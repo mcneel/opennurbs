@@ -155,7 +155,6 @@ var searchData=
   ['anglezerosuppress',['AngleZeroSuppress',['../da/d51/class_o_n___annotation.html#ad3330ce98d9324fe2cfff5b829ce099b',1,'ON_Annotation::AngleZeroSuppress()'],['../d8/df8/class_o_n___dim_style.html#a88beddf348bbbf24a32f2cd536b35858',1,'ON_DimStyle::AngleZeroSuppress() const'],['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa498cf3ab9fd1cacc9aa045567ad954f5',1,'ON_DimStyle::AngleZeroSuppress()']]],
   ['angstroms',['Angstroms',['../d4/d1c/class_o_n___unit_system.html#a016d543ee39255287f134692eb89b5f7',1,'ON_UnitSystem']]],
   ['angularround',['AngularRound',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa0fa37b7c5144fde324bc5a1a8355bd6c',1,'ON_DimStyle']]],
-  ['annotationfontapplepointsize',['AnnotationFontApplePointSize',['../d8/df5/class_o_n___font.html#ab55ead78e0fc5501a58ba69cc1f5d023a113fca853504b08b7e9452b933150f39',1,'ON_Font']]],
   ['annotationfontcellheight',['AnnotationFontCellHeight',['../d8/df5/class_o_n___font.html#ab55ead78e0fc5501a58ba69cc1f5d023ae798466615e328a2329d9ce5982cb4b5',1,'ON_Font']]],
   ['annotationsettings',['AnnotationSettings',['../d8/d7f/class_o_n__3dm_annotation_context.html#a659546d36f80bb5061438ef5cc6ba059',1,'ON_3dmAnnotationContext']]],
   ['annotationsettingsareset',['AnnotationSettingsAreSet',['../d8/d7f/class_o_n__3dm_annotation_context.html#a593ddc07508de3fafab49766b51d4740',1,'ON_3dmAnnotationContext']]],

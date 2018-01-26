@@ -20,7 +20,6 @@ var searchData=
   ['angleresolution',['AngleResolution',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa35e4e8dab4b37c9f69ae93e291ec0195',1,'ON_DimStyle']]],
   ['anglezerosuppress',['AngleZeroSuppress',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa498cf3ab9fd1cacc9aa045567ad954f5',1,'ON_DimStyle']]],
   ['angularround',['AngularRound',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa0fa37b7c5144fde324bc5a1a8355bd6c',1,'ON_DimStyle']]],
-  ['annotationfontapplepointsize',['AnnotationFontApplePointSize',['../d8/df5/class_o_n___font.html#ab55ead78e0fc5501a58ba69cc1f5d023a113fca853504b08b7e9452b933150f39',1,'ON_Font']]],
   ['annotationfontcellheight',['AnnotationFontCellHeight',['../d8/df5/class_o_n___font.html#ab55ead78e0fc5501a58ba69cc1f5d023ae798466615e328a2329d9ce5982cb4b5',1,'ON_Font']]],
   ['arclengthsymbol',['ArclengthSymbol',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaa3057b5a522755f1d096ad493305caeab',1,'ON_DimStyle']]],
   ['arrowblockid1',['ArrowBlockId1',['../d8/df8/class_o_n___dim_style.html#a21c2db7d069250b9932240ca61d65feaab5fa89332f4bb0a8bce1085a85a5a1be',1,'ON_DimStyle']]],
