@@ -1,0 +1,4 @@
+/* hide member titles */
+h2.memtitle {
+  display: none;
+}
