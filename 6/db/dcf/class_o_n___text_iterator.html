@@ -68,7 +68,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3ab16afd986ff3b9ed1f452b40b9385d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a3ab16afd986ff3b9ed1f452b40b9385d">AtBackslashTic</a> () const</td></tr>
 <tr class="separator:a3ab16afd986ff3b9ed1f452b40b9385d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3a8d83e7f791afe7da7015a87f8b958"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#ac3a8d83e7f791afe7da7015a87f8b958">Back</a> ()</td></tr>
-<tr class="memdesc:ac3a8d83e7f791afe7da7015a87f8b958"><td class="mdescLeft">&#160;</td><td class="mdescRight">move position back and return current codepoint after moving back  <a href="#ac3a8d83e7f791afe7da7015a87f8b958">More...</a><br /></td></tr>
 <tr class="separator:ac3a8d83e7f791afe7da7015a87f8b958"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cb86171bb995280f40591c27bcc5d63"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html">ON_TextIterator</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a9cb86171bb995280f40591c27bcc5d63">operator=</a> (const <a class="el" href="../../db/dcf/class_o_n___text_iterator.html">ON_TextIterator</a> &amp;)=default</td></tr>
 <tr class="separator:a9cb86171bb995280f40591c27bcc5d63"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -77,6 +76,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1beb199a0221343ca63f0977f72a58f6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a1beb199a0221343ca63f0977f72a58f6">ReadCharValue</a> (unsigned char &amp;c)</td></tr>
 <tr class="separator:a1beb199a0221343ca63f0977f72a58f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ad6ccb5fde15d34388385c913a668fb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a0ad6ccb5fde15d34388385c913a668fb">ReadCodePoint</a> (ON__UINT32 &amp;unicode_code_point)</td></tr>
+<tr class="memdesc:a0ad6ccb5fde15d34388385c913a668fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current unicode code point and calls <a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a0411b494b4d509c953dcfabbfbbfb363">Step()</a> to advance the text iterator by one code point.  <a href="#a0ad6ccb5fde15d34388385c913a668fb">More...</a><br /></td></tr>
 <tr class="separator:a0ad6ccb5fde15d34388385c913a668fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0411b494b4d509c953dcfabbfbbfb363"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a0411b494b4d509c953dcfabbfbbfb363">Step</a> ()</td></tr>
 <tr class="separator:a0411b494b4d509c953dcfabbfbbfb363"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,8 +214,6 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>move position back and return current codepoint after moving back </p>
-
 </div>
 </div>
 <a id="a9cb86171bb995280f40591c27bcc5d63"></a>
@@ -259,7 +257,13 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: unicode_code_point - [out] current unicode code point returned here. 0 = end of string Returns: true if returned unicode_code_point is not zero </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">unicode_code_point</td><td>[out] current unicode code point returned here. 0 = end of string</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if returned unicode_code_point is not zero </dd></dl>
 
 </div>
 </div>
@@ -296,7 +300,15 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets the current unicode code point and calls <a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a0411b494b4d509c953dcfabbfbbfb363">Step()</a> to advance the text iterator by one code point. Parameters: unicode_code_point - [out] current unicode code point returned here. 0 = end of string Returns: true if returned unicode_code_point is not zero </p>
+
+<p>Gets the current unicode code point and calls <a class="el" href="../../db/dcf/class_o_n___text_iterator.html#a0411b494b4d509c953dcfabbfbbfb363">Step()</a> to advance the text iterator by one code point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">unicode_code_point</td><td>[out] current unicode code point returned here. 0 = end of string</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if returned unicode_code_point is not zero </dd></dl>
 
 </div>
 </div>
@@ -314,7 +326,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Get the next UNICODE code point encoded in m_text beginning at m_text[m_next_text_ci]; Save this code point in m_cur_codepoint. Advance m_next_text_ci. </p>
 
 </div>
 </div>
@@ -324,7 +335,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

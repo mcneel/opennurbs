@@ -88,12 +88,15 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a013a44e670740768dd531dac3f218cb8"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da1/class_o_n___length_unit_name.html#a013a44e670740768dd531dac3f218cb8">CompareLocaleIdUnitSystemName</a> (const <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> &amp;a, const <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> &amp;b)</td></tr>
+<tr class="memdesc:a013a44e670740768dd531dac3f218cb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order locale id, unit system, name, singular, plural  <a href="#a013a44e670740768dd531dac3f218cb8">More...</a><br /></td></tr>
 <tr class="separator:a013a44e670740768dd531dac3f218cb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45dc4469c6e66f5904cdd885395b6cf1"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da1/class_o_n___length_unit_name.html#a45dc4469c6e66f5904cdd885395b6cf1">CompareUnitSystemLocaleIdName</a> (const <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> &amp;a, const <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> &amp;b)</td></tr>
+<tr class="memdesc:a45dc4469c6e66f5904cdd885395b6cf1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order unit system, locale id, name, singular, plural  <a href="#a45dc4469c6e66f5904cdd885395b6cf1">More...</a><br /></td></tr>
 <tr class="separator:a45dc4469c6e66f5904cdd885395b6cf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77729d63dc0a6b98f3eb90984a96df25"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da1/class_o_n___length_unit_name.html#a77729d63dc0a6b98f3eb90984a96df25">Create</a> (unsigned int locale_id, ON::LengthUnitSystem length_unit_system, bool bPlural)</td></tr>
 <tr class="separator:a77729d63dc0a6b98f3eb90984a96df25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3aa0ddbc21d776d335f740a22baf3416"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da1/class_o_n___length_unit_name.html#a3aa0ddbc21d776d335f740a22baf3416">GetLengthUnitNameList</a> (size_t length_unit_list_capacity, class <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> *length_unit_list)</td></tr>
+<tr class="memdesc:a3aa0ddbc21d776d335f740a22baf3416"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get list of length unit names and abbreviations and their corresponding unit systems that are recognized by ON_ParseLengthUnitSystemName().  <a href="#a3aa0ddbc21d776d335f740a22baf3416">More...</a><br /></td></tr>
 <tr class="separator:a3aa0ddbc21d776d335f740a22baf3416"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -212,7 +215,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order locale id, unit system, name, singular, plural </p>
+
+<p>Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order locale id, unit system, name, singular, plural </p>
 
 </div>
 </div>
@@ -249,7 +253,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order unit system, locale id, name, singular, plural </p>
+
+<p>Dictionary compare of all <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> information in the order unit system, locale id, name, singular, plural </p>
 
 </div>
 </div>
@@ -328,11 +333,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get list of length unit names and abbreviations and their corresponding unit systems that are recognized by ON_ParseLengthUnitSystemName().</p>
-<p>Parameters: length_unit_list_capacity - [in] number of available elements in length_unit_list[] If length_unit_list_capacity is zero and length_unit_list is null, then the number of length unit names is returned. length_unit_list - [out] The list of length unit names is returned here.</p>
-<p>Returns: Number of length unit names and abbreviations.</p>
-<p>Example: unsigned int count = ON_GetLengthUnitNameList(0,0); ON_UnitName* length_unit_list = new (std::nothrow) ON_UnitName[capacity]; count = ON_GetLengthUnitNameList(count,length_unit_list); ... delete[] length_unit_list; Remarks: If length_unit_list_capacity is zero and length_unit_list is null, then the number of length unit names is returned. </p>
 
+<p>Get list of length unit names and abbreviations and their corresponding unit systems that are recognized by ON_ParseLengthUnitSystemName(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">length_unit_list_capacity</td><td>[in] number of available elements in length_unit_list[] If length_unit_list_capacity is zero and length_unit_list is null, then the number of length unit names is returned.</td></tr>
+    <tr><td class="paramname">length_unit_list</td><td>[out] The list of length unit names is returned here. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">Number of length unit names and abbreviations.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>If length_unit_list_capacity is zero and length_unit_list is null, then the number of length unit names is returned. </p>
+<div class="fragment"><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> count = ON_GetLengthUnitNameList(0,0);</div><div class="line">ON_UnitName* length_unit_list = <span class="keyword">new</span> (std::nothrow) ON_UnitName[capacity];</div><div class="line">count = ON_GetLengthUnitNameList(count,length_unit_list);</div><div class="line">...</div><div class="line">delete[] length_unit_list;</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a79a47a5c1e95b3b665799f85ee342a8e"></a>
@@ -366,7 +380,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the length unit system is set and the name is not empty. False if length unit system is ON::LengthUnitSystem::None or ON::LengthUnitSystem::Unset or the name is empty. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the length unit system is set and the name is not empty. False if length unit system is ON::LengthUnitSystem::None or ON::LengthUnitSystem::Unset or the name is empty. </dd></dl>
 
 </div>
 </div>
@@ -384,7 +398,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the length unit system is set. False if length unit system is ON::LengthUnitSystem::None or ON::LengthUnitSystem::Unset. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the length unit system is set. False if length unit system is ON::LengthUnitSystem::None or ON::LengthUnitSystem::Unset. </dd></dl>
 
 </div>
 </div>
@@ -402,7 +416,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the length unit system is set or is ON::LengthUnitSystem::None </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the length unit system is set or is ON::LengthUnitSystem::None </dd></dl>
 
 </div>
 </div>
@@ -420,7 +434,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A pointer to a localized length unit name or a pointer to an empty string. Remarks: Never returns nullptr. </p>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to a localized length unit name or a pointer to an empty string. </dd></dl>
+<p>Never returns nullptr. </p>
 
 </div>
 </div>
@@ -472,7 +487,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Remarks: True if the length unit name is plural in languages where that question has a meaningful answer. Remarks: Some names and name abbreviations are both singular and plural. </p>
+<p>Some names and name abbreviations are both singular and plural. </p>
 
 </div>
 </div>
@@ -490,7 +505,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Remarks: True if the length unit name is singular in languages where that question has a meaningful answer. Remarks: Some names and name abbreviations are both singular and plural. </p>
+<p>Some names and name abbreviations are both singular and plural. </p>
 
 </div>
 </div>
@@ -566,7 +581,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

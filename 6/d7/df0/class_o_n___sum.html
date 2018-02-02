@@ -50,31 +50,42 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Class for carefully adding long list of numbers.  
+ <a href="../../d7/df0/class_o_n___sum.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d2/d00/opennurbs__math_8h_source.html">opennurbs_math.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af1faca3cc368e02733d988a04e434eed"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#af1faca3cc368e02733d988a04e434eed">ON_Sum</a> ()</td></tr>
+<tr class="memdesc:af1faca3cc368e02733d988a04e434eed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a sum that is ready to be used.  <a href="#af1faca3cc368e02733d988a04e434eed">More...</a><br /></td></tr>
 <tr class="separator:af1faca3cc368e02733d988a04e434eed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74fa9d75aac2ed90b1a4dadba6d95961"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a74fa9d75aac2ed90b1a4dadba6d95961">Begin</a> (double starting_value=0.0)</td></tr>
+<tr class="memdesc:a74fa9d75aac2ed90b1a4dadba6d95961"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a sum is being used more than once, call <a class="el" href="../../d7/df0/class_o_n___sum.html#a74fa9d75aac2ed90b1a4dadba6d95961" title="If a sum is being used more than once, call Begin() before starting each sum. ">Begin()</a> before starting each sum.  <a href="#a74fa9d75aac2ed90b1a4dadba6d95961">More...</a><br /></td></tr>
 <tr class="separator:a74fa9d75aac2ed90b1a4dadba6d95961"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a674f6ee8ae2c4d5a323eebed3173684d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a674f6ee8ae2c4d5a323eebed3173684d">operator+=</a> (double x)</td></tr>
+<tr class="memdesc:a674f6ee8ae2c4d5a323eebed3173684d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls ON_Sum::Plus(x);  <a href="#a674f6ee8ae2c4d5a323eebed3173684d">More...</a><br /></td></tr>
 <tr class="separator:a674f6ee8ae2c4d5a323eebed3173684d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bec3f2a615e1f83b8f852245410ad34"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a1bec3f2a615e1f83b8f852245410ad34">operator-=</a> (double x)</td></tr>
+<tr class="memdesc:a1bec3f2a615e1f83b8f852245410ad34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls <a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730" title="Add x to the current sum. ">ON_Sum::Plus</a>(-x);  <a href="#a1bec3f2a615e1f83b8f852245410ad34">More...</a><br /></td></tr>
 <tr class="separator:a1bec3f2a615e1f83b8f852245410ad34"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a027a89cec6901446853493ae7ea4827a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a027a89cec6901446853493ae7ea4827a">operator=</a> (double x)</td></tr>
+<tr class="memdesc:a027a89cec6901446853493ae7ea4827a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls ON_Sum::Begin(x)  <a href="#a027a89cec6901446853493ae7ea4827a">More...</a><br /></td></tr>
 <tr class="separator:a027a89cec6901446853493ae7ea4827a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a300264a1c6ecdb0d51464b808706b730"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730">Plus</a> (double x)</td></tr>
+<tr class="memdesc:a300264a1c6ecdb0d51464b808706b730"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add x to the current sum.  <a href="#a300264a1c6ecdb0d51464b808706b730">More...</a><br /></td></tr>
 <tr class="separator:a300264a1c6ecdb0d51464b808706b730"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa9261c9ff6d341f5e4d5f380196b82a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#afa9261c9ff6d341f5e4d5f380196b82a">Plus</a> (double x, double dx)</td></tr>
+<tr class="memdesc:afa9261c9ff6d341f5e4d5f380196b82a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add x to the current sum.  <a href="#afa9261c9ff6d341f5e4d5f380196b82a">More...</a><br /></td></tr>
 <tr class="separator:afa9261c9ff6d341f5e4d5f380196b82a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a487319cab02c7cbe906ed45a3822b3a2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#a487319cab02c7cbe906ed45a3822b3a2">SummandCount</a> () const</td></tr>
 <tr class="separator:a487319cab02c7cbe906ed45a3822b3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2ebb80f6b96309951a6ba769bac33f0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df0/class_o_n___sum.html#ab2ebb80f6b96309951a6ba769bac33f0">Total</a> (double *error_estimate=nullptr)</td></tr>
+<tr class="memdesc:ab2ebb80f6b96309951a6ba769bac33f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the total sum.  <a href="#ab2ebb80f6b96309951a6ba769bac33f0">More...</a><br /></td></tr>
 <tr class="separator:ab2ebb80f6b96309951a6ba769bac33f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Class for carefully adding long list of numbers. </p>
+<div class="textblock"><p>Class for carefully adding long list of numbers. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="af1faca3cc368e02733d988a04e434eed"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af1faca3cc368e02733d988a04e434eed">&#9670;&nbsp;</a></span>ON_Sum()</h2>
@@ -90,7 +101,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Creates a sum that is ready to be used. </p>
+
+<p>Creates a sum that is ready to be used. </p>
 
 </div>
 </div>
@@ -110,7 +122,14 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If a sum is being used more than once, call <a class="el" href="../../d7/df0/class_o_n___sum.html#a74fa9d75aac2ed90b1a4dadba6d95961">Begin()</a> before starting each sum. Parameters: starting_value - [in] Initial value of sum. </p>
+
+<p>If a sum is being used more than once, call <a class="el" href="../../d7/df0/class_o_n___sum.html#a74fa9d75aac2ed90b1a4dadba6d95961" title="If a sum is being used more than once, call Begin() before starting each sum. ">Begin()</a> before starting each sum. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">starting_value</td><td>[in] Initial value of sum.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -129,7 +148,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls ON_Sum::Plus(x); </p>
+
+<p>Calls ON_Sum::Plus(x); </p>
 
 </div>
 </div>
@@ -148,7 +168,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls <a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730">ON_Sum::Plus</a>(-x); </p>
+
+<p>Calls <a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730" title="Add x to the current sum. ">ON_Sum::Plus</a>(-x); </p>
 
 </div>
 </div>
@@ -167,7 +188,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls ON_Sum::Begin(x) </p>
+
+<p>Calls ON_Sum::Begin(x) </p>
 
 </div>
 </div>
@@ -186,7 +208,14 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add x to the current sum. Parameters: x - [in] value to add to the current sum. </p>
+
+<p>Add x to the current sum. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">x</td><td>[in] value to add to the current sum.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -215,7 +244,15 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add x to the current sum. Parameters: x - [in] value to add to the current sum. dx - [in] symmetric uncertainty in x. (true value is in the range x-dx to x+dx </p>
+
+<p>Add x to the current sum. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">x</td><td>[in] value to add to the current sum.</td></tr>
+    <tr><td class="paramname">dx</td><td>[in] symmetric uncertainty in x. (true value is in the range x-dx to x+dx</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -233,7 +270,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of summands. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of summands. </dd></dl>
 
 </div>
 </div>
@@ -252,7 +289,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calculates the total sum. Parameters: error_estimate - [out] if not nullptr, the returned value of error_estimate is an estimate of the error in the sum. Returns: Total of the sum. Remarks: You can get subtotals by mixing calls to <a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730">Plus()</a> and <a class="el" href="../../d7/df0/class_o_n___sum.html#ab2ebb80f6b96309951a6ba769bac33f0">Total()</a>. In delicate sums, some precision may be lost in the final total if you call <a class="el" href="../../d7/df0/class_o_n___sum.html#ab2ebb80f6b96309951a6ba769bac33f0">Total()</a> to calculate subtotals. </p>
+
+<p>Calculates the total sum. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">error_estimate</td><td>[out] if not nullptr, the returned value of *error_estimate is an estimate of the error in the sum.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Total of the sum. </dd></dl>
+<p>You can get subtotals by mixing calls to <a class="el" href="../../d7/df0/class_o_n___sum.html#a300264a1c6ecdb0d51464b808706b730" title="Add x to the current sum. ">Plus()</a> and <a class="el" href="../../d7/df0/class_o_n___sum.html#ab2ebb80f6b96309951a6ba769bac33f0" title="Calculates the total sum. ">Total()</a>. In delicate sums, some precision may be lost in the final total if you call <a class="el" href="../../d7/df0/class_o_n___sum.html#ab2ebb80f6b96309951a6ba769bac33f0" title="Calculates the total sum. ">Total()</a> to calculate subtotals. </p>
 
 </div>
 </div>
@@ -262,7 +308,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

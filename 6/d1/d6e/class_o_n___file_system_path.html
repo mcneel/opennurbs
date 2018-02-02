@@ -67,10 +67,13 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:af8fee8aee148bbcf87ea9cefe46eeba5"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#af8fee8aee148bbcf87ea9cefe46eeba5">CleanPath</a> (bool bTrimLeft, bool bTrimRight, bool bAllowWindowsUNCHostNameOrDiskLetter, bool bDeleteWindowsUNCHostNameOrDiskLetter, const wchar_t directory_separator, const wchar_t *dirty_path)</td></tr>
+<tr class="memdesc:af8fee8aee148bbcf87ea9cefe46eeba5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Condenses // to / Condenses /./ to / Condenses /sfsdf/../ to / Sets all directory separators to directory_separator.  <a href="#af8fee8aee148bbcf87ea9cefe46eeba5">More...</a><br /></td></tr>
 <tr class="separator:af8fee8aee148bbcf87ea9cefe46eeba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0eee0cb8ad7a0de1dc90bc8db0fb9d6"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#ae0eee0cb8ad7a0de1dc90bc8db0fb9d6">CleanPath</a> (const wchar_t *dirty_path)</td></tr>
+<tr class="memdesc:ae0eee0cb8ad7a0de1dc90bc8db0fb9d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Condenses // to / Condenses /./ to / Condenses /sfsdf/../ to / Trims left and right white space. Sets all directory separators to <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aae9819121b9ebd432e557564cbf544a6">ON_FileSystemPath::DirectorySeparator</a>. If the Platform is not windows, the UNC host names and volume letters are deleted.  <a href="#ae0eee0cb8ad7a0de1dc90bc8db0fb9d6">More...</a><br /></td></tr>
 <tr class="separator:ae0eee0cb8ad7a0de1dc90bc8db0fb9d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa551b0bd3acdeed45adc3a6bd98b6aa5"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aa551b0bd3acdeed45adc3a6bd98b6aa5">CombinePaths</a> (const wchar_t *left_side, bool bLeftSideContainsFileName, const wchar_t *right_side, bool bRightSideContainsFileName, bool bAppendTrailingDirectorySeparator)</td></tr>
+<tr class="memdesc:aa551b0bd3acdeed45adc3a6bd98b6aa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combine paths into a single valid path name. Remove internal .. and . directory references. If necessary remove file names.  <a href="#aa551b0bd3acdeed45adc3a6bd98b6aa5">More...</a><br /></td></tr>
 <tr class="separator:aa551b0bd3acdeed45adc3a6bd98b6aa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afca8ecff11e752acfa848b141a724d59"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#afca8ecff11e752acfa848b141a724d59">CurrentDirectory</a> (bool bWithTrailingDirectorySeparator)</td></tr>
 <tr class="separator:afca8ecff11e752acfa848b141a724d59"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -103,8 +106,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ade43db3a709e250870f50d7cb3225a99"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#ade43db3a709e250870f50d7cb3225a99">IsRelativePath</a> (const wchar_t *path)</td></tr>
 <tr class="separator:ade43db3a709e250870f50d7cb3225a99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0b29a6d9930c740f716b504ff9136cb"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aa0b29a6d9930c740f716b504ff9136cb">IsValidFileName</a> (const char *file_name, bool bAllPlatforms)</td></tr>
+<tr class="memdesc:aa0b29a6d9930c740f716b504ff9136cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values.  <a href="#aa0b29a6d9930c740f716b504ff9136cb">More...</a><br /></td></tr>
 <tr class="separator:aa0b29a6d9930c740f716b504ff9136cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e206196c42ab656c66d807fcd27988b"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a3e206196c42ab656c66d807fcd27988b">IsValidFileName</a> (const wchar_t *file_name, bool bAllPlatforms)</td></tr>
+<tr class="memdesc:a3e206196c42ab656c66d807fcd27988b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values.  <a href="#a3e206196c42ab656c66d807fcd27988b">More...</a><br /></td></tr>
 <tr class="separator:a3e206196c42ab656c66d807fcd27988b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f7a079873f50e6ffe3989ddcb4f9825"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a2f7a079873f50e6ffe3989ddcb4f9825">PathExists</a> (const char *path)</td></tr>
 <tr class="separator:a2f7a079873f50e6ffe3989ddcb4f9825"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,12 +120,16 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a9cb9362f3b1f40104ba3cd0b98981389"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a9cb9362f3b1f40104ba3cd0b98981389">PlatformPathIgnoreCase</a> ()</td></tr>
 <tr class="separator:a9cb9362f3b1f40104ba3cd0b98981389"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1093d3885aebb04afc2d33537752e339"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a1093d3885aebb04afc2d33537752e339">RelativePath</a> (const wchar_t *full_path, bool bFullPathIncludesFileName, const wchar_t *base_path, bool bBasePathIncludesFileName)</td></tr>
+<tr class="memdesc:a1093d3885aebb04afc2d33537752e339"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a the relative path from base_path to full_path.  <a href="#a1093d3885aebb04afc2d33537752e339">More...</a><br /></td></tr>
 <tr class="separator:a1093d3885aebb04afc2d33537752e339"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1c28554555392a9c6ffc0672bd4339e"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#ae1c28554555392a9c6ffc0672bd4339e">RemoveFileName</a> (const wchar_t *path, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *file_name)</td></tr>
+<tr class="memdesc:ae1c28554555392a9c6ffc0672bd4339e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes file name from path.  <a href="#ae1c28554555392a9c6ffc0672bd4339e">More...</a><br /></td></tr>
 <tr class="separator:ae1c28554555392a9c6ffc0672bd4339e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bb35f0d2cc21a99b746cc11b44184b0"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a6bb35f0d2cc21a99b746cc11b44184b0">RemoveVolumeName</a> (const wchar_t *path, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *volume_name)</td></tr>
+<tr class="memdesc:a6bb35f0d2cc21a99b746cc11b44184b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes Windows volume name from path.  <a href="#a6bb35f0d2cc21a99b746cc11b44184b0">More...</a><br /></td></tr>
 <tr class="separator:a6bb35f0d2cc21a99b746cc11b44184b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6b7e23142f04252e7e33f6ddb746417"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#ac6b7e23142f04252e7e33f6ddb746417">SplitPath</a> (const char *path, <a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a> *volume, <a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a> *dir, <a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a> *file_name_stem, <a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a> *file_name_ext)</td></tr>
+<tr class="memdesc:ac6b7e23142f04252e7e33f6ddb746417"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the locations in a path the specify the drive, directory, file name and file extension.  <a href="#ac6b7e23142f04252e7e33f6ddb746417">More...</a><br /></td></tr>
 <tr class="separator:ac6b7e23142f04252e7e33f6ddb746417"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada49b8eac5f4ed9a5a3363202e9284f5"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#ada49b8eac5f4ed9a5a3363202e9284f5">SplitPath</a> (const char *path, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *volume, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *dir, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *file_name_stem, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> *file_name_ext)</td></tr>
 <tr class="separator:ada49b8eac5f4ed9a5a3363202e9284f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -233,7 +242,18 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Condenses ///&lt; to / Condenses /./ to / Condenses /sfsdf/../ to / Sets all directory separators to directory_separator. Parameters: bAllowWindowsUNCHostNameOrDiskLetter - [in] If bAllowWindowsUNCHostNameOrDiskLetter and the path begins with \HostName followed by a directory separator, then the initial \ is not condensed. If the path begins with X: followed by a directory separator, where "X" is a single letter in the range A to Z or a to z, then the path is considered valid. bDeleteWindowsUNCHostNameOrDiskLetter - [in] If bAllowWindowsUNCHostNameOrDiskLetter is true and the path begins with a UNC host name or disk letter followed by a directory separator, then host name or disk letter is deleted. This is useful when using paths from a Windows platform on a non-Windows platform. directory_separator - [in] If 0 == directory_separator, then the first directory separator is kept when condensing occurs. ON_wString::FileSystemPathSeparator is a good choice if you want to use the current runtime's separator. dirty_path - [in] path to clean. Return: Cleaned path. </p>
+
+<p>Condenses // to / Condenses /./ to / Condenses /sfsdf/../ to / Sets all directory separators to directory_separator. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bAllowWindowsUNCHostNameOrDiskLetter</td><td>[in] If bAllowWindowsUNCHostNameOrDiskLetter and the path begins with \HostName followed by a directory separator, then the initial \ is not condensed. If the path begins with X: followed by a directory separator, where "X" is a single letter in the range A to Z or a to z, then the path is considered valid.</td></tr>
+    <tr><td class="paramname">bDeleteWindowsUNCHostNameOrDiskLetter</td><td>[in] If bAllowWindowsUNCHostNameOrDiskLetter is true and the path begins with a UNC host name or disk letter followed by a directory separator, then host name or disk letter is deleted. This is useful when using paths from a Windows platform on a</td></tr>
+    <tr><td class="paramname">non</td><td>Windows platform.</td></tr>
+    <tr><td class="paramname">directory_separator</td><td>[in] If 0 == directory_separator, then the first directory separator is kept when condensing occurs. ON_wString::FileSystemPathSeparator is a good choice if you want to use the current runtime's separator.</td></tr>
+    <tr><td class="paramname">dirty_path</td><td>[in] path to clean. Return: Cleaned path.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -260,7 +280,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Condenses ///&lt; to / Condenses /./ to / Condenses /sfsdf/../ to / Trims left and right white space. Sets all directory separators to <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aae9819121b9ebd432e557564cbf544a6">ON_FileSystemPath::DirectorySeparator</a>. If the Platform is not windows, the UNC host names and volume letters are deleted. </p>
+
+<p>Condenses // to / Condenses /./ to / Condenses /sfsdf/../ to / Trims left and right white space. Sets all directory separators to <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aae9819121b9ebd432e557564cbf544a6">ON_FileSystemPath::DirectorySeparator</a>. If the Platform is not windows, the UNC host names and volume letters are deleted. </p>
 
 </div>
 </div>
@@ -315,7 +336,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Combine paths into a single valid path name. Remove internal .. and . directory references. If necessary remove file names. Parameters: left_side - [in] bLeftSideContainsFileName - [in] true if left_side path ends in a file name and that file name is removed and discarded. right_side - [in] bRightSideContainsFileName - [in] true if right_side path ends in a file name. If bAppendTrailingDirectorySeparator is true, that file name is removed and discarded. If bAppendTrailingDirectorySeparator is false, the returned path ends in that file name. bAppendTrailingDirectorySeparator - [in] If true, any file names are removed and a directory separator is appended to the returned string. Returns: a path made left_side + right_side Remarks: This function manipulates string information. This function does not look at storage media to see if the paths currently exist. </p>
+
+<p>Combine paths into a single valid path name. Remove internal .. and . directory references. If necessary remove file names. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">left_side</td><td>[in]</td></tr>
+    <tr><td class="paramname">bLeftSideContainsFileName</td><td>[in] true if left_side path ends in a file name and that file name is removed and discarded.</td></tr>
+    <tr><td class="paramname">right_side</td><td>[in]</td></tr>
+    <tr><td class="paramname">bRightSideContainsFileName</td><td>[in] true if right_side path ends in a file name. If bAppendTrailingDirectorySeparator is true, that file name is removed and discarded. If bAppendTrailingDirectorySeparator is false, the returned path ends in that file name.</td></tr>
+    <tr><td class="paramname">bAppendTrailingDirectorySeparator</td><td>[in] If true, any file names are removed and a directory separator is appended to the returned string.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a path made left_side + right_side </dd></dl>
+<p>This function manipulates string information. This function does not look at storage media to see if the paths currently exist. </p>
 
 </div>
 </div>
@@ -342,7 +376,15 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: bWithTrailingDirectorySeparator - [in] true - returned path will have a trailing directory separator. false - returned path will not have a trailing directory separator. Returns: The platform current working directory which should be the directory where ON::OpenFile("fname","r") would look for a file named "fname". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bWithTrailingDirectorySeparator</td><td>[in]</td></tr>
+    <tr><td class="paramname">true</td><td>returned path will have a trailing directory separator.</td></tr>
+    <tr><td class="paramname">false</td><td>returned path will not have a trailing directory separator.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The platform current working directory which should be the directory where ON::OpenFile("fname","r") would look for a file named "fname". </dd></dl>
 
 </div>
 </div>
@@ -369,7 +411,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to split Returns: The directory portion of the path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The directory portion of the path. </dd></dl>
 
 </div>
 </div>
@@ -396,7 +444,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to split Returns: The file name extension portion of the path, inlcuding the leading period or "dot". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The file name extension portion of the path, inlcuding the leading period or "dot". </dd></dl>
 
 </div>
 </div>
@@ -433,7 +487,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to split bIncludeExtension - [in] Returns: The file name portion of the path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+    <tr><td class="paramname">bIncludeExtension</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The file name portion of the path. </dd></dl>
 
 </div>
 </div>
@@ -760,7 +821,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to test directory_separator - [in] If 0 == directory_separator, then either ON_wString::FileSystemPathSeparator or ON_wString::AlternateFileSystemPathSeparator is permitted as a directory separator. ON_wString::FileSystemPathSeparator is a good choice if you want to use the current runtime's separator. Returns: True if path begins with ../ or ./ </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to test</td></tr>
+    <tr><td class="paramname">directory_separator</td><td>[in] If 0 == directory_separator, then either ON_wString::FileSystemPathSeparator or ON_wString::AlternateFileSystemPathSeparator is permitted as a directory separator. ON_wString::FileSystemPathSeparator is a good choice if you want to use the current runtime's separator.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if path begins with ../ or ./ </dd></dl>
 
 </div>
 </div>
@@ -787,7 +855,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to test Returns: True if path begins with ../ or ..\ or ./ or .\ </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to test</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if path begins with ../ or ..\ or ./ or .\ </dd></dl>
 
 </div>
 </div>
@@ -824,7 +898,16 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values. Parameters: file_name - [in] string to test. bAllPlatforms - [in] If true, test name for all supported platforms. Returns: True if the string can be a file name. </p>
+
+<p>Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_name</td><td>[in] string to test.</td></tr>
+    <tr><td class="paramname">bAllPlatforms</td><td>[in] If true, test name for all supported platforms.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the string can be a file name. </dd></dl>
 
 </div>
 </div>
@@ -861,7 +944,16 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values. Parameters: file_name - [in] string to test. bAllPlatforms - [in] If true, test name for all supported platforms. Returns: True if the string can be a file name. </p>
+
+<p>Determine if the file_name string is a permitted file name. Valid file names must be non empty, cannot have two periods in a row, and cannot contain directory separators, tildes, and other platform specific values. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_name</td><td>[in] string to test.</td></tr>
+    <tr><td class="paramname">bAllPlatforms</td><td>[in] If true, test name for all supported platforms.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the string can be a file name. </dd></dl>
 
 </div>
 </div>
@@ -940,7 +1032,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path_id - [in] Specifies path to get. Returns: Requested path. If the path does not exist in the current context, the empty string is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path_id</td><td>[in] Specifies path to get.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Requested path. If the path does not exist in the current context, the empty string is returned. </dd></dl>
 
 </div>
 </div>
@@ -966,7 +1064,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: true if the platform file system ignores case. Remarks: Windows and default installations of OS X 10.10.3, and default installations of the UNIX terminal interface in OS X 10.10.3 and later ignore case. In the case of OX X, a user can override the default setting. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the platform file system ignores case. </dd></dl>
+<p>Windows and default installations of OS X 10.10.3, and default installations of the UNIX terminal interface in OS X 10.10.3 and later ignore case. In the case of OX X, a user can override the default setting. </p>
 
 </div>
 </div>
@@ -1015,10 +1114,18 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get a the relative path from base_path to full_path. Parameters: full_path - [in] base_path - [in]</p>
+
+<p>Get a the relative path from base_path to full_path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">full_path</td><td>[in]</td></tr>
+    <tr><td class="paramname">base_path</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>Example full_path = L"c:/a/b/c/d/somefile.txt"; base_path = L"C:/A/B/X/Y/Z/model.3dm"; ON_wString::GetRelativePath(full_path,base_path) returns L"../../../c/d/somefile.txt"</p>
-<p>Example full_path = L"c:/a/b/somefile.txt"; base_path = L"C:/A/B/model.3dm"; ON_wString::GetRelativePath(full_path,base_path) returns L"./somefile.txt"</p>
-<p>Remarks: Path separators on the input can be mixed. Path separators on the returned relative path are ON_wString::FileSystemPathSeparator </p>
+<p>Example full_path = L"c:/a/b/somefile.txt"; base_path = L"C:/A/B/model.3dm"; ON_wString::GetRelativePath(full_path,base_path) returns L"./somefile.txt" </p>
+<p>Path separators on the input can be mixed. Path separators on the returned relative path are ON_wString::FileSystemPathSeparator </p>
 
 </div>
 </div>
@@ -1055,7 +1162,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Removes file name from path. Parameters: path - [in] file system path with a file name. file_name - [out] If file_name is not nullptr, the removed portion of path is returned here. Returns: path with any file name removed. Remarks: This function uses on_wsplitpath() to decide if the path ends with characters that could be a file name. It does not inspect the file system to see if the file exists. </p>
+
+<p>Removes file name from path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] file system path with a file name.</td></tr>
+    <tr><td class="paramname">file_name</td><td>[out] If file_name is not nullptr, the removed portion of path is returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>path with any file name removed. </dd></dl>
+<p>This function uses on_wsplitpath() to decide if the path ends with characters that could be a file name. It does not inspect the file system to see if the file exists. </p>
 
 </div>
 </div>
@@ -1092,7 +1209,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Removes Windows volume name from path. Parameters: path - [in] file system path volume_name - [out] If volume_name is not nullptr, the removed portion of path is returned here. Returns: path with any volume name removed. Remarks: This function uses on_wsplitpath() to decide if the path begins with characters that could be a volume name. It does not inspect the file system to see if the volume exists. </p>
+
+<p>Removes Windows volume name from path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] file system path</td></tr>
+    <tr><td class="paramname">volume_name</td><td>[out] If volume_name is not nullptr, the removed portion of path is returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>path with any volume name removed. </dd></dl>
+<p>This function uses on_wsplitpath() to decide if the path begins with characters that could be a volume name. It does not inspect the file system to see if the volume exists. </p>
 
 </div>
 </div>
@@ -1147,7 +1274,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Find the locations in a path the specify the drive, directory, file name and file extension. Parameters: path - [in] path to split volume - [out] (pass null if you don't need the volume) If volume is not null and the path parameter begins with a Windows volume specification, *volume will either be the Windows volume letter followed by the trailing colon or a Windows UNC \&lt;hostname&gt;. Otherwise volume will be the empty string. dir - [out] (pass null if you don't need the directory) If dir is not null and the path parameter contains a directory specification, then the returned value of *dir will be the directory specification including the trailing slash. file_name_stem - [out] (pass null if you don't need the file name stem) If file_name_stem is not null and the path parameter contains a file name specification, then the returned value of *file_name_stem will be the file name stem. file_name_ext - [out] (pass null if you don't need the extension) If file_name_ext is not null and the path parameter contains a file name extension specification, then the returned value of file_name_ext will be the file name extension including the initial '.' character. Remarks: This function will treat a front slash ( / ) and a back slash ( \ ) as directory separators. Because this function parses file names store in .3dm files and the .3dm file may have been written on a Windows computer and then read on a another computer, it looks for a volume specification even when the operating system is not Windows. This function will not return an directory that does not end with a trailing slash. This function will not return an empty filename and a non-empty extension. This function parses the path string according to these rules. It does not check the actual file system to see if the answer is correct. See Also: on_splitpath </p>
+
+<p>Find the locations in a path the specify the drive, directory, file name and file extension. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+    <tr><td class="paramname">volume</td><td>[out] (pass null if you don't need the volume) If volume is not null and the path parameter begins with a Windows volume specification, *volume will either be the Windows volume letter followed by the trailing colon or a Windows UNC \&lt;hostname&gt;. Otherwise volume will be the empty string.</td></tr>
+    <tr><td class="paramname">dir</td><td>[out] (pass null if you don't need the directory) If dir is not null and the path parameter contains a directory specification, then the returned value of *dir will be the directory specification including the trailing slash.</td></tr>
+    <tr><td class="paramname">file_name_stem</td><td>[out] (pass null if you don't need the file name stem) If file_name_stem is not null and the path parameter contains a file name specification, then the returned value of *file_name_stem will be the file name stem.</td></tr>
+    <tr><td class="paramname">file_name_ext</td><td>[out] (pass null if you don't need the extension) If file_name_ext is not null and the path parameter contains a file name extension specification, then the returned value of *file_name_ext will be the file name extension including the initial '.' character.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>This function will treat a front slash ( / ) and a back slash ( \ ) as directory separators. Because this function parses file names store in .3dm files and the .3dm file may have been written on a Windows computer and then read on a another computer, it looks for a volume specification even when the operating system is not Windows. This function will not return an directory that does not end with a trailing slash. This function will not return an empty filename and a non-empty extension. This function parses the path string according to these rules. It does not check the actual file system to see if the answer is correct. </p>
+<dl class="section see"><dt>See also</dt><dd>on_splitpath</dd></dl>
 
 </div>
 </div>
@@ -1330,7 +1470,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to split Returns: The volume and directory portion of the path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The volume and directory portion of the path. </dd></dl>
 
 </div>
 </div>
@@ -1357,7 +1503,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: path - [in] path to split Returns: The volume portion of the path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] path to split</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The volume portion of the path. </dd></dl>
 
 </div>
 </div>
@@ -1447,7 +1599,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Platform dependent character used to separate directory names. On Windows platforms: <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aae9819121b9ebd432e557564cbf544a6">ON_FileSystemPath::DirectorySeparator</a> = <a class="el" href="../../d1/d11/class_o_n__w_string.html#a718636bfb9d4177a18761b8ed6562824" title="Unicode REVERSE SOLIDUS U+005C. ">ON_wString::Backslash</a>. On UNIX (including modern Apple) platforms: <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#aae9819121b9ebd432e557564cbf544a6">ON_FileSystemPath::DirectorySeparator</a> = <a class="el" href="../../d1/d11/class_o_n__w_string.html#a4aa245420f53c181b354801b8ad80042" title="Unicode SOLIDUS U+002F. ">ON_wString::Slash</a>. </p>
 
 </div>
 </div>
@@ -1457,7 +1608,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

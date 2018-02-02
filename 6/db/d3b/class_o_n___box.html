@@ -81,6 +81,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada10927a0df91c633e0594f9ce63b092"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d3b/class_o_n___box.html#ada10927a0df91c633e0594f9ce63b092">GetCorners</a> (<a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &gt; &amp;corners) const</td></tr>
 <tr class="separator:ada10927a0df91c633e0594f9ce63b092"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad00d772325bb9aafb30d54716541869"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d3b/class_o_n___box.html#aad00d772325bb9aafb30d54716541869">IsDegenerate</a> (double tolerance=ON_UNSET_VALUE) const</td></tr>
+<tr class="memdesc:aad00d772325bb9aafb30d54716541869"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test the box to see if it is degenerate (flat) in one or more directions.  <a href="#aad00d772325bb9aafb30d54716541869">More...</a><br /></td></tr>
 <tr class="separator:aad00d772325bb9aafb30d54716541869"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30e39fcea133f60f06960b3c3b632c0b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d3b/class_o_n___box.html#a30e39fcea133f60f06960b3c3b632c0b">IsValid</a> () const</td></tr>
 <tr class="separator:a30e39fcea133f60f06960b3c3b632c0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,10 +116,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ac0492b0644f80ed9c199a713825a8ae3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d3b/class_o_n___box.html#ac0492b0644f80ed9c199a713825a8ae3">plane</a></td></tr>
 <tr class="separator:ac0492b0644f80ed9c199a713825a8ae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a1d696ceb8276f272582e7ce756483d17"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1d696ceb8276f272582e7ce756483d17">&#9670;&nbsp;</a></span>ON_Box() <span class="overload">[1/2]</span></h2>
 
@@ -369,7 +367,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test the box to see if it is degenerate (flat) in one or more directions. Parameters: tolerance - [in] Distances &lt;= tolerance will be considered to be zero. If tolerance is negative (default), then a scale invarient tolerance is used. Returns:  table 0 box is not degenerate 1 box is a rectangle (degenerate in one direction) 2 box is a line (degenerate in two directions) 3 box is a point (degenerate in three directions) 4 box is not valid </p>
+
+<p>Test the box to see if it is degenerate (flat) in one or more directions. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] Distances &lt;= tolerance will be considered to be zero. If tolerance is negative (default), then a scale invarient tolerance is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>table 0 box is not degenerate 1 box is a rectangle (degenerate in one direction) 2 box is a line (degenerate in two directions) 3 box is a point (degenerate in three directions) 4 box is not valid </dd></dl>
 
 </div>
 </div>
@@ -457,14 +463,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>rotate sphere about its origin </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sin_angle</td><td>sin(angle) </td></tr>
-    <tr><td class="paramname">cos_angle</td><td>cos(angle) </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -493,13 +491,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">angle_radians</td><td>angle in radians </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -542,15 +533,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>rotate sphere about a point and axis </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sin_angle</td><td>sin(angle) </td></tr>
-    <tr><td class="paramname">cos_angle</td><td>cos(angle) </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-    <tr><td class="paramname">center_of_rotation</td><td>center of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -585,14 +567,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">angle_radians</td><td>angle in radians </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-    <tr><td class="paramname">center_of_rotation</td><td>center of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -714,7 +688,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

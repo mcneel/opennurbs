@@ -50,6 +50,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Iterates through every item in a file system directory.  
+ <a href="../../d5/db7/class_o_n___file_iterator.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d6/da3/opennurbs__file__utilities_8h_source.html">opennurbs_file_utilities.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -77,8 +80,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a797cc1b6ccc3fdbd60f45c527ca94ccf"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a797cc1b6ccc3fdbd60f45c527ca94ccf">DirectoryName</a> () const</td></tr>
 <tr class="separator:a797cc1b6ccc3fdbd60f45c527ca94ccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a567cb1ab3261da62b69574d4da31910f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a567cb1ab3261da62b69574d4da31910f">FirstItem</a> ()</td></tr>
+<tr class="memdesc:a567cb1ab3261da62b69574d4da31910f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the first matching item in the directory.  <a href="#a567cb1ab3261da62b69574d4da31910f">More...</a><br /></td></tr>
 <tr class="separator:a567cb1ab3261da62b69574d4da31910f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a645792dfdd91e9e6740699c3965c871c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a645792dfdd91e9e6740699c3965c871c">Initialize</a> (const wchar_t *directory_name)</td></tr>
+<tr class="memdesc:a645792dfdd91e9e6740699c3965c871c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize where the search should occur.  <a href="#a645792dfdd91e9e6740699c3965c871c">More...</a><br /></td></tr>
 <tr class="separator:a645792dfdd91e9e6740699c3965c871c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d033fd80c40858284bde98bf62302de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a1d033fd80c40858284bde98bf62302de">Initialize</a> (const wchar_t *directory_name, const wchar_t *item_name_filter)</td></tr>
 <tr class="separator:a1d033fd80c40858284bde98bf62302de"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -87,12 +92,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a61e7a7d3f6bb7b30b10194db8f9cdf28"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a61e7a7d3f6bb7b30b10194db8f9cdf28">Initialize</a> (const char *directory_name, const char *item_name_filter)</td></tr>
 <tr class="separator:a61e7a7d3f6bb7b30b10194db8f9cdf28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c555e74a6fb6206017ee15193329126"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a5c555e74a6fb6206017ee15193329126">NextItem</a> ()</td></tr>
+<tr class="memdesc:a5c555e74a6fb6206017ee15193329126"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the next matching item in the directory.  <a href="#a5c555e74a6fb6206017ee15193329126">More...</a><br /></td></tr>
 <tr class="separator:a5c555e74a6fb6206017ee15193329126"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10adb7b493fac17ec843fbed88dd605b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a10adb7b493fac17ec843fbed88dd605b">Reset</a> ()</td></tr>
+<tr class="memdesc:a10adb7b493fac17ec843fbed88dd605b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset this <a class="el" href="../../d5/db7/class_o_n___file_iterator.html" title="Iterates through every item in a file system directory. ">ON_FileIterator</a> so it can be used again.  <a href="#a10adb7b493fac17ec843fbed88dd605b">More...</a><br /></td></tr>
 <tr class="separator:a10adb7b493fac17ec843fbed88dd605b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Iterates through every item in a file system directory. </p>
+<div class="textblock"><p>Iterates through every item in a file system directory. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a3f019250af476aa9eef3f27042228238"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3f019250af476aa9eef3f27042228238">&#9670;&nbsp;</a></span>ON_FileIterator()</h2>
@@ -151,7 +158,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of matching items iterated through. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of matching items iterated through. </dd></dl>
 
 </div>
 </div>
@@ -186,7 +193,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if the current item is a directory. </p>
 
 </div>
 </div>
@@ -204,7 +210,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if the current item is a file. </p>
 
 </div>
 </div>
@@ -222,7 +227,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if the current file or directory is hidden. This means its name begins with a '.' or it's Windows hidden attribute is true. </p>
 
 </div>
 </div>
@@ -240,7 +244,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: File last modified time in seconds since January 1, 1970 Remarks: The times returned by <a class="el" href="../../d5/db7/class_o_n___file_iterator.html">ON_FileIterator</a> can differ from the time returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700">ON_FileStream::GetFileInformation()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>File last modified time in seconds since January 1, 1970 </dd></dl>
+<p>The times returned by <a class="el" href="../../d5/db7/class_o_n___file_iterator.html" title="Iterates through every item in a file system directory. ">ON_FileIterator</a> can differ from the time returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700" title="Portable wrapper for C runtime fstat(). ">ON_FileStream::GetFileInformation()</a>. </p>
 
 </div>
 </div>
@@ -258,7 +263,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Current item query Returns: Current file or directory name in the directory being iterated. Use CurrentFullPathItemName() to get the full path name. </p>
+<dl class="section return"><dt>Returns</dt><dd>Current file or directory name in the directory being iterated. Use CurrentFullPathItemName() to get the full path name. </dd></dl>
 
 </div>
 </div>
@@ -276,7 +281,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: If the current item is a file, then the size of the file in bytes is returned. If the current item is a directory, then 0 is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>If the current item is a file, then the size of the file in bytes is returned. If the current item is a directory, then 0 is returned. </dd></dl>
 
 </div>
 </div>
@@ -294,7 +299,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The name of the directory being iterated. </p>
+<dl class="section return"><dt>Returns</dt><dd>The name of the directory being iterated. </dd></dl>
 
 </div>
 </div>
@@ -312,9 +317,10 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Iteratation iteration tools Description: Find the first matching item in the directory. Example: / Iterate through the files in a directory named "\rootdir\subdir" <a class="el" href="../../d5/db7/class_o_n___file_iterator.html">ON_FileIterator</a> fit; fit.Initialize("\\rootdir\\subdir"); for ( bool bHaveItem = fit.FirstItem(); bHaveItem; bHaveItem = fit.NextItem() ) { if ( fit.CurrentFileIsDirectory() ) continue; <a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a> fullpath = fit.CurrentItemFullPathName(); FILE* fp = <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open</a>(fullpath,"rb"); if ( 0 == fp ) { continue; } ... ON_FileStream::Close(fp); fp = 0; } }</p>
-<p>Returns: true: The iterator is set to the first item. false: There are no matching items. </p>
 
+<p>Find the first matching item in the directory. </p>
+<dl class="section return"><dt>Returns</dt><dd>true: The iterator is set to the first item. false: There are no matching items. </dd></dl>
+<div class="fragment"><div class="line">  <span class="comment">// Iterate through the files in a directory named &quot;\rootdir\subdir&quot;</span></div><div class="line">  <a class="code" href="../../d5/db7/class_o_n___file_iterator.html">ON_FileIterator</a> fit;</div><div class="line">  fit.<a class="code" href="../../d5/db7/class_o_n___file_iterator.html#a645792dfdd91e9e6740699c3965c871c">Initialize</a>(<span class="stringliteral">&quot;\\rootdir\\subdir&quot;</span>);</div><div class="line">  <span class="keywordflow">for</span> ( <span class="keywordtype">bool</span> bHaveItem = fit.<a class="code" href="../../d5/db7/class_o_n___file_iterator.html#a567cb1ab3261da62b69574d4da31910f">FirstItem</a>(); bHaveItem; bHaveItem = fit.<a class="code" href="../../d5/db7/class_o_n___file_iterator.html#a5c555e74a6fb6206017ee15193329126">NextItem</a>() )</div><div class="line">  {</div><div class="line">    <span class="keywordflow">if</span> ( fit.CurrentFileIsDirectory() )</div><div class="line">      <span class="keywordflow">continue</span>;</div><div class="line">    <a class="code" href="../../d2/d3b/class_o_n___string.html">ON_String</a> fullpath = fit.<a class="code" href="../../d5/db7/class_o_n___file_iterator.html#ae48ad7e53caeed626d34813e572f50e0">CurrentItemFullPathName</a>();</div><div class="line">    FILE* fp = <a class="code" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open</a>(fullpath,<span class="stringliteral">&quot;rb&quot;</span>);</div><div class="line">    <span class="keywordflow">if</span> ( 0 == fp )</div><div class="line">    {</div><div class="line">      <span class="keywordflow">continue</span>;</div><div class="line">    }</div><div class="line">    ...</div><div class="line">    <a class="code" href="../../dd/da7/class_o_n___file_stream.html#a519b0b8ae279eae9834a3433c11bc54c">ON_FileStream::Close</a>(fp);</div><div class="line">    fp = 0;</div><div class="line">  }</div><div class="line">}</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a645792dfdd91e9e6740699c3965c871c"></a>
@@ -332,9 +338,19 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Iteratation initialization tools Description: Initialize where the search should occur. Parameters: directory_name - [in] The directory to look in. item_name_filter - [in] If this paramter is null, then the iteration includes all names in the directory. The item name to search for. This parameter can include wildcard characters, such as an asterisk (*) or a question mark (?). For example, "\rootdir\subdir\*.*" will iterate all files in the \ directory.</p>
-<p>Returns: true: The iterator is set to the first item. false: There are no matching items.</p>
-<p>Remarks: Calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a567cb1ab3261da62b69574d4da31910f">FirstItem()</a> is eqivalent to calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a645792dfdd91e9e6740699c3965c871c">Initialize()</a> and then calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a5c555e74a6fb6206017ee15193329126">NextItem()</a>. </p>
+
+<p>Initialize where the search should occur. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">directory_name</td><td>[in] The directory to look in.</td></tr>
+    <tr><td class="paramname">item_name_filter</td><td>[in] If this paramter is null, then the iteration includes all names in the directory. The item name to search for. This parameter can include wildcard characters, such as an asterisk (*) or a question mark (?). For example, "\rootdir\subdir\*.*" will iterate all files in the \ directory. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">true: The iterator is set to the first item. false: There are no matching items.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>Calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a567cb1ab3261da62b69574d4da31910f" title="Find the first matching item in the directory. ">FirstItem()</a> is eqivalent to calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a645792dfdd91e9e6740699c3965c871c" title="Initialize where the search should occur. ">Initialize()</a> and then calling <a class="el" href="../../d5/db7/class_o_n___file_iterator.html#a5c555e74a6fb6206017ee15193329126" title="Find the next matching item in the directory. ">NextItem()</a>. </p>
 
 </div>
 </div>
@@ -426,7 +442,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Find the next matching item in the directory. Returns: true: The iterator was advanced to the next item. false: There are no more matching items. </p>
+
+<p>Find the next matching item in the directory. </p>
+<dl class="section return"><dt>Returns</dt><dd>true: The iterator was advanced to the next item. false: There are no more matching items. </dd></dl>
 
 </div>
 </div>
@@ -444,7 +462,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reset this <a class="el" href="../../d5/db7/class_o_n___file_iterator.html">ON_FileIterator</a> so it can be used again. </p>
+
+<p>Reset this <a class="el" href="../../d5/db7/class_o_n___file_iterator.html" title="Iterates through every item in a file system directory. ">ON_FileIterator</a> so it can be used again. </p>
 
 </div>
 </div>
@@ -454,7 +473,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

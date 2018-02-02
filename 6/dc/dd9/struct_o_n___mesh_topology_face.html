@@ -56,10 +56,13 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa834a81c6136b8f6aef2d051661668e4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dd9/struct_o_n___mesh_topology_face.html#aa834a81c6136b8f6aef2d051661668e4">IsQuad</a> () const</td></tr>
+<tr class="memdesc:aa834a81c6136b8f6aef2d051661668e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">A topological mesh face is a valid quad if m_topei[0], m_topei[1], m_topei[2], and m_topei[3] are distinct edges.  <a href="#aa834a81c6136b8f6aef2d051661668e4">More...</a><br /></td></tr>
 <tr class="separator:aa834a81c6136b8f6aef2d051661668e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9870f25d99e68b97a4d80665197a827"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dd9/struct_o_n___mesh_topology_face.html#ad9870f25d99e68b97a4d80665197a827">IsTriangle</a> () const</td></tr>
+<tr class="memdesc:ad9870f25d99e68b97a4d80665197a827"><td class="mdescLeft">&#160;</td><td class="mdescRight">A topological mesh face is a valid triangle if m_topei[0], m_topei[1], m_topei[2] are distinct edges and m_topei[3]=m_topei[2].  <a href="#ad9870f25d99e68b97a4d80665197a827">More...</a><br /></td></tr>
 <tr class="separator:ad9870f25d99e68b97a4d80665197a827"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab79f89c92864173d3645558b0ee48eca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dd9/struct_o_n___mesh_topology_face.html#ab79f89c92864173d3645558b0ee48eca">IsValid</a> () const</td></tr>
+<tr class="memdesc:ab79f89c92864173d3645558b0ee48eca"><td class="mdescLeft">&#160;</td><td class="mdescRight">A topological mesh face is valid if m_topei[0], m_topei[1], and m_topei[2] are mutually distinct, and m_topei[3] is either equal to m_topei[2] or mutually distinct from the first three indices.  <a href="#ab79f89c92864173d3645558b0ee48eca">More...</a><br /></td></tr>
 <tr class="separator:ab79f89c92864173d3645558b0ee48eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -84,7 +87,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: A topological mesh face is a valid quad if m_topei[0], m_topei[1], m_topei[2], and m_topei[3] are distinct edges. Returns: True if face is a quad. </p>
+
+<p>A topological mesh face is a valid quad if m_topei[0], m_topei[1], m_topei[2], and m_topei[3] are distinct edges. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if face is a quad. </dd></dl>
 
 </div>
 </div>
@@ -102,7 +107,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: A topological mesh face is a valid triangle if m_topei[0], m_topei[1], m_topei[2] are distinct edges and m_topei[3]=m_topei[2]. Returns: True if face is a triangle. </p>
+
+<p>A topological mesh face is a valid triangle if m_topei[0], m_topei[1], m_topei[2] are distinct edges and m_topei[3]=m_topei[2]. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if face is a triangle. </dd></dl>
 
 </div>
 </div>
@@ -120,7 +127,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: A topological mesh face is valid if m_topei[0], m_topei[1], and m_topei[2] are mutually distinct, and m_topei[3] is either equal to m_topei[2] or mutually distinct from the first three indices. Returns: True if face is valid. </p>
+
+<p>A topological mesh face is valid if m_topei[0], m_topei[1], and m_topei[2] are mutually distinct, and m_topei[3] is either equal to m_topei[2] or mutually distinct from the first three indices. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if face is valid. </dd></dl>
 
 </div>
 </div>
@@ -136,7 +145,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_reve[i] is 0, then the orientation of the edge matches the orientation of the face. If m_reve[i] is 1, then the orientation of the edge is opposite that of the face. </p>
 
 </div>
 </div>
@@ -151,10 +159,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_topei[] = indices of the topological edges that bound the face. If m_topei[2] = m_topei[3], then the face is a triangle, otherwise the face is a quad.</p>
-<p>NOTE WELL: The topological edge with index m_topei[k] ENDS at the vertex corresponding to <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[k]. So, ...</p>
-<p>If the face is a quad, (<a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2]!=<a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[3]), the topological edge with index m_topei[0] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[3] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[0], the topological edge with index m_topei[1] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[0] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[1], the topological edge with index m_topei[2] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[1] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2], and the topological edge with index m_topei[3] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[3],</p>
-<p>If the face is a triangle, (<a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2]==<a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[3]), the topological edge with index m_topei[0] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[0], the topological edge with index m_topei[1] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[0] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[1], the topological edge with index m_topei[2] STARTS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[1] and ENDS at <a class="el" href="../../de/d91/class_o_n___mesh_face.html#a48215097327f42857c4761bebb6252e1" title="vertex index - vi[2]==vi[3] for tirangles ">ON_MeshFace.vi</a>[2]. </p>
 
 </div>
 </div>
@@ -164,7 +168,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

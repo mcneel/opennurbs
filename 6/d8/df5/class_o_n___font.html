@@ -108,7 +108,7 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c">Weight::Ultrabold</a> = 8, 
 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491">Weight::Heavy</a> = 9
 <br />
- }<tr class="memdesc:a00ce657702926f66bcbc70a7209d757d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Weight enum values Avoid casting these values to int. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a956108b7a5429f4d2d865e3cf8e629ce">ON_Font::WindowsLogfontWeightFromWeight()</a> or <a class="el" href="../../d8/df5/class_o_n___font.html#ab858a9acdba8c30b23a4805e75dbb8c0">ON_Font::AppleWeightOfFontFromWeight()</a> or add another converter.  <a href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">More...</a><br /></td></tr>
+ }<tr class="memdesc:a00ce657702926f66bcbc70a7209d757d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Weight enum values Avoid casting these values to int. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a956108b7a5429f4d2d865e3cf8e629ce" title="The correspondence between Windows LOGFONT lfWeight values and ON_Font::Weight enum values is ON_Font...">ON_Font::WindowsLogfontWeightFromWeight()</a> or <a class="el" href="../../d8/df5/class_o_n___font.html#ab858a9acdba8c30b23a4805e75dbb8c0" title="The correspondence between Apple &quot;weight of font&quot; values and ON_Font::Weight enum values is ON_Font::...">ON_Font::AppleWeightOfFontFromWeight()</a> or add another converter.  <a href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a00ce657702926f66bcbc70a7209d757d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0fe463dc04930a703fd3d6c696285d38"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a0fe463dc04930a703fd3d6c696285d38">WindowsConstants</a> : unsigned char { <br />
@@ -140,21 +140,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5ebf00e23cad0ab3dbfbe9c7a310b71d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a5ebf00e23cad0ab3dbfbe9c7a310b71d">AppleWeightOfFont</a> () const</td></tr>
 <tr class="separator:a5ebf00e23cad0ab3dbfbe9c7a310b71d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bea2c0f22ace1eddb4ede6c790f6f4c"><td class="memItemLeft" align="right" valign="top">const class <a class="el" href="../../d7/d29/class_o_n___font_glyph.html">ON_FontGlyph</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a9bea2c0f22ace1eddb4ede6c790f6f4c">CodePointGlyph</a> (ON__UINT32 unicode_code_point) const</td></tr>
+<tr class="memdesc:a9bea2c0f22ace1eddb4ede6c790f6f4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the glpyh informationh for used to render a specific code point  <a href="#a9bea2c0f22ace1eddb4ede6c790f6f4c">More...</a><br /></td></tr>
 <tr class="separator:a9bea2c0f22ace1eddb4ede6c790f6f4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a907cd85a5226547c5bb1a1cdd8f88c3d"><td class="memItemLeft" align="right" valign="top">ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a907cd85a5226547c5bb1a1cdd8f88c3d">CRC32</a> (bool bIgnoreFaceNameOrdinalCase) const</td></tr>
+<tr class="memdesc:a907cd85a5226547c5bb1a1cdd8f88c3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a 32-bit crc of the font weight, style, stretch, underline, strikethrough, and facename characteristics.  <a href="#a907cd85a5226547c5bb1a1cdd8f88c3d">More...</a><br /></td></tr>
 <tr class="separator:a907cd85a5226547c5bb1a1cdd8f88c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17957ea9ab412e0559dd8ebe85a4163a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a17957ea9ab412e0559dd8ebe85a4163a">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const</td></tr>
-<tr class="memdesc:a17957ea9ab412e0559dd8ebe85a4163a"><td class="mdescLeft">&#160;</td><td class="mdescRight">for debugging  <a href="#a17957ea9ab412e0559dd8ebe85a4163a">More...</a><br /></td></tr>
 <tr class="separator:a17957ea9ab412e0559dd8ebe85a4163a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b9b334f76b099ba3fdce3708c58395c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a7b9b334f76b099ba3fdce3708c58395c">DumpFreeType</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;text_log) const</td></tr>
 <tr class="separator:a7b9b334f76b099ba3fdce3708c58395c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a128535f6fd576cd684b97f0ed748813f"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a128535f6fd576cd684b97f0ed748813f">FontCharacteristicsAsUnsigned</a> () const</td></tr>
+<tr class="memdesc:a128535f6fd576cd684b97f0ed748813f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The font properties weight, style, stretch, underlined, and strikethrough are encoded in the returned value.  <a href="#a128535f6fd576cd684b97f0ed748813f">More...</a><br /></td></tr>
 <tr class="separator:a128535f6fd576cd684b97f0ed748813f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67c9b634e508792b43dc589797704514"><td class="memItemLeft" align="right" valign="top">const class <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash</a> () const</td></tr>
 <tr class="separator:a67c9b634e508792b43dc589797704514"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2b10d955fc49d94a87224b7494eda31"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ab2b10d955fc49d94a87224b7494eda31">FontDescription</a> () const</td></tr>
+<tr class="memdesc:ab2b10d955fc49d94a87224b7494eda31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a text description of the font.  <a href="#ab2b10d955fc49d94a87224b7494eda31">More...</a><br /></td></tr>
 <tr class="separator:ab2b10d955fc49d94a87224b7494eda31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd12cc05a1f0a9a92f42b1e08289a290"><td class="memItemLeft" align="right" valign="top">const wchar_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#acd12cc05a1f0a9a92f42b1e08289a290">FontDescriptionAsPointer</a> () const</td></tr>
+<tr class="memdesc:acd12cc05a1f0a9a92f42b1e08289a290"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a text description of the font.  <a href="#acd12cc05a1f0a9a92f42b1e08289a290">More...</a><br /></td></tr>
 <tr class="separator:acd12cc05a1f0a9a92f42b1e08289a290"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afdb9693ee124b41f66bbfd2136ee406f"><td class="memItemLeft" align="right" valign="top">const wchar_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#afdb9693ee124b41f66bbfd2136ee406f">FontFaceName</a> () const</td></tr>
 <tr class="separator:afdb9693ee124b41f66bbfd2136ee406f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,20 +169,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a31a1bb48d913dc99962f81a7808a833e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277">ON_Font::Style</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle</a> () const</td></tr>
 <tr class="separator:a31a1bb48d913dc99962f81a7808a833e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e32c7e8c49988a6ba7863e69e71a7f8"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../dd/d29/class_o_n___font_metrics.html">ON_FontMetrics</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a5e32c7e8c49988a6ba7863e69e71a7f8">FontUnitFontMetrics</a> () const</td></tr>
+<tr class="memdesc:a5e32c7e8c49988a6ba7863e69e71a7f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function is for expert users doing something complicated.  <a href="#a5e32c7e8c49988a6ba7863e69e71a7f8">More...</a><br /></td></tr>
 <tr class="separator:a5e32c7e8c49988a6ba7863e69e71a7f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2da4b35ad2ba1110a9fcf7f6c07f2669"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a2da4b35ad2ba1110a9fcf7f6c07f2669">FontUnitToNormalizedScale</a> () const</td></tr>
 <tr class="separator:a2da4b35ad2ba1110a9fcf7f6c07f2669"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb4d3fc2b4af0600a4ef0bb0f7758c8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#abb4d3fc2b4af0600a4ef0bb0f7758c8d">FontWeight</a> () const</td></tr>
 <tr class="separator:abb4d3fc2b4af0600a4ef0bb0f7758c8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7126903b45edbf500d8b2d700a63210f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f">IsBold</a> () const</td></tr>
+<tr class="memdesc:a7126903b45edbf500d8b2d700a63210f"><td class="mdescLeft">&#160;</td><td class="mdescRight">User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges.  <a href="#a7126903b45edbf500d8b2d700a63210f">More...</a><br /></td></tr>
 <tr class="separator:a7126903b45edbf500d8b2d700a63210f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af096da5951e1919f56a0f7d34e2d50ca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#af096da5951e1919f56a0f7d34e2d50ca">IsItalic</a> () const</td></tr>
 <tr class="separator:af096da5951e1919f56a0f7d34e2d50ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1332d6239a0e3b1b631169a1275d3b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4">IsLight</a> () const</td></tr>
+<tr class="memdesc:ac1332d6239a0e3b1b631169a1275d3b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges.  <a href="#ac1332d6239a0e3b1b631169a1275d3b4">More...</a><br /></td></tr>
 <tr class="separator:ac1332d6239a0e3b1b631169a1275d3b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa433490929c0b1c727e8e8d7d73f0506"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aa433490929c0b1c727e8e8d7d73f0506">IsManagedFont</a> () const</td></tr>
 <tr class="separator:aa433490929c0b1c727e8e8d7d73f0506"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02144a9b0fb0ac5fa49ed653033f7665"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665">IsNormalWeight</a> () const</td></tr>
+<tr class="memdesc:a02144a9b0fb0ac5fa49ed653033f7665"><td class="mdescLeft">&#160;</td><td class="mdescRight">User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges.  <a href="#a02144a9b0fb0ac5fa49ed653033f7665">More...</a><br /></td></tr>
 <tr class="separator:a02144a9b0fb0ac5fa49ed653033f7665"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40d25f3477401db15bfa554d6bae3e5e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a40d25f3477401db15bfa554d6bae3e5e">IsOblique</a> ()</td></tr>
 <tr class="separator:a40d25f3477401db15bfa554d6bae3e5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -189,6 +197,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acc8de54c032f3f2051079a87f9fb29cd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#acc8de54c032f3f2051079a87f9fb29cd">IsUpright</a> () const</td></tr>
 <tr class="separator:acc8de54c032f3f2051079a87f9fb29cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19cd1b3c2abe0813486042e502637d20"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a19cd1b3c2abe0813486042e502637d20">IsValid</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log=nullptr) const</td></tr>
+<tr class="memdesc:a19cd1b3c2abe0813486042e502637d20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests an object to see if its data members are correctly initialized.  <a href="#a19cd1b3c2abe0813486042e502637d20">More...</a><br /></td></tr>
 <tr class="separator:a19cd1b3c2abe0813486042e502637d20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa819bf84686e011d5fdb9f1cb655d3e3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aa819bf84686e011d5fdb9f1cb655d3e3">LinefeedRatio</a> () const</td></tr>
 <tr class="separator:aa819bf84686e011d5fdb9f1cb655d3e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -197,6 +206,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af2a9a876471b5287ba4f3535fd76d681"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#af2a9a876471b5287ba4f3535fd76d681">ManagedFont</a> () const</td></tr>
 <tr class="separator:af2a9a876471b5287ba4f3535fd76d681"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe31815f4447196731e3e1ab779b0f00"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00">ManagedFontSerialNumber</a> () const</td></tr>
+<tr class="memdesc:afe31815f4447196731e3e1ab779b0f00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Two <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> classes reference the same platform font and create identical glyphs if and only if the have the same <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00" title="Two ON_Font classes reference the same platform font and create identical glyphs if and only if the h...">ManagedFontSerialNumber()</a>.  <a href="#afe31815f4447196731e3e1ab779b0f00">More...</a><br /></td></tr>
 <tr class="separator:afe31815f4447196731e3e1ab779b0f00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef9d593d46d13c89ef0d2ea80de4ce24"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aef9d593d46d13c89ef0d2ea80de4ce24">NormalizedToFontUnitScale</a> () const</td></tr>
 <tr class="separator:aef9d593d46d13c89ef0d2ea80de4ce24"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -231,10 +241,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6b21377e67835fcd5340591ddc227929"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a6b21377e67835fcd5340591ddc227929">SetAppleWeightOfFont</a> (int apple_weight_of_font)</td></tr>
 <tr class="separator:a6b21377e67835fcd5340591ddc227929"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad44d0142407c38d07cf172ffe4659ed"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aad44d0142407c38d07cf172ffe4659ed">SetFontCharacteristics</a> (const wchar_t *face_name, bool bBold, bool bItalic, bool bUnderlined, bool bStrikethrough)</td></tr>
+<tr class="memdesc:aad44d0142407c38d07cf172ffe4659ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a font with a specified facename and properties.  <a href="#aad44d0142407c38d07cf172ffe4659ed">More...</a><br /></td></tr>
 <tr class="separator:aad44d0142407c38d07cf172ffe4659ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67d59da5bde52b6fcf5744b60d3f8052"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a67d59da5bde52b6fcf5744b60d3f8052">SetFontCharacteristics</a> (double point_size, const wchar_t *face_name, bool bBold, bool bItalic, bool bUnderlined, bool bStrikethrough)</td></tr>
+<tr class="memdesc:a67d59da5bde52b6fcf5744b60d3f8052"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a font with a specified facename and properties.  <a href="#a67d59da5bde52b6fcf5744b60d3f8052">More...</a><br /></td></tr>
 <tr class="separator:a67d59da5bde52b6fcf5744b60d3f8052"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2c544f1c006da7e3d4b47b28cfef282"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#af2c544f1c006da7e3d4b47b28cfef282">SetFontCharacteristics</a> (const wchar_t *face_name, <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight, <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277">ON_Font::Style</a> font_style, <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1">ON_Font::Stretch</a> font_stretch, bool bUnderlined, bool bStrikethrough)</td></tr>
+<tr class="memdesc:af2c544f1c006da7e3d4b47b28cfef282"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the font's face name and characteristics.  <a href="#af2c544f1c006da7e3d4b47b28cfef282">More...</a><br /></td></tr>
 <tr class="separator:af2c544f1c006da7e3d4b47b28cfef282"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d781b85eccaac663f902595d0d3c703"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a3d781b85eccaac663f902595d0d3c703">SetFontCharacteristics</a> (double point_size, const wchar_t *face_name, <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight, <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277">ON_Font::Style</a> font_style, <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1">ON_Font::Stretch</a> font_stretch, bool bUnderlined, bool bStrikethrough)</td></tr>
 <tr class="separator:a3d781b85eccaac663f902595d0d3c703"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -278,26 +291,35 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e5d2fc55215f47b6ad256dd662c4775"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a2e5d2fc55215f47b6ad256dd662c4775">AppleFontWeightTraitFromWeight</a> (<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight)</td></tr>
+<tr class="memdesc:a2e5d2fc55215f47b6ad256dd662c4775"><td class="mdescLeft">&#160;</td><td class="mdescRight">The correspondence between Apple "font weight trait" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = -0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = -0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = -0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 0.0 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 0.5333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 0.6667 Apple font weight trait  <a href="#a2e5d2fc55215f47b6ad256dd662c4775">More...</a><br /></td></tr>
 <tr class="separator:a2e5d2fc55215f47b6ad256dd662c4775"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab858a9acdba8c30b23a4805e75dbb8c0"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ab858a9acdba8c30b23a4805e75dbb8c0">AppleWeightOfFontFromWeight</a> (<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight)</td></tr>
+<tr class="memdesc:ab858a9acdba8c30b23a4805e75dbb8c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9  <a href="#ab858a9acdba8c30b23a4805e75dbb8c0">More...</a><br /></td></tr>
 <tr class="separator:ab858a9acdba8c30b23a4805e75dbb8c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d553601f3ef98ab0a22a79f4f8002df"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a4d553601f3ef98ab0a22a79f4f8002df">CompareFontCharacteristics</a> (const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;a, const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;b)</td></tr>
+<tr class="memdesc:a4d553601f3ef98ab0a22a79f4f8002df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics.  <a href="#a4d553601f3ef98ab0a22a79f4f8002df">More...</a><br /></td></tr>
 <tr class="separator:a4d553601f3ef98ab0a22a79f4f8002df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac97c1abef2f06015931e3139ae291be"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aac97c1abef2f06015931e3139ae291be">CompareWeight</a> (<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> weight_a, <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> weight_b)</td></tr>
 <tr class="separator:aac97c1abef2f06015931e3139ae291be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a715ec76771e644e5d258904e2064d0a5"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a715ec76771e644e5d258904e2064d0a5">DumpFreeTypeFace</a> (ON__UINT_PTR free_type_face_ptr, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;text_log)</td></tr>
 <tr class="separator:a715ec76771e644e5d258904e2064d0a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47ce726f1e15ec5c016ae947aa4453c6"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a47ce726f1e15ec5c016ae947aa4453c6">EqualFontCharacteristics</a> (const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;a, const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;b)</td></tr>
+<tr class="memdesc:a47ce726f1e15ec5c016ae947aa4453c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics.  <a href="#a47ce726f1e15ec5c016ae947aa4453c6">More...</a><br /></td></tr>
 <tr class="separator:a47ce726f1e15ec5c016ae947aa4453c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3fe009ce7152fe0b0d286a5675c78a9"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1">ON_Font::Stretch</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#af3fe009ce7152fe0b0d286a5675c78a9">FontStretchFromUnsigned</a> (unsigned int unsigned_font_stretch)</td></tr>
+<tr class="memdesc:af3fe009ce7152fe0b0d286a5675c78a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#af3fe009ce7152fe0b0d286a5675c78a9" title="In the rare cases when an ON_Font::Stretch value must be passed as an unsigned int, use ON_Font::FontStretchFromUnsigned() to convert the unsigned value to an ON_Font::Stretch value. ">ON_Font::FontStretchFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value.  <a href="#af3fe009ce7152fe0b0d286a5675c78a9">More...</a><br /></td></tr>
 <tr class="separator:af3fe009ce7152fe0b0d286a5675c78a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7447e7840b87fd13023f7cf08fe9a89f"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277">ON_Font::Style</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a7447e7840b87fd13023f7cf08fe9a89f">FontStyleFromUnsigned</a> (unsigned int unsigned_font_style)</td></tr>
+<tr class="memdesc:a7447e7840b87fd13023f7cf08fe9a89f"><td class="mdescLeft">&#160;</td><td class="mdescRight">In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a7447e7840b87fd13023f7cf08fe9a89f" title="In the rare cases when an ON_Font::Style value must be passed as an unsigned int, use ON_Font::FontSt...">ON_Font::FontStyleFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value.  <a href="#a7447e7840b87fd13023f7cf08fe9a89f">More...</a><br /></td></tr>
 <tr class="separator:a7447e7840b87fd13023f7cf08fe9a89f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5dbc7f7e0707245f56c2299b094e0b89"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a5dbc7f7e0707245f56c2299b094e0b89">FontWeightFromUnsigned</a> (unsigned int unsigned_font_weight)</td></tr>
+<tr class="memdesc:a5dbc7f7e0707245f56c2299b094e0b89"><td class="mdescLeft">&#160;</td><td class="mdescRight">In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a5dbc7f7e0707245f56c2299b094e0b89" title="In the rare cases when an ON_Font::Weight value must be passed as an unsigned int, use ON_Font::FontWeightFromUnsigned() to convert the unsigned value to an ON_Font::Weight value. ">ON_Font::FontWeightFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value.  <a href="#a5dbc7f7e0707245f56c2299b094e0b89">More...</a><br /></td></tr>
 <tr class="separator:a5dbc7f7e0707245f56c2299b094e0b89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a293dc0074c5d521ca722c3047b0c2584"><td class="memItemLeft" align="right" valign="top">static ON__UINT_PTR&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a293dc0074c5d521ca722c3047b0c2584">FreeTypeFace</a> (const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> *font)</td></tr>
+<tr class="memdesc:a293dc0074c5d521ca722c3047b0c2584"><td class="mdescLeft">&#160;</td><td class="mdescRight">If opennurbs is built with FreeType support then FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font) will return a FreeType face that can be used to render the font.  <a href="#a293dc0074c5d521ca722c3047b0c2584">More...</a><br /></td></tr>
 <tr class="separator:a293dc0074c5d521ca722c3047b0c2584"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65d02091b7dd25676f361b416a265b4b"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b">GetManagedFont</a> (const wchar_t *face_name)</td></tr>
+<tr class="memdesc:a65d02091b7dd25676f361b416a265b4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a font managed by the application from the font characteristics. Never delete a font returned by <a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b" title="Get a font managed by the application from the font characteristics. Never delete a font returned by ...">GetManagedFont()</a>.  <a href="#a65d02091b7dd25676f361b416a265b4b">More...</a><br /></td></tr>
 <tr class="separator:a65d02091b7dd25676f361b416a265b4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a556104c3b282d2bda1e234206b6210cd"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a556104c3b282d2bda1e234206b6210cd">GetManagedFont</a> (double point_size, const wchar_t *face_name)</td></tr>
 <tr class="separator:a556104c3b282d2bda1e234206b6210cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -330,6 +352,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ae5e23949ffb821743450279ec3f13d94"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ae5e23949ffb821743450279ec3f13d94">GetRunBounds</a> (const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;font, const wchar_t *text, double fontSizePixels, ON::TextHorizontalAlignment horizontalAlignment, ON::TextVerticalAlignment verticalAlignment, <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;boundsMin, <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;boundsMax, int &amp;lineCount)</td></tr>
 <tr class="separator:ae5e23949ffb821743450279ec3f13d94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86b7418cf59c4434bdb7bc07f8e4a8d7"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a86b7418cf59c4434bdb7bc07f8e4a8d7">IsNotAppleFontName</a> (const wchar_t *font_description)</td></tr>
+<tr class="memdesc:a86b7418cf59c4434bdb7bc07f8e4a8d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">When reading version 5 3dm achives, the font description can be a generic font description or an Apple font name. This function rejects certain descriptions like "Default" and "Arial" for use as Apple font names.  <a href="#a86b7418cf59c4434bdb7bc07f8e4a8d7">More...</a><br /></td></tr>
 <tr class="separator:a86b7418cf59c4434bdb7bc07f8e4a8d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad300e6bd921f481c8fbbcc082056553c"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ad300e6bd921f481c8fbbcc082056553c">IsValidFaceName</a> (const wchar_t *face_name)</td></tr>
 <tr class="separator:ad300e6bd921f481c8fbbcc082056553c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -340,14 +363,17 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a42efc4f7325d372fa4d22151f52b8d9f"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a42efc4f7325d372fa4d22151f52b8d9f">WeightFromAppleFontWeightTrait</a> (double apple_font_weight_trait)</td></tr>
 <tr class="separator:a42efc4f7325d372fa4d22151f52b8d9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fd0ddbff815671914952457991817e1"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a4fd0ddbff815671914952457991817e1">WeightFromAppleWeightOfFont</a> (int apple_weight_of_font)</td></tr>
+<tr class="memdesc:a4fd0ddbff815671914952457991817e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9  <a href="#a4fd0ddbff815671914952457991817e1">More...</a><br /></td></tr>
 <tr class="separator:a4fd0ddbff815671914952457991817e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab547899ff0b566d8885340b9004f095c"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#ab547899ff0b566d8885340b9004f095c">WeightFromWindowsLogfontWeight</a> (int windows_logfont_weight)</td></tr>
+<tr class="memdesc:ab547899ff0b566d8885340b9004f095c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is  <a href="#ab547899ff0b566d8885340b9004f095c">More...</a><br /></td></tr>
 <tr class="separator:ab547899ff0b566d8885340b9004f095c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec085cfac08befc42fd5c32f054a8c2e"><td class="memItemLeft" align="right" valign="top">static const wchar_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#aec085cfac08befc42fd5c32f054a8c2e">WeightToWideString</a> (<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight)</td></tr>
 <tr class="separator:aec085cfac08befc42fd5c32f054a8c2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70fb753f03588cb9db9cbbebc18ab2ee"><td class="memItemLeft" align="right" valign="top">static unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a70fb753f03588cb9db9cbbebc18ab2ee">WindowsLogfontCharSetFromFaceName</a> (const wchar_t *face_name)</td></tr>
 <tr class="separator:a70fb753f03588cb9db9cbbebc18ab2ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a956108b7a5429f4d2d865e3cf8e629ce"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df5/class_o_n___font.html#a956108b7a5429f4d2d865e3cf8e629ce">WindowsLogfontWeightFromWeight</a> (<a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d">ON_Font::Weight</a> font_weight)</td></tr>
+<tr class="memdesc:a956108b7a5429f4d2d865e3cf8e629ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 100 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 200 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 300 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 400 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 500 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 600 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 700 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 800 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 900 LOGFONT lfWeight  <a href="#a956108b7a5429f4d2d865e3cf8e629ce">More...</a><br /></td></tr>
 <tr class="separator:a956108b7a5429f4d2d865e3cf8e629ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -390,7 +416,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns free type glyph index (or nonzero equivalent) if glyph is defined fo the glyph.CodePoint() in glyph.Font() and glyph_box is set. </p>
 
 </div>
 </div>
@@ -409,12 +434,8 @@ Friends</h2></td></tr>
 
 <p>miscellaneous constants use to initialize Windows LOGFONT fields </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ab55ead78e0fc5501a58ba69cc1f5d023ae798466615e328a2329d9ce5982cb4b5"></a>AnnotationFontCellHeight&#160;</td><td class="fielddoc"><p>LOGFONT.lfHeight value. </p>
-<p>1995 - 2015: Windows fonts have variations in glyph size, design and kerning for different point sizes. Text in Rhino is generally placed around geometry and the relative spatial relationships between the text and the geometry must remain constant on all devices and at all "zoom" levels. We have to choose a point size and then apply appropriate scaling during display, printing, and in other rendering calculations. After many experiments and 20 years of commercial use, (1995-2015) we have found 256 works best. This value is used on all platforms because the calculations it is used in occur on all platforms. These calculations must return consistent results so models exchanged between platforms maintain spatial relationships between text and geometry.</p>
-<p>2017: (switching to freetype) The value ON_Font::Constants::AnnotationFontCellHeight is used to define "opennurbs normalized font coordinates". The scale ((double)ON_Font::Constants::AnnotationFontCellHeight)/(font definition grid height) is used to convert bounding information and outlines from a native font definition to opennurbs normalized font coordinates. Many TrueType fonts have font definition grid height = 2048. Many PostScript fonts have font definition grid height = 1000. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="ab55ead78e0fc5501a58ba69cc1f5d023a0c726d7265af66178ddb104e396ae648"></a>MetricsGlyphCodePoint&#160;</td><td class="fielddoc"><p>ON_Font::Constants::metric_char is the unicode code point value for the glpyh used to calculate critical glyph metrics. It must be an 'I' or 'H', but we have not tested 'H'. There are problems with any other upper case latin letter in common fonts. In particular, the standard 'M' does not work. We have used 'I' for 22 years (1995 - 2017). This value is used on all platforms because the calculations it is used in occur on all platforms. These calculations must return consistent results so models exchanged between platforms maintain spatial relationships between text and geometry. </p>
-</td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ab55ead78e0fc5501a58ba69cc1f5d023ae798466615e328a2329d9ce5982cb4b5"></a>AnnotationFontCellHeight&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ab55ead78e0fc5501a58ba69cc1f5d023a0c726d7265af66178ddb104e396ae648"></a>MetricsGlyphCodePoint&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -484,8 +505,7 @@ Friends</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be"></a>Upright&#160;</td><td class="fielddoc"><p>Default font style. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c"></a>Italic&#160;</td><td class="fielddoc"><p>Normal = 1, Roman = 1, </p>
-</td></tr>
+<tr><td class="fieldname"><a id="a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c"></a>Italic&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466"></a>Oblique&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -511,7 +531,7 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Weight enum values Avoid casting these values to int. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a956108b7a5429f4d2d865e3cf8e629ce">ON_Font::WindowsLogfontWeightFromWeight()</a> or <a class="el" href="../../d8/df5/class_o_n___font.html#ab858a9acdba8c30b23a4805e75dbb8c0">ON_Font::AppleWeightOfFontFromWeight()</a> or add another converter. </p>
+<p>Weight enum values Avoid casting these values to int. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a956108b7a5429f4d2d865e3cf8e629ce" title="The correspondence between Windows LOGFONT lfWeight values and ON_Font::Weight enum values is ON_Font...">ON_Font::WindowsLogfontWeightFromWeight()</a> or <a class="el" href="../../d8/df5/class_o_n___font.html#ab858a9acdba8c30b23a4805e75dbb8c0" title="The correspondence between Apple &quot;weight of font&quot; values and ON_Font::Weight enum values is ON_Font::...">ON_Font::AppleWeightOfFontFromWeight()</a> or add another converter. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a00ce657702926f66bcbc70a7209d757dac9f88e098f6fe4e4e112eeb05ccb9671"></a>Unset&#160;</td><td class="fielddoc"><p>Not set. </p>
 </td></tr>
@@ -530,7 +550,6 @@ Friends</h2></td></tr>
 <tr><td class="fieldname"><a id="a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea"></a>Semibold&#160;</td><td class="fielddoc"><p>IsBold = true </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246"></a>Bold&#160;</td><td class="fielddoc"><p>IsBold = true </p>
-<p>Demibold = 6, Demi = 6, Semi = 6, </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c"></a>Ultrabold&#160;</td><td class="fielddoc"><p>IsBold = true </p>
 </td></tr>
@@ -552,10 +571,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Interface </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a0fe463dc04930a703fd3d6c696285d38a4cd1ec148d80517b57de5a9d1f9e9892"></a>logfont_ansi_charset&#160;</td><td class="fielddoc"><p>Values used to set Windows LOGFONT fields. </p>
-<p>The values below are identical to the ones above and are used to insure code compiles for Apple and other platforms. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a0fe463dc04930a703fd3d6c696285d38a0570807fdc3560f77f6ff61b35b80532"></a>logfont_default_charset&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a0fe463dc04930a703fd3d6c696285d38a26502dfefeebee05b76f2de69b770c9c"></a>logfont_symbol_charset&#160;</td><td class="fielddoc"></td></tr>
@@ -702,7 +719,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: The correspondence between Apple "font weight trait" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = -0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = -0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = -0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 0.0 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 0.5333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 0.6667 Apple font weight trait Returns: The Apple "NSFontWeightTrait" value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </p>
+
+<p>The correspondence between Apple "font weight trait" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = -0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = -0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = -0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 0.0 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 0.1333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 0.2667 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 0.4 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 0.5333 Apple font weight trait <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 0.6667 Apple font weight trait </p>
+<dl class="section return"><dt>Returns</dt><dd>The Apple "NSFontWeightTrait" value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </dd></dl>
 
 </div>
 </div>
@@ -746,7 +765,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9 Returns: The Apple "weight of font" value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </p>
+
+<p>The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9 </p>
+<dl class="section return"><dt>Returns</dt><dd>The Apple "weight of font" value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </dd></dl>
 
 </div>
 </div>
@@ -765,11 +786,14 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns the glpyh informationh for used to render a specific code point Parameters: unicode_code_point UNICODE code point value Returns: Glyph rendering information.</p>
-<p>Remarks: Typically the returned glpyh uses is a single glpyh in this-&gt;<a class="el" href="../../d8/df5/class_o_n___font.html#af2a9a876471b5287ba4f3535fd76d681">ManagedFont()</a>. In this case, glyph-&gt;SubstitueCount() is 0.</p>
-<p>In some cases one or more glyphs from one or more substitute fonts are required to render the code point. In this case, glyph-&gt;SubstitueCount() is 0.</p>
-<p>Example: ON_Font* font = ...; unsigned int code_point = ...; const ON_FontGlyph* g = font-&gt;CodePointGlyph(code_point); if (nullptr != g ) { if ( g-&gt;SubstituteCount() &gt; 0 ) { / complicate case - one of more substitutes must be rendered to render g for ( const ON_FontGlyph* gsub = g.NextSubstitute(); nullptr != gsub; gsub = gsub-&gt;NextSubstitute() ) { ... } } else { / simple case - this computer can directly render g ... } } </p>
 
+<p>Returns the glpyh informationh for used to render a specific code point </p>
+<p>TODODOC: unicode_code_point TODODOC: UNICODE code point value </p><dl class="section return"><dt>Returns</dt><dd><p class="startdd">Glyph rendering information.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>Typically the returned glpyh uses is a single glpyh in this-&gt;<a class="el" href="../../d8/df5/class_o_n___font.html#af2a9a876471b5287ba4f3535fd76d681">ManagedFont()</a>. In this case, glyph-&gt;SubstitueCount() is 0.</p>
+<p>In some cases one or more glyphs from one or more substitute fonts are required to render the code point. In this case, glyph-&gt;SubstitueCount() is 0.</p>
+<div class="fragment"><div class="line"><a class="code" href="../../d8/df5/class_o_n___font.html">ON_Font</a>* font = ...;</div><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> code_point = ...;</div><div class="line"><span class="keyword">const</span> <a class="code" href="../../d7/d29/class_o_n___font_glyph.html">ON_FontGlyph</a>* g = font-&gt;<a class="code" href="../../d8/df5/class_o_n___font.html#a9bea2c0f22ace1eddb4ede6c790f6f4c">CodePointGlyph</a>(code_point);</div><div class="line"><span class="keywordflow">if</span> (<span class="keyword">nullptr</span> != g )</div><div class="line">{</div><div class="line">    <span class="keywordflow">if</span> ( g-&gt;SubstituteCount() &gt; 0 )</div><div class="line">    {</div><div class="line">      <span class="comment">// complicate case - one of more substitutes must be rendered to render g</span></div><div class="line">      <span class="keywordflow">for</span> ( <span class="keyword">const</span> <a class="code" href="../../d7/d29/class_o_n___font_glyph.html">ON_FontGlyph</a>* gsub = g.NextSubstitute(); <span class="keyword">nullptr</span> != gsub; gsub = gsub-&gt;NextSubstitute() )</div><div class="line">      {</div><div class="line">        ...</div><div class="line">      }</div><div class="line">    }</div><div class="line">    <span class="keywordflow">else</span></div><div class="line">    {</div><div class="line">      <span class="comment">// simple case - this computer can directly render g</span></div><div class="line">      ...</div><div class="line">    }</div><div class="line">}</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a4d553601f3ef98ab0a22a79f4f8002df"></a>
@@ -805,7 +829,10 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics. Returns: -1: a characteristics &lt; b characteristics 0: a characteristics = b characteristics +1: a characteristics &gt; b characteristics Remarks: This is a legacy function and to preserve past behavior, some platform specific characteristics are not checked. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> when every characteristic needs to be compared. </p>
+
+<p>Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics. </p>
+<dl class="section return"><dt>Returns</dt><dd>-1: a characteristics &lt; b characteristics 0: a characteristics = b characteristics +1: a characteristics &gt; b characteristics </dd></dl>
+<p>This is a legacy function and to preserve past behavior, some platform specific characteristics are not checked. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> when every characteristic needs to be compared. </p>
 
 </div>
 </div>
@@ -842,7 +869,7 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: -1: weight_a is lighter, weight_b is heavier +1: weight_a is heavier, weight_b is lighter 0: weight_a = weight_b </p>
+<dl class="section return"><dt>Returns</dt><dd>-1: weight_a is lighter, weight_b is heavier +1: weight_a is heavier, weight_b is lighter 0: weight_a = weight_b </dd></dl>
 
 </div>
 </div>
@@ -861,8 +888,14 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns a 32-bit crc of the font weight, style, stretch, underline, strikethrough, and facename characteristics.</p>
-<p>Parameters: bIgnoreFaceNameOrdinalCase - [in] If true, <a class="el" href="../../d1/d11/class_o_n__w_string.html#aac0398df0108160254abcb4f4c58f324">ON_wString::MapStringOrdinal()</a> is applied to the face name and the returned CRC is ordinal case independent. </p>
+
+<p>Returns a 32-bit crc of the font weight, style, stretch, underline, strikethrough, and facename characteristics. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bIgnoreFaceNameOrdinalCase</td><td>[in] If true, <a class="el" href="../../d1/d11/class_o_n__w_string.html#aac0398df0108160254abcb4f4c58f324">ON_wString::MapStringOrdinal()</a> is applied to the face name and the returned CRC is ordinal case independent.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -881,8 +914,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>for debugging </p>
 
 </div>
 </div>
@@ -973,7 +1004,10 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics. Returns: 0 == ON_Font::CompareFontCharacteristics(a,b). Remarks: This is a legacy function and to preserve past behavior, some platform specific characteristics are not checked. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> when every characteristic needs to be compared. </p>
+
+<p>Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio and facename characteristics. </p>
+<dl class="section return"><dt>Returns</dt><dd>0 == ON_Font::CompareFontCharacteristics(a,b). </dd></dl>
+<p>This is a legacy function and to preserve past behavior, some platform specific characteristics are not checked. Use <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> when every characteristic needs to be compared. </p>
 
 </div>
 </div>
@@ -991,7 +1025,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The font properties weight, style, stretch, underlined, and strikethrough are encoded in the returned value. Remarks: This is a legacy value used in 3dm archive reading/writing and some sorting operations. </p>
+
+<p>The font properties weight, style, stretch, underlined, and strikethrough are encoded in the returned value. </p>
+<p>This is a legacy value used in 3dm archive reading/writing and some sorting operations. </p>
 
 </div>
 </div>
@@ -1009,9 +1045,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A SHA-1 hash of all font characteristics, including platform specific settings. Two fonts have identical font characteristics, if and only if they have identical <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> values.</p>
-<p>Example: <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> f1 = ... <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> f2 = ... if ( f1.FontCharacteristicsHash() == f2.FontCharacteristicsHash() ) { / f1 and f2 have identical font characteristics } else { / f1 and f2 have different font characteristics } </p>
-
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">A SHA-1 hash of all font characteristics, including platform specific settings. Two fonts have identical font characteristics, if and only if they have identical <a class="el" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash()</a> values.</p>
+<p class="enddd"></p>
+</dd></dl>
+<div class="fragment"><div class="line"><a class="code" href="../../d8/df5/class_o_n___font.html">ON_Font</a> f1 = ...</div><div class="line">ON_Font f2 = ...</div><div class="line">if ( f1.<a class="code" href="../../d8/df5/class_o_n___font.html#a67c9b634e508792b43dc589797704514">FontCharacteristicsHash</a>() == f2.FontCharacteristicsHash() )</div><div class="line">{</div><div class="line">  <span class="comment">// f1 and f2 have identical font characteristics</span></div><div class="line">}</div><div class="line"><span class="keywordflow">else</span></div><div class="line">{</div><div class="line">  <span class="comment">// f1 and f2 have different font characteristics</span></div><div class="line">}</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="ab2b10d955fc49d94a87224b7494eda31"></a>
@@ -1028,7 +1065,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a text description of the font. Parameters: font_description - [out] Returns: A pointer to the font description string stored in the font_description parameter. </p>
+
+<p>Get a text description of the font. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">font_description</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the font description string stored in the font_description parameter. </dd></dl>
 
 </div>
 </div>
@@ -1046,7 +1091,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a text description of the font. Parameters: font_description - [out] Returns: A pointer to the font description string stored in the font_description parameter. </p>
+
+<p>Get a text description of the font. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">font_description</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the font description string stored in the font_description parameter. </dd></dl>
 
 </div>
 </div>
@@ -1081,8 +1134,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Normalized font metrics.</p>
-<p>Remarks: Font metric "normalized" units are comparable between different fonts. Normalized font metrics exist so that code that positions glyphs from multiple fonts does not have to take the unit system and resolution used in the design of each font. In opennurbs, much of this code that positions glyphs is located in <a class="el" href="../../da/d51/class_o_n___annotation.html">ON_Annotation</a>, <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a>, and <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> member functions and is used when rendering annotation objects.</p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">Normalized font metrics.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>Font metric "normalized" units are comparable between different fonts. Normalized font metrics exist so that code that positions glyphs from multiple fonts does not have to take the unit system and resolution used in the design of each font. In opennurbs, much of this code that positions glyphs is located in <a class="el" href="../../da/d51/class_o_n___annotation.html">ON_Annotation</a>, <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a>, and <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> member functions and is used when rendering annotation objects.</p>
 <p>Fonts can be designed and defined at different resolutions and relative scaling is necessary when text contains glyphs from fonts desinged at different grid resolutions. For example, TrueType font grid with and height is often 1024x1024 or 2048x2014, OpenType grids are often 1000x1000, and PostScript grids are often 1000x1000. Opennurbs "font units" are the units the font was designed in.</p>
 <p>Long ago, opennurbs and Rhino used only Windows TrueType fonts and ran only in Microsoft Windows. During this era, the "normalized units" were for a Windows LOGFONT created with lfHeight = ON_Font::Constants::AnnotationFontCellHeight.</p>
 <p>Currently opennurbs and Rhino work on Microsoft Windows and Apple platforms and use FreeType to access font information. When a font is not "tricky", the "font design" units are the the units FreeType uses when a font is loaded with FT_LOAD_NO_SCALE.</p>
@@ -1130,7 +1185,14 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#af3fe009ce7152fe0b0d286a5675c78a9">ON_Font::FontStretchFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value. Parameters: unsigned_font_stretch - [in] </p>
+
+<p>In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#af3fe009ce7152fe0b0d286a5675c78a9" title="In the rare cases when an ON_Font::Stretch value must be passed as an unsigned int, use ON_Font::FontStretchFromUnsigned() to convert the unsigned value to an ON_Font::Stretch value. ">ON_Font::FontStretchFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a260244d29871bd942706652123d0e2f1" title="Horizontal expansion or contraction of font ">ON_Font::Stretch</a> value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">unsigned_font_stretch</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1174,7 +1236,14 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a7447e7840b87fd13023f7cf08fe9a89f">ON_Font::FontStyleFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value. Parameters: unsigned_font_style - [in] </p>
+
+<p>In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a7447e7840b87fd13023f7cf08fe9a89f" title="In the rare cases when an ON_Font::Style value must be passed as an unsigned int, use ON_Font::FontSt...">ON_Font::FontStyleFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277" title="Vertical angle of font Upright, Italic, or Oblique ">ON_Font::Style</a> value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">unsigned_font_style</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1192,7 +1261,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This function is for expert users doing something complicated. Returns: Font metrics read directly from the font definition with no or minimal scaling. Remarks: See <a class="el" href="../../d8/df5/class_o_n___font.html#ae783b7e59accf9d488c35a30e47dad3d">ON_Font.FontMetrics()</a> documentation for important information about the differnce bewteen normalized and font unit metrics. </p>
+
+<p>This function is for expert users doing something complicated. </p>
+<dl class="section return"><dt>Returns</dt><dd>Font metrics read directly from the font definition with no or minimal scaling. </dd></dl>
+<p>See <a class="el" href="../../d8/df5/class_o_n___font.html#ae783b7e59accf9d488c35a30e47dad3d">ON_Font.FontMetrics()</a> documentation for important information about the differnce bewteen normalized and font unit metrics. </p>
 
 </div>
 </div>
@@ -1210,7 +1282,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: scale to apply when converting from a FT_LOAD_NO_SCALE FreeType glyph metric or outline to normalized opennurbs font coordinates. </p>
+<dl class="section return"><dt>Returns</dt><dd>scale to apply when converting from a FT_LOAD_NO_SCALE FreeType glyph metric or outline to normalized opennurbs font coordinates. </dd></dl>
 
 </div>
 </div>
@@ -1254,7 +1326,14 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a5dbc7f7e0707245f56c2299b094e0b89">ON_Font::FontWeightFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value. Parameters: unsigned_font_weight - [in] </p>
+
+<p>In the rare cases when an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value must be passed as an unsigned int, use <a class="el" href="../../d8/df5/class_o_n___font.html#a5dbc7f7e0707245f56c2299b094e0b89" title="In the rare cases when an ON_Font::Weight value must be passed as an unsigned int, use ON_Font::FontWeightFromUnsigned() to convert the unsigned value to an ON_Font::Weight value. ">ON_Font::FontWeightFromUnsigned()</a> to convert the unsigned value to an <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">unsigned_font_weight</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1281,7 +1360,16 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: If opennurbs is built with FreeType support then FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font) will return a FreeType face that can be used to render the font. Parameters: font - [in] Returns: A value that can be cast as a FreeType FT_Face. Example const ON_Font* font = ...; FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font); Remarks: Many fonts do not have a glyph for a every UNICODE codepoint and font substitution is required. If you want to get the freetype face used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace(). </p>
+
+<p>If opennurbs is built with FreeType support then FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font) will return a FreeType face that can be used to render the font. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">font</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A value that can be cast as a FreeType FT_Face. Example const ON_Font* font = ...; FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font); </dd></dl>
+<p>Many fonts do not have a glyph for a every UNICODE codepoint and font substitution is required. If you want to get the freetype face used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace(). </p>
 
 </div>
 </div>
@@ -1308,7 +1396,21 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get a font managed by the application from the font characteristics. Never delete a font returned by <a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b">GetManagedFont()</a>. Parameters: face_name - [in] font_weight - [in] default = ON_Font::Default.FontWeight() font_style - [in] default = ON_Font::Default.FontStyle() font_stretch - [in] default = ON_Font::Default.FontStretch() bUnderlined - [in] default = ON_Font::Default.Underlined() = false bStrikethrough - [in] default = ON_Font::Default.Strikethrough() = false linefeed_ratio - [in] default = ON_Font::Default.LinefeedRatio() windows_charset - [in] default = ON_Font::WindowsCharSet::DefaultCharSet </p>
+
+<p>Get a font managed by the application from the font characteristics. Never delete a font returned by <a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b" title="Get a font managed by the application from the font characteristics. Never delete a font returned by ...">GetManagedFont()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">face_name</td><td>[in]</td></tr>
+    <tr><td class="paramname">font_weight</td><td>[in] default = ON_Font::Default.FontWeight()</td></tr>
+    <tr><td class="paramname">font_style</td><td>[in] default = ON_Font::Default.FontStyle()</td></tr>
+    <tr><td class="paramname">font_stretch</td><td>[in] default = ON_Font::Default.FontStretch()</td></tr>
+    <tr><td class="paramname">bUnderlined</td><td>[in] default = ON_Font::Default.Underlined() = false</td></tr>
+    <tr><td class="paramname">bStrikethrough</td><td>[in] default = ON_Font::Default.Strikethrough() = false</td></tr>
+    <tr><td class="paramname">linefeed_ratio</td><td>[in] default = ON_Font::Default.LinefeedRatio()</td></tr>
+    <tr><td class="paramname">windows_charset</td><td>[in] default = ON_Font::WindowsCharSet::DefaultCharSet</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1982,7 +2084,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f">ON_Font.IsBold()</a>, to query font weight ranges. Returns: True if heavier than <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a>. </p>
+
+<p>User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if heavier than <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a>. </dd></dl>
 
 </div>
 </div>
@@ -2000,7 +2104,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. </dd></dl>
 
 </div>
 </div>
@@ -2018,7 +2122,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f">ON_Font.IsBold()</a>, to query font weight ranges. Returns: True if <a class="el" href="../../d8/df5/class_o_n___font.html#abb4d3fc2b4af0600a4ef0bb0f7758c8d">FontWeight()</a> is lighter than <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> </p>
+
+<p>User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if <a class="el" href="../../d8/df5/class_o_n___font.html#abb4d3fc2b4af0600a4ef0bb0f7758c8d">FontWeight()</a> is lighter than <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> </dd></dl>
 
 </div>
 </div>
@@ -2036,7 +2142,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if this font is a managed font returned by one of the static <a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b">ON_Font::GetManagedFont</a>(...) functions. Remarks: <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a> is managed. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if this font is a managed font returned by one of the static <a class="el" href="../../d8/df5/class_o_n___font.html#a65d02091b7dd25676f361b416a265b4b" title="Get a font managed by the application from the font characteristics. Never delete a font returned by ...">ON_Font::GetManagedFont</a>(...) functions. </dd></dl>
+<p><a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a> is managed. </p>
 
 </div>
 </div>
@@ -2054,7 +2161,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f">ON_Font.IsBold()</a>, to query font weight ranges. Returns: True if <a class="el" href="../../d8/df5/class_o_n___font.html#abb4d3fc2b4af0600a4ef0bb0f7758c8d">FontWeight()</a> is ON_Font::Normal or <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> </p>
+
+<p>User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold, can use the functions <a class="el" href="../../d8/df5/class_o_n___font.html#ac1332d6239a0e3b1b631169a1275d3b4" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsLight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a02144a9b0fb0ac5fa49ed653033f7665" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsNormalWeight()</a>, <a class="el" href="../../d8/df5/class_o_n___font.html#a7126903b45edbf500d8b2d700a63210f" title="User interfaces that want to behave as if there are 3 font weights, light &lt; normal &lt; &lt; bold...">ON_Font.IsBold()</a>, to query font weight ranges. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if <a class="el" href="../../d8/df5/class_o_n___font.html#abb4d3fc2b4af0600a4ef0bb0f7758c8d">FontWeight()</a> is ON_Font::Normal or <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> </dd></dl>
 
 </div>
 </div>
@@ -2081,7 +2190,8 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: When reading version 5 3dm achives, the font description can be a generic font description or an Apple font name. This function rejects certain descriptions like "Default" and "Arial" for use as Apple font names. </p>
+
+<p>When reading version 5 3dm achives, the font description can be a generic font description or an Apple font name. This function rejects certain descriptions like "Default" and "Arial" for use as Apple font names. </p>
 
 </div>
 </div>
@@ -2099,7 +2209,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a>. </dd></dl>
 
 </div>
 </div>
@@ -2151,7 +2261,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277aadcd5aa8fd001045d4f75625829875be" title="Default font style. ">ON_Font::Style::Upright</a>. false if <a class="el" href="../../d8/df5/class_o_n___font.html#a31a1bb48d913dc99962f81a7808a833e">FontStyle()</a> is <a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a1d874710ccdcd46b95397049d2e7500c">ON_Font::Style::Italic</a> or .<a class="el" href="../../d8/df5/class_o_n___font.html#a620a36120633b9420686f76ec405f277a12a8e47062ed3272e04dc0b991e38466">ON_Font::Style::Oblique</a>. </dd></dl>
 
 </div>
 </div>
@@ -2170,7 +2280,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Tests an object to see if its data members are correctly initialized. Parameters: text_log - [in] if the object is not valid and text_log is not nullptr, then a brief englis description of the reason the object is not valid is appened to the log. The information appended to text_log is suitable for low-level debugging purposes by programmers and is not intended to be useful as a high level user interface tool. Returns:  table true object is valid false object is invalid, uninitialized, etc. </p>
+
+<p>Tests an object to see if its data members are correctly initialized. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">text_log</td><td>[in] if the object is not valid and text_log is not nullptr, then a brief englis description of the reason the object is not valid is appened to the log. The information appended to text_log is suitable for</td></tr>
+    <tr><td class="paramname">low</td><td>level debugging purposes by programmers and is not intended to be useful as a high level user interface tool.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>table true object is valid false object is invalid, uninitialized, etc. </dd></dl>
 
 </div>
 </div>
@@ -2248,7 +2367,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The managed font for this font. Remarks: If this-&gt;<a class="el" href="../../d8/df5/class_o_n___font.html#aa433490929c0b1c727e8e8d7d73f0506">IsManagedFont()</a> is true, then "this" is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>The managed font for this font. </dd></dl>
+<p>If this-&gt;<a class="el" href="../../d8/df5/class_o_n___font.html#aa433490929c0b1c727e8e8d7d73f0506">IsManagedFont()</a> is true, then "this" is returned. </p>
 
 </div>
 </div>
@@ -2266,7 +2386,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Two <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> classes reference the same platform font and create identical glyphs if and only if the have the same <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00">ManagedFontSerialNumber()</a>. Returns: 0: This font is unset. &gt;= 1: Serial number of the managed font with the same characteristics. Remark: For managed fonts other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>, the value of <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00">ManagedFontSerialNumber()</a> typically varies between instances of the same application. Different platforms and application versions may use different font faces for <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> and <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00">ManagedFontSerialNumber()</a> are identical. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is not a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> is zero. </p>
+
+<p>Two <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> classes reference the same platform font and create identical glyphs if and only if the have the same <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00" title="Two ON_Font classes reference the same platform font and create identical glyphs if and only if the h...">ManagedFontSerialNumber()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>0: This font is unset. &gt;= 1: Serial number of the managed font with the same characteristics. Remark: For managed fonts other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>, the value of <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00" title="Two ON_Font classes reference the same platform font and create identical glyphs if and only if the h...">ManagedFontSerialNumber()</a> typically varies between instances of the same application. Different platforms and application versions may use different font faces for <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> and <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00" title="Two ON_Font classes reference the same platform font and create identical glyphs if and only if the h...">ManagedFontSerialNumber()</a> are identical. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is not a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> is zero. </dd></dl>
 
 </div>
 </div>
@@ -2284,7 +2406,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: scale to apply when converting from a FT_LOAD_NO_SCALE FreeType glyph metric or outline to normalized opennurbs font coordinates. </p>
+<dl class="section return"><dt>Returns</dt><dd>scale to apply when converting from a FT_LOAD_NO_SCALE FreeType glyph metric or outline to normalized opennurbs font coordinates. </dd></dl>
 
 </div>
 </div>
@@ -2446,9 +2568,11 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Font character height in points (1 point = 1/72 inch).</p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">Font character height in points (1 point = 1/72 inch).</p>
 <p>See the remarks for a defintion of "character height".</p>
-<p>Remarks: A "point" is a length unit system. 1 point = 1/72 inch = 25.4/72 millimeters.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>A "point" is a length unit system. 1 point = 1/72 inch = 25.4/72 millimeters.</p>
 <p>Typically, fonts are designed for maximum clarity when the rendered character height is close to <a class="el" href="../../d8/df5/class_o_n___font.html#af13685e2304ab3dba824a44c0d96757e">PointSize()</a>.</p>
 <p>font cell height = font ascent + font descent.</p>
 <p>font character height = font cell height - font internal leading.</p>
@@ -2527,7 +2651,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: This is not a managed font. 1: This is the managed font <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. &gt;= 2: This is a managed font other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. Remark: For managed fonts other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>, the value of <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> typically varies between instances of the same application. Different platforms and application versions may use different font faces for <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> and <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00">ManagedFontSerialNumber()</a> are identical. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is not a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> is zero. </p>
+<dl class="section return"><dt>Returns</dt><dd>0: This is not a managed font. 1: This is the managed font <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. &gt;= 2: This is a managed font other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. Remark: For managed fonts other than <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>, the value of <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> typically varies between instances of the same application. Different platforms and application versions may use different font faces for <a class="el" href="../../d8/df5/class_o_n___font.html#a05c94f6c57071525f59916a874b007e8">ON_Font::Default</a>. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> and <a class="el" href="../../d8/df5/class_o_n___font.html#afe31815f4447196731e3e1ab779b0f00" title="Two ON_Font classes reference the same platform font and create identical glyphs if and only if the h...">ManagedFontSerialNumber()</a> are identical. If an <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> is not a managed font, then <a class="el" href="../../d8/df5/class_o_n___font.html#ae3b41707ef6eb3326aee07923b0b8834">RuntimeSerialNumber()</a> is zero. </dd></dl>
 
 </div>
 </div>
@@ -2646,7 +2770,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create a font with a specified facename and properties. Parameters: face_name - [in] nullptr is treated as ON_Font::Default.FaceName(). bBold - [in] True for a bold version of the font. bItalic - [in] True for an italic version of the font. Returns: True if the font characteristics were valid and set on the font. </p>
+
+<p>Create a font with a specified facename and properties. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">face_name</td><td>[in] nullptr is treated as ON_Font::Default.FaceName().</td></tr>
+    <tr><td class="paramname">bBold</td><td>[in] True for a bold version of the font.</td></tr>
+    <tr><td class="paramname">bItalic</td><td>[in] True for an italic version of the font.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the font characteristics were valid and set on the font. </dd></dl>
 
 </div>
 </div>
@@ -2699,7 +2833,18 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create a font with a specified facename and properties. Parameters: point_size - [in] If point_size &gt; 0.0, then it specifies which size of font definition should be used. Otherwise the font size used for annotation text is used. For high quality fonts it is generally the case that different point sizes of the same font face have subtle differences in glyph design and are not simply scaled versions of a base glyph. face_name - [in] nullptr is treated as ON_Font::Default.FaceName(). bBold - [in] True for a bold version of the font. bItalic - [in] True for an italic version of the font. Returns: True if the font characteristics were valid and set on the font. </p>
+
+<p>Create a font with a specified facename and properties. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">point_size</td><td>[in] If point_size &gt; 0.0, then it specifies which size of font definition should be used. Otherwise the font size used for annotation text is used. For high quality fonts it is generally the case that different point sizes of the same font face have subtle differences in glyph design and are not simply scaled versions of a base glyph.</td></tr>
+    <tr><td class="paramname">face_name</td><td>[in] nullptr is treated as ON_Font::Default.FaceName().</td></tr>
+    <tr><td class="paramname">bBold</td><td>[in] True for a bold version of the font.</td></tr>
+    <tr><td class="paramname">bItalic</td><td>[in] True for an italic version of the font.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the font characteristics were valid and set on the font. </dd></dl>
 
 </div>
 </div>
@@ -2752,7 +2897,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set the font's face name and characteristics. Parameters: face_name - [in] nullptr is not permitted. Pass ON_Font::Default.FaceName() if you don't have a face name. Returns: True if the font characteristics were valid and set on the font. </p>
+
+<p>Set the font's face name and characteristics. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">face_name</td><td>[in] nullptr is not permitted. Pass ON_Font::Default.FaceName() if you don't have a face name.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the font characteristics were valid and set on the font. </dd></dl>
 
 </div>
 </div>
@@ -3117,8 +3270,13 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: point_size - [in] font character height in point units.</p>
-<p>Remarks: See the remarks section <a class="el" href="../../d8/df5/class_o_n___font.html#af13685e2304ab3dba824a44c0d96757e">ON_Font::PointSize()</a> for more information about point units and character height. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">point_size</td><td>[in] font character height in point units. </td></tr>
+  </table>
+  </dd>
+</dl>
+<p>See the remarks section <a class="el" href="../../d8/df5/class_o_n___font.html#af13685e2304ab3dba824a44c0d96757e">ON_Font::PointSize()</a> for more information about point units and character height. </p>
 
 </div>
 </div>
@@ -3225,7 +3383,12 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: apple_font_weight_trait - [in] Apple NSFontWeightTrait The valid value range is from -1.0 to 1.0. The value of 0.0 corresponds to the regular or medium font weight. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">apple_font_weight_trait</td><td>[in] Apple NSFontWeightTrait The valid value range is from -1.0 to 1.0. The value of 0.0 corresponds to the regular or medium font weight.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -3252,7 +3415,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9 Returns: The best <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value for the Apple weight of font. </p>
+
+<p>The correspondence between Apple "weight of font" values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 1 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 2 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 3 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 4 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 5 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 6 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 7 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 8 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 9 </p>
+<dl class="section return"><dt>Returns</dt><dd>The best <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value for the Apple weight of font. </dd></dl>
 
 </div>
 </div>
@@ -3279,8 +3444,10 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is</p>
-<p><a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 100 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 200 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 300 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 400 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 500 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 600 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 700 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 800 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 900 Returns: The best <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value for the Windows LOGFONT weight. </p>
+
+<p>The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is </p>
+<p><a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 100 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 200 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 300 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 400 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 500 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 600 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 700 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 800 <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 900 </p>
+<dl class="section return"><dt>Returns</dt><dd>The best <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value for the Windows LOGFONT weight. </dd></dl>
 
 </div>
 </div>
@@ -3333,7 +3500,13 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: face_name - [in] Returns: If the code is running on Windows: The appropriate value of LOGFONT.lfCharSet for the input facename. If the code is not running on Windows: ON_Font::WindowsConstants::logfont_default_charset. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">face_name</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the code is running on Windows: The appropriate value of LOGFONT.lfCharSet for the input facename. If the code is not running on Windows: ON_Font::WindowsConstants::logfont_default_charset. </dd></dl>
 
 </div>
 </div>
@@ -3377,7 +3550,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 100 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 200 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 300 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 400 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 500 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 600 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 700 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 800 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 900 LOGFONT lfWeight Returns: The Windows LOGFONT lfWeight value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </p>
+
+<p>The correspondence between Windows LOGFONT lfWeight values and <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum values is <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daaedfcbf06fc92bafadf4527a2fcccc69" title="IsLight = true ">ON_Font::Weight::Thin</a> = 100 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da2a1ff112a8ef821dd23e8a4d9c43517c" title="IsLight = true ">ON_Font::Weight::Ultralight</a> = 200 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da9914a0ce04a7b7b6a8e39bec55064b82" title="ExtraLight = 2,. ">ON_Font::Weight::Light</a> = 300 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da960b44c579bc2f6818d2daaf9e4c16f0" title="Default font weight. IsNormalWeight = true Also called Regular.">ON_Font::Weight::Normal</a> = 400 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da87f8a6ab85c9ced3702b4ea641ad4bb5" title="Regular = 4,. ">ON_Font::Weight::Medium</a> = 500 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da625c6f83191b5abca037dc56a1f6e8ea" title="IsBold = true ">ON_Font::Weight::Semibold</a> = 600 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da114c3050111d8b8ddd830b99ccebd246" title="IsBold = true ">ON_Font::Weight::Bold</a> = 700 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757da82e85dd7aaad1574cf617f76506daa3c" title="IsBold = true ">ON_Font::Weight::Ultrabold</a> = 800 LOGFONT lfWeight <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757daf9ffe67a20da9cbff56b420fca4bd491" title="ExtraBold = 8,. ">ON_Font::Weight::Heavy</a> = 900 LOGFONT lfWeight </p>
+<dl class="section return"><dt>Returns</dt><dd>The Windows LOGFONT lfWeight value that corresponds to the <a class="el" href="../../d8/df5/class_o_n___font.html#a00ce657702926f66bcbc70a7209d757d" title="Weight enum values Avoid casting these values to int. Use ON_Font::WindowsLogfontWeightFromWeight() o...">ON_Font::Weight</a> enum value. </dd></dl>
 
 </div>
 </div>
@@ -3511,7 +3686,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -186,7 +186,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Run must be a managed run or on the heap. The destructor will return managed runs and delete unmanaged runs. </p>
 
 </div>
 </div>
@@ -267,7 +266,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Run must be a managed run or on the heap. The destructor will return managed runs and delete unmanaged runs. </p>
 
 </div>
 </div>
@@ -360,7 +358,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bReturnManagedRuns - [in] True: Managed runs will be returned. False: Caller must explicityly handle managed runs. bDeleteUnmanagedRuns - [in] True: Unmanaged runs are deleted. False: Caller must explicityly handle unmanaged runs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bReturnManagedRuns</td><td>[in] True: Managed runs will be returned. False: Caller must explicityly handle managed runs.</td></tr>
+    <tr><td class="paramname">bDeleteUnmanagedRuns</td><td>[in] True: Unmanaged runs are deleted. False: Caller must explicityly handle unmanaged runs.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -378,7 +382,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A hash of the information that determines the text content with evaluated fields. </p>
+<dl class="section return"><dt>Returns</dt><dd>A hash of the information that determines the text content with evaluated fields. </dd></dl>
 
 </div>
 </div>
@@ -397,7 +401,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bEvaluateFields - [in] true - hash text with fields evaluated false - hash text with fields unevaluated Returns: A hash of the information that determines the text content without evaluating the fields. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bEvaluateFields</td><td>[in]</td></tr>
+    <tr><td class="paramname">true</td><td>hash text with fields evaluated</td></tr>
+    <tr><td class="paramname">false</td><td>hash text with fields unevaluated</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A hash of the information that determines the text content without evaluating the fields. </dd></dl>
 
 </div>
 </div>
@@ -438,7 +450,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>ON_TextRun*&amp; <a class="el" href="../../dc/dfe/class_o_n___simple_array.html#ad6fb51ad272618b034b8dd4695094a2d" title="array operations //////////////////////////////////////////////////// ">AppendNew()</a>; void <a class="el" href="../../dc/dfe/class_o_n___simple_array.html#a5e10b309af51f313e265059bb1240559" title="Append copy of an array T[count]. ">Append(int, ON_TextRun* const *)</a>; void Append(ON_TextRun* const); </p>
 
 </div>
 </div>
@@ -448,7 +459,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

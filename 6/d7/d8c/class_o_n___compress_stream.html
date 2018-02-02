@@ -59,26 +59,31 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4d1828f4099ff69ce70bd61ecc3a1585"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4d1828f4099ff69ce70bd61ecc3a1585">~ON_CompressStream</a> ()</td></tr>
 <tr class="separator:a4d1828f4099ff69ce70bd61ecc3a1585"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ef967209337035985063d0aa8f28d88"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a2ef967209337035985063d0aa8f28d88">Begin</a> ()</td></tr>
+<tr class="memdesc:a2ef967209337035985063d0aa8f28d88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a2ef967209337035985063d0aa8f28d88" title="Call Begin() one time to initialize the compression calculation. Then call In() one or more times to ...">Begin()</a> one time to initialize the compression calculation. Then call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> one or more times to submit the uncompressed stream to the compression calculation. When you reach the end of the uncompressed stream, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>.  <a href="#a2ef967209337035985063d0aa8f28d88">More...</a><br /></td></tr>
 <tr class="separator:a2ef967209337035985063d0aa8f28d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97a7b70543c1ffd6bb6ac6965e097893"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a97a7b70543c1ffd6bb6ac6965e097893">CallbackContext</a> () const</td></tr>
 <tr class="separator:a97a7b70543c1ffd6bb6ac6965e097893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5098d6c54bfa5ffd41ad4ecb601a317f"><td class="memItemLeft" align="right" valign="top">ON_StreamCallbackFunction&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a5098d6c54bfa5ffd41ad4ecb601a317f">CallbackFunction</a> () const</td></tr>
 <tr class="separator:a5098d6c54bfa5ffd41ad4ecb601a317f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b910180a8c17a3f33c3cb511b886fce"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End</a> ()</td></tr>
+<tr class="memdesc:a0b910180a8c17a3f33c3cb511b886fce"><td class="mdescLeft">&#160;</td><td class="mdescRight">After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> may generate zero or more calls to the output stream handler.  <a href="#a0b910180a8c17a3f33c3cb511b886fce">More...</a><br /></td></tr>
 <tr class="separator:a0b910180a8c17a3f33c3cb511b886fce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f45e26920b7c8f971f43de758213cb1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In</a> (ON__UINT64 in_buffer_size, const void *in_buffer)</td></tr>
+<tr class="memdesc:a4f45e26920b7c8f971f43de758213cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> one or more times to compress a stream of uncompressed bytes. After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> may generate zero or more calls to the output stream handler.  <a href="#a4f45e26920b7c8f971f43de758213cb1">More...</a><br /></td></tr>
 <tr class="separator:a4f45e26920b7c8f971f43de758213cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7733c7e94200a85cf11c56094a9354c7"><td class="memItemLeft" align="right" valign="top">ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a7733c7e94200a85cf11c56094a9354c7">InCRC</a> () const</td></tr>
 <tr class="separator:a7733c7e94200a85cf11c56094a9354c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa3187ae793e762a2667821d4a27c06ff"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#aa3187ae793e762a2667821d4a27c06ff">InSize</a> () const</td></tr>
 <tr class="separator:aa3187ae793e762a2667821d4a27c06ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e1c6b600127cf0c67e2309b91b4093b"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out</a> (void *callback_context, ON__UINT32 out_buffer_size, const void *out_buffer)</td></tr>
+<tr class="memdesc:a8e1c6b600127cf0c67e2309b91b4093b"><td class="mdescLeft">&#160;</td><td class="mdescRight">If an explicit compressed stream output handler is not specified ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a5098d6c54bfa5ffd41ad4ecb601a317f">CallbackFunction()</a> returns null ), then the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function is called to handle the compressed output stream. As the input stream is compressed, one or more calls to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> will occur.  <a href="#a8e1c6b600127cf0c67e2309b91b4093b">More...</a><br /></td></tr>
 <tr class="separator:a8e1c6b600127cf0c67e2309b91b4093b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a19335bba6260ce2342b91ea71c5be1"><td class="memItemLeft" align="right" valign="top">ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a9a19335bba6260ce2342b91ea71c5be1">OutCRC</a> () const</td></tr>
 <tr class="separator:a9a19335bba6260ce2342b91ea71c5be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3860050814973008f0137375f1389861"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a3860050814973008f0137375f1389861">OutSize</a> () const</td></tr>
 <tr class="separator:a3860050814973008f0137375f1389861"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0bf06e8b42af025cac07e081a12a3e20"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0bf06e8b42af025cac07e081a12a3e20">SetCallback</a> (ON_StreamCallbackFunction callback_function, void *callback_context)</td></tr>
+<tr class="memdesc:a0bf06e8b42af025cac07e081a12a3e20"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html">ON_CompressStream</a> delivers the compressed stream by calling a compressed stream output handler function. There are two options for specifying the compressed stream output handler function.  <a href="#a0bf06e8b42af025cac07e081a12a3e20">More...</a><br /></td></tr>
 <tr class="separator:a0bf06e8b42af025cac07e081a12a3e20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -139,7 +144,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a2ef967209337035985063d0aa8f28d88">Begin()</a> one time to initialize the compression calculation. Then call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a> one or more times to submit the uncompressed stream to the compression calculation. When you reach the end of the uncompressed stream, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a>. Returns: true if successful, false if an error occured. </p>
+
+<p>Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a2ef967209337035985063d0aa8f28d88" title="Call Begin() one time to initialize the compression calculation. Then call In() one or more times to ...">Begin()</a> one time to initialize the compression calculation. Then call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> one or more times to submit the uncompressed stream to the compression calculation. When you reach the end of the uncompressed stream, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if successful, false if an error occured. </dd></dl>
 
 </div>
 </div>
@@ -157,7 +164,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Current value of the context pointer passed as the first argument to the compressed stream output handler function. </p>
+<dl class="section return"><dt>Returns</dt><dd>Current value of the context pointer passed as the first argument to the compressed stream output handler function. </dd></dl>
 
 </div>
 </div>
@@ -175,7 +182,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Current value of the callback function for handling the compressed stream. If the callback function is null, the the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> function is used to handle </p>
+<dl class="section return"><dt>Returns</dt><dd>Current value of the callback function for handling the compressed stream. If the callback function is null, the the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function is used to handle </dd></dl>
 
 </div>
 </div>
@@ -193,7 +200,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a> may generate zero or more calls to the output stream handler. Returns: true if successful, false if an error occured. </p>
+
+<p>After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> may generate zero or more calls to the output stream handler. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if successful, false if an error occured. </dd></dl>
 
 </div>
 </div>
@@ -222,7 +231,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a> one or more times to compress a stream of uncompressed bytes. After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a> may generate zero or more calls to the output stream handler. Parameters: in_buffer_size - [in] number of bytes in in_buffer in_buffer - [in] Returns: true if successful, false if an error occured. </p>
+
+<p>Call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> one or more times to compress a stream of uncompressed bytes. After the last call to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a>, call <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a>. Calling <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> may generate zero or more calls to the output stream handler. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">in_buffer_size</td><td>[in] number of bytes in in_buffer</td></tr>
+    <tr><td class="paramname">in_buffer</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if successful, false if an error occured. </dd></dl>
 
 </div>
 </div>
@@ -240,7 +258,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Then the returned value is the 32-bit crc of the input stream. The crc is updated every time <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a> is called before any calls are made to the output stream handler. If the compression calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a> has been called ), then the returned value is the 32-bit crc of the entire input stream. </p>
+<dl class="section return"><dt>Returns</dt><dd>Then the returned value is the 32-bit crc of the input stream. The crc is updated every time <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> is called before any calls are made to the output stream handler. If the compression calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> has been called ), then the returned value is the 32-bit crc of the entire input stream. </dd></dl>
 
 </div>
 </div>
@@ -258,7 +276,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Then the returned value is the total number bytes in the input stream. The size is updated every time <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1">In()</a> is called before any calls are made to the output stream handler. If the calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a> has been called ), then the returned value is the total number of bytes in the entire input stream. </p>
+<dl class="section return"><dt>Returns</dt><dd>Then the returned value is the total number bytes in the input stream. The size is updated every time <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a4f45e26920b7c8f971f43de758213cb1" title="Call In() one or more times to compress a stream of uncompressed bytes. After the last call to In()...">In()</a> is called before any calls are made to the output stream handler. If the calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> has been called ), then the returned value is the total number of bytes in the entire input stream. </dd></dl>
 
 </div>
 </div>
@@ -301,7 +319,10 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: If an explicit compressed stream output handler is not specified ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a5098d6c54bfa5ffd41ad4ecb601a317f">CallbackFunction()</a> returns null ), then the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> function is called to handle the compressed output stream. As the input stream is compressed, one or more calls to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> will occur. Returns: True to continue compressing and false to cancel the compression calculation. Remarks: In general, it is probably going to be easier to test and debug your code if you ignore the callback_context parameter and add a member variable to your derived class to make additional information accessable to your Out function. </p>
+
+<p>If an explicit compressed stream output handler is not specified ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a5098d6c54bfa5ffd41ad4ecb601a317f">CallbackFunction()</a> returns null ), then the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function is called to handle the compressed output stream. As the input stream is compressed, one or more calls to <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> will occur. </p>
+<dl class="section return"><dt>Returns</dt><dd>True to continue compressing and false to cancel the compression calculation. </dd></dl>
+<p>In general, it is probably going to be easier to test and debug your code if you ignore the callback_context parameter and add a member variable to your derived class to make additional information accessable to your Out function. </p>
 
 </div>
 </div>
@@ -319,7 +340,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Then the returned value is the 32bit crc of the output stream. The crc is updated immediately after each call to the output stream handler. If the calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a> has been called ), then the returned value is the 32-bit crc of the entire output stream. </p>
+<dl class="section return"><dt>Returns</dt><dd>Then the returned value is the 32bit crc of the output stream. The crc is updated immediately after each call to the output stream handler. If the calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> has been called ), then the returned value is the 32-bit crc of the entire output stream. </dd></dl>
 
 </div>
 </div>
@@ -337,7 +358,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Then the returned value is the total number bytes in the output stream. The size is incremented immediately after each call to the output stream handler. If the compression calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce">End()</a> has been called ), then the returned value is the total number of bytes in the entire output stream. </p>
+<dl class="section return"><dt>Returns</dt><dd>Then the returned value is the total number bytes in the output stream. The size is incremented immediately after each call to the output stream handler. If the compression calculation is finished ( <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0b910180a8c17a3f33c3cb511b886fce" title="After the last call to In(), call End(). Calling End() may generate zero or more calls to the output ...">End()</a> has been called ), then the returned value is the total number of bytes in the entire output stream. </dd></dl>
 
 </div>
 </div>
@@ -366,10 +387,21 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html">ON_CompressStream</a> delivers the compressed stream by calling a compressed stream output handler function. There are two options for specifying the compressed stream output handler function.</p><ol type="1">
-<li>Overriding the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> function.</li>
-<li>Providing a callback function. <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0bf06e8b42af025cac07e081a12a3e20">SetCallback()</a> is used to specify a callback function to handle the compressed stream and to specify a context pointer to be passed to either option of the handler. Parameters: callback_function - [in] Function to call with sections of the compressed stream. If callback_function is null, then the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> function will be called. When callback_function is specified, it must return true if the compression calculation should continue and false to cancel the compression calculation. callback_context - [in] This value is passed as the first argument when calling callback_function or the virutal <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b">Out()</a> function. Returns: True if successful. Remarks: Once compression has started, it would be unusual to intentionally change the compressed stream output handler, but you can do this if you need to. </li>
+
+<p><a class="el" href="../../d7/d8c/class_o_n___compress_stream.html">ON_CompressStream</a> delivers the compressed stream by calling a compressed stream output handler function. There are two options for specifying the compressed stream output handler function. </p>
+<ol type="1">
+<li>Overriding the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function.</li>
+<li>Providing a callback function. <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a0bf06e8b42af025cac07e081a12a3e20" title="ON_CompressStream delivers the compressed stream by calling a compressed stream output handler functi...">SetCallback()</a> is used to specify a callback function to handle the compressed stream and to specify a context pointer to be passed to either option of the handler. </li>
 </ol>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">callback_function</td><td>[in] Function to call with sections of the compressed stream. If callback_function is null, then the virtual <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function will be called. When callback_function is specified, it must return true if the compression calculation should continue and false to cancel the compression calculation.</td></tr>
+    <tr><td class="paramname">callback_context</td><td>[in] This value is passed as the first argument when calling callback_function or the virutal <a class="el" href="../../d7/d8c/class_o_n___compress_stream.html#a8e1c6b600127cf0c67e2309b91b4093b" title="If an explicit compressed stream output handler is not specified ( CallbackFunction() returns null )...">Out()</a> function.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. </dd></dl>
+<p>Once compression has started, it would be unusual to intentionally change the compressed stream output handler, but you can do this if you need to. </p>
 
 </div>
 </div>
@@ -379,7 +411,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

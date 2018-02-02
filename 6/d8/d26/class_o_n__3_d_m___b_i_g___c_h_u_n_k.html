@@ -75,19 +75,15 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a7e388094d77362403990efac6abd5983"><td class="memItemLeft" align="right" valign="top">ON__INT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a7e388094d77362403990efac6abd5983">m_big_value</a> =0</td></tr>
 <tr class="separator:a7e388094d77362403990efac6abd5983"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a837ac18a3f3c89098ac9afcae28bcb30"><td class="memItemLeft" align="right" valign="top">ON__UINT8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a837ac18a3f3c89098ac9afcae28bcb30">m_bLongChunk</a> =0</td></tr>
-<tr class="memdesc:a837ac18a3f3c89098ac9afcae28bcb30"><td class="mdescLeft">&#160;</td><td class="mdescRight">true if chunk is a long chunk and m_big_value is a length.  <a href="#a837ac18a3f3c89098ac9afcae28bcb30">More...</a><br /></td></tr>
 <tr class="separator:a837ac18a3f3c89098ac9afcae28bcb30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f2cbaf0c7813ace05f52271074d5bc2"><td class="memItemLeft" align="right" valign="top">ON__UINT16&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a6f2cbaf0c7813ace05f52271074d5bc2">m_crc16</a> =0</td></tr>
-<tr class="memdesc:a6f2cbaf0c7813ace05f52271074d5bc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">current 16 bit CRC value  <a href="#a6f2cbaf0c7813ace05f52271074d5bc2">More...</a><br /></td></tr>
 <tr class="separator:a6f2cbaf0c7813ace05f52271074d5bc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a895364772f75bf9d63995830d47a1de0"><td class="memItemLeft" align="right" valign="top">ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a895364772f75bf9d63995830d47a1de0">m_crc32</a> =0</td></tr>
-<tr class="memdesc:a895364772f75bf9d63995830d47a1de0"><td class="mdescLeft">&#160;</td><td class="mdescRight">current 32 bit CRC value  <a href="#a895364772f75bf9d63995830d47a1de0">More...</a><br /></td></tr>
 <tr class="separator:a895364772f75bf9d63995830d47a1de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a629d02c854cb0c75c8e70977592cc5e8"><td class="memItemLeft" align="right" valign="top">ON__UINT8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a629d02c854cb0c75c8e70977592cc5e8">m_do_crc16</a> =0</td></tr>
 <tr class="memdesc:a629d02c854cb0c75c8e70977592cc5e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">CRC settings.  <a href="#a629d02c854cb0c75c8e70977592cc5e8">More...</a><br /></td></tr>
 <tr class="separator:a629d02c854cb0c75c8e70977592cc5e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cbe3294a98a7881533faf1e8a1a9590"><td class="memItemLeft" align="right" valign="top">ON__UINT8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a9cbe3294a98a7881533faf1e8a1a9590">m_do_crc32</a> =0</td></tr>
-<tr class="memdesc:a9cbe3294a98a7881533faf1e8a1a9590"><td class="mdescLeft">&#160;</td><td class="mdescRight">true (1) if we are calculating 32 bit CRC  <a href="#a9cbe3294a98a7881533faf1e8a1a9590">More...</a><br /></td></tr>
 <tr class="separator:a9cbe3294a98a7881533faf1e8a1a9590"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5079c4cc219d36c88d66a3bf6cedf8c3"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a5079c4cc219d36c88d66a3bf6cedf8c3">m_end_offset</a> =0</td></tr>
 <tr class="separator:a5079c4cc219d36c88d66a3bf6cedf8c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,7 +184,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>offset (file position) of the byte immediately after the farthest successful write. When reading 3dm archives, this the archive offset of the first byte after the chunk's information content. When reading, a 16 bit or 32 bit CRC can follow the chunk information content. During ordinary reading and writing, valid seek target positions satisfy m_start_offset &lt;= seek target pos &lt;= m_end_offset. Returns: Number of bytes in the chunk, including bytes used to store CRC values. 0 for short chunks. 0 for chunks currently being written. Remarks: For chunks being read, m_start_offset + <a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a0dc9091ddf7cdde77973fecdd1cda333">Length()</a> = m_end_offset + <a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#ad9ece988d048896bdb7e60f12e5fb736">SizeofCRC()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of bytes in the chunk, including bytes used to store CRC values. 0 for short chunks. 0 for chunks currently being written. </dd></dl>
+<p>For chunks being read, m_start_offset + <a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#a0dc9091ddf7cdde77973fecdd1cda333">Length()</a> = m_end_offset + <a class="el" href="../../d8/d26/class_o_n__3_d_m___b_i_g___c_h_u_n_k.html#ad9ece988d048896bdb7e60f12e5fb736">SizeofCRC()</a>. </p>
 
 </div>
 </div>
@@ -207,8 +204,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: current_position - [in] Value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a209fa5486a774343eba40e5f23704e8a">ON_BinaryArchive.CurrentPosition()</a></p>
-<p>Returns: Number of bytes that can be read when <a class="el" href="../../db/d16/class_o_n___binary_archive.html" title="&lt; use for generic serialization of binary data ">ON_BinaryArchive</a> ReadMode() is true. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">current_position</td><td>[in] Value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a209fa5486a774343eba40e5f23704e8a">ON_BinaryArchive.CurrentPosition()</a> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of bytes that can be read when <a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> ReadMode() is true. </dd></dl>
 
 </div>
 </div>
@@ -252,7 +254,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: no CRC 4: 32 bit CRC (4 bytes) 2: 16 bit CRC (2 bytes) </p>
+<dl class="section return"><dt>Returns</dt><dd>0: no CRC 4: 32 bit CRC (4 bytes) 2: 16 bit CRC (2 bytes) </dd></dl>
 
 </div>
 </div>
@@ -283,8 +285,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>true if chunk is a long chunk and m_big_value is a length. </p>
-
 </div>
 </div>
 <a id="a6f2cbaf0c7813ace05f52271074d5bc2"></a>
@@ -299,8 +299,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>current 16 bit CRC value </p>
-
 </div>
 </div>
 <a id="a895364772f75bf9d63995830d47a1de0"></a>
@@ -314,8 +312,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>current 32 bit CRC value </p>
 
 </div>
 </div>
@@ -332,7 +328,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>CRC settings. </p>
-<p>true (1) if we are calculating 16 bit CRC </p>
 
 </div>
 </div>
@@ -348,8 +343,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>true (1) if we are calculating 32 bit CRC </p>
-
 </div>
 </div>
 <a id="a5079c4cc219d36c88d66a3bf6cedf8c3"></a>
@@ -363,7 +356,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>archive offset (file position) of first byte of chunk information conent. When writing 3dm archives, this is the archive </p>
 
 </div>
 </div>
@@ -378,7 +370,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>When reading or writing 3dm archives, this is the </p>
 
 </div>
 </div>
@@ -402,7 +393,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

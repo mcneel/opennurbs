@@ -92,6 +92,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5a576912302ecb8ee3a5e2fee5b74c2d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a5a576912302ecb8ee3a5e2fee5b74c2d">SetRenderingSize</a> (const <a class="el" href="../../d8/d49/class_o_n__2i_size.html">ON_2iSize</a> &amp;size)</td></tr>
 <tr class="separator:a5a576912302ecb8ee3a5e2fee5b74c2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3156260c52ec3415876af4cd92535f55"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a3156260c52ec3415876af4cd92535f55">SetTargetPoint</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> target_point)</td></tr>
+<tr class="memdesc:a3156260c52ec3415876af4cd92535f55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the viewport target point.  <a href="#a3156260c52ec3415876af4cd92535f55">More...</a><br /></td></tr>
 <tr class="separator:a3156260c52ec3415876af4cd92535f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46a89bcdd9fdd798021e9068af0c2694"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a46a89bcdd9fdd798021e9068af0c2694">TargetPoint</a> () const</td></tr>
 <tr class="separator:a46a89bcdd9fdd798021e9068af0c2694"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,7 +130,6 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a909479d766cbdf90ebd404da84a492ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">tracing image  <a href="#a909479d766cbdf90ebd404da84a492ae">More...</a><br /></td></tr>
 <tr class="separator:a909479d766cbdf90ebd404da84a492ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24db763c1e0a2c837576d0ef308cf99c"><td class="memItemLeft" align="right" valign="top">ON::view_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a24db763c1e0a2c837576d0ef308cf99c">m_view_type</a></td></tr>
-<tr class="memdesc:a24db763c1e0a2c837576d0ef308cf99c"><td class="mdescLeft">&#160;</td><td class="mdescRight">model, page, or nested  <a href="#a24db763c1e0a2c837576d0ef308cf99c">More...</a><br /></td></tr>
 <tr class="separator:a24db763c1e0a2c837576d0ef308cf99c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b7ffd5bc2efaf7de03141936d877753"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/deb/class_o_n___viewport.html">ON_Viewport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a1b7ffd5bc2efaf7de03141936d877753">m_vp</a></td></tr>
 <tr class="memdesc:a1b7ffd5bc2efaf7de03141936d877753"><td class="mdescLeft">&#160;</td><td class="mdescRight">view projection information  <a href="#a1b7ffd5bc2efaf7de03141936d877753">More...</a><br /></td></tr>
@@ -188,7 +188,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The C++ default copy constructor and operator= work fine. Do not provide customized versions. NO ///&lt; <a class="el" href="../../d7/d51/class_o_n__3dm_view.html">ON_3dmView(const ON_3dmView&amp;)</a>; NO ///&lt; <a class="el" href="../../d7/d51/class_o_n__3dm_view.html">ON_3dmView</a>&amp; operator=(const ON_3dmView&amp;); </p>
 
 </div>
 </div>
@@ -476,7 +475,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the viewport target point. Parameters: target_point - [in] When in doubt, the point m_vp.FrustumCenterPoint(ON_UNSET_VALUE) is a good choice. Remarks: This point is saved on m_vp.m_target_point. </p>
+
+<p>Sets the viewport target point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">target_point</td><td>[in] When in doubt, the point m_vp.FrustumCenterPoint(ON_UNSET_VALUE) is a good choice.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>This point is saved on m_vp.m_target_point. </p>
 
 </div>
 </div>
@@ -494,7 +501,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>target point Returns: Target point. This point is saved on m_vp.m_target_point. The default constructor sets the target point to <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>. You must explicitly set the target point if you want to use it. Remarks: The target point is stored on m_vp.m_target_point. The value ON_3dmView.m_target is obsolete. This function always returns the value of m_vp.m_target_point. </p>
+<dl class="section return"><dt>Returns</dt><dd>Target point. This point is saved on m_vp.m_target_point. The default constructor sets the target point to <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d">ON_3dPoint::UnsetPoint</a>. You must explicitly set the target point if you want to use it. </dd></dl>
+<p>The target point is stored on m_vp.m_target_point. The value ON_3dmView.m_target is obsolete. This function always returns the value of m_vp.m_target_point.</p>
 
 </div>
 </div>
@@ -528,7 +536,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If true, the the camera location, camera direction, and lens angle should not be changed. It is ok to adjust clipping planes. </p>
 
 </div>
 </div>
@@ -601,7 +608,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>clipping planes Prior to Dec 14, 2010 m_clipping_planes was not saved with the view. After Dec 14, 2010 m_clipping_planes is saved. </p>
 
 </div>
 </div>
@@ -616,7 +622,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Construction plane </p>
 
 </div>
 </div>
@@ -631,7 +636,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The value of m_display_mode_id can be one of the "standard" ids from <a class="el" href="../../dc/d72/class_o_n___standard_display_mode_id.html">ON_StandardDisplayModeId</a>, nil, or a custom display mode settings on a particular computer. If you encounter a nil id or any other id that is not one of the "standard" display mode ids, then your application should use a default display mode, typically either wireframe or shaded, that is appropriate for general model viewing. The function ON::RhinoV3DisplayMode(id) will convert a display mode id into a legacy Rhino V3 display mode enum value. </p>
 
 </div>
 </div>
@@ -646,7 +650,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>name on window </p>
 
 </div>
 </div>
@@ -661,11 +664,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Named view information</p>
-<p>If this view was created from a named view, then m_named_view_id identifies the named view.</p>
-<p>The named views are <a class="el" href="../../d7/d51/class_o_n__3dm_view.html">ON_3dmView</a> classes saved in <a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#a726b9d4c5ee24b11b50091c0fe996539">ON_3dmSettings.m_named_views</a>[]. A named view's id is the value returned by ON_3dmView.m_vp.ViewportId() A named view's name is the value returned by <a class="el" href="../../d7/d51/class_o_n__3dm_view.html#a01db13568be4b904e2019e608fee40ca">ON_3dmView.m_name</a></p>
-<p>If this view is a named view, then m_named_view_id should be equal to m_vp.m_viewport_id.</p>
-<p>If this view is not a named view and not created from a named view, then m_named_view_id is equal to ON_nil_uuid. </p>
 
 </div>
 </div>
@@ -680,7 +678,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_view_type == ON::page_view_type, then the m_page_settings records the page size. Otherwise, m_page_settings should be ignored. </p>
 
 </div>
 </div>
@@ -695,7 +692,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>position of view in parent window (relative display device coordinates) </p>
 
 </div>
 </div>
@@ -726,8 +722,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>model, page, or nested </p>
 
 </div>
 </div>
@@ -769,7 +763,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

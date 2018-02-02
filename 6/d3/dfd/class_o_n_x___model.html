@@ -54,6 +54,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> to store the information read from 3dm archives. Please study example_read.cpp for details.  
+ <a href="../../d3/dfd/class_o_n_x___model.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../dc/d81/opennurbs__extensions_8h_source.html">opennurbs_extensions.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -67,30 +70,39 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abbb885e1a9dcb34b9de487d02b838d12"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#abbb885e1a9dcb34b9de487d02b838d12">ActiveComponentCount</a> (<a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">ON_ModelComponent::Type</a> component_type) const</td></tr>
 <tr class="separator:abbb885e1a9dcb34b9de487d02b838d12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab263492baae183368b4deccd1b213fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aab263492baae183368b4deccd1b213fd">AddDefaultDimensionStyle</a> (const wchar_t *dimension_style_name, ON::LengthUnitSystem length_unit_system, double model_tolerance)</td></tr>
+<tr class="memdesc:aab263492baae183368b4deccd1b213fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Easy way to add a default dimension style to the model.  <a href="#aab263492baae183368b4deccd1b213fd">More...</a><br /></td></tr>
 <tr class="separator:aab263492baae183368b4deccd1b213fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86ed58f0f7e770ebe3cbd4d326ba7a03"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a86ed58f0f7e770ebe3cbd4d326ba7a03">AddDefaultLayer</a> (const wchar_t *layer_name, <a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a> layer_color)</td></tr>
+<tr class="memdesc:a86ed58f0f7e770ebe3cbd4d326ba7a03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Easy way to add a default layer to the model. Properties: layer_name - [in] can be nullptr or empty. layer_color - [in] can be <a class="el" href="../../d0/df9/class_o_n___color.html#a54c9448a0e7a53032cdb7f111163aca9">ON_Color::UnsetColor</a>  <a href="#a86ed58f0f7e770ebe3cbd4d326ba7a03">More...</a><br /></td></tr>
 <tr class="separator:a86ed58f0f7e770ebe3cbd4d326ba7a03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3413c847ed8fad685ccd709322ddf648"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a3413c847ed8fad685ccd709322ddf648">AddLayer</a> (const wchar_t *layer_name, <a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a> layer_color)</td></tr>
+<tr class="memdesc:a3413c847ed8fad685ccd709322ddf648"><td class="mdescLeft">&#160;</td><td class="mdescRight">Easy way to add a layer to the model.  <a href="#a3413c847ed8fad685ccd709322ddf648">More...</a><br /></td></tr>
 <tr class="separator:a3413c847ed8fad685ccd709322ddf648"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32a3474b62b5ad318120be19f05a8be4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a32a3474b62b5ad318120be19f05a8be4">AddManagedModelComponent</a> (class <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> *managed_model_component, bool bResolveIdAndNameConflicts)</td></tr>
+<tr class="memdesc:a32a3474b62b5ad318120be19f05a8be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a managed model component (<a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a>, <a class="el" href="../../d8/df8/class_o_n___dim_style.html">ON_DimStyle</a>, ...) to this model.  <a href="#a32a3474b62b5ad318120be19f05a8be4">More...</a><br /></td></tr>
 <tr class="separator:a32a3474b62b5ad318120be19f05a8be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11f2c3e86cb8a728a4abcbec7aeded9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a11f2c3e86cb8a728a4abcbec7aeded9d">AddManagedModelComponent</a> (class <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> *managed_model_component)</td></tr>
 <tr class="separator:a11f2c3e86cb8a728a4abcbec7aeded9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4709866cabf9868469b1c5b2c2855915"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a4709866cabf9868469b1c5b2c2855915">AddManagedModelGeometryComponent</a> (class <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *managed_geometry_object, class <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> *managed_attributes, bool bResolveIdAndNameConflicts)</td></tr>
+<tr class="memdesc:a4709866cabf9868469b1c5b2c2855915"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an copy of the model_geometry and attrbutes to this model.  <a href="#a4709866cabf9868469b1c5b2c2855915">More...</a><br /></td></tr>
 <tr class="separator:a4709866cabf9868469b1c5b2c2855915"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09f77289c75e33d25e4c26b453554d37"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a09f77289c75e33d25e4c26b453554d37">AddManagedModelGeometryComponent</a> (class <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *managed_geometry_object, class <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> *managed_attributes)</td></tr>
 <tr class="separator:a09f77289c75e33d25e4c26b453554d37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2050e91080663a01d30d153a4a69d7f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a2050e91080663a01d30d153a4a69d7f0">AddModelComponent</a> (const class <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> &amp;model_component, bool bResolveIdAndNameConflicts)</td></tr>
+<tr class="memdesc:a2050e91080663a01d30d153a4a69d7f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an copy of a model_compoent to this model. model_component - [in] A copy of model_component is added to this model. The index, id, and name of the copied component are set the the model values (<a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> "Manifest" index, name, and id).  <a href="#a2050e91080663a01d30d153a4a69d7f0">More...</a><br /></td></tr>
 <tr class="separator:a2050e91080663a01d30d153a4a69d7f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e79744209d8e692b28951aa062d8969"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a1e79744209d8e692b28951aa062d8969">AddModelComponent</a> (const class <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> &amp;model_component)</td></tr>
 <tr class="separator:a1e79744209d8e692b28951aa062d8969"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3dc95c7ef9ca6489b0eca766de21c012"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a3dc95c7ef9ca6489b0eca766de21c012">AddModelComponentForExperts</a> (class <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> *model_component, bool bManagedComponent, bool bResolveIdAndNameConflicts, bool bUpdateComponentIdentification)</td></tr>
+<tr class="memdesc:a3dc95c7ef9ca6489b0eca766de21c012"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a model component to this model and control how the model_component instance is managed.  <a href="#a3dc95c7ef9ca6489b0eca766de21c012">More...</a><br /></td></tr>
 <tr class="separator:a3dc95c7ef9ca6489b0eca766de21c012"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a478fe8f56e6f7933797723416950466d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a478fe8f56e6f7933797723416950466d">AddModelGeometryComponent</a> (const class <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *geometry_object, const class <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> *attributes, bool bResolveIdAndNameConflicts)</td></tr>
+<tr class="memdesc:a478fe8f56e6f7933797723416950466d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an copy of the model_geometry and attrbutes to this model.  <a href="#a478fe8f56e6f7933797723416950466d">More...</a><br /></td></tr>
 <tr class="separator:a478fe8f56e6f7933797723416950466d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6dd1f2fef0a3af45cf1b67af4d854d8f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a6dd1f2fef0a3af45cf1b67af4d854d8f">AddModelGeometryComponent</a> (const class <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *geometry_object, const class <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> *attributes)</td></tr>
 <tr class="separator:a6dd1f2fef0a3af45cf1b67af4d854d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6862aa32782d6c347fb6615f3a49799"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aa6862aa32782d6c347fb6615f3a49799">AddModelGeometryComponentForExperts</a> (bool bManageGeometry, class <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *geometry_object, bool bManageAttributes, class <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> *attributes, bool bResolveIdAndNameConflicts)</td></tr>
+<tr class="memdesc:aa6862aa32782d6c347fb6615f3a49799"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add geometry and attibutes to this model and control how the instances are managed.  <a href="#aa6862aa32782d6c347fb6615f3a49799">More...</a><br /></td></tr>
 <tr class="separator:aa6862aa32782d6c347fb6615f3a49799"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8ff6c4dc08a3f25657c9173f7f856b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ae8ff6c4dc08a3f25657c9173f7f856b7">ComponentFromId</a> (<a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">ON_ModelComponent::Type</a> component_type, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> component_model_id) const</td></tr>
 <tr class="separator:ae8ff6c4dc08a3f25657c9173f7f856b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -117,12 +129,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6098289547298339cc91c8e001fb19b5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a6098289547298339cc91c8e001fb19b5">DimensionStyleFromId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> dimension_styleid) const</td></tr>
 <tr class="separator:a6098289547298339cc91c8e001fb19b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad76c1a34e48c658672937b3ea1035490"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ad76c1a34e48c658672937b3ea1035490">DimensionStyleFromIndex</a> (int dimension_style_index) const</td></tr>
+<tr class="memdesc:ad76c1a34e48c658672937b3ea1035490"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a dimension style from its model index.  <a href="#ad76c1a34e48c658672937b3ea1035490">More...</a><br /></td></tr>
 <tr class="separator:ad76c1a34e48c658672937b3ea1035490"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab62ccd442ddd9ccb6a1b12c984ff1add"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab62ccd442ddd9ccb6a1b12c984ff1add">DimensionStyleFromName</a> (const wchar_t *dimension_style_name) const</td></tr>
 <tr class="separator:ab62ccd442ddd9ccb6a1b12c984ff1add"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a585f4c4d60afa010dcfb94d8210d035d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a585f4c4d60afa010dcfb94d8210d035d">DimensionStyleFromNameHash</a> (<a class="el" href="../../da/de3/class_o_n___name_hash.html">ON_NameHash</a> dimension_style_name_hash) const</td></tr>
 <tr class="separator:a585f4c4d60afa010dcfb94d8210d035d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c8c9d0418b85859d464267f26d8e128"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a4c8c9d0418b85859d464267f26d8e128">DimensionStyleWithFontCharacteristics</a> (const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> &amp;font_characteristics, double model_space_text_scale)</td></tr>
+<tr class="memdesc:a4c8c9d0418b85859d464267f26d8e128"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find or create a dimension style with the specified font characteristics.  <a href="#a4c8c9d0418b85859d464267f26d8e128">More...</a><br /></td></tr>
 <tr class="separator:a4c8c9d0418b85859d464267f26d8e128"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9dde348f8b2f7d17994689bf374db588"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a9dde348f8b2f7d17994689bf374db588">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const</td></tr>
 <tr class="memdesc:a9dde348f8b2f7d17994689bf374db588"><td class="mdescLeft">&#160;</td><td class="mdescRight">text dump of entire model  <a href="#a9dde348f8b2f7d17994689bf374db588">More...</a><br /></td></tr>
@@ -142,8 +156,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8cb8d7542e7a5edc3d7c6725b8b5915e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a8cb8d7542e7a5edc3d7c6725b8b5915e">FirstDimensionStyleFromManagedFontSerialNumber</a> (unsigned int managed_font_serial_number, double model_space_text_scale, bool bIgnoreSystemDimStyles) const</td></tr>
 <tr class="separator:a8cb8d7542e7a5edc3d7c6725b8b5915e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6d9bf6babe5b6509db6228a93df6446"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab6d9bf6babe5b6509db6228a93df6446">GetDocumentUserString</a> (const wchar_t *key, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;string_value) const</td></tr>
+<tr class="memdesc:ab6d9bf6babe5b6509db6228a93df6446"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get user string from the document.  <a href="#ab6d9bf6babe5b6509db6228a93df6446">More...</a><br /></td></tr>
 <tr class="separator:ab6d9bf6babe5b6509db6228a93df6446"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba39627cf25f07fa036b39e9a3f96ee6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aba39627cf25f07fa036b39e9a3f96ee6">GetDocumentUserStrings</a> (<a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d0/d82/class_o_n___user_string.html">ON_UserString</a> &gt; &amp;user_strings) const</td></tr>
+<tr class="memdesc:aba39627cf25f07fa036b39e9a3f96ee6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of all user strings in the document.  <a href="#aba39627cf25f07fa036b39e9a3f96ee6">More...</a><br /></td></tr>
 <tr class="separator:aba39627cf25f07fa036b39e9a3f96ee6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf40a90fd16f9fe7f4de273a0c92ae59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#acf40a90fd16f9fe7f4de273a0c92ae59">ImageFromFileContent</a> (const <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> &amp;image_file_content_hash) const</td></tr>
 <tr class="separator:acf40a90fd16f9fe7f4de273a0c92ae59"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -154,28 +170,35 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa83f34216fb486dcf8966f6eb59ecc0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aa83f34216fb486dcf8966f6eb59ecc0c">ImageFromId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> image_id) const</td></tr>
 <tr class="separator:aa83f34216fb486dcf8966f6eb59ecc0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab978105b119ec8a162116d6262c8c0a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab978105b119ec8a162116d6262c8c0a8">ImageFromIndex</a> (int image_model_index) const</td></tr>
+<tr class="memdesc:ab978105b119ec8a162116d6262c8c0a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an image from its model index.  <a href="#ab978105b119ec8a162116d6262c8c0a8">More...</a><br /></td></tr>
 <tr class="separator:ab978105b119ec8a162116d6262c8c0a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58b4490125175d0fb836b46e53897637"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a58b4490125175d0fb836b46e53897637">IncrementalReadBegin</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, bool bManageComponents, unsigned int table_filter, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log)</td></tr>
+<tr class="memdesc:a58b4490125175d0fb836b46e53897637"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads everything up to the object table.  <a href="#a58b4490125175d0fb836b46e53897637">More...</a><br /></td></tr>
 <tr class="separator:a58b4490125175d0fb836b46e53897637"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab096da2ee6eafb6ba15c67e58f3a2cd7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab096da2ee6eafb6ba15c67e58f3a2cd7">IncrementalReadFinish</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, bool bManageComponents, unsigned int table_filter, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log)</td></tr>
+<tr class="memdesc:ab096da2ee6eafb6ba15c67e58f3a2cd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads everything up to the object table.  <a href="#ab096da2ee6eafb6ba15c67e58f3a2cd7">More...</a><br /></td></tr>
 <tr class="separator:ab096da2ee6eafb6ba15c67e58f3a2cd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b6b57d82e84fd6389571496aeda481f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a2b6b57d82e84fd6389571496aeda481f">IncrementalReadModelGeometry</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, bool bManageModelGeometryComponent, bool bManageGeometry, bool bManageAttributes, unsigned int model_object_type_filter, <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> &amp;model_geometry_reference)</td></tr>
+<tr class="memdesc:a2b6b57d82e84fd6389571496aeda481f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the next item in the model geometry table.  <a href="#a2b6b57d82e84fd6389571496aeda481f">More...</a><br /></td></tr>
 <tr class="separator:a2b6b57d82e84fd6389571496aeda481f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0bda5583490cb0a95678eea577095c3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ac0bda5583490cb0a95678eea577095c3">LayerFromAttributes</a> (const <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> &amp;attributes) const</td></tr>
 <tr class="separator:ac0bda5583490cb0a95678eea577095c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94b758cf04a6d880a59d2c1ffd249299"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a94b758cf04a6d880a59d2c1ffd249299">LayerFromId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> layer_model_id) const</td></tr>
 <tr class="separator:a94b758cf04a6d880a59d2c1ffd249299"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24c99d64cd4b1f121610fb04ba2aea18"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a24c99d64cd4b1f121610fb04ba2aea18">LayerFromIndex</a> (int layer_model_index) const</td></tr>
+<tr class="memdesc:a24c99d64cd4b1f121610fb04ba2aea18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a layer from its model index.  <a href="#a24c99d64cd4b1f121610fb04ba2aea18">More...</a><br /></td></tr>
 <tr class="separator:a24c99d64cd4b1f121610fb04ba2aea18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81a76401fcc725c6caabdea0bce5e231"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a81a76401fcc725c6caabdea0bce5e231">LayerFromName</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> layer_parent_id, const wchar_t *layer_name) const</td></tr>
 <tr class="separator:a81a76401fcc725c6caabdea0bce5e231"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2f6192f476ada55532ef7dae55d53bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ae2f6192f476ada55532ef7dae55d53bc">LayerFromNameHash</a> (const <a class="el" href="../../da/de3/class_o_n___name_hash.html">ON_NameHash</a> &amp;layer_model_name_hash) const</td></tr>
 <tr class="separator:ae2f6192f476ada55532ef7dae55d53bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa78cb3bc02bad3b6e8cc0a699d3d8c90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aa78cb3bc02bad3b6e8cc0a699d3d8c90">LinePatternFromAttributes</a> (const <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> &amp;attributes) const</td></tr>
+<tr class="memdesc:aa78cb3bc02bad3b6e8cc0a699d3d8c90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get linetype from object attributes.  <a href="#aa78cb3bc02bad3b6e8cc0a699d3d8c90">More...</a><br /></td></tr>
 <tr class="separator:aa78cb3bc02bad3b6e8cc0a699d3d8c90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5e3c7e4d8b61e3a51fdebdc258adbf5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ae5e3c7e4d8b61e3a51fdebdc258adbf5">LinePatternFromId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> line_pattern_model_id) const</td></tr>
 <tr class="separator:ae5e3c7e4d8b61e3a51fdebdc258adbf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac21f433ff05a753ffaedf5c323bb6875"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ac21f433ff05a753ffaedf5c323bb6875">LinePatternFromIndex</a> (int line_pattern_model_index) const</td></tr>
+<tr class="memdesc:ac21f433ff05a753ffaedf5c323bb6875"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a line pattern from its model index.  <a href="#ac21f433ff05a753ffaedf5c323bb6875">More...</a><br /></td></tr>
 <tr class="separator:ac21f433ff05a753ffaedf5c323bb6875"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3b0a4357b3dccef93f5fbe972833324"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ad3b0a4357b3dccef93f5fbe972833324">LinePatternFromLayerIndex</a> (int layer_index) const</td></tr>
 <tr class="separator:ad3b0a4357b3dccef93f5fbe972833324"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,8 +207,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a154b7c66405c7f07d47f155171123e9c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a154b7c66405c7f07d47f155171123e9c">LinePatternFromNameHash</a> (<a class="el" href="../../da/de3/class_o_n___name_hash.html">ON_NameHash</a> line_pattern_model_name_hash) const</td></tr>
 <tr class="separator:a154b7c66405c7f07d47f155171123e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70eba676014cc0e52d093a8e4206eb16"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest</a> () const</td></tr>
+<tr class="memdesc:a70eba676014cc0e52d093a8e4206eb16"><td class="mdescLeft">&#160;</td><td class="mdescRight">A manifest of every model component in this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a>.  <a href="#a70eba676014cc0e52d093a8e4206eb16">More...</a><br /></td></tr>
 <tr class="separator:a70eba676014cc0e52d093a8e4206eb16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33d23c68bce7a10c2df3787fbdae1ea9"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a33d23c68bce7a10c2df3787fbdae1ea9">ModelContentVersionNumber</a> () const</td></tr>
+<tr class="memdesc:a33d23c68bce7a10c2df3787fbdae1ea9"><td class="mdescLeft">&#160;</td><td class="mdescRight">This number changes every time the content of the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> is modified.  <a href="#a33d23c68bce7a10c2df3787fbdae1ea9">More...</a><br /></td></tr>
 <tr class="separator:a33d23c68bce7a10c2df3787fbdae1ea9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9909672f71b066ff4b4525c2c1c021db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a9909672f71b066ff4b4525c2c1c021db">ModelGeometryBoundingBox</a> () const</td></tr>
 <tr class="separator:a9909672f71b066ff4b4525c2c1c021db"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,6 +225,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a51afd1506f1cd2bafcdbc2ac00045b8c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a51afd1506f1cd2bafcdbc2ac00045b8c">OriginalToModelMap</a> () const</td></tr>
 <tr class="separator:a51afd1506f1cd2bafcdbc2ac00045b8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a356596cc1d9606d5877fd503f28fbe44"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a356596cc1d9606d5877fd503f28fbe44">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, unsigned int table_filter, unsigned int model_object_type_filter, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log)</td></tr>
+<tr class="memdesc:a356596cc1d9606d5877fd503f28fbe44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads an openNURBS archive and saves the information in this model  <a href="#a356596cc1d9606d5877fd503f28fbe44">More...</a><br /></td></tr>
 <tr class="separator:a356596cc1d9606d5877fd503f28fbe44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afea4fe901b772568deed97d173dca75f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#afea4fe901b772568deed97d173dca75f">Read</a> (const char *filename, unsigned int table_filter, unsigned int model_object_type_filter, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log)</td></tr>
 <tr class="separator:afea4fe901b772568deed97d173dca75f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,24 +248,31 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a365fe884efd8768d74650901f704da45"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a365fe884efd8768d74650901f704da45">RenderMaterialFromIndex</a> (int render_material_index) const</td></tr>
 <tr class="separator:a365fe884efd8768d74650901f704da45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49d57a2f2341bd2951b36524f300da1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a49d57a2f2341bd2951b36524f300da1d">RenderMaterialFromLayerIndex</a> (int layer_index) const</td></tr>
+<tr class="memdesc:a49d57a2f2341bd2951b36524f300da1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get render material from object attributes.  <a href="#a49d57a2f2341bd2951b36524f300da1d">More...</a><br /></td></tr>
 <tr class="separator:a49d57a2f2341bd2951b36524f300da1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46986bd8b13949f831acf510f21b21b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a46986bd8b13949f831acf510f21b21b3">Reset</a> ()</td></tr>
 <tr class="separator:a46986bd8b13949f831acf510f21b21b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bbfa27a4b56e454067fb667fba99b3c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a3bbfa27a4b56e454067fb667fba99b3c">SetCurrentDimensionStyleId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> dimension_style_id)</td></tr>
 <tr class="separator:a3bbfa27a4b56e454067fb667fba99b3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae35541db29fea076ddf67fbe1c21f85c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ae35541db29fea076ddf67fbe1c21f85c">SetDocumentUserString</a> (const wchar_t *key, const wchar_t *string_value)</td></tr>
+<tr class="memdesc:ae35541db29fea076ddf67fbe1c21f85c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach a user string to the document.  <a href="#ae35541db29fea076ddf67fbe1c21f85c">More...</a><br /></td></tr>
 <tr class="separator:ae35541db29fea076ddf67fbe1c21f85c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75302bf563fa7d09e9e30fdda088435e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a75302bf563fa7d09e9e30fdda088435e">UsesIDef</a> (const <a class="el" href="../../de/de8/class_o_n___instance_ref.html">ON_InstanceRef</a> &amp;iref, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> idef_uuid) const</td></tr>
+<tr class="memdesc:a75302bf563fa7d09e9e30fdda088435e"><td class="mdescLeft">&#160;</td><td class="mdescRight">See if the instance reference iref refers to an instance definition.  <a href="#a75302bf563fa7d09e9e30fdda088435e">More...</a><br /></td></tr>
 <tr class="separator:a75302bf563fa7d09e9e30fdda088435e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae78efb28ef00be9b443b92604d5a2175"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#ae78efb28ef00be9b443b92604d5a2175">ValdateComponentIdAndName</a> (<a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">ON_ModelComponent::Type</a> component_type, const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;candidate_id, const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;component_parent_id, const wchar_t *candidate_name, bool bResolveIdConflict, bool bResolveNameConflict, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;model_id, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;model_name) const</td></tr>
 <tr class="separator:ae78efb28ef00be9b443b92604d5a2175"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b880097cdfea21a5a9c03b3770d510d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a3b880097cdfea21a5a9c03b3770d510d">WireframeColorFromAttributes</a> (const <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> &amp;attributes) const</td></tr>
+<tr class="memdesc:a3b880097cdfea21a5a9c03b3770d510d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get wireframe drawing color from object attributes.  <a href="#a3b880097cdfea21a5a9c03b3770d510d">More...</a><br /></td></tr>
 <tr class="separator:a3b880097cdfea21a5a9c03b3770d510d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb080afd3f41d09c76eb7b1c8aab21da"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da">Write</a> (const char *filename, int version=0, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log=nullptr) const</td></tr>
+<tr class="memdesc:aeb080afd3f41d09c76eb7b1c8aab21da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes contents of this model to an openNURBS archive.  <a href="#aeb080afd3f41d09c76eb7b1c8aab21da">More...</a><br /></td></tr>
 <tr class="separator:aeb080afd3f41d09c76eb7b1c8aab21da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa76d97aee9adf79bdf41097f350048d2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#aa76d97aee9adf79bdf41097f350048d2">Write</a> (const wchar_t *filename, int version=0, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log=nullptr) const</td></tr>
+<tr class="memdesc:aa76d97aee9adf79bdf41097f350048d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes contents of this model to an openNURBS archive.  <a href="#aa76d97aee9adf79bdf41097f350048d2">More...</a><br /></td></tr>
 <tr class="separator:aa76d97aee9adf79bdf41097f350048d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d138eb3829f2f4d386b0d42319d1315"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dfd/class_o_n_x___model.html#a3d138eb3829f2f4d386b0d42319d1315">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, int version=0, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *error_log=nullptr) const</td></tr>
+<tr class="memdesc:a3d138eb3829f2f4d386b0d42319d1315"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes contents of this model to an openNURBS archive.  <a href="#a3d138eb3829f2f4d386b0d42319d1315">More...</a><br /></td></tr>
 <tr class="separator:a3d138eb3829f2f4d386b0d42319d1315"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
@@ -277,7 +310,7 @@ Friends</h2></td></tr>
 <tr class="separator:a4183844ca76b9750e3ea72f3309afe4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> to store the information read from 3dm archives. Please study example_read.cpp for details. </p>
+<div class="textblock"><p>Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> to store the information read from 3dm archives. Please study example_read.cpp for details. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6a92b0d0bd753cc0c52c468a68effdfc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6a92b0d0bd753cc0c52c468a68effdfc">&#9670;&nbsp;</a></span>ONX_Model()</h2>
@@ -337,7 +370,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of active and deleted components. Count does not include system components. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of active and deleted components. Count does not include system components. </dd></dl>
 
 </div>
 </div>
@@ -356,7 +389,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of active components. Count does not include system components. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of active components. Count does not include system components. </dd></dl>
 
 </div>
 </div>
@@ -391,7 +424,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Easy way to add a default dimension style to the model. Parameters: dimension_style_name - [in] can be nullptr or empty length_unit_system - [in] If ON::LengthUnitSystem::Unset, then settings length unit system is used. tolerance - [in] If not &gt; 0, then settings tolerance is used. Returns: The default dimension style's index (&gt;=0) is returned. </p>
+
+<p>Easy way to add a default dimension style to the model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dimension_style_name</td><td>[in] can be nullptr or empty</td></tr>
+    <tr><td class="paramname">length_unit_system</td><td>[in] If ON::LengthUnitSystem::Unset, then settings length unit system is used.</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] If not &gt; 0, then settings tolerance is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The default dimension style's index (&gt;=0) is returned. </dd></dl>
 
 </div>
 </div>
@@ -420,7 +463,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Easy way to add a default layer to the model. Properties: layer_name - [in] can be nullptr or empty. layer_color - [in] can be <a class="el" href="../../d0/df9/class_o_n___color.html#a54c9448a0e7a53032cdb7f111163aca9" title="0xFFFFFFFFu ">ON_Color::UnsetColor</a> Returns: The default layer's index (&gt;=0) is returned. </p>
+
+<p>Easy way to add a default layer to the model. Properties: layer_name - [in] can be nullptr or empty. layer_color - [in] can be <a class="el" href="../../d0/df9/class_o_n___color.html#a54c9448a0e7a53032cdb7f111163aca9">ON_Color::UnsetColor</a> </p>
+<dl class="section return"><dt>Returns</dt><dd>The default layer's index (&gt;=0) is returned. </dd></dl>
 
 </div>
 </div>
@@ -449,7 +494,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Easy way to add a layer to the model. Returns: If layer_name is valid, the layer's index (&gt;=0) is returned. Otherwise, ON_UNSET_INT_INDEX is returned. </p>
+
+<p>Easy way to add a layer to the model. </p>
+<dl class="section return"><dt>Returns</dt><dd>If layer_name is valid, the layer's index (&gt;=0) is returned. Otherwise, ON_UNSET_INT_INDEX is returned. </dd></dl>
 
 </div>
 </div>
@@ -478,10 +525,11 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add a managed model component (<a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a>, <a class="el" href="../../d8/df8/class_o_n___dim_style.html">ON_DimStyle</a>, ...) to this model.</p>
+
+<p>Add a managed model component (<a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a>, <a class="el" href="../../d8/df8/class_o_n___dim_style.html">ON_DimStyle</a>, ...) to this model. </p>
 <p>managed_model_component - [in] managed_model_component must be created by operator new and on the heap. It will be deleted when the model and last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed.</p>
 <p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil and not used in this model and model_component.Name() must be correctly set. If bResolveIdAndNameConflicts is true, then id and name will be modified as needed in managed_model_component, the model, and the manifest.</p>
-<p>Returns: A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </dd></dl>
 
 </div>
 </div>
@@ -534,11 +582,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add an copy of the model_geometry and attrbutes to this model.</p>
-<p>Parameters: managed_geometry_object - [in] managed_geometry_object must point to an instance geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed.</p>
-<p>managed_attributes - [in] managed_attributes should be nullptr or point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed.</p>
-<p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then managed_attributes must be nullptr or managed_attributes-&gt;m_uuid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed.</p>
-<p>Returns: A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </p>
+
+<p>Add an copy of the model_geometry and attrbutes to this model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">managed_geometry_object</td><td>[in] managed_geometry_object must point to an instance geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. </td></tr>
+    <tr><td class="paramname">managed_attributes</td><td>[in] managed_attributes should be nullptr or point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. </td></tr>
+    <tr><td class="paramname">bResolveIdAndNameConflicts</td><td>[in] If bResolveIdAndNameConflicts is false, then managed_attributes must be nullptr or managed_attributes-&gt;m_uuid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </dd></dl>
 
 </div>
 </div>
@@ -595,9 +649,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add an copy of a model_compoent to this model. model_component - [in] A copy of model_component is added to this model. The index, id, and name of the copied component are set the the model values (<a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> "Manifest" index, name, and id).</p>
+
+<p>Add an copy of a model_compoent to this model. model_component - [in] A copy of model_component is added to this model. The index, id, and name of the copied component are set the the model values (<a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> "Manifest" index, name, and id). </p>
 <p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil and not used in this model and model_component.Name() must be correctly set. If bResolveIdAndNameConflicts is true, then id and name will be modified as needed in the model and manifest.</p>
-<p>Returns: A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </dd></dl>
 
 </div>
 </div>
@@ -656,12 +711,13 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add a model component to this model and control how the model_component instance is managed.</p>
-<p>model_component - [in] An <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> created on the heap by calling new X where X is derived from <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a>.</p>
-<p>bManagedComponent - [in] If bManagedComponent is true, then ~ONX_Model will delete the component. If bManagedComponent is false, then you are responsible for insuring the component exists past the desctruction of this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a>.</p>
+
+<p>Add a model component to this model and control how the model_component instance is managed. </p>
+<p>model_component - [in] An <a class="el" href="../../dc/d5c/class_o_n___model_component.html" title="The ON_ModelComponent class is a base class for all components in a model and manages the index...">ON_ModelComponent</a> created on the heap by calling new X where X is derived from <a class="el" href="../../dc/d5c/class_o_n___model_component.html" title="The ON_ModelComponent class is a base class for all components in a model and manages the index...">ON_ModelComponent</a>.</p>
+<p>bManagedComponent - [in] If bManagedComponent is true, then ~ONX_Model will delete the component. If bManagedComponent is false, then you are responsible for insuring the component exists past the desctruction of this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a>.</p>
 <p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil and not used in this model and model_component.Name() must be correctly set. If bResolveIdAndNameConflicts is true, then id and name will be modified as needed.</p>
-<p>bUpdateComponentIdentification - [in] The model_component Index(), Id(), and Name() values are set to match the ones used in the model (<a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> "Manifest" values.)</p>
-<p>Returns: A reference to the added model component. If the reference is empty (<a class="el" href="../../df/de4/class_o_n___model_component_reference.html#a899eb62ff401aba716cf9e83cdb0245e">ON_ModelComponentReference::IsEmpty()</a> is true), then the input was not valid and the model component was not added. </p>
+<p>bUpdateComponentIdentification - [in] The model_component Index(), Id(), and Name() values are set to match the ones used in the model (<a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> "Manifest" values.)</p>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (<a class="el" href="../../df/de4/class_o_n___model_component_reference.html#a899eb62ff401aba716cf9e83cdb0245e">ON_ModelComponentReference::IsEmpty()</a> is true), then the input was not valid and the model component was not added. </dd></dl>
 
 </div>
 </div>
@@ -696,10 +752,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add an copy of the model_geometry and attrbutes to this model.</p>
-<p>Parameters: geometry_object - [in] geometry_object must point to a geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object. A copy of geometry_object is added to and managed by this model. attributes - [in] nullptr if not available. A copy of attributes is added to and managed by this model.</p>
-<p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then attributes must be nullptr or attributes-&gt;m_uid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed.</p>
-<p>Returns: A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </p>
+
+<p>Add an copy of the model_geometry and attrbutes to this model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">geometry_object</td><td>[in] geometry_object must point to a geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object. A copy of geometry_object is added to and managed by this model.</td></tr>
+    <tr><td class="paramname">attributes</td><td>[in] nullptr if not available. A copy of attributes is added to and managed by this model. </td></tr>
+    <tr><td class="paramname">bResolveIdAndNameConflicts</td><td>[in] If bResolveIdAndNameConflicts is false, then attributes must be nullptr or attributes-&gt;m_uid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </dd></dl>
 
 </div>
 </div>
@@ -774,13 +837,19 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add geometry and attibutes to this model and control how the instances are managed.</p>
-<p>Parameters: bManageGeometry - [in] If true, geometry_object should point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. If false, the expert caller is carefully managing the instance and memory to insure model_geometry is a valid instance while this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and any <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are active.</p>
-<p>geometry_object - [in] geometry_object should point to a geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object.</p>
-<p>bManageAttributes - [in] If true, attributes should be nullptr or point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. If false, the expert caller is carefully managing the instance and memory to insure attributes is a valid instance while this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and and <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are active.</p>
-<p>attributes - [in] nullptr if not avaiable.</p>
-<p>bResolveIdAndNameConflicts - [in] If bResolveIdAndNameConflicts is false, then attributes must be nullptr or attributes-&gt;m_uid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed.</p>
-<p>Returns: A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </p>
+
+<p>Add geometry and attibutes to this model and control how the instances are managed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bManageGeometry</td><td>[in] If true, geometry_object should point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. If false, the expert caller is carefully managing the instance and memory to insure model_geometry is a valid instance while this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and any <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are active. </td></tr>
+    <tr><td class="paramname">geometry_object</td><td>[in] geometry_object should point to a geometric object (curve, surface, brep, mesh, points, ...), a render light, an annotation object, or a detail object. </td></tr>
+    <tr><td class="paramname">bManageAttributes</td><td>[in] If true, attributes should be nullptr or point to an instance created by operator new and on the heap. It will be deleted when the this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and the last <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are destroyed. If false, the expert caller is carefully managing the instance and memory to insure attributes is a valid instance while this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and and <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> are active. </td></tr>
+    <tr><td class="paramname">attributes</td><td>[in] nullptr if not avaiable. </td></tr>
+    <tr><td class="paramname">bResolveIdAndNameConflicts</td><td>[in] If bResolveIdAndNameConflicts is false, then attributes must be nullptr or attributes-&gt;m_uid must be non-nil and not used in this model. If bResolveIdAndNameConflicts is true, then id will be modified as needed. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the added model component. If the reference is empty (ON_ModelComponent::IsEmpty() is true) then the input was not valid. </dd></dl>
 
 </div>
 </div>
@@ -962,7 +1031,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A SHA-1 hash of the model's content. If two models have identical content, then the have equal <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a209a4b123b3a0ecdd2271188508fe28b">ContentHash()</a> values. </p>
+<dl class="section return"><dt>Returns</dt><dd>A SHA-1 hash of the model's content. If two models have identical content, then the have equal <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a209a4b123b3a0ecdd2271188508fe28b">ContentHash()</a> values. </dd></dl>
 
 </div>
 </div>
@@ -980,7 +1049,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Current dimension style = DimensionStyleFromId(CurrentDimensionStyleId()) </p>
+<dl class="section return"><dt>Returns</dt><dd>Current dimension style = DimensionStyleFromId(CurrentDimensionStyleId()) </dd></dl>
 
 </div>
 </div>
@@ -998,7 +1067,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Id of the current dimension style or nil if the current style is not set or not in this model. </p>
+<dl class="section return"><dt>Returns</dt><dd>Id of the current dimension style or nil if the current style is not set or not in this model. </dd></dl>
 
 </div>
 </div>
@@ -1016,7 +1085,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A system dimension style that is the default for this model and is used when a referenced dimension style is missing from this model. </p>
+<dl class="section return"><dt>Returns</dt><dd>A system dimension style that is the default for this model and is used when a referenced dimension style is missing from this model. </dd></dl>
 
 </div>
 </div>
@@ -1035,7 +1104,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of deleted components. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of deleted components. </dd></dl>
 
 </div>
 </div>
@@ -1072,7 +1141,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a dimension style from its model index. Parameters: dimension_style_model_index - [in] Returns: An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the dimension style. Remarks: Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> manifest item index are the same. </p>
+
+<p>Get a dimension style from its model index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dimension_style_model_index</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the dimension style. </dd></dl>
+<p>Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> manifest item index are the same. </p>
 
 </div>
 </div>
@@ -1137,7 +1215,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Find or create a dimension style with the specified font characteristics. </p>
+
+<p>Find or create a dimension style with the specified font characteristics. </p>
 
 </div>
 </div>
@@ -1158,8 +1237,6 @@ Friends</h2></td></tr>
 </div><div class="memdoc">
 
 <p>text dump of entire model </p>
-<p>END model document level user string tools</p>
-<p>BEGIN model text dump tools </p>
 
 </div>
 </div>
@@ -1206,7 +1283,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A text dump of all component lists. </p>
+<dl class="section return"><dt>Returns</dt><dd>A text dump of all component lists. </dd></dl>
 
 </div>
 </div>
@@ -1281,7 +1358,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: font - [in] model_space_text_scale - [in] If model_space_text_scale &gt; 0, then the DimScale() must be equal to model_space_text_scale. bIgnoreSystemDimStyles - [in] Returns: The first dimension style with the specified font. Remarks: dimension styles with a non-nil parent id are ignored. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">font</td><td>[in]</td></tr>
+    <tr><td class="paramname">model_space_text_scale</td><td>[in] If model_space_text_scale &gt; 0, then the DimScale() must be equal to model_space_text_scale.</td></tr>
+    <tr><td class="paramname">bIgnoreSystemDimStyles</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The first dimension style with the specified font. </dd></dl>
+<p>dimension styles with a non-nil parent id are ignored. </p>
 
 </div>
 </div>
@@ -1316,7 +1402,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: managed_font_serial_number - [in] model_space_text_scale - [in] If model_space_text_scale &gt; 0, then the DimScale() must be equal to model_space_text_scale. bIgnoreSystemDimStyles - [in] Returns: The first dimension style with the specified font. Remarks: dimension styles with a non-nil parent id are ignored. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">managed_font_serial_number</td><td>[in]</td></tr>
+    <tr><td class="paramname">model_space_text_scale</td><td>[in] If model_space_text_scale &gt; 0, then the DimScale() must be equal to model_space_text_scale.</td></tr>
+    <tr><td class="paramname">bIgnoreSystemDimStyles</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The first dimension style with the specified font. </dd></dl>
+<p>dimension styles with a non-nil parent id are ignored. </p>
 
 </div>
 </div>
@@ -1345,7 +1440,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get user string from the document. Parameters: key - [in] id used to retrieve the string. string_value - [out] Returns: True if a string with id was found. </p>
+
+<p>Get user string from the document. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>[in] id used to retrieve the string.</td></tr>
+    <tr><td class="paramname">string_value</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a string with id was found. </dd></dl>
 
 </div>
 </div>
@@ -1364,7 +1468,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a list of all user strings in the document. Parameters: user_strings - [out] user strings are appended to this list. Returns: Number of elements appended to the user_strings list. </p>
+
+<p>Get a list of all user strings in the document. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">user_strings</td><td>[out] user strings are appended to this list.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of elements appended to the user_strings list. </dd></dl>
 
 </div>
 </div>
@@ -1527,7 +1639,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get an image from its model index. Parameters: image_model_index - [in] Returns: An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the image. Remarks: Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> manifest item index are the same. </p>
+
+<p>Get an image from its model index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">image_model_index</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the image. </dd></dl>
+<p>Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> manifest item index are the same. </p>
 
 </div>
 </div>
@@ -1568,19 +1689,21 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reads everything up to the object table.</p>
-<p>Parameters: archive - [in] archive to read from bManageComponents - [in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> destructor will delete the model components created by this function. false: The caller must delete the <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> is destroyed. table_filter - [in] If table_filter is zero, then everything in the archive before the model object table is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum. error_log - [out] any archive reading errors are logged here. pass nullptr if you don't want to log errors</p>
-<p>Returns: If the input is valid and everything before the model object table is successfully read, then true is returned. Otherwise false is returned.</p>
-<p>Example:</p>
-<p>/ for ASCII file names const char* sFileName = ....; FILE* fp = ON::OpenFile( sFileName, "rb");</p>
-<p>/ for UNICODE file names const wchar_t* wsFileName = ....; FILE* fp = ON::OpenFile( wsFileName, L"rb");</p>
-<p>bool bModelRead = false; bool bModelIsValid = false;</p>
-<p><a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> error_log;</p>
-<p>if ( 0 != fp ) { <a class="el" href="../../de/d36/class_o_n___binary_file.html">ON_BinaryFile</a> archive( ON::archive_mode::read3dm, fp ); <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> model;</p>
-<p>/ Read settings, layer information, and other tables / with information that is referenced by model object / attributes. bModelRead = model.IncrementalReadBegin( archive, error_log );</p>
-<p>if ( bModelRead ) { object_filter = ON::mesh_object ///&lt; read meshes | ON::curve_object ///&lt; and curves ; for(;;) { / read the next model object ON_ModelGeometryComponent* pModelObject = model.IncrementalReadModelObject(object_filter,0); if ( 0 == pModelObject ) break;</p>
-<p>... ///&lt; work with this model object</p>
-<p>/ done with this object. pModelObject = 0; model.m_object_table.Remove(); } } ON::CloseFile( fp ); } See Also: ONX_Model::IsValid <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da">ONX_Model::Write</a> ONX_Model::m_crc_error_count </p>
+
+<p>Reads everything up to the object table. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to read from</td></tr>
+    <tr><td class="paramname">bManageComponents</td><td>[in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> destructor will delete the model components created by this function. false: The caller must delete the <a class="el" href="../../dc/d5c/class_o_n___model_component.html" title="The ON_ModelComponent class is a base class for all components in a model and manages the index...">ON_ModelComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> is destroyed.</td></tr>
+    <tr><td class="paramname">table_filter</td><td>[in] If table_filter is zero, then everything in the archive before the model object table is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum.</td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive reading errors are logged here. pass nullptr if you don't want to log errors </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">If the input is valid and everything before the model object table is successfully read, then true is returned. Otherwise false is returned.</p>
+<p class="enddd"></p>
+</dd></dl>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">      <span class="comment">// for ASCII file names</span></div><div class="line">      <span class="keyword">const</span> <span class="keywordtype">char</span>* sFileName = ....;</div><div class="line">      FILE* fp = ON::OpenFile( sFileName, <span class="stringliteral">&quot;rb&quot;</span>);</div><div class="line"></div><div class="line">      <span class="comment">// for UNICODE file names</span></div><div class="line">      <span class="keyword">const</span> <span class="keywordtype">wchar_t</span>* wsFileName = ....;</div><div class="line">      FILE* fp = ON::OpenFile( wsFileName, L<span class="stringliteral">&quot;rb&quot;</span>);</div><div class="line"></div><div class="line">      <span class="keywordtype">bool</span> bModelRead = <span class="keyword">false</span>;</div><div class="line">      <span class="keywordtype">bool</span> bModelIsValid = <span class="keyword">false</span>;</div><div class="line"></div><div class="line">      <a class="code" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> error_log;</div><div class="line"></div><div class="line">      <span class="keywordflow">if</span> ( 0 != fp )</div><div class="line">      {</div><div class="line">        <a class="code" href="../../de/d36/class_o_n___binary_file.html">ON_BinaryFile</a> archive( ON::archive_mode::read3dm, fp );</div><div class="line">        <a class="code" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> model;</div><div class="line"></div><div class="line">        <span class="comment">// Read settings, layer information, and other tables</span></div><div class="line">        <span class="comment">// with information that is referenced by model object</span></div><div class="line">        <span class="comment">// attributes.</span></div><div class="line">        bModelRead = model.<a class="code" href="../../d3/dfd/class_o_n_x___model.html#a58b4490125175d0fb836b46e53897637">IncrementalReadBegin</a>( archive, error_log );</div><div class="line"></div><div class="line">        <span class="keywordflow">if</span> ( bModelRead )</div><div class="line">        {</div><div class="line">          object_filter = ON::mesh_object   <span class="comment">// read meshes</span></div><div class="line">                        | ON::curve_object  <span class="comment">//  and curves</span></div><div class="line">                        ;</div><div class="line">          <span class="keywordflow">for</span>(;;)</div><div class="line">          {</div><div class="line">            <span class="comment">// read the next model object</span></div><div class="line">            <a class="code" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a>* pModelObject = model.IncrementalReadModelObject(object_filter,0);</div><div class="line">            <span class="keywordflow">if</span> ( 0 == pModelObject )</div><div class="line">              <span class="keywordflow">break</span>;</div><div class="line"></div><div class="line">            ... <span class="comment">// work with this model object</span></div><div class="line"></div><div class="line">            <span class="comment">// done with this object.</span></div><div class="line">            pModelObject = 0;</div><div class="line">            model.m_object_table.Remove();</div><div class="line">          }</div><div class="line">        }</div><div class="line">        ON::CloseFile( fp );</div><div class="line">      }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd>ONX_Model::IsValid, <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da" title="Writes contents of this model to an openNURBS archive. ">ONX_Model::Write</a>, ONX_Model::m_crc_error_count</dd></dl>
 
 </div>
 </div>
@@ -1621,10 +1744,21 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reads everything up to the object table.</p>
-<p>Parameters: archive - [in] archive to read from bManageComponents - [in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> destructor will delete the model components created by this function. false: The caller must delete the <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> is destroyed. table_filter - [in] If table_filter is zero, then everything in the archive before the model object table is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum. error_log - [out] any archive reading errors are logged here. pass nullptr if you don't want to log errors</p>
-<p>Returns: If the input is valid and everything before the model object table is successfully read, then true is returned. Otherwise false is returned.</p>
-<p>See Also: ONX_Model::IsValid <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da">ONX_Model::Write</a> ONX_Model::m_crc_error_count </p>
+
+<p>Reads everything up to the object table. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to read from</td></tr>
+    <tr><td class="paramname">bManageComponents</td><td>[in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> destructor will delete the model components created by this function. false: The caller must delete the <a class="el" href="../../dc/d5c/class_o_n___model_component.html" title="The ON_ModelComponent class is a base class for all components in a model and manages the index...">ON_ModelComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> is destroyed.</td></tr>
+    <tr><td class="paramname">table_filter</td><td>[in] If table_filter is zero, then everything in the archive before the model object table is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum.</td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive reading errors are logged here. pass nullptr if you don't want to log errors </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">If the input is valid and everything before the model object table is successfully read, then true is returned. Otherwise false is returned.</p>
+<p class="enddd"></p>
+</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>ONX_Model::IsValid, <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da" title="Writes contents of this model to an openNURBS archive. ">ONX_Model::Write</a>, ONX_Model::m_crc_error_count</dd></dl>
 
 </div>
 </div>
@@ -1677,8 +1811,21 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reads the next item in the model geometry table.</p>
-<p>Parameters: archive - [in] bManageModelGeometryComponent - [in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> destructor will delete the <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> components created by this function. false: The caller must delete the <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> is destroyed. bManageGeometry - [in] true: The <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> destructor will delete the <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> classes created by this function. false: The caller must delete the <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> classes after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> components are destroyed. bManageAttributes - [in] true: The <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> destructor will delete the <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> classes created by this function. false: The caller must delete the <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> classes after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> and <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> components are destroyed. model_object_type_filter - [in] If model_object_type_filter is not zero, then it is a bitfield filter made by bitwise oring ON::object_type values to select which types of objects will be read from the model object table. model_geometry_reference - [out] A reference to an <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a>. This referenced <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html">ON_ModelGeometryComponent</a> component is also added to the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a>. Call ONX_Model.RemoveComponent() if you want to discard it before continuing. Returns: True Succesful. If model_geometry_reference.IsEmpty() is true, then no more geometry objects are available and you should call <a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab096da2ee6eafb6ba15c67e58f3a2cd7">IncrementalReadFinish()</a>. False An error occured and reading should terminate. Remarks: You must call <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a58b4490125175d0fb836b46e53897637">IncrementalReadBegin()</a> before making any calls to IncrementalReadModelObject(). </p>
+
+<p>Reads the next item in the model geometry table. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in]</td></tr>
+    <tr><td class="paramname">bManageModelGeometryComponent</td><td>[in] true: The <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> destructor will delete the <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> components created by this function. false: The caller must delete the <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> components after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> is destroyed.</td></tr>
+    <tr><td class="paramname">bManageGeometry</td><td>[in] true: The <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> destructor will delete the <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> classes created by this function. false: The caller must delete the <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> classes after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> components are destroyed.</td></tr>
+    <tr><td class="paramname">bManageAttributes</td><td>[in] true: The <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> destructor will delete the <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html" title="Top level OpenNURBS objects have geometry and attributes. The geometry is stored in some class derive...">ON_3dmObjectAttributes</a> classes created by this function. false: The caller must delete the <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html" title="Top level OpenNURBS objects have geometry and attributes. The geometry is stored in some class derive...">ON_3dmObjectAttributes</a> classes after the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> and <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> components are destroyed.</td></tr>
+    <tr><td class="paramname">model_object_type_filter</td><td>[in] If model_object_type_filter is not zero, then it is a bitfield filter made by bitwise oring ON::object_type values to select which types of objects will be read from the model object table.</td></tr>
+    <tr><td class="paramname">model_geometry_reference</td><td>[out] A reference to an <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a>. This referenced <a class="el" href="../../db/d69/class_o_n___model_geometry_component.html" title="Used to store geometry table object definition and attributes in an ONX_Model. ">ON_ModelGeometryComponent</a> component is also added to the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a>. Call ONX_Model.RemoveComponent() if you want to discard it before continuing.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True Succesful. If model_geometry_reference.IsEmpty() is true, then no more geometry objects are available and you should call <a class="el" href="../../d3/dfd/class_o_n_x___model.html#ab096da2ee6eafb6ba15c67e58f3a2cd7" title="Reads everything up to the object table. ">IncrementalReadFinish()</a>. False An error occured and reading should terminate. </dd></dl>
+<p>You must call <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a58b4490125175d0fb836b46e53897637" title="Reads everything up to the object table. ">IncrementalReadBegin()</a> before making any calls to IncrementalReadModelObject(). </p>
 
 </div>
 </div>
@@ -1705,8 +1852,6 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>END model text dump tools</p>
-<p>BEGIN Render Development Toolkit (RDK) information </p>
 
 </div>
 </div>
@@ -1787,7 +1932,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a layer from its model index. Parameters: layer_model_index - [in] Returns: An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the layer. Remarks: Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> manifest item index are the same. </p>
+
+<p>Get a layer from its model index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">layer_model_index</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the layer. </dd></dl>
+<p>Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> manifest item index are the same. </p>
 
 </div>
 </div>
@@ -1852,7 +2006,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get linetype from object attributes. Parameters: attributes - [in] object attributes. line_pattern - [out] linetype </p>
+
+<p>Get linetype from object attributes. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">attributes</td><td>[in] object attributes.</td></tr>
+    <tr><td class="paramname">line_pattern</td><td>[out] linetype</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1889,7 +2051,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a line pattern from its model index. Parameters: line_pattern_model_index - [in] Returns: An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the line pattern. Remarks: Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16">Manifest()</a> manifest item index are the same. </p>
+
+<p>Get a line pattern from its model index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line_pattern_model_index</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../df/de4/class_o_n___model_component_reference.html">ON_ModelComponentReference</a> to the line pattern. </dd></dl>
+<p>Model index and <a class="el" href="../../d3/dfd/class_o_n_x___model.html#a70eba676014cc0e52d093a8e4206eb16" title="A manifest of every model component in this ONX_Model. ">Manifest()</a> manifest item index are the same. </p>
 
 </div>
 </div>
@@ -1961,8 +2132,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: A manifest of every model component in this <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a>. Remarks: Use the manifest to find model objects from a name, id or index.</p>
-<p>The manifest Id, Name, and Index values are values used in the model. These are assigned when a component is added to the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a>. When possible the id and name are not changed.</p>
+
+<p>A manifest of every model component in this <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a>. </p>
+<p>Use the manifest to find model objects from a name, id or index.</p>
+<p>The manifest Id, Name, and Index values are values used in the model. These are assigned when a component is added to the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a>. When possible the id and name are not changed.</p>
 <p>The manifest=model and original component values are different when:</p><ul>
 <li>The original component Id or Name was not set and a value was automatically assigned.</li>
 <li>The original component Id or Name was not unique and was modified when the component was added to the model.</li>
@@ -1987,7 +2160,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This number changes every time the content of the <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> is modified. </p>
+
+<p>This number changes every time the content of the <a class="el" href="../../d3/dfd/class_o_n_x___model.html" title="Pedegodgical example of all the things in an OpenNURBS 3dm archive. The openNURBS examples use ONX_Mo...">ONX_Model</a> is modified. </p>
 
 </div>
 </div>
@@ -2005,7 +2179,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>END model definitions Returns: Bounding box of every object in m_object_table[]. </p>
+<dl class="section return"><dt>Returns</dt><dd>Bounding box of every object in m_object_table[]. </dd></dl>
 
 </div>
 </div>
@@ -2077,7 +2251,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A map from manifest=model index and id to original component index and id. Remarks: <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Source = model-manifest index and id. <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Destination = original component index and id. </p>
+<dl class="section return"><dt>Returns</dt><dd>A map from manifest=model index and id to original component index and id. </dd></dl>
+<p><a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Source = model-manifest index and id. <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Destination = original component index and id. </p>
 
 </div>
 </div>
@@ -2095,7 +2270,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A map from original component index and id to manifest=model index and id. Remarks: <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Source = original component index and id. <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Destination = model-manifest index and id. </p>
+<dl class="section return"><dt>Returns</dt><dd>A map from original component index and id to manifest=model index and id. </dd></dl>
+<p><a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Source = original component index and id. <a class="el" href="../../d4/d30/class_o_n___manifest_map_item.html">ON_ManifestMapItem</a> Destination = model-manifest index and id. </p>
 
 </div>
 </div>
@@ -2136,14 +2312,19 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reads an openNURBS archive and saves the information in this model Parameters: archive - [in] archive to read from table_filter - [in] If table_filter is zero, then everything in the archive is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum. model_object_type_filter - [in] If model_object_type_filter is not zero, then it is a bitfield filter made by bitwise oring ON::object_type values to select which types of objects will be read from the model object table. error_log - [out] any archive reading errors are logged here. Returns: true if archive is read with no error. False if errors occur. Error details are logged in error_log. If crc errors are in the archive, then ONX_Model::m_crc_error_count is set to the number of crc errors. Example:</p>
-<p>/ for ASCII file names const char* sFileName = ....; FILE* fp = ON::OpenFile( sFileName, "rb");</p>
-<p>/ for UNICODE file names const wchar_t* wsFileName = ....; FILE* fp = ON::OpenFile( wsFileName, L"rb");</p>
-<p>bool bModelRead = false; bool bModelIsValid = false;</p>
-<p><a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> error_log; <a class="el" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> model;</p>
-<p>if ( 0 != fp ) { <a class="el" href="../../de/d36/class_o_n___binary_file.html">ON_BinaryFile</a> archive( ON::archive_mode::read3dm, fp ); bModelRead = model.Read( archive, error_log ); ON::CloseFile( fp ); }</p>
-<p>if ( bModelRead ) { bModelIsValid = model.Validate(error_log); }</p>
-<p>See Also: ONX_Model::IsValid <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da">ONX_Model::Write</a> ONX_Model::m_crc_error_count </p>
+
+<p>Reads an openNURBS archive and saves the information in this model </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to read from</td></tr>
+    <tr><td class="paramname">table_filter</td><td>[in] If table_filter is zero, then everything in the archive is read. Otherwise the bits in table_filter identify what tables should be read. The bits are defined by the ON_BInaryArchive::table_type enum.</td></tr>
+    <tr><td class="paramname">model_object_type_filter</td><td>[in] If model_object_type_filter is not zero, then it is a bitfield filter made by bitwise oring ON::object_type values to select which types of objects will be read from the model object table.</td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive reading errors are logged here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if archive is read with no error. False if errors occur. Error details are logged in error_log. If crc errors are in the archive, then ONX_Model::m_crc_error_count is set to the number of crc errors. </dd></dl>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">      <span class="comment">// for ASCII file names</span></div><div class="line">      <span class="keyword">const</span> <span class="keywordtype">char</span>* sFileName = ....;</div><div class="line">      FILE* fp = ON::OpenFile( sFileName, <span class="stringliteral">&quot;rb&quot;</span>);</div><div class="line"></div><div class="line">      <span class="comment">// for UNICODE file names</span></div><div class="line">      <span class="keyword">const</span> <span class="keywordtype">wchar_t</span>* wsFileName = ....;</div><div class="line">      FILE* fp = ON::OpenFile( wsFileName, L<span class="stringliteral">&quot;rb&quot;</span>);</div><div class="line"></div><div class="line">      <span class="keywordtype">bool</span> bModelRead = <span class="keyword">false</span>;</div><div class="line">      <span class="keywordtype">bool</span> bModelIsValid = <span class="keyword">false</span>;</div><div class="line"></div><div class="line">      <a class="code" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> error_log;</div><div class="line">      <a class="code" href="../../d3/dfd/class_o_n_x___model.html">ONX_Model</a> model;</div><div class="line"></div><div class="line">      <span class="keywordflow">if</span> ( 0 != fp )</div><div class="line">      {</div><div class="line">        <a class="code" href="../../de/d36/class_o_n___binary_file.html">ON_BinaryFile</a> archive( ON::archive_mode::read3dm, fp );</div><div class="line">        bModelRead = model.<a class="code" href="../../d3/dfd/class_o_n_x___model.html#a356596cc1d9606d5877fd503f28fbe44">Read</a>( archive, error_log );</div><div class="line">        ON::CloseFile( fp );</div><div class="line">      }</div><div class="line"></div><div class="line">      <span class="keywordflow">if</span> ( bModelRead )</div><div class="line">      {</div><div class="line">        bModelIsValid = model.Validate(error_log);</div><div class="line">      }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd>ONX_Model::IsValid, <a class="el" href="../../d3/dfd/class_o_n_x___model.html#aeb080afd3f41d09c76eb7b1c8aab21da" title="Writes contents of this model to an openNURBS archive. ">ONX_Model::Write</a>, ONX_Model::m_crc_error_count</dd></dl>
 
 </div>
 </div>
@@ -2353,7 +2534,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Bounding box of every render light in m_light_table[]. </p>
+<dl class="section return"><dt>Returns</dt><dd>Bounding box of every render light in m_light_table[]. </dd></dl>
 
 </div>
 </div>
@@ -2426,7 +2607,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get render material from object attributes. Parameters: attributes - [in] object attributes. material - [out] render material </p>
+
+<p>Get render material from object attributes. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">attributes</td><td>[in] object attributes.</td></tr>
+    <tr><td class="paramname">material</td><td>[out] render material</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -2462,7 +2651,13 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: dimension_style_id - [in] Id of a dimension style in this model, a system dimension style, or ON_nil_uuid. Returns: true if dimension_style_id is valid and is set. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dimension_style_id</td><td>[in] Id of a dimension style in this model, a system dimension style, or ON_nil_uuid.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if dimension_style_id is valid and is set. </dd></dl>
 
 </div>
 </div>
@@ -2491,7 +2686,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>BEGIN model document level user string tools Description: Attach a user string to the document. Parameters: key - [in] id used to retrieve this string. string_value - [in] If nullptr, the string with this id will be removed. Returns: True if successful. </p>
+
+<p>Attach a user string to the document. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">key</td><td>[in] id used to retrieve this string.</td></tr>
+    <tr><td class="paramname">string_value</td><td>[in] If nullptr, the string with this id will be removed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. </dd></dl>
 
 </div>
 </div>
@@ -2520,7 +2724,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: See if the instance reference iref refers to an instance definition. Parameters: iref - [in] idef_uuid - [in] id of idef we are looking for Returns:  table 0 iref does not use idef 1 iref directly references idef &gt;1 iref has a nested reference to idef (nesting depth returned) -1 iref.m_instance_definition_uuid is not valid -2 invalid idef found </p>
+
+<p>See if the instance reference iref refers to an instance definition. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">iref</td><td>[in]</td></tr>
+    <tr><td class="paramname">idef_uuid</td><td>[in] id of idef we are looking for</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>table 0 iref does not use idef 1 iref directly references idef &gt;1 iref has a nested reference to idef (nesting depth returned) -1 iref.m_instance_definition_uuid is not valid -2 invalid idef found </dd></dl>
 
 </div>
 </div>
@@ -2603,7 +2816,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get wireframe drawing color from object attributes. Parameters: attributes - [in] object attributes. Returns: Wireframe drawing color. </p>
+
+<p>Get wireframe drawing color from object attributes. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">attributes</td><td>[in] object attributes.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Wireframe drawing color. </dd></dl>
 
 </div>
 </div>
@@ -2638,11 +2859,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Writes contents of this model to an openNURBS archive.</p>
-<p>Parameters: filename - [in]</p>
-<p>version - [in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files.</p>
-<p>error_log - [out] any archive writing errors are logged here.</p>
-<p>Returns: True if archive is written with no error. False if errors occur. Error details are logged in error_log. </p>
+
+<p>Writes contents of this model to an openNURBS archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] </td></tr>
+    <tr><td class="paramname">version</td><td>[in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files. </td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive writing errors are logged here. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if archive is written with no error. False if errors occur. Error details are logged in error_log. </dd></dl>
 
 </div>
 </div>
@@ -2677,11 +2904,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Writes contents of this model to an openNURBS archive.</p>
-<p>Parameters: filename - [in]</p>
-<p>version - [in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files.</p>
-<p>error_log - [out] any archive writing errors are logged here.</p>
-<p>Returns: True if archive is written with no error. False if errors occur. Error details are logged in error_log. </p>
+
+<p>Writes contents of this model to an openNURBS archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] </td></tr>
+    <tr><td class="paramname">version</td><td>[in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files. </td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive writing errors are logged here. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if archive is written with no error. False if errors occur. Error details are logged in error_log. </dd></dl>
 
 </div>
 </div>
@@ -2716,31 +2949,20 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Writes contents of this model to an openNURBS archive.</p>
-<p>Parameters: archive - [in] archive to write to You must call archive.SetArchiveFullPath(...) i order for file references to work correctly.</p>
-<p>version - [in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files.</p>
-<p>error_log - [out] any archive writing errors are logged here.</p>
-<p>Returns: True if archive is written with no error. False if errors occur. Error details are logged in error_log.</p>
-<p>Example: </p><pre class="fragment">      model = ...;
-      if ( model.IsValid( error_log ) )
-      {
-        const wchar_t* wsFileName = ....;
-        FILE* fp = ON::OpenFile( wsFileName, L"wb");
 
-        bool ok = false;
-        if ( 0 != fp )
-        {
-          const char* sStartSectionComment = "...";
-          int version = 5; ///&lt; 2, 3, 4 or 5 are valid
-          ON_BinaryFile archive( ON::archive_mode::write3dm, fp );
-          archive.SetArchiveFullPath(wsFileName);
-          ok = model.write( archive, 
-                            version, 
-                            sStartSectionComment, 
-                            error_log );
-          ON::CloseFile( fp );
-        }
-     }</pre> 
+<p>Writes contents of this model to an openNURBS archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to write to You must call archive.SetArchiveFullPath(...) i order for file references to work correctly. </td></tr>
+    <tr><td class="paramname">version</td><td>[in] Version of the openNURBS archive to write. 0 default value and suggested. When 0 is passed in, the value of <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a> is used. 2, 3, 4, 50, 60, ... If you pass in a value &lt; <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a29788efc3c02dfbc2b11c715389e2141">ON_BinaryArchive::CurrentArchiveVersion()</a>, then some information in current data structures will not be saved in the 3dm archive. Rhino 2.x can read version 2 files. Rhino 3.x can read version 2 and 3 files. Rhino 4.x can read version 2, 3, and 4 files. Rhino 5.x can read version 2, 3, 4, 5, and 50 files. Rhino 6.x can read version 2, 3, 4, 5, 50, and 60 files. </td></tr>
+    <tr><td class="paramname">error_log</td><td>[out] any archive writing errors are logged here. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">True if archive is written with no error. False if errors occur. Error details are logged in error_log.</p>
+<p class="enddd"></p>
+</dd></dl>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">      model = ...;</div><div class="line">      <span class="keywordflow">if</span> ( model.IsValid( error_log ) )</div><div class="line">      {</div><div class="line">        <span class="keyword">const</span> <span class="keywordtype">wchar_t</span>* wsFileName = ....;</div><div class="line">        FILE* fp = ON::OpenFile( wsFileName, L<span class="stringliteral">&quot;wb&quot;</span>);</div><div class="line"></div><div class="line">        <span class="keywordtype">bool</span> ok = <span class="keyword">false</span>;</div><div class="line">        <span class="keywordflow">if</span> ( 0 != fp )</div><div class="line">        {</div><div class="line">          <span class="keyword">const</span> <span class="keywordtype">char</span>* sStartSectionComment = <span class="stringliteral">&quot;...&quot;</span>;</div><div class="line">          <span class="keywordtype">int</span> version = 5; <span class="comment">// 2, 3, 4 or 5 are valid</span></div><div class="line">          <a class="code" href="../../de/d36/class_o_n___binary_file.html">ON_BinaryFile</a> archive( ON::archive_mode::write3dm, fp );</div><div class="line">          archive.SetArchiveFullPath(wsFileName);</div><div class="line">          ok = model.write( archive,</div><div class="line">                            version,</div><div class="line">                            sStartSectionComment,</div><div class="line">                            error_log );</div><div class="line">          ON::CloseFile( fp );</div><div class="line">        }</div><div class="line">     }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> 
 </div>
 </div>
 <h2 class="groupheader">Friends And Related Function Documentation</h2>
@@ -2794,7 +3016,6 @@ Friends</h2></td></tr>
 </div><div class="memdoc">
 
 <p>3dm archive start section information </p>
-<p>BEGIN model definitions </p>
 
 </div>
 </div>
@@ -2823,7 +3044,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Properties include revision history, notes, information about the applicaton that created the file, and an optional preview image. </p>
 
 </div>
 </div>
@@ -2838,7 +3058,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Settings include tolerance, and unit system, and defaults used for creating views and objects. </p>
 
 </div>
 </div>
@@ -2876,7 +3095,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

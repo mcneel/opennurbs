@@ -64,8 +64,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a25fbf15125ebdcf385ad6b5b7440f584"><td class="memItemLeft" align="right" valign="top">ON__UINT_PTR&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#a25fbf15125ebdcf385ad6b5b7440f584">CallbackFunction</a> () const</td></tr>
 <tr class="separator:a25fbf15125ebdcf385ad6b5b7440f584"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a665a583aeb9c5f152e48d2e6aef533e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#a665a583aeb9c5f152e48d2e6aef533e5">RequestTermination</a> ()</td></tr>
+<tr class="memdesc:a665a583aeb9c5f152e48d2e6aef533e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets m_bTerminationRequested = true. All future calls to TerminationRequested(this) will return true.  <a href="#a665a583aeb9c5f152e48d2e6aef533e5">More...</a><br /></td></tr>
 <tr class="separator:a665a583aeb9c5f152e48d2e6aef533e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2070e70db7ccc68a3af8769472c41a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#ab2070e70db7ccc68a3af8769472c41a7">SetTerminationQueryCallbackFunction</a> (bool(*callback_function)(ON__UINT_PTR context), ON__UINT_PTR callback_context)</td></tr>
+<tr class="memdesc:ab2070e70db7ccc68a3af8769472c41a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the function that is called when a calculation wants to determine if the calculation should stop or continue.  <a href="#ab2070e70db7ccc68a3af8769472c41a7">More...</a><br /></td></tr>
 <tr class="separator:ab2070e70db7ccc68a3af8769472c41a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0d4beb109848233be52494fc5804cd3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#ab0d4beb109848233be52494fc5804cd3">SetThreadId</a> (ON__UINT_PTR thread_id)</td></tr>
 <tr class="separator:ab0d4beb109848233be52494fc5804cd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -75,16 +77,16 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a0a279621a45a5b3b5a1b4baa076e2a08"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#a0a279621a45a5b3b5a1b4baa076e2a08">RequestTermination</a> (<a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> *terminator)</td></tr>
+<tr class="memdesc:a0a279621a45a5b3b5a1b4baa076e2a08"><td class="mdescLeft">&#160;</td><td class="mdescRight">If terminator is not nullptr, sets terminator-&gt;m_bTerminationRequested = true. If terminator is not nullptr, all future calls to TerminationRequested(terminator) will return true.  <a href="#a0a279621a45a5b3b5a1b4baa076e2a08">More...</a><br /></td></tr>
 <tr class="separator:a0a279621a45a5b3b5a1b4baa076e2a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8da087534f4a36db658a09343375554"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#ae8da087534f4a36db658a09343375554">TerminationRequested</a> (<a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> *terminator)</td></tr>
+<tr class="memdesc:ae8da087534f4a36db658a09343375554"><td class="mdescLeft">&#160;</td><td class="mdescRight">A calculation calls ON_Terminator::TerminationRequested(terminator) to determine if it should continue or quit.  <a href="#ae8da087534f4a36db658a09343375554">More...</a><br /></td></tr>
 <tr class="separator:ae8da087534f4a36db658a09343375554"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2ad4ca8f0f6c0fe5e3f67f782a67dce"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/da9/class_o_n___terminator.html#ad2ad4ca8f0f6c0fe5e3f67f782a67dce">TerminationRequestedExpert</a> (<a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> *terminator, ON__UINT64 callback_delta)</td></tr>
+<tr class="memdesc:ad2ad4ca8f0f6c0fe5e3f67f782a67dce"><td class="mdescLeft">&#160;</td><td class="mdescRight">An expert user function to determine if a calculation should continue.  <a href="#ad2ad4ca8f0f6c0fe5e3f67f782a67dce">More...</a><br /></td></tr>
 <tr class="separator:ad2ad4ca8f0f6c0fe5e3f67f782a67dce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2013 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="af747120bc6042550e073aaeaa62c792f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af747120bc6042550e073aaeaa62c792f">&#9670;&nbsp;</a></span>ON_Terminator()</h2>
 
@@ -168,7 +170,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets m_bTerminationRequested = true. All future calls to TerminationRequested(this) will return true. </p>
+
+<p>Sets m_bTerminationRequested = true. All future calls to TerminationRequested(this) will return true. </p>
 
 </div>
 </div>
@@ -195,8 +198,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: If terminator is not nullptr, sets terminator-&gt;m_bTerminationRequested = true. If terminator is not nullptr, all future calls to TerminationRequested(terminator) will return true. Parameters: terminator - [in] (can be nullptr) Remarks: This is convenience function and is identical to the code</p>
-<p>if (nullptr != terminator) terminator-&gt;<a class="el" href="../../d9/da9/class_o_n___terminator.html#a665a583aeb9c5f152e48d2e6aef533e5">RequestTermination()</a>; </p>
+
+<p>If terminator is not nullptr, sets terminator-&gt;m_bTerminationRequested = true. If terminator is not nullptr, all future calls to TerminationRequested(terminator) will return true. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">terminator</td><td>[in] (can be nullptr)</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>This is convenience function and is identical to the code</p>
+<p>if (nullptr != terminator) terminator-&gt;<a class="el" href="../../d9/da9/class_o_n___terminator.html#a665a583aeb9c5f152e48d2e6aef533e5" title="Sets m_bTerminationRequested = true. All future calls to TerminationRequested(this) will return true...">RequestTermination()</a>; </p>
 
 </div>
 </div>
@@ -225,11 +236,23 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set the function that is called when a calculation wants to determine if the calculation should stop or continue. Parameters: callback_function - [in] The function that is called when a calculation wants to determine if the calculation should stop or continue. If this callback function returns true, the calculation will terminate as soon as possible. If this callback function returns false, the calculation will continue. The calculation thread calls in this callback function. The callback function should do something that is fast and simple. Parameters passed to the callback function: context - [in] the value of callback_context. Example: bool bStopCalculation = false;</p>
-<p>bool StopCalculation( ON__UINT_PTR context ) { if ( 0 != context ) { const bool* p = (const bool*)context; if ( *p ) return true; ///&lt; terminate calculation as soon as possible } return false; ///&lt; continue calculation }</p>
-<p>...</p>
-<p><a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> terminator; terminator.SetTerminationQueryCallbackFunction(StopCalculation,(ON__UINT_PTR)(&amp;bStopCalculation)); ... Pass &amp;terminator to a calculation and then set bStopCalculation = true to terminate it. The calculation will generally be running in another thread, but can be in the same thread if it is structured to pump windows messages or something similar. </p>
 
+<p>Set the function that is called when a calculation wants to determine if the calculation should stop or continue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">callback_function</td><td>[in]<ul>
+<li>The function that is called when a calculation wants to determine if the calculation should stop or continue.</li>
+<li>If this callback function returns true, the calculation will terminate as soon as possible.</li>
+<li>If this callback function returns false, the calculation will continue.</li>
+<li>The calculation thread calls in this callback function.</li>
+<li>The callback function should do something that is fast and simple. Parameters passed to the callback function:</li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">context</td><td>[in] the value of callback_context.</td></tr>
+  </table>
+  </dd>
+</dl>
+<div class="fragment"><div class="line"><span class="keywordtype">bool</span> bStopCalculation = <span class="keyword">false</span>;</div><div class="line"></div><div class="line"><span class="keywordtype">bool</span> StopCalculation( ON__UINT_PTR context )</div><div class="line">{</div><div class="line">  <span class="keywordflow">if</span> ( 0 != context )</div><div class="line">  {</div><div class="line">    <span class="keyword">const</span> <span class="keywordtype">bool</span>* p = (<span class="keyword">const</span> <span class="keywordtype">bool</span>*)context;</div><div class="line">    <span class="keywordflow">if</span> ( *p )</div><div class="line">      <span class="keywordflow">return</span> <span class="keyword">true</span>; <span class="comment">// terminate calculation as soon as possible</span></div><div class="line">   }</div><div class="line">   <span class="keywordflow">return</span> <span class="keyword">false</span>; <span class="comment">// continue calculation</span></div><div class="line">}</div><div class="line"></div><div class="line">...</div><div class="line"></div><div class="line">ON_Terminator terminator;</div><div class="line">terminator.SetTerminationQueryCallbackFunction(StopCalculation,(ON__UINT_PTR)(&amp;bStopCalculation));</div><div class="line">...</div><div class="line">Pass &amp;terminator to a calculation and then <span class="keyword">set</span> bStopCalculation = <span class="keyword">true</span> to terminate it.</div><div class="line">The calculation will generally be running in another thread, but can be in the same</div><div class="line">thread <span class="keywordflow">if</span> it is structured to pump windows messages or something similar.</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="ab0d4beb109848233be52494fc5804cd3"></a>
@@ -273,8 +296,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: A calculation calls ON_Terminator::TerminationRequested(terminator) to determine if it should continue or quit. Parameters: terminator - [in] A pointer to an <a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> or null pointer. Returns: True if the calculation should terminate as soon as possible. False if the calculation should continue. Example: void MyLongCalculation( ..., ON_Terminator* terminator, ...) { for ( i = 0; i &lt; count; i++ ) { if ( ON_Terminator::TerminationRequested(terminator) ) break; ... } } </p>
 
+<p>A calculation calls ON_Terminator::TerminationRequested(terminator) to determine if it should continue or quit. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">terminator</td><td>[in] A pointer to an <a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> or null pointer.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the calculation should terminate as soon as possible. False if the calculation should continue. </dd></dl>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> MyLongCalculation( ..., <a class="code" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a>* terminator, ...)</div><div class="line">{</div><div class="line">   <span class="keywordflow">for</span> ( i = 0; i &lt; count; i++ )</div><div class="line">   {</div><div class="line">     <span class="keywordflow">if</span> ( <a class="code" href="../../d9/da9/class_o_n___terminator.html#ae8da087534f4a36db658a09343375554">ON_Terminator::TerminationRequested</a>(terminator) )</div><div class="line">       <span class="keywordflow">break</span>;</div><div class="line">     ...</div><div class="line">   }</div><div class="line">}</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="ad2ad4ca8f0f6c0fe5e3f67f782a67dce"></a>
@@ -310,7 +341,17 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: An expert user function to determine if a calculation should continue. Parameters: terminator - [in] A pointer to an <a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> or null pointer. callback_delta - [in] Minimum amount of time to delay between calls to the registered callback function in clock() time units. 0 will omit making any call to the registered function. ON_Terminator::TerminationRequested( terminator ) uses a value of callback_delta = CLOCKS_PER_SEC/10 meaning a maximum of 10 callbacks per second. Returns: True if the calculation should terminate as soon as possible. False if the calculation should continue. Remarks: In general, call the ON_Terminator::TerminationRequested( terminator ). </p>
+
+<p>An expert user function to determine if a calculation should continue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">terminator</td><td>[in] A pointer to an <a class="el" href="../../d9/da9/class_o_n___terminator.html">ON_Terminator</a> or null pointer.</td></tr>
+    <tr><td class="paramname">callback_delta</td><td>[in] Minimum amount of time to delay between calls to the registered callback function in clock() time units. 0 will omit making any call to the registered function. ON_Terminator::TerminationRequested( terminator ) uses a value of callback_delta = CLOCKS_PER_SEC/10 meaning a maximum of 10 callbacks per second.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the calculation should terminate as soon as possible. False if the calculation should continue. </dd></dl>
+<p>In general, call the ON_Terminator::TerminationRequested( terminator ). </p>
 
 </div>
 </div>
@@ -337,7 +378,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

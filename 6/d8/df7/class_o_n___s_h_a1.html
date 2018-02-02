@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time).  
+ <a href="../../d8/df7/class_o_n___s_h_a1.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d1/df2/opennurbs__sha1_8h_source.html">opennurbs_sha1.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -76,12 +79,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6431e99ebf72aaae28d33e1494c55f9e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a6431e99ebf72aaae28d33e1494c55f9e">AccumulateBoundingBox</a> (const class <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox)</td></tr>
 <tr class="separator:a6431e99ebf72aaae28d33e1494c55f9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aedbb3a60e78e10d2d83e102b70a92c6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#aedbb3a60e78e10d2d83e102b70a92c6b">AccumulateBytes</a> (const void *buffer, ON__UINT64 sizeof_buffer)</td></tr>
+<tr class="memdesc:aedbb3a60e78e10d2d83e102b70a92c6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make one or more calls to <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#aedbb3a60e78e10d2d83e102b70a92c6b" title="Make one or more calls to AccumulateBytes() as the sequenence of bytes is available. ">AccumulateBytes()</a> as the sequenence of bytes is available.  <a href="#aedbb3a60e78e10d2d83e102b70a92c6b">More...</a><br /></td></tr>
 <tr class="separator:aedbb3a60e78e10d2d83e102b70a92c6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afce57a83281382b29b0c6e14e41dbab7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#afce57a83281382b29b0c6e14e41dbab7">AccumulateDouble</a> (double x)</td></tr>
+<tr class="memdesc:afce57a83281382b29b0c6e14e41dbab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order.  <a href="#afce57a83281382b29b0c6e14e41dbab7">More...</a><br /></td></tr>
 <tr class="separator:afce57a83281382b29b0c6e14e41dbab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79776860951a618a0c993cb907491117"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a79776860951a618a0c993cb907491117">AccumulateDoubleArray</a> (size_t count, const double *a)</td></tr>
+<tr class="memdesc:a79776860951a618a0c993cb907491117"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order.  <a href="#a79776860951a618a0c993cb907491117">More...</a><br /></td></tr>
 <tr class="separator:a79776860951a618a0c993cb907491117"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af593f1ea4c27f73ebb48ca4184a43f01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#af593f1ea4c27f73ebb48ca4184a43f01">AccumulateFileReference</a> (const class <a class="el" href="../../d8/dfd/class_o_n___file_reference.html">ON_FileReference</a> &amp;file_reference)</td></tr>
+<tr class="memdesc:af593f1ea4c27f73ebb48ca4184a43f01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accumuates the full and relative path names.  <a href="#af593f1ea4c27f73ebb48ca4184a43f01">More...</a><br /></td></tr>
 <tr class="separator:af593f1ea4c27f73ebb48ca4184a43f01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1524d260d818029ab6135b236e6e51fc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a1524d260d818029ab6135b236e6e51fc">AccumulateId</a> (const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;id)</td></tr>
 <tr class="separator:a1524d260d818029ab6135b236e6e51fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -128,16 +135,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae02843174c5453e83b0b969b83091806"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#ae02843174c5453e83b0b969b83091806">operator=</a> (const <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> &amp;)=default</td></tr>
 <tr class="separator:ae02843174c5453e83b0b969b83091806"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1672a52817e6510cb31bcb5d5c13c699"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a1672a52817e6510cb31bcb5d5c13c699">Reset</a> ()</td></tr>
+<tr class="memdesc:a1672a52817e6510cb31bcb5d5c13c699"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset this <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> class so it can be reused.  <a href="#a1672a52817e6510cb31bcb5d5c13c699">More...</a><br /></td></tr>
 <tr class="separator:a1672a52817e6510cb31bcb5d5c13c699"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab3f64bf424a432b414c3fafe5e42e4e4"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#ab3f64bf424a432b414c3fafe5e42e4e4">Validate</a> ()</td></tr>
+<tr class="memdesc:ab3f64bf424a432b414c3fafe5e42e4e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is a static function that uses <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> to compute SHA-1 hash values of sequences of bytes with known SHA-1 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> with the known SHA-1 hash values.  <a href="#ab3f64bf424a432b414c3fafe5e42e4e4">More...</a><br /></td></tr>
 <tr class="separator:ab3f64bf424a432b414c3fafe5e42e4e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time).</p>
-<p>Remarks: The <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> class cannot be used for cryptographic or security applications. The SHA-1 hash algorithm is not suitable for cryptographic or security applications. The <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> class does not "wipe" intermediate results.</p>
+<div class="textblock"><p><a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time). </p>
+<p>The <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> class cannot be used for cryptographic or security applications. The SHA-1 hash algorithm is not suitable for cryptographic or security applications. The <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> class does not "wipe" intermediate results.</p>
 <p>If you have two different seqences of N bytes storing information (lower entropy than a random sequence) are you are not intentionally calculating the information to create a SHA-1 hash collision, then the probability that the sequences have the same SHA-1 hash is approximately 2^-80 ~ 10^-24. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa548cc44b57ddcd792e46f46b53e069e"></a>
@@ -368,8 +377,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Make one or more calls to <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#aedbb3a60e78e10d2d83e102b70a92c6b">AccumulateBytes()</a> as the sequenence of bytes is available.</p>
-<p>Parameters: buffer - [in] sizeof_buffer - [in] number of bytes in buffer </p>
+
+<p>Make one or more calls to <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#aedbb3a60e78e10d2d83e102b70a92c6b" title="Make one or more calls to AccumulateBytes() as the sequenence of bytes is available. ">AccumulateBytes()</a> as the sequenence of bytes is available. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">sizeof_buffer</td><td>[in] number of bytes in buffer</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -388,7 +404,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order. </p>
+
+<p>Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order. </p>
 
 </div>
 </div>
@@ -417,7 +434,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order. </p>
+
+<p>Add the double value to the SHA1 in a manner that -0.0 and +0.0 will generate identical SHA-1 values and the result is independent of endian byte order. </p>
 
 </div>
 </div>
@@ -436,7 +454,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Accumuates the full and relative path names. </p>
+
+<p>Accumuates the full and relative path names. </p>
 
 </div>
 </div>
@@ -848,7 +867,7 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Total number of bytes passed to Update(). </p>
+<dl class="section return"><dt>Returns</dt><dd>Total number of bytes passed to Update(). </dd></dl>
 
 </div>
 </div>
@@ -866,7 +885,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: SHA-1 hash value of the sequenence of <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a96d28a9b17ec30cac84d05bd85b057b5">ByteCount()</a> bytes that have been passed to this <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> classe's Update() function since construction or the last call to <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a1672a52817e6510cb31bcb5d5c13c699">Reset()</a>. Remarks: You may use <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a4ba0a3146a3e66bd4c7e227b610581d2">Hash()</a> to compute intermediate SHA-1 hash values.</p>
+<dl class="section return"><dt>Returns</dt><dd>SHA-1 hash value of the sequenence of <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a96d28a9b17ec30cac84d05bd85b057b5">ByteCount()</a> bytes that have been passed to this <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> classe's Update() function since construction or the last call to <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a1672a52817e6510cb31bcb5d5c13c699" title="Reset this ON_SHA1 class so it can be reused. ">Reset()</a>. </dd></dl>
+<p>You may use <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html#a4ba0a3146a3e66bd4c7e227b610581d2">Hash()</a> to compute intermediate SHA-1 hash values.</p>
 <p>Put another way, you may call Update() zero or more times passing in N1 bytes, call Digest() to get the SHA-1 hash of those N1 bytes, make zero or more additional calls to Update() passing in N2 additional bytes, call digest to get the SHA-1 hash of the seqence of (N1 + N2) bytes, and so on. </p>
 
 </div>
@@ -911,7 +931,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reset this <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> class so it can be reused. </p>
+
+<p>Reset this <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> class so it can be reused. </p>
 
 </div>
 </div>
@@ -937,9 +958,10 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: This is a static function that uses <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> to compute SHA-1 hash values of sequences of bytes with known SHA-1 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> with the known SHA-1 hash values.</p>
-<p>This function can be used to validate the <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> class compiled correctly.</p>
-<p>Returns: true All validation tests passed. false At least one validation test failed. </p>
+
+<p>This is a static function that uses <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> to compute SHA-1 hash values of sequences of bytes with known SHA-1 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> with the known SHA-1 hash values. </p>
+<p>This function can be used to validate the <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> class compiled correctly.</p>
+<dl class="section return"><dt>Returns</dt><dd>true All validation tests passed. false At least one validation test failed. </dd></dl>
 
 </div>
 </div>
@@ -949,7 +971,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

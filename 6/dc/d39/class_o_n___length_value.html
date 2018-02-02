@@ -124,8 +124,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a809b8a9df3bd9c26e8a262c97ef49a39"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d39/class_o_n___length_value.html#a809b8a9df3bd9c26e8a262c97ef49a39">Create</a> (double length_value, const class <a class="el" href="../../db/da1/class_o_n___length_unit_name.html">ON_LengthUnitName</a> &amp;length_unit_system, <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae6ffd4bc4f67c82b2081b49ca138170c">ON_LengthValue::StringFormat</a> string_format)</td></tr>
 <tr class="separator:a809b8a9df3bd9c26e8a262c97ef49a39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa78395036bad41b309d0d3e1509c4e21"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21">CreateFromString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string)</td></tr>
+<tr class="memdesc:aa78395036bad41b309d0d3e1509c4e21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string.  <a href="#aa78395036bad41b309d0d3e1509c4e21">More...</a><br /></td></tr>
 <tr class="separator:aa78395036bad41b309d0d3e1509c4e21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1cb03ea30a20d69a03948c423948304"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304">CreateFromSubString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string, int string_count, const wchar_t **string_end)</td></tr>
+<tr class="memdesc:ae1cb03ea30a20d69a03948c423948304"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string.  <a href="#ae1cb03ea30a20d69a03948c423948304">More...</a><br /></td></tr>
 <tr class="separator:ae1cb03ea30a20d69a03948c423948304"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20f51084f7e8b9e0b13886e9228b4f95"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae6ffd4bc4f67c82b2081b49ca138170c">ON_LengthValue::StringFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d39/class_o_n___length_value.html#a20f51084f7e8b9e0b13886e9228b4f95">LengthStringFormatFromUnsigned</a> (unsigned int string_format_as_unsigned)</td></tr>
 <tr class="separator:a20f51084f7e8b9e0b13886e9228b4f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -160,18 +162,18 @@ Static Public Attributes</h2></td></tr>
 
 <p>Formatting to apply when creating a length value from a double. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca99ec4b2cce408e50ed2c69737c07e588"></a>ExactDecimal&#160;</td><td class="fielddoc"><p>summary&gt;Use exact decimal string.</p>
-<p>summary&gt;If possible, use exact integer-fraction format (1.125 becomes 1-1/8).</p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca99ec4b2cce408e50ed2c69737c07e588"></a>ExactDecimal&#160;</td><td class="fielddoc"><p>Use exact decimal string.</p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170cac67056f962e7c2a68ca9e1539e81f00a"></a>ExactProperFraction&#160;</td><td class="fielddoc"><p>summary&gt;If possible, use exact fraction format (1.125 becomes 9/8).</p>
+<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170cac67056f962e7c2a68ca9e1539e81f00a"></a>ExactProperFraction&#160;</td><td class="fielddoc"><p>If possible, use exact integer-fraction format (1.125 becomes 1-1/8).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca2443c1a956f7b565f66751cd6fbc2984"></a>ExactImproperFraction&#160;</td><td class="fielddoc"><p>summary&gt;The value may be adjusted slightly to improve clarity (1.124999... becomes 1.125).</p>
+<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca2443c1a956f7b565f66751cd6fbc2984"></a>ExactImproperFraction&#160;</td><td class="fielddoc"><p>If possible, use exact fraction format (1.125 becomes 9/8).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170caa816afb2cc234c2298c013a663febbd5"></a>CleanDecimal&#160;</td><td class="fielddoc"><p>summary&gt;The value may be adjusted slightly to improve clarity (1.124999... becomes 1-1/8).</p>
+<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170caa816afb2cc234c2298c013a663febbd5"></a>CleanDecimal&#160;</td><td class="fielddoc"><p>The value may be adjusted slightly to improve clarity (1.124999... becomes 1.125).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca00c3183f3025881f146a6e4d4506412f"></a>CleanProperFraction&#160;</td><td class="fielddoc"><p>summary&gt;The value may be adjusted slightly to improve clarity (1.124999... becomes 9/8).</p>
+<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170ca00c3183f3025881f146a6e4d4506412f"></a>CleanProperFraction&#160;</td><td class="fielddoc"><p>The value may be adjusted slightly to improve clarity (1.124999... becomes 1-1/8).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170caaab6a8cd17a458edc215dd82118d0613"></a>CleanImproperFraction&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae6ffd4bc4f67c82b2081b49ca138170caaab6a8cd17a458edc215dd82118d0613"></a>CleanImproperFraction&#160;</td><td class="fielddoc"><p>The value may be adjusted slightly to improve clarity (1.124999... becomes 9/8).</p>
+</td></tr>
 </table>
 
 </div>
@@ -269,7 +271,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: length_value - [in] New length. Returns: A <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> with the new length and other settings copied from this. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">length_value</td><td>[in] New length.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> with the new length and other settings copied from this. </dd></dl>
 
 </div>
 </div>
@@ -340,7 +348,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Angle unit system used to parse input strings. </p>
+<dl class="section return"><dt>Returns</dt><dd>Angle unit system used to parse input strings. </dd></dl>
 
 </div>
 </div>
@@ -358,7 +366,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Locale used to parse input strings and create unit names. </p>
+<dl class="section return"><dt>Returns</dt><dd>Locale used to parse input strings and create unit names. </dd></dl>
 
 </div>
 </div>
@@ -407,7 +415,18 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: length_value - [in] length_unit_system - [in] bUseFractionsInString - [in] If bUseFractions is true and length_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal. locale_id - [in] locale id for the string length unit system 0 will select <a class="el" href="../../d8/dd4/class_o_n___locale.html#aa08f2914ddad52ab4f608072c6f8320e">ON_Locale::CurrentCulture</a>. string_format - [in] Determines the format of the string representation Returns: Length in the specified length unit system Remarks: If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21">ON_LengthValue::CreateFromString()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">length_value</td><td>[in]</td></tr>
+    <tr><td class="paramname">length_unit_system</td><td>[in]</td></tr>
+    <tr><td class="paramname">bUseFractionsInString</td><td>[in] If bUseFractions is true and length_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal.</td></tr>
+    <tr><td class="paramname">locale_id</td><td>[in] locale id for the string length unit system 0 will select <a class="el" href="../../d8/dd4/class_o_n___locale.html#aa08f2914ddad52ab4f608072c6f8320e">ON_Locale::CurrentCulture</a>.</td></tr>
+    <tr><td class="paramname">string_format</td><td>[in] Determines the format of the string representation</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Length in the specified length unit system </dd></dl>
+<p>If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21" title="Create an ON_LengthValue by parsing a string. ">ON_LengthValue::CreateFromString()</a>. </p>
 
 </div>
 </div>
@@ -456,7 +475,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: length_value - [in] length_unit_system - [in] bUseFractionsInString - [in] If bUseFractions is true and length_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal. locale_id - [in] locale id for the string length unit system bool Returns: Length in the specified length unit system Remarks: If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21">ON_LengthValue::CreateFromString()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">length_value</td><td>[in]</td></tr>
+    <tr><td class="paramname">length_unit_system</td><td>[in]</td></tr>
+    <tr><td class="paramname">bUseFractionsInString</td><td>[in] If bUseFractions is true and length_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal.</td></tr>
+    <tr><td class="paramname">locale_id</td><td>[in] locale id for the string length unit system bool</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Length in the specified length unit system </dd></dl>
+<p>If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21" title="Create an ON_LengthValue by parsing a string. ">ON_LengthValue::CreateFromString()</a>. </p>
 
 </div>
 </div>
@@ -535,7 +564,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. Returns: If the string is valid, the exact length value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../dc/d39/class_o_n___length_value.html#a224be66420350e567f9cb645181558f8">ON_LengthValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
+
+<p>Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact length value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../dc/d39/class_o_n___length_value.html#a224be66420350e567f9cb645181558f8">ON_LengthValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304" title="Create an ON_LengthValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
 
 </div>
 </div>
@@ -584,7 +623,19 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. string_count - [in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates length parsing. string_end - [out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed. Returns: If the string is valid, the exact length value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../dc/d39/class_o_n___length_value.html#a224be66420350e567f9cb645181558f8">ON_LengthValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
+
+<p>Create an <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+    <tr><td class="paramname">string_count</td><td>[in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates length parsing.</td></tr>
+    <tr><td class="paramname">string_end</td><td>[out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact length value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../dc/d39/class_o_n___length_value.html#a224be66420350e567f9cb645181558f8">ON_LengthValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304" title="Create an ON_LengthValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
 
 </div>
 </div>
@@ -637,7 +688,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: context_unit_system - [in] length unit system for the returned value. Pass <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#af361b3ba4bac783bf72350aa6ed7e98f" title="unit system = ON::LengthUnitSystem::None. Scale to or from any valid unit = 1 ">ON_UnitSystem::None</a> to ignore the length unit system and get the value save in this class. Returns: Length in the specified length unit system </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context_unit_system</td><td>[in] length unit system for the returned value. Pass <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#af361b3ba4bac783bf72350aa6ed7e98f" title="unit system = ON::LengthUnitSystem::None. Scale to or from any valid unit = 1 ">ON_UnitSystem::None</a> to ignore the length unit system and get the value save in this class.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Length in the specified length unit system </dd></dl>
 
 </div>
 </div>
@@ -656,7 +713,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: context_unit_system - [in] length unit system for the returned value. Pass ON::LengthUnitSystem::None to ignore the length unit system and get the value save in this class. Returns: Length in the specified length unit system </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context_unit_system</td><td>[in] length unit system for the returned value. Pass ON::LengthUnitSystem::None to ignore the length unit system and get the value save in this class.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Length in the specified length unit system </dd></dl>
 
 </div>
 </div>
@@ -674,7 +737,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The length as a string. Remarks: If <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21">ON_LengthValue::CreateFromString()</a> or <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304">ON_LengthValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a>, a copy of that string is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>The length as a string. </dd></dl>
+<p>If <a class="el" href="../../dc/d39/class_o_n___length_value.html#aa78395036bad41b309d0d3e1509c4e21" title="Create an ON_LengthValue by parsing a string. ">ON_LengthValue::CreateFromString()</a> or <a class="el" href="../../dc/d39/class_o_n___length_value.html#ae1cb03ea30a20d69a03948c423948304" title="Create an ON_LengthValue by parsing a string. ">ON_LengthValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a>, a copy of that string is returned. </p>
 
 </div>
 </div>
@@ -709,7 +773,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Format processing applied to input values. </p>
+<dl class="section return"><dt>Returns</dt><dd>Format processing applied to input values. </dd></dl>
 
 </div>
 </div>
@@ -770,7 +834,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Length unit system for this class. </p>
+<dl class="section return"><dt>Returns</dt><dd>Length unit system for this class. </dd></dl>
 
 </div>
 </div>
@@ -832,7 +896,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> with the same length value and unit system = None. </p>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> with the same length value and unit system = None. </dd></dl>
 
 </div>
 </div>
@@ -905,7 +969,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

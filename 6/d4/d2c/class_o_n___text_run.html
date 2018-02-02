@@ -189,10 +189,13 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a24fd37fa93eedee42bb74fc715988cf7"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a24fd37fa93eedee42bb74fc715988cf7">DefaultStackFractionHeight</a> ()</td></tr>
 <tr class="separator:a24fd37fa93eedee42bb74fc715988cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55de058dec220d6fb363d3d24ffe338a"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d4/d2c/class_o_n___text_run.html">ON_TextRun</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a55de058dec220d6fb363d3d24ffe338a">GetManagedTextRun</a> ()</td></tr>
+<tr class="memdesc:a55de058dec220d6fb363d3d24ffe338a"><td class="mdescLeft">&#160;</td><td class="mdescRight">ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool.  <a href="#a55de058dec220d6fb363d3d24ffe338a">More...</a><br /></td></tr>
 <tr class="separator:a55de058dec220d6fb363d3d24ffe338a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3802cca92972ce9e5820568c4c6463ae"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d4/d2c/class_o_n___text_run.html">ON_TextRun</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a3802cca92972ce9e5820568c4c6463ae">GetManagedTextRun</a> (const <a class="el" href="../../d4/d2c/class_o_n___text_run.html">ON_TextRun</a> &amp;src)</td></tr>
+<tr class="memdesc:a3802cca92972ce9e5820568c4c6463ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool and copies src  <a href="#a3802cca92972ce9e5820568c4c6463ae">More...</a><br /></td></tr>
 <tr class="separator:a3802cca92972ce9e5820568c4c6463ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a371321eeb652757fd8ed8f7af6cd8eb2"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a371321eeb652757fd8ed8f7af6cd8eb2">ReturnManagedTextRun</a> (<a class="el" href="../../d4/d2c/class_o_n___text_run.html">ON_TextRun</a> *managed_text_run)</td></tr>
+<tr class="memdesc:a371321eeb652757fd8ed8f7af6cd8eb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a managed <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a>.  <a href="#a371321eeb652757fd8ed8f7af6cd8eb2">More...</a><br /></td></tr>
 <tr class="separator:a371321eeb652757fd8ed8f7af6cd8eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa30767916eff153fff56836f8ed9cbb0"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d4/d2c/class_o_n___text_run.html#ad77326c863dab4eae1149ab7bc59a10d">ON_TextRun::RunDirection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#aa30767916eff153fff56836f8ed9cbb0">RunDirectionFromUnsigned</a> (unsigned int run_direction_as_unsigned)</td></tr>
 <tr class="separator:aa30767916eff153fff56836f8ed9cbb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,35 +207,26 @@ Static Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ab7c5b016ccc721d08ed768ed52574bd4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d08/class_o_n__2d_vector.html">ON_2dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#ab7c5b016ccc721d08ed768ed52574bd4">m_advance</a> = <a class="el" href="../../da/d08/class_o_n__2d_vector.html#a2f9dd18fe13c0bd3e85cde1db1eee97b">ON_2dVector::ZeroVector</a></td></tr>
-<tr class="memdesc:ab7c5b016ccc721d08ed768ed52574bd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">(ECS) distance and direction from m_offset to start of next run  <a href="#ab7c5b016ccc721d08ed768ed52574bd4">More...</a><br /></td></tr>
 <tr class="separator:ab7c5b016ccc721d08ed768ed52574bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab620d333549054476e4483eb6341bd3b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#ab620d333549054476e4483eb6341bd3b">m_color</a> = <a class="el" href="../../d0/df9/class_o_n___color.html#a54c9448a0e7a53032cdb7f111163aca9">ON_Color::UnsetColor</a></td></tr>
 <tr class="separator:ab620d333549054476e4483eb6341bd3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2962cf141fadbdebcd17c11c1bdea850"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a2962cf141fadbdebcd17c11c1bdea850">m_height_scale</a> = -1.0</td></tr>
-<tr class="memdesc:a2962cf141fadbdebcd17c11c1bdea850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Font HeightOfI / text height - Converts from font units to model units or page units.  <a href="#a2962cf141fadbdebcd17c11c1bdea850">More...</a><br /></td></tr>
 <tr class="separator:a2962cf141fadbdebcd17c11c1bdea850"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89cf01d83b25e6e9b5e0aa5797153d2f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a89cf01d83b25e6e9b5e0aa5797153d2f">m_indent</a> = 0.0</td></tr>
-<tr class="memdesc:a89cf01d83b25e6e9b5e0aa5797153d2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">These apply to Paragraph type runs (m_type == rtParagraph)  <a href="#a89cf01d83b25e6e9b5e0aa5797153d2f">More...</a><br /></td></tr>
 <tr class="separator:a89cf01d83b25e6e9b5e0aa5797153d2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b8605fa5d07f30670683a1ae6cfc20d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a5b8605fa5d07f30670683a1ae6cfc20d">m_left_margin</a> = 0.0</td></tr>
-<tr class="memdesc:a5b8605fa5d07f30670683a1ae6cfc20d"><td class="mdescLeft">&#160;</td><td class="mdescRight">left margin in formatting rect for this paragraph  <a href="#a5b8605fa5d07f30670683a1ae6cfc20d">More...</a><br /></td></tr>
 <tr class="separator:a5b8605fa5d07f30670683a1ae6cfc20d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e395320053bac7be1cb07e097d67818"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a4e395320053bac7be1cb07e097d67818">m_line_index</a> = -1</td></tr>
-<tr class="memdesc:a4e395320053bac7be1cb07e097d67818"><td class="mdescLeft">&#160;</td><td class="mdescRight">line position in <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a>  <a href="#a4e395320053bac7be1cb07e097d67818">More...</a><br /></td></tr>
 <tr class="separator:a4e395320053bac7be1cb07e097d67818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91fc91c3ac4e64dfa64020cd63ed7eeb"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/df5/class_o_n___font.html">ON_Font</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a91fc91c3ac4e64dfa64020cd63ed7eeb">m_managed_font</a> = nullptr</td></tr>
 <tr class="separator:a91fc91c3ac4e64dfa64020cd63ed7eeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f3babee978191329edaa41a7b516db1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d08/class_o_n__2d_vector.html">ON_2dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a0f3babee978191329edaa41a7b516db1">m_offset</a> = <a class="el" href="../../da/d08/class_o_n__2d_vector.html#a2f9dd18fe13c0bd3e85cde1db1eee97b">ON_2dVector::ZeroVector</a></td></tr>
-<tr class="memdesc:a0f3babee978191329edaa41a7b516db1"><td class="mdescLeft">&#160;</td><td class="mdescRight">(ECS) offset to lower left of bounding box from <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a> plane origin  <a href="#a0f3babee978191329edaa41a7b516db1">More...</a><br /></td></tr>
 <tr class="separator:a0f3babee978191329edaa41a7b516db1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3c1f090a88216392db1a2609dd4a65b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#ad3c1f090a88216392db1a2609dd4a65b">m_right_margin</a> = 0.0</td></tr>
-<tr class="memdesc:ad3c1f090a88216392db1a2609dd4a65b"><td class="mdescLeft">&#160;</td><td class="mdescRight">right margin in formatting rect for this paragraph  <a href="#ad3c1f090a88216392db1a2609dd4a65b">More...</a><br /></td></tr>
 <tr class="separator:ad3c1f090a88216392db1a2609dd4a65b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c89d2a0aacbcb5a8fc32069aaeeddb1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/dbb/class_o_n___stacked_text.html">ON_StackedText</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#a5c89d2a0aacbcb5a8fc32069aaeeddb1">m_stacked_text</a> = nullptr</td></tr>
-<tr class="memdesc:a5c89d2a0aacbcb5a8fc32069aaeeddb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointers to runs for the top and bottom parts  <a href="#a5c89d2a0aacbcb5a8fc32069aaeeddb1">More...</a><br /></td></tr>
 <tr class="separator:a5c89d2a0aacbcb5a8fc32069aaeeddb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0142463d9a975c9932935da906e0444"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d2c/class_o_n___text_run.html#aa0142463d9a975c9932935da906e0444">m_stackscale</a> = 0.7</td></tr>
-<tr class="memdesc:aa0142463d9a975c9932935da906e0444"><td class="mdescLeft">&#160;</td><td class="mdescRight">fraction for scaling textheight in stacked text  <a href="#aa0142463d9a975c9932935da906e0444">More...</a><br /></td></tr>
 <tr class="separator:aa0142463d9a975c9932935da906e0444"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -574,7 +568,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>bool Write( <a class="el" href="../../db/d16/class_o_n___binary_archive.html" title="&lt; use for generic serialization of binary data ">ON_BinaryArchive</a>&amp; ) const; bool Read( <a class="el" href="../../db/d16/class_o_n___binary_archive.html" title="&lt; use for generic serialization of binary data ">ON_BinaryArchive</a>&amp; ); </p>
 
 </div>
 </div>
@@ -640,7 +633,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool. Returns: A pointer to a text run. (never nullptr). </p>
+
+<p>ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool. </p>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to a text run. (never nullptr). </dd></dl>
 
 </div>
 </div>
@@ -667,7 +662,9 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool and copies src Returns: A pointer to a text run. (never nullptr). </p>
+
+<p>ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool and copies src </p>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to a text run. (never nullptr). </dd></dl>
 
 </div>
 </div>
@@ -686,7 +683,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This returns the scale of m_height / HeightOfI. It doesn't take into account anything about annotation scaling This is the scale for converting <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> bounding boxes and offsets to basic model units </p>
 
 </div>
 </div>
@@ -774,7 +770,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the memory for this <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> is managed and the text run is active. It was created by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a55de058dec220d6fb363d3d24ffe338a">ON_TextRun::GetManagedTextRun()</a> and should be deleted by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a371321eeb652757fd8ed8f7af6cd8eb2">ON_TextRun::ReturnManagedTextRun()</a>; </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the memory for this <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> is managed and the text run is active. It was created by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a55de058dec220d6fb363d3d24ffe338a" title="ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool. ">ON_TextRun::GetManagedTextRun()</a> and should be deleted by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a371321eeb652757fd8ed8f7af6cd8eb2" title="Return a managed ON_TextRun. ">ON_TextRun::ReturnManagedTextRun()</a>; </dd></dl>
 
 </div>
 </div>
@@ -809,7 +805,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the memory for this <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> is managed. It was created by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a55de058dec220d6fb363d3d24ffe338a">ON_TextRun::GetManagedTextRun()</a>. If it is active, then is must be deleted by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a371321eeb652757fd8ed8f7af6cd8eb2">ON_TextRun::ReturnManagedTextRun()</a>; </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the memory for this <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a> is managed. It was created by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a55de058dec220d6fb363d3d24ffe338a" title="ON_TextRun::NewTextRun() gets a text run from an efficiently managed pool. ">ON_TextRun::GetManagedTextRun()</a>. If it is active, then is must be deleted by calling <a class="el" href="../../d4/d2c/class_o_n___text_run.html#a371321eeb652757fd8ed8f7af6cd8eb2" title="Return a managed ON_TextRun. ">ON_TextRun::ReturnManagedTextRun()</a>; </dd></dl>
 
 </div>
 </div>
@@ -939,7 +935,8 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Return a managed <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a>. </p>
+
+<p>Return a managed <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a>. </p>
 
 </div>
 </div>
@@ -1289,7 +1286,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Set or get the WCS model unit height of the text not including any annotatition scaling </p>
 
 </div>
 </div>
@@ -1342,7 +1338,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns the string in m_text_string, which is a wchar_t version of the basic text for this run, and may contain unevaluated field formulae </p>
 
 </div>
 </div>
@@ -1514,8 +1509,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>(ECS) distance and direction from m_offset to start of next run </p>
-
 </div>
 </div>
 <a id="ab620d333549054476e4483eb6341bd3b"></a>
@@ -1544,8 +1537,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Font HeightOfI / text height - Converts from font units to model units or page units. </p>
-
 </div>
 </div>
 <a id="a89cf01d83b25e6e9b5e0aa5797153d2f"></a>
@@ -1559,9 +1550,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>These apply to Paragraph type runs (m_type == rtParagraph) </p>
-<p>indent and margins are in model units or page unitsFirst line indentation for this paragraph </p>
 
 </div>
 </div>
@@ -1577,8 +1565,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>left margin in formatting rect for this paragraph </p>
-
 </div>
 </div>
 <a id="a4e395320053bac7be1cb07e097d67818"></a>
@@ -1593,8 +1579,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>line position in <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a> </p>
-
 </div>
 </div>
 <a id="a91fc91c3ac4e64dfa64020cd63ed7eeb"></a>
@@ -1608,7 +1592,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Font used to draw, pick, or otherwise evaluate this <a class="el" href="../../d4/d2c/class_o_n___text_run.html" title="A range of text with all the same attributes. ">ON_TextRun</a>. This pointer is run-time only and must be set and point to a valid <a class="el" href="../../d8/df5/class_o_n___font.html" title="An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT, a .NET System...">ON_Font</a> for any font related operations to work. </p>
 
 </div>
 </div>
@@ -1624,8 +1607,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>(ECS) offset to lower left of bounding box from <a class="el" href="../../d3/d82/class_o_n___text_content.html">ON_TextContent</a> plane origin </p>
-
 </div>
 </div>
 <a id="ad3c1f090a88216392db1a2609dd4a65b"></a>
@@ -1639,8 +1620,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>right margin in formatting rect for this paragraph </p>
 
 </div>
 </div>
@@ -1656,8 +1635,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>pointers to runs for the top and bottom parts </p>
-
 </div>
 </div>
 <a id="aa0142463d9a975c9932935da906e0444"></a>
@@ -1672,8 +1649,6 @@ Friends</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>fraction for scaling textheight in stacked text </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1682,7 +1657,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

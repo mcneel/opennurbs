@@ -85,11 +85,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a4632563221b8e2386048039d0c4fb2f1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d39/class_o_n___mesh_curve_parameters.html#a4632563221b8e2386048039d0c4fb2f1">m_tolerance</a></td></tr>
 <tr class="separator:a4632563221b8e2386048039d0c4fb2f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p>Definition of virtual parametric curve </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a47962de19711d2fe1973f8703587188a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a47962de19711d2fe1973f8703587188a">&#9670;&nbsp;</a></span>ON_MeshCurveParameters()</h2>
 
@@ -119,7 +115,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If main_seg_count &lt;= 0, then both these parameters are ignored. If main_seg_count &gt; 0, then sub_seg_count must be &gt;= 1. In this case the curve will be broken into main_seg_count equally spaced chords. If needed, each of these chords can be split into as many sub_seg_count sub-parts if the subdivision is necessary for the mesh to meet the other meshing constraints. In particular, if sub_seg_count = 0, then the curve is broken into main_seg_count pieces and no further testing is performed. </p>
 
 </div>
 </div>
@@ -134,7 +129,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Maximum angle (in radians) between unit tangents at adjacent vertices. </p>
 
 </div>
 </div>
@@ -149,7 +143,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If max_aspect &lt; 1.0, the parameter is ignored. If 1 &lt;= max_aspect &lt; sqrt(2), it is treated as if max_aspect = sqrt(2). This parameter controls the maximum permitted value of (length of longest chord) / (length of shortest chord) </p>
 
 </div>
 </div>
@@ -164,7 +157,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Maximum permitted value of distance chord midpoint to curve) / (length of chord) </p>
 
 </div>
 </div>
@@ -179,7 +171,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If max_edge_length = 0, the parameter is ignored. This parameter controls the maximum permitted edge length. </p>
 
 </div>
 </div>
@@ -194,7 +185,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_min_edge_length = 0, the parameter is ignored. This parameter controls the minimum permitted edge length. </p>
 
 </div>
 </div>
@@ -279,7 +269,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If tolerance = 0, the parameter is ignored. This parameter controls the maximum permitted value of the distance from the curve to the mesh. </p>
 
 </div>
 </div>
@@ -289,7 +278,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

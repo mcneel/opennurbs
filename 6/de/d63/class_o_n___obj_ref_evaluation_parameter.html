@@ -69,7 +69,6 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a9baaf90602b40c21da478af856e8b346"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d63/class_o_n___obj_ref_evaluation_parameter.html#a9baaf90602b40c21da478af856e8b346">m_s</a> [3]</td></tr>
-<tr class="memdesc:a9baaf90602b40c21da478af856e8b346"><td class="mdescLeft">&#160;</td><td class="mdescRight">curve/surface/cage domains  <a href="#a9baaf90602b40c21da478af856e8b346">More...</a><br /></td></tr>
 <tr class="separator:a9baaf90602b40c21da478af856e8b346"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae90aefcf421ece02795c9dc9312adf7b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d63/class_o_n___obj_ref_evaluation_parameter.html#ae90aefcf421ece02795c9dc9312adf7b">m_t</a> [4]</td></tr>
 <tr class="separator:ae90aefcf421ece02795c9dc9312adf7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -78,10 +77,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:af88034a100ec5d8c2041c8cebcd8835c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d63/class_o_n___obj_ref_evaluation_parameter.html#af88034a100ec5d8c2041c8cebcd8835c">m_t_type</a></td></tr>
 <tr class="separator:af88034a100ec5d8c2041c8cebcd8835c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ab9115abcf1b72cf3805604e16939a660"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab9115abcf1b72cf3805604e16939a660">&#9670;&nbsp;</a></span>ON_ObjRefEvaluationParameter()</h2>
 
@@ -183,8 +179,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>curve/surface/cage domains </p>
-
 </div>
 </div>
 <a id="ae90aefcf421ece02795c9dc9312adf7b"></a>
@@ -212,7 +206,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Not necesarily the same as m_component_index See comment above for details. </p>
 
 </div>
 </div>
@@ -227,17 +220,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_point != <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a> and m_t_type != 0, then m_t_type, m_t, and m_t_ci record the m_geometry evaluation parameters of the m_point.</p>
-<p>m_t_type values</p>
-<p>0: no parameter values; m_t_ci and m_t[] have no meaning.</p>
-<p>1: m_geometry points to a curve, m_t[0] is a curve parameter for m_point, and m_t_ci has no meaning.</p>
-<p>2: m_geometry points to surface or single faced brep, (m_t[0],m_t[1]) is a surface parameter for m_point, and m_t_ci has no meaning. In this case, m_component_index may not be set or, if m_geometry points to a brep face, m_component_index may identify the face in the parent brep.</p>
-<p>3: m_geometry points to a brep edge with an associated trim and m_t[0] is the edge parameter for m_point. m_t_ci is the <a class="el" href="../../d3/dac/class_o_n___brep_trim.html">ON_BrepTrim</a> component index and m_t[1] is the <a class="el" href="../../d3/dac/class_o_n___brep_trim.html">ON_BrepTrim</a> parameter that corresponds to the edge point. m_s[0] and m_s[1] are normalized parameters. In this case m_component_index identifies the the edge in the brep and m_t_ci identifies a trim.</p>
-<p>4: m_geometry points to a mesh or mesh face and m_t_ci identifies the mesh face. If the face is a triangle, the barycentric coordinates of m_point are(m_t[0], m_t[1], m_t[2]) and m_t[3] is zero. If the mesh face is a quadrangle, the barycentric coordinates of m_point are (m_t[0], m_t[1], m_t[2], m_t[3]) and at least one of the coordinates is zero. In both cases, the point can be evaluated using the formula m_t[0]*mesh.m_V[f.vi[0]] + ... + m_t[3]*mesh.m_V[f.vi[3]], where f = mesh.m_F[m_component_index.m_index]. In this case, if m_geometry points to a mesh, then m_component_index != m_t_ci.</p>
-<p>5: m_geometry points to a mesh or mesh edge and m_t_ci identifies the mesh edge. The normalized coordinate of the point on the mesh edge is m_t[0]. The point can be evaluated using the formula m_t[0]*mesh.m_V[v0] + (1.0-m_t[0])*mesh.m_V[v1], where v0 and v1 are the indices of the mesh vertices at the edge's ends. In this case, if m_geometry points to a mesh, then m_component_index != m_t_ci.</p>
-<p>6: m_geometry points to a NURBS cage and (m_t[0],m_t[1],m_t[2]) are cage evaluation parameters.</p>
-<p>7: m_geometry points to an annotation object and m_t_ci identifies a point on the annotation object.</p>
-<p>8: m_geometry points to a mesh or mesh vertex object and m_t_ci identifies a vertex on the mesh object. </p>
 
 </div>
 </div>
@@ -247,7 +229,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

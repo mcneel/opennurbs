@@ -72,6 +72,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a628160cd613f78b05ee4332a24ad886b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#a628160cd613f78b05ee4332a24ad886b">Scale</a> (ON::LengthUnitSystem) const</td></tr>
 <tr class="separator:a628160cd613f78b05ee4332a24ad886b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a768b6a37cb7db9c5e8b6b87673420d13"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#a768b6a37cb7db9c5e8b6b87673420d13">SetInvalidTolerancesToDefaultValues</a> ()</td></tr>
+<tr class="memdesc:a768b6a37cb7db9c5e8b6b87673420d13"><td class="mdescLeft">&#160;</td><td class="mdescRight">If m_absolute_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_absolute_tolerance. If m_angle_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_angle_tolerance. If m_relative_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_relative_tolerance.  <a href="#a768b6a37cb7db9c5e8b6b87673420d13">More...</a><br /></td></tr>
 <tr class="separator:a768b6a37cb7db9c5e8b6b87673420d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bdb1bee4be37b7a3cd4978426971919"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#a2bdb1bee4be37b7a3cd4978426971919">TolerancesAreValid</a> () const</td></tr>
 <tr class="separator:a2bdb1bee4be37b7a3cd4978426971919"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -81,18 +82,14 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ac039993039ddf54848522b286589435c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#ac039993039ddf54848522b286589435c">m_absolute_tolerance</a> = 0.001</td></tr>
-<tr class="memdesc:ac039993039ddf54848522b286589435c"><td class="mdescLeft">&#160;</td><td class="mdescRight">in units &gt; 0.0  <a href="#ac039993039ddf54848522b286589435c">More...</a><br /></td></tr>
 <tr class="separator:ac039993039ddf54848522b286589435c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae00fe438149ede3cf989efa77c442cef"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#ae00fe438149ede3cf989efa77c442cef">m_angle_tolerance</a> = ON_PI/180.0</td></tr>
-<tr class="memdesc:ae00fe438149ede3cf989efa77c442cef"><td class="mdescLeft">&#160;</td><td class="mdescRight">in radians &gt; 0.0 and &lt;= ON_PI  <a href="#ae00fe438149ede3cf989efa77c442cef">More...</a><br /></td></tr>
 <tr class="separator:ae00fe438149ede3cf989efa77c442cef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafca681216e7d6c96aa8c57ec6cad161"><td class="memItemLeft" align="right" valign="top">ON::OBSOLETE_DistanceDisplayMode&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#aafca681216e7d6c96aa8c57ec6cad161">m_distance_display_mode</a> = ON::OBSOLETE_DistanceDisplayMode::Decimal</td></tr>
-<tr class="memdesc:aafca681216e7d6c96aa8c57ec6cad161"><td class="mdescLeft">&#160;</td><td class="mdescRight">decimal or fractional  <a href="#aafca681216e7d6c96aa8c57ec6cad161">More...</a><br /></td></tr>
 <tr class="separator:aafca681216e7d6c96aa8c57ec6cad161"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeffd4dda9e243f8c221e53d8c2b692d4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#aeffd4dda9e243f8c221e53d8c2b692d4">m_distance_display_precision</a> = 3</td></tr>
 <tr class="separator:aeffd4dda9e243f8c221e53d8c2b692d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09d0f5c6d7bd63a5d2de2bb37a706ddc"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#a09d0f5c6d7bd63a5d2de2bb37a706ddc">m_relative_tolerance</a> = 0.01</td></tr>
-<tr class="memdesc:a09d0f5c6d7bd63a5d2de2bb37a706ddc"><td class="mdescLeft">&#160;</td><td class="mdescRight">fraction &gt; 0.0 and &lt; 1.0  <a href="#a09d0f5c6d7bd63a5d2de2bb37a706ddc">More...</a><br /></td></tr>
 <tr class="separator:a09d0f5c6d7bd63a5d2de2bb37a706ddc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c901130e113c82d499b9f0d25bde6e9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#a4c901130e113c82d499b9f0d25bde6e9">m_unit_system</a> = <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a715d76cee1d4321c50af9ab673c38af8">ON_UnitSystem::Millimeters</a></td></tr>
 <tr class="separator:a4c901130e113c82d499b9f0d25bde6e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -102,11 +99,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:aa0cb31839be446db20857b1116b770b9"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html">ON_3dmUnitsAndTolerances</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d67/class_o_n__3dm_units_and_tolerances.html#aa0cb31839be446db20857b1116b770b9">Millimeters</a></td></tr>
 <tr class="separator:aa0cb31839be446db20857b1116b770b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p>units and tolerances </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a638b7c6de92f09f3527f2be8a1dd5af3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a638b7c6de92f09f3527f2be8a1dd5af3">&#9670;&nbsp;</a></span>ON_3dmUnitsAndTolerances() <span class="overload">[1/2]</span></h2>
 
@@ -263,7 +256,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns scale factor that needs to be applied to change from the argument's unit system to m_unit_system. When m_unit_system is not ON::LengthUnitSystem::CustomUnits, Scale(us) = ON::UnitScale(us,m_unit_system). When Scale(us) When m_unit_system is ON::LengthUnitSystem::CustomUnits, Scale(us) = ON::UnitScale(us,ON::LengthUnitSystem::Meters)*m_custom_unit_scale. </p>
 
 </div>
 </div>
@@ -281,7 +273,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If m_absolute_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_absolute_tolerance. If m_angle_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_angle_tolerance. If m_relative_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_relative_tolerance. Returns: 0: all tolerances were valid 0 != (rc &amp; 1): m_absolute_tolerance was invalid and set to the default value 0 != (rc &amp; 2): m_angle_tolerance was invalid and set to the default value 0 != (rc &amp; 4): m_relative_tolerance was invalid and set to the default value </p>
+
+<p>If m_absolute_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_absolute_tolerance. If m_angle_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_angle_tolerance. If m_relative_tolerance is not set to a valid value, it is set to ON_3dmUnitsAndTolerances::DefaultValue.m_relative_tolerance. </p>
+<dl class="section return"><dt>Returns</dt><dd>0: all tolerances were valid 0 != (rc &amp; 1): m_absolute_tolerance was invalid and set to the default value 0 != (rc &amp; 2): m_angle_tolerance was invalid and set to the default value 0 != (rc &amp; 4): m_relative_tolerance was invalid and set to the default value </dd></dl>
 
 </div>
 </div>
@@ -299,7 +293,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if tolerances (m_absolute_tolerance, m_angle_tolerance, m_relative_tolerance) are set to valid values. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if tolerances (m_absolute_tolerance, m_angle_tolerance, m_relative_tolerance) are set to valid values. </dd></dl>
 
 </div>
 </div>
@@ -334,8 +328,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>in units &gt; 0.0 </p>
-
 </div>
 </div>
 <a id="ae00fe438149ede3cf989efa77c442cef"></a>
@@ -349,8 +341,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>in radians &gt; 0.0 and &lt;= ON_PI </p>
 
 </div>
 </div>
@@ -366,8 +356,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>decimal or fractional </p>
-
 </div>
 </div>
 <a id="aeffd4dda9e243f8c221e53d8c2b692d4"></a>
@@ -381,7 +369,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>decimal mode: number of decimal places </p>
 
 </div>
 </div>
@@ -396,8 +383,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>fraction &gt; 0.0 and &lt; 1.0 </p>
 
 </div>
 </div>
@@ -434,7 +419,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>fractional modes: denominator = (1/2)^m_distance_display_precision DefaultValue m_unit_system ON::LengthUnitSystem::Millimeters m_absolute_tolerance 0.001 m_angle_tolerance pi/180 = 1 degree m_relative_tolerance 0.01 = 1% m_distance_display_mode ON::OBSOLETE_DistanceDisplayMode::Decimal m_distance_display_precision 3 </p>
 
 </div>
 </div>
@@ -444,7 +428,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -106,22 +106,11 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:afce10293e3a2215e9de118741a856ed9"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../da/dff/class_o_n___m_d5___hash.html">ON_MD5_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dff/class_o_n___m_d5___hash.html#afce10293e3a2215e9de118741a856ed9">EmptyContentHash</a></td></tr>
-<tr class="memdesc:afce10293e3a2215e9de118741a856ed9"><td class="mdescLeft">&#160;</td><td class="mdescRight">MD5 hash of zero bytes.  <a href="#afce10293e3a2215e9de118741a856ed9">More...</a><br /></td></tr>
 <tr class="separator:afce10293e3a2215e9de118741a856ed9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7596a8757e6dfebdfa9ddcf44d862207"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../da/dff/class_o_n___m_d5___hash.html">ON_MD5_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dff/class_o_n___m_d5___hash.html#a7596a8757e6dfebdfa9ddcf44d862207">ZeroDigest</a></td></tr>
-<tr class="memdesc:a7596a8757e6dfebdfa9ddcf44d862207"><td class="mdescLeft">&#160;</td><td class="mdescRight">all digest bytes are zero  <a href="#a7596a8757e6dfebdfa9ddcf44d862207">More...</a><br /></td></tr>
 <tr class="separator:a7596a8757e6dfebdfa9ddcf44d862207"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>/ / Copyright (c) 1993-2015 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// The <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> class is based on code that is modified from C code with the following copyright.</p>
-<p>Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.</p>
-<p>License to copy and use this software is granted provided that it is identified as the "RSA Data Security, Inc. MD5 Message-Digest
-  Algorithm" in all material mentioning or referencing this software or this function.</p>
-<p>License is also granted to make and use derivative works provided that such works are identified as "derived from the RSA Data
-  Security, Inc. MD5 Message-Digest Algorithm" in all material mentioning or referencing the derived work.</p>
-<p>RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided "as is" without express or implied warranty of any kind.</p>
-<p>These notices must be retained in any copies of any part of this documentation and/or software. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ab962329c13b841866d052b2460b2b72a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab962329c13b841866d052b2460b2b72a">&#9670;&nbsp;</a></span>ON_MD5_Hash() <span class="overload">[1/2]</span></h2>
 
@@ -226,7 +215,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: buffer - [in] sizeof_buffer - [in] number of bytes in buffer Returns: MD5 hash of the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">sizeof_buffer</td><td>[in] number of bytes in buffer</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash of the buffer. </dd></dl>
 
 </div>
 </div>
@@ -317,7 +313,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: filename - [in] Name of file sizeof_file - [out] number of bytes in file Returns: MD5 hash of the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] Name of file</td></tr>
+    <tr><td class="paramname">sizeof_file</td><td>[out] number of bytes in file</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash of the buffer. </dd></dl>
 
 </div>
 </div>
@@ -390,7 +393,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: file - [in] File stream from <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open</a>(...,L"rb"); sizeof_file - [out] number of bytes in file Returns: MD5 hash of the file stream from the current offset to the end of the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file</td><td>[in] File stream from <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open</a>(...,L"rb");</td></tr>
+    <tr><td class="paramname">sizeof_file</td><td>[out] number of bytes in file</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash of the file stream from the current offset to the end of the file. </dd></dl>
 
 </div>
 </div>
@@ -471,7 +481,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: str - [in] string byte_count - [out] number of bytes in UTF-8 encoding of the string. Returns: MD5 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>[in] string</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[out] number of bytes in UTF-8 encoding of the string.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </dd></dl>
 
 </div>
 </div>
@@ -550,7 +567,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: str - [in] byte_count - [out] number of bytes in the string. Returns: MD5 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>[in]</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[out] number of bytes in the string.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </dd></dl>
 
 </div>
 </div>
@@ -611,7 +635,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bUpperCaseHexadecimalDigits - [in] false - use 0-9, a-f true - use 0-9, A-F Returns: The MD5 hash value as a 32 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bUpperCaseHexadecimalDigits</td><td>[in]</td></tr>
+    <tr><td class="paramname">false</td><td>use 0-9, a-f</td></tr>
+    <tr><td class="paramname">true</td><td>use 0-9, A-F</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The MD5 hash value as a 32 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </dd></dl>
 
 </div>
 </div>
@@ -630,7 +662,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bUpperCaseHexadecimalDigits - [in] false - use 0-9, a-f true - use 0-9, A-F Returns: The MD5 hash value as a 32 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bUpperCaseHexadecimalDigits</td><td>[in]</td></tr>
+    <tr><td class="paramname">false</td><td>use 0-9, a-f</td></tr>
+    <tr><td class="paramname">true</td><td>use 0-9, A-F</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The MD5 hash value as a 32 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </dd></dl>
 
 </div>
 </div>
@@ -673,8 +713,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>MD5 hash of zero bytes. </p>
-
 </div>
 </div>
 <a id="a42bbd91a69d06ae1191ac0c20b8985f7"></a>
@@ -711,8 +749,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>all digest bytes are zero </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -721,7 +757,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

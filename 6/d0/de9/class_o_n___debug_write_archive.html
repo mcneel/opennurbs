@@ -67,8 +67,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4d7d967a25ac364376a98e19d1491b82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Opens a debug archive file Uses directory set by ON_SetDebugWriteObjectDirectory(const wchar_t* ). creates a file named "debug_file_nnnn.3dm" Example: <a class="el" href="../../d0/de9/class_o_n___debug_write_archive.html">ON_DebugWriteArchive</a> debug; if(debug.m_Archive) ON_WriteArchive( *debug.m_Archive, geometry ); </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<div class="textblock"><div class="fragment"><div class="line"><a class="code" href="../../d0/de9/class_o_n___debug_write_archive.html">ON_DebugWriteArchive</a> debug;</div><div class="line"><span class="keywordflow">if</span>(debug.m_Archive)</div><div class="line">   ON_WriteArchive( *debug.m_Archive, geometry );</div></div><!-- fragment --> </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad6b67b0955140c1d6ad35f617d2630a8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad6b67b0955140c1d6ad35f617d2630a8">&#9670;&nbsp;</a></span>ON_DebugWriteArchive()</h2>
 
@@ -83,7 +82,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a file in N_DebugWriteObjectDirectory() and allocates archive to write to that file. </p>
 
 </div>
 </div>
@@ -119,7 +117,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>check for nullptr before using Destructor closes archive and deletes it. </p>
 
 </div>
 </div>
@@ -137,7 +134,6 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Name of the archive file. = .../debug_file_NNNNN.3dm where N = <a class="el" href="../../d0/de9/class_o_n___debug_write_archive.html#a4d7d967a25ac364376a98e19d1491b82" title="the number of the archive or 0 ">Number()</a>. </p>
 
 </div>
 </div>
@@ -166,7 +162,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

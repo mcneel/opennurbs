@@ -57,14 +57,12 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a9a77c2e07cdb02f796e5da04a6d81dfe"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a9a77c2e07cdb02f796e5da04a6d81dfe">ON_Triangle</a> ()=default</td></tr>
-<tr class="memdesc:a9a77c2e07cdb02f796e5da04a6d81dfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor is uninitialized.  <a href="#a9a77c2e07cdb02f796e5da04a6d81dfe">More...</a><br /></td></tr>
 <tr class="separator:a9a77c2e07cdb02f796e5da04a6d81dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ebcdb38e84d37f8a34b3733a4718be9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a6ebcdb38e84d37f8a34b3733a4718be9">ON_Triangle</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> vertices[3])</td></tr>
 <tr class="separator:a6ebcdb38e84d37f8a34b3733a4718be9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb2dcf67be0f3e77c610d6d7401bd7e7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#adb2dcf67be0f3e77c610d6d7401bd7e7">ON_Triangle</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;a, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;b, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;c)</td></tr>
 <tr class="separator:adb2dcf67be0f3e77c610d6d7401bd7e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ef0712cfa97cf142c5466d914854fc2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a6ef0712cfa97cf142c5466d914854fc2">ON_Triangle</a> (double x)</td></tr>
-<tr class="memdesc:a6ef0712cfa97cf142c5466d914854fc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allows Triangle(0.0) ZeroTriangle.  <a href="#a6ef0712cfa97cf142c5466d914854fc2">More...</a><br /></td></tr>
 <tr class="separator:a6ef0712cfa97cf142c5466d914854fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1e3519793194518cf535755aa1ccee6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#af1e3519793194518cf535755aa1ccee6">ON_Triangle</a> (const <a class="el" href="../../d4/df9/class_o_n___triangle.html">ON_Triangle</a> &amp;tri)=default</td></tr>
 <tr class="separator:af1e3519793194518cf535755aa1ccee6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -73,22 +71,30 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a19f44b34c5b4dacd2444a1fd2ed441de"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a19f44b34c5b4dacd2444a1fd2ed441de">Area</a> () const</td></tr>
 <tr class="separator:a19f44b34c5b4dacd2444a1fd2ed441de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc99a12b987effd1707d8d0f0d2a466"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a4fc99a12b987effd1707d8d0f0d2a466">BoundingBox</a> () const</td></tr>
+<tr class="memdesc:a4fc99a12b987effd1707d8d0f0d2a466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Triangles 3d axis aligned bounding box.  <a href="#a4fc99a12b987effd1707d8d0f0d2a466">More...</a><br /></td></tr>
 <tr class="separator:a4fc99a12b987effd1707d8d0f0d2a466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a702b6075af75f8fcc6e906986c53d40b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a702b6075af75f8fcc6e906986c53d40b">ClosestPointTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point, double *s1, double *s2) const</td></tr>
+<tr class="memdesc:a702b6075af75f8fcc6e906986c53d40b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the point on the triangle that is closest to the test_point.  <a href="#a702b6075af75f8fcc6e906986c53d40b">More...</a><br /></td></tr>
 <tr class="separator:a702b6075af75f8fcc6e906986c53d40b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ee7ff85e28d04c50bce594c919e7f3a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a8ee7ff85e28d04c50bce594c919e7f3a">ClosestPointTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point) const</td></tr>
+<tr class="memdesc:a8ee7ff85e28d04c50bce594c919e7f3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the point on the triangle that is closest to the test_point.  <a href="#a8ee7ff85e28d04c50bce594c919e7f3a">More...</a><br /></td></tr>
 <tr class="separator:a8ee7ff85e28d04c50bce594c919e7f3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa3566eca5c38d945c0a573f535ce206"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#afa3566eca5c38d945c0a573f535ce206">Create</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> vertices[3])</td></tr>
+<tr class="memdesc:afa3566eca5c38d945c0a573f535ce206"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a Triangle from three points.  <a href="#afa3566eca5c38d945c0a573f535ce206">More...</a><br /></td></tr>
 <tr class="separator:afa3566eca5c38d945c0a573f535ce206"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad544ea03d4c668e90ae791a565a8c169"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#ad544ea03d4c668e90ae791a565a8c169">Create</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;a, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;b, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;c)</td></tr>
+<tr class="memdesc:ad544ea03d4c668e90ae791a565a8c169"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a Triangle from three points.  <a href="#ad544ea03d4c668e90ae791a565a8c169">More...</a><br /></td></tr>
 <tr class="separator:ad544ea03d4c668e90ae791a565a8c169"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6a41e85de44778aa1ec1003e7ee449f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#af6a41e85de44778aa1ec1003e7ee449f">DistanceTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point) const</td></tr>
+<tr class="memdesc:af6a41e85de44778aa1ec1003e7ee449f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the point on the triangle that is closest to the test_point.  <a href="#af6a41e85de44778aa1ec1003e7ee449f">More...</a><br /></td></tr>
 <tr class="separator:af6a41e85de44778aa1ec1003e7ee449f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab56b749e26fc64643a0721d1d4b735de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#ab56b749e26fc64643a0721d1d4b735de">Edge</a> (int i) const</td></tr>
 <tr class="separator:ab56b749e26fc64643a0721d1d4b735de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa281fbcbb5b2ce87abc5a4637ab1c489"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#aa281fbcbb5b2ce87abc5a4637ab1c489">GetBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox, int bGrowBox=false) const</td></tr>
+<tr class="memdesc:aa281fbcbb5b2ce87abc5a4637ab1c489"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get line's 3d axis aligned bounding box or the union of the input box with the object's bounding box.  <a href="#aa281fbcbb5b2ce87abc5a4637ab1c489">More...</a><br /></td></tr>
 <tr class="separator:aa281fbcbb5b2ce87abc5a4637ab1c489"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa09cc39e375358195e2bd5a9858336f2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#aa09cc39e375358195e2bd5a9858336f2">GetTightBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;tight_bbox, bool bGrowBox=false, const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> *xform=nullptr) const</td></tr>
+<tr class="memdesc:aa09cc39e375358195e2bd5a9858336f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get tight bounding box with respect to a given frame  <a href="#aa09cc39e375358195e2bd5a9858336f2">More...</a><br /></td></tr>
 <tr class="separator:aa09cc39e375358195e2bd5a9858336f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3238ef876221f6eeaa40db4b33b73206"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a3238ef876221f6eeaa40db4b33b73206">IsDegenerate</a> (double tol=ON_ZERO_TOLERANCE) const</td></tr>
 <tr class="separator:a3238ef876221f6eeaa40db4b33b73206"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -110,8 +116,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a58551ef478d86c983ce27a14cb3c16d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a58551ef478d86c983ce27a14cb3c16d2">PlaneEquation</a> () const</td></tr>
 <tr class="separator:a58551ef478d86c983ce27a14cb3c16d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff3eb20118fd2a61acdcd33d48b89cf8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#aff3eb20118fd2a61acdcd33d48b89cf8">PointAt</a> (double s1, double s2) const</td></tr>
+<tr class="memdesc:aff3eb20118fd2a61acdcd33d48b89cf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate point on triangle.  <a href="#aff3eb20118fd2a61acdcd33d48b89cf8">More...</a><br /></td></tr>
 <tr class="separator:aff3eb20118fd2a61acdcd33d48b89cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae483f88d577e6cf113ebc727bac38154"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#ae483f88d577e6cf113ebc727bac38154">Reverse</a> (int i)</td></tr>
+<tr class="memdesc:ae483f88d577e6cf113ebc727bac38154"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reverse endpoints of Edge[i].  <a href="#ae483f88d577e6cf113ebc727bac38154">More...</a><br /></td></tr>
 <tr class="separator:ae483f88d577e6cf113ebc727bac38154"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81f88c1319048b37d8e5627ea1bc4691"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a81f88c1319048b37d8e5627ea1bc4691">Rotate</a> (double sin_angle, double cos_angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;axis_of_rotation, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;center_of_rotation)</td></tr>
 <tr class="memdesc:a81f88c1319048b37d8e5627ea1bc4691"><td class="mdescLeft">&#160;</td><td class="mdescRight">rotate line about a point and axis  <a href="#a81f88c1319048b37d8e5627ea1bc4691">More...</a><br /></td></tr>
@@ -128,19 +136,15 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ab721c1111f1fc05d338ed8b6499f7073"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#ab721c1111f1fc05d338ed8b6499f7073">m_V</a> [3]</td></tr>
-<tr class="memdesc:ab721c1111f1fc05d338ed8b6499f7073"><td class="mdescLeft">&#160;</td><td class="mdescRight">verticies  <a href="#ab721c1111f1fc05d338ed8b6499f7073">More...</a><br /></td></tr>
 <tr class="separator:ab721c1111f1fc05d338ed8b6499f7073"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a3493f70880a69e59ef3785baec1b1443"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d4/df9/class_o_n___triangle.html">ON_Triangle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a3493f70880a69e59ef3785baec1b1443">NanTriangle</a></td></tr>
-<tr class="memdesc:a3493f70880a69e59ef3785baec1b1443"><td class="mdescLeft">&#160;</td><td class="mdescRight">{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>}  <a href="#a3493f70880a69e59ef3785baec1b1443">More...</a><br /></td></tr>
 <tr class="separator:a3493f70880a69e59ef3785baec1b1443"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab4245632c9b586075706cfcdc851f86d"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d4/df9/class_o_n___triangle.html">ON_Triangle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#ab4245632c9b586075706cfcdc851f86d">UnsetTriangle</a></td></tr>
-<tr class="memdesc:ab4245632c9b586075706cfcdc851f86d"><td class="mdescLeft">&#160;</td><td class="mdescRight">{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>}  <a href="#ab4245632c9b586075706cfcdc851f86d">More...</a><br /></td></tr>
 <tr class="separator:ab4245632c9b586075706cfcdc851f86d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a539b325f064f60664ca7250035b99c68"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d4/df9/class_o_n___triangle.html">ON_Triangle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/df9/class_o_n___triangle.html#a539b325f064f60664ca7250035b99c68">ZeroTriangle</a></td></tr>
-<tr class="memdesc:a539b325f064f60664ca7250035b99c68"><td class="mdescLeft">&#160;</td><td class="mdescRight">{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>}  <a href="#a539b325f064f60664ca7250035b99c68">More...</a><br /></td></tr>
 <tr class="separator:a539b325f064f60664ca7250035b99c68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -166,8 +170,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Default constructor is uninitialized. </p>
 
 </div>
 </div>
@@ -239,8 +241,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Allows Triangle(0.0) ZeroTriangle. </p>
-
 </div>
 </div>
 <a id="af1e3519793194518cf535755aa1ccee6"></a>
@@ -309,7 +309,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Area of triangle </p>
+<dl class="section return"><dt>Returns</dt><dd>Area of triangle </dd></dl>
 
 </div>
 </div>
@@ -327,7 +327,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get Triangles 3d axis aligned bounding box. Returns: 3d bounding box. </p>
+
+<p>Get Triangles 3d axis aligned bounding box. </p>
+<dl class="section return"><dt>Returns</dt><dd>3d bounding box. </dd></dl>
 
 </div>
 </div>
@@ -362,7 +364,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Find the point on the triangle that is closest to the test_point. Parameters: test_point - [in] s1, s2 - [out] PointAt( *s1, *s2) is the point on the triangle closest to test_point. Returns: true if successful. </p>
+
+<p>Find the point on the triangle that is closest to the test_point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">test_point</td><td>[in] s1, s2 - [out] PointAt( *s1, *s2) is the point on the triangle closest to test_point.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if successful. </dd></dl>
 
 </div>
 </div>
@@ -381,7 +391,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Find the point on the triangle that is closest to the test_point. Parameters: test_point - [in] Returns: The point on the line that is closest to test_point. </p>
+
+<p>Find the point on the triangle that is closest to the test_point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">test_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The point on the line that is closest to test_point. </dd></dl>
 
 </div>
 </div>
@@ -400,7 +418,14 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create a Triangle from three points. Parameters: vertices - [in] vertices </p>
+
+<p>Create a Triangle from three points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">vertices</td><td>[in] vertices</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -435,7 +460,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create a Triangle from three points. Parameters: a,b,c - [in] vertices </p>
+
+<p>Create a Triangle from three points. </p>
+<p>TODODOC: a,b,c - [in] vertices </p>
 
 </div>
 </div>
@@ -454,7 +481,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Find the point on the triangle that is closest to the test_point. Parameters: test_point -[in] Returns: distance from the point on triangle that is closest to test_point. See Also: <a class="el" href="../../d2/d35/class_o_n__3d_point.html#a645aae8223672bebfdda756671763e01">ON_3dPoint::DistanceTo</a> <a class="el" href="../../d4/d6f/class_o_n___line.html#ac2cea825235da9735f589c31601e0824">ON_Line::ClosestPointTo</a> </p>
+
+<p>Find the point on the triangle that is closest to the test_point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">test_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>distance from the point on triangle that is closest to test_point. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d2/d35/class_o_n__3d_point.html#a645aae8223672bebfdda756671763e01">ON_3dPoint::DistanceTo</a>, <a class="el" href="../../d4/d6f/class_o_n___line.html#ac2cea825235da9735f589c31601e0824" title="Find the point on the (infinite) line that is closest to the test_point. ">ON_Line::ClosestPointTo</a></dd></dl>
 
 </div>
 </div>
@@ -473,7 +509,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Edge opposite m_V[i] Specifically, <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a>( m_V[(i+1)%3 ], m_V[(i+2)%3 ] ) </p>
+<dl class="section return"><dt>Returns</dt><dd>Edge opposite m_V[i] Specifically, <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a>( m_V[(i+1)%3 ], m_V[(i+2)%3 ] ) </dd></dl>
 
 </div>
 </div>
@@ -502,7 +538,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get line's 3d axis aligned bounding box or the union of the input box with the object's bounding box. Parameters: bbox - [in/out] 3d axis aligned bounding box bGrowBox - [in] (default=false) If true, then the union of the input bbox and the object's bounding box is returned in bbox. If false, the object's bounding box is returned in bbox. Returns: true if object has bounding box and calculation was successful. </p>
+
+<p>Get line's 3d axis aligned bounding box or the union of the input box with the object's bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in/out] 3d axis aligned bounding box</td></tr>
+    <tr><td class="paramname">bGrowBox</td><td>[in] (default=false) If true, then the union of the input bbox and the object's bounding box is returned in bbox. If false, the object's bounding box is returned in bbox.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if object has bounding box and calculation was successful. </dd></dl>
 
 </div>
 </div>
@@ -537,7 +582,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get tight bounding box with respect to a given frame Parameters: tight_bbox - [in/out] tight bounding box bGrowBox -[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the line's tight bounding box. xform -[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed triangle is calculated. The triangle is not modified. Returns: True if a valid tight_bbox is returned. </p>
+
+<p>Get tight bounding box with respect to a given frame </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tight_bbox</td><td>[in/out] tight bounding box</td></tr>
+    <tr><td class="paramname">bGrowBox</td><td>[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the line's tight bounding box.</td></tr>
+    <tr><td class="paramname">xform</td><td>[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed triangle is calculated. The triangle is not modified.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a valid tight_bbox is returned. </dd></dl>
 
 </div>
 </div>
@@ -556,7 +611,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if <a class="el" href="../../d4/df9/class_o_n___triangle.html#a19f44b34c5b4dacd2444a1fd2ed441de">Area()</a>&lt; tol Note: Recall Area = .5* base * height. So this degeneracy tests for a combination long enough and high enough. See Also: <a class="el" href="../../d4/df9/class_o_n___triangle.html#a19f44b34c5b4dacd2444a1fd2ed441de">ON_Triangle::Area()</a> </p>
+<dl class="section return"><dt>Returns</dt><dd>true if <a class="el" href="../../d4/df9/class_o_n___triangle.html#a19f44b34c5b4dacd2444a1fd2ed441de">Area()</a>&lt; tol Note: Recall Area = .5* base * height. So this degeneracy tests for a combination long enough and high enough. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/df9/class_o_n___triangle.html#a19f44b34c5b4dacd2444a1fd2ed441de">ON_Triangle::Area()</a></dd></dl>
 
 </div>
 </div>
@@ -574,7 +630,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if m_V[i].<a class="el" href="../../d4/df9/class_o_n___triangle.html#a53dcb06810c9c23252a1f69e7bfc4754">IsValid()</a> for all i </p>
+<dl class="section return"><dt>Returns</dt><dd>True if m_V[i].<a class="el" href="../../d4/df9/class_o_n___triangle.html#a53dcb06810c9c23252a1f69e7bfc4754">IsValid()</a> for all i </dd></dl>
 
 </div>
 </div>
@@ -592,7 +648,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: N = ( b-a) X ( c-a) where a,b,c are the verticies See Also: <a class="el" href="../../d4/df9/class_o_n___triangle.html">ON_Triangle</a> <a class="el" href="../../d4/df9/class_o_n___triangle.html#a6969d23684a0cb2f39e44916ef417bb0">UnitNormal()</a> </p>
+<dl class="section return"><dt>Returns</dt><dd>N = ( b-a) X ( c-a) where a,b,c are the verticies </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>ON_Triangle UnitNormal()</dd></dl>
 
 </div>
 </div>
@@ -708,7 +765,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Plane containing Triangle with normal given by <a class="el" href="../../d4/df9/class_o_n___triangle.html#a6969d23684a0cb2f39e44916ef417bb0">UnitNormal()</a>. Notes: Ensure !IsDegenerate() to gaurentee meaningful result </p>
+<dl class="section return"><dt>Returns</dt><dd>Plane containing Triangle with normal given by <a class="el" href="../../d4/df9/class_o_n___triangle.html#a6969d23684a0cb2f39e44916ef417bb0">UnitNormal()</a>. Notes: Ensure !IsDegenerate() to gaurentee meaningful result </dd></dl>
 
 </div>
 </div>
@@ -737,7 +794,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Evaluate point on triangle. Parameters: s1, s2 - [in] evaluation parameter. Returns: (1-s1-s2)* m_V[0] + s1*m_V[1] + s2*m_V[2] Notes: Point is in the triangle iff s1&gt;=0, s2&gt;=0 and s1 + s2&lt;=1. Other values produce points on the plane of the triangle. </p>
+
+<p>Evaluate point on triangle. </p>
+<p>TODODOC: s1, s2 - [in] evaluation parameter. </p><dl class="section return"><dt>Returns</dt><dd>(1-s1-s2)* m_V[0] + s1*m_V[1] + s2*m_V[2] Notes: Point is in the triangle iff s1&gt;=0, s2&gt;=0 and s1 + s2&lt;=1. Other values produce points on the plane of the triangle. </dd></dl>
 
 </div>
 </div>
@@ -756,7 +815,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reverse endpoints of Edge[i]. </p>
+
+<p>Reverse endpoints of Edge[i]. </p>
 
 </div>
 </div>
@@ -886,7 +946,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../d4/df9/class_o_n___triangle.html#ad49a96df7b21b933e8c6898eec2771fc">Normal()</a>.Unitize() Notes: Ensure !IsDegenerate() to gaurentee that <a class="el" href="../../d4/df9/class_o_n___triangle.html#a6969d23684a0cb2f39e44916ef417bb0">UnitNormal()</a>.Length()==1 and the result is not just a bunch of noise. Can return zero vector in some degenerate cases. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../d4/df9/class_o_n___triangle.html#ad49a96df7b21b933e8c6898eec2771fc">Normal()</a>.Unitize() Notes: Ensure !IsDegenerate() to gaurentee that <a class="el" href="../../d4/df9/class_o_n___triangle.html#a6969d23684a0cb2f39e44916ef417bb0">UnitNormal()</a>.Length()==1 and the result is not just a bunch of noise. Can return zero vector in some degenerate cases. </dd></dl>
 
 </div>
 </div>
@@ -902,8 +962,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>verticies </p>
 
 </div>
 </div>
@@ -927,8 +985,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#a431f63a983b61e62251c3ebb37d851ff" title="(ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN) ">ON_3dPoint::NanPoint</a>} </p>
-
 </div>
 </div>
 <a id="ab4245632c9b586075706cfcdc851f86d"></a>
@@ -950,8 +1006,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>} </p>
 
 </div>
 </div>
@@ -975,8 +1029,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>{<a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>, <a class="el" href="../../d2/d35/class_o_n__3d_point.html#ae5dcca5dde698b25a7ec98b3868285b5" title="(0.0,0.0,0.0) ">ON_3dPoint::Origin</a>} </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -985,7 +1037,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

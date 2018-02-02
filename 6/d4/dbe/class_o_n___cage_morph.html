@@ -69,6 +69,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af001e9aa4ef57e135b05ca4a3687e548"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dbe/class_o_n___cage_morph.html#af001e9aa4ef57e135b05ca4a3687e548">~ON_CageMorph</a> ()</td></tr>
 <tr class="separator:af001e9aa4ef57e135b05ca4a3687e548"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafdb2ef7b957e363b434fcab490ecdcf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dbe/class_o_n___cage_morph.html#aafdb2ef7b957e363b434fcab490ecdcf">IsIdentity</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const override</td></tr>
+<tr class="memdesc:aafdb2ef7b957e363b434fcab490ecdcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides a quick way to determine if a morph function is the identity (doesn't move the points) on a region of space.  <a href="#aafdb2ef7b957e363b434fcab490ecdcf">More...</a><br /></td></tr>
 <tr class="separator:aafdb2ef7b957e363b434fcab490ecdcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_o_n___space_morph"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_o_n___space_morph')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../da/d04/class_o_n___space_morph.html">ON_SpaceMorph</a></td></tr>
 <tr class="memitem:a0dd84ee156866dc69976d53bee9160ec inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a0dd84ee156866dc69976d53bee9160ec">ON_SpaceMorph</a> ()</td></tr>
@@ -76,22 +77,29 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaad135aa484329e7460532ab62c3b88f inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#aaad135aa484329e7460532ab62c3b88f">~ON_SpaceMorph</a> ()</td></tr>
 <tr class="separator:aaad135aa484329e7460532ab62c3b88f inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d325222cfb95ea01e20036e055723e7 inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a5d325222cfb95ea01e20036e055723e7">IsIdentity</a> (const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &gt; &amp;Points, double tol) const</td></tr>
+<tr class="memdesc:a5d325222cfb95ea01e20036e055723e7 inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">A slower way to determine if a morph function is the identity (doesn't move the points) on a set of points, to within a tolerance  <a href="../../da/d04/class_o_n___space_morph.html#a5d325222cfb95ea01e20036e055723e7">More...</a><br /></td></tr>
 <tr class="separator:a5d325222cfb95ea01e20036e055723e7 inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a277d7139cab149c621d4946e124c6a6a inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a277d7139cab149c621d4946e124c6a6a">IsIdentity</a> (const class <a class="el" href="../../da/da0/class_o_n___surface.html">ON_Surface</a> &amp;Srf, double tol) const</td></tr>
+<tr class="memdesc:a277d7139cab149c621d4946e124c6a6a inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">A slower way to determine if a morph function is the identity (doesn't move the points) on a surface, to within a tolerance  <a href="../../da/d04/class_o_n___space_morph.html#a277d7139cab149c621d4946e124c6a6a">More...</a><br /></td></tr>
 <tr class="separator:a277d7139cab149c621d4946e124c6a6a inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d43602668cc3088efdbf4e3e17a74a7 inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a6d43602668cc3088efdbf4e3e17a74a7">IsIdentity</a> (const class <a class="el" href="../../d4/d5a/class_o_n___curve.html">ON_Curve</a> &amp;Crv, double tol) const</td></tr>
+<tr class="memdesc:a6d43602668cc3088efdbf4e3e17a74a7 inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">A slower way to determine if a morph function is the identity (doesn't move the points) on a curve, to within a tolerance.  <a href="../../da/d04/class_o_n___space_morph.html#a6d43602668cc3088efdbf4e3e17a74a7">More...</a><br /></td></tr>
 <tr class="separator:a6d43602668cc3088efdbf4e3e17a74a7 inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac218bef710ac8fd1c6c1ce63323803fb inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#ac218bef710ac8fd1c6c1ce63323803fb">PreserveStructure</a> () const</td></tr>
 <tr class="separator:ac218bef710ac8fd1c6c1ce63323803fb inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b8fdac9b37b57cb95b6528b5b3e466a inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a2b8fdac9b37b57cb95b6528b5b3e466a">QuickPreview</a> () const</td></tr>
 <tr class="separator:a2b8fdac9b37b57cb95b6528b5b3e466a inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61616358725e68f57085ed7baf698e47 inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a61616358725e68f57085ed7baf698e47">SetPreserveStructure</a> (bool bPreserveStructure)</td></tr>
+<tr class="memdesc:a61616358725e68f57085ed7baf698e47 inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the preserve structure value.  <a href="../../da/d04/class_o_n___space_morph.html#a61616358725e68f57085ed7baf698e47">More...</a><br /></td></tr>
 <tr class="separator:a61616358725e68f57085ed7baf698e47 inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb50f66cea1238085a3754ebcd253395 inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#aeb50f66cea1238085a3754ebcd253395">SetQuickPreview</a> (bool bQuickPreview)</td></tr>
+<tr class="memdesc:aeb50f66cea1238085a3754ebcd253395 inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the quick preview value.  <a href="../../da/d04/class_o_n___space_morph.html#aeb50f66cea1238085a3754ebcd253395">More...</a><br /></td></tr>
 <tr class="separator:aeb50f66cea1238085a3754ebcd253395 inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b8714e508f54fc6f991b536896957bb inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a8b8714e508f54fc6f991b536896957bb">SetTolerance</a> (double tolerance)</td></tr>
+<tr class="memdesc:a8b8714e508f54fc6f991b536896957bb inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the 3d fitting tolerance used when morphing surfaces and breps.  <a href="../../da/d04/class_o_n___space_morph.html#a8b8714e508f54fc6f991b536896957bb">More...</a><br /></td></tr>
 <tr class="separator:a8b8714e508f54fc6f991b536896957bb inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5afd9775a97dee74911c099100c81a63 inherit pub_methods_class_o_n___space_morph"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d04/class_o_n___space_morph.html#a5afd9775a97dee74911c099100c81a63">Tolerance</a> () const</td></tr>
+<tr class="memdesc:a5afd9775a97dee74911c099100c81a63 inherit pub_methods_class_o_n___space_morph"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the desired accuracy of the morph. This value is primarily used for deforming surfaces and breps.  <a href="../../da/d04/class_o_n___space_morph.html#a5afd9775a97dee74911c099100c81a63">More...</a><br /></td></tr>
 <tr class="separator:a5afd9775a97dee74911c099100c81a63 inherit pub_methods_class_o_n___space_morph"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -166,7 +174,15 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Provides a quick way to determine if a morph function is the identity (doesn't move the points) on a region of space. Parameters: bbox - [in] region of space to test. Returns: The default always returns false. If you override this function, then return true when every point in the bounding box is fixed by the morph. </p>
+
+<p>Provides a quick way to determine if a morph function is the identity (doesn't move the points) on a region of space. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in] region of space to test.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The default always returns false. If you override this function, then return true when every point in the bounding box is fixed by the morph. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="../../da/d04/class_o_n___space_morph.html#a2c8a9223a77214c3c22ec1f1bc5334aa">ON_SpaceMorph</a>.</p>
 
@@ -193,7 +209,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

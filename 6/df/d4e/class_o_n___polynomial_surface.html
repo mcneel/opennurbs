@@ -81,12 +81,10 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aff4a35c01851b8810bdf0cbc4e9de9a9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d9b/class_o_n__4d_point_array.html">ON_4dPointArray</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d4e/class_o_n___polynomial_surface.html#aff4a35c01851b8810bdf0cbc4e9de9a9">m_cv</a></td></tr>
 <tr class="separator:aff4a35c01851b8810bdf0cbc4e9de9a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a804ee9bef09d892d9a2f5a714631f9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d4e/class_o_n___polynomial_surface.html#a7a804ee9bef09d892d9a2f5a714631f9">m_dim</a></td></tr>
-<tr class="memdesc:a7a804ee9bef09d892d9a2f5a714631f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">1,2, or 3  <a href="#a7a804ee9bef09d892d9a2f5a714631f9">More...</a><br /></td></tr>
 <tr class="separator:a7a804ee9bef09d892d9a2f5a714631f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed322af96188c206717c2ba0a8f15b5e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d4e/class_o_n___polynomial_surface.html#aed322af96188c206717c2ba0a8f15b5e">m_domain</a> [2]</td></tr>
 <tr class="separator:aed322af96188c206717c2ba0a8f15b5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a122da57ae8429c4dcc9ac52055e1a74a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d4e/class_o_n___polynomial_surface.html#a122da57ae8429c4dcc9ac52055e1a74a">m_is_rat</a></td></tr>
-<tr class="memdesc:a122da57ae8429c4dcc9ac52055e1a74a"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 if rational, 0 if not rational  <a href="#a122da57ae8429c4dcc9ac52055e1a74a">More...</a><br /></td></tr>
 <tr class="separator:a122da57ae8429c4dcc9ac52055e1a74a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a914d13511af0b07fd33b2c182fe70b24"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d4e/class_o_n___polynomial_surface.html#a914d13511af0b07fd33b2c182fe70b24">m_order</a> [2]</td></tr>
 <tr class="separator:a914d13511af0b07fd33b2c182fe70b24"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -303,16 +301,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">s</td><td>returns false if unable to evaluate </td></tr>
-    <tr><td class="paramname">t</td><td>evaluation parameter </td></tr>
-    <tr><td class="paramname">der_count</td><td>number of derivatives (&gt;=0) </td></tr>
-    <tr><td class="paramname">v_stride</td><td>array stride (&gt;=Dimension()) </td></tr>
-    <tr><td class="paramname">v</td><td>array of length stride*(ndir+1)*(ndir+2)/2 </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -364,7 +352,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>coefficients ( m_C.Length() = m_order[0]*m_order[1] coefficient of s^m*t^n = m_cv[m_order[1]*m+n] </p>
 
 </div>
 </div>
@@ -379,8 +366,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>1,2, or 3 </p>
 
 </div>
 </div>
@@ -410,8 +395,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>1 if rational, 0 if not rational </p>
-
 </div>
 </div>
 <a id="a914d13511af0b07fd33b2c182fe70b24"></a>
@@ -434,7 +417,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

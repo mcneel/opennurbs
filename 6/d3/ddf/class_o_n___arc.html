@@ -52,6 +52,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>An <a class="el" href="../../d3/ddf/class_o_n___arc.html" title="An ON_Arc is a subcurve of 3d circle. ">ON_Arc</a> is a subcurve of 3d circle.  
+ <a href="../../d3/ddf/class_o_n___arc.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d2/d25/opennurbs__arc_8h_source.html">opennurbs_arc.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for ON_Arc:</div>
@@ -59,7 +62,7 @@ Inheritance diagram for ON_Arc:</div>
  <div class="center">
   <img src="../../d3/ddf/class_o_n___arc.png" usemap="#ON_5FArc_map" alt=""/>
   <map id="ON_5FArc_map" name="ON_5FArc_map">
-<area href="../../d1/d1b/class_o_n___circle.html" alt="ON_Circle" shape="rect" coords="0,0,72,24"/>
+<area href="../../d1/d1b/class_o_n___circle.html" title="ON_Circle is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the pla..." alt="ON_Circle" shape="rect" coords="0,0,72,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -71,18 +74,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac6d5501297089ec8206b10f5c8f20a3d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ac6d5501297089ec8206b10f5c8f20a3d">ON_Arc</a> (const <a class="el" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> &amp;)=default</td></tr>
 <tr class="separator:ac6d5501297089ec8206b10f5c8f20a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1f323c3d0b3ec5f08c0b6154e3b748f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ab1f323c3d0b3ec5f08c0b6154e3b748f">ON_Arc</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;circle, double angle_in_radians)</td></tr>
+<tr class="memdesc:ab1f323c3d0b3ec5f08c0b6154e3b748f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc from a circle and an angle in radians  <a href="#ab1f323c3d0b3ec5f08c0b6154e3b748f">More...</a><br /></td></tr>
 <tr class="separator:ab1f323c3d0b3ec5f08c0b6154e3b748f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93dd3f0c3e6b276fa81d4a12f76f9f17"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a93dd3f0c3e6b276fa81d4a12f76f9f17">ON_Arc</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;circle, <a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a> angle_interval_in_radians)</td></tr>
 <tr class="separator:a93dd3f0c3e6b276fa81d4a12f76f9f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7c0c323e6469e1ee942e967f2030021"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ad7c0c323e6469e1ee942e967f2030021">ON_Arc</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d1/d1b/class_o_n___circle.html#a957bf952e4df87b12c8190140f4f7f24">plane</a>, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:ad7c0c323e6469e1ee942e967f2030021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin.  <a href="#ad7c0c323e6469e1ee942e967f2030021">More...</a><br /></td></tr>
 <tr class="separator:ad7c0c323e6469e1ee942e967f2030021"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb3004871178a4be15f3e63a793a6ff6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#acb3004871178a4be15f3e63a793a6ff6">ON_Arc</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;center, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:acb3004871178a4be15f3e63a793a6ff6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0).  <a href="#acb3004871178a4be15f3e63a793a6ff6">More...</a><br /></td></tr>
 <tr class="separator:acb3004871178a4be15f3e63a793a6ff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab50270197db961ca1754f780029f27aa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ab50270197db961ca1754f780029f27aa">ON_Arc</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d1/d1b/class_o_n___circle.html#a957bf952e4df87b12c8190140f4f7f24">plane</a>, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;center, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:ab50270197db961ca1754f780029f27aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis.  <a href="#ab50270197db961ca1754f780029f27aa">More...</a><br /></td></tr>
 <tr class="separator:ab50270197db961ca1754f780029f27aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b72c4b8fe40dbb3702b25e92637a793"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a7b72c4b8fe40dbb3702b25e92637a793">ON_Arc</a> (const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;start_point, const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;interior_point, const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:a7b72c4b8fe40dbb3702b25e92637a793"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc that passes through three 2d points.  <a href="#a7b72c4b8fe40dbb3702b25e92637a793">More...</a><br /></td></tr>
 <tr class="separator:a7b72c4b8fe40dbb3702b25e92637a793"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd3e42765733431ac8d71d488aeef882"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#acd3e42765733431ac8d71d488aeef882">ON_Arc</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;start_point, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;interior_point, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:acd3e42765733431ac8d71d488aeef882"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an arc that passes through three 3d points.  <a href="#acd3e42765733431ac8d71d488aeef882">More...</a><br /></td></tr>
 <tr class="separator:acd3e42765733431ac8d71d488aeef882"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5fd9f60d9e347758a3c59fd12aa7f3d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ae5fd9f60d9e347758a3c59fd12aa7f3d">~ON_Arc</a> ()=default</td></tr>
 <tr class="separator:ae5fd9f60d9e347758a3c59fd12aa7f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -91,52 +100,72 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a500298b72e2e444e16fb0a580bb01c8b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians</a> () const</td></tr>
 <tr class="separator:a500298b72e2e444e16fb0a580bb01c8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03d3e93575eea68a6492e68097ce27f8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a03d3e93575eea68a6492e68097ce27f8">BoundingBox</a> () const</td></tr>
+<tr class="memdesc:a03d3e93575eea68a6492e68097ce27f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get arc's 3d axis aligned bounding box.  <a href="#a03d3e93575eea68a6492e68097ce27f8">More...</a><br /></td></tr>
 <tr class="separator:a03d3e93575eea68a6492e68097ce27f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ba149028b30944bffbdb1daf0e46605"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a0ba149028b30944bffbdb1daf0e46605">ClosestPointTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point, double *t) const</td></tr>
+<tr class="memdesc:a0ba149028b30944bffbdb1daf0e46605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the point on the arc that is closest to test_point.  <a href="#a0ba149028b30944bffbdb1daf0e46605">More...</a><br /></td></tr>
 <tr class="separator:a0ba149028b30944bffbdb1daf0e46605"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a42836f591f5003d57d10ebb7d155ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a4a42836f591f5003d57d10ebb7d155ec">ClosestPointTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point) const</td></tr>
+<tr class="memdesc:a4a42836f591f5003d57d10ebb7d155ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the point on the arc that is closest to test_point.  <a href="#a4a42836f591f5003d57d10ebb7d155ec">More...</a><br /></td></tr>
 <tr class="separator:a4a42836f591f5003d57d10ebb7d155ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86fd5ca54277dcdfbdd634bebbd39649"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a86fd5ca54277dcdfbdd634bebbd39649">Create</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;circle, double angle_in_radians)</td></tr>
+<tr class="memdesc:a86fd5ca54277dcdfbdd634bebbd39649"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc from a circle and an angle in radians  <a href="#a86fd5ca54277dcdfbdd634bebbd39649">More...</a><br /></td></tr>
 <tr class="separator:a86fd5ca54277dcdfbdd634bebbd39649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d24954d091513197be3294e1ee4863f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a3d24954d091513197be3294e1ee4863f">Create</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;circle, <a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a> angle_interval_in_radians)</td></tr>
+<tr class="memdesc:a3d24954d091513197be3294e1ee4863f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc from a circle and an increasing angle interval  <a href="#a3d24954d091513197be3294e1ee4863f">More...</a><br /></td></tr>
 <tr class="separator:a3d24954d091513197be3294e1ee4863f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50db8ce523e9635b28b14b1773f1fd96"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a50db8ce523e9635b28b14b1773f1fd96">Create</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d1/d1b/class_o_n___circle.html#a957bf952e4df87b12c8190140f4f7f24">plane</a>, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:a50db8ce523e9635b28b14b1773f1fd96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin.  <a href="#a50db8ce523e9635b28b14b1773f1fd96">More...</a><br /></td></tr>
 <tr class="separator:a50db8ce523e9635b28b14b1773f1fd96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1aff0fa9af01e3eeaea522b0591e7b81"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a1aff0fa9af01e3eeaea522b0591e7b81">Create</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;center, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:a1aff0fa9af01e3eeaea522b0591e7b81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0).  <a href="#a1aff0fa9af01e3eeaea522b0591e7b81">More...</a><br /></td></tr>
 <tr class="separator:a1aff0fa9af01e3eeaea522b0591e7b81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafcd16827080c6b8eeafe887253d58f8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#aafcd16827080c6b8eeafe887253d58f8">Create</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d1/d1b/class_o_n___circle.html#a957bf952e4df87b12c8190140f4f7f24">plane</a>, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;center, double <a class="el" href="../../d1/d1b/class_o_n___circle.html#a48d3fe4c0792b269453768f803e412e7">radius</a>, double angle_in_radians)</td></tr>
+<tr class="memdesc:aafcd16827080c6b8eeafe887253d58f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis.  <a href="#aafcd16827080c6b8eeafe887253d58f8">More...</a><br /></td></tr>
 <tr class="separator:aafcd16827080c6b8eeafe887253d58f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4d63aa0bbec41bb5f71af51f6a253b1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ad4d63aa0bbec41bb5f71af51f6a253b1">Create</a> (const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;start_point, const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;interior_point, const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:ad4d63aa0bbec41bb5f71af51f6a253b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc that passes through three 2d points.  <a href="#ad4d63aa0bbec41bb5f71af51f6a253b1">More...</a><br /></td></tr>
 <tr class="separator:ad4d63aa0bbec41bb5f71af51f6a253b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69fee664abad2a181c8c89eeb52ec2f0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a69fee664abad2a181c8c89eeb52ec2f0">Create</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;start_point, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;interior_point, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:a69fee664abad2a181c8c89eeb52ec2f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc that passes through three 3d points.  <a href="#a69fee664abad2a181c8c89eeb52ec2f0">More...</a><br /></td></tr>
 <tr class="separator:a69fee664abad2a181c8c89eeb52ec2f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeff53762ce7d13ba6fbaf94351d882c6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#aeff53762ce7d13ba6fbaf94351d882c6">Create</a> (const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;start_point, const <a class="el" href="../../da/d08/class_o_n__2d_vector.html">ON_2dVector</a> &amp;dir_at_start, const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:aeff53762ce7d13ba6fbaf94351d882c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc from a 2d start point, 2d start direction and a 2d end point.  <a href="#aeff53762ce7d13ba6fbaf94351d882c6">More...</a><br /></td></tr>
 <tr class="separator:aeff53762ce7d13ba6fbaf94351d882c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab9c322e5f7633f9cc7cc900c5a20ab56"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ab9c322e5f7633f9cc7cc900c5a20ab56">Create</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;start_point, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;dir_at_start, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;end_point)</td></tr>
+<tr class="memdesc:ab9c322e5f7633f9cc7cc900c5a20ab56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an arc from a 3d start point, 3d start direction and a 3d end point.  <a href="#ab9c322e5f7633f9cc7cc900c5a20ab56">More...</a><br /></td></tr>
 <tr class="separator:ab9c322e5f7633f9cc7cc900c5a20ab56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29540a3b8ce0f67d9ca3378a5c00eb0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a29540a3b8ce0f67d9ca3378a5c00eb0c">Domain</a> () const</td></tr>
+<tr class="memdesc:a29540a3b8ce0f67d9ca3378a5c00eb0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get evaluation domain.  <a href="#a29540a3b8ce0f67d9ca3378a5c00eb0c">More...</a><br /></td></tr>
 <tr class="separator:a29540a3b8ce0f67d9ca3378a5c00eb0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa19c6497385e04d0fe0a12ac9afcd934"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#aa19c6497385e04d0fe0a12ac9afcd934">DomainDegrees</a> () const</td></tr>
 <tr class="separator:aa19c6497385e04d0fe0a12ac9afcd934"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27b404b15c5ad78e64cec25cccc54cf4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a27b404b15c5ad78e64cec25cccc54cf4">DomainRadians</a> () const</td></tr>
 <tr class="separator:a27b404b15c5ad78e64cec25cccc54cf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae53eb6b5ba1e04a5d48114f7f04550fb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ae53eb6b5ba1e04a5d48114f7f04550fb">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;dump) const</td></tr>
+<tr class="memdesc:ae53eb6b5ba1e04a5d48114f7f04550fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a text dump of the arc listing the normal, center radius, start point, end point, and angle.  <a href="#ae53eb6b5ba1e04a5d48114f7f04550fb">More...</a><br /></td></tr>
 <tr class="separator:ae53eb6b5ba1e04a5d48114f7f04550fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f8483d502c7acc3d968b8a04c5c9a8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a4f8483d502c7acc3d968b8a04c5c9a8e">EndPoint</a> () const</td></tr>
 <tr class="separator:a4f8483d502c7acc3d968b8a04c5c9a8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae03506857b0813c20cf1d746e92a37ac"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ae03506857b0813c20cf1d746e92a37ac">GetBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox, int bGrowBox=false) const</td></tr>
+<tr class="memdesc:ae03506857b0813c20cf1d746e92a37ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get arc's 3d axis aligned bounding box or the union of the input box with the arc's bounding box.  <a href="#ae03506857b0813c20cf1d746e92a37ac">More...</a><br /></td></tr>
 <tr class="separator:ae03506857b0813c20cf1d746e92a37ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a334002db627b712c81826096b9b1f380"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a334002db627b712c81826096b9b1f380">GetNurbForm</a> (<a class="el" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> &amp;nurbs_curve) const</td></tr>
+<tr class="memdesc:a334002db627b712c81826096b9b1f380"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a rational degree 2 NURBS curve representation of the arc. Note that the parameterization of NURBS curve does not match arc's transcendental paramaterization. Use <a class="el" href="../../d3/ddf/class_o_n___arc.html#a7408117c5357172e3904b20777c56a93" title="Convert a NURBS curve arc parameter to a arc radians parameter. ">GetRadianFromNurbFormParameter()</a> and GetParameterFromRadian() to convert between the NURBS curve parameter and the transcendental parameter  <a href="#a334002db627b712c81826096b9b1f380">More...</a><br /></td></tr>
 <tr class="separator:a334002db627b712c81826096b9b1f380"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25b89e1bed79b3221c9a9cc6769be6d2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2">GetNurbFormParameterFromRadian</a> (double arc_radians_parameter, double *nurbs_parameter) const</td></tr>
+<tr class="memdesc:a25b89e1bed79b3221c9a9cc6769be6d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a arc radians parameter to a NURBS curve arc parameter.  <a href="#a25b89e1bed79b3221c9a9cc6769be6d2">More...</a><br /></td></tr>
 <tr class="separator:a25b89e1bed79b3221c9a9cc6769be6d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7408117c5357172e3904b20777c56a93"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a7408117c5357172e3904b20777c56a93">GetRadianFromNurbFormParameter</a> (double nurbs_parameter, double *arc_radians_parameter) const</td></tr>
+<tr class="memdesc:a7408117c5357172e3904b20777c56a93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a NURBS curve arc parameter to a arc radians parameter.  <a href="#a7408117c5357172e3904b20777c56a93">More...</a><br /></td></tr>
 <tr class="separator:a7408117c5357172e3904b20777c56a93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10b2bebdd46a7e80674e091f9421987d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a10b2bebdd46a7e80674e091f9421987d">GetTightBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;tight_bbox, bool bGrowBox=false, const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> *xform=nullptr) const</td></tr>
+<tr class="memdesc:a10b2bebdd46a7e80674e091f9421987d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get tight bounding box.  <a href="#a10b2bebdd46a7e80674e091f9421987d">More...</a><br /></td></tr>
 <tr class="separator:a10b2bebdd46a7e80674e091f9421987d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3819c8e01c9f57f50d84a11fe4fe295a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a3819c8e01c9f57f50d84a11fe4fe295a">IsCircle</a> () const</td></tr>
 <tr class="separator:a3819c8e01c9f57f50d84a11fe4fe295a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac387d6a5366f21fb94ce26beb2f09db7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ac387d6a5366f21fb94ce26beb2f09db7">IsValid</a> () const</td></tr>
+<tr class="memdesc:ac387d6a5366f21fb94ce26beb2f09db7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks an arc to make sure it is valid. Detail: Radius&gt;0 and 0&lt;<a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a>&lt;=2 ON_PI  <a href="#ac387d6a5366f21fb94ce26beb2f09db7">More...</a><br /></td></tr>
 <tr class="separator:ac387d6a5366f21fb94ce26beb2f09db7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bb5b0b27c1fe361ae06d44304095613"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a6bb5b0b27c1fe361ae06d44304095613">Length</a> () const</td></tr>
 <tr class="separator:a6bb5b0b27c1fe361ae06d44304095613"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,6 +176,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0fd00dd039a35cb5cf5dbc63084c862b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a0fd00dd039a35cb5cf5dbc63084c862b">operator=</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;)</td></tr>
 <tr class="separator:a0fd00dd039a35cb5cf5dbc63084c862b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac361c004f15eeba02c7095f595abbb4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#aac361c004f15eeba02c7095f595abbb4">Reverse</a> ()</td></tr>
+<tr class="memdesc:aac361c004f15eeba02c7095f595abbb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reverse the orientation of the arc. Changes the domain from [a,b] to [-b.-a].  <a href="#aac361c004f15eeba02c7095f595abbb4">More...</a><br /></td></tr>
 <tr class="separator:aac361c004f15eeba02c7095f595abbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a368808c4e2a314f9f876a3744b3e2387"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a368808c4e2a314f9f876a3744b3e2387">SectorArea</a> () const</td></tr>
 <tr class="separator:a368808c4e2a314f9f876a3744b3e2387"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,14 +187,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2621b7531b23ec575714d3a06c076753"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a2621b7531b23ec575714d3a06c076753">SegmentAreaCentroid</a> () const</td></tr>
 <tr class="separator:a2621b7531b23ec575714d3a06c076753"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25a2821502db6b3ef0019e4864561f81"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a25a2821502db6b3ef0019e4864561f81">SetAngleDegrees</a> (double angle_in_degrees)</td></tr>
+<tr class="memdesc:a25a2821502db6b3ef0019e4864561f81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set arc's subtended angle in degrees.  <a href="#a25a2821502db6b3ef0019e4864561f81">More...</a><br /></td></tr>
 <tr class="separator:a25a2821502db6b3ef0019e4864561f81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8192358ff9c83c445b52f1b4a1f6c47d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a8192358ff9c83c445b52f1b4a1f6c47d">SetAngleIntervalRadians</a> (<a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a> angle_in_radians)</td></tr>
+<tr class="memdesc:a8192358ff9c83c445b52f1b4a1f6c47d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set arc's angle interval in radians.  <a href="#a8192358ff9c83c445b52f1b4a1f6c47d">More...</a><br /></td></tr>
 <tr class="separator:a8192358ff9c83c445b52f1b4a1f6c47d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bbc419b2e851fb8636589c59d0cf6db"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a7bbc419b2e851fb8636589c59d0cf6db">SetAngleRadians</a> (double angle_in_radians)</td></tr>
+<tr class="memdesc:a7bbc419b2e851fb8636589c59d0cf6db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set arc's subtended angle in radians.  <a href="#a7bbc419b2e851fb8636589c59d0cf6db">More...</a><br /></td></tr>
 <tr class="separator:a7bbc419b2e851fb8636589c59d0cf6db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf2436d97d78c96deba73d33672df72f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#adf2436d97d78c96deba73d33672df72f">StartPoint</a> () const</td></tr>
 <tr class="separator:adf2436d97d78c96deba73d33672df72f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10b9ac447c37672a28150baa8c1bc8e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#a10b9ac447c37672a28150baa8c1bc8e0">Trim</a> (<a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a> domain_radian)</td></tr>
+<tr class="memdesc:a10b9ac447c37672a28150baa8c1bc8e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set arc's domain as a subdomain of the circle.  <a href="#a10b9ac447c37672a28150baa8c1bc8e0">More...</a><br /></td></tr>
 <tr class="separator:a10b9ac447c37672a28150baa8c1bc8e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_o_n___circle"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_o_n___circle')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a></td></tr>
 <tr class="memitem:a1040f37d097e4f253ad8d83a4827fb04 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a1040f37d097e4f253ad8d83a4827fb04">ON_Circle</a> ()=default</td></tr>
@@ -217,17 +251,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a5548566cca680403bf1c476636154fbd inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">evaluate circle's implicit equation in plane  <a href="../../d1/d1b/class_o_n___circle.html#a5548566cca680403bf1c476636154fbd">More...</a><br /></td></tr>
 <tr class="separator:a5548566cca680403bf1c476636154fbd inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a929c90fe185faf98e5660f85e990ae96 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96">GetNurbForm</a> (<a class="el" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> &amp;nurbs_curve) const</td></tr>
+<tr class="memdesc:a929c90fe185faf98e5660f85e990ae96 inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a four span rational degree 2 NURBS circle representation of the circle.  <a href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96">More...</a><br /></td></tr>
 <tr class="separator:a929c90fe185faf98e5660f85e990ae96 inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92b460aff5c8c9d01542e55660e2cd2b inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">GetNurbFormParameterFromRadian</a> (double circle_radians_parameter, double *nurbs_parameter) const</td></tr>
+<tr class="memdesc:a92b460aff5c8c9d01542e55660e2cd2b inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a circle radians parameter to a NURBS curve circle parameter.  <a href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">More...</a><br /></td></tr>
 <tr class="separator:a92b460aff5c8c9d01542e55660e2cd2b inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f23b490f574755d8f5fa0cf4b8bb833 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833">GetRadianFromNurbFormParameter</a> (double nurbs_parameter, double *circle_radians_parameter) const</td></tr>
+<tr class="memdesc:a6f23b490f574755d8f5fa0cf4b8bb833 inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a NURBS curve circle parameter to a circle radians parameter.  <a href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833">More...</a><br /></td></tr>
 <tr class="separator:a6f23b490f574755d8f5fa0cf4b8bb833 inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2b7b40b23e536c7e3ef01d6e9d7fcce inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#ad2b7b40b23e536c7e3ef01d6e9d7fcce">GetTightBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;tight_bbox, bool bGrowBox=false, const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> *xform=nullptr) const</td></tr>
+<tr class="memdesc:ad2b7b40b23e536c7e3ef01d6e9d7fcce inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get tight bounding box.  <a href="../../d1/d1b/class_o_n___circle.html#ad2b7b40b23e536c7e3ef01d6e9d7fcce">More...</a><br /></td></tr>
 <tr class="separator:ad2b7b40b23e536c7e3ef01d6e9d7fcce inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abacde9098db723842125593b2aeef649 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d08/class_o_n__2d_vector.html">ON_2dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#abacde9098db723842125593b2aeef649">GradientAt</a> (const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;plane_point) const</td></tr>
 <tr class="separator:abacde9098db723842125593b2aeef649 inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c93444689aa516e077085b21bf40228 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a8c93444689aa516e077085b21bf40228">IsInPlane</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;, double=ON_ZERO_TOLERANCE) const</td></tr>
-<tr class="memdesc:a8c93444689aa516e077085b21bf40228 inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool UpdatePoints(); ///&lt; sets m_point[] to have valid points  <a href="../../d1/d1b/class_o_n___circle.html#a8c93444689aa516e077085b21bf40228">More...</a><br /></td></tr>
+<tr class="memdesc:a8c93444689aa516e077085b21bf40228 inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool UpdatePoints(); // sets m_point[] to have valid points  <a href="../../d1/d1b/class_o_n___circle.html#a8c93444689aa516e077085b21bf40228">More...</a><br /></td></tr>
 <tr class="separator:a8c93444689aa516e077085b21bf40228 inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8c3054ce83d5c219976aac30d1cb17b inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#aa8c3054ce83d5c219976aac30d1cb17b">IsValid</a> () const</td></tr>
 <tr class="memdesc:aa8c3054ce83d5c219976aac30d1cb17b inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">A Valid circle has m_radius&gt;0 and m_plane.IsValid().  <a href="../../d1/d1b/class_o_n___circle.html#aa8c3054ce83d5c219976aac30d1cb17b">More...</a><br /></td></tr>
@@ -237,7 +275,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6616e3d52ad3467634c05892c083a935 inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a6616e3d52ad3467634c05892c083a935">operator=</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;)=default</td></tr>
 <tr class="separator:a6616e3d52ad3467634c05892c083a935 inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adef250a8efeedc7d822b60408813a15c inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#adef250a8efeedc7d822b60408813a15c">Plane</a> () const</td></tr>
-<tr class="memdesc:adef250a8efeedc7d822b60408813a15c inherit pub_methods_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">plane containing circle  <a href="../../d1/d1b/class_o_n___circle.html#adef250a8efeedc7d822b60408813a15c">More...</a><br /></td></tr>
 <tr class="separator:adef250a8efeedc7d822b60408813a15c inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0187471be5403e3cdf61689475c133a inherit pub_methods_class_o_n___circle"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#ab0187471be5403e3cdf61689475c133a">PointAt</a> (double) const</td></tr>
 <tr class="separator:ab0187471be5403e3cdf61689475c133a inherit pub_methods_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -265,11 +302,9 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:ac3523ced5157b20b7ba05ccdfc6070bc"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/ddf/class_o_n___arc.html#ac3523ced5157b20b7ba05ccdfc6070bc">UnitCircle</a></td></tr>
-<tr class="memdesc:ac3523ced5157b20b7ba05ccdfc6070bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">unit circle in the xy plane  <a href="#ac3523ced5157b20b7ba05ccdfc6070bc">More...</a><br /></td></tr>
 <tr class="separator:ac3523ced5157b20b7ba05ccdfc6070bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_class_o_n___circle"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_o_n___circle')"><img src="../../closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a></td></tr>
 <tr class="memitem:abe9b4cbee22108f4f4f349197673a23e inherit pub_static_attribs_class_o_n___circle"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#abe9b4cbee22108f4f4f349197673a23e">UnitCircle</a></td></tr>
-<tr class="memdesc:abe9b4cbee22108f4f4f349197673a23e inherit pub_static_attribs_class_o_n___circle"><td class="mdescLeft">&#160;</td><td class="mdescRight">unit circle in the xy plane  <a href="../../d1/d1b/class_o_n___circle.html#abe9b4cbee22108f4f4f349197673a23e">More...</a><br /></td></tr>
 <tr class="separator:abe9b4cbee22108f4f4f349197673a23e inherit pub_static_attribs_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
@@ -288,9 +323,9 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a48d3fe4c0792b269453768f803e412e7 inherit pub_attribs_class_o_n___circle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// Description: An <a class="el" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> is a subcurve of 3d circle. Details: The curve is parameterized by an angle expressed in radians. For an <a class="el" href="../../d3/ddf/class_o_n___arc.html#ac387d6a5366f21fb94ce26beb2f09db7">IsValid()</a> arc the total subtended angle <a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a> = <a class="el" href="../../d3/ddf/class_o_n___arc.html#a29540a3b8ce0f67d9ca3378a5c00eb0c">Domain()</a>(1) - <a class="el" href="../../d3/ddf/class_o_n___arc.html#a29540a3b8ce0f67d9ca3378a5c00eb0c">Domain()</a>(0) must satisfy 0&lt; <a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a> &lt;2*Pi .</p>
-<p>The parameterization of the <a class="el" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> is inherited from the <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> it is derived from. In particular t -&gt; center + cos(t)*radius*xaxis + sin(t)*radius*yaxis where xaxis and yaxis, (part of ON_Circle::m_plane) form an othonormal frame of the plane containing the circle. </p>
+<div class="textblock"><p>An <a class="el" href="../../d3/ddf/class_o_n___arc.html" title="An ON_Arc is a subcurve of 3d circle. ">ON_Arc</a> is a subcurve of 3d circle. </p>
+<p>The curve is parameterized by an angle expressed in radians. For an <a class="el" href="../../d3/ddf/class_o_n___arc.html#ac387d6a5366f21fb94ce26beb2f09db7" title="Checks an arc to make sure it is valid. Detail: Radius&gt;0 and 0&lt;AngleRadians()&lt;=2 ON_PI ...">IsValid()</a> arc the total subtended angle <a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a> = <a class="el" href="../../d3/ddf/class_o_n___arc.html#a29540a3b8ce0f67d9ca3378a5c00eb0c" title="Get evaluation domain. ">Domain()</a>(1) - <a class="el" href="../../d3/ddf/class_o_n___arc.html#a29540a3b8ce0f67d9ca3378a5c00eb0c" title="Get evaluation domain. ">Domain()</a>(0) must satisfy 0&lt; <a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a> &lt;2*Pi .</p>
+<p>The parameterization of the <a class="el" href="../../d3/ddf/class_o_n___arc.html" title="An ON_Arc is a subcurve of 3d circle. ">ON_Arc</a> is inherited from the <a class="el" href="../../d1/d1b/class_o_n___circle.html" title="ON_Circle is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the pla...">ON_Circle</a> it is derived from. In particular t -&gt; center + cos(t)*radius*xaxis + sin(t)*radius*yaxis where xaxis and yaxis, (part of ON_Circle::m_plane) form an othonormal frame of the plane containing the circle. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad990fcc2e7f5515003dc60240b4ad21f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad990fcc2e7f5515003dc60240b4ad21f">&#9670;&nbsp;</a></span>ON_Arc() <span class="overload">[1/9]</span></h2>
@@ -395,7 +430,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc from a circle and an angle in radians Parameters: circle - [in] angle_in_radians - [in] </p>
+
+<p>Construct an arc from a circle and an angle in radians </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">circle</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -424,7 +467,13 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: circle - [in] angle_interval_in_radians - [in] increasing angle interval in radians with angle_interval_in_radians.Length() &lt;= 2.0*ON_PI. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">circle</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_interval_in_radians</td><td>[in] increasing angle interval in radians with angle_interval_in_radians.Length() &lt;= 2.0*ON_PI.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -459,7 +508,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin. Parameters: plane - [in] circle is in this plane with center at m_origin center - [in] circle's center point radius - [in] angle_in_radians - [in] </p>
+
+<p>Construct an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in] circle is in this plane with center at m_origin</td></tr>
+    <tr><td class="paramname">center</td><td>[in] circle's center point</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -494,7 +553,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0). Parameters: center - [in] radius - [in] angle_in_radians - [in] </p>
+
+<p>Construct an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">center</td><td>[in]</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -535,7 +603,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis. Parameters: plane - [in] The plane x, y and z axis are used to defines the circle plane's x, y and z axis. The plane origin is ignorned. center - [in] circle's center point radius - [in] angle_in_radians - [in] </p>
+
+<p>Construct an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in] The plane x, y and z axis are used to defines the circle plane's x, y and z axis. The plane origin is ignorned.</td></tr>
+    <tr><td class="paramname">center</td><td>[in] circle's center point</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -570,7 +648,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc that passes through three 2d points. Parameters: start_point - [in] interior_point - [in] end_point - [in] </p>
+
+<p>Construct an arc that passes through three 2d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">interior_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -605,7 +692,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an arc that passes through three 3d points. Parameters: start_point - [in] interior_point - [in] end_point - [in] </p>
+
+<p>Construct an arc that passes through three 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">interior_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -624,7 +720,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The arc's subtended angle in degrees. </p>
+<dl class="section return"><dt>Returns</dt><dd>The arc's subtended angle in degrees. </dd></dl>
 
 </div>
 </div>
@@ -642,7 +738,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The arc's subtended angle in radians. </p>
+<dl class="section return"><dt>Returns</dt><dd>The arc's subtended angle in radians. </dd></dl>
 
 </div>
 </div>
@@ -660,7 +756,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get arc's 3d axis aligned bounding box. Returns: 3d bounding box. </p>
+
+<p>Get arc's 3d axis aligned bounding box. </p>
+<dl class="section return"><dt>Returns</dt><dd>3d bounding box. </dd></dl>
 
 </div>
 </div>
@@ -689,7 +787,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the point on the arc that is closest to test_point. Parameters: test_point - [in] t - [out] parameter (in radians) of the point on the arc that is closest to test_point. If test_point is the center of the arc, then the starting point of the arc is (arc.Domain()[0]) returned. </p>
+
+<p>Get the point on the arc that is closest to test_point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">test_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">t</td><td>[out] parameter (in radians) of the point on the arc that is closest to test_point. If test_point is the center of the arc, then the starting point of the arc is (arc.Domain()[0]) returned.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -708,7 +814,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the point on the arc that is closest to test_point. Parameters: test_point - [in] Returns: The point on the arc that is closest to test_point. If test_point is the center of the arc, then the starting point of the arc is returned. </p>
+
+<p>Get the point on the arc that is closest to test_point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">test_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The point on the arc that is closest to test_point. If test_point is the center of the arc, then the starting point of the arc is returned. </dd></dl>
 
 </div>
 </div>
@@ -737,7 +851,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc from a circle and an angle in radians Parameters: circle - [in] angle_in_radians - [in] Returns: true if input is valid and a valid arc is created. </p>
+
+<p>Create an arc from a circle and an angle in radians </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">circle</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if input is valid and a valid arc is created. </dd></dl>
 
 </div>
 </div>
@@ -766,7 +889,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc from a circle and an increasing angle interval Parameters: circle - [in] angle_interval_in_radians - [in] increasing angle interval in radians with angle_interval_in_radians.Length() &lt;= 2.0*ON_PI Returns: true if input is valid and a valid arc is created. </p>
+
+<p>Create an arc from a circle and an increasing angle interval </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">circle</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_interval_in_radians</td><td>[in] increasing angle interval in radians with angle_interval_in_radians.Length() &lt;= 2.0*ON_PI</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if input is valid and a valid arc is created. </dd></dl>
 
 </div>
 </div>
@@ -801,7 +933,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin. Parameters: plane - [in] circle is in this plane with center at m_origin center - [in] circle's center point radius - [in] angle_in_radians - [in] </p>
+
+<p>Create an arc from a plane, radius and an angle in radians. The center of the arc is at the plane's origin. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in] circle is in this plane with center at m_origin</td></tr>
+    <tr><td class="paramname">center</td><td>[in] circle's center point</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -836,7 +978,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0). Parameters: center - [in] radius - [in] angle_in_radians - [in] </p>
+
+<p>Create an arc parallel to the world XY plane from a center point, radius, and angle in radians. The arc starts at center+(radius,0,0). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">center</td><td>[in]</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -877,7 +1028,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis. Parameters: plane - [in] The plane x, y and z axis are used to defines the circle plane's x, y and z axis. The plane origin is ignorned. center - [in] circle's center point radius - [in] angle_in_radians - [in] </p>
+
+<p>Create an arc parallel to plane from a center point, radius, and angle in radians. The arc starts at center+radius*plane.xaxis. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in] The plane x, y and z axis are used to defines the circle plane's x, y and z axis. The plane origin is ignorned.</td></tr>
+    <tr><td class="paramname">center</td><td>[in] circle's center point</td></tr>
+    <tr><td class="paramname">radius</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_in_radians</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -912,7 +1073,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc that passes through three 2d points. Parameters: start_point - [in] interior_point - [in] end_point - [in] </p>
+
+<p>Create an arc that passes through three 2d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">interior_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -947,7 +1117,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc that passes through three 3d points. Parameters: start_point - [in] interior_point - [in] end_point - [in] </p>
+
+<p>Create an arc that passes through three 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">interior_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -982,7 +1161,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc from a 2d start point, 2d start direction and a 2d end point. Parameters: start_point - [in] dir_at_start - [in] end_point - [in] </p>
+
+<p>Create an arc from a 2d start point, 2d start direction and a 2d end point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">dir_at_start</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1017,7 +1205,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an arc from a 3d start point, 3d start direction and a 3d end point. Parameters: start_point - [in] dir_at_start - [in] end_point - [in] </p>
+
+<p>Create an arc from a 3d start point, 3d start direction and a 3d end point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_point</td><td>[in]</td></tr>
+    <tr><td class="paramname">dir_at_start</td><td>[in]</td></tr>
+    <tr><td class="paramname">end_point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1035,7 +1232,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get evaluation domain. Returns: Evaluation domain (same as <a class="el" href="../../d3/ddf/class_o_n___arc.html#a27b404b15c5ad78e64cec25cccc54cf4">DomainRadians()</a>). </p>
+
+<p>Get evaluation domain. </p>
+<dl class="section return"><dt>Returns</dt><dd>Evaluation domain (same as <a class="el" href="../../d3/ddf/class_o_n___arc.html#a27b404b15c5ad78e64cec25cccc54cf4">DomainRadians()</a>). </dd></dl>
 
 </div>
 </div>
@@ -1053,7 +1252,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The arc's domain in degrees. </p>
+<dl class="section return"><dt>Returns</dt><dd>The arc's domain in degrees. </dd></dl>
 
 </div>
 </div>
@@ -1071,7 +1270,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The arc's domain in radians. </p>
+<dl class="section return"><dt>Returns</dt><dd>The arc's domain in radians. </dd></dl>
 
 </div>
 </div>
@@ -1090,7 +1289,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Creates a text dump of the arc listing the normal, center radius, start point, end point, and angle. Remarks: <a class="el" href="../../d3/ddf/class_o_n___arc.html#ae53eb6b5ba1e04a5d48114f7f04550fb">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an arc. </p>
+
+<p>Creates a text dump of the arc listing the normal, center radius, start point, end point, and angle. </p>
+<p><a class="el" href="../../d3/ddf/class_o_n___arc.html#ae53eb6b5ba1e04a5d48114f7f04550fb" title="Creates a text dump of the arc listing the normal, center radius, start point, end point...">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an arc. </p>
 
 </div>
 </div>
@@ -1108,7 +1309,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Point at end of the arc. </p>
+<dl class="section return"><dt>Returns</dt><dd>Point at end of the arc. </dd></dl>
 
 </div>
 </div>
@@ -1137,7 +1338,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get arc's 3d axis aligned bounding box or the union of the input box with the arc's bounding box. Parameters: bbox - [in/out] 3d axis aligned bounding box bGrowBox - [in] (default=false) If true, then the union of the input bbox and the arc's bounding box is returned in bbox. If false, the arc's bounding box is returned in bbox. Returns: true if arc has bounding box and calculation was successful. </p>
+
+<p>Get arc's 3d axis aligned bounding box or the union of the input box with the arc's bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in/out] 3d axis aligned bounding box</td></tr>
+    <tr><td class="paramname">bGrowBox</td><td>[in] (default=false) If true, then the union of the input bbox and the arc's bounding box is returned in bbox. If false, the arc's bounding box is returned in bbox.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if arc has bounding box and calculation was successful. </dd></dl>
 
 </div>
 </div>
@@ -1156,7 +1366,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a rational degree 2 NURBS curve representation of the arc. Note that the parameterization of NURBS curve does not match arc's transcendental paramaterization. Use <a class="el" href="../../d3/ddf/class_o_n___arc.html#a7408117c5357172e3904b20777c56a93">GetRadianFromNurbFormParameter()</a> and GetParameterFromRadian() to convert between the NURBS curve parameter and the transcendental parameter Parameters: nurbs_curve - [out] nurbs_curve returned here. Returns: 0 for failure and 2 for success. </p>
+
+<p>Get a rational degree 2 NURBS curve representation of the arc. Note that the parameterization of NURBS curve does not match arc's transcendental paramaterization. Use <a class="el" href="../../d3/ddf/class_o_n___arc.html#a7408117c5357172e3904b20777c56a93" title="Convert a NURBS curve arc parameter to a arc radians parameter. ">GetRadianFromNurbFormParameter()</a> and GetParameterFromRadian() to convert between the NURBS curve parameter and the transcendental parameter </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nurbs_curve</td><td>[out] nurbs_curve returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 for failure and 2 for success. </dd></dl>
 
 </div>
 </div>
@@ -1185,17 +1403,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Convert a arc radians parameter to a NURBS curve arc parameter. Parameters: arc_radians_parameter - [in] 0.0 to 2.0*ON_PI nurbs_parameter - [out] Example: </p><pre class="fragment">    ON_Arc arc = ...;
-    double arc_t = 1.2345; ///&lt; some number in interval (0,2.0*ON_PI).
-    double nurbs_t;
-    arc.GetNurbFormParameterFromRadian( arc_t, &amp;nurbs_t );
 
-    ON_NurbsCurve nurbs_curve;
-    arc.GetNurbsForm( nurbs_curve );
-    arc_pt = arc.PointAt(arc_t);
-    nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-</pre><p> / arc_pt and nurbs_pt will be the same</p>
-<p>Remarks: The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d3/ddf/class_o_n___arc.html#a334002db627b712c81826096b9b1f380">ON_Arc::GetNurbForm</a>. At radian values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. See Also: <a class="el" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2">ON_Arc::GetNurbFormParameterFromRadian</a> </p>
+<p>Convert a arc radians parameter to a NURBS curve arc parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">arc_radians_parameter</td><td>[in] 0.0 to 2.0*ON_PI</td></tr>
+    <tr><td class="paramname">nurbs_parameter</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d3/ddf/class_o_n___arc.html#a334002db627b712c81826096b9b1f380" title="Get a rational degree 2 NURBS curve representation of the arc. Note that the parameterization of NURB...">ON_Arc::GetNurbForm</a>. At radian values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. </p>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> arc = ...;</div><div class="line">    <span class="keywordtype">double</span> arc_t = 1.2345; <span class="comment">// some number in interval (0,2.0*ON_PI).</span></div><div class="line">    <span class="keywordtype">double</span> nurbs_t;</div><div class="line">    arc.<a class="code" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2">GetNurbFormParameterFromRadian</a>( arc_t, &amp;nurbs_t );</div><div class="line"></div><div class="line">    <a class="code" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> nurbs_curve;</div><div class="line">    arc.GetNurbsForm( nurbs_curve );</div><div class="line">    arc_pt = arc.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(arc_t);</div><div class="line">    nurbs_pt = nurbs_curve.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(nurbs_t);</div><div class="line">    <span class="comment">// arc_pt and nurbs_pt will be the same</span></div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2" title="Convert a arc radians parameter to a NURBS curve arc parameter. ">ON_Arc::GetNurbFormParameterFromRadian</a></dd></dl>
 
 </div>
 </div>
@@ -1224,17 +1442,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Convert a NURBS curve arc parameter to a arc radians parameter. Parameters: nurbs_parameter - [in] arc_radians_parameter - [out] Example: </p><pre class="fragment">    ON_Arc arc = ...;
-    double nurbs_t = 1.2345; ///&lt; some number in interval (0,2.0*ON_PI).
-    double arc_t;
-    arc.GetRadianFromNurbFormParameter( nurbs_t, &amp;arc_t );
 
-    ON_NurbsCurve nurbs_curve;
-    arc.GetNurbsForm( nurbs_curve );
-    arc_pt = arc.PointAt(arc_t);
-    nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-</pre><p> / arc_pt and nurbs_pt will be the same</p>
-<p>Remarks: The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d3/ddf/class_o_n___arc.html#a334002db627b712c81826096b9b1f380">ON_Arc::GetNurbForm</a>. At nurbs parameter values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. See Also: <a class="el" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2">ON_Arc::GetNurbFormParameterFromRadian</a> </p>
+<p>Convert a NURBS curve arc parameter to a arc radians parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nurbs_parameter</td><td>[in]</td></tr>
+    <tr><td class="paramname">arc_radians_parameter</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d3/ddf/class_o_n___arc.html#a334002db627b712c81826096b9b1f380" title="Get a rational degree 2 NURBS curve representation of the arc. Note that the parameterization of NURB...">ON_Arc::GetNurbForm</a>. At nurbs parameter values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. </p>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../d3/ddf/class_o_n___arc.html">ON_Arc</a> arc = ...;</div><div class="line">    <span class="keywordtype">double</span> nurbs_t = 1.2345; <span class="comment">// some number in interval (0,2.0*ON_PI).</span></div><div class="line">    <span class="keywordtype">double</span> arc_t;</div><div class="line">    arc.<a class="code" href="../../d3/ddf/class_o_n___arc.html#a7408117c5357172e3904b20777c56a93">GetRadianFromNurbFormParameter</a>( nurbs_t, &amp;arc_t );</div><div class="line"></div><div class="line">    <a class="code" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> nurbs_curve;</div><div class="line">    arc.GetNurbsForm( nurbs_curve );</div><div class="line">    arc_pt = arc.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(arc_t);</div><div class="line">    nurbs_pt = nurbs_curve.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(nurbs_t);</div><div class="line">    <span class="comment">// arc_pt and nurbs_pt will be the same</span></div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d3/ddf/class_o_n___arc.html#a25b89e1bed79b3221c9a9cc6769be6d2" title="Convert a arc radians parameter to a NURBS curve arc parameter. ">ON_Arc::GetNurbFormParameterFromRadian</a></dd></dl>
 
 </div>
 </div>
@@ -1269,7 +1487,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get tight bounding box. Parameters: tight_bbox - [in/out] tight bounding box bGrowBox -[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the arc's tight bounding box. xform -[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed arc is calculated. The arc is not modified. Returns: True if a valid tight_bbox is returned. </p>
+
+<p>Get tight bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tight_bbox</td><td>[in/out] tight bounding box</td></tr>
+    <tr><td class="paramname">bGrowBox</td><td>[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the arc's tight bounding box.</td></tr>
+    <tr><td class="paramname">xform</td><td>[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed arc is calculated. The arc is not modified.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a valid tight_bbox is returned. </dd></dl>
 
 </div>
 </div>
@@ -1287,7 +1515,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if the arc is a complete circle; i.e., the arc's angle is 360 degrees. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the arc is a complete circle; i.e., the arc's angle is 360 degrees. </dd></dl>
 
 </div>
 </div>
@@ -1305,7 +1533,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Checks an arc to make sure it is valid. Detail: Radius&gt;0 and 0&lt;<a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a>&lt;=2 ON_PI Returns: true if the arc is valid. </p>
+
+<p>Checks an arc to make sure it is valid. Detail: Radius&gt;0 and 0&lt;<a class="el" href="../../d3/ddf/class_o_n___arc.html#a500298b72e2e444e16fb0a580bb01c8b">AngleRadians()</a>&lt;=2 ON_PI </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the arc is valid. </dd></dl>
 
 </div>
 </div>
@@ -1323,7 +1553,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Length of the arc = radius*(subtended angle in radians). </p>
+<dl class="section return"><dt>Returns</dt><dd>Length of the arc = radius*(subtended angle in radians). </dd></dl>
 
 </div>
 </div>
@@ -1341,7 +1571,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Point at middle of the arc. </p>
+<dl class="section return"><dt>Returns</dt><dd>Point at middle of the arc. </dd></dl>
 
 </div>
 </div>
@@ -1403,7 +1633,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reverse the orientation of the arc. Changes the domain from [a,b] to [-b.-a]. </p>
+
+<p>Reverse the orientation of the arc. Changes the domain from [a,b] to [-b.-a]. </p>
 
 </div>
 </div>
@@ -1421,7 +1652,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Area of the arc's sector. Remarks: The arc's sector is the region bounded by the arc, the line segment from the arc's end to the center, and the line segment from the center to the arc's start. </p>
+<dl class="section return"><dt>Returns</dt><dd>Area of the arc's sector. </dd></dl>
+<p>The arc's sector is the region bounded by the arc, the line segment from the arc's end to the center, and the line segment from the center to the arc's start. </p>
 
 </div>
 </div>
@@ -1439,7 +1671,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Area centroid of the arc's sector. Remarks: The arc's sector is the region bounded by the arc, the line segment from the arc's end to the center, and the line segment from the center to the arc's start. </p>
+<dl class="section return"><dt>Returns</dt><dd>Area centroid of the arc's sector. </dd></dl>
+<p>The arc's sector is the region bounded by the arc, the line segment from the arc's end to the center, and the line segment from the center to the arc's start. </p>
 
 </div>
 </div>
@@ -1457,7 +1690,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Area of the arc's segment. Remarks: The arc's segment is the region bounded by the arc and the line segment from the arc's end to the arc's start. </p>
+<dl class="section return"><dt>Returns</dt><dd>Area of the arc's segment. </dd></dl>
+<p>The arc's segment is the region bounded by the arc and the line segment from the arc's end to the arc's start. </p>
 
 </div>
 </div>
@@ -1475,7 +1709,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Area centroid of the arc's segment. Remarks: The arc's segment is the region bounded by the arc and the line segment from the arc's end to the arc's start. </p>
+<dl class="section return"><dt>Returns</dt><dd>Area centroid of the arc's segment. </dd></dl>
+<p>The arc's segment is the region bounded by the arc and the line segment from the arc's end to the arc's start. </p>
 
 </div>
 </div>
@@ -1494,7 +1729,14 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set arc's subtended angle in degrees. Parameters: angle_in_degrees - [in] 0 &lt; angle_in_degrees &lt;= 360 </p>
+
+<p>Set arc's subtended angle in degrees. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle_in_degrees</td><td>[in] 0 &lt; angle_in_degrees &lt;= 360</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1513,7 +1755,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set arc's angle interval in radians. Parameters: angle_in_radians - [in] increasing interval with start and end angle in radians. Length of the interval &lt;= 2.0*ON_PI. Returns: true if successful. </p>
+
+<p>Set arc's angle interval in radians. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle_in_radians</td><td>[in] increasing interval with start and end angle in radians. Length of the interval &lt;= 2.0*ON_PI.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if successful. </dd></dl>
 
 </div>
 </div>
@@ -1532,7 +1782,14 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set arc's subtended angle in radians. Parameters: angle_in_radians - [in] 0 &lt;= angle_in_radians &lt;= 2.0*ON_PI </p>
+
+<p>Set arc's subtended angle in radians. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle_in_radians</td><td>[in] 0 &lt;= angle_in_radians &lt;= 2.0*ON_PI </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1550,7 +1807,7 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Point at start of the arc. </p>
+<dl class="section return"><dt>Returns</dt><dd>Point at start of the arc. </dd></dl>
 
 </div>
 </div>
@@ -1569,7 +1826,14 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set arc's domain as a subdomain of the circle. Parameters: domain_radian - [in] 0 &lt; domain_radian[1] - domain_radian[0] &lt;= 2.0 * ON*PI </p>
+
+<p>Set arc's domain as a subdomain of the circle. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">domain_radian</td><td>[in] 0 &lt; domain_radian[1] - domain_radian[0] &lt;= 2.0 * ON*PI </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1647,8 +1911,6 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>unit circle in the xy plane </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1657,7 +1919,7 @@ Additional Inherited Members</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

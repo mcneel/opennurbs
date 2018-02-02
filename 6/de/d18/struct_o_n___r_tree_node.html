@@ -56,10 +56,8 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aed7b29a0fe4bacf8d56ab6cf3abd59b0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/struct_o_n___r_tree_node.html#aed7b29a0fe4bacf8d56ab6cf3abd59b0">IsInternalNode</a> () const</td></tr>
-<tr class="memdesc:aed7b29a0fe4bacf8d56ab6cf3abd59b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">internal nodes have m_level &gt; 0  <a href="#aed7b29a0fe4bacf8d56ab6cf3abd59b0">More...</a><br /></td></tr>
 <tr class="separator:aed7b29a0fe4bacf8d56ab6cf3abd59b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b79274a571b8bef6a494aa99652f768"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/struct_o_n___r_tree_node.html#a1b79274a571b8bef6a494aa99652f768">IsLeaf</a> () const</td></tr>
-<tr class="memdesc:a1b79274a571b8bef6a494aa99652f768"><td class="mdescLeft">&#160;</td><td class="mdescRight">branch nodes have m_level = 0  <a href="#a1b79274a571b8bef6a494aa99652f768">More...</a><br /></td></tr>
 <tr class="separator:a1b79274a571b8bef6a494aa99652f768"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -72,9 +70,7 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a4d49210e3bb215fb7b2dee29b53a99a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">m_level must be a signed int to insure signed compares work correctly  <a href="#a4d49210e3bb215fb7b2dee29b53a99a4">More...</a><br /></td></tr>
 <tr class="separator:a4d49210e3bb215fb7b2dee29b53a99a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The <a class="el" href="../../de/d18/struct_o_n___r_tree_node.html">ON_RTreeNode</a> is used at root, branch and leaf nodes. When m_level &gt; 0, the node is a branch. When m_level = 0, the node is a leaf. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="aed7b29a0fe4bacf8d56ab6cf3abd59b0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aed7b29a0fe4bacf8d56ab6cf3abd59b0">&#9670;&nbsp;</a></span>IsInternalNode()</h2>
 
@@ -97,8 +93,6 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>internal nodes have m_level &gt; 0 </p>
 
 </div>
 </div>
@@ -124,8 +118,6 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>branch nodes have m_level = 0 </p>
 
 </div>
 </div>
@@ -155,7 +147,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The m_branch[] array contains m_count elements 0 &lt;= m_count &lt;= ON_RTree_MAX_NODE_COUNT m_count must be a signed int to insure signed compares work correctly </p>
 
 </div>
 </div>
@@ -172,7 +163,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>m_level must be a signed int to insure signed compares work correctly </p>
-<p>=0 at leaf nodes, &gt; 0 at branch nodes </p>
 
 </div>
 </div>
@@ -182,7 +172,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

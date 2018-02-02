@@ -73,7 +73,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Unicode code point value to use in when masking type 16 errors. If 0 == (error_mask &amp; 16), then this parameter is ignored. ON_UnicodeCodePoint::ON_ReplacementCharacter (U+FFFD) is a popular choice for the m_error_code_point value. </p>
 
 </div>
 </div>
@@ -88,7 +87,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If 0 != (error_mask &amp; 4), then type 4 errors are masked. If 0 != (error_mask &amp; 8), then type 8 errors are masked. If 0 != (error_mask &amp; 16) and m_error_code_point is a valid unicode code point value, then type 16 errors are masked. </p>
 
 </div>
 </div>
@@ -103,15 +101,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If an error occurs, then bits of error_status are set to indicate what type of error occured.</p>
-<p>Error types: 1: The input parameters were invalid. This error cannot be masked.</p>
-<p>2: The ouput buffer was not large enough to hold the converted string. As much conversion as possible is performed in this case and the error cannot be masked.</p>
-<p>4: When parsing a UTF-8 or UTF-32 string, the values of two consecutive encoding sequences formed a valid UTF-16 surrogate pair.</p>
-<p>This error is masked if 0 != (4 &amp; m_error_mask). If the error is masked, then the surrogate pair is decoded, the value of the resulting unicode code point is used, and parsing continues.</p>
-<p>8: An overlong UTF-8 encoding sequence was encountered and the value of the overlong sUTF-8 equence was a valid unicode code point.</p>
-<p>This error is masked if 0 != (8 &amp; m_error_mask). If the error is masked, then the unicode code point is used and parsing continues.</p>
-<p>16: An illegal UTF-8, UTF-16 or UTF-32 sequence occured, or an unsupported or invalid Windows code page value, or an invalid unicode code point value resulted from decoding a UTF-8 sequence.</p>
-<p>This error is masked if 0 != (16 &amp; m_error_mask). If the error is masked and the value of m_error_code_point is a valid unicode code point, then m_error_code_point is used and parsing continues. </p>
 
 </div>
 </div>
@@ -121,7 +110,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

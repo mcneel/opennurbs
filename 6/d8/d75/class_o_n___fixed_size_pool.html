@@ -76,21 +76,28 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a500f50edb2b7efff4655f4ea9c264fa2"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement</a> ()</td></tr>
 <tr class="separator:a500f50edb2b7efff4655f4ea9c264fa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0904463b277ba449081d8b2929c8ef26"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26">Create</a> (size_t sizeof_element, size_t element_count_estimate, size_t block_element_capacity)</td></tr>
+<tr class="memdesc:a0904463b277ba449081d8b2929c8ef26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a fixed size memory pool.  <a href="#a0904463b277ba449081d8b2929c8ef26">More...</a><br /></td></tr>
 <tr class="separator:a0904463b277ba449081d8b2929c8ef26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a373f8bb4eda7fe5abfb08875a87ac00a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a373f8bb4eda7fe5abfb08875a87ac00a">Destroy</a> ()</td></tr>
+<tr class="memdesc:a373f8bb4eda7fe5abfb08875a87ac00a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the pool and free all the heap. The pool cannot be used again until <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26" title="Create a fixed size memory pool. ">Create()</a> is called.  <a href="#a373f8bb4eda7fe5abfb08875a87ac00a">More...</a><br /></td></tr>
 <tr class="separator:a373f8bb4eda7fe5abfb08875a87ac00a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab23bc8f7379187a60621be143ba59c61"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#ab23bc8f7379187a60621be143ba59c61">Element</a> (size_t element_index) const</td></tr>
+<tr class="memdesc:ab23bc8f7379187a60621be143ba59c61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the i-th elment in the fixed size pool.  <a href="#ab23bc8f7379187a60621be143ba59c61">More...</a><br /></td></tr>
 <tr class="separator:ab23bc8f7379187a60621be143ba59c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9deb1bdc66640e2a95b19f51af9bed49"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a9deb1bdc66640e2a95b19f51af9bed49">ElementFromId</a> (size_t id_offset, unsigned int id) const</td></tr>
+<tr class="memdesc:a9deb1bdc66640e2a95b19f51af9bed49"><td class="mdescLeft">&#160;</td><td class="mdescRight">If you are certain that all elements in hte pool (active and returned) have an unsigned id that is unique and increasing, then you may use this function to find them.  <a href="#a9deb1bdc66640e2a95b19f51af9bed49">More...</a><br /></td></tr>
 <tr class="separator:a9deb1bdc66640e2a95b19f51af9bed49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37d7012aaeddd359d200ae9fcee404c8"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a37d7012aaeddd359d200ae9fcee404c8">ElementIndex</a> (const void *element_pointer) const</td></tr>
+<tr class="memdesc:a37d7012aaeddd359d200ae9fcee404c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the fixed size pool index of an element.  <a href="#a37d7012aaeddd359d200ae9fcee404c8">More...</a><br /></td></tr>
 <tr class="separator:a37d7012aaeddd359d200ae9fcee404c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84143b885fb1b9afe66b8012d6746b66"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a84143b885fb1b9afe66b8012d6746b66">IsValid</a> () const</td></tr>
 <tr class="memdesc:a84143b885fb1b9afe66b8012d6746b66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Primarily used for debugging.  <a href="#a84143b885fb1b9afe66b8012d6746b66">More...</a><br /></td></tr>
 <tr class="separator:a84143b885fb1b9afe66b8012d6746b66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a96b965fdd3105a9c6d05cce330634c84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a96b965fdd3105a9c6d05cce330634c84">ReturnAll</a> ()</td></tr>
+<tr class="memdesc:a96b965fdd3105a9c6d05cce330634c84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return all allocated elements to the pool. No heap is freed and the pool remains initialized and ready for <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> to be called.  <a href="#a96b965fdd3105a9c6d05cce330634c84">More...</a><br /></td></tr>
 <tr class="separator:a96b965fdd3105a9c6d05cce330634c84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b5cb208942ebb038e9cce4bfdadbbc3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement</a> (void *p)</td></tr>
+<tr class="memdesc:a3b5cb208942ebb038e9cce4bfdadbbc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return an element to the pool.  <a href="#a3b5cb208942ebb038e9cce4bfdadbbc3">More...</a><br /></td></tr>
 <tr class="separator:a3b5cb208942ebb038e9cce4bfdadbbc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08a3eca1cfbd2272826d1a69610fdd77"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement</a> () const</td></tr>
 <tr class="separator:a08a3eca1cfbd2272826d1a69610fdd77"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -102,10 +109,7 @@ Friends</h2></td></tr>
 <tr class="memitem:a6b3a440f8ac861a8d7731be18603eb84"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a6b3a440f8ac861a8d7731be18603eb84">ON_FixedSizePoolIterator</a></td></tr>
 <tr class="separator:a6b3a440f8ac861a8d7731be18603eb84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad17cc7144c361db18aef3f55f0e19635"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad17cc7144c361db18aef3f55f0e19635">&#9670;&nbsp;</a></span>ON_FixedSizePool()</h2>
 
@@ -155,7 +159,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of active elements. (Elements that have been returned are not active.) </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of active elements. (Elements that have been returned are not active.) </dd></dl>
 
 </div>
 </div>
@@ -173,7 +177,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A pointer to sizeof_element bytes. The values in the returned block are undefined. </p>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to sizeof_element bytes. The values in the returned block are undefined. </dd></dl>
 
 </div>
 </div>
@@ -191,7 +195,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A pointer to sizeof_element bytes. The memory is zeroed. </p>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to sizeof_element bytes. The memory is zeroed. </dd></dl>
 
 </div>
 </div>
@@ -226,7 +230,18 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create a fixed size memory pool. Parameters: sizeof_element - [in] number of bytes in each element. This parameter must be greater than zero. In general, use sizeof(element type). If you pass a "raw" number as sizeof_element, then be certain that it is the right size to insure the fields in your elements will be properly aligned. element_count_estimate - [in] (0 = good default) If you know how many elements you will need, pass that number here. It is better to slightly overestimate than to slightly underestimate. If you do not have a good estimate, then use zero. block_element_capacity - [in] (0 = good default) If block_element_capacity is zero, <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26">Create()</a> will calculate a block size that is efficent for most applications. If you are an expert user and want to specify the number of elements per block, then pass the number of elements per block here. When block_element_capacity &gt; 0 and element_count_estimate &gt; 0, the first block will have a capacity of at least element_count_estimate; in this case do not ask for extraordinarly large amounts of contiguous heap. Remarks: You must call <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26">Create()</a> on an unused <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html">ON_FixedSizePool</a> or call <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a373f8bb4eda7fe5abfb08875a87ac00a">Destroy()</a> before calling create. Returns: True if successful and the pool can be used. </p>
+
+<p>Create a fixed size memory pool. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sizeof_element</td><td>[in] number of bytes in each element. This parameter must be greater than zero. In general, use sizeof(element type). If you pass a "raw" number as sizeof_element, then be certain that it is the right size to insure the fields in your elements will be properly aligned.</td></tr>
+    <tr><td class="paramname">element_count_estimate</td><td>[in] (0 = good default) If you know how many elements you will need, pass that number here. It is better to slightly overestimate than to slightly underestimate. If you do not have a good estimate, then use zero.</td></tr>
+    <tr><td class="paramname">block_element_capacity</td><td>[in] (0 = good default) If block_element_capacity is zero, <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26" title="Create a fixed size memory pool. ">Create()</a> will calculate a block size that is efficent for most applications. If you are an expert user and want to specify the number of elements per block, then pass the number of elements per block here. When block_element_capacity &gt; 0 and element_count_estimate &gt; 0, the first block will have a capacity of at least element_count_estimate; in this case do not ask for extraordinarly large amounts of contiguous heap.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if successful and the pool can be used. </dd></dl>
+<p>You must call <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26" title="Create a fixed size memory pool. ">Create()</a> on an unused <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html">ON_FixedSizePool</a> or call <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a373f8bb4eda7fe5abfb08875a87ac00a" title="Destroy the pool and free all the heap. The pool cannot be used again until Create() is called...">Destroy()</a> before calling create. </p>
 
 </div>
 </div>
@@ -244,7 +259,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Destroy the pool and free all the heap. The pool cannot be used again until <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26">Create()</a> is called. </p>
+
+<p>Destroy the pool and free all the heap. The pool cannot be used again until <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a0904463b277ba449081d8b2929c8ef26" title="Create a fixed size memory pool. ">Create()</a> is called. </p>
 
 </div>
 </div>
@@ -263,8 +279,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the i-th elment in the fixed size pool. Parameters: element_index - [in] Returns: A pointer to the element with the specified index. The first element has element_index = 0 and is the element returned by the first call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. The last element has element_index = ElementCount()-1. If element_index is out of range, nullptr is returned. Remarks: It is faster to use <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a0d52d7d6fc5290d8a9266bab85d3b88c">ON_FixedSizePoolIterator.FirstElement()</a> and <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a502e802f6f5dd70c8f868dffd3111fcc">ON_FixedSizePoolIterator.NextElement()</a> to iterate through the entire list of elements. This function is relatively efficient when there are a few large blocks in the pool or element_index is small compared to the number of elements in the first few blocks.</p>
-<p>If <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a> is not used or no <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> calls are made after any use of <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a>, then the i-th element is the one returned by the (i+1)-th call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> </p>
+
+<p>Get the i-th elment in the fixed size pool. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">element_index</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the element with the specified index. The first element has element_index = 0 and is the element returned by the first call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. The last element has element_index = ElementCount()-1. If element_index is out of range, nullptr is returned. </dd></dl>
+<p>It is faster to use <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a0d52d7d6fc5290d8a9266bab85d3b88c" title="Get the first element when iterating through the list of elements. ">ON_FixedSizePoolIterator.FirstElement()</a> and <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a502e802f6f5dd70c8f868dffd3111fcc" title="Get the next element when iterating through the list of elements. If FirstElement() is not called...">ON_FixedSizePoolIterator.NextElement()</a> to iterate through the entire list of elements. This function is relatively efficient when there are a few large blocks in the pool or element_index is small compared to the number of elements in the first few blocks.</p>
+<p>If <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a> is not used or no <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> calls are made after any use of <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a>, then the i-th element is the one returned by the (i+1)-th call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> </p>
 
 </div>
 </div>
@@ -293,7 +318,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If you are certain that all elements in hte pool (active and returned) have an unsigned id that is unique and increasing, then you may use this function to find them. Parameters: id_offset - [in] offset into the element where the id is stored. id - [in] id to search for </p>
+
+<p>If you are certain that all elements in hte pool (active and returned) have an unsigned id that is unique and increasing, then you may use this function to find them. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id_offset</td><td>[in] offset into the element where the id is stored.</td></tr>
+    <tr><td class="paramname">id</td><td>[in] id to search for</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -312,8 +345,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the fixed size pool index of an element. Parameters: element_pointer - [in] Returns: An index &gt;= 0 and &lt; ON_MAX_SIZE_T if the element_pointer points to an element managed by the this fixed size pool. ON_MAX_SIZE_T otherwise. Remarks: It is faster to use <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a0d52d7d6fc5290d8a9266bab85d3b88c">ON_FixedSizePoolIterator.FirstElement()</a> and <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a502e802f6f5dd70c8f868dffd3111fcc">ON_FixedSizePoolIterator.NextElement()</a> to iterate through the entire list of elements. This function is relatively efficient when there are a few large blocks in the pool or element_pointer is an element in the first few blocks.</p>
-<p>If <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a> is not used or no <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> calls are made after any use of <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a>, then the i-th element is the one returned by the (i+1)-th call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. </p>
+
+<p>Get the fixed size pool index of an element. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">element_pointer</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An index &gt;= 0 and &lt; ON_MAX_SIZE_T if the element_pointer points to an element managed by the this fixed size pool. ON_MAX_SIZE_T otherwise. </dd></dl>
+<p>It is faster to use <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a0d52d7d6fc5290d8a9266bab85d3b88c" title="Get the first element when iterating through the list of elements. ">ON_FixedSizePoolIterator.FirstElement()</a> and <a class="el" href="../../de/da1/class_o_n___fixed_size_pool_iterator.html#a502e802f6f5dd70c8f868dffd3111fcc" title="Get the next element when iterating through the list of elements. If FirstElement() is not called...">ON_FixedSizePoolIterator.NextElement()</a> to iterate through the entire list of elements. This function is relatively efficient when there are a few large blocks in the pool or element_pointer is an element in the first few blocks.</p>
+<p>If <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a> is not used or no <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> calls are made after any use of <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a>, then the i-th element is the one returned by the (i+1)-th call to <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. </p>
 
 </div>
 </div>
@@ -350,7 +392,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Return all allocated elements to the pool. No heap is freed and the pool remains initialized and ready for <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> to be called. </p>
+
+<p>Return all allocated elements to the pool. No heap is freed and the pool remains initialized and ready for <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a> to be called. </p>
 
 </div>
 </div>
@@ -369,9 +412,17 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Return an element to the pool. Parameters: p - [in] A pointer returned by <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. It is critical that p be from this pool and that you return a pointer no more than one time. Remarks: If you find the following remarks confusing, but you really want to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a>, then here are some simple guidelines. 1) <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be &gt;= 16 2) <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be a multiple of 8. 3) Do not use FirstElement() and NextElement() to iterate through the pool.</p>
-<p>If 1 to 3 don't work for you, then you need to understand the following information before using <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a>.</p>
-<p>ON_FixedMemoryPool uses the first sizeof(void*) bytes of the returned element for bookkeeping purposes. Therefore, if you are going to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a>, then <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be at least sizeof(void*). If you are using a platform that requires pointers to be aligned on sizeof(void*) boundaries, then <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be a multiple of sizeof(void*). If you are going to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a> and then use FirstElement() and NextElement() to iterate through the list of elements, then you need to set a value in the returned element to indicate that it needs to be skipped during the iteration. This value cannot be located in the fist sizeof(void*) bytes of the element. If the element is a class with a vtable, you cannot call a virtual function on a returned element because the vtable pointer is trashed when <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3">ReturnElement()</a> modifies the fist sizeof(void*) bytes. </p>
+
+<p>Return an element to the pool. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">p</td><td>[in] A pointer returned by <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a500f50edb2b7efff4655f4ea9c264fa2">AllocateElement()</a>. It is critical that p be from this pool and that you return a pointer no more than one time.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>If you find the following remarks confusing, but you really want to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a>, then here are some simple guidelines. 1) <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be &gt;= 16 2) <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be a multiple of 8. 3) Do not use FirstElement() and NextElement() to iterate through the pool.</p>
+<p>If 1 to 3 don't work for you, then you need to understand the following information before using <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a>.</p>
+<p>ON_FixedMemoryPool uses the first sizeof(void*) bytes of the returned element for bookkeeping purposes. Therefore, if you are going to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a>, then <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be at least sizeof(void*). If you are using a platform that requires pointers to be aligned on sizeof(void*) boundaries, then <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a08a3eca1cfbd2272826d1a69610fdd77">SizeofElement()</a> must be a multiple of sizeof(void*). If you are going to use <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a> and then use FirstElement() and NextElement() to iterate through the list of elements, then you need to set a value in the returned element to indicate that it needs to be skipped during the iteration. This value cannot be located in the fist sizeof(void*) bytes of the element. If the element is a class with a vtable, you cannot call a virtual function on a returned element because the vtable pointer is trashed when <a class="el" href="../../d8/d75/class_o_n___fixed_size_pool.html#a3b5cb208942ebb038e9cce4bfdadbbc3" title="Return an element to the pool. ">ReturnElement()</a> modifies the fist sizeof(void*) bytes. </p>
 
 </div>
 </div>
@@ -389,7 +440,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Size of the elements in this pool. </p>
+<dl class="section return"><dt>Returns</dt><dd>Size of the elements in this pool. </dd></dl>
 
 </div>
 </div>
@@ -407,7 +458,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Total number of elements = number of active elements + number of returned elements. </p>
+<dl class="section return"><dt>Returns</dt><dd>Total number of elements = number of active elements + number of returned elements. </dd></dl>
 
 </div>
 </div>
@@ -440,7 +491,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -60,8 +60,8 @@ Inheritance diagram for ON_Material:</div>
  <div class="center">
   <img src="../../d7/d53/class_o_n___material.png" usemap="#ON_5FMaterial_map" alt=""/>
   <map id="ON_5FMaterial_map" name="ON_5FMaterial_map">
-<area href="../../dc/d5c/class_o_n___model_component.html" alt="ON_ModelComponent" shape="rect" coords="0,56,136,80"/>
-<area href="../../d9/d7b/class_o_n___object.html" alt="ON_Object" shape="rect" coords="0,0,136,24"/>
+<area href="../../dc/d5c/class_o_n___model_component.html" title="The ON_ModelComponent class is a base class for all components in a model and manages the index..." alt="ON_ModelComponent" shape="rect" coords="0,56,136,80"/>
+<area href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D..." alt="ON_Object" shape="rect" coords="0,0,136,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -74,47 +74,56 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aca9964c4613dc16f2f86d67c60e3f19d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#aca9964c4613dc16f2f86d67c60e3f19d">~ON_Material</a> ()=default</td></tr>
 <tr class="separator:aca9964c4613dc16f2f86d67c60e3f19d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe40493787a4554b6e64a58b223253f8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#afe40493787a4554b6e64a58b223253f8">AddTexture</a> (const <a class="el" href="../../d0/d16/class_o_n___texture.html">ON_Texture</a> &amp;tx)</td></tr>
+<tr class="memdesc:afe40493787a4554b6e64a58b223253f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">If there is already a texture with the same file name and type, then that texture is modified, otherwise a new texture is added. If tx has user data, the user data is copied to the m_textures[] element.  <a href="#afe40493787a4554b6e64a58b223253f8">More...</a><br /></td></tr>
 <tr class="separator:afe40493787a4554b6e64a58b223253f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57fd031488c79e2c341633f01d63fa32"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a57fd031488c79e2c341633f01d63fa32">AddTexture</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *filename, <a class="el" href="../../d0/d16/class_o_n___texture.html#a1e73ed16dda764adcb0618dbf8097558">ON_Texture::TYPE</a> type)</td></tr>
+<tr class="memdesc:a57fd031488c79e2c341633f01d63fa32"><td class="mdescLeft">&#160;</td><td class="mdescRight">If there is a texture with a matching type, that texture's filename is modified, otherwise a new texture is added.  <a href="#a57fd031488c79e2c341633f01d63fa32">More...</a><br /></td></tr>
 <tr class="separator:a57fd031488c79e2c341633f01d63fa32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81c39357a57bba3e0684221b5a06c2a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a81c39357a57bba3e0684221b5a06c2a8">Ambient</a> () const</td></tr>
 <tr class="memdesc:a81c39357a57bba3e0684221b5a06c2a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface.  <a href="#a81c39357a57bba3e0684221b5a06c2a8">More...</a><br /></td></tr>
 <tr class="separator:a81c39357a57bba3e0684221b5a06c2a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40022f40864c84c6cf6dbb880ec423c2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a40022f40864c84c6cf6dbb880ec423c2">DeleteTexture</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *filename, <a class="el" href="../../d0/d16/class_o_n___texture.html#a1e73ed16dda764adcb0618dbf8097558">ON_Texture::TYPE</a> type)</td></tr>
+<tr class="memdesc:a40022f40864c84c6cf6dbb880ec423c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deletes all texures with matching filenames and types.  <a href="#a40022f40864c84c6cf6dbb880ec423c2">More...</a><br /></td></tr>
 <tr class="separator:a40022f40864c84c6cf6dbb880ec423c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9a48cf1d0cf533c63fef08576c13bf9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ae9a48cf1d0cf533c63fef08576c13bf9">Diffuse</a> () const</td></tr>
 <tr class="separator:ae9a48cf1d0cf533c63fef08576c13bf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4e41b7f5646bb79bc8d1de36e45d0ec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ae4e41b7f5646bb79bc8d1de36e45d0ec">DisableLighting</a> () const</td></tr>
 <tr class="separator:ae4e41b7f5646bb79bc8d1de36e45d0ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd10615f531b165b0d2f86b44c6f3e72"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#abd10615f531b165b0d2f86b44c6f3e72">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;text_log) const override</td></tr>
+<tr class="memdesc:abd10615f531b165b0d2f86b44c6f3e72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a text dump of the object.  <a href="#abd10615f531b165b0d2f86b44c6f3e72">More...</a><br /></td></tr>
 <tr class="separator:abd10615f531b165b0d2f86b44c6f3e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa63e3e0fc12c2f4c22a8c96474ead02"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#afa63e3e0fc12c2f4c22a8c96474ead02">Emission</a> () const</td></tr>
 <tr class="separator:afa63e3e0fc12c2f4c22a8c96474ead02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1007afbc140bd39c27d34c873fd4c680"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a1007afbc140bd39c27d34c873fd4c680">FindTexture</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> texture_id) const</td></tr>
+<tr class="memdesc:a1007afbc140bd39c27d34c873fd4c680"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for a texure with matching texture_id. If more than one texture matches, the first match is returned.  <a href="#a1007afbc140bd39c27d34c873fd4c680">More...</a><br /></td></tr>
 <tr class="separator:a1007afbc140bd39c27d34c873fd4c680"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafdd3dcaab732d809d986f314ca53362"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#aafdd3dcaab732d809d986f314ca53362">FindTexture</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *filename, <a class="el" href="../../d0/d16/class_o_n___texture.html#a1e73ed16dda764adcb0618dbf8097558">ON_Texture::TYPE</a> type, int i0=-1) const</td></tr>
+<tr class="memdesc:aafdd3dcaab732d809d986f314ca53362"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for a texure with matching filename and type. If more than one texture matches, the first match is returned.  <a href="#aafdd3dcaab732d809d986f314ca53362">More...</a><br /></td></tr>
 <tr class="separator:aafdd3dcaab732d809d986f314ca53362"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f350658845244788ee84a79ce5eb4df"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a4f350658845244788ee84a79ce5eb4df">FresnelReflectionCoefficient</a> (<a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> N, <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> R) const</td></tr>
 <tr class="separator:a4f350658845244788ee84a79ce5eb4df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c1d48035a13df2f32eea970f2977aa9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a7c1d48035a13df2f32eea970f2977aa9">FresnelReflections</a> () const</td></tr>
 <tr class="separator:a7c1d48035a13df2f32eea970f2977aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe14a7feaafa717bcc7ceaa0422fda81"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#abe14a7feaafa717bcc7ceaa0422fda81">IsValid</a> (class <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log=nullptr) const override</td></tr>
-<tr class="memdesc:abe14a7feaafa717bcc7ceaa0422fda81"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> overrides.  <a href="#abe14a7feaafa717bcc7ceaa0422fda81">More...</a><br /></td></tr>
+<tr class="memdesc:abe14a7feaafa717bcc7ceaa0422fda81"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> overrides.  <a href="#abe14a7feaafa717bcc7ceaa0422fda81">More...</a><br /></td></tr>
 <tr class="separator:abe14a7feaafa717bcc7ceaa0422fda81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab42f79dc1e95e195b4cd5d9418d40ebf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ab42f79dc1e95e195b4cd5d9418d40ebf">MaterialPlugInId</a> () const</td></tr>
 <tr class="memdesc:ab42f79dc1e95e195b4cd5d9418d40ebf"><td class="mdescLeft">&#160;</td><td class="mdescRight">ID of the last plug-in to modify this material.  <a href="#ab42f79dc1e95e195b4cd5d9418d40ebf">More...</a><br /></td></tr>
 <tr class="separator:ab42f79dc1e95e195b4cd5d9418d40ebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75674551143e774a03dcdb3d7d6e9961"><td class="memItemLeft" align="right" valign="top">ON::object_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a75674551143e774a03dcdb3d7d6e9961">ObjectType</a> () const override</td></tr>
+<tr class="memdesc:a75674551143e774a03dcdb3d7d6e9961"><td class="mdescLeft">&#160;</td><td class="mdescRight">Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on.  <a href="#a75674551143e774a03dcdb3d7d6e9961">More...</a><br /></td></tr>
 <tr class="separator:a75674551143e774a03dcdb3d7d6e9961"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58e068372e993074b1f4284090432453"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a58e068372e993074b1f4284090432453">operator=</a> (const <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a> &amp;src)=default</td></tr>
 <tr class="separator:a58e068372e993074b1f4284090432453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2a385a8f3b7650ffeed7cd6ab2cc4de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ac2a385a8f3b7650ffeed7cd6ab2cc4de">RdkMaterialInstanceId</a> () const</td></tr>
+<tr class="memdesc:ac2a385a8f3b7650ffeed7cd6ab2cc4de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the RDK material id.  <a href="#ac2a385a8f3b7650ffeed7cd6ab2cc4de">More...</a><br /></td></tr>
 <tr class="separator:ac2a385a8f3b7650ffeed7cd6ab2cc4de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6e40e736ebdff23522951242feb4fb0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ac6e40e736ebdff23522951242feb4fb0">RdkMaterialInstanceIdIsNil</a> () const</td></tr>
 <tr class="separator:ac6e40e736ebdff23522951242feb4fb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd52adb3ebb63d0799437285670286b9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#afd52adb3ebb63d0799437285670286b9">RdkMaterialInstanceIdIsNotNil</a> () const</td></tr>
 <tr class="separator:afd52adb3ebb63d0799437285670286b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77407f8b2361f6e1d286e571adcbed78"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a77407f8b2361f6e1d286e571adcbed78">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive) override</td></tr>
+<tr class="memdesc:a77407f8b2361f6e1d286e571adcbed78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a>.  <a href="#a77407f8b2361f6e1d286e571adcbed78">More...</a><br /></td></tr>
 <tr class="separator:a77407f8b2361f6e1d286e571adcbed78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98d5c9f4430870bd77a6f9da8be75caf"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a98d5c9f4430870bd77a6f9da8be75caf">Reflectivity</a> () const</td></tr>
 <tr class="memdesc:a98d5c9f4430870bd77a6f9da8be75caf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transparency values are in range 0.0 = opaque to 1.0 = transparent.  <a href="#a98d5c9f4430870bd77a6f9da8be75caf">More...</a><br /></td></tr>
@@ -132,26 +141,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a439fd60ba3e817d41b79fb7b0b1407fb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a439fd60ba3e817d41b79fb7b0b1407fb">SetMaterialPlugInId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> plugin_id)</td></tr>
 <tr class="separator:a439fd60ba3e817d41b79fb7b0b1407fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c8fa13b1988742ae7d8a107f4869297"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a7c8fa13b1988742ae7d8a107f4869297">SetRdkMaterialInstanceId</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> rdk_material_instance_id)</td></tr>
+<tr class="memdesc:a7c8fa13b1988742ae7d8a107f4869297"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set this material's RDK material id.  <a href="#a7c8fa13b1988742ae7d8a107f4869297">More...</a><br /></td></tr>
 <tr class="separator:a7c8fa13b1988742ae7d8a107f4869297"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9748c65011bb62450dbd7bdb8a2d9ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ae9748c65011bb62450dbd7bdb8a2d9ad">SetReflectivity</a> (double)</td></tr>
-<tr class="memdesc:ae9748c65011bb62450dbd7bdb8a2d9ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">0.0 = opaque, 1.0 = transparent  <a href="#ae9748c65011bb62450dbd7bdb8a2d9ad">More...</a><br /></td></tr>
 <tr class="separator:ae9748c65011bb62450dbd7bdb8a2d9ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fcd1aff538569b5fc3c18202f567bf5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a6fcd1aff538569b5fc3c18202f567bf5">SetShareable</a> (bool bShareable)</td></tr>
 <tr class="separator:a6fcd1aff538569b5fc3c18202f567bf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47e3b858f4c13da608a9163767e7001b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a47e3b858f4c13da608a9163767e7001b">SetShine</a> (double)</td></tr>
-<tr class="memdesc:a47e3b858f4c13da608a9163767e7001b"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf" title="maximum value of shine exponent = 255.0 ">ON_Material::MaxShine</a>  <a href="#a47e3b858f4c13da608a9163767e7001b">More...</a><br /></td></tr>
 <tr class="separator:a47e3b858f4c13da608a9163767e7001b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36ad21d89db974094edcb12ff7860d3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a36ad21d89db974094edcb12ff7860d3b">SetSpecular</a> (<a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>)</td></tr>
 <tr class="separator:a36ad21d89db974094edcb12ff7860d3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae81c8d23ec37a6fa255fb181b471468e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ae81c8d23ec37a6fa255fb181b471468e">SetTransparency</a> (double)</td></tr>
-<tr class="memdesc:ae81c8d23ec37a6fa255fb181b471468e"><td class="mdescLeft">&#160;</td><td class="mdescRight">0.0 = opaque, 1.0 = transparent  <a href="#ae81c8d23ec37a6fa255fb181b471468e">More...</a><br /></td></tr>
 <tr class="separator:ae81c8d23ec37a6fa255fb181b471468e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd6e2022b60060fe4ddfd7b3cd33ae54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#abd6e2022b60060fe4ddfd7b3cd33ae54">SetUseDiffuseTextureAlphaForObjectTransparencyTexture</a> (bool bUseDiffuseTextureAlphaForObjectTransparencyTexture)</td></tr>
 <tr class="separator:abd6e2022b60060fe4ddfd7b3cd33ae54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5692451a654cf0fb84e512d5ebff16d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ae5692451a654cf0fb84e512d5ebff16d">Shareable</a> () const</td></tr>
 <tr class="separator:ae5692451a654cf0fb84e512d5ebff16d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc39c35a41e7d27e9bdd84424aa6cbe1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#afc39c35a41e7d27e9bdd84424aa6cbe1">Shine</a> () const</td></tr>
-<tr class="memdesc:afc39c35a41e7d27e9bdd84424aa6cbe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shine values are in range 0.0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf" title="maximum value of shine exponent = 255.0 ">ON_Material::MaxShine</a>.  <a href="#afc39c35a41e7d27e9bdd84424aa6cbe1">More...</a><br /></td></tr>
+<tr class="memdesc:afc39c35a41e7d27e9bdd84424aa6cbe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shine values are in range 0.0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf">ON_Material::MaxShine</a>.  <a href="#afc39c35a41e7d27e9bdd84424aa6cbe1">More...</a><br /></td></tr>
 <tr class="separator:afc39c35a41e7d27e9bdd84424aa6cbe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9da9388bca7081e45b954f838c463d22"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a9da9388bca7081e45b954f838c463d22">Specular</a> () const</td></tr>
 <tr class="separator:a9da9388bca7081e45b954f838c463d22"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,6 +168,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac72a8759b48c95e0a56203941292ee98"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ac72a8759b48c95e0a56203941292ee98">UseDiffuseTextureAlphaForObjectTransparencyTexture</a> () const</td></tr>
 <tr class="separator:ac72a8759b48c95e0a56203941292ee98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9034ace9ef32a8be1fc6d45d5303f53"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ad9034ace9ef32a8be1fc6d45d5303f53">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive) const override</td></tr>
+<tr class="memdesc:ad9034ace9ef32a8be1fc6d45d5303f53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a>.  <a href="#ad9034ace9ef32a8be1fc6d45d5303f53">More...</a><br /></td></tr>
 <tr class="separator:ad9034ace9ef32a8be1fc6d45d5303f53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_o_n___model_component"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_o_n___model_component')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a></td></tr>
 <tr class="memitem:a5af22cae5cb0c0ffd17835be862bdd06 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a5af22cae5cb0c0ffd17835be862bdd06">ON_ModelComponent</a> () ON_NOEXCEPT</td></tr>
@@ -168,6 +176,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e5b691e7d7ce6893d37e44ae0c30c01 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2e5b691e7d7ce6893d37e44ae0c30c01">ON_ModelComponent</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> &amp;source)</td></tr>
 <tr class="separator:a2e5b691e7d7ce6893d37e44ae0c30c01 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4bf455f656723f013013ec9a10642fdb inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a4bf455f656723f013013ec9a10642fdb">ON_ModelComponent</a> (<a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">ON_ModelComponent::Type</a> component_type) ON_NOEXCEPT</td></tr>
+<tr class="memdesc:a4bf455f656723f013013ec9a10642fdb inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets and locks the component type attribute.  <a href="../../dc/d5c/class_o_n___model_component.html#a4bf455f656723f013013ec9a10642fdb">More...</a><br /></td></tr>
 <tr class="separator:a4bf455f656723f013013ec9a10642fdb inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef97b9bbea377931fe0b8c2339c4edfc inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aef97b9bbea377931fe0b8c2339c4edfc">ON_ModelComponent</a> (<a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">ON_ModelComponent::Type</a> component_type, const <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> &amp;source) ON_NOEXCEPT</td></tr>
 <tr class="memdesc:aef97b9bbea377931fe0b8c2339c4edfc inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locked status of source attributes is not copied to permit copy and modify operations.  <a href="../../dc/d5c/class_o_n___model_component.html#aef97b9bbea377931fe0b8c2339c4edfc">More...</a><br /></td></tr>
@@ -175,20 +184,27 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a693dd54044a9d2a5424bac7f3442a1eb inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a693dd54044a9d2a5424bac7f3442a1eb">~ON_ModelComponent</a> ()=default</td></tr>
 <tr class="separator:a693dd54044a9d2a5424bac7f3442a1eb inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7a1fe3ade2341a073586c42c4b9f33a inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#af7a1fe3ade2341a073586c42c4b9f33a">ChangeName</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *new_name, class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> *manifest)</td></tr>
+<tr class="memdesc:af7a1fe3ade2341a073586c42c4b9f33a inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the name of a component and optionally update a manifest.  <a href="../../dc/d5c/class_o_n___model_component.html#af7a1fe3ade2341a073586c42c4b9f33a">More...</a><br /></td></tr>
 <tr class="separator:af7a1fe3ade2341a073586c42c4b9f33a inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6227429dfeb467e65f30f2b50b97faa3 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a6227429dfeb467e65f30f2b50b97faa3">ClearComponentType</a> ()</td></tr>
+<tr class="memdesc:a6227429dfeb467e65f30f2b50b97faa3 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the model serial number value to the ON_ModelComponent::Unset.Type() and change the state so TypeIsSet() returns false.  <a href="../../dc/d5c/class_o_n___model_component.html#a6227429dfeb467e65f30f2b50b97faa3">More...</a><br /></td></tr>
 <tr class="separator:a6227429dfeb467e65f30f2b50b97faa3 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad02cb394c2ee2f81193e8a0b3e74e2a9 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ad02cb394c2ee2f81193e8a0b3e74e2a9">ClearId</a> ()</td></tr>
+<tr class="memdesc:ad02cb394c2ee2f81193e8a0b3e74e2a9 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the component id value to the ON_ModelComponent::Unset.ModelComponentId() and change the state so ModelComponentIdIsSet() returns false.  <a href="../../dc/d5c/class_o_n___model_component.html#ad02cb394c2ee2f81193e8a0b3e74e2a9">More...</a><br /></td></tr>
 <tr class="separator:ad02cb394c2ee2f81193e8a0b3e74e2a9 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6bd6e539d06a9c928bcb291e7eb5042 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ac6bd6e539d06a9c928bcb291e7eb5042">ClearIndex</a> ()</td></tr>
+<tr class="memdesc:ac6bd6e539d06a9c928bcb291e7eb5042 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the component index value to the ON_ModelComponent::Unset.ModelComponentIndex() and change the state so ModelComponentIndexIsSet() returns false.  <a href="../../dc/d5c/class_o_n___model_component.html#ac6bd6e539d06a9c928bcb291e7eb5042">More...</a><br /></td></tr>
 <tr class="separator:ac6bd6e539d06a9c928bcb291e7eb5042 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a1ed01950699a694427815c550f20c8 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a9a1ed01950699a694427815c550f20c8">ClearModelComponentAttributes</a> (unsigned int attributes_filter)</td></tr>
+<tr class="memdesc:a9a1ed01950699a694427815c550f20c8 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the attributes identified by the component_filter parameter.  <a href="../../dc/d5c/class_o_n___model_component.html#a9a1ed01950699a694427815c550f20c8">More...</a><br /></td></tr>
 <tr class="separator:a9a1ed01950699a694427815c550f20c8 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afea83d77ef52dfab7d977f5f14a24462 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#afea83d77ef52dfab7d977f5f14a24462">ClearModelComponentStatus</a> ()</td></tr>
 <tr class="separator:afea83d77ef52dfab7d977f5f14a24462 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca0332723c3afd7d63d56dbc0ee32aa9 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aca0332723c3afd7d63d56dbc0ee32aa9">ClearModelSerialNumber</a> ()</td></tr>
+<tr class="memdesc:aca0332723c3afd7d63d56dbc0ee32aa9 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the model serial number, reference model serial number and instance definition model serial number values to 0 and flags these values as unset.  <a href="../../dc/d5c/class_o_n___model_component.html#aca0332723c3afd7d63d56dbc0ee32aa9">More...</a><br /></td></tr>
 <tr class="separator:aca0332723c3afd7d63d56dbc0ee32aa9 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6696e69584c85069f135d2a2f77097fd inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a6696e69584c85069f135d2a2f77097fd">ClearName</a> ()</td></tr>
+<tr class="memdesc:a6696e69584c85069f135d2a2f77097fd inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the component name value to the ON_ModelComponent::Unset.Name() and change the state so <a class="el" href="../../dc/d5c/class_o_n___model_component.html#adb14e78ec38e645c07791e569095f3be">NameIsSet()</a> and <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aa65c1c03f0f08c0dcf04fbb8aeb0c1a8">DeletedNameIsSet()</a> both return false.  <a href="../../dc/d5c/class_o_n___model_component.html#a6696e69584c85069f135d2a2f77097fd">More...</a><br /></td></tr>
 <tr class="separator:a6696e69584c85069f135d2a2f77097fd inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ff090d48eafb272c8d48b28680f8f0a inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2ff090d48eafb272c8d48b28680f8f0a">ClearParentId</a> ()</td></tr>
 <tr class="separator:a2ff090d48eafb272c8d48b28680f8f0a inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,10 +223,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acf3c2db48f10168187d29f7295ba8b20 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#acf3c2db48f10168187d29f7295ba8b20">ComponentTypeIsSet</a> () const</td></tr>
 <tr class="separator:acf3c2db48f10168187d29f7295ba8b20 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a519fee9947b7f5652095e5e5973f99c9 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a519fee9947b7f5652095e5e5973f99c9">ContentVersionNumber</a> () const</td></tr>
+<tr class="memdesc:a519fee9947b7f5652095e5e5973f99c9 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whenever an attribute is changed, the content version number is incremented. The <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a519fee9947b7f5652095e5e5973f99c9" title="Whenever an attribute is changed, the content version number is incremented. The ContentVersionNumber...">ContentVersionNumber()</a> is commonly used by consumers of the model component attributes to trigger updates when needed.  <a href="../../dc/d5c/class_o_n___model_component.html#a519fee9947b7f5652095e5e5973f99c9">More...</a><br /></td></tr>
 <tr class="separator:a519fee9947b7f5652095e5e5973f99c9 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f3088d8d85e64261ea0f40121ed4b27 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a1f3088d8d85e64261ea0f40121ed4b27">CopyFrom</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a> &amp;src, unsigned int attributes_filter)</td></tr>
 <tr class="separator:a1f3088d8d85e64261ea0f40121ed4b27 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacc6c77d678662a84796ee0380ec55bc inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aacc6c77d678662a84796ee0380ec55bc">DataCRC</a> (ON__UINT32 current_remainder) const override</td></tr>
+<tr class="memdesc:aacc6c77d678662a84796ee0380ec55bc inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a CRC calculated from the information that defines the object. This CRC can be used as a quick way to see if two objects are not identical.  <a href="../../dc/d5c/class_o_n___model_component.html#aacc6c77d678662a84796ee0380ec55bc">More...</a><br /></td></tr>
 <tr class="separator:aacc6c77d678662a84796ee0380ec55bc inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bf54d789ced063daf43b2a9b600e523 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2bf54d789ced063daf43b2a9b600e523">DeletedName</a> () const</td></tr>
 <tr class="separator:a2bf54d789ced063daf43b2a9b600e523 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -219,8 +237,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa65c1c03f0f08c0dcf04fbb8aeb0c1a8 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aa65c1c03f0f08c0dcf04fbb8aeb0c1a8">DeletedNameIsSet</a> () const</td></tr>
 <tr class="separator:aa65c1c03f0f08c0dcf04fbb8aeb0c1a8 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2211d07ccddf34c7968df989012fb58f inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2211d07ccddf34c7968df989012fb58f">DeleteName</a> ()</td></tr>
+<tr class="memdesc:a2211d07ccddf34c7968df989012fb58f inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <a class="el" href="../../dc/d5c/class_o_n___model_component.html#adb14e78ec38e645c07791e569095f3be">NameIsSet()</a> is true, then the name is deleted in a waty that can be undone by calling <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aa24b302e5c1d657b65aff299bdccfab1">UndeleteName()</a> and the <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aa65c1c03f0f08c0dcf04fbb8aeb0c1a8">DeletedNameIsSet()</a> property is changed to true.  <a href="../../dc/d5c/class_o_n___model_component.html#a2211d07ccddf34c7968df989012fb58f">More...</a><br /></td></tr>
 <tr class="separator:a2211d07ccddf34c7968df989012fb58f inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aebee8c1655e072f442bd71d873240770 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aebee8c1655e072f442bd71d873240770">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const override</td></tr>
+<tr class="memdesc:aebee8c1655e072f442bd71d873240770 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a text dump of the object.  <a href="../../dc/d5c/class_o_n___model_component.html#aebee8c1655e072f442bd71d873240770">More...</a><br /></td></tr>
 <tr class="separator:aebee8c1655e072f442bd71d873240770 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab89341ea48153725f2a6f20f4f884522 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ab89341ea48153725f2a6f20f4f884522">EraseIdentification</a> (bool bIgnoreLocks)</td></tr>
 <tr class="separator:ab89341ea48153725f2a6f20f4f884522 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -237,6 +257,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a71669e6a180c9db66726a2cf58408317 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a71669e6a180c9db66726a2cf58408317">IdIsSet</a> () const</td></tr>
 <tr class="separator:a71669e6a180c9db66726a2cf58408317 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae597c623ccc8c405c121fca53e754e96 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ae597c623ccc8c405c121fca53e754e96">IfIdIsNilSetId</a> ()</td></tr>
+<tr class="memdesc:ae597c623ccc8c405c121fca53e754e96 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">If the it is nil, call <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aaf5dc8f80355c00ab2c2646567f9e125" title="Sets the id to a new value created by ON_CreateUuid(). ">SetId()</a>.  <a href="../../dc/d5c/class_o_n___model_component.html#ae597c623ccc8c405c121fca53e754e96">More...</a><br /></td></tr>
 <tr class="separator:ae597c623ccc8c405c121fca53e754e96 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d0998a906ab18cf3c9205218542c7c9 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a1d0998a906ab18cf3c9205218542c7c9">Index</a> () const</td></tr>
 <tr class="separator:a1d0998a906ab18cf3c9205218542c7c9 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -259,20 +280,26 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6796f8e51d4c1e3a8c17ff28901198a2 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a6796f8e51d4c1e3a8c17ff28901198a2">IsSystemComponent</a> () const</td></tr>
 <tr class="separator:a6796f8e51d4c1e3a8c17ff28901198a2 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf05d4c839f242289c7b7a3ea607c242 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#adf05d4c839f242289c7b7a3ea607c242">IsValid</a> (class <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log=nullptr) const override</td></tr>
+<tr class="memdesc:adf05d4c839f242289c7b7a3ea607c242 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests an object to see if its data members are correctly initialized.  <a href="../../dc/d5c/class_o_n___model_component.html#adf05d4c839f242289c7b7a3ea607c242">More...</a><br /></td></tr>
 <tr class="separator:adf05d4c839f242289c7b7a3ea607c242 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ff17b6abf1686efcadb4505b88b3912 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a4ff17b6abf1686efcadb4505b88b3912">LockAllSettingsExceptName</a> ()</td></tr>
 <tr class="separator:a4ff17b6abf1686efcadb4505b88b3912 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6486577bddb54e9f58d7d98b0107de0f inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a6486577bddb54e9f58d7d98b0107de0f">LockComponentType</a> ()</td></tr>
+<tr class="memdesc:a6486577bddb54e9f58d7d98b0107de0f inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling LockType() will prhibit future changes to the Type attribute.  <a href="../../dc/d5c/class_o_n___model_component.html#a6486577bddb54e9f58d7d98b0107de0f">More...</a><br /></td></tr>
 <tr class="separator:a6486577bddb54e9f58d7d98b0107de0f inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a300c39d490748acf673ed11797330f99 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a300c39d490748acf673ed11797330f99">LockId</a> ()</td></tr>
+<tr class="memdesc:a300c39d490748acf673ed11797330f99 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling LockModelComponentId() will prhibit future changes to the ModelComponentId attribute.  <a href="../../dc/d5c/class_o_n___model_component.html#a300c39d490748acf673ed11797330f99">More...</a><br /></td></tr>
 <tr class="separator:a300c39d490748acf673ed11797330f99 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a898f9b9b4d8187f6a6ec02db7ba60edb inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a898f9b9b4d8187f6a6ec02db7ba60edb">LockIndex</a> ()</td></tr>
+<tr class="memdesc:a898f9b9b4d8187f6a6ec02db7ba60edb inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling LockModelComponentIndex() will prhibit future changes to the ModelComponentIndex attribute.  <a href="../../dc/d5c/class_o_n___model_component.html#a898f9b9b4d8187f6a6ec02db7ba60edb">More...</a><br /></td></tr>
 <tr class="separator:a898f9b9b4d8187f6a6ec02db7ba60edb inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2cf7637689f3dd58a0b52d6fa7fa80d inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aa2cf7637689f3dd58a0b52d6fa7fa80d">LockModelComponentStatus</a> ()</td></tr>
 <tr class="separator:aa2cf7637689f3dd58a0b52d6fa7fa80d inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2042cd45c9fe898dd4b2b7b10ecc1e63 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2042cd45c9fe898dd4b2b7b10ecc1e63">LockModelSerialNumber</a> ()</td></tr>
+<tr class="memdesc:a2042cd45c9fe898dd4b2b7b10ecc1e63 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2042cd45c9fe898dd4b2b7b10ecc1e63" title="Calling LockModelSerialNumber() will prohibit future changes to the ModelSerialNumber(), ReferenceModelSerialNumber(), and InstanceDefinitionModelSerialNumber() attributes. ">LockModelSerialNumber()</a> will prohibit future changes to the <a class="el" href="../../dc/d5c/class_o_n___model_component.html#ad6e40301734fa20489f53b27e1b4f0f5">ModelSerialNumber()</a>, <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a05d33af020136d855b8ff663911081c3">ReferenceModelSerialNumber()</a>, and <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aaed0b07fa591a07c8bcfc97640a785c3">InstanceDefinitionModelSerialNumber()</a> attributes.  <a href="../../dc/d5c/class_o_n___model_component.html#a2042cd45c9fe898dd4b2b7b10ecc1e63">More...</a><br /></td></tr>
 <tr class="separator:a2042cd45c9fe898dd4b2b7b10ecc1e63 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab02216721380f82ff5feb96569ae112 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aab02216721380f82ff5feb96569ae112">LockName</a> ()</td></tr>
+<tr class="memdesc:aab02216721380f82ff5feb96569ae112 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling <a class="el" href="../../dc/d5c/class_o_n___model_component.html#aab02216721380f82ff5feb96569ae112" title="Calling LockName() will prohibit future changes to the Name attribute. ">LockName()</a> will prohibit future changes to the Name attribute.  <a href="../../dc/d5c/class_o_n___model_component.html#aab02216721380f82ff5feb96569ae112">More...</a><br /></td></tr>
 <tr class="separator:aab02216721380f82ff5feb96569ae112 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacb3e232d8e69eb4ccaa15d9ebee5567 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aacb3e232d8e69eb4ccaa15d9ebee5567">LockParentId</a> ()</td></tr>
 <tr class="separator:aacb3e232d8e69eb4ccaa15d9ebee5567 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -283,6 +310,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a09947b924e1b7eb7ed554765f2e65804 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a09947b924e1b7eb7ed554765f2e65804">ModelComponentStatusIsSet</a> () const</td></tr>
 <tr class="separator:a09947b924e1b7eb7ed554765f2e65804 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcdd748b7b44448d6d58f26f63141660 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#afcdd748b7b44448d6d58f26f63141660">ModelObjectId</a> () const override</td></tr>
+<tr class="memdesc:afcdd748b7b44448d6d58f26f63141660 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">All objects in an opennurbs model have an id ( ON_Layer.m_layer_id, ON_Font.m_font_id, ON_Material.m_material_id, <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a806a85052b002c45021650e3b97e2018">ON_3dmObjectAttributes.m_uuid</a> ).  <a href="../../dc/d5c/class_o_n___model_component.html#afcdd748b7b44448d6d58f26f63141660">More...</a><br /></td></tr>
 <tr class="separator:afcdd748b7b44448d6d58f26f63141660 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6e40301734fa20489f53b27e1b4f0f5 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ad6e40301734fa20489f53b27e1b4f0f5">ModelSerialNumber</a> () const</td></tr>
 <tr class="separator:ad6e40301734fa20489f53b27e1b4f0f5 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -293,8 +321,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac157c257e5a54aa12e3b3688ac87618a inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ac157c257e5a54aa12e3b3688ac87618a">Name</a> () const</td></tr>
 <tr class="separator:ac157c257e5a54aa12e3b3688ac87618a inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacded0f025770da4135f91d5ac5d9d42 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aacded0f025770da4135f91d5ac5d9d42">NameAsPointer</a> () const</td></tr>
+<tr class="memdesc:aacded0f025770da4135f91d5ac5d9d42 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user function that gets a pointer to the name.  <a href="../../dc/d5c/class_o_n___model_component.html#aacded0f025770da4135f91d5ac5d9d42">More...</a><br /></td></tr>
 <tr class="separator:aacded0f025770da4135f91d5ac5d9d42 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06b75052749c5d7c76829500aa5b6d9e inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../da/de3/class_o_n___name_hash.html">ON_NameHash</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a06b75052749c5d7c76829500aa5b6d9e">NameHash</a> () const</td></tr>
+<tr class="memdesc:a06b75052749c5d7c76829500aa5b6d9e inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a platform independent hash of the name suitable for equality testing and binary searching. When testing for equality or doing binary searches, using <a class="el" href="../../da/de3/class_o_n___name_hash.html" title="An ON_NameHash is designed to help search for and compare attribute names like the ON_ModelComponent...">ON_NameHash</a> values is faster than using the CompareName or <a class="el" href="../../d1/d11/class_o_n__w_string.html#ae38123b115bd5fca83e700544f31de95" title="Compare this string and other_name as a name attribute of an object like ON_3dmObjectAttributes.m_name, ON_Layer.m_name, and so on. These comparisons ignore case and use appropriate string normalization. ">ON_wString::CompareAttributeName</a>.  <a href="../../dc/d5c/class_o_n___model_component.html#a06b75052749c5d7c76829500aa5b6d9e">More...</a><br /></td></tr>
 <tr class="separator:a06b75052749c5d7c76829500aa5b6d9e inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70117916cafd4d54548f33c4c248ec9b inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a70117916cafd4d54548f33c4c248ec9b">NameIsEmpty</a> () const</td></tr>
 <tr class="separator:a70117916cafd4d54548f33c4c248ec9b inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -325,6 +355,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aec107d943b87f00ed57478ccc389ba17 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aec107d943b87f00ed57478ccc389ba17">RuntimeSerialNumber</a> () const</td></tr>
 <tr class="separator:aec107d943b87f00ed57478ccc389ba17 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada84c12d978b562a779a6504e0d35f5e inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ada84c12d978b562a779a6504e0d35f5e">SetAndLockId</a> ()</td></tr>
+<tr class="memdesc:ada84c12d978b562a779a6504e0d35f5e inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the id to a new value created by ON_CreateUuid() and locks the id attribute so it cannot be changed.  <a href="../../dc/d5c/class_o_n___model_component.html#ada84c12d978b562a779a6504e0d35f5e">More...</a><br /></td></tr>
 <tr class="separator:ada84c12d978b562a779a6504e0d35f5e inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66ea8fc60e0b93686f49d5c26bf4c9b6 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a66ea8fc60e0b93686f49d5c26bf4c9b6">SetAsSystemComponent</a> ()</td></tr>
 <tr class="separator:a66ea8fc60e0b93686f49d5c26bf4c9b6 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -339,8 +370,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae182339cb9733031ccc483630f8680fd inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ae182339cb9733031ccc483630f8680fd">SetId</a> (const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;component_id)</td></tr>
 <tr class="separator:ae182339cb9733031ccc483630f8680fd inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf5dc8f80355c00ab2c2646567f9e125 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aaf5dc8f80355c00ab2c2646567f9e125">SetId</a> ()</td></tr>
+<tr class="memdesc:aaf5dc8f80355c00ab2c2646567f9e125 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the id to a new value created by ON_CreateUuid().  <a href="../../dc/d5c/class_o_n___model_component.html#aaf5dc8f80355c00ab2c2646567f9e125">More...</a><br /></td></tr>
 <tr class="separator:aaf5dc8f80355c00ab2c2646567f9e125 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33f36d109e2096730251360beabe2b19 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a33f36d109e2096730251360beabe2b19">SetIdentification</a> (const class <a class="el" href="../../de/d34/class_o_n___component_manifest_item.html">ON_ComponentManifestItem</a> &amp;manifest_item, const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *manifest_name, bool bSetId, bool bParentId, bool bSetName, bool bSetIndex)</td></tr>
+<tr class="memdesc:a33f36d109e2096730251360beabe2b19 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a component's id, name and index to the manifest_item values.  <a href="../../dc/d5c/class_o_n___model_component.html#a33f36d109e2096730251360beabe2b19">More...</a><br /></td></tr>
 <tr class="separator:a33f36d109e2096730251360beabe2b19 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5175a4cde67c03af7f39dbd5b54c23e8 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a5175a4cde67c03af7f39dbd5b54c23e8">SetIndex</a> (int component_index)</td></tr>
 <tr class="separator:a5175a4cde67c03af7f39dbd5b54c23e8 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -351,8 +384,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a84d1d7035a96f5aacd765aeba0cad449 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a84d1d7035a96f5aacd765aeba0cad449">SetModelComponentStatus</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> component_status)</td></tr>
 <tr class="separator:a84d1d7035a96f5aacd765aeba0cad449 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32968c29e7dc646d0e1118ae730caebd inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a32968c29e7dc646d0e1118ae730caebd">SetModelSerialNumber</a> (unsigned int model_serial_number)</td></tr>
+<tr class="memdesc:a32968c29e7dc646d0e1118ae730caebd inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specify the model that is managing this component.  <a href="../../dc/d5c/class_o_n___model_component.html#a32968c29e7dc646d0e1118ae730caebd">More...</a><br /></td></tr>
 <tr class="separator:a32968c29e7dc646d0e1118ae730caebd inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3d25aa9c43325daddd0d3c3232abf80 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ac3d25aa9c43325daddd0d3c3232abf80">SetModelSerialNumber</a> (unsigned int model_serial_number, unsigned int reference_model_serial_number, unsigned int instance_definition_model_serial_number)</td></tr>
+<tr class="memdesc:ac3d25aa9c43325daddd0d3c3232abf80 inherit pub_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specify the model that is managing this component.  <a href="../../dc/d5c/class_o_n___model_component.html#ac3d25aa9c43325daddd0d3c3232abf80">More...</a><br /></td></tr>
 <tr class="separator:ac3d25aa9c43325daddd0d3c3232abf80 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a438dcead4834272400aa56b57ace93d0 inherit pub_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a438dcead4834272400aa56b57ace93d0">SetName</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *component_name)</td></tr>
 <tr class="separator:a438dcead4834272400aa56b57ace93d0 inherit pub_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -372,64 +407,92 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad940aab7d51005c8732d76d1b188e332 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad940aab7d51005c8732d76d1b188e332">~ON_Object</a> ()</td></tr>
 <tr class="separator:ad940aab7d51005c8732d76d1b188e332 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d1/df0/class_o_n___aggregate_component_status.html">ON_AggregateComponentStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a8a1cfab63437a2d03cc50fdc6734f2a5">AggregateComponentStatus</a> () const</td></tr>
+<tr class="memdesc:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call whenever a component status setting is modifed by directly changing it on a component in a way that will result in any saved information about the parent object's aggretate component status becoming invalid.  <a href="../../d9/d7b/class_o_n___object.html#a8a1cfab63437a2d03cc50fdc6734f2a5">More...</a><br /></td></tr>
 <tr class="separator:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79">AttachUserData</a> (class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *pUserData)</td></tr>
+<tr class="memdesc:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach user data to an object.  <a href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79">More...</a><br /></td></tr>
 <tr class="separator:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a27893ff72ca7abbe985f8b5f4ccd900e">ClearAllComponentStates</a> () const</td></tr>
+<tr class="memdesc:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set all active level component states to <a class="el" href="../../d9/d12/class_o_n___component_status.html#ae267cd5d4088c8a033fa348d30227223">ON_ComponentStatus::NoneSet</a>.  <a href="../../d9/d7b/class_o_n___object.html#a27893ff72ca7abbe985f8b5f4ccd900e">More...</a><br /></td></tr>
 <tr class="separator:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a1af75ebe418edff4a11985f8fca7d83b">ClearComponentStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_clear) const</td></tr>
+<tr class="memdesc:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the specified states on every component.  <a href="../../d9/d7b/class_o_n___object.html#a1af75ebe418edff4a11985f8fca7d83b">More...</a><br /></td></tr>
 <tr class="separator:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aeadf76a46f3f1a661bbf41e1b754fe89">ClearComponentStates</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_clear) const</td></tr>
+<tr class="memdesc:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear states on an individual component.  <a href="../../d9/d7b/class_o_n___object.html#aeadf76a46f3f1a661bbf41e1b754fe89">More...</a><br /></td></tr>
 <tr class="separator:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad044157e5c1efde9fce1c6ccf6e81ff3">CopyUserData</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> source_userdata_item_id, <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">ON_Object::UserDataConflictResolution</a> userdata_conflict_resolution)</td></tr>
+<tr class="memdesc:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool that copies user data items with positive values of <a class="el" href="../../d5/d55/class_o_n___user_data.html#ac025400e9bff35c899ed85ba1b0a52e4">ON_UserData.m_userdata_copycount</a> from source_object to "this.  <a href="../../d9/d7b/class_o_n___object.html#ad044157e5c1efde9fce1c6ccf6e81ff3">More...</a><br /></td></tr>
 <tr class="separator:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a58958333257eba5575a6a1b09c366c1b">CopyUserData</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object)</td></tr>
+<tr class="memdesc:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls CopyUserData(source_object,ON_Object::UserDataConflictResolution::source_object).  <a href="../../d9/d7b/class_o_n___object.html#a58958333257eba5575a6a1b09c366c1b">More...</a><br /></td></tr>
 <tr class="separator:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aa67be7d8cc76ec82ae22a30093ecf98f">DeleteComponents</a> (const ON_COMPONENT_INDEX *ci_list, size_t ci_count)</td></tr>
+<tr class="memdesc:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the portions of the object identified in ci_list[].  <a href="../../d9/d7b/class_o_n___object.html#aa67be7d8cc76ec82ae22a30093ecf98f">More...</a><br /></td></tr>
 <tr class="separator:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#af8435c33ab53af41c22dac75e8917569">DestroyRuntimeCache</a> (bool bDelete=true)</td></tr>
+<tr class="memdesc:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user function. If you are using openNURBS in its default configuration to read and write 3dm archives, you never need to call this function. Many objects employ lazy creation of (runtime) caches that save information to help speed geometric calculations. This function will destroy all runtime information.  <a href="../../d9/d7b/class_o_n___object.html#af8435c33ab53af41c22dac75e8917569">More...</a><br /></td></tr>
 <tr class="separator:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a1dbb0eff3b2287152b40991b3afca9ee">DetachUserData</a> (class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *pUserData)</td></tr>
+<tr class="memdesc:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove user data from an object.  <a href="../../d9/d7b/class_o_n___object.html#a1dbb0eff3b2287152b40991b3afca9ee">More...</a><br /></td></tr>
 <tr class="separator:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad265ca0da2d751edaa9d2b5ab2540c6a">EmergencyDestroy</a> ()</td></tr>
+<tr class="memdesc:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets m_user_data_list = 0.  <a href="../../d9/d7b/class_o_n___object.html#ad265ca0da2d751edaa9d2b5ab2540c6a">More...</a><br /></td></tr>
 <tr class="separator:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835">FirstUserData</a> () const</td></tr>
+<tr class="memdesc:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">User data is stored as a linked list of <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> classes. FirstUserData gets the first item in the linked list. This is the most recent item attached using <a class="el" href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79" title="Attach user data to an object. ">AttachUserData()</a>. Remark: To iterate through all the user data on an object, call <a class="el" href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835" title="User data is stored as a linked list of ON_UserData classes. FirstUserData gets the first item in the...">FirstUserData()</a> and then use <a class="el" href="../../d5/d55/class_o_n___user_data.html#a5e5a0d01e000319e0b37b340752613d8">ON_UserData::Next()</a> to traverse the list.  <a href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835">More...</a><br /></td></tr>
 <tr class="separator:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a691de6470e814973858aa5c51eaffa77 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a691de6470e814973858aa5c51eaffa77">GetComponentsWithSetStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_filter, bool bAllEqualStates, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; ON_COMPONENT_INDEX &gt; &amp;components) const</td></tr>
 <tr class="separator:a691de6470e814973858aa5c51eaffa77 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a29f8d609e22008680581c6ca72ac47df">GetUserData</a> (const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;userdata_uuid) const</td></tr>
+<tr class="memdesc:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a pointer to user data.  <a href="../../d9/d7b/class_o_n___object.html#a29f8d609e22008680581c6ca72ac47df">More...</a><br /></td></tr>
 <tr class="separator:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab40b5e89b4766299e415593b31a3849c">GetUserString</a> (const wchar_t *key, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;string_value) const</td></tr>
+<tr class="memdesc:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get user string from the object.  <a href="../../d9/d7b/class_o_n___object.html#ab40b5e89b4766299e415593b31a3849c">More...</a><br /></td></tr>
 <tr class="separator:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ac285fba1506b2b9b821e3655582939c4">GetUserStringKeys</a> (<a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &gt; &amp;user_string_keys) const</td></tr>
+<tr class="memdesc:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of all user string keys on the object.  <a href="../../d9/d7b/class_o_n___object.html#ac285fba1506b2b9b821e3655582939c4">More...</a><br /></td></tr>
 <tr class="separator:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a004ab49490f69fcdc7681919c3837a33">GetUserStrings</a> (<a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d0/d82/class_o_n___user_string.html">ON_UserString</a> &gt; &amp;user_strings) const</td></tr>
+<tr class="memdesc:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of all user strings on the object.  <a href="../../d9/d7b/class_o_n___object.html#a004ab49490f69fcdc7681919c3837a33">More...</a><br /></td></tr>
 <tr class="separator:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#afe5367058a90545e81cd79b78103175d">IsKindOf</a> (const <a class="el" href="../../d3/d3c/class_o_n___class_id.html">ON_ClassId</a> *pClassId) const</td></tr>
+<tr class="memdesc:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level tool to test if an object is derived from a specified class.  <a href="../../d9/d7b/class_o_n___object.html#afe5367058a90545e81cd79b78103175d">More...</a><br /></td></tr>
 <tr class="separator:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a609192fbafecbe4be3136d8cb4dce882">MarkAggregateComponentStatusAsNotCurrent</a> () const</td></tr>
+<tr class="memdesc:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call whenever a component status setting is modifed by directly changing it on a component in a way that will result in any saved information about the parent object's aggretate component status becoming invalid.  <a href="../../d9/d7b/class_o_n___object.html#a609192fbafecbe4be3136d8cb4dce882">More...</a><br /></td></tr>
 <tr class="separator:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73">MemoryRelocate</a> ()</td></tr>
+<tr class="memdesc:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73" title="The MemoryRelocate() function is called when an object&#39;s location in memory is changed. For example, if an object resides in a chunk of memory that is grown by calling a realloc that has to allocate a new chunk and copy the contents of the old chunk to the new chunk, then the location of the object&#39;s memory changes. In practice this happens when classes derived from ON_Object are stored in dynamic arrays, like the default implementation of ON_ObjectArray&lt;&gt;&#39;s that use realloc to grow the dynamic array. ">MemoryRelocate()</a> function is called when an object's location in memory is changed. For example, if an object resides in a chunk of memory that is grown by calling a realloc that has to allocate a new chunk and copy the contents of the old chunk to the new chunk, then the location of the object's memory changes. In practice this happens when classes derived from <a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> are stored in dynamic arrays, like the default implementation of ON_ObjectArray&lt;&gt;'s that use realloc to grow the dynamic array.  <a href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73">More...</a><br /></td></tr>
 <tr class="separator:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a78b4ecb2eb36641e1ee6b4fc6129606e">MoveUserData</a> (<a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> source_userdata_item_id, <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">ON_Object::UserDataConflictResolution</a> userdata_conflict_resolution, bool bDeleteAllSourceItems)</td></tr>
+<tr class="memdesc:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool that moves user data items from source_object to "this.  <a href="../../d9/d7b/class_o_n___object.html#a78b4ecb2eb36641e1ee6b4fc6129606e">More...</a><br /></td></tr>
 <tr class="separator:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a54a891ae2cb2a25008a7a39cb19dfcea">MoveUserData</a> (<a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object)</td></tr>
+<tr class="memdesc:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls MoveUserData(source_object,ON_Object::UserDataConflictResolution::source_object,true).  <a href="../../d9/d7b/class_o_n___object.html#a54a891ae2cb2a25008a7a39cb19dfcea">More...</a><br /></td></tr>
 <tr class="separator:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba6166c9aecef42639e684a2a3fda223 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aba6166c9aecef42639e684a2a3fda223">operator=</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;)</td></tr>
 <tr class="separator:aba6166c9aecef42639e684a2a3fda223 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680">PurgeUserData</a> ()</td></tr>
+<tr class="memdesc:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680" title="PurgeUserData() removes all user data from object. ">PurgeUserData()</a> removes all user data from object.  <a href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680">More...</a><br /></td></tr>
 <tr class="separator:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab728c0576fd5913bc1575b74997bddb5">SetComponentStates</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_set) const</td></tr>
+<tr class="memdesc:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set states on an individual component.  <a href="../../d9/d7b/class_o_n___object.html#ab728c0576fd5913bc1575b74997bddb5">More...</a><br /></td></tr>
 <tr class="separator:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a589f1fdc28f6259d1bd22bdedc9c4c76">SetComponentStatus</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> status_to_copy) const</td></tr>
+<tr class="memdesc:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy status settings to an individual component.  <a href="../../d9/d7b/class_o_n___object.html#a589f1fdc28f6259d1bd22bdedc9c4c76">More...</a><br /></td></tr>
 <tr class="separator:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a074dc9e9b919853919564793c37f5143">SetUserString</a> (const wchar_t *key, const wchar_t *string_value)</td></tr>
+<tr class="memdesc:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach a user string to the object. This information will perisist through copy construction, operator=, and file IO.  <a href="../../d9/d7b/class_o_n___object.html#a074dc9e9b919853919564793c37f5143">More...</a><br /></td></tr>
 <tr class="separator:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a7234af898c307a2c2f7931db7e627592">SetUserStrings</a> (int count, const <a class="el" href="../../d0/d82/class_o_n___user_string.html">ON_UserString</a> *user_strings, bool bReplace)</td></tr>
+<tr class="memdesc:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append entries to the user string list  <a href="../../d9/d7b/class_o_n___object.html#a7234af898c307a2c2f7931db7e627592">More...</a><br /></td></tr>
 <tr class="separator:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052">TransformUserData</a> (const class <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;xform)</td></tr>
+<tr class="memdesc:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Objects derived from <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> must call <a class="el" href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052" title="Objects derived from ON_Geometry must call TransformUserData() in their Transform() member function...">TransformUserData()</a> in their Transform() member function.  <a href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052">More...</a><br /></td></tr>
 <tr class="separator:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a82188bbf97bbd149ac6fcb7cd8e989d1">UpdateReferencedComponents</a> (const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;source_manifest, const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;destination_manifest, const class <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;manifest_map)</td></tr>
+<tr class="memdesc:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the destination_manifest to update references to other components. This is typically done when a component's references came from a "source" context and are being updated to the "destination" context. For example, inserting one model into another when index, id, and name conflicts need to be resolved at the time of insertion.  <a href="../../d9/d7b/class_o_n___object.html#a82188bbf97bbd149ac6fcb7cd8e989d1">More...</a><br /></td></tr>
 <tr class="separator:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab648403ebf4592831809710f378e9ac2 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab648403ebf4592831809710f378e9ac2">UserStringCount</a> () const</td></tr>
 <tr class="separator:ab648403ebf4592831809710f378e9ac2 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -479,10 +542,13 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a4d75fb10c07264595741be96873c371e inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">For internal use. Never call this function.  <a href="../../dc/d5c/class_o_n___model_component.html#a4d75fb10c07264595741be96873c371e">More...</a><br /></td></tr>
 <tr class="separator:a4d75fb10c07264595741be96873c371e inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add7734325ce94ce5c447c7af75bf6ead inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#add7734325ce94ce5c447c7af75bf6ead">IsNamePathSeparator</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *s)</td></tr>
+<tr class="memdesc:add7734325ce94ce5c447c7af75bf6ead inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a string to see if its beginning matches the string returned by <a class="el" href="../../dc/d5c/class_o_n___model_component.html#ae65df2e8323ee23f769316b506a5bdaf" title="Returns the string &quot;::&quot;. This is the string Rhino uses in layer full path names to separate the names...">ON_ModelComponent::NamePathSeparator</a>.  <a href="../../dc/d5c/class_o_n___model_component.html#add7734325ce94ce5c447c7af75bf6ead">More...</a><br /></td></tr>
 <tr class="separator:add7734325ce94ce5c447c7af75bf6ead inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8bcf2524e50f50da86a349e813e367a inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">*static const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ad8bcf2524e50f50da86a349e813e367a">IsReferencePrefixDelimiter</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *s)</td></tr>
-<tr class="separator:ad8bcf2524e50f50da86a349e813e367a inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22625b5bd441e1fc459d7dbdd4ffe0fb inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">*&lt;/code &gt; *&lt;/example &gt; *static const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a22625b5bd441e1fc459d7dbdd4ffe0fb">IsReferencePrefixDelimiter</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *s)</td></tr>
+<tr class="memdesc:a22625b5bd441e1fc459d7dbdd4ffe0fb inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a string to see if its beginning matches the string returned by ON_ModelComponent::NameReferenceDelimiter.  <a href="../../dc/d5c/class_o_n___model_component.html#a22625b5bd441e1fc459d7dbdd4ffe0fb">More...</a><br /></td></tr>
+<tr class="separator:a22625b5bd441e1fc459d7dbdd4ffe0fb inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e2587ae4aa0f1b8dd703a04614ee47a inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a7e2587ae4aa0f1b8dd703a04614ee47a">IsReferencePrefixSeparator</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *s)</td></tr>
+<tr class="memdesc:a7e2587ae4aa0f1b8dd703a04614ee47a inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a string to see if its beginning matches the string returned by ON_ModelComponent::NameReferenceSeparator.  <a href="../../dc/d5c/class_o_n___model_component.html#a7e2587ae4aa0f1b8dd703a04614ee47a">More...</a><br /></td></tr>
 <tr class="separator:a7e2587ae4aa0f1b8dd703a04614ee47a inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98aa61a2c8d4a8c44ab57e26f2bb2a35 inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a98aa61a2c8d4a8c44ab57e26f2bb2a35">IsValidComponentName</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *candidate_component_name)</td></tr>
 <tr class="separator:a98aa61a2c8d4a8c44ab57e26f2bb2a35 inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -503,14 +569,18 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab88e0dacbb65387d6076879e4deb0656 inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ab88e0dacbb65387d6076879e4deb0656">NameReferencePrefix</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
 <tr class="separator:ab88e0dacbb65387d6076879e4deb0656 inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93f76d3c2fd3cbe32729e2434a6ae31e inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a93f76d3c2fd3cbe32729e2434a6ae31e">RemoveAllReferencePrefixDelimiters</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
+<tr class="memdesc:a93f76d3c2fd3cbe32729e2434a6ae31e inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all occurances of ON::NameReferenceDelimiter() from name.  <a href="../../dc/d5c/class_o_n___model_component.html#a93f76d3c2fd3cbe32729e2434a6ae31e">More...</a><br /></td></tr>
 <tr class="separator:a93f76d3c2fd3cbe32729e2434a6ae31e inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3eac6a9460097526cbf1841df26b0ce3 inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a3eac6a9460097526cbf1841df26b0ce3">RemoveReferencePrefix</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
 <tr class="separator:a3eac6a9460097526cbf1841df26b0ce3 inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a1cd9625116a3c01890bbc6d3a31529 inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a1a1cd9625116a3c01890bbc6d3a31529">RemoveTrailingNamePathSeparator</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
+<tr class="memdesc:a1a1cd9625116a3c01890bbc6d3a31529 inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove any trailing occurance of <a class="el" href="../../dc/d5c/class_o_n___model_component.html#ae65df2e8323ee23f769316b506a5bdaf" title="Returns the string &quot;::&quot;. This is the string Rhino uses in layer full path names to separate the names...">ON_ModelComponent::NamePathSeparator</a> from name.  <a href="../../dc/d5c/class_o_n___model_component.html#a1a1cd9625116a3c01890bbc6d3a31529">More...</a><br /></td></tr>
 <tr class="separator:a1a1cd9625116a3c01890bbc6d3a31529 inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2f0a80b5f86fc83aff3dcffedaa4635 inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ab2f0a80b5f86fc83aff3dcffedaa4635">RemoveTrailingReferencePrefixDelimiter</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
+<tr class="memdesc:ab2f0a80b5f86fc83aff3dcffedaa4635 inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove any trailing occurance of ON_ModelComponent::NameReferenceDelimiter from name.  <a href="../../dc/d5c/class_o_n___model_component.html#ab2f0a80b5f86fc83aff3dcffedaa4635">More...</a><br /></td></tr>
 <tr class="separator:ab2f0a80b5f86fc83aff3dcffedaa4635 inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac149a940329dc304073764e7f5a69a8e inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ac149a940329dc304073764e7f5a69a8e">RemoveTrailingReferencePrefixSeparator</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name)</td></tr>
+<tr class="memdesc:ac149a940329dc304073764e7f5a69a8e inherit pub_static_methods_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove any trailing occurance of ON_ModelComponent::NameReferenceSeparator from name.  <a href="../../dc/d5c/class_o_n___model_component.html#ac149a940329dc304073764e7f5a69a8e">More...</a><br /></td></tr>
 <tr class="separator:ac149a940329dc304073764e7f5a69a8e inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86bebe7f43d5018d17056051b3890f4a inherit pub_static_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a86bebe7f43d5018d17056051b3890f4a">SplitName</a> (const <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a63a60bd152dda8879588b15d7f394b47">wchar_t</a> *name, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;reference_prefix, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;name_parent, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;name_leaf)</td></tr>
 <tr class="separator:a86bebe7f43d5018d17056051b3890f4a inherit pub_static_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -534,25 +604,23 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a0577c5b649ad15f0ec2b01aab73d85c3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a0577c5b649ad15f0ec2b01aab73d85c3">m_index_of_refraction</a> = 1.0</td></tr>
 <tr class="separator:a0577c5b649ad15f0ec2b01aab73d85c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4170bc1eaac0c1eae3712c005c745be7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; ON_UuidIndex &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a4170bc1eaac0c1eae3712c005c745be7">m_material_channel</a></td></tr>
+<tr class="memdesc:a4170bc1eaac0c1eae3712c005c745be7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used to provide per face material support. The parent object reference a basic material. When a brep face or mesh facet wants to use a material besides the base material, it specifies a channelSupports material channel. The default material channel is 0 and that indicates the base material. A channel of n &gt; 0 means that face used the material with id m_material_channel[n-1]. If (n-1) &gt;= m_material_channel.Count(), then the base material is used. The value of m_material_channel[n].m_id is persistent. The value of m_material_channel[n].m_i is a runtime index in the CRhinoDoc::m_material_table[]. If CRhinoDoc::m_material_table[m_i].m_uuid != m_id, then m_id is assumed to be correct.  <a href="#a4170bc1eaac0c1eae3712c005c745be7">More...</a><br /></td></tr>
 <tr class="separator:a4170bc1eaac0c1eae3712c005c745be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a148092f3f171d6377e43787eb539d2d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a148092f3f171d6377e43787eb539d2d7">m_reflection</a> = <a class="el" href="../../d0/df9/class_o_n___color.html#ab8657f1e46506e08a1a32f09d15e12b9">ON_Color::White</a></td></tr>
 <tr class="separator:a148092f3f171d6377e43787eb539d2d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3b42fd4651e660b8b2f6c0a11970d44"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#af3b42fd4651e660b8b2f6c0a11970d44">m_reflection_glossiness</a> = 0.0</td></tr>
 <tr class="separator:af3b42fd4651e660b8b2f6c0a11970d44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a187020bb1ea15952baa498e4f25ed9e0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a187020bb1ea15952baa498e4f25ed9e0">m_reflectivity</a> = 0.0</td></tr>
-<tr class="memdesc:a187020bb1ea15952baa498e4f25ed9e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">0.0 = none, 1.0 = 100%  <a href="#a187020bb1ea15952baa498e4f25ed9e0">More...</a><br /></td></tr>
 <tr class="separator:a187020bb1ea15952baa498e4f25ed9e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bec54f00cde4dfd5ee186aab20141e6"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a9bec54f00cde4dfd5ee186aab20141e6">m_refraction_glossiness</a> = 0.0</td></tr>
 <tr class="separator:a9bec54f00cde4dfd5ee186aab20141e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac61028d68bf2d3f69f76ab8fa81c10f8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#ac61028d68bf2d3f69f76ab8fa81c10f8">m_shine</a> = 0.0</td></tr>
-<tr class="memdesc:ac61028d68bf2d3f69f76ab8fa81c10f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">0.0 = none to GetMaxShine()=maximum  <a href="#ac61028d68bf2d3f69f76ab8fa81c10f8">More...</a><br /></td></tr>
 <tr class="separator:ac61028d68bf2d3f69f76ab8fa81c10f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60a4c2ba56108be7d332f42c3e161ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a60a4c2ba56108be7d332f42c3e161ae5">m_specular</a> = <a class="el" href="../../d0/df9/class_o_n___color.html#ab8657f1e46506e08a1a32f09d15e12b9">ON_Color::White</a></td></tr>
 <tr class="separator:a60a4c2ba56108be7d332f42c3e161ae5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86ef5cc514afb7185007041934e19b55"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d08/class_o_n___object_array.html">ON_ObjectArray</a>&lt; <a class="el" href="../../d0/d16/class_o_n___texture.html">ON_Texture</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a86ef5cc514afb7185007041934e19b55">m_textures</a></td></tr>
 <tr class="separator:a86ef5cc514afb7185007041934e19b55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2eae9a610db46c64ca4641c632de2950"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a2eae9a610db46c64ca4641c632de2950">m_transparency</a> = 0.0</td></tr>
-<tr class="memdesc:a2eae9a610db46c64ca4641c632de2950"><td class="mdescLeft">&#160;</td><td class="mdescRight">0.0 = opaque to 1.0 = transparent (1.0-alpha)  <a href="#a2eae9a610db46c64ca4641c632de2950">More...</a><br /></td></tr>
 <tr class="separator:a2eae9a610db46c64ca4641c632de2950"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a9735b41bc59e688d2d98929ee287fc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/df9/class_o_n___color.html">ON_Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a4a9735b41bc59e688d2d98929ee287fc">m_transparent</a> = <a class="el" href="../../d0/df9/class_o_n___color.html#ab8657f1e46506e08a1a32f09d15e12b9">ON_Color::White</a></td></tr>
 <tr class="separator:a4a9735b41bc59e688d2d98929ee287fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -560,20 +628,20 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a528120f1d2bf07ea639a1855962b13b4"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a528120f1d2bf07ea639a1855962b13b4">Default</a></td></tr>
-<tr class="memdesc:a528120f1d2bf07ea639a1855962b13b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">persistent id  <a href="#a528120f1d2bf07ea639a1855962b13b4">More...</a><br /></td></tr>
 <tr class="separator:a528120f1d2bf07ea639a1855962b13b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a765af2c8e79cd476e2e4d10b347917cf"><td class="memItemLeft" align="right" valign="top">static const double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf">MaxShine</a></td></tr>
-<tr class="memdesc:a765af2c8e79cd476e2e4d10b347917cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">maximum value of shine exponent = 255.0  <a href="#a765af2c8e79cd476e2e4d10b347917cf">More...</a><br /></td></tr>
 <tr class="separator:a765af2c8e79cd476e2e4d10b347917cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cdb35fdca9f1dd6987d6d6c35c045e2"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/class_o_n___material.html#a0cdb35fdca9f1dd6987d6d6c35c045e2">Unset</a></td></tr>
-<tr class="memdesc:a0cdb35fdca9f1dd6987d6d6c35c045e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">nil id  <a href="#a0cdb35fdca9f1dd6987d6d6c35c045e2">More...</a><br /></td></tr>
 <tr class="separator:a0cdb35fdca9f1dd6987d6d6c35c045e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_class_o_n___model_component"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_o_n___model_component')"><img src="../../closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a></td></tr>
 <tr class="memitem:ae65df2e8323ee23f769316b506a5bdaf inherit pub_static_attribs_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#ae65df2e8323ee23f769316b506a5bdaf">NamePathSeparator</a></td></tr>
+<tr class="memdesc:ae65df2e8323ee23f769316b506a5bdaf inherit pub_static_attribs_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the string "::". This is the string Rhino uses in layer full path names to separate the names of individual layers.  <a href="../../dc/d5c/class_o_n___model_component.html#ae65df2e8323ee23f769316b506a5bdaf">More...</a><br /></td></tr>
 <tr class="separator:ae65df2e8323ee23f769316b506a5bdaf inherit pub_static_attribs_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21d3152dddf88cb6d387b9f74d51033a inherit pub_static_attribs_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a21d3152dddf88cb6d387b9f74d51033a">ReferencePrefixDelimiter</a></td></tr>
+<tr class="memdesc:a21d3152dddf88cb6d387b9f74d51033a inherit pub_static_attribs_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the string " : ". This is the string Rhino uses to separate the reference file names from and model component names read from those files.  <a href="../../dc/d5c/class_o_n___model_component.html#a21d3152dddf88cb6d387b9f74d51033a">More...</a><br /></td></tr>
 <tr class="separator:a21d3152dddf88cb6d387b9f74d51033a inherit pub_static_attribs_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff7493e7c306e8faef135e6cf348db6a inherit pub_static_attribs_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#aff7493e7c306e8faef135e6cf348db6a">ReferencePrefixSeparator</a></td></tr>
+<tr class="memdesc:aff7493e7c306e8faef135e6cf348db6a inherit pub_static_attribs_class_o_n___model_component"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the string "&gt;". This is the string Rhino uses to separate the block definition name and linked file name in grandparent layers.  <a href="../../dc/d5c/class_o_n___model_component.html#aff7493e7c306e8faef135e6cf348db6a">More...</a><br /></td></tr>
 <tr class="separator:aff7493e7c306e8faef135e6cf348db6a inherit pub_static_attribs_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6caf26908c92f603cdb07baec0c27990 inherit pub_static_attribs_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a6caf26908c92f603cdb07baec0c27990">Unset</a></td></tr>
 <tr class="separator:a6caf26908c92f603cdb07baec0c27990 inherit pub_static_attribs_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -623,7 +691,7 @@ Additional Inherited Members</h2></td></tr>
 <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eacaf53acc9e6d0618a0e0d4db806de77642">Type::HistoryRecord</a> = 13, 
 <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eaca699b4f79215d191584653efebf156e52">Type::Mixed</a> = 0xFE
 <br />
- }<tr class="memdesc:a2977d69091b4952cc19b0189a28a0eac"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac" title="The ON_ModelComponent::Type enum has a value for each explicit component type and two special values...">ON_ModelComponent::Type</a> enum has a value for each explicit component type and two special values, Unset and Mixed. Use an <a class="el" href="../../d0/d89/class_o_n___model_component_type_iterator.html">ON_ModelComponentTypeIterator</a> instance to iterate over the <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac" title="The ON_ModelComponent::Type enum has a value for each explicit component type and two special values...">ON_ModelComponent::Type</a> values. /summary&gt;  <a href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">More...</a><br /></td></tr>
+ }<tr class="memdesc:a2977d69091b4952cc19b0189a28a0eac"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac" title="The ON_ModelComponent::Type enum has a value for each explicit component type and two special values...">ON_ModelComponent::Type</a> enum has a value for each explicit component type and two special values, Unset and Mixed. Use an <a class="el" href="../../d0/d89/class_o_n___model_component_type_iterator.html">ON_ModelComponentTypeIterator</a> instance to iterate over the <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac" title="The ON_ModelComponent::Type enum has a value for each explicit component type and two special values...">ON_ModelComponent::Type</a> values.  <a href="../../dc/d5c/class_o_n___model_component.html#a2977d69091b4952cc19b0189a28a0eac">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a2977d69091b4952cc19b0189a28a0eac inherit pub_types_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_class_o_n___object"><td colspan="2" onclick="javascript:toggleInherit('pub_types_class_o_n___object')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a></td></tr>
@@ -637,17 +705,14 @@ Additional Inherited Members</h2></td></tr>
 <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956cadb77cee2050a09b500c679688e45a105">UserDataConflictResolution::destination_copycount_ge</a> = 5, 
 <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956ca880ec7882afd9386e91140bf4f77e594">UserDataConflictResolution::delete_item</a> = 6
 <br />
- }</td></tr>
+ }<tr class="memdesc:a7f520e987ffa14e71b06493340f9956c"><td class="mdescLeft">&#160;</td><td class="mdescRight">When a userdata item is copied or moved from a source object to a destination object, the <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c" title="When a userdata item is copied or moved from a source object to a destination object, the ON_Object::UserDataConflictResolution enum values specify how conficts are resolved. Remark: A userdata item &quot;conflict&quot; occurs when both the destination and source object have a user data item with the same value of ON_UserData::m_userdata_uuid. ">ON_Object::UserDataConflictResolution</a> enum values specify how conficts are resolved. Remark: A userdata item "conflict" occurs when both the destination and source object have a user data item with the same value of <a class="el" href="../../d5/d55/class_o_n___user_data.html#a9bc044ba84a529fe2195d8f8a817fda2" title="This uuid is the value that must be passed to ON_Object::GetUserData() to retrieve this piece of user...">ON_UserData::m_userdata_uuid</a>.  <a href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">More...</a><br /></td></tr>
+</td></tr>
 <tr class="separator:a7f520e987ffa14e71b06493340f9956c inherit pub_types_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_o_n___model_component"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_o_n___model_component')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../dc/d5c/class_o_n___model_component.html">ON_ModelComponent</a></td></tr>
 <tr class="memitem:a7f6f2f7fe63a3db314c6456f63d7d728 inherit pro_methods_class_o_n___model_component"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d5c/class_o_n___model_component.html#a7f6f2f7fe63a3db314c6456f63d7d728">IncrementContentVersionNumber</a> () const</td></tr>
 <tr class="separator:a7f6f2f7fe63a3db314c6456f63d7d728 inherit pro_methods_class_o_n___model_component"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p>Class <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a> </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac42340f5888f481005d51b54a5873def"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac42340f5888f481005d51b54a5873def">&#9670;&nbsp;</a></span>ON_Material() <span class="overload">[1/2]</span></h2>
 
@@ -724,7 +789,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If there is already a texture with the same file name and type, then that texture is modified, otherwise a new texture is added. If tx has user data, the user data is copied to the m_textures[] element. Parameters: tx - [in] Returns: Index of the added texture in the m_textures[] array. Remarks: This is intended to be a quick and simple way to add textures to the material. If you need to do something different, then just work on the m_textures[] array. </p>
+
+<p>If there is already a texture with the same file name and type, then that texture is modified, otherwise a new texture is added. If tx has user data, the user data is copied to the m_textures[] element. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tx</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Index of the added texture in the m_textures[] array. </dd></dl>
+<p>This is intended to be a quick and simple way to add textures to the material. If you need to do something different, then just work on the m_textures[] array. </p>
 
 </div>
 </div>
@@ -753,7 +827,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If there is a texture with a matching type, that texture's filename is modified, otherwise a new texture is added. Parameters: filename - [in] new filename type - [in] Returns: Index of the added texture in the m_textures[] array. Remarks: This is intended to be a quick and simple way to add textures to the material. If you need to do something different, then just work on the m_textures[] array. </p>
+
+<p>If there is a texture with a matching type, that texture's filename is modified, otherwise a new texture is added. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] new filename</td></tr>
+    <tr><td class="paramname">type</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Index of the added texture in the m_textures[] array. </dd></dl>
+<p>This is intended to be a quick and simple way to add textures to the material. If you need to do something different, then just work on the m_textures[] array. </p>
 
 </div>
 </div>
@@ -847,7 +931,6 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Compare all settings (color, reflection, texture, plug-in id) that effect the appearance. Ignore <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a1d0998a906ab18cf3c9205218542c7c9">Index()</a>, <a class="el" href="../../dc/d5c/class_o_n___model_component.html#a7e4decb826ac79c583526fbc83a96946">Id()</a>, <a class="el" href="../../dc/d5c/class_o_n___model_component.html#ac157c257e5a54aa12e3b3688ac87618a">Name()</a>, m_rdk_material_instance_id. </p>
 
 </div>
 </div>
@@ -1022,7 +1105,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Deletes all texures with matching filenames and types. Parameters: filename - [in] If nullptr, then any filename matches. type - [in] If ON_Texture::no_texture_type, then any texture type matches. Returns: Number of textures deleted. </p>
+
+<p>Deletes all texures with matching filenames and types. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] If nullptr, then any filename matches.</td></tr>
+    <tr><td class="paramname">type</td><td>[in] If ON_Texture::no_texture_type, then any texture type matches.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of textures deleted. </dd></dl>
 
 </div>
 </div>
@@ -1057,7 +1149,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if lighting is disabled. Remarks: True means render this object without applying any modulation based on lights. Basically, the diffuse, ambient, specular and emissive channels get combined additively, clamped, and then get treated as an emissive channel. Another way to think about it is when m_bDisableLighting is true, render the same way OpenGL does when ::glDisable( GL_LIGHTING ) is called. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if lighting is disabled. </dd></dl>
+<p>True means render this object without applying any modulation based on lights. Basically, the diffuse, ambient, specular and emissive channels get combined additively, clamped, and then get treated as an emissive channel. Another way to think about it is when m_bDisableLighting is true, render the same way OpenGL does when ::glDisable( GL_LIGHTING ) is called. </p>
 
 </div>
 </div>
@@ -1084,7 +1177,9 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Creates a text dump of the object. Remarks: <a class="el" href="../../d7/d53/class_o_n___material.html#abd10615f531b165b0d2f86b44c6f3e72">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an object.</p>
+
+<p>Creates a text dump of the object. </p>
+<p><a class="el" href="../../d7/d53/class_o_n___material.html#abd10615f531b165b0d2f86b44c6f3e72" title="Creates a text dump of the object. ">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an object.</p>
 <p>The default implementations of this virtual function prints the class's name. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a21c7b04a80f1806c3a45f72d7c491a44">ON_Object</a>.</p>
@@ -1123,7 +1218,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Searches for a texure with matching texture_id. If more than one texture matches, the first match is returned. Parameters: texture_id - [in] Returns: &gt;=0 m_textures[] index of matching texture -1 if no match is found. </p>
+
+<p>Searches for a texure with matching texture_id. If more than one texture matches, the first match is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">texture_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>&gt;=0 m_textures[] index of matching texture -1 if no match is found. </dd></dl>
 
 </div>
 </div>
@@ -1158,22 +1261,18 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Searches for a texure with matching filename and type. If more than one texture matches, the first match is returned. Parameters: filename - [in] If nullptr, then any filename matches. type - [in] If ON_Texture::no_texture_type, then any texture type matches. i0 - [in] If i0 is &lt; 0, the search begins at m_textures[0], if i0 &gt;= m_textures.Count(), -1 is returnd, otherwise, the search begins at m_textures[i0+1]. Example: Iterate through all the the bitmap textures on a material. </p><pre class="fragment">  ON_Material&amp; mat = ...;
-  int ti = -1;
-  int bitmap_texture_count = 0;
-  for(;;)
-  {
-    ti = mat.FindTexture( 
-                nullptr, 
-                ON_Texture::TYPE::bitmap_texture, 
-                ti );
 
-    if ( ti &lt; 0 )
-    {
-</pre><p> / no more bitmap textures break; }</p>
-<p>/ we have a bitmap texture bitmap_texture_count++; const <a class="el" href="../../d0/d16/class_o_n___texture.html">ON_Texture</a>&amp; bitmap_texture = mat.m_textures[ti]; ... }</p>
-<p>Returns: &gt;=0 m_textures[] index of matching texture -1 if no match is found. </p>
-
+<p>Searches for a texure with matching filename and type. If more than one texture matches, the first match is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] If nullptr, then any filename matches.</td></tr>
+    <tr><td class="paramname">type</td><td>[in] If ON_Texture::no_texture_type, then any texture type matches.</td></tr>
+    <tr><td class="paramname">i0</td><td>[in] If i0 is &lt; 0, the search begins at m_textures[0], if i0 &gt;= m_textures.Count(), -1 is returnd, otherwise, the search begins at m_textures[i0+1].</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>&gt;=0 m_textures[] index of matching texture -1 if no match is found. </dd></dl>
+<div class="fragment"><div class="line">Iterate through all the the bitmap textures on</div><div class="line">a material.</div><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../d7/d53/class_o_n___material.html">ON_Material</a>&amp; mat = ...;</div><div class="line">    <span class="keywordtype">int</span> ti = -1;</div><div class="line">    <span class="keywordtype">int</span> bitmap_texture_count = 0;</div><div class="line">    <span class="keywordflow">for</span>(;;)</div><div class="line">    {</div><div class="line">      ti = mat.<a class="code" href="../../d7/d53/class_o_n___material.html#a1007afbc140bd39c27d34c873fd4c680">FindTexture</a>(</div><div class="line">                  <span class="keyword">nullptr</span>,</div><div class="line">                  <a class="code" href="../../d0/d16/class_o_n___texture.html#a1e73ed16dda764adcb0618dbf8097558a1381ce013ac0c864a7cc6c201206055d">ON_Texture::TYPE::bitmap_texture</a>,</div><div class="line">                  ti );</div><div class="line"></div><div class="line">      <span class="keywordflow">if</span> ( ti &lt; 0 )</div><div class="line">      {</div><div class="line">        <span class="comment">// no more bitmap textures</span></div><div class="line">        <span class="keywordflow">break</span>;</div><div class="line">      }</div><div class="line"></div><div class="line">      <span class="comment">// we have a bitmap texture</span></div><div class="line">      bitmap_texture_count++;</div><div class="line">      <span class="keyword">const</span> <a class="code" href="../../d0/d16/class_o_n___texture.html">ON_Texture</a>&amp; bitmap_texture = mat.m_textures[ti];</div><div class="line">      ...</div><div class="line">    }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a2342fbc1c9ae27d8b498540756893cf4"></a>
@@ -1215,7 +1314,15 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: fresnel_index_of_refraction - [in] ON_Material::Material::Default.m_fresnel_index_of_refraction is a good default N - [in] 3d surface normal R - [in] 3d reflection direction Returns: 1.0: The input values were not valid or the calculation failed due to a divide by zero or some other numerical arithmetic failure. fresnel reflection coefficient 1/2 * ((g-c)/(g+c))^2 * (1 + ( (c*(g+c) -1)/(c*(g+c) + 1) )^2) where c = N o (N-R); ///&lt; c = 3d vector dot product of N and (N-R) and g = sqrt(fresnel_index_of_refraction*fresnel_index_of_refraction + c*c - 1.0). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fresnel_index_of_refraction</td><td>[in] ON_Material::Material::Default.m_fresnel_index_of_refraction is a good default</td></tr>
+    <tr><td class="paramname">N</td><td>[in] 3d surface normal</td></tr>
+    <tr><td class="paramname">R</td><td>[in] 3d reflection direction</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1.0: The input values were not valid or the calculation failed due to a divide by zero or some other numerical arithmetic failure. fresnel reflection coefficient 1/2 * ((g-c)/(g+c))^2 * (1 + ( (c*(g+c) -1)/(c*(g+c) + 1) )^2) where c = N o (N-R); // c = 3d vector dot product of N and (N-R) and g = sqrt(fresnel_index_of_refraction*fresnel_index_of_refraction + c*c - 1.0). </dd></dl>
 
 </div>
 </div>
@@ -1244,7 +1351,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: N - [in] 3d surface normal R - [in] 3d reflection direction Returns: If m_bFresnelReflections is false, then 1.0 is returned. If m_bFresnelReflections is true, then the value of the fresnel reflection coefficient is returned. In typical rendering applications, the reflection term is multiplied by the fresnel reflection coefficient before it is added to the diffuse color. If any input is not valid or the calculation fails, then 1.0 is returned. Remarks: When m_bFresnelReflections is true, the calculation is performed by calling ON_FresnelReflectionCoefficient() with m_fresnel_index_of_refraction as the fresnel index of refraction. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">N</td><td>[in] 3d surface normal</td></tr>
+    <tr><td class="paramname">R</td><td>[in] 3d reflection direction</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If m_bFresnelReflections is false, then 1.0 is returned. If m_bFresnelReflections is true, then the value of the fresnel reflection coefficient is returned. In typical rendering applications, the reflection term is multiplied by the fresnel reflection coefficient before it is added to the diffuse color. If any input is not valid or the calculation fails, then 1.0 is returned. </dd></dl>
+<p>When m_bFresnelReflections is true, the calculation is performed by calling ON_FresnelReflectionCoefficient() with m_fresnel_index_of_refraction as the fresnel index of refraction. </p>
 
 </div>
 </div>
@@ -1262,7 +1377,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Reflection and Refraction settingsThe bool m_bFresnelReflections enables fresnel scaling of reflection contributions to the diffuse color. True: The fresnel term is used to scale the reflection contribution before addition to the diffuse component. False: The reflection contribution is simply added to the diffuse component. </p>
 
 </div>
 </div>
@@ -1299,7 +1413,14 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: model_component_reference - [in] none_return_value - [in] value to return if ON_Material::Cast(model_component_ref.ModelComponent()) is nullptr Returns: If ON_Material::Cast(model_component_ref.ModelComponent()) is not nullptr, that pointer is returned. Otherwise, none_return_value is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model_component_reference</td><td>[in]</td></tr>
+    <tr><td class="paramname">none_return_value</td><td>[in] value to return if ON_Material::Cast(model_component_ref.ModelComponent()) is nullptr</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If ON_Material::Cast(model_component_ref.ModelComponent()) is not nullptr, that pointer is returned. Otherwise, none_return_value is returned. </dd></dl>
 
 </div>
 </div>
@@ -1327,7 +1448,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> overrides. </p>
+<p><a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> overrides. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a7212696724553dc4d365479a10150c0d">ON_Object</a>.</p>
 
@@ -1374,9 +1495,12 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on.</p>
-<p>Returns: ON::object_type enum value.</p>
-<p>Remarks: The default implementation of this virtual function returns ON::unknown_object_type </p>
+
+<p>Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on. </p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">ON::object_type enum value.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>The default implementation of this virtual function returns ON::unknown_object_type </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#afa19aee4a411a8fda53aff00bd02d86e">ON_Object</a>.</p>
 
@@ -1422,7 +1546,10 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the RDK material id. Returns: The RDK material id for this material. Remarks: The RDK material id identifies a material definition managed by the RDK (rendering development kit). Multiple materials in a Rhino or opennurbs model can reference the same RDK material. </p>
+
+<p>Get the RDK material id. </p>
+<dl class="section return"><dt>Returns</dt><dd>The RDK material id for this material. </dd></dl>
+<p>The RDK material id identifies a material definition managed by the RDK (rendering development kit). Multiple materials in a Rhino or opennurbs model can reference the same RDK material. </p>
 
 </div>
 </div>
@@ -1483,7 +1610,16 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3">ON_BinaryArchive::ReadObject()</a>. Parameters: binary_archive - archive to read from Returns: Returns true if the read is successful. Remarks: Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3">ON_BinaryArchive::ReadObject()</a> to read objects. This <a class="el" href="../../d7/d53/class_o_n___material.html#a77407f8b2361f6e1d286e571adcbed78">Read()</a> function should read the objects definition back into its data members.</p>
+
+<p>Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">binary_archive</td><td>archive to read from</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns true if the read is successful. </dd></dl>
+<p>Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a> to read objects. This <a class="el" href="../../d7/d53/class_o_n___material.html#a77407f8b2361f6e1d286e571adcbed78" title="Low level archive writing tool used by ON_BinaryArchive::ReadObject(). ">Read()</a> function should read the objects definition back into its data members.</p>
 <p>The default implementation of this virtual function returns false and does nothing. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a09ac9742ead91dd8f9cdd579bcbfed10">ON_Object</a>.</p>
@@ -1632,7 +1768,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set this material's RDK material id. Parameters: rdk_material_id - [in] RDK material id value. Remarks: The RDK material id identifies a material definition managed by the RDK (rendering development kit). Multiple materials in a Rhino or opennurbs model can reference the same RDK material. </p>
+
+<p>Set this material's RDK material id. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rdk_material_id</td><td>[in] RDK material id value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The RDK material id identifies a material definition managed by the RDK (rendering development kit). Multiple materials in a Rhino or opennurbs model can reference the same RDK material. </p>
 
 </div>
 </div>
@@ -1651,8 +1795,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>0.0 = opaque, 1.0 = transparent </p>
 
 </div>
 </div>
@@ -1690,8 +1832,6 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf" title="maximum value of shine exponent = 255.0 ">ON_Material::MaxShine</a> </p>
-
 </div>
 </div>
 <a id="a36ad21d89db974094edcb12ff7860d3b"></a>
@@ -1728,8 +1868,6 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0.0 = opaque, 1.0 = transparent </p>
-
 </div>
 </div>
 <a id="abd6e2022b60060fe4ddfd7b3cd33ae54"></a>
@@ -1764,7 +1902,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the material can be shared. Remarks: If true, when an object using this material is copied, the copy references the same material. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the material can be shared. </dd></dl>
+<p>If true, when an object using this material is copied, the copy references the same material. </p>
 
 </div>
 </div>
@@ -1783,7 +1922,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Shine values are in range 0.0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf" title="maximum value of shine exponent = 255.0 ">ON_Material::MaxShine</a>. </p>
+<p>Shine values are in range 0.0 to <a class="el" href="../../d7/d53/class_o_n___material.html#a765af2c8e79cd476e2e4d10b347917cf">ON_Material::MaxShine</a>. </p>
 
 </div>
 </div>
@@ -1837,7 +1976,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_bUseDiffuseTextureAlphaForObjectTransparencyTexture is true, the alpha channel of the texture in m_textures with m_type=bitmap_texture is used in addition to any textures with m_type=transparency_texture. </p>
 
 </div>
 </div>
@@ -1864,7 +2002,16 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b" title="writes object definition ">ON_BinaryArchive::WriteObject()</a>. Parameters: binary_archive - archive to write to Returns: Returns true if the write is successful. Remarks: Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b" title="writes object definition ">ON_BinaryArchive::WriteObject()</a> to write objects. This <a class="el" href="../../d7/d53/class_o_n___material.html#ad9034ace9ef32a8be1fc6d45d5303f53">Write()</a> function should just write the specific definition of this object. It should not write and any chunk typecode or length information.</p>
+
+<p>Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">binary_archive</td><td>archive to write to</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns true if the write is successful. </dd></dl>
+<p>Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a> to write objects. This <a class="el" href="../../d7/d53/class_o_n___material.html#ad9034ace9ef32a8be1fc6d45d5303f53" title="Low level archive writing tool used by ON_BinaryArchive::WriteObject(). ">Write()</a> function should just write the specific definition of this object. It should not write and any chunk typecode or length information.</p>
 <p>The default implementation of this virtual function returns false and does nothing. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a16eb9ab6bf0d0a614655cf9cd055871a">ON_Object</a>.</p>
@@ -1891,8 +2038,6 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>persistent id </p>
 
 </div>
 </div>
@@ -1949,11 +2094,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_fresnel_index_of_refraction: Default is 1.56. This is the value ON:Material::<a class="el" href="../../d7/d53/class_o_n___material.html#a2342fbc1c9ae27d8b498540756893cf4">FresnelReflectionCoefficient()</a> passes as the first parameter to ON_FresnelReflectionCoefficient().</p><ul>
-<li>Glass material types can be simulated with m_index_of_refraction ~ 1.56 m_fresnel_index_of_refraction ~ 1.56</li>
-<li>Thin glass can be simulated with m_fresnel_index_of_refraction = 1.56 m_index_of_refraction = 0.0</li>
-<li>Porcelain type materials can be simulated with m_fresnel_index_of_refraction = 1.56 m_index_of_refraction = 1.0 m_transparency = 0.0 </li>
-</ul>
 
 </div>
 </div>
@@ -1968,7 +2108,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_index_of_refraction: Default is 1.0. Physically, the index of refraction is &gt;= 1.0 and is the value (speed of light in vacum)/(speed of light in material). Some rendering algorithms set m_index_of_refraction to zero or values &lt; 1.0 to generate desirable effects. </p>
 
 </div>
 </div>
@@ -1983,7 +2122,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Used to provide per face material support. The parent object reference a basic material. When a brep face or mesh facet wants to use a material besides the base material, it specifies a channelSupports material channel. The default material channel is 0 and that indicates the base material. A channel of n &gt; 0 means that face used the material with id m_material_channel[n-1]. If (n-1) &gt;= m_material_channel.Count(), then the base material is used. The value of m_material_channel[n].m_id is persistent. The value of m_material_channel[n].m_i is a runtime index in the CRhinoDoc::m_material_table[]. If CRhinoDoc::m_material_table[m_i].m_uuid != m_id, then m_id is assumed to be correct. </p>
+
+<p>Used to provide per face material support. The parent object reference a basic material. When a brep face or mesh facet wants to use a material besides the base material, it specifies a channelSupports material channel. The default material channel is 0 and that indicates the base material. A channel of n &gt; 0 means that face used the material with id m_material_channel[n-1]. If (n-1) &gt;= m_material_channel.Count(), then the base material is used. The value of m_material_channel[n].m_id is persistent. The value of m_material_channel[n].m_i is a runtime index in the CRhinoDoc::m_material_table[]. If CRhinoDoc::m_material_table[m_i].m_uuid != m_id, then m_id is assumed to be correct. </p>
 
 </div>
 </div>
@@ -2012,10 +2152,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_reflection_glossiness: Default is 0.0. Values from 0.0 to 1.0 make sense.</p><ul>
-<li>0.0 reflections are perfectly specular.</li>
-<li>t &gt; 0.0 permits reflection ray direction to vary from the specular direction by up to t*pi/2. </li>
-</ul>
 
 </div>
 </div>
@@ -2031,8 +2167,6 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0.0 = none, 1.0 = 100% </p>
-
 </div>
 </div>
 <a id="a9bec54f00cde4dfd5ee186aab20141e6"></a>
@@ -2046,10 +2180,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_refraction_glossiness: Default is 0.0. Values from 0.0 to 1.0 make sense.</p><ul>
-<li>0.0 refractions are perfectly specular.</li>
-<li>t &gt; 0.0 permits refraction ray direction to vary from the specular direction by up to t*pi/2. </li>
-</ul>
 
 </div>
 </div>
@@ -2064,8 +2194,6 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>0.0 = none to GetMaxShine()=maximum </p>
 
 </div>
 </div>
@@ -2109,8 +2237,6 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0.0 = opaque to 1.0 = transparent (1.0-alpha) </p>
-
 </div>
 </div>
 <a id="a4a9735b41bc59e688d2d98929ee287fc"></a>
@@ -2147,8 +2273,6 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>maximum value of shine exponent = 255.0 </p>
-
 </div>
 </div>
 <a id="a0cdb35fdca9f1dd6987d6d6c35c045e2"></a>
@@ -2171,8 +2295,6 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>nil id </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -2181,7 +2303,7 @@ Additional Inherited Members</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

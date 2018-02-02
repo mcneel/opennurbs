@@ -257,7 +257,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If this <a class="el" href="../../de/d5d/class_o_n___obj_ref___i_ref_i_d.html">ON_ObjRef_IRefID</a> is the first entry in the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a27c1433660f45e922512f1bbdf7e4cd2">ON_ObjRef.m__iref</a>[] array, then it references a "real" piece of geometry (not a nested instance reference). If the reference is to a subobject of the real piece of geometry, then m_component_index records the subobject index. In all other cases, m_component_index is not set. </p>
 
 </div>
 </div>
@@ -272,7 +271,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If this <a class="el" href="../../de/d5d/class_o_n___obj_ref___i_ref_i_d.html">ON_ObjRef_IRefID</a> is the first entry in the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a27c1433660f45e922512f1bbdf7e4cd2">ON_ObjRef.m__iref</a>[] array, then it references a "real" piece of geometry (not a nested instance reference). If there is an evaluation parameter for the geometry, it is saved in m_evp. In all other cases, m_evp is not set. </p>
 
 </div>
 </div>
@@ -287,7 +285,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_geometry_xform is the transformation to map the base geometry to world coordinates. If the instance reference is not nested, then m_geometry_xform = m_iref_xform. If the instance reference is nested, then m_geometry_xform = m_iref_xform * .... * T1 where the Ts are the transformations from the children. </p>
 
 </div>
 </div>
@@ -302,7 +299,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_geometry_index is the index of the uuid of the pertinant piece of geometry in the ON_InstanceRef.m_object_uuid[] array. This index is identical to the index of the geometry's CRhinoObject in the CRhinoInstanceDefinition.m_objects[] array. </p>
 
 </div>
 </div>
@@ -317,7 +313,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_idef_uuid is the instance definition id stored in <a class="el" href="../../de/de8/class_o_n___instance_ref.html#a8fce2631dcfe330e0db828c669d09b0e">ON_InstanceRef.m_instance_definition_uuid</a> and ON_InstanceDefinition.m_uuid. </p>
 
 </div>
 </div>
@@ -332,7 +327,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_iref_uuid is the CRhinoInstanceObject's uuid stored in its <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a806a85052b002c45021650e3b97e2018">ON_3dmObjectAttributes.m_uuid</a>. </p>
 
 </div>
 </div>
@@ -358,7 +352,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -60,22 +60,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a191e2ecc93cc30434e642015b0cce6c9"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#a191e2ecc93cc30434e642015b0cce6c9">~ON_TensorProduct</a> ()</td></tr>
 <tr class="separator:a191e2ecc93cc30434e642015b0cce6c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68b0482a5ff5b923b31e884c1da13bf2"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#a68b0482a5ff5b923b31e884c1da13bf2">DimensionA</a> () const =0</td></tr>
-<tr class="memdesc:a68b0482a5ff5b923b31e884c1da13bf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension of A space  <a href="#a68b0482a5ff5b923b31e884c1da13bf2">More...</a><br /></td></tr>
 <tr class="separator:a68b0482a5ff5b923b31e884c1da13bf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91547ee4fb8afffa8e792682918ce024"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#a91547ee4fb8afffa8e792682918ce024">DimensionB</a> () const =0</td></tr>
-<tr class="memdesc:a91547ee4fb8afffa8e792682918ce024"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension of B space  <a href="#a91547ee4fb8afffa8e792682918ce024">More...</a><br /></td></tr>
 <tr class="separator:a91547ee4fb8afffa8e792682918ce024"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac354ebce2c8bc5cc3e11c3bd28606c71"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#ac354ebce2c8bc5cc3e11c3bd28606c71">DimensionC</a> () const =0</td></tr>
-<tr class="memdesc:ac354ebce2c8bc5cc3e11c3bd28606c71"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension of range space  <a href="#ac354ebce2c8bc5cc3e11c3bd28606c71">More...</a><br /></td></tr>
 <tr class="separator:ac354ebce2c8bc5cc3e11c3bd28606c71"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86429e599cb980bc348a58f7d9d751d5"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#a86429e599cb980bc348a58f7d9d751d5">Evaluate</a> (double, const double *, double, const double *, double *)=0</td></tr>
 <tr class="separator:a86429e599cb980bc348a58f7d9d751d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p>Definition of NURBS surface </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a918a46f1e2e5ac16030c6d96067375a0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a918a46f1e2e5ac16030c6d96067375a0">&#9670;&nbsp;</a></span>ON_TensorProduct()</h2>
 
@@ -144,9 +137,6 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>dimension of A space </p>
-<p><a class="el" href="../../d6/d0b/class_o_n___tensor_product.html#a86429e599cb980bc348a58f7d9d751d5">Evaluate()</a> must define a function T:R^dimA X R^dimB -&gt; R^Dimension() such that </p><pre class="fragment">     T(a*A0 + (1-a)*A1, B) = a*T(A0,B) + (1-a)*T(A1,B) and
-     T(A, b*B0 + (1-b)*B1) = b*T(A,B0) + (1-b)*T(A,B1).  </pre> 
 </div>
 </div>
 <a id="a91547ee4fb8afffa8e792682918ce024"></a>
@@ -172,8 +162,6 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>dimension of B space </p>
-
 </div>
 </div>
 <a id="ac354ebce2c8bc5cc3e11c3bd28606c71"></a>
@@ -198,8 +186,6 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>dimension of range space </p>
 
 </div>
 </div>
@@ -263,7 +249,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

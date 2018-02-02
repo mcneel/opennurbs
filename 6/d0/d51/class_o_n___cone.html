@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Lightweight right circular cone. Use ON_ConeSurface if you need <a class="el" href="../../d0/d51/class_o_n___cone.html" title="Lightweight right circular cone. Use ON_ConeSurface if you need ON_Cone geometry as a virtual ON_Surf...">ON_Cone</a> geometry as a virtual <a class="el" href="../../da/da0/class_o_n___surface.html">ON_Surface</a>.  
+ <a href="../../d0/d51/class_o_n___cone.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d3/dd8/opennurbs__cone_8h_source.html">opennurbs_cone.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -58,7 +61,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a176125d9b19fe6333de11fb6702ee797"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a176125d9b19fe6333de11fb6702ee797">ON_Cone</a> ()</td></tr>
 <tr class="separator:a176125d9b19fe6333de11fb6702ee797"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e23c9c17d8ac556146e692e8fe0bf07"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a2e23c9c17d8ac556146e692e8fe0bf07">ON_Cone</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d0/d51/class_o_n___cone.html#afee2406430c41254b01cf5be52c3321a">plane</a>, double <a class="el" href="../../d0/d51/class_o_n___cone.html#ab12d6d30cd21a14dacbc54b4e12004f1">height</a>, double <a class="el" href="../../d0/d51/class_o_n___cone.html#a259db0d749c0d9ed73c656622b8994e9">radius</a>)</td></tr>
-<tr class="memdesc:a2e23c9c17d8ac556146e692e8fe0bf07"><td class="mdescLeft">&#160;</td><td class="mdescRight">See <a class="el" href="../../d0/d51/class_o_n___cone.html#a47d9162058758f58bfa4360fbf3b8510">ON_Cone::Create</a>.  <a href="#a2e23c9c17d8ac556146e692e8fe0bf07">More...</a><br /></td></tr>
+<tr class="memdesc:a2e23c9c17d8ac556146e692e8fe0bf07"><td class="mdescLeft">&#160;</td><td class="mdescRight">See <a class="el" href="../../d0/d51/class_o_n___cone.html#a47d9162058758f58bfa4360fbf3b8510" title="Creates a right circular cone from a plane, height, and radius. plane - [in] The apex of cone is at p...">ON_Cone::Create</a>.  <a href="#a2e23c9c17d8ac556146e692e8fe0bf07">More...</a><br /></td></tr>
 <tr class="separator:a2e23c9c17d8ac556146e692e8fe0bf07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d1f5ce2544c6da27e0353123e205967"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a8d1f5ce2544c6da27e0353123e205967">~ON_Cone</a> ()</td></tr>
 <tr class="separator:a8d1f5ce2544c6da27e0353123e205967"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -73,6 +76,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9abcd76329c812847a36013dd5fc9bf2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a9abcd76329c812847a36013dd5fc9bf2">BasePoint</a> () const</td></tr>
 <tr class="separator:a9abcd76329c812847a36013dd5fc9bf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a30166f87756c6223d49939a32f2460"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a4a30166f87756c6223d49939a32f2460">CircleAt</a> (double height_parameter) const</td></tr>
+<tr class="memdesc:a4a30166f87756c6223d49939a32f2460"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get iso curve circle at a specified height.  <a href="#a4a30166f87756c6223d49939a32f2460">More...</a><br /></td></tr>
 <tr class="separator:a4a30166f87756c6223d49939a32f2460"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a808b5a4c123f9e007f8fc68dd58eec00"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a808b5a4c123f9e007f8fc68dd58eec00">ClosestPointTo</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> point, double *radial_parameter, double *height_parameter) const</td></tr>
 <tr class="memdesc:a808b5a4c123f9e007f8fc68dd58eec00"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns parameters of point on cone that is closest to given point  <a href="#a808b5a4c123f9e007f8fc68dd58eec00">More...</a><br /></td></tr>
@@ -81,18 +85,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a3854bbbed5caf262c4d02aefdb87ec55"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns point on cone that is closest to given point  <a href="#a3854bbbed5caf262c4d02aefdb87ec55">More...</a><br /></td></tr>
 <tr class="separator:a3854bbbed5caf262c4d02aefdb87ec55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47d9162058758f58bfa4360fbf3b8510"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a47d9162058758f58bfa4360fbf3b8510">Create</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;<a class="el" href="../../d0/d51/class_o_n___cone.html#afee2406430c41254b01cf5be52c3321a">plane</a>, double <a class="el" href="../../d0/d51/class_o_n___cone.html#ab12d6d30cd21a14dacbc54b4e12004f1">height</a>, double <a class="el" href="../../d0/d51/class_o_n___cone.html#a259db0d749c0d9ed73c656622b8994e9">radius</a>)</td></tr>
+<tr class="memdesc:a47d9162058758f58bfa4360fbf3b8510"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a right circular cone from a plane, height, and radius. plane - [in] The apex of cone is at plane.origin and the axis of the cone is plane.zaxis. height - [in] The center of the base is height*plane.zaxis. radius - [in] tan(cone angle) = radius/height  <a href="#a47d9162058758f58bfa4360fbf3b8510">More...</a><br /></td></tr>
 <tr class="separator:a47d9162058758f58bfa4360fbf3b8510"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a377f70ee4168e53552cb1300b6841008"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a377f70ee4168e53552cb1300b6841008">GetNurbForm</a> (<a class="el" href="../../de/ddc/class_o_n___nurbs_surface.html">ON_NurbsSurface</a> &amp;) const</td></tr>
 <tr class="separator:a377f70ee4168e53552cb1300b6841008"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94aa1a72fb187360251604c1e4e4986f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a94aa1a72fb187360251604c1e4e4986f">IsValid</a> () const</td></tr>
 <tr class="separator:a94aa1a72fb187360251604c1e4e4986f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31a840d86fff17ab0f64b0d74a798ae2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a31a840d86fff17ab0f64b0d74a798ae2">LineAt</a> (double radial_parameter) const</td></tr>
+<tr class="memdesc:a31a840d86fff17ab0f64b0d74a798ae2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get iso curve line segment at a specified angle.  <a href="#a31a840d86fff17ab0f64b0d74a798ae2">More...</a><br /></td></tr>
 <tr class="separator:a31a840d86fff17ab0f64b0d74a798ae2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7040ba44c32a0f21f6516e892ad5a9c3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a7040ba44c32a0f21f6516e892ad5a9c3">NormalAt</a> (double radial_parameter, double height_parameter) const</td></tr>
 <tr class="separator:a7040ba44c32a0f21f6516e892ad5a9c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a148ed233648c87d79cd71210e9247b72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a148ed233648c87d79cd71210e9247b72">PointAt</a> (double radial_parameter, double height_parameter) const</td></tr>
 <tr class="separator:a148ed233648c87d79cd71210e9247b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe89b80cce0ef9c589c67214a21d398d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d37/class_o_n___rev_surface.html">ON_RevSurface</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#abe89b80cce0ef9c589c67214a21d398d">RevSurfaceForm</a> (<a class="el" href="../../d1/d37/class_o_n___rev_surface.html">ON_RevSurface</a> *srf=nullptr) const</td></tr>
+<tr class="memdesc:abe89b80cce0ef9c589c67214a21d398d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a surface of revolution definition of the cylinder.  <a href="#abe89b80cce0ef9c589c67214a21d398d">More...</a><br /></td></tr>
 <tr class="separator:abe89b80cce0ef9c589c67214a21d398d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8215eb449bbdfb94c0387d73d2a11732"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a8215eb449bbdfb94c0387d73d2a11732">Rotate</a> (double sin_angle, double cos_angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;axis_of_rotation)</td></tr>
 <tr class="memdesc:a8215eb449bbdfb94c0387d73d2a11732"><td class="mdescLeft">&#160;</td><td class="mdescRight">rotate cone about its origin  <a href="#a8215eb449bbdfb94c0387d73d2a11732">More...</a><br /></td></tr>
@@ -112,17 +119,14 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ab12d6d30cd21a14dacbc54b4e12004f1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#ab12d6d30cd21a14dacbc54b4e12004f1">height</a></td></tr>
-<tr class="memdesc:ab12d6d30cd21a14dacbc54b4e12004f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">not zero  <a href="#ab12d6d30cd21a14dacbc54b4e12004f1">More...</a><br /></td></tr>
 <tr class="separator:ab12d6d30cd21a14dacbc54b4e12004f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afee2406430c41254b01cf5be52c3321a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#afee2406430c41254b01cf5be52c3321a">plane</a></td></tr>
-<tr class="memdesc:afee2406430c41254b01cf5be52c3321a"><td class="mdescLeft">&#160;</td><td class="mdescRight">apex = plane.origin, axis = plane.zaxis  <a href="#afee2406430c41254b01cf5be52c3321a">More...</a><br /></td></tr>
 <tr class="separator:afee2406430c41254b01cf5be52c3321a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a259db0d749c0d9ed73c656622b8994e9"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d51/class_o_n___cone.html#a259db0d749c0d9ed73c656622b8994e9">radius</a></td></tr>
-<tr class="memdesc:a259db0d749c0d9ed73c656622b8994e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">not zero  <a href="#a259db0d749c0d9ed73c656622b8994e9">More...</a><br /></td></tr>
 <tr class="separator:a259db0d749c0d9ed73c656622b8994e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Lightweight right circular cone. Use ON_ConeSurface if you need <a class="el" href="../../d0/d51/class_o_n___cone.html">ON_Cone</a> geometry as a virtual <a class="el" href="../../da/da0/class_o_n___surface.html">ON_Surface</a>. </p>
+<div class="textblock"><p>Lightweight right circular cone. Use ON_ConeSurface if you need <a class="el" href="../../d0/d51/class_o_n___cone.html" title="Lightweight right circular cone. Use ON_ConeSurface if you need ON_Cone geometry as a virtual ON_Surf...">ON_Cone</a> geometry as a virtual <a class="el" href="../../da/da0/class_o_n___surface.html">ON_Surface</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a176125d9b19fe6333de11fb6702ee797"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a176125d9b19fe6333de11fb6702ee797">&#9670;&nbsp;</a></span>ON_Cone() <span class="overload">[1/2]</span></h2>
@@ -138,7 +142,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a cone with world XY plane as the base plane, center = (0,0,0), radius = 0.0, height = 0.0. </p>
 
 </div>
 </div>
@@ -174,7 +177,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>See <a class="el" href="../../d0/d51/class_o_n___cone.html#a47d9162058758f58bfa4360fbf3b8510">ON_Cone::Create</a>. </p>
+<p>See <a class="el" href="../../d0/d51/class_o_n___cone.html#a47d9162058758f58bfa4360fbf3b8510" title="Creates a right circular cone from a plane, height, and radius. plane - [in] The apex of cone is at p...">ON_Cone::Create</a>. </p>
 
 </div>
 </div>
@@ -210,7 +213,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The angle Iin degrees) between the axis and the side. The angle and the height have the same sign. </p>
+<dl class="section return"><dt>Returns</dt><dd>The angle Iin degrees) between the axis and the side. The angle and the height have the same sign. </dd></dl>
 
 </div>
 </div>
@@ -228,7 +231,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The angle (in radians) between the axis and the side of the cone. The angle and the height have the same sign. </p>
+<dl class="section return"><dt>Returns</dt><dd>The angle (in radians) between the axis and the side of the cone. The angle and the height have the same sign. </dd></dl>
 
 </div>
 </div>
@@ -246,7 +249,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Point at the tip of the cone. Remarks: The apex point is plane.origin. </p>
+<dl class="section return"><dt>Returns</dt><dd>Point at the tip of the cone. </dd></dl>
+<p>The apex point is plane.origin. </p>
 
 </div>
 </div>
@@ -264,7 +268,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Unit vector axis of cone. </p>
+<dl class="section return"><dt>Returns</dt><dd>Unit vector axis of cone. </dd></dl>
 
 </div>
 </div>
@@ -282,7 +286,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Center of base circle. Remarks: The base point is plane.origin + height*plane.zaxis. </p>
+<dl class="section return"><dt>Returns</dt><dd>Center of base circle. </dd></dl>
+<p>The base point is plane.origin + height*plane.zaxis. </p>
 
 </div>
 </div>
@@ -301,7 +306,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get iso curve circle at a specified height. Parameters: height_parameter - [in] 0 = apex, height = base </p>
+
+<p>Get iso curve circle at a specified height. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">height_parameter</td><td>[in] 0 = apex, height = base</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -392,7 +404,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Creates a right circular cone from a plane, height, and radius. plane - [in] The apex of cone is at plane.origin and the axis of the cone is plane.zaxis. height - [in] The center of the base is height*plane.zaxis. radius - [in] tan(cone angle) = radius/height </p>
+
+<p>Creates a right circular cone from a plane, height, and radius. plane - [in] The apex of cone is at plane.origin and the axis of the cone is plane.zaxis. height - [in] The center of the base is height*plane.zaxis. radius - [in] tan(cone angle) = radius/height </p>
 
 </div>
 </div>
@@ -411,7 +424,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>returns: 0 = failure 2 = success </p>
+<dl class="section return"><dt>Returns</dt><dd>0 = failure 2 = success </dd></dl>
 
 </div>
 </div>
@@ -429,7 +442,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if plane is valid, height is not zero, and radius is not zero. </p>
 
 </div>
 </div>
@@ -448,7 +460,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get iso curve line segment at a specified angle. Parameters: radial_parameter - [in] (in radians) 0.0 to 2.0*ON_PI </p>
+
+<p>Get iso curve line segment at a specified angle. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">radial_parameter</td><td>[in] (in radians) 0.0 to 2.0*ON_PI</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -477,7 +496,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: radial_parameter - [in] (in radians) 0.0 to 2.0*ON_PI height_parameter - [in] 0 = apex, height = base Remarks: If radius&gt;0 and height&gt;0, then the normal points "out" when height_parameter &gt;= 0. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">radial_parameter</td><td>[in] (in radians) 0.0 to 2.0*ON_PI</td></tr>
+    <tr><td class="paramname">height_parameter</td><td>[in] 0 = apex, height = base</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>If radius&gt;0 and height&gt;0, then the normal points "out" when height_parameter &gt;= 0. </p>
 
 </div>
 </div>
@@ -506,7 +532,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>evaluate parameters and return point Parameters: radial_parameter - [in] 0.0 to 2.0*ON_PI height_parameter - [in] 0 = apex, height = base </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">radial_parameter</td><td>[in] 0.0 to 2.0*ON_PI</td></tr>
+    <tr><td class="paramname">height_parameter</td><td>[in] 0 = apex, height = base</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -525,7 +557,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Creates a surface of revolution definition of the cylinder. Parameters: srf - [in] if not nullptr, then this srf is used. Result: A surface of revolution or nullptr if the cylinder is not valid or is infinite. </p>
+
+<p>Creates a surface of revolution definition of the cylinder. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">srf</td><td>[in] if not nullptr, then this srf is used. Result: A surface of revolution or nullptr if the cylinder is not valid or is infinite.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -718,8 +757,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>not zero </p>
-
 </div>
 </div>
 <a id="afee2406430c41254b01cf5be52c3321a"></a>
@@ -733,8 +770,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>apex = plane.origin, axis = plane.zaxis </p>
 
 </div>
 </div>
@@ -750,8 +785,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>not zero </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -760,7 +793,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

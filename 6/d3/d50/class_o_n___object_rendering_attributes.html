@@ -97,6 +97,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a41ca0dae1937f77c3ce43c40a863a4f0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a41ca0dae1937f77c3ce43c40a863a4f0">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive)</td></tr>
 <tr class="separator:a41ca0dae1937f77c3ce43c40a863a4f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3df3989351e13c30fb6d25087c07b320"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a3df3989351e13c30fb6d25087c07b320">Transform</a> (const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;xform)</td></tr>
+<tr class="memdesc:a3df3989351e13c30fb6d25087c07b320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update mapping channel transformations.  <a href="#a3df3989351e13c30fb6d25087c07b320">More...</a><br /></td></tr>
 <tr class="separator:a3df3989351e13c30fb6d25087c07b320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02957c4eba3949591ed3b9a4c9179619"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a02957c4eba3949591ed3b9a4c9179619">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive) const</td></tr>
 <tr class="separator:a02957c4eba3949591ed3b9a4c9179619"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -119,10 +120,8 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a6aff5e29f23bc1658f7393d75fcd6f09"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a6aff5e29f23bc1658f7393d75fcd6f09">m_bCastsShadows</a></td></tr>
-<tr class="memdesc:a6aff5e29f23bc1658f7393d75fcd6f09"><td class="mdescLeft">&#160;</td><td class="mdescRight">default is true  <a href="#a6aff5e29f23bc1658f7393d75fcd6f09">More...</a><br /></td></tr>
 <tr class="separator:a6aff5e29f23bc1658f7393d75fcd6f09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35c54b4591b3c3802584d4b273f04d50"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a35c54b4591b3c3802584d4b273f04d50">m_bReceivesShadows</a></td></tr>
-<tr class="memdesc:a35c54b4591b3c3802584d4b273f04d50"><td class="mdescLeft">&#160;</td><td class="mdescRight">default is true  <a href="#a35c54b4591b3c3802584d4b273f04d50">More...</a><br /></td></tr>
 <tr class="separator:a35c54b4591b3c3802584d4b273f04d50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50e806543ccbb7f65b388976f1e2c4bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d1/dbb/class_o_n___mapping_ref.html">ON_MappingRef</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a50e806543ccbb7f65b388976f1e2c4bd">m_mappings</a></td></tr>
 <tr class="separator:a50e806543ccbb7f65b388976f1e2c4bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -180,7 +179,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: True if the mapping channel was added or a pefect match already existed. False if a mapping channel with a different mapping_id already exists for this plug-in and channel. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the mapping channel was added or a pefect match already existed. False if a mapping channel with a different mapping_id already exists for this plug-in and channel. </dd></dl>
 
 </div>
 </div>
@@ -199,7 +206,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] Returns: If a mapping ref exists, it is returned. Otherwise one is added. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If a mapping ref exists, it is returned. Otherwise one is added. </dd></dl>
 
 </div>
 </div>
@@ -217,7 +230,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if advancded texture preview is enabled. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if advancded texture preview is enabled. </dd></dl>
 
 </div>
 </div>
@@ -252,7 +265,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] old_mapping_channel_id - [in] new_mapping_channel_id - [in] Returns: True if a matching mapping channel was found and changed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">old_mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">new_mapping_channel_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a matching mapping channel was found and changed. </dd></dl>
 
 </div>
 </div>
@@ -316,7 +337,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: True if a matching mapping channel was deleted. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a matching mapping channel was deleted. </dd></dl>
 
 </div>
 </div>
@@ -363,7 +392,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] Returns: If a mapping ref exists, it is returned. Otherwise one is added. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If a mapping ref exists, it is returned. Otherwise one is added. </dd></dl>
 
 </div>
 </div>
@@ -382,7 +417,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bEnable - [in] false - (default) Do not generate bitmap textures that approximate procedural textures. true - generate bitmap textures that approximate procedural textures and use these for quick previews. Returns: True if advancded texture preview is enabled. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bEnable</td><td>[in]</td></tr>
+    <tr><td class="paramname">false</td><td>(default) Do not generate bitmap textures that approximate procedural textures.</td></tr>
+    <tr><td class="paramname">true</td><td>generate bitmap textures that approximate procedural textures and use these for quick previews.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if advancded texture preview is enabled. </dd></dl>
 
 </div>
 </div>
@@ -429,7 +472,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: A pointer to the plug-in's mapping channel, if there is one. Otherwise nullptr is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the plug-in's mapping channel, if there is one. Otherwise nullptr is returned. </dd></dl>
 
 </div>
 </div>
@@ -476,7 +527,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plugin_id - [in] Returns: A pointer to the plug-in's mapping reference, if there is one. Otherwise nullptr is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plugin_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the plug-in's mapping reference, if there is one. Otherwise nullptr is returned. </dd></dl>
 
 </div>
 </div>
@@ -513,7 +570,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Update mapping channel transformations. Parameters: xform - [in] Transformation applied to parent object. Returns: True is successful. False if there are mapping channels and xform cannot be inverted. </p>
+
+<p>Update mapping channel transformations. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">xform</td><td>[in] Transformation applied to parent object.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True is successful. False if there are mapping channels and xform cannot be inverted. </dd></dl>
 
 </div>
 </div>
@@ -548,8 +613,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>default is true </p>
-
 </div>
 </div>
 <a id="a35c54b4591b3c3802584d4b273f04d50"></a>
@@ -564,8 +627,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>default is true </p>
-
 </div>
 </div>
 <a id="a50e806543ccbb7f65b388976f1e2c4bd"></a>
@@ -579,8 +640,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Use <a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#a597591c0cf709c06d52bfa90b1b19fea">AddMappingRef()</a> or <a class="el" href="../../d3/d50/class_o_n___object_rendering_attributes.html#acdea2be57d4c446217336bdfb1162dc9">AddMappingChannel()</a> if you want to add an element to this array.</p>
-<p>Every mapping ref in this array must have a distinct value of <a class="el" href="../../d1/dbb/class_o_n___mapping_ref.html#a24165c9ea7fb37047eb9e3135797a97d" title="Identifies a rendering plugin. ">ON_MappingRef.m_plugin_id</a>. </p>
 
 </div>
 </div>
@@ -590,7 +649,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

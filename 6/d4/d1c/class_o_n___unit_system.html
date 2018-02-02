@@ -72,6 +72,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a515e3667fddcc6691a051520c237238a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a515e3667fddcc6691a051520c237238a">IsSet</a> () const</td></tr>
 <tr class="separator:a515e3667fddcc6691a051520c237238a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1793e06209b018bb48e06331d588bcec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1793e06209b018bb48e06331d588bcec">IsValid</a> () const</td></tr>
+<tr class="memdesc:a1793e06209b018bb48e06331d588bcec"><td class="mdescLeft">&#160;</td><td class="mdescRight"><dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a515e3667fddcc6691a051520c237238a">IsSet()</a></dd></dl>
+ <a href="#a1793e06209b018bb48e06331d588bcec">More...</a><br /></td></tr>
 <tr class="separator:a1793e06209b018bb48e06331d588bcec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e7b5923cf2ab1d5302d1861fd8f5ae0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a8e7b5923cf2ab1d5302d1861fd8f5ae0">MetersPerUnit</a> () const</td></tr>
 <tr class="separator:a8e7b5923cf2ab1d5302d1861fd8f5ae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -88,8 +90,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1d707a421810b4d196acb25ef94d56d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem</a> (const wchar_t *custom_unit_name, double meters_per_custom_unit)</td></tr>
 <tr class="separator:a1d707a421810b4d196acb25ef94d56d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47b0f2f05511b1131f687cfe11fef466"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a47b0f2f05511b1131f687cfe11fef466">SetCustomUnitSystemName</a> (const wchar_t *custom_unit_name)</td></tr>
+<tr class="memdesc:a47b0f2f05511b1131f687cfe11fef466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Changes the unit system to custom units and sets the custom unit scale.  <a href="#a47b0f2f05511b1131f687cfe11fef466">More...</a><br /></td></tr>
 <tr class="separator:a47b0f2f05511b1131f687cfe11fef466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa59866152e9074ec4815c9342be7057"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#aaa59866152e9074ec4815c9342be7057">SetCustomUnitSystemScale</a> (double meters_per_custom_unit)</td></tr>
+<tr class="memdesc:aaa59866152e9074ec4815c9342be7057"><td class="mdescLeft">&#160;</td><td class="mdescRight">Changes the unit system to custom units and sets the custom unit scale.  <a href="#aaa59866152e9074ec4815c9342be7057">More...</a><br /></td></tr>
 <tr class="separator:aaa59866152e9074ec4815c9342be7057"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2eb2f7126832640ee389e3baabb03f39"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a2eb2f7126832640ee389e3baabb03f39">SetUnitSystem</a> (ON::LengthUnitSystem us)</td></tr>
 <tr class="separator:a2eb2f7126832640ee389e3baabb03f39"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -297,8 +301,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: custom_unit_name - [in] length unit name (no spaces) meters_per_custom_unit - [in] a positive number Example: / 1 League = 5556 meters const <a class="el" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues = <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a475e7c49168591fe2e7d779b20ff9759">ON_UnitSystem::CreateCustomUnitSystem</a>(L"Leagues", 1.0/5556.0); </p>
-
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">custom_unit_name</td><td>[in] length unit name (no spaces)</td></tr>
+    <tr><td class="paramname">meters_per_custom_unit</td><td>[in] a positive number</td></tr>
+  </table>
+  </dd>
+</dl>
+<div class="fragment"><div class="line"><span class="comment">// 1 League = 5556 meters</span></div><div class="line"><span class="keyword">const</span> <a class="code" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues = <a class="code" href="../../d4/d1c/class_o_n___unit_system.html#a475e7c49168591fe2e7d779b20ff9759">ON_UnitSystem::CreateCustomUnitSystem</a>(L<span class="stringliteral">&quot;Leagues&quot;</span>, 1.0/5556.0);</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a262b121c5827c9ed8b31cc16a8857836"></a>
@@ -333,7 +343,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true If the unit system is ON::LengthUnitSystem::CustomUnits </p>
 
 </div>
 </div>
@@ -351,7 +360,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true If the unit system is valid and set to something beside ON::no_unit_systm; </p>
 
 </div>
 </div>
@@ -369,7 +377,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if m_unit_system is a valid ON::LengthUnitSystem enum value, which may be ON::LengthUnitSystem::None. If m_unit_system is ON::LengthUnitSystem::CustomUnits, then <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1793e06209b018bb48e06331d588bcec">IsValid()</a> returns true if m_custom_unit_scale &gt; 0.0 and false otherwise. The value of m_custom_unit_name is not tested. See Also: <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a515e3667fddcc6691a051520c237238a">IsSet()</a> </p>
+
+<p><dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a515e3667fddcc6691a051520c237238a">IsSet()</a></dd></dl>
+</p>
 
 </div>
 </div>
@@ -513,8 +523,14 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: custom_unit_name - [in] length unit name (no spaces) meters_per_custom_unit - [in] a positive number Example: / 1 League = 5556 meters <a class="el" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues; Leagues.SetCustomUnitSystem( L"Leagues", 1.0/5556.0); / or <a class="el" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues = <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a475e7c49168591fe2e7d779b20ff9759">ON_UnitSystem::CreateCustomUnitSystem</a>(L"Leagues", 1.0/5556.0); </p>
-
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">custom_unit_name</td><td>[in] length unit name (no spaces)</td></tr>
+    <tr><td class="paramname">meters_per_custom_unit</td><td>[in] a positive number</td></tr>
+  </table>
+  </dd>
+</dl>
+<div class="fragment"><div class="line"><span class="comment">// 1 League = 5556 meters</span></div><div class="line"><a class="code" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues;</div><div class="line">Leagues.<a class="code" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem</a>( L<span class="stringliteral">&quot;Leagues&quot;</span>, 1.0/5556.0);</div><div class="line"><span class="comment">// or</span></div><div class="line"><a class="code" href="../../d4/d1c/class_o_n___unit_system.html">ON_UnitSystem</a> Leagues = <a class="code" href="../../d4/d1c/class_o_n___unit_system.html#a475e7c49168591fe2e7d779b20ff9759">ON_UnitSystem::CreateCustomUnitSystem</a>(L<span class="stringliteral">&quot;Leagues&quot;</span>, 1.0/5556.0);</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a47b0f2f05511b1131f687cfe11fef466"></a>
@@ -532,7 +548,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Changes the unit system to custom units and sets the custom unit scale. Remarks: Avoid using this function. Use <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem()</a> or <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a2eb2f7126832640ee389e3baabb03f39">SetUnitSystem()</a> instead. </p>
+
+<p>Changes the unit system to custom units and sets the custom unit scale. </p>
+<p>Avoid using this function. Use <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem()</a> or <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a2eb2f7126832640ee389e3baabb03f39">SetUnitSystem()</a> instead. </p>
 
 </div>
 </div>
@@ -551,7 +569,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Changes the unit system to custom units and sets the custom unit scale. Remarks: Avoid using this function. Use <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem()</a> or <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a2eb2f7126832640ee389e3baabb03f39">SetUnitSystem()</a> instead. </p>
+
+<p>Changes the unit system to custom units and sets the custom unit scale. </p>
+<p>Avoid using this function. Use <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a1d707a421810b4d196acb25ef94d56d5">SetCustomUnitSystem()</a> or <a class="el" href="../../d4/d1c/class_o_n___unit_system.html#a2eb2f7126832640ee389e3baabb03f39">SetUnitSystem()</a> instead. </p>
 
 </div>
 </div>
@@ -1216,7 +1236,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

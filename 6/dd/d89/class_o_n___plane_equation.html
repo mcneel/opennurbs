@@ -53,6 +53,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Typically the vector portion is a unit vector and m_d = -(x*P.x + y*P.y + z*P.z) for a point P on the plane.  
+ <a href="../../dd/d89/class_o_n___plane_equation.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d9/d0d/opennurbs__point_8h_source.html">opennurbs_point.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -62,32 +65,42 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad4a56651669f269a767ed06a76d120fd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#ad4a56651669f269a767ed06a76d120fd">ON_PlaneEquation</a> (double xx, double yy, double zz, double dd)</td></tr>
 <tr class="separator:ad4a56651669f269a767ed06a76d120fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a06f921e5450f6687fd263e87ea817e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a2a06f921e5450f6687fd263e87ea817e">ClosestPointTo</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> point) const</td></tr>
+<tr class="memdesc:a2a06f921e5450f6687fd263e87ea817e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get point on plane that is closest to a given point.  <a href="#a2a06f921e5450f6687fd263e87ea817e">More...</a><br /></td></tr>
 <tr class="separator:a2a06f921e5450f6687fd263e87ea817e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55dc2e1e9fad40f02ca82f185e9b5ac4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a55dc2e1e9fad40f02ca82f185e9b5ac4">Create</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P, <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> N)</td></tr>
+<tr class="memdesc:a55dc2e1e9fad40f02ca82f185e9b5ac4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets (x,y,z) to a unitized N and then sets d = -(x*P.x + y*P.y + z*P.z).  <a href="#a55dc2e1e9fad40f02ca82f185e9b5ac4">More...</a><br /></td></tr>
 <tr class="separator:a55dc2e1e9fad40f02ca82f185e9b5ac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7ee71418e059e90a605b8d19f651de9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#ae7ee71418e059e90a605b8d19f651de9">Direction</a> () const</td></tr>
 <tr class="separator:ae7ee71418e059e90a605b8d19f651de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad28f9ce2d9168550d5255d238d27a2df"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#ad28f9ce2d9168550d5255d238d27a2df">DirectionLength</a> () const</td></tr>
 <tr class="separator:ad28f9ce2d9168550d5255d238d27a2df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cb171b6e1b7997083c2b8e969aa72d1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a5cb171b6e1b7997083c2b8e969aa72d1">IsNearerThan</a> (const class <a class="el" href="../../d9/d6f/class_o_n___bezier_curve.html">ON_BezierCurve</a> &amp;bezcrv, double s0, double s1, int sample_count, double endpoint_tolerance, double interior_tolerance, double *smin, double *smax) const</td></tr>
+<tr class="memdesc:a5cb171b6e1b7997083c2b8e969aa72d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test points on a bezier curve to see if they are near the plane.  <a href="#a5cb171b6e1b7997083c2b8e969aa72d1">More...</a><br /></td></tr>
 <tr class="separator:a5cb171b6e1b7997083c2b8e969aa72d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a33994b7894ad018731a3478a4c3a33"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a7a33994b7894ad018731a3478a4c3a33">IsParallelTo</a> (const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a> &amp;other, double angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE) const</td></tr>
 <tr class="separator:a7a33994b7894ad018731a3478a4c3a33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e7c94e6c5eba1cfbba9a100973d6d0d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3e7c94e6c5eba1cfbba9a100973d6d0d">IsSet</a> () const</td></tr>
+<tr class="memdesc:a3e7c94e6c5eba1cfbba9a100973d6d0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if x, y, z, d are valid, finite doubles and at least one of x, y or z is not zero.  <a href="#a3e7c94e6c5eba1cfbba9a100973d6d0d">More...</a><br /></td></tr>
 <tr class="separator:a3e7c94e6c5eba1cfbba9a100973d6d0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0d08bd5be0857852a718436cfc73531"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#ab0d08bd5be0857852a718436cfc73531">IsValid</a> () const</td></tr>
+<tr class="memdesc:ab0d08bd5be0857852a718436cfc73531"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns true if x, y, z, d are valid, finite doubles.  <a href="#ab0d08bd5be0857852a718436cfc73531">More...</a><br /></td></tr>
 <tr class="separator:ab0d08bd5be0857852a718436cfc73531"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23d702f0765ce38fb4a2399c5411ef10"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a23d702f0765ce38fb4a2399c5411ef10">MaximumAbsoluteValueAt</a> (bool bRational, int point_count, int point_stride, const double *points, double stop_value) const</td></tr>
+<tr class="memdesc:a23d702f0765ce38fb4a2399c5411ef10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the maximum absolute value of the plane equation on a set of 3d points.  <a href="#a23d702f0765ce38fb4a2399c5411ef10">More...</a><br /></td></tr>
 <tr class="separator:a23d702f0765ce38fb4a2399c5411ef10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bab28ce11d4d01efd287299fbcbf305"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3bab28ce11d4d01efd287299fbcbf305">MaximumCoefficient</a> () const</td></tr>
 <tr class="separator:a3bab28ce11d4d01efd287299fbcbf305"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:accee2c91d3d3ce63936f527c70ddde11"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#accee2c91d3d3ce63936f527c70ddde11">MaximumValueAt</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const</td></tr>
+<tr class="memdesc:accee2c91d3d3ce63936f527c70ddde11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the maximum value of the plane equation on a bounding box.  <a href="#accee2c91d3d3ce63936f527c70ddde11">More...</a><br /></td></tr>
 <tr class="separator:accee2c91d3d3ce63936f527c70ddde11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f4a3e21883955e92d029293893b3f62"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3f4a3e21883955e92d029293893b3f62">MaximumValueAt</a> (bool bRational, int point_count, int point_stride, const double *points, double stop_value) const</td></tr>
+<tr class="memdesc:a3f4a3e21883955e92d029293893b3f62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the maximum value of the plane equation on a set of 3d points.  <a href="#a3f4a3e21883955e92d029293893b3f62">More...</a><br /></td></tr>
 <tr class="separator:a3f4a3e21883955e92d029293893b3f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf4a8734f9528a225e0543f82500fabb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#abf4a8734f9528a225e0543f82500fabb">MinimumValueAt</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const</td></tr>
+<tr class="memdesc:abf4a8734f9528a225e0543f82500fabb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the minimum value of the plane equation on a bounding box.  <a href="#abf4a8734f9528a225e0543f82500fabb">More...</a><br /></td></tr>
 <tr class="separator:abf4a8734f9528a225e0543f82500fabb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2cab7508c8fc776cf50172f85bf849dc"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a2cab7508c8fc776cf50172f85bf849dc">MinimumValueAt</a> (bool bRational, int point_count, int point_stride, const double *points, double stop_value) const</td></tr>
+<tr class="memdesc:a2cab7508c8fc776cf50172f85bf849dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the minimum value of the plane equation on a set of 3d points.  <a href="#a2cab7508c8fc776cf50172f85bf849dc">More...</a><br /></td></tr>
 <tr class="separator:a2cab7508c8fc776cf50172f85bf849dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0732be84773967a58eab91c6ab55ece"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#ae0732be84773967a58eab91c6ab55ece">NegatedPlaneEquation</a> () const</td></tr>
 <tr class="separator:ae0732be84773967a58eab91c6ab55ece"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -104,12 +117,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a79070f884391afc27ebacd7ed6b80b72"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a79070f884391afc27ebacd7ed6b80b72">operator[]</a> (unsigned int) const</td></tr>
 <tr class="separator:a79070f884391afc27ebacd7ed6b80b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79dca42f287aea7c5591ad5368b5bbcc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a79dca42f287aea7c5591ad5368b5bbcc">Transform</a> (const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;xform)</td></tr>
+<tr class="memdesc:a79dca42f287aea7c5591ad5368b5bbcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transform the plane equation so that, if e0 is the initial equation, e1 is transformed equation and P is a point, then e0.ValueAt(P) = e1.ValueAt(xform*P).  <a href="#a79dca42f287aea7c5591ad5368b5bbcc">More...</a><br /></td></tr>
 <tr class="separator:a79dca42f287aea7c5591ad5368b5bbcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7368bfc4fac027371984e5589aa48ac0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a7368bfc4fac027371984e5589aa48ac0">UnitizedPlaneEquation</a> () const</td></tr>
 <tr class="separator:a7368bfc4fac027371984e5589aa48ac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3174971db91a7d9ad4a055b538d631e8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3174971db91a7d9ad4a055b538d631e8">UnitNormal</a> () const</td></tr>
 <tr class="separator:a3174971db91a7d9ad4a055b538d631e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af209c0d9a2149b65b39b5ad88a33600c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#af209c0d9a2149b65b39b5ad88a33600c">ValueAt</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P) const</td></tr>
+<tr class="memdesc:af209c0d9a2149b65b39b5ad88a33600c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the plane at a point.  <a href="#af209c0d9a2149b65b39b5ad88a33600c">More...</a><br /></td></tr>
 <tr class="separator:af209c0d9a2149b65b39b5ad88a33600c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec69defc22dc7bacf006e62ddc3a3f3a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#aec69defc22dc7bacf006e62ddc3a3f3a">ValueAt</a> (<a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> P) const</td></tr>
 <tr class="separator:aec69defc22dc7bacf006e62ddc3a3f3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -118,6 +133,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af221ea26dab4ec7bbea5cf65c369c050"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#af221ea26dab4ec7bbea5cf65c369c050">ValueAt</a> (double <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3cf6518017394b76ab7ef877014d86d9">x</a>, double <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a57500be6e3d4c103d9a6a0bd6b3221ff">y</a>, double <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#aa3c776cd68ad4de9a003fba1b032dde9">z</a>) const</td></tr>
 <tr class="separator:af221ea26dab4ec7bbea5cf65c369c050"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94fb801814ee524958129447ed90eb58"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a94fb801814ee524958129447ed90eb58">ValueAt</a> (int Pcount, const <a class="el" href="../../d0/dec/class_o_n__3f_point.html">ON_3fPoint</a> *P, double *value, double value_range[2]) const</td></tr>
+<tr class="memdesc:a94fb801814ee524958129447ed90eb58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the plane at a list of point values.  <a href="#a94fb801814ee524958129447ed90eb58">More...</a><br /></td></tr>
 <tr class="separator:a94fb801814ee524958129447ed90eb58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4aaea07ab8bf189e759dbbfce88f1b0"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#af4aaea07ab8bf189e759dbbfce88f1b0">ValueAt</a> (int Pcount, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *P, double *value, double value_range[2]) const</td></tr>
 <tr class="separator:af4aaea07ab8bf189e759dbbfce88f1b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -136,6 +152,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abaeae52f94c0f3786b58b684dc475389"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#abaeae52f94c0f3786b58b684dc475389">ValueRange</a> (size_t point_index_count, size_t point_index_stride, const unsigned int *point_index_list, const class <a class="el" href="../../d0/d8a/class_o_n__3d_point_list_ref.html">ON_3dPointListRef</a> &amp;point_list) const</td></tr>
 <tr class="separator:abaeae52f94c0f3786b58b684dc475389"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67b3091b481b3c28cff24b186d68e687"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a67b3091b481b3c28cff24b186d68e687">ZeroTolerance</a> () const</td></tr>
+<tr class="memdesc:a67b3091b481b3c28cff24b186d68e687"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function calculates and evalutes points that would be exactly on the plane if double precision aritmetic were mathematically perfect and returns the largest value of the evaluations.  <a href="#a67b3091b481b3c28cff24b186d68e687">More...</a><br /></td></tr>
 <tr class="separator:a67b3091b481b3c28cff24b186d68e687"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
@@ -146,7 +163,6 @@ Static Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:adb0d2f26cf107cc81375350c83eb1d47"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#adb0d2f26cf107cc81375350c83eb1d47">d</a></td></tr>
-<tr class="memdesc:adb0d2f26cf107cc81375350c83eb1d47"><td class="mdescLeft">&#160;</td><td class="mdescRight">4th coefficient of the plane equation.  <a href="#adb0d2f26cf107cc81375350c83eb1d47">More...</a><br /></td></tr>
 <tr class="separator:adb0d2f26cf107cc81375350c83eb1d47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cf6518017394b76ab7ef877014d86d9"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3cf6518017394b76ab7ef877014d86d9">x</a></td></tr>
 <tr class="separator:a3cf6518017394b76ab7ef877014d86d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -158,14 +174,12 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a1c12e001d0a9b845cffd0a0b008b6911"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a1c12e001d0a9b845cffd0a0b008b6911">UnsetPlaneEquation</a></td></tr>
-<tr class="memdesc:a1c12e001d0a9b845cffd0a0b008b6911"><td class="mdescLeft">&#160;</td><td class="mdescRight">(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)  <a href="#a1c12e001d0a9b845cffd0a0b008b6911">More...</a><br /></td></tr>
 <tr class="separator:a1c12e001d0a9b845cffd0a0b008b6911"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72042db29095dbfa9fa6fcaeec6501e6"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a72042db29095dbfa9fa6fcaeec6501e6">ZeroPlaneEquation</a></td></tr>
-<tr class="memdesc:a72042db29095dbfa9fa6fcaeec6501e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">(0.0,0.0,0.0,0.0)  <a href="#a72042db29095dbfa9fa6fcaeec6501e6">More...</a><br /></td></tr>
 <tr class="separator:a72042db29095dbfa9fa6fcaeec6501e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Typically the vector portion is a unit vector and m_d = -(x*P.x + y*P.y + z*P.z) for a point P on the plane. </p>
+<div class="textblock"><p>Typically the vector portion is a unit vector and m_d = -(x*P.x + y*P.y + z*P.z) for a point P on the plane. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6e2c3248bb07912eee0546197fbafb28"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6e2c3248bb07912eee0546197fbafb28">&#9670;&nbsp;</a></span>ON_PlaneEquation() <span class="overload">[1/2]</span></h2>
@@ -240,7 +254,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get point on plane that is closest to a given point. Parameters: point - [in] Returns: A 3d point on the plane that is closest to the input point. </p>
+
+<p>Get point on plane that is closest to a given point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">point</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A 3d point on the plane that is closest to the input point. </dd></dl>
 
 </div>
 </div>
@@ -269,7 +291,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets (x,y,z) to a unitized N and then sets d = -(x*P.x + y*P.y + z*P.z). Parameters: P - [in] point on the plane N - [in] vector perpendicular to the plane Returns: true if input is valid. </p>
+
+<p>Sets (x,y,z) to a unitized N and then sets d = -(x*P.x + y*P.y + z*P.z). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point on the plane</td></tr>
+    <tr><td class="paramname">N</td><td>[in] vector perpendicular to the plane</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if input is valid. </dd></dl>
 
 </div>
 </div>
@@ -287,7 +318,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Direction (x,y,z) </p>
+<dl class="section return"><dt>Returns</dt><dd>Direction (x,y,z) </dd></dl>
 
 </div>
 </div>
@@ -369,7 +400,22 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test points on a bezier curve to see if they are near the plane. Parameters: bezcrv - [in] s0 - [in] s1 - [in] the interval from s0 to s1 is tested (s0 &lt; s1) sample_count - [in] number of interior points to test. Numbers like 1, 3, 7, 15, ... work best. endpoint_tolerance - [in] If &gt;= 0, then the end points are tested to see if the distance from the endpoints is &lt;= endpoint_tolerance. interior_tolerance - [in] (&gt;=0 and &gt;=endpoint_tolerance) This tolerance is used to test the interior sample points. smin - [put] If not nullptr, *smin = bezier parameter of nearest test point. smax - [put] If not nullptr, *smax = bezier parameter of farthest test point. If false is returned, this is the parameter of the test point that failed. Returns: True if all the tested points passed the tolerance test. False if at least one tested point failed the tolerance test. (The test terminates when the first failure is encountered.) </p>
+
+<p>Test points on a bezier curve to see if they are near the plane. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bezcrv</td><td>[in]</td></tr>
+    <tr><td class="paramname">s0</td><td>[in]</td></tr>
+    <tr><td class="paramname">s1</td><td>[in] the interval from s0 to s1 is tested (s0 &lt; s1)</td></tr>
+    <tr><td class="paramname">sample_count</td><td>[in] number of interior points to test. Numbers like 1, 3, 7, 15, ... work best.</td></tr>
+    <tr><td class="paramname">endpoint_tolerance</td><td>[in] If &gt;= 0, then the end points are tested to see if the distance from the endpoints is &lt;= endpoint_tolerance.</td></tr>
+    <tr><td class="paramname">interior_tolerance</td><td>[in] (&gt;=0 and &gt;=endpoint_tolerance) This tolerance is used to test the interior sample points.</td></tr>
+    <tr><td class="paramname">smin</td><td>[put] If not nullptr, *smin = bezier parameter of nearest test point.</td></tr>
+    <tr><td class="paramname">smax</td><td>[put] If not nullptr, *smax = bezier parameter of farthest test point. If false is returned, this is the parameter of the test point that failed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if all the tested points passed the tolerance test. False if at least one tested point failed the tolerance test. (The test terminates when the first failure is encountered.) </dd></dl>
 
 </div>
 </div>
@@ -398,14 +444,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns 1: this and other vectors are parallel -1: this and other vectors are anti-parallel 0: this and other vectors are not parallel or at least one of the vectors is zero </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">other</td><td>other plane equation </td></tr>
-    <tr><td class="paramname">angle_tolerance</td><td>optional angle tolerance (radians) </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -423,7 +461,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: returns true if x, y, z, d are valid, finite doubles and at least one of x, y or z is not zero. </p>
+
+<p>returns true if x, y, z, d are valid, finite doubles and at least one of x, y or z is not zero. </p>
 
 </div>
 </div>
@@ -441,7 +480,10 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: returns true if x, y, z, d are valid, finite doubles. Remarks: this function will return true if x, y and z are all zero. See Also: <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#a3e7c94e6c5eba1cfbba9a100973d6d0d">ON_PlaneEquation::IsSet()</a>. </p>
+
+<p>returns true if x, y, z, d are valid, finite doubles. </p>
+<p>this function will return true if x, y and z are all zero. </p>
+<dl class="section see"><dt>See also</dt><dd>ON_PlaneEquation::IsSet().</dd></dl>
 
 </div>
 </div>
@@ -488,7 +530,20 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the maximum absolute value of the plane equation on a set of 3d points. Parameters: bRational - [in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value. point_count - [in] point_stride - [in] i-th point's x coordinate = points[i*point_stride] points - [in] coordinates of points stop_value - [in] If stop_value &gt;= 0.0, then the evaulation stops if an absolute value &gt; stop_value is found. If stop_value &lt; 0.0 or stop_value is invalid, then stop_value is ignored. Returns: Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </p>
+
+<p>Get the maximum absolute value of the plane equation on a set of 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bRational</td><td>[in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value.</td></tr>
+    <tr><td class="paramname">point_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">point_stride</td><td>[in]</td></tr>
+    <tr><td class="paramname">i</td><td>th point's x coordinate = points[i*point_stride]</td></tr>
+    <tr><td class="paramname">points</td><td>[in] coordinates of points</td></tr>
+    <tr><td class="paramname">stop_value</td><td>[in] If stop_value &gt;= 0.0, then the evaulation stops if an absolute value &gt; stop_value is found. If stop_value &lt; 0.0 or stop_value is invalid, then stop_value is ignored.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </dd></dl>
 
 </div>
 </div>
@@ -524,7 +579,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the maximum value of the plane equation on a bounding box. Parameters: bbox - [in] Returns: Maximum value of the plane equation on the bounding box. </p>
+
+<p>Get the maximum value of the plane equation on a bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Maximum value of the plane equation on the bounding box. </dd></dl>
 
 </div>
 </div>
@@ -571,7 +634,20 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the maximum value of the plane equation on a set of 3d points. Parameters: bRational - [in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value. point_count - [in] point_stride - [in] i-th point's x coordinate = points[i*point_stride] points - [in] coordinates of points stop_value - [in] If stop_value is valid and not ON_UNSET_VALUE, then the evaulation stops if a value &gt; stop_value is found. If stop_value = ON_UNSET_VALUE, then stop_value is ignored. Returns: Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </p>
+
+<p>Get the maximum value of the plane equation on a set of 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bRational</td><td>[in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value.</td></tr>
+    <tr><td class="paramname">point_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">point_stride</td><td>[in]</td></tr>
+    <tr><td class="paramname">i</td><td>th point's x coordinate = points[i*point_stride]</td></tr>
+    <tr><td class="paramname">points</td><td>[in] coordinates of points</td></tr>
+    <tr><td class="paramname">stop_value</td><td>[in] If stop_value is valid and not ON_UNSET_VALUE, then the evaulation stops if a value &gt; stop_value is found. If stop_value = ON_UNSET_VALUE, then stop_value is ignored.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </dd></dl>
 
 </div>
 </div>
@@ -590,7 +666,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the minimum value of the plane equation on a bounding box. Parameters: bbox - [in] Returns: Minimum value of the plane equation on the bounding box. </p>
+
+<p>Get the minimum value of the plane equation on a bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Minimum value of the plane equation on the bounding box. </dd></dl>
 
 </div>
 </div>
@@ -637,7 +721,20 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the minimum value of the plane equation on a set of 3d points. Parameters: bRational - [in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value. point_count - [in] point_stride - [in] i-th point's x coordinate = points[i*point_stride] points - [in] coordinates of points stop_value - [in] If stop_value is valid and not ON_UNSET_VALUE, then the evaulation stops if a value &lt; stop_value is found. If stop_value = ON_UNSET_VALUE, then stop_value is ignored. Returns: Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </p>
+
+<p>Get the minimum value of the plane equation on a set of 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bRational</td><td>[in] False if the points are euclidean (x,y,z) True if the points are homogenous rational (x,y,z,w) (x/w,y/w,z/w) is used to evaluate the value.</td></tr>
+    <tr><td class="paramname">point_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">point_stride</td><td>[in]</td></tr>
+    <tr><td class="paramname">i</td><td>th point's x coordinate = points[i*point_stride]</td></tr>
+    <tr><td class="paramname">points</td><td>[in] coordinates of points</td></tr>
+    <tr><td class="paramname">stop_value</td><td>[in] If stop_value is valid and not ON_UNSET_VALUE, then the evaulation stops if a value &lt; stop_value is found. If stop_value = ON_UNSET_VALUE, then stop_value is ignored.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Maximum value of the plane equation on the point list. If the input is not valid, then ON_UNSET_VALUE is returned. </dd></dl>
 
 </div>
 </div>
@@ -655,7 +752,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The plane equation whose coefficient values are the negative of the coefficent values in this, provided the coeffient value is valid. Any invalid coefficent values are copied. </p>
+<dl class="section return"><dt>Returns</dt><dd>The plane equation whose coefficient values are the negative of the coefficent values in this, provided the coeffient value is valid. Any invalid coefficent values are copied. </dd></dl>
 
 </div>
 </div>
@@ -710,7 +807,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>index operators mimic double[4] behavior Return null refs or ON_UNSET_VALUE for out-of-range indices </p>
 
 </div>
 </div>
@@ -837,7 +933,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Transform the plane equation so that, if e0 is the initial equation, e1 is transformed equation and P is a point, then e0.ValueAt(P) = e1.ValueAt(xform*P). Parameters: xform - [in] Invertable transformation. Returns: True if the plane equation was successfully transformed. False if xform is not invertable or the equation is not valid. Remarks: This function has to invert xform. If you have apply the same transformation to a bunch of planes, then it will be more efficient to calculate xform's inverse transpose and apply the resultingt transformation to the equation's coefficients as if they were 4d point coordinates. </p>
+
+<p>Transform the plane equation so that, if e0 is the initial equation, e1 is transformed equation and P is a point, then e0.ValueAt(P) = e1.ValueAt(xform*P). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">xform</td><td>[in] Invertable transformation.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the plane equation was successfully transformed. False if xform is not invertable or the equation is not valid. </dd></dl>
+<p>This function has to invert xform. If you have apply the same transformation to a bunch of planes, then it will be more efficient to calculate xform's inverse transpose and apply the resultingt transformation to the equation's coefficients as if they were 4d point coordinates. </p>
 
 </div>
 </div>
@@ -855,7 +960,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The plane equation whose first three coefficient values are a unit vector. </p>
+<dl class="section return"><dt>Returns</dt><dd>The plane equation whose first three coefficient values are a unit vector. </dd></dl>
 
 </div>
 </div>
@@ -873,7 +978,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Unitized direction or zero vector if not set. </p>
+<dl class="section return"><dt>Returns</dt><dd>Unitized direction or zero vector if not set. </dd></dl>
 
 </div>
 </div>
@@ -892,7 +997,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Evaluate the plane at a point. Parameters: P - [in] Returns: x*P.x + y*P.y + z*P.z + d; </p>
+
+<p>Evaluate the plane at a point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>x*P.x + y*P.y + z*P.z + d; </dd></dl>
 
 </div>
 </div>
@@ -1003,7 +1116,18 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Evaluate the plane at a list of point values. Parameters: Pcount - [in] number of points P - [in] points value - [in] If not null, value[] must be an array of length at least Pcount. The values will be stored in this array. If null, the an array will be allocated with onmalloc() and returned. value_range - [out] If not null, the range of values will be returned here. Returns: An array of Pcount values. If the input parameter value was null, then the array is allocated on the heap using onmalloc() and the caller is responsible for calling onfree() when finished. If the input is not valid, null is returned. </p>
+
+<p>Evaluate the plane at a list of point values. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Pcount</td><td>[in] number of points</td></tr>
+    <tr><td class="paramname">P</td><td>[in] points</td></tr>
+    <tr><td class="paramname">value</td><td>[in] If not null, value[] must be an array of length at least Pcount. The values will be stored in this array. If null, the an array will be allocated with onmalloc() and returned.</td></tr>
+    <tr><td class="paramname">value_range</td><td>[out] If not null, the range of values will be returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An array of Pcount values. If the input parameter value was null, then the array is allocated on the heap using onmalloc() and the caller is responsible for calling onfree() when finished. If the input is not valid, null is returned. </dd></dl>
 
 </div>
 </div>
@@ -1072,7 +1196,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1091,7 +1215,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1120,7 +1244,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1139,7 +1263,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1158,7 +1282,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1193,7 +1317,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: <a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6" title="(ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_Interval::EmptyInterval</a> if input is not valid. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../dc/dc7/class_o_n___interval.html#a1477445eae2a66b83f55164d5388b8c6">ON_Interval::EmptyInterval</a> if input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -1251,7 +1375,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This function calculates and evalutes points that would be exactly on the plane if double precision aritmetic were mathematically perfect and returns the largest value of the evaluations. </p>
+
+<p>This function calculates and evalutes points that would be exactly on the plane if double precision aritmetic were mathematically perfect and returns the largest value of the evaluations. </p>
 
 </div>
 </div>
@@ -1267,8 +1392,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>4th coefficient of the plane equation. </p>
 
 </div>
 </div>
@@ -1291,9 +1414,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) </p>
-<p>C++ defaults for construction, destruction, copys, and operator= work fine. </p>
 
 </div>
 </div>
@@ -1359,8 +1479,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>(0.0,0.0,0.0,0.0) </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1369,7 +1487,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

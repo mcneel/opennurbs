@@ -112,7 +112,6 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ab74c17b78fffd125721ea27184be9818"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#ab74c17b78fffd125721ea27184be9818">m_active_view_id</a> = ON_nil_uuid</td></tr>
-<tr class="memdesc:ab74c17b78fffd125721ea27184be9818"><td class="mdescLeft">&#160;</td><td class="mdescRight">id of "active" viewport  <a href="#ab74c17b78fffd125721ea27184be9818">More...</a><br /></td></tr>
 <tr class="separator:ab74c17b78fffd125721ea27184be9818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf810240750c3c81d8f01df16497b3b5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#acf810240750c3c81d8f01df16497b3b5">m_AnalysisMeshSettings</a> = <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#affa7de4ffedeccdf72c7911f7c95293d">ON_MeshParameters::DefaultAnalysisMesh</a></td></tr>
 <tr class="memdesc:acf810240750c3c81d8f01df16497b3b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">settings used for automatically created analysis meshes  <a href="#acf810240750c3c81d8f01df16497b3b5">More...</a><br /></td></tr>
@@ -170,7 +169,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ac0c9fe91aca7f56e9e7092488a6e9335"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d99/class_o_n__3dm_render_settings.html">ON_3dmRenderSettings</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#ac0c9fe91aca7f56e9e7092488a6e9335">m_RenderSettings</a> = <a class="el" href="../../da/d99/class_o_n__3dm_render_settings.html#a1b23145400f18d59d5d6e8e260cb020e">ON_3dmRenderSettings::Default</a></td></tr>
 <tr class="separator:ac0c9fe91aca7f56e9e7092488a6e9335"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a367a55da8b594452c6b794089fc0e5ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d7/d51/class_o_n__3dm_view.html">ON_3dmView</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#a367a55da8b594452c6b794089fc0e5ac">m_views</a></td></tr>
-<tr class="memdesc:a367a55da8b594452c6b794089fc0e5ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">current viewports  <a href="#a367a55da8b594452c6b794089fc0e5ac">More...</a><br /></td></tr>
 <tr class="separator:a367a55da8b594452c6b794089fc0e5ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -178,9 +176,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a2c33f0835c579afc2b1f027ffbff79ff"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dd/df2/class_o_n__3dm_settings.html">ON_3dmSettings</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#a2c33f0835c579afc2b1f027ffbff79ff">Default</a></td></tr>
 <tr class="separator:a2c33f0835c579afc2b1f027ffbff79ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="../../dd/df2/class_o_n__3dm_settings.html">ON_3dmSettings</a> </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a55eed70e747efa1eeeccac55ff49efc5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a55eed70e747efa1eeeccac55ff49efc5">&#9670;&nbsp;</a></span>ON_3dmSettings() <span class="overload">[1/2]</span></h2>
 
@@ -522,7 +518,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: ON_MeshParameters::render_mesh_fast m_RenderMeshSettings and <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8">ON_MeshParameters::FastRenderMesh</a> have the same mesh geometry parameter settings. ON_MeshParameters::render_mesh_quality m_RenderMeshSettings and <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f">ON_MeshParameters::QualityRenderMesh</a> have the same mesh geometry parameter settings. ON_MeshParameters::render_mesh_custom m_RenderMeshSettings and m_CustomRenderMeshSettings have the same mesh geometry parameter settings. no_match_found_result otherwise </p>
+<dl class="section return"><dt>Returns</dt><dd>ON_MeshParameters::render_mesh_fast m_RenderMeshSettings and <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8" title="Mesh creationg parameters to create the a render mesh when meshing speed is prefered over mesh qualit...">ON_MeshParameters::FastRenderMesh</a> have the same mesh geometry parameter settings. ON_MeshParameters::render_mesh_quality m_RenderMeshSettings and <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f" title="Mesh creationg parameters to create the a render mesh when mesh quality is prefered over meshing spee...">ON_MeshParameters::QualityRenderMesh</a> have the same mesh geometry parameter settings. ON_MeshParameters::render_mesh_custom m_RenderMeshSettings and m_CustomRenderMeshSettings have the same mesh geometry parameter settings. no_match_found_result otherwise </dd></dl>
 
 </div>
 </div>
@@ -577,7 +573,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>These fields determine what layer, material, color, line style, and wire density are used for new objects. </p>
 
 </div>
 </div>
@@ -705,8 +700,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>id of "active" viewport </p>
 
 </div>
 </div>
@@ -837,8 +830,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Surface wireframe density</p>
-<p>table 0 boundary + "knot" wires 1 boundary + "knot" wires + 1 interior wire if no interior "knots" N&gt;=2 boundry + "knot" wires + (N-1) interior wires </p>
 
 </div>
 </div>
@@ -869,7 +860,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If set, this is the model's location on the earth. This information is used when the model is used with GIS information. </p>
 
 </div>
 </div>
@@ -914,7 +904,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>World scale factor to apply to non-solid linetypes for model display. For plotting, the linetype settings are used without scaling. </p>
 
 </div>
 </div>
@@ -929,7 +918,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Model basepoint is used when the file is read as an instance definition and is the point that is mapped to the origin in the instance definition. </p>
 
 </div>
 </div>
@@ -1067,8 +1055,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>current viewports </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1077,7 +1063,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time).  
+ <a href="../../d8/d7c/class_o_n___m_d5.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../db/d87/opennurbs__md5_8h_source.html">opennurbs_md5.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -62,6 +65,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab1a7d330a25e40f222bdf0e5ae4f896c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#ab1a7d330a25e40f222bdf0e5ae4f896c">~ON_MD5</a> ()=default</td></tr>
 <tr class="separator:ab1a7d330a25e40f222bdf0e5ae4f896c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f6db76b8ef7a43241daebcb8f3feea7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a2f6db76b8ef7a43241daebcb8f3feea7">AccumulateBytes</a> (const void *buffer, ON__UINT64 sizeof_buffer)</td></tr>
+<tr class="memdesc:a2f6db76b8ef7a43241daebcb8f3feea7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make one or more calls to <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a2f6db76b8ef7a43241daebcb8f3feea7" title="Make one or more calls to AccumulateBytes() as the sequenence of bytes is available. ">AccumulateBytes()</a> as the sequenence of bytes is available.  <a href="#a2f6db76b8ef7a43241daebcb8f3feea7">More...</a><br /></td></tr>
 <tr class="separator:a2f6db76b8ef7a43241daebcb8f3feea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a475f019d99ce5693aa223dff43ec6772"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a475f019d99ce5693aa223dff43ec6772">ByteCount</a> () const</td></tr>
 <tr class="separator:a475f019d99ce5693aa223dff43ec6772"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -70,23 +74,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acf295b06d1b253acf9d0c81721f2c5da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#acf295b06d1b253acf9d0c81721f2c5da">operator=</a> (const <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> &amp;)=default</td></tr>
 <tr class="separator:acf295b06d1b253acf9d0c81721f2c5da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32203e931e3d4282b372a7fa7c915bca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a32203e931e3d4282b372a7fa7c915bca">Reset</a> ()</td></tr>
+<tr class="memdesc:a32203e931e3d4282b372a7fa7c915bca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset this <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> class so it can be reused.  <a href="#a32203e931e3d4282b372a7fa7c915bca">More...</a><br /></td></tr>
 <tr class="separator:a32203e931e3d4282b372a7fa7c915bca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:af36f49e356cf03ea7f0084058d1a167a"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7c/class_o_n___m_d5.html#af36f49e356cf03ea7f0084058d1a167a">Validate</a> ()</td></tr>
+<tr class="memdesc:af36f49e356cf03ea7f0084058d1a167a"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is a static function that uses <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> to compute MD5 hash values of sequences of bytes with known MD5 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> with the known MD5 hash values.  <a href="#af36f49e356cf03ea7f0084058d1a167a">More...</a><br /></td></tr>
 <tr class="separator:af36f49e356cf03ea7f0084058d1a167a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time).</p>
-<p>Remarks: The <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> class cannot be used for cryptographic or security applications. The MD5 hash algorithm is not suitable for cryptographic or security applications. The <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> class does not "wipe" intermediate results.</p>
+<div class="textblock"><p><a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementally (the bytes do not have to be in a contiguous array in memory at one time). </p>
+<p>The <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> class cannot be used for cryptographic or security applications. The MD5 hash algorithm is not suitable for cryptographic or security applications. The <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> class does not "wipe" intermediate results.</p>
 <p>The probability of two different randomly selected seqences of N bytes to have the same value MD5 hash depends on N, but it is roughly 2^-64 ~ 10^-19.</p>
-<p>MD5 hash values are 16 bytes. SHA-1 hash values are 20 bytes. If you need a hash and have room for 20 bytes, then <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> is preferred over <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a>.</p>
+<p>MD5 hash values are 16 bytes. SHA-1 hash values are 20 bytes. If you need a hash and have room for 20 bytes, then <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> is preferred over <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a>.</p>
 <p>Legal: Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.</p>
 <p>License to copy and use this software is granted provided that it is identified as the "RSA Data Security, Inc. MD5 Message-Digest
-  Algorithm" in all material mentioning or referencing this software or this function.</p>
+Algorithm" in all material mentioning or referencing this software or this function.</p>
 <p>License is also granted to make and use derivative works provided that such works are identified as "derived from the RSA Data
-  Security, Inc. MD5 Message-Digest Algorithm" in all material mentioning or referencing the derived work.</p>
+Security, Inc. MD5 Message-Digest Algorithm" in all material mentioning or referencing the derived work.</p>
 <p>RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided "as is" without express or implied warranty of any kind.</p>
 <p>These notices must be retained in any copies of any part of this documentation and/or software. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -192,7 +198,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Make one or more calls to <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a2f6db76b8ef7a43241daebcb8f3feea7">AccumulateBytes()</a> as the sequenence of bytes is available. Parameters: buffer - [in] sizeof_buffer - [in] number of bytes in buffer </p>
+
+<p>Make one or more calls to <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a2f6db76b8ef7a43241daebcb8f3feea7" title="Make one or more calls to AccumulateBytes() as the sequenence of bytes is available. ">AccumulateBytes()</a> as the sequenence of bytes is available. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">sizeof_buffer</td><td>[in] number of bytes in buffer</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -210,7 +224,7 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Total number of bytes passed to Update(). </p>
+<dl class="section return"><dt>Returns</dt><dd>Total number of bytes passed to Update(). </dd></dl>
 
 </div>
 </div>
@@ -228,7 +242,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: MD5 hash value of the sequenence of <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a475f019d99ce5693aa223dff43ec6772">ByteCount()</a> bytes that have been passed to this <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> classe's Update() function since construction or the last call to <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a32203e931e3d4282b372a7fa7c915bca">Reset()</a>. Remarks: You may use <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a8e48da3ab6766483b8a254aa00b9a5ac">Hash()</a> to compute intermediate MD5 hash values.</p>
+<dl class="section return"><dt>Returns</dt><dd>MD5 hash value of the sequenence of <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a475f019d99ce5693aa223dff43ec6772">ByteCount()</a> bytes that have been passed to this <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> classe's Update() function since construction or the last call to <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a32203e931e3d4282b372a7fa7c915bca" title="Reset this ON_MD5 class so it can be reused. ">Reset()</a>. </dd></dl>
+<p>You may use <a class="el" href="../../d8/d7c/class_o_n___m_d5.html#a8e48da3ab6766483b8a254aa00b9a5ac">Hash()</a> to compute intermediate MD5 hash values.</p>
 <p>Put another way, you may call Update() zero or more times passing in N1 bytes, call Digest() to get the MD5 hash of those N1 bytes, make zero or more additional calls to Update() passing in N2 additional bytes, call digest to get the MD5 hash of the seqence of (N1 + N2) bytes, and so on. </p>
 
 </div>
@@ -273,7 +288,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reset this <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> class so it can be reused. </p>
+
+<p>Reset this <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> class so it can be reused. </p>
 
 </div>
 </div>
@@ -299,9 +315,10 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: This is a static function that uses <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> to compute MD5 hash values of sequences of bytes with known MD5 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html">ON_SHA1</a> with the known MD5 hash values.</p>
-<p>This function can be used to validate the <a class="el" href="../../d8/d7c/class_o_n___m_d5.html">ON_MD5</a> class compiled correctly.</p>
-<p>Returns: true All validation tests passed. false At least one validation test failed. </p>
+
+<p>This is a static function that uses <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> to compute MD5 hash values of sequences of bytes with known MD5 hash values and compares the results from <a class="el" href="../../d8/df7/class_o_n___s_h_a1.html" title="ON_SHA1 is a small class for calculating the SHA-1 hash of a sequence of bytes. It may be use increme...">ON_SHA1</a> with the known MD5 hash values. </p>
+<p>This function can be used to validate the <a class="el" href="../../d8/d7c/class_o_n___m_d5.html" title="ON_MD5 is a small class for calculating the MD5 hash of a sequence of bytes. It may be use incrementa...">ON_MD5</a> class compiled correctly.</p>
+<dl class="section return"><dt>Returns</dt><dd>true All validation tests passed. false At least one validation test failed. </dd></dl>
 
 </div>
 </div>
@@ -311,7 +328,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

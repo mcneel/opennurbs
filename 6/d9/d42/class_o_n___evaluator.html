@@ -51,23 +51,32 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Abstract function with an arbitrary number of parameters and values. <a class="el" href="../../d9/d42/class_o_n___evaluator.html" title="Abstract function with an arbitrary number of parameters and values. ON_Evaluator is used to pass fun...">ON_Evaluator</a> is used to pass functions to local solvers.  
+ <a href="../../d9/d42/class_o_n___evaluator.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d2/d00/opennurbs__math_8h_source.html">opennurbs_math.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ade46238934de49cb6a91870f707381a9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#ade46238934de49cb6a91870f707381a9">ON_Evaluator</a> (int parameter_count, int value_count, const <a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a> *domain, const bool *periodic)</td></tr>
+<tr class="memdesc:ade46238934de49cb6a91870f707381a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construction of the class for a function that takes parameter_count input functions and returns value_count values. If the domain is infinite, pass a nullptr for the domain[] and periodic[] arrays. If the domain is finite, pass a domain[] array with parameter_count increasing intervals. If one or more of the parameters is periodic, pass the fundamental domain in the domain[] array and a true in the periodic[] array.  <a href="#ade46238934de49cb6a91870f707381a9">More...</a><br /></td></tr>
 <tr class="separator:ade46238934de49cb6a91870f707381a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae27f0a638112728273fde6156133d463"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#ae27f0a638112728273fde6156133d463">~ON_Evaluator</a> ()</td></tr>
 <tr class="separator:ae27f0a638112728273fde6156133d463"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b98b96b74c0d751357612989490ebb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dc7/class_o_n___interval.html">ON_Interval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#a8b98b96b74c0d751357612989490ebb0">Domain</a> (int parameter_index) const</td></tr>
+<tr class="memdesc:a8b98b96b74c0d751357612989490ebb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true.  <a href="#a8b98b96b74c0d751357612989490ebb0">More...</a><br /></td></tr>
 <tr class="separator:a8b98b96b74c0d751357612989490ebb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49026c63f638b1da01536622c6afc1bf"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#a49026c63f638b1da01536622c6afc1bf">Evaluate</a> (const double *parameters, double *values, double **jacobian)=0</td></tr>
+<tr class="memdesc:a49026c63f638b1da01536622c6afc1bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the function that takes m_parameter_count parameters and returns a m_value_count dimensional point.  <a href="#a49026c63f638b1da01536622c6afc1bf">More...</a><br /></td></tr>
 <tr class="separator:a49026c63f638b1da01536622c6afc1bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a430ebc027c6d2e7c313844092de819c7"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#a430ebc027c6d2e7c313844092de819c7">EvaluateHessian</a> (const double *parameters, double *value, double *gradient, double **hessian)</td></tr>
+<tr class="memdesc:a430ebc027c6d2e7c313844092de819c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">OPTIONAL ability to evaluate the hessian in the case when m_value_count is one. If your function has more that one value or it is not feasable to evaluate the hessian, then do not override this function. The default implementation returns -1.  <a href="#a430ebc027c6d2e7c313844092de819c7">More...</a><br /></td></tr>
 <tr class="separator:a430ebc027c6d2e7c313844092de819c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9a3f628b395c6c4d88d521e8751cc55"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#ae9a3f628b395c6c4d88d521e8751cc55">FiniteDomain</a> () const</td></tr>
+<tr class="memdesc:ae9a3f628b395c6c4d88d521e8751cc55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functions can have finite or infinite domains. Finite domains are specified by passing the domain[] array to the constructor or filling in the m_domain[] member variable. If m_domain.Count() == m_parameter_count &gt; 0, then the function has finite domains.  <a href="#ae9a3f628b395c6c4d88d521e8751cc55">More...</a><br /></td></tr>
 <tr class="separator:ae9a3f628b395c6c4d88d521e8751cc55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27be468ed93adb95e90e12a051b25cd4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d42/class_o_n___evaluator.html#a27be468ed93adb95e90e12a051b25cd4">Periodic</a> (int parameter_index) const</td></tr>
+<tr class="memdesc:a27be468ed93adb95e90e12a051b25cd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true.  <a href="#a27be468ed93adb95e90e12a051b25cd4">More...</a><br /></td></tr>
 <tr class="separator:a27be468ed93adb95e90e12a051b25cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -82,7 +91,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a61abf86c2c652d0ab38548f6eba4d482"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Abstract function with an arbitrary number of parameters and values. <a class="el" href="../../d9/d42/class_o_n___evaluator.html">ON_Evaluator</a> is used to pass functions to local solvers. </p>
+<div class="textblock"><p>Abstract function with an arbitrary number of parameters and values. <a class="el" href="../../d9/d42/class_o_n___evaluator.html" title="Abstract function with an arbitrary number of parameters and values. ON_Evaluator is used to pass fun...">ON_Evaluator</a> is used to pass functions to local solvers. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ade46238934de49cb6a91870f707381a9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ade46238934de49cb6a91870f707381a9">&#9670;&nbsp;</a></span>ON_Evaluator()</h2>
@@ -121,7 +130,17 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construction of the class for a function that takes parameter_count input functions and returns value_count values. If the domain is infinite, pass a nullptr for the domain[] and periodic[] arrays. If the domain is finite, pass a domain[] array with parameter_count increasing intervals. If one or more of the parameters is periodic, pass the fundamental domain in the domain[] array and a true in the periodic[] array. Parameters: parameter_count - [in] &gt;= 1. Number of input parameters value_count - [in] &gt;= 1. Number of output values. domain - [in] If not nullptr, then this is an array of parameter_count increasing intervals that defines the domain of the function. periodic - [in] if not nullptr, then this is an array of parameter_count bools where b[i] is true if the i-th parameter is periodic. Valid increasing finite domains must be specificed when this parameter is not nullptr. </p>
+
+<p>Construction of the class for a function that takes parameter_count input functions and returns value_count values. If the domain is infinite, pass a nullptr for the domain[] and periodic[] arrays. If the domain is finite, pass a domain[] array with parameter_count increasing intervals. If one or more of the parameters is periodic, pass the fundamental domain in the domain[] array and a true in the periodic[] array. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parameter_count</td><td>[in] &gt;= 1. Number of input parameters</td></tr>
+    <tr><td class="paramname">value_count</td><td>[in] &gt;= 1. Number of output values.</td></tr>
+    <tr><td class="paramname">domain</td><td>[in] If not nullptr, then this is an array of parameter_count increasing intervals that defines the domain of the function.</td></tr>
+    <tr><td class="paramname">periodic</td><td>[in] if not nullptr, then this is an array of parameter_count bools where b[i] is true if the i-th parameter is periodic. Valid increasing finite domains must be specificed when this parameter is not nullptr.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -166,7 +185,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true. Returns: The domain of the parameter. If the domain is infinite, the (-1.0e300, +1.0e300) is returned. </p>
+
+<p>If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true. </p>
+<dl class="section return"><dt>Returns</dt><dd>The domain of the parameter. If the domain is infinite, the (-1.0e300, +1.0e300) is returned. </dd></dl>
 
 </div>
 </div>
@@ -209,17 +230,18 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Evaluate the function that takes m_parameter_count parameters and returns a m_value_count dimensional point. Parameters: parameters - [in] array of m_parameter_count evaluation parameters values - [out] array of m_value_count function values jacobian - [out] If nullptr, simply evaluate the value of the function. If not nullptr, this is the jacobian of the function. jacobian[i][j] = j-th partial of the i-th value 0 &lt;= i &lt; m_value_count, 0 &lt;= j &lt; m_parameter_count If not nullptr, then all the memory for the jacobian is allocated, you just need to fill in the answers. Example: If f(u,v) = square of the distance from a fixed point P to a surface evaluated at (u,v), then </p><pre class="fragment">  values[0] = (S-P)o(S-P)
-  jacobian[0] = ( 2*(Du o (S-P)), 2*(Dv o (S-P)) )
-</pre><p>where S, Du, Dv = surface point and first partials evaluated at u=parameters[0], v = parameters[1].</p>
-<p>If the function takes 3 parameters, say (x,y,z), and returns two values, say f(x,y,z) and g(z,y,z), then </p><pre class="fragment">  values[0] = f(x,y,z)
-  values[1] = g(x,y,z)
 
-  jacobian[0] = (DfDx, DfDy, DfDz)
-  jacobian[1] = (DgDx, DgDy, DgDz)
-</pre><p>where dfx denotes the first partial of f with respect to x.</p>
-<p>Returns: 0 = unable to evaluate 1 = successful evaluation 2 = found answer, terminate search </p>
-
+<p>Evaluate the function that takes m_parameter_count parameters and returns a m_value_count dimensional point. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parameters</td><td>[in] array of m_parameter_count evaluation parameters</td></tr>
+    <tr><td class="paramname">values</td><td>[out] array of m_value_count function values</td></tr>
+    <tr><td class="paramname">jacobian</td><td>[out] If nullptr, simply evaluate the value of the function. If not nullptr, this is the jacobian of the function. jacobian[i][j] = j-th partial of the i-th value 0 &lt;= i &lt; m_value_count, 0 &lt;= j &lt; m_parameter_count If not nullptr, then all the memory for the jacobian is allocated, you just need to fill in the answers.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 = unable to evaluate 1 = successful evaluation 2 = found answer, terminate search </dd></dl>
+<div class="fragment"><div class="line">If f(u,v) = square of the distance from a fixed point P to a</div><div class="line">surface evaluated at (u,v), then</div><div class="line">@verbatim</div><div class="line">    values[0] = (S-P)o(S-P)</div><div class="line">    jacobian[0] = ( 2*(Du o (S-P)), 2*(Dv o (S-P)) )</div><div class="line"><span class="keyword">@end</span>verbatim</div><div class="line"></div><div class="line">where S, Du, Dv = surface point and first partials evaluated</div><div class="line">at u=parameters[0], v = parameters[1].</div><div class="line"></div><div class="line">If the <span class="keyword">function</span> takes 3 parameters, say (x,y,z), and returns</div><div class="line">two values, say f(x,y,z) and g(z,y,z), then</div><div class="line">@verbatim</div><div class="line">    values[0] = f(x,y,z)</div><div class="line">    values[1] = g(x,y,z)</div><div class="line"></div><div class="line">    jacobian[0] = (DfDx, DfDy, DfDz)</div><div class="line">    jacobian[1] = (DgDx, DgDy, DgDz)</div><div class="line"><span class="keyword">@end</span>verbatim</div><div class="line"></div><div class="line">where dfx denotes the first partial of f with respect to x.</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a430ebc027c6d2e7c313844092de819c7"></a>
@@ -267,7 +289,18 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: OPTIONAL ability to evaluate the hessian in the case when m_value_count is one. If your function has more that one value or it is not feasable to evaluate the hessian, then do not override this function. The default implementation returns -1. Parameters: parameters - [in] array of m_parameter_count evaluation parameters value - [out] value of the function (one double) gradient - [out] The gradient of the function. This is a vector of length m_parameter_count; gradient[i] is the first partial of the function with respect to the i-th parameter. hessian - [out] The hessian of the function. This is an m_parameter_count x m_parameter_count symmetric matrix: hessian[i][j] is the second partial of the function with respect to the i-th and j-th parameters. The evaluator is responsible for filling in both the upper and lower triangles. Since the matrix is symmetrix, you should do something like evaluate the upper triangle and copy the values to the lower tiangle. Returns: -1 = Hessian evaluation not available. 0 = unable to evaluate 1 = successful evaluation 2 = found answer, terminate search </p>
+
+<p>OPTIONAL ability to evaluate the hessian in the case when m_value_count is one. If your function has more that one value or it is not feasable to evaluate the hessian, then do not override this function. The default implementation returns -1. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parameters</td><td>[in] array of m_parameter_count evaluation parameters</td></tr>
+    <tr><td class="paramname">value</td><td>[out] value of the function (one double)</td></tr>
+    <tr><td class="paramname">gradient</td><td>[out] The gradient of the function. This is a vector of length m_parameter_count; gradient[i] is the first partial of the function with respect to the i-th parameter.</td></tr>
+    <tr><td class="paramname">hessian</td><td>[out] The hessian of the function. This is an m_parameter_count x m_parameter_count symmetric matrix: hessian[i][j] is the second partial of the function with respect to the i-th and j-th parameters. The evaluator is responsible for filling in both the upper and lower triangles. Since the matrix is symmetrix, you should do something like evaluate the upper triangle and copy the values to the lower tiangle.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>-1 = Hessian evaluation not available. 0 = unable to evaluate 1 = successful evaluation 2 = found answer, terminate search </dd></dl>
 
 </div>
 </div>
@@ -285,7 +318,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Functions can have finite or infinite domains. Finite domains are specified by passing the domain[] array to the constructor or filling in the m_domain[] member variable. If m_domain.Count() == m_parameter_count &gt; 0, then the function has finite domains. Returns: True if the domain of the function is finite. </p>
+
+<p>Functions can have finite or infinite domains. Finite domains are specified by passing the domain[] array to the constructor or filling in the m_domain[] member variable. If m_domain.Count() == m_parameter_count &gt; 0, then the function has finite domains. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the domain of the function is finite. </dd></dl>
 
 </div>
 </div>
@@ -304,7 +339,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true. Returns: True if the function parameter is periodic. </p>
+
+<p>If a function has a periodic parameter, then the m_domain interval for that parameter is the fundamental domain and the m_bPeriodicParameter bool for that parameter is true. A parameter is periodic if, and only if, m_domain.Count() == m_parameter_count, and m_bPeriodicParameter.Count() == m_parameter_count, and m_bPeriodicParameter[parameter_index] is true. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the function parameter is periodic. </dd></dl>
 
 </div>
 </div>
@@ -320,7 +357,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If the function has periodic parameters, then m_bPeriodicParameter[] is an array of m_parameter_count bools. If m_bPeriodicParameter[i] is true, then the i-th parameter is periodic and m_domain[i] is the fundamental domain for that parameter. </p>
 
 </div>
 </div>
@@ -335,7 +371,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If the function has a finite domain or periodic parameters, then m_domain[] is an array of m_parameter_count finite increasing intervals. </p>
 
 </div>
 </div>
@@ -350,7 +385,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Number of the function's input parameters. This number is &gt;= 1 and is specified in the constructor. </p>
 
 </div>
 </div>
@@ -365,7 +399,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Number of the function's output values. This number is &gt;= 1 and is specified in the constructor. </p>
 
 </div>
 </div>
@@ -375,7 +408,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

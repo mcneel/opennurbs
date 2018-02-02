@@ -61,8 +61,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3d1e978d437131ab54e55956963ea825"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#a3d1e978d437131ab54e55956963ea825">AllocateNgon</a> (unsigned int Vcount, unsigned int Fcount)</td></tr>
 <tr class="separator:a3d1e978d437131ab54e55956963ea825"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad563c7d182cdbae0bc573894d383fa8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#ad563c7d182cdbae0bc573894d383fa8e">CopyNgon</a> (const <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *ngon)</td></tr>
+<tr class="memdesc:ad563c7d182cdbae0bc573894d383fa8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of ngon.  <a href="#ad563c7d182cdbae0bc573894d383fa8e">More...</a><br /></td></tr>
 <tr class="separator:ad563c7d182cdbae0bc573894d383fa8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a270ed8b1b90e6a9584e12fa12ea60f76"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#a270ed8b1b90e6a9584e12fa12ea60f76">DeallocateAllNgons</a> ()</td></tr>
+<tr class="memdesc:a270ed8b1b90e6a9584e12fa12ea60f76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deallocate every n-gon managed by this allocator.  <a href="#a270ed8b1b90e6a9584e12fa12ea60f76">More...</a><br /></td></tr>
 <tr class="separator:a270ed8b1b90e6a9584e12fa12ea60f76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad02900e63dc4787316e38072597fb22b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#ad02900e63dc4787316e38072597fb22b">DeallocateNgon</a> (<a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *ngon)</td></tr>
 <tr class="separator:ad02900e63dc4787316e38072597fb22b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -130,7 +132,13 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: Vcount - [in] &gt;= 3 Fcount - [in] &gt;= 0 </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Vcount</td><td>[in] &gt;= 3</td></tr>
+    <tr><td class="paramname">Fcount</td><td>[in] &gt;= 0</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -149,7 +157,15 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns a copy of ngon. Parameters: ngon - [in] Returns: If </p>
+
+<p>Returns a copy of ngon. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ngon</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If </dd></dl>
 
 </div>
 </div>
@@ -167,7 +183,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Deallocate every n-gon managed by this allocator. </p>
+
+<p>Deallocate every n-gon managed by this allocator. </p>
 
 </div>
 </div>
@@ -186,7 +203,12 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: ngon - in] An ngon pointer value that was previously returned by this allocator's <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#a3d1e978d437131ab54e55956963ea825">AllocateNgon()</a> or <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#ad563c7d182cdbae0bc573894d383fa8e">CopyNgon()</a> function. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ngon</td><td>in] An ngon pointer value that was previously returned by this allocator's <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#a3d1e978d437131ab54e55956963ea825">AllocateNgon()</a> or <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html#ad563c7d182cdbae0bc573894d383fa8e" title="Returns a copy of ngon. ">CopyNgon()</a> function.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -221,7 +243,13 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: Vcount - [in] &gt;= 3 Fcount - [in] &gt;= 0 </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Vcount</td><td>[in] &gt;= 3</td></tr>
+    <tr><td class="paramname">Fcount</td><td>[in] &gt;= 0</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -231,7 +259,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

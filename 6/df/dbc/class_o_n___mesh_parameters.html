@@ -123,6 +123,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a71596334e34d2996341d75a573eb75a2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a71596334e34d2996341d75a573eb75a2">ON_MeshParameters</a> (const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> &amp;)=default</td></tr>
 <tr class="separator:a71596334e34d2996341d75a573eb75a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82ee975378b140c812cb154b185c0dc6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a82ee975378b140c812cb154b185c0dc6">ON_MeshParameters</a> (double density, double min_edge_length=ON_UNSET_VALUE)</td></tr>
+<tr class="memdesc:a82ee975378b140c812cb154b185c0dc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for provding a simple slider interface.  <a href="#a82ee975378b140c812cb154b185c0dc6">More...</a><br /></td></tr>
 <tr class="separator:a82ee975378b140c812cb154b185c0dc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5c4ad50ad9fd68ee9ce25ecd4ad0098"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ab5c4ad50ad9fd68ee9ce25ecd4ad0098">~ON_MeshParameters</a> ()=default</td></tr>
 <tr class="separator:ab5c4ad50ad9fd68ee9ce25ecd4ad0098"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -260,38 +261,41 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a0b8c794f19881601e41bab8565111fc1"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a0b8c794f19881601e41bab8565111fc1">Compare</a> (const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> &amp;a, const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> &amp;b)</td></tr>
 <tr class="separator:a0b8c794f19881601e41bab8565111fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35f34c090e362322a24f5145544234eb"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35f34c090e362322a24f5145544234eb">CompareGeometrySettings</a> (const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> &amp;a, const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> &amp;b)</td></tr>
+<tr class="memdesc:a35f34c090e362322a24f5145544234eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares all meshing parameters that control mesh geometry. Does not compare m_bCustomSettings, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a>, m_bComputeCurvature, m_bDoublePrecision, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#aa1fb6bfd6c6f782db84d5786f70ec29e">MinimumTolerance()</a>, m_texture_range, m_srf_domain0 and m_srf_domain1.  <a href="#a35f34c090e362322a24f5145544234eb">More...</a><br /></td></tr>
 <tr class="separator:a35f34c090e362322a24f5145544234eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3794edd6bcf92d6469e4f1952dc6865f"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae3534a8bc15e264688b12003087b3b0a">ON_MeshParameters::MESH_PARAMETER_ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3794edd6bcf92d6469e4f1952dc6865f">MeshParameterIdFromUnsigned</a> (unsigned int mesh_parameter_id_as_unsigned)</td></tr>
 <tr class="separator:a3794edd6bcf92d6469e4f1952dc6865f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50a81d93d0ae72016f1a8f6b64340e31"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a707dd7580e0141baa2585e539502e732">ON_MeshParameters::MESH_STYLE</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a50a81d93d0ae72016f1a8f6b64340e31">MeshStyleFromUnsigned</a> (unsigned int mesh_style_as_unsigned)</td></tr>
 <tr class="separator:a50a81d93d0ae72016f1a8f6b64340e31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6a6e882ba521d57b877359e999abb01"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ab6a6e882ba521d57b877359e999abb01">MinimumEdgeLengthFromTolerance</a> (double max_edge_length, double tolerance)</td></tr>
+<tr class="memdesc:ab6a6e882ba521d57b877359e999abb01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a value to use for minimum edge length base on max_edge_length and tolerance settings.  <a href="#ab6a6e882ba521d57b877359e999abb01">More...</a><br /></td></tr>
 <tr class="separator:ab6a6e882ba521d57b877359e999abb01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a417337f84a4c321db6cf47cf2e53e7b7"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a417337f84a4c321db6cf47cf2e53e7b7">ToleranceFromObjectSize</a> (double relative_tolerance, double actual_size)</td></tr>
+<tr class="memdesc:a417337f84a4c321db6cf47cf2e53e7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a value to use for tolerance based on the relative_tolerance and actual size.  <a href="#a417337f84a4c321db6cf47cf2e53e7b7">More...</a><br /></td></tr>
 <tr class="separator:a417337f84a4c321db6cf47cf2e53e7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:affa7de4ffedeccdf72c7911f7c95293d"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#affa7de4ffedeccdf72c7911f7c95293d">DefaultAnalysisMesh</a></td></tr>
+<tr class="memdesc:affa7de4ffedeccdf72c7911f7c95293d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mesh creationg parameters to create the default analysis mesh.  <a href="#affa7de4ffedeccdf72c7911f7c95293d">More...</a><br /></td></tr>
 <tr class="separator:affa7de4ffedeccdf72c7911f7c95293d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a433127d317caac08e0364b0f753735e5"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a433127d317caac08e0364b0f753735e5">DefaultMesh</a></td></tr>
+<tr class="memdesc:a433127d317caac08e0364b0f753735e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mesh creationg parameters to create the default render mesh.  <a href="#a433127d317caac08e0364b0f753735e5">More...</a><br /></td></tr>
 <tr class="separator:a433127d317caac08e0364b0f753735e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35bb295853afdf7c0a111e28ec6181d8"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8">FastRenderMesh</a></td></tr>
+<tr class="memdesc:a35bb295853afdf7c0a111e28ec6181d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mesh creationg parameters to create the a render mesh when meshing speed is prefered over mesh quality.  <a href="#a35bb295853afdf7c0a111e28ec6181d8">More...</a><br /></td></tr>
 <tr class="separator:a35bb295853afdf7c0a111e28ec6181d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9e247ad16293744998af6efbdebcbdd"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#af9e247ad16293744998af6efbdebcbdd">PangolinMesherId</a></td></tr>
 <tr class="memdesc:af9e247ad16293744998af6efbdebcbdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">{EB6F6F3F-F975-4546-9D1C-64E9423BEB7F}  <a href="#af9e247ad16293744998af6efbdebcbdd">More...</a><br /></td></tr>
 <tr class="separator:af9e247ad16293744998af6efbdebcbdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae95d9be8f85767f2e49d67567b99633f"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f">QualityRenderMesh</a></td></tr>
+<tr class="memdesc:ae95d9be8f85767f2e49d67567b99633f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mesh creationg parameters to create the a render mesh when mesh quality is prefered over meshing speed.  <a href="#ae95d9be8f85767f2e49d67567b99633f">More...</a><br /></td></tr>
 <tr class="separator:ae95d9be8f85767f2e49d67567b99633f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bc79686ef49bf8f74fb5fdc589126e8"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3bc79686ef49bf8f74fb5fdc589126e8">RhinoLegacyMesherId</a></td></tr>
 <tr class="memdesc:a3bc79686ef49bf8f74fb5fdc589126e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">surface meshing perameters  <a href="#a3bc79686ef49bf8f74fb5fdc589126e8">More...</a><br /></td></tr>
 <tr class="separator:a3bc79686ef49bf8f74fb5fdc589126e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p>Class <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> </p>
-</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ae3534a8bc15e264688b12003087b3b0a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae3534a8bc15e264688b12003087b3b0a">&#9670;&nbsp;</a></span>MESH_PARAMETER_ID</h2>
 
@@ -311,11 +315,9 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>The MESH_PARAMETER_ID enum values are used to identify mesh creation parameters. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aaedc71e1493e187ada43b5a5567868f36"></a>unspecified_mesh_parameter_id&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aaf8b18afcc0e6c6a6d4a103ad8647f5cf"></a>bComputeCurvature_parameter_id&#160;</td><td class="fielddoc"><p>BEGIN Legacy parameters. </p>
-</td></tr>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aaf8b18afcc0e6c6a6d4a103ad8647f5cf"></a>bComputeCurvature_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa0836f6b4906b3b52d6e777e0a581ed7b"></a>bSimplePlanes_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa44d127003cf1ec553797d2c2982f0b1a"></a>bRefine_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aacc767b87f815815bfd00b7ae52137a3f"></a>bJaggedSeams_parameter_id&#160;</td><td class="fielddoc"></td></tr>
@@ -336,26 +338,21 @@ Static Public Attributes</h2></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aab6e3961f7e6fa606724e5f87b60268d9"></a>face_type_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa3e6ddaeb67f96a96a79bc78c4914b201"></a>srf_domain_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa903ecf79be49b97d135a9fbcb330be7a"></a>bClosedObjectPostProcess_id&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aac2f45fa1f00885a5b90549945d8960e3"></a>mesher_id&#160;</td><td class="fielddoc"><p>END Legacy parameters. </p>
-<p>UUID parameter identifying what mesher code created the mesh. </p>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aac2f45fa1f00885a5b90549945d8960e3"></a>mesher_id&#160;</td><td class="fielddoc"><p>UUID parameter identifying what mesher code created the mesh. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aae81dbf1db56f4d354a4ffca1d3386d10"></a>crv_tess_min_num_segments_parameter_id&#160;</td><td class="fielddoc"><p>BEGIN Pangolin parameters </p>
-</td></tr>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aae81dbf1db56f4d354a4ffca1d3386d10"></a>crv_tess_min_num_segments_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aaa3266d946ec360ba6c13195179e47685"></a>crv_tess_angle_tol_in_degrees_parameter_id&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa1387a67cee2b7bd73cd91fea4a509d0a"></a>crv_tess_max_dist_between_points_parameter_id&#160;</td><td class="fielddoc"><p>Not same as 'max_edge_length_parameter_id' since 'curve_tess_max_dist_between_points' is only for curves, not surfaces. </p>
-</td></tr>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa1387a67cee2b7bd73cd91fea4a509d0a"></a>crv_tess_max_dist_between_points_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa43d2fa92f21ab52eb3ad1bee74c46918"></a>crv_tess_min_parametric_ratio_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa65f9f7bc1bfaadc390a7e192d203cbd2"></a>bEvaluatorBasedTessellation_parameter_id&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aada311ff1dbf769f911ec06f01bf64814"></a>srf_tess_chord_height_parameter_id&#160;</td><td class="fielddoc"><p>Not same as 'tolerance_parameter_id' since 'surface_tess_chord_height' is only for surfaces, not curves. </p>
-</td></tr>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aada311ff1dbf769f911ec06f01bf64814"></a>srf_tess_chord_height_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aabf3cefaebb5bdfb6f7ac62ed2a78ba37"></a>srf_tess_angle_tol_in_degrees_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa751dd0d3e0c117baa3969529bb155527"></a>srf_tess_max_edge_length_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa0d0f0d7fd629b7aac428f3bf17dcfa3c"></a>srf_tess_min_edge_length_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aae5c879a19c8754ccd02e1b780a8e2aca"></a>srf_tess_min_edge_length_ratio_uv_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aac8a9d7eb36e2292247f7a60bb2f07bd4"></a>srf_tess_max_aspect_ratio_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aacec0406dee83985cf72098fd7b43e353"></a>smoothing_passes_parameter_id&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa8e9ea37212f3bb9586aa6d6513fd2411"></a>max_mesh_parameter_id&#160;</td><td class="fielddoc"><p>END Pangolin parameters. </p>
-</td></tr>
+<tr><td class="fieldname"><a id="ae3534a8bc15e264688b12003087b3b0aa8e9ea37212f3bb9586aa6d6513fd2411"></a>max_mesh_parameter_id&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -380,17 +377,12 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732aa1d59cf5048395c6960680a9416df2d1"></a>unset_mesh_style&#160;</td><td class="fielddoc"><p>All of these enum values must be in the range 0-255 because unsigned chars are use for storage in some locations. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a9c828f1b1331835d12af8fa04b8089cc"></a>render_mesh_fast&#160;</td><td class="fielddoc"><p>Use <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8">ON_MeshParameters::FastRenderMesh</a>. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a8603fb6c558c19bbf52d81ce24b378b8"></a>render_mesh_quality&#160;</td><td class="fielddoc"><p>Use <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f">ON_MeshParameters::QualityRenderMesh</a> </p>
-</td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732aa1d59cf5048395c6960680a9416df2d1"></a>unset_mesh_style&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a9c828f1b1331835d12af8fa04b8089cc"></a>render_mesh_fast&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a8603fb6c558c19bbf52d81ce24b378b8"></a>render_mesh_quality&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a3378c2d60b9fd989d76b23287fa80649"></a>render_mesh_custom&#160;</td><td class="fielddoc"><p>3 - 8 reserved for future predefined render mesh styles </p>
-<p>Use <a class="el" href="../../dd/df2/class_o_n__3dm_settings.html#ac0fc2c7dcd58de9b1083076a2ddf4043" title="saved custom settings ">ON_3dmSettings::m_CustomRenderMeshSettings</a> </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a33e362982a236f91ffb6b9b4c05dc86f"></a>render_mesh_per_object&#160;</td><td class="fielddoc"><p>Use ON_Object::GetMeshParameters(). </p>
-</td></tr>
+<tr><td class="fieldname"><a id="a707dd7580e0141baa2585e539502e732a33e362982a236f91ffb6b9b4c05dc86f"></a>render_mesh_per_object&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -497,7 +489,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Tool for provding a simple slider interface. Parameters: density - [in] 0.0 &lt;= density &lt;= 1.0 0 quickly creates coarse meshes. 1 slowly creates dense meshes. min_edge_length - [in] &gt; 0.0 custom value ON_UNSET_VALUE: for default (0.0001) </p>
+
+<p>Tool for provding a simple slider interface. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">density</td><td>[in] 0.0 &lt;= density &lt;= 1.0 0 quickly creates coarse meshes. 1 slowly creates dense meshes.</td></tr>
+    <tr><td class="paramname">min_edge_length</td><td>[in] &gt; 0.0 custom value ON_UNSET_VALUE: for default (0.0001)</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -516,7 +516,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If the object being meshed is closed, m_bClosedObjectPostProcess is true, m_bJaggedSeams = false, and the resultig mesh is not closed, then a post meshing process is applied to find and close gaps in the mesh. Typically the resulting mesh is not closed because the input object has a geometric flaw like loops in trimming curves. </p>
 
 </div>
 </div>
@@ -589,7 +588,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Compares all meshing parameters that control mesh geometry. Does not compare m_bCustomSettings, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a>, m_bComputeCurvature, m_bDoublePrecision, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#aa1fb6bfd6c6f782db84d5786f70ec29e">MinimumTolerance()</a>, m_texture_range, m_srf_domain0 and m_srf_domain1. </p>
+
+<p>Compares all meshing parameters that control mesh geometry. Does not compare m_bCustomSettings, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a>, m_bComputeCurvature, m_bDoublePrecision, <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#aa1fb6bfd6c6f782db84d5786f70ec29e">MinimumTolerance()</a>, m_texture_range, m_srf_domain0 and m_srf_domain1. </p>
 
 </div>
 </div>
@@ -607,7 +607,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Meshing happens in two stages. The first stage creates a rectangular grid. The second stage refines the grid until the mesh meets all meshing requirements. The third stage combines coincident vertices if the resulting mesh is a composite.false - (default) - <a class="el" href="../../df/d11/class_o_n___mesh.html#a8f353770ff5fcc259d21e8a162d3e9d8" title="Implementation - curvature. ">ON_Mesh::m_K</a>[] not computed true - <a class="el" href="../../df/d11/class_o_n___mesh.html#a8f353770ff5fcc259d21e8a162d3e9d8" title="Implementation - curvature. ">ON_Mesh::m_K</a>[] computed bool <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a0193aa044696b13c8e7439611fa20ac4">ComputeCurvature() const</a>; </p>
 
 </div>
 </div>
@@ -642,9 +641,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ad891a35a5061fd1a03a683ece3f92006">CustomSettings()</a> parameter applies when these mesh creation parameters specify how an object's mesh should be created and these parameters should override the the model or application default mesh creation parameters.</p>
-<p>When <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ad891a35a5061fd1a03a683ece3f92006">CustomSettings()</a> is true, it indicates these mesh creation parameters are explictily set for the object and context in question and should override the model or application defaults.</p>
-<p>When <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ad891a35a5061fd1a03a683ece3f92006">CustomSettings()</a> is false, it indicates these mesh creation parameters were inherited from from model or application defaults and any mesh created with these parameters should be updated when these parameters differ from the current model or application defaults. </p>
 
 </div>
 </div>
@@ -662,9 +658,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a> value applies to mesh creation parameters that are on <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> and have <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ad891a35a5061fd1a03a683ece3f92006">CustomSettings()</a> = true. In this situation:</p>
-<p>If <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a> is true, then the use of these mesh creation parameters is enabled.</p>
-<p>If <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a3928e3ba3396a85fad9b7c4d488a6e2d">CustomSettingsEnabled()</a> is false, then these mesh creation parameters should be gnored. </p>
 
 </div>
 </div>
@@ -700,7 +693,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>false - (default) the mesh vertices will be float precision values in the m_V[] array. true - The mesh vertices will be double precision values in the DoublePrecisionVertices() array. Float precision values will also be returned in the m_V[] array. </p>
 
 </div>
 </div>
@@ -719,7 +711,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>C++ default works fine ///&lt; <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a71596334e34d2996341d75a573eb75a2">ON_MeshParameters(const ON_MeshParameters&amp; )</a>; C++ default works fine ///&lt; <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>&amp; <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#aeedc957c74030c11e41c4f89ba645c60">operator=(const ON_MeshParameters&amp;)</a>; </p>
 
 </div>
 </div>
@@ -737,7 +728,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>These controls are used during stage 30 = mixed triangle and quads 1 = all triangles 2 = all quads </p>
 
 </div>
 </div>
@@ -756,7 +746,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: n in the range 0 to 100, inclusive, when (0 == <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35f34c090e362322a24f5145544234eb">ON_MeshParameters::CompareGeometrySettings</a>(*this,<a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>(n/100.0)) no_match_found_result: otherwise </p>
+<dl class="section return"><dt>Returns</dt><dd>n in the range 0 to 100, inclusive, when (0 == <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35f34c090e362322a24f5145544234eb" title="Compares all meshing parameters that control mesh geometry. Does not compare m_bCustomSettings, CustomSettingsEnabled(), m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(), m_texture_range, m_srf_domain0 and m_srf_domain1. ">ON_MeshParameters::CompareGeometrySettings</a>(*this,<a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a>(n/100.0)) no_match_found_result: otherwise </dd></dl>
 
 </div>
 </div>
@@ -802,7 +792,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: ON_MeshParameters::render_mesh_fast <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8">ON_MeshParameters::FastRenderMesh</a> and this have the same geometry settings ON_MeshParameters::render_mesh_quality <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f">ON_MeshParameters::QualityRenderMesh</a> and this have the same geometry settings ON_MeshParameters::render_mesh_custom custom_mp is not null and has the same geometry settings no_match_found_result otherwise </p>
+<dl class="section return"><dt>Returns</dt><dd>ON_MeshParameters::render_mesh_fast <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a35bb295853afdf7c0a111e28ec6181d8" title="Mesh creationg parameters to create the a render mesh when meshing speed is prefered over mesh qualit...">ON_MeshParameters::FastRenderMesh</a> and this have the same geometry settings ON_MeshParameters::render_mesh_quality <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#ae95d9be8f85767f2e49d67567b99633f" title="Mesh creationg parameters to create the a render mesh when mesh quality is prefered over meshing spee...">ON_MeshParameters::QualityRenderMesh</a> and this have the same geometry settings ON_MeshParameters::render_mesh_custom custom_mp is not null and has the same geometry settings no_match_found_result otherwise </dd></dl>
 
 </div>
 </div>
@@ -820,7 +810,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The parameters above generate a grid. If you want fewer quads, set m_grid_amplification to a value &lt; 1. If you want more quads, set m_grid_amplification to a value &gt; 1. default = 1 and values &lt;= 0 are treated as 1. </p>
 
 </div>
 </div>
@@ -838,7 +827,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>maximum angle (degrees) between surface normal evaluated at adjacent vertices. 0.0 is treated as 180.0. </p>
 
 </div>
 </div>
@@ -856,7 +844,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>maximum angle (radians) between surface normal evaluated at adjacent vertices. 0.0 is treated as pi. </p>
 
 </div>
 </div>
@@ -874,7 +861,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>These controls are used during stage 1 to generate the griddesired aspect ratio of quads in grid 0.0 = any aspect ratio is acceptable values &gt;0 and &lt; sqrt(2) are treated as sqrt(2) </p>
 
 </div>
 </div>
@@ -930,7 +916,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>false - (default) edges of meshes of joined b-rep faces match with no gaps or "T" joints. true - faces in b-reps are meshed independently. This is faster but results in gaps and "T" joints along seams between faces. </p>
 
 </div>
 </div>
@@ -948,7 +933,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>edges longer than <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a9226084667fdee9f1601b693a9abfc66">MaximumEdgeLength()</a> will be split even when they meet all other meshing requirements </p>
 
 </div>
 </div>
@@ -1054,7 +1038,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>edges shorter than <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#af1c558ee2a40547a38a86ecc7beb90d7">MinimumEdgeLength()</a> will not be split even if the do not meet other meshing requirements </p>
 
 </div>
 </div>
@@ -1091,7 +1074,16 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get a value to use for minimum edge length base on max_edge_length and tolerance settings. Parameters: max_edge_length - [in] 3d maximum edge length used to create mesh. tolerance - [in] 3d distance tolerance used to create mesh. Returns: A value that can be used for m_min_edge_length if no user specified value is available. </p>
+
+<p>Get a value to use for minimum edge length base on max_edge_length and tolerance settings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">max_edge_length</td><td>[in] 3d maximum edge length used to create mesh.</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] 3d distance tolerance used to create mesh.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A value that can be used for m_min_edge_length if no user specified value is available. </dd></dl>
 
 </div>
 </div>
@@ -1170,7 +1162,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>false - skip stage 2 mesh refinement step true - (default) do stage 2 mesh refinement step </p>
 
 </div>
 </div>
@@ -1205,7 +1196,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>These controls are used during stage 2 to refine the grid(in radians) maximum angle in radians between surface normal evaluated at adjacent vertices. </p>
 
 </div>
 </div>
@@ -1223,7 +1213,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If 0.0 &lt; <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a4ab15bc06358b10f4c97e995f2e6d220">RelativeTolerance()</a> &lt; 1.0, then the maximum distance from the center of an edge to the surface will be &lt;= T, where T is the larger of (<a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#aa1fb6bfd6c6f782db84d5786f70ec29e">MinimumTolerance()</a>,d*RelativeTolerance()), where d is an esimate of the size of the object being meshed. </p>
 
 </div>
 </div>
@@ -1708,7 +1697,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>false - (default) planar surfaces are meshed using the controls below. true - planar surfaces are meshed using minimal number of triangles and aspect/edge controls are ignored. </p>
 
 </div>
 </div>
@@ -1726,8 +1714,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: SubD display mesh density. Example: Use <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> to control the density of a SubD limit mesh. <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> mp = ...; ON_Mesh* mesh = subd-&gt;GetLimitSurfaceMesh( ON_SubDDisplayParameters::CreateFromDisplayDensity( mp.SubDDisplayMeshDensity() ), nullptr ); </p>
-
+<dl class="section return"><dt>Returns</dt><dd>SubD display mesh density. </dd></dl>
+<div class="fragment"><div class="line">Use <a class="code" href="../../df/dbc/class_o_n___mesh_parameters.html">ON_MeshParameters</a> to control the density of a SubD limit mesh.</div><div class="line"><a class="code" href="../../df/dbc/class_o_n___mesh_parameters.html#a5afd5012567de9a01d8fe05be26e47b8">ON_MeshParameters</a> mp = ...;</div><div class="line"><a class="code" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a>* mesh = subd-&gt;GetLimitSurfaceMesh(</div><div class="line">    ON_SubDDisplayParameters::CreateFromDisplayDensity( mp.SubDDisplayMeshDensity() ),</div><div class="line">    <span class="keyword">nullptr</span></div><div class="line">    );</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a4dcd7efb5162093e8ddc654b8b463e71"></a>
@@ -1744,8 +1732,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>1: unpacked, unscaled, normalized each face has a normalized texture range [0,1]x[0,1]. The normalized coordinate is calculated using the entire surface domain. For meshes of trimmed surfaces when the active area is a small subset of the entire surface, there will be large regions of unsued texture space in [0,1]x[0,1]. When the 3d region being meshed is far from being sqaure-ish, there will be a substantual amount of distortion mapping [0,1]x[0,1] texture space to the 3d mesh.</p>
-<p>2: packed, scaled, normalized (default) each face is assigned a texture range that is a subrectangle of [0,1]x[0,1]. The subrectangles are mutually disjoint and packed into into [0,1]x[0,1] in a way that minimizes distortion and maximizes the coverage of [0,1]x[0,1]. When the surface or surfaces being meshed are trimmed, this option takes into account only the region of the base surface the mesh covers and uses as much of [0,1]x[0,1] as possible. unsigned int <a class="el" href="../../df/dbc/class_o_n___mesh_parameters.html#a4dcd7efb5162093e8ddc654b8b463e71">TextureRange() const</a>; </p>
 
 </div>
 </div>
@@ -1819,7 +1805,16 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get a value to use for tolerance based on the relative_tolerance and actual size. Parameters: relative_tolerance - [in] See m_relative_tolerance field actual_size - [in] Length of object's bounding box diagonal or some similar measure of the object's 3d size. Returns: A value that can be used for m_tolerance if no user specified value is available. </p>
+
+<p>Get a value to use for tolerance based on the relative_tolerance and actual size. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">relative_tolerance</td><td>[in] See m_relative_tolerance field</td></tr>
+    <tr><td class="paramname">actual_size</td><td>[in] Length of object's bounding box diagonal or some similar measure of the object's 3d size.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A value that can be used for m_tolerance if no user specified value is available. </dd></dl>
 
 </div>
 </div>
@@ -1861,7 +1856,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Mesh creationg parameters to create the default analysis mesh. </p>
+
+<p>Mesh creationg parameters to create the default analysis mesh. </p>
 
 </div>
 </div>
@@ -1884,7 +1880,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Mesh creationg parameters to create the default render mesh. </p>
+
+<p>Mesh creationg parameters to create the default render mesh. </p>
 
 </div>
 </div>
@@ -1907,7 +1904,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Mesh creationg parameters to create the a render mesh when meshing speed is prefered over mesh quality. </p>
+
+<p>Mesh creationg parameters to create the a render mesh when meshing speed is prefered over mesh quality. </p>
 
 </div>
 </div>
@@ -1954,7 +1952,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Mesh creationg parameters to create the a render mesh when mesh quality is prefered over meshing speed. </p>
+
+<p>Mesh creationg parameters to create the a render mesh when mesh quality is prefered over meshing speed. </p>
 
 </div>
 </div>
@@ -1979,7 +1978,6 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>surface meshing perameters </p>
-<p>The Rhino legacy mesher is the mesher used in Rhino 1, 2, 3, 4, 5, 6. {F15F67AA-4AF9-4B25-A3B8-517CEDDAB134} </p>
 
 </div>
 </div>
@@ -1989,7 +1987,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

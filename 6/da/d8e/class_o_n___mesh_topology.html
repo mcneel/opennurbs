@@ -64,6 +64,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9e9a32d4c3787065b3564a4cf65e0511"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a9e9a32d4c3787065b3564a4cf65e0511">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const</td></tr>
 <tr class="separator:a9e9a32d4c3787065b3564a4cf65e0511"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61f1ef18bd957168b073d2dfd0dce584"><td class="memItemLeft" align="right" valign="top">int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a61f1ef18bd957168b073d2dfd0dce584">GetIntArray</a> (int count)</td></tr>
+<tr class="memdesc:a61f1ef18bd957168b073d2dfd0dce584"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user function for efficiently getting the integer arrays used by the <a class="el" href="../../de/d65/struct_o_n___mesh_topology_vertex.html">ON_MeshTopologyVertex</a> and <a class="el" href="../../d6/d17/struct_o_n___mesh_topology_edge.html">ON_MeshTopologyEdge</a> classes.  <a href="#a61f1ef18bd957168b073d2dfd0dce584">More...</a><br /></td></tr>
 <tr class="separator:a61f1ef18bd957168b073d2dfd0dce584"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab165c20d651e6877f97bb02dc1d53255"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#ab165c20d651e6877f97bb02dc1d53255">GetTopFaceVertices</a> (int topfi, int topvi[4]) const</td></tr>
 <tr class="separator:ab165c20d651e6877f97bb02dc1d53255"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -76,8 +77,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a71337b0946ee1a799f72656142992da2"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a71337b0946ee1a799f72656142992da2">NgonIndexFromTopologyVertexIndex</a> (unsigned int topvi, const unsigned int *mesh_facedex_to_ngondex_map) const</td></tr>
 <tr class="separator:a71337b0946ee1a799f72656142992da2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeca0c893d61e4163c80301cdd3a408f9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#aeca0c893d61e4163c80301cdd3a408f9">SortVertexEdges</a> (int topvi) const</td></tr>
+<tr class="memdesc:aeca0c893d61e4163c80301cdd3a408f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sort the m_topei[] list of a mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call. Parameter: topvi - [in] index of vertex in m_topv[] array.  <a href="#aeca0c893d61e4163c80301cdd3a408f9">More...</a><br /></td></tr>
 <tr class="separator:aeca0c893d61e4163c80301cdd3a408f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a616cd3b398ffc645c4a39aa39e213c0e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a616cd3b398ffc645c4a39aa39e213c0e">SortVertexEdges</a> () const</td></tr>
+<tr class="memdesc:a616cd3b398ffc645c4a39aa39e213c0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sort the m_topei[] list of every mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call.  <a href="#a616cd3b398ffc645c4a39aa39e213c0e">More...</a><br /></td></tr>
 <tr class="separator:a616cd3b398ffc645c4a39aa39e213c0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27d7b3966b8e94b20277400050acebe2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a27d7b3966b8e94b20277400050acebe2">TopEdge</a> (int vtopi0, int vtopi1) const</td></tr>
 <tr class="separator:a27d7b3966b8e94b20277400050acebe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -85,20 +88,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a28d6dcdef86b790c72d8e060d5aef982"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of topoligical edges  <a href="#a28d6dcdef86b790c72d8e060d5aef982">More...</a><br /></td></tr>
 <tr class="separator:a28d6dcdef86b790c72d8e060d5aef982"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9220ececa11b7e26dd15d0ee20bfdac9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a9220ececa11b7e26dd15d0ee20bfdac9">TopEdgeIsHidden</a> (int topei) const</td></tr>
+<tr class="memdesc:a9220ececa11b7e26dd15d0ee20bfdac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the topological edge is hidden.  <a href="#a9220ececa11b7e26dd15d0ee20bfdac9">More...</a><br /></td></tr>
 <tr class="separator:a9220ececa11b7e26dd15d0ee20bfdac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2406da2a2356ff4b86f6dfa680c2d7f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a2406da2a2356ff4b86f6dfa680c2d7f0">TopEdgeLine</a> (int tope_index) const</td></tr>
+<tr class="memdesc:a2406da2a2356ff4b86f6dfa680c2d7f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the 3d line along an edge.  <a href="#a2406da2a2356ff4b86f6dfa680c2d7f0">More...</a><br /></td></tr>
 <tr class="separator:a2406da2a2356ff4b86f6dfa680c2d7f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ec7c39c0ea0d8a9a91622f09a0512bc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a3ec7c39c0ea0d8a9a91622f09a0512bc">TopFaceCount</a> () const</td></tr>
 <tr class="memdesc:a3ec7c39c0ea0d8a9a91622f09a0512bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of topoligical faces (same as m_mesh.FaceCount())  <a href="#a3ec7c39c0ea0d8a9a91622f09a0512bc">More...</a><br /></td></tr>
 <tr class="separator:a3ec7c39c0ea0d8a9a91622f09a0512bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9836ca785a5a0c99df153ce121504932"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a9836ca785a5a0c99df153ce121504932">TopFaceIsHidden</a> (int topfi) const</td></tr>
+<tr class="memdesc:a9836ca785a5a0c99df153ce121504932"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the topological face is hidden.  <a href="#a9836ca785a5a0c99df153ce121504932">More...</a><br /></td></tr>
 <tr class="separator:a9836ca785a5a0c99df153ce121504932"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac56b6a8f656b1e7e53967ee90549f016"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#ac56b6a8f656b1e7e53967ee90549f016">TopVertexCount</a> () const</td></tr>
 <tr class="memdesc:ac56b6a8f656b1e7e53967ee90549f016"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of topoligical vertices (&lt;= m_mesh.VertexCount())  <a href="#ac56b6a8f656b1e7e53967ee90549f016">More...</a><br /></td></tr>
 <tr class="separator:ac56b6a8f656b1e7e53967ee90549f016"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8869fab93617fd9b5243710b143d11f2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a8869fab93617fd9b5243710b143d11f2">TopVertexIsHidden</a> (int topvi) const</td></tr>
+<tr class="memdesc:a8869fab93617fd9b5243710b143d11f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the topological vertex is hidden.  <a href="#a8869fab93617fd9b5243710b143d11f2">More...</a><br /></td></tr>
 <tr class="separator:a8869fab93617fd9b5243710b143d11f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b0e645c7e31edfd60a298b6567c722f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a3b0e645c7e31edfd60a298b6567c722f">TopVertexPoint</a> (int topv_index) const</td></tr>
+<tr class="memdesc:a3b0e645c7e31edfd60a298b6567c722f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the 3d point location of a vertex.  <a href="#a3b0e645c7e31edfd60a298b6567c722f">More...</a><br /></td></tr>
 <tr class="separator:a3b0e645c7e31edfd60a298b6567c722f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -135,7 +143,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>A mesh topology class is always associated with an <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> and can be retrieved by calling <a class="el" href="../../df/d11/class_o_n___mesh.html#af24a886d37eb19d3525530480e1f18e7">ON_Mesh::Topology()</a> </p>
 
 </div>
 </div>
@@ -190,7 +197,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Expert user function for efficiently getting the integer arrays used by the <a class="el" href="../../de/d65/struct_o_n___mesh_topology_vertex.html">ON_MeshTopologyVertex</a> and <a class="el" href="../../d6/d17/struct_o_n___mesh_topology_edge.html">ON_MeshTopologyEdge</a> classes. Parameters: count - [in] number of integers in array Returns: pointer to integer array. The array memory will be freed by <a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a6c182f5ce12a9587b6d9c4f9a6bc11fa">~ON_MeshTopology()</a> </p>
+
+<p>Expert user function for efficiently getting the integer arrays used by the <a class="el" href="../../de/d65/struct_o_n___mesh_topology_vertex.html">ON_MeshTopologyVertex</a> and <a class="el" href="../../d6/d17/struct_o_n___mesh_topology_edge.html">ON_MeshTopologyEdge</a> classes. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] number of integers in array</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to integer array. The array memory will be freed by <a class="el" href="../../da/d8e/class_o_n___mesh_topology.html#a6c182f5ce12a9587b6d9c4f9a6bc11fa">~ON_MeshTopology()</a> </dd></dl>
 
 </div>
 </div>
@@ -219,14 +234,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>returns <a class="el" href="../../da/d8e/class_o_n___mesh_topology.html">ON_MeshTopology</a> vertex topology index of a face corner. The face is triangle iv TopFaceVertex(2) = TopFaceVertex(3) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">topfi</td><td><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html">ON_MeshTopology</a> face topology index (= <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> face index) </td></tr>
-    <tr><td class="paramname">topvi</td><td><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html">ON_MeshTopology</a> vertex indices returned here </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -290,7 +297,14 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: topei - [in] Topology edge index mesh_facedex_to_ngondex_map - [in] If null, Mesh().NgonMap() will be used. In cases where Mesh().NgonMap() does not exist and cannot be created, an expert user may pass in a local map that converts a face index into an ngon index. Returns: If the vertex is interior to a single ngon, then the index of the ngon is returned. Otherwise ON_UNSET_UINT_INDEX is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topei</td><td>[in] Topology edge index</td></tr>
+    <tr><td class="paramname">mesh_facedex_to_ngondex_map</td><td>[in] If null, Mesh().NgonMap() will be used. In cases where Mesh().NgonMap() does not exist and cannot be created, an expert user may pass in a local map that converts a face index into an ngon index.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the vertex is interior to a single ngon, then the index of the ngon is returned. Otherwise ON_UNSET_UINT_INDEX is returned. </dd></dl>
 
 </div>
 </div>
@@ -319,7 +333,14 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: topvi - [in] Topology vertex index mesh_facedex_to_ngondex_map - [in] If null, Mesh().NgonMap() will be used. In cases where Mesh().NgonMap() does not exist and cannot be created, an expert user may pass in a local map that converts a face index into an ngon index. Returns: If the vertex is interior to a single ngon, then the index of the ngon is returned. Otherwise ON_UNSET_UINT_INDEX is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topvi</td><td>[in] Topology vertex index</td></tr>
+    <tr><td class="paramname">mesh_facedex_to_ngondex_map</td><td>[in] If null, Mesh().NgonMap() will be used. In cases where Mesh().NgonMap() does not exist and cannot be created, an expert user may pass in a local map that converts a face index into an ngon index.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the vertex is interior to a single ngon, then the index of the ngon is returned. Otherwise ON_UNSET_UINT_INDEX is returned. </dd></dl>
 
 </div>
 </div>
@@ -338,7 +359,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sort the m_topei[] list of a mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call. Parameter: topvi - [in] index of vertex in m_topv[] array. Remarks: A nonmanifold edge is treated as a boundary edge with respect to sorting. If any boundary or nonmanifold edges end at the vertex, then the first edge will be a boundary or nonmanifold edge. </p>
+
+<p>Sort the m_topei[] list of a mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call. Parameter: topvi - [in] index of vertex in m_topv[] array. </p>
+<p>A nonmanifold edge is treated as a boundary edge with respect to sorting. If any boundary or nonmanifold edges end at the vertex, then the first edge will be a boundary or nonmanifold edge. </p>
 
 </div>
 </div>
@@ -356,7 +379,9 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sort the m_topei[] list of every mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call. Remarks: Same as for ( int topvi = 0; topvi &lt; m_topv.Count(); topvi++ ) SortVertexEdges(topvi); </p>
+
+<p>Sort the m_topei[] list of every mesh topology vertex so that the edges are in radial order. The "const" is a white lie to make this function easier to call. </p>
+<p>Same as for ( int topvi = 0; topvi &lt; m_topv.Count(); topvi++ ) SortVertexEdges(topvi); </p>
 
 </div>
 </div>
@@ -385,13 +410,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>returns index of edge that connects topological vertices returns -1 if no edge is found. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">vtopi1</td><td><a class="el" href="../../da/d8e/class_o_n___mesh_topology.html">ON_MeshTopology</a> vertex topology indices </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -429,7 +447,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns true if the topological edge is hidden. Parameters: topei - [in] mesh topology edge index. Returns: True if mesh topology edge is hidden. Remarks: The mesh topology edge is hidden if and only if either of its mesh topology vertices is hidden. </p>
+
+<p>Returns true if the topological edge is hidden. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topei</td><td>[in] mesh topology edge index.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if mesh topology edge is hidden. </dd></dl>
+<p>The mesh topology edge is hidden if and only if either of its mesh topology vertices is hidden. </p>
 
 </div>
 </div>
@@ -448,7 +475,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the 3d line along an edge. Parameters: tope_index - [in]; Returns: Line along edge. If input is not valid, the line.from and to are <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a> </p>
+
+<p>Get the 3d line along an edge. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tope_index</td><td>[in];</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Line along edge. If input is not valid, the line.from and to are <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d">ON_3dPoint::UnsetPoint</a> </dd></dl>
 
 </div>
 </div>
@@ -486,7 +521,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns true if the topological face is hidden. Parameters: topfi - [in] mesh topology face index. Returns: True if mesh topology face is hidden. Remarks: The mesh topology face is hidden if and only if any of its mesh topology edges are hidden. </p>
+
+<p>Returns true if the topological face is hidden. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topfi</td><td>[in] mesh topology face index.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if mesh topology face is hidden. </dd></dl>
+<p>The mesh topology face is hidden if and only if any of its mesh topology edges are hidden. </p>
 
 </div>
 </div>
@@ -524,7 +568,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns true if the topological vertex is hidden. Parameters: topvi - [in] mesh topology vertex index. Returns: True if mesh topology vertex is hidden. Remarks: The mesh topology vertex is hidden if and only if all the <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> vertices it represents is hidden. </p>
+
+<p>Returns true if the topological vertex is hidden. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topvi</td><td>[in] mesh topology vertex index.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if mesh topology vertex is hidden. </dd></dl>
+<p>The mesh topology vertex is hidden if and only if all the <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> vertices it represents is hidden. </p>
 
 </div>
 </div>
@@ -543,7 +596,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the 3d point location of a vertex. Parameters: topv_index - [in]; Returns: Location of vertex. </p>
+
+<p>Get the 3d point location of a vertex. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topv_index</td><td>[in];</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Location of vertex. </dd></dl>
 
 </div>
 </div>
@@ -598,7 +659,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Array of topological mesh edges. See the comments in the definition of <a class="el" href="../../d6/d17/struct_o_n___mesh_topology_edge.html">ON_MeshTopologyEdge</a> for details. </p>
 
 </div>
 </div>
@@ -613,7 +673,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Array of topological mesh faces. The topological face m_topf[fi] corresponds to the mesh face <a class="el" href="../../df/d11/class_o_n___mesh.html#a005e7e4b0f04014c289264e06e496450" title="m_F[] facets (triangles or quads) ">ON_Mesh.m_F</a>[fi]. See the comments in the definition of <a class="el" href="../../dc/dd9/struct_o_n___mesh_topology_face.html">ON_MeshTopologyFace</a> for details. To get the indices of the mesh topology vertices at the face corners use topvi = m_topv_map[m_mesh.m_F[fi].vi[n]] </p>
 
 </div>
 </div>
@@ -628,7 +687,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Array of topological mesh vertices. See the comments in the definition of <a class="el" href="../../de/d65/struct_o_n___mesh_topology_vertex.html">ON_MeshTopologyVertex</a> for details. </p>
 
 </div>
 </div>
@@ -643,7 +701,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_topv_map[] has length m_mesh.VertexCount() and m_topv[m_topv_map[vi]] is the topological mesh vertex that is assocated the with the mesh vertex m_mesh.m_V[vi]. </p>
 
 </div>
 </div>
@@ -653,7 +710,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

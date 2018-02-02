@@ -93,6 +93,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6fe38afcab7a7919a9833f09dc6afb4e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc1/class_o_n___localizer.html#a6fe38afcab7a7919a9833f09dc6afb4e">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;)</td></tr>
 <tr class="separator:a6fe38afcab7a7919a9833f09dc6afb4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0258c1bebd81077fe146eab334979fff"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc1/class_o_n___localizer.html#a0258c1bebd81077fe146eab334979fff">Value</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P) const</td></tr>
+<tr class="memdesc:a0258c1bebd81077fe146eab334979fff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluators.  <a href="#a0258c1bebd81077fe146eab334979fff">More...</a><br /></td></tr>
 <tr class="separator:a0258c1bebd81077fe146eab334979fff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20d6acde51720762040a2be681000695"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc1/class_o_n___localizer.html#a20d6acde51720762040a2be681000695">Value</a> (double distance) const</td></tr>
 <tr class="separator:a20d6acde51720762040a2be681000695"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -230,11 +231,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Descrption: Creates a cylindrical localizer. If d = distance from the point to the line, then the localizer has the following behavior:</p>
-<p>point distance localizer value d &lt;= r0 &lt; r1 or d &gt;= r0 &gt; r1 0 d &gt;= r1 &gt; r0 or d &lt;= r1 &lt; r0 1</p>
-<p>For values of d between r0 and r1, the localizer smoothly transitions between 0 to 1.</p>
-<p>Parameters: P - [in] cylinder axis point D - [in] cylinder axis direction r0 - [in] r1 - [in] r0 and r1 are radii that control where the localizer is nonzero. Both r0 and r1 must be postive and the cannot be equal. If 0 &lt; r0 &lt; r1, then the localizer is zero for points inside the cylinder of radius r0 and one for points outside the cylinder of radius r1. If 0 &lt; r1 &lt; r0, then the localizer is one for points inside the cylinder of radius r1 and zero for points outside the cylinder of radius r0.</p>
-<p>Returns: True if the input is value and the localizer is initialized. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] cylinder axis point</td></tr>
+    <tr><td class="paramname">D</td><td>[in] cylinder axis direction</td></tr>
+    <tr><td class="paramname">r0</td><td>[in]</td></tr>
+    <tr><td class="paramname">r1</td><td>[in] r0 and r1 are radii that control where the localizer is nonzero. Both r0 and r1 must be postive and the cannot be equal. If 0 &lt; r0 &lt; r1, then the localizer is zero for points inside the cylinder of radius r0 and one for points outside the cylinder of radius r1. If 0 &lt; r1 &lt; r0, then the localizer is one for points inside the cylinder of radius r1 and zero for points outside the cylinder of radius r0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the input is value and the localizer is initialized. </dd></dl>
 
 </div>
 </div>
@@ -275,11 +281,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Descrption: Creates a planar localizer. If d = signed distance from the point to the plane, then the localizer has the following behavior:</p>
-<p>point distance localizer value d &lt;= h0 &lt; h1 or d &gt;= h0 &gt; h1 0 d &gt;= h1 &gt; h0 or d &lt;= h1 &lt; h0 1</p>
-<p>For values of d between h0 and h1, the localizer smoothly transitions between 0 to 1.</p>
-<p>Parameters: P - [in] point on plane N - [in] normal to plane h0 - [in] h1 - [in] h0 and h1 are signed distances that control where the localizer is nonzero.</p>
-<p>Returns: True if the input is value and the localizer is initialized. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point on plane</td></tr>
+    <tr><td class="paramname">N</td><td>[in] normal to plane</td></tr>
+    <tr><td class="paramname">h0</td><td>[in]</td></tr>
+    <tr><td class="paramname">h1</td><td>[in] h0 and h1 are signed distances that control where the localizer is nonzero. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the input is value and the localizer is initialized. </dd></dl>
 
 </div>
 </div>
@@ -314,11 +325,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Descrption: Creates a spherical localizer. If d = distance from the point to the center of the sphere, then the localizer has the following behavior:</p>
-<p>point distance localizer value d &lt;= r0 &lt; r1 or d &gt;= r0 &gt; r1 0 d &gt;= r1 &gt; r0 or d &lt;= r1 &lt; r0 1</p>
-<p>For values of d between r0 and r1, the localizer smoothly transitions between 0 to 1.</p>
-<p>Parameters: P - [in] center of sphere r0 - [in] r1 - [in] r0 and r1 are radii that control where the localizer is nonzero. Both r0 and r1 must be postive and the cannot be equal. If 0 &lt; r0 &lt; r1, then the localizer is zero for points inside the cylinder of radius r0 and one for points outside the cylinder of radius r1. If 0 &lt; r1 &lt; r0, then the localizer is one for points inside the cylinder of radius r1 and zero for points outside the cylinder of radius r0.</p>
-<p>Returns: True if the input is value and the localizer is initialized. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] center of sphere</td></tr>
+    <tr><td class="paramname">r0</td><td>[in]</td></tr>
+    <tr><td class="paramname">r1</td><td>[in] r0 and r1 are radii that control where the localizer is nonzero. Both r0 and r1 must be postive and the cannot be equal. If 0 &lt; r0 &lt; r1, then the localizer is zero for points inside the cylinder of radius r0 and one for points outside the cylinder of radius r1. If 0 &lt; r1 &lt; r0, then the localizer is one for points inside the cylinder of radius r1 and zero for points outside the cylinder of radius r0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the input is value and the localizer is initialized. </dd></dl>
 
 </div>
 </div>
@@ -354,7 +369,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bbox - [in] Returns: True if localizer is identically zero inside bbox. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bbox</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if localizer is identically zero inside bbox. </dd></dl>
 
 </div>
 </div>
@@ -409,7 +430,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Evaluators. Parameters: P - [in] Evaluation point distance - [in] Evaluation distance Returns: Value of the localizer. </p>
+
+<p>Evaluators. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] Evaluation point</td></tr>
+    <tr><td class="paramname">distance</td><td>[in] Evaluation distance</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Value of the localizer. </dd></dl>
 
 </div>
 </div>
@@ -540,7 +570,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

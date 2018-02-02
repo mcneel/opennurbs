@@ -75,8 +75,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a89728f57e90f0d01cc57f6b8c7b9362b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a89728f57e90f0d01cc57f6b8c7b9362b">ClipPlaneTolerance</a> () const</td></tr>
 <tr class="separator:a89728f57e90f0d01cc57f6b8c7b9362b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18f80972a9f7827ccfba03d703dcdec4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a18f80972a9f7827ccfba03d703dcdec4">GetLineClipPlaneParamters</a> (<a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> P0, <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> P1, double *t0, double *t1) const</td></tr>
+<tr class="memdesc:a18f80972a9f7827ccfba03d703dcdec4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the interval for the segment of a line that is in the clip plane region.  <a href="#a18f80972a9f7827ccfba03d703dcdec4">More...</a><br /></td></tr>
 <tr class="separator:a18f80972a9f7827ccfba03d703dcdec4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a192cffa87dae29b2a87eab52d307786a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a192cffa87dae29b2a87eab52d307786a">InClipPlaneRegion</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P) const</td></tr>
+<tr class="memdesc:a192cffa87dae29b2a87eab52d307786a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The "clip plane region" is the convex hull of the planes in the m_clip_plane[] array. These functions determine if some portion of the convex hull of the test points is inside the clip plane region.  <a href="#a192cffa87dae29b2a87eab52d307786a">More...</a><br /></td></tr>
 <tr class="separator:a192cffa87dae29b2a87eab52d307786a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ca741216e2eac2f40d7df6fd31f9d77"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a6ca741216e2eac2f40d7df6fd31f9d77">InClipPlaneRegion</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const</td></tr>
 <tr class="separator:a6ca741216e2eac2f40d7df6fd31f9d77"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -89,6 +91,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a155acc9a6ab7d5611c684545469215a3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a155acc9a6ab7d5611c684545469215a3">InverseObjectToClipTransformation</a> () const</td></tr>
 <tr class="separator:a155acc9a6ab7d5611c684545469215a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2c500c3046db968860745ea85d769d7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#ae2c500c3046db968860745ea85d769d7">InViewFrustum</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P) const</td></tr>
+<tr class="memdesc:ae2c500c3046db968860745ea85d769d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The "view frustum" is the frustum the m_xform transformation maps to clipping coordinate box (-1,+1)^3. These functions determine if some portion of the convex hull of the test points is inside the view frustum.  <a href="#ae2c500c3046db968860745ea85d769d7">More...</a><br /></td></tr>
 <tr class="separator:ae2c500c3046db968860745ea85d769d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad96cf966c69362395d0ce987fd479545"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#ad96cf966c69362395d0ce987fd479545">InViewFrustum</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const</td></tr>
 <tr class="separator:ad96cf966c69362395d0ce987fd479545"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -99,6 +102,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae83f89849669b70db2e2e4a2f9fe3bec"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#ae83f89849669b70db2e2e4a2f9fe3bec">InViewFrustum</a> (int count, const <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> *p) const</td></tr>
 <tr class="separator:ae83f89849669b70db2e2e4a2f9fe3bec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9934f1372ed3d54944e4acda50018442"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a9934f1372ed3d54944e4acda50018442">IsVisible</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> P) const</td></tr>
+<tr class="memdesc:a9934f1372ed3d54944e4acda50018442"><td class="mdescLeft">&#160;</td><td class="mdescRight">The "visible area" is the intersection of the view frustum, defined by m_xform, and the clipping region, defined by the m_clip_plane[] array. These functions determing if some portion of the convex hull of the test points is visible.  <a href="#a9934f1372ed3d54944e4acda50018442">More...</a><br /></td></tr>
 <tr class="separator:a9934f1372ed3d54944e4acda50018442"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a978a5f37c2ddccec2b345f179d6f3316"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a978a5f37c2ddccec2b345f179d6f3316">IsVisible</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox) const</td></tr>
 <tr class="separator:a978a5f37c2ddccec2b345f179d6f3316"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -113,16 +117,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5f04d3bc8093b56b9d14e58490635c82"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a5f04d3bc8093b56b9d14e58490635c82">SetClipPlaneTolerance</a> (double clip_plane_tolerance)</td></tr>
 <tr class="separator:a5f04d3bc8093b56b9d14e58490635c82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a999410da26abca6a31fe8da9875679db"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a999410da26abca6a31fe8da9875679db">SetObjectToClipTransformation</a> (const class <a class="el" href="../../d4/deb/class_o_n___viewport.html">ON_Viewport</a> &amp;viewport)</td></tr>
+<tr class="memdesc:a999410da26abca6a31fe8da9875679db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the object to clip transformation to the viewport's workd to clip transformation.  <a href="#a999410da26abca6a31fe8da9875679db">More...</a><br /></td></tr>
 <tr class="separator:a999410da26abca6a31fe8da9875679db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8ab28dc3dcf8a18e3b964365c8d3f00"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#af8ab28dc3dcf8a18e3b964365c8d3f00">SetObjectToClipTransformation</a> (const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> object_to_clip_transformation)</td></tr>
 <tr class="separator:af8ab28dc3dcf8a18e3b964365c8d3f00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02c3fabe9f78cb4b1bde47247be2609a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a02c3fabe9f78cb4b1bde47247be2609a">TransformPoint</a> (const <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> &amp;P, <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> &amp;Q) const</td></tr>
+<tr class="memdesc:a02c3fabe9f78cb4b1bde47247be2609a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transform a pont and return the clipping information.  <a href="#a02c3fabe9f78cb4b1bde47247be2609a">More...</a><br /></td></tr>
 <tr class="separator:a02c3fabe9f78cb4b1bde47247be2609a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6174e6843533d817350ee03507b173f6"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a6174e6843533d817350ee03507b173f6">TransformPoint</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;P, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;Q) const</td></tr>
 <tr class="separator:a6174e6843533d817350ee03507b173f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1363176e7e0d5f8304e85f3fc4ce8e13"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a1363176e7e0d5f8304e85f3fc4ce8e13">TransformPoint</a> (const <a class="el" href="../../d0/dec/class_o_n__3f_point.html">ON_3fPoint</a> &amp;P, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;Q) const</td></tr>
 <tr class="separator:a1363176e7e0d5f8304e85f3fc4ce8e13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a639c50ec392c32dbd600e114fe0ef016"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a639c50ec392c32dbd600e114fe0ef016">TransformPoints</a> (int count, <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> *p) const</td></tr>
+<tr class="memdesc:a639c50ec392c32dbd600e114fe0ef016"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transform a list of 4d homogenous points while testing for visibility.  <a href="#a639c50ec392c32dbd600e114fe0ef016">More...</a><br /></td></tr>
 <tr class="separator:a639c50ec392c32dbd600e114fe0ef016"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2c5fd9b30d26a67ade5da3abde85426"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#aa2c5fd9b30d26a67ade5da3abde85426">TransformPoints</a> (int count, <a class="el" href="../../d9/db1/class_o_n__4d_point.html">ON_4dPoint</a> *p, unsigned int *pflags) const</td></tr>
 <tr class="separator:aa2c5fd9b30d26a67ade5da3abde85426"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -132,7 +139,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a3f02f975bf398cc464f11f0e27264495"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#a3f02f975bf398cc464f11f0e27264495">m_clip_plane</a> [<a class="el" href="../../da/db3/class_o_n___clipping_region.html#a630cfb58f6cb4c81050a174f2caf3822a0705e8187649b87a60fde84e06781d5a">max_clip_plane_count</a>]</td></tr>
 <tr class="separator:a3f02f975bf398cc464f11f0e27264495"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeeaac7ec9af8658fc46660240418c645"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/db3/class_o_n___clipping_region.html#aeeaac7ec9af8658fc46660240418c645">m_clip_plane_count</a></td></tr>
-<tr class="memdesc:aeeaac7ec9af8658fc46660240418c645"><td class="mdescLeft">&#160;</td><td class="mdescRight">(0 &lt;= m_clip_plane_count &lt;= max_clip_plane_count)  <a href="#aeeaac7ec9af8658fc46660240418c645">More...</a><br /></td></tr>
 <tr class="separator:aeeaac7ec9af8658fc46660240418c645"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -148,8 +154,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a630cfb58f6cb4c81050a174f2caf3822a0705e8187649b87a60fde84e06781d5a"></a>max_clip_plane_count&#160;</td><td class="fielddoc"><p>must be &lt;= 25 </p>
-</td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a630cfb58f6cb4c81050a174f2caf3822a0705e8187649b87a60fde84e06781d5a"></a>max_clip_plane_count&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a630cfb58f6cb4c81050a174f2caf3822a6b9cd52921539546fec38665ae2de156"></a>frustum_bitmask&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a630cfb58f6cb4c81050a174f2caf3822af840e1d73fdb263a72f879bdb30e97df"></a>near_plane_bitmask&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a630cfb58f6cb4c81050a174f2caf3822abd966df581aa9f44b812de87e3013706"></a>far_plane_bitmask&#160;</td><td class="fielddoc"></td></tr>
@@ -192,7 +197,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 3d world coordinates tolerance to use when testing objects to see if the planes in m_clip_plane[] hide the objects. Remarks: The constructor sets this value to zero. Rhino uses values around 1e-5. </p>
+<dl class="section return"><dt>Returns</dt><dd>3d world coordinates tolerance to use when testing objects to see if the planes in m_clip_plane[] hide the objects. </dd></dl>
+<p>The constructor sets this value to zero. Rhino uses values around 1e-5. </p>
 
 </div>
 </div>
@@ -233,7 +239,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calculate the interval for the segment of a line that is in the clip plane region. Parameters: P0 - [in] start point P1 - [in] end point t0 - [out] start parameter t1 - [out] end parameter Returns: True if some portion of the line is visible and 0.0 &lt;= *t0 &lt;= *t1 &lt;= 1.0. </p>
+
+<p>Calculate the interval for the segment of a line that is in the clip plane region. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P0</td><td>[in] start point</td></tr>
+    <tr><td class="paramname">P1</td><td>[in] end point</td></tr>
+    <tr><td class="paramname">t0</td><td>[out] start parameter</td></tr>
+    <tr><td class="paramname">t1</td><td>[out] end parameter</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if some portion of the line is visible and 0.0 &lt;= *t0 &lt;= *t1 &lt;= 1.0. </dd></dl>
 
 </div>
 </div>
@@ -252,7 +269,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The "clip plane region" is the convex hull of the planes in the m_clip_plane[] array. These functions determine if some portion of the convex hull of the test points is inside the clip plane region. Parameters: P - [in] point box - [in] bounding box count - [in] number of points p - [in] array of points bEnableClippingPlanes - [in] If true, then the additional clipping planes are tested. If false, then the additional clipping planes are ignored. Returns: 0 = No part of the of the convex hull of the tested points is in the clip plane region. 1 = A portion of the convex hull of the tested points may be in the clip plane region. 2 = The entire convex hull of the tested points is in the clip plane region. </p>
+
+<p>The "clip plane region" is the convex hull of the planes in the m_clip_plane[] array. These functions determine if some portion of the convex hull of the test points is inside the clip plane region. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point</td></tr>
+    <tr><td class="paramname">box</td><td>[in] bounding box</td></tr>
+    <tr><td class="paramname">count</td><td>[in] number of points</td></tr>
+    <tr><td class="paramname">p</td><td>[in] array of points</td></tr>
+    <tr><td class="paramname">bEnableClippingPlanes</td><td>[in] If true, then the additional clipping planes are tested. If false, then the additional clipping planes are ignored.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 = No part of the of the convex hull of the tested points is in the clip plane region. 1 = A portion of the convex hull of the tested points may be in the clip plane region. 2 = The entire convex hull of the tested points is in the clip plane region. </dd></dl>
 
 </div>
 </div>
@@ -390,7 +419,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The "view frustum" is the frustum the m_xform transformation maps to clipping coordinate box (-1,+1)^3. These functions determine if some portion of the convex hull of the test points is inside the view frustum. Parameters: P - [in] point box - [in] bounding box count - [in] number of points p - [in] array of points bEnableClippingPlanes - [in] If true, then the additional clipping planes are tested. If false, then the additional clipping planes are ignored. Returns: 0 = No part of the of the convex hull of the tested points is in the view frustum. 1 = A portion of the convex hull of the otested points may be in the view frustum. 2 = The entire convex hull of the tested points is in the view frustum. </p>
+
+<p>The "view frustum" is the frustum the m_xform transformation maps to clipping coordinate box (-1,+1)^3. These functions determine if some portion of the convex hull of the test points is inside the view frustum. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point</td></tr>
+    <tr><td class="paramname">box</td><td>[in] bounding box</td></tr>
+    <tr><td class="paramname">count</td><td>[in] number of points</td></tr>
+    <tr><td class="paramname">p</td><td>[in] array of points</td></tr>
+    <tr><td class="paramname">bEnableClippingPlanes</td><td>[in] If true, then the additional clipping planes are tested. If false, then the additional clipping planes are ignored.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 = No part of the of the convex hull of the tested points is in the view frustum. 1 = A portion of the convex hull of the otested points may be in the view frustum. 2 = The entire convex hull of the tested points is in the view frustum. </dd></dl>
 
 </div>
 </div>
@@ -511,7 +552,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The "visible area" is the intersection of the view frustum, defined by m_xform, and the clipping region, defined by the m_clip_plane[] array. These functions determing if some portion of the convex hull of the test points is visible. Parameters: P - [in] point box - [in] bounding box count - [in] number of points p - [in] array of points Returns: 0 = no part of the object is in the region. 1 = a portion of the object is in the region 2 = entire object is in clipping region </p>
+
+<p>The "visible area" is the intersection of the view frustum, defined by m_xform, and the clipping region, defined by the m_clip_plane[] array. These functions determing if some portion of the convex hull of the test points is visible. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point</td></tr>
+    <tr><td class="paramname">box</td><td>[in] bounding box</td></tr>
+    <tr><td class="paramname">count</td><td>[in] number of points</td></tr>
+    <tr><td class="paramname">p</td><td>[in] array of points</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 = no part of the object is in the region. 1 = a portion of the object is in the region 2 = entire object is in clipping region </dd></dl>
 
 </div>
 </div>
@@ -649,7 +701,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: clip_plane_tolerance - [in] 3d world coordinates tolerance to use when testing objects to see if the planes in m_clip_plane[] hide the objects. Remarks: The constructor sets this value to zero. Rhino uses values around 1e-5. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">clip_plane_tolerance</td><td>[in] 3d world coordinates tolerance to use when testing objects to see if the planes in m_clip_plane[] hide the objects.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The constructor sets this value to zero. Rhino uses values around 1e-5. </p>
 
 </div>
 </div>
@@ -668,7 +726,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the object to clip transformation to the viewport's workd to clip transformation. </p>
+
+<p>Sets the object to clip transformation to the viewport's workd to clip transformation. </p>
 
 </div>
 </div>
@@ -715,9 +774,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Transform a pont and return the clipping information. Parameters: P - [in] point ot transform Q - [out] transformed point Returns: 0 when the point is in the visible region. Otherwise the bits are set to indicate which planes clip the intput point. 0x01 left of the view frusturm 0x02 right of the view frustum 0x04 below the view frustum 0x08 above the view frustum 0x10 behind the view frustum (too far) 0x20 in front of the view frustum (too near)</p>
+
+<p>Transform a pont and return the clipping information. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in] point ot transform</td></tr>
+    <tr><td class="paramname">Q</td><td>[out] transformed point</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">0 when the point is in the visible region. Otherwise the bits are set to indicate which planes clip the intput point. 0x01 left of the view frusturm 0x02 right of the view frustum 0x04 below the view frustum 0x08 above the view frustum 0x10 behind the view frustum (too far) 0x20 in front of the view frustum (too near)</p>
 <p>0x10 below m_clip_plane[0] 0x20 below m_clip_plane[1] ... 0x40000000 below m_clip_plane[24]</p>
-<p>0x80000000 transformation created a non-positive weight </p>
+<p class="enddd">0x80000000 transformation created a non-positive weight </p>
+</dd></dl>
 
 </div>
 </div>
@@ -802,9 +871,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Transform a list of 4d homogenous points while testing for visibility. Parameters: count - [in] number of points p - [in/out] array of points to test and transform If 0 is returned, some of the points may not be transformed. In all other cases, the output points are transformed by m_xform. pflags - [out] 0 when the point is in the visible region. Otherwise the bits are set to indicate which planes clip the intput point. 0x01 left of the view frusturm 0x02 right of the view frustum 0x04 below the view frustum 0x08 above the view frustum 0x10 behind the view frustum (too far) 0x20 in front of the view frustum (too near)</p>
+
+<p>Transform a list of 4d homogenous points while testing for visibility. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] number of points</td></tr>
+    <tr><td class="paramname">p</td><td>[in/out] array of points to test and transform If 0 is returned, some of the points may not be transformed. In all other cases, the output points are transformed by m_xform.</td></tr>
+    <tr><td class="paramname">pflags</td><td>[out] 0 when the point is in the visible region. Otherwise the bits are set to indicate which planes clip the intput point. 0x01 left of the view frusturm 0x02 right of the view frustum 0x04 below the view frustum 0x08 above the view frustum 0x10 behind the view frustum (too far) 0x20 in front of the view frustum (too near)</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>0x10 below m_clip_plane[0] 0x20 below m_clip_plane[1] ... 0x40000000 below m_clip_plane[24]</p>
-<p>0x80000000 transformation created a non-positive weight Returns: 0 = convex hull of the points is not in the region. The m_cull_bits field reports which plane or planes culled the point set. 1 = a portion of the convex hull is in the region. The m_cull_bits field reports which plane or planes culled the point set. 2 = all points are in the region. The m_cull_bits field will be zero. </p>
+<p>0x80000000 transformation created a non-positive weight</p>
+<dl class="section return"><dt>Returns</dt><dd>0 = convex hull of the points is not in the region. The m_cull_bits field reports which plane or planes culled the point set. 1 = a portion of the convex hull is in the region. The m_cull_bits field reports which plane or planes culled the point set. 2 = all points are in the region. The m_cull_bits field will be zero. </dd></dl>
 
 </div>
 </div>
@@ -869,9 +948,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>(0 &lt;= m_clip_plane_count &lt;= max_clip_plane_count) </p>
-<p>Up to 25 additional clipping planes in object coordinates. The convex region that is the intersection of the positive side of these planes is the active region. </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -880,7 +956,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

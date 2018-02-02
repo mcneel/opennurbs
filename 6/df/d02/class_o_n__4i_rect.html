@@ -131,15 +131,11 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a9f5f0a1e435ef70eb74112b0a2d0536c"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d02/class_o_n__4i_rect.html#a9f5f0a1e435ef70eb74112b0a2d0536c">Unset</a></td></tr>
-<tr class="memdesc:a9f5f0a1e435ef70eb74112b0a2d0536c"><td class="mdescLeft">&#160;</td><td class="mdescRight">(ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX)  <a href="#a9f5f0a1e435ef70eb74112b0a2d0536c">More...</a><br /></td></tr>
 <tr class="separator:a9f5f0a1e435ef70eb74112b0a2d0536c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93c4a5addb9b7549d21ce9d33ba0a37f"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d02/class_o_n__4i_rect.html#a93c4a5addb9b7549d21ce9d33ba0a37f">Zero</a></td></tr>
-<tr class="memdesc:a93c4a5addb9b7549d21ce9d33ba0a37f"><td class="mdescLeft">&#160;</td><td class="mdescRight">(0,0,0,0)  <a href="#a93c4a5addb9b7549d21ce9d33ba0a37f">More...</a><br /></td></tr>
 <tr class="separator:a93c4a5addb9b7549d21ce9d33ba0a37f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Class <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a> For those situations where a Windows SDK RECT or MFC CRect value needs to be used in code that does not link with MFC. If you want a traditional bounding box, use ON_2dBoundingBox. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a0aed415c8601a4291a1e3bb3b5485be4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0aed415c8601a4291a1e3bb3b5485be4">&#9670;&nbsp;</a></span>ON_4iRect() <span class="overload">[1/5]</span></h2>
 
@@ -162,7 +158,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Default construction intentionally leaves x and y uninitialized. Use something like <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a> pt(1,2,3,4); or <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a> pt = <a class="el" href="../../df/d02/class_o_n__4i_rect.html#a93c4a5addb9b7549d21ce9d33ba0a37f" title="(0,0,0,0) ">ON_4iRect::Zero</a>; when you need an initialized <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a>. </p>
 
 </div>
 </div>
@@ -570,7 +565,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if none of left, top, right, or bottom is set to ON_UNSET_INT_INDEX </p>
+<dl class="section return"><dt>Returns</dt><dd>true if none of left, top, right, or bottom is set to ON_UNSET_INT_INDEX </dd></dl>
 
 </div>
 </div>
@@ -588,7 +583,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: true if all of left, top, right, and bottom are set to 0. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if all of left, top, right, and bottom are set to 0. </dd></dl>
 
 </div>
 </div>
@@ -890,7 +885,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>NOTE WELL: Windows 2d integer device coordinates have a strong y-down bias and it is common for top &lt; bottom. General 2d bounding boxes have a strong lower &lt; upper / min &lt; max bias. Take care when converting between <a class="el" href="../../dd/d25/class_o_n__2i_bounding_box.html">ON_2iBoundingBox</a> and <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a>. It is intentional that no automatic conversion between bounding box and <a class="el" href="../../df/d02/class_o_n__4i_rect.html">ON_4iRect</a> is supplied because each case must be carefully considered. </p>
 
 </div>
 </div>
@@ -942,8 +936,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>(ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX) </p>
-
 </div>
 </div>
 <a id="a93c4a5addb9b7549d21ce9d33ba0a37f"></a>
@@ -966,8 +958,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>(0,0,0,0) </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -976,7 +966,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

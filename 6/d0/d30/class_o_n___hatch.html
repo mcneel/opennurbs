@@ -58,8 +58,8 @@ Inheritance diagram for ON_Hatch:</div>
  <div class="center">
   <img src="../../d0/d30/class_o_n___hatch.png" usemap="#ON_5FHatch_map" alt=""/>
   <map id="ON_5FHatch_map" name="ON_5FHatch_map">
-<area href="../../df/de0/class_o_n___geometry.html" alt="ON_Geometry" shape="rect" coords="0,56,92,80"/>
-<area href="../../d9/d7b/class_o_n___object.html" alt="ON_Object" shape="rect" coords="0,0,92,24"/>
+<area href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common..." alt="ON_Geometry" shape="rect" coords="0,56,92,80"/>
+<area href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D..." alt="ON_Object" shape="rect" coords="0,0,92,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -73,74 +73,98 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0abedb8bd6618338b5923451484dae40"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a0abedb8bd6618338b5923451484dae40">~ON_Hatch</a> ()</td></tr>
 <tr class="separator:a0abedb8bd6618338b5923451484dae40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6afee77b818dffcf7932034c69de787d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a6afee77b818dffcf7932034c69de787d">AddLoop</a> (<a class="el" href="../../db/dca/class_o_n___hatch_loop.html">ON_HatchLoop</a> *loop)</td></tr>
+<tr class="memdesc:a6afee77b818dffcf7932034c69de787d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a loop to the hatch  <a href="#a6afee77b818dffcf7932034c69de787d">More...</a><br /></td></tr>
 <tr class="separator:a6afee77b818dffcf7932034c69de787d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a53a4362ff69b6e64927e57d42dd1ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a0a53a4362ff69b6e64927e57d42dd1ec">BasePoint</a> () const</td></tr>
+<tr class="memdesc:a0a53a4362ff69b6e64927e57d42dd1ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return 3d WCS point that lies on hatch's plane used for pattern origin.  <a href="#a0a53a4362ff69b6e64927e57d42dd1ec">More...</a><br /></td></tr>
 <tr class="separator:a0a53a4362ff69b6e64927e57d42dd1ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c6ad7c369315d40322a5ecb8c1ea5fe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a4c6ad7c369315d40322a5ecb8c1ea5fe">BasePoint2d</a> () const</td></tr>
+<tr class="memdesc:a4c6ad7c369315d40322a5ecb8c1ea5fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return 2d ECS point used for pattern origin.  <a href="#a4c6ad7c369315d40322a5ecb8c1ea5fe">More...</a><br /></td></tr>
 <tr class="separator:a4c6ad7c369315d40322a5ecb8c1ea5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cf66b0ac24697a652983cf33ccece74"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a0cf66b0ac24697a652983cf33ccece74">BrepForm</a> (class <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> *brep=nullptr) const override</td></tr>
+<tr class="memdesc:a0cf66b0ac24697a652983cf33ccece74"><td class="mdescLeft">&#160;</td><td class="mdescRight">If possible, <a class="el" href="../../d0/d30/class_o_n___hatch.html#a0cf66b0ac24697a652983cf33ccece74" title="If possible, BrepForm() creates a brep form of the ON_Geometry. ">BrepForm()</a> creates a brep form of the <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a>.  <a href="#a0cf66b0ac24697a652983cf33ccece74">More...</a><br /></td></tr>
 <tr class="separator:a0cf66b0ac24697a652983cf33ccece74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08ea5fcaf4bfa846673fa38ddc241f8a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a08ea5fcaf4bfa846673fa38ddc241f8a">Create</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane, const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; const <a class="el" href="../../d4/d5a/class_o_n___curve.html">ON_Curve</a> *&gt; loops, int pattern_index, double pattern_rotation, double pattern_scale)</td></tr>
 <tr class="memdesc:a08ea5fcaf4bfa846673fa38ddc241f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface.  <a href="#a08ea5fcaf4bfa846673fa38ddc241f8a">More...</a><br /></td></tr>
 <tr class="separator:a08ea5fcaf4bfa846673fa38ddc241f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7007cfebc3465c0c841d28c04854ed0a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a7007cfebc3465c0c841d28c04854ed0a">Dimension</a> () const override</td></tr>
-<tr class="memdesc:a7007cfebc3465c0c841d28c04854ed0a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> overrides.  <a href="#a7007cfebc3465c0c841d28c04854ed0a">More...</a><br /></td></tr>
+<tr class="memdesc:a7007cfebc3465c0c841d28c04854ed0a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> overrides ////////////////////////////////////////////////////////////// Returns the geometric dimension of the object ( usually 3)  <a href="#a7007cfebc3465c0c841d28c04854ed0a">More...</a><br /></td></tr>
 <tr class="separator:a7007cfebc3465c0c841d28c04854ed0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad895ec79e3072cbacf8267512fd62371"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#ad895ec79e3072cbacf8267512fd62371">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const override</td></tr>
+<tr class="memdesc:ad895ec79e3072cbacf8267512fd62371"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a text dump of the object.  <a href="#ad895ec79e3072cbacf8267512fd62371">More...</a><br /></td></tr>
 <tr class="separator:ad895ec79e3072cbacf8267512fd62371"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3db6a6ec652b0aeea9d4a3fa8047a449"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a3db6a6ec652b0aeea9d4a3fa8047a449">DuplicateHatch</a> () const</td></tr>
 <tr class="separator:a3db6a6ec652b0aeea9d4a3fa8047a449"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa94f57a39b476619ec63c438952f8d73"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#aa94f57a39b476619ec63c438952f8d73">GetBBox</a> (double *boxmin, double *boxmax, bool bGrowBox=false) const override</td></tr>
-<tr class="memdesc:aa94f57a39b476619ec63c438952f8d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> GetBBox override  <a href="#aa94f57a39b476619ec63c438952f8d73">More...</a><br /></td></tr>
+<tr class="memdesc:aa94f57a39b476619ec63c438952f8d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> GetBBox override  <a href="#aa94f57a39b476619ec63c438952f8d73">More...</a><br /></td></tr>
 <tr class="separator:aa94f57a39b476619ec63c438952f8d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae234cca69b80a3e1f33873b1d15acbee"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#ae234cca69b80a3e1f33873b1d15acbee">GetTightBoundingBox</a> (class <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;tight_bbox, bool bGrowBox=false, const class <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> *xform=nullptr) const override</td></tr>
-<tr class="memdesc:ae234cca69b80a3e1f33873b1d15acbee"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> GetTightBoundingBox override  <a href="#ae234cca69b80a3e1f33873b1d15acbee">More...</a><br /></td></tr>
+<tr class="memdesc:ae234cca69b80a3e1f33873b1d15acbee"><td class="mdescLeft">&#160;</td><td class="mdescRight">virtual <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> GetTightBoundingBox override  <a href="#ae234cca69b80a3e1f33873b1d15acbee">More...</a><br /></td></tr>
 <tr class="separator:ae234cca69b80a3e1f33873b1d15acbee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49fc4f7c24383e68726fc3baf0e249f0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a49fc4f7c24383e68726fc3baf0e249f0">InsertLoop</a> (int index, <a class="el" href="../../db/dca/class_o_n___hatch_loop.html">ON_HatchLoop</a> *loop)</td></tr>
+<tr class="memdesc:a49fc4f7c24383e68726fc3baf0e249f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a loop to the hatch at the specified index  <a href="#a49fc4f7c24383e68726fc3baf0e249f0">More...</a><br /></td></tr>
 <tr class="separator:a49fc4f7c24383e68726fc3baf0e249f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a279017bfca4922b6a743dec0babff905"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a279017bfca4922b6a743dec0babff905">IsValid</a> (class <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log=nullptr) const override</td></tr>
-<tr class="memdesc:a279017bfca4922b6a743dec0babff905"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> overrides.  <a href="#a279017bfca4922b6a743dec0babff905">More...</a><br /></td></tr>
+<tr class="memdesc:a279017bfca4922b6a743dec0babff905"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> overrides.  <a href="#a279017bfca4922b6a743dec0babff905">More...</a><br /></td></tr>
 <tr class="separator:a279017bfca4922b6a743dec0babff905"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacc04b3e12f19e7b21fe9fd6935d3d6c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../db/dca/class_o_n___hatch_loop.html">ON_HatchLoop</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#aacc04b3e12f19e7b21fe9fd6935d3d6c">Loop</a> (int index) const</td></tr>
+<tr class="memdesc:aacc04b3e12f19e7b21fe9fd6935d3d6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the loop at index  <a href="#aacc04b3e12f19e7b21fe9fd6935d3d6c">More...</a><br /></td></tr>
 <tr class="separator:aacc04b3e12f19e7b21fe9fd6935d3d6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34a51c514bb6caa00e1daf252ff99dc3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a34a51c514bb6caa00e1daf252ff99dc3">LoopCount</a> () const</td></tr>
+<tr class="memdesc:a34a51c514bb6caa00e1daf252ff99dc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of loops used by this hatch  <a href="#a34a51c514bb6caa00e1daf252ff99dc3">More...</a><br /></td></tr>
 <tr class="separator:a34a51c514bb6caa00e1daf252ff99dc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afad66e1e8240856003790331893b67ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d5a/class_o_n___curve.html">ON_Curve</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#afad66e1e8240856003790331893b67ac">LoopCurve3d</a> (int index) const</td></tr>
+<tr class="memdesc:afad66e1e8240856003790331893b67ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the 3d curve corresponding to loop[index]  <a href="#afad66e1e8240856003790331893b67ac">More...</a><br /></td></tr>
 <tr class="separator:afad66e1e8240856003790331893b67ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15501f594f5fcfd5175328f2826493e4"><td class="memItemLeft" align="right" valign="top">ON::object_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a15501f594f5fcfd5175328f2826493e4">ObjectType</a> () const override</td></tr>
+<tr class="memdesc:a15501f594f5fcfd5175328f2826493e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on.  <a href="#a15501f594f5fcfd5175328f2826493e4">More...</a><br /></td></tr>
 <tr class="separator:a15501f594f5fcfd5175328f2826493e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea9891f8f7b8899500749b2f0e358696"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#aea9891f8f7b8899500749b2f0e358696">operator=</a> (const <a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> &amp;)</td></tr>
 <tr class="separator:aea9891f8f7b8899500749b2f0e358696"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44a0e622c5d1f33856b355cf8edf5eaf"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a44a0e622c5d1f33856b355cf8edf5eaf">PatternIndex</a> () const</td></tr>
+<tr class="memdesc:a44a0e622c5d1f33856b355cf8edf5eaf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the index of the hatch's pattern  <a href="#a44a0e622c5d1f33856b355cf8edf5eaf">More...</a><br /></td></tr>
 <tr class="separator:a44a0e622c5d1f33856b355cf8edf5eaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af810164205590a77e9f326e05d3b6bd2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#af810164205590a77e9f326e05d3b6bd2">PatternRotation</a> () const</td></tr>
+<tr class="memdesc:af810164205590a77e9f326e05d3b6bd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the rotation applied to the hatch pattern when it is mapped to the hatch's plane  <a href="#af810164205590a77e9f326e05d3b6bd2">More...</a><br /></td></tr>
 <tr class="separator:af810164205590a77e9f326e05d3b6bd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac90a0b825709b93e06549e82cd3586ba"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#ac90a0b825709b93e06549e82cd3586ba">PatternScale</a> () const</td></tr>
+<tr class="memdesc:ac90a0b825709b93e06549e82cd3586ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the scale applied to the hatch pattern when it is mapped to the hatch's plane  <a href="#ac90a0b825709b93e06549e82cd3586ba">More...</a><br /></td></tr>
 <tr class="separator:ac90a0b825709b93e06549e82cd3586ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7964a63616e97555f6a37a56ae8d666d"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a7964a63616e97555f6a37a56ae8d666d">Plane</a> () const</td></tr>
+<tr class="memdesc:a7964a63616e97555f6a37a56ae8d666d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the plane defining the hatch's coordinate system  <a href="#a7964a63616e97555f6a37a56ae8d666d">More...</a><br /></td></tr>
 <tr class="separator:a7964a63616e97555f6a37a56ae8d666d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20f6a4af55073270f96b01d29a61a6fd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a20f6a4af55073270f96b01d29a61a6fd">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;) override</td></tr>
+<tr class="memdesc:a20f6a4af55073270f96b01d29a61a6fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a>.  <a href="#a20f6a4af55073270f96b01d29a61a6fd">More...</a><br /></td></tr>
 <tr class="separator:a20f6a4af55073270f96b01d29a61a6fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62bb692a19471308ca10c0727cc40a92"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a62bb692a19471308ca10c0727cc40a92">RemoveLoop</a> (int index)</td></tr>
+<tr class="memdesc:a62bb692a19471308ca10c0727cc40a92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a loop in the hatch  <a href="#a62bb692a19471308ca10c0727cc40a92">More...</a><br /></td></tr>
 <tr class="separator:a62bb692a19471308ca10c0727cc40a92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d32d50bbbc1a8ee47a93a422080c140"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a4d32d50bbbc1a8ee47a93a422080c140">ReplaceLoops</a> (<a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; const <a class="el" href="../../d4/d5a/class_o_n___curve.html">ON_Curve</a> *&gt; &amp;loops)</td></tr>
+<tr class="memdesc:a4d32d50bbbc1a8ee47a93a422080c140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all of the loops on the hatch and add the curves in 'loops' as new loops  <a href="#a4d32d50bbbc1a8ee47a93a422080c140">More...</a><br /></td></tr>
 <tr class="separator:a4d32d50bbbc1a8ee47a93a422080c140"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a816744bd57a8c16f81bb26ed06dd9942"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a816744bd57a8c16f81bb26ed06dd9942">SetBasePoint</a> (<a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> basepoint)</td></tr>
-<tr class="memdesc:a816744bd57a8c16f81bb26ed06dd9942"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basepoint functions added March 23, 2008 -LW.  <a href="#a816744bd57a8c16f81bb26ed06dd9942">More...</a><br /></td></tr>
+<tr class="memdesc:a816744bd57a8c16f81bb26ed06dd9942"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set 2d Base point for hatch pattern alignment.  <a href="#a816744bd57a8c16f81bb26ed06dd9942">More...</a><br /></td></tr>
 <tr class="separator:a816744bd57a8c16f81bb26ed06dd9942"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a280e8e5608ae39178f4235b9999268d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a280e8e5608ae39178f4235b9999268d6">SetBasePoint</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> point)</td></tr>
+<tr class="memdesc:a280e8e5608ae39178f4235b9999268d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set 3d Base point for hatch pattern alignment.  <a href="#a280e8e5608ae39178f4235b9999268d6">More...</a><br /></td></tr>
 <tr class="separator:a280e8e5608ae39178f4235b9999268d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0de868701c0a4339578b8f18223a36ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a0de868701c0a4339578b8f18223a36ca">SetPatternIndex</a> (int index)</td></tr>
+<tr class="memdesc:a0de868701c0a4339578b8f18223a36ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the index of the hatch's pattern  <a href="#a0de868701c0a4339578b8f18223a36ca">More...</a><br /></td></tr>
 <tr class="separator:a0de868701c0a4339578b8f18223a36ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa75a00ea3f7c071f955fbb197c0feaf3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#aa75a00ea3f7c071f955fbb197c0feaf3">SetPatternRotation</a> (double rotation)</td></tr>
+<tr class="memdesc:aa75a00ea3f7c071f955fbb197c0feaf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the rotation applied to the hatch pattern when it is mapped to the hatch's plane  <a href="#aa75a00ea3f7c071f955fbb197c0feaf3">More...</a><br /></td></tr>
 <tr class="separator:aa75a00ea3f7c071f955fbb197c0feaf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc7d413d0c4c4c49363a1c5a85bbf604"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#acc7d413d0c4c4c49363a1c5a85bbf604">SetPatternScale</a> (double scale)</td></tr>
+<tr class="memdesc:acc7d413d0c4c4c49363a1c5a85bbf604"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scale applied to the hatch pattern when it is mapped to the hatch's plane  <a href="#acc7d413d0c4c4c49363a1c5a85bbf604">More...</a><br /></td></tr>
 <tr class="separator:acc7d413d0c4c4c49363a1c5a85bbf604"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1de62d3bfea7329f4eb30434c9decd19"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a1de62d3bfea7329f4eb30434c9decd19">SetPlane</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane)</td></tr>
+<tr class="memdesc:a1de62d3bfea7329f4eb30434c9decd19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the plane defining the hatch's coordinate system  <a href="#a1de62d3bfea7329f4eb30434c9decd19">More...</a><br /></td></tr>
 <tr class="separator:a1de62d3bfea7329f4eb30434c9decd19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24506502cba24b5c8bbaa7767b204d09"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a24506502cba24b5c8bbaa7767b204d09">Transform</a> (const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;) override</td></tr>
+<tr class="memdesc:a24506502cba24b5c8bbaa7767b204d09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transform the object by a 4x4 xform matrix  <a href="#a24506502cba24b5c8bbaa7767b204d09">More...</a><br /></td></tr>
 <tr class="separator:a24506502cba24b5c8bbaa7767b204d09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73e5a59c152cc5aa049cfe0d546deb18"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d30/class_o_n___hatch.html#a73e5a59c152cc5aa049cfe0d546deb18">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;) const override</td></tr>
+<tr class="memdesc:a73e5a59c152cc5aa049cfe0d546deb18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a>.  <a href="#a73e5a59c152cc5aa049cfe0d546deb18">More...</a><br /></td></tr>
 <tr class="separator:a73e5a59c152cc5aa049cfe0d546deb18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_o_n___geometry"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_o_n___geometry')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a></td></tr>
 <tr class="memitem:a65226d33b1c8c1e8289e37073566c953 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a65226d33b1c8c1e8289e37073566c953">ON_Geometry</a> ()=default</td></tr>
@@ -150,34 +174,47 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4f2ca447610c622f3530944c764a3a67 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a4f2ca447610c622f3530944c764a3a67">~ON_Geometry</a> ()=default</td></tr>
 <tr class="separator:a4f2ca447610c622f3530944c764a3a67 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1acdd7f0c350da696b402a9ac5edce0 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#ab1acdd7f0c350da696b402a9ac5edce0">BoundingBox</a> () const</td></tr>
+<tr class="memdesc:ab1acdd7f0c350da696b402a9ac5edce0 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get object's 3d axis aligned bounding box.  <a href="../../df/de0/class_o_n___geometry.html#ab1acdd7f0c350da696b402a9ac5edce0">More...</a><br /></td></tr>
 <tr class="separator:ab1acdd7f0c350da696b402a9ac5edce0 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8dfbd8534986bbd327a6ad812e374be inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#af8dfbd8534986bbd327a6ad812e374be">ClearBoundingBox</a> ()</td></tr>
+<tr class="memdesc:af8dfbd8534986bbd327a6ad812e374be inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Some objects cache bounding box information. If you modify an object, then call <a class="el" href="../../df/de0/class_o_n___geometry.html#af8dfbd8534986bbd327a6ad812e374be" title="Some objects cache bounding box information. If you modify an object, then call ClearBoundingBox() to...">ClearBoundingBox()</a> to inform the object that any cached bounding boxes are invalid.  <a href="../../df/de0/class_o_n___geometry.html#af8dfbd8534986bbd327a6ad812e374be">More...</a><br /></td></tr>
 <tr class="separator:af8dfbd8534986bbd327a6ad812e374be inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20e5d1aeada9545127329a8699c702b9 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual ON_COMPONENT_INDEX&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a20e5d1aeada9545127329a8699c702b9">ComponentIndex</a> () const</td></tr>
+<tr class="memdesc:a20e5d1aeada9545127329a8699c702b9 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">If this piece of geometry is a component in something larger, like an <a class="el" href="../../dd/de8/class_o_n___brep_edge.html" title="Brep edge information is stored in ON_BrepEdge classes. ON_Brep.m_E[] is an array of all the edges in...">ON_BrepEdge</a> in an <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a>, then this function returns the component index.  <a href="../../df/de0/class_o_n___geometry.html#a20e5d1aeada9545127329a8699c702b9">More...</a><br /></td></tr>
 <tr class="separator:a20e5d1aeada9545127329a8699c702b9 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcb646d6ca698c092b73f2f05373bfc2 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#adcb646d6ca698c092b73f2f05373bfc2">EvaluatePoint</a> (const class <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> &amp;objref, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;P) const</td></tr>
+<tr class="memdesc:adcb646d6ca698c092b73f2f05373bfc2 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the location of a point from the object reference.  <a href="../../df/de0/class_o_n___geometry.html#adcb646d6ca698c092b73f2f05373bfc2">More...</a><br /></td></tr>
 <tr class="separator:adcb646d6ca698c092b73f2f05373bfc2 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7259b0a7e7c663e55345788411352075 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a7259b0a7e7c663e55345788411352075">GetBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox, bool bGrowBox=false) const</td></tr>
+<tr class="memdesc:a7259b0a7e7c663e55345788411352075 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get object's 3d axis aligned bounding box or the union of the input box with the object's bounding box.  <a href="../../df/de0/class_o_n___geometry.html#a7259b0a7e7c663e55345788411352075">More...</a><br /></td></tr>
 <tr class="separator:a7259b0a7e7c663e55345788411352075 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac123c564ea7a43c4406ac78954cf5266 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#ac123c564ea7a43c4406ac78954cf5266">GetBoundingBox</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;bbox_min, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;bbox_max, bool bGrowBox=false) const</td></tr>
+<tr class="memdesc:ac123c564ea7a43c4406ac78954cf5266 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get corners of object's 3d axis aligned bounding box or the union of the input box with the object's bounding box.  <a href="../../df/de0/class_o_n___geometry.html#ac123c564ea7a43c4406ac78954cf5266">More...</a><br /></td></tr>
 <tr class="separator:ac123c564ea7a43c4406ac78954cf5266 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84b28eb33d34c71913b9cd16f8ecab50 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a84b28eb33d34c71913b9cd16f8ecab50">HasBrepForm</a> () const</td></tr>
+<tr class="memdesc:a84b28eb33d34c71913b9cd16f8ecab50 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query an object to see if it has an <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> form. Result: Returns true if the virtual <a class="el" href="../../df/de0/class_o_n___geometry.html#aeb8d6122b6285e4ab819fa50bd442c23" title="If possible, BrepForm() creates a brep form of the ON_Geometry. ">ON_Geometry::BrepForm</a> can compute an <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> representation of this object.  <a href="../../df/de0/class_o_n___geometry.html#a84b28eb33d34c71913b9cd16f8ecab50">More...</a><br /></td></tr>
 <tr class="separator:a84b28eb33d34c71913b9cd16f8ecab50 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af156cd098b9e68fab5f32e76b1e274e2 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#af156cd098b9e68fab5f32e76b1e274e2">IsDeformable</a> () const</td></tr>
 <tr class="separator:af156cd098b9e68fab5f32e76b1e274e2 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3d5cb708edca66a4a6c1992299329a3 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#ac3d5cb708edca66a4a6c1992299329a3">MakeDeformable</a> ()</td></tr>
+<tr class="memdesc:ac3d5cb708edca66a4a6c1992299329a3 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">If possible, converts the object into a form that can be accuratly modified with "squishy" transformations like projections, shears, an non-uniform scaling.  <a href="../../df/de0/class_o_n___geometry.html#ac3d5cb708edca66a4a6c1992299329a3">More...</a><br /></td></tr>
 <tr class="separator:ac3d5cb708edca66a4a6c1992299329a3 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a071e7617820ea38c40f4b3966e7daee0 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a071e7617820ea38c40f4b3966e7daee0">operator=</a> (const <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> &amp;)=default</td></tr>
 <tr class="separator:a071e7617820ea38c40f4b3966e7daee0 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c8306ab6d43886453a056160429bc0a inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a3c8306ab6d43886453a056160429bc0a">Rotate</a> (double sin_angle, double cos_angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;rotation_axis, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;rotation_center)</td></tr>
+<tr class="memdesc:a3c8306ab6d43886453a056160429bc0a inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rotates the object about the specified axis. A positive rotation angle results in a counter-clockwise rotation about the axis (right hand rule).  <a href="../../df/de0/class_o_n___geometry.html#a3c8306ab6d43886453a056160429bc0a">More...</a><br /></td></tr>
 <tr class="separator:a3c8306ab6d43886453a056160429bc0a inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af49629d8d427ee579d9b28c1e25818e0 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#af49629d8d427ee579d9b28c1e25818e0">Rotate</a> (double rotation_angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;rotation_axis, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;rotation_center)</td></tr>
+<tr class="memdesc:af49629d8d427ee579d9b28c1e25818e0 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rotates the object about the specified axis. A positive rotation angle results in a counter-clockwise rotation about the axis (right hand rule).  <a href="../../df/de0/class_o_n___geometry.html#af49629d8d427ee579d9b28c1e25818e0">More...</a><br /></td></tr>
 <tr class="separator:af49629d8d427ee579d9b28c1e25818e0 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b847d6dcda412468ab59f06328b2619 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a1b847d6dcda412468ab59f06328b2619">Scale</a> (double scale_factor)</td></tr>
+<tr class="memdesc:a1b847d6dcda412468ab59f06328b2619 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scales the object by the specified facotor. The scale is centered at the origin.  <a href="../../df/de0/class_o_n___geometry.html#a1b847d6dcda412468ab59f06328b2619">More...</a><br /></td></tr>
 <tr class="separator:a1b847d6dcda412468ab59f06328b2619 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a737d7b1433104a39298629931e899cd4 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a737d7b1433104a39298629931e899cd4">SwapCoordinates</a> (int i, int j)</td></tr>
+<tr class="memdesc:a737d7b1433104a39298629931e899cd4 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swaps object coordinate values with indices i and j.  <a href="../../df/de0/class_o_n___geometry.html#a737d7b1433104a39298629931e899cd4">More...</a><br /></td></tr>
 <tr class="separator:a737d7b1433104a39298629931e899cd4 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b47e669fde50b5223a8017863598e89 inherit pub_methods_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a3b47e669fde50b5223a8017863598e89">Translate</a> (const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;translation_vector)</td></tr>
+<tr class="memdesc:a3b47e669fde50b5223a8017863598e89 inherit pub_methods_class_o_n___geometry"><td class="mdescLeft">&#160;</td><td class="mdescRight">Translates the object along the specified vector.  <a href="../../df/de0/class_o_n___geometry.html#a3b47e669fde50b5223a8017863598e89">More...</a><br /></td></tr>
 <tr class="separator:a3b47e669fde50b5223a8017863598e89 inherit pub_methods_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_o_n___object"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_o_n___object')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a></td></tr>
 <tr class="memitem:af580c6199f4469c49a4e09a117626c10 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#af580c6199f4469c49a4e09a117626c10">ON_Object</a> () ON_NOEXCEPT</td></tr>
@@ -187,70 +224,100 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad940aab7d51005c8732d76d1b188e332 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad940aab7d51005c8732d76d1b188e332">~ON_Object</a> ()</td></tr>
 <tr class="separator:ad940aab7d51005c8732d76d1b188e332 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d1/df0/class_o_n___aggregate_component_status.html">ON_AggregateComponentStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a8a1cfab63437a2d03cc50fdc6734f2a5">AggregateComponentStatus</a> () const</td></tr>
+<tr class="memdesc:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call whenever a component status setting is modifed by directly changing it on a component in a way that will result in any saved information about the parent object's aggretate component status becoming invalid.  <a href="../../d9/d7b/class_o_n___object.html#a8a1cfab63437a2d03cc50fdc6734f2a5">More...</a><br /></td></tr>
 <tr class="separator:a8a1cfab63437a2d03cc50fdc6734f2a5 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79">AttachUserData</a> (class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *pUserData)</td></tr>
+<tr class="memdesc:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach user data to an object.  <a href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79">More...</a><br /></td></tr>
 <tr class="separator:ad5432b341051664c185b10712a6e5b79 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a27893ff72ca7abbe985f8b5f4ccd900e">ClearAllComponentStates</a> () const</td></tr>
+<tr class="memdesc:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set all active level component states to <a class="el" href="../../d9/d12/class_o_n___component_status.html#ae267cd5d4088c8a033fa348d30227223">ON_ComponentStatus::NoneSet</a>.  <a href="../../d9/d7b/class_o_n___object.html#a27893ff72ca7abbe985f8b5f4ccd900e">More...</a><br /></td></tr>
 <tr class="separator:a27893ff72ca7abbe985f8b5f4ccd900e inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a1af75ebe418edff4a11985f8fca7d83b">ClearComponentStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_clear) const</td></tr>
+<tr class="memdesc:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the specified states on every component.  <a href="../../d9/d7b/class_o_n___object.html#a1af75ebe418edff4a11985f8fca7d83b">More...</a><br /></td></tr>
 <tr class="separator:a1af75ebe418edff4a11985f8fca7d83b inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aeadf76a46f3f1a661bbf41e1b754fe89">ClearComponentStates</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_clear) const</td></tr>
+<tr class="memdesc:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear states on an individual component.  <a href="../../d9/d7b/class_o_n___object.html#aeadf76a46f3f1a661bbf41e1b754fe89">More...</a><br /></td></tr>
 <tr class="separator:aeadf76a46f3f1a661bbf41e1b754fe89 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad044157e5c1efde9fce1c6ccf6e81ff3">CopyUserData</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> source_userdata_item_id, <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">ON_Object::UserDataConflictResolution</a> userdata_conflict_resolution)</td></tr>
+<tr class="memdesc:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool that copies user data items with positive values of <a class="el" href="../../d5/d55/class_o_n___user_data.html#ac025400e9bff35c899ed85ba1b0a52e4">ON_UserData.m_userdata_copycount</a> from source_object to "this.  <a href="../../d9/d7b/class_o_n___object.html#ad044157e5c1efde9fce1c6ccf6e81ff3">More...</a><br /></td></tr>
 <tr class="separator:ad044157e5c1efde9fce1c6ccf6e81ff3 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a58958333257eba5575a6a1b09c366c1b">CopyUserData</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object)</td></tr>
+<tr class="memdesc:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls CopyUserData(source_object,ON_Object::UserDataConflictResolution::source_object).  <a href="../../d9/d7b/class_o_n___object.html#a58958333257eba5575a6a1b09c366c1b">More...</a><br /></td></tr>
 <tr class="separator:a58958333257eba5575a6a1b09c366c1b inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af51d5fcec9379ad9b7a56ac4dfc9a8b2 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual ON__UINT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#af51d5fcec9379ad9b7a56ac4dfc9a8b2">DataCRC</a> (ON__UINT32 current_remainder) const</td></tr>
+<tr class="memdesc:af51d5fcec9379ad9b7a56ac4dfc9a8b2 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a CRC calculated from the information that defines the object. This CRC can be used as a quick way to see if two objects are not identical.  <a href="../../d9/d7b/class_o_n___object.html#af51d5fcec9379ad9b7a56ac4dfc9a8b2">More...</a><br /></td></tr>
 <tr class="separator:af51d5fcec9379ad9b7a56ac4dfc9a8b2 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aa67be7d8cc76ec82ae22a30093ecf98f">DeleteComponents</a> (const ON_COMPONENT_INDEX *ci_list, size_t ci_count)</td></tr>
+<tr class="memdesc:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the portions of the object identified in ci_list[].  <a href="../../d9/d7b/class_o_n___object.html#aa67be7d8cc76ec82ae22a30093ecf98f">More...</a><br /></td></tr>
 <tr class="separator:aa67be7d8cc76ec82ae22a30093ecf98f inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#af8435c33ab53af41c22dac75e8917569">DestroyRuntimeCache</a> (bool bDelete=true)</td></tr>
+<tr class="memdesc:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user function. If you are using openNURBS in its default configuration to read and write 3dm archives, you never need to call this function. Many objects employ lazy creation of (runtime) caches that save information to help speed geometric calculations. This function will destroy all runtime information.  <a href="../../d9/d7b/class_o_n___object.html#af8435c33ab53af41c22dac75e8917569">More...</a><br /></td></tr>
 <tr class="separator:af8435c33ab53af41c22dac75e8917569 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a1dbb0eff3b2287152b40991b3afca9ee">DetachUserData</a> (class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *pUserData)</td></tr>
+<tr class="memdesc:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove user data from an object.  <a href="../../d9/d7b/class_o_n___object.html#a1dbb0eff3b2287152b40991b3afca9ee">More...</a><br /></td></tr>
 <tr class="separator:a1dbb0eff3b2287152b40991b3afca9ee inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ad265ca0da2d751edaa9d2b5ab2540c6a">EmergencyDestroy</a> ()</td></tr>
+<tr class="memdesc:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets m_user_data_list = 0.  <a href="../../d9/d7b/class_o_n___object.html#ad265ca0da2d751edaa9d2b5ab2540c6a">More...</a><br /></td></tr>
 <tr class="separator:ad265ca0da2d751edaa9d2b5ab2540c6a inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835">FirstUserData</a> () const</td></tr>
+<tr class="memdesc:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">User data is stored as a linked list of <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> classes. FirstUserData gets the first item in the linked list. This is the most recent item attached using <a class="el" href="../../d9/d7b/class_o_n___object.html#ad5432b341051664c185b10712a6e5b79" title="Attach user data to an object. ">AttachUserData()</a>. Remark: To iterate through all the user data on an object, call <a class="el" href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835" title="User data is stored as a linked list of ON_UserData classes. FirstUserData gets the first item in the...">FirstUserData()</a> and then use <a class="el" href="../../d5/d55/class_o_n___user_data.html#a5e5a0d01e000319e0b37b340752613d8">ON_UserData::Next()</a> to traverse the list.  <a href="../../d9/d7b/class_o_n___object.html#adb43bb324c44740c4bc2932e2f95c835">More...</a><br /></td></tr>
 <tr class="separator:adb43bb324c44740c4bc2932e2f95c835 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a691de6470e814973858aa5c51eaffa77 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a691de6470e814973858aa5c51eaffa77">GetComponentsWithSetStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_filter, bool bAllEqualStates, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; ON_COMPONENT_INDEX &gt; &amp;components) const</td></tr>
 <tr class="separator:a691de6470e814973858aa5c51eaffa77 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">class <a class="el" href="../../d5/d55/class_o_n___user_data.html">ON_UserData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a29f8d609e22008680581c6ca72ac47df">GetUserData</a> (const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;userdata_uuid) const</td></tr>
+<tr class="memdesc:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a pointer to user data.  <a href="../../d9/d7b/class_o_n___object.html#a29f8d609e22008680581c6ca72ac47df">More...</a><br /></td></tr>
 <tr class="separator:a29f8d609e22008680581c6ca72ac47df inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab40b5e89b4766299e415593b31a3849c">GetUserString</a> (const wchar_t *key, <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &amp;string_value) const</td></tr>
+<tr class="memdesc:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get user string from the object.  <a href="../../d9/d7b/class_o_n___object.html#ab40b5e89b4766299e415593b31a3849c">More...</a><br /></td></tr>
 <tr class="separator:ab40b5e89b4766299e415593b31a3849c inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ac285fba1506b2b9b821e3655582939c4">GetUserStringKeys</a> (<a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a> &gt; &amp;user_string_keys) const</td></tr>
+<tr class="memdesc:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of all user string keys on the object.  <a href="../../d9/d7b/class_o_n___object.html#ac285fba1506b2b9b821e3655582939c4">More...</a><br /></td></tr>
 <tr class="separator:ac285fba1506b2b9b821e3655582939c4 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a004ab49490f69fcdc7681919c3837a33">GetUserStrings</a> (<a class="el" href="../../dd/d40/class_o_n___class_array.html">ON_ClassArray</a>&lt; <a class="el" href="../../d0/d82/class_o_n___user_string.html">ON_UserString</a> &gt; &amp;user_strings) const</td></tr>
+<tr class="memdesc:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of all user strings on the object.  <a href="../../d9/d7b/class_o_n___object.html#a004ab49490f69fcdc7681919c3837a33">More...</a><br /></td></tr>
 <tr class="separator:a004ab49490f69fcdc7681919c3837a33 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#afe5367058a90545e81cd79b78103175d">IsKindOf</a> (const <a class="el" href="../../d3/d3c/class_o_n___class_id.html">ON_ClassId</a> *pClassId) const</td></tr>
+<tr class="memdesc:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Low level tool to test if an object is derived from a specified class.  <a href="../../d9/d7b/class_o_n___object.html#afe5367058a90545e81cd79b78103175d">More...</a><br /></td></tr>
 <tr class="separator:afe5367058a90545e81cd79b78103175d inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a609192fbafecbe4be3136d8cb4dce882">MarkAggregateComponentStatusAsNotCurrent</a> () const</td></tr>
+<tr class="memdesc:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call whenever a component status setting is modifed by directly changing it on a component in a way that will result in any saved information about the parent object's aggretate component status becoming invalid.  <a href="../../d9/d7b/class_o_n___object.html#a609192fbafecbe4be3136d8cb4dce882">More...</a><br /></td></tr>
 <tr class="separator:a609192fbafecbe4be3136d8cb4dce882 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73">MemoryRelocate</a> ()</td></tr>
+<tr class="memdesc:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73" title="The MemoryRelocate() function is called when an object&#39;s location in memory is changed. For example, if an object resides in a chunk of memory that is grown by calling a realloc that has to allocate a new chunk and copy the contents of the old chunk to the new chunk, then the location of the object&#39;s memory changes. In practice this happens when classes derived from ON_Object are stored in dynamic arrays, like the default implementation of ON_ObjectArray&lt;&gt;&#39;s that use realloc to grow the dynamic array. ">MemoryRelocate()</a> function is called when an object's location in memory is changed. For example, if an object resides in a chunk of memory that is grown by calling a realloc that has to allocate a new chunk and copy the contents of the old chunk to the new chunk, then the location of the object's memory changes. In practice this happens when classes derived from <a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> are stored in dynamic arrays, like the default implementation of ON_ObjectArray&lt;&gt;'s that use realloc to grow the dynamic array.  <a href="../../d9/d7b/class_o_n___object.html#ae0674ccb79b6333e4b3c8e95ee10dd73">More...</a><br /></td></tr>
 <tr class="separator:ae0674ccb79b6333e4b3c8e95ee10dd73 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21c508d3b53458e252adbcd29e62ed09 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a21c508d3b53458e252adbcd29e62ed09">ModelObjectId</a> () const</td></tr>
+<tr class="memdesc:a21c508d3b53458e252adbcd29e62ed09 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">All objects in an opennurbs model have an id ( ON_Layer.m_layer_id, ON_Font.m_font_id, ON_Material.m_material_id, <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a806a85052b002c45021650e3b97e2018">ON_3dmObjectAttributes.m_uuid</a> ).  <a href="../../d9/d7b/class_o_n___object.html#a21c508d3b53458e252adbcd29e62ed09">More...</a><br /></td></tr>
 <tr class="separator:a21c508d3b53458e252adbcd29e62ed09 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a78b4ecb2eb36641e1ee6b4fc6129606e">MoveUserData</a> (<a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> source_userdata_item_id, <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">ON_Object::UserDataConflictResolution</a> userdata_conflict_resolution, bool bDeleteAllSourceItems)</td></tr>
+<tr class="memdesc:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool that moves user data items from source_object to "this.  <a href="../../d9/d7b/class_o_n___object.html#a78b4ecb2eb36641e1ee6b4fc6129606e">More...</a><br /></td></tr>
 <tr class="separator:a78b4ecb2eb36641e1ee6b4fc6129606e inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a54a891ae2cb2a25008a7a39cb19dfcea">MoveUserData</a> (<a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;source_object)</td></tr>
+<tr class="memdesc:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls MoveUserData(source_object,ON_Object::UserDataConflictResolution::source_object,true).  <a href="../../d9/d7b/class_o_n___object.html#a54a891ae2cb2a25008a7a39cb19dfcea">More...</a><br /></td></tr>
 <tr class="separator:a54a891ae2cb2a25008a7a39cb19dfcea inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba6166c9aecef42639e684a2a3fda223 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#aba6166c9aecef42639e684a2a3fda223">operator=</a> (const <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> &amp;)</td></tr>
 <tr class="separator:aba6166c9aecef42639e684a2a3fda223 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680">PurgeUserData</a> ()</td></tr>
+<tr class="memdesc:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680" title="PurgeUserData() removes all user data from object. ">PurgeUserData()</a> removes all user data from object.  <a href="../../d9/d7b/class_o_n___object.html#a88b61cafc0024ecb7a4bd22da2718680">More...</a><br /></td></tr>
 <tr class="separator:a88b61cafc0024ecb7a4bd22da2718680 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab728c0576fd5913bc1575b74997bddb5">SetComponentStates</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_set) const</td></tr>
+<tr class="memdesc:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set states on an individual component.  <a href="../../d9/d7b/class_o_n___object.html#ab728c0576fd5913bc1575b74997bddb5">More...</a><br /></td></tr>
 <tr class="separator:ab728c0576fd5913bc1575b74997bddb5 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a589f1fdc28f6259d1bd22bdedc9c4c76">SetComponentStatus</a> (ON_COMPONENT_INDEX component_index, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> status_to_copy) const</td></tr>
+<tr class="memdesc:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy status settings to an individual component.  <a href="../../d9/d7b/class_o_n___object.html#a589f1fdc28f6259d1bd22bdedc9c4c76">More...</a><br /></td></tr>
 <tr class="separator:a589f1fdc28f6259d1bd22bdedc9c4c76 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a074dc9e9b919853919564793c37f5143">SetUserString</a> (const wchar_t *key, const wchar_t *string_value)</td></tr>
+<tr class="memdesc:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach a user string to the object. This information will perisist through copy construction, operator=, and file IO.  <a href="../../d9/d7b/class_o_n___object.html#a074dc9e9b919853919564793c37f5143">More...</a><br /></td></tr>
 <tr class="separator:a074dc9e9b919853919564793c37f5143 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a7234af898c307a2c2f7931db7e627592">SetUserStrings</a> (int count, const <a class="el" href="../../d0/d82/class_o_n___user_string.html">ON_UserString</a> *user_strings, bool bReplace)</td></tr>
+<tr class="memdesc:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append entries to the user string list  <a href="../../d9/d7b/class_o_n___object.html#a7234af898c307a2c2f7931db7e627592">More...</a><br /></td></tr>
 <tr class="separator:a7234af898c307a2c2f7931db7e627592 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0299df21bfed90d7b5bfb24cdcf5e6c1 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a0299df21bfed90d7b5bfb24cdcf5e6c1">SizeOf</a> () const</td></tr>
 <tr class="separator:a0299df21bfed90d7b5bfb24cdcf5e6c1 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052">TransformUserData</a> (const class <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;xform)</td></tr>
+<tr class="memdesc:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Objects derived from <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> must call <a class="el" href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052" title="Objects derived from ON_Geometry must call TransformUserData() in their Transform() member function...">TransformUserData()</a> in their Transform() member function.  <a href="../../d9/d7b/class_o_n___object.html#a881bd2f0d8515adba1c42c578bcb7052">More...</a><br /></td></tr>
 <tr class="separator:a881bd2f0d8515adba1c42c578bcb7052 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#a82188bbf97bbd149ac6fcb7cd8e989d1">UpdateReferencedComponents</a> (const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;source_manifest, const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;destination_manifest, const class <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;manifest_map)</td></tr>
+<tr class="memdesc:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the destination_manifest to update references to other components. This is typically done when a component's references came from a "source" context and are being updated to the "destination" context. For example, inserting one model into another when index, id, and name conflicts need to be resolved at the time of insertion.  <a href="../../d9/d7b/class_o_n___object.html#a82188bbf97bbd149ac6fcb7cd8e989d1">More...</a><br /></td></tr>
 <tr class="separator:a82188bbf97bbd149ac6fcb7cd8e989d1 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab648403ebf4592831809710f378e9ac2 inherit pub_methods_class_o_n___object"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7b/class_o_n___object.html#ab648403ebf4592831809710f378e9ac2">UserStringCount</a> () const</td></tr>
 <tr class="separator:ab648403ebf4592831809710f378e9ac2 inherit pub_methods_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -273,16 +340,14 @@ Additional Inherited Members</h2></td></tr>
 <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956cadb77cee2050a09b500c679688e45a105">UserDataConflictResolution::destination_copycount_ge</a> = 5, 
 <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956ca880ec7882afd9386e91140bf4f77e594">UserDataConflictResolution::delete_item</a> = 6
 <br />
- }</td></tr>
+ }<tr class="memdesc:a7f520e987ffa14e71b06493340f9956c"><td class="mdescLeft">&#160;</td><td class="mdescRight">When a userdata item is copied or moved from a source object to a destination object, the <a class="el" href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c" title="When a userdata item is copied or moved from a source object to a destination object, the ON_Object::UserDataConflictResolution enum values specify how conficts are resolved. Remark: A userdata item &quot;conflict&quot; occurs when both the destination and source object have a user data item with the same value of ON_UserData::m_userdata_uuid. ">ON_Object::UserDataConflictResolution</a> enum values specify how conficts are resolved. Remark: A userdata item "conflict" occurs when both the destination and source object have a user data item with the same value of <a class="el" href="../../d5/d55/class_o_n___user_data.html#a9bc044ba84a529fe2195d8f8a817fda2" title="This uuid is the value that must be passed to ON_Object::GetUserData() to retrieve this piece of user...">ON_UserData::m_userdata_uuid</a>.  <a href="../../d9/d7b/class_o_n___object.html#a7f520e987ffa14e71b06493340f9956c">More...</a><br /></td></tr>
+</td></tr>
 <tr class="separator:a7f520e987ffa14e71b06493340f9956c inherit pub_types_class_o_n___object"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_class_o_n___geometry"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_o_n___geometry')"><img src="../../closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a></td></tr>
 <tr class="memitem:a4d9849b197644c66831f3ed1b8738935 inherit pub_static_attribs_class_o_n___geometry"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/de0/class_o_n___geometry.html#a4d9849b197644c66831f3ed1b8738935">Unset</a></td></tr>
 <tr class="separator:a4d9849b197644c66831f3ed1b8738935 inherit pub_static_attribs_class_o_n___geometry"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>class <a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> /////////////////////////////////////////////////////////////// Represents a hatch in planar boundary loop or loops This is a 2d entity with a plane defining a local coordinate system The loops, patterns, angles, etc are all in this local coordinate system</p>
-<p>The <a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> object manages the plane and loop array Fill definitions are in the <a class="el" href="../../dc/db0/class_o_n___hatch_pattern.html">ON_HatchPattern</a> or class derived from <a class="el" href="../../dc/db0/class_o_n___hatch_pattern.html">ON_HatchPattern</a> <a class="el" href="../../d0/d30/class_o_n___hatch.html">ON_Hatch</a> has an index to get the pattern definition from the pattern table </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ab9ce050c014d1621935254c706f3c5e0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab9ce050c014d1621935254c706f3c5e0">&#9670;&nbsp;</a></span>ON_Hatch() <span class="overload">[1/2]</span></h2>
 
@@ -361,7 +426,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Add a loop to the hatch Parameters: loop - [in] the loop to add. Memory management for the loop is managed by this class. Returns: </p>
+
+<p>Add a loop to the hatch </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loop</td><td>[in] the loop to add. Memory management for the loop is managed by this class.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -379,7 +452,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Return 3d WCS point that lies on hatch's plane used for pattern origin. </p>
+
+<p>Return 3d WCS point that lies on hatch's plane used for pattern origin. </p>
 
 </div>
 </div>
@@ -397,7 +471,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Return 2d ECS point used for pattern origin. </p>
+
+<p>Return 2d ECS point used for pattern origin. </p>
 
 </div>
 </div>
@@ -424,7 +499,15 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: If possible, <a class="el" href="../../d0/d30/class_o_n___hatch.html#a0cf66b0ac24697a652983cf33ccece74">BrepForm()</a> creates a brep form of the <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a>. Parameters: brep - [in] if not nullptr, brep is used to store the brep form of the geometry. Result: Returns a pointer to on <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> or nullptr. If the brep parameter is not nullptr, then brep is returned if the geometry has a brep form and nullptr is returned if the geometry does not have a brep form. Remarks: The caller is responsible for managing the brep memory. See Also <a class="el" href="../../df/de0/class_o_n___geometry.html#a84b28eb33d34c71913b9cd16f8ecab50">ON_Geometry::HasBrepForm</a> </p>
+
+<p>If possible, <a class="el" href="../../d0/d30/class_o_n___hatch.html#a0cf66b0ac24697a652983cf33ccece74" title="If possible, BrepForm() creates a brep form of the ON_Geometry. ">BrepForm()</a> creates a brep form of the <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">brep</td><td>[in] if not nullptr, brep is used to store the brep form of the geometry. Result: Returns a pointer to on <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> or nullptr. If the brep parameter is not nullptr, then brep is returned if the geometry has a brep form and nullptr is returned if the geometry does not have a brep form.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The caller is responsible for managing the brep memory. See Also <a class="el" href="../../df/de0/class_o_n___geometry.html#a84b28eb33d34c71913b9cd16f8ecab50" title="Query an object to see if it has an ON_Brep form. Result: Returns true if the virtual ON_Geometry::Br...">ON_Geometry::HasBrepForm</a> </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#aeb8d6122b6285e4ab819fa50bd442c23">ON_Geometry</a>.</p>
 
@@ -475,7 +558,8 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Interface. </p>
-<p>Description: Create a hatch from input geometry and parameters Parameters: plane [I] - <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> to make the hatch on loops [I] - Array of boundary loops with the outer one first pattern_index [I] - Index into the hatch table pattern_rotation [I] - ccw in radians about plane origin pattern_scale [I] - Scale factor for pattern definition Returns: true = success, false = failure </p>
+<p>Create a hatch from input geometry and parameters </p>
+<p>TODODOC: plane [I] - <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> to make the hatch on TODODOC: loops [I] - Array of boundary loops with the outer one first TODODOC: pattern_index [I] - Index into the hatch table TODODOC: pattern_rotation [I] - ccw in radians about plane origin TODODOC: pattern_scale [I] - Scale factor for pattern definition </p><dl class="section return"><dt>Returns</dt><dd>true = success, false = failure </dd></dl>
 
 </div>
 </div>
@@ -502,8 +586,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p><a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> overrides. </p>
-<p>Returns the geometric dimension of the object ( usually 3) </p>
+<p><a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> overrides ////////////////////////////////////////////////////////////// Returns the geometric dimension of the object ( usually 3) </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#a0d66ab16e2fddfd1b3e6cf3d6ebbd364">ON_Geometry</a>.</p>
 
@@ -532,7 +615,9 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Creates a text dump of the object. Remarks: <a class="el" href="../../d0/d30/class_o_n___hatch.html#ad895ec79e3072cbacf8267512fd62371">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an object.</p>
+
+<p>Creates a text dump of the object. </p>
+<p><a class="el" href="../../d0/d30/class_o_n___hatch.html#ad895ec79e3072cbacf8267512fd62371" title="Creates a text dump of the object. ">Dump()</a> is intended for debugging and is not suitable for creating high quality text descriptions of an object.</p>
 <p>The default implementations of this virtual function prints the class's name. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a21c7b04a80f1806c3a45f72d7c491a44">ON_Object</a>.</p>
@@ -604,7 +689,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>virtual <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> GetBBox override </p>
+<p>virtual <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> GetBBox override </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#ad615e08fe92af659c8d10cbb4f8fc5e3">ON_Geometry</a>.</p>
 
@@ -650,7 +735,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>virtual <a class="el" href="../../df/de0/class_o_n___geometry.html">ON_Geometry</a> GetTightBoundingBox override </p>
+<p>virtual <a class="el" href="../../df/de0/class_o_n___geometry.html" title="Base class for all geometry classes that must provide runtime class id. Provides interface for common...">ON_Geometry</a> GetTightBoundingBox override </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#ab59968e400d15d016517b7b4f2e32ea4">ON_Geometry</a>.</p>
 
@@ -747,7 +832,16 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Insert a loop to the hatch at the specified index Parameters: index - [in] zero based index of the position where insert the loop to. loop - [in] the loop to insert. Memory management for the loop is managed by this class on success. Returns: true if success false if index is lower than 0 or greater than current loop count. </p>
+
+<p>Insert a loop to the hatch at the specified index </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>[in] zero based index of the position where insert the loop to.</td></tr>
+    <tr><td class="paramname">loop</td><td>[in] the loop to insert. Memory management for the loop is managed by this class on success.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if success false if index is lower than 0 or greater than current loop count. </dd></dl>
 
 </div>
 </div>
@@ -775,7 +869,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p><a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> overrides. </p>
+<p><a class="el" href="../../d9/d7b/class_o_n___object.html" title="Pure virtual base class for all classes that must provide runtime class id or support object level 3D...">ON_Object</a> overrides. </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#adf87e5ba0d9939dfabbb9f421b9d2b3b">ON_Geometry</a>.</p>
 
@@ -796,7 +890,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the loop at index Parameters: index - [in] which loop to get Returns: pointer to loop at index nullptr if index is out of range </p>
+
+<p>Get the loop at index </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>[in] which loop to get</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to loop at index nullptr if index is out of range </dd></dl>
 
 </div>
 </div>
@@ -814,7 +916,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the number of loops used by this hatch Parameters: Returns: the number of loops </p>
+
+<p>Get the number of loops used by this hatch </p>
+<dl class="section return"><dt>Returns</dt><dd>the number of loops </dd></dl>
 
 </div>
 </div>
@@ -833,7 +937,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the 3d curve corresponding to loop[index] Parameters: index - [in] which loop to get Returns: pointer to 3d curve of loop at index nullptr if index is out of range or curve can't be made Caller deletes the returned curve </p>
+
+<p>Get the 3d curve corresponding to loop[index] </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>[in] which loop to get</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to 3d curve of loop at index nullptr if index is out of range or curve can't be made Caller deletes the returned curve </dd></dl>
 
 </div>
 </div>
@@ -859,9 +971,12 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on.</p>
-<p>Returns: ON::object_type enum value.</p>
-<p>Remarks: The default implementation of this virtual function returns ON::unknown_object_type </p>
+
+<p>Useful for switch statements that need to differentiate between basic object types like points, curves, surfaces, and so on. </p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">ON::object_type enum value.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>The default implementation of this virtual function returns ON::unknown_object_type </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#afa19aee4a411a8fda53aff00bd02d86e">ON_Object</a>.</p>
 
@@ -899,7 +1014,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the index of the hatch's pattern Parameters: Returns: index of the pattern </p>
+
+<p>Get the index of the hatch's pattern </p>
+<dl class="section return"><dt>Returns</dt><dd>index of the pattern </dd></dl>
 
 </div>
 </div>
@@ -917,7 +1034,10 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets the rotation applied to the hatch pattern when it is mapped to the hatch's plane Returns: The rotation in radians Remarks: The pattern is rotated counter-clockwise around the hatch's plane origin by this value </p>
+
+<p>Gets the rotation applied to the hatch pattern when it is mapped to the hatch's plane </p>
+<dl class="section return"><dt>Returns</dt><dd>The rotation in radians </dd></dl>
+<p>The pattern is rotated counter-clockwise around the hatch's plane origin by this value </p>
 
 </div>
 </div>
@@ -935,7 +1055,10 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets the scale applied to the hatch pattern when it is mapped to the hatch's plane Returns: The scale Remarks: The pattern is scaled around the hatch's plane origin by this value </p>
+
+<p>Gets the scale applied to the hatch pattern when it is mapped to the hatch's plane </p>
+<dl class="section return"><dt>Returns</dt><dd>The scale </dd></dl>
+<p>The pattern is scaled around the hatch's plane origin by this value </p>
 
 </div>
 </div>
@@ -953,7 +1076,9 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the plane defining the hatch's coordinate system Parameters: Returns: the plane </p>
+
+<p>Get the plane defining the hatch's coordinate system </p>
+<dl class="section return"><dt>Returns</dt><dd>the plane </dd></dl>
 
 </div>
 </div>
@@ -980,7 +1105,16 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3">ON_BinaryArchive::ReadObject()</a>. Parameters: binary_archive - archive to read from Returns: Returns true if the read is successful. Remarks: Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3">ON_BinaryArchive::ReadObject()</a> to read objects. This <a class="el" href="../../d0/d30/class_o_n___hatch.html#a20f6a4af55073270f96b01d29a61a6fd">Read()</a> function should read the objects definition back into its data members.</p>
+
+<p>Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">binary_archive</td><td>archive to read from</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns true if the read is successful. </dd></dl>
+<p>Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a025b86c1da38eb51f66d6260b1141ac3" title="Reads and object from a 3dm archive; ">ON_BinaryArchive::ReadObject()</a> to read objects. This <a class="el" href="../../d0/d30/class_o_n___hatch.html#a20f6a4af55073270f96b01d29a61a6fd" title="Low level archive writing tool used by ON_BinaryArchive::ReadObject(). ">Read()</a> function should read the objects definition back into its data members.</p>
 <p>The default implementation of this virtual function returns false and does nothing. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a09ac9742ead91dd8f9cdd579bcbfed10">ON_Object</a>.</p>
@@ -1002,7 +1136,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Remove a loop in the hatch Parameters: loop - [in] zero based index of the loop to remove. Returns: true if success </p>
+
+<p>Remove a loop in the hatch </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loop</td><td>[in] zero based index of the loop to remove.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if success </dd></dl>
 
 </div>
 </div>
@@ -1021,7 +1163,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Function added June 12 2008 LW Description: Remove all of the loops on the hatch and add the curves in 'loops' as new loops Parameters: loops - [in] An array of pointers to 2d or 3d curves If the curves are 2d, add them to the hatch directly If they are 3d, project them to the hatch's plane first Returns: true - success false - no loops in input array or an error adding them </p>
+
+<p>Remove all of the loops on the hatch and add the curves in 'loops' as new loops </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loops</td><td>[in] An array of pointers to 2d or 3d curves If the curves are 2d, add them to the hatch directly If they are 3d, project them to the hatch's plane first</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true - success false - no loops in input array or an error adding them </dd></dl>
 
 </div>
 </div>
@@ -1041,8 +1191,14 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Basepoint functions added March 23, 2008 -LW. </p>
-<p>Description: Set 2d Base point for hatch pattern alignment. Parameters: basepoint - 2d point in hatch's ECS </p>
+<p>Set 2d Base point for hatch pattern alignment. </p>
+<p>Basepoint functions added March 23, 2008 -LW</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">basepoint</td><td>2d point in hatch's ECS</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1061,7 +1217,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set 3d Base point for hatch pattern alignment. Parameters: point - 3d WCS point Remarks: Projects point to hatch's plane and sets 2d point </p>
+
+<p>Set 3d Base point for hatch pattern alignment. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">point</td><td>3d WCS point</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Projects point to hatch's plane and sets 2d point </p>
 
 </div>
 </div>
@@ -1080,7 +1244,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set the index of the hatch's pattern Parameters: index - [in] pattern index to set Returns: </p>
+
+<p>Set the index of the hatch's pattern </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>[in] pattern index to set</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -1099,7 +1271,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the rotation applied to the hatch pattern when it is mapped to the hatch's plane Parameters: rotation - [in] The rotation in radians Remarks: The pattern is rotated counter-clockwise around the hatch's plane origin by this value </p>
+
+<p>Sets the rotation applied to the hatch pattern when it is mapped to the hatch's plane </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rotation</td><td>[in] The rotation in radians</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The pattern is rotated counter-clockwise around the hatch's plane origin by this value </p>
 
 </div>
 </div>
@@ -1118,7 +1298,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the scale applied to the hatch pattern when it is mapped to the hatch's plane Parameters: scale - [in] The scale Remarks: The pattern is scaled around the hatch's plane origin by this value </p>
+
+<p>Sets the scale applied to the hatch pattern when it is mapped to the hatch's plane </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">scale</td><td>[in] The scale</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The pattern is scaled around the hatch's plane origin by this value </p>
 
 </div>
 </div>
@@ -1137,7 +1325,15 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set the plane defining the hatch's coordinate system Parameters: plane - [in] the plane to set Returns: </p>
+
+<p>Set the plane defining the hatch's coordinate system </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in] the plane to set</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -1164,8 +1360,10 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Transform the object by a 4x4 xform matrix</p>
-<p>Parameters: [in] xform - An <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> with the transformation information Returns: true = Success false = Failure Remarks: The object has been transformed when the function returns. </p>
+
+<p>Transform the object by a 4x4 xform matrix </p>
+<p>TODODOC: [in] xform - An <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> with the transformation information </p><dl class="section return"><dt>Returns</dt><dd>true = Success false = Failure </dd></dl>
+<p>The object has been transformed when the function returns. </p>
 
 <p>Reimplemented from <a class="el" href="../../df/de0/class_o_n___geometry.html#add710872e89bc29e1ed1321b3e70b1b1">ON_Geometry</a>.</p>
 
@@ -1194,7 +1392,16 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b" title="writes object definition ">ON_BinaryArchive::WriteObject()</a>. Parameters: binary_archive - archive to write to Returns: Returns true if the write is successful. Remarks: Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b" title="writes object definition ">ON_BinaryArchive::WriteObject()</a> to write objects. This <a class="el" href="../../d0/d30/class_o_n___hatch.html#a73e5a59c152cc5aa049cfe0d546deb18">Write()</a> function should just write the specific definition of this object. It should not write and any chunk typecode or length information.</p>
+
+<p>Low level archive writing tool used by <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">binary_archive</td><td>archive to write to</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns true if the write is successful. </dd></dl>
+<p>Use <a class="el" href="../../db/d16/class_o_n___binary_archive.html#a33187abe5d04ac52c41d7a798e664f3b">ON_BinaryArchive::WriteObject()</a> to write objects. This <a class="el" href="../../d0/d30/class_o_n___hatch.html#a73e5a59c152cc5aa049cfe0d546deb18" title="Low level archive writing tool used by ON_BinaryArchive::WriteObject(). ">Write()</a> function should just write the specific definition of this object. It should not write and any chunk typecode or length information.</p>
 <p>The default implementation of this virtual function returns false and does nothing. </p>
 
 <p>Reimplemented from <a class="el" href="../../d9/d7b/class_o_n___object.html#a16eb9ab6bf0d0a614655cf9cd055871a">ON_Object</a>.</p>
@@ -1207,7 +1414,7 @@ Additional Inherited Members</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

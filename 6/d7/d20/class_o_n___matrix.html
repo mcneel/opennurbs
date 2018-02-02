@@ -67,16 +67,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7b0b0a5bf94839cbedd5dc9bf01d5427"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a7b0b0a5bf94839cbedd5dc9bf01d5427">ON_Matrix</a> (const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;)</td></tr>
 <tr class="separator:a7b0b0a5bf94839cbedd5dc9bf01d5427"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c666468504806e790a817247d271766"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5c666468504806e790a817247d271766">ON_Matrix</a> (int row_count, int col_count, double **M, bool bDestructorFreeM)</td></tr>
+<tr class="memdesc:a5c666468504806e790a817247d271766"><td class="mdescLeft">&#160;</td><td class="mdescRight">This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form.  <a href="#a5c666468504806e790a817247d271766">More...</a><br /></td></tr>
 <tr class="separator:a5c666468504806e790a817247d271766"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a0f75b14b2927679d475856d494d950"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5a0f75b14b2927679d475856d494d950">~ON_Matrix</a> ()</td></tr>
 <tr class="separator:a5a0f75b14b2927679d475856d494d950"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1d3c54c376ee8df65db638f6ea464c4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#aa1d3c54c376ee8df65db638f6ea464c4">Add</a> (const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;A, const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;B)</td></tr>
+<tr class="memdesc:aa1d3c54c376ee8df65db638f6ea464c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set this = A+B.  <a href="#aa1d3c54c376ee8df65db638f6ea464c4">More...</a><br /></td></tr>
 <tr class="separator:aa1d3c54c376ee8df65db638f6ea464c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55e3baa7d2b4667bf08867d53bbe55e1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1">BackSolve</a> (double, int, const double *, double *) const</td></tr>
+<tr class="memdesc:a55e3baa7d2b4667bf08867d53bbe55e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values.  <a href="#a55e3baa7d2b4667bf08867d53bbe55e1">More...</a><br /></td></tr>
 <tr class="separator:a55e3baa7d2b4667bf08867d53bbe55e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b0d7b410ca2ea57d00b7aac9d7f1596"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a7b0d7b410ca2ea57d00b7aac9d7f1596">BackSolve</a> (double, int, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *) const</td></tr>
+<tr class="memdesc:a7b0d7b410ca2ea57d00b7aac9d7f1596"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of 3d points.  <a href="#a7b0d7b410ca2ea57d00b7aac9d7f1596">More...</a><br /></td></tr>
 <tr class="separator:a7b0d7b410ca2ea57d00b7aac9d7f1596"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20e7f824ed7351549101c75355acd058"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a20e7f824ed7351549101c75355acd058">BackSolve</a> (double, int, int, int, const double *, int, double *) const</td></tr>
+<tr class="memdesc:a20e7f824ed7351549101c75355acd058"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of points  <a href="#a20e7f824ed7351549101c75355acd058">More...</a><br /></td></tr>
 <tr class="separator:a20e7f824ed7351549101c75355acd058"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7efd54299aa8bcd94d2220fe3bafb0c0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a7efd54299aa8bcd94d2220fe3bafb0c0">ColCount</a> () const</td></tr>
 <tr class="separator:a7efd54299aa8bcd94d2220fe3bafb0c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -89,11 +94,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a70cc2091358308051f52b9df617790f0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a70cc2091358308051f52b9df617790f0">Create</a> (int, int, int, int)</td></tr>
 <tr class="separator:a70cc2091358308051f52b9df617790f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10e43ee3add720f939ea4ba3d8c55d8d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a10e43ee3add720f939ea4ba3d8c55d8d">Create</a> (int row_count, int col_count, double **M, bool bDestructorFreeM)</td></tr>
+<tr class="memdesc:a10e43ee3add720f939ea4ba3d8c55d8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form.  <a href="#a10e43ee3add720f939ea4ba3d8c55d8d">More...</a><br /></td></tr>
 <tr class="separator:a10e43ee3add720f939ea4ba3d8c55d8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab905309e163746445db79cf170cdbb7d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ab905309e163746445db79cf170cdbb7d">Destroy</a> ()</td></tr>
 <tr class="separator:ab905309e163746445db79cf170cdbb7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ba7807885a5369450ff271899e94b43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a2ba7807885a5369450ff271899e94b43">EmergencyDestroy</a> ()</td></tr>
-<tr class="memdesc:a2ba7807885a5369450ff271899e94b43"><td class="mdescLeft">&#160;</td><td class="mdescRight">call if memory pool used matrix by becomes invalid  <a href="#a2ba7807885a5369450ff271899e94b43">More...</a><br /></td></tr>
 <tr class="separator:a2ba7807885a5369450ff271899e94b43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5708bd5913b6b55790132e675a9ea1a6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5708bd5913b6b55790132e675a9ea1a6">Invert</a> (double)</td></tr>
 <tr class="separator:a5708bd5913b6b55790132e675a9ea1a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -106,17 +111,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a62d2062d73f6164cea45a14e2e56babc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a62d2062d73f6164cea45a14e2e56babc">IsRowOrthoNormal</a> () const</td></tr>
 <tr class="separator:a62d2062d73f6164cea45a14e2e56babc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46b9ec01e2c8a824a1bedbd3e08d91c0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a46b9ec01e2c8a824a1bedbd3e08d91c0">IsSquare</a> () const</td></tr>
-<tr class="memdesc:a46b9ec01e2c8a824a1bedbd3e08d91c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns 0 for no and m_row_count (= m_col_count) for yes  <a href="#a46b9ec01e2c8a824a1bedbd3e08d91c0">More...</a><br /></td></tr>
 <tr class="separator:a46b9ec01e2c8a824a1bedbd3e08d91c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc5b82867bfc03d25505ba34643b2dc0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#abc5b82867bfc03d25505ba34643b2dc0">IsValid</a> () const</td></tr>
 <tr class="separator:abc5b82867bfc03d25505ba34643b2dc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e72cc2950350310e1df283aab5e2ee1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a4e72cc2950350310e1df283aab5e2ee1">MaxCount</a> () const</td></tr>
-<tr class="memdesc:a4e72cc2950350310e1df283aab5e2ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">largest of row and column count  <a href="#a4e72cc2950350310e1df283aab5e2ee1">More...</a><br /></td></tr>
 <tr class="separator:a4e72cc2950350310e1df283aab5e2ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a400907eceb70c82a167aaef00f8fef"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a7a400907eceb70c82a167aaef00f8fef">MinCount</a> () const</td></tr>
-<tr class="memdesc:a7a400907eceb70c82a167aaef00f8fef"><td class="mdescLeft">&#160;</td><td class="mdescRight">smallest of row and column count  <a href="#a7a400907eceb70c82a167aaef00f8fef">More...</a><br /></td></tr>
 <tr class="separator:a7a400907eceb70c82a167aaef00f8fef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8527842943c0f6d49218b1f45f0541d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ad8527842943c0f6d49218b1f45f0541d">Multiply</a> (const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;A, const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;B)</td></tr>
+<tr class="memdesc:ad8527842943c0f6d49218b1f45f0541d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set this = A*B.  <a href="#ad8527842943c0f6d49218b1f45f0541d">More...</a><br /></td></tr>
 <tr class="separator:ad8527842943c0f6d49218b1f45f0541d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a555d64aec2ac025dbdcbc236c63d8cff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a555d64aec2ac025dbdcbc236c63d8cff">operator=</a> (const <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> &amp;)</td></tr>
 <tr class="separator:a555d64aec2ac025dbdcbc236c63d8cff"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,44 +134,41 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a191a9919a8cb9442797eca7f34834ecb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a191a9919a8cb9442797eca7f34834ecb">RowOp</a> (int, double, int)</td></tr>
 <tr class="separator:a191a9919a8cb9442797eca7f34834ecb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5985fb39254a0393a6269f954f774542"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542">RowReduce</a> (double, double &amp;, double &amp;)</td></tr>
+<tr class="memdesc:a5985fb39254a0393a6269f954f774542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Row reduce a matrix to calculate rank and determinant.  <a href="#a5985fb39254a0393a6269f954f774542">More...</a><br /></td></tr>
 <tr class="separator:a5985fb39254a0393a6269f954f774542"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4bdf7a9269a13cdfbf51ddad87599efd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a4bdf7a9269a13cdfbf51ddad87599efd">RowReduce</a> (double, double *, double *=nullptr)</td></tr>
+<tr class="memdesc:a4bdf7a9269a13cdfbf51ddad87599efd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Row reduce a matrix as the first step in solving M*X=B where B is a column of values.  <a href="#a4bdf7a9269a13cdfbf51ddad87599efd">More...</a><br /></td></tr>
 <tr class="separator:a4bdf7a9269a13cdfbf51ddad87599efd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac100d36c2b52557ab74c7f6974e0d28c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ac100d36c2b52557ab74c7f6974e0d28c">RowReduce</a> (double, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *, double *=nullptr)</td></tr>
+<tr class="memdesc:ac100d36c2b52557ab74c7f6974e0d28c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Row reduce a matrix as the first step in solving M*X=B where B is a column of 3d points  <a href="#ac100d36c2b52557ab74c7f6974e0d28c">More...</a><br /></td></tr>
 <tr class="separator:ac100d36c2b52557ab74c7f6974e0d28c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a012ba97bcf8a31b0adf4980404e50f2b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a012ba97bcf8a31b0adf4980404e50f2b">RowReduce</a> (double, int, int, double *, double *=nullptr)</td></tr>
+<tr class="memdesc:a012ba97bcf8a31b0adf4980404e50f2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Row reduce a matrix as the first step in solving M*X=B where B is a column arbitrary dimension points.  <a href="#a012ba97bcf8a31b0adf4980404e50f2b">More...</a><br /></td></tr>
 <tr class="separator:a012ba97bcf8a31b0adf4980404e50f2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81dfa90eaf33d08fcb7a1628e63d7aaf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a81dfa90eaf33d08fcb7a1628e63d7aaf">RowScale</a> (int, double)</td></tr>
 <tr class="separator:a81dfa90eaf33d08fcb7a1628e63d7aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8ded2b4a205d83b8fe9371c4bc00e17"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#af8ded2b4a205d83b8fe9371c4bc00e17">Scale</a> (double s)</td></tr>
+<tr class="memdesc:af8ded2b4a205d83b8fe9371c4bc00e17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set this = s*this.  <a href="#af8ded2b4a205d83b8fe9371c4bc00e17">More...</a><br /></td></tr>
 <tr class="separator:af8ded2b4a205d83b8fe9371c4bc00e17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa93c6808014a93dcec907b8bf6c60093"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#aa93c6808014a93dcec907b8bf6c60093">SetDiagonal</a> (double)</td></tr>
-<tr class="memdesc:aa93c6808014a93dcec907b8bf6c60093"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets diagonal value and zeros off diagonal values  <a href="#aa93c6808014a93dcec907b8bf6c60093">More...</a><br /></td></tr>
 <tr class="separator:aa93c6808014a93dcec907b8bf6c60093"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97cc876e3e579ab331cae9e5b1f5b367"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a97cc876e3e579ab331cae9e5b1f5b367">SetDiagonal</a> (const double *)</td></tr>
-<tr class="memdesc:a97cc876e3e579ab331cae9e5b1f5b367"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets diagonal values and zeros off diagonal values  <a href="#a97cc876e3e579ab331cae9e5b1f5b367">More...</a><br /></td></tr>
 <tr class="separator:a97cc876e3e579ab331cae9e5b1f5b367"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6433b82a205903a793de314a811a80f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ab6433b82a205903a793de314a811a80f">SetDiagonal</a> (int, const double *)</td></tr>
-<tr class="memdesc:ab6433b82a205903a793de314a811a80f"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets size to count x count and diagonal values and zeros off diagonal values  <a href="#ab6433b82a205903a793de314a811a80f">More...</a><br /></td></tr>
 <tr class="separator:ab6433b82a205903a793de314a811a80f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae63acde9f45118675fa02ba3361e65ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ae63acde9f45118675fa02ba3361e65ac">SetDiagonal</a> (const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; double &gt; &amp;)</td></tr>
-<tr class="memdesc:ae63acde9f45118675fa02ba3361e65ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets size to length X lengthdiagonal values and zeros off diagonal values  <a href="#ae63acde9f45118675fa02ba3361e65ac">More...</a><br /></td></tr>
 <tr class="separator:ae63acde9f45118675fa02ba3361e65ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c82eb69f2dfd52a2d9c2f1f8f8fb3f3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a8c82eb69f2dfd52a2d9c2f1f8f8fb3f3">SwapCols</a> (int, int)</td></tr>
-<tr class="memdesc:a8c82eb69f2dfd52a2d9c2f1f8f8fb3f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">ints are col indices to swap  <a href="#a8c82eb69f2dfd52a2d9c2f1f8f8fb3f3">More...</a><br /></td></tr>
 <tr class="separator:a8c82eb69f2dfd52a2d9c2f1f8f8fb3f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6bd7503c583d7dffada5ececadd70db"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#af6bd7503c583d7dffada5ececadd70db">SwapRows</a> (int, int)</td></tr>
-<tr class="memdesc:af6bd7503c583d7dffada5ececadd70db"><td class="mdescLeft">&#160;</td><td class="mdescRight">ints are row indices to swap  <a href="#af6bd7503c583d7dffada5ececadd70db">More...</a><br /></td></tr>
 <tr class="separator:af6bd7503c583d7dffada5ececadd70db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace4e41327cfcc5aa794d35a8bf214913"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#ace4e41327cfcc5aa794d35a8bf214913">Transpose</a> ()</td></tr>
 <tr class="separator:ace4e41327cfcc5aa794d35a8bf214913"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a840239d2fc3eab0707151f048b722c9f"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a840239d2fc3eab0707151f048b722c9f">UnsignedColCount</a> () const</td></tr>
 <tr class="separator:a840239d2fc3eab0707151f048b722c9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70af4300b11e7e578bee4090fe404773"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a70af4300b11e7e578bee4090fe404773">UnsignedMaxCount</a> () const</td></tr>
-<tr class="memdesc:a70af4300b11e7e578bee4090fe404773"><td class="mdescLeft">&#160;</td><td class="mdescRight">largest of row and column count  <a href="#a70af4300b11e7e578bee4090fe404773">More...</a><br /></td></tr>
 <tr class="separator:a70af4300b11e7e578bee4090fe404773"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1a3a2c1e566ac9e4ff0b247f97faddb"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#af1a3a2c1e566ac9e4ff0b247f97faddb">UnsignedMinCount</a> () const</td></tr>
-<tr class="memdesc:af1a3a2c1e566ac9e4ff0b247f97faddb"><td class="mdescLeft">&#160;</td><td class="mdescRight">smallest of row and column count  <a href="#af1a3a2c1e566ac9e4ff0b247f97faddb">More...</a><br /></td></tr>
 <tr class="separator:af1a3a2c1e566ac9e4ff0b247f97faddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f86352e077d57d4c306521498822a82"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d20/class_o_n___matrix.html#a7f86352e077d57d4c306521498822a82">UnsignedRowCount</a> () const</td></tr>
 <tr class="separator:a7f86352e077d57d4c306521498822a82"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -346,7 +346,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form. Parameters: row_count - [in] col_count - [in] M - [in] bDestructorFreeM - [in] If true, ~ON_Matrix will call onfree(M). If false, caller is managing M's memory. Remarks: <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> functions that increase the value of row_count or col_count will fail on a matrix created with this constructor. </p>
+
+<p>This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">row_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">col_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">M</td><td>[in]</td></tr>
+    <tr><td class="paramname">bDestructorFreeM</td><td>[in] If true, ~ON_Matrix will call onfree(M). If false, caller is managing M's memory.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p><a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> functions that increase the value of row_count or col_count will fail on a matrix created with this constructor. </p>
 
 </div>
 </div>
@@ -401,7 +412,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set this = A+B. Parameters: A - [in] (Can be this) B - [in] (Can be this) Returns: True when A and B are mXn matrices; in which case "this" will be an mXn matrix = A+B. False when A and B have different sizes. </p>
+
+<p>Set this = A+B. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">A</td><td>[in] (Can be this)</td></tr>
+    <tr><td class="paramname">B</td><td>[in] (Can be this)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True when A and B are mXn matrices; in which case "this" will be an mXn matrix = A+B. False when A and B have different sizes. </dd></dl>
 
 </div>
 </div>
@@ -438,7 +458,7 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: A row_count X col_count martix on the heap that can be deleted by calling <a class="el" href="../../d7/d20/class_o_n___matrix.html#a705803864541b5927265adcba386562e">ON_Matrix::Deallocate()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>A row_count X col_count martix on the heap that can be deleted by calling <a class="el" href="../../d7/d20/class_o_n___matrix.html#a705803864541b5927265adcba386562e">ON_Matrix::Deallocate()</a>. </dd></dl>
 
 </div>
 </div>
@@ -479,7 +499,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values. Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations. Bsize - [in] (&gt;=m_row_count) length of B. The values in B[m_row_count],...,B[Bsize-1] are tested to make sure they are "zero". B - [in] array of length Bsize. X - [out] array of length m_col_count. Solutions returned here. Remarks: Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542">ON_Matrix::RowReduce</a> </p>
+
+<p>Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations.</td></tr>
+    <tr><td class="paramname">Bsize</td><td>[in] (&gt;=m_row_count) length of B. The values in B[m_row_count],...,B[Bsize-1] are tested to make sure they are "zero".</td></tr>
+    <tr><td class="paramname">B</td><td>[in] array of length Bsize.</td></tr>
+    <tr><td class="paramname">X</td><td>[out] array of length m_col_count. Solutions returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542" title="Row reduce a matrix to calculate rank and determinant. ">ON_Matrix::RowReduce</a></dd></dl>
 
 </div>
 </div>
@@ -520,7 +552,19 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of 3d points. Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations. Bsize - [in] (&gt;=m_row_count) length of B. The values in B[m_row_count],...,B[Bsize-1] are tested to make sure they are "zero". B - [in] array of length Bsize. X - [out] array of length m_col_count. Solutions returned here. Remarks: Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542">ON_Matrix::RowReduce</a> </p>
+
+<p>Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of 3d points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations.</td></tr>
+    <tr><td class="paramname">Bsize</td><td>[in] (&gt;=m_row_count) length of B. The values in B[m_row_count],...,B[Bsize-1] are tested to make sure they are "zero".</td></tr>
+    <tr><td class="paramname">B</td><td>[in] array of length Bsize.</td></tr>
+    <tr><td class="paramname">X</td><td>[out] array of length m_col_count. Solutions returned here.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542" title="Row reduce a matrix to calculate rank and determinant. ">ON_Matrix::RowReduce</a></dd></dl>
 
 </div>
 </div>
@@ -579,7 +623,22 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of points Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations. pt_dim - [in] dimension of points Bsize - [in] (&gt;=m_row_count) number of points in B[]. The points correspoinding to indices m_row_count, ..., (Bsize-1) are tested to make sure they are "zero". Bpt_stride - [in] stride between B points (&gt;=pt_dim) Bpt - [in/out] array of m_row_count*Bpt_stride values. The i-th B point is (Bpt[i*Bpt_stride],...,Bpt[i*Bpt_stride+pt_dim-1]). Xpt_stride - [in] stride between X points (&gt;=pt_dim) Xpt - [out] array of m_col_count*Xpt_stride values. The i-th X point is (Xpt[i*Xpt_stride],...,Xpt[i*Xpt_stride+pt_dim-1]). Remarks: Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542">ON_Matrix::RowReduce</a> </p>
+
+<p>Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of points </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> used to test for "zero" values in B in under determined systems of equations.</td></tr>
+    <tr><td class="paramname">pt_dim</td><td>[in] dimension of points</td></tr>
+    <tr><td class="paramname">Bsize</td><td>[in] (&gt;=m_row_count) number of points in B[]. The points correspoinding to indices m_row_count, ..., (Bsize-1) are tested to make sure they are "zero".</td></tr>
+    <tr><td class="paramname">Bpt_stride</td><td>[in] stride between B points (&gt;=pt_dim)</td></tr>
+    <tr><td class="paramname">Bpt</td><td>[in/out] array of m_row_count*Bpt_stride values. The i-th B point is (Bpt[i*Bpt_stride],...,Bpt[i*Bpt_stride+pt_dim-1]).</td></tr>
+    <tr><td class="paramname">Xpt_stride</td><td>[in] stride between X points (&gt;=pt_dim)</td></tr>
+    <tr><td class="paramname">Xpt</td><td>[out] array of m_col_count*Xpt_stride values. The i-th X point is (Xpt[i*Xpt_stride],...,Xpt[i*Xpt_stride+pt_dim-1]).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Actual values M[i][j] with i &lt;= j are ignored. M[i][i] is assumed to be one and M[i][j] i&lt;j is assumed to be zero. For square M, B and X can point to the same memory. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542" title="Row reduce a matrix to calculate rank and determinant. ">ON_Matrix::RowReduce</a></dd></dl>
 
 </div>
 </div>
@@ -767,7 +826,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form. Parameters: row_count - [in] col_count - [in] M - [in] bDestructorFreeM - [in] If true, ~ON_Matrix will call onfree(M). If false, caller is managing M's memory. Remarks: <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> functions that increase the value of row_count or col_count will fail on a matrix created with this constructor. </p>
+
+<p>This constructor is for experts who have storage for a matrix and need to use it in <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> form. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">row_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">col_count</td><td>[in]</td></tr>
+    <tr><td class="paramname">M</td><td>[in]</td></tr>
+    <tr><td class="paramname">bDestructorFreeM</td><td>[in] If true, ~ON_Matrix will call onfree(M). If false, caller is managing M's memory.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p><a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> functions that increase the value of row_count or col_count will fail on a matrix created with this constructor. </p>
 
 </div>
 </div>
@@ -828,8 +898,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>call if memory pool used matrix by becomes invalid </p>
 
 </div>
 </div>
@@ -934,8 +1002,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>returns 0 for no and m_row_count (= m_col_count) for yes </p>
-
 </div>
 </div>
 <a id="abc5b82867bfc03d25505ba34643b2dc0"></a>
@@ -970,8 +1036,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>largest of row and column count </p>
-
 </div>
 </div>
 <a id="a7a400907eceb70c82a167aaef00f8fef"></a>
@@ -988,8 +1052,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>smallest of row and column count </p>
 
 </div>
 </div>
@@ -1018,7 +1080,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set this = A*B. Parameters: A - [in] (Can be this) B - [in] (Can be this) Returns: True when A is an mXk matrix and B is a k X n matrix; in which case "this" will be an mXn matrix = A*B. False when A.ColCount() != B.RowCount(). </p>
+
+<p>Set this = A*B. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">A</td><td>[in] (Can be this)</td></tr>
+    <tr><td class="paramname">B</td><td>[in] (Can be this)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True when A is an mXk matrix and B is a k X n matrix; in which case "this" will be an mXn matrix = A*B. False when A.ColCount() != B.RowCount(). </dd></dl>
 
 </div>
 </div>
@@ -1073,7 +1144,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a>[i][j] = value at row i and column j 0 &lt;= i &lt; <a class="el" href="../../d7/d20/class_o_n___matrix.html#a0ce758d83505f28e1c1aefe89e93b15b">RowCount()</a> 0 &lt;= j &lt; <a class="el" href="../../d7/d20/class_o_n___matrix.html#a7efd54299aa8bcd94d2220fe3bafb0c0">ColCount()</a> </p>
 
 </div>
 </div>
@@ -1177,7 +1247,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Row reduce a matrix to calculate rank and determinant. Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero. determinant - [out] value of determinant is returned here. pivot - [out] value of the smallest pivot is returned here Returns: Rank of the matrix. Remarks: The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. </p>
+
+<p>Row reduce a matrix to calculate rank and determinant. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero.</td></tr>
+    <tr><td class="paramname">determinant</td><td>[out] value of determinant is returned here.</td></tr>
+    <tr><td class="paramname">pivot</td><td>[out] value of the smallest pivot is returned here</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Rank of the matrix. </dd></dl>
+<p>The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. </p>
 
 </div>
 </div>
@@ -1212,7 +1293,20 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Row reduce a matrix as the first step in solving M*X=B where B is a column of values. Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero. B - [in/out] an array of m_row_count values that is row reduced with the matrix. determinant - [out] value of determinant is returned here. pivot - [out] If not nullptr, then the value of the smallest pivot is returned here Returns: Rank of the matrix. Remarks: The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. Example: Solve M*X=B; double B[m] = ...; double B[n] = ...; <a class="el" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> M(m,n) = ...; M.RowReduce(ON_ZERO_TOLERANCE,B); ///&lt; modifies M and B M.BackSolve(m,B,X); ///&lt; solution is in X See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1">ON_Matrix::BackSolve</a> </p>
+
+<p>Row reduce a matrix as the first step in solving M*X=B where B is a column of values. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero.</td></tr>
+    <tr><td class="paramname">B</td><td>[in/out] an array of m_row_count values that is row reduced with the matrix.</td></tr>
+    <tr><td class="paramname">determinant</td><td>[out] value of determinant is returned here.</td></tr>
+    <tr><td class="paramname">pivot</td><td>[out] If not nullptr, then the value of the smallest pivot is returned here</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Rank of the matrix. </dd></dl>
+<p>The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. </p>
+<div class="fragment"><div class="line">Solve M*X=B;</div><div class="line"><span class="keywordtype">double</span> B[<a class="code" href="../../d7/d20/class_o_n___matrix.html#a83af73f8033024e23fdae01d2b9d340b">m</a>] = ...;</div><div class="line"><span class="keywordtype">double</span> B[n] = ...;</div><div class="line"><a class="code" href="../../d7/d20/class_o_n___matrix.html">ON_Matrix</a> M(<a class="code" href="../../d7/d20/class_o_n___matrix.html#a83af73f8033024e23fdae01d2b9d340b">m</a>,n) = ...;</div><div class="line">M.<a class="code" href="../../d7/d20/class_o_n___matrix.html#a5985fb39254a0393a6269f954f774542">RowReduce</a>(ON_ZERO_TOLERANCE,B); <span class="comment">// modifies M and B</span></div><div class="line">M.BackSolve(<a class="code" href="../../d7/d20/class_o_n___matrix.html#a83af73f8033024e23fdae01d2b9d340b">m</a>,B,X); <span class="comment">// solution is in X</span></div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1" title="Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values...">ON_Matrix::BackSolve</a></dd></dl>
 
 </div>
 </div>
@@ -1247,7 +1341,20 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Row reduce a matrix as the first step in solving M*X=B where B is a column of 3d points Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero. B - [in/out] an array of m_row_count 3d points that is row reduced with the matrix. determinant - [out] value of determinant is returned here. pivot - [out] If not nullptr, then the value of the smallest pivot is returned here Returns: Rank of the matrix. Remarks: The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1">ON_Matrix::BackSolve</a> </p>
+
+<p>Row reduce a matrix as the first step in solving M*X=B where B is a column of 3d points </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If the absolute value of a pivot is &lt;= zero_tolerance, then the pivot is assumed to be zero.</td></tr>
+    <tr><td class="paramname">B</td><td>[in/out] an array of m_row_count 3d points that is row reduced with the matrix.</td></tr>
+    <tr><td class="paramname">determinant</td><td>[out] value of determinant is returned here.</td></tr>
+    <tr><td class="paramname">pivot</td><td>[out] If not nullptr, then the value of the smallest pivot is returned here</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Rank of the matrix. </dd></dl>
+<p>The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1" title="Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values...">ON_Matrix::BackSolve</a></dd></dl>
 
 </div>
 </div>
@@ -1294,7 +1401,21 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Row reduce a matrix as the first step in solving M*X=B where B is a column arbitrary dimension points. Parameters: zero_tolerance - <a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If a the absolute value of a pivot is &lt;= zero_tolerance, then the pivoit is assumed to be zero. pt_dim - [in] dimension of points pt_stride - [in] stride between points (&gt;=pt_dim) pt - [in/out] array of m_row_count*pt_stride values. The i-th point is (pt[i*pt_stride],...,pt[i*pt_stride+pt_dim-1]). This array of points is row reduced along with the matrix. pivot - [out] If not nullptr, then the value of the smallest pivot is returned here Returns: Rank of the matrix. Remarks: The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. See Also: <a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1">ON_Matrix::BackSolve</a> </p>
+
+<p>Row reduce a matrix as the first step in solving M*X=B where B is a column arbitrary dimension points. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">zero_tolerance</td><td><a href="../../&gt;=0.0">in</a> zero tolerance for pivot test If a the absolute value of a pivot is &lt;= zero_tolerance, then the pivoit is assumed to be zero.</td></tr>
+    <tr><td class="paramname">pt_dim</td><td>[in] dimension of points</td></tr>
+    <tr><td class="paramname">pt_stride</td><td>[in] stride between points (&gt;=pt_dim)</td></tr>
+    <tr><td class="paramname">pt</td><td>[in/out] array of m_row_count*pt_stride values. The i-th point is (pt[i*pt_stride],...,pt[i*pt_stride+pt_dim-1]). This array of points is row reduced along with the matrix.</td></tr>
+    <tr><td class="paramname">pivot</td><td>[out] If not nullptr, then the value of the smallest pivot is returned here</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Rank of the matrix. </dd></dl>
+<p>The matrix itself is row reduced so that the result is an upper triangular matrix with 1's on the diagonal. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d7/d20/class_o_n___matrix.html#a55e3baa7d2b4667bf08867d53bbe55e1" title="Solve M*X=B where M is upper triangular with a unit diagonal and B is a column of values...">ON_Matrix::BackSolve</a></dd></dl>
 
 </div>
 </div>
@@ -1341,7 +1462,15 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set this = s*this. Parameters: s - [in] Returns: True when A and s are valid. </p>
+
+<p>Set this = s*this. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">s</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True when A and s are valid. </dd></dl>
 
 </div>
 </div>
@@ -1361,8 +1490,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>sets diagonal value and zeros off diagonal values </p>
-
 </div>
 </div>
 <a id="a97cc876e3e579ab331cae9e5b1f5b367"></a>
@@ -1380,8 +1507,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>sets diagonal values and zeros off diagonal values </p>
 
 </div>
 </div>
@@ -1411,8 +1536,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>sets size to count x count and diagonal values and zeros off diagonal values </p>
-
 </div>
 </div>
 <a id="ae63acde9f45118675fa02ba3361e65ac"></a>
@@ -1430,8 +1553,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>sets size to length X lengthdiagonal values and zeros off diagonal values </p>
 
 </div>
 </div>
@@ -1461,8 +1582,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>ints are col indices to swap </p>
-
 </div>
 </div>
 <a id="af6bd7503c583d7dffada5ececadd70db"></a>
@@ -1490,8 +1609,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>ints are row indices to swap </p>
 
 </div>
 </div>
@@ -1544,8 +1661,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>largest of row and column count </p>
-
 </div>
 </div>
 <a id="af1a3a2c1e566ac9e4ff0b247f97faddb"></a>
@@ -1562,8 +1677,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>smallest of row and column count </p>
 
 </div>
 </div>
@@ -1613,7 +1726,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m[i][j] = value at row i and column j </p>
 
 </div>
 </div>
@@ -1623,7 +1735,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

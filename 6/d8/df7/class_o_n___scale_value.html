@@ -113,8 +113,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a1a040d64e9f4cc238c83758cee5481ef"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___scale_value.html#a1a040d64e9f4cc238c83758cee5481ef">Create</a> (const class <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> &amp;left_side_length, const class <a class="el" href="../../dc/d39/class_o_n___length_value.html">ON_LengthValue</a> &amp;right_side_length, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#af737cbb998530cb6d59503d10b64d89a">ON_ScaleValue::ScaleStringFormat</a> string_format_preference)</td></tr>
 <tr class="separator:a1a040d64e9f4cc238c83758cee5481ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b85b0da479d36f3444a2cc5527f3841"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___scale_value.html#a9b85b0da479d36f3444a2cc5527f3841">CreateFromString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string)</td></tr>
+<tr class="memdesc:a9b85b0da479d36f3444a2cc5527f3841"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string.  <a href="#a9b85b0da479d36f3444a2cc5527f3841">More...</a><br /></td></tr>
 <tr class="separator:a9b85b0da479d36f3444a2cc5527f3841"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf9f51eb9f21e118ef61619b2dc7c08b"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b">CreateFromSubString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string, int string_count, const wchar_t **string_end)</td></tr>
+<tr class="memdesc:aaf9f51eb9f21e118ef61619b2dc7c08b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string.  <a href="#aaf9f51eb9f21e118ef61619b2dc7c08b">More...</a><br /></td></tr>
 <tr class="separator:aaf9f51eb9f21e118ef61619b2dc7c08b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97fb2d6207199507c61e047e99a36475"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d8/df7/class_o_n___scale_value.html#af737cbb998530cb6d59503d10b64d89a">ON_ScaleValue::ScaleStringFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df7/class_o_n___scale_value.html#a97fb2d6207199507c61e047e99a36475">ScaleStringFormatFromUnsigned</a> (unsigned int scale_string_format_as_unsigned)</td></tr>
 <tr class="separator:a97fb2d6207199507c61e047e99a36475"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -333,7 +335,15 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: left_length - [in] right_length - [in] Returns: A scale value for converting a distance from source_length to destination_length. Remarks: If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a9b85b0da479d36f3444a2cc5527f3841">ON_ScaleValue::CreateFromString()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">left_length</td><td>[in]</td></tr>
+    <tr><td class="paramname">right_length</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A scale value for converting a distance from source_length to destination_length. </dd></dl>
+<p>If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a9b85b0da479d36f3444a2cc5527f3841" title="Create an ON_ScaleValue by parsing a string. ">ON_ScaleValue::CreateFromString()</a>. </p>
 
 </div>
 </div>
@@ -370,7 +380,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. Returns: If the string is valid, the exact scale value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a727aa550f37d53a143ae71fb75847012">ON_ScaleValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b">CreateFromSubString()</a> to permit parsing a portion of the string. Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
+
+<p>Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact scale value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a727aa550f37d53a143ae71fb75847012">ON_ScaleValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b" title="Create an ON_ScaleValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string. Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
 <p>"4:1", "4=1", "4/1", "4" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.25, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 4</p>
 <p>"100:1", "100=1", "1 meter = 1 centimeter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.01, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 100</p>
 <p>"1:100", "1=100", "1 centimeter = 1 meter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 100, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.01</p>
@@ -425,7 +445,19 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. string_count - [in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates scale parsing. string_end - [out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed. Returns: If the string is valid, the exact scale value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a727aa550f37d53a143ae71fb75847012">ON_ScaleValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b">CreateFromSubString()</a> to permit parsing a portion of the string.</p>
+
+<p>Create an <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+    <tr><td class="paramname">string_count</td><td>[in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates scale parsing.</td></tr>
+    <tr><td class="paramname">string_end</td><td>[out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact scale value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a727aa550f37d53a143ae71fb75847012">ON_ScaleValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b" title="Create an ON_ScaleValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string.</p>
 <p>Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
 <p>"4:1", "4=1", "4/1", "4" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.25, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 4</p>
 <p>"100:1", "100=1", "1 meter = 1 centimeter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.01, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 100</p>
@@ -501,7 +533,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A dimensionless scale factor. The word "dimensionless" is critical. Differneces in left and right side unit systems are accounted for in the returned value. Remarks: <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 1.0/RightToLeftScale() Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
+<dl class="section return"><dt>Returns</dt><dd>A dimensionless scale factor. The word "dimensionless" is critical. Differneces in left and right side unit systems are accounted for in the returned value. </dd></dl>
+<p><a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 1.0/RightToLeftScale() Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
 <p>"4:1", "4=1", "4/1", "4" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.25, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 4</p>
 <p>"100:1", "100=1", "1 meter = 1 centimeter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.01, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 100</p>
 <p>"1:100", "1=100", "1 centimeter = 1 meter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 100, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.01</p>
@@ -586,7 +619,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A dimensionless scale factor. The word "dimensionless" is critical. Differneces in left and right side unit systems are accounted for in the returned value. Remarks: <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 1.0/LeftToRightScale() Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
+<dl class="section return"><dt>Returns</dt><dd>A dimensionless scale factor. The word "dimensionless" is critical. Differneces in left and right side unit systems are accounted for in the returned value. </dd></dl>
+<p><a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 1.0/LeftToRightScale() Examples: "1:4", "1=4", "1/4", "0.25" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 4, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.25</p>
 <p>"4:1", "4=1", "4/1", "4" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.25, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 4</p>
 <p>"100:1", "100=1", "1 meter = 1 centimeter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 0.01, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 100</p>
 <p>"1:100", "1=100", "1 centimeter = 1 meter" will set <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a6674570f9ae1b8cf9c47c8355fb7c466">LeftToRightScale()</a> = 100, <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a5830dd975eb0aca04f18b4bec33d93dd">RightToLeftScale()</a> = 0.01</p>
@@ -610,7 +644,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The scale as a string. Remarks: If <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a9b85b0da479d36f3444a2cc5527f3841">ON_ScaleValue::CreateFromString()</a> or <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b">ON_ScaleValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a>, a copy of that string is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>The scale as a string. </dd></dl>
+<p>If <a class="el" href="../../d8/df7/class_o_n___scale_value.html#a9b85b0da479d36f3444a2cc5527f3841" title="Create an ON_ScaleValue by parsing a string. ">ON_ScaleValue::CreateFromString()</a> or <a class="el" href="../../d8/df7/class_o_n___scale_value.html#aaf9f51eb9f21e118ef61619b2dc7c08b" title="Create an ON_ScaleValue by parsing a string. ">ON_ScaleValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../d8/df7/class_o_n___scale_value.html">ON_ScaleValue</a>, a copy of that string is returned. </p>
 
 </div>
 </div>
@@ -688,7 +723,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description Exchange the left and right lengths. </p>
 
 </div>
 </div>
@@ -761,7 +795,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

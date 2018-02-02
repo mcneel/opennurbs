@@ -91,7 +91,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a8c0f3c2f43e36643203d8b69da60cb93"><td class="memItemLeft" align="right" valign="top">ON__UINT8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d62/class_o_n___font_glyph_outline_point.html#a8c0f3c2f43e36643203d8b69da60cb93">m_bToPoint</a> = 0</td></tr>
 <tr class="separator:a8c0f3c2f43e36643203d8b69da60cb93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57f0f661c91c88a671dc1aacc186d2ae"><td class="memItemLeft" align="right" valign="top">ON__UINT16&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d62/class_o_n___font_glyph_outline_point.html#a57f0f661c91c88a671dc1aacc186d2ae">m_contour_index</a> = 0</td></tr>
-<tr class="memdesc:a57f0f661c91c88a671dc1aacc186d2ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = unset. The first contour has m_contour_index = 1.  <a href="#a57f0f661c91c88a671dc1aacc186d2ae">More...</a><br /></td></tr>
 <tr class="separator:a57f0f661c91c88a671dc1aacc186d2ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af56bdf7dfe83d84d93f33a5ab420fbe3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../de/dd6/class_o_n__2i_point.html">ON_2iPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d62/class_o_n___font_glyph_outline_point.html#af56bdf7dfe83d84d93f33a5ab420fbe3">m_point</a> = <a class="el" href="../../de/dd6/class_o_n__2i_point.html#a21721819ea51e0fae5b56aed251184bd">ON_2iPoint::Unset</a></td></tr>
 <tr class="separator:af56bdf7dfe83d84d93f33a5ab420fbe3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,8 +130,7 @@ Static Public Attributes</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="aef12c67de9caa9dd638f8bfe5c874c9eaf5296d4658489fd0bb26f00554ac0bb5"></a>CubicBezierPoint&#160;</td><td class="fielddoc"><p>cubic bezier (degree=3, order=4) control point. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="aef12c67de9caa9dd638f8bfe5c874c9eaa7dc59c3daf3790a05b1bede594aaab5"></a>LineToCloseContour&#160;</td><td class="fielddoc"><p>a line segment added to close an open contour. This is common. It does not indicate the glyph is a single stroke glyph. </p>
-</td></tr>
+<tr><td class="fieldname"><a id="aef12c67de9caa9dd638f8bfe5c874c9eaa7dc59c3daf3790a05b1bede594aaab5"></a>LineToCloseContour&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -279,7 +277,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>1 if the point is a move to, line to, or the start or end of a bezier segment. 0 otherwise </p>
 
 </div>
 </div>
@@ -294,8 +291,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>0 = unset. The first contour has m_contour_index = 1. </p>
 
 </div>
 </div>
@@ -355,7 +350,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

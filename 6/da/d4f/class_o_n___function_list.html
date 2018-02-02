@@ -59,8 +59,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a51283addbbf29144bdf713928e7515ba"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d4f/class_o_n___function_list.html#a51283addbbf29144bdf713928e7515ba">~ON_FunctionList</a> ()</td></tr>
 <tr class="separator:a51283addbbf29144bdf713928e7515ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8fcc93fad22a5ce598954628f6b3748"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d4f/class_o_n___function_list.html#ad8fcc93fad22a5ce598954628f6b3748">AddFunction</a> (void(*function)(ON__UINT_PTR), ON__UINT_PTR function_parameter)</td></tr>
+<tr class="memdesc:ad8fcc93fad22a5ce598954628f6b3748"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unconditionally add a function to the list.  <a href="#ad8fcc93fad22a5ce598954628f6b3748">More...</a><br /></td></tr>
 <tr class="separator:ad8fcc93fad22a5ce598954628f6b3748"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ea0e219d3e0ddcd55e5ee110eaa9314"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d4f/class_o_n___function_list.html#a9ea0e219d3e0ddcd55e5ee110eaa9314">CallFunctions</a> (bool bFirstToLast)</td></tr>
+<tr class="memdesc:a9ea0e219d3e0ddcd55e5ee110eaa9314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call all the functions in the function list.  <a href="#a9ea0e219d3e0ddcd55e5ee110eaa9314">More...</a><br /></td></tr>
 <tr class="separator:a9ea0e219d3e0ddcd55e5ee110eaa9314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57f782aa15ec10fd0360f19c08bdbe78"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d4f/class_o_n___function_list.html#a57f782aa15ec10fd0360f19c08bdbe78">EmptyList</a> ()</td></tr>
 <tr class="separator:a57f782aa15ec10fd0360f19c08bdbe78"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -77,10 +79,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9b52c03c1371172feacc16e380018b8d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d4f/class_o_n___function_list.html#a9b52c03c1371172feacc16e380018b8d">RemoveFunction</a> (void(*function)(ON__UINT_PTR), ON__UINT_PTR function_parameter)</td></tr>
 <tr class="separator:a9b52c03c1371172feacc16e380018b8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2013 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a29cf2947727f8ea3db18e9f511d3dfd8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a29cf2947727f8ea3db18e9f511d3dfd8">&#9670;&nbsp;</a></span>ON_FunctionList()</h2>
 
@@ -96,7 +95,12 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: function_count_estimate - [in] An estimate of the maximum number of functions that will be in the list at any one time. Pass 0 if you don't know. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">function_count_estimate</td><td>[in] An estimate of the maximum number of functions that will be in the list at any one time. Pass 0 if you don't know.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -143,7 +147,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Unconditionally add a function to the list. Parameters: function - [in] A function that takes a single ON__UINT_PTR parameter. function_parameter - [in] Returns: 0: list in use 1: function added 2: invalid input </p>
+
+<p>Unconditionally add a function to the list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">function</td><td>[in] A function that takes a single ON__UINT_PTR parameter.</td></tr>
+    <tr><td class="paramname">function_parameter</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0: list in use 1: function added 2: invalid input </dd></dl>
 
 </div>
 </div>
@@ -162,7 +175,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Call all the functions in the function list. Parameters: bFirstToLast - [in] true - function are called in the order added false - functions are called in the reverse order added Returns: True if the functions were called or the list is empty. False if the list is in use. </p>
+
+<p>Call all the functions in the function list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bFirstToLast</td><td>[in]</td></tr>
+    <tr><td class="paramname">true</td><td>function are called in the order added</td></tr>
+    <tr><td class="paramname">false</td><td>functions are called in the reverse order added</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the functions were called or the list is empty. False if the list is in use. </dd></dl>
 
 </div>
 </div>
@@ -180,7 +203,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: list in use 1: list was emptied </p>
+<dl class="section return"><dt>Returns</dt><dd>0: list in use 1: list was emptied </dd></dl>
 
 </div>
 </div>
@@ -215,7 +238,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the list is in use. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the list is in use. </dd></dl>
 
 </div>
 </div>
@@ -244,7 +267,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: Matching function and parameter are not in the list. 1: Matching function and parameter are in the list. 2: list in use </p>
+<dl class="section return"><dt>Returns</dt><dd>0: Matching function and parameter are not in the list. 1: Matching function and parameter are in the list. 2: list in use </dd></dl>
 
 </div>
 </div>
@@ -263,7 +286,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: list in use 1: Matching function is in the list. 2: Matching function is not in the list. </p>
+<dl class="section return"><dt>Returns</dt><dd>0: list in use 1: Matching function is in the list. 2: Matching function is not in the list. </dd></dl>
 
 </div>
 </div>
@@ -282,7 +305,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: list in use 1: function removed 2: matching function not in the list </p>
+<dl class="section return"><dt>Returns</dt><dd>0: list in use 1: function removed 2: matching function not in the list </dd></dl>
 
 </div>
 </div>
@@ -311,7 +334,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: list in use 1: function removed 2: matching function not in the list </p>
+<dl class="section return"><dt>Returns</dt><dd>0: list in use 1: function removed 2: matching function not in the list </dd></dl>
 
 </div>
 </div>
@@ -321,7 +344,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../df/d10/class_o_n___lock.html" title="ON_Lock is a thread safe lock semephore. It is implemented using platform specfic compare and set fun...">ON_Lock</a> is a thread safe lock semephore. It is implemented using platform specfic compare and set functions.  
+ <a href="../../df/d10/class_o_n___lock.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../de/dfb/opennurbs__lock_8h_source.html">opennurbs_lock.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
@@ -71,8 +74,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae774e799e45537f621e14fc69ffd6c9b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#ae774e799e45537f621e14fc69ffd6c9b">~ON_Lock</a> ()=default</td></tr>
 <tr class="separator:ae774e799e45537f621e14fc69ffd6c9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39a050c1a0437b5e2dccfeb26b7f8e50"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a39a050c1a0437b5e2dccfeb26b7f8e50">BreakLock</a> ()</td></tr>
+<tr class="memdesc:a39a050c1a0437b5e2dccfeb26b7f8e50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unconditionally sets the lock value to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a>.  <a href="#a39a050c1a0437b5e2dccfeb26b7f8e50">More...</a><br /></td></tr>
 <tr class="separator:a39a050c1a0437b5e2dccfeb26b7f8e50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5931ae077c91bdf23c20726d1b03d7df"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a5931ae077c91bdf23c20726d1b03d7df">GetDefaultLock</a> ()</td></tr>
+<tr class="memdesc:a5931ae077c91bdf23c20726d1b03d7df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls GetLock(ON_Lock::DefaultLockedValue);  <a href="#a5931ae077c91bdf23c20726d1b03d7df">More...</a><br /></td></tr>
 <tr class="separator:a5931ae077c91bdf23c20726d1b03d7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6216ad48aed8b4cc78a3a2eaee2ae677"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a6216ad48aed8b4cc78a3a2eaee2ae677">GetLock</a> (int lock_value)</td></tr>
 <tr class="separator:a6216ad48aed8b4cc78a3a2eaee2ae677"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -81,13 +86,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9675ca55c02085e2d0eb2d40d6ef002b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../df/d10/class_o_n___lock.html">ON_Lock</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a9675ca55c02085e2d0eb2d40d6ef002b">operator=</a> (const <a class="el" href="../../df/d10/class_o_n___lock.html">ON_Lock</a> &amp;)=default</td></tr>
 <tr class="separator:a9675ca55c02085e2d0eb2d40d6ef002b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f905a5656c42da06f9fbfacc99de1a2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a8f905a5656c42da06f9fbfacc99de1a2">ReturnDefaultLock</a> ()</td></tr>
+<tr class="memdesc:a8f905a5656c42da06f9fbfacc99de1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls ReturnLock(ON_Lock::DefaultLockedValue);  <a href="#a8f905a5656c42da06f9fbfacc99de1a2">More...</a><br /></td></tr>
 <tr class="separator:a8f905a5656c42da06f9fbfacc99de1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bcfc5267bb4cb996ca008a445363654"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/class_o_n___lock.html#a2bcfc5267bb4cb996ca008a445363654">ReturnLock</a> (int lock_value)</td></tr>
 <tr class="separator:a2bcfc5267bb4cb996ca008a445363654"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2013 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// Description: <a class="el" href="../../df/d10/class_o_n___lock.html">ON_Lock</a> is a thread safe lock semephore. It is implemented using platform specfic compare and set functions. </p>
+<div class="textblock"><p><a class="el" href="../../df/d10/class_o_n___lock.html" title="ON_Lock is a thread safe lock semephore. It is implemented using platform specfic compare and set fun...">ON_Lock</a> is a thread safe lock semephore. It is implemented using platform specfic compare and set functions. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a4f2a7bc0117c61e9dd13aa89d38e37e5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4f2a7bc0117c61e9dd13aa89d38e37e5">&#9670;&nbsp;</a></span>anonymous enum</h2>
@@ -202,7 +207,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Unconditionally sets the lock value to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a>. Returns: previous value of the lock. <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> indicates the lock was available otherwise the lock passed to <a class="el" href="../../df/d10/class_o_n___lock.html#a6216ad48aed8b4cc78a3a2eaee2ae677">GetLock()</a> is returned </p>
+
+<p>Unconditionally sets the lock value to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>previous value of the lock. <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> indicates the lock was available otherwise the lock passed to <a class="el" href="../../df/d10/class_o_n___lock.html#a6216ad48aed8b4cc78a3a2eaee2ae677">GetLock()</a> is returned </dd></dl>
 
 </div>
 </div>
@@ -220,7 +227,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls GetLock(ON_Lock::DefaultLockedValue); Returns: True if the lock state was unlocked and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a>. False otherwise. </p>
+
+<p>Calls GetLock(ON_Lock::DefaultLockedValue); </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the lock state was unlocked and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a>. False otherwise. </dd></dl>
 
 </div>
 </div>
@@ -239,7 +248,13 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: lock_value - [in] any value except <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> or <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5a8b28bdd23dd3c971f86090ac8ff1fdc8">ON_Lock::InvalidLockValue</a>. Typically <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> is used. Returns: True if the lock_value parameter was valid and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> to lock_value. False otherwise. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lock_value</td><td>[in] any value except <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> or <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5a8b28bdd23dd3c971f86090ac8ff1fdc8">ON_Lock::InvalidLockValue</a>. Typically <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the lock_value parameter was valid and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> to lock_value. False otherwise. </dd></dl>
 
 </div>
 </div>
@@ -257,7 +272,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Current lock value <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> indicates the the resource protected by the lock is available. </p>
+<dl class="section return"><dt>Returns</dt><dd>Current lock value <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> indicates the the resource protected by the lock is available. </dd></dl>
 
 </div>
 </div>
@@ -301,7 +316,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls ReturnLock(ON_Lock::DefaultLockedValue); Returns: True if the lock state was locked with a locak value = <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a>. False otherwise. </p>
+
+<p>Calls ReturnLock(ON_Lock::DefaultLockedValue); </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the lock state was locked with a locak value = <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> and the current lock value was changed from <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5abb37cec5885d90d89d8cc6e2a2775e76">ON_Lock::DefaultLockedValue</a> to <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a>. False otherwise. </dd></dl>
 
 </div>
 </div>
@@ -320,7 +337,13 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: lock_value - [in] any value except <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> or <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5a8b28bdd23dd3c971f86090ac8ff1fdc8">ON_Lock::InvalidLockValue</a>. Typically this is the value that was passed to <a class="el" href="../../df/d10/class_o_n___lock.html#a6216ad48aed8b4cc78a3a2eaee2ae677">GetLock()</a>. Returns: True if the lock_value parameter was valid and the current lock value was changed from that value to zero. False otherwise. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lock_value</td><td>[in] any value except <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5ae4f5230d589694ab75bc5c686bdf23da">ON_Lock::UnlockedValue</a> or <a class="el" href="../../df/d10/class_o_n___lock.html#a4f2a7bc0117c61e9dd13aa89d38e37e5a8b28bdd23dd3c971f86090ac8ff1fdc8">ON_Lock::InvalidLockValue</a>. Typically this is the value that was passed to <a class="el" href="../../df/d10/class_o_n___lock.html#a6216ad48aed8b4cc78a3a2eaee2ae677">GetLock()</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the lock_value parameter was valid and the current lock value was changed from that value to zero. False otherwise. </dd></dl>
 
 </div>
 </div>
@@ -330,7 +353,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

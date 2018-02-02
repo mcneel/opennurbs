@@ -103,8 +103,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a8132745dd145dd85f16edb55541e2c54"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a8132745dd145dd85f16edb55541e2c54">Create</a> (double angle_value, const class <a class="el" href="../../da/d8d/class_o_n___angle_unit_name.html">ON_AngleUnitName</a> &amp;angle_unit_system, <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#aaed252d633c46b419cc015cbf598734d">ON_AngleValue::StringFormat</a> string_format)</td></tr>
 <tr class="separator:a8132745dd145dd85f16edb55541e2c54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9219c28b8317769eee8bd8d4c7544c7"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ae9219c28b8317769eee8bd8d4c7544c7">CreateFromString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string)</td></tr>
+<tr class="memdesc:ae9219c28b8317769eee8bd8d4c7544c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string.  <a href="#ae9219c28b8317769eee8bd8d4c7544c7">More...</a><br /></td></tr>
 <tr class="separator:ae9219c28b8317769eee8bd8d4c7544c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78251abb2b89fcc8a58e541600ccf3b9"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9">CreateFromSubString</a> (<a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings</a> parse_settings, const wchar_t *string, int string_count, const wchar_t **string_end)</td></tr>
+<tr class="memdesc:a78251abb2b89fcc8a58e541600ccf3b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string.  <a href="#a78251abb2b89fcc8a58e541600ccf3b9">More...</a><br /></td></tr>
 <tr class="separator:a78251abb2b89fcc8a58e541600ccf3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -137,14 +139,14 @@ Static Public Attributes</h2></td></tr>
 
 <p><a class="el" href="../../d6/dc8/class_o_n___angle_value.html#aaed252d633c46b419cc015cbf598734d" title="ON_AngleValue::StringFormat identifies the formatting to apply when creating a length value from a do...">ON_AngleValue::StringFormat</a> identifies the formatting to apply when creating a length value from a double. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734da99ec4b2cce408e50ed2c69737c07e588"></a>ExactDecimal&#160;</td><td class="fielddoc"><p>summary&gt;Use exact decimal string.</p>
-<p>summary&gt;If possible, use exact fraction format (1.125 becomes 9/8).</p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734da99ec4b2cce408e50ed2c69737c07e588"></a>ExactDecimal&#160;</td><td class="fielddoc"><p>Use exact decimal string.</p>
 </td></tr>
-<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734da3d6a733870e5546005c6e055a4d8e74b"></a>ExactFraction&#160;</td><td class="fielddoc"><p>summary&gt;The value may be adjusted slightly to improve clarity (1.124999... becomes 1.125).</p>
+<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734da3d6a733870e5546005c6e055a4d8e74b"></a>ExactFraction&#160;</td><td class="fielddoc"><p>If possible, use exact fraction format (1.125 becomes 9/8).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734daa816afb2cc234c2298c013a663febbd5"></a>CleanDecimal&#160;</td><td class="fielddoc"><p>summary&gt;The value may be adjusted slightly to improve clarity (1.124999... becomes 9/8).</p>
+<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734daa816afb2cc234c2298c013a663febbd5"></a>CleanDecimal&#160;</td><td class="fielddoc"><p>The value may be adjusted slightly to improve clarity (1.124999... becomes 1.125).</p>
 </td></tr>
-<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734dad0e7b3f83996da47029ab8ff07cb58e6"></a>CleanFraction&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aaed252d633c46b419cc015cbf598734dad0e7b3f83996da47029ab8ff07cb58e6"></a>CleanFraction&#160;</td><td class="fielddoc"><p>The value may be adjusted slightly to improve clarity (1.124999... becomes 9/8).</p>
+</td></tr>
 </table>
 
 </div>
@@ -242,7 +244,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: context_unit_system - [in] angle unit system for the returned value. Pass ON::AngleUnitSystem::None to ignore the angle unit system and get the value save in this class. Returns: Angle in the specified angle unit system </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context_unit_system</td><td>[in] angle unit system for the returned value. Pass ON::AngleUnitSystem::None to ignore the angle unit system and get the value save in this class.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Angle in the specified angle unit system </dd></dl>
 
 </div>
 </div>
@@ -260,7 +268,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The angle as a string. Remarks: If <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ae9219c28b8317769eee8bd8d4c7544c7">ON_AngleValue::CreateFromString()</a> or <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9">ON_AngleValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a>, a copy of that string is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>The angle as a string. </dd></dl>
+<p>If <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ae9219c28b8317769eee8bd8d4c7544c7" title="Create an ON_AngleValue by parsing a string. ">ON_AngleValue::CreateFromString()</a> or <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9" title="Create an ON_AngleValue by parsing a string. ">ON_AngleValue::CreateFromSubString()</a> were used to create this <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a>, a copy of that string is returned. </p>
 
 </div>
 </div>
@@ -338,7 +347,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Angle unit system for this class. </p>
+<dl class="section return"><dt>Returns</dt><dd>Angle unit system for this class. </dd></dl>
 
 </div>
 </div>
@@ -387,7 +396,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: angle_value - [in] angle_unit_system - [in] bUseFractionsInString - [in] If bUseFractions is true and angle_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal. locale_id - [in] locale id for the string angle unit system bool Returns: Angle in the specified angle unit system Remarks: If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ae9219c28b8317769eee8bd8d4c7544c7">ON_AngleValue::CreateFromString()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle_value</td><td>[in]</td></tr>
+    <tr><td class="paramname">angle_unit_system</td><td>[in]</td></tr>
+    <tr><td class="paramname">bUseFractionsInString</td><td>[in] If bUseFractions is true and angle_value can be represented as a common fraction, then the string form will contain a fraction rather than a decimal.</td></tr>
+    <tr><td class="paramname">locale_id</td><td>[in] locale id for the string angle unit system bool</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Angle in the specified angle unit system </dd></dl>
+<p>If you don't like the automatically created string value, then format the string yourself and use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ae9219c28b8317769eee8bd8d4c7544c7" title="Create an ON_AngleValue by parsing a string. ">ON_AngleValue::CreateFromString()</a>. </p>
 
 </div>
 </div>
@@ -466,7 +485,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. Returns: If the string is valid, the exact angle value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ab7d2e8f577a2fb9fb7167193a5509c64">ON_AngleValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
+
+<p>Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact angle value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ab7d2e8f577a2fb9fb7167193a5509c64">ON_AngleValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9" title="Create an ON_AngleValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
 
 </div>
 </div>
@@ -515,7 +544,19 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string. Parameters: parse_settings - [in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a> string - [in] null terminated string to parse. string_count - [in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates angle parsing. string_end - [out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed. Returns: If the string is valid, the exact angle value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ab7d2e8f577a2fb9fb7167193a5509c64">ON_AngleValue::Unset</a> is returned. Remarks: If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
+
+<p>Create an <a class="el" href="../../d6/dc8/class_o_n___angle_value.html">ON_AngleValue</a> by parsing a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parse_settings</td><td>[in] Pass <a class="el" href="../../d6/d60/class_o_n___parse_settings.html">ON_ParseSettings(context_length_unit_system,context_angle_unit_system,context_locale_id)</a></td></tr>
+    <tr><td class="paramname">string</td><td>[in] null terminated string to parse.</td></tr>
+    <tr><td class="paramname">string_count</td><td>[in] string[] and string_count specify the string to parse. If string_count &gt;= 0, it specifies the maximum number of elements in string[] that may be parsed. If string_count = -1, then the string must contain a character that terminates angle parsing.</td></tr>
+    <tr><td class="paramname">string_end</td><td>[out] If string_end is not nullptr, then *string_end points to the first element in the string that was not parsed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the string is valid, the exact angle value is returned. If the string is not valid or parsing ends before the string's null terminator, the <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#ab7d2e8f577a2fb9fb7167193a5509c64">ON_AngleValue::Unset</a> is returned. </dd></dl>
+<p>If the entire string is not parsed, that is an error condition. Use <a class="el" href="../../d6/dc8/class_o_n___angle_value.html#a78251abb2b89fcc8a58e541600ccf3b9" title="Create an ON_AngleValue by parsing a string. ">CreateFromSubString()</a> to permit parsing a portion of the string. </p>
 
 </div>
 </div>
@@ -666,7 +707,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

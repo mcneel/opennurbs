@@ -65,18 +65,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac31b4c41441825e5826b79376edbfa9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">(a,b,c,d) = (0,v.x,v.y,v.z)  <a href="#ac31b4c41441825e5826b79376edbfa9f">More...</a><br /></td></tr>
 <tr class="separator:ac31b4c41441825e5826b79376edbfa9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c57a2950765a6ccaf75a9616506b213"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a7c57a2950765a6ccaf75a9616506b213">Conjugate</a> () const</td></tr>
+<tr class="memdesc:a7c57a2950765a6ccaf75a9616506b213"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the conjugate of the quaternion = (a,-b,-c,-d).  <a href="#a7c57a2950765a6ccaf75a9616506b213">More...</a><br /></td></tr>
 <tr class="separator:a7c57a2950765a6ccaf75a9616506b213"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa04e085f17f83b02e75989306470dcd8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#aa04e085f17f83b02e75989306470dcd8">DistanceTo</a> (const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a> &amp;q) const</td></tr>
 <tr class="separator:aa04e085f17f83b02e75989306470dcd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaa88efe61d7f72b59fd6d2cdc61361d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#afaa88efe61d7f72b59fd6d2cdc61361d">GetRotation</a> (double &amp;angle, <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;axis) const</td></tr>
 <tr class="separator:afaa88efe61d7f72b59fd6d2cdc61361d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afea34ea8a527a736523bb70520889991"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#afea34ea8a527a736523bb70520889991">GetRotation</a> (<a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;xform) const</td></tr>
+<tr class="memdesc:afea34ea8a527a736523bb70520889991"><td class="mdescLeft">&#160;</td><td class="mdescRight">The transformation returned by this function has the property that xform*V = q.Rotate(V).  <a href="#afea34ea8a527a736523bb70520889991">More...</a><br /></td></tr>
 <tr class="separator:afea34ea8a527a736523bb70520889991"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac26334d57e502cb81b4e4de7a88d36c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#aac26334d57e502cb81b4e4de7a88d36c">GetRotation</a> (<a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane) const</td></tr>
 <tr class="separator:aac26334d57e502cb81b4e4de7a88d36c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bc13ce7ad41adafb53424d9fcc006ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a1bc13ce7ad41adafb53424d9fcc006ec">Inverse</a> () const</td></tr>
 <tr class="separator:a1bc13ce7ad41adafb53424d9fcc006ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab57b9e8619d188c2517a6b7f6e705619"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#ab57b9e8619d188c2517a6b7f6e705619">Invert</a> ()</td></tr>
+<tr class="memdesc:ab57b9e8619d188c2517a6b7f6e705619"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the quaternion to a/L2, -b/L2, -c/L2, -d/L2, where L2 = length squared = (a*a + b*b + c*c + d*d). This is the multiplicative inverse, i.e., (a,b,c,d)*(a/L2, -b/L2, -c/L2, -d/L2) = (1,0,0,0).  <a href="#ab57b9e8619d188c2517a6b7f6e705619">More...</a><br /></td></tr>
 <tr class="separator:ab57b9e8619d188c2517a6b7f6e705619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01f25c00ead2e578de541dc5be06131b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a01f25c00ead2e578de541dc5be06131b">IsNotZero</a> () const</td></tr>
 <tr class="separator:a01f25c00ead2e578de541dc5be06131b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,10 +127,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2701cbcee25d051f44be1a4a3bab6f0c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a2701cbcee25d051f44be1a4a3bab6f0c">Set</a> (double qa, double qb, double qc, double qd)</td></tr>
 <tr class="separator:a2701cbcee25d051f44be1a4a3bab6f0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ce1cf23657d2a22523bc11d95acf7ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a2ce1cf23657d2a22523bc11d95acf7ac">SetRotation</a> (double angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;axis)</td></tr>
+<tr class="memdesc:a2ce1cf23657d2a22523bc11d95acf7ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the quaternion to  <a href="#a2ce1cf23657d2a22523bc11d95acf7ac">More...</a><br /></td></tr>
 <tr class="separator:a2ce1cf23657d2a22523bc11d95acf7ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a820d1c0c15c15c49061e728a0a352033"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a820d1c0c15c15c49061e728a0a352033">SetRotation</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane0, const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane1)</td></tr>
 <tr class="separator:a820d1c0c15c15c49061e728a0a352033"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ad085599a112d37b6c7bc9d019f5e57"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a3ad085599a112d37b6c7bc9d019f5e57">Unitize</a> ()</td></tr>
+<tr class="memdesc:a3ad085599a112d37b6c7bc9d019f5e57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scales the quaternion's coordinates so that a*a + b*b + c*c + d*d = 1.  <a href="#a3ad085599a112d37b6c7bc9d019f5e57">More...</a><br /></td></tr>
 <tr class="separator:a3ad085599a112d37b6c7bc9d019f5e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f944b92989264bd7a7cb68f7a99d237"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector</a> () const</td></tr>
 <tr class="separator:a8f944b92989264bd7a7cb68f7a99d237"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,25 +169,17 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a0d34db53e780c5081c90180ba59ebd92"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a0d34db53e780c5081c90180ba59ebd92">I</a></td></tr>
-<tr class="memdesc:a0d34db53e780c5081c90180ba59ebd92"><td class="mdescLeft">&#160;</td><td class="mdescRight">"i" = (0,1,0,0)  <a href="#a0d34db53e780c5081c90180ba59ebd92">More...</a><br /></td></tr>
 <tr class="separator:a0d34db53e780c5081c90180ba59ebd92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70fe3af1b1d8598e85e2649029d3f554"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a70fe3af1b1d8598e85e2649029d3f554">Identity</a></td></tr>
-<tr class="memdesc:a70fe3af1b1d8598e85e2649029d3f554"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 = (1,0,0,0)  <a href="#a70fe3af1b1d8598e85e2649029d3f554">More...</a><br /></td></tr>
 <tr class="separator:a70fe3af1b1d8598e85e2649029d3f554"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68ec3851e8d2ee8774e541eea06a69cb"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a68ec3851e8d2ee8774e541eea06a69cb">J</a></td></tr>
-<tr class="memdesc:a68ec3851e8d2ee8774e541eea06a69cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">"j" = (0,0,1,0)  <a href="#a68ec3851e8d2ee8774e541eea06a69cb">More...</a><br /></td></tr>
 <tr class="separator:a68ec3851e8d2ee8774e541eea06a69cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9dc264f67e8bdb22726d79d078d3dc7f"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#a9dc264f67e8bdb22726d79d078d3dc7f">K</a></td></tr>
-<tr class="memdesc:a9dc264f67e8bdb22726d79d078d3dc7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">"k" = (0,0,0,1)  <a href="#a9dc264f67e8bdb22726d79d078d3dc7f">More...</a><br /></td></tr>
 <tr class="separator:a9dc264f67e8bdb22726d79d078d3dc7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5b5284547fce4d835db622a13952c93"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d9/d33/class_o_n___quaternion.html">ON_Quaternion</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d33/class_o_n___quaternion.html#ac5b5284547fce4d835db622a13952c93">Zero</a></td></tr>
-<tr class="memdesc:ac5b5284547fce4d835db622a13952c93"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = (0,0,0,0  <a href="#ac5b5284547fce4d835db622a13952c93">More...</a><br /></td></tr>
 <tr class="separator:ac5b5284547fce4d835db622a13952c93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6049aaea1fef16350e0a4bb31a594e17"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6049aaea1fef16350e0a4bb31a594e17">&#9670;&nbsp;</a></span>ON_Quaternion() <span class="overload">[1/3]</span></h2>
 
@@ -283,7 +280,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Returns the conjugate of the quaternion = (a,-b,-c,-d). </p>
+
+<p>Returns the conjugate of the quaternion = (a,-b,-c,-d). </p>
 
 </div>
 </div>
@@ -320,7 +318,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: The distance or norm of the difference between the two quaternions. = (p - q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#ae618b56f8488cc484bea9d7ce4d03dac">Length()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The distance or norm of the difference between the two quaternions. = (p - q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#ae618b56f8488cc484bea9d7ce4d03dac">Length()</a>. </dd></dl>
 
 </div>
 </div>
@@ -339,7 +337,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The distance or norm of the difference between the two quaternions. = ("this" - q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#ae618b56f8488cc484bea9d7ce4d03dac">Length()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The distance or norm of the difference between the two quaternions. = ("this" - q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#ae618b56f8488cc484bea9d7ce4d03dac">Length()</a>. </dd></dl>
 
 </div>
 </div>
@@ -366,7 +364,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: exp(q) = e^a*( cos(|V|) + V/|V|*sin(|V|) ), where V = b*i + c*j + d*k. </p>
+<dl class="section return"><dt>Returns</dt><dd>exp(q) = e^a*( cos(|V|) + V/|V|*sin(|V|) ), where V = b*i + c*j + d*k. </dd></dl>
 
 </div>
 </div>
@@ -395,7 +393,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: angle - [out] in radians axis - [out] unit axis of rotation of 0 if (b,c,d) is the zero vector. Returns: The rotation defined by the quaternion. Remarks: If the quaternion is not unitized, the rotation of its unitized form is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle</td><td>[out] in radians</td></tr>
+    <tr><td class="paramname">axis</td><td>[out] unit axis of rotation of 0 if (b,c,d) is the zero vector.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The rotation defined by the quaternion. </dd></dl>
+<p>If the quaternion is not unitized, the rotation of its unitized form is returned. </p>
 
 </div>
 </div>
@@ -414,7 +420,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The transformation returned by this function has the property that xform*V = q.Rotate(V). Parameters: xform - [out] Returns: A transformation matrix that performs the rotation defined by the quaternion. Remarks: If the quaternion is not unitized, the rotation of its unitized form is returned. Do not confuse the result of this function the matrix returned by <a class="el" href="../../d9/d33/class_o_n___quaternion.html#adc30079f12ae54e9979ca5369c51fe91">ON_Quaternion::MatrixForm()</a>. The transformation returned by this function has the property that xform*V = q.Rotate(V). </p>
+
+<p>The transformation returned by this function has the property that xform*V = q.Rotate(V). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">xform</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A transformation matrix that performs the rotation defined by the quaternion. </dd></dl>
+<p>If the quaternion is not unitized, the rotation of its unitized form is returned. Do not confuse the result of this function the matrix returned by <a class="el" href="../../d9/d33/class_o_n___quaternion.html#adc30079f12ae54e9979ca5369c51fe91">ON_Quaternion::MatrixForm()</a>. The transformation returned by this function has the property that xform*V = q.Rotate(V). </p>
 
 </div>
 </div>
@@ -433,7 +448,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: plane - [out] Returns: The frame created by applying the quaternion's rotation to the canonical world frame (1,0,0),(0,1,0),(0,0,1). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The frame created by applying the quaternion's rotation to the canonical world frame (1,0,0),(0,1,0),(0,0,1). </dd></dl>
 
 </div>
 </div>
@@ -451,7 +472,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Sets the quaternion to a/L2, -b/L2, -c/L2, -d/L2, where L2 = length squared = (a*a + b*b + c*c + d*d). This is the multiplicative inverse, i.e., (a,b,c,d)*(a/L2, -b/L2, -c/L2, -d/L2) = (1,0,0,0). If "this" is the zero quaternion, then the zero quaternion is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>Sets the quaternion to a/L2, -b/L2, -c/L2, -d/L2, where L2 = length squared = (a*a + b*b + c*c + d*d). This is the multiplicative inverse, i.e., (a,b,c,d)*(a/L2, -b/L2, -c/L2, -d/L2) = (1,0,0,0). If "this" is the zero quaternion, then the zero quaternion is returned. </dd></dl>
 
 </div>
 </div>
@@ -469,7 +490,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the quaternion to a/L2, -b/L2, -c/L2, -d/L2, where L2 = length squared = (a*a + b*b + c*c + d*d). This is the multiplicative inverse, i.e., (a,b,c,d)*(a/L2, -b/L2, -c/L2, -d/L2) = (1,0,0,0). Returns: True if successful. False if the quaternion is zero and cannot be inverted. </p>
+
+<p>Sets the quaternion to a/L2, -b/L2, -c/L2, -d/L2, where L2 = length squared = (a*a + b*b + c*c + d*d). This is the multiplicative inverse, i.e., (a,b,c,d)*(a/L2, -b/L2, -c/L2, -d/L2) = (1,0,0,0). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. False if the quaternion is zero and cannot be inverted. </dd></dl>
 
 </div>
 </div>
@@ -487,7 +510,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if a, b, c, and d are all valid, finite and at least one is non-zero. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a, b, c, and d are all valid, finite and at least one is non-zero. </dd></dl>
 
 </div>
 </div>
@@ -505,7 +528,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if b, c, and d are all zero. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if b, c, and d are all zero. </dd></dl>
 
 </div>
 </div>
@@ -523,7 +546,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if a, b, c, and d are valid finite IEEE doubles. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a, b, c, and d are valid finite IEEE doubles. </dd></dl>
 
 </div>
 </div>
@@ -541,7 +564,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if a = 0 and at least one of b, c, or d is not zero. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a = 0 and at least one of b, c, or d is not zero. </dd></dl>
 
 </div>
 </div>
@@ -559,7 +582,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if a, b, c, and d are all zero. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a, b, c, and d are all zero. </dd></dl>
 
 </div>
 </div>
@@ -577,7 +600,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Returns the length or norm of the quaternion sqrt(a*a + b*b + c*c + d*d). </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns the length or norm of the quaternion sqrt(a*a + b*b + c*c + d*d). </dd></dl>
 
 </div>
 </div>
@@ -595,7 +618,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Returns a*a + b*b + c*c + d*d. </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns a*a + b*b + c*c + d*d. </dd></dl>
 
 </div>
 </div>
@@ -622,7 +645,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: log(q) = log(|q|) + V/|V|*acos(a/|q|), where V = b*i + c*j + d*k. </p>
+<dl class="section return"><dt>Returns</dt><dd>log(q) = log(|q|) + V/|V|*acos(a/|q|), where V = b*i + c*j + d*k. </dd></dl>
 
 </div>
 </div>
@@ -640,11 +663,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 4x4 real valued matrix form of the quaternion </p><pre class="fragment">    a  b  c  d
-   -b  a -d  c
-   -c  d  a -b
-   -d -c  b  a
-</pre><p>which has the same arithmetic properties in as the quaternion. Remarks: Do not confuse this with the rotation defined by the quaternion. This function will only be interesting to math nerds and is not useful in rendering or animation applications. </p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">4x4 real valued matrix form of the quaternion </p><pre class="fragment">      a  b  c  d
+     -b  a -d  c
+     -c  d  a -b
+     -d -c  b  a
+</pre><p class="enddd">which has the same arithmetic properties in as the quaternion. </p>
+</dd></dl>
+<p>Do not confuse this with the rotation defined by the quaternion. This function will only be interesting to math nerds and is not useful in rendering or animation applications. </p>
 
 </div>
 </div>
@@ -867,7 +892,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: q^t = Exp(t*Log(q)) </p>
+<dl class="section return"><dt>Returns</dt><dd>q^t = Exp(t*Log(q)) </dd></dl>
 
 </div>
 </div>
@@ -886,9 +911,14 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description Rotate a 3d vector. This operation is also called conjugation, because the result is the same as</p>
-<p>(q.Conjugate()*(0,x,y,x)*q/q.<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a7374cffe3374e0cde4e047a07f8131da">LengthSquared()</a>).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector()</a></p>
-<p>Parameters: v - [in] Returns: R*v, where R is the rotation defined by the unit quaternion. This is mathematically the same as the values (Inverse(q)*(0,x,y,z)*q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector()</a> and (q.Conjugate()*(0,x,y,x)*q/q.<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a7374cffe3374e0cde4e047a07f8131da">LengthSquared()</a>).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector()</a> Remarks: If you need to rotate more than a dozen or so vectors, it will be more efficient to call GetRotation(ON_Xform&amp; xform) and multiply the vectors by xform. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">v</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>R*v, where R is the rotation defined by the unit quaternion. This is mathematically the same as the values (Inverse(q)*(0,x,y,z)*q).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector()</a> and (q.Conjugate()*(0,x,y,x)*q/q.<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a7374cffe3374e0cde4e047a07f8131da">LengthSquared()</a>).<a class="el" href="../../d9/d33/class_o_n___quaternion.html#a8f944b92989264bd7a7cb68f7a99d237">Vector()</a> </dd></dl>
+<p>If you need to rotate more than a dozen or so vectors, it will be more efficient to call GetRotation(ON_Xform&amp; xform) and multiply the vectors by xform. </p>
 
 </div>
 </div>
@@ -925,9 +955,16 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: angle - [in] in radians axis - [in] axis of rotation Returns: The unit quaternion</p>
-<p>cos(angle/2), sin(angle/2)*x, sin(angle/2)*y, sin(angle/2)*z</p>
-<p>where (x,y,z) is the unit vector parallel to axis. This is the unit quaternion that represents the rotation of angle about axis. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle</td><td>[in] in radians</td></tr>
+    <tr><td class="paramname">axis</td><td>[in] axis of rotation</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">The unit quaternion </p><pre class="fragment"> cos(angle/2), sin(angle/2)*x, sin(angle/2)*y, sin(angle/2)*z
+</pre><p class="enddd">where (x,y,z) is the unit vector parallel to axis. This is the unit quaternion that represents the rotation of angle about axis. </p>
+</dd></dl>
 
 </div>
 </div>
@@ -964,7 +1001,15 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: plane0 - [in] plane1 - [in] Returns: The unit quaternion that represents the the rotation that maps plane0.xaxis to plane1.xaxis, plane0.yaxis to plane1.yaxis, and plane0.zaxis to plane1.zaxis. Remarks: The plane origins are ignored. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane0</td><td>[in]</td></tr>
+    <tr><td class="paramname">plane1</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The unit quaternion that represents the the rotation that maps plane0.xaxis to plane1.xaxis, plane0.yaxis to plane1.yaxis, and plane0.zaxis to plane1.zaxis. </dd></dl>
+<p>The plane origins are ignored. </p>
 
 </div>
 </div>
@@ -982,7 +1027,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The "real" or "scalar" part of the quaternion = a. </p>
+<dl class="section return"><dt>Returns</dt><dd>The "real" or "scalar" part of the quaternion = a. </dd></dl>
 
 </div>
 </div>
@@ -1051,9 +1096,18 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets the quaternion to</p>
+
+<p>Sets the quaternion to </p>
 <p>cos(angle/2), sin(angle/2)*x, sin(angle/2)*y, sin(angle/2)*z</p>
-<p>where (x,y,z) is the unit vector parallel to axis. This is the unit quaternion that represents the rotation of angle about axis. Parameters: angle - [in] in radians axis - [in] axis of rotation Returns: </p>
+<p>where (x,y,z) is the unit vector parallel to axis. This is the unit quaternion that represents the rotation of angle about axis. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">angle</td><td>[in] in radians</td></tr>
+    <tr><td class="paramname">axis</td><td>[in] axis of rotation</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -1082,7 +1136,14 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Descriptin: Sets the quaternion to the unit quaternion which rotates plane0.xaxis to plane1.xaxis, plane0.yaxis to plane1.yaxis, and plane0.zaxis to plane1.zaxis. Parameters: plane0 - [in] plane1 - [in] Remarks: The plane origins are ignored. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane0</td><td>[in]</td></tr>
+    <tr><td class="paramname">plane1</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The plane origins are ignored. </p>
 
 </div>
 </div>
@@ -1142,7 +1203,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Scales the quaternion's coordinates so that a*a + b*b + c*c + d*d = 1. Returns: True if successful. False if the quaternion is zero and cannot be unitized. </p>
+
+<p>Scales the quaternion's coordinates so that a*a + b*b + c*c + d*d = 1. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. False if the quaternion is zero and cannot be unitized. </dd></dl>
 
 </div>
 </div>
@@ -1160,7 +1223,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: The "vector" or "imaginary" part of the quaternion = (b,c,d) </p>
+<dl class="section return"><dt>Returns</dt><dd>The "vector" or "imaginary" part of the quaternion = (b,c,d) </dd></dl>
 
 </div>
 </div>
@@ -1243,8 +1306,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>"i" = (0,1,0,0) </p>
-
 </div>
 </div>
 <a id="a70fe3af1b1d8598e85e2649029d3f554"></a>
@@ -1266,8 +1327,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>1 = (1,0,0,0) </p>
 
 </div>
 </div>
@@ -1291,8 +1350,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>"j" = (0,0,1,0) </p>
-
 </div>
 </div>
 <a id="a9dc264f67e8bdb22726d79d078d3dc7f"></a>
@@ -1314,8 +1371,6 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>"k" = (0,0,0,1) </p>
 
 </div>
 </div>
@@ -1339,8 +1394,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>0 = (0,0,0,0 </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1349,7 +1402,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

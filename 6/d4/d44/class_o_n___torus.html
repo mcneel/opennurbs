@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>The torus is defined by a major circle and minor radius. The torus is parameterized by (major_angle,minor_angle). The angles are specified in radians. The domain of both parameters is (0,2pi).  
+ <a href="../../d4/d44/class_o_n___torus.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../df/df5/opennurbs__torus_8h_source.html">opennurbs_torus.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -83,14 +86,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a34236cd0d05abf54030dc0e3050ffa36"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#a34236cd0d05abf54030dc0e3050ffa36">IsValid</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log=nullptr) const</td></tr>
 <tr class="separator:a34236cd0d05abf54030dc0e3050ffa36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa559c7ea2c30b70b6091ca77140e5a84"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84">MajorCircleDegrees</a> (double minor_angle_degrees) const</td></tr>
+<tr class="memdesc:aa559c7ea2c30b70b6091ca77140e5a84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_degrees - [in]  <a href="#aa559c7ea2c30b70b6091ca77140e5a84">More...</a><br /></td></tr>
 <tr class="separator:aa559c7ea2c30b70b6091ca77140e5a84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba7724c7a7bbad8e710eee9f9dfb8ca9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9">MajorCircleRadians</a> (double minor_angle_radians) const</td></tr>
+<tr class="memdesc:aba7724c7a7bbad8e710eee9f9dfb8ca9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_radians - [in]  <a href="#aba7724c7a7bbad8e710eee9f9dfb8ca9">More...</a><br /></td></tr>
 <tr class="separator:aba7724c7a7bbad8e710eee9f9dfb8ca9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47f35c83aecc094bec9bf9c667c539c3"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#a47f35c83aecc094bec9bf9c667c539c3">MajorRadius</a> () const</td></tr>
 <tr class="separator:a47f35c83aecc094bec9bf9c667c539c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab9b1842bfe010ed92f2077c67d5f2e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2">MinorCircleDegrees</a> (double major_angle_degrees) const</td></tr>
+<tr class="memdesc:aab9b1842bfe010ed92f2077c67d5f2e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in]  <a href="#aab9b1842bfe010ed92f2077c67d5f2e2">More...</a><br /></td></tr>
 <tr class="separator:aab9b1842bfe010ed92f2077c67d5f2e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00417780160ef2c68d9c6eb6e6e4420f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f">MinorCircleRadians</a> (double major_angle_radians) const</td></tr>
+<tr class="memdesc:a00417780160ef2c68d9c6eb6e6e4420f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in]  <a href="#a00417780160ef2c68d9c6eb6e6e4420f">More...</a><br /></td></tr>
 <tr class="separator:a00417780160ef2c68d9c6eb6e6e4420f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef359535325faa3d830ecd4d9ffe88c5"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#aef359535325faa3d830ecd4d9ffe88c5">MinorRadius</a> () const</td></tr>
 <tr class="separator:aef359535325faa3d830ecd4d9ffe88c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -99,6 +106,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac041c60a71301662b97ce8070321bb61"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#ac041c60a71301662b97ce8070321bb61">PointAt</a> (double major_angle_radians, double minor_angle_radians) const</td></tr>
 <tr class="separator:ac041c60a71301662b97ce8070321bb61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92541bbf880c7ee36c35a7c79d28d515"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d37/class_o_n___rev_surface.html">ON_RevSurface</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#a92541bbf880c7ee36c35a7c79d28d515">RevSurfaceForm</a> (<a class="el" href="../../d1/d37/class_o_n___rev_surface.html">ON_RevSurface</a> *srf=nullptr) const</td></tr>
+<tr class="memdesc:a92541bbf880c7ee36c35a7c79d28d515"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a surface of revolution definition of the torus.  <a href="#a92541bbf880c7ee36c35a7c79d28d515">More...</a><br /></td></tr>
 <tr class="separator:a92541bbf880c7ee36c35a7c79d28d515"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af424d4c181ebf2a57c82d596be7646e5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#af424d4c181ebf2a57c82d596be7646e5">Rotate</a> (double sin_angle, double cos_angle, const <a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> &amp;axis_of_rotation)</td></tr>
 <tr class="memdesc:af424d4c181ebf2a57c82d596be7646e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">rotate torus about its origin  <a href="#af424d4c181ebf2a57c82d596be7646e5">More...</a><br /></td></tr>
@@ -118,23 +126,15 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a48d9920b5b940bedabe2bf90458ab2a0"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#a48d9920b5b940bedabe2bf90458ab2a0">major_radius</a></td></tr>
-<tr class="memdesc:a48d9920b5b940bedabe2bf90458ab2a0"><td class="mdescLeft">&#160;</td><td class="mdescRight"><blockquote class="doxtable">
-<p>minor_radius </p>
-</blockquote>
- <a href="#a48d9920b5b940bedabe2bf90458ab2a0">More...</a><br /></td></tr>
 <tr class="separator:a48d9920b5b940bedabe2bf90458ab2a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad82a00b7119803c4e4b97a9fb118ae5f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#ad82a00b7119803c4e4b97a9fb118ae5f">minor_radius</a></td></tr>
-<tr class="memdesc:ad82a00b7119803c4e4b97a9fb118ae5f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><blockquote class="doxtable">
-<p>0 </p>
-</blockquote>
- <a href="#ad82a00b7119803c4e4b97a9fb118ae5f">More...</a><br /></td></tr>
 <tr class="separator:ad82a00b7119803c4e4b97a9fb118ae5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaad824c344ceae6d02236efcd3e99183"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d44/class_o_n___torus.html#aaad824c344ceae6d02236efcd3e99183">plane</a></td></tr>
 <tr class="memdesc:aaad824c344ceae6d02236efcd3e99183"><td class="mdescLeft">&#160;</td><td class="mdescRight">for expert users  <a href="#aaad824c344ceae6d02236efcd3e99183">More...</a><br /></td></tr>
 <tr class="separator:aaad824c344ceae6d02236efcd3e99183"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: The torus is defined by a major circle and minor radius. The torus is parameterized by (major_angle,minor_angle). The angles are specified in radians. The domain of both parameters is (0,2pi). </p>
+<div class="textblock"><p>The torus is defined by a major circle and minor radius. The torus is parameterized by (major_angle,minor_angle). The angles are specified in radians. The domain of both parameters is (0,2pi). </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a330241b4cf13f9e4d863b4586869745b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a330241b4cf13f9e4d863b4586869745b">&#9670;&nbsp;</a></span>ON_Torus() <span class="overload">[1/3]</span></h2>
@@ -402,7 +402,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>parameterization of NURBS surface does not match torus's transcendental paramaterization </p>
-<p>returns 0=failure, 2=success </p>
 
 </div>
 </div>
@@ -439,7 +438,10 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_degrees - [in] Returns: A circle with normal major_circle.plane.zaxis that starts at PointAt( 0.0, minor_angle_degrees*ON_PI/180.0 ). See Also: <a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9">ON_Torus::MajorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84">ON_Torus::MajorCircleDegrees</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f">ON_Torus::MinorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2">ON_Torus::MinorCircleDegrees</a> </p>
+
+<p>Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_degrees - [in] </p>
+<dl class="section return"><dt>Returns</dt><dd>A circle with normal major_circle.plane.zaxis that starts at PointAt( 0.0, minor_angle_degrees*ON_PI/180.0 ). </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleDegrees</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] ">ON_Torus::MinorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] ">ON_Torus::MinorCircleDegrees</a></dd></dl>
 
 </div>
 </div>
@@ -458,7 +460,10 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_radians - [in] Returns: A circle with normal major_circle.plane.zaxis that starts at PointAt( 0.0, minor_angle_radians ). See Also: <a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9">ON_Torus::MajorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84">ON_Torus::MajorCircleDegrees</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f">ON_Torus::MinorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2">ON_Torus::MinorCircleDegrees</a> </p>
+
+<p>Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angle_radians - [in] </p>
+<dl class="section return"><dt>Returns</dt><dd>A circle with normal major_circle.plane.zaxis that starts at PointAt( 0.0, minor_angle_radians ). </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleDegrees</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] ">ON_Torus::MinorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] ">ON_Torus::MinorCircleDegrees</a></dd></dl>
 
 </div>
 </div>
@@ -494,7 +499,10 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] Returns: A circle with radius = minor_radis, center = major_circle.PointAt(major_angle_degrees*ON_PI/180.0), and starting point PointAt( major_angle_degrees*ON_PI/180.0, 0.0 ). See Also: <a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9">ON_Torus::MajorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84">ON_Torus::MajorCircleDegrees</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f">ON_Torus::MinorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2">ON_Torus::MinorCircleDegrees</a> </p>
+
+<p>Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] </p>
+<dl class="section return"><dt>Returns</dt><dd>A circle with radius = minor_radis, center = major_circle.PointAt(major_angle_degrees*ON_PI/180.0), and starting point PointAt( major_angle_degrees*ON_PI/180.0, 0.0 ). </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleDegrees</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] ">ON_Torus::MinorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] ">ON_Torus::MinorCircleDegrees</a></dd></dl>
 
 </div>
 </div>
@@ -513,7 +521,10 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] Returns: A circle with radius = minor_radis, center = major_circle.PointAt(major_angle_radians), and starting point PointAt( major_angle_radians, 0.0 ). See Also: <a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9">ON_Torus::MajorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84">ON_Torus::MajorCircleDegrees</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f">ON_Torus::MinorCircleRadians</a> <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2">ON_Torus::MinorCircleDegrees</a> </p>
+
+<p>Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] </p>
+<dl class="section return"><dt>Returns</dt><dd>A circle with radius = minor_radis, center = major_circle.PointAt(major_angle_radians), and starting point PointAt( major_angle_radians, 0.0 ). </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d4/d44/class_o_n___torus.html#aba7724c7a7bbad8e710eee9f9dfb8ca9" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aa559c7ea2c30b70b6091ca77140e5a84" title="Get the circle that is the isocurve on the torus at a specified minor angle. Parameteters: minor_angl...">ON_Torus::MajorCircleDegrees</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#a00417780160ef2c68d9c6eb6e6e4420f" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_radians - [in] ">ON_Torus::MinorCircleRadians</a>, <a class="el" href="../../d4/d44/class_o_n___torus.html#aab9b1842bfe010ed92f2077c67d5f2e2" title="Get the minor circle that is the isocurve on the torus at a specified major angle. Parameteters: major_angle_degrees - [in] ">ON_Torus::MinorCircleDegrees</a></dd></dl>
 
 </div>
 </div>
@@ -605,7 +616,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Creates a surface of revolution definition of the torus. Parameters: srf - [in] if not nullptr, then this srf is used. Result: A surface of revolution or nullptr if the torus is not valid. </p>
+
+<p>Creates a surface of revolution definition of the torus. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">srf</td><td>[in] if not nullptr, then this srf is used. Result: A surface of revolution or nullptr if the torus is not valid.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -642,14 +660,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>rotate torus about its origin </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sin_angle</td><td>sin(angle) </td></tr>
-    <tr><td class="paramname">cos_angle</td><td>cos(angle) </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -678,13 +688,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">angle_radians</td><td>angle in radians </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -727,15 +730,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>rotate torus about a point and axis </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sin_angle</td><td>sin(angle) </td></tr>
-    <tr><td class="paramname">cos_angle</td><td>cos(angle) </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-    <tr><td class="paramname">center_of_rotation</td><td>center of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -770,14 +764,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">angle_radians</td><td>angle in radians </td></tr>
-    <tr><td class="paramname">axis_of_rotation</td><td>axis of rotation </td></tr>
-    <tr><td class="paramname">center_of_rotation</td><td>center of rotation </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -830,11 +816,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p><blockquote class="doxtable">
-<p>minor_radius </p>
-</blockquote>
-</p>
-
 </div>
 </div>
 <a id="ad82a00b7119803c4e4b97a9fb118ae5f"></a>
@@ -848,11 +829,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p><blockquote class="doxtable">
-<p>0 </p>
-</blockquote>
-</p>
 
 </div>
 </div>
@@ -869,7 +845,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>for expert users </p>
-<p>major circle plane </p>
 
 </div>
 </div>
@@ -879,7 +854,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

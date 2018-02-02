@@ -55,12 +55,16 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a519b0b8ae279eae9834a3433c11bc54c"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a519b0b8ae279eae9834a3433c11bc54c">Close</a> (FILE *fp)</td></tr>
+<tr class="memdesc:a519b0b8ae279eae9834a3433c11bc54c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fclose().  <a href="#a519b0b8ae279eae9834a3433c11bc54c">More...</a><br /></td></tr>
 <tr class="separator:a519b0b8ae279eae9834a3433c11bc54c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add50a7643172810ee33d0d0ecb2f525d"><td class="memItemLeft" align="right" valign="top">static ON__INT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#add50a7643172810ee33d0d0ecb2f525d">CurrentPosition</a> (FILE *fp)</td></tr>
+<tr class="memdesc:add50a7643172810ee33d0d0ecb2f525d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime ftell().  <a href="#add50a7643172810ee33d0d0ecb2f525d">More...</a><br /></td></tr>
 <tr class="separator:add50a7643172810ee33d0d0ecb2f525d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f69c07a76f7c6d2bb85c2a421a14f30"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a5f69c07a76f7c6d2bb85c2a421a14f30">Flush</a> (FILE *fp)</td></tr>
+<tr class="memdesc:a5f69c07a76f7c6d2bb85c2a421a14f30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fflush(fp).  <a href="#a5f69c07a76f7c6d2bb85c2a421a14f30">More...</a><br /></td></tr>
 <tr class="separator:a5f69c07a76f7c6d2bb85c2a421a14f30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac344f0e78881d31fe07aa99f63955700"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700">GetFileInformation</a> (FILE *fp, ON__UINT64 *file_size, ON__UINT64 *file_metadata_last_modified_time, ON__UINT64 *file_contents_last_modified_time)</td></tr>
+<tr class="memdesc:ac344f0e78881d31fe07aa99f63955700"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fstat().  <a href="#ac344f0e78881d31fe07aa99f63955700">More...</a><br /></td></tr>
 <tr class="separator:ac344f0e78881d31fe07aa99f63955700"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33ab4bdb97185c9c2849ab3de2bd2ef9"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a33ab4bdb97185c9c2849ab3de2bd2ef9">GetFileInformation</a> (const wchar_t *file_name, ON__UINT64 *file_size, ON__UINT64 *file_metadata_last_modified_time, ON__UINT64 *file_contents_last_modified_time)</td></tr>
 <tr class="separator:a33ab4bdb97185c9c2849ab3de2bd2ef9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -71,24 +75,34 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a6c4125addb09e08fab20dd9c4f9e9bc0"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a6c4125addb09e08fab20dd9c4f9e9bc0">Is3dmFile</a> (const char *file_path, bool bAllow3dmbakExtension)</td></tr>
 <tr class="separator:a6c4125addb09e08fab20dd9c4f9e9bc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09e4b43c9176ae7854ba10e5d21b2923"><td class="memItemLeft" align="right" valign="top">static FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">Open</a> (const wchar_t *filename, const wchar_t *mode)</td></tr>
+<tr class="memdesc:a09e4b43c9176ae7854ba10e5d21b2923"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fopen().  <a href="#a09e4b43c9176ae7854ba10e5d21b2923">More...</a><br /></td></tr>
 <tr class="separator:a09e4b43c9176ae7854ba10e5d21b2923"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d1c367f44712b6f4c9893fd27b64809"><td class="memItemLeft" align="right" valign="top">static FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a8d1c367f44712b6f4c9893fd27b64809">Open</a> (const char *filename, const char *mode)</td></tr>
+<tr class="memdesc:a8d1c367f44712b6f4c9893fd27b64809"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fopen().  <a href="#a8d1c367f44712b6f4c9893fd27b64809">More...</a><br /></td></tr>
 <tr class="separator:a8d1c367f44712b6f4c9893fd27b64809"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1d36151bf1f7b2e929bb3c66b75ee84"><td class="memItemLeft" align="right" valign="top">static FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#ad1d36151bf1f7b2e929bb3c66b75ee84">Open3dmToRead</a> (const wchar_t *file_path)</td></tr>
+<tr class="memdesc:ad1d36151bf1f7b2e929bb3c66b75ee84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open the file and seek to the location where the 3dm archive information begins.  <a href="#ad1d36151bf1f7b2e929bb3c66b75ee84">More...</a><br /></td></tr>
 <tr class="separator:ad1d36151bf1f7b2e929bb3c66b75ee84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e8096ef66fd340f21ffa74be51a4ed2"><td class="memItemLeft" align="right" valign="top">static FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a5e8096ef66fd340f21ffa74be51a4ed2">Open3dmToRead</a> (const char *file_path)</td></tr>
+<tr class="memdesc:a5e8096ef66fd340f21ffa74be51a4ed2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open the file and seek to the location where the 3dm archive information begins.  <a href="#a5e8096ef66fd340f21ffa74be51a4ed2">More...</a><br /></td></tr>
 <tr class="separator:a5e8096ef66fd340f21ffa74be51a4ed2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c5b133a8e2dc437b1b3503affe71720"><td class="memItemLeft" align="right" valign="top">static ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a1c5b133a8e2dc437b1b3503affe71720">Read</a> (FILE *fp, ON__UINT64 count, void *buffer)</td></tr>
+<tr class="memdesc:a1c5b133a8e2dc437b1b3503affe71720"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fread(buffer,1,count,fp).  <a href="#a1c5b133a8e2dc437b1b3503affe71720">More...</a><br /></td></tr>
 <tr class="separator:a1c5b133a8e2dc437b1b3503affe71720"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66d97d2c066287152be5d9e36774263e"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a66d97d2c066287152be5d9e36774263e">Seek</a> (FILE *fp, ON__INT64 offset, int orgin)</td></tr>
+<tr class="memdesc:a66d97d2c066287152be5d9e36774263e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fseek(fp,offset,origin).  <a href="#a66d97d2c066287152be5d9e36774263e">More...</a><br /></td></tr>
 <tr class="separator:a66d97d2c066287152be5d9e36774263e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3dda2d298aff228e3b4c140a99f19224"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a3dda2d298aff228e3b4c140a99f19224">SeekFromCurrentPosition</a> (FILE *fp, ON__INT64 offset)</td></tr>
+<tr class="memdesc:a3dda2d298aff228e3b4c140a99f19224"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fseek(fp,offset,SEEK_CUR).  <a href="#a3dda2d298aff228e3b4c140a99f19224">More...</a><br /></td></tr>
 <tr class="separator:a3dda2d298aff228e3b4c140a99f19224"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c32b4d7e7e4848b1e352b0a57bbfda9"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a1c32b4d7e7e4848b1e352b0a57bbfda9">SeekFromEnd</a> (FILE *fp, ON__INT64 offset)</td></tr>
+<tr class="memdesc:a1c32b4d7e7e4848b1e352b0a57bbfda9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fseek(fp,offset,SEEK_END).  <a href="#a1c32b4d7e7e4848b1e352b0a57bbfda9">More...</a><br /></td></tr>
 <tr class="separator:a1c32b4d7e7e4848b1e352b0a57bbfda9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c3cc28af5c0cc7c7e2f473bf0fbafb9"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a6c3cc28af5c0cc7c7e2f473bf0fbafb9">SeekFromStart</a> (FILE *fp, ON__INT64 offset)</td></tr>
+<tr class="memdesc:a6c3cc28af5c0cc7c7e2f473bf0fbafb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fseek(fp,offset,SEEK_SET).  <a href="#a6c3cc28af5c0cc7c7e2f473bf0fbafb9">More...</a><br /></td></tr>
 <tr class="separator:a6c3cc28af5c0cc7c7e2f473bf0fbafb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d41d3911f86a6f203b12622df756d9e"><td class="memItemLeft" align="right" valign="top">static ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/da7/class_o_n___file_stream.html#a4d41d3911f86a6f203b12622df756d9e">Write</a> (FILE *fp, ON__UINT64 count, const void *buffer)</td></tr>
+<tr class="memdesc:a4d41d3911f86a6f203b12622df756d9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Portable wrapper for C runtime fwrite(buffer,1,count,fp).  <a href="#a4d41d3911f86a6f203b12622df756d9e">More...</a><br /></td></tr>
 <tr class="separator:a4d41d3911f86a6f203b12622df756d9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -115,7 +129,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fclose(). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. Returns: 0: successful -1: null fp parameter != 0: fclose() failure code </p>
+
+<p>Portable wrapper for C runtime fclose(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0: successful -1: null fp parameter != 0: fclose() failure code </dd></dl>
 
 </div>
 </div>
@@ -142,7 +164,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime ftell(). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. Returns: &gt;= 0: current file position -1: an error occured </p>
+
+<p>Portable wrapper for C runtime ftell(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>&gt;= 0: current file position -1: an error occured </dd></dl>
 
 </div>
 </div>
@@ -169,7 +199,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fflush(fp). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. Returns: true if flush was successful. False if an error occured. </p>
+
+<p>Portable wrapper for C runtime fflush(fp). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if flush was successful. False if an error occured. </dd></dl>
 
 </div>
 </div>
@@ -218,7 +256,18 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fstat(). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. file_size - [out] If file_size is not null, the the size of the file in bytes returned here file_metadata_last_modified_time - [out] If file_metadata_last_modified_time is not null, then the time the file's metadata (owner, permissions, ...) were last modified is returned here as the number of seconds since midnight January 1, 1970. file_contents_last_modified_time - [out] If file_contents_last_modified_time is not null, then the time the file's contents were last modified is returned here as the number of seconds since midnight January 1, 1970. Returns: true if the query was successful. False if an error occured. </p>
+
+<p>Portable wrapper for C runtime fstat(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+    <tr><td class="paramname">file_size</td><td>[out] If file_size is not null, the the size of the file in bytes returned here</td></tr>
+    <tr><td class="paramname">file_metadata_last_modified_time</td><td>[out] If file_metadata_last_modified_time is not null, then the time the file's metadata (owner, permissions, ...) were last modified is returned here as the number of seconds since midnight January 1, 1970.</td></tr>
+    <tr><td class="paramname">file_contents_last_modified_time</td><td>[out] If file_contents_last_modified_time is not null, then the time the file's contents were last modified is returned here as the number of seconds since midnight January 1, 1970.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the query was successful. False if an error occured. </dd></dl>
 
 </div>
 </div>
@@ -351,7 +400,7 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: True if the file is a 3dm archive. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the file is a 3dm archive. </dd></dl>
 
 </div>
 </div>
@@ -388,7 +437,7 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: True if the file is a 3dm archive. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the file is a 3dm archive. </dd></dl>
 
 </div>
 </div>
@@ -425,7 +474,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fopen(). Parameters: filename - [in] mode - [in] Remarks: Use the <a class="el" href="../../dd/da7/class_o_n___file_stream.html">ON_FileStream</a> static functions for reading, writing, seeking, position finding with the FILE pointer returned by this function. </p>
+
+<p>Portable wrapper for C runtime fopen(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in]</td></tr>
+    <tr><td class="paramname">mode</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Use the <a class="el" href="../../dd/da7/class_o_n___file_stream.html">ON_FileStream</a> static functions for reading, writing, seeking, position finding with the FILE pointer returned by this function. </p>
 
 </div>
 </div>
@@ -462,7 +520,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fopen(). Parameters: filename - [in] mode - [in] Remarks: Use the <a class="el" href="../../dd/da7/class_o_n___file_stream.html">ON_FileStream</a> static functions for reading, writing, seeking, position finding with the FILE pointer returned by this function. </p>
+
+<p>Portable wrapper for C runtime fopen(). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in]</td></tr>
+    <tr><td class="paramname">mode</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Use the <a class="el" href="../../dd/da7/class_o_n___file_stream.html">ON_FileStream</a> static functions for reading, writing, seeking, position finding with the FILE pointer returned by this function. </p>
 
 </div>
 </div>
@@ -489,7 +556,9 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Open the file and seek to the location where the 3dm archive information begins. Returns: A file stream with the current position at the beginning of the 3dm archive. nullptr if the file is not a 3dm archive. </p>
+
+<p>Open the file and seek to the location where the 3dm archive information begins. </p>
+<dl class="section return"><dt>Returns</dt><dd>A file stream with the current position at the beginning of the 3dm archive. nullptr if the file is not a 3dm archive. </dd></dl>
 
 </div>
 </div>
@@ -516,7 +585,9 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Open the file and seek to the location where the 3dm archive information begins. Returns: A file stream with the current position at the beginning of the 3dm archive. nullptr if the file is not a 3dm archive. </p>
+
+<p>Open the file and seek to the location where the 3dm archive information begins. </p>
+<dl class="section return"><dt>Returns</dt><dd>A file stream with the current position at the beginning of the 3dm archive. nullptr if the file is not a 3dm archive. </dd></dl>
 
 </div>
 </div>
@@ -559,7 +630,17 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fread(buffer,1,count,fp). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a> count - [in] number of bytes to read. buffer - [out] read bytes are stored in this buffer Returns: number of bytes read </p>
+
+<p>Portable wrapper for C runtime fread(buffer,1,count,fp). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a></td></tr>
+    <tr><td class="paramname">count</td><td>[in] number of bytes to read.</td></tr>
+    <tr><td class="paramname">buffer</td><td>[out] read bytes are stored in this buffer</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>number of bytes read </dd></dl>
 
 </div>
 </div>
@@ -602,7 +683,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fseek(fp,offset,origin). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. offset - [in] origin - [in] SEEK_SET (0): seek from beginning of file. SEEK_CUR (1): seek from current position of file pointer. SEEK_END (2): seek from end of file. </p>
+
+<p>Portable wrapper for C runtime fseek(fp,offset,origin). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+    <tr><td class="paramname">offset</td><td>[in]</td></tr>
+    <tr><td class="paramname">origin</td><td>[in] SEEK_SET (0): seek from beginning of file. SEEK_CUR (1): seek from current position of file pointer. SEEK_END (2): seek from end of file.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -639,7 +729,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fseek(fp,offset,SEEK_CUR). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. offset - [in] </p>
+
+<p>Portable wrapper for C runtime fseek(fp,offset,SEEK_CUR). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+    <tr><td class="paramname">offset</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -676,7 +774,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fseek(fp,offset,SEEK_END). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. offset - [in] </p>
+
+<p>Portable wrapper for C runtime fseek(fp,offset,SEEK_END). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+    <tr><td class="paramname">offset</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -713,7 +819,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fseek(fp,offset,SEEK_SET). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a>. offset - [in] </p>
+
+<p>Portable wrapper for C runtime fseek(fp,offset,SEEK_SET). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a>.</td></tr>
+    <tr><td class="paramname">offset</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -756,7 +870,17 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Portable wrapper for C runtime fwrite(buffer,1,count,fp). Parameters: fp - [in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open()</a> count - [in] number of bytes to write buffer - [in] data to be written Returns: number of bytes written. </p>
+
+<p>Portable wrapper for C runtime fwrite(buffer,1,count,fp). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fp</td><td>[in] FILE pointer returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open()</a></td></tr>
+    <tr><td class="paramname">count</td><td>[in] number of bytes to write</td></tr>
+    <tr><td class="paramname">buffer</td><td>[in] data to be written</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>number of bytes written. </dd></dl>
 
 </div>
 </div>
@@ -766,7 +890,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

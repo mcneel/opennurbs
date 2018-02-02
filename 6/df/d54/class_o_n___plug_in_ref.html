@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>The ON_PluginRef class is used to store a list of application plug-ins that may have saved user data in a 3dm file so they can be loaded as needed for reading their user data.  
+ <a href="../../df/d54/class_o_n___plug_in_ref.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d0/d43/opennurbs__pluginlist_8h_source.html">opennurbs_pluginlist.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -86,7 +89,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aac4c90976283695f0245c61351a2425a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#aac4c90976283695f0245c61351a2425a">m_developer_website</a></td></tr>
 <tr class="separator:aac4c90976283695f0245c61351a2425a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af768e38482ad906496eba8ab6b37f3e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#af768e38482ad906496eba8ab6b37f3e2">m_plugin_filename</a></td></tr>
-<tr class="memdesc:af768e38482ad906496eba8ab6b37f3e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">name of executable file  <a href="#af768e38482ad906496eba8ab6b37f3e2">More...</a><br /></td></tr>
 <tr class="separator:af768e38482ad906496eba8ab6b37f3e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad48d308b35d36164b571bd9cbaea6dba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#ad48d308b35d36164b571bd9cbaea6dba">m_plugin_id</a></td></tr>
 <tr class="memdesc:ad48d308b35d36164b571bd9cbaea6dba"><td class="mdescLeft">&#160;</td><td class="mdescRight">executable informtion  <a href="#ad48d308b35d36164b571bd9cbaea6dba">More...</a><br /></td></tr>
@@ -94,21 +96,18 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a34cd85a5e5fa056393cc64a561a67bb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#a34cd85a5e5fa056393cc64a561a67bb0">m_plugin_name</a></td></tr>
 <tr class="separator:a34cd85a5e5fa056393cc64a561a67bb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aead93158f90376d1c6bd12d9e1eaa484"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#aead93158f90376d1c6bd12d9e1eaa484">m_plugin_platform</a></td></tr>
-<tr class="memdesc:aead93158f90376d1c6bd12d9e1eaa484"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = unknown, 1 = C++, 2 = .NET  <a href="#aead93158f90376d1c6bd12d9e1eaa484">More...</a><br /></td></tr>
 <tr class="separator:aead93158f90376d1c6bd12d9e1eaa484"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3318f87e9cadbcfc3aac5515a620234"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#ad3318f87e9cadbcfc3aac5515a620234">m_plugin_sdk_service_release</a></td></tr>
 <tr class="separator:ad3318f87e9cadbcfc3aac5515a620234"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf2ca550ce7342b736527ee0b8ef539b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#acf2ca550ce7342b736527ee0b8ef539b">m_plugin_sdk_version</a></td></tr>
 <tr class="separator:acf2ca550ce7342b736527ee0b8ef539b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3929a5b6032600af4cd2e89af6cd8d8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#ad3929a5b6032600af4cd2e89af6cd8d8">m_plugin_type</a></td></tr>
-<tr class="memdesc:ad3929a5b6032600af4cd2e89af6cd8d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">CRhinoPlugIn::plugin_type enum value.  <a href="#ad3929a5b6032600af4cd2e89af6cd8d8">More...</a><br /></td></tr>
 <tr class="separator:ad3929a5b6032600af4cd2e89af6cd8d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adec6eed61e96254d8122f409029a1b45"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d11/class_o_n__w_string.html">ON_wString</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d54/class_o_n___plug_in_ref.html#adec6eed61e96254d8122f409029a1b45">m_plugin_version</a></td></tr>
 <tr class="separator:adec6eed61e96254d8122f409029a1b45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// Description: The ON_PluginRef class is used to store a list of application plug-ins that may have saved user data in a 3dm file so they can be loaded as needed for reading their user data. </p>
+<div class="textblock"><p>The ON_PluginRef class is used to store a list of application plug-ins that may have saved user data in a 3dm file so they can be loaded as needed for reading their user data. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a0b14c61491fafcd513ec863226241095"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0b14c61491fafcd513ec863226241095">&#9670;&nbsp;</a></span>ON_PlugInRef()</h2>
@@ -326,8 +325,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>name of executable file </p>
-
 </div>
 </div>
 <a id="ad48d308b35d36164b571bd9cbaea6dba"></a>
@@ -372,8 +369,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0 = unknown, 1 = C++, 2 = .NET </p>
-
 </div>
 </div>
 <a id="ad3318f87e9cadbcfc3aac5515a620234"></a>
@@ -416,8 +411,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>CRhinoPlugIn::plugin_type enum value. </p>
-
 </div>
 </div>
 <a id="adec6eed61e96254d8122f409029a1b45"></a>
@@ -440,7 +433,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

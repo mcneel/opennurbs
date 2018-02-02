@@ -85,7 +85,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a90ca346028a45ef87add7871b871a97e"><td class="memItemLeft" align="right" valign="top">unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a90ca346028a45ef87add7871b871a97e">m_output</a> [512]</td></tr>
 <tr class="separator:a90ca346028a45ef87add7871b871a97e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d524fe2fd44ec635ba538972e7efc5e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a7d524fe2fd44ec635ba538972e7efc5e">m_output_count</a></td></tr>
-<tr class="memdesc:a7d524fe2fd44ec635ba538972e7efc5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 to 512  <a href="#a7d524fe2fd44ec635ba538972e7efc5e">More...</a><br /></td></tr>
 <tr class="separator:a7d524fe2fd44ec635ba538972e7efc5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -164,7 +163,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Decode will generate zero or more callbacks to the virtual <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a> function. If the base 64 encoded information is in pieces, you can call <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> for each piece. For example, if your encoded information is in a text file, you might call <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> for every line in the file. <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> returns 0 if there is nothing in base64str to decode or if it detects an error that prevents any further decoding. The function <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a72da83c695ca7f5f831ee1d965d373e4">Error()</a> can be used to determine if an error occured. Otherwise, <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> returns a pointer to the location in the string where it stopped decoding because it detected a character, like a null terminator, an end of line character, or any other character that could not be part of the base 64 encoded information. </p>
 
 </div>
 </div>
@@ -256,7 +254,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>You must call <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#ae38f2157ea6ca374fc49e863d80078ad">End()</a> when <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> returns 0 or when you have reached the end of your encoded information. <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#ae38f2157ea6ca374fc49e863d80078ad">End()</a> may callback to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a> zero or one time. If all the information passed to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> was successfully decoded, then <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#ae38f2157ea6ca374fc49e863d80078ad">End()</a> returns true. If something was not decoded, then <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#ae38f2157ea6ca374fc49e863d80078ad">End()</a> returns false. </p>
 
 </div>
 </div>
@@ -274,7 +271,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns true if an error occured during decoding because invalid input was passed to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a>. </p>
 
 </div>
 </div>
@@ -300,7 +296,6 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Override the virtual <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a> callback function to process the decoded output. Each time <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a> is called there are m_output_count bytes in the m_output[] array. Every call to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> can result in zero, one, or many callbacks to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a>. Calling <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#ae38f2157ea6ca374fc49e863d80078ad">End()</a> may result in zero or one callbacks to <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a>. </p>
 
 </div>
 </div>
@@ -318,7 +313,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Call if your <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#adc9e416c6a20cd04d4f8b95213e85ac9">Output()</a> function detects an error and wants to stop further decoding. </p>
 
 </div>
 </div>
@@ -334,7 +328,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_decode_count = total number of input base64 characters that <a class="el" href="../../d5/db3/class_o_n___decode_base64.html#a0e3e2d2f2962cbb0e6558ba4cc8fb73f">Decode()</a> has decoded. </p>
 
 </div>
 </div>
@@ -364,8 +357,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>0 to 512 </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -374,7 +365,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

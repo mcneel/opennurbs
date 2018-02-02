@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Context for an annotation object. This context is required when converting current annotation objects to and from formats used in earlier versions and is typically used when reading and writing 3dm archives.  
+ <a href="../../d8/d7f/class_o_n__3dm_annotation_context.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d3/dad/opennurbs__archive_8h_source.html">opennurbs_archive.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -114,7 +117,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:a8d8aabed8137d1f1e3c3bb1d562d666b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: Context for an annotation object. This context is required when converting current annotation objects to and from formats used in earlier versions and is typically used when reading and writing 3dm archives. </p>
+<div class="textblock"><p>Context for an annotation object. This context is required when converting current annotation objects to and from formats used in earlier versions and is typically used when reading and writing 3dm archives. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a5f05028893d6b33e62dafe4dcab19a48"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5f05028893d6b33e62dafe4dcab19a48">&#9670;&nbsp;</a></span>ON_3dmAnnotationContext() <span class="overload">[1/2]</span></h2>
@@ -208,7 +211,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the annotation settings have been explicitly set. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the annotation settings have been explicitly set. </dd></dl>
 
 </div>
 </div>
@@ -243,7 +246,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the the target binary archive is set. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the the target binary archive is set. </dd></dl>
 
 </div>
 </div>
@@ -261,7 +264,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This is the dimstyle the annotation object is question is using. It can be a "base" dimstyle from the dimstyle table or an "override" style attached used by a single instance of an annnotation object. </p>
 
 </div>
 </div>
@@ -279,7 +281,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the dimension style has been explicitly set. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the dimension style has been explicitly set. </dd></dl>
 
 </div>
 </div>
@@ -297,7 +299,13 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bRequireSetOverrides - [in] true if explicit overrides are required. Returns: true if the context dim style is an override style (parent id is not nil) and it has overrides or bRequireSetOverrides is false. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bRequireSetOverrides</td><td>[in] true if explicit overrides are required.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the context dim style is an override style (parent id is not nil) and it has overrides or bRequireSetOverrides is false. </dd></dl>
 
 </div>
 </div>
@@ -384,7 +392,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: If the dimstyle is not set or it has a nil parent id, then DimStyleId() is returned. Otherwise the parent id is returned. </p>
+<dl class="section return"><dt>Returns</dt><dd>If the dimstyle is not set or it has a nil parent id, then DimStyleId() is returned. Otherwise the parent id is returned. </dd></dl>
 
 </div>
 </div>
@@ -403,7 +411,12 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: annotation_settings - [in] A copy of annotation_settings is stored and manged by the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html">ON_3dmAnnotationContext</a> class instance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">annotation_settings</td><td>[in] A copy of annotation_settings is stored and manged by the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html" title="Context for an annotation object. This context is required when converting current annotation objects...">ON_3dmAnnotationContext</a> class instance.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -438,7 +451,12 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: dim_style - [in] A copy of a dim_style is stored and manged by the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html">ON_3dmAnnotationContext</a> class instance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dim_style</td><td>[in] A copy of a dim_style is stored and manged by the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html" title="Context for an annotation object. This context is required when converting current annotation objects...">ON_3dmAnnotationContext</a> class instance.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -493,7 +511,12 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: annotation_settings - [in] Annotation settings that are externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html">ON_3dmAnnotationContext</a> class instance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">annotation_settings</td><td>[in] Annotation settings that are externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html" title="Context for an annotation object. This context is required when converting current annotation objects...">ON_3dmAnnotationContext</a> class instance.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -512,7 +535,12 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: binary_archive - [in] Binary archive that is externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html">ON_3dmAnnotationContext</a> class instance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">binary_archive</td><td>[in] Binary archive that is externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html" title="Context for an annotation object. This context is required when converting current annotation objects...">ON_3dmAnnotationContext</a> class instance.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -547,7 +575,12 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: dim_style - [in] A dimension style that is externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html">ON_3dmAnnotationContext</a> class instance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dim_style</td><td>[in] A dimension style that is externally managed and will exist during the lifetime of the <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html" title="Context for an annotation object. This context is required when converting current annotation objects...">ON_3dmAnnotationContext</a> class instance.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -611,7 +644,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 3dm archive dimension style table index to use when writing a V5 3dm archive. This is often different from <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html#a42752e09412ce3c63959bf55b9058334">DimStyle()</a>.Index(). </p>
+<dl class="section return"><dt>Returns</dt><dd>3dm archive dimension style table index to use when writing a V5 3dm archive. This is often different from <a class="el" href="../../d8/d7f/class_o_n__3dm_annotation_context.html#a42752e09412ce3c63959bf55b9058334">DimStyle()</a>.Index(). </dd></dl>
 
 </div>
 </div>
@@ -661,7 +694,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:38 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:27 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

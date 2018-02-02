@@ -52,6 +52,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../d1/d1b/class_o_n___circle.html" title="ON_Circle is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the pla...">ON_Circle</a> is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the plane containing the circle, with origin at the center.  
+ <a href="../../d1/d1b/class_o_n___circle.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../dc/d12/opennurbs__circle_8h_source.html">opennurbs_circle.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for ON_Circle:</div>
@@ -59,7 +62,7 @@ Inheritance diagram for ON_Circle:</div>
  <div class="center">
   <img src="../../d1/d1b/class_o_n___circle.png" usemap="#ON_5FCircle_map" alt=""/>
   <map id="ON_5FCircle_map" name="ON_5FCircle_map">
-<area href="../../d3/ddf/class_o_n___arc.html" alt="ON_Arc" shape="rect" coords="0,56,72,80"/>
+<area href="../../d3/ddf/class_o_n___arc.html" title="An ON_Arc is a subcurve of 3d circle. " alt="ON_Arc" shape="rect" coords="0,56,72,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -115,17 +118,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a5548566cca680403bf1c476636154fbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">evaluate circle's implicit equation in plane  <a href="#a5548566cca680403bf1c476636154fbd">More...</a><br /></td></tr>
 <tr class="separator:a5548566cca680403bf1c476636154fbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a929c90fe185faf98e5660f85e990ae96"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96">GetNurbForm</a> (<a class="el" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> &amp;nurbs_curve) const</td></tr>
+<tr class="memdesc:a929c90fe185faf98e5660f85e990ae96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a four span rational degree 2 NURBS circle representation of the circle.  <a href="#a929c90fe185faf98e5660f85e990ae96">More...</a><br /></td></tr>
 <tr class="separator:a929c90fe185faf98e5660f85e990ae96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92b460aff5c8c9d01542e55660e2cd2b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">GetNurbFormParameterFromRadian</a> (double circle_radians_parameter, double *nurbs_parameter) const</td></tr>
+<tr class="memdesc:a92b460aff5c8c9d01542e55660e2cd2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a circle radians parameter to a NURBS curve circle parameter.  <a href="#a92b460aff5c8c9d01542e55660e2cd2b">More...</a><br /></td></tr>
 <tr class="separator:a92b460aff5c8c9d01542e55660e2cd2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f23b490f574755d8f5fa0cf4b8bb833"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833">GetRadianFromNurbFormParameter</a> (double nurbs_parameter, double *circle_radians_parameter) const</td></tr>
+<tr class="memdesc:a6f23b490f574755d8f5fa0cf4b8bb833"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a NURBS curve circle parameter to a circle radians parameter.  <a href="#a6f23b490f574755d8f5fa0cf4b8bb833">More...</a><br /></td></tr>
 <tr class="separator:a6f23b490f574755d8f5fa0cf4b8bb833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2b7b40b23e536c7e3ef01d6e9d7fcce"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#ad2b7b40b23e536c7e3ef01d6e9d7fcce">GetTightBoundingBox</a> (<a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;tight_bbox, bool bGrowBox=false, const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> *xform=nullptr) const</td></tr>
+<tr class="memdesc:ad2b7b40b23e536c7e3ef01d6e9d7fcce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get tight bounding box.  <a href="#ad2b7b40b23e536c7e3ef01d6e9d7fcce">More...</a><br /></td></tr>
 <tr class="separator:ad2b7b40b23e536c7e3ef01d6e9d7fcce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abacde9098db723842125593b2aeef649"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../da/d08/class_o_n__2d_vector.html">ON_2dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#abacde9098db723842125593b2aeef649">GradientAt</a> (const <a class="el" href="../../dd/dd9/class_o_n__2d_point.html">ON_2dPoint</a> &amp;plane_point) const</td></tr>
 <tr class="separator:abacde9098db723842125593b2aeef649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c93444689aa516e077085b21bf40228"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a8c93444689aa516e077085b21bf40228">IsInPlane</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;, double=ON_ZERO_TOLERANCE) const</td></tr>
-<tr class="memdesc:a8c93444689aa516e077085b21bf40228"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool UpdatePoints(); ///&lt; sets m_point[] to have valid points  <a href="#a8c93444689aa516e077085b21bf40228">More...</a><br /></td></tr>
+<tr class="memdesc:a8c93444689aa516e077085b21bf40228"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool UpdatePoints(); // sets m_point[] to have valid points  <a href="#a8c93444689aa516e077085b21bf40228">More...</a><br /></td></tr>
 <tr class="separator:a8c93444689aa516e077085b21bf40228"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8c3054ce83d5c219976aac30d1cb17b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#aa8c3054ce83d5c219976aac30d1cb17b">IsValid</a> () const</td></tr>
 <tr class="memdesc:aa8c3054ce83d5c219976aac30d1cb17b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A Valid circle has m_radius&gt;0 and m_plane.IsValid().  <a href="#aa8c3054ce83d5c219976aac30d1cb17b">More...</a><br /></td></tr>
@@ -135,7 +142,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6616e3d52ad3467634c05892c083a935"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#a6616e3d52ad3467634c05892c083a935">operator=</a> (const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> &amp;)=default</td></tr>
 <tr class="separator:a6616e3d52ad3467634c05892c083a935"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adef250a8efeedc7d822b60408813a15c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#adef250a8efeedc7d822b60408813a15c">Plane</a> () const</td></tr>
-<tr class="memdesc:adef250a8efeedc7d822b60408813a15c"><td class="mdescLeft">&#160;</td><td class="mdescRight">plane containing circle  <a href="#adef250a8efeedc7d822b60408813a15c">More...</a><br /></td></tr>
 <tr class="separator:adef250a8efeedc7d822b60408813a15c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0187471be5403e3cdf61689475c133a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#ab0187471be5403e3cdf61689475c133a">PointAt</a> (double) const</td></tr>
 <tr class="separator:ab0187471be5403e3cdf61689475c133a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -170,11 +176,10 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:abe9b4cbee22108f4f4f349197673a23e"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1b/class_o_n___circle.html#abe9b4cbee22108f4f4f349197673a23e">UnitCircle</a></td></tr>
-<tr class="memdesc:abe9b4cbee22108f4f4f349197673a23e"><td class="mdescLeft">&#160;</td><td class="mdescRight">unit circle in the xy plane  <a href="#abe9b4cbee22108f4f4f349197673a23e">More...</a><br /></td></tr>
 <tr class="separator:abe9b4cbee22108f4f4f349197673a23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: <a class="el" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the plane containing the circle, with origin at the center.</p>
+<div class="textblock"><p><a class="el" href="../../d1/d1b/class_o_n___circle.html" title="ON_Circle is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the pla...">ON_Circle</a> is a circle in 3d. The cirle is represented by a radius and an orthonormal frame of the plane containing the circle, with origin at the center. </p>
 <p>An Is_Valid() circle has positive radius and an Is_ Valid() plane defining the frame.</p>
 <p>The circle is parameterized by radians from 0 to 2 Pi given by t -&gt; center + cos(t)*radius*xaxis + sin(t)*radius*yaxis where center, xaxis and yaxis define the orthonormal frame of the circle's plane. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -279,7 +284,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle in the plane with center at plane.origin. </p>
 
 </div>
 </div>
@@ -308,7 +312,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle parallel to the world XY plane with given center and radius </p>
 
 </div>
 </div>
@@ -343,7 +346,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle parallel to the plane with given center and radius. </p>
 
 </div>
 </div>
@@ -378,13 +380,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle through three 2d points. The start/end of the circle is at point P. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">P</td><td>circle through 3 2d points </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -419,7 +414,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle through three 3d points. The start/end of the circle is at point P. </p>
 
 </div>
 </div>
@@ -550,7 +544,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle in the plane with center at plane.origin. </p>
 
 </div>
 </div>
@@ -579,7 +572,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle parallel to the world XY plane with given center and radius </p>
 
 </div>
 </div>
@@ -614,7 +606,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Creates a circle parallel to the plane with given centr and radius. </p>
 
 </div>
 </div>
@@ -649,13 +640,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle through three 2d points. The start/end of the circle is at point P. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">P</td><td>circle through 3 2d points </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -690,7 +674,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle through three 3d points. The start/end of the circle is at point P. </p>
 
 </div>
 </div>
@@ -725,7 +708,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle from two 2d points and a tangent at the first point. The start/end of the circle is at point P. </p>
 
 </div>
 </div>
@@ -760,7 +742,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create a circle from two 3d points and a tangent at the first point. The start/end of the circle is at point P. </p>
 
 </div>
 </div>
@@ -844,7 +825,10 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get a four span rational degree 2 NURBS circle representation of the circle. Returns: 2 for success, 0 for failure Remarks: Note that the parameterization of NURBS curve does not match circle's transcendental paramaterization. Use <a class="el" href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833">ON_Circle::GetRadianFromNurbFormParameter()</a> and ON_Circle::GetParameterFromRadian() to convert between the NURBS curve parameter and the transcendental parameter. </p>
+
+<p>Get a four span rational degree 2 NURBS circle representation of the circle. </p>
+<dl class="section return"><dt>Returns</dt><dd>2 for success, 0 for failure </dd></dl>
+<p>Note that the parameterization of NURBS curve does not match circle's transcendental paramaterization. Use <a class="el" href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833" title="Convert a NURBS curve circle parameter to a circle radians parameter. ">ON_Circle::GetRadianFromNurbFormParameter()</a> and ON_Circle::GetParameterFromRadian() to convert between the NURBS curve parameter and the transcendental parameter. </p>
 
 </div>
 </div>
@@ -873,17 +857,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Convert a circle radians parameter to a NURBS curve circle parameter. Parameters: circle_radians_parameter - [in] 0.0 to 2.0*ON_PI nurbs_parameter - [out] Example: </p><pre class="fragment">    ON_Circle circle = ...;
-    double circle_t = 1.2345; ///&lt; some number in interval (0,2.0*ON_PI).
-    double nurbs_t;
-    circle.GetNurbFormParameterFromRadian( circle_t, &amp;nurbs_t );
 
-    ON_NurbsCurve nurbs_curve;
-    circle.GetNurbsForm( nurbs_curve );
-    circle_pt = circle.PointAt(circle_t);
-    nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-</pre><p> / circle_pt and nurbs_pt will be the same</p>
-<p>Remarks: The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96">ON_Circle::GetNurbForm</a>. At radian values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. See Also: <a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">ON_Circle::GetNurbFormParameterFromRadian</a> </p>
+<p>Convert a circle radians parameter to a NURBS curve circle parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">circle_radians_parameter</td><td>[in] 0.0 to 2.0*ON_PI</td></tr>
+    <tr><td class="paramname">nurbs_parameter</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96" title="Get a four span rational degree 2 NURBS circle representation of the circle. ">ON_Circle::GetNurbForm</a>. At radian values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. </p>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> circle = ...;</div><div class="line">    <span class="keywordtype">double</span> circle_t = 1.2345; <span class="comment">// some number in interval (0,2.0*ON_PI).</span></div><div class="line">    <span class="keywordtype">double</span> nurbs_t;</div><div class="line">    circle.<a class="code" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">GetNurbFormParameterFromRadian</a>( circle_t, &amp;nurbs_t );</div><div class="line"></div><div class="line">    <a class="code" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> nurbs_curve;</div><div class="line">    circle.GetNurbsForm( nurbs_curve );</div><div class="line">    circle_pt = circle.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(circle_t);</div><div class="line">    nurbs_pt = nurbs_curve.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(nurbs_t);</div><div class="line">    <span class="comment">// circle_pt and nurbs_pt will be the same</span></div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b" title="Convert a circle radians parameter to a NURBS curve circle parameter. ">ON_Circle::GetNurbFormParameterFromRadian</a></dd></dl>
 
 </div>
 </div>
@@ -912,17 +896,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Convert a NURBS curve circle parameter to a circle radians parameter. Parameters: nurbs_parameter - [in] circle_radians_parameter - [out] Example: </p><pre class="fragment">    ON_Circle circle = ...;
-    double nurbs_t = 1.2345; ///&lt; some number in interval (0,2.0*ON_PI).
-    double circle_t;
-    circle.GetRadianFromNurbFormParameter( nurbs_t, &amp;circle_t );
 
-    ON_NurbsCurve nurbs_curve;
-    circle.GetNurbsForm( nurbs_curve );
-    circle_pt = circle.PointAt(circle_t);
-    nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-</pre><p> / circle_pt and nurbs_pt will be the same</p>
-<p>Remarks: The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96">ON_Circle::GetNurbForm</a>. At nurbs parameter values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. See Also: <a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b">ON_Circle::GetNurbFormParameterFromRadian</a> </p>
+<p>Convert a NURBS curve circle parameter to a circle radians parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nurbs_parameter</td><td>[in]</td></tr>
+    <tr><td class="paramname">circle_radians_parameter</td><td>[out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The NURBS curve parameter is with respect to the NURBS curve created by <a class="el" href="../../d1/d1b/class_o_n___circle.html#a929c90fe185faf98e5660f85e990ae96" title="Get a four span rational degree 2 NURBS circle representation of the circle. ">ON_Circle::GetNurbForm</a>. At nurbs parameter values of 0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs parameter and radian parameter are the same. At all other values the nurbs and radian parameter values are different. </p>
+<div class="fragment"><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../d1/d1b/class_o_n___circle.html">ON_Circle</a> circle = ...;</div><div class="line">    <span class="keywordtype">double</span> nurbs_t = 1.2345; <span class="comment">// some number in interval (0,2.0*ON_PI).</span></div><div class="line">    <span class="keywordtype">double</span> circle_t;</div><div class="line">    circle.<a class="code" href="../../d1/d1b/class_o_n___circle.html#a6f23b490f574755d8f5fa0cf4b8bb833">GetRadianFromNurbFormParameter</a>( nurbs_t, &amp;circle_t );</div><div class="line"></div><div class="line">    <a class="code" href="../../d3/d6a/class_o_n___nurbs_curve.html">ON_NurbsCurve</a> nurbs_curve;</div><div class="line">    circle.GetNurbsForm( nurbs_curve );</div><div class="line">    circle_pt = circle.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(circle_t);</div><div class="line">    nurbs_pt = nurbs_curve.<a class="code" href="../../d4/d5a/class_o_n___curve.html#abe5aefbc95ce86f017e69bf76cbbe03f">PointAt</a>(nurbs_t);</div><div class="line">    <span class="comment">// circle_pt and nurbs_pt will be the same</span></div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d1b/class_o_n___circle.html#a92b460aff5c8c9d01542e55660e2cd2b" title="Convert a circle radians parameter to a NURBS curve circle parameter. ">ON_Circle::GetNurbFormParameterFromRadian</a></dd></dl>
 
 </div>
 </div>
@@ -957,7 +941,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get tight bounding box. Parameters: tight_bbox - [in/out] tight bounding box bGrowBox -[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the arc's tight bounding box. xform -[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed arc is calculated. The arc is not modified. Returns: True if a valid tight_bbox is returned. </p>
+
+<p>Get tight bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tight_bbox</td><td>[in/out] tight bounding box</td></tr>
+    <tr><td class="paramname">bGrowBox</td><td>[in] (default=false) If true and the input tight_bbox is valid, then returned tight_bbox is the union of the input tight_bbox and the arc's tight bounding box.</td></tr>
+    <tr><td class="paramname">xform</td><td>[in] (default=nullptr) If not nullptr, the tight bounding box of the transformed arc is calculated. The arc is not modified.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a valid tight_bbox is returned. </dd></dl>
 
 </div>
 </div>
@@ -1005,7 +999,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>bool UpdatePoints(); ///&lt; sets m_point[] to have valid points </p>
+<p>bool UpdatePoints(); // sets m_point[] to have valid points </p>
 
 </div>
 </div>
@@ -1086,8 +1080,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>plane containing circle </p>
-
 </div>
 </div>
 <a id="ab0187471be5403e3cdf61689475c133a"></a>
@@ -1105,7 +1097,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Circles use trigonometric parameterization t -&gt; center + cos(t)*radius*xaxis + sin(t)*radius*yaxis </p>
 
 </div>
 </div>
@@ -1386,8 +1377,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>unit circle in the xy plane </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -1396,7 +1385,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

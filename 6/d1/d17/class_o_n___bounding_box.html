@@ -57,7 +57,6 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af5a49ef15f2418565472b4fd232d52bc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#af5a49ef15f2418565472b4fd232d52bc">ON_BoundingBox</a> () ON_NOEXCEPT</td></tr>
-<tr class="memdesc:af5a49ef15f2418565472b4fd232d52bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">creates EmptyBoundingBox  <a href="#af5a49ef15f2418565472b4fd232d52bc">More...</a><br /></td></tr>
 <tr class="separator:af5a49ef15f2418565472b4fd232d52bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c28641f010915fb1ee7c771390be6e8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a9c28641f010915fb1ee7c771390be6e8">ON_BoundingBox</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;)=default</td></tr>
 <tr class="separator:a9c28641f010915fb1ee7c771390be6e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -77,7 +76,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad3d48f628633d3baa34bc0194cefd656"><td class="mdescLeft">&#160;</td><td class="mdescRight">OBSOLETE.  <a href="#ad3d48f628633d3baa34bc0194cefd656">More...</a><br /></td></tr>
 <tr class="separator:ad3d48f628633d3baa34bc0194cefd656"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa4056cb0a993e2dddc3f98b9871e3ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aaa4056cb0a993e2dddc3f98b9871e3ba">Diagonal</a> () const</td></tr>
-<tr class="memdesc:aaa4056cb0a993e2dddc3f98b9871e3ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">max corner - min corner  <a href="#aaa4056cb0a993e2dddc3f98b9871e3ba">More...</a><br /></td></tr>
 <tr class="separator:aaa4056cb0a993e2dddc3f98b9871e3ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a083bdd210339a218b0c67392d8cc9f5f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a083bdd210339a218b0c67392d8cc9f5f">Dump</a> (class <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;) const</td></tr>
 <tr class="separator:a083bdd210339a218b0c67392d8cc9f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -85,6 +83,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a537d8c43bae404e57a09628e732c1117"><td class="mdescLeft">&#160;</td><td class="mdescRight">Point on the box that is farthest from the test_point.  <a href="#a537d8c43bae404e57a09628e732c1117">More...</a><br /></td></tr>
 <tr class="separator:a537d8c43bae404e57a09628e732c1117"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98595bc41d4ddfb5e4686361867176a3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a98595bc41d4ddfb5e4686361867176a3">GetClosestPoint</a> (const <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a> &amp;, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;, double *, double *) const</td></tr>
+<tr class="memdesc:a98595bc41d4ddfb5e4686361867176a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get point in a bounding box that is closest to a line segment.  <a href="#a98595bc41d4ddfb5e4686361867176a3">More...</a><br /></td></tr>
 <tr class="separator:a98595bc41d4ddfb5e4686361867176a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af48b58b8495b336bdee2efc6687a12ba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#af48b58b8495b336bdee2efc6687a12ba">GetClosestPoint</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;) const</td></tr>
 <tr class="separator:af48b58b8495b336bdee2efc6687a12ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -98,76 +97,87 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a529b9c498c2d4432831c976dc87a17ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get points on bounding boxes that are farthest from each other.  <a href="#a529b9c498c2d4432831c976dc87a17ae">More...</a><br /></td></tr>
 <tr class="separator:a529b9c498c2d4432831c976dc87a17ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ce5980eda563c64699caf8090231023"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a1ce5980eda563c64699caf8090231023">Includes</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other, bool bProperSubSet=false) const</td></tr>
+<tr class="memdesc:a1ce5980eda563c64699caf8090231023"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a box to see if it is contained in this box.  <a href="#a1ce5980eda563c64699caf8090231023">More...</a><br /></td></tr>
 <tr class="separator:a1ce5980eda563c64699caf8090231023"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a104eb40d19aebe7a8c462b1bf69d4bdf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a104eb40d19aebe7a8c462b1bf69d4bdf">Intersection</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other_bbox)</td></tr>
+<tr class="memdesc:a104eb40d19aebe7a8c462b1bf69d4bdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Intersect this with other_bbox and save intersection in this.  <a href="#a104eb40d19aebe7a8c462b1bf69d4bdf">More...</a><br /></td></tr>
 <tr class="separator:a104eb40d19aebe7a8c462b1bf69d4bdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad48411c0c7661f7d0d43708e43dd268d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad48411c0c7661f7d0d43708e43dd268d">Intersection</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox_A, const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;bbox_B)</td></tr>
+<tr class="memdesc:ad48411c0c7661f7d0d43708e43dd268d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set "this" to the intersection of bbox_A and bbox_B.  <a href="#ad48411c0c7661f7d0d43708e43dd268d">More...</a><br /></td></tr>
 <tr class="separator:ad48411c0c7661f7d0d43708e43dd268d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1b252107a45fdd08814b60924eac38f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ab1b252107a45fdd08814b60924eac38f">Intersection</a> (const <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a> &amp;, double *=nullptr, double *=nullptr) const</td></tr>
 <tr class="separator:ab1b252107a45fdd08814b60924eac38f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa65161624df9aca711da5f57ae1f5a00"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aa65161624df9aca711da5f57ae1f5a00">IsDegenerate</a> (double tolerance=ON_UNSET_VALUE) const</td></tr>
+<tr class="memdesc:aa65161624df9aca711da5f57ae1f5a00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a bounding box to see if it is degenerate (flat) in one or more directions.  <a href="#aa65161624df9aca711da5f57ae1f5a00">More...</a><br /></td></tr>
 <tr class="separator:aa65161624df9aca711da5f57ae1f5a00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3404a3d18af06761e796246c3c4d94c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3404a3d18af06761e796246c3c4d94c8">IsDisjoint</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other_bbox) const</td></tr>
+<tr class="memdesc:a3404a3d18af06761e796246c3c4d94c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test to see if "this" and other_bbox are disjoint (do not intersect).  <a href="#a3404a3d18af06761e796246c3c4d94c8">More...</a><br /></td></tr>
 <tr class="separator:a3404a3d18af06761e796246c3c4d94c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc57ae39c9e80e33808298e963680359"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#abc57ae39c9e80e33808298e963680359">IsEmpty</a> () const</td></tr>
-<tr class="memdesc:abc57ae39c9e80e33808298e963680359"><td class="mdescLeft">&#160;</td><td class="mdescRight">(m_min.x &gt; m_max.x || m_min.y &gt; m_max.y || m_min.z &gt; m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a>;  <a href="#abc57ae39c9e80e33808298e963680359">More...</a><br /></td></tr>
 <tr class="separator:abc57ae39c9e80e33808298e963680359"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40131776a7ee2a6b224c23c751717c69"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a40131776a7ee2a6b224c23c751717c69">IsFartherThan</a> (double d, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;P) const</td></tr>
+<tr class="memdesc:a40131776a7ee2a6b224c23c751717c69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly determine if the shortest distance from the point P to the bounding box is greater than d.  <a href="#a40131776a7ee2a6b224c23c751717c69">More...</a><br /></td></tr>
 <tr class="separator:a40131776a7ee2a6b224c23c751717c69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5326a9cd824c8acb16c90a4586dd7cd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aa5326a9cd824c8acb16c90a4586dd7cd">IsFartherThan</a> (double d, const <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a> &amp;line) const</td></tr>
+<tr class="memdesc:aa5326a9cd824c8acb16c90a4586dd7cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly determine if the shortest distance from the line to the bounding box is greater than d.  <a href="#aa5326a9cd824c8acb16c90a4586dd7cd">More...</a><br /></td></tr>
 <tr class="separator:aa5326a9cd824c8acb16c90a4586dd7cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a496032e7d80b0712d341fe5ee29b5af3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a496032e7d80b0712d341fe5ee29b5af3">IsFartherThan</a> (double d, const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane) const</td></tr>
+<tr class="memdesc:a496032e7d80b0712d341fe5ee29b5af3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly determine if the shortest distance from the plane to the bounding box is greater than d.  <a href="#a496032e7d80b0712d341fe5ee29b5af3">More...</a><br /></td></tr>
 <tr class="separator:a496032e7d80b0712d341fe5ee29b5af3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad085d69a3d32f9c4c29b2ced6809d92e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad085d69a3d32f9c4c29b2ced6809d92e">IsFartherThan</a> (double d, const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a> &amp;plane_equation) const</td></tr>
+<tr class="memdesc:ad085d69a3d32f9c4c29b2ced6809d92e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly determine if the shortest distance from the plane to the bounding box is greater than d.  <a href="#ad085d69a3d32f9c4c29b2ced6809d92e">More...</a><br /></td></tr>
 <tr class="separator:ad085d69a3d32f9c4c29b2ced6809d92e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa418b26c52b731e0bdcecd478730caeb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aa418b26c52b731e0bdcecd478730caeb">IsFartherThan</a> (double d, const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other) const</td></tr>
+<tr class="memdesc:aa418b26c52b731e0bdcecd478730caeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly determine if the shortest distance this bounding box to another bounding box is greater than d.  <a href="#aa418b26c52b731e0bdcecd478730caeb">More...</a><br /></td></tr>
 <tr class="separator:aa418b26c52b731e0bdcecd478730caeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d628c9b63eae3d7196017a556d024c5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0d628c9b63eae3d7196017a556d024c5">IsNan</a> () const</td></tr>
-<tr class="memdesc:a0d628c9b63eae3d7196017a556d024c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">some coordinate is a NAN  <a href="#a0d628c9b63eae3d7196017a556d024c5">More...</a><br /></td></tr>
 <tr class="separator:a0d628c9b63eae3d7196017a556d024c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a474708c3f27efb78b1f92b2b6c762958"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a474708c3f27efb78b1f92b2b6c762958">IsNotEmpty</a> () const</td></tr>
-<tr class="memdesc:a474708c3f27efb78b1f92b2b6c762958"><td class="mdescLeft">&#160;</td><td class="mdescRight">(m_min.x &lt;= m_max.x &amp;&amp; m_min.y &lt;= m_max.y &amp;&amp; m_min.z &lt;= m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a>  <a href="#a474708c3f27efb78b1f92b2b6c762958">More...</a><br /></td></tr>
 <tr class="separator:a474708c3f27efb78b1f92b2b6c762958"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61385b5363c421243e80a930ed9f550b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a61385b5363c421243e80a930ed9f550b">IsPoint</a> () const</td></tr>
-<tr class="memdesc:a61385b5363c421243e80a930ed9f550b"><td class="mdescLeft">&#160;</td><td class="mdescRight">(m_min.x == m_max.x &amp;&amp; m_min.y == m_max.y &amp;&amp; m_min.z == m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a>  <a href="#a61385b5363c421243e80a930ed9f550b">More...</a><br /></td></tr>
 <tr class="separator:a61385b5363c421243e80a930ed9f550b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bac69c2bb1b89927c894687f600056b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3bac69c2bb1b89927c894687f600056b">IsPointIn</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;test_point, int bStrictlyIn=false) const</td></tr>
 <tr class="separator:a3bac69c2bb1b89927c894687f600056b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a070b42c6c3d9ac9aec63d173ad512143"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143">IsSet</a> () const</td></tr>
-<tr class="memdesc:a070b42c6c3d9ac9aec63d173ad512143"><td class="mdescLeft">&#160;</td><td class="mdescRight">every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE  <a href="#a070b42c6c3d9ac9aec63d173ad512143">More...</a><br /></td></tr>
 <tr class="separator:a070b42c6c3d9ac9aec63d173ad512143"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b9b1a4c18002b1fc1711abdba16b5d8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3b9b1a4c18002b1fc1711abdba16b5d8">IsUnset</a> () const</td></tr>
-<tr class="memdesc:a3b9b1a4c18002b1fc1711abdba16b5d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">some coordinate is ON_UNSET_VALUE or ON_UNSET_POSITIVE_VALUE  <a href="#a3b9b1a4c18002b1fc1711abdba16b5d8">More...</a><br /></td></tr>
 <tr class="separator:a3b9b1a4c18002b1fc1711abdba16b5d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e71aff9231edcdaee25ae0390ad07de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0e71aff9231edcdaee25ae0390ad07de">IsUnsetOrNan</a> () const</td></tr>
-<tr class="memdesc:a0e71aff9231edcdaee25ae0390ad07de"><td class="mdescLeft">&#160;</td><td class="mdescRight">= <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3b9b1a4c18002b1fc1711abdba16b5d8" title="some coordinate is ON_UNSET_VALUE or ON_UNSET_POSITIVE_VALUE ">IsUnset()</a> or <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0d628c9b63eae3d7196017a556d024c5" title="some coordinate is a NAN ">IsNan()</a>  <a href="#a0e71aff9231edcdaee25ae0390ad07de">More...</a><br /></td></tr>
 <tr class="separator:a0e71aff9231edcdaee25ae0390ad07de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a565ad0a351021856966d7579e6817155"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a565ad0a351021856966d7579e6817155">IsValid</a> () const</td></tr>
-<tr class="memdesc:a565ad0a351021856966d7579e6817155"><td class="mdescLeft">&#160;</td><td class="mdescRight">OBSOLETE <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a565ad0a351021856966d7579e6817155" title="OBSOLETE IsValid() = IsNotEmpty() ">IsValid()</a> = <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a474708c3f27efb78b1f92b2b6c762958" title="(m_min.x &lt;= m_max.x &amp;&amp; m_min.y &lt;= m_max.y &amp;&amp; m_min.z &lt;= m_max.z) &amp;&amp; IsSet() ">IsNotEmpty()</a>  <a href="#a565ad0a351021856966d7579e6817155">More...</a><br /></td></tr>
+<tr class="memdesc:a565ad0a351021856966d7579e6817155"><td class="mdescLeft">&#160;</td><td class="mdescRight">OBSOLETE <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a565ad0a351021856966d7579e6817155" title="OBSOLETE IsValid() = IsNotEmpty() ">IsValid()</a> = <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a474708c3f27efb78b1f92b2b6c762958">IsNotEmpty()</a>  <a href="#a565ad0a351021856966d7579e6817155">More...</a><br /></td></tr>
 <tr class="separator:a565ad0a351021856966d7579e6817155"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0645c5fb2a4c65e4c3e0bfd80d7d8d81"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0645c5fb2a4c65e4c3e0bfd80d7d8d81">IsVisible</a> (const <a class="el" href="../../d3/d13/class_o_n___xform.html">ON_Xform</a> &amp;bbox2c) const</td></tr>
 <tr class="separator:a0645c5fb2a4c65e4c3e0bfd80d7d8d81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a268daebf59a24919c052796f9a0b3182"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a268daebf59a24919c052796f9a0b3182">Max</a> () const</td></tr>
 <tr class="separator:a268daebf59a24919c052796f9a0b3182"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1aaafca2f1da0a8e83371c88b265769"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad1aaafca2f1da0a8e83371c88b265769">MaximumDistanceTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;P) const</td></tr>
+<tr class="memdesc:ad1aaafca2f1da0a8e83371c88b265769"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find an upper bound on the distance between the point and this bounding box.  <a href="#ad1aaafca2f1da0a8e83371c88b265769">More...</a><br /></td></tr>
 <tr class="separator:ad1aaafca2f1da0a8e83371c88b265769"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a101e6226820c2c0c5ed2402c2817760a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a101e6226820c2c0c5ed2402c2817760a">MaximumDistanceTo</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other) const</td></tr>
+<tr class="memdesc:a101e6226820c2c0c5ed2402c2817760a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find an upper bound on the distance between this and the other bounding box.  <a href="#a101e6226820c2c0c5ed2402c2817760a">More...</a><br /></td></tr>
 <tr class="separator:a101e6226820c2c0c5ed2402c2817760a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a041883c7763f474d57d86cfcf58513ce"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a041883c7763f474d57d86cfcf58513ce">MaximumDistanceTo</a> (const <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a> &amp;line) const</td></tr>
+<tr class="memdesc:a041883c7763f474d57d86cfcf58513ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find an upper bound on the distance between the line segment and this bounding box.  <a href="#a041883c7763f474d57d86cfcf58513ce">More...</a><br /></td></tr>
 <tr class="separator:a041883c7763f474d57d86cfcf58513ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add98f458282432a18b2ded919ee1cd63"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#add98f458282432a18b2ded919ee1cd63">MaximumDistanceTo</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane) const</td></tr>
+<tr class="memdesc:add98f458282432a18b2ded919ee1cd63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find a tight upper bound on the distance between the plane and this bounding box.  <a href="#add98f458282432a18b2ded919ee1cd63">More...</a><br /></td></tr>
 <tr class="separator:add98f458282432a18b2ded919ee1cd63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13f5ea3c0b7ef80b49df126b1ebeedd1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a13f5ea3c0b7ef80b49df126b1ebeedd1">MaximumDistanceTo</a> (const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a> &amp;plane_equation) const</td></tr>
 <tr class="separator:a13f5ea3c0b7ef80b49df126b1ebeedd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8b024b2588bfdbc7f36d0a3fde66fa0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#af8b024b2588bfdbc7f36d0a3fde66fa0">Min</a> () const</td></tr>
 <tr class="separator:af8b024b2588bfdbc7f36d0a3fde66fa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4194fac6c9394f2ca83f895c839f8cf"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad4194fac6c9394f2ca83f895c839f8cf">MinimumDistanceTo</a> (const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &amp;P) const</td></tr>
+<tr class="memdesc:ad4194fac6c9394f2ca83f895c839f8cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find a lower bound on the distance between the point and this bounding box.  <a href="#ad4194fac6c9394f2ca83f895c839f8cf">More...</a><br /></td></tr>
 <tr class="separator:ad4194fac6c9394f2ca83f895c839f8cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a426569c83e28f10a17afa09b836b4462"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a426569c83e28f10a17afa09b836b4462">MinimumDistanceTo</a> (const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> &amp;other) const</td></tr>
+<tr class="memdesc:a426569c83e28f10a17afa09b836b4462"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find a lower bound on the distance between this and the other bounding box.  <a href="#a426569c83e28f10a17afa09b836b4462">More...</a><br /></td></tr>
 <tr class="separator:a426569c83e28f10a17afa09b836b4462"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7fb2f4610119589603acf0ecebb69df2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a7fb2f4610119589603acf0ecebb69df2">MinimumDistanceTo</a> (const <a class="el" href="../../d4/d6f/class_o_n___line.html">ON_Line</a> &amp;line) const</td></tr>
+<tr class="memdesc:a7fb2f4610119589603acf0ecebb69df2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find a lower bound on the distance between the line segment and this bounding box.  <a href="#a7fb2f4610119589603acf0ecebb69df2">More...</a><br /></td></tr>
 <tr class="separator:a7fb2f4610119589603acf0ecebb69df2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3426848b975d1ac6fa0e3889411b3898"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3426848b975d1ac6fa0e3889411b3898">MinimumDistanceTo</a> (const <a class="el" href="../../d4/d48/class_o_n___plane.html">ON_Plane</a> &amp;plane) const</td></tr>
+<tr class="memdesc:a3426848b975d1ac6fa0e3889411b3898"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quickly find a tight lower bound on the distance between the plane and this bounding box.  <a href="#a3426848b975d1ac6fa0e3889411b3898">More...</a><br /></td></tr>
 <tr class="separator:a3426848b975d1ac6fa0e3889411b3898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f0777ca000619f1097681481cb43e0b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a1f0777ca000619f1097681481cb43e0b">MinimumDistanceTo</a> (const <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a> &amp;plane_equation) const</td></tr>
 <tr class="separator:a1f0777ca000619f1097681481cb43e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -225,20 +235,13 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:ad4f488fc6dfa2692722d7dc7969fc9cc"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad4f488fc6dfa2692722d7dc7969fc9cc">EmptyBoundingBox</a></td></tr>
-<tr class="memdesc:ad4f488fc6dfa2692722d7dc7969fc9cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">((1.0,0.0,0.0),(-1.0,0.0,0.0))  <a href="#ad4f488fc6dfa2692722d7dc7969fc9cc">More...</a><br /></td></tr>
 <tr class="separator:ad4f488fc6dfa2692722d7dc7969fc9cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a638a489b986da528eccc0d252662ee7e"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a638a489b986da528eccc0d252662ee7e">NanBoundingBox</a></td></tr>
-<tr class="memdesc:a638a489b986da528eccc0d252662ee7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">all coordinates are ON_DBL_QNAN  <a href="#a638a489b986da528eccc0d252662ee7e">More...</a><br /></td></tr>
 <tr class="separator:a638a489b986da528eccc0d252662ee7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a5db2f185ab14187662f2a2341fb533"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0a5db2f185ab14187662f2a2341fb533">UnsetBoundingBox</a></td></tr>
-<tr class="memdesc:a0a5db2f185ab14187662f2a2341fb533"><td class="mdescLeft">&#160;</td><td class="mdescRight">all coordinates are ON_UNSET_VALUE  <a href="#a0a5db2f185ab14187662f2a2341fb533">More...</a><br /></td></tr>
 <tr class="separator:a0a5db2f185ab14187662f2a2341fb533"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / //////////////////////////////////////////////////////////////</p>
-<p><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a> - axis aligned bounding box </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="af5a49ef15f2418565472b4fd232d52bc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af5a49ef15f2418565472b4fd232d52bc">&#9670;&nbsp;</a></span>ON_BoundingBox() <span class="overload">[1/3]</span></h2>
 
@@ -253,8 +256,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>creates EmptyBoundingBox </p>
 
 </div>
 </div>
@@ -395,7 +396,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Point on or in the box that is closest to test_point. If test_point is in or on the box, the test_point is returned. </p>
 
 </div>
 </div>
@@ -449,7 +449,6 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>OBSOLETE. </p>
-<p>set this = <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#ad4f488fc6dfa2692722d7dc7969fc9cc" title="((1.0,0.0,0.0),(-1.0,0.0,0.0)) ">ON_BoundingBox::EmptyBoundingBox</a> </p>
 
 </div>
 </div>
@@ -467,8 +466,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>max corner - min corner </p>
 
 </div>
 </div>
@@ -547,7 +544,19 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get point in a bounding box that is closest to a line segment. Parameters: line - [in] line segment box_point - [out] point in box that is closest to line segment point at t0. t0 - [out] parameter of point on line that is closest to the box. t1 - [out] parameter of point on line that is closest to the box. Returns: 3 success - line segments intersects box in a segment from line(t0) to line(t1) (t0 &lt; t1) 2 success - line segments intersects box in a single point at line(t0) (t0==t1) 1 success - line segment does not intersect box. Closest point on the line is at line(t0) (t0==t1) 0 failure - box is invalid. Remarks: The box is treated as a solid box. If the intersection of the line segment, then 3 is returned. </p>
+
+<p>Get point in a bounding box that is closest to a line segment. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line</td><td>[in] line segment</td></tr>
+    <tr><td class="paramname">box_point</td><td>[out] point in box that is closest to line segment point at t0.</td></tr>
+    <tr><td class="paramname">t0</td><td>[out] parameter of point on line that is closest to the box.</td></tr>
+    <tr><td class="paramname">t1</td><td>[out] parameter of point on line that is closest to the box.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>3 success - line segments intersects box in a segment from line(t0) to line(t1) (t0 &lt; t1) 2 success - line segments intersects box in a single point at line(t0) (t0==t1) 1 success - line segment does not intersect box. Closest point on the line is at line(t0) (t0==t1) 0 failure - box is invalid. </dd></dl>
+<p>The box is treated as a solid box. If the intersection of the line segment, then 3 is returned. </p>
 
 </div>
 </div>
@@ -582,7 +591,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Get points on bounding boxes that are closest to each other. If the boxes intersect, then the point at the centroid of the intersection is returned for both points. </p>
 
 </div>
 </div>
@@ -601,12 +609,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">box_corners</td><td>returns list of 8 corner points </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -625,12 +627,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">box_corners</td><td>returns list of 8 corner points </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -649,13 +645,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: edges[] - out 12 edge lines. If the bounding box has no height, width or depth, then the corresponding edges will have the same "from" and "to" points. Returns: If the bounding box is valid, then true is returned and 12 line segments, some possibly a single point, are returned. Otherwise false is returned and 12 line segments with "from" and "to" points set to <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a> are returned. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">edges</td><td>returns list of 12 edge segments </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>TODODOC: edges[] - out TODODOC: 12 edge lines. If the bounding box has no height, width or depth, TODODOC: then the corresponding edges will have the same "from" and "to" TODODOC: points. </p><dl class="section return"><dt>Returns</dt><dd>If the bounding box is valid, then true is returned and 12 line segments, some possibly a single point, are returned. Otherwise false is returned and 12 line segments with "from" and "to" points set to <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d">ON_3dPoint::UnsetPoint</a> are returned. </dd></dl>
 
 </div>
 </div>
@@ -720,7 +710,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test a box to see if it is contained in this box. Parameters: other - [in] box to test bProperSubSet - [in] if true, then the test is for a proper inclusion. Returns: If bProperSubSet is false, then the result is true when this-&gt;m_min[i] &lt;= other.m_min[i] and other.m_max[i] &lt;= this-&gt;m_max[i]. for i=0,1 and 2. If bProperSubSet is true, then the result is true when the above condition is true and at least one of the inequalities is strict. </p>
+
+<p>Test a box to see if it is contained in this box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>[in] box to test</td></tr>
+    <tr><td class="paramname">bProperSubSet</td><td>[in] if true, then the test is for a proper inclusion.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If bProperSubSet is false, then the result is true when this-&gt;m_min[i] &lt;= other.m_min[i] and other.m_max[i] &lt;= this-&gt;m_max[i]. for i=0,1 and 2. If bProperSubSet is true, then the result is true when the above condition is true and at least one of the inequalities is strict. </dd></dl>
 
 </div>
 </div>
@@ -739,7 +738,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Intersect this with other_bbox and save intersection in this. Parameters: other_bbox - [in] Returns: True if this-intesect-other_bbox is a non-empty valid bounding box and this is set. False if the intersection is empty, in which case "this" is set to an invalid bounding box. Remarks: If "this" or other_bbox is invalid, they are treated as the empty set, and false is returned. </p>
+
+<p>Intersect this with other_bbox and save intersection in this. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other_bbox</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if this-intesect-other_bbox is a non-empty valid bounding box and this is set. False if the intersection is empty, in which case "this" is set to an invalid bounding box. </dd></dl>
+<p>If "this" or other_bbox is invalid, they are treated as the empty set, and false is returned. </p>
 
 </div>
 </div>
@@ -768,13 +776,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set "this" to the intersection of bbox_A and bbox_B. Parameters: bbox_A - [in] bbox_B - [in] Returns: True if the "this" is a non-empty valid bounding box. False if the intersection is empty, in which case "this" is set to an invalid bounding box. Remarks: If bbox_A or bbox_B is invalid, they are treated as the empty set, and false is returned. </p>
+
+<p>Set "this" to the intersection of bbox_A and bbox_B. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">bbox_A</td><td>this = intersection of two args </td></tr>
+    <tr><td class="paramname">bbox_A</td><td>[in]</td></tr>
+    <tr><td class="paramname">bbox_B</td><td>[in]</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the "this" is a non-empty valid bounding box. False if the intersection is empty, in which case "this" is set to an invalid bounding box. </dd></dl>
+<p>If bbox_A or bbox_B is invalid, they are treated as the empty set, and false is returned. </p>
 
 </div>
 </div>
@@ -827,7 +839,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test a bounding box to see if it is degenerate (flat) in one or more directions. Parameters: tolerance - [in] Distances &lt;= tolerance will be considered to be zero. If tolerance is negative (default), then a scale invarient tolerance is used. Returns:  table 0 box is not degenerate 1 box is a rectangle (degenerate in one direction) 2 box is a line (degenerate in two directions) 3 box is a point (degenerate in three directions) 4 box is not valid </p>
+
+<p>Test a bounding box to see if it is degenerate (flat) in one or more directions. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] Distances &lt;= tolerance will be considered to be zero. If tolerance is negative (default), then a scale invarient tolerance is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>table 0 box is not degenerate 1 box is a rectangle (degenerate in one direction) 2 box is a line (degenerate in two directions) 3 box is a point (degenerate in three directions) 4 box is not valid </dd></dl>
 
 </div>
 </div>
@@ -846,7 +866,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test to see if "this" and other_bbox are disjoint (do not intersect). Parameters: other_bbox - [in] Returns: True if "this" and other_bbox are disjoint. Remarks: If "this" or other_bbox is invalid, then true is returned. </p>
+
+<p>Test to see if "this" and other_bbox are disjoint (do not intersect). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other_bbox</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if "this" and other_bbox are disjoint. </dd></dl>
+<p>If "this" or other_bbox is invalid, then true is returned. </p>
 
 </div>
 </div>
@@ -864,8 +893,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>(m_min.x &gt; m_max.x || m_min.y &gt; m_max.y || m_min.z &gt; m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a>; </p>
 
 </div>
 </div>
@@ -894,7 +921,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly determine if the shortest distance from the point P to the bounding box is greater than d. Parameters: d - [in] distance (&gt; 0.0) P - [in] Returns: True if if the shortest distance from the point P to the bounding box is greater than d. </p>
+
+<p>Quickly determine if the shortest distance from the point P to the bounding box is greater than d. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>[in] distance (&gt; 0.0)</td></tr>
+    <tr><td class="paramname">P</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if if the shortest distance from the point P to the bounding box is greater than d. </dd></dl>
 
 </div>
 </div>
@@ -923,7 +959,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly determine if the shortest distance from the line to the bounding box is greater than d. Parameters: d - [in] distance (&gt; 0.0) line - [in] Returns: True if the shortest distance from the line to the bounding box is greater than d. It is not the case that false means that the shortest distance is less than or equal to d. </p>
+
+<p>Quickly determine if the shortest distance from the line to the bounding box is greater than d. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>[in] distance (&gt; 0.0)</td></tr>
+    <tr><td class="paramname">line</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the shortest distance from the line to the bounding box is greater than d. It is not the case that false means that the shortest distance is less than or equal to d. </dd></dl>
 
 </div>
 </div>
@@ -952,7 +997,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly determine if the shortest distance from the plane to the bounding box is greater than d. Parameters: d - [in] distance (&gt; 0.0) plane - [in] Returns: True if the shortest distance from the plane to the bounding box is greater than d, and false if the shortest distance is less than or equal to d. </p>
+
+<p>Quickly determine if the shortest distance from the plane to the bounding box is greater than d. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>[in] distance (&gt; 0.0)</td></tr>
+    <tr><td class="paramname">plane</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the shortest distance from the plane to the bounding box is greater than d, and false if the shortest distance is less than or equal to d. </dd></dl>
 
 </div>
 </div>
@@ -981,7 +1035,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly determine if the shortest distance from the plane to the bounding box is greater than d. Parameters: d - [in] distance (&gt; 0.0) plane_equation - [in] (the first three coefficients are assumed to be a unit vector. If not, adjust your d accordingly.) Returns: True if the shortest distance from the plane to the bounding box is greater than d, and false if the shortest distance is less than or equal to d. </p>
+
+<p>Quickly determine if the shortest distance from the plane to the bounding box is greater than d. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>[in] distance (&gt; 0.0)</td></tr>
+    <tr><td class="paramname">plane_equation</td><td>[in] (the first three coefficients are assumed to be a unit vector. If not, adjust your d accordingly.)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the shortest distance from the plane to the bounding box is greater than d, and false if the shortest distance is less than or equal to d. </dd></dl>
 
 </div>
 </div>
@@ -1010,7 +1073,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly determine if the shortest distance this bounding box to another bounding box is greater than d. Parameters: d - [in] distance (&gt; 0.0) other - [in] other bounding box Returns: True if if the shortest distance from this bounding box to the other bounding box is greater than d. </p>
+
+<p>Quickly determine if the shortest distance this bounding box to another bounding box is greater than d. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>[in] distance (&gt; 0.0)</td></tr>
+    <tr><td class="paramname">other</td><td>[in] other bounding box</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if if the shortest distance from this bounding box to the other bounding box is greater than d. </dd></dl>
 
 </div>
 </div>
@@ -1029,8 +1101,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>some coordinate is a NAN </p>
-
 </div>
 </div>
 <a id="a474708c3f27efb78b1f92b2b6c762958"></a>
@@ -1048,8 +1118,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>(m_min.x &lt;= m_max.x &amp;&amp; m_min.y &lt;= m_max.y &amp;&amp; m_min.z &lt;= m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a> </p>
-
 </div>
 </div>
 <a id="a61385b5363c421243e80a930ed9f550b"></a>
@@ -1066,8 +1134,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>(m_min.x == m_max.x &amp;&amp; m_min.y == m_max.y &amp;&amp; m_min.z == m_max.z) &amp;&amp; <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a070b42c6c3d9ac9aec63d173ad512143" title="every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE ...">IsSet()</a> </p>
 
 </div>
 </div>
@@ -1096,13 +1162,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">test_point</td><td>point to test </td></tr>
-    <tr><td class="paramname">bStrictlyIn</td><td>true to test for strict ( min &lt; point &lt; max ) false to test for (min &lt;= point &lt;= max) </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -1121,8 +1180,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>every coordinate is a finite, valid double, not ON_UNSET_VALUE and not ON_UNSET_POSITIVE_VALUE </p>
-
 </div>
 </div>
 <a id="a3b9b1a4c18002b1fc1711abdba16b5d8"></a>
@@ -1139,8 +1196,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>some coordinate is ON_UNSET_VALUE or ON_UNSET_POSITIVE_VALUE </p>
 
 </div>
 </div>
@@ -1159,8 +1214,6 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>= <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a3b9b1a4c18002b1fc1711abdba16b5d8" title="some coordinate is ON_UNSET_VALUE or ON_UNSET_POSITIVE_VALUE ">IsUnset()</a> or <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a0d628c9b63eae3d7196017a556d024c5" title="some coordinate is a NAN ">IsNan()</a> </p>
-
 </div>
 </div>
 <a id="a565ad0a351021856966d7579e6817155"></a>
@@ -1178,8 +1231,7 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>OBSOLETE <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a565ad0a351021856966d7579e6817155" title="OBSOLETE IsValid() = IsNotEmpty() ">IsValid()</a> = <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a474708c3f27efb78b1f92b2b6c762958" title="(m_min.x &lt;= m_max.x &amp;&amp; m_min.y &lt;= m_max.y &amp;&amp; m_min.z &lt;= m_max.z) &amp;&amp; IsSet() ">IsNotEmpty()</a> </p>
-<p>empty boxes are not valid </p>
+<p>OBSOLETE <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a565ad0a351021856966d7579e6817155" title="OBSOLETE IsValid() = IsNotEmpty() ">IsValid()</a> = <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a474708c3f27efb78b1f92b2b6c762958">IsNotEmpty()</a> </p>
 
 </div>
 </div>
@@ -1198,7 +1250,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>OBSOLETE temporary - use <a class="el" href="../../da/db3/class_o_n___clipping_region.html">ON_ClippingRegion</a> - this function will be removed soon. </p>
 
 </div>
 </div>
@@ -1234,7 +1285,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find an upper bound on the distance between the point and this bounding box. Parameters: P - [in] Returns: A distance that is greater than or equal to the longest distance from the point P to this bounding box. Put another way, if Q is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </p>
+
+<p>Quickly find an upper bound on the distance between the point and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is greater than or equal to the longest distance from the point P to this bounding box. Put another way, if Q is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1253,7 +1312,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find an upper bound on the distance between this and the other bounding box. Parameters: other - [in] Returns: A distance that is greater than or equal to the longest distance between the bounding boxes. Put another way, if Q is any point in this bounding box and P is any point in the other bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </p>
+
+<p>Quickly find an upper bound on the distance between this and the other bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is greater than or equal to the longest distance between the bounding boxes. Put another way, if Q is any point in this bounding box and P is any point in the other bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1272,7 +1339,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find an upper bound on the distance between the line segment and this bounding box. Parameters: line - [in] Returns: A distance that is greater than or equal to the longest distance from the line to this bounding box. Put another way, if Q is any point on the line and P is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </p>
+
+<p>Quickly find an upper bound on the distance between the line segment and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is greater than or equal to the longest distance from the line to this bounding box. Put another way, if Q is any point on the line and P is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1291,7 +1366,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find a tight upper bound on the distance between the plane and this bounding box. Parameters: plane - [in] Returns: A distance that is equal to the longest distance from the plane to this bounding box. Put another way, if Q is any point on the plane and P is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox) and there is at least one point on the bounding box where the distance is equal to the returned value. See Also: <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#accee2c91d3d3ce63936f527c70ddde11">ON_PlaneEquation::MaximumValueAt</a> </p>
+
+<p>Quickly find a tight upper bound on the distance between the plane and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is equal to the longest distance from the plane to this bounding box. Put another way, if Q is any point on the plane and P is any point in this bounding box, then P.DistanceTo(Q) &lt;= MaximumDistanceTo(bbox) and there is at least one point on the bounding box where the distance is equal to the returned value. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../dd/d89/class_o_n___plane_equation.html#accee2c91d3d3ce63936f527c70ddde11" title="Get the maximum value of the plane equation on a bounding box. ">ON_PlaneEquation::MaximumValueAt</a></dd></dl>
 
 </div>
 </div>
@@ -1345,7 +1429,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find a lower bound on the distance between the point and this bounding box. Parameters: P - [in] Returns: A distance that is less than or equal to the shortest distance from the line to this bounding box. Put another way, if Q is any point in this bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </p>
+
+<p>Quickly find a lower bound on the distance between the point and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">P</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is less than or equal to the shortest distance from the line to this bounding box. Put another way, if Q is any point in this bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1364,7 +1456,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find a lower bound on the distance between this and the other bounding box. Parameters: other - [in] Returns: A distance that is less than or equal to the shortest distance between the bounding boxes. Put another way, if Q is any point in this bounding box and P is any point in the other bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </p>
+
+<p>Quickly find a lower bound on the distance between this and the other bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is less than or equal to the shortest distance between the bounding boxes. Put another way, if Q is any point in this bounding box and P is any point in the other bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1383,7 +1483,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find a lower bound on the distance between the line segment and this bounding box. Parameters: line - [in] Returns: A distance that is less than or equal to the shortest distance from the line to this bounding box. Put another way, if Q is any point on line and P is any point in this bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </p>
+
+<p>Quickly find a lower bound on the distance between the line segment and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A distance that is less than or equal to the shortest distance from the line to this bounding box. Put another way, if Q is any point on line and P is any point in this bounding box, then P.DistanceTo(Q) &gt;= MinimumDistanceTo(bbox). </dd></dl>
 
 </div>
 </div>
@@ -1402,7 +1510,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Quickly find a tight lower bound on the distance between the plane and this bounding box. Parameters: plane - [in] Returns: The minimum distance between a point on the plane and a point on the bounding box. See Also: ON_PlaneEquation::MimimumValueAt <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#accee2c91d3d3ce63936f527c70ddde11">ON_PlaneEquation::MaximumValueAt</a> </p>
+
+<p>Quickly find a tight lower bound on the distance between the plane and this bounding box. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">plane</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The minimum distance between a point on the plane and a point on the bounding box. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>ON_PlaneEquation::MimimumValueAt, <a class="el" href="../../dd/d89/class_o_n___plane_equation.html#accee2c91d3d3ce63936f527c70ddde11" title="Get the maximum value of the plane equation on a bounding box. ">ON_PlaneEquation::MaximumValueAt</a></dd></dl>
 
 </div>
 </div>
@@ -1537,7 +1654,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>All of these <a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aef52816f2a4984449c6abeb5c4995c25">Set()</a> functions set or expand a box to enclose the points in the arguments If bGrowBox is true, the existing box is expanded, otherwise it is only set to the current point list </p>
 
 </div>
 </div>
@@ -1915,7 +2031,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>rough guess at a tolerance to use for comparing objects in this bounding box </p>
 
 </div>
 </div>
@@ -1934,7 +2049,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#a6308e193f97335a85cb6dd91f4645825">ON_BoundingBox::Transform()</a> updates the bounding box to be the smallest axis aligned bounding box that contains the transform of the eight corner points of the input bounding box. </p>
 
 </div>
 </div>
@@ -1953,7 +2067,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="../../d1/d17/class_o_n___bounding_box.html#aa3ef502101cad3db71920e1b4adb713e">Union()</a> returns true if union is not empty. Invalid boxes are treated as the empty set. </p>
 
 </div>
 </div>
@@ -2023,8 +2136,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>((1.0,0.0,0.0),(-1.0,0.0,0.0)) </p>
-
 </div>
 </div>
 <a id="ad2bad56fc4099ef6b628e9389d68c97e"></a>
@@ -2075,8 +2186,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>all coordinates are ON_DBL_QNAN </p>
-
 </div>
 </div>
 <a id="a0a5db2f185ab14187662f2a2341fb533"></a>
@@ -2099,8 +2208,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>all coordinates are ON_UNSET_VALUE </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -2109,7 +2216,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

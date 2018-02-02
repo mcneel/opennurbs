@@ -61,6 +61,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a00a71053ebeef0ebb6eea83bd5b9ebf1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a00a71053ebeef0ebb6eea83bd5b9ebf1">ON_ComponentStatus</a> (const <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> &amp;)=default</td></tr>
 <tr class="separator:a00a71053ebeef0ebb6eea83bd5b9ebf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adec7b205caa7382c3a960f023bc5b289"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#adec7b205caa7382c3a960f023bc5b289">ON_ComponentStatus</a> (ON_ComponentState state)</td></tr>
+<tr class="memdesc:adec7b205caa7382c3a960f023bc5b289"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a status with the specified state set.  <a href="#adec7b205caa7382c3a960f023bc5b289">More...</a><br /></td></tr>
 <tr class="separator:adec7b205caa7382c3a960f023bc5b289"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b03e26bc61af66213ea84b7b979638e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a7b03e26bc61af66213ea84b7b979638e">~ON_ComponentStatus</a> ()=default</td></tr>
 <tr class="separator:a7b03e26bc61af66213ea84b7b979638e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -69,6 +70,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0b1cb6183fefa6613021e7e054c4ad04"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a0b1cb6183fefa6613021e7e054c4ad04">ClearRuntimeMark</a> ()</td></tr>
 <tr class="separator:a0b1cb6183fefa6613021e7e054c4ad04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abec4dcdcb602e0f5d48f25ba8c9b6f7c"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#abec4dcdcb602e0f5d48f25ba8c9b6f7c">ClearStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_clear)</td></tr>
+<tr class="memdesc:abec4dcdcb602e0f5d48f25ba8c9b6f7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a state is set in states_to_clear, the same state is cleared in "this".  <a href="#abec4dcdcb602e0f5d48f25ba8c9b6f7c">More...</a><br /></td></tr>
 <tr class="separator:abec4dcdcb602e0f5d48f25ba8c9b6f7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54ca59f8a7a57220582cca5a6fa0c305"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a54ca59f8a7a57220582cca5a6fa0c305">IsClear</a> () const</td></tr>
 <tr class="separator:a54ca59f8a7a57220582cca5a6fa0c305"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -121,8 +123,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a360b7eeea320037b7718a4fe5295de8e"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a360b7eeea320037b7718a4fe5295de8e">SetSelectedState</a> (ON_ComponentState selected_state, bool bSynchronizeHighlight)</td></tr>
 <tr class="separator:a360b7eeea320037b7718a4fe5295de8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a00c2de927e3124995723d5dd88592f"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a4a00c2de927e3124995723d5dd88592f">SetStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_to_set)</td></tr>
+<tr class="memdesc:a4a00c2de927e3124995723d5dd88592f"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a state is set in states_to_set, the same state is set in "this".  <a href="#a4a00c2de927e3124995723d5dd88592f">More...</a><br /></td></tr>
 <tr class="separator:a4a00c2de927e3124995723d5dd88592f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c01ab7360dbbd8a9412969d0e842703"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#a8c01ab7360dbbd8a9412969d0e842703">SetStatus</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> status_to_copy)</td></tr>
+<tr class="memdesc:a8c01ab7360dbbd8a9412969d0e842703"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets *this = status_to_copy and returns 1 if a state setting changed.  <a href="#a8c01ab7360dbbd8a9412969d0e842703">More...</a><br /></td></tr>
 <tr class="separator:a8c01ab7360dbbd8a9412969d0e842703"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0fdd7626cf0af0eee9c1a6bb68768a2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d12/class_o_n___component_status.html#ae0fdd7626cf0af0eee9c1a6bb68768a2">SomeEqualStates</a> (<a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> states_filter, <a class="el" href="../../d9/d12/class_o_n___component_status.html">ON_ComponentStatus</a> comparand) const</td></tr>
 <tr class="separator:ae0fdd7626cf0af0eee9c1a6bb68768a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -245,7 +249,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Constructs a status with the specified state set. </p>
+
+<p>Constructs a status with the specified state set. </p>
 
 </div>
 </div>
@@ -275,7 +280,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: states_filter - [in] If no states are specified, then false is returned. comparand - [in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested. Returns: True if every tested state in "this" and comparand are identical. Remarks: For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">states_filter</td><td>[in] If no states are specified, then false is returned.</td></tr>
+    <tr><td class="paramname">comparand</td><td>[in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if every tested state in "this" and comparand are identical. </dd></dl>
+<p>For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
 
 </div>
 </div>
@@ -311,7 +324,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If a state is set in states_to_clear, the same state is cleared in "this". Parameters: states_to_clear - [in] Returns: 1 if status changed. 0 if status did not change. Remarks: The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#abec4dcdcb602e0f5d48f25ba8c9b6f7c">ClearStates()</a>. </p>
+
+<p>If a state is set in states_to_clear, the same state is cleared in "this". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">states_to_clear</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
+<p>The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#abec4dcdcb602e0f5d48f25ba8c9b6f7c" title="If a state is set in states_to_clear, the same state is cleared in &quot;this&quot;. ">ClearStates()</a>. </p>
 
 </div>
 </div>
@@ -329,7 +351,8 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if every setting besides runtime mark is 0 or false. Ignores the runtime mark state. Remarks: The runtime mark setting is ignored by <a class="el" href="../../d9/d12/class_o_n___component_status.html#a54ca59f8a7a57220582cca5a6fa0c305">IsClear()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if every setting besides runtime mark is 0 or false. Ignores the runtime mark state. </dd></dl>
+<p>The runtime mark setting is ignored by <a class="el" href="../../d9/d12/class_o_n___component_status.html#a54ca59f8a7a57220582cca5a6fa0c305">IsClear()</a>. </p>
 
 </div>
 </div>
@@ -347,7 +370,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false if not damaged. true otherwise. (ON_ComponentStatus::DAMAGED_STATE::not_damaged != DamagedState()) </p>
+<dl class="section return"><dt>Returns</dt><dd>false if not damaged. true otherwise. (ON_ComponentStatus::DAMAGED_STATE::not_damaged != DamagedState()) </dd></dl>
 
 </div>
 </div>
@@ -365,7 +388,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false if not hidden. true otherwise. (ON_ComponentStatus::DELETED_STATE::not_deleted != DeletedState()) </p>
+<dl class="section return"><dt>Returns</dt><dd>false if not hidden. true otherwise. (ON_ComponentStatus::DELETED_STATE::not_deleted != DeletedState()) </dd></dl>
 
 </div>
 </div>
@@ -383,7 +406,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false if not hidden. true otherwise. (ON_ComponentStatus::HIDDEN_STATE::not_hidden != HiddenState()) </p>
+<dl class="section return"><dt>Returns</dt><dd>false if not hidden. true otherwise. (ON_ComponentStatus::HIDDEN_STATE::not_hidden != HiddenState()) </dd></dl>
 
 </div>
 </div>
@@ -401,7 +424,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false if not highlighted. true otherwise. </p>
+<dl class="section return"><dt>Returns</dt><dd>false if not highlighted. true otherwise. </dd></dl>
 
 </div>
 </div>
@@ -419,7 +442,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false if not locked. true otherwise. (ON_ComponentStatus::LOCKED_STATE::not_locked != LockedState()) </p>
+<dl class="section return"><dt>Returns</dt><dd>false if not locked. true otherwise. (ON_ComponentStatus::LOCKED_STATE::not_locked != LockedState()) </dd></dl>
 
 </div>
 </div>
@@ -437,7 +460,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false The selection state is ON_ComponentState::not_selected. true The selection state is ON_ComponentState::Selected or ON_ComponentState::Selected_pesistent. </p>
+<dl class="section return"><dt>Returns</dt><dd>false The selection state is ON_ComponentState::not_selected. true The selection state is ON_ComponentState::Selected or ON_ComponentState::Selected_pesistent. </dd></dl>
 
 </div>
 </div>
@@ -455,7 +478,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: false The selection state is ON_ComponentState::not_selected. true The selection state is ON_ComponentState::Selected_pesistent. </p>
+<dl class="section return"><dt>Returns</dt><dd>false The selection state is ON_ComponentState::not_selected. true The selection state is ON_ComponentState::Selected_pesistent. </dd></dl>
 
 </div>
 </div>
@@ -484,7 +507,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: states_filter - [in] If no states are specified, then false is returned. comparand - [in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested. Returns: True if every tested state in "this" and comparand are different. Remarks: For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">states_filter</td><td>[in] If no states are specified, then false is returned.</td></tr>
+    <tr><td class="paramname">comparand</td><td>[in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if every tested state in "this" and comparand are different. </dd></dl>
+<p>For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
 
 </div>
 </div>
@@ -583,7 +614,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Checking multiple state values efficently </p>
 
 </div>
 </div>
@@ -601,7 +631,6 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>RuntimeMark </p>
 
 </div>
 </div>
@@ -619,7 +648,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Selection Returns: ON_ComponentState::not_selected, ON_ComponentState::Selected or ON_ComponentState::Selected_pesistent. </p>
+<dl class="section return"><dt>Returns</dt><dd>ON_ComponentState::not_selected, ON_ComponentState::Selected or ON_ComponentState::Selected_pesistent. </dd></dl>
 
 </div>
 </div>
@@ -638,7 +667,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Damaged Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -657,7 +686,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Deleted Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -676,7 +705,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Hidden Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -695,7 +724,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Highlighted Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -714,7 +743,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Locked Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -784,7 +813,7 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 1 if status changed. 0 if status did not change. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
 
 </div>
 </div>
@@ -831,7 +860,16 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If a state is set in states_to_set, the same state is set in "this". Parameters: states_to_set - [in] Returns: 1 if status changed. 0 if status did not change. Remarks: The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#a4a00c2de927e3124995723d5dd88592f">SetStates()</a>. </p>
+
+<p>If a state is set in states_to_set, the same state is set in "this". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">states_to_set</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
+<p>The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#a4a00c2de927e3124995723d5dd88592f" title="If a state is set in states_to_set, the same state is set in &quot;this&quot;. ">SetStates()</a>. </p>
 
 </div>
 </div>
@@ -850,7 +888,10 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets *this = status_to_copy and returns 1 if a state setting changed. Returns: 1 if status changed. 0 if status did not change. Remarks: The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#a8c01ab7360dbbd8a9412969d0e842703">SetStatus()</a>. </p>
+
+<p>Sets *this = status_to_copy and returns 1 if a state setting changed. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 if status changed. 0 if status did not change. </dd></dl>
+<p>The runtime mark setting cannot be changed using <a class="el" href="../../d9/d12/class_o_n___component_status.html#a8c01ab7360dbbd8a9412969d0e842703" title="Sets *this = status_to_copy and returns 1 if a state setting changed. ">SetStatus()</a>. </p>
 
 </div>
 </div>
@@ -879,7 +920,15 @@ Friends</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: states_filter - [in] If no states are specified, then false is returned. comparand - [in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested. Returns: True if at least one tested state in "this" and comparand are identical. Remarks: For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">states_filter</td><td>[in] If no states are specified, then false is returned.</td></tr>
+    <tr><td class="paramname">comparand</td><td>[in] If a state is set in states_filter, the corresponding state in "this" and comparand will be tested.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if at least one tested state in "this" and comparand are identical. </dd></dl>
+<p>For the purposes of this test, ON_ComponentState::Selected and ON_ComponentState::SelectedPersistent are considered equal. </p>
 
 </div>
 </div>
@@ -1111,7 +1160,7 @@ Friends</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

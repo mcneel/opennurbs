@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>The <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html" title="The ONX_ErrorCounter is useful for counting errors that occur in a section of code. ">ONX_ErrorCounter</a> is useful for counting errors that occur in a section of code.  
+ <a href="../../d7/de3/class_o_n_x___error_counter.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../dc/d81/opennurbs__extensions_8h_source.html">opennurbs_extensions.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -62,16 +65,22 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acfd4e9409b8e0ebe88fa1b5255e6eabd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#acfd4e9409b8e0ebe88fa1b5255e6eabd">~ONX_ErrorCounter</a> ()=default</td></tr>
 <tr class="separator:acfd4e9409b8e0ebe88fa1b5255e6eabd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a405e81e87cc3e678308fa70f23f4630d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d">AddLibraryErrors</a> ()</td></tr>
+<tr class="memdesc:a405e81e87cc3e678308fa70f23f4630d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds the number of calls to ON_ERROR since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a" title="Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. ">ClearLibraryErrors()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d" title="Adds the number of calls to ON_ERROR since the last call to ClearLibraryErrors(), AddLibraryErrors()...">AddLibraryErrors()</a>, ClearLibraryErrorsAndWarnings, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb" title="Calls AddLibraryErrors() and AddLibraryWarnings(). ">AddLibraryErrorsAndWarnings()</a>.  <a href="#a405e81e87cc3e678308fa70f23f4630d">More...</a><br /></td></tr>
 <tr class="separator:a405e81e87cc3e678308fa70f23f4630d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0cbae162837bef2e809512b6bb443cb"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb">AddLibraryErrorsAndWarnings</a> ()</td></tr>
+<tr class="memdesc:ac0cbae162837bef2e809512b6bb443cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d" title="Adds the number of calls to ON_ERROR since the last call to ClearLibraryErrors(), AddLibraryErrors()...">AddLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc" title="Adds the number of calls to ON_WARNING since the last call to ClearLibraryWarnings(), AddLibraryWarnings(), ClearLibraryErrorsAndWarnings(), or AddLibraryErrorsAndWarnings(). ">AddLibraryWarnings()</a>.  <a href="#ac0cbae162837bef2e809512b6bb443cb">More...</a><br /></td></tr>
 <tr class="separator:ac0cbae162837bef2e809512b6bb443cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73c14a1b69fdb54766acf6d58761e6cc"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc">AddLibraryWarnings</a> ()</td></tr>
+<tr class="memdesc:a73c14a1b69fdb54766acf6d58761e6cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds the number of calls to ON_WARNING since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec" title="Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted...">ClearLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc" title="Adds the number of calls to ON_WARNING since the last call to ClearLibraryWarnings(), AddLibraryWarnings(), ClearLibraryErrorsAndWarnings(), or AddLibraryErrorsAndWarnings(). ">AddLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a6db00f336a119ee78af0d1f86a4ee80a" title="Calls ClearLibraryErrors() and ClearLibraryWarnings(). ">ClearLibraryErrorsAndWarnings()</a>, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb" title="Calls AddLibraryErrors() and AddLibraryWarnings(). ">AddLibraryErrorsAndWarnings()</a>.  <a href="#a73c14a1b69fdb54766acf6d58761e6cc">More...</a><br /></td></tr>
 <tr class="separator:a73c14a1b69fdb54766acf6d58761e6cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f50fbc2809353020bdbbbcc708a956a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a">ClearLibraryErrors</a> ()</td></tr>
+<tr class="memdesc:a4f50fbc2809353020bdbbbcc708a956a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted.  <a href="#a4f50fbc2809353020bdbbbcc708a956a">More...</a><br /></td></tr>
 <tr class="separator:a4f50fbc2809353020bdbbbcc708a956a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6db00f336a119ee78af0d1f86a4ee80a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a6db00f336a119ee78af0d1f86a4ee80a">ClearLibraryErrorsAndWarnings</a> ()</td></tr>
+<tr class="memdesc:a6db00f336a119ee78af0d1f86a4ee80a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a" title="Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. ">ClearLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec" title="Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted...">ClearLibraryWarnings()</a>.  <a href="#a6db00f336a119ee78af0d1f86a4ee80a">More...</a><br /></td></tr>
 <tr class="separator:a6db00f336a119ee78af0d1f86a4ee80a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6014f4d0163f859d52f6c4235e8c9ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec">ClearLibraryWarnings</a> ()</td></tr>
+<tr class="memdesc:ac6014f4d0163f859d52f6c4235e8c9ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted.  <a href="#ac6014f4d0163f859d52f6c4235e8c9ec">More...</a><br /></td></tr>
 <tr class="separator:ac6014f4d0163f859d52f6c4235e8c9ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d42019217bdc9fdece9c90a61ab4a6e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a5d42019217bdc9fdece9c90a61ab4a6e">Dump</a> (<a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;text_log) const</td></tr>
 <tr class="separator:a5d42019217bdc9fdece9c90a61ab4a6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -80,10 +89,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a703bd05be62733b9d1e3d44e47bc8299"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a703bd05be62733b9d1e3d44e47bc8299">FailureCount</a> () const</td></tr>
 <tr class="separator:a703bd05be62733b9d1e3d44e47bc8299"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef53b2a41571b591f67932da8358de69"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#aef53b2a41571b591f67932da8358de69">IncrementErrorCount</a> ()</td></tr>
+<tr class="memdesc:aef53b2a41571b591f67932da8358de69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds one to the error count.  <a href="#aef53b2a41571b591f67932da8358de69">More...</a><br /></td></tr>
 <tr class="separator:aef53b2a41571b591f67932da8358de69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b1201fa7b470371633085985a39e62c"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a1b1201fa7b470371633085985a39e62c">IncrementFailureCount</a> ()</td></tr>
+<tr class="memdesc:a1b1201fa7b470371633085985a39e62c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds one to the failure count.  <a href="#a1b1201fa7b470371633085985a39e62c">More...</a><br /></td></tr>
 <tr class="separator:a1b1201fa7b470371633085985a39e62c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bdd533355e06c29dc8f7e875b72a701"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a8bdd533355e06c29dc8f7e875b72a701">IncrementWarningCount</a> ()</td></tr>
+<tr class="memdesc:a8bdd533355e06c29dc8f7e875b72a701"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds one to the warning count.  <a href="#a8bdd533355e06c29dc8f7e875b72a701">More...</a><br /></td></tr>
 <tr class="separator:a8bdd533355e06c29dc8f7e875b72a701"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44b223240e4c70a09d59793b0315e82b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html">ONX_ErrorCounter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a44b223240e4c70a09d59793b0315e82b">operator+</a> (const <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html">ONX_ErrorCounter</a> &amp;rhs)</td></tr>
 <tr class="separator:a44b223240e4c70a09d59793b0315e82b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -102,8 +114,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:aa6ba33c01e79387ad93053a500b471b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// Description: The <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html">ONX_ErrorCounter</a> is useful for counting errors that occur in a section of code. </p>
+<div class="textblock"><p>The <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html" title="The ONX_ErrorCounter is useful for counting errors that occur in a section of code. ">ONX_ErrorCounter</a> is useful for counting errors that occur in a section of code. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a0b5f5d1f989b4a0b647492c4d0401e4f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0b5f5d1f989b4a0b647492c4d0401e4f">&#9670;&nbsp;</a></span>ONX_ErrorCounter() <span class="overload">[1/2]</span></h2>
@@ -196,7 +207,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds the number of calls to ON_ERROR since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a">ClearLibraryErrors()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d">AddLibraryErrors()</a>, ClearLibraryErrorsAndWarnings, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb">AddLibraryErrorsAndWarnings()</a>. Returns: The number of errors added. </p>
+
+<p>Adds the number of calls to ON_ERROR since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a" title="Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. ">ClearLibraryErrors()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d" title="Adds the number of calls to ON_ERROR since the last call to ClearLibraryErrors(), AddLibraryErrors()...">AddLibraryErrors()</a>, ClearLibraryErrorsAndWarnings, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb" title="Calls AddLibraryErrors() and AddLibraryWarnings(). ">AddLibraryErrorsAndWarnings()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of errors added. </dd></dl>
 
 </div>
 </div>
@@ -214,7 +227,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d">AddLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc">AddLibraryWarnings()</a>. Returns: The number of errors and warnings added. </p>
+
+<p>Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a405e81e87cc3e678308fa70f23f4630d" title="Adds the number of calls to ON_ERROR since the last call to ClearLibraryErrors(), AddLibraryErrors()...">AddLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc" title="Adds the number of calls to ON_WARNING since the last call to ClearLibraryWarnings(), AddLibraryWarnings(), ClearLibraryErrorsAndWarnings(), or AddLibraryErrorsAndWarnings(). ">AddLibraryWarnings()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of errors and warnings added. </dd></dl>
 
 </div>
 </div>
@@ -232,7 +247,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds the number of calls to ON_WARNING since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec">ClearLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc">AddLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a6db00f336a119ee78af0d1f86a4ee80a">ClearLibraryErrorsAndWarnings()</a>, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb">AddLibraryErrorsAndWarnings()</a>. Returns: The number of warnings added. </p>
+
+<p>Adds the number of calls to ON_WARNING since the last call to <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec" title="Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted...">ClearLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a73c14a1b69fdb54766acf6d58761e6cc" title="Adds the number of calls to ON_WARNING since the last call to ClearLibraryWarnings(), AddLibraryWarnings(), ClearLibraryErrorsAndWarnings(), or AddLibraryErrorsAndWarnings(). ">AddLibraryWarnings()</a>, <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a6db00f336a119ee78af0d1f86a4ee80a" title="Calls ClearLibraryErrors() and ClearLibraryWarnings(). ">ClearLibraryErrorsAndWarnings()</a>, or <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac0cbae162837bef2e809512b6bb443cb" title="Calls AddLibraryErrors() and AddLibraryWarnings(). ">AddLibraryErrorsAndWarnings()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of warnings added. </dd></dl>
 
 </div>
 </div>
@@ -250,7 +267,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. </p>
+
+<p>Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. </p>
 
 </div>
 </div>
@@ -268,7 +286,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a">ClearLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec">ClearLibraryWarnings()</a>. </p>
+
+<p>Calls <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#a4f50fbc2809353020bdbbbcc708a956a" title="Saves the current value of ON_GetErrorCount() so future calls to ON_ERROR can be counted. ">ClearLibraryErrors()</a> and <a class="el" href="../../d7/de3/class_o_n_x___error_counter.html#ac6014f4d0163f859d52f6c4235e8c9ec" title="Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted...">ClearLibraryWarnings()</a>. </p>
 
 </div>
 </div>
@@ -286,7 +305,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted. </p>
+
+<p>Saves the current value of ON_GetWarningCount() so future calls to ON_WARNING can be counted. </p>
 
 </div>
 </div>
@@ -322,7 +342,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of errors. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of errors. </dd></dl>
 
 </div>
 </div>
@@ -340,7 +360,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of failures. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of failures. </dd></dl>
 
 </div>
 </div>
@@ -358,7 +378,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds one to the error count. Returns: Number of errors including this one. </p>
+
+<p>Adds one to the error count. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of errors including this one. </dd></dl>
 
 </div>
 </div>
@@ -376,7 +398,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds one to the failure count. Returns: Number of failures including this one. </p>
+
+<p>Adds one to the failure count. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of failures including this one. </dd></dl>
 
 </div>
 </div>
@@ -394,7 +418,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds one to the warning count. Returns: Number of warnings including this one. </p>
+
+<p>Adds one to the warning count. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of warnings including this one. </dd></dl>
 
 </div>
 </div>
@@ -474,7 +500,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of failures, erros, and warnings. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of failures, erros, and warnings. </dd></dl>
 
 </div>
 </div>
@@ -492,7 +518,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of warnings. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of warnings. </dd></dl>
 
 </div>
 </div>
@@ -525,7 +551,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -73,18 +73,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5e2369285b80f0cee315265c3684b377"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a5e2369285b80f0cee315265c3684b377">Dump</a> (class <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> &amp;text_log) const</td></tr>
 <tr class="separator:a5e2369285b80f0cee315265c3684b377"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6eed871ea493de2c8ce5c15f4baa756e"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a6eed871ea493de2c8ce5c15f4baa756e">GetBoundarySides</a> (const class <a class="el" href="../../d6/d82/class_o_n___mesh_face_list.html">ON_MeshFaceList</a> &amp;mesh_face_list, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; unsigned int &gt; &amp;ngon_boundary_sides) const</td></tr>
+<tr class="memdesc:a6eed871ea493de2c8ce5c15f4baa756e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the ngon m_fi[] array to get a list of ngon boundary sides.  <a href="#a6eed871ea493de2c8ce5c15f4baa756e">More...</a><br /></td></tr>
 <tr class="separator:a6eed871ea493de2c8ce5c15f4baa756e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adaad9cc8d7ec59317d114cc70c6ddfaa"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#adaad9cc8d7ec59317d114cc70c6ddfaa">GetOuterBoundaryPoints</a> (const class <a class="el" href="../../d0/d8a/class_o_n__3d_point_list_ref.html">ON_3dPointListRef</a> &amp;mesh_vertex_list, bool bAppendStartPoint, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &gt; &amp;ngon_boundary_points) const</td></tr>
+<tr class="memdesc:adaad9cc8d7ec59317d114cc70c6ddfaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list.  <a href="#adaad9cc8d7ec59317d114cc70c6ddfaa">More...</a><br /></td></tr>
 <tr class="separator:adaad9cc8d7ec59317d114cc70c6ddfaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e9ba32e30d4c112dbc50ee17cd51d17"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a2e9ba32e30d4c112dbc50ee17cd51d17">GetOuterBoundaryPoints</a> (const class <a class="el" href="../../d0/d8a/class_o_n__3d_point_list_ref.html">ON_3dPointListRef</a> &amp;mesh_vertex_list, bool bAppendStartPoint, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *ngon_boundary_points) const</td></tr>
+<tr class="memdesc:a2e9ba32e30d4c112dbc50ee17cd51d17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list.  <a href="#a2e9ba32e30d4c112dbc50ee17cd51d17">More...</a><br /></td></tr>
 <tr class="separator:a2e9ba32e30d4c112dbc50ee17cd51d17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad081408a2dc6df86095488eb46f7ca40"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#ad081408a2dc6df86095488eb46f7ca40">Orientation</a> (const <a class="el" href="../../d6/d82/class_o_n___mesh_face_list.html">ON_MeshFaceList</a> &amp;mesh_face_list, bool bPermitHoles) const</td></tr>
+<tr class="memdesc:ad081408a2dc6df86095488eb46f7ca40"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if the ngon's boundary orientation matches that of the set of faces it is made from.  <a href="#ad081408a2dc6df86095488eb46f7ca40">More...</a><br /></td></tr>
 <tr class="separator:ad081408a2dc6df86095488eb46f7ca40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab08fb8f3992e5d0befa84a1b7e192fd0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#ab08fb8f3992e5d0befa84a1b7e192fd0">Orientation</a> (const <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> *mesh, bool bPermitHoles) const</td></tr>
+<tr class="memdesc:ab08fb8f3992e5d0befa84a1b7e192fd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if the ngon's boundary orientation matches that of the set of faces it is made from.  <a href="#ab08fb8f3992e5d0befa84a1b7e192fd0">More...</a><br /></td></tr>
 <tr class="separator:ab08fb8f3992e5d0befa84a1b7e192fd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6841bf12bab1e1846b0e5473269c3649"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a6841bf12bab1e1846b0e5473269c3649">OuterBoundaryEdgeCount</a> () const</td></tr>
 <tr class="separator:a6841bf12bab1e1846b0e5473269c3649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94957bdc9789dd8f577e48b28c40909b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a94957bdc9789dd8f577e48b28c40909b">ReverseOuterBoundary</a> ()</td></tr>
+<tr class="memdesc:a94957bdc9789dd8f577e48b28c40909b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reverse the order of the m_vi[] array.  <a href="#a94957bdc9789dd8f577e48b28c40909b">More...</a><br /></td></tr>
 <tr class="separator:a94957bdc9789dd8f577e48b28c40909b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a844465d5254f81ae6005b4a30335f0b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d3b/class_o_n___string.html">ON_String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a844465d5254f81ae6005b4a30335f0b2">ToString</a> () const</td></tr>
 <tr class="separator:a844465d5254f81ae6005b4a30335f0b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -96,24 +102,28 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a9f28257f2bd43c955bc82314b827fcb7"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a9f28257f2bd43c955bc82314b827fcb7">Compare</a> (const <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *A, const <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *B)</td></tr>
 <tr class="separator:a9f28257f2bd43c955bc82314b827fcb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4352b8bb0569558de08dfa74f8b1395"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#ac4352b8bb0569558de08dfa74f8b1395">FindNgonOuterBoundary</a> (const class <a class="el" href="../../d0/d8a/class_o_n__3d_point_list_ref.html">ON_3dPointListRef</a> &amp;mesh_vertex_list, const class <a class="el" href="../../d6/d82/class_o_n___mesh_face_list.html">ON_MeshFaceList</a> &amp;mesh_face_list, const unsigned int *const *vertex_face_map, size_t ngon_fi_count, const unsigned int *ngon_fi, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; unsigned int &gt; &amp;ngon_vi)</td></tr>
+<tr class="memdesc:ac4352b8bb0569558de08dfa74f8b1395"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of vertices that form the boundary of a set of faces.  <a href="#ac4352b8bb0569558de08dfa74f8b1395">More...</a><br /></td></tr>
 <tr class="separator:ac4352b8bb0569558de08dfa74f8b1395"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62d6fc97ef9375f87118ea25d9da3e1e"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a62d6fc97ef9375f87118ea25d9da3e1e">FindPlanarNgons</a> (const class <a class="el" href="../../d0/d8a/class_o_n__3d_point_list_ref.html">ON_3dPointListRef</a> &amp;vertex_list, const class <a class="el" href="../../d6/d82/class_o_n___mesh_face_list.html">ON_MeshFaceList</a> &amp;face_list, const unsigned int *const *vertex_face_map, double planar_tolerance, unsigned int minimum_ngon_vertex_count, unsigned int minimum_ngon_face_count, bool bAllowHoles, class <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html">ON_MeshNgonAllocator</a> &amp;NgonAllocator, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; unsigned int &gt; &amp;NgonMap, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *&gt; &amp;Ngons)</td></tr>
 <tr class="separator:a62d6fc97ef9375f87118ea25d9da3e1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6198586119e95e3d1a1829c613080b12"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a6198586119e95e3d1a1829c613080b12">IsValid</a> (const <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *ngon, unsigned int ngon_index, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log, unsigned int mesh_vertex_count, unsigned int mesh_face_count, const <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a> *mesh_F)</td></tr>
+<tr class="memdesc:a6198586119e95e3d1a1829c613080b12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test ngon to see if the vertex and face references are valid and pass partial boundary validity checks,  <a href="#a6198586119e95e3d1a1829c613080b12">More...</a><br /></td></tr>
 <tr class="separator:a6198586119e95e3d1a1829c613080b12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e1f92bff7349a4fa964a12c2a0366be"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a2e1f92bff7349a4fa964a12c2a0366be">IsValid</a> (const <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *ngon, unsigned int ngon_index, <a class="el" href="../../d2/da3/class_o_n___text_log.html">ON_TextLog</a> *text_log, unsigned int mesh_vertex_count, unsigned int mesh_face_count, const <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a> *mesh_F, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; unsigned int &gt; &amp;workspace_buffer)</td></tr>
 <tr class="separator:a2e1f92bff7349a4fa964a12c2a0366be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a394718017f61f497b598ef7b65cab5c9"><td class="memItemLeft" align="right" valign="top">static class <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a394718017f61f497b598ef7b65cab5c9">NgonFromMeshFace</a> (class <a class="el" href="../../df/d35/class_o_n___mesh_ngon_buffer.html">ON_MeshNgonBuffer</a> &amp;ngon_buffer, unsigned int mesh_face_index, const unsigned int *fvi)</td></tr>
+<tr class="memdesc:a394718017f61f497b598ef7b65cab5c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons.  <a href="#a394718017f61f497b598ef7b65cab5c9">More...</a><br /></td></tr>
 <tr class="separator:a394718017f61f497b598ef7b65cab5c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31f82078d58ddc0f0da74f35a35ea946"><td class="memItemLeft" align="right" valign="top">static class <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a31f82078d58ddc0f0da74f35a35ea946">NgonListFromMeshFace</a> (class <a class="el" href="../../df/d35/class_o_n___mesh_ngon_buffer.html">ON_MeshNgonBuffer</a> &amp;ngon_buffer, unsigned int mesh_face_index, const unsigned int *fvi)</td></tr>
+<tr class="memdesc:a31f82078d58ddc0f0da74f35a35ea946"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons.  <a href="#a31f82078d58ddc0f0da74f35a35ea946">More...</a><br /></td></tr>
 <tr class="separator:a31f82078d58ddc0f0da74f35a35ea946"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8228c54598e58fdad9968fcd11b49ed7"><td class="memItemLeft" align="right" valign="top">static unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a8228c54598e58fdad9968fcd11b49ed7">NgonListFromMeshFaceOrNgonComponent</a> (class <a class="el" href="../../df/d35/class_o_n___mesh_ngon_buffer.html">ON_MeshNgonBuffer</a> &amp;ngon_buffer, ON_COMPONENT_INDEX ci, const class <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> *mesh, const class <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> *const *&amp;ngon_list)</td></tr>
+<tr class="memdesc:a8228c54598e58fdad9968fcd11b49ed7"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a component index identifies a face or ngon, Get an array Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons.  <a href="#a8228c54598e58fdad9968fcd11b49ed7">More...</a><br /></td></tr>
 <tr class="separator:a8228c54598e58fdad9968fcd11b49ed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a120e153345a764577ceaf05e90a546cb"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#a120e153345a764577ceaf05e90a546cb">m_Fcount</a></td></tr>
-<tr class="memdesc:a120e153345a764577ceaf05e90a546cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of faces  <a href="#a120e153345a764577ceaf05e90a546cb">More...</a><br /></td></tr>
 <tr class="separator:a120e153345a764577ceaf05e90a546cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafb93ba1bbc13cc9aa7be5011cdf4013"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html#aafb93ba1bbc13cc9aa7be5011cdf4013">m_fi</a></td></tr>
 <tr class="separator:aafb93ba1bbc13cc9aa7be5011cdf4013"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -175,7 +185,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: mesh_face_list - [in] faces referenced by this n-gon. Returns: Total number of boundary edges, including interior edges. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_face_list</td><td>[in] faces referenced by this n-gon.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Total number of boundary edges, including interior edges. </dd></dl>
 
 </div>
 </div>
@@ -194,7 +210,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: mesh - [in] mesh referenced by this n-gon. Returns: Total number of boundary edges, including interior edges. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh</td><td>[in] mesh referenced by this n-gon.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Total number of boundary edges, including interior edges. </dd></dl>
 
 </div>
 </div>
@@ -212,7 +234,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: This n-gon is not managed by an <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html">ON_MeshNgonAllocator</a>. &gt;=0: The maximum capcity (maximum m_Vcount+m_Fcount) for this N-gon </p>
+<dl class="section return"><dt>Returns</dt><dd>0: This n-gon is not managed by an <a class="el" href="../../d0/dec/class_o_n___mesh_ngon_allocator.html">ON_MeshNgonAllocator</a>. &gt;=0: The maximum capcity (maximum m_Vcount+m_Fcount) for this N-gon </dd></dl>
 
 </div>
 </div>
@@ -266,7 +288,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: A SHA-1 has of the vertex and face indices. </p>
+<dl class="section return"><dt>Returns</dt><dd>A SHA-1 has of the vertex and face indices. </dd></dl>
 
 </div>
 </div>
@@ -284,7 +306,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 32-bit cyclic redundancy check that can be used as a hash code. </p>
+<dl class="section return"><dt>Returns</dt><dd>32-bit cyclic redundancy check that can be used as a hash code. </dd></dl>
 
 </div>
 </div>
@@ -363,7 +385,20 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Get a list of vertices that form the boundary of a set of faces. Parameters: mesh_vertex_list - [in] mesh_face_list - [in] vertex_face_map - [in] null or a vertex map made from the information in mesh_vertex_list and mesh_face_list. ngon_fi_count - [in] length of ngon_fi[] array ngon_fi - [in] An array of length ngon_fi_count that contains the indices of the faces that form the ngon. ngon_vi - [out] An array of vertex indices that make the ngon boundary. Returns: Number of vertices in the ngon outer boundary or 0 if the input is not valid. </p>
+
+<p>Get a list of vertices that form the boundary of a set of faces. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_vertex_list</td><td>[in]</td></tr>
+    <tr><td class="paramname">mesh_face_list</td><td>[in]</td></tr>
+    <tr><td class="paramname">vertex_face_map</td><td>[in] null or a vertex map made from the information in mesh_vertex_list and mesh_face_list.</td></tr>
+    <tr><td class="paramname">ngon_fi_count</td><td>[in] length of ngon_fi[] array</td></tr>
+    <tr><td class="paramname">ngon_fi</td><td>[in] An array of length ngon_fi_count that contains the indices of the faces that form the ngon.</td></tr>
+    <tr><td class="paramname">ngon_vi</td><td>[out] An array of vertex indices that make the ngon boundary.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of vertices in the ngon outer boundary or 0 if the input is not valid. </dd></dl>
 
 </div>
 </div>
@@ -448,7 +483,6 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Tools for finding a making n-gons </p>
 
 </div>
 </div>
@@ -477,7 +511,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Use the ngon m_fi[] array to get a list of ngon boundary sides. Parameters: mesh_face_list - [in] ngon_boundary_sides - [out] ngon_boundary_sides[i]/8 = ON_MeshNon.m_fi[] array index ngon_boundary_sides[i]%4 = side index side index 0 identifies the side that runs from the first face vertex to the second face vertex. ngon_boundary_sides[i]&amp;4 != 0 means the face side is reversed when used as an ngon boundary segment. Returns: Number of elements added to ngon_boundary_sides[] or 0 if invalid input is encountered. </p>
+
+<p>Use the ngon m_fi[] array to get a list of ngon boundary sides. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_face_list</td><td>[in]</td></tr>
+    <tr><td class="paramname">ngon_boundary_sides</td><td>[out] ngon_boundary_sides[i]/8 = ON_MeshNon.m_fi[] array index ngon_boundary_sides[i]%4 = side index side index 0 identifies the side that runs from the first face vertex to the second face vertex. ngon_boundary_sides[i]&amp;4 != 0 means the face side is reversed when used as an ngon boundary segment.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of elements added to ngon_boundary_sides[] or 0 if invalid input is encountered. </dd></dl>
 
 </div>
 </div>
@@ -512,7 +555,17 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list. Parameters: mesh_vertex_list - [in] bAppendStartPoint - [in] If true, the initial point in the boundary will be added as the first point of ngon_boundary_points[] and then added again as the last point of ngon_boundary_points[]. This is useful when you need a closed polyline. ngon_boundary_points - [out] An array of ngon-&gt;m_Vcount + (bAppendStartPoint ? 1 : 0) points. Returns: Number of points added to ngon_boundary_points[] or 0 if invalid input is encountered. </p>
+
+<p>Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_vertex_list</td><td>[in]</td></tr>
+    <tr><td class="paramname">bAppendStartPoint</td><td>[in] If true, the initial point in the boundary will be added as the first point of ngon_boundary_points[] and then added again as the last point of ngon_boundary_points[]. This is useful when you need a closed polyline.</td></tr>
+    <tr><td class="paramname">ngon_boundary_points</td><td>[out] An array of ngon-&gt;m_Vcount + (bAppendStartPoint ? 1 : 0) points.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of points added to ngon_boundary_points[] or 0 if invalid input is encountered. </dd></dl>
 
 </div>
 </div>
@@ -547,7 +600,17 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list. Parameters: mesh_vertex_list - [in] bAppendStartPoint - [in] If true, the initial point in the boundary will be added as the first point of ngon_boundary_points[] and then added again as the last point of ngon_boundary_points[]. This is useful when you need a closed polyline. ngon_boundary_points - [out] An array of ngon-&gt;m_Vcount + (bAppendStartPoint ? 1 : 0) points is returned in ngon_boundary_points[]. The caller must insure that ngon_boundary_points[] has room for this many elements. Returns: Number of points added to ngon_boundary_points[] or 0 if invalid input is encountered. </p>
+
+<p>Use the ngon m_vi[] array to get a list of 3d points from mesh_vertex_list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_vertex_list</td><td>[in]</td></tr>
+    <tr><td class="paramname">bAppendStartPoint</td><td>[in] If true, the initial point in the boundary will be added as the first point of ngon_boundary_points[] and then added again as the last point of ngon_boundary_points[]. This is useful when you need a closed polyline.</td></tr>
+    <tr><td class="paramname">ngon_boundary_points</td><td>[out] An array of ngon-&gt;m_Vcount + (bAppendStartPoint ? 1 : 0) points is returned in ngon_boundary_points[]. The caller must insure that ngon_boundary_points[] has room for this many elements.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of points added to ngon_boundary_points[] or 0 if invalid input is encountered. </dd></dl>
 
 </div>
 </div>
@@ -608,7 +671,21 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Tools for validation output Description: Test ngon to see if the vertex and face references are valid and pass partial boundary validity checks, Parameters: ngon - [in] ngon to test ngon_index - [in] This index is used in messages sent to text_log text_log - [in] nullptr or a place to send information about problems. mesh_vertex_count - [in] Number of vertices in the mesh mesh_face_count - [in] Number of face in the mesh mesh_F - [in] nullptr of mesh faces - required for boundary checks workspace_buffer - [in] If you are passing in mesh_F and you are testing testing multple ngons, then consider providing a workspace_buffer that will be automatically reused for successive ngons. Returns: 0: ngon is not valid &gt;0: number of boundary edges. If this number is &gt; ngon-&gt;m_V_count, then the ngon has inner boundaries or duplicate vertices. </p>
+
+<p>Test ngon to see if the vertex and face references are valid and pass partial boundary validity checks, </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ngon</td><td>[in] ngon to test</td></tr>
+    <tr><td class="paramname">ngon_index</td><td>[in] This index is used in messages sent to text_log</td></tr>
+    <tr><td class="paramname">text_log</td><td>[in] nullptr or a place to send information about problems.</td></tr>
+    <tr><td class="paramname">mesh_vertex_count</td><td>[in] Number of vertices in the mesh</td></tr>
+    <tr><td class="paramname">mesh_face_count</td><td>[in] Number of face in the mesh</td></tr>
+    <tr><td class="paramname">mesh_F</td><td>[in] nullptr of mesh faces - required for boundary checks</td></tr>
+    <tr><td class="paramname">workspace_buffer</td><td>[in] If you are passing in mesh_F and you are testing testing multple ngons, then consider providing a workspace_buffer that will be automatically reused for successive ngons.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0: ngon is not valid &gt;0: number of boundary edges. If this number is &gt; ngon-&gt;m_V_count, then the ngon has inner boundaries or duplicate vertices. </dd></dl>
 
 </div>
 </div>
@@ -717,7 +794,18 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. Parameters: buffer - [in] an array with a capacity for at least 9 ON__UINT_PTR elements. The returned ngon information will be stored in this memory. mesh_face_index - [in] fvi - [in] mesh face vertex indices. If "f" is an <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a>, then pass (const unsigned int*)f.vi. Returns: If the input is valid, the returned ngon pointer is is the face's triangle or quad. All returned information is in the buffer[]. null - invalid input. See Also: <a class="el" href="../../df/d11/class_o_n___mesh.html#aa7dc938246cff27850bd279cb8b9e307">ON_Mesh::NgonFromComponentIndex()</a> </p>
+
+<p>Create an ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in] an array with a capacity for at least 9 ON__UINT_PTR elements. The returned ngon information will be stored in this memory.</td></tr>
+    <tr><td class="paramname">mesh_face_index</td><td>[in]</td></tr>
+    <tr><td class="paramname">fvi</td><td>[in] mesh face vertex indices. If "f" is an <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a>, then pass (const unsigned int*)f.vi.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the input is valid, the returned ngon pointer is is the face's triangle or quad. All returned information is in the buffer[]. null - invalid input. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../df/d11/class_o_n___mesh.html#aa7dc938246cff27850bd279cb8b9e307">ON_Mesh::NgonFromComponentIndex()</a></dd></dl>
 
 </div>
 </div>
@@ -760,7 +848,17 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. Parameters: ngon_buffer - [in] memory used to create ngon classan array with a capacity for at least 10 ON__UINT_PTR elements. mesh_face_index - [in] fvi - [in] mesh face vertex indices. If "f" is an <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a>, then pass (const unsigned int*)f.vi. Returns: If the input is valid, the returned pointer is an array of a single ngon that is the face's triangle or quad. All returned information is in the buffer[]. null - invalid input. </p>
+
+<p>Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ngon_buffer</td><td>[in] memory used to create ngon classan array with a capacity for at least 10 ON__UINT_PTR elements.</td></tr>
+    <tr><td class="paramname">mesh_face_index</td><td>[in]</td></tr>
+    <tr><td class="paramname">fvi</td><td>[in] mesh face vertex indices. If "f" is an <a class="el" href="../../de/d91/class_o_n___mesh_face.html">ON_MeshFace</a>, then pass (const unsigned int*)f.vi.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>If the input is valid, the returned pointer is an array of a single ngon that is the face's triangle or quad. All returned information is in the buffer[]. null - invalid input. </dd></dl>
 
 </div>
 </div>
@@ -809,7 +907,18 @@ Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: If a component index identifies a face or ngon, Get an array Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. Parameters: ngon_buffer - [in] memory used to create <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> class ci - [in] mesh - [in] ngon_list - [out] An array of ngon pointers. Some pointers may be null. Returns: Number of ngon pointers in ngon_list. </p>
+
+<p>If a component index identifies a face or ngon, Get an array Create an array of a single ngon pointer that contains a triangle (3-gon) or quad (4-gon) from a mesh face. This is handy when your code needs to handle both ngons and faces because it lets you convert a face to its ngon format and the rest of the code can work exclusively with ngons. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ngon_buffer</td><td>[in] memory used to create <a class="el" href="../../d5/df5/class_o_n___mesh_ngon.html">ON_MeshNgon</a> class</td></tr>
+    <tr><td class="paramname">ci</td><td>[in]</td></tr>
+    <tr><td class="paramname">mesh</td><td>[in]</td></tr>
+    <tr><td class="paramname">ngon_list</td><td>[out] An array of ngon pointers. Some pointers may be null.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of ngon pointers in ngon_list. </dd></dl>
 
 </div>
 </div>
@@ -838,7 +947,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Pamameters: mesh_face_list - [in] <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> face list. bPermitHoles - [in] true if the ngon is permitted to have interior holes false otherwise. Description: Determine if the ngon's boundary orientation matches that of the set of faces it is made from. Returns: 1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation matches the faces' orientation. -1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation is opposite the faces' orientation. 0: Otherwise. The ngon may be invalid, have holes, the ngon's faces may not be compatibly oriented, the ngons edges may not have a consistent orientation with respect to the faces, or some other issue. </p>
+
+<p>Determine if the ngon's boundary orientation matches that of the set of faces it is made from. </p>
+<dl class="section return"><dt>Returns</dt><dd>1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation matches the faces' orientation. -1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation is opposite the faces' orientation. 0: Otherwise. The ngon may be invalid, have holes, the ngon's faces may not be compatibly oriented, the ngons edges may not have a consistent orientation with respect to the faces, or some other issue. </dd></dl>
 
 </div>
 </div>
@@ -867,7 +978,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Pamameters: mesh_face_list - [in] <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> face list. bPermitHoles - [in] true if the ngon is permitted to have interior holes false otherwise. Description: Determine if the ngon's boundary orientation matches that of the set of faces it is made from. Returns: 1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation matches the faces' orientation. -1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation is opposite the faces' orientation. 0: Otherwise. The ngon may be invalid, have holes, the ngon's faces may not be compatibly oriented, the ngons edges may not have a consistent orientation with respect to the faces, or some other issue. </p>
+
+<p>Determine if the ngon's boundary orientation matches that of the set of faces it is made from. </p>
+<dl class="section return"><dt>Returns</dt><dd>1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation matches the faces' orientation. -1: The ngon does not have holes, the ngon's faces are compatibly oriented, and the ngon's outer boundary orientation is opposite the faces' orientation. 0: Otherwise. The ngon may be invalid, have holes, the ngon's faces may not be compatibly oriented, the ngons edges may not have a consistent orientation with respect to the faces, or some other issue. </dd></dl>
 
 </div>
 </div>
@@ -885,7 +998,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Total number of outer boundary edges. </p>
+<dl class="section return"><dt>Returns</dt><dd>Total number of outer boundary edges. </dd></dl>
 
 </div>
 </div>
@@ -903,7 +1016,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reverse the order of the m_vi[] array. </p>
+
+<p>Reverse the order of the m_vi[] array. </p>
 
 </div>
 </div>
@@ -921,7 +1035,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Tools for text output </p>
 
 </div>
 </div>
@@ -955,8 +1068,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>number of faces </p>
-
 </div>
 </div>
 <a id="aafb93ba1bbc13cc9aa7be5011cdf4013"></a>
@@ -970,7 +1081,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>N-gon face indices An array of m_Fcount indices into the mesh's m_F[] face array. Unset elements have the value ON_UNSET_UINT_INDEX. If the ngon in managed by an ON_NgonAllocator, then the memory for m_fi[] is also managed by that ON_NgonAllocator. </p>
 
 </div>
 </div>
@@ -987,7 +1097,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Number of N-gon corners (N &gt;= 3) </p>
-<p>number of vertices and sides (the "n" in n-gon) </p>
 
 </div>
 </div>
@@ -1002,7 +1111,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>N-gon vertex indices An array of m_Vcount indices into the mesh's m_V[] vertex array. Unset elements have the value ON_UNSET_UINT_INDEX. If the ngon in managed by an ON_NgonAllocator, then the memory for m_vi[] is also managed by that ON_NgonAllocator. </p>
 
 </div>
 </div>
@@ -1012,7 +1120,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html" title="Top level OpenNURBS objects have geometry and attributes. The geometry is stored in some class derive...">ON_3dmObjectAttributes</a> uses <a class="el" href="../../d5/d2c/class_o_n___material_ref.html">ON_MaterialRef</a> to record which rendering material and mappings a rendering plug-in wants to use. This allows different rendering plug-ins to have different materials on the same object. The values of <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a6cac5115a39deafa888ada86a6fcdbbe">ON_3dmObjectAttributes.m_material_index</a> and ON_3dmObjectAttributes.m_matrial_source reflect the settings of the renderer that is currently active.  
+ <a href="../../d1/dbb/class_o_n___mapping_ref.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d6/d24/opennurbs__mapchan_8h_source.html">opennurbs_mapchan.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -87,12 +90,10 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ac1a4ec2603d26577a5e45e030f20b493"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../dd/d60/class_o_n___mapping_channel.html">ON_MappingChannel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dbb/class_o_n___mapping_ref.html#ac1a4ec2603d26577a5e45e030f20b493">m_mapping_channels</a></td></tr>
 <tr class="separator:ac1a4ec2603d26577a5e45e030f20b493"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24165c9ea7fb37047eb9e3135797a97d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dbb/class_o_n___mapping_ref.html#a24165c9ea7fb37047eb9e3135797a97d">m_plugin_id</a></td></tr>
-<tr class="memdesc:a24165c9ea7fb37047eb9e3135797a97d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies a rendering plugin.  <a href="#a24165c9ea7fb37047eb9e3135797a97d">More...</a><br /></td></tr>
 <tr class="separator:a24165c9ea7fb37047eb9e3135797a97d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Class <a class="el" href="../../d5/d2c/class_o_n___material_ref.html">ON_MaterialRef</a></p>
-<p>Description: <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html">ON_3dmObjectAttributes</a> uses <a class="el" href="../../d5/d2c/class_o_n___material_ref.html">ON_MaterialRef</a> to record which rendering material and mappings a rendering plug-in wants to use. This allows different rendering plug-ins to have different materials on the same object. The values of <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a6cac5115a39deafa888ada86a6fcdbbe">ON_3dmObjectAttributes.m_material_index</a> and ON_3dmObjectAttributes.m_matrial_source reflect the settings of the renderer that is currently active. </p>
+<div class="textblock"><p><a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html" title="Top level OpenNURBS objects have geometry and attributes. The geometry is stored in some class derive...">ON_3dmObjectAttributes</a> uses <a class="el" href="../../d5/d2c/class_o_n___material_ref.html">ON_MaterialRef</a> to record which rendering material and mappings a rendering plug-in wants to use. This allows different rendering plug-ins to have different materials on the same object. The values of <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a6cac5115a39deafa888ada86a6fcdbbe">ON_3dmObjectAttributes.m_material_index</a> and ON_3dmObjectAttributes.m_matrial_source reflect the settings of the renderer that is currently active. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="adac3513ee72179c83be899cde665b00b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adac3513ee72179c83be899cde665b00b">&#9670;&nbsp;</a></span>ON_MappingRef()</h2>
@@ -137,7 +138,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: True if the mapping channel was added or a pefect match already existed. False if a mapping channel with a different mapping_id already exists for this plug-in and channel. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the mapping channel was added or a pefect match already existed. False if a mapping channel with a different mapping_id already exists for this plug-in and channel. </dd></dl>
 
 </div>
 </div>
@@ -166,7 +174,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: old_mapping_channel_id - [in] new_mapping_channel_id - [in] Returns: True if a matching mapping channel was found and changed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">old_mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">new_mapping_channel_id</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a matching mapping channel was found and changed. </dd></dl>
 
 </div>
 </div>
@@ -220,7 +235,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: True if a matching mapping channel was deleted. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a matching mapping channel was deleted. </dd></dl>
 
 </div>
 </div>
@@ -275,7 +297,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: mapping_channel_id - [in] mapping_id - [in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id Returns: A pointer to the plug-in's mapping channel, if there is one. Otherwise nullptr is returned. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mapping_channel_id</td><td>[in]</td></tr>
+    <tr><td class="paramname">mapping_id</td><td>[in] <a class="el" href="../../d7/de3/class_o_n___texture_mapping.html">ON_TextureMapping</a> id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the plug-in's mapping channel, if there is one. Otherwise nullptr is returned. </dd></dl>
 
 </div>
 </div>
@@ -363,8 +392,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Use <a class="el" href="../../d1/dbb/class_o_n___mapping_ref.html#a3842867cd44edca097e8e7af538b024e">AddMappingChannel()</a> if you want to add an element to this array.</p>
-<p>Every mapping channel in this array must have a distinct value of <a class="el" href="../../dd/d60/class_o_n___mapping_channel.html#a495b5782bf55b08fb499b9d333f7acca">ON_MappingChannel.m_mapping_channel_id</a> </p>
 
 </div>
 </div>
@@ -380,8 +407,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Identifies a rendering plugin. </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -390,7 +415,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

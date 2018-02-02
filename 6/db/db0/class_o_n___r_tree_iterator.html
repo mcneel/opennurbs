@@ -56,30 +56,35 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ae700e79587799cd8a62f11e03c82ce20"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#ae700e79587799cd8a62f11e03c82ce20">ON_RTreeIterator</a> ()</td></tr>
+<tr class="memdesc:ae700e79587799cd8a62f11e03c82ce20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an empty iterator. Call <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761" title="Initialize an iterator to iterate every leaf in the rtree. ">Initialize()</a> to attach the iterator to an R-tree. Remark: Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">ON_RTree::Remove()</a> that modify an R-tree being iterated invalidate the iterator. The iterator must be re-initialized before being used again.  <a href="#ae700e79587799cd8a62f11e03c82ce20">More...</a><br /></td></tr>
 <tr class="separator:ae700e79587799cd8a62f11e03c82ce20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bf13891214c025bfaed456768cecdf3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a6bf13891214c025bfaed456768cecdf3">ON_RTreeIterator</a> (const class <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtree)</td></tr>
 <tr class="separator:a6bf13891214c025bfaed456768cecdf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20bb8550f3087b93ec31aeab0a40a853"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a20bb8550f3087b93ec31aeab0a40a853">~ON_RTreeIterator</a> ()</td></tr>
 <tr class="separator:a20bb8550f3087b93ec31aeab0a40a853"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c4c7421aef0e50bee763f9ae932c17f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">First</a> ()</td></tr>
+<tr class="memdesc:a0c4c7421aef0e50bee763f9ae932c17f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the iterator so the current leaf is the first leaf in the R-tree. The <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761" title="Initialize an iterator to iterate every leaf in the rtree. ">Initialize()</a> functions automatically do this, but <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f" title="Reset the iterator so the current leaf is the first leaf in the R-tree. The Initialize() functions au...">First()</a> can be called if an iterator needs to be used more than once or to make code easy to read and understand.  <a href="#a0c4c7421aef0e50bee763f9ae932c17f">More...</a><br /></td></tr>
 <tr class="separator:a0c4c7421aef0e50bee763f9ae932c17f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a813ac66a5853cb90714d78ba8817e761"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761">Initialize</a> (const class <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtree)</td></tr>
+<tr class="memdesc:a813ac66a5853cb90714d78ba8817e761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize an iterator to iterate every leaf in the rtree.  <a href="#a813ac66a5853cb90714d78ba8817e761">More...</a><br /></td></tr>
 <tr class="separator:a813ac66a5853cb90714d78ba8817e761"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46f5b6357658b13995aee85596fa9cc9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a46f5b6357658b13995aee85596fa9cc9">Initialize</a> (const struct <a class="el" href="../../de/d18/struct_o_n___r_tree_node.html">ON_RTreeNode</a> *a_node)</td></tr>
+<tr class="memdesc:a46f5b6357658b13995aee85596fa9cc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize an iterator to iterate every leaf on or below a_node.  <a href="#a46f5b6357658b13995aee85596fa9cc9">More...</a><br /></td></tr>
 <tr class="separator:a46f5b6357658b13995aee85596fa9cc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a266b8ac48962bbcc127840dc531c3bf6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a266b8ac48962bbcc127840dc531c3bf6">Last</a> ()</td></tr>
+<tr class="memdesc:a266b8ac48962bbcc127840dc531c3bf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the iterator so the current leaf is the last leaf in the R-tree.  <a href="#a266b8ac48962bbcc127840dc531c3bf6">More...</a><br /></td></tr>
 <tr class="separator:a266b8ac48962bbcc127840dc531c3bf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a279cf841b4f30c4a556fba6d0a2ab948"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a279cf841b4f30c4a556fba6d0a2ab948">Next</a> ()</td></tr>
+<tr class="memdesc:a279cf841b4f30c4a556fba6d0a2ab948"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment the iterator to the next leaf in the R-tree.  <a href="#a279cf841b4f30c4a556fba6d0a2ab948">More...</a><br /></td></tr>
 <tr class="separator:a279cf841b4f30c4a556fba6d0a2ab948"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8728b95b2889aaa7f8877a868d622805"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a8728b95b2889aaa7f8877a868d622805">Prev</a> ()</td></tr>
+<tr class="memdesc:a8728b95b2889aaa7f8877a868d622805"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decrement the iterator to the previous leaf in the R-tree.  <a href="#a8728b95b2889aaa7f8877a868d622805">More...</a><br /></td></tr>
 <tr class="separator:a8728b95b2889aaa7f8877a868d622805"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7157ac16cb8e002259c36ac09d27cb2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d6/df6/struct_o_n___r_tree_branch.html">ON_RTreeBranch</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value</a> () const</td></tr>
+<tr class="memdesc:aa7157ac16cb8e002259c36ac09d27cb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the value of the current leaf element. Calling <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> does not increment or decrement the iterator.  <a href="#aa7157ac16cb8e002259c36ac09d27cb2">More...</a><br /></td></tr>
 <tr class="separator:aa7157ac16cb8e002259c36ac09d27cb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a></p>
-<p>The <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> class can be used to iterate each leaf in an <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a>. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae700e79587799cd8a62f11e03c82ce20"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae700e79587799cd8a62f11e03c82ce20">&#9670;&nbsp;</a></span>ON_RTreeIterator() <span class="overload">[1/2]</span></h2>
 
@@ -94,7 +99,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Construct an empty iterator. Call <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761">Initialize()</a> to attach the iterator to an R-tree. Remark: Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">ON_RTree::Remove()</a> that modify an R-tree being iterated invalidate the iterator. The iterator must be re-initialized before being used again.</p>
+
+<p>Construct an empty iterator. Call <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761" title="Initialize an iterator to iterate every leaf in the rtree. ">Initialize()</a> to attach the iterator to an R-tree. Remark: Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">ON_RTree::Remove()</a> that modify an R-tree being iterated invalidate the iterator. The iterator must be re-initialized before being used again. </p>
 <p>There is no connection between the order elements are inserted in an R-tree and the order the elements are iterated by an iterator. </p>
 
 </div>
@@ -149,14 +155,10 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Reset the iterator so the current leaf is the first leaf in the R-tree. The <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761">Initialize()</a> functions automatically do this, but <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">First()</a> can be called if an iterator needs to be used more than once or to make code easy to read and understand. Example: Iterate every leaf in an R-tree. </p><pre class="fragment">  ON_RTree rtree;
-  ...
-  ON_RtreeIterator rit(rtree);
-  const ON_RTreeBranch* rtree_leaf;
-  for ( rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next() )
-  {
-</pre><p> / leaf id = rtree_leaf-&gt;m_id / leaf bounding box = rtree-&gt;m_rect }</p>
-<p>Returns: True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return a non-null pointer. See Also: <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a266b8ac48962bbcc127840dc531c3bf6">ON_RTreeIterator::Last()</a>; </p>
+
+<p>Reset the iterator so the current leaf is the first leaf in the R-tree. The <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a813ac66a5853cb90714d78ba8817e761" title="Initialize an iterator to iterate every leaf in the rtree. ">Initialize()</a> functions automatically do this, but <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f" title="Reset the iterator so the current leaf is the first leaf in the R-tree. The Initialize() functions au...">First()</a> can be called if an iterator needs to be used more than once or to make code easy to read and understand. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return a non-null pointer. </dd></dl>
+<div class="fragment"><div class="line">Iterate every leaf in an R-tree.</div><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> rtree;</div><div class="line">    ...</div><div class="line">    ON_RtreeIterator rit(rtree);</div><div class="line">    <span class="keyword">const</span> <a class="code" href="../../d6/df6/struct_o_n___r_tree_branch.html">ON_RTreeBranch</a>* rtree_leaf;</div><div class="line">    <span class="keywordflow">for</span> ( rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next() )</div><div class="line">    {</div><div class="line">      <span class="comment">// leaf id           = rtree_leaf-&gt;m_id</span></div><div class="line">      <span class="comment">// leaf bounding box = rtree-&gt;m_rect</span></div><div class="line">    }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a266b8ac48962bbcc127840dc531c3bf6" title="Set the iterator so the current leaf is the last leaf in the R-tree. ">ON_RTreeIterator::Last();</a></dd></dl>
 
 </div>
 </div>
@@ -175,9 +177,19 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Initialize an iterator to iterate every leaf in the rtree. Parameters: a_rtree - [in] R-tree to iterate Example: See the comment for <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First()</a>. Returns: True if a_rtree has at least one element. Remarks: Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">ON_RTree::Remove()</a> that modify this node or its children will invalidate this iterator and it must be re-initialized.</p>
-<p>There is no connection between the order elements are inserted in an R-tree and the order the elements are iterated by an iterator. </p>
 
+<p>Initialize an iterator to iterate every leaf in the rtree. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rtree</td><td>[in]</td></tr>
+    <tr><td class="paramname">R</td><td>tree to iterate</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a_rtree has at least one element. </dd></dl>
+<p>Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">ON_RTree::Remove()</a> that modify this node or its children will invalidate this iterator and it must be re-initialized.</p>
+<p>There is no connection between the order elements are inserted in an R-tree and the order the elements are iterated by an iterator. </p>
+<div class="fragment"><div class="line">See the comment <span class="keywordflow">for</span> <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First</a>().</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a46f5b6357658b13995aee85596fa9cc9"></a>
@@ -195,9 +207,19 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Initialize an iterator to iterate every leaf on or below a_node. Parameters: a_node - [in] R-tree node to iterate Example: See the comment for <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First()</a>. Returns: True if a_node has at least one element. Remarks: Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">ON_RTree::Remove()</a> that modify this node or its children will invalidate this iterator and it must be re-initialized.</p>
-<p>There is no connection between the order elements are inserted in an R-tree and the order the elements are iterated by an iterator. </p>
 
+<p>Initialize an iterator to iterate every leaf on or below a_node. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_node</td><td>[in]</td></tr>
+    <tr><td class="paramname">R</td><td>tree node to iterate</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if a_node has at least one element. </dd></dl>
+<p>Any calls to <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">ON_RTree::Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">ON_RTree::Remove()</a> that modify this node or its children will invalidate this iterator and it must be re-initialized.</p>
+<p>There is no connection between the order elements are inserted in an R-tree and the order the elements are iterated by an iterator. </p>
+<div class="fragment"><div class="line">See the comment <span class="keywordflow">for</span> <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First</a>().</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a266b8ac48962bbcc127840dc531c3bf6"></a>
@@ -214,15 +236,10 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Set the iterator so the current leaf is the last leaf in the R-tree.</p>
-<p>Example: Iterate an R-tree in reverse order. </p><pre class="fragment">  ON_RTree rtree;
-  ...
-  ON_RTreeIterator rit(rtree);
-  const ON_RTreeBranch* rtree_leaf;
-  for ( rit.Last(); 0 != (rtree_leaf = rit.Value()); rit.Prev() )
-  {
-</pre><p> / leaf id = rtree_leaf-&gt;m_id / leaf bounding box = rtree-&gt;m_rect }</p>
-<p>Returns: True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return a non-null pointer. See Also: <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First()</a>; </p>
+
+<p>Set the iterator so the current leaf is the last leaf in the R-tree. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return a non-null pointer. </dd></dl>
+<div class="fragment"><div class="line">Iterate an R-tree in reverse order.</div><div class="line">@verbatim</div><div class="line">    <a class="code" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> rtree;</div><div class="line">    ...</div><div class="line">    <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> rit(rtree);</div><div class="line">    <span class="keyword">const</span> <a class="code" href="../../d6/df6/struct_o_n___r_tree_branch.html">ON_RTreeBranch</a>* rtree_leaf;</div><div class="line">    <span class="keywordflow">for</span> ( rit.Last(); 0 != (rtree_leaf = rit.Value()); rit.Prev() )</div><div class="line">    {</div><div class="line">      <span class="comment">// leaf id           = rtree_leaf-&gt;m_id</span></div><div class="line">      <span class="comment">// leaf bounding box = rtree-&gt;m_rect</span></div><div class="line">    }</div><div class="line"><span class="keyword">@end</span>verbatim</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f" title="Reset the iterator so the current leaf is the first leaf in the R-tree. The Initialize() functions au...">ON_RTreeIterator::First();</a></dd></dl>
 
 </div>
 </div>
@@ -240,7 +257,10 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Increment the iterator to the next leaf in the R-tree. Example: See the comment for <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First()</a> Returns: True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return a non-null pointer. False if there is not a next leaf and all susequent calls to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return null. See Also: <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a8728b95b2889aaa7f8877a868d622805">ON_RTreeIterator::Prev()</a>; </p>
+
+<p>Increment the iterator to the next leaf in the R-tree. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return a non-null pointer. False if there is not a next leaf and all susequent calls to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return null. </dd></dl>
+<div class="fragment"><div class="line">See the comment <span class="keywordflow">for</span> <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First</a>()</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a8728b95b2889aaa7f8877a868d622805" title="Decrement the iterator to the previous leaf in the R-tree. ">ON_RTreeIterator::Prev();</a></dd></dl>
 
 </div>
 </div>
@@ -258,7 +278,10 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Decrement the iterator to the previous leaf in the R-tree. Example: See the comment for <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a266b8ac48962bbcc127840dc531c3bf6">ON_RTreeIterator::Last()</a> Returns: True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return a non-null pointer. False if there is not a previous leaf and all susequent calls to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> will return null. See Also: <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a279cf841b4f30c4a556fba6d0a2ab948">ON_RTreeIterator::Next()</a>; </p>
+
+<p>Decrement the iterator to the previous leaf in the R-tree. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if a call to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return a non-null pointer. False if there is not a previous leaf and all susequent calls to <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> will return null. </dd></dl>
+<div class="fragment"><div class="line">See the comment <span class="keywordflow">for</span> <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html#a266b8ac48962bbcc127840dc531c3bf6">ON_RTreeIterator::Last</a>()</div></div><!-- fragment --> <dl class="section see"><dt>See also</dt><dd><a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a279cf841b4f30c4a556fba6d0a2ab948" title="Increment the iterator to the next leaf in the R-tree. ">ON_RTreeIterator::Next();</a></dd></dl>
 
 </div>
 </div>
@@ -276,8 +299,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Get the value of the current leaf element. Calling <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2">Value()</a> does not increment or decrement the iterator. Example: See the comment for <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First()</a>. Return: Null pointer if there are no more leaves to iterate A pointer to the current R-tree leaf. When there are no more leaves, the returned pointer is null. </p>
 
+<p>Get the value of the current leaf element. Calling <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html#aa7157ac16cb8e002259c36ac09d27cb2" title="Get the value of the current leaf element. Calling Value() does not increment or decrement the iterat...">Value()</a> does not increment or decrement the iterator. </p>
+<div class="fragment"><div class="line">See the comment <span class="keywordflow">for</span> <a class="code" href="../../db/db0/class_o_n___r_tree_iterator.html#a0c4c7421aef0e50bee763f9ae932c17f">ON_RTreeIterator::First</a>().</div><div class="line">Return:</div><div class="line">Null pointer <span class="keywordflow">if</span> there are no more leaves to iterate</div><div class="line">A pointer to the current R-tree leaf.  When there are no more leaves,</div><div class="line">the returned pointer is null.</div></div><!-- fragment --> 
 </div>
 </div>
 </div><!-- contents -->
@@ -286,7 +310,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

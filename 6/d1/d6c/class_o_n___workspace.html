@@ -50,54 +50,76 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Use <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> classes on the stack to efficiently get and automatically clean up workspace memory and scratch files.  
+ <a href="../../d1/d6c/class_o_n___workspace.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../dd/d7c/opennurbs__workspace_8h_source.html">opennurbs_workspace.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a451014f96a5446f061ef1f94a31d8d54"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a451014f96a5446f061ef1f94a31d8d54">ON_Workspace</a> ()</td></tr>
+<tr class="memdesc:a451014f96a5446f061ef1f94a31d8d54"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> classes should be on the stack or as members on classes that are never copied. The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>.  <a href="#a451014f96a5446f061ef1f94a31d8d54">More...</a><br /></td></tr>
 <tr class="separator:a451014f96a5446f061ef1f94a31d8d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5f38447078c616f5a089c90de0db0e1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace</a> ()</td></tr>
+<tr class="memdesc:aa5f38447078c616f5a089c90de0db0e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>.  <a href="#aa5f38447078c616f5a089c90de0db0e1">More...</a><br /></td></tr>
 <tr class="separator:aa5f38447078c616f5a089c90de0db0e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9012adce3a0f26aeeed92004249fcb53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a9012adce3a0f26aeeed92004249fcb53">Destroy</a> ()</td></tr>
+<tr class="memdesc:a9012adce3a0f26aeeed92004249fcb53"><td class="mdescLeft">&#160;</td><td class="mdescRight">The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>. The workspace can be used again after calling destroy.  <a href="#a9012adce3a0f26aeeed92004249fcb53">More...</a><br /></td></tr>
 <tr class="separator:a9012adce3a0f26aeeed92004249fcb53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac128e1a55780ccb886b24aa66c82bf4a"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a">GetDoubleMemory</a> (size_t count)</td></tr>
+<tr class="memdesc:ac128e1a55780ccb886b24aa66c82bf4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an array of doubles that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a" title="Gets an array of doubles that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetDoubleMe...">ON_Workspace::GetDoubleMemory</a> is to provide an easy way to get scratch double arrays without having to worry about cleaning up before returning.  <a href="#ac128e1a55780ccb886b24aa66c82bf4a">More...</a><br /></td></tr>
 <tr class="separator:ac128e1a55780ccb886b24aa66c82bf4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf748a2ec5a575c1ae2be028ffe65e7c"><td class="memItemLeft" align="right" valign="top">double **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#adf748a2ec5a575c1ae2be028ffe65e7c">GetDoubleMemory</a> (size_t row_count, size_t col_count)</td></tr>
+<tr class="memdesc:adf748a2ec5a575c1ae2be028ffe65e7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an matrix of doubles  <a href="#adf748a2ec5a575c1ae2be028ffe65e7c">More...</a><br /></td></tr>
 <tr class="separator:adf748a2ec5a575c1ae2be028ffe65e7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af273f3cb2935d9112a37908114ffe7fe"><td class="memItemLeft" align="right" valign="top">int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe">GetIntMemory</a> (size_t count)</td></tr>
+<tr class="memdesc:af273f3cb2935d9112a37908114ffe7fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an array of integers that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe" title="Gets an array of integers that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetIntMemo...">ON_Workspace::GetIntMemory</a> is to provide an easy way to get scratch integer arrays without having to worry about cleaning up before returning.  <a href="#af273f3cb2935d9112a37908114ffe7fe">More...</a><br /></td></tr>
 <tr class="separator:af273f3cb2935d9112a37908114ffe7fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a076caac8b9ca7267ce1f8a7ec533e8c4"><td class="memItemLeft" align="right" valign="top">int **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a076caac8b9ca7267ce1f8a7ec533e8c4">GetIntMemory</a> (size_t row_count, size_t col_count)</td></tr>
+<tr class="memdesc:a076caac8b9ca7267ce1f8a7ec533e8c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an matrix of integers  <a href="#a076caac8b9ca7267ce1f8a7ec533e8c4">More...</a><br /></td></tr>
 <tr class="separator:a076caac8b9ca7267ce1f8a7ec533e8c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a501164357dedebcac9ded42aa4ddda5a"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory</a> (size_t sz)</td></tr>
+<tr class="memdesc:a501164357dedebcac9ded42aa4ddda5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> is to provide an easy way to get blocks of scratch memory without having to worry about cleaning up before returning.  <a href="#a501164357dedebcac9ded42aa4ddda5a">More...</a><br /></td></tr>
 <tr class="separator:a501164357dedebcac9ded42aa4ddda5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62aa3e0ed8a4692752d0cc4283b0c919"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919">GetPointMemory</a> (size_t count)</td></tr>
+<tr class="memdesc:a62aa3e0ed8a4692752d0cc4283b0c919"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919" title="Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetPoin...">ON_Workspace::GetPointMemory</a> is to provide an easy way to get scratch point arrays without having to worry about cleaning up before returning.  <a href="#a62aa3e0ed8a4692752d0cc4283b0c919">More...</a><br /></td></tr>
 <tr class="separator:a62aa3e0ed8a4692752d0cc4283b0c919"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a187afb0c90420dac624b8a114cb79544"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544">GetVectorMemory</a> (size_t count)</td></tr>
+<tr class="memdesc:a187afb0c90420dac624b8a114cb79544"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544" title="Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetVec...">ON_Workspace::GetVectorMemory</a> is to provide an easy way to get scratch Vector arrays without having to worry about cleaning up before returning.  <a href="#a187afb0c90420dac624b8a114cb79544">More...</a><br /></td></tr>
 <tr class="separator:a187afb0c90420dac624b8a114cb79544"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cf4382ea9177d0ce78acb7680264b3e"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a5cf4382ea9177d0ce78acb7680264b3e">GrowDoubleMemory</a> (double *ptr, size_t count)</td></tr>
+<tr class="memdesc:a5cf4382ea9177d0ce78acb7680264b3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grows the array of doubles that was allocated by GetDoubleMemory or GrowDoubleMemory.  <a href="#a5cf4382ea9177d0ce78acb7680264b3e">More...</a><br /></td></tr>
 <tr class="separator:a5cf4382ea9177d0ce78acb7680264b3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a033a2755c5f01ff7ae06fcd5e9f41215"><td class="memItemLeft" align="right" valign="top">int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">GrowIntMemory</a> (int *ptr, size_t count)</td></tr>
+<tr class="memdesc:a033a2755c5f01ff7ae06fcd5e9f41215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory.  <a href="#a033a2755c5f01ff7ae06fcd5e9f41215">More...</a><br /></td></tr>
 <tr class="separator:a033a2755c5f01ff7ae06fcd5e9f41215"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2a85bc034d029677f3f555703ee52ce"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce">GrowMemory</a> (void *ptr, size_t sz)</td></tr>
+<tr class="memdesc:ac2a85bc034d029677f3f555703ee52ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grows a block of heap memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>.  <a href="#ac2a85bc034d029677f3f555703ee52ce">More...</a><br /></td></tr>
 <tr class="separator:ac2a85bc034d029677f3f555703ee52ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d58452b5ac12199a38b1974ca4aca39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a1d58452b5ac12199a38b1974ca4aca39">GrowPointMemory</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *ptr, size_t count)</td></tr>
+<tr class="memdesc:a1d58452b5ac12199a38b1974ca4aca39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grows the array of points that was allocated by GetPointMemory or GrowPointMemory.  <a href="#a1d58452b5ac12199a38b1974ca4aca39">More...</a><br /></td></tr>
 <tr class="separator:a1d58452b5ac12199a38b1974ca4aca39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a183be8757c791b858c6aa78c835e04f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a183be8757c791b858c6aa78c835e04f2">GrowVectorMemory</a> (<a class="el" href="../../d5/dae/class_o_n__3d_vector.html">ON_3dVector</a> *ptr, size_t count)</td></tr>
+<tr class="memdesc:a183be8757c791b858c6aa78c835e04f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grows the array of vectors that was allocated by GetVectorMemory or GrowVectorMemory.  <a href="#a183be8757c791b858c6aa78c835e04f2">More...</a><br /></td></tr>
 <tr class="separator:a183be8757c791b858c6aa78c835e04f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2368c4bc3c5fc5134d373cae3e73b12e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e">KeepAllMemory</a> ()</td></tr>
+<tr class="memdesc:a2368c4bc3c5fc5134d373cae3e73b12e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e" title="Calling KeepAllMemory() has the same effect as calling KeepMemory(p) for every active allocation in t...">KeepAllMemory()</a> has the same effect as calling KeepMemory(p) for every active allocation in the workspace. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e" title="Calling KeepAllMemory() has the same effect as calling KeepMemory(p) for every active allocation in t...">KeepAllMemory()</a>, you can no longer use Grow...() on the pointers and you are responsible for using onfree() to release the memory when it is no longer needed.  <a href="#a2368c4bc3c5fc5134d373cae3e73b12e">More...</a><br /></td></tr>
 <tr class="separator:a2368c4bc3c5fc5134d373cae3e73b12e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a900ccd355d813f2bddec3529271f1f7f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a900ccd355d813f2bddec3529271f1f7f">KeepFile</a> (FILE *fileptr)</td></tr>
+<tr class="memdesc:a900ccd355d813f2bddec3529271f1f7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">If you want to prevent ~ON_Workspace from closing a file that was opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>, then pass the returned FILE pointer to KeepFile. After calling KeepFile, the caller is responsible for calling ON::CloseFile to close the file.  <a href="#a900ccd355d813f2bddec3529271f1f7f">More...</a><br /></td></tr>
 <tr class="separator:a900ccd355d813f2bddec3529271f1f7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab21c61bec3d3ef472abe7c04c5c65257"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">KeepMemory</a> (void *ptr)</td></tr>
+<tr class="memdesc:ab21c61bec3d3ef472abe7c04c5c65257"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling the <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">KeepMemory()</a> function with a pointer returned from one of the Get...() or Grow...() calls keeps the workspace destructor from freeing the memory. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">KeepMemory()</a>, you can no longer use Grow...() on the pointer. The caller is responsible for using onfree() to release the memory when it is no longer needed.  <a href="#ab21c61bec3d3ef472abe7c04c5c65257">More...</a><br /></td></tr>
 <tr class="separator:ab21c61bec3d3ef472abe7c04c5c65257"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95acfcc647b928b72f8768d3a415c0f4"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">OpenFile</a> (const char *filename, const char *filemode)</td></tr>
+<tr class="memdesc:a95acfcc647b928b72f8768d3a415c0f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses ON::OpenFile to open a file. ~ON_Workspace will close the file.  <a href="#a95acfcc647b928b72f8768d3a415c0f4">More...</a><br /></td></tr>
 <tr class="separator:a95acfcc647b928b72f8768d3a415c0f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa80494bd6dc9c737d150601a9badb8a6"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa80494bd6dc9c737d150601a9badb8a6">OpenFile</a> (const wchar_t *filename, const wchar_t *filemode)</td></tr>
+<tr class="memdesc:aa80494bd6dc9c737d150601a9badb8a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses ON::OpenFile to open a file. ~ON_Workspace will close the file.  <a href="#aa80494bd6dc9c737d150601a9badb8a6">More...</a><br /></td></tr>
 <tr class="separator:aa80494bd6dc9c737d150601a9badb8a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// Description: Use <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> classes on the stack to efficiently get and automatically clean up workspace memory and scratch files. </p>
+<div class="textblock"><p>Use <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> classes on the stack to efficiently get and automatically clean up workspace memory and scratch files. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a451014f96a5446f061ef1f94a31d8d54"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a451014f96a5446f061ef1f94a31d8d54">&#9670;&nbsp;</a></span>ON_Workspace()</h2>
@@ -113,7 +135,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> classes should be on the stack or as members on classes that are never copied. The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">ON_Workspace::OpenFile</a>. </p>
+
+<p><a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> classes should be on the stack or as members on classes that are never copied. The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>. </p>
 
 </div>
 </div>
@@ -131,7 +154,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">ON_Workspace::OpenFile</a>. </p>
+
+<p>The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>. </p>
 
 </div>
 </div>
@@ -150,7 +174,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">ON_Workspace::OpenFile</a>. The workspace can be used again after calling destroy. </p>
+
+<p>The destructor frees memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> and closes files that were opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>. The workspace can be used again after calling destroy. </p>
 
 </div>
 </div>
@@ -169,7 +194,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an array of doubles that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a">ON_Workspace::GetDoubleMemory</a> is to provide an easy way to get scratch double arrays without having to worry about cleaning up before returning. Parameters: count - [in] (&gt;0) number of doubles in memory block. If count &lt;= 0, then nullptr is returned. Returns: A pointer to the array of doubles. Remarks. This is a simple helper function so you don't have to mess around with (double*) casts and sizeof(double)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory()</a>. It is exactly like calling (double*)GetMemory(count*sizeof(double)); See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">ON_Workspace::GrowIntMemory</a> </p>
+
+<p>Gets an array of doubles that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a" title="Gets an array of doubles that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetDoubleMe...">ON_Workspace::GetDoubleMemory</a> is to provide an easy way to get scratch double arrays without having to worry about cleaning up before returning. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of doubles in memory block. If count &lt;= 0, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the array of doubles. Remarks. This is a simple helper function so you don't have to mess around with (double*) casts and sizeof(double)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">GetMemory()</a>. It is exactly like calling (double*)GetMemory(count*sizeof(double)); </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">ON_Workspace::GrowIntMemory</a></dd></dl>
 
 </div>
 </div>
@@ -198,7 +232,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an matrix of doubles Parameters: row_count - [in] (&gt;0) number of rows col_count - [in] (&gt;0) number of columns Returns: A pointer p so that p[i][j] is an double when 0 &lt;= i &lt; row_count and 0 &lt;= j &lt; col_count. Remarks. This is a simple helper function so you don't have to mess around building the 2d array. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Gets an matrix of doubles </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">row_count</td><td>[in] (&gt;0) number of rows</td></tr>
+    <tr><td class="paramname">col_count</td><td>[in] (&gt;0) number of columns</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer p so that p[i][j] is an double when 0 &lt;= i &lt; row_count and 0 &lt;= j &lt; col_count. Remarks. This is a simple helper function so you don't have to mess around building the 2d array. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -217,7 +261,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an array of integers that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe">ON_Workspace::GetIntMemory</a> is to provide an easy way to get scratch integer arrays without having to worry about cleaning up before returning. Parameters: count - [in] (&gt;0) number of integers in memory block. If count &lt;= 0, then nullptr is returned. Returns: A pointer to the array of integers. Remarks. This is a simple helper function so you don't have to mess around with (int*) casts and sizeof(int)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory()</a>. It is exactly like calling (int*)GetMemory(count*sizeof(int)); See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">ON_Workspace::GrowIntMemory</a> </p>
+
+<p>Gets an array of integers that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe" title="Gets an array of integers that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetIntMemo...">ON_Workspace::GetIntMemory</a> is to provide an easy way to get scratch integer arrays without having to worry about cleaning up before returning. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of integers in memory block. If count &lt;= 0, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the array of integers. Remarks. This is a simple helper function so you don't have to mess around with (int*) casts and sizeof(int)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">GetMemory()</a>. It is exactly like calling (int*)GetMemory(count*sizeof(int)); </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">ON_Workspace::GrowIntMemory</a></dd></dl>
 
 </div>
 </div>
@@ -246,7 +299,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an matrix of integers Parameters: row_count - [in] (&gt;0) number of rows col_count - [in] (&gt;0) number of columns Returns: A pointer p so that p[i][j] is an integer when 0 &lt;= i &lt; row_count and 0 &lt;= j &lt; col_count. Remarks. This is a simple helper function so you don't have to mess around building the 2d array. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Gets an matrix of integers </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">row_count</td><td>[in] (&gt;0) number of rows</td></tr>
+    <tr><td class="paramname">col_count</td><td>[in] (&gt;0) number of columns</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer p so that p[i][j] is an integer when 0 &lt;= i &lt; row_count and 0 &lt;= j &lt; col_count. Remarks. This is a simple helper function so you don't have to mess around building the 2d array. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -265,7 +328,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> is to provide an easy way to get blocks of scratch memory without having to worry about cleaning up before returning. Parameters: sz - [in] (&gt;0) size of memory block in bytes. If sz &lt;= 0, then nullptr is returned. Returns: A pointer to the memory block. Remarks. onmalloc() is used to get the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a>::::~ON_Workspace <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce">ON_Workspace::GrowMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe">ON_Workspace::GetIntMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a">ON_Workspace::GetDoubleMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919">ON_Workspace::GetPointMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544">ON_Workspace::GetVectorMemory</a> </p>
+
+<p>Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a> is to provide an easy way to get blocks of scratch memory without having to worry about cleaning up before returning. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sz</td><td>[in] (&gt;0) size of memory block in bytes. If sz &lt;= 0, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the memory block. Remarks. onmalloc() is used to get the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">GetMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>ON_Workspace::::~ON_Workspace, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce" title="Grows a block of heap memory that was allocated by ON_Workspace::GetMemory. ">ON_Workspace::GrowMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe" title="Gets an array of integers that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetIntMemo...">ON_Workspace::GetIntMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a" title="Gets an array of doubles that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetDoubleMe...">ON_Workspace::GetDoubleMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919" title="Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetPoin...">ON_Workspace::GetPointMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544" title="Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetVec...">ON_Workspace::GetVectorMemory</a></dd></dl>
 
 </div>
 </div>
@@ -284,7 +356,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919">ON_Workspace::GetPointMemory</a> is to provide an easy way to get scratch point arrays without having to worry about cleaning up before returning. Parameters: count - [in] (&gt;0) number of points in memory block. If count &lt;= 0, then nullptr is returned. Returns: A pointer to the memory block. Remarks. This is a simple helper function so you don't have to mess around with (ON_3dPoint*) casts and sizeof(ON_3dPoint)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory()</a>. It is exactly like calling (ON_3dPoint*)GetMemory(count*sizeof(ON_3dPoint)); See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">ON_Workspace::GrowIntMemory</a> </p>
+
+<p>Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919" title="Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetPoin...">ON_Workspace::GetPointMemory</a> is to provide an easy way to get scratch point arrays without having to worry about cleaning up before returning. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of points in memory block. If count &lt;= 0, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the memory block. Remarks. This is a simple helper function so you don't have to mess around with (ON_3dPoint*) casts and sizeof(ON_3dPoint)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">GetMemory()</a>. It is exactly like calling (ON_3dPoint*)GetMemory(count*sizeof(ON_3dPoint)); </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">ON_Workspace::GrowIntMemory</a></dd></dl>
 
 </div>
 </div>
@@ -303,7 +384,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544">ON_Workspace::GetVectorMemory</a> is to provide an easy way to get scratch Vector arrays without having to worry about cleaning up before returning. Parameters: count - [in] (&gt;0) number of Vectors in memory block. If count &lt;= 0, then nullptr is returned. Returns: A pointer to the memory block. Remarks. This is a simple helper function so you don't have to mess around with (ON_3dVector*) casts and sizeof(ON_3dVector)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">GetMemory()</a>. It is exactly like calling (ON_3dVector*)GetMemory(count*sizeof(ON_3dVector)); See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">ON_Workspace::GrowIntMemory</a> </p>
+
+<p>Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544" title="Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetVec...">ON_Workspace::GetVectorMemory</a> is to provide an easy way to get scratch Vector arrays without having to worry about cleaning up before returning. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of Vectors in memory block. If count &lt;= 0, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the memory block. Remarks. This is a simple helper function so you don't have to mess around with (ON_3dVector*) casts and sizeof(ON_3dVector)s in a call to <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">GetMemory()</a>. It is exactly like calling (ON_3dVector*)GetMemory(count*sizeof(ON_3dVector)); </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">ON_Workspace::GrowIntMemory</a></dd></dl>
 
 </div>
 </div>
@@ -332,7 +422,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Grows the array of doubles that was allocated by GetDoubleMemory or GrowDoubleMemory. Parameters: ptr - [in] pointer returned by an earlier call to GetDoubleMemory or GrowDoubleMemory. count - [in] (&gt;0) number of doubles in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> class, then nullptr is returned. Returns: A pointer to the double array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a5cf4382ea9177d0ce78acb7680264b3e">GrowDoubleMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a">ON_Workspace::GetDoubleMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Grows the array of doubles that was allocated by GetDoubleMemory or GrowDoubleMemory. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by an earlier call to GetDoubleMemory or GrowDoubleMemory.</td></tr>
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of doubles in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> class, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the double array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a5cf4382ea9177d0ce78acb7680264b3e" title="Grows the array of doubles that was allocated by GetDoubleMemory or GrowDoubleMemory. ">GrowDoubleMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac128e1a55780ccb886b24aa66c82bf4a" title="Gets an array of doubles that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetDoubleMe...">ON_Workspace::GetDoubleMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -361,7 +461,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. Parameters: ptr - [in] pointer returned by an earlier call to GetIntMemory or GrowIntMemory. count - [in] (&gt;0) number of integers in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> class, then nullptr is returned. Returns: A pointer to the integer array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">GrowIntMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe">ON_Workspace::GetIntMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by an earlier call to GetIntMemory or GrowIntMemory.</td></tr>
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of integers in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> class, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the integer array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">GrowIntMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#af273f3cb2935d9112a37908114ffe7fe" title="Gets an array of integers that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetIntMemo...">ON_Workspace::GetIntMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -390,7 +500,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Grows a block of heap memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a>. Parameters: ptr - [in] pointer returned by an earlier call to GetMemory or GrowMemory. sz - [in] (&gt;0) size of memory block in bytes. If sz &lt;= 0, then nullptr is returned. If ptr is not nullptr and was not allocated by an earlier call to GetMemory or GrowMemory, then nullptr is returned. Returns: A pointer to the memory block. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215">ON_Workspace::GrowIntMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a5cf4382ea9177d0ce78acb7680264b3e">ON_Workspace::GrowDoubleMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a1d58452b5ac12199a38b1974ca4aca39">ON_Workspace::GrowPointMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a183be8757c791b858c6aa78c835e04f2">ON_Workspace::GrowVectorMemory</a> </p>
+
+<p>Grows a block of heap memory that was allocated by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by an earlier call to GetMemory or GrowMemory.</td></tr>
+    <tr><td class="paramname">sz</td><td>[in] (&gt;0) size of memory block in bytes. If sz &lt;= 0, then nullptr is returned. If ptr is not nullptr and was not allocated by an earlier call to GetMemory or GrowMemory, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the memory block. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce" title="Grows a block of heap memory that was allocated by ON_Workspace::GetMemory. ">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a033a2755c5f01ff7ae06fcd5e9f41215" title="Grows the array of integers that was allocated by GetIntMemory or GrowIntMemory. ">ON_Workspace::GrowIntMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a5cf4382ea9177d0ce78acb7680264b3e" title="Grows the array of doubles that was allocated by GetDoubleMemory or GrowDoubleMemory. ">ON_Workspace::GrowDoubleMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a1d58452b5ac12199a38b1974ca4aca39" title="Grows the array of points that was allocated by GetPointMemory or GrowPointMemory. ">ON_Workspace::GrowPointMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a183be8757c791b858c6aa78c835e04f2" title="Grows the array of vectors that was allocated by GetVectorMemory or GrowVectorMemory. ">ON_Workspace::GrowVectorMemory</a></dd></dl>
 
 </div>
 </div>
@@ -419,7 +539,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Grows the array of points that was allocated by GetPointMemory or GrowPointMemory. Parameters: ptr - [in] pointer returned by an earlier call to GetPointMemory or GrowPointMemory. count - [in] (&gt;0) number of points in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> class, then nullptr is returned. Returns: A pointer to the point array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919">ON_Workspace::GetPointMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Grows the array of points that was allocated by GetPointMemory or GrowPointMemory. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by an earlier call to GetPointMemory or GrowPointMemory.</td></tr>
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of points in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> class, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the point array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce" title="Grows a block of heap memory that was allocated by ON_Workspace::GetMemory. ">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a62aa3e0ed8a4692752d0cc4283b0c919" title="Gets an array of ON_3dPoints that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetPoin...">ON_Workspace::GetPointMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -448,7 +578,17 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Grows the array of vectors that was allocated by GetVectorMemory or GrowVectorMemory. Parameters: ptr - [in] pointer returned by an earlier call to GetVectorMemory or GrowVectorMemory. count - [in] (&gt;0) number of vectors in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a> class, then nullptr is returned. Returns: A pointer to the vector array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544">ON_Workspace::GetVectorMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Grows the array of vectors that was allocated by GetVectorMemory or GrowVectorMemory. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by an earlier call to GetVectorMemory or GrowVectorMemory.</td></tr>
+    <tr><td class="paramname">count</td><td>[in] (&gt;0) number of vectors in memory block. If count &lt;= 0, then nullptr is returned. If ptr was not allocated by this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a> class, then nullptr is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the vector array. Remarks. onrealloc() is used to grow the block of memory. Do NOT free the pointer returned by <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ac2a85bc034d029677f3f555703ee52ce" title="Grows a block of heap memory that was allocated by ON_Workspace::GetMemory. ">GrowMemory()</a>. <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">~ON_Workspace()</a> will free the memory. If you decide you want to keep the memory block, pass the pointer to KeepMemory before ~ON_Workspace is called. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#a187afb0c90420dac624b8a114cb79544" title="Gets an array of ON_3dVectors that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetVec...">ON_Workspace::GetVectorMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -466,7 +606,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e">KeepAllMemory()</a> has the same effect as calling KeepMemory(p) for every active allocation in the workspace. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e">KeepAllMemory()</a>, you can no longer use Grow...() on the pointers and you are responsible for using onfree() to release the memory when it is no longer needed. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">ON_Workspace::~ON_Workspace</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">ON_Workspace::KeepMemory</a> </p>
+
+<p>Calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e" title="Calling KeepAllMemory() has the same effect as calling KeepMemory(p) for every active allocation in t...">KeepAllMemory()</a> has the same effect as calling KeepMemory(p) for every active allocation in the workspace. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e" title="Calling KeepAllMemory() has the same effect as calling KeepMemory(p) for every active allocation in t...">KeepAllMemory()</a>, you can no longer use Grow...() on the pointers and you are responsible for using onfree() to release the memory when it is no longer needed. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">ON_Workspace::~ON_Workspace</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">ON_Workspace::KeepMemory</a></dd></dl>
 
 </div>
 </div>
@@ -485,7 +627,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: If you want to prevent ~ON_Workspace from closing a file that was opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">ON_Workspace::OpenFile</a>, then pass the returned FILE pointer to KeepFile. After calling KeepFile, the caller is responsible for calling ON::CloseFile to close the file. Parameters: fileptr - [in] pointer returned by OpenFile. Returns: True if file was successfully closed. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">ON_Workspace::~ON_Workspace</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4">ON_Workspace::OpenFile</a> ON::OpenFile ON::CloseFile </p>
+
+<p>If you want to prevent ~ON_Workspace from closing a file that was opened with <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>, then pass the returned FILE pointer to KeepFile. After calling KeepFile, the caller is responsible for calling ON::CloseFile to close the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fileptr</td><td>[in] pointer returned by OpenFile.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if file was successfully closed. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">ON_Workspace::~ON_Workspace</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a95acfcc647b928b72f8768d3a415c0f4" title="Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. ">ON_Workspace::OpenFile</a>, ON::OpenFile, ON::CloseFile</dd></dl>
 
 </div>
 </div>
@@ -504,7 +655,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Calling the <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">KeepMemory()</a> function with a pointer returned from one of the Get...() or Grow...() calls keeps the workspace destructor from freeing the memory. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257">KeepMemory()</a>, you can no longer use Grow...() on the pointer. The caller is responsible for using onfree() to release the memory when it is no longer needed. Parameters: ptr - [in] pointer returned by a Get...() or Grow() call to this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a>. Returns: True if the pointer was successfully found and removed from this <a class="el" href="../../d1/d6c/class_o_n___workspace.html">ON_Workspace</a>. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">ON_Workspace::~ON_Workspace</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a">ON_Workspace::GetMemory</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e">ON_Workspace::KeepAllMemory</a> </p>
+
+<p>Calling the <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">KeepMemory()</a> function with a pointer returned from one of the Get...() or Grow...() calls keeps the workspace destructor from freeing the memory. After calling <a class="el" href="../../d1/d6c/class_o_n___workspace.html#ab21c61bec3d3ef472abe7c04c5c65257" title="Calling the KeepMemory() function with a pointer returned from one of the Get...() or Grow...">KeepMemory()</a>, you can no longer use Grow...() on the pointer. The caller is responsible for using onfree() to release the memory when it is no longer needed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>[in] pointer returned by a Get...() or Grow() call to this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the pointer was successfully found and removed from this <a class="el" href="../../d1/d6c/class_o_n___workspace.html" title="Use ON_Workspace classes on the stack to efficiently get and automatically clean up workspace memory ...">ON_Workspace</a>. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">ON_Workspace::~ON_Workspace</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a501164357dedebcac9ded42aa4ddda5a" title="Gets a block of heap memory that will be freed by ~ON_Workspace. The intent of ON_Workspace::GetMemor...">ON_Workspace::GetMemory</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a2368c4bc3c5fc5134d373cae3e73b12e" title="Calling KeepAllMemory() has the same effect as calling KeepMemory(p) for every active allocation in t...">ON_Workspace::KeepAllMemory</a></dd></dl>
 
 </div>
 </div>
@@ -533,7 +693,18 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. Parameters: filename - [in] name of file filemode - [in] open mode (just like second argument to fopen). Returns: Pointer to opened file. Remarks: ~ON_Workspace will close the file. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">ON_Workspace::~ON_Workspace</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a900ccd355d813f2bddec3529271f1f7f">ON_Workspace::KeepFile</a> ON::OpenFile </p>
+
+<p>Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] name of file</td></tr>
+    <tr><td class="paramname">filemode</td><td>[in] open mode (just like second argument to fopen).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to opened file. </dd></dl>
+<p>~ON_Workspace will close the file. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">ON_Workspace::~ON_Workspace</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a900ccd355d813f2bddec3529271f1f7f" title="If you want to prevent ~ON_Workspace from closing a file that was opened with ON_Workspace::OpenFile...">ON_Workspace::KeepFile</a>, ON::OpenFile</dd></dl>
 
 </div>
 </div>
@@ -562,7 +733,18 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. Parameters: filename - [in] name of file filemode - [in] open mode (just like second argument to _wfopen). Returns: Pointer to opened file. Remarks: ~ON_Workspace will close the file. See Also: <a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1">ON_Workspace::~ON_Workspace</a> <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a900ccd355d813f2bddec3529271f1f7f">ON_Workspace::KeepFile</a> ON::OpenFile </p>
+
+<p>Uses ON::OpenFile to open a file. ~ON_Workspace will close the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] name of file</td></tr>
+    <tr><td class="paramname">filemode</td><td>[in] open mode (just like second argument to _wfopen).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to opened file. </dd></dl>
+<p>~ON_Workspace will close the file. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../d1/d6c/class_o_n___workspace.html#aa5f38447078c616f5a089c90de0db0e1" title="The destructor frees memory that was allocated by ON_Workspace::GetMemory and closes files that were ...">ON_Workspace::~ON_Workspace</a>, <a class="el" href="../../d1/d6c/class_o_n___workspace.html#a900ccd355d813f2bddec3529271f1f7f" title="If you want to prevent ~ON_Workspace from closing a file that was opened with ON_Workspace::OpenFile...">ON_Workspace::KeepFile</a>, ON::OpenFile</dd></dl>
 
 </div>
 </div>
@@ -572,7 +754,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

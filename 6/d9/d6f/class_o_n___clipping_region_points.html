@@ -52,6 +52,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html" title="ON_ClippingRegionPoints is a container for storing or referencing clip points and clip flags...">ON_ClippingRegionPoints</a> is a container for storing or referencing clip points and clip flags. The values are typically calcuated by <a class="el" href="../../da/db3/class_o_n___clipping_region.html#a02c3fabe9f78cb4b1bde47247be2609a" title="Transform a pont and return the clipping information. ">ON_ClippingRegion.TransformPoint()</a>.  
+ <a href="../../d9/d6f/class_o_n___clipping_region_points.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d4/df4/opennurbs__xform_8h_source.html">opennurbs_xform.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -63,22 +66,29 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad62115c7da2a9fda1910002ae94b19d0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#ad62115c7da2a9fda1910002ae94b19d0">~ON_ClippingRegionPoints</a> ()</td></tr>
 <tr class="separator:ad62115c7da2a9fda1910002ae94b19d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d00810813eb60987cf3dc69523303bb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a3d00810813eb60987cf3dc69523303bb">AppendClipPoint</a> (const class <a class="el" href="../../da/db3/class_o_n___clipping_region.html">ON_ClippingRegion</a> &amp;clipping_region, <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> world_point)</td></tr>
+<tr class="memdesc:a3d00810813eb60987cf3dc69523303bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the clipping point and clipping flag calculated by clipping_region.TransformPoint(world_point,...).  <a href="#a3d00810813eb60987cf3dc69523303bb">More...</a><br /></td></tr>
 <tr class="separator:a3d00810813eb60987cf3dc69523303bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11b12f2da5f8de3a12dde6c6a9241b2c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a11b12f2da5f8de3a12dde6c6a9241b2c">AppendClipPoint</a> (<a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> clip_point, unsigned int clip_flag)</td></tr>
+<tr class="memdesc:a11b12f2da5f8de3a12dde6c6a9241b2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the clipping point and clipping flag value.  <a href="#a11b12f2da5f8de3a12dde6c6a9241b2c">More...</a><br /></td></tr>
 <tr class="separator:a11b12f2da5f8de3a12dde6c6a9241b2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff80136cf69ea528e1fcc035bde253f9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aff80136cf69ea528e1fcc035bde253f9">AppendClipPoints</a> (const class <a class="el" href="../../da/db3/class_o_n___clipping_region.html">ON_ClippingRegion</a> &amp;clipping_region, const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> &gt; &amp;world_points)</td></tr>
+<tr class="memdesc:aff80136cf69ea528e1fcc035bde253f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point.  <a href="#aff80136cf69ea528e1fcc035bde253f9">More...</a><br /></td></tr>
 <tr class="separator:aff80136cf69ea528e1fcc035bde253f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6eb5f8e62532b4a6158917e134acb8c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#ad6eb5f8e62532b4a6158917e134acb8c">AppendClipPoints</a> (const class <a class="el" href="../../da/db3/class_o_n___clipping_region.html">ON_ClippingRegion</a> &amp;clipping_region, size_t world_point_count, const <a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a> *world_points)</td></tr>
+<tr class="memdesc:ad6eb5f8e62532b4a6158917e134acb8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point.  <a href="#ad6eb5f8e62532b4a6158917e134acb8c">More...</a><br /></td></tr>
 <tr class="separator:ad6eb5f8e62532b4a6158917e134acb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe5a653add13073afa349cc7c19c2f42"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#abe5a653add13073afa349cc7c19c2f42">AppendClipPoints</a> (const class <a class="el" href="../../da/db3/class_o_n___clipping_region.html">ON_ClippingRegion</a> &amp;clipping_region, size_t world_point_count, size_t world_point_stride, const double *world_points)</td></tr>
+<tr class="memdesc:abe5a653add13073afa349cc7c19c2f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point.  <a href="#abe5a653add13073afa349cc7c19c2f42">More...</a><br /></td></tr>
 <tr class="separator:abe5a653add13073afa349cc7c19c2f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1f2878f3644394225dd7f5c37e8488a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a">Clear</a> ()</td></tr>
+<tr class="memdesc:aa1f2878f3644394225dd7f5c37e8488a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer. When an <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html" title="ON_ClippingRegionPoints is a container for storing or referencing clip points and clip flags...">ON_ClippingRegionPoints</a> will be used multiple times, it is more efficient to call <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a" title="Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer...">Clear()</a> between uses than calling <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a2901980f012d088c6a77400372b776a0" title="Clear() and deallocate the memory buffer. ">Destroy()</a>.  <a href="#aa1f2878f3644394225dd7f5c37e8488a">More...</a><br /></td></tr>
 <tr class="separator:aa1f2878f3644394225dd7f5c37e8488a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9a71ae876578cb88dfbb7f49cebd8d3"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#af9a71ae876578cb88dfbb7f49cebd8d3">ClipFlag</a> (unsigned int point_index) const</td></tr>
 <tr class="separator:af9a71ae876578cb88dfbb7f49cebd8d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65ff68914eebf67ffbae40316c0a689c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d35/class_o_n__3d_point.html">ON_3dPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a65ff68914eebf67ffbae40316c0a689c">ClipPoint</a> (unsigned int point_index) const</td></tr>
 <tr class="separator:a65ff68914eebf67ffbae40316c0a689c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2901980f012d088c6a77400372b776a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a2901980f012d088c6a77400372b776a0">Destroy</a> ()</td></tr>
+<tr class="memdesc:a2901980f012d088c6a77400372b776a0"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a" title="Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer...">Clear()</a> and deallocate the memory buffer.  <a href="#a2901980f012d088c6a77400372b776a0">More...</a><br /></td></tr>
 <tr class="separator:a2901980f012d088c6a77400372b776a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40c6ba900e49d4071e0ea7b16fceb0f5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html">ON_ClippingRegionPoints</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a40c6ba900e49d4071e0ea7b16fceb0f5">operator=</a> (const <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html">ON_ClippingRegionPoints</a> &amp;src)</td></tr>
 <tr class="separator:a40c6ba900e49d4071e0ea7b16fceb0f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -87,6 +97,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7fbdf27d316c4ef80d3c14aeb723821a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a7fbdf27d316c4ef80d3c14aeb723821a">PointCout</a> () const</td></tr>
 <tr class="separator:a7fbdf27d316c4ef80d3c14aeb723821a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4772c5c182074e36c70261e247464e79"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a4772c5c182074e36c70261e247464e79">ReserveBufferPointCapacity</a> (size_t buffer_point_capacity)</td></tr>
+<tr class="memdesc:a4772c5c182074e36c70261e247464e79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserve buffer capacity.  <a href="#a4772c5c182074e36c70261e247464e79">More...</a><br /></td></tr>
 <tr class="separator:a4772c5c182074e36c70261e247464e79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -110,7 +121,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:aee9c2a2250800185ae57d0eaed94e598"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html">ON_ClippingRegionPoints</a> is a container for storing or referencing clip points and clip flags. The values are typically calcuated by <a class="el" href="../../da/db3/class_o_n___clipping_region.html#a02c3fabe9f78cb4b1bde47247be2609a">ON_ClippingRegion.TransformPoint()</a>. </p>
+<div class="textblock"><p><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html" title="ON_ClippingRegionPoints is a container for storing or referencing clip points and clip flags...">ON_ClippingRegionPoints</a> is a container for storing or referencing clip points and clip flags. The values are typically calcuated by <a class="el" href="../../da/db3/class_o_n___clipping_region.html#a02c3fabe9f78cb4b1bde47247be2609a" title="Transform a pont and return the clipping information. ">ON_ClippingRegion.TransformPoint()</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a8f5bdd211e9967f7f656c03cc27b2c62"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8f5bdd211e9967f7f656c03cc27b2c62">&#9670;&nbsp;</a></span>ON_ClippingRegionPoints() <span class="overload">[1/2]</span></h2>
@@ -198,7 +209,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the clipping point and clipping flag calculated by clipping_region.TransformPoint(world_point,...). </p>
+
+<p>Append the clipping point and clipping flag calculated by clipping_region.TransformPoint(world_point,...). </p>
 
 </div>
 </div>
@@ -227,7 +239,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the clipping point and clipping flag value. </p>
+
+<p>Append the clipping point and clipping flag value. </p>
 
 </div>
 </div>
@@ -256,7 +269,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
+
+<p>Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
 
 </div>
 </div>
@@ -291,7 +305,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
+
+<p>Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
 
 </div>
 </div>
@@ -332,7 +347,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
+
+<p>Append the clipping points and clipping flags calculated by clipping_region.TransformPoint(world_point,...) for every input world point. </p>
 
 </div>
 </div>
@@ -350,7 +366,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer. When an <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html">ON_ClippingRegionPoints</a> will be used multiple times, it is more efficient to call <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a">Clear()</a> between uses than calling <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a2901980f012d088c6a77400372b776a0">Destroy()</a>. </p>
+
+<p>Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer. When an <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html" title="ON_ClippingRegionPoints is a container for storing or referencing clip points and clip flags...">ON_ClippingRegionPoints</a> will be used multiple times, it is more efficient to call <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a" title="Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer...">Clear()</a> between uses than calling <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a2901980f012d088c6a77400372b776a0" title="Clear() and deallocate the memory buffer. ">Destroy()</a>. </p>
 
 </div>
 </div>
@@ -369,7 +386,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Clip flag </p>
+<dl class="section return"><dt>Returns</dt><dd>Clip flag </dd></dl>
 
 </div>
 </div>
@@ -388,7 +405,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Clip point location. </p>
+<dl class="section return"><dt>Returns</dt><dd>Clip point location. </dd></dl>
 
 </div>
 </div>
@@ -406,7 +423,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a">Clear()</a> and deallocate the memory buffer. </p>
+
+<p><a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aa1f2878f3644394225dd7f5c37e8488a" title="Sets point count and aggragate flags falues to zero but does not deallocate the memory buffer...">Clear()</a> and deallocate the memory buffer. </p>
 
 </div>
 </div>
@@ -477,7 +495,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>These functions and data members are public so they can be used by experts to reference information that is managed by other entities. If you access or modify them, you are responsible for making sure you do it correctly. All the interface functions above assume the values below are correctly set. Reserve buffer capacity. </p>
+
+<p>Reserve buffer capacity. </p>
 
 </div>
 </div>
@@ -585,7 +604,6 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>All the information below is automatically managed if you use the <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#a3d00810813eb60987cf3dc69523303bb">AppendClipPoint()</a> or <a class="el" href="../../d9/d6f/class_o_n___clipping_region_points.html#aff80136cf69ea528e1fcc035bde253f9">AppendClipPoints()</a> functions to add clipping points. </p>
 
 </div>
 </div>
@@ -595,7 +613,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:28 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -192,7 +192,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Searches domain between m_t0 and m_t1 domain for a root. Returns true if a root is found. </p>
 
 </div>
 </div>
@@ -208,7 +207,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>(&gt;= 0.0) If this value is &gt; 0.0, then the search is terminated when a parameter "t" is found where |f(t)| &lt;= m_f_tolerance. </p>
 
 </div>
 </div>
@@ -223,12 +221,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_k[] is either nullptr or monotone increasing array of length m_k_count.</p>
-<p>This zero finder works on continuous piecewise c2 functions. If the function is c2 on the interior of the domain </p><pre class="fragment">     [min(t0,t1), max(m_t0,m_t1)]
-</pre><p>then there is no need to initialize m_k[]. If the function is not c2 on the domain in question, then the m_k[m_count] array is a list of parameters that define the c2 domains. When m_k[] is not nullptr, m_count must be &gt;= 2 and m_k[] must be monotone increasing and satisfy </p><pre class="fragment">     m_k[0] &lt;= min(m_t0,m_t1) 
-     and
-     m_k[m_count-1] &gt;= max(m_t0,m_t1).
-</pre><p>Duplicate values in m_k[] are permitted so that NURBS knot vector arrays may be used directly. </p>
 
 </div>
 </div>
@@ -259,9 +251,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>m_t0 and m_t1 specify the domain to search and must satisfy </p><pre class="fragment">     1) m_t0 != m_t1
-     2) f(m_t0) and f(m_t1) must have different signs
-        or one must have absolute value &lt;= m_f_tolerance  </pre> 
+
 </div>
 </div>
 <a id="a10c3a20ceb868332f8f2b9b0d833acae"></a>
@@ -289,7 +279,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>(&gt;= 0.0) If this value is &gt; 0.0, then the search is terminated when a parameter the root is bracketed in a domain with width &lt;= m_t_tolerance. </p>
 
 </div>
 </div>
@@ -299,7 +288,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -67,7 +67,7 @@ Public Types</h2></td></tr>
 <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847daab7e9f2fa8b2404bc25061dd572e9797">CompareResult::FileDoesNotExist</a> = 5, 
 <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847daf6c4270bbdfbbf35aa42b5fd44edf750">CompareResult::FileSystemFailure</a> = 6
 <br />
- }<tr class="memdesc:a5a6e077d6893727a93e91d3f1c9e847d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../db/d13/class_o_n___content_hash.html#af0a7f308fe41d1ffbc67f3ccc644ab29">ON_ContentHash::Compare</a> are the possible results of calling ON_ContentHash::CompareFile().  <a href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d">More...</a><br /></td></tr>
+ }<tr class="memdesc:a5a6e077d6893727a93e91d3f1c9e847d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../db/d13/class_o_n___content_hash.html#af0a7f308fe41d1ffbc67f3ccc644ab29" title="Compare the information used to set this content hash with the contents of the file. ">ON_ContentHash::Compare</a> are the possible results of calling ON_ContentHash::CompareFile().  <a href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a5a6e077d6893727a93e91d3f1c9e847d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -82,8 +82,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3d5536333ff8bbebf6b341355cca1172"><td class="memItemLeft" align="right" valign="top">ON__UINT64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a3d5536333ff8bbebf6b341355cca1172">ByteCount</a> () const</td></tr>
 <tr class="separator:a3d5536333ff8bbebf6b341355cca1172"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0a7f308fe41d1ffbc67f3ccc644ab29"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d">ON_ContentHash::CompareResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#af0a7f308fe41d1ffbc67f3ccc644ab29">Compare</a> (const wchar_t *file_path, bool bFastTest) const</td></tr>
+<tr class="memdesc:af0a7f308fe41d1ffbc67f3ccc644ab29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compare the information used to set this content hash with the contents of the file.  <a href="#af0a7f308fe41d1ffbc67f3ccc644ab29">More...</a><br /></td></tr>
 <tr class="separator:af0a7f308fe41d1ffbc67f3ccc644ab29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fdda90f92f7cd5e935091cb4a403df0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d">ON_ContentHash::CompareResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a6fdda90f92f7cd5e935091cb4a403df0">Compare</a> (<a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> file_content_hash) const</td></tr>
+<tr class="memdesc:a6fdda90f92f7cd5e935091cb4a403df0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compare the byte count and SHA-1 content hash.  <a href="#a6fdda90f92f7cd5e935091cb4a403df0">More...</a><br /></td></tr>
 <tr class="separator:a6fdda90f92f7cd5e935091cb4a403df0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6dcfec1c56e53f3576a628997483003"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#ad6dcfec1c56e53f3576a628997483003">ContentHash</a> () const</td></tr>
 <tr class="separator:ad6dcfec1c56e53f3576a628997483003"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -98,10 +100,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac810581378d560ecd1122d4f08f75627"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#ac810581378d560ecd1122d4f08f75627">IsNotSet</a> () const</td></tr>
 <tr class="separator:ac810581378d560ecd1122d4f08f75627"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ba2d45e64ea148145997d3e002c8cd8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a8ba2d45e64ea148145997d3e002c8cd8">IsSameBufferContent</a> (const void *buffer, size_t byte_count) const</td></tr>
+<tr class="memdesc:a8ba2d45e64ea148145997d3e002c8cd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a buffer to see if it has a matching size and SHA-1 hash.  <a href="#a8ba2d45e64ea148145997d3e002c8cd8">More...</a><br /></td></tr>
 <tr class="separator:a8ba2d45e64ea148145997d3e002c8cd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6e3086aca27c2cd0253a810891c29f4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#af6e3086aca27c2cd0253a810891c29f4">IsSameFileContent</a> (FILE *fp) const</td></tr>
+<tr class="memdesc:af6e3086aca27c2cd0253a810891c29f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a file to see if it has a matching size and SHA-1 hash. Paramters: fp - [in] pointer to file opened with ON::OpenFile(...,"rb") bSkipTimeCheck - [in] if true, the time of last modification is not checked.  <a href="#af6e3086aca27c2cd0253a810891c29f4">More...</a><br /></td></tr>
 <tr class="separator:af6e3086aca27c2cd0253a810891c29f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5ca405dc369311f5bffd22d7862e455"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#ad5ca405dc369311f5bffd22d7862e455">IsSameFileContent</a> (const wchar_t *filename) const</td></tr>
+<tr class="memdesc:ad5ca405dc369311f5bffd22d7862e455"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a file to see if it has a matching size and SHA-1 content hash. Paramters: filename - [in]  <a href="#ad5ca405dc369311f5bffd22d7862e455">More...</a><br /></td></tr>
 <tr class="separator:ad5ca405dc369311f5bffd22d7862e455"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52e7f03e75d056b67069c012e08010d8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a52e7f03e75d056b67069c012e08010d8">IsSameFileContent</a> (const char *filename) const</td></tr>
 <tr class="separator:a52e7f03e75d056b67069c012e08010d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -119,8 +124,10 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a480080e26dcb714010b5530dc46893c9"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#a480080e26dcb714010b5530dc46893c9">Compare</a> (const <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> &amp;a, const <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> &amp;b)</td></tr>
+<tr class="memdesc:a480080e26dcb714010b5530dc46893c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares all fields  <a href="#a480080e26dcb714010b5530dc46893c9">More...</a><br /></td></tr>
 <tr class="separator:a480080e26dcb714010b5530dc46893c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af605df4c83d4a65433799cee60af2e8a"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#af605df4c83d4a65433799cee60af2e8a">CompareContent</a> (const <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> &amp;a, const <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> &amp;b)</td></tr>
+<tr class="memdesc:af605df4c83d4a65433799cee60af2e8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compares content byte count and content SHA-1  <a href="#af605df4c83d4a65433799cee60af2e8a">More...</a><br /></td></tr>
 <tr class="separator:af605df4c83d4a65433799cee60af2e8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd47df95f4fb24a81e6ac811e77defba"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d">ON_ContentHash::CompareResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d13/class_o_n___content_hash.html#afd47df95f4fb24a81e6ac811e77defba">CompareResultFromUnsigned</a> (unsigned int compare_result_as_unsigned)</td></tr>
 <tr class="separator:afd47df95f4fb24a81e6ac811e77defba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,7 +172,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p><a class="el" href="../../db/d13/class_o_n___content_hash.html#af0a7f308fe41d1ffbc67f3ccc644ab29">ON_ContentHash::Compare</a> are the possible results of calling ON_ContentHash::CompareFile(). </p>
+<p><a class="el" href="../../db/d13/class_o_n___content_hash.html#af0a7f308fe41d1ffbc67f3ccc644ab29" title="Compare the information used to set this content hash with the contents of the file. ">ON_ContentHash::Compare</a> are the possible results of calling ON_ContentHash::CompareFile(). </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5a6e077d6893727a93e91d3f1c9e847dac9f88e098f6fe4e4e112eeb05ccb9671"></a>Unset&#160;</td><td class="fielddoc"><p>Not set. This value is never returned by ON_ContentHash::CheckFile(). </p>
 </td></tr>
@@ -277,7 +284,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of bytes in the content (typically a file or buffer). </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of bytes in the content (typically a file or buffer). </dd></dl>
 
 </div>
 </div>
@@ -306,7 +313,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Compare the information used to set this content hash with the contents of the file. Parameters: file_path - [in] bFastCompare - [in] If bFastCompare is true and the file_path, create time, last modified time, and size exactly match the values in <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a>, then <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847dab5294ef36dd9b816f7293624759fa0a9" title="File exists and its size and content matches the information used to set the content hash...">ON_ContentHash::CompareResult::EqualContent</a> is returned without performing the expensive SHA1 test on the file's content. If bFastCompare is false, the SHA-1 hash of the file's content will be calculated and compared before <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847dab5294ef36dd9b816f7293624759fa0a9" title="File exists and its size and content matches the information used to set the content hash...">ON_ContentHash::CompareResult::EqualContent</a> is returned. Returns: Result of compare test as a <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d" title="ON_ContentHash::Compare are the possible results of calling ON_ContentHash::CompareFile(). ">ON_ContentHash::CompareResult</a> enum. <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847da1960e05afce81d6a258b850d82611a09" title="File exists and its size or content differs from the information used to set the content hash...">ON_ContentHash::CompareResult::DifferentContentFileIsOlder</a> means file_path content is different and older than "this". ON_ContentHash::CompareResult::DifferentContentFileIsNewer means file_path content is different and newer than "this". </p>
+
+<p>Compare the information used to set this content hash with the contents of the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_path</td><td>[in]</td></tr>
+    <tr><td class="paramname">bFastCompare</td><td>[in] If bFastCompare is true and the file_path, create time, last modified time, and size exactly match the values in <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a>, then <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847dab5294ef36dd9b816f7293624759fa0a9" title="File exists and its size and content matches the information used to set the content hash...">ON_ContentHash::CompareResult::EqualContent</a> is returned without performing the expensive SHA1 test on the file's content. If bFastCompare is false, the SHA-1 hash of the file's content will be calculated and compared before <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847dab5294ef36dd9b816f7293624759fa0a9" title="File exists and its size and content matches the information used to set the content hash...">ON_ContentHash::CompareResult::EqualContent</a> is returned.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Result of compare test as a <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d" title="ON_ContentHash::Compare are the possible results of calling ON_ContentHash::CompareFile(). ">ON_ContentHash::CompareResult</a> enum. <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847da1960e05afce81d6a258b850d82611a09" title="File exists and its size or content differs from the information used to set the content hash...">ON_ContentHash::CompareResult::DifferentContentFileIsOlder</a> means file_path content is different and older than "this". ON_ContentHash::CompareResult::DifferentContentFileIsNewer means file_path content is different and newer than "this". </dd></dl>
 
 </div>
 </div>
@@ -325,7 +341,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Compare the byte count and SHA-1 content hash. Parameters: file_content_hash - [in] <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> to compare against this one. Returns: Result of compare test as a <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d" title="ON_ContentHash::Compare are the possible results of calling ON_ContentHash::CompareFile(). ">ON_ContentHash::CompareResult</a> enum. <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847da1960e05afce81d6a258b850d82611a09" title="File exists and its size or content differs from the information used to set the content hash...">ON_ContentHash::CompareResult::DifferentContentFileIsOlder</a> means file_content_hash is different and older than "this". ON_ContentHash::CompareResult::DifferentContentFileIsNewer means file_content_hash is different and newer than "this". </p>
+
+<p>Compare the byte count and SHA-1 content hash. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_content_hash</td><td>[in] <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> to compare against this one.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Result of compare test as a <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847d" title="ON_ContentHash::Compare are the possible results of calling ON_ContentHash::CompareFile(). ">ON_ContentHash::CompareResult</a> enum. <a class="el" href="../../db/d13/class_o_n___content_hash.html#a5a6e077d6893727a93e91d3f1c9e847da1960e05afce81d6a258b850d82611a09" title="File exists and its size or content differs from the information used to set the content hash...">ON_ContentHash::CompareResult::DifferentContentFileIsOlder</a> means file_content_hash is different and older than "this". ON_ContentHash::CompareResult::DifferentContentFileIsNewer means file_content_hash is different and newer than "this". </dd></dl>
 
 </div>
 </div>
@@ -362,7 +386,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Compares all fields </p>
+
+<p>Compares all fields </p>
 
 </div>
 </div>
@@ -399,7 +424,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Compares content byte count and content SHA-1 </p>
+
+<p>Compares content byte count and content SHA-1 </p>
 
 </div>
 </div>
@@ -443,7 +469,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: SHA-1 hash of the content (typically a buffer or file). </p>
+<dl class="section return"><dt>Returns</dt><dd>SHA-1 hash of the content (typically a buffer or file). </dd></dl>
 
 </div>
 </div>
@@ -461,10 +487,11 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Time the hashed content was last modifed in seconds since January 1, 1970 UCT. 0 is returned if this time is not known.</p>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">Time the hashed content was last modifed in seconds since January 1, 1970 UCT. 0 is returned if this time is not known.</p>
 <p>This time should be used for important decisions as a last resort.</p>
 <p>When hash values differ, this time may be considered to which content is newer (or most recently copied).</p>
-<p>Unfortunately, in many cases this time is often unknown and incorrectly set. For example, some file systems set the last modified time of a copy of an "old" file to the time the copy was created. Thus a copy of "old" content may appear to be newer than "new" content that has not been copied. </p>
+<p class="enddd">Unfortunately, in many cases this time is often unknown and incorrectly set. For example, some file systems set the last modified time of a copy of an "old" file to the time the copy was created. Thus a copy of "old" content may appear to be newer than "new" content that has not been copied. </p>
+</dd></dl>
 
 </div>
 </div>
@@ -519,7 +546,17 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Descripton: Create an <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> class with the specified size, hash and times. Parameters: sha1_name_hash - [in] The SHA-1 hash of the name (typically a full path file name). When the content is identified by a file name in a file system, use <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a9cb83e4e627ac917404722990efa2f0c">ON_SHA1_Hash::FileSystemPathHash()</a> to calculate this value. byte_count - [in] number of bytes in the content. sha1_content_hash - [in] The SHA-1 hash of the content (typically a buffer or file). You may use ON_SHA1_Has::FileContentHash() or <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#aed137337f874a15956aaa4f2d0ebe912">ON_SHA1_Hash::BufferContentHash()</a> to calculate this value. hash_time - [in] The time the sha1_hash was calculated in seconds since January 1, 1970 UCT. If 0 is passed in, the current time is used. content_last_modified_time - [in] Pass 0 if not known. The time the hashed information that was last modifed in seconds since January 1, 1970 UCT. If content_last_modified_time &gt; hash_time, then 0 is used. Returns: An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the parameters, </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sha1_name_hash</td><td>[in] The SHA-1 hash of the name (typically a full path file name). When the content is identified by a file name in a file system, use <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a9cb83e4e627ac917404722990efa2f0c" title="Return a hash of the file system path that is independent of the size of wchar_t, constant across pla...">ON_SHA1_Hash::FileSystemPathHash()</a> to calculate this value.</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[in] number of bytes in the content.</td></tr>
+    <tr><td class="paramname">sha1_content_hash</td><td>[in] The SHA-1 hash of the content (typically a buffer or file). You may use ON_SHA1_Has::FileContentHash() or <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#aed137337f874a15956aaa4f2d0ebe912">ON_SHA1_Hash::BufferContentHash()</a> to calculate this value.</td></tr>
+    <tr><td class="paramname">hash_time</td><td>[in] The time the sha1_hash was calculated in seconds since January 1, 1970 UCT. If 0 is passed in, the current time is used.</td></tr>
+    <tr><td class="paramname">content_last_modified_time</td><td>[in] Pass 0 if not known. The time the hashed information that was last modifed in seconds since January 1, 1970 UCT. If content_last_modified_time &gt; hash_time, then 0 is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the parameters, </dd></dl>
 
 </div>
 </div>
@@ -562,7 +599,15 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Descripton: Create an <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> from a memory buffer. Parameters: sha1_name_hash - [in] A SHA-1 hash of the name associated with this content. If the buffer has no name, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686" title="all digest bytes are zero ">ON_SHA1_Hash::ZeroDigest</a>. If the buffer has an empty name, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a5fbd8257f1b9c3fdfc929d3869113924" title="SHA-1 hash of zero bytes. ">ON_SHA1_Hash::EmptyContentHash</a>. buffer - [in] byte_count - [in] number of bytes in buffer[] Returns: An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash calculated from the parameters, hash time = now, and content last modified time = 0. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sha1_name_hash</td><td>[in] A SHA-1 hash of the name associated with this content. If the buffer has no name, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686">ON_SHA1_Hash::ZeroDigest</a>. If the buffer has an empty name, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a5fbd8257f1b9c3fdfc929d3869113924">ON_SHA1_Hash::EmptyContentHash</a>.</td></tr>
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[in] number of bytes in buffer[]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash calculated from the parameters, hash time = now, and content last modified time = 0. </dd></dl>
 
 </div>
 </div>
@@ -599,7 +644,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Descripton: Create an <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> from a file stream. Parameters: sha1_file_name_hash - [in] A SHA-1 hash of the file name associated with fp. Use ON_SHA1_Has::FileSystemPathHash() to create the value. If the name is not known, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686" title="all digest bytes are zero ">ON_SHA1_Hash::ZeroDigest</a>. fp - [in] pointer to a file opened with ON:FileOpen(...,"rb") Returns: An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the file, hash time = now, and content last modifed time set from the file system information returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700">ON_FileStream::GetFileInformation()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sha1_file_name_hash</td><td>[in] A SHA-1 hash of the file name associated with fp. Use ON_SHA1_Has::FileSystemPathHash() to create the value. If the name is not known, pass <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686">ON_SHA1_Hash::ZeroDigest</a>.</td></tr>
+    <tr><td class="paramname">fp</td><td>[in] pointer to a file opened with ON:FileOpen(...,"rb")</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the file, hash time = now, and content last modifed time set from the file system information returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700" title="Portable wrapper for C runtime fstat(). ">ON_FileStream::GetFileInformation()</a>. </dd></dl>
 
 </div>
 </div>
@@ -626,7 +678,13 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Descripton: Create an <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> from a file stream. Parameters: filename - [in] name of file. Returns: An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the file, hash time = now, and content last modifed time set from the file system information returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700">ON_FileStream::GetFileInformation()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in] name of file.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="../../db/d13/class_o_n___content_hash.html">ON_ContentHash</a> with size and SHA-1 hash and times set from the file, hash time = now, and content last modifed time set from the file system information returned by <a class="el" href="../../dd/da7/class_o_n___file_stream.html#ac344f0e78881d31fe07aa99f63955700" title="Portable wrapper for C runtime fstat(). ">ON_FileStream::GetFileInformation()</a>. </dd></dl>
 
 </div>
 </div>
@@ -689,7 +747,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: true if a and b have differnt <a class="el" href="../../db/d13/class_o_n___content_hash.html#a3d5536333ff8bbebf6b341355cca1172">ByteCount()</a> or SHA-1 content hash values. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if a and b have differnt <a class="el" href="../../db/d13/class_o_n___content_hash.html#a3d5536333ff8bbebf6b341355cca1172">ByteCount()</a> or SHA-1 content hash values. </dd></dl>
 
 </div>
 </div>
@@ -744,7 +802,7 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns: true if a and b have identical <a class="el" href="../../db/d13/class_o_n___content_hash.html#a3d5536333ff8bbebf6b341355cca1172">ByteCount()</a> and SHA-1 content hash values. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if a and b have identical <a class="el" href="../../db/d13/class_o_n___content_hash.html#a3d5536333ff8bbebf6b341355cca1172">ByteCount()</a> and SHA-1 content hash values. </dd></dl>
 
 </div>
 </div>
@@ -763,7 +821,14 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: filename - [in] Returns: True if the file exists, has size &gt; 0, has the same name, same size, and same last modified time than this content hash. False otherwise. Remarks: Faster than the <a class="el" href="../../db/d13/class_o_n___content_hash.html#aa495c50d35d777aeb70226bac13e5401">ON_ContentHash::EqualContent()</a> and reliable if this content hash was set on the same file system. Unreliable if the file system does not correctly set last modified times or the file was modified less than 2 seconds before the call. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the file exists, has size &gt; 0, has the same name, same size, and same last modified time than this content hash. False otherwise. </dd></dl>
+<p>Faster than the <a class="el" href="../../db/d13/class_o_n___content_hash.html#aa495c50d35d777aeb70226bac13e5401">ON_ContentHash::EqualContent()</a> and reliable if this content hash was set on the same file system. Unreliable if the file system does not correctly set last modified times or the file was modified less than 2 seconds before the call. </p>
 
 </div>
 </div>
@@ -781,7 +846,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Time the hash SHA-1 hash was cacluated in seconds since January 1, 1970 UCT. </p>
+<dl class="section return"><dt>Returns</dt><dd>Time the hash SHA-1 hash was cacluated in seconds since January 1, 1970 UCT. </dd></dl>
 
 </div>
 </div>
@@ -799,7 +864,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the SHA-1 hash is not set. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the SHA-1 hash is not set. </dd></dl>
 
 </div>
 </div>
@@ -828,7 +893,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test a buffer to see if it has a matching size and SHA-1 hash. Parameters: buffer - [in] byte_count - [in] number of bytes in buffer[] Returns: True if the buffer has a matching byte_count and SHA-1 hash. </p>
+
+<p>Test a buffer to see if it has a matching size and SHA-1 hash. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[in] number of bytes in buffer[]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the buffer has a matching byte_count and SHA-1 hash. </dd></dl>
 
 </div>
 </div>
@@ -847,7 +921,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test a file to see if it has a matching size and SHA-1 hash. Paramters: fp - [in] pointer to file opened with ON::OpenFile(...,"rb") bSkipTimeCheck - [in] if true, the time of last modification is not checked. Returns: True if the file existes, can be read, and has a matching byte_count and SHA-1 hash. </p>
+
+<p>Test a file to see if it has a matching size and SHA-1 hash. Paramters: fp - [in] pointer to file opened with ON::OpenFile(...,"rb") bSkipTimeCheck - [in] if true, the time of last modification is not checked. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the file existes, can be read, and has a matching byte_count and SHA-1 hash. </dd></dl>
 
 </div>
 </div>
@@ -866,7 +942,9 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Test a file to see if it has a matching size and SHA-1 content hash. Paramters: filename - [in] Returns: True if the file exists, can be read, and has a matching byte_count and SHA-1 content hash. </p>
+
+<p>Test a file to see if it has a matching size and SHA-1 content hash. Paramters: filename - [in] </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the file exists, can be read, and has a matching byte_count and SHA-1 content hash. </dd></dl>
 
 </div>
 </div>
@@ -902,7 +980,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if the SHA-1 hash has been set. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if the SHA-1 hash has been set. </dd></dl>
 
 </div>
 </div>
@@ -920,7 +998,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: SHA-1 hash of the name (typically a full path file name). </p>
+<dl class="section return"><dt>Returns</dt><dd>SHA-1 hash of the name (typically a full path file name). </dd></dl>
 
 </div>
 </div>
@@ -1015,7 +1093,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -63,10 +63,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acf66798ce1ab81e70c4d2ad971db1117"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d17/class_o_n___bounding_box.html">ON_BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#acf66798ce1ab81e70c4d2ad971db1117">BoundingBox</a> () const</td></tr>
 <tr class="separator:acf66798ce1ab81e70c4d2ad971db1117"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeaaa332119e0045797d276cf5d593dc2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aeaaa332119e0045797d276cf5d593dc2">CreateMeshFaceTree</a> (const class <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> *mesh)</td></tr>
+<tr class="memdesc:aeaaa332119e0045797d276cf5d593dc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an R-tree with an element for each face in the mesh. The element id is set to the index of the face.  <a href="#aeaaa332119e0045797d276cf5d593dc2">More...</a><br /></td></tr>
 <tr class="separator:aeaaa332119e0045797d276cf5d593dc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a553c28a6189ab8b336aad9d0cc5d1ae1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a553c28a6189ab8b336aad9d0cc5d1ae1">ElementCount</a> ()</td></tr>
 <tr class="separator:a553c28a6189ab8b336aad9d0cc5d1ae1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9de21d768597267474047dda81932e2c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">Insert</a> (const double a_min[3], const double a_max[3], void *a_element_id)</td></tr>
+<tr class="memdesc:a9de21d768597267474047dda81932e2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert an element into the RTree.  <a href="#a9de21d768597267474047dda81932e2c">More...</a><br /></td></tr>
 <tr class="separator:a9de21d768597267474047dda81932e2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8de2fc8ec53bfbda3eb7ebbbc88d4134"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a8de2fc8ec53bfbda3eb7ebbbc88d4134">Insert</a> (const double a_min[3], const double a_max[3], int a_element_id)</td></tr>
 <tr class="separator:a8de2fc8ec53bfbda3eb7ebbbc88d4134"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -75,6 +77,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6aa006eb044d4bc8f134d1bf7a0be6cf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a6aa006eb044d4bc8f134d1bf7a0be6cf">Insert2d</a> (const double a_min[2], const double a_max[2], int a_element_id)</td></tr>
 <tr class="separator:a6aa006eb044d4bc8f134d1bf7a0be6cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1dad8a204492af25fd33fb1fde74758"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">Remove</a> (const double a_min[3], const double a_max[3], void *a_elementId)</td></tr>
+<tr class="memdesc:aa1dad8a204492af25fd33fb1fde74758"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove an element from the RTree.  <a href="#aa1dad8a204492af25fd33fb1fde74758">More...</a><br /></td></tr>
 <tr class="separator:aa1dad8a204492af25fd33fb1fde74758"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc1e12e01dc16b1a0b550a71497f0482"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#afc1e12e01dc16b1a0b550a71497f0482">Remove</a> (const double a_min[3], const double a_max[3], int a_elementId)</td></tr>
 <tr class="separator:afc1e12e01dc16b1a0b550a71497f0482"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -83,16 +86,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae800b17ab98147356110941ef0f72ecb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#ae800b17ab98147356110941ef0f72ecb">Remove2d</a> (const double a_min[2], const double a_max[2], int a_elementId)</td></tr>
 <tr class="separator:ae800b17ab98147356110941ef0f72ecb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46db5e9d84bc480f1fa7550b09e1fbd1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a46db5e9d84bc480f1fa7550b09e1fbd1">RemoveAll</a> ()</td></tr>
+<tr class="memdesc:a46db5e9d84bc480f1fa7550b09e1fbd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all elements from the R-tree.  <a href="#a46db5e9d84bc480f1fa7550b09e1fbd1">More...</a><br /></td></tr>
 <tr class="separator:a46db5e9d84bc480f1fa7550b09e1fbd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc2e00cbb7018e8ebce40218565ae0f2"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../de/d18/struct_o_n___r_tree_node.html">ON_RTreeNode</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#adc2e00cbb7018e8ebce40218565ae0f2">Root</a> () const</td></tr>
 <tr class="separator:adc2e00cbb7018e8ebce40218565ae0f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c8689767a0edbccf8ff7181f7b0af9b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">Search</a> (<a class="el" href="../../d3/d7f/struct_o_n___r_tree_sphere.html">ON_RTreeSphere</a> *a_sphere, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
+<tr class="memdesc:a3c8689767a0edbccf8ff7181f7b0af9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search the R-tree for all elements whose bounding boxes overlap a_rect.  <a href="#a3c8689767a0edbccf8ff7181f7b0af9b">More...</a><br /></td></tr>
 <tr class="separator:a3c8689767a0edbccf8ff7181f7b0af9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a178196eaa2fd6ca8317f62a13d853817"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a178196eaa2fd6ca8317f62a13d853817">Search</a> (<a class="el" href="../../df/d46/struct_o_n___r_tree_capsule.html">ON_RTreeCapsule</a> *a_capsule, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
 <tr class="separator:a178196eaa2fd6ca8317f62a13d853817"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93488df03e8d43bf059881bb2dcfba93"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a93488df03e8d43bf059881bb2dcfba93">Search</a> (<a class="el" href="../../da/dce/struct_o_n___r_tree_b_box.html">ON_RTreeBBox</a> *a_rect, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
 <tr class="separator:a93488df03e8d43bf059881bb2dcfba93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a384a71567ae0e7f0b55acd0548fb1fd6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a384a71567ae0e7f0b55acd0548fb1fd6">Search</a> (const double a_plane_eqn[4], double a_min, double a_max, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
+<tr class="memdesc:a384a71567ae0e7f0b55acd0548fb1fd6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search the R-tree for all elements whose bounding boxes overlap the set of points between to parallel planes.  <a href="#a384a71567ae0e7f0b55acd0548fb1fd6">More...</a><br /></td></tr>
 <tr class="separator:a384a71567ae0e7f0b55acd0548fb1fd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb48a60f59ea578c30939e1c45d1829e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aeb48a60f59ea578c30939e1c45d1829e">Search</a> (const class <a class="el" href="../../dd/d89/class_o_n___plane_equation.html">ON_PlaneEquation</a> &amp;a_plane_eqn, double a_min, double a_max, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
 <tr class="separator:aeb48a60f59ea578c30939e1c45d1829e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,12 +113,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae18942534add216538d971d266ef62f3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#ae18942534add216538d971d266ef62f3">Search</a> (const double a_min[3], const double a_max[3], <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; int &gt; &amp;a_result) const</td></tr>
 <tr class="separator:ae18942534add216538d971d266ef62f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a691a5c09301cf8a7f869f762f9b51dc8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a691a5c09301cf8a7f869f762f9b51dc8">Search</a> (double tolerance, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; ON_2dex &gt; &amp;a_result) const</td></tr>
+<tr class="memdesc:a691a5c09301cf8a7f869f762f9b51dc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap.  <a href="#a691a5c09301cf8a7f869f762f9b51dc8">More...</a><br /></td></tr>
 <tr class="separator:a691a5c09301cf8a7f869f762f9b51dc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7cffce7ab9b169a55f95f5a305299531"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a7cffce7ab9b169a55f95f5a305299531">Search</a> (double tolerance, void ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB), void *a_context) const</td></tr>
+<tr class="memdesc:a7cffce7ab9b169a55f95f5a305299531"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap.  <a href="#a7cffce7ab9b169a55f95f5a305299531">More...</a><br /></td></tr>
 <tr class="separator:a7cffce7ab9b169a55f95f5a305299531"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ce5797e0f24dcfe60e4cb5d2a305551"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a7ce5797e0f24dcfe60e4cb5d2a305551">Search</a> (double tolerance, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB), void *a_context) const</td></tr>
+<tr class="memdesc:a7ce5797e0f24dcfe60e4cb5d2a305551"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap.  <a href="#a7ce5797e0f24dcfe60e4cb5d2a305551">More...</a><br /></td></tr>
 <tr class="separator:a7ce5797e0f24dcfe60e4cb5d2a305551"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae86bf57453293f572bb791c449b23cdb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#ae86bf57453293f572bb791c449b23cdb">Search</a> (double tolerance, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB, double *tolerance), void *a_context) const</td></tr>
+<tr class="memdesc:ae86bf57453293f572bb791c449b23cdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap.  <a href="#ae86bf57453293f572bb791c449b23cdb">More...</a><br /></td></tr>
 <tr class="separator:ae86bf57453293f572bb791c449b23cdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25b64597a8b7cb18ec70db91613bc198"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a25b64597a8b7cb18ec70db91613bc198">Search2d</a> (const double a_min[2], const double a_max[2], bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_id), void *a_context) const</td></tr>
 <tr class="separator:a25b64597a8b7cb18ec70db91613bc198"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -130,12 +140,16 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a89495554a3643a1ceccf18fc3de4028f"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a89495554a3643a1ceccf18fc3de4028f">Search</a> (const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeA, const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeB, double tolerance, <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; ON_2dex &gt; &amp;a_result)</td></tr>
+<tr class="memdesc:a89495554a3643a1ceccf18fc3de4028f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search two R-trees for all pairs elements whose bounding boxes overlap.  <a href="#a89495554a3643a1ceccf18fc3de4028f">More...</a><br /></td></tr>
 <tr class="separator:a89495554a3643a1ceccf18fc3de4028f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a305a82abc47dd0a6ea8ee89b06cf37da"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a305a82abc47dd0a6ea8ee89b06cf37da">Search</a> (const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeA, const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeB, double tolerance, void ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB), void *a_context)</td></tr>
+<tr class="memdesc:a305a82abc47dd0a6ea8ee89b06cf37da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search two R-trees for all pairs elements whose bounding boxes overlap.  <a href="#a305a82abc47dd0a6ea8ee89b06cf37da">More...</a><br /></td></tr>
 <tr class="separator:a305a82abc47dd0a6ea8ee89b06cf37da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81130c40694f16ecc2cf8e1652972454"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a81130c40694f16ecc2cf8e1652972454">Search</a> (const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeA, const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeB, double tolerance, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB), void *a_context)</td></tr>
+<tr class="memdesc:a81130c40694f16ecc2cf8e1652972454"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search two R-trees for all pairs elements whose bounding boxes overlap.  <a href="#a81130c40694f16ecc2cf8e1652972454">More...</a><br /></td></tr>
 <tr class="separator:a81130c40694f16ecc2cf8e1652972454"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac293e6ba656ac6e792f4c577fb0d98c8"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d3e/class_o_n___r_tree.html#ac293e6ba656ac6e792f4c577fb0d98c8">Search</a> (const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeA, const <a class="el" href="../../dc/d3e/class_o_n___r_tree.html">ON_RTree</a> &amp;a_rtreeB, double tolerance, bool ON_CALLBACK_CDECL resultCallback(void *a_context, ON__INT_PTR a_idA, ON__INT_PTR a_idB, double *tolerance), void *a_context)</td></tr>
+<tr class="memdesc:ac293e6ba656ac6e792f4c577fb0d98c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Search two R-trees for all pairs elements whose bounding boxes overlap. The tolerance can be reduced by the callback function during the search. This version of search is well suited to finding closest points between two objects.  <a href="#ac293e6ba656ac6e792f4c577fb0d98c8">More...</a><br /></td></tr>
 <tr class="separator:ac293e6ba656ac6e792f4c577fb0d98c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
@@ -194,7 +208,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Bounding box of the entire R-tree; </p>
+<dl class="section return"><dt>Returns</dt><dd>Bounding box of the entire R-tree; </dd></dl>
 
 </div>
 </div>
@@ -213,7 +227,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Create an R-tree with an element for each face in the mesh. The element id is set to the index of the face. Parameters: mesh - [in] Returns: True if successful. </p>
+
+<p>Create an R-tree with an element for each face in the mesh. The element id is set to the index of the face. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh</td><td>[in]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. </dd></dl>
 
 </div>
 </div>
@@ -231,7 +253,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of elements (leaves). Remark: No internal count is maintained, so this function traverses the tree to count the leaves. If efficiency is important, save the result. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of elements (leaves). Remark: No internal count is maintained, so this function traverses the tree to count the leaves. If efficiency is important, save the result. </dd></dl>
 
 </div>
 </div>
@@ -266,7 +288,18 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Insert an element into the RTree. Parameters: a_min - [in] a_max - [in] 3d bounding box of the element. The values in a_min[3] and a_max[3] must satisfy a_min[0] &lt;= a_max[0], a_min[1] &lt;= a_max[1], and a_min[1] &lt;= a_max[1]. a_dataId - [in] id of the element. This can be either a pointer or an integer id. Returns: True if element was successfully inserted. Remarks: Calling <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">Remove()</a> invalidates any <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> used to iterate this rtree. </p>
+
+<p>Insert an element into the RTree. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_min</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_max</td><td>[in] 3d bounding box of the element. The values in a_min[3] and a_max[3] must satisfy a_min[0] &lt;= a_max[0], a_min[1] &lt;= a_max[1], and a_min[1] &lt;= a_max[1].</td></tr>
+    <tr><td class="paramname">a_dataId</td><td>[in] id of the element. This can be either a pointer or an integer id.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if element was successfully inserted. </dd></dl>
+<p>Calling <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">Remove()</a> invalidates any <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> used to iterate this rtree. </p>
 
 </div>
 </div>
@@ -403,7 +436,18 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Remove an element from the RTree. Parameters: a_min - [in] a_max - [in] 3d bounding box of the element. The values in a_min[3] and a_max[3] must satisfy a_min[0] &lt;= a_max[0], a_min[1] &lt;= a_max[1], and a_min[2] &lt;= a_max[2]. a_dataId - [in] id of the element. This can be either a pointer or an integer id. Returns: True if element was successfully removed. Remarks: Calling <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c">Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758">Remove()</a> invalidates any <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> used to iterate this rtree. </p>
+
+<p>Remove an element from the RTree. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_min</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_max</td><td>[in] 3d bounding box of the element. The values in a_min[3] and a_max[3] must satisfy a_min[0] &lt;= a_max[0], a_min[1] &lt;= a_max[1], and a_min[2] &lt;= a_max[2].</td></tr>
+    <tr><td class="paramname">a_dataId</td><td>[in] id of the element. This can be either a pointer or an integer id.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if element was successfully removed. </dd></dl>
+<p>Calling <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a9de21d768597267474047dda81932e2c" title="Insert an element into the RTree. ">Insert()</a> or <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#aa1dad8a204492af25fd33fb1fde74758" title="Remove an element from the RTree. ">Remove()</a> invalidates any <a class="el" href="../../db/db0/class_o_n___r_tree_iterator.html">ON_RTreeIterator</a> used to iterate this rtree. </p>
 
 </div>
 </div>
@@ -523,7 +567,8 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Remove all elements from the R-tree. </p>
+
+<p>Remove all elements from the R-tree. </p>
 
 </div>
 </div>
@@ -541,7 +586,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Pointer to the root node. </p>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the root node. </dd></dl>
 
 </div>
 </div>
@@ -576,7 +621,23 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search the R-tree for all elements whose bounding boxes overlap a_rect. Parameters: a_rect - [in/out] The version of search that has ON_RTreeBBox* a_rect as the first argument, allows you to shrink the a_rect as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_rect, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified rect must be contained in the previous rect. a_sphere - [in/out] The version of search that has ON_RTreeSphere* a_sphere as the first argument, allows you to shrink the a_sphere as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_sphere, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified sphere must be contained in the previous sphere. a_capsule - [in/out] The version of search that has ON_RTreeSphere* a_capsule as the first argument, allows you to shrink the a_capsule as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_capsule, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified capsule must be contained in the previous capsule. a_min - [in] a_max - [in] (a_min,a_max) is the bounding box of the search region. a_results - [out] The ids of elements that overlaps the search region. resultCallback - [in] A function to call when leaf nodes overlap. a_context - [in] pointer passed to the resultCallback() function. Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you are using a <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">Search()</a> that uses a resultCallback() function, then return true to keep searching and false to terminate the search. </p>
+
+<p>Search the R-tree for all elements whose bounding boxes overlap a_rect. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rect</td><td>[in/out] The version of search that has ON_RTreeBBox* a_rect as the first argument, allows you to shrink the a_rect as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_rect, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified rect must be contained in the previous rect.</td></tr>
+    <tr><td class="paramname">a_sphere</td><td>[in/out] The version of search that has ON_RTreeSphere* a_sphere as the first argument, allows you to shrink the a_sphere as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_sphere, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified sphere must be contained in the previous sphere.</td></tr>
+    <tr><td class="paramname">a_capsule</td><td>[in/out] The version of search that has ON_RTreeSphere* a_capsule as the first argument, allows you to shrink the a_capsule as the search progresses. This is useful for doing things like searching for closest points. If you want to shrink a_capsule, you must use a_context to pass it to the resultCallback function and shrink it in the resultCallback function. In the callback, the modified capsule must be contained in the previous capsule.</td></tr>
+    <tr><td class="paramname">a_min</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_max</td><td>[in] (a_min,a_max) is the bounding box of the search region.</td></tr>
+    <tr><td class="paramname">a_results</td><td>[out] The ids of elements that overlaps the search region.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[in] A function to call when leaf nodes overlap.</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] pointer passed to the resultCallback() function.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you are using a <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">Search()</a> that uses a resultCallback() function, then return true to keep searching and false to terminate the search. </p>
 
 </div>
 </div>
@@ -691,7 +752,20 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search the R-tree for all elements whose bounding boxes overlap the set of points between to parallel planes. Parameters: a_plane_eqn - [in] a_min - [in] a_max - [in] The region between the parallel planes is the set point points where the value of the plane equation is &gt;= a_min and &lt;= a_max. resultCallback - [in] A function to call when leaf nodes overlap the region between the parallel planes. a_context - [in] pointer passed to the resultCallback() function. Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you are using a <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">Search()</a> that uses a resultCallback() function, then return true to keep searching and false to terminate the search. </p>
+
+<p>Search the R-tree for all elements whose bounding boxes overlap the set of points between to parallel planes. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_plane_eqn</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_min</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_max</td><td>[in] The region between the parallel planes is the set point points where the value of the plane equation is &gt;= a_min and &lt;= a_max.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[in] A function to call when leaf nodes overlap the region between the parallel planes.</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] pointer passed to the resultCallback() function.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you are using a <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">Search()</a> that uses a resultCallback() function, then return true to keep searching and false to terminate the search. </p>
 
 </div>
 </div>
@@ -962,7 +1036,19 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Search two R-trees for all pairs elements whose bounding boxes overlap. Parameters: a_rtreeA - [in] a_rtreeB - [in] tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then the pair is added to a_result[]. a_result - [out] Pairs of ids of elements who bounding boxes overlap. Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
+
+<p>Search two R-trees for all pairs elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rtreeA</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_rtreeB</td><td>[in]</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then the pair is added to a_result[].</td></tr>
+    <tr><td class="paramname">a_result</td><td>[out] Pairs of ids of elements who bounding boxes overlap.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
 
 </div>
 </div>
@@ -1017,7 +1103,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Search two R-trees for all pairs elements whose bounding boxes overlap. Parameters: a_rtreeA - [in] a_rtreeB - [in] tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
+
+<p>Search two R-trees for all pairs elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rtreeA</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_rtreeB</td><td>[in]</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
 
 </div>
 </div>
@@ -1072,7 +1171,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Search two R-trees for all pairs elements whose bounding boxes overlap. Parameters: a_rtreeA - [in] a_rtreeB - [in] tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function Return true for the search to continue and false to terminate the search. a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
+
+<p>Search two R-trees for all pairs elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rtreeA</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_rtreeB</td><td>[in]</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function Return true for the search to continue and false to terminate the search.</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
 
 </div>
 </div>
@@ -1127,7 +1239,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Search two R-trees for all pairs elements whose bounding boxes overlap. The tolerance can be reduced by the callback function during the search. This version of search is well suited to finding closest points between two objects. Parameters: a_rtreeA - [in] a_rtreeB - [in] tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function Return true for the search to continue and false to terminate the search. The callback may reduce the value of the tolerance parameter during the search. Increasing the value of the tolerance or setting it to an invalid value is not supported and will lead to unpredictable results. a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. Remarks: If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
+
+<p>Search two R-trees for all pairs elements whose bounding boxes overlap. The tolerance can be reduced by the callback function during the search. This version of search is well suited to finding closest points between two objects. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">a_rtreeA</td><td>[in]</td></tr>
+    <tr><td class="paramname">a_rtreeB</td><td>[in]</td></tr>
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function Return true for the search to continue and false to terminate the search. The callback may reduce the value of the tolerance parameter during the search. Increasing the value of the tolerance or setting it to an invalid value is not supported and will lead to unpredictable results.</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
+<p>If you have a single R-tree and you want to find paris of distinct nodes whose bounding boxes overlap, then use the non-static <a class="el" href="../../dc/d3e/class_o_n___r_tree.html#a3c8689767a0edbccf8ff7181f7b0af9b" title="Search the R-tree for all elements whose bounding boxes overlap a_rect. ">ON_RTree::Search</a>(double tolerance, ... results ) member functions. </p>
 
 </div>
 </div>
@@ -1156,7 +1281,16 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. Parameters: tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then the pair is added to a_result[]. a_result - [out] Pairs of ids of elements who bounding boxes overlap. Returns: True if entire tree was searched. It is possible no results were found. </p>
+
+<p>Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then the pair is added to a_result[].</td></tr>
+    <tr><td class="paramname">a_result</td><td>[out] Pairs of ids of elements who bounding boxes overlap.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
 
 </div>
 </div>
@@ -1191,7 +1325,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. Parameters: tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. </p>
+
+<p>Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
 
 </div>
 </div>
@@ -1226,7 +1370,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. Parameters: tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. </p>
+
+<p>Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
 
 </div>
 </div>
@@ -1261,7 +1415,17 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. Parameters: tolerance - [in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called. resultCallback - [out] callback function Return true for the search to continue and false to terminate the search. The callback may reduce the value of the tolerance parameter during the search. Increasing the value of the tolerance or setting it to an invalid value is not supported and will lead to unpredictable results. a_context - [in] argument passed through to resultCallback(). Returns: True if entire tree was searched. It is possible no results were found. </p>
+
+<p>Search a single R-tree for all pairs of distinct elements whose bounding boxes overlap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tolerance</td><td>[in] If the distance between a pair of bounding boxes is &lt;= tolerance, then resultCallback() is called.</td></tr>
+    <tr><td class="paramname">resultCallback</td><td>[out] callback function Return true for the search to continue and false to terminate the search. The callback may reduce the value of the tolerance parameter during the search. Increasing the value of the tolerance or setting it to an invalid value is not supported and will lead to unpredictable results.</td></tr>
+    <tr><td class="paramname">a_context</td><td>[in] argument passed through to resultCallback().</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if entire tree was searched. It is possible no results were found. </dd></dl>
 
 </div>
 </div>
@@ -1455,7 +1619,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of bytes of heap memory used by this R-tree. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of bytes of heap memory used by this R-tree. </dd></dl>
 
 </div>
 </div>
@@ -1488,7 +1652,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

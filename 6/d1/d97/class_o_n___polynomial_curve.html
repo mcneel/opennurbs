@@ -58,6 +58,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1429100544046950b8c989ff0c73289a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#a1429100544046950b8c989ff0c73289a">ON_PolynomialCurve</a> ()</td></tr>
 <tr class="separator:a1429100544046950b8c989ff0c73289a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af70e6b09447db32e474b5b3114b95abb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#af70e6b09447db32e474b5b3114b95abb">ON_PolynomialCurve</a> (int dim, bool bIsRational, int order)</td></tr>
+<tr class="memdesc:af70e6b09447db32e474b5b3114b95abb"><td class="mdescLeft">&#160;</td><td class="mdescRight">See <a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#aaafe3f0abd076a9ebc7a081779ecab41" title="Initializes fields and allocates the m_cv array. ">ON_PolynomialCurve::Create</a>.  <a href="#af70e6b09447db32e474b5b3114b95abb">More...</a><br /></td></tr>
 <tr class="separator:af70e6b09447db32e474b5b3114b95abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a951029c4c38b1d197e212ee769bc85f5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#a951029c4c38b1d197e212ee769bc85f5">ON_PolynomialCurve</a> (const <a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html">ON_PolynomialCurve</a> &amp;)</td></tr>
 <tr class="separator:a951029c4c38b1d197e212ee769bc85f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -66,10 +67,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad88419e738da95150efa572664e195e5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#ad88419e738da95150efa572664e195e5">~ON_PolynomialCurve</a> ()</td></tr>
 <tr class="separator:ad88419e738da95150efa572664e195e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaafe3f0abd076a9ebc7a081779ecab41"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#aaafe3f0abd076a9ebc7a081779ecab41">Create</a> (int dim, bool bIsRational, int order)</td></tr>
+<tr class="memdesc:aaafe3f0abd076a9ebc7a081779ecab41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes fields and allocates the m_cv array.  <a href="#aaafe3f0abd076a9ebc7a081779ecab41">More...</a><br /></td></tr>
 <tr class="separator:aaafe3f0abd076a9ebc7a081779ecab41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a32ca2814132d4956275d5c19a5be10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#a6a32ca2814132d4956275d5c19a5be10">Destroy</a> ()</td></tr>
+<tr class="memdesc:a6a32ca2814132d4956275d5c19a5be10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deallocates the m_cv array and sets fields to zero.  <a href="#a6a32ca2814132d4956275d5c19a5be10">More...</a><br /></td></tr>
 <tr class="separator:a6a32ca2814132d4956275d5c19a5be10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec246613dd6a0ebcfadf01212ca1b620"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#aec246613dd6a0ebcfadf01212ca1b620">Evaluate</a> (double t, int der_count, int v_stride, double *v) const</td></tr>
+<tr class="memdesc:aec246613dd6a0ebcfadf01212ca1b620"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate a polynomial curve.  <a href="#aec246613dd6a0ebcfadf01212ca1b620">More...</a><br /></td></tr>
 <tr class="separator:aec246613dd6a0ebcfadf01212ca1b620"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72ff74f2b0777b4c80959f1c58761887"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html">ON_PolynomialCurve</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#a72ff74f2b0777b4c80959f1c58761887">operator=</a> (const <a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html">ON_PolynomialCurve</a> &amp;)</td></tr>
 <tr class="separator:a72ff74f2b0777b4c80959f1c58761887"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,7 +147,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: See <a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#aaafe3f0abd076a9ebc7a081779ecab41">ON_PolynomialCurve::Create</a>. Parameters: dim - [in] dimension of the curve bIsRational - [in] true if rational order - [in] (&gt;=2) order = degree+1 </p>
+
+<p>See <a class="el" href="../../d1/d97/class_o_n___polynomial_curve.html#aaafe3f0abd076a9ebc7a081779ecab41" title="Initializes fields and allocates the m_cv array. ">ON_PolynomialCurve::Create</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dim</td><td>[in] dimension of the curve</td></tr>
+    <tr><td class="paramname">bIsRational</td><td>[in] true if rational</td></tr>
+    <tr><td class="paramname">order</td><td>[in] (&gt;=2) order = degree+1</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -232,7 +245,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Initializes fields and allocates the m_cv array. Parameters: dim - [in] dimension of the curve bIsRational - [in] true if rational order - [in] (&gt;=2) order = degree+1 </p>
+
+<p>Initializes fields and allocates the m_cv array. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dim</td><td>[in] dimension of the curve</td></tr>
+    <tr><td class="paramname">bIsRational</td><td>[in] true if rational</td></tr>
+    <tr><td class="paramname">order</td><td>[in] (&gt;=2) order = degree+1</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -250,7 +272,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Deallocates the m_cv array and sets fields to zero. </p>
+
+<p>Deallocates the m_cv array and sets fields to zero. </p>
 
 </div>
 </div>
@@ -291,7 +314,18 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Evaluate a polynomial curve. Parameters: t - [in] evaluation parameter ( usually in Domain() ). der_count - [in] (&gt;=0) number of derivatives to evaluate v_stride - [in] (&gt;=Dimension()) stride to use for the v[] array v - [out] array of length (der_count+1)*v_stride curve(t) is returned in (v[0],...,v[m_dim-1]), curve'(t) is retuned in (v[v_stride],...,v[v_stride+m_dim-1]), curve"(t) is retuned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]), etc. Returns: false if unable to evaluate. </p>
+
+<p>Evaluate a polynomial curve. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t</td><td>[in] evaluation parameter ( usually in Domain() ).</td></tr>
+    <tr><td class="paramname">der_count</td><td>[in] (&gt;=0) number of derivatives to evaluate</td></tr>
+    <tr><td class="paramname">v_stride</td><td>[in] (&gt;=Dimension()) stride to use for the v[] array</td></tr>
+    <tr><td class="paramname">v</td><td>[out] array of length (der_count+1)*v_stride curve(t) is returned in (v[0],...,v[m_dim-1]), curve'(t) is retuned in (v[v_stride],...,v[v_stride+m_dim-1]), curve"(t) is retuned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]), etc.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>false if unable to evaluate. </dd></dl>
 
 </div>
 </div>
@@ -418,7 +452,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

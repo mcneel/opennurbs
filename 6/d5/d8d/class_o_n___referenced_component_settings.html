@@ -61,10 +61,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a40b0f486406b521061a6ce664af8f2bc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#a40b0f486406b521061a6ce664af8f2bc">~ON_ReferencedComponentSettings</a> ()</td></tr>
 <tr class="separator:a40b0f486406b521061a6ce664af8f2bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f48ff2aa599e4cf7d91cc6bd019d8a2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#a3f48ff2aa599e4cf7d91cc6bd019d8a2">AfterLayerTableAddedToModel</a> (const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;source_archive_manifest, const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;model_manifest, const class <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;archive_to_model_map)</td></tr>
+<tr class="memdesc:a3f48ff2aa599e4cf7d91cc6bd019d8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the mapping from from reference file layer id to runtime model layer id. Typically this is done immediately after the reference file layers are added to the runtime model.  <a href="#a3f48ff2aa599e4cf7d91cc6bd019d8a2">More...</a><br /></td></tr>
 <tr class="separator:a3f48ff2aa599e4cf7d91cc6bd019d8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3147f782e4c17a2e5f35acf7b55b4fb8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#a3147f782e4c17a2e5f35acf7b55b4fb8">AfterReferenceLayerTableRead</a> (const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;source_archive_manifest, const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;model_manifest, const class <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;archive_to_model_map, <a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a> *linked_definition_parent_layer, unsigned int layer_count, <a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a> **layers)</td></tr>
+<tr class="memdesc:a3147f782e4c17a2e5f35acf7b55b4fb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update runtime layer color visibility, locked, ... settings in the layer table read from a refence file to the values to use in the runtime model. This is typically done right after the reference file layer table is read and before the layers are added to the runtime model.  <a href="#a3147f782e4c17a2e5f35acf7b55b4fb8">More...</a><br /></td></tr>
 <tr class="separator:a3147f782e4c17a2e5f35acf7b55b4fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6107a2ef826576acaa22b1b5f1ee08c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#a6107a2ef826576acaa22b1b5f1ee08c0">BeforeLinkedDefinitionWrite</a> (const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;model_manifest, const class <a class="el" href="../../d8/d72/class_o_n___component_manifest.html">ON_ComponentManifest</a> &amp;destination_archive_manifest, const class <a class="el" href="../../d9/df6/class_o_n___manifest_map.html">ON_ManifestMap</a> &amp;model_to_archive_map, const <a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a> *linked_definition_parent_layer, void *context, const <a class="el" href="../../d6/d78/class_o_n___layer.html">ON_Layer</a> *(*ModelLayerFromIdFunc)(void *context, const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &amp;))</td></tr>
+<tr class="memdesc:a6107a2ef826576acaa22b1b5f1ee08c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save the current runtime layer color, visibility, ... states. Typically this is done immediately before a linked instance definition or worksession reference information is written. Calling the <a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#ad3e638ea624809628983a08ac60dc26b">Write()</a> function destroys the information created by BeforeWrite() because it is generally out-of-date if modeling resumes after writing.  <a href="#a6107a2ef826576acaa22b1b5f1ee08c0">More...</a><br /></td></tr>
 <tr class="separator:a6107a2ef826576acaa22b1b5f1ee08c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1787a9024039541cecf7f41b7fe2bbe6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#a1787a9024039541cecf7f41b7fe2bbe6">HasLayerInformation</a> () const</td></tr>
 <tr class="separator:a1787a9024039541cecf7f41b7fe2bbe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -83,10 +86,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad3e638ea624809628983a08ac60dc26b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#ad3e638ea624809628983a08ac60dc26b">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive) const</td></tr>
 <tr class="separator:ad3e638ea624809628983a08ac60dc26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2012 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae47da95c9c3ab70430e9540d3fe5aed8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae47da95c9c3ab70430e9540d3fe5aed8">&#9670;&nbsp;</a></span>ON_ReferencedComponentSettings() <span class="overload">[1/2]</span></h2>
 
@@ -179,7 +179,16 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Update the mapping from from reference file layer id to runtime model layer id. Typically this is done immediately after the reference file layers are added to the runtime model. Parameters: source_archive_manifest - [in] manifest of archive being read (may partially read) model_manifest - [in] manifest of runtime model (may partially created) archive_to_model_map - [in] Manifest map from reference file settings to runtime model settings. This map typically exists while the archive is being read and is destroyed after reading is complete. That's why the mapping has to be saved. </p>
+
+<p>Update the mapping from from reference file layer id to runtime model layer id. Typically this is done immediately after the reference file layers are added to the runtime model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source_archive_manifest</td><td>[in] manifest of archive being read (may partially read)</td></tr>
+    <tr><td class="paramname">model_manifest</td><td>[in] manifest of runtime model (may partially created)</td></tr>
+    <tr><td class="paramname">archive_to_model_map</td><td>[in] Manifest map from reference file settings to runtime model settings. This map typically exists while the archive is being read and is destroyed after reading is complete. That's why the mapping has to be saved.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -232,7 +241,19 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Update runtime layer color visibility, locked, ... settings in the layer table read from a refence file to the values to use in the runtime model. This is typically done right after the reference file layer table is read and before the layers are added to the runtime model. Parameters: source_archive_manifest - [in] manifest of archive being read (may partially read) model_manifest - [in] manifest of runtime model (may partially created) layer_count - [in] length of layers[] array; layers - [in/out] The input values should be the layer table read from the referenced file. The output values have color, visibility, locked, ... settings updated to the state they had the last time the model file (not the referenced file) was saved. linked_definition_parent_layer - [in/out] If linked_definition_parent_layer is not nullptr, its color, visibility, ... settings are updated to the state they had the last time the model file (not the referenced file) was saved. Remarks: The layer idenitification information (name, index, id) are not changed by this function. </p>
+
+<p>Update runtime layer color visibility, locked, ... settings in the layer table read from a refence file to the values to use in the runtime model. This is typically done right after the reference file layer table is read and before the layers are added to the runtime model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source_archive_manifest</td><td>[in] manifest of archive being read (may partially read)</td></tr>
+    <tr><td class="paramname">model_manifest</td><td>[in] manifest of runtime model (may partially created)</td></tr>
+    <tr><td class="paramname">layer_count</td><td>[in] length of layers[] array;</td></tr>
+    <tr><td class="paramname">layers</td><td>[in/out] The input values should be the layer table read from the referenced file. The output values have color, visibility, locked, ... settings updated to the state they had the last time the model file (not the referenced file) was saved.</td></tr>
+    <tr><td class="paramname">linked_definition_parent_layer</td><td>[in/out] If linked_definition_parent_layer is not nullptr, its color, visibility, ... settings are updated to the state they had the last time the model file (not the referenced file) was saved.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The layer idenitification information (name, index, id) are not changed by this function. </p>
 
 </div>
 </div>
@@ -285,7 +306,19 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Save the current runtime layer color, visibility, ... states. Typically this is done immediately before a linked instance definition or worksession reference information is written. Calling the <a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#ad3e638ea624809628983a08ac60dc26b">Write()</a> function destroys the information created by BeforeWrite() because it is generally out-of-date if modeling resumes after writing. Parameters: model_manifest - [in] manifest of runtime model destination_archive_manifest - [in] manifest of archive being written (may partially written) model_to_archive_map - [in] Manifest map from model to destination_archive_manifest. linked_definition_parent_layer - [in] nullptr or the parent layer context - [in] first parameter passed to ModelLayerFromIdFunc ModelLayerFromIdFunc - [in] Function to get model layers from id </p>
+
+<p>Save the current runtime layer color, visibility, ... states. Typically this is done immediately before a linked instance definition or worksession reference information is written. Calling the <a class="el" href="../../d5/d8d/class_o_n___referenced_component_settings.html#ad3e638ea624809628983a08ac60dc26b">Write()</a> function destroys the information created by BeforeWrite() because it is generally out-of-date if modeling resumes after writing. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model_manifest</td><td>[in] manifest of runtime model</td></tr>
+    <tr><td class="paramname">destination_archive_manifest</td><td>[in] manifest of archive being written (may partially written)</td></tr>
+    <tr><td class="paramname">model_to_archive_map</td><td>[in] Manifest map from model to destination_archive_manifest.</td></tr>
+    <tr><td class="paramname">linked_definition_parent_layer</td><td>[in] nullptr or the parent layer</td></tr>
+    <tr><td class="paramname">context</td><td>[in] first parameter passed to ModelLayerFromIdFunc</td></tr>
+    <tr><td class="paramname">ModelLayerFromIdFunc</td><td>[in] Function to get model layers from id</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -434,7 +467,7 @@ Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

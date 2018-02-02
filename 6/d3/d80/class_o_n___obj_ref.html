@@ -62,6 +62,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaa47ec76460fa4e19470568cfd0964da"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#aaa47ec76460fa4e19470568cfd0964da">~ON_ObjRef</a> ()</td></tr>
 <tr class="separator:aaa47ec76460fa4e19470568cfd0964da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28085af6bac22cc5b2be0d717e82a42e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a28085af6bac22cc5b2be0d717e82a42e">DecrementProxyReferenceCount</a> ()</td></tr>
+<tr class="memdesc:a28085af6bac22cc5b2be0d717e82a42e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool to decrement reference counts. Most users will never need to call this tool. It is called by ~ON_ObjRef and used in rare cases when a <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> needs to reference an object only by uuid and component index.  <a href="#a28085af6bac22cc5b2be0d717e82a42e">More...</a><br /></td></tr>
 <tr class="separator:a28085af6bac22cc5b2be0d717e82a42e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d39cf2167a1c9ef68688f59bb17f5f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a3d39cf2167a1c9ef68688f59bb17f5f1">Destroy</a> ()</td></tr>
 <tr class="separator:a3d39cf2167a1c9ef68688f59bb17f5f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -74,10 +75,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2196f6637c6571ea92f37237fa9ab2bd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a2196f6637c6571ea92f37237fa9ab2bd">Read</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;)</td></tr>
 <tr class="separator:a2196f6637c6571ea92f37237fa9ab2bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20552c00e67ccf76a1b93fa8fe046ebc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a20552c00e67ccf76a1b93fa8fe046ebc">RemapObjectId</a> (const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html">ON_UuidPair</a> &gt; &amp;uuid_remap)</td></tr>
+<tr class="memdesc:a20552c00e67ccf76a1b93fa8fe046ebc"><td class="mdescLeft">&#160;</td><td class="mdescRight">This tool is used in rare situations when the object ids stored in the uuid list need to be remapped.  <a href="#a20552c00e67ccf76a1b93fa8fe046ebc">More...</a><br /></td></tr>
 <tr class="separator:a20552c00e67ccf76a1b93fa8fe046ebc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad67113207a49fc4e2da2ace05ecdf4f7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#ad67113207a49fc4e2da2ace05ecdf4f7">SetParentIRef</a> (const <a class="el" href="../../de/de8/class_o_n___instance_ref.html">ON_InstanceRef</a> &amp;iref, <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> iref_id, int idef_geometry_index)</td></tr>
 <tr class="separator:ad67113207a49fc4e2da2ace05ecdf4f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38f2f78fbff8fada250d4cc1119baa2d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a38f2f78fbff8fada250d4cc1119baa2d">SetProxy</a> (<a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *proxy1, <a class="el" href="../../d9/d7b/class_o_n___object.html">ON_Object</a> *proxy2, bool bCountReferences)</td></tr>
+<tr class="memdesc:a38f2f78fbff8fada250d4cc1119baa2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expert user tool to initialize the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> m__proxy1, m__proxy2, and m__proxy_ref_count fields.  <a href="#a38f2f78fbff8fada250d4cc1119baa2d">More...</a><br /></td></tr>
 <tr class="separator:a38f2f78fbff8fada250d4cc1119baa2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2da05e608cc071c37169835d2fa7c872"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d80/class_o_n___obj_ref.html#a2da05e608cc071c37169835d2fa7c872">Write</a> (<a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;) const</td></tr>
 <tr class="separator:a2da05e608cc071c37169835d2fa7c872"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,7 +176,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Expert user tool to decrement reference counts. Most users will never need to call this tool. It is called by ~ON_ObjRef and used in rare cases when a <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> needs to reference an object only by uuid and component index. </p>
+
+<p>Expert user tool to decrement reference counts. Most users will never need to call this tool. It is called by ~ON_ObjRef and used in rare cases when a <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> needs to reference an object only by uuid and component index. </p>
 
 </div>
 </div>
@@ -227,7 +231,13 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: proxy_object_index - [in] 1 or 2. Returns: A pointer to the requested proxy object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">proxy_object_index</td><td>[in] 1 or 2.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the requested proxy object. </dd></dl>
 
 </div>
 </div>
@@ -245,7 +255,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: 0: This <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> is not counting references. &gt;0: Number of references. </p>
+<dl class="section return"><dt>Returns</dt><dd>0: This <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> is not counting references. &gt;0: Number of references. </dd></dl>
 
 </div>
 </div>
@@ -282,7 +292,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This tool is used in rare situations when the object ids stored in the uuid list need to be remapped. Parameters: uuid_remap - [in] Is it critical that uuid_remap[] be sorted with respect to <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html#a453128b528d685bf7d8358abe9af21f0">ON_UuidPair::CompareFirstUuid</a>. </p>
+
+<p>This tool is used in rare situations when the object ids stored in the uuid list need to be remapped. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid_remap</td><td>[in] Is it critical that uuid_remap[] be sorted with respect to <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html#a453128b528d685bf7d8358abe9af21f0" title="Compares m_uuid[0] and ignores m_uuid[1] ">ON_UuidPair::CompareFirstUuid</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -351,7 +368,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Expert user tool to initialize the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> m__proxy1, m__proxy2, and m__proxy_ref_count fields. </p>
+
+<p>Expert user tool to initialize the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> m__proxy1, m__proxy2, and m__proxy_ref_count fields. </p>
 
 </div>
 </div>
@@ -385,7 +403,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m__iref[] is not empty, then m_uuid identifies and instance reference (ON_InstanceRef/CRhinoInstanceObject) and m__iref[] records the chain of instance references from the base piece of geometry to the instance reference. The top level instance reference is last in the list. </p>
 
 </div>
 </div>
@@ -414,7 +431,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_point != <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a> and m_evp.m_t_type != 0, then m_evp records the records the m_geometry evaluation parameters for the m_point. </p>
 
 </div>
 </div>
@@ -429,11 +445,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The m_geometry and m_parent_geometry pointers are runtime values that point to the object being referenced. The destructor ~ON_ObjRef does not delete the objects these pointers reference.</p>
-<p>m_geometry_type records the type of geometry m_geometry points to.</p>
-<p>When the referenced object is a subobject, like a part of a brep or mesh, m_geometry points to the subobject and m_parent_geometry points to the parent object, like the brep or mesh. In this case m_component_index records the location of the subobject.</p>
-<p>Parts of instance reference objects: When the geometry belongs to an instance reference m_uuid is the id of the CRhinoInstanceObject, m_parent_geometry points to the instance definition geometry or a transformed proxy, and m_geometry points to the piece of m_geometry. The m__iref[] array records the connection between the instance reference and the geometry the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> refers to.</p>
-<p>For example if the <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> is to an edge of a brep in and instance reference, m_uuid would be the Rhino id of the CRhinoInstanceObject, m_parent_geometry would point to a, possibly proxy, <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a> object, m_geometry would point to the <a class="el" href="../../dd/de8/class_o_n___brep_edge.html">ON_BrepEdge</a> in the <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a>, m_component_index would record the edge's index in the <a class="el" href="../../d9/d96/class_o_n___brep.html#a0cab74697be6282befc920ab0db73c63" title="edges ">ON_Brep.m_E</a>[] array and m_geometry_type would be ON::curve_object or ON::brep_edge. m__iref-&gt;Last() would contain the information about the top level instance reference. If the brep was at the bottom of a chain of instance references, m__iref[0] would be the reference that immediately used the brep. </p>
 
 </div>
 </div>
@@ -462,7 +473,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If the point was the result of some type of object snap, then the object snap is recorded here. </p>
 
 </div>
 </div>
@@ -491,7 +501,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_point != <a class="el" href="../../d2/d35/class_o_n__3d_point.html#aa68906e3e7650b01ce88c527f6088d7d" title="(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE) ">ON_3dPoint::UnsetPoint</a>, then the ObjRef resolves to a point location. The point location is saved here so the information can persist if the object itself vanishes. </p>
 
 </div>
 </div>
@@ -506,7 +515,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_runtime_sn &gt; 0, then it is the value of a Rhino object's CRhinoObject::m_runtime_object_serial_number field. The serial number is used instead of the pointer to prevent crashes in cases when the CRhinoObject is deleted but an <a class="el" href="../../d3/d80/class_o_n___obj_ref.html">ON_ObjRef</a> continues to reference the Rhino object. The value of m_runtime_sn is not saved in archives because it generally changes if you save and reload an archive. </p>
 
 </div>
 </div>
@@ -521,7 +529,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>In Rhino, this uuid is the persistent id of the CRhinoObject that owns the referenced geometry. The value of the CRhinoObject id is stored on <a class="el" href="../../d0/d52/class_o_n__3dm_object_attributes.html#a806a85052b002c45021650e3b97e2018">ON_3dmObjectAttributes.m_uuid</a>. </p>
 
 </div>
 </div>
@@ -531,7 +538,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

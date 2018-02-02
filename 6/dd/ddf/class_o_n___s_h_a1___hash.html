@@ -96,6 +96,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a82f852b0d83eacd5cbbad31bfafddf30"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a82f852b0d83eacd5cbbad31bfafddf30">FileContentHash</a> (FILE *file, ON__UINT64 &amp;sizeof_file)</td></tr>
 <tr class="separator:a82f852b0d83eacd5cbbad31bfafddf30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cb83e4e627ac917404722990efa2f0c"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a9cb83e4e627ac917404722990efa2f0c">FileSystemPathHash</a> (const wchar_t *path)</td></tr>
+<tr class="memdesc:a9cb83e4e627ac917404722990efa2f0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a hash of the file system path that is independent of the size of wchar_t, constant across platforms, and constant across varations in the way the path is formatted.  <a href="#a9cb83e4e627ac917404722990efa2f0c">More...</a><br /></td></tr>
 <tr class="separator:a9cb83e4e627ac917404722990efa2f0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a117faec166cf3d1e109420f44c7ce38d"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a117faec166cf3d1e109420f44c7ce38d">FileSystemPathHash</a> (const char *path)</td></tr>
 <tr class="separator:a117faec166cf3d1e109420f44c7ce38d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,15 +125,11 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a5fbd8257f1b9c3fdfc929d3869113924"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a5fbd8257f1b9c3fdfc929d3869113924">EmptyContentHash</a></td></tr>
-<tr class="memdesc:a5fbd8257f1b9c3fdfc929d3869113924"><td class="mdescLeft">&#160;</td><td class="mdescRight">SHA-1 hash of zero bytes.  <a href="#a5fbd8257f1b9c3fdfc929d3869113924">More...</a><br /></td></tr>
 <tr class="separator:a5fbd8257f1b9c3fdfc929d3869113924"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50683fde45600ba340667429fd8fd686"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html">ON_SHA1_Hash</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686">ZeroDigest</a></td></tr>
-<tr class="memdesc:a50683fde45600ba340667429fd8fd686"><td class="mdescLeft">&#160;</td><td class="mdescRight">all digest bytes are zero  <a href="#a50683fde45600ba340667429fd8fd686">More...</a><br /></td></tr>
 <tr class="separator:a50683fde45600ba340667429fd8fd686"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>/ / Copyright (c) 1993-2015 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a260f104c8943027793e81ab7759a8667"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a260f104c8943027793e81ab7759a8667">&#9670;&nbsp;</a></span>ON_SHA1_Hash() <span class="overload">[1/2]</span></h2>
 
@@ -237,7 +234,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: buffer - [in] sizeof_buffer - [in] number of bytes in buffer Returns: SHA1-1 hash of the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>[in]</td></tr>
+    <tr><td class="paramname">sizeof_buffer</td><td>[in] number of bytes in buffer</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>SHA1-1 hash of the buffer. </dd></dl>
 
 </div>
 </div>
@@ -328,7 +332,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: file_name - [in] Name of file sizeof_file - [out] number of bytes in file Returns: SHA1-1 hash of the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file_name</td><td>[in] Name of file</td></tr>
+    <tr><td class="paramname">sizeof_file</td><td>[out] number of bytes in file</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>SHA1-1 hash of the buffer. </dd></dl>
 
 </div>
 </div>
@@ -401,7 +412,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: file - [in] File stream from <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923">ON_FileStream::Open</a>(...,L"rb"); sizeof_file - [out] number of bytes in file Returns: SHA1-1 hash of the file stream from the current offset to the end of the file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file</td><td>[in] File stream from <a class="el" href="../../dd/da7/class_o_n___file_stream.html#a09e4b43c9176ae7854ba10e5d21b2923" title="Portable wrapper for C runtime fopen(). ">ON_FileStream::Open</a>(...,L"rb");</td></tr>
+    <tr><td class="paramname">sizeof_file</td><td>[out] number of bytes in file</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>SHA1-1 hash of the file stream from the current offset to the end of the file. </dd></dl>
 
 </div>
 </div>
@@ -428,12 +446,20 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Return a hash of the file system path that is independent of the size of wchar_t, constant across platforms, and constant across varations in the way the path is formatted.</p>
-<p>Parameters: path - [in] File system path to a directory or file.</p>
-<p>Returns: SHA1-1 hash of the buffer.</p>
-<p>Example: These file system paths have identical values of <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a9cb83e4e627ac917404722990efa2f0c">FileSystemPathHash()</a>. /x/y/z/name.ext .ext /x///&lt;y//z/name.ext /x/y/a/b/c/../../../z/name.ext /X/Y/Z/NAME.EXT (When ON_ComparePathIgnoreCase() is true)</p>
-<p>Remarks: This function uses the value of <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a9cb9362f3b1f40104ba3cd0b98981389">ON_FileSystemPath::PlatformPathIgnoreCase()</a> to determine if case should be ignored. Use the version with a bIgnoreCase parameter if you want to explicitly control this decision. </p>
 
+<p>Return a hash of the file system path that is independent of the size of wchar_t, constant across platforms, and constant across varations in the way the path is formatted. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>[in] File system path to a directory or file. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><p class="startdd">SHA1-1 hash of the buffer.</p>
+<p class="enddd"></p>
+</dd></dl>
+<p>This function uses the value of <a class="el" href="../../d1/d6e/class_o_n___file_system_path.html#a9cb9362f3b1f40104ba3cd0b98981389">ON_FileSystemPath::PlatformPathIgnoreCase()</a> to determine if case should be ignored. Use the version with a bIgnoreCase parameter if you want to explicitly control this decision. </p>
+<div class="fragment"><div class="line">These file system paths have identical values of <a class="code" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a9cb83e4e627ac917404722990efa2f0c">FileSystemPathHash</a>().</div><div class="line">/x/y/z/name.ext
+\x\y\z\name.ext</div><div class="line">/x<span class="comment">//y//z/name.ext</span></div><div class="line">/x/y/a/b/c/../../../z/name.ext</div><div class="line">/X/Y/Z/NAME.EXT (When ON_ComparePathIgnoreCase() is <span class="keyword">true</span>)</div></div><!-- fragment --> 
 </div>
 </div>
 <a id="a117faec166cf3d1e109420f44c7ce38d"></a>
@@ -548,7 +574,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if this and <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a5fbd8257f1b9c3fdfc929d3869113924" title="SHA-1 hash of zero bytes. ">ON_SHA1_Hash::EmptyContentHash</a> have identical digest values. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if this and <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a5fbd8257f1b9c3fdfc929d3869113924">ON_SHA1_Hash::EmptyContentHash</a> have identical digest values. </dd></dl>
 
 </div>
 </div>
@@ -583,7 +609,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: True if this and <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686" title="all digest bytes are zero ">ON_SHA1_Hash::ZeroDigest</a> have identical digest values. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if this and <a class="el" href="../../dd/ddf/class_o_n___s_h_a1___hash.html#a50683fde45600ba340667429fd8fd686">ON_SHA1_Hash::ZeroDigest</a> have identical digest values. </dd></dl>
 
 </div>
 </div>
@@ -664,7 +690,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: str - [in] string byte_count - [out] number of bytes in UTF-8 encoding of the string. Returns: SHA1-1 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>[in] string</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[out] number of bytes in UTF-8 encoding of the string.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>SHA1-1 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </dd></dl>
 
 </div>
 </div>
@@ -769,7 +802,14 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Parameters: str - [in] byte_count - [out] number of bytes in the string. Returns: SHA1-1 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>[in]</td></tr>
+    <tr><td class="paramname">byte_count</td><td>[out] number of bytes in the string.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>SHA1-1 hash of the UTF-8 encoding of the string. (Platforms and endian independent.) </dd></dl>
 
 </div>
 </div>
@@ -856,7 +896,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bUpperCaseHexadecimalDigits - [in] false - use 0-9, a-f true - use 0-9, A-F Returns: The SHA-1 hash value as a 40 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bUpperCaseHexadecimalDigits</td><td>[in]</td></tr>
+    <tr><td class="paramname">false</td><td>use 0-9, a-f</td></tr>
+    <tr><td class="paramname">true</td><td>use 0-9, A-F</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The SHA-1 hash value as a 40 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </dd></dl>
 
 </div>
 </div>
@@ -875,7 +923,15 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parameters: bUpperCaseHexadecimalDigits - [in] false - use 0-9, a-f true - use 0-9, A-F Returns: The SHA-1 hash value as a 40 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bUpperCaseHexadecimalDigits</td><td>[in]</td></tr>
+    <tr><td class="paramname">false</td><td>use 0-9, a-f</td></tr>
+    <tr><td class="paramname">true</td><td>use 0-9, A-F</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The SHA-1 hash value as a 40 hexadecimal digits. The first digit in the string is the hexadecimal value of m_digest[0]. </dd></dl>
 
 </div>
 </div>
@@ -918,8 +974,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>SHA-1 hash of zero bytes. </p>
-
 </div>
 </div>
 <a id="a39d3beb2cb8130667bf4b05f05494e3d"></a>
@@ -956,8 +1010,6 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>all digest bytes are zero </p>
-
 </div>
 </div>
 </div><!-- contents -->
@@ -966,7 +1018,7 @@ Static Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:41 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:31 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

@@ -51,6 +51,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>The <a class="el" href="../../db/dbc/class_o_n___uuid_list.html" title="The ON_UuidList class provides a tool to efficiently maintain a list of uuids and determine if a uuid...">ON_UuidList</a> class provides a tool to efficiently maintain a list of uuids and determine if a uuid is in the list. This class is based on the premise that there are no duplicate uuids in the list.  
+ <a href="../../db/dbc/class_o_n___uuid_list.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="../../d3/d03/opennurbs__array_8h_source.html">opennurbs_array.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for ON_UuidList:</div>
@@ -73,45 +76,58 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2276cd6fe677f4b7802067dcd1c08438"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a2276cd6fe677f4b7802067dcd1c08438">~ON_UuidList</a> ()</td></tr>
 <tr class="separator:a2276cd6fe677f4b7802067dcd1c08438"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26ecd795d92c4ab7c2c96b565d0c09f3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a26ecd795d92c4ab7c2c96b565d0c09f3">AddUuid</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> uuid, bool bCheckForDupicates=true)</td></tr>
+<tr class="memdesc:a26ecd795d92c4ab7c2c96b565d0c09f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a uuid to the list.  <a href="#a26ecd795d92c4ab7c2c96b565d0c09f3">More...</a><br /></td></tr>
 <tr class="separator:a26ecd795d92c4ab7c2c96b565d0c09f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e0e47fe0b8979066aa361ba2413c4be"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a2e0e47fe0b8979066aa361ba2413c4be">Array</a> () const</td></tr>
 <tr class="separator:a2e0e47fe0b8979066aa361ba2413c4be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4202970bc50d09937dbe97ad70f03b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#aa4202970bc50d09937dbe97ad70f03b0">Compact</a> ()</td></tr>
+<tr class="memdesc:aa4202970bc50d09937dbe97ad70f03b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the uuid list as efficent as possible in both search speed and memory usage. Use <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#aa4202970bc50d09937dbe97ad70f03b0" title="Makes the uuid list as efficent as possible in both search speed and memory usage. Use Compact() when a uuid list will be in use but is not likely to be modifed. A list that has been compacted can still be modified. ">Compact()</a> when a uuid list will be in use but is not likely to be modifed. A list that has been compacted can still be modified.  <a href="#aa4202970bc50d09937dbe97ad70f03b0">More...</a><br /></td></tr>
 <tr class="separator:aa4202970bc50d09937dbe97ad70f03b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b3c53c80b2cc76ade38a913c638897a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a3b3c53c80b2cc76ade38a913c638897a">Count</a> () const</td></tr>
 <tr class="separator:a3b3c53c80b2cc76ade38a913c638897a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae58e93b7afa79e2640d9321e1be86c08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#ae58e93b7afa79e2640d9321e1be86c08">Destroy</a> ()</td></tr>
+<tr class="memdesc:ae58e93b7afa79e2640d9321e1be86c08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy list. If list will be reused, <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a69dc8994fd5faadec50c645abfea8ed4" title="Provides an efficient way to empty a list so that it can be used again. ">Empty()</a> is more efficient.  <a href="#ae58e93b7afa79e2640d9321e1be86c08">More...</a><br /></td></tr>
 <tr class="separator:ae58e93b7afa79e2640d9321e1be86c08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69dc8994fd5faadec50c645abfea8ed4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a69dc8994fd5faadec50c645abfea8ed4">Empty</a> ()</td></tr>
+<tr class="memdesc:a69dc8994fd5faadec50c645abfea8ed4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides an efficient way to empty a list so that it can be used again.  <a href="#a69dc8994fd5faadec50c645abfea8ed4">More...</a><br /></td></tr>
 <tr class="separator:a69dc8994fd5faadec50c645abfea8ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaae9bca2593b25c92d71ff5d703d6df5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#aaae9bca2593b25c92d71ff5d703d6df5">FindUuid</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> uuid) const</td></tr>
+<tr class="memdesc:aaae9bca2593b25c92d71ff5d703d6df5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if a uuid is in the list.  <a href="#aaae9bca2593b25c92d71ff5d703d6df5">More...</a><br /></td></tr>
 <tr class="separator:aaae9bca2593b25c92d71ff5d703d6df5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50742a1caa9cc3e7d89b8742e81dd2f5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a50742a1caa9cc3e7d89b8742e81dd2f5">GetUuids</a> (<a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> &gt; &amp;uuid_list) const</td></tr>
+<tr class="memdesc:a50742a1caa9cc3e7d89b8742e81dd2f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append the uuids in this class to uuid_list.  <a href="#a50742a1caa9cc3e7d89b8742e81dd2f5">More...</a><br /></td></tr>
 <tr class="separator:a50742a1caa9cc3e7d89b8742e81dd2f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab08208ecd00e6a4c9aec477c5bfbe8eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html">ON_UuidList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#ab08208ecd00e6a4c9aec477c5bfbe8eb">operator=</a> (const <a class="el" href="../../db/dbc/class_o_n___uuid_list.html">ON_UuidList</a> &amp;src)</td></tr>
 <tr class="separator:ab08208ecd00e6a4c9aec477c5bfbe8eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbd1ccc8cef432f7e7db5b3afbf594e3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#abbd1ccc8cef432f7e7db5b3afbf594e3">Read</a> (class <a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive)</td></tr>
+<tr class="memdesc:abbd1ccc8cef432f7e7db5b3afbf594e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the uuid list from an archive.  <a href="#abbd1ccc8cef432f7e7db5b3afbf594e3">More...</a><br /></td></tr>
 <tr class="separator:abbd1ccc8cef432f7e7db5b3afbf594e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a486783882004754e4801aa43f9ef4c53"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a486783882004754e4801aa43f9ef4c53">Read</a> (class <a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, bool bSortAferRead)</td></tr>
+<tr class="memdesc:a486783882004754e4801aa43f9ef4c53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the uuid list from an archive.  <a href="#a486783882004754e4801aa43f9ef4c53">More...</a><br /></td></tr>
 <tr class="separator:a486783882004754e4801aa43f9ef4c53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0fe03936fe02545e1285735ec27cda22"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a0fe03936fe02545e1285735ec27cda22">RemapUuids</a> (const <a class="el" href="../../dc/dfe/class_o_n___simple_array.html">ON_SimpleArray</a>&lt; <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html">ON_UuidPair</a> &gt; &amp;uuid_remap)</td></tr>
+<tr class="memdesc:a0fe03936fe02545e1285735ec27cda22"><td class="mdescLeft">&#160;</td><td class="mdescRight">This tool is used in rare situations when the object ids stored in the uuid list need to be remapped.  <a href="#a0fe03936fe02545e1285735ec27cda22">More...</a><br /></td></tr>
 <tr class="separator:a0fe03936fe02545e1285735ec27cda22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a770220d28063e3b144599c8e16509a00"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a770220d28063e3b144599c8e16509a00">RemoveUuid</a> (<a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> uuid)</td></tr>
+<tr class="memdesc:a770220d28063e3b144599c8e16509a00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a uuid from the list.  <a href="#a770220d28063e3b144599c8e16509a00">More...</a><br /></td></tr>
 <tr class="separator:a770220d28063e3b144599c8e16509a00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5586fea528064e9bebd2590830f4ee09"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a5586fea528064e9bebd2590830f4ee09">Reserve</a> (size_t capacity)</td></tr>
 <tr class="separator:a5586fea528064e9bebd2590830f4ee09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a682912e0a41bbbe43b50e4cb2af2a3a2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a682912e0a41bbbe43b50e4cb2af2a3a2">Write</a> (class <a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive) const</td></tr>
+<tr class="memdesc:a682912e0a41bbbe43b50e4cb2af2a3a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the uuid list in an archive.  <a href="#a682912e0a41bbbe43b50e4cb2af2a3a2">More...</a><br /></td></tr>
 <tr class="separator:a682912e0a41bbbe43b50e4cb2af2a3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58c5231bffc256b065e847ffa07f38de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a58c5231bffc256b065e847ffa07f38de">Write</a> (class <a class="el" href="../../db/d16/class_o_n___binary_archive.html">ON_BinaryArchive</a> &amp;archive, bool bSortBeforeWrite) const</td></tr>
+<tr class="memdesc:a58c5231bffc256b065e847ffa07f38de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the uuid list in an archive.  <a href="#a58c5231bffc256b065e847ffa07f38de">More...</a><br /></td></tr>
 <tr class="separator:a58c5231bffc256b065e847ffa07f38de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a5107d1e9c44ebd2e157ad6694a9f1221"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a5107d1e9c44ebd2e157ad6694a9f1221">CompareUuid</a> (const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> *a, const <a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a> *b)</td></tr>
+<tr class="memdesc:a5107d1e9c44ebd2e157ad6694a9f1221"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fast uuid compare. Not necessarily the same as ON_UuidCompare().  <a href="#a5107d1e9c44ebd2e157ad6694a9f1221">More...</a><br /></td></tr>
 <tr class="separator:a5107d1e9c44ebd2e157ad6694a9f1221"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Description: The <a class="el" href="../../db/dbc/class_o_n___uuid_list.html">ON_UuidList</a> class provides a tool to efficiently maintain a list of uuids and determine if a uuid is in the list. This class is based on the premise that there are no duplicate uuids in the list. </p>
+<div class="textblock"><p>The <a class="el" href="../../db/dbc/class_o_n___uuid_list.html" title="The ON_UuidList class provides a tool to efficiently maintain a list of uuids and determine if a uuid...">ON_UuidList</a> class provides a tool to efficiently maintain a list of uuids and determine if a uuid is in the list. This class is based on the premise that there are no duplicate uuids in the list. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae0422f3cf461cffdd3d12fa045b95769"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae0422f3cf461cffdd3d12fa045b95769">&#9670;&nbsp;</a></span>ON_UuidList() <span class="overload">[1/3]</span></h2>
@@ -209,7 +225,16 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Adds a uuid to the list. Parameters: uuid - [in] id to add. bCheckForDupicates - [in] if true, then the uuid is not added if it is already in the list. If you are certain that the uuid is not in the list and you are going to have a large list of uuids, then setting bCheckForDupicates=false will speed up the addition of uuids. Returns: True if uuid was added. False if uuid was not added because it is already in the collection. </p>
+
+<p>Adds a uuid to the list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>[in] id to add.</td></tr>
+    <tr><td class="paramname">bCheckForDupicates</td><td>[in] if true, then the uuid is not added if it is already in the list. If you are certain that the uuid is not in the list and you are going to have a large list of uuids, then setting bCheckForDupicates=false will speed up the addition of uuids.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if uuid was added. False if uuid was not added because it is already in the collection. </dd></dl>
 
 </div>
 </div>
@@ -227,7 +252,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Array of uuids in the list. Sorted with respect to <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a5107d1e9c44ebd2e157ad6694a9f1221">ON_UuidList::CompareUuid()</a>. Remarks: Calling <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a26ecd795d92c4ab7c2c96b565d0c09f3">AddUuid()</a> may grow the dynamic array and make the pointer invalid. </p>
+<dl class="section return"><dt>Returns</dt><dd>Array of uuids in the list. Sorted with respect to <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a5107d1e9c44ebd2e157ad6694a9f1221" title="Fast uuid compare. Not necessarily the same as ON_UuidCompare(). ">ON_UuidList::CompareUuid()</a>. </dd></dl>
+<p>Calling <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a26ecd795d92c4ab7c2c96b565d0c09f3" title="Adds a uuid to the list. ">AddUuid()</a> may grow the dynamic array and make the pointer invalid. </p>
 
 </div>
 </div>
@@ -245,7 +271,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Makes the uuid list as efficent as possible in both search speed and memory usage. Use <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#aa4202970bc50d09937dbe97ad70f03b0">Compact()</a> when a uuid list will be in use but is not likely to be modifed. A list that has been compacted can still be modified. </p>
+
+<p>Makes the uuid list as efficent as possible in both search speed and memory usage. Use <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#aa4202970bc50d09937dbe97ad70f03b0" title="Makes the uuid list as efficent as possible in both search speed and memory usage. Use Compact() when a uuid list will be in use but is not likely to be modifed. A list that has been compacted can still be modified. ">Compact()</a> when a uuid list will be in use but is not likely to be modifed. A list that has been compacted can still be modified. </p>
 
 </div>
 </div>
@@ -282,7 +309,8 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Description: Fast uuid compare. Not necessarily the same as ON_UuidCompare(). </p>
+
+<p>Fast uuid compare. Not necessarily the same as ON_UuidCompare(). </p>
 
 </div>
 </div>
@@ -300,7 +328,7 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns: Number of active uuids in the list. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of active uuids in the list. </dd></dl>
 
 </div>
 </div>
@@ -318,7 +346,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Destroy list. If list will be reused, <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a69dc8994fd5faadec50c645abfea8ed4">Empty()</a> is more efficient. </p>
+
+<p>Destroy list. If list will be reused, <a class="el" href="../../db/dbc/class_o_n___uuid_list.html#a69dc8994fd5faadec50c645abfea8ed4" title="Provides an efficient way to empty a list so that it can be used again. ">Empty()</a> is more efficient. </p>
 
 </div>
 </div>
@@ -336,7 +365,8 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Provides an efficient way to empty a list so that it can be used again. </p>
+
+<p>Provides an efficient way to empty a list so that it can be used again. </p>
 
 </div>
 </div>
@@ -355,7 +385,9 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Determine if a uuid is in the list. Returns: True if uuid is in the list. </p>
+
+<p>Determine if a uuid is in the list. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if uuid is in the list. </dd></dl>
 
 </div>
 </div>
@@ -374,7 +406,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Append the uuids in this class to uuid_list. Parameters: uuid_list - [in/out] Returns: Number of uuids added to uuid_list. </p>
+
+<p>Append the uuids in this class to uuid_list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid_list</td><td>[in/out]</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of uuids added to uuid_list. </dd></dl>
 
 </div>
 </div>
@@ -411,7 +451,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Read the uuid list from an archive. Parameters: archive - [in] archive to read from. Returns: true if the read was successful. </p>
+
+<p>Read the uuid list from an archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to read from.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the read was successful. </dd></dl>
 
 </div>
 </div>
@@ -440,7 +488,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Read the uuid list from an archive. Parameters: archive - [in] archive to read from. bool bSortAfterRead - [in] True if ids should be sorted after the read so future lookups will be fast. False if the state of the sorted/unsorted bits that existed at write time should be preserved. Returns: true if the read was successful. </p>
+
+<p>Read the uuid list from an archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to read from. bool bSortAfterRead - [in] True if ids should be sorted after the read so future lookups will be fast. False if the state of the sorted/unsorted bits that existed at write time should be preserved.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the read was successful. </dd></dl>
 
 </div>
 </div>
@@ -459,7 +515,14 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: This tool is used in rare situations when the object ids stored in the uuid list need to be remapped. Parameters: uuid_remap - [in] Is it critical that uuid_remap[] be sorted with respect to <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html#a453128b528d685bf7d8358abe9af21f0">ON_UuidPair::CompareFirstUuid</a>. </p>
+
+<p>This tool is used in rare situations when the object ids stored in the uuid list need to be remapped. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid_remap</td><td>[in] Is it critical that uuid_remap[] be sorted with respect to <a class="el" href="../../d7/d14/class_o_n___uuid_pair.html#a453128b528d685bf7d8358abe9af21f0" title="Compares m_uuid[0] and ignores m_uuid[1] ">ON_UuidPair::CompareFirstUuid</a>.</td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -478,7 +541,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Removes a uuid from the list. Parameters: uuid - [in] id to remove Returns: True if uuid was in the list and was removed. False if uuid was not in the list. </p>
+
+<p>Removes a uuid from the list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">uuid</td><td>[in] id to remove</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if uuid was in the list and was removed. False if uuid was not in the list. </dd></dl>
 
 </div>
 </div>
@@ -515,7 +586,15 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Saves the uuid list in an archive. Parameters: archive - [in] archive to write to. Returns: true if write was successful. </p>
+
+<p>Saves the uuid list in an archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to write to.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if write was successful. </dd></dl>
 
 </div>
 </div>
@@ -544,7 +623,16 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Description: Saves the uuid list in an archive. Parameters: archive - [in] archive to write to. bSortBeforeWrite - [in] True if ids should be sorted before the write so future lookups will be fast. False if the current state of the sorted/unsorted bits should be preserved. Returns: true if write was successful. </p>
+
+<p>Saves the uuid list in an archive. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">archive</td><td>[in] archive to write to.</td></tr>
+    <tr><td class="paramname">bSortBeforeWrite</td><td>[in] True if ids should be sorted before the write so future lookups will be fast. False if the current state of the sorted/unsorted bits should be preserved.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if write was successful. </dd></dl>
 
 </div>
 </div>
@@ -554,7 +642,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:42 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:32 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

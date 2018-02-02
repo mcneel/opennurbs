@@ -78,15 +78,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a96dd55f373bf8bac4d45ad6bf393f184"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#a96dd55f373bf8bac4d45ad6bf393f184">m_material_backface_index</a></td></tr>
 <tr class="separator:a96dd55f373bf8bac4d45ad6bf393f184"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ba21e192058b9dd2d228b1386d4b221"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#a8ba21e192058b9dd2d228b1386d4b221">m_material_id</a></td></tr>
-<tr class="memdesc:a8ba21e192058b9dd2d228b1386d4b221"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies an <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a>.  <a href="#a8ba21e192058b9dd2d228b1386d4b221">More...</a><br /></td></tr>
 <tr class="separator:a8ba21e192058b9dd2d228b1386d4b221"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bd7855c552604e2ba4961ab4070683f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#a6bd7855c552604e2ba4961ab4070683f">m_material_index</a></td></tr>
 <tr class="separator:a6bd7855c552604e2ba4961ab4070683f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea916b28f904c4e3db6534a107e750d2"><td class="memItemLeft" align="right" valign="top">unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#aea916b28f904c4e3db6534a107e750d2">m_material_source</a></td></tr>
-<tr class="memdesc:aea916b28f904c4e3db6534a107e750d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">ON::object_material_source values.  <a href="#aea916b28f904c4e3db6534a107e750d2">More...</a><br /></td></tr>
 <tr class="separator:aea916b28f904c4e3db6534a107e750d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbdc59fc0d6d5c0f30ac5fd16bf727fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/db4/struct_o_n___u_u_i_d__struct.html">ON_UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#acbdc59fc0d6d5c0f30ac5fd16bf727fa">m_plugin_id</a></td></tr>
-<tr class="memdesc:acbdc59fc0d6d5c0f30ac5fd16bf727fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies a rendering plugin.  <a href="#acbdc59fc0d6d5c0f30ac5fd16bf727fa">More...</a><br /></td></tr>
 <tr class="separator:acbdc59fc0d6d5c0f30ac5fd16bf727fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee96b19aa8bf54bb10c52e02da11e222"><td class="memItemLeft" align="right" valign="top">unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d2c/class_o_n___material_ref.html#aee96b19aa8bf54bb10c52e02da11e222">m_reserved1</a></td></tr>
 <tr class="separator:aee96b19aa8bf54bb10c52e02da11e222"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -110,7 +107,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>If m_material_id = ON_MaterialRef::material_from_layer, then the object's layer determine the material. See ON::material_from_layer. static const ON_UUID material_from_layer; ///&lt; TOD0 - remove this If m_material_id = ON_MaterialRef::material_from_layer, then the object's parent determine the material. See ON::material_from_parent. static const ON_UUID material_from_parent; ///&lt; TODO - remove this </p>
 
 </div>
 </div>
@@ -235,7 +231,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>If nil, then m_material_id is used for front and back faces. </p>
-<p>Identifies an <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a> </p>
 
 </div>
 </div>
@@ -250,7 +245,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>RUNTIME material table index for m_material_id. This value is not saved in files. If -1, then it needs to be set. </p>
 
 </div>
 </div>
@@ -266,8 +260,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Identifies an <a class="el" href="../../d7/d53/class_o_n___material.html">ON_Material</a>. </p>
-
 </div>
 </div>
 <a id="a6bd7855c552604e2ba4961ab4070683f"></a>
@@ -281,7 +273,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>RUNTIME material table index for m_material_id. This value is not saved in files. If -1, then it needs to be set. </p>
 
 </div>
 </div>
@@ -297,8 +288,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>ON::object_material_source values. </p>
-
 </div>
 </div>
 <a id="acbdc59fc0d6d5c0f30ac5fd16bf727fa"></a>
@@ -312,8 +301,6 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Identifies a rendering plugin. </p>
 
 </div>
 </div>
@@ -365,7 +352,7 @@ Public Attributes</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:40 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:30 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13

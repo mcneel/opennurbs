@@ -100,10 +100,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:abf9bbeda8527d0024c2fe7eb6f4ac046"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inspects aggregate edge demographics to determine if every edge has exactly two faces and all the faces have a compatible orientations.  <a href="#abf9bbeda8527d0024c2fe7eb6f4ac046">More...</a><br /></td></tr>
 <tr class="separator:abf9bbeda8527d0024c2fe7eb6f4ac046"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><dl class="section rcs"><dt>NoKeywords</dt><dd></dd></dl>
-<p>/ / Copyright (c) 1993-2015 Robert McNeel &amp; Associates. All rights reserved. / OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert / McNeel &amp; Associates. / / THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. / ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF / MERCHANTABILITY ARE HEREBY DISCLAIMED. / / For complete openNURBS copyright information see <a href="http://www.opennurbs.org">http://www.opennurbs.org</a>. / ////////////////////////////////////////////////////////////// </p>
-</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a771d8615898e996a98ab39510328b811"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a771d8615898e996a98ab39510328b811">&#9670;&nbsp;</a></span>EdgeFlags</h2>
 
@@ -117,40 +114,42 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p></p>
-<p>ON_EdgeAttributeFlags are used to report attributes of single edge objects, like ON_SubDEdge and <a class="el" href="../../dd/de8/class_o_n___brep_edge.html">ON_BrepEdge</a>, and aggregate edge demographics in objects with topology like ON_SubD, <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> and <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a>.</p>
+<p>ON_EdgeAttributeFlags are used to report attributes of single edge objects, like ON_SubDEdge and <a class="el" href="../../dd/de8/class_o_n___brep_edge.html" title="Brep edge information is stored in ON_BrepEdge classes. ON_Brep.m_E[] is an array of all the edges in...">ON_BrepEdge</a>, and aggregate edge demographics in objects with topology like ON_SubD, <a class="el" href="../../df/d11/class_o_n___mesh.html">ON_Mesh</a> and <a class="el" href="../../d9/d96/class_o_n___brep.html">ON_Brep</a>.</p>
 <dl class="section see"><dt>See also</dt><dd>ON_BrepEdge::ComponentAttributes, ON_SubDEdge::ComponentAttributes, ON_Brep::AggregateEdgeComponentAttributes, ON_Mesh::AggregateEdgeComponentAttributes, ON_SubD::AggregateEdgeComponentAttributes</dd></dl>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a69060f8d22beca7de07380dbbf1a18ee"></a>Open&#160;</td><td class="fielddoc"><p>summary&gt; The Open bit is set when an edge has distinct start and end vertices. /summary&gt; summary&gt; The Closed bit is set when an edge begins and ends at the same vertex. /summary&gt; </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a69060f8d22beca7de07380dbbf1a18ee"></a>Open&#160;</td><td class="fielddoc"><p>The Open bit is set when an edge has distinct start and end vertices. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811add02384cd3e6225da38bfd98dd0a15f3"></a>Closed&#160;</td><td class="fielddoc"><p>summary&gt; The Wire bit when an edge has no faces. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811add02384cd3e6225da38bfd98dd0a15f3"></a>Closed&#160;</td><td class="fielddoc"><p>The Closed bit is set when an edge begins and ends at the same vertex. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811af527a9c0e116ce442d1d99cbbdaee9f5"></a>Wire&#160;</td><td class="fielddoc"><p>summary&gt; The Boundary bit is set when an edge has one face. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811af527a9c0e116ce442d1d99cbbdaee9f5"></a>Wire&#160;</td><td class="fielddoc"><p>The Wire bit when an edge has no faces. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a71c7ede5cb53d371be4cb4d26b4f720e"></a>Boundary&#160;</td><td class="fielddoc"><p>summary&gt; The Interior bit is set when an edge has two distinct faces. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a71c7ede5cb53d371be4cb4d26b4f720e"></a>Boundary&#160;</td><td class="fielddoc"><p>The Boundary bit is set when an edge has one face. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a190cd1fcadb8698f18758624092d97c1"></a>Interior&#160;</td><td class="fielddoc"><p>summary&gt; The Nonmanifold bit is set when an edge has three or more faces. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a190cd1fcadb8698f18758624092d97c1"></a>Interior&#160;</td><td class="fielddoc"><p>The Interior bit is set when an edge has two distinct faces. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aedfbbfcad1c474c8842a1c2292d6034e"></a>Nonmanifold&#160;</td><td class="fielddoc"><p>summary&gt; The Oriented bit is set when an edge has two faces with compatible orientations. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aedfbbfcad1c474c8842a1c2292d6034e"></a>Nonmanifold&#160;</td><td class="fielddoc"><p>The Nonmanifold bit is set when an edge has three or more faces. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811af5aaf750ad49662c9c7bf4f97a3cb298"></a>Oriented&#160;</td><td class="fielddoc"><p>summary&gt; The NotOriented bit is set when an edge has two faces with opposited orientations. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811af5aaf750ad49662c9c7bf4f97a3cb298"></a>Oriented&#160;</td><td class="fielddoc"><p>The Oriented bit is set when an edge has two faces with compatible orientations. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aed9a656da1e8af769ece55f9d5ec144c"></a>NotOriented&#160;</td><td class="fielddoc"><p>summary&gt; The Smooth bit is set when an an edge has two faces with a guaranteed surface tangent continuity. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aed9a656da1e8af769ece55f9d5ec144c"></a>NotOriented&#160;</td><td class="fielddoc"><p>The NotOriented bit is set when an edge has two faces with opposited orientations. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811ad8c457eb9144c86e72a23dfe41143ccc"></a>Smooth&#160;</td><td class="fielddoc"><p>summary&gt; The Crease bit is set when an edge has two faces with a possible surface tangent discontinuity /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811ad8c457eb9144c86e72a23dfe41143ccc"></a>Smooth&#160;</td><td class="fielddoc"><p>The Smooth bit is set when an an edge has two faces with a guaranteed surface tangent continuity. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a30e6d2f2ce05fc24700799973ab11777"></a>Crease&#160;</td><td class="fielddoc"><p>summary&gt; The Dart bit is set when an edge has two faces with a possible surface tangent discontinuity at one end and guaranteed surface tangent space continuity at the other end. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a30e6d2f2ce05fc24700799973ab11777"></a>Crease&#160;</td><td class="fielddoc"><p>The Crease bit is set when an edge has two faces with a possible surface tangent discontinuity </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a7cd179c4cf9b847496cffbdd367b1f03"></a>Dart&#160;</td><td class="fielddoc"><p>summary&gt; The Seam bit is set when an edge has two faces that are identical and the edge is on the parametric boundary of the face's surface. /summary&gt; example&gt; Parametric surfaces that are cylinders are an example of a situation where seam edges occur. /example&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a7cd179c4cf9b847496cffbdd367b1f03"></a>Dart&#160;</td><td class="fielddoc"><p>The Dart bit is set when an edge has two faces with a possible surface tangent discontinuity at one end and guaranteed surface tangent space continuity at the other end. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aba968a764140d77eabb58aa024642b3d"></a>Seam&#160;</td><td class="fielddoc"><p>summary&gt; The Slit bit is set when edge has two faces that are identical and the edges is not a seam. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811aba968a764140d77eabb58aa024642b3d"></a>Seam&#160;</td><td class="fielddoc"><p>The Seam bit is set when an edge has two faces that are identical and the edge is on the parametric boundary of the face's surface. </p>
+<p>Parametric surfaces that are cylinders are an example of a situation where seam edges occur. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a55433de96acbca3424b5b4d7d32fa827"></a>Slit&#160;</td><td class="fielddoc"><p>summary&gt; The Slit bit is set when an edge has zero length. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a55433de96acbca3424b5b4d7d32fa827"></a>Slit&#160;</td><td class="fielddoc"><p>The Slit bit is set when edge has two faces that are identical and the edges is not a seam. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811afb87049d435134dd5b02e640f9e2fd6a"></a>Degenerate&#160;</td><td class="fielddoc"><p>summary&gt; The Damaged bit is set when an edge has a critical flaw like missing vertex information. /summary&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811afb87049d435134dd5b02e640f9e2fd6a"></a>Degenerate&#160;</td><td class="fielddoc"><p>The Slit bit is set when an edge has zero length. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811ac15d89f96adc524dcf63a5afc8220b4f"></a>Damaged&#160;</td><td class="fielddoc"><p>summary&gt; Mask can be used to isolate EdgeFlags bits from an unsigned int bit field containing other information. /summary&gt; example&gt; Determine if two unsigned ints have identical EdgeFlags settings. code&gt; unsigned int combined_flags1 = ...; unsigned int combined_flags2 = ...; unsigned int edge_flags1 = (ON_ComponentAttributes::EdgeFlags::Mask &amp; combined_flags1); unsigned int edge_flags2 = (ON_ComponentAttributes::EdgeFlags::Mask &amp; combined_flags2); if ( edge_flags1 == edge_flags1) { ... edges flags are identical ... } /code&gt; /example&gt; </p>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811ac15d89f96adc524dcf63a5afc8220b4f"></a>Damaged&#160;</td><td class="fielddoc"><p>The Damaged bit is set when an edge has a critical flaw like missing vertex information. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a6677074f901796cb086657e0fb74fca1"></a>Mask&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a771d8615898e996a98ab39510328b811a6677074f901796cb086657e0fb74fca1"></a>Mask&#160;</td><td class="fielddoc"><p>Mask can be used to isolate EdgeFlags bits from an unsigned int bit field containing other information. </p>
+<p>Determine if two unsigned ints have identical EdgeFlags settings. </p><div class="fragment"><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> combined_flags1 = ...;</div><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> combined_flags2 = ...;</div><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> edge_flags1 = (ON_ComponentAttributes::EdgeFlags::Mask &amp;amp; combined_flags1);</div><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> edge_flags2 = (ON_ComponentAttributes::EdgeFlags::Mask &amp;amp; combined_flags2);</div><div class="line"><span class="keywordflow">if</span> ( edge_flags1 == edge_flags1)</div><div class="line">{</div><div class="line">   ... edges flags are identical ...</div><div class="line">}</div></div><!-- fragment --> </td></tr>
 </table>
 
 </div>
@@ -187,7 +186,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>True if there is at least one edge that has exactly one face. Otherwise, false is returned. /returns&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if there is at least one edge that has exactly one face. Otherwise, false is returned. </dd></dl>
 
 </div>
 </div>
@@ -222,7 +221,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>If every edge has one or two faces, then true is returned. If bAllowBoundaryEdges is true and every edge has one or two faces, then true is returned. Otherwise, false is returned. /returns&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>If every edge has one or two faces, then true is returned. If bAllowBoundaryEdges is true and every edge has one or two faces, then true is returned. Otherwise, false is returned. </dd></dl>
 
 </div>
 </div>
@@ -292,7 +291,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>If there is an edge edge with exactly two faces and those faces have incompatible orientations, then true is returned. Otherwise, false is returned. /returns&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>If there is an edge edge with exactly two faces and those faces have incompatible orientations, then true is returned. Otherwise, false is returned. </dd></dl>
 
 </div>
 </div>
@@ -327,7 +326,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>If for every edge edge with exactly two faces, those two faces have compatible orientations, then true is returned. Otherwise, false is returned. /returns&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>If for every edge edge with exactly two faces, those two faces have compatible orientations, then true is returned. Otherwise, false is returned. </dd></dl>
 
 </div>
 </div>
@@ -356,7 +355,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Inspects aggregate edge demographics to determine if every edge has exactly two faces and all the faces have a compatible orientations. </p>
-<p>This sample shows how to determine if an ON_SubD is a solid. </p><div class="fragment"><div class="line">ON_SubD subd = ...;</div><div class="line"><span class="keywordflow">if</span> (<a class="code" href="../../d1/dd7/class_o_n___component_attributes.html#abf9bbeda8527d0024c2fe7eb6f4ac046">ON_ComponentAttributes::IsSolid</a>(subd.AggregateEdgeComponentAttributes())</div><div class="line">{ <span class="comment"></span></div><div class="line"><span class="comment">  ///&lt; subd is a solid</span></div><div class="line"><span class="comment"></span>  ...</div><div class="line">}</div></div><!-- fragment --> <dl class="params"><dt>Parameters</dt><dd>
+<p>This sample shows how to determine if an ON_SubD is a solid. </p><div class="fragment"><div class="line">ON_SubD subd = ...;</div><div class="line"><span class="keywordflow">if</span> (<a class="code" href="../../d1/dd7/class_o_n___component_attributes.html#abf9bbeda8527d0024c2fe7eb6f4ac046">ON_ComponentAttributes::IsSolid</a>(subd.AggregateEdgeComponentAttributes())</div><div class="line">{</div><div class="line">  <span class="comment">// subd is a solid</span></div><div class="line">  ...</div><div class="line">}</div></div><!-- fragment --> <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">aggregate_edge_component_attributes</td><td>Value made by bitwise or of <a class="el" href="../../d1/dd7/class_o_n___component_attributes.html#a771d8615898e996a98ab39510328b811">ON_ComponentAttributes::EdgeFlags</a> values for every edge in the object. </td></tr>
   </table>
@@ -373,7 +372,7 @@ Static Public Member Functions</h2></td></tr>
 </div> <!-- page-content -->
 </div> <!-- container -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 31 2018 14:45:39 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 2 2018 07:57:29 for openNURBS SDK Help by <a href="http://www.doxygen.org/index.html">
 <!-- <img class="footer" src="../../doxygen.png" alt="doxygen"/> -->
 Doxygen
 </a> 1.8.13
