@@ -2,3 +2,21 @@
 h2.memtitle {
   display: none;
 }
+
+body {
+  padding-top: 20px;
+  /* padding-top: 56px; */
+}
+
+/* .version-banner,
+.version-banner-warning {
+  position: fixed;
+  top: 0px;
+  width: 100%;
+  z-index: 1000000;
+  text-align: center;
+  background-color: #424242;
+  padding: 5px;
+  color: white;
+  font-style: italic;
+} */

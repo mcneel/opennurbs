@@ -75,10 +75,20 @@ $( document ).ready(function() {
 
   /* smart menus */
   var nav_container = $('#main-nav').detach();
-  nav_container.addClass('navbar-collapse collapse');
-  $('div.navbar').append(nav_container);
-  $('#main-nav > ul').removeClass('sm sm-dox').addClass('nav navbar-nav navbar-right');
+  // nav_container.addClass('collapse navbar-collapse');
+  $('#main-nav-placeholder').append(nav_container);
+  var main_page = $('#main-nav > ul > li').first() //.detach()
+  $('a.navbar-brand').attr('href', main_page.find('a').first().attr('href'))
+  $('#main-nav > ul').removeClass('sm sm-dox').addClass('nav navbar-nav');
+  $('#main-nav * li:has(> ul)').addClass('dropdown');
   $('#main-nav * li > ul').addClass('dropdown-menu');
+  $('#main-nav * li > ul > a').addClass('dropdown-toggle');
+
+  // bootstrap 4
+  // $('#main-nav > ul > li').addClass('nav-item');
+  // $('#main-nav * li > a').addClass('nav-link');
+  // $('#main-nav > ul > li * li').addClass('dropdown-item');
+
   // replace '+' with caret
   var nav_sub = $('#main-nav * li > a.has-submenu');
   nav_sub.children('span').remove();
