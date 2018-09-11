@@ -1,0 +1,163 @@
+/*
+// Copyright (c) 1993-2016 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
+#if !defined(OPENNURBS_SYSTEM_RUNTIME_INC_)
+#define OPENNURBS_SYSTEM_RUNTIME_INC_
+
+/*
+////////////////////////////////////////////////////////////////
+//
+// Determines the runtime environment where the code is executed.
+//
+////////////////////////////////////////////////////////////////
+*/
+
+
+/*
+////////////////////////////////////////////////////////////
+//
+// BEGIN - ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID defines
+//
+// ON_RUNTIME_* specifies the runtime C/C++ SDK being used
+//   At most one the ON_RUNTIME_* should be defined
+//
+//   ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID
+//
+*/
+#if (defined(__APPLE__) || defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR) || defined(__IOS__))
+
+#if !defined(ON_RUNTIME_APPLE)
+#define ON_RUNTIME_APPLE
+#endif
+
+#elif defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS) || defined(_WINDOWS_) || defined(__WINDOWS__)
+
+#if !defined(ON_RUNTIME_WIN)
+#define ON_RUNTIME_WIN
+#endif
+
+#elif defined(__ANDROID__)
+
+#if !defined(ON_RUNTIME_ANDROID)
+#define ON_RUNTIME_ANDROID
+#endif
+
+#endif
+/*
+//
+// END - ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID defines
+//
+////////////////////////////////////////////////////////////
+*/
+
+/*
+////////////////////////////////////////////////////////////
+//
+// BEGIN - Additional platform defines
+//
+// ON_64BIT_RUNTIME / ON_32BIT_RUNTIME
+// ON_LITTLE_ENDIAN / ON_BIG_ENDIAN
+// ON_SIZEOF_WCHAR_T
+// ON_RUNTIME_<PLATFORM>_<SUBPLATFORM>
+//
+*/
+#if defined(ON_RUNTIME_APPLE)
+
+#if (defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR) || defined(__IOS__))
+#define ON_RUNTIME_APPLE_IOS
+#else
+#define ON_RUNTIME_APPLE_MACOS
+#endif
+
+#if (defined(__LP64__) || defined(__ppc64__))
+#define ON_64BIT_RUNTIME
+#elif defined(__LP32__)
+#define ON_32BIT_RUNTIME
+#else
+#error Add code to detect sizeof pointer on this Apple platform
+#endif
+
+#define ON_SIZEOF_WCHAR_T 4
+
+#if (defined(__ppc__) || defined(__ppc64__))
+#define ON_BIG_ENDIAN
+#else
+#define ON_LITTLE_ENDIAN
+#endif
+
+#elif defined(ON_RUNTIME_WIN)
+
+#define ON_SIZEOF_WCHAR_T 2
+
+#if defined(WINDOWS_PHONE)
+#define ON_RUNTIME_WIN_MOBILE
+#else
+#define ON_RUNTIME_WIN_WINOS
+#endif
+
+#if defined(_M_X64) || defined(_WIN64)
+#define ON_64BIT_RUNTIME
+#elif defined(_M_X86) || defined(_WIN32)
+#define ON_32BIT_RUNTIME
+#else
+#error Add code to detect sizeof pointer on this Windows platform
+#endif
+
+#if !defined(ON_LITTLE_ENDIAN)
+#if (defined(_M_X64) || defined(_M_IX86) || defined (__i386__) || defined( __x86_64__ ))
+#define ON_LITTLE_ENDIAN
+#endif
+#endif
+
+#elif defined(ON_RUNTIME_ANDROID)
+
+#if !defined(ON_SIZEOF_WCHAR_T)
+#define ON_SIZEOF_WCHAR_T 4
+#endif
+
+#endif
+
+#if !defined(ON_64BIT_RUNTIME) && !defined(ON_32BIT_RUNTIME)
+/* Attempt to determing runtime pointer size */
+#if (defined(_M_X64) || defined(__LP64__) || defined(__ppc64__))
+#define ON_64BIT_RUNTIME
+#elif (defined(_M_X86) || defined(__LP32__))
+#define ON_32BIT_RUNTIME
+#endif
+#endif
+
+#if defined(ON_64BIT_RUNTIME) && defined(ON_32BIT_RUNTIME)
+#error Exactly one of ON_64BIT_RUNTIME or ON_32BIT_RUNTIME must be defined.
+#endif
+
+#if !defined(ON_64BIT_RUNTIME) && !defined(ON_32BIT_RUNTIME)
+#error Exactly one of ON_64BIT_RUNTIME or ON_32BIT_RUNTIME must be defined.
+#endif
+
+#if defined(ON_BIG_ENDIAN) && defined(ON_LITTLE_ENDIAN)
+#error Exactly one of ON_LITTLE_ENDIAN or ON_BIG_ENDIAN should be defined.
+#endif
+
+#if !defined(ON_BIG_ENDIAN) && !defined(ON_LITTLE_ENDIAN)
+#error Exactly one of ON_LITTLE_ENDIAN or ON_BIG_ENDIAN should be defined.
+#endif
+
+/*
+//
+// END - Additional platform defines
+//
+////////////////////////////////////////////////////////////
+*/
+
+#endif

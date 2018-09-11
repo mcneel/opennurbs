@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <MSBuildExtensionsPath32>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild</MSBuildExtensionsPath32>
+    <MSBuildExtensionsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild</MSBuildExtensionsPath>
+    <MSBuildToolsPath32>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\bin</MSBuildToolsPath32>
+    <MSBuildToolsPath64>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\bin\amd64</MSBuildToolsPath64>
+    <MSBuildSDKsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\Sdks</MSBuildSDKsPath>
+    <FrameworkSDKRoot />
+    <MSBuildRuntimeVersion>4.0.30319</MSBuildRuntimeVersion>
+    <MSBuildFrameworkToolsPath>C:\Windows\Microsoft.NET\Framework\v4.0.30319\</MSBuildFrameworkToolsPath>
+    <MSBuildFrameworkToolsPath32>C:\Windows\Microsoft.NET\Framework\v4.0.30319\</MSBuildFrameworkToolsPath32>
+    <MSBuildFrameworkToolsPath64>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\</MSBuildFrameworkToolsPath64>
+    <MSBuildFrameworkToolsRoot>C:\Windows\Microsoft.NET\Framework\</MSBuildFrameworkToolsRoot>
+    <SDK35ToolsPath />
+    <SDK40ToolsPath>C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\</SDK40ToolsPath>
+    <WindowsSDK80Path />
+    <VsInstallRoot>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional</VsInstallRoot>
+    <MSBuildToolsRoot>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild</MSBuildToolsRoot>
+    <RoslynTargetsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\bin\Roslyn</RoslynTargetsPath>
+    <VCTargetsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\</VCTargetsPath>
+    <VCTargetsPath14>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\</VCTargetsPath14>
+    <VCTargetsPath12>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\</VCTargetsPath12>
+    <VCTargetsPath11>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\</VCTargetsPath11>
+    <VCTargetsPath10>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\</VCTargetsPath10>
+    <AndroidTargetsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\Microsoft\MDD\Android\V150\</AndroidTargetsPath>
+    <iOSTargetsPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\Microsoft\MDD\iOS\V150\</iOSTargetsPath>
+    <VisualStudioVersion>15.0</VisualStudioVersion>
+    <AspNetConfiguration>Release</AspNetConfiguration>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <NuGetRestoreTargets>C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\..\Common7\IDE\CommonExtensions\Microsoft\NuGet\NuGet.targets</NuGetRestoreTargets>
+    <IsRestoreTargetsFileLoaded>true</IsRestoreTargetsFileLoaded>
+    <RestoreTaskAssemblyFile>NuGet.Build.Tasks.dll</RestoreTaskAssemblyFile>
+    <HideWarningsAndErrors>false</HideWarningsAndErrors>
+    <RestoreRecursive>true</RestoreRecursive>
+    <MSBuildAllProjects>;C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\NuGet\NuGet.targets</MSBuildAllProjects>
+    <ValidateRuntimeIdentifierCompatibility>false</ValidateRuntimeIdentifierCompatibility>
+    <RestoreContinueOnError>WarnAndContinue</RestoreContinueOnError>
+    <_GenerateRestoreGraphProjectEntryInputProperties>
+      RestoreUseCustomAfterTargets=;
+      NuGetRestoreTargets=C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\NuGet\NuGet.targets;
+      BuildProjectReferences=false;
+      ExcludeRestorePackageImports=true;
+    </_GenerateRestoreGraphProjectEntryInputProperties>
+  </PropertyGroup>
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <ProjectReference Include="D:\BuildAgent\work\commercial\src4\BuildSolutions\..\opennurbs\opennurbs.vcxproj.metaproj">
+      <ToolsVersion>15.0</ToolsVersion>
+      <SkipNonexistentProjects>Build</SkipNonexistentProjects>
+      <AdditionalProperties>Configuration=Release; Platform=x64</AdditionalProperties>
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectReference>
+  </ItemGroup>
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectReference-&gt;Reverse())" Targets="Clean" BuildInParallel="True" Properties="BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" SkipNonexistentProjects="%(ProjectReference.SkipNonexistentProjects)" />
+    <MSBuild Projects="D:\BuildAgent\work\commercial\src4\BuildSolutions\..\opennurbs\opennurbs_public.vcxproj" Targets="Clean" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Release; Platform=x64;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+  </Target>
+  <Target Name="Build" Outputs="@(opennurbs_publicBuildOutput)">
+    <MSBuild Projects="@(ProjectReference)" BuildInParallel="True" Properties="BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" SkipNonexistentProjects="%(ProjectReference.SkipNonexistentProjects)" />
+    <MSBuild Projects="D:\BuildAgent\work\commercial\src4\BuildSolutions\..\opennurbs\opennurbs_public.vcxproj" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Release; Platform=x64;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+      <Output TaskParameter="TargetOutputs" ItemName="opennurbs_publicBuildOutput" />
+    </MSBuild>
+  </Target>
+  <Target Name="Rebuild" Outputs="@(opennurbs_publicBuildOutput)">
+    <MSBuild Projects="@(ProjectReference)" Targets="Rebuild" BuildInParallel="True" Properties="BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" SkipNonexistentProjects="%(ProjectReference.SkipNonexistentProjects)" />
+    <MSBuild Projects="D:\BuildAgent\work\commercial\src4\BuildSolutions\..\opennurbs\opennurbs_public.vcxproj" Targets="Rebuild" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Release; Platform=x64;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+      <Output TaskParameter="TargetOutputs" ItemName="opennurbs_publicBuildOutput" />
+    </MSBuild>
+  </Target>
+  <Target Name="Publish">
+    <MSBuild Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" Properties="BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" SkipNonexistentProjects="%(ProjectReference.SkipNonexistentProjects)" />
+    <MSBuild Projects="D:\BuildAgent\work\commercial\src4\BuildSolutions\..\opennurbs\opennurbs_public.vcxproj" Targets="Publish" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Release; Platform=x64;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+  </Target>
+</Project>
