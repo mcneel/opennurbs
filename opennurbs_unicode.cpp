@@ -92,6 +92,19 @@ int ON_IsValidUTF16SurrogatePair(
   return ( w1 >= 0xD800U && w1 < 0xDC00 && w2 >= 0xDC00 && w2 < 0xE000 );
 }
 
+unsigned int ON_DecodeUTF16SurrogatePair(
+  unsigned int u1,
+  unsigned int u2,
+  unsigned int error_code_point
+)
+{
+  if (u1 >= 0xD800U && u1 < 0xDC00 && u2 >= 0xDC00 && u2 < 0xE000)
+  {
+    return ((u1-0xD800)*0x400 + (u2-0xDC00) + 0x10000);
+  }
+  return error_code_point;
+}
+
 
 int ON_IsValidSingleElementWideCharValue(
   wchar_t w
@@ -2827,11 +2840,16 @@ int ON_ConvertMSMBCPToWideChar(
   if ( 0 != error_status )
     *error_status = 0;
 
+  bool bNullTerminated = false;
   if ( -1 == sMBCS_count && nullptr != sMBCS )
   {
-    for ( sMBCS_count = 0; 0 != sMBCS[sMBCS_count]; sMBCS_count++)
+    for ( sMBCS_count = 0; true; sMBCS_count++)
     {
-      // empty for body
+      if (0 == sMBCS[sMBCS_count])
+      {
+        bNullTerminated = true;
+        break;
+      }
     }
   }
 
@@ -2922,14 +2940,98 @@ int ON_ConvertMSMBCPToWideChar(
   if (sWideChar_count < sWideChar_capacity)
     sWideChar[sWideChar_count] = 0;
   return sWideChar_count;
-#else
-  // Add support for Mac if needed.
-  // Shift JIS, Hangol, and Big 5 are likely candidates. 
-  // These are encodings with either 1 or 2 bytes per glyph.
-  if (949 == windows_code_page)
-  {
 
+#elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+  CFStringEncoding cfEncoding = CFStringConvertWindowsCodepageToEncoding(windows_code_page);
+  if (cfEncoding == kCFStringEncodingInvalidId)
+  {
+    ON_ERROR("No Apple CFStringEncoding support for this value of windows_code_page");
+    return 0;
   }
+
+  char* szMBCS = nullptr;
+  if (false == bNullTerminated)
+  {
+    szMBCS = (char*)onmalloc((sMBCS_count + 1) * sizeof(szMBCS[0]));
+    memcpy(szMBCS, sMBCS, sMBCS_count * sizeof(szMBCS[0]));
+    szMBCS[sMBCS_count] = 0;
+    sMBCS = szMBCS;
+  }
+
+  int sWideChar_count = 0;
+
+  for (;;)
+  {
+    NSStringEncoding nsEncoding = CFStringConvertEncodingToNSStringEncoding(cfEncoding);
+    NSString* str = [NSString stringWithCString : sMBCS encoding : nsEncoding];
+    if (nullptr == str)
+    {
+      ON_ERROR("[NSString stringWithCString: sMBCS encoding: nsEncoding] failed.");
+      break;
+    }
+    const int len = (int)(str.length);
+    if (len <= 0)
+    {
+      break;
+    }
+
+    for (int i = 0; i < len; i++)
+    {
+      ON__UINT32 unicode_code_point = 0;
+      const int u1 = [str characterAtIndex : i];
+      if (u1 >= 0xD800U && u1 < 0xDC00 && i+1 < len)
+      {
+        const int u2 = [str characterAtIndex : (i+1)];
+        unicode_code_point = ON_DecodeUTF16SurrogatePair((unsigned int)u1, (unsigned int)u2, ON_wString::ReplacementCharacter);
+        if (ON_wString::ReplacementCharacter != unicode_code_point)
+          i++;
+      }
+      else
+      {
+        unicode_code_point = (unsigned int)u1;
+      }
+      if (
+        false == ON_IsValidUnicodeCodePoint(unicode_code_point)
+        || ON_wString::ReplacementCharacter == unicode_code_point
+        )
+      {
+        unicode_code_point = ON_wString::ReplacementCharacter;
+        if (nullptr != error_status)
+          *error_status |= 16;
+      }
+      if (nullptr != sWideChar && sWideChar_capacity > 0)
+      {
+        if (sWideChar_count < sWideChar_capacity)
+          sWideChar[sWideChar_count] = (wchar_t)unicode_code_point;
+        else
+        {
+          // continue counting but no more output to sWideChar[]
+          sWideChar[sWideChar_capacity-1] = 0;
+          sWideChar = nullptr;
+          sWideChar_capacity = 0;
+          if (nullptr != error_status)
+            *error_status |= 2;
+        }
+      }
+      sWideChar_count++;
+    }
+
+    break;
+  }
+
+  if (nullptr != szMBCS)
+    onfree(szMBCS);
+
+  if (nullptr != sWideChar && sWideChar_count < sWideChar_capacity)
+  {
+    sWideChar[sWideChar_count] = 0;
+    sWideChar[sWideChar_capacity-1] = 0;
+  }
+
+  return sWideChar_count;
+
+#else
+  // Add support for other platforms as needed.
   return 0;
 #endif
 

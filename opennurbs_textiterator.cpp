@@ -1,8 +1,6 @@
-
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -26,7 +24,6 @@
 #endif
 
 #include "opennurbs_textiterator.h"
-
 
 static bool IsAtoZ(ON__UINT32 ch)
 {
@@ -88,7 +85,7 @@ static const wchar_t* tagColorBackground     = L"cb";
 //static const wchar_t* tagColorBackgroundWord = L"chcbpat";
 //static const wchar_t* tagColorHighlight      = L"highlight";
 
-
+// Some Rhino specific optional tags
 //static const wchar_t* tagExColorTable        = L"expandedcolortbl";
 //static const wchar_t* tagTextHeight          = L"h";      // not rtf
 static const wchar_t* tagStackFraction       = L"stackheight"; // not rtf - scale factor for text height in stacked text
@@ -349,27 +346,40 @@ void ON_TextBuilder::InitBuilder(const ON_Font* default_font)
 {
   m_in_run = 0;
   m_level = 0;
-  m_font_table_level = -1;
-  m_ansi_equiv_chars.Empty();
+  m_font_table_level = 100000;
   m_current_codepoints.Empty();
 }
 
 void ON_TextBuilder::GroupBegin()
 {
   m_level++;
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Append(*m_ansi_equiv_chars.Last());
-  else
-    m_ansi_equiv_chars.Append(1);
 }
 
 void ON_TextBuilder::GroupEnd()
 {
-  if(m_font_table_level >= m_level)
-    m_font_table_level = -1;
+  //if(m_font_table_level >= m_level)
+  //  m_font_table_level = -1;
   m_level--;
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Remove();
+}
+
+bool ON_TextBuilder::ReadingFontTable()
+{
+  return (m_level >= m_font_table_level);
+}
+
+bool ON_TextBuilder::ReadingFontDefinition()
+{
+  return m_bReadingFontDefinition;
+}
+
+void ON_TextBuilder::SetReadingFontDefinition(bool b)
+{
+  m_bReadingFontDefinition = b;
+}
+
+void ON_TextBuilder::FinishFontDef()
+{
+  m_bReadingFontDefinition = false;
 }
 
 void ON_TextBuilder::FlushText(size_t count, ON__UINT32* cp)
@@ -388,23 +398,22 @@ void ON_TextBuilder::BeginHeader()
 // Sets m_default_font_index when \deffn is read.
 void ON_TextBuilder::DefaultFont(const wchar_t* value)
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
   ON__INT32 nval = -1;
-  nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if(nval >= 0 && sp != value)
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if(nval >= 0 && sp > value)
     m_default_font_index = nval;
 }
 
 // Process a rtf \fn tag to set the current font to the nth font in the rtf font table
 void ON_TextBuilder::FontTag(const wchar_t* value)
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
   ON__INT32 nval = -1;
-  nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if(nval >= 0 && sp != value)
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if(nval >= 0 && sp > value)
   {
-    if(m_font_table_level >= 0 && 
-       m_level > m_font_table_level)
+    //if(m_font_table_level >= 0 && 
+    //   m_level >= m_font_table_level)
+    if(ReadingFontTable())
     {
       // Defining a font in the font table
       // n in \fn is the rtf index of the font currently being read from the table
@@ -428,7 +437,7 @@ const ON_wString ON_TextBuilder::FaceNameFromMap(int nval)
   for (int mi = 0; mi < count; mi++)
   {
     if (m_facename_map[mi].m_rtf_font_index == nval)
-      return m_facename_map[mi].m_facename;
+      return m_facename_map[mi].m_rtf_font_name;
   }
   return ON_wString::EmptyString;
 }
@@ -461,11 +470,12 @@ void ON_TextBuilder::FontSize(const wchar_t* value)
 
 void ON_TextBuilder::CharSet(const wchar_t* value)  // \fcharsetN
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  unsigned int charset = (ON__INT32)::wcstol(value, &sp, 10);
-  if (charset >= 0 && sp != value)
+  unsigned int charset = 0;
+  const wchar_t* sp = ON_wString::ToNumber(value, charset, &charset);
+  if (sp > value)
   {
-    if (m_font_table_level >= 0 && m_level > m_font_table_level)
+    //if (m_font_table_level >= 0 && m_level >= m_font_table_level)
+    if(m_bReadingFontDefinition)
     {
       // This is a charset specification in a font definition in the font table
       // the value is convertable to a codepage to use for interpreting the text chars
@@ -477,11 +487,12 @@ void ON_TextBuilder::CharSet(const wchar_t* value)  // \fcharsetN
 
 void ON_TextBuilder::CodePage(const wchar_t* value)  // \cpgN
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  unsigned int codepage = (ON__INT32)::wcstol(value, &sp, 10);
-  if (codepage >= 0 && sp != value)
+  unsigned int codepage = 0;
+  const wchar_t* sp = ON_wString::ToNumber(value, codepage, &codepage);
+  if (sp > value)
   {
-    if (m_font_table_level >= 0 && m_level > m_font_table_level)
+    //if (m_font_table_level >= 0 && m_level >= m_font_table_level)
+    if(m_bReadingFontDefinition)
     {
       // This is a codepage specification in a font definition in the font table
       m_current_props.SetCodePage(codepage);
@@ -588,13 +599,13 @@ ON__UINT32* ON_TextBuilder::RunCodePoints(const ON_TextRun& run)
 
 void ON_TextBuilder::UniCpCount(const wchar_t* value)
 {
-  // #bytes used following \uN for codepage code of equivalenet char
-  short count = -1;
-  if (nullptr != ON_wString::ToNumber(value, -1, &count))
-  {
-    if (m_ansi_equiv_chars.Count() > 0)
-      *m_ansi_equiv_chars.Last() = count;
-  }
+  // Dale Lear April 2018 - This code does absolutely nothing useful- commenting all of it out.
+
+  //// #bytes used following \uN for codepage code of equivalenet char
+  //short count = 1, d = ON_DBL_QNAN;
+  //const wchar_t* sp = ON_wString::ToNumber(value, d, &d);
+  //if (sp > value)
+  //  count = d;
 }
 
 void ON_TextBuilder::UniDecimal(const wchar_t* value)
@@ -603,11 +614,64 @@ void ON_TextBuilder::UniDecimal(const wchar_t* value)
   // unicode char in decimal followed by ascii char(s) (to skip if unicode can't be digested) :
   // \u1472? means char at unicode point 1472, or '?' as a fallback ascii char to substitute.
   // the decimal value may be written as a negative number: \u-2671? and should be cast to unsigned.
-  // The number of fallback chars to skip after the decimal number is set by the N in \ucN
-  // and is stored here in m_ansi_equiv_chars.Last() (default 1)
-  short d = INT16_MIN;
-  ON_wString::ToNumber(value, INT16_MIN, &d);
-  if (INT16_MIN != d)
+
+  ON__UINT16 u = 0;
+  const wchar_t* sp = nullptr;
+  for (;;)
+  {
+    // For example, the single UNICODE code point ON_UnicodeCodePoint::Wastebasket U+1F5D1 (decimal 128465)
+    //
+    // As of March 2018:
+    //  RTF from Windows 10 controls are using signed shorts with question mark as the ASCII fallback char
+    //    Wastebasket = "\u-10179?\u-8751?"
+    //      \u-10179? -> unsigned short 0xD83D
+    //      \u-8751?  -> unsigned short 0xDDD1
+    //      UTF-16 surrogate pair is (0xD83D, 0xDDD1) -> U+1F5D1 = UNICODE wastebasket glyph
+    //  RTF from MacOS controls are using unsigned shorts with a space as the ASCII fallback char
+    //    Wastebasket = "\u55357 \u56785 "
+    //      \u55357  -> unsigned short 0xD83D
+    //      \u56785  -> unsigned short 0xDDD1
+    //      UTF-16 surrogate pair is (0xD83D, 0xDDD1) -> UNICODE code point U+1F5D1 = wastebasket glyph
+
+    short signed_short = 0;
+    sp = ON_wString::ToNumber(value, signed_short, &signed_short);
+    if (nullptr != sp && sp > value)
+    {
+      // value is either positive or a negative in short range
+      u = (unsigned short)signed_short;
+      break;
+    }
+    
+    unsigned short unsigned_short = 0;
+    sp = ON_wString::ToNumber(value, unsigned_short, &unsigned_short);
+    if (nullptr != sp && sp > value && unsigned_short > 32767)
+    {
+      // value is a unsigned short too large to be a signed short.
+      u = unsigned_short;
+      break;
+    }
+
+    if (0 == m_current_UTF16_buffer_count)
+    {
+      // No doubt, we will eventually encounter RTF will using unsigned UTF-32 values.
+      unsigned int u32 = 0;
+      sp = ON_wString::ToNumber(value, u32, &u32);
+      if (nullptr != sp && sp > value && u32 > 0xffff && ON_IsValidUnicodeCodePoint(u32) )
+      {
+        // value is a unsigned int too large to be an unsigned short.
+        AppendCodePoint(u32);
+        return;
+      }
+    }
+
+    // probably an error in the RTF or a bug in this parsing code.
+    sp = nullptr;
+    break;
+  }
+
+  // Often *sp = '?' (question mark) on Windows and ' ' (space) on MacOS, 
+  // but that is not required if some other ASCII fallback char is used.
+  if (nullptr != sp && sp > value)
   {
     bool bError = false;
     const ON__UINT32 error_cp = ON_UnicodeCodePoint::ON_ReplacementCharacter;
@@ -622,7 +686,6 @@ void ON_TextBuilder::UniDecimal(const wchar_t* value)
         && waiting_mark == m_current_UTF16_buffer[1]);
 
     ON__UINT32 cp = 0;
-    ON__UINT16 u = (unsigned short)d;
     // Mar 3, 2017 Dale Lear
     //   Attempt to support handling of UTF-16 surrogate pairs without
     //   rewriting the RTF parser.
@@ -636,7 +699,8 @@ void ON_TextBuilder::UniDecimal(const wchar_t* value)
       if (bHaveFirstSurrogate)
       {
         // never got the second value for the pair
-        m_current_codepoints.Append(error_cp);
+        //m_current_codepoints.Append(error_cp);
+        AppendCodePoint(error_cp);
       }
 
       if (0 == m_current_UTF16_buffer_count)
@@ -686,7 +750,8 @@ void ON_TextBuilder::UniDecimal(const wchar_t* value)
 
     if (bError)
       cp = error_cp;
-    m_current_codepoints.Append(cp);
+    //m_current_codepoints.Append(cp);
+    AppendCodePoint(cp);
 
     m_current_UTF16_buffer_count = 0;
     m_current_UTF16_buffer[0] = unused_mark;
@@ -745,6 +810,11 @@ bool ON_TextBuilder::AppendCodePoint(ON__UINT32 codept)
   return true;
 }
 
+void ON_TextBuilder::FormatChange()
+{
+
+}
+
 #pragma endregion  // TextBuilder
 
 
@@ -769,10 +839,10 @@ ON_TextRunBuilder::ON_TextRunBuilder(
 
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
-  const ON_Font& style_font = dimstyle->Font();
+  const ON_Font& style_font = dimstyle->Font();  // this is always a managed font
   double stackscale = dimstyle->StackHeightScale();
   ON_DimStyle::stack_format stackformat = dimstyle->StackFractionFormat();
-  bool bold = dimstyle->Font().IsBold();
+  bool bold = dimstyle->Font().IsBoldInQuartet();
   bool italic = dimstyle->Font().IsItalic();
   bool underlined = dimstyle->Font().IsUnderlined();
   bool strikethrough = dimstyle->Font().IsStrikethrough();
@@ -787,8 +857,15 @@ ON_TextRunBuilder::ON_TextRunBuilder(
   m_current_props.SetUnderlined(underlined);
   m_current_props.SetStrikethrough(strikethrough);
 
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
-    m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.Init(
+    m_current_font,
+    height,
+    stackscale,
+    color,
+    bold,
+    italic,
+    underlined,
+    strikethrough);
 }
 
 void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
@@ -801,11 +878,10 @@ void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
 
   m_in_run = 0;
   m_level = 0;
-  m_font_table_level = -1;
+  m_font_table_level = 10000;
   m_runs = ON_TextRunArray::EmptyArray;
   m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
-  m_ansi_equiv_chars.Empty();
   // Array for accumulating text codepoints
   m_current_codepoints.Empty();
 }
@@ -819,9 +895,33 @@ void ON_TextRunBuilder::AppendCurrentRun()
     {
       m_runs.AppendRun(run);
     }
+    m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+      m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   }
 }
 
+bool ON_TextRunBuilder::AppendCodePoint(ON__UINT32 codept)
+{
+  if (m_current_codepoints.Count() == 0 && m_current_run.IsStacked() != ON_TextRun::Stacked::kStacked)
+  {
+    // First codepoint in a run after format changes
+    m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+      m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  }
+  m_current_codepoints.Append(codept);
+  return true;
+}
+
+void ON_TextRunBuilder::FormatChange()
+{
+  int cp32_count = m_current_codepoints.Count();
+  if (cp32_count > 0)
+  {
+    FlushText(cp32_count, m_current_codepoints.Array());
+    m_current_codepoints.Empty();
+    FinishCurrentRun();
+  }
+}
 
 #ifndef ON_TEXT_BRACKET_FRACTION
 static bool FindFrac(const wchar_t* wstr, int start, int spos, int& topstart, int& bottomend)
@@ -913,6 +1013,7 @@ void ON_TextRunBuilder::FinishCurrentRun()
     // and store that pointer on the run
     if (nullptr == m_current_font)
       m_current_font = &ON_Font::Default;
+
     const ON_Font* pManagedFont = m_current_font->ManagedFont();
 
     if (nullptr != pManagedFont)
@@ -971,10 +1072,41 @@ void ON_TextRunBuilder::FinishCurrentRun()
 #endif // 0
       AppendCurrentRun();
   }
-  else if (m_current_run.Type() == ON_TextRun::RunType::kFontdef)
+  //else if (ReadingFontDefinition() && m_current_run.Type() == ON_TextRun::RunType::kFontdef)
+  //{
+  //  // String is a font "facename" (In reality the "facename" it can be a PostScript name, a LOGFONT.lfFaceName,
+  //  // or a DWrite family name - depending on who is making the RTF). 
+  //  // Make a font with that facename and a font definition run 
+  //  size_t cpcount = ON_TextRun::CodepointCount(RunCodePoints(m_current_run));
+  //  if (0 != cpcount)
+  //  {
+  //    ON_wString str;
+  //    ON_TextContext::ConvertCodepointsToString((int)cpcount, RunCodePoints(m_current_run), str);
+  //    if (!str.IsEmpty())
+  //    {
+  //      str.Remove(L';');  // facename delimiter from rtf
+  //      ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
+  //      fn_key.m_rtf_font_index = m_font_index;
+  //      fn_key.m_rtf_font_name = str;
+  //      fn_key.m_codepage = m_current_props.CodePage();
+  //      fn_key.m_charset = m_current_props.CharSet();
+  //    }
+  //  }
+  //}
+}
+void ON_TextRunBuilder::FinishFontDef()
+{
+  if (ReadingFontDefinition())
   {
-    // String is a font facename. Make a font with that facename
-    // and a font definition run 
+    int cp32_count = m_current_codepoints.Count();
+    if (cp32_count > 0)
+    {
+      FlushText(cp32_count, m_current_codepoints.Array());
+      m_current_codepoints.Empty();
+    }
+    // String is a font "facename" (In reality the "facename" it can be a PostScript name, a LOGFONT.lfFaceName,
+    // or a DWrite family name - depending on who is making the RTF). 
+    // Make a font with that facename and a font definition run 
     size_t cpcount = ON_TextRun::CodepointCount(RunCodePoints(m_current_run));
     if (0 != cpcount)
     {
@@ -985,15 +1117,16 @@ void ON_TextRunBuilder::FinishCurrentRun()
         str.Remove(L';');  // facename delimiter from rtf
         ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
         fn_key.m_rtf_font_index = m_font_index;
-        fn_key.m_facename = str;
+        fn_key.m_rtf_font_name = str;
         fn_key.m_codepage = m_current_props.CodePage();
         fn_key.m_charset = m_current_props.CharSet();
       }
     }
+    SetReadingFontDefinition(false);
   }
 }
 
-void ON_TextRunBuilder::GroupBegin()
+void ON_TextRunBuilder::GroupBegin()  // {
 {
   int cp32_count = m_current_codepoints.Count();
   if (cp32_count > 0)
@@ -1010,14 +1143,10 @@ void ON_TextRunBuilder::GroupBegin()
 
   m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Append(*m_ansi_equiv_chars.Last());
-  else
-    m_ansi_equiv_chars.Append(1);
 }
 
 
-void ON_TextRunBuilder::GroupEnd()
+void ON_TextRunBuilder::GroupEnd()   // '}'
 {
   int cp32_count = m_current_codepoints.Count();
   if (cp32_count > 0)
@@ -1037,11 +1166,9 @@ void ON_TextRunBuilder::GroupEnd()
   m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
 
-  if (m_font_table_level >= m_level)
-    m_font_table_level = -1;
+  if (m_level <= m_font_table_level)
+    m_font_table_level = 10000;
   m_level--;
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Remove();
 }
 
 void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
@@ -1049,13 +1176,12 @@ void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
   if (count < 1 || 0 == cp || 0 == cp[0])
     return;
 
-  if (m_font_table_level > -1 && m_level >= m_font_table_level)
+  m_current_run.SetUnicodeString(count, cp);
+  if(ReadingFontDefinition())
   {
     // String is a font facename. Make a font with that facename
     // and a font definition run 
-    m_current_run.SetUnicodeString(count, cp);
     m_current_run.SetType(ON_TextRun::RunType::kFontdef);
-
 
     ON_wString str;
     ON_TextContext::ConvertCodepointsToString((int)count, cp, str);
@@ -1071,7 +1197,6 @@ void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
   else
   {
     // String is for a text run
-    m_current_run.SetUnicodeString(count, cp);
     m_current_run.SetType(ON_TextRun::RunType::kText);
   }
 
@@ -1094,22 +1219,195 @@ void ON_TextRunBuilder::BeginHeader()
 // Sets m_default_font_index when \deffn is read.
 void ON_TextRunBuilder::DefaultFont(const wchar_t* value)
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  ON__INT32 nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if (nval >= 0 && sp != value)
+  ON__INT32 nval = -1;
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if (nval >= 0 && sp > value)
     m_default_font_index = nval;
 }
+
+static const ON_Font* Internal_UpdateManagedFont(
+  const ON_Font* current_managed_font,
+  const ON_wString rtf_font_name,
+  bool rtf_bBold,
+  bool rtf_bItalic,
+  bool rtf_bUnderlined,
+  bool rtf_bStrikethrough
+)
+{
+  // insure bool compares work as expected.
+  if (false != rtf_bBold)
+    rtf_bBold = true;
+  if (false != rtf_bItalic)
+    rtf_bItalic = true;
+  if (false != rtf_bUnderlined)
+    rtf_bUnderlined = true;
+  if (false != rtf_bStrikethrough)
+    rtf_bStrikethrough = true;
+
+  if (nullptr != current_managed_font && false == current_managed_font->IsManagedFont())
+    current_managed_font = current_managed_font->ManagedFont();
+  if (nullptr == current_managed_font)
+    current_managed_font = &ON_Font::Default;
+
+  ON_wString local_rtf_name(rtf_font_name);
+  local_rtf_name.TrimLeftAndRight();
+  if (local_rtf_name.IsEmpty())
+    local_rtf_name = ON_Font::RichTextFontName(current_managed_font, true);
+
+  const ON_Font* new_managed_font = nullptr;
+
+  if (false == ON_wString::EqualOrdinal(local_rtf_name, ON_Font::RichTextFontName(current_managed_font, false), true))
+  {
+    // changing rich text font name - get everything at once
+   new_managed_font = ON_Font::ManagedFontFromRichTextProperties(
+      local_rtf_name,
+      rtf_bBold,
+      rtf_bItalic,
+      rtf_bUnderlined,
+      rtf_bStrikethrough
+    );
+    if (nullptr != new_managed_font)
+      return new_managed_font;
+  }
+
+  // same  rich text font name
+  const bool bCurrentIsBold = current_managed_font->IsBoldInQuartet();
+  const bool bChangeBold = (rtf_bBold != bCurrentIsBold);
+  const bool bChangeItalic = (rtf_bItalic != current_managed_font->IsItalic());
+  const bool bChangeUnderlined = (rtf_bUnderlined != current_managed_font->IsUnderlined());
+  const bool bChangeStrikethrough = (rtf_bStrikethrough != current_managed_font->IsStrikethrough());
+
+  if (false == bChangeBold && false == bChangeItalic)
+  {
+    if (bChangeUnderlined || bChangeStrikethrough)
+    {
+      ON_Font f(*current_managed_font);
+      f.SetUnderlined(rtf_bUnderlined);
+      f.SetStrikethrough(rtf_bStrikethrough);
+      new_managed_font = f.ManagedFont();
+    }
+  }
+  else
+  {
+    // changing bold or italic
+    const ON_Font* fontBoldItalic = current_managed_font;
+    ON_FontFaceQuartet q = current_managed_font->InstalledFontQuartet();
+    fontBoldItalic = q.Face(rtf_bBold, rtf_bItalic);
+    if (nullptr == fontBoldItalic && bChangeBold && bChangeItalic)
+      fontBoldItalic = q.Face(bCurrentIsBold, rtf_bItalic);
+    if (nullptr == fontBoldItalic)
+      fontBoldItalic = current_managed_font;
+    if (rtf_bUnderlined || rtf_bStrikethrough)
+    {
+      ON_Font f(*fontBoldItalic);
+      f.SetUnderlined(rtf_bUnderlined);
+      f.SetStrikethrough(rtf_bStrikethrough);
+      new_managed_font = f.ManagedFont();
+    }
+    else
+      new_managed_font = fontBoldItalic->ManagedFont();
+  }
+
+  if (nullptr != new_managed_font)
+    return new_managed_font;
+
+  return current_managed_font;
+}
+
+//const ON_Font* Internal_UpdateManagedFont(
+//  const ON_Font* current_managed_font,
+//  const ON_wString rtf_font_name,
+//  bool rtf_bBold,
+//  bool rtf_bItalic,
+//  bool rtf_bUnderlined,
+//  bool rtf_bStrikethrough
+//)
+//{
+//  if (nullptr != current_managed_font && false == current_managed_font->IsManagedFont())
+//    current_managed_font = current_managed_font->ManagedFont();
+//  if (nullptr == current_managed_font)
+//    current_managed_font = &ON_Font::Default;
+//
+//  bool bChangeFontFamilyName = false;
+//  for (;;)
+//  {
+//    if (rtf_font_name.IsEmpty())
+//      break;
+//    if (Internal_EqualFontName(rtf_font_name, current_managed_font->FamilyName()))
+//      break;
+//    if (Internal_EqualFontName(rtf_font_name, current_managed_font->PostScriptName()))
+//      break;
+//    const ON_wString windows_logfont_name = current_managed_font->WindowsLogfontName();
+//    if (Internal_EqualFontName(rtf_font_name, windows_logfont_name))
+//      break;
+//    ON_wString rtf_family_name = ON_Font::FamilyNameFromDirtyName(rtf_font_name);
+//    if (Internal_EqualFontName(rtf_family_name, current_managed_font->FamilyName()))
+//      break;
+//    bChangeFontFamilyName = true;
+//    break;
+//  }
+//
+//  const bool bChangeWeight = ((rtf_bBold ? true : false) != current_managed_font->IsBoldInQuartet());
+//  const bool bChangeStyle = ((rtf_bItalic ? true : false) != current_managed_font->IsItalic());
+//  const bool bChangeUnderlined = ((rtf_bUnderlined ? true : false) != current_managed_font->IsUnderlined());
+//  const bool bChangeStrikethrough = ((rtf_bStrikethrough ? true : false) != current_managed_font->IsStrikethrough());
+//
+//  const bool bUpdateFont
+//    = bChangeFontFamilyName
+//    || bChangeWeight
+//    || bChangeStyle
+//    || bChangeUnderlined
+//    || bChangeStrikethrough;
+//
+//  if (false == bUpdateFont)
+//    return current_managed_font;
+//
+//  const ON_Font::Weight font_weight
+//    = bChangeWeight
+//    ? (rtf_bBold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal)
+//    : (current_managed_font->FontWeight());    //      IsBold() ? ON_Font::Weight::Bold : ON_Font::Weight::Normal);
+//  const ON_Font::Style font_style
+//    = bChangeStyle
+//    ? (rtf_bItalic ? ON_Font::Style::Italic : ON_Font::Style::Upright)
+//    : current_managed_font->FontStyle();
+//  const bool bUnderlined
+//    = bChangeUnderlined
+//    ? rtf_bUnderlined
+//    : current_managed_font->IsUnderlined();
+//  const bool bStrikethrough
+//    = bChangeStrikethrough
+//    ? rtf_bStrikethrough
+//    : current_managed_font->IsStrikethrough();
+//
+//  ON_Font updated_font(*current_managed_font);
+//  if (bChangeFontFamilyName)
+//  {
+//    ON_wString rtf_family_name = ON_Font::FamilyNameFromDirtyName(rtf_font_name);
+//    updated_font.SetFamilyName(rtf_family_name);
+//  }
+//
+//  updated_font.SetFontWeight(font_weight);
+//  updated_font.SetFontStyle(font_style);
+//  updated_font.SetUnderlined(bUnderlined);
+//  updated_font.SetStrikethrough(bStrikethrough);
+//
+//  const ON_Font* new_managed_font = updated_font.ManagedFont();
+//  if (nullptr != new_managed_font)
+//    return new_managed_font;
+//
+//  return current_managed_font;
+//}
 
 // Process a rtf \fn tag to set the current font to the nth font in the rtf font table
 void ON_TextRunBuilder::FontTag(const wchar_t* value)
 {
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  ON__INT32 nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if (nval >= 0 && sp != value)
+  ON__INT32 nval = -1;
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if (nval >= 0 && sp > value)
   {
-    if (m_font_table_level >= 0 &&
-      m_level > m_font_table_level)
+    if(ReadingFontTable())
     {
+      SetReadingFontDefinition(true);
       // Defining a font in the font table
       // n in \fn is the rtf index of the font currently being read from the table
       // store a mapping from \fn to font
@@ -1126,39 +1424,38 @@ void ON_TextRunBuilder::FontTag(const wchar_t* value)
       const ON_Font* pManagedFont = (nullptr == m_current_font)
         ? &ON_Font::Default : m_current_font->ManagedFont();
 
-      ON_wString facename = FaceNameFromMap(nval);
-      if (facename.IsEmpty())
-        facename = (nullptr == pManagedFont)
-        ? ON_Font::Default.FontFaceName() : pManagedFont->FontFaceName();
-      ON_Font::Weight weight = m_current_props.IsBold()
-        ? ON_Font::Weight::Bold : ON_Font::Weight::Normal;
-      ON_Font::Style style = m_current_props.IsItalic()
-        ? ON_Font::Style::Italic : ON_Font::Style::Upright;
-      ON_Font::Stretch stretch = ON_Font::Stretch::Medium;
-      bool underlined = m_current_props.IsUnderlined();
-      bool strikethrough = m_current_props.IsStrikethrough();
+      ON_wString rft_font_name = FaceNameFromMap(nval);
+      rft_font_name.TrimLeftAndRight();
+      const bool rtf_bBold = m_current_props.IsBold();
+      const bool rtf_bItalic = m_current_props.IsItalic();
+      const bool rtf_bUnderlined = m_current_props.IsUnderlined();
+      const bool rtf_bStrikethrough = m_current_props.IsStrikethrough();
 
-      ON_Font font;
-      font.SetFontCharacteristics(facename, weight, style, stretch, underlined, strikethrough);
+      pManagedFont = Internal_UpdateManagedFont(
+        pManagedFont,
+        rft_font_name,
+        rtf_bBold,
+        rtf_bItalic,
+        rtf_bUnderlined,
+        rtf_bStrikethrough
+      );
 
       if (nullptr != pManagedFont)
       {
-        if (0 != ON_Font::CompareFontCharacteristics(*pManagedFont, font))
-        {
-          const ON_Font* newfont = ON_Font::GetManagedFont(font, true);
-          pManagedFont = newfont;
-        }
         m_current_font = pManagedFont;
-        m_current_props.SetBold(pManagedFont->IsBold());
-        m_current_props.SetItalic(pManagedFont->IsItalic());
-        m_current_props.SetUnderlined(pManagedFont->IsUnderlined());
-        m_current_props.SetStrikethrough(pManagedFont->IsStrikethrough());
+        // Use the rtf settings to update m_current_props
+        // to because the current computer may not have an exact font match.
+        m_current_props.SetBold(rtf_bBold);
+        m_current_props.SetItalic(rtf_bItalic);
+        m_current_props.SetUnderlined(rtf_bUnderlined);
+        m_current_props.SetStrikethrough(rtf_bStrikethrough);
       }
 
       unsigned int charset = CharSetFromMap(nval);
       m_current_props.SetCharSet(charset, true);
     }
   }
+
   return;  // error - need font index      
 }
 
@@ -1171,7 +1468,7 @@ void ON_TextRunBuilder::FontSize(const wchar_t* value)
 
 
   //wchar_t* eptr = const_cast< wchar_t* >(value);
-  //ON__UINT32 fs = wcstol(value, &eptr, 10);
+  //ON__UINT32 fs = ON_wString::ToNumber(value, &eptr, 10);
   //double d = 1.0;
   //if(eptr != value && fs > 0)
   //  d = MapControlFontSizeTo3dFontSize(fs);
@@ -1206,9 +1503,6 @@ void ON_TextRunBuilder::Tab()
 
 void ON_TextRunBuilder::Bold(const wchar_t* value)
 {
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
-  bool bold = m_current_font->IsBold();
   bool on = true;
   if (nullptr != value)
   {
@@ -1217,21 +1511,28 @@ void ON_TextRunBuilder::Bold(const wchar_t* value)
     else if ('0' == value[0])
       on = false;
   }
-  if (on != bold)
+
+  if (nullptr == m_current_font)
+    m_current_font = &ON_Font::Default;
+
+  if (false == m_current_font->IsManagedFont() || on != m_current_font->IsBoldInQuartet())
   {
-    ON_Font font(*m_current_font);
-    font.SetFontWeight(on ? ON_Font::Weight::Bold : ON_Font::Weight::Normal);
-    m_current_font = font.ManagedFont();
+    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+      on,
+      m_current_font->IsItalic(),
+      m_current_font->IsUnderlined(),
+      m_current_font->IsStrikethrough()
+    );
+    if (nullptr != managed_font)
+    {
+      m_current_font = managed_font;
+    }
   }
   m_current_props.SetBold(on);
 }
 
 void ON_TextRunBuilder::Italic(const wchar_t* value)
 {
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
-
-  bool italic = m_current_font->IsItalic();
   bool on = true;
   if (nullptr != value)
   {
@@ -1240,14 +1541,22 @@ void ON_TextRunBuilder::Italic(const wchar_t* value)
     else if ('0' == value[0])
       on = false;
   }
-  if (on != italic)
+
+  if (nullptr == m_current_font)
+    m_current_font = &ON_Font::Default;
+
+  if (false == m_current_font->IsManagedFont() || on != m_current_font->IsItalic())
   {
-    ON_Font font(*m_current_font);
-    if (on)
-      font.SetFontStyle(ON_Font::Style::Italic);
-    else
-      font.SetFontStyle(ON_Font::Style::Upright);
-    m_current_font = font.ManagedFont();
+    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+      m_current_font->IsBoldInQuartet(),
+      on,
+      m_current_font->IsUnderlined(),
+      m_current_font->IsStrikethrough()
+    );
+    if (nullptr != managed_font)
+    {
+      m_current_font = managed_font;
+    }
   }
   m_current_props.SetItalic(on);
 }
@@ -1256,9 +1565,17 @@ void ON_TextRunBuilder::UnderlineOn()
 {
   if (nullptr == m_current_font)
     m_current_font = &ON_Font::Default;
-  ON_Font font(*m_current_font);
-  font.SetUnderlined(true);
-  m_current_font = font.ManagedFont();
+  if ( false == m_current_font->IsManagedFont() || false == m_current_font->IsUnderlined() )
+  {
+    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+      m_current_font->IsBoldInQuartet(),
+      m_current_font->IsItalic(),
+      true,
+      m_current_font->IsStrikethrough()
+    );
+    if (nullptr != managed_font)
+      m_current_font = managed_font;
+  }
   m_current_props.SetUnderlined(true);
 }
 
@@ -1266,15 +1583,22 @@ void ON_TextRunBuilder::UnderlineOff()
 {
   if (nullptr == m_current_font)
     m_current_font = &ON_Font::Default;
-  ON_Font font(*m_current_font);
-  font.SetUnderlined(false);
-  m_current_font = font.ManagedFont();
+  if ( false == m_current_font->IsManagedFont() || m_current_font->IsUnderlined() )
+  {
+    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+      m_current_font->IsBoldInQuartet(),
+      m_current_font->IsItalic(),
+      false,
+      m_current_font->IsStrikethrough()
+    );
+    if (nullptr != managed_font)
+      m_current_font = managed_font;
+  }
   m_current_props.SetUnderlined(false);
 }
 
 void ON_TextRunBuilder::Strikethrough(const wchar_t* value)
 {
-  bool strike = m_current_font->IsStrikethrough();
   bool on = true;
   if (nullptr != value)
   {
@@ -1283,11 +1607,20 @@ void ON_TextRunBuilder::Strikethrough(const wchar_t* value)
     else if ('0' == value[0])
       on = false;
   }
-  if (on != strike)
+  if (nullptr == m_current_font)
+    m_current_font = &ON_Font::Default;
+  if ( false == m_current_font->IsManagedFont() || on != m_current_font->IsStrikethrough() )
   {
-    ON_Font font(*m_current_font);
-    font.SetStrikethrough(true);
-    m_current_font = font.ManagedFont();
+    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+      m_current_font->IsBoldInQuartet(),
+      m_current_font->IsItalic(),
+      m_current_font->IsUnderlined(),
+      on
+    );
+    if (nullptr != managed_font)
+    {
+      m_current_font = managed_font;
+    }
   }
   m_current_props.SetStrikethrough(on);
 }
@@ -1393,13 +1726,13 @@ void ON_RtfStringBuilder::InitStringBuilder(const ON_DimStyle* dimstyle)
     dimstyle = &ON_DimStyle::Default;
   const ON_Font& style_font = dimstyle->Font();
   ON_FaceNameKey& fnkey = m_facename_map.AppendNew();
-  fnkey.m_facename = style_font.FontFaceName();
+  fnkey.m_rtf_font_name = ON_Font::RichTextFontName(&style_font, true);
   fnkey.m_rtf_font_index = 0;
 
-  bool bold = dimstyle->Font().IsBold();
-  bool italic = dimstyle->Font().IsItalic();
-  bool underlined = dimstyle->Font().IsUnderlined();
-  bool strikethrough = dimstyle->Font().IsStrikethrough();
+  bool bold = style_font.IsBoldInQuartet();
+  bool italic = style_font.IsItalic();
+  bool underlined = style_font.IsUnderlined();
+  bool strikethrough = style_font.IsStrikethrough();
 
   m_run_stack.Empty();
 
@@ -1411,8 +1744,7 @@ void ON_RtfStringBuilder::InitStringBuilder(const ON_DimStyle* dimstyle)
 
   m_in_run = 0;
   m_level = 0;
-  m_font_table_level = -1;
-  m_ansi_equiv_chars.Empty();
+  m_font_table_level = 10000;
   m_current_codepoints.Empty();
 }
 
@@ -1431,14 +1763,6 @@ ON_RtfStringBuilder::TextRun ON_RtfStringBuilder::PopRun()
   return m_current_run;
 }
 
-bool ON_RtfStringBuilder::InFontTable()
-{
-  return m_in_font_table;
-}
-void ON_RtfStringBuilder::SetInFontTable(bool b)
-{
-  m_in_font_table = b;
-}
 bool ON_RtfStringBuilder::InColorTable()
 {
   return m_in_color_table;
@@ -1565,10 +1889,6 @@ void ON_RtfStringBuilder::GroupBegin()
   m_current_run.SetTerminated(true);
 
   PushRun(m_current_run);
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Append(*m_ansi_equiv_chars.Last());
-  else
-    m_ansi_equiv_chars.Append(1);
   
   m_current_run.AddControl(L"{");
   m_have_rtf = true;
@@ -1577,8 +1897,6 @@ void ON_RtfStringBuilder::GroupBegin()
 
 void ON_RtfStringBuilder::GroupEnd()
 {
-  if (m_font_table_level > m_level)
-    m_font_table_level = 0;
   if (m_current_run.Type() != ON_TextRun::RunType::kColortbl)
   {
     if (m_level >= 0)
@@ -1587,7 +1905,6 @@ void ON_RtfStringBuilder::GroupEnd()
       m_level--;
       if (m_current_run.Type() == ON_TextRun::RunType::kFonttbl)
       {
-        SetInFontTable(false);
         if (SkippingFacename())
         {
           m_current_run.AddControl(L"{\\f0 ");
@@ -1601,7 +1918,7 @@ void ON_RtfStringBuilder::GroupEnd()
           m_current_run.AddControl(temp.Array());
           m_level++;
         }
-        m_font_table_level = -1;
+        m_font_table_level = 10000;
       }
       m_string_out = m_string_out + m_current_run.TextString();
       m_current_run.EmptyText();
@@ -1612,9 +1929,6 @@ void ON_RtfStringBuilder::GroupEnd()
     SetInColorTable(false);
 
   m_current_run = PopRun();
-
-  if (m_ansi_equiv_chars.Count() > 0)
-    m_ansi_equiv_chars.Remove();
 }
 
 void ON_RtfStringBuilder::BeginFontTable()
@@ -1628,7 +1942,6 @@ void ON_RtfStringBuilder::BeginFontTable()
   ON_wString temp;
   temp.Format(L"\\fonttbl{\\f0 %s;}", m_default_facename.Array());
   m_current_run.AddText(temp.Array());
-  SetInFontTable(true);
   if (SettingFacename())
   {
     temp.Format(L"{\\f1 %s;}", m_override_facename.Array());
@@ -1651,14 +1964,13 @@ void ON_RtfStringBuilder::BeginHeader()
 // Sets m_default_font_index when \deffn is read.
 void ON_RtfStringBuilder::DefaultFont(const wchar_t* value)
 {
-  ON__INT32 nval = -1;
   if (m_skip_facename || (m_make_facename && !m_default_facename.IsEmpty()))
     m_default_font_index = 0;
   else
   {
-    wchar_t* sp = const_cast<wchar_t*>(value);
-    nval = (ON__INT32)::wcstol(value, &sp, 10);
-    if (nval >= 0 && sp != value)
+    ON__INT32 nval = -1;
+    const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+    if (nval >= 0 && sp > value)
       m_default_font_index = nval;
   }
   ON_wString temp;
@@ -1678,17 +1990,17 @@ const ON_wString ON_RtfStringBuilder::OutputString()
 // or to store the definition for the nth font in the font table
 void ON_RtfStringBuilder::FontTag(const wchar_t* value)
 {
-  if (m_font_table_level >= 0 && m_level > m_font_table_level)  // if(InFontTable())...
+  if(ReadingFontTable())
     m_current_run.SetType(ON_TextRun::RunType::kFontdef);
 
   if (SkippingFacename())
     return;
 
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  ON__INT32 nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if (nval >= 0 && sp != value) // got a number
+  ON__INT32 nval = -1;
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if (nval >= 0 && sp > value) // got a number
   {
-    if (m_font_table_level >= 0 && m_level > m_font_table_level)  // if(InFontTable())...
+    if (ReadingFontTable())
     {
       if (!SettingFacename())
       {
@@ -1707,7 +2019,6 @@ void ON_RtfStringBuilder::FontTag(const wchar_t* value)
     {
       // Not defining the font table. Rather, setting a font current
       // Set current font to font corresponding to font_index
-      
       {
         if (SkippingFacename() || SettingFacename())
           m_current_run.AddControl(L"\\f1");
@@ -1721,15 +2032,16 @@ void ON_RtfStringBuilder::FontTag(const wchar_t* value)
       }
     }
   }
+
   return;      
 }
 
 void ON_RtfStringBuilder::FontSize(const wchar_t* value)
 {
   // We ignore font height
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  ON__INT32 nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if (nval >= 0 && sp != value) // got a number
+  ON__INT32 nval = -1;
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if (nval >= 0 && sp > value) // got a number
   {
     ON_wString temp;
     temp.Format(L"\\fs%d", nval);
@@ -1961,10 +2273,10 @@ void ON_RtfFirstChar::InitStringBuilder(const ON_DimStyle* dimstyle)
     dimstyle = &ON_DimStyle::Default;
   const ON_Font& style_font = dimstyle->Font();
   ON_FaceNameKey& fnkey = m_facename_map.AppendNew();
-  fnkey.m_facename = style_font.FontFaceName();
+  fnkey.m_rtf_font_name = style_font.FamilyName();
   fnkey.m_rtf_font_index = -1;
 
-  bool bold = dimstyle->Font().IsBold();
+  bool bold = dimstyle->Font().IsBoldInQuartet();
   bool italic = dimstyle->Font().IsItalic();
   bool underlined = dimstyle->Font().IsUnderlined();
   bool strikethrough = dimstyle->Font().IsStrikethrough();
@@ -1979,7 +2291,7 @@ void ON_RtfFirstChar::InitStringBuilder(const ON_DimStyle* dimstyle)
 
   m_in_run = 0;
   m_level = 0;
-  m_font_table_level = -1;
+  m_font_table_level = 10000;
 }
 
 void ON_RtfFirstChar::PushRun(TextRun& run)
@@ -1997,14 +2309,6 @@ ON_RtfFirstChar::TextRun ON_RtfFirstChar::PopRun()
   return m_current_run;
 }
 
-bool ON_RtfFirstChar::InFontTable()
-{
-  return m_in_font_table;
-}
-void ON_RtfFirstChar::SetInFontTable(bool b)
-{
-  m_in_font_table = b;
-}
 bool ON_RtfFirstChar::InColorTable()
 {
   return m_in_color_table;
@@ -2025,7 +2329,7 @@ void ON_RtfFirstChar::GroupBegin()
 void ON_RtfFirstChar::GroupEnd()
 {
   if (m_current_run.Type() == ON_TextRun::RunType::kFonttbl)
-    SetInFontTable(false);
+    m_font_table_level = 10000;
 
   if (m_current_run.Type() == ON_TextRun::RunType::kColortbl)
     SetInColorTable(false);
@@ -2041,7 +2345,7 @@ void ON_RtfFirstChar::GroupEnd()
       str.Remove(L';');  // facename delimiter from rtf
       ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
       fn_key.m_rtf_font_index = m_font_index;
-      fn_key.m_facename = str;
+      fn_key.m_rtf_font_name = str;
       fn_key.m_charset = m_current_props.CharSet();
       fn_key.m_codepage = m_current_props.CodePage();
     }
@@ -2049,8 +2353,6 @@ void ON_RtfFirstChar::GroupEnd()
 
   m_current_run = PopRun();
 
-  if (m_font_table_level >= m_level)
-    m_font_table_level = -1;
   m_level--;
 }
 
@@ -2058,7 +2360,6 @@ void ON_RtfFirstChar::BeginFontTable()
 {
   m_font_table_level = m_level;
   m_current_run.SetType(ON_TextRun::RunType::kFonttbl);
-  SetInFontTable(true);
 }
 
 void ON_RtfFirstChar::BeginHeader()
@@ -2082,7 +2383,7 @@ bool ON_RtfFirstChar::AppendCodePoint(ON__UINT32 codept)
   if (!m_have_rtf)
     m_have_rtf = true;
   // First char not in a table or tag - return false to stop parsing
-  if (!InColorTable() && !InFontTable())
+  if (!InColorTable() && !ReadingFontTable())
     return false;
 
   ON_wString str;
@@ -2096,20 +2397,22 @@ bool ON_RtfFirstChar::AppendCodePoint(ON__UINT32 codept)
 
 void ON_RtfFirstChar::FontTag(const wchar_t* value)
 {
-  if (m_font_table_level >= 0 && m_level > m_font_table_level)  // if(InFontTable())...
-    m_current_run.SetType(ON_TextRun::RunType::kFontdef);
+    if (ReadingFontTable())
+      m_current_run.SetType(ON_TextRun::RunType::kFontdef);
 
-  wchar_t* sp = const_cast< wchar_t* >(value);
-  ON__INT32 nval = (ON__INT32)::wcstol(value, &sp, 10);
-  if (nval >= 0 && sp != value) // got a number
+  ON__INT32 nval = -1;
+  const wchar_t* sp = ON_wString::ToNumber(value, nval, &nval);
+  if (nval >= 0 && sp > value) // got a number
   {
-    if (m_font_table_level >= 0 && m_level > m_font_table_level)  // if(InFontTable())...
+    if (ReadingFontTable())
     {
+      SetReadingFontDefinition(true);
       // Defining a font in the font table
       // n in \fn is the rtf index of the font currently being read from the table
       // store a mapping from \fn to font
       // when the font for this font table entry is made
       m_font_index = nval;
+      // next will be a face name that will be read and put in a fontdef run
     }
     else
     {
@@ -2186,8 +2489,6 @@ void ON_RtfFirstChar::Strikethrough(const wchar_t* value)
 ON_RtfParser::ON_RtfParser(ON_TextIterator& iter, ON_TextBuilder& builder)
   : m_ti(iter)
   , m_builder(builder)
-  , m_p_level(0)
-  , m_in_real_rtf(false)
 {
 }
 
@@ -2211,7 +2512,7 @@ bool ON_RtfParser::ProcessTag(const wchar_t* name, const wchar_t* value, bool op
     m_in_real_rtf = true;
     m_builder.BeginHeader();
   }
-  else if(0 == tagname.CompareOrdinal(tagFontTable,bOrdinalIgnoreCase))
+  else if (0 == tagname.CompareOrdinal(tagFontTable, bOrdinalIgnoreCase))
     m_builder.BeginFontTable();
   else if(0 == tagname.CompareOrdinal(tagDefaultFont,bOrdinalIgnoreCase)      && 0 != value && 0 != value[0])
     m_builder.DefaultFont(value);
@@ -2305,33 +2606,58 @@ bool ON_RtfParser::ProcessTag(const wchar_t* name, const wchar_t* value, bool op
   else if (0 == ON_wString::CompareOrdinal(name, tagemdash, bOrdinalIgnoreCase))
     m_builder.EmDash();
 
-  
-    
-    
-    
-    
-    
-    
-
-  else if (!optional)
-    return false;
-
   return true;
+}
+
+// Called after '\\*' is read
+// '\\tagname<value> ...  ;' follows optional tag.
+// optional tags can be skipped, and terminate with ';'
+// the first tagname following '\\*\\' is the name of the optional tag and
+// additional tags and tokens can follow, up to a terminiating ';'
+// tags can contain up to 32 chars in the name optionally followed by a number
+bool ON_RtfParser::ReadOptionalTag()
+{
+  bool rc = false;
+  bool end_of_tag = false;
+  ON__UINT32 cp = 0;
+
+  while (!end_of_tag)
+  {
+    if (false == m_ti.ReadCodePoint(cp))
+    {
+      end_of_tag = true;
+      break;
+    }
+    switch (cp)
+    {
+    case ON_UnicodeCodePoint::ON_Backslash:
+      rc = ReadTag(true);
+      break;
+    default:   // terminates an optional tag
+      end_of_tag = true;
+      // Terminating chars other than these are eaten here
+      if ('\\' == cp || '{' == cp || '}' == cp)
+        m_ti.Back();
+
+      break;
+    }
+  }
+  return rc;
 }
 
 // Called after '\\' is read
 // tags can contain up to 32 chars in the name optionally followed by a number
-bool ON_RtfParser::ReadTag(bool optional_tag)
+bool ON_RtfParser::ReadTag(bool optional)
 {
   wchar_t name[64];  // These are limited to 32 chars in the rtf spec
   wchar_t value[64];
   memset(name, 0, 64*sizeof(wchar_t));
   memset(value, 0, 64*sizeof(wchar_t));
   int namecnt = 0, valcnt = 0;
-  m_ti.Back();
   bool in_name = true;
   bool end_of_tag = false;
   ON__UINT32 cp = 0;
+  bool rc = false;
 
   while(!end_of_tag)
   {
@@ -2340,7 +2666,6 @@ bool ON_RtfParser::ReadTag(bool optional_tag)
       end_of_tag = true;
       break;
     }
-    
     if(in_name && IsAtoZ(cp) && namecnt < 63)  // Tag name is all alpha chars
     {
       name[namecnt++] = (wchar_t)cp;
@@ -2353,22 +2678,15 @@ bool ON_RtfParser::ReadTag(bool optional_tag)
     else   // tag name terminated by any non-alphabetic char, tag parameter argument terminated by non-digit char
     {
       end_of_tag = true;
-      ProcessTag(name, value, optional_tag);
-      // MAC HACK - mac rtf stirngs include {\\*\\expandedcolortbl;;} which has an extra ';' to throw away
-      if (optional_tag && (0 == ON_wString::CompareOrdinal(name, L"expandedcolortbl", false)))
-      {
-        while ('}' != cp)
-        {
-          if (false == m_ti.ReadCodePoint(cp))
-            break;
-        }
-      }
+      m_builder.FormatChange();
+      rc = ProcessTag(name, value, optional);
+
       // Terminating chars other than these are eaten here
       if('\\' == cp || '{' == cp || '}' == cp)
         m_ti.Back();
     }
   }
-  return true;
+  return rc;
 }
 
 
@@ -2435,8 +2753,10 @@ bool ON_RtfParser::Parse()
           case ON_UnicodeCodePoint::ON_CarriageReturn:
           case ON_UnicodeCodePoint::ON_LineSeparator:
           case ON_UnicodeCodePoint::ON_ParagraphSeparator:
-            m_builder.m_current_codepoints.Append(rtf_code_point);
-            //      TODO    ProcessTag(new RtfTag(tagParagraph));
+            FlushCurText(m_builder.m_current_codepoints);
+            m_builder.GroupEnd();
+            ProcessTag(L"par", nullptr, false);
+            m_builder.GroupBegin();
             break;
 
           case '\'':
@@ -2460,22 +2780,20 @@ bool ON_RtfParser::Parse()
           case ':':
             break;
           case '*':
-            optional_tag = true;
+            ReadOptionalTag();
             break;
           case 'n':
-            if (!m_in_real_rtf)
-            {
-              FlushCurText(m_builder.m_current_codepoints);
-              m_builder.GroupEnd();
-              ProcessTag(L"par", nullptr, false);
-              m_builder.GroupBegin();
-              break;
-            }
-
+            //FlushCurText(m_builder.m_current_codepoints);
+            m_builder.GroupEnd();
+            ProcessTag(L"par", nullptr, false);
+            m_builder.GroupBegin();
+            break;
           default:
             // Tag names are always low ascii alphabetic
-            ReadTag(optional_tag);
-            //m_builder.m_current_codepoints.Empty();
+            m_ti.Back();
+            ReadTag(false);
+            //// Breaks reading unocode text like A<\u26085?\u26412?\u12398?\u12469?\u12452?>
+            //// m_builder.m_current_codepoints.Empty();
             optional_tag = false;
           }
         }
@@ -2535,7 +2853,9 @@ bool ON_RtfParser::Parse()
       // Normal single byte text character not in a tag name
       // Could be argument to a tag, like a font name in fonttbl
       // AppendCodePoint() returns false to stop parsing
-      if (!m_builder.AppendCodePoint(rtf_code_point))
+      if (m_builder.ReadingFontDefinition() && rtf_code_point == L';')
+        m_builder.FinishFontDef();
+      else if (!m_builder.AppendCodePoint(rtf_code_point))
         return true;
       break;
     }
@@ -2549,16 +2869,43 @@ bool ON_RtfParser::Parse()
 
 // This has to make a string that the text control can digest
 // and that's short and simple as possible so it can be put in the file
+unsigned int RtfComposer::GetFacenameKey(const ON_Font* font, ON_SimpleArray< wchar_t[34] >& fonttable)
+{
+  if (nullptr == font)
+    return 0;
+  // Depending on what created the RTF, the face name in the RTF can be a 
+  // PostScript name, LOGFONT.lfFaceName, IDWriteFont family name, ...
+  const ON_wString rtf_facename = ON_Font::RichTextFontName(font,true);
+
+  if (rtf_facename.IsEmpty())
+    return 0;
+  if (rtf_facename.Length() > 33)
+    ON_ERROR("rtf_facename is too long\n");
+  wchar_t facename[34];
+  wcsncpy(facename, rtf_facename.Array(), 33);
+  facename[33] = 0;
+
+  return RtfComposer::GetFacenameKey(facename, fonttable);
+}
+
 unsigned int RtfComposer::GetFacenameKey(const wchar_t* facename, ON_SimpleArray< wchar_t[34] >& fonttable)
 {
+  if(nullptr == facename || 0 == facename[0])
+    return 0;
   int count = fonttable.Count();
   for(int i = 0; i < count; i++)
   {
-    if(0 == ON_wString::CompareOrdinal(facename, 34, fonttable[i], 34, true))
+    if (nullptr == fonttable[i] || 0 == fonttable[i][0])
+      continue;
+    if(ON_wString::EqualOrdinal(facename, fonttable[i], true))
       return i;
   }
-  wcsncpy( fonttable.AppendNew(), facename, 33);
-  return count;
+  if (nullptr != wcsncpy(fonttable.AppendNew(), facename, 33))
+  {
+    fonttable[count][33] = 0;
+    return count;
+  }
+  return 0;
 }
 unsigned int RtfComposer::GetColorKey(ON_Color color, ON_SimpleArray< unsigned int >& colortable)
 {
@@ -2585,9 +2932,8 @@ bool IsSpecial(const wchar_t ch)
   return false;
 }
 
-#if 1
 
-static bool GetRunText(ON_TextRun* run, ON_wString& text_out)
+static bool GetRunText(ON_TextRun* run, ON_wString& text_out, bool& foundunicodepoint)
 {
   if (nullptr == run)
     return false;
@@ -2641,6 +2987,7 @@ static bool GetRunText(ON_TextRun* run, ON_wString& text_out)
           const int signed_string_format_param = (int)signed_rtf_utf16_value;
           n.Format(L"\\u%d?", signed_string_format_param);
           text_out += n;
+          foundunicodepoint = true;
         }
       }
       else
@@ -2658,8 +3005,6 @@ static bool GetRunText(ON_TextRun* run, ON_wString& text_out)
   }
   return true;
 }
-#endif
-
 
 
 bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyle, ON_wString& rtf)
@@ -2680,11 +3025,8 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
     return false;
 
   const ON_Font& style_font = dimstyle->Font();
-  const wchar_t* style_facename = style_font.FontFaceName();
-  if (nullptr == style_facename)
-    style_facename = ON_Font::Default.FontFaceName();
 
-  bool style_bold = style_font.IsBold();
+  bool style_bold = style_font.IsBoldInQuartet();
   bool style_italic = (ON_Font::Style::Italic == style_font.FontStyle());
   bool style_underline = style_font.IsUnderlined();
   bool style_strikeout = style_font.IsStrikethrough();
@@ -2697,10 +3039,10 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
   
   // First facename is from the ON_TextContent
   // Any after that are from runs
-  ON_SimpleArray< wchar_t[34] > fonttable;
+  ON_SimpleArray< wchar_t[34] > fonttable(8);
   
   // Creates a fonttable entry the first time
-  int deffont_key = GetFacenameKey(style_facename, fonttable);
+  unsigned int deffont_key = GetFacenameKey(&style_font, fonttable);
 
   int runcount = runs->Count();
   int nlcount = 0;
@@ -2710,7 +3052,7 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
   for (int ri = 0; ri < runcount; ri++)
   {
     ON_TextRun* run = (*runs)[ri];
-    if (0 != run)
+    if (nullptr != run)
     {
       if (ON_TextRun::RunType::kText == run->Type() && 0 < nlcount)
         multiline = true;
@@ -2725,7 +3067,7 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
   for (int ri = 0; ri < runcount; ri++)
   {
     ON_TextRun* run = (*runs)[ri];
-    if (0 != run)
+    if (nullptr != run)
     {
       if (
         ON_TextRun::RunType::kText == run->Type() ||
@@ -2736,9 +3078,9 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
         if (nullptr != run_font)
         {
           runholders.AppendNew() = run;
-          int facename_key = GetFacenameKey(run_font->FontFaceName(), fonttable);
+          unsigned int facename_key = GetFacenameKey(run_font, fonttable);
           if(!chg_bold)
-            chg_bold = run_font->IsBold() != style_bold;
+            chg_bold = run_font->IsBoldInQuartet() != style_bold;
           if(!chg_italic)
             chg_italic = run_font->IsItalic() != style_italic;
           if(!chg_underline)
@@ -2747,6 +3089,18 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
             chg_strikeout = run_font->IsStrikethrough() != style_strikeout;
           if(!chg_facename)
             chg_facename = facename_key != deffont_key;
+        }
+        const ON__UINT32* run_codepoints = run->UnicodeString();
+        if (!make_rtf && nullptr != run_codepoints)
+        {
+          for (int i = 0; run_codepoints[i] != 0; i++)
+          {
+            if (run_codepoints[i] > 127)
+            {
+              make_rtf = true;
+              break;
+            }
+          }
         }
       }
       else if (
@@ -2779,66 +3133,74 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
     {
       if (make_rtf || (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0))
       {
-        const ON_Font* run_font = run->Font();
-        if (nullptr == run_font)
-          continue;
+        if (make_rtf)
+        {
+          const ON_Font* run_font = run->Font();
+          if (nullptr == run_font)
+            continue;
 
-        // add properties for this string
-        run_strings += L"{";
-        bool addspace = false;
-        int run_font_key = GetFacenameKey(run_font->FontFaceName(), fonttable);
-        if (run_font_key != deffont_key)
-        {
-          temp.Format(L"\\f%d", run_font_key);
-          run_strings += temp;
-          addspace = true;
+          // add properties for this string
+          run_strings += L"{";
+          bool addspace = false;
+          unsigned int run_font_key = GetFacenameKey(run_font, fonttable);
+          if (run_font_key != deffont_key)
+          {
+            temp.Format(L"\\f%d", run_font_key);
+            run_strings += temp;
+            addspace = true;
+          }
+          if (run_font->IsBoldInQuartet())
+          {
+            run_strings += L"\\b";
+            addspace = true;
+          }
+          if (run_font->IsItalic())
+          {
+            run_strings += L"\\i";
+            addspace = true;
+          }
+          if (run_font->IsUnderlined())
+          {
+            run_strings += L"\\ul";
+            addspace = true;
+          }
+          if (addspace)
+            run_strings += L" ";
         }
-        //if (run_font->IsBold() != style_bold)
-        {
-          run_strings += run_font->IsBold() ? L"\\b" : L"\\b0";
-          addspace = true;
-        }
-        if (run_font->IsItalic())
-        {
-          run_strings += L"\\i";
-          addspace = true;
-        }
-        if (run_font->IsUnderlined())
-        {
-          run_strings += L"\\ul";
-          addspace = true;
-        }
-        if (addspace)
-          run_strings += L" ";
 
         if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
         {
           run_strings += L"[[";
-          GetRunText(run->m_stacked_text->m_top_run, run_strings);
-          run_strings += L"/";
-          GetRunText(run->m_stacked_text->m_bottom_run, run_strings);
-          run_strings += L"]]}";
+          run_strings += run->m_stacked_text->m_separator;
+          GetRunText(run->m_stacked_text->m_top_run, run_strings, make_rtf);
+          run_strings += run->m_stacked_text->m_separator;
+          GetRunText(run->m_stacked_text->m_bottom_run, run_strings, make_rtf);
+          run_strings += L"]]";
         }
         else if (ON_TextRun::RunType::kField == run->Type())
         {
           run_strings += L"%<";
-          GetRunText(run, run_strings);
+          GetRunText(run, run_strings, make_rtf);
           run_strings += L">%";
         }
         else
         {
-          GetRunText(run, run_strings);
+          GetRunText(run, run_strings, make_rtf);
         }
-        run_strings += L"}";
+        if (make_rtf)
+          run_strings += L"}";
       }
       else
       {
-        GetRunText(run, run_strings);
+        GetRunText(run, run_strings, make_rtf);
       }
     }
     else if (ri < runcount-1 && multiline && (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type()))
     {
-      run_strings += L"{\\par}";
+      if (make_rtf)
+        run_strings += L"{\\par}";
+      else
+        run_strings += L"\n";
     }
   }  // end of collecting run text
 
@@ -2857,8 +3219,8 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
     // entry in the table for font0.
 
     rtf.Format(L"{\\rtf1");
-
     if (0 < nfont)
+
     {
       ON_wString fonttable_string;
       temp.Format(L"\\deff%d", deffont_key);
@@ -2873,7 +3235,7 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
       fonttable_string += "}";
       rtf += fonttable_string;
     }
-    temp.Format(L"{\\f%d\\b", deffont_key);
+    temp.Format(L"{\\f%d ", deffont_key);
     rtf += temp;
 
     rtf += run_strings;
@@ -2887,7 +3249,17 @@ bool RtfComposer::Compose(const ON_TextContent* text, const ON_DimStyle* dimstyl
   return true;
 }
 
+bool RtfComposer::m_bComposeRTF = true;
+bool RtfComposer::RecomposeRTF()
+{
+  return RtfComposer::m_bComposeRTF;
+}
+void RtfComposer::SetRecomposeRTF(bool b)
+{
+  RtfComposer::m_bComposeRTF = b;
+}
 
+#if 0
 //static
 void RtfComposer::ComposeRun(
   const ON_TextRun* run,
@@ -2917,21 +3289,25 @@ void RtfComposer::ComposeRun(
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
 
+  void* pft = &fonttable;
+  if (nullptr == pft)
+    return;
+
   const ON_Font& style_font = dimstyle->Font();
 
   const ON_Font* run_font = run->Font();
   if (nullptr == run_font)
     run_font = &ON_Font::Default;
 
-  const wchar_t* style_facename = style_font.FontFaceName();
-  const wchar_t* run_facename = run_font->FontFaceName();
+  const ON_wString style_facename = ON_Font::RichTextFontName(&style_font,false);
+  const ON_wString run_facename = ON_Font::RichTextFontName(run_font,false);
 
-  if (0 != ON_wString::CompareOrdinal(style_facename, 34, run_facename, 34, true))
+  if (run_facename.IsNotEmpty() && false == ON_wString::EqualOrdinal(style_facename, run_facename, true))
   {
     chg_facename = true;
-    facenamekey = GetFacenameKey(run_facename, fonttable);
+    facenamekey = GetFacenameKey(run_font, fonttable);
   }
-  if (run_font->IsBold() != (bold ? true : false))
+  if (run_font->IsBoldInQuartet() != (bold ? true : false))
   {
     chg_bold = true;
   }
@@ -2968,7 +3344,7 @@ void RtfComposer::ComposeRun(
 
     if (chg_bold)
     {
-      if (run_font->IsBold())
+      if (run_font->IsBoldInQuartet())
         strings_out += L"\\b";
       else
         strings_out += L"\\b0";
@@ -3088,19 +3464,6 @@ void RtfComposer::ComposeRun(
   }
 }
 
-bool RtfComposer::m_bComposeRTF = true;
-bool RtfComposer::RecomposeRTF()
-{
-  return RtfComposer::m_bComposeRTF;
-}
-void RtfComposer::SetRecomposeRTF(bool b)
-{
-  RtfComposer::m_bComposeRTF = b;
-}
-
-
-
-
 bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimstyle, ON_wString& rtf)
 {
   dimstyle = &ON_DimStyle::DimStyleOrDefault(dimstyle);
@@ -3119,11 +3482,7 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
     return false;
 
   const ON_Font& style_font = dimstyle->Font();
-  const wchar_t* style_facename = style_font.FontFaceName();
-  if (nullptr == style_facename)
-    style_facename = ON_Font::Default.FontFaceName();
-
-  bool bold = style_font.IsBold();
+  bool bold = style_font.IsBoldInQuartet();
   bool italic = (ON_Font::Style::Italic == style_font.FontStyle());
   bool underlined = style_font.IsUnderlined();
   bool strikeout = style_font.IsStrikethrough();
@@ -3131,12 +3490,12 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
   // First color and first facename are from the ON_TextContent
   // Any after that are from runs
   ON_SimpleArray< unsigned int > colortable;
-  ON_SimpleArray< wchar_t[34] > fonttable;
+  ON_SimpleArray< wchar_t[34] > fonttable(8);
   int changecount = 0;  // count all changes except font and color (because they are in tables in rtf)
   int changecolor = 0;  // count changes in color
   int changefont = 0;   // count changes in font
 
-  int deffont_index = GetFacenameKey(style_facename, fonttable);
+  unsigned int deffont_index = GetFacenameKey(&style_font, fonttable);
 
   ON_ClassArray< ON_String > lines;
   ON_wString fonttbl_string;
@@ -3203,8 +3562,7 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
             else  // If it's not all digits, add [[ ]]
 #endif
             {
-              const wchar_t* run_facename = run_font->FontFaceName();
-              int facenamekey = GetFacenameKey(run_facename, fonttable);
+              unsigned int facenamekey = GetFacenameKey(run_font, fonttable);
               temp.Format(L"{\\f%d [[", facenamekey);
               strings += temp;
 
@@ -3240,7 +3598,7 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
   // even if there are no changes in the string itself
   if (strings.Length() > 0 &&
 
-    (style_font.IsBold() ||
+    (style_font.IsBoldInQuartet() ||
       // Currently not allowing italic or underlined in styles 
       // because the WPF text control doesn't deal with them well
       //ON_Font::Style::Italic == style_font.FontStyle() ||
@@ -3286,18 +3644,18 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
       rtf += colortbl.Array();
     }
 
-    if (style_font.IsBold())
+    if (style_font.IsBoldInQuartet())
       rtf += L"{\\b";
     else
       rtf += L"{\\b0";
 
 
-    if (L'{' != strings[0]/* && ((1 == nfont && 0 == ncolor) || style_font.IsBold())*/)
+    if (L'{' != strings[0]/* && ((1 == nfont && 0 == ncolor) || style_font.IsBoldInQuartet())*/)
       rtf += L" ";
 
     rtf += strings;
 
-    //if (style_font.IsBold())
+    //if (style_font.IsBoldInQuartet())
     //  rtf += L"}";
 
     rtf += L"}}";
@@ -3308,4 +3666,5 @@ bool RtfComposer::ComposeA(const ON_TextContent* text, const ON_DimStyle* dimsty
   }
   return true;
 }
+#endif
 

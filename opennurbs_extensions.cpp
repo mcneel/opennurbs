@@ -575,6 +575,21 @@ ON_ModelComponentReference ONX_Model::ComponentFromId(
     : ON_ModelComponentReference::Empty;
 }
 
+ON_ModelComponentReference ONX_Model::ModelGeometryFromId(
+  ON_UUID model_object_id
+) const
+{
+  return ComponentFromId(ON_ModelComponent::Type::ModelGeometry, model_object_id);
+}
+
+const ON_ModelGeometryComponent& ONX_Model::ModelGeometryComponentFromId(
+  ON_UUID model_object_id
+) const
+{
+  const ON_ModelGeometryComponent* p = ON_ModelGeometryComponent::Cast(ModelGeometryFromId(model_object_id).ModelComponent());
+  return (nullptr != p) ? *p : ON_ModelGeometryComponent::Unset;
+}
+
 ON_ModelComponentReference ONX_Model::ComponentFromName(
   ON_ModelComponent::Type component_type,
   ON_UUID component_parent_id,
@@ -4206,6 +4221,14 @@ const ON_wString ONX_ModelTest::Source3dmFilePath() const
   return m_source_3dm_file_path;
 }
 
+const ON_wString ONX_ModelTest::TextLogSource3dmFilePath() const
+{
+  return 
+    m_text_log_3dm_file_path.IsNotEmpty() 
+    ? m_text_log_3dm_file_path 
+    : Source3dmFilePath();
+}
+
 
 unsigned int ONX_ModelTest::Source3dmFileVersion() const
 {
@@ -4251,6 +4274,7 @@ bool ONX_ModelTest::ReadTest(
     const char* file_path,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const char* text_log_file_path,
     ON_TextLog* text_log
 )
 {
@@ -4283,7 +4307,8 @@ bool ONX_ModelTest::ReadTest(
     ON_BinaryFile archive(ON::archive_mode::read3dm, fp);
     archive.SetArchiveFullPath(ON_wString(file_path));
 
-    Internal_ReadTest(archive, test_type, bKeepModels, text_log);
+    ON_wString wide_text_log_file_path(text_log_file_path);
+    Internal_ReadTest(archive, test_type, bKeepModels, wide_text_log_file_path, text_log);
     break;
   }
 
@@ -4304,6 +4329,7 @@ bool ONX_ModelTest::ReadTest(
   const wchar_t* file_path,
   ONX_ModelTest::Type test_type,
   bool bKeepModels,
+  const wchar_t* text_log_file_path,
   ON_TextLog* text_log
 )
 {
@@ -4333,8 +4359,7 @@ bool ONX_ModelTest::ReadTest(
 
     ON_BinaryFile archive(ON::archive_mode::read3dm, fp);
     archive.SetArchiveFullPath(file_path);
-
-    Internal_ReadTest(archive, test_type, bKeepModels, text_log);
+    Internal_ReadTest(archive, test_type, bKeepModels, text_log_file_path, text_log);
     break;
   }
 
@@ -4354,6 +4379,7 @@ bool ONX_ModelTest::ReadTest(
   FILE* fp,
   ONX_ModelTest::Type test_type,
   bool bKeepModels,
+  const wchar_t* text_log_file_path,
   ON_TextLog* text_log
 )
 {
@@ -4374,7 +4400,7 @@ bool ONX_ModelTest::ReadTest(
 
     ON_BinaryFile archive(ON::archive_mode::read3dm, fp);
 
-    Internal_ReadTest(archive, test_type, bKeepModels, text_log);
+    Internal_ReadTest(archive, test_type, bKeepModels, text_log_file_path, text_log);
     break;
   }
 
@@ -4553,8 +4579,9 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 
   text_log.Print("Test type: %s\n", ONX_ModelTest::TestTypeToString(test_type));
 
-  const ON_wString source_archive = Source3dmFilePath();
-  text_log.Print(L"Source 3dm file path: %ls\n", static_cast<const wchar_t*>(source_archive));
+  //const ON_wString source_archive = Source3dmFilePath();
+  const ON_wString test_log_source_archive = TextLogSource3dmFilePath();
+  text_log.Print(L"Source 3dm file path: %ls\n", static_cast<const wchar_t*>(test_log_source_archive));
   text_log.Print(L"Source 3dm file version: %u\n", Source3dmFileVersion());
 
   text_log.Print("Result: ");
@@ -4628,11 +4655,12 @@ bool ONX_ModelTest::ReadTest(
   ON_BinaryArchive& archive,
   ONX_ModelTest::Type test_type,
   bool bKeepModels,
+  const wchar_t* text_log_file_path,
   ON_TextLog* text_log
 )
 {
   Internal_BeginTest();
-  Internal_ReadTest(archive, test_type, bKeepModels, text_log);
+  Internal_ReadTest(archive, test_type, bKeepModels, text_log_file_path, text_log);
   return Internal_TallyTestResults();
 }
 
@@ -4640,11 +4668,14 @@ void ONX_ModelTest::Internal_ReadTest(
   ON_BinaryArchive& archive,
   ONX_ModelTest::Type test_type,
   bool bKeepModels,
+  const wchar_t* text_log_file_path,
   ON_TextLog* text_log
 )
 {
   m_test_type = test_type;
   m_source_3dm_file_path = archive.ArchiveFullPath();
+  m_text_log_3dm_file_path = text_log_file_path;
+
   const unsigned int current_3dm_file_version = (unsigned int)ON_BinaryArchive::CurrentArchiveVersion();
 
   ON_TextLogNull devnull;
@@ -4667,12 +4698,14 @@ void ONX_ModelTest::Internal_ReadTest(
     if (bKeepModels)
       this->m_model[0] = model0_sp;
 
-    ON_String file_path(archive.ArchiveFullPath());
-    if (file_path.IsEmpty())
-      file_path = "archive";
+    ON_String text_log_3dm_archive_name = TextLogSource3dmFilePath();
+    if (text_log_3dm_archive_name.IsEmpty())
+    {
+      text_log_3dm_archive_name = "archive";
+    }
 
     const ON_String read0_description
-      = ON_String::FormatToString("ONX_Model.Read(%s,...)", static_cast<const char*>(file_path));
+      = ON_String::FormatToString("ONX_Model.Read(%s,...)", static_cast<const char*>(text_log_3dm_archive_name));
 
     // read the original file
     text_log->Print("Calling %s ...\n", static_cast<const char*>(read0_description));

@@ -429,6 +429,16 @@ bool ON_Linetype::SetSegment( int index, double length, ON_LinetypeSegment::eSeg
     return false;
 }
 
+bool ON_Linetype::SetSegments(const ON_SimpleArray<ON_LinetypeSegment>& segments)
+{
+  if (PatternIsLocked())
+    return false;
+
+  m_segments = segments;
+  return true;
+}
+
+
 ON_LinetypeSegment ON_Linetype::Segment( int index) const
 {
   if( index >= 0 && index < m_segments.Count())

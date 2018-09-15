@@ -9150,3 +9150,116 @@ bool operator!=(const ON_4dRect& lhs, const ON_4dRect& rhs)
     || lhs.right != rhs.right
     || lhs.bottom != rhs.bottom);
 }
+
+
+ON_PeriodicDomain::ON_PeriodicDomain(const ON_Interval dom[2], const bool closed[2], double normband) :
+	m_dom{ dom[0], dom[1] },
+	m_closed{ closed[0],closed[1] },
+	m_normband(normband),
+	m_deck{ 0,0 }
+{}
+
+void ON_PeriodicDomain::Initialize(const ON_Interval dom[2], const bool closed[2], double normband)
+{
+	m_dom[0] = dom[0];
+	m_dom[1] = dom[1];
+	m_closed[0] = closed[0];
+	m_closed[1] = closed[1];
+	m_normband = normband;
+	m_deck[0] = m_deck[1] = 0;
+}
+
+// Repeated application of LiftToCover maps a sequence in the domain covering space, 
+//  Pin[i] to  Out[i].
+// 
+//  *  proj(Pin[i]) = proj(Out[i])
+//  *  Out[0] = Pin[0]
+//  *  Out[i+1] and Out[i] are in adjacnt bands
+ON_2dPoint ON_PeriodicDomain::LiftToCover(ON_2dPoint Pin, bool stealth )
+{
+	ON_2dPoint out = Pin;
+	ON_2dPoint nnext;
+	int deck_in[2] = { 0,0 };
+	//  decompose Pin
+	//     Pin = m_dom.ParameterAt( deck + nnext)
+	// where nnext[i] is in [0.0, 1.0)
+	for (int i = 0; i < 2; i++)
+	{
+		nnext[i] = m_dom[i].NormalizedParameterAt(out[i]);
+		if (m_closed[i])
+		{
+			deck_in[i] = int(floor(nnext[i]));
+			nnext[i] -= deck_in[i];
+		}
+	}
+
+
+	if (m_nprev == ON_2dPoint::UnsetPoint)
+	{
+		if( !stealth)
+		{ 
+			m_nprev = nnext;
+			m_deck[0] = deck_in[0];
+			m_deck[1] = deck_in[1];
+		}
+		return Pin;
+	}
+
+	int deck[2] = { m_deck[0], m_deck[1] };
+	for (int i = 0; i < 2; i++)
+	{
+		if (!m_closed[i])
+			continue;
+		if (m_nprev[i]<m_normband &&  nnext[i]>1.0 - m_normband)
+			deck[i] --;
+		else if (m_nprev[i] > 1.0 - m_normband && nnext[i] < m_normband)
+			deck[i]++;
+	}
+
+	for (int i = 0; i < 2; i++)
+		out[i] = m_dom[i].ParameterAt(deck[i] + nnext[i]);
+	
+	if (!stealth)
+	{
+		m_deck[0] = deck[0]; 
+		m_deck[1] = deck[1];
+		m_nprev = nnext;
+	}
+
+	return out;
+}
+
+ON_2dPoint ON_PeriodicDomain::LiftInverse(ON_2dPoint p)
+{
+	return ON_LiftInverse(p, m_dom, m_closed);
+}
+
+ON_SimpleArray<ON_2dPoint> ON_LiftToCover(
+	const ON_SimpleArray<ON_2dPoint>& in,
+	const ON_Interval dom[2], bool closed[2],
+	double normband)
+{
+	ON_PeriodicDomain Cover(dom, closed, normband);
+	ON_SimpleArray<ON_2dPoint> out(in.Count());
+	for (int i = 0; i < in.Count(); i++)
+		out.Append(Cover.LiftToCover(in[i]));
+
+	return out;
+}
+
+ON_2dPoint ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2])
+{
+	ON_2dPoint Q = P;
+	if (closed[0] || closed[1])
+	{
+		for (int di = 0; di < 2; di++)
+		{
+			if (closed[di])
+				Q[di] -= floor((Q[di] - dom[di][0]) / dom[di].Length())*dom[di].Length();
+
+		}
+	}
+	return Q;
+}
+
+

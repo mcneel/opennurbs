@@ -462,7 +462,25 @@ public:
   */
   static double GetLinefeedHeight(ON_TextRun& run);
 
+
+  const ON_Font* FirstCharFont() const;
+
+
   // Dimension text formatting
+  static bool FormatDistance(
+    double distance,
+    ON::LengthUnitSystem units_in,
+    const ON_DimStyle* dimstyle,
+    bool alternate,                     // Primary or alternate
+    ON_wString& formatted_string);      // Output
+
+  static bool FormatTolerance(
+    double distance,
+    ON::LengthUnitSystem units_in,
+    const ON_DimStyle* dimstyle,
+    bool alternate,                     // Primary or alternate
+    ON_wString& formatted_string);      // Output
+
   static bool FormatDistanceAndTolerance(
     double distance,
     ON::LengthUnitSystem units_in,

@@ -4193,7 +4193,7 @@ bool ON_MeshTriangle::IsValid(
   if ( false == IsValid(vertex_list.PointCount()) )
     return false;
   ON_3dPoint V[3] = {vertex_list[m_vi[0]],vertex_list[m_vi[1]],vertex_list[m_vi[2]]};
-  return ( V[0] != V[1] && V[1] != V[2] && V[2] != V[3] );
+  return ( V[0] != V[1] && V[1] != V[2] && V[2] != V[0] );
 }
 
 void ON_MeshTriangle::Flip()
@@ -8132,7 +8132,9 @@ bool ON_MeshTopology::SortVertexEdges(int topvi) const
   int topei;
   int vei;
   int efcnt;
-  int* new_tope = (int*)alloca(5*topv.m_tope_count*sizeof(new_tope[0]));
+  ON_SimpleArray<int> new_tope_buffer(5*topv.m_tope_count);
+  new_tope_buffer.SetCount(5*topv.m_tope_count);
+  int* new_tope = new_tope_buffer.Array();
   int* e2f  = new_tope + topv.m_tope_count;
   int* e1f  = e2f + topv.m_tope_count;
   int e1fcnt = 0;

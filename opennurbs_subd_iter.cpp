@@ -189,7 +189,7 @@ void ON_SubDVertexIterator::Internal_Init(
     m_v_current = m_v_first;
     m_vertex_count = vertex_count;
     m_component_ptr
-      = (ON_SubDComponentPtr::ComponentPtrType::unset == component_ptr.ComponentType())
+      = (ON_SubDComponentPtr::Type::Unset == component_ptr.ComponentType())
       ? ON_SubDComponentPtr::Null
       : component_ptr;
   }
@@ -356,7 +356,7 @@ void ON_SubDEdgeIterator::Internal_Init(
     m_e_current = m_e_first;
     m_edge_count = edge_count;
     m_component_ptr
-      = (ON_SubDComponentPtr::ComponentPtrType::unset == component_ptr.ComponentType())
+      = (ON_SubDComponentPtr::Type::Unset == component_ptr.ComponentType())
       ? ON_SubDComponentPtr::Null
       : component_ptr;
   }
@@ -527,7 +527,7 @@ void ON_SubDFaceIterator::Internal_Init(
     m_face_current = m_face_first;
     m_face_count = face_count;
     m_component_ptr
-      = (ON_SubDComponentPtr::ComponentPtrType::unset == component_ptr.ComponentType())
+      = (ON_SubDComponentPtr::Type::Unset == component_ptr.ComponentType())
       ? ON_SubDComponentPtr::Null
       : component_ptr;
   }
@@ -1409,7 +1409,7 @@ const class ON_SubDComponentPtr ON_SubDComponentIterator::NextComponent()
 {
   switch (m_cptr_current.ComponentType())
   {
-  case ON_SubDComponentPtr::ComponentPtrType::vertex:
+  case ON_SubDComponentPtr::Type::Vertex:
     {
       const ON_SubDVertex* vertex = ON_SUBD_VERTEX_POINTER(m_cptr_current.m_ptr);
       if (nullptr != vertex && vertex != m_vertex_last && nullptr != vertex->m_next_vertex)
@@ -1421,7 +1421,7 @@ const class ON_SubDComponentPtr ON_SubDComponentIterator::NextComponent()
     m_cptr_current = ON_SubDComponentPtr::Null;
     // no break here
 
-  case ON_SubDComponentPtr::ComponentPtrType::edge:
+  case ON_SubDComponentPtr::Type::Edge:
     {
       if (0 == m_cptr_current.m_ptr && nullptr != m_edge_first)
       {
@@ -1439,7 +1439,7 @@ const class ON_SubDComponentPtr ON_SubDComponentIterator::NextComponent()
     m_cptr_current = ON_SubDComponentPtr::Null;
     // no break here
 
-  case ON_SubDComponentPtr::ComponentPtrType::face:
+  case ON_SubDComponentPtr::Type::Face:
     {
       if (0 == m_cptr_current.m_ptr && nullptr != m_face_first)
       {

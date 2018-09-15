@@ -1330,6 +1330,7 @@ bool ON_SubD::Read(
     }
     else if ( 0 != c )
       break;
+
     return true;
   }
   return ON_SUBD_RETURN_ERROR(false);

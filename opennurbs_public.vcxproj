@@ -111,6 +111,7 @@
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_USRDLL;OPENNURBS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OpenMPSupport>true</OpenMPSupport>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,6 +147,7 @@
     <ClInclude Include="opennurbs_archive.h" />
     <ClInclude Include="opennurbs_array.h" />
     <ClInclude Include="opennurbs_array_defs.h" />
+    <ClInclude Include="opennurbs_atomic_op.h" />
     <ClInclude Include="opennurbs_base32.h" />
     <ClInclude Include="opennurbs_base64.h" />
     <ClInclude Include="opennurbs_beam.h" />
@@ -280,6 +282,7 @@
     <ClInclude Include="opennurbs_version_number.h" />
     <ClInclude Include="opennurbs_viewport.h" />
     <ClInclude Include="opennurbs_windows_targetver.h" />
+    <ClInclude Include="opennurbs_win_dwrite.h" />
     <ClInclude Include="opennurbs_wip.h" />
     <ClInclude Include="opennurbs_workspace.h" />
     <ClInclude Include="opennurbs_xform.h" />
@@ -342,6 +345,7 @@
     <ClCompile Include="opennurbs_fsp.cpp" />
     <ClCompile Include="opennurbs_function_list.cpp" />
     <ClCompile Include="opennurbs_geometry.cpp" />
+    <ClCompile Include="opennurbs_glyph_outline.cpp" />
     <ClCompile Include="opennurbs_group.cpp" />
     <ClCompile Include="opennurbs_hash_table.cpp" />
     <ClCompile Include="opennurbs_hatch.cpp" />
@@ -458,6 +462,7 @@
     <ClCompile Include="opennurbs_version.cpp" />
     <ClCompile Include="opennurbs_version_number.cpp" />
     <ClCompile Include="opennurbs_viewport.cpp" />
+    <ClCompile Include="opennurbs_win_dwrite.cpp" />
     <ClCompile Include="opennurbs_workspace.cpp" />
     <ClCompile Include="opennurbs_wstring.cpp" />
     <ClCompile Include="opennurbs_xform.cpp" />

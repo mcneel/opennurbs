@@ -96,12 +96,21 @@ bool ON_TextStyle::Write(
     // We only need to save the m_font_description when we are using an
     // alternate font or writing a V5 Mac file.
     const bool bWriteFont = (nullptr != m_managed_font);
-    ON_wString font_description
-      = bWriteFont
-      ? m_managed_font->FontDescription()
-      : m_font_description;
+    ON_wString postscript_name;
+    ON_wString font_description;
+    if (nullptr != m_managed_font)
+    {
+      postscript_name = m_managed_font->PostScriptName();
+      if (postscript_name.IsEmpty())
+        postscript_name = m_managed_font->Description(ON_Font::NameLocale::LocalizedFirst, ON_wString::HyphenMinus, 0, false);
+      font_description = postscript_name;
+    }
+    else
+    {
+      font_description = m_font_description;
+    }
 
-    if (ON::RuntimeEnvironment::Apple == file.ArchiveRuntimeEnvironment() && m_apple_font_name.IsNotEmpty())
+    if (ON::RuntimeEnvironment::Apple == file.ArchiveRuntimeEnvironment() && m_apple_font_name.IsNotEmpty() && postscript_name.IsEmpty() )
     {
       font_description = m_apple_font_name;
     }
@@ -145,7 +154,7 @@ static void SetNameFromFontDescription(
   ON_TextStyle& text_style
   )
 {
-  const ON_wString font_description(text_style.Font().FontDescription());
+  const ON_wString font_description(text_style.Font().Description());
   ON_wString text_style_name = manifest.UnusedName(
     text_style.ComponentType(),
     ON_nil_uuid,
@@ -240,7 +249,7 @@ bool ON_TextStyle::Read(
       if (!font_characteristics.Read(file))
         break;
       if (apple_font_name.IsEmpty())
-        apple_font_name = font_characteristics.AppleFontName();
+        apple_font_name = font_characteristics.PostScriptName();
       SetFontFromDescription(
          static_cast<const wchar_t*>(font_description),
          static_cast<const wchar_t*>(apple_font_name),
@@ -343,15 +352,15 @@ void ON_TextStyle::SetFont(
     
     if (nullptr != font_characteristics)
     {
-      m_font_description = font_characteristics->FontDescription();
-      m_apple_font_name = font_characteristics->AppleFontName();
+      m_font_description = font_characteristics->Description();
+      m_apple_font_name = font_characteristics->PostScriptName();
     }
     
     if (m_font_description.IsEmpty())
-      m_font_description = m_managed_font->FontDescription();
+      m_font_description = m_managed_font->Description();
     
     if (m_apple_font_name.IsEmpty())
-      m_apple_font_name = m_managed_font->AppleFontName();
+      m_apple_font_name = m_managed_font->PostScriptName();
 
     m_is_set_bits |= ON_TextStyle::font_bit;
     IncrementContentVersionNumber();

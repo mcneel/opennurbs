@@ -658,6 +658,10 @@ ON_ModelComponent& ON_ModelComponent::operator=(const ON_ModelComponent& src)
 {
   if (this != &src)
   {
+    // copy user data
+    ON_Object::operator=(src); 
+
+    // copy ON_ModelComponent fields
     CopyFrom(src,ON_ModelComponent::Attributes::AllAttributes);
   }
   return *this;
@@ -3493,8 +3497,10 @@ bool ON_BinaryArchive::UpdateManifestMapItemDestination(
     ON_ERROR("map_item source information is not set.");
     return false;
   }
-  return m_manifest_map.UpdatetMapItemDestination(map_item);
 
+  const bool bIgnoreSourceIndex = (ON_ModelComponent::Type::Group == map_item.ComponentType());
+
+  return m_manifest_map.UpdatetMapItemDestination(map_item, bIgnoreSourceIndex);
 }
 
 
@@ -3615,6 +3621,9 @@ bool ON_BinaryArchive::Internal_Read3dmUpdateManifest(
       model_component.SetName(m_manifest.UnusedName(model_component));
     }
 
+    const bool bIndexRequired = ON_ModelComponent::IndexRequired(model_component.ComponentType());
+    const int archive_index = model_component.Index();
+
     ON_wString assigned_name;
     const ON_ComponentManifestItem& manifest_item = m_manifest.AddComponentToManifest(model_component, bResolveIdAndNameCollisions, &assigned_name);
     if (manifest_item.IsUnset())
@@ -3634,8 +3643,6 @@ bool ON_BinaryArchive::Internal_Read3dmUpdateManifest(
 
       // In damaged files, the index values are a mess.
       // Fix them here.
-      const bool bIndexRequired = ON_ModelComponent::IndexRequired(model_component.ComponentType());
-      const int archive_index = model_component.Index();
       const int manifest_index = manifest_item.Index();
       const int assigned_index
         = bIndexRequired
@@ -3644,16 +3651,28 @@ bool ON_BinaryArchive::Internal_Read3dmUpdateManifest(
 
       if (assigned_index != archive_index)
       {
-        if (bIndexRequired) // <- Good location for a debugger breakpoint when debugging file reading index issues.
+        if (bIndexRequired) // This is a good location for a debugger breakpoint when debugging file reading index issues.
           model_component.SetIndex(manifest_item.Index());
         else
           model_component.ClearIndex();
       }
     }
 
+    ON_ComponentManifestItem source_item(manifest_item);
+    if (ON_ModelComponent::Type::Group == model_component.ComponentType()
+      && archive_index >= 0
+      && manifest_item.Index() >= 0
+      && archive_index != manifest_item.Index()
+      )
+    {
+      // group index values are not always the zero based index of the
+      // group element's location in the archive.
+      source_item.SetIndex(archive_index);
+    }
+
     ON_ManifestMapItem map_item;
     // Rhino will update destination identification if it changes when added to the model.
-    if (!map_item.SetSourceIdentification(&manifest_item))
+    if (!map_item.SetSourceIdentification(&source_item))
       break;
     if (!map_item.SetDestinationIdentification(&model_component))
       break;

@@ -23,6 +23,8 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+#include "opennurbs_internal_glyph.h"
+
 #if defined(OPENNURBS_FREETYPE_SUPPORT)
 
 // opennurbs uses FreeType to calculate font metric, glyph metric, and glyph outline information.
@@ -243,10 +245,7 @@ Warning	C4263	..: member function does not override any base class virtual membe
 #include FT_GLYPH_H
 #include FT_MODULE_H
 
-#if defined(ON_RUNTIME_WIN)
-#include <dwrite.h>
-#pragma comment(lib, "dwrite.lib")
-#endif
+#include "opennurbs_win_dwrite.h"
 
 #if defined(ON_COMPILER_MSC)
 #pragma ON_PRAGMA_WARNING_POP
@@ -1065,374 +1064,91 @@ unsigned int ON_FreeType::GlyphId(
   return 0;
 }
 
-
-
-
 #if defined(ON_RUNTIME_WIN)
 
-#if 0
-class ON_WindowsFontFamily
-{
-public:
-  ON_WindowsFontFamily();
-  ~ON_WindowsFontFamily() = default;
-  ON_WindowsFontFamily(const ON_WindowsFontFamily&) = default;
-  ON_WindowsFontFamily& operator=(const ON_WindowsFontFamily&) = default;
-
-  bool IsTrueTypeFontType() const;
-  bool IsRasterFontType() const;
-  bool IsVectorFontType() const;
-  bool IsDeviceFontType() const;
-
-public:
-  LOGFONT m_logfont;
-  NEWTEXTMETRIC m_text_metric;
-
-  // m_font_type can be a bitwise or of the values
-  // DEVICE_FONTTYPE
-  // RASTER_FONTTYPE
-  // TRUETYPE_FONTTYPE
-  DWORD m_font_type = 0; // value from ::EnumFontFamilies
-
-  // Note:
-  // Sone font files contain multiple font faces.
-  ON_wString m_font_file_path;
-  unsigned int m_font_file_face_index = 0;
-};
-
-bool ON_WindowsFontFamily::IsTrueTypeFontType() const
-{
-  // If the TRUETYPE_FONTTYPE bit is set, the font is a TrueType font. 
-  // An application can also check bits 1 and 2 in the tmPitchAndFamily 
-  // member of the NEWTEXTMETRIC structure to identify a TrueType font.
-  // If bit 1 is 0 and bit 2 is 1, the font is a TrueType font.
-  return (0 != (m_font_type & TRUETYPE_FONTTYPE)) ? true : false;
-}
-
-bool ON_WindowsFontFamily::IsRasterFontType() const
-{
-  // If the RASTER_FONTTYPE bit is set, the font is a raster font. 
-  return (0 != (m_font_type & RASTER_FONTTYPE)) ? true : false;
-}
-
-bool ON_WindowsFontFamily::IsVectorFontType() const
-{
-  // If neither the RASTER_FONTTYPE bit nor the TRUETYPE_FONTTYPE bit is set, the font is a vector font.
-  // Vector fonts are categorized as OEM_CHARSET instead of ANSI_CHARSET. 
-  // Some applications identify vector fonts by using this information, 
-  // checking the tmCharSet member of the NEWTEXTMETRIC structure. 
-  // This categorization usually prevents the font mapper from choosing
-  // vector fonts unless they are specifically requested. 
-  // (Most applications no longer use vector fonts because their
-  // strokes are single lines and they take longer to draw than 
-  // TrueType fonts, which offer many of the same scaling and 
-  // rotation features that required vector fonts.)
-  return (0 == (m_font_type & (RASTER_FONTTYPE|TRUETYPE_FONTTYPE))) ? true : false;
-}
-
-bool ON_WindowsFontFamily::IsDeviceFontType() const
-{
-  // The "device" mentioned below depends on the HDC passed to EnumFontFamilies().
-  //
-  // A third mask, DEVICE_FONTTYPE, is set when a device (for example, a laser printer)
-  // supports downloading TrueType fonts; it is zero if the device is a display adapter,
-  // dot-matrix printer, or other raster device. 
-  //
-  // An application can also use the DEVICE_FONTTYPE mask to distinguish GDI-supplied
-  // raster fonts from device-supplied fonts.
-  //
-  // The system can simulate bold, italic, underline, and strikeout attributes for 
-  // GDI-supplied raster fonts, but not for device-supplied fonts.
-  return (0 == (m_font_type & DEVICE_FONTTYPE)) ? true : false;
-}
-
-ON_WindowsFontFamily::ON_WindowsFontFamily()
-{
-  memset(&m_logfont, 0, sizeof(m_logfont));
-  memset(&m_text_metric, 0, sizeof(m_text_metric));
-}
-
-static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID a) 
-{ 
-  ON_WindowsFontFamily& f = ((ON_ClassArray<ON_WindowsFontFamily>*)a)->AppendNew();
-  if (nullptr != lplf)
-    f.m_logfont = *lplf;
-  if (nullptr != lpntm)
-    f.m_text_metric = *lpntm;
-  f.m_font_type = FontType;
-  return 1; // 0 = stop enumeration, nonzero = continue enumeration
-}
-
-class ON_FontRegistryNameAndFilePath
-{
-public:
-  ON_FontRegistryNameAndFilePath() = default;
-  ~ON_FontRegistryNameAndFilePath() = default;
-  ON_FontRegistryNameAndFilePath(const ON_FontRegistryNameAndFilePath&) = default;
-  ON_FontRegistryNameAndFilePath& operator=(const ON_FontRegistryNameAndFilePath&) = default;
-
-public:
-  // Note: A single file can contain multiplle faces. For example
-  // m_registry_name = "Sitka Small Bold Italic & Sitka Text Bold Italic & Sitka Subheading Bold Italic & Sitka Heading Bold Italic & Sitka Display Bold Italic & Sitka Banner Bold Italic (TrueType)"
-  // m_font_file_path = "C:\\Windows\\Fonts\\SitkaZ.ttc"
-  // Contains 6 faces.
-  ON_wString m_registry_name;
-  ON_wString m_font_file_path;
-  ON_wString m_font_face_name;
-  unsigned int m_font_face_index = 0;
-};
-
-static unsigned int Internal_GetWindowsFontFamilyList(
-  HDC hdc,
-  ON_ClassArray<ON_WindowsFontFamily>& font_families
+static bool Internal_CreateFontBufferFromDirectWrite(
+  IDWriteFont* dwriteFont,
+  ON_FontFileBuffer& font_buffer
 )
 {
-  // Enumerate Windows fonts.
-  bool bCallDeleteDC = false;
-  if (nullptr == hdc)
+  font_buffer.AllocateBuffer(0);
+
+  if (nullptr == dwriteFont)
+    return false;
+
+  Microsoft::WRL::ComPtr<IDWriteFontFace> dwriteFontFace = nullptr;
+  HRESULT hr = dwriteFont->CreateFontFace(&dwriteFontFace);
+  if (FAILED(hr))
+    return false;
+  if (nullptr == dwriteFontFace || nullptr == dwriteFontFace.Get() )
+    return false;
+
+  UINT32 numfiles = 0;
+  hr = dwriteFontFace->GetFiles(&numfiles, nullptr);
+  if (FAILED(hr))
+    return false;
+  if (numfiles <= 0)
+    return false;
+
+  if (numfiles > 1)
   {
-    hdc = ::CreateCompatibleDC(nullptr); // "screen" device context
-    bCallDeleteDC = true;
+    // The docs state that this function should be called twice; first to obtain
+    // the number of files. In the context of FreeType, I'm not sure what to do
+    // with multiple files.
+    ON_WARNING("Multiple font files.");
+    numfiles = 1;
   }
-  LPCTSTR lpszFamily = nullptr;
-  ::EnumFontFamilies(
-    hdc,
-    lpszFamily,
-    (FONTENUMPROC)EnumFamCallBack,
-    (LPARAM)((UINT_PTR)(&font_families))
-  );
-  if ( bCallDeleteDC )
-    ::DeleteDC(hdc);
+  
+  Microsoft::WRL::ComPtr<IDWriteFontFile> dwriteFontFile = nullptr;
+  hr = dwriteFontFace->GetFiles(&numfiles, &dwriteFontFile);
+  if (FAILED(hr))
+    return false;
+  if (nullptr == dwriteFontFile || nullptr == dwriteFontFile.Get())
+    return false;
 
-  return font_families.UnsignedCount();
-}
+  const void* reference_key = nullptr;
+  UINT32 reference_key_size = 0;
+  hr = dwriteFontFile->GetReferenceKey(&reference_key, &reference_key_size);
+  if (FAILED(hr))
+    return false;
 
-const wchar_t* Internal_GetNextFontFaceNameFromRegistryData(
-  const wchar_t* s,
-  ON_wString& font_face_name
-)
-{
-  if (0 == s)
-    return nullptr;
-  const wchar_t* s1 = s;
-  while (0 != *s1 && '&' != *s1 && '(' != *s1)
+  Microsoft::WRL::ComPtr<IDWriteFontFileLoader> dwriteFontFileLoader = nullptr;
+  hr = dwriteFontFile->GetLoader(&dwriteFontFileLoader);
+  if (FAILED(hr))
+    return false;
+  if (nullptr == dwriteFontFileLoader || nullptr == dwriteFontFileLoader.Get() )
+    return false;
+
+  Microsoft::WRL::ComPtr<IDWriteFontFileStream> dwriteFontFileStream = nullptr;
+  hr = dwriteFontFileLoader->CreateStreamFromKey(reference_key, reference_key_size, &dwriteFontFileStream);
+  if (FAILED(hr))
+    return false;
+  if (nullptr == dwriteFontFileStream || nullptr == dwriteFontFileStream.Get() )
+    return false;
+
+  UINT64 filesize = 0;
+  hr = dwriteFontFileStream->GetFileSize(&filesize);
+  if (FAILED(hr))
+    return false;
+  if (filesize <= 0)
+    return false;
+
+  const void *fragstart = nullptr;
+  void *fragcontext = nullptr;
+  hr = dwriteFontFileStream->ReadFileFragment(&fragstart, 0, filesize, &fragcontext);
+  if (FAILED(hr))
+    return false;
+
+  if (nullptr != fragstart)
   {
-    s1++;
-  }
-  if (s1 <= s)
-    return nullptr;
-  const size_t length = s1 - s;
-  if (length <= 0 || length > 0xFFFFFFF)
-    return nullptr;
-  ON_wString buffer(s, (int)length);
-  buffer.TrimLeftAndRight();
-  if (buffer.IsEmpty())
-    return nullptr;
-  font_face_name = buffer;
-  if ('&' == *s1)
-  {
-    s1++;
-  }
-  else if ('(' == *s1)
-  {
-    s1++;
-    for ( int paren_level = 1; 0 != *s1 && paren_level > 0; s1++ )
-    {
-      if ('(' == *s1)
-        paren_level++;
-      else if (')' == *s1)
-        paren_level--;
-    }
-  }
-  return s1;
-}
-
-static unsigned int Internal_GetWindowsRegistryFontist(
-  ON_ClassArray<ON_FontRegistryNameAndFilePath>& registry_font_list
-)
-{
-  // Enumerates the font file paths listed in the registry.
-  const wchar_t* regkey_names[] =
-  {
-    L"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
-    //L"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Fonts",
-    nullptr
-  };
-
-  // Enumerates the font file paths listed in the registry.
-
-  /*
-PItemIDList PIDL;
-
-SHGetSpecialFolderLocation(Application.Handle, CSIDL_FONTS, PIDL);
-
-In this case, the 1st parameter is you application main handle, the
-second is a constant defined in the Windows headers telling it what path
-you're looking for, and the last is a pointer that will carry the return
-value.  Here's a code snippet in Delphi from my application.  Note that
-you have to free some memory when you're done:
-
-  Path := StrAlloc(MAX_PATH);
-  SHGetSpecialFolderLocation(Application.Handle, CSIDL_FONTS, PIDL);
-  if SHGetPathFromIDList(PIDL, Path) then
-    CurrWindowsFontPath := Path;
-  SHGetMalloc(AMalloc);
-  AMalloc.Free(PIDL);
-  StrDispose(Path);
-
-  // Make sure the path has a trailing directory separator
-  CurrWindowsFontPath :=
-IncludeTrailingPathDelimiter(CurrWindowsFontPath);
-
-  */
-  const wchar_t* font_directories[] =
-  {
-    // System fonts
-    L"C:\\Windows\\Fonts\\",
-
-    // The empty string is needed to find fonts like
-    // registry value name: "MecSoft_Font-1 (TrueType)"
-    // registry string: "C:\\Program Files\\Rhino WIP\\System\\MecSoft_Font-1.ttf"
-    L"",
-    nullptr,
-    nullptr,
-    nullptr,
-  };
-
-  for (int key_index = 0; nullptr != regkey_names[key_index]; key_index++)
-  {
-    ON_RegKey regkey;
-    if (false == regkey.OpenRead(regkey_names[key_index]))
-      continue;
-    ON_ClassArray<ON_wString> value_names;
-    if (false == regkey.GetValueNames(value_names))
-      continue;
-    for (int value_index = 0; value_index < value_names.Count(); value_index++)
-    {
-      const wchar_t* value_name = static_cast<const wchar_t*>(value_names[value_index]);
-      if (nullptr == value_name || 0 == value_name[0])
-        continue;
-      ON_wString font_file_name;
-      if (false == regkey.QueryValue(value_name, font_file_name))
-        continue;
-      if (font_file_name.IsEmpty())
-        continue;
-      bool bFontFileFound = false;
-      for (int font_dir_index = 0; nullptr != font_directories[font_dir_index]; font_dir_index++)
-      {
-        ON_wString font_file_path = font_directories[font_dir_index];
-        font_file_path += font_file_name;
-        if (false == ON_FileSystem::IsFile(font_file_path))
-          continue;
-        bFontFileFound = true;
-        // Note: A single file can contain multiple font faces
-        ON_FontRegistryNameAndFilePath sp;
-        sp.m_registry_name = value_names[value_index];
-        sp.m_font_file_path = font_file_path;
-        sp.m_font_face_index = 0;
-        for (
-          const wchar_t* s = static_cast<const wchar_t*>(sp.m_registry_name);
-          nullptr != (s = Internal_GetNextFontFaceNameFromRegistryData(s, sp.m_font_face_name));
-          sp.m_font_face_index++
-          )
-        {
-          if (sp.m_font_face_name.IsNotEmpty())
-          {
-            registry_font_list.Append(sp);
-            sp.m_font_face_name = ON_wString::EmptyString;
-          }
-        }
-        break;
-      }
-      if (false == bFontFileFound)
-      {
-        ON_ERROR("Unable to locate Windows font file.");
-      }
-    }
+    void* buffer = font_buffer.AllocateBuffer((size_t)filesize);
+    if (nullptr != buffer && font_buffer.SizeOfBuffer() >= (size_t)filesize)
+      memcpy(buffer, fragstart, font_buffer.SizeOfBuffer());
   }
 
-  return registry_font_list.UnsignedCount();
-}
+  dwriteFontFileStream->ReleaseFileFragment(fragcontext);
 
-#endif
-class CDirectWriteStackCleaner
-{
-public:
-  ~CDirectWriteStackCleaner()
-  {
-    if (m_font_file_stream)
-      m_font_file_stream->Release();
-    if (m_font_file_loader)
-      m_font_file_loader->Release();
-    if (m_font_file)
-      m_font_file->Release();
-    if (m_font_face)
-      m_font_face->Release();
-    if (m_font)
-      m_font->Release();
-    if (m_font_family)
-      m_font_family->Release();
-    if (m_font_collection)
-      m_font_collection->Release();
-    if (m_factory)
-      m_factory->Release();
-  }
-public:
-  IDWriteFactory* m_factory = nullptr;
-  IDWriteFontCollection* m_font_collection = nullptr;
-  IDWriteFontFamily* m_font_family = nullptr;
-  IDWriteFont* m_font = nullptr;
-  IDWriteFontFace* m_font_face = nullptr;
-  IDWriteFontFile* m_font_file = nullptr;
-  IDWriteFontFileLoader* m_font_file_loader = nullptr;
-  IDWriteFontFileStream* m_font_file_stream = nullptr;
-};
-
-static DWRITE_FONT_WEIGHT Internal_DWFontWeightFromLogfont(
-  const LOGFONT& logfont
-)
-{
-  const DWRITE_FONT_WEIGHT a[]
-    = {
-    DWRITE_FONT_WEIGHT_THIN, // = 100,
-    DWRITE_FONT_WEIGHT_EXTRA_LIGHT, // = 200,
-    DWRITE_FONT_WEIGHT_ULTRA_LIGHT, // = 200,
-    DWRITE_FONT_WEIGHT_LIGHT, // = 300,
-    DWRITE_FONT_WEIGHT_SEMI_LIGHT, // = 350,
-    DWRITE_FONT_WEIGHT_NORMAL, // = 400,
-    DWRITE_FONT_WEIGHT_REGULAR, // = 400,
-    DWRITE_FONT_WEIGHT_MEDIUM, // = 500,
-    DWRITE_FONT_WEIGHT_DEMI_BOLD, // = 600,
-    DWRITE_FONT_WEIGHT_SEMI_BOLD, // = 600,
-    DWRITE_FONT_WEIGHT_BOLD, // = 700,
-    DWRITE_FONT_WEIGHT_EXTRA_BOLD, // = 800,
-    DWRITE_FONT_WEIGHT_ULTRA_BOLD, // = 800,
-    DWRITE_FONT_WEIGHT_BLACK, // = 900,
-    DWRITE_FONT_WEIGHT_HEAVY, // = 900,
-    DWRITE_FONT_WEIGHT_EXTRA_BLACK, // = 950,
-    DWRITE_FONT_WEIGHT_ULTRA_BLACK // = 950
-  };
-
-  const size_t a_count = sizeof(a) / sizeof(a[0]);
-
-  if (logfont.lfWeight <= static_cast<int>(a[0]))
-    return a[0];
-
-  if (logfont.lfWeight >= static_cast<int>(a[a_count-1]))
-    return a[a_count-1];
-
-  for (size_t i = 1; i < a_count; i++)
-  {
-    const int w1 = static_cast<int>(a[i]);
-    if ( logfont.lfWeight > w1 )
-      continue;
-    const int w0 = static_cast<int>(a[i - 1]);
-    if (2 * logfont.lfWeight <= (w0 + w1))
-      return (a[i-1] );
-    return (a[i] );
-  }
-
-  return DWRITE_FONT_WEIGHT_REGULAR;
+  return (font_buffer.SizeOfBuffer() > 0);
 }
 
 static bool Internal_CreateFontBufferFromDirectWrite(
@@ -1442,98 +1158,60 @@ static bool Internal_CreateFontBufferFromDirectWrite(
 {
   font_buffer.AllocateBuffer(0);
 
-  CDirectWriteStackCleaner dwrite;
-  UINT64 filesize = 0;
-  //create the factory - this should probably be cached
-  HRESULT hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwrite.m_factory));
+  if (0 == logfont.lfFaceName[0])
+    return false;
+
+  Microsoft::WRL::ComPtr<IDWriteFactory> dwriteFactory = nullptr;
+  HRESULT hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), &dwriteFactory);
   if (FAILED(hr))
     return false;
-  if (nullptr == dwrite.m_factory)
+  if (nullptr == dwriteFactory || nullptr == dwriteFactory.Get())
     return false;
 
   //fonts on this computer
-  hr = dwrite.m_factory->GetSystemFontCollection(&dwrite.m_font_collection, true);
+  Microsoft::WRL::ComPtr<IDWriteFontCollection> dwriteFontCollection = nullptr;
+  hr = dwriteFactory->GetSystemFontCollection(&dwriteFontCollection, true);
   if (FAILED(hr))
     return false;
-  if (nullptr == dwrite.m_font_collection)
+  if (nullptr == dwriteFontCollection || nullptr == dwriteFontCollection.Get())
     return false;
 
-  UINT32 index = 0;
-  int bExists = 0;
-  hr = dwrite.m_font_collection->FindFamilyName(logfont.lfFaceName, &index, &bExists);
+  Microsoft::WRL::ComPtr< IDWriteGdiInterop > dwriteGdiInterop = nullptr;
+  hr = dwriteFactory->GetGdiInterop(&dwriteGdiInterop);
   if (FAILED(hr))
     return false;
-  if (bExists == false)
+  if (nullptr == dwriteGdiInterop || nullptr == dwriteGdiInterop.Get())
     return false;
 
-  hr = dwrite.m_font_collection->GetFontFamily(index, &dwrite.m_font_family);
+  LOGFONT cleanLogFont = logfont;
+
+  cleanLogFont.lfHeight = 0;
+  cleanLogFont.lfWidth = 0;
+  cleanLogFont.lfEscapement = 0;
+  cleanLogFont.lfOrientation = 0;
+  if (cleanLogFont.lfWeight < 1 || cleanLogFont.lfWeight > 999)
+    cleanLogFont.lfWeight = 400;
+  if (0 != cleanLogFont.lfItalic) 
+    cleanLogFont.lfItalic = 1;
+  if (0 != cleanLogFont.lfUnderline) 
+    cleanLogFont.lfUnderline = 1;
+  if (0 != cleanLogFont.lfStrikeOut) 
+    cleanLogFont.lfStrikeOut = 1;
+  if (ON_Font::WindowsConstants::logfont_symbol_charset != cleanLogFont.lfCharSet)
+    cleanLogFont.lfCharSet = ON_Font::WindowsConstants::logfont_default_charset;
+  cleanLogFont.lfOutPrecision = ON_Font::WindowsConstants::logfont_out_precis;
+  cleanLogFont.lfClipPrecision = 0;
+  cleanLogFont.lfQuality = ON_Font::WindowsConstants::logfont_quality;
+  cleanLogFont.lfPitchAndFamily = ON_Font::WindowsConstants::logfont_pitch_and_family;
+
+  Microsoft::WRL::ComPtr<IDWriteFont> dwriteFont = nullptr;
+  hr = dwriteGdiInterop->CreateFontFromLOGFONT(&cleanLogFont, &dwriteFont);
   if (FAILED(hr))
     return false;
-  if (nullptr == dwrite.m_font_family)
+  if (nullptr == dwriteFont || nullptr == dwriteFont.Get())
     return false;
 
-  const DWRITE_FONT_WEIGHT weight = Internal_DWFontWeightFromLogfont(logfont);
-  const DWRITE_FONT_STYLE style 
-    = (0 != logfont.lfItalic)
-    ? DWRITE_FONT_STYLE_ITALIC
-    : DWRITE_FONT_STYLE_NORMAL;
-  hr = dwrite.m_font_family->GetFirstMatchingFont(weight, DWRITE_FONT_STRETCH_NORMAL, style, &dwrite.m_font);
-  if (FAILED(hr))
-    return false;
-  if (nullptr == dwrite.m_font)
-    return false;
-
-  hr = dwrite.m_font->CreateFontFace(&dwrite.m_font_face);
-  if (FAILED(hr))
-    return false;
-  if (nullptr == dwrite.m_font_face)
-    return false;
-
-  // The docs state that this function should be called twice; first to obtain
-  // the number of files. In the context of FreeType, I'm not sure what to do
-  // with multiple files.
-  UINT32 numfiles = 1;
-  hr = dwrite.m_font_face->GetFiles(&numfiles, &dwrite.m_font_file);
-  if (FAILED(hr))
-    return false;
-  if (nullptr == dwrite.m_font_file)
-    return false;
-
-  const void* reference_key = nullptr;
-  UINT32 reference_key_size = 0;
-  hr = dwrite.m_font_file->GetReferenceKey(&reference_key, &reference_key_size);
-  if (FAILED(hr))
-    return false;
-
-  hr = dwrite.m_font_file->GetLoader(&dwrite.m_font_file_loader);
-  if (FAILED(hr))
-    return false;
-  if (nullptr == dwrite.m_font_file_loader)
-    return false;
-
-  hr = dwrite.m_font_file_loader->CreateStreamFromKey(reference_key, reference_key_size, &dwrite.m_font_file_stream);
-  if (FAILED(hr))
-    return false;
-
-  hr = dwrite.m_font_file_stream->GetFileSize(&filesize);
-  if (FAILED(hr))
-    return false;
-
-  const void *fragstart = nullptr;
-  void *fragcontext = nullptr;
-  hr = dwrite.m_font_file_stream->ReadFileFragment(&fragstart, 0, filesize, &fragcontext);
-  if (FAILED(hr))
-    return false;
-
-  if (filesize > 0)
-  {
-    void* buffer = font_buffer.AllocateBuffer((size_t)filesize);
-    if ( nullptr != buffer )
-      memcpy(buffer, fragstart, font_buffer.SizeOfBuffer());
-  }
-  dwrite.m_font_file_stream->ReleaseFileFragment(fragcontext);
-
-  return (font_buffer.SizeOfBuffer() > 0);
+  return Internal_CreateFontBufferFromDirectWrite(dwriteFont.Get(), font_buffer);
 }
 
 static bool Internal_CreateFontBufferFromGDI(
@@ -1543,7 +1221,7 @@ static bool Internal_CreateFontBufferFromGDI(
 {
   font_buffer.AllocateBuffer(0);
 
-  HDC hdc = nullptr;
+  HDC font_hdc = nullptr;
   HFONT hfont = nullptr;
   HGDIOBJ hfont_original = nullptr;
   bool rc = false;
@@ -1556,14 +1234,14 @@ static bool Internal_CreateFontBufferFromGDI(
       break;
     }
 
-    hdc = ::CreateCompatibleDC(nullptr);
-    if (nullptr == hdc)
+    font_hdc = ON_Font::CreateWindowsLogfontDeviceContext();
+    if (nullptr == font_hdc)
     {
-      ON_ERROR("CreateCompatibleDC(nullptr) failed.");
+      ON_ERROR("ON_Font::CreateWindowsLogfontDeviceContext()(nullptr) failed.");
       break;
     }
 
-    hfont_original = ::SelectObject(hdc, hfont);
+    hfont_original = ::SelectObject(font_hdc, hfont);
     if (nullptr == hfont_original)
     {
       ON_ERROR("SelectObject(hdc, hfont) failed.");
@@ -1573,7 +1251,7 @@ static bool Internal_CreateFontBufferFromGDI(
     //const DWORD dwTable_TrueTypeCollection = 0x66637474;
     DWORD  dwTable = 0;
     DWORD  dwOffset = 0;
-    const DWORD buffer_capacity = ::GetFontData(hdc, dwTable, dwOffset, nullptr, 0);
+    const DWORD buffer_capacity = ::GetFontData(font_hdc, dwTable, dwOffset, nullptr, 0);
     if (buffer_capacity <= 0)
     {
       ON_ERROR("GetFontData(...,nullptr,0) failed.");
@@ -1588,7 +1266,7 @@ static bool Internal_CreateFontBufferFromGDI(
     }    
     memset(buffer, 0, buffer_capacity);
 
-    const DWORD buffer_size = ::GetFontData(hdc, dwTable, dwOffset, buffer, buffer_capacity);
+    const DWORD buffer_size = ::GetFontData(font_hdc, dwTable, dwOffset, buffer, buffer_capacity);
     if ( buffer_size != buffer_capacity )
     {
       ON_ERROR("GetFontData(...,nullptr,0) failed.");
@@ -1604,11 +1282,11 @@ static bool Internal_CreateFontBufferFromGDI(
     font_buffer.AllocateBuffer(0);
   }
 
-  if (nullptr != hdc)
+  if (nullptr != font_hdc)
   {
     if (nullptr != hfont_original)
-      ::SelectObject(hdc, hfont_original);
-    ::DeleteDC(hdc);
+      ::SelectObject(font_hdc, hfont_original);
+    ON_Font::DeleteWindowsLogfontDeviceContext(font_hdc);
   }
 
   if (nullptr != hfont)
@@ -1768,8 +1446,8 @@ ON_FreeTypeFace* ON_FreeType::CreateFace(
   f = ON_FreeType::Internal_CreateFaceFromAppleFont(nsFont);
 #endif
 
-  // Create empty holder so this function doesn't perform the same calculations
-  // over and over when a freetype face can not be loaded.
+  // Create empty holder so this function doesn't repeatedly
+  // try to load the freetype face.
   if (nullptr == f)
     f = new ON_FreeTypeFace();
 
@@ -1811,6 +1489,34 @@ void ON_Font::DestroyFreeTypeFace(
   }
 }
 
+unsigned int ON_FreeTypeGetFontUnitsPerM(
+  const ON_Font* font
+  )
+{
+  for(;;)
+  {
+    if (nullptr == font)
+      break;
+    font = font->ManagedFont();
+    if (nullptr == font)
+      break;
+  
+    const ON__UINT_PTR ft_face_as_uint = ON_Font::FreeTypeFace(font);
+    if (0 == ft_face_as_uint)
+      break;
+    
+    FT_Face ft_face = (FT_Face)ft_face_as_uint;
+    
+    unsigned int freetypeUPM =  (unsigned int)ft_face->units_per_EM;
+    if (freetypeUPM > 0 && freetypeUPM < 0xFFFFFFF)
+      return freetypeUPM;
+    
+    break;
+  }
+  
+  return 0;
+}
+
 void ON_FreeTypeGetFontMetrics(
   const ON_Font* font,
   ON_FontMetrics& font_unit_font_metrics
@@ -1818,20 +1524,57 @@ void ON_FreeTypeGetFontMetrics(
 {
   font_unit_font_metrics = ON_FontMetrics::Unset;
 
+  font = font->ManagedFont();
   if (nullptr == font)
     return;
 
-  FT_Face ft_face = (FT_Face)ON_Font::FreeTypeFace(font);
-  if (nullptr == ft_face)
+  const ON__UINT_PTR ft_face_as_uint = ON_Font::FreeTypeFace(font);
+  if (0 == ft_face_as_uint)
     return;
 
+  FT_Face ft_face = (FT_Face)ft_face_as_uint;
+
+  /*
+
+  if (nullptr == glyph || false == glyph->CodePointIsSet())
+    return 0;
+
+  const ON_Font* font = glyph->Font();
+  if (nullptr == font)
+    return 0;
+  font = font->ManagedFont();
+  if (nullptr == font)
+    return 0;
+
+
+    
+  const unsigned int glyph_id 
+    = glyph->FontGlyphIdIsSet()
+    ? (unsigned int)glyph->FontGlyphId()
+    : ON_FreeType::GlyphId(face, glyph->CodePoint());
+  if (0 == glyph_id)
+    return 0;
+    */
+  
+  // Turns out that checking H and I doesn't work very well for some
+  // fonts designed for Asian languages, symbol fonts, and emoji fonts.
+  const ON_FontGlyph Iglyph(font, 'I');
   ON_TextBox Ibox = ON_TextBox::Unset;
   const int ascent_of_I
-    = (0 != ON_FreeTypeGetGlyphMetrics(font, 'I', Ibox) && Ibox.IsSet() && Ibox.m_bbmax.j > 0)
+    = (0 != ON_FreeTypeGetGlyphMetrics(&Iglyph, Ibox) && Ibox.IsSet() && Ibox.m_bbmax.j > 0)
     ? Ibox.m_bbmax.j
     : 0;
 
-  font_unit_font_metrics.SetAscentOfI(ascent_of_I);
+  const ON_FontGlyph Hglyph(font, 'H');
+  ON_TextBox Hbox = ON_TextBox::Unset;
+  const int ascent_of_H
+    = (0 != ON_FreeTypeGetGlyphMetrics(&Hglyph, Hbox) && Hbox.IsSet() && Hbox.m_bbmax.j > 0)
+    ? Hbox.m_bbmax.j
+    : 0;
+
+  const int ascent_of_capital = (ascent_of_H >= ascent_of_I) ? ascent_of_H : ascent_of_I;
+
+  font_unit_font_metrics.SetAscentOfCapital(ascent_of_capital);
 
   font_unit_font_metrics.SetHeights(
     ft_face->ascender,
@@ -1845,11 +1588,11 @@ void ON_FreeTypeGetFontMetrics(
     ft_face->underline_thickness
   );
 
-  int h = (ascent_of_I > 0) ? ascent_of_I : ft_face->ascender;
-
+  // Turns out there are better strikeout values in DWRITE  information.
+  double h = (double)((ascent_of_capital > 0) ? ascent_of_capital : ft_face->ascender);
   font_unit_font_metrics.SetStrikeout(
-    (int)ceil(0.5*h),
-    (int)ceil(0.5*ft_face->underline_thickness)
+    (0.5*h),
+    (0.5*((double)ft_face->underline_thickness))
   );
 }
 
@@ -1857,131 +1600,55 @@ void ON_FreeTypeGetFontMetrics(
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 
-class ON_FreeTypeOutlineAccumlator
+class ON_FreeTypeOutlineAccumlator : public ON_OutlineAccumulator
 {
 public:
   ON_FreeTypeOutlineAccumlator() = default;
   ~ON_FreeTypeOutlineAccumlator() = default;
-  ON_FreeTypeOutlineAccumlator(const ON_FreeTypeOutlineAccumlator&) = default;
-  ON_FreeTypeOutlineAccumlator& operator=(const ON_FreeTypeOutlineAccumlator&) = default;
 
-public:
-  bool AccumulateOutlineBoundingBox(
-    const ON_FontGlyph* glyph
-  )
-  {
-    m_bAccumulateBoundingBox = true;
-    return Internal_Accumulate(glyph);
-  }
+  bool AddFreeTypeFiguresToOutline(
+    FT_Face ft_face, 
+    FT_UInt font_glyph_id, 
+    ON_Outline& outline
+  );
 
-  bool AccumulateOutlineBoundingBox(
-    FT_Face ft_face,
-    FT_UInt ft_glyph_index,
-    ON_TextBox& glyph_outline_bbox
-  )
+private:
+  ON_FreeTypeOutlineAccumlator(const ON_FreeTypeOutlineAccumlator&) = delete;
+  ON_FreeTypeOutlineAccumlator& operator=(const ON_FreeTypeOutlineAccumlator&) = delete;
+
+//public:
+//  bool BeginGlyphOutline(
+//    ON__UINT32 font_units_per_em,
+//    bool bSingleStrokeFont,
+//    ON_Outline* destination_outline,
+//    FT_Face ft_face, FT_UInt font_glyph_id, FT_Orientation* ft_orientation
+//  );
+//  
+//  bool BeginGlyphOutline(
+//    ON__UINT32 font_units_per_em,
+//    bool bSingleStrokeFont,
+//    ON_Outline* destination_outline,
+//    FT_Face ft_face, FT_UInt font_glyph_id, FT_Orientation* ft_orientation
+//  );
+
+private:
+  FT_Orientation m_ft_orientation = FT_ORIENTATION_NONE;
+  ON_OutlineFigurePoint::Type m_end_figure_point_type = ON_OutlineFigurePoint::Type::Unset;
+
+  FT_Vector m_start_point;
+  FT_Vector m_prev_point;
+
+  static const ON_2fPoint Internal_To2fPoint(const FT_Vector* v) { return ON_2fPoint((float)(v->x), (float)(v->y)); }
+
+  bool Internal_EndPreviousFigure()
   {
-    glyph_outline_bbox = ON_TextBox::Unset;
-    m_bAccumulateBoundingBox = true;
-    bool rc = Internal_Accumulate(
-      ft_face, 
-      ft_glyph_index
-    );
+    // Freetype has a bad habit of leaving the last figure unclosed.
+    const bool rc = (CurrentFigurePointCount() >= 2 && CurrentFigureAccumulating() && CurrentFigurePoint().IsOnFigure());
     if (rc)
-    {
-      glyph_outline_bbox.m_bbmin.i = m_glyph_outline_bbmin.x;
-      glyph_outline_bbox.m_bbmin.j = m_glyph_outline_bbmin.y;
-      glyph_outline_bbox.m_bbmax.i = m_glyph_outline_bbmax.x;
-      glyph_outline_bbox.m_bbmax.j = m_glyph_outline_bbmax.y;
-    }
+      EndFigure(m_end_figure_point_type);
     return rc;
   }
 
-  bool AccumulateOutlineContours(
-    const ON_FontGlyph* glyph,
-    bool bSingleStrokeFont,
-    double text_height,
-    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& contours,
-    ON_BoundingBox* glyph_bbox,
-    ON_3dVector* glyph_advance
-  );
-
-
-  // "to" points are ends of segments.
-  ON_2iPoint m_to_points_bbmin = ON_2iPoint::Unset;
-  ON_2iPoint m_to_points_bbmax = ON_2iPoint::Unset;
-
-  // "control" points are interior quadratic and cubic bezier control points.
-  // They are not necessarily inside thte glyph's bounding box.
-  ON_2iPoint m_control_points_bbmin = ON_2iPoint::Unset;
-  ON_2iPoint m_control_points_bbmax = ON_2iPoint::Unset;
-
-  ON_2iPoint m_glyph_outline_bbmin = ON_2iPoint::Unset;
-  ON_2iPoint m_glyph_outline_bbmax = ON_2iPoint::Unset;
-
-  ON_SimpleArray<ON_FontGlyphOutlinePoint> m_points;
-private:
-
-  int Internal_GetOutlineCurves(
-    int point_index0,
-    int point_index1,
-    double curve_scale,
-    ON_SimpleArray< ON_Curve* >& curves
-  ) const;
-
-  ON_FontGlyphOutlinePoint m_current_point = ON_FontGlyphOutlinePoint::Unset;
-
-  void Internal_AccumulatePoint(
-    const FT_Vector* v,
-    ON_FontGlyphOutlinePoint::ContourPointType point_type,
-    bool bIsToPoint
-  );
-
-  void UnsetCurrentPoint()
-  {
-    m_current_point = ON_FontGlyphOutlinePoint::Unset;
-  }
-  
-private:
-  bool Internal_Accumulate(const ON_FontGlyph* glyph);
-  bool Internal_Accumulate(FT_Face ft_face, FT_UInt font_glyph_id);
-  
-  static int Internal_SegmentNurbsOrder(
-    int count,
-    const ON_FontGlyphOutlinePoint* points
-  );
-
-  static bool Internal_GetBezierBoundingBox(
-    int order,
-    const ON_FontGlyphOutlinePoint* point,
-    ON_2iPoint& bbmin, 
-    ON_2iPoint& bbmax
-  );
-
-  static void Internal_AddPointToBBox(
-    const ON_2iPoint& point,
-    ON_2iPoint& bbmin, 
-    ON_2iPoint& bbmax
-  );
-
-private:
-  bool m_bAccumulateBoundingBox = false;
-  bool m_bAccumulatePoints = true;
-
-  // m_point_count is incremented as points are accumulated.
-  // In some cases, the information in FT_Outline does not
-  // match the what is accumulated.
-  ON__UINT32 m_point_count = 0;
-
-  // m_contour_count is incremented by Internal_FreeTypeOutlineMoveToFunc()
-  // When glyph outlines are damaged, the information in FT_Outline does not
-  // match the what is accumulated.
-  ON__UINT32 m_contour_count = 0;
-
-  ON__UINT32 m_font_units_per_EM = 0;   // font design grid size
-  ON__UINT32 m_font_height_of_font = 0; // typically ON_Font::Constants::AnnotationFontCellHeight
-  ON__UINT32 m_font_height_of_I = 0;    // in normal font height
-
-private:
   static int Internal_FreeTypeOutlineMoveToFunc(
     const FT_Vector* to,
     void* user
@@ -2007,389 +1674,99 @@ private:
   );
 };
 
-bool ON_FreeTypeOutlineAccumlator::Internal_Accumulate(
-  const ON_FontGlyph* glyph
+
+const ON_TextBox ON_TextBox_CreateFromFreeTypeGlyphMetrics(
+  const FT_Glyph_Metrics* ft_glyph_metrics
 )
 {
-  if (nullptr == glyph || false == glyph->CodePointIsSet())
-    return false;
+  if (nullptr == ft_glyph_metrics)
+    return ON_TextBox::Unset;
 
-  return Internal_Accumulate(
-    (FT_Face)glyph->FreeTypeFace(),
-    (FT_UInt)glyph->FontGlyphId()
-  );
+  // Must use ft_load_flags that include FT_LOAD_NO_SCALE, in order
+  // to get units are expressed in font design units.
+  ON_TextBox glyph_metrics;
+  glyph_metrics.m_bbmin.i = (int)(ft_glyph_metrics->horiBearingX);
+  glyph_metrics.m_bbmin.j = (int)(ft_glyph_metrics->horiBearingY - ft_glyph_metrics->height);
+  glyph_metrics.m_bbmax.i = (int)(ft_glyph_metrics->horiBearingX + ft_glyph_metrics->width);
+  glyph_metrics.m_bbmax.j = (int)(ft_glyph_metrics->horiBearingY);
+  glyph_metrics.m_advance.i = (int)(ft_glyph_metrics->horiAdvance);
+  glyph_metrics.m_advance.j = (int)(ft_glyph_metrics->vertAdvance); // positive values mean downwards advance
+
+  return glyph_metrics;
 }
 
-void ON_FreeTypeOutlineAccumlator::Internal_AccumulatePoint(
-  const FT_Vector* v,
-  ON_FontGlyphOutlinePoint::ContourPointType point_type,
-  bool bIsToPoint
+bool ON_FreeTypeOutlineAccumlator::AddFreeTypeFiguresToOutline(
+  FT_Face ft_face, 
+  FT_UInt font_glyph_id, 
+  ON_Outline& outline
 )
 {
-  if (nullptr == v
-    || ON_FontGlyphOutlinePoint::ContourPointType::Unset == point_type
-    )
-  {
-    UnsetCurrentPoint();
-  }
-  else
-  {
-    m_point_count++;
+  bool rc = false;
 
-    m_current_point.m_point_type = point_type;
-    m_current_point.m_bToPoint = bIsToPoint ? 1 : 0;
-    m_current_point.m_contour_index = (ON__UINT16)m_contour_count;
-    m_current_point.m_point.x = (ON__INT32)v->x;
-    m_current_point.m_point.y = (ON__INT32)v->y;
-    if ( m_bAccumulatePoints )
-      m_points.Append(m_current_point);
-    if (m_bAccumulateBoundingBox)
+  for (;;)
+  {
+
+    if (nullptr == ft_face)
+      break;
+
+    if (0 == font_glyph_id)
+      break;
+
+    if (false == ON_FreeTypeLoadGlyph((ON__UINT_PTR)ft_face, font_glyph_id, false))
+      break;
+
+    rc = true;
+
+    const ON_TextBox glyph_metrics_in_font_design_units = ON_TextBox_CreateFromFreeTypeGlyphMetrics(&ft_face->glyph->metrics);
+    outline.SetGlyphMetrics(glyph_metrics_in_font_design_units);
+
+    FT_Glyph ft_glyph = nullptr;
+    if (FT_Err_Ok != FT_Get_Glyph(ft_face->glyph, &ft_glyph))
+      break;
+    if (nullptr == ft_glyph)
+      break;    
+
+    if (FT_GLYPH_FORMAT_OUTLINE != ft_glyph->format)
+      break;
+
+    const FT_OutlineGlyph ft_outline_glyph = (FT_OutlineGlyph)ft_glyph;
+
+    FT_Outline ft_outline = ft_outline_glyph->outline;
+
+    if (ft_outline.n_points <= 0 || nullptr == ft_outline.points)
     {
-      if ( bIsToPoint )
-        ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(m_current_point.m_point, m_to_points_bbmin, m_to_points_bbmax);
-      else
-        ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(m_current_point.m_point, m_control_points_bbmin, m_control_points_bbmax);
+      FT_Done_Glyph(ft_glyph);
+      break;
     }
-  }
-}
+
+    m_ft_orientation = FT_Outline_Get_Orientation(&ft_outline);
+    m_end_figure_point_type 
+      = (ON_OutlineFigure::Type::SingleStroke == outline.FigureType())
+     ? ON_OutlineFigurePoint::Type::EndFigureOpen
+     : ON_OutlineFigurePoint::Type::EndFigureClosed;
 
 
-void ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(const ON_2iPoint& point, ON_2iPoint& bbmin, ON_2iPoint& bbmax)
-{
-  if (ON_UNSET_INT_INDEX == bbmin.x)
-  {
-    bbmin = point;
-    bbmax = point;
-  }
-  else
-  {
-    if (ON_UNSET_INT_INDEX != point.x)
-    {
-      if (point.x < bbmin.x)
-        bbmin.x = point.x;
-      else if (point.x > bbmax.x)
-        bbmax.x = point.x;
-    }
-    if (ON_UNSET_INT_INDEX != point.y)
-    {
-      if (point.y < bbmin.y)
-        bbmin.y = point.y;
-      else if (point.y > bbmax.y)
-        bbmax.y = point.y;
-    }
-  }
-}
+    FT_Outline_Funcs ft_outline_funcs;
+    memset(&ft_outline_funcs, 0, sizeof(ft_outline_funcs));
+    ft_outline_funcs.move_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc;
+    ft_outline_funcs.line_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToFunc;
+    ft_outline_funcs.conic_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc;
+    ft_outline_funcs.cubic_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineCubicToFunc;
+    ft_outline_funcs.line_to_close_contour = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToCloseContourFunc;
 
-bool ON_FreeTypeOutlineAccumlator::Internal_GetBezierBoundingBox(
-  int order,
-  const ON_FontGlyphOutlinePoint* point,
-  ON_2iPoint& bez_bbmin,
-  ON_2iPoint& bez_bbmax
-)
-{
-  bez_bbmin = ON_2iPoint::Unset;
-  if (order < 3 || order > 4 || nullptr != point )
-    return false;
+    FT_Outline_Decompose(&ft_outline, &ft_outline_funcs, (void*)this);
 
-  const ON_FontGlyphOutlinePoint::ContourPointType point_type
-    = (3 == order)
-    ? ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint
-    : ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint;
-
-  if (false == point[0].m_bToPoint || false == point[0].m_point.IsSet())
-    return false;
-
-  if (point_type != point[1].m_point_type || point[1].m_bToPoint || false == point[1].m_point.IsSet())
-    return false;
-
-  if (4 == order)
-  {
-    if (point_type != point[2].m_point_type || point[2].m_bToPoint || false == point[2].m_point.IsSet())
-      return false;
-  }
-
-  if (point_type != point[order-1].m_point_type || point[order-1].m_bToPoint || false == point[order-1].m_point.IsSet())
-    return false;
-  
-  ON_BezierCurve bez(3, false, order);
-  for (int i = 0; i < order; i++)
-  {
-    if (false == point[i].m_point.IsSet())
-      return false;
-    if (i > 0 && point_type != point[i].m_point_type)
-      return false;
-    if (i > 0 && i + 1 < order)
-    {
-      if (point[i].m_bToPoint)
-        return false;
-    }
-    else
-    {
-      if (false == point[i].m_bToPoint)
-        return false;
-    }
-    ON_3dPoint cv((double)point[i].m_point.x, (double)point[i].m_point.y, 0.0);
-    bez.SetCV(i, cv);
-  }
-  const ON_BoundingBox bez_bbox = bez.BoundingBox();
-  if (false == bez_bbox.IsNotEmpty())
-    return false;
-
-  bez_bbmin.x = (int)floor(bez_bbox.m_min.x);
-  bez_bbmin.y = (int)floor(bez_bbox.m_min.y);
-  bez_bbmax.x = (int)ceil(bez_bbox.m_max.x);
-  bez_bbmax.y = (int)ceil(bez_bbox.m_max.y);
-  return true;
-}
-
-
-bool ON_FreeTypeOutlineAccumlator::Internal_Accumulate(FT_Face ft_face, FT_UInt font_glyph_id)
-{
-  if (nullptr == ft_face)
-    return false;
-
-  if (0 == font_glyph_id)
-    return false;
-
-  if (m_bAccumulateBoundingBox)
-    m_bAccumulatePoints = true;
-
-  if (false == m_bAccumulatePoints)
-    return false;
-
-  if ( false == ON_FreeTypeLoadGlyph((ON__UINT_PTR)ft_face, font_glyph_id, false) )
-    return false;
-  
-  FT_Glyph ft_glyph = nullptr; 
-  if (FT_Err_Ok != FT_Get_Glyph(ft_face->glyph, &ft_glyph))
-    return false;
-  if (nullptr == ft_glyph)
-    return false;
-
-  if (FT_GLYPH_FORMAT_OUTLINE != ft_glyph->format)
-    return false;
-
-  const FT_OutlineGlyph ft_outline_glyph = (FT_OutlineGlyph)ft_glyph;
-
-  FT_Outline ft_outline = ft_outline_glyph->outline;
-
-  if (ft_outline.n_points <= 0 || nullptr == ft_outline.points)
-  {
+    // Frees point memory
     FT_Done_Glyph(ft_glyph);
-    return false;
-  }
 
-  m_current_point = ON_FontGlyphOutlinePoint::Unset;
-  m_point_count = 0;
-  m_contour_count = 0;
-  m_points.SetCount(0);
+    // Freetype has a bad habit of leaving the last figure unclosed.
+    Internal_EndPreviousFigure();
 
-  FT_Outline_Funcs ft_outline_funcs;
-  memset(&ft_outline_funcs, 0, sizeof(ft_outline_funcs));
-  ft_outline_funcs.move_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc;
-  ft_outline_funcs.line_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToFunc;
-  ft_outline_funcs.conic_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc;
-  ft_outline_funcs.cubic_to = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineCubicToFunc;
-  ft_outline_funcs.line_to_close_contour = ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToCloseContourFunc;
-  
-  FT_Outline_Decompose( &ft_outline, &ft_outline_funcs, (void*)this );
-
-  bool rc = (m_point_count > 0);
-
-  while (rc && m_bAccumulateBoundingBox)
-  {
-    if (false == m_to_points_bbmin.IsSet() )
-      break;
-    if (false == m_to_points_bbmax.IsSet() )
-      break;
-
-    ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(m_to_points_bbmin, m_glyph_outline_bbmin, m_glyph_outline_bbmax);
-    ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(m_to_points_bbmax, m_glyph_outline_bbmin, m_glyph_outline_bbmax);
-
-    if (false == m_control_points_bbmin.IsSet())
-      break;
-    if (false == m_control_points_bbmax.IsSet())
-      break;
-    if (
-      m_control_points_bbmin.x >= m_glyph_outline_bbmin.x
-      && m_control_points_bbmax.x <= m_glyph_outline_bbmax.x
-      && m_control_points_bbmin.y >= m_glyph_outline_bbmin.y
-      && m_control_points_bbmax.y <= m_glyph_outline_bbmax.y
-      )
-      break;
-
-    // look for bezier segments that are outside of current glyph box
-    const int point_count = m_points.Count();
-    if (point_count < 3)
-      break;
-    const ON_FontGlyphOutlinePoint* points = m_points.Array();
-
-    int i1 = point_count;
-    for (int i = 0; i + 1 < point_count; i = i1)
-    {
-      const int order = ON_FreeTypeOutlineAccumlator::Internal_SegmentNurbsOrder(point_count - i,points + i);
-      if (order <= 2 )
-      {
-        i1 = i + 1;
-        continue;
-      }
-      i1 = i + order - 1;
-      ON_2iPoint cv_bbmin = points[i+1].m_point;
-      ON_2iPoint cv_bbmax = points[i+1].m_point;
-      if (4 == order)
-      {
-        ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(points[i + 1].m_point,cv_bbmin, cv_bbmax);
-      }
-      if (
-        cv_bbmin.x >= m_glyph_outline_bbmin.x
-        && cv_bbmax.x <= m_glyph_outline_bbmax.x
-        && cv_bbmin.y >= m_glyph_outline_bbmin.y
-        && cv_bbmax.y <= m_glyph_outline_bbmax.y
-        )
-      {
-        // bezier segment is contained in current m_glyph_outline_bb* box.
-        continue;
-      }
-
-      // Get tight bezier bounding box
-      ON_2iPoint bez_bbmin = ON_2iPoint::Unset;
-      ON_2iPoint bez_bbmax = ON_2iPoint::Unset;
-      if( ON_FreeTypeOutlineAccumlator::Internal_GetBezierBoundingBox(order,points+i,bez_bbmin,bez_bbmax) )
-      {
-        ON_FreeTypeOutlineAccumlator::ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(bez_bbmin, m_glyph_outline_bbmin, m_glyph_outline_bbmax);
-        ON_FreeTypeOutlineAccumlator::Internal_AddPointToBBox(bez_bbmax, m_glyph_outline_bbmin, m_glyph_outline_bbmax);
-      }
-    }
     break;
   }
 
-  // Frees point memory
-  FT_Done_Glyph(ft_glyph);
-
   return rc;
 }
-
-bool ON_FreeTypeOutlineAccumlator::AccumulateOutlineContours(
-  const ON_FontGlyph* glyph,
-  bool bSingleStrokeFont,
-  double text_height,
-  ON_ClassArray< ON_SimpleArray< ON_Curve* > >& contours,
-  ON_BoundingBox* glyph_bbox,
-  ON_3dVector* glyph_advance
-)
-{
-  ON_BoundingBox local_glyph_bbox = ON_BoundingBox::UnsetBoundingBox;
-  ON_3dVector local_glyph_advance = ON_3dVector::ZeroVector;
-  if (nullptr == glyph_bbox)
-    glyph_bbox = &local_glyph_bbox;
-  else
-    *glyph_bbox = local_glyph_bbox;
-  if (nullptr == glyph_advance)
-    glyph_advance = &local_glyph_advance;
-  else
-    *glyph_advance = local_glyph_advance;
-
-  if (nullptr == glyph || false == glyph->CodePointIsSet())
-    return false;
-
-  double scale = 1.0; // scale applid to glyph outline in font units
-  const bool bNoScale = (ON_UNSET_VALUE == text_height);
-  
-  if (false == bNoScale)
-  {
-    const ON_Font* font = glyph->Font();
-    if (nullptr != font)
-    {
-      scale = glyph->Font()->FontUnitToNormalizedScale();
-      if (text_height > 0.0 && ON_IsValid(text_height))
-        scale *= font->FontMetrics().GlyphScale(text_height);
-      if (fabs(1.0 - scale) <= ON_ZERO_TOLERANCE)
-        scale = 1.0;
-    }
-  }
-
-  if (nullptr != glyph)
-  {
-    const ON_TextBox glyph_box = glyph->FontUnitGlyphBox();
-    if (glyph_box.IsSet())
-    {
-      glyph_bbox->m_min.Set(scale*glyph_box.m_bbmin.i, scale*glyph_box.m_bbmin.j, 0.0);
-      glyph_bbox->m_max.Set(scale*glyph_box.m_bbmax.i, scale*glyph_box.m_bbmax.j, 0.0);
-    }
-    if ( glyph_box.m_advance.i >= 0 && glyph_box.m_advance.j >= 0 )
-    {
-      glyph_advance->Set(scale*glyph_box.m_advance.i, scale*glyph_box.m_advance.j, 0.0);
-    }
-  }
-
-  m_bAccumulateBoundingBox = false;
-  m_bAccumulatePoints = true;
-
-  if (false == Internal_Accumulate(glyph))
-    return false;
-
-  const int point_count = m_points.Count();
-  if (0 == point_count)
-    return false;
-
-  int i1 = point_count;
-  for (int i0 = 0; i0 < point_count; i0 = i1)
-  {
-    const ON_FontGlyphOutlinePoint p0 = m_points[i0];
-    for (i1 = i0 + 1; i1 < point_count; i1++)
-    {
-      if (p0.m_contour_index != m_points[i1].m_contour_index)
-        break;
-    }
-
-    int ii1 = i1;
-    if (bSingleStrokeFont
-      && ii1 > i0 + 1
-      && ON_FontGlyphOutlinePoint::ContourPointType::LineToCloseContour == m_points[ii1-1].m_point_type
-      )
-    {
-      // omit final line segment added by FT_Outline_Decompose(...)  to close this contour.
-      ii1--;
-    }
-
-    ON_SimpleArray< ON_Curve* > curves;
-    Internal_GetOutlineCurves( i0, ii1, scale, curves);
-    const int curve_count = curves.Count();
-    if (curve_count > 0)
-    {
-      if (false == bSingleStrokeFont)
-      {
-        const ON_3dPoint P0 = curves[0]->PointAtStart();
-        const ON_3dPoint P1 = curves[curve_count-1]->PointAtEnd();
-        double d = P0.DistanceTo(P1);
-        if (d > ON_ZERO_TOLERANCE)
-        {
-          curves.Reserve(2 * curve_count);
-          for (int k = curve_count - 1; k >= 0; k--)
-          {
-            ON_Curve* rev = curves[k]->DuplicateCurve();
-            if (nullptr == rev )
-            {
-              for (int n = curve_count; n < k; n++)
-              {
-                delete curves[n];
-              }
-              curves.SetCount(curve_count);
-              break;
-            }
-            rev->Reverse();
-            curves.Append(rev);
-          }
-        }
-      }
-      contours.Append(curves);
-    }
-  }
-
-  return true;
-}
-
-
 
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc( 
   const FT_Vector* to, 
@@ -2400,16 +1777,12 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc(
   if (nullptr == a)
     return FT_Err_Invalid_Argument;
 
-  a->m_contour_count++;
+  // freetype has a bad habit of failing to end the previous figure.
+  a->Internal_EndPreviousFigure();
 
-  if (nullptr != to)
-  {
-    a->Internal_AccumulatePoint(to,ON_FontGlyphOutlinePoint::ContourPointType::MoveTo,true);
-  }
-  else
-  {
-    a->UnsetCurrentPoint();
-  }
+  a->BeginFigure(ON_OutlineFigurePoint::Type::BeginFigureUnknown, Internal_To2fPoint(to));
+  a->m_start_point = *to;
+  a->m_prev_point = *to;
 
   return FT_Err_Ok;
 }
@@ -2423,15 +1796,8 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToFunc(
   if (nullptr == a)
     return FT_Err_Invalid_Argument;
 
-  if (
-    nullptr != to 
-    && ON_FontGlyphOutlinePoint::ContourPointType::Unset != a->m_current_point.m_point_type
-    )
-  {
-    a->Internal_AccumulatePoint(to,ON_FontGlyphOutlinePoint::ContourPointType::LineTo,true);
-  }
-  else
-    a->UnsetCurrentPoint();
+  a->AppendLine(Internal_To2fPoint(to));
+  a->m_prev_point = *to;
 
   return FT_Err_Ok;
 }
@@ -2445,19 +1811,11 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToCloseContourFunc
   if (nullptr == a)
     return FT_Err_Invalid_Argument;
 
-  if (
-    nullptr != to 
-    && ON_FontGlyphOutlinePoint::ContourPointType::Unset != a->m_current_point.m_point_type
-    )
-  {
-    a->Internal_AccumulatePoint(to,ON_FontGlyphOutlinePoint::ContourPointType::LineToCloseContour,true);
-  }
-  else
-    a->UnsetCurrentPoint();
-
+  a->EndFigure(a->m_end_figure_point_type);
+  a->m_prev_point = *to;
+  
   return FT_Err_Ok;
 }
-
 
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc(
   const FT_Vector* control,
@@ -2467,19 +1825,10 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc(
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
   if (nullptr == a)
-    return 1;
+    return FT_Err_Invalid_Argument;   
 
-  if (
-    nullptr != control 
-    && nullptr != to 
-    && ON_FontGlyphOutlinePoint::ContourPointType::Unset != a->m_current_point.m_point_type
-    )
-  {
-    a->Internal_AccumulatePoint(control,ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint,false);
-    a->Internal_AccumulatePoint(to,ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint,true);
-  }
-  else
-    a->UnsetCurrentPoint();
+  a->AppendQuadraticBezier(Internal_To2fPoint(control),Internal_To2fPoint(to));
+  a->m_prev_point = *to;
 
   return FT_Err_Ok;
 }
@@ -2495,129 +1844,10 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineCubicToFunc(
   if (nullptr == a)
     return FT_Err_Invalid_Argument;
 
-  if (
-    nullptr != control1 
-    && nullptr != control2
-    && nullptr != to
-    && ON_FontGlyphOutlinePoint::ContourPointType::Unset != a->m_current_point.m_point_type
-    )
-  {
-    a->Internal_AccumulatePoint(control1,ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint,false);
-    a->Internal_AccumulatePoint(control2,ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint,false);
-    a->Internal_AccumulatePoint(to,ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint,true);
-  }
-  else
-    a->UnsetCurrentPoint();
+  a->AppendCubicBezier(Internal_To2fPoint(control1),Internal_To2fPoint(control2),Internal_To2fPoint(to));
+  a->m_prev_point = *to;
 
   return FT_Err_Ok;
-}
-
-int ON_FreeTypeOutlineAccumlator::Internal_SegmentNurbsOrder(
-  int count,
-  const ON_FontGlyphOutlinePoint* points
-)
-{
-  if (count < 2 || 0 == points[0].m_bToPoint )
-    return 0;
-
-  switch (points[1].m_point_type)
-  {
-  case ON_FontGlyphOutlinePoint::ContourPointType::LineTo:
-  case ON_FontGlyphOutlinePoint::ContourPointType::LineToCloseContour:
-    if ( 0 != points[1].m_bToPoint )
-      return 2;
-    break;
-
-  case ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint:
-    if (count < 3)
-      return 0;
-    if (
-      ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint == points[2].m_point_type
-      && 0 != points[2].m_bToPoint 
-      )
-      return 3;
-    break;
-
-  case ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint:
-    if (count < 4)
-      return 0;
-    if (
-      ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint == points[2].m_point_type 
-      && ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint == points[3].m_point_type
-      && 0 != points[3].m_bToPoint 
-      )
-      return 4;
-    break;
-  }
-
-  return 0;
-}
-
-int ON_FreeTypeOutlineAccumlator::Internal_GetOutlineCurves(
-  int point_index0,
-  int point_index1,
-  double curve_scale,
-  ON_SimpleArray< ON_Curve* >& curves
-) const
-{
-  if (point_index0 < 0 || point_index1 > m_points.Count())
-    return 0;
-
-  int count = point_index1 - point_index0;
-  if (count <= 1)
-    return 0;
-
-  const ON_FontGlyphOutlinePoint* points = m_points.Array() + point_index0;
-  
-  const int curve_count0 = curves.Count();
-
-  const double scale
-    = (curve_scale > 0.0 && ON_IsValid(curve_scale))
-    ? curve_scale
-    : 1.0;
-
-  int i1 = count;
-  for (int i = 0; i+1 < count; i = i1)
-  {
-    const int order = ON_FreeTypeOutlineAccumlator::Internal_SegmentNurbsOrder(count - i,points + i);
-    if (0 == order)
-    {
-      i1 = i + 1;
-      continue;
-    }
-    int cv_count = order;
-    const int degree = order - 1;
-    for (i1 = i + degree; i1+1 < count; i1 += degree)
-    {
-      if (order != ON_FreeTypeOutlineAccumlator::Internal_SegmentNurbsOrder(count - i1, points + i1))
-        break;
-      cv_count += degree;
-    }
-
-    ON_NurbsCurve* curve = new ON_NurbsCurve(3, false, order, cv_count);
-    ON_3dPoint cv = ON_3dPoint::Origin;
-    for (int j = 0; j < cv_count; j++)
-    {
-      cv.x = scale*(double)points[i+j].m_point.x;
-      cv.y = scale*(double)points[i+j].m_point.y;
-      curve->SetCV(j, ON::point_style::not_rational,&cv.x);
-    }
-    const int knot_count = cv_count + order - 2;
-    const int knot_mult = order - 1;
-    double t = 0.0;
-    for (int j = 0; j < knot_count; /*empty iterator*/)
-    {
-      const int j1 = j + knot_mult;
-      while(j < j1 && j < knot_count)
-        curve->m_knot[j++] = t;
-      t += 1.0;
-    }
-
-
-    curves.Append(curve);
-  }
-
-  return (curves.Count() - curve_count0);
 }
 
 
@@ -2668,10 +1898,10 @@ bool ON_FreeTypeLoadGlyph(
       // "lfu" = Windows logical font units = LOGFONT.lfHeight units
       // "linch" = "logical" inch units used by ::GetDeviceCaps(hdc, LOGPIXELS*)
       // "pixels" = "pixel" units used by ::GetDeviceCaps(hdc, LOGPIXELS*)
-      HDC hdc = ::CreateCompatibleDC(0); // "screen" device context
-      const int horiz_pixels_per_inch = ::GetDeviceCaps(hdc, LOGPIXELSX); // units = horiz pixels/"logical inch"
-      const int vert_pixels_per_inch = ::GetDeviceCaps(hdc, LOGPIXELSY); // units = vertical pixels/"logical inch"
-      ::DeleteDC(hdc);
+      HDC font_hdc = ON_Font::CreateWindowsLogfontDeviceContext();
+      const int horiz_pixels_per_inch = ::GetDeviceCaps(font_hdc, LOGPIXELSX); // units = horiz pixels/"logical inch"
+      const int vert_pixels_per_inch = ::GetDeviceCaps(font_hdc, LOGPIXELSY); // units = vertical pixels/"logical inch"
+      ON_Font::DeleteWindowsLogfontDeviceContext(font_hdc);
       const double logical_font_height = ((double)ON_Font::Constants::AnnotationFontCellHeight); // units = lfu
       const double ppts_per_inch = 72.0; // printer points / inch
       // If "logical font units"/("pixels"/"logical inch") = "real" inch = 2.54 cm
@@ -2724,14 +1954,20 @@ bool ON_FreeTypeLoadGlyph(
 
 // Returns font glyph id or 0
 ON__UINT_PTR ON_FreeTypeGetGlyphMetrics(
-  const ON_Font* font,
-  ON__UINT32 unicode_code_point,
-  class ON_TextBox& font_unit_glyph_box
+  const ON_FontGlyph* glyph,
+  class ON_TextBox& glyph_metrics_in_font_design_units
 )  
 {
-  font_unit_glyph_box = ON_TextBox::Unset;
+  glyph_metrics_in_font_design_units = ON_TextBox::Unset;
 
-  if (false == ON_IsValidUnicodeCodePoint(unicode_code_point))
+  if (nullptr == glyph || false == glyph->CodePointIsSet())
+    return 0;
+
+  const ON_Font* font = glyph->Font();
+  if (nullptr == font)
+    return 0;
+  font = font->ManagedFont();
+  if (nullptr == font)
     return 0;
 
   const ON__UINT_PTR ft_face_as_uint = ON_Font::FreeTypeFace(font);
@@ -2740,7 +1976,10 @@ ON__UINT_PTR ON_FreeTypeGetGlyphMetrics(
 
   FT_Face face = (FT_Face)ft_face_as_uint;
     
-  const unsigned int glyph_id = ON_FreeType::GlyphId(face, unicode_code_point);
+  const unsigned int glyph_id 
+    = glyph->FontGlyphIdIsSet()
+    ? (unsigned int)glyph->FontGlyphId()
+    : ON_FreeType::GlyphId(face, glyph->CodePoint());
   if (0 == glyph_id)
     return 0;
   
@@ -2754,59 +1993,72 @@ ON__UINT_PTR ON_FreeTypeGetGlyphMetrics(
     return 0;
   
   // Because ft_load_flags includes FT_LOAD_NO_SCALE, the
-  // face->glyph->metrics units are expressed in font units.
-  ON_TextBox ft_glyph_box;
-  ft_glyph_box.m_bbmin.i = (int)(face->glyph->metrics.horiBearingX);
-  ft_glyph_box.m_bbmin.j = (int)(face->glyph->metrics.horiBearingY - face->glyph->metrics.height);
-  ft_glyph_box.m_bbmax.i = (int)(face->glyph->metrics.horiBearingX + face->glyph->metrics.width);
-  ft_glyph_box.m_bbmax.j = (int)(face->glyph->metrics.horiBearingY);
-  ft_glyph_box.m_advance.i = (int)(face->glyph->metrics.horiAdvance);
-  ft_glyph_box.m_advance.j = (int)(face->glyph->metrics.vertAdvance); // positive values mean downwards advance
-
-  // NOPE - read freetype docs an pay close attention to FT_LOAD_NO_SCALE behavior.
-  //ft_glyph_box.m_advance.i = (int)(face->glyph->advance.x);
-  //ft_glyph_box.m_advance.j = (int)(face->glyph->advance.y);
-  //ft_glyph_box.m_advance.i = (int)(face->glyph->linearHoriAdvance);
-  //ft_glyph_box.m_advance.j = (int)(face->glyph->linearVertAdvance);
-
-  ON_TextBox ft_glyph_outline_box;
-  ON_FreeTypeOutlineAccumlator a;
-  if ( a.AccumulateOutlineBoundingBox(face, glyph_id, ft_glyph_outline_box) 
-    && ft_glyph_outline_box.IsSet()
-    )
-  {
-    // AccumulateBoundingBox to returns false for code points like CR, LF, TAB, ...
-    // Whenever possible we get the answer directly from the  glyph outline. 
-    // This box gets cached on ON_FontGlyph's so it is calculated
-    // once per glyph.
-    ft_glyph_box.m_bbmin = ft_glyph_outline_box.m_bbmin;
-    ft_glyph_box.m_bbmax = ft_glyph_outline_box.m_bbmax;
-  }
-
-  font_unit_glyph_box = ft_glyph_box;
+  // face->glyph->metrics units are expressed in font design units.
+  glyph_metrics_in_font_design_units = ON_TextBox_CreateFromFreeTypeGlyphMetrics(&face->glyph->metrics);
 
   return glyph_id;
-  // face glyph_id
 }
 
 bool ON_FreeTypeGetGlyphOutline(
   const ON_FontGlyph* glyph,
-  bool bSingleStrokeFont,
-  double text_height,
-  ON_ClassArray< ON_SimpleArray< ON_Curve* > >& contours,
-  ON_BoundingBox* glyph_bbox,
-  ON_3dVector* glyph_advance
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
 )
 {
+  outline = ON_Outline::Unset;
+
+  if (nullptr == glyph)
+    return false;
+
+  if (false == glyph->CodePointIsSet())
+    return false;
+
+  glyph = glyph->ManagedGlyph();
+
+  const ON_Font* font = glyph->Font();
+  if (nullptr == font)
+    return false;
+
+  if (ON_OutlineFigure::Type::Unset == figure_type)
+  {
+    ON_OutlineFigure::Type font_figure_type = font->OutlineFigureType();
+    if (ON_OutlineFigure::Type::Unset != font_figure_type)
+    {
+      figure_type = font_figure_type;
+    }
+  }
+
+  ON__UINT_PTR  glyph_index = glyph->FontGlyphId();
+  if (glyph_index <= 0 || glyph_index > 0xFFFFFFFF)
+    return false;
+  
+  FT_Face ft_face = (FT_Face)(ON_Font::FreeTypeFace(font));
+  if (nullptr == ft_face)
+    return false;
+
+  const ON_FontMetrics fm = font->FontUnitFontMetrics();
+
   ON_FreeTypeOutlineAccumlator a;
-  return a.AccumulateOutlineContours(
-    glyph,
-    bSingleStrokeFont,
-    text_height,
-    contours,
-    glyph_bbox,
-    glyph_advance
-    );  
+
+  bool rc = a.BeginGlyphOutline(fm.UPM(), figure_type, &outline);
+
+  if (rc)
+  {
+
+    rc = a.AddFreeTypeFiguresToOutline(
+      ft_face,
+      (FT_UInt)glyph_index,
+      outline
+    );
+
+    if (false == a.EndOutline())
+      rc = false;
+  }
+
+  if ( false == outline.GlyphMetrics().IsSet() )
+    outline.SetGlyphMetrics(glyph->FontUnitGlyphBox());
+
+  return rc;
 }
 
 void ON_Font::DumpFreeTypeFace(
@@ -2950,22 +2202,117 @@ void ON_Font::DumpFreeTypeFace(
 
 #endif
 
+
+bool ON_FontGlyph::GetOutline(
+  bool bSingleStrokeFont,
+  class ON_Outline& outline
+) const
+{
+  outline = ON_Outline::Unset;
+  const ON_Font* font = Font();
+  if (nullptr == font)
+    return false;
+
+  // When it comes to the difference between a single stroke and a double stroke font,
+  // users and programmers are confused most of the time. This code protects
+  // them from the consequences of that confusion.
+  ON_OutlineFigure::Type font_figure_type = font->OutlineFigureType();
+  if (ON_OutlineFigure::Type::SingleStroke == font_figure_type)
+    bSingleStrokeFont = true;
+  else if (ON_OutlineFigure::Type::DoubleStroke == font_figure_type)
+    bSingleStrokeFont = false;
+  else if (bSingleStrokeFont)
+    font_figure_type = ON_OutlineFigure::Type::SingleStroke;
+
+  if (nullptr != ON_Font::Internal_CustomGetGlyphOutlineFunc)
+  {
+    ON_Font::Internal_CustomGetGlyphOutlineFunc(
+        this,
+        bSingleStrokeFont,
+        outline
+      );
+  }
+  else
+  {
+#if defined(ON_OS_WINDOWS_GDI)
+    // Use Direct Write based tools
+    ON_WindowsDWriteGetGlyphOutline(
+      this,
+      font_figure_type,
+      outline
+    );
+#else
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+    ON_FreeTypeGetGlyphOutline(
+      this,
+      font_figure_type,
+      outline
+    );
+#endif
+#endif
+  }
+
+  return outline.FigureCount() > 0;
+}
+
 bool ON_FontGlyph::GetGlyphContours(
   bool bSingleStrokeFont,
-  double text_height,
+  double height_of_capital,
   ON_ClassArray< ON_SimpleArray< ON_Curve* > >& glyph_contours,
   ON_BoundingBox* glyph_bbox,
   ON_3dVector* glyph_advance
 ) const
 {
-  return ON_FreeTypeGetGlyphOutline(
-    this,
-    bSingleStrokeFont,
-    text_height,
-    glyph_contours,
-    glyph_bbox,
-    glyph_advance
+  const ON_Font* font = Font();
+  if (nullptr == font)
+    return false;
+
+  ON_Outline outline;
+  GetOutline(bSingleStrokeFont, outline);
+
+  const ON_FontMetrics fm = font->FontUnitFontMetrics();
+  double scale = 1.0;
+  if (height_of_capital > 0.0 && height_of_capital < ON_UNSET_POSITIVE_FLOAT)
+  {
+    scale = fm.GlyphScale(height_of_capital);
+  }
+  else if ( 
+    ON_UNSET_VALUE == height_of_capital
+    || ON_UNSET_POSITIVE_VALUE == height_of_capital
+    || ON_UNSET_FLOAT == height_of_capital
+    || ON_UNSET_POSITIVE_FLOAT == height_of_capital
+    )
+  {
+    // returne results in font design units
+    scale = 1.0;
+  }
+  else
+  {
+    // normalized units.
+    const double font_UPM = font->FontUnitFontMetrics().AscentOfCapital();
+    if ( font_UPM > 0.0 &&  font_UPM < ON_UNSET_POSITIVE_FLOAT )
+    scale = ((double)ON_Font::AnnotationFontCellHeight) / font_UPM;
+  }
+
+  unsigned int rc = outline.GetOutlineCurves(
+    scale,
+    true, // 3d curves
+    glyph_contours
   );
+
+  const ON_TextBox glyph_metrics = outline.GlyphMetrics();
+
+  if (nullptr != glyph_advance)
+    *glyph_advance = scale * ON_3dVector(glyph_metrics.m_advance.i, glyph_metrics.m_advance.j, 0.0);
+
+  if (nullptr != glyph_bbox)
+    *glyph_bbox = ON_BoundingBox(
+      scale*ON_3dPoint(glyph_metrics.m_bbmin.i, glyph_metrics.m_bbmin.j, 0.0),
+      scale*ON_3dPoint(glyph_metrics.m_bbmax.i, glyph_metrics.m_bbmax.j, 0.0)
+    );
+
+  return (rc > 0);
+
 }
 
 bool ON_Annotation::GetTextGlyphContours(
@@ -3191,7 +2538,7 @@ bool ON_TextRun::GetGlyphContours(
   }
 
   double run_height = run.TextHeight();  // Specified height of text in Model units
-  double I_height = run_font->FontMetrics().AscentOfI();
+  double I_height = run_font->FontMetrics().AscentOfCapital();
   double font_scale = run_height / I_height; // converts Font units to Model units, including text height
   ON_Xform scale_xf(ON_Xform::DiagonalTransformation(font_scale));
   run_xf = run_xf * scale_xf;
@@ -3300,10 +2647,16 @@ void ON_Font::DumpFreeType(
   ON_TextLog& text_log
 ) const
 {
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
   const ON_Font* managed_font = this->ManagedFont();
   if (nullptr == managed_font)
     return;
-#if defined(OPENNURBS_FREETYPE_SUPPORT)
+  if (nullptr == managed_font->m_free_type_face)
+    return;
+  if (this != managed_font && ON_Font::CompareFontCharacteristicsForExperts(true, false, *this, *managed_font))
+  {
+    text_log.Print("FreeType managed font = <%u>\n", managed_font->RuntimeSerialNumber());
+  }
   ON_Font::DumpFreeTypeFace((ON__UINT_PTR)(managed_font->m_free_type_face->m_face), text_log);
 #endif
 }

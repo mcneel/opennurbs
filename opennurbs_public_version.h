@@ -4,8 +4,9 @@
 // This means you have a very limited set of preprocessor instructions
 // at your disposal.
 
+// To update version numbers, edit ..\build\build_dates.msbuild
 #define RMA_VERSION_MAJOR 6
-#define RMA_VERSION_MINOR 1
+#define RMA_VERSION_MINOR 8
 
 ////////////////////////////////////////////////////////////////
 //
@@ -13,10 +14,10 @@
 // first step in each build.
 //
 #define RMA_VERSION_YEAR   2018
-#define RMA_VERSION_MONTH  1
-#define RMA_VERSION_DATE   14
-#define RMA_VERSION_HOUR   22
-#define RMA_VERSION_MINUTE 40
+#define RMA_VERSION_MONTH  8
+#define RMA_VERSION_DATE   28
+#define RMA_VERSION_HOUR   20
+#define RMA_VERSION_MINUTE 5
 
 ////////////////////////////////////////////////////////////////
 //
@@ -34,19 +35,19 @@
 //     3 = build system release build
 #define RMA_VERSION_BRANCH 1
 
-#define VERSION_WITH_COMMAS  6,1,18014,22401
-#define VERSION_WITH_PERIODS 6.1.18014.22401
+#define VERSION_WITH_COMMAS  6,8,18240,20051
+#define VERSION_WITH_PERIODS 6.8.18240.20051
 #define COPYRIGHT "Copyright (C) 1993-2018, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Public OpenNURBS C++ 3dm file IO library."
 
 #define RMA_VERSION_NUMBER_MAJOR_STRING   "6"
 #define RMA_VERSION_NUMBER_MAJOR_WSTRING L"6"
 
-#define RMA_VERSION_NUMBER_SR_STRING   "SR1"
-#define RMA_VERSION_NUMBER_SR_WSTRING L"SR1"
+#define RMA_VERSION_NUMBER_SR_STRING   "SR8"
+#define RMA_VERSION_NUMBER_SR_WSTRING L"SR8"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "6.1.18014.22401"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"6.1.18014.22401"
+#define RMA_VERSION_WITH_PERIODS_STRING   "6.8.18240.20051"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"6.8.18240.20051"
 
 
 

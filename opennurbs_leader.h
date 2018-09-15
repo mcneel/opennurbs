@@ -120,6 +120,14 @@ public:
     ON_Xform& text_xform_out
   ) const override;
 
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
+  
   void UpdateTextAlignment(ON_2dVector angle); // Sets text to right or left justified per leader direction
 
   const ON_NurbsCurve* Curve(

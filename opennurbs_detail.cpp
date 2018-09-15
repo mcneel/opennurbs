@@ -196,3 +196,46 @@ bool ON_DetailView::Transform( const ON_Xform& xform )
   return m_boundary.Transform(xform);
 }
 
+bool ON_DetailView::UpdateFrustum(
+  ON::LengthUnitSystem model_units,
+  ON::LengthUnitSystem paper_units
+)
+{
+  if (!m_view.m_vp.IsParallelProjection())
+    return false;
+  if (!(m_page_per_model_ratio > 0.0))
+    return false;
+
+  ON_BoundingBox bbox = BoundingBox();
+  double port_width = bbox.m_max.x - bbox.m_min.x;
+  double port_height = bbox.m_max.y - bbox.m_min.y;
+  if (!(port_height > 0.0) || !(port_width > 0.0))
+    return false; 
+
+  double detail_width_on_paper = bbox.m_max.x - bbox.m_min.x;
+  double detail_width_on_paper_mm = detail_width_on_paper * ON::UnitScale(paper_units, ON::LengthUnitSystem::Millimeters);
+  if (!(detail_width_on_paper_mm > 0.0))
+    return false;
+
+  double frustum_width_mm = detail_width_on_paper_mm / m_page_per_model_ratio;
+  double frustum_width = frustum_width_mm * ON::UnitScale(ON_UnitSystem(ON::LengthUnitSystem::Millimeters), model_units);
+
+  double aspect = fabs(port_width / port_height);
+  if (!(aspect > 0.0))
+    return false;
+
+  double frustum_height = frustum_width / aspect;
+  if (!(frustum_height > 0.0))
+    return false;
+
+  double fr_left, fr_right, fr_top, fr_bottom, fr_near, fr_far;
+  if (m_view.m_vp.GetFrustum(&fr_left, &fr_right, &fr_bottom, &fr_top, &fr_near, &fr_far))
+  {
+    fr_left = (fr_left + fr_right) / 2.0 - frustum_width / 2.0;
+    fr_right = fr_left + frustum_width;
+    fr_bottom = (fr_bottom + fr_top) / 2.0 - frustum_height / 2.0;
+    fr_top = fr_bottom + frustum_height;
+    return m_view.m_vp.SetFrustum(fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far);
+  }
+  return false;
+}

@@ -736,11 +736,13 @@ const ON_UnitSystem& ON_LengthValue::LengthUnitSystem() const
 
 const ON_wString& ON_LengthValue::LengthAsString() const
 {
+  m_length_as_string.IsValid(true);
   return m_length_as_string;
 }
 
 const wchar_t* ON_LengthValue::LengthAsStringPointer() const
 {
+  m_length_as_string.IsValid(true);
   return static_cast<const wchar_t*>(m_length_as_string);
 }
 
@@ -778,6 +780,7 @@ bool ON_LengthValue::Write(
       break;
     if (!archive.WriteInt(m_context_locale_id))
       break;
+    m_length_as_string.IsValid(true);
     if (!archive.WriteString(m_length_as_string))
       break;
 
@@ -1568,11 +1571,13 @@ const class ON_LengthValue& ON_ScaleValue::RightLengthValue() const
 
 const ON_wString& ON_ScaleValue::ScaleAsString() const
 {
+  m_scale_as_string.IsValid(true);
   return m_scale_as_string;
 }
 
 const wchar_t* ON_ScaleValue::ScaleAsStringPointer() const
 {
+  m_scale_as_string.IsValid(true);
   return static_cast<const wchar_t*>(m_scale_as_string);
 }
 
@@ -1614,6 +1619,7 @@ bool ON_ScaleValue::Write(
       break;
     if (!archive.WriteInt(static_cast<unsigned int>(m_context_angle_unit_system)))
       break;
+    m_scale_as_string.IsValid(true);
     if (!archive.WriteString(m_scale_as_string))
       break;
     if (!m_left_length.Write(archive))
@@ -1655,6 +1661,8 @@ bool ON_ScaleValue::Read(
   class ON_BinaryArchive& archive
 )
 {
+  *this = ON_ScaleValue::Unset;
+
   int content_version = 0;
   if (!archive.BeginRead3dmAnonymousChunk(&content_version))
     return false;
@@ -1761,6 +1769,7 @@ const ON_SHA1_Hash ON_ScaleValue::ContentHash() const
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_context_length_unit_system));
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_context_angle_unit_system));
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_string_format_preference));
+  m_scale_as_string.IsValid(true);
   sha1.AccumulateString(m_scale_as_string);
   ON_SHA1_Hash h = m_left_length.ContentHash();
   sha1.AccumulateSubHash(h);
@@ -1790,6 +1799,7 @@ const ON_SHA1_Hash ON_LengthValue::ContentHash() const
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_context_angle_unit_system));
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_string_format));
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_length_unit_system.UnitSystem()));
+  m_length_as_string.IsValid(true);
   sha1.AccumulateString(m_length_as_string);
   return sha1.Hash();
 }

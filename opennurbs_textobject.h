@@ -128,6 +128,14 @@ public:
     ON_Xform& text_xform_out
   ) const override;
 
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
+
   // returns the base point and with grip using the current alignments
   bool GetGripPoints(ON_2dPoint& base, ON_2dPoint& width, double textscale) const;
 

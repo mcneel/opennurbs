@@ -62,6 +62,8 @@
 #define ON_ENUM_FROM_UNSIGNED_CASE(e) case (unsigned int)e: return(e); break
 #define ON_ENUM_TO_STRING_CASE(e) case e: return( ON_String(#e) ); break
 #define ON_ENUM_TO_WIDE_STRING_CASE(e) case e: return( ON_wString(#e) ); break
+#define ON_ENUM_TO_STRING_CASE_SET(e,s) case e: (s)=ON_String(#e); break
+#define ON_ENUM_TO_WIDE_STRING_CASE_SET(e,s) case e: (s)=ON_wString(#e); break
 
 /* export/import */
 #if defined(OPENNURBS_EXPORTS)
@@ -262,6 +264,19 @@ extern ON_EXTERN_DECL const float  ON_FLT_NINF;
 
 
 /*
+The ON_PTR_SEMAPHORE* values are used in rare cases
+when a special signal must be passed as a pointer argument.
+The values must be a multiple of 8 to suppress runtime pointer alignment checks.
+The values must never be a valid user heap or stack pointer value.
+*/
+#define ON_PTR_SEMAPHORE1 ((ON__UINT_PTR)8)
+#define ON_PTR_SEMAPHORE2 ((ON__UINT_PTR)16)
+#define ON_PTR_SEMAPHORE3 ((ON__UINT_PTR)24)
+#define ON_PTR_SEMAPHORE4 ((ON__UINT_PTR)32)
+#define ON_PTR_SEMAPHORE_MAX ((ON__UINT_PTR)32)
+
+
+/*
 Description:
 Paramters:
   x - [out] returned value of x is an SNan
@@ -443,6 +458,11 @@ public:
   unsigned int j;
 
   ON_2udex(unsigned int i, unsigned int j);
+
+  static int DictionaryCompare(
+    const ON_2udex* lhs,
+    const ON_2udex* rhs
+  );
 
   static const ON_2udex Unset;  // (ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX);
   static const ON_2udex Zero;  // (0, 0)
@@ -654,9 +674,12 @@ public:
   Returns:
     The value of OPENNURBS_VERSION_BRANCH, which is defined in opennurbs_version.h
       0: developer build
-      1: trunk build
-      2: release candidate build
-      3: release build
+      1: Windows Commercial build
+      2: Mac Commercial build
+      3: Windows BETA build
+      4: Mac Beta build
+      5: Windows WIP build
+      6: Mac WIP build
   */
   static
   unsigned int VersionBranch();

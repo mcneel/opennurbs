@@ -868,7 +868,14 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
       m_annotation_context.SetReferencedDimStyle( dim_style, override_dim_style, V5_dim_style_index );
       ON_Annotation* V6_annotation = ON_Annotation::CreateFromV5Annotation( *V5_annotation, &m_annotation_context );
       if (nullptr != V6_annotation)
-        V6_annotation->SetDimensionStyleIdForExperts(dim_style->Id(),true);
+      {
+        const ON_UUID archive_id = dim_style->Id();
+        ON_UUID model_id = archive_id;
+        const ON_ManifestMapItem mapitem = this->ManifestMap().MapItemFromSourceId(archive_id);
+        if (ON_ModelComponent::Type::DimStyle == mapitem.ComponentType())
+          model_id = mapitem.DestinationId();
+        V6_annotation->SetDimensionStyleIdForExperts(model_id, true);
+      }
 
       return V6_annotation;
     }
@@ -884,7 +891,7 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
       ON_TextDot* text_dot = new ON_TextDot();
       text_dot->SetPrimaryText(v1_text_dot->m_text);
       text_dot->SetCenterPoint(v1_text_dot->point);
-      text_dot->SetFontFace(ON_DimStyle::Default.Font().FontFaceName());
+      text_dot->SetFontFace(ON_DimStyle::Default.Font().WindowsLogfontName());
       return text_dot;
     }
     return nullptr;

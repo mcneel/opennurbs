@@ -462,6 +462,9 @@ void ON_SHA1::AccumulateString(
   ON_StringMapOrdinalType mapping
 )
 {
+  // Do not permit corrupt strings to crash this code.
+  str.IsValid(false);
+
   AccumulateString( str.Array(), str.Length(), mapping);
 }
 
@@ -571,6 +574,9 @@ void ON_SHA1::AccumulateString(
   ON_StringMapOrdinalType mapping
 )
 {
+  // Do not permit corrupt strings to crash this code.
+  str.IsValid(false);
+
   AccumulateString( str.Array(), str.Length(), mapping);
 }
 
@@ -1279,6 +1285,35 @@ int ON_ManifestMapItem::Compare(
   return ON_UuidCompare(a.m_destination_id, b.m_destination_id);
 }
 
+
+int ON_ManifestMapItem::CompareTypeAndSourceId(
+  const ON_ManifestMapItem& a,
+  const ON_ManifestMapItem& b
+  )
+{
+  const unsigned int at = static_cast<unsigned int>(a.m_component_type);
+  const unsigned int bt = static_cast<unsigned int>(b.m_component_type);
+  if (at < bt)
+    return -1;
+  if (at > bt)
+    return 1;
+  return ON_UuidCompare(a.m_source_id, b.m_source_id);
+}
+
+int ON_ManifestMapItem::CompareTypeAndDestinationId(
+  const ON_ManifestMapItem& a,
+  const ON_ManifestMapItem& b
+  )
+{
+  const unsigned int at = static_cast<unsigned int>(a.m_component_type);
+  const unsigned int bt = static_cast<unsigned int>(b.m_component_type);
+  if (at < bt)
+    return -1;
+  if (at > bt)
+    return 1;
+  return ON_UuidCompare(a.m_destination_id, b.m_destination_id);
+}
+
 int ON_ManifestMapItem::CompareTypeAndSourceIdAndIndex(
   const ON_ManifestMapItem& a,
   const ON_ManifestMapItem& b
@@ -1314,7 +1349,6 @@ int ON_ManifestMapItem::CompareTypeAndDestinationIdAndIndex(
     return 1;
   return ON_UuidCompare(a.m_destination_id, b.m_destination_id);
 }
-
 
 
 int ON_ManifestMapItem::CompareTypeAndSourceIndex(
@@ -1679,7 +1713,7 @@ void ON_ManifestMapImpl::Internal_Copy(const ON_ManifestMapImpl& src)
   if (src.m_source_id_hash_table.ItemCount() > 0)
   {
     const ON__UINT32 src_hash_table_sn = src.m_source_id_hash_table.HashTableSerialNumber();
-    ON_FixedSizePoolIterator fit(m_fsp);
+    ON_FixedSizePoolIterator fit(src.m_fsp);
     for (const ON_ManifestMap_Hash32TableItem* src_item = static_cast<const ON_ManifestMap_Hash32TableItem*>(fit.FirstElement());
       nullptr != src_item;
       src_item = static_cast<const ON_ManifestMap_Hash32TableItem*>(fit.NextElement())
@@ -1740,7 +1774,16 @@ ON_ManifestMap::~ON_ManifestMap()
 
 bool ON_ManifestMap::UpdatetMapItemDestination(
   const class ON_ManifestMapItem& map_item
-  )
+)
+{
+  const bool bIgnoreSourceIndex = false;
+  return UpdatetMapItemDestination(map_item, bIgnoreSourceIndex);
+}
+
+bool ON_ManifestMap::UpdatetMapItemDestination(
+    const class ON_ManifestMapItem& map_item,
+    bool bIgnoreSourceIndex
+    )
 {
   if (map_item.SourceIsUnset())
   {
@@ -1766,10 +1809,26 @@ bool ON_ManifestMap::UpdatetMapItemDestination(
     }
   }
 
+  // map_item_id = item in this manifest map for the SourceId().
+  // map_item_id must be valid and have a matching type and id.
   const class ON_ManifestMapItem& map_item_id = MapItemFromSourceId(map_item.SourceId());
-  if ( 0 != ON_ManifestMapItem::CompareTypeAndSourceIdAndIndex(map_item_id,map_item) )
+
+  if (ON_nil_uuid == map_item_id.SourceId())
   {
-    ON_ERROR("map_item source settings are not equal to corresponding ON_ManifestMap item source settings.");
+    ON_ERROR("map_item.SourceId() is not in the ON_ManifestMap as a source id.");
+    return false;
+  }
+  if ( 0 != ON_ManifestMapItem::CompareTypeAndSourceId(map_item_id,map_item) )
+  {
+    ON_ERROR("map_item type is not equal to corresponding ON_ManifestMap item source type.");
+    return false;
+  }
+  if (
+    false == bIgnoreSourceIndex
+    && map_item_id.SourceIndex() != map_item.SourceIndex()
+    )
+  {
+    ON_ERROR("map_item source index is not equal to corresponding ON_ManifestMap item source index.");
     return false;
   }
 
@@ -1780,7 +1839,7 @@ bool ON_ManifestMap::UpdatetMapItemDestination(
   if (
     map_item_index.ComponentType() != map_item.ComponentType()
     || map_item_index.SourceId() != map_item.SourceId()
-    || map_item_index.SourceIndex() != map_item.SourceIndex()
+    || (false == bIgnoreSourceIndex && map_item_index.SourceIndex() != map_item.SourceIndex())
     )
   {
     ON_ERROR("map_item source settings are not equal to corresponding ON_ManifestMap item source settings.");

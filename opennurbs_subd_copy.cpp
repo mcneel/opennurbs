@@ -487,13 +487,13 @@ bool ON_SubDArchiveIdMap::AddComponentPtr(ON_SubDComponentPtr eptr, unsigned int
     {
       switch (p1->ComponentType())
       {
-      case ON_SubDComponentPtr::ComponentPtrType::vertex:
+      case ON_SubDComponentPtr::Type::Vertex:
         archive_id1 = p1->Vertex()->ArchiveId();
         break;
-      case ON_SubDComponentPtr::ComponentPtrType::edge:
+      case ON_SubDComponentPtr::Type::Edge:
         archive_id1 = p1->Edge()->ArchiveId();
         break;
-      case ON_SubDComponentPtr::ComponentPtrType::face:
+      case ON_SubDComponentPtr::Type::Face:
         archive_id1 = p1->Face()->ArchiveId();
         break;
       default:
@@ -522,7 +522,7 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
   // The first element is ON_SubDComponentPtr::Null.  This is done so the index of the elements
   // in element_list[] is equal to the element's archive_id.
   const ON_SubDComponentPtr* element = First();
-  if (nullptr == element || ON_SubDComponentPtr::ComponentPtrType::unset != element->ComponentType())
+  if (nullptr == element || ON_SubDComponentPtr::Type::Unset != element->ComponentType())
     return ON_SUBD_RETURN_ERROR(0);
   
   element = Next();

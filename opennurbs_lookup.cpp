@@ -345,7 +345,7 @@ void ON_SN_BLOCK::SortBlockHelper()
 
 static bool ON_SerialNumberMap_IsNotValidBlock()
 {
-  return ON_IsNotValid(); // <- Good location for a debugger breakpoint.
+  return ON_IsNotValid();
 }
 
 bool ON_SN_BLOCK::IsValidBlock(
@@ -1211,7 +1211,7 @@ ON__UINT64 ON_SN_BLOCK::ActiveElementEstimate(ON__UINT64 sn0, ON__UINT64 sn1) co
 
 static bool ON_SerialNumberMap_IsNotValid()
 {
-  return ON_IsNotValid(); // <- Good location for a debugger breakpoint.
+  return ON_IsNotValid();
 }
 
 bool ON_SerialNumberMap::IsValid(

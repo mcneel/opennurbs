@@ -43,7 +43,50 @@ void ON_SubDimple::Clear()
   m_heap.Clear();
 }
 
-void ON_SubDimple::ClearSubdivisionLevels(
+void  ON_SubDimple::ClearLevelContents(
+  ON_SubDLevel* level
+)
+{
+  if (nullptr == level)
+    return;
+
+  level->ResetFaceArray();
+  level->ResetEdgeArray();
+  level->ResetVertexArray();
+
+  ON_SubDVertex* next_vertex = level->m_vertex[0];
+  level->m_vertex[0] = nullptr;
+  level->m_vertex[1] = nullptr;
+
+  ON_SubDEdge* next_edge = level->m_edge[0];
+  level->m_edge[0] = nullptr;
+  level->m_edge[1] = nullptr;
+
+  ON_SubDFace* next_face = level->m_face[0];
+  level->m_face[0] = nullptr;
+  level->m_face[1] = nullptr;
+
+  for (ON_SubDVertex* vertex = next_vertex; nullptr != vertex; vertex = next_vertex)
+  {
+    next_vertex = const_cast<ON_SubDVertex*>(vertex->m_next_vertex);
+    ReturnVertex(vertex);
+  }
+
+  for (ON_SubDEdge* edge = next_edge; nullptr != edge; edge = next_edge)
+  {
+    next_edge = const_cast<ON_SubDEdge*>(edge->m_next_edge);
+    ReturnEdge(edge);
+  }
+
+  for (ON_SubDFace* face = next_face; nullptr != face; face = next_face)
+  {
+    next_face = const_cast<ON_SubDFace*>(face->m_next_face);
+    ReturnFace(face);
+  }
+
+}
+
+void ON_SubDimple::ClearHigherSubdivisionLevels(
   unsigned int max_level_index
   )
 {
@@ -72,42 +115,66 @@ void ON_SubDimple::ClearSubdivisionLevels(
       if ( nullptr == level )
         continue;
 
-      level->ResetFaceArray();
-      level->ResetEdgeArray();
-      level->ResetVertexArray();
-
-      ON_SubDVertex* next_vertex = level->m_vertex[0];
-      level->m_vertex[0] = nullptr;
-      level->m_vertex[1] = nullptr;
-
-      ON_SubDEdge* next_edge = level->m_edge[0];
-      level->m_edge[0] = nullptr;
-      level->m_edge[1] = nullptr;
-
-      ON_SubDFace* next_face = level->m_face[0];
-      level->m_face[0] = nullptr;
-      level->m_face[1] = nullptr;
-
-      for (ON_SubDVertex* vertex = next_vertex; nullptr != vertex; vertex = next_vertex)
-      {
-        next_vertex = const_cast<ON_SubDVertex*>(vertex->m_next_vertex);
-        ReturnVertex(vertex);
-      }
-
-      for (ON_SubDEdge* edge = next_edge; nullptr != edge; edge = next_edge)
-      {
-        next_edge = const_cast<ON_SubDEdge*>(edge->m_next_edge);
-        ReturnEdge(edge);
-      }
-
-      for (ON_SubDFace* face = next_face; nullptr != face; face = next_face)
-      {
-        next_face = const_cast<ON_SubDFace*>(face->m_next_face);
-        ReturnFace(face);
-      }
+      ClearLevelContents(level);
 
       delete level;
     }
+  }
+}
+
+
+void ON_SubDimple::ClearLowerSubdivisionLevels(
+  unsigned int min_level_index
+  )
+{
+  const unsigned int original_level_count = m_levels.UnsignedCount();
+
+  if (min_level_index > 0 && min_level_index < original_level_count)
+  {
+    if (nullptr != m_active_level && m_active_level->m_level_index < min_level_index)
+    {
+      m_active_level = m_levels[min_level_index];
+    }
+
+    for ( unsigned int level_index = 0; level_index < min_level_index; level_index++)
+    {
+      ON_SubDLevel* level = m_levels[level_index];
+      m_levels[level_index] = nullptr;
+      if ( nullptr == level )
+        continue;
+      ClearLevelContents(level);
+      delete level;
+    }
+    
+    unsigned short new_level_index = 0;
+    for (unsigned int level_index = min_level_index; level_index < original_level_count; level_index++, new_level_index++)
+    {
+      ON_SubDLevel* level = m_levels[level_index];
+      m_levels[level_index] = nullptr;
+      if ( nullptr == level )
+        continue;
+      level->m_level_index = new_level_index;
+
+      for (ON_SubDVertex* vertex = level->m_vertex[0]; nullptr != vertex; vertex = const_cast<ON_SubDVertex*>(vertex->m_next_vertex))
+      {
+        vertex->m_level = new_level_index;
+      }
+
+      for (ON_SubDEdge* edge = level->m_edge[0]; nullptr != edge; edge = const_cast<ON_SubDEdge*>(edge->m_next_edge))
+      {
+        edge->m_level = new_level_index;
+      }
+
+      for (ON_SubDFace* face = level->m_face[0]; nullptr != face; face = const_cast<ON_SubDFace*>(face->m_next_face))
+      {
+        face->m_level = new_level_index;
+        face->m_parent_face_id = 0;
+        face->m_zero_face_id = face->m_id;
+      }
+
+      m_levels[new_level_index] = level;
+    }
+    m_levels.SetCount(new_level_index);
   }
 }
 

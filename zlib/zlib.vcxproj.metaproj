@@ -34,13 +34,16 @@
     <HideWarningsAndErrors>false</HideWarningsAndErrors>
     <RestoreRecursive>true</RestoreRecursive>
     <MSBuildAllProjects>;C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\NuGet\NuGet.targets</MSBuildAllProjects>
+    <RestoreUseSkipNonexistentTargets>true</RestoreUseSkipNonexistentTargets>
     <ValidateRuntimeIdentifierCompatibility>false</ValidateRuntimeIdentifierCompatibility>
     <RestoreContinueOnError>WarnAndContinue</RestoreContinueOnError>
+    <RestoreBuildInParallel>true</RestoreBuildInParallel>
+    <_RestoreSolutionFileUsed>true</_RestoreSolutionFileUsed>
     <_GenerateRestoreGraphProjectEntryInputProperties>
-      RestoreUseCustomAfterTargets=;
-      NuGetRestoreTargets=C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\NuGet\NuGet.targets;
-      BuildProjectReferences=false;
       ExcludeRestorePackageImports=true;
+      _RestoreSolutionFileUsed=true;
+      SolutionDir=D:\BuildAgent\work\commercial\src4\BuildSolutions\;
+      SolutionName=Rhino;
     </_GenerateRestoreGraphProjectEntryInputProperties>
   </PropertyGroup>
   <ItemDefinitionGroup />

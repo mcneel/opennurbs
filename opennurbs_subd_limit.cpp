@@ -390,6 +390,16 @@ void ON_SubDQuadNeighborhood::Internal_Destroy(bool bReinitialize)
     m_bBoundaryCrease[2] = false;
     m_bBoundaryCrease[3] = false;
 
+    m_bCenterEdgeLimitPoint[0] = false;
+    m_bCenterEdgeLimitPoint[1] = false;
+    m_bCenterEdgeLimitPoint[2] = false;
+    m_bCenterEdgeLimitPoint[3] = false;
+
+    m_center_edge_limit_point[0] = ON_SubDSectorLimitPoint::Nan;
+    m_center_edge_limit_point[1] = ON_SubDSectorLimitPoint::Nan;
+    m_center_edge_limit_point[2] = ON_SubDSectorLimitPoint::Nan;
+    m_center_edge_limit_point[3] = ON_SubDSectorLimitPoint::Nan;
+
     for (unsigned int i = 0; i < 4; i++)
     {
       m_vertex_grid[i][0] = nullptr;
@@ -492,7 +502,7 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
   }
   else
   {
-    ON_ERROR("Bug in this code.");
+    ON_SUBD_ERROR("Bug in this code.");
     return false;
   }
 
@@ -503,7 +513,7 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
       const ON_SubDFace* f = m_face_grid[i][j];
       if (nullptr == f || 4 != f->m_edge_count)
       {
-        ON_ERROR("Bug in this code.");
+        ON_SUBD_ERROR("Bug in this code.");
         return false;
       }
       fcount_check--;
@@ -512,7 +522,7 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
 
   if (0 != fcount_check)
   {
-    ON_ERROR("Bug in this code.");
+    ON_SUBD_ERROR("Bug in this code.");
     return false;
   }
 
@@ -562,7 +572,7 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
     case 1:
       if (4 != crease_vtx_count)
       {
-        ON_ERROR("Invalid input or a bug above.");
+        ON_SUBD_ERROR("Invalid input or a bug above.");
         return false;
       }
       break;
@@ -570,13 +580,13 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
     case 2:
       if (6 != crease_vtx_count)
       {
-        ON_ERROR("Invalid input or a bug above.");
+        ON_SUBD_ERROR("Invalid input or a bug above.");
         return false;
       }
       break;
 
     default:
-      ON_ERROR("Invalid input or a bug above.");
+      ON_SUBD_ERROR("Invalid input or a bug above.");
       return false;
     }
 
@@ -678,7 +688,8 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   //  m_bExtraordinaryCornerVertex[], m_extraordinary_corner_vertex_count
   //  m_bExactQuadrantPatch[], and m_exact_quadrant_patch_count
   // 
-  unsigned int boundary_corner_index = 86U;
+  unsigned int boundary_crease_corner_index = 86U;
+  unsigned int boundary_corner_corner_index = 86U;
 
   bool bExtraordinaryCornerVertex[4] = {};
   bExtraordinaryCornerVertex[fvi0] = true;
@@ -708,7 +719,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       if (false == bExtraordinaryCornerVertex[corner_index])
         continue;
 
-      if (false == bQuadVertexIsSmoothOrCrease[corner_index])
+      if (false == bQuadVertexIsSmoothOrCrease[corner_index] && false == quad_vertex[corner_index]->IsCorner())
         continue;
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+1)%4])
         continue;
@@ -755,7 +766,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       if (bCenterEdgeIsCrease[corner_index] && bCenterEdgeIsCrease[(corner_index + 3) % 4])
       {
         if (
-          quad_vertex[corner_index]->IsCrease()
+          (quad_vertex[corner_index]->IsCrease() || quad_vertex[corner_index]->IsCorner())
           && quad_vertex[(corner_index + 1) % 4]->IsCrease()
           && quad_vertex[(corner_index + 3) % 4]->IsCrease()
           && IsOrdinarySmoothQuadCornerVertex(quad_vertex[(corner_index + 2) % 4])
@@ -767,8 +778,15 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
           {
             if (delta_subdivision_level > 0)
             {
-              boundary_corner_index = corner_index;
-              bExtraordinaryCornerVertex[corner_index] = false;
+              if (quad_vertex[corner_index]->IsCrease())
+              {
+                boundary_crease_corner_index = corner_index;
+                bExtraordinaryCornerVertex[corner_index] = false;
+              }
+              else if ( quad_vertex[corner_index]->IsCorner() )
+              {
+                boundary_corner_corner_index = corner_index;
+              }
             }
           }
         }
@@ -794,8 +812,14 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
     m_bExactQuadrantPatch[corner_index] = false;
     if (m_boundary_crease_count > 2)
       continue;
-    if (2 == m_boundary_crease_count && boundary_corner_index >= 4 )
-      continue;
+    if (2 == m_boundary_crease_count)
+    {
+      if (boundary_crease_corner_index >= 4)
+      {
+        if ( boundary_corner_corner_index >= 4 || ((boundary_corner_corner_index+2)%4) != corner_index)
+          continue;
+      }
+    }
     if (bExtraordinaryCornerVertex[corner_index])
       continue;
     if (bExtraordinaryCornerVertex[(corner_index + 1) % 4])
@@ -810,7 +834,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   m_bIsCubicPatch = VertexGridIsExactCubicPatch(
     min_face_grid_dex,
     max_face_grid_dex,
-    boundary_corner_index
+    boundary_crease_corner_index
     );
 }
 
@@ -1033,8 +1057,23 @@ const ON_SubDVertex* ON_SubDQuadNeighborhood::CenterVertex(
   if (3==vi)
     return m_vertex_grid[1][2];
   return ON_SUBD_RETURN_ERROR(nullptr);
-
 }
+
+const ON_2dex ON_SubDQuadNeighborhood::CenterVertexDex(
+  int vi
+)
+{
+  if (0 == vi)
+    return ON_2dex(1, 1);
+  if (1==vi)
+    return ON_2dex(2, 1);
+  if (2==vi)
+    return ON_2dex(2, 2);
+  if (3==vi)
+    return ON_2dex(1, 2);
+  return ON_2dex(ON_UNSET_INT_INDEX,ON_UNSET_INT_INDEX);
+}
+
 
 const ON_SubDFace* ON_SubDQuadNeighborhood::SideFace(
   unsigned int fei
@@ -1481,7 +1520,50 @@ bool ON_SubDQuadNeighborhood::GetLimitSubSurfaceSinglePatchCV(
   return true;
 }
 
-bool ON_SubDQuadNeighborhood::GetApproximateCV(
+
+unsigned int ON_SubDQuadNeighborhood::ExtraordinaryCenterVertexIndex(
+  ON_SubD::VertexTag vertex_tag_filter,
+  unsigned int minimum_edge_count_filter
+) const
+{
+  for(;;)
+  {
+    if (1 != m_extraordinary_corner_vertex_count)
+      break;
+    if (1 != m_exact_quadrant_patch_count)
+      break;
+    const unsigned int extraordinary_vertex_index
+      = m_bExtraordinaryCornerVertex[0] ? 0
+      : (m_bExtraordinaryCornerVertex[1] ? 1
+        : (m_bExtraordinaryCornerVertex[2] ? 2 : 3));
+      if (false == (m_bExtraordinaryCornerVertex[extraordinary_vertex_index]))
+        break;
+      if (false == (m_bExactQuadrantPatch[(extraordinary_vertex_index + 2) % 4]))
+        break;
+      const ON_2dex dex = CenterVertexDex(extraordinary_vertex_index);
+      if (dex.i < 1 || dex.i > 2 || dex.j < 1 || dex.j > 2)
+        break;
+      if (nullptr == m_vertex_grid[dex.i][dex.j])
+        break;
+      if (ON_SubD::VertexTag::Corner != m_vertex_grid[dex.i][dex.j]->m_vertex_tag)
+      {
+        if (((unsigned int)(m_vertex_grid[dex.i][dex.j]->m_edge_count)) < minimum_edge_count_filter)
+          break;
+        if (
+          ON_SubD::VertexTag::Unset != vertex_tag_filter
+          && m_vertex_grid[dex.i][dex.j]->m_vertex_tag != vertex_tag_filter
+          )
+        {
+          break;
+        }
+      }
+      return extraordinary_vertex_index;
+  }
+  return ON_UNSET_UINT_INDEX;
+}
+
+
+bool ON_SubDQuadNeighborhood::Internal_GetApproximateCV(
   int i,
   int j,
   double unset_cv,
@@ -1577,12 +1659,32 @@ bool ON_SubDQuadNeighborhood::GetApproximateCV(
   
   bool bHaveApproximateCV;
   const bool bUseSavedSubdivisionPoint = true;
-  if ( nullptr != e )
-    bHaveApproximateCV = e->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,bUseSavedSubdivisionPoint,approximate_cv);
+  if (nullptr != e)
+  {
+    const int extraordinary_vertex_index = ExtraordinaryCenterVertexIndex(ON_SubD::VertexTag::Crease, 4);
+    const ON_SubDVertex* extraordinary_vertex
+      = (extraordinary_vertex_index >= 0 && extraordinary_vertex_index < 4)
+      ? CenterVertex(extraordinary_vertex_index)
+      : nullptr;
+    if (
+      (ON_SubD::EdgeTag::Smooth == e->m_edge_tag || ON_SubD::EdgeTag::Crease == e->m_edge_tag)
+      && (e->m_vertex[0] == extraordinary_vertex || e->m_vertex[1] == extraordinary_vertex)
+      )
+    {
+      // extraordinary crease vertices
+      bHaveApproximateCV = false;
+    }
+    else
+    {
+      bHaveApproximateCV = e->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, approximate_cv);
+    }
+  }
   else if ( nullptr != f && 4 == f->m_edge_count )
     bHaveApproximateCV = f->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,bUseSavedSubdivisionPoint,approximate_cv);
   else
+  {
     bHaveApproximateCV = false;
+  }
 
   return bHaveApproximateCV;
 }
@@ -1591,33 +1693,117 @@ static bool CheckCV(const double* P)
 {
   if ( ((const ON_3dPoint*)P)->IsValid() )
     return true;
-  ON_ERROR("bogus cv");
+  ON_SUBD_ERROR("bogus cv");
   return false;
 }
 
-
-unsigned int ON_SubDQuadNeighborhood::GetLimitSubSurfaceMultiPatchCV(
-  double unset_cv,
-  bool bEnableApproximatePatch,
+static bool Internal_InterpCV(
   double srf_cv[5][5][3],
-  ON_SubDLimitPatchFragment::PatchType patch_type[4]
+  const ON_2udex srf_unset_cv_dex,
+  const ON_2udex srf_patchcv00_dex,
+  ON_NurbsSurface& tmp,
+  const ON_SubDSectorLimitPoint* limit_point
   )
 {
+  if (nullptr == limit_point || false == limit_point->IsSet() )
+    return false;
+  const ON_3dPoint LP(limit_point->m_limitP);
+  if (false == LP.IsValid())
+  {
+    ON_SUBD_ERROR("limit_point->m_limitP is not valid.");
+    return false;
+  }
+
+  double* P1 = srf_cv[srf_unset_cv_dex.i][srf_unset_cv_dex.j];
+  if (!(ON_UNSET_VALUE == P1[0]))
+  {
+    ON_SUBD_ERROR("srf_unset_cv_dex parameter does not index an unset cv");
+    return false;
+  }
+
+  const ON_2udex patch_unset_cv_dex(srf_unset_cv_dex.i - srf_patchcv00_dex.i, srf_unset_cv_dex.j - srf_patchcv00_dex.j);
+  if (0 != patch_unset_cv_dex.i && 3 != patch_unset_cv_dex.i)
+  {
+    ON_SUBD_ERROR("Unable to correctly set patch_unset_cv_dex.i");
+    return false;
+  }
+  if (0 != patch_unset_cv_dex.j && 3 != patch_unset_cv_dex.j)
+  {
+    ON_SUBD_ERROR("Unable to correctly set patch_unset_cv_dex.j");
+    return false;
+  }
+
+  tmp.m_cv = srf_cv[srf_patchcv00_dex.i][srf_patchcv00_dex.j];
+  if (tmp.CV(patch_unset_cv_dex.i, patch_unset_cv_dex.j) != P1)
+  {
+    // There is a bug in this function or in input parameters.
+    ON_SUBD_ERROR("Unable to correctly set tmp.m_cv.");
+    tmp.m_cv = nullptr;
+    return false;
+  }
+  P1[0] = 0.0;
+  P1[1] = 0.0;
+  P1[2] = 0.0;
+  const double s = (0 == patch_unset_cv_dex.i) ? 0.0 : 1.0;
+  const double t = (0 == patch_unset_cv_dex.j) ? 0.0 : 1.0;
+  const ON_3dPoint A = tmp.PointAt(s,t);
+  tmp.m_cv = nullptr;
+  if (false == A.IsValid())
+  {
+    ON_SUBD_ERROR("tmp.PointAt(s,t) failed.");
+    P1[0] = ON_UNSET_VALUE;
+    P1[1] = ON_UNSET_VALUE;
+    P1[2] = ON_UNSET_VALUE;
+    return false;
+  }
+
+  // If C = unset cv, the tensor product B-spline coefficient of C is (1/6)*(1/6) = 1/36
+  // and A + 1/36*C = limitP.  So, C = 36*(LP - A).
+  const ON_3dPoint C = 36.0*(LP - A);
+  if (false == C.IsValid())
+  {
+    ON_SUBD_ERROR("36*(LP - A).is not valid.");
+    P1[0] = ON_UNSET_VALUE;
+    P1[1] = ON_UNSET_VALUE;
+    P1[2] = ON_UNSET_VALUE;
+    return false;
+  }
+  P1[0] = C.x;
+  P1[1] = C.y;
+  P1[2] = C.z;
+
+  return true;
+}
+
+unsigned int ON_SubDQuadNeighborhood::GetLimitSubSurfaceMultiPatchCV(
+  bool bEnableApproximatePatch,
+  double srf_cv[5][5][3],
+  ON_SubDLimitNurbsFragment::BispanType patch_type[4]
+  )
+{
+  // Each "patch" is a 4x4 grid of CVs and srf_cc are the cvs for a cubic NURBS with 2 x2 spans (5x5 cvs)
+  // Patch 0 has cvs with indices [0][0] to [3][3].
+  // Patch 1 has cvs with indices [1][0] to [4][3].
+  // Patch 2 has cvs with indices [1][1] to [4][4].
+  // Patch 3 has cvs with indices [0][1] to [3][4].
+  // this->m_srf_cv1[5][5][3] are the CVS we could set from SubD control NET.
+  // Unset CVS have coordinates with values ON_UNSET_VALUE
+  // This function fills in unset cvs, returns them in srf_cv[5][5][3], 
+  // and sets patch_type[N] to indicate if all the CVs for that patch are set.
+  // It returns the total number of set patches.
+
+  const ON_2udex patch_cv00[4] = { ON_2udex(0,0),ON_2udex(1,0),ON_2udex(1,1),ON_2udex(0,1) };
+
   if (nullptr != patch_type)
   {
-    patch_type[0] = ON_SubDLimitPatchFragment::PatchType::Unset;
-    patch_type[1] = ON_SubDLimitPatchFragment::PatchType::Unset;
-    patch_type[2] = ON_SubDLimitPatchFragment::PatchType::Unset;
-    patch_type[3] = ON_SubDLimitPatchFragment::PatchType::Unset;
+    patch_type[0] = ON_SubDLimitNurbsFragment::BispanType::None;
+    patch_type[1] = ON_SubDLimitNurbsFragment::BispanType::None;
+    patch_type[2] = ON_SubDLimitNurbsFragment::BispanType::None;
+    patch_type[3] = ON_SubDLimitNurbsFragment::BispanType::None;
   }
   unsigned int quadrant_count = SetLimitSubSurfaceExactCVs(4U);
   if ( quadrant_count <= 0 )
     return ON_SUBD_RETURN_ERROR(0);
-
-  //unset_cv = ON_DBL_QNAN;
-
-  unsigned int unset_corner_count = 0;
-  unsigned int unset_corner_index_list[4] = {};
 
   unsigned int patch_exact_cv_count[4] = {};
   unsigned int patch_approx_cv_count[4] = {};
@@ -1626,30 +1812,43 @@ unsigned int ON_SubDQuadNeighborhood::GetLimitSubSurfaceMultiPatchCV(
   const double* src = m_srf_cv1[0][0];
   unsigned int exact_cv_count = 0;
   unsigned int approx_cv_count = 0;
+
+  // Here "approximate" means the cv valud is not set in m_srf_cv1[][][] and 
+  // the corresponding srf_cv[][][] value was set in this function.
+  // It also means the resulting cubic patches using that cv are close to but 
+  // generally not exactly equal to the SubD surface location. 
+  // The need for approximation happens because we have an exceptional SubD vertex on the central face.
+  // Recall that the SubD surface at the limit point of an exceptional vertex is typically G1 but not G2
+  // and that a bicubic NURBS surface with simple interior knots is G2. Hence, the bicubic NURBS surface
+  // in this exceptional case has to be an approximation. When there are no exceptional vertices,
+  // the bicubic NURBS surface is exactly equal to the SubD surface 
+  // (that's one of the selling points of Catmull-Clark SubD).
+  //
+  unsigned char srf_cv_status[5][5] = {}; // 0 = unset, 1 = set, 2 = approximate from subD control poly, 3 = approximate from interpolation
+
+
+  // This loop counts the number of set cvs for each of the 4 patches and copies the cv locations
+  // from the input srv cv array this->m_srf_cv1[][][] to the output cv array srf_cv[][][].
   for (unsigned int i = 0; i < 5U; i++)
   {
     for (unsigned int j = 0; j < 5U; j++, P1 += 3)
     {
-      // patch_count = number of patches this cv is active on (1,2,3,4);
+      // patch_count = number of patches this cv is used by (1 patch for the m_srf_cv1[][][] grid corners up to 4 patches for the central 3x3 grid).
       unsigned int active_patch_count = 0;
       // indices of patches this cv is active on
       unsigned int active_patch_index[4] = {};
-      if (i <= 3)
+      for (unsigned int patch_dex = 0; patch_dex < 4; patch_dex++)
       {
-        if ( j <= 3 )
-          active_patch_index[active_patch_count++] = 0;
-        if ( j >= 1 )
-          active_patch_index[active_patch_count++] = 3;
-      }
-      if (i >= 1)
-      {
-        if ( j <= 3 )
-          active_patch_index[active_patch_count++] = 1;
-        if ( j >= 1 )
-          active_patch_index[active_patch_count++] = 2;
+        if (
+          i >= patch_cv00[patch_dex].i && i < patch_cv00[patch_dex].i+4 
+          && j >= patch_cv00[patch_dex].j && j < patch_cv00[patch_dex].j+4 
+          )
+          active_patch_index[active_patch_count++] = patch_dex;
       }
       if (ON_UNSET_VALUE != src[0])
       {
+        // input cv at this->m_srf_cv1[i][j][] is set - copy it.
+        srf_cv_status[i][j] = 1;
         P1[0] = *src++;
         P1[1] = *src++;
         P1[2] = *src++;
@@ -1660,150 +1859,277 @@ unsigned int ON_SubDQuadNeighborhood::GetLimitSubSurfaceMultiPatchCV(
       }
       else 
       {
-        P1[0] = unset_cv;
-        P1[1] = unset_cv;
-        P1[2] = unset_cv;
+        // input cv at this->m_srf_cv1[i][j][] is not set
+        // output srf_cv[i][j][] = (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
+        P1[0] = ON_UNSET_VALUE;
+        P1[1] = ON_UNSET_VALUE;
+        P1[2] = ON_UNSET_VALUE;
         src += 3;
         if (bEnableApproximatePatch)
         {
-          if (GetApproximateCV(i, j, unset_cv, P1))
+          // see if we can set the srf_cv[i][j][] using the SubD neighborhood edges or faces
+          // This works for patches that are far enough away from exceptional SubD vertices.
+          if (Internal_GetApproximateCV(i, j, ON_UNSET_VALUE, P1))
           {
+            srf_cv_status[i][j] = 2;
             CheckCV(P1);
             approx_cv_count++;
             for ( unsigned int k = 0; k < active_patch_count; k++ )
               patch_approx_cv_count[active_patch_index[k]]++;
           }
-          else if (0 == i && 0 == j)
-            unset_corner_index_list[unset_corner_count++] = 0;
-          else if ( 4 == i && 0 == j )
-            unset_corner_index_list[unset_corner_count++] = 1;
-          else if ( 4 == i && 4 == j )
-            unset_corner_index_list[unset_corner_count++] = 2;
-          else if ( 0 == i && 4 == j )
-            unset_corner_index_list[unset_corner_count++] = 3;
         }
       }
     }
   }
 
-  ON_SubDLimitPatchFragment::PatchType pt[4] = 
+  ON_SubDLimitNurbsFragment::BispanType pt[4] = 
   {
-    ON_SubDLimitPatchFragment::PatchType::None,
-    ON_SubDLimitPatchFragment::PatchType::None,
-    ON_SubDLimitPatchFragment::PatchType::None,
-    ON_SubDLimitPatchFragment::PatchType::None
+    ON_SubDLimitNurbsFragment::BispanType::None,
+    ON_SubDLimitNurbsFragment::BispanType::None,
+    ON_SubDLimitNurbsFragment::BispanType::None,
+    ON_SubDLimitNurbsFragment::BispanType::None
   };
 
   unsigned int exact_quadrant_count = 0;
   unsigned int approx_quadrant_count = 0;
   unsigned int interp_quadrant_count = 0;
-  for (unsigned int k = 0; k < 4; k++)
+  for (unsigned int patch_dex = 0; patch_dex < 4; patch_dex++)
   {
-    if ( 16 != patch_exact_cv_count[k] + patch_approx_cv_count[k])
-      continue;
-
-    if (16 == patch_exact_cv_count[k] )
+    const unsigned int patch_set_cv_count = patch_exact_cv_count[patch_dex] + patch_approx_cv_count[patch_dex];
+    if (16 != patch_set_cv_count)
     {
-      pt[k] = ON_SubDLimitPatchFragment::PatchType::BicubicQuadrant;
+      if (patch_set_cv_count > 16)
+      {
+        ON_SUBD_ERROR("Bug in patch set cv counter during step 1.");
+      }
+      continue;
+    }
+
+    if (16 == patch_exact_cv_count[patch_dex] )
+    {
+      pt[patch_dex] = ON_SubDLimitNurbsFragment::BispanType::Exact;
       exact_quadrant_count++;
     }
     else
     {
       // No interpolation is required to approximate the patch bispan for this quadrant.
-      pt[k] = ON_SubDLimitPatchFragment::PatchType::ApproximateBicubicQuadrant;
+      pt[patch_dex] = ON_SubDLimitNurbsFragment::BispanType::Approximate;
       approx_quadrant_count++;
     }
   }
 
   if (quadrant_count != exact_quadrant_count)
   {
-    ON_ERROR("exact_quadrant_count != SetLimitSubSurfaceExactCVs()");
+    ON_SUBD_ERROR("exact_quadrant_count != SetLimitSubSurfaceExactCVs()");
   }
 
-  if ( unset_corner_count > 0 ) 
+  if (bEnableApproximatePatch && (exact_quadrant_count + approx_quadrant_count) < 4 )
   {
-    // need to interpolate through the limit point of an extraordinary vertex
-    for (unsigned int k = 0; k < unset_corner_count; k++)
+    // See if we can interpolate limit points to set some more srf_cv[][][] locations.
+    double knot[6] = { -2.0, -1.0, 0.0, 1.0, 2.0, 3.0 };
+    ON_NurbsSurface tmp;
+    tmp.m_dim = 3;
+    tmp.m_is_rat = 0;
+    tmp.m_order[0] = 4;
+    tmp.m_order[1] = 4;
+    tmp.m_cv_count[0] = 4;
+    tmp.m_cv_count[1] = 4;
+    tmp.m_knot[0] = knot;
+    tmp.m_knot[1] = knot;
+    const size_t cv_stride0 = &(srf_cv[1][0][0]) - &(srf_cv[0][0][0]); // should be 3*15 = 15
+    const size_t cv_stride1 = &(srf_cv[0][1][0]) - &(srf_cv[0][0][0]); // should be 3
+    tmp.m_cv_stride[0] = (int)cv_stride0;
+    tmp.m_cv_stride[1] = (int)cv_stride1;
+
+    // First see if patch 1 and patch 3 can be completed using 
+    // this->m_center_edge*_limit_point locations
+    for ( unsigned int interp_patch_dex = 0; interp_patch_dex < 4; interp_patch_dex++)
     {
-      const unsigned int unset_corner_index = unset_corner_index_list[k];
-      if ( 15 != patch_exact_cv_count[unset_corner_index] + patch_approx_cv_count[unset_corner_index])
+      if (exact_quadrant_count + approx_quadrant_count + interp_quadrant_count >= 4)
+        break; // all patches have been set
+
+      if (ON_SubDLimitNurbsFragment::BispanType::None != pt[interp_patch_dex])
+        continue; // already have this patch 
+
+      if (15 != (patch_exact_cv_count[interp_patch_dex] + patch_approx_cv_count[interp_patch_dex]))
+        continue; // missing too many cvs for interopolation to work
+
+      ON_2udex srf_cv_dex[2] = {};
+      unsigned int edge_index[2] = {};
+      switch (interp_patch_dex)
+      {
+      case 0:
+        srf_cv_dex[0] = ON_2udex(0, 3); edge_index[0] = 3;
+        srf_cv_dex[1] = ON_2udex(3, 0); edge_index[1] = 0;
+        break;
+      case 1:
+        srf_cv_dex[0] = ON_2udex(1, 0); edge_index[0] = 0;
+        srf_cv_dex[1] = ON_2udex(4, 3); edge_index[1] = 1;
+        break;
+      case 2:
+        srf_cv_dex[0] = ON_2udex(4, 1); edge_index[0] = 1;
+        srf_cv_dex[1] = ON_2udex(1, 4); edge_index[1] = 2;
+        break;
+      case 3:
+        srf_cv_dex[0] = ON_2udex(3, 4); edge_index[0] = 2;
+        srf_cv_dex[1] = ON_2udex(0, 1); edge_index[1] = 3;
+        break;
+      default:
+        break;
+      }
+
+      const int n = (0 == srf_cv_status[srf_cv_dex[0].i][srf_cv_dex[0].j])  ? 0 : 1;
+      const ON_2udex srf_unset_cv_dex = srf_cv_dex[n];
+
+      if (0 != srf_cv_status[srf_unset_cv_dex.i][srf_unset_cv_dex.j])
+        continue; // the CV we would set using interpolation is already set.
+
+      if (false == m_bCenterEdgeLimitPoint[edge_index[n]])
+        continue; // We don't have a limit point to interpolate.
+
+      // We are missing exactly one patch cv and can set it using interpolation through LP
+      if (false == Internal_InterpCV(
+        srf_cv,
+        srf_unset_cv_dex,
+        patch_cv00[interp_patch_dex],
+        tmp,
+        &m_center_edge_limit_point[edge_index[n]]
+      ))
+      {
+        continue;
+      }
+
+      srf_cv_status[srf_unset_cv_dex.i][srf_unset_cv_dex.j] = 3;
+      pt[interp_patch_dex] = ON_SubDLimitNurbsFragment::BispanType::Approximate;
+      interp_quadrant_count++;
+      approx_cv_count++;
+      for (unsigned int patch_dex = 0; patch_dex < 4; patch_dex++)
+      {
+        if (
+          srf_unset_cv_dex.i >= patch_cv00[patch_dex].i && srf_unset_cv_dex.i < patch_cv00[patch_dex].i + 4
+          && srf_unset_cv_dex.j >= patch_cv00[patch_dex].j && srf_unset_cv_dex.j < patch_cv00[patch_dex].j + 4
+          )
+        {
+         const unsigned int patch_set_cv_count = patch_exact_cv_count[patch_dex] + patch_approx_cv_count[patch_dex];
+
+          if (patch_set_cv_count < 16)
+            patch_approx_cv_count[patch_dex]++;
+          else
+          {
+            ON_SUBD_ERROR("Bug in patch set cv counter during step 2.");
+          }
+        }
+      }
+    }
+
+    // See if interpolating a central quad limpt point will complete a patch.
+    for ( unsigned int interp_patch_dex = 0; interp_patch_dex < 4; interp_patch_dex++)
+    {
+      if (exact_quadrant_count + approx_quadrant_count + interp_quadrant_count >= 4)
+        break;
+
+      if (ON_SubDLimitNurbsFragment::BispanType::None != pt[interp_patch_dex])
+        continue; // already have this patch 
+
+      if (15 != (patch_exact_cv_count[interp_patch_dex] + patch_approx_cv_count[interp_patch_dex]))
+        continue; // missing too many cvs for interopolation to work
+
+      const ON_2udex srf_unset_cv_dex(
+        (1 == interp_patch_dex || 2 == interp_patch_dex) ? 4 : 0,
+        (2 == interp_patch_dex || 3 == interp_patch_dex) ? 4 : 0
+      );
+
+      if (0 != srf_cv_status[srf_unset_cv_dex.i][srf_unset_cv_dex.j])
         continue;
 
-      //const ON_2udex srf00_cv_dex_list[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
-      const ON_2udex srf00_cv_dex = { (0U != unset_corner_index%3U)?1U:0U, (unset_corner_index >= 2U)?1U:0U };
-      const ON_2udex vertex_grid_dex = {1U + srf00_cv_dex.i, 1U + srf00_cv_dex.j};
+      const ON_2udex vertex_grid_dex(0 == srf_unset_cv_dex.i ? 1 : 2, 0 == srf_unset_cv_dex.j ? 1 : 2);
 
-      const ON_SubDVertex* extraordinary_vertex = m_vertex_grid[vertex_grid_dex.i][vertex_grid_dex.j];
-      if ( nullptr == extraordinary_vertex)
+      const ON_SubDVertex* vertex = m_vertex_grid[vertex_grid_dex.i][vertex_grid_dex.j];
+      if (nullptr == vertex)
         continue;
 
-      ON_SubDSectorLimitPoint limit_point = ON_SubDSectorLimitPoint::Unset;
+      ON_SubDSectorLimitPoint vertex_limit_point = ON_SubDSectorLimitPoint::Unset;
       const bool bUseSavedLimitPoint = true;
-      bool rc = extraordinary_vertex->GetLimitPoint(
+      if (false == vertex->GetLimitPoint(
         ON_SubD::SubDType::QuadCatmullClark,
         m_face_grid[1][1],
         bUseSavedLimitPoint,
-        limit_point
-        );
-
-      if (!rc)
-        continue;
-      if ( !limit_point.IsSet())
+        vertex_limit_point
+      ))
         continue;
 
       // Calculate value of the unset CV so the surface passes through the limit point.
-      double knot[6] = { -2.0, -1.0, 0.0, 1.0, 2.0, 3.0 };
-      ON_NurbsSurface tmp;
-      tmp.m_dim = 3;
-      tmp.m_is_rat = 0;
-      tmp.m_order[0] = 4;
-      tmp.m_order[1] = 4;
-      tmp.m_cv_count[0] = 4;
-      tmp.m_cv_count[1] = 4;
-      tmp.m_knot[0] = knot;
-      tmp.m_knot[1] = knot;
-      tmp.m_cv_stride[0] = 5 * 3;
-      tmp.m_cv_stride[1] = 3;
+      if (false == Internal_InterpCV(
+        srf_cv,
+        srf_unset_cv_dex,
+        patch_cv00[interp_patch_dex],
+        tmp,
+        &vertex_limit_point
+      ))
+      {
+        continue;
+      }
 
-      const ON_2udex srf_unset_cv_dex = {4*srf00_cv_dex.i, 4*srf00_cv_dex.j};
-      P1 = srf_cv[srf_unset_cv_dex.i][srf_unset_cv_dex.j];
-      P1[0] = 0.0;
-      P1[1] = 0.0;
-      P1[2] = 0.0;
-      tmp.m_cv = srf_cv[srf00_cv_dex.i][srf00_cv_dex.j];
-      const double st[2] = { static_cast<double>(srf00_cv_dex.i), static_cast<double>(srf00_cv_dex.j) };
-      const ON_3dPoint A = tmp.PointAt(st[0], st[1]);
-      tmp.m_cv = nullptr;
-      tmp.m_knot[0] = nullptr;
-      tmp.m_knot[1] = nullptr;
-
-      // If C = unset cv, the tensor product B-spline coefficient of C is (1/6)*(1/6) = 1/36
-      // and A + 1/36*C = limitP.  So, C = 36*(limitP - A).
-
-      const double b = 36.0;
-      P1[0] = b*(limit_point.m_limitP[0] - A.x);
-      P1[1] = b*(limit_point.m_limitP[1] - A.y);
-      P1[2] = b*(limit_point.m_limitP[2] - A.z);
-      CheckCV(P1);
-
-      pt[unset_corner_index] = ON_SubDLimitPatchFragment::PatchType::ApproximateBicubicQuadrant;
+      srf_cv_status[srf_unset_cv_dex.i][srf_unset_cv_dex.j] = 3;
+      pt[interp_patch_dex] = ON_SubDLimitNurbsFragment::BispanType::Approximate;
       interp_quadrant_count++;
+      approx_cv_count++;
+      for (unsigned int patch_dex = 0; patch_dex < 4; patch_dex++)
+      {
+        if (
+          srf_unset_cv_dex.i >= patch_cv00[patch_dex].i && srf_unset_cv_dex.i < patch_cv00[patch_dex].i + 4
+          && srf_unset_cv_dex.j >= patch_cv00[patch_dex].j && srf_unset_cv_dex.j < patch_cv00[patch_dex].j + 4
+          )
+        {
+         const unsigned int patch_set_cv_count = patch_exact_cv_count[patch_dex] + patch_approx_cv_count[patch_dex];
+
+          if (patch_set_cv_count < 16)
+            patch_approx_cv_count[patch_dex]++;
+          else
+          {
+            ON_SUBD_ERROR("Bug in patch set cv counter during step 2.");
+          }
+        }
+      }
+
     }
+
+    // Not necessary at the time of writing, but will prevent crashes if tmp m_*_capacity values are 
+    // corrupted by a bug.
+    tmp.m_cv = nullptr;
+    tmp.m_knot[0] = nullptr;
+    tmp.m_knot[1] = nullptr;
   }
 
   unsigned qcheck=0;
-  for (unsigned k = 0; k < 4; k++)
+  for (unsigned patch_dex = 0; patch_dex < 4; patch_dex++)
   {
+    const unsigned int patch_set_cv_count = (patch_exact_cv_count[patch_dex] + patch_approx_cv_count[patch_dex]);
     if (
-      ON_SubDLimitPatchFragment::PatchType::BicubicQuadrant == pt[k]
-      || ON_SubDLimitPatchFragment::PatchType::ApproximateBicubicQuadrant == pt[k]
+      ON_SubDLimitNurbsFragment::BispanType::Exact == pt[patch_dex]
+      || ON_SubDLimitNurbsFragment::BispanType::Approximate == pt[patch_dex]
       )
+    {
+      if (16 != patch_set_cv_count)
+      {
+        ON_SUBD_ERROR("Patch cv count bug 1.");
+      }
       qcheck++;
+    }
+    else
+    {
+      if (patch_set_cv_count >= 16)
+      {
+        ON_SUBD_ERROR("Patch cv count bug 1.");
+      }
+    }
   }
+
   if (qcheck != interp_quadrant_count + approx_quadrant_count + exact_quadrant_count)
   {
-    ON_ERROR("patch_type[] values are not correct.");
+    ON_SUBD_ERROR("patch_type[] values are not correct.");
   }
+
   if (nullptr != patch_type)
   {
     patch_type[0] = pt[0];

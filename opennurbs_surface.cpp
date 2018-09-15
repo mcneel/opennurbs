@@ -550,6 +550,17 @@ bool ON_Surface::GetNextDiscontinuity(
   return rc;
 }
 
+
+void ON_IsG1Closed(const ON_Surface& Srf, bool closed[2])
+{
+	ON_Interval dom[2];
+	double t;
+	dom[0] = Srf.Domain(0);
+	dom[1] = Srf.Domain(1);
+	closed[0] = Srf.IsClosed(0) && !Srf.GetNextDiscontinuity(0, ON::continuity::G1_locus_continuous, dom[0][0], dom[0][1], &t);
+	closed[1] = Srf.IsClosed(1) && !Srf.GetNextDiscontinuity(1, ON::continuity::G1_locus_continuous, dom[1][0], dom[1][1], &t);
+}
+
 static 
 bool PrincipalCurvaturesAreContinuous( 
     bool bSmoothTest, 

@@ -1106,13 +1106,242 @@ int ON_wString::CompareAttributeName(
   return ON_wString::CompareAttributeName(name1, other_name );
 }
 
+static unsigned int Internal_NameAttributeWideCharRank(
+  wchar_t c,
+  bool bIgnoreCase
+)
+{
+  // Attribute names have ASCII symbols sorted this way
+
+  // rank symbol
+  //  1   (space)
+  //  2 ! (exclamation point)
+  //  3 " (double quote)
+  //  4 # (hash)
+  //  5 $ (dollar)
+  //  6 % (percent)
+  //  7 & (ampersand)
+  //  8 ( (left paren)
+  //  9 ) (right paren)
+  // 10 * (asterisk)
+  // 11 , (comma)
+  // 12 . (period)
+  // 13 / (slash)
+  // 14 : (colon)
+  // 15 ; (semicolon)
+  // 16 ? (question mark)
+  // 17 @ (at)
+  // 18 [ (left bracket)
+  // 19 \ (back slash)
+  // 20 ] (right bracket)
+  // 21 ^ (carrot)
+  // 22 _ (underscore)
+  // 23 ` (back tick)
+  // 24 { (left brace)
+  // 25 | (pipe)
+  // 26 } (right brace)
+  // 27 ~ (tilde)
+  // 28 + (plus)
+  // 29 < (less than)
+  // 30 = (equal)
+  // 31 > (greater than)
+  // 32 0
+  // 33 1
+  // 34 2
+  // 35 3
+  // 36 4
+  // 37 5
+  // 38 6
+  // 39 7
+  // 40 8
+  // 41 9
+  // 42 ' (apostrophe)
+  // 43 - (hyphen)
+  // 44 A
+  // 45 B
+  // 46 C  
+  // ...
+  // 69 Z
+  // 70 a
+  // ...
+  // 95 z
+
+
+  unsigned int code_point = (unsigned int)c;
+  if (0 == code_point)
+    return 0;
+
+  if (code_point < 0x20 || code_point >= 0x7F)
+    return ON_UNSET_UINT_INDEX; // no rank - sort some other way
+
+  // 0 to 9
+  if (code_point >= 0x30 && code_point <= 0x39)
+    return (code_point - 0x30 + 32);
+
+  // upper case A to Z
+  if (code_point >= 0x41 && code_point <= 0x5A)
+    return (code_point - 0x41 + 44);
+
+  // lower case a to z
+  if (code_point >= 0x61 && code_point <= 0x7A)
+    return bIgnoreCase ? (code_point - 0x61 + 44) : (code_point - 0x61 + 70);
+
+  unsigned int rank;
+  switch (code_point)
+  {
+  case 0x20: //  1   (space)
+    rank = 1;
+    break;
+  case 0x21: //  2 ! (exclamation point)
+    rank = 2;
+    break;
+  case 0x22: //  3 " (double quote)
+    rank = 3;
+    break;
+  case 0x23: //  4 # (hash)
+    rank = 4;
+    break;
+  case 0x24: //  5 $ (dollar)
+    rank = 5;
+    break;
+  case 0x25: //  6 % (percent)
+    rank = 6;
+    break;
+  case 0x26: //  7 & (ampersand)
+    rank = 7;
+    break;
+  case 0x28: //  8 ( (left paren)
+    rank = 8;
+    break;
+  case 0x29: //  9 ) (right paren)
+    rank = 9;
+    break;
+  case 0x2A: // 10 * (asterisk)
+    rank = 10;
+    break;
+  case 0x2C: // 11 , (comma)
+    rank = 11;
+    break;
+  case 0x2E: // 12 . (period)
+    rank = 12;
+    break;
+  case 0x2F: // 13 / (slash)
+    rank = 13;
+    break;
+  case 0x3A: // 14 : (colon)
+    rank = 14;
+    break;
+  case 0x3B: // 15 ; (semicolon)
+    rank = 15;
+    break;
+  case 0x3F: // 16 ? (question mark)
+    rank = 16;
+    break;
+  case 0x40: // 17 @ (at)
+    rank = 17;
+    break;
+  case 0x5B: // 18 [ (left bracket)
+    rank = 18;
+    break;
+  case 0x5C: // 19 \ (back slash)
+    rank = 19;
+    break;
+  case 0x5D: // 20 ] (right bracket)
+    rank = 20;
+    break;
+  case 0x5E: // 21 ^ (carrot)
+    rank = 21;
+    break;
+  case 0x5F: // 22 _ (underscore)
+    rank = 22;
+    break;
+  case 0x60: // 23 ` (back tick)
+    rank = 23;
+    break;
+  case 0x7B: // 24 { (left brace)
+    rank = 24;
+    break;
+  case 0x7C: // 25 | (pipe)
+    rank = 25;
+    break;
+  case 0x7D: // 26 } (right brace)
+    rank = 26;
+    break;
+  case 0x7E: // 27 ~ (tilde)
+    rank = 27;
+    break;
+  case 0x2B: // 28 + (plus)
+    rank = 28;
+    break;
+  case 0x3C: // 29 < (less than)
+    rank = 29;
+    break;
+  case 0x3D: // 30 = (equal)
+    rank = 30;
+    break;
+  case 0x3E: // 31 > (greater than)
+    rank = 31;
+    break;
+
+  // 32 to 41 numerals 0 to 9 handled before this switch
+
+  case 0x27: // 42 ' (apostrophe) 
+    rank = 42;
+    break;
+  case 0x2D: // 43 - (hyphen)
+    rank = 43;
+    break;
+
+  // 43 to 69 upper case A to Z handled before this switch
+
+  // 43 to 69 lower case z to z handled before this switch
+
+  default: // no rank - sort some other way
+    rank = ON_UNSET_UINT_INDEX;
+    break;
+  }
+
+  return rank; 
+}
+
 int ON_wString::CompareAttributeName(
   const wchar_t* name1,
   const wchar_t* name2
   )
 {
-  // TODO - normalize and then use a culture aware ignore case test
-  return ON_wString::CompareOrdinal(name1, -1, name2, -1, true);
+  if (name1 == name2)
+    return 0;
+
+  const bool bIgnoreCase = true;
+
+  if ( nullptr != name1 && nullptr != name2 )
+  {
+    // Sort leading underbar before 'A'
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-41224
+
+    unsigned int rank1 = Internal_NameAttributeWideCharRank(*name1,bIgnoreCase);
+    unsigned int rank2 = Internal_NameAttributeWideCharRank(*name2,bIgnoreCase);
+    while (rank1 == rank2 && ON_UNSET_UINT_INDEX != rank1 && 0 != rank1)
+    {
+      name1++;
+      name2++;
+      rank1 = Internal_NameAttributeWideCharRank(*name1,bIgnoreCase);
+      rank2 = Internal_NameAttributeWideCharRank(*name2,bIgnoreCase);
+    }
+
+    if (ON_UNSET_UINT_INDEX != rank1 || ON_UNSET_UINT_INDEX != rank2)
+    {
+      if (rank1 < rank2)
+        return -1;
+      if (rank1 > rank2)
+        return 1;
+      if (0 == rank1)
+        return 0;
+    }
+  }
+
+  // name1 or name2 is nullptr or begins with an unranked code point.
+  return ON_wString::CompareOrdinal(name1, -1, name2, -1, bIgnoreCase);
 }
 
 bool ON_String::EqualAttributeName(

@@ -49,8 +49,10 @@ enum ON_UnicodeCodePoint
   ON_CarriageReturn = 0x0D, // CARRIAGE RETURN control U+000D  (decimal 13)
   ON_Escape = 0x1B, // CARRIAGE RETURN control U+001B  (decimal 27)
   ON_Space = 0x20, // SPACE U+0020  (decimal 32)
+  ON_HyphenMinus = 0x2D, // HYPHEN-MINUS U+002D (decimal 45)
   ON_Slash = 0x2F, // SOLIDUS U+002F  (decimal 47)
   ON_Backslash = 0x5C, // REVERSE SOLIDUS U+005C (decimal 92)ere
+  ON_Underscore = 0x5F, // Unicode LOW LINE U+005F
   ON_Pipe = 0x7C, // VERTICAL LINE U+007C (decimal 124)
 
   //
@@ -250,6 +252,30 @@ int ON_IsValidUTF16SurrogatePair(
   unsigned int w1,
   unsigned int w2
   );
+
+/*
+Parameters:
+  w1 - [in]
+  w2 - in]
+  error_code_point - [in]
+    Value returned when (w1,w2) is not a valud UTF-16 surrogate pair.
+    Depending on what you are doing, good choices are
+    0, 
+    ON_UnicodeCodePoint::ON_ReplacementCharacter, and
+    and ON_UnicodeCodePoint::ON_InvalidCodePoint
+Returns:
+  If (w1,w2) is a valid UTF-16 surrogate pair, the corresponding 
+  unicode code point is returned. This value is always > 0.
+  Otherwise, error_code_point is returned.
+*/
+ON_DECL
+unsigned int ON_DecodeUTF16SurrogatePair(
+  unsigned int u1,
+  unsigned int u2,
+  unsigned int error_code_point
+);
+
+
 
 /*
 Description:
@@ -3385,7 +3411,7 @@ Parameters:
 
 Returns:
   If sWideChar_capacity > 0, the return value is the number of wchar_t
-  elements written to sWideChar[].  When the return value < sWideChar_count,
+  elements written to sWideChar[].  When the return value < sWideChar_capacity,
   a null terminator is written to sWideChar[return value].
 
   If sWideChar_count == 0, the return value is the minimum number of

@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -171,7 +170,23 @@ public:
 
   void PrintRGB( const ON_Color& );
 
-  void PrintTime( const struct tm& );
+  /*
+  Description:
+    Prints the time in the t parameter as Universal Coordinated Time in English.
+    weekday month date::hour::min::sec year
+  Parameters:
+    t - [in]
+  */
+  void PrintTime( 
+    const struct tm& t 
+  );
+
+  /*
+  Description:
+    Prints the current Universal Coordinated Time returned by the gmtime() function in English.
+    weekday month date::hour::min::sec year
+  */
+  void PrintCurrentTime();
 
   void PrintPointList( 
     int,               // dim
@@ -213,9 +228,8 @@ public:
 protected:
   friend class ON_TextHash;
 
-  FILE* m_pFile;
-  ON_wString* m_pString;
-
+  FILE* m_pFile = nullptr;
+  ON_wString* m_pString = nullptr;
   
   /*
   Description:
@@ -258,13 +272,17 @@ private:
 
   ON_String m_line;
 
-  int m_beginning_of_line = 0; // 0
+  int m_beginning_of_line = 1;
 
   // size of a single indentation
   int m_indent_size = 0;       // 0 use tabs, > 0 = number of spaces per indent level
 
   // Number of indentations at the start of a new line
   int m_indent_count = 0;
+
+  const bool m_bNullTextLog = false;
+  ON__UINT8 m_reserved0 = 0;
+  ON__UINT16 m_reserved1 = 0;
 
 private:
   ON_TextLog( const ON_TextLog& ) = delete;

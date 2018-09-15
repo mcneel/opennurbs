@@ -1,7 +1,7 @@
 More Information:
   Please see 
 
-    http://en.wiki.mcneel.com/default.aspx/McNeel/OpenNURBS.html
+    http://developer.rhino3d.com/guides/opennurbs/getting-started/
 
   for information about opennurbs including supported compilers, 
   build instructions, 

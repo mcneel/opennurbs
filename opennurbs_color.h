@@ -38,9 +38,11 @@ public:
   static const ON_Color SaturatedYellow;  // 0x0000FFFFu on little endan, 0xFFFF0000u on big endian
   static const ON_Color SaturatedCyan;    // 0x00FFFF00u on little endan, 0x00FFFF00u on big endian
   static const ON_Color SaturatedMagenta; // 0x00FF00FFu on little endan, 0xFF00FF00u on big endian
+  static const ON_Color Gray105;          // R = G = B = 105 (medium dark)
   static const ON_Color Gray126;          // R = G = B = 128 (medium)
   static const ON_Color Gray160;          // R = G = B = 160 (medium light)
   static const ON_Color Gray230;          // R = G = B = 230 (light)
+  static const ON_Color Gray250;          // R = G = B = 250 (lightest)
 
   // If you need to use byte indexing to convert RGBA components to and from
   // an unsigned int ON_Color value and want your code to work on both little

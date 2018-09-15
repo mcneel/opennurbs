@@ -1762,6 +1762,11 @@ bool ON_Hatch::Transform( const ON_Xform& xform)
   }
   int rc = m_plane.Transform( xform);
 
+  ON_3dVector x = m_plane.xaxis;
+  x.Transform(xform);
+  double scale = x.Length() * PatternScale();
+  SetPatternScale(scale);
+
   UnrotateHatch(this);
 
   TransformUserData(xform);

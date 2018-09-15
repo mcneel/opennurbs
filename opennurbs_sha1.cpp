@@ -265,6 +265,9 @@ ON_SHA1_Hash ON_SHA1_Hash::StringHash(
   ON__UINT64& byte_count
   )
 {
+  // Do not permit corrupt strings to crash this code.
+  str.IsValid(false);
+
   return ON_SHA1_Hash::StringHash(
     static_cast<const wchar_t*>(str),
     (size_t)str.Length(),
@@ -332,6 +335,9 @@ ON_SHA1_Hash ON_SHA1_Hash::StringHash(
   ON__UINT64& byte_count
   )
 {
+  // Do not permit corrupt strings to crash this code.
+  str.IsValid(false);
+
   return ON_SHA1_Hash::StringHash(
     static_cast<const char*>(str),
     (size_t)str.Length(),

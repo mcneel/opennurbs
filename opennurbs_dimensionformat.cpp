@@ -235,7 +235,7 @@ bool ON_NumberFormatter::FormatNumber(
         if (0 != numerator)
         {
           if(bracket_fractions)
-            sFormat2.Format(L"[[%d/%d]]", numerator, denominator);
+            sFormat2.Format(L"[[/%d/%d]]", numerator, denominator);
           else
             sFormat2.Format(L"%d/%d", numerator, denominator);
           sFormat += sFormat2;
@@ -313,14 +313,14 @@ bool ON_NumberFormatter::FormatNumber(
         if (wholeinches > 0 || include_feet)
         {
           if (bracket_fractions)
-            sInches.Format(L"%d [[%d/%d]]\"", wholeinches, numerator, denominator);
+            sInches.Format(L"%d [[/%d/%d]]\"", wholeinches, numerator, denominator);
           else
             sInches.Format(L"%d %d/%d\"", wholeinches, numerator, denominator);
         }
         else
         {
           if (bracket_fractions)
-            sInches.Format(L"[[%d/%d]]\"", numerator, denominator);
+            sInches.Format(L"[[/%d/%d]]\"", numerator, denominator);
           else
             sInches.Format(L"%d/%d\"", numerator, denominator);
         }

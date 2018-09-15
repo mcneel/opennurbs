@@ -3094,6 +3094,83 @@ ON_DECL
 bool operator!=(const ON_4dRect&, const ON_4dRect&);
 
 
+/*
+ON_PeriodicDomain is a helper class for dealing with closed or periodic surfaces using the idea of a covering space.
+
+If a surface is closed in the u-direction (or v respectively),  a curve on the surface that crosses the seam
+will not have a continuous pull back to parameter space.  However, if we extend the surface domain
+in the u-coordinates and allow the surface to cover itself periodicly, i.e S(u,v) = S(u + T, v) with period T,  then  we
+can pull back the curve to the domain covering space (-inf,inf) x dom[1].
+
+*/
+class ON_CLASS ON_PeriodicDomain
+{
+public:
+	ON_PeriodicDomain() = default;
+	ON_PeriodicDomain(const ON_Interval dom[2], const bool closed[2], double normband = 1.0 / 3.0);
+	void Initialize(const ON_Interval dom[2], const bool closed[2], double normband = 1.0 / 3.0);
+	/*
+	Construction or Initialization
+	Parameters:
+		dom -[in] surface domain
+		closed -[in] closed[0] is true if the surface is closed in u direction (similary for 1 and v)
+						Use  ON_IsG1Closed(...) to test for G1-closed surfaces.
+		normband - [in] 0<normband<.5 is a normalized coordinate defining a band on each side of the seam.
+						The bands are {(u,v): dom[0].NormalizedParameterAt(u)< normband } and
+													{(u,v): dom[0].NormalizedParameterAt(u)> 1.0 - normband }
+	The point sequence crosses the seam if consecutive points are in opposite bands along the seam.
+	*/
+
+	// Repeatedly call LiftToCover( Pin) with Pin in the domain covering space.  The resulting 
+	// output sequence will be lifted to the domain covering space, and will be 'continuous' in that 
+	// consecutive points will be in the same or an adjacent band.
+	// Use stealth=true to lift this point without affecting the state,  this allows one to compute a trial end 
+	// of sequence.  
+	// see also ON_LiftToCover(...).
+	ON_2dPoint LiftToCover(ON_2dPoint Pin, bool stealth = false);
+
+	// The projection from covering space back to domain.  LiftInverse(LiftToCover(p))==p
+	ON_2dPoint LiftInverse(ON_2dPoint p);
+
+	ON_Interval m_dom[2];
+	bool m_closed[2];
+	double m_normband;
+private:
+	int m_deck[2];
+	ON_2dPoint m_nprev = ON_2dPoint::UnsetPoint;
+};
+
+
+/*
+Lift a sequence of surface points to the covering space.
+
+If a surface is closed in the u-direction (or v respectively),  a curve on the surface that crosses the seam
+will not have a continuous pull back to parameter space.  However, if we extend the surface domain
+in the u-coordinates and allow the surface to cover itself periodiclly  then  we
+we can pull back the curve to the covering space (-inf,inf) x dom[1].
+Parameters
+in - [in] surface parameter points in dom[0] x dom[1]
+dom -[in] surface domain
+closed -[in] closed[0] is true if the surface is closed in u direction (similary for 1 and v)
+normband - [in] 0<normband<.5 is a normalized coordinate defining a band on each side of the seam.
+The point sequence crosses the seam if consecutive points are in opposite bands
+along the seam.
+Returns
+A sequence out with out[0] = in[0] and out.Count()==in.Count()
+*/
+ON_DECL
+ON_SimpleArray<ON_2dPoint> ON_LiftToCover(
+	const ON_SimpleArray<ON_2dPoint>& in,
+	const ON_Interval dom[2], bool closed[2],
+	double normband = 1.0 / 3.0);
+
+/*
+LiftInverse is the projection map that inverts ON_LiftToCover 
+Parameters
+	P -[in]  A point in the domain covering space.
+Returns a point in dom.  
+*/
+ON_2dPoint ON_DECL ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2]);
 
 
 

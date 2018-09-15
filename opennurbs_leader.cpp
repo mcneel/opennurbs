@@ -167,6 +167,17 @@ bool ON_Leader::GetTextXform(
   ON_Xform& text_xform_out
 )const
 {
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_Leader::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
   if (nullptr == dimstyle)
     return false;
 
@@ -176,30 +187,18 @@ bool ON_Leader::GetTextXform(
 
   if ( DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash() )
   {
+    ON_wString rtfstr = text->RtfText();
+    ON_Plane objectplane = Plane();
+    const_cast<ON_TextContent*>(text)->Create(
+      rtfstr, ON::AnnotationType::Leader, dimstyle,
+      text->TextIsWrapped(), text->FormattingRectangleWidth(), text->TextRotationRadians());
+
     ON::TextHorizontalAlignment halign = dimstyle->LeaderTextHorizontalAlignment();
     ON::TextVerticalAlignment valign = dimstyle->LeaderTextVerticalAlignment();
     const_cast<ON_TextContent*>(text)->SetAlignment(halign, valign);
   }
 
   ON_2dVector tail_dir = TailDirection(dimstyle);
-
-  //ON::TextHorizontalAlignment style_halign = dimstyle->LeaderHorizontalAlignment();
-  //if (ON::TextHorizontalAlignment::Auto == style_halign)
-  //{
-  //  ON::TextHorizontalAlignment halign;
-  //  ON::TextVerticalAlignment valign;
-  //  text->GetAlignment(halign, valign);
-  //  if (tail_dir.x < 0.0)
-  //  {
-  //    if (halign != ON::TextHorizontalAlignment::Right)
-  //      const_cast<ON_TextContent*>(text)->SetAlignment(ON::TextHorizontalAlignment::Right, valign);
-  //  }
-  //  else
-  //  {
-  //    if (halign != ON::TextHorizontalAlignment::Left)
-  //      const_cast<ON_TextContent*>(text)->SetAlignment(ON::TextHorizontalAlignment::Left, valign);
-  //  }
-  //}
 
   // Find center of scaled text
   double textblock_width = 0.0;
@@ -320,23 +319,36 @@ bool ON_Leader::GetTextXform(
         dxf = world_to_leader_xf * dxf;
         ON_3dVector x(ON_3dVector::XAxis);
         ON_3dVector y(ON_3dVector::YAxis);
+        //ON_3dVector x(leaderplane.xaxis);
+        //ON_3dVector y(leaderplane.yaxis);
         x.Transform(dxf);
         y.Transform(dxf);
-        bool fx = (0.0 > view_x * x);
-        bool fy = (0.0 > view_y * y);
+        if (nullptr != model_xform)
+        {
+          x.Transform(*model_xform);
+          y.Transform(*model_xform);
+        }
+        double xovx = view_x * x;
+        double yovy = view_y * y;
+        bool fx = (0.00015 >= xovx);
+        bool fy = (0.00015 >= yovy);
         if (fx || fy)
         {
-          ON_Xform mxf(ON_Xform::IdentityTransformation);
-          if (fx)
+          double xovy = x * view_y;
+          if (0.99985 > xovy)
           {
-            mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::XAxis);
-            textcenter_xf = textcenter_xf * mxf;
-          }
-          if (fy)
-          {
-            mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::YAxis);
-            textcenter_xf.m_xform[1][3] = -text_center.y - text_shift.y;
-            textcenter_xf = textcenter_xf * mxf;
+            ON_Xform mxf(ON_Xform::IdentityTransformation);
+            if (fx)
+            {
+              mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::XAxis);
+              textcenter_xf = textcenter_xf * mxf;
+            }
+            if (fy)
+            {
+              mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::YAxis);
+              textcenter_xf.m_xform[1][3] = -text_center.y - text_shift.y;
+              textcenter_xf = textcenter_xf * mxf;
+            }
           }
         }
       }

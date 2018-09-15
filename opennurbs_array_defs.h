@@ -481,43 +481,49 @@ T& ON_SimpleArray<T>::AppendNew()
 template <class T>
 void ON_SimpleArray<T>::Append( const T& x ) 
 {
+  const T* p = &x;
   if ( m_count == m_capacity ) 
   {
     const int newcapacity = NewCapacity();
-    if (m_a)
+    if ( p >= m_a && p < (m_a + m_capacity) )
     {
-      const int s = (int)(&x - m_a); // (int) cast is for 64 bit pointers
-      if ( s >= 0 && s < m_capacity )
-      {
-        // 26 Sep 2005 Dale Lear
-        //    User passed in an element of the m_a[]
-        //    that will get reallocated by the call
-        //    to Reserve(newcapacity).
-        T temp;   // ON_*Array<> templates do not require robust copy constructor.
-        temp = x; // ON_*Array<> templates require a robust operator=.
-        Reserve( newcapacity );
-        m_a[m_count++] = temp;
-        return;
-      }
+      // 26 Sep 2005 Dale Lear
+      // x is in the block of memory about to be reallocated.
+      void* temp = onmalloc(sizeof(T));
+      memcpy(temp, p, sizeof(T));
+      p = (T*)temp;
     }
     Reserve(newcapacity);
   }
-  m_a[m_count++] = x;
+  m_a[m_count++] = *p;
+  if (p != &x)
+    onfree((void*)p);
 }
 
 template <class T>
-void ON_SimpleArray<T>::Append( int count, const T* p ) 
+void ON_SimpleArray<T>::Append( int count, const T* buffer ) 
 {
-  if ( count > 0 && p ) 
+  if ( count > 0 && nullptr != buffer ) 
   {
+    const size_t sizeof_buffer = count * sizeof(T);
+    void* temp = nullptr;
     if ( count + m_count > m_capacity ) 
     {
       int newcapacity = NewCapacity();
       if ( newcapacity < count + m_count )
         newcapacity = count + m_count;
+      if ( buffer >= m_a && buffer < (m_a + m_capacity) )
+      {
+        // buffer is in the block of memory about to be reallocated
+        temp = onmalloc(sizeof_buffer);
+        memcpy(temp, buffer, sizeof_buffer);
+        buffer = (const T*)temp;
+      }
       Reserve( newcapacity );
     }
-    memcpy( (void*)(m_a + m_count), (void*)(p), count*sizeof(T) );
+    memcpy( (void*)(m_a + m_count), (void*)(buffer), sizeof_buffer );
+    if (nullptr != temp)
+      onfree(temp);
     m_count += count;
   }
 }
@@ -527,14 +533,24 @@ void ON_SimpleArray<T>::Insert( int i, const T& x )
 {
   if( i >= 0 && i <= m_count ) 
   {
+    const T* p = &x;
     if ( m_count == m_capacity ) 
     {
+      if (&x >= m_a && &x < (m_a + m_capacity))
+      {
+        // x is in the block of memory about to be reallocated.
+        void* temp = onmalloc(sizeof(T));
+        memcpy(temp, p, sizeof(T));
+        p = (T*)temp;
+      }
       int newcapacity = NewCapacity();
       Reserve( newcapacity );
     }
 	  m_count++;
     Move( i+1, i, m_count-1-i );
-	  m_a[i] = x;
+	  m_a[i] = *p;
+    if (p != &x)
+      onfree((void*)p);
   }
 }
 

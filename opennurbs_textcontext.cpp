@@ -121,7 +121,7 @@ const ON_wString ON_TextContext::FormatRtfString(
     return string_out;
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
-  const wchar_t* style_facename = dimstyle->Font().FontFaceName();
+  const ON_wString rtf_font_name = ON_Font::RichTextFontName(&dimstyle->Font(),true);
 
   ON_RtfStringBuilder builder(dimstyle, 1.0, ON_UNSET_COLOR);
   builder.SetSkipColorTbl(true);
@@ -135,16 +135,27 @@ const ON_wString ON_TextContext::FormatRtfString(
   builder.SetMakeUnderline(set_underline);
   builder.SetMakeFacename(set_facename);
   builder.SetOverrideFacename(override_facename);
-  builder.SetDefaultFacename(style_facename);
+  builder.SetDefaultFacename(rtf_font_name);
 
   ON_wString rtf_wstring(rtf_string);
   int rtf = rtf_wstring.Find("rtf1");
   if (-1 == rtf)
   {
+    ON_wString font_table_str;
+    ON_wString rtf_text_str;
     if (builder.SettingFacename())
-      rtf_wstring.Format(L"{\\rtf1\\deff0{\\fonttbl{\\f0 %s;}{\\f1 %s;}}{\\f1 %s}}", style_facename, override_facename, rtf_string);
+    {
+      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}{\\f1 %ls;}}", rtf_font_name.Array(), override_facename);
+      rtf_text_str.Format(L"{\\f1 %ls}", rtf_string);
+      rtf_text_str.Replace(L"\n", L"}{\\par}{\\f1 ");
+    }
     else
-      rtf_wstring.Format(L"{\\rtf1\\deff0{\\fonttbl{\\f0 %s;}}{\\f0 %s}}", style_facename, rtf_string);
+    {
+      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}}", rtf_font_name.Array());
+      rtf_text_str.Format(L"{\\f0 %ls}", rtf_string);
+      rtf_text_str.Replace(L"\n", L"}{\\par}{\\f0 ");
+    }
+    rtf_wstring.Format(L"{\\rtf1\\deff0%ls%ls}", font_table_str.Array(), rtf_text_str.Array());
   }
   else
   {
@@ -156,7 +167,7 @@ const ON_wString ON_TextContext::FormatRtfString(
         ON_wString temp;
         len = rtf_wstring.Length();
         ON_wString str = rtf_wstring.Right(((int)len) - 7);
-        temp.Format(L"{\\rtf1{\\fonttbl}%s", str.Array());
+        temp.Format(L"{\\rtf1{\\fonttbl}%ls", str.Array());
         rtf_wstring = temp;
       }
     }
@@ -205,6 +216,23 @@ bool ON_TextContext::RtfFirstCharProperties(const wchar_t* rtf_string,
       facename = builder.FaceNameFromMap(fi);
   }
   return rc;
+}
+
+const ON_Font* ON_TextContent::FirstCharFont() const
+{
+  ON_TextRunArray* runs = TextRuns(true);
+  if (nullptr != runs)
+  {
+    for (int i = 0; i < runs->Count(); i++)
+    {
+      if (ON_TextRun::RunType::kText == (*runs)[i]->Type() ||
+        ON_TextRun::RunType::kField == (*runs)[i]->Type())
+      {
+        return (*runs)[i]->Font();
+      }
+    }
+  }
+  return &ON_Font::Default;
 }
 
 //--------------------------------------------------------------------

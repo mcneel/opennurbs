@@ -1420,4 +1420,183 @@ private:
   bool Write_v2(ON_BinaryArchive&) const;
 };
 
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// ON_3dmAnimationProperties
+//
+
+class ON_CLASS ON_3dmAnimationProperties
+{
+public:
+  ON_3dmAnimationProperties() = default;
+  ~ON_3dmAnimationProperties() = default;
+  ON_3dmAnimationProperties(const ON_3dmAnimationProperties&) = default;
+  ON_3dmAnimationProperties& operator=(const ON_3dmAnimationProperties&) = default;
+
+  static const ON_3dmAnimationProperties Default;
+
+  bool Read(ON_BinaryArchive&);
+  bool Write(ON_BinaryArchive&) const;
+
+public:
+  enum class CaptureTypes : int
+  {
+    path = 0,
+    turntable,
+    flythrough,
+    day_sun_study,
+    seasonal_sun_study,
+    none
+  };
+
+  CaptureTypes CaptureType(void) const;
+  void SetCaptureType(CaptureTypes t);
+
+  ON_wString FileExtension(void) const;
+  void SetFileExtension(const ON_wString& s);
+
+  ON_wString CaptureMethod(void) const;
+  void SetCaptureMethod(const ON_wString& s);
+
+  ON_wString ViewportName(void) const;
+  void SetViewportName(const ON_wString& s);
+
+  ON_wString HtmlFilename(void) const;
+  void SetHtmlFilename(const ON_wString& s);
+
+  ON_UUID DisplayMode(void) const;
+  void SetDisplayMode(const ON_UUID& id);
+
+  ON_3dPointArray& CameraPoints(void);
+  const ON_3dPointArray& CameraPoints(void) const;
+
+  ON_3dPointArray& TargetPoints(void);
+  const ON_3dPointArray& TargetPoints(void) const;
+
+  int FrameCount(void) const;
+  void SetFrameCount(int i);
+
+  int CurrentFrame(void) const;
+  void SetCurrentFrame(int i);
+
+  ON_UUID CameraPathId(void) const;
+  void SetCameraPathId(const ON_UUID& id);
+
+  ON_UUID TargetPathId(void) const;
+  void SetTargetPathId(const ON_UUID& id);
+
+  double Latitude(void) const;
+  void SetLatitude(double d);
+
+  double Longitude(void) const;
+  void SetLongitude(double d);
+
+  double NorthAngle(void) const;
+  void SetNorthAngle(double d);
+
+  int StartDay(void) const;
+  void SetStartDay(int i);
+
+  int StartMonth(void) const;
+  void SetStartMonth(int i);
+
+  int StartYear(void) const;
+  void SetStartYear(int i);
+
+  int EndDay(void) const;
+  void SetEndDay(int i);
+
+  int EndMonth(void) const;
+  void SetEndMonth(int i);
+
+  int EndYear(void) const;
+  void SetEndYear(int i);
+
+  int StartHour(void) const;
+  void SetStartHour(int i);
+
+  int StartMinutes(void) const;
+  void SetStartMinutes(int i);
+
+  int StartSeconds(void) const;
+  void SetStartSeconds(int i);
+
+  int EndHour(void) const;
+  void SetEndHour(int i);
+
+  int EndMinutes(void) const;
+  void SetEndMinutes(int i);
+
+  int EndSeconds(void) const;
+  void SetEndSeconds(int i);
+
+  int DaysBetweenFrames(void) const;
+  void SetDaysBetweenFrames(int i);
+
+  int MinutesBetweenFrames(void) const;
+  void SetMinutesBetweenFrames(int i);
+
+  int LightIndex(void) const;
+  void SetLightIndex(int i);
+
+  ON_wString FolderName(void) const;
+  void SetFolderName(const ON_wString& s);
+
+  ON_ClassArray<ON_wString>& Images(void);
+  const ON_ClassArray<ON_wString>& Images(void) const;
+
+  ON_ClassArray<ON_wString>& Dates(void);
+  const ON_ClassArray<ON_wString>& Dates(void) const;
+
+  bool RenderFull(void) const;
+  void SetRenderFull(const bool b);
+
+  bool RenderPreview(void) const;
+  void SetRenderPreview(const bool b);
+
+private:
+  CaptureTypes m_CaptureTypes  = CaptureTypes::none;
+  ON_wString m_sFileExtension = L"jpg";
+  ON_wString m_sCaptureMethod;
+  ON_wString m_sHtmlFilename;
+  ON_wString m_sViewport;
+  ON_UUID m_idDisplayMode = ON_nil_uuid;
+  ON_3dPointArray m_aCameraPoints;
+  ON_3dPointArray m_aTargetPoints;
+  int m_iFrameCount = 100;
+  int m_iCurrentFrame = 1;
+  ON_UUID m_idCameraPath = ON_nil_uuid;
+  ON_UUID m_idTargetPath = ON_nil_uuid;
+  double m_dLatitude = 51.2838;
+  double m_dLongitude = 0.0;
+  double m_dNorthAngle = 0.0;
+  int m_iStartDay = 1;
+  int m_iStartMonth = 6;
+  int m_iStartYear = 2012;
+  int m_iEndDay = 1;
+  int m_iEndMonth = 6;
+  int m_iEndYear = 2010;
+  int m_iStartHour = 6;
+  int m_iStartMinutes = 0;
+  int m_iStartSeconds = 0;
+  int m_iEndHour = 18;
+  int m_iEndMinutes = 0;
+  int m_iEndSeconds = 59;
+  int m_iDaysBetweenFrames = 30;
+  int m_iMinutesBetweenFrames = 30;
+  int m_iLightIndex = -1;
+  ON_wString m_sFolderName;
+  ON_ClassArray<ON_wString> m_aImages;
+  ON_ClassArray<ON_wString> m_aDates;
+  bool m_bRenderFull = false;
+  bool m_bRenderPreview = false;
+
+private:
+  unsigned char m_reserved1 = 0;
+  unsigned char m_reserved2 = 0;
+  ON__UINT32 m_reserved4 = 0;
+  ON__INT_PTR reserved = 0;
+};
+
 #endif

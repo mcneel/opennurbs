@@ -190,6 +190,7 @@ bool ON_VersionNumberIsYearMonthDateFormat(
            || (n <= 4 && year <= 2011)
            || (5==n && year >= 2006)
            || (6==n && year >= 2012)
+           || (n>=7 && year >= 2018)
          )
       {
         rc = true;

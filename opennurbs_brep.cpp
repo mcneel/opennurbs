@@ -5354,6 +5354,8 @@ int ON_Brep::NextTrim(int ti) const
 {
   const ON_BrepTrim& trim = m_T[ti];
   const int li = trim.m_li;
+  if (li < 0 || li >= m_L.Count())
+    return -1;
   const ON_BrepLoop& loop = m_L[li];
   const int trim_count = loop.m_ti.Count();
   int lti;
@@ -5368,10 +5370,12 @@ int ON_Brep::PrevTrim(int ti) const
 {
   const ON_BrepTrim& trim = m_T[ti];
   const int li = trim.m_li;
+  if (li < 0 || li >= m_L.Count())
+    return -1;
   const ON_BrepLoop& loop = m_L[li];
   const int trim_count = loop.m_ti.Count();
   int lti;
-  for ( lti = 0; loop.m_ti[lti] != ti && lti < trim_count; lti++)
+  for ( lti = 0; lti < trim_count && loop.m_ti[lti] != ti; lti++)
     ;/* empty for*/
   if ( lti < 0 || lti >= trim_count )
     return -1;
@@ -5814,6 +5818,10 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
   for (i = 0; ict > i; i++)
   {
     const ON_BrepFace& face = m_F[i];
+
+    //15 July 2018 - Chuck - If a face has been deleted, it will not have an associated surface.
+    if (face.SurfaceOf() == NULL)
+      continue;
 
     ON_NurbsSurface nsrf;
     if (0 == face.SurfaceOf()->GetNurbForm(nsrf) || false == nsrf.IsValid())
@@ -7072,6 +7080,14 @@ int ON_ClosedCurveOrientation( const ON_Curve& curve, const ON_Xform* xform )
 }
 
 
+int ON_ClosedCurveOrientation(const ON_Curve& curve, const ON_Plane& plane)
+{
+	ON_Xform x;
+	x.Rotation(plane, ON_Plane::World_xy);
+	return ON_ClosedCurveOrientation(curve, &x);
+}
+
+
 double ON_CurveOrientationArea( 
   const ON_Curve* curve,
   const ON_Interval* domain,
@@ -8318,7 +8334,6 @@ static void PropagateLabel(const ON_Brep& B,
             V.m_vertex_user.i = label;
           }
         }
-
         for (int trim_i=0; trim_i<E.m_ti.Count(); trim_i++)
         {
           int fi = B.m_T[E.m_ti[trim_i]].FaceIndexOf();

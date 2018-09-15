@@ -2142,7 +2142,7 @@ bool ON_DimStyle::Write(
   ON_BinaryArchive& file // serialize definition to binary archive
   ) const
 {
-  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 6))
+  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 7))
     return false;
 
   bool rc = false;
@@ -2213,10 +2213,20 @@ bool ON_DimStyle::Write(
     if (!file.WriteInt(u)) break;
 
     if (!file.WriteInt(m_alternate_lengthresolution)) break;
+
+    // The ON_wString::IsValid calls prevent corrupt strings from breaking file IO
+    m_prefix.IsValid(true);
     if (!file.WriteString(m_prefix)) break;
+
+    m_suffix.IsValid(true);
     if (!file.WriteString(m_suffix)) break;
+
+    m_alternate_prefix.IsValid(true);
     if (!file.WriteString(m_alternate_prefix)) break;
+
+    m_alternate_suffix.IsValid(true);
     if (!file.WriteString(m_alternate_suffix)) break;
+
     if (!file.WriteDouble(m_dimextension)) break;
     if (!file.WriteBool(m_bSuppressExtension1)) break;
     if (!file.WriteBool(m_bSuppressExtension2)) break;
@@ -2457,6 +2467,10 @@ bool ON_DimStyle::Write(
     if (!file.WriteInt(u)) break;
     // END chunk version 1.6 information
 
+    u = static_cast<unsigned int>(m_centermark_style);
+    if (!file.WriteInt(u)) break;
+    // END chunk version 1.7 information
+
     rc = true;
     break;
   }
@@ -2530,12 +2544,15 @@ bool ON_DimStyle::Read(
     case ON_INTERNAL_OBSOLETE::V5_TextDisplayMode::kNormal:
       m_dim_text_location = ON_DimStyle::TextLocation::AboveDimLine;
       m_dimradial_text_location = ON_DimStyle::TextLocation::InDimLine;
+      break;
     case ON_INTERNAL_OBSOLETE::V5_TextDisplayMode::kAboveLine:
       m_dim_text_location = ON_DimStyle::TextLocation::AboveDimLine;
       m_dimradial_text_location = ON_DimStyle::TextLocation::AboveDimLine;
+      break;
     case ON_INTERNAL_OBSOLETE::V5_TextDisplayMode::kInLine:
       m_dim_text_location = ON_DimStyle::TextLocation::InDimLine;
       m_dimradial_text_location = ON_DimStyle::TextLocation::InDimLine;
+      break;
     default:
       // DO NO HARM ... use ON_DimStyle constructor defaults.
       break;
@@ -3021,6 +3038,16 @@ bool ON_DimStyle::Read(
     if (!file.ReadInt(&u)) break;
     m_alternate_dimension_length_display = ON_DimStyle::LengthDisplayFromUnsigned(u);
     // END chunk version 1.6 information
+    if (minor_version <= 6)
+    {
+      rc = true;
+      break;
+    }
+
+    u = static_cast<unsigned int>(m_centermark_style);
+    if (!file.ReadInt(&u)) break;
+    m_centermark_style = ON_DimStyle::CentermarkStyleFromUnsigned(u);
+    // END chunk version 1.7 information
 
     rc = true;
     break;
@@ -3200,6 +3227,11 @@ bool ON_DimStyle::Internal_SetStringMember(
   ON_wString& class_member
 )
 {
+  if (false == class_member.IsValid(true))
+  {
+    // just in case value pointed to the bogus string array.
+    value = L"";
+  }
   bool bValueChanged = false;
   if (false == class_member.EqualOrdinal(value,false) )
   {
@@ -3356,7 +3388,7 @@ const bool ON_DimStyle::FontSubstituted() const
   return
     (nullptr == m_managed_font)
     || (0 != ON_Font::CompareFontCharacteristics(*m_managed_font, m_font_characteristics))
-    || (m_managed_font->FontDescription() != m_font_characteristics.FontDescription())
+    || (m_managed_font->Description() != m_font_characteristics.Description())
     ;
 }
 
@@ -3381,7 +3413,7 @@ void ON_DimStyle::SetFont(
   const bool bFontChanged
     = bManagedFontChanged
     || (0 != ON_Font::CompareFontCharacteristics(font_characteristics, m_font_characteristics))
-    || m_font_characteristics.FontDescription() != font_characteristics.FontDescription()
+    || m_font_characteristics.Description() != font_characteristics.Description()
     ;
 
   // copy font_characteristics unconditionally in case compare missed some detail.
@@ -3426,7 +3458,7 @@ ON_DimStyle* ON_DimStyle::CreateFromFont(
   if ( model_view_text_scale > 0.0 && ON_IsValid(model_view_text_scale))
     destination->SetDimScale(model_view_text_scale);
 
-  const ON_wString font_description = font_characteristics->FontDescription();
+  const ON_wString font_description = font_characteristics->Description();
   if (font_description.IsNotEmpty())
   {
     const ON_wString name
@@ -3472,10 +3504,19 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateBool(m_bAlternate);
     sha1.AccumulateDouble(m_alternate_lengthfactor);
     sha1.AccumulateInteger32(m_alternate_lengthresolution);
+
+    m_prefix.IsValid(true);
     sha1.AccumulateString(m_prefix);
+
+    m_suffix.IsValid(true);
     sha1.AccumulateString(m_suffix);
+
+    m_alternate_prefix.IsValid(true);
     sha1.AccumulateString(m_alternate_prefix);
+
+    m_alternate_suffix.IsValid(true);
     sha1.AccumulateString(m_alternate_suffix);
+
     sha1.AccumulateDouble(m_dimextension);
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_tolerance_format));
     sha1.AccumulateInteger32(m_tolerance_resolution);
@@ -3667,6 +3708,7 @@ void ON_DimStyle::SetAlternateLengthResolution(int resolution)
 
 const ON_wString& ON_DimStyle::Prefix() const
 {
+  m_prefix.IsValid(true);
   return m_prefix;
 }
 
@@ -3677,6 +3719,7 @@ void ON_DimStyle::SetPrefix(const wchar_t* prefix)
 
 const ON_wString& ON_DimStyle::Suffix() const
 {
+  m_suffix.IsValid(true);
   return m_suffix;
 }
 
@@ -3687,6 +3730,7 @@ void ON_DimStyle::SetSuffix(const wchar_t* suffix)
 
 const ON_wString& ON_DimStyle::AlternatePrefix() const
 {
+  m_alternate_prefix.IsValid(true);
   return m_alternate_prefix;
 }
 
@@ -3697,6 +3741,7 @@ void ON_DimStyle::SetAlternatePrefix(const wchar_t* prefix)
 
 const ON_wString& ON_DimStyle::AlternateSuffix() const
 {
+  m_alternate_suffix.IsValid(true);
   return m_alternate_suffix;
 }
 
@@ -5443,7 +5488,10 @@ double ON_DimStyle::ToleranceLowerValue() const
 
 double ON_DimStyle::ToleranceHeightScale() const
 {
-  return m_tolerance_height_scale;
+  // Intentionally using StackHeightScale for both fractions and tolerances
+  // Tolerances aren't allowed with fractional formats
+  return StackHeightScale();
+//  return m_tolerance_height_scale;
 }
 
 double ON_DimStyle::BaselineSpacing() const
@@ -5503,8 +5551,11 @@ void ON_DimStyle::SetToleranceLowerValue(double lower_value)
 
 void ON_DimStyle::SetToleranceHeightScale(double scale)
 {
-  if (ON_IsValid(scale) && scale > ON_SQRT_EPSILON)
-    Internal_SetDoubleMember(ON_DimStyle::field::ToleranceHeightScale, scale, m_tolerance_height_scale);
+  // Intentionally using StackHeightScale for both fractions and tolerances
+  // Tolerances aren't allowed with fractional formats
+  SetStackHeightScale(scale);
+  //if (ON_IsValid(scale) && scale > ON_SQRT_EPSILON)
+  //  Internal_SetDoubleMember(ON_DimStyle::field::ToleranceHeightScale, scale, m_tolerance_height_scale);
 }
 
 void ON_DimStyle::SetBaselineSpacing(double spacing)

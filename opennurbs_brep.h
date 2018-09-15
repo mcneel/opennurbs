@@ -3037,7 +3037,7 @@ public:
     then duplicates of the connected components are appended
     to the components[] array.
   Parameters:
-    components - [in] connected components are appended to this array.
+    components - [out] connected components are appended to this array.
     bDuplicateMeshes - [in] if true, any meshes on this brep are copied
          to the output breps.
   Returns:
@@ -3050,6 +3050,7 @@ public:
           ON_SimpleArray< ON_Brep* >& components,
           bool bDuplicateMeshes
           ) const;
+
 
   /*
   Description:

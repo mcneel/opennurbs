@@ -29,7 +29,14 @@ class ON_FaceNameKey
 {
 public:
   int m_rtf_font_index = -1;
-  ON_wString m_facename;
+
+  // In reality, the RTF "face" name can be
+  // a PostScript name, LOGFONT.lfFaceName, DWrite Family Name,
+  // and probably more. It depends on what tool is used to create the RTF and we see
+  // all three of the above names in Rhino parsing and the current Eto Text controls
+  // generate RTF with all three of those "names" OS version.
+  ON_wString m_rtf_font_name;
+
   unsigned int m_codepage = 1252;
   unsigned int m_charset = 0;
 };
@@ -215,6 +222,14 @@ public:
         m_codepage = ON_MapRTFcharsetToWindowsCodePage(charset, 1252);
       }
     }
+    bool FormatPending()
+    {
+      return m_format_pending;
+    }
+    void SetFormatPending(bool b)
+    {
+      m_format_pending = b;
+    }
 
   private:
     double                    m_height = 1.0;
@@ -227,10 +242,12 @@ public:
     bool                      m_strikethrough = false;
     unsigned int              m_codepage = 1252;
     unsigned int              m_charset = 0;   // Charset isn't really needed but is here to make debugging a little easier
+    bool                      m_format_pending = false;
   };
 
-  ON_ClassArray< TextProps >         m_prop_stack;
-  TextProps                          m_current_props;
+  ON_ClassArray< TextProps >  m_prop_stack;
+  TextProps                   m_current_props;
+  TextProps                   m_pending_props;
 
   // Rtf uses UTF-16 encoding and surrogate pairs need to be properly handled.
   // For example, the single UNICODE code point ON_UnicodeCodePoint::Wastebasket U+1F5D1 (decimal 128465)
@@ -249,17 +266,23 @@ public:
   ON_SimpleArray< ON__UINT32 >       m_current_codepoints;
   ON__INT32                          m_in_run;
   ON__INT32                          m_level = 0;
-  ON__INT32                          m_font_table_level = -1;
+  ON__INT32                          m_font_table_level = 10000;
   ON__INT32                          m_font_index = 0;
   ON__INT32                          m_default_font_index = 0;
-  ON_SimpleArray< int >              m_ansi_equiv_chars = 0;
-
+private:
+  bool                               m_bReadingFontDefinition = false;
+public:
   ON_ClassArray< ON_FaceNameKey >    m_facename_map;
 
   virtual void InitBuilder(const ON_Font* default_font);
   virtual void FlushText(size_t count, ON__UINT32* cp_array);
   virtual void GroupBegin();
   virtual void GroupEnd();
+  virtual void FinishFontDef();
+  virtual bool ReadingFontTable();
+  virtual bool ReadingFontDefinition();
+  virtual void SetReadingFontDefinition(bool b);
+
 
   virtual void BeginHeader();
   virtual void BeginFontTable();
@@ -313,6 +336,7 @@ public:
   virtual void EmDash();
 
   virtual bool AppendCodePoint(ON__UINT32 codept);
+  virtual void FormatChange();
 
   ON__UINT32* RunCodePoints(const ON_TextRun& run);
 
@@ -352,6 +376,9 @@ public:
   void FlushText(size_t count, ON__UINT32* cp_array) override;
   void GroupBegin() override;
   void GroupEnd() override;
+  void FinishFontDef() override;
+  bool AppendCodePoint(ON__UINT32 codept) override;
+  void FormatChange() override;
 
   void BeginHeader() override;
   void BeginFontTable() override;
@@ -563,8 +590,8 @@ public:
   void PushRun(TextRun& run);
   TextRun PopRun();
   
-  bool InFontTable();
-  void SetInFontTable(bool b);
+  //bool InFontTable();
+  //void SetInFontTable(bool b);
   bool InColorTable();
   void SetInColorTable(bool b);
 
@@ -762,8 +789,8 @@ public:
   void PushRun(TextRun& run);
   TextRun PopRun();
 
-  bool InFontTable();
-  void SetInFontTable(bool b);
+  //bool InFontTable();
+  //void SetInFontTable(bool b);
   bool InColorTable();
   void SetInColorTable(bool b);
   
@@ -803,14 +830,15 @@ private:
     const ON__UINT32 windows_code_page
     );
 
-  ON_TextIterator&          m_ti;
+  ON_TextIterator&   m_ti;
 
-  ON_TextBuilder&           m_builder;
-  int                       m_p_level;
-  bool                      m_in_real_rtf;
+  ON_TextBuilder&    m_builder;
+  int                m_p_level = 0;
+  bool               m_in_real_rtf = false;
 
   bool FlushCurText(ON_SimpleArray< ON__UINT32 >& cp_array);
   bool ReadTag(bool optional);
+  bool ReadOptionalTag();
   bool ProcessTag(const wchar_t* name, const wchar_t* value, bool optional);
 
   ON_RtfParser operator=(const ON_RtfParser& src);
@@ -877,6 +905,8 @@ private:
   static bool m_bComposeRTF;
 
   RtfComposer();
+
+  static unsigned int GetFacenameKey(const ON_Font* font, ON_SimpleArray< wchar_t[34] >& fonttable);
   static unsigned int GetFacenameKey(const wchar_t* facename, ON_SimpleArray< wchar_t[34] >& fonttable);
   static unsigned int GetColorKey(ON_Color color, ON_SimpleArray< unsigned int >& colortable);
   static bool FormatTextHeight(double height, ON_wString& str);

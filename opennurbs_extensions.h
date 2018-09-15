@@ -1245,16 +1245,31 @@ public:
     double model_space_text_scale
     );
 
+  /*
+  Description:
+    Find a model geometry component from Id
+  Parameters:
+    model_geometry_component_id - [in]
+  Returns:
+    If there is a model geometry component with the id, it is returned.
+    Otherwise, ON_ModelComponentReference::Empty is returned.
+  */
+  ON_ModelComponentReference ModelGeometryFromId(
+    ON_UUID model_geometry_component_id
+    ) const;
 
-  ON_ModelGeometryComponent ModelGeometryFromIndex(
-    int model_object_index
-    );
-  ON_ModelGeometryComponent ModelGeometryFromUnsignedIndex(
-    unsigned int model_object_index
-    );
-  ON_ModelGeometryComponent ModelGeometryFromId(
-    unsigned int model_object_index
-    );
+  /*
+  Description:
+    Find a model geometry component from Id
+  Parameters:
+    model_geometry_component_id - [in]
+  Returns:
+    If there is a model geometry component with the id, it is returned.
+    Otherwise, ON_ModelGeometryComponent::Unset is returned.
+  */
+  const ON_ModelGeometryComponent& ModelGeometryComponentFromId(
+    ON_UUID model_geometry_component_id
+    ) const;
 
 public:
   ON_SimpleArray<ONX_Model_UserData*> m_userdata_table;
@@ -1718,6 +1733,9 @@ public:
     bKeepModels - [in]
       If true, then the ONX_Models created by reading 3dm archives are saved
       so the can be examined after the tests complete.
+    text_log_file_path - [in]
+      If not empty, the string to use for file_path in the output text_log.
+      This is used to create logs on different computers that can be compared.
     text_log - [in]
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
@@ -1728,6 +1746,7 @@ public:
     const char* file_path,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const char* text_log_file_path,
     ON_TextLog* text_log
   );
 
@@ -1742,6 +1761,9 @@ public:
     bKeepModels - [in]
       If true, then the ONX_Models created by reading 3dm archives are saved
       so the can be examined after the tests complete.
+    text_log_file_path - [in]
+      If not empty, the string to use for file_path in the output text_log.
+      This is used to create logs on different computers that can be compared.
     text_log - [in]
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
@@ -1752,6 +1774,7 @@ public:
     const wchar_t* file_path,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const wchar_t* text_log_file_path,
     ON_TextLog* text_log
   );
 
@@ -1766,6 +1789,9 @@ public:
     bKeepModels - [in]
       If true, then the ONX_Models created by reading 3dm archives are saved
       so the can be examined after the tests complete.
+    text_log_file_path - [in]
+      If not empty, the string to use for file_path in the output text_log.
+      This is used to create logs on different computers that can be compared.
     text_log - [in]
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
@@ -1776,6 +1802,7 @@ public:
     FILE* fp,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const wchar_t* text_log_file_path,
     ON_TextLog* text_log
   );
 
@@ -1784,13 +1811,15 @@ public:
   Description:
     ONX_Model::Test() can be used to test reading a specific file.
   Parameters:
-    file_path - [in]
-      file path
+    archive - [in]      
     test_type - [in]
       test to perform.
     bKeepModels - [in]
       If true, then the ONX_Models created by reading 3dm archives are saved
       so the can be examined after the tests complete.
+    text_log_file_path - [in]
+      If not empty, the string to use for file_path in the output text_log.
+      This is used to create logs on different computers that can be compared.
     text_log - [in]
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
@@ -1801,6 +1830,7 @@ public:
     ON_BinaryArchive& archive,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const wchar_t* text_log_file_path,
     ON_TextLog* text_log
   );
 
@@ -1886,6 +1916,7 @@ private:
     ON_BinaryArchive& archive,
     ONX_ModelTest::Type test_type,
     bool bKeepModels,
+    const wchar_t* text_log_file_path,
     ON_TextLog* text_log
   );
 
@@ -1901,6 +1932,12 @@ public:
     The name of the source 3dm file.
   */
   const ON_wString Source3dmFilePath() const;
+
+  /*
+  Returns:
+    The string used in the output log to identify the source 3dm file.
+  */
+  const ON_wString TextLogSource3dmFilePath() const;
 
   /*
   Returns:
@@ -1967,6 +2004,10 @@ public:
    ONX_ModelTest::Type m_test_type = ONX_ModelTest::Type::Unset;
 
    ON_wString m_source_3dm_file_path;
+
+   // if set, used when printing the name of m_source_3dm_file_path in the text
+   // log so results from different computers can be compared.
+   ON_wString m_text_log_3dm_file_path;
 
    unsigned int m_model_3dm_file_version[3];
 

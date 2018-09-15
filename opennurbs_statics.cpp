@@ -17,12 +17,15 @@
 #pragma ON_PRAGMA_WARNING_POP
 #endif
 
+const ON_ErrorEvent ON_ErrorEvent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ErrorEvent);
+
 static unsigned int ON_LibraryStatusInit()
 {
   return 0;
 }
 
 unsigned int ON::m_opennurbs_library_status = ON_LibraryStatusInit();
+
 
 unsigned int ON_MemoryAllocationTracking::m_g_stack_depth = 0;
 int ON_MemoryAllocationTracking::m_g_crt_dbg_flag0 = 0;
@@ -418,7 +421,6 @@ static ON_SHA1_Hash ON_SHA1_Hash_EmptyContentHash()
 const ON_SHA1_Hash ON_SHA1_Hash::EmptyContentHash = ON_SHA1_Hash_EmptyContentHash();
 const ON_SHA1_Hash ON_SHA1_Hash::ZeroDigest ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SHA1_Hash);
 
-
 const ONX_ModelTest ONX_ModelTest::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ONX_ModelTest);
 
 // Works with Microsoft's CL, fails for Apple's CLang
@@ -446,8 +448,10 @@ const char ON_String::FormFeed = (char)ON_UnicodeCodePoint::ON_FormFeed;
 const char ON_String::CarriageReturn = (char)ON_UnicodeCodePoint::ON_CarriageReturn;
 const char ON_String::Escape = (char)ON_UnicodeCodePoint::ON_Escape;
 const char ON_String::Space = (char)ON_UnicodeCodePoint::ON_Space;
+const char ON_String::HyphenMinus = (char)ON_UnicodeCodePoint::ON_HyphenMinus;
 const char ON_String::Slash = (char)ON_UnicodeCodePoint::ON_Slash;
 const char ON_String::Backslash = (char)ON_UnicodeCodePoint::ON_Backslash;
+const char ON_String::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
 const char ON_String::Pipe = (char)ON_UnicodeCodePoint::ON_Pipe;
 
 // ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
@@ -463,8 +467,10 @@ const wchar_t ON_wString::FormFeed = (wchar_t)ON_UnicodeCodePoint::ON_FormFeed;
 const wchar_t ON_wString::CarriageReturn = (wchar_t)ON_UnicodeCodePoint::ON_CarriageReturn;
 const wchar_t ON_wString::Escape = (wchar_t)ON_UnicodeCodePoint::ON_Escape;
 const wchar_t ON_wString::Space = (wchar_t)ON_UnicodeCodePoint::ON_Space;
+const wchar_t ON_wString::HyphenMinus = (wchar_t)ON_UnicodeCodePoint::ON_HyphenMinus;
 const wchar_t ON_wString::Slash = (wchar_t)ON_UnicodeCodePoint::ON_Slash;
 const wchar_t ON_wString::Backslash = (wchar_t)ON_UnicodeCodePoint::ON_Backslash;
+const wchar_t ON_wString::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
 const wchar_t ON_wString::Pipe = (wchar_t)ON_UnicodeCodePoint::ON_Pipe;
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
@@ -659,8 +665,10 @@ const ON_ScaleValue ON_ScaleValue::OneToOne = ON_ScaleValue::Create(
   ON_ScaleValue::ScaleStringFormat::RatioFormat
 );
 
-ON_TextLog ON_TextLog::Null( *((ON_wString*)((ON__INT_PTR)1)) );
-
+// ON_PTR_SEMAPHORE1 triggers a special case in the constructor.
+// See ON_TextLog::AppendText() and Internal_TextLogIsNull() for implementation
+// details.
+ON_TextLog ON_TextLog::Null( (FILE*)ON_PTR_SEMAPHORE1 );
 
 // Discuss any changes of these values with Dale Lear
 //
@@ -779,9 +787,11 @@ const ON_Color ON_Color::SaturatedBlue(0, 0, 255);
 const ON_Color ON_Color::SaturatedYellow(255, 255, 0);
 const ON_Color ON_Color::SaturatedCyan(0, 255, 255);
 const ON_Color ON_Color::SaturatedMagenta(255, 0, 255);
+const ON_Color ON_Color::Gray105(105, 105, 105);
 const ON_Color ON_Color::Gray126(126, 126, 126);
 const ON_Color ON_Color::Gray160(160, 160, 160);
 const ON_Color ON_Color::Gray230(230, 230, 230);
+const ON_Color ON_Color::Gray250(250, 250, 250);
 
 const ON_UuidIndex ON_UuidIndex::NilIndex = ON_UuidIndex();
 const ON_UuidPtr ON_UuidPtr::NilPtr = ON_UuidPtr();
@@ -1023,32 +1033,111 @@ const ON_2dSize ON_2dSize::Unset(ON_UNSET_VALUE, ON_UNSET_VALUE);
 const ON_4dRect ON_4dRect::Zero(0.0, 0.0, 0.0, 0.0);
 const ON_4dRect ON_4dRect::Unset(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
-const ON_FontGlyphOutlinePoint ON_FontGlyphOutlinePoint::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontGlyphOutlinePoint);
-const ON_FontGlyph ON_FontGlyph::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontGlyph);
+const ON_OutlineFigurePoint ON_OutlineFigurePoint::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_OutlineFigurePoint);
+static ON_OutlineFigurePoint Internal_FontGlyphOutlinePoint()
+{
+  ON_OutlineFigurePoint p;
+  p.m_point_type = ON_OutlineFigurePoint::Type::Error;
+  return p;
+}
+const ON_OutlineFigurePoint ON_OutlineFigurePoint::Error(Internal_FontGlyphOutlinePoint());
+
+const ON_OutlineFigure ON_OutlineFigure::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_OutlineFigure);
+
+const ON_Outline ON_Outline::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Outline);
+
+const ON_FontGlyph ON_FontGlyph::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontGlyph);
+
+const ON_PANOSE1 ON_PANOSE1::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_PANOSE1);
 
 const double ON_FontMetrics::DefaultLineFeedRatio = 1.6;
 const ON__UINT32 ON_FontMetrics::HeightOfCapitalCodePoint = 'I';
 const ON_FontMetrics ON_FontMetrics::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontMetrics);
 
-unsigned int ON_Font::__runtime_serial_number_generator = 0;
-
-static ON_Font DefaultFontInitializer()
+static ON_FontMetrics Internal_LastResortNormalizedFontMetrics()
 {
-  const wchar_t* default_face_name =
-#if defined(ON_RUNTIME_WIN)
-    L"Arial"
-    // L"Segoe UI" // better choice ?
-#elif defined(ON_RUNTIME_APPLE)
-    //L"Lucida Grande " // pre OS X Yosemite default
-    L"Helvetica Neue" // OS X Yosemite and iOS default
-#else
-    L"Arial"
-#endif
-    ;
-  ON_Font default_font;
-  default_font.SetFontFaceName(default_face_name);
-  return default_font;
+  /*
+    Normalized font metrics:
+      Units per EM = 256
+      Ascent = 232
+      Descent = -55
+      Distance between baselines = 295
+      Ascent of I = 184
+      Strikeout thickness = 10
+      Strikeout position = 92
+      Underscore thickness = 19
+      Underscore position = -37
+    Font file metrics:
+      Units per EM = 2048
+      Ascent = 1854
+      Descent = -434
+      Distance between baselines = 2355
+      Ascent of I = 1466
+      Strikeout thickness = 75
+      Strikeout position = 733
+      Underscore thickness = 150
+      Underscore position = -292
+  
+  */
+  const int last_restort_UPM = 256; // needs to be as large or larger than "real" UPM
+  ON_FontMetrics last_restort;
+  last_restort.SetHeights(232,-55,last_restort_UPM,295);
+  last_restort.SetAscentOfI(184);
+  last_restort.SetStrikeout(92, 10);
+  last_restort.SetUnderscore(-37, 19);
+
+  if ( false == last_restort.IsSet() || false == last_restort.HeightsAreValid())
+  {
+    ON_ERROR("Immediately fix ON_FontMetrics::LastResortNormailizedMetrics");
+    return last_restort;
+  }
+
+  // As of March 2018, ON_Font::Constants::AnnotationFontCellHeight = 256 and 
+  // normalized_scale = 1.0; The code below is in place to handle any future
+  // changes to ON_Font::Constants::AnnotationFontCellHeight.
+  const double normalized_scale = ((double)ON_Font::Constants::AnnotationFontCellHeight) / ((double)last_restort.UPM());
+  if ( 1.0 == normalized_scale )
+    return last_restort;
+
+  const ON_FontMetrics last_restort_normalized =  ON_FontMetrics::Scale(last_restort, normalized_scale);
+  if ( false == last_restort_normalized.IsSet() || false == last_restort_normalized.HeightsAreValid())
+  {
+    ON_ERROR("Immediately fix scale section of ON_FontMetrics::LastResortNormailizedMetrics");
+    return last_restort;
+  }
+
+  return last_restort_normalized;
 }
+
+const ON_FontMetrics ON_FontMetrics::LastResortNormalizedMetrics( Internal_LastResortNormalizedFontMetrics());
+
+static ON_FontMetrics Internal_LastResortFontMetrics()
+{
+  const int last_restort_UPM = 2048; // needs to be as large or larger than any common "real" UPM
+  const double scale = ((double)last_restort_UPM) / ((double)ON_Font::Constants::AnnotationFontCellHeight);
+  ON_FontMetrics last_restort = ON_FontMetrics::Scale(ON_FontMetrics::LastResortNormalizedMetrics, scale);
+  return last_restort;
+}
+
+const ON_FontMetrics ON_FontMetrics::LastResortMetrics( Internal_LastResortFontMetrics());
+
+ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = nullptr;
+ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = nullptr;
+ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc = nullptr;
+
+// Used to test freetype
+//ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = ON_FreeTypeGetGlyphMetrics;
+//ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = ON_FreeTypeGetFontMetrics;
+//ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc = ON_FreeTypeGetGlyphOutline;
+
+//// Used to test WIndows DWrite
+//#include "opennurbs_internal_glyph.h"
+//ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = ON_WindowsDWriteGetGlyphMetrics;
+//ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = ON_WindowsDWriteGetFontMetrics;
+//ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc = ON_WindowsDWriteGetGlyphOutline;
+
+
+unsigned int ON_Font::__runtime_serial_number_generator = 1;
 
 static void Internal_SystemModelComponentInit(
   ON_UUID id,
@@ -1070,9 +1159,82 @@ static void Internal_SystemModelComponentInit(
     model_component.LockName();
 }
 
-// The order of the next three lines is critical
+const wchar_t* ON_Font::DefaultFamilyName()
+{
+  const wchar_t* s;
+#if defined(ON_RUNTIME_WIN)
+  s = L"Arial";
+#elif defined(ON_RUNTIME_APPLE)
+  s = L"Helvetica Neue";
+#else
+  s = L"Arial";
+#endif
+  return s;
+}
 
-const ON_Font ON_Font::Default(1, DefaultFontInitializer());
+const wchar_t* ON_Font::DefaultFaceName()
+{
+  const wchar_t* s;
+#if defined(ON_RUNTIME_WIN)
+  s = L"Regular";
+#elif defined(ON_RUNTIME_APPLE)
+  s = L"Regular";
+#else
+  s = L"Regular";
+#endif
+  return s;
+}
+
+const wchar_t* ON_Font::DefaultPostScriptName()
+{
+  const wchar_t* s;
+#if defined(ON_RUNTIME_WIN)
+  s = L"ArialMT";
+#elif defined(ON_RUNTIME_APPLE)
+  s = L"HelveticaNeue";
+#else
+  s = L"ArialMT";
+#endif
+  return s;
+}
+
+const wchar_t* ON_Font::DefaultWindowsLogfontName()
+{
+  const wchar_t* s;
+#if defined(ON_RUNTIME_WIN)
+  s = L"Arial";
+#elif defined(ON_RUNTIME_APPLE)
+  s = L"Helvetica Neue";
+#else
+  s = L"Arial";
+#endif
+  return s;
+}
+
+#include "opennurbs_internal_glyph.h"
+
+// ON_GlyphMap::GlyphPool needs to be allocated before  ON_ManagedFonts::List. 
+// This is so the pool is still around when the ON_ManagedFonts::List
+// is being destroyed.
+ON_Internal_FontGlyphPool ON_Internal_FontGlyphPool::theGlyphItemPool;
+
+// ON_ManagedFonts::List needs to be allocated before ON_Font::Default
+// This list of installed fonts is used to initialize ON_Font::Default.
+ON_ManagedFonts ON_ManagedFonts::List ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ManagedFonts);
+
+// The ON_PTR_SEMAPHORE1 parameter to the
+// ON_Font::ON_Font(const ON_Font&) copy ctor triggers special
+// initialization for the static font ON_Font::Unset.
+// See ON_Font::ON_Font(const ON_Font&) and ON_Font::Internal_CopyFrom()
+// for implementation details.
+const ON_Font ON_Font::Unset(*((const ON_Font*)ON_PTR_SEMAPHORE1));
+
+// The ON_PTR_SEMAPHORE2 parameter to the
+// ON_Font::ON_Font(const ON_Font&) copy ctor triggers special
+// initialization for the static font ON_Font::Default.
+// See ON_Font::ON_Font(const ON_Font&) and ON_Font::Internal_CopyFrom()
+// for implementation details.
+const ON_Font ON_Font::Default(*((const ON_Font*)ON_PTR_SEMAPHORE2));
 
 const ON_Geometry ON_Geometry::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Geometry);
 
@@ -1194,15 +1356,39 @@ const double ON_Material::MaxShine = 255.0;
 
 const ON_Material ON_Material::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Material);
 
-static ON_Material DefaultMaterialInit()
+static ON_Material Internal_SystemMaterialInit(int index)
 {
-  // {2FACDC3B-269B-4722-A68D-E7D5C6DE0C44}
-  const ON_UUID id = { 0x2facdc3b, 0x269b, 0x4722,{ 0xa6, 0x8d, 0xe7, 0xd5, 0xc6, 0xde, 0xc, 0x44 } };
   ON_Material m;
-  Internal_SystemModelComponentInit(id, -1, nullptr, m);
+  switch (index)
+  {
+  case -1: // Default
+    {
+      // {CF2BE1DE-B81C-4D69-9418-DDE91D266086}
+      const ON_UUID id =
+      { 0xcf2be1de, 0xb81c, 0x4d69, { 0x94, 0x18, 0xdd, 0xe9, 0x1d, 0x26, 0x60, 0x86 } };
+      Internal_SystemModelComponentInit(id, index, nullptr, m);
+      m.m_diffuse = ON_Color::Gray250;
+    }
+    break;
+
+  case -2: // Locked Object Color
+    {
+      // {70BD1640-E92D-4FFF-818A-9A150BAE3139}
+      const ON_UUID id =
+      { 0x70bd1640, 0xe92d, 0x4fff, { 0x81, 0x8a, 0x9a, 0x15, 0xb, 0xae, 0x31, 0x39 } };
+      Internal_SystemModelComponentInit(id, index, nullptr, m);
+      m.m_diffuse = ON_Color::Gray105;
+    }
+    break;
+
+  default:
+    ON_ERROR("Invalid index.");
+    break;
+  }
   return m;
 }
-const ON_Material ON_Material::Default(DefaultMaterialInit());
+const ON_Material ON_Material::Default(Internal_SystemMaterialInit(-1));
+const ON_Material ON_Material::DefaultLockedObject(Internal_SystemMaterialInit(-2));
 
 const ON_TextureMapping ON_TextureMapping::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextureMapping);
 
@@ -1225,81 +1411,195 @@ const ON_TextureMapping ON_TextureMapping::SurfaceParameterTextureMapping(Surfac
 const ON_LinetypeSegment ON_LinetypeSegment::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LinetypeSegment);
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);
 
-const ON_Linetype ON_Linetype::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Linetype);
 
 const ON_Group ON_Group::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Group);
 
-static void LinePatternInit(
-  ON_UUID id,
-  int index,
-  const wchar_t* name,
-  bool bIsContinuous,
-  ON_Linetype& line_pattern
-  )
+const ON_Linetype ON_Linetype::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Linetype);
+
+static ON_Linetype Internal_BuiltInLinePattern( int index )
 {
-  Internal_SystemModelComponentInit(id, index, name, line_pattern);
-  if (bIsContinuous)
-    line_pattern.AppendSegment(ON_LinetypeSegment::OneMillimeterLine);
+  ON_Linetype line_pattern;
+  ON_SimpleArray<double> segments(8);
+
+  switch (index)
+  {
+  case -1: // Continuous
+    {
+      const ON_UUID line_pattern_id =
+      { 0x3999bed5, 0x78ee, 0x4d73,{ 0xa0, 0x59, 0x3, 0x22, 0x24, 0xc6, 0xfd, 0x55 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Continuous",
+        line_pattern
+      );
+      line_pattern.AppendSegment(ON_LinetypeSegment::OneMillimeterLine);
+    }
+    break;
+
+  case -2: // By Layer
+    {
+      const ON_UUID line_pattern_id =
+      { 0x913882da, 0xbce9, 0x4a67,{ 0x8d, 0x86, 0xd4, 0x49, 0xfd, 0x58, 0x50, 0xb8 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"By Layer",
+        line_pattern
+        );
+      line_pattern.AppendSegment(ON_LinetypeSegment::OneMillimeterLine);
+    }
+    break;
+
+  case -3: // By Parent
+    {
+      const ON_UUID line_pattern_id =
+      { 0xef59d771, 0x5099, 0x4f60,{ 0x99, 0x14, 0xc1, 0x83, 0x6a, 0xeb, 0xe4, 0x84 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"By Parent",
+        line_pattern
+        );
+      line_pattern.AppendSegment(ON_LinetypeSegment::OneMillimeterLine);
+    }
+    break;
+
+  case -4: // Hidden
+    {
+      // {7A55AC0F-803C-431B-A7FE-A43319436C8A}
+      const ON_UUID line_pattern_id = 
+      { 0x7a55ac0f, 0x803c, 0x431b, { 0xa7, 0xfe, 0xa4, 0x33, 0x19, 0x43, 0x6c, 0x8a } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Hidden",
+        line_pattern
+        );
+      segments.Append(2.0);
+      segments.Append(-2.0);
+    }
+    break;
+
+  case -5: // Dashed
+    {
+      // {864526FB-1EEC-40B9-85E1-4619C1F670C5}
+      const ON_UUID line_pattern_id =
+      { 0x864526fb, 0x1eec, 0x40b9, { 0x85, 0xe1, 0x46, 0x19, 0xc1, 0xf6, 0x70, 0xc5 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Dashed",
+        line_pattern
+        );
+      segments.Append(5.0);
+      segments.Append(-5.0);
+    }
+    break;
+
+  case -6: // DashDot
+    {
+      // {249AD50D-96C7-44A7-AB20-136EAE74C34D}
+      const ON_UUID line_pattern_id =
+      { 0x249ad50d, 0x96c7, 0x44a7, { 0xab, 0x20, 0x13, 0x6e, 0xae, 0x74, 0xc3, 0x4d } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"DashDot",
+        line_pattern
+        );
+      segments.Append(4.0);
+      segments.Append(-1.0);
+      segments.Append(0.0);
+      segments.Append(-1.0);
+    }
+    break;
+
+  case -7: // Center
+    {
+      // {B59B1B65-F88F-4854-BED4-E52C51970D0C}
+      const ON_UUID line_pattern_id =
+      { 0xb59b1b65, 0xf88f, 0x4854, { 0xbe, 0xd4, 0xe5, 0x2c, 0x51, 0x97, 0xd, 0xc } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Center",
+        line_pattern
+        );
+      segments.Append(2.5);
+      segments.Append(-0.5);
+      segments.Append(0.5);
+      segments.Append(-0.5);
+    }
+    break;
+
+  case -8: // Border
+    {
+      // {93721775-52EA-4193-83A5-3A541A335630}
+      const ON_UUID line_pattern_id =
+      { 0x93721775, 0x52ea, 0x4193, { 0x83, 0xa5, 0x3a, 0x54, 0x1a, 0x33, 0x56, 0x30 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Border",
+        line_pattern
+        );
+      segments.Append(4.0);
+      segments.Append(-1.0);
+      segments.Append(4.0);
+      segments.Append(-1.0);
+      segments.Append(1.0);
+      segments.Append(-1.0);
+    }
+    break;
+
+  case -9: // Dots
+    {
+      // {E6A283A4-EBBE-4C25-A20C-B1135A791908}
+      const ON_UUID line_pattern_id =
+      { 0xe6a283a4, 0xebbe, 0x4c25, { 0xa2, 0xc, 0xb1, 0x13, 0x5a, 0x79, 0x19, 0x8 } };
+      Internal_SystemModelComponentInit(
+        line_pattern_id,
+        index,
+        L"Dots",
+        line_pattern
+        );
+      segments.Append(0.0);
+      segments.Append(-1.0);
+    }
+    break;
+
+  default:
+    ON_ERROR("Invalid index parameter");
+    break;
+  }
+
+  if (segments.Count() > 0)
+  {
+    ON_LinetypeSegment segment;
+    for( int i = 0; i < segments.Count(); i++)
+    {
+      segment.m_length = fabs(segments[i]);
+      segment.m_seg_type = (segments[i] >=  0.0)
+                         ? ON_LinetypeSegment::eSegType::stLine
+                         : ON_LinetypeSegment::eSegType::stSpace;    
+      line_pattern.AppendSegment(segment);
+    }
+  }
   line_pattern.LockPattern();
+
+  return line_pattern;
 }
 
-static ON_Linetype ContinuousLinePattern()
-{
-  const ON_UUID continuous_line_pattern_id =
-  { 0x3999bed5, 0x78ee, 0x4d73,{ 0xa0, 0x59, 0x3, 0x22, 0x24, 0xc6, 0xfd, 0x55 } };
-
-  ON_Linetype continuous_line_pattern;
-  LinePatternInit(
-    continuous_line_pattern_id,
-    -1,
-    L"Continuous",
-    true,
-    continuous_line_pattern
-    );
-
-  return continuous_line_pattern;
-}
-
-const ON_Linetype ON_Linetype::Continuous(ContinuousLinePattern());
-
-
-static ON_Linetype ByLayerLinetype()
-{
-  const ON_UUID by_layer_line_pattern_id =
-  { 0x913882da, 0xbce9, 0x4a67,{ 0x8d, 0x86, 0xd4, 0x49, 0xfd, 0x58, 0x50, 0xb8 } };
-
-  ON_Linetype by_layer_line_pattern;
-  LinePatternInit(
-    by_layer_line_pattern_id,
-    -2,
-    L"By Layer",
-    false,
-    by_layer_line_pattern
-    );
-  return by_layer_line_pattern;
-}
-
-const ON_Linetype ON_Linetype::ByLayer(ByLayerLinetype());
-
-static ON_Linetype ByParentLinetype()
-{
-  const ON_UUID by_parent_line_pattern_id =
-  { 0xef59d771, 0x5099, 0x4f60,{ 0x99, 0x14, 0xc1, 0x83, 0x6a, 0xeb, 0xe4, 0x84 } };
-
-  ON_Linetype by_parent_line_pattern;
-  LinePatternInit(
-    by_parent_line_pattern_id,
-    -3,
-    L"By Parent",
-    false,
-    by_parent_line_pattern
-    );
-
-  return by_parent_line_pattern;
-}
-
-const ON_Linetype ON_Linetype::ByParent(ByParentLinetype());
-
+const ON_Linetype ON_Linetype::Continuous(Internal_BuiltInLinePattern(-1));
+const ON_Linetype ON_Linetype::ByLayer(Internal_BuiltInLinePattern(-2));
+const ON_Linetype ON_Linetype::ByParent(Internal_BuiltInLinePattern(-3));
+const ON_Linetype ON_Linetype::Hidden(Internal_BuiltInLinePattern(-4));
+const ON_Linetype ON_Linetype::Dashed(Internal_BuiltInLinePattern(-5));
+const ON_Linetype ON_Linetype::DashDot(Internal_BuiltInLinePattern(-6));
+const ON_Linetype ON_Linetype::Center(Internal_BuiltInLinePattern(-7));
+const ON_Linetype ON_Linetype::Border(Internal_BuiltInLinePattern(-8));
+const ON_Linetype ON_Linetype::Dots(Internal_BuiltInLinePattern(-9));
 
 static void TextStyleInit(
   const wchar_t* name,
@@ -1313,7 +1613,7 @@ static void TextStyleInit(
   bool bLockName = false;
   if (nullptr != font)
   {
-    font_description = font->FontDescription();
+    font_description = font->Description();
     text_style.SetFont(font);
 
     if ( (nullptr == name || 0 == name[0]) && font_description.IsNotEmpty() )
@@ -1402,6 +1702,8 @@ const ON_TextMask ON_TextMask::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextMask);
 //
 //  return rc;
 //}
+
+const ON_FontFaceQuartet ON_FontFaceQuartet::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontFaceQuartet);
 
 static void DimStyleInit(
   const wchar_t* name,
@@ -1946,6 +2248,12 @@ const ON_HatchPattern ON_HatchPattern::Squares(Internal_LineHatchPatternInit(-9)
 
 unsigned int ON_SubD::ErrorCount = 0;
 
+const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
+const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
+const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
+const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
+
+
 static ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint_Init(double x)
 {
   ON_SubDSectorLimitPoint lp;
@@ -1994,7 +2302,7 @@ const unsigned int ON_SubDVertex::MaximumFaceCount = 0xFFF0U;
 const unsigned int ON_SubDEdge::MaximumFaceCount = 0xFFF0U;
 const unsigned int ON_SubDFace::MaximumEdgeCount = 0xFFF0U;
 
-
+const ON_SubDComponentRegion ON_SubDComponentRegion::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegion);
 
 const ON_ComponentStatus ON_ComponentStatus::NoneSet = ON_ComponentStatus(ON_ComponentState::Clear);
 const ON_ComponentStatus ON_ComponentStatus::Selected = ON_ComponentStatus(ON_ComponentState::Selected);
@@ -2033,7 +2341,6 @@ static ON_AggregateComponentStatus ON_AggregateComponentStatus_NotCurrent()
 }
 const ON_AggregateComponentStatus ON_AggregateComponentStatus::NotCurrent = ON_AggregateComponentStatus_NotCurrent();
 
-const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
 
 const ON_SubDComponentPoint ON_SubDComponentPoint::Unset = ON_SubDComponentPoint();
 
@@ -2054,9 +2361,9 @@ static ON_SubDLimitMeshFragment EmptyLimitMeshFragmentInit()
 const ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Empty = EmptyLimitMeshFragmentGridInit();
 const ON_SubDLimitMeshFragment ON_SubDLimitMeshFragment::Empty = EmptyLimitMeshFragmentInit();
 
-ON_SubDLimitPatchFragment ON_SubDLimitPatchFragment_Init(double x)
+ON_SubDLimitNurbsFragment ON_SubDLimitPatchFragment_Init(double x)
 {
-  ON_SubDLimitPatchFragment pf;
+  ON_SubDLimitNurbsFragment pf;
   memset(&pf, 0, sizeof(pf));
   if (!(0.0 == x))
   {
@@ -2068,9 +2375,9 @@ ON_SubDLimitPatchFragment ON_SubDLimitPatchFragment_Init(double x)
   return pf;
 }
 
-const ON_SubDLimitPatchFragment ON_SubDLimitPatchFragment::Empty = ON_SubDLimitPatchFragment_Init(0.0);
-const ON_SubDLimitPatchFragment ON_SubDLimitPatchFragment::Unset = ON_SubDLimitPatchFragment_Init(ON_UNSET_VALUE);
-const ON_SubDLimitPatchFragment ON_SubDLimitPatchFragment::Nan = ON_SubDLimitPatchFragment_Init(ON_DBL_QNAN);
+const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Empty = ON_SubDLimitPatchFragment_Init(0.0);
+const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Unset = ON_SubDLimitPatchFragment_Init(ON_UNSET_VALUE);
+const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Nan = ON_SubDLimitPatchFragment_Init(ON_DBL_QNAN);
 
 static ON_SubDComponentBase UnsetComponentBaseInit()
 {
@@ -2166,6 +2473,7 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_DimStyle::Unset,
       &ON_Material::Unset,
       &ON_Material::Default,
+      &ON_Material::DefaultLockedObject,
       &ON_TextureMapping::Unset,
       &ON_TextureMapping::SurfaceParameterTextureMapping,
       &ON_HatchPattern::Unset,
@@ -2178,6 +2486,12 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_Linetype::Continuous,
       &ON_Linetype::ByLayer,
       &ON_Linetype::ByParent,
+      &ON_Linetype::Hidden,
+      &ON_Linetype::Dashed,
+      &ON_Linetype::DashDot,
+      &ON_Linetype::Center,
+      &ON_Linetype::Border,
+      &ON_Linetype::Dots,
 
       &ON_Layer::Default,
 

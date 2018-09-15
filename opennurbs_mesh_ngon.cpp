@@ -3803,6 +3803,29 @@ unsigned int ON_Mesh::GetNgonOuterBoundary(
   return ON_MeshNgon::FindNgonOuterBoundary(mesh_vertex_list,mesh_face_list,0,ngon_fi_count,ngon_fi,ngon_vi);
 }
 
+static 
+double Internal_NgonBoundaryArea(
+  const ON_Plane& ngon_plane,
+  const ON_3dPointListRef& vertex_list,
+  const ON_SimpleArray< unsigned int >& ngon_vi
+)
+{
+  ON_2dPoint p0, p1;
+  const unsigned int count = ngon_vi.UnsignedCount();
+  if (count < 3)
+    return 0.0;
+  if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[count-1]], &p1.x, &p1.y))
+    return 0.0;
+  double twice_area = 0.0;
+  for (unsigned int i = 0; i < count; i++)
+  {
+    p0 = p1;
+    if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[i]], &p1.x, &p1.y))
+      return 0.0;
+    twice_area += (p0.x - p1.x)*(p0.y + p1.y);
+  }
+  return fabs(0.5*twice_area);
+}
 
 unsigned int ON_MeshNgon::FindPlanarNgons(
   const ON_3dPointListRef& vertex_list,
@@ -3919,16 +3942,13 @@ unsigned int ON_MeshNgon::FindPlanarNgons(
         if ( ngon_vi.UnsignedCount() < ngon_boundary_edge_count )
         {
           // ngon has holes.
-          // For now, take the boundary with the most edges.
-          // TODO - do a geometric test to select the outer boundary
+          // The boundary with the largest area is the outer boundary.
+          const ON_Plane ngon_plane(vertex_list[ngon_vi[0]], e.UnitNormal());
+
+          double ngon_vi_area = Internal_NgonBoundaryArea(ngon_plane, vertex_list, ngon_vi);
+
           for(;;)
           {
-            if (2 * ngon_vi.UnsignedCount() >= ngon_boundary_edge_count)
-            {
-              // ngon_vi[] has the most segments of any possible boundary
-              break;
-            }
-
             ON_SimpleArray<unsigned int> ngon_vi1;
             ngon_boundary_index++;
             if ( !GetNgonBoundarySegments(face_list,
@@ -3940,8 +3960,12 @@ unsigned int ON_MeshNgon::FindPlanarNgons(
               break;
             if ( ngon_vi1.UnsignedCount() < 3 )
               break;
-            if ( ngon_vi1.UnsignedCount() > ngon_vi.UnsignedCount() )
+            double ngon_vi1_area = Internal_NgonBoundaryArea(ngon_plane, vertex_list, ngon_vi1);
+            if (ngon_vi1_area > ngon_vi_area)
+            {
+              ngon_vi_area = ngon_vi1_area;
               ngon_vi = ngon_vi1;
+            }
           }
 
           if (false == bAllowHoles)

@@ -151,25 +151,31 @@ public:
   unsigned char m_extraordinary_corner_vertex_count = 0;
   // m_bExtraordinaryCornerVertex[] = true if the corresponding corner vertex of 
   // the center quad is extraordinary.
-  bool m_bExtraordinaryCornerVertex[4]; 
+  bool m_bExtraordinaryCornerVertex[4] = {};
 
   // m_bExactCubicPatchCorner[] = true if the sub 4x4 grid of subdivision points
   // for the corresponding quadrant can be used to create an exact quadrant cubic patch.
   unsigned char m_exact_quadrant_patch_count = 0;
-  bool m_bExactQuadrantPatch[4];
+  bool m_bExactQuadrantPatch[4] = {};
 
   // m_bBoundaryCrease[] = true if the corresponding m_center_edges[] is a crease
   // and both end vertices are not darts.
   unsigned char m_boundary_crease_count = 0;
-  bool m_bBoundaryCrease[4];
+  bool m_bBoundaryCrease[4] = {};
 
-private:
-  unsigned short m_reserved2 = 0;
+  // If m_bCenterEdgeLimitPoint[n] is true, then m_center_edge0_limit_point[n] is set.
+  bool m_bCenterEdgeLimitPoint[4] = {};
+
+  // If ON_SubDQuadNeighborhood is being used to calculate NURBS patches,
+  // and there is a single exceptional crease vertex, 
+  // then m_center_edge_limit_point[n] = limit point of the middle of m_center_edges[n]
+  // This information is needed to get NURBS patches near exceptional crease vertices.
+  ON_SubDSectorLimitPoint m_center_edge_limit_point[4];
 
 public:
-  const ON_SubDVertex* m_vertex_grid[4][4]; // vertex net m_quad_face corners = ([1][1], [2][1], [2][2], [1][2])
+  const ON_SubDVertex* m_vertex_grid[4][4] = {}; // vertex net m_quad_face corners = ([1][1], [2][1], [2][2], [1][2])
 
-  const ON_SubDEdge* m_edge_grid[4][2];
+  const ON_SubDEdge* m_edge_grid[4][2] = {};
 
   // m_face[][] is a 3x3 grid of faces.
   // Center face
@@ -180,17 +186,18 @@ public:
   //   m_face[2][1] = the neighbor across m_center_edges[1]
   //   m_face[1][2] = the neighbor across m_center_edges[2]
   //   m_face[0][1] = the neighbor across m_center_edges[3]
-  const ON_SubDFace* m_face_grid[3][3];
+  const ON_SubDFace* m_face_grid[3][3] = {};
 
   // edges of center face;
   // m_center_edge[0] connects m_vertex_grid[1][1] and m_vertex_grid[2][1]
   // m_center_edge[1] connects m_vertex_grid[2][1] and m_vertex_grid[2][2]
   // m_center_edge[2] connects m_vertex_grid[2][2] and m_vertex_grid[1][2]
   // m_center_edge[3] connects m_vertex_grid[1][2] and m_vertex_grid[1][1]
-  const ON_SubDEdge* m_center_edges[4]; 
+  const ON_SubDEdge* m_center_edges[4] = {}; 
 
   // If not null, the storage for the referenced subd information is from m_fsh.
   class ON_SubD_FixedSizeHeap* m_fsh = nullptr;
+
 
   // level 1 subdivision control points
   double m_srf_cv1[5][5][3];
@@ -204,6 +211,29 @@ public:
   const ON_SubDVertex* CenterVertex(
     int vi
     ) const;
+
+  static const ON_2dex CenterVertexDex(
+    int vi
+    );
+
+  /*
+  Parameters:
+    vertex_tag_filter - [in]
+      If vertex_tag_filter is not ON_SubD::VertexTag::Unset, then the
+      indexed vertex must have the specified tag.
+    minimum_edge_count_filter - [in]
+      The index vertex must have at least this many edges.
+  Returns:
+    0: m_vertex_grid[1][1] is the unique extraordinary center quad vertex
+    1: m_vertex_grid[2][1] is the unique extraordinary center quad vertex
+    2: m_vertex_grid[2][2] is the unique extraordinary center quad vertex
+    3: m_vertex_grid[3][2] is the unique extraordinary center quad vertex
+    ON_UNSET_UINT_INDEX (otherwise)
+  */
+  unsigned int ExtraordinaryCenterVertexIndex(
+    ON_SubD::VertexTag vertex_tag_filter,
+    unsigned int minimum_edge_count_filter
+  ) const;
 
   /*
   Parameters:
@@ -286,10 +316,6 @@ public:
 
   /*
   Parameters:
-    unset_cv - [in]
-      If a patch cv srf_cv[j][j] does not exist or cannot be set, then all three
-      coordinates of srf_cv[j][j] are set to unset_cv.  Use a value like
-      ON_UNSET_VALUE or ON_DBL_QNAN.
     bEnableApproximatePatch - [in]
       If true, an approximate patches may be generated.
       This parameter should be true only when all permitted subdivisions have
@@ -299,6 +325,8 @@ public:
       neighboring exact patches.
     srf_cv[5][5]
       CVs for a uniform cubic NURBS patch.
+      If a patch cv srf_cv[j][j] does not exist or cannot be set, then all three
+      coordinates of srf_cv[j][j] are set to ON_UNSET_VALUE.
     patch_type - [out]
       patch_type[0] 
         the type of cubic bispan for the 4x4 grid (srf_cv[0][0] ... srf_cv[3][3])
@@ -313,10 +341,9 @@ public:
     Number of bispans set in srf_cv[5][5]
   */
   unsigned int GetLimitSubSurfaceMultiPatchCV(
-    double unset_cv,
     bool bEnableApproximatePatch,
     double srf_cv[5][5][3],
-    ON_SubDLimitPatchFragment::PatchType patch_type[4]
+    ON_SubDLimitNurbsFragment::BispanType patch_type[4]
     );
 
 private:
@@ -337,7 +364,7 @@ private:
       location for a cubic NURBS CV that will yield a smooth result but 
       approximate the true subdivision surface.      
   */
-  bool GetApproximateCV(
+  bool Internal_GetApproximateCV(
     int i,
     int j,
     double unset_cv,
@@ -542,6 +569,14 @@ public:
     m_edge[0] = m_edge[1] = nullptr;
     m_face[0] = m_face[1] = nullptr;
   }
+
+
+  unsigned int DumpTopology(
+    ON_2udex vertex_id_range,
+    ON_2udex edge_id_range,
+    ON_2udex face_id_range,
+    ON_TextLog& text_log
+  ) const;
 
 private:
   ON_SubDLevel(const ON_SubDLevel&) = delete;
@@ -1102,13 +1137,13 @@ public:
     return m_level_count;
   }
 
-private:
   friend class ON_SubDimple;
   ON_SubDLevelIterator() = default;
   ~ON_SubDLevelIterator() = default;
   ON_SubDLevelIterator(const ON_SubDLevelIterator&) = default;
   ON_SubDLevelIterator& operator=(const ON_SubDLevelIterator&) = default;
 
+private:
   class ON_SubDLevel** m_levels = nullptr;
   unsigned int m_level_count = 0;
   unsigned int m_level_index = 0;
@@ -1571,9 +1606,26 @@ public:
   */
   void Clear();
 
-  void ClearSubdivisionLevels(
+  /*
+  Description:
+    Removes every level above max_level_index
+  */
+  void ClearHigherSubdivisionLevels(
     unsigned int max_level_index
     );
+  
+  /*
+  Description:
+    Removes every level below min_level_index
+  */
+  void ClearLowerSubdivisionLevels(
+    unsigned int min_level_index
+    );
+
+
+  void ClearLevelContents(
+    ON_SubDLevel* level
+  );
 
   size_t SizeOf() const
   {
@@ -1729,44 +1781,6 @@ private:
 
 
 
-class ON_SubDQuadFaceSubdivisionCounter
-{
-public:
-  const ON_SubDFace* m_level0_face = nullptr;
-  unsigned int m_level0_face_id = 0;
-
-  unsigned short m_subdivision_count = 0;
-  unsigned short m_corner_index[9];
-
-  void SetLevel0Face(
-    const ON_SubDFace* face
-    )
-  {
-    m_level0_face = face;
-    m_level0_face_id = (nullptr == face) ? 0 : face->m_id;
-    m_subdivision_count = 0;
-  }
-
-  bool BreakpointTest();
-
-  void Push(
-    unsigned int face_corner_index
-    )
-  {
-    if ( face_corner_index >= 0xFFFFU )
-      face_corner_index = 0xFFFFU;
-    if ( m_subdivision_count < sizeof(m_corner_index)/sizeof(m_corner_index[0]) )
-      m_corner_index[m_subdivision_count] = (unsigned short)face_corner_index;
-    m_subdivision_count++;
-    BreakpointTest();
-  }
-
-  void Pop()
-  {
-    if ( m_subdivision_count > 0 )
-      m_subdivision_count--;
-  }
-};
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -1777,23 +1791,25 @@ public:
 class ON_SubDQuadFacePatcher
 {
 public:
-  ON_SubDLimitPatchFragment m_patch_fragment = ON_SubDLimitPatchFragment::Empty;
+  ON_SubDLimitNurbsFragment m_patch_fragment = ON_SubDLimitNurbsFragment::Empty;
   unsigned int m_display_density = 0;
   unsigned int m_patch_count = 0;
   ON__UINT_PTR m_fragment_callback_context = 0;
-  bool (*m_fragment_callback_function)(ON__UINT_PTR, const class ON_SubDLimitPatchFragment*) = nullptr;
+  bool (*m_fragment_callback_function)(ON__UINT_PTR, const class ON_SubDLimitNurbsFragment*) = nullptr;
   bool m_bCallbackResult = false;
   
-  bool SendSinglePatch(
+  bool Send4x4Patch(
     unsigned int display_density,
-    const class ON_SubDQuadFaceSubdivisionCounter& quad_face_subdivision_counter,
-    ON_SubDLimitPatchFragment::PatchType patch_type
+    const class ON_SubDComponentRegion& face_region,
+    const class ON_SubDComponentRegion edge_region[], // [4]
+    ON_SubDLimitNurbsFragment::BispanType bispan_type
     );
   
-  bool SendMultiPatch(
+  bool Send5x5Patch(
     unsigned int display_density,
-    const class ON_SubDQuadFaceSubdivisionCounter& quad_face_subdivision_counter,
-    const ON_SubDLimitPatchFragment::PatchType patch_type[4]
+    const class ON_SubDComponentRegion& face_region,
+    const class ON_SubDComponentRegion edge_region[], // [4]
+    const ON_SubDLimitNurbsFragment::BispanType bispan_type[4]
     );
 };
 
@@ -1884,12 +1900,14 @@ public:
     );
 
   bool GetLimitMesh(
-    class ON_SubDQuadFaceSubdivisionCounter& quad_face_subdivision_counter,
+    class ON_SubDComponentRegion& face_region,
+    ON_SubDComponentRegion edge_region[], // [4]
     const ON_SubDFace* face
     );
 
   bool GetLimitPatches(
-    class ON_SubDQuadFaceSubdivisionCounter& quad_face_subdivision_counter,
+    class ON_SubDComponentRegion& face_region,
+    ON_SubDComponentRegion edge_region[], // [4]
     const ON_SubDFace* face
     );
 
@@ -1960,7 +1978,8 @@ private:
     ) const; 
 
   bool GetLimitSubMeshOrPatch(
-    class ON_SubDQuadFaceSubdivisionCounter& quad_face_subdivision_counter,
+    class ON_SubDComponentRegion& face_region,
+    class ON_SubDComponentRegion edge_region[], // [4]
     class ON_SubDQuadNeighborhood* qft, // may be destroyed
     unsigned int display_density,
     unsigned int point_i0,

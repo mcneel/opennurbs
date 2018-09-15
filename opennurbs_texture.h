@@ -167,9 +167,14 @@ public:
   //
 
   static int Compare(
-    const ON_Texture& a, 
+    const ON_Texture& a,
     const ON_Texture& b
-    );
+  );
+
+  static int CompareAppearance(
+    const ON_Texture& a,
+    const ON_Texture& b
+  );
 
   /*
   Description:

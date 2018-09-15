@@ -278,7 +278,7 @@ bool ON_TextContent::Internal_ParseRtf(
   int ix = rtf_w_string.Find(L"{\\rtf1");
   if (ix != -1)
   {
-    ON_wString dimstyle_facename = dimstyle->Font().FontFaceName();
+    ON_wString dimstyle_facename = ON_Font::RichTextFontName(&dimstyle->Font(),true);
     int idxdeff = rtf_w_string.Find(L"\\deff", ix + 5);
     int deff = 0;
     const wchar_t* n = rtf_w_string.Array() + idxdeff + 5;
@@ -1381,9 +1381,12 @@ int ON_TextContent::FindAndStackFractions(ON_TextRunArray* runs, int i, ON_wStri
   ON_TextRun* run = (*runs)[i];
   run->SetDisplayString(wstr);
   int start = wstr.Find(L"[[");
+  if (wstr.Length() < start + 5)
+    return 0;
+
   while (0 <= start && !wstr.IsEmpty())
   {
-    int delim = wstr.Find(L"/", start + 3);
+    int delim = wstr.Find(L'/', start + 3);
     if (0 <= delim)
     {
       int end = wstr.Find(L"]]", delim + 2);
@@ -1425,6 +1428,8 @@ int ON_TextContent::FindAndStackFractions(ON_TextRunArray* runs, int i, ON_wStri
         }
       }
     }
+    else
+      break;
   }
   return added;
 }
@@ -1911,8 +1916,131 @@ bool ON_TextContent::MeasureTextRunArray(
 
 // Dimension text formatting
 
+bool ON_TextContent::FormatTolerance(
+  double distance,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  ON_wString sDist;
+#ifndef ON_TEXT_BRACKET_FRACTION  // Stacked fraction bracket
+  bool bracket_stack_frac = false;
+#endif
 
-bool ON_TextContent::FormatDistanceAndTolerance(
+  if (nullptr == dimstyle)
+    dimstyle = &ON_DimStyle::Default;
+
+  const ON_DimStyle::LengthDisplay dim_length_display =
+    alt
+    ? dimstyle->AlternateDimensionLengthDisplay()
+    : dimstyle->DimensionLengthDisplay();
+
+  const ON::LengthUnitSystem dim_us
+    = alt
+    ? dimstyle->AlternateDimensionLengthDisplayUnit(0)
+    : dimstyle->DimensionLengthDisplayUnit(0);
+
+  bool bracket_stack_frac = ON_DimStyle::stack_format::None != dimstyle->StackFractionFormat();
+  ON_DimStyle::tolerance_format tolstyle = dimstyle->ToleranceFormat();
+
+  int tolprecision = alt ? dimstyle->AlternateToleranceResolution() : dimstyle->ToleranceResolution();
+  ON_DimStyle::suppress_zero zs = alt ? dimstyle->AlternateZeroSuppress() : dimstyle->ZeroSuppress();
+
+
+  double length_factor = dimstyle->LengthFactor();
+  double unit_length_factor = ON::UnitScale(units_in, dim_us);
+  length_factor *= unit_length_factor;
+  if (alt)
+  {
+    length_factor *= dimstyle->AlternateLengthFactor();
+  }
+
+  switch (tolstyle)
+  {
+  case ON_DimStyle::tolerance_format::None:
+    break;
+
+  case ON_DimStyle::tolerance_format::Symmetrical:
+  {
+    ON_wString sTol;
+    double tol_uv = dimstyle->ToleranceUpperValue();
+    tol_uv *= length_factor;
+
+    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, bracket_stack_frac, sTol))
+    {
+      formatted_string += ON_wString::PlusMinusSymbol;
+      formatted_string += sTol;
+    }
+    break;
+  }
+  case ON_DimStyle::tolerance_format::Deviation:
+  {
+    double tol_uv = dimstyle->ToleranceUpperValue();
+    double tol_lv = dimstyle->ToleranceLowerValue();
+    wchar_t tol_uv_sign = L'+';
+    wchar_t tol_lv_sign = L'-';
+
+    tol_uv *= length_factor;
+    tol_lv *= length_factor;
+
+    if (tol_uv >= 0.0)
+      tol_uv_sign = L'+';
+    else
+      tol_uv_sign = L'-';
+    tol_uv = fabs(tol_uv);
+
+    if (tol_lv >= 0.0)
+      tol_lv_sign = L'-';
+    else
+      tol_lv_sign = L'+';
+    tol_lv = fabs(tol_lv);
+
+    ON_wString sTol_uv, sTol_lv;
+    // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
+    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sTol_uv) &&
+        ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sTol_lv))
+    {
+      formatted_string += L" [[";
+      formatted_string += L"|";
+      formatted_string += tol_uv_sign;
+      formatted_string += sTol_uv;
+      formatted_string += L"|";
+      formatted_string += tol_lv_sign;
+      formatted_string += sTol_lv;
+      formatted_string += L"]]";
+    }
+    break;
+  }
+  case ON_DimStyle::tolerance_format::Limits:
+  {
+    double tol_uv = dimstyle->ToleranceUpperValue();
+    double tol_lv = dimstyle->ToleranceLowerValue();
+    
+    tol_uv *= length_factor;
+    tol_lv *= length_factor;
+    
+    tol_uv = distance + tol_uv;
+    tol_lv = distance - tol_lv;
+    ON_wString sDist_u, sDist_l;
+    // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
+    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sDist_u) &&
+      ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sDist_l))
+    {
+      formatted_string += L" [[";
+      formatted_string += L"|";
+      formatted_string += sDist_u;
+      formatted_string += L"|";
+      formatted_string += sDist_l;
+      formatted_string += L"]]";
+    }
+    break;
+  }
+  }
+  return true;
+}
+
+bool ON_TextContent::FormatDistance(
   double distance_in,
   ON::LengthUnitSystem units_in,
   const ON_DimStyle* dimstyle,
@@ -1928,8 +2056,8 @@ bool ON_TextContent::FormatDistanceAndTolerance(
 
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
-  
-  const ON_DimStyle::LengthDisplay dim_length_display = 
+
+  const ON_DimStyle::LengthDisplay dim_length_display =
     alt
     ? dimstyle->AlternateDimensionLengthDisplay()
     : dimstyle->DimensionLengthDisplay();
@@ -1943,93 +2071,35 @@ bool ON_TextContent::FormatDistanceAndTolerance(
   double unit_length_factor = ON::UnitScale(units_in, dim_us);
   distance = unit_length_factor * length_factor * distance_in;
 
-  // Fixes rounding error (0.00098 -> 0.001)
-  if (fabs(distance) < pow(10.0, -(dimstyle->LengthResolution() + 1)))
-    distance = 0.0;
-
   bool bracket_stack_frac = ON_DimStyle::stack_format::None != dimstyle->StackFractionFormat();
-  ON_DimStyle::tolerance_format tolstyle = dimstyle->ToleranceFormat();
 
   double roundoff = alt ? dimstyle->AlternateRoundOff() : dimstyle->RoundOff();
   int precision = alt ? dimstyle->AlternateLengthResolution() : dimstyle->LengthResolution();
-  int tolprecision = alt ? dimstyle->AlternateToleranceResolution() : dimstyle->ToleranceResolution();
   ON_DimStyle::suppress_zero zs = alt ? dimstyle->AlternateZeroSuppress() : dimstyle->ZeroSuppress();
 
-  switch (tolstyle)
-  {
-  case ON_DimStyle::tolerance_format::None:
-  {
-    ON_NumberFormatter::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, formatted_string);
-    break;
-  }
-  case ON_DimStyle::tolerance_format::Symmetrical:
-  {
-    ON_wString sTol;
-    double tol_uv = dimstyle->ToleranceUpperValue();
-    if (alt)
-    {
-      double altlengthfactor = dimstyle->AlternateLengthFactor() / dimstyle->LengthFactor();
-      tol_uv *= altlengthfactor;
-    }
-    if (ON_NumberFormatter::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, formatted_string) &&
-      ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, bracket_stack_frac, sTol))
-    {
-      formatted_string += ON_wString::PlusMinusSymbol;
-      formatted_string += sTol;
-    }
-    break;
-  }
-  case ON_DimStyle::tolerance_format::Deviation:
-  {
-    double tol_uv = dimstyle->ToleranceUpperValue();
-    double tol_lv = dimstyle->ToleranceLowerValue();
-    if (alt)
-    {
-      double altlengthfactor = dimstyle->AlternateLengthFactor() / dimstyle->LengthFactor();
-      tol_uv *= altlengthfactor;
-      tol_lv *= altlengthfactor;
-    }
-    ON_wString sTol_u, sTol_l;
-    // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
-    if (ON_NumberFormatter::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, formatted_string) &&
-      ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sTol_u) &&
-      ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sTol_l))
-    {
-      formatted_string += L" [[|+";
-      formatted_string += sTol_u;
-      formatted_string += L"|-";
-      formatted_string += sTol_l;
-      formatted_string += L"]]";
-    }
-    break;
-  }
-  case ON_DimStyle::tolerance_format::Limits:
-  {
-    double tol_uv = dimstyle->ToleranceUpperValue();
-    double tol_lv = dimstyle->ToleranceLowerValue();
-    if (alt)
-    {
-      double altlengthfactor = dimstyle->AlternateLengthFactor() / dimstyle->LengthFactor();
-      tol_uv *= altlengthfactor;
-      tol_lv *= altlengthfactor;
-    }
-    tol_uv = distance + tol_uv;
-    tol_lv = distance - tol_lv;
-    ON_wString sDist_u, sDist_l;
-    // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
-    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sDist_u) &&
-      ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sDist_l))
-    {
-      formatted_string += L" [[|";
-      formatted_string += sDist_u;
-      formatted_string += L"|";
-      formatted_string += sDist_l;
-      formatted_string += L"]]";
-    }
-    break;
-  }
-  }
+  // Fixes rounding error (0.00098 -> 0.001)
+  if (fabs(distance) < pow(10.0, -(precision + 1)))
+    distance = 0.0;
+
+  ON_NumberFormatter::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, formatted_string);
   return true;
+}
+
+
+bool ON_TextContent::FormatDistanceAndTolerance(
+  double distance_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  if (ON_DimStyle::tolerance_format::Limits != dimstyle->ToleranceFormat())
+    ON_TextContent::FormatDistance(distance_in, units_in, dimstyle, alt, formatted_string);
+  if (ON_DimStyle::tolerance_format::None != dimstyle->ToleranceFormat())
+    ON_TextContent::FormatTolerance(distance_in, units_in, dimstyle, alt, formatted_string);
+  
+  return true;
+
 }
 
 // static
@@ -2049,45 +2119,61 @@ bool ON_TextContent::FormatDistanceMeasurement(
   ON_wString user_string(user_text);
   int cpi = user_string.Find(L"<>");
 
-  if (-1 == cpi) // No <> token to replace - just print the user text - no substitution
+  if (-1 != cpi)
   {
-    formatted_string = user_string;
-  }
-  else
-  {
+    if (nullptr != dimstyle->Prefix())
+      formatted_string += dimstyle->Prefix();
+
     int len = user_string.Length();
     for (int i = 0; i < len; i++)
     {
       if (i == cpi)
       {
-        // this section replaces the <> with the formatted string
-        // including prefix, suffix and alternate dimension string
-        if (nullptr != dimstyle->Prefix())
-          formatted_string += dimstyle->Prefix();
-
-        ON_wString sDistance;
-        if (FormatDistanceAndTolerance(distance_in, units_in, dimstyle, false, sDistance))
-          formatted_string += sDistance;
-
+        FormatDistanceAndTolerance(distance_in, units_in, dimstyle, false, formatted_string);
         if (nullptr != dimstyle->Suffix())
           formatted_string += dimstyle->Suffix();
-
         if (dimstyle->Alternate()) // text alternate units
         {
           if (dimstyle->AlternateBelow())
             formatted_string += L"{\\par}";
           formatted_string += dimstyle->AlternatePrefix();
-
-          sDistance.Empty();
-          if (FormatDistanceAndTolerance(distance_in, units_in, dimstyle, true, sDistance))
-            formatted_string += sDistance;
-
+          FormatDistanceAndTolerance(distance_in, units_in, dimstyle, true, formatted_string);
           formatted_string += dimstyle->AlternateSuffix();
         }
         i++; // skips past the < in <>
       }
       else
         formatted_string += user_string[i];
+    }
+  }
+  else // no "<>" in the string
+  {
+    //if (nullptr != dimstyle->Prefix())
+    //  formatted_string += dimstyle->Prefix();
+
+    int ix = user_string.ReverseFind(L"\\par");
+    if (ix >= 0)
+    {
+      formatted_string += user_string.Left(ix);
+      int il = user_string.Length() - ix - 4;
+      formatted_string += user_string.Right(il);
+    }
+    else
+    {
+      formatted_string += user_string;
+    }
+    ON_TextContent::FormatTolerance(distance_in, units_in, dimstyle, false, formatted_string);
+
+    //if (nullptr != dimstyle->Suffix())
+    //  formatted_string += dimstyle->Suffix();
+
+    if (dimstyle->Alternate()) // text alternate units
+    {
+      if (dimstyle->AlternateBelow())
+        formatted_string += L"{\\par}";
+      formatted_string += dimstyle->AlternatePrefix();
+      FormatDistanceAndTolerance(distance_in, units_in, dimstyle, true, formatted_string);
+      formatted_string += dimstyle->AlternateSuffix();
     }
   }
   return true;

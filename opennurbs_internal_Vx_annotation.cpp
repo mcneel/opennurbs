@@ -40,7 +40,7 @@ ON::TextVerticalAlignment ON::TextVerticalAlignmentFromV5Justification(
   unsigned int v5_justification_bits
 )
 {
-  ON::TextVerticalAlignment valign = ON::TextVerticalAlignment::BottomOfTop;
+  ON::TextVerticalAlignment valign = ON::TextVerticalAlignment::Top;
 
   const unsigned int v5_valign_mask
     = ON_OBSOLETE_V5_TextObject::eTextJustification::tjBottom
@@ -333,9 +333,14 @@ void ON_Text::Internal_SetObsoleteV5TextObjectInformation(
     break;
   }
 
+  SetAllowTextScaling(V5_text_object.m_annotative_scale);
+
   // Set m_obsolete_V5_model_space_text_scale
   for (;;)
   {
+    if (!V5_text_object.m_annotative_scale)
+      break;
+
     if (false == annotation_context->AnnotationSettings().Is_V5_AnnotationScalingEnabled())
       break;
 
@@ -402,7 +407,6 @@ static bool RemoveV5Wrapping(const wchar_t* txt, const ON_DimStyle& dimstyle, do
   return wrapped;
 }
 
-
 ON_Text* ON_Text::CreateFromV5TextObject(
   const class ON_OBSOLETE_V5_TextObject& V5_text_object,
   const class ON_3dmAnnotationContext* annotation_context,
@@ -432,6 +436,8 @@ ON_Text* ON_Text::CreateFromV5TextObject(
   ON_wString newtxt;
   bool wraptext = RemoveV5Wrapping(txt, dim_style, wrapwidth, newtxt);
 
+  newtxt.Replace(L"\\", L"\\\\");
+
   if (wraptext)
   {
     double dimscale = dim_style.DimScale();
@@ -453,7 +459,8 @@ ON_Text* ON_Text::CreateFromV5TextObject(
   if (valign != dim_style.TextVerticalAlignment())
     V6_text_object->SetTextVerticalAlignment(&dim_style, valign);
 
-  if (annotation_context->AnnotationSettingsAreSet())
+
+  if (V5_text_object.m_annotative_scale && annotation_context->AnnotationSettingsAreSet())
   {
     if (false == annotation_context->AnnotationSettings().Is_V5_AnnotationScalingEnabled())
     {
@@ -575,24 +582,29 @@ ON_OBSOLETE_V5_TextObject* ON_OBSOLETE_V5_TextObject::CreateFromV6TextObject(
   V5_text_object->SetAnnotativeScaling(true);
   V5_text_object->SetJustification(justification);
 
+  V5_text_object->m_annotative_scale = V6_text_object.AllowTextScaling();
+
   if (ON::active_space::model_space == annotation_context->ViewContext())
   {
     double v5_text_entity_scale = 1.0;
-    const ON_3dmAnnotationSettings& annotation_settings = annotation_context->AnnotationSettings();
-    if (annotation_settings.Is_V5_AnnotationScalingEnabled()
-      && ON_IsValid(annotation_settings.m_dimscale)
-      && annotation_settings.m_dimscale > 0.0
-      )
+    if (V6_text_object.AllowTextScaling())
     {
-      //v5_text_entity_scale = annotation_settings.m_dimscale;
-      v5_text_entity_scale = annotation_settings.WorldViewTextScale();
-    }
+      const ON_3dmAnnotationSettings& annotation_settings = annotation_context->AnnotationSettings();
+      if (annotation_settings.Is_V5_AnnotationScalingEnabled()
+        && ON_IsValid(annotation_settings.m_dimscale)
+        && annotation_settings.m_dimscale > 0.0
+        )
+      {
+        //v5_text_entity_scale = annotation_settings.m_dimscale;
+        v5_text_entity_scale = annotation_settings.WorldViewTextScale();
+      }
 
-    const double dim_style_scale = V6_text_object.DimScale(&parent_dim_style);
-    if (ON_IsValid(dim_style_scale) && dim_style_scale > 0.0 && v5_text_entity_scale > 0.0 && dim_style_scale != v5_text_entity_scale)
-    {
-      const double scale = dim_style_scale / v5_text_entity_scale;
-      V5_text_object->m_textheight *= scale;
+      const double dim_style_scale = V6_text_object.DimScale(&parent_dim_style);
+      if (ON_IsValid(dim_style_scale) && dim_style_scale > 0.0 && v5_text_entity_scale > 0.0 && dim_style_scale != v5_text_entity_scale)
+      {
+        const double scale = dim_style_scale / v5_text_entity_scale;
+        V5_text_object->m_textheight *= scale;
+      }
     }
   }
 
@@ -758,6 +770,8 @@ ON_Leader* ON_Leader::CreateFromV5Leader(
   double wrapwidth = 0.0;
   ON_wString newtxt;
   bool wraptext = RemoveV5Wrapping(ldrtext, dim_style, wrapwidth, newtxt);
+  newtxt.Replace(L"\\", L"\\\\");
+
   V6_leader->Create(newtxt, &dim_style, points.Count(), points, plane, wraptext,  wrapwidth);
 
   V6_leader->Internal_SetDimStyleFromV5Annotation(V5_leader,annotation_context);
@@ -1010,7 +1024,9 @@ ON_DimLinear* ON_DimLinear::CreateFromV5DimLinear(
   V6_dim_linear->Internal_SetDimStyleFromV5Annotation(V5_dim_linear,annotation_context);
   V6_dim_linear->Set2dTextPoint(V5_dim_linear.Point(ON_OBSOLETE_V5_DimLinear::POINT_INDEX::userpositionedtext_pt_index));
   V6_dim_linear->SetUseDefaultTextPoint(!V5_dim_linear.UserPositionedText());
-  V6_dim_linear->SetUserText(V5_dim_linear.TextValue());
+  ON_wString usrtext = V5_dim_linear.TextFormula();
+  usrtext.Replace(L"\\", L"\\\\");
+  V6_dim_linear->SetUserText(usrtext.Array());
 
   const ON_OBSOLETE_V5_DimExtra* extra = ON_OBSOLETE_V5_DimExtra::DimensionExtension(const_cast<ON_OBSOLETE_V5_DimLinear*>(&V5_dim_linear), false);
   if(nullptr != extra)
@@ -1071,11 +1087,11 @@ ON_OBSOLETE_V5_DimAngular* ON_OBSOLETE_V5_DimAngular::CreateFromV6DimAngular(
     V6_dim_angular.Plane().ClosestPointTo(textpt, &tp2.x, &tp2.y);
     V5_dim_angle->SetPoint(ON_OBSOLETE_V5_DimAngular::userpositionedtext_pt_index, tp2);
   }
-  const ON_wString usertext = V6_dim_angular.PlainUserText();
+  ON_wString usertext = V6_dim_angular.PlainUserText();
+  usertext.Replace(L"\\", L"\\\\");
   V5_dim_angle->SetTextFormula(usertext);
 
   V5_dim_angle->m_textheight = V6_dim_angular.TextHeight(&parent_dim_style);
-
   V5_dim_angle->SetV5_3dmArchiveDimStyleIndex( annotation_context->V5_ArchiveDimStyleIndex() );
 
   return V5_dim_angle;
@@ -1116,7 +1132,9 @@ ON_DimAngular* ON_DimAngular::CreateFromV5DimAngular(
   if (V5_dim_angle.UserPositionedText())
     V6_dim_angle->Set2dTextPoint(text_center);
   V6_dim_angle->SetUseDefaultTextPoint(!V5_dim_angle.UserPositionedText());
-  V6_dim_angle->SetUserText(V5_dim_angle.TextFormula());
+  ON_wString usrtext = V5_dim_angle.TextFormula();
+  usrtext.Replace(L"\\", L"\\\\");
+  V6_dim_angle->SetUserText(usrtext.Array());
 
   // updates any m_overrides to be current and updates content hash.
   const ON_DimStyle& parent_dim_style = annotation_context->ParentDimStyle();
@@ -1238,7 +1256,9 @@ ON_DimRadial* ON_DimRadial::CreateFromV5DimRadial(
 
 
   V6_dim_radial->SetUseDefaultTextPoint(!V5_radial_dimension.UserPositionedText());
-  V6_dim_radial->SetUserText(V5_radial_dimension.TextValue());
+  ON_wString usrtext = V5_radial_dimension.TextFormula();
+  usrtext.Replace(L"\\", L"\\\\");
+  V6_dim_radial->SetUserText(usrtext.Array());
   
   const ON_OBSOLETE_V5_DimExtra* extra = ON_OBSOLETE_V5_DimExtra::DimensionExtension(const_cast<ON_OBSOLETE_V5_DimRadial*>(&V5_radial_dimension), false);
   if (nullptr != extra)
@@ -1360,10 +1380,23 @@ ON_DimOrdinate* ON_DimOrdinate::CreateFromV5DimOrdinate(
   if (koffset2 < k / 10.0)
     koffset2 = k / 2.0;
 
+  double dist = def_pt.DistanceTo(leader_pt);
+  if (koffset1 > dist - 0.05)
+    koffset1 = dist * 2.0 / 3.0;
+  if (koffset2 > dist - koffset1)
+    koffset2 = (dist - koffset1) / 2.0;
+
   V6_dim_ordinate->Create(dim_style_id, plane, direction, plane.origin, def_pt, leader_pt, koffset1, koffset2);
   V6_dim_ordinate->Internal_SetDimStyleFromV5Annotation(v5_dim_ordinate,annotation_context);
   V6_dim_ordinate->SetDimTextLocation(&parent_dim_style, ON_DimStyle::TextLocation::InDimLine);
-
+  
+  const ON_OBSOLETE_V5_DimExtra* extra = ON_OBSOLETE_V5_DimExtra::DimensionExtension(const_cast<ON_OBSOLETE_V5_DimOrdinate*>(&v5_dim_ordinate), false);
+  if (nullptr != extra)
+  {
+    V6_dim_ordinate->SetDetailMeasured(extra->DetailMeasured());
+    V6_dim_ordinate->SetDistanceScale(extra->DistanceScale());
+  }
+  
   // updates any m_overrides to be current and updates content hash.
   parent_dim_style.ContentHash();
   V6_dim_ordinate->DimensionStyle(parent_dim_style).ContentHash();

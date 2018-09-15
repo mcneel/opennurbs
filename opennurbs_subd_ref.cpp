@@ -223,7 +223,7 @@ ON_SubDComponentRef ON_SubDComponentRef::Create(
   bool bValidInput = false;
   switch (component_ptr.ComponentType())
   {
-  case ON_SubDComponentPtr::ComponentPtrType::vertex:
+  case ON_SubDComponentPtr::Type::Vertex:
     {
       const ON_SubDVertex* vertex = ON_SUBD_VERTEX_POINTER(component_ptr.m_ptr);
       if (nullptr != vertex && vertex->m_id > 0 && vertex->m_id < ON_UNSET_UINT_INDEX)
@@ -235,7 +235,7 @@ ON_SubDComponentRef ON_SubDComponentRef::Create(
       }
     }
     break;
-  case ON_SubDComponentPtr::ComponentPtrType::edge:
+  case ON_SubDComponentPtr::Type::Edge:
     {
       const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(component_ptr.m_ptr);
       if (nullptr != edge && edge->m_id > 0 && edge->m_id < ON_UNSET_UINT_INDEX)
@@ -247,7 +247,7 @@ ON_SubDComponentRef ON_SubDComponentRef::Create(
       }
     }
     break;
-  case ON_SubDComponentPtr::ComponentPtrType::face:
+  case ON_SubDComponentPtr::Type::Face:
     {
       const ON_SubDFace* face = ON_SUBD_FACE_POINTER(component_ptr.m_ptr);
       if (nullptr != face && face->m_id > 0 && face->m_id < ON_UNSET_UINT_INDEX)
@@ -392,7 +392,7 @@ bool ON_SubDComponentRef::GetBBox(
 
   switch (m_component_ptr.ComponentType())
   {
-  case ON_SubDComponentPtr::ComponentPtrType::vertex:
+  case ON_SubDComponentPtr::Type::Vertex:
     {
       const ON_SubDVertex* vertex = m_component_ptr.Vertex();
       if ( nullptr == vertex )
@@ -408,7 +408,7 @@ bool ON_SubDComponentRef::GetBBox(
       }
     }
     break;
-  case ON_SubDComponentPtr::ComponentPtrType::edge:
+  case ON_SubDComponentPtr::Type::Edge:
     {
       const ON_SubDEdge* edge = m_component_ptr.Edge();
       if ( nullptr == edge )
@@ -424,7 +424,7 @@ bool ON_SubDComponentRef::GetBBox(
       }
     }
     break;
-  case ON_SubDComponentPtr::ComponentPtrType::face:
+  case ON_SubDComponentPtr::Type::Face:
     {
       const ON_SubDFace* face = m_component_ptr.Face();
       if ( nullptr == face )

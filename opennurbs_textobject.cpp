@@ -228,7 +228,7 @@ bool ON_Text::Transform(const ON_Xform& xform, const ON_DimStyle* parent_dimstyl
   {
     double oldheight = TextHeight(parent_dimstyle);
     double newheight = oldheight * scale;
-    SetDimScale(parent_dimstyle, newheight);
+    SetTextHeight(parent_dimstyle, newheight);
   }
   return rc;
 }
@@ -270,6 +270,17 @@ bool ON_Text::GetTextXform(
   double dimscale,
   ON_Xform& text_xform_out
 )const 
+{
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_Text::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
 {
   if (nullptr == dimstyle)
     return false;
@@ -326,6 +337,11 @@ bool ON_Text::GetTextXform(
         text_center = (text_corners[0] + text_corners[2]) / 2.0;
         ON_3dVector text_xdir = textobjectplane.xaxis;
         ON_3dVector text_ydir = textobjectplane.yaxis;
+        if (nullptr != model_xform)
+        {
+          text_xdir.Transform(*model_xform);
+          text_ydir.Transform(*model_xform);
+        }
         if (fabs(textrotation) > ON_SQRT_EPSILON)
         {
           text_xdir.Rotate(textrotation, textobjectplane.zaxis);
@@ -337,12 +353,12 @@ bool ON_Text::GetTextXform(
         if (fx)
         {
           mxf.Mirror(text_center, ON_3dVector::XAxis);
-          textcenter_xf = textcenter_xf * mxf;
+          textscale_xf = textscale_xf * mxf;
         }
         if (fy)
         {
           mxf.Mirror(text_center, ON_3dVector::YAxis);
-          textcenter_xf = textcenter_xf * mxf;
+          textscale_xf = textscale_xf * mxf;
         }
       }
     }

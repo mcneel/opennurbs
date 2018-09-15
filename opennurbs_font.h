@@ -15,6 +15,207 @@
 #if !defined(OPENNURBS_FONT_INC_)
 #define OPENNURBS_FONT_INC_
 
+
+/// <summary>
+/// https://monotype.github.io/panose/pan1.htm
+/// </summary>  
+class ON_CLASS  ON_PANOSE1
+{
+public:
+  ON_PANOSE1() = default;
+  ~ON_PANOSE1() = default;
+  ON_PANOSE1(const ON_PANOSE1&) = default;
+  ON_PANOSE1& operator=(const ON_PANOSE1&) = default;
+
+  /// <summary>
+  /// PANOSE 1.0 font family kind
+  ///
+  /// The overall genre of the alphabet or script that is being described 
+  /// is signified by the Family Kind digit. This digit consists of two parts: 
+  /// the script kind identifier and the genre kind identifier. 
+  /// In this case, the script identifier is Latin, and the genre type is described as Text, 
+  /// Hand Written, Decorative or Symbol.
+  
+  /// The Family Kind digit is not controlled by specific measurements, 
+  /// and there has been no attempt to mathematically determine the 
+  /// appropriate category for a given font design. Visual and aesthetic 
+  /// classification of Latin faces that are obviously script, decorative,
+  /// or symbol fonts is required.
+  /// </summary>  
+  enum class FamilyKind : ON__UINT8
+  {
+    /// <summary>"Any" means match that digit with any available digit, which allows the mapper to handle distortable typefaces. </summary>
+    Any = 0,
+
+    /// <summary>"No Fit" means that the item being classified does not fit within the PANOSE 1.0 classification system. </summary>
+    NoFit = 1,
+
+    /// <summary>
+    /// To decide whether a font belongs to the Latin Text group follow the two step process below.
+    ///
+    /// A. Answer the following three questions. If they are all yes, then it belongs in this group.
+    /// If the answer is still ambiguous, go to step B.
+    ///
+    ///   Does the font belong to a family that includes italic versions? 
+    ///   Most fonts in this group have a variety of weights and most include italic versions.
+    ///
+    ///   Are the characters in the font made up of standard topologies constructed of standard parts?
+    ///
+    ///  Is some portion of the font suitable for composing a paragraph of text?
+    ///
+    /// B. As a final tie breaker, look at the second digit of the Decorative (Section 4) 
+    //     and Handwritten (Section 3) families and see if there is something in them that 
+    ///    fits the font in question better.
+    /// https://monotype.github.io/panose/pan2.htm
+    /// </summary>
+    LatinText = 2,
+
+    /// <summary>
+    /// Many fonts are clearly scripts and unrelated to any book face. On occasion, 
+    /// though, the distinction gets rather vague. A good rule of thumb is that if 
+    /// the cursive font is part a family that includes a book face, then it should 
+    /// be classified in the Latin Text group. If it is freestanding with no obvious 
+    /// related book face, then it falls into the Latin Hand Written group. This can 
+    /// be a bit difficult to determine, since a font house may only choose to provide
+    /// the cursive from a larger family, so the classifier needs to think about the 
+    /// face being processed and not do it purely by rote. 
+    /// https://monotype.github.io/panose/pan3.htm
+    /// </summary>
+    LatinScript = 3,
+
+    /// <summary>
+    /// Latin Decorative faces are those that are designed more for impact than readability. 
+    /// Usually Decoratives are used singly or in small groups, for special purposes. 
+    /// Small cap fonts are also included in this group because they have become unusual 
+    /// enough to be considered special purpose fonts.
+    /// https://monotype.github.io/panose/pan4.htm
+    /// </summary>
+    LatinDecorative = 4,
+
+    /// <summary>
+    /// Latin Symbol is where all the nonalphabetic fonts reside. These are fonts that can be loaded
+    /// like normal text fonts, but do not contain readable characters. Dingbats and specialized 
+    /// symbol fonts are two examples.
+    /// https://monotype.github.io/panose/pan5.htm
+    /// </summary>
+    LatinSymbol = 5
+  };
+
+  /*
+Special values "Any" (0) and "No Fit" (1) exist for every category, which have specific meanings to the mapper.  
+*/
+
+  /*
+  Description:
+    In the rare cases when an ON_PANOSE1::Classification value must be passed
+    as an unsigned int, use ON_PANOSE1::ClassificationFromUnsigned() to
+    convert the unsigned value to an ON_PANOSE1::Classification value.
+  Parameters:
+    unsigned_panose_family_kind - [in]
+  */
+  static ON_PANOSE1::FamilyKind FamilyKindFromUnsigned(
+    unsigned int unsigned_panose_family_kind
+    );
+
+  static const wchar_t* FamilyKindToWideString(
+    ON_PANOSE1::FamilyKind family_kind
+  );
+
+  static const ON_PANOSE1 Zero; // All PANOSE 1.0 values are zero, which means (Any,Any,...,Any)
+
+  /*
+  Returns:
+    True if every PANOSE 1.0 value is zero which means there is no useful
+    font classification information in the instance.
+  */
+  bool IsZero() const;
+
+  /*
+  Returns:
+    True if every PANOSE 1.0 value is zero or one which means there is no useful
+    font classification information in the instance.
+  */
+  bool IsZeroOrOne() const;
+
+  /*
+  Returns:
+    True if some PANOSE 1.0 value is not zero and not one.  This means this 
+    PANOSE 1.0 information may be useful in searching for similar fonts.
+  */
+  bool IsSet() const;
+
+  ON_PANOSE1::FamilyKind PANOSE1FamilyKind() const;
+
+  /*
+  Returns:
+    A pointer to an array of 10 bytes of PANOSE 1 classification properties.
+    The initial byte is the PANOSE 1 Classification and is identical
+    to the value returned by FontClassification().
+    The interpretation of the following 9 bytes depends on the
+    value of the first byte. If the initial byte is 
+    0 = ON_FontPANOSE1::Classification::Any (0) 
+    or 1 = ON_FontPANOSE1::Classification::NoFit,
+    then these 9 bytes have no meaning.    
+  */
+  const ON__UINT8* TenBytes() const;
+
+  /*
+  Parameters:
+    classification - [in]
+      PANOSE 1.0 font classification
+    panose1_properties_bytes - [in]
+      Array of 9 bytes of PANOSE1 properties
+  */
+  void SetTenBytes(const ON__UINT8* panose1_ten_bytes);
+
+  /*
+  Parameters:
+    family_kind - [in]
+      PANOSE 1.0 font Family kind classification
+    panose1_properties_bytes - [in]
+      Array of 9 bytes of PANOSE1 properties
+  */
+  void SetNineBytes(
+    ON_PANOSE1::FamilyKind family_kind,
+    const ON__UINT8* panose1_properties_bytes
+  );
+
+  void Dump(
+    class ON_TextLog& text_log
+  ) const;
+
+  bool Write(
+    class ON_BinaryArchive& archive
+  ) const;
+
+  bool Read(
+    class ON_BinaryArchive& archive
+  );
+
+private:
+  // PANOSE 1.0 properties (10 bytes)
+  //  // text / script / decrorative / symbol
+  ON_PANOSE1::FamilyKind m_family_kind = ON_PANOSE1::FamilyKind::Any;
+
+  // The interpretation of the m_prop* values depends on the value of m_family_kind.
+  //
+  // For every classification property,
+  // 0 =  "Any" and means match that digit with any available digit, which allows the mapper to handle distortable typefaces.
+  // 1 = "No Fit" means that the item being classified does not fit within the PANOSE 1.0 classification system.
+  // Additional values need to be 
+  
+  // Classification       // Latin text       / Latin script    / Latin decrorative   / Latin symbol
+  ON__UINT8 m_prop1 = 0;  // serif style      / tool kind       / decorative class    / symbol kind
+  ON__UINT8 m_prop2 = 0;  // weight           / weight          / weight              / weight
+  ON__UINT8 m_prop3 = 0;  // proportion       / spacing         / aspect              / spacing
+  ON__UINT8 m_prop4 = 0;  // contrast         / aspect ratio    / contrast            / aspect ration and contrast
+  ON__UINT8 m_prop5 = 0;  // stroke variation / contrast        / serif variant       / aspect ratio 94
+  ON__UINT8 m_prop6 = 0;  // arm style        / script topology / fill                / aspect ratio 119
+  ON__UINT8 m_prop7 = 0;  // letter form      / script form     / lining              / aspect ratio 157
+  ON__UINT8 m_prop8 = 0;  // midline          / finials         / decorative topology / aspect ratio 163
+  ON__UINT8 m_prop9 = 0;  // x-height         / x-ascent        / character range     / aspect ratio 211
+};
+
 class ON_CLASS ON_FontMetrics
 {
 public:
@@ -28,8 +229,20 @@ public:
   // All properties are zero.
   static const ON_FontMetrics Unset;
 
+
+  // Used when it is impossible to find normalized font metrics (missing font for example)
+  // and something valid is required for a computation.
+  static const ON_FontMetrics LastResortNormalizedMetrics;
+
+  // Used when it is impossible to find font metrics (missing font for example)
+  // and something valid is required for a computation.
+  // Currently LastResortMetrics.UPM() is 2048 and this value is chosen because
+  // it is the largest common UPM found in real fonts encountered in March 2018.
+  static const ON_FontMetrics LastResortMetrics;
+
+
   /*
-    ON_FontMetric::DefaultLineFeedRatio*ON_FontMetrics().AspectOfI()
+    ON_FontMetric::DefaultLineFeedRatio*ON_FontMetrics().AscentOfCapital()
     can be used to cook up a line space value when using the 
     ON_FontMetrics.LineSpace() value defined by the font is
     not desired.
@@ -47,30 +260,40 @@ public:
   /*
   Returns:
     Signed distance from the baseline to highest point on a glyph outline.
+
   Remarks:
     If every glyph outline in the font has (0,0) on the basline, then Ascent() 
     is the maximum glyph bounding box Y.
+
+    Ascent typically includes internal leading, the space used for 
+    diacritcial marks above capital latin letters. For this reason,
+    Ascent is typically greater than AscentOfCapital.
+
+    Windows: = DWRITE_FONT_METRICS.ascent
   */
   int Ascent() const;
 
   /*
   Returns:
-    Signed distance from the baseline to lowest point on a glyph outline.
+    Signed distance from the English baseline to lowest point on a glyph outline.
+
   Remarks:
-    This value is typically negative because glyphs for letters like 'j'
+    This value is typically negative because glyphs for letters like 'g' and 'j'
     typically have a portion of their outline below the baseline.  However,
     some fonts have positive descent.
-    If every glyph outline in the font has (0,0) on the basline, then Ascent() 
-    is the maximum glyph bounding box Y.
+    If every glyph outline in the font has (0,0) on the basline, then Descent() 
+    is the minimum glyph bounding box Y.
+
+    Windows: = -DWRITE_FONT_METRICS.descent
   */
   int Descent() const;
 
   /*
   Returns:
-    The postive distance to move a base line when moving to a new line of text.
+    The postive distance to move the base line when moving to a new line of text.
 
   Remarks:
-    For almost every font used to render text, LineSpace() > (Ascent() - Descent()).
+    For almost every font used to render English text, LineSpace() > (Ascent() - Descent()).
 
     This metric is sometimes called "height", but that term is often confused
     with (Ascent() - Descent()). 
@@ -79,6 +302,10 @@ public:
     vertical distance. For fonts desingned to render vertical lines of text,
     LineSpace() is a horizontal distance.  Depending on the context, the 
     direction to move can be up, down, left or right.
+
+    Windows: = DWRITE_FONT_METRICS.ascent
+             + DWRITE_FONT_METRICS.descent
+             + DWRITE_FONT_METRICS.lineGap;
   */
   int LineSpace() const;
 
@@ -92,41 +319,67 @@ public:
     In TrueType fonts, UPM is often a power of two and generally 1024 or 2048.
     In OpenType fonts, UPM is often 1000.
     In PostScript fonts, UPM is often 1000.
+
+    Windows: = DWRITE_FONT_METRICS.designUnitsPerEm
   */
   int UPM() const;
 
   /*
   Returns:
-    The signed distance from the baseline to the highest point on the 'I' glyph.
+    AscentOfCapital()
+  */
+  int AscentOfI() const;
+
+  /*
+  Returns:
+    The font's typographic capital height.
+
   Remarks:
-    The primary uses of AscentOfI() are:
+    The primary uses of AscentOfCapital() are:
     1) 
     Calculate a scale factor to produce text with a user specified "text height".
     2) 
     To calculate insertion location for ON::TextVerticalAlignment::Middle
     and ON::TextVerticalAlignment::Top.
 
-    Since 2005, opennurbs has used
-    (user specified text height)/AscentOfI()
+    From 2005-2018 opennurbs used the ascent of a capital I. 
+    Beginning in 2018 this value is taken from the system font metrics
+    so that fonts designed to render Asian language text, symbols, 
+    and emojis will display as expected and lines of text containing 
+    mulitiple fonts will render more clearly.
+
+    The value (user specified text height)/AscentOfCapital() is used
     as the scale factor to render glyphs when user interface has provided 
-    a "text height" value.  Users are more satisfied with this approach
-    than when the scaling is base on line space or maximum font glyph ascent
-    values. Experiments have ruled out the use of any other capital latin 
-    letter glyph except 'H' for this use.  When a font does not contain an
-    'I' glyph, a suitable value is returned that can be used for text height
-    scaling and vertical alignment.
+    a "text height" value. 
+
+    If the capial height property of a font is not
+    available, the ascent of I or H can be used instead. (There are
+    commonly used fonts where using other glpyhs gives undesirable results.)OfI.
+
+    Windows: = DWRITE_FONT_METRICS.capHeight
+    Apple: = NSFont.
   */
-  int AscentOfI() const;
+  int AscentOfCapital() const;
   
+
+  /*
+  Returns:
+    The font's typographic x-height.
+
+  Remarks:
+    The x-height is used to help select a substitute font to use for missing glpyhs.
+  */
+  int AscentOfx() const;
+
   /*
   Description:
-    Get the scale to apply to normalized glyph boxes and outlines to 
-    render the 'I' in the glyph's font at a height of text_height.
   Parameters:
-    text_height - [in]
+    height_of_capital - [in]
       The desired height of typical capital latin letter glyphs.
+      For fonts like Arial, Helvetica, and Times Roman the 
+      heights of the H and I glyphs = font's height of capital.
   Returns:
-    text_height / AscentOfI().
+    text_height / AscentOfCapital().
   */
   double GlyphScale(double text_height) const;
   
@@ -174,6 +427,10 @@ public:
     double scale
   );
 
+  static const ON_FontMetrics Normalize(
+    const ON_FontMetrics& font_metrics
+  );
+
   void SetHeights(
     int ascent,
     int descent,
@@ -181,10 +438,16 @@ public:
     int line_space
   );
 
-  bool HeightsAreValid() const;
-
   void SetAscentOfI(
-    int ascent_of_I
+    int ascent_of_capital
+  );
+
+  void SetAscentOfCapital(
+    int ascent_of_capital
+  );
+
+  void SetAscentOfx(
+    int ascent_of_x
   );
   
   void SetStrikeout(
@@ -196,13 +459,84 @@ public:
     int underscore_position,
     int underscore_thickness
   );
+
+  void SetHeights(
+    double ascent,
+    double descent,
+    double UPM,
+    double line_space
+  );
+
+  void SetAscentOfCapital(
+    double ascent_of_capital
+  );
+
+  void SetAscentOfx(
+    double ascent_of_x
+  );
   
+  void SetStrikeout(
+    double strikeout_position,
+    double strikeout_thickness
+  );
+  
+  void SetUnderscore(
+    double underscore_position,
+    double underscore_thickness
+  );
+
+  /*
+  Returns:
+    True if all of the following are true.
+    UPM() > 0
+    At least one of Ascent() or Descent() is not zero.
+    Ascent() > Descent()
+    None of UPM(), Ascent(), or Descent() is ON_UNSET_INT_INDEX or -ON_UNSET_INT_INDEX.
+  */
+  bool AscentDescentAndUPMAreValid() const;
+
+  /*
+  Returns:
+    True if all of the following are true.
+    AscentDescentAndUPMAreValid() is true
+    LineSpace() >= Ascent() - Descent()
+    AscentOfCapital() <= Ascent()
+    AscentOfx() <= Ascent()
+  */
+  bool HeightsAreValid() const;
+
+  /*
+  Returns:
+    True if all of the following are true.
+    HeightsAreValid() is true.
+    AscentOfCapital() > 0
+  */
+  bool IsSetAndValid() const;
+
+  /*
+  Returns true if at least one metric is not zero.
+  */
+  bool IsSet() const;
+
+  /*
+  Returns true if all metrics are zero
+  */
+  bool IsUnset() const;
+
+  void Dump(class ON_TextLog& text_log) const;
+
+#if defined(ON_OS_WINDOWS_GDI)
+  static const ON_FontMetrics CreateFromDWriteFontMetrics(const struct DWRITE_FONT_METRICS* dwrite_font_metrics);
+  static const ON_FontMetrics CreateFromDWriteFont(struct IDWriteFont* dwrite_font);
+#endif
+ 
 private:
   int m_UPM = 0;           // units per EM
   int m_ascent = 0;        // max over all glyphs in font of (highest outline point - baseline point).y
   int m_descent = 0;       // min over all glyphs in font of (lowest outline point - baseline point).y
   int m_line_space = 0;    // distance between baselines 
-  int m_ascent_of_I = 0;   // (highest 'I' outline point - I baseline point).y
+  ON__UINT16 m_ascent_of_capital = 0;
+  ON__UINT16 m_ascent_of_x = 0;
 
   int m_strikeout_thickness = 0;      //
   int m_strikeout_position = 0;  // 
@@ -214,9 +548,1561 @@ private:
   int m_reserved1 = 0;
   double m_reserved2 = 0.0;
   double m_reserved3 = 0.0;
-  ON__UINT_PTR m_reserved5 = 0;
+  ON__UINT_PTR m_reserved_ptr = 0;
 };
 
+class ON_CLASS ON_TextBox
+{
+public:
+  ON_TextBox() = default;
+  ~ON_TextBox() = default;
+  ON_TextBox(const ON_TextBox&) = default;
+  ON_TextBox& operator=(const ON_TextBox&) = default;
+
+  ON_TextBox(
+    ON_2dPoint bbmin,
+    ON_2dPoint bbmax
+  );
+
+#if defined(ON_OS_WINDOWS_GDI)
+  static const ON_TextBox CreateFromDWriteGlyphMetrics(const struct DWRITE_GLYPH_METRICS* dwrite_glyph_metrics);
+#endif
+
+  /*
+  Returns:
+    true if bounding box is set.
+  */
+  bool IsSet() const;
+
+  static const ON_TextBox Scale(
+    const ON_TextBox& text_box,
+    double scale
+  );
+
+  /*
+  Returns:
+    A text box with m_bbmin, m_bbmax, m_max_basepoint are translated by delta.
+    m_advance is not changed.
+  */
+  static const ON_TextBox Translate(
+    const ON_TextBox& text_box,
+    const ON_2dVector& delta
+  );
+
+  static const ON_TextBox Translate(
+    const ON_TextBox& text_box,
+    const ON_2dex& delta
+  );
+
+  /*
+  Parameters:
+    lhs - [in]
+      lhs.m_advance is ignored
+    rhs - [in]
+      rhs.m_advance is ignored
+  Returns:
+    Returned m_bbmin, m_bbmax, m_max_basepoint are the union of the lhs and rhs bounding box.
+    Returned m_advance = (0,0)
+  */
+  static const ON_TextBox Union(
+    const ON_TextBox& lhs,
+    const ON_TextBox& rhs
+  );
+
+  void Dump(class ON_TextLog& text_log) const;
+
+public:
+  static const ON_TextBox Unset;
+
+public:
+  // The use context determines the length units. Common units include font glyph design units,
+  // normalizied font design units, various display units.  Typically x increases to the right,
+  // y increases upwards. For glyph and text run boxes, (0,0) is the horizontal base
+  //
+  ON_2dex m_bbmin = ON_2dex::Unset;
+  ON_2dex m_bbmax = ON_2dex::Unset;
+
+  // m_max_basepoint.i = maximum horizontal delta in any line. Increases to the right, decreases to the left.
+  // m_max_basepoint.i = vertical delta to basline of bottom line. Increases upward, decreases downward.
+  ON_2dex m_max_basepoint = ON_2dex::Zero;
+
+  // m_advance is a vector that specifies where the basepoint should be moved
+  // to after the text is rendered. m_advance.i and m_advance.j are always >= 0.  
+  // When glyphs are rendered right to left (Arabic and Hebrew being examples)
+  // or bottom to top, the rendering code must apply the correct sign. Some
+  // reasons for using positive advance values for every glyph is that left to right 
+  // and right to left languages can be appear on a single line and the sign of y 
+  // associated with "up" is sometimes positive and sometimes negative.
+  // ON_TextBox::Translate does not modify the vector m_advance. 
+  // ON_TextBox::Union ignored input advance values and returns a box with advance = (0,0).
+  // 0 <= m_advance.i will be <= m_max_basepoint.i.
+  ON_2dex m_advance  = ON_2dex::Zero;
+
+
+  // NOTE: 
+  //  When the SDK can be broken, this class needs another int = verticalOriginY.
+  //  verticalOriginY is required when placing glyphs vertically.
+};
+
+class ON_CLASS ON_OutlineFigurePoint
+{
+public:
+  ON_OutlineFigurePoint() = default;
+  ~ON_OutlineFigurePoint() = default;
+  ON_OutlineFigurePoint(const ON_OutlineFigurePoint&) = default;
+  ON_OutlineFigurePoint& operator= (const ON_OutlineFigurePoint&) = default;
+
+public:
+  enum class Type : ON__UINT8
+  {
+    Unset = 0,
+
+    //////////////////////////////////////////////////////////////////
+    //
+    // Beginning of a figure
+    //
+    // The open/closed state is unknown.
+    BeginFigureUnknown = 1,
+
+    // Marks the beginning of an open figure. (single stroke font, ...)
+    BeginFigureOpen = 2,
+
+    // Marks the beginning of a closed figure.
+    BeginFigureClosed = 3,
+
+
+    //////////////////////////////////////////////////////////////////
+    //
+    // Interior of a figure
+    //
+
+    // interior line segment point
+    LineTo = 6,
+
+    // interior quadratic bezier (degree=2, order=3) control point.
+    QuadraticBezierPoint = 7,
+
+    // interior cubic bezier (degree=3, order=4) control point.
+    CubicBezierPoint = 8,
+
+    //////////////////////////////////////////////////////////////////
+    //
+    // End of a figure
+    //
+
+    // End of an open figure (single stroke font, ...)
+    EndFigureOpen = 11,
+
+    // End of a closed figure.
+    EndFigureClosed = 12,
+
+
+    //////////////////////////////////////////////////////////////////
+    //
+
+    // Error of some sort.
+    Error = 15
+  };
+
+  enum class Proximity : ON__UINT8
+  {
+    Unset = 0,
+
+    // The point is the beginning or end of a line or bezier segment in the figure
+    OnFigure = 1,
+
+    // The point is a bezier control point that may be off the figure
+    OffFigure = 2,
+
+    Error = 15
+  };
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::BeginFigureUnknown
+      ON_OutlineFigurePoint::Type::BeginFigureFilled
+      ON_OutlineFigurePoint::Type::BeginFigureHollow
+      ON_OutlineFigurePoint::Type::BeginFigureOpen
+  */
+  static bool IsBeginFigurePointType(
+    ON_OutlineFigurePoint::Type point_type
+  );
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::MoveTo
+      ON_OutlineFigurePoint::Type::LineTo
+      ON_OutlineFigurePoint::Type::QuadraticBezierPoint
+      ON_OutlineFigurePoint::Type::CubicBezierPoint
+  */
+  static bool IsInteriorFigurePointType(
+    ON_OutlineFigurePoint::Type point_type
+  );
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::LineToCloseContour
+      ON_OutlineFigurePoint::Type::EndFigureUnknown
+      ON_OutlineFigurePoint::Type::EndFigureClosed
+      ON_OutlineFigurePoint::Type::EndFigureOpen
+  */
+  static bool IsEndFigurePointType(
+    ON_OutlineFigurePoint::Type point_type
+  );
+
+  static ON_OutlineFigurePoint::Type ContourPointTypeFromUnsigned(unsigned contour_point_type_as_unsigned);
+
+  static const ON_OutlineFigurePoint Unset;
+  static const ON_OutlineFigurePoint Error;
+
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::BeginFigureUnknown
+      ON_OutlineFigurePoint::Type::BeginFigureFilled
+      ON_OutlineFigurePoint::Type::BeginFigureHollow
+      ON_OutlineFigurePoint::Type::BeginFigureOpen
+  */
+  bool IsBeginFigurePoint() const;
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::MoveTo
+      ON_OutlineFigurePoint::Type::LineTo
+      ON_OutlineFigurePoint::Type::QuadraticBezierPoint
+      ON_OutlineFigurePoint::Type::CubicBezierPoint
+  */
+  bool IsInteriorFigurePoint() const;
+
+  /*
+  Returns:
+    true if point_type is one of the following:
+      ON_OutlineFigurePoint::Type::LineToCloseContour
+      ON_OutlineFigurePoint::Type::EndFigureUnknown
+      ON_OutlineFigurePoint::Type::EndFigureClosed
+      ON_OutlineFigurePoint::Type::EndFigureOpen
+  */
+  bool IsEndFigurePoint() const;
+
+
+  ON_OutlineFigurePoint::Type PointType() const;
+
+  ON_OutlineFigurePoint::Proximity PointProximity() const;
+
+  /*
+  Returns:
+    True if the point is on at the start or end of a line or bezier segment.
+    False otherwise (the point is in iterior control point in bezier segment or unset).
+  */
+  bool IsOnFigure() const;
+
+  /*
+  Returns:
+    True if the point is in iterior control point in bezier segment.
+    False otherwise (the point is on at the start or end of a line or bezier segment or unset).
+  */
+  bool IsOffFigure() const;
+
+  ON__UINT16 FigureIndex() const;
+
+  const ON_2fPoint Point() const;
+  const ON_2dPoint Point2d() const;
+
+  /*
+  Returns:
+    Point rounded to nearest integer coordinates.
+  */
+  const ON_2iPoint Point2i() const;
+
+  /*
+  Returns:
+    Point rounded up (ceil) to integer coordinates.
+  */
+  const ON_2iPoint Point2iCeil() const;
+
+  /*
+  Returns:
+    Point rounded down (floor) to integer coordinates.
+  */
+  const ON_2iPoint Point2iFloor() const;
+
+public:
+  ON_OutlineFigurePoint::Type m_point_type = ON_OutlineFigurePoint::Type::Unset; 
+
+  ON_OutlineFigurePoint::Proximity m_point_proximity = ON_OutlineFigurePoint::Proximity::Unset;
+
+  // 0 = unset. The first figure in an outline has m_figure_index = 1.
+  ON__UINT16 m_figure_index = 0; 
+
+  // point location
+  ON_2fPoint m_point = ON_2fPoint::NanPoint;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_OutlineFigurePoint>;
+#endif
+
+class ON_CLASS ON_OutlineFigure
+{
+public:
+  ON_OutlineFigure() = default;
+  ~ON_OutlineFigure() = default;
+  ON_OutlineFigure(const ON_OutlineFigure&) = default;
+  ON_OutlineFigure& operator=(const ON_OutlineFigure&) = default;
+
+public:
+  static const ON_OutlineFigure Unset;
+
+public:
+
+  enum class Orientation : ON__UINT8
+  {
+    Unset = 0,
+
+    CounterClockwise = 1,
+
+    Clockwise = 2,
+
+    NotOriented = 3,
+
+    // An error occured in orientation calculations
+    Error = 15
+  };
+
+  /// <summary>
+  /// ON_OutlineFigure::Type identifies the structure of the figure.
+  /// </summary>
+  enum class Type : ON__UINT8
+  {
+    ///<summary>
+    /// This value should be used for parameters where the type is has not
+    /// been explicity to determined.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// Unknown indicates an attempt was made to determine the type,
+    /// that attempt failed, and further attempts will just waste time.
+    /// It is best to pass Unset when calling functions and you have 
+    /// not calculated the type.
+    ///</summary>
+    Unknown = 1,
+
+    ///<summary>
+    /// Single stroke figures can be open or closed and are not designed to be filled.
+    /// Single stroke fonts like RhSS and MecSoft have these types of figures.
+    ///</summary>
+    SingleStroke = 2,
+
+    ///<summary>
+    /// Double stroke figures are closed and contain no area. 
+    /// They consist of a single stroke path follow by the reverse of the single stroke path.
+    /// The CamBam Stick fonts have these types of figures. A double stroke figure can
+    /// be converted to a single stroke figure by removing the reversed overlapping portion.
+    ///</summary>
+    DoubleStroke = 3,
+
+    ///<summary>
+    /// The outline figures are perimeters around non-empty areas that are typically
+    /// filled or hollow depending on their orientation.
+    /// The majority of TrueType, OpenType, and PostScript fonts have these types of figures.
+    ///</summary>
+    Perimeter = 4,
+
+    ///<summary>
+    /// The outline figure is not a perimeter around a non-empty area.
+    ///</summary>
+    NotPerimeter = 5,
+
+    ///<summary>
+    /// Used in a context where there are multiple figures with different types.
+    ///</summary>
+    Mixed = 7,
+  };
+
+  /*
+  Returns:
+    If the figure type is known for certain, that type is returned.
+    Otherwise ON_OutlineFigure::Type::Unknown is returned.
+  */
+  static ON_OutlineFigure::Type FigureTypeFromFontName(
+    const wchar_t* font_name
+  );
+
+  /*
+  Returns:
+    Figure orientation.
+  */
+  ON_OutlineFigure::Orientation FigureOrientation() const;
+
+  /*
+  Returns:
+    Figure type.
+  */
+  ON_OutlineFigure::Type FigureType() const;
+
+  /*
+  Returns:
+    Signed area estimate. For simple closed curves, a positive area indicates a counter-clockwise orientation.
+  */
+  double AreaEstimate() const;
+
+  ON__UINT16 FigureIndex() const;
+
+  unsigned int GetFigureCurves(
+    double scale,
+    bool b3d,
+    ON_SimpleArray< ON_Curve* >& figure_curves
+    ) const;
+
+  unsigned int GetFigureCurves(
+    double scale,
+    bool b3d,
+    ON_SimpleArray< ON_NurbsCurve* >& figure_curves
+    ) const;
+
+  bool IsValidFigure(
+    bool bLogErrors
+  ) const;
+  
+  const ON_BoundingBox BoundingBox() const;
+
+  bool ReverseFigure();
+
+  bool NegateY();
+
+  /*
+  Description:
+    Get a polyline approximation of the figure.
+  Parameters:
+    tolerance - [in]
+      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+    PointCallbackFunc - [in]
+      called once for each point in the polyline
+    context - [in]
+      third parameter to PointCallbackFunc()
+  Returns:
+    Number of points passed to PointCallbackFunc()
+  */
+  unsigned int GetPolyline(
+    double tolerance,
+    void(*PointCallbackFunc)(float x, float y, void*),
+    void* context
+  ) const;
+
+  /*
+  Description:
+    Get a polyline approximation of the figure.
+  Parameters:
+    tolerance - [in]
+      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+    points - [out]
+      polyline points are appended to this array.
+  Returns:
+    Number of points appended to oiunts[]
+  */
+  unsigned int GetPolyline(
+    double tolerance,
+    ON_SimpleArray<ON_2dPoint>& points
+  ) const;
+
+  /*
+  Description:
+    Get a polyline approximation of the figure.
+  Parameters:
+    tolerance - [in]
+      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+    points - [out]
+      polyline points are appended to this array.
+  Returns:
+    Number of points appended to oiunts[]
+  */
+  unsigned int GetPolyline(
+    double tolerance,
+    ON_SimpleArray<ON_2fPoint>& points
+  ) const;
+
+  /*
+  Description:
+    Get a polyline approximation of the figure.
+  Parameters:
+    tolerance - [in]
+      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+    points - [out]
+      polyline points are appended to this array.
+  Returns:
+    Number of points appended to oiunts[]
+  */
+  unsigned int GetPolyline(
+    double tolerance,
+    ON_SimpleArray<ON_3dPoint>& points
+  ) const;
+
+  /*
+  Description:
+    Get a polyline approximation of the figure.
+  Parameters:
+    tolerance - [in]
+      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+    points - [out]
+      polyline points are appended to this array.
+  Returns:
+    Number of points appended to oiunts[]
+  */
+  unsigned int GetPolyline(
+    double tolerance,
+    ON_SimpleArray<ON_3fPoint>& points
+  ) const;
+
+private:
+  friend class ON_Outline;
+
+private:
+  ON__UINT32 m_reserved3 = 0;
+
+private:
+  mutable ON_OutlineFigure::Orientation m_orientation = ON_OutlineFigure::Orientation::Unset;
+  mutable ON_OutlineFigure::Type m_figure_type = ON_OutlineFigure::Type::Unset;
+
+private:
+  mutable ON__UINT8 m_bbox_status = 0; // 0 = unset, 1 = set, 7 = error
+  mutable ON__UINT8 m_area_status = 0; // 0 = unset, 1 = set, 7 = error
+
+
+public:
+  ON__UINT16 m_figure_index = 0;
+
+private:
+  mutable ON_2fPoint m_bbox_min = ON_2fPoint::NanPoint;
+  mutable ON_2fPoint m_bbox_max = ON_2fPoint::NanPoint;
+
+  double m_short_tolerance = 0.0;
+  mutable double m_area_estimate = ON_DBL_QNAN;
+
+public:
+  ON_SimpleArray<ON_OutlineFigurePoint> m_points;
+
+private:
+  ON__UINT32 Internal_FigureEndDex( bool bLogErrors ) const;
+
+  bool Internal_HasValidEnds( bool bLogErrors ) const;
+  ON__UINT32 Internal_EstimateFigureSegmentCount() const;
+
+  static bool Internal_NegateY(ON_2fPoint&);
+
+
+  unsigned int Internal_SegmentDegree(
+    ON__UINT32 segment_start_dex
+  ) const;
+
+  /*
+  Parameters:
+    figure_end_dex - [in]
+      index of the last point in the figure.
+    b3dCurve - [in]
+      If true the result is 3d, otherwise it is 2d.
+    curve - [in]
+      If not nullptr, result is stored here
+  Returns:
+    nurbs curve
+  */
+  class ON_NurbsCurve* Internal_GetFigureCurve(
+    ON__UINT32 figure_end_dex,
+    ON__UINT32 segment_start_dex,
+    ON__UINT32* segment_end_dex,
+    bool b3d,
+    class ON_NurbsCurve* destination_curve
+  ) const;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_OutlineFigure>;
+#endif
+
+class ON_CLASS ON_Outline
+{
+public:
+  ON_Outline() = default;
+  ~ON_Outline() = default;
+  ON_Outline(const ON_Outline&) = default;
+  ON_Outline& operator=(const ON_Outline&) = default;
+
+public:
+  static const ON_Outline Unset;
+
+
+
+  ON__UINT32 UnitsPerEM() const;
+
+  void SetUnitsPerEM(
+    ON__UINT32 units_per_em
+  );
+
+  /*
+  Returns:
+    Number of figures in the outline.
+  */
+  unsigned int FigureCount() const;
+
+  /*
+  Parameters:
+    i - [in]
+      0 <= i < count
+  */
+  const ON_OutlineFigure& Figure(
+  int i
+  ) const;
+
+  const ON_ClassArray< ON_OutlineFigure >& Figures() const;
+
+  /*
+  Returns:
+    Number of points in all figures in the outline.
+  */
+  unsigned int OutlinePointCount() const;
+
+  /*
+  Parameters:
+    bLogErrors - [in]
+      
+  Returns:
+    True if the outline and all figures are valid.
+  */
+  bool IsValidOutline(
+    bool bLogErrors
+  ) const;
+
+  /*
+  Description:
+    The outline consists of one or more figures. 
+    There can be zero or more closed outer figures 
+    (single stroke fonts have zero, Arial I has one, Arial i has two). 
+    There can be zero or more inner figures 
+    (Arial I has zero, O has one, 8 has two).
+  Parameters:
+    scale - [in]
+      If scale > 0.0, then all curves are scaled this factor with (0,0) 
+      as the fixed point. Otherwise all curves are returned in font design units.
+      ON_Font::ScaleFromTextHeight() is a good tool to get this value.
+    b3d - [in]
+      If true, then 3d curves in the world xy plane are returned.
+      Otherwise 2d curves  are returned.
+    figure_curves - [in]
+      Results are appended to this array.
+  Returns:
+    Number of figures appended to outline_curves[]
+  */
+  unsigned int GetOutlineCurves(
+    double scale,
+    bool b3d,
+    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& outline_curves
+    ) const;
+
+  /*
+  Returns:
+    The bounding box of the outline curves.
+
+  Remarks:
+     The glyph metrics bounding box of the metrics can be different from the 
+     figure outline bounding box.
+     For example, the glyph metrics box for 1 (numeral one) often contains space beyond the
+     glyph outline because 1 visually occupies the same space as a 2. The choice is up to the
+     font designer and takes into account the desired font asthetics of columns of numbers.
+     */
+  const ON_BoundingBox OutlineBoundingBox() const;
+
+  /*
+  Returns:
+    Glyph metrics.
+  Remarks:
+     The glyph metrics bounding box of the metrics can be different from the 
+     figure outline bounding box.
+     For example, the glyph metrics box for 1 (numeral one) often contains space beyond the
+     glyph outline because 1 visually occupies the same space as a 2. The choice is up to the
+     font designer and takes into account the desired font asthetics of columns of numbers.
+  */
+  const ON_TextBox GlyphMetrics() const;
+
+  /*
+  Description:
+    The signed area estimate calculated as the sum of each figure's area estimate.
+  */
+  double AreaEstimate() const;
+  
+  /*
+  Description:
+    Reverse every figure.
+  */
+  void Reverse();
+
+  /*
+  Description:
+    Sort figures so that each outer loop is followed by it's inner loops. 
+  */
+  void SortFigures(
+    ON_OutlineFigure::Orientation outer_loop_orientation
+  );
+
+  /*
+  Returns:
+    Type of figures in the outline.
+  */
+  ON_OutlineFigure::Type FigureType() const;
+
+public:
+  ON__UINT16 AppendFigure(
+    const ON_SimpleArray<ON_OutlineFigurePoint>& points
+  );
+
+  ON__UINT16 AppendFigure(
+    size_t point_count,
+    const ON_OutlineFigurePoint* points
+  );
+
+  void SetGlyphMetrics(
+    ON_TextBox glyph_metrics
+  );
+
+private:
+  friend class ON_OutlineAccumulator;
+  ON__UINT32 m_units_per_em = 0;
+  ON_OutlineFigure::Type m_figure_type = ON_OutlineFigure::Type::Unset;
+  mutable ON__UINT8 m_bbox_status = 0; // 0 = unset, 1 = set, 7 = error
+
+  mutable ON__UINT8 m_sorted_status = 0; // 0 = unsorted, 1 = sorted, 7 = error;
+
+  ON__UINT8 m_reserved1 = 0;
+
+  double m_short_tolerance = 0.0;
+
+  mutable ON_BoundingBox m_bbox = ON_BoundingBox::NanBoundingBox;
+  ON_TextBox m_glyph_metrics = ON_TextBox::Unset;
+
+  // unsets the bounding box, m_bSingleStroke settings, ...
+  void Internal_ClearCachedValues() const;
+
+  ON__UINT16 Internal_AppendFigure(
+    size_t point_count,
+    const ON_OutlineFigurePoint* points,
+    double short_tolerance,
+    bool bSkipPointFigures
+  );
+  
+  ON_ClassArray< ON_OutlineFigure > m_figures;
+};
+
+class ON_CLASS ON_OutlineAccumulator
+{
+public:
+  ON_OutlineAccumulator() = default;
+  ~ON_OutlineAccumulator() = default;
+
+private:
+  ON_OutlineAccumulator(const ON_OutlineAccumulator&) = delete;
+  ON_OutlineAccumulator& operator=(const ON_OutlineAccumulator&) = delete;
+
+public:
+
+  /*
+  Parameters:
+    font_units_per_em - [in]
+      This is the height and width of the square font design grid.
+      In TrueType fonts, font_units_per_em is often a power of two and generally 1024 or 2048.
+      In OpenType fonts, font_units_per_em is often 1000.
+      In PostScript fonts, font_units_per_em is often 1000.
+    figure_type - [in]
+      True if the glyphs are single stroke and open glyphs should not
+      be closed.
+    coordinate_type - [in]
+      ON_OutlineAccumulator::Coordinate::Integer
+        The points passed to the figure drawing methods will be ON_2iPoint values.
+        The resulting outline will contain ON_2iPoint values.
+      ON_OutlineAccumulator::Coordinate::Float
+        The points passed to the figure drawing methods will be ON_2fPoint values.
+        The resulting outline will contain ON_2fPoint values.
+      ON_OutlineAccumulator::Coordinate::Float
+        The points passed to the figure drawing methods will be ON_2fPoint values
+        that should be rounded to the nearest integer. The resulting outline
+        will contain ON_2iPoint values.
+    bAccumulatePoints - [in]
+      True if the points should be accumulated in the m_outline_points[]
+      array.
+      False if the points are not accumulated.
+      In all cases, the outline bounding box is calculated.
+  Remarks:
+    Typically both the width and the height of the 'M' glyph 
+    in the font are less than font_units_per_em.
+  */
+  bool BeginGlyphOutline(
+    ON__UINT32 font_units_per_em,
+    ON_OutlineFigure::Type figure_type,
+    ON_Outline* destination_outline
+  );
+
+  bool EndOutline();
+
+  void Clear();
+
+  ON_Outline* HarvestOutline();
+
+  /*
+  Parameters:
+    bNegatePointY - [in]
+      If true, the y coordinate of the accumulated points is negated.
+      This is done before any orientation adjustments are performed.
+    outer_orientation - [in]
+      If outer_orientation is ON_OutlineFigure::Orientation::Clockwise,
+      or ON_OutlineFigure::Orientation::CounterClockwise, then
+      the figures are oriented so that outer boundaries have
+      the specified orientation.
+      Otherwise this parameter is ignored.
+  */
+  bool EndOutline(
+    bool bNegatePointY,
+    ON_OutlineFigure::Orientation outer_orientation
+  );
+ 
+  ///////////////////////////////////////////////////////////
+  //
+  // Tools for adding figures to the outline
+  //
+
+  /*
+  Description:
+    Begins a figure. A glyph outline has zero or more figures.
+  Parameters:
+    point_type - [in] 
+      One of 
+        ON_OutlineFigurePoint::Type::BeginFigureUnknown
+        ON_OutlineFigurePoint::Type::BeginFigureFilled
+        ON_OutlineFigurePoint::Type::BeginFigureHollow
+        ON_OutlineFigurePoint::Type::BeginFigureOpen
+        ON_OutlineFigurePoint::Type::BeginFigureClosed
+    figure_starting_point - [in]
+      First point in the figure.
+  */
+  bool BeginFigure(
+    ON_OutlineFigurePoint::Type point_type,
+    ON_2fPoint figure_starting_point
+  );
+  
+  /*
+  Description:
+    Appends a line segment to the current figure.
+    The line segment begins at the current_point and ends at line_end_point.
+  Parameters:
+    line_end_point - [in]
+  */
+  bool AppendLine(
+    ON_2fPoint line_end_point
+  );  
+
+  /*
+  Description:
+    Appends a quadratic (degree = 2, order = 3) bezier to the current figure.
+    The quadratic bezier begins at the current_point and ends at cv2.
+    The quadratic bezier has three control points
+    (current point, cv1, cv2, cv3).
+  Parameters:
+    cv1 - [in]
+    cv2 - [in]
+      end of the quadratic bezier.
+  */
+  bool AppendQuadraticBezier(
+    ON_2fPoint cv1,
+    ON_2fPoint cv2
+  );
+  
+  /*
+  Description:
+    Appends a cubic (degree = 3, order = 4) bezier to the current figure.
+    The cubic bezier begins at the current_point and ends at cv3.
+    The cubic bezier has four control points
+    (current point, cv1, cv2, cv3).
+  Parameters:
+    cv1 - [in]
+    cv2 - [in]
+    cv3 - [in]
+      end of the cubic bezier.
+  */
+  bool AppendCubicBezier(
+    ON_2fPoint cv1,
+    ON_2fPoint cv2,
+    ON_2fPoint cv3
+  );
+
+  /*
+  Description:
+    Terminates a figure that was started with the previous call to 
+    BeginFigure2i() or BeginFigure2f(). 
+    The locations of the figure's starting and final points are always identical.
+    The point_type parameter is used to indicate if a line segment from the
+    starting point to the final point is included in the figure.
+  Parameters:
+    point_type - [in] 
+      One of 
+        ON_OutlineFigurePoint::Type::EndFigureUnknown
+          If FigureType() is SingleStroke, this value is treated as
+          if it were ON_OutlineFigurePoint::Type::EndFigureOpen.
+          Otherwise, the final point in the figure will have this type.
+        ON_OutlineFigurePoint::Type::EndFigureClosed
+          If FigureType() is SingleStroke is true, this value is treated as
+          if it were ON_OutlineFigurePoint::Type::EndFigureOpen.
+          Otherwise, the final point in the figure will have this type.
+        ON_OutlineFigurePoint::Type::EndFigureOpen
+          The final point in the figure will have this type.   
+  */
+  bool EndFigure(
+    ON_OutlineFigurePoint::Type point_type
+  );
+
+  void AbandonCurrentFigure();
+
+  /*
+  Returns:
+    Number of points in the current figure.
+  */
+  unsigned int CurrentFigurePointCount() const;
+
+  /*
+  Returns:
+    Number of input errors that have occured.
+  Remarks:
+    When an error occurs, the current figure is terminated.
+  */
+  unsigned int ErrorCount() const;
+
+  const ON_OutlineFigurePoint CurrentFigureStartPoint() const;
+  
+  const ON_OutlineFigurePoint CurrentFigurePreviousPoint() const;
+  
+  const ON_OutlineFigurePoint CurrentFigurePoint() const;
+
+  const bool CurrentFigureAccumulating() const;
+
+  /*
+  Returns:
+    Outline design units per em.
+  */
+  ON__UINT32 UnitsPerEM() const;
+
+  ON_OutlineFigure::Type FigureType() const;
+
+  bool IsInitialized() const;
+  bool IsFinalized() const;
+  bool IsInitializedOrFinalized() const;
+
+private:
+  // Units per EM > 0
+  // This is the height and width of the square grid font design grid.
+  //     The width of the 'M' glyph in a font can be  different from UPM.
+  //     The height of the 'M' glyph in a font is typically less than UPM.
+  //     In TrueType fonts, UPM is often a power of two and generally 1024 or 2048.
+  //     In OpenType fonts, UPM is often 1000.
+  //     In PostScript fonts, UPM is often 1000.
+  ON__UINT32 m_units_per_em = 0;
+    
+  ON__UINT8 m_status = 0;      // 0 = none, 1 initialized, 2 finalized.
+  ON_OutlineFigure::Type m_figure_type = ON_OutlineFigure::Type::Unset;
+
+  // 0 = not accumulating points in a figure.
+  // 1 = accumulating points in a figure.
+  int m_figure_depth = 0;
+
+  // Total number of errors
+  ON__UINT32 m_error_count = 0;
+  
+  // current figure accumulator
+  ON_OutlineFigurePoint m_figure_start = ON_OutlineFigurePoint::Unset;
+  ON_OutlineFigurePoint m_figure_prev = ON_OutlineFigurePoint::Unset;
+  ON_OutlineFigurePoint m_figure_current = ON_OutlineFigurePoint::Unset;
+  ON_SimpleArray< ON_OutlineFigurePoint > m_point_accumulator;
+  ON_Outline* m_outline = nullptr;
+  ON_Outline* m_managed_outline = nullptr;
+
+public:
+  /*
+    Expert user tool for getting the start point of 
+    the figure currently being accumulated.
+  */
+  const ON_OutlineFigurePoint ActiveFigureStartPoint() const;
+
+  /*
+    Expert user tool for getting the curent point of 
+    the figure being accumulated.
+  */
+  const ON_OutlineFigurePoint ActiveFigureCurrentPoint() const;
+
+  const ON_Outline& Outline() const;
+
+private:
+  bool Internal_InFigure() const;
+
+  void Internal_AccumulateError(
+    bool bCancelCurrentFigure
+  );
+
+  bool Internal_AccumulatePoint(
+    ON_OutlineFigurePoint::Type point_type,
+    ON_2fPoint point_location,
+    bool bPointInBoundingBox
+  );
+
+  ON_Outline& Internal_Outline();
+};
+
+
+/*
+  The best way to get a useful ON_FontGlyph is to call
+  ON_Font.CodePointGlyph(unicode_code_point)
+*/
+class ON_CLASS ON_FontGlyph 
+{
+public:
+  /*
+    The best way to get a useful ON_FontGlyph is to call
+    ON_Font.CodePointGlyph(unicode_code_point)
+  */
+  ON_FontGlyph() = default;
+  ~ON_FontGlyph() = default;
+  ON_FontGlyph(const ON_FontGlyph& src);
+  ON_FontGlyph& operator=(const ON_FontGlyph& src);
+
+
+  /*
+    If the font and code point are valid, constructs an unmanaged 
+    glyph with the specified font and code point.
+    The glyph box is not set.
+  */
+  ON_FontGlyph(
+    const class ON_Font* font,
+    ON__UINT32 code_point
+  );
+
+public:
+  static const ON_FontGlyph Unset;
+
+  const class ON_Font* Font() const;
+  
+  const ON__UINT32 CodePoint() const;
+
+  bool IsEndOfLineCodePoint() const;
+
+  static bool IsEndOfLineCodePoint(
+    ON__UINT32 unicode_code_point
+  );
+
+  static bool IsCarriageReturnAndLineFeed(
+    ON__UINT32 unicode_code_point,
+    ON__UINT32 next_unicode_code_point
+  );
+
+  /*
+  Returns:
+    Glyph box in opennurbs normalized font coordinates.
+  */
+  const ON_TextBox& GlyphBox() const;
+
+  /*
+  Returns:
+    Font unit glyph box. 
+  Remarks:
+    Must be used with ON_Font::FontUnitFontMetrics() and a single font to obtain useful results.
+    You are probably better of using normalized font coordinates in a ON_FontGlyph.GlyphBox().
+  */
+  const ON_TextBox& FontUnitGlyphBox() const;
+
+  static int CompareCodePointAndFont(
+    const ON_FontGlyph& lhs,
+    const ON_FontGlyph& rhs
+  );
+
+  /*
+  Parameters:
+    text - [in]
+      Null terminated wchar_t string.
+    font - [in]
+      The font used to render the glyphs.
+    unicode_CRLF_code_point - [in]
+      If unicode_CRLF_code_point is a valid unicode code point,
+      then consecutive carriage return line feed pairs are converted
+      to a single glyph with code point = unicode_CRLF_code_point.
+
+      ON_UnicodeCodePoint::ON_LineSeparator is a good choice when you want to  
+      condense carriage return line feed pairs to a single unambiguous code point.
+
+      ON_UnicodeCodePoint::ON_InvalidCodePoint is a good choice when you want to
+      preserve carriage return line feed pairs as two separate glyphs.
+
+    glyph_list - [out]
+      Note that glyph_list.Count() is often different than the 
+      length of the text string or the number of unicode codepoints
+      in the decoded text. 
+      Adjacent carriage return and line feed codepoints are 
+      converted to single a hard end of line.
+      All trailing end of line code points are removed from text.
+      Invalid unicode encoding sequences are replaced with
+      ON_UnicodeCodePoint::ReplacementCharacter glyphs.
+
+    text_box - [out]
+      tight bounding boxt of text extents.
+      text_box.m_advance.i = maximum of all line horizontal advance values..
+      text_box.m_advance.j = vertical advance to baseline of last line
+      If if the font height
+      is ON_Font::Constants::AnnotationFontCellHeight. If you will render the font
+      at a different height from ON_Font::Constants::AnnotationFontCellHeight, then
+      use ON_TextBox::Scale as follows:
+      ON_TextBox scaled_box 
+        = ON_TextBox::Scale(
+            text_box,
+            (font render height)/((double)ON_Font::Constants::AnnotationFontCellHeight)
+        );
+  Return:
+    number of lines of text or 0 if input is not valid or text is empty.
+  */
+  static int GetGlyphList
+  (
+    const wchar_t* text,
+    const class ON_Font* font,
+    ON__UINT32 unicode_CRLF_code_point,
+    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+    ON_TextBox& text_box
+  );
+
+  static int GetGlyphList
+  (
+    size_t code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON__UINT32 unicode_CRLF_code_point,
+    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+    ON_TextBox& text_box
+  );
+
+  /*
+  Parameters:
+    font - [in]
+      The font used to render the glyphs.
+    text_box - [out]
+      tight bounding boxt of text extents.
+      text_box.m_advance.i = maximum of all line horizontal advance values..
+      text_box.m_advance.j = vertical advance to baseline of last line
+      If if the font height
+      is ON_Font::Constants::AnnotationFontCellHeight. If you will render the font
+      at a different height from ON_Font::Constants::AnnotationFontCellHeight, then
+      use ON_TextBox::Scale as follows:
+      ON_TextBox scaled_box 
+        = ON_TextBox::Scale(
+            text_box,
+            (font render height)/((double)ON_Font::Constants::AnnotationFontCellHeight)
+        );
+  Return:
+    number of lines of text or 0 if input is not valid or text is empty.
+  */
+  static int GetGlyphListBoundingBox
+  (
+    const wchar_t* text,
+    const class ON_Font* font,
+    ON_TextBox& text_box
+  );
+
+  static int GetGlyphListBoundingBox
+  (
+    size_t code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON_TextBox& text_box
+  );
+
+  /*
+  Description:
+    Sets the font and code point and unsets every other property including the
+    glyph box and substitute information.
+  Parameters:
+    font - [in]
+    code_point - [in]
+  */
+  bool SetCodePoint(
+    const class ON_Font* font,
+    ON__UINT32 code_point
+  );
+
+  /*
+  Returns:
+    True if the unicode code point and font are set
+  */
+  bool CodePointIsSet() const;
+
+  /*
+  Returns: 
+    true if this is a managed instance.
+    Managed instances persist for the lifetime of the application
+    and the pointer can be safely saved and referenced at any time.
+  */
+  bool IsManaged() const;
+
+  /*
+  Returns:
+    If this->CodePointIsSet() is true, then a persistent pointer
+    to a managed glyph with the same code point and font is returned.
+    Otherwise nullptr is returned.
+  */
+  const ON_FontGlyph* ManagedGlyph() const;
+
+  /*
+  Parameters:
+    bUseReplacementCharacter - [in]
+      When this->CodePointIsSet() is true, 
+      and bUseReplacementCharacter is true,
+      and no reasonable glyph definition exists,
+      and no substitued  is available, 
+      then the replacement character glyph for UNICODE code point
+      ON_UnicodeCodePoint::ON_ReplacementCharacter (U+FFFD) will be returned.
+
+  Returns:
+    A managed glyph that can be used to render "this".
+    If this->CodePointIsSet() is false, nullptr is returned.
+    If this->CodePointIsSet() is true, the returned glyph may
+    have a different font and code point when the current 
+    computer requires font or glyph substitution to draw
+    the glyph.  When the current platform cannot render this,
+    nullptr or the replacement glyph is returned depending on
+    the value of bUseReplacementCharacter.
+
+  See Also:
+    ON_FontGlyph.SubstituteGlyph().
+  */
+  const ON_FontGlyph* RenderGlyph(
+    bool bUseReplacementCharacter
+    ) const;
+
+  /*
+  Returns:
+    If this is a managed glyph or a copy of a managed glyph, 
+    and a substitute font or code point is used to render the glyph, 
+    then the substitue is returned.
+    In all other cases, nullptr is returned.
+  See Also:
+    ON_FontGlyph.RenderGlyph().
+  */
+  const ON_FontGlyph* SubstituteGlyph() const;
+
+  /*
+  Parameters:
+    bIncludeCharMaps - [in]
+      If true, then char information is printed.
+  */
+  void Dump(
+    bool bIncludeCharMaps,
+    ON_TextLog& text_log
+  ) const;
+
+  void Dump(
+    bool bIncludeFont,
+    bool bIncludeCharMaps,
+    bool bIncludeSubstitute,
+    bool bIncludeFontUnitTextBox,
+    ON_TextLog& text_log
+  ) const;
+
+  /*
+  Description:
+    This is a debugging tool to test the code that starts with a font and 
+    Unicode code point and and finds a glyph in the font definition for 
+    that code point.
+  Parameters:
+    text_log - [in]
+      If text_log is not nullptr, then diagnostic messages are sent to this log.
+  Returns:
+    True: 
+      No errors were found. Every available charmap either returned the same glyph id
+      that FontGlyphId() function returns or had no glyph id for this code point.
+    False:
+      Inconsistent results were returned from different charmaps.
+  Remarks:
+    If a font or charmap is known to contain a bug and that bug is
+    handled by opennurbs, then true is returned and a message is printed
+    to the log.
+  */
+  bool TestFaceCharMaps(
+    ON_TextLog* text_log
+  ) const;
+
+public:
+
+  const ON__UINT_PTR FreeTypeFace() const;
+
+  /*
+  Returns:
+    Font glyph id.
+  Remarks:
+    The glyph id depends on the font and is assigned by the font designer.
+    In particular the font glyph id for the same Unicode code point
+    often varies from font to font. In a font, it is often the case that
+    multiple Unicode code points map to the same glyph. For example,
+    space an non-breaking space typically map to the same font glyph id.
+  */
+  const ON__UINT_PTR FontGlyphId() const;
+
+  bool FontGlyphIdIsSet() const;
+
+  /*
+  Description:
+    Get glyph contours as NURBS curves.
+  Parameters:
+    bSingleStrokeFont - [in]
+      If true, open contours will not be closed by adding a line segment.
+    height_of_capital - [in]
+      If > 0, ouptut curves, bounding box, and advance vector are scaled 
+      by height_of_capital/(font design capital height). For fonts like
+      Arial, Helvetica, Times Roman, and Courier this means the height
+      of H and I will be height_of_capital. 
+      Otherwise, no scaling is applied to the output curves, bounding box,
+      and advance vector.
+      Pass 0.0 or in this->Font()->HeightOfI() to get the contours to be in opennurbs
+      normalized font coordinates.
+      All other values < 0 are treated as 0.0.
+    glyph_contours - [out]
+    glyph_bbox - [out]
+      glyph bounding box.
+    glyph_advance - [out]
+      glyph_advance->x = horizontal advance to apply when rendering glyphs horizontally.
+      A positive horizontal advance indicates advance to the right.
+      glyph_advance->y = vertical advance to apply when rendering glyphs vertically.
+      A positive vertical advance indicates advance downwards.
+  */
+  bool GetGlyphContours(
+    bool bSingleStrokeFont,
+    double height_of_capital,
+    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& glyph_contours,
+    ON_BoundingBox* glyph_bbox,
+    ON_3dVector* glyph_advance
+  ) const;
+
+  bool GetOutline(
+    bool bSingleStrokeFont,
+    class ON_Outline& outline
+  ) const;
+
+
+  static bool GetStringContours(
+    const wchar_t* text_string,
+    const class ON_Font* font,
+    bool bSingleStrokeFont,
+    double height_of_capital,
+    double small_caps_scale,
+    ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+  );
+
+
+private:
+  friend class ON_GlyphMap;
+  friend class ON_Font;
+  
+  // NOTE WELL: 
+  //   The offset of m_codepoint in ON_FontGlyph must be >= 8 bytes.
+  //   so the ON_FixeSizePool that manages memory for the glyph cache
+  //   can efficiently iteratate all active managed glyphs.
+  //
+  ON_TextBox m_font_unit_glyph_bbox; // values in the native font definition units (freetype FT_LOAD_NO_SCALE units)
+  ON_TextBox m_normalized_glyph_bbox; // bounding box in opennurbs normalized font coordinates
+
+  // This box is for the platform native glyph. It can be different than m_glyph_box.
+  // Example:
+  //  Start with a Windows LOGFONT with face = Arial, height = ON_Font::Constants::AnnotationFontCellHeight (256)
+  //  Native Windows height of Arial I = 165, height of LF = ...
+  //  FreeType made from the same LOGFONT on the same has height of Arial I = 184, height of LF = ...
+
+  // When font does not contain a glyph to render  a specified unicode codepoint,
+  // then one or more glyphs from one or more subsitution fonts are used to
+  // render the codepoint. In this case, m_substitutes points to a linked
+  // list of substitute used to render the glyph.
+  //
+  ON__UINT32 m_code_point = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+ 
+  ON__UINT8 m_is_managed = 0; // 1 = managed glyph
+  ON__UINT8 m_reserved1 = 0;
+  ON__UINT16 m_reserved2 = 0;
+  ON__UINT_PTR m_font_glyph_id = 0;
+  const class ON_Font* m_managed_font = nullptr;
+  const class ON_FontGlyph* m_substitute = nullptr;
+
+
+private:
+  void Internal_SetFontGlyphId(ON__UINT_PTR font_glyph_id);
+  void Internal_CopyFrom(const ON_FontGlyph& src);
+  static ON_FontGlyph* Internal_AllocateManagedGlyph(const ON_FontGlyph& src);
+  bool Internal_GetPlatformSubstitute(
+    ON_FontGlyph& substitue
+  ) const;
+};
+
+
+#if defined(ON_OS_WINDOWS_GDI)
+class ON_CLASS ON_WindowsDWriteFontInformation
+{
+public:
+  ON_WindowsDWriteFontInformation() = default;
+  ~ON_WindowsDWriteFontInformation() = default;
+  ON_WindowsDWriteFontInformation(const ON_WindowsDWriteFontInformation&) = default;
+  ON_WindowsDWriteFontInformation& operator=(const ON_WindowsDWriteFontInformation&) = default;
+
+public:
+  void Dump(ON_TextLog& text_log) const;
+
+  static int CompareFamilyName(const ON_WindowsDWriteFontInformation* lhs, const ON_WindowsDWriteFontInformation* rhs);
+  static int CompareFamilyNameFaceNameWeightStretchStyle(const ON_WindowsDWriteFontInformation* lhs, const ON_WindowsDWriteFontInformation* rhs);
+  static int ComparePostScriptName(const ON_WindowsDWriteFontInformation* lhs, const ON_WindowsDWriteFontInformation* rhs);
+
+public:
+  // value passed to IDWriteFontCollection.GetFontFamily(m_family_index,...)
+  // IDWriteFactory.GetSystemFontCollection() is used to get the IDWriteFontCollection.
+  unsigned int m_family_index = 0;
+
+  // value passed to IDWriteFontFamily.GetFont(m_family_font_index,...)
+  unsigned int m_family_font_index = 0;
+
+  struct IDWriteFont* m_dwrite_font = nullptr;
+
+  // prefered locale used to get the localized name values. 
+  // If the a parrticular string was not available in the prefered locale, 
+  // then other locales are used with "en-us" being the prefered alternate locale.
+  ON_wString m_prefered_locale;
+
+  // from IDWriteFontFamily.GetFamilyNames()
+  const ON_wString FamilyName() const;
+  ON_wString m_loc_family_name;
+  ON_wString m_en_family_name;
+
+  // from IDWriteFont.GetFaceNames()
+  const ON_wString FaceName() const;
+  ON_wString m_loc_face_name;
+  ON_wString m_en_face_name;
+
+  // DWRITE_FONT_WEIGHT value from IDWriteFont.GetWeight()
+  unsigned int m_weight = 0;
+
+  // DWRITE_FONT_STRETCH value from IDWriteFont.GetStretch()
+  unsigned int m_stretch = 0;
+
+  // DWRITE_FONT_STYLE value from IDWriteFont.GetStyle()
+  unsigned int m_style = 0;
+
+
+  // from IDWriteFont.IsSymbolFont()
+  bool m_bIsSymbolFont = false;
+
+  // deconstructed DWRITE_FONT_SIMULATIONS value from IDWriteFont.GetSimulations()
+  bool m_bSimulatedBold = false;    // DWRITE_FONT_SIMULATIONS_BOLD
+  bool m_bSimulatedOblique = false; // DWRITE_FONT_SIMULATIONS_OBLIQUE
+  bool m_bSimulatedOther = false;   // future DWRITE_FONT_SIMULATIONS_...
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_FULL_NAME, ... )
+  ON_wString m_loc_full_name;
+  ON_wString m_en_full_name;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME, ... )
+  const ON_wString PostScriptName() const;
+  ON_wString m_loc_postscript_name;
+  ON_wString m_en_postscript_name;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, ... )
+  // == LOGFONT lfFaceName
+  const ON_wString WindowsLogfontName() const;
+  ON_wString m_loc_gdi_family_name;
+  ON_wString m_en_gdi_family_name;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES, ... )
+  ON_wString m_loc_gdi_subfamily_name;
+  ON_wString m_en_gdi_subfamily_name;
+
+  // from IDWriteGdiInterop.ConvertFontToLOGFONT
+  LOGFONT m_gdi_interop_logfont;
+
+  // from IDWriteGdiInterop.ConvertFontToLOGFONT
+  bool m_gdi_interop_logfont_bIsSystemFont = false;
+
+  // from IDWriteFont.GetMetrics
+  ON_FontMetrics m_font_metrics;
+
+  // Sample glyph metrics from IDWriteFontFace.GetDesignGlyphMetrics
+
+  // "standard" metric glpyhs
+  ON_FontGlyph m_Spacebox;
+  ON_FontGlyph m_Hbox;
+  ON_FontGlyph m_Ibox;
+  ON_FontGlyph m_xbox;
+
+  ON_PANOSE1 m_panose1;
+};
+#endif
+
+class ON_CLASS ON_FontFaceQuartet
+{
+public:
+  ON_FontFaceQuartet() = default;
+  ~ON_FontFaceQuartet() = default;
+  ON_FontFaceQuartet(const ON_FontFaceQuartet&) = default;
+  ON_FontFaceQuartet& operator=(const ON_FontFaceQuartet&) = default;
+
+  ON_FontFaceQuartet(
+    const wchar_t* quartet_name,
+    const class ON_Font* regular,
+    const class ON_Font* bold,
+    const class ON_Font* italic,
+    const class ON_Font* bold_italic
+  );
+
+  static int CompareQuartetName(
+    const ON_FontFaceQuartet* lhs,
+    const ON_FontFaceQuartet* rhs
+  );
+
+public:
+  static const ON_FontFaceQuartet Empty;
+
+public:
+  bool HasRegularFace() const;
+  bool HasBoldFace() const;
+  bool HasItalicFace() const;
+  bool HasBoldItalicFace() const;
+  bool HasAllFaces() const;
+  bool IsEmpty() const;
+
+  /*
+  Returns:
+    0,1,2,3 or 4
+  */
+  unsigned int FaceCount() const;
+
+  const ON_wString QuartetName() const;
+  const class ON_Font* RegularFace() const;
+  const class ON_Font* BoldFace() const;
+  const class ON_Font* ItalicFace() const;
+  const class ON_Font* BoldItalicFace() const;
+
+  const ON_Font* Face(
+    bool bBold,
+    bool bItalic
+  ) const;
+
+  void Dump(ON_TextLog& text_log) const;
+private:
+  ON_wString m_quartet_name;
+  const class ON_Font* m_regular = nullptr;
+  const class ON_Font* m_bold = nullptr;
+  const class ON_Font* m_italic = nullptr;
+  const class ON_Font* m_bold_italic = nullptr;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_FontFaceQuartet>;
+#endif
 
 /// <summary>
 /// An ON_Font is a face in a font family. It corresponds to a Windows LOGFONT,
@@ -225,6 +2111,56 @@ private:
 class ON_CLASS ON_Font
 {
 public:
+
+ #pragma region RH_C_SHARED_ENUM [ON_Font::Origin] [Rhino.DocObjects.Font.FontOrigin] [nested:byte]
+  /// <summary>
+  /// Platform where font originated. This information is useful when 
+  /// searching for appropriate substitues.
+  /// </summary>
+  enum class Origin : unsigned char
+  {
+    /// <summary> Not set. </summary>
+    Unset = 0,
+
+    /// <summary> Origin unknown. Changing an ON_Font characteristic like weight or sytle sets the origin to unknown. </summary>
+    Unknown = 1,
+
+    /// <summary> 
+    /// Set from a Windows IDWriteFont by ON_Font::SetFromDWriteFont() 
+    /// or a Windows LOGFONT by ON_Font::SetFromWindowsLogFont() and
+    /// FaceName and WindowLogfontName match a font installed on a Windows device.
+    /// </summary>
+    WindowsFont = 2,
+
+    /// <summary> 
+    /// Set from an Apple NSFont of font name by ON_Font::SetFromAppleFont()
+    /// and PostScriptName() and FamilyName() match a font installed on an Apple device.
+    /// or iOS computer.
+    /// </summary>
+    AppleFont = 3
+  };
+#pragma endregion
+
+#pragma region RH_C_SHARED_ENUM [ON_Font::FontType] [Rhino.DocObjects.Font.FontType] [nested:byte]
+  /// <summary>
+  /// An enum that reports if the font face is avaialable on the current device.
+  /// </summary>
+  enum class FontType : unsigned char
+  {
+    /// <summary> Not set. </summary>
+    Unset = 0,
+
+    /// <summary> 
+    /// In the managed font list.
+    /// </summary>
+    ManagedFont = 1,
+
+    /// <summary> 
+    /// In the installed font list.
+    /// </summary>
+    InstalledFont = 2
+  };
+#pragma endregion
 
 #pragma region RH_C_SHARED_ENUM [ON_Font::Weight] [Rhino.DocObjects.Font.FontWeight] [nested:byte]
   /// <summary>
@@ -415,6 +2351,19 @@ public:
     double apple_font_weight_trait
     );
 
+  static const wchar_t* WeightToWideString(
+    ON_Font::Weight font_weight
+  );
+
+  /*
+  Returns:
+    True if weight is ON_Font::Weight::Semibold or heavier.
+  */
+  static bool IsBoldWeight(
+    ON_Font::Weight weight
+  );
+
+
 #pragma region RH_C_SHARED_ENUM [ON_Font::Stretch] [Rhino.DocObjects.Font.FontStretch] [nested:byte]
   /// <summary>
   /// Horizontal expansion or contraction of font
@@ -459,6 +2408,18 @@ public:
   static ON_Font::Stretch FontStretchFromUnsigned(
     unsigned int unsigned_font_stretch
     );
+  
+  static const wchar_t* StretchToWideString(
+    ON_Font::Stretch font_stretch
+  );
+
+#if defined(ON_OS_WINDOWS_GDI)
+  static ON_Font::Stretch FontStretchFromDWriteStretch(
+    unsigned int dwrite_stretch,
+    ON_Font::Stretch undefined_result
+  );
+#endif
+
 
 
 #pragma region RH_C_SHARED_ENUM [ON_Font::Style] [Rhino.DocObjects.Font.FontStyle] [nested:byte]
@@ -477,10 +2438,17 @@ public:
     //Normal = 1,
     //Roman = 1,
 
-    /// <summary> </summary>
+    /// <summary> 
+    /// The face is sloped so the top is to the right of the base.
+    /// Face names sometimes use the word "oblique" for italic faces.
+    /// </summary>
     Italic = 2,
 
-    /// <summary> </summary>
+    /// <summary> 
+    /// The face is sloped so the top is to the left of the base.
+    /// This is extremely rare.
+    /// NOTE WELL: Face names sometimes use the word "oblique" for italic faces.
+    /// </summary>
     Oblique = 3
   };
 #pragma endregion
@@ -497,25 +2465,133 @@ public:
     unsigned int unsigned_font_style
     );
 
+  static const wchar_t* StyleToWideString(
+    ON_Font::Style font_style
+  );
+
+  /*
+  Returns:
+    The installed font face quartet for this font or ON_FontFaceQuartet::Empty 
+    if this font is not a member of an installed face quartet.
+  */
+  const ON_FontFaceQuartet InstalledFontQuartet() const;
+
 public:
+
+  /*
+  Returns:
+    True if lhs an rhs are in the same font family.
+  */
+  static bool EqualFontFamily(
+    const ON_Font* lhs,
+    const ON_Font* rhs
+  );
+
+  /*
+  Returns:
+    True if lhs and rhs have equal family names and equal face names
+    in with the name local or in English.
+  */
+  static bool EqualFontFamilyAndFace(
+    const ON_Font* lhs,
+    const ON_Font* rhs
+  );
+
+  static bool EqualWeightStretchStyle(
+    const ON_Font* lhs,
+    const ON_Font* rhs,
+    bool bUnsetIsEqual
+  );
+
+  static bool EqualWeight(
+    const ON_Font* lhs,
+    const ON_Font* rhs,
+    bool bUnsetIsEqual
+  );
+
+  static bool EqualStretch(
+    const ON_Font* lhs,
+    const ON_Font* rhs,
+    bool bUnsetIsEqual
+  );
+
+  static bool EqualStyle(
+    const ON_Font* lhs,
+    const ON_Font* rhs,
+    bool bUnsetIsEqual
+  );
+
+
+public:
+
+  // ON_Font::Default depends on the platform.
+  //  Arial on Windows
+  //  Helvetica Neue on Mac OS
   static const ON_Font Default;
+
+  // ON_Font::Unset has unset face name and platform font name.
+  static const ON_Font Unset;
+
+  /*
+  Returns:
+    Windows: "Arial"
+    Apple: "Helvetica Neue"
+  */
+  static const wchar_t* DefaultFamilyName();
+
+  /*
+  Returns:
+    Windows: "Regular"
+    Apple: "Regular"
+  */
+  static const wchar_t* DefaultFaceName();
+
+  /*
+  Returns:
+    Windows: "ArialMT"
+    Apple: "HelveticaNeue"
+  */
+  static const wchar_t* DefaultPostScriptName();
+
+
+  /*
+  Returns:
+    Windows: "ArialMT"
+    Apple: "HelveticaNeue"
+  */
+  static const wchar_t* DefaultWindowsLogfontName();
+
+  /*
+  Description:
+    This function is poorly designed, poorly named, named and doesn't do 
+    anything very useful. Avoid it. It will be deleted when it is possible
+    to break the SDK.
+  Parameters:
+    face_name - [in]
+      Name to test
+  Returns:
+    False if face_name is nullptr, or face_name is the empty string, 
+    or the first element in the name is < ON_wString::Space,
+    or the face_name contains any of these elements:   ; " ' ` = #
+    True otherwise.
+  */
   static bool IsValidFaceName(
     const wchar_t* face_name
     );
     
 private:
-  // This private constructor is used to construct ON_Font::Default and managed fonts.
-  // Never make this constructor protected or public.
+  // This private constructor is used to construct ON_Font::Default, managed fonts,
+  // and installed fonts. Never make this constructor protected or public.
   ON_Font(
-    unsigned char managed_status, // 0 = no, 1 = ON_Font::Default, 2 = managed
+    ON_Font::FontType font_type,
     const ON_Font& src
     );
 
 private:
   // Use ON_Font( const ON_Font& ) or ON_Font::operator= if you need to make a copy.
   // Never make CopyHelper protected or public.
-  void CopyHelper(
-    const ON_Font&
+  void Internal_CopyFrom(
+    const ON_Font& src
     );
 
 public:
@@ -640,8 +2716,6 @@ public:
         lfCharSet;
         lfFaceName[LF_FACESIZE];
         All other LOGFONT properties is ignored.
-  See Also:
-    ON_Font::GetManagedFontFromWindowsLogfontComplete
   */
   static const ON_Font* GetManagedFontFromWindowsLogfont(
     int map_mode,
@@ -649,12 +2723,48 @@ public:
     const LOGFONT& logfont
     );
 
-
+  enum : int
+  {
+    MAP_MODE_ZERO_ERROR_SUPPRESS = MM_MAX + 3
+  };
 #endif
 
+  ON_DEPRECATED_MSG("Use ON_Font::GetManagedFontFromPostScriptName()")
   static const ON_Font* GetManagedFontFromAppleFontName(
-    const wchar_t* apple_font_name
+    const char* postscript_name
     );
+
+  ON_DEPRECATED_MSG("Use ON_Font::GetManagedFontFromPostScriptName()")
+  static const ON_Font* GetManagedFontFromAppleFontName(
+    const wchar_t* postscript_name
+    );
+
+  /*
+  Parameters:
+    postscript_name - [in]
+      Windows: PostScript name = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
+      Apple: PostScript name = NSFont.fontName
+  */
+  static const ON_Font* GetManagedFontFromPostScriptName(
+    const char* postscript_name
+    );
+
+  /*
+  Parameters:
+    postscript_name - [in]
+      Windows: PostScript name = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
+      Apple: PostScript name = NSFont.fontName
+  */
+  static const ON_Font* GetManagedFontFromPostScriptName(
+    const wchar_t* postscript_name
+    );
+
+#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+  static const ON_Font* GetManagedFontFromAppleFont(
+    NSFont* apple_font,
+    bool bAnnotationFont
+    );
+#endif
 
   /*
   Returns:
@@ -663,6 +2773,164 @@ public:
     If this->IsManagedFont() is true, then "this" is returned.
   */
   const ON_Font* ManagedFont() const;
+
+  /*
+  Parameters:
+    rtf_font_name - [in]
+      Rich text format name. This name is not well defined and depends on
+      the device and application that created the rich text. On Windows this
+      is often a LOGFONT.lfFaceName. On MacOS it is often a PostScript name.
+
+    bRtfBold - [in]
+      RTF bold flag
+
+    bRtfItalic - [in]
+      RTF italic flag
+  Returns:
+    A managed font to use for this RTF font.
+  */
+  static const ON_Font* ManagedFontFromRichTextProperties(
+    const wchar_t* rtf_font_name,
+    bool bRtfBold,
+    bool bRtfItalic,
+    bool bRftUnderlined,
+    bool bRftStrikethrough
+  );
+
+  static const ON_wString RichTextPropertiesToString(
+    bool bRtfBold,
+    bool bRtfItalic,
+    bool bRtfUnderlined,
+    bool bRtfStrikethrough
+  );
+
+  static const ON_wString RichTextPropertiesToString(
+    ON_Font::Weight rtf_weight,
+    ON_Font::Style rtf_style,
+    bool bRtfUnderlined,
+    bool bRtfStrikethrough
+  );
+
+  static const ON_wString RichTextPropertiesToString(
+    const ON_Font* font
+  );
+
+  /*
+  Returns:
+    The list of managed fonts in a class with lots of searching tools.
+  */
+  static const class ON_FontList& ManagedFontList();
+
+  /*
+  Description:
+    Look for a font installed on the current device that matches this font.
+    The Strikethrough, Underlined, and PointSize properties are ignored.
+  Parameters:
+    bAllowBestMatch - [in]
+      If no exact match is available and bAllowBestMach is true and
+      there are installed fonts with a matching familiy name,
+      then the best match in the family is returned.
+  Returns:
+    If there is a matching installed font, it is returned.
+    Otherwise, nullptr is returned.
+  */
+  const ON_Font* InstalledFont(
+    bool bAllowBestMatch
+  ) const;
+
+  /*
+  Parameters:
+    desired_weight - [in]
+      Pass ON_Font::Weight::Unset if you do not want to change the weight.
+    desired_stretch - [in]
+      Pass ON_Font::Stretch::Unset if you do not want to change the stretch.
+    desired_style - [in]
+      Pass ON_Font::Style::Unset if you do not want to change the style.
+
+  Returns:
+    The installed font in the same family as this with the best match
+    for the desired weight, stretch, and style.
+    If nothing close to suitable is available, nullptr is returned.
+  */
+  const ON_Font* InstalledFamilyMemberWithWeightStretchStyle(
+    ON_Font::Weight desired_weight,
+    ON_Font::Stretch desired_stretch,
+    ON_Font::Style desired_style
+  ) const;
+
+
+  /*
+  Parameters:
+    desired_weight - [in]
+      Pass ON_Font::Weight::Unset if you do not want to change the weight.
+    desired_stretch - [in]
+      Pass ON_Font::Stretch::Unset if you do not want to change the stretch.
+    desired_style - [in]
+      Pass ON_Font::Style::Unset if you do not want to change the style.
+    bUnderlined - [in]
+    bStrikethrough - [in]
+
+  Returns:
+    The installed font in the same family as this with the best match
+    for the desired weight, stretch, and style.
+    If nothing close to suitable is available, nullptr is returned.
+  */
+  const ON_Font* ManagedFamilyMemberWithWeightStretchStyle(
+    ON_Font::Weight desired_weight,
+    ON_Font::Stretch desired_stretch,
+    ON_Font::Style desired_style,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+
+  /*
+  Parameters:
+    bBold - [in]
+      True for a heavy face
+    bItalic - [in]
+      True for a sloped face
+    bUnderlined - [in]
+      True for an underlined face
+    bStrikethrough - [in]
+      True for a strikethrough face
+  Returns:
+    A managed face in the same family as "this" with the desired rich text properties.
+  */
+  const ON_Font* ManagedFamilyMemberWithRichTextProperties(
+    bool bBold,
+    bool bItalic,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+
+  /*
+  Returns:
+    The list of installed fonts in a class with lots of searching tools.
+  */
+  static const class ON_FontList& InstalledFontList();
+  
+
+  /*
+  Parameters:
+    rtf_font_name - [in]
+      Rich text format name. This name is not well defined and depends on
+      the device and application that created the rich text. On Windows this
+      is often a LOGFONT.lfFaceName. On MacOS it is often a PostScript name.
+    bRtfBold - [in]
+      RTF bold flag
+
+    bRtfItalic - [in]
+      RTF italic flag
+  Returns:
+    An installed font to use for this RTF font or nullptr if the current
+    device does not have a font with any family, PostScript, or Windows LOGFONT
+    that has a name matching rtf_font_name.
+  */
+  static const ON_Font* InstalledFontFromRichTextProperties(
+    const wchar_t* rtf_font_name,
+    bool bRtfBold,
+    bool bRtfItalic
+  );
 
   /*
   Description:
@@ -707,6 +2975,7 @@ public:
 
 private:
   friend class ON_FontGlyph;
+  friend class ON_FontList;
   const class ON_FontGlyph* Internal_ManagedCodePointGlyph(
     ON__UINT32 unicode_code_point,
     bool bCreateIfMissing,
@@ -731,13 +3000,159 @@ public:
     bool bCreateIfNotFound
     );
 
+  /*
+  Returns:
+    If there is a managed font with the specified serial number, it is returned.
+    Otherwise, nullptr is returned.
+  */
   static const ON_Font* GetManagedFontFromSerialNumber(
     unsigned int managed_font_runtime_serial_number
     );
 
+  /*
+  Parameters:
+    managed_fonts - [out]
+      The current list of managed fonts.
+  Returns:
+    Number of managed fonts.
+  */
   static unsigned int GetManagedFontList(
     ON_SimpleArray< const ON_Font* >& managed_fonts
     );
+
+  /*
+  Parameters:
+    installed_fonts - [out]
+      A list of all fonts available on the current computer
+      sorted by font family name.
+  Returns:
+    Number of fonts available on the current computer.
+  */
+  static unsigned int GetInstalledFontList(
+    ON_SimpleArray< const ON_Font* >& installed_fonts
+    );
+
+  /*
+  Parameters:
+    font_family_name - [in]
+      A font family name like Arial or Helvetica.
+    bIncludePartialMatch - [in]
+      If true, family names that begin with font_family_name
+      will be included.
+    installed_fonts - [out]
+      A list of all fonts available on the current computer
+      with a matching font family name.
+  Returns:
+    Number of fonts available on the current computer.
+  */
+  static unsigned int GetInstalledFontFamily(
+    const wchar_t* font_family_name,
+    ON_SimpleArray< const ON_Font* >& installed_fonts
+    );
+
+  /*
+  Parameters:
+    font_list - [in]
+      Fonts to search for a match. All fonts in this list
+      are tested (search time is proportional to font_list.Count()).
+      If the list returned by GetInstalledFontFamily() contains
+      reasonable options, it is a good choice for the font_list[] 
+      parameter.
+  Returns:
+    A pointer to the font in font_list[] that is the best
+    match to this.
+  */
+  const ON_Font* BestMatch(
+    const ON_SimpleArray< const ON_Font* >& font_list
+  ) const;
+
+  /*
+  Parameters:
+    font_list - [in]
+      Fonts to search for a match. All fonts in this list
+      are tested (search time is proportional to font_list.Count()).
+      If the list returned by GetInstalledFontFamily() contains
+      reasonable options, it is a good choice for the font_list[] 
+      parameter.
+    font_count - [in]
+      Number of elements in the font_list[] array.
+  Returns:
+    A pointer to the font in font_list[] that is the best
+    match to this.
+  */
+  const ON_Font* BestMatch(
+    ON_Font const*const* font_list,
+    size_t font_count
+  ) const;
+    
+  static unsigned int WeightStretchStyleDeviation(
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    ON_Font::Weight available_weight,
+    ON_Font::Stretch available_stretch,
+    ON_Font::Style available_style
+  );
+
+  static unsigned int WeightStretchStyleDeviation(
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    const ON_Font* available_font
+  );
+
+  static unsigned int WeightStretchStyleDeviation(
+    const ON_Font* prefered_weight_stretch_style,
+    const ON_Font* available_font
+  );
+    
+  static unsigned int UnderlinedStrikethroughDeviation(
+    bool bPreferedUnderline,
+    bool bPreferedStrikethrough,
+    bool bAvailableUnderline,
+    bool bAvailableStrikethrough
+  );
+
+  static unsigned int UnderlinedStrikethroughDeviation(
+    bool bPreferedUnderline,
+    bool bPreferedStrikethrough,
+    const ON_Font* available_font
+  );
+
+  static unsigned int UnderlinedStrikethroughDeviation(
+    const ON_Font* prefered_underlined_strikethrough,
+    const ON_Font* available_font
+  );
+    
+  static unsigned int RichTextPropertyDeviation(
+    bool bPreferedRtfBold,
+    bool bPreferedItalic,
+    bool bPreferedUnderline,
+    bool bPreferedStrikethrough,
+    bool bAvailableRtfBold,
+    bool bAvailableItalic,
+    bool bAvailableUnderline,
+    bool bAvailableStrikethrough
+  );
+    
+  static unsigned int RichTextPropertyDeviation(
+    bool bPreferedRtfBold,
+    bool bPreferedItalic,
+    bool bPreferedUnderline,
+    bool bPreferedStrikethrough,
+    const ON_Font* available_font
+  );
+
+private:
+  static const ON_Font* Internal_BestMatchWeightStretchStyle(
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    ON_Font const*const* font_list,
+    size_t font_count
+  );
+
+public:
 
   /*
   Returns:
@@ -747,6 +3162,15 @@ public:
     ON_Font::Default is managed.
   */
   bool IsManagedFont() const;
+  
+  /*
+  Returns:
+    True if this font is a mangaged font with a face that is installed on the current device
+    or this is an installed font returned by a function like ON_Font::InstalledFont(), 
+    ON_Font::GetInstalledFontFamily(), or ON_Font::GetInstalledFontList(). 
+    False in all other cases.
+  */
+  bool IsInstalledFont() const;
 
 public:
 
@@ -792,8 +3216,8 @@ public:
   Description:
     Create a font with a specified facename and properties.
   Parameters:
-    face_name - [in]
-      nullptr is treated as ON_Font::Default.FaceName().
+    gdi_logfont_name - [in]
+      Windows LOGFONT.lfFaceName.
     bBold - [in]
       True for a bold version of the font.
     bItalic - [in]
@@ -802,7 +3226,7 @@ public:
     True if the font characteristics were valid and set on the font.
  */
   bool SetFontCharacteristics( 
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     bool bBold,
     bool bItalic,
     bool bUnderlined,
@@ -822,7 +3246,7 @@ public:
       subtle differences in glyph design and are not
       simply scaled versions of a base glyph.
     face_name - [in]
-      nullptr is treated as ON_Font::Default.FaceName().
+      Windows LOGFONT.lfFaceName value.
     bBold - [in]
       True for a bold version of the font.
     bItalic - [in]
@@ -832,7 +3256,7 @@ public:
  */
   bool SetFontCharacteristics( 
     double point_size,
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     bool bBold,
     bool bItalic,
     bool bUnderlined,
@@ -843,14 +3267,13 @@ public:
   Description:
     Set the font's face name and characteristics.
   Parameters:
-    face_name - [in]
-      nullptr is not permitted.
-      Pass ON_Font::Default.FaceName() if you don't have a face name.
+    gdi_logfont_name - [in]
+      Windows LOGFONT.lfFaceName value.
   Returns:
     True if the font characteristics were valid and set on the font.
  */  
   bool SetFontCharacteristics( 
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     ON_Font::Weight font_weight,
     ON_Font::Style font_style,
     ON_Font::Stretch font_stretch,
@@ -860,7 +3283,7 @@ public:
 
   bool SetFontCharacteristics( 
     double point_size,
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     ON_Font::Weight font_weight,
     ON_Font::Style font_style,
     ON_Font::Stretch font_stretch,
@@ -869,7 +3292,7 @@ public:
     );
 
   bool SetFontCharacteristics( 
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     ON_Font::Weight font_weight,
     ON_Font::Style font_style,
     ON_Font::Stretch font_stretch,
@@ -881,7 +3304,7 @@ public:
 
   bool SetFontCharacteristics( 
     double point_size,
-    const wchar_t* face_name,
+    const wchar_t* gdi_logfont_name,
     ON_Font::Weight font_weight,
     ON_Font::Style font_style,
     ON_Font::Stretch font_stretch,
@@ -935,23 +3358,212 @@ private:
     unsigned int font_characteristics_as_unsigned
     );
 
+  static void Internal_GetFontCharacteristicsFromUnsigned(
+    unsigned int font_characteristics_as_unsigned,
+    ON_Font::Weight& font_weight,
+    ON_Font::Stretch& font_stretch,
+    ON_Font::Style& font_style,
+    bool& bUnderlined,
+    bool& bStrikethrough
+    );
+
 public:
   /*
   Description:
     Returns a 32-bit crc of the font weight, style, stretch, underline, strikethrough, 
-    and facename characteristics.
+    and WIndows logfont name characteristics.
 
   Parameters:
-    bIgnoreFaceNameOrdinalCase - [in]
-      If true, ON_wString::MapStringOrdinal() is applied to the face name
+    bIgnoreWindowsLogfontNameOrdinalCase - [in]
+      If true, ON_wString::MapStringOrdinal() is applied to the windows logfont name
       and the returned CRC is ordinal case independent.
   */
   ON__UINT32 CRC32(
-    bool bIgnoreFaceNameOrdinalCase
+    bool bIgnoreNameOrdinalCase
     ) const;
+
+public:
+// BUSTED #pragma region RH_BUSTED_C_SHARED_ENUM [ON_Font::NameLocale] [Rhino.DocObjects.Font.NameLocale] [nested:byte]
+  /// <summary>
+  /// ON_Font::NameLocale selects what locale is used for font name (PostScript, family, face, LOGFONT) queries.
+  /// </summary>
+  enum class NameLocale : ON__UINT8
+  {
+    ///<summary>
+    /// If the localalized name is not empty, return it. Otherwise return the en-us name.
+    ///</summary>
+    LocalizedFirst = 0,
+
+    ///<summary>
+    /// Localized name.
+    ///</summary>
+    Localized = 1,
+
+    ///<summary>
+    /// en-us name.
+    ///</summary>
+    English = 2
+  };
+// BUSTED #pragma endregion
+
+  /*
+  Returns:
+    Locale for the font localized font names.
+  */
+  const ON_wString Locale() const;
+
+  /*
+  Returns:
+    The font's PostScript name.
+  Remarks:
+    The PostScript name is not always unique for each face. For example,
+    OpenType variable fonts like Windows 10 Bahnschrift have "Bahnschrift"
+    as the PostScript name for at least 10 different Bahnschrift faces.
+
+    Platform equivalents:
+    Apple: = NSFont.fontName
+    Windows: = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
+  */
+  const ON_wString PostScriptName(
+    ON_Font::NameLocale name_locale
+  ) const;
+
+  /*
+  Returns:
+    ON_Font::PostScriptName(ON_Font::NameLocale::LocalizedFirst)
+  */
+  const ON_wString PostScriptName() const;
+  
+  /*
+  Returns:
+    The font's Family name.
+  Remarks:
+    Typically a font family has many faces.
+
+    Platform equivalents:
+    Apple: = NSFont.familyName
+    Windows: = IDWriteFontFamily.GetFamilyNames()
+
+    NOTE WELL: This is NOT the Windows LOGFONT lfFaceName.
+  */
+  const ON_wString FamilyName(
+    ON_Font::NameLocale name_locale
+  ) const;
+
+  /*
+  Returns:
+    ON_Font::FamilyName(ON_Font::NameLocale::LocalizedFirst)
+  */
+  const ON_wString FamilyName() const;
+  
+  /*
+  Returns:
+    The font's Family name.
+  Remarks:
+    Typically a font family has many faces and the face name gives a clue about the
+    weight, stretch, and style of the face.
+    
+    For example, Arial is a common font family that often includes faces like
+    "Regular", "Bold", "Italic", "Bold Italic", 
+    "Narrow", "Narrow Bold", "Narrow Italic", "Narrow Bold Italic", 
+    "Black", and "Black Oblique".
+
+    Platform equivalents:
+    Apple: = not available
+    Windows: = IDWriteFontFamily.GetFaceNames()
+
+    NOTE WELL: This is NOT the Windows LOGFONT lfFaceName.
+  */
+  const ON_wString FaceName(
+    ON_Font::NameLocale name_locale
+  ) const;
+
+  /*
+  Returns:
+    ON_Font::FaceName(ON_Font::NameLocale::LocalizedFirst)
+  */
+  const ON_wString FaceName() const;
+
+  
+  /*
+  Returns:
+    The font's Windows GDI LOGFONT.lfFaceName.
+  Remarks:
+    This name is preserved so Rhino can write early version files and
+    so some old code can use Windows GDI tools. 
+    Every effort should be made to avoid using Windows LOGFONT lfFaceName.
+  */
+  const ON_wString WindowsLogfontName(
+    ON_Font::NameLocale name_locale
+  ) const;
+
+  /*
+  Returns:
+    ON_Font::WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst)
+  */
+  const ON_wString WindowsLogfontName() const;
+
+  /*
+  Returns:
+    Name of the quartet for this font. See ON_FontFaceQuartet for more details.
+  */
+  const ON_wString QuartetName() const;
+
+
+  /*
+  Returns:
+    A long description that includes family, face, weight, stretch and style information. 
+    Generally not useful for finding matching fonts.
+  Remarks:
+    Calls
+    ON_Font.Description(ON_Font::NameLocale::localizeFirst, ON_wString::HyphenMinus,ON_wString::Space,true)
+  */
+  const ON_wString Description() const;
+
+    /*
+  Description:
+    Get a text descripton with family weight, width (stretch), slope (style).
+  Parameters:
+    family_separator - [in]
+      character to place after family name in the description.
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+    weight_width_slope_separator - [in]
+      character to place bewtween weight, stretch, and style descriptions
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+    bIncludeUndelinedAndStrikethrough - [in]
+      If true, underlined and strikethrough attributes are appended
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+  Returns:
+    A font description with family name, weight, stretch, and style. 
+    If present, the weight, stretch, style, underlined, and strikethrough
+    descriptions begin with a  capital letter followed by lowercase letters.
+  Remarks:
+    A description similar to the PostScript name is returned by
+    DescriptionFamilyWeightStretchStyle(ON_wString::HyphenMinus,0,false).
+    However, this often differs from the actual PostScript name.
+  */
+  const ON_wString Description(
+    ON_Font::NameLocale name_local,
+    wchar_t family_separator,
+    wchar_t weight_width_slope_separator,
+    bool bIncludeUndelinedAndStrikethrough
+  ) const;
+
+
+private:
+  static const ON_wString& Internal_GetName(
+    ON_Font::NameLocale name_locale,
+    const ON_wString& localized_name,
+    const ON_wString& english_name
+  );
+
 
 #if defined(ON_OS_WINDOWS_GDI)
 
+public:
   /*
   Description:
     Get the scale factors for converting heights beween 
@@ -1202,9 +3814,29 @@ public:
     TEXTMETRIC& textmetric
   );
 
-private:
-  static HDC Internal_CreateWindowsLogfontDeviceContext();
-  static void Internal_DeleteWindowsLogfontDeviceContext(
+public:
+  /*
+  Example:
+        HDC font_hdc = ON_Font::CreateWindowsLogfontDeviceContext();
+        if ( nullptr != font_hdc )
+        {
+          ...
+          Calls to Windows SDK font managment functions needing an HDC
+          ...
+          ON_Font::DeleteWindowsLogfontDeviceContext(font_hdc);
+        }
+
+  Returns:
+    Default HDC used for Windows GDI font management
+  */
+  static HDC CreateWindowsLogfontDeviceContext();
+
+  /*
+  Parameters:
+    font_hdc - [in]
+      HDC from call to ON_Font::CreateWindowsLogfontDeviceContext();
+  */
+  static void DeleteWindowsLogfontDeviceContext(
     HDC hdc
   );
 
@@ -1214,20 +3846,20 @@ public:
     Set ON_Font properties from a subset of the LOGFONT properties.
   Parameters:
     map_mode - [in]
+      If logfont.lfHeight = 0, then map_mode is ignored. Otherwise ...
       If map_mode is 0, then ::GetMapMode(hdc) is called to get the mapping mode.
-      Otherwised, map_mode must identify a Windows mapping mode
+      Otherwise, map_mode must identify a Windows mapping mode
       (MM_TEXT, MM_LOMETRIC, MM_HIMETRIC, MM_LOENGLISH, MM_HIENGLISH, M_TWIPS).
       If map_mode = MM_TEXT (1), then hdc is used as described in the hdc parameter.
     hdc - [in]
-      Windows device context.
-      If map_mode is set and not MM_TEXT, then hdc is ignored.
+      If logfont.lfHeight = 0 or map_mode is set and not MM_TEXT, then hdc is ignored.
       Otherwise the device context is used to get the mapping mode ( GetMapMode(hdc) ). 
       If the mapping mode is MM_TEXT, then the additional device context values
       GetDeviceCaps(hdc, LOGPIXELSY) and conversion between device and logical pixel heights
       DPtoLP(hdc,...) and LPtoDP(hdc,...) are used.
     logfont - [in]
       These logfont properties are used to set the ON_Font.
-        lfHeight (when dc is not zero),
+        lfHeight
         lfWeight
         lfItalic
         lfUnderline
@@ -1235,14 +3867,46 @@ public:
         lfCharSet
         lfFaceName[LF_FACESIZE];
         All other LOGFONT properties are ignored.
-  See Also:
-    ON_Font::SetFromWindowsLogFontPartialComplete
   */
   bool SetFromWindowsLogFont(
     int map_mode,
     HDC hdc,
     const LOGFONT& logfont
     );
+
+
+  /*
+  Description:
+    Use the Windows GDI EnumFontFamiliesEx tool to get a list of LOGFONTS.
+  Parameters:
+    logfont_list - [out]
+  */
+  static unsigned int GetInstalledWindowsLogFonts(
+    ON_SimpleArray<LOGFONT>& logfont_list
+  );
+
+  /*
+  Description:
+    Use the Windows GDI EnumFontFamiliesEx tool to get a list of LOGFONTS.
+  Parameters:
+    preferedLocale - [in]
+      If not empty, names from this locale will be prefered.
+      If preferedLocale = L"GetUserDefaultLocaleName", then
+      ::GetUserDefaultLocaleName will be used to set the preferedLocale.
+    bIncludeSimulatedFontFaces - [in]
+      True to include simulated font faces.
+    bKeepDWriteFont - [in]
+      If true, then bKeepDWriteFont.m_dwrite_font will be set and the caller
+      is responsible for calling m_dwrite_font->Release().
+    logfont_list - [out]
+  */
+  static unsigned int GetInstalledWindowsDWriteFonts(
+    const wchar_t* preferedLocale,
+    bool bIncludeSimulatedFontFaces,
+    bool bKeepDWriteFont,
+    ON_SimpleArray<ON_WindowsDWriteFontInformation>& dwrite_font_list
+  );
+
 
   /*
   Parameters:
@@ -1276,18 +3940,194 @@ public:
 
 #endif
 
+
 #if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-  bool SetFromAppleFont (NSFont* apple_font);
+public:
+  bool SetFromAppleFont (
+    NSFont* apple_font,
+    bool bAnnotationFont
+    );
+    
   NSFont* AppleFont() const;
+    
+  NSFont* AppleFont(double point_size) const;
+  static const ON_wString PostScriptNameFromAppleFont(
+    NSFont* apple_font
+  );
+    
+  static const ON_wString FamilyNameFromAppleFont(
+    NSFont* apple_font
+  );
+
+  static const ON_wString FaceNameFromAppleFont(
+    NSFont* apple_font
+    );
+    
 #endif
 
+public:
+
+  /*
+  Parameters:
+    postscript_name - [in]
+      From NSFont.fontName
+  Remarks:
+    The "Apple Font Name" is the PostScript font name in the 
+    Mac OS "Font Book" application and in some other Apple documentation.
+    It is NSFont.fontName or the "fontManagerName" string in this for loop:
+    for (NSString* fontManagerName in[NSFontManager.sharedFontManager availableFonts])
+    {
+    ...
+    }
+    It is the best choice of a string to pass as the "fontWithName" parameter
+    in the following call:
+    NSFont* apple_font = [NSFont fontWithName : apple_font_name size : pointSize];
+  */
   bool SetFromAppleFontName(
-    const wchar_t* apple_font_name
+    const wchar_t* postscript_name
     );
   
+  /*
+  Parameters:
+    postscript_name - [in]
+      From NSFont.fontName
+    point_size - [in]
+      Pass 0.0 for annotation fonts
+  Remarks:
+    The "Apple Font Name" is the PostScript name in the 
+    Mac OS "Font Book" application and in some other Apple documentation.
+    It is NSFont.fontName or the "fontManagerName" string in this for loop:
+    for (NSString* fontManagerName in[NSFontManager.sharedFontManager availableFonts])
+    {
+    ...
+    }
+    It is the best choice of a string to pass as the "fontWithName" parameter
+    in the following call:
+    NSFont* apple_font = [NSFont fontWithName : apple_font_name size : pointSize];
+  */
+  bool SetFromAppleFontName(
+    const wchar_t* postscript_name,
+    double point_size
+    );
+  
+  ON_DEPRECATED_MSG("Use ON_Font::PostScriptName(ON_Font::NameLocale)")
   const ON_wString& AppleFontName() const;
   
+  ON_DEPRECATED_MSG("Use ON_Font::PostScriptName(ON_Font::NameLocale)")
   const wchar_t* AppleFontNameAsPointer() const;
+
+  /*
+  Returns:
+    A pointer for immediate use in formatted printing as in
+    FormattedPrint(L"PostScript name = \"&ls\"\n",font.PostScriptNameAsPointer());
+  Remarks:
+    WARNING: 
+      Do not save this pointer for later use. 
+      It points to memory in a dynamic string.
+  */
+  const wchar_t* PostScriptNameAsPointer() const;
+
+  /*
+  Description:
+    Sets the ON_Font information from the platform font with the specified
+    postscript_name.
+  Parameters:
+    postscript_name - [in]
+    bAcceptPartialMatch - [in]
+      If bAcceptPartialMatch is true, there is not a font on the device with a
+      matching name, but there are fonts with names that have siginificant overlap,
+      then the font with the best overlap is returned. 
+      For example if "Arial-Black" is not present and "Arial-BoldMT" is present,
+      then ON_Font.SetFromPostScriptName(L"Arial-Black",true) will return the
+      font with PostScript name "Arial-BoldMT".
+  Returns:
+    True if the font was set.
+  */
+  bool SetFromPostScriptName(
+    const wchar_t* postscript_name
+  );
+
+  /*
+  Paramaters:
+    font_name - [in]
+      A UTF-16 or UTF-32 encoded null terminated string.
+    bStopAtHyphen - [in]
+      If true, the hash calculation terminates at the first hyphen.
+      This is useful when font_name is a PostScript name and you
+      don't want to include face weight or style information in the hash.
+  Returns:
+    A hash of the font_name parameter that ignores spaces, hyphens, and case.
+    For example, the three names "Yu Gothic Regular", "YuGothic-Regular", 
+    "YUGOTHICREGULAR", and "yugothicregular" have the same FontNameHash(). 
+    The hash will be identical for UTF-16 and UTF-32 encodings.
+  */
+  static const ON_SHA1_Hash FontNameHash(
+    const wchar_t* font_name,
+    bool bStopAtHyphen
+  );
+
+  /*
+  Paramaters:
+    dirty_font_name - [in]
+      A UTF-16 or UTF-32 encoded null terminated string.
+    map - [in]
+      Map to apply
+  Returns:
+    The input name with all spaces and hyphens removed.
+  */
+  static const ON_String CleanFontName(
+    const wchar_t* dirty_font_name,
+    ON_StringMapOrdinalType map
+  );
+
+  /*
+  Parameters:
+    font - [in]
+    bDefaultIfEmpty - [in]
+      If true and font is nullptr or has emtpy names, then
+      the rich text font name for ON_Font::Default is returned,
+  Returns:
+    Font name to use in rich text file fonttbl sections.
+    {\\fonttbl...{\\fN <RichTextFontName>;}...}
+  */
+  static const ON_wString RichTextFontName(
+    const ON_Font* font,
+    bool bDefaultIfEmpty
+  );
+
+  /*
+  Parameters:
+    family_name - [in]
+      The font family name. 
+      
+      This a name like "Arial".
+      It is NOT a name like ArialMT, Arial-..., "Arial Black", "Arial Narrow", ...
+      Generally, family names do NOT contain word that specify 
+      weight (Bold, Light, Heavy, ...), 
+      width (Medium, Condensed, ...), 
+      or slope (Oblique, Italic, Upright).
+      Generally, family names do NOT contain hyphens (like thos in PostScript names).
+
+      Apple: = NSFont.familyName
+      Windows: = IDWriteFontFamily.GetFamilyNames()
+      NOTE WELL: GDI LOGFONT.lfFaceName is NOT a font family name.
+
+      https://blogs.msdn.microsoft.com/text/2009/04/15/introducing-the-directwrite-font-system/
+  */
+  bool SetFamilyName(
+    const wchar_t* family_name
+  );
+
+  /*
+  Parameters:
+    dirty_name - [in]
+      A Windows GDI LOGFONT name or PostScript name.
+  Returns:
+    A family name
+  */
+  static const ON_wString FamilyNameFromDirtyName(
+    const wchar_t* dirty_name
+  );
 
   bool SetFromFontDescription(
     const wchar_t* font_description
@@ -1295,7 +4135,7 @@ public:
 
   bool SetFromFontDescription(
     const wchar_t* font_description,
-    const wchar_t* apple_font_name
+    const wchar_t* postscript_name
     );
 
   /*
@@ -1319,7 +4159,6 @@ public:
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-
   void DumpFreeType(
     ON_TextLog& text_log
   ) const;
@@ -1332,6 +4171,57 @@ public:
 #if defined(ON_OS_WINDOWS_GDI)
   static void DumpLogfont(
     const LOGFONT* logfont,
+    ON_TextLog& text_log
+  );
+  static void DumpTextMetric(
+    const TEXTMETRIC* tm,
+    ON_TextLog& text_log
+  );
+
+  bool SetFromWindowsDWriteFont (
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+private:
+    ON_Font(
+      ON_Font::FontType font_type,
+      const class ON_WindowsDWriteFontInformation& dwrite_font_information
+      );
+
+public:
+
+  struct IDWriteFont* WindowsDWriteFont() const;
+
+  static const ON_wString PostScriptNameFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  /*
+  Parameters:
+    dwrite_font - [in]
+    preferedLocale - [in]
+      prefered local for strings (family name, font name, face name, postscript name, ...)
+      A locale name often has the form "es-es", "en-us", ...
+      Pass nullptr or empty string list all locales and use "en-us" as the prefered locale name.
+      (Most modern fonts distributed with Windows 10 in all locales have en-us names).
+      Pass "*..." if you want to list all locale names and specify a prefered locale.
+      For example, "*es-es" will list all local names but use "es-es" as the preferedLocale.
+    text_log - [in]
+      destintion for the text description of the font.
+  */
+  static void DumpWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale,
+    ON_TextLog& text_log
+  );
+
+#endif
+
+#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+  static void DumpNSFont(
+    NSFont* apple_font,
     ON_TextLog& text_log
   );
 #endif
@@ -1421,9 +4311,21 @@ public:
 #endif
   }; 
 
+
+  #if defined(ON_OS_WINDOWS_GDI)
+  static unsigned char WindowsLogfontCharSetFromLogfont(
+    const LOGFONT* logfont,
+    bool bValidateSymbolFont
+  );
+  #endif
   /*
   Parameters:
-    face_name - [in]    
+    face_name - [in]  
+      GDI LOGFONT.lfFaceName value.
+      Note well: This is not the font "face name" or the font "family name". 
+      It is typically a combination of the face name and "GDI sub-family" name
+      and typically does not include words that identify face weight or 
+      face style.
   Returns:
     If the code is running on Windows:
       The appropriate value of LOGFONT.lfCharSet for the input facename.
@@ -1461,7 +4363,16 @@ public:
     // font definition to opennurbs normalized font coordinates.
     // Many TrueType fonts have font definition grid height = 2048.
     // Many PostScript fonts have font definition grid height = 1000.
-    AnnotationFontCellHeight = 256,  // LOGFONT.lfHeight value
+    AnnotationFontCellHeight = 256,  // Windows LOGFONT.lfHeight value (NOT A POINT SIZE)
+
+    // This value is used on Apple platforms to get fonts used for rendering annotation.
+    // The size should be a power of 2. Ideally we want access to raw font and glyph
+    // design information but we cannot get this via NSFont.
+    // It appears that NSFont applies the scale factor
+    //   AnnotationFontApplePointSize/(font design unit cell height)
+    // to the values in the font definitions (PostScript TrueType, OpenType,... font files).
+    // NSFont* apple_font = [NSFont fontWithName : <name> size : ON_Font::Constants::AnnotationFontApplePointSize]
+    AnnotationFontApplePointSize = 256,
 
     // ON_Font::Constants::metric_char is the unicode code point value
     // for the glpyh used to calculate critical glyph metrics.
@@ -1476,24 +4387,15 @@ public:
     MetricsGlyphCodePoint = 'I'
   }; 
 
-  /*
-  Description:
-    Get a text description of the font.
-  Parameters:
-    font_description - [out]
-  Returns:
-    A pointer to the font description string stored in the font_description parameter.
-  */
+  ON_DEPRECATED_MSG("Use ON_Font::Description() or ON_Font::PostScriptName()")
   const ON_wString& FontDescription() const;
 
-  /*
-  Description:
-    Get a text description of the font.
-  Parameters:
-    font_description - [out]
-  Returns:
-    A pointer to the font description string stored in the font_description parameter.
-  */
+  ON_DEPRECATED_MSG("V6 ON_Font does not have a description property.")
+  bool SetFontDescriptionForExperts(
+    const wchar_t* ignored_parameter
+  );
+ 
+  ON_DEPRECATED_MSG("Use ON_Font::PostScriptName()")
   const wchar_t* FontDescriptionAsPointer() const;
   
   ON_DEPRECATED_MSG("Use ON_FontMetrics::DefaultLineFeedRatio")
@@ -1602,10 +4504,66 @@ public:
     double point_size
   );
 
+  static bool IsValidPointSize(
+    double point_size
+  );
+
+  /*
+  Description:
+    This is a legacy function that traces it's heritage to Windows specific
+    GDI LOGFONT code from 1995. Best to avoid it whenever possible. 
+    Ideally, use an Windows IDWriteFont or Apple NSFont to crete an ON_Font that
+    references an installed font. Less ideally, use a complete LOGFONT structure.
+  Parameters:
+    windows_logfont_name - [in]
+      GDI LOGFONT.lfFaceName value.
+      Note well: 
+        This is not the font "face name", not the font "family name",
+        and not the font PostScript name.
+        It is often a combination of the family name, an additional "GDI sub-family" name.
+        Occasionally it includes some face weight and style attributes.
+  Returns:
+    True if the value was set.
+  */  
+  ON_DEPRECATED_MSG("Use ON_Font::SetFromDWriteFont(), ON_Font::SetFromAppleFont(), or ON_Font::SetFromWindowsLogFont()")
   bool SetFontFaceName( 
-    const wchar_t* face_name
+    const wchar_t* windows_logfont_name
     );
+
+  /*
+  Description:
+    This is a legacy function that traces it's heritage to Windows specific
+    GDI LOGFONT code from 1995. Best to avoid it whenever possible. 
+    Ideally, use an Windows IDWriteFont or Apple NSFont to crete an ON_Font that
+    references an installed font. Less ideally, use a complete LOGFONT structure.
+  Parameters:
+    windows_logfont_name - [in]
+      GDI LOGFONT.lfFaceName value.
+      Note well: 
+        This is not the font "face name", not the font "family name",
+        and not the font PostScript name.
+        It is often a combination of the family name, an additional "GDI sub-family" name.
+        Occasionally it includes some face weight and style attributes.
+  Returns:
+    True if the value was set.
+  */  
+  bool SetWindowsLogfontName( 
+    const wchar_t* windows_logfont_name
+    );
+
+  ON_DEPRECATED_MSG("Use ON_Font::WindowsLogfontName(ON_Font::NameLocale)")
   const wchar_t* FontFaceName() const;
+
+  /*
+  Returns:
+    A pointer for immediate use in formatted printing as in
+    FormattedPrint(L"Windows LOGFONT.lfFaceName[] = \"&ls\"\n",font.WindowsLogfontNameAsPointer());
+  Remarks:
+    WARNING: 
+      Do not save this pointer for later use. 
+      It points to memory in a dynamic string.
+  */
+  const wchar_t* WindowsLogfontNameAsPointer() const;
 
   ON_Font::Weight FontWeight() const;
 
@@ -1613,20 +4571,88 @@ public:
   int AppleWeightOfFont() const;
   double AppleFontWeightTrait() const;
 
+  /*
+  Description:
+    Don't use this old function.  If you have a font and want a face in
+    the same famliy with a different weight, then call 
+    InstalledFamilyMemberWithWeightStretchStyle(desired_weight,unset,unset).
+
+    NOTE WELL: 
+      Changing the weight requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+  */
   bool SetFontWeight(
     ON_Font::Weight font_weight
     );
 
+  /*
+  Description:
+    Don't use this old function. Higher quality font information is created 
+    by SetFromAppleFont() and SetFromWindowsDWriteFont().
+    NOTE WELL: 
+      Changing the weight requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+  */
   bool SetWindowsLogfontWeight(
     int windows_logfont_weight
   );
 
+  /*
+  Description:
+    Don't use this old function. Higher quality font information is created 
+    by SetFromAppleFont() and SetFromWindowsDWriteFont().
+    NOTE WELL: 
+      Changing the weight requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+  */
   bool SetAppleWeightOfFont(
     int apple_weight_of_font
   );
 
+  /*
+  Description:
+    Don't use this old function. Higher quality font information is created 
+    by SetFromAppleFont() and SetFromWindowsDWriteFont().
+    NOTE WELL: 
+      Changing the weight requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+  */
   bool SetAppleFontWeightTrait(
     double apple_font_weight_trait
+  );
+
+  /*
+  Paramaters:
+    bCheckFamilyName - [in]
+    bCheckPostScriptName - [in]
+  Returns:
+    True if any of LOGFONT face name is empty.
+    True if any of weight, stretch, or style is unset.
+    True if bCheckFamilyName is true and FamilyName() is empty.
+    True if bCheckPostScriptName is true and PostScriptName() is empty.
+    False otherwise.
+  */
+   bool HasUnsetProperties(
+    bool bCheckFamilyName,
+    bool bCheckPostScriptName
+  ) const;
+
+  /*
+  Description:
+    If a propery is unset in this and set in source, then it is set
+    to the source value.
+  Parameters:
+    source - [in]
+    bUpdateDescription - [in]
+      When in doubt, pass true. 
+      If bUpdateDescription is true and  at least one property
+      is changed, then the description is also updated. 
+  Returns:
+    Number of changed properties.
+  */
+  unsigned int SetUnsetProperties(
+    const ON_Font& source,
+    bool bUpdateDescription
   );
 
 private:
@@ -1636,6 +4662,9 @@ private:
     double apple_font_weight_trait,
     bool bUpdateFontDescription
     );
+
+  // Unsets origin and resets cache
+  void Internal_AfterModification();
 
 public:
   /*
@@ -1676,9 +4705,35 @@ public:
     True if heavier than ON_Font::Weight::Medium.
   */
   bool IsBold() const;
+
+  /*
+  Returns:
+    True if this font is considered a bold member in its installed font ON_FontFaceQuartet.
+  Remarks:
+    In a traditional regular/bold/italic/bold-italic font face interfaces, 
+    "bold" is relative to the quartet members and cannot be determined
+    by inspecting the numerical value of the font's weight. For example,
+    Arial Black has a weight of 900=ON_FontWeight::Weight::Heavy, 
+    but the Arial Black quartet has only two faces, regular and italic.
+    In quartets for fonts with a simulated bold, like AvenirLT-Roman, 
+    the bold member often has a LOGFONT weight of 551 < SemiBold = 600.
+    The Windows AvenirLT-Roman quartet has four faces and the bold faces in
+    the quartet have weights 551.
+  */
+  bool IsBoldInQuartet() const;
   
   ON_Font::Style FontStyle() const;
 
+  /*
+  Description:
+    Don't use this old function.  If you have a font and want a face in
+    the same famliy with a different style, then call 
+    InstalledFamilyMemberWithWeightStretchStyle(nullptr,unset,desired_style).
+
+    NOTE WELL: 
+      Changing the style requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+ */
   bool SetFontStyle(
     ON_Font::Style font_style
     );
@@ -1687,6 +4742,11 @@ public:
   Returns:
     true if FontStyle() is ON_Font::Style::Italic.
     false if FontStyle() is ON_Font::Style::Upright or .ON_Font::Style::Oblique.
+  Remarks:
+    The face is sloped so the top is to the right of the base.
+    NOTE WELL: 
+      When the term "oblique" appears in a face names or descriptions,
+      it generally means the face is an italic face.
   */
   bool IsItalic() const;
 
@@ -1694,6 +4754,9 @@ public:
   Returns:
     true if FontStyle() is ON_Font::Style::Upright.
     false if FontStyle() is ON_Font::Style::Italic or .ON_Font::Style::Oblique.
+  Remark:
+    In face names and descriptions, the terms "Roman", "Normal", or "Regular" 
+    are often used.
   */
   bool IsUpright() const;
 
@@ -1701,12 +4764,26 @@ public:
   Returns:
     true if FontStyle() is ON_Font::Style::Oblique.
     false if FontStyle() is ON_Font::Style::Upright or .ON_Font::Style::Italic.
+  Remarks:
+    The face is sloped so the top is to the left of the base. This is extremely rare.
+    NOTE WELL: 
+      When the term "oblique" appears in a face names or descriptions,
+      it generally means the face is an italic face.
   */
-  bool IsOblique();
-
+  bool IsOblique(); // ERROR - missing const
   
   ON_Font::Stretch FontStretch() const;
 
+  /*
+  Description:
+    Don't use this old function.  If you have a font and want a face in
+    the same famliy with a different stretch, then call 
+    InstalledFamilyMemberWithWeightStretchStyle(nullptr,desired_stretch,unset).
+
+    NOTE WELL: 
+      Changing the stretch requires updating the Family, Face, PostScript 
+      and Windows LOGFONT names as well.
+ */
   bool SetFontStretch(
     ON_Font::Stretch font_stretch
     );
@@ -1721,13 +4798,58 @@ public:
     bool bStrikethrough
     );
 
+  /*
+  Returns:
+    True if the font is a symbol font. Typically this means
+    that there is no meaningful correspondence between
+    public use UNICODE codepoints and glyphs.
+  Remarks:
+    The Linguist's Software fonts (circa 1997) with the family names
+      CityBlueprint
+      CountryBlueprint
+      Romantic
+      Technic
+    are classified as symbol fonts but have reasonable glyphs 
+    for most ASCII codepoints.
+  */
+  bool IsSymbolFont() const;
+
+  const ON_PANOSE1 PANOSE1() const;
+
+  void SetPANOSE1(
+    ON_PANOSE1 panose1
+  );
+
+  /*
+  Returns:
+    If the outline figure type is known for certain, it is returned.
+    Otherwise, ON_OutlineFigure::Type::Unknown is returned.
+  */
+  ON_OutlineFigure::Type OutlineFigureType() const;
+
+  /*
+  Returns:
+    True if this is a known single stroke font.
+    False otherwise.
+  */
+  bool IsSingleStrokeFont() const;
+
+  /*
+  Returns:
+    True if this is a known double stroke font.
+    False otherwise.
+  */
+  bool IsDoubleStrokeFont() const;
+
+  bool IsSingleStrokeOrDoubleStrokeFont() const;  
+
   unsigned char LogfontCharSet() const;
   
   bool SetLogfontCharSet(
     unsigned char logfont_charset
     );
 
-  ON_DEPRECATED_MSG("Use FontMetrics().AscentOfI()")
+  ON_DEPRECATED_MSG("Use FontMetrics().AscentOfCapital()")
   int HeightOfI() const;
 
   ON_DEPRECATED_MSG("Use FontMetrics().LineSpace()")
@@ -1775,37 +4897,127 @@ public:
 
   /*
   Description:
-    Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio
-    and facename characteristics. 
+    Compares the font face name, weight, style, stretch, underline, strikethrough,
+    point size, and platform specific characteristics. 
   Returns:
-    -1: a characteristics < b characteristics
-      0: a characteristics = b characteristics
-    +1: a characteristics > b characteristics
+    -1: lhs characteristics < rhs characteristics
+     0: lhs characteristics = rhs characteristics
+    +1: lhs characteristics > rhs characteristics
   Remarks:
-    This is a legacy function and to preserve past behavior, some platform specific 
-    characteristics are not checked. 
     Use FontCharacteristicsHash() when every characteristic needs to be compared.
   */
   static int CompareFontCharacteristics(
-    const ON_Font& a,
-    const ON_Font& b
+    const ON_Font& lhs,
+    const ON_Font& rhs
     );
+
 
   /*
   Description:
     Compares the font weight, style, stretch, underline, strikethrough, linefeed_ratio
     and facename characteristics.
   Returns:
-    0 == ON_Font::CompareFontCharacteristics(a,b).
+    0 == ON_Font::CompareFontCharacteristics(lhs,rhs).
   Remarks:
-    This is a legacy function and to preserve past behavior, some platform specific 
-    characteristics are not checked. 
     Use FontCharacteristicsHash() when every characteristic needs to be compared.
   */
   static bool EqualFontCharacteristics(
-    const ON_Font& a,
-    const ON_Font& b
+    const ON_Font& lhs,
+    const ON_Font& rhs
     );
+
+  /*
+  Description:
+    Expert user tool to compares the font face name, weight, style, stretch, 
+    underline, and strikethrough characteristics. Additional parameters 
+    determine how unset and platform specific characteristics are compared.     
+
+  Parameters:
+    bComparePlatformSpecificCharacteristics - [in]
+      If bComparePlatformSpecificCharacteristics is true, characteristics
+      for the current platform are compared. Otherwise all platform specific
+      characteristics are ignored.
+      Platform specific characteristics include m_logfont_charset on Windows,
+      and m_apple_font_name and m_apple_font_weight_trait on Mac OS.
+
+    bIgnoreUnsetCharacteristics - [in]
+      If bIgnoreUnsetCharacteristics is true, unset characteristics are 
+      considered equal to any other value.  
+
+      WARNING: 
+        When bIgnoredUnsetCharacteristic is true, this compare function is not a 
+        well ordering of ON_Font classes and cannot be used in sorting algorithms. 
+        For example, if A, B, C are fonts with weights 
+          A.FontWeight() = ON_Font::Weight::Normal, 
+          B.FontWeight() = ON_Font::Weight::Bold, 
+          C.FontWeight() = ON_Font::Weight::Unset, 
+        and all other settings identical, then A < B and A=C and B=C. 
+
+  Returns:
+    -1: lhs characteristics < rhs characteristics
+     0: lhs characteristics = rhs characteristics
+    +1: lhs characteristics > rhs characteristics
+  */
+  static int CompareFontCharacteristicsForExperts(
+    bool bComparePlatformSpecificCharacteristics,
+    bool bIgnoreUnsetCharacteristics,
+    const ON_Font& lhs,
+    const ON_Font& rhs
+    );
+
+  /*
+  Description:
+    In the rare cases when an ON_Font::Weight value must be passed
+    as an unsigned int, use ON_Font::FontWeightFromUnsigned() to
+    convert the unsigned value to an ON_Font::Weight value.
+  Parameters:
+    unsigned_font_weight - [in]
+  */
+  static ON_Font::Origin FontOriginFromUnsigned(
+    unsigned int unsigned_font_origin
+    );
+
+  /*
+  Returns:
+    Source of the information used to set the font characteristics.
+    Unset = 0,
+  */
+  ON_Font::Origin FontOrigin() const;
+  
+  void SetFontOrigin(
+    ON_Font::Origin font_origin
+  );
+
+  /*
+  Returns:
+    True if the font face is simulated in some way
+  */
+  bool IsSimulated() const;
+
+  /*
+  Returns:
+    often bold from normal
+  */
+  bool SimulatedWeight() const;
+
+  /*
+  Returns:
+    often bold from normal
+  */
+  bool SimulatedStretch() const;
+
+  /*
+  Returns:
+    true if the style was simulated (typically italic from upright)
+  */
+  bool SimulatedStyle() const;
+
+  void SetSimulated(
+    bool bSimulatedWeight,
+    bool bSimulatedStretch,
+    bool bSimulatedStyle,
+    bool bSimulatedOther
+  );
 
 private:
   friend class ON_ManagedFonts;
@@ -1831,7 +5043,7 @@ private:
   const unsigned int m_runtime_serial_number = 0;
   
   int m_windows_logfont_weight = 400; // 100 <= m_windows_logfont_weight <= 1000
-  double m_point_size = 0.0;
+  double m_point_size = 0.0; // 0.0 indicates the annotation font size will be used.
   double m_apple_font_weight_trait = 0.0; // = Apple NSFontWeightTrait value -1.0 <= m_apple_font_weight < 1.0, 0.0 = "normal"
   ON_Font::Weight  m_font_weight = ON_Font::Weight::Normal;
 
@@ -1839,50 +5051,70 @@ private:
   ON_Font::Stretch m_font_stretch = ON_Font::Stretch::Medium;
   bool             m_font_bUnderlined = false;                // Same as Windows LOGFONT.lfUnderlined
   bool             m_font_bStrikethrough = false;             // Same as Windows LOGFONT.lfStrikeOut
+
+  // There are two permitted values for m_logfont_charset.
+  //   ON_Font::WindowsConstants::logfont_default_charset = 1
+  //   ON_Font::WindowsConstants::logfont_symbol_charset = 2
   unsigned char    m_logfont_charset = ON_Font::WindowsConstants::logfont_default_charset;
 
 private:
-  unsigned char    m_reserved_char1 = 0;
+  ON_Font::Origin m_font_origin = ON_Font::Origin::Unset;
 
 private:
-  // If m_bCompleteLOGFONT is true, then the m_LOGFONT_* values are set.
-  // If m_bCompleteLOGFONT is false, then the m_LOGFONT_* values are undefined and must be ignored.
-  /*
-  unsigned char m_bCompleteLOGFONT = 0;
-  unsigned char m_LOGFONT_lfClipPrecision = 0;
-  unsigned char m_LOGFONT_lfQuality = 0;
-  unsigned char m_LOGFONT_lfPitchAndFamily = 0;
-  unsigned char m_LOGFONT_lfOutPrecision = 0;
-  int m_LOGFONT_lfHeight = 0;
-  int m_LOGFONT_lfWidth = 0;
-  int m_LOGFONT_lfEscapement = 0;
-  int m_LOGFONT_lfOrientation = 0;
-  */
+  const ON_Font::FontType m_font_type = ON_Font::FontType::Unset;
 
 private:
-  enum : int
-  {
-    face_name_capacity = 32
-  };
-  // https://en.wikipedia.org/wiki/List_of_typefaces_included_with_Microsoft_Windows
-  wchar_t          m_face_name[ON_Font::face_name_capacity+2];  // same as Windows LOGFONT.lfFaceName 
+  // Locale for localized m_locale_* font names.
+  ON_wString m_locale_name;
 
-  // If m_linefeed_ratio needs to become a variable or variables are required for tracking or stretch,
-  // these fields will be used.
-  double m_reserved_double_0 = 0.0;
-  double m_reserved_double_1 = 0.0;
-  //
-  // END "font glpyh definition" parameters:
-  //
-  //////////////////////////////////////////////////////////////////////////////////
+  // Localized and English font PostScript name
+  //  Apple: = NSFont.fontName
+  //  Windows: = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
+  //  NOTE WELL: 
+  //    This is NOT the GDI LOGFONT.lfFaceName.
+  ON_wString m_loc_postscript_name;
+  ON_wString m_en_postscript_name;
+
+  // Localized and English font family name
+  //  Apple: = NSFont.familyName
+  //  Windows: = IDWriteFontFamily.GetFamilyNames()
+  //  NOTE WELL: 
+  //    This is NOT the GDI LOGFONT.lfFaceName.
+  ON_wString m_loc_family_name;
+  ON_wString m_en_family_name;
+
+  // Localized and English font face name
+  //  Apple: = not available
+  //  Windows: = IDWriteFont.GetFaceNames()
+  //  NOTE WELL: 
+  //    This is NOT the GDI LOGFONT.lfFaceName.
+  ON_wString m_loc_face_name;
+  ON_wString m_en_face_name;
+
+  // Localized and English Windows GDI LOGFONT.lfFaceName
+  //  Apple: = not available
+  //  Windows: = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES,...)
+  ON_wString m_loc_windows_logfont_name;
+  ON_wString m_en_windows_logfont_name;
+
+  void Internal_ClearAllNames();
+
+  void Internal_ClearName(
+    bool bClearFamilyName,
+    bool bClearFaceName,
+    bool bClearPostScriptName,
+    bool bClearWindowsLogfontName
+  );
+  
+private:
+  ON__UINT8 m_simulated = 0; // bit field (&1 = some simulation, &2 simulated weight, &4 simulated stretch, &8 simulated italic)
 
 private:
-  // https://support.apple.com/en-us/HT201375
-  // https://en.wikipedia.org/wiki/List_of_typefaces_included_with_OS_X
-  ON_wString m_apple_font_name;
+  // = 1 if this is a managed font and the face is installed on the current device.
+  mutable ON__UINT8 m_managed_face_is_installed = 0;
 
 private:
-  ON_wString m_font_description;
+  ON_PANOSE1 m_panose1;
 
 private:
   // A sha1 hash of all font characteristics.
@@ -1891,15 +5123,16 @@ private:
   mutable ON_SHA1_Hash m_font_characteristics_hash;
 
 private:
+  double m_reserved2 = 0.0;
+  double m_reserved3 = 0.0;
+  double m_reserved4 = 0.0;
+
+private:
   bool ModificationPermitted(
     const char* function_name,
     const char* file_name,
     int line_number
     ) const;
-
-private:
-  void Internal_SetFontDescription();
-
 
 private:
   //////////////////////////////////////////////////////////////////////////////////
@@ -1932,20 +5165,38 @@ private:
   mutable class ON_FreeTypeFace* m_free_type_face = nullptr;
 
 private:
-  ON__UINT_PTR m_reserved_ptr = 0;
+  ON__UINT_PTR m_reserved5 = 0;
 
 public:
-  // Returns free type glyph index (or nonzero equivalent) if glyph is defined fo the glyph.CodePoint() in glyph.Font()
-  // and glyph_box is set.
+  /*
+  Parameters:
+    font_glyph - [in]
+    glyph_metrics_in_font_design_units - [out]
+      glyph metrics in font design units
+  Returns:
+    >0: Glyph index
+    0: failed
+  */
   typedef ON__UINT_PTR (*ON_GetGlyphMetricsFuncType)(
-    const class ON_Font* font, 
-    ON__UINT32 unicode_code_point,
-    class ON_TextBox& font_unit_glyph_box
+    const class ON_FontGlyph* font_glyph,
+    class ON_TextBox& glyph_metrics_in_font_design_units
     );
 
+  /*
+  Parameters:
+    font - [in]
+    font_metrics_in_font_design_units - [out]
+      font metrics in font design units
+  */
   typedef void (*ON_GetFontMetricsFuncType)(
-    const ON_Font* font,
-    ON_FontMetrics& font_unit_font_metrics
+    const class ON_Font* font,
+    class ON_FontMetrics& font_metrics_in_font_design_units
+    );
+
+  typedef bool (*ON_GetGlyphOutlineFuncType)(
+      const class ON_FontGlyph* glyph,
+      bool bSingleStrokeFont,
+      class ON_Outline& outline
     );
 
   static void SetCustomMeasurementFunctions(
@@ -1956,6 +5207,7 @@ public:
 private:
   static ON_GetGlyphMetricsFuncType Internal_CustomGetGlyphMetricsFunc;
   static ON_GetFontMetricsFuncType Internal_CustomGetFontMetricsFunc;
+  static ON_GetGlyphOutlineFuncType Internal_CustomGetGlyphOutlineFunc;
 
 public:
   static void GetRunBounds(
@@ -1970,495 +5222,442 @@ public:
   );
 };
 
-class ON_CLASS ON_TextBox
+typedef int (*ON_FontPtrCompareFunc)(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Font*>;
+#endif
+
+class ON_CLASS ON_FontList
 {
 public:
-  ON_TextBox() = default;
-  ~ON_TextBox() = default;
-  ON_TextBox(const ON_TextBox&) = default;
-  ON_TextBox& operator=(const ON_TextBox&) = default;
-
-  ON_TextBox(
-    ON_2dPoint bbmin,
-    ON_2dPoint bbmax
-  );
-
-  /*
-  Returns:
-    true if bounding box is set.
-  */
-  bool IsSet() const;
-
-  static const ON_TextBox Scale(
-    const ON_TextBox& text_box,
-    double scale
-  );
-
-  /*
-  Returns:
-    A text box with m_bbmin, m_bbmax, m_max_basepoint are translated by delta.
-    m_advance is not changed.
-  */
-  static const ON_TextBox Translate(
-    const ON_TextBox& text_box,
-    const ON_2dVector& delta
-  );
-
-  static const ON_TextBox Translate(
-    const ON_TextBox& text_box,
-    const ON_2dex& delta
-  );
+  ON_FontList() = default;
 
   /*
   Parameters:
-    lhs - [in]
-      lhs.m_advance is ignored
-    rhs - [in]
-      rhs.m_advance is ignored
-  Returns:
-    Returned m_bbmin, m_bbmax, m_max_basepoint are the union of the lhs and rhs bounding box.
-    Returned m_advance = (0,0)
+    bMatchUnderlineStrikethroughAndPointSize - [in]
+      False to ignore underline, strikethrough, and point size properties (installed font list)
+      True to match underline, strikethrough and point size properties (managed font list)
   */
-  static const ON_TextBox Union(
-    const ON_TextBox& lhs,
-    const ON_TextBox& rhs
+  ON_FontList(
+    bool bMatchUnderlineStrikethroughAndPointSize
   );
 
-public:
-  static const ON_TextBox Unset;
+  ~ON_FontList() = default;
+  ON_FontList(const ON_FontList&) = default;
+  ON_FontList& operator=(const ON_FontList&) = default;
 
 public:
-  // Default units are with respect to a LOGFONT height = ON_Font::Constants::AnnotationFontCellHeight.
-  // and (0,0) is the font glyph base point.
-  //
-  // Application of a Scale or Translate will change distance units and base point.
-  //
+  /*
+  Returns:
+    Number of fonts in the list.
+  */
+  unsigned int Count() const;
 
-  // Tight bounding box of the rendered glyphs.
-  ON_2dex m_bbmin = ON_2dex::Unset;
-  ON_2dex m_bbmax = ON_2dex::Unset;
+  ON_Font::NameLocale NameLocale() const;
 
-  // m_max_basepoint.i = maximum horizontal delta in any line. Increases to the right, decreases to the left.
-  // m_max_basepoint.i = vertical delta to basline of bottom line. Increases upward, decreases downward.
-  ON_2dex m_max_basepoint = ON_2dex::Zero;
+  const ON_Font* FromPostScriptName(
+    const wchar_t* postscript_name
+  ) const;
+  
+  const ON_Font* FromPostScriptName(
+    const wchar_t* postscript_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style
+  ) const;
+  
+  const ON_Font* FromPostScriptName(
+    const wchar_t* postscript_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+  
+  const ON_Font* FromWindowsLogfontName(
+    const wchar_t* windows_logfont_name
+  ) const;
+  
+  const ON_Font* FromWindowsLogfontName(
+    const wchar_t* windows_logfont_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style
+  ) const;
+  
+  const ON_Font* FromWindowsLogfontName(
+    const wchar_t* windows_logfont_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+  
+  const ON_Font* FromFamilyName(
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name
+  ) const;
+  
+  const ON_Font* FromFamilyName(
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style
+  ) const;
+  
+  const ON_Font* FromFamilyName(
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
 
-  // m_advance is a vector that specifies where the basepoint should be moved
-  // to after the text is rendered. m_advance.i and m_advance.j are is always >= 0.  
-  // When glyphs are rendered right to left (Arabic and Hebrew being examples)
-  // or bottom to top, the rendering code must apply the correct sign. One reason
-  // is that Arabic and Hebrew text can be mixed with latin and Cyrillic text
-  // and text rendering is much more complicated than a signed advance can handle.
-  // Another is that the sign of y associated with "up" is sometimes positive and sometimes negative.
-  // ON_TextBox::Translate does not modify the vector m_advance. 
-  // ON_TextBox::Union ignored input advance values and returns a box with advance = (0,0).
-  // 0 <= m_advance.i will be <= m_max_basepoint.i.
-  ON_2dex m_advance  = ON_2dex::Zero;
-};
+  /*
+  Parameters:
+    rtf_font_name - [in]
+      Rich text format name. This name is not well defined and depends on
+      the device and application that created the rich text. On Windows this
+      is often a LOGFONT.lfFaceName. On MacOS it is often a PostScript name.
 
-class ON_CLASS ON_FontGlyphOutlinePoint
-{
-public:
-  ON_FontGlyphOutlinePoint() = default;
-  ~ON_FontGlyphOutlinePoint() = default;
-  ON_FontGlyphOutlinePoint(const ON_FontGlyphOutlinePoint&) = default;
-  ON_FontGlyphOutlinePoint& operator= (const ON_FontGlyphOutlinePoint&) = default;
-public:
-  enum class ContourPointType : ON__UINT8
-  {
-    Unset = 0,
-    MoveTo = 1,
-    LineTo = 2,
+    bRtfBold - [in]
+      RTF bold flag
+
+    bRtfItalic - [in]
+      RTF italic flag
+  */
+  const ON_Font* FromRichTextProperties(
+    const wchar_t* rtf_font_name,
+    bool bRtfBold,
+    bool bRtfItalic,
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+
+  /*
+  Parameters:
+    postscript_name - [in]
+    windows_logfont_name - [in]
+    family_name - [in]
+      The returned font will have an exact match for one
+      of the three names, postscript_name, windows_logfont_name, 
+      or family_name.
     
-    // quadratic bezier (degree=2, order=3) control point.
-    QuadraticBezierPoint = 3,
+    prefered_face_name - [in]
+    prefered_weight - [in]      
+    prefered_stretch - [in]
+    prefered_style - [in]
+      Prefered font properties.
 
-    // cubic bezier (degree=3, order=4) control point.
-    CubicBezierPoint = 4,
+    bRequireFaceMatch - [in]
+      If true and face_name is not empty, then the returned font 
+      will have an exact match for either postscript_name, windows_logfont_name, 
+      or the family and face name pair.
 
-    // a line segment added to close an open contour.
-    // This is common. It does not indicate the glyph is a single stroke glyph.
-    LineToCloseContour = 5
-  };
-
-  static ON_FontGlyphOutlinePoint::ContourPointType ContourPointTypeFromUnsigned(unsigned contour_point_type_as_unsigned);
-
-  static const ON_FontGlyphOutlinePoint Unset;
-
-public:
-  ON_FontGlyphOutlinePoint::ContourPointType m_point_type = ContourPointType::Unset; 
-  ON__UINT8 m_bToPoint = 0; // 1 if the point is a move to, line to, or the start or end of a bezier segment.
-                            // 0 otherwise
-  ON__UINT16 m_contour_index = 0; // 0 = unset. The first contour has m_contour_index = 1.
-  ON_2iPoint m_point = ON_2iPoint::Unset;
-};
-
-
-/*
-  The best way to get a useful ON_FontGlyph is to call
-  ON_Font.CodePointGlyph(unicode_code_point)
-*/
-class ON_CLASS ON_FontGlyph 
-{
-public:
-  /*
-    The best way to get a useful ON_FontGlyph is to call
-    ON_Font.CodePointGlyph(unicode_code_point)
+    bRequireStyleMatch - [in]
+      If true and prefered_stretch is not unset, then the returned
+      font will have prefered_style
+  Remarks:
+    Ignores underlined, strikethrough, and point size settings when looking for a match.
   */
-  ON_FontGlyph() = default;
-  ~ON_FontGlyph() = default;
-  ON_FontGlyph(const ON_FontGlyph& src);
-  ON_FontGlyph& operator=(const ON_FontGlyph& src);
-
+  const ON_Font* FromNames(
+    const wchar_t* postscript_name,
+    const wchar_t* windows_logfont_name,
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bRequireFaceMatch,
+    bool bRequireStyleMatch
+  ) const;
 
   /*
-    If the font and code point are valid, constructs an unmanaged 
-    glyph with the specified font and code point.
-    The glyph box is not set.
+  Parameters:
+    postscript_name - [in]
+    windows_logfont_name - [in]
+    family_name - [in]
+      The returned font will have an exact match for one
+      of the three names, postscript_name, windows_logfont_name, 
+      or family_name.
+    
+    prefered_face_name - [in]
+    prefered_weight - [in]      
+    prefered_stretch - [in]
+    prefered_style - [in]
+      Prefered font properties.
+
+    bRequireFaceMatch - [in]
+      If true and face_name is not empty, then the returned font 
+      will have an exact match for either postscript_name, windows_logfont_name, 
+      or the family and face name pair.
+
+    bRequireStyleMatch - [in]
+      If true and prefered_stretch is not unset, then the returned
+      font will have prefered_style
+
+    bUnderlined - [in]
+      Exact match required.
+    bStrikethrough - [in]
+      Exact match required.
+    point_size - [in]
+      Exact match required.
   */
-  ON_FontGlyph(
-    const ON_Font* font,
-    ON__UINT32 code_point
-  );
+  const ON_Font* FromNames(
+    const wchar_t* postscript_name,
+    const wchar_t* windows_logfont_name,
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bRequireFaceMatch,
+    bool bRequireStyleMatch,
+    bool bUnderlined,
+    bool bStrikethrough,
+    double point_size
+  ) const;
 
-public:
-  static const ON_FontGlyph Unset;
+  const ON_Font* FromFontProperties(
+    const ON_Font* font_properties,
+    bool bRequireFaceMatch,
+    bool bRequireStyleMatch
+  ) const;
 
-  const ON_Font* Font() const;
+  const ON_Font* FromFontProperties(
+    const ON_Font* font_properties,
+    bool bRequireFaceMatch,
+    bool bRequireStyleMatch,
+    bool bUnderlined,
+    bool bStrikethrough,
+    double point_size
+  ) const;
+
+  /*
+  Properties:
+    family name - [in]
+    desired_weight - [in]
+    desired_stretch - [in]
+    desired_style - [in]
+  Returns:
+    A font in the same family with that comes a close as possible to matching the
+    desired weight, stretch and style.
+  */
+  const ON_Font* FamilyMemberWithWeightStretchStyle(
+    const wchar_t* family_name,
+    ON_Font::Weight desired_weight,
+    ON_Font::Stretch desired_stretch,
+    ON_Font::Style desired_style
+  ) const;  
   
-  const ON__UINT32 CodePoint() const;
-
-  bool IsEndOfLineCodePoint() const;
-
-  static bool IsEndOfLineCodePoint(
-    ON__UINT32 unicode_code_point
-  );
-
-  static bool IsCarriageReturnAndLineFeed(
-    ON__UINT32 unicode_code_point,
-    ON__UINT32 next_unicode_code_point
-  );
-
   /*
-  Returns:
-    Glyph box in opennurbs normalized font coordinates.
-  */
-  const ON_TextBox& GlyphBox() const;
-
-  /*
-  Returns:
-    Font unit glyph box. 
-  Remarks:
-    Must be used with ON_Font::FontUnitFontMetrics() and a single font to obtain useful results.
-    You are probably better of using normalized font coordinates in a ON_FontGlyph.GlyphBox().
-  */
-  const ON_TextBox& FontUnitGlyphBox() const;
-
-  static int CompareCodePointAndFont(
-    ON_FontGlyph& lhs,
-    ON_FontGlyph& rhs
-  );
-
-  /*
-  Parameters:
-    text - [in]
-      Null terminated wchar_t string.
+  Properties:
     font - [in]
-      The font used to render the glyphs.
-    unicode_CRLF_code_point - [in]
-      If unicode_CRLF_code_point is a valid unicode code point,
-      then consecutive carriage return line feed pairs are converted
-      to a single glyph with code point = unicode_CRLF_code_point.
-
-      ON_UnicodeCodePoint::ON_LineSeparator is a good choice when you want to  
-      condense carriage return line feed pairs to a single unambiguous code point.
-
-      ON_UnicodeCodePoint::ON_InvalidCodePoint is a good choice when you want to
-      preserve carriage return line feed pairs as two separate glyphs.
-
-    glyph_list - [out]
-      Note that glyph_list.Count() is often different than the 
-      length of the text string or the number of unicode codepoints
-      in the decoded text. 
-      Adjacent carriage return and line feed codepoints are 
-      converted to single a hard end of line.
-      All trailing end of line code points are removed from text.
-      Invalid unicode encoding sequences are replaced with
-      ON_UnicodeCodePoint::ReplacementCharacter glyphs.
-
-    text_box - [out]
-      tight bounding boxt of text extents.
-      text_box.m_advance.i = maximum of all line horizontal advance values..
-      text_box.m_advance.j = vertical advance to baseline of last line
-      If if the font height
-      is ON_Font::Constants::AnnotationFontCellHeight. If you will render the font
-      at a different height from ON_Font::Constants::AnnotationFontCellHeight, then
-      use ON_TextBox::Scale as follows:
-      ON_TextBox scaled_box 
-        = ON_TextBox::Scale(
-            text_box,
-            (font render height)/((double)ON_Font::Constants::AnnotationFontCellHeight)
-        );
-  Return:
-    number of lines of text or 0 if input is not valid or text is empty.
-  */
-  static int GetGlyphList
-  (
-    const wchar_t* text,
-    const ON_Font* font,
-    ON__UINT32 unicode_CRLF_code_point,
-    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
-    ON_TextBox& text_box
-  );
-
-  static int GetGlyphList
-  (
-    size_t code_point_count,
-    ON__UINT32* code_points,
-    const ON_Font* font,
-    ON__UINT32 unicode_CRLF_code_point,
-    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
-    ON_TextBox& text_box
-  );
-
-  /*
-  Parameters:
-    font - [in]
-      The font used to render the glyphs.
-    text_box - [out]
-      tight bounding boxt of text extents.
-      text_box.m_advance.i = maximum of all line horizontal advance values..
-      text_box.m_advance.j = vertical advance to baseline of last line
-      If if the font height
-      is ON_Font::Constants::AnnotationFontCellHeight. If you will render the font
-      at a different height from ON_Font::Constants::AnnotationFontCellHeight, then
-      use ON_TextBox::Scale as follows:
-      ON_TextBox scaled_box 
-        = ON_TextBox::Scale(
-            text_box,
-            (font render height)/((double)ON_Font::Constants::AnnotationFontCellHeight)
-        );
-  Return:
-    number of lines of text or 0 if input is not valid or text is empty.
-  */
-  static int GetGlyphListBoundingBox
-  (
-    const wchar_t* text,
-    const ON_Font* font,
-    ON_TextBox& text_box
-  );
-
-  static int GetGlyphListBoundingBox
-  (
-    size_t code_point_count,
-    ON__UINT32* code_points,
-    const ON_Font* font,
-    ON_TextBox& text_box
-  );
-
-  /*
-  Description:
-    Sets the font and code point and unsets every other property including the
-    glyph box and substitute information.
-  Parameters:
-    font - [in]
-    code_point - [in]
-  */
-  bool SetCodePoint(
-    const ON_Font* font,
-    ON__UINT32 code_point
-  );
-
-  /*
+      Used to identify the family,
+    desired_weight - [in]
+      new weight or unset if font weight is adequate
+    desired_stretch - [in]
+      new stretch or unset if font stretch is adequate
+    desired_style - [in]
+      new style or unset if font style is adequate
   Returns:
-    True if the unicode code point and font are set
+    A font in the same family with that comes a close as possible to matching the
+    desired weight, stretch and style.
   */
-  bool CodePointIsSet() const;
-
-  /*
-  Returns: 
-    true if this is a managed instance.
-    Managed instances persist for the lifetime of the application
-    and the pointer can be safely saved and referenced at any time.
-  */
-  bool IsManaged() const;
-
-  /*
-  Returns:
-    If this->CodePointIsSet() is true, then a persistent pointer
-    to a managed glyph with the same code point and font is returned.
-    Otherwise nullptr is returned.
-  */
-  const ON_FontGlyph* ManagedGlyph() const;
-
-  /*
-  Parameters:
-    bUseReplacementCharacter - [in]
-      When this->CodePointIsSet() is true, 
-      and bUseReplacementCharacter is true,
-      and no reasonable glyph definition exists,
-      and no substitued  is available, 
-      then the replacement character glyph for UNICODE code point
-      ON_UnicodeCodePoint::ON_ReplacementCharacter (U+FFFD) will be returned.
-
-  Returns:
-    A managed glyph that can be used to render "this".
-    If this->CodePointIsSet() is false, nullptr is returned.
-    If this->CodePointIsSet() is true, the returned glyph may
-    have a different font and code point when the current 
-    computer requires font or glyph substitution to draw
-    the glyph.  When the current platform cannot render this,
-    nullptr or the replacement glyph is returned depending on
-    the value of bUseReplacementCharacter.
-
-  See Also:
-    ON_FontGlyph.SubstituteGlyph().
-  */
-  const ON_FontGlyph* RenderGlyph(
-    bool bUseReplacementCharacter
-    ) const;
-
-  /*
-  Returns:
-    If this is a managed glyph or a copy of a managed glyph, 
-    and a substitute font or code point is used to render the glyph, 
-    then the substitue is returned.
-    In all other cases, nullptr is returned.
-  See Also:
-    ON_FontGlyph.RenderGlyph().
-  */
-  const ON_FontGlyph* SubstituteGlyph() const;
-
-  /*
-  Parameters:
-    bIncludeCharMaps - [in]
-      If true, then char information is printed.
-  */
-  void Dump(
-    bool bIncludeCharMaps,
-    ON_TextLog& text_log
+  const ON_Font* FamilyMemberWithWeightStretchStyle(
+    const ON_Font* font,
+    ON_Font::Weight desired_weight,
+    ON_Font::Stretch desired_stretch,
+    ON_Font::Style desired_style
   ) const;
 
   /*
   Description:
-    This is a debugging tool to test the code that starts with a font and 
-    Unicode code point and and finds a glyph in the font definition for 
-    that code point.
-  Parameters:
-    text_log - [in]
-      If text_log is not nullptr, then diagnostic messages are sent to this log.
-  Returns:
-    True: 
-      No errors were found. Every available charmap either returned the same glyph id
-      that FontGlyphId() function returns or had no glyph id for this code point.
-    False:
-      Inconsistent results were returned from different charmaps.
-  Remarks:
-    If a font or charmap is known to contain a bug and that bug is
-    handled by opennurbs, then true is returned and a message is printed
-    to the log.
+    Get the subset of fonts in this list with matching names.
   */
-  bool TestFaceCharMaps(
-    ON_TextLog* text_log
+  unsigned int FontListFromNames(
+    const wchar_t* postscript_name,
+    const wchar_t* windows_logfont_name,
+    const wchar_t* family_name,
+    const wchar_t* face_name,
+    ON_SimpleArray< const ON_Font* >& font_list
   ) const;
-
-public:
-
-  const ON__UINT_PTR FreeTypeFace() const;
 
   /*
   Returns:
-    Font glyph id.
-  Remarks:
-    The glyph id depends on the font and is assigned by the font designer.
-    In particular the font glyph id for the same Unicode code point
-    often varies from font to font. In a font, it is often the case that
-    multiple Unicode code points map to the same glyph. For example,
-    space an non-breaking space typically map to the same font glyph id.
+    Array of fonts in the order they were added.
   */
-  const ON__UINT_PTR FontGlyphId() const;
+  const ON_SimpleArray< const class ON_Font* >& ByIndex() const;
+
+  /*
+  Returns:
+    Array of fonts sorted by ON_Font.PostScriptName().
+  */
+  const ON_SimpleArray< const class ON_Font* >& ByPostScriptName() const;
+
+  /*
+  Returns:
+    Array of fonts sorted by ON_Font.WindowsLogfontName().
+  */
+  const ON_SimpleArray< const class ON_Font* >& ByWindowsLogfontName() const;
+
+  /*
+  Returns:
+    Array of fonts sorted by ON_Font.FamilyName() and then by ON_Font.FaceName().
+  */
+  const ON_SimpleArray< const class ON_Font* >& ByFamilyName() const;
+
+  /*
+  Returns:
+    Array of fonts sorted by ON_Font.QuartetName().
+  */
+  const ON_SimpleArray< const class ON_Font* >& ByQuartetName() const;
+
+  /*
+  Returns:
+    Array of font face quartets for this list sorted quartet name.
+  Remarks:
+    This is pribarily for old-fashioned font selection UI that harkens back
+    to the days of LOGFONT. The UI displays a name and a bold and italic button
+    that lets you select one of four releated faces. The name used to be based
+    on the LOGFONT name. Depending on the contents of the list, there may be 
+    some faces in the list that do not appear in the QuartetList().
+  */
+  const ON_ClassArray< ON_FontFaceQuartet >& QuartetList() const;
 
   /*
   Description:
-    Get glyph contours as NURBS curves.
+    Find a font in this list with the specified quartet properties.
   Parameters:
-    bSingleStrokeFont - [in]
-      If true, open contours will not be closed by adding a line segment.
-    text_height - [in]
-      If > 0, ouptut curves, bounding box, and advance vector are scaled 
-      so that a capital latin letter I would have a height of text_height.
-      Otherwise, no scaling is applied to the output curves, bounding box,
-      and advance vector.
-      Pass 0.0 or in this->Font()->HeightOfI() to get the contours to be in opennurbs
-      normalized font coordinates.
-      Pass ON_UNSET_VALUE to get the contours to be in native font definition units.
-      All other values < 0 are treated as 0.0.
-    glyph_contours - [out]
-    glyph_bbox - [out]
-      glyph bounding box.
-    glyph_advance - [out]
-      glyph_advance->x = horizontal advance to apply when rendering glyphs horizontally.
-      A positive horizontal advance indicates advance to the right.
-      glyph_advance->y = vertical advance to apply when rendering glyphs vertically.
-      A positive vertical advance indicates advance downwards.
+    quartet_name - [in]
+    bBold - [in]
+    bItalic - [in]
+  Returns:
+    font in the list with specified quartet properties or nullptr if none exists.
   */
-  bool GetGlyphContours(
-    bool bSingleStrokeFont,
-    double text_height,
-    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& glyph_contours,
-    ON_BoundingBox* glyph_bbox,
-    ON_3dVector* glyph_advance
+  const ON_Font* FontFromQuartetProperties(
+    const wchar_t* quartet_name,
+    bool bBold,
+    bool bItalic
   ) const;
 
-  static bool GetStringContours(
-    const wchar_t* text_string,
+  /*
+  Returns:
+    The quartet with the specified name or ON_FontFaceQuartet::Empty if none exists.
+  */
+  const ON_FontFaceQuartet QuartetFromQuartetName(
+    const wchar_t* quartet_name
+  ) const;
+
+  static int ComparePostScriptName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareFamilyName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareFamilyAndFaceName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+  static int CompareEnglishPostScriptName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareEnglishFamilyName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareEnglishFamilyAndFaceName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareEnglishWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+  static int CompareQuartetName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+  static int CompareWeightStretchStyle(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareUnderlinedStrikethroughPointSize(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+  unsigned int AddFont(
     const ON_Font* font,
-    bool bSingleStrokeFont,
-    double text_height,
-    double small_caps_scale,
-    ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+    bool bCheckForDuplicates
   );
+
+  unsigned int AddFonts(
+    const ON_SimpleArray< const ON_Font* >& fonts
+  );
+  
+  unsigned int AddFonts(
+    size_t font_count,
+    const ON_Font * const * font_list
+  );
+
 
 
 private:
-  friend class ON_GlyphMap;
-  friend class ON_Font;
-  
-  // NOTE WELL: 
-  //   The offset of m_codepoint in ON_FontGlyph must be >= 8 bytes.
-  //   so the ON_FixeSizePool that manages memory for the glyph cache
-  //   can efficiently iteratate all active managed glyphs.
-  //
-  ON_TextBox m_font_unit_glyph_bbox; // values in the native font definition units (freetype FT_LOAD_NO_SCALE units)
-  ON_TextBox m_normalized_glyph_bbox; // bounding box in opennurbs normalized font coordinates
-
-  // This box is for the platform native glyph. It can be different than m_glyph_box.
-  // Example:
-  //  Start with a Windows LOGFONT with face = Arial, height = ON_Font::Constants::AnnotationFontCellHeight (256)
-  //  Native Windows height of Arial I = 165, height of LF = ...
-  //  FreeType made from the same LOGFONT on the same has height of Arial I = 184, height of LF = ...
-
-  // When font does not contain a glyph to render  a specified unicode codepoint,
-  // then one or more glyphs from one or more subsitution fonts are used to
-  // render the codepoint. In this case, m_substitutes points to a linked
-  // list of substitute used to render the glyph.
-  //
-  ON__UINT32 m_code_point = ON_UnicodeCodePoint::ON_InvalidCodePoint;
- 
-  ON__UINT8 m_is_managed = 0; // 1 = managed glyph
-  ON__UINT8 m_reserved1 = 0;
-  ON__UINT16 m_reserved2 = 0;
-  ON__UINT_PTR m_font_glyph_id = 0;
-  const class ON_Font* m_managed_font = nullptr;
-  const class ON_FontGlyph* m_substitute = nullptr;
-
+  friend class ON_ManagedFonts;
 
 private:
-  void Internal_SetFontGlyphId(ON__UINT_PTR font_glyph_id);
-  void Internal_CopyFrom(const ON_FontGlyph& src);
-  static ON_FontGlyph* Internal_AllocateManagedGlyph(const ON_FontGlyph& src);
-  bool Internal_GetPlatformSubstitute(
-    ON_FontGlyph& substitue
+  const ON_Font* Internal_FromNames(
+    const wchar_t* postscript_name,
+    const wchar_t* windows_logfont_name,
+    const wchar_t* family_name,
+    const wchar_t* prefered_face_name,
+    ON_Font::Weight prefered_weight,
+    ON_Font::Stretch prefered_stretch,
+    ON_Font::Style prefered_style,
+    bool bRequireFaceMatch,
+    bool bRequireStyleMatch,
+    bool bMatchUnderlineStrikethroughAndPointSize,
+    bool bUnderlined,
+    bool bStrikethrough,
+    double point_size
   ) const;
+
+private:
+  const ON_Font::NameLocale m_name_locale = ON_Font::NameLocale::LocalizedFirst;
+  bool m_bMatchUnderlineStrikethroughAndPointSize = false;
+
+  void Internal_EmptyLists();
+
+  // List of all added fonts in the order they were added
+  ON_SimpleArray< const ON_Font* > m_by_index;
+
+  void Internal_UpdateSortedLists() const;
+
+  static const ON_2dex Internal_SearchSortedList(
+    const ON_Font* key,
+    ON_FontPtrCompareFunc compare_func,
+    const ON_SimpleArray< const ON_Font* >& sorted_font_list
+  );
+
+  // List of recently added fonts unsorted
+  mutable ON_SimpleArray< const ON_Font* > m_unsorted;
+
+  // List of fonts sorted by PostScript name 
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_postscript_name;
+
+  // List of fonts sorted by Windows LOGFONT.lfFaceName name
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_windows_logfont_name;
+
+  // List of fonts sorted by Family name, then FaceName
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_family_name;
+
+
+  // List of fonts sorted by English PostScript name
+  // Only fonts with m_en_postscript_name != m_loc_postscript_name are included here
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_english_postscript_name;
+
+  // List of fonts sorted by English Windows LOGFONT.lfFaceName name
+  // Only fonts with m_en_windows_logfont_name != m_loc_windows_logfont_name are included here
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_english_windows_logfont_name;
+
+  // List of fonts sorted by English Family name, then English FaceName
+  // Only fonts with m_en_family_name != m_loc_family_name are included here
+  // (Recently added fonts may be in m_unsorted[])
+  mutable ON_SimpleArray< const ON_Font* > m_by_english_family_name;
+
+  mutable ON_SimpleArray< const ON_Font* > m_by_quartet_name;
+
+  // List of quartets sorted by quartet name.
+  mutable ON_ClassArray< ON_FontFaceQuartet > m_quartet_list;
 };
 
 

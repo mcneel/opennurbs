@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D21BE19208A731400C62038 /* opennurbs_glyph_outline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D21BE18208A731400C62038 /* opennurbs_glyph_outline.cpp */; };
 		1D4452FF1ED6454500CD7FC1 /* opennurbs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4452FE1ED6454500CD7FC1 /* opennurbs.h */; };
 		1D7B99581FF3009600E9A791 /* opennurbs_unicode_cpsb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B99571FF3009600E9A791 /* opennurbs_unicode_cpsb.cpp */; };
 		1DBFBF3A1EDF3092005B50AF /* opennurbs_public_memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DBFBF391EDF3092005B50AF /* opennurbs_public_memory.cpp */; };
@@ -333,6 +334,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1D21BE18208A731400C62038 /* opennurbs_glyph_outline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_glyph_outline.cpp; sourceTree = "<group>"; };
 		1D4452FE1ED6454500CD7FC1 /* opennurbs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opennurbs.h; sourceTree = "<group>"; };
 		1D7B99571FF3009600E9A791 /* opennurbs_unicode_cpsb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_unicode_cpsb.cpp; sourceTree = "<group>"; };
 		1DB0280D1ED6421900FA9144 /* libopennurbs_public.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libopennurbs_public.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -851,6 +853,7 @@
 		1DC319F01ED6546C00DE6D26 /* Source Files */ = {
 			isa = PBXGroup;
 			children = (
+				1D21BE18208A731400C62038 /* opennurbs_glyph_outline.cpp */,
 				1D7B99571FF3009600E9A791 /* opennurbs_unicode_cpsb.cpp */,
 				1DBFBF3B1EDF333C005B50AF /* opennurbs_memory_util.cpp */,
 				1DBFBF391EDF3092005B50AF /* opennurbs_public_memory.cpp */,
@@ -1350,6 +1353,7 @@
 				1DC319A81ED6534E00DE6D26 /* opennurbs_subd_iter.cpp in Sources */,
 				1DC318B81ED652F800DE6D26 /* opennurbs_internal_Vx_annotation.cpp in Sources */,
 				1DC319DD1ED6534E00DE6D26 /* opennurbs_uuid.cpp in Sources */,
+				1D21BE19208A731400C62038 /* opennurbs_glyph_outline.cpp in Sources */,
 				1DC318A61ED652F800DE6D26 /* opennurbs_group.cpp in Sources */,
 				1DC319C51ED6534E00DE6D26 /* opennurbs_textdraw.cpp in Sources */,
 				1DC318011ED652B800DE6D26 /* opennurbs_curve.cpp in Sources */,
@@ -1466,7 +1470,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -1508,7 +1512,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 			};

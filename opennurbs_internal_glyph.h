@@ -33,53 +33,90 @@ public:
   // List is the only instance of this class.
   static ON_ManagedFonts List;
 
+  static const ON_FontList& InstalledFonts();
+
+  static const ON_FontList& ManagedFonts()
+  {
+    return List.m_managed_fonts;
+  }
+
   const ON_Font* GetFromFontCharacteristics(
     const ON_Font& font_characteristics,
     bool bCreateIfNotFound
     );
 
-  const ON_Font* GetFromAppleFontName(
-    const wchar_t* apple_font_name,
-    bool bCreateIfNotFound
-    );
-  
   const ON_Font* GetFromSerialNumber(
     unsigned int managed_font_runtime_serial_number
     );
 
-  unsigned int GetList(
-    ON_SimpleArray< const ON_Font* >& managed_fonts
-    );
+#if defined(ON_OS_WINDOWS_GDI)
+
+
+  static void Internal_GetWindowsInstalledFonts(ON_SimpleArray<const ON_Font*>&);
+
+#endif
+
+  // sorts nulls to end of lists
+  static int CompareFontPointer(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
+  static int CompareFontCharacteristicsHash(ON_Font const* const* lhs, ON_Font const* const* rhs);
 
   /*
   Returns:
     0: failure
     >0: success font glyph id
   */
-  static ON__UINT_PTR GetGlyphMetrics(
+  static ON__UINT_PTR GetGlyphMetricsInFontDesignUnits(
     const class ON_Font* font, 
     ON__UINT32 unicode_code_point,
-    class ON_TextBox& font_unit_glyph_box
+    class ON_TextBox& glyph_metrics_in_font_design_units
     );
 
-  static void GetFontMetrics(
+  /*
+  Parameters:
+    font - [in]
+    font_metrics_in_font_design_units - [out]
+  Returns:
+    True: 
+      font_metrics_in_font_design_units set from a font installed on the
+      current device.
+    False:
+      ON_FontMetrics::LastResortMetrics used or other corrections applied.
+  */
+
+  static bool GetFontMetricsInFontDesignUnits(
     const ON_Font* font,
-    ON_FontMetrics& font_unit_font_metrics
+    ON_FontMetrics& font_metrics_in_font_design_units
     );
 
 private:
-  ON_ManagedFonts() = default;
+  ON_ManagedFonts();
   ~ON_ManagedFonts();
 
+  /*
+  Parameters:
+    managed_font_metrics_in_font_design_units - [in]
+      Pass nullptr if not available.
+      If not nullptr, then the values are assumed to be accurate
+      and the units are the font design units (not normalized).
+  */
   const ON_Font* Internal_AddManagedFont(
-    const ON_Font* managed_font
+    const ON_Font* managed_font,
+    const ON_FontMetrics* managed_font_metrics_in_font_design_units // can be nullptr
     );
 
 private:
-  ON_SimpleArray<const ON_Font*> m_managed_fonts;
-  ON_SimpleArray<const ON_Font*> m_managed_fonts_by_serial_number;
-  unsigned int m_sorted_count = 0;
-  unsigned int m_sorted_by_serial_number_count = 0;
+  ON__UINT_PTR m_default_font_ptr = 0;
+
+private:
+  // Managed fonts used in annotation, etc.
+  // They may or may not be installed on this device
+  ON_FontList m_managed_fonts;
+
+
+private:
+  // Fonts installed on this device
+  ON_FontList m_installed_fonts;
 };
 
 class ON_CLASS ON_GlyphMap
@@ -107,5 +144,105 @@ private:
   unsigned int m_reserved = 0;
   ON_SimpleArray< const class ON_FontGlyph* > m_glyphs;
 };
+
+#if defined(ON_OS_WINDOWS_GDI)
+/*
+Parameters:
+  glyph - [in]
+  font_metrics - [out]
+    font metrics in font design units
+Returns:
+  >0: glyph index
+  0: failed
+*/
+ON_DECL
+void ON_WindowsDWriteGetFontMetrics(
+  const ON_Font* font,
+  ON_FontMetrics& font_metrics
+);
+
+/*
+Parameters:
+  glyph - [in]
+  glyph_metrics - [out]
+    Returns glyph metrics in font design units
+Returns:
+  >0: glyph index
+  0: failed
+*/
+ON_DECL
+ON__UINT_PTR ON_WindowsDWriteGetGlyphMetrics(
+  const ON_FontGlyph* glyph,
+  ON_TextBox& glyph_metrics
+);
+
+/*
+Parameters:
+  glyph - [in]
+  bSingleStrokeFont - [in]
+  outline - [out]
+    outline and metrics in font design units
+*/
+ON_DECL
+bool ON_WindowsDWriteGetGlyphOutline(
+  const ON_FontGlyph* glyph,
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
+);
+#endif
+
+#if defined(ON_RUNTIME_APPLE) && defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+/*
+Parameters:
+  glyph - [in]
+  knownUPM - [in]
+    The cell height in design units is not avaialble from the Apple NSFont SDK.
+    If you known it, pass it in. Otherwise pass 0.0f and an appropriate value
+    will be guesed at.
+  font_metrics - [out]
+    font metrics in font design units
+Returns:
+  >0: glyph index
+  0: failed
+*/
+ON_DECL
+void ON_AppleNSFontGetFontMetrics(
+  const ON_Font* font,
+  ON_FontMetrics& font_metrics
+);
+
+/*
+Parameters:
+  glyph - [in]
+  glyph_metrics - [out]
+    Returns glyph metrics in font design units
+Returns:
+  >0: glyph index
+  0: failed
+*/
+ON_DECL
+ON__UINT_PTR ON_AppleNSFontGetGlyphMetrics(
+  const ON_FontGlyph* glyph,
+  ON_TextBox& glyph_metrics
+);
+
+/*
+Parameters:
+  glyph - [in]
+  font_design_units_per_M - [in]
+    Pass 0 if not know, but try hard to pass in the correct value.
+  figure_type - [in]
+    Pass ON_OutlineFigure::Type::Unset if not known.
+  outline - [out]
+    outline and metrics in font design units
+*/
+ON_DECL
+bool ON_AppleNSFontGetGlyphOutline(
+  const ON_FontGlyph* glyph,
+  unsigned int font_design_units_per_M,
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
+);
+#endif
 
 #endif

@@ -78,6 +78,7 @@ ON_INC = opennurbs.h \
 	opennurbs_archive.h \
 	opennurbs_array.h \
 	opennurbs_array_defs.h \
+	opennurbs_atomic_op.h \
 	opennurbs_base32.h \
 	opennurbs_base64.h \
 	opennurbs_beam.h \
@@ -269,6 +270,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_fsp.cpp \
 	opennurbs_function_list.cpp \
 	opennurbs_geometry.cpp \
+	opennurbs_glyph_outline.cpp \
 	opennurbs_group.cpp \
 	opennurbs_hash_table.cpp \
 	opennurbs_hatch.cpp \
@@ -768,17 +770,17 @@ EXAMPLE_INC = examples.h \
 
 EXAMPLE_OBJ = example_read/example_read.o \
       example_write/example_write.o \
+      example_test/example_test.o \
       example_convert/example_convert.o \
       example_brep/example_brep.o \
       example_userdata/example_ud.o \
-      example_userdata/example_userdata.o \
-      example_roundtrip/example_roundtrip.o
+      example_userdata/example_userdata.o
 
 EXAMPLES = example_read/example_read \
       example_write/example_write \
+      example_test/example_test \
       example_convert/example_convert \
       example_brep/example_brep \
-      example_roundtrip/example_roundtrip \
       example_userdata/example_userdata
 
 all : $(OPENNURBS_LIB_FILE) $(EXAMPLES)
@@ -812,6 +814,9 @@ example_read/example_read : example_read/example_read.o example_userdata/example
 example_write/example_write : example_write/example_write.o example_userdata/example_ud.o $(OPENNURBS_LIB_FILE)
 	$(LINK) $(LINKFLAGS) example_write/example_write.o example_userdata/example_ud.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
 
+example_test/example_test : example_test/example_test.o $(OPENNURBS_LIB_FILE)
+	$(LINK) $(LINKFLAGS) example_test/example_test.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
+
 example_convert/example_convert : example_convert/example_convert.o example_userdata/example_ud.o $(OPENNURBS_LIB_FILE)
 	$(LINK) $(LINKFLAGS) example_convert/example_convert.o example_userdata/example_ud.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
 
@@ -820,9 +825,6 @@ example_brep/example_brep : example_brep/example_brep.o $(OPENNURBS_LIB_FILE)
 
 example_userdata/example_userdata : example_userdata/example_userdata.o $(OPENNURBS_LIB_FILE)
 	$(LINK) $(LINKFLAGS) example_userdata/example_userdata.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
-
-example_roundtrip/example_roundtrip : example_roundtrip/example_roundtrip.o $(OPENNURBS_LIB_FILE)
-	$(LINK) $(LINKFLAGS) example_roundtrip/example_roundtrip.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
 
 clean :
 	-$(RM) $(OPENNURBS_LIB_FILE)

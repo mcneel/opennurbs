@@ -1213,6 +1213,17 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
       rc = false;
   }
 
+  //if (!bInChunk)
+  {
+    // If justification is 0, change it to top-left
+    // and move the text point up by text height
+    if (bIsText && 0 == m_justification)
+    {
+      m_justification = eTextJustification::tjTopLeft;
+      m_plane.origin = m_plane.PointAt(0.0, m_textheight);
+    }
+  }
+
   if (ON_UNSET_INT_INDEX == dim_style_index)
   {
     if (bIsText)
@@ -2368,7 +2379,7 @@ ON_OBSOLETE_V2_TextObject* ON_OBSOLETE_V2_TextObject::CreateFromV5TextObject(
     : new ON_OBSOLETE_V2_TextObject();
   V2_text_object->Internal_InitializeFromV5Annotation(V5_text_object,annotation_context);
 
-  V2_text_object->m_facename = dim_style.Font().FontFaceName();
+  V2_text_object->m_facename = dim_style.Font().WindowsLogfontName();
 
   const double V5_text_height = V5_text_object.Height();
   V2_text_object->m_fontweight = 400;
@@ -7007,7 +7018,7 @@ void ON_OBSOLETE_V5_Annotation::SetTextFormula( const wchar_t* text_formula )
 const wchar_t* ON_OBSOLETE_V5_Annotation::TextFormula() const
 {
   const ON_AnnotationTextFormula* tf = ON_AnnotationTextFormula::Get(this);
-  return (0 != tf) ? ((const wchar_t*)tf->m_text_formula) : 0;
+  return (0 != tf) ? ((const wchar_t*)tf->m_text_formula) : TextValue();
 }
 
 bool ON_BinaryArchive::Internal_WriteV2AnnotationObject(

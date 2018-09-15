@@ -58,6 +58,10 @@ public:
     Right = 2,
     /// <summary> </summary>
     Left = 3,
+    /// <summary> If override isn't specified and text doesn't fit, move it right </summary>
+    HintRight = 4,
+    /// <summary> If override isn't specified and text doesn't fit, move it left </summary>
+    HintLeft = 5,
   };
 #pragma endregion
 
@@ -95,7 +99,10 @@ public:
   virtual double Measurement() const = 0;
 
   // Add to natural rotation
+  ON_DEPRECATED_MSG("ON_Dimension::TextRotation() is a mistake. Use ON_Annotation::TextRotationRadians().")
   double TextRotation() const;
+
+  ON_DEPRECATED_MSG("ON_Dimension::SetTextRotation() is a mistake. Use ON_Annotation::SetTextRotationRadians().")
   void SetTextRotation(double rotation_radians);
 
   bool ArrowIsFlipped(int i) const;
@@ -172,7 +179,7 @@ public:
 
 protected:
   ON_wString            m_user_text = L"<>";            // If user overridden, or "<>" to use default
-  double                m_text_rotation = 0.0;
+  double                m_reserved = 0.0;
   mutable ON_wString    m_plain_user_text;
 
   bool                  m_use_default_text_point = true;
@@ -277,6 +284,14 @@ public:
   ) const override; // ON_Annotation override
 
   // Gets transform for dimension text from ON_xy_plane to 3d display location
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
+
   bool GetTextXform(
     const ON_Viewport* vp,
     const ON_DimStyle* dimstyle,
@@ -471,7 +486,15 @@ public:
     bool bGrow = false
   ) const override; // ON_Annotation override
 
-  // Gets transform for dimension text from ON_xy_plane to 3d display location
+// Gets transform for dimension text from ON_xy_plane to 3d display location
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
+
   bool GetTextXform(
     const ON_Viewport* vp,
     const ON_DimStyle* dimstyle,
@@ -758,6 +781,14 @@ public:
 
   // Gets transform for dimension text from ON_xy_plane to 3d display location
   bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
+
+  bool GetTextXform(
     const ON_Viewport* vp,
     const ON_DimStyle* dimstyle,
     double dimscale,
@@ -904,6 +935,14 @@ public:
     double dimscale,
     ON_Xform& text_xform_out
   ) const override;
+
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
 
   bool Create(
     const ON_UUID style_id,

@@ -154,7 +154,7 @@ int ON_3dmRevisionHistory::NewRevision()
     current_user[0] = 0;
   m_sLastEditedBy = current_user;
 #endif
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
   m_sLastEditedBy = NSFullUserName().UTF8String;
 #endif
 

@@ -1202,7 +1202,7 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( major_version == 1 ) {
-    if ( minor_version >= 0 ) {
+    if (minor_version >= 0) {
       if (rc) rc = file.ReadDouble(&m_dimscale);
       if (rc) rc = file.ReadDouble(&m_textheight);
       if (rc) rc = file.ReadDouble(&m_dimexe);
@@ -1213,42 +1213,59 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 
       {
         unsigned int i;
-        if (rc) 
+        if (rc)
         {
-          rc = file.ReadInt( &i );
+          rc = file.ReadInt(&i);
           if (rc)
             m_dimunits = ON::LengthUnitSystemFromUnsigned(i);
         }
       }
 
-      if (rc) rc = file.ReadInt( &m_arrowtype );
-      if (rc) rc = file.ReadInt( &m_angularunits );
-      if (rc) rc = file.ReadInt( &m_lengthformat );
-      if (rc) rc = file.ReadInt( &m_angleformat );
+      if (rc) rc = file.ReadInt(&m_arrowtype);
+      if (rc) rc = file.ReadInt(&m_angularunits);
+      if (rc) rc = file.ReadInt(&m_lengthformat);
+      if (rc) rc = file.ReadInt(&m_angleformat);
 
       unsigned int obsolete_value = 0;
       if (rc) rc = file.ReadInt(&obsolete_value);
 
-      if (rc) rc = file.ReadInt( &m_resolution );
+      if (rc) rc = file.ReadInt(&m_resolution);
 
-      if (rc) rc = file.ReadString( m_facename );
+      if (rc) rc = file.ReadString(m_facename);
 
-      // files that do not contain m_bEnableAnnotationScaling,
+      bool bV6orLater = file.Archive3dmVersion() >= 60;
+      bool bV5 = !bV6orLater && file.Archive3dmVersion() >= 5;
+
+      if (bV6orLater)
+      {
+        // files that do not contain m_bEnableAnnotationScaling,
       // set m_bEnableAnnotationScaling = false so the display 
       // image does not change.
-      m_b_V5_EnableAnnotationScaling = 1;
+        m_b_V5_EnableAnnotationScaling = 1;
 
-      // files that do not contain m_bEnableModelSpaceAnnotationScaling,
-      // set m_bEnableModelSpaceAnnotationScaling = true so the display 
-      // image does not change.
-      //*********** This is probably right for v5 files, but not for pre-V5 *************
-      m_bEnableModelSpaceAnnotationScaling = 1;
+        // files that do not contain m_bEnableModelSpaceAnnotationScaling,
+        // set m_bEnableModelSpaceAnnotationScaling = true so the display 
+        // image does not change.
+        //*********** This is probably right for v5 files, but not for pre-V5 *************
+        m_bEnableModelSpaceAnnotationScaling = 1;
 
-      // files that do not contain m_bEnableLayoutSpaceAnnotationScaling,
-      // set m_bEnableLayoutAnnotationScaling = false so the display 
-      // image does not change.
-      // ********** This should be set from m_b_V5_EnableAnnotationScaling for V5 files   *************
-      m_bEnableLayoutSpaceAnnotationScaling = 1;
+        // files that do not contain m_bEnableLayoutSpaceAnnotationScaling,
+        // set m_bEnableLayoutAnnotationScaling = false so the display 
+        // image does not change.
+        // ********** This should be set from m_b_V5_EnableAnnotationScaling for V5 files   *************
+        m_bEnableLayoutSpaceAnnotationScaling = 1;
+      }
+      else if (bV5)
+      {
+        m_bEnableModelSpaceAnnotationScaling = 1;
+      }
+      else
+      {
+        // v4 or earlier - no layout or model space scaling
+        m_b_V5_EnableAnnotationScaling = 0;
+        m_bEnableModelSpaceAnnotationScaling = 0;
+        m_bEnableLayoutSpaceAnnotationScaling = 0;
+      }
 
       // files that do not contain m_bEnableHatchScaling,
       // set m_bEnableHatchScaling = false so the display
@@ -4777,6 +4794,16 @@ bool ON_3dmSettings::Read(ON_BinaryArchive& file )
 
   *this = ON_3dmSettings::Default;
 
+  if (60 > file.Archive3dmVersion())
+  {
+    m_AnnotationSettings.EnableLayoutSpaceAnnotationScaling(false);
+    m_AnnotationSettings.EnableModelSpaceAnnotationScaling(false);
+    m_AnnotationSettings.EnableHatchScaling(false);
+    m_AnnotationSettings.Enable_V5_AnnotationScaling(false);
+  }
+
+
+
   if ( 1 == file.Archive3dmVersion() ) 
   {
     rc = Read_v1(file); 
@@ -5337,3 +5364,588 @@ void ON_3dmSettings::Dump( ON_TextLog& dump ) const
 
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// ON_3dmAnimationProperties
+//
+
+const ON_3dmAnimationProperties ON_3dmAnimationProperties::Default;
+
+bool ON_3dmAnimationProperties::Read(ON_BinaryArchive& archive)
+{
+  //*this = ON_3dmAnimationProperties::Default;
+
+// If the file archive version is not 4,
+  // just return.
+  if( archive.Archive3dmVersion() < 4 )
+    return true;
+
+  if (archive.Archive3dmVersion() == 4)
+  {
+    // This fixes bugs like RH-35784
+    // It appears that the current code in CAnimationToolsPlugIn::ReadDocument()
+    // is not capable of reading information saved by the V4 version of this plug-in.
+
+    return true;
+  }
+
+  // Read the major and minor version of the
+  // document data
+  int major = 0, minor = 0;
+  if( !archive.Read3dmChunkVersion(&major, &minor) )
+    return false;
+
+  // At this point, if we've changed the format of
+  // our document data, we'll want to compare the
+  // major and minor revision numbers and read our
+  // data accordingly.
+
+	//READ camera and target points count
+	int cp_count = 0;
+  if( !archive.ReadInt(&cp_count) )
+    return false;
+	int tp_count = 0;
+  if( !archive.ReadInt(&tp_count) )
+    return false;
+	if( cp_count < 1 || tp_count < 1 )
+		return true;
+
+	m_aCameraPoints.SetCount(0);
+	m_aTargetPoints.SetCount(0);
+
+	for( int i = 0; i < cp_count; i++ )
+	{
+		//read camera points
+		ON_3dPoint pt = ON_3dPoint::UnsetPoint;
+		if( !archive.ReadPoint( pt )  )
+			return false;
+		m_aCameraPoints.Append( pt );
+	}
+	for( int i = 0; i < tp_count; i++ )
+	{
+		//read camera points
+		ON_3dPoint pt = ON_3dPoint::UnsetPoint;
+		if( !archive.ReadPoint( pt )  )
+			return false;
+		m_aTargetPoints.Append( pt );
+	}
+
+	//READ OTHER PARAMETERS
+	int act = 5;//none
+	if( !archive.ReadInt( &act ) )
+		return false;
+	if( act < 0 || act > 5 )
+		return true;
+	m_CaptureTypes = static_cast<CaptureTypes>(act);
+
+	if( !archive.ReadString(m_sFileExtension))
+		return false;
+	if( !archive.ReadString(m_sCaptureMethod))
+		return false;
+	if( !archive.ReadUuid(m_idDisplayMode))
+		return false;
+	if( !archive.ReadString(m_sHtmlFilename))
+		return false;
+	if( !archive.ReadString(m_sViewport))
+		return false;
+	if( !archive.ReadInt(&m_iFrameCount))
+		return false;
+	if( !archive.ReadInt(&m_iCurrentFrame))
+		return false;
+	if( !archive.ReadUuid(m_idCameraPath))
+		return false;
+	if( !archive.ReadUuid(m_idTargetPath))
+		return false;
+	if( !archive.ReadDouble(&m_dLatitude))
+		return false;
+	if( !archive.ReadDouble(&m_dLongitude))
+		return false;
+	if( !archive.ReadDouble(&m_dNorthAngle))
+		return false;
+	if( !archive.ReadInt(&m_iStartDay))
+		return false;
+	if( !archive.ReadInt(&m_iStartMonth))
+		return false;
+	if( !archive.ReadInt(&m_iStartYear))
+		return false;
+	if( !archive.ReadInt(&m_iEndDay)  )
+		return false;
+	if( !archive.ReadInt(&m_iEndMonth))
+		return false;
+	if( !archive.ReadInt(&m_iEndYear))
+		return false;
+	if( !archive.ReadInt(&m_iStartHour))
+		return false;
+	if( !archive.ReadInt(&m_iStartMinutes))
+		return false;
+	if( !archive.ReadInt(&m_iStartSeconds))
+		return false;
+	if( !archive.ReadInt(&m_iEndHour))
+		return false;
+	if( !archive.ReadInt(&m_iEndMinutes))
+		return false;
+	if( !archive.ReadInt(&m_iEndSeconds))
+		return false;
+	if( !archive.ReadInt(&m_iDaysBetweenFrames))
+		return false;
+	if( !archive.ReadInt(&m_iMinutesBetweenFrames))
+		return false;
+	if( !archive.ReadString(m_sFolderName))
+		return false;
+	if( !archive.ReadInt(&m_iLightIndex))
+		return false;
+	if( !archive.ReadBool(&m_bRenderFull))
+		return false;
+	if( !archive.ReadBool(&m_bRenderPreview))
+		return false;
+	
+  return true;
+}
+
+bool ON_3dmAnimationProperties::Write(ON_BinaryArchive& archive) const
+{
+  int cp_count = CameraPoints().Count();
+  int tp_count = TargetPoints().Count();
+
+	//Added by Rajaa - May 2, 2009 - next 2 lines commented out (test added to CallWriteDocument)
+	// Bug # 48383 - all validation happens on CallWriteDocument and not WriteDocument
+
+	if( cp_count < 1 || tp_count < 1)
+		return true;
+
+  if( !archive.WriteInt( cp_count ) )//Count of camera points
+    return true;
+  if( !archive.WriteInt( tp_count ) )// count of target points
+    return false;
+
+	for( int i = 0; i < cp_count; i++ )
+	{
+		//write camera points
+		if( !archive.WritePoint( m_aCameraPoints[i] )  )
+			return false;
+	}
+	for( int i = 0; i < tp_count; i++ )
+	{
+		//write camera points
+		if( !archive.WritePoint( m_aTargetPoints[i] )  )
+			return false;
+	}
+
+	//SAVE OTHER PARAMETERS
+//	ARecord::AType AnimationCaptureType;
+	const int iCaptureType = static_cast<int>(m_CaptureTypes);
+	if( !archive.WriteInt(iCaptureType))
+		return false;
+	if( !archive.WriteString(m_sFileExtension))
+		return false;
+	if( !archive.WriteString(m_sCaptureMethod))
+		return false;
+	if( !archive.WriteUuid(m_idDisplayMode))
+		return false;
+	if( !archive.WriteString(m_sHtmlFilename))
+		return false;
+	if( !archive.WriteString(m_sViewport))
+		return false;
+	if( !archive.WriteInt(m_iFrameCount))
+		return false;
+	if( !archive.WriteInt(m_iCurrentFrame))
+		return false;
+	if( !archive.WriteUuid(m_idCameraPath))
+		return false;
+	if( !archive.WriteUuid(m_idTargetPath))
+		return false;
+	if( !archive.WriteDouble(m_dLatitude))
+		return false;
+	if( !archive.WriteDouble(m_dLongitude))
+		return false;
+	if( !archive.WriteDouble(m_dNorthAngle))
+		return false;
+	if( !archive.WriteInt(m_iStartDay))
+		return false;
+	if( !archive.WriteInt(m_iStartMonth))
+		return false;
+	if( !archive.WriteInt(m_iStartYear))
+		return false;
+	if( !archive.WriteInt(m_iEndDay))
+		return false;
+	if( !archive.WriteInt(m_iEndMonth))
+		return false;
+	if( !archive.WriteInt(m_iEndYear))
+		return false;
+	if( !archive.WriteInt(m_iStartHour))
+		return false;
+	if( !archive.WriteInt(m_iStartMinutes))
+		return false;
+	if( !archive.WriteInt(m_iStartSeconds))
+		return false;
+	if( !archive.WriteInt(m_iEndHour))
+		return false;
+	if( !archive.WriteInt(m_iEndMinutes))
+		return false;
+	if( !archive.WriteInt(m_iEndSeconds))
+		return false;
+	if( !archive.WriteInt(m_iDaysBetweenFrames))
+		return false;
+	if( !archive.WriteInt(m_iMinutesBetweenFrames))
+		return false;
+	if( !archive.WriteString(m_sFolderName))
+		return false;
+	if( !archive.WriteInt(m_iLightIndex))
+		return false;
+	if( !archive.WriteBool(m_bRenderFull))
+		return false;
+	if( !archive.WriteBool(m_bRenderPreview))
+		return false;
+
+  return true;
+}
+
+ON_3dmAnimationProperties::CaptureTypes ON_3dmAnimationProperties::CaptureType(void) const
+{
+  return m_CaptureTypes;
+}
+
+void ON_3dmAnimationProperties::SetCaptureType(CaptureTypes type)
+{
+  m_CaptureTypes = type;
+}
+
+ON_wString ON_3dmAnimationProperties::FileExtension(void) const
+{
+  return m_sFileExtension;
+}
+
+void ON_3dmAnimationProperties::SetFileExtension(const ON_wString& s)
+{
+  m_sFileExtension = s;
+}
+
+ON_UUID ON_3dmAnimationProperties::DisplayMode(void) const
+{
+  return m_idDisplayMode;
+}
+
+void ON_3dmAnimationProperties::SetDisplayMode(const ON_UUID& id)
+{
+  m_idDisplayMode = id;
+}
+
+ON_wString ON_3dmAnimationProperties::ViewportName(void) const
+{
+  return m_sViewport;
+}
+
+void ON_3dmAnimationProperties::SetViewportName(const ON_wString& s)
+{
+  m_sViewport = s;
+}
+
+ON_wString ON_3dmAnimationProperties::HtmlFilename(void) const
+{
+  return m_sHtmlFilename;
+}
+
+void ON_3dmAnimationProperties::SetHtmlFilename(const ON_wString& s)
+{
+  m_sHtmlFilename = s;
+}
+
+ON_wString ON_3dmAnimationProperties::CaptureMethod(void) const
+{
+  return m_sCaptureMethod;
+}
+
+void ON_3dmAnimationProperties::SetCaptureMethod(const ON_wString& s)
+{
+  m_sCaptureMethod = s;
+}
+
+ON_3dPointArray& ON_3dmAnimationProperties::CameraPoints(void)
+{
+  return m_aCameraPoints;
+}
+
+const ON_3dPointArray& ON_3dmAnimationProperties::CameraPoints(void) const
+{
+  return m_aCameraPoints;
+}
+
+ON_3dPointArray& ON_3dmAnimationProperties::TargetPoints(void)
+{
+  return m_aTargetPoints;
+}
+
+const ON_3dPointArray& ON_3dmAnimationProperties::TargetPoints(void) const
+{
+  return m_aTargetPoints;
+}
+
+int ON_3dmAnimationProperties::FrameCount(void) const
+{
+  return m_iFrameCount;
+}
+
+void ON_3dmAnimationProperties::SetFrameCount(int i)
+{
+  m_iFrameCount = i;
+}
+
+int ON_3dmAnimationProperties::CurrentFrame(void) const
+{
+  return m_iCurrentFrame;
+}
+
+void ON_3dmAnimationProperties::SetCurrentFrame(int i)
+{
+  m_iCurrentFrame = i;
+}
+
+ON_UUID ON_3dmAnimationProperties::CameraPathId(void) const
+{
+  return m_idCameraPath;
+}
+
+void ON_3dmAnimationProperties::SetCameraPathId(const ON_UUID& id)
+{
+  m_idCameraPath = id;
+}
+
+ON_UUID ON_3dmAnimationProperties::TargetPathId(void) const
+{
+  return m_idTargetPath;
+}
+
+void ON_3dmAnimationProperties::SetTargetPathId(const ON_UUID& id)
+{
+  m_idTargetPath = id;
+}
+
+double ON_3dmAnimationProperties::Latitude(void) const
+{
+  return m_dLatitude;
+}
+
+void ON_3dmAnimationProperties::SetLatitude(double d)
+{
+  m_dLatitude = d;
+}
+
+double ON_3dmAnimationProperties::Longitude(void) const
+{
+  return m_dLongitude;
+}
+
+void ON_3dmAnimationProperties::SetLongitude(double d)
+{
+  m_dLongitude = d;
+}
+
+double ON_3dmAnimationProperties::NorthAngle(void) const
+{
+  return m_dNorthAngle;
+}
+
+void ON_3dmAnimationProperties::SetNorthAngle(double d)
+{
+  m_dNorthAngle = d;
+}
+
+int ON_3dmAnimationProperties::StartDay(void) const
+{
+  return m_iStartDay;
+}
+
+void ON_3dmAnimationProperties::SetStartDay(int i)
+{
+  m_iStartDay = i;
+}
+
+int ON_3dmAnimationProperties::StartMonth(void) const
+{
+  return m_iStartMonth;
+}
+
+void ON_3dmAnimationProperties::SetStartMonth(int i)
+{
+  m_iStartMonth = i;
+}
+
+int ON_3dmAnimationProperties::StartYear(void) const
+{
+  return m_iStartYear;
+}
+
+void ON_3dmAnimationProperties::SetStartYear(int i)
+{
+  m_iStartYear = i;
+}
+
+int ON_3dmAnimationProperties::EndDay(void) const
+{
+  return m_iEndDay;
+}
+
+void ON_3dmAnimationProperties::SetEndDay(int i)
+{
+  m_iEndDay = i;
+}
+
+int ON_3dmAnimationProperties::EndMonth(void) const
+{
+  return m_iEndMonth;
+}
+
+void ON_3dmAnimationProperties::SetEndMonth(int i)
+{
+  m_iEndMonth= i;
+}
+
+int ON_3dmAnimationProperties::EndYear(void) const
+{
+  return m_iEndYear;
+}
+
+void ON_3dmAnimationProperties::SetEndYear(int i)
+{
+  m_iEndYear = i;
+}
+
+int ON_3dmAnimationProperties::StartHour(void) const
+{
+  return m_iStartHour;
+}
+
+void ON_3dmAnimationProperties::SetStartHour(int i)
+{
+  m_iStartHour = i;
+}
+
+int ON_3dmAnimationProperties::StartMinutes(void) const
+{
+  return m_iStartMinutes;
+}
+
+void ON_3dmAnimationProperties::SetStartMinutes(int i)
+{
+  m_iStartMinutes = i;
+}
+
+int ON_3dmAnimationProperties::StartSeconds(void) const
+{
+  return m_iStartSeconds;
+}
+
+void ON_3dmAnimationProperties::SetStartSeconds(int i)
+{
+  m_iStartSeconds = i;
+}
+
+int ON_3dmAnimationProperties::EndHour(void) const
+{
+  return m_iEndHour;
+}
+
+void ON_3dmAnimationProperties::SetEndHour(int i)
+{
+  m_iEndHour = i;
+}
+
+int ON_3dmAnimationProperties::EndMinutes(void) const
+{
+  return m_iEndMinutes;
+}
+
+void ON_3dmAnimationProperties::SetEndMinutes(int i)
+{
+  m_iEndMinutes = i;
+}
+
+int ON_3dmAnimationProperties::EndSeconds(void) const
+{
+  return m_iEndSeconds;
+}
+
+void ON_3dmAnimationProperties::SetEndSeconds(int i)
+{
+  m_iEndSeconds = i;
+}
+
+int ON_3dmAnimationProperties::DaysBetweenFrames(void) const
+{
+  return m_iDaysBetweenFrames;
+}
+
+void ON_3dmAnimationProperties::SetDaysBetweenFrames(int i)
+{
+  m_iDaysBetweenFrames = i;
+}
+
+int ON_3dmAnimationProperties::MinutesBetweenFrames(void) const
+{
+  return m_iMinutesBetweenFrames;
+}
+
+void ON_3dmAnimationProperties::SetMinutesBetweenFrames(int i)
+{
+  m_iMinutesBetweenFrames = i;
+}
+
+int ON_3dmAnimationProperties::LightIndex(void) const
+{
+  return m_iLightIndex;
+}
+
+void ON_3dmAnimationProperties::SetLightIndex(int i)
+{
+  m_iLightIndex = i;
+}
+
+ON_wString ON_3dmAnimationProperties::FolderName(void) const
+{return m_sFolderName;
+}
+
+void ON_3dmAnimationProperties::SetFolderName(const ON_wString& s)
+{
+  m_sFolderName = s;
+}
+
+const ON_ClassArray<ON_wString>& ON_3dmAnimationProperties::Images(void) const
+{
+  return m_aImages;
+}
+
+ON_ClassArray<ON_wString>& ON_3dmAnimationProperties::Images(void)
+{
+  return m_aImages;
+}
+
+ON_ClassArray<ON_wString>& ON_3dmAnimationProperties::Dates(void)
+{
+  return m_aDates;
+}
+
+const ON_ClassArray<ON_wString>& ON_3dmAnimationProperties::Dates(void) const
+{
+  return m_aDates;
+}
+
+bool ON_3dmAnimationProperties::RenderFull(void) const
+{
+  return m_bRenderFull;
+}
+
+void ON_3dmAnimationProperties::SetRenderFull(bool b)
+{
+  m_bRenderFull = b;
+}
+
+bool ON_3dmAnimationProperties::RenderPreview(void) const
+{
+  return m_bRenderPreview;
+}
+
+void ON_3dmAnimationProperties::SetRenderPreview(bool b)
+{
+  m_bRenderPreview = b;
+}

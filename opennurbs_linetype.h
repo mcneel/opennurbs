@@ -54,6 +54,24 @@ public:
   // index = -3, id, name and pattern are set.
   static const ON_Linetype ByParent;
 
+  // index = -4, id, name and pattern are set.
+  static const ON_Linetype Hidden;
+
+  // index = -5, id, name and pattern are set.
+  static const ON_Linetype Dashed;
+
+  // index = -6, id, name and pattern are set.
+  static const ON_Linetype DashDot;
+
+  // index = -7, id, name and pattern are set.
+  static const ON_Linetype Center;
+
+  // index = -8, id, name and pattern are set.
+  static const ON_Linetype Border;
+
+  // index = -9, id, name and pattern are set.
+  static const ON_Linetype Dots;
+
   /*
   Parameters:
     model_component_reference - [in]
@@ -153,6 +171,15 @@ public:
       Sets the length and type of the segment at index
   */
   bool SetSegment( int index, double length, ON_LinetypeSegment::eSegType type);
+
+  /*
+  Description:
+    Set all segments
+  Parameters:
+    segments - [in]
+  */
+  bool SetSegments(const ON_SimpleArray<ON_LinetypeSegment>& segments);
+
 
   /*
     Description:

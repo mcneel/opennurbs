@@ -210,6 +210,23 @@ public:
   Parameters:
     t - [in] curve parameter of new start/end point.  The
              returned curves domain will start at t.
+    min_dist - [in] Do not change if Crv(t) is within min_dist of the original seam
+  Returns:
+    true if successful, and seam was moved.
+  */
+
+  bool ChangeClosedCurveSeam( 
+            double t, 
+            double min_dist 
+            );
+
+  /*
+  Description:
+    If this curve is closed, then modify it so that
+    the start/end point is at curve parameter t.
+  Parameters:
+    t - [in] curve parameter of new start/end point.  The
+             returned curves domain will start at t.
   Returns:
     true if successful.
   */
@@ -1413,13 +1430,17 @@ Paramters:
   curve - [in] simple (no self intersections) closed planar curve
   xform - [in] Transformation to map the curve to the xy plane. If the
                curve is parallel to the xy plane, you may pass nullptr.
+	plane - [in] If curve is on plane then determine the orientation in relation to 
+								plane's orientation.
 Returns:
   +1: The curve's orientation is counter clockwise in the xy plane.
   -1: The curve's orientation is clockwise in the xy plane.
    0: Unable to compute the curve's orientation.
 */
 ON_DECL
-int ON_ClosedCurveOrientation( const ON_Curve& curve, const ON_Xform* xform );
+int ON_ClosedCurveOrientation(const ON_Curve& curve, const ON_Xform* xform);
+ON_DECL
+int ON_ClosedCurveOrientation(const ON_Curve& curve, const ON_Plane& plane);
 
 
 /*

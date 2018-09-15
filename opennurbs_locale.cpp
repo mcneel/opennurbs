@@ -1071,7 +1071,16 @@ ON_Locale ON_Locale::FromWindowsName(
   else
   {
     // Rhino supports a single region and default script for these languages.
-#define LANG_CASE(lcid,lang) if (ON_String::EqualOrdinal(lang, -1, language_subtag, -1, true)) return ON_Locale::FromWindowsLCIDAndName(lcid, lang )
+    ON_String cleaned_loc = language_subtag;
+    cleaned_loc += '-';
+    cleaned_loc +=region_subtag;
+    if ( nullptr != windows_sortorder && 0 != windows_sortorder[0])
+    {
+      cleaned_loc += '_';
+      cleaned_loc += windows_sortorder;
+    }
+    
+#define LANG_CASE(lcid,lang) if (ON_String::EqualOrdinal(lang, -1, cleaned_loc, -1, true)) return ON_Locale::FromWindowsLCIDAndName(lcid, lang )
     LANG_CASE( ON_Locale::cs_CZ_LCID, "cs-CZ" );
     LANG_CASE( ON_Locale::de_DE_LCID, "de-DE" );
     LANG_CASE( ON_Locale::en_US_LCID, "en-US" );
@@ -1084,6 +1093,20 @@ ON_Locale ON_Locale::FromWindowsName(
     LANG_CASE( ON_Locale::pl_PL_LCID, "pl-PL" );
     LANG_CASE( ON_Locale::pt_PT_LCID, "pt-PT" );
 #undef LANG_CASE
+    
+    // Bail out clause to handle string like fr-US.
+#define LANG_CASE_2(two_letter_lang_code,lcid,lang) if (ON_String::EqualOrdinal(two_letter_lang_code, -1, language_subtag, -1, true)) return ON_Locale::FromWindowsLCIDAndName(lcid, lang )
+    LANG_CASE_2( "cs", ON_Locale::cs_CZ_LCID, "cs-CZ" );
+    LANG_CASE_2( "de", ON_Locale::de_DE_LCID, "de-DE" );
+    LANG_CASE_2( "en", ON_Locale::en_US_LCID, "en-US" );
+    LANG_CASE_2( "es", ON_Locale::es_ES_LCID, "es-ES" );
+    LANG_CASE_2( "fr", ON_Locale::fr_FR_LCID, "fr-FR" );
+    LANG_CASE_2( "it", ON_Locale::it_IT_LCID, "it-IT" );
+    LANG_CASE_2( "ja", ON_Locale::ja_JP_LCID, "ja-JP" );
+    LANG_CASE_2( "ko", ON_Locale::ko_KR_LCID, "ko-KR" );
+    LANG_CASE_2( "pl", ON_Locale::pl_PL_LCID, "pl-PL" );
+    LANG_CASE_2( "pt", ON_Locale::pt_PT_LCID, "pt-PT" );
+#undef LANG_CASE_2
   }
 
   ON_ERROR("Unsupported language name.");

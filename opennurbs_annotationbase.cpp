@@ -65,12 +65,13 @@ void ON_Annotation::Internal_CopyFrom(const ON_Annotation& src)
   m_dimstyle_id = src.m_dimstyle_id;
   m_plane = src.m_plane;
   m_horizontal_direction = src.m_horizontal_direction;
+  m_allow_text_scaling = src.m_allow_text_scaling;
   if (nullptr != src.m_text)
     m_text = new ON_TextContent(*src.m_text);
   if (nullptr != src.m_override_dimstyle)
   {
     m_override_dimstyle = new ON_DimStyle(*src.m_override_dimstyle);
-}
+  }
 }
 
 void ON_Annotation::Internal_Destroy()
@@ -331,7 +332,8 @@ bool ON_Annotation::Internal_WriteAnnotation(
 {
   // content_version = 2 - added override dimstyle to ON_Annotation RH-37176
   // content_version = 3 -  added m_horizontal_direction
-  const int content_version = 3;
+  // content_version = 4 -  added m_allow_text_scaling - Lowell
+  const int content_version = 4;
 
   if (false == archive.BeginWrite3dmAnonymousChunk(content_version))
     return false;
@@ -363,6 +365,10 @@ bool ON_Annotation::Internal_WriteAnnotation(
 
     // content_version = 3 ( 13 July, 2017 )
     if (!archive.WriteVector(m_horizontal_direction))
+      break;
+
+    // content_version = 4 ( 17 May, 2018 - Lowell)
+    if (!archive.WriteBool(m_allow_text_scaling))
       break;
 
     rc = true;
@@ -468,6 +474,16 @@ bool ON_Annotation::Internal_ReadAnnotation(
     if (!archive.ReadVector(m_horizontal_direction))
       break;
 
+    if (content_version <= 3)
+    {
+      rc = true;
+      break;
+    }
+
+    // content_version = 4 ( 17 May, 2018 - Lowell)
+    if (!archive.ReadBool(&m_allow_text_scaling))
+      break;
+
     rc = true;
     break;
   }
@@ -483,6 +499,46 @@ bool ON_Annotation::IsValid(ON_TextLog* text_log) const
     m_text->IsValid() 
     && m_plane.IsValid()
     );
+}
+
+bool ON_Annotation::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
+  const ON_Text* pText = ON_Text::Cast(this);
+  if (nullptr != pText)
+    return pText->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_Leader* pLeader = ON_Leader::Cast(this);
+  if (nullptr != pLeader)
+    return pLeader->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_DimLinear* pDimLinear = ON_DimLinear::Cast(this);
+  if (nullptr != pDimLinear)
+    return pDimLinear->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_DimAngular* pDimAngular = ON_DimAngular::Cast(this);
+  if (nullptr != pDimAngular)
+    return pDimAngular->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_DimRadial* pDimRadial = ON_DimRadial::Cast(this);
+  if (nullptr != pDimRadial)
+    return pDimRadial->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_DimOrdinate* pDimOrdinate = ON_DimOrdinate::Cast(this);
+  if (nullptr != pDimOrdinate)
+    return pDimOrdinate->GetTextXform(model_xform, vp, dimstyle, dimscale, text_xform_out);
+
+  const ON_Centermark* pCentermark = ON_Centermark::Cast(this);
+  if (nullptr != pCentermark)
+    return pCentermark->GetTextXform(vp, dimstyle, dimscale, text_xform_out);
+
+  ON_ERROR("Annotation type not handled");
+  return false;
 }
 
 void ON_Annotation::SetPlane(const ON_Plane& plane)
@@ -662,6 +718,19 @@ bool ON_Annotation::IsOverrideStylePointer(
   return (nullptr != ptr && ptr == m_override_dimstyle);
 }
 
+bool ON_Annotation::AllowTextScaling() const
+{
+  return m_allow_text_scaling;
+}
+
+void ON_Annotation::SetAllowTextScaling(bool scale)
+{
+  if (scale != m_allow_text_scaling)
+  {
+    m_allow_text_scaling = scale ? true : false;
+    ClearBoundingBox();
+  }
+}
 
 bool ON_Annotation::IsOverrideDimStyleCandidate(
   const ON_DimStyle* override_style_candidate,
@@ -2952,7 +3021,7 @@ bool ON_Annotation::SetAnnotationBold(bool bold, const ON_DimStyle* parent_style
 
   parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
   ON_wString newrtf;
-  if (!bold && parent_style->Font().IsBold())
+  if (!bold && parent_style->Font().IsBoldInQuartet())
   {
     newrtf = ON_TextContext::FormatRtfString(rtfstr, parent_style, true, true, false, false, false, false, false, false, L"");
     newrtf.Replace(L"\\b", L"\\b0");
@@ -3038,6 +3107,44 @@ bool ON_Annotation::SetAnnotationUnderline(bool underline, const ON_DimStyle* pa
   return false;
 }
 
+
+bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style)
+{
+  if (nullptr != font)
+  {
+    const ON_wString fontname = ON_Font::RichTextFontName(font, true);
+    bool bold = font->IsBoldInQuartet();
+    bool italic = font->IsItalic();
+
+    ON_Dimension* dim = ON_Dimension::Cast(this);
+    const wchar_t* textstring;
+    if (nullptr == dim)
+      textstring = RichText().Array();
+    else
+      textstring = dim->UserText();
+    ON_wString rtfstr(textstring);
+
+    const ON_wString newrtf = ON_TextContext::FormatRtfString(rtfstr, parent_style, !bold, bold, !italic, italic, false, false, false, true, fontname);
+    if (newrtf.IsNotEmpty())
+    {
+      if (nullptr != dim)
+      {
+        dim->SetUserText(newrtf);
+      }
+      else
+      {
+        ON_TextContent* text = this->Text();
+        ON::AnnotationType type = this->Type();
+        parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+        text->ReplaceTextString(newrtf, type, parent_style);
+        SetText(text);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 bool ON_Annotation::SetAnnotationFacename(bool set_or_clear, const wchar_t* facename, const ON_DimStyle* parent_style)
 {
   ON_Dimension* dim = ON_Dimension::Cast(this);
@@ -3072,6 +3179,13 @@ bool ON_Annotation::FirstCharTextProperties(const wchar_t* rtfstr, bool& bold, b
 {
   bool rc = ON_TextContext::RtfFirstCharProperties(rtfstr, bold, italic, underline, facename);
   return rc;
+}
+
+const ON_Font* ON_Annotation::FirstCharFont() const
+{
+  if(nullptr != Text())
+    return Text()->FirstCharFont();
+  return &ON_Font::Default;
 }
 
 

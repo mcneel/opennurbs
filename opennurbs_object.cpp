@@ -929,8 +929,10 @@ const ON_ClassId* ON_ClassId::ClassId( ON_UUID uuid )
       p = &ON_CLASS_RTTI(ON_SumSurface);
     else
     {
-      // The p = nullptr line does nothing (p is already nullptr) but it's a ...
-      p = nullptr; // <- Good location for a debugger breakpoint.
+      // The p = nullptr line does nothing (p is already nullptr) but, if you're working on
+      // file reading bugs or other cases that involving rtti bugs, then it's a good 
+      // location for a debugger breakpoint.
+      p = nullptr;
     }
   }
   return p;

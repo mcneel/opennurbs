@@ -70,8 +70,8 @@ const ON_Font* ON_FontGlyph::Font() const
 }
   
 int ON_FontGlyph::CompareCodePointAndFont(
-  ON_FontGlyph& lhs,
-  ON_FontGlyph& rhs
+  const ON_FontGlyph& lhs,
+  const ON_FontGlyph& rhs
 )
 {
   if (lhs.m_managed_font != rhs.m_managed_font)
@@ -222,7 +222,8 @@ int ON_FontGlyph::GetGlyphList
 
     const int end_index = bEOL ? i-1 : i;
     const bool bEmptyLine 
-      = glyphs[end_index]->IsEndOfLineCodePoint()
+      = end_index < 0
+      || glyphs[end_index]->IsEndOfLineCodePoint()
       || (bCondenseCRLF && unicode_CRLF_code_point == glyphs[end_index]->CodePoint());
     if (false == bEmptyLine)
     {
@@ -364,11 +365,19 @@ const ON__UINT32 ON_FontGlyph::CodePoint() const
 
 const ON__UINT_PTR ON_FontGlyph::FontGlyphId() const
 {
+  if (0 != m_font_glyph_id)
+    return m_font_glyph_id;
+
   const ON_FontGlyph* managed_glyph = ManagedGlyph();
   return
     nullptr == managed_glyph
     ? 0
     : managed_glyph->m_font_glyph_id;
+}
+
+bool ON_FontGlyph::FontGlyphIdIsSet() const
+{
+  return (0 != m_font_glyph_id);
 }
 
 const ON__UINT_PTR ON_FontGlyph::FreeTypeFace() const
@@ -509,6 +518,20 @@ void ON_FontGlyph::Dump(
   ON_TextLog& text_log
 ) const
 {
+  bool bIncludeFont = true;
+  bool bIncludeSubstitute = true;
+  bool bIncludeFontUnitTextBox = false;
+  Dump(bIncludeFont, bIncludeCharMaps, bIncludeSubstitute, bIncludeFontUnitTextBox, text_log);
+}
+
+void ON_FontGlyph::Dump(
+  bool bIncludeFont,
+  bool bIncludeCharMaps,
+  bool bIncludeSubstitute,
+  bool bIncludeFontUnitTextBox,
+  ON_TextLog& text_log
+) const
+{
   ON_wString s;
   const ON_FontGlyph* g = this;
   bool bPrintMaps = false;
@@ -519,37 +542,40 @@ void ON_FontGlyph::Dump(
 
     if (pass > 0)
     {
+      if (false == bIncludeSubstitute)
+        break;
       s += L" -> substitute: ";
     }
 
-    if (g->CodePointIsSet())
+    if ( ON_IsValidUnicodeCodePoint(g->CodePoint()) )
     {
       const unsigned int code_point = g->CodePoint();
       const unsigned int glyph_id = (unsigned int)g->FontGlyphId();
       wchar_t w[8] = { 0 };
       ON_EncodeWideChar(code_point, 7, w);
       const ON_Font* font = g->Font();
-      const ON_wString font_description = (font) ? font->FontDescription() : ON_wString::EmptyString;
-      unsigned int font_sn = (font) ? font->RuntimeSerialNumber() : 0;
       s += ON_wString::FormatToString(
         L"[%ls] U+%04X",
         w,
-        code_point,
-        font_sn,
-        static_cast<const wchar_t*>(font_description)
+        code_point
       );
 
-      if (nullptr != font)
+      if (bIncludeFont)
       {
-        s += ON_wString::FormatToString(
-          L" %ls <%u>",
-          static_cast<const wchar_t*>(font_description),
-          font_sn
-        );
-      }
-      else
-      {
-        s += L" (no font)";
+        if (nullptr != font)
+        {
+          const ON_wString font_description = (font) ? font->Description() : ON_wString::EmptyString;
+          unsigned int font_sn = (font) ? font->RuntimeSerialNumber() : 0;
+          s += ON_wString::FormatToString(
+            L" %ls <%u>",
+            static_cast<const wchar_t*>(font_description),
+            font_sn
+          );
+        }
+        else
+        {
+          s += L" (no font)";
+        }
       }
 
       if (glyph_id > 0)
@@ -557,13 +583,13 @@ void ON_FontGlyph::Dump(
         s += ON_wString::FormatToString(L" glyph id = %u", glyph_id);
         bPrintMaps = bIncludeCharMaps;
       }
-      else
+      else if (bIncludeFont)
       {
         s += L" (no glyph)";
       }
 
-      const ON_TextBox gbox = g->GlyphBox();
-      const bool bGlyphBoxIsSet = gbox.IsSet();
+      const ON_TextBox gbox = g->FontUnitGlyphBox();
+      const bool bGlyphBoxIsSet = gbox.IsSet() || g->GlyphBox().IsSet();
       const bool bManagedGlyph = (g->IsManaged());
       if (bManagedGlyph)
       {
@@ -573,6 +599,15 @@ void ON_FontGlyph::Dump(
       else
       {
         s += (bGlyphBoxIsSet ? L" (unmanaged)" : L" (unmanaged, unset box)");
+      }
+      if (bIncludeFontUnitTextBox && gbox.IsSet())
+      {
+        s += ON_wString::FormatToString(
+          L" bbmin(%d,%d) bbmax(%d,%d) advance(%d,%d)",
+          gbox.m_bbmin.i,gbox.m_bbmin.j, 
+          gbox.m_bbmax.i,gbox.m_bbmax.j, 
+          gbox.m_advance.i,gbox.m_advance.j
+        );
       }
     }
     else
@@ -708,6 +743,12 @@ const ON_TextBox ON_TextBox::Union(
   u.m_advance.j = 0;
 
   return u;
+}
+
+void ON_TextBox::Dump(ON_TextLog& text_log) const
+{
+  text_log.Print("BBbox: min = (%d,%d) max = (%d,%d)\n", m_bbmin.i, m_bbmin.j, m_bbmax.i, m_bbmax.j);
+  text_log.Print("Advance: (%d,%d)\n", m_advance.i, m_advance.j);
 }
 
 const ON_TextBox ON_TextBox::Translate(
@@ -959,20 +1000,160 @@ unsigned int ON_GlyphMap::GlyphCount() const
   return m_glyph_count;
 }
 
-ON_FontGlyphOutlinePoint::ContourPointType ON_FontGlyphOutlinePoint::ContourPointTypeFromUnsigned(
+ON_OutlineFigurePoint::Type ON_OutlineFigurePoint::ContourPointTypeFromUnsigned(
   unsigned contour_point_type_as_unsigned
 )
 {
   switch (contour_point_type_as_unsigned)
   {
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::Unset);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::MoveTo);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::LineTo);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::QuadraticBezierPoint);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::CubicBezierPoint);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_FontGlyphOutlinePoint::ContourPointType::LineToCloseContour);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::Unset);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::BeginFigureUnknown);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::BeginFigureOpen);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::BeginFigureClosed);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::LineTo);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::QuadraticBezierPoint);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::CubicBezierPoint);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::EndFigureOpen);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::EndFigureClosed);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_OutlineFigurePoint::Type::Error);
   }
 
   ON_ERROR("Invalid contour_point_type_as_unsigned parameter.");
-  return ON_FontGlyphOutlinePoint::ContourPointType::Unset;
+  return ON_OutlineFigurePoint::Type::Unset;
+}
+
+bool ON_OutlineFigurePoint::IsBeginFigurePointType(
+  ON_OutlineFigurePoint::Type point_type
+)
+{
+  if (
+    ON_OutlineFigurePoint::Type::BeginFigureUnknown == point_type
+    || ON_OutlineFigurePoint::Type::BeginFigureOpen == point_type
+    || ON_OutlineFigurePoint::Type::BeginFigureClosed == point_type
+    )
+    return true;
+
+  return false;
+}
+
+bool ON_OutlineFigurePoint::IsInteriorFigurePointType(
+  ON_OutlineFigurePoint::Type point_type
+)
+{
+  if (
+    ON_OutlineFigurePoint::Type::LineTo == point_type
+    || ON_OutlineFigurePoint::Type::QuadraticBezierPoint == point_type
+    || ON_OutlineFigurePoint::Type::CubicBezierPoint == point_type
+    )
+    return true;
+
+  return false;
+}
+
+bool ON_OutlineFigurePoint::IsEndFigurePointType(
+  ON_OutlineFigurePoint::Type point_type
+)
+{
+  if (
+    ON_OutlineFigurePoint::Type::EndFigureClosed == point_type
+    || ON_OutlineFigurePoint::Type::EndFigureOpen == point_type
+    )
+    return true;
+
+  return false;
+}
+
+bool ON_OutlineFigurePoint::IsBeginFigurePoint() const
+{
+  return ON_OutlineFigurePoint::IsBeginFigurePointType(m_point_type);
+}
+
+bool ON_OutlineFigurePoint::IsInteriorFigurePoint() const
+{
+  return ON_OutlineFigurePoint::IsInteriorFigurePointType(m_point_type);
+}
+
+bool ON_OutlineFigurePoint::IsEndFigurePoint() const
+{
+  return ON_OutlineFigurePoint::IsEndFigurePointType(m_point_type);
+}
+
+static int Internal_FloatToInt(
+  float f
+)
+{
+  const float maxf = 999999.0f;
+  if (f > -maxf && f < maxf)
+  {
+    float t = floor(f);
+    if (f - t <= 0.5f)
+      return (int)t;
+    return (int)ceil(f);
+  }
+  return ON_UNSET_INT_INDEX;
+}
+
+const ON_2iPoint ON_OutlineFigurePoint::Point2i() const
+{
+  return ON_2iPoint(Internal_FloatToInt(m_point.x), Internal_FloatToInt(m_point.y));
+}
+
+const ON_2iPoint ON_OutlineFigurePoint::Point2iCeil() const
+{
+  const float maxf = 999999.0f;
+  float t;
+  ON_2iPoint p;
+  t = ceil(m_point.x);
+  p.x = (t > -maxf && t < maxf) ? ((int)t) : ON_UNSET_INT_INDEX;
+  t = ceil(m_point.y);
+  p.y = (t > -maxf && t < maxf) ? ((int)t) : ON_UNSET_INT_INDEX;
+  return p;
+}
+
+
+const ON_2iPoint ON_OutlineFigurePoint::Point2iFloor() const
+{
+  const float maxf = 999999.0f;
+  float t;
+  ON_2iPoint p;
+  t = floor(m_point.x);
+  p.x = (t > -maxf && t < maxf) ? ((int)t) : ON_UNSET_INT_INDEX;
+  t = floor(m_point.y);
+  p.y = (t > -maxf && t < maxf) ? ((int)t) : ON_UNSET_INT_INDEX;
+  return p;
+}
+
+ON_OutlineFigurePoint::Type ON_OutlineFigurePoint::PointType() const
+{
+  return m_point_type;
+}
+
+ON_OutlineFigurePoint::Proximity ON_OutlineFigurePoint::PointProximity() const
+{
+  return m_point_proximity;
+}
+
+bool ON_OutlineFigurePoint::IsOnFigure() const
+{
+  return (ON_OutlineFigurePoint::Proximity::OnFigure == m_point_proximity);
+}
+
+bool ON_OutlineFigurePoint::IsOffFigure() const
+{
+  return (ON_OutlineFigurePoint::Proximity::OffFigure == m_point_proximity);
+}
+
+ON__UINT16 ON_OutlineFigurePoint::FigureIndex() const
+{
+  return m_figure_index;
+}
+
+const ON_2fPoint ON_OutlineFigurePoint::Point() const
+{
+  return m_point;
+}
+
+const ON_2dPoint ON_OutlineFigurePoint::Point2d() const
+{
+  return ON_2dPoint(m_point);
 }

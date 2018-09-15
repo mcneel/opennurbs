@@ -33,6 +33,15 @@
 #endif
 
 /*
+ Returns:
+   Units per em in font design units.
+*/
+ON_DECL
+unsigned int ON_FreeTypeGetFontUnitsPerM(
+  const ON_Font* font
+  );
+
+/*
 Parameters:
   font_unit_font_metrics - [in]
     metrics in font units (freetype face loaded with FT_LOAD_NO_SCALE) unless
@@ -46,8 +55,8 @@ void ON_FreeTypeGetFontMetrics(
 
 /*
 Parameters:
-  font_unit_glyph_box - [in]
-    box in font units (freetype face loaded with FT_LOAD_NO_SCALE) unless
+  glyph_box - [out]
+    glyph metrics infont units (freetype face loaded with FT_LOAD_NO_SCALE) unless
     it is a "tricky" font.
 Returns:
   0 if box was not set.
@@ -55,19 +64,22 @@ Returns:
 */
 ON_DECL
 ON__UINT_PTR ON_FreeTypeGetGlyphMetrics(
-  const ON_Font* font,
-  ON__UINT32 unicode_code_point,
-  class ON_TextBox& font_unit_glyph_box
+  const ON_FontGlyph* glyph,
+  ON_TextBox& glyph_metrics_in_font_design_units
 );
 
+/*
+Parameters:
+  glyph - [in]
+  bSingleStrokeFont - [in]
+  outline - [out]
+    outline and metrics in font design units
+*/
 ON_DECL
 bool ON_FreeTypeGetGlyphOutline(
   const ON_FontGlyph* glyph,
-  bool bSingleStrokeFont,
-  double text_height,
-  ON_ClassArray< ON_SimpleArray< ON_Curve* > >& contours,
-  ON_BoundingBox* glyph_bbox,
-  ON_3dVector* glyph_advance
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
 );
 
 /*

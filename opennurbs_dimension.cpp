@@ -69,7 +69,7 @@ void ON_Dimension::Internal_Destroy()
 
 void ON_Dimension::Internal_CopyFrom(const ON_Dimension& src)
 {
-  m_text_rotation = src.m_text_rotation;
+  // m_text_rotation NOT used in 6.0 - m_text_rotation = src.m_text_rotation;
   m_use_default_text_point = src.m_use_default_text_point;
   m_user_text_point = src.m_user_text_point;
   m_user_text = src.m_user_text;
@@ -150,12 +150,18 @@ const wchar_t* ON_Dimension::PlainUserText() const
 // Add to natural rotation
 double ON_Dimension::TextRotation() const
 {
-  return m_text_rotation;
+  // This V5 function should have been removed from the 6.0 SDK.
+  // It returned some angle in radians and it doesn't do anything in V6. It was almost always zero.
+  // Text rotation is handled completely differently in V5 an V6.
+  return 0.0;
 }
 
-void ON_Dimension::SetTextRotation(double rotation_radians)
+void ON_Dimension::SetTextRotation(double ignored_rotation_radians)
 {
-  m_text_rotation = remainder(rotation_radians, (2.0 * ON_PI));
+  // This V5 function and m_text_rotation should have been removed from the 6.0 SDK.
+  // Text rotation is handled completely differently in V5 an V6.
+  // m_text_rotation = remainder(rotation_radians, (2.0 * ON_PI));
+  return;
 }
 
 bool ON_Dimension::GetTextRect(ON_3dPoint text_rect[4]) const
@@ -337,6 +343,8 @@ ON_Dimension::ForceText ON_Dimension::ForceTextFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Dimension::ForceText::Inside);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Dimension::ForceText::Right);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Dimension::ForceText::Left);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Dimension::ForceText::HintRight);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Dimension::ForceText::HintLeft);
   }
   ON_ERROR("Invalid type_as_unsigned parameter.");
   return (ON_Dimension::ForceText::Auto);
@@ -359,7 +367,7 @@ bool ON_Dimension::Internal_WriteDimension(
 
     if (!archive.WriteString(m_user_text))
       break;
-    if (!archive.WriteDouble(m_text_rotation))
+    if (!archive.WriteDouble(0.0)) // OBSOLETE m_text_rotation
       break;
     if (!archive.WriteBool(m_use_default_text_point))
       break;
@@ -412,7 +420,8 @@ bool ON_Dimension::Internal_ReadDimension(
 
     if (!archive.ReadString(m_user_text))
       break;
-    if (!archive.ReadDouble(&m_text_rotation))
+    double obsolete_text_rotation = 0.0;
+    if (!archive.ReadDouble(&obsolete_text_rotation))
       break;
     if (!archive.ReadBool(&m_use_default_text_point))
       break;
@@ -584,6 +593,18 @@ bool ON_DimLinear::GetTextXform(
   ON_Xform& text_xform_out
 ) const
 {
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+
+bool ON_DimLinear::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
   bool rc = false;
   if (nullptr == dimstyle)
     return false;
@@ -618,22 +639,8 @@ bool ON_DimLinear::GetTextXform(
   ON_Xform dimplane_to_textpoint(1.0);        // Dimension plane to text point translation
   ON_Xform text_rotation(1.0);          // Text rotation around text plane origin point
 
-  const ON_Plane& dimplane = Plane();
-  ON_3dVector dim_xaxis = dimplane.xaxis;
-  //ON_3dVector dim_yaxis = dimplane.yaxis;
-  ON_3dVector dim_zaxis = dimplane.zaxis;
-
-  ON_3dVector view_xdir = ON_3dVector::XAxis;
-  ON_3dVector view_ydir = ON_3dVector::YAxis;
-  ON_3dVector view_zdir = ON_3dVector::ZAxis;
-  if (nullptr != vp)
-  {
-    view_xdir = vp->CameraX();
-    view_ydir = vp->CameraY();
-    view_zdir = vp->CameraZ();
-  }
-
-  const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : -cos(80.0*ON_PI / 180.0);
+  // The amount past vertical where text flips to the other orientation
+  const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(80.0*ON_PI / 180.0);
 
   ON_3dPoint text_center = ON_3dPoint::Origin;
   // Text starts out approximately centered at origin
@@ -651,9 +658,10 @@ bool ON_DimLinear::GetTextXform(
     text_height = -2.0 * text_gap;
 
   text_xform_out = ON_Xform::IdentityTransformation;
-  text_to_dimplane.Rotation(ON_Plane::World_xy, dimplane);     // Rotate text from starting text plane to dimension plane
+  text_to_dimplane.Rotation(ON_Plane::World_xy, Plane());     // Rotate text from starting text plane to dimension plane
   bool draw_forward = dimstyle->DrawForward();
 
+#pragma region ArrowAndTextFitting
   // See if arrows and text will all fit inside extension lines
   // or what has to be moved outside
   bool arrowflipped[2] = { false, false };
@@ -670,15 +678,15 @@ bool ON_DimLinear::GetTextXform(
   // V6_Dimstyle Arrow1 & Arrow2
   double asz = dimstyle->ArrowSize() * dimscale;
 
-  double total_text_width = text_width;
-  if (force_text != ON_Dimension::ForceText::Auto)
+  double total_text_width = (ON_DimStyle::ContentAngleStyle::Horizontal == text_angle_style) ? text_height : text_width;
+
+  if (force_text == ON_Dimension::ForceText::Left || force_text == ON_Dimension::ForceText::Right)
+  {
     total_text_width = 0.0;
+    text_outside = true;
+  }
   else if (0.0 < total_text_width)
     total_text_width += text_gap;
-
-  if (force_text != ON_Dimension::ForceText::Auto &&
-      force_text != ON_Dimension::ForceText::Inside)
-    text_outside = true;
 
   static double arrow_width_factor = 1.1;
   double total_arrow_width = asz * arrow_width_factor * 2;
@@ -715,9 +723,9 @@ bool ON_DimLinear::GetTextXform(
   {
     // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
     double x = text_width * 0.5 + text_gap;
-    if (force_text == ON_Dimension::ForceText::Left)
+    if (force_text == ON_Dimension::ForceText::Left || force_text == ON_Dimension::ForceText::HintLeft)
     {
-      if (arrowflipped[0])
+      if (arrowflipped[0]) 
         x += (asz * arrow_width_factor);
       text_pt = ArrowPoint1().x < ArrowPoint2().x ? ArrowPoint1() : ArrowPoint2();
       text_pt.x -= x;
@@ -731,14 +739,37 @@ bool ON_DimLinear::GetTextXform(
     }
   }
 
-  // text is in dimension plane
+#pragma endregion ArrowAndTextFitting
+
+  ON_3dVector dim_xaxis = Plane().xaxis;
+  ON_3dVector dim_yaxis = Plane().yaxis;
+  ON_3dVector dim_zaxis = Plane().zaxis;
+  if (nullptr != model_xform)
+  {
+    dim_xaxis.Transform(*model_xform);
+    dim_yaxis.Transform(*model_xform);
+    dim_zaxis.Transform(*model_xform);
+  }
+
+  ON_3dVector view_xdir = ON_3dVector::XAxis;
+  ON_3dVector view_ydir = ON_3dVector::YAxis;
+  ON_3dVector view_zdir = ON_3dVector::ZAxis;
+  if (nullptr != vp)
+  {
+    view_xdir = vp->CameraX();
+    view_ydir = vp->CameraY();
+    view_zdir = vp->CameraZ();
+  }
+
+  // text is in dimension plane, not horizontal to the view
   ON_3dVector text_xdir = dim_xaxis;
+  ON_2dVector h_dir = HorizontalDirection();
   if (ON::TextOrientation::InPlane == text_orientation)
   {
     if (ON_DimStyle::ContentAngleStyle::Rotated == text_angle_style)
     {
       // Rotation angle = 0 means the text is horizontal
-      text_angle = TextRotation();
+      text_angle = 0.0; //TextRotation();
     }
     else if (ON_DimStyle::ContentAngleStyle::Aligned == text_angle_style)
     {
@@ -746,27 +777,79 @@ bool ON_DimLinear::GetTextXform(
     }
     if (ON_DimStyle::ContentAngleStyle::Aligned != text_angle_style)
     {
-      ON_2dVector h = HorizontalDirection();
-      double h_angle = atan2(h.y, h.x);
+      double h_angle = atan2(h_dir.y, h_dir.x);
       text_angle += h_angle;
       text_xdir.Rotate(h_angle, dim_zaxis);
     }
   }
 
-  const bool from_the_back = (view_zdir * dim_zaxis < 0.0);
-  const double upsign = (view_xdir*text_xdir) < fliptol ? -1.0 : 1.0;
+  double XoX = dim_xaxis * view_xdir;
+  double XoY = dim_xaxis * view_ydir;
+  double YoX = dim_yaxis * view_xdir;
+  double YoY = dim_yaxis * view_ydir;
+  bool from_the_back = (view_zdir * dim_zaxis < 0.0);
+  if (nullptr != model_xform && model_xform->Determinant() < 0.0)
+    from_the_back = !from_the_back;
+
+  double upsign = 1.0;
+
+  // This part shifts text to the correct side of the dimension line
+  if (fabs(XoX) > fabs(XoY)) // more horizontal
+  {
+    if (YoY > 0.0)
+      upsign = 1.0;
+    else
+      upsign = -1.0;
+  }
+  else  // more vertical
+  {
+    if (from_the_back)
+    {
+      if (YoX < 0.0)
+      {
+        if (XoX < fliptol)
+          upsign = 1.0;
+        else
+          upsign = -1.0;
+      }
+      else
+      {
+        if (XoX > -fliptol)
+          upsign = -1.0;
+        else
+          upsign = 1.0;
+      }
+    }
+    else
+    {
+      if (YoX > 0.0)
+      {
+        if (XoX > fliptol)
+          upsign = 1.0;
+        else
+          upsign = -1.0;
+      }
+      else
+      {
+        if (XoX < -fliptol)
+          upsign = -1.0;
+        else
+          upsign = 1.0;
+      }
+    }
+  }
 
   if (ON_DimStyle::TextLocation::AboveDimLine == text_location)
   {
     // Moves the text to AboveLine if that's the alignment mode
     double d = (text_height * 0.5 + text_gap) * upsign;
-    if (from_the_back)
-      d = -d;
+    //if (from_the_back)
+    //  d = -d;
     text_pt.y += d;
   }
 
-  ON_3dPoint text_point_3d = dimplane.PointAt(text_pt.x, text_pt.y);  // 3d text point
-  dimplane_to_textpoint = ON_Xform::TranslationTransformation(text_point_3d - dimplane.origin);                // Move from dimplane origin to text point
+  ON_3dPoint text_point_3d = Plane().PointAt(text_pt.x, text_pt.y);  // 3d text point
+  dimplane_to_textpoint = ON_Xform::TranslationTransformation(text_point_3d - Plane().origin);  // Move from dimplane origin to text point
 
   text_xform_out = ON_Xform::DiagonalTransformation(dimscale, dimscale, dimscale);      // dimscale
 
@@ -783,23 +866,25 @@ bool ON_DimLinear::GetTextXform(
   
   if (ON::TextOrientation::InView == text_orientation)  // Draw dimension horizontal to view
   {
-    view_xdir = ON_3dVector::XAxis;
-    view_ydir = ON_3dVector::YAxis;
-    view_zdir = ON_3dVector::ZAxis;
-    if (nullptr != vp)
+    if (nullptr != model_xform)
     {
-      view_xdir = vp->CameraX();
-      view_ydir = vp->CameraY();
-      view_zdir = vp->CameraZ();
+      ON_Xform xf(*model_xform);
+      xf.Invert();
+      view_xdir.Transform(xf);
+      view_ydir.Transform(xf);
+      view_zdir.Transform(xf);
     }
+
     ON_Xform tp2sxf;        // Text point to view plane rotation
-    tp2sxf.Rotation(text_point_3d, dimplane.xaxis, dimplane.yaxis, dimplane.zaxis, text_point_3d, view_xdir, view_ydir, view_zdir);
+    tp2sxf.Rotation(text_point_3d, Plane().xaxis, Plane().yaxis, Plane().zaxis, text_point_3d, view_xdir, view_ydir, view_zdir);
     text_xform_out = tp2sxf * text_xform_out;
   }
   else if (draw_forward)
   {
     bool fx = false;
     bool fy = false;
+    if (from_the_back)
+      upsign = -upsign;
     fx = upsign < 0.0;
     if (from_the_back)
       fy = !fx;
@@ -877,7 +962,7 @@ bool ON_DimLinear::GetAnnotationBoundingBox(
     return false;
 
   ON_Xform text_xform;
-  GetTextXform(vp, dimstyle, dimscale, text_xform);
+  GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform);
 
   ON_BoundingBox dim_box;
 
@@ -892,12 +977,11 @@ bool ON_DimLinear::GetAnnotationBoundingBox(
     text_rect[3].Set(dim_box.m_min.x, dim_box.m_max.y, 0.0);
     for (int i = 0; i < 4; i++)
       text_rect[i].Transform(text_xform);  // Text + gap bounding rect
-  }
 
-  dim_box.Destroy();
-  for (int i = 0; i < 4; i++)
-  {
-    dim_box.Set(text_rect[i], 0 < i ? true : false);
+    for (int i = 0; i < 4; i++)
+    {
+      dim_box.Set(text_rect[i], 0 < i ? true : false);
+    }
   }
 
   // Get non-text display geometry for the dimension
@@ -1407,6 +1491,15 @@ static int ClipLineToTextRect(
   if (!v0.Unitize())
     return 0;
 
+  bool bTextRectBackwards = false;
+  {
+    ON_3dVector a = text_rect[2] - text_rect[0];
+    ON_3dVector b = text_rect[3] - text_rect[1];
+    ON_3dVector c = ON_CrossProduct(a, b);
+    if ((c * cam_dir) < 0.0)
+      bTextRectBackwards = true;
+  }
+
   for (int i = 0; i < 4; i++)
   {
     v1 = text_rect[i] - cam_loc;
@@ -1414,6 +1507,8 @@ static int ClipLineToTextRect(
       return 0;
     // Makes normals facing out of frustum
     ON_3dVector z = ON_CrossProduct(v0, v1);
+    if (bTextRectBackwards)
+      z = -z;
     if (!frust_plane_eq[i].Create(cam_loc, z))
       return 0;
     v0 = v1;
@@ -1525,7 +1620,7 @@ static int ClipArcToTextRect(
   cam_plane_eq.Create(cam_loc, cam_dir);
 
   ON_Plane frust_plane[4];
-  ON_3dVector v0;
+  ON_3dVector v0, v1;
   v0 = text_rect[3] - cam_loc;
   if (!v0.Unitize())
     return 0;
@@ -1534,6 +1629,30 @@ static int ClipArcToTextRect(
   {
     if (!frust_plane[i].CreateFromPoints(cam_loc, text_rect[i], text_rect[(i + 1) % 4]))
       return 0;
+  }
+
+  bool bTextRectBackwards = false;
+  {
+    ON_3dVector a = text_rect[2] - text_rect[0];
+    ON_3dVector b = text_rect[3] - text_rect[1];
+    ON_3dVector c = ON_CrossProduct(a, b);
+    if ((c * cam_dir) < 0.0)
+      bTextRectBackwards = true;
+  }
+
+  for (int i = 0; i < 4; i++)
+  {
+    v1 = text_rect[i] - cam_loc;
+    if (!v1.Unitize())
+      return 0;
+    // Makes normals facing out of frustum
+    ON_3dVector z = ON_CrossProduct(v0, v1);
+    z.Unitize();
+    if (bTextRectBackwards)
+      z = -z;
+    if(!frust_plane[i].CreateFromNormal(cam_loc, z))
+      return 0;
+    v0 = v1;
   }
 
   double s[4];
@@ -1726,19 +1845,27 @@ bool ON_DimLinear::GetDisplayLines(
 
   if (UseDefaultTextPoint() && ON_DimStyle::TextLocation::InDimLine != text_location)
   {
+    // If the dimline is under the text, and the text extends past the end of the dimline,
+    // make the dim line as long as the text if the text is offset sideways from the 
+    // extension lines.
+    // If the text overlaps the extensions in both directions, it is centered and the
+    // dimension line will hang out just a little each way, so don't do it in that case
     double t0, t1;
     lines[2].ClosestPointTo(text_rect[0], &t0);
     lines[2].ClosestPointTo(text_rect[1], &t1);
-    if (t0 > t1)
+    if (fabs(t0 - t1) > 0.00001) // if text rect has some width
     {
-      double t = t0; t0 = t1; t1 = t;
+      if (t0 > t1)
+      {
+        double t = t0; t0 = t1; t1 = t;
+      }
+      ON_Line l = lines[2];
+      if (t0 < 0.0 && t1 < 1.0)
+        l.from = lines[2].PointAt(t0);
+      if (t1 > 1.0 && t0 > 0.0)
+        l.to = lines[2].PointAt(t1);
+      lines[2] = l;
     }
-    ON_Line l = lines[2];
-    if (t0 < 0.0)
-      l.from = lines[2].PointAt(t0);
-    if (t1 > 1.0)
-      l.to = lines[2].PointAt(t1);
-    lines[2] = l;
   }
 
   if (
@@ -2579,7 +2706,7 @@ bool ON_DimAngular::GetAnnotationBoundingBox(
     view_ydir = vp->CameraY();
   }
   ON_Xform text_xform;
-  GetTextXform(vp, dimstyle, dimscale, text_xform);
+  GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform);
 
   ON_BoundingBox dim_box;
 
@@ -2635,6 +2762,17 @@ bool ON_DimAngular::GetAnnotationBoundingBox(
 }
 
 bool ON_DimAngular::GetTextXform(
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_DimAngular::GetTextXform(
+  const ON_Xform* model_xform,
   const ON_Viewport* vp,
   const ON_DimStyle* dimstyle,
   double dimscale,
@@ -2792,7 +2930,7 @@ bool ON_DimAngular::GetTextXform(
     if (ON_DimStyle::ContentAngleStyle::Rotated == text_angle_style)
     {
       // Rotation angle = 0 means the text is horizontal
-      text_angle = TextRotation();
+      text_angle = 0.0; //TextRotation(); Was some gooffy 0 to 1 property from V5. Not degrees or radians
     }
     else if (ON_DimStyle::ContentAngleStyle::Horizontal == text_angle_style)
     {
@@ -2861,6 +2999,13 @@ bool ON_DimAngular::GetTextXform(
     view_ydir = vp->CameraY();
     view_zdir = vp->CameraZ();
   }
+  ON_3dVector dim_xdir = Plane().xaxis;
+  ON_3dVector dim_ydir = Plane().yaxis;
+  if (nullptr != model_xform)
+  {
+    dim_xdir.Transform(*model_xform);
+    dim_ydir.Transform(*model_xform);
+  }
 
   if (ON::TextOrientation::InView == text_orientation)  // Draw dimension horizontal to view
   {
@@ -2873,9 +3018,12 @@ bool ON_DimAngular::GetTextXform(
   {
     ON_3dVector text_right_dir_local(1.0, 0.0, 0.0);
     text_right_dir_local.Transform(text_xform_out);
+    if (nullptr != model_xform)
+      text_right_dir_local.Transform(*model_xform);
     if (text_right_dir_local.Unitize())
     {
-      ON_3dVector text_up_dir_local = ON_CrossProduct(dimplane.zaxis, text_right_dir_local);
+      ON_3dVector zdir = ON_CrossProduct(dim_xdir, dim_ydir);
+      ON_3dVector text_up_dir_local = ON_CrossProduct(zdir, text_right_dir_local);
       bool fx = (0.0 > view_xdir * text_right_dir_local);
       bool fy = (0.0 > view_ydir * text_up_dir_local);
 
@@ -3733,7 +3881,7 @@ bool ON_DimRadial::GetAnnotationBoundingBox(
     return false;
 
   ON_Xform text_xform;
-  GetTextXform(vp, dimstyle, dimscale, text_xform);
+  GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform);
 
   ON_BoundingBox dim_box;
 
@@ -3782,6 +3930,17 @@ bool ON_DimRadial::GetTextXform(
   ON_Xform& text_xform_out
 ) const
 {
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_DimRadial::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
   const ON_TextContent* text = Text();
   if (nullptr == text)
     return false;
@@ -3800,7 +3959,6 @@ bool ON_DimRadial::GetTextXform(
     const_cast<ON_TextContent*>(text)->Create(rtfstr, annotation_type, dimstyle, wrapped, width, rot);
   }
 
-  const ON_Plane& dimplane = Plane();
   ON_3dPoint text_center = ON_3dPoint::Origin;
 
   ON_3dPoint cp[4];
@@ -3813,7 +3971,8 @@ bool ON_DimRadial::GetTextXform(
 
   const ON::TextOrientation text_orientation = dimstyle->DimRadialTextOrientation();
   const ON_DimStyle::ContentAngleStyle text_alignment = dimstyle->DimRadialTextAngleStyle();
-  const ON_DimStyle::TextLocation text_location = 
+  // Always move text to InLine if it's going to be horizontal and in the view plane
+  const ON_DimStyle::TextLocation text_location =   
     (ON::TextOrientation::InView == text_orientation)
     ? ON_DimStyle::TextLocation::InDimLine
     : dimstyle->DimRadialTextLocation();
@@ -3822,7 +3981,9 @@ bool ON_DimRadial::GetTextXform(
   bool draw_forward = dimstyle->DrawForward();
 
   ON_Xform dimplane_xf(1.0);
-  dimplane_xf.Rotation(textplane, dimplane);     // Rotate text from world xy to dimension plane
+
+  dimplane_xf.Rotation(textplane, Plane());     // Rotate text from world xy to dimension plane
+
   ON_Xform textpt_xf(1.0);           // Dimension plane to text point translation
   ON_Xform textrot_xf(1.0);          // Text rotation around text plane origin point
   ON_Xform textscale_xf(1.0);
@@ -3836,7 +3997,9 @@ bool ON_DimRadial::GetTextXform(
   ON_2dPoint radius_pt = RadiusPoint();
   ON_2dPoint center_pt(0.0, 0.0);
   ON_2dPoint kink_pt(ON_2dPoint::UnsetPoint);
-  ON_2dVector rv = radius_pt;
+  ON_2dVector radius_vector = radius_pt;
+  if (!radius_vector.Unitize())
+    return false;
   if (fabs(dimline_pt.x) < ON_SQRT_EPSILON)
     dimline_pt.x = 0.0;
   if (fabs(dimline_pt.y) < ON_SQRT_EPSILON)
@@ -3845,12 +4008,29 @@ bool ON_DimRadial::GetTextXform(
     radius_pt.x = 0.0;
   if (fabs(radius_pt.y) < ON_SQRT_EPSILON)
     radius_pt.y = 0.0;
-  if (!rv.Unitize())
-    return false;
   ON_2dVector tail_dir(1.0, 0.0);
 
   kink_pt = KneePoint();
 
+  ON_3dVector dim_xdir = Plane().xaxis;
+  ON_3dVector dim_ydir = Plane().yaxis;
+  if (nullptr != model_xform)
+  {
+    dim_xdir.Transform(*model_xform);
+    dim_ydir.Transform(*model_xform);
+  }
+
+  ON_3dVector view_x = ON_3dVector::XAxis;
+  ON_3dVector view_y = ON_3dVector::YAxis;
+  ON_3dVector view_z = ON_3dVector::ZAxis;
+  if (nullptr != vp)
+  {
+    view_x = vp->CameraX();
+    view_y = vp->CameraY();
+    view_z = vp->CameraZ();
+  }
+
+  // Text is horizontal in CPlane, not view
   if (ON_DimStyle::ContentAngleStyle::Horizontal == text_alignment &&
       ON_2dPoint::UnsetPoint != kink_pt)
   {
@@ -3870,13 +4050,13 @@ bool ON_DimRadial::GetTextXform(
         tail_dir.Set(-1.0, 0.0);
     }
   }
-
+  // Text is aligned with last leader segment
   else if (ON_DimStyle::ContentAngleStyle::Aligned == text_alignment) // && no kink point
   {
     double d = ((ON_2dVector)dimline_pt).Length();
     if (((ON_2dVector)dimline_pt) * ((ON_2dVector)radius_pt) < 0.0)
       d = -d;  // text point is on the other side of center from arrow point
-    dimline_pt = rv * d;  // With no kink, adjust dimline point to line up with radius point
+    dimline_pt = radius_vector * d;  // With no kink, adjust dimline point to line up with radius point
     tail_dir = dimline_pt - radius_pt;
     if (ON_SQRT_EPSILON > tail_dir.Length() || !tail_dir.Unitize())
       tail_dir = radius_pt - center_pt;
@@ -3888,7 +4068,6 @@ bool ON_DimRadial::GetTextXform(
     return false;
 
   // Text position adjustment
-
   ON_2dVector shift(0.0, 0.0);
   if(ON_DimStyle::TextLocation::AboveDimLine == text_location)
     shift.y = text_height / 2.0 + text_gap;
@@ -3897,6 +4076,9 @@ bool ON_DimRadial::GetTextXform(
   shift.x += dimstyle->LeaderLandingLength() * dimscale;
 
   if (-ON_SQRT_EPSILON > tail_dir.x)  // text to left
+    shift.y = -shift.y;
+
+  if (dim_ydir * view_y < 0.0)
     shift.y = -shift.y;
 
   shift.Rotate(tail_dir.y, tail_dir.x);
@@ -3909,27 +4091,19 @@ bool ON_DimRadial::GetTextXform(
 
   text_xform_out = ON_Xform::DiagonalTransformation(dimscale, dimscale, dimscale);
 
+  // Text is horizontal to view
   if (ON::TextOrientation::InView != text_orientation)
     text_xform_out = textrot_xf * text_xform_out;
   text_xform_out = textpt_xf * text_xform_out;
   text_xform_out = dimplane_xf * text_xform_out;
 
-  ON_3dPoint text_point_3d = dimplane.PointAt(dimline_pt.x + shift.x, dimline_pt.y + shift.y);
+  ON_3dPoint text_point_3d = Plane().PointAt(dimline_pt.x + shift.x, dimline_pt.y + shift.y);
 
-  ON_3dVector view_x = ON_3dVector::XAxis;
-  ON_3dVector view_y = ON_3dVector::YAxis;
-  ON_3dVector view_z = ON_3dVector::ZAxis;
-  if (nullptr != vp)
-  {
-    view_x = vp->CameraX();
-    view_y = vp->CameraY();
-    view_z = vp->CameraZ();
-  }
-
+  // Text is horizontal to view
   if (ON::TextOrientation::InView == text_orientation)
   {
     ON_Xform tp2sxf;        // Text point to view plane rotation
-    tp2sxf.Rotation(text_point_3d, dimplane.xaxis, dimplane.yaxis, dimplane.zaxis, text_point_3d, view_x, view_y, view_z);
+    tp2sxf.Rotation(text_point_3d, Plane().xaxis, Plane().yaxis, Plane().zaxis, text_point_3d, view_x, view_y, view_z);
     text_xform_out = tp2sxf * text_xform_out;
   }
   else
@@ -3938,9 +4112,12 @@ bool ON_DimRadial::GetTextXform(
     // Check if the text is right-reading
     ON_3dVector text_right_dir(1.0, 0.0, 0.0);
     text_right_dir.Transform(text_xform_out);
+    if(nullptr != model_xform)
+      text_right_dir.Transform(*model_xform);
     if (text_right_dir.Unitize())
     {
-      ON_3dVector text_up_dir = ON_CrossProduct(dimplane.zaxis, text_right_dir);
+      ON_3dVector zdir = ON_CrossProduct(dim_xdir, dim_ydir);
+      ON_3dVector text_up_dir = ON_CrossProduct(zdir, text_right_dir);
       bool fx = (0.0 > view_x * text_right_dir);
       bool fy = (0.0 > view_y * text_up_dir);
       if (fx || fy)
@@ -3953,7 +4130,7 @@ bool ON_DimRadial::GetTextXform(
         }
         if (fy)
         {
-          mxf.Mirror(text_center, textplane.yaxis);
+          mxf.Mirror(ON_3dPoint::Origin, textplane.yaxis);
           text_xform_out = text_xform_out * mxf;
         }
       }
@@ -4203,7 +4380,7 @@ bool ON_DimRadial::GetDisplayLines(
       )
     {
       if (!dimstyle->LeaderHasLanding() && fabs(dimline_point.x - kink_point.x) < ON_ZERO_TOLERANCE)
-        landinglength = dimstyle->TextHeight() * dimstyle->DimScale();
+        landinglength = dimstyle->TextHeight() * dimscale;
     }
 
     if(ON_DimStyle::TextLocation::AboveDimLine == text_location && ON::TextOrientation::InView != dimstyle->DimRadialTextOrientation())
@@ -4511,7 +4688,7 @@ bool ON_DimOrdinate::GetAnnotationBoundingBox(
       view_ydir = vp->CameraY();
     }
     ON_Xform textxform;
-    GetTextXform(vp, dimstyle, dimscale, textxform);
+    GetTextXform(nullptr, vp, dimstyle, dimscale, textxform);
     dbox.Transform(textxform);
   }
 
@@ -4525,6 +4702,17 @@ bool ON_DimOrdinate::GetAnnotationBoundingBox(
 
 // Gets transform for dimension text from ON_xy_plane to 3d display location
 bool ON_DimOrdinate::GetTextXform(
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
+  return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_DimOrdinate::GetTextXform(
+  const ON_Xform* model_xform,
   const ON_Viewport* vp,
   const ON_DimStyle* dimstyle,
   double dimscale,
@@ -4592,7 +4780,7 @@ bool ON_DimOrdinate::GetTextXform(
   if (MeasuredDirection::Xaxis == direction) // Tail direction is vertical
   {
     tail_dir.Set(0.0, 1.0, 0.0);
-    if (ldrpt.y < defpt.y)   // tail directioin is down
+    if (ldrpt.y < defpt.y)   // tail direction is down
     {
       tail_dir.y = -1.0;
       shift.x = -shift.x;
@@ -4619,6 +4807,12 @@ bool ON_DimOrdinate::GetTextXform(
     W2CX.Transform(xfWorld2Cam);
     W2CY.Transform(xfWorld2Cam);
     W2CZ.Transform(xfWorld2Cam);
+    if (nullptr != model_xform)
+    {
+      W2CX.Transform(*model_xform);
+      W2CY.Transform(*model_xform);
+      W2CZ.Transform(*model_xform);
+    }
   }
   bool xright = (W2CX * ON_3dVector::XAxis) > -ON_SQRT_EPSILON;
   bool yup = (W2CY * ON_3dVector::YAxis) > -ON_SQRT_EPSILON;
@@ -4666,11 +4860,26 @@ bool ON_DimOrdinate::GetTextXform(
   {
     ON_3dVector text_right_dir(1.0, 0.0, 0.0);
     text_right_dir.Transform(text_xform_out);
-    if (text_right_dir.Unitize())
+    if (nullptr != model_xform)
+      text_right_dir.Transform(*model_xform);
+    ON_3dVector text_up_dir(0.0, 1.0, 0.0);
+    text_up_dir.Transform(text_xform_out);
+    if (nullptr != model_xform)
+      text_up_dir.Transform(*model_xform);
+    if (text_right_dir.Unitize() && text_up_dir.Unitize())
     {
-      ON_3dVector text_up_dir = ON_CrossProduct(dimplane.zaxis, text_right_dir);
-      bool fx = (0.0 > view_xdir * text_right_dir);
-      bool fy = (0.0 > view_ydir * text_up_dir);
+      bool fx = false;
+      bool fy = false;
+      if (direction == MeasuredDirection::Xaxis)
+      {
+        fx = (view_ydir * text_right_dir) < 0.0;
+        fy = (view_xdir * text_up_dir) > 0.0;
+      }
+      else
+      {
+        fx = (view_xdir * text_right_dir) < 0.0;
+        fy = (view_ydir * text_up_dir) < 0.0;
+      }
 
       ON_Xform mxf;  // Mirror xform for backwards text to adjust DrawForward
       if (fx)
@@ -4720,7 +4929,7 @@ bool ON_DimOrdinate::Create(
       Set2dDefPt(def_pton);
       Set2dLeaderPt(ldr_pton);
       SetKinkOffset1(kinkoffset1);
-      SetKinkOffset1(kinkoffset2);
+      SetKinkOffset2(kinkoffset2);
     }
   }
   return rc;
@@ -4956,7 +5165,7 @@ bool ON_DimOrdinate::Get3dPoints(
         *kink2 = m_plane.PointAt(m_ldr_pt.x - ko1, m_ldr_pt.y);
     }
   }
-  return true;
+  return true;  
 }
 
 bool ON_DimOrdinate::GetDisplayLines(
@@ -4972,9 +5181,17 @@ bool ON_DimOrdinate::GetDisplayLines(
     ON_ERROR("Wrong linecount calling ON_DimOrdinate::GetDisplayLines.\n");
     return false;
   }
-  ON_3dPoint defpt, ldrpt, kink1, kink2;
+  ON_3dPoint defpt, ldrpt, kink1, kink2, frompt;
   Get3dPoints(nullptr, &defpt, &ldrpt, &kink1, &kink2);
-  lines[0].from = defpt;
+  frompt = defpt;
+  double eodist = dimstyle->ExtOffset() * dimscale;
+  ON_3dVector eodir = kink1 - defpt;
+  if (eodir.Unitize())
+  {
+    frompt = defpt + (eodir * eodist);
+  }
+
+  lines[0].from = frompt;
   lines[0].to = kink1;
   if (ON_SQRT_EPSILON < lines[0].Length())
     isline[0] = true;
@@ -5124,7 +5341,7 @@ double ON_DimOrdinate::Measurement() const
   if (DistanceScale() != 1.0)
     m *= DistanceScale();
 
-  return m;
+  return fabs(m);
 }
 
 

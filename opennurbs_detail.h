@@ -81,6 +81,12 @@ public:
   // 2d curve in page layout coordinates in mm
   // (0,0) = lower left corner of page
   ON_NurbsCurve m_boundary;
+
+  // Update frustum to match bounding box and detail scale
+  bool UpdateFrustum(
+    ON::LengthUnitSystem model_units,
+    ON::LengthUnitSystem paper_units
+  );
 };
 
 

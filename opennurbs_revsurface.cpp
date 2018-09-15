@@ -1485,7 +1485,7 @@ bool ON_RevSurface::GetBBox(    // returns true if successful
       arc.SetAngleRadians(m_angle[1] - m_angle[0]);
       int i;
       double t;
-      for ( i = 0; i < 8; i++ )
+      for ( i = 0; i < corners.Count(); i++ )
       {
         P = corners[i];
         abox.Set(P,false);

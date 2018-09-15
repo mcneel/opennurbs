@@ -24,6 +24,8 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+#include "opennurbs_atomic_op.h"
+
 // wide char (utf-8 / utf-16 / utf-23) <-> char (utf-8) converter
 static int w2c_size( int, const wchar_t* ); // gets minimum "c_count" arg for w2c().
 static int w2c( int,            // w_count = number of wide chars to convert
@@ -148,6 +150,9 @@ void ON_String::CopyToArray( int w_count, const wchar_t* w )
 
 struct ON_wStringHeader
 {
+  // NOTE WELL: 
+  //  ref_count must be a signed 32-bit integer type that
+  //  supports atomic increment/decrement operations.
 	int    ref_count;       // reference count (>=0 or -1 for empty string)
 	int    string_length;   // does not include any terminators
 	int    string_capacity; // does not include any terminators
@@ -158,8 +163,22 @@ static struct {
   ON_wStringHeader header;
   wchar_t           s;  
 } empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
-static ON_wStringHeader* pEmptyStringHeader = &empty_wstring.header;
+static const ON_wStringHeader* pEmptyStringHeader = &empty_wstring.header;
 static const wchar_t* pEmptywString = &empty_wstring.s;
+
+static void ON_wStringHeader_DecrementRefCountAndDeleteIfZero(struct ON_wStringHeader* hdr)
+{
+  if (nullptr == hdr || hdr == pEmptyStringHeader)
+    return;
+  const int ref_count = ON_AtomicDecrementInt32(&hdr->ref_count);
+  if (0 == ref_count)
+  {
+    // zero entire header to help prevent crashes from corrupt string bug
+    hdr->string_length = 0;
+    hdr->string_capacity = 0;
+    onfree(hdr);
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // protected helpers
@@ -169,20 +188,134 @@ void ON_wString::Create()
   m_s = (wchar_t*)pEmptywString;
 }
 
+bool ON_wString::IsValid(
+  bool bLengthTest
+) const
+{
+  if (m_s == pEmptywString)
+    return true;
+  for (;;)
+  {
+    // These checks attempt to detect cases when the memory used for the header informtion
+    // no longer contains valid settings.
+    const wchar_t* s = m_s;
+    if (nullptr == s)
+      break;
+#if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN) && defined(ON_64BIT_RUNTIME)
+    // WINDOWS 64-bit pointer brackets in debug heap
+    // https://docs.microsoft.com/en-us/windows-hardware/drivers/gettingstarted/virtual-address-spaces
+    if (((ON__UINT_PTR)s) <= 0x10000ull)
+      break;
+    if (((ON__UINT_PTR)s) > 0x7FFFFFFFFFFull)
+      break;
+    if (0 != ((ON__UINT_PTR)s) % 4)
+      break;
+#endif
+    const ON_wStringHeader* hdr = Header();
+    if (nullptr == hdr)
+      break;
+
+#if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN) && defined(ON_64BIT_RUNTIME)
+    if (0 != ((ON__UINT_PTR)hdr) % 8)
+      break;
+#endif
+
+    // If the string is corrupt, there may be a crash on one of the 3 const int xxx = hdr->xxx; lines.
+    // But, if we do nothing that crash that was going to happen in the very near future when
+    // the code calling this function tries to use the string.
+    // If the memory was recently freed or corrupted, there is a non-zero chance
+    // these checks will break out of the for(;;){} scope, we will prevent
+    // the crash by setting "this" to the empty string.
+    const int string_capacity = hdr->string_capacity;
+    if (string_capacity <= 0)
+      break;
+    if (string_capacity > ON_String::MaximumStringLength)
+      break;
+    const int string_length = hdr->string_length;
+    if (string_length < 0)
+      break;
+    if (string_length > string_capacity)
+      break;
+    const int ref_count = hdr->ref_count;
+    if (ref_count <= 0)
+      break;
+    const wchar_t* s1 = s + string_length;
+    if (s1 < s)
+    {
+      // overflow check
+      break;
+    }
+#if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN) && defined(ON_64BIT_RUNTIME)
+    // WINDOWS 64-bit pointer brackets in debug heap
+    // https://docs.microsoft.com/en-us/windows-hardware/drivers/gettingstarted/virtual-address-spaces
+    if (((ON__UINT_PTR)s1) <= 0x10000ull)
+      break;
+    if (((ON__UINT_PTR)s1) > 0x7FFFFFFFFFFull)
+      break;
+#endif
+    if (bLengthTest)
+    {
+      // Because the ON_wString m_s[] array can have internal null elements,
+      // the length test has to be enabled in situations where it is certain
+      // that we are in the common situation where m_s[] is a single null teminated 
+      // sting and hdr->string_length is the m_s[] index of the null terminator.
+      while (s < s1 && 0 != *s)
+        s++;
+      if (s != s1)
+        break;
+      if (0 != *s)
+        break;
+    }
+    return true;
+  }
+  // prevent imminent and unpredictable crash
+  //
+  // The empty string is used (as opposed to something like "YIKES - CALL TECH SUPPORT")
+  // becuase anything besides the empty string introduces using heap in a class that
+  // has been corrupted by some earlier operation.
+  const_cast<ON_wString*>(this)->m_s = (wchar_t*)pEmptywString;
+  // Devs
+  //  If you get this error, some earlier operation corrupted the string
+  //  It is critical to track this bug down ASAP.
+  ON_ERROR("Corrupt ON_wString - crash prevented.");
+  return false;
+}
+
+ON_wStringHeader* ON_wString::IncrementedHeader() const
+{
+  ON_wStringHeader* p = (ON_wStringHeader*)m_s;
+  if (nullptr == p)
+    return nullptr;
+  
+  p--;
+  if (p == pEmptyStringHeader)
+    return nullptr;
+
+  ON_AtomicIncrementInt32(&p->ref_count);
+  return p;
+}
+
 ON_wStringHeader* ON_wString::Header() const
 {
   ON_wStringHeader* p = (ON_wStringHeader*)m_s;
   if (p)
     p--;
   else
-    p = pEmptyStringHeader;
+    p = &empty_wstring.header;
   return p;
 }
 
 wchar_t* ON_wString::CreateArray( int capacity )
 {
   Destroy();
-  if ( capacity > 0 ) {
+  if (capacity > ON_String::MaximumStringLength)
+  {
+    ON_ERROR("Requested capacity > ON_String::MaximumStringLength");
+    return nullptr;
+  }
+  if ( capacity > 0 ) 
+  {
+    // This scope does not need atomic operations
 		ON_wStringHeader* p =
 			(ON_wStringHeader*)onmalloc( sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
 		p->ref_count = 1;
@@ -197,40 +330,16 @@ wchar_t* ON_wString::CreateArray( int capacity )
 
 void ON_wString::Destroy()
 {
-  ON_wStringHeader* p = Header();
-  if ( p != pEmptyStringHeader && p->ref_count > 0 ) {
-    p->ref_count--;
-		if ( p->ref_count == 0 )
-			onfree(p);
-  }
+  ON_wStringHeader* hdr = Header();
+  if ( hdr != pEmptyStringHeader && nullptr != hdr && hdr->ref_count > 0 )
+    ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr);
 	Create();
 }
 
 void ON_wString::Empty()
 {
-  ON_wStringHeader* p = Header();
-  if ( p != pEmptyStringHeader ) {
-    if ( p->ref_count > 1 ) {
-      // string memory is shared
-      p->ref_count--;
-	    Create();
-    }
-    else if ( p->ref_count == 1 ) {
-      // string memory is not shared - reuse it
-      if (m_s && p->string_capacity>0)
-        *m_s = 0;
-      p->string_length = 0;
-    }
-    else {
-      // should not happen
-      ON_ERROR("ON_wString::Empty() encountered invalid header - fixed.");
-      Create();
-    }
-  }
-  else {
-    // initialized again
-	  Create();
-  }
+  Destroy();
+  Create();  
 }
 
 void ON_wString::EmergencyDestroy()
@@ -240,7 +349,7 @@ void ON_wString::EmergencyDestroy()
 
 void ON_wString::EnableReferenceCounting( bool bEnable )
 {
-  // TODO fill this in;
+  // OBSOLETE - DELETE WHEN SDK CAN BE BROKEN
 }
 
 bool ON_wString::IsReferenceCounted() const
@@ -253,73 +362,111 @@ void ON_wString::CopyArray()
 {
   // If 2 or more string are using array, it is duplicated.
   // Call CopyArray() before modifying array contents.
-  ON_wStringHeader* p = Header();
-  if ( p != pEmptyStringHeader && p && p->ref_count > 1 ) 
+  // hdr0 = original header
+  ON_wStringHeader* hdr0 = Header();
+  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && hdr0->ref_count > 1 ) 
   {
-    const wchar_t* s = m_s;
-    // p and s remain valid after Destroy() because
-    // will simply be decremented and no deallocation
-    // will happen.
-    Destroy();
+    // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
-    CopyToArray( p->string_capacity, s );
-    if ( p->string_length < p->string_capacity )
+    CopyToArray( hdr0->string_capacity, hdr0->string_array() );
+    if ( hdr0->string_length < hdr0->string_capacity )
     {
-      Header()->string_length = p->string_length;
+      // Set new header string length;
+      Header()->string_length = hdr0->string_length;
     }
+    // "this" no longer requires access to the original header
+    // If we are in a multi-threaded situation and another thread
+    // has decremented ref_count since the > 1 check above,
+    // we might end up deleting hdr0.
+    ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr0);
   }
 }
 
 wchar_t* ON_wString::ReserveArray( size_t array_capacity )
 {
-  ON_wStringHeader* p = Header();
+  if (array_capacity <= 0)
+    return nullptr;
+
+  if (array_capacity > (size_t)ON_String::MaximumStringLength)
+  {
+    ON_ERROR("Requested capacity > ON_String::MaximumStringLength");
+    return nullptr;
+  }
+
   const int capacity = (int)array_capacity; // for 64 bit compiler
-  if ( p == pEmptyStringHeader ) 
+  ON_wStringHeader* hdr0 = Header();
+  if ( hdr0 == pEmptyStringHeader || nullptr == hdr0 ) 
   {
 		CreateArray(capacity);
   }
-  else if ( p->ref_count > 1 ) 
+  else if ( hdr0->ref_count > 1 ) 
   {
+    // Calling Create() here insures hdr0 remains valid until we decrement below.
+    Create();
+
+    // Allocate a new array
 		CreateArray(capacity);
-    ON_wStringHeader* p1 = Header();
-    const int size = (capacity < p->string_length) ? capacity : p->string_length;
+    ON_wStringHeader* hdr1 = Header();
+    const int size = (capacity < hdr0->string_length) ? capacity : hdr0->string_length;
     if ( size > 0 ) 
     {
-      memcpy( p1->string_array(), p->string_array(), size*sizeof(*m_s) );
-      p1->string_length = size;
+      memcpy( hdr1->string_array(), hdr0->string_array(), size*sizeof(*m_s) );
+      hdr1->string_length = size;
     }
+    // "this" no longer requires access to the original header
+    // If we are in a multi-threaded situation and another thread
+    // has decremented ref_count since the > 1 check above,
+    // we might end up deleting hdr0.
+    ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr0);
   }
-	else if ( capacity > p->string_capacity ) 
+	else if ( capacity > hdr0->string_capacity ) 
   {
-		p = (ON_wStringHeader*)onrealloc( p, sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
-    m_s = p->string_array();
-    memset( &m_s[p->string_capacity], 0, (1+capacity-p->string_capacity)*sizeof(*m_s) );
-    p->string_capacity = capacity;
+		hdr0 = (ON_wStringHeader*)onrealloc( hdr0, sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
+    m_s = hdr0->string_array();
+    memset( &m_s[hdr0->string_capacity], 0, (1 + capacity - hdr0->string_capacity)*sizeof(*m_s) );
+    hdr0->string_capacity = capacity;
 	}
   return Array();
 }
 
 void ON_wString::ShrinkArray()
 {
-  ON_wStringHeader* p = Header();
-  if ( p != pEmptyStringHeader ) {
-    if ( p->string_length < 1 ) {
+  ON_wStringHeader* hdr0 = Header();
+  if (nullptr == hdr0)
+  {
+    Create();
+  }
+  else if ( hdr0 != pEmptyStringHeader ) 
+  {
+    if ( hdr0->string_length < 1 ) 
+    {
       Destroy();
+      Create();
     }
-    else if ( p->ref_count > 1 ) {
+    else if ( hdr0->ref_count > 1 ) 
+    {
+      // Calling Create() here insures hdr0 remains valid until we decrement below.
+      Create();
+
       // shared string
-      CreateArray(p->string_length);
-		  ON_wStringHeader* p1 = Header();
-      memcpy( m_s, p->string_array(), p->string_length*sizeof(*m_s));
-      p1->string_length = p->string_length;
-      m_s[p1->string_length] = 0;
+      CreateArray(hdr0->string_length);
+		  ON_wStringHeader* hdr1 = Header();
+      memcpy( m_s, hdr0->string_array(), hdr0->string_length*sizeof(*m_s));
+      hdr1->string_length = hdr0->string_length;
+      m_s[hdr1->string_length] = 0;
+      // "this" no longer requires access to the original header
+      // If we are in a multi-threaded situation and another thread
+      // has decremented ref_count since the > 1 check above,
+      // we might end up deleting hdr0.
+      ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr0);
     }
-	  else if ( p->string_length < p->string_capacity ) {
+	  else if ( hdr0->string_length < hdr0->string_capacity )
+    {
       // onrealloc string
-		  p = (ON_wStringHeader*)onrealloc( p, sizeof(ON_wStringHeader) + (p->string_length+1)*sizeof(*m_s) );
-      p->string_capacity = p->string_length;
-      m_s = p->string_array();
-      m_s[p->string_length] = 0;
+		  hdr0 = (ON_wStringHeader*)onrealloc( hdr0, sizeof(ON_wStringHeader) + (hdr0->string_length+1)*sizeof(*m_s) );
+      hdr0->string_capacity = hdr0->string_length;
+      m_s = hdr0->string_array();
+      m_s[hdr0->string_length] = 0;
 	  }
   }
 }
@@ -331,19 +478,20 @@ void ON_wString::CopyToArray( const ON_wString& s )
 
 void ON_wString::CopyToArray( int size, const char* s )
 {
-  if ( size > 0 && s && s[0] ) {
-	  ReserveArray(size);
+  while ( size > 0 && s && s[0] ) 
+  {
+    if (nullptr == ReserveArray(size))
+      break;
+    // s = UTF-8 string.
+    // m_s = UTF-8, UTF-16, or UTF-32 encoded string.
+    // Even with errors, the number of wchar_t elments <= UTF-8 length
     Header()->string_length = c2w( size, s, Header()->string_capacity, m_s );
     m_s[Header()->string_length] = 0;
+    return;
   }
-  else {
-    if ( Header()->ref_count > 1 )
-      Destroy();
-    else {
-      Header()->string_length = 0;
-      m_s[0] = 0;
-    }
-  }
+
+  Destroy();
+  Create();
 }
 
 void ON_wString::CopyToArray( int size, const unsigned char* s )
@@ -353,19 +501,34 @@ void ON_wString::CopyToArray( int size, const unsigned char* s )
 
 void ON_wString::CopyToArray( int size, const wchar_t* s )
 {
-  if ( size > 0 && s && s[0] ) {
-	  ReserveArray(size);
-	  memcpy(m_s, s, size*sizeof(*m_s));
-	  Header()->string_length = size;
-    m_s[Header()->string_length] = 0;
+  if (size > ON_String::MaximumStringLength)
+  {
+    ON_ERROR("Requested size > ON_String::MaximumStringLength.");
+    size = 0;
   }
-  else {
-    if ( Header()->ref_count != 1 )
-      Destroy();
-    else {
-      Header()->string_length = 0;
-      m_s[0] = 0;
+
+  if ( size > 0 && s && s[0] ) 
+  {
+    ON_wStringHeader* hdr0 = Header();
+    // Calling Create() here preserves hdr0 in case s is in its m_s[] buffer.
+    Create();
+
+    // ReserveArray() will allocate a new header 
+	  ReserveArray(size);
+    ON_wStringHeader* hdr1 = Header();
+    if (nullptr != hdr1 && hdr1 != pEmptyStringHeader)
+    {
+      memcpy(m_s, s, size * sizeof(*m_s));
+      hdr1->string_length = size;
+      m_s[hdr1->string_length] = 0;
     }
+    // "this" no longer requires access to the original header
+    ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr0);
+  }
+  else
+  {
+    Destroy();
+    Create();
   }
 }
 
@@ -376,8 +539,10 @@ void ON_wString::AppendToArray( const ON_wString& s )
 
 void ON_wString::AppendToArray( int size, const char* s )
 {
-  if ( size > 0 && s && s[0] ) {
-	  ReserveArray(size + Header()->string_length );
+  if ( size > 0 && s && s[0] ) 
+  {
+    if (nullptr == ReserveArray(size + Header()->string_length))
+      return;
     Header()->string_length += c2w( size, s, Header()->string_capacity-Header()->string_length, &m_s[Header()->string_length] );
     m_s[Header()->string_length] = 0;
   }
@@ -390,8 +555,10 @@ void ON_wString::AppendToArray( int size, const unsigned char* s )
 
 void ON_wString::AppendToArray( int size, const wchar_t* s )
 {
-  if ( size > 0 && s && s[0] ) {
-	  ReserveArray(size + Header()->string_length );
+  if ( size > 0 && s && s[0] ) 
+  {
+    if (nullptr == ReserveArray(size + Header()->string_length))
+      return;
 	  memcpy(&m_s[Header()->string_length], s, size*sizeof(*m_s));
 	  Header()->string_length += size;
     m_s[Header()->string_length] = 0;
@@ -399,12 +566,24 @@ void ON_wString::AppendToArray( int size, const wchar_t* s )
 }
 
 
-
 int ON_wString::Length(const wchar_t* s)
 {
-  size_t slen = s ? wcslen(s) : 0;
-  int n = ((0 < slen && slen <= 2147483645) ? ((int)slen) : 0); // the (int) cast is for 64 bit size_t conversion
-  return n;
+  return ON_wString::Length(s, 2147483645);
+}
+
+int ON_wString::Length(
+  const wchar_t* s,
+  size_t string_capacity
+)
+{
+  if (nullptr == s)
+    return 0;
+  if (string_capacity > 2147483645)
+    string_capacity = 2147483645;
+  size_t slen = 0;
+  while (slen < string_capacity && 0 != *s++)
+    slen++;
+  return ((int)slen);
 }
 
 unsigned int ON_wString::UnsignedLength(const wchar_t* s)
@@ -429,15 +608,14 @@ ON_wString::~ON_wString()
 
 ON_wString::ON_wString(const ON_wString& src)
 {
-	if ( src.Header()->ref_count > 0 )	
+  const ON_wStringHeader* p = src.IncrementedHeader();
+	if ( nullptr != p )	
   {
 		m_s = src.m_s;
-    src.Header()->ref_count++;
 	}
 	else 
   {
 		Create();
-		*this = src.m_s; // use operator=(const wchar_t*) to copy
 	}
 }
 
@@ -551,11 +729,16 @@ ON_wString::ON_wString( const wchar_t* s, int length )
 
 ON_wString::ON_wString( wchar_t c, int repeat_count )
 {
-  int i;
   Create();
-  if ( repeat_count > 0 ) {
+  if (repeat_count > ON_String::MaximumStringLength)
+  {
+    ON_ERROR("Requested size > ON_String::MaximumStringLength");
+    return;
+  }
+  if ( repeat_count > 0 ) 
+  {
     ReserveArray(repeat_count);
-    for (i=0;i<repeat_count;i++)
+    for (int i=0;i<repeat_count;i++)
       m_s[i] = c;
     m_s[repeat_count] = 0;
     Header()->string_length = repeat_count;
@@ -614,22 +797,15 @@ const ON_wString& ON_wString::operator=(const ON_wString& src)
 {
 	if (m_s != src.m_s)	
   {
-    if ( src.IsEmpty() ) 
+    if ( nullptr != src.IncrementedHeader() )
+    {
+      Destroy();
+      m_s = src.m_s;
+    }
+    else
     {
       Destroy();
       Create();
-    }
-    else if ( src.Header()->ref_count > 0 ) 
-    {
-      Destroy();
-      src.Header()->ref_count++;
-      m_s = src.m_s;
-    }
-    else 
-    {
-      ReserveArray(src.Length());
-      memcpy( m_s, src.Array(), src.Length()*sizeof(*m_s));
-      Header()->string_length = src.Length();
     }
   }
 	return *this;
@@ -811,11 +987,18 @@ const ON_wString& ON_wString::operator+=( const wchar_t* s )
 
 wchar_t* ON_wString::SetLength(size_t string_length)
 {
+  if (string_length >= (size_t)ON_String::MaximumStringLength)
+  {
+    ON_ERROR("Requested size > ON_String::MaximumStringLength");
+    return nullptr;
+  }
   int length = (int)string_length; // for 64 bit compilers
-  if ( length >= Header()->string_capacity ) {
+  if ( length >= Header()->string_capacity )
+  {
     ReserveArray(length);
   }
-  if ( length >= 0 && length <= Header()->string_capacity ) {
+  if ( length >= 0 && length <= Header()->string_capacity ) 
+  {
     CopyArray();
     Header()->string_length = length;
     m_s[length] = 0;
@@ -1151,7 +1334,8 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
         //    but when newlen < len and the string had multiple
         //    references, the ReserveArray(newlen) call truncated
         //    the input array.  
-        ReserveArray( (newlen<len) ? len : newlen );
+        if (nullptr == ReserveArray((newlen < len) ? len : newlen))
+          return 0;
 
         int i0, i1, ni, j;
 

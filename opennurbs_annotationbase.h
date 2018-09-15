@@ -158,13 +158,20 @@ protected:
   ) const;
 
 public:
-  
   virtual bool GetTextXform(
     const ON_Viewport* vp,
     const ON_DimStyle* dimstyle,
     double dimscale,
     ON_Xform& text_xform_out
   ) const = 0;
+
+  bool GetTextXform(
+    const ON_Xform* model_xform,
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_Xform& text_xform_out
+  ) const;
 
   void SetPlane(const ON_Plane& plane);
   const ON_Plane& Plane() const;
@@ -393,9 +400,14 @@ public:
     const ON_DimStyle* ptr
   ) const;
 
+  // These functions are being added to continue the V5 behavior of
+  // per-object text scaling
+  bool AllowTextScaling() const;
+  void SetAllowTextScaling(bool scale);
+
 protected:
   ON::AnnotationType m_annotation_type = ON::AnnotationType::Unset;
-  unsigned char m_reserved1 = 0;
+  bool m_allow_text_scaling = true;
   unsigned char m_reserved2 = 0;
   unsigned char m_reserved3 = 0;
   unsigned int m_reserved4 = 0;
@@ -815,12 +827,12 @@ public:
   */
   const bool FontSubstituted(const ON_DimStyle* parent_style) const;
 
-
-
   bool SetAnnotationBold(bool bold, const ON_DimStyle* dimstyle);
   bool SetAnnotationItalic(bool italic, const ON_DimStyle* dimstyle);
   bool SetAnnotationUnderline(bool underline, const ON_DimStyle* dimstyle);
   bool SetAnnotationFacename(bool set_or_clear, const wchar_t* facename, const ON_DimStyle* parent_style);
+  bool SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style);
+
   static bool SetAnnotationTextFormat(ON_wString& rtf_in, const wchar_t* fmt_str_on, const wchar_t* fmt_str_off, bool set_on);
 
   static bool SetRtfFmt(ON_wString& rtf_in, const wchar_t* fmt_str);
@@ -828,6 +840,8 @@ public:
   static int FindRtfTable(ON_wString rtf_in, int startidx, const wchar_t* tablename);
 
   static bool FirstCharTextProperties(const wchar_t* rtf_in, bool& bold, bool& italic, bool& underline, ON_wString& facename);
+  
+  const ON_Font* FirstCharFont() const;
 };
 
 

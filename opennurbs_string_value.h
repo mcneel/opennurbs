@@ -711,8 +711,8 @@ private:
 
   // parsing context
   unsigned int m_context_locale_id = 0;
-  ON::LengthUnitSystem m_context_length_unit_system;
-  ON::AngleUnitSystem m_context_angle_unit_system;
+  ON::LengthUnitSystem m_context_length_unit_system = ON::LengthUnitSystem::None;
+  ON::AngleUnitSystem m_context_angle_unit_system = ON::AngleUnitSystem::None;
   ON_ScaleValue::ScaleStringFormat m_string_format_preference = ON_ScaleValue::ScaleStringFormat::Unset;
 
   ON_wString m_scale_as_string;

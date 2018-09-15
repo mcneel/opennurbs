@@ -200,6 +200,14 @@ bool ON_Curve::SetDomain( double, double )
   return false;
 }
 
+bool ON_Curve::ChangeClosedCurveSeam( double t, double min_dist)
+{
+  ON_3dPoint P = PointAt(t);
+  if (min_dist <= 0.0 || P.DistanceTo(PointAtStart()) >= min_dist)
+    return ChangeClosedCurveSeam(t);
+  return false;
+}
+
 bool ON_Curve::ChangeClosedCurveSeam( double t )
 {
   // this virtual function is overridden by curves that can be closed
@@ -1241,7 +1249,7 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
         ON_3dPoint F1, F2;
         if ( ellipse.GetFoci(F1,F2) )
         {
-          P = ( F1.DistanceTo(Q) <= F1.DistanceTo(Q)) ? F1 : F2;
+          P = ( F1.DistanceTo(Q) <= F2.DistanceTo(Q)) ? F1 : F2;
           rc = true;
         }
       }
@@ -1668,6 +1676,25 @@ static bool ForceMatchArcs(ON_ArcCurve& Arc0, int end0, ON_ArcCurve& Arc1, int e
 
 }
 
+static bool FastIsShort(const ON_Curve& crv, double tol)
+
+{
+  ON_3dPoint P[5];
+  P[0] = crv.PointAtStart();
+  P[4] = crv.PointAtEnd();
+  if (P[0].DistanceTo(P[4]) >= tol)
+    return false;
+  double d = 0.0;
+  for (int i=1; i<4; i++){
+    P[i] = crv.PointAt(crv.Domain().ParameterAt(0.25*(double)i));
+    d += P[i].DistanceTo(P[i-1]);
+    if (d >= tol)
+      return false;
+  }
+  d += P[4].DistanceTo(P[3]);
+  return (d < tol) ? true : false;
+}
+
 bool ON_ForceMatchCurveEnds(ON_Curve& Crv0, int end0, ON_Curve& Crv1, int end1)
 
 {
@@ -1740,21 +1767,67 @@ bool ON_ForceMatchCurveEnds(ON_Curve& Crv0, int end0, ON_Curve& Crv1, int end1)
   }
 
   bool rc = true;
+  bool bTryAgain = false;
   if (bMove[0]){
     bool brc = (end0) ? seg[0]->SetEndPoint(P) : seg[0]->SetStartPoint(P);
     if (!brc)
       rc = false;
+    else {
+      //23 Jan 2018 - Chuck - If yanking a polycurve segment at the join causes
+      //that seg to be tiny, remove it and try again. See RH-43661
+      if (ON_CurveType(&Crv0) == ON::ctPolycurve){
+        ON_PolyCurve* polycurve = ON_PolyCurve::Cast(&Crv0);
+        if (polycurve->Count() > 1 && FastIsShort(*seg[0], 10.0*ON_ZERO_TOLERANCE))
+          bTryAgain = (end0) ? polycurve->Remove() : polycurve->Remove(0);
+      }
+    }
   }
   if (bMove[1]){
     bool brc = (end1) ? seg[1]->SetEndPoint(P) : seg[1]->SetStartPoint(P);
     if (!brc)
       rc = false;
+    else {
+      //23 Jan 2018 - Chuck - If yanking a polycurve segment at the join causes
+      //that seg to be tiny, remove it and try again. See RH-43661
+      if (ON_CurveType(&Crv1) == ON::ctPolycurve){
+        ON_PolyCurve* polycurve = ON_PolyCurve::Cast(&Crv1);
+        if (polycurve->Count() > 1 && FastIsShort(*seg[1], 10.0*ON_ZERO_TOLERANCE)){
+          bool bRem = (end1) ? polycurve->Remove() : polycurve->Remove(0);
+          if (bRem)
+            bTryAgain = true;
+        }
+      }
+    }
   }
+
+  //23 Jan 2018 - Chuck - If yanking a polycurve segment at the join causes
+  //that seg to be tiny, remove it and try again. See RH-43661
+  if (bTryAgain)//One of these is a polycurve with one less segment thane before, so no infinite recursion.
+    return ON_ForceMatchCurveEnds(Crv0, end0, Crv1, end1);
 
   return rc;
 }
 
 
+
+static bool Internal_IsUniformCubic(const ON_NurbsCurve& curve)
+{
+  if (4 != curve.m_order)
+    return false;
+  if (curve.m_cv_count < curve.m_order)
+    return false;
+  if (0 != curve.m_is_rat)
+    return false;
+  if (nullptr == curve.m_knot)
+    return false;
+  const int knot_count = curve.KnotCount();
+  for (int i = 0; i < knot_count; i++)
+  {
+    if (curve.m_knot[i] != (double)(i - 2))
+      return false;
+  }
+  return true;
+}
 
 bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 {
@@ -1782,11 +1855,14 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     {
       if ( m_knot[0] != m_knot[m_order-2] || m_knot[m_cv_count-1] != m_knot[m_cv_count+m_order-3] )
       {
-        rc = true;
-        if ( bRepair )
-          ClampEnd(2);
-        else
-          return rc;
+        if (false == Internal_IsUniformCubic(*this))
+        {
+          rc = true;
+          if (bRepair)
+            ClampEnd(2);
+          else
+            return rc;
+        }
       }
     }
 

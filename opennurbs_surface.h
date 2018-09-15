@@ -932,4 +932,9 @@ public:
                                      // duplicate copies the surfaces themselves
 };
 
+
+// Sets closed[di] if Surface if G1-closed in the di direction, i.e no 
+// G1-discontinuities on the interior or the seam.
+void ON_DECL ON_IsG1Closed(const ON_Surface& Srf, bool closed[2]);
+
 #endif

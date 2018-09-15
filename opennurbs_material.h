@@ -30,7 +30,12 @@ public:
   static const double MaxShine; // maximum value of shine exponent = 255.0
 
   static const ON_Material Unset;   // nil id
-  static const ON_Material Default; // persistent id
+
+
+  static const ON_Material Default; // index = -1, persistent id
+
+  // Default material for locked objects
+  static const ON_Material DefaultLockedObject; // index = -2, persistent id
 
   /*
   Parameters:
@@ -77,11 +82,16 @@ public:
     const ON_Material& b
     );
 
-  static int CompareTextureAttributes( 
+  static int CompareTextureAttributes(
     const ON_Material& a,
     const ON_Material& b
-    );
-  
+  );
+
+  static int CompareTextureAttributesAppearance(
+    const ON_Material& a,
+    const ON_Material& b
+  );
+
 
 
   /*
@@ -258,6 +268,9 @@ public:
     bool bFresnelReflections
     );
 
+  //Returns a color that can be used as a simple preview of the material in GUIs.  This is
+  //the function that the layer manager uses to color the little material swatch, for example.
+  ON_Color PreviewColor() const;
 
 private:
   // The value of m_rdk_material_id idetifies an RDK (rendering development kit)

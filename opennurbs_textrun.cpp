@@ -510,20 +510,25 @@ void ON_TextRun::Init(
   m_color = color;
   m_run_text_height = height;
   m_stackscale = stackscale;
-  //if (managed_font->IsBold() != bold || managed_font->IsItalic() != italic ||
-  //  managed_font->IsUnderlined() != underlined || managed_font->IsStrikethrough() != strikethrough)
-  {
 
-    ON_Font font(*managed_font);
-    font.SetFontWeight(bold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal);
-    font.SetFontStyle(italic ? ON_Font::Style::Italic : ON_Font::Style::Upright);
-    font.SetUnderlined(underlined);
-    font.SetStrikethrough(strikethrough);
-    const ON_Font* newfont = ON_Font::GetManagedFont(font, true);
-    m_managed_font = newfont;
+  if (nullptr == managed_font)
+    managed_font = &ON_Font::Default;
+  if (
+    false == managed_font->IsManagedFont()
+    || managed_font->IsBold() != bold
+    || managed_font->IsItalic() != italic
+    || managed_font->IsUnderlined() != underlined
+    || managed_font->IsStrikethrough() != strikethrough
+    )
+  {
+    managed_font = ON_Font::ManagedFontFromRichTextProperties(
+      ON_Font::RichTextFontName(managed_font, true),
+      bold,
+      italic,
+      underlined,
+      strikethrough);
   }
-  //else
-  //  m_managed_font = managed_font;
+  m_managed_font = managed_font;
 }
 
 bool ON_TextRun::IsText() const

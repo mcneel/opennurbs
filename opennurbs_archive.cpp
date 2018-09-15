@@ -3351,6 +3351,10 @@ ON_BinaryArchive::WriteUTF16String(
 bool
 ON_BinaryArchive::WriteString( const ON_String& sUTF8 )
 {
+  // The ON_String::IsValid call prevents corrupt strings from breaking file IO
+  // The parameter MUST be false here.
+  sUTF8.IsValid(false);
+
   size_t string_utf8_element_count = sUTF8.Length();
   if ( string_utf8_element_count )
     string_utf8_element_count++;
@@ -3638,6 +3642,12 @@ ON_BinaryArchive::WriteString( const ON_wString& s )
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4127 )
 #endif
 
+  // The ON_wString::IsValid call prevents corrupt strings from breaking file IO
+  // The parameter MUST be false here.
+  s.IsValid(false);
+
+  // NOTE WELL:
+  //   In some cases there are embedded nulls in strings.
   size_t string_element_count = s.Length();
   if ( string_element_count > 0)
     string_element_count++;
@@ -16572,7 +16582,12 @@ ON_BinaryFile::EnableMemoryBuffer(
 
 size_t ON_BinaryFile::Internal_ReadOverride( size_t count, void* p )
 {
-  return (m_fp) ? fread( p, 1, count, m_fp ) : 0;
+  const size_t rc  = (m_fp) ? fread( p, 1, count, m_fp ) : 0;
+  if (rc != count && nullptr != m_fp)
+  {
+    ON_ERROR("fread() failed.");
+  }
+  return rc;
 }
 
 size_t ON_BinaryFile::Internal_WriteOverride( size_t count, const void* p )
@@ -16586,6 +16601,10 @@ size_t ON_BinaryFile::Internal_WriteOverride( size_t count, const void* p )
         if ( !Flush() ) // flush existing memory buffer to disk
           return 0;
         rc = fwrite( p, 1, count, m_fp ); // write directly to disk
+        if (rc != count)
+        {
+          ON_ERROR("fwrite() failed - situation A.");
+        }
       }
       else 
       {
@@ -16600,6 +16619,10 @@ size_t ON_BinaryFile::Internal_WriteOverride( size_t count, const void* p )
     else
     {
       rc = fwrite( p, 1, count, m_fp );
+      if (rc != count)
+      {
+        ON_ERROR("fwrite() failed - situation B.");
+      }
     }
   }
   return rc;

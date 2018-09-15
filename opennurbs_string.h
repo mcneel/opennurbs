@@ -883,6 +883,20 @@ public:
 	ON_String() ON_NOEXCEPT;
 	ON_String( const ON_String& );
 
+  enum : int
+  {
+    // This ON_String::MaximumStringLength value of 100,000,000
+    // is used for string length sanity checking in both ON_String and
+    // ON_wString.
+    // The design of the ON_String and ON_wString classes could support 
+    // string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
+    // a cap of 100 million seems generous enough for current usage
+    // and is small enough to detect many corrupt memory
+    // situations.
+    // This value is used for both ON_String and ON_wString.
+    MaximumStringLength = 100000000
+  };
+
   // ON_String::EmptyString has length 0.
   // const char* s = ON_String::EmptyString sets s to "".
   static const ON_String EmptyString;
@@ -895,8 +909,10 @@ public:
   static const char CarriageReturn;  // Unicode CHARACTER TABULATION control U+000D
   static const char Escape;          // Unicode CARRIAGE RETURN control U+001B
   static const char Space;           // Unicode SPACE U+0020
+  static const char HyphenMinus;     // Unicode SPACE U+002D
   static const char Slash;           // Unicode SOLIDUS U+002F
   static const char Backslash;       // Unicode REVERSE SOLIDUS U+005C
+  static const char Underscore;      // Unicode LOW LINE U+005F
   static const char Pipe;            // Unicode VERTICAL LINE U+007C
     
 private:
@@ -931,22 +947,27 @@ public:
 	bool LoadResourceString( HINSTANCE, UINT); // load from Windows string resource
 										                         // 2047 chars max
 #endif
+  /*
+  Parameters:
+    bLengthTest - [in]
+      true
+        (common case) If this->Length() != ON_wString::Length(static_cast<const wchar_t*)(this)), then this string is not valid.
+      false
+        (less common case) There may be null elements in the first this->Length()-1 chars.
+  Returns:
+    True - this is valid.
+    False
+      There is a serious memory corruption bug in your code.
+      This was not valid and converted to ON_wString::EmptyString to prevent future crashes.  */
+  bool IsValid(
+    bool bLengthTest
+  ) const;
 
   void Create();
   void Destroy(); // releases any memory and initializes to default empty string
   void EmergencyDestroy();
 
-  /*
-  Description:
-    Enables reference counting.  I limited cases, this is useful 
-    for large strings or strings that are frequently passed around.
-    Reference counted strings must be carefully managed in
-    when multi-threading is used.
-  Parameters:
-    If EnableReferenceCounting()
-    is not called, then the string will not be referanceThe default is to not use
-    reference counted strings.
-  */
+  ON_DEPRECATED_MSG("Obsolete - does nothing.")
   void EnableReferenceCounting( bool bEnable );
 
   /*
@@ -977,6 +998,20 @@ public:
   */
   static int Length(
     const char* string
+    );
+
+  /*
+  Parameters:
+    string_capacity - [in]
+      number of elements that can be read in string[] array.
+  Returns:
+    number of nonzero elements in string before the first null terminator
+    or string_capacity if no null terminator is in string[].
+    If string is nullptr, 0 is returned.
+  */
+  static int Length(
+    const char* string,
+    size_t string_capacity
     );
 
   /*
@@ -1941,6 +1976,7 @@ protected:
 
 	// implementation helpers
 	struct ON_aStringHeader* Header() const;
+	struct ON_aStringHeader* IncrementedHeader() const;
 	char* CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_String& );
@@ -2102,8 +2138,10 @@ public:
   static const wchar_t CarriageReturn;  // Unicode CARRIAGE RETURN control U+000D
   static const wchar_t Escape;          // Unicode CARRIAGE RETURN control U+001B
   static const wchar_t Space;           // Unicode SPACE U+0020
+  static const wchar_t HyphenMinus;     // Unicode SPACE U+002D
   static const wchar_t Slash;           // Unicode SOLIDUS U+002F
   static const wchar_t Backslash;       // Unicode REVERSE SOLIDUS U+005C
+  static const wchar_t Underscore;      // Unicode LOW LINE U+005F
   static const wchar_t Pipe;            // Unicode VERTICAL LINE U+007C
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
@@ -2162,21 +2200,28 @@ public:
 										                        // 2047 characters max
 #endif
 
+  /*
+  Parameters:
+    bLengthTest - [in]
+      true
+        (common case) If this->Length() != ON_wString::Length(static_cast<const wchar_t*)(this)), then this string is not valid.
+      false
+        (less common case) There may be null elements in the first this->Length()-1 chars.
+  Returns:
+    True - this is valid.
+    False
+      There is a serious memory corruption bug in your code.
+      This was not valid and converted to ON_wString::EmptyString to prevent future crashes.     
+  */
+  bool IsValid(
+    bool bLengthTest
+  ) const;
+
   void Create();
   void Destroy(); // releases any memory and initializes to default empty string
   void EmergencyDestroy();
 
-  /*
-  Description:
-    Enables reference counting.  I limited cases, this is useful 
-    for large strings or strings that are frequently passed around.
-    Reference counted strings must be carefully managed in
-    when multi-threading is used.
-  Parameters:
-    If EnableReferenceCounting()
-    is not called, then the string will not be referanceThe default is to not use
-    reference counted strings.
-  */
+  ON_DEPRECATED_MSG("Obsolete - does nothing.")
   void EnableReferenceCounting( bool bEnable );
 
   /*
@@ -2206,6 +2251,20 @@ public:
   */
   static int Length(
     const wchar_t* string
+    );
+
+  /*
+  Parameters:
+    string_capacity - [in]
+      number of elements that can be read in string[] array.
+  Returns:
+    number of nonzero elements in string before the first null terminator
+    or string_capacity if no null terminator is in string[].
+    If string is nullptr, 0 is returned.
+  */
+  static int Length(
+    const wchar_t* string,
+    size_t string_capacity
     );
 
   /*
@@ -3350,9 +3409,18 @@ public:
     );
 
 
-	// Low level access to string contents as character array
-	wchar_t* ReserveArray(size_t); // make sure internal array has at least
-                          // the requested capacity.
+  /*
+  Description:
+    Expert user funtion to reserve and gain access to string memory.
+  Parameters:
+    capacity - [in]
+      If capacity > ON_String::MaximumStringLength, then nullptr is returned.
+      If capacity <= 0, then nullptr is returned.
+  */
+	wchar_t* ReserveArray(
+    size_t capacity
+  );
+
 	void ShrinkArray();     // shrink internal storage to minimum size
   wchar_t* SetLength(size_t); // set length (<=capacity)
   wchar_t* Array();
@@ -3407,6 +3475,7 @@ protected:
 
 	// implementation helpers
 	struct ON_wStringHeader* Header() const;
+	struct ON_wStringHeader* IncrementedHeader() const;
 	wchar_t* CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_wString& );

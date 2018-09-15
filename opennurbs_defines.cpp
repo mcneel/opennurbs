@@ -2321,6 +2321,28 @@ ON_2udex::ON_2udex(
   , j(jValue)
 {}
 
+int ON_2udex::DictionaryCompare(
+  const ON_2udex* lhs,
+  const ON_2udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->i < rhs->i)
+    return -1;
+  if (lhs->i > rhs->i)
+    return 1;
+  if (lhs->j < rhs->j)
+    return -1;
+  if (lhs->j > rhs->j)
+    return 1;
+  return 0;
+}
+
 ON_3udex::ON_3udex(
   unsigned int iValue,
   unsigned int jValue,

@@ -1115,21 +1115,21 @@ static int CompareXform( const ON_Xform& a, const ON_Xform& b )
   return j;
 }
 
-int ON_Texture::Compare(  const ON_Texture& a, const ON_Texture& b )
+int ON_Texture::Compare(const ON_Texture& a, const ON_Texture& b)
 {
   int rc = ON_UuidCompare(&a.m_texture_id, &b.m_texture_id);
-  while(!rc)
+  while (!rc)
   {
-    if ( a.m_mapping_channel_id < b.m_mapping_channel_id )
+    if (a.m_mapping_channel_id < b.m_mapping_channel_id)
       rc = -1;
-    else if ( a.m_mapping_channel_id > b.m_mapping_channel_id )
+    else if (a.m_mapping_channel_id > b.m_mapping_channel_id)
       rc = 1;
     if (rc) break;
 
-    rc = a.m_image_file_reference.FullPath().ComparePath(static_cast< const wchar_t* >(b.m_image_file_reference.FullPath()));    
+    rc = a.m_image_file_reference.FullPath().ComparePath(static_cast< const wchar_t* >(b.m_image_file_reference.FullPath()));
     if (rc) break;
 
-    rc = ((int)(a.m_bOn?1:0)) - ((int)(b.m_bOn?1:0));
+    rc = ((int)(a.m_bOn ? 1 : 0)) - ((int)(b.m_bOn ? 1 : 0));
     if (rc) break;
 
     rc = ((int)a.m_type) - ((int)b.m_type);
@@ -1162,28 +1162,105 @@ int ON_Texture::Compare(  const ON_Texture& a, const ON_Texture& b )
     rc = a.m_transparent_color.Compare(b.m_transparent_color);
     if (rc) break;
 
-    rc = ON_Interval::Compare(a.m_bump_scale,b.m_bump_scale);
+    rc = ON_Interval::Compare(a.m_bump_scale, b.m_bump_scale);
     if (rc) break;
 
-    rc = CompareDouble( a.m_blend_constant_A, b.m_blend_constant_A );
+    rc = CompareDouble(a.m_blend_constant_A, b.m_blend_constant_A);
     if (rc) break;
 
-    rc = CompareDouble( a.m_blend_A0, b.m_blend_A0 );
+    rc = CompareDouble(a.m_blend_A0, b.m_blend_A0);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_A1, b.m_blend_A1 );
+    rc = CompareDouble(a.m_blend_A1, b.m_blend_A1);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_A2, b.m_blend_A2 );
+    rc = CompareDouble(a.m_blend_A2, b.m_blend_A2);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_A3, b.m_blend_A3 );
+    rc = CompareDouble(a.m_blend_A3, b.m_blend_A3);
     if (rc) break;
 
-    rc = CompareDouble( a.m_blend_RGB0, b.m_blend_RGB0 );
+    rc = CompareDouble(a.m_blend_RGB0, b.m_blend_RGB0);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_RGB1, b.m_blend_RGB1 );
+    rc = CompareDouble(a.m_blend_RGB1, b.m_blend_RGB1);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_RGB2, b.m_blend_RGB2 );
+    rc = CompareDouble(a.m_blend_RGB2, b.m_blend_RGB2);
     if (rc) break;
-    rc = CompareDouble( a.m_blend_RGB3, b.m_blend_RGB3 );
+    rc = CompareDouble(a.m_blend_RGB3, b.m_blend_RGB3);
+    if (rc) break;
+
+    break;
+  }
+
+  return rc;
+}
+
+int ON_Texture::CompareAppearance(const ON_Texture& a, const ON_Texture& b)
+{
+  int rc = 0;
+  while (!rc)
+  {
+    if (a.m_mapping_channel_id < b.m_mapping_channel_id)
+      rc = -1;
+    else if (a.m_mapping_channel_id > b.m_mapping_channel_id)
+      rc = 1;
+    if (rc) break;
+
+    rc = a.m_image_file_reference.FullPath().ComparePath(static_cast< const wchar_t* >(b.m_image_file_reference.FullPath()));
+    if (rc) break;
+
+    rc = ((int)(a.m_bOn ? 1 : 0)) - ((int)(b.m_bOn ? 1 : 0));
+    if (rc) break;
+
+    rc = ((int)a.m_type) - ((int)b.m_type);
+    if (rc) break;
+
+    rc = ((int)a.m_mode) - ((int)b.m_mode);
+    if (rc) break;
+
+    rc = ((int)a.m_minfilter) - ((int)b.m_minfilter);
+    if (rc) break;
+
+    rc = ((int)a.m_magfilter) - ((int)b.m_magfilter);
+    if (rc) break;
+
+    rc = ((int)a.m_wrapu) - ((int)b.m_wrapu);
+    if (rc) break;
+
+    rc = ((int)a.m_wrapv) - ((int)b.m_wrapv);
+    if (rc) break;
+
+    rc = ((int)a.m_wrapw) - ((int)b.m_wrapw);
+    if (rc) break;
+
+    rc = CompareXform(a.m_uvw, b.m_uvw);
+    if (rc) break;
+
+    rc = a.m_border_color.Compare(b.m_border_color);
+    if (rc) break;
+
+    rc = a.m_transparent_color.Compare(b.m_transparent_color);
+    if (rc) break;
+
+    rc = ON_Interval::Compare(a.m_bump_scale, b.m_bump_scale);
+    if (rc) break;
+
+    rc = CompareDouble(a.m_blend_constant_A, b.m_blend_constant_A);
+    if (rc) break;
+
+    rc = CompareDouble(a.m_blend_A0, b.m_blend_A0);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_A1, b.m_blend_A1);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_A2, b.m_blend_A2);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_A3, b.m_blend_A3);
+    if (rc) break;
+
+    rc = CompareDouble(a.m_blend_RGB0, b.m_blend_RGB0);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_RGB1, b.m_blend_RGB1);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_RGB2, b.m_blend_RGB2);
+    if (rc) break;
+    rc = CompareDouble(a.m_blend_RGB3, b.m_blend_RGB3);
     if (rc) break;
 
     break;
@@ -1213,6 +1290,14 @@ int ON_Material::CompareNameAndIds( const ON_Material& a, const ON_Material& b )
   if (rc) return rc;
 
   rc = ON_UuidCompare(&a.m_rdk_material_instance_id, &b.m_rdk_material_instance_id);
+  if (rc) return rc;
+
+  const int tcount = a.m_textures.Count();
+  rc = tcount - b.m_textures.Count();
+  for (int i = 0; i < tcount && 0 == rc; i++)
+  {
+    rc = ON_UuidCompare(a.m_textures[i].m_texture_id, b.m_textures[i].m_texture_id);
+  }
 
   return rc;  
 }
@@ -1221,9 +1306,6 @@ int ON_Material::CompareNameAndIds( const ON_Material& a, const ON_Material& b )
 int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material& b )
 {
   int rc = a.m_ambient.Compare(b.m_ambient);
-  if (rc) return rc;
-
-  rc = a.m_diffuse.Compare( b.m_diffuse );
   if (rc) return rc;
 
   rc = a.m_diffuse.Compare( b.m_diffuse );
@@ -1281,21 +1363,38 @@ int ON_Material::CompareReflectionAttributes( const ON_Material& a, const ON_Mat
   return rc;  
 }
 
-int ON_Material::CompareTextureAttributes( const ON_Material& a, const ON_Material& b )
+int ON_Material::CompareTextureAttributes(const ON_Material& a, const ON_Material& b)
 {
   // do NOT test index or id
 
   const int tcount = a.m_textures.Count();
   int rc = tcount - b.m_textures.Count();
-  for ( int i = 0; i < tcount && 0 == rc; i++ )
+  for (int i = 0; i < tcount && 0 == rc; i++)
   {
-    rc = ON_Texture::Compare( a.m_textures[i], b.m_textures[i] );
+    rc = ON_Texture::Compare(a.m_textures[i], b.m_textures[i]);
   }
-  if (0 == rc )
+  if (0 == rc)
     rc = ((int)a.m_bUseDiffuseTextureAlphaForObjectTransparencyTexture) - ((int)b.m_bUseDiffuseTextureAlphaForObjectTransparencyTexture);
 
-    
-  return rc;  
+
+  return rc;
+}
+
+int ON_Material::CompareTextureAttributesAppearance(const ON_Material& a, const ON_Material& b)
+{
+  // do NOT test index or id
+
+  const int tcount = a.m_textures.Count();
+  int rc = tcount - b.m_textures.Count();
+  for (int i = 0; i < tcount && 0 == rc; i++)
+  {
+    rc = ON_Texture::CompareAppearance(a.m_textures[i], b.m_textures[i]);
+  }
+  if (0 == rc)
+    rc = ((int)a.m_bUseDiffuseTextureAlphaForObjectTransparencyTexture) - ((int)b.m_bUseDiffuseTextureAlphaForObjectTransparencyTexture);
+
+
+  return rc;
 }
 
 int ON_Material::CompareAppearance( const ON_Material& a, const ON_Material& b )
@@ -1304,7 +1403,7 @@ int ON_Material::CompareAppearance( const ON_Material& a, const ON_Material& b )
   if ( 0 == rc )
     rc = CompareReflectionAttributes(a,b);
   if ( 0 == rc )
-    rc = CompareTextureAttributes(a,b);
+    rc = CompareTextureAttributesAppearance(a,b);
 
   if ( 0 == rc )
     rc = ON_UuidCompare( &a.m_plugin_id, &b.m_plugin_id );
@@ -1700,7 +1799,24 @@ void ON_Material::SetDisableLighting(
   }
 }
 
+//Very simple preview color function that better supports metals and dialectrics.
+ON_Color ON_Material::PreviewColor(void) const
+{
+	if (Transparency() > 0.5)
+	{
+		return m_transparent;
+	}
 
+	if (!FresnelReflections())
+	{
+		if (Reflectivity() > 0.5)
+		{
+			return m_reflection;
+		}
+	}
+
+	return m_diffuse;
+}
 
 bool ON_Material::UseDiffuseTextureAlphaForObjectTransparencyTexture() const
 {
@@ -5041,6 +5157,14 @@ bool ON_Mesh::SetTextureCoordinates(
   // Use mp instead of mapping to call GetTextureCoordinates()
   // because m_uvw must be the identity if we have seams.
   bool rc = mp.GetTextureCoordinates(*this,m_T,mesh_xform,bLazy,Tsd);
+
+  if (Tsd != nullptr && Tsd->Count() == 0)
+  {
+    // Tsd array is needed for seam check but it was not filled by GetTextureCoordinates.
+    // This happened because matching texture coordinates were found. These coordinates
+    // were already once seam checked. So seam check can be skipped now.
+    bSeamCheck = false;
+  }
   
   if (rc)
   {

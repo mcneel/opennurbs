@@ -5,6 +5,9 @@
       location = "container:"
       name = "Examples">
       <FileRef
+         location = "group:example_test/example_test.xcodeproj">
+      </FileRef>
+      <FileRef
          location = "group:example_read/example_read.xcodeproj">
       </FileRef>
       <FileRef
@@ -12,9 +15,6 @@
       </FileRef>
       <FileRef
          location = "group:example_brep/example_brep.xcodeproj">
-      </FileRef>
-      <FileRef
-         location = "group:example_roundtrip/example_roundtrip.xcodeproj">
       </FileRef>
       <FileRef
          location = "group:example_userdata/example_userdata.xcodeproj">

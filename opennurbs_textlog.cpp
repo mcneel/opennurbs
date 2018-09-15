@@ -49,20 +49,32 @@ ON_TextLogIndent::~ON_TextLogIndent()
 
 //////////////////////////////////////////////////////////////////////////////
 
-ON_TextLog::ON_TextLog() : m_pFile(0), m_pString(0), m_indent(""), m_beginning_of_line(1), m_indent_size(0)
+ON_TextLog::ON_TextLog()
 {
   SetFloatFormat("%g");
   SetDoubleFormat("%.17g");
 }
 
-ON_TextLog::ON_TextLog( FILE* pFile ) : m_pFile(pFile), m_pString(0), m_indent(""), m_beginning_of_line(1), m_indent_size(0)
+ON_TextLog::ON_TextLog( FILE* pFile )
+  : m_pFile(pFile)
+  , m_bNullTextLog(((ON__UINT_PTR)pFile) <= ON_PTR_SEMAPHORE_MAX)
 {
+  if (m_bNullTextLog)
+  {
+    m_pFile = nullptr;
+  }
   SetFloatFormat("%g");
   SetDoubleFormat("%.17g");
 }
 
-ON_TextLog::ON_TextLog( ON_wString& wstr ) : m_pFile(0), m_pString(&wstr), m_indent(""), m_beginning_of_line(1), m_indent_size(0)
+ON_TextLog::ON_TextLog( ON_wString& wstr ) 
+  : m_pString(&wstr)
+  , m_bNullTextLog(((ON__UINT_PTR)&wstr) <= ON_PTR_SEMAPHORE_MAX)
 {
+  if (m_bNullTextLog)
+  {
+    m_pString = nullptr;
+  }
   SetFloatFormat("%g");
   SetDoubleFormat("%.17g");
 }
@@ -164,6 +176,12 @@ void ON_TextLog::SetIndentCount(
 
 void ON_VARGS_FUNC_CDECL ON_TextLog::Print(const char* format, ...)
 {
+  if (m_bNullTextLog)
+    return;
+
+  // NOTE:
+  //  This code does not work on Traditional Chinese Windows 10.
+  //
   if (nullptr == format || 0 == format[0])
     return;
 
@@ -206,6 +224,9 @@ void ON_VARGS_FUNC_CDECL ON_TextLog::Print(const char* format, ...)
 
 void ON_VARGS_FUNC_CDECL ON_TextLog::Print(const wchar_t* format, ...)
 {
+  if (m_bNullTextLog)
+    return;
+
   if (nullptr == format || 0 == format[0])
     return;
 
@@ -246,23 +267,19 @@ void ON_VARGS_FUNC_CDECL ON_TextLog::Print(const wchar_t* format, ...)
 
 }
 
-static bool Internal_TextLogIsNull(const void* p)
-{
-  const bool bTextLogIsNull = (1 == ((ON__INT_PTR)p));
-  return bTextLogIsNull;
-}
-
 void ON_TextLog::AppendText( const char* s )
 {
   // This is a virtual function 
+  if (m_bNullTextLog)
+    return;
+
   if ( s && *s ) 
   {
-    if ( m_pString)
+    if ( nullptr != m_pString)
     {
-      if ( false == Internal_TextLogIsNull(m_pString) )
-        (*m_pString) += s;
+      (*m_pString) += s;
     }
-    else if ( m_pFile ) 
+    else if ( nullptr != m_pFile ) 
     {
       fputs( s, m_pFile );
     }
@@ -276,10 +293,12 @@ void ON_TextLog::AppendText( const char* s )
 void ON_TextLog::AppendText( const wchar_t* s )
 {
   // This is a virtual function 
-  if ( m_pString )
+  if (m_bNullTextLog)
+    return;
+
+  if ( nullptr != m_pString )
   {
-    if ( false == Internal_TextLogIsNull(m_pString) )
-       (*m_pString) += s;
+    (*m_pString) += s;
   }
   else
   {
@@ -539,6 +558,19 @@ void ON_TextLog::PrintRGB( const ON_Color& color )
     Print("ON_UNSET_COLOR");
   else
     Print("%d %d %d",color.Red(),color.Green(),color.Blue());
+}
+
+void ON_TextLog::PrintCurrentTime()
+{
+  struct tm current_time;
+  memset(&current_time, 0, sizeof(current_time));
+  time_t uct = time(nullptr);
+  const struct tm* t = gmtime(&uct);
+  if (t)
+  {
+    current_time = *t;
+  }
+  PrintTime(current_time);
 }
 
 void ON_TextLog::PrintTime( const struct tm& t )
