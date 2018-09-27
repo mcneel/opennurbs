@@ -1154,13 +1154,14 @@ ON_ClassArray<T>& ON_ClassArray<T>::operator=( ON_ClassArray<T>&& src ) ON_NOEXC
 {
   if( this != &src ) 
   {
-    this->Destroy();
-    m_a = src.m_a;
-    m_count = src.m_count;
-    m_capacity = src.m_capacity;
-    src.m_a = 0;
-    src.m_count = 0;
-    src.m_capacity = 0;
+    ON_ClassArray<T>::operator=(std::move(src));
+    //this->Destroy();
+    //m_a = src.m_a;
+    //m_count = src.m_count;
+    //m_capacity = src.m_capacity;
+    //src.m_a = 0;
+    //src.m_count = 0;
+    //src.m_capacity = 0;
   }  
   return *this;
 }
