@@ -1,4 +1,5 @@
 *.o
+*.swp
 
 # output from example_test
 example_test_log_*.txt
@@ -371,3 +372,13 @@ healthchecksdb
 
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
+
+## Linux
+
+example_brep/example_brep
+example_brep/my_brep.3dm
+example_read/example_read
+example_test/example_test
+example_userdata/example_userdata
+example_write/example_write
+libopennurbs_public.a
