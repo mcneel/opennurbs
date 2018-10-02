@@ -247,7 +247,7 @@
 
 #define ON_SIZEOF_WCHAR_T 2
 
-#elif defined(__clang__) | defined(ON_COMPILER_CLANG)
+#elif defined(__clang__) | defined(__clang) |  defined(ON_COMPILER_CLANG)
 /*
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////

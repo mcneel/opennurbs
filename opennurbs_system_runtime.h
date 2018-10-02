@@ -55,6 +55,11 @@
 #define ON_RUNTIME_ANDROID
 #endif
 
+#elif defined(__linux__)
+#if !defined(ON_RUNTIME_LINUX)
+#define ON_RUNTIME_LINUX
+#endif
+
 #endif
 /*
 //
@@ -148,6 +153,25 @@
 
 #if !defined(ON_SIZEOF_WCHAR_T)
 #define ON_SIZEOF_WCHAR_T 4
+#endif
+
+#elif defined(ON_RUNTIME_LINUX)
+
+#if defined(__x86_64__)
+#define ON_64BIT_RUNTIME
+#else
+#define ON_32BIT_RUNTIME
+#endif
+
+
+#if !defined(ON_SIZEOF_WCHAR_T)
+#define ON_SIZEOF_WCHAR_T 4
+#endif
+
+#if !defined(ON_LITTLE_ENDIAN)
+#if defined( __x86_64__ )
+#define ON_LITTLE_ENDIAN
+#endif
 #endif
 
 #endif
