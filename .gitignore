@@ -1,3 +1,11 @@
 *.o
+*.swp
 /bin
 /obj
+example_brep/example_brep
+example_brep/my_brep.3dm
+example_read/example_read
+example_test/example_test
+example_userdata/example_userdata
+example_write/example_write
+libopennurbs_public.a
