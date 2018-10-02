@@ -48,14 +48,20 @@ ON_GNU_COMMON_FLAGS = $(ON_GNU_OPTIMIZER_FLAGS) $(ON_GNU_WARNING_FLAGS) -D_GNU_S
 
 # C compiler and flags
 CC = gcc
+# clang c
+#CC = clang
 CFLAGS = $(ON_GNU_COMMON_FLAGS) 
 
 # C++ compiler and flags
 CCC = g++
+# clang++
+#CCC = c++
 CCFLAGS = $(ON_GNU_COMMON_FLAGS) -std=c++14
 
 LINK = $(CCC)
 LINKFLAGS =
+# Linux link flag needed for libuuid
+#LINKFLAGS = -luuid
 
 ###############################################################
 
@@ -378,6 +384,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_topology.cpp \
 	opennurbs_torus.cpp \
 	opennurbs_unicode.cpp \
+	opennurbs_unicode_cpsb.cpp \
 	opennurbs_units.cpp \
 	opennurbs_userdata.cpp \
 	opennurbs_userdata_obsolete.cpp \
@@ -444,6 +451,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_fsp.o \
 	opennurbs_function_list.o \
 	opennurbs_geometry.o \
+	opennurbs_glyph_outline.o \
 	opennurbs_group.o \
 	opennurbs_hash_table.o \
 	opennurbs_hatch.o \
@@ -550,6 +558,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_topology.o \
 	opennurbs_torus.o \
 	opennurbs_unicode.o \
+	opennurbs_unicode_cpsb.o \
 	opennurbs_units.o \
 	opennurbs_userdata.o \
 	opennurbs_userdata_obsolete.o \
