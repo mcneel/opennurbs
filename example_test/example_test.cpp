@@ -696,6 +696,8 @@ static void Internal_PrintIntroduction(
     L"Apple"
 #elif defined(ON_RUNTIME_ANDROID)
     L"Android"
+#elif defined(ON_RUNTIME_LINUX)
+    L"Linux"
 #else
     L"Unknown"
 #endif
