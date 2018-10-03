@@ -939,7 +939,12 @@ public:
     ///<summary>
     /// ON::RuntimeEnvironment::Android indicates some version of Google Android.
     ///</summary>
-    Android =  4    
+    Android =  4,
+
+    ///<summary>
+    /// ON::RuntimeEnvironment::Linux indicates some version of Linux.
+    ///</summary>
+    Linux = 5
   };
 #pragma endregion
 
