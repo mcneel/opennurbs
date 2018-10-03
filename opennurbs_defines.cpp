@@ -555,6 +555,7 @@ ON::RuntimeEnvironment ON::RuntimeEnvironmentFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Windows);
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Apple);
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Android);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Linux);
   }
   ON_ERROR("Invalid runtime_environment_as_unsigned parameter value.");
   return (ON::RuntimeEnvironment::Unset);
@@ -568,6 +569,8 @@ ON::RuntimeEnvironment ON::CurrentRuntimeEnvironment()
   return ON::RuntimeEnvironment::Apple;
 #elif defined (ON_RUNTIME_ANDROID)
   return ON::RuntimeEnvironment::Android;
+#elif defined (ON_RUNTIME_LINUX)
+  return ON::RuntimeEnvironment::Linux;
 #else
   ON_ERROR("ON_RUNTIME_... not defined.");
   return ON::RuntimeEnvironment::Unset;

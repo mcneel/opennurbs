@@ -42,6 +42,7 @@ const ON_String Internal_RuntimeEnvironmentToString(
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Windows);
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Apple);
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Android);
+  ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Linux);
   }
 
   ON_ERROR("Invalid runtime_environment parameter value.");
