@@ -503,7 +503,7 @@ int ON::CloseAllFiles()
   //fcloseall is not supported on OS X
   return EOF;
 #elif defined(ON_COMPILER_GNU)
-#error TODO - call gcc fcloseall()
+  return fcloseall();
 #else
   // I can't find an fcloseall() or _fcloseall() in
   // gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)

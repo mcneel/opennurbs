@@ -363,6 +363,8 @@
 #define _GNU_SOURCE
 #endif
 
+///same as for clang, see above
+#define ON_CLANG_CONSTRUCTOR_BUG
 /* 
 // Usage example - disables gcc warning xyz - See Gnu gcc docs for warning options
 #pragma ON_PRAGMA_WARNING_PUSH
