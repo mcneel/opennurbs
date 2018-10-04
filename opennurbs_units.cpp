@@ -2198,7 +2198,7 @@ static const wchar_t* ON_Internal_GetUnitsName(
   if (locale_id <= special_id_limit && locale_id != ON_RHINO_LOCALE_ID)
   {
     if (0 == locale_id)
-      locale_id = ON_Locale::CurrentCulture.WindowsLCID();
+      locale_id = ON_Locale::CurrentCulture.get_WindowsLCID();
     if ( locale_id <= special_id_limit && locale_id != ON_RHINO_LOCALE_ID )
       locale_id = ON_RHINO_LOCALE_ID;
   }
@@ -2260,7 +2260,7 @@ ON_LengthUnitName ON_LengthUnitName::Create(
 )
 {
   if (0 == locale_id)
-    locale_id = ON_Locale::CurrentCulture.WindowsLCID();
+    locale_id = ON_Locale::CurrentCulture.get_WindowsLCID();
 
   size_t count = 0;
   const ON_UnitName* names = nullptr;

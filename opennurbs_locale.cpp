@@ -118,7 +118,7 @@ ON_Locale::ON_Locale() ON_NOEXCEPT
   m_string_coll_map_locale = ON_CRT_C_locale();
 }
 
-ON__UINT32 ON_Locale::WindowsLCID() const
+ON__UINT32 ON_Locale::get_WindowsLCID() const
 {
   return m_windows_lcid;
 }

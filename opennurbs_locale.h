@@ -250,7 +250,7 @@ public:
     ON_Locale::InvariantCultureLCID (=0x00000027U)
       The locale is a copy of ON_Locale::InvariantCulture.
   */
-  ON__UINT32 WindowsLCID() const;
+  ON__UINT32 get_WindowsLCID() const;
 
   /*
   Description:
