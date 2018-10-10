@@ -355,6 +355,143 @@ const ON_wString ON_wString::PreciseFromNumber(
   return ON_wString::EmptyString;
 }
 
+const ON_wString ON_wString::FromCurrentCoordinatedUniversalTime(
+  ON_DateFormat date_format,
+  ON_TimeFormat time_format,
+  wchar_t date_separator,
+  wchar_t date_time_separator,
+  wchar_t time_separator
+)
+{
+  struct tm current_time;
+  memset(&current_time,0,sizeof(current_time));
+  time_t gmt = time(0);
+  const struct tm* t = gmtime(&gmt);
+  if ( t )
+    current_time = *t;
+  return ON_wString::FromTime(
+    current_time,
+    date_format,
+    time_format,
+    date_separator,
+    date_time_separator,
+    time_separator
+  );
+}
+
+const ON_wString ON_wString::FromTime(
+  const struct tm& t,
+  ON_DateFormat date_format,
+  ON_TimeFormat time_format,
+  wchar_t date_separator,
+  wchar_t date_time_separator,
+  wchar_t time_separator
+)
+{
+  int mday = t.tm_mday;
+  if (mday < 1 || mday > 31)
+    mday = 0;
+
+  int yday = t.tm_yday;
+  if (yday < 0 || yday > 365)
+    yday = 0;
+  else
+    yday++;
+
+  int mon = t.tm_mon;
+  if (mon < 0 || mon > 11)
+    mon = 0;
+  else
+    mon++;
+
+  int year = t.tm_year;
+  if (year < 0)
+    year = 0;
+  else
+    year += 1900;
+
+  bool bValidDate = (year >= 1900 && mday > 0 && yday > 0 && mon > 0);
+  bool bValidHMS = (t.tm_hour >= 0 && t.tm_min >= 0 && t.tm_sec >= 0 && t.tm_hour < 24 && t.tm_min <= 59 && t.tm_sec <= 59);
+
+  if (0 == date_separator)
+    date_separator = ON_wString::HyphenMinus;
+  if (0 == time_separator)
+    time_separator = ':';
+
+  const wchar_t ds[2] = { date_separator,0 };
+  const wchar_t ts[2] = { time_separator,0 };
+  const wchar_t* ampm = (t.tm_hour >= 12) ? L"PM" : L"AM";
+  
+  ON_wString date;
+  switch (date_format)
+  {
+  case ON_DateFormat::Unset:
+    bValidDate = true;
+    break;
+  case ON_DateFormat::Omit:
+    bValidDate = true;
+    break;
+  case ON_DateFormat::YearMonthDay:
+    date = ON_wString::FormatToString(L"%d%ls%d%ls%d", year, ds, mon, ds, mday);
+    break;
+  case ON_DateFormat::YearDayMonth:
+    date = ON_wString::FormatToString(L"%d%ls%d%ls%d", year, ds, mday, ds, mon);
+    break;
+  case ON_DateFormat::MonthDayYear:
+    date = ON_wString::FormatToString(L"%d%ls%d%ls%d", mon, ds, mday, ds, year);
+    break;
+  case ON_DateFormat::DayMonthYear:
+    date = ON_wString::FormatToString(L"%d%ls%d%ls%d", mday, ds, mon, ds, year);
+    break;
+  case ON_DateFormat::YearDayOfYear:
+    date = ON_wString::FormatToString(L"%d%ls%d", year, ds, yday);
+    break;
+  default:
+    break;
+  }
+  if (false == bValidDate)
+    return ON_wString::EmptyString;
+  
+  ON_wString hms;
+  switch (time_format)
+  {
+  case ON_TimeFormat::Unset:
+    bValidHMS = true;
+    break;
+  case ON_TimeFormat::Omit:
+    bValidHMS = true;
+    break;
+  case ON_TimeFormat::HourMinute12:
+    hms = ON_wString::FormatToString(L"%d%ls%d%ls", t.tm_hour%12, ts, t.tm_min, ampm);
+    break;
+  case ON_TimeFormat::HourMinuteSecond12:
+    hms = ON_wString::FormatToString(L"%d%ls%d%ls%d%ls", t.tm_hour%12, ts, t.tm_min, ts, t.tm_sec, ampm);
+    break;
+  case ON_TimeFormat::HourMinute24:
+    hms = ON_wString::FormatToString(L"%d%ls%d", t.tm_hour, ts, t.tm_min);
+    break;
+  case ON_TimeFormat::HourMinuteSecond24:
+    hms = ON_wString::FormatToString(L"%d%ls%d%ls%d", t.tm_hour, ts, t.tm_min, ts, t.tm_sec);
+    break;
+  default:
+    break;
+  }
+
+  ON_wString result = date;
+  if (result.IsNotEmpty() && hms.IsNotEmpty())
+  {
+    if (0 == date_time_separator)
+      date_time_separator = ON_wString::Space;
+    const wchar_t dts[] = { date_time_separator,0 };
+    result += dts;
+  }
+  result += hms;
+
+  return result;
+}
+
+
+
 static bool ON_BytesToHexadecimalString(
   const ON__UINT8* bytes,
   size_t byte_count,

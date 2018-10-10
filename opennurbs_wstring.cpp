@@ -762,6 +762,132 @@ bool ON_wString::LoadResourceString(HINSTANCE instance, UINT id )
 }
 #endif
 
+
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+ON_String::ON_String(CFStringRef appleString)
+{
+  Create();
+  for (;;)
+  {
+    if (nullptr == appleString)
+      break;
+
+    const char * utf8_str = CFStringGetCStringPtr(appleString, kCFStringEncodingUTF8);
+    ON_SimpleArray<char> local_buffer;
+    if (nullptr == utf8_str)
+    {
+      CFIndex utf16_count = CFStringGetLength(appleString);
+      if (utf16_count <= 0)
+        break;
+      // get local storage
+      CFIndex utf8_capacity = 6*utf16_count;
+      local_buffer.Reserve((int)(utf8_capacity+1));
+      local_buffer.SetCount((int)(utf8_capacity+1));
+      local_buffer.Zero();
+      Boolean b = CFStringGetCString(appleString, local_buffer.Array(), utf8_capacity, kCFStringEncodingUTF8);
+      if (b)
+        utf8_str = local_buffer.Array();
+      if (nullptr == utf8_str)
+        break;
+    }
+    if ( 0 == utf8_str[0])
+      break;
+    this->operator=(utf8_str);
+    break;
+  }
+}
+
+ON_wString::ON_wString(CFStringRef appleString)
+{
+  Create();
+  for (;;)
+  {
+    if (nullptr == appleString)
+      break;
+    CFIndex utf16_count = CFStringGetLength(appleString);
+    if (utf16_count <= 0)
+      break;
+    const UniChar * utf16_str = CFStringGetCharactersPtr(appleString);
+    ON_SimpleArray<UniChar> local_buffer;
+    if (nullptr == utf16_str)
+    {
+      // get local storage
+      local_buffer.Reserve((int)(utf16_count + 1));
+      local_buffer.SetCount((int)(utf16_count + 1));
+      CFRange range;
+      range.length = utf16_count;
+      range.location = 0;
+      CFStringGetCharacters(appleString, range, local_buffer.Array());
+      local_buffer[(int)utf16_count] = 0;
+      utf16_str = local_buffer.Array();
+    }
+
+    ReserveArray(utf16_count);
+    if (2 == ON_SIZEOF_WCHAR_T)
+    {
+      for (CFIndex i = 0;i < utf16_count;i++)
+        m_s[i] = (wchar_t)(utf16_str[i]);
+      m_s[utf16_count] = 0;
+      Header()->string_length = utf16_count;      
+    }
+    else
+    {
+      ON__UINT32 code_point;
+      int utf32_count = 0;
+      for (CFIndex i = 0;i < utf16_count;i++)
+      {
+        code_point = (ON__UINT32)(utf16_str[i]);
+        if (
+          0 == ON_IsValidUTF16Singleton(code_point)
+          && ( i+1 < utf16_count )
+          && ON_IsValidUTF16SurrogatePair(code_point,utf16_str[i + 1])
+          )
+        {
+          code_point = ON_DecodeUTF16SurrogatePair(code_point, utf16_str[i + 1], ON_UnicodeCodePoint::ON_InvalidCodePoint);
+          if (ON_UnicodeCodePoint::ON_InvalidCodePoint != code_point)
+            i++;
+          else
+            code_point = (ON__UINT32)(utf16_str[i]);
+        }
+        m_s[utf32_count++] = (wchar_t)code_point;
+      }
+      m_s[utf32_count] = 0;
+      Header()->string_length = utf32_count;      
+    }
+    break;
+  }
+}
+
+CFStringRef ON_wString::ToAppleCFString() const
+{
+  if ( IsEmpty() || Length() <= 0)
+    return nullptr;
+  const ON_String utf8_string(*this);
+  return utf8_string.ToAppleCFString();
+}
+
+CFStringRef ON_String::ToAppleCFString() const
+{
+  for(;;)
+  {
+    if ( IsEmpty() || Length() <= 0 )
+      break;
+    CFAllocatorRef alloc = nullptr;
+    const UInt8 *bytes = (UInt8 *)static_cast<const char*>(*this);
+    if (nullptr == bytes || 0 == bytes[0])
+      break;
+    CFIndex numBytes = (CFIndex)Length();
+    CFStringEncoding encoding = kCFStringEncodingUTF8;
+    Boolean isExternalRepresentation = true;
+    CFStringRef appleString = CFStringCreateWithBytes( alloc, bytes, numBytes, encoding, isExternalRepresentation);
+    if (nullptr == appleString)
+      break;
+    return appleString;
+  }
+  return nullptr;
+}
+#endif
+
 int ON_wString::Length() const
 {
   return Header()->string_length;

@@ -48,6 +48,36 @@
 #define OPENNURBS_PUBLIC
 #include "opennurbs.h"
 
+#if defined(ON_COMPILER_MSC) && defined(OPENNURBS_PUBLIC_INSTALL_DIR)
+
+#if defined(_DEBUG)
+#if defined(ON_64BIT_RUNTIME)
+#define OPENNURBS_PUBLIC_LIBS_DIR OPENNURBS_PUBLIC_INSTALL_DIR "/bin/x64/Debug"
+#elif defined(ON_32BIT_RUNTIME)
+#define OPENNURBS_PUBLIC_LIBS_DIR OPENNURBS_PUBLIC_INSTALL_DIR "/bin/Win32/Debug"
+#endif
+#else
+#if defined(ON_64BIT_RUNTIME)
+#define OPENNURBS_PUBLIC_LIBS_DIR OPENNURBS_PUBLIC_INSTALL_DIR "/bin/x64/Release"
+#elif defined(ON_32BIT_RUNTIME)
+#define OPENNURBS_PUBLIC_LIBS_DIR OPENNURBS_PUBLIC_INSTALL_DIR "/bin/Win32/Release"
+#endif
+#endif
+
+#if defined(OPENNURBS_IMPORTS)
+#pragma message( " --- dynamically linking opennurbs (DLL)." )
+#pragma comment(lib, "\"" OPENNURBS_PUBLIC_LIBS_DIR "/" "opennurbs_public.lib" "\"")
+#else
+#pragma message( " --- statically linking opennurbs." )
+#pragma comment(lib, "\"" OPENNURBS_PUBLIC_LIBS_DIR "/" "opennurbs_public_staticlib.lib" "\"")
+#pragma comment(lib, "\"" OPENNURBS_PUBLIC_LIBS_DIR "/" "zlib.lib" "\"")
+#pragma comment(lib, "\"" OPENNURBS_PUBLIC_LIBS_DIR "/" "freetype263.lib" "\"")
+#pragma comment(lib, "rpcrt4.lib")
+#pragma comment(lib, "shlwapi.lib")
+#endif
+
+#endif
+
 #undef OPENNURBS_PUBLIC_INC_IN_PROGRESS
 
 #endif

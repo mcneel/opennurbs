@@ -1090,7 +1090,7 @@ unsigned int ON_Font::GetInstalledWindowsDWriteFonts(
               break;
             ON_FontGlyph glyph_box;
             glyph_box.m_code_point = codepoints[k];
-            glyph_box.m_font_glyph_id = glyphIndex;
+            glyph_box.m_font_glyph_index = glyphIndex;
 
             // In font design units
             glyph_box.m_font_unit_glyph_bbox = ON_TextBox::CreateFromDWriteGlyphMetrics(&glyphMetric);
@@ -1453,7 +1453,7 @@ bool ON_WindowsDWriteGetGlyphOutline(
   //  is the default "TrueType" orientation. The Klavika OpenType font is
   //  an example where the outlines returned by DirectWrite are "backwards"
   //  from those returned by 
-  accumulator.EndOutline(bNegatePointY,ON_OutlineFigure::Orientation::Clockwise);
+  accumulator.EndOutline(bNegatePointY, ON_Outline::DefaultOuterOrientation);
 
   DWRITE_GLYPH_METRICS  glyphMetrics[2] = {};
 
@@ -1542,7 +1542,7 @@ void ON_WindowsDWriteGetFontMetrics(
   return;
 }
 
-ON__UINT_PTR ON_WindowsDWriteGetGlyphMetrics(
+unsigned int ON_WindowsDWriteGetGlyphMetrics(
   const ON_FontGlyph* glyph,
   ON_TextBox& glyph_metrics
 )
@@ -1563,14 +1563,14 @@ ON__UINT_PTR ON_WindowsDWriteGetGlyphMetrics(
   if (nullptr == dwriteFont)
     return 0;
 
-  ON__UINT_PTR glpyh_id = 0;
+  unsigned int glyph_index = 0;
   for(;;)
   {
-    glpyh_id
-      = glyph->FontGlyphIdIsSet()
-      ? glyph->FontGlyphId()
+    glyph_index
+      = glyph->FontGlyphIndexIsSet()
+      ? glyph->FontGlyphIndex()
       : 0;
-    if (glpyh_id > 0 && glpyh_id < 0xFFFFFFFF)
+    if (glyph_index > 0)
       break;
 
     Microsoft::WRL::ComPtr<IDWriteFontFace> dwriteFontFace = nullptr;
@@ -1587,18 +1587,18 @@ ON__UINT_PTR ON_WindowsDWriteGetGlyphMetrics(
     if (FAILED(hr))
       break;
 
-    glpyh_id = glyphIndices[0];
+    glyph_index = glyphIndices[0];
     break;
   }
 
   const bool rc
-    = (0 != glpyh_id)
-    ? ON_WindowsDWriteGetGlyphMetrics(dwriteFont, (unsigned int)glpyh_id, glyph_metrics)
+    = (0 != glyph_index)
+    ? ON_WindowsDWriteGetGlyphMetrics(dwriteFont, glyph_index, glyph_metrics)
     : false;
 
   dwriteFont->Release();
 
-  return rc ? glpyh_id : 0;
+  return rc ? glyph_index : 0;
 }
 
 bool ON_WindowsDWriteGetGlyphOutline(
@@ -1615,10 +1615,7 @@ bool ON_WindowsDWriteGetGlyphOutline(
   if (false == glyph->CodePointIsSet())
     return false;
 
-  ON__UINT64 glpyh_id = (ON__UINT64)glyph->FontGlyphId();
-  if (glpyh_id > 0xFFFFFFFF)
-    return false;
-  const unsigned int dwriteGlyphIndex = (unsigned int)glpyh_id;
+  const unsigned int dwriteGlyphIndex = glyph->FontGlyphIndex();
 
   const ON_Font* font = glyph->Font();
   if (nullptr == font)

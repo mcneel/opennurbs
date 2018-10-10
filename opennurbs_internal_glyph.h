@@ -50,10 +50,11 @@ public:
     );
 
 #if defined(ON_OS_WINDOWS_GDI)
-
-
   static void Internal_GetWindowsInstalledFonts(ON_SimpleArray<const ON_Font*>&);
+#endif
 
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  static void Internal_GetAppleInstalledCTFonts(ON_SimpleArray<const ON_Font*>& platform_font_list);
 #endif
 
   // sorts nulls to end of lists
@@ -64,9 +65,9 @@ public:
   /*
   Returns:
     0: failure
-    >0: success font glyph id
+    >0: success font glyph index
   */
-  static ON__UINT_PTR GetGlyphMetricsInFontDesignUnits(
+  static unsigned int GetGlyphMetricsInFontDesignUnits(
     const class ON_Font* font, 
     ON__UINT32 unicode_code_point,
     class ON_TextBox& glyph_metrics_in_font_design_units
@@ -171,7 +172,7 @@ Returns:
   0: failed
 */
 ON_DECL
-ON__UINT_PTR ON_WindowsDWriteGetGlyphMetrics(
+unsigned int ON_WindowsDWriteGetGlyphMetrics(
   const ON_FontGlyph* glyph,
   ON_TextBox& glyph_metrics
 );
@@ -191,14 +192,10 @@ bool ON_WindowsDWriteGetGlyphOutline(
 );
 #endif
 
-#if defined(ON_RUNTIME_APPLE) && defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
 /*
 Parameters:
   glyph - [in]
-  knownUPM - [in]
-    The cell height in design units is not avaialble from the Apple NSFont SDK.
-    If you known it, pass it in. Otherwise pass 0.0f and an appropriate value
-    will be guesed at.
   font_metrics - [out]
     font metrics in font design units
 Returns:
@@ -206,7 +203,7 @@ Returns:
   0: failed
 */
 ON_DECL
-void ON_AppleNSFontGetFontMetrics(
+void ON_AppleFontGetFontMetrics(
   const ON_Font* font,
   ON_FontMetrics& font_metrics
 );
@@ -221,7 +218,7 @@ Returns:
   0: failed
 */
 ON_DECL
-ON__UINT_PTR ON_AppleNSFontGetGlyphMetrics(
+unsigned int ON_AppleFontGetGlyphMetrics(
   const ON_FontGlyph* glyph,
   ON_TextBox& glyph_metrics
 );
@@ -229,17 +226,14 @@ ON__UINT_PTR ON_AppleNSFontGetGlyphMetrics(
 /*
 Parameters:
   glyph - [in]
-  font_design_units_per_M - [in]
-    Pass 0 if not know, but try hard to pass in the correct value.
   figure_type - [in]
     Pass ON_OutlineFigure::Type::Unset if not known.
   outline - [out]
     outline and metrics in font design units
 */
 ON_DECL
-bool ON_AppleNSFontGetGlyphOutline(
+bool ON_AppleFontGetGlyphOutline(
   const ON_FontGlyph* glyph,
-  unsigned int font_design_units_per_M,
   ON_OutlineFigure::Type figure_type,
   class ON_Outline& outline
 );

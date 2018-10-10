@@ -9152,6 +9152,371 @@ bool operator!=(const ON_4dRect& lhs, const ON_4dRect& rhs)
 }
 
 
+int ON_WindingNumber::WindingNumber() const
+{
+  int winding_number = m_left_crossing_number;
+  if (abs(m_right_crossing_number) < abs(winding_number))
+    winding_number = m_right_crossing_number;
+  if (abs(m_above_crossing_number) < abs(winding_number))
+    winding_number = m_above_crossing_number;
+  if (abs(m_below_crossing_number) < abs(winding_number))
+    winding_number = m_below_crossing_number;
+  return winding_number;
+}
+
+const ON_2dPoint ON_WindingNumber::WindingPoint() const
+{
+  return m_winding_point;
+}
+
+unsigned int ON_WindingNumber::BoundarySegmentCount() const
+{
+  return m_boundary_segment_count;
+}
+
+const ON_2dPoint ON_WindingNumber::PreviousBoundaryPoint() const
+{
+  return m_prev_boundary_point;
+}
+
+bool ON_WindingNumber::Internal_HaveWindingPoint() const
+{
+  // m_point.x is a NAN when not initialized
+  return (m_winding_point.x == m_winding_point.x);
+}
+
+void ON_WindingNumber::SetWindingPoint(double x, double y)
+{
+  return ON_WindingNumber::SetWindingPoint(ON_2dPoint(x, y));
+}
+
+void ON_WindingNumber::SetWindingPoint(ON_2dPoint winding_point)
+{
+  *this = ON_WindingNumber::Unset;
+  if (winding_point.IsValid())
+    m_winding_point = winding_point;
+}
+
+//bool ON_WindingNumber::Internal_IsLeft( const double* p, const  double* q )
+//{
+//  // Input: p and q are 2d points with p.y <= 0 and q.y > 0
+//  //
+//  // Returns:
+//  //   true if the x coordinate of the intersection of the line segment from p to q and the x axis
+//  //   is negative; i.e., the intersection point is to the left of the origin (0,0).
+//  //
+//  // Arithmetic:
+//  //  L = segment from p to q.
+//  //  L crosses the x-axis (y=0)
+//  //  L(t) = (1-t)*P + t*Q;
+//  //  When t = p.y/(p.y-q.y), L(t).y == 0
+//  //  (1-t) = (-q.y/(p.y-q.y))
+//  //  L(t).x = (-q.y/(p.y-q.y))*p.x + (p.y/(p.y-q.y))*q.x
+//  //         = (p.y*q.x - p.x*q.y)/(p.y-q.y)
+//  //  Since (p.y <= 0 and q.y > 0), (p.y-q.y) < 0
+//  //  Therefore L(t).x < 0 if and only if (p.y*q.x - p.x*q.y) > 0.
+//  //  Therefore L(t).x < 0 if and only if p.y*q.x > p.x*q.y.
+//  return (p[1]*q[0]) > (p[0]*q[1]);
+//}
+
+
+int ON_WindingNumber::Internal_SignOfX(const ON_2dPoint& p, const ON_2dPoint& q)
+{
+  // Input: p and q are 2d points with p.y <= 0 and q.y > 0
+  //
+  // Returns:
+  //   Sign of the x coordinate of the intersection of the line segment from p to q 
+  //   and the x axis.
+  //
+  // Arithmetic:
+  //  L = segment from p to q.
+  //  L crosses the x-axis (y=0)
+  //  L(t) = (1-t)*P + t*Q;
+  //  When t = p.y/(p.y-q.y), L(t).y == 0
+  //  (1-t) = (-q.y/(p.y-q.y))
+  //  L(t).x = (-q.y/(p.y-q.y))*p.x + (p.y/(p.y-q.y))*q.x
+  //         = (p.y*q.x - p.x*q.y)/(p.y-q.y)
+  //  Since (p.y <= 0 and q.y > 0), (p.y-q.y) < 0
+  //  Therefore 
+  //     L(t).x < 0 if and only if (p.y*q.x - p.x*q.y) > 0.
+  //     L(t).x > 0 if and only if (p.y*q.x - p.x*q.y) < 0.
+  const double x = (p.y*q.x) - (p.x*q.y);
+  if (x < 0.0)
+    return 1;
+  if (x > 0.0)
+    return -1;
+  return 0;
+}
+
+int ON_WindingNumber::Internal_SignOfY(const ON_2dPoint& p, const ON_2dPoint& q)
+{
+  // Input: p and q are 2d points with p.x <= 0 and q.x > 0
+  //
+  // Returns:
+  //   Sign of the y coordinate of the intersection of the line segment from p to q 
+  //   and the y axis.
+  //
+  // Arithmetic:
+  //  L = segment from p to q.
+  //  L crosses the y-axis (x=0)
+  //  L(t) = (1-t)*P + t*Q;
+  //  When t = p.x/(p.x-q.x), L(t).x == 0
+  //  (1-t) = (-q.x/(p.x-q.x))
+  //  L(t).y = (-q.x/(p.x-q.x))*p.y + (p.x/(p.x-q.x))*q.y
+  //         = (p.x*q.y - p.y*q.x)/(p.x-q.x)
+  //  Since (p.x <= 0 and q.x > 0), (p.x-q.x) < 0
+  //  Therefore 
+  //     L(t).y < 0 if and only if (p.x*q.y - p.y*q.x) > 0.
+  //     L(t).y > 0 if and only if (p.x*q.y - p.y*q.x) < 0.
+  const double y = (p.x*q.y) - (p.y*q.x);
+  if (y < 0.0)
+    return 1;
+  if (y > 0.0)
+    return -1;
+  return 0;
+}
+
+void ON_WindingNumber::Internal_AddBoundarySegment(const double* p, const double* q)
+{
+  /////////////////////////////////////////////////////////////////////////
+  // The calculation below is a modified version of a portion of wn_PnPoly()
+  // with a bug fix for the case when m_winding_point is on the polyline.
+  //
+  // http://geomalgorithms.com/a03-_inclusion.html
+  //
+  // Copyright 2000 softSurfer, 2012 Dan Sunday
+  // This code may be freely used and modified for any purpose
+  // providing that this copyright notice is included with it.
+  // SoftSurfer makes no warranty for this code, and cannot be held
+  // liable for any real or imagined damage resulting from its use.
+  // Users of this code must verify correctness for their application.
+  /////////////////////////////////////////////////////////////////////////
+
+  // calling function insures m_winding_point is set.
+  // In the comments below H is the horizontal line through the winding point.
+  const ON_2dPoint p0(p[0] - m_winding_point.x, p[1] - m_winding_point.y);
+  const ON_2dPoint p1(q[0] - m_winding_point.x, q[1] - m_winding_point.y);
+  int sign_of;
+
+  if (p0.y <= 0.0)
+  {   
+    if (p1.y > 0.0)
+    {
+      // p0.y <= 0, p1.y > 0 (line segment goes "up") and ...
+      sign_of = ON_WindingNumber::Internal_SignOfX(p0, p1);
+      if ( sign_of < 0 )
+      {
+        // ... intersects the x-axis to the left of the origin.
+        --m_left_crossing_number;
+        m_status_bits |= 1;
+      }
+      else if (sign_of > 0)
+      {
+        // ... intersects the x-axis to the right of the origin.
+        ++m_right_crossing_number;
+        m_status_bits |= 2;
+      }
+    }
+  }
+  else
+  {                
+    if (p1.y <= 0.0)
+    {
+      // p1.y <= 0 and p0.y > 0 (line segment from p0 to p1 goes "down") ...
+      sign_of = ON_WindingNumber::Internal_SignOfX(p1, p0); // YES, (p1, p0) is correct.
+      if (sign_of < 0)
+      {
+        // ... and intersects the x-axis to the left of the origin.
+        ++m_left_crossing_number;
+        m_status_bits |= 1;
+      }
+      else if (sign_of > 0)
+      {
+        // ... and intersects the x-axis to the right of the origin.
+        --m_right_crossing_number;
+        m_status_bits |= 2;
+      }
+    }
+  }
+
+
+  if (p0.x <= 0.0)
+  {   
+    if (p1.x > 0.0)
+    {
+      // p0.x <= 0, p1.x > 0 (line segment from p0 to p1 goes "right") ...
+      sign_of = ON_WindingNumber::Internal_SignOfY(p0, p1);
+      if ( sign_of < 0 )
+      {
+        // ... and intersects the y-axis to the below of the origin.
+        ++m_below_crossing_number;
+        m_status_bits |= 4;
+      }
+      else if (sign_of > 0)
+      {
+        // ... and intersects the y-axis to the above of the origin.
+        --m_above_crossing_number;
+        m_status_bits |= 8;
+      }
+    }
+  }
+  else
+  {                
+    if (p1.x <= 0.0)
+    {
+      // p1.x <= 0 and p0.x > 0 (line segment from p0 to p1 goes "down") ...
+      sign_of = ON_WindingNumber::Internal_SignOfY(p1, p0); // YES, (p1, p0) is correct.
+      if (sign_of < 0)
+      {
+        // ... and intersects the y-axis to the left of the origin.
+        --m_below_crossing_number;
+        m_status_bits |= 4;
+      }
+      else if (sign_of > 0)
+      {
+        // ... and intersects the y-axis to the right of the origin.
+        ++m_above_crossing_number;
+        m_status_bits |= 8;
+      }
+    }
+  }
+
+  if (0.0 == p0.x && 0.0 == p1.x && p0.y != p1.y )
+  {
+    if ((p0.y <= 0.0 && p1.y >= 0.0) || (p0.y >= 0.0 && p1.y <= 0.0))
+      m_status_bits |= 32; // vertical segment on winding point
+  }
+  else if (0.0 == p0.y && 0.0 == p1.y && p0.x != p1.x)
+  {
+    if ( (p0.x <= 0.0 && p1.x >= 0.0) || (p0.x >= 0.0 && p1.x <= 0.0) )
+      m_status_bits |= 16; // horizontal segment on winding point
+  }
+
+  m_prev_boundary_point.x = q[0];
+  m_prev_boundary_point.y = q[1];
+  ++m_boundary_segment_count;
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(ON_2dPoint p)
+{
+  const ON__UINT32 boundary_segment_count0 = m_boundary_segment_count;
+  if (Internal_HaveWindingPoint())
+  {
+    if ( m_prev_boundary_point.x == m_prev_boundary_point.x )
+      Internal_AddBoundarySegment(&m_prev_boundary_point.x, &p.x);
+    else 
+      m_prev_boundary_point = p;
+  }
+  return (m_boundary_segment_count - boundary_segment_count0);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(ON_2dPoint p, ON_2dPoint q)
+{
+  const ON__UINT32 boundary_segment_count0 = m_boundary_segment_count;
+  if (Internal_HaveWindingPoint())
+  {
+    Internal_AddBoundarySegment(&p.x, &q.x);
+  }
+  return (m_boundary_segment_count - boundary_segment_count0);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, size_t point_stride, const double* boundary_points, bool bCloseBoundary)
+{
+  const ON__UINT32 boundary_segment_count0 = m_boundary_segment_count;
+  if (Internal_HaveWindingPoint() && point_count >= 2 && point_stride >= 2 && nullptr != boundary_points)
+  {
+    const double* last_point = boundary_points + ((point_count - 1)*point_stride);
+    for (const double* p = boundary_points; p < last_point; p += point_stride)
+    {
+      Internal_AddBoundarySegment(p, p + point_stride);
+    }
+    if (bCloseBoundary)
+    {
+      Internal_AddBoundarySegment(last_point, boundary_points);
+    }
+  }
+  return (m_boundary_segment_count - boundary_segment_count0);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, size_t point_stride, const float* boundary_points, bool bCloseBoundary)
+{
+  const ON__UINT32 boundary_segment_count0 = m_boundary_segment_count;
+  if (Internal_HaveWindingPoint() && point_count >= 2 && point_stride >= 2 && nullptr != boundary_points)
+  {
+    ON_2dPoint p0, p1;
+    const float* pmax = boundary_points + (point_count*point_stride);
+    p1.x = boundary_points[0];
+    p1.y = boundary_points[1];
+    for (const float* p = boundary_points+point_stride; p < pmax; p += point_stride)
+    {
+      p0 = p1;
+      p1.x = p[0];
+      p1.y = p[1];
+      Internal_AddBoundarySegment(&p0.x, &p1.x);
+    }
+    if (bCloseBoundary)
+    {
+      p0.x = boundary_points[0];
+      p0.y = boundary_points[1];
+      Internal_AddBoundarySegment(&p1.x, &p0.x);
+    }
+  }
+  return (m_boundary_segment_count - boundary_segment_count0);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, size_t point_stride, const int* boundary_points, bool bCloseBoundary)
+{
+  const ON__UINT32 boundary_segment_count0 = m_boundary_segment_count;
+  if (Internal_HaveWindingPoint() && point_count >= 2 && point_stride >= 2 && nullptr != boundary_points)
+  {
+    ON_2dPoint p0, p1;
+    const int* pmax = boundary_points + (point_count*point_stride);
+    p1.x = boundary_points[0];
+    p1.y = boundary_points[1];
+    for (const int* p = boundary_points+point_stride; p < pmax; p += point_stride)
+    {
+      p0 = p1;
+      p1.x = p[0];
+      p1.y = p[1];
+      Internal_AddBoundarySegment(&p0.x, &p1.x);
+    }
+    if (bCloseBoundary)
+    {
+      p0.x = boundary_points[0];
+      p0.y = boundary_points[1];
+      Internal_AddBoundarySegment(&p1.x, &p0.x);
+    }
+  }
+  return (m_boundary_segment_count - boundary_segment_count0);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, const ON_2dPoint* boundary_points, bool bCloseBoundary)
+{
+  const double* p = (nullptr != boundary_points ? &boundary_points->x : nullptr);
+  return AddBoundary(point_count, sizeof(boundary_points[0])/sizeof(p[0]), p, bCloseBoundary);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, const ON_3dPoint* boundary_points, bool bCloseBoundary)
+{
+  const double* p = (nullptr != boundary_points ? &boundary_points->x : nullptr);
+  return AddBoundary(point_count, sizeof(boundary_points[0])/sizeof(p[0]), p, bCloseBoundary);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, const ON_2fPoint* boundary_points, bool bCloseBoundary)
+{
+  const float* p = (nullptr != boundary_points ? &boundary_points->x : nullptr);
+  return AddBoundary(point_count, sizeof(boundary_points[0])/sizeof(p[0]), p, bCloseBoundary);
+}
+
+ON__UINT32 ON_WindingNumber::AddBoundary(size_t point_count, const ON_3fPoint* boundary_points, bool bCloseBoundary)
+{
+  const float* p = (nullptr != boundary_points ? &boundary_points->x : nullptr);
+  return AddBoundary(point_count, sizeof(boundary_points[0])/sizeof(p[0]), p, bCloseBoundary);
+}
+
+
+
+
 ON_PeriodicDomain::ON_PeriodicDomain(const ON_Interval dom[2], const bool closed[2], double normband) :
 	m_dom{ dom[0], dom[1] },
 	m_closed{ closed[0],closed[1] },
@@ -9261,5 +9626,4 @@ ON_2dPoint ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2])
 	}
 	return Q;
 }
-
 

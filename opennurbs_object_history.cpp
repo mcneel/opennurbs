@@ -2657,12 +2657,14 @@ void ON_CurveProxyHistory::Destroy()
   m_full_real_curve_domain = ON_Interval::EmptyInterval;
   m_sub_real_curve_domain = ON_Interval::EmptyInterval;
   m_proxy_curve_domain = ON_Interval::EmptyInterval;
+  m_segment_edge_domain = ON_Interval::EmptyInterval;
+  m_segment_trim_domain = ON_Interval::EmptyInterval;
 }
 
 
 bool ON_CurveProxyHistory::Write( ON_BinaryArchive& file ) const
 {
-  if ( !file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK,1,0) )
+  if ( !file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK,1,1) )
     return false;
 
   bool rc = false;
@@ -2676,7 +2678,12 @@ bool ON_CurveProxyHistory::Write( ON_BinaryArchive& file ) const
       break;
     if ( !file.WriteInterval(m_sub_real_curve_domain) )
       break;
-    if ( !file.WriteInterval(m_proxy_curve_domain) )
+    if (!file.WriteInterval(m_proxy_curve_domain))
+      break;
+    // Added in version 1,1
+    if (!file.WriteInterval(m_segment_edge_domain))
+      break;
+    if (!file.WriteInterval(m_segment_trim_domain))
       break;
     rc = true;
     break;
@@ -2709,9 +2716,15 @@ bool ON_CurveProxyHistory::Read( ON_BinaryArchive& file )
       break;
     if ( !file.ReadInterval(m_sub_real_curve_domain) )
       break;
-    if ( !file.ReadInterval(m_proxy_curve_domain) )
+    if (!file.ReadInterval(m_proxy_curve_domain))
       break;
-    
+    if (version_minor > 0)
+    {
+      if (!file.ReadInterval(m_segment_edge_domain))
+        break;
+      if (!file.ReadInterval(m_segment_trim_domain))
+        break;
+    }
     rc = true;
     break;
   }

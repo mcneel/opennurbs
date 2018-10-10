@@ -357,7 +357,7 @@ public:
     commonly used fonts where using other glpyhs gives undesirable results.)OfI.
 
     Windows: = DWRITE_FONT_METRICS.capHeight
-    Apple: = NSFont.
+    Apple: = CTFontGetAscent(...)
   */
   int AscentOfCapital() const;
   
@@ -874,6 +874,10 @@ public:
     Error = 15
   };
 
+  static const wchar_t* OrientationToWideString(
+    ON_OutlineFigure::Orientation orientation
+  );
+
   /// <summary>
   /// ON_OutlineFigure::Type identifies the structure of the figure.
   /// </summary>
@@ -952,6 +956,15 @@ public:
   */
   double AreaEstimate() const;
 
+
+  /*
+  Returns:
+    Bounding box area >= 0
+  */
+  double BoxArea() const;
+
+  ON__UINT32 UnitsPerEM() const;
+
   ON__UINT16 FigureIndex() const;
 
   unsigned int GetFigureCurves(
@@ -975,13 +988,17 @@ public:
   bool ReverseFigure();
 
   bool NegateY();
-
+  
   /*
   Description:
     Get a polyline approximation of the figure.
+
   Parameters:
     tolerance - [in]
-      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+      If tolerance > 0, that value is used.
+      Otherwise UnitsPerEM() / 256.0 is used, which gives course but 
+      recognizable decent results for glyph outlines.
+
     PointCallbackFunc - [in]
       called once for each point in the polyline
     context - [in]
@@ -995,12 +1012,24 @@ public:
     void* context
   ) const;
 
+  double DefaultPolylineTolerance() const;
+
+  static double DefaultPolylineTolerance(
+    double units_per_em
+    );
+
+  int WindingNumber(
+    ON_2fPoint winding_point
+  ) const;
+
   /*
   Description:
     Get a polyline approximation of the figure.
   Parameters:
     tolerance - [in]
-      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+      If tolerance > 0, that value is used.
+      Otherwise UnitsPerEM() / 256.0 is used, which gives course but 
+      recognizable decent results for glyph outlines.
     points - [out]
       polyline points are appended to this array.
   Returns:
@@ -1016,7 +1045,9 @@ public:
     Get a polyline approximation of the figure.
   Parameters:
     tolerance - [in]
-      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+      If tolerance > 0, that value is used.
+      Otherwise UnitsPerEM() / 256.0 is used, which gives course but 
+      recognizable decent results for glyph outlines.
     points - [out]
       polyline points are appended to this array.
   Returns:
@@ -1032,7 +1063,9 @@ public:
     Get a polyline approximation of the figure.
   Parameters:
     tolerance - [in]
-      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+      If tolerance > 0, that value is used.
+      Otherwise UnitsPerEM() / 256.0 is used, which gives course but 
+      recognizable decent results for glyph outlines.
     points - [out]
       polyline points are appended to this array.
   Returns:
@@ -1048,7 +1081,9 @@ public:
     Get a polyline approximation of the figure.
   Parameters:
     tolerance - [in]
-      The value (ON_Outline.UnitsPerEM()) / 2048.0) gives nice results.
+      If tolerance > 0, that value is used.
+      Otherwise UnitsPerEM() / 256.0 is used, which gives course but 
+      recognizable decent results for glyph outlines.
     points - [out]
       polyline points are appended to this array.
   Returns:
@@ -1063,7 +1098,7 @@ private:
   friend class ON_Outline;
 
 private:
-  ON__UINT32 m_reserved3 = 0;
+  ON__UINT32 m_units_per_em = 0;
 
 private:
   mutable ON_OutlineFigure::Orientation m_orientation = ON_OutlineFigure::Orientation::Unset;
@@ -1135,6 +1170,11 @@ public:
 public:
   static const ON_Outline Unset;
 
+  /*
+  Default value for outer orientation when it is not explicitly specified.
+  */
+  static const ON_OutlineFigure::Orientation DefaultOuterOrientation;
+
 
 
   ON__UINT32 UnitsPerEM() const;
@@ -1203,6 +1243,7 @@ public:
     ON_ClassArray< ON_SimpleArray< ON_Curve* > >& outline_curves
     ) const;
 
+
   /*
   Returns:
     The bounding box of the outline curves.
@@ -1250,6 +1291,32 @@ public:
 
   /*
   Returns:
+    ON_OutlineFigure::Orientation::Unset
+      Figures are not sorted.
+    ON_OutlineFigure::Orientation::CounterClockwise
+      Figures are sorted and outer figures are CCW.
+    ON_OutlineFigure::Orientation::Clockwise
+      Figures are sorted and outer figures are CW.
+    ON_OutlineFigure::Orientation::Error
+      Figure sorting failed.
+  */
+  ON_OutlineFigure::Orientation SortedFigureOuterOrientation() const;
+
+  /*
+  Returns:
+    ON_OutlineFigure::Orientation::Unset
+      Figures are not sorted.
+    ON_OutlineFigure::Orientation::CounterClockwise
+      Figures are sorted and inner figures are CCW.
+    ON_OutlineFigure::Orientation::Clockwise
+      Figures are sorted and inner figures are CW.
+    ON_OutlineFigure::Orientation::Error
+      Figure sorting failed.
+  */
+  ON_OutlineFigure::Orientation SortedFigureInnerOrientation() const;
+
+  /*
+  Returns:
     Type of figures in the outline.
   */
   ON_OutlineFigure::Type FigureType() const;
@@ -1274,7 +1341,11 @@ private:
   ON_OutlineFigure::Type m_figure_type = ON_OutlineFigure::Type::Unset;
   mutable ON__UINT8 m_bbox_status = 0; // 0 = unset, 1 = set, 7 = error
 
-  mutable ON__UINT8 m_sorted_status = 0; // 0 = unsorted, 1 = sorted, 7 = error;
+  // Unset = unsorted
+  // CounterClockwise: outer figures are CCW
+  // Clockwise: outer fitures are CW
+  // Error: error occured during sorting
+  mutable ON_OutlineFigure::Orientation m_sorted_figure_outer_orientation = ON_OutlineFigure::Orientation::Unset;
 
   ON__UINT8 m_reserved1 = 0;
 
@@ -1344,11 +1415,15 @@ public:
     ON_Outline* destination_outline
   );
 
-  bool EndOutline();
-
   void Clear();
 
   ON_Outline* HarvestOutline();
+
+  /*
+  Returns:
+    EndOutline(false,ON_Outline::DefaultOuterOrientation);
+  */
+  bool EndOutline();
 
   /*
   Parameters:
@@ -1810,6 +1885,12 @@ public:
     ON_TextLog& text_log
   ) const;
 
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+// Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+// Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
+
+
+public:
   /*
   Description:
     This is a debugging tool to test the code that starts with a font and 
@@ -1829,14 +1910,32 @@ public:
     handled by opennurbs, then true is returned and a message is printed
     to the log.
   */
-  bool TestFaceCharMaps(
+  bool TestFreeTypeFaceCharMaps(
     ON_TextLog* text_log
   ) const;
 
 public:
-
+  /*
+  Description:
+    If opennurbs is built with FreeType support then
+    FT_Face freetype_face = (FT_Face)glyph->FreeTypeFace()
+    will return a FreeType face that can be used to render the glyph.
+  Parameters:
+    font - [in]
+  Returns:
+    A value that can be cast as a FreeType FT_Face.
+  Example
+    const ON_Font* font = ...;
+    FT_Face freetype_face = (FT_Face)glyph->FreeTypeFace(font);
+  Remarks:
+    Many fonts do not have a glyph for a every UNICODE codepoint and font
+    substitution is required. If you want to get the freetype face
+    used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
+  */
   const ON__UINT_PTR FreeTypeFace() const;
+#endif
 
+public:
   /*
   Returns:
     Font glyph id.
@@ -1847,8 +1946,15 @@ public:
     multiple Unicode code points map to the same glyph. For example,
     space an non-breaking space typically map to the same font glyph id.
   */
+  unsigned int FontGlyphIndex() const;
+
+  bool FontGlyphIndexIsSet() const;
+
+
+  ON_DEPRECATED_MSG("Use FontGlyphIndex()")
   const ON__UINT_PTR FontGlyphId() const;
 
+  ON_DEPRECATED_MSG("Use FontGlyphIndexIsSet()")
   bool FontGlyphIdIsSet() const;
 
   /*
@@ -1928,13 +2034,14 @@ private:
   ON__UINT8 m_is_managed = 0; // 1 = managed glyph
   ON__UINT8 m_reserved1 = 0;
   ON__UINT16 m_reserved2 = 0;
-  ON__UINT_PTR m_font_glyph_id = 0;
+  ON__UINT32 m_reserved3 = 0;
+  ON__UINT32 m_font_glyph_index = 0;
   const class ON_Font* m_managed_font = nullptr;
   const class ON_FontGlyph* m_substitute = nullptr;
 
 
 private:
-  void Internal_SetFontGlyphId(ON__UINT_PTR font_glyph_id);
+  void Internal_SetFontGlyphIndex(unsigned int font_glyph_index);
   void Internal_CopyFrom(const ON_FontGlyph& src);
   static ON_FontGlyph* Internal_AllocateManagedGlyph(const ON_FontGlyph& src);
   bool Internal_GetPlatformSubstitute(
@@ -2133,9 +2240,9 @@ public:
     WindowsFont = 2,
 
     /// <summary> 
-    /// Set from an Apple NSFont of font name by ON_Font::SetFromAppleFont()
-    /// and PostScriptName() and FamilyName() match a font installed on an Apple device.
-    /// or iOS computer.
+    /// Set from an Apple CTFont. The PostScriptName() and FamilyName() match a
+    /// font installed on device running MacOS or iOS. The FaceName() matches
+    /// the "typeface" name shonw in the MacOS FontBook app.
     /// </summary>
     AppleFont = 3
   };
@@ -2293,7 +2400,7 @@ public:
     ON_Font::Weight::Ultrabold  =  0.5333 Apple font weight trait
     ON_Font::Weight::Heavy      =  0.6667 Apple font weight trait
   Returns:
-    The Apple "NSFontWeightTrait" value that corresponds to the ON_Font::Weight enum value.
+    The Apple "WeightTrait" value that corresponds to the ON_Font::Weight enum value.
   */  
   static double AppleFontWeightTraitFromWeight(
     ON_Font::Weight font_weight
@@ -2344,7 +2451,7 @@ public:
   /*
   Parameters:
     apple_font_weight_trait - [in]
-      Apple NSFontWeightTrait
+      Apple WeightTrait
       The valid value range is from -1.0 to 1.0. The value of 0.0 corresponds to the regular or medium font weight.
   */
   static ON_Font::Weight WeightFromAppleFontWeightTrait(
@@ -2743,7 +2850,7 @@ public:
   Parameters:
     postscript_name - [in]
       Windows: PostScript name = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
-      Apple: PostScript name = NSFont.fontName
+      Apple: PostScript name = CTFontCopyPostScriptName() / NSFont.fontName
   */
   static const ON_Font* GetManagedFontFromPostScriptName(
     const char* postscript_name
@@ -2753,18 +2860,25 @@ public:
   Parameters:
     postscript_name - [in]
       Windows: PostScript name = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
-      Apple: PostScript name = NSFont.fontName
+      Apple: PostScript name = CTFontCopyPostScriptName() / NSFont.fontName
   */
   static const ON_Font* GetManagedFontFromPostScriptName(
     const wchar_t* postscript_name
     );
 
-#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-  static const ON_Font* GetManagedFontFromAppleFont(
-    NSFont* apple_font,
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  static const ON_Font* GetManagedFontFromAppleCTFont(
+    CTFontRef apple_font,
     bool bAnnotationFont
     );
 #endif
+
+//#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+//  static const ON_Font* GetManagedFontFromAppleNSFont(
+//    NSFont* apple_font,
+//    bool bAnnotationFont
+//    );
+//#endif
 
   /*
   Returns:
@@ -3173,39 +3287,6 @@ public:
   bool IsInstalledFont() const;
 
 public:
-
-  /*
-  Description:
-    If opennurbs is built with FreeType support then
-    FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font)
-    will return a FreeType face that can be used to render the font.
-  Parameters:
-    font - [in]
-  Returns:
-    A value that can be cast as a FreeType FT_Face.
-  Example
-    const ON_Font* font = ...;
-    FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font);
-  Remarks:
-    Many fonts do not have a glyph for a every UNICODE codepoint and font
-    substitution is required. If you want to get the freetype face
-    used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
-  */
-  static ON__UINT_PTR FreeTypeFace(
-    const ON_Font* font
-  );
- 
-private:
-  /*
-  Description:
-    Helper function used by destructor to deallocate memory used
-    by FreeType face
-  */
-  static void DestroyFreeTypeFace(
-    const ON_Font* font
-  );
-
-public:
   ON_Font();
   ~ON_Font() = default;
   ON_Font(const ON_Font& src);
@@ -3421,7 +3502,7 @@ public:
     as the PostScript name for at least 10 different Bahnschrift faces.
 
     Platform equivalents:
-    Apple: = NSFont.fontName
+    Apple: = CTFontCopyPostScriptName(...) / NSFont.fontName
     Windows: = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
   */
   const ON_wString PostScriptName(
@@ -3441,7 +3522,7 @@ public:
     Typically a font family has many faces.
 
     Platform equivalents:
-    Apple: = NSFont.familyName
+    Apple: = CTFontCopyFamilyName(...) / NSFont.familyName
     Windows: = IDWriteFontFamily.GetFamilyNames()
 
     NOTE WELL: This is NOT the Windows LOGFONT lfFaceName.
@@ -3941,28 +4022,135 @@ public:
 #endif
 
 
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+
 public:
-  bool SetFromAppleFont (
-    NSFont* apple_font,
+  /*
+  Parameters:
+    size - [in]
+      If size is not > 0, then the size is set to units_per_em.
+  */
+  static CTFontRef AppleCTFontSetSize(
+    CTFontRef original,
+    CGFloat size,
+    bool bReleaseOriginal
+    );
+    
+  static unsigned int AppleCTFontUnitsPerEm(CTFontRef apple_font);
+    
+  bool SetFromAppleCTFont (
+    CTFontRef apple_font,
     bool bAnnotationFont
     );
     
-  NSFont* AppleFont() const;
+  /*
+  Returns:
+    An Apple CTFontRef managed by the Apple platform.
+    Do not delete this font.
+  */
+  CTFontRef AppleCTFont() const;
+
+  /*
+  Returns:
+    An Apple CTFontRef managed by the Apple platform.
+    Do not delete this font.
+  */
+  CTFontRef AppleCTFont(double point_size) const;
     
-  NSFont* AppleFont(double point_size) const;
-  static const ON_wString PostScriptNameFromAppleFont(
-    NSFont* apple_font
-  );
-    
-  static const ON_wString FamilyNameFromAppleFont(
-    NSFont* apple_font
+  static CTFontRef AppleCTFont(
+    const wchar_t* name,
+    double point_size
   );
 
-  static const ON_wString FaceNameFromAppleFont(
-    NSFont* apple_font
-    );
     
+  static const ON_wString AppleCTFontPostScriptName(
+    CTFontRef apple_font
+  );
+    
+  static const ON_wString AppleCTFontFamilyName(
+    CTFontRef apple_font
+  );
+    
+
+  /*
+  Description:
+    Apple CTFont, NSFont, and MacOS do not have "face names" as a font attribute.
+    This is the "typeface" name shown in the Apple FontBook Application
+    and the closest approximation to the Windows font face name.
+    The value from CTFontCopyName(...,kCTFontStyleNameKey)
+  */
+  static const ON_wString AppleCTFontFaceName(
+    CTFontRef apple_font
+  );
+    
+  /*
+  Description:
+    The Apple display name is used in some Apple apps
+    as a short description of the font.
+    When working in MacOS, the PostScript name is most reliable
+    way to uniquely identify a font.
+  */
+  static const ON_wString AppleCTFontDisplayName(
+    CTFontRef apple_font
+  );
+    
+  static ON_PANOSE1 AppleCTFontPANOSE1(
+    CTFontRef apple_font
+  );
+    
+#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+  // NSFont* appleNSFont = (__bridge NSFont*)(appleCTFont);
+  static NSFont* AppleTollFreeNSFont(CTFontRef appleCTFont);
+    
+  // CTFontRef appleCTFont = (__bridge CTFontRef)(appleNSFont);
+  static CTFontRef AppleTollFreeCTFont(NSFont* appleNSFont);
+#endif
+
+#endif
+
+#if defined (OPENNURBS_FREETYPE_SUPPORT)
+public:
+  /*
+  Description:
+    If opennurbs is built with FreeType support then
+    FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font)
+    will return a FreeType face that can be used to render the font.
+  Parameters:
+    font - [in]
+  Returns:
+    A value that can be cast as a FreeType FT_Face.
+  Example
+    const ON_Font* font = ...;
+    FT_Face freetype_face = (FT_Face)ON_Font::FreeTypeFace(font);
+  Remarks:
+    Many fonts do not have a glyph for a every UNICODE codepoint and font
+    substitution is required. If you want to get the freetype face
+    used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
+  */
+  static ON__UINT_PTR FreeTypeFace(
+    const ON_Font* font
+  );
+ 
+private:
+  /*
+  Description:
+    Helper function used by destructor to deallocate memory used
+    by FreeType face
+  */
+  static void DestroyFreeTypeFace(
+    const ON_Font* font
+  );
+
+public:
+  void DumpFreeType(
+    ON_TextLog& text_log
+  ) const;
+
+public:
+  static void DumpFreeTypeFace(
+    ON__UINT_PTR free_type_face_ptr,
+    ON_TextLog& text_log
+  );
 #endif
 
 public:
@@ -3970,18 +4158,11 @@ public:
   /*
   Parameters:
     postscript_name - [in]
-      From NSFont.fontName
+      From CTFontCopyPostScriptName(...) / NSFont.fontName
   Remarks:
     The "Apple Font Name" is the PostScript font name in the 
     Mac OS "Font Book" application and in some other Apple documentation.
-    It is NSFont.fontName or the "fontManagerName" string in this for loop:
-    for (NSString* fontManagerName in[NSFontManager.sharedFontManager availableFonts])
-    {
-    ...
-    }
-    It is the best choice of a string to pass as the "fontWithName" parameter
-    in the following call:
-    NSFont* apple_font = [NSFont fontWithName : apple_font_name size : pointSize];
+    It is CTFontCopyPostScriptName(...) / NSFont.fontName.
   */
   bool SetFromAppleFontName(
     const wchar_t* postscript_name
@@ -3989,21 +4170,14 @@ public:
   
   /*
   Parameters:
-    postscript_name - [in]
-      From NSFont.fontName
+   postscript_name - [in]
+     From CTFontCopyPostScriptName(...) / NSFont.fontName
     point_size - [in]
       Pass 0.0 for annotation fonts
   Remarks:
-    The "Apple Font Name" is the PostScript name in the 
-    Mac OS "Font Book" application and in some other Apple documentation.
-    It is NSFont.fontName or the "fontManagerName" string in this for loop:
-    for (NSString* fontManagerName in[NSFontManager.sharedFontManager availableFonts])
-    {
-    ...
-    }
-    It is the best choice of a string to pass as the "fontWithName" parameter
-    in the following call:
-    NSFont* apple_font = [NSFont fontWithName : apple_font_name size : pointSize];
+   The "Apple Font Name" is the PostScript font name in the
+   Mac OS "Font Book" application and in some other Apple documentation.
+   It is CTFontCopyPostScriptName(...) / NSFont.fontName.
   */
   bool SetFromAppleFontName(
     const wchar_t* postscript_name,
@@ -4096,6 +4270,12 @@ public:
   );
 
   /*
+  Returns:
+    ON_Font::RichTextFontName(this,false);
+  */
+  const ON_wString RichTextFontName() const;
+
+  /*
   Parameters:
     family_name - [in]
       The font family name. 
@@ -4108,7 +4288,7 @@ public:
       or slope (Oblique, Italic, Upright).
       Generally, family names do NOT contain hyphens (like thos in PostScript names).
 
-      Apple: = NSFont.familyName
+      Apple: = CTFontCopyFamilyName() / NSFont.familyName
       Windows: = IDWriteFontFamily.GetFamilyNames()
       NOTE WELL: GDI LOGFONT.lfFaceName is NOT a font family name.
 
@@ -4159,16 +4339,8 @@ public:
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  void DumpFreeType(
-    ON_TextLog& text_log
-  ) const;
-
-  static void DumpFreeTypeFace(
-    ON__UINT_PTR free_type_face_ptr,
-    ON_TextLog& text_log
-  );
-
 #if defined(ON_OS_WINDOWS_GDI)
+public:
   static void DumpLogfont(
     const LOGFONT* logfont,
     ON_TextLog& text_log
@@ -4218,13 +4390,16 @@ public:
   );
 
 #endif
-
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-  static void DumpNSFont(
-    NSFont* apple_font,
+  
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+public:
+  static void DumpCTFont(
+    CTFontRef apple_font,
     ON_TextLog& text_log
   );
 #endif
+
+public:
 
   // serialize definition to binary archive
   bool Write( ON_BinaryArchive& ) const;
@@ -4366,12 +4541,8 @@ public:
     AnnotationFontCellHeight = 256,  // Windows LOGFONT.lfHeight value (NOT A POINT SIZE)
 
     // This value is used on Apple platforms to get fonts used for rendering annotation.
-    // The size should be a power of 2. Ideally we want access to raw font and glyph
-    // design information but we cannot get this via NSFont.
-    // It appears that NSFont applies the scale factor
-    //   AnnotationFontApplePointSize/(font design unit cell height)
-    // to the values in the font definitions (PostScript TrueType, OpenType,... font files).
-    // NSFont* apple_font = [NSFont fontWithName : <name> size : ON_Font::Constants::AnnotationFontApplePointSize]
+    // The size should be a power of 2. Ideally we want access to the font and glyph
+    // design size returned by CTFontGetUnitsPerEm().
     AnnotationFontApplePointSize = 256,
 
     // ON_Font::Constants::metric_char is the unicode code point value
@@ -4512,7 +4683,7 @@ public:
   Description:
     This is a legacy function that traces it's heritage to Windows specific
     GDI LOGFONT code from 1995. Best to avoid it whenever possible. 
-    Ideally, use an Windows IDWriteFont or Apple NSFont to crete an ON_Font that
+    Ideally, use an Windows IDWriteFont or Apple CTFont to create an ON_Font that
     references an installed font. Less ideally, use a complete LOGFONT structure.
   Parameters:
     windows_logfont_name - [in]
@@ -4534,7 +4705,7 @@ public:
   Description:
     This is a legacy function that traces it's heritage to Windows specific
     GDI LOGFONT code from 1995. Best to avoid it whenever possible. 
-    Ideally, use an Windows IDWriteFont or Apple NSFont to crete an ON_Font that
+    Ideally, use an Windows IDWriteFont or Apple CTFont to create an ON_Font that
     references an installed font. Less ideally, use a complete LOGFONT structure.
   Parameters:
     windows_logfont_name - [in]
@@ -4831,6 +5002,8 @@ public:
   Returns:
     True if this is a known single stroke font.
     False otherwise.
+  See Also:
+    IsEngravingFont()   
   */
   bool IsSingleStrokeFont() const;
 
@@ -4838,10 +5011,32 @@ public:
   Returns:
     True if this is a known double stroke font.
     False otherwise.
+  See Also:
+    IsEngravingFont()   
   */
   bool IsDoubleStrokeFont() const;
 
+  /*
+  Returns:
+    True if this is a known single stroke or double stroke font.
+    False otherwise.
+  See Also:
+    IsEngravingFont()   
+  */
   bool IsSingleStrokeOrDoubleStrokeFont() const;  
+
+  /*
+  Description:
+    The outlines for an engraving font have single-stroke, double-stroke, 
+    or perimeters desinged for path engraving. 
+    These fonts behave poorly when used for filled font rendering 
+    or creating solid extrusions. 
+    The OrachTech 2 line fonts are examples of engraving fonts that
+    are not single or double stroke.
+  Returns:
+    True if the font is a known engraving font.
+  */
+  bool IsEngravingFont() const;
 
   unsigned char LogfontCharSet() const;
   
@@ -5044,7 +5239,7 @@ private:
   
   int m_windows_logfont_weight = 400; // 100 <= m_windows_logfont_weight <= 1000
   double m_point_size = 0.0; // 0.0 indicates the annotation font size will be used.
-  double m_apple_font_weight_trait = 0.0; // = Apple NSFontWeightTrait value -1.0 <= m_apple_font_weight < 1.0, 0.0 = "normal"
+  double m_apple_font_weight_trait = 0.0; // = Apple WeightTrait value -1.0 <= m_apple_font_weight < 1.0, 0.0 = "normal"
   ON_Font::Weight  m_font_weight = ON_Font::Weight::Normal;
 
   ON_Font::Style   m_font_style = ON_Font::Style::Upright;    // m_font_style corresponds to Windows LOGFONT.lfItalic field
@@ -5068,7 +5263,7 @@ private:
   ON_wString m_locale_name;
 
   // Localized and English font PostScript name
-  //  Apple: = NSFont.fontName
+  //  Apple: = CTFontCopyPostScriptName() / NSFont.fontName
   //  Windows: = IDWriteFont.GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,...)
   //  NOTE WELL: 
   //    This is NOT the GDI LOGFONT.lfFaceName.
@@ -5076,7 +5271,7 @@ private:
   ON_wString m_en_postscript_name;
 
   // Localized and English font family name
-  //  Apple: = NSFont.familyName
+  //  Apple: = CTFontCopyFamilyName() / NSFont.familyName
   //  Windows: = IDWriteFontFamily.GetFamilyNames()
   //  NOTE WELL: 
   //    This is NOT the GDI LOGFONT.lfFaceName.
@@ -5084,7 +5279,7 @@ private:
   ON_wString m_en_family_name;
 
   // Localized and English font face name
-  //  Apple: = not available
+  //  Apple: = CTFontCopyName( ..., kCTFontStyleNameKey)
   //  Windows: = IDWriteFont.GetFaceNames()
   //  NOTE WELL: 
   //    This is NOT the GDI LOGFONT.lfFaceName.
@@ -5177,7 +5372,7 @@ public:
     >0: Glyph index
     0: failed
   */
-  typedef ON__UINT_PTR (*ON_GetGlyphMetricsFuncType)(
+  typedef unsigned int (*ON_GetGlyphMetricsFuncType)(
     const class ON_FontGlyph* font_glyph,
     class ON_TextBox& glyph_metrics_in_font_design_units
     );

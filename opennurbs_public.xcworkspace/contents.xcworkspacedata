@@ -24,9 +24,6 @@
       location = "container:"
       name = "Libraries">
       <FileRef
-         location = "group:freetype263/opennurbs_public_freetype.xcodeproj">
-      </FileRef>
-      <FileRef
          location = "group:zlib/opennurbs_public_zlib.xcodeproj">
       </FileRef>
       <FileRef

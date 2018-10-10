@@ -28,6 +28,8 @@ public:
   // reference in history records.
   ON_CurveProxyHistory();
   ~ON_CurveProxyHistory();
+  ON_CurveProxyHistory(const ON_CurveProxyHistory&) = default;
+  ON_CurveProxyHistory& operator=(const ON_CurveProxyHistory&) = default;
 
   ON_ObjRef m_curve_ref;                // from ON_CurveProxy.m_real_curve
   bool      m_bReversed;                // from ON_CurveProxy.m_bReversed
@@ -35,13 +37,17 @@ public:
   ON_Interval m_sub_real_curve_domain;  // from ON_CurveProxy.m_real_curve_domain
   ON_Interval m_proxy_curve_domain;     // from ON_CurveProxy.m_this_domain
 
+  // If these are empty intervals, they are from old files. Ignore them.
+  ON_Interval m_segment_edge_domain;
+  ON_Interval m_segment_trim_domain;
+
   void Destroy();
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
   void Dump( ON_TextLog& ) const;
 
 private:
-  ON__UINT8 m_reserved[64];
+  ON__UINT8 m_reserved[32];
 };
 
 #if defined(ON_DLL_TEMPLATE)

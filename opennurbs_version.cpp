@@ -34,6 +34,16 @@ unsigned int ON::Version()
   return version_number;
 }
 
+unsigned int ON::VersionMajorMaximum()
+{
+  return OPENNURBS_MAX_VERSION_MAJOR;
+}
+
+unsigned int ON::VersionMinorMaximum()
+{
+  return OPENNURBS_MAX_VERSION_MINOR;
+}
+
 unsigned int ON::VersionMajor()
 {
   return OPENNURBS_VERSION_MAJOR;
@@ -148,4 +158,139 @@ const char* ON::VersionQuartetAsString()
 const wchar_t* ON::VersionQuartetAsWideString()
 {
   return OPENNURBS_VERSION_QUARTET_WSTRING;
+}
+
+bool ON_TestVersionNumber(
+  unsigned int major,
+  unsigned int minor,
+  unsigned int year,
+  unsigned int month,
+  unsigned int day_of_month,
+  unsigned int platform_branch,
+  unsigned int version_as_unsigned_number
+)
+{
+  for (;;)
+  {
+    if (major < 1 || major > OPENNURBS_MAX_VERSION_MAJOR)
+    {
+      ON_ERROR("Invalid major parameter");
+      break;
+    }
+    if (minor > OPENNURBS_MAX_VERSION_MINOR)
+    {
+      ON_ERROR("Invalid minor parameter");
+      break;
+    }
+    if (year < 2000 || year >= 2099)
+    {
+      ON_ERROR("Invalid year parameter");
+      break;
+    }
+    if (month < 1 || month > 12)
+    {
+      ON_ERROR("Invalid month parameter");
+      break;
+    }
+    const unsigned int max_day_of_month = ON_DaysInMonthOfGregorianYear(year, month);
+    if (2 == month)
+    {
+      if (max_day_of_month != 28)
+      {
+        if (max_day_of_month != 29 || 0 != (year % 4))
+        {
+          ON_ERROR("ON_DaysInMonthOfGregorianYear() has bug");
+          break;
+        }
+      }
+    }
+    else
+    {
+      if (max_day_of_month != 30 && max_day_of_month != 31)
+      {
+        ON_ERROR("ON_DaysInMonthOfGregorianYear() has bug");
+        break;
+      }
+    }
+
+    if (day_of_month < 1 || day_of_month > max_day_of_month || max_day_of_month > 31)
+    {
+      ON_ERROR("Invalid day_of_month parameter");
+      break;
+    }
+
+    const unsigned int platform = (platform_branch > 0) ? (2 - (platform_branch % 2)) : 0;
+
+    unsigned int version_major = 0xFFFFFFFFU;
+    unsigned int version_minor = 0xFFFFFFFFU;
+    unsigned int version_year = 0xFFFFFFFFU;
+    unsigned int version_month = 0xFFFFFFFFU;
+    unsigned int version_day_of_month = 0xFFFFFFFFU;
+    unsigned int version_platform = 0xFFFFFFFFU;
+
+    if (0 == version_as_unsigned_number)
+    {
+      version_as_unsigned_number = ON_VersionNumberConstruct(
+        major,
+        minor,
+        year,
+        month,
+        day_of_month,
+        platform_branch
+      );
+    }
+
+    const bool bParsed = ON_VersionNumberParse(
+      version_as_unsigned_number,
+      &version_major,
+      &version_minor,
+      &version_year,
+      &version_month,
+      &version_day_of_month,
+      &version_platform
+      );
+    if (false == bParsed)
+    {
+      ON_ERROR("Invalid version_as_unsigned_number parameter.");
+      break;
+    }
+
+    if (
+      version_major != major
+      || version_minor != minor
+      || version_year != year
+      || version_month != month
+      || version_day_of_month != day_of_month
+      || version_platform != platform
+      )
+    {
+      ON_ERROR("version_as_unsigned_number does not encode version information.");
+      break;
+    }
+
+    const unsigned int version_ctor_cpp = ON_VersionNumberConstruct(
+      major,
+      minor,
+      year,
+      month,
+      day_of_month,
+      platform_branch
+    );
+
+    if (version_ctor_cpp != version_as_unsigned_number)
+    {
+      ON_ERROR("version_as_unsigned_number != ON_VersionNumberConstruct().");
+      break;
+    }
+
+    const unsigned int version_ctor_macro = ON_VERSION_NUMBER_CTOR(major, minor, year, month, day_of_month, platform_branch);
+    if (version_ctor_macro != version_as_unsigned_number)
+    {
+      ON_ERROR("version_as_unsigned_number != ON_VERSION_NUMBER_CTOR().");
+      break;
+    }
+    return true;
+  }
+
+  return false;
 }

@@ -16,20 +16,16 @@
 #if !defined(OPENNURBS_FREETYPE_INC_)
 #define OPENNURBS_FREETYPE_INC_
 
-#if defined(ON_COMPILER_MSC) 
-//&& defined(ON_64BIT_RUNTIME)
-// freetype is not delivered in a 32-bit version.
-// To disable freetype support, comment out the following define.
-// To enable freetype support, define OPENNURBS_FREETYPE_SUPPORT
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+// Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+// Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
 
-#define OPENNURBS_FREETYPE_SUPPORT
+#if defined(ON_COMPILER_MSC) ||defined(ON_RUNTIME_WIN)
+#error FreeType is not used in Windows. It does not work as well as DirectWrite based tools.
+#endif
 
-#elif defined(ON_RUNTIME_APPLE)
-// To disable freetype support, comment out the following define.
-// To enable freetype support, define OPENNURBS_FREETYPE_SUPPORT
-
-#define OPENNURBS_FREETYPE_SUPPORT
-
+#if defined(ON_RUNTIME_APPLE)
+#error FreeType is not used in MacOS and iOS builds. It does not work as well as CTFont based code.
 #endif
 
 /*
@@ -38,7 +34,7 @@
 */
 ON_DECL
 unsigned int ON_FreeTypeGetFontUnitsPerM(
-  const ON_Font* font
+  const class ON_Font* font
   );
 
 /*
@@ -49,8 +45,8 @@ Parameters:
 */
 ON_DECL
 void ON_FreeTypeGetFontMetrics(
-  const ON_Font* font,
-  ON_FontMetrics& font_unit_font_metrics
+  const class ON_Font* font,
+  class ON_FontMetrics& font_unit_font_metrics
   );
 
 /*
@@ -60,12 +56,12 @@ Parameters:
     it is a "tricky" font.
 Returns:
   0 if box was not set.
-  >0: font glyph id (or other non-zero value) when box is set
+  >0: font glyph index (or other non-zero value) when box is set
 */
 ON_DECL
-ON__UINT_PTR ON_FreeTypeGetGlyphMetrics(
-  const ON_FontGlyph* glyph,
-  ON_TextBox& glyph_metrics_in_font_design_units
+unsigned int ON_FreeTypeGetGlyphMetrics(
+  const class ON_FontGlyph* glyph,
+  class ON_TextBox& glyph_metrics_in_font_design_units
 );
 
 /*
@@ -77,7 +73,7 @@ Parameters:
 */
 ON_DECL
 bool ON_FreeTypeGetGlyphOutline(
-  const ON_FontGlyph* glyph,
+  const class ON_FontGlyph* glyph,
   ON_OutlineFigure::Type figure_type,
   class ON_Outline& outline
 );
@@ -97,9 +93,10 @@ Returns:
 ON_DECL
 bool ON_FreeTypeLoadGlyph(
   ON__UINT_PTR ft_face,
-  ON__UINT_PTR font_glyph_id,
+  unsigned int font_glyph_index,
   bool bLoadRenderBitmap
 );
+#endif
 
 
 #endif

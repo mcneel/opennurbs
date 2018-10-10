@@ -630,6 +630,21 @@ public:
   bool Transform( const ON_Xform&) override;
 
   /*
+    Description:
+      Scales the hatch's pattern by a 4x4 xform matrix
+    Parameters:
+      [in] xform  - An ON_Xform with the transformation information
+    Returns:
+      true = Success
+      false = Failure
+    Remarks:
+      The hatch pattern scale is multiplied by the change in length of a
+      unit vector in the hatch plane x direction when that vector is
+      scaled by the input xform
+  */
+  bool ScalePattern(ON_Xform xform);
+
+  /*
   Description:
   If possible, BrepForm() creates a brep form of the
   ON_Geometry.

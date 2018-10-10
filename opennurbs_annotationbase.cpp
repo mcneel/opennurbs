@@ -3112,7 +3112,9 @@ bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* pa
 {
   if (nullptr != font)
   {
-    const ON_wString fontname = ON_Font::RichTextFontName(font, true);
+    SetFont(parent_style, *font);
+
+    const ON_wString fontname = font->QuartetName();  //ON_Font::RichTextFontName(font, true);
     bool bold = font->IsBoldInQuartet();
     bool italic = font->IsItalic();
 

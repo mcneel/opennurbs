@@ -1103,74 +1103,6 @@ const ON_Font* ON_ManagedFonts::Internal_AddManagedFont(
 // BEGIN list of platform ON_Fonts
 //
 
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-
-//static NSString* Internal_FontCategory (NSFont* font)
-//{
-//  // determine file path for NSFont
-//  CTFontRef fontRef = (__bridge CTFontRef) font;
-//  CFURLRef fontURLRef = (CFURLRef) CTFontCopyAttribute (fontRef, kCTFontURLAttribute);
-//  NSURL* fontURL = (NSURL*) CFBridgingRelease (fontURLRef);
-//  NSString* fontPath = fontURL.path;
-//  if ([fontPath hasPrefix: @"/System/"])
-//    return @"System";
-//  if ([fontPath hasPrefix: @"/Library/Fonts/Microsoft/"])
-//    return @"Microsoft";
-//  if ([fontPath hasPrefix: @"/Library/Fonts/"])
-//    return @"Library";
-//  return @"User";
-//}
-
-
-//static bool Internal_IsSystemFont (NSFont* font)
-//{
-//  // determine file path for NSFont
-//  CTFontRef fontRef = (__bridge CTFontRef) font;
-//  CFURLRef fontURLRef = (CFURLRef) CTFontCopyAttribute (fontRef, kCTFontURLAttribute);
-//  NSURL* fontURL = (NSURL*) CFBridgingRelease (fontURLRef);
-//  NSString* fontPath = fontURL.path;
-//  return [fontPath hasPrefix: @"/System/"] ||  [fontPath hasPrefix: @"/Library/"];
-//}
-
-
-static void Internal_GetAppleInstalledFonts(
-  ON_SimpleArray<const ON_Font*>& platform_font_list
-)
-{
-  const bool bAnnotationFont = true;
-  const double pointSize = ON_Font::Constants::AnnotationFontApplePointSize;
-
- 
-  for (NSString* fontManagerName in[NSFontManager.sharedFontManager availableFonts])
-  {
-    const bool bIsInternalSystemFont = [fontManagerName hasPrefix : @"."];
-    if (bIsInternalSystemFont)
-    {
-      continue; // skip internal system fonts
-    }
-    
-    const ON_String utf8fontManagerName(fontManagerName.UTF8String);
-
-    NSFont* apple_font = [NSFont fontWithName : fontManagerName size : pointSize];
-    if (apple_font == nil)
-    {
-      continue;     // damaged font
-    }
-
-    const ON_wString ON_Font_apple_font_name(apple_font.fontName.UTF8String);
-
-    //NSString* fontCategory = Internal_FontCategory(apple_font);
-
-    ON_Font* platform_font = new ON_Font();
-    if (false == platform_font->SetFromAppleFont(apple_font, bAnnotationFont))
-    {
-      delete platform_font;
-      continue;
-    }
-    platform_font_list.Append(platform_font);
-  }
-}
-#endif
 
 #if defined(ON_RUNTIME_WIN)
 
@@ -3263,7 +3195,7 @@ const ON_Font* ON_FontList::FromFamilyName(
   const wchar_t* prefered_face_name
 ) const
 {
-  return FromFamilyName(family_name, prefered_face_name, ON_Font::Weight::Normal, ON_Font::Stretch::Condensed, ON_Font::Style::Upright);
+  return FromFamilyName(family_name, prefered_face_name, ON_Font::Weight::Normal, ON_Font::Stretch::Medium, ON_Font::Style::Upright);
 }
   
 const ON_Font* ON_FontList::FromFamilyName(
@@ -3466,7 +3398,10 @@ const ON_Font* ON_FontList::Internal_FromNames(
   key.m_font_stretch = prefered_stretch;
   key.m_font_style = prefered_style;
 
-  if (key.m_loc_family_name.IsEmpty() || key.m_loc_face_name.IsEmpty())
+
+  const bool bKeyHasFamilyAndFace = key.m_loc_family_name.IsNotEmpty() && key.m_loc_face_name.IsNotEmpty();
+
+  if (false == bKeyHasFamilyAndFace)
     bRequireFaceMatch = false;
 
   int pass_count = 0;
@@ -3606,12 +3541,34 @@ const ON_Font* ON_FontList::Internal_FromNames(
         }
         if (bRequireStyleMatch && prefered_style != candidate->FontStyle())
           continue;
-        if (bRequireFaceMatch && candidate->FamilyName().IsNotEmpty() && false == ON_Font::EqualFontFamilyAndFace(&key, candidate))
+        
+        const bool bCandidateFamilyAndFaceMatch 
+          = bKeyHasFamilyAndFace
+          && (ON_Font::EqualFontFamilyAndFace(&key, candidate) || 0 == ON_FontList::CompareEnglishFamilyAndFaceName(&pkey,&candidate));
+
+        if (bRequireFaceMatch && candidate->FamilyName().IsNotEmpty() && false == bCandidateFamilyAndFaceMatch)
           continue;
+
+        const bool bFontFamilyAndFaceMatch 
+          = bKeyHasFamilyAndFace
+          && (nullptr != font) 
+          && (ON_Font::EqualFontFamilyAndFace(&key, font) || 0 == ON_FontList::CompareEnglishFamilyAndFaceName(&pkey,&candidate));
+
+        if (bFontFamilyAndFaceMatch && false == bCandidateFamilyAndFaceMatch)
+          continue;
+
         candidate_dev = ON_Font::WeightStretchStyleDeviation(prefered_weight, prefered_stretch, prefered_style, candidate);
         if (0 == candidate_dev)
-          return candidate;
-        if (nullptr == font || candidate_dev < font_dev)
+        {
+          if ( bCandidateFamilyAndFaceMatch || false == bKeyHasFamilyAndFace)
+            return candidate;
+        }
+
+        if (
+          nullptr == font 
+          || (bCandidateFamilyAndFaceMatch && false == bFontFamilyAndFaceMatch)
+          || candidate_dev < font_dev
+          )
         {
           font = candidate;
           font_dev = candidate_dev;
@@ -3870,7 +3827,7 @@ const ON_Font* ON_Font::ManagedFamilyMemberWithRichTextProperties(
   bStrikethrough = bStrikethrough ? true : false;
 
   const ON_Font::Weight desired_weight
-    = (bBold != IsBold())
+    = (bBold != IsBoldInQuartet())
     ? (bBold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal)
     : FontWeight();
 
@@ -4551,19 +4508,6 @@ const ON_Font* ON_Font::GetManagedFontFromPostScriptName(
 
   return font.ManagedFont();
 }
-
-#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-const ON_Font* ON_Font::GetManagedFontFromAppleFont(
-  NSFont* apple_font,
-  bool bAnnotationFont
-)
-{
-  ON_Font font_characteristics;
-  if ( false == font_characteristics.SetFromAppleFont(apple_font,bAnnotationFont) )
-    return nullptr;
-  return font_characteristics.ManagedFont();
-}
-#endif
 
 int ON_Font::WindowsLogfontWeightFromWeight(
   ON_Font::Weight font_weight
@@ -5813,319 +5757,6 @@ bool ON_Font::SetFontCharacteristics(
   return true;
 }
 
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-bool ON_Font::SetFromAppleFont( NSFont* apple_font, bool bAnnotationFont )
-{
-  
-  if ( false == ON_FONT_MODIFICATION_PERMITTED )
-    return false;
-
-  *this = ON_Font::Unset;
-  
-  const ON_wString postscript_name = ON_Font::PostScriptNameFromAppleFont(apple_font);
-  const ON_wString family_name = ON_Font::FamilyNameFromAppleFont(apple_font);
-  const ON_wString face_name = ON_Font::FaceNameFromAppleFont(apple_font);
-  
-  // Set Windows LOGFONT.lfFaceName to something not empty there is some hope this
-  // font might work in Rhino 5 for Windows too.
-  // https://mcneel.myjetbrains.com/youtrack/issue/RH-37074
-  const ON_wString windows_logfont_name = family_name;
-  
-  const bool rc = postscript_name.IsNotEmpty() || family_name.IsNotEmpty();
-  if (rc)
-  {
-    m_loc_postscript_name = postscript_name;
-    m_en_postscript_name = postscript_name;
-    m_loc_family_name = family_name;
-    m_en_family_name = family_name;
-    m_loc_face_name = face_name;
-    m_en_face_name = face_name;
-    m_loc_windows_logfont_name = windows_logfont_name;
-    m_en_windows_logfont_name = windows_logfont_name;
-
-    // Can get font metrics from NSFontDescriptor
-    // https://developer.apple.com/library/content/documentation/TextFonts/Conceptual/CocoaTextArchitecture/FontHandling/FontHandling.html
-    // defaultLineHeight(for theFont: NSFont)
-    // fd.xHeight, fd.ascender, fd.descender, fd.capHeight, fd.defaultLineHeightForFont
-    
-    // Set weight - used if this font needs sustution on another computer
-    // https://mcneel.myjetbrains.com/youtrack/issue/RH-37075
-    NSFontDescriptor* fd = apple_font.fontDescriptor;
-    NSDictionary* traits = [fd objectForKey: NSFontTraitsAttribute];
-    NSNumber* weightValue = [traits objectForKey: NSFontWeightTrait];
-    if (weightValue)
-    {
-      const double apple_font_weight_trait = weightValue.doubleValue;
-      SetAppleFontWeightTrait(apple_font_weight_trait);
-    }
-    else if ( 0 != (fd.symbolicTraits & NSFontBoldTrait) )
-      SetFontWeight(ON_Font::Weight::Bold);
-    else
-      SetFontWeight(ON_Font::Weight::Normal);
-    
-    // Set style - used if this font needs sustution on another computer
-    if ( 0 != (fd.symbolicTraits & NSFontItalicTrait) )
-      m_font_style = ON_Font::Style::Italic;
-    else
-      m_font_style = ON_Font::Style::Upright;
-    
-    if ( 0 != (fd.symbolicTraits & NSFontExpandedTrait) )
-      m_font_stretch = ON_Font::Stretch::Expanded;
-    else if ( 0 != (fd.symbolicTraits & NSFontCondensedTrait) )
-      m_font_stretch = ON_Font::Stretch::Condensed;
-    else
-      m_font_stretch = ON_Font::Stretch::Medium;
-
-    // Saving point size added January 2018.
-    const double point_size = (double)apple_font.pointSize;
-    m_point_size
-      = (false == bAnnotationFont && ON_Font::IsValidPointSize(point_size) )
-      ? point_size
-      : 0.0; // indicates annotation size will be used
-
-    m_logfont_charset = ON_Font::WindowsConstants::logfont_default_charset;
-    
-    // do this again because some of the above calls can modify description
-    m_loc_postscript_name = postscript_name;
-    m_en_postscript_name = m_loc_postscript_name;
-    m_loc_family_name = family_name;
-    m_en_family_name = m_loc_family_name;
-    m_loc_face_name = face_name;
-    m_en_face_name = m_loc_family_name;
-    m_loc_windows_logfont_name = windows_logfont_name;
-    m_en_windows_logfont_name = windows_logfont_name;
-
-    SetFontOrigin(ON_Font::Origin::AppleFont);
-  }
-
-  return rc;
-}
-
-const ON_wString ON_Font::PostScriptNameFromAppleFont(
-  NSFont* apple_font
-)
-{
-  if (nullptr == apple_font)
-    return ON_wString::EmptyString;
-  const ON_String utf8_postscript_name(apple_font.fontName.UTF8String);
-  ON_wString postscript_name(utf8_postscript_name);
-  postscript_name.TrimLeftAndRight();
-  return postscript_name;
-}
-
-const ON_wString ON_Font::FamilyNameFromAppleFont(
-  NSFont* apple_font
-  )
-{
-  if (nullptr == apple_font)
-    return ON_wString::EmptyString;
-  const ON_String utf8_family_name(apple_font.familyName.UTF8String);
-  ON_wString family_name(utf8_family_name);
-  family_name.TrimLeftAndRight();
-  return family_name;
-}
-
-const ON_wString ON_Font::FaceNameFromAppleFont(
-  NSFont* apple_font
-  )
-{
-  for(;;)
-  {
-    if (nullptr == apple_font)
-      break;
-
-    const ON_String utf8_family_and_face_name(apple_font.displayName.UTF8String);
-    ON_wString family_and_face_name(utf8_family_and_face_name);
-    family_and_face_name.TrimLeftAndRight();
-    if ( family_and_face_name.IsEmpty() )
-      break;
-    const wchar_t* family_and_face_str = static_cast<const wchar_t*>(family_and_face_name);
-    if (nullptr == family_and_face_str)
-      break;
-
-    const ON_wString family_name = ON_Font::FamilyNameFromAppleFont(apple_font);
-    if ( family_name.IsEmpty() )
-      break;
-    const wchar_t* family_str = static_cast<const wchar_t*>(family_name);
-    if (nullptr == family_str)
-      break;
-
-    // It is not always the case that the beginning of
-    // apple_font.displayName.UTF8String exactly matches
-    // apple_font.familyName.UTF8String. We need to ignore
-    // spaces and hyphens.
-    for (;;)
-    {
-      wchar_t a = *family_str;
-      while (ON_wString::Space == a || ON_wString::HyphenMinus == a)
-        a = *(++family_str);
-
-      wchar_t b = *family_and_face_str;
-      while (ON_wString::Space == b || ON_wString::HyphenMinus == b)
-        b = *(++family_and_face_str);
-
-      if (0 == a || 0 == b)
-        break;
-      a = ON_wString::MapCharacterOrdinal(ON_StringMapOrdinalType::MinimumOrdinal,a);
-      b = ON_wString::MapCharacterOrdinal(ON_StringMapOrdinalType::MinimumOrdinal,b);
-      if (a != b)
-        break;
-      family_str++;
-      family_and_face_str++;
-    }
-    ON_wString face_name(family_and_face_str);
-    face_name.TrimLeftAndRight();
-    if ( face_name.IsEmpty())
-      break;
-    return face_name;
-  }
-  
-  return ON_wString::EmptyString;
-}
-
-
-NSFont* ON_Font::AppleFont() const
-{
-  // Using PointSize() added January 2018.
-  const double annotation_font_point_size = (double)ON_Font::Constants::AnnotationFontApplePointSize;
-  double pointSize
-  = ON_Font::IsValidPointSize(m_point_size)
-  ? m_point_size
-  : annotation_font_point_size;
-  
-  return AppleFont(pointSize);
-}
-
-NSFont* ON_Font::AppleFont(double pointSize) const
-{
-  const double annotation_font_point_size = (double)ON_Font::Constants::AnnotationFontApplePointSize;
-  NSFont* userFont = nullptr;
-  
-  // TODO - Use ON_Font::InstalledFontFromNames(...) to search installed fonts instead of the following
-
-  for (int pass = 0; pass < 2; pass++)
-  {
-    if ( 0 != pass)
-      pointSize = annotation_font_point_size;
-    
-    // TODO - replace the following with ON_Font::InstalledFontFromNames(....)
-
-    for(int ps_loc = 0; ps_loc < 2; ps_loc++)
-    {
-      // NOTE WELL:
-      //   The post script name is NOT unique for simulated fonts
-      //   (Bahnschrift and other OpenType variable fonts being one common source of simulated fonts.)
-      const ON_wString postscript_name
-      = (0 == ps_loc)
-      ? m_loc_postscript_name
-      : m_en_postscript_name;
-      
-      if (ps_loc > 0 && postscript_name == m_loc_postscript_name)
-        break;
-      
-      if (postscript_name.IsNotEmpty())
-      {
-        // m_apple_font name was a Mac OS font name (NSFont.fontName = Mac OS FontBook "PostScript" name) on some Apple platform device.
-        // If the current computer has the same font, this will return the
-        // highest fidelity match.
-        const ON_String UTF8_postscript_name(postscript_name);
-        NSString* fontPostscriptName = [NSString stringWithUTF8String : UTF8_postscript_name];
-        userFont = [NSFont fontWithName : fontPostscriptName size : pointSize];
-        if (userFont)
-          break;
-      }
-    }
-    
-    // Try getting a NSFont by using NSFontManager
-    NSFontTraitMask traitsStyleStretch = 0;
-    if (IsItalic())
-      traitsStyleStretch |= NSItalicFontMask;
-    if (FontStretch() <= ON_Font::Stretch::Condensed)
-      traitsStyleStretch |= NSCondensedFontMask;
-    if (FontStretch() >= ON_Font::Stretch::Expanded)
-      traitsStyleStretch |= NSExpandedFontMask;
-
-    ON_String family_name = FamilyName();    // convert to UTF8
-    NSString* fontFamilyName = [NSString stringWithUTF8String : family_name];   // font family name
-
-    // https://developer.apple.com/documentation/appkit/nsfontmanager/1462332-fontwithfamily
-    // weight
-    //   A hint for the weight desired, on a scale of 0 to 15: 
-    //   a value of 5 indicates a normal or book weight, 
-    //   and 9 or more a bold or heavier weight. 
-    //   The weight is ignored if fontTraitMask includes NSBoldFontMask.
-    if (IsBold() || IsNormalWeight())
-    {
-      NSFontTraitMask traitsStyleStretchWeight
-      = IsBold()
-      ? (traitsStyleStretch | NSBoldFontMask)
-      : (traitsStyleStretch | NSUnboldFontMask);
-      userFont = [[NSFontManager sharedFontManager] fontWithFamily:fontFamilyName traits : traitsStyleStretchWeight weight : 5 size : pointSize];
-      if (userFont)
-        break;
-    }
-    
-    int weightFromFontWeight;
-    switch (FontWeight())
-    {
-    case ON_Font::Weight::Thin:
-      weightFromFontWeight = 2;
-      break;
-    case ON_Font::Weight::Ultralight:
-      weightFromFontWeight = 3;
-      break;
-    case ON_Font::Weight::Light:
-      weightFromFontWeight = 4;
-      break;
-    case ON_Font::Weight::Normal:
-      weightFromFontWeight = 5;
-      break;
-    case ON_Font::Weight::Medium:
-      weightFromFontWeight = 6;
-      break;
-    case ON_Font::Weight::Semibold:
-      weightFromFontWeight = 7;
-      break;
-    case ON_Font::Weight::Bold:
-      weightFromFontWeight = 9;
-      break;
-    case ON_Font::Weight::Ultrabold:
-      weightFromFontWeight = 12;
-      break;
-    case ON_Font::Weight::Heavy:
-      weightFromFontWeight = 15;
-      break;
-    default:
-      weightFromFontWeight = 5;
-      break;
-    }
-    
-    userFont = [[NSFontManager sharedFontManager] fontWithFamily:fontFamilyName traits : traitsStyleStretch weight : weightFromFontWeight size : pointSize];
-    if (userFont)
-      break;
-
-    // Try using just FontFaceName()
-    userFont = [NSFont fontWithName : fontFamilyName size : pointSize];
-    if (userFont)
-      break;
-
-    // Cannot find an equivalent font.  Just use a system font.
-    userFont = [NSFont userFontOfSize : pointSize];
-    if (userFont)
-      break;
-
-    userFont = [NSFont systemFontOfSize : pointSize];
-    if (userFont)
-      break;
-
-    if (annotation_font_point_size == pointSize)
-      break; // 2nd pass will not help
-  }
-
-  return userFont;
-}
-
-#endif
 
 
 bool ON_Font::SetFromAppleFontName(
@@ -6148,25 +5779,21 @@ bool ON_Font::SetFromAppleFontName(
   apple_font_name = static_cast<const wchar_t*>(local_apple_font_name);
 
   const bool bAnnotationFont
-    = ON_Font::IsValidPointSize(point_size)
+  = ON_Font::IsValidPointSize(point_size) && point_size < ON_Font::AnnotationFontCellHeight
     ? false
     : true;
 
   bool rc = false;
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   // If the current computer has the same Apple font, this will return the highest fidelity match.
-  const double pointSize
-    = bAnnotationFont
-    ? (double)ON_Font::Constants::AnnotationFontApplePointSize
-    : point_size;
-  const ON_String UTF8_apple_font_name(apple_font_name);
-  NSString* fullFontName = [NSString stringWithUTF8String : UTF8_apple_font_name];
-  NSFont* userFont = [NSFont fontWithName : fullFontName size : pointSize];
-  if (userFont)
+  CTFontRef appleFont = ON_Font::AppleCTFont(apple_font_name,point_size);
+  if (nullptr != appleFont)
   {
     // In some cases, the NSfont.fontName is different from apple_font_name
     // For example, when apple_font_name = "Arial", NSfont.fontName = "ArialMT".
-    if (SetFromAppleFont(userFont, bAnnotationFont))
+    const bool b = SetFromAppleCTFont(appleFont, bAnnotationFont);
+    CFRelease(appleFont);
+    if(b)
       return true;
   }
 #endif
@@ -6394,6 +6021,11 @@ const ON_wString Internal_RichTextCleaner
   return clean_name;
 }
 
+const ON_wString ON_Font::RichTextFontName() const
+{
+  return ON_Font::RichTextFontName(this, false);
+}
+
 const ON_wString ON_Font::RichTextFontName(
   const ON_Font* font,
   bool bDefaultIfEmpty
@@ -6522,7 +6154,6 @@ public:
   const wchar_t* m_family_name = nullptr;
 };
 
-
 static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
   const InternalHashToName* key
 )
@@ -6602,7 +6233,8 @@ static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
     // NOTE WELL: 
     //  Orach Technic 2L fonts are NOT a double stroke fonts.
     //  The figure outlines are simple closed perimenters
-    //  that contain postivie areas.
+    //  that contain postive areas. 
+    //  The behave poorly in simulated bold face.
   };
 
   static InternalHashToName perimeter_name_map[] = 
@@ -6677,6 +6309,83 @@ static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
 
   return ON_OutlineFigure::Type::Unknown;
 }
+
+static bool Internal_IsEngravingFont(
+  const InternalHashToName* key
+)
+{
+
+  // The structure of the font is a "perimeter", but the intended use
+  // is for engraving. The OrachTech*2* fonts behave poorly when used
+  // as perimeter fonts.
+  static InternalHashToName double_line_name_map[] = 
+  {  
+    // Orach Technic 2L
+    InternalHashToName(L"OrachTech2Lotf"), // Family
+    InternalHashToName(L"OrachTech2Lotf"), // PostScript
+    InternalHashToName(L"OrachTechDemo2Lotf"), // Family
+    InternalHashToName(L"OrachTechDemo2Lotf"), // PostScript
+    InternalHashToName(L"OrachTech2Lttf"), // Family
+    InternalHashToName(L"OrachTech2Lttf"), // PostScript
+    InternalHashToName(L"OrachTechDemo2Lttf"), // Family
+    InternalHashToName(L"OrachTechDemo2Lttf"), // PostScript
+  };
+
+  static size_t double_line_name_map_count = 0;
+
+  const InternalHashToName* e;
+  const size_t sizeof_e = sizeof(*e);
+
+  if (0 == double_line_name_map_count)
+  {
+    double_line_name_map_count = InternalHashToName::SortAndCullByHash(double_line_name_map, (sizeof(double_line_name_map) / sizeof_e));
+  }
+
+  e = (const InternalHashToName*)bsearch(key, double_line_name_map, double_line_name_map_count, sizeof_e, InternalHashToName::CompareHash);
+  if (nullptr != e)
+    return true;
+
+  ON_OutlineFigure::Type outline_type = Internal_FigureTypeFromHashedFontName(key);
+  if (ON_OutlineFigure::Type::SingleStroke == outline_type)
+    return true;
+  if (ON_OutlineFigure::Type::DoubleStroke == outline_type)
+    return true;
+
+  return false;
+}
+
+
+const wchar_t* ON_OutlineFigure::OrientationToWideString(
+  ON_OutlineFigure::Orientation orientation
+)
+{
+  const wchar_t* s;
+
+  switch (orientation)
+  {
+  case ON_OutlineFigure::Orientation::Unset:
+    s = L"Unset";
+    break;
+  case ON_OutlineFigure::Orientation::CounterClockwise:
+    s = L"CounterClockwise";
+    break;
+  case ON_OutlineFigure::Orientation::Clockwise:
+    s = L"Clockwise";
+    break;
+  case ON_OutlineFigure::Orientation::NotOriented:
+    s = L"NotOriented";
+    break;
+  case ON_OutlineFigure::Orientation::Error:
+    s = L"Error";
+    break;
+  default:
+    s = L"<INVALID>";
+    break;
+  }
+
+  return s;
+}
+
 
 ON_OutlineFigure::Type ON_OutlineFigure::FigureTypeFromFontName(
   const wchar_t* font_name
@@ -6757,6 +6466,52 @@ bool ON_Font::IsSingleStrokeOrDoubleStrokeFont() const
     ON_OutlineFigure::Type::SingleStroke == figure_type
     || ON_OutlineFigure::Type::DoubleStroke == figure_type
     );
+}
+
+bool ON_Font::IsEngravingFont() const
+{
+  const ON_wString names[] =
+  {
+    FamilyName(),
+    FamilyName(ON_Font::NameLocale::English),
+    PostScriptName(),
+    PostScriptName(ON_Font::NameLocale::English)
+  };
+  
+  InternalHashToName key[sizeof(names)/sizeof(names[0])];
+
+  const int name_count = (int)(sizeof(names) / sizeof(names[0]));
+  int key_count = 0;
+  for (int i = 0; i < name_count; i++)
+  {
+    const ON_wString& name = names[i];
+    if (name.IsEmpty())
+      continue;
+
+    // computing the hash is much more expensive than checking for duplicate names (which is common)
+    bool bSkipName = name.IsEmpty();
+    for (int j = 0; false == bSkipName && j < i; j++)
+      bSkipName = (name == names[j]);
+    if (bSkipName)
+      continue;
+
+    // compute name hash
+    key[key_count] = InternalHashToName(name, nullptr);
+
+    // searching for a duplicate hash is more expensive than checking for duplicate hash 
+    // (which is common because of space and hyphen differences between family and postscript names)
+    for (int j = 0; false == bSkipName && j < key_count; j++)
+      bSkipName = (key[key_count].m_dirty_name_hash == key[i].m_dirty_name_hash);
+    if (bSkipName)
+      continue;
+
+    // search for matching name hash is lists of known single stroke and double stroke fonts
+    bool bIsEngravingFont = Internal_IsEngravingFont(&key[key_count]);
+    key_count++;
+    if (bIsEngravingFont)
+      return true;
+  }
+  return false;
 }
 
 
@@ -7370,16 +7125,17 @@ bool ON_Font::SetFromPostScriptName(
 #if defined(ON_RUNTIME_WIN)
   // TODO: Get Windows IDWriteFont with matching post_script_name
 
-#elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   // If the current computer has the same font, this will return the
   // highest fidelity match.
-  const ON_String UTF8_postscript_font_name(postscript_font_name);
-  NSString* fullFontName = [NSString stringWithUTF8String : UTF8_postscript_font_name];
-  double pointSize = (double)ON_Font::Constants::AnnotationFontApplePointSize;
-  NSFont* apple_font = [NSFont fontWithName : fullFontName size : pointSize];
+  // NOTE WELL: The NSFont API fails for some valid PostScript names.
+  // For example, the some of the 14 or so faces Helvetica Neue 
+  // are not round tripped using the NSFont by name creation and
+  // are round tripped by using the CTFont API.
+  CTFontRef apple_font = ON_Font::AppleCTFont(postscript_font_name,0.0);
   if (nullptr != apple_font)
   {
-    return SetFromAppleFont(apple_font,true);
+    return SetFromAppleCTFont(apple_font,true);
   }
 #endif
 
@@ -7769,21 +7525,26 @@ void ON_Font::Dump(ON_TextLog& dump) const
     }
 #endif
 
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
     {
-      NSFont* apple_font = AppleFont();
-      dump.Print(L"Apple font:\n");
+      CTFontRef apple_font = AppleCTFont();
+      dump.Print(L"Apple Core Text font:\n");
       dump.PushIndent();
-      ON_Font::DumpNSFont(apple_font, dump);
+      ON_Font::DumpCTFont(apple_font, dump);
       dump.PopIndent();
     }
 #endif
 
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+// Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+// Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
     if (runtime_sn >= 1)
     {
       // Free Type font details
       DumpFreeType(dump);
     }
+#endif
+
   }
   dump.PopIndent();
 }
@@ -7822,33 +7583,6 @@ void ON_FontMetrics::Dump(class ON_TextLog& text_log) const
   text_log.Print("Underscore thickness = %d\n", m_underscore_thickness);
   text_log.Print("Underscore position = %d\n", m_underscore_position);
 }
-
-
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-void ON_Font::DumpNSFont(
-  NSFont* apple_font,
-  ON_TextLog& text_log
-)
-{
-  if (nullptr == apple_font)
-  {
-    text_log.Print("NSFont = nullptr\n");
-    return;
-  }
-
-  text_log.Print("NSFont\n");
-  text_log.PushIndent();
-  const ON_String utf8fontName(apple_font.fontName.UTF8String);
-  text_log.Print("NSFont.fontName: \"%s\"\n",static_cast<const char*>(utf8fontName));
-  const ON_String utf8displayName(apple_font.displayName.UTF8String);
-  text_log.Print("NSFont.displayName: \"%s\"\n",static_cast<const char*>(utf8displayName));
-  const ON_String utf8familyName(apple_font.familyName.UTF8String);
-  text_log.Print("NSFont.familyName: \"%s\"\n",static_cast<const char*>(utf8familyName));
-  const double point_size = (double)apple_font.pointSize;
-  text_log.Print("NSFont.pointSize: \"%g\"\n",point_size);
-  text_log.PopIndent();
-}
-#endif
 
 #if defined(ON_OS_WINDOWS_GDI)
 
@@ -8870,7 +8604,7 @@ bool ON_Font::ReadV5(
       if ( 0 != bItalic )
         font_style = ON_Font::Style::Italic;
 
-      double obsolete_linefeed_ratio = 1.6;
+      double obsolete_linefeed_ratio = ON_FontMetrics::DefaultLineFeedRatio;
       if (!file.ReadDouble(&obsolete_linefeed_ratio))
         break;
 
@@ -11145,8 +10879,8 @@ const ON_FontGlyph* ON_Font::Internal_ManagedCodePointGlyph(
 
   // Call external function to get glyph details
   ON_TextBox font_unit_glyph_box = ON_TextBox::Unset;
-  ON__UINT_PTR font_glyph_id = ON_ManagedFonts::GetGlyphMetricsInFontDesignUnits(this, unicode_code_point, font_unit_glyph_box);
-  if (0 != font_glyph_id)
+  const unsigned int font_glyph_index = ON_ManagedFonts::GetGlyphMetricsInFontDesignUnits(this, unicode_code_point, font_unit_glyph_box);
+  if (0 != font_glyph_index)
   {
     if (font_unit_glyph_box.IsSet())
     {
@@ -11158,7 +10892,7 @@ const ON_FontGlyph* ON_Font::Internal_ManagedCodePointGlyph(
         normalized_glyph_box = ON_TextBox::Scale(font_unit_glyph_box, normalize_scale);
       glyph.m_normalized_glyph_bbox = normalized_glyph_box;
     }
-    glyph.Internal_SetFontGlyphId(font_glyph_id);
+    glyph.Internal_SetFontGlyphIndex(font_glyph_index);
     bFindSubstitutes = false;
   }
 
@@ -11317,31 +11051,35 @@ void ON_Font::SetCustomMeasurementFunctions(
   ON_Font::Internal_CustomGetFontMetricsFunc = metricsFunc;
 }
 
-ON__UINT_PTR ON_ManagedFonts::GetGlyphMetricsInFontDesignUnits(
+unsigned int ON_ManagedFonts::GetGlyphMetricsInFontDesignUnits(
   const class ON_Font* font,
   ON__UINT32 unicode_code_point,
   class ON_TextBox& glyph_metrics_in_font_design_units
 )
 {
-  ON__UINT_PTR glyph_id = 0;
+  unsigned int glyph_index = 0;
 
   const ON_FontGlyph g(font, unicode_code_point);
 
   if (nullptr != ON_Font::Internal_CustomGetGlyphMetricsFunc)
   {
-    glyph_id = ON_Font::Internal_CustomGetGlyphMetricsFunc(&g, glyph_metrics_in_font_design_units);
-    if (0 != glyph_id)
-      return glyph_id;
+    glyph_index = ON_Font::Internal_CustomGetGlyphMetricsFunc(&g, glyph_metrics_in_font_design_units);
+    if (0 != glyph_index)
+      return glyph_index;
   }
 
 #if defined(ON_OS_WINDOWS_GDI)
-  glyph_id = ON_WindowsDWriteGetGlyphMetrics(&g, glyph_metrics_in_font_design_units);
+  glyph_index = ON_WindowsDWriteGetGlyphMetrics(&g, glyph_metrics_in_font_design_units);
+#elif defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  glyph_index = ON_AppleFontGetGlyphMetrics(&g, glyph_metrics_in_font_design_units);
 #elif defined(OPENNURBS_FREETYPE_SUPPORT)
-  glyph_id = ON_FreeTypeGetGlyphMetrics(&g, glyph_metrics_in_font_design_units);
+  // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+  // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
+  glyph_index = ON_FreeTypeGetGlyphMetrics(&g, glyph_metrics_in_font_design_units);
 #endif
 
-  if (0 != glyph_id)
-    return glyph_id;
+  if (0 != glyph_index)
+    return glyph_index;
 
   glyph_metrics_in_font_design_units = ON_TextBox::Unset;
   return 0;
@@ -11380,18 +11118,11 @@ bool ON_ManagedFonts::GetFontMetricsInFontDesignUnits(
 
 #if defined(ON_OS_WINDOWS_GDI)
     ON_WindowsDWriteGetFontMetrics(font, fm);
-    if (fm.AscentDescentAndUPMAreValid())
-      break;
-#elif defined(ON_RUNTIME_APPLE) && defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-    ON_AppleNSFontGetFontMetrics(font, fm);
-    if (fm.AscentDescentAndUPMAreValid())
-      break;
-#endif
-    
-#if defined(OPENNURBS_FREETYPE_SUPPORT)
-    // Last try - freetype is the least desirable option because
-    // it has hacks to get capital height and bugs in support
-    // for .ttc files and variable type fonts like Bahnschrift.
+#elif defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+    ON_AppleFontGetFontMetrics(font, fm);
+#elif defined(OPENNURBS_FREETYPE_SUPPORT)
+    // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+    // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
     ON_FreeTypeGetFontMetrics(font, fm);
 #endif
     
@@ -11439,9 +11170,9 @@ const ON_FontList& ON_ManagedFonts::InstalledFonts()
     ON_MemoryAllocationTracking disable_tracking(false);
     ON_SimpleArray<const ON_Font*> device_list;
 #if defined(ON_OS_WINDOWS_GDI)
-    Internal_GetWindowsInstalledFonts(device_list);
-#elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-    Internal_GetAppleInstalledFonts(device_list);
+    ON_ManagedFonts::Internal_GetWindowsInstalledFonts(device_list);
+#elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+    ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(device_list);
 #endif
     if (device_list.Count() > 0)
     {

@@ -3114,6 +3114,403 @@ bool ON_NurbsCurve::ClampEnd(
 }
 
 
+double ON_NurbsCurve::GetCubicBezierApproximation(
+  double max_deviation,
+  class ON_BezierCurve& bezierCurve
+) const
+{
+  ON_3dPoint bezCV[4];
+  const double deviation = GetCubicBezierApproximation(max_deviation, bezCV);
+  if (deviation >= 0.0)
+  {
+    bezierCurve.Create(3, false, 4);
+    bezierCurve.SetCV(0, bezCV[0]);
+    bezierCurve.SetCV(1, bezCV[1]);
+    bezierCurve.SetCV(2, bezCV[2]);
+    bezierCurve.SetCV(3, bezCV[3]);
+  }
+  return deviation;
+}
+
+double ON_NurbsCurve::GetCubicBezierApproximation(
+  double max_deviation,
+  ON_3dPoint bezCV[4]
+) const
+{
+  const double failed_rc = ON_DBL_QNAN;
+
+  if (nullptr == this)
+    return failed_rc;
+  if (m_order < 2)
+    return failed_rc;
+  if (m_cv_count < m_order)
+    return failed_rc;
+  if ( nullptr == bezCV)
+    return failed_rc;
+
+  if (
+    0 == m_is_rat
+    && 4 == m_order
+    && 4 == m_cv_count
+    && m_knot[0] == m_knot[2]
+    && m_knot[3] == m_knot[5]
+    )
+  {
+    GetCV(0, bezCV[0]);
+    GetCV(1, bezCV[1]);
+    GetCV(2, bezCV[2]);
+    GetCV(3, bezCV[3]);
+    return 0.0;
+  }
+
+  const ON_Interval domain = Domain();
+
+
+  // bez0CV[] are cubic bezier control points set from end locations and interpolating 2 interior points.
+  ON_3dPoint bez0CV[4] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
+  // bez1CV[] are cubic bezier control points set from end locations and derivatives.
+  ON_3dPoint bez1CV[4] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
+
+  // bez1CV[] are cubic bezier control points set from end locations and derivatives.
+  Evaluate(domain[0], 1, 3, &bez1CV[0].x, 0, nullptr);
+  Evaluate(domain[1], 1, 3, &bez1CV[2].x, 0, nullptr);
+  bez0CV[0] = bez1CV[0];
+  bez0CV[3] = bez1CV[2];
+  const double c = domain[1] - domain[0];
+  const ON_3dVector D[2]{ c * bez1CV[1], c * bez1CV[3] };
+  bez1CV[1] = bez0CV[0] + D[0]/3.0;
+  bez1CV[2] = bez0CV[3] - D[1]/3.0;
+  bez1CV[3] = bez0CV[3];
+
+  // bez0CV[] are cubic bezier control points set from end locations and interpolating 2 interior points.
+  ON_3dPoint P[2] = {ON_3dPoint::Origin,ON_3dPoint::Origin};
+  int hint = 0;
+  Evaluate(domain.ParameterAt(1.0/3.0), 0, 3, &P[0].x, 0, &hint);
+  Evaluate(domain.ParameterAt(2.0/3.0), 0, 3, &P[1].x, 0, &hint);
+  bez0CV[1] = (bez0CV[3] - 2.5*bez0CV[0])/3.0 + (3.0*P[0] - 1.5*P[1]);
+  bez0CV[2] = (bez0CV[0] - 2.5*bez0CV[3])/3.0 + (3.0*P[1] - 1.5*P[0]);
+
+  double zero_tol = 0.0;
+  double deviation0 = 0.0;
+  double deviation1 = 0.0;
+  if (4 != m_order || 4 != m_cv_count || 0 != m_is_rat)
+  {
+    // g[] = parameters for evaluation test
+    double g32[32];
+    double* g = (m_cv_count <= 32) ? g32 : (double*)onmalloc(m_cv_count * sizeof(g[0]));
+    GetGrevilleAbcissae(g);
+    if (3 == m_order)
+    {
+      const double* k = m_knot;
+      if (k[0] < k[2])
+      {
+        g[0] = k[2];
+        g[1] = (2.0*k[2] + k[3]) / 3.0;
+      }
+      k += (m_cv_count - m_order);
+      if (k[3] < k[5])
+      {
+        g[m_cv_count - 1] = k[3];
+        g[m_cv_count - 2] = (2.0*k[3] + k[2]) / 3.0;
+      }
+    }
+  
+    // test evaluation
+    ON_BezierCurve bez;
+    bez.m_dim = 3;
+    bez.m_is_rat = 0;
+    bez.m_order = 4;
+    bez.m_cv_stride = 3;
+    bez.m_cv = &bez0CV[0].x;
+
+    ON_3dPoint A, B;
+    bez.Evaluate(1.0 / 3.0, 0, 3, &A.x);
+    bez.Evaluate(2.0 / 3.0, 0, 3, &B.x);
+    zero_tol = 16.0*(P[0].DistanceTo(A) + P[1].DistanceTo(B)) + 1.0e-14;
+    double d;
+    for (int i = 1; i < m_cv_count; i++)
+    {
+      for (int pass = 0; pass < 2; pass++)
+      {
+        const double t = (0==pass) ? 0.5*(g[i - 1] + g[i]) : g[i];
+        const double s = domain.NormalizedParameterAt(t);
+        if (false == (s > 0.0 && s < 1.0))
+          continue;
+
+        Evaluate(t, 0, 3, &A.x, 0, &hint);
+
+        // test bez0CV[]
+        bez.m_cv = &bez0CV[0].x;
+        bez.Evaluate(s, 0, 3, &B.x);
+        d = A.DistanceTo(B);
+        if (d > deviation0)
+          deviation0 = d;
+
+        // test bez1CV[]
+        bez.m_cv = &bez1CV[0].x;
+        bez.Evaluate(s, 0, 3, &B.x);
+        d = A.DistanceTo(B);
+        if (d > deviation1)
+          deviation1 = d;
+
+        if (max_deviation > zero_tol && deviation0 > max_deviation && deviation1 > max_deviation)
+          return failed_rc;
+      }
+    }
+
+    bez.m_cv = nullptr;
+
+    if (g != g32)
+      onfree(g);
+  }
+
+
+  if (deviation1 <= zero_tol || deviation1 <= deviation0)
+  {
+    // use cubic bezier CVs calculated from end locations and interpolating end derivatives.
+    bezCV[0] = bez1CV[0];
+    bezCV[1] = bez1CV[1];
+    bezCV[2] = bez1CV[2];
+    bezCV[3] = bez1CV[3];
+    return (deviation1 > zero_tol) ? deviation1 : 0.0;
+  }
+
+  // use cubic bezier CVs calculated from end locations and interpolating 2 interior points.
+  bezCV[0] = bez0CV[0];
+  bezCV[1] = bez0CV[1];
+  bezCV[2] = bez0CV[2];
+  bezCV[3] = bez0CV[3];
+  return (deviation0 > zero_tol) ? deviation0 : 0.0;
+}
+
+double ON_NurbsSurface::GetCubicBezierApproximation(
+  double max_deviation,
+  class ON_BezierSurface& bezierSurface
+) const
+{
+  ON_3dPoint bezCV[4][4];
+  const double deviation = GetCubicBezierApproximation(max_deviation, bezCV);
+  if (deviation >= 0.0)
+  {
+    bezierSurface.Create(3, false, 4, 4);
+    for ( int i = 0; i < 4; i++) for ( int j = 0; j < 4; j++)
+      bezierSurface.SetCV(i, j, bezCV[i][j]);
+  }
+  return deviation;
+}
+
+double ON_NurbsSurface::GetCubicBezierApproximation(
+  double max_deviation,
+  ON_3dPoint bezCV[4][4]
+) const
+{
+  const double failed_rc = ON_DBL_QNAN;
+
+  if (nullptr == this)
+    return failed_rc;
+
+  if (nullptr == this)
+    return failed_rc;
+  if (this->m_order[0] < 2 || this->m_order[1] < 2)
+    return failed_rc;
+  if (this->m_cv_count[0] < this->m_order[0] || this->m_cv_count[0] > 64)
+    return failed_rc;
+  if (this->m_cv_count[1] < this->m_order[1] || this->m_cv_count[1] > 64)
+    return failed_rc;
+
+  ON_3dPoint Q[4];
+  
+  const ON_Interval domain[2] = { this->Domain(0),this->Domain(1) };
+  
+  const double c[4] = { domain[1][0],domain[0][1],domain[1][1],domain[0][0] };
+  const double maximum_deviation = ON_DBL_QNAN;
+  double deviation = 0.0;
+  for (int side = 0; side < 4; side++)
+  {
+    ON_Curve* iso = this->IsoCurve((side%2), c[side]);
+    if (nullptr == iso)
+      return failed_rc;
+    const ON_NurbsCurve* nurbs_curve = ON_NurbsCurve::Cast(iso);
+    double d
+      = (nullptr != nurbs_curve)
+      ? nurbs_curve->GetCubicBezierApproximation(
+        maximum_deviation,
+        (0 == (side % 2)) ? Q : &bezCV[(1 == side) ? 3 : 0][0])
+      : ON_DBL_QNAN;
+    if (false == (d >= 0.0))
+      return failed_rc;
+    if (d > deviation)
+      deviation = d;
+    if (0 == (side % 2))
+    {
+      int j = (0 == side) ? 0 : 3;
+      bezCV[1][j] = Q[1];
+      bezCV[2][j] = Q[2];
+    }
+    delete iso;
+  }
+
+  bezCV[1][1] = ON_3dPoint::Origin;
+  bezCV[1][2] = ON_3dPoint::Origin;
+  bezCV[2][1] = ON_3dPoint::Origin;
+  bezCV[2][2] = ON_3dPoint::Origin;
+
+  ON_BezierSurface bezS;
+  bezS.m_dim = 3;
+  bezS.m_is_rat = 0;
+  bezS.m_order[0] = 4;
+  bezS.m_order[1] = 4;
+  bezS.m_cv_stride[0] = (int)(&bezCV[1][0].x - &bezCV[0][0].x);
+  bezS.m_cv_stride[1] = (int)(&bezCV[0][1].x - &bezCV[0][0].x);
+  bezS.m_cv = &bezCV[0][0].x;
+
+
+  // b[0][] = 27*(bernstein cubics at 1/3)
+  // b[1][] = 27*(bernstein cubics at 2/3)
+  const double b[2][4] = {
+    { 8.0, 12.0, 6.0, 1.0 },
+    { 1.0, 6.0, 12.0, 8.0 } 
+  };
+
+  // uv[4] = {{1/3,1/3}, {2/3,1/3}, {1/3,2/3}, {2/3,2/3} }
+  // K[n] = (27*27)*bezCV(uv[n])
+  // P[n] = this(domain.ParamaterAt(uv[n]));
+  // 36* M * Transpose[C11,C21,C12,C22] = [X0,X1,X2,X3]
+  // uv[4] = {{1/3,1/3{, {2/3,1/3}, {1/3,2/3}, {2/3,2/3} }
+  // X0 = nurbs_srf(1/3,1/3) - K[0]/(27*27)
+  // A[4][4] = 4x4 matrix with rows
+  // 36*A[0][] = {b1[1]*b1[1], b1[2]*b1[1], b1[1]*b1[2], b1[2]*b1[2] }
+  // 36*A[1][] = {b2[1]*b1[1], b2[2]*b1[1], b2[1]*b1[2], b2[2]*b1[2] }
+  // 36*A[2][] = {b1[1]*b2[1], b1[2]*b2[1], b1[1]*b2[2], b1[2]*b2[2] }
+  // 36*A[3][] = {b2[1]*b2[1], b2[2]*b2[1], b2[1]*b2[2], b2[2]*b2[2] }
+  // K[n] + 36*(A[n][0]*C11 + A[n][1]*C21 + A[n][2]*C12 + A[n][3]*C22) = (27*27)P[n]
+  // A*Transpose(C11,C21,C12,C22) = Transpose(X[0],X[1],X[2],X[3])
+  // X[n] = ((27*27)P[n] - K[n])/36 = 81/4*P[n] - K[n]/36.0
+  // Inverse(A) = M/9.
+  // Transpose(C11,C21,C12,C22) = M*Transpose(X[0],X[1],X[2],X[3])/9
+  // Q[n] = X[n]/9 = 2.25*P[n] - K[n]/324.0
+  // bezCV[cvdex[n].i][cvdex[n].i] = M*Transpose(X[0],X[1],X[2],X[3])/9
+  const double bezuv[4][2] =
+  {
+    {(1.0 / 3.0), (1.0 / 3.0)},
+    {(2.0 / 3.0), (1.0 / 3.0)},
+    {(1.0 / 3.0), (2.0 / 3.0)},
+    {(2.0 / 3.0), (2.0 / 3.0)}
+  };
+  ON_3dPoint srfP[4] = { ON_3dPoint::Origin,ON_3dPoint::Origin,ON_3dPoint::Origin,ON_3dPoint::Origin };
+  int hint[2] = {};
+  for (int n = 0; n < 4; n++)
+  {
+    this->Evaluate(domain[0].ParameterAt(bezuv[n][0]),domain[1].ParameterAt(bezuv[n][1]), 0, 3, &srfP[n].x, 0, hint);
+    const double* bi = b[n%2];
+    const double* bj = b[n/2];
+    ON_3dPoint K(0.0, 0.0, 0.0);
+    ON_3dPoint valQ(0, 0, 0);
+    for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++)
+    {
+      if ((1 == i || 2 == i) && (1 == j || 2 == j))
+        continue;
+      K += (bi[i] * bj[j])*bezCV[i][j];
+    }
+    Q[n] = (2.25*srfP[n]) - (K/324.0);
+  }
+
+  const ON_2dex cvdex[4]{ON_2dex(1,1),ON_2dex(2,1),ON_2dex(1,2),ON_2dex(2,2)};
+
+  ////const double A[4][4] =
+  ////{
+  ////  {4.0, 2.0, 2.0, 1.0},
+  ////  {2.0, 4.0, 1.0, 2.0},
+  ////  {2.0, 1.0, 4.0, 2.0},
+  ////  {1.0, 2.0, 2.0, 4.0}
+  ////};
+
+  const double M[4][4] =
+  {
+    {4.0,-2.0,-2.0,1.0},
+    {-2.0,4.0,1.0,-2.0},
+    {-2.0,1.0,4.0,-2.0},
+    {1.0,-2.0,-2.0,4.0}
+  };
+
+  for (int n = 0; n < 4; n++)
+    bezCV[cvdex[n].i][cvdex[n].j] = M[n][0] * Q[0] + M[n][1] * Q[1] + M[n][2] * Q[2] + M[n][3] * Q[3];
+
+  double zero_tol = 0.0;
+  for (int n = 0; n < 4; n++)
+  {
+    ON_3dPoint bezP(0.0, 0.0, 0.0);
+    bezS.Evaluate(bezuv[n][0], bezuv[n][1], 0, 3, &bezP.x);
+    double d = srfP[n].DistanceTo(bezP);
+    zero_tol += d;
+  }
+  zero_tol = 16.0*zero_tol;
+
+  double g_buffer[64];
+  double* g[2];
+  g[0] 
+    = (m_cv_count[0] + m_cv_count[1] <= 32)
+    ? g_buffer 
+    : (double*)onmalloc((m_cv_count[0] + m_cv_count[1]) * sizeof(g[0][0]));
+  g[1] = g[0] + m_cv_count[0];
+  for (int dir = 0; dir < 2; dir++)
+  {
+    this->GetGrevilleAbcissae(dir, g[dir]);
+    if (4 == this->m_order[dir])
+    {
+      const double* k = this->m_knot[dir];
+      if (k[0] < k[2])
+      {
+        g[dir][0] = k[2];
+        g[dir][1] = (2.0*k[2] + k[3]) / 3.0;
+      }
+      const int cv_count = this->m_cv_count[dir];
+      k += (cv_count - this->m_order[dir]);
+      if (k[3] < k[5])
+      {
+        g[dir][cv_count-1] = k[3];
+        g[dir][cv_count-2] = (2.0*k[3] + k[2]) / 3.0;
+      }
+    }
+  }
+
+  ON_3dPoint bezP(ON_3dPoint::Origin), nurbsP(ON_3dPoint::Origin);
+  hint[0] = 0;
+  hint[1] = 0;
+  for (int i = 1; i < this->m_cv_count[0]; i++)
+  {
+    for (int passi = 0; passi < 2; passi++)
+    {
+      const double t0 = (0 == passi) ? 0.5*(g[0][i - 1] + g[0][i]) : g[0][i];
+      const double s0 = domain[0].NormalizedParameterAt(t0);
+      if (false == (s0 > 0.0 && s0 < 1.0))
+        continue;
+      for (int j = 1; j < this->m_cv_count[1]; j++)
+      {
+        for (int passj = 0; passj < 2; passj++)
+        {
+          const double t1 = (0 == passj) ? 0.5*(g[1][j - 1] + g[1][j]) : g[1][j];
+          const double s1 = domain[1].NormalizedParameterAt(t1);
+          if (false == (s1 > 0.0 && s1 < 1.0))
+            continue;
+          bezS.Evaluate(s0,s1, 0, 3, &bezP.x);
+          this->Evaluate(t0,t1, 0, 3, &nurbsP.x, 0, hint);
+          double d = nurbsP.DistanceTo(bezP);
+          if (d > zero_tol && d > deviation)
+          {
+            deviation = d;
+            if (max_deviation >= 0.0 && deviation > max_deviation)
+              return failed_rc;
+          }
+        }
+      }
+    }
+  }
+
+  return deviation;
+} 
+
+
 /*
 static 
 bool ON_DuplicateKnots( int order, int cv_count, bool bRevKnot1,

@@ -1728,7 +1728,8 @@ ON_ComparePoint( // returns
   const double wB = (is_rat && pointB[dim] != 0.0) ? 1.0/pointB[dim] : 1.0;
   double a, b, tol;
   int i;
-  for ( i = 0; i < dim; i++ ) {
+  for ( i = 0; i < dim; i++ )
+  {
     a = wA* *pointA++;
     b = wB* *pointB++;
     tol = (fabs(a) + fabs(b))* ON_RELATIVE_TOLERANCE;
@@ -1738,11 +1739,11 @@ ON_ComparePoint( // returns
       return -1;
     if ( b < a-tol )
       return 1;
-    if ( wA < wB- ON_SQRT_EPSILON )
-      return -1;
-    if ( wB < wA- ON_SQRT_EPSILON )
-      return -1;
   }
+  if ( wA < wB- ON_SQRT_EPSILON )
+    return -1;
+  if ( wB < wA- ON_SQRT_EPSILON )
+    return -1;
   return 0;
 }
 
@@ -1762,31 +1763,28 @@ ON_ComparePointList( // returns
           )
 {
   int i, rc = 0, rc1 = 0;
-  bool bDoSecondCheck = ( 1 == is_rat && dim <= 3 && point_count > 0 
+  const bool bDoSecondCheck = ( 1 == is_rat && dim <= 3 && point_count > 0 
                          && ON_IsValid(pointA[dim]) && 0.0 != pointA[dim]
                          && ON_IsValid(pointB[dim]) && 0.0 != pointB[dim]
                          );
-  const double wA = bDoSecondCheck ? pointA[dim] : 1.0; 
-  const double wB = bDoSecondCheck ? pointB[dim] : 1.0; 
-  const double wAtol = wA*ON_ZERO_TOLERANCE;
-  const double wBtol = wB*ON_ZERO_TOLERANCE;
   double A[3] = {0.0,0.0,0.0};
   double B[3] = {0.0,0.0,0.0};
-  const size_t AB_size = dim*sizeof(A[0]);
 
   for ( i = 0; i < point_count && !rc; i++ ) 
   {
     rc = ON_ComparePoint( dim, is_rat, pointA, pointB );
     if (    rc && bDoSecondCheck 
-         && fabs(wA - pointA[dim]) <= wAtol 
-         && fabs(wB - pointB[dim]) <= wBtol )
+      && 0.0 != pointA[dim] && 0.0 != pointB[dim]
+      )
     {
       if ( !rc1 )
         rc1 = rc;
-      memcpy(A,pointA,AB_size);
-      A[0] /= pointA[dim]; A[1] /= pointA[dim]; A[2] /= pointA[dim];
-      memcpy(B,pointB,AB_size);
-      B[0] /= pointB[dim]; B[1] /= pointB[dim]; B[2] /= pointB[dim];
+      // bDoSecondCheck = true ensures is_rat is true and pointX[dim] != 0.0
+      for(int k = 0; k < dim; k++) 
+      {
+        A[k] = pointA[k]/pointA[dim];      
+        B[k] = pointB[k]/pointB[dim];
+      }
       rc = ( 0 == ON_ComparePoint( dim, 0, A, B ) ) ? 0 : rc1;
     }
     pointA += point_strideA;

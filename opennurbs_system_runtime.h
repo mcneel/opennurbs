@@ -47,8 +47,10 @@
 #define ON_RUNTIME_WIN
 #endif
 
-#elif defined(__ANDROID__)
-
+#elif defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+// __EMSCRIPTEN__ is for a web assembly compile which currently compiles with the
+// same settings as an android build. We will need to add an ON_RUNTIME_WASM once
+// the __EMSCRIPTEN__ compile stabilizes
 #if !defined(ON_RUNTIME_ANDROID)
 #define ON_RUNTIME_ANDROID
 #endif

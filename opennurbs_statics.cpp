@@ -607,6 +607,8 @@ const ON_3fVector ON_3fVector::XAxis(1.0f, 0.0f, 0.0f);
 const ON_3fVector ON_3fVector::YAxis(0.0f, 1.0f, 0.0f);
 const ON_3fVector ON_3fVector::ZAxis(0.0f, 0.0f, 1.0f);
 
+const ON_WindingNumber ON_WindingNumber::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindingNumber);
+
 static ON_BoundingBox BoundingBoxInit(double x)
 {
   ON_BoundingBox bbox;
@@ -1033,6 +1035,8 @@ const ON_2dSize ON_2dSize::Unset(ON_UNSET_VALUE, ON_UNSET_VALUE);
 const ON_4dRect ON_4dRect::Zero(0.0, 0.0, 0.0, 0.0);
 const ON_4dRect ON_4dRect::Unset(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
+const ON_OutlineFigure::Orientation ON_Outline::DefaultOuterOrientation = ON_OutlineFigure::Orientation::Clockwise;
+
 const ON_OutlineFigurePoint ON_OutlineFigurePoint::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_OutlineFigurePoint);
 static ON_OutlineFigurePoint Internal_FontGlyphOutlinePoint()
 {
@@ -1322,6 +1326,8 @@ const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::TableComponen
 
 const ON_ModelComponent ON_ModelComponent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponent);
 
+const ON_ModelComponentReference ON_ModelComponentReference::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentReference);
+const ON_ModelComponentWeakReference ON_ModelComponentWeakReference::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentWeakReference);
 
 const ON_ModelComponentContentMark ON_ModelComponentContentMark::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentContentMark);
 
@@ -2302,7 +2308,18 @@ const unsigned int ON_SubDVertex::MaximumFaceCount = 0xFFF0U;
 const unsigned int ON_SubDEdge::MaximumFaceCount = 0xFFF0U;
 const unsigned int ON_SubDFace::MaximumEdgeCount = 0xFFF0U;
 
+const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegionIndex);
+
+static ON_SubDComponentRegionIndex InternalON_SubDComponentRegionIndex_Unset()
+{
+  ON_SubDComponentRegionIndex unset;
+  memset(&unset, 0xFF, sizeof(unset));
+  return unset;
+}
+const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Unset = InternalON_SubDComponentRegionIndex_Unset();
+
 const ON_SubDComponentRegion ON_SubDComponentRegion::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegion);
+const ON_SubDFaceRegion ON_SubDFaceRegion::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFaceRegion);
 
 const ON_ComponentStatus ON_ComponentStatus::NoneSet = ON_ComponentStatus(ON_ComponentState::Clear);
 const ON_ComponentStatus ON_ComponentStatus::Selected = ON_ComponentStatus(ON_ComponentState::Selected);

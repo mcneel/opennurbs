@@ -10,7 +10,6 @@
 		1D4E12A22016B8A400B90EA3 /* example_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D4E12A12016B8A400B90EA3 /* example_test.cpp */; };
 		1D4E12A42016B99F00B90EA3 /* libopennurbs_public.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D4E12A52016B99F00B90EA3 /* libopennurbs_public.a */; };
 		1D4E12A62016B9A600B90EA3 /* libopennurbs_public_zlib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D4E12A72016B9A600B90EA3 /* libopennurbs_public_zlib.a */; };
-		1D4E12A82016B9AB00B90EA3 /* libopennurbs_public_freetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D4E12A92016B9AB00B90EA3 /* libopennurbs_public_freetype.a */; };
 		1D4E12AB2016B9DD00B90EA3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D4E12AA2016B9DD00B90EA3 /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -31,7 +30,6 @@
 		1D4E12A12016B8A400B90EA3 /* example_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = example_test.cpp; sourceTree = "<group>"; };
 		1D4E12A52016B99F00B90EA3 /* libopennurbs_public.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libopennurbs_public.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D4E12A72016B9A600B90EA3 /* libopennurbs_public_zlib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libopennurbs_public_zlib.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		1D4E12A92016B9AB00B90EA3 /* libopennurbs_public_freetype.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libopennurbs_public_freetype.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D4E12AA2016B9DD00B90EA3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -42,7 +40,6 @@
 			files = (
 				1D4E12AB2016B9DD00B90EA3 /* Cocoa.framework in Frameworks */,
 				1D4E12A62016B9A600B90EA3 /* libopennurbs_public_zlib.a in Frameworks */,
-				1D4E12A82016B9AB00B90EA3 /* libopennurbs_public_freetype.a in Frameworks */,
 				1D4E12A42016B99F00B90EA3 /* libopennurbs_public.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,7 +68,6 @@
 			isa = PBXGroup;
 			children = (
 				1D4E12AA2016B9DD00B90EA3 /* Cocoa.framework */,
-				1D4E12A92016B9AB00B90EA3 /* libopennurbs_public_freetype.a */,
 				1D4E12A72016B9A600B90EA3 /* libopennurbs_public_zlib.a */,
 				1D4E12A52016B99F00B90EA3 /* libopennurbs_public.a */,
 			);

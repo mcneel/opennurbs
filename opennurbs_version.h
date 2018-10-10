@@ -44,6 +44,10 @@
 
 #include "opennurbs_public_version.h"
 
+
+#define OPENNURBS_MAX_VERSION_MINOR  0x07F
+#define OPENNURBS_MAX_VERSION_MAJOR  0x03F
+
 ////////////////////////////////////////////////////////////////
 //
 // Major version number >= 0 and <= 63
@@ -68,19 +72,23 @@
 
 ////////////////////////////////////////////////////////////////
 //
-// branch = 0 to 3
+// branch => 0
 // Use ON::VersionBranch() to get this value.
 //   This number identifies the branch used in the build.
 //
-//   The build system automatically sets the value to
-//   1, 2 or 3 before compiling any code.
+//   The build system automatically sets the value before compiling any code.
 //
 //   The file checked into the source code repository
 //   always has branch set to 0.
-//     0 = developer build
-//     1 = build system trunk build
-//     2 = build system release candidate build
-//     3 = build system release build
+//
+//  RMA_VERSION_BRANCH is defined in opennurbs_version.h
+//    0: developer build
+//    1: Windows Commercial build
+//    2: Mac Commercial build
+//    3: Windows BETA build
+//    4: Mac Beta build
+//    5: Windows WIP build
+//    6: Mac WIP build
 //#define OPENNURBS_VERSION_BRANCH 0
 
 #define OPENNURBS_VERSION_BRANCH RMA_VERSION_BRANCH
@@ -151,6 +159,27 @@
 #define ON_VERSION_NUMBER_TIME(year, month, day_of_month) \
   ((((year)-2000)*367) + (ON_VERSION_NUMBER_DAYOFYEAR(year,month,day_of_month)))
 
+// branch is 0 for developer builds, odd for windows builds, and even for Mac builds
+// When compressed into 2 bits, the type of build (Commercial/Beta/WIP) is not encoded.
+//
+//  branch
+//    0: developer build
+//    1: Windows Commercial build
+//    2: Mac Commercial build
+//    3: Windows BETA build
+//    4: Mac Beta build
+//    5: Windows WIP build
+//    6: Mac WIP build
+//
+// ON_VERSION_NUMBER_PLATFORM_ID(branch) =
+// = 0: developer build
+//   1: Windows build
+//   2: Mac build
+//
+// NOTE WELL: 
+//   ON_VERSION_NUMBER_PLATFORM_ID(branch) must be a value between 0 and 3.
+#define ON_VERSION_NUMBER_PLATFORM_ID(branch) \
+   (((branch) > 0x0U) ? (0x02U - ((branch) % 0x02U)) : 0x0U)
 
 ////////////////////////////////////////////////////////////////
 //
@@ -160,7 +189,7 @@
 // values.
 //
 // In almost every situation, it is best to used the function call
-// ON_VersionNumberConstruct(major,minor,year,month,day_of_month)
+// ON_VersionNumberConstruct(major,minor,year,month,day_of_month,branch)
 // to get this value.  The ON_VERSION_NUMBER_CTOR macro is for 
 // rare and unusual situations where the C preprocessor needs 
 // this value.
@@ -169,7 +198,7 @@
   (0x80000000U \
   + ((((major)*0x080U + (minor)))*0x010000U \
   + ((ON_VERSION_NUMBER_TIME(year,month,day_of_month))))*0x04U \
-  + ((branch)))
+  + ((ON_VERSION_NUMBER_PLATFORM_ID(branch))))
 
 ////////////////////////////////////////////////////////////////
 //

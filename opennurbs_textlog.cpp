@@ -536,8 +536,12 @@ void ON_TextLog::Print( const ON_String& string )
 
 void ON_TextLog::PrintString( const char* s )
 {
-  if ( s && *s )
+  if (s && *s)
+  {
+    if (m_beginning_of_line && m_indent.IsNotEmpty())
+      AppendText(static_cast<const char*>(m_indent));
     AppendText(s);
+  }
 }
 
 void ON_TextLog::PrintNewLine()
@@ -548,8 +552,12 @@ void ON_TextLog::PrintNewLine()
 
 void ON_TextLog::PrintString( const wchar_t* s )
 {
-  if ( s && *s )
+  if (s && *s)
+  {
+    if (m_beginning_of_line && m_indent.IsNotEmpty())
+      AppendText(static_cast<const char*>(m_indent));
     AppendText(s);
+  }
 }
 
 void ON_TextLog::PrintRGB( const ON_Color& color )

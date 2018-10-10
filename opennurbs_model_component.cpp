@@ -3819,13 +3819,64 @@ bool ON_BinaryArchive::AddManifestMapItem(
   return true;
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 //
 //
 //
 
-const ON_ModelComponentReference ON_ModelComponentReference::Empty;
+// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+ON_ModelComponentWeakReference::ON_ModelComponentWeakReference() ON_NOEXCEPT
+{}
+
+// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+ON_ModelComponentWeakReference::~ON_ModelComponentWeakReference()
+{}
+
+// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+ON_ModelComponentWeakReference::ON_ModelComponentWeakReference(const ON_ModelComponentWeakReference& src) ON_NOEXCEPT
+  : m_wp(src.m_wp)
+{}
+
+// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+ON_ModelComponentWeakReference& ON_ModelComponentWeakReference::operator=(const ON_ModelComponentWeakReference& src)
+{
+  if ( this != &src)
+    m_wp = src.m_wp;
+  return *this;
+}
+  
+#if defined(ON_HAS_RVALUEREF)
+ON_ModelComponentWeakReference::ON_ModelComponentWeakReference( ON_ModelComponentWeakReference&& src ) ON_NOEXCEPT
+  : m_wp(std::move(src.m_wp))
+{}
+
+ON_ModelComponentWeakReference& ON_ModelComponentWeakReference::operator=(ON_ModelComponentWeakReference&& src)
+{
+  if ( this != &src )
+  {
+    m_wp.reset();
+    m_wp = std::move(src.m_wp);
+  }
+  return *this;
+}
+
+#endif
+
+ON_ModelComponentWeakReference::ON_ModelComponentWeakReference(const ON_ModelComponentReference& src)  ON_NOEXCEPT
+  : m_wp(src.m_sp)
+{}
+
+ON_ModelComponentWeakReference& ON_ModelComponentWeakReference::operator=(const ON_ModelComponentReference& src)
+{
+  m_wp = src.m_sp;
+  return *this;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+//
 
 // Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
 ON_ModelComponentReference::ON_ModelComponentReference() ON_NOEXCEPT
@@ -3864,6 +3915,22 @@ ON_ModelComponentReference& ON_ModelComponentReference::operator=(ON_ModelCompon
 }
 
 #endif
+
+ON_ModelComponentReference::ON_ModelComponentReference(const ON_ModelComponentWeakReference& src) ON_NOEXCEPT
+  : m_sp(src.m_wp.lock())
+{
+  // NOTE WELL: 
+  //   std::shared_ptr<T>(std::weak_ptr<T>) throws an exception when weak_ptr is empty.
+  //   std::shared_ptr<T>(std::weak_ptr<T>.lock()) constructs and empty shared_ptr when weak_ptr is empty.
+}
+
+
+ON_ModelComponentReference& ON_ModelComponentReference::operator=(const ON_ModelComponentWeakReference& src)
+{
+  m_sp = src.m_wp.lock();
+  return *this;
+}
+
 
 ON_ModelComponentReference::ON_ModelComponentReference(
   std::shared_ptr<ON_ModelComponent>& sp
@@ -3917,6 +3984,14 @@ ON_ModelComponentReference ON_ModelComponentReference::CreateForExperts(
 const class ON_ModelComponent* ON_ModelComponentReference::ModelComponent() const ON_NOEXCEPT
 {
   return m_sp.get();
+}
+
+class ON_ModelComponent* ON_ModelComponentReference::ExclusiveModelComponent() const ON_NOEXCEPT
+{
+  return 
+    (1 == m_sp.use_count())
+    ? m_sp.get()
+    : nullptr;
 }
 
 ON__UINT64 ON_ModelComponentReference::ModelComponentRuntimeSerialNumber() const ON_NOEXCEPT

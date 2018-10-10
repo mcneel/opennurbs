@@ -977,58 +977,58 @@ int main ()
   filename = L"my_points.3dm";
   rc = write_points_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_curves.3dm";
   rc = write_curves_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_surfaces.3dm";
   rc = write_surfaces_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_mesh.3dm";
   rc = write_mesh_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_mesh_with_material.3dm";
   rc = write_mesh_with_material_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_spot_light.3dm";
   rc = write_spot_light_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_viewports.3dm";
   rc = write_viewport_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   filename = L"my_trimmed_surface.3dm";
   rc = write_trimmed_surface_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   ON::End();
 

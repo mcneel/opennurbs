@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@
 // - When compiling opennurbs as a static library, ON_COMPILING_OPENNURBS
 //   should be defined and neither OPENNURBS_EXPORTS nor OPENNURBS_IMPORTS
 //   should be defined.
-// - When using opennurbs as a static library, neither 
+// - When using opennurbs as a static library, neither
 //   ON_COMPILING_OPENNURBS nor OPENNURBS_EXPORTS nor OPENNURBS_IMPORTS
 //   should be defined.
 */
@@ -102,7 +102,7 @@
 #if defined(ON_COMPILING_OPENNURBS)
 #if !defined(OPENNURBS_WALL)
 /*
-// When OPENNURBS_WALL is defined, warnings and deprications that 
+// When OPENNURBS_WALL is defined, warnings and deprications that
 // encourage the highest quality of code are used.
 */
 #define OPENNURBS_WALL
@@ -126,12 +126,31 @@
 // places before opennurbs.h or opennurbs_system.h is included.
 // Therefore, this define cannot be in opennurbs_system_runtime.h
 //
-// When ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is defined, 
+// When ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is defined,
 // <Cocoa/Cocoa.h> is included by opennurbs_system.h and
 // your project must link with the Apple Cocoa Framework.
 #define ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE
 
 #endif
+
+#if defined(ON_RUNTIME_APPLE) && defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+
+// TODO:
+//   Requiring ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is too strong,
+//   Determine exactly when ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE should
+//   be defined so opennurbs font / glyph tools will work on iOS.
+
+// The header file opennurbs_system_runtime.h is included in several
+// places before opennurbs.h or opennurbs_system.h is included.
+// Therefore, this define cannot be in opennurbs_system_runtime.h
+//
+// When ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE is defined,
+// Apple Core Text and Core Graphics SDK can be used.
+#define ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE
+
+#endif
+
+
 
 #if defined(ON_64BIT_RUNTIME)
 /* 64 bit (8 byte) pointers */
@@ -279,7 +298,7 @@ typedef ON__UINT32 wchar_t;
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 //
-// Validate ON_SIZEOF_WCHAR_T and set ON_WCHAR_T_ENCODING 
+// Validate ON_SIZEOF_WCHAR_T and set ON_WCHAR_T_ENCODING
 //
 */
 
@@ -359,7 +378,7 @@ typedef ON__UINT32 wchar_t;
 /*
 /////////////////////////////////////////////////////////////////////////
 //
-// Begin Windows system includes - 
+// Begin Windows system includes -
 */
 
 
@@ -605,6 +624,46 @@ typedef ON__UINT32 wchar_t;
 #endif
 #endif
 
+#endif
+
+#if !defined(ON_RUNTIME_WIN) && !defined(ON_RUNTIME_APPLE)
+
+// As of September, 2018 Freetype is not reliable on Windows, MacOS, and iOS.
+//   Its mapping from UNICODE code points to glyph indices is buggy.
+//   It does not support OpenType variable fonts like Windows 10 Bahnschrift.
+//   It does not support font simulation (Windows does a great job here.)
+//   Its support for multiple locale names is limited.
+//   Its support for PANOSE1 is limited.
+//   It does not support font substitution.
+// Windows uses the Direct Write SDK for font and glyph calcuations.
+// MacOS and iOS use the Apple Core Text SDK for font and glyph calcuations.
+
+#if defined(ON_RUNTIME_ANDROID)
+// May work reasonably for Andoid versions < 8-ish as of Sep 2018.
+// Test carefully if working right is important.
+
+// We are currently not using Freetype in OpenNURBS at all.
+// Leaving this in place for testing in the future if we find that we need the
+// library again for glyph metrics.
+// #define OPENNURBS_FREETYPE_SUPPORT
+#else
+
+// not Windows, Apple, or Android
+
+// To disable freetype support, comment out the following define.
+// To enable freetype support, define OPENNURBS_FREETYPE_SUPPORT
+// NOTE WELL: freetype is not delivered in a 32-bit version.
+
+// Whenever possible use native OS tools for font and glyph support.
+// Things like names, outlines, metrics, UNICODE mapping will generally
+// work better align with user's experiences on that platform.
+// Freetype is basically a platform neutral font file file reading toolkit
+// and has all the limitations that arise from that approach to complex
+// information modern OSs manage in complicated ways.
+
+//#define OPENNURBS_FREETYPE_SUPPORT
+
+#endif
 #endif
 
 /*

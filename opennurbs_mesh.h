@@ -2274,6 +2274,28 @@ public:
 
   void DestroyTree( bool bDeleteTree = true );
 
+  /*
+  Description:
+    Check for corrupt data values that are likely to cause crashes.
+  Parameters:
+    bRepair - [in]
+      If true, const_cast<> will be used to change the corrupt data
+      so that crashes are less likely.
+    bSilentError - [in]
+      If true, ON_ERROR will not be called when corruption is detected.
+    text_log - [out]
+      If text_log is not null, then a description of corruption 
+      is printed using text_log.
+  Remarks:
+    Ideally, IsCorrupt() would be a virtual function on ON_Object,
+    but doing that at this point would break the public SDK.
+  */
+  bool IsCorrupt(
+    bool bRepair,
+    bool bSilentError,
+    class ON_TextLog* text_log
+  ) const;
+
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
@@ -4088,8 +4110,8 @@ public:
   // If ON_Mesh::HasNgons() is true, then the mesh has n-gons.
   // When a mesh has ngons, m_NgonMap[] is used to determine when
   // a face belongs to an n-gon.
-  // If m_NgonMap[fi] >= 0, then it is the index of the ngon m_F[]
-  // belongs to.  Otherwise, m_Fngon[fi] is -1.
+  // If m_NgonMap[fi] < m_Ngon.UnsignedCount(), then it is the index of the N-gon in m_Ngon[] 
+  // that m_F[]  belongs to.  Otherwise, m_NgonMap[fi] is ON_UNSET_UINT_INDEX.
   ON_SimpleArray<unsigned int> m_NgonMap; // invalid if m_NgonMap.Count() != m_F.Count()
   ON_SimpleArray<ON_MeshNgon*> m_Ngon;
   ON_MeshNgonAllocator m_NgonAllocator; // use this to allocate elements added to m_Ngon;

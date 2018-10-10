@@ -618,6 +618,44 @@ public:
   int HasNurbForm(
     ) const override;
 
+  /*
+  Description:
+    Approximate the entire NURBS surface with a single nonrational cubic bezier surface.
+    Typically, the NURBS surface has only a few bispans.
+  Parameters:
+    max_deviation - [in]
+      If max_deviation >= 0.0, then the approximation is returned only
+      if the deviation sample is <= max_deviation.
+    bezierSurface - [out]
+  Returns:
+    ON_DBL_QNAN: no bezier surface is returned.
+    If a bezier surface is returned, then the maximum deviation between 
+    the bezier suface this NURBS surface sampled at the Greville abcissa.
+  */
+  double GetCubicBezierApproximation(
+    double max_deviation,
+    class ON_BezierSurface& bezierSurface
+  ) const;
+
+  /*
+  Description:
+    Approximate the entire NURBS surface with a single nonrational cubic bezier surface.
+    Typically, the NURBS surface has only a few bispans.
+  Parameters:
+    max_deviation - [in]
+      If max_deviation >= 0.0, then the approximation is returned only
+      if the deviation sample is <= max_deviation.
+    bezierSurface - [out]
+  Returns:
+    ON_DBL_QNAN: no bezier surface is returned.
+    If a bezier surface is returned, then the maximum deviation between 
+    the bezier suface this NURBS surface sampled at the Greville abcissa.
+  */
+  double GetCubicBezierApproximation(
+    double max_deviation,
+    ON_3dPoint bezCV[4][4]
+  ) const;
+
   /////////////////////////////////////////////////////////////////
   // Interface
 

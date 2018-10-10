@@ -674,6 +674,13 @@ bool ON_DimLinear::GetTextXform(
 
   bool text_outside = false;
   double dist = Measurement();
+  // Display scale for detail viewports when page space dimension measures model space
+  if (ON_nil_uuid != DetailMeasured())
+  {
+    double dist_scale = DistanceScale();
+    if (dist_scale != 1.0 && dist_scale > 0.0)
+      dist /= dist_scale;
+  }
 
   // V6_Dimstyle Arrow1 & Arrow2
   double asz = dimstyle->ArrowSize() * dimscale;
@@ -684,6 +691,11 @@ bool ON_DimLinear::GetTextXform(
   {
     total_text_width = 0.0;
     text_outside = true;
+  }
+  else if (force_text == ON_Dimension::ForceText::Inside)
+  {
+    total_text_width = 0.0;
+    text_outside = false;
   }
   else if (0.0 < total_text_width)
     total_text_width += text_gap;
@@ -1655,12 +1667,14 @@ static int ClipArcToTextRect(
     v0 = v1;
   }
 
-  double s[4];
+  double s[8];
   int intcount = 0;
   for (int i = 0; i < 4; i++)
   {
     ON_3dPoint p[2];
     int icount = ON_Intersect(frust_plane[i], dimarc, p[0], p[1]);
+    if (icount > 2)
+      icount = 2;
     for (int ip = 0; ip < icount; ip++)
     {
       double d = cam_plane_eq.ValueAt(p[ip]);
@@ -1684,6 +1698,8 @@ static int ClipArcToTextRect(
       {
         dimarc.ClosestPointTo(p[ip], &s[intcount]);
         intcount++;
+        if (intcount > 7)
+          intcount = 7;
       }
     }
   }
@@ -2649,7 +2665,14 @@ bool ON_DimAngular::AdjustFromPoints(
   if (!ON_DimAngular::FindAngleVertex(lines, pickpoints, plane, center_point))
     return false;
 
-  if (AdjustFromPoints(plane, center_point, pe1on, pe2on, dimline_pt))
+  ON_3dPoint pd1 = pe1on;
+  ON_3dPoint pd2 = pe2on;
+  if (center_point.DistanceTo(pe1on) < ON_SQRT_EPSILON)
+    pd1 = pd1on;
+  if (center_point.DistanceTo(pe2on) < ON_SQRT_EPSILON)
+    pd2 = pd2on;
+
+  if (AdjustFromPoints(plane, center_point, pd1, pd2, dimline_pt))
   {
     m_ext_offset_1 = center_point.DistanceTo(pe1on);
     m_ext_offset_2 = center_point.DistanceTo(pe2on);
@@ -3967,10 +3990,15 @@ bool ON_DimRadial::GetTextXform(
 
   double text_width = 0.0;
   double text_height = 0.0;
+  double line_height = 0.0;
   double text_gap = 0.0;
+  double landing_length = 0.0;
 
   const ON::TextOrientation text_orientation = dimstyle->DimRadialTextOrientation();
   const ON_DimStyle::ContentAngleStyle text_alignment = dimstyle->DimRadialTextAngleStyle();
+  const ON::TextHorizontalAlignment halign = dimstyle->LeaderTextHorizontalAlignment();
+  //const ON::TextVerticalAlignment valign = dimstyle->LeaderTextVerticalAlignment();
+
   // Always move text to InLine if it's going to be horizontal and in the view plane
   const ON_DimStyle::TextLocation text_location =   
     (ON::TextOrientation::InView == text_orientation)
@@ -3991,7 +4019,9 @@ bool ON_DimRadial::GetTextXform(
   text_center = (cp[0] * dimscale + cp[2] * dimscale) / 2.0;
   text_width = (cp[1].x - cp[0].x) * dimscale;
   text_height = (cp[3].y - cp[0].y) * dimscale;
+  line_height = dimstyle->TextHeight() * dimscale;
   text_gap = dimstyle->TextGap() * dimscale;
+  landing_length = dimstyle->LeaderLandingLength() * dimscale;
 
   ON_2dPoint dimline_pt = DimlinePoint();
   ON_2dPoint radius_pt = RadiusPoint();
@@ -4069,14 +4099,45 @@ bool ON_DimRadial::GetTextXform(
 
   // Text position adjustment
   ON_2dVector shift(0.0, 0.0);
-  if(ON_DimStyle::TextLocation::AboveDimLine == text_location)
-    shift.y = text_height / 2.0 + text_gap;
+  shift.y = -line_height / 2.0;
+  if (ON_DimStyle::TextLocation::AboveDimLine == text_location)
+    shift.y = text_gap + text_height;
 
-  shift.x = text_width / 2.0 + text_gap;
-  shift.x += dimstyle->LeaderLandingLength() * dimscale;
+  shift.x = text_gap;
+  shift.x += landing_length;
+  //shift.x += text_width / 2.0;
 
   if (-ON_SQRT_EPSILON > tail_dir.x)  // text to left
+  {
+    switch (halign)
+    {
+    default:
+    case ON::TextHorizontalAlignment::Left:
+      shift.x += text_width;
+      break;
+    case ON::TextHorizontalAlignment::Right:
+      break;
+    case ON::TextHorizontalAlignment::Center:
+      shift.x += text_width / 2.0;
+      break;
+    }
     shift.y = -shift.y;
+  }
+  else
+  {
+    switch (halign)
+    {
+    default:
+    case ON::TextHorizontalAlignment::Left:
+      break;
+    case ON::TextHorizontalAlignment::Right:
+      shift.x += text_width;
+      break;
+    case ON::TextHorizontalAlignment::Center:
+      shift.x += text_width / 2.0;
+      break;
+    }
+  }
 
   if (dim_ydir * view_y < 0.0)
     shift.y = -shift.y;

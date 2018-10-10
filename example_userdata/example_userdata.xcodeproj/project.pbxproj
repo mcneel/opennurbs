@@ -10,7 +10,6 @@
 		1D41D1B41EE0913600EB94A6 /* example_ud.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D41D1B11EE0913600EB94A6 /* example_ud.cpp */; };
 		1D41D1B51EE0913600EB94A6 /* example_userdata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D41D1B31EE0913600EB94A6 /* example_userdata.cpp */; };
 		1D41D1D41EE0A01200EB94A6 /* libopennurbs_public.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D41D1D31EE0A01200EB94A6 /* libopennurbs_public.a */; };
-		1D41D1D61EE0A01700EB94A6 /* libopennurbs_public_freetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D41D1D51EE0A01700EB94A6 /* libopennurbs_public_freetype.a */; };
 		1D41D1D81EE0A01B00EB94A6 /* libopennurbs_public_zlib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D41D1D71EE0A01B00EB94A6 /* libopennurbs_public_zlib.a */; };
 		1D77E3911EE20FDC00994B0B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D77E3901EE20FDC00994B0B /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -33,7 +32,6 @@
 		1D41D1B21EE0913600EB94A6 /* example_ud.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = example_ud.h; sourceTree = "<group>"; };
 		1D41D1B31EE0913600EB94A6 /* example_userdata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = example_userdata.cpp; sourceTree = "<group>"; };
 		1D41D1D31EE0A01200EB94A6 /* libopennurbs_public.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public.a; path = ../build/Debug/libopennurbs_public.a; sourceTree = "<group>"; };
-		1D41D1D51EE0A01700EB94A6 /* libopennurbs_public_freetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public_freetype.a; path = ../freetype263/build/Debug/libopennurbs_public_freetype.a; sourceTree = "<group>"; };
 		1D41D1D71EE0A01B00EB94A6 /* libopennurbs_public_zlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public_zlib.a; path = ../zlib/build/Debug/libopennurbs_public_zlib.a; sourceTree = "<group>"; };
 		1D77E3901EE20FDC00994B0B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -45,7 +43,6 @@
 			files = (
 				1D77E3911EE20FDC00994B0B /* Cocoa.framework in Frameworks */,
 				1D41D1D81EE0A01B00EB94A6 /* libopennurbs_public_zlib.a in Frameworks */,
-				1D41D1D61EE0A01700EB94A6 /* libopennurbs_public_freetype.a in Frameworks */,
 				1D41D1D41EE0A01200EB94A6 /* libopennurbs_public.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,7 +74,6 @@
 			children = (
 				1D77E3901EE20FDC00994B0B /* Cocoa.framework */,
 				1D41D1D71EE0A01B00EB94A6 /* libopennurbs_public_zlib.a */,
-				1D41D1D51EE0A01700EB94A6 /* libopennurbs_public_freetype.a */,
 				1D41D1D31EE0A01200EB94A6 /* libopennurbs_public.a */,
 			);
 			name = Frameworks;

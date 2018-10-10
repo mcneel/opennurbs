@@ -11,7 +11,6 @@
 		1DCB16F11EE0835C004CC693 /* example_read.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DCB16F01EE0835C004CC693 /* example_read.cpp */; };
 		1DCB16F41EE0841D004CC693 /* example_ud.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DCB16F31EE0841D004CC693 /* example_ud.cpp */; };
 		1DCB16F71EE0883F004CC693 /* libopennurbs_public.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DCB16F61EE0883F004CC693 /* libopennurbs_public.a */; };
-		1DCB16F91EE08847004CC693 /* libopennurbs_public_freetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DCB16F81EE08847004CC693 /* libopennurbs_public_freetype.a */; };
 		1DCB16FB1EE08850004CC693 /* libopennurbs_public_zlib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DCB16FA1EE08850004CC693 /* libopennurbs_public_zlib.a */; };
 /* End PBXBuildFile section */
 
@@ -33,7 +32,6 @@
 		1DCB16F01EE0835C004CC693 /* example_read.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = example_read.cpp; sourceTree = "<group>"; };
 		1DCB16F31EE0841D004CC693 /* example_ud.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = example_ud.cpp; path = ../example_userdata/example_ud.cpp; sourceTree = "<group>"; };
 		1DCB16F61EE0883F004CC693 /* libopennurbs_public.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public.a; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/opennurbs_public-guyfbzppmwxsskejyvyxsmsqppib/Build/Products/Debug/libopennurbs_public.a"; sourceTree = "<group>"; };
-		1DCB16F81EE08847004CC693 /* libopennurbs_public_freetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public_freetype.a; path = ../freetype263/build/Debug/libopennurbs_public_freetype.a; sourceTree = "<group>"; };
 		1DCB16FA1EE08850004CC693 /* libopennurbs_public_zlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopennurbs_public_zlib.a; path = ../zlib/build/Debug/libopennurbs_public_zlib.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,7 +42,6 @@
 			files = (
 				1D77E3891EE20FA700994B0B /* Cocoa.framework in Frameworks */,
 				1DCB16FB1EE08850004CC693 /* libopennurbs_public_zlib.a in Frameworks */,
-				1DCB16F91EE08847004CC693 /* libopennurbs_public_freetype.a in Frameworks */,
 				1DCB16F71EE0883F004CC693 /* libopennurbs_public.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -78,7 +75,6 @@
 			children = (
 				1D77E3881EE20FA700994B0B /* Cocoa.framework */,
 				1DCB16FA1EE08850004CC693 /* libopennurbs_public_zlib.a */,
-				1DCB16F81EE08847004CC693 /* libopennurbs_public_freetype.a */,
 				1DCB16F61EE0883F004CC693 /* libopennurbs_public.a */,
 			);
 			name = Frameworks;

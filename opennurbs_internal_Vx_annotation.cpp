@@ -423,7 +423,7 @@ ON_Text* ON_Text::CreateFromV5TextObject(
   const ON::TextVerticalAlignment valign = ON::TextVerticalAlignmentFromV5Justification(just);
 
   ON_Plane plane = V5_text_object.Plane();
-  const double h = V5_text_object.Height();
+  const double v5height = V5_text_object.Height();
   ON_wString txt = V5_text_object.TextFormula();
   if (txt.IsEmpty())
     txt = V5_text_object.TextValue();
@@ -442,8 +442,8 @@ ON_Text* ON_Text::CreateFromV5TextObject(
   {
     double dimscale = dim_style.DimScale();
     double dsht = dim_style.TextHeight();
-    double widthscale = h * dimscale / dsht;
-    double width = (wrapwidth + (h * 0.1)) * widthscale;
+    double widthscale = v5height * dimscale / dsht;
+    double width = (wrapwidth + (v5height * 0.1)) * widthscale;
     V6_text_object->Create(newtxt, &dim_style, plane, true, width, 0.0);
   }
   else
@@ -452,12 +452,46 @@ ON_Text* ON_Text::CreateFromV5TextObject(
     // These override settings currently get erased by 
   // ON_Annotation::SetDimensionStyleId(ON_UUID dimstyle_id)
   // which deletes any existing override style
-  if (h > 0.0 && h != dim_style.TextHeight())
-    V6_text_object->SetTextHeight(&dim_style, h);
+
+  if (v5height > 0.0 && v5height != dim_style.TextHeight())
+    V6_text_object->SetTextHeight(&dim_style, v5height);
   if (halign != dim_style.TextHorizontalAlignment())
     V6_text_object->SetTextHorizontalAlignment(&dim_style, halign);
   if (valign != dim_style.TextVerticalAlignment())
     V6_text_object->SetTextVerticalAlignment(&dim_style, valign);
+
+  bool setmask = false;
+  ON_TextMask mask = dim_style.TextMask();
+  bool drawmask = V5_text_object.DrawTextMask();
+  if (drawmask != mask.DrawTextMask())
+  {
+    mask.SetDrawTextMask(drawmask);
+    setmask = true;
+  }
+  if (drawmask)
+  {
+    double mb = V5_text_object.MaskOffsetFactor() * v5height;
+    if (mb != mask.MaskBorder())
+    {
+      mask.SetMaskBorder(mb);
+      setmask = true;
+    }
+    ON_TextMask::MaskType mt = mask.MaskFillType();
+    int mc = V5_text_object.MaskColorSource();
+    if ((mt == ON_TextMask::MaskType::BackgroundColor && mc != 0) ||
+      (mt == ON_TextMask::MaskType::MaskColor && mc != 1))
+    {
+      mask.SetMaskFillType(mc == 0 ? ON_TextMask::MaskType::BackgroundColor : ON_TextMask::MaskType::MaskColor);
+      setmask = true;
+    }
+    if (V5_text_object.MaskColor() != mask.MaskColor())
+    {
+      mask.SetMaskColor(V5_text_object.MaskColor());
+      setmask = true;
+    }
+  }
+  if (setmask)
+    V6_text_object->SetTextMask(&dim_style, mask);
 
 
   if (V5_text_object.m_annotative_scale && annotation_context->AnnotationSettingsAreSet())
@@ -599,11 +633,14 @@ ON_OBSOLETE_V5_TextObject* ON_OBSOLETE_V5_TextObject::CreateFromV6TextObject(
         v5_text_entity_scale = annotation_settings.WorldViewTextScale();
       }
 
-      const double dim_style_scale = V6_text_object.DimScale(&parent_dim_style);
-      if (ON_IsValid(dim_style_scale) && dim_style_scale > 0.0 && v5_text_entity_scale > 0.0 && dim_style_scale != v5_text_entity_scale)
+      if (annotation_settings.IsModelSpaceAnnotationScalingEnabled())
       {
-        const double scale = dim_style_scale / v5_text_entity_scale;
-        V5_text_object->m_textheight *= scale;
+        const double dim_style_scale = V6_text_object.DimScale(&parent_dim_style);
+        if (ON_IsValid(dim_style_scale) && dim_style_scale > 0.0 && v5_text_entity_scale > 0.0 && dim_style_scale != v5_text_entity_scale)
+        {
+          const double scale = dim_style_scale / v5_text_entity_scale;
+          V5_text_object->m_textheight *= scale;
+        }
       }
     }
   }
@@ -1134,6 +1171,8 @@ ON_DimAngular* ON_DimAngular::CreateFromV5DimAngular(
   V6_dim_angle->SetUseDefaultTextPoint(!V5_dim_angle.UserPositionedText());
   ON_wString usrtext = V5_dim_angle.TextFormula();
   usrtext.Replace(L"\\", L"\\\\");
+  if (usrtext.Length() > 1 && usrtext[usrtext.Length()-1] == ON_DegreeSymbol)
+    usrtext.SetLength(usrtext.Length() - 1);
   V6_dim_angle->SetUserText(usrtext.Array());
 
   // updates any m_overrides to be current and updates content hash.
@@ -1396,6 +1435,10 @@ ON_DimOrdinate* ON_DimOrdinate::CreateFromV5DimOrdinate(
     V6_dim_ordinate->SetDetailMeasured(extra->DetailMeasured());
     V6_dim_ordinate->SetDistanceScale(extra->DistanceScale());
   }
+
+  ON_wString usrtext = v5_dim_ordinate.TextFormula();
+  usrtext.Replace(L"\\", L"\\\\");
+  V6_dim_ordinate->SetUserText(usrtext.Array());
   
   // updates any m_overrides to be current and updates content hash.
   parent_dim_style.ContentHash();

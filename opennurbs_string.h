@@ -947,6 +947,13 @@ public:
 	bool LoadResourceString( HINSTANCE, UINT); // load from Windows string resource
 										                         // 2047 chars max
 #endif
+  
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  ON_String(CFStringRef);
+  
+  CFStringRef ToAppleCFString() const;
+#endif
+  
   /*
   Parameters:
     bLengthTest - [in]
@@ -2200,6 +2207,12 @@ public:
 										                        // 2047 characters max
 #endif
 
+
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  ON_wString(CFStringRef);
+  
+  CFStringRef ToAppleCFString() const;
+#endif
   /*
   Parameters:
     bLengthTest - [in]
@@ -3142,6 +3155,58 @@ public:
   static const ON_wString PreciseFromNumber(
     double d // "%.17g"
     );
+
+  /*
+  Parameters:
+    date_format - [in]
+    date_format - [in]
+    time_format - [in]
+    date_separator - [in]
+      Character placed between the year, month and day values.
+      If 0, then ON_wString::HyphenMinus is used to
+    date_time_separator - [in]
+      Character placed between the date and time.
+      If 0, then ON_wString::Space is used.
+    time_separator - [in]
+      Character placed between the hour, minute, and second values.
+      If 0, then : (colon) is used.
+  Returns:
+    A string value for the current coordinated universal time (UTC).
+  */
+  
+  static const ON_wString FromCurrentCoordinatedUniversalTime(
+    ON_DateFormat date_format,
+    ON_TimeFormat time_format,
+    wchar_t date_separator,
+    wchar_t date_time_separator,
+    wchar_t time_separator
+  );
+
+  /*
+  Parameters:
+    t - [in]
+      time to format
+    date_format - [in]
+    date_format - [in]
+    time_format - [in]
+    date_separator - [in]
+      Character placed between the year, month and day values.
+      If 0, then ON_wString::HyphenMinus is used to
+    date_time_separator - [in]
+      Character placed between the date and time.
+      If 0, then ON_wString::Space is used.
+    time_separator - [in]
+      Character placed between the hour, minute, and second values.
+      If 0, then : (colon) is used.
+  */
+  static const ON_wString FromTime(
+    const struct tm& t,
+    ON_DateFormat date_format,
+    ON_TimeFormat time_format,
+    wchar_t date_separator,
+    wchar_t date_time_separator,
+    wchar_t time_separator
+  );
 
   /*
   Description:

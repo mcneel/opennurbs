@@ -630,6 +630,7 @@ void ON_Mesh::Destroy()
   DestroyRuntimeCache( true );
   m_Ttag.Default();
   m_Ctag.Default();
+  m_dV.Destroy();
   m_V.Destroy();
   m_F.Destroy();
   m_N.Destroy();
@@ -649,6 +650,7 @@ void ON_Mesh::Destroy()
 void ON_Mesh::EmergencyDestroy()
 {
   DestroyRuntimeCache( false );
+  m_dV.EmergencyDestroy();
   m_V.EmergencyDestroy();
   m_F.EmergencyDestroy();
   m_N.EmergencyDestroy();
@@ -658,6 +660,8 @@ void ON_Mesh::EmergencyDestroy()
   m_S.EmergencyDestroy();
   m_K.EmergencyDestroy();
   m_C.EmergencyDestroy();
+  m_NgonMap.EmergencyDestroy();
+  m_Ngon.EmergencyDestroy();
 }
 
 static bool ON_MeshIsNotValid(bool bSilentError)
@@ -896,6 +900,123 @@ unsigned int ON_MeshNgon::IsValid(
   return bdry_edge_count;
 }
 
+static void Internal_ON_Mesh_IsCorruptMessage(
+  bool bSilentError,
+  bool& bIsCorrupt,
+  ON_TextLog* text_log,
+  const wchar_t* corruption_description
+)
+{
+  if (false == bIsCorrupt)
+  {
+    if (false == bSilentError)
+    {
+      ON_ERROR("ON_Mesh data is corrupt.");
+    }
+    bIsCorrupt = true;
+    if (nullptr != text_log)
+      text_log->PrintString(corruption_description);
+  }
+}
+
+bool ON_Mesh::IsCorrupt(
+  bool bRepair,
+  bool bSilentError,
+  class ON_TextLog* text_log
+) const
+{
+  const unsigned int V_count = m_V.UnsignedCount();
+  unsigned int F_count = m_F.UnsignedCount();
+
+  bool bIsCorrupt = false;
+
+  // test faces first
+  for (unsigned int fi = 0; fi < F_count; fi++)
+  {
+    unsigned int* fvi = (unsigned int*)m_F[fi].vi;
+    for (int j = 0; j < 4; j++)
+    {
+      if (fvi[j] >= V_count)
+      {
+        Internal_ON_Mesh_IsCorruptMessage(
+          bSilentError,
+          bIsCorrupt,
+          text_log,
+          L"ON_Mesh.m_F[] has out of range vertex indices.\n"
+        );
+        if (bRepair)
+        {
+          fvi[0] = V_count; // mark this corrupt face for deletion below
+
+          // deleting a face makes cached information invalid
+          // and the fact the face was corrupt makes any
+          // set values suspect.
+          const_cast<ON_Mesh*>(this)->m_invalid_count = 0;
+          const_cast<ON_Mesh*>(this)->m_quad_count = 0;
+          const_cast<ON_Mesh*>(this)->m_triangle_count = 0;
+
+          const_cast<ON_Mesh*>(this)->m_mesh_is_closed = 0;
+          const_cast<ON_Mesh*>(this)->m_mesh_is_manifold = 0;
+          const_cast<ON_Mesh*>(this)->m_mesh_is_oriented = 0;
+          const_cast<ON_Mesh*>(this)->m_mesh_is_solid = 0;
+        }
+      }
+    }
+  }
+
+  if (bIsCorrupt && bRepair)
+  {
+    // remove corrupt faces
+    // N-gon indices reference faces that will get new indices
+    // or get deleted.
+    // If the creator couldn't get the vertex indices in a 
+    // face set correctly, then they loose any N-gon work
+    // too that may or may not have been done correctly. 
+    // (Harsh, I know).
+    const_cast<ON_Mesh*>(this)->RemoveAllNgons();
+
+
+    unsigned int new_F_count = 0;
+    ON_MeshFace* F = const_cast<ON_MeshFace*>(m_F.Array());
+    ON_3fVector* FN =
+      (F_count == m_FN.UnsignedCount())
+      ? const_cast<ON_3fVector*>(m_FN.Array())
+      : nullptr;
+    if ( nullptr == FN)
+      const_cast<ON_Mesh*>(this)->m_F.SetCount(0);
+
+    for (unsigned int fi = 0; fi < F_count; fi++)
+    {
+      if (V_count ==(unsigned int)F[fi].vi[0])
+        continue; // corrupt face
+
+      F[new_F_count] = F[fi];
+      if (nullptr != FN)
+        FN[new_F_count] = FN[fi];
+      new_F_count++;
+    }
+
+    const_cast<ON_Mesh*>(this)->m_F.SetCount(new_F_count);
+    if (nullptr != FN)
+      const_cast<ON_Mesh*>(this)->m_FN.SetCount(new_F_count);
+    F_count = new_F_count;
+  }
+
+  if (0 != m_dV.UnsignedCount() && V_count != m_dV.UnsignedCount())
+  {
+    Internal_ON_Mesh_IsCorruptMessage(
+      bSilentError,
+      bIsCorrupt,
+      text_log,
+      L"ON_Mesh.m_dV[] has wrong size.\n"
+    );
+    if( bRepair )
+      const_cast<ON_Mesh*>(this)->m_dV.SetCount(0);
+  }
+
+  return bIsCorrupt;
+}
+
 unsigned int ON_MeshNgon::IsValid(
   const ON_MeshNgon* ngon,
   unsigned int ngon_index,
@@ -917,6 +1038,9 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
   const ON__INT_PTR hightbits = ~lowbit;
   bool bSilentError = ( 0 != (lowbit & ((ON__INT_PTR)text_logx)) );
   ON_TextLog* text_log = (ON_TextLog*)(((ON__INT_PTR)text_logx) & hightbits);
+
+  if (IsCorrupt(false, bSilentError, text_log))
+    return false;
 
   const unsigned int facet_count = FaceUnsignedCount();
   const unsigned int vertex_count = VertexUnsignedCount();
@@ -2569,16 +2693,26 @@ bool ON_Mesh::Transform(
        const ON_Xform& xform
        )
 {
-  const unsigned int vertex_count = VertexUnsignedCount();
-  const bool bIsValid_fV = (vertex_count == m_V.UnsignedCount());
-  const bool bIsValid_dV = (vertex_count == m_dV.UnsignedCount());
-  const bool bSyncheddV = bIsValid_fV && bIsValid_dV && HasSynchronizedDoubleAndSinglePrecisionVertices();
+  // Tansform user data before doing sanity checks in case rogue code
+  // damages m_V[], m_dV[] or other data members.
   TransformUserData(xform);
 	DestroyTree();
 
-  if ( bIsValid_fV )
-   ON_TransformPointList( 3, false, vertex_count, 3, &m_dV[0][0], xform );
+  const unsigned int vertex_count = VertexUnsignedCount();
 
+  const bool bIsValid_fV = (vertex_count == m_V.UnsignedCount());
+  if (false == bIsValid_fV)
+    m_V.SetCount(0);
+
+  const bool bIsValid_dV = (vertex_count == m_dV.UnsignedCount());
+  if (false == bIsValid_dV)
+    m_dV.SetCount(0);
+
+  const bool bSyncheddV = bIsValid_fV && bIsValid_dV && HasSynchronizedDoubleAndSinglePrecisionVertices();
+
+  if (bIsValid_dV)
+    ON_TransformPointList(3, false, vertex_count, 3, &m_dV[0][0], xform);
+  
   double d = xform.Determinant();
   bool rc = false;
   if ( bSyncheddV )
@@ -2588,7 +2722,7 @@ bool ON_Mesh::Transform(
     UpdateSinglePrecisionVertices();
     rc = true;
   }
-  else
+  else if ( bIsValid_fV )
   {
     rc = ON_TransformPointList( 3, false, vertex_count, 3, &m_V[0][0], xform );
   }

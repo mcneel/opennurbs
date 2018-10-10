@@ -789,24 +789,42 @@ example_userdata/example_ud.o : example_userdata/example_ud.h $(ON_INC)
 
 $(EXAMPLE_OBJ) : $(EXAMPLE_INC) $(ON_INC)
 
-# opennurbs_freetype.h requires -I./freetype263/include
-ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS -I./freetype263/include
-$(ON_OBJ) : CFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
-$(ON_OBJ) : CCFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
-$(ON_OBJ) : $(ON_INC)
-
 ZLIB_OBJ_EXTRA_FLAGS = -DMY_ZCALLOC -DZ_PREFIX
 $(ZLIB_OBJ) : CFLAGS+=$(ZLIB_OBJ_EXTRA_FLAGS)
 $(ZLIB_OBJ) : $(ZLIB_INC)
 
-FREETYPE_OBJ_EXTRA_FLAGS = -DFT2_BUILD_LIBRARY -I./freetype263/include
-$(FREETYPE_OBJ) : CFLAGS+=$(FREETYPE_OBJ_EXTRA_FLAGS)
-$(FREETYPE_OBJ) : $(FREETYPE_INC)
+########################################################
+##
+## opennurbs without freetype
+##
+ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS
+$(ON_OBJ) : CFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
+$(ON_OBJ) : CCFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
+$(ON_OBJ) : $(ON_INC)
 
-$(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ) $(FREETYPE_OBJ)
+$(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ)
 	-$(RM) $@
-	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ)  $(FREETYPE_OBJ) 
+	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ)
 	$(RANLIB) $@
+
+########################################################
+##
+## opennurbs with freetype
+##
+### opennurbs_freetype.h requires -I./freetype263/include
+##ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS -I./freetype263/include
+##$(ON_OBJ) : CFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
+##$(ON_OBJ) : CCFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
+##$(ON_OBJ) : $(ON_INC)
+##
+##FREETYPE_OBJ_EXTRA_FLAGS = -DFT2_BUILD_LIBRARY -I./freetype263/include
+##$(FREETYPE_OBJ) : CFLAGS+=$(FREETYPE_OBJ_EXTRA_FLAGS)
+##$(FREETYPE_OBJ) : $(FREETYPE_INC)
+##
+##$(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ) $(FREETYPE_OBJ)
+##	-$(RM) $@
+##	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ)  $(FREETYPE_OBJ) 
+##	$(RANLIB) $@
 
 example_read/example_read : example_read/example_read.o example_userdata/example_ud.o $(OPENNURBS_LIB_FILE)
 	$(LINK) $(LINKFLAGS) example_read/example_read.o example_userdata/example_ud.o -L. -l$(OPENNURBS_LIB_NAME) -lm -o $@
@@ -830,5 +848,6 @@ clean :
 	-$(RM) $(OPENNURBS_LIB_FILE)
 	-$(RM) $(ON_OBJ)
 	-$(RM) $(ZLIB_OBJ)
+	-$(RM) $(FREETYPE_OBJ)
 	-$(RM) $(EXAMPLE_OBJ)
 	-$(RM) $(EXAMPLES)

@@ -99,17 +99,17 @@ unsigned int ONX_ErrorCounter::TotalCount() const
 
 unsigned int ONX_ErrorCounter::IncrementFailureCount()
 {
-  return ++m_failure_count;
+  return ++m_failure_count; // <- Good location for a debugger breakpoint.
 }
 
 unsigned int ONX_ErrorCounter::IncrementErrorCount()
 {
-  return ++m_error_count;
+  return ++m_error_count; // <- Good location for a debugger breakpoint.
 }
 
 unsigned int ONX_ErrorCounter::IncrementWarningCount()
 {
-  return ++m_warning_count;
+  return ++m_warning_count; // <- Good location for a debugger breakpoint.
 }
 
 void ONX_ErrorCounter::ClearLibraryErrors()
@@ -127,8 +127,8 @@ unsigned int ONX_ErrorCounter::AddLibraryErrors()
     = bActive
     ? (m_opennurbs_library_error_count - count0)
     : 0U;
-  if (bActive)
-    m_error_count += count;
+  if (bActive && count > 0)
+    m_error_count += count; // <- Good location for a debugger breakpoint.
   return count;
 }
 
@@ -147,8 +147,8 @@ unsigned int ONX_ErrorCounter::AddLibraryWarnings()
     = bActive
     ? (m_opennurbs_library_warning_count - count0)
     : 0U;
-  if (bActive)
-    m_warning_count += count;
+  if (bActive && count>0)
+    m_warning_count += count; // <- Good location for a debugger breakpoint.
   return count;
 }
 
@@ -287,8 +287,14 @@ public:
   ONX_ModelComponentReferenceLink& operator=(const ONX_ModelComponentReferenceLink&) = default;
 
 public:
+  // m_mcr in this class is the "first"  std::shared_ptr<ON_ModelComponent> that manages
+  // the referenced ON_ModelComponent and is what insures ON_ModelComponent alive inside
+  // and ONX_Model for the duration of the model's lifetime.
+  //
+  // m_sn = ON_ModelComponent.RuntimeSerialNumber() so sn lookup can be safely used to find runtime pointer.
+  // When m_mcr.ModelComponent() is not nullptr, then m_sn = m_mcr.ModelComponent()->RuntimeSerialNumber().
   ON_ModelComponentReference m_mcr;
-  ON__UINT64 m_sn = 0;
+  ON__UINT64 m_sn = 0; 
   ONX_ModelComponentReferenceLink* m_next = nullptr;
   ONX_ModelComponentReferenceLink* m_prev = nullptr;
 };
@@ -570,6 +576,16 @@ ON_ModelComponentReference ONX_Model::ComponentFromId(
 {
   ON__UINT64 sn = m_manifest.ItemFromId(component_type, component_model_id).ComponentRuntimeSerialNumber();
   ONX_ModelComponentReferenceLink* link = Internal_ModelComponentLinkFromSerialNumber(sn);
+  return (nullptr != link)
+    ? link->m_mcr
+    : ON_ModelComponentReference::Empty;
+}
+
+const ON_ModelComponentReference& ONX_Model::ComponentFromRuntimeSerialNumber(
+  ON__UINT64 runtime_serial_number
+) const
+{
+  ONX_ModelComponentReferenceLink* link = Internal_ModelComponentLinkFromSerialNumber(runtime_serial_number);
   return (nullptr != link)
     ? link->m_mcr
     : ON_ModelComponentReference::Empty;
@@ -3445,34 +3461,37 @@ bool ONX_Model::Write(
   }
 
   // STEP 17: - write user tables (plug-in info, etc.)
-  if ( nullptr != m_model_user_string_list && m_model_user_string_list->UserStringCount() > 0 )
+  if (archive.ArchiveContains3dmTable(ON_3dmArchiveTableType::user_table))
   {
-    // Write the document user strings (key-value pairs) as
-    // a user table with plug-in id = 
-    ON_UUID model_user_string_plugin_id = ON_CLASS_ID(ON_DocumentUserStringList);
-    if ( archive.BeginWrite3dmUserTable(model_user_string_plugin_id,false,0,0) )
+    if (nullptr != m_model_user_string_list && m_model_user_string_list->UserStringCount() > 0)
     {
-      archive.WriteObject(m_model_user_string_list);
-      archive.EndWrite3dmUserTable();
-    }
-  }
-
-  // USER DATA TABLE
-  for( int i = 0; ok && i < m_userdata_table.Count(); i++ )
-  {
-    const ONX_Model_UserData* model_ud = m_userdata_table[i];
-    if (nullptr == model_ud)
-      continue;
-    if ( ON_UuidIsNotNil(model_ud->m_uuid) )
-    {
-      if ( !archive.Write3dmAnonymousUserTableRecord(
-        model_ud->m_uuid,
-        model_ud->m_usertable_3dm_version,
-        model_ud->m_usertable_opennurbs_version,
-        model_ud->m_goo) 
-        )
+      // Write the document user strings (key-value pairs) as
+      // a user table with plug-in id = 
+      ON_UUID model_user_string_plugin_id = ON_CLASS_ID(ON_DocumentUserStringList);
+      if (archive.BeginWrite3dmUserTable(model_user_string_plugin_id, false, 0, 0))
       {
+        archive.WriteObject(m_model_user_string_list);
+        archive.EndWrite3dmUserTable();
+      }
+    }
+
+    // USER DATA TABLE
+    for (int i = 0; ok && i < m_userdata_table.Count(); i++)
+    {
+      const ONX_Model_UserData* model_ud = m_userdata_table[i];
+      if (nullptr == model_ud)
         continue;
+      if (ON_UuidIsNotNil(model_ud->m_uuid))
+      {
+        if (!archive.Write3dmAnonymousUserTableRecord(
+          model_ud->m_uuid,
+          model_ud->m_usertable_3dm_version,
+          model_ud->m_usertable_opennurbs_version,
+          model_ud->m_goo)
+          )
+        {
+          continue;
+        }
       }
     }
   }
@@ -3649,7 +3668,7 @@ void ONX_ModelComponentIterator::Internal_SetLink(
     m_current_component_sn = 0;
     m_next_component_sn = 0;
     m_prev_component_sn = 0;
-    m_current_component = ON_ModelComponentReference::Empty;
+    m_current_component_weak_ref = ON_ModelComponentWeakReference::Empty;
     m_model_content_version = 0;
   }
   else
@@ -3657,7 +3676,7 @@ void ONX_ModelComponentIterator::Internal_SetLink(
     m_current_component_sn = link->m_sn;
     m_next_component_sn = (nullptr != link->m_next) ? link->m_next->m_sn : 0;
     m_prev_component_sn = (nullptr != link->m_prev) ? link->m_prev->m_sn : 0;
-    m_current_component = link->m_mcr;
+    m_current_component_weak_ref = link->m_mcr;
   }
 }
 
@@ -3667,35 +3686,58 @@ void ONX_ModelComponentIterator::Internal_SetLink(
 {
 }
 
-void ONX_ModelComponentIterator::Internal_IncrementLink() const
-{
-}
-
-
-void ONX_ModelComponentIterator::Internal_DecrementLink() const
-{
-}
 
 ON_ModelComponentReference ONX_ModelComponentIterator::FirstComponentReference()
 {
-  const ONX_Model::ONX_ModelComponentList* list = Internal_List();
-  Internal_SetLink((nullptr != list) ? list->m_first_mcr_link : nullptr);
-  return m_current_component;
+  return ON_ModelComponentReference(FirstComponentWeakReference());
 }
 
 ON_ModelComponentReference ONX_ModelComponentIterator::LastComponentReference()
 {
-  const ONX_Model::ONX_ModelComponentList* list = Internal_List();
-  Internal_SetLink((nullptr != list) ? list->m_last_mcr_link : nullptr);
-  return m_current_component;
+  return ON_ModelComponentReference(LastComponentWeakReference());
 }
 
 ON_ModelComponentReference ONX_ModelComponentIterator::CurrentComponentReference() const
 {
-  return m_current_component;
+  return ON_ModelComponentReference(CurrentComponentWeakReference());
 }
 
 ON_ModelComponentReference ONX_ModelComponentIterator::NextComponentReference()
+{
+  return ON_ModelComponentReference(NextComponentWeakReference());
+}
+
+ON_ModelComponentReference ONX_ModelComponentIterator::PreviousComponentReference()
+{
+  return ON_ModelComponentReference(PreviousComponentWeakReference());
+}
+
+
+
+ON_ModelComponentWeakReference ONX_ModelComponentIterator::FirstComponentWeakReference()
+{
+  const ONX_Model::ONX_ModelComponentList* list = Internal_List();
+  Internal_SetLink((nullptr != list) ? list->m_first_mcr_link : nullptr);
+  return m_current_component_weak_ref;
+}
+
+ON_ModelComponentWeakReference ONX_ModelComponentIterator::LastComponentWeakReference()
+{
+  const ONX_Model::ONX_ModelComponentList* list = Internal_List();
+  Internal_SetLink((nullptr != list) ? list->m_last_mcr_link : nullptr);
+  return m_current_component_weak_ref;
+}
+
+ON_ModelComponentWeakReference ONX_ModelComponentIterator::CurrentComponentWeakReference() const
+{
+  // unchanged ModelContentVersionNumber() means that m_link is safe to dreference.
+  // Otherwise use sn for safe reset.
+  if (m_model_content_version != m_model->ModelContentVersionNumber() )
+    Internal_SetLink(m_model->Internal_ModelComponentLinkFromSerialNumber(m_current_component_sn));
+  return m_current_component_weak_ref;
+}
+
+ON_ModelComponentWeakReference ONX_ModelComponentIterator::NextComponentWeakReference()
 {
   if ( nullptr == m_list )
     return FirstComponentReference();
@@ -3705,37 +3747,40 @@ ON_ModelComponentReference ONX_ModelComponentIterator::NextComponentReference()
 
   if (m_model_content_version == m_model->ModelContentVersionNumber() && nullptr != m_link )
   {
+    // unchanged ModelContentVersionNumber() means that m_link is safe to dreference.
     m_link = m_link->m_next;
     if (nullptr == m_link)
     {
       m_prev_component_sn = m_current_component_sn;
       m_current_component_sn = 0;
       m_next_component_sn = 0;
-      m_current_component = ON_ModelComponentReference::Empty;
+      m_current_component_weak_ref = ON_ModelComponentWeakReference::Empty;
     }
     else
     {
       m_current_component_sn = m_link->m_sn;
       m_next_component_sn = (nullptr != m_link->m_next) ? m_link->m_next->m_sn : 0;
       m_prev_component_sn = (nullptr != m_link->m_prev) ? m_link->m_prev->m_sn : 0;
-      m_current_component = m_link->m_mcr;
+      m_current_component_weak_ref = m_link->m_mcr;
     }
   }
   else if ( 0 != m_next_component_sn )
   {
+    // Otherwise m_link is not safe to dereference.
+    // Use slower serial number lookup.
     Internal_SetLink(m_model->Internal_ModelComponentLinkFromSerialNumber(m_next_component_sn));
   }
   else
   {
     m_link = nullptr;
     m_current_component_sn = 0;
-    m_current_component = ON_ModelComponentReference::Empty;
+    m_current_component_weak_ref = ON_ModelComponentWeakReference::Empty;
   }
 
-  return m_current_component;
+  return m_current_component_weak_ref;
 }
 
-ON_ModelComponentReference ONX_ModelComponentIterator::PreviousComponentReference()
+ON_ModelComponentWeakReference ONX_ModelComponentIterator::PreviousComponentWeakReference()
 {
   if ( nullptr == m_list )
     return LastComponentReference();
@@ -3751,14 +3796,14 @@ ON_ModelComponentReference ONX_ModelComponentIterator::PreviousComponentReferenc
       m_next_component_sn = m_current_component_sn;
       m_current_component_sn = 0;
       m_prev_component_sn = 0;
-      m_current_component = ON_ModelComponentReference::Empty;
+      m_current_component_weak_ref = ON_ModelComponentWeakReference::Empty;
     }
     else
     {
       m_current_component_sn = m_link->m_sn;
       m_next_component_sn = (nullptr != m_link->m_next) ? m_link->m_next->m_sn : 0;
       m_prev_component_sn = (nullptr != m_link->m_prev) ? m_link->m_prev->m_sn : 0;
-      m_current_component = m_link->m_mcr;
+      m_current_component_weak_ref = m_link->m_mcr;
     }
   }
   else if ( 0 != m_prev_component_sn )
@@ -3769,10 +3814,10 @@ ON_ModelComponentReference ONX_ModelComponentIterator::PreviousComponentReferenc
   {
     m_link = nullptr;
     m_current_component_sn = 0;
-    m_current_component = ON_ModelComponentReference::Empty;
+    m_current_component_weak_ref = ON_ModelComponentReference::Empty;
   }
 
-  return m_current_component;
+  return m_current_component_weak_ref;
 }
 
 const ON_ModelComponent* ONX_ModelComponentIterator::FirstComponent()

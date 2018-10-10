@@ -292,6 +292,22 @@ const ON_3dmObjectAttributes* ON_ModelGeometryComponent::Attributes(
   return (nullptr != ptr) ? ptr : no_attributes_return_value;
 }
 
+ON_Geometry* ON_ModelGeometryComponent::ExclusiveGeometry() const
+{
+  return
+    (1 == m_geometry_sp.use_count())
+    ? m_geometry_sp.get()
+    : nullptr;
+}
+
+ON_3dmObjectAttributes* ON_ModelGeometryComponent::ExclusiveAttributes() const
+{
+  return
+    (1 == m_attributes_sp.use_count())
+    ? m_attributes_sp.get()
+    : nullptr;
+}
+
 void ON_ModelGeometryComponent::Dump( ON_TextLog& text_log ) const
 {
   ON_ModelComponent::Dump(text_log);

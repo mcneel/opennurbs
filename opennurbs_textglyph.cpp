@@ -32,7 +32,7 @@ void ON_FontGlyph::Internal_CopyFrom(const ON_FontGlyph& src)
   m_managed_font = src.m_managed_font;
   m_substitute = src.m_substitute;
   // Do not copy m_is_managed.
-  m_font_glyph_id = src.m_font_glyph_id;
+  m_font_glyph_index = src.m_font_glyph_index;
 }
 
 ON_FontGlyph::ON_FontGlyph(const ON_FontGlyph& src)
@@ -51,9 +51,9 @@ ON_FontGlyph& ON_FontGlyph::operator=(const ON_FontGlyph& src)
   return *this;
 }
 
-void ON_FontGlyph::Internal_SetFontGlyphId(ON__UINT_PTR font_glyph_id)
+void ON_FontGlyph::Internal_SetFontGlyphIndex(unsigned int font_glyph_index)
 {
-  m_font_glyph_id = font_glyph_id;
+  m_font_glyph_index = font_glyph_index;
 }
 
 ON_FontGlyph::ON_FontGlyph(
@@ -363,31 +363,33 @@ const ON__UINT32 ON_FontGlyph::CodePoint() const
   return m_code_point;
 }
 
-const ON__UINT_PTR ON_FontGlyph::FontGlyphId() const
+unsigned int ON_FontGlyph::FontGlyphIndex() const
 {
-  if (0 != m_font_glyph_id)
-    return m_font_glyph_id;
+  if (0 != m_font_glyph_index)
+    return m_font_glyph_index;
 
   const ON_FontGlyph* managed_glyph = ManagedGlyph();
   return
     nullptr == managed_glyph
     ? 0
-    : managed_glyph->m_font_glyph_id;
+    : managed_glyph->m_font_glyph_index;
+}
+
+
+bool ON_FontGlyph::FontGlyphIndexIsSet() const
+{
+  return (0 != m_font_glyph_index);
+}
+
+const ON__UINT_PTR ON_FontGlyph::FontGlyphId() const
+{
+  return (ON__UINT_PTR)FontGlyphIndex();
 }
 
 bool ON_FontGlyph::FontGlyphIdIsSet() const
 {
-  return (0 != m_font_glyph_id);
+  return FontGlyphIndexIsSet();
 }
-
-const ON__UINT_PTR ON_FontGlyph::FreeTypeFace() const
-{
-  return
-    (nullptr == m_managed_font)
-    ? 0
-    : ON_Font::FreeTypeFace(m_managed_font);
-}
-
 
 bool ON_FontGlyph::IsEndOfLineCodePoint() const
 {
@@ -476,7 +478,7 @@ const ON_FontGlyph* ON_FontGlyph::RenderGlyph(
         continue;
       if (nullptr != managed_glyph->m_substitute)
         return managed_glyph->m_substitute;
-      if (0 == glyph->m_font_glyph_id && bUseReplacementCharacter)
+      if (0 == glyph->m_font_glyph_index && bUseReplacementCharacter)
         continue;
       return glyph;
     }
@@ -550,7 +552,7 @@ void ON_FontGlyph::Dump(
     if ( ON_IsValidUnicodeCodePoint(g->CodePoint()) )
     {
       const unsigned int code_point = g->CodePoint();
-      const unsigned int glyph_id = (unsigned int)g->FontGlyphId();
+      const unsigned int glyph_index = g->FontGlyphIndex();
       wchar_t w[8] = { 0 };
       ON_EncodeWideChar(code_point, 7, w);
       const ON_Font* font = g->Font();
@@ -578,9 +580,9 @@ void ON_FontGlyph::Dump(
         }
       }
 
-      if (glyph_id > 0)
+      if (glyph_index > 0)
       {
-        s += ON_wString::FormatToString(L" glyph id = %u", glyph_id);
+        s += ON_wString::FormatToString(L" glyph index = %u", glyph_index);
         bPrintMaps = bIncludeCharMaps;
       }
       else if (bIncludeFont)
@@ -626,12 +628,18 @@ void ON_FontGlyph::Dump(
 
   text_log.PrintString(s);
   text_log.PrintNewLine();
+
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+  // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+  // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
   if ( bPrintMaps && nullptr != g )
   {
     text_log.PushIndent();
-    g->TestFaceCharMaps(&text_log);
+    g->TestFreeTypeFaceCharMaps(&text_log);
     text_log.PopIndent();
   }
+#endif
+
 }
 
 
@@ -1157,3 +1165,333 @@ const ON_2dPoint ON_OutlineFigurePoint::Point2d() const
 {
   return ON_2dPoint(m_point);
 }
+
+
+bool ON_Annotation::GetTextGlyphContours(
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  bool bApplyDimStyleDimScale,
+  bool bSingleStrokeFont,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& text_contours
+) const
+{
+  const ON_TextContent* text_content = Text();
+  if (nullptr == text_content)
+    return false;
+
+  double text_scale = 0.0;
+  if (bApplyDimStyleDimScale && nullptr != dimstyle)
+  {
+    text_scale = dimstyle->DimScale();
+  }
+  if (false == (text_scale > 0.0 && ON_IsValid(text_scale)))
+    text_scale = 1.0;
+
+
+  ON_Xform text_xform = ON_Xform::IdentityTransformation;
+  if (false == this->GetTextXform(vp, dimstyle, text_scale, text_xform))
+    text_xform = ON_Xform::IdentityTransformation;
+
+  const ON_Font* text_font = (nullptr != dimstyle) ? &dimstyle->Font() : nullptr;
+  
+  return text_content->GetGlyphContours(text_font, bSingleStrokeFont, text_xform, text_contours);
+}
+
+bool ON_TextContent::GetGlyphContours(
+  const ON_Font* text_font,
+  bool bSingleStrokeFont,
+  double text_height,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& text_contours
+) const
+{
+  ON_Xform text_xform = ON_Xform::IdentityTransformation;
+
+  double scale = 1.0;
+  if (text_height > 0.0 && ON_IsValid(text_height) )
+  {
+    if (nullptr == text_font)
+      text_font = &ON_Font::Default;
+    scale = text_font->FontMetrics().GlyphScale(text_height);
+    if (scale > 0.0)
+      text_xform = ON_Xform::DiagonalTransformation(scale);
+  }
+
+  return this->GetGlyphContours(
+    text_font,
+    bSingleStrokeFont,
+    text_xform,
+    text_contours
+  );
+}
+
+
+static const ON_FontGlyph* Internal_GetGlyphContours_SmallCapsGlyph(
+  const ON_FontGlyph* glyph
+)
+{
+  if (nullptr == glyph || false == glyph->CodePointIsSet() )
+    return nullptr;
+  const ON_FontGlyph* small_caps_glyph = nullptr;
+  const ON__UINT32 code_point = glyph->CodePoint();
+  const ON__UINT32 upper_ordinal_code_point = ON_UnicodeMapCodePointOrdinal(ON_StringMapOrdinalType::UpperOrdinal, code_point);
+  if (
+    upper_ordinal_code_point != code_point
+    && upper_ordinal_code_point >= 'A'
+    && ON_IsValidUnicodeCodePoint(upper_ordinal_code_point)
+    )
+  {
+    small_caps_glyph = glyph->Font()->CodePointGlyph(upper_ordinal_code_point);
+    if (nullptr != small_caps_glyph)
+    {
+      if (glyph->Font() != small_caps_glyph->Font() || small_caps_glyph != small_caps_glyph->RenderGlyph(false))
+      {
+        // do not permit font or glyph substitution when "small caps" are used.
+        small_caps_glyph = nullptr;
+      }
+    }
+  }
+  return small_caps_glyph;
+}
+
+bool ON_FontGlyph::GetStringContours(
+  const wchar_t* text_string,
+  const ON_Font* font,
+  bool bSingleStrokeFont,
+  double text_height,
+  double small_caps_scale,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+)
+{
+  // Dale Lear: https://mcneel.myjetbrains.com/youtrack/issue/RH-38183
+  // Font substitution has to be used to get outlines for all code points.
+  // I rewrote this entire function to support use of multiple fonts in a single string
+  // to fix RH-38183.
+  const bool bUseReplacementCharacter = true;
+
+  if (nullptr == text_string || 0 == text_string[0])
+    return false;
+  
+  const ON_Font* primary_font = (nullptr != font) ? font->ManagedFont() : ON_Font::Default.ManagedFont();
+  if (nullptr == primary_font)
+    return false;
+
+  const ON_FontMetrics primary_fm = primary_font->FontMetrics();
+
+  double scale = (text_height > ON_ZERO_TOLERANCE && text_height < 1.e38)
+    ? primary_fm.GlyphScale(text_height)
+    : 0.0;
+  if (false == (scale > ON_ZERO_TOLERANCE && ON_IsValid(scale)) )
+  {
+    text_height = 0.0;
+    scale = 1.0;
+  }
+  const double height_of_LF = scale*primary_fm.LineSpace();
+
+  if (false == (text_height > ON_ZERO_TOLERANCE && text_height < 1.e38))
+    text_height = 0.0;
+
+  const double small_caps_text_height
+    = (small_caps_scale > ON_ZERO_TOLERANCE && small_caps_scale < 1.0)
+    ? small_caps_scale*text_height
+    : text_height;
+
+  ON_SimpleArray< const ON_FontGlyph* > glyph_list;
+  ON_TextBox text_box;
+  if (ON_FontGlyph::GetGlyphList(
+    text_string,
+    primary_font,
+    ON_UnicodeCodePoint::ON_LineSeparator,
+    glyph_list,
+    text_box) <= 0)
+  {
+    return false;
+  }
+  
+  double line_advance = 0.0;
+  ON_3dPoint glyph_base_point = ON_3dPoint::Origin;
+
+  unsigned int glyph_count = glyph_list.UnsignedCount();
+  for ( unsigned int gdex = 0; gdex < glyph_count; gdex++ )
+  {
+    const ON_FontGlyph* glyph = glyph_list[gdex];
+    if (nullptr == glyph)
+      continue;
+    if (glyph->IsEndOfLineCodePoint())
+    {
+      line_advance += height_of_LF;
+      glyph_base_point.x = 0;
+      glyph_base_point.y = line_advance;
+      continue;
+    }
+
+    glyph = glyph->RenderGlyph(bUseReplacementCharacter);
+    if (nullptr == glyph)
+      continue;
+
+    double glyph_text_height = text_height;
+
+    const ON_FontGlyph* small_caps_glyph = 
+      (small_caps_text_height > 0.0 &&  small_caps_text_height < text_height)
+      ? Internal_GetGlyphContours_SmallCapsGlyph(glyph)
+      : glyph;
+    if (nullptr != small_caps_glyph)
+    {
+      glyph_text_height = small_caps_text_height;
+      glyph = small_caps_glyph;
+    }
+
+    ON_BoundingBox glyph_contours_bbox = ON_BoundingBox::UnsetBoundingBox;
+    ON_3dVector glyph_contours_advance = ON_3dVector::ZeroVector;
+    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& glyph_contours = string_contours.AppendNew();
+    glyph->GetGlyphContours(bSingleStrokeFont, glyph_text_height, glyph_contours, &glyph_contours_bbox, &glyph_contours_advance);
+
+    const ON_3dVector translate = glyph_base_point;
+    glyph_base_point.x += glyph_contours_advance.x;
+
+    const int contour_count = glyph_contours.Count();
+
+    for (int li = 0; li < contour_count; li++)  // contours per glyph
+    {
+      const int curve_count = glyph_contours[li].Count();
+      for (int ci = 0; ci < curve_count; ci++)
+      {
+        if (nullptr != glyph_contours[li][ci])
+          glyph_contours[li][ci]->Translate(translate);
+      }
+    }
+  }
+
+  return true;
+}
+
+bool ON_TextRun::GetGlyphContours(
+  const ON_Font* text_font,
+  bool bSingleStrokeFont,
+  const ON_Xform& text_xform,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& run_contours
+) const
+{
+  const ON_TextRun& run = *this;
+
+  const ON_Font* run_font = run.Font();
+  if (nullptr == run_font)
+  {
+    run_font = text_font;
+    if (nullptr == run_font)
+      run_font = &ON_Font::Default;
+  }
+
+  ON_Xform run_xf(text_xform);
+
+  if (0.0 != run.m_offset.x || 0.0 != run.m_offset.y)
+  {
+    const ON_Xform run_offset(ON_Xform::TranslationTransformation(run.m_offset.x, run.m_offset.y, 0.0));
+    run_xf = text_xform * run_offset;
+  }
+
+  double run_height = run.TextHeight();  // Specified height of text in Model units
+  double I_height = run_font->FontMetrics().AscentOfCapital();
+  double font_scale = run_height / I_height; // converts Font units to Model units, including text height
+  ON_Xform scale_xf(ON_Xform::DiagonalTransformation(font_scale));
+  run_xf = run_xf * scale_xf;
+
+  if (run.IsStacked() == ON_TextRun::Stacked::kStacked && nullptr != run.m_stacked_text)
+  {
+    const ON_TextRun* stacked_runs[2] =
+    {
+      run.m_stacked_text->m_top_run,
+      run.m_stacked_text->m_bottom_run,
+    };
+    bool rc = false;
+    for (int i = 0; i < 2; i++)
+    {
+      if (nullptr == stacked_runs[i])
+        continue;
+      if (stacked_runs[i]->GetGlyphContours(
+        run_font,
+        bSingleStrokeFont,
+        text_xform,
+        run_contours
+      ))
+        rc = true;
+    }
+
+    //if (L'/' == run.m_stacked_text->m_separator)
+    //{
+    //  double h = 0.5 * I_height;
+    //  double hs = (double)font->GetUnderscoreSize();
+    //  double l = run.m_advance.x / font_scale;
+    //  DrawFracLine(*this, run_xf, 0.0, h, hs, l, color);
+    //}
+    return rc;
+  }
+
+
+  // run->UnicodeString() returns the raw string which may have unevaluated fields.
+  // run->DisplayString() returns the evaluated results of fields.
+  const int run_contours_count0 = run_contours.Count();
+  bool rc = ON_FontGlyph::GetStringContours(
+    run.DisplayString(),
+    run_font,
+    bSingleStrokeFont,
+    0.0, // text_height = 0.0 means get glyphs in openurbs normalized font size
+    0.0, // small_caps_scale,
+    run_contours
+  );
+
+  const int run_contours_count1 = run_contours.Count();
+  for (int gi = run_contours_count0; gi < run_contours_count1; gi++)
+  {
+    ON_ClassArray< ON_SimpleArray< ON_Curve* > >& countours = run_contours[gi];
+    const int countour_count = countours.Count();
+    for (int li = 0; li < countour_count; li++)
+    {
+      ON_SimpleArray< ON_Curve* >& curves = countours[li];
+      const int curve_count = curves.Count();
+      for (int ci = 0; ci < curve_count; ci++)
+      {
+        ON_Curve* curve = curves[ci];
+        if (curve)
+          curve->Transform(run_xf);
+      }
+    }
+  }
+
+  return rc;
+}
+
+bool ON_TextContent::GetGlyphContours(
+  const ON_Font* text_font,
+  bool bSingleStrokeFont,
+  const ON_Xform& text_xform,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& text_contours
+) const
+{
+  if (nullptr == text_font)
+    text_font = &ON_Font::Default;
+
+  const ON_Xform xf = text_xform;
+
+  const ON_TextRunArray* runs = TextRuns(false);
+  if (nullptr != runs)
+  {
+    const int runcount = runs->Count();
+    for (int ri = 0; ri < runcount; ri++)
+    {
+      const ON_TextRun* run = (*runs)[ri];
+      if (nullptr == run)
+        continue;
+      if (ON_TextRun::RunType::kText != run->Type() && ON_TextRun::RunType::kField != run->Type())
+        continue;
+
+      const ON_Font* run_font = run->Font();
+      if (nullptr == run_font)
+        run_font = text_font;
+
+      run->GetGlyphContours(run_font, bSingleStrokeFont, xf, text_contours);
+    }
+  }
+
+  return false;
+}
+

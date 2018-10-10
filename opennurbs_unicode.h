@@ -3463,5 +3463,23 @@ bool ON_Test_PrintPlatformMSSBCPToUnicodeTable(
   ON_TextLog& text_log
 );
 
+/*
+Parameters:
+  code_point - [in]
+    value to test
+  bNullReturnValue
+    value to return if 0 == code_point
+Returns:
+  true if the code_point is a control code point 
+  (> 0 && < U+0020)
+  or ( >=  U+007F && <= U+00A0)
+  or ( ==  U+00AD)
+  or ...
+*/
+ON_DECL
+bool ON_IsUnicodeControlCodePoint(
+  ON__UINT32 code_point,
+  bool bNullReturnValue
+);
 #endif
 #endif

@@ -3093,6 +3093,335 @@ bool operator==(const ON_4dRect&, const ON_4dRect&);
 ON_DECL
 bool operator!=(const ON_4dRect&, const ON_4dRect&);
 
+/*
+Description:
+  Tool for efficiently calculating a boundary polyline winding number 
+  with input tools that do not require the boundary polyline to be
+  a contiguous array of points.
+*/
+class ON_CLASS ON_WindingNumber
+{
+public:
+  ON_WindingNumber() = default;
+  ~ON_WindingNumber() = default;
+  ON_WindingNumber(const ON_WindingNumber&) = default;
+  ON_WindingNumber& operator=(const ON_WindingNumber&) = default;
+
+public:
+  static const ON_WindingNumber Unset;
+
+public:
+  /*
+  Description:
+    The calculation of the winding number begins with a call to SetWindingPoint().
+  Parameters:
+    x - [in]
+    y - [in]
+      The coordinates of the winding point are (x,y).
+  Remarks:
+    Calling SetWindingPoint() erases results of any previous calculations.
+  */
+  void SetWindingPoint(double x, double y);
+
+  /*
+  Description:
+    The calculation of the winding number begins with a call to SetWindingPoint().
+  Parameters:
+    winding_point - [in]
+  Remarks:
+    Calling SetWindingPoint() erases results of any previous calculations.
+  */
+  void SetWindingPoint(ON_2dPoint winding_point);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    p - [in]
+      next point in boundary.
+  Returns:
+    Number of boundary edge segments added.
+  */
+  ON__UINT32 AddBoundary(ON_2dPoint p);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    p - [in]
+      start of edge segment. 
+      Caller is responsible for insuring coordinates of p are valid doubles.
+    q - [in]
+      end of edge segment
+      Caller is responsible for insuring coordinates of q are valid doubles.
+      The calculation tolerates p==q.
+  Returns:
+    Number of boundary edge segments added.
+  */
+  ON__UINT32 AddBoundary(ON_2dPoint p, ON_2dPoint q);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    point_stride - [in] >= 2
+      The i-th point has coordinates (boundary_points[i*point_stride],boundary_points[i*point_stride+1]).
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, size_t point_stride, const double* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    point_stride - [in] >= 2
+      The i-th point has coordinates (boundary_points[i*point_stride],boundary_points[i*point_stride+1]).
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, size_t point_stride, const float* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    point_stride - [in] >= 2
+      The i-th point has coordinates (boundary_points[i*point_stride],boundary_points[i*point_stride+1]).
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, size_t point_stride, const int* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, const ON_2dPoint* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, const ON_3dPoint* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, const ON_2fPoint* boundary_points, bool bCloseBoundary);
+
+  /*
+  Description:
+    After calling SetWindingPoint(), the boundary may be specified by one or more calls to
+    various AddBoundary functions.
+    The boundary may be specified one point at a time, one edge at a time, portions of the boundary
+    at a time, or the entire boundary in a single call. The edges may be added in any order.
+    The caller is responsible for insuring the collection calls to AddBoundary() results in a
+    a continuous, oriented, and closed polyline.
+  Parameters:
+    point_count - [in] >= 2
+      number of points in boundary_points[] array.
+    boundary_points - [in]
+      Boundary points.
+    bCloseBoundary - [in]
+      If true, an edge segment is added from the last boundary point to the first boundary point.
+  Returns:
+    Number of boundary edge segments added.
+  Remarks:
+    The calculation tolerates zero length edge segments. The caller is responsible for insuring the
+    coordinates in boundary_points[] are valid doubles.
+  */
+  ON__UINT32 AddBoundary(size_t point_count, const ON_3fPoint* boundary_points, bool bCloseBoundary);
+
+  /*
+  Returns:
+    The winding number of the boundary about the winding point.
+  */
+  ON__INT32 WindingNumber() const;
+
+  /*
+  Returns:
+    The winding point.
+  */
+  const ON_2dPoint WindingPoint() const;
+
+  /*
+  Returns:
+    Number of segments in the boundary.
+  */
+  ON__UINT32 BoundarySegmentCount() const;
+
+  /*
+  Returns:
+    The end of the previous call to AddBoundary()
+  */
+  const ON_2dPoint PreviousBoundaryPoint() const;
+
+private:
+  // Location of the winding point.
+  ON_2dPoint m_winding_point = ON_2dPoint::NanPoint;
+
+  // Location of the last boundary point added. This is used 
+  // by AddBoundary(ON_2dPoint p) to generate a segment
+  // from m_prev_boundary_point to p in situations where
+  // points are streamed so the caller doesn't have to
+  // deal with accumulating the previous point and can
+  // mix streamed points with other forms of boundary input.
+  ON_2dPoint m_prev_boundary_point = ON_2dPoint::NanPoint;
+
+  // Number of boundary segments in the polyline
+  ON__UINT32 m_boundary_segment_count = 0;
+
+  // In the comments below, H is the horizontal line throught the winding point
+  // and V is the vertical line through the winding point.
+
+  // signed net number of times polyline crosses H to the left of the winding point.
+  // A below to above crossing is -1.
+  ON__INT32 m_left_crossing_number = 0;
+
+  // signed net number of times polyline crosses H to the right of the winding point.
+  // A below to above crossing is +1.
+  ON__INT32 m_right_crossing_number = 0;
+
+  // signed net number of times polyline crosses V to the below of the winding point.
+  // A left to right crossing is +1.
+  ON__INT32 m_below_crossing_number = 0;
+
+  // signed net number of times polyline crosses V to the above of the winding point.
+  // A left to right crossing is -1.
+  ON__INT32 m_above_crossing_number = 0;
+
+  // 0 != (m_status_bits & 1): left crossing occured
+  // 0 != (m_status_bits & 2): right crossing occured
+  // 0 != (m_status_bits & 4): below crossing occured
+  // 0 != (m_status_bits & 8): above crossing occured
+  // 0 != (m_status_bits & 16): winding point on horizontal segment
+  // 0 != (m_status_bits & 32): winding point on vertical segment
+  ON__INT32 m_status_bits = 0;
+
+  void Internal_AddBoundarySegment(const double* p, const double* q);
+
+  // Input: p and q are 2d points with p.y <= 0 and q.y > 0
+  //
+  // Returns:
+  //   Sign of the x coordinate of the intersection of the line segment from p to q 
+  //   and the x axis.
+  static int Internal_SignOfX(const ON_2dPoint& p, const ON_2dPoint& q);
+
+  // Input: p and q are 2d points with p.x <= 0 and q.x > 0
+  //
+  // Returns:
+  //   Sign of the y coordinate of the intersection of the line segment from p to q 
+  //   and the y axis.
+  static int Internal_SignOfY(const ON_2dPoint& p, const ON_2dPoint& q);
+
+  bool Internal_HaveWindingPoint() const;
+};
+
 
 /*
 ON_PeriodicDomain is a helper class for dealing with closed or periodic surfaces using the idea of a covering space.

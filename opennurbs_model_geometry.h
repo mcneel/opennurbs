@@ -136,6 +136,9 @@ public:
     );
 
   /*
+  Description:
+    Get a pointer to geometry. The returned pointer may be shared
+    and should not be used to modify the geometry.
   Parameters:
     no_geometry_return_value - [in]
       This value is returned if no geometric object has been set.
@@ -148,12 +151,42 @@ public:
     If the geometry is set and something besides light, then ComponentType() 
     will return ON_ModelComponent::Type::ModelGeometry.
     Otherwise, ComponentType() will return ON_ModelComponent::Type::ModelGeometry::Unset.
+  See Also:
+    ON_ModelGeometryComponent::Attributes()
+    ON_ModelGeometryComponent::Geometry()
+    ON_ModelGeometryComponent::ExclusiveAttributes()
+    ON_ModelGeometryComponent::ExclusiveGeometry();
+    ON_ModelComponentRef::ExclusiveModelComponent();
+    ONX_Model::ComponentFromRuntimeSerialNumber()
   */
   const class ON_Geometry* Geometry(
     const class ON_Geometry* no_geometry_return_value
     ) const;
 
   /*
+  Description:
+    Get a pointer to geometry that can be used to modify the geometry.
+    The returned pointer is not shared at the time it is returned
+    and will not be shared until a copy of this ON_ModelGeometryComponent
+    is created.
+  Returns:
+    If this ON_ModelGeometryComponent is the only reference to the geometry, 
+    then a pointer to the geometry is returned.
+    Otherwise, nullptr is returned.
+  See Also:
+    ON_ModelGeometryComponent::Attributes()
+    ON_ModelGeometryComponent::Geometry()
+    ON_ModelGeometryComponent::ExclusiveAttributes()
+    ON_ModelGeometryComponent::ExclusiveGeometry();
+    ON_ModelComponentRef::ExclusiveModelComponent();
+    ONX_Model::ComponentFromRuntimeSerialNumber()
+  */
+  class ON_Geometry* ExclusiveGeometry() const;
+
+  /*
+  Description:
+    Get a pointer to attributes. The returned pointer may be shared
+    and should not be used to modify the attributes.
   Parameters:
     no_attributes_return_value - [in]
       This value is returned if no attributes have been set.
@@ -163,10 +196,37 @@ public:
   Returns:
     The layer, rendering and other attributes for this element, 
     or no_attributes_return_value if the attributes have not been set.
+  See Also:
+    ON_ModelGeometryComponent::Attributes()
+    ON_ModelGeometryComponent::Geometry()
+    ON_ModelGeometryComponent::ExclusiveAttributes()
+    ON_ModelGeometryComponent::ExclusiveGeometry();
+    ON_ModelComponentRef::ExclusiveModelComponent();
+    ONX_Model::ComponentFromRuntimeSerialNumber()
   */
   const ON_3dmObjectAttributes* Attributes(
     const ON_3dmObjectAttributes* no_attributes_return_value
     ) const;
+
+  /*
+  Description:
+    Get a pointer to attributes that can be used to modify the attributes.
+    The returned pointer is not shared at the time it is returned
+    and will not be shared until a copy of this ON_ModelGeometryComponent
+    is created.
+  Returns:
+    If this ON_ModelGeometryComponent is the only reference to the attributes, 
+    then a pointer to the attributes is returned.
+    Otherwise, nullptr is returned.
+  See Also:
+    ON_ModelGeometryComponent::Attributes()
+    ON_ModelGeometryComponent::Geometry()
+    ON_ModelGeometryComponent::ExclusiveAttributes()
+    ON_ModelGeometryComponent::ExclusiveGeometry();
+    ON_ModelComponentRef::ExclusiveModelComponent();
+    ONX_Model::ComponentFromRuntimeSerialNumber()
+  */
+  class ON_3dmObjectAttributes* ExclusiveAttributes() const;
 
 private:
 

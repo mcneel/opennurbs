@@ -339,7 +339,7 @@ static bool Internal_UseHatchReadV5(
     return false;
   
   // There are 4 possible Feb 26 version numbers depending on the build system
-  // archive.Archive3dmVersion() % 4 = (0,1,2,3 identifies the build system = OPENNURBS_VERSION_BRANCH)
+  // archive.Archive3dmVersion() % 4 = (0=developer,1=windows build system,2 = mac build system, 3=unused)
   const unsigned int Feb_26_2016_opennurbs_version_number0 = 2348833956;
   const unsigned int Feb_26_2016_opennurbs_version_number3 = 2348833956+3; 
 
@@ -1762,16 +1762,30 @@ bool ON_Hatch::Transform( const ON_Xform& xform)
   }
   int rc = m_plane.Transform( xform);
 
-  ON_3dVector x = m_plane.xaxis;
-  x.Transform(xform);
-  double scale = x.Length() * PatternScale();
-  SetPatternScale(scale);
+  //ON_3dVector x = m_plane.xaxis;
+  //x.Transform(xform);
+  //double scale = x.Length() * PatternScale();
+  //SetPatternScale(scale);
 
   UnrotateHatch(this);
 
   TransformUserData(xform);
 
   return rc;
+}
+
+bool ON_Hatch::ScalePattern(ON_Xform xform)
+{
+  ON_3dVector v = m_plane.xaxis;
+  v.Transform(xform);
+
+  double l = v.Length();
+  if (v.Unitize())
+  {
+    m_pattern_scale *= l;
+    return true;
+  }
+  return false;
 }
 
 ON_Brep* ON_Hatch::BrepForm(ON_Brep* brep) const
@@ -1993,13 +2007,12 @@ void ON_Hatch::SetBasePoint(ON_2dPoint basepoint)
 
 void ON_Hatch::SetBasePoint(ON_3dPoint point)
 {
-  m_basepoint = point;
+  m_plane.ClosestPointTo(point, &m_basepoint.x, &m_basepoint.y);
 }
 
 ON_3dPoint ON_Hatch::BasePoint() const
 {
-  const ON_3dPoint point(m_basepoint);
-  return point;
+  return m_plane.PointAt(m_basepoint.x, m_basepoint.y);
 }
 
 ON_2dPoint ON_Hatch::BasePoint2d() const

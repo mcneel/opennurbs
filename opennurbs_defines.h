@@ -464,6 +464,16 @@ public:
     const ON_2udex* rhs
   );
 
+  static int CompareFirstIndex(
+    const ON_2udex* lhs,
+    const ON_2udex* rhs
+  );
+
+  static int CompareSecondIndex(
+    const ON_2udex* lhs,
+    const ON_2udex* rhs
+  );
+
   static const ON_2udex Unset;  // (ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX);
   static const ON_2udex Zero;  // (0, 0)
 };
@@ -506,6 +516,32 @@ public:
 
   static const ON_3udex Unset;  // (ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX);
   static const ON_3udex Zero;  // (0, 0, 0)
+
+  static int DictionaryCompare(
+    const ON_3udex* lhs,
+    const ON_3udex* rhs
+  );
+
+  static int CompareFirstIndex(
+    const ON_3udex* lhs,
+    const ON_3udex* rhs
+  );
+
+  static int CompareSecondIndex(
+    const ON_3udex* lhs,
+    const ON_3udex* rhs
+  );
+
+  static int CompareThirdIndex(
+    const ON_3udex* lhs,
+    const ON_3udex* rhs
+  );
+
+  static int CompareFirstAndSecondIndex(
+    const ON_3udex* lhs,
+    const ON_3udex* rhs
+  );
+
 };
 
 // quadruplet of integer indices.
@@ -567,6 +603,47 @@ enum class ON_StringMapOrdinalType : int
   MinimumOrdinal = 3
 };
 
+enum class ON_DateFormat : int
+{
+  Unset = 0,
+  Omit = 1,
+  
+  ///<summary>
+  /// February 1st, 2001 = 2001-2-1
+  ///</summary>
+  YearMonthDay = 2,
+  
+  ///<summary>
+  /// February 1st, 2001 = 2001-1-2
+  ///</summary>
+  YearDayMonth = 3,
+  
+  ///<summary>
+  /// February 1st, 2001 = 2-1-2001
+  ///</summary>
+  MonthDayYear = 4,
+  
+  ///<summary>
+  /// February 1st, 2001 = 1-2-2001
+  ///</summary>
+  DayMonthYear = 5,
+  
+  ///<summary>
+  /// February 1st, 2001 = 2001-32
+  ///</summary>
+  YearDayOfYear = 6
+};
+
+enum class ON_TimeFormat : int
+{
+  Unset = 0,
+  Omit = 1,
+  HourMinute12 = 2,
+  HourMinuteSecond12 = 3,
+  HourMinute24 = 4,
+  HourMinuteSecond24 = 5
+};
+
 ON_DECL
 ON_StringMapOrdinalType ON_StringMapOrdinalTypeFromStringMapType(
   ON_StringMapType map_type
@@ -624,11 +701,25 @@ public:
 
   /*
   Returns:
+    63 = maximum major version number that opennurbs version number utilities can handle.
+  */
+  static
+  unsigned int VersionMajorMaximum();
+  
+  /*
+  Returns:
     The value of OPENNURBS_VERSION_MINOR, which is defined in opennurbs_version.h
     (0 to 127).
   */
   static
   unsigned int VersionMinor();
+
+  /*
+  Returns:
+    127 = maximum minor version number that opennurbs version number utilities can handle.
+  */
+  static
+  unsigned int VersionMinorMaximum();
 
   /*
   Returns:

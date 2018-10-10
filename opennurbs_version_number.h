@@ -38,12 +38,14 @@ Parameters:
   day_of_month - [in]
     day_of_month >= 1 and day_of_month <= ON_DaysInMonthOfGregorianYear(year,month)
 
-  branch - [in]
-    >= 0 and <= 3
-      0 = developer build
-      1 = build system trunk branch build
-      2 = build system release candidate branch build
-      3 = build system release build
+  platform_branch - [in]
+    0: developer build
+    1: Windows Commercial build
+    2: Mac Commercial build
+    3: Windows BETA build
+    4: Mac Beta build
+    5: Windows WIP build
+    6: Mac WIP build
 
 Returns:
   If the input values are valid, this returns
@@ -65,7 +67,7 @@ unsigned int ON_VersionNumberConstruct(
   unsigned int year,
   unsigned int month,
   unsigned int day_of_month,
-  unsigned int branch
+  unsigned int platform_branch
   );
 
 /*
@@ -181,6 +183,42 @@ bool ON_VersionNumberParse(
   unsigned int* version_day_of_month,
   unsigned int* version_branch
   );
+
+/*
+Description:
+  A tool to validate version information and to test opennurbs version number encoding and parsing.
+Parameters:
+  major
+    A value between 1 and ON::VersionMajorMaximum().
+  minor,
+    A value between 0 and ON::VersionMinorMaximum().
+  year
+    A value between 2000 and 2099
+  month
+    A value between 1 and 12
+  day_of_month
+    A value between 1 and ON_DaysInMonthOfGregorianYear(year, month).
+  platform_branch
+    0: developer build
+    >= 1: some type of build system build
+  version_as_unsigned_number
+    Either 0 or the encoded version number to test against the previous parameters.
+Returns:
+  true 
+    Input parameters are valid and testing internal version number utilities passed.
+  false
+    Inpute parameters are not valid or a bug was detected in internal version number utilities.
+*/
+ON_DECL
+bool ON_TestVersionNumber(
+  unsigned int major,
+  unsigned int minor,
+  unsigned int year,
+  unsigned int month,
+  unsigned int day_of_month,
+  unsigned int platform_branch,
+  unsigned int version_as_unsigned_number
+);
 
 ON_DECL
 const ON_String ON_VersionNumberToString(

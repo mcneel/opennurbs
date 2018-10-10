@@ -1800,15 +1800,13 @@ public:
   
   bool Send4x4Patch(
     unsigned int display_density,
-    const class ON_SubDComponentRegion& face_region,
-    const class ON_SubDComponentRegion edge_region[], // [4]
+    const class ON_SubDFaceRegion& face_region,
     ON_SubDLimitNurbsFragment::BispanType bispan_type
     );
   
   bool Send5x5Patch(
     unsigned int display_density,
-    const class ON_SubDComponentRegion& face_region,
-    const class ON_SubDComponentRegion edge_region[], // [4]
+    const class ON_SubDFaceRegion& face_region,
     const ON_SubDLimitNurbsFragment::BispanType bispan_type[4]
     );
 };
@@ -1900,14 +1898,12 @@ public:
     );
 
   bool GetLimitMesh(
-    class ON_SubDComponentRegion& face_region,
-    ON_SubDComponentRegion edge_region[], // [4]
+    const ON_SubDFaceRegion& face_region,
     const ON_SubDFace* face
     );
 
   bool GetLimitPatches(
-    class ON_SubDComponentRegion& face_region,
-    ON_SubDComponentRegion edge_region[], // [4]
+    const ON_SubDFaceRegion& face_region,
     const ON_SubDFace* face
     );
 
@@ -1978,8 +1974,7 @@ private:
     ) const; 
 
   bool GetLimitSubMeshOrPatch(
-    class ON_SubDComponentRegion& face_region,
-    class ON_SubDComponentRegion edge_region[], // [4]
+    const ON_SubDFaceRegion& face_region,
     class ON_SubDQuadNeighborhood* qft, // may be destroyed
     unsigned int display_density,
     unsigned int point_i0,

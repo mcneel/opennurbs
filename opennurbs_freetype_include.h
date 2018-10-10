@@ -224,6 +224,9 @@
 //   freetype includes directory in the system includes path.
 
 #if defined(OPENNURBS_FREETYPE_SUPPORT)
+// Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+// Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
+
 
 // Angle brackets are used on #include <ft2build.h> because if it fails,
 // the following #include FT_FREETYPE_H will fail, but in more mysterious ways.

@@ -342,58 +342,66 @@ public:
   ON_SubDComponentPtr ToggleMark() const;
 
   static
-  class ON_SubDComponentPtr CreateNull(
+  const ON_SubDComponentPtr CreateNull(
     ON_SubDComponentPtr::Type component_type,
     bool bMark
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDVertex* vertex
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDEdge* edge
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDFace* face
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDVertex* vertex,
     ON__UINT_PTR vertex_mark
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDEdge* edge,
     ON__UINT_PTR edge_mark
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     const class ON_SubDFace* face,
     ON__UINT_PTR face_mark
     );
   
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     ON_SubDVertexPtr vertexptr
     );
   
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     ON_SubDEdgePtr edgeptr
     );
 
   static
-  class ON_SubDComponentPtr Create(
+  const ON_SubDComponentPtr Create(
     ON_SubDFacePtr faceptr
     );
+
+  wchar_t* ToString(
+    wchar_t* s,
+    size_t s_capacity
+  ) const;
+
+  const ON_wString ToString() const;
+
 };
 
 #if defined(OPENNURBS_SUBD_WIP)
@@ -405,6 +413,455 @@ public:
 // SuD is not exported from opennurbs DLL
 #define ON_SUBD_CLASS
 #endif
+
+class ON_SUBD_CLASS ON_SubDComponentRegionIndex
+{
+public:
+  ON_SubDComponentRegionIndex() = default;
+  ~ON_SubDComponentRegionIndex() = default;
+  ON_SubDComponentRegionIndex(const ON_SubDComponentRegionIndex&) = default;
+  ON_SubDComponentRegionIndex& operator=(const ON_SubDComponentRegionIndex&) = default;
+
+public:
+  enum : unsigned short
+  {
+    /// Capacity of the m_index[] array;
+    IndexCapacity = 9
+  };
+
+  // All values are zero
+  static const ON_SubDComponentRegionIndex Zero;
+
+  // All values are 0xFFFF
+  static const ON_SubDComponentRegionIndex Unset;
+
+  /*
+  Description:
+    Compares subdivision counts. If the counts are the same, compares m_indices[].    
+  */
+  static int Compare(
+    const ON_SubDComponentRegionIndex* lhs,
+    const ON_SubDComponentRegionIndex* rhs
+  );
+
+  /*
+  Description:
+    Compares subdivision indices for minimum(lhs->m_subdivision_count,rhs->m_subdivision_count).
+  */
+  static int CompareMinimumSubregion(
+    const ON_SubDComponentRegionIndex* lhs,
+    const ON_SubDComponentRegionIndex* rhs
+  );
+
+  unsigned short Index(
+    unsigned short i
+  ) const;
+
+  unsigned short m_subdivision_count = 0;
+
+  // If m_subdivision_count > 0, then m_index[0], ..., m_index[m_subdivision_count-1]
+  // identifies a subregion of the level 0 component.
+  //
+  // Faces with quad subdivision:
+  //   m_index[n] is the subdivision quad for the region that contains
+  //   the parent face's corner at face->m_vertex[m_index[n]].
+  // Edges
+  //   m_region_index[n] = 0 indicates the beginning half of the parent edge.
+  //                       (begins at edge->Vertex(0))
+  //   m_region_index[n] = 1 indicates the ending half of the parent edge.
+  //                       (ends at edge->Vertex(1))
+  //
+  // When a component is created during a subdivision step, the value 0xFFFF
+  // is used to mark the non-existent regions at earlier subdivision levels.
+  // For example, if a level 1 edge is created by connecting 
+  // a level0 edge subdivision point (middle-ish of the edge)
+  // to a level0 face subdivision point (center-ish of the face),
+  // then the level 1 edge would have 
+  //   m_level0_component = ON_SubDComponentPtr::CreateNull(ON_SubDComponentPtr::Type::Edge, bReversed),
+  //     (m_level0_component.IsNull() will be true)
+  //   m_level0_component_id = ON_SubDComponentRegion::NewTransientId()
+  //   m_subdivision_count = 1,
+  //   m_region_index[0] = 0xFFFF.
+  // 
+  unsigned short m_index[ON_SubDComponentRegionIndex::IndexCapacity] = {};
+
+  void Push(
+    unsigned int region_index
+  );
+  
+  void Pop();
+
+  /*
+  Description:
+    Get a string of the form .a.b.c .a.b.c = m_index[] values.
+  */
+  wchar_t* ToString(
+    wchar_t* s,
+    size_t s_capacity
+  ) const;
+
+  const ON_wString ToString() const;
+
+  /*
+  Description:
+    Encodes ON_SubDComponentRegionIndex information in 32 bits.
+    (m_subdivision_count) << 24
+    | (0x00FF0000 & ((m_region_index[0]) << 16))
+    | (m_region_index[1] & 0x0003) << (14)
+    | (m_region_index[2] & 0x0003) << (12)
+    ...
+    | (m_index[m_subdivision_count] & 0x0003) <<(16-(2*m_subdivision_count))
+  Remarks:
+    This is useful when quick compare and sorting of regions is required,
+    m_subdivision_count < 256, m_index[0] < 256, m_index[1] < 4, ..., m_index[m_subdivision_count] < 4
+    Regions of N-gons with N < 256 and regions of edges
+    satisify these condition when m_subdivision_count < 256 
+    (which is always in real world situations).
+  */
+  ON__UINT32 ToCompressedRegionIndex() const;
+
+  static const ON_SubDComponentRegionIndex FromCompressedRegionIndex(
+    ON__UINT32 compressed_region_index
+  );
+
+  static ON__UINT32 ToCompressedRegionIndex(
+    unsigned short subdivision_count,
+    const unsigned short* region_index
+  );
+
+  /*
+  Description:
+    Decompress a 32-bit region.
+  Parameters:
+    region32 - [in]
+      Value returned from To32BitRegion().
+    subdivision_count - [out]
+      Subdivision count
+    region_index[] - out
+      Region indices. The region_index[] array must have a capcity of at 
+      least ON_SubDComponentRegion::region_index_capacity elements.
+  */
+  static void FromCompressedRegionIndex(
+    ON__UINT32 compressed_region_index,
+    unsigned short* subdivision_count,
+    unsigned short* region_index
+  );
+};
+
+class ON_SUBD_CLASS ON_SubDComponentRegion
+{
+public:
+  ON_SubDComponentRegion() = default;
+  ~ON_SubDComponentRegion() = default;
+  ON_SubDComponentRegion(const ON_SubDComponentRegion&) = default;
+  ON_SubDComponentRegion& operator=(const ON_SubDComponentRegion&) = default;
+
+public:
+  static const ON_SubDComponentRegion Create(
+    const class ON_SubDFace* level0_face
+  );
+
+  static const ON_SubDComponentRegion Create(
+    unsigned int component_id,
+    ON_SubDComponentPtr::Type component_type,
+    bool bComponentMark
+  );
+
+  /*
+  Description:
+    Creates a region that can be used to identify a component
+    created at a certain level of subdivision that does not
+    come from dividing a component from the previous level.
+    For example, Catmull Clark subdivision edges on level N+1
+    that run from the level N edge subdivision point to the 
+    level N face subdivision point.
+
+    m_level0_component = ON_SubDComponentPtr::CreateNull(component_type, bComponentMark),
+       (m_level0_component.IsNull() will be true)
+    m_level0_component_id = ON_SubDComponentRegion::NewTransientId()
+    m_subdivision_count = subdivision_count,
+     m_region_index[0, ..., (subdivision_count-1)] = 0xFFFF.
+   
+  */
+  static const ON_SubDComponentRegion CreateSubdivisionRegion(
+    ON_SubDComponentPtr::Type component_type,
+    bool bComponentMark,
+    unsigned short subdivision_count,
+    bool bAssignTransientId
+  );
+
+public:
+  static const ON_SubDComponentRegion Empty;
+
+public:
+  ON_SubDComponentPtr m_level0_component = ON_SubDComponentPtr::Null;
+
+  unsigned int m_level0_component_id = 0;
+
+  unsigned short SubdivisionCount() const;
+
+  ON_SubDComponentRegionIndex m_region_index;
+
+  /*
+  Returns:
+    True if m_level0_component_id is a transient id.
+  */
+  bool IsTransientId() const;
+
+  /*
+  Returns:
+    True if m_level0_component_id is the id of a persistent ON_SubD level 0 component.
+  */
+  bool IsPersistentId() const;
+
+  /*
+  Description:
+    Compares 
+    m_level0_component.ComponentType(), 
+    m_level0_component_id,
+    m_level0_component.ComponentMark(),
+    the entire sub region,
+    and m_level0_component.m_ptr.
+  */
+  static int Compare(
+    const ON_SubDComponentRegion* lhs,
+    const ON_SubDComponentRegion* rhs
+    );
+
+  /*
+  Descriptions:
+    Compares 
+    m_level0_component.ComponentType(), 
+    m_level0_component_id,
+    m_level0_component.ComponentMark().
+  */
+  static int CompareTypeIdMark(
+    const ON_SubDComponentRegion* lhs,
+    const ON_SubDComponentRegion* rhs
+    );
+
+  /*
+  Description:
+    Compares 
+    m_level0_component.ComponentType(), 
+    m_level0_component_id,
+    m_level0_component.ComponentMark(),
+    and the m_region_index[] values for the 
+    minimum subdivision count lhs and rhs.    
+  */
+  static int CompareTypeIdMarkMinimumSubregion(
+    const ON_SubDComponentRegion* lhs,
+    const ON_SubDComponentRegion* rhs
+    );
+  
+  /*
+  Description:
+    Compares 
+    m_level0_component.ComponentType(), 
+    m_level0_component_id,
+    m_level0_component.ComponentMark(),
+    and the entire sub region.
+  */
+  static int CompareTypeIdMarkSubregion(
+    const ON_SubDComponentRegion* lhs,
+    const ON_SubDComponentRegion* rhs
+    );
+
+  void SetLevel0Component(
+    ON_SubDComponentPtr component_ptr
+  );
+
+  void SetLevel0Face(
+    const ON_SubDFace* face
+  );
+
+  void SetLevel0EdgePtr(
+    const ON_SubDEdgePtr edge_ptr
+  );
+
+  void SetLevel0Vertex(
+    const ON_SubDVertex* vertex
+  );
+
+  /*
+  Description:
+    region_index - [in]
+      If m_level0_component identifies an edge, region_index is 0 or 1,
+      and the edge is reversed (1=m_level0_component.ComponentMark()),
+      then PushAbsolute(1-region_index) is called.
+      In every other case, PushAbsolute(region_index) is called.
+  */
+  void PushAdjusted(
+    unsigned int region_index
+  );
+
+  /*
+  Parameters:
+    region_index - [in]
+      If m_level0_component identifies a face, then region_index is the index of the
+      corner vertex for the subdivision quad.
+      If m_level0_component identifies an edge, then region_index must be 0 or 1.
+  Description:
+    Increments if m_subdivision_count and appends region_index to m_region_index[]
+    (m_region_index[m_subdivision_count++] = region_index)
+  */
+  void PushAbsolute(
+    unsigned int region_index
+  );
+
+  /*
+  Description:
+    Get a string of the form fN.a.b.c where N = m_level0_face-m_id, a.b.c = m_region_index[] values.
+  */
+  wchar_t* ToString(
+    wchar_t* s,
+    size_t s_capacity
+  ) const;
+
+  const ON_wString ToString() const;
+
+  void Pop();
+
+  bool IsEmptyRegion() const;
+
+  enum : unsigned int
+  {
+    TransientIdBit = 0x80000000U
+  };
+
+
+  /*
+  Returns:
+    A value that can be used to identify transient subdivision components that do not
+    exist in the persistent levels of a SubD.
+    Transient ids always satisfy (ON_SubDComponentRegion::TransientIdBit & transient_id) is not zero and 
+    (~ON_SubDComponentRegion::TransientIdBit & transient_id) is not zero.
+  Remarks:
+    Transient ids are used to identify subdivision components at levels that do
+    not persist in the ON_SubD. They are unique within the context where they are
+    being used. They generally vary with each repetition of a calcultion in that
+    context.
+  */
+  static const unsigned int NewTransientId();
+
+  /*
+  Description:
+    Resets the value used to generate transient ids.
+    This is useful during debugging session so that transient id
+    values are predictable. Otherwise, use of this function 
+    should be avoided.
+  */
+  static void ResetTransientId();
+
+  /*
+  Parameters:
+    id - [in]
+      Value to test to see if it is a transient subd component id.
+  Returns:
+    True if (ON_SubDComponentRegion::TransientIdBit & id) is not zero and 
+    (~ON_SubDComponentRegion::TransientIdBit & id) is not zero.
+  Remarks:
+    Transient ids are used to identify subdivision components at levels that do
+    not persist in the ON_SubD. They are unique within the context where they are
+    being used. They generally vary with each repetition of a calcultion in that
+    context.
+  */
+  static bool IsTransientId(unsigned int id);
+
+  /*
+  Parameters:
+    id - [in]
+      Value to test to see if it is a transient subd component id.
+  Returns:
+    If the id is a transient id, then its id value is returned.
+    Otherwise, 0 is returned.
+  Remarks:
+    Transient ids are used to identify subdivision components at levels that do
+    not persist in the ON_SubD. They are unique within the context where they are
+    being used. They generally vary with each repetition of a calcultion in that
+    context.
+  */
+  static unsigned int TransientId(unsigned int id);
+
+  /*
+  Parameters:
+    id - [in]
+      Value to test to see if it is a persitsent subd component id.
+  Returns:
+    True if (ON_SubDComponentRegion::TransientIdBit & id) is not zero and 
+    (~ON_SubDComponentRegion::TransientIdBit & id) is not zero.
+  Remarks:
+    Transient ids are used to identify subdivision components at levels that do
+    not persist in the ON_SubD. They are unique within the context where they are
+    being used. They generally vary with each repetition of a calcultion in that
+    context.
+  */
+  static bool IsPersistentId(unsigned int id);
+};
+
+class ON_SUBD_CLASS ON_SubDFaceRegion
+{
+public:
+  ON_SubDFaceRegion() = default;
+  ~ON_SubDFaceRegion() = default;
+  ON_SubDFaceRegion(const ON_SubDFaceRegion&) = default;
+  ON_SubDFaceRegion& operator=(const ON_SubDFaceRegion&) = default;
+
+  static const ON_SubDFaceRegion Empty;
+
+public:
+  // Identifies a region of an ON_SubDFace
+  ON_SubDComponentRegion m_face_region;
+
+  // When the face region is a quad, m_edge_region[4] identifies regions of ON_SubDEdge elements.
+  // When the face region is a sub-quad, these edges may be null or have null ON_SubDEdge pointers 
+  // and the ids will be zero or ON_SubDComponentRegion::IsTransientId() will be true.
+  // When ON_SubDComponentRegion::IsTransientId() is true, the id does not identify
+  // a persistent edge in the ON_SubD.
+  ON_SubDComponentRegion m_edge_region[4];
+
+  unsigned int m_level0_edge_count = 0;
+
+  // If set, these are the vertice ids at the region's limit surface corners.
+  // m_vertex_id[] is mutable because these values appear during recursive calculations.
+  // When the face region is a sub-quad, these ids will be zero or ON_SubDComponentRegion::IsTransientId()
+  // will be true. 
+  // When ON_SubDComponentRegion::IsTransientId() is true, the id does not identify
+  // a persistent vertex in the ON_SubD.
+  mutable unsigned int m_vertex_id[4] = {};
+
+public:
+  void Push(unsigned int quadrant_index);
+
+  bool IsValid(
+    bool bSilentError
+  ) const;
+
+  wchar_t* ToString(
+    wchar_t* s,
+    size_t s_capacity
+  ) const;
+
+  const ON_wString ToString() const;
+};
+
+
+class ON_SUBD_CLASS ON_SubDFaceRegionAndNurbs
+{
+public:
+  ON_SubDFaceRegionAndNurbs() = default;
+  ~ON_SubDFaceRegionAndNurbs() = default;
+  ON_SubDFaceRegionAndNurbs(const ON_SubDFaceRegionAndNurbs&) = default;
+  ON_SubDFaceRegionAndNurbs& operator=(const ON_SubDFaceRegionAndNurbs&) = default;
+
+  static const ON_SubDFaceRegionAndNurbs Empty;
+
+public:
+  ON_SubDFaceRegion m_face_region;
+  // This pointer is not managed by ON_SubDFaceRegionAndNurbs
+  class ON_NurbsSurface* m_nurbs_surface = nullptr;
+};
+
 
 /*
 Description:
@@ -2113,15 +2570,14 @@ public:
 
         bool begin_face_callback_function(
           void *fragment_callback_context, 
-          const class ON_SubDFace* level0_face, 
-          const class ON_SubDFace* level1_face, 
-          unsigned int level1_face_region_index
+          const class ON_SubDFaceRegion& face_region,
           );
 
-      At the beginning of each face, this function is called.
-      If an initial subdivison of an extraodinary face was required,
-      level1_face is not null and level1_face_region_index identifies the region
-      of level0_face that it covers.
+      At the beginning of each quad face, this function is called.
+      If the original SubD face is a quad, then face_region identifies that quad.
+      If the original SubD face is not a quad, then face_region identifies the
+      level 1 subdivision quad. The face region information is useful in building
+      a correspondence between the original SubD and the Nurbs patches.
       If begin_face_callback_function returns false, the calculation is canceled.
 
     fragment_callback_function - [in]
@@ -2141,7 +2597,7 @@ public:
   unsigned int GetLimitSurfaceNurbsFragments(
     const class ON_SubDDisplayParameters& display_parameters,
     ON__UINT_PTR callback_context,
-    bool(*begin_face_callback_function)(ON__UINT_PTR ,const class ON_SubDFace*, const class ON_SubDFace*, unsigned int),
+    bool(*begin_face_callback_function)(ON__UINT_PTR ,const class ON_SubDFaceRegion&),
     bool(*fragment_callback_function)(ON__UINT_PTR ,const class ON_SubDLimitNurbsFragment*)
     ) const;
 
@@ -2215,10 +2671,12 @@ public:
       models. 
       
       subd_edge_region[4] identifies the edges the NURBS surface abuts in
-      the order South,East,North,West. When an edge is a subdivision edge,
+      the order South,East,North,West. 
+      
+      When an edge is a subdivision edge, then
       subd_edge_region[i].m_level0_component.ComponentType() is ON_SubDComponentPtr::Type::Edge,
       subd_edge_region[i].m_level0_component.ComponentBase() is nullptr, and
-      subd_edge_region[i].m_level0_component_id is 0x80000000 | ...
+      ON_SubDComponentRegion::IsTransientId(subd_edge_region[i].m_level0_component_id) is true
 
       The nurbs_surface pointer points to an ON_NurbsSurface on the heap.
       You must take responsibility for managing this surface and deleting it 
@@ -2232,7 +2690,7 @@ public:
     const class ON_SubDDisplayParameters& display_parameters,
     ON_SubD::NurbsSurfaceType nurbs_surface_type,
     ON__UINT_PTR callback_context,
-    bool(*nurbs_callback_function)(ON__UINT_PTR , const class ON_SubDComponentRegion&, const class ON_SubDComponentRegion*, class ON_NurbsSurface*)
+    bool(*nurbs_callback_function)(ON__UINT_PTR , const class ON_SubDFaceRegion&, class ON_NurbsSurface*)
     ) const;
 
   
@@ -2244,10 +2702,6 @@ public:
       Determines the density of NURBS patches near extraordinary vertices.
     nurbs_surface_type - [in]
       Controls the size and knot properties of the returned NURBS sufaces.
-    sUserStringPatchKey - [in]
-      If non empty, a user string with this key will be added that
-      contains the SubD face region information (from ON_SubDComponentRegion.ToString) 
-      for the NURBS surface.
     patches - [out]
       The bicubic NURBS patches are appended to this array.
   Returns:
@@ -2256,8 +2710,18 @@ public:
   unsigned int GetLimitSurfaceNurbs(
     const class ON_SubDDisplayParameters& display_parameters,
     ON_SubD::NurbsSurfaceType nurbs_surface_type,
-    const wchar_t* sUserStringPatchKey,
     ON_SimpleArray< ON_NurbsSurface* >& patches
+    ) const;
+
+  unsigned int GetLimitSurfaceNurbs(
+    const class ON_SubDDisplayParameters& display_parameters,
+    ON_SubD::NurbsSurfaceType nurbs_surface_type,
+    ON_SimpleArray< ON_SubDFaceRegionAndNurbs >& patches
+    ) const;
+
+  ON_Brep* GetLimitSurfaceNurbs(
+    const class ON_SubDDisplayParameters& display_parameters,
+    ON_Brep* destination_brep
     ) const;
 
 public:
@@ -3931,108 +4395,7 @@ private:
 };
 
 
-class ON_SUBD_CLASS ON_SubDComponentRegion
-{
-public:
-  ON_SubDComponentRegion() = default;
-  ~ON_SubDComponentRegion() = default;
-  ON_SubDComponentRegion(const ON_SubDComponentRegion&) = default;
-  ON_SubDComponentRegion& operator=(const ON_SubDComponentRegion&) = default;
 
-public:
-  static const ON_SubDComponentRegion Create(
-    const class ON_SubDFace* level0_face
-  );
-
-  static const ON_SubDComponentRegion Create(
-    unsigned int component_id,
-    ON_SubDComponentPtr::Type component_type,
-    bool bComponentMark
-  );
-
-public:
-  static const ON_SubDComponentRegion Empty;
-
-public:
-  ON_SubDComponentPtr m_level0_component = ON_SubDComponentPtr::Null;
-  unsigned int m_level0_component_id = 0;
-
-  unsigned short m_subdivision_count = 0;
-
-  enum : unsigned short
-  {
-    region_index_capacity = 9
-  };
-
-  // If m_subdivision_count > 0, then m_region_index[0], ..., m_region_index[m_subdivision_count-1]
-  // identifies a subregion of the level 0 component.
-  // Faces with quad subdivision:
-  //   m_region_index[n] is the subdivision quad for the region contain the parent face->m_vertex[m_region_index[n]].
-  // Edges
-  //   m_region_index[n] = 0 indicates the beginning half of the parent edge.
-  //   m_region_index[n] = 1 indicates the ending half of the parent edge.
-  unsigned short m_region_index[ON_SubDComponentRegion::region_index_capacity] = {};
-
-  /*
-  Returns:
-    Returns a region with the value m_level0_component.ComponentMark() toggled
-    and the active portion of the m_region_index[] array reversed.
-  Description:
-    Useful for standardizing edge regions when searching for duplicates.
-  */
-  ON_SubDComponentRegion Reverse() const;
-
-  /*
-  Returns:
-    Returns a region with the value m_level0_component.ComponentMark() = false.
-  Description:
-    Useful for standardizing edge regions when searching for duplicates.
-  */
-  ON_SubDComponentRegion ReverseIfMarked() const;
-
-  static int Compare(
-    const ON_SubDComponentRegion* lhs,
-    const ON_SubDComponentRegion* rhs
-    );
-
-  static int CompareTypeIdMarkRegion(
-    const ON_SubDComponentRegion* lhs,
-    const ON_SubDComponentRegion* rhs
-    );
-
-  void SetLevel0Component(
-    ON_SubDComponentPtr component_ptr
-  );
-
-  void SetLevel0Face(
-    const ON_SubDFace* face
-  );
-
-  void SetLevel0EdgePtr(
-    const ON_SubDEdgePtr edge_ptr
-  );
-
-  void SetLevel0Vertex(
-    const ON_SubDVertex* vertex
-  );
-
-  void Push(
-    unsigned int region_index
-  );
-
-  /*
-  Description:
-    Get a string of the form fN.a.b.c where N = m_level0_face-m_id, a.b.c = m_region_index[] values.
-  */
-  const wchar_t* ToString(
-    wchar_t* s,
-    size_t s_capacity
-  ) const;
-
-  const ON_wString ToString() const;
-
-  void Pop();
-};
 
 class ON_SUBD_CLASS ON_SubDLimitNurbsFragment
 {
@@ -4095,11 +4458,8 @@ public:
   // knot vector is uniform and not clamped. For example {-2,-1,0,1,2,3,4}.
   double m_patch_cv[5][5][3];
 
-  // m_face_region identifies what part of the SubD region is represented by the patches
-  ON_SubDComponentRegion m_face_region;
-
-  // m_face_region identifies what part of the SubD level0 edges are on the patch boundaries.
-  ON_SubDComponentRegion m_edge_region[4];
+  // m_face_region identifies what part of the SubD is represented by this patch
+  ON_SubDFaceRegion m_face_region;
 
   ON_SubDLimitNurbsFragment::Type m_type = ON_SubDLimitNurbsFragment::Type::Unset;
 
@@ -4730,6 +5090,19 @@ public:
     bool bUseSavedLimitPoint,
     class ON_SubDSectorLimitPoint& limit_point
     ) const;
+
+  /*
+  Description:
+    If there is a saved limit point, then its location is returned in limit_point[].
+  Parameters:
+    limit_point - [out]
+  Returns:
+    ON_SubD::SubDType::Unset: No saved limit point. The input value of limit_point[] is not changed.
+    Otherwise: The type of saved SubD limit point and its location is returned in limit_point[].
+  */
+  ON_SubD::SubDType GetSavedLimitPointLocation(
+    double limit_point[3]
+  ) const;
 
   /*
   Description:

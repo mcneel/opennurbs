@@ -1228,7 +1228,7 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
   {
     if (bIsText)
     {
-      if (dim_style_index0 >= 0 && dim_style_index0 == dim_style_index1)
+      if (dim_style_index0 > ON_UNSET_INT_INDEX && dim_style_index0 == dim_style_index1)
         dim_style_index = dim_style_index1;
       else
       {
@@ -1244,7 +1244,7 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
     else
     {
       // not text 
-      if (dim_style_index0 >= 0 && dim_style_index0 == dim_style_index2)
+      if (dim_style_index0 > ON_UNSET_INT_INDEX && dim_style_index0 == dim_style_index2)
         dim_style_index = dim_style_index2;
       else
       {
@@ -3651,7 +3651,13 @@ ON_2dPoint ON_OBSOLETE_V5_DimAngular::Dim2dPoint( int point_index ) const
 ON_3dPoint ON_OBSOLETE_V5_DimAngular::Dim3dPoint( int point_index ) const
 {
   ON_2dPoint p2 = Dim2dPoint(point_index);
-  return (ON_UNSET_VALUE == p2.x) ? ON_3dPoint::UnsetPoint : m_plane.PointAt(p2.x,p2.y);
+  if (ON_UNSET_VALUE == p2.x)
+    return ON_3dPoint::UnsetPoint;
+
+  ON_3dPoint p = m_plane.PointAt(p2.x, p2.y);
+  return p;
+
+  //return (ON_UNSET_VALUE == p2.x) ? ON_3dPoint::UnsetPoint : m_plane.PointAt(p2.x,p2.y);
 }
 
 

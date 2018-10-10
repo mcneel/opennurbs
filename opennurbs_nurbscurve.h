@@ -692,6 +692,44 @@ public:
         double* nurbs_t
         ) const override;
 
+  /*
+  Description:
+    Approximate the entire NURBS curve with a single nonrational cubic bezier curve.
+    Typically, the NURBS curve has only a few bispans.
+  Parameters:
+    max_deviation - [in]
+      If max_deviation >= 0.0, then the approximation is returned only
+      if the deviation sample is <= max_deviation.
+    bezierCurve - [out]
+  Returns:
+    ON_DBL_QNAN: no bezier curve is returned.
+    If a bezier curve is returned, then the maximum deviation between 
+    the bezier curve this NURBS curve sampled at the Greville abcissa.
+  */
+  double GetCubicBezierApproximation(
+    double max_deviation,
+    class ON_BezierCurve& bezierCurve
+  ) const;
+
+  /*
+  Description:
+    Approximate the entire NURBS surface with a single nonrational cubic bezier surface.
+    Typically, the NURBS surface has only a few bispans.
+  Parameters:
+    max_deviation - [in]
+      If max_deviation >= 0.0, then the approximation is returned only
+      if the deviation sample is <= max_deviation.
+    bezierSurface - [out]
+  Returns:
+    ON_DBL_QNAN: no bezier surface is returned.
+    If a bezier surface is returned, then the maximum deviation between 
+    the bezier suface this NURBS surface sampled at the Greville abcissa.
+  */
+  double GetCubicBezierApproximation(
+    double max_deviation,
+    ON_3dPoint bezCV[4]
+  ) const;
+
 public:
 
   /////////////////////////////////////////////////////////////////

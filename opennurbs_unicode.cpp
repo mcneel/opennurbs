@@ -200,6 +200,27 @@ static int ON_IsUTF8ByteOrderMark(
   return (0xEF == (unsigned char)(sUTF8[0]) && 0xBB == (unsigned char)(sUTF8[1]) && 0xBF == (unsigned char)(sUTF8[2]));
 }
 
+bool ON_IsUnicodeControlCodePoint(
+  ON__UINT32 code_point,
+  bool bNullReturnValue
+)
+{
+  if (0 == code_point)
+    return bNullReturnValue ? true : false;
+  if (code_point < 0x0020)
+    return true; // below space
+  if (code_point < 0x007f)
+    return false;
+  if (code_point <= 0x00A0)
+    return true; // del to 0xA0
+  if (code_point < 0x00AD)
+    return false;
+  if (code_point == 0x00AD)
+    return true; // soft hyphen
+
+  return false;
+}
+
 int ON_EncodeUTF8( ON__UINT32 u, char sUTF8[6] )
 {
   ON__UINT32 c;

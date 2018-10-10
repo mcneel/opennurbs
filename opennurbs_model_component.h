@@ -1683,6 +1683,11 @@ private:
   ON_ModelComponent::Type m_types[32];
 };
 
+/// <summary>
+/// ON_ModelComponentReference is a persistent reference to a model component.
+/// ON_ModelComponentReference and ON_ModelComponentWeakReference are based on
+/// like std::shared_ptr and std::weak_ptr.
+/// </summary>
 class ON_CLASS ON_ModelComponentReference
 {
 public:
@@ -1698,6 +1703,13 @@ public:
   ON_ModelComponentReference( ON_ModelComponentReference&& ) ON_NOEXCEPT;
   ON_ModelComponentReference& operator=( ON_ModelComponentReference&& );
 #endif
+
+  ON_ModelComponentReference(
+    const class ON_ModelComponentWeakReference& weak_ref
+  )  ON_NOEXCEPT;
+
+  ON_ModelComponentReference& operator=( const ON_ModelComponentWeakReference& );
+
 
   ON_ModelComponentReference(
     std::shared_ptr<ON_ModelComponent>& sp
@@ -1743,8 +1755,32 @@ public:
   /*
   Return:
     A pointer to the managed model component or nullptr.
+  See Also:
+    ON_ModelComponentRef::ExclusiveModelComponent();
   */
   const class ON_ModelComponent* ModelComponent() const ON_NOEXCEPT;
+
+  /*
+  Return:
+    If this is the only referance to a component, the a pointer to
+    that component is returned.
+    Otherwise, nullptr is returned
+  See Also:
+    ON_ModelGeometryComponent::Attributes()
+    ON_ModelGeometryComponent::Geometry()
+    ON_ModelGeometryComponent::ExclusiveAttributes()
+    ON_ModelGeometryComponent::ExclusiveGeometry();
+    ON_ModelComponentRef::ExclusiveModelComponent();
+    ONX_Model::ComponentFromRuntimeSerialNumber()
+  Remarks:
+    If .NET or other wrappers using "lazy garbage collection" memory management are in use,
+    there may be stale references awaiting gargage collection and this function will return
+    nullptr when you think it should not. 
+    For this function to work reliably, the ONX_Model and its components 
+    and references should be in well constructed C++ code with carefully 
+    crafted memory management.
+  */
+  class ON_ModelComponent* ExclusiveModelComponent() const ON_NOEXCEPT;
 
   ON__UINT64 ModelComponentRuntimeSerialNumber() const ON_NOEXCEPT;
   const ON_UUID ModelComponentId() const ON_NOEXCEPT;
@@ -1760,6 +1796,8 @@ public:
     ) const;
 
 private:
+  friend class ON_ModelComponentWeakReference;
+
 #pragma ON_PRAGMA_WARNING_PUSH
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 ) 
   // C4251: ... needs to have dll-interface to be used by clients of class ...
@@ -1771,5 +1809,44 @@ private:
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_ModelComponentReference>;
 #endif
+
+/// <summary>
+/// ON_ModelComponentWeakReference is a weak shared reference to a model component.
+/// ON_ModelComponentReference and ON_ModelComponentWeakReference are based on
+/// like std::shared_ptr and std::weak_ptr.
+/// </summary>
+class ON_CLASS ON_ModelComponentWeakReference
+{
+public:
+  static const ON_ModelComponentWeakReference Empty;
+
+public:
+  // No = default to insure m_sp is completely managed in the openurbs DLL.
+  ON_ModelComponentWeakReference() ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
+  ~ON_ModelComponentWeakReference(); // No = default to insure m_sp is completely managed in the openurbs DLL.
+  ON_ModelComponentWeakReference(const ON_ModelComponentWeakReference&) ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
+  ON_ModelComponentWeakReference& operator=(const ON_ModelComponentWeakReference&); // No = default to insure m_sp is completely managed in the openurbs DLL.
+  
+#if defined(ON_HAS_RVALUEREF)
+  ON_ModelComponentWeakReference( ON_ModelComponentWeakReference&& ) ON_NOEXCEPT;
+  ON_ModelComponentWeakReference& operator=( ON_ModelComponentWeakReference&& );
+#endif
+
+  ON_ModelComponentWeakReference(
+    const class ON_ModelComponentReference&
+  )  ON_NOEXCEPT;
+
+  ON_ModelComponentWeakReference& operator=( const ON_ModelComponentReference& );
+
+
+private:
+  friend class ON_ModelComponentReference;
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 ) 
+  // C4251: ... needs to have dll-interface to be used by clients of class ...
+  // m_weak_sp is private and all code that manages m_weak_sp is explicitly implemented in the DLL.
+  std::weak_ptr<ON_ModelComponent> m_wp;
+#pragma ON_PRAGMA_WARNING_POP
+};
 
 #endif

@@ -123,6 +123,43 @@ const ON_wString ON_TextContext::FormatRtfString(
     dimstyle = &ON_DimStyle::Default;
   const ON_wString rtf_font_name = ON_Font::RichTextFontName(&dimstyle->Font(),true);
 
+  ON_wString rtf_wstring(rtf_string);
+  int rtf = rtf_wstring.Find("rtf1");
+  if (-1 == rtf)  // Input is plain text string
+  {
+    ON_wString font_table_str;
+    ON_wString rtf_text_str;
+    ON_wString fmts;
+    // Keep dimstyle font as f0 in the font table even if we don't need itg here 
+    if (set_facename && !rtf_font_name.EqualOrdinal(override_facename, true))
+    {
+      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}{\\f1 %ls;}}", rtf_font_name.Array(), override_facename);
+      fmts = L"\\f1";
+    }
+    else  // Use style facename
+    {
+      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}}", rtf_font_name.Array());
+      fmts = L"\\f0";
+    }
+    if (set_bold)
+      fmts += L"\\b";
+    if (set_italic)
+      fmts += L"\\i";
+    if (set_underline)
+      fmts += "L\\ul";
+
+    rtf_wstring.Replace(L"\\", L"\\\\");
+    rtf_text_str.Format(L"{%ls %ls}", fmts.Array(), rtf_wstring.Array());
+    ON_wString par;
+    par.Format(L"}{\\par}{%ls ", fmts.Array());
+    rtf_text_str.Replace(L"\n", par.Array());
+
+    rtf_wstring.Format(L"{\\rtf1\\deff0%ls%ls}", font_table_str.Array(), rtf_text_str.Array());
+    return rtf_wstring;
+  }
+
+  // else Input is RTF string
+
   ON_RtfStringBuilder builder(dimstyle, 1.0, ON_UNSET_COLOR);
   builder.SetSkipColorTbl(true);
 
@@ -137,39 +174,16 @@ const ON_wString ON_TextContext::FormatRtfString(
   builder.SetOverrideFacename(override_facename);
   builder.SetDefaultFacename(rtf_font_name);
 
-  ON_wString rtf_wstring(rtf_string);
-  int rtf = rtf_wstring.Find("rtf1");
-  if (-1 == rtf)
+  if (builder.SettingFacename())
   {
-    ON_wString font_table_str;
-    ON_wString rtf_text_str;
-    if (builder.SettingFacename())
+    int ftbl = rtf_wstring.Find(L"fonttbl");
+    if (-1 == ftbl)
     {
-      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}{\\f1 %ls;}}", rtf_font_name.Array(), override_facename);
-      rtf_text_str.Format(L"{\\f1 %ls}", rtf_string);
-      rtf_text_str.Replace(L"\n", L"}{\\par}{\\f1 ");
-    }
-    else
-    {
-      font_table_str.Format(L"{\\fonttbl{\\f0 %ls;}}", rtf_font_name.Array());
-      rtf_text_str.Format(L"{\\f0 %ls}", rtf_string);
-      rtf_text_str.Replace(L"\n", L"}{\\par}{\\f0 ");
-    }
-    rtf_wstring.Format(L"{\\rtf1\\deff0%ls%ls}", font_table_str.Array(), rtf_text_str.Array());
-  }
-  else
-  {
-    if (builder.SettingFacename())
-    {
-      int ftbl = rtf_wstring.Find(L"fonttbl");
-      if (-1 == ftbl)
-      {
-        ON_wString temp;
-        len = rtf_wstring.Length();
-        ON_wString str = rtf_wstring.Right(((int)len) - 7);
-        temp.Format(L"{\\rtf1{\\fonttbl}%ls", str.Array());
-        rtf_wstring = temp;
-      }
+      ON_wString temp;
+      len = rtf_wstring.Length();
+      ON_wString str = rtf_wstring.Right(((int)len) - 7);
+      temp.Format(L"{\\rtf1{\\fonttbl}%ls", str.Array());
+      rtf_wstring = temp;
     }
   }
   len = rtf_wstring.Length();

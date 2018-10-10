@@ -274,6 +274,7 @@ bool ON_TextContent::Internal_ParseRtf(
   // a different font.
   // The intent is to leave any font changes in place and replace 
   // only the font used for text not explicitly set to some other font
+  ON_wString default_fontname = ON_Font::RichTextFontName(&dimstyle->Font(),true);
   ON_wString rtf_w_string(rtf_string);
   int ix = rtf_w_string.Find(L"{\\rtf1");
   if (ix != -1)
@@ -297,12 +298,12 @@ bool ON_TextContent::Internal_ParseRtf(
           int idx1 = rtf_w_string.Find(L";", idxface);
           if (idx1 > 0)
           {
-            ON_wString deffacename = rtf_w_string.SubString(idxface + 1, idx1 - idxface - 1);
-            if (0 != deffacename.CompareOrdinal(dimstyle_facename, true))
+            default_fontname = rtf_w_string.SubString(idxface + 1, idx1 - idxface - 1);
+            if (0 != default_fontname.CompareOrdinal(dimstyle_facename, true))
             {
               ON_wString t1 = rtf_w_string.Left(idxface + 1);
               ON_wString t2 = rtf_w_string.Right(rtf_w_string.Length() - idx1);
-              rtf_w_string = t1 + dimstyle_facename.Array();
+              rtf_w_string = t1 + default_fontname.Array();
               rtf_w_string = rtf_w_string + t2;
             }
           }
@@ -342,7 +343,7 @@ bool ON_TextContent::Internal_ParseRtf(
     rc = ON_TextContent::MeasureTextContent(this, true, false);
   if (rc && bComposeAndUpdateRtf)
   {
-    rc = RtfComposer::Compose(this, dimstyle, str);
+    rc = RtfComposer::Compose(this, dimstyle, default_fontname, str);
     if (rc)
     {
       m_text = str;
@@ -588,6 +589,11 @@ bool ON_TextContent::Create(
   case ON::AnnotationType::Text:
     h_align = dimstyle->TextHorizontalAlignment();
     v_align = dimstyle->TextVerticalAlignment();
+    break;
+  case ON::AnnotationType::Diameter:
+  case ON::AnnotationType::Radius:
+    h_align = dimstyle->LeaderTextHorizontalAlignment();
+    v_align = dimstyle->LeaderTextVerticalAlignment();
     break;
   }
 
@@ -1586,6 +1592,8 @@ ON::AnnotationType ON_TextContent::Internal_AlignmentAnnotationType(
   {
   case ON::AnnotationType::Text:
   case ON::AnnotationType::Leader:
+  case ON::AnnotationType::Diameter:
+  case ON::AnnotationType::Radius:
     return annotation_type;
   }
   return ON::AnnotationType::Unset;
@@ -1620,7 +1628,8 @@ const wchar_t* ON_TextContent::RtfText() const
 bool ON_TextContent::ComposeText()
 {
   ON_wString rtf;
-  if (RtfComposer::Compose(this, nullptr, rtf))
+  ON_wString nothing;
+  if (RtfComposer::Compose(this, nullptr, nothing, rtf))
   {
     m_text = rtf;
     return true;
@@ -1670,14 +1679,56 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
 
 double ON_TextContent::GetLinefeedHeight(ON_TextRun& run)
 {
-  double lfht = 1.6;
+  double lfht = ON_FontMetrics::DefaultLineFeedRatio; // (1.6)
   if (nullptr != run.Font())
   {
     // March 2017 Dale Lear asks:
     //   Why not use run.Font()->FontMetrics().LineSpace() instead
     //   of this?
-    lfht = ON_FontMetrics::DefaultLineFeedRatio * run.TextHeight();
+    const double text_height = run.TextHeight();
+    const double legacy_lfht = ON_FontMetrics::DefaultLineFeedRatio * text_height;
+
+    // September 2018 Dale Lear
+    // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-48824
+    //
+    // In an attempt to cause minimal distruption to the line spacing
+    // in existing files using common fonts 
+    // (Arial, Klavika, Helvetica, City/Country Blueprint, ...)
+    // AND fix the bug for fonts like Microsoft Himalaya, I am switching
+    // to using line spacing value from the font metrics, BUT, I use
+    // this value only when it is substantually larger than the
+    // "1.6*HeightOfI" value we've been using since Rhino 4.
+    //
+    const ON_FontMetrics& fm = run.m_managed_font->FontMetrics();
+    const double ascent_of_I = fm.AscentOfCapital(); // legacy "height of I"
+    const double font_line_space = fm.LineSpace(); // font designer's line spacing
+    const double font_metric_lfht
+      = (ascent_of_I > 0.0)
+      ? (text_height / ascent_of_I)*font_line_space
+      : 0.0;
+
+    // The 1.25 threshold value was picked so that the fonts
+    // Arial, Arial Black, City Blueprint, Country Blueprint, Klavika*,
+    // Helvetica, Technic, Bahnschrift, Segoe UI, Courier, Franklin Gothic,
+    // Malgun Gothic, Futura, Lucida, Tahoma will continue to use line spacing
+    // that the have in Rhino 4, 5, 6 (up to Setp 2018). These fonts are common
+    // and lots of existing files have drawings with text blocks that will
+    // have incorrect spacing if we use the font designer's spacing.
+    // The font Microsoft Himalaya has font_metric_lfht/legacy_lfht = 1.4
+    // so it will use the new spacing and be readable. More generally,
+    // if font_metric_lfht/legacy_lfht > 1.25, and the font designer set
+    // fm.LineSpace() to a reasonable value, then it is likely that
+    // multiline text will have overlapping glyphs.
+    lfht
+      = (font_metric_lfht > 1.25*legacy_lfht)
+      ? font_metric_lfht // this fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-48824
+      : legacy_lfht;
+
+    if (!(lfht == legacy_lfht))
+      ON_TextLog::Null.Print(L"Break");
   }
+
+
   return lfht;
 }
 
@@ -2067,7 +2118,11 @@ bool ON_TextContent::FormatDistance(
     ? dimstyle->AlternateDimensionLengthDisplayUnit(0)
     : dimstyle->DimensionLengthDisplayUnit(0);
 
-  double length_factor = dimstyle->LengthFactor();
+  double length_factor = 
+    alt
+    ? dimstyle->AlternateLengthFactor()
+    : dimstyle->LengthFactor();
+
   double unit_length_factor = ON::UnitScale(units_in, dim_us);
   distance = unit_length_factor * length_factor * distance_in;
 

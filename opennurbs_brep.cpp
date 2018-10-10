@@ -4036,8 +4036,290 @@ bool CheckLoopOnSrfHelper( const ON_Brep& brep,
 }
 
 
+static void Internal_ValidateBrepIndex(
+  ON__UINT_PTR text_log_ptr_plus,
+  const wchar_t* corruption_descirption,
+  bool& bCorrupt,
+  const int max_idx,
+  const int& idx
+)
+{
+  if (idx < max_idx)
+    return;
+  const bool bSilentError = (0 != (text_log_ptr_plus & 1));
+  const bool bRepair = (0 != (text_log_ptr_plus & 2));
+  ON_TextLog* text_log = (ON_TextLog*)(text_log_ptr_plus & (~((ON__UINT_PTR)3)) );
+  if (false == bCorrupt && false == bSilentError)
+  {
+    ON_ERROR("ON_Brep has corrupt indices that will cause crashes.");
+  }
+  bCorrupt = true;
+  if (nullptr != text_log)
+    text_log->PrintString(corruption_descirption);
+  if (bRepair)
+    const_cast<int&>(idx) = -1; // prevents crashes because code checks for -1 as an unset index value
+}
+
+
+static void Internal_ValidateBrepIndexArray(
+  ON__UINT_PTR text_log_ptr_plus,
+  const wchar_t* corruption_descirption,
+  bool& bCorrupt,
+  const int max_idx,
+  const int idex_count,
+  const int* idex_a
+)
+{
+  for (int j = 0; j < idex_count; j++)
+  {
+    Internal_ValidateBrepIndex(text_log_ptr_plus, corruption_descirption, bCorrupt, max_idx, idex_a[j]);
+  }
+}
+
+
+static void Internal_ValidateBrepIndexSimpleArray(
+  ON__UINT_PTR text_log_ptr_plus,
+  const wchar_t* corruption_descirption,
+  bool& bCorrupt,
+  const int max_idx,
+  const ON_SimpleArray<int>& idx_array
+)
+{
+  const int idex_count = idx_array.Count();
+  const int* idex_a = idx_array.Array();
+  Internal_ValidateBrepIndexArray(text_log_ptr_plus, corruption_descirption, bCorrupt, max_idx, idex_count, idex_a);
+}
+
+static void Internal_ValidateBrepComponentBackPtr(
+  ON__UINT_PTR text_log_ptr_plus,
+  const wchar_t* corruption_descirption,
+  bool& bCorrupt,
+  const ON_Brep* this_brep,
+  ON_Brep*const* brep_back_ptr,
+  const int idx,
+  const int& component_back_idx
+)
+{
+  if (this_brep != *brep_back_ptr)
+  {
+    const bool bSilentError = (0 != (text_log_ptr_plus & 1));
+    const bool bRepair = (0 != (text_log_ptr_plus & 2));
+    ON_TextLog* text_log = (ON_TextLog*)(text_log_ptr_plus & (~((ON__UINT_PTR)3)) );
+
+    if (false == bCorrupt && false == bSilentError)
+    {
+      ON_ERROR("ON_Brep has corrupt indices that will cause crashes.");
+    }
+    bCorrupt = true;
+    if (nullptr != text_log)
+      text_log->Print(corruption_descirption);
+    if (bRepair)
+      *const_cast<ON_Brep**>(brep_back_ptr) = const_cast<ON_Brep*>(this_brep);
+  }
+
+  if (idx != component_back_idx)
+  {
+    const bool bSilentError = (0 != (text_log_ptr_plus & 1));
+    const bool bRepair = (0 != (text_log_ptr_plus & 2));
+    ON_TextLog* text_log = (ON_TextLog*)(text_log_ptr_plus & (~((ON__UINT_PTR)3)));
+
+    if (false == bCorrupt && false == bSilentError)
+    {
+      ON_ERROR("ON_Brep has corrupt indices that will cause crashes.");
+    }
+    bCorrupt = true;
+    if (nullptr != text_log)
+      text_log->Print(corruption_descirption);
+    if (bRepair)
+      const_cast<int&>(component_back_idx) = idx;
+  }
+}
+
+bool ON_Brep::IsCorrupt(
+  bool bRepair,
+  bool bSilentError,
+  class ON_TextLog* text_log
+) const
+{
+  bool bCorrupt = false;
+
+  const int C2_count = m_C2.Count();
+  const int C3_count = m_C3.Count();
+  const int S_count = m_S.Count();
+  const int V_count = m_V.Count();
+  const int E_count = m_E.Count();
+  const int T_count = m_T.Count();
+  const int L_count = m_L.Count();
+  const int F_count = m_F.Count();
+
+  ON__UINT_PTR text_log_ptr = (ON__UINT_PTR)text_log;
+  if (bSilentError)
+    text_log_ptr |= 1;
+  if (bRepair)
+    text_log_ptr |= 2;
+
+  ON_Brep* ignored_this_ptr = const_cast<ON_Brep*>(this);
+
+  for (int vi = 0; vi < V_count; vi++)
+  {
+    const ON_BrepVertex& v = m_V[vi];
+    Internal_ValidateBrepComponentBackPtr(
+      text_log_ptr,
+      L"Corrupt ON_BrepVertex.m_vertex_index back pointer.\n",
+      bCorrupt,
+      this, &ignored_this_ptr,
+      vi, v.m_vertex_index
+    );
+
+    Internal_ValidateBrepIndexSimpleArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepVertex.m_ei[] index.\n",
+      bCorrupt,
+      E_count,
+      v.m_ei
+    );
+  }
+  
+  for (int ei = 0; ei < E_count; ei++)
+  {
+    const ON_BrepEdge& e = m_E[ei];
+    Internal_ValidateBrepComponentBackPtr(
+      text_log_ptr,
+      L"Corrupt ON_BrepEdge m_brep or m_edge_index back pointers.\n",
+      bCorrupt,
+      this, &e.m_brep,
+      ei, e.m_edge_index
+    );
+
+    Internal_ValidateBrepIndexArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepEdge.m_vi[] index.\n",
+      bCorrupt,
+      V_count,
+      2,
+      e.m_vi
+    );
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepEdge.m_c3i index.\n",
+      bCorrupt,
+      C3_count,
+      e.m_c3i
+    );
+    Internal_ValidateBrepIndexSimpleArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepEdge.m_ti[] index.\n",
+      bCorrupt,
+      T_count,
+      e.m_ti
+    );
+  }
+  
+  for (int ti = 0; ti < T_count; ti++)
+  {
+    const ON_BrepTrim& t = m_T[ti];
+    Internal_ValidateBrepComponentBackPtr(
+      text_log_ptr,
+      L"Corrupt ON_BrepTrim m_brep or m_trim_index back pointers.\n",
+      bCorrupt,
+      this, &t.m_brep,
+      ti, t.m_trim_index
+    );
+
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepTrim.m_c2i index.\n",
+      bCorrupt,
+      C2_count,
+      t.m_c2i
+    );
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepTrim.m_ei index.\n",
+      bCorrupt,
+      E_count,
+      t.m_ei
+    );
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepTrim.m_li index.\n",
+      bCorrupt,
+      L_count,
+      t.m_li
+    );
+    Internal_ValidateBrepIndexArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepTrim.m_vi[] index.\n",
+      bCorrupt,
+      V_count,
+      2,
+      t.m_vi
+    );
+  }
+  
+  for (int li = 0; li < L_count; li++)
+  {
+    const ON_BrepLoop& l = m_L[li];
+    Internal_ValidateBrepComponentBackPtr(
+      text_log_ptr,
+      L"Corrupt ON_BrepLoop m_brep or m_loop_index back pointers.\n",
+      bCorrupt,
+      this, &l.m_brep,
+      li, l.m_loop_index
+    );
+
+    Internal_ValidateBrepIndexSimpleArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepLoop.m_ti[] index.\n",
+      bCorrupt,
+      T_count,
+      l.m_ti
+    );
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepLoop.m_fi index.\n",
+      bCorrupt,
+      F_count,
+      l.m_fi
+    );
+  }
+  
+  for (int fi = 0; fi < F_count; fi++)
+  {
+    const ON_BrepFace& f = m_F[fi];
+    Internal_ValidateBrepComponentBackPtr(
+      text_log_ptr,
+      L"Corrupt ON_BrepFace m_brep or m_face_index back pointers.\n",
+      bCorrupt,
+      this, &f.m_brep,
+      fi, f.m_face_index
+    );
+
+    Internal_ValidateBrepIndexSimpleArray(
+      text_log_ptr,
+      L"Corrupt ON_BrepFace.m_li[] index.\n",
+      bCorrupt,
+      L_count,
+      f.m_li
+    );
+    Internal_ValidateBrepIndex(
+      text_log_ptr,
+      L"Corrupt ON_BrepFace.m_si index.\n",
+      bCorrupt,
+      S_count,
+      f.m_si
+    );
+  }
+
+  return bCorrupt;
+}
+
+
 bool ON_Brep::IsValid( ON_TextLog* text_log ) const
 {
+  if (IsCorrupt(false, true, text_log))
+    return false;
+
   const int curve2d_count = m_C2.Count();
   const int curve3d_count = m_C3.Count();
   const int surface_count = m_S.Count();
@@ -8442,67 +8724,84 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
   ON_Object* dup = 0;
 
   // mark vertices, edges, faces, surfaces, and curves to duplicate
-  ON_SimpleArray<int> s_remap(m_S.Count());
-  s_remap.SetCount(m_S.Count());
+  const int s_ct = m_S.Count();
+  ON_SimpleArray<int> s_remap(s_ct);
+  s_remap.SetCount(s_ct);
   s_remap.Zero();
-  ON_SimpleArray<int> f_remap(m_F.Count());
-  f_remap.SetCount(m_F.Count());
+  
+  const int f_ct = m_F.Count();
+  ON_SimpleArray<int> f_remap(f_ct);
+  f_remap.SetCount(f_ct);
   f_remap.Zero();
-  ON_SimpleArray<int> c2_remap(m_C2.Count());
-  c2_remap.SetCount(m_C2.Count());
+  
+  const int c2_ct = m_C2.Count();
+  ON_SimpleArray<int> c2_remap(c2_ct);
+  c2_remap.SetCount(c2_ct);
   c2_remap.Zero();
-  ON_SimpleArray<int> c3_remap(m_C3.Count());
-  c3_remap.SetCount(m_C3.Count());
+  
+  const int c3_ct = m_C3.Count();
+  ON_SimpleArray<int> c3_remap(c3_ct);
+  c3_remap.SetCount(c3_ct);
   c3_remap.Zero();
-  ON_SimpleArray<int> e_remap(m_E.Count());
-  e_remap.SetCount(m_E.Count());
+  
+  const int e_ct = m_E.Count();
+  ON_SimpleArray<int> e_remap(e_ct);
+  e_remap.SetCount(e_ct);
   e_remap.Zero();
-  ON_SimpleArray<int> v_remap(m_V.Count());
-  v_remap.SetCount(m_V.Count());
+  
+  const int v_ct = m_V.Count();
+  ON_SimpleArray<int> v_remap(v_ct);
+  v_remap.SetCount(v_ct);
   v_remap.Zero();
-  for (i = 0; i < face_count; i++ ) {
+  
+  const int t_ct = m_T.Count();
+  const int l_ct = m_L.Count();
+
+  for (i = 0; i < face_count; i++ )
+  {
     fi = face_index[i];
-    if (fi >= 0 && fi < m_F.Count() ) {
+    if (fi >= 0 && fi < f_ct )
+    {
       const ON_BrepFace& face = m_F[fi];
       rc = true;
       f_remap[fi] = 1;
       si = face.m_si;
-      if ( si >= 0 && si < m_S.Count() ) {
+      if ( si >= 0 && si < s_ct )
+      {
         s_remap[si] = 1;
       }
       for ( fli = 0; fli < face.m_li.Count(); fli++ ) 
       {
         li = face.m_li[fli];
-        if ( li < 0 || li >= m_L.Count() )
+        if ( li < 0 || li >= l_ct )
           continue;
         const ON_BrepLoop& loop = m_L[li];
         for ( lti = 0; lti < loop.m_ti.Count(); lti++ ) 
         {
           ti = loop.m_ti[lti];
-          if ( ti < 0 || ti >= m_T.Count() )
+          if ( ti < 0 || ti >= t_ct )
             continue;
           const ON_BrepTrim& trim = m_T[ti];
-          if ( trim.m_ei >= 0 && trim.m_ei < m_E.Count() ) 
+          if ( trim.m_ei >= 0 && trim.m_ei < e_ct )
           {
             int vi;
             e_remap[trim.m_ei] = 1;
             vi = m_E[trim.m_ei].m_vi[0];
-            if ( vi >= 0 )
+            if ( vi >= 0 && v_ct > vi)
               v_remap[vi] = 1;
             vi = m_E[trim.m_ei].m_vi[1];
-            if ( vi >= 0 )
+            if ( vi >= 0 && v_ct > vi)
               v_remap[vi] = 1;
           }
-          if ( trim.m_vi[0] >= 0 )
+          if ( trim.m_vi[0] >= 0 && v_ct > trim.m_vi[0])
             v_remap[trim.m_vi[0]] = 1;
-          if ( trim.m_vi[1] >= 0 )
+          if ( trim.m_vi[1] >= 0 && v_ct > trim.m_vi[1])
             v_remap[trim.m_vi[1]] = 1;
           int ci = trim.EdgeCurveIndexOf();
-          if ( ci >= 0 ) {
+          if ( ci >= 0 && c3_ct > ci)
             c3_remap[ci] = 1;
-          }
           ci = trim.TrimCurveIndexOf();
-          if ( ci >= 0 )
+          if ( ci >= 0 && c2_ct > ci)
             c2_remap[ci] = 1;
         }
       }
@@ -8514,7 +8813,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
   brep_copy = new ON_Brep();
 
   // duplicate surfaces
-  for ( i = 0; i < m_S.Count() && rc; i++ )
+  for ( i = 0; i < s_ct && rc; i++ )
   {
     if ( s_remap[i] ) {
       if ( !m_S[i] )
@@ -8529,10 +8828,10 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     else
       s_remap[i] = -1;
   }
-  rc = ( rc && i == m_S.Count() );
+  rc = ( rc && i == s_ct );
 
   // duplicate 2d curves
-  for ( i = 0; i < m_C2.Count() && rc; i++ )
+  for ( i = 0; i < c2_ct && rc; i++ )
   {
     if ( c2_remap[i] ) {
       if ( !m_C2[i] )
@@ -8547,10 +8846,10 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     else
       c2_remap[i] = -1;
   }
-  rc = ( rc && i == m_C2.Count() );
+  rc = ( rc && i == c2_ct );
 
   // duplicate 3d curves
-  for ( i = 0; i < m_C3.Count() && rc; i++ )
+  for ( i = 0; i < c3_ct && rc; i++ )
   {
     if ( c3_remap[i] ) {
       if ( !m_C3[i] )
@@ -8565,10 +8864,10 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     else
       c3_remap[i] = -1;
   }
-  rc = ( rc && i == m_C3.Count() );
+  rc = ( rc && i == c3_ct );
 
   // duplicate vertices
-  for (i = 0; i < m_V.Count() && rc; i++ ) 
+  for (i = 0; i < v_ct && rc; i++ )
   {
     if (v_remap[i]) 
     {
@@ -8580,10 +8879,10 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     else
       v_remap[i] = -1;
   }
-  rc = ( rc && i == m_V.Count() );
+  rc = ( rc && i == v_ct );
 
   // duplicate edges
-  for (i = 0; i < m_E.Count() && rc; i++ ) 
+  for (i = 0; i < e_ct && rc; i++ )
   {
     if (e_remap[i]) 
     {
@@ -8610,7 +8909,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     else
       e_remap[i] = -1;
   }
-  rc = ( rc && i == m_E.Count() );
+  rc = ( rc && i == e_ct );
 
   //03/11/2010 Tim
   //More checking to prevent crashes
@@ -8618,7 +8917,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
   bool bFoundBadIdx = false;
 
   // duplicate faces
-  for ( fi = 0; rc && fi < m_F.Count() && rc && !bFoundBadIdx; fi++ )
+  for ( fi = 0; rc && fi < f_ct && rc && !bFoundBadIdx; fi++ )
   {
     if ( f_remap[fi] == 0 )
       continue;
@@ -8626,7 +8925,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     const ON_BrepFace& face = m_F[fi];
 
     // duplicate face
-    si = (face.m_si>=0) ? s_remap[face.m_si] : -1;
+    si = (face.m_si>=0 && s_ct > face.m_si) ? s_remap[face.m_si] : -1;
     if ( si < 0 )
       break;
 
@@ -8644,7 +8943,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     for ( fli = 0; fli < face.m_li.Count() && !bFoundBadIdx; fli++ )
     {
       li = face.m_li[fli];
-      if (0 > li || m_L.Count() <= li)
+      if (0 > li || l_ct <= li)
       {
         bFoundBadIdx = true;
         break;
@@ -8657,20 +8956,22 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
       for ( lti = 0; lti < loop.m_ti.Count() && !bFoundBadIdx; lti++ )
       {
         ti = loop.m_ti[lti];
-        if (0 > ti || m_T.Count() <= ti)
+        if (0 > ti || t_ct <= ti)
         {
           bFoundBadIdx = true;
           break;
         }
         const ON_BrepTrim& trim = m_T[ti];
-        i = (trim.m_c2i>=0) ? c2_remap[trim.m_c2i] : -1;
-        if ( trim.m_ei >= 0 ) {
+        i = (trim.m_c2i >= 0 && c2_ct > trim.m_c2i) ? c2_remap[trim.m_c2i] : -1;
+        if ( trim.m_ei >= 0 && e_ct > trim.m_ei)
+        {
           i = brep_copy->NewTrim( brep_copy->m_E[e_remap[trim.m_ei]], trim.m_bRev3d, loop_copy, i ).m_trim_index;
         }
-        else {
+        else
+        {
           i = brep_copy->NewTrim( trim.m_bRev3d, loop_copy, i ).m_trim_index;
-          int vi0 = (trim.m_vi[0]>=0) ? v_remap[trim.m_vi[0]] : -1;
-          int vi1 = (trim.m_vi[1]>=0) ? v_remap[trim.m_vi[1]] : -1;
+          int vi0 = (trim.m_vi[0] >= 0  && v_ct > trim.m_vi[0]) ? v_remap[trim.m_vi[0]] : -1;
+          int vi1 = (trim.m_vi[1] >= 0  && v_ct > trim.m_vi[1]) ? v_remap[trim.m_vi[1]] : -1;
           brep_copy->m_T[i].m_vi[0] = vi0;
           brep_copy->m_T[i].m_vi[1] = vi1;
         }
@@ -9579,6 +9880,10 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
     src.m_C3.Duplicate( m_C3 );
     src.m_S.Duplicate( m_S );
 
+    const int C2_count = m_C2.Count();
+    const int C3_count = m_C3.Count();
+    const int S_count = m_S.Count();
+
     int i, count = m_V.Count();
     for ( i = 0; i < count; i++ ) 
     {
@@ -9591,6 +9896,12 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
       m_E[i] = src.m_E[i];
       ON_BrepEdge& e = m_E[i];
       e.m_brep = this;
+
+      if (e.m_c3i >= C3_count)
+      {
+        ON_ERROR("src brep has invalid ON_BrepEdge.m_c3i value.");
+        e.m_c3i = -1;
+      }
 
       // update curve proxy info to point at 3d curve in this brep
       e.SetProxyCurve( ( e.m_c3i >= 0 ) ? m_C3[e.m_c3i] : 0, 
@@ -9613,6 +9924,13 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
       m_F[i] = src.m_F[i];
       ON_BrepFace& f = m_F[i];
       f.m_brep = this;
+
+      if (f.m_si >= S_count)
+      {
+        ON_ERROR("src brep has invalid ON_BrepFace.m_si value.");
+        f.m_si = -1;
+      }
+
       // update surface proxy info to point at 3d surface in this brep
       f.SetProxySurface(( f.m_si >= 0 ) ? m_S[f.m_si] : 0);
       f.m_bbox = src.m_F[i].m_bbox; // because SetProxySurface destroys it
@@ -9624,6 +9942,12 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
       m_T[i] = src.m_T[i];
       ON_BrepTrim& trim = m_T[i];
       trim.m_brep = this;
+
+      if (trim.m_c2i >= C2_count)
+      {
+        ON_ERROR("src brep has invalid ON_BrepTrim.m_c2i value.");
+        trim.m_c2i = -1;
+      }
 
       // update curve proxy info to point at 2d curve in this brep
       trim.SetProxyCurve( ( trim.m_c2i >= 0 ) ? m_C2[trim.m_c2i] : 0, 

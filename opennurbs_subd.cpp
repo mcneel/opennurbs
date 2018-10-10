@@ -667,7 +667,7 @@ ON_SubDComponentPtr ON_SubDComponentPtr::ToggleMark() const
   return (0 != (m_ptr & ON_SUBD_ELEMENT_MARK_MASK)) ? ClearMark() : SetMark();
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::CreateNull(
+const ON_SubDComponentPtr ON_SubDComponentPtr::CreateNull(
   ON_SubDComponentPtr::Type component_type,
   bool bMark
 )
@@ -767,7 +767,7 @@ ON_SubDFacePtr ON_SubDComponentPtr::FacePtr() const
   return ON_SUBD_RETURN_ERROR(ON_SubDFacePtr::Null);
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDVertex* vertex
   )
 {
@@ -779,7 +779,7 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   return ON_SubDComponentPtr::Null;
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDEdge* edge
   )
 {
@@ -792,7 +792,7 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
 }
 
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDFace* face
   )
 {
@@ -804,7 +804,7 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   return ON_SubDComponentPtr::Null;
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDVertex* vertex,
   ON__UINT_PTR vertex_direction
   )
@@ -817,7 +817,7 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   return ON_SubDComponentPtr::Null;
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDEdge* edge,
   ON__UINT_PTR edge_direction
   )
@@ -830,7 +830,7 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   return ON_SubDComponentPtr::Null;
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   const class ON_SubDFace* face,
   ON__UINT_PTR face_direction
   )
@@ -843,21 +843,21 @@ class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   return ON_SubDComponentPtr::Null;
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   ON_SubDVertexPtr vertexptr
   )
 {
   return Create(vertexptr.Vertex(), vertexptr.VertexPtrMark());
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   ON_SubDEdgePtr edgeptr
   )
 {
   return Create(edgeptr.Edge(), edgeptr.EdgeDirection());
 }
 
-class ON_SubDComponentPtr ON_SubDComponentPtr::Create(
+const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
   ON_SubDFacePtr faceptr
   )
 {

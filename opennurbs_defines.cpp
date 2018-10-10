@@ -2343,6 +2343,43 @@ int ON_2udex::DictionaryCompare(
   return 0;
 }
 
+int ON_2udex::CompareFirstIndex(
+  const ON_2udex* lhs,
+  const ON_2udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->i < rhs->i)
+    return -1;
+  if (lhs->i > rhs->i)
+    return 1;
+  return 0;
+}
+
+int ON_2udex::CompareSecondIndex(
+  const ON_2udex* lhs,
+  const ON_2udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->j < rhs->j)
+    return -1;
+  if (lhs->j > rhs->j)
+    return 1;
+  return 0;
+}
+
+
 ON_3udex::ON_3udex(
   unsigned int iValue,
   unsigned int jValue,
@@ -2351,6 +2388,108 @@ ON_3udex::ON_3udex(
   , j(jValue)
   , k(kValue)
 {}
+
+int ON_3udex::DictionaryCompare(
+  const ON_3udex* lhs,
+  const ON_3udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->i < rhs->i)
+    return -1;
+  if (lhs->i > rhs->i)
+    return 1;
+  if (lhs->j < rhs->j)
+    return -1;
+  if (lhs->j > rhs->j)
+    return 1;
+  if (lhs->k < rhs->k)
+    return -1;
+  if (lhs->k > rhs->k)
+    return 1;
+  return 0;
+}
+
+int ON_3udex::CompareFirstIndex(
+  const ON_3udex* lhs,
+  const ON_3udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->i < rhs->i)
+    return -1;
+  if (lhs->i > rhs->i)
+    return 1;
+  return 0;
+}
+
+int ON_3udex::CompareSecondIndex(
+  const ON_3udex* lhs,
+  const ON_3udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->j < rhs->j)
+    return -1;
+  if (lhs->j > rhs->j)
+    return 1;
+  return 0;
+}
+
+int ON_3udex::CompareThirdIndex(
+  const ON_3udex* lhs,
+  const ON_3udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->k < rhs->k)
+    return -1;
+  if (lhs->k > rhs->k)
+    return 1;
+  return 0;
+}
+
+int ON_3udex::CompareFirstAndSecondIndex(
+  const ON_3udex* lhs,
+  const ON_3udex* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (lhs->i < rhs->i)
+    return -1;
+  if (lhs->i > rhs->i)
+    return 1;
+  if (lhs->j < rhs->j)
+    return -1;
+  if (lhs->j > rhs->j)
+    return 1;
+  return 0;
+}
 
 ON_4udex::ON_4udex(
   unsigned int iValue,

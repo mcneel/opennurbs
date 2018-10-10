@@ -862,41 +862,11 @@ public:
   };
 
 
-  static bool ComposeA(
-    const ON_TextContent* text,
-    const ON_DimStyle* dimstyle,
-    ON_wString& rtf);
-
   static bool Compose(
     const ON_TextContent* text,
     const ON_DimStyle* dimstyle,
+    const ON_wString default_fontname,
     ON_wString& rtf);
-
-  static void ComposeRunA(
-    const ON_TextRun* run,
-    const ON_DimStyle* dimstyle,
-    ON_SimpleArray< wchar_t[34] >& fonttable,
-    bool multiline,
-    int& changecount,
-    int& changefont,
-    bool& bold,
-    bool& italic,
-    bool& underlined,
-    RunInfo& runinfo);
-
-  static void ComposeRun(
-    const ON_TextRun* run,
-    const ON_DimStyle* dimstyle,
-    ON_SimpleArray< wchar_t[34] >& fonttable,
-    bool multiline,
-    int& changecount,
-    int& changefont,
-    int& changecolor,
-    bool& bold,
-    bool& italic,
-    bool& underlined,
-    bool& strikeout,
-    ON_wString& strings_out);
 
   static bool RecomposeRTF();
   static void SetRecomposeRTF(bool b);

@@ -3754,8 +3754,8 @@ public:
       plug-in wrote the user table.
     goo - [in]
   Returns:
-    True if the goo was written or skipped because it could not be robustly
-    saved.  False if a catastrophic IO error occured.
+    True if the goo was written.
+    False if skipped because it could not be robustly saved.
   */
   bool Write3dmAnonymousUserTableRecord( 
     ON_UUID plugin_id,
@@ -4312,7 +4312,14 @@ private:
     actual number of bytes read (like fread())
   */
   size_t Read(size_t, void*);
+
 protected:
+  /*
+  Remarks:
+    In some unusual situations when reading old or damaged files, a read may fail.
+    Call MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 sizeof_read )
+    before calling ON_ERROR().
+  */
   virtual size_t Internal_ReadOverride( size_t, void* ) = 0; 
 
 private:

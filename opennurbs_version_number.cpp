@@ -9,8 +9,6 @@
 #endif
 
 #define BRANCH_MAX 0x03
-#define MINOR_MAX  0x07F
-#define MAJOR_MAX  0x03F
 #define TIME_MAX   0x0FFFF
 
 
@@ -86,7 +84,7 @@ unsigned int ON_VersionNumberConstruct(
   unsigned int year,
   unsigned int month,
   unsigned int day_of_month,
-  unsigned int branch
+  unsigned int platform_branch
   )
 {
   unsigned int version_number = 0;
@@ -94,13 +92,22 @@ unsigned int ON_VersionNumberConstruct(
 
   if (version_time > TIME_MAX)
     version_time = TIME_MAX;
-  if ( branch > BRANCH_MAX )
-    branch = 0; // all invalid branch numbers get mapped to "developer"
-  if ( minor_version > MINOR_MAX)
-    minor_version = MINOR_MAX;
-  if ( major_version > MAJOR_MAX)
-    major_version = MAJOR_MAX;
-  version_number = ((major_version*(MINOR_MAX+1) + minor_version)*(TIME_MAX+1) + version_time)*(BRANCH_MAX+1) + branch;
+
+  // platform
+  //   0 = developer
+  //   1 = Windows Commercial/Beta/WIP
+  //   2 = Mac OS Commercial/Beta/WIP
+  unsigned int platform
+    = (platform_branch > 0)
+    ? (2 - (platform_branch % 2) )
+    : 0;
+  if ( platform > BRANCH_MAX )
+    platform = 0; // all invalid branch numbers get mapped to "developer"
+  if ( minor_version > ON::VersionMinorMaximum())
+    minor_version = ON::VersionMinorMaximum();
+  if ( major_version > ON::VersionMajorMaximum())
+    major_version = ON::VersionMajorMaximum();
+  version_number = ((major_version*(ON::VersionMinorMaximum()+1) + minor_version)*(TIME_MAX+1) + version_time)*(BRANCH_MAX+1) + platform;
   version_number |= 0x80000000;
   return version_number;
 }
@@ -201,6 +208,8 @@ bool ON_VersionNumberIsYearMonthDateFormat(
 }
 
 
+
+
 bool ON_VersionNumberIsValid(
   unsigned int version_number
   )
@@ -296,7 +305,7 @@ bool ON_VersionNumberParse(
     version_month,
     version_day_of_month);
 
-  max = MINOR_MAX+1;
+  max = ON::VersionMinorMaximum()+1;
   if ( 0 != version_minor )
     *version_minor = u % max;
   u /= max;

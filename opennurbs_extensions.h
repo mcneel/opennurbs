@@ -1021,6 +1021,31 @@ public:
     ) const;
 
   /*
+  Parameters:
+    runtime_serial_number - [in]
+      Value of ON_ModelComponent::RuntimeSerialNumber() to search for.
+  Returns:
+    If there is a model component with the specified runtime serial number,
+    then a reference to that component is returned.
+    Otherwise, ON_ModelComponentReference::Empty is returned.
+  Remarks:
+    ONX_Model::ComponentFromRuntimeSerialNumber() used to get a reference rather than a copy of the model's 
+    primary ON_ModelComponentReference. This is the function that must be used if a caller is going to 
+    use exclusive access funcitons like
+
+      ON_ModelComponent* ON_ModelComponentReference::ExclusiveModelComponent()
+      ON_3dmObjectAttributes* ON_ModelGeometryComponent::ExclusiveAttributes()
+      ON_Geometry* ON_ModelGeometryComponent::ExclusiveGeometry()
+
+    to modify content that is in the ONX_Model. The exclusive access functions 
+    will only return non-nullptr values when there are no external references to
+    the model component.
+  */
+  const ON_ModelComponentReference& ComponentFromRuntimeSerialNumber(
+    ON__UINT64 runtime_serial_number
+  ) const;
+
+  /*
   Description:
     Get an image from its model index.
   Parameters:
@@ -1557,6 +1582,14 @@ public:
   ON_ModelComponentReference NextComponentReference();
   ON_ModelComponentReference PreviousComponentReference();
 
+  ON_ModelComponentWeakReference FirstComponentWeakReference();
+  ON_ModelComponentWeakReference LastComponentWeakReference();
+  ON_ModelComponentWeakReference NextComponentWeakReference();
+  ON_ModelComponentWeakReference PreviousComponentWeakReference();
+  ON_ModelComponentWeakReference CurrentComponentWeakReference() const;
+
+  // Use these with caution unless it is clear you are the only thread
+  // with references to the model and the iterator.
   const ON_ModelComponent* FirstComponent();
   const ON_ModelComponent* LastComponent();
   const ON_ModelComponent* CurrentComponent() const;
@@ -1575,8 +1608,6 @@ private:
   const class ONX_Model::ONX_ModelComponentList* Internal_List() const;
   void Internal_SetLink(const class ONX_ModelComponentReferenceLink* link) const;
   void Internal_SetLink(ON__UINT64 model_component_sn) const;
-  void Internal_IncrementLink() const;
-  void Internal_DecrementLink() const;
 
   ON_ModelComponent::Type m_component_type = ON_ModelComponent::Type::Unset;
   const class ONX_Model* m_model = nullptr;
@@ -1586,22 +1617,16 @@ private:
   mutable ON__UINT64 m_current_component_sn = 0;
   mutable ON__UINT64 m_next_component_sn = 0;
   mutable ON__UINT64 m_prev_component_sn = 0;
-  mutable ON_ModelComponentReference m_current_component = ON_ModelComponentReference::Empty;
-};
 
-/*
-Description:
-  Tests a string to see if it is valid as a name for a layer,
-  object, material, linetype, instance definition, etc.
-Parameters:
-  name - [in] string to test
-Returns:
-  True if the string is a valid name.
-*/
-ON_DECL
-bool ONX_IsValidName( 
-          const wchar_t* name 
-          );
+  // The current component is a weak ref so that a stand alone iterator cannot
+  // keep the current element alive since iterations often involve deletion.
+  // The iterators next/prev will still work as expected when the current element
+  // is deleted. In particular, an iterator can be used to efficiently delete
+  // portions of a model and have the deletion occur when many people
+  // expect it to occur and not at a later time. This makes debugging 
+  // invalid deletions much easier.
+  mutable ON_ModelComponentWeakReference m_current_component_weak_ref;
+};
 
 class ON_CLASS ONX_ModelTest
 {

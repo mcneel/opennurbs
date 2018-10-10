@@ -181,8 +181,6 @@
     <ClInclude Include="opennurbs_file_utilities.h" />
     <ClInclude Include="opennurbs_font.h" />
     <ClInclude Include="opennurbs_fpoint.h" />
-    <ClInclude Include="opennurbs_freetype.h" />
-    <ClInclude Include="opennurbs_freetype_include.h" />
     <ClInclude Include="opennurbs_fsp.h" />
     <ClInclude Include="opennurbs_fsp_defs.h" />
     <ClInclude Include="opennurbs_function_list.h" />
@@ -339,9 +337,6 @@
     <ClCompile Include="opennurbs_extensions.cpp" />
     <ClCompile Include="opennurbs_file_utilities.cpp" />
     <ClCompile Include="opennurbs_font.cpp" />
-    <ClCompile Include="opennurbs_freetype.cpp">
-      <AdditionalIncludeDirectories>$(OpennurbsRootDir)/freetype263/include</AdditionalIncludeDirectories>
-    </ClCompile>
     <ClCompile Include="opennurbs_fsp.cpp" />
     <ClCompile Include="opennurbs_function_list.cpp" />
     <ClCompile Include="opennurbs_geometry.cpp" />

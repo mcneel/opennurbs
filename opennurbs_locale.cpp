@@ -1074,7 +1074,7 @@ ON_Locale ON_Locale::FromWindowsName(
     ON_String cleaned_loc = language_subtag;
     cleaned_loc += '-';
     cleaned_loc +=region_subtag;
-    if ( nullptr != windows_sortorder && 0 != windows_sortorder[0])
+    if ( 0 != windows_sortorder[0])
     {
       cleaned_loc += '_';
       cleaned_loc += windows_sortorder;

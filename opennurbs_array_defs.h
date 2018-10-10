@@ -985,13 +985,7 @@ ON_ObjectArray<T>& ON_ObjectArray<T>::operator=( ON_ObjectArray<T>&& src )
 {
   if( this != &src ) 
   {
-    this->Destroy();
-    m_a = src.m_a;
-    m_count = src.m_count;
-    m_capacity = src.m_capacity;
-    src.m_a = 0;
-    src.m_count = 0;
-    src.m_capacity = 0;
+    ON_ClassArray<T>::operator=(std::move(src));
   }  
   return *this;
 }

@@ -229,6 +229,9 @@ bool ON_Text::Transform(const ON_Xform& xform, const ON_DimStyle* parent_dimstyl
     double oldheight = TextHeight(parent_dimstyle);
     double newheight = oldheight * scale;
     SetTextHeight(parent_dimstyle, newheight);
+    oldheight = MaskBorder(parent_dimstyle);
+    newheight = oldheight * scale;
+    SetMaskBorder(parent_dimstyle, newheight);
   }
   return rc;
 }

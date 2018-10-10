@@ -666,6 +666,21 @@ bool ON_SubDVertex::GetLimitPoint(
   return rc;
 }
 
+ON_SubD::SubDType ON_SubDVertex::GetSavedLimitPointLocation(
+  double limit_point[3]
+) const
+{
+  const ON_SubD::SubDType subd_type = SavedLimitPointType();
+  if (ON_SubD::SubDType::Unset != subd_type)
+  {
+    limit_point[0] = m_limit_point.m_limitP[0];
+    limit_point[1] = m_limit_point.m_limitP[1];
+    limit_point[2] = m_limit_point.m_limitP[2];
+  }
+  return subd_type;
+}
+
+
 static bool SetLimitPointSectorCheck(
   const ON_SubDVertex* vertex,
   ON_SubDSectorLimitPoint& limit_point
