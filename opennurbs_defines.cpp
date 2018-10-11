@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -27,13 +27,13 @@
 #include "opennurbs_internal_defines.h"
 
 // {EA2EFFD2-C9A9-4cb1-BE15-D2F46290F1A1}
-//const ON_UUID ON_MaterialRef::material_from_layer = 
+//const ON_UUID ON_MaterialRef::material_from_layer =
 //{ 0xea2effd2, 0xc9a9, 0x4cb1, { 0xbe, 0x15, 0xd2, 0xf4, 0x62, 0x90, 0xf1, 0xa1 } };
 
 
 
 // {86EDFDE4-8AAF-4bcd-AB7C-F7111978D7FE}
-//const ON_UUID ON_MaterialRef::material_from_parent = 
+//const ON_UUID ON_MaterialRef::material_from_parent =
 //{ 0x86edfde4, 0x8aaf, 0x4bcd, { 0xab, 0x7c, 0xf7, 0x11, 0x19, 0x78, 0xd7, 0xfe } };
 
 
@@ -56,9 +56,9 @@ char* on_strupr(char* s)
 #if defined(ON_RUNTIME_WIN)
   return _strupr(s); // ANSI name
 #else
-  if (s) 
+  if (s)
   {
-    while (*s) 
+    while (*s)
     {
       *s = toupper(*s);
       s++;
@@ -157,10 +157,10 @@ int on_WideCharToMultiByte(
 {
   // 14 March 2011 Dale Lear
   //   It turns out that Windows WideCharToMultiByte does correctly
-  //   convert UTF-16 to UTF-8 in Windows 7 when the code page 
+  //   convert UTF-16 to UTF-8 in Windows 7 when the code page
   //   is CP_ACP and calls with CP_UTF8 sometimes fail to do
   //   any conversion.  So, I wrote ON_ConvertWideCharToUTF8()
-  //   and opennurbs will use ON_ConvertWideCharToUTF8 to get 
+  //   and opennurbs will use ON_ConvertWideCharToUTF8 to get
   //   consistent results on all platforms.
   unsigned int error_status = 0;
   unsigned int error_mask = 0xFFFFFFFF;
@@ -184,10 +184,10 @@ int on_MultiByteToWideChar(
 {
   // 14 March 2011 Dale Lear
   //   It turns out that Windows WideCharToMultiByte does not correctly
-  //   convert UTF-8 to UTF-16 in Windows 7 when the code page 
+  //   convert UTF-8 to UTF-16 in Windows 7 when the code page
   //   is CP_ACP and calls with CP_UTF8 sometimes fail to do
   //   any conversion.  So, I wrote ON_ConvertUTF8ToWideChar()
-  //   and opennurbs will use ON_ConvertUTF8ToWideChar to get 
+  //   and opennurbs will use ON_ConvertUTF8ToWideChar to get
   //   consistent results on all platforms.
   unsigned int error_status = 0;
   unsigned int error_mask = 0xFFFFFFFF;
@@ -210,9 +210,9 @@ void on_splitpath(
   const char** ext
   )
 {
-  // The "const char* path" parameter is a UTF-8 encoded string. 
-  // Since the unicode code point values for the characters we 
-  // are searching for ( '/' '\' '.' ':' A-Z a-z) are all > 0 
+  // The "const char* path" parameter is a UTF-8 encoded string.
+  // Since the unicode code point values for the characters we
+  // are searching for ( '/' '\' '.' ':' A-Z a-z) are all > 0
   // and < 128, we can simply check for an array element having
   // the character value and not have to worry about dealing
   // with UTF-8 continuation values (>= 128).
@@ -251,11 +251,11 @@ void on_splitpath(
       }
     }
     else if (
-      ON_String::Backslash == path[0] 
+      ON_String::Backslash == path[0]
       && ON_String::Backslash == path[1]
-      &&( (path[2] >= 'A' && path[2] <= 'Z') 
-        || (path[2] >= 'a' && path[2] <= 'z') 
-        || (path[2] >= '0' && path[2] <= '9') 
+      &&( (path[2] >= 'A' && path[2] <= 'Z')
+        || (path[2] >= 'a' && path[2] <= 'z')
+        || (path[2] >= '0' && path[2] <= '9')
         )
       )
     {
@@ -288,7 +288,7 @@ void on_splitpath(
     while ( 0 != *s1 )
       s1++;
     s = (s1 > path) ? s1 - 1 : path;
-  
+
     while ( s > path && '.' != *s && slash1 != *s && slash2 != *s )
       s--;
 
@@ -305,7 +305,7 @@ void on_splitpath(
 
     if ( s >= path && s < s1 )
     {
-      if (slash1 == *s || slash2 == *s ) 
+      if (slash1 == *s || slash2 == *s )
       {
         if ( s+1 < s1 )
           f = s+1;
@@ -344,9 +344,9 @@ void on_wsplitpath(
   )
 {
   // The "const wchar_t* path" parameter is a UTF-8, UTF-16 or UTF-32
-  // encoded string. Since the unicode code point values for the 
+  // encoded string. Since the unicode code point values for the
   // characters we are searching for ( '/' '\' '.' ':' A-Z a-z) are
-  // all > 0 and < 128, we can simply check for an array element 
+  // all > 0 and < 128, we can simply check for an array element
   // having the character value and not have to worry about dealing
   // with UTF-16 surrogate pair values (0xD800-0xDBFF and DC00-DFFF)
   // and UTF-8 continuation values (>= 128).
@@ -385,11 +385,11 @@ void on_wsplitpath(
       }
     }
     else if (
-      ON_wString::Backslash == path[0] 
+      ON_wString::Backslash == path[0]
       && ON_wString::Backslash == path[1]
-      &&( (path[2] >= 'A' && path[2] <= 'Z') 
-        || (path[2] >= 'a' && path[2] <= 'z') 
-        || (path[2] >= '0' && path[2] <= '9') 
+      &&( (path[2] >= 'A' && path[2] <= 'Z')
+        || (path[2] >= 'a' && path[2] <= 'z')
+        || (path[2] >= '0' && path[2] <= '9')
         )
       )
     {
@@ -422,7 +422,7 @@ void on_wsplitpath(
     while ( 0 != *s1 )
       s1++;
     s = (s1 > path) ? s1 - 1 : path;
-  
+
     while ( s > path && '.' != *s && slash1 != *s && slash2 != *s )
       s--;
 
@@ -439,7 +439,7 @@ void on_wsplitpath(
 
     if ( s >= path && s < s1 )
     {
-      if (slash1 == *s || slash2 == *s ) 
+      if (slash1 == *s || slash2 == *s )
       {
         if ( s+1 < s1 )
           f = s+1;
@@ -503,7 +503,7 @@ int ON::CloseAllFiles()
   //fcloseall is not supported on OS X
   return EOF;
 #elif defined(ON_COMPILER_GNU)
-#error TODO - call gcc fcloseall()
+  fcloseall();
 #else
   // I can't find an fcloseall() or _fcloseall() in
   // gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
@@ -806,9 +806,9 @@ ON::LengthUnitSystem ON::ModelLengthUnitSystem(
   ON__UINT_PTR model_serial_number
 )
 {
-  return 
-    (nullptr == Internal_func_ModelLengthUnitSystemCallback 
-      || 0 == model_serial_number 
+  return
+    (nullptr == Internal_func_ModelLengthUnitSystemCallback
+      || 0 == model_serial_number
       || model_serial_number >= ON_UNSET_UINT_INDEX
       )
     ? ON::LengthUnitSystem::None
@@ -844,12 +844,12 @@ double ON::AngleUnitScale(
 
   // the default cases are here to keep lint quiet
   double scale = 1.0;
-  
+
   if (  us_from != us_to
         && ((int)us_to) > 0 && ((int)us_to) < 6
         // switch weeds out bogus values of us_from
-      ) 
-  switch( us_from ) 
+      )
+  switch( us_from )
   {
   case ON::AngleUnitSystem::Turns:
     switch(us_to)
@@ -1006,7 +1006,7 @@ double ON::AngleUnitScale(
 
 
 double ON::UnitScale(
-                     const class ON_3dmUnitsAndTolerances& u_and_t_from, 
+                     const class ON_3dmUnitsAndTolerances& u_and_t_from,
                      const class ON_3dmUnitsAndTolerances& u_and_t_to
                      )
 {
@@ -1020,7 +1020,7 @@ double ON::UnitScale(
 {
   ON::LengthUnitSystem us1 = us_to.UnitSystem();
   if (
-    ON::LengthUnitSystem::Unset == us_from 
+    ON::LengthUnitSystem::Unset == us_from
     || ON::LengthUnitSystem::Unset == us1
     || us_from != ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(us_from))
     || us1 != ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(us1))
@@ -1045,7 +1045,7 @@ double ON::UnitScale(
   }
 
   double scale = 1.0;
-  if (    ON::LengthUnitSystem::CustomUnits == us1 
+  if (    ON::LengthUnitSystem::CustomUnits == us1
        && ON::LengthUnitSystem::None != us_from
        && ON::LengthUnitSystem::CustomUnits != us_from
     )
@@ -1061,7 +1061,7 @@ double ON::UnitScale(
 }
 
 double ON::UnitScale(
-    const class ON_UnitSystem& us_from, 
+    const class ON_UnitSystem& us_from,
     ON::LengthUnitSystem us_to
     )
 {
@@ -1091,7 +1091,7 @@ double ON::UnitScale(
     return 1.0;
 
   double scale = 1.0;
-  if (    ON::LengthUnitSystem::CustomUnits == us0 
+  if (    ON::LengthUnitSystem::CustomUnits == us0
        && ON::LengthUnitSystem::None != us_to
        && ON::LengthUnitSystem::CustomUnits != us_to
      )
@@ -1107,7 +1107,7 @@ double ON::UnitScale(
 }
 
 double ON::UnitScale(
-  const class ON_UnitSystem& u_and_t_from, 
+  const class ON_UnitSystem& u_and_t_from,
   const class ON_UnitSystem& u_and_t_to
   )
 {
@@ -1137,8 +1137,8 @@ double ON::UnitScale(
   if (meters_per_unit_from == meters_per_unit_to)
     return 1.0;
   double scale = 1.0;
-  if ( ON::LengthUnitSystem::CustomUnits == us_from 
-        && meters_per_unit_from > 0.0 
+  if ( ON::LengthUnitSystem::CustomUnits == us_from
+        && meters_per_unit_from > 0.0
         && meters_per_unit_from < ON_UNSET_POSITIVE_VALUE
         )
   {
@@ -1146,9 +1146,9 @@ double ON::UnitScale(
     us_from = ON::LengthUnitSystem::Meters;
   }
 
-  if ( ON::LengthUnitSystem::CustomUnits == us_to 
-    && meters_per_unit_to > 0.0 
-    && meters_per_unit_to < ON_UNSET_POSITIVE_VALUE 
+  if ( ON::LengthUnitSystem::CustomUnits == us_to
+    && meters_per_unit_to > 0.0
+    && meters_per_unit_to < ON_UNSET_POSITIVE_VALUE
     )
   {
     scale *= meters_per_unit_to;
@@ -1180,10 +1180,10 @@ double ON::UnitScale(
             )
 {
   // Scale factor for changing unit systems
-  // Examples 
-  //   100.0  = UnitScale( ON::LengthUnitSystem::Meters, ON::LengthUnitSystem::Centimeters ) 
-  //     2.54 = UnitScale( ON::LengthUnitSystem::Inches, ON::LengthUnitSystem::Centimeters ) 
-  //    12.0  = UnitScale( ON::LengthUnitSystem::Feet, ON::LengthUnitSystem::Inches ) 
+  // Examples
+  //   100.0  = UnitScale( ON::LengthUnitSystem::Meters, ON::LengthUnitSystem::Centimeters )
+  //     2.54 = UnitScale( ON::LengthUnitSystem::Inches, ON::LengthUnitSystem::Centimeters )
+  //    12.0  = UnitScale( ON::LengthUnitSystem::Feet, ON::LengthUnitSystem::Inches )
 
   if (ON::LengthUnitSystem::Unset == u0 || ON::LengthUnitSystem::Unset == u1)
   {
@@ -1219,7 +1219,7 @@ double ON::UnitScale(
   // the default cases are here to keep lint quiet
   double scale = 1.0;
 
-  switch( u0 ) 
+  switch( u0 )
   {
   case ON::LengthUnitSystem::Angstroms:
     scale = UnitScale( ON::LengthUnitSystem::Meters, u1)*1.0e-10;
@@ -1234,7 +1234,7 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Millimeters:
-    switch( u1 ) 
+    switch( u1 )
     {
     case ON::LengthUnitSystem::Meters:      scale = 1.0e-3; break;
     case ON::LengthUnitSystem::Microns:     scale = 1.0e+3; break;
@@ -1249,7 +1249,7 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Centimeters:
-    switch( u1 ) 
+    switch( u1 )
     {
     case ON::LengthUnitSystem::Meters:      scale = 1.0e-2; break;
     case ON::LengthUnitSystem::Millimeters: scale = 1.0e+1; break;
@@ -1269,7 +1269,7 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Meters:
-    switch( u1 ) 
+    switch( u1 )
     {
     case ON::LengthUnitSystem::Angstroms:      scale = 1.0e+10; break;
     case ON::LengthUnitSystem::Nanometers:     scale = 1.0e+9;  break;
@@ -1327,7 +1327,7 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Inches:
-    switch( u1 ) 
+    switch( u1 )
     {
     case ON::LengthUnitSystem::Angstroms:       scale = 2.54e+8; break;
     case ON::LengthUnitSystem::Nanometers:      scale = 2.54e+7; break;
@@ -1358,8 +1358,8 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Feet:
-    switch( u1 ) 
-    {      
+    switch( u1 )
+    {
     case ON::LengthUnitSystem::Yards:
       scale = 1.0/3.0;
       break;
@@ -1373,8 +1373,8 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::Yards:
-    switch( u1 ) 
-    {      
+    switch( u1 )
+    {
     case ON::LengthUnitSystem::Feet:        scale = 3.0; break;
     case ON::LengthUnitSystem::Miles:       scale = 1.0/1760.0; break;
     default:
@@ -1410,8 +1410,8 @@ double ON::UnitScale(
 
   case ON::LengthUnitSystem::AstronomicalUnits:
     // 1.4959787e+11  http://en.wikipedia.org/wiki/Astronomical_unit
-    // 1.495979e+11   http://units.nist.gov/Pubs/SP811/appenB9.htm  
-    //    An astronomical unit (au) is the mean distance from the 
+    // 1.495979e+11   http://units.nist.gov/Pubs/SP811/appenB9.htm
+    //    An astronomical unit (au) is the mean distance from the
     //    center of the earth to the center of the sun.
     scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*1.4959787e+11;
     break;
@@ -1421,14 +1421,14 @@ double ON::UnitScale(
     // 9.46073e+15 meters  http://units.nist.gov/Pubs/SP811/appenB9.htm
     //    A light year is the distance light travels in one Julian year.
     //    The speed of light is exactly 299792458 meters/second.
-    //    A Julian year is exactly 365.25 * 86400 seconds and is 
+    //    A Julian year is exactly 365.25 * 86400 seconds and is
     //    approximately the time it takes for one earth orbit.
     scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*9.4607304725808e+15;
     break;
 
   case ON::LengthUnitSystem::Parsecs:
     // 3.08567758e+16  // http://en.wikipedia.org/wiki/Parsec
-    // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
+    // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm
     scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*3.08567758e+16;
     break;
 
@@ -1449,7 +1449,7 @@ double ON::UnitScale(
 
 ON::OBSOLETE_DistanceDisplayMode ON::DistanceDisplayModeFromUnsigned(unsigned int distance_display_mode_as_unsigned)
 {
-  switch (distance_display_mode_as_unsigned) 
+  switch (distance_display_mode_as_unsigned)
   {
   ON_ENUM_FROM_UNSIGNED_CASE(ON::OBSOLETE_DistanceDisplayMode::Decimal);
   ON_ENUM_FROM_UNSIGNED_CASE(ON::OBSOLETE_DistanceDisplayMode::Fractional);
@@ -1501,7 +1501,7 @@ ON::continuity ON::Continuity(int i)
   case (int)ON::continuity::C2_continuous: c = ON::continuity::C2_continuous; break;
   case (int)ON::continuity::G1_continuous: c = ON::continuity::G1_continuous; break;
   case (int)ON::continuity::G2_continuous: c = ON::continuity::G2_continuous; break;
-  
+
   // 30 March 2003 Dale Lear added these
   case (int)ON::continuity::C0_locus_continuous: c = ON::continuity::C0_locus_continuous; break;
   case (int)ON::continuity::C1_locus_continuous: c = ON::continuity::C1_locus_continuous; break;
@@ -1591,7 +1591,7 @@ ON::surface_style ON::SurfaceStyle(int i)
 {
   //convertintegertosurface_styleenum
   surface_style ss = unknown_surface_style;
-  
+
   switch (i) {
   case plane: ss = plane; break;
   case circular_cylinder: ss = circular_cylinder; break;
@@ -1611,7 +1611,7 @@ ON::surface_style ON::SurfaceStyle(int i)
 ON::sort_algorithm ON::SortAlgorithm(int i)
 {
   sort_algorithm sa = ON::sort_algorithm::quick_sort;
-  
+
   switch (i) {
   case (int)ON::sort_algorithm::heap_sort: sa = ON::sort_algorithm::heap_sort; break;
   case (int)ON::sort_algorithm::quick_sort: sa = ON::sort_algorithm::quick_sort; break;
@@ -1655,7 +1655,7 @@ ON::view_projection ON::ViewProjection(int i)
 {
   // convert integer to view_projection enum
   view_projection v = ON::unknown_view;
-  switch(i) 
+  switch(i)
   {
   case ON::parallel_view:          v = ON::parallel_view;          break;
   case ON::perspective_view:       v = ON::perspective_view;       break;
@@ -1730,7 +1730,7 @@ ON::object_color_source ON::ObjectColorSource(int i)
 {
   // convert integer to object_mode enum
   ON::object_color_source cs = color_from_layer;
-  switch (i) 
+  switch (i)
   {
   case color_from_layer: // use color assigned to layer
     cs = color_from_layer;
@@ -1752,7 +1752,7 @@ ON::plot_color_source ON::PlotColorSource(int i)
 {
   // convert integer to object_mode enum
   ON::plot_color_source cs = plot_color_from_layer;
-  switch (i) 
+  switch (i)
   {
   case plot_color_from_layer:
     cs = plot_color_from_layer;
@@ -1760,7 +1760,7 @@ ON::plot_color_source ON::PlotColorSource(int i)
   case plot_color_from_object:
     cs = plot_color_from_object;
     break;
-  case plot_color_from_display: 
+  case plot_color_from_display:
     cs = plot_color_from_display;
     break;
   case plot_color_from_parent:
@@ -1851,11 +1851,11 @@ ON::curvature_style ON::CurvatureStyle(int i)
   case mean_curvature:
     cs = mean_curvature;
     break;
-  case min_curvature: 
+  case min_curvature:
     // minimum unsigned radius of curvature
     cs = min_curvature;
     break;
-  case max_curvature: 
+  case max_curvature:
     // maximum unsigned radius of curvature
     cs = max_curvature;
     break;
@@ -1879,7 +1879,7 @@ ON::curvature_style ON::CurvatureStyle(int i)
 {
   model_view_type     = 0,
   plot_page_view_type = 1,
-  nested_view_type    = 2 
+  nested_view_type    = 2
 };*/
 
 ON::view_type ON::ViewType(int vt)
@@ -1909,7 +1909,7 @@ ON::v3_display_mode ON::V3DisplayMode(int i)
   case ON::v3_shaded_display:
     dm = ON::v3_shaded_display;
     break;
-  case ON::v3_renderpreview_display: 
+  case ON::v3_renderpreview_display:
     dm = ON::v3_renderpreview_display;
     break;
   }
@@ -1942,7 +1942,7 @@ ON::object_type ON::ObjectType(int i)
 {
   // convert integer to object_type enum
   object_type ot = ON::object_type::unknown_object_type;
-  switch(i) 
+  switch(i)
   {
   case ON::object_type::unknown_object_type:  ot = ON::object_type::unknown_object_type; break;
 
@@ -2095,7 +2095,7 @@ ON::mesh_type ON::MeshType(int i)
 ON_INTERNAL_OBSOLETE::V5_eAnnotationType ON_INTERNAL_OBSOLETE::V5AnnotationTypeFromUnsigned(unsigned int v5_annotation_type_as_unsigned)
 {
   // convert integer to eAnnotationType enum
-  switch(v5_annotation_type_as_unsigned) 
+  switch(v5_annotation_type_as_unsigned)
   {
   ON_ENUM_FROM_UNSIGNED_CASE(ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtNothing);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimLinear);
@@ -2194,30 +2194,30 @@ ON::TextVerticalAlignment ON_INTERNAL_OBSOLETE::V6VerticalAlignmentFromV5Vertica
   switch (V5_vertical_alignment)
   {
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Centered:
-    valign = ON::TextVerticalAlignment::Middle;    
+    valign = ON::TextVerticalAlignment::Middle;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Above:
     // V5 text "above" dim line means "bottom" of text bbox is at insertion point above dim line
-    valign = ON::TextVerticalAlignment::Bottom;    
+    valign = ON::TextVerticalAlignment::Bottom;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Below:
     // V5 text "below" dim line means "top" of text bbox is at insertion point below dim line
-    valign = ON::TextVerticalAlignment::Top;    
+    valign = ON::TextVerticalAlignment::Top;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Top:
-    valign = ON::TextVerticalAlignment::Top;    
+    valign = ON::TextVerticalAlignment::Top;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::FirstLine:
-    valign = ON::TextVerticalAlignment::MiddleOfTop;    
+    valign = ON::TextVerticalAlignment::MiddleOfTop;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Middle:
-    valign = ON::TextVerticalAlignment::Middle;    
+    valign = ON::TextVerticalAlignment::Middle;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::LastLine:
-    valign = ON::TextVerticalAlignment::MiddleOfBottom;    
+    valign = ON::TextVerticalAlignment::MiddleOfBottom;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Bottom:
-    valign = ON::TextVerticalAlignment::Bottom;    
+    valign = ON::TextVerticalAlignment::Bottom;
     break;
   case ON_INTERNAL_OBSOLETE::V5_vertical_alignment::Underlined:
     valign = ON::TextVerticalAlignment::BottomOfBoundingBox;
@@ -2260,7 +2260,7 @@ ON_INTERNAL_OBSOLETE::V5_horizontal_alignment ON_INTERNAL_OBSOLETE::V5Horizontal
   case ON::TextHorizontalAlignment::Right:
     halign = ON_INTERNAL_OBSOLETE::V5_horizontal_alignment::Right;
     break;
-  }  
+  }
 
   return halign;
 }
@@ -2504,4 +2504,3 @@ ON_4udex::ON_4udex(
   , k(kValue)
   , l(lValue)
 {}
-

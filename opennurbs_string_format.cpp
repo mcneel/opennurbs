@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -689,7 +689,7 @@ int ON_String::FormatVargsIntoBuffer(
   if (0 == buffer || buffer_capacity <= 0)
     return -1;
   buffer[0] = 0;
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);
@@ -740,7 +740,7 @@ int ON_String::FormatVargsOutputCount(
   if ( nullptr == format || 0 == format[0] )
     return 0;
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);
@@ -885,7 +885,7 @@ static const wchar_t* ConvertToCLangFormat(
   if ( !clang_format_buffer.GrowBuffer(format_capacity) )
     return format;
 
-  wchar_t* ls = clang_format_buffer.m_buffer; 
+  wchar_t* ls = clang_format_buffer.m_buffer;
   if ( nullptr == ls )
     return format;
 
@@ -942,7 +942,7 @@ int ON_wString::FormatVargsIntoBuffer(
 
   if ( nullptr == format || 0 == format[0] )
     return 0;
-  
+
 #if defined(ON_COMPILER_CLANG)
   // CLang requires %ls to properly format a const wchar_t* parameter
   wchar_t clang_format_stack_buffer[128];
@@ -954,17 +954,25 @@ int ON_wString::FormatVargsIntoBuffer(
 
   va_list args_copy;
   va_copy (args_copy, args);
-  // Cannot use Apple's vswprintf_l() because it's buggy. 
+  // Cannot use Apple's vswprintf_l() because it's buggy.
   // This means we cannot be certain that a period will be used for a decimal point in formatted printing.
   // For details, see comments below in ON_wString::FormatVargsOutputCount().
   //int len = vswprintf_l(buffer, buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
   int len = vswprintf(buffer, buffer_capacity, format, args_copy);
   va_end(args_copy);
-  
+
 #else
-  // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
+
+#if defined(ON_COMPILER_GNU)
+  va_list args_copy;
+  va_copy (args_copy, args);
+  int len = vswprintf(buffer, buffer_capacity, format, args_copy);
+  va_end(args_copy);
+#else
+  // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period
   // will be use for the decimal point in formatted printing.
   int len = _vswprintf_p_l(buffer, buffer_capacity, format, ON_Locale::Ordinal.NumericLocalePtr(), args);
+#endif
 #endif
   if (((size_t)len) >= buffer_capacity)
     len = -1;
@@ -1005,9 +1013,9 @@ int ON_wString::FormatVargsOutputCount(
     return 0;
 
 #if defined(ON_COMPILER_CLANG)
-  // Unlike _vscwprintf_p_l(), CLang's vswprintf() does not tell you how many characters would have 
-  // been written if there was space enough in the buffer. 
-  // It reports an error when there is not enough space.  
+  // Unlike _vscwprintf_p_l(), CLang's vswprintf() does not tell you how many characters would have
+  // been written if there was space enough in the buffer.
+  // It reports an error when there is not enough space.
   // Assume a moderately large machine so kilobytes of wchar_t on the stack is not a problem.
 
   // CLang requires %ls to properly format a const wchar_t* parameter
@@ -1025,7 +1033,7 @@ int ON_wString::FormatVargsOutputCount(
   ////const int formatted_string_count = vswprintf_l(nullptr, 0, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
   ////va_end(args_copy);
   ////return (formatted_string_count >= 0) ? formatted_string_count : -1;
-  
+
   wchar_t stack_buffer[1024];
   ON_wStringBuffer buffer(stack_buffer, sizeof(stack_buffer) / sizeof(stack_buffer[0]));
   size_t buffer_capacity = buffer.m_buffer_capacity;
@@ -1035,7 +1043,7 @@ int ON_wString::FormatVargsOutputCount(
     va_copy(args_copy, args);
 
     // NOTE:
-    //   Cannot use Apple's vswprintf_l() because it's buggy. 
+    //   Cannot use Apple's vswprintf_l() because it's buggy.
     //   This means we cannot be certain that a period will be used for a decimal point in formatted printing.
     //
     //   Apple's OS X 10.4 (July 2015) formatted printing functions are buggy when locale is specified.
@@ -1049,7 +1057,7 @@ int ON_wString::FormatVargsOutputCount(
     ////      va_end(args);
     ////      return count;
     ////    }
-    ////       
+    ////
     ////    int ON_VARGS_FUNC_CDECL VargsFormatFuncB(const wchar_t* format, ...)
     ////    {
     ////      va_list args;
@@ -1062,25 +1070,25 @@ int ON_wString::FormatVargsOutputCount(
     ////    #endif
     ////      va_end(args);
     ////      return count;
-    ////    }    ////        
-    ////    
+    ////    }    ////
+    ////
     ////    Tests()
     ////    {
     ////      const wchar_t str1[5] = {'T', 'e',   's', 't', 0};
     ////      const wchar_t str2[5] = {'T', 0xFFFD,'s', 't', 0};
-    ////    
+    ////
     ////      int Acount1 = VargsFormatFuncA(L"%ls",str1);
     ////      int Acount2 = VargsFormatFuncA(L"%ls",str2);
-    ////    
+    ////
     ////      RhinoApp().Print("Acount1 = %d Acount2 = %d\n",Acount1,Acount2);
-    ////      
+    ////
     ////      int Bcount1 = VargsFormatFuncB(L"%ls",str1);
     ////      int Bcount2 = VargsFormatFuncB(L"%ls",str2);
-    ////    
+    ////
     ////       // Windows Results: Acount1 = 4, Acount2 = 4, Bcount1 = 4, Bcount2 = 4
     ////       // Apple   Results: Acount1 = 4, Acount2 = 4, Bcount1 = 4, Bcount2 = -1
     ////    }
-    ////      
+    ////
     //const int formatted_string_count = vswprintf_l(buffer.m_buffer, buffer.m_buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
     const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
     va_end(args_copy);
@@ -1101,8 +1109,37 @@ int ON_wString::FormatVargsOutputCount(
   }
   return -1;
 #else
-  // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
+#if defined(ON_COMPILER_GNU)
+  wchar_t stack_buffer[1024];
+  ON_wStringBuffer buffer(stack_buffer, sizeof(stack_buffer) / sizeof(stack_buffer[0]));
+  size_t buffer_capacity = buffer.m_buffer_capacity;
+  for(;;)
+  {
+    va_list args_copy;
+    va_copy(args_copy, args);
+
+    const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
+    va_end(args_copy);
+    if (formatted_string_count >= 0)
+    {
+      // formatted_string_count = number of wchar_t elements not including null terminator
+      return formatted_string_count;
+    }
+    if ( buffer_capacity >= 1024*16*16*16 )
+      break;
+    buffer_capacity *= 16;
+    if (false == buffer.GrowBuffer(buffer_capacity))
+      break;
+    if (nullptr == buffer.m_buffer)
+      break;
+    if (buffer_capacity < buffer.m_buffer_capacity)
+      break;
+  }
+  return -1;
+#else
+  // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period
   // will be use for the decimal point in formatted printing.
   return _vscwprintf_p_l(format, ON_Locale::Ordinal.NumericLocalePtr(), args);
+#endif
 #endif
 }

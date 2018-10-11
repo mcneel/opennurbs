@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -85,7 +85,7 @@ int ON_String::ScanBufferVargs(
   va_list args
   )
 {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (nullptr == buffer || nullptr == format)
     return -1;
@@ -148,7 +148,7 @@ int ON_wString::ScanBufferVargs(
   va_list args
   )
 {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (nullptr == buffer || nullptr == format)
     return -1;
@@ -397,7 +397,7 @@ const char* ON_String::ToNumber(
   local_buffer[local_buffer_count++] = 0;
 
   double x = value_on_failure;
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (1 == sscanf(local_buffer, "%lg", &x))
   {
@@ -639,7 +639,7 @@ const wchar_t* ON_wString::ToNumber(
   local_buffer[local_buffer_count++] = 0;
 
   double x = value_on_failure;
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (1 == sscanf(local_buffer, "%lg", &x))
   {

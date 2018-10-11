@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -41,7 +41,7 @@ static ON_CRT_locale_t ON_CRT_C_locale()
     ON_C_locale = _create_locale(category, locale);
 #endif
   }
-  
+
   return ON_C_locale;
 }
 
@@ -64,8 +64,8 @@ static ON_CRT_locale_t ON_CRT_create_locale_ALL( const char * locale )
     && ('X' == locale[4] || 'x' == locale[4])
     && 0 == locale[5]
     )
-    return ON_CRT_C_locale();  
-  
+    return ON_CRT_C_locale();
+
 #if defined(ON_RUNTIME_WIN)
   return _create_locale(LC_ALL, locale);
 #elif defined(ON_RUNTIME_APPLE)
@@ -361,7 +361,7 @@ static bool ZeroWideBuffer(
   size_t sizeof_buffer_element
   )
 {
-  bool rc 
+  bool rc
     = (nullptr != buffer && buffer_capacity > 0 && sizeof_buffer_element > 0 )
     || 0 == buffer_capacity;
   if (nullptr == buffer || buffer_capacity <= 0 || sizeof_buffer_element <= 0 )
@@ -382,7 +382,7 @@ static bool ZeroCharBuffer(
   size_t sizeof_buffer_element
   )
 {
-  bool rc 
+  bool rc
     = (nullptr != buffer && buffer_capacity > 0 && sizeof_buffer_element > 0 )
     || 0 == buffer_capacity;
   if (nullptr == buffer || buffer_capacity <= 0 || sizeof_buffer_element <= 0 )
@@ -594,7 +594,7 @@ bool ON_Locale::ParseName(
     sname[i] = (char)w;
   }
   sname[locale_name_element_count] = 0;
-  
+
   const size_t ON_S_CAPACITY = 64;
   char slanguage_code[ON_S_CAPACITY] = { 0 };
   char sextlang_code[ON_S_CAPACITY] = { 0 };
@@ -806,7 +806,7 @@ ON_Locale ON_Locale::FromWindowsLCID(
     locale.m_windows_lcid = (ON__UINT32)windows_lcid;
     return locale;
   }
-  
+
 #if defined(ON_RUNTIME_WIN)
 
   wchar_t wide_locale_name[LOCALE_NAME_MAX_LENGTH + 1] = { 0 };
@@ -906,7 +906,7 @@ ON_Locale ON_Locale::FromWindowsLCIDAndName(
   {
     return ON_Locale::InvariantCulture;
   }
-  
+
   ON_Locale locale;
 
   locale.m_windows_lcid = windows_lcid;
@@ -947,7 +947,7 @@ ON_Locale ON_Locale::FromWindowsLCIDAndName(
     ON_ERROR("Unable to create m_bcp47_language_tag.");
     return ON_Locale::Ordinal;
   }
-  
+
   locale.m_numeric_locale = ON_CRT_C_locale();
 
   locale.m_string_coll_map_locale = ON_CRT_create_locale_ALL( locale.m_bcp47_language_tag );
@@ -1053,20 +1053,20 @@ ON_Locale ON_Locale::FromWindowsName(
     {
       // Apple uses "zh-Hans" to mean BCP 47 "zh-CN"
       if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("CN", -1, region_subtag, -1, true) )
-        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" ); 
+        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" );
     }
     else if (ON_String::EqualOrdinal("Hant", -1, script_subtag, -1, true))
     {
       // Apple uses "zh-Hant" to mean BCP 47 "zh-CN"
       if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("TW", -1, region_subtag, -1, true) )
-        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
     }
     else if ( ON_String::EqualOrdinal("CN", -1, region_subtag, -1, true) )
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" ); 
+      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" );
     else if ( ON_String::EqualOrdinal("TW", -1, region_subtag, -1, true) )
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
     else
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
   }
   else
   {
@@ -1079,7 +1079,7 @@ ON_Locale ON_Locale::FromWindowsName(
       cleaned_loc += '_';
       cleaned_loc += windows_sortorder;
     }
-    
+
 #define LANG_CASE(lcid,lang) if (ON_String::EqualOrdinal(lang, -1, cleaned_loc, -1, true)) return ON_Locale::FromWindowsLCIDAndName(lcid, lang )
     LANG_CASE( ON_Locale::cs_CZ_LCID, "cs-CZ" );
     LANG_CASE( ON_Locale::de_DE_LCID, "de-DE" );
@@ -1093,7 +1093,7 @@ ON_Locale ON_Locale::FromWindowsName(
     LANG_CASE( ON_Locale::pl_PL_LCID, "pl-PL" );
     LANG_CASE( ON_Locale::pt_PT_LCID, "pt-PT" );
 #undef LANG_CASE
-    
+
     // Bail out clause to handle string like fr-US.
 #define LANG_CASE_2(two_letter_lang_code,lcid,lang) if (ON_String::EqualOrdinal(two_letter_lang_code, -1, language_subtag, -1, true)) return ON_Locale::FromWindowsLCIDAndName(lcid, lang )
     LANG_CASE_2( "cs", ON_Locale::cs_CZ_LCID, "cs-CZ" );
@@ -1146,28 +1146,28 @@ ON_Locale ON_Locale::FromAppleName(
   // Apple "language" names have hyphens before <REGION> or no <REGION> in the case of Chinese
 
   ON_String buffer(apple_name);
-  buffer.Replace('_', '-'); 
+  buffer.Replace('_', '-');
   apple_name = buffer;
 
   // According to https://en.wikipedia.org/wiki/Chinese_language, Chinese is a family of language
   // varieties, often mutually unintelligible.  Specifying both Script and REGION
-  // (zh-Hans-CN or zh-Hant-TW) doesn't narrow things down nearly enough. 
+  // (zh-Hans-CN or zh-Hant-TW) doesn't narrow things down nearly enough.
   //
-  // Basically we have to hope the string collate and mapping functions supplied by the OS and 
-  // the translations supplied by our staff work well for our customers who select from the 
+  // Basically we have to hope the string collate and mapping functions supplied by the OS and
+  // the translations supplied by our staff work well for our customers who select from the
   // two types of "Chinese" Rhino offers.
   //
   if (ON_String::EqualOrdinal("zh-Hans", -1, apple_name, -1, true) || ON_String::EqualOrdinal("zh-CN", -1, apple_name, -1, true))
   {
-    // Apple uses "zh-Hanx" for the "language" name and "zh_CN" for the "locale" name 
+    // Apple uses "zh-Hanx" for the "language" name and "zh_CN" for the "locale" name
     // when identifying OS X string services that might be useful to people who live
     // in the Peoples Republic of China.
     return ON_Locale::FromWindowsLCIDAndName(ON_Locale::WindowsLCID::zh_CN_LCID, "zh-CN");
   }
-  
+
   if (ON_String::EqualOrdinal("zh-Hant", -1, apple_name, -1, true) || ON_String::EqualOrdinal("zh-TW", -1, apple_name, -1, true))
   {
-    // Apple uses "zh-Hant" for the "language" name and "zh_TW" for the "locale" name 
+    // Apple uses "zh-Hant" for the "language" name and "zh_TW" for the "locale" name
     // when identifying OS X string services that might be useful to people who live
     // in Tiawan.
     return ON_Locale::FromWindowsLCIDAndName(ON_Locale::WindowsLCID::zh_TW_LCID, "zh-TW");
@@ -1289,19 +1289,19 @@ ON_CRT_locale_t ON_Locale::StringCollateAndMapLocalePtr() const
 
 bool ON_Locale::IsInvariantCulture() const
 {
-  return 
-    0x0027 == m_windows_lcid 
-    && 0 != m_numeric_locale 
-    && ON_CRT_C_locale() == m_numeric_locale 
+  return
+    0x0027 == m_windows_lcid
+    && 0 != m_numeric_locale
+    && ON_CRT_C_locale() == m_numeric_locale
     && m_numeric_locale == m_string_coll_map_locale;
 }
 
 bool ON_Locale::IsOrdinal() const
 {
-  return 
-    0 == m_windows_lcid 
-    && 0 != m_numeric_locale 
-    && ON_CRT_C_locale() == m_numeric_locale 
+  return
+    0 == m_windows_lcid
+    && 0 != m_numeric_locale
+    && ON_CRT_C_locale() == m_numeric_locale
     && m_numeric_locale == m_string_coll_map_locale;
 }
 
@@ -1324,7 +1324,7 @@ public:
 
   static bool Validate_sprintf_s()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG)  || defined(ON_COMPILER_GNU)
     // Test formatted printing
     char buffer[64] = { 0 };
     size_t buffer_capacity = (sizeof(buffer) / sizeof(buffer[0])) - 1;
@@ -1343,7 +1343,7 @@ public:
 
   static bool Validate_sprintf_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1368,7 +1368,7 @@ public:
 
   static bool Validate_sprintf_s_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1405,7 +1405,7 @@ public:
 
   static bool Validate_sscanf_s()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
     // Testing C-runtime - do not using ON_String::Scan
@@ -1422,7 +1422,7 @@ public:
 
   static bool Validate_sscanf_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
@@ -1447,7 +1447,7 @@ public:
 
   static bool Validate_sscanf_s_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
@@ -1602,7 +1602,7 @@ bool ON_Locale::SetPeriodAsCRuntimeDecimalPoint()
     if (prev_type != _DISABLE_PER_THREAD_LOCALE && prev_type >= 0)
       _configthreadlocale(prev_type);
 
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
     // Apple's Clang compiler
     const char* s = setlocale(LC_NUMERIC, "C");
     rc = (0 != s && 'C' == s[0] && 0 == s[1]);
@@ -1631,7 +1631,7 @@ unsigned int ON_Locale::EnforcePeriodAsCRuntimeDecimalPoint()
 
   if (false == ON_Locale::SetPeriodAsCRuntimeDecimalPoint())
     return 0; // attempt to set decimal point = period failed
-  
+
   if (false == ON_Locale::PeriodIsCRuntimeDecimalPoint())
     return  0; // decimal point != period
 

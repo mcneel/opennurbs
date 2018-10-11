@@ -3,7 +3,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -188,7 +188,7 @@ bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
     = bTri
     ? (extraordinary_valence + 14)
     : (3 * extraordinary_valence + 12); // quads or unset
-  
+
   // const unsigned int f_capacity = extraordinary_valence + 7 for tris
   // const unsigned int f_capacity = extraordinary_valence + 5 for quads
   // 7 is alwasy used to accomodate unset as well
@@ -228,7 +228,7 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
   memset(v, 0, sizeof(*v));
   if (m_v_index > 0)
   {
-    // code in ON_SubDFaceNeighborhood.Subdivide() relies on 
+    // code in ON_SubDFaceNeighborhood.Subdivide() relies on
     // m_next_vertex being set this way.
     m_v[m_v_index - 1].m_next_vertex = v;
     v->m_prev_vertex = &m_v[m_v_index - 1];
@@ -268,17 +268,17 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 {
   if ( nullptr == vertex0)
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   double subdP[3];
   if (false == vertex0->GetSubdivisionPoint(subdivision_type,bUseSavedSubdivisionPoint,subdP))
     return ON_SUBD_RETURN_ERROR(nullptr);
   ON_SubDVertex* v1 = AllocateVertex(subdP,edge_capacity,face_capacity);
-  
+
   if ( nullptr == v1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   v1->m_level = vertex0->m_level+1;
-  
+
   v1->m_vertex_tag = vertex0->m_vertex_tag;
 
   //if ( ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
@@ -298,7 +298,7 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
       }
     }
   }
-  
+
   return v1;
 }
 
@@ -312,17 +312,17 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 {
   if ( nullptr == edge0)
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   double subdP[3];
   if (false == edge0->GetSubdivisionPoint(subdivision_type,bUseSavedSubdivisionPoint,subdP))
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   ON_SubDVertex* v1 = AllocateVertex(subdP,edge_capacity,face_capacity);
   if ( nullptr == v1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   v1->m_level = edge0->m_level+1;
-  
+
   if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::X == edge0->m_edge_tag)
     v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
   else if (ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
@@ -438,7 +438,7 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
   }
 
   e->m_id = ++m_e_index;
-  
+
   if (nullptr != v0)
   {
     e->m_vertex[0] = v0;
@@ -474,7 +474,7 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateFace(
   memset(f, 0, sizeof(*f));
   if (m_f_index > 0)
   {
-    // code in ON_SubDFaceNeighborhood.Subdivide() relies on 
+    // code in ON_SubDFaceNeighborhood.Subdivide() relies on
     // m_next_face being set this way.
     m_f[m_f_index-1].m_next_face = f;
     f->m_prev_face = &m_f[m_f_index-1];
@@ -531,7 +531,7 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateQuad(
     return ON_SUBD_RETURN_ERROR(nullptr);
   if (nullptr == vertices[3] || nullptr == vertices[3]->m_faces || vertices[3]->m_face_count >= vertices[3]->m_face_capacity || vertices[3] != edges[2]->m_vertex[1-edgedirs[2]])
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   ON_SubDFace* f = AllocateFace(zero_face_id,parent_face_id);
   if (nullptr == f)
     return ON_SUBD_RETURN_ERROR(nullptr);
@@ -599,7 +599,7 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateTri(
     return ON_SUBD_RETURN_ERROR(nullptr);
   if (nullptr == vertices[2] || nullptr == vertices[2]->m_faces || vertices[2]->m_face_count >= vertices[2]->m_face_capacity || vertices[2] != edges[1]->m_vertex[1-edgedirs[1]])
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   ON_SubDFace* f = AllocateFace(zero_face_id,parent_face_id);
   if (nullptr == f)
     return ON_SUBD_RETURN_ERROR(nullptr);
@@ -660,7 +660,7 @@ bool ON_SubD_FixedSizeHeap::ReturnPtrArray(
     m_p_index -= capacity;
     return true;
   }
-  return ON_SUBD_RETURN_ERROR(nullptr);
+  return ON_SUBD_RETURN_ERROR(false);
 }
 
 
@@ -703,7 +703,7 @@ class ON_SubDVertex* ON_SubDHeap::AllocateVertexAndSetId(unsigned int& max_verte
   // In order for m_fspv.ElementFromId() to work, it is critical that
   // once a vertex is allocated from m_fspv, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDVertex* v;
   if (m_unused_vertex)
@@ -749,7 +749,7 @@ class ON_SubDEdge* ON_SubDHeap::AllocateEdgeAndSetId(unsigned int& max_edge_id)
   // In order for m_fspe.ElementFromId() to work, it is critical that
   // once a edge is allocated from m_fspe, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDEdge* e;
   if (m_unused_edge)
@@ -796,7 +796,7 @@ class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(unsigned int& max_face_id)
   // In order for m_fspf.ElementFromId() to work, it is critical that
   // once a face is allocated from m_fspf, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDFace* f;
   if (m_unused_face)
@@ -1357,4 +1357,3 @@ void ON_SubDHeap::ReturnArray(
   }
   return;
 }
-

@@ -8,18 +8,20 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
 #include "opennurbs.h"
-
+#if defined(ON_RUNTIME_LINUX)
+#include "android_uuid/uuid.h"
+#endif
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -29,7 +31,7 @@
 // When ON_UUID is a typdef for Microsoft 's UUID,
 // the Microsoft compiler handles == and !=.
 // When a ON_UUID is not a typedef for a Microsoft UUID,
-// it is declared as a class and operator== and operator!= 
+// it is declared as a class and operator== and operator!=
 // need to be explicitly defined.
 
 bool operator==(const struct ON_UUID_struct& a, const struct ON_UUID_struct& b)
@@ -53,7 +55,7 @@ static const int little_endian_rho[16] = {3,2,1,0, 5,4, 7,6, 8,9, 10,11,12,13,14
 // for big endian CPUs (Motorola, MIPS, Sparc, etc.)
 static const int big_endian_rho[16] = {0,1,2,3, 4,5, 6,7, 8,9, 10,11,12,13,14,15};
 
- 
+
 ON_UUID ON_CreateId()
 {
   ON_UUID id;
@@ -168,7 +170,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
 
 #if defined(ON_COMPILER_MSC)
   // Header: Declared in Rpcdce.h.
-  // Library: Use Rpcrt4.lib  
+  // Library: Use Rpcrt4.lib
 #pragma comment(lib, "Rpcrt4.lib")
   ::UuidCreate(&new_uuid);
   //::UuidCreateSequential(&new_uuid); // faster but computer MAC address
@@ -180,7 +182,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   if ( ON::endian::little_endian == ON::Endian() )
   {
     // Intel cpu mac
-    // The uuid_generate() function returns a UUID in network or 
+    // The uuid_generate() function returns a UUID in network or
     // big-endian order.  The rest of OpenNURBS assumes that a UUID
     // is stored in native byte order, so we switch the byte order
     // of the UUID.
@@ -188,29 +190,29 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
     uuid_generate(apple_osx_uuid);
     unsigned char* dst = (unsigned char*)&new_uuid;
     const unsigned char* src = (const unsigned char*)&apple_osx_uuid;
-    *dst++ = src[little_endian_rho[ 0]]; 
-    *dst++ = src[little_endian_rho[ 1]]; 
-    *dst++ = src[little_endian_rho[ 2]]; 
-    *dst++ = src[little_endian_rho[ 3]]; 
-    *dst++ = src[little_endian_rho[ 4]]; 
-    *dst++ = src[little_endian_rho[ 5]]; 
-    *dst++ = src[little_endian_rho[ 6]]; 
-    *dst++ = src[little_endian_rho[ 7]]; 
-    *dst++ = src[little_endian_rho[ 8]]; 
-    *dst++ = src[little_endian_rho[ 9]]; 
-    *dst++ = src[little_endian_rho[10]]; 
-    *dst++ = src[little_endian_rho[11]]; 
-    *dst++ = src[little_endian_rho[12]]; 
-    *dst++ = src[little_endian_rho[13]]; 
-    *dst++ = src[little_endian_rho[14]]; 
-    *dst   = src[little_endian_rho[15]]; 
+    *dst++ = src[little_endian_rho[ 0]];
+    *dst++ = src[little_endian_rho[ 1]];
+    *dst++ = src[little_endian_rho[ 2]];
+    *dst++ = src[little_endian_rho[ 3]];
+    *dst++ = src[little_endian_rho[ 4]];
+    *dst++ = src[little_endian_rho[ 5]];
+    *dst++ = src[little_endian_rho[ 6]];
+    *dst++ = src[little_endian_rho[ 7]];
+    *dst++ = src[little_endian_rho[ 8]];
+    *dst++ = src[little_endian_rho[ 9]];
+    *dst++ = src[little_endian_rho[10]];
+    *dst++ = src[little_endian_rho[11]];
+    *dst++ = src[little_endian_rho[12]];
+    *dst++ = src[little_endian_rho[13]];
+    *dst++ = src[little_endian_rho[14]];
+    *dst   = src[little_endian_rho[15]];
   }
   else
   {
     // Motorola cpu mac
     uuid_generate((unsigned char*)&new_uuid);
   }
-  
+
 #if defined (ON_DEBUG)
   // OS X generates version 4 UUIDs.  Check that this is still true after changing the byte order.
   if ((new_uuid.Data3 & 0xF000) != 0x4000)
@@ -221,7 +223,13 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
 
   return true;
 #else
-  // You must supply a way to create unique ids or you 
+
+#if defined(ON_RUNTIME_LINUX)
+  uuid_generate((unsigned char*)&new_uuid);
+  return true;
+#else
+
+  // You must supply a way to create unique ids or you
   // will not be able to write 3dm files.
 #error TODO - generate uuid
   memset(&new_uuid,0,sizeof(ON_UUID));
@@ -229,13 +237,14 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
 #endif
 
 #endif
+#endif
 }
 
 const char* ON_ParseUuidString(const char* sUUID, ON_UUID* uuid)
 {
   // NOTE WELL: This code has to work on non-Windows OSs and on
   //            both big and little endian CPUs.  On Windows OSs
-  //            is must return the same result as 
+  //            is must return the same result as
   //            Windows's UuidFromString().
   //
 
@@ -272,7 +281,7 @@ const char* ON_ParseUuidString(const char* sUUID, ON_UUID* uuid)
   unsigned char byte_value[2];
 
   memset(&u, 0, sizeof(u));
-  //for ( bi = 0; bi < 16; bi++ ) 
+  //for ( bi = 0; bi < 16; bi++ )
   //  u.b[bi] = 0;
 
   bFailed = sUUID ? false : true;
@@ -312,7 +321,7 @@ const char* ON_ParseUuidString(const char* sUUID, ON_UUID* uuid)
     }
   }
 
-  if (bFailed) 
+  if (bFailed)
   {
     // 09 August 2006 John Morse
     // There are times when Rhino is looking for a plug-in but the SDK or command
@@ -331,12 +340,12 @@ const char* ON_ParseUuidString(const char* sUUID, ON_UUID* uuid)
   return bFailed ? 0 : sUUID;
 }
 
- 
+
 ON_UUID ON_UuidFromString( const char* sUUID )
 {
   // NOTE WELL: This code has to work on non-Windows OSs and on
   //            both big and little endian CPUs.  On Windows OSs
-  //            is must return the same result as 
+  //            is must return the same result as
   //            Windows's UuidFromString().
   //
 
@@ -349,7 +358,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
   /*
 #if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN)
   RPC_STATUS st;
-  union 
+  union
   {
     ON_UUID uuid;
     unsigned char b[16];
@@ -359,10 +368,10 @@ ON_UUID ON_UuidFromString( const char* sUUID )
 */
 
   static const int* rho = (ON::endian::big_endian == ON::Endian())
-                        ? big_endian_rho 
+                        ? big_endian_rho
                         : little_endian_rho;
 
-  union 
+  union
   {
     ON_UUID uuid;
     unsigned char b[16];
@@ -373,7 +382,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
   unsigned char byte_value[2];
 
   memset(&u,0,sizeof(u));
-  //for ( bi = 0; bi < 16; bi++ ) 
+  //for ( bi = 0; bi < 16; bi++ )
   //  u.b[bi] = 0;
 
   bFailed = sUUID ? false : true;
@@ -463,7 +472,7 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
       s[i++] = (char)w;
     else if ( w >= 'a' && w <= 'f' )
       s[i++] = (char)w;
-    else if ( w != '-' ) 
+    else if ( w != '-' )
       break;
   }
   s[i] = 0;
@@ -471,7 +480,7 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
   return ON_UuidFromString(s);
 
 }
- 
+
 int ON_UuidIndex::CompareIdAndIndex( const ON_UuidIndex* a, const ON_UuidIndex* b )
 {
   int i;
@@ -533,7 +542,7 @@ int ON_UuidIndex::CompareIndex( const ON_UuidIndex* a, const ON_UuidIndex* b )
   return 0;
 }
 
- 
+
 int ON_UuidPtr::CompareIdAndPtr( const ON_UuidPtr* a, const ON_UuidPtr* b )
 {
   int i;
@@ -619,9 +628,9 @@ int ON_UuidPtr::ComparePtr( const ON_UuidPtr* a, const ON_UuidPtr* b )
 ////        z = ::UuidCompare(&a,&b,&rpc_status);
 ////        if ( y != z )
 ////        {
-////          int mscomparediff = 99; 
+////          int mscomparediff = 99;
 ////        }
-////      }      
+////      }
 ////    }
 ////  }
 ////}
@@ -634,10 +643,10 @@ int ON_UuidCompare( const ON_UUID* a, const ON_UUID* b )
   //            taking into account the way ON_UUIDs
   //            are read/written by ON_BinaryArchive.
   //
-  //            On Windows, ::UuidCompare() must agree 
+  //            On Windows, ::UuidCompare() must agree
   //            with this function.
 
-  if ( !a ) 
+  if ( !a )
   {
     return b ? -1 : 0;
   }
@@ -654,14 +663,14 @@ int ON_UuidCompare( const ON_UUID* a, const ON_UUID* b )
   if ( a->Data3 > b->Data3 ) return  1;
   return memcmp(a->Data4,b->Data4,sizeof(a->Data4));
 }
- 
+
 int ON_UuidCompare( const ON_UUID& a, const ON_UUID& b)
 {
   return ON_UuidCompare(&a,&b);
 }
 
-bool ON_UuidIsNil( 
-        const ON_UUID& uuid 
+bool ON_UuidIsNil(
+        const ON_UUID& uuid
         )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
@@ -669,8 +678,8 @@ bool ON_UuidIsNil(
 }
 
 
-bool ON_UuidIsNotNil( 
-        const ON_UUID& uuid 
+bool ON_UuidIsNotNil(
+        const ON_UUID& uuid
         )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
@@ -680,11 +689,11 @@ bool ON_UuidIsNotNil(
 
 char* ON_UuidToString( const ON_UUID& uuid, char* s)
 {
-  // s - [out]  The s[] char array must have length >= 37.  
-  //            The returned char array will have a 36 
+  // s - [out]  The s[] char array must have length >= 37.
+  //            The returned char array will have a 36
   //            character uuid in s[0..35] and a null in s[36].
 
-  // NOTE WELL: 
+  // NOTE WELL:
   //   This code has to work on non-Windows OSs and on both big and
   //   little endian CPUs.  The result must satisfy
   //   uuid == ON_UuidFromString(ON_UuidToString(uuid,s))
@@ -698,13 +707,13 @@ char* ON_UuidToString( const ON_UUID& uuid, char* s)
   const unsigned char* b = (const unsigned char*)&uuid;
   char* p;
   int i;
-  
+
   static const int* rho = (ON::endian::big_endian == ON::Endian())
-                        ? big_endian_rho 
+                        ? big_endian_rho
                         : little_endian_rho;
 
   // 5 December 2002 Dale Lear:
-  //   There is either a bug in Purify (likely) or perhaps a bug in the 
+  //   There is either a bug in Purify (likely) or perhaps a bug in the
   //   way Microsoft compiles  c>>4 when c is an unsigned char.  In any
   //   case, changing c to an unsigned int makes purify happy and should
   //   work just as well.
@@ -739,11 +748,11 @@ char* ON_UuidToString( const ON_UUID& uuid, char* s)
 
 wchar_t* ON_UuidToString( const ON_UUID& uuid, wchar_t* s)
 {
-  // s - [out]  The s[] char array must have length >= 37.  
-  //            The returned char array will have a 36 
+  // s - [out]  The s[] char array must have length >= 37.
+  //            The returned char array will have a 36
   //            character uuid in s[0..35] and a null in s[36].
 
-  // NOTE WELL: 
+  // NOTE WELL:
   //   This code has to work on non-Windows OSs and on both big and
   //   little endian CPUs.  The result must satisfy
   //   uuid == ON_UuidFromString(ON_UuidToString(uuid,s))
@@ -763,7 +772,7 @@ wchar_t* ON_UuidToString( const ON_UUID& uuid, wchar_t* s)
   return s;
 }
 
- 
+
 const char* ON_UuidToString( const ON_UUID& uuid, ON_String& s )
 {
   char x[37];
@@ -771,7 +780,7 @@ const char* ON_UuidToString( const ON_UUID& uuid, ON_String& s )
   return s.Array();
 }
 
- 
+
 const wchar_t* ON_UuidToString( const ON_UUID& uuid, ON_wString& s )
 {
   wchar_t x[37];

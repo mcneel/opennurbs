@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -18,19 +18,19 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
 #if defined(ON_COMPILER_MSC) && defined(ON_RUNTIME_WIN)
 // November 2015: Visual Studo 2013 (and probably others)
-// Shlwapi.h and Shlobj.h are not included in opennurbs_system.h 
+// Shlwapi.h and Shlobj.h are not included in opennurbs_system.h
 // because the have gems like "#define small ..." (Thank You Microsoft!).
-// Turns out there is plenty of code that uses opennurbs where crazy 
+// Turns out there is plenty of code that uses opennurbs where crazy
 // developers thought "small" would be a reasonable name for a local
 // variable.  Reminds me of dealing with AutoDesk's old #define X 0
-// in their headers from 20 years ago. 
+// in their headers from 20 years ago.
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
 #include <Shlwapi.h>
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
@@ -263,7 +263,7 @@ void ON_wString::SplitPath(
   ON_wString* ext
   )
 {
-  ON_FileSystemPath::SplitPath( 
+  ON_FileSystemPath::SplitPath(
     path,
     drive,
     dir,
@@ -343,7 +343,7 @@ void ON_FileSystemPath::SplitPath(
 }
 
 
-void ON_FileSystemPath::SplitPath( 
+void ON_FileSystemPath::SplitPath(
   const wchar_t* path,
   ON_wString* drive,
   ON_wString* dir,
@@ -566,13 +566,13 @@ const ON_wString ON_FileSystemPath::CurrentDirectory(
 
   // TODO implement for Apple OS's
   ON_ERROR("ON_FileSystemPath::CurrentDirectory() not implemented.");
-  return ON_wString::EmptyString;   
+  return ON_wString::EmptyString;
 
 #else
 
   // unsupported OS
   ON_ERROR("ON_FileSystemPath::CurrentDirectory() not implemented.");
-  return ON_wString::EmptyString;   
+  return ON_wString::EmptyString;
 #endif
 }
 
@@ -621,7 +621,7 @@ const ON_wString ON_FileSystemPath::RemoveFileName(
   const wchar_t* dir = nullptr;
   const wchar_t* fname = nullptr;
   on_wsplitpath(path, &vol, &dir, &fname, nullptr);
-  
+
   const size_t length
     = (nullptr != fname && nullptr != path && path <= fname)
     ? (int)(fname - path)
@@ -649,7 +649,7 @@ const ON_wString ON_FileSystemPath::CombinePaths(
     : ON_FileSystemPath::CleanPath(left_side);
 
   ON_wString rhs_fname;
-  ON_wString rhs 
+  ON_wString rhs
     = bRightSideContainsFileName
     ? ON_FileSystemPath::RemoveFileName(right_side,&rhs_fname)
     : ON_FileSystemPath::CleanPath(right_side);
@@ -665,10 +665,10 @@ const ON_wString ON_FileSystemPath::CombinePaths(
   }
 
   ON_wString path = lhs;
-  bool bPathEndsDirectorySeparator 
+  bool bPathEndsDirectorySeparator
     = path.IsNotEmpty()
     && ON_FileSystemPath::IsDirectorySeparator(path[path.Length() - 1], true);
-  
+
   if (rhs.IsNotEmpty())
   {
     if (path.IsNotEmpty() && false == bPathEndsDirectorySeparator)
@@ -678,7 +678,7 @@ const ON_wString ON_FileSystemPath::CombinePaths(
     if (lhs.IsNotEmpty() && ON_FileSystemPath::IsRelativePath(rhs))
       path = ON_FileSystemPath::CleanPath(path);
 
-    bPathEndsDirectorySeparator 
+    bPathEndsDirectorySeparator
       = path.IsNotEmpty()
       && ON_FileSystemPath::IsDirectorySeparator(path[path.Length() - 1], true);
   }
@@ -692,7 +692,7 @@ const ON_wString ON_FileSystemPath::CombinePaths(
     {
       const wchar_t* vol = nullptr;
       const wchar_t* dir = nullptr;
-      // on_wsplitpath is called to avoid appending a directory separator to a 
+      // on_wsplitpath is called to avoid appending a directory separator to a
       on_wsplitpath(static_cast<const wchar_t*>(path), &vol, &dir, nullptr, nullptr);
       if (nullptr != dir && false == ON_FileSystemPath::IsDirectorySeparator(path[path.Length() - 1], true))
         path += ON_FileSystemPath::DirectorySeparator;
@@ -781,8 +781,8 @@ const ON_wString ON_FileSystemPath::CleanPath(
 
   dirty_path = local_dirty_path;
 
-  const bool bIsUNCHostName 
-    = bAllowWindowsUNCHostNameOrDiskLetter 
+  const bool bIsUNCHostName
+    = bAllowWindowsUNCHostNameOrDiskLetter
     && local_dirty_path.Length() >= 3
     && ON_wString::Backslash == local_dirty_path[0]
     && ON_wString::Backslash == local_dirty_path[1]
@@ -790,7 +790,7 @@ const ON_wString ON_FileSystemPath::CleanPath(
     && (IsAtoZ(local_dirty_path[2]) || Is0to9(local_dirty_path[2]) || local_dirty_path[2] > 127)
     ;
 
-  const bool bIsWindowsDrive 
+  const bool bIsWindowsDrive
     = bAllowWindowsUNCHostNameOrDiskLetter
     && (false == bIsUNCHostName)
     && local_dirty_path.Length() >= 3
@@ -804,10 +804,10 @@ const ON_wString ON_FileSystemPath::CleanPath(
   if (bIsUNCHostName)
   {
     clean_start += 3; // skip \\ and first charater of host name
-    
+
     // skip rest of host name
     while ( IsPermittedInHostName(*clean_start) )
-      clean_start++;    
+      clean_start++;
     if (false == IsDirSep(*clean_start))
       return ON_wString_CleanPathFailed();
   }
@@ -912,7 +912,7 @@ const ON_wString ON_FileSystemPath::CleanPath(
     }
     if (IsDotDotDir(src + 1))
     {
-      // replace dir/../ with ./ and recursively clean 
+      // replace dir/../ with ./ and recursively clean
       dst = dir;
       dst[0] = '.';
       dst[1] = src[3];
@@ -960,7 +960,7 @@ const ON_wString ON_FileSystemPath::CleanPath(
     return clean_path;
   }
 
-  // recursively clean 
+  // recursively clean
   const ON_wString clean_tail = ON_FileSystemPath::CleanPath(false,false,false,false,0,clean_start);
   if (clean_head < clean_start)
   {
@@ -1177,7 +1177,7 @@ bool ON_FileSystem::IsDirectoryWithWriteAccess(
       // The purpose of this function is to test if a file can be opened and
       // written to using the same tools that write .3dm files.
       //
-      // It is possible to have create and write permissions but not have 
+      // It is possible to have create and write permissions but not have
       // read permissions. For this reason, we do not attempt to read the tmp file.
       break;
     }
@@ -1186,11 +1186,11 @@ bool ON_FileSystem::IsDirectoryWithWriteAccess(
       // The purpose of this function is to test if a file can be opened and
       // written to using the same tools that write .3dm files.
       //
-      // There is speculation that when a directory is managed by dropbox 
-      // or perhaps other network storage devices, there may be significant 
-      // latency in the file systems that results in a time lag between calling 
+      // There is speculation that when a directory is managed by dropbox
+      // or perhaps other network storage devices, there may be significant
+      // latency in the file systems that results in a time lag between calling
       // unlink() and having ON_FileSystem::IsFile() report false.
-      // For that reason, we do not check success codes on unlink 
+      // For that reason, we do not check success codes on unlink
       // or verify the tmp file is gone.
       ON_FileSystem::RemoveFile(tmpfilename);
     }
@@ -1225,7 +1225,7 @@ const ON_wString ON_FileSystemPath::FullPathFromRelativePath(
     return ON_wString::EmptyString;
   if (!(base_path < base_path_end))
     return ON_wString::EmptyString;
-  
+
   ON_wString dirty_full_path;
   dirty_full_path.Append(base_path,(int)(base_path_end - base_path));
   if ( false == ON_FileSystemPath::IsDirectorySeparator(base_path_end[-1],true) )
@@ -1259,7 +1259,7 @@ static bool CleanAndRemoveFileName(
 
     if (nullptr == d || 0 == d[0])
       break;
-    
+
     clean_path = d;
 
     if (bPathIncludesFileName)
@@ -1365,7 +1365,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
       bool bBaseDirSep = IsDirSep(*base1);
       if (false == bFullDirSep && false == bBaseDirSep)
       {
-        // skipping an element of a directory name 
+        // skipping an element of a directory name
         base1++;
         full1++;
         continue;
@@ -1408,7 +1408,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
   // It is reasonable for base_tail to be nullptr
   if (nullptr != base_tail && IsDirSep(*base_tail) )
     return best_answer;
-  
+
   // set dotdot_count to number of directories left in base_tail
   int dotdot_count = 0;
   while (0 != *base_tail)
@@ -1461,7 +1461,7 @@ FILE* ON_FileStream::Open( const wchar_t* filename, const wchar_t* mode )
     return fp;
 
 #if defined(ON_COMPILER_MSC) && defined(ON_RUNTIME_WIN)
-  errno_t e = _wfopen_s(&fp,filename,mode); 
+  errno_t e = _wfopen_s(&fp,filename,mode);
   if ( 0 != e && 0 == fp )
     fp = 0; // reference e to keep lint quiet.
 #else
@@ -1483,7 +1483,7 @@ FILE* ON_FileStream::Open( const char* filename, const char* mode )
     return fp;
 
 #if defined(ON_COMPILER_MSC) && defined(ON_RUNTIME_WIN)
-  errno_t e = fopen_s(&fp,filename,mode); 
+  errno_t e = fopen_s(&fp,filename,mode);
   if ( 0 != e && 0 == fp )
     fp = 0; // reference e to keep lint quiet.
 #else
@@ -1633,7 +1633,7 @@ bool ON_FileSystemPath::IsValidFileName(
     if (file_name_length > 256)
       return false;
 
-    // note that all illegal symbols currently tested for have 
+    // note that all illegal symbols currently tested for have
     // UNICODE code points <= U+07F, so we can simply test c
     const wchar_t c = file_name[file_name_length];
     if (ON_FileSystemPath::IsDirectorySeparator(c, bAllPlatforms))
@@ -1654,7 +1654,7 @@ bool ON_FileSystemPath::IsValidFileName(
 #endif
       break;
 
-      //// Most windows apps have these restrictions, but the file system supports 
+      //// Most windows apps have these restrictions, but the file system supports
       //// names with these characters.
       ////    case ':':
       ////    case '~':
@@ -1675,7 +1675,7 @@ bool ON_FileSystemPath::IsValidFileName(
       ////      if (bAllPlatforms)
       ////        return false;
       ////#endif
-      ////    
+      ////
     }
 
     prev_c = c;
@@ -1687,7 +1687,7 @@ bool ON_FileSystemPath::IsValidFileName(
     if (1 == file_name_length)
       return false;
     if (2 == file_name_length && bDoubleDot)
-      return false; 
+      return false;
     break;
 
   case '~':
@@ -1750,7 +1750,7 @@ const ON_wString ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId path
 #elif defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
 
   NSArray *apple_paths = NSSearchPathForDirectoriesInDomains(platform_path_id, NSUserDomainMask, YES);
-  if ([apple_paths count] > 0)  
+  if ([apple_paths count] > 0)
   {
     NSString* apple_path = [apple_paths objectAtIndex:0];
     if ( nullptr != apple_path )
@@ -1789,7 +1789,7 @@ static unsigned int ON_Internal_SeekTo3DGeometryFileFormatMark(
 
     if (0 != ON_String::CompareOrdinal(tag, 24, buffer, 24, false))
     {
-      // it's not a "pure" .3DM file 
+      // it's not a "pure" .3DM file
       // - see if we have a .3DM file with MS OLE-goo at the start
       // (generally, there is around 6kb of goo.  I keep looking
       // for up to 32mb just in case.)
@@ -1930,7 +1930,7 @@ bool ON_FileStream::Seek( FILE* fp, ON__INT64 offset, int origin )
 
   if ( 0 == offset && SEEK_CUR == origin )
     return true;
-  
+
 #if defined(ON_COMPILER_MSC) && defined(ON_RUNTIME_WIN)
   if (0 != _fseeki64(fp, offset, origin))
     return false;
@@ -2060,7 +2060,7 @@ bool ON_FileStream::GetFileInformation(
   return rc;
 }
 
-bool ON_FileStream::GetFileInformation( 
+bool ON_FileStream::GetFileInformation(
     FILE* fp,
     ON__UINT64* file_size,
     ON__UINT64* file_metadata_last_modified_time,
@@ -2083,18 +2083,18 @@ bool ON_FileStream::GetFileInformation(
 
     // Microsoft compilers
 #if (_MSC_VER >= 1400)
-    // VC 8 (2005) 
-    // works for file sizes > 4GB 
+    // VC 8 (2005)
+    // works for file sizes > 4GB
     // when size_t is a 64 bit integer
     struct _stat64 sb;
     memset(&sb,0,sizeof(sb));
-    int fd = _fileno(fp);    
+    int fd = _fileno(fp);
     int fstat_rc = _fstat64(fd, &sb);
 #else
     // VC6 compiler
     struct _stat sb;
     memset(&sb,0,sizeof(sb));
-    int fd = _fileno(fp);    
+    int fd = _fileno(fp);
     int fstat_rc = _fstat(fd, &sb);
 #endif
 
@@ -2229,7 +2229,7 @@ static bool IsDotOrDotDotDir( const char* s )
   return rc;
 }
 
-bool ON_FileIterator::Initialize( 
+bool ON_FileIterator::Initialize(
   const wchar_t* directory_name
   )
 {
@@ -2237,8 +2237,8 @@ bool ON_FileIterator::Initialize(
   return Initialize(directory_name,item_name_filter);
 }
 
-bool ON_FileIterator::Initialize( 
-  const wchar_t* directory_name, 
+bool ON_FileIterator::Initialize(
+  const wchar_t* directory_name,
   const wchar_t* item_name_filter
   )
 {
@@ -2262,7 +2262,7 @@ bool ON_FileIterator::Initialize(
   return true;
 }
 
-bool ON_FileIterator::Initialize( 
+bool ON_FileIterator::Initialize(
   const char* directory_name
   )
 {
@@ -2280,7 +2280,7 @@ bool ON_FileIterator::Initialize(
   return Initialize(
     static_cast<const wchar_t*>(local_directory_name),
     static_cast<const wchar_t*>(local_item_name_filter)
-    );  
+    );
 }
 
 bool ON_FileIterator::FirstItem()
@@ -2314,7 +2314,7 @@ bool ON_FileIterator::FirstItem()
 
     if (0 == item_name_filter)
     {
-      // A null file file_name_filter means iterate 
+      // A null file file_name_filter means iterate
       // through all items in the directory.  To do
       // this using Windows' ::FindFirstFile, set the
       // filter to "*.*", even though some items will
@@ -2460,7 +2460,7 @@ bool ON_FileIterator::NextItem()
       // Only *.ext filters work at this time for non-windows
       const wchar_t* file_name_filter = m_impl->m_ws_file_name_filter;
       if (   0 != file_name_filter
-            && '*' == file_name_filter[0] 
+            && '*' == file_name_filter[0]
             && '.' == file_name_filter[1]
             && 0 != file_name_filter[2]
             && '*' != file_name_filter[2] )
@@ -2468,8 +2468,8 @@ bool ON_FileIterator::NextItem()
         // assume this is a *.extension filter
         const wchar_t* current_name_ext = 0;
         on_wsplitpath(current_name,0,0,0,&current_name_ext);
-        if (   0 == current_name_ext 
-            || 0 != wcscmp(file_name_filter+1,current_name_ext) 
+        if (   0 == current_name_ext
+            || 0 != wcscmp(file_name_filter+1,current_name_ext)
            )
         {
           // current_name does pass match file_name_filter
@@ -2626,9 +2626,9 @@ ON__UINT64 ON_SecondsSinceJanOne1970UTC()
 #if defined(ON_COMPILER_MSC)
 
   __time64_t t = _time64(nullptr);
-  return (ON__UINT64)t;  
+  return (ON__UINT64)t;
 
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 
   //__time64_t t = _time64(nullptr);
   time_t t = time(nullptr);
@@ -2637,7 +2637,7 @@ ON__UINT64 ON_SecondsSinceJanOne1970UTC()
 #else
 
   __time64_t t = _time64(nullptr);
-  return (ON__UINT64)t;  
+  return (ON__UINT64)t;
 
 #endif
 }
@@ -2668,7 +2668,7 @@ const ON_wString SecondsSinceJanOne1970UTCToString(
     sec = uct.tm_sec;
   }
 
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 
   const time_t t = (time_t)seconds_since_epoch;
   const struct tm* ptr = gmtime( &t );
@@ -2723,7 +2723,7 @@ static ON__UINT64 SecondsSinceJanOne1970( FILETIME ft )
 {
   // The FILETIME is in 100-nanosecond intervals since January 1, 1601 UCT.
   //
-  // Between midnight January 1, 1601 and midnight January 1, 1970 there 
+  // Between midnight January 1, 1601 and midnight January 1, 1970 there
   // were 134774 days = 11644473600 seconds. Each second has 10^7 intervals
   // that are one hundred nanoseconds long.  So, if N = number of one hundred
   // nanosecond intervals since midnight January 1, 1601, then
@@ -2731,9 +2731,9 @@ static ON__UINT64 SecondsSinceJanOne1970( FILETIME ft )
   // January 1, 1970.
   //
   // January 1, 1601 was the start of a Gregorian calendary 400 year cycle
-  // and "the internet" sometimes cites that as the reason that date is 
+  // and "the internet" sometimes cites that as the reason that date is
   // the "beginning of time" for Windows' FILETIME values.  This convention
-  // would slightly simplify the formulae used to account for leap years, 
+  // would slightly simplify the formulae used to account for leap years,
   // so it is plausable this might might even be true.
 
   ON__UINT64 ft_since_jan_1_1601 = ft.dwHighDateTime;
@@ -2743,7 +2743,7 @@ static ON__UINT64 SecondsSinceJanOne1970( FILETIME ft )
   ON__UINT64 hundrednanoseconds_per_second = 10000000;
 
   ON__UINT64 seconds_since_jan_1_1601 = ft_since_jan_1_1601 / hundrednanoseconds_per_second;
-                                                   
+
   ON__UINT64 seconds_since_jan_1_1970 = seconds_since_jan_1_1601 - 11644473600;
 
   return seconds_since_jan_1_1970;
@@ -2776,20 +2776,20 @@ ON_ContentHash ON_ContentHash::Create(
   )
 {
   ON_ContentHash hash;
-  
+
   if ( 0 == hash_time )
     hash_time = ON_SecondsSinceJanOne1970UTC();
   hash.m_byte_count = (byte_count > 0) ? byte_count : 0;
   hash.m_hash_time = hash_time;
-  
-  hash.m_content_time 
-    = (content_last_modified_time <= hash_time) 
+
+  hash.m_content_time
+    = (content_last_modified_time <= hash_time)
     ? content_last_modified_time
     : 0;
-  
+
   hash.m_sha1_name_hash = sha1_name_hash;
 
-  hash.m_sha1_content_hash 
+  hash.m_sha1_content_hash
     = (hash.m_byte_count > 0)
     ? sha1_content_hash
     : ON_SHA1_Hash::EmptyContentHash
@@ -2798,7 +2798,7 @@ ON_ContentHash ON_ContentHash::Create(
   return hash;
 }
 
-ON_ContentHash ON_ContentHash::CreateFromBuffer( 
+ON_ContentHash ON_ContentHash::CreateFromBuffer(
   ON_SHA1_Hash sha1_name_hash,
   const void* buffer,
   size_t byte_count
@@ -2811,7 +2811,7 @@ ON_ContentHash ON_ContentHash::CreateFromBuffer(
   return ON_ContentHash::Create(sha1_name_hash,hash_byte_count,sha1_content_hash,hash_time,content_last_modifed_time);
 }
 
-ON_ContentHash ON_ContentHash::CreateFromFile( 
+ON_ContentHash ON_ContentHash::CreateFromFile(
   ON_SHA1_Hash sha1_file_name_hash,
   FILE* fp
   )
@@ -2829,7 +2829,7 @@ ON_ContentHash ON_ContentHash::CreateFromFile(
 }
 
 
-ON_ContentHash ON_ContentHash::CreateFromFile( 
+ON_ContentHash ON_ContentHash::CreateFromFile(
   const wchar_t* filename
   )
 {
@@ -2840,7 +2840,7 @@ ON_ContentHash ON_ContentHash::CreateFromFile(
   return hash;
 }
 
-ON_ContentHash ON_ContentHash::CreateFromFile( 
+ON_ContentHash ON_ContentHash::CreateFromFile(
   const char* filename
   )
 {
@@ -2936,7 +2936,7 @@ bool ON_ContentHash::IsSet() const
 {
   if ( 0 == m_hash_time )
     return false;
-  return 
+  return
     (0 == m_byte_count)
     ? (ON_SHA1_Hash::EmptyContentHash == m_sha1_content_hash)
     : (ON_SHA1_Hash::EmptyContentHash != m_sha1_content_hash);
@@ -2976,7 +2976,7 @@ ON_SHA1_Hash ON_ContentHash::NameHash() const
 {
   return m_sha1_name_hash;
 }
-  
+
 
 bool ON_ContentHash::IsSameBufferContent(
   const void* buffer,
@@ -2987,21 +2987,21 @@ bool ON_ContentHash::IsSameBufferContent(
 }
 
 
-bool ON_ContentHash::IsSameFileContent( 
+bool ON_ContentHash::IsSameFileContent(
   FILE* fp
   ) const
 {
   return ON_ContentHash::EqualContent(*this, ON_ContentHash::CreateFromFile(ON_SHA1_Hash::ZeroDigest,fp));
 }
 
-bool ON_ContentHash::IsSameFileContent( 
+bool ON_ContentHash::IsSameFileContent(
   const wchar_t* filename
   ) const
 {
   return ON_ContentHash::EqualContent(*this, ON_ContentHash::CreateFromFile(filename));
 }
 
-bool ON_ContentHash::IsSameFileContent( 
+bool ON_ContentHash::IsSameFileContent(
   const char* filename
   ) const
 {
@@ -3096,12 +3096,12 @@ ON_ContentHash::CompareResult ON_ContentHash::Compare(
   if ( m_byte_count == file_content_hash.m_byte_count && m_sha1_content_hash == file_content_hash.m_sha1_content_hash )
     return ON_ContentHash::CompareResult::EqualContent;
   const ON__UINT64 current_time = ON_SecondsSinceJanOne1970UTC();
-  bool bValidTimes 
-    =  m_content_time > 0 
-    && m_hash_time >= m_content_time 
+  bool bValidTimes
+    =  m_content_time > 0
+    && m_hash_time >= m_content_time
     && current_time >= m_hash_time
-    && file_content_hash.m_content_time > 0 
-    && file_content_hash.m_hash_time >= file_content_hash.m_content_time 
+    && file_content_hash.m_content_time > 0
+    && file_content_hash.m_hash_time >= file_content_hash.m_content_time
     && current_time >= file_content_hash.m_hash_time
     ;
   if (bValidTimes)
@@ -3487,7 +3487,7 @@ ON_FileReference::FindFilePreference ON_FileReference::Internal_FindFile(
         base_path = local_base_path;
       }
     }
-    
+
 
     // Clean up file preferences and append defaults
     ON_FileReference::FindFilePreference default_pref[] =
@@ -3772,7 +3772,7 @@ bool ON_FileReference::Write(
     if (!archive.WriteString(full_path))
       break;
 
-    const ON_wString relative_path 
+    const ON_wString relative_path
       = (bBasePathIsEmpty || m_full_path.IsEmpty() )
       ? m_relative_path
       : ON_FileSystemPath::RelativePath(m_full_path,true,base_path,bBasePathIncludesFileName);
@@ -3835,13 +3835,13 @@ bool ON_FileReference::Read(
       break;
     if (!m_content_hash.Read(archive))
       break;
-    
+
     unsigned int full_path_status_as_unsigned = 0;
     if (!archive.ReadInt(&full_path_status_as_unsigned))
       break;
     //m_full_path_status = ON_FileReference::StatusFromUnsigned(full_path_status_as_unsigned);
     // The full path status must be validated after each read.
-    m_full_path_status = ON_FileReference::Status::Unknown; 
+    m_full_path_status = ON_FileReference::Status::Unknown;
 
     if (minor_version >= 1)
     {
@@ -3913,7 +3913,7 @@ void ON_FileReference::SetFullPath(
     else if (bFullPathChanged)
     {
       m_content_hash = ON_ContentHash::Unset;
-      m_full_path_status 
+      m_full_path_status
         = ON_FileSystem::IsFile(m_full_path)
         ? ON_FileReference::Status::FullPathValid
         : ON_FileReference::Status::FileNotFound;
