@@ -15,7 +15,9 @@
 */
 
 #include "opennurbs.h"
-
+#if defined(ON_RUNTIME_LINUX)
+#include "android_uuid/uuid.h"
+#endif
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -221,6 +223,12 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
 
   return true;
 #else
+
+#if defined(ON_RUNTIME_LINUX)
+  uuid_generate((unsigned char*)&new_uuid);
+  return true;
+#else
+
   // You must supply a way to create unique ids or you 
   // will not be able to write 3dm files.
 #error TODO - generate uuid
@@ -228,6 +236,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   return false;
 #endif
 
+#endif
 #endif
 }
 

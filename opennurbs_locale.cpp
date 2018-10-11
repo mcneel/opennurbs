@@ -1324,7 +1324,7 @@ public:
 
   static bool Validate_sprintf_s()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG)  || defined(ON_COMPILER_GNU)
     // Test formatted printing
     char buffer[64] = { 0 };
     size_t buffer_capacity = (sizeof(buffer) / sizeof(buffer[0])) - 1;
@@ -1343,7 +1343,7 @@ public:
 
   static bool Validate_sprintf_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1368,7 +1368,7 @@ public:
 
   static bool Validate_sprintf_s_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1405,7 +1405,7 @@ public:
 
   static bool Validate_sscanf_s()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
     // Testing C-runtime - do not using ON_String::Scan
@@ -1422,7 +1422,7 @@ public:
 
   static bool Validate_sscanf_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
@@ -1447,7 +1447,7 @@ public:
 
   static bool Validate_sscanf_s_l()
   {
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
@@ -1602,7 +1602,7 @@ bool ON_Locale::SetPeriodAsCRuntimeDecimalPoint()
     if (prev_type != _DISABLE_PER_THREAD_LOCALE && prev_type >= 0)
       _configthreadlocale(prev_type);
 
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
     // Apple's Clang compiler
     const char* s = setlocale(LC_NUMERIC, "C");
     rc = (0 != s && 'C' == s[0] && 0 == s[1]);
