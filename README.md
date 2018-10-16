@@ -15,14 +15,14 @@ For more information, see ["What is openNURBS?"](https://developer.rhino3d.com/g
 3. Create your C++ project that will use opennurbs.
 4. In your project's stdafx.h, put the following lines:
 
-  ```cpp
-  // defining OPENNURBS_PUBLIC_INSTALL_DIR enables automatic linking using pragmas
-  #define OPENNURBS_PUBLIC_INSTALL_DIR "<MY_INSTALLPATH>"
-  // uncomment the next line if you want to use opennurbs as a DLL
-  //#define OPENNURBS_IMPORTS
-  #include "<MY_INSTALLPATH>/opennurbs_public.h"
-  ```
-  Replace `<MY_INSTALLPATH>` with the full path where you installed opennurbs using forward slashes as directory separators.
+    ```cpp
+    // defining OPENNURBS_PUBLIC_INSTALL_DIR enables automatic linking using pragmas
+    #define OPENNURBS_PUBLIC_INSTALL_DIR "<MY_INSTALLPATH>"
+    // uncomment the next line if you want to use opennurbs as a DLL
+    //#define OPENNURBS_IMPORTS
+    #include "<MY_INSTALLPATH>/opennurbs_public.h"
+    ```
+    Replace `<MY_INSTALLPATH>` with the full path where you installed opennurbs using forward slashes as directory separators.
 
 Please see ["Getting started"](https://developer.rhino3d.com/guides/opennurbs/getting-started/) for more information about openNURBS including supported compilers, build instructions, and a description of the examples.
 
