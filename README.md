@@ -6,13 +6,6 @@ The openNURBS Initiative provides CAD, CAM, CAE, and computer graphics software 
 
 The openNURBS Toolkit consists of C++ source code for a library that will read and write openNURBS 3D model files (_.3dm_). More than 400 software development teams and applications, including [_Rhinoceros®_](https://rhino3d.com), exchange 3D models using the openNURBS file format. Additionally, the Toolkit provides NURBS evaluation tools and elementary geometric and 3D view manipulation tools as well as including source code for several example programs.
 
-Unlike other open development initiatives, alliances, or consortia:
-
-* Commercial use is encouraged.
-* The tools, support, and membership are free.
-* There are no restrictions. Neither copyright nor copyleft restrictions apply.
-* No contribution of effort or technology is required from the members, although it is encouraged.
-
 For more information, see ["What is openNURBS?"](https://developer.rhino3d.com/guides/opennurbs/what-is-opennurbs).
 
 ## Getting started
