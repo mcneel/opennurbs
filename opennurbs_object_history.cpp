@@ -1858,25 +1858,48 @@ bool ON_HistoryRecord::SetObjRefValues( int value_id, int count, const ON_ObjRef
   {
     v->m_value.Destroy();
     v->m_value.Reserve(count);
-    int i;
-    for ( i = 0; i < count; i++ )
+
+    if(count)
     {
-      // The call to DecrementProxyReferenceCount() is critical.
-      // It makes sure there are no active runtime pointers 
-      // saved in the history record.  If this call is not here,
-      // you will eventually crash and history update will never
-      // work right even when it doesn't crash.
-      ON_ObjRef& vor = v->m_value.AppendNew();
-      vor = oref[i];
-      vor.DecrementProxyReferenceCount();
-      // Feb 12 2010 - Fixing bug in ExtrudeCrv history
-      //  and probably lots of other subtle history bugs.
-      //  History must lookup by UUID and not by runtime serial number.
-      vor.m_runtime_sn = 0; 
-      ON_UUID object_id = v->m_value[i].m_uuid;
-      if ( !ON_UuidIsNil(object_id) )
+      // 2019-01-23 - kike@mcneel.com
+      // Objects in instance definitions can not be modified in that case
+      // I add the root instance reference and all the instance definitions as 'antecedents'
+      const bool idef_geometry = oref && (oref->m__iref.Count() > 0);
+
+      for(int i = 0; i < count; i++)
       {
-        m_antecedents.AddUuid(object_id);
+        // The call to DecrementProxyReferenceCount() is critical.
+        // It makes sure there are no active runtime pointers 
+        // saved in the history record.  If this call is not here,
+        // you will eventually crash and history update will never
+        // work right even when it doesn't crash.
+        ON_ObjRef& vor = v->m_value.AppendNew();
+        vor = oref[i];
+        vor.DecrementProxyReferenceCount();
+        // Feb 12 2010 - Fixing bug in ExtrudeCrv history
+        //  and probably lots of other subtle history bugs.
+        //  History must lookup by UUID and not by runtime serial number.
+        vor.m_runtime_sn = 0;
+
+        // 2019-01-23 - kike@mcneel.com
+        if(!idef_geometry)
+        {
+          ON_UUID object_id = v->m_value[i].m_uuid;
+          if(!ON_UuidIsNil(object_id))
+          {
+            m_antecedents.AddUuid(object_id);
+          }
+        }
+      }
+
+      // 2019-01-23 - kike@mcneel.com
+      if(idef_geometry)
+      {
+        if(auto iref = oref->m__iref.Last())
+          m_antecedents.AddUuid(iref->m_iref_uuid);
+
+        for(int r = 0; r < oref->m__iref.Count(); ++r)
+          m_antecedents.AddUuid(oref->m__iref[r].m_idef_uuid);
       }
     }
   }

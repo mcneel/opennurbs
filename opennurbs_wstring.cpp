@@ -24,8 +24,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#include "opennurbs_atomic_op.h"
-
 // wide char (utf-8 / utf-16 / utf-23) <-> char (utf-8) converter
 static int w2c_size( int, const wchar_t* ); // gets minimum "c_count" arg for w2c().
 static int w2c( int,            // w_count = number of wide chars to convert
@@ -148,29 +146,66 @@ void ON_String::CopyToArray( int w_count, const wchar_t* w )
 /////////////////////////////////////////////////////////////////////////////
 // Empty strings point at empty_wstring
 
-struct ON_wStringHeader
+class ON_wStringHeader
 {
+private:
+  ON_wStringHeader() = delete;
+public:
+  ~ON_wStringHeader() = default;
+  ON_wStringHeader(const ON_wStringHeader&) = default;
+  ON_wStringHeader& operator=(const ON_wStringHeader&) = default;
+
+public:
+  ON_wStringHeader(
+    int initial_ref_count,
+    int capacity
+  )
+    : ref_count(initial_ref_count)
+    , string_capacity(capacity)
+  {}
+
+public:
   // NOTE WELL: 
   //  ref_count must be a signed 32-bit integer type that
   //  supports atomic increment/decrement operations.
-	int    ref_count;       // reference count (>=0 or -1 for empty string)
-	int    string_length;   // does not include any terminators
-	int    string_capacity; // does not include any terminators
+  std::atomic<int> ref_count;
+	int string_length=0;   // does not include null terminator
+	int string_capacity; // does not include null terminator
 	wchar_t* string_array() {return (wchar_t*)(this+1);}
 };
 
-static struct {
+class ON_Internal_Empty_wString
+{
+private:
+  ON_Internal_Empty_wString(const ON_Internal_Empty_wString&) = delete;
+  ON_Internal_Empty_wString& operator=(const ON_Internal_Empty_wString&) = delete;
+
+public: 
+  ON_Internal_Empty_wString()
+    : header(-1,0)
+  {}
+  ~ON_Internal_Empty_wString() = default;
+
+public:
   ON_wStringHeader header;
-  wchar_t           s;  
-} empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
+  wchar_t  s = 0;    
+};
+
+static ON_Internal_Empty_wString empty_wstring;
 static const ON_wStringHeader* pEmptyStringHeader = &empty_wstring.header;
 static const wchar_t* pEmptywString = &empty_wstring.s;
 
-static void ON_wStringHeader_DecrementRefCountAndDeleteIfZero(struct ON_wStringHeader* hdr)
+static void ON_wStringHeader_DecrementRefCountAndDeleteIfZero(class ON_wStringHeader* hdr)
 {
+  //// sz must be = 12 or SDK breaks
+  //size_t sz = sizeof(*hdr);
+  //ON_TextLog::Null.Print((const char*)nullptr, (int)sz);
+
   if (nullptr == hdr || hdr == pEmptyStringHeader)
     return;
-  const int ref_count = ON_AtomicDecrementInt32(&hdr->ref_count);
+
+  //const int ref_count = ON_AtomicDecrementInt32(&hdr->ref_count);
+  const int ref_count = --hdr->ref_count;
   if (0 == ref_count)
   {
     // zero entire header to help prevent crashes from corrupt string bug
@@ -185,6 +220,10 @@ static void ON_wStringHeader_DecrementRefCountAndDeleteIfZero(struct ON_wStringH
 
 void ON_wString::Create()
 {
+  //// sz must be = sizeof(void*) or SDK breaks
+  //size_t sz = sizeof(*this);
+  //ON_TextLog::Null.Print((const char*)nullptr, (int)sz);
+
   m_s = (wchar_t*)pEmptywString;
 }
 
@@ -236,7 +275,7 @@ bool ON_wString::IsValid(
       break;
     if (string_length > string_capacity)
       break;
-    const int ref_count = hdr->ref_count;
+    const int ref_count = (int)(hdr->ref_count);
     if (ref_count <= 0)
       break;
     const wchar_t* s1 = s + string_length;
@@ -283,26 +322,27 @@ bool ON_wString::IsValid(
 
 ON_wStringHeader* ON_wString::IncrementedHeader() const
 {
-  ON_wStringHeader* p = (ON_wStringHeader*)m_s;
-  if (nullptr == p)
+  ON_wStringHeader* hdr = (ON_wStringHeader*)m_s;
+  if (nullptr == hdr)
     return nullptr;
   
-  p--;
-  if (p == pEmptyStringHeader)
+  hdr--;
+  if (hdr == pEmptyStringHeader)
     return nullptr;
 
-  ON_AtomicIncrementInt32(&p->ref_count);
-  return p;
+  //ON_AtomicIncrementInt32(&hdr->ref_count);
+  ++hdr->ref_count;
+  return hdr;
 }
 
 ON_wStringHeader* ON_wString::Header() const
 {
-  ON_wStringHeader* p = (ON_wStringHeader*)m_s;
-  if (p)
-    p--;
+  ON_wStringHeader* hdr = (ON_wStringHeader*)m_s;
+  if (hdr)
+    hdr--;
   else
-    p = &empty_wstring.header;
-  return p;
+    hdr = &empty_wstring.header;
+  return hdr;
 }
 
 wchar_t* ON_wString::CreateArray( int capacity )
@@ -316,12 +356,9 @@ wchar_t* ON_wString::CreateArray( int capacity )
   if ( capacity > 0 ) 
   {
     // This scope does not need atomic operations
-		ON_wStringHeader* p =
-			(ON_wStringHeader*)onmalloc( sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
-		p->ref_count = 1;
-		p->string_length = 0;
-		p->string_capacity = capacity;
-		m_s = p->string_array();
+		void* buffer = onmalloc( sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
+    ON_wStringHeader* hdr = new(buffer) ON_wStringHeader(1,capacity);
+		m_s = hdr->string_array();
     memset( m_s, 0, (capacity+1)*sizeof(*m_s) );
     return m_s;
   }
@@ -331,7 +368,7 @@ wchar_t* ON_wString::CreateArray( int capacity )
 void ON_wString::Destroy()
 {
   ON_wStringHeader* hdr = Header();
-  if ( hdr != pEmptyStringHeader && nullptr != hdr && hdr->ref_count > 0 )
+  if ( hdr != pEmptyStringHeader && nullptr != hdr && (int)(hdr->ref_count) > 0 )
     ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr);
 	Create();
 }
@@ -364,7 +401,7 @@ void ON_wString::CopyArray()
   // Call CopyArray() before modifying array contents.
   // hdr0 = original header
   ON_wStringHeader* hdr0 = Header();
-  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && hdr0->ref_count > 1 ) 
+  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && (int)(hdr0->ref_count) > 1 ) 
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -399,7 +436,7 @@ wchar_t* ON_wString::ReserveArray( size_t array_capacity )
   {
 		CreateArray(capacity);
   }
-  else if ( hdr0->ref_count > 1 ) 
+  else if ( (int)(hdr0->ref_count) > 1 ) 
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -443,7 +480,7 @@ void ON_wString::ShrinkArray()
       Destroy();
       Create();
     }
-    else if ( hdr0->ref_count > 1 ) 
+    else if ( (int)(hdr0->ref_count) > 1 ) 
     {
       // Calling Create() here insures hdr0 remains valid until we decrement below.
       Create();

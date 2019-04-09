@@ -1038,7 +1038,22 @@ unsigned int ON_Font::GetInstalledWindowsDWriteFonts(
         if (0 == fi.m_gdi_interop_logfont.lfFaceName[0])
         {
           // During testing on Windows 10, this never occured.
-          ON_ERROR("Empty LOGFONT lfFaceName");
+          // ...
+          // Dale Lear 7 Jan 2019.
+          // It appears Turbo Tax 2018 installs 4 faces of Avenir LT with
+          // empty family name and empty logfont name. It has non-empty PostScript names.
+          //
+          //   C:\PROGRAM FILES (X86)\TURBOTAX\DELUXE 2018\32BIT\LOCAL\FUEGO\HOST\AVENIR\
+          //   Avenir LT 35 Light: AVENIRLT-LIGHT.TTF 
+          //   Avenir LT 55 Roman: AVENIRLT-ROMAN.TTF 
+          //   Avenir LT 65 Medium: AVENIRLT-MEDIUM.TTF 
+          //   Avenir LT 85 Heavy: AVENIRLT-HEAVY.TTF 
+          //
+          // These fonts never appear in Windows Notepad, WordPad, or Word font UI. 
+          // The Windows Setting font list leaves the name of this font blank as well. 
+          // So I'm going to comment out the call to ON_ERROR.
+          //
+          ////ON_ERROR("Empty LOGFONT lfFaceName");
           continue;
         }
 

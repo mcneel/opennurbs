@@ -54,6 +54,7 @@ enum ON_UnicodeCodePoint
   ON_Backslash = 0x5C, // REVERSE SOLIDUS U+005C (decimal 92)ere
   ON_Underscore = 0x5F, // Unicode LOW LINE U+005F
   ON_Pipe = 0x7C, // VERTICAL LINE U+007C (decimal 124)
+  ON_Tilde = 0x7E, // TILDE U+007E (decimal 126)
 
   //
   // NOTE: UTF-8 encodings of the codepoint values below this comment require multiple bytes.

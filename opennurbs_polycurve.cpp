@@ -913,14 +913,33 @@ static bool GetTestPlane( const ON_Curve& curve, ON_Plane& plane )
   }
 
   Q = P+X;
+  double best_dot = 1.0;
+  ON_3dPoint best_Y = ON_3dPoint::Origin;
+
   for ( i = 2; i <= 16; i += 2 )
   {
     for ( j = 1; j < i; j += 2 )
     {
       R = curve.PointAt( d.ParameterAt( ((double)j)/((double)i) ) );
-      if ( plane.CreateFromFrame( P, X, R-P ) )
-        return true;
+      ON_3dVector Y = R - P;
+      if (!Y.Unitize())
+        continue;
+      if (! X.IsParallelTo (Y)){
+        if ( plane.CreateFromFrame( P, X, Y ) )
+          return true;
+      }
+      else {
+        double dot = fabs(X*Y);
+        if (dot < best_dot){
+          best_Y = Y;
+          best_dot = dot;
+        }
+      }
     }
+  }
+  if (best_dot < 1.0){
+    if ( plane.CreateFromFrame( P, X, best_Y ) )
+      return true;
   }
   return false;
 }

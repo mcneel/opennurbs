@@ -2198,6 +2198,11 @@ public:
     bool bItalic
   ) const;
 
+  const ON_Font* ClosestFace(
+    bool bPreferedBold,
+    bool bPreferedItalic
+  ) const;
+
   void Dump(ON_TextLog& text_log) const;
 private:
   ON_wString m_quartet_name;
@@ -3586,10 +3591,17 @@ public:
 
   /*
   Returns:
+     Name of the quartet for this font. See ON_FontFaceQuartet for more details.
+  */
+  const ON_wString QuartetName(
+    ON_Font::NameLocale name_locale
+  ) const;
+
+  /*
+  Returns:
     Name of the quartet for this font. See ON_FontFaceQuartet for more details.
   */
   const ON_wString QuartetName() const;
-
 
   /*
   Returns:

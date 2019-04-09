@@ -920,9 +920,7 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
       ON_Mesh* mesh = nullptr;
       if ( Archive3dmVersion() < 60 )
       {
-        // Use an ordinary mesh to V5 and earlier file formats.
-        const ON_SubDDisplayParameters dp = ON_SubDMeshProxyUserData::MeshProxyDisplayParameters();
-        mesh = subd->GetLimitSurfaceMesh(dp, nullptr);
+        mesh = subd->GetControlNetMesh(nullptr);
       }
       else if ( ON_Internal_UseSubDMeshProxy(*this) )
       {

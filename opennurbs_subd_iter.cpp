@@ -1097,22 +1097,22 @@ const ON_SubDVertex* ON_SubDSectorIterator::CurrentEdgeRingVertex(
 }
 
 const ON_SubDFace* ON_SubDSectorIterator::NextFace(
-  bool bStopAtCrease
+  ON_SubDSectorIterator::StopAt stop_at
   )
 {
-  return IncrementFace(1, bStopAtCrease);
+  return IncrementFace(1, stop_at);
 }
 
 const ON_SubDFace* ON_SubDSectorIterator::PrevFace(
-  bool bStopAtCrease
+  ON_SubDSectorIterator::StopAt stop_at
   )
 {
-  return IncrementFace(-1, bStopAtCrease);
+  return IncrementFace(-1, stop_at);
 }
 
 const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
   int increment_direction,
-  bool bStopAtCrease
+  ON_SubDSectorIterator::StopAt stop_at
   )
 {
   if (nullptr == m_current_face)
@@ -1133,12 +1133,23 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
   for (;;)
   {
     if (edge->m_face_count != 2)
+    {
+      // set stop_at to something not equal to Boundary
+      stop_at = ON_SubDSectorIterator::StopAt::AnyCrease;
       break;
+    }
 
-    if (ON_SubD::EdgeTag::Crease == edge->m_edge_tag && bStopAtCrease)
-      break;
-
-    bStopAtCrease = false;
+    if (ON_SubDSectorIterator::StopAt::Boundary != stop_at)
+    {
+      if (ON_SubD::EdgeTag::Crease == edge->m_edge_tag)
+      {
+        if (ON_SubDSectorIterator::StopAt::AnyCrease == stop_at)
+          break;
+        if (ON_SubDSectorIterator::StopAt::HardCrease == stop_at && edge->IsHardCrease())
+          break;
+      }
+      stop_at = ON_SubDSectorIterator::StopAt::Boundary;
+    }
 
     unsigned int efi;
     if (m_current_face == ON_SUBD_FACE_POINTER(edge->m_face2[0].m_ptr))
@@ -1238,7 +1249,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
   m_current_fei[0] = 0;
   m_current_fei[1] = 0;
   
-  if (bStopAtCrease)
+  if (ON_SubDSectorIterator::StopAt::Boundary != stop_at)
   {
     // termination at a crease, nonmanifold edge, or edge with one face
     m_current_eptr[1 - side_index] = m_current_eptr[side_index];
@@ -1282,7 +1293,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementToCrease(
       return CurrentFace();
     }
 
-    const ON_SubDFace* face = sit.IncrementFace(increment_direction,true);
+    const ON_SubDFace* face = sit.IncrementFace(increment_direction,ON_SubDSectorIterator::StopAt::AnyCrease);
     if (nullptr == face)
       return ON_SUBD_RETURN_ERROR(nullptr);
     if ( face == face0 )

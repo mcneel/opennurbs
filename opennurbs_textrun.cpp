@@ -22,15 +22,19 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-class ON_CLASS ON_TextRunPool : public ON_FixedSizePool
+class ON_TextRunPool : public ON_FixedSizePool
 {
 public:
   static ON_TextRunPool thePool;
+
 private:
   ON_TextRunPool()
   {
     ON_FixedSizePool::Create(sizeof(ON_TextRun), 0, 0);
   } 
+  ~ON_TextRunPool() = default;
+  ON_TextRunPool(const ON_TextRunPool&) = delete;
+  ON_TextRunPool& operator=(const ON_TextRunPool&) = delete;
 };
 
 ON_TextRunPool ON_TextRunPool::thePool;
@@ -41,8 +45,14 @@ ON_TextRun::ON_TextRun(bool bManagedTextRun)
 
 ON_TextRun* ON_TextRun::GetManagedTextRun()
 {
-  void* p = ON_TextRunPool::thePool.AllocateDirtyElement();
-  ON_TextRun* run = new(p)ON_TextRun(true);
+  // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+  // so text run allocation/return using the global ON_TextRunPool::thePool resource
+  // must be thread safe.
+  void* p = ON_TextRunPool::thePool.ThreadSafeAllocateDirtyElement();
+  ON_TextRun* run 
+    = (nullptr != p)
+    ? new(p)ON_TextRun(true) // always happens in practice
+    : new ON_TextRun(false); // could occur if a crashing working thread leaves the pool locked.
   return run;
 }
 
@@ -66,14 +76,16 @@ bool ON_TextRun::ReturnManagedTextRun(
   if ( nullptr == run )
     return true;
 
-
   if (1 == run->m_managed_status)
   {
     if (0 == run->m_active_status)
     {
       run->Internal_Destroy();
       run->m_active_status = 1;
-      ON_TextRunPool::thePool.ReturnElement(run);
+      // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+      // so text run allocation/return using the global ON_TextRunPool::thePool resource
+      // must be thread safe.
+      ON_TextRunPool::thePool.ThreadSafeReturnElement(run);
       return true;
     }
     ON_ERROR("Attempt to return a managed run that is not active.");

@@ -899,38 +899,7 @@ bool ON_AppleFontGetGlyphOutline(
     outline.SetGlyphMetrics(glyph_metrics_in_font_design_units);
   else
     outline.SetGlyphMetrics(ON_TextBox::Unset);
-  
-  /*
-  for(;;)
-  {
-    if ( 0 == outline.FigureCount())
-      break;
-    ON_wString postscriptName(CTFontCopyPostScriptName(appleFont));
-    postscriptName.Remove(ON_String::Space);
-    postscriptName.Remove(ON_wString::HyphenMinus);
-    if ( false == postscriptName.EqualOrdinal(L"AppleColorEmoji",true) )
-      break;
-    // AppleColorEmoji contains bitmaps and no outlines.
-    // Use NotoEmoji as a fallback.
-    CTFontRef notoEmoji = CTFontCreateWithName(CFSTR("NotoEmoji"), font_design_units_per_M, nullptr);
-    if (nullptr == notoEmoji)
-      break;
-    
-    CGPathRef applePath = CTFontCreatePathForGlyph(notoEmoji, appleGlyphIndex, nullptr);
-    if (nullptr == applePath)
-      return false;
-    
-    
-    outline = ON_Outline::Unset;
-    ON_AppleGlyphOutlineAccumlator acc2;
-    acc2.BeginGlyphOutline(font_design_units_per_M, figure_type, &outline);
-    CGPathApply(applePath, &acc2, ON_AppleGlyphOutlineAccumlator::Internal_PathApplierFunction);
-    CGPathRelease(applePath);
-    acc2.EndOutline();
-    CFRelease(notoEmoji);
-  }
-  */
-    
+      
   return true;
 }
 
@@ -1033,6 +1002,32 @@ bool ON_AppleFontGetGlyphOutline(
       figure_type = font_figure_type;
     }
   }
+
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+  if (
+    ON_OutlineFigure::Type::SingleStroke == figure_type
+    // NO // ON_OutlineFigure::Type::DoubleStroke == font_figure_type
+    )
+  {
+    // Apple's Mac OS CTFontCreatePathForGlyph() ignores subfigures that
+    // are lines. These are common in single stroke fonts. Typical results
+    // with singel stroke files are things like the R is missing it's right leg, 
+    // h is missing is left side line, and so on. 
+    // Freetype has many bugs, but it can parse some common single stroke files. 
+    // Freetype is basically a file reading utility that can parse outline 
+    // information in older formats of font files. It fails on newer formats 
+    // and it also commonly fails to correctly map UNICODE code points to 
+    // glyph indices. Freetype should only be used as a last resort.
+    const bool freetype_rc = ON_FreeTypeGetGlyphOutline(
+      glyph,
+      glyphIndex,
+      figure_type,
+      outline
+    );
+    if (freetype_rc)
+      return true;
+  }
+#endif
 
   CTFontRef appleFont = font->AppleCTFont();
   if (nullptr == appleFont)

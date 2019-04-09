@@ -38,6 +38,26 @@ static bool ON_BrepIsNotValid()
   return ON_IsNotValid(); // <-- good place for a breakpoint
 }
 
+//bool ON_Brep::GetLock()
+//{
+//  return m_sleep_lock.GetLock();
+//}
+//
+//bool ON_Brep::GetLockOrReturnFalse()
+//{
+//  return m_sleep_lock.GetLockOrReturnFalse();
+//}
+//
+//bool ON_Brep::ReturnLock()
+//{
+//  return m_sleep_lock.ReturnLock();
+//}
+
+ON_SleepLockGuard::ON_SleepLockGuard(const class ON_Brep& brep)
+  : m_sleep_lock(brep.m_sleep_lock)
+{
+  m_bIsManagingLock = m_sleep_lock.GetLock();
+}
 
 ON_BrepVertex::ON_BrepVertex()
 {
@@ -6592,8 +6612,15 @@ ON_Brep::IsManifold( bool* pbIsOriented, bool* pbHasBoundary ) const
                 bool bFlipTrim = trim.m_bRev3d;
                 if (0 <= trim.m_li && brep_loop_count > trim.m_li)
                 {
-                  if ( m_F[m_L[trim.m_li].m_fi].m_bRev )
-                    bFlipTrim = !bFlipTrim;
+                  if (m_L[trim.m_li].m_fi >= 0 && m_L[trim.m_li].m_fi < m_F.Count()){
+                    if ( m_F[m_L[trim.m_li].m_fi].m_bRev )
+                      bFlipTrim = !bFlipTrim;
+                  }
+                  else
+                  {
+                    ON_ERROR("Bogus face index in m_L[trim.m_li]");
+                    continue;
+                  }
                 }
                 else
                 {
@@ -6604,8 +6631,15 @@ ON_Brep::IsManifold( bool* pbIsOriented, bool* pbHasBoundary ) const
                 bool bFlipOther = other_trim.m_bRev3d;
                 if (0 <= other_trim.m_li && brep_loop_count > other_trim.m_li)
                 {
-                  if ( m_F[m_L[other_trim.m_li].m_fi].m_bRev )
-                    bFlipOther = !bFlipOther;
+                  if (m_L[other_trim.m_li].m_fi >= 0 && m_L[other_trim.m_li].m_fi < m_F.Count()){
+                    if ( m_F[m_L[other_trim.m_li].m_fi].m_bRev )
+                      bFlipOther = !bFlipOther;
+                  }
+                  else
+                  {
+                    ON_ERROR("Bogus face index in m_L[other_trim.m_li]");
+                    continue;
+                  }
                 }
                 else
                 {

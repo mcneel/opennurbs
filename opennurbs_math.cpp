@@ -1769,6 +1769,7 @@ ON_ComparePointList( // returns
                          );
   double A[3] = {0.0,0.0,0.0};
   double B[3] = {0.0,0.0,0.0};
+  //const size_t AB_size = dim*sizeof(A[0]);
 
   for ( i = 0; i < point_count && !rc; i++ ) 
   {
@@ -4588,3 +4589,332 @@ double ON_LinearInterpolation(double t, double x, double y)
 
   return z;
 }
+
+static 
+bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
+	double D, double E,
+	double* e1, ON_3dVector& E1,
+	double* e2, ON_3dVector& E2,
+	double* e3, ON_3dVector& E3);
+
+static
+bool TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV);
+
+/*
+Description:
+Find the eigen values and eigen vectors of a real symmetric
+3x3 matrix
+
+A D F
+D B E
+F E C
+
+Parameters:
+A - [in] matrix entry
+B - [in] matrix entry
+C - [in] matrix entry
+D - [in] matrix entry
+E - [in] matrix entry
+F - [in] matrix entry
+e1 - [out] eigen value
+E1 - [out] eigen vector with eigen value e1
+e2 - [out] eigen value
+E2 - [out] eigen vector with eigen value e2
+e3 - [out] eigen value
+E3 - [out] eigen vector with eigen value e3
+Returns:
+True if successful.
+*/
+bool ON_Sym3x3EigenSolver(double A, double B, double C,
+	double D, double E, double F,
+	double* e1, ON_3dVector& E1,
+	double* e2, ON_3dVector& E2,
+	double* e3, ON_3dVector& E3
+)
+{
+	// STEP 1: reduce to tri-diagonal form
+	double cos_phi = 1.0;
+	double sin_phi = 0.0;
+	double AA = A, BB = B, CC = C, DD = D, EE = E;
+	if (F != 0.0)
+	{
+		double theta = 0.5*(C - A) / F;
+
+		double t;
+		if (fabs(theta) > 1.0e154)
+		{
+			t = 0.5 / fabs(theta);
+		}
+		else if (fabs(theta) > 1.0)
+		{
+			t = 1.0 / (fabs(theta)*(1.0 + sqrt(1.0 + 1.0 / (theta*theta))));
+		}
+		else
+		{
+			t = 1.0 / (fabs(theta) + sqrt(1.0 + theta * theta));
+		}
+
+		if (theta < 0.0)
+			t = -t;
+
+		if (fabs(t) > 1.0)
+		{
+			double tt = 1.0 / t;
+			cos_phi = 1.0 / (fabs(t)*sqrt(1.0 + tt * tt));
+		}
+		else
+			cos_phi = 1.0 / sqrt(1.0 + t * t);
+
+		sin_phi = t * cos_phi;
+
+		double tau = sin_phi / (1.0 + cos_phi);
+
+		/* Debug only: check the algebra
+		double delAA, delCC, delDD, delEE;
+		delAA = cos_phi*cos_phi*A - 2 * cos_phi*sin_phi*F + sin_phi*sin_phi*C;
+		delCC = sin_phi*sin_phi*A + 2 * cos_phi*sin_phi*F + cos_phi*cos_phi*C;
+		delDD = cos_phi*D - sin_phi*E;
+		delEE = cos_phi*E + sin_phi*D;
+		*/
+
+		AA = A - t * F;
+		BB = B;
+		CC = C + t * F;
+		DD = D - sin_phi * (E + tau * D);
+		EE = E + sin_phi * (D - tau * E);
+
+		/*   debug only  test - FF should be close to zero.
+		delAA = AA - delAA;
+		delCC = CC - delCC;
+		delDD = DD - delDD;
+		delEE = EE - delEE;
+		double one = cos_phi*cos_phi + sin_phi*sin_phi;  // should be close to 1
+		double FF = (cos_phi*cos_phi - sin_phi*sin_phi)*F + sin_phi*cos_phi*(A-C);
+		*/
+	}
+
+	// STEP 2:  EigenSolve the  tri-diagonal matrix
+	double ee1, ee2, ee3;
+	ON_3dVector EE1, EE2, EE3;
+	bool rc = ON_SymTriDiag3x3EigenSolver(AA, BB, CC, DD, EE,
+		&ee1, EE1,
+		&ee2, EE2,
+		&ee3, EE3);
+
+	/* Step 3. Apply rotation to express results in orignal coordinate system  */
+	E1.Set(cos_phi*EE1.x + sin_phi * EE1.z, EE1.y, -sin_phi * EE1.x + cos_phi * EE1.z);
+	E2.Set(cos_phi*EE2.x + sin_phi * EE2.z, EE2.y, -sin_phi * EE2.x + cos_phi * EE2.z);
+	E3.Set(cos_phi*EE3.x + sin_phi * EE3.z, EE3.y, -sin_phi * EE3.x + cos_phi * EE3.z);
+
+	if (e1)
+		*e1 = ee1;
+	if (e2)
+		*e2 = ee2;
+	if (e3)
+		*e3 = ee3;
+
+	/* debugging check of results
+	{
+	err1.x = (A*E1.x + D*E1.y + F*E1.z) - ee1*E1.x;
+	err1.y = (D*E1.x + B*E1.y + E*E1.z) - ee1*E1.y;
+	err1.z = (F*E1.x + E*E1.y + C*E1.z) - ee1*E1.z;
+
+	err2.x = (A*E2.x + D*E2.y + F*E2.z) - ee2*E2.x;
+	err2.y = (D*E2.x + B*E2.y + E*E2.z) - ee2*E2.y;
+	err2.z = (F*E2.x + E*E2.y + C*E2.z) - ee2*E2.z;
+
+	err3.x = (A*E3.x + D*E3.y + F*E3.z) - ee3*E3.x;
+	err3.y = (D*E3.x + B*E3.y + E*E3.z) - ee3*E3.y;
+	err3.z = (F*E3.x + E*E3.y + C*E3.z) - ee3*E3.z;
+	}
+	*/
+
+	return rc;
+}
+
+
+/*
+Description:
+Find the eigen values and eigen vectors of a tri-diagonal
+real symmetric 3x3 matrix
+
+A D 0
+D B E
+0 E C
+
+Parameters:
+A - [in] matrix entry
+B - [in] matrix entry
+C - [in] matrix entry
+D - [in] matrix entry
+E - [in] matrix entry
+e1 - [out] eigen value
+E1 - [out] eigen vector with eigen value e1
+e2 - [out] eigen value
+E2 - [out] eigen vector with eigen value e2
+e3 - [out] eigen value
+E3 - [out] eigen vector with eigen value e3
+Returns:
+True if successful.
+*/
+bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
+	double D, double E,
+	double* e1, ON_3dVector& E1,
+	double* e2, ON_3dVector& E2,
+	double* e3, ON_3dVector& E3
+)
+{
+
+	double d[3] = { A,B,C };
+	double e[3] = { D,E,0 };
+
+	ON_Matrix V(3, 3);
+	bool rc = TriDiagonalQLImplicit(d, e, 3, &V);
+	if (rc)
+	{
+		if (e1) *e1 = d[0];
+		E1 = ON_3dVector(V[0][0], V[1][0], V[2][0]);
+		if (e2) *e2 = d[1];
+		E2 = ON_3dVector(V[0][1], V[1][1], V[2][1]);
+		if (e3) *e3 = d[2];
+		E3 = ON_3dVector(V[0][2], V[1][2], V[2][2]);
+	}
+	return rc;
+}
+
+
+/*
+Description:
+	QL Algorithm with implict shifts, to determine the eigenvalues and eigenvectors of a
+	symmetric, tridiagonal matrix.
+
+Parametrers:
+	d - [in/out]	On input d[0] to d[n-1] are the diagonal entries of the matrix.
+								As output d[0] to d[n-1] are the eigenvalues.
+	e - [in/out]  On Input e[0] to e[n-1] are the off-diagonal entries of the matrix.
+								with e[n-1] not used, but must be allocated.
+								on output e is unpredictable.
+n - [in]      matrix is n by n
+pV - [out]		If not nullptr the it should be an n by n matix.
+							The kth column will be a normalized eigenvector of d[k]
+*/
+bool TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)
+{
+	/*  Debug code
+	ON_SimpleArray<double> OrigD(n);
+	ON_SimpleArray<double> OrigE(n);
+	ON_SimpleArray<double> Test(n);
+
+
+	OrigD.SetCount(n);
+	OrigE.SetCount(n);
+	Test.SetCount(n);
+
+	for (int i = 0; i < n; i++)
+	{
+	OrigD[i] = d[i];
+	OrigE[i] = e[i];
+	}
+	// End of debug code  */
+
+	if (pV)
+	{
+		if (pV->RowCount() != n || pV->ColCount() != n)
+			pV = nullptr;
+	}
+
+	if (pV)
+		pV->SetDiagonal(1.0);
+
+	e[n - 1] = 0.0;
+
+	for (int l = 0; l<n; l++)
+	{
+		int iter = 0;
+		int m;
+		do
+		{
+			for (m = l; m<n - 1; m++)
+			{
+				if (fabs(e[m]) < ON_EPSILON*(fabs(d[m]) + fabs(d[m + 1])))
+					break;
+			}
+			if (m != l)
+			{
+				if (iter++ == 30)
+					return false;
+				double g = (d[l + 1] - d[l]) / (2 * e[l]);
+				double r = sqrt(g*g + 1.0);
+				g = d[m] - d[l] + e[l] / ((g >= 0) ? (g + fabs(r)) : (g - fabs(r)));
+				double s = 1.0;
+				double c = 1.0;
+				double p = 0.0;
+				int i;
+				for (i = m - 1; i >= l; i--)
+				{
+					double f = s * e[i];
+					double b = c * e[i];
+					r = sqrt(f*f + g * g);
+					e[i + 1] = r;
+					if (r == 0.0)
+					{
+						d[i + 1] -= p;
+						e[m] = 0.0;
+						break;
+					}
+					s = f / r;
+					c = g / r;
+					g = d[i + 1] - p;
+					r = (d[i] - g) *s + 2.0*c*b;
+
+					p = s * r;
+					d[i + 1] = g + p;
+					g = c * r - b;
+
+					for (int k = 0; pV && k<n; k++)
+					{
+						ON_Matrix & V = *pV;
+						f = V[k][i + 1];
+						V[k][i + 1] = s * V[k][i] + c * f;
+						V[k][i] = c * V[k][i] - s * f;
+					}
+				}
+				if (r == 0.0 && i >= l)
+					continue;
+				d[l] -= p;
+				e[l] = g;
+				e[m] = 0.0;
+			}
+		} while (m != l);
+	}
+
+	/*  Debug ONLY code
+		//	 verify results errors stored
+		//	 e[k] = | T * V(:k) - d[k] V(:k) |
+	
+	ON_Matrix & V = *pV;
+
+	for (int k = 0; k < n; k++)
+	{
+
+	double len2 = 0.0;
+	for (int i = 0; i < n; i++)
+	{
+	Test[i] = OrigD[i] * V[i][k];
+
+	Test[i] += (i>0)?		OrigE[i - 1] * V[i - 1][k] : 0.0;
+	Test[i] += (i < n - 1) ? OrigE[i] * V[i + 1][k] : 0.0;
+	Test[i] +=	- d[k] * V[i][k];
+	len2 += Test[i] * Test[i];
+	}
+	e[k] = sqrt(len2);
+	}
+
+	*/
+
+	return true;
+}
+
+
+
+

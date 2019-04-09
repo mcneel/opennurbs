@@ -967,18 +967,22 @@ public:
   /*
   Parameters:
     component_type - [in]
-    component_name_hash - [in]
+    model_component - [in]
       The value of ON_ModelComponent::UniqueNameIgnoresCase(component_type) must be used
       when creating the name hash (group names are case sensitive).
-
-      If  ON_ModelComponent::UniqueNameIncludesParent(component_type) is true, 
-      then the parent_id must be used to calculate the name hash 
-      (layer names require parent ids).
   */
   const class ON_ComponentManifestItem& ItemFromName(
     const class ON_ModelComponent* model_component
     ) const;
 
+  /*
+  Parameters:
+    component_type - [in]
+    parent_id - [in]
+      If  ON_ModelComponent::UniqueNameIncludesParent(component_type) is true, 
+      then the parent_id must be used to calculate the name hash 
+      (layer names require parent ids).
+  */
   const class ON_ComponentManifestItem& ItemFromName(
     ON_ModelComponent::Type component_type,
     ON_UUID parent_id,

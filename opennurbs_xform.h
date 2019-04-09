@@ -224,32 +224,146 @@ public:
           0 0 0 0
           0 0 0 0
           0 0 0 1
+		An element of the matrix is "zero" if fabs(x) <= zero_tolerance.
+		IsZeroTolerance() is the same as IsZeroTransformation( 0.0 );
   */
-  bool IsZeroTransformation() const;
+	bool IsZeroTransformation() const;
+	bool IsZeroTransformation(double zero_tolerance ) const;
 
 
   /*
   Description:
     A similarity transformation can be broken into a sequence
-    of dialations, translations, rotations, and reflections.
+    of a dialation, translation, rotation, and a reflection.
+	Parameters:
+		*this - must be IsAffine().
+		Translation - [out] Translation vector
+		dilation    - [out]  dialation, (dilation <0 iff this is an orientation reversing similarity )
+		Rotation    - [out] a proper rotation transformation ie. R*Transpose(R)=I and det(R)=1 
+	Details:
+		If X.DecomposeSimilarity(T, d, R, tol) !=0 then X ~ TranslationTransformation(T)*DiagonalTransformation(d)*R
+		note when d>0 the transformation is orientation preserving.
+	Note:
+	  If dilation<0 then   DiagonalTransformation( dilation)  is actually a reflection 
+		combined with a "true" dialation, i.e.
+		  DiagonalTransformation( dilation) = DiagonalTransformation(-1) * DiagonalTransformation( |diagonal| ) 
   Returns:
     +1: This transformation is an orientation preserving similarity.
     -1: This transformation is an orientation reversing similarity.
      0: This transformation is not a similarity.
   */
-  int IsSimilarity() const;
+	int IsSimilarity() const;
+	int IsSimilarity(double tolerance) const;
+	int DecomposeSimilarity(ON_3dVector& Translation, double& dilation, ON_Xform& Rotation, double tolerance) const;
+
+	/*
+	Description:
+		A rigid transformation can be broken into  a proper rotation and a translation.  
+		while an isometry transformation could also include a reflection.
+	Parameters:
+	  *this - must be IsAffine().
+		Translation - [out] Translation vector
+		Rotation - [out] Proper Rotation transformation, ie. R*Transpose(R)=I and det(R)=1 
+	Details:
+		If X.DecomposeRigid(T, R) is 1 then X ~	TranslationTransformation(T)*R
+		                            -1      X ~ ON_Xform(-1) *TranslationTransformation(T)*R
+		where ~ means approximates to within tolerance.
+		DecomposeRigid will find the closest rotation to the linear part of this transformation.
+ 	Returns:
+	  +1: This transformation is an rigid transformation.
+	  -1: This transformation is an orientation reversing isometry.
+		0 : This transformation is not an orthogonal transformation.
+	*/
+	int IsRigid(double tolerance = ON_ZERO_TOLERANCE) const;
+	int DecomposeRigid(ON_3dVector& Translation, ON_Xform& Rotation, double tolerance = ON_ZERO_TOLERANCE) const;
 
 	/*
 	Description:
 		A transformation is affine if it is valid and its last row is
 		  0  0  0  1
+		If in addition its last column is ( 0, 0, 0, 1)^T then it is linear.
 		An affine transformation can be broken into a linear transformation and a translation.
+	Parameters:
+	  *this - IsAffine() must be true for DecomposeAffine(..) to succeed
+		Translation - [out] Translation vector
+		Linear   -    [out] Linear transformation 
 	Example:
 	  A perspective transformation is not affine.
+	Details:
+		If X.DecomposeAffine(T, L) is true then X == TranslationTransformation(T)*L
+		If X.DecomposeAffine(L, T) is true then X == L* TranslationTransformation(T).
+	Note: 
+	  DecomposeAffine(T,L) succeeds for all affine transformations and is a simple copying of values.
+		DecomposeAffine(L, T), on the otherhand, may fail for affine transformations if L is not invertible
+		and is more computationally expensive.
 	Returns:
-		True if this is an affine transformation.
+		True - if sucessfull decomposition
 	*/
 	bool IsAffine() const;
+	bool IsLinear() const;
+	bool DecomposeAffine(ON_3dVector& Translation, ON_Xform& Linear) const;
+	bool DecomposeAffine(ON_Xform& Linear, ON_3dVector& Translation ) const;
+
+	// true if this is a proper rotation. 
+	bool IsRotation() const;
+
+	/*
+	Description:
+		An affine transformation can be decomposed into a Symmetric, Rotation and Translation.
+		Then the Symmetric component may be further decomposed as non-uniform scale in an orthonormal
+		coordinate system.  
+	Parameters:
+	  *this - must be IsAffine().
+		Translation-[out] Translation vector
+		Rotation -  [out] Proper Rotation transformation 
+		OrthBasis - [out] Orthogonal Basis 
+		Diagonal  - [out] diagonal elements of a DiagonalTransformation 
+  Details:
+	  DecomposeAffine(T,R,Q,diag) 
+	 (*this) == TranslationTransformation(T) * R * Q * DiagonalTransformation(diag) * Q.Transpose()
+  Returns:
+		true if decomposition succeeds
+	*/
+	bool DecomposeAffine(ON_3dVector& Translation, ON_Xform& Rotation, ON_Xform& OrthBasis, ON_3dVector& Diagonal) const;
+
+	/*
+		Description:
+			Replace last row with  0  0  0  1 discarding any perspecive part of this transform
+	*/
+	void Affineize();
+
+	/*
+	Description:
+		Affineize()  and  replace last column with   (0  0  0  1)^T 
+		discarding any translation part of this transform.
+	*/
+	void Linearize();
+
+	/*
+	Description:
+		Force the linear part of this transformation to be a rotation (or a rotation with reflection).
+		This is probably best to perform minute tweeks.  
+		Use DecomposeRigid(T,R) to find the nearest rotation
+	*/
+	bool Orthogonalize(double tol);
+
+	/*
+	Description:
+		A Symmetric linear transformation can be decomposed  A = Q * Diag * Q^T where Diag is a diagonal 
+		transformation.  Diag[i][i] is an eigenvalue of A and the i-th coulmn of Q is a corresponding 
+		unit length eigenvector.
+	Parameters:
+	  This transformation must be Linear() and Symmetric, that is *this==Transpose().
+		Q -[out] is set to an orthonormal matrix of eigenvectors when true is returned.
+		diagonal -[out] is set to a vector of eigenvalues when true is returned.
+	Details:
+		If success then *this== Q*DiagonalTransformation(diagonal) * QT, where QT == Q.Transpose().
+		If L.IsLinear() and LT==L.Transpose() then LT*L is symmetric and is a common source of symmetric 
+		transformations.
+	Return:
+	  true if success.
+	*/
+	bool DecomposeSymmetric(ON_Xform& Q, ON_3dVector& diagonal) const;
 
   /*
   Description:
@@ -638,6 +752,68 @@ public:
     const ON_Plane& plane0,
     const ON_Plane& plane1
     );
+
+	/*
+	Description:
+		Create rotation transformation From Tait-Byran angles (also loosely known as Euler angles).
+	Parameters:
+		yaw - angle (in radians) to rotate about the Z axis
+		pitch -  angle (in radians) to rotate about the Y axis
+		roll - angle (in radians) to rotate about the X axis
+  Details:
+	  RotationZYX(yaw, pitch, roll)  = R_z( yaw) * R_y(pitch) * R_x(roll)
+		where R_*(angle) is  rotation of angle radians  about the corresponding world coordinate axis.
+	*/
+	void RotationZYX(double yaw, double pitch, double roll);
+
+	/*
+	Description:
+		Find the Tait-Byran angles (also loosely called Euler angles) for a rotation transformation.
+	Parameters:
+		yaw - angle (in radians) to rotate about the Z axis
+		pitch -  angle (in radians) to rotate about the Y axis
+		roll - angle (in radians) to rotate about the X axis
+	Details:
+		When true is returned.  
+		this = RotationZYX(yaw, pitch, roll)  = R_z( yaw) * R_y(pitch) * R_x(roll)
+		where R_*(angle) is  rotation of angle radians  about the corresponding world coordinate axis.
+		Returns false if this is not a rotation.
+	Notes:
+	 roll and yaw are in the range  (-pi, pi] and pitch is in [-pi/2, pi/2]
+
+	*/
+	bool GetYawPitchRoll(double& yaw, double& pitch, double& roll)const;
+
+/*
+Description:
+	Create rotation transformation From Euler angles.
+Parameters:
+	alpha - angle (in radians) to rotate about the Z axis
+	beta -  angle (in radians) to rotate about the Y axis
+	gamma - angle (in radians) to rotate about the Z axis
+Details:
+	RotationZYZ(alpha, beta, gamma)  = R_z( alpha) * R_y(beta) * R_z(gamma)
+	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
+*/
+	void RotationZYZ(double alpha, double beta, double gamma);
+
+/*
+Description:
+	Find the Euler angles for a rotation transformation.
+Parameters:
+	alpha - angle (in radians) to rotate about the Z axis
+	beta -  angle (in radians) to rotate about the Y axis
+	gamma - angle (in radians) to rotate about the Z axis
+Details:
+	When true is returned.
+	  *this = RotationZYZ(alpha, beta, gamma)  = R_z( alpha) * R_y(beta) * R_z(gamma)
+	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
+	Returns false if this is not a rotation.
+Notes:
+  alpha and gamma are in the range (-pi, pi] while beta in in the range [0, pi]
+*/
+	bool GetEulerZYZ(double& alpha, double& beta, double& gamma )const;
+
 
   /*
   Description:

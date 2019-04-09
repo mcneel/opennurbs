@@ -835,6 +835,9 @@ private:
   ON_TextBuilder&    m_builder;
   int                m_p_level = 0;
   bool               m_in_real_rtf = false;
+  // suspend to close means ignore everything until the current group is closed
+  // It's used to skip over commands and parameters in optional tags
+  int                m_suspend_to_close = 0;
 
   bool FlushCurText(ON_SimpleArray< ON__UINT32 >& cp_array);
   bool ReadTag(bool optional);

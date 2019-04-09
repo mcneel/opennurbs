@@ -117,6 +117,9 @@ ON_SubD* ON_SubD::CreateFromMesh(
 
   ON_Workspace ws;
 
+  if (nullptr == from_mesh_options)
+    from_mesh_options = &ON_SubDFromMeshOptions::Smooth;
+
   ON_3dPointListRef mesh_points(level_zero_mesh);
   const unsigned int mesh_point_count = mesh_points.PointCount();
   if (mesh_point_count < 3)
@@ -728,6 +731,107 @@ ON_SubD* ON_SubD::CreateFromMesh(
     ? from_mesh_options->SubDType()
     : ON_SubD::DefaultSubDType();
   new_subd->SetSubDType(subd_type);
+
+  /*
+  // Vid[]
+  //   Vid[] has mesh_point_count values.
+  //   Vid[i] = Vid[j] if and only if mesh->m_V[i] and mesh->m_V[j] are coincident.
+  //   Values in Vid[] run from 0 to VidCount-1.
+  //   There are VidCount unique locations.
+  // Vindex[] is a permutation of (0, ..., mesh_point_count-1)
+  //   0 == Vid[Vindex[0]] <= ... <= Vid[Vindex[mesh_point_count-1]] = VidCount-1.
+
+
+  //const bool bConcaveCornerTest 
+  //  =  nullptr != crease_parameters 
+  //  && crease_parameters->ConcaveCornerTestIsEnabled();
+
+  //const double min_cos_concave_corner_angle 
+  //  = bConcaveCornerTest
+  //  ? (crease_parameters->MaximumConcaveCornerAngleRadians() < ON_PI ? cos(crease_parameters->MaximumConcaveCornerAngleRadians()) : -2.0)
+  //  : 2.0;  
+  */
+
+  if (ON_SubDFromMeshOptions::ConvexCornerOption::AtMeshCorner == from_mesh_options->ConvexCornerTest())
+  {
+    // Add corners
+    ON_SubDVertexIterator vit(*new_subd);
+    ON_SubDEdge* e[2];
+    const ON_SubDFace* f;
+    const ON_SubDVertex* v[4];
+    ON_3dPoint P[4];
+    ON_3dVector T[4];
+    ON_3dVector N[4];
+    double NoN[4];
+    const double a = from_mesh_options->MaximumConvexCornerAngleRadians();
+    if (a > 0.0 && a < ON_PI)
+    {
+      const double NoNtol = 0.2588190451; // sin(15 degrees)
+      const double min_cos_corner_angle = cos(a);
+      for (ON_SubDVertex* vertex = const_cast<ON_SubDVertex*>(vit.FirstVertex()); nullptr != vertex; vertex = const_cast<ON_SubDVertex*>(vit.NextVertex()))
+      {
+        if (ON_SubD::VertexTag::Crease != vertex->m_vertex_tag)
+          continue;
+        if (2 != vertex->m_edge_count)
+          continue;
+        e[0] = ON_SUBD_EDGE_POINTER(vertex->m_edges[0].m_ptr);
+        e[1] = ON_SUBD_EDGE_POINTER(vertex->m_edges[1].m_ptr);
+        if (nullptr == e[0] || 1 != e[0]->m_face_count || ON_SubD::EdgeTag::Crease != e[0]->m_edge_tag)
+          continue;
+        if (nullptr == e[1] || 1 != e[1]->m_face_count || ON_SubD::EdgeTag::Crease != e[1]->m_edge_tag)
+          continue;
+        f = ON_SUBD_FACE_POINTER(e[0]->m_face2[0].m_ptr);
+        if (nullptr == f)
+          continue;
+        if (f != ON_SUBD_FACE_POINTER(e[1]->m_face2[0].m_ptr))
+          continue;
+
+        const unsigned int vi = f->VertexIndex(vertex);
+        if (vi >= 4)
+          continue;
+        ON_SubDEdgePtr eptr[2];
+        if (e[0] == f->Edge(vi))
+        {
+          eptr[0] = ON_SubDEdgePtr::Create(e[0], vertex == e[0]->m_vertex[1] ? 1 : 0);
+          eptr[1] = ON_SubDEdgePtr::Create(e[1], vertex == e[1]->m_vertex[1] ? 1 : 0);
+        }
+        else if (e[1] == f->Edge(vi))
+        {
+          eptr[1] = ON_SubDEdgePtr::Create(e[0], vertex == e[0]->m_vertex[1] ? 1 : 0);
+          eptr[0] = ON_SubDEdgePtr::Create(e[1], vertex == e[1]->m_vertex[1] ? 1 : 0);
+        }
+        const double corner_angle_radians = ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(eptr[0], eptr[1]);
+        if (!(corner_angle_radians > 0.0 && corner_angle_radians < ON_PI))
+          continue;
+
+        // ocnvex quad restriction - for now
+        if (4 != f->m_edge_count)
+          continue;
+        v[0] = vertex;
+        v[1] = f->Vertex((vi + 1) % 4);
+        v[2] = f->Vertex((vi + 2) % 4);
+        v[3] = f->Vertex((vi + 3) % 4);
+        if (nullptr == v[0] || nullptr == v[1] || nullptr == v[2] || nullptr == v[3])
+          continue;
+        for (int i = 0; i < 4; i++)
+          P[i] = ON_3dPoint(v[i]->m_P);
+        for (int i = 0; i < 4; i++)
+          T[i] = P[(i + 1) % 4] - P[i];
+        for (int i = 0; i < 4; i++)
+          N[i] = -ON_CrossProduct(T[i], T[(i + 3) % 4]).UnitVector();
+        for (int i = 0; i < 4; i++)
+          NoN[i] = N[i] * N[(i + 1) % 4];
+        if (false == (NoN[0] >= NoNtol && NoN[1] >= NoNtol && NoN[2] >= NoNtol && NoN[3] >= NoNtol))
+          continue;
+        const double cos_corner_angle = ON_CrossProduct(T[0], T[3]).Length();
+        if (false == (cos_corner_angle >= min_cos_corner_angle))
+          continue;
+        vertex->m_vertex_tag = ON_SubD::VertexTag::Corner;
+      }
+    }
+  }
+
+  new_subd->UpdateEdgeSectorCoefficients(false);
 
   return new_subd;
 }

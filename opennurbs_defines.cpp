@@ -2502,3 +2502,56 @@ ON_4udex::ON_4udex(
   , l(lValue)
 {}
 
+void ON_StopWatch::Start()
+{
+  if (ON_StopWatch::State::Off == m_state || ON_StopWatch::State::Stopped == m_state)
+  {
+    m_state = ON_StopWatch::State::Running;
+    m_start = std::chrono::high_resolution_clock::now();
+  }
+}
+
+double ON_StopWatch::Stop()
+{
+  const std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+  double d;
+  if ( ON_StopWatch::State::Running == m_state)
+  {
+    m_stop = t;
+    m_state = ON_StopWatch::State::Stopped;
+    d = ElapsedTime();
+  }
+  else
+  {
+    d = 0.0;
+  }
+  return d;
+}
+
+void ON_StopWatch::Reset()
+{
+  m_state = ON_StopWatch::State::Off;
+}
+
+ON_StopWatch::State ON_StopWatch::CurrentState() const
+{
+  return m_state;
+}
+
+double ON_StopWatch::ElapsedTime() const
+{
+  std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+  if (ON_StopWatch::State::Stopped == m_state)
+    t = m_stop;
+  double d;
+  if (ON_StopWatch::State::Stopped == m_state || ON_StopWatch::State::Running == m_state)
+  {
+    //d = std::chrono::duration< double, std::chrono::high_resolution_clock::period >(t - m_start).count();
+    d = std::chrono::duration<double, std::ratio<1, 1> >(t - m_start).count();
+  }
+  else
+  {
+    d = 0.0;
+  }
+  return d;
+}

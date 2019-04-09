@@ -29,9 +29,8 @@ bool ON_ComponentAttributes::IsSolid(
   unsigned int aggregate_edge_component_attributes
   )
 {
-  const unsigned int required_bits
+  const unsigned int required_bits 
     = ON_ComponentAttributes::EdgeFlags::Oriented
-    | ON_ComponentAttributes::EdgeFlags::Damaged
     ;
   if ( required_bits != (required_bits & aggregate_edge_component_attributes) )
     return false;

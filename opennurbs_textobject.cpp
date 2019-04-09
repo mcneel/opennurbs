@@ -315,7 +315,16 @@ bool ON_Text::GetTextXform(
     ON_Xform tp2sxf;        // Text point to view plane rotation
     ON_3dVector view_z = ON_CrossProduct(view_x, view_y);
     ON_3dPoint text_point_3d = Plane().origin;
-    rotation_xf.Rotation(text_point_3d, textobjectplane.xaxis, textobjectplane.yaxis, textobjectplane.zaxis, text_point_3d, view_x, view_y, view_z);
+    ON_3dVector text_xdir = textobjectplane.xaxis;
+    ON_3dVector text_ydir = textobjectplane.yaxis;
+    ON_3dVector text_zdir = textobjectplane.zaxis;
+    if (nullptr != model_xform)
+    {
+      text_xdir.Transform(*model_xform);
+      text_ydir.Transform(*model_xform);
+      text_zdir.Transform(*model_xform);
+    }
+    rotation_xf.Rotation(text_point_3d, text_xdir, text_ydir, text_zdir, text_point_3d, view_x, view_y, view_z);
     text_xform_out = wcs2obj_xf * textscale_xf;
     text_xform_out = rotation_xf * text_xform_out;
     return true;
@@ -325,8 +334,8 @@ bool ON_Text::GetTextXform(
     double textrotation = TextRotationRadians();
     if (fabs(textrotation) > ON_SQRT_EPSILON)
       rotation_xf.Rotation(textrotation, ON_3dVector::ZAxis, ON_3dPoint::Origin);  // Text rotation
-
-    ON_Xform textcenter_xf(ON_Xform::IdentityTransformation);
+  
+    //ON_Xform textcenter_xf(ON_Xform::IdentityTransformation);
     if (dimstyle->DrawForward())
     {
       // Check if the text is right-reading by comparing
@@ -367,7 +376,7 @@ bool ON_Text::GetTextXform(
     }
     text_xform_out = textscale_xf;
     text_xform_out = rotation_xf * text_xform_out;
-    text_xform_out = textcenter_xf * text_xform_out;
+    //text_xform_out = textcenter_xf * text_xform_out;
     text_xform_out = wcs2obj_xf * text_xform_out;
 
     return true;

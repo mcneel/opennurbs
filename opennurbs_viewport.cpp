@@ -1201,6 +1201,23 @@ bool ON_Viewport::DollyFrustum( double dollyDistance )
 }
 
 bool ON_Viewport::GetCameraFrame(
+  class ON_Plane& camera_frame
+) const
+{
+  bool rc = GetCameraFrame(
+    &camera_frame.origin.x,
+    &camera_frame.xaxis.x,
+    &camera_frame.yaxis.x,
+    &camera_frame.zaxis.x
+    );
+  if (rc)
+    rc = camera_frame.UpdateEquation();
+  if (false == rc)
+    camera_frame = ON_Plane::NanPlane;
+  return rc;
+}
+
+bool ON_Viewport::GetCameraFrame(
     double* CameraLocation,
     double* CameraX,
     double* CameraY,

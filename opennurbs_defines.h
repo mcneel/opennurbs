@@ -649,6 +649,30 @@ ON_StringMapOrdinalType ON_StringMapOrdinalTypeFromStringMapType(
   ON_StringMapType map_type
   );
 
+///<summary>
+/// ON_ChainDirection is used to specify directions when building
+/// chains of components like edges or faces.
+///</summary>
+enum class ON_ChainDirection : unsigned char
+{
+  Unset = 0,
+
+  ///<summary>
+  /// Search for chain links before the current link.
+  ///</summary>
+  Previous = 1,
+
+  ///<summary>
+  /// Search for chain links after the current link.
+  ///</summary>
+  Next = 2,
+
+  ///<summary>
+  /// Search for chain links before and after the current link.
+  ///</summary>
+  Both = 3
+};
+
 // OpenNurbs enums
 class ON_CLASS ON
 {
@@ -1943,14 +1967,14 @@ public:
     morph_control_object =    0x20000, // some type of ON_MorphControl
     subd_object          =    0x40000, // some type of ON_SubD, ON_SubDRef, ON_SubDComponentRef, ON_SubD....
     loop_object          =    0x80000, // some type of ON_BrepLoop
-    brepvertex_filter    =   0x100000, // selection filter value - not a real object type
+    brepvertex_filter    =   0x100000, // selection filter value - not a real object type (ON_BrepEdge, ON_SubDVertex)
     polysrf_filter       =   0x200000, // selection filter value - not a real object type
-    edge_filter          =   0x400000, // selection filter value - not a real object type
+    edge_filter          =   0x400000, // selection filter value - not a real object type (ON_BrepEdge, ON_SubDEdge)
     polyedge_filter      =   0x800000, // selection filter value - not a real object type
-    meshvertex_filter    = 0x01000000, // selection filter value - not a real object type
-    meshedge_filter      = 0x02000000, // selection filter value - not a real object type
-    meshface_filter      = 0x04000000, // selection filter for mesh triangle, quad or ngon - not a real object type
-    meshcomponent_reference = 0x07000000, // an ON_MeshComponentRef to vertex, edge, face, ngon
+    meshvertex_filter    = 0x01000000, // selection filter value - not a real object type (ON_MeshTopologyVertex, ON_SubDVertex)
+    meshedge_filter      = 0x02000000, // selection filter value - not a real object type (ON_MeshTopologyEdge, ON_SubDEdge)
+    meshface_filter      = 0x04000000, // selection filter for ON_Mesh triangle, quad, ngon, or ON_SubDFace - not a real object type
+    meshcomponent_reference = 0x07000000, // an ON_MeshComponentRef or ON_SubDComponentRef
     cage_object          = 0x08000000, // some type of ON_NurbsCage
     phantom_object       = 0x10000000,
     clipplane_object     = 0x20000000,

@@ -480,7 +480,7 @@ bool ON_SubD::ComponentRingIsValid(
     }
     else
     {
-      if (2 != edge->m_face_count || false == edge->IsSmooth(true))
+      if (2 != edge->m_face_count || false == edge->IsSmooth())
         return ON_SUBD_RETURN_ERROR(false);
     }
 
@@ -927,7 +927,7 @@ unsigned int ON_SubD::GetSectorComponentRing(
   const unsigned int N = vertex->m_edge_count; // for () used to prevent infinite recursion when vertex is not valid
   for (unsigned int i = 0; i < N; i++)
   {
-    const ON_SubDFace* face = localsit.NextFace(true);
+    const ON_SubDFace* face = localsit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease);
 
     edgeptr = localsit.CurrentEdgePtr(0);
     const ON_SubDEdge* edge = edgeptr.Edge();
@@ -969,7 +969,7 @@ unsigned int ON_SubD::GetSectorComponentRing(
       return ON_SUBD_RETURN_ERROR(0);
     }
 
-    if ( false == edge->IsSmooth(true) || 2 != edge->m_face_count )
+    if ( false == edge->IsSmooth() || 2 != edge->m_face_count )
       return ON_SUBD_RETURN_ERROR(false);
 
     if ( component_ring_count >= component_ring_capacity)

@@ -1491,6 +1491,35 @@ int ON_ParseLengthExpression(
   return str_index;
 }
 
+static bool Internal_IsInteger(
+  const wchar_t* str,
+  int str_count
+)
+{
+  if (nullptr == str || str_count < 1)
+    return false;
+  for (int i = 0; i < str_count; ++i)
+  {
+    if (str[i] >= '0' && str[i] <= '9')
+      continue;
+    return false;
+  }
+  return true;
+}
+
+static bool Internal_IsNegativeInteger(
+  const ON_ParseSettings& parse_settings,
+  const wchar_t* str,
+  int str_count
+)
+{
+  if (nullptr == str || str_count < 2 || false == parse_settings.ParseUnaryMinus())
+    return false;
+  if (false == parse_settings.IsUnaryMinus(str[0]))
+    return false;
+  return Internal_IsInteger(str + 1, str_count - 1);
+}
+
 int ON_ParseAngleExpression( 
   const wchar_t* str,
   int str_count,
@@ -1511,6 +1540,7 @@ int ON_ParseAngleExpression(
   if ( 0 != parse_results )
     *parse_results = pr;
 
+  bool bNegativeDegreesMinutesSecondsIsPossible = false;
   int str_index = 0;
   ON__UINT32 cSurveyorsNotationNS = 0;
   ON__UINT32 cSurveyorsNotationEW = 0;
@@ -1561,6 +1591,8 @@ int ON_ParseAngleExpression(
     int str_number_index = ON_ParseNumberExpression(str+str_index,str_number_count,input_parse_settings,&pr1,&x);
     if ( str_number_index > 0 )
     {
+      if (0 == cSurveyorsNotationNS && x <= 0.0 && Internal_IsNegativeInteger(input_parse_settings, str + str_index, str_number_index - str_index))
+        bNegativeDegreesMinutesSecondsIsPossible = true;
       pr |= pr1;
     }
     else
@@ -1584,6 +1616,8 @@ int ON_ParseAngleExpression(
     str_index = ON_ParseNumberExpression(str,str_count,input_parse_settings,&pr,&x);
     if ( str_index <= 0 )
       return 0;
+    if (0 == cSurveyorsNotationNS && x <= 0.0 && Internal_IsNegativeInteger(input_parse_settings, str, str_index))
+      bNegativeDegreesMinutesSecondsIsPossible = true;
   }
 
   if ( str_count > 0 )
@@ -1594,6 +1628,9 @@ int ON_ParseAngleExpression(
   }
 
   int end_of_unit_index = ON_ParseAngleUnitName(str+str_index,str_count,parse_settings.PreferedLocaleId(),&angle_us);
+
+  if (bNegativeDegreesMinutesSecondsIsPossible && ON::AngleUnitSystem::Degrees != angle_us)
+    bNegativeDegreesMinutesSecondsIsPossible = false;
 
   if ( end_of_unit_index > 0 )
   {
@@ -1626,6 +1663,9 @@ int ON_ParseAngleExpression(
         next_parse_settings.SetParseIntegerDashFraction(false);
         next_parse_settings.SetParseRationalNumber(false);
         next_parse_settings.SetParsePi(false);
+        next_parse_settings.SetParseSurveyorsNotation(false);
+        next_parse_settings.SetParseUnaryMinus(false);
+        next_parse_settings.SetParseUnaryPlus(false);
 
         double arc_minutes_value = 0.0;
         double arc_seconds_value = 0.0;
@@ -1643,8 +1683,11 @@ int ON_ParseAngleExpression(
           if ( next_str_index <= 0 )
             break;
 
-          if ( !(next_value >= 0.0 && next_value < 60.0) )
+          if (!(next_value >= 0.0 && next_value < 60.0))
+          {
+            bNegativeDegreesMinutesSecondsIsPossible = false;
             break;
+          }
 
           if ( 0 == next_value_pass )
           {
@@ -1653,23 +1696,45 @@ int ON_ParseAngleExpression(
               if ( ON::AngleUnitSystem::Seconds == next_us && 0 == next_value_pass )
                 next_value_pass = 1;
               else
+              {
+                bNegativeDegreesMinutesSecondsIsPossible = false;
                 break;
+              }
             }
           }
           else if ( 1 == next_value_pass )
           {
-            if ( ON::AngleUnitSystem::Seconds != next_us )
+            if (ON::AngleUnitSystem::Seconds != next_us)
+            {
+              bNegativeDegreesMinutesSecondsIsPossible = false;              
               break;
+            }
           }
 
-          if ( ON::AngleUnitSystem::Minutes == next_us )
+          if (ON::AngleUnitSystem::Minutes == next_us)
             arc_minutes_value = next_value;
-          else if ( ON::AngleUnitSystem::Seconds == next_us )
+          else if (ON::AngleUnitSystem::Seconds == next_us)
             arc_seconds_value = next_value;
+          else
+            bNegativeDegreesMinutesSecondsIsPossible = false;
 
           str_index += next_str_index;
           pr.SetParseArcDegreesMinutesSeconds(true);
           pr |= next_pr;
+        }
+
+        if (
+          bNegativeDegreesMinutesSecondsIsPossible
+          && x <= 0.0 
+          && arc_minutes_value >= 0.0 
+          && arc_seconds_value >= 0.0
+          )
+        {
+          // parsing something like -90d40'30"
+          if (arc_minutes_value > 0.0)
+            arc_minutes_value = -arc_minutes_value;
+          if (arc_seconds_value > 0.0)
+            arc_seconds_value = -arc_seconds_value;
         }
 
         if ( 0 != arc_seconds_value )
@@ -1687,6 +1752,7 @@ int ON_ParseAngleExpression(
   }
   else
   {
+    bNegativeDegreesMinutesSecondsIsPossible = false;
     angle_us = parse_settings.DefaultAngleUnitSystem();
   }
 

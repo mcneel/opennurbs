@@ -408,6 +408,24 @@ ON__UINT_PTR ON_SubDEdgePtr::EdgeDirection() const
   return ON_SUBD_EDGE_DIRECTION(m_ptr);
 }
 
+const class ON_SubDVertex* ON_SubDEdgePtr::RelativeVertex(
+  int relative_vertex_index
+  ) const
+{
+  for (;;)
+  {
+    if (relative_vertex_index < 0 || relative_vertex_index>1)
+      break;
+    const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_ptr);
+    if (nullptr == edge)
+      break;
+    if (0 != ON_SUBD_EDGE_DIRECTION(m_ptr))
+      relative_vertex_index = 1 - relative_vertex_index;
+    return edge->m_vertex[relative_vertex_index];
+  }
+  return nullptr;
+}
+
 ON_ComponentStatus ON_SubDEdgePtr::Status() const
 {
   const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_ptr);
@@ -1368,15 +1386,32 @@ bool ON_SubDVertex::IsSmoothOrCrease() const
   return (ON_SubD::VertexTag::Smooth == m_vertex_tag || ON_SubD::VertexTag::Crease == m_vertex_tag);
 }
 
-bool ON_SubDEdge::IsCrease(
-  bool bEdgeTagXresult
-  ) const
+bool ON_SubDEdge::IsCrease() const
 {
-  if (ON_SubD::EdgeTag::Crease == m_edge_tag)
-    return true;
-  if (ON_SubD::EdgeTag::X == m_edge_tag)
-    return (bEdgeTagXresult ? true : false);
-  return false;
+  return (ON_SubD::EdgeTag::Crease == m_edge_tag) ? true : false;
+}
+
+
+bool ON_SubDEdge::IsHardCrease() const
+{
+  return
+    (
+      ON_SubD::EdgeTag::Crease == m_edge_tag
+      && nullptr != m_vertex[0]
+      && nullptr != m_vertex[1]
+      && m_vertex[0]->IsCreaseOrCorner()
+      && m_vertex[1]->IsCreaseOrCorner()
+      )
+    ? true
+    : false;
+}
+
+bool ON_SubDEdge::IsDartCrease() const
+{
+  return
+    (ON_SubD::EdgeTag::Crease == m_edge_tag && DartCount() > 0 )
+    ? true
+    : false;
 }
 
 unsigned int ON_SubDEdge::DartCount() const
@@ -1389,15 +1424,19 @@ unsigned int ON_SubDEdge::DartCount() const
   return dart_count;
 }
 
-bool ON_SubDEdge::IsSmooth(
-  bool bEdgeTagXresult
-  ) const
+bool ON_SubDEdge::IsSmooth() const
 {
-  if (ON_SubD::EdgeTag::Smooth == m_edge_tag)
-    return true;
-  if (ON_SubD::EdgeTag::X == m_edge_tag)
-    return (bEdgeTagXresult ? true : false);
-  return false;
+  return (ON_SubD::EdgeTag::Smooth == m_edge_tag || ON_SubD::EdgeTag::X == m_edge_tag) ? true : false;
+}
+
+bool ON_SubDEdge::IsSmoothNotX() const
+{
+  return (ON_SubD::EdgeTag::Smooth == m_edge_tag) ? true : false;
+}
+
+bool ON_SubDEdge::IsSmoothX() const
+{
+  return (ON_SubD::EdgeTag::X == m_edge_tag) ? true : false;
 }
 
 bool ON_SubDVertex::IsStandard(
@@ -1591,7 +1630,7 @@ unsigned int ON_SubDEdge::EdgeFlags() const
         edge_topology_attributes |= ON_ComponentAttributes::EdgeFlags::Damaged;
       else
       {
-        if (IsSmooth(true))
+        if (IsSmooth())
           edge_topology_attributes |= ON_ComponentAttributes::EdgeFlags::Smooth;
         else if ( m_vertex[0]->IsDart() || m_vertex[1]->IsDart() )
           edge_topology_attributes |= ON_ComponentAttributes::EdgeFlags::Dart;
@@ -1945,6 +1984,20 @@ const ON_SubDVertex* ON_SubDEdge::OtherEndVertex(
       return m_vertex[0];
   }
   return nullptr;
+}
+
+const ON_3dPoint ON_SubDEdge::EndPoint( unsigned int i) const
+{
+  if (i >= 2 || nullptr == m_vertex[i])
+    return ON_3dPoint::NanPoint;
+  return (ON_3dPoint(m_vertex[i]->m_P));
+}
+
+const ON_3dVector ON_SubDEdge::Direction() const
+{
+  if (nullptr == m_vertex[0] || nullptr == m_vertex[1])
+    return ON_3dVector::NanVector;
+  return (ON_3dPoint(m_vertex[1]->m_P) - ON_3dPoint(m_vertex[0]->m_P));
 }
 
 
@@ -2511,6 +2564,13 @@ ON_SubD& ON_SubD::operator=( ON_SubD&& src )
 #endif
 
 
+ON__UINT64 ON_SubD::RuntimeSerialNumber() const
+{
+  ON_SubDimple* subdimple = m_subdimple_sp.get();
+  return (nullptr != subdimple) ? subdimple->RuntimeSerialNumber : 0;
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -2577,7 +2637,7 @@ static bool IsValidVertexEdgeLink(
   //if (ON_SubDVertexPtr::NoCorner != corner_type && ON_SubD::VertexTag::Corner != vertex->m_vertex_tag)
   //  return ON_SubDIsNotValid(bSilentError);
 
-  if ( edge->IsSmooth(true) )
+  if ( edge->IsSmooth() )
   {
     // edge->m_edge_tag is ON_SubD::EdgeTag::Smooth or ON_SubD::EdgeTag::X
     if (ON_SubD::VertexTag::Smooth == vertex->m_vertex_tag)
@@ -2877,7 +2937,7 @@ static bool IsValidSubDEdge(
   if (edge_vertex[0] == edge_vertex[1])
     return ON_SubDIsNotValid(bSilentError);
 
-  if (edge->IsSmooth(true))
+  if (edge->IsSmooth())
   {
     // m_edge_tag is ON_SubD::EdgeTag::Smooth or ON_SubD::EdgeTag::X
     if ( 2 != edge->m_face_count)
@@ -3045,6 +3105,8 @@ bool ON_SubDimple::IsValidLevel(
     return ON_SubDIsNotValid(bSilentError);
   if (1 + v_id_range[1] - v_id_range[0] < level->m_vertex_count)
     return ON_SubDIsNotValid(bSilentError);
+  if ( v_id_range[1] > m_max_vertex_id )
+    return ON_SubDIsNotValid(bSilentError);
 
   // currently, point vertices are not permitted
   if (point_vertex_count > 0)
@@ -3092,12 +3154,13 @@ bool ON_SubDimple::IsValidLevel(
     return ON_SubDIsNotValid(bSilentError);
   if (level->m_edge[1] != last_edge)
     return ON_SubDIsNotValid(bSilentError);
-
-
+  if ( e_id_range[1] > m_max_edge_id )
+    return ON_SubDIsNotValid(bSilentError);
+   
   // currently, wire edges are not permitted
   if (wire_edge_count > 0)
     return ON_SubDIsNotValid(bSilentError);
-
+   
   // simple face validation
   if (level_index == subd.ActiveLevelIndex())
   {
@@ -3136,6 +3199,8 @@ bool ON_SubDimple::IsValidLevel(
   if (1 + f_id_range[1] - f_id_range[0] < level->m_face_count)
     return ON_SubDIsNotValid(bSilentError);  
   if (level->m_face[1] != last_face)
+    return ON_SubDIsNotValid(bSilentError);
+  if ( f_id_range[1] > m_max_face_id )
     return ON_SubDIsNotValid(bSilentError);
 
 
@@ -3224,6 +3289,36 @@ bool ON_SubDimple::IsValid(
     if (false == IsValidLevel(subd, level_index, bSilentError, text_log))
       return false;
   }
+  
+  if (false == m_heap.IsValid())
+  {
+    // id values are not increasing in the heap blocks.
+    if (nullptr != text_log)
+      text_log->Print("Component ids are not set correctly. m_heap.ResetId() will fix this but may break externally stored component references.\n");
+    return ON_SubDIsNotValid(bSilentError);
+  }
+
+  if (MaximumVertexId() < m_heap.MaximumVertexId())
+  {
+    if (nullptr != text_log)
+      text_log->Print("MaximumVertexId() = %u < m_heap.MaximumVertexId() = %u\n", MaximumVertexId(), m_heap.MaximumVertexId());
+    return ON_SubDIsNotValid(bSilentError);
+  }
+
+  if (MaximumEdgeId() < m_heap.MaximumEdgeId())
+  {
+    if (nullptr != text_log)
+      text_log->Print("MaximumEdgeId() = %u < m_heap.MaximumEdgeId() = %u\n", MaximumEdgeId(), m_heap.MaximumEdgeId());
+    return ON_SubDIsNotValid(bSilentError);
+  }
+
+  if (MaximumFaceId() <m_heap.MaximumFaceId())
+  {
+    if (nullptr != text_log)
+      text_log->Print("MaximumFaceId() = %u < m_heap.MaximumFaceId() = %u\n", MaximumFaceId(), m_heap.MaximumFaceId());
+    return ON_SubDIsNotValid(bSilentError);
+  }
+
   return true;
 }
 
@@ -3276,10 +3371,13 @@ unsigned int ON_SubD::DumpTopology(
 
   const unsigned int level_count = LevelCount();
   const unsigned int active_level_index = ActiveLevel().m_level_index;
+
+  const ON__UINT64 runtime_sn = (text_log.IsTextHash()) ? 0 : RuntimeSerialNumber(); // TextHash ignores settings that don't depend on 3dm file content.
+
   if (level_count > 1)
-    text_log.Print(L"SubD: %u levels. Level %u is active.\n", level_count, active_level_index);
+    text_log.Print(L"SubD[%" PRIu64 "]: %u levels. Level %u is active.\n", runtime_sn, level_count, active_level_index);
   else
-    text_log.Print(L"SubD:\n");
+    text_log.Print(L"SubD[%" PRIu64 "]:\n", runtime_sn );
 
   ON_SubDLevelIterator lit(subdimple->LevelIterator());
 
@@ -3304,13 +3402,23 @@ unsigned int ON_SubD::DumpTopology(
       ? face_id_range
       : empty_id_range;
 
-    error_count += level->DumpTopology(level_vertex_id_range, level_edge_id_range, level_face_id_range, text_log);
+    error_count += level->DumpTopology(
+      subdimple->MaximumVertexId(),
+      subdimple->MaximumEdgeId(),
+      subdimple->MaximumFaceId(),
+      level_vertex_id_range,
+      level_edge_id_range, 
+      level_face_id_range,
+      text_log);
   }
 
   return error_count;
 }
 
 unsigned int ON_SubDLevel::DumpTopology(
+  const unsigned int validate_max_vertex_id,
+  const unsigned int validate_max_edge_id,
+  const unsigned int validate_max_face_id,
   ON_2udex vertex_id_range,
   ON_2udex edge_id_range,
   ON_2udex face_id_range,
@@ -3413,25 +3521,49 @@ unsigned int ON_SubDLevel::DumpTopology(
   //
   unsigned int vertex_count = 0;
   unsigned int vertex_dump_count = 0;
+  ON_2udex skipped_vertex_id = ON_2udex::Zero;
+  unsigned int max_vertex_id = 0;
   for (const ON_SubDVertex* v = m_vertex[0]; nullptr != v; v = v->m_next_vertex)
   {
     if (vertex_count >= m_vertex_count && v->m_level != level_index)
       break;
+    if (v->m_id > max_vertex_id)
+      max_vertex_id = v->m_id;
+
     vertex_count++;
 
     if (bVertexIdTest)
     {
-      if (ON_UNSET_UINT_INDEX == vertex_id_range.i)
-        continue;
-      if (vertex_max_dump_count > 0)
+      bool bSkip = true;
+      for (;;)
       {
-        if (vertex_count > vertex_max_dump_count)
-          continue;
+        if (ON_UNSET_UINT_INDEX == vertex_id_range.i)
+          break;
+        if (vertex_max_dump_count > 0)
+        {
+          if (vertex_count > vertex_max_dump_count)
+            break;
+        }
+        else
+        {
+          if (v->m_id < vertex_id_range.i || v->m_id >= vertex_id_range.j)
+            break;
+        }
+        bSkip = false;
+        break;
       }
-      else
+      if (bSkip)
       {
-        if (v->m_id < vertex_id_range.i || v->m_id >= vertex_id_range.j)
-          continue;
+        if (0 == skipped_vertex_id.j)
+        {
+          skipped_vertex_id.i = v->m_id;
+          skipped_vertex_id.j = v->m_id;
+        }
+        else if (v->m_id < skipped_vertex_id.i)
+          skipped_vertex_id.i = v->m_id;
+        else if (v->m_id > skipped_vertex_id.j)
+          skipped_vertex_id.j = v->m_id;
+        continue;
       }
     }
 
@@ -3505,12 +3637,22 @@ unsigned int ON_SubDLevel::DumpTopology(
     text_log.PopIndent();
   }
 
+  text_log.PushIndent();
   if (vertex_dump_count > 0 && vertex_dump_count < vertex_count)
   {
-    text_log.PushIndent();
-    text_log.Print(L"... %u additional vertices.\n", vertex_count-vertex_dump_count);
-    text_log.PopIndent();
+    text_log.Print(
+      L"... %u additional vertices (v%u to v%u).\n", 
+      vertex_count-vertex_dump_count,
+      skipped_vertex_id.i,
+      skipped_vertex_id.j
+    );
   }
+  text_log.Print("Maximum vertex id = %u.  ",max_vertex_id);
+  if (validate_max_vertex_id >= max_vertex_id)
+    text_log.Print("Next id = %u.\n", validate_max_vertex_id + 1);
+  else
+    text_log.Print("ERROR Next id = %u.\n", validate_max_vertex_id + 1);
+  text_log.PopIndent();
 
   ///////////////////////////////////////////////////////////////////
   //
@@ -3520,25 +3662,48 @@ unsigned int ON_SubDLevel::DumpTopology(
   //
   unsigned int edge_count = 0;
   unsigned int edge_dump_count = 0;
+  ON_2udex skipped_edge_id = ON_2udex::Zero;
+  unsigned int max_edge_id = 0;
   for (const ON_SubDEdge* e = m_edge[0]; nullptr != e; e = e->m_next_edge)
   {
     if (edge_count >= m_edge_count && e->m_level != level_index)
       break;
+    if (e->m_id > max_edge_id)
+      max_edge_id = e->m_id;
     edge_count++;
 
     if (bEdgeIdTest)
     {
-      if (ON_UNSET_UINT_INDEX == edge_id_range.i)
-        continue;
-      if (edge_max_dump_count > 0)
+      bool bSkip = true;
+      for (;;)
       {
-        if (edge_count > edge_max_dump_count)
-          continue;
+        if (ON_UNSET_UINT_INDEX == edge_id_range.i)
+          break;
+        if (edge_max_dump_count > 0)
+        {
+          if (edge_count > edge_max_dump_count)
+            break;
+        }
+        else
+        {
+          if (e->m_id < edge_id_range.i || e->m_id >= edge_id_range.j)
+            break;
+        }
+        bSkip = false;
+        break;
       }
-      else
+      if (bSkip)
       {
-        if (e->m_id < edge_id_range.i || e->m_id >= edge_id_range.j)
-          continue;
+        if (0 == skipped_edge_id.j)
+        {
+          skipped_edge_id.i = e->m_id;
+          skipped_edge_id.j = e->m_id;
+        }
+        else if (e->m_id < skipped_edge_id.i)
+          skipped_edge_id.i = e->m_id;
+        else if (e->m_id > skipped_edge_id.j)
+          skipped_edge_id.j = e->m_id;
+        continue;
       }
     }
 
@@ -3611,12 +3776,21 @@ unsigned int ON_SubDLevel::DumpTopology(
     text_log.PopIndent();
   }
 
+  text_log.PushIndent();
   if (edge_dump_count > 0 && edge_dump_count < edge_count)
   {
-    text_log.PushIndent();
-    text_log.Print(L"... %u additional edges.\n", edge_count - edge_dump_count);
-    text_log.PopIndent();
+    text_log.Print(L"... %u additional edges (e%u to e%u).\n",
+      edge_count - edge_dump_count,
+      skipped_edge_id.i,
+      skipped_edge_id.j
+    );
   }
+  text_log.Print("Maximum edge id = %u.  ",max_edge_id);
+  if (validate_max_edge_id >= max_edge_id)
+    text_log.Print("Next id = %u.\n", validate_max_edge_id + 1);
+  else
+    text_log.Print("ERROR Next id = %u.\n", validate_max_edge_id + 1);
+  text_log.PopIndent();
 
 
   ///////////////////////////////////////////////////////////////////
@@ -3628,25 +3802,48 @@ unsigned int ON_SubDLevel::DumpTopology(
   //
   face_count = 0;
   unsigned int face_dump_count = 0;
+  ON_2udex skipped_face_id = ON_2udex::Zero;
+  unsigned int max_face_id = 0;
   for (const ON_SubDFace* f = m_face[0]; nullptr != f; f = f->m_next_face)
   {
     if (face_count >= m_face_count && f->m_level != level_index)
       break;
+    if (f->m_id > max_face_id)
+      max_face_id = f->m_id;
     face_count++;
 
     if (bFaceIdTest)
     {
-      if (ON_UNSET_UINT_INDEX == face_id_range.i)
-        continue;
-      if (face_max_dump_count > 0)
+      bool bSkip = true;
+      for (;;)
       {
-        if (face_count > face_max_dump_count)
-          continue;
+        if (ON_UNSET_UINT_INDEX == face_id_range.i)
+          break;
+        if (face_max_dump_count > 0)
+        {
+          if (face_count > face_max_dump_count)
+            break;
+        }
+        else
+        {
+          if (f->m_id < face_id_range.i || f->m_id >= face_id_range.j)
+            break;
+        }
+        bSkip = false;
+        break;
       }
-      else
+      if (bSkip)
       {
-        if (f->m_id < face_id_range.i || f->m_id >= face_id_range.j)
-          continue;
+        if (0 == skipped_face_id.j)
+        {
+          skipped_face_id.i = f->m_id;
+          skipped_face_id.j = f->m_id;
+        }
+        else if (f->m_id < skipped_face_id.i)
+          skipped_face_id.i = f->m_id;
+        else if (f->m_id > skipped_face_id.j)
+          skipped_face_id.j = f->m_id;
+        continue;
       }
     }
 
@@ -3741,12 +3938,23 @@ unsigned int ON_SubDLevel::DumpTopology(
     text_log.PopIndent();
   }
 
+  text_log.PushIndent();
   if (face_dump_count > 0 && face_dump_count < face_count)
   {
-    text_log.PushIndent();
-    text_log.Print(L"... %u additional faces.\n", face_count - face_dump_count);
-    text_log.PopIndent();
+    text_log.Print(
+      L"... %u additional faces (f%u to f%u).\n",
+      face_count - face_dump_count,
+      skipped_face_id.i,
+      skipped_face_id.j
+    );
   }
+  text_log.Print("Maximum face id = %u.  ",max_face_id);
+  if (validate_max_face_id >= max_face_id)
+    text_log.Print("Next id = %u.\n", validate_max_face_id + 1);
+  else
+    text_log.Print("ERROR Next id = %u.\n", validate_max_face_id + 1);
+  text_log.PopIndent();
+
  
   const unsigned int topology_error_count
     = vertex_error_count
@@ -3866,118 +4074,6 @@ bool ON_SubD::GetBBox(
   return (rc || bGrowBox);
 }
 
-
-
-class /*DO NOT EXPORT*/ ON_SubD_GetTightBoundingBoxContext
-{
-public:
-  ON_SubD_GetTightBoundingBoxContext(const ON_Xform* xform)
-  {
-    if (nullptr != xform && xform->IsNotIdentity() && false == xform->IsZero() )
-      m_xform = *xform;
-    else
-      m_xform.m_xform[0][0] = ON_UNSET_VALUE;
-    m_bbox.m_min.x = ON_UNSET_VALUE;
-  }
-  ON_BoundingBox m_bbox = ON_BoundingBox::EmptyBoundingBox;
-  ON_Xform m_xform = ON_Xform::IdentityTransformation;
-  static bool FragmentCallback(
-    ON__UINT_PTR context_as_void, 
-    const class ON_SubDLimitMeshFragment* fragment
-    );
-};
-
-bool ON_SubD_GetTightBoundingBoxContext::FragmentCallback(
-    ON__UINT_PTR context_as_void, 
-    const class ON_SubDLimitMeshFragment* fragment
-    )
-{
-  ON_SubD_GetTightBoundingBoxContext* context = (ON_SubD_GetTightBoundingBoxContext*)context_as_void;
-
-    ON_BoundingBox bbox;
-  if (ON_UNSET_VALUE == context->m_xform.m_xform[0][0])
-  {
-    bbox = fragment->m_bbox;
-  }
-  else
-  {
-    const double* P = fragment->m_P;
-    const size_t P_stride = fragment->m_P_stride;
-    bbox.m_min = context->m_xform*ON_3dPoint(P);
-    bbox.m_max = bbox.m_min;
-    for (const double* P1 = P + fragment->m_P_count*P_stride; P < P1; P += P_stride)
-    {
-      const ON_3dPoint Q = context->m_xform*ON_3dPoint(P);
-      if ( Q.x < bbox.m_min.x )
-        bbox.m_min.x = Q.x;
-      else if ( Q.x > bbox.m_max.x )
-        bbox.m_max.x = Q.x;
-      if ( Q.y < bbox.m_min.y )
-        bbox.m_min.y = Q.y;
-      else if ( Q.y > bbox.m_max.y )
-        bbox.m_max.y = Q.y;
-      if ( Q.z < bbox.m_min.z )
-        bbox.m_min.z = Q.z;
-      else if ( Q.z > bbox.m_max.z )
-        bbox.m_max.z = Q.z;
-    }
-  }
-
-  if (ON_UNSET_VALUE == context->m_bbox.m_min.x)
-    context->m_bbox = bbox;
-  else
-    context->m_bbox.Union(bbox);
-
-  return true; // continue sending fragments
-}
-
-bool ON_SubD::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    bool bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  if ( 0 != xform )
-  {
-    if ( !xform->IsValid() )
-      return false;
-
-    if ( xform->IsIdentity() )
-      xform = 0;
-  }
-
-  if ( !tight_bbox.IsValid() )
-    bGrowBox = false;
-
-  const ON_SubDimple* subdimple = SubDimple();
-  if ( 0 == subdimple )
-    return bGrowBox?true:false;
-
-  const unsigned int level_count = subdimple->LevelCount();
-  if ( level_count <= 0 )
-    return bGrowBox?true:false;
-
-  ON_SubD_GetTightBoundingBoxContext context(xform);
-  ON_SubDDisplayParameters display_parameters;
-  display_parameters.m_display_density = 3;
-  GetLimitSurfaceMeshInFragments(
-    display_parameters,
-    (ON__UINT_PTR)&context,
-    ON_SubD_GetTightBoundingBoxContext::FragmentCallback
-    );
-
-  const bool rc = context.m_bbox.IsValid();
-  if (rc)
-  {
-    if (bGrowBox)
-      tight_bbox.Union(context.m_bbox);
-    else
-      tight_bbox = context.m_bbox;
-    bGrowBox = true;
-  }
-  return (rc || bGrowBox);
-}
-
 //virtual
 void ON_SubD::ClearBoundingBox()
 {
@@ -4025,8 +4121,6 @@ bool ON_SubD::SwapCoordinates(
 {
   return false;
 }
-  
-
 
 //virtual
 bool ON_SubD::HasBrepForm() const
@@ -4110,10 +4204,16 @@ void ON_SubD::ShareDimple(const class ON_SubDLimitMeshImpl& subd_limple)
 {
   std::shared_ptr<ON_SubDimple> limple_sp(subd_limple.m_subdimple_wp.lock());
 
-  if (nullptr == limple_sp.get())
-    const_cast< ON_SubDLimitMeshImpl& >(subd_limple).ClearFragmentFacePointers();
+  const ON_SubDimple* subd_imple = m_subdimple_sp.get();
 
-  if (m_subdimple_sp.get() != limple_sp.get())
+  if (nullptr == limple_sp.get())
+  {
+    // weak pointer is nullptr, meaning there are no known references to the
+    // subd used to create this limit mesh.
+    const_cast<ON_SubDLimitMeshImpl&>(subd_limple).ClearFragmentFacePointers(true);
+  }
+
+  if (subd_imple != limple_sp.get())
   {
     m_subdimple_sp.reset();
     m_subdimple_sp = limple_sp;
@@ -4175,6 +4275,14 @@ bool ON_SubD::SetSubDType(
 {
   ON_SubDimple* subdimple = SubDimple(true);
   return (subdimple) ? subdimple->SetSubDType(subdivision_type) : ON_SUBD_RETURN_ERROR(false);
+}
+
+
+class ON_SubDVertex* ON_SubD::AddVertex(
+  const double* P
+)
+{
+  return AddVertex(ON_SubD::VertexTag::Unset, P);
 }
 
 class ON_SubDVertex* ON_SubD::AddVertex(
@@ -4312,6 +4420,15 @@ ON_SubD::EdgeTag ON_SubD::EdgeTagFromContext(
   }
 
   return edge_tag;
+}
+
+
+class ON_SubDEdge* ON_SubD::AddEdge(
+  ON_SubDVertex* v0,
+  ON_SubDVertex* v1
+)
+{
+  return ON_SubD::AddEdge(ON_SubD::EdgeTag::Unset, v0, v1);
 }
 
 class ON_SubDEdge* ON_SubD::AddEdge(
@@ -4555,6 +4672,54 @@ bool ON_SubDimple::SetSubDType(
   return subd_level->SetSubDType(subd_type);
 }
 
+class ON_SubDFace* ON_SubD::AddTriangleFace(
+  class ON_SubDEdge* edge0, bool bReverseEdge0,
+  class ON_SubDEdge* edge1, bool bReverseEdge1,
+  class ON_SubDEdge* edge2, bool bReverseEdge2
+)
+{
+  return AddTriangleFace(
+    ON_SubDEdgePtr::Create(edge0, bReverseEdge0 ? 1 : 0),
+    ON_SubDEdgePtr::Create(edge1, bReverseEdge1 ? 1 : 0),
+    ON_SubDEdgePtr::Create(edge2, bReverseEdge2 ? 1 : 0)
+  );
+}
+
+class ON_SubDFace* ON_SubD::AddTriangleFace(
+  ON_SubDEdgePtr edge0,
+  ON_SubDEdgePtr edge1,
+  ON_SubDEdgePtr edge2
+)
+{
+  ON_SubDEdgePtr eptr3[3] = { edge0,edge1,edge2 };
+  return AddFace(3, eptr3);
+}
+
+class ON_SubDFace* ON_SubD::AddQuadFace(
+  class ON_SubDEdge* edge0, bool bReverseEdge0,
+  class ON_SubDEdge* edge1, bool bReverseEdge1,
+  class ON_SubDEdge* edge2, bool bReverseEdge2,
+  class ON_SubDEdge* edge3, bool bReverseEdge3
+)
+{
+  return AddQuadFace(
+    ON_SubDEdgePtr::Create(edge0, bReverseEdge0 ? 1 : 0),
+    ON_SubDEdgePtr::Create(edge1, bReverseEdge1 ? 1 : 0),
+    ON_SubDEdgePtr::Create(edge2, bReverseEdge2 ? 1 : 0),
+    ON_SubDEdgePtr::Create(edge3, bReverseEdge3 ? 1 : 0)
+  );
+}
+
+class ON_SubDFace* ON_SubD::AddQuadFace(
+  ON_SubDEdgePtr edge0,
+  ON_SubDEdgePtr edge1,
+  ON_SubDEdgePtr edge2,
+  ON_SubDEdgePtr edge3
+  )
+{
+  ON_SubDEdgePtr eptr4[4] = { edge0,edge1,edge2,edge3 };
+  return AddFace(4, eptr4);
+}
 
 class ON_SubDFace* ON_SubD::AddFace(
   unsigned int edge_count,
@@ -4907,6 +5072,141 @@ bool ON_SubDComponentBase::GetSavedSubdivisionPoint(
   return true;
 }
 
+
+const ON_ComponentStatus ON_SubDComponentBase::Status() const
+{
+  return m_status;
+}
+
+const ON_ComponentStatus ON_SubDVertex::NeighborhoodStatusLogicalOr(
+  bool bIncludeEdges,
+  bool bIncludeFaces
+) const
+{
+  ON_ComponentStatus s(m_status);
+  if (bIncludeEdges && nullptr != m_edges)
+  {
+    for (unsigned short vei = 0; vei < m_edge_count; vei++)
+    {
+      const ON_SubDEdge* e = m_edges[vei].Edge();
+      if (nullptr != e)
+        s = ON_ComponentStatus::LogicalOr(s, e->m_status);
+    }
+  }
+  if (bIncludeFaces && nullptr != m_faces)
+  {
+    for (unsigned short vfi = 0; vfi < m_face_count; vfi++)
+    {
+      const ON_SubDFace* f = m_faces[vfi];
+      if (nullptr != f)
+        s = ON_ComponentStatus::LogicalOr(s, f->m_status);
+    }
+  }
+  return s;
+}
+  
+const ON_ComponentStatus ON_SubDEdge::NeighborhoodStatusLogicalOr(
+  bool bIncludeVertices,
+  bool bIncludeFaces
+) const
+{
+  ON_ComponentStatus s(m_status);
+  if (bIncludeVertices)
+  {
+    for (unsigned int evi = 0; evi < 2; evi++)
+    {
+      const ON_SubDVertex* v = m_vertex[evi];
+      if (nullptr != v)
+        s = ON_ComponentStatus::LogicalOr(s, v->m_status);
+    }
+  }
+  if (bIncludeFaces)
+  {
+    const ON_SubDFacePtr* fptr = m_face2;
+    for (unsigned short vfi = 0; vfi < m_face_count; vfi++)
+    {
+      const ON_SubDFace* f = fptr->Face();
+      if (nullptr != f)
+        s = ON_ComponentStatus::LogicalOr(s, f->m_status);
+      if (1 == vfi)
+      {
+        fptr = m_facex;
+        if (nullptr == fptr)
+          break;
+      }
+      else
+        fptr++;
+    }
+  }
+  return s;
+}
+
+const ON_ComponentStatus ON_SubDFace::NeighborhoodStatusLogicalOr(bool bIncludeVertices, bool bIncludeEdges) const
+{
+  ON_ComponentStatus s(m_status);
+  if (bIncludeVertices || bIncludeEdges)
+  {
+    const ON_SubDEdgePtr* eptr = m_edge4;
+    for (unsigned int fei = 0; fei < m_edge_count; fei++)
+    {
+      if (4 == fei)
+      {
+        eptr = m_edgex;
+        if (nullptr == eptr)
+          break;
+      }
+      const ON_SubDEdge* e = eptr->Edge();
+      if (nullptr != e)
+      {
+        if (bIncludeEdges)
+        {
+          s = ON_ComponentStatus::LogicalOr(s, e->m_status);
+        }
+        if (bIncludeVertices)
+        {
+          const ON_SubDVertex* v = e->m_vertex[(0!=eptr->EdgeDirection())?1:0];
+          if (nullptr != v)
+            s = ON_ComponentStatus::LogicalOr(s, v->m_status);
+        }
+      }
+      eptr++;
+    }
+  }
+  return s;
+}
+
+static void Internal_ClearFaceNeighborhoodCache(const ON_SubDFace* face)
+{
+  // Clear cached values for every component associated with this face.
+  face->ClearSavedSubdivisionPoint();
+  const ON_SubDEdgePtr* eptr = face->m_edge4;
+  for (unsigned int efi = 0; efi < face->m_edge_count; efi++)
+  {
+    if (4 == efi)
+    {
+      eptr = face->m_edgex;
+      if ( nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr != edge)
+    {
+      edge->ClearSavedSubdivisionPoint();
+      edge->UnsetSectorCoefficients();
+      for (unsigned int evi = 0; evi < 2; evi++)
+      {
+        const ON_SubDVertex* vertex = edge->m_vertex[evi];
+        if (nullptr != vertex)
+        {
+          vertex->ClearSavedSubdivisionPoint();
+          vertex->ClearSavedLimitPoints();
+        }
+      }
+    }
+    eptr++;
+  }
+}
+
 void ON_SubDVertex::VertexModifiedNofification() const
 {
   ClearSavedSubdivisionPoint();
@@ -4916,17 +5216,21 @@ void ON_SubDVertex::VertexModifiedNofification() const
     for (unsigned short vei = 0; vei < m_edge_count; vei++)
     {
       const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
-      if ( nullptr != edge )
+      if (nullptr != edge)
+      {
         edge->ClearSavedSubdivisionPoint();
+        edge->UnsetSectorCoefficients();
+      }
     }
-  }
-  if (nullptr != m_faces)
-  {
+
+    // This is needed to clear cached information in the Catmull-Clark 
+    // ring that is not immediately adjacent to this vertex but whose values
+    // this vertex affects.
     for (unsigned short vfi = 0; vfi < m_face_count; vfi++)
     {
-      const ON_SubDFace* face = m_faces[vfi];
-      if ( nullptr != face )
-        face->ClearSavedSubdivisionPoint();
+      const ON_SubDFace* face = this->m_faces[vfi];
+      if (nullptr != face)
+        Internal_ClearFaceNeighborhoodCache(face);
     }
   }
 }
@@ -4934,14 +5238,17 @@ void ON_SubDVertex::VertexModifiedNofification() const
 void ON_SubDEdge::EdgeModifiedNofification() const
 {
   ClearSavedSubdivisionPoint();
+  UnsetSectorCoefficients();
   for (unsigned int evi = 0; evi < 2; evi++)
   {
+    const_cast<ON_SubDEdge*>(this)->m_sector_coefficient[evi] = ON_SubDSectorType::UnsetSectorWeight;
     if (nullptr != m_vertex[evi])
-    {
-      m_vertex[evi]->ClearSavedSubdivisionPoint();
-      m_vertex[evi]->ClearSavedLimitPoints();
-    }
+      m_vertex[evi]->VertexModifiedNofification();
   }
+
+  // If the topology pointers are complete and accurate, then the following
+  // is not required. It's here because this SubD may be under construction
+  // and we cannot assume the topology pointers are complete and accurate.
   const ON_SubDFacePtr* fptr = m_face2;
   for (unsigned int efi = 0; efi < 2; efi++)
   {
@@ -4953,14 +5260,25 @@ void ON_SubDEdge::EdgeModifiedNofification() const
     }
     const ON_SubDFace* face = ON_SUBD_FACE_POINTER(fptr->m_ptr);
     if ( nullptr != face )
-      face->ClearSavedSubdivisionPoint();
+      Internal_ClearFaceNeighborhoodCache(face);
     fptr++;
   }
 }
 
+void ON_SubDEdge::UnsetSectorCoefficients() const
+{
+  const_cast<ON_SubDEdge*>(this)->m_sector_coefficient[0] = ON_SubDSectorType::UnsetSectorWeight;
+  const_cast<ON_SubDEdge*>(this)->m_sector_coefficient[1] = ON_SubDSectorType::UnsetSectorWeight;
+}
+
+
 void ON_SubDFace::FaceModifiedNofification() const
 {
-  ClearSavedSubdivisionPoint();
+  Internal_ClearFaceNeighborhoodCache(this);
+
+  // This is needed to clear cached information in the Catmull-Clark 
+  // ring that is not immediately adjacent to this face but whose values
+  // this face affects.
   const ON_SubDEdgePtr* eptr = m_edge4;
   for (unsigned int efi = 0; efi < m_edge_count; efi++)
   {
@@ -4973,14 +5291,18 @@ void ON_SubDFace::FaceModifiedNofification() const
     const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
     if (nullptr != edge)
     {
-      edge->ClearSavedSubdivisionPoint();
-      for (unsigned int evi = 0; evi < 2; evi++)
+      const ON_SubDFacePtr* fptr = edge->m_face2;
+      for (unsigned short fei = 0; fei < edge->m_face_count; fei++)
       {
-        if (nullptr != edge->m_vertex[evi])
+        if (2 == fei)
         {
-          edge->m_vertex[evi]->ClearSavedSubdivisionPoint();
-          edge->m_vertex[evi]->ClearSavedLimitPoints();
+          fptr = edge->m_facex;
+          if (nullptr == fptr)
+            break;
         }
+        const ON_SubDFace* f = ON_SUBD_FACE_POINTER(fptr->m_ptr);
+        if (nullptr != f && f != this)
+          Internal_ClearFaceNeighborhoodCache(f);
       }
     }
     eptr++;
@@ -5300,13 +5622,7 @@ bool ON_SubDEdge::GetSubdivisionPoint(
 
   const double* edgeP[2] = { edge_vertex[0]->m_P, edge_vertex[1]->m_P };
 
-  
-  // If you extrude a polygon, so all the "vertical" edges are "x" edges,
-  // and bSubDivideXEdgesAsSmooth is false, then the result has a barrel like
-  // bulge in it.  Giulio pointed this out in April 2015.
-  const bool bSubDivideXEdgesAsSmooth = true;
-
-  if ( IsSmooth(bSubDivideXEdgesAsSmooth) )
+  if ( IsSmooth() )
   {
     // A smooth edge must have exactly two neighboring faces and
     // at most one end vertex can be tagged.
@@ -5335,7 +5651,7 @@ bool ON_SubDEdge::GetSubdivisionPoint(
     if (
       ON_UNSET_UINT_INDEX == tagged_end
       || 0.5 == m_sector_coefficient[tagged_end]
-      || (bSubDivideXEdgesAsSmooth && ON_SubD::EdgeTag::X == m_edge_tag)
+      || (ON_SubD::EdgeTag::X == m_edge_tag)
       )
     {
       // ignore edge weights
@@ -5424,7 +5740,7 @@ bool ON_SubDEdge::GetSubdivisionPoint(
     return true;
   }
 
-  if ( IsCrease(false == bSubDivideXEdgesAsSmooth) )
+  if ( IsCrease() )
   {
     subdivision_point[0] = 0.5*(edgeP[0][0] + edgeP[1][0]);
     subdivision_point[1] = 0.5*(edgeP[0][1] + edgeP[1][1]);
@@ -5528,7 +5844,7 @@ unsigned int ON_SubDEdge::GetSectorBoundaryEdges(
       if (vertex != edge1->m_vertex[edge1_end_index])
         return GetSectorBoundaryEdgesError();
 
-      if ( edge1->IsSmooth(true) && 2 == edge1->m_face_count )
+      if ( edge1->IsSmooth() && 2 == edge1->m_face_count )
       {
         const ON_SubDFace* edge1_faces[2] = { ON_SUBD_FACE_POINTER(edge1->m_face2[0].m_ptr), ON_SUBD_FACE_POINTER(edge1->m_face2[1].m_ptr) };
         unsigned int edge1_face_index = (face == edge1_faces[0] ? 1 : 0);
@@ -7439,7 +7755,7 @@ ON_SubDEdgePtr ON_SubDimple::MergeEdges(
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   ON_SubD::EdgeTag merged_edge_tag 
-    = (e[0]->IsSmooth(true) || e[1]->IsSmooth(true))
+    = (e[0]->IsSmooth() || e[1]->IsSmooth())
     ? ON_SubD::EdgeTag::Smooth
     : ON_SubD::EdgeTag::Crease;
 
@@ -7769,6 +8085,11 @@ unsigned int ON_SubD::ActiveLevelIndex() const
 bool ON_SubD::IsEmpty() const
 {
   return (nullptr == SubDimple());
+}
+
+bool ON_SubD::IsNotEmpty() const
+{
+  return (nullptr != SubDimple());
 }
 
 /////////////////////////////////////////////////////////
@@ -8654,7 +8975,7 @@ const ON_SubDEdge* ON_SubDimple::SplitFace(
               evi = 2;
             if (evi < 2)
               const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[vi] = sector_weight[vi];
-            if (nullptr == sit.CurrentFace() || sit.InitialFace() == sit.NextFace(true))
+            if (nullptr == sit.CurrentFace() || sit.InitialFace() == sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
               break;
           }
         }
@@ -9097,6 +9418,7 @@ void ON_SubDLevel::ClearSubdivisonAndLimitPoints() const
   for (const ON_SubDEdge* edge = m_edge[0]; nullptr != edge; edge = edge->m_next_edge)
   {
     edge->ClearSavedSubdivisionPoint();
+    // NO // Leave these set - they are not "cached" values // edge->UnsetSectorCoefficients();
   }
   for (const ON_SubDFace* face = m_face[0]; nullptr != face; face = face->m_next_face)
   {
@@ -9549,6 +9871,10 @@ unsigned int ON_SubDLevel::UpdateAllTagsAndSectorCoefficients(
 
   change_count += UpdateEdgeSectorCoefficients(false);
 
+  if ( change_count > 0 )
+    m_limit_mesh = ON_SubDLimitMesh::Empty;
+    
+
   return change_count;
 }
 
@@ -9586,6 +9912,12 @@ unsigned int ON_SubD::UpdateEdgeSectorCoefficients(
     return ON_SUBD_RETURN_ERROR(0);
 
   return level->UpdateEdgeSectorCoefficients(bUnsetSectorCoefficientsOnly);
+}
+
+void ON_SubD::SubDModifiedNofification()
+{
+  ClearLimitSurfaceMesh();
+  UpdateAllTagsAndSectorCoefficients(false);
 }
 
 unsigned int ON_SubD::UpdateAllTagsAndSectorCoefficients(
@@ -9743,7 +10075,7 @@ unsigned int ON_SubDimple::DeleteComponents(
         bInteriorVertex = false;
         continue;
       }
-      if (edge->IsCrease(false))
+      if (edge->IsCrease())
         crease_count++;
       if (2 != edge->m_face_count)
         bInteriorVertex = false;
@@ -9942,6 +10274,45 @@ unsigned int ON_SubD::GetMarkedComponents(
   return mark_count;
 }
 
+ON_SubDComponentMarksClearAndRestore::ON_SubDComponentMarksClearAndRestore(
+  ON_SubD& subd
+)  
+{
+  m_subd.ShareContentsFrom(subd);
+  m_subd.ClearComponentMarks(true, true, true, &m_saved_marked_component_list);
+}
+
+ON_SubDComponentMarksClearAndRestore::~ON_SubDComponentMarksClearAndRestore()
+{
+  Restore(true);
+}
+
+const ON_SimpleArray<const class ON_SubDComponentBase*>& ON_SubDComponentMarksClearAndRestore::SavedMarkedComponentList() const
+{
+  return m_saved_marked_component_list;
+}
+
+bool ON_SubDComponentMarksClearAndRestore::Restore(
+  bool bDisableFutureRestore )
+{
+  const bool rc = m_bRestore;
+  if (rc)
+  {
+    if ( bDisableFutureRestore)
+      m_bRestore = false;
+    if (m_saved_marked_component_list.UnsignedCount() > 0)
+      m_subd.SetComponentMarks(true, m_saved_marked_component_list);
+    else
+      m_subd.ClearComponentMarks(true, true, true, nullptr);
+    m_saved_marked_component_list.Destroy();
+  }
+  return rc;
+}
+
+void ON_SubDComponentMarksClearAndRestore::DisableRestore()
+{
+  m_bRestore = false;
+}
 
 unsigned int ON_SubD::TransformComponents(
   const ON_Xform& xform,
@@ -10165,6 +10536,28 @@ int ON_Internal_ExtrudedVertexPair::CompareMarkedVertexId(
   return 0;
 }
 
+static  ON_SubD::EdgeTag Internal_AdjustedEdgeTag(const ON_SubDEdge* edge)
+{
+  if (nullptr == edge || nullptr == edge->m_vertex[0] || nullptr == edge->m_vertex[1])
+    return ON_SubD::EdgeTag::Unset;
+
+
+  // adjust moved edge tag because vertex tags can change when they get moved.
+  const ON_SubD::VertexTag evtag[2] = { edge->m_vertex[0]->m_vertex_tag ,edge->m_vertex[1]->m_vertex_tag };
+  
+  if (ON_SubD::VertexTag::Unset == evtag[0] || ON_SubD::VertexTag::Unset == evtag[1])
+    return ON_SubD::EdgeTag::Unset;
+
+  if (ON_SubD::VertexTag::Smooth == evtag[0] || ON_SubD::VertexTag::Smooth == evtag[1])
+    return ON_SubD::EdgeTag::Smooth;
+  
+  const ON_SubD::EdgeTag etag = edge->m_edge_tag;
+  if (ON_SubD::EdgeTag::Smooth == etag || ON_SubD::EdgeTag::X == etag )
+    return ON_SubD::EdgeTag::X;
+
+  return etag;
+}
+
 static void Internal_SetEdgeVertices(
   ON_SubD& subd,
   ON_Internal_ExtrudedVertexPair& vertex_pair
@@ -10293,41 +10686,165 @@ static ON_SubDFace* Internal_AddNewFace(
   return side.m_new_face;
 }
 
-bool Internal_ExtrudeAsCrease(
-  const ON_SubDVertex* v
+static ON_SubD::EdgeTag Internal_ConnectingEdgeTagAtVertex(
+  const ON_SubDVertex* v,
+  ON_SubD::VertexTag& moved_vertex_tag,
+  ON_SubD::VertexTag& stationary_vertex_tag
 )
 {
-  unsigned int marked_faces_crease_count = 0;
-  unsigned int unmarked_faces_crease_count = 0;
+  moved_vertex_tag = v->m_vertex_tag;
+  stationary_vertex_tag = v->m_vertex_tag;
+  if (ON_SubD::VertexTag::Crease != v->m_vertex_tag && ON_SubD::VertexTag::Dart != v->m_vertex_tag)
+  {
+    ON_SUBD_ERROR("This function requires a crease or dart vertex as input.");
+    return ON_SubD::EdgeTag::Unset;
+  }
+
+  unsigned int expected_crease_count = ON_UNSET_UINT_INDEX;
+  switch (v->m_vertex_tag)
+  {
+  case ON_SubD::VertexTag::Smooth:
+    expected_crease_count = 0;
+    break;
+  case ON_SubD::VertexTag::Dart:
+    expected_crease_count = 1;
+    break;
+  case ON_SubD::VertexTag::Crease:
+    expected_crease_count = 2;
+    break;
+  case ON_SubD::VertexTag::Corner:
+    break;
+  default:
+    break;
+  }
+
+/*
+
+    = (ON_SubD::VertexTag::Dart == v->m_vertex_tag)
+    ? 1
+    : ((ON_SubD::VertexTag::CDart == v->m_vertex_tag) ? 2 : 0;
+*/
+
   const unsigned int vertex_edge_count = v->m_edge_count;
+  unsigned int sep_crease_count = 0;
+  unsigned int moved_crease_count = 0;
+  unsigned int stationary_crease_count = 0;
   for (unsigned int vei = 0; vei < vertex_edge_count; vei++)
   {
-    const ON_SubDEdge* e = v->Edge(vei);
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
     if (nullptr == e)
       continue;
-    if (ON_SubD::EdgeTag::Smooth == e->m_edge_tag)
-      continue;
+
     if (ON_SubD::EdgeTag::Crease != e->m_edge_tag)
-      return false;
+      continue;
+
     if (e->m_status.RuntimeMark())
-      return false;
-    if (2 != e->m_face_count)
-      return false;
-    const ON_SubDFace* f = e->Face(0);
-    if (nullptr == f)
-      return false;
-    const bool bMarkedFace = f->m_status.RuntimeMark();
-    f = e->Face(1);
-    if (nullptr == f)
-      return false;
-    if (bMarkedFace != f->m_status.RuntimeMark())
-      return false;
-    if (bMarkedFace)
-      marked_faces_crease_count++;
+    {
+      sep_crease_count++;
+      continue;
+    }
+
+    bool bThisEdgeMoves = false;
+    for (unsigned short evi = 0; evi < e->m_face_count; evi++)
+    {
+      const ON_SubDFace* f = e->Face(evi);
+      if (f->m_status.RuntimeMark())
+      {
+        bThisEdgeMoves = true;
+        break;
+      }
+    }
+    if (bThisEdgeMoves)
+      ++moved_crease_count;
     else
-      unmarked_faces_crease_count++;
+      ++stationary_crease_count;
   }
-  return (1 == marked_faces_crease_count && 1 == unmarked_faces_crease_count);
+
+ 
+  if (ON_SubD::VertexTag::Corner == v->m_vertex_tag && (sep_crease_count + moved_crease_count + stationary_crease_count) >= 2)
+    expected_crease_count = (sep_crease_count + moved_crease_count + stationary_crease_count);
+
+  if (expected_crease_count != (sep_crease_count + moved_crease_count + stationary_crease_count))
+    ON_SUBD_ERROR("Unexpected tags - input is probably invalid.");
+
+  ON_SubD::EdgeTag connecting_edge_tag;
+  if (0 == stationary_crease_count || 0 == moved_crease_count)
+  {
+    if (sep_crease_count >= 2 && ON_SubD::VertexTag::Corner == v->m_vertex_tag)
+    {
+      stationary_vertex_tag = ON_SubD::VertexTag::Corner;
+      moved_vertex_tag = ON_SubD::VertexTag::Corner;
+    }
+    else
+    {
+      switch (sep_crease_count + stationary_crease_count)
+      {
+      case 0:
+        stationary_vertex_tag = ON_SubD::VertexTag::Smooth;
+        break;
+      case 1:
+        stationary_vertex_tag = ON_SubD::VertexTag::Dart;
+        break;
+      case 2:
+        stationary_vertex_tag = ON_SubD::VertexTag::Crease;
+        break;
+      default:
+        stationary_vertex_tag = ON_SubD::VertexTag::Corner;
+        break;
+      }
+
+      switch (sep_crease_count + moved_crease_count)
+      {
+      case 0:
+        moved_vertex_tag = ON_SubD::VertexTag::Smooth;
+        break;
+      case 1:
+        moved_vertex_tag = ON_SubD::VertexTag::Dart;
+        break;
+      case 2:
+        moved_vertex_tag = ON_SubD::VertexTag::Crease;
+        break;
+      default:
+        moved_vertex_tag = ON_SubD::VertexTag::Corner;
+        break;
+      }
+    }
+
+    if ( 
+      (0 == stationary_crease_count && 0 == moved_crease_count)
+      || ON_SubD::VertexTag::Smooth == stationary_vertex_tag
+      || ON_SubD::VertexTag::Dart == stationary_vertex_tag
+      || ON_SubD::VertexTag::Smooth == moved_vertex_tag
+      || ON_SubD::VertexTag::Dart == moved_vertex_tag
+      )
+      connecting_edge_tag = ON_SubD::EdgeTag::Smooth;
+    else
+      connecting_edge_tag = ON_SubD::EdgeTag::Crease;
+  }
+  else
+  {
+    // Corner "upgrade" check is below.
+    stationary_vertex_tag = ON_SubD::VertexTag::Crease;
+    moved_vertex_tag = ON_SubD::VertexTag::Crease;
+    connecting_edge_tag = ON_SubD::EdgeTag::Crease;
+  }
+
+
+  if (ON_SubD::EdgeTag::Smooth == connecting_edge_tag)
+  {
+    if (ON_SubD::VertexTag::Smooth != stationary_vertex_tag && ON_SubD::VertexTag::Smooth!= moved_vertex_tag)
+      connecting_edge_tag = ON_SubD::EdgeTag::X; // at level 0, both ends are tagged.
+  }
+  else
+  {
+    // connecting edge is crease
+    if (sep_crease_count + stationary_crease_count + 1 > 2)
+      stationary_vertex_tag = ON_SubD::VertexTag::Corner;
+    if (sep_crease_count + moved_crease_count + 1 > 2)
+      moved_vertex_tag = ON_SubD::VertexTag::Corner;
+  }
+
+  return connecting_edge_tag;
 }
 
 static bool Internal_NonManifoldEdgeWillBeCreated( const ON_SubDVertex* v )
@@ -10374,14 +10891,13 @@ unsigned int ON_SubD::ExtrudeComponents(
     )
     return 0;
 
-  if (ON_SubD::EdgeTag::Crease != original_edge_tag)
+  if (ON_SubD::EdgeTag::Crease != original_edge_tag && ON_SubD::EdgeTag::Smooth != original_edge_tag)
     original_edge_tag = ON_SubD::EdgeTag::Unset;
 
-  if (ON_SubD::EdgeTag::Crease != moved_edge_tag)
+  if (ON_SubD::EdgeTag::Crease != moved_edge_tag && ON_SubD::EdgeTag::Smooth != moved_edge_tag)
     moved_edge_tag = ON_SubD::EdgeTag::Unset;
-
-  ON_SimpleArray<const ON_SubDComponentBase*> marked_components;
-  const bool bRestoreMarks = ClearComponentMarks(true, true, true, &marked_components) > 0;
+  
+  ON_SubDComponentMarksClearAndRestore mark_guard(*this);
 
   // Marks very vertex touching a component in the cptr_list.
   // Skips applying the transform because it is the identity.
@@ -10513,39 +11029,47 @@ unsigned int ON_SubD::ExtrudeComponents(
         ON_Internal_ExtrudedVertexPair& vpair = vertex_pairs.AppendNew();
         vpair.m_marked_vertex = v;
 
-        ON_SubD::VertexTag new_vertex_tag;
-        ON_SubD::EdgeTag new_edge_tag;
+        ON_SubD::VertexTag moved_vertex_tag; // the original vertex gets moved
+        ON_SubD::VertexTag stationary_vertex_tag; // (this one get allocated)
+        ON_SubD::EdgeTag connecting_edge_tag; // from stationary to moved vertex
         switch (v->m_vertex_tag)
         {
+        case ON_SubD::VertexTag::Dart:
+          connecting_edge_tag = Internal_ConnectingEdgeTagAtVertex(v, moved_vertex_tag, stationary_vertex_tag);
+          break;
         case ON_SubD::VertexTag::Crease:
-          new_vertex_tag = v->m_vertex_tag;
-          new_edge_tag 
-            = Internal_ExtrudeAsCrease(v)
-            ? ON_SubD::EdgeTag::Crease
-            : ON_SubD::EdgeTag::Unset;
+          connecting_edge_tag = Internal_ConnectingEdgeTagAtVertex(v, moved_vertex_tag, stationary_vertex_tag);
           break;
         case ON_SubD::VertexTag::Corner:
-          new_vertex_tag = v->m_vertex_tag;
-          new_edge_tag = ON_SubD::EdgeTag::Crease;
+          moved_vertex_tag = v->m_vertex_tag;
+          stationary_vertex_tag = v->m_vertex_tag;
+          connecting_edge_tag = ON_SubD::EdgeTag::Crease;
+          break;
+        case ON_SubD::VertexTag::Smooth:
+          moved_vertex_tag = ON_SubD::VertexTag::Smooth;
+          stationary_vertex_tag = ON_SubD::VertexTag::Smooth;
+          connecting_edge_tag = ON_SubD::EdgeTag::Smooth;
           break;
         default:
-          new_vertex_tag = ON_SubD::VertexTag::Unset;
-          new_edge_tag = ON_SubD::EdgeTag::Unset;
+          moved_vertex_tag = ON_SubD::VertexTag::Unset;
+          stationary_vertex_tag = ON_SubD::VertexTag::Unset;
+          connecting_edge_tag = ON_SubD::EdgeTag::Unset;
           break;
         }
 
         // original vertex will eventually be moved.
-        v->m_vertex_tag = new_vertex_tag;
+        v->m_vertex_tag = moved_vertex_tag;
 
         // new vertex will become part of the stationary subset.
         // It is not marked.
-        vpair.m_unmarked_vertex = this->AddVertex(new_vertex_tag, v->m_P);
+        vpair.m_unmarked_vertex = this->AddVertex(stationary_vertex_tag, v->m_P);
 
         // transform the marked boundary vertex
         v->Transform(false, xform);
 
         // edge from stationary subset to moved subset.
-        vpair.m_new_side = this->AddEdge(new_edge_tag, vpair.m_unmarked_vertex, vpair.m_marked_vertex);
+        ON_SubDEdge* connecting_edge = this->AddEdge(connecting_edge_tag, vpair.m_unmarked_vertex, vpair.m_marked_vertex);
+        vpair.m_new_side = connecting_edge;
       }
     }
 
@@ -10593,7 +11117,12 @@ unsigned int ON_SubD::ExtrudeComponents(
         }
         key[evi] = vertex_pairs[i0];
       } 
-      new_sides[i].m_unmarked_edge = this->AddEdge(ON_SubD::EdgeTag::Unset, key[0].m_unmarked_vertex, key[1].m_unmarked_vertex);
+
+      const ON_SubD::EdgeTag unmoved_edge_tag
+        = (ON_SubD::EdgeTag::Crease == e->m_edge_tag)
+        ? ON_SubD::EdgeTag::Crease
+        : ON_SubD::EdgeTag::Unset;
+      new_sides[i].m_unmarked_edge = this->AddEdge(unmoved_edge_tag, key[0].m_unmarked_vertex, key[1].m_unmarked_vertex);
       new_sides[i].m_new_side0 = key[0].m_new_side;
       new_sides[i].m_new_side1 = key[1].m_new_side;
     }
@@ -10635,6 +11164,29 @@ unsigned int ON_SubD::ExtrudeComponents(
       Internal_AddNewFace(*this, new_sides[i]);
     }
 
+    // Any edge touching the vertices in vertex_pairs[] may need its tag adjusted
+    // because those vertices may have had their tags adjusted.
+    // Some edges get checked twice, but adding code to check just once
+    // takes more time than checking twice.
+    for (unsigned int i = 0; i < vertex_pairs.UnsignedCount(); i++)
+    {
+      for (unsigned int j = 0; j < 2; j++)
+      {
+        const ON_SubDVertex* v = (0 == j) ? vertex_pairs[i].m_marked_vertex : vertex_pairs[i].m_unmarked_vertex;
+        if (nullptr == v || nullptr == v->m_edges)
+          continue;
+        for (unsigned int vei = 0; vei < v->m_edge_count; vei++)
+        {
+          ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+          if (nullptr == e)
+            continue;
+          const ON_SubD::EdgeTag adjusted_etag = Internal_AdjustedEdgeTag(e);
+          if (ON_SubD::EdgeTag::Unset != adjusted_etag && e->m_edge_tag != adjusted_etag)
+            e->m_edge_tag = adjusted_etag;
+        }
+      }
+    }
+
     // remove cached subdivision calculations
     ClearEvaluationCache();
 
@@ -10643,10 +11195,6 @@ unsigned int ON_SubD::ExtrudeComponents(
     break;
   }
 
-
-  if (bRestoreMarks)
-    SetComponentMarks(true, marked_components);
-
 #if defined(ON_DEBUG)
   IsValid();
 #endif
@@ -10654,6 +11202,1328 @@ unsigned int ON_SubD::ExtrudeComponents(
   return f_count;
 }
 
+unsigned int ON_SubD::SetVertexTags(
+  const ON_COMPONENT_INDEX* ci_list,
+  size_t ci_count,
+  ON_SubD::VertexTag vertex_tag
+)
+{
+  if (
+    ON_SubD::VertexTag::Smooth != vertex_tag
+    && ON_SubD::VertexTag::Crease != vertex_tag
+    && ON_SubD::VertexTag::Corner != vertex_tag
+    )
+    return 0;
+
+  if (
+    ci_count <= 0
+    || nullptr == ci_list
+    || VertexCount() <= 0
+    )
+    return 0;
+
+  ON_SimpleArray<ON_SubDComponentPtr> cptr_list;
+  if (ComponentPtrFromComponentIndex(ci_list,ci_count,cptr_list) <= 0)
+    return 0; // nothing to change
+
+  return SetVertexTags(
+    cptr_list.Array(),
+    cptr_list.UnsignedCount(),
+    vertex_tag
+    );
+}
+
+unsigned int ON_SubD::SetVertexTags(
+  const ON_SubDComponentPtr* cptr_list,
+  size_t cptr_count,
+  ON_SubD::VertexTag vertex_tag
+)
+{
+  if (
+    ON_SubD::VertexTag::Smooth != vertex_tag
+    && ON_SubD::VertexTag::Crease != vertex_tag
+    && ON_SubD::VertexTag::Corner != vertex_tag
+    )
+    return 0;
+
+  if (cptr_count <= 0 || nullptr == cptr_list)
+    return 0;
+
+  ON_SubDComponentMarksClearAndRestore mark_guard(*this);
+
+  const bool bNewVertexTagIsSmooth = (ON_SubD::VertexTag::Smooth == vertex_tag);
+
+  // count and mark vertex candidates
+  // mark edges that may need to have their tag changed
+  unsigned int candidate_count = 0;
+  for (size_t i = 0; i < cptr_count; i++)
+  {
+    ON_SubDVertex* vertex = cptr_list[i].Vertex();
+    if (nullptr == vertex)
+      continue;
+    if (vertex->m_vertex_tag == vertex_tag)
+      continue;
+
+    if (ON_SubD::VertexTag::Corner != vertex_tag)
+    {
+      // new vertex_tag is Smooth or Crease
+      if (nullptr == vertex->m_edges || vertex->m_edge_count < 2)
+        continue;
+
+      unsigned short min_face_count = 0xFFFFU;
+      unsigned short max_face_count = 0xFFFEU;
+      for (unsigned short vei = 0; vei < vertex->m_edge_count; vei++)
+      {
+        const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+        if (nullptr == edge)
+          continue;
+        // The next if (min_face_count > min_face_count) should be if (min_face_count > max_face_count)
+        // and is a bug that will not be fixed in 6.x because it exposes other bugs below.
+        // Without the fix, max_face_count is always 0xFFFEU and the continue always occurs.
+        // It will be fixed in 7.x. See RH-51598.
+        if (min_face_count > min_face_count)
+        {
+          min_face_count = edge->m_face_count;
+          max_face_count = edge->m_face_count;
+        }
+        else if (edge->m_face_count < min_face_count)
+          min_face_count = edge->m_face_count;
+        else if (edge->m_face_count > max_face_count)
+          max_face_count = edge->m_face_count;
+      }
+
+      if (max_face_count > 2)
+        continue;
+
+      if (bNewVertexTagIsSmooth && 2 != min_face_count )
+        continue;
+    }
+
+    candidate_count++;
+    vertex->m_status.SetRuntimeMark();
+    if (nullptr != vertex->m_edges)
+    {
+      if (ON_SubD::VertexTag::Corner == vertex_tag)
+      {
+        const unsigned int crease_count = vertex->EdgeCount(ON_SubD::EdgeTag::Crease);
+        if (2 == crease_count)
+          continue; // do not crease additional edges
+      }
+
+      for (unsigned short vei = 0; vei < vertex->m_edge_count; vei++)
+      {
+        const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+        if (nullptr == edge)
+          continue;
+        if (bNewVertexTagIsSmooth)
+        {
+          // new vertex_tag is Smooth
+          if (edge->IsSmoothNotX())
+            continue;
+        }
+        else
+        {
+          // new vertex_tag is Crease or Corner
+          if (edge->IsCrease())
+            continue;
+        }
+
+        // This edge tag will need to be changed
+        edge->m_status.SetRuntimeMark();
+      }
+    }
+  }
+
+  if (0 == candidate_count)
+    return 0;
+
+  bool bUpdateTags = (ON_SubD::VertexTag::Crease != vertex_tag);
+
+  // This for loop is used when new vertex_tag is ON_SubD::VertexTag::Crease.
+  for (int pass = 0; pass < 2 && false == bUpdateTags; pass++)
+  {
+    // More careful analysis is neeeded to accurately mark smooth edges that will become creases
+    ON_SubDEdgeIterator eit(*this);
+    for (const ON_SubDEdge* edge = eit.FirstEdge(); nullptr != edge; edge = eit.NextEdge())
+    {
+      if (false == edge->m_status.RuntimeMark())
+        continue;
+      
+      edge->m_status.ClearRuntimeMark();
+      if (false == edge->IsSmooth())
+        continue;
+
+      const ON_SubDVertex* v[2] = { edge->m_vertex[0], edge->m_vertex[1] };
+      if (nullptr == v[0] || nullptr == v[1])
+        continue;
+
+      const ON_SubD::VertexTag vtag[2] = {
+        (v[0]->m_status.RuntimeMark() ? vertex_tag : v[0]->m_vertex_tag),
+        (v[1]->m_status.RuntimeMark() ? vertex_tag : v[1]->m_vertex_tag)
+      };
+
+      // At least one of v[0] and v[1] had m_vertex_tag changed.
+
+      ON_SubD::EdgeTag edge_tag;
+      for (;;)
+      {
+        if (2 != edge->m_face_count)
+        {
+          edge_tag = ON_SubD::EdgeTag::Crease;
+          break;
+        }
+
+        if (2 == v[0]->m_edge_count && (ON_SubD::VertexTag::Crease == vtag[0] || ON_SubD::VertexTag::Corner == vtag[0]))
+        {
+          edge_tag = ON_SubD::EdgeTag::Crease;
+          break;
+        }
+
+        if (2 == v[1]->m_edge_count && (ON_SubD::VertexTag::Crease == vtag[1] || ON_SubD::VertexTag::Corner == vtag[1]))
+        {
+          edge_tag = ON_SubD::EdgeTag::Crease;
+          break;
+        }
+
+        if (
+          (ON_SubD::VertexTag::Crease == vtag[0] || ON_SubD::VertexTag::Corner == vtag[0] || ON_SubD::VertexTag::Dart == vtag[0])
+          &&
+          (ON_SubD::VertexTag::Crease == vtag[1] || ON_SubD::VertexTag::Corner == vtag[1] || ON_SubD::VertexTag::Dart == vtag[1])
+          )
+        {
+          edge_tag = ON_SubD::EdgeTag::Crease;
+          break;
+        }
+
+        edge_tag = ON_SubD::EdgeTag::Smooth;
+        break;
+      }
+
+      if (ON_SubD::EdgeTag::Crease == edge_tag)
+        edge->m_status.SetRuntimeMark();
+    }
+
+    // make sure new crease vertices will have the right number of creased edges
+    bUpdateTags = true;
+    for (size_t i = 0; i < cptr_count; i++)
+    {
+      ON_SubDVertex* vertex = cptr_list[i].Vertex();
+      if (nullptr == vertex)
+        continue;
+      if (false == vertex->m_status.RuntimeMark())
+        continue;
+      unsigned int crease_count = 0;
+      unsigned int marked_count = 0;
+      for (unsigned short vei = 0; vei < vertex->m_edge_count; vei++)
+      {
+        const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+        if (nullptr == edge)
+          continue;
+        if (edge->IsCrease())
+          ++crease_count;
+        else if (edge->m_status.RuntimeMark())
+          ++marked_count;
+      }
+      if (crease_count + marked_count <= 2 && (0 != crease_count || 0 != marked_count))
+        continue;
+
+      if (pass > 0)
+        return 0;
+      bUpdateTags = false;
+      if (2 == crease_count)
+      {
+        for (unsigned short vei = 0; vei < vertex->m_edge_count; vei++)
+        {
+          const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+          if (nullptr != edge)
+            edge->m_status.ClearRuntimeMark();
+        }
+      }
+      else
+      {
+        vertex->m_status.ClearRuntimeMark();
+        candidate_count--;
+      }
+    }
+
+    if (0 == candidate_count)
+      return 0;
+  }
+
+  if (false == bUpdateTags)
+    return 0;
+
+  unsigned int changed_vertex_count = 0;
+  for (size_t i = 0; i < cptr_count; i++)
+  {
+    ON_SubDVertex* vertex = cptr_list[i].Vertex();
+    if (nullptr == vertex)
+      continue;
+    if (false == vertex->m_status.RuntimeMark())
+      continue;
+    changed_vertex_count++;
+    vertex->m_vertex_tag = vertex_tag;
+    vertex->VertexModifiedNofification();
+    for (unsigned short vei = 0; vei < vertex->m_edge_count; vei++)
+    {
+      const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+      if (nullptr == edge)
+        continue;
+      if ( false == bNewVertexTagIsSmooth
+        && edge->m_status.RuntimeMark() 
+        && false == edge->IsCrease()
+        )
+      {
+        const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubD::EdgeTag::Crease;
+        edge->EdgeModifiedNofification();
+      }
+      edge->m_status.SetRuntimeMark();
+
+      const ON_SubDVertex* other_vertex = edge->OtherEndVertex(vertex);
+      other_vertex->m_status.SetRuntimeMark();
+
+      if ( false == bNewVertexTagIsSmooth
+        && ON_SubD::EdgeTag::Crease == edge->m_edge_tag
+        && other_vertex->IsSmooth()
+        )
+      {
+        const_cast<ON_SubDVertex*>(other_vertex)->m_vertex_tag = ON_SubD::VertexTag::Dart;
+        other_vertex->VertexModifiedNofification();
+      }
+    }
+  }
+
+  if (0 == changed_vertex_count)
+    return 0;
+
+  ON_SubDEdgeIterator eit(*this);
+  for (const ON_SubDEdge* edge = eit.FirstEdge(); nullptr != edge; edge = eit.NextEdge())
+  {
+    if (false == edge->m_status.RuntimeMark())
+      continue;
+    const ON_SubDVertex* v[2] = { edge->m_vertex[0], edge->m_vertex[1] };
+    if (nullptr == v[0] || nullptr == v[1])
+      continue;
+
+    ON_SubD::EdgeTag edge_tag;
+    if (v[0]->IsCreaseOrCornerOrDart() && v[1]->IsCreaseOrCornerOrDart())
+      edge_tag = ON_SubD::EdgeTag::Crease;
+    else
+      edge_tag = ON_SubD::EdgeTag::Smooth;
+
+    if (edge->m_edge_tag == edge_tag)
+      continue;
+    const_cast<ON_SubDEdge*>(edge)->m_edge_tag = edge_tag;
+    edge->EdgeModifiedNofification();
+  }
+
+  ON_SubDVertexIterator vit(*this);
+  for (const ON_SubDVertex* vertex = vit.FirstVertex(); nullptr != vertex; vertex = vit.NextVertex())
+  {
+    if (false == vertex->m_status.RuntimeMark())
+      continue;
+    const unsigned int crease_count = vertex->EdgeCount(ON_SubD::EdgeTag::Crease);
+    ON_SubD::VertexTag vtag = vertex->m_vertex_tag;
+    if (2 == crease_count)
+    {
+      if ( false == vertex->IsCreaseOrCorner() )
+        vtag = ON_SubD::VertexTag::Crease;
+    }
+    else if (1 == crease_count)
+      vtag = ON_SubD::VertexTag::Dart;
+    else if (crease_count > 2)
+      vtag = ON_SubD::VertexTag::Corner;
+    else
+      vtag = ON_SubD::VertexTag::Smooth;
+    if (vertex->m_vertex_tag == vtag)
+      continue;
+    const_cast<ON_SubDVertex*>(vertex)->m_vertex_tag = vtag;
+  }
+
+  ClearLimitSurfaceMesh();
+  UpdateAllTagsAndSectorCoefficients(false);
+
+  return changed_vertex_count;
+}
+
+unsigned int ON_SubD::SetEdgeTags(
+  const ON_COMPONENT_INDEX* ci_list,
+  size_t ci_count,
+  ON_SubD::EdgeTag edge_tag
+)
+{
+  if (ON_SubD::EdgeTag::Smooth != edge_tag && ON_SubD::EdgeTag::Crease != edge_tag)
+    return 0;
+
+  if (
+    ci_count <= 0
+    || nullptr == ci_list
+    || EdgeCount() <= 0
+    )
+    return 0;
+
+  ON_SimpleArray<ON_SubDComponentPtr> cptr_list;
+  if (ComponentPtrFromComponentIndex(ci_list,ci_count,cptr_list) <= 0)
+    return 0; // nothing to change
+
+  return SetEdgeTags(
+    cptr_list.Array(),
+    cptr_list.UnsignedCount(),
+    edge_tag
+    );
+}
+
+unsigned int ON_SubD::SetEdgeTags(
+  const ON_SubDComponentPtr* cptr_list,
+  size_t cptr_count,
+  ON_SubD::EdgeTag edge_tag
+)
+{
+  if (ON_SubD::EdgeTag::Smooth != edge_tag && ON_SubD::EdgeTag::Crease != edge_tag)
+    return 0;
+
+  if (
+    cptr_count <= 0
+    || nullptr == cptr_list
+    || EdgeCount() <= 0
+    )
+    return 0;
+
+  unsigned int changed_edge_count = 0;
+
+  const bool bChangeToSmooth = (ON_SubD::EdgeTag::Smooth == edge_tag) ? true : false;
+
+  for (size_t i = 0; i < cptr_count; i++)
+  {
+    ON_SubDEdge* edge = cptr_list[i].Edge();
+    if (nullptr == edge)
+      continue;
+    if (bChangeToSmooth == edge->IsSmooth())
+      continue;
+    if (bChangeToSmooth && 2 != edge->FaceCount())
+      continue;
+
+    edge->EdgeModifiedNofification();
+
+    changed_edge_count++;
+    edge->m_edge_tag = edge_tag;
+    edge->UnsetSectorCoefficients();
+    for (int evi = 0; evi < 2; evi++)
+    {
+      ON_SubDVertex* v = const_cast<ON_SubDVertex*>(edge->m_vertex[evi]);
+      if (nullptr == v)
+        continue;
+      v->m_vertex_tag = ON_SubD::VertexTag::Unset;
+    }
+  }
+
+  if (0 == changed_edge_count)
+    return 0;
+
+  ClearLimitSurfaceMesh();
+
+  ON_SubDVertexIterator vit(*this);
+  for (const ON_SubDVertex* v = vit.FirstVertex(); nullptr != v; v = vit.NextVertex())
+  {
+    if (ON_SubD::VertexTag::Unset != v->m_vertex_tag)
+      continue;
+    unsigned crease_count = 0;
+    const unsigned vertex_edge_count = v->EdgeCount();
+    for (unsigned vei = 0; vei < vertex_edge_count; vei++)
+    {
+      const ON_SubDEdge* e = v->Edge(vei);
+      if (nullptr == e)
+        continue;
+      if (e->IsCrease())
+      {
+        crease_count++;
+        if (crease_count > 2)
+          break;
+      }
+    }
+    ON_SubD::VertexTag vertex_tag;
+    switch (crease_count)
+    {
+    case 0:
+      vertex_tag = ON_SubD::VertexTag::Smooth;
+      break;
+    case 1:
+      vertex_tag = ON_SubD::VertexTag::Dart;
+      break;
+    case 2:
+      vertex_tag = ON_SubD::VertexTag::Crease;
+      break;
+    default:
+      vertex_tag = ON_SubD::VertexTag::Corner;
+      break;
+    }
+    if (v->m_vertex_tag != vertex_tag)
+    {
+      const_cast<ON_SubDVertex*>(v)->m_vertex_tag = vertex_tag;
+    }
+  }
+
+  ON_SubDEdgeIterator eit(*this);
+  for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
+  {
+    ON_SubD::EdgeTag e_tag = e->m_edge_tag;
+    if (nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1])
+      e_tag = ON_SubD::EdgeTag::Unset;
+    else if (ON_SubD::EdgeTag::Smooth == e_tag
+      && ON_SubD::VertexTag::Smooth != e->m_vertex[0]->m_vertex_tag
+      && ON_SubD::VertexTag::Smooth != e->m_vertex[1]->m_vertex_tag)
+      e_tag = ON_SubD::EdgeTag::Unset;
+    if (e_tag != e->m_edge_tag)
+    {
+      const_cast<ON_SubDEdge*>(e)->m_edge_tag = e_tag;
+      e->UnsetSectorCoefficients();
+    }
+  }
+
+  UpdateAllTagsAndSectorCoefficients(false);
+  return changed_edge_count;
+}
+
+
+const ON_SubDEdgePtr ON_SubDEdgeChain::EdgeChainNeighbor(
+    ON_SubDEdgePtr starting_edge,
+    ON_ChainDirection search_direction,
+    bool bStopAtBreak,
+    bool bEnableStatusCheck,
+    ON_ComponentStatus status_pass,
+    ON_ComponentStatus status_fail
+  )
+{
+  for (;;)
+  {
+    if (ON_ChainDirection::Previous != search_direction && ON_ChainDirection::Next != search_direction)
+      break;
+    const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(starting_edge.m_ptr);
+    if (nullptr == edge)
+      break;
+    bool bReverse = (ON_ChainDirection::Previous == search_direction);    
+    if (0 != ON_SUBD_EDGE_DIRECTION(starting_edge.m_ptr))
+      bReverse = !bReverse;
+    const ON_SubDVertex* v = edge->m_vertex[bReverse ? 0 : 1];
+    if (nullptr == v)
+      break;
+    if (v->m_edge_count <= 1 || nullptr == v->m_edges)
+      break;
+    
+    const bool bIsSmooth = edge->IsSmooth();
+    const bool bIsCrease = edge->IsCrease();
+    if (bIsSmooth != (bIsCrease?false:true))
+      break;
+
+    if (bStopAtBreak)    
+    {
+      if (bIsSmooth)
+      {
+        if (ON_SubD::VertexTag::Smooth != v->m_vertex_tag)
+          break;
+      }
+      else
+      {
+        if (ON_SubD::VertexTag::Crease != v->m_vertex_tag)
+          break;
+      }
+    }
+
+    // Look for a single neighbor with same crease/smooth property and same face count
+    // This lets chains turn the right way when there are both creases and smooth
+    // edges.
+    const ON_SubDEdge* nxt = nullptr;
+    for (unsigned short vei = 0; vei < v->m_edge_count; vei++)
+    {
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+      if (edge == e)
+        continue;
+      if (bIsSmooth != e->IsSmooth())
+        continue;
+      if (bIsCrease != e->IsCrease())
+        continue;
+      if (e->m_face_count != edge->m_face_count)
+        continue;
+      if (e->m_vertex[0] != v && e->m_vertex[1] != v)
+        continue; // bogus edge
+      if (nullptr == nxt)
+      {
+        nxt = e;
+        continue;
+      }
+      // ambiguous options here
+      nxt = nullptr;
+      break;
+    }
+    const int nxt_connecting_vertex_index = (ON_ChainDirection::Next == search_direction) ? 0 : 1;
+    if (nullptr != nxt)
+    {
+      if (false == bEnableStatusCheck || ON_ComponentStatus::StatusCheck(nxt->m_status, status_pass, status_fail))
+        return ON_SubDEdgePtr::Create(nxt, (v == nxt->m_vertex[nxt_connecting_vertex_index]) ? 0 : 1);
+    }
+
+    if (2 != edge->m_face_count || 4 != v->m_edge_count)
+      break;
+    const ON_SubDFace* f[2] = { ON_SUBD_FACE_POINTER(edge->m_face2[0].m_ptr),ON_SUBD_FACE_POINTER(edge->m_face2[1].m_ptr) };
+    if (nullptr == f[0] || nullptr == f[1] || f[0] == f[1])
+      break;
+    for (unsigned short vei = 0; vei < v->m_edge_count; vei++)
+    {
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+      if (edge == e)
+        continue;
+      if (2 != e->m_face_count)
+        continue;
+      if (e->m_vertex[0] != v && e->m_vertex[1] != v)
+        continue; // bogus edge
+      const ON_SubDFace* nxtf[2] = { ON_SUBD_FACE_POINTER(e->m_face2[0].m_ptr),ON_SUBD_FACE_POINTER(e->m_face2[1].m_ptr) };
+      if (nullptr == nxtf[0] || nullptr == nxtf[1] || nxtf[0] == nxtf[1])
+        continue;
+      if (f[0] == nxtf[0] || f[1] == nxtf[0])
+        continue;
+      if (f[0] == nxtf[1] || f[1] == nxtf[1])
+        continue;
+      if (nullptr == nxt)
+      {
+        nxt = e;
+        continue;
+      }
+      // ambiguous options here
+      nxt = nullptr;
+      break;
+    }
+    if (nullptr != nxt)
+    {
+      if (bStopAtBreak && bIsSmooth != nxt->IsSmooth())
+        break;
+      if (false == bEnableStatusCheck || ON_ComponentStatus::StatusCheck(nxt->m_status, status_pass, status_fail))
+        return ON_SubDEdgePtr::Create(nxt, (v == nxt->m_vertex[nxt_connecting_vertex_index]) ? 0 : 1);
+    }
+
+    break;
+  }
+
+  return ON_SubDEdgePtr::Null;
+}
+
+void ON_UniqueTester::Block::DeleteBlock(Block* blk)
+{
+  if (nullptr != blk)
+    onfree(blk);
+}
+
+ON_UniqueTester::Block* ON_UniqueTester::Block::NewBlock()
+{
+  size_t sz1 = sizeof(Block);
+  while (0 != sz1 % 8)
+    sz1++;
+  size_t sz2 = ON_UniqueTester::Block::BlockCapacity * sizeof(m_a[0]);
+  void* p = onmalloc(sz1 + sz2);
+  Block* blk = new (p) Block();
+  blk->m_a = (ON__UINT_PTR*)((char*)(p)) + sz1;
+  return blk;
+}
+
+int ON_UniqueTester::Block::Compare(ON__UINT_PTR* lhs, ON__UINT_PTR* rhs)
+{
+  if (*lhs < *rhs)
+    return -1;
+  if (*lhs > *rhs)
+    return 1;
+  return 0;
+}
+
+bool ON_UniqueTester::Block::InBlock(size_t sorted_count,ON__UINT_PTR x) const
+{
+  if (nullptr != m_a && m_count > 0)
+  {
+    if ( sorted_count > 0 && x >= m_a[0] && x <= m_a[sorted_count - 1])
+    {
+      if (nullptr != bsearch(&x, m_a, sorted_count, sizeof(m_a[0]), (int(*)(const void*, const void*))ON_UniqueTester::Block::Compare))
+        return true;
+    }
+    if (sorted_count < m_count)
+    {
+      const ON__UINT_PTR* p = m_a + sorted_count;
+      const ON__UINT_PTR* p1 = m_a + m_count;
+      while (p < p1)
+      {
+        if (x == *p++)
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+void ON_UniqueTester::Block::SortBlock()
+{
+  ON_qsort(m_a, m_count, sizeof(m_a[0]), (int(*)(const void*, const void*))ON_UniqueTester::Block::Compare);
+}
+
+void ON_UniqueTester::Internal_CopyFrom(
+  const ON_UniqueTester & src
+)
+{
+  m_block_list = nullptr;
+  m_sorted_count = 0;
+ 
+  Block* first_blk = nullptr;
+
+  for ( Block* src_blk = src.m_block_list; nullptr != src_blk; src_blk = src_blk->m_next)
+  {
+    Block* blk = Block::NewBlock();
+    memcpy( blk->m_a, src_blk->m_a, src_blk->m_count * sizeof(blk->m_a[0]) );
+    blk->m_count = src_blk->m_count;
+    if (nullptr == first_blk)
+    {
+      first_blk = blk;
+    }
+    else
+    {
+      blk->m_next = m_block_list;
+      m_block_list = blk;
+    }
+  }  
+
+  if (nullptr != first_blk)
+  {
+    if (src.m_sorted_count != first_blk->m_count)
+      first_blk->SortBlock();
+    first_blk->m_next = m_block_list;
+    m_block_list = first_blk;
+    m_sorted_count = first_blk->m_count;
+  }
+}
+
+void ON_UniqueTester::Internal_Destroy()
+{
+  Block* nxt = m_block_list;
+  m_block_list = nullptr;
+  m_sorted_count = 0;
+  for ( Block* blk = nxt; nullptr != blk; blk = nxt)
+  {
+    nxt = blk->m_next;
+    Block::DeleteBlock(blk);
+  }  
+}
+
+ON_UniqueTester::~ON_UniqueTester()
+{
+  Internal_Destroy();
+}
+
+ON_UniqueTester::ON_UniqueTester(const ON_UniqueTester& src)
+{
+  Internal_CopyFrom(src);
+}
+
+ON_UniqueTester& ON_UniqueTester::operator=(const ON_UniqueTester& src)
+{
+  if (this != &src)
+  {
+    Internal_Destroy();
+    Internal_CopyFrom(src);
+  }
+  return *this;
+}
+
+bool ON_UniqueTester::InList(ON__UINT_PTR x) const
+{
+  size_t sorted_count = m_sorted_count;
+  for ( const Block* blk = m_block_list; nullptr != blk; blk = blk->m_next)
+  {
+    if (blk->InBlock(sorted_count, x))
+      return true;
+    sorted_count = ON_UniqueTester::Block::BlockCapacity;
+  }  
+  return false;
+}
+
+bool ON_UniqueTester::AddToList(ON__UINT_PTR x)
+{
+  if (nullptr != m_block_list && m_sorted_count + 50 == m_block_list->m_count)
+  {
+    m_block_list->SortBlock();
+    m_sorted_count = m_block_list->m_count;
+  }
+  if (InList(x))
+    return false;
+  Internal_AddValue(x);
+  return true;
+}
+
+
+void ON_UniqueTester::ExpertAddNewToList(ON__UINT_PTR x)
+{
+  Internal_AddValue(x);
+}
+
+void ON_UniqueTester::Internal_AddValue(ON__UINT_PTR x)
+{
+  if (nullptr == m_block_list || ON_UniqueTester::Block::BlockCapacity == m_block_list->m_count)
+  {
+    if (nullptr != m_block_list && m_sorted_count < ON_UniqueTester::Block::BlockCapacity)
+      m_block_list->SortBlock();
+    ON_UniqueTester::Block* blk = ON_UniqueTester::Block::NewBlock();
+    blk->m_next = m_block_list;
+    m_block_list = blk;
+    m_sorted_count = 0;
+  }
+  m_block_list->m_a[m_block_list->m_count++] = x;
+  if ( 1 == m_block_list->m_count
+    || (m_sorted_count+1 == m_block_list->m_count && x > m_block_list->m_a[m_sorted_count-1])
+    )
+    ++m_sorted_count;
+}
+
+void ON_UniqueTester::ClearList()
+{
+  Internal_Destroy();
+}
+
+unsigned int ON_UniqueTester::Count() const
+{
+  size_t count = 0;
+  for ( const Block* blk = m_block_list; nullptr != blk; blk = blk->m_next)
+  {
+    count += blk->m_count;
+  }
+  return (unsigned int)count;
+}
+
+
+const ON_SimpleArray<ON_SubDEdgePtr>& ON_SubDEdgeChain::EdgeChain() const
+{
+  return m_edge_chain;
+}
+
+const ON_SubD& ON_SubDEdgeChain::SubD() const
+{
+  return m_subd_ref.SubD();
+}
+
+const ON_SubDRef ON_SubDEdgeChain::SubDRef() const
+{
+  return m_subd_ref;
+}
+
+bool ON_SubDEdgeChain::InChain(
+  const ON_SubDEdgePtr edge_ptr
+) const
+{
+  return InChain(ON_SUBD_EDGE_POINTER(edge_ptr.m_ptr));
+}
+
+bool ON_SubDEdgeChain::InChain(
+  const ON_SubDEdge* edge
+) const
+{
+  return (nullptr == edge) ? false : m_unique_tester.InList((ON__UINT_PTR)edge);
+}
+
+bool ON_SubDEdgeChain::InChain(
+  const ON_SubDVertex* vertex
+) const
+{
+  return (nullptr == vertex) ? false : m_unique_tester.InList((ON__UINT_PTR)vertex);
+}
+
+bool ON_SubDEdgeChain::IsClosedLoop() const
+{
+  const unsigned int count = m_edge_chain.UnsignedCount();
+  return (count >= 2 && m_edge_chain[0].RelativeVertex(0) == m_edge_chain[count - 1].RelativeVertex(1));
+}
+
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  const ON_SubDEdge* initial_edge
+)
+{
+  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, ON_SubDEdgePtr::Create(initial_edge, 0));
+}
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  const ON_SimpleArray<const ON_SubDEdge* >& initial_edge_chain
+)
+{
+  return BeginEdgeChain(subd_ref, initial_edge_chain.UnsignedCount(), initial_edge_chain.Array());
+}
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  size_t edge_count,
+  const ON_SubDEdge*const* initial_edge_chain
+)
+{
+  ClearEdgeChain();
+
+  if (
+    edge_count <= 0 
+    || subd_ref.SubD().IsEmpty() 
+    || subd_ref.SubD().EdgeCount() < (unsigned int)edge_count
+    )
+    return 0;
+
+  if ( 1 == edge_count)
+    return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, ON_SubDEdgePtr::Create(initial_edge_chain[0], 0));
+
+  const ON_SubDEdge* e0 = initial_edge_chain[0];
+  if (nullptr == e0 || nullptr == e0->m_vertex[0] || nullptr == e0->m_vertex[1] )
+    return 0;
+  const ON_SubDEdge* e1 = initial_edge_chain[1];
+  if (nullptr == e1 || nullptr == e1->m_vertex[0] || nullptr == e1->m_vertex[1] )
+    return 0;
+
+
+  ON_SubDEdgePtr eptr = ON_SubDEdgePtr::Create(e0, (e0->m_vertex[1] == e1->m_vertex[0] || e0->m_vertex[1] == e1->m_vertex[1]) ? 0 : 1);
+
+  ON_SimpleArray<ON_SubDEdgePtr> eptr_chain(edge_count);
+  eptr_chain.Append(eptr);
+  const ON_SubDVertex* v = eptr.RelativeVertex(1);
+  for (unsigned int i = 1; i < edge_count; i++)
+  {
+    e1 = initial_edge_chain[i];
+    if (nullptr == e1 || nullptr == e1->m_vertex[0] || nullptr == e1->m_vertex[1] )
+      return 0;
+    if (v != e1->m_vertex[0] && v != e1->m_vertex[1])
+      return 0;
+    eptr = ON_SubDEdgePtr::Create(e1, (v == e1->m_vertex[0]) ? 0 : 1);
+    eptr_chain.Append(eptr);
+  }
+
+  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref,eptr_chain);
+}
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  ON_SubDEdgePtr eptr
+)
+{
+  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, 1, &eptr);
+}
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  const ON_SimpleArray<ON_SubDEdgePtr>& initial_edge_chain
+)
+{
+  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, initial_edge_chain.UnsignedCount(), initial_edge_chain.Array() );
+}
+
+unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_SubDRef subd_ref,
+  size_t edge_count,
+  const ON_SubDEdgePtr* initial_edge_chain
+)
+{
+  ClearEdgeChain();
+
+  m_subd_ref = subd_ref;
+
+  if (edge_count <= 0 || m_subd_ref.SubD().IsEmpty())
+    return 0;
+
+  if ( ((size_t)subd_ref.SubD().EdgeCount()) < edge_count )
+    return 0;
+
+  m_edge_chain.Reserve(edge_count + 128);
+  const ON_SubDVertex* first_vertex = nullptr;
+  const ON_SubDVertex* last_vertex = nullptr;
+  for (size_t i = 0; i < edge_count; i++)
+  {
+    const ON_SubDEdgePtr eptr = initial_edge_chain[i];
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+    if (nullptr == e)
+      continue;
+    if (m_unique_tester.InList((ON__UINT_PTR)e))
+      continue;
+    const ON__UINT_PTR edir = ON_SUBD_EDGE_DIRECTION(eptr.m_ptr);
+    const ON_SubDVertex* v[2] = { e->m_vertex[edir], e->m_vertex[1 - edir] };
+    if (nullptr == v[0] || nullptr == v[1] || v[0] == v[1] )
+      continue;
+    if (nullptr == first_vertex)
+    {
+      first_vertex = v[0];
+      last_vertex = v[1];
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)first_vertex);
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)last_vertex);
+    }
+    else 
+    {
+      if (last_vertex != v[0])
+        continue;
+      if (v[1] != first_vertex)
+      {
+        if (m_unique_tester.AddToList((ON__UINT_PTR)v[1]))
+          continue;
+      }
+    }
+    m_edge_chain.Append(eptr);
+    m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)e);
+    last_vertex = v[1];
+    if (last_vertex == first_vertex)
+      break;
+  };
+
+  return m_edge_chain.UnsignedCount();
+}
+
+void ON_SubDEdgeChain::ClearEdgeChain()
+{
+  m_edge_chain.SetCount(0);
+  m_unique_tester.ClearList();
+}
+
+unsigned int ON_SubDEdgeChain::EdgeCount() const
+{
+  return m_edge_chain.UnsignedCount();
+}
+
+void ON_SubDEdgeChain::SetStatusCheck(
+  bool bEnableStatusCheck,
+  ON_ComponentStatus status_check_pass,
+  ON_ComponentStatus status_check_fail
+)
+{
+  m_bEnableStatusCheck = bEnableStatusCheck ? true : false;
+  m_status_check_pass = status_check_pass;
+  m_status_check_fail = status_check_fail;  
+}
+
+bool ON_SubDEdgeChain::StatusCheckEnabled() const
+{
+  return m_bEnableStatusCheck;
+}
+
+void ON_SubDEdgeChain::Reverse()
+{
+  ON_SubDEdgeChain::ReverseEdgeChain(m_edge_chain);
+}
+
+const ON_SubDEdgePtr ON_SubDEdgeChain::FirstEdgePtr() const
+{
+  return m_edge_chain.UnsignedCount() > 0 ? m_edge_chain[0] : ON_SubDEdgePtr::Null;
+}
+const ON_SubDEdgePtr ON_SubDEdgeChain::LastEdgePtr() const
+{
+  return m_edge_chain.UnsignedCount() > 0 ? *(m_edge_chain.Last()) : ON_SubDEdgePtr::Null;
+}
+
+const ON_SubDEdgePtr ON_SubDEdgeChain::EdgePtr(int edge_index) const
+{
+  return (edge_index >= 0 && edge_index < m_edge_chain.Count()) ? m_edge_chain[edge_index] : ON_SubDEdgePtr::Null;
+}
+
+const ON_SubDEdge* ON_SubDEdgeChain::FirstEdge() const
+{
+  return FirstEdgePtr().Edge();
+}
+
+const ON_SubDEdge* ON_SubDEdgeChain::LastEdge() const
+{
+  return LastEdgePtr().Edge();
+}
+
+const ON_SubDEdge* ON_SubDEdgeChain::Edge(int edge_index) const
+{
+  return EdgePtr(edge_index).Edge();
+}
+
+const ON_SubDVertex* ON_SubDEdgeChain::FirstVertex() const
+{
+  return Vertex(0);
+}
+
+const ON_SubDVertex* ON_SubDEdgeChain::LastVertex() const
+{
+  return Vertex(m_edge_chain.Count());
+}
+
+const ON_SubDVertex* ON_SubDEdgeChain::Vertex(int vertex_index) const
+{
+  const int edge_count = m_edge_chain.Count();
+  if ( vertex_index >= 0 && vertex_index <= edge_count && edge_count > 0 )
+  {
+    return 
+      (vertex_index == edge_count)
+      ? m_edge_chain[edge_count - 1].RelativeVertex(1)
+      : m_edge_chain[vertex_index].RelativeVertex(0);
+  }
+  return nullptr;
+}
+
+
+unsigned int ON_SubDEdgeChain::AddOneNeighbor(
+  ON_ChainDirection direction,
+  bool bStopAtTagChange
+)
+{
+  const unsigned int count0 = m_edge_chain.UnsignedCount();
+  if (count0 <= 0 || IsClosedLoop() )
+    return 0;
+
+  ON_SubDEdgePtr eptr;
+  const ON_SubDEdge* e;
+  const ON_SubDVertex* v;
+
+  const ON_SubDVertex* chain_ends[2] = { FirstVertex() ,LastVertex() };
+
+  eptr
+    = (ON_ChainDirection::Previous != direction)
+    ? ON_SubDEdgeChain::EdgeChainNeighbor(LastEdgePtr(), ON_ChainDirection::Next, bStopAtTagChange, m_bEnableStatusCheck, m_status_check_pass, m_status_check_fail)
+    : ON_SubDEdgePtr::Null;
+  e = eptr.Edge();
+  v = eptr.RelativeVertex(0);
+  if ( nullptr != v && v == chain_ends[1] && false == InChain(e) )
+  {
+    v = eptr.RelativeVertex(1);
+    if (v == chain_ends[0] || m_unique_tester.AddToList((ON__UINT_PTR)v))
+    {
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)e);
+      m_edge_chain.Append(eptr);
+    }
+  }
+
+  eptr
+    = (ON_ChainDirection::Next != direction)
+    ? ON_SubDEdgeChain::EdgeChainNeighbor(FirstEdgePtr(), ON_ChainDirection::Previous, bStopAtTagChange, m_bEnableStatusCheck, m_status_check_pass, m_status_check_fail)
+    : ON_SubDEdgePtr::Null;
+  e = eptr.Edge();
+  v = eptr.RelativeVertex(1);
+  if ( nullptr != v && v == chain_ends[0] && false == InChain(e) )
+  {
+    v = eptr.RelativeVertex(0);
+    if (v == chain_ends[1] || m_unique_tester.AddToList((ON__UINT_PTR)v))
+    {
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)e);
+      m_edge_chain.Insert(0, eptr);
+    }
+  }
+
+  return m_edge_chain.UnsignedCount() - count0;
+}
+
+unsigned int ON_SubDEdgeChain::AddAllNeighbors(
+  ON_ChainDirection direction,
+  bool bStopAtTagChange
+)
+{
+  const unsigned int count0 = m_edge_chain.UnsignedCount();
+  if (count0 <= 0 || IsClosedLoop())
+    return 0;
+
+  if (ON_ChainDirection::Previous != direction)
+    while (1 == AddOneNeighbor(ON_ChainDirection::Next, bStopAtTagChange)) {}      
+  if (ON_ChainDirection::Next != direction)
+    while (1 == AddOneNeighbor(ON_ChainDirection::Previous, bStopAtTagChange)) {}      
+
+  return m_edge_chain.UnsignedCount() - count0;
+}
+
+unsigned int ON_SubDEdgeChain::AddEdge(
+  const ON_SubDEdge* edge
+) 
+{
+  const unsigned int count0 = m_edge_chain.UnsignedCount();
+  if (count0 <= 0)
+    return 0;
+
+  if (
+    nullptr == edge 
+    || nullptr == edge->m_vertex[0]
+    || nullptr == edge->m_vertex[1] 
+    || edge->m_vertex[0] == edge->m_vertex[1]
+    )
+    return 0;
+
+  const ON_SubDVertex* v[2] = { FirstVertex(),LastVertex() };
+  if (v[0] == v[1])
+    return 0;
+
+  if ( m_bEnableStatusCheck && false == ON_ComponentStatus::StatusCheck(edge->m_status, m_status_check_pass, m_status_check_fail))
+    return 0;
+
+  ON_SubDEdgePtr eptr = ON_SubDEdgePtr::Null;
+
+  if (v[1] == edge->m_vertex[0])
+    eptr = ON_SubDEdgePtr::Create(edge, 0);
+  else if (v[1] == edge->m_vertex[1])
+    eptr = ON_SubDEdgePtr::Create(edge, 1);
+  else if (v[0] == edge->m_vertex[1])
+    eptr = ON_SubDEdgePtr::Create(edge, 0);
+  else if (v[0] == edge->m_vertex[0])
+    eptr = ON_SubDEdgePtr::Create(edge, 1);
+  else
+    return 0;
+
+  if (m_unique_tester.InList((ON__UINT_PTR)edge))
+    return 0;
+
+  if (v[1] == eptr.RelativeVertex(0) )
+  {
+    if (v[0] == eptr.RelativeVertex(1) || m_unique_tester.AddToList((ON__UINT_PTR)eptr.RelativeVertex(1)))
+    {
+      m_edge_chain.Append(eptr);
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)edge);
+    }
+  }
+  else if (v[0] == eptr.RelativeVertex(1) )
+  {
+    if (v[1] == eptr.RelativeVertex(0) || m_unique_tester.AddToList((ON__UINT_PTR)eptr.RelativeVertex(0)))
+    {
+      m_edge_chain.Insert(0, eptr);
+      m_unique_tester.ExpertAddNewToList((ON__UINT_PTR)edge);
+    }
+  }
+
+  return m_edge_chain.UnsignedCount() - count0;
+}
+
+unsigned int ON_SubDEdgeChain::RemoveEdges(
+  const ON_SubDEdge* first_edge,
+  const ON_SubDEdge* last_edge
+) 
+{
+  unsigned int count0 = m_edge_chain.UnsignedCount();
+  unsigned int i0 = 0;
+  unsigned int i1 = count0;
+  if (nullptr != first_edge)
+  {
+    while (i0 < count0 && first_edge != m_edge_chain[i0].Edge())
+      ++i0;
+  }
+  if (nullptr != last_edge)
+  {
+    while (i1 > i0 && last_edge != m_edge_chain[i1 - 1].Edge())
+      --i1;
+  }
+
+  const unsigned int count1 = i1 - i0;
+  if (count1 >= count0)
+    return 0;
+
+  if (i0 > 0)
+  {
+    for (unsigned int i = i0; i < i1; i++)
+      m_edge_chain[i - i0] = m_edge_chain[i];
+  }
+
+  m_edge_chain.SetCount(count1);
+  m_unique_tester.ClearList();
+  for (unsigned int i = 0; i < count1; i++)
+  {
+    m_unique_tester.AddToList((ON__UINT_PTR)m_edge_chain[i].Edge());
+    m_unique_tester.AddToList((ON__UINT_PTR)m_edge_chain[i].RelativeVertex(0));
+  }
+  if ( FirstVertex() != LastVertex() )
+    m_unique_tester.AddToList((ON__UINT_PTR)LastVertex());
+
+  return count0 - count1;
+}
+
+
+void ON_SubDEdgeChain::ReverseEdgeChain(
+  ON_SimpleArray< ON_SubDEdgePtr >& edge_chain
+)
+{
+  ON_SubDEdgeChain::ReverseEdgeChain(edge_chain.UnsignedCount(), edge_chain.Array());
+}
+
+void ON_SubDEdgeChain::ReverseEdgeChain(
+  size_t edge_count,
+  ON_SubDEdgePtr* edge_chain
+)
+{
+  if (edge_count <= 0 || nullptr == edge_chain)
+    return;
+  ON_SubDEdgePtr* p0 = edge_chain;
+  ON_SubDEdgePtr* p1 = p0 + (edge_count - 1);
+  while ( p0 < p1)
+  {
+    ON_SubDEdgePtr eptr = p0->Reversed();
+    *p0 = p1->Reversed();
+    *p1 = eptr;
+    ++p0;
+    --p1;
+  }
+  if (p0 == p1)
+    *p0 = p0->Reversed();
+}
+
+bool ON_SubDEdgeChain::IsValidEdgeChain(
+  const ON_SimpleArray< ON_SubDEdgePtr >& edge_chain,
+  bool bCheckForDuplicateEdges
+)
+{
+  return ON_SubDEdgeChain::IsValidEdgeChain(edge_chain.UnsignedCount(), edge_chain.Array(), bCheckForDuplicateEdges);
+}
+
+bool ON_SubDEdgeChain::IsValidEdgeChain(
+  size_t edge_count,
+  const ON_SubDEdgePtr* edge_chain,
+  bool bCheckForDuplicateEdges
+)
+{
+  if (edge_count <= 0)
+    return true;
+  if (nullptr == edge_chain)
+    return false;
+
+  const ON_SubDVertex* first_vertex = edge_chain->RelativeVertex(0);
+  if (nullptr == first_vertex)
+    return false;
+
+  const ON_SubDVertex* v = first_vertex;
+  const ON_SubDEdgePtr* p0 = edge_chain;
+  const ON_SubDEdgePtr* p1 = edge_chain+1;
+
+  for (const ON_SubDEdgePtr* p = p0; p < p1; ++p)
+  {
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(p->m_ptr);
+    if (nullptr == e || nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1])
+      return false;
+    ON__UINT_PTR edir = ON_SUBD_EDGE_DIRECTION(p->m_ptr);
+    const ON_SubDVertex* v0 = e->m_vertex[edir];
+    const ON_SubDVertex* v1 = e->m_vertex[1 - edir];
+    if (v0 != v || nullptr == v1 || v0 == v1)
+      return false;
+    v = v1;
+  }
+
+  if (bCheckForDuplicateEdges)
+  {
+    const ON_SubDVertex* last_vertex = v;
+    ON_UniqueTester tester;
+    for (const ON_SubDEdgePtr* p = p0; p < p1; ++p)
+    {
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(p->m_ptr);
+      if (false == tester.AddToList((ON__UINT_PTR)e))
+        return false; // duplicate edge
+      if (false == tester.AddToList((ON__UINT_PTR)e->m_vertex[ON_SUBD_EDGE_DIRECTION(p->m_ptr)]))
+        return false; // duplicate vertex
+    }    
+    if (first_vertex != last_vertex)
+    {
+      if (false == tester.AddToList((ON__UINT_PTR)last_vertex))
+        return false; // duplicate vertex
+    }
+  }
+
+  return true;
+}
+
+class ON_SubDLimitMeshImpl* ON_SubDLimitMesh::SubLimple() const
+{
+  return m_impl_sp.get();
+}
+
+unsigned int ON_SubDLimitMesh::SubLimpleUseCount() const
+{
+  return (unsigned int)(m_impl_sp.use_count());
+}
 
 
 #if defined(ON_SUBD_CENSUS)
@@ -10811,16 +12681,6 @@ void ON_CensusCounter::RegisterDeath(ON_CensusCounter::Class c, ON__UINT_PTR ptr
 void ON_CensusCounter::Clear()
 {
   ON_PointerHashTable::DestroyTheOne();
-}
-
-class ON_SubDLimitMeshImpl* ON_SubDLimitMesh::SubLimple() const
-{
-  return m_impl_sp.get();
-}
-
-unsigned int ON_SubDLimitMesh::SubLimpleUseCount() const
-{
-  return m_impl_sp.use_count();
 }
 
 void ON_CensusCounter::CensusReport(

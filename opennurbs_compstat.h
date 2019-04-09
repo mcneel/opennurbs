@@ -14,6 +14,8 @@
 ////////////////////////////////////////////////////////////////
 */
 
+#if !defined(OPENNURBS_COMPSTAT_INC_)
+#define OPENNURBS_COMPSTAT_INC_
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -97,7 +99,71 @@ public:
   static const ON_ComponentStatus Locked;
   static const ON_ComponentStatus Deleted;
   static const ON_ComponentStatus Damaged;
+  static const ON_ComponentStatus Marked;
+
+  /*
+  The six bits for SelectedPersistent, Highlighted, Hidden, Locked, and Damaged are set.
+  The two bits for Deleted and RuntimeMark are clear.
+  */
   static const ON_ComponentStatus AllSet;
+
+  /*
+  Returns:
+    A logical and of the status bit in lhs and rhs.
+  */
+  static const ON_ComponentStatus LogicalAnd(ON_ComponentStatus lhs, ON_ComponentStatus rhs);
+
+  /*
+  Returns:
+    A logical and of the status bit in lhs and rhs.
+  */
+  static const ON_ComponentStatus LogicalOr(ON_ComponentStatus lhs, ON_ComponentStatus rhs);
+
+  /*
+  Description:
+    A tool for adding a status check filter. This tool pays attention to RuntimeMark().
+
+  Paramters:
+    candidate - [in]
+    pass_bits - [in]
+    fail_bits - [in]
+
+  Returns:
+    Checking is perfomed in the folloing order and every bit, include the RuntimeMark() bit, are tested.
+
+    First:
+    If ON_ComponentStatus::LogicalAnd(candidate,status_pass) has any set bits,
+    then true is returned.
+
+    Second:
+    If ON_ComponentStatus::LogicalAnd(candidate,status_fail) has any set bits,
+    then false is returned.
+
+    Third:
+    If status_fail has no set bits the true is returned.
+
+    Forth:
+    If status_pass has any set bits then false is returned.
+
+    Fifth:
+    True is returned.
+
+  Examples:
+    StatusCheck(candidate,ON_ComponentStatus::Selected,ON_ComponentStatus::NoneSet) = candidate.>IsSelected().
+
+    StatusCheck(candidate,ON_ComponentStatus::NoneSet,ON_ComponentStatus::Selected) = !candidate.>IsSelected().
+
+    StatusCheck(candidate,ON_ComponentStatus::NoneSet,ON_ComponentStatus::NoneSet) = true;
+
+    StatusCheck(candidate,ON_ComponentStatus::AllSet,ON_ComponentStatus::NoneSet) = true;
+
+    StatusCheck(candidate,ON_ComponentStatus::NoneSet,ON_ComponentStatus::AllSet) = candidate.IsClear() && false==candidate.RuntimeMark();
+  */
+  static bool StatusCheck(
+    ON_ComponentStatus candidate,
+    ON_ComponentStatus status_pass,
+    ON_ComponentStatus status_fail
+  );
 
   ON_ComponentStatus() = default;
   ~ON_ComponentStatus() = default;
@@ -123,6 +189,15 @@ public:
     The runtime mark setting is ignored by IsClear().
   */
   bool IsClear() const;
+
+  /*
+  Returns:
+    True if some setting besides runtime mark is 1 or true.
+    Ignores the runtime mark state.
+  Remarks:
+    The runtime mark setting is ignored by IsNotClear().
+  */
+  bool IsNotClear() const;
 
   /*
   Description:
@@ -549,3 +624,84 @@ private:
   unsigned int m_damaged_count = 0;
 };
 
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_UniqueTester
+//
+
+class ON_CLASS ON_UniqueTester
+{
+public:
+  ON_UniqueTester() = default;
+  ~ON_UniqueTester();
+  ON_UniqueTester(const ON_UniqueTester&);
+  ON_UniqueTester& operator=(const ON_UniqueTester&);
+
+public:
+
+  /*
+  Description:
+    If p is not in the list, it is added.
+  Returns:
+    True if p is in the list.
+  */
+  bool InList(ON__UINT_PTR x) const;
+
+  /*
+  Description:
+    If p is not in the list, it is added.
+  Returns:
+    True if p is not in the list and was added. False if p was already in the list.
+  */
+  bool AddToList(ON__UINT_PTR x);
+
+  void ClearList();
+
+  unsigned int Count() const;
+
+public:
+  /*
+  Description:
+    Add x to the list. The expert caller is certain that x is not already in the list.
+    For large lists, using this function when appropriate, can result in substantial
+    speed improvments.
+  Parameters:
+    x - [in]
+      A value that is known to not be in the list.
+  */
+  void ExpertAddNewToList(ON__UINT_PTR x);
+
+private:
+  class Block
+  {
+  public:
+    static Block* NewBlock();
+    static void DeleteBlock(Block*);
+
+  public:
+    enum : size_t {BlockCapacity=1000};
+    size_t m_count = 0;
+    ON__UINT_PTR* m_a = nullptr;
+    class Block* m_next = nullptr;
+    bool InBlock(size_t sorted_count,ON__UINT_PTR p) const;
+
+    void SortBlock();
+
+  private:
+    static int Compare(ON__UINT_PTR* lhs, ON__UINT_PTR* rhs);
+    Block() = default;
+    ~Block() = delete;
+    Block(const Block&) = delete;
+    Block& operator=(const Block&) = delete;
+  };
+  
+  size_t m_sorted_count = 0;
+  Block* m_block_list = nullptr;
+
+private:
+  void Internal_CopyFrom(const ON_UniqueTester& src);
+  void Internal_Destroy();
+  void Internal_AddValue(ON__UINT_PTR x);
+};
+
+#endif

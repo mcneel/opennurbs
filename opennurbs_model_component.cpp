@@ -296,12 +296,6 @@ ON_UUID ON_ModelComponent::ModelObjectId() const
   return Id();
 }
 
-static ON__UINT64 ON_ModelComponentRuntimeSerialNumberGenerator()
-{
-  static ON__UINT64 sn = 0;
-  return ++sn; // TODO make this multi-thread safe by using an atomic increment operation - no need for mutexes, etc.
-}
-
 static ON__UINT64 ON_ModelComponentContentVersionNumberOne(
   ON__UINT64 runtime_serial_number
   )
@@ -312,7 +306,7 @@ static ON__UINT64 ON_ModelComponentContentVersionNumberOne(
 }
 
 ON_ModelComponent::ON_ModelComponent() ON_NOEXCEPT
-  : m_runtime_serial_number(ON_ModelComponentRuntimeSerialNumberGenerator())
+  : m_runtime_serial_number(++ON_ModelComponent::Internal_RuntimeSerialNumberGenerator)
   , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))
 {}
 
@@ -638,7 +632,7 @@ unsigned int ON_ModelComponent::CopyFrom(
 
 ON_ModelComponent::ON_ModelComponent(const ON_ModelComponent& src)
   : ON_Object(src)
-  , m_runtime_serial_number(ON_ModelComponentRuntimeSerialNumberGenerator())
+  , m_runtime_serial_number(++ON_ModelComponent::Internal_RuntimeSerialNumberGenerator)
   , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))
 {
   CopyFrom(src,ON_ModelComponent::Attributes::AllAttributes);
@@ -672,7 +666,7 @@ ON_ModelComponent::ON_ModelComponent(
   const ON_ModelComponent& src
   ) ON_NOEXCEPT
   : ON_Object(src)
-  , m_runtime_serial_number(ON_ModelComponentRuntimeSerialNumberGenerator())
+  , m_runtime_serial_number(++ON_ModelComponent::Internal_RuntimeSerialNumberGenerator)
   , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))
   , m_component_type(component_type)
 {
@@ -689,7 +683,7 @@ ON_ModelComponent::ON_ModelComponent(
 ON_ModelComponent::ON_ModelComponent(
   ON_ModelComponent::Type component_type
   ) ON_NOEXCEPT
-  : m_runtime_serial_number(ON_ModelComponentRuntimeSerialNumberGenerator())
+  : m_runtime_serial_number(++ON_ModelComponent::Internal_RuntimeSerialNumberGenerator)
   , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))
   , m_component_type(component_type)
 {
@@ -2017,52 +2011,48 @@ bool ON_ModelComponent::UniqueNameIncludesParent(
   )
 {
   bool bUniqueNameIncludesParent = false;
-  if (ON_ModelComponent::UniqueNameRequired(component_type))
+  // [Giulio] If this table is changed, then also 
+  // RhinoCommon documentation in
+  // Rhino.DocObjects.ModelComponent.FindName() / FindNameHash
+  // will require appropriate tweaks.
+  switch (component_type)
   {
-    // [Giulio] If this table is changed, then also 
-    // RhinoCommon documentation in
-    // Rhino.DocObjects.ModelComponent.FindName() / FindNameHash
-    // will require appropriate tweaks.
-
-    switch (component_type)
-    {
-    case ON_ModelComponent::Type::Unset:
-      ON_ERROR("Invalid component_type parameter.");
-      break;
-    case ON_ModelComponent::Type::Image:
-      break;
-    case ON_ModelComponent::Type::TextureMapping:
-      break;
-    case ON_ModelComponent::Type::RenderMaterial:
-      break;
-    case ON_ModelComponent::Type::LinePattern:
-      break;
-    case ON_ModelComponent::Type::Layer:
-      bUniqueNameIncludesParent = true;
-      break;
-    case ON_ModelComponent::Type::Group:
-      break;
-    case ON_ModelComponent::Type::TextStyle:
-      break;
-    case ON_ModelComponent::Type::DimStyle:
-      break;
-    case ON_ModelComponent::Type::RenderLight:
-      break;
-    case ON_ModelComponent::Type::HatchPattern:
-      break;
-    case ON_ModelComponent::Type::InstanceDefinition:
-      break;
-    case ON_ModelComponent::Type::ModelGeometry:
-      break;
-    case ON_ModelComponent::Type::HistoryRecord:
-      break;
-    case ON_ModelComponent::Type::Mixed:
-      ON_ERROR("Invalid component_type parameter.");
-      break;
-    default:
-      ON_ERROR("Invalid component_type parameter.");
-      break;
-    }
+  case ON_ModelComponent::Type::Unset:
+    ON_ERROR("Invalid component_type parameter.");
+    break;
+  case ON_ModelComponent::Type::Image:
+    break;
+  case ON_ModelComponent::Type::TextureMapping:
+    break;
+  case ON_ModelComponent::Type::RenderMaterial:
+    break;
+  case ON_ModelComponent::Type::LinePattern:
+    break;
+  case ON_ModelComponent::Type::Layer:
+    bUniqueNameIncludesParent = true;
+    break;
+  case ON_ModelComponent::Type::Group:
+    break;
+  case ON_ModelComponent::Type::TextStyle:
+    break;
+  case ON_ModelComponent::Type::DimStyle:
+    break;
+  case ON_ModelComponent::Type::RenderLight:
+    break;
+  case ON_ModelComponent::Type::HatchPattern:
+    break;
+  case ON_ModelComponent::Type::InstanceDefinition:
+    break;
+  case ON_ModelComponent::Type::ModelGeometry:
+    break;
+  case ON_ModelComponent::Type::HistoryRecord:
+    break;
+  case ON_ModelComponent::Type::Mixed:
+    ON_ERROR("Invalid component_type parameter.");
+    break;
+  default:
+    ON_ERROR("Invalid component_type parameter.");
+    break;
   }
   return bUniqueNameIncludesParent;
 }
@@ -2128,18 +2118,10 @@ bool ON_ModelComponent::UniqueNameIgnoresCase(
   ON_ModelComponent::Type component_type
 )
 {
+  // This function must return true for components like ON_Material that do not require a unique name.
   return (
-    ON_ModelComponent::UniqueNameRequired(component_type) &&
+    // NO // ON_ModelComponent::UniqueNameRequired(component_type) &&
     ON_ModelComponent::Type::Group != component_type
-    );
-}
-
-bool UniqueNameIsCaseSensitive(
-  ON_ModelComponent::Type component_type
-)
-{
-  return (
-    ON_ModelComponent::Type::Group == component_type
     );
 }
 

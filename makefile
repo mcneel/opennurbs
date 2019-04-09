@@ -78,7 +78,6 @@ ON_INC = opennurbs.h \
 	opennurbs_archive.h \
 	opennurbs_array.h \
 	opennurbs_array_defs.h \
-	opennurbs_atomic_op.h \
 	opennurbs_base32.h \
 	opennurbs_base64.h \
 	opennurbs_beam.h \
@@ -180,6 +179,7 @@ ON_INC = opennurbs.h \
 	opennurbs_revsurface.h \
 	opennurbs_rtree.h \
 	opennurbs_sha1.h \
+	opennurbs_sleeplock.h \
 	opennurbs_sphere.h \
 	opennurbs_std_string.h \
 	opennurbs_string.h \
@@ -336,6 +336,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_revsurface.cpp \
 	opennurbs_rtree.cpp \
 	opennurbs_sha1.cpp \
+	opennurbs_sleeplock.cpp \
 	opennurbs_sort.cpp \
 	opennurbs_sphere.cpp \
 	opennurbs_statics.cpp \

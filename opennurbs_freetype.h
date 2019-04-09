@@ -25,7 +25,9 @@
 #endif
 
 #if defined(ON_RUNTIME_APPLE)
-#error FreeType is not used in MacOS and iOS builds. It does not work as well as CTFont based code.
+// Freetype is used to get single stroke font outlines.
+// For everything else, use the CTFont based tools.
+//#error FreeType is not used in MacOS and iOS builds. It does not work as well as CTFont based code.
 #endif
 
 /*
@@ -74,6 +76,24 @@ Parameters:
 ON_DECL
 bool ON_FreeTypeGetGlyphOutline(
   const class ON_FontGlyph* glyph,
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
+);
+
+/*
+Parameters:
+  glyph - [in]
+  glyph_index - [in]
+    If known for certain, pass in the glyph index. If not known, pass in 0.
+  figure_type - [in]
+    If known for certain, pass in figure_type. Otherwise, pass in ON_OutlineFigure::Type::Unset.
+  outline - [out]
+    outline and metrics in font design units
+*/
+ON_DECL
+bool ON_FreeTypeGetGlyphOutline(
+  const class ON_FontGlyph* glyph,
+  unsigned int glyph_index,
   ON_OutlineFigure::Type figure_type,
   class ON_Outline& outline
 );

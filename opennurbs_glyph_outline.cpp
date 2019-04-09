@@ -2964,10 +2964,10 @@ bool ON_FontGlyph::GetOutline(
   if (nullptr != ON_Font::Internal_CustomGetGlyphOutlineFunc)
   {
     rc = ON_Font::Internal_CustomGetGlyphOutlineFunc(
-        this,
-        bSingleStrokeFont,
-        outline
-      );
+      this,
+      bSingleStrokeFont,
+      outline
+    );
   }
   else
   {
@@ -2988,7 +2988,11 @@ bool ON_FontGlyph::GetOutline(
 #elif defined(OPENNURBS_FREETYPE_SUPPORT)
     // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
     // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
-    // Use freetype based tools (least reliable results)
+    // Use freetype based tools (least reliable results).
+    // Freetype is basically a file reading utility that can parse outline 
+    // information in older formats of font files. It fails on newer formats 
+    // and it also commonly fails to correctly map UNICODE code points to 
+    // glyph indices. Freetype should only be used as a last resort.
     rc = ON_FreeTypeGetGlyphOutline(
       this,
       font_figure_type,

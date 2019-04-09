@@ -2202,6 +2202,10 @@ bool ON_DimStyle::ZeroSuppressMatchesLengthDisplay(
 
   switch (length_display)
   {
+  case ON_DimStyle::LengthDisplay::ModelUnits:
+    rc = true;
+    break;
+
   case ON_DimStyle::LengthDisplay::InchesFractional:
     if (
       ON_DimStyle::suppress_zero::None != zero_suppress

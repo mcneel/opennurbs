@@ -914,6 +914,7 @@ public:
   static const char Backslash;       // Unicode REVERSE SOLIDUS U+005C
   static const char Underscore;      // Unicode LOW LINE U+005F
   static const char Pipe;            // Unicode VERTICAL LINE U+007C
+  static const char Tilde;           // Unicode TILDE U+007E
     
 private:
   // Use IsEmpty() or IsNotEmpty() when you want a bool 
@@ -1750,7 +1751,7 @@ public:
     ...
     );
 
-  static const ON_wString ON_VARGS_FUNC_CDECL FormatToString(
+  static const ON_String ON_VARGS_FUNC_CDECL FormatToString(
     const char* format,
     ...
     );
@@ -1982,8 +1983,8 @@ protected:
              // m_s - 12 bytes points at the string's ON_aStringHeader
 
 	// implementation helpers
-	struct ON_aStringHeader* Header() const;
-	struct ON_aStringHeader* IncrementedHeader() const;
+	class ON_aStringHeader* Header() const;
+	class ON_aStringHeader* IncrementedHeader() const;
 	char* CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_String& );
@@ -2150,6 +2151,7 @@ public:
   static const wchar_t Backslash;       // Unicode REVERSE SOLIDUS U+005C
   static const wchar_t Underscore;      // Unicode LOW LINE U+005F
   static const wchar_t Pipe;            // Unicode VERTICAL LINE U+007C
+  static const wchar_t Tilde;           // Unicode TILDE U+007E
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
   // Never cast these values as "char"
@@ -3157,6 +3159,8 @@ public:
     );
 
   /*
+  Description:
+    Get the Gregorian calendar current coordinated universal time as a string.
   Parameters:
     date_format - [in]
     date_format - [in]
@@ -3172,8 +3176,7 @@ public:
       If 0, then : (colon) is used.
   Returns:
     A string value for the current coordinated universal time (UTC).
-  */
-  
+  */  
   static const ON_wString FromCurrentCoordinatedUniversalTime(
     ON_DateFormat date_format,
     ON_TimeFormat time_format,
@@ -3183,9 +3186,11 @@ public:
   );
 
   /*
+  Description:
+    Get the Gregorian calendar date and time as a string.
   Parameters:
     t - [in]
-      time to format
+      Gregorian calendar time to format
     date_format - [in]
     date_format - [in]
     time_format - [in]
@@ -3207,6 +3212,121 @@ public:
     wchar_t date_time_separator,
     wchar_t time_separator
   );
+  
+  /*
+  Description:
+    Get the Gregorian calendar date and time as a string.
+  Parameters:
+    seconds - [in]
+      number of seconds since January 1, 1970 00:00:00.
+    date_format - [in]
+    date_format - [in]
+    time_format - [in]
+    date_separator - [in]
+      Character placed between the year, month and day values.
+      If 0, then ON_wString::HyphenMinus is used to
+    date_time_separator - [in]
+      Character placed between the date and time.
+      If 0, then ON_wString::Space is used.
+    time_separator - [in]
+      Character placed between the hour, minute, and second values.
+      If 0, then : (colon) is used.
+  */
+  static const ON_wString FromSecondsSinceJanuaryFirst1970(
+    ON__UINT64 seconds_since_jan_first_1970,
+    ON_DateFormat date_format,
+    ON_TimeFormat time_format,
+    wchar_t date_separator,
+    wchar_t date_time_separator,
+    wchar_t time_separator
+  );
+
+
+  /*
+  Description:
+    Get the Gregorian calendar date and time as a string.
+    The year value must be >= 1582 (beginning of Gregorian calendar).
+  Parameters:
+    year - [in]
+      year >= 1582 (beginning of Gregorian calendar)
+    month - [in]
+      1 to 12
+    mday - [in]
+      1 to 31
+    hour - [in]
+     0 to 23
+    minute - [in]
+     0 to 59
+    second - [in]
+     0 to 59
+    date_format - [in]
+    date_format - [in]
+    time_format - [in]
+    date_separator - [in]
+      Character placed between the year, month and day values.
+      If 0, then ON_wString::HyphenMinus is used to
+    date_time_separator - [in]
+      Character placed between the date and time.
+      If 0, then ON_wString::Space is used.
+    time_separator - [in]
+      Character placed between the hour, minute, and second values.
+      If 0, then : (colon) is used.
+  */
+  static const ON_wString FromYearMonthDayHourMinuteSecond(
+    int year,
+    int month,
+    int mday,
+    int hour,
+    int minute,
+    int second,
+    ON_DateFormat date_format,
+    ON_TimeFormat time_format,
+    wchar_t date_separator,
+    wchar_t date_time_separator,
+    wchar_t time_separator
+  );
+
+  /*
+  Description:
+    Get the Gregorian calendar date and time as a string.
+    The year value must be >= 1582 (beginning of Gregorian calendar).
+  Parameters:
+    year - [in]
+      year >= 1582 (beginning of Gregorian calendar)
+    day_of_year - [in]
+     1 to 366
+    hour - [in]
+     0 to 23
+    minute - [in]
+     0 to 59
+    second - [in]
+     0 to 59
+    date_format - [in]
+    date_format - [in]
+    time_format - [in]
+    date_separator - [in]
+      Character placed between the year, month and day values.
+      If 0, then ON_wString::HyphenMinus is used to
+    date_time_separator - [in]
+      Character placed between the date and time.
+      If 0, then ON_wString::Space is used.
+    time_separator - [in]
+      Character placed between the hour, minute, and second values.
+      If 0, then : (colon) is used.
+  */
+  static const ON_wString FromYearDayHourMinuteSecond(
+    int year,
+    int day_of_year,
+    int hour,
+    int minute,
+    int second,
+    ON_DateFormat date_format,
+    ON_TimeFormat time_format,
+    wchar_t date_separator,
+    wchar_t date_time_separator,
+    wchar_t time_separator
+  );
+
 
   /*
   Description:
@@ -3539,8 +3659,8 @@ protected:
                 // m_s - 12 bytes points at the string's ON_wStringHeader
 
 	// implementation helpers
-	struct ON_wStringHeader* Header() const;
-	struct ON_wStringHeader* IncrementedHeader() const;
+	class ON_wStringHeader* Header() const;
+	class ON_wStringHeader* IncrementedHeader() const;
 	wchar_t* CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_wString& );

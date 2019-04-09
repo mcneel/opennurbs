@@ -679,7 +679,7 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::LinePattern, m_linetype_index);
       if (!rc) break;
     }
-    if ( -1 != m_material_index )
+    if ( -1 != m_material_index && MaterialSource() == ON::material_from_object)
     {
       c = 4;
       rc = file.WriteChar(c);
@@ -1027,12 +1027,26 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
   dump.Print("object mode = %s\n",sMode); // sSMode is const char*
 
   dump.Print("object layer index = %d\n",m_layer_index);
-  dump.Print("object material index = %d\n",m_material_index);
+
+  const ON::object_material_source mat_source = MaterialSource();
+
+  if (ON::object_material_source::material_from_object == mat_source || false == dump.IsTextHash())
+  {
+    // Depending on when a 3dm file was written, m_material_index may get set to an implicit -1 
+    // during writing as part of an old attempt to reduce the size of attributes when saved in .3dm files.
+    // When mat_source is not (ON::object_material_source::material_from_object. This causes the
+    // 3dm content to vary in a way that content hashing must ignore. The sample file
+    // C:\dev\github\mcneel\rhino\src4\opennurbs\example_files\V5\v5_teacup.3dm is an example.
+    // It's old enough that it contians material index values >= 0 that are not saved
+    // by SaveAs V5 writing code since circa 2010 or earlier.
+    dump.Print("object material index = %d\n", m_material_index);
+  }
+
   const char* sMaterialSource = "unknown";
   switch(MaterialSource()) {
-  case ON::material_from_layer: sMaterialSource = "layer material"; break;
-  case ON::material_from_object: sMaterialSource = "object material"; break;
-  case ON::material_from_parent: sMaterialSource = "parent material"; break;
+  case ON::object_material_source::material_from_layer: sMaterialSource = "layer material"; break;
+  case ON::object_material_source::material_from_object: sMaterialSource = "object material"; break;
+  case ON::object_material_source::material_from_parent: sMaterialSource = "parent material"; break;
   }
   dump.Print("material source = %s\n",sMaterialSource); // sMaterialSource is const char*
   const int group_count = GroupCount();

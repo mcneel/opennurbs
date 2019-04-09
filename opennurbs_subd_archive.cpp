@@ -1267,6 +1267,17 @@ bool ON_SubDimple::Read(
       m_active_level = level;
     }
 
+
+    const unsigned int heap_max_vertex_id = m_heap.MaximumVertexId();
+    const unsigned int heap_max_edge_id = m_heap.MaximumEdgeId();
+    const unsigned int heap_max_face_id = m_heap.MaximumFaceId();
+    if (m_max_vertex_id < heap_max_vertex_id)
+      m_max_vertex_id = heap_max_vertex_id;
+    if (m_max_edge_id < heap_max_edge_id)
+      m_max_edge_id = heap_max_edge_id;
+    if (m_max_face_id < heap_max_face_id)
+      m_max_face_id = heap_max_face_id;
+
     if ( level_index != level_count)
       break;
 
@@ -1276,9 +1287,50 @@ bool ON_SubDimple::Read(
   if (!archive.EndRead3dmChunk())
     rc = false;
 
-  m_max_vertex_id = max_vertex_id;
-  m_max_edge_id = max_edge_id;
-  m_max_face_id = max_face_id;
+  // Heap id validation. Always an error if max_heap_..._id > m_max_..._id.
+  if (false == m_heap.IsValid())
+  {
+    ON_SUBD_ERROR("m_heap.IsValid() is false.");
+    m_heap.ResetId(); // breaks component id references, but this is a serious error.
+  }
+  const unsigned int max_heap_vertex_id = m_heap.MaximumVertexId();
+  const unsigned int max_heap_edge_id = m_heap.MaximumEdgeId();
+  const unsigned int max_heap_face_id = m_heap.MaximumFaceId();
+  if (m_max_vertex_id < max_heap_vertex_id)
+  {
+    ON_SUBD_ERROR("m_max_vertex_id is too small.");
+    m_max_vertex_id = max_heap_vertex_id;
+  }
+  if (m_max_edge_id < max_heap_edge_id)
+  {
+    ON_SUBD_ERROR("m_max_edge_id is too small.");
+    m_max_edge_id = max_heap_edge_id;
+  }
+  if (m_max_face_id < max_heap_face_id)
+  {
+    ON_SUBD_ERROR("m_max_face_id is too small.");
+    m_max_face_id = max_heap_face_id;
+  }
+  
+  if (max_vertex_id > m_max_vertex_id)
+    m_max_vertex_id = max_vertex_id;
+  if (max_edge_id > m_max_edge_id)
+    m_max_edge_id = max_edge_id;
+  if (max_face_id > m_max_face_id)
+    m_max_face_id = max_face_id;
+  
+  const unsigned int archive_version = archive.ArchiveOpenNURBSVersion();
+  const unsigned int bad_counts_cutoff_version = ON_VersionNumberConstruct(6, 12, 2018, 12, 12, 0);
+  if (archive_version > bad_counts_cutoff_version)
+  {
+    if( m_max_vertex_id != max_vertex_id
+      || m_max_edge_id != max_edge_id
+      || m_max_face_id != max_face_id
+      )
+    {
+      ON_SUBD_ERROR("Correct m_max_verrtex/edge/face_id differs from value saved in 3dm archive.");
+    }
+  }
 
   if (rc)
     return true;
@@ -1427,8 +1479,7 @@ ON_Mesh* ON_SubDMeshProxyUserData::MeshProxyFromSubD(
     subd_copy = new ON_SubD(*subd);
     if (nullptr == subd_copy)
       break;
-    const ON_SubDDisplayParameters dp = ON_SubDMeshProxyUserData::MeshProxyDisplayParameters();
-    mesh = subd_copy->GetLimitSurfaceMesh(dp, nullptr);
+    mesh = subd_copy->GetControlNetMesh(nullptr);
     if (false == ON_SubDMeshProxyUserData::Internal_MeshHasFaces(mesh))
       break;
     ON_SubDMeshProxyUserData* ud = new ON_SubDMeshProxyUserData();

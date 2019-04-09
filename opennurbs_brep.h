@@ -1129,44 +1129,7 @@ public:
   */
   bool TransformTrim( const ON_Xform& xform );
 
-  /*
-  Description:
-    Expert user tool that replaces the 3d surface geometry
-    use by the face.
-  Parameters;
-    si - [in] brep surface index of new surface
-    bTransformTrimCurves - [in]
-      If unsure, then pass true.
-      If the surface's domain has changed and you are certain
-      its parameterization still jibes with the trim curve
-      locations, then pass false.
-  Returns:
-    True if successful.
-  Example:
-
-            ON_Surface* pSurface = ...;
-            int si = brep.AddSurface(pSurface);
-            face.ChangeSurface(si);
-
-  Remarks:
-    If the face had a surface and new surface has a different
-    shape, then you probably want to call something like
-    ON_Brep::RebuildEdges() to move the 3d edge curves so they
-    will lie on the new surface. This doesn't delete the old 
-    surface; call ON_Brep::CullUnusedSurfaces() or ON_Brep::Compact
-    to remove unused surfaces.
-  See Also:
-    ON_Brep::RebuildEdges
-    ON_Brep::CullUnusedSurfaces
-  */
-  bool ChangeSurface(
-    int si
-    );
-  bool ChangeSurface(
-    int si,
-    bool bTransformTrimCurves
-    );
-
+  
   /*
   Returns:
     brep.m_S[] surface index of the 3d surface geometry used by 
@@ -3866,7 +3829,23 @@ protected:
   // 2 = solid with normals pointing in
   // 3 = not solid
   int m_is_solid = 0;
+
+public:
+  // Not ideal - used in debug/dev testing
+  //bool GetLock();
+  //bool GetLockOrReturnFalse();
+  //bool ReturnLock();
+
+private:
+  // In calculations where multiple threads are using a brep and calling functions
+  // that may modify content, the calling code can use use ON_SleepLockGuard guard(Mutex)
+  // or similar techniques to make the calculations thread safe.
+  // Because Mutex is a public resource, it must be used with great care to
+  // prevent lock contention.
+  friend class ON_SleepLockGuard;
+  mutable ON_SleepLock m_sleep_lock;
   
+protected:
   // These are friends so legacy tol values stored in v1 3dm files
   // can be used to set brep edge and trimming tolerances with a call
   // to ON_Brep::SetTolsFromLegacyValues().

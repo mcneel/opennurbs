@@ -839,11 +839,11 @@ bool ON_Mesh::DeleteFace( int meshfi )
   return rc;
 }
 
-ON_Mesh* ON_ControlPolygonMesh( 
-          const ON_NurbsSurface& nurbs_surface, 
-          bool bCleanMesh,
-          ON_Mesh* input_mesh
-          )
+ON_Mesh* ON_ControlPolygonMesh(
+  const ON_NurbsSurface& nurbs_surface,
+  bool bCleanMesh,
+  ON_Mesh* input_mesh
+)
 {
   int u0 = 0;
   int u1 = nurbs_surface.CVCount(0);
@@ -904,10 +904,14 @@ ON_Mesh* ON_ControlPolygonMesh(
   dpv.Reserve(vertex_count);
   mesh->m_N.Reserve(vertex_count);
   mesh->m_T.Reserve(vertex_count);
+  mesh->m_S.Reserve(vertex_count);
   mesh->m_F.Reserve(face_count);
+  mesh->m_srf_domain[0] = d0;
+  mesh->m_srf_domain[1] = d1;
 
   ON_3dPoint V;
   ON_3dVector N;
+  ON_2dPoint S;
   ON_2dPoint T;
 
   int hint[2] = {0,0};
@@ -915,14 +919,17 @@ ON_Mesh* ON_ControlPolygonMesh(
   int k = -1;
   for ( j = v0; j < v1; j++)
   {
-    T.y = d1.NormalizedParameterAt(gv[j]);
+    S.y = gv[j];
+    T.y = d1.NormalizedParameterAt(S.y);
     for ( i = u0; i < u1; i++)
     {
       nurbs_surface.GetCV( i, j, V);
-      T.x = d0.NormalizedParameterAt(gu[i]);
+      S.x = gu[i];
+      T.x = d0.NormalizedParameterAt(S.x);
       nurbs_surface.EvNormal(gu[i],gv[j],N,0,hint);
       dpv.AppendNew() = V;
       mesh->m_N.AppendNew() = N;
+      mesh->m_S.AppendNew() = S;
       mesh->m_T.AppendNew() = T;
       if ( i > u0 && j > v0 )
       {

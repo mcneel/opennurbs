@@ -935,7 +935,38 @@ const class ON_SubDFace* ON_SubDHeap::FaceFromId(
   return face;
 }
 
-size_t ON_SubDHeap::OversizedElementCapacityQWERTY(size_t count)
+unsigned int ON_SubDHeap::MaximumVertexId() const
+{
+  return m_fspv.MaximumElementId(ON_SubDHeap::m_offset_vertex_id);
+}
+
+unsigned int ON_SubDHeap::MaximumEdgeId() const
+{
+  return m_fspe.MaximumElementId(ON_SubDHeap::m_offset_edge_id);
+}
+
+unsigned int ON_SubDHeap::MaximumFaceId() const
+{
+  return m_fspf.MaximumElementId(ON_SubDHeap::m_offset_face_id);
+}
+
+
+bool ON_SubDHeap::IsValid() const
+{
+  return m_fspv.ElementIdIsIncreasing(ON_SubDHeap::m_offset_vertex_id) 
+    && m_fspe.ElementIdIsIncreasing(ON_SubDHeap::m_offset_edge_id) 
+    && m_fspf.ElementIdIsIncreasing(ON_SubDHeap::m_offset_face_id);
+}
+
+void ON_SubDHeap::ResetId()
+{
+  const unsigned int first_id = 1;
+  m_fspv.ResetElementId(ON_SubDHeap::m_offset_vertex_id,first_id);
+  m_fspe.ResetElementId(ON_SubDHeap::m_offset_edge_id,first_id);
+  m_fspf.ResetElementId(ON_SubDHeap::m_offset_face_id,first_id);
+}
+
+size_t ON_SubDHeap::OversizedElementCapacity(size_t count)
 {
   size_t capacity = 32 * (count / 32);
   if (count % 32 > 0 || 0 == count)
@@ -943,10 +974,10 @@ size_t ON_SubDHeap::OversizedElementCapacityQWERTY(size_t count)
   return capacity;
 }
 
-ON__UINT_PTR* ON_SubDHeap::AllocateOversizedElementQWERTY(size_t* capacity)
+ON__UINT_PTR* ON_SubDHeap::AllocateOversizedElement(size_t* capacity)
 {
   class tagWSItem* p;
-  size_t actual_capacity = ON_SubDHeap::OversizedElementCapacityQWERTY(*capacity);
+  size_t actual_capacity = ON_SubDHeap::OversizedElementCapacity(*capacity);
   size_t sz = (actual_capacity + 1)*sizeof(ON__UINT_PTR);
   sz += sizeof(*p);
   p = (class tagWSItem*)onmalloc(sz);
@@ -1325,7 +1356,7 @@ ON__UINT_PTR* ON_SubDHeap::AllocateArray(size_t* capacity)
     return a;
   }
 
-  return  AllocateOversizedElementQWERTY(capacity);
+  return  AllocateOversizedElement(capacity);
 }
 
 void ON_SubDHeap::ReturnArray(

@@ -1815,7 +1815,7 @@ ON_Color ON_Material::PreviewColor(void) const
 		}
 	}
 
-	return m_diffuse;
+	return Diffuse( );
 }
 
 bool ON_Material::UseDiffuseTextureAlphaForObjectTransparencyTexture() const
@@ -6293,4 +6293,32 @@ bool ON_TextureMapping::GetMappingSphere(ON_Sphere& sphere) const
   }
   return rc && sphere.IsValid();
 }
+
+
+
+
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BaseColor(void) { return L"pbr-base-color"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BRDF(void) { return L"pbr-brdf"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Subsurface(void) { return L"pbr-subsurface"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringColor(void) { return L"pbr-subsurface-scattering-color"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringRadius(void) { return L"pbr-subsurface-scattering-radius"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Specular(void) { return L"pbr-specular"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SpecularTint(void) { return L"pbr-specular-tint"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Metallic(void) { return L"pbr-metallic"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Roughness(void) { return L"pbr-roughness"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Anisotropic(void) { return L"pbr-anisotropic"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::AnisotropicRotation(void) { return L"pbr-anisotropic-rotation"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Sheen(void) { return L"pbr-sheen"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SheenTint(void) { return L"pbr-sheen-tint"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Clearcoat(void) { return L"pbr-clearcoat"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatRoughness(void) { return L"pbr-clearcoat-roughness"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityIor(void) { return L"pbr-opacity-ior"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Opacity(void) { return L"pbr-opacity"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityRoughness(void) { return L"pbr-opacity-roughness"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Emission(void) { return L"pbr-emission"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::AmbientOcclusion(void) { return L"pbr-ambient-occlusion"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Smudge(void) { return L"pbr-smudge"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Displacement(void) { return L"pbr-displacement"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Normal(void) { return L"pbr-normal"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Bump(void) { return L"pbr-bump"; }
 

@@ -411,16 +411,15 @@ const class ON_SubDEdgePtr ON_SubDLimitMeshFragment::EdgePtr(
   unsigned int grid_side_index
   ) const
 {
-  const int grid_side_count = 4; // will be 3 for tri grid
-  if (nullptr != m_face && grid_side_index < grid_side_count)
+  const unsigned int grid_side_count = 4; // will be 3 for a tri sub-D
+  if (nullptr != m_face &&  m_face->m_edge_count >= 3 && grid_side_index < grid_side_count)
   {
     unsigned short fei = m_face_vertex_index[grid_side_index];
     if (fei < m_face->m_edge_count)
       return m_face->EdgePtr(fei);
-    grid_side_index = (grid_side_index+grid_side_count-1) % grid_side_count;
-    fei = m_face_vertex_index[grid_side_index];
+    fei = m_face_vertex_index[(grid_side_index+1) % grid_side_count];
     if (fei < m_face->m_edge_count)
-      return m_face->EdgePtr(fei);
+      return m_face->EdgePtr((fei+m_face->m_edge_count-1) % m_face->m_edge_count);
   }
   return ON_SubDEdgePtr::Null;
 }
@@ -429,27 +428,159 @@ const class ON_SubDVertex* ON_SubDLimitMeshFragment::Vertex(
   unsigned int grid_corner_index
   ) const
 {
-  ON_SubDEdgePtr eptr = EdgePtr(grid_corner_index);
-  const ON_SubDEdge* edge = eptr.Edge();
-  if ( nullptr != edge )
-    return edge->m_vertex[eptr.EdgeDirection()];
+  if (nullptr != m_face && m_face->m_edge_count >= 3 && grid_corner_index < 4)
+  {
+    const unsigned short fei = m_face_vertex_index[grid_corner_index];
+    if (fei < m_face->m_edge_count)
+      return m_face->Vertex(fei);
+  }
   return nullptr;
 }
 
-ON_3dPoint ON_SubDLimitMeshFragment::CornerPoint(
+const ON_3dPoint ON_SubDLimitMeshFragment::CornerPoint(
   unsigned int grid_corner_index
   ) const
 {
   if ( grid_corner_index >= 4 || nullptr == m_P || m_P_stride <= 0 || nullptr == m_grid.m_S )
-    return ON_3dPoint::UnsetPoint;
+    return ON_3dPoint::NanPoint;
   
-  //unsigned int i = grid_corner_index*m_grid.m_side_segment_count + 1;
-  unsigned int i = grid_corner_index*m_grid.m_side_segment_count;
+  const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
 
   return ON_3dPoint(m_P + (i*m_P_stride));
 }
 
+const ON_3dVector ON_SubDLimitMeshFragment::CornerNormal(unsigned int grid_corner_index) const
+{
+  if ( grid_corner_index >= 4 || nullptr == m_N || m_N_stride <= 0 || nullptr == m_grid.m_S )
+    return ON_3dPoint::NanPoint;
+  
+  const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
 
+  return ON_3dVector(m_N + (i*m_N_stride));
+}
+
+const ON_3dPoint ON_SubDLimitMeshFragment::SidePoint(unsigned int grid_side_index) const
+{
+  if ( grid_side_index >= 4 || nullptr == m_P || m_P_stride <= 0 || nullptr == m_grid.m_S )
+    return ON_3dPoint::NanPoint;
+  
+  const unsigned int i = grid_side_index*m_grid.m_side_segment_count + m_grid.m_side_segment_count/2;
+
+  return ON_3dPoint(m_P + (i*m_P_stride));
+}
+
+const ON_3dVector ON_SubDLimitMeshFragment::SideNormal(unsigned int grid_side_index) const
+{
+  if ( grid_side_index >= 4 || nullptr == m_N || m_N_stride <= 0 || nullptr == m_grid.m_S )
+    return ON_3dPoint::NanPoint;
+  
+  const unsigned int i = grid_side_index*m_grid.m_side_segment_count + m_grid.m_side_segment_count/2;
+
+  return ON_3dVector(m_N + (i*m_N_stride));
+}
+
+const ON_3dPoint ON_SubDLimitMeshFragment::CenterPoint() const
+{
+  if ( nullptr == m_P || m_P_stride <= 0 || nullptr == m_grid.m_S )
+    return ON_3dPoint::NanPoint;
+  
+  const unsigned int i = (m_grid.m_side_segment_count*(m_grid.m_side_segment_count + 2)) / 2;
+
+  return ON_3dPoint(m_P + (i*m_P_stride));
+}
+
+const ON_3dVector ON_SubDLimitMeshFragment::CenterNormal() const
+{
+  if ( nullptr == m_N || m_N_stride <= 0 || nullptr == m_grid.m_S )
+    return ON_3dPoint::NanPoint;
+  
+  const unsigned int i = (m_grid.m_side_segment_count*(m_grid.m_side_segment_count + 2)) / 2;
+
+  return ON_3dVector(m_N + (i*m_N_stride));
+}
+
+bool ON_SubDLimitMeshFragment::Internal_GetFrameHelper(
+  unsigned int P_dex,
+  unsigned int Q_dex,
+  ON_Plane& frame
+) const
+{
+  const unsigned int P_count = m_P_count;
+  if ( P_dex < P_count 
+    && Q_dex < P_count
+    && nullptr != m_P
+    && m_P_stride > 0
+    && nullptr != m_N
+    && m_N_stride > 0
+    )
+  {
+    const ON_3dVector Z(m_N + (P_dex*m_N_stride));
+    const ON_3dPoint P(m_P + (P_dex*m_P_stride));
+    const ON_3dPoint Q (m_P + (Q_dex*m_P_stride));
+    ON_3dVector V = (Q - P).UnitVector();
+    ON_3dVector X = (V - (frame.zaxis*V)*V).UnitVector();
+    if (X.IsUnitVector())
+    {
+      frame.origin = P;
+      frame.xaxis = X;
+      frame.yaxis = ON_CrossProduct(Z, X);
+      frame.zaxis = Z;
+      frame.UpdateEquation();
+    }
+    else
+    {
+      frame = ON_Plane(P, Z);
+    }
+    return true;
+  }
+  return false;
+}
+
+
+bool ON_SubDLimitMeshFragment::GetCornerFrame(
+  unsigned int grid_corner_index,
+  ON_Plane& frame
+) const
+{
+  if (grid_corner_index < 4 && m_grid.m_side_segment_count > 0 && nullptr != m_grid.m_S)
+  {
+    unsigned int S_dex = grid_corner_index * m_grid.m_side_segment_count;
+    if (Internal_GetFrameHelper(m_grid.m_S[S_dex], m_grid.m_S[S_dex + 1], frame))
+      return true;
+  }
+
+  frame = ON_Plane::NanPlane;
+  return false;
+}
+
+bool ON_SubDLimitMeshFragment::GetSideFrame(unsigned int grid_side_index, ON_Plane & frame) const
+{
+  const unsigned int count = m_grid.m_side_segment_count;
+  if (grid_side_index < 4U && count > 0 && nullptr != m_grid.m_S)
+  {
+    const unsigned int S_dex = grid_side_index * count + count / 2U;
+    const unsigned int S_dex1 = (S_dex < (4U * count)) ? (S_dex + 1U) : (S_dex - 1U);
+    if (Internal_GetFrameHelper(m_grid.m_S[S_dex], m_grid.m_S[S_dex1], frame))
+      return true;
+  }
+
+  frame = ON_Plane::NanPlane;
+  return false;
+}
+
+bool ON_SubDLimitMeshFragment::GetCenterFrame(ON_Plane & frame) const
+{
+  if (m_grid.m_side_segment_count > 0 && nullptr != m_grid.m_S)
+  {
+    const unsigned int n = m_grid.m_side_segment_count;
+    const unsigned int P_dex = (n * (n + 2))/2; // central point index
+    if (Internal_GetFrameHelper(P_dex, P_dex+1, frame))
+      return true;
+  }
+
+  frame = ON_Plane::NanPlane;
+  return false;
+}
 
 const class ON_SubDVertexPtr ON_SubDLimitMeshFragment::VertexPtr(
   unsigned int grid_corner_index
@@ -464,19 +595,31 @@ ON_ComponentStatus ON_SubDLimitMeshFragment::Status() const
 }
 
 
-bool ON_SubDLimitMeshFragment::IsSubFragment() const
+bool ON_SubDLimitMeshFragment::IsPartialFragment() const
 {
-  return ( nullptr != m_face && m_face_vertex_index[0] < ON_SubDFace::MaximumEdgeCount );
+  return ( 
+    nullptr != m_face
+    && m_face->m_edge_count < ON_SubDFace::MaximumEdgeCount
+    && m_face_vertex_index[0] >= ON_SubDFace::MaximumEdgeCount 
+    && m_face_vertex_index[1] >= ON_SubDFace::MaximumEdgeCount 
+    && m_face_vertex_index[2] < m_face->m_edge_count 
+    && m_face_vertex_index[3] >= ON_SubDFace::MaximumEdgeCount 
+    && m_grid.m_side_segment_count > 0 && nullptr != m_grid.m_S
+    );
 }
-
 
 bool ON_SubDLimitMeshFragment::IsCompleteFragment() const
 {
+  // For a complete fragment,
+  // m_face_vertex_index[i] = {0,1,2,3} for quads
+  // m_face_vertex_index[i] = {0,1,2,?} for tris
   return ( 
     nullptr != m_face 
-    && m_face_vertex_index[0] < ON_SubDFace::MaximumEdgeCount 
-    && m_face_vertex_index[1] < ON_SubDFace::MaximumEdgeCount 
-    && m_face_vertex_index[2] < ON_SubDFace::MaximumEdgeCount 
+    && m_face->m_edge_count < ON_SubDFace::MaximumEdgeCount
+    && m_face_vertex_index[0] < m_face->m_edge_count
+    && m_face_vertex_index[1] < m_face->m_edge_count
+    && m_face_vertex_index[2] < m_face->m_edge_count
+    && m_grid.m_side_segment_count > 0 && nullptr != m_grid.m_S
     );
 }
 
@@ -603,13 +746,11 @@ ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Quads(
     return *fragment_grid;
   }
 
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
   // The code below is thread safe and constructs the ON_SubDLimitMeshFragmentGrids
   // that are resources shared by all ON_SubDLimitMeshFragments.
 
   static ON_SleepLock lock;
   const bool bReturnLock = lock.GetLock(50,ON_SleepLock::OneMinute,true);
-#endif
 
 
   // The ON_SubDLimitMeshFragmentGrid classes created below are created one time as needed
@@ -710,10 +851,8 @@ ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Quads(
     grid_cache[i] = first_lod;
   }           
 
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
   if ( bReturnLock )
     lock.ReturnLock();
-#endif
 
   if (vdex != vdex1)
   {
@@ -736,10 +875,14 @@ ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Quads(
 // ON_SubDLimitMesh
 //
 
-void ON_SubDLimitMeshImpl::ClearFragmentFacePointers()
+void ON_SubDLimitMeshImpl::ClearFragmentFacePointers(
+  bool bResetSubDWeakPtr
+)
 {
   // When the ON_SubDimple that manages the faces referenced by
   // fragment->m_face is deleted, fragment->m_face must be set to zero.
+  if (bResetSubDWeakPtr)
+    m_subdimple_wp.reset();
   if (nullptr != m_first_fragment && nullptr != m_first_fragment->m_face)
   {
     for (auto fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
@@ -898,6 +1041,324 @@ bool ON_SubDLimitMeshImpl::AddFinishedFragment(
   return true;
 }
 
+
+////class ON_SubDLimitMeshSealVertexInfo
+////{
+////public:
+////  ON_SubDLimitMeshSealVertexInfo() = default;
+////  ~ON_SubDLimitMeshSealVertexInfo() = default;
+////  ON_SubDLimitMeshSealVertexInfo(const ON_SubDLimitMeshSealVertexInfo&) = default;
+////  ON_SubDLimitMeshSealVertexInfo& operator=(const ON_SubDLimitMeshSealVertexInfo&) = default;
+////
+////  static const ON_SubDLimitMeshSealVertexInfo Unset;
+////
+////  enum Bits : unsigned char
+////  {
+////    // Set if the vertex is smooth and normals should be sealed along with location.
+////    SmoothVertex = 0x01,
+////
+////    // Set if the edge is smooth and normals should be sealed along with location.
+////    SmoothEdge = 0x02,
+////  };
+////
+////public:
+////  unsigned int m_vertex_id = 0;
+////  unsigned int m_edge_id = 0;
+////  unsigned char m_bits = 0;
+////  double* m_P = nullptr;
+////  double* m_N = nullptr;
+////};
+////const ON_SubDLimitMeshSealVertexInfo ON_SubDLimitMeshSealVertexInfo::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDLimitMeshSealVertexInfo);
+
+class ON_SubDLimitMeshSealEdgeInfo
+{
+public:
+  ON_SubDLimitMeshSealEdgeInfo() = default;
+  ~ON_SubDLimitMeshSealEdgeInfo() = default;
+  ON_SubDLimitMeshSealEdgeInfo(const ON_SubDLimitMeshSealEdgeInfo&) = default;
+  ON_SubDLimitMeshSealEdgeInfo& operator=(const ON_SubDLimitMeshSealEdgeInfo&) = default;
+
+  static const ON_SubDLimitMeshSealEdgeInfo Unset;
+
+  enum Bits : unsigned char
+  {
+    // Set if edge orientation is opposite face boundary ccw orientation.
+    EdgeDir = 0x01,
+
+    // Set if the edge is smooth and normals should be sealed along with location.
+    Smooth = 0x02,
+
+    // The high bits are used for half edges so they will sort after full edges
+    FirstHalf = 0x40,
+    SecondHalf = 0x80,
+    HalfMask = 0xC0,
+
+    // Used to ignore edge dir
+    IgnoreEdgeDirMask = 0xFE
+  };
+
+  bool SetEdge(
+    unsigned int grid_side_dex
+  )
+  {
+    for (;;)
+    {
+      if (nullptr == m_fragment || nullptr == m_fragment->m_face)
+        break;
+
+      m_face_edge_count = m_fragment->m_face->m_edge_count;
+      if (m_face_edge_count < 3 || m_face_edge_count > ON_SubDFace::MaximumEdgeCount)
+        break; // bogus face
+
+      const ON_SubDEdgePtr eptr = m_fragment->EdgePtr(grid_side_dex);
+      const ON_SubDEdge* edge = eptr.Edge();
+      m_edge_id = (nullptr != edge && edge->m_face_count >= 2) ? edge->m_id : 0;
+      if (0 == m_edge_id)
+        break; // nothing to seal
+
+      const bool bCompleteFragment = m_fragment->IsCompleteFragment();
+      const bool bPartialFragment
+        = (false == bCompleteFragment)
+        && m_fragment->m_face_vertex_index[0] > ON_SubDFace::MaximumEdgeCount
+        && m_fragment->m_face_vertex_index[1] > ON_SubDFace::MaximumEdgeCount
+        && m_fragment->m_face_vertex_index[2] < ON_SubDFace::MaximumEdgeCount
+        && m_fragment->m_face_vertex_index[3] > ON_SubDFace::MaximumEdgeCount
+        ;
+
+      if (false == bCompleteFragment && false == bPartialFragment)
+      {
+        ON_SUBD_ERROR("Unexpected m_face_vertex[] falues in partial fragment.");
+        break;
+      }
+
+      m_bits = 0;
+      const ON__UINT_PTR edge_dir = eptr.EdgeDirection();
+      if (bPartialFragment)
+      {
+        // The high bit is used for partial fragments so they will sort after full fragments.
+        if ( 1 == grid_side_dex )
+          m_bits |= (0==edge_dir) ? Bits::SecondHalf : Bits::FirstHalf;
+        else if ( 2 == grid_side_dex )
+          m_bits |= (0==edge_dir) ? Bits::FirstHalf : Bits::SecondHalf;
+        else
+        {
+          // this is an inteior edge of a partial fragment and it
+          // is alwasy sealed with its neighbor when it is created.
+          break;
+        }
+      }
+      if (0 != edge_dir)
+        m_bits |= Bits::EdgeDir;
+      if (edge->IsSmooth())
+        m_bits |= Bits::Smooth;
+
+      m_grid_side_dex = (unsigned char)grid_side_dex; // 0,1,2, or 3
+
+      return true;
+    }
+
+
+    m_edge_id = 0;
+    m_bits = 0;
+    m_grid_side_dex = 0;
+    m_face_edge_count = 0;
+    return false;
+  }
+
+  static bool Seal(
+    const ON_SubDLimitMeshSealEdgeInfo& src,
+    const ON_SubDLimitMeshSealEdgeInfo& dst
+  );
+
+
+  static int CompareEdgeIdBitsFaceId(
+    const ON_SubDLimitMeshSealEdgeInfo* lhs,
+    const ON_SubDLimitMeshSealEdgeInfo* rhs
+  )
+  {
+    // sort by edge id
+    if (lhs->m_edge_id < rhs->m_edge_id)
+      return -1;
+    if (lhs->m_edge_id > rhs->m_edge_id)
+      return 1;
+
+    // then sort by bits with full edges before half edges
+    // Critical to ignore the EdgeDir bit because we need
+    // the identical sections of edges to be sorted together.
+    // When an edge has 2 N-gons (N != 4) attached, we need
+    // the pairs for the first half and 2nd half sorted toether
+    const unsigned char lhs_bits = (lhs->m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::IgnoreEdgeDirMask);
+    const unsigned char rhs_bits = (rhs->m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::IgnoreEdgeDirMask);
+    if (lhs_bits < rhs_bits)
+      return -1;
+    if (lhs_bits > rhs_bits)
+      return 1;
+
+    // then sort by face id
+    unsigned int lhs_face_id = (nullptr != lhs->m_fragment->m_face) ? lhs->m_fragment->m_face->m_id : 0xFFFFFFFF;
+    unsigned int rhs_face_id = (nullptr != rhs->m_fragment->m_face) ? rhs->m_fragment->m_face->m_id : 0xFFFFFFFF;
+    if (0 == lhs_face_id)
+      lhs_face_id = 0xFFFFFFFE;
+    if (0 == rhs_face_id)
+      rhs_face_id = 0xFFFFFFFE;
+    if (lhs_face_id < rhs_face_id)
+      return -1;
+    if (lhs_face_id > rhs_face_id)
+      return 1;
+
+    return 0;
+  }
+
+public:
+  unsigned int m_edge_id = 0;
+
+  // m_bits is bitwise or of ON_SubDLimitMeshSealEdgeInfo::Bits enum values
+  unsigned char m_bits = 0;
+  unsigned char m_grid_side_dex = 0; // 0,1,2,or 3
+  unsigned short m_face_edge_count = 0;
+
+  ON_SubDLimitMeshFragment* m_fragment = nullptr;
+};
+
+const ON_SubDLimitMeshSealEdgeInfo ON_SubDLimitMeshSealEdgeInfo::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDLimitMeshSealEdgeInfo);
+
+bool ON_SubDLimitMeshSealEdgeInfo::Seal(
+  const ON_SubDLimitMeshSealEdgeInfo& src,
+  const ON_SubDLimitMeshSealEdgeInfo& dst
+)
+{
+  if (src.m_edge_id != dst.m_edge_id || 0 == src.m_edge_id)
+    return false;
+  if (nullptr == src.m_fragment || nullptr == dst.m_fragment)
+    return false;
+  const bool bSealNormals = (0 != (src.m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::Smooth));
+  const unsigned char src_half = (src.m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::HalfMask);
+  const unsigned char dst_half = (dst.m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::HalfMask);
+  unsigned int src_side_segment_count = src.m_fragment->m_grid.m_side_segment_count;
+  unsigned int dst_side_segment_count = dst.m_fragment->m_grid.m_side_segment_count;
+  unsigned int i0 = src.m_grid_side_dex*src_side_segment_count;
+  unsigned int i1 = i0 + src_side_segment_count;
+
+  ////unsigned int vid[2] = {};
+  ////const ON_SubDEdge* e = src.m_fragment->Edge(src.m_grid_side_dex);
+  ////if (nullptr != e )
+  ////{
+  ////  const ON_SubDVertex* v = src.m_fragment->Vertex(src.m_grid_side_dex);
+  ////  if ( nullptr != v )
+  ////    vid[0] = v->m_id;
+  ////  v = src.m_fragment->Vertex((src.m_grid_side_dex+1)%4);
+  ////  if ( nullptr !=v )
+  ////    vid[1] = v->m_id;
+  ////}   
+
+  // src_dir = 0 if SubD edge and fragment side have compatible natural orientations
+  const unsigned char src_dir = (src.m_bits&ON_SubDLimitMeshSealEdgeInfo::Bits::EdgeDir);
+
+  if (src_half != dst_half || src_side_segment_count != dst_side_segment_count)
+  {
+    if (
+      0 == src_half 
+      && 4 == src.m_face_edge_count
+      && 4 != dst.m_face_edge_count
+      && 2 * dst_side_segment_count == src_side_segment_count)
+    {
+      // The face for src_half is a quad and the face for dest_half is an N-gon with N != 3,
+      // and src_fragment is a full sized fragment and dst_fragment is a half sized fragment.
+      if (ON_SubDLimitMeshSealEdgeInfo::Bits::FirstHalf == dst_half)
+      {
+        // only copy half of src_fragment side
+        if (0 == src_dir)
+        {
+          i1 -= dst_side_segment_count; // copy first half of src_framgent side
+          ////vid[1] = 0;
+        }
+        else
+        {
+          i0 += dst_side_segment_count; // copy 2nd half of src_framgent side
+          ////vid[0] = 0;
+        }
+      }
+      else if (ON_SubDLimitMeshSealEdgeInfo::Bits::SecondHalf == dst_half)
+      {
+        // only copy half of src_fragment side
+        if (0 == src_dir)
+        {
+          i0 += dst_side_segment_count; // copy 2nd half of src_framgent side
+          ////vid[0] = 0;
+        }
+        else
+        {
+          i1 -= dst_side_segment_count; // copy first half of src_framgent side
+          ////vid[1] = 0;
+        }
+      }
+      else
+      {
+        // bug in this code or the code that sets the m_bits information.
+        ON_SUBD_ERROR("unexpected dst_half");
+        return false;
+      }
+    }
+    else
+    {
+      // Either the parent subd is invalid or information
+      // set in the fragments, or the sorting in ON_SubDLimitMeshImpl::SealEdges()
+      // is not valid (or some other bug).
+      ON_SUBD_ERROR("unexpected sealing fragment portions");
+      return false;
+    }
+  }
+
+  // seal this edge
+  const bool bSameDirection = (src_dir == (dst.m_bits&ON_SubDLimitMeshSealEdgeInfo::Bits::EdgeDir));
+  const unsigned int j0 = dst.m_grid_side_dex*dst_side_segment_count + (bSameDirection?0:dst_side_segment_count);
+  const unsigned int j1 = bSameDirection ? (j0+dst_side_segment_count) : (j0-dst_side_segment_count);
+  ON_SubDLimitMeshFragment::SealAdjacentSides(
+    true, // bTestNearEqual,
+    bSealNormals,
+    *src.m_fragment,
+    i0,
+    i1,
+    *dst.m_fragment,
+    j0,
+    j1
+  );
+  return true;
+}
+
+
+void ON_SubDLimitMeshImpl::SealEdges()
+{
+  ON_SimpleArray<ON_SubDLimitMeshSealEdgeInfo> fe_list(m_fragment_count);
+  ON_SubDLimitMeshSealEdgeInfo fe;
+  for (fe.m_fragment = m_first_fragment; nullptr != fe.m_fragment; fe.m_fragment = fe.m_fragment->m_next_fragment)
+  {
+    if (nullptr == fe.m_fragment->m_face)
+      continue;
+    for (unsigned int grid_side_dex = 0; grid_side_dex < 4; grid_side_dex++)
+    {
+      if ( fe.SetEdge(grid_side_dex) )
+        fe_list.Append(fe);
+    }
+  }
+
+  fe_list.QuickSort(ON_SubDLimitMeshSealEdgeInfo::CompareEdgeIdBitsFaceId);
+  const unsigned int fe_list_count = fe_list.UnsignedCount();
+  unsigned int i0 = 0;
+  while ( i0 < fe_list_count )
+  {
+    fe = fe_list[i0];    
+    const unsigned char src_half_mask = (fe.m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::HalfMask);
+    for ( i0++; i0 < fe_list_count && fe.m_edge_id == fe_list[i0].m_edge_id; i0++ )
+    {
+      if (0 != src_half_mask && 0 == (src_half_mask & fe_list[i0].m_bits))
+        break; // necessary when all faces attached to an edge are not quads.
+      ON_SubDLimitMeshSealEdgeInfo::Seal(fe, fe_list[i0]);
+    }
+  }
+}
+
+
 unsigned int ON_SubDLimitMeshImpl::Internal_NextContentSerialNumber()
 {
   static unsigned int serial_number = 0;
@@ -1001,393 +1462,6 @@ bool ON_SubDLimitMeshImpl::GetTightBoundingBox(
   return true;
 }
 
-class /*DO NOT EXPORT*/ON_SubDLimitMeshImpl_CallbackContext
-{
-public:
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-  bool m_bUseMultipleThreads = false; // If true, callback uses the lock
-  ON_SleepLock m_lock;
-#endif
-  ON_SubDLimitMeshImpl* m_impl = nullptr;
-  ON_SimpleArray< ON_SubDLimitMeshFragment* > m_face_mesh_fragments;
-
-  static bool FragmentCallbackFunction(
-    ON__UINT_PTR impl_context_as_void,
-    const class ON_SubDLimitMeshFragment* fragment
-    );
-
-  /*
-  Description:
-    compares the face id and then the fragment index.
-  Parameters:
-    a - [in]
-    b - [in]
-      The caller insures that a, b, a->m_face and b->m_face are not nullptr.
-  */
-  static int CompareFragmentIndex(
-    ON_SubDLimitMeshFragment*const* a,
-    ON_SubDLimitMeshFragment*const* b
-    );
-  
-  /*
-  Description:
-    Once all the mesh fragments for a face are delivered and sorted,
-    this function is called to make coincident vertices have identical
-    locations and normals.
-
-  Parameters:
-     count - [in]
-       Number of elements in mesh_fragments[].  This should be the same
-       number as sub_fragments[i].m_face_fragment_count.
-     mesh_fragments - [in]
-       Every element in the array should have the same ON_SubDLimitMeshFragment.m_face->m_id
-  */
-  static bool ProcessSortedFragments(
-    unsigned int count,
-    ON_SubDLimitMeshFragment** mesh_fragments
-    );
-
-  static bool CoincidentSideCopy(
-    ON_SubDLimitMeshFragment* prev_fragment,
-    ON_SubDLimitMeshFragment* fragment
-    );
-};
-
-bool ON_SubDLimitMeshImpl_CallbackContext::FragmentCallbackFunction(
-  ON__UINT_PTR callback_context_as_void,
-  const class ON_SubDLimitMeshFragment* callback_fragment
-  )
-{
-  bool bContinueMeshCalculation = true;
-
-  ON_SubDLimitMeshImpl_CallbackContext* context = (ON_SubDLimitMeshImpl_CallbackContext*)callback_context_as_void;
-
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-  bool bReleaseLock = false;
-  if (context->m_bUseMultipleThreads)
-  {
-    if (false == context->m_lock.GetLock(0, ON_SleepLock::OneSecond))
-    {
-      // return true to keep going, but something is really hogging the lock
-      return ON_SUBD_RETURN_ERROR(bContinueMeshCalculation);
-    }
-  }
-#endif
-
-  for (;;)
-  {
-    ON_SubDLimitMeshFragment* impl_managed_fragment = context->m_impl->CopyCallbackFragment(callback_fragment);
-    if (nullptr == impl_managed_fragment)
-    {
-      ON_SubDIncrementErrorCount();
-      bContinueMeshCalculation = false; // terminate meshing
-      break;
-    }
-
-    const unsigned int face_fragment_count = impl_managed_fragment->m_face_fragment_count;
-
-    const unsigned int face_id 
-      = (nullptr == impl_managed_fragment->m_face)
-      ? 0
-      : impl_managed_fragment->m_face->m_id;
-
-
-    if ( 0 == face_id || ON_UNSET_UINT_INDEX == face_id
-      || face_fragment_count <= 1
-      || impl_managed_fragment->m_face_fragment_index >= face_fragment_count
-      )
-    {
-      // simple case where no additional processing is reqired
-      context->m_impl->AddFinishedFragment(impl_managed_fragment);
-      break;
-    }
-
-
-    unsigned int count = context->m_face_mesh_fragments.UnsignedCount();
-
-    if (count + 1 < face_fragment_count)
-    {
-      // waiting on more fragments
-      context->m_face_mesh_fragments.Append(impl_managed_fragment);
-      break;
-    }
-
-    ON_SubDLimitMeshFragment** mesh_fragments = context->m_face_mesh_fragments.Array();
-    unsigned int delivered_mesh_fragment_count = 0;
-    unsigned int i0 = ON_UNSET_UINT_INDEX;
-    for (unsigned int i = 0; i < count; i++)
-    {
-      if ( face_id != mesh_fragments[i]->m_face->m_id)
-        continue;
-      if ( 0 == delivered_mesh_fragment_count++)
-        i0 = i;
-      if ( delivered_mesh_fragment_count + 1 == face_fragment_count )
-        break;
-    }
-
-    if (delivered_mesh_fragment_count + 1 < face_fragment_count)
-    {
-      // waiting on more fragments
-      context->m_face_mesh_fragments.Append(impl_managed_fragment);
-      break;
-    }
-
-    // copy the fragments we need to process to local storage I can release the lock.
-    ON_SimpleArray< ON_SubDLimitMeshFragment* > local_mesh_fragments(face_fragment_count);
-    if (delivered_mesh_fragment_count == count)
-    {
-      local_mesh_fragments.Append(count,mesh_fragments);
-      context->m_face_mesh_fragments.SetCount(0);
-    }
-    else
-    {
-      local_mesh_fragments.Append(mesh_fragments[i0]);
-      unsigned int count1 = 0;
-      for (unsigned int i = i0+1; i < count; i++)
-      {
-        if (face_id != mesh_fragments[i]->m_face->m_id)
-        {
-          mesh_fragments[count1++] = mesh_fragments[i];
-          continue;
-        }
-        local_mesh_fragments.Append(mesh_fragments[i]);
-      }
-      context->m_face_mesh_fragments.SetCount(count1);
-    }
-
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-    if (bReleaseLock)
-    {
-      // don't keep lock during processing
-      context->m_lock.ReturnLock();
-      bReleaseLock = false;
-    }
-#endif
-
-    local_mesh_fragments.Append(impl_managed_fragment);
-    local_mesh_fragments.QuickSort(ON_SubDLimitMeshImpl_CallbackContext::CompareFragmentIndex);
-    count = local_mesh_fragments.UnsignedCount();
-    mesh_fragments = local_mesh_fragments.Array();
-
-    if ( count == face_fragment_count)
-      ON_SubDLimitMeshImpl_CallbackContext::ProcessSortedFragments(count,mesh_fragments);
-    else
-    {
-      // there is a bug in the code above
-      ON_SubDIncrementErrorCount();
-    }
-    
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-    // If needed, get a lock before adding the processed fragments to
-    // the linked list.
-    if (context->m_bUseMultipleThreads)
-    {
-      if (false == context->m_lock.GetLock(0, ON_SleepLock::OneSecond))
-      {
-        // return true to keep going, but something is really hogging the lock
-        return ON_SUBD_RETURN_ERROR(bContinueMeshCalculation);
-      }
-    }
-#endif
-
-    for ( unsigned int i = 0; i < count; i++ )
-      context->m_impl->AddFinishedFragment(local_mesh_fragments[i]);
-
-    break;
-  }
-
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-  if (bReleaseLock)
-    context->m_lock.ReturnLock();
-#endif
-
-  return bContinueMeshCalculation;
-}
-
-
-int ON_SubDLimitMeshImpl_CallbackContext::CompareFragmentIndex(
-    ON_SubDLimitMeshFragment*const* a,
-    ON_SubDLimitMeshFragment*const* b
-    )
-{
-  if ( a == b )
-    return 0;
-
-  // caller insures no nulls
-  //if ( nullptr == a )
-  //  return 1;
-  //if ( nullptr == b )
-  //  return -1;
-
-  //unsigned int a_id = ( nullptr == (*a)->m_face ) ? ON_UNSET_UINT_INDEX : (*a)->m_face->m_id;
-  //unsigned int b_id = ( nullptr == (*b)->m_face ) ? ON_UNSET_UINT_INDEX : (*b)->m_face->m_id;
-  //if ( a_id < b_id )
-  //  return -1;
-  //if ( a_id > b_id )
-  //  return 1;
-
-  unsigned int a_index = (*a)->m_face_fragment_index;
-  unsigned int b_index = (*b)->m_face_fragment_index;
-  if ( a_index < b_index )
-    return -1;
-  if ( a_index > b_index )
-    return 1;
-
-  // identical values should never appear in separate entries.
-  return ON_SUBD_RETURN_ERROR(0);
-}
-
-
-bool ON_SubDLimitMeshImpl_CallbackContext::CoincidentSideCopy(
-  ON_SubDLimitMeshFragment* prev_fragment,
-  ON_SubDLimitMeshFragment* fragment
-  )
-{
-  if ( prev_fragment->m_grid.m_side_segment_count != fragment->m_grid.m_side_segment_count)
-    return ON_SUBD_RETURN_ERROR(false);
-
-  //const unsigned int side_segment_count = fragment->m_grid.m_side_segment_count;
-  //const unsigned int* S0 = prev_fragment->m_grid.m_S + 4*side_segment_count;
-  //const unsigned int* S1 = fragment->m_grid.m_S;
-
-  //const double* P0 = prev_fragment->m_P;
-  //double* P1 = fragment->m_P;
-  //const double* N0 = prev_fragment->m_N;
-  //double* N1 = fragment->m_N;
-
-  // const double* src;
-  // double* dst;
-
-
-  //for (const unsigned int* S1max = S1 + side_segment_count; S1 < S1max; S1++, S0--)
-  //{
-  //  src = P0 + P0_stride * *S0;
-  //  dst = P1 + P1_stride * *S1;
-  //  
-  //  d = fabs(src[0] - dst[0]) + fabs(src[1] - dst[1]) + fabs(src[2] - dst[2]);
-  //  if (!(d <= 1e-8))
-  //    return ON_SUBD_RETURN_ERROR(false);
-
-  //  *dst++ = *src++;
-  //  *dst++ = *src++;
-  //  *dst = *src;
-
-  //  src = N0 + N0_stride * *S0;
-  //  dst = N1 + N1_stride * *S1;
-
-  //  d = fabs(src[0] - dst[0]) + fabs(src[1] - dst[1]) + fabs(src[2] - dst[2]);
-  //  if (!(d <= 0.01))
-  //    return ON_SUBD_RETURN_ERROR(false);
-
-  //  *dst++ = *src++;
-  //  *dst++ = *src++;
-  //  *dst = *src;
-  //}
-
-  const size_t side_point_count = 1U + (unsigned int)(fragment->m_grid.m_side_segment_count);
-
-  const double* P0 = prev_fragment->m_P;
-  const double* N0 = prev_fragment->m_N;
-  const size_t P0_stride = side_point_count*prev_fragment->m_P_stride;
-  const size_t N0_stride = side_point_count*prev_fragment->m_N_stride;
-
-  double* P1 = fragment->m_P;
-  double* N1 = fragment->m_N;
-  const size_t P1_stride = fragment->m_P_stride;
-  const size_t N1_stride = fragment->m_N_stride;
-
-  double* P1max = P1 + side_point_count*P1_stride;
-  while ( P1 < P1max )
-  {
-    double d = fabs(P0[0] - P1[0]) + fabs(P0[1] - P1[1]) + fabs(P0[2] - P1[2]);
-    if (!(d <= 1e-8))
-      return ON_SUBD_RETURN_ERROR(false);
-
-    P1[0] = P0[0];
-    P1[1] = P0[1];
-    P1[2] = P0[2];
-    P0 += P0_stride;
-    P1 += P1_stride;
-
-    d = fabs(N0[0] - N1[0]) + fabs(N0[1] - N1[1]) + fabs(N0[2] - N1[2]);
-    if (!(d <= 0.01))
-      return ON_SUBD_RETURN_ERROR(false);
-
-    N1[0] = N0[0];
-    N1[1] = N0[1];
-    N1[2] = N0[2];
-    N0 += N0_stride;
-    N1 += N1_stride;
-  }
-
-  return true;
-}
-
-
-bool ON_SubDLimitMeshImpl_CallbackContext::ProcessSortedFragments(
-  unsigned int count,
-  ON_SubDLimitMeshFragment** mesh_fragments
-  )
-{
-  if ( count < 2 || nullptr == mesh_fragments)
-    return ON_SUBD_RETURN_ERROR(false);
-  if ( nullptr == mesh_fragments[0] 
-    || nullptr == mesh_fragments[0]->m_face
-    || nullptr == mesh_fragments[0]->m_P
-    || nullptr == mesh_fragments[0]->m_N
-    || 0 != mesh_fragments[0]->m_face_fragment_index
-    || count != mesh_fragments[0]->m_face_fragment_count
-    )
-    return ON_SUBD_RETURN_ERROR(false);
-
-  const unsigned int face_id = mesh_fragments[0]->m_face->m_id;
-  const unsigned int grid_F_count = mesh_fragments[0]->m_grid.m_F_count;
-  const unsigned int grid_side_count = mesh_fragments[0]->m_grid.m_side_segment_count;
-  if ( 0 == face_id || ON_UNSET_UINT_INDEX == face_id )
-    return ON_SUBD_RETURN_ERROR(false);
-  if ( 0 == grid_F_count || grid_side_count*grid_side_count != grid_F_count )
-    return ON_SUBD_RETURN_ERROR(false);
-
-  if ( nullptr == mesh_fragments[count-1] 
-    || nullptr == mesh_fragments[count-1]->m_face
-    || nullptr == mesh_fragments[count-1]->m_P
-    || nullptr == mesh_fragments[count-1]->m_N
-    || (count-1) != mesh_fragments[count-1]->m_face_fragment_index
-    || count != mesh_fragments[count-1]->m_face_fragment_count
-    || face_id != mesh_fragments[count-1]->m_face->m_id
-    || grid_F_count != mesh_fragments[count-1]->m_grid.m_F_count
-    || grid_side_count != mesh_fragments[count-1]->m_grid.m_side_segment_count
-    )
-    return ON_SUBD_RETURN_ERROR(false);
-
-
-  ON_SubDLimitMeshFragment* fragment = mesh_fragments[count-1];
-
-  for (unsigned int i = 0; i < count; i++)
-  {
-    ON_SubDLimitMeshFragment* prev_fragment = fragment;
-    fragment = mesh_fragments[i];
-    if (i > 0)
-    {
-      if (nullptr == fragment
-        || nullptr == fragment->m_face
-        || face_id != fragment->m_face->m_id
-        || grid_F_count != fragment->m_grid.m_F_count
-        || grid_side_count != fragment->m_grid.m_side_segment_count
-        || i != fragment->m_face_fragment_index
-        || count != fragment->m_face_fragment_count
-        || nullptr == fragment->m_P
-        || nullptr == fragment->m_N
-        )
-        return ON_SUBD_RETURN_ERROR(false);
-    }
-
-    if ( false == ON_SubDLimitMeshImpl_CallbackContext::CoincidentSideCopy(prev_fragment,fragment) )
-      return ON_SUBD_RETURN_ERROR(false);
-  }
-  return true;
-}
-
 #if defined(ON_HAS_RVALUEREF)
 ON_SubDLimitMesh::ON_SubDLimitMesh( ON_SubDLimitMesh&& src) ON_NOEXCEPT
   : m_impl_sp(std::move(src.m_impl_sp))
@@ -1440,6 +1514,152 @@ const ON_SubDLimitMeshFragment* ON_SubDLimitMesh::FirstFragment() const
     : nullptr;
 }
   
+const ON_SubDLimitMeshFragment* ON_SubDLimitMesh::FaceFragment(
+  const class ON_SubDFace* face
+) const
+{
+  if (nullptr == face)
+    return nullptr;
+  for (const ON_SubDLimitMeshFragment* fragment = FirstFragment(); nullptr != fragment; fragment = fragment->m_next_fragment)
+  {
+    if (face == fragment->m_face)
+      return fragment;
+  }
+  return nullptr;
+}
+
+bool ON_SubDLimitMesh::GetFaceCenterPointAndNormal(
+  const class ON_SubDFace* face,
+  double* P,
+  double* N
+) const
+{
+  if (nullptr != P)
+  {
+    P[0] = ON_DBL_QNAN;
+    P[1] = ON_DBL_QNAN;
+    P[2] = ON_DBL_QNAN;
+  }
+  if (nullptr != N)
+  {
+    N[0] = ON_DBL_QNAN;
+    N[1] = ON_DBL_QNAN;
+    N[2] = ON_DBL_QNAN;
+  }
+  const ON_SubDLimitMeshFragment* fragment = FaceFragment(face);
+  if (nullptr == fragment)
+    return false;
+  if (nullptr == fragment->m_P || nullptr == fragment->m_N)
+    return false;
+  const unsigned int n = fragment->m_grid.m_side_segment_count;
+  const unsigned int P_dex = fragment->IsCompleteFragment() ? (n*(n + 2) / 2) : 0;
+  if (P_dex >= (unsigned int)fragment->m_P_count)
+    return nullptr;
+  const double* fragment_P = fragment->m_P + (P_dex * fragment->m_P_stride);
+  const double* fragment_N = fragment->m_N + (P_dex * fragment->m_N_stride);
+  if (nullptr != P)
+  {
+    P[0] = fragment_P[0];
+    P[1] = fragment_P[1];
+    P[2] = fragment_P[2];
+  }
+  if (nullptr != N)
+  {
+    N[0] = fragment_N[0];
+    N[1] = fragment_N[1];
+    N[2] = fragment_N[2];
+  }
+  return true;
+}
+
+
+bool ON_SubDLimitMesh::GetEdgeCenterPointAndNormal(
+  const class ON_SubDEdge* edge,
+  unsigned int edge_face_index,
+  double* P,
+  double* N
+) const
+{
+  if (nullptr != P)
+  {
+    P[0] = ON_DBL_QNAN;
+    P[1] = ON_DBL_QNAN;
+    P[2] = ON_DBL_QNAN;
+  }
+  if (nullptr != N)
+  {
+    N[0] = ON_DBL_QNAN;
+    N[1] = ON_DBL_QNAN;
+    N[2] = ON_DBL_QNAN;
+  }
+  if (nullptr == edge)
+    return false;
+  const ON_SubDFace* face = edge->Face(edge_face_index);
+  if (nullptr == face)
+    return false;
+  const unsigned int fei = face->EdgeArrayIndex(edge);
+  if (fei >= face->EdgeCount())
+    return false;
+
+  unsigned int P_dex = ON_UNSET_UINT_INDEX;
+
+  bool bIsPartialFragment = false;
+  const ON_SubDLimitMeshFragment* fragment = nullptr;
+  for (
+    fragment =  FaceFragment(face);
+    nullptr != fragment && fragment->m_face == face; 
+    fragment = bIsPartialFragment ? fragment->m_next_fragment : nullptr
+    )
+  {
+    bIsPartialFragment = fragment->IsPartialFragment();
+    for (unsigned int grid_side_index = 0; grid_side_index < 4; grid_side_index++)
+    {
+      const ON_SubDEdge* grid_side_edge = fragment->Edge(grid_side_index);
+      if (edge != grid_side_edge)
+        continue;
+      const unsigned int n = fragment->m_grid.m_side_segment_count;
+      if (n <= 0 || nullptr == fragment->m_grid.m_S)
+        break;
+      if (bIsPartialFragment)
+      {
+        const ON_SubDVertex* v = fragment->Vertex(grid_side_index);
+        if (nullptr != v)
+        {
+          const unsigned int evi = (0 == face->EdgeDirection(fei)) ? 0U : 1U;
+          if (v == edge->Vertex(evi))
+            grid_side_index++;
+          P_dex = fragment->m_grid.m_S[grid_side_index*n];
+        }
+      }
+      else if (fragment->IsCompleteFragment())
+      {
+        P_dex = fragment->m_grid.m_S[grid_side_index*n + n / 2];
+      }
+      break;
+    }
+    if (false == bIsPartialFragment || ON_UNSET_UINT_INDEX != P_dex)
+      break;
+  }
+  if (nullptr == fragment)
+    return false;
+  if (P_dex >= (unsigned int)fragment->m_P_count)
+    return false;
+  const double* fragment_P = fragment->m_P + (P_dex * fragment->m_P_stride);
+  const double* fragment_N = fragment->m_N + (P_dex * fragment->m_N_stride);
+  if (nullptr != P)
+  {
+    P[0] = fragment_P[0];
+    P[1] = fragment_P[1];
+    P[2] = fragment_P[2];
+  }
+  if (nullptr != N)
+  {
+    N[0] = fragment_N[0];
+    N[1] = fragment_N[1];
+    N[2] = fragment_N[2];
+  }
+  return true;
+}
 
 bool ON_SubDLimitMesh::Update(
   bool bShareUpdate
@@ -1529,16 +1749,6 @@ unsigned int ON_SubDLimitMesh::ContentSerialNumber() const
   return (nullptr != impl) ? impl->m_limit_mesh_content_serial_number : 0;
 }
 
-ON_SubDLimitMesh* ON_SubDLimitMesh::Create(
-  const ON_SubD& subd,
-  const class ON_SubDDisplayParameters& limit_mesh_parameters,
-  ON_SubDLimitMesh* destination_mesh
-  )
-{
-  ON_SubDFaceIterator fit = subd.FaceIterator();
-  return ON_SubDLimitMesh::Create(fit,limit_mesh_parameters,destination_mesh);
-}
-
 ON_SubDLimitMesh& ON_SubDLimitMesh::CopyFrom(
   const ON_SubDLimitMesh& src
   )
@@ -1571,96 +1781,6 @@ void ON_SubDLimitMesh::Swap(
     std::swap(a.m_impl_sp, b.m_impl_sp);
   }
 }
-
-ON_SubDLimitMesh* ON_SubDLimitMesh::Create(
-    ON_SubDFaceIterator fit,
-    const class ON_SubDDisplayParameters& limit_mesh_parameters,
-    ON_SubDLimitMesh* destination_mesh
-    )
-{
-  ON_SubDLimitMeshImpl* impl = 0;
-  std::shared_ptr< ON_SubDLimitMeshImpl > impl_sp;
-
-  if (nullptr != destination_mesh)
-  {
-    destination_mesh->Clear();
-    std::shared_ptr< ON_SubDLimitMeshImpl > dest_sp = destination_mesh->m_impl_sp;
-    if (1 == dest_sp.use_count())
-    {
-      impl_sp.swap(dest_sp);
-      impl = impl_sp.get();
-    }
-  }
-
-  if ( limit_mesh_parameters.m_display_density > ON_SubDLimitMesh::MaximumDisplayDensity )
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  const ON_SubD& subd = fit.SubD();
-
-  ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd.ActiveLevelSubDType());
-  
-  const unsigned int subd_fragment_count = fit.LimitSurfaceMeshFragmentCount(facet_type);
-  if ( 0 == subd_fragment_count )
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  if (nullptr == impl)
-  {
-    impl = new(std::nothrow) ON_SubDLimitMeshImpl();
-    if ( nullptr == impl)
-      return ON_SUBD_RETURN_ERROR(nullptr);
-    std::shared_ptr< ON_SubDLimitMeshImpl > new_impl_sp(impl);
-    impl_sp.swap(new_impl_sp);
-  }
-
-  if (false == impl->ReserveCapacity(subd_fragment_count,facet_type,limit_mesh_parameters.m_display_density))
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  ON_SubDLimitMeshImpl_CallbackContext callback_context;
-
-#if defined(OPENNURBS_SLEEPLOCK_AVAILABLE)
-  callback_context.m_bUseMultipleThreads = limit_mesh_parameters.m_bUseMultipleThreads;
-#endif
-
-  callback_context.m_impl = impl_sp.get();
-  subd.GetLimitSurfaceMeshInFragments(
-    limit_mesh_parameters,
-    (ON__UINT_PTR)&callback_context,
-    ON_SubDLimitMeshImpl_CallbackContext::FragmentCallbackFunction
-    );
-
-  if (ON_Terminator::TerminationRequested(limit_mesh_parameters.m_terminator))
-  {
-    return nullptr; // not an error - outside intervention canceled meshing
-  }
-
-  if (impl->m_fragment_count < 1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  
-  ON_SubDLimitMesh* limit_mesh 
-    = (nullptr != destination_mesh)
-    ? destination_mesh
-    : new ON_SubDLimitMesh();
-
-
-  // The next three lines are conceptually the same as
-  //   impl_sp->m_subdimple_sp = fit.SubD().m_subdimple_sp;
-  // The three line approach is required because ON_SubD::m_subdimple_sp is  private.
-  {
-    ON_SubD tmp_sub;
-    tmp_sub.ShareDimple(fit.SubD()); // tmp_sub.m_subdimple_sp = fit.SubD().m_subdimple_sp (increments fit.SubD().m_subdimple_sp ref count)
-    // NOTE: 
-    //  There are at least std::shared_ptr references to the ON_SubDimple (fit and tmp_subd),
-    //  This insures the std::weak_ptr on impl_sp will be valid.
-    tmp_sub.SwapDimple(*impl_sp);  // swap impl_sp->m_subdimple_wp and tmp_sub.m_subdimple_sp
-  }
-
-  // Let limit_mesh manage the contents
-  limit_mesh->m_impl_sp.swap(impl_sp);
-
-  // return the new mesh
-  return limit_mesh;
-}
-
 
 ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(
   unsigned int display_density

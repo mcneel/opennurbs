@@ -159,7 +159,7 @@ public:
     s - [in] nullptr terminated ASCII string.
   */
   void PrintString( const char* s );
-
+  
   /*
   Description:
     Print an unformatted UNICODE string of any length.
@@ -167,7 +167,7 @@ public:
     s - [in] nullptr terminated UNICODE string.
   */
   void PrintString( const wchar_t* s );
-
+  
   void PrintRGB( const ON_Color& );
 
   /*

@@ -69,12 +69,16 @@ public:
   /*
   Returns:
     A pointer to sizeof_element bytes.  The memory is zeroed.
+  Remarks:
+    If multiple threads are using this pool, then use ThreadSafeAllocateElement().
   */
   void* AllocateElement();
 
   /*
   Returns:
     A pointer to sizeof_element bytes.  The values in the returned block are undefined.
+  Remarks:
+    If multiple threads are using this pool, then use ThreadSafeAllocateDirtyElement().
   */
   void* AllocateDirtyElement();
 
@@ -87,6 +91,8 @@ public:
       It is critical that p be from this pool and that
       you return a pointer no more than one time.
   Remarks:
+    If multiple threads are using this pool, then use ThreadSafeReturnElement().
+
     If you find the following remarks confusing, but you really want to use
     ReturnElement(), then here are some simple guidelines.
       1) SizeofElement() must be >= 16
@@ -113,6 +119,28 @@ public:
     trashed when ReturnElement() modifies the fist sizeof(void*) bytes.
   */
   void ReturnElement(void* p);
+
+  /*
+  Description:
+    Thread safe version of AllocateElement().
+  Returns:
+    A pointer to sizeof_element bytes.  The memory is zeroed.
+  */
+  void* ThreadSafeAllocateElement();
+
+  /*
+  Description:
+    Thread safe version of AllocateDirtyElement().
+  Returns:
+    A pointer to sizeof_element bytes.  The values in the returned block are undefined.
+  */
+  void* ThreadSafeAllocateDirtyElement();
+
+  /*
+  Description:
+    Thread safe version of ReturnElement().
+  */
+  void ThreadSafeReturnElement(void* p);
 
   /*
   Description:
@@ -197,8 +225,8 @@ public:
 
   /*
   Description:
-    If you are certain that all elements in hte pool (active and returned)
-    have an unsigned id that is unique and increasing, then you may use
+    If you are certain that all elements in the pool (active and returned)
+    have an unsigned 32-bit id that is unique and increasing, then you may use
     this function to find them.
   Parameters:
     id_offset - [in]
@@ -211,6 +239,30 @@ public:
     unsigned int id
     ) const;
 
+  /*
+  Description:
+    If you are certain that all elements in the pool (active and returned)
+    have an unsigned 32-bit id that is unique and increasing, then you may use
+    this function to find the maximum assigned id.
+  Parameters:
+    id_offset - [in]
+      offset into the element where the id is stored.
+  Returns:
+    maximum id in all elements (active and returned).
+  */
+  unsigned int MaximumElementId(
+    size_t id_offset
+    ) const;
+
+  bool ElementIdIsIncreasing(
+    size_t id_offset
+    ) const;
+
+  unsigned int ResetElementId(
+    size_t id_offset,
+    unsigned int initial_id
+    );
+
 public:
   // Primarily used for debugging
   bool IsValid() const;
@@ -218,20 +270,27 @@ public:
 private:
   friend class ON_FixedSizePoolIterator;
 
-  void* m_first_block;
+  void* m_first_block = nullptr;
 
   // ReturnElement() adds to the m_al_element stack.
   // AllocateElement() will use the stack before using m_al_element_array[]
-  void* m_al_element_stack;
+  void* m_al_element_stack = nullptr;
 
-  void* m_al_block; // current element allocation block.
+  void* m_al_block = nullptr; // current element allocation block.
   // m_al_element_array[] is in m_al_block and has length m_al_count.
-  void* m_al_element_array;
-  size_t m_al_count;
-  size_t m_sizeof_element;
-  size_t m_block_element_count;  // block element count
-  size_t m_active_element_count; // number of active elements
-  size_t m_total_element_count;  // total number of elements (active + returned)
+  void* m_al_element_array = nullptr;
+  size_t m_al_count = 0;
+  size_t m_sizeof_element = 0;
+  size_t m_block_element_count = 0;  // block element count
+
+  //size_t m_active_element_count = 0; // number of active elements
+  //size_t m_total_element_count = 0;  // total number of elements (active + returned)
+
+  unsigned int m_active_element_count = 0; // number of active elements
+  unsigned int m_total_element_count = 0;  // total number of elements (active + returned)
+  ON_SleepLock m_sleep_lock;
+  unsigned int m_reserved0 = 0;
+
   
 private:
   // returns capacity of elements in existing block

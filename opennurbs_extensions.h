@@ -1548,6 +1548,9 @@ public:
   static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
   static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data);
 
+  //This is only supported for Version 6 files onwards.
+  static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers);
+
   static bool IsRDKObjectInformation(const ON_UserData& objectud);
   static bool GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data);
   //

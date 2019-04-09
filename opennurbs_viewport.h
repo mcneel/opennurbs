@@ -361,6 +361,10 @@ public:
       double*  // CameraZ[3]
       ) const;
 
+  bool GetCameraFrame(
+      class ON_Plane& camera_frame
+      ) const;
+
   // these do not check for a valid camera orientation
   ON_3dVector CameraX() const; // unit to right vector
   ON_3dVector CameraY() const; // unit up vector

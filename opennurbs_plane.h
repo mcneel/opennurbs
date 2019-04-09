@@ -520,6 +520,9 @@ public:
 	const static
 	ON_Plane UnsetPlane;
 
+  // All values are ON_DBL_QNAN.
+	const static ON_Plane NanPlane;
+
 public:
   // origin of plane
   ON_3dPoint  origin;
