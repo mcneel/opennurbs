@@ -1,4 +1,6 @@
 #include "opennurbs.h"
+#include "opennurbs_testclass.h"
+#include "opennurbs_subd_data.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -82,6 +84,21 @@ ON_MemoryAllocationTracking::~ON_MemoryAllocationTracking()
   }
 #endif
 }
+
+#if !defined(OPENNURBS_NO_STD_MUTEX)
+// It is critical that ON_TestClass::global_mutex, ON_TestClass::CtorSerialNumberGenerator, and
+// ON_TestClass::PopulationCounter be initialized before any instance of ON_TestClass is created. 
+std::mutex ON_TestClass::internal_counter_mutex;
+ON__UINT64 ON_TestClass::internal_CtorSerialNumberGenerator = 0;
+ON__UINT64 ON_TestClass::internal_PopulationCounter = 0;
+#endif
+
+// It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
+// be constructed before any instance of a class derived from ON_ModelComponent.
+// That is why it is above the ClassId stuff in this .cpp file.
+std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(0);
+
+std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
 ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
@@ -453,6 +470,7 @@ const char ON_String::Slash = (char)ON_UnicodeCodePoint::ON_Slash;
 const char ON_String::Backslash = (char)ON_UnicodeCodePoint::ON_Backslash;
 const char ON_String::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
 const char ON_String::Pipe = (char)ON_UnicodeCodePoint::ON_Pipe;
+const char ON_String::Tilde = (char)ON_UnicodeCodePoint::ON_Tilde;
 
 // ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
 // ON_wString is UTF-32 encoded when sizeof(wchar_t) = 4
@@ -472,6 +490,7 @@ const wchar_t ON_wString::Slash = (wchar_t)ON_UnicodeCodePoint::ON_Slash;
 const wchar_t ON_wString::Backslash = (wchar_t)ON_UnicodeCodePoint::ON_Backslash;
 const wchar_t ON_wString::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
 const wchar_t ON_wString::Pipe = (wchar_t)ON_UnicodeCodePoint::ON_Pipe;
+const wchar_t ON_wString::Tilde = (wchar_t)ON_UnicodeCodePoint::ON_Tilde;
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
 // ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
@@ -739,8 +758,6 @@ const ON_EarthAnchorPoint ON_EarthAnchorPoint::SeattleSpaceNeedle = Internal_Ear
 
 const ON_3dmAnnotationSettings ON_3dmAnnotationSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmAnnotationSettings);
 
-const ON_3dmSettings ON_3dmSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmSettings);
-
 const ON_3dmAnnotationContext ON_3dmAnnotationContext::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmAnnotationContext);
 
 const ON_3dmArchiveTableStatus ON_3dmArchiveTableStatus::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmArchiveTableStatus);
@@ -804,6 +821,7 @@ const ON_Line ON_Line::NanLine(ON_3dPoint::NanPoint, ON_3dPoint::NanPoint);
 
 const ON_PlaneEquation ON_PlaneEquation::UnsetPlaneEquation(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 const ON_PlaneEquation ON_PlaneEquation::ZeroPlaneEquation(0.0, 0.0, 0.0, 0.0);
+const ON_PlaneEquation ON_PlaneEquation::NanPlaneEquation(ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN);
 
 const ON_Plane ON_xy_plane(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis);
 const ON_Plane ON_yz_plane(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis);
@@ -822,6 +840,18 @@ static ON_Plane ON_Plane_UnsetPlane()
 }
 
 const ON_Plane ON_Plane::UnsetPlane(ON_Plane_UnsetPlane());
+
+static ON_Plane ON_Plane_NanPlane()
+{
+  ON_Plane nan_plane;
+  nan_plane.xaxis = ON_3dVector::NanVector;
+  nan_plane.yaxis = ON_3dVector::NanVector;
+  nan_plane.zaxis = ON_3dVector::NanVector;
+  nan_plane.origin = ON_3dPoint::NanPoint;
+  nan_plane.plane_equation = ON_PlaneEquation::NanPlaneEquation;
+  return nan_plane;
+}
+const ON_Plane ON_Plane::NanPlane(ON_Plane_NanPlane());
 
 // {F15F67AA-4AF9-4B25-A3B8-517CEDDAB134}
 const ON_UUID ON_MeshParameters::RhinoLegacyMesherId = { 0xf15f67aa, 0x4af9, 0x4b25,{ 0xa3, 0xb8, 0x51, 0x7c, 0xed, 0xda, 0xb1, 0x34 } };
@@ -970,7 +1000,10 @@ const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters ON_CLANG_CO
 
 const ON_Circle ON_Circle::UnitCircle ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Circle);
 const ON_Arc ON_Arc::UnitCircle ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Arc);
+
 const ON_3dmRenderSettings ON_3dmRenderSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmRenderSettings);
+
+const ON_3dmSettings ON_3dmSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmSettings);
 
 const ON_ProgressStepCounter ON_ProgressStepCounter::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ProgressStepCounter);
 
@@ -2259,6 +2292,7 @@ const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
 const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
 const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
 
+const ON_SubDEdgeChain ON_SubDEdgeChain::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDEdgeChain);
 
 static ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint_Init(double x)
 {
@@ -2329,6 +2363,7 @@ const ON_ComponentStatus ON_ComponentStatus::Hidden = ON_ComponentStatus(ON_Comp
 const ON_ComponentStatus ON_ComponentStatus::Locked = ON_ComponentStatus(ON_ComponentState::Locked);
 const ON_ComponentStatus ON_ComponentStatus::Deleted = ON_ComponentStatus(ON_ComponentState::Deleted);
 const ON_ComponentStatus ON_ComponentStatus::Damaged = ON_ComponentStatus(ON_ComponentState::Damaged);
+const ON_ComponentStatus ON_ComponentStatus::Marked = ON_ComponentStatus(ON_ComponentState::RuntimeMarkSet);
 static ON_ComponentStatus ON_ComponentStatus_AllSet()
 {
   ON_ComponentStatus s;
@@ -2378,23 +2413,6 @@ static ON_SubDLimitMeshFragment EmptyLimitMeshFragmentInit()
 const ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Empty = EmptyLimitMeshFragmentGridInit();
 const ON_SubDLimitMeshFragment ON_SubDLimitMeshFragment::Empty = EmptyLimitMeshFragmentInit();
 
-ON_SubDLimitNurbsFragment ON_SubDLimitPatchFragment_Init(double x)
-{
-  ON_SubDLimitNurbsFragment pf;
-  memset(&pf, 0, sizeof(pf));
-  if (!(0.0 == x))
-  {
-    double* p = &pf.m_patch_cv[0][0][0];
-    double* p1 = p + sizeof(pf.m_patch_cv) / sizeof(p[0]);
-    while (p < p1)
-      *p++ = x;
-  }
-  return pf;
-}
-
-const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Empty = ON_SubDLimitPatchFragment_Init(0.0);
-const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Unset = ON_SubDLimitPatchFragment_Init(ON_UNSET_VALUE);
-const ON_SubDLimitNurbsFragment ON_SubDLimitNurbsFragment::Nan = ON_SubDLimitPatchFragment_Init(ON_DBL_QNAN);
 
 static ON_SubDComponentBase UnsetComponentBaseInit()
 {

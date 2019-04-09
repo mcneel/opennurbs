@@ -46,7 +46,7 @@ public:
   }
 
   void SetInitialDirecory(
-    const wchar_t* initial_directory,
+    const char* initial_directory,
     unsigned int counter
   )
   {
@@ -65,31 +65,31 @@ public:
   unsigned int m_max_directory_tree_depth = 0;
   unsigned int m_max_file_count = 0;
 
-  const ON_wString TextLogPathFromFullPath(
-    const wchar_t* full_path
+  const ON_String TextLogPathFromFullPath(
+    const char* full_path
   ) const;
 
 private:
-  ON_wString m_initial_directory;
+  ON_String m_initial_directory;
   unsigned int m_initial_directory_counter = 0;
   int m_initial_directory_length = 0;
   Internal_CTestContext(const Internal_CTestContext&) = delete;
   Internal_CTestContext operator=(const Internal_CTestContext&) = delete;
-  const ON_wString Internal_CleanPath(const wchar_t* dirty_path) const
+  const ON_String Internal_CleanPath(const char* dirty_path) const
   {
-    const wchar_t* volume = 0;
-    const wchar_t* path = 0;
+    const char* volume = 0;
+    const char* path = 0;
 
     // Use local path in case drive, dir, file_name_stem or ext are being reused.
-    on_wsplitpath(dirty_path, &volume, &path, nullptr, nullptr);
-    ON_wString clean_path(path);
+    on_splitpath(dirty_path, &volume, &path, nullptr, nullptr);
+    ON_String clean_path(path);
     if (clean_path.IsEmpty())
-      return ON_wString(dirty_path);
-    clean_path.Replace(ON_wString::Backslash, ON_wString::Slash);
+      return ON_String(dirty_path);
+    clean_path.Replace(ON_String::Backslash, ON_String::Slash);
     
     if (nullptr != volume && volume < path)
     {
-      ON_wString clean_volume(volume, (int)(path - volume));
+      ON_String clean_volume(volume, (int)(path - volume));
       return (clean_volume + clean_path);
     }
 
@@ -98,21 +98,21 @@ private:
 
 };
 
-const ON_wString Internal_CTestContext::TextLogPathFromFullPath(const wchar_t* full_path) const
+const ON_String Internal_CTestContext::TextLogPathFromFullPath(const char* full_path) const
 {
   // replace initial directory with <Initial Folder> and use / for
   // the directory separator so that output files are standardized.
-  ON_wString text_log_path;
-  ON_wString path1 = Internal_CleanPath(full_path);
+  ON_String text_log_path;
+  ON_String path1 = Internal_CleanPath(full_path);
   if (m_initial_directory_length > 0 &&
-    ON_wString::EqualOrdinal(m_initial_directory, m_initial_directory_length, path1, m_initial_directory_length, true)
+    ON_String::EqualOrdinal(m_initial_directory, m_initial_directory_length, path1, m_initial_directory_length, true)
     )
   {
     text_log_path 
       = (m_initial_directory_counter>0)
-      ? ON_wString::FormatToString(L"<initial folder %u>", m_initial_directory_counter)
-      : ON_wString(L"<initial folder>");
-    text_log_path += static_cast<const wchar_t*>(path1) + m_initial_directory_length;
+      ? ON_String::FormatToString("<initial folder %u>", m_initial_directory_counter)
+      : ON_String("<initial folder>");
+    text_log_path += static_cast<const char*>(path1) + m_initial_directory_length;
   }
   else
   {
@@ -124,7 +124,7 @@ const ON_wString Internal_CTestContext::TextLogPathFromFullPath(const wchar_t* f
 
 static const ONX_ErrorCounter Internal_TestModelRead(
   ON_TextLog& text_log,
-  const ON_wString text_log_3dm_file_name,
+  const ON_String text_log_3dm_file_name,
   ON_BinaryArchive& source_archive,
   bool bVerbose
   )
@@ -137,7 +137,8 @@ static const ONX_ErrorCounter Internal_TestModelRead(
   //
   text_log.PushIndent();
   ONX_ModelTest test;
-  test.ReadTest(source_archive, test_type, true, text_log_3dm_file_name, &text_log);
+  const ON_wString wide_text_log_3dm_file_name(text_log_3dm_file_name);
+  test.ReadTest(source_archive, test_type, true, wide_text_log_3dm_file_name, &text_log);
   text_log.PrintNewLine();
   text_log.Print("Test Results:\n");
   text_log.PushIndent();
@@ -324,8 +325,8 @@ static const ONX_ErrorCounter Internal_TestModelRead(
 
 static const ONX_ErrorCounter Internal_TestFileRead(
   ON_TextLog& text_log,
-  const ON_wString fullpath,
-  const ON_wString text_log_path,
+  const ON_String fullpath,
+  const ON_String text_log_path,
   bool bVerbose
   )
 {
@@ -336,7 +337,7 @@ static const ONX_ErrorCounter Internal_TestFileRead(
   ONX_ErrorCounter error_counter;
   error_counter.ClearLibraryErrorsAndWarnings();
 
-  const ON_wString path_to_print
+  const ON_String path_to_print
     = (text_log_path.IsNotEmpty())
     ? text_log_path
     : fullpath;
@@ -346,20 +347,21 @@ static const ONX_ErrorCounter Internal_TestFileRead(
     if (nullptr == fp)
     {
       text_log.Print(
-        L"Skipped file: %ls\n",
-        static_cast<const wchar_t*>(path_to_print)
+        "Skipped file: %s\n",
+        static_cast<const char*>(path_to_print)
       );
       error_counter.IncrementFailureCount();
       break;
     }
 
     text_log.Print(
-      L"File name: %ls\n",
-      static_cast<const wchar_t*>(path_to_print)
+      "File name: %s\n",
+      static_cast<const char*>(path_to_print)
     );
 
     ON_BinaryFile source_archive(ON::archive_mode::read3dm, fp);
-    source_archive.SetArchiveFullPath(fullpath);
+    const ON_wString wide_full_path(fullpath);
+    source_archive.SetArchiveFullPath(static_cast<const wchar_t*>(wide_full_path));
 
     error_counter += Internal_TestModelRead(text_log, path_to_print, source_archive, bVerbose);
     break;
@@ -374,7 +376,7 @@ static const ONX_ErrorCounter Internal_TestFileRead(
   return error_counter;
 }
 
-static int Internal_ComparePath(const ON_wString* lhs, const ON_wString* rhs)
+static int Internal_ComparePath(const ON_String* lhs, const ON_String* rhs)
 {
   // sort nullptr to end of list.
   if (lhs == rhs)
@@ -383,15 +385,15 @@ static int Internal_ComparePath(const ON_wString* lhs, const ON_wString* rhs)
     return 1;
   if (nullptr == rhs)
     return -1;
-  int rc = ON_wString::CompareOrdinal(static_cast<const wchar_t*>(*lhs), static_cast<const wchar_t*>(*rhs), true);
+  int rc = ON_String::CompareOrdinal(static_cast<const char*>(*lhs), static_cast<const char*>(*rhs), true);
   if ( 0 == rc )
-    rc = ON_wString::CompareOrdinal(static_cast<const wchar_t*>(*lhs), static_cast<const wchar_t*>(*rhs), false);
+    rc = ON_String::CompareOrdinal(static_cast<const char*>(*lhs), static_cast<const char*>(*rhs), false);
   return rc;
 }
 
 static const ONX_ErrorCounter Internal_TestReadFolder(
   ON_TextLog& text_log,
-  const wchar_t* directory_path,
+  const char* directory_path,
   unsigned int directory_tree_depth,
   bool bVerbose,
   Internal_CTestContext& test_context
@@ -402,33 +404,33 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
 
   if (nullptr == directory_path || 0 == directory_path[0])
   {
-    text_log.Print(L"Empty directory name.\n");
+    text_log.Print("Empty directory name.\n");
   }
 
   ON_FileIterator fit;
   if (false == fit.Initialize(directory_path))
   {
     text_log.Print(
-      L"Invalid directory name: %ls\n",
+      "Invalid directory name: %s\n",
       directory_path
       );
     error_counter.IncrementFailureCount();
     return error_counter;
   }
 
-  const ON_wString text_log_directory_name
+  const ON_String text_log_directory_name
     = (directory_tree_depth <= 1)
-    ? ON_wString(directory_path)
+    ? ON_String(directory_path)
     : test_context.TextLogPathFromFullPath(directory_path);
   text_log.Print(
-    L"Directory name: %ls\n",
-    static_cast<const wchar_t*>(text_log_directory_name)
+    "Directory name: %s\n",
+    static_cast<const char*>(text_log_directory_name)
     );
   text_log.PushIndent();
 
-  ON_ClassArray< ON_wString > sub_directories(32);
-  ON_ClassArray< ON_wString > skipped_files(32);
-  ON_ClassArray< ON_wString > tested_files(32);
+  ON_ClassArray< ON_String > sub_directories(32);
+  ON_ClassArray< ON_String > skipped_files(32);
+  ON_ClassArray< ON_String > tested_files(32);
 
   for ( bool bHaveItem = fit.FirstItem(); bHaveItem; bHaveItem = fit.NextItem() )
   {
@@ -444,7 +446,7 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
       continue;
     }
 
-    ON_wString fullpath = fit.CurrentItemFullPathName();
+    ON_String fullpath( fit.CurrentItemFullPathName() );
 
     if (ON_FileStream::Is3dmFile(fullpath, false))
       tested_files.Append(fullpath);
@@ -463,10 +465,10 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
     text_log.PrintNewLine();
     for (int i = 0; i < skipped_files.Count(); i++)
     {
-      const ON_wString path_to_print = test_context.TextLogPathFromFullPath(skipped_files[i]);
+      const ON_String path_to_print = test_context.TextLogPathFromFullPath(skipped_files[i]);
       text_log.Print(
-        L"Skipped file: %ls\n",
-        static_cast<const wchar_t*>(path_to_print)
+        "Skipped file: %s\n",
+        static_cast<const char*>(path_to_print)
       );
     }
     text_log.PrintNewLine();
@@ -474,8 +476,8 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
      
   for ( int i = 0; i < tested_files.Count(); i++ )
   {
-    const ON_wString full_path = tested_files[i];
-    const ON_wString path_to_print = test_context.TextLogPathFromFullPath(full_path);
+    const ON_String full_path = tested_files[i];
+    const ON_String path_to_print = test_context.TextLogPathFromFullPath(full_path);
     test_context.m_file_count++;
     const ONX_ErrorCounter file_error_counter = Internal_TestFileRead(text_log, full_path, path_to_print, bVerbose);
     error_counter += file_error_counter;
@@ -485,7 +487,7 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
   {
     if (test_context.m_max_file_count > 0 && test_context.m_file_count >= test_context.m_max_file_count)
       break;
-    const ON_wString sub_directory_path = sub_directories[i];
+    const ON_String sub_directory_path = sub_directories[i];
     test_context.m_directory_count++;
     error_counter += Internal_TestReadFolder(text_log, sub_directory_path, directory_tree_depth + 1, bVerbose, test_context);
   }
@@ -495,9 +497,18 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
   return error_counter;
 }
 
+
+static ONX_ErrorCounter Internal_InvalidArg(const ON_String arg, ON_TextLog& text_log)
+{
+  ONX_ErrorCounter err = ONX_ErrorCounter::Zero;
+  text_log.Print("Invalid command line parameter: \"%s\"\n", static_cast<const char*>(arg));
+  err.IncrementFailureCount();
+  return err;
+}
+
 static ONX_ErrorCounter Internal_Test( 
   unsigned int max_directory_tree_depth,
-  ON_wString full_path,
+  ON_String full_path,
   bool bVerbose,
   ON_TextLog& text_log,
   unsigned int& directory_counter,
@@ -512,21 +523,16 @@ static ONX_ErrorCounter Internal_Test(
   {
     if (ON_FileStream::Is3dmFile(full_path, false))
     {
-      text_log.Print(L"Testing 3dm file: %ls\n", static_cast<const wchar_t*>(full_path));
-      err = Internal_TestFileRead(text_log, full_path, ON_wString::EmptyString, bVerbose);
+      text_log.Print("Testing 3dm file: %s\n", static_cast<const char*>(full_path));
+      err = Internal_TestFileRead(text_log, full_path, ON_String::EmptyString, bVerbose);
       file_count++;
     }
   }
-  else if ( max_directory_tree_depth > 0 )
+  else if (ON_FileSystem::IsDirectory(full_path))    
   {
-    if (full_path.Length() != 1 || false == ON_FileSystemPath::IsDirectorySeparator(full_path[0], true))
+    if ( max_directory_tree_depth > 0 )
     {
-      const wchar_t dir_seps[3] = { ON_FileSystemPath::DirectorySeparator,ON_FileSystemPath::AlternateDirectorySeparator,0 };
-      full_path.TrimRight(dir_seps);
-    }
-    if (ON_FileSystem::IsDirectory(full_path))
-    {
-      text_log.Print(L"Testing 3dm files in folder: %ls\n", static_cast<const wchar_t*>(full_path));
+      text_log.Print("Testing 3dm files in folder: %s\n", static_cast<const char*>(full_path));
       Internal_CTestContext test_context;
       directory_counter++;
       test_context.SetInitialDirecory(full_path,directory_counter);
@@ -537,45 +543,136 @@ static ONX_ErrorCounter Internal_Test(
       folder_count += test_context.m_directory_count;
     }
   }
+  else
+  {
+    err += Internal_InvalidArg(full_path,text_log);
+  }
 
   return err;
 }
 
+static ON_String Internal_PlatformId(bool bVerbose)
+{
+  const ON_String runtime =
+#if defined(ON_RUNTIME_WIN)
+    bVerbose ? "Windows" : "Win"
+#elif defined(ON_RUNTIME_APPLE_IOS)
+    bVerbose ? "Apple iOS" : "iOS"
+#elif defined(ON_RUNTIME_APPLE_MACOS)
+    bVerbose ? "Apple Mac OS" : "MacOS"
+#elif defined(ON_RUNTIME_APPLE)
+    "Apple"
+#elif defined(ON_RUNTIME_ANDROID)
+    "Android"
+#else
+    "Runtime"
+#endif
+    ;
+
+  const ON_String platform =
+#if defined(ON_64BIT_RUNTIME)
+    bVerbose ? " 64 bit" : "64"
+#elif defined(ON_32BIT_RUNTIME)
+    bVerbose ? " 32 bit" : "32"
+#else
+    ""
+#endif
+    ;
+
+  const ON_String configuration =
+#if defined(ON_DEBUG)
+    bVerbose ? " Debug" : "Debug"
+#else
+    bVerbose ? " Release" : "Release"
+#endif
+    ;
+
+  ON_String platform_id(runtime+platform+configuration);
+
+  return platform_id;
+}
+
+
+static ON_String Internal_DefaultOutFileName(
+  const ON_String exe_stem
+  )
+{
+  ON_String default_file_name(exe_stem);
+  default_file_name.TrimLeftAndRight();
+  if (default_file_name.IsEmpty())
+    default_file_name = "example_test";
+  default_file_name += "_log";
+
+  const ON_String platform_id = Internal_PlatformId(false);
+  if (platform_id.IsNotEmpty())
+    default_file_name += ON_String(ON_String("_") + platform_id);
+  default_file_name += ".txt";
+
+  return default_file_name;
+}
+
 static void Internal_PrintHelp(
-  const char* example_test_exe_name,
+  const ON_String example_test_exe_stem,
   ON_TextLog& text_log
 )
 {
-  if ( 0 == example_test_exe_name || 0 == example_test_exe_name[0])
-    example_test_exe_name = "example_test";
+  const ON_String default_out_filename = Internal_DefaultOutFileName(example_test_exe_stem);
 
   text_log.Print("\n");
   text_log.Print("SYNOPSIS:\n");
-  text_log.Print("  %s [-out:outputfilename.txt] [-r[:N]] <file or directory names>\n",example_test_exe_name );
+  text_log.Print("  %s [-out[:outfilename.txt]] [-recursive[:N]] [-verbose] <file or folder names>\n", static_cast<const char*>(example_test_exe_stem) );
   text_log.Print("\n");
   text_log.Print("DESCRIPTION:\n");
   text_log.Print("  If a file is listed, it is read as an opennurbs model file.\n");
-  text_log.Print("  If a directory is listed, all .3dm files in that directory\n");
-  text_log.Print("  are read as opennurbs model files.\n");
+  text_log.Print("  If a folder is listed, all .3dm files in that folder are read\n");
+  text_log.Print("  as opennurbs model files.\n");
   text_log.Print("\n");
   text_log.Print("  Available options:\n");
-  text_log.Print("    -out:outputfilename.txt\n");
-  text_log.Print("      The output is written to the named file.\n");
+  text_log.Print("    -help\n");
+  text_log.Print("      Displays this message.\n");
+  text_log.Print("    -out\n");
+  text_log.Print("      If -out is not present, output is written to stdout.\n");
+  text_log.Print("      If :outfilename.txt is appended to -out, output is written to the specifed file.\n");
+  text_log.Print("      If :stdout is appended to -out, output is sent to stdout.\n");
+  text_log.Print("      If :null is appended to -out, no output is written.\n");
+  text_log.Print("      Otherise output is written to %s.\n",static_cast<const char*>(default_out_filename));
   text_log.Print("    -recursive\n");
-  text_log.Print("      Recursivly reads files in subdirectories.\n");
+  text_log.Print("    -r\n");
+  text_log.Print("      Recursivly reads files in subfolders.\n");
   text_log.Print("      If a :N is appended to the option, N limits the recursion depth.\n");
-  text_log.Print("      -r:1 reads the directory and does not recurse.\n");
+  text_log.Print("      -recursive:1 reads all 3dm files in the folder and does not recurse.\n");
   text_log.Print("    -verbose\n");
-  text_log.Print("      Include a full listing of 3dm file contents.\n");
+  text_log.Print("    -v\n");
+  text_log.Print("      For each 3dm file, a text summary of the 3dm file contents is created\n");
+  text_log.Print("      in the folder containing the 3dm file.\n");
   text_log.Print("\n");
   text_log.Print("RETURNS:\n");
   text_log.Print("  0: All tested files passed.\n");
   text_log.Print("  >0: Number of failures, errors, or warnings. See output for details.\n");
   text_log.Print("\n");
   text_log.Print("EXAMPLE:\n");
-  text_log.Print("  %s -out:list.txt -resursive:2 .../example_files\n",example_test_exe_name);
-  text_log.Print("  with read all the opennurbs .3dm files in the\n"); 
-  text_log.Print("  example_files/ directory and immediate subdirectories of example_files/.\n");
+  text_log.Print("  %s -out:mytestresults.txt -resursive:2 .../example_files\n",static_cast<const char*>(example_test_exe_stem));
+  text_log.Print("  with read all the opennurbs .3dm files in the .../example_files folder\n");
+  text_log.Print("  and immediate subfolders of .../example_files. Output will be saved in mytestresults.txt.\n");
+}
+
+static void Internal_PrintHelp(
+  const ON_String example_test_exe_stem,
+  ON_TextLog* text_log_ptr
+)
+{
+  ON_TextLog print_to_stdout;
+  if (nullptr == text_log_ptr)
+  {
+    print_to_stdout.SetIndentSize(2);
+    text_log_ptr = &print_to_stdout;
+  }
+  return Internal_PrintHelp(example_test_exe_stem, *text_log_ptr);
+}
+
+static char Internal_ParseOptionTailSeparator()
+{
+  return ':';
 }
 
 static const char* Internal_ParseOptionHead(
@@ -608,8 +705,13 @@ static const char* Internal_ParseOptionHead(
     if (option_name_length < 1)
       continue;
     if (ON_String::EqualOrdinal(option_name, option_name_length, s, option_name_length, true))
-      return s + option_name_length;
+    {
+      const char* tail = s + option_name_length;
+      if (0 == tail[0] || Internal_ParseOptionTailSeparator() == tail[0])
+        return tail;
+    }
   }
+
   return nullptr;
 }
 
@@ -619,89 +721,144 @@ static const ON_String Internal_ParseOptionTail(
 {
   for (;;)
   {
-    if (nullptr == s || ':' != s[0] || s[1] <= ON_String::Space)
+    if (nullptr == s || Internal_ParseOptionTailSeparator() != s[0] || s[1] <= ON_String::Space)
       break;
     ON_String tail(s+1);
     tail.TrimRight();
     int len = tail.Length();
     if (len < 1)
       break;
-    if ('"' == tail[0] && '"' == tail[len - 1])
-      tail.TrimLeftAndRight("\"");
-    else if ('\'' == tail[0] && '\'' == tail[len - 1])
-      tail.TrimLeftAndRight("'");
-    if (tail.Length() < 1)
-      break;
+    if (len >= 2)
+    {
+      bool bTrim = false;
+      if ('"' == tail[0] && '"' == tail[len - 1])
+        bTrim = true;
+      else if ('\'' == tail[0] && '\'' == tail[len - 1])
+        bTrim = true;
+      if (bTrim)
+      {
+        tail = ON_String(s + 2, len - 2);
+        if (tail.Length() < 1)
+          break;
+      }
+    }
     return tail;
   }
   return ON_String::EmptyString;
 }
 
 
-static bool Internal_ParseOption_OUT(const char* s, ON_String& output_file_name)
+static bool Internal_ParseArg_HELP(const ON_String arg)
 {
-  output_file_name = ON_wString::EmptyString;
-  const char* tail = Internal_ParseOptionHead(s, "out" );
-  if (nullptr == tail)
-    return false;
-  output_file_name = Internal_ParseOptionTail(tail);
-  return true;
+  const char* tail = Internal_ParseOptionHead(static_cast<const char*>(arg), "help", "h", "?" );
+  return (nullptr != tail && 0 == tail[0]);
 }
 
-static bool Internal_Parse_ParsOption_RECURSE(const char* s, unsigned int& N)
+static bool Internal_ParseArg_VERBOSE(const ON_String arg)
 {
-  const char* tail = Internal_ParseOptionHead(s, "r", "recurse", "recursive" );
+  const char* tail = Internal_ParseOptionHead(static_cast<const char*>(arg), "verbose", "v" );
+  return (nullptr != tail && 0 == tail[0]);
+}
+
+static bool Internal_ParseArg_OUT(const ON_String exe_stem, const ON_String arg, ON_String& output_file_path)
+{
+  const char* tail = Internal_ParseOptionHead(static_cast<const char*>(arg), "out" );
   if (nullptr == tail)
     return false;
 
   if (0 == tail[0])
   {
-    N = 16; // sanity limit of default directory recursion depth
-    return true;
+    output_file_path = Internal_DefaultOutFileName(exe_stem);
+  }
+  else if (Internal_ParseOptionTailSeparator() == tail[0])
+  {
+    output_file_path = ON_FileSystemPath::ExpandUser(Internal_ParseOptionTail(tail));
+    output_file_path.TrimLeftAndRight();
+    if (
+      false == output_file_path.EqualOrdinal("stdout",true)
+      && false == output_file_path.EqualOrdinal("stderr",true)
+      && false == output_file_path.EqualOrdinal("null",true)
+      && false == output_file_path.EqualOrdinal("dev/null",true)
+      && ON_FileSystem::IsDirectory(output_file_path)
+      )
+    {
+      const ON_wString wide_dir(output_file_path);
+      const ON_wString wide_fname(Internal_DefaultOutFileName(exe_stem));
+      output_file_path = ON_String(ON_FileSystemPath::CombinePaths(wide_dir, false, wide_fname, true, false));
+    }
+  }
+  else
+  {
+    output_file_path = ON_String::EmptyString;
   }
 
-  N = 0;
-  const ON_String num = Internal_ParseOptionTail(tail);
-  if (num.IsNotEmpty())
-  {
-    unsigned int u = 0;
-    const char* s1 = ON_String::ToNumber(num, u, &u);
-    if (nullptr != s1 && s1 > static_cast<const char*>(num) && u >= 1 && 0 == s1[0])
-      N = u;
-  }
   return true;
 }
 
-static bool Internal_Parse_ParsOption_VERBOSE(const char* s)
+static bool Internal_ParseArg_RECURSE(const ON_String arg, unsigned int& N)
 {
-  const char* tail = Internal_ParseOptionHead(s, "v", "verbose");
-  return (nullptr != tail && 0 == tail[0]);
+  const char* tail = Internal_ParseOptionHead(static_cast<const char*>(arg), "recursive", "r" );
+  if (nullptr == tail)
+    return false;
+
+  if (0 == tail[0])
+  {
+    N = 16; // sanity limit for default directory recursion depth; 
+    return true;
+  }
+    
+  if (Internal_ParseOptionTailSeparator() == tail[0])
+  {
+    const ON_String num = Internal_ParseOptionTail(tail);
+    if (num.IsNotEmpty())
+    {
+      unsigned int u = 0;
+      const char* s1 = ON_String::ToNumber(num, u, &u);
+      if (nullptr != s1 && s1 > static_cast<const char*>(num) && u >= 1 && 0 == s1[0])
+      {
+        N = u;
+        return true;
+      }
+    }
+  }
+
+  N = 0;
+  return false;
+}
+
+
+static const ON_String Internal_ParseArg_PATH(const ON_String arg, unsigned int max_directory_tree_depth)
+{
+  ON_String arg_full_path = ON_FileSystemPath::ExpandUser(static_cast<const char*>(arg));
+  arg_full_path.TrimLeftAndRight();
+
+  if (ON_FileSystem::IsFile(arg_full_path))
+    return arg_full_path;
+
+  if (max_directory_tree_depth > 0)
+  {
+    if (arg_full_path.Length() != 1 || false == ON_FileSystemPath::IsDirectorySeparator(arg_full_path[0], true))
+    {
+      const char dir_seps[3] = { ON_FileSystemPath::DirectorySeparatorAsChar, ON_FileSystemPath::AlternateDirectorySeparatorAsChar, 0 };
+      arg_full_path.TrimRight(dir_seps);
+    }
+    if (ON_FileSystem::IsDirectory(arg_full_path))
+      return arg_full_path;
+  }
+
+  return ON_String::EmptyString;
 }
 
 static void Internal_PrintIntroduction(
-  const ON_wString& exe_name,
+  const ON_String& example_test_exe_path,
   ON_TextLog& text_log
 )
 {
-  text_log.Print(L"Executable: %ls\n", static_cast<const wchar_t*>(exe_name));
+  text_log.Print("Executable: %s\n", static_cast<const char*>(example_test_exe_path));
   text_log.Print("Compiled: " __DATE__ " " __TIME__ "\n");
-  const ON_wString platform_name =
-#if defined(ON_RUNTIME_WIN)
-    L"Windows"
-#elif defined(ON_RUNTIME_APPLE_IOS)
-    L"Apple iOS"
-#elif defined(ON_RUNTIME_APPLE_MACOS)
-    L"Apple Mac OS"
-#elif defined(ON_RUNTIME_APPLE)
-    L"Apple"
-#elif defined(ON_RUNTIME_ANDROID)
-    L"Android"
-#else
-    L"Unknown"
-#endif
-    ;
+  const ON_String platform_name = Internal_PlatformId(true);
   ON::Version();
-  text_log.Print(L"Platform: %ls\n", static_cast<const wchar_t*>(platform_name));
+  text_log.Print("Platform: %s\n", static_cast<const char*>(platform_name));
   text_log.Print(
     "Opennurbs version: %u.%u %04u-%02u-%02u %02u:%02u (%u)\n",
     ON::VersionMajor(),
@@ -725,28 +882,13 @@ int main( int argc, const char *argv[] )
   // as a Windows DLL, then you may use either ON::OpenFile() or fopen()
   // to open the file.
 
-  const char* example_test_exe_name = 0;
-  if ( argc >= 1 && 0 != argv && 0 != argv[0] && 0 != argv[0][0] )
-  {
-    on_splitpath(
-      argv[0],
-      nullptr, // volume
-      nullptr, // directory,
-      &example_test_exe_name,
-      nullptr // extension
-      );
-  }
-
-  if ( 0 == example_test_exe_name || 0 == example_test_exe_name[0] )
-  {
-#if defined(ON_OS_WINDOWS)
-    example_test_exe_name = "example_test.exe";
-#else
-    example_test_exe_name = "example_test";
-#endif
-  }
-
-  const ON_wString exe_name((nullptr != argv && argc > 0) ? argv[0] : ((const char*)nullptr));
+  ON_String arg(nullptr != argv ? argv[0] : ((const char*)nullptr));
+  arg.TrimLeftAndRight();
+  const ON_String example_test_exe_path(arg);
+  ON_String example_test_exe_stem;
+  ON_FileSystemPath::SplitPath(example_test_exe_path, nullptr, nullptr, &example_test_exe_stem, nullptr);
+  if (example_test_exe_stem.IsEmpty())
+    example_test_exe_stem = "example_test";
 
   ON_TextLog print_to_stdout;
   print_to_stdout.SetIndentSize(2);
@@ -754,7 +896,7 @@ int main( int argc, const char *argv[] )
   int argi;
   if ( argc < 2 ) 
   {
-    Internal_PrintHelp(example_test_exe_name, print_to_stdout);
+    Internal_PrintHelp(example_test_exe_stem, print_to_stdout);
     return 0;
   }
 
@@ -778,66 +920,90 @@ int main( int argc, const char *argv[] )
 
   for ( argi = 1; argi < argc; argi++ ) 
   {
-    const char* arg = argv[argi];
+    arg = argv[argi];
+    arg.TrimLeftAndRight();
+    if (arg.IsEmpty())
+      continue;
+
+    if (argi + 1 == argc && Internal_ParseArg_HELP(arg))
+    {
+      Internal_PrintHelp(example_test_exe_stem, text_log);
+      if ( 0 == folder_count && 0 == file_count && 0 == err.TotalCount() )
+        return 0;
+      continue;
+    }
 
     // check for -out:<file name> option
     ON_String output_file_name;
-    if ( Internal_ParseOption_OUT(arg,output_file_name) )
+    if ( Internal_ParseArg_OUT(example_test_exe_stem, arg, output_file_name) )
     {
       // need a new introduction when output destination changes.
       bPrintIntroduction = true;
 
-      if (output_file_name.IsEmpty())
-        continue; // invalid option systax
-
       // change destination of text_log file
-      if ( text_log != &print_to_stdout )
+      if ( text_log != &print_to_stdout && text_log != &ON_TextLog::Null )
       {
         delete text_log;
-        text_log = nullptr;
       }
       if ( text_log_fp )
       {
         ON::CloseFile(text_log_fp);
+        text_log_fp = nullptr;
+      }
+
+      text_log = &print_to_stdout;
+
+      if (output_file_name.IsEmpty() || output_file_name.EqualOrdinal("stdout", true))
+        continue;
+
+      if (output_file_name.EqualOrdinal("null", true) || output_file_name.EqualOrdinal("dev/null", true))
+      {
+        text_log = &ON_TextLog::Null;
+        continue;
       }
 
       FILE* text_fp = ON::OpenFile(output_file_name,"w");
-      if ( text_fp )
+      if (nullptr == text_fp)
       {
-        text_log_fp = text_fp;
-        text_log = new ON_TextLog(text_log_fp);
-        text_log->SetIndentSize(2);
+        err += Internal_InvalidArg(arg, *text_log);
+        break;
       }
+
+      text_log_fp = text_fp;
+      text_log = new ON_TextLog(text_log_fp);
+      text_log->SetIndentSize(2);
 
       continue;
     }
 
     // check for -recursive:<directory depth> option
-    if (Internal_Parse_ParsOption_RECURSE(arg, maximum_directory_depth))
+    if (Internal_ParseArg_RECURSE(arg, maximum_directory_depth))
     {
       continue;
     }
 
-    if (Internal_Parse_ParsOption_VERBOSE(arg))
+    if (Internal_ParseArg_VERBOSE(arg))
     {
       bVerbose = true;
       continue;
     }
 
-    ON_wString full_path(arg);
-
-    if ( nullptr == text_log )
-      text_log = &print_to_stdout;
-
     if (bPrintIntroduction)
     {
       bPrintIntroduction = false;
-      Internal_PrintIntroduction(exe_name, *text_log);
+      Internal_PrintIntroduction(example_test_exe_path, *text_log);
+    }
+
+    const ON_String arg_full_path = Internal_ParseArg_PATH(arg,maximum_directory_depth);
+    if (arg_full_path.IsEmpty())
+    {
+      err += Internal_InvalidArg(arg, *text_log);
+      break;
     }
 
     err += Internal_Test(
       maximum_directory_depth,
-      full_path,
+      arg_full_path,
       bVerbose,
       *text_log,
       directory_arg_counter,
@@ -849,13 +1015,13 @@ int main( int argc, const char *argv[] )
   if (bPrintIntroduction)
   {
     bPrintIntroduction = false;
-    Internal_PrintIntroduction(exe_name, *text_log);
+    Internal_PrintIntroduction(example_test_exe_path, *text_log);
   }
 
   if (folder_count > 0)
   {
     text_log->Print(
-      L"Tested %u 3dm files in %u folders.",
+      "Tested %u 3dm files in %u folders.",
       file_count,
       folder_count
     );
@@ -863,7 +1029,7 @@ int main( int argc, const char *argv[] )
   else
   {
     text_log->Print(
-      L"Tested %u 3dm files.",
+      "Tested %u 3dm files.",
       file_count
     );
   }
@@ -879,11 +1045,12 @@ int main( int argc, const char *argv[] )
   err.Dump(*text_log);
   text_log->PrintNewLine();
 
-  if ( text_log != &print_to_stdout )
+  if ( text_log != &print_to_stdout && text_log != &ON_TextLog::Null )
   {
     delete text_log;
-    text_log = nullptr;
   }
+
+  text_log = nullptr;
 
   if ( text_log_fp )
   {

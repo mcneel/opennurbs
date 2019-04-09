@@ -2521,11 +2521,29 @@ bool ON_Mesh::Read( ON_BinaryArchive& file )
               {
                 bool bHasDoublePrecisionVertices = false;
                 rc = file.ReadBool(&bHasDoublePrecisionVertices);
+                bool bHasInvalidDoublePrecisionVertices = false;
                 if (bHasDoublePrecisionVertices)
                 {
                   // Added explicit double precision vertices chunk version 3.7
                   // (used to be on user data)
                   rc = ReadMeshDoublePrecisionVertices(file, m_dV);
+                  if (rc && m_dV.UnsignedCount() == m_V.UnsignedCount())
+                  {
+                    // Validate m_dV[] - some files contain different values for m_V[] and m_dV[].
+                    // When this happens, delete m_dV[].
+                    const unsigned int dvcount = m_dV.UnsignedCount();
+                    for (unsigned int vdex = 0; vdex < dvcount; vdex++)
+                    {
+                      const ON_3fPoint P(m_dV[vdex]);
+                      const double m = fabs(m_V[vdex].MaximumCoordinate());
+                      const double d = fabs((P - m_V[vdex]).MaximumCoordinate());
+                      if (d <= m*1.0e-6)
+                        continue;
+                      bHasInvalidDoublePrecisionVertices = true;
+                      m_dV.Destroy();
+                      break;
+                    }
+                  }
                   if (rc && m_dV.UnsignedCount() == m_V.UnsignedCount() && minor_version <= 7)
                   {
                     m_vertex_bbox.Set(m_dV, false);
@@ -2534,6 +2552,10 @@ bool ON_Mesh::Read( ON_BinaryArchive& file )
                 if (rc && minor_version >= 8)
                 {
                   rc = file.ReadBoundingBox(m_vertex_bbox);
+                }
+                if (bHasInvalidDoublePrecisionVertices)
+                {
+                  m_vertex_bbox.Set(m_V, false);
                 }
               }
             }
@@ -7709,6 +7731,9 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
   const bool bHasSurfaceParameters = HasSurfaceParameters();
   if ( bHasSurfaceParameters )
   {
+    const bool bHasDoublePrecisionVertices = this->HasDoublePrecisionVertices();
+    if (false == bHasDoublePrecisionVertices)
+      this->m_dV.Destroy();
     const bool bHasVertexNormals = HasVertexNormals();
     m_N.SetCapacity(vcount);
     int vi, side, hint[2];
@@ -7739,9 +7764,11 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
                                   &kgauss, &kmean, 
                                   &m_K[vi].k1, &m_K[vi].k2, 
                                   K1, K2 ); //m_K[vi].e1, m_K[vi].e2 );
-        m_V[vi] = &point.x; // use ON_3fPoint double* conversion (quiets gcc)
+        m_V[vi] = ON_3fPoint(&point.x); // use ON_3fPoint double* conversion (quiets gcc)
+        if (bHasDoublePrecisionVertices)
+          m_dV[vi] = point;
         if ( bHasVertexNormals )
-          m_N[vi] = &normal.x; // use ON_3fVector double* conversion (quiets gcc)
+          m_N[vi] = ON_3fVector(&normal.x); // use ON_3fVector double* conversion (quiets gcc)
       }
       InvalidateCurvatureStats();
     }
@@ -7757,8 +7784,10 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
         //                           are correctly evaluated RR 12482
         side = ( smax == s ) ? ((tmax == t) ? 3 : 2) : ((tmax == t) ? 4 : 1);
         srf.EvNormal( s, t, point, normal, side, hint );
-        m_V[vi] = &point.x; // use ON_3fPoint double* conversion (quiets gcc)
-        m_N[vi] = &normal.x; // use ON_3fVector double* conversion (quiets gcc)
+        m_V[vi] = ON_3fPoint(&point.x); // use ON_3fPoint double* conversion (quiets gcc)
+        if (bHasDoublePrecisionVertices)
+          m_dV[vi] = point;
+        m_N[vi] = ON_3fVector(&normal.x); // use ON_3fVector double* conversion (quiets gcc)
       }
     }
     else 
@@ -7770,7 +7799,9 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
         s = srf_st->x;
         t = srf_st->y;
         srf.EvPoint( s, t, point, side, hint );
-        m_V[vi] = &point.x;
+        m_V[vi] = ON_3fPoint(&point.x);
+        if (bHasDoublePrecisionVertices)
+          m_dV[vi] = point;
       }
     }
     if ( HasFaceNormals() )
@@ -9795,6 +9826,62 @@ void ON_MeshComponentRef::Set(
   m_mesh_ci = ci;
 }
 
+int ON_MeshComponentRef::CompareMeshPointer(const ON_MeshComponentRef* lhs, const ON_MeshComponentRef* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+
+  // nullptrs are last
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+
+  const ON__UINT_PTR lhs_ptr = (ON__UINT_PTR)lhs->m_mesh;
+  const ON__UINT_PTR rhs_ptr = (ON__UINT_PTR)rhs->m_mesh;
+  if (lhs_ptr < rhs_ptr)
+    return -1;
+  if (lhs_ptr > rhs_ptr)
+    return 1;
+
+  return 0;
+}
+
+
+int ON_MeshComponentRef::Compare(const ON_MeshComponentRef* lhs, const ON_MeshComponentRef* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+
+  // nullptrs are last
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+
+  const ON__UINT_PTR lhs_ptr = (ON__UINT_PTR)lhs->m_mesh;
+  const ON__UINT_PTR rhs_ptr = (ON__UINT_PTR)rhs->m_mesh;
+  if (lhs_ptr < rhs_ptr)
+    return -1;
+  if (lhs_ptr > rhs_ptr)
+    return 1;
+
+  return ON_COMPONENT_INDEX::Compare(&lhs->m_mesh_ci, &rhs->m_mesh_ci);
+}
+
+int ON_MeshComponentRef::Compare2(const ON_MeshComponentRef*const* lhs, const ON_MeshComponentRef*const* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+
+  // nullptrs are last
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+
+  return ON_MeshComponentRef::Compare(*lhs, *rhs);
+}
 
 bool ON_MeshComponentRef::IsValid( ON_TextLog* text_log ) const
 {
@@ -10326,6 +10413,35 @@ ON_MeshComponentRef ON_Mesh::MeshComponentRef(
   }
   return cr;
 }
+
+const ON_COMPONENT_INDEX ON_MeshTopology::TopVertexComponentIndex(
+  ON_COMPONENT_INDEX ci
+) const
+{
+  switch (ci.m_type)
+  {
+  case ON_COMPONENT_INDEX::TYPE::mesh_vertex:
+    if (ci.m_index >= 0
+      && nullptr != m_mesh 
+      && ci.m_index < m_mesh->VertexCount() 
+      && m_mesh->VertexCount() == m_topv_map.Count() 
+      )
+    {
+      ci.m_type = ON_COMPONENT_INDEX::TYPE::meshtop_vertex;
+      ci.m_index = m_topv_map[ci.m_index];
+    }
+    // no break here
+  case ON_COMPONENT_INDEX::TYPE::meshtop_vertex:
+    if (ci.m_index >= 0 && ci.m_index < m_topv.Count())
+    {
+      return ci;
+    }
+    break;
+  }
+
+  return ON_COMPONENT_INDEX::UnsetComponentIndex;
+}
+
 
 ON_MeshComponentRef ON_MeshTopology::MeshComponentRef(ON_COMPONENT_INDEX ci) const
 {

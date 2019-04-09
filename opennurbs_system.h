@@ -109,6 +109,7 @@
 #endif
 #endif
 
+
 #include "opennurbs_system_compiler.h"
 
 #include "opennurbs_system_runtime.h"
@@ -594,12 +595,32 @@ typedef ON__UINT32 wchar_t;
 #include <atomic>  // for std:atomic<type>
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 
+#pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
+#include <chrono>  // for std:chrono::high_resolution_clock
+#pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
+
+#pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
+#if !defined(OPENNURBS_NO_STD_THREAD)
+#include <thread>  // for std::this_thread::sleep_for
+#endif
+#pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
+
+#pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
+#if !defined(OPENNURBS_NO_STD_MUTEX)
+#include <mutex>  // for std:mutex
+#endif
+#pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
+
 
 #define ON_NO_SHARED_PTR_DTOR(T) [=](T*){}
 #define ON_MANAGED_SHARED_PTR(T, p) std::shared_ptr<T>(p)
 #define ON_UNMANAGED_SHARED_PTR(T, p) std::shared_ptr<T>(p,[=](T*){})
 
 #if defined(ON_RUNTIME_APPLE)
+
+// To handle single stroke fonts on MacOS, we need freetype tools.
+// See ON_AppleFontGetGlyphOutline() for details.
+// freetype linking is broken in current project // #define OPENNURBS_FREETYPE_SUPPORT
 
 #if defined(ON_COMPILER_CLANG)
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE

@@ -33,6 +33,11 @@ const ON_SubDLevel ON_SubDLevel::Empty;
 // ON_SubDimple
 //
 
+
+ON_SubDimple::ON_SubDimple()
+  : RuntimeSerialNumber(++ON_SubDimple::Internal_RuntimeSerialNumberGenerator)
+{}
+
 ON_SubDimple::~ON_SubDimple()
 {
   Destroy();
@@ -720,31 +725,6 @@ ON_BoundingBox ON_SubDVertex::ControlNetBoundingBox() const
 }
 
 
-ON_BoundingBox ON_SubDVertex::LimitSurfaceBoundingBox(
-  const ON_SubD& subd
-  ) const
-{
-  ON_BoundingBox bbox;
-
-  for (;;)
-  {
-    const ON_SubDimple* dimple = subd.SubDimple();
-    if (nullptr == dimple)
-      break;
-    const ON_SubDLevel* level = dimple->SubDLevel(m_level);
-    if ( nullptr == level )
-      break;
-    ON_SubDSectorLimitPoint limit_point;
-    if (false == this->GetLimitPoint(
-      level->m_subdivision_type, Face(0),true,limit_point))
-      break;
-    bbox.m_min = limit_point.m_limitP;
-    bbox.m_max = bbox.m_min;
-    break;
-  }
-
-  return bbox;
-}
 
 ON_BoundingBox ON_SubDEdge::ControlNetBoundingBox() const
 {
@@ -756,50 +736,6 @@ ON_BoundingBox ON_SubDEdge::ControlNetBoundingBox() const
     P[1] = m_vertex[1]->m_P;
     ON_GetPointListBoundingBox(3, 0, 2, 3, &P[0].x, &bbox.m_min.x, &bbox.m_max.x,false);
   }
-  return bbox;
-}
-
-
-ON_BoundingBox ON_SubDEdge::LimitSurfaceBoundingBox(
-  const ON_SubD& subd
-  ) const
-{
-  
-  ON_BoundingBox bbox;
-
-  for (;;)
-  {
-    const ON_SubDFace* face = Face(0);
-    if ( nullptr == face )
-      break;
-
-    // TODO = restrict to just the edge
-    bbox = face->LimitSurfaceBoundingBox(subd);
-    break;
-
-    //const ON_SubDimple* dimple = subd.SubDimple();
-    //if (nullptr == dimple)
-    //  break;
-    //const ON_SubDLevel* level = dimple->SubDLevel(m_level);
-    //if ( nullptr == level )
-    //  break;
-    //if (level->m_limit_mesh.IsEmpty())
-    //{
-    //  unsigned int display_density = 4;
-    //  if (m_level < display_density)
-    //    display_density -= m_level;
-    //  else
-    //    display_density = 1;
-    //  ON_SubDDisplayParameters display_parameters = ON_SubDDisplayParameters::CreateFromDisplayDensity(display_density);
-    //  level->UpdateLimitSurfaceMesh(subd, display_parameters);
-    //  if ( level->m_limit_mesh.IsEmpty() )
-    //    break;
-    //}
-    //bbox.m_min = limit_point.m_limitP;
-    //bbox.m_max = bbox.m_min;
-    //break;
-  }
-
   return bbox;
 }
 
@@ -832,41 +768,3 @@ ON_BoundingBox ON_SubDFace::ControlNetBoundingBox() const
   return bbox;
 }
 
-
-ON_BoundingBox ON_SubDFace::LimitSurfaceBoundingBox(
-  const ON_SubD& subd
-  ) const
-{
-  ON_BoundingBox bbox;
-
-  for (;;)
-  {
-    const ON_SubDimple* dimple = subd.SubDimple();
-    if (nullptr == dimple)
-      break;
-    const ON_SubDLevel* level = dimple->SubDLevel(m_level);
-    if ( nullptr == level )
-      break;
-    if (level->m_limit_mesh.IsEmpty())
-    {
-      unsigned int display_density = 4;
-      if (m_level < display_density)
-        display_density -= m_level;
-      else
-        display_density = 1;
-      ON_SubDDisplayParameters display_parameters = ON_SubDDisplayParameters::CreateFromDisplayDensity(display_density);
-      level->UpdateLimitSurfaceMesh(subd, display_parameters);
-      if ( level->m_limit_mesh.IsEmpty() )
-        break;
-    }
-    for (const ON_SubDLimitMeshFragment* fragment = level->m_limit_mesh.FirstFragment(); nullptr != fragment; fragment = fragment->m_next_fragment)
-    {
-      if (this == fragment->m_face)
-        bbox.Union(fragment->m_bbox);
-    }
-    break;
-  }
-
-  return bbox;
-
-}

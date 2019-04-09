@@ -147,7 +147,6 @@
     <ClInclude Include="opennurbs_archive.h" />
     <ClInclude Include="opennurbs_array.h" />
     <ClInclude Include="opennurbs_array_defs.h" />
-    <ClInclude Include="opennurbs_atomic_op.h" />
     <ClInclude Include="opennurbs_base32.h" />
     <ClInclude Include="opennurbs_base64.h" />
     <ClInclude Include="opennurbs_beam.h" />
@@ -248,6 +247,7 @@
     <ClInclude Include="opennurbs_revsurface.h" />
     <ClInclude Include="opennurbs_rtree.h" />
     <ClInclude Include="opennurbs_sha1.h" />
+    <ClInclude Include="opennurbs_sleeplock.h" />
     <ClInclude Include="opennurbs_sphere.h" />
     <ClInclude Include="opennurbs_std_string.h" />
     <ClInclude Include="opennurbs_string.h" />
@@ -261,6 +261,7 @@
     <ClInclude Include="opennurbs_system_compiler.h" />
     <ClInclude Include="opennurbs_system_runtime.h" />
     <ClInclude Include="opennurbs_terminator.h" />
+    <ClInclude Include="opennurbs_testclass.h" />
     <ClInclude Include="opennurbs_text.h" />
     <ClInclude Include="opennurbs_textcontext.h" />
     <ClInclude Include="opennurbs_textglyph.h" />
@@ -408,6 +409,7 @@
     <ClCompile Include="opennurbs_revsurface.cpp" />
     <ClCompile Include="opennurbs_rtree.cpp" />
     <ClCompile Include="opennurbs_sha1.cpp" />
+    <ClCompile Include="opennurbs_sleeplock.cpp" />
     <ClCompile Include="opennurbs_sort.cpp" />
     <ClCompile Include="opennurbs_sphere.cpp" />
     <ClCompile Include="opennurbs_statics.cpp" />
@@ -438,6 +440,7 @@
     <ClCompile Include="opennurbs_surface.cpp" />
     <ClCompile Include="opennurbs_surfaceproxy.cpp" />
     <ClCompile Include="opennurbs_terminator.cpp" />
+    <ClCompile Include="opennurbs_testclass.cpp" />
     <ClCompile Include="opennurbs_text.cpp" />
     <ClCompile Include="opennurbs_textcontext.cpp" />
     <ClCompile Include="opennurbs_textglyph.cpp" />

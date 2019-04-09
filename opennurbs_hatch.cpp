@@ -2019,3 +2019,26 @@ ON_2dPoint ON_Hatch::BasePoint2d() const
 {
   return m_basepoint;
 }
+
+ON_CurveRegionBoundaryElement::ON_CurveRegionBoundaryElement()
+  : m_curve_id(-1), m_bReversed(false)
+{}
+ON_CurveRegionBoundaryElement::ON_CurveRegionBoundaryElement(const ON_CurveRegionBoundaryElement& src)
+{
+  *this = src;
+}
+
+ON_CurveRegionBoundaryElement::~ON_CurveRegionBoundaryElement()
+{}
+
+ON_CurveRegionBoundaryElement& ON_CurveRegionBoundaryElement::operator=(const ON_CurveRegionBoundaryElement& src)
+{
+  if (this != &src){
+    m_curve_id = src.m_curve_id;
+    m_subdomain = src.m_subdomain;
+    m_bReversed = src.m_bReversed;
+  }
+  return *this;
+}
+
+

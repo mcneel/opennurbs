@@ -629,7 +629,7 @@ void ON_FontGlyph::Dump(
   text_log.PrintString(s);
   text_log.PrintNewLine();
 
-#if defined(OPENNURBS_FREETYPE_SUPPORT)
+#if !defined(ON_RUNTIME_APPLE) && defined(OPENNURBS_FREETYPE_SUPPORT)
   // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
   // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
   if ( bPrintMaps && nullptr != g )
@@ -851,7 +851,7 @@ ON_FontGlyph* ON_FontGlyph::Internal_AllocateManagedGlyph(
   // managed glyphs are app resources, allocated once per instance and never freed.
   ON_MemoryAllocationTracking disable_tracking(false); 
 
-  ON_FontGlyph* managed_glyph = (ON_FontGlyph*)ON_Internal_FontGlyphPool::theGlyphItemPool.AllocateElement();
+  ON_FontGlyph* managed_glyph = (ON_FontGlyph*)ON_Internal_FontGlyphPool::theGlyphItemPool.ThreadSafeAllocateElement();
   if (nullptr != managed_glyph)
   {
     managed_glyph = new (managed_glyph)ON_FontGlyph();
@@ -895,6 +895,12 @@ const ON_FontGlyph* ON_GlyphMap::FindGlyph(const ON__UINT32 unicode_codepoint) c
 {
   if ( false == ON_IsValidUnicodeCodePoint(unicode_codepoint) )
     return nullptr; // invalid codepoint
+
+  // The glyph map is a global resource. 
+  // When multiple threads are simultaneously rendering text (very uncommon),
+  // then they must take turns.
+  ON_SleepLockGuard lock_guard(m_sleep_lock);
+
   const unsigned count = m_glyphs.UnsignedCount();
   if (unicode_codepoint < 256)
   {
@@ -945,6 +951,11 @@ const ON_FontGlyph* ON_GlyphMap::InsertGlyph(const ON_FontGlyph& glyph )
   }
 
   const int base_count = 256;
+
+  // The glyph map is a global resource. 
+  // When multiple threads are simultaneously rendering text (very uncommon),
+  // then they must take turns. 
+  ON_SleepLockGuard lock_guard(m_sleep_lock);
 
   if (0 == m_glyphs.Count())
   {

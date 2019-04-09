@@ -1697,6 +1697,41 @@ const ON_Font* ON_FontFaceQuartet::Face(
     : (bBold ? BoldFace() : RegularFace());
 }
 
+const ON_Font* ON_FontFaceQuartet::ClosestFace(
+  bool bPreferedBold,
+  bool bPreferedItalic
+) const
+{
+  const ON_Font* f = Face(bPreferedBold, bPreferedItalic);
+  if (nullptr != f)
+    return f;
+
+  if (IsEmpty())
+    return nullptr;
+
+  if (nullptr == m_bold && nullptr == m_bold_italic)
+    bPreferedBold = false;
+  else if (nullptr == m_regular && nullptr == m_italic)
+    bPreferedBold = true;
+
+  if (nullptr == m_italic && nullptr == m_bold_italic)
+    bPreferedItalic = false;
+  else if (nullptr == m_regular && nullptr == m_bold)
+    bPreferedItalic = true;
+
+  f = Face(bPreferedBold, bPreferedItalic);
+  if (nullptr != f)
+    return f;
+  if (nullptr != m_regular)
+    return m_regular;
+  if (nullptr != m_bold)
+    return m_bold;
+  if (nullptr != m_italic)
+    return m_italic;
+  return m_bold_italic;
+}
+
+
 unsigned int ON_FontFaceQuartet::FaceCount() const
 {
   unsigned int face_count = 0;
@@ -2622,29 +2657,123 @@ const ON_Font* ON_Font::InstalledFontFromRichTextProperties(
   bool bRtfItalic
 )
 {
-  ON_wString s(rtf_font_name);
-  s.TrimLeftAndRight();
-  if (s.IsEmpty())
-    s = ON_Font::DefaultFamilyName();
-  rtf_font_name = s;
+  ON_wString local_rtf_font_name(rtf_font_name);
+  local_rtf_font_name.TrimLeftAndRight();
+  if (local_rtf_font_name.IsEmpty())
+    local_rtf_font_name = ON_Font::Default.RichTextFontName();
+  rtf_font_name = local_rtf_font_name;
 
-  ON_Font font(ON_Font::Default);
-  if (bRtfBold)
-    font.SetFontWeight(ON_Font::Weight::Bold);
-  if (bRtfItalic)
-    font.SetFontStyle(ON_Font::Style::Italic);
+  // It is critical that bRequireFaceMatch because the input name must
+  // clearly identify a font in some way. The search below allows for this
+  // name to appear in various contexts (LOGFONT, PostScript, Family+Face, Family).
+  const bool bRequireFaceMatch = true;
 
-  font.Internal_ClearAllNames();
-  font.m_loc_family_name = rtf_font_name;
-  font.m_en_family_name = font.m_loc_family_name;
+  // It is critical that bRequireStyleMatch = false. See below
+  const bool bRequireStyleMatch = false;
 
-  font.m_loc_postscript_name = rtf_font_name;
-  font.m_en_postscript_name = font.m_loc_postscript_name;
+  // The preferred_weight is a bias used to pick between faces that have matching name properties.
+  // An exact match is not required because bRequireStyleMatch = false;
+  const ON_Font::Weight preferred_weight = bRtfBold ? ON_Font::Weight::Semibold : ON_Font::Weight::Medium;
 
-  font.m_loc_windows_logfont_name = rtf_font_name;
-  font.m_en_windows_logfont_name = font.m_loc_windows_logfont_name;
+  // The preferred_style is a bias used to pick between faces that have matching name properties.
+  // An exact match is not required because bRequireStyleMatch = false;
+  const ON_Font::Style preferred_style = bRtfItalic ? ON_Font::Style::Italic : ON_Font::Style::Upright;
 
-  return ON_Font::InstalledFontList().FromFontProperties(&font,false,true);
+  const bool bUnderlined = false;
+  const bool bStrikethrough = false;
+  const wchar_t* ignore_postscript_name = nullptr;
+  const wchar_t* ignore_windows_logfont_name = nullptr;
+  const wchar_t* ignore_family_name = nullptr;
+  const wchar_t* ignore_prefered_face_name = nullptr;
+
+
+  // 1st: Try LOGFONT name. For Windows this is the very best choice.
+  // For MacOS this works the best in practice. If it fails, we move onto PostScript.
+  const ON_Font* installed_font = ON_Font::InstalledFontList().FromNames(
+    ignore_postscript_name,
+    rtf_font_name, // windows_logfont_name,
+    ignore_family_name,
+    ignore_prefered_face_name,
+    preferred_weight, ON_Font::Stretch::Unset, preferred_style,
+    bRequireFaceMatch, bRequireStyleMatch, bUnderlined, bStrikethrough,
+    0.0
+  );
+
+  while (nullptr == installed_font)
+  {
+
+    // 2nd: Try PostScript name
+    installed_font = ON_Font::InstalledFontList().FromNames(
+      rtf_font_name, // postscript_name,
+      ignore_windows_logfont_name,
+      ignore_family_name,
+      ignore_prefered_face_name,
+      preferred_weight, ON_Font::Stretch::Unset, preferred_style,
+      bRequireFaceMatch, bRequireStyleMatch, bUnderlined, bStrikethrough,
+      0.0
+    );
+    if (nullptr != installed_font)
+      break;
+
+    // 3rd: Try Family + Face name
+    const wchar_t hyphen[2] = {ON_wString::HyphenMinus,0};
+    for (const wchar_t* separator = rtf_font_name + 1; 0 != *separator; ++separator)
+    {
+      if (ON_wString::Space != *separator && ON_wString::HyphenMinus != *separator)
+        continue;
+      ON_wString family_name(rtf_font_name, (int)(separator - rtf_font_name));
+      family_name.TrimLeftAndRight();
+      family_name.TrimLeftAndRight(hyphen);
+      family_name.TrimLeftAndRight();
+      if (family_name.IsEmpty())
+        continue;
+      ON_wString face_name(separator + 1);
+      face_name.TrimLeftAndRight();
+      face_name.TrimLeftAndRight(hyphen);
+      face_name.TrimLeftAndRight();
+      if (face_name.IsEmpty())
+        continue;
+
+      installed_font = ON_Font::InstalledFontList().FromNames(
+        ignore_postscript_name,
+        ignore_windows_logfont_name,
+        family_name, face_name,
+        preferred_weight, ON_Font::Stretch::Unset, preferred_style,
+        bRequireFaceMatch, bRequireStyleMatch, bUnderlined, bStrikethrough,
+        0.0
+      );
+      if (nullptr != installed_font)
+        break;
+    }
+    if (nullptr != installed_font)
+      break;
+
+
+    // 4th: Try Family name
+    installed_font = ON_Font::InstalledFontList().FromNames(
+      ignore_postscript_name,
+      ignore_windows_logfont_name,
+      rtf_font_name, // family name
+      ignore_prefered_face_name,
+      preferred_weight, ON_Font::Stretch::Unset, preferred_style,
+      bRequireFaceMatch, bRequireStyleMatch, bUnderlined, bStrikethrough,
+      0.0
+    );
+    if (nullptr != installed_font)
+      break;
+
+    // No installed font comes close to matching the input name parameter 
+    break;
+  }
+
+  if (nullptr != installed_font)
+  {
+    const ON_FontFaceQuartet q = installed_font->InstalledFontQuartet();
+    const ON_Font* f = q.ClosestFace(bRtfBold, bRtfItalic);
+    return (nullptr != f) ? f : installed_font;
+  }
+
+  return nullptr;
 }
 
 
@@ -3826,10 +3955,37 @@ const ON_Font* ON_Font::ManagedFamilyMemberWithRichTextProperties(
   bUnderlined = bUnderlined ? true : false;
   bStrikethrough = bStrikethrough ? true : false;
 
-  const ON_Font::Weight desired_weight
-    = (bBold != IsBoldInQuartet())
-    ? (bBold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal)
-    : FontWeight();
+  const ON_Font::Weight current_weight = FontWeight();
+  ON_Font::Weight desired_weight = current_weight;
+  if (bBold != IsBoldInQuartet())
+  {
+    const ON_FontFaceQuartet q = InstalledFontQuartet();
+    const ON_Font* f = nullptr;
+    if (bBold)
+    {
+      // increase desired_weight 
+      f = (bItalic) ? q.BoldItalicFace() : q.BoldFace();
+      if ( nullptr == f)
+        f = (bItalic) ? q.BoldFace() : q.BoldItalicFace();    
+      if (nullptr != f)
+      {
+        if (ON_Font::Weight::Unset == current_weight || static_cast<unsigned char>(f->FontWeight()) > static_cast<unsigned char>(current_weight))
+          desired_weight = f->FontWeight();
+      }
+    }
+    else
+    {
+      // descrease desired_weight 
+      f = (bItalic) ? q.ItalicFace() : q.RegularFace();
+      if ( nullptr == f)
+        f = (bItalic) ? q.RegularFace() : q.ItalicFace();      
+      if (nullptr != f)
+      {
+        if (ON_Font::Weight::Unset == current_weight || static_cast<unsigned char>(f->FontWeight()) < static_cast<unsigned char>(current_weight))
+          desired_weight = f->FontWeight();
+      }
+    }
+  }
 
   const ON_Font::Style desired_style
     = (bItalic != IsItalic())
@@ -4282,11 +4438,14 @@ const ON_Font* ON_Font::GetManagedFont(
   const wchar_t* face_name
   )
 {
+  const bool bBold = false;
+  const bool bItalic = false;
+
   return ON_Font::GetManagedFont(
     point_size,
     face_name,
-    ON_Font::Default.m_font_weight,
-    ON_Font::Default.m_font_style
+    bBold,
+    bItalic
     );
 }
 
@@ -4319,14 +4478,14 @@ const ON_Font* ON_Font::GetManagedFont(
 
 const ON_Font* ON_Font::GetManagedFont(
   double point_size,
-  const wchar_t* face_name,
+  const wchar_t* name,
   bool bBold,
   bool bItalic
   )
 {
   return ON_Font::GetManagedFont(
     point_size,
-    face_name,
+    name,
     bBold ? ON_Font::Weight::Bold : ON_Font::Default.FontWeight(),
     bItalic ? ON_Font::Style::Italic : ON_Font::Default.FontStyle()
     );
@@ -4343,16 +4502,38 @@ const ON_Font* ON_Font::GetManagedFont(
 
 const ON_Font* ON_Font::GetManagedFont(
   double point_size,
-  const wchar_t* face_name,
+  const wchar_t* name,
   ON_Font::Weight font_weight,
   ON_Font::Style font_style
   )
 {
-  const unsigned int logfont_charset = static_cast<unsigned int>(ON_Font::WindowsLogfontCharSetFromFaceName(face_name));
+  // Using ON_Font::InstalledFontFromRichTextProperties() fixes lots 
+  // of RTF parsing bugs including RH-49028 and "Arial Black" bugs.
+  // Depending on the context, name can be LOGFONT, PostScript, Family+Face, Family, ...
+  // The font_weight parameter is typically a "face" indication. 
+  // Treating it as a literal value causes more bugs than it fixes.
+  const ON_Font* installed_font = ON_Font::InstalledFontFromRichTextProperties(
+    name, 
+    ON_Font::IsBoldWeight(font_weight), 
+    (ON_Font::Style::Italic == font_style)
+  );
+  if (nullptr != installed_font)
+  {
+    if (point_size > 0.0 && point_size < ON_Font::AnnotationFontApplePointSize)
+    {
+      ON_Font f(*installed_font);
+      f.m_point_size = point_size;
+      return f.ManagedFont();
+    }
+    return installed_font->ManagedFont();
+  }
+
+  // Less reliable approach
+  const unsigned int logfont_charset = static_cast<unsigned int>(ON_Font::WindowsLogfontCharSetFromFaceName(name));
 
   return ON_Font::GetManagedFont(
     point_size,
-    face_name, 
+    name, 
     font_weight,
     font_style,
     ON_Font::Default.m_font_stretch,
@@ -5944,11 +6125,17 @@ const ON_wString ON_Font::WindowsLogfontName() const
   return WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst);
 }
 
+const ON_wString ON_Font::QuartetName(
+  ON_Font::NameLocale name_locale
+) const
+{
+  // This may need adjustment for MacOS.
+  return WindowsLogfontName(name_locale);
+}
 
 const ON_wString ON_Font::QuartetName() const
 {
-  // This may need adjustment for MacOS.
-  return WindowsLogfontName();
+  return ON_Font::QuartetName(ON_Font::NameLocale::LocalizedFirst);
 }
 
 bool ON_Font::IsBoldInQuartet() const
@@ -7523,9 +7710,7 @@ void ON_Font::Dump(ON_TextLog& dump) const
       //  ON_Font::DumpTextMetric(&logfont_tm, dump);
       //}
     }
-#endif
-
-#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+#elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
     {
       CTFontRef apple_font = AppleCTFont();
       dump.Print(L"Apple Core Text font:\n");
@@ -7533,9 +7718,7 @@ void ON_Font::Dump(ON_TextLog& dump) const
       ON_Font::DumpCTFont(apple_font, dump);
       dump.PopIndent();
     }
-#endif
-
-#if defined(OPENNURBS_FREETYPE_SUPPORT)
+#elif defined(OPENNURBS_FREETYPE_SUPPORT)
 // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
 // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
     if (runtime_sn >= 1)
@@ -7544,7 +7727,6 @@ void ON_Font::Dump(ON_TextLog& dump) const
       DumpFreeType(dump);
     }
 #endif
-
   }
   dump.PopIndent();
 }

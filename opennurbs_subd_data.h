@@ -48,6 +48,15 @@
 
 #if defined(OPENNURBS_SUBD_WIP)
 
+bool ON_SubDFaceRegionBreakpoint(
+  unsigned int level0_face_id,
+  const class ON_SubDComponentRegionIndex& region_index
+);
+
+bool ON_SubDComponentRegionBreakpoint(
+  const class ON_SubDComponentRegion* component_region
+);
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -295,7 +304,7 @@ public:
 
   /*
   Description:
-    Get the limit surface for the entrie quad
+    Get the limit surface for the entire quad
   */
   bool GetLimitSurfaceCV(
     //double srf_cv[4][4][3]
@@ -314,37 +323,6 @@ public:
     double srf_cv[4][4][3]
     );
 
-  /*
-  Parameters:
-    bEnableApproximatePatch - [in]
-      If true, an approximate patches may be generated.
-      This parameter should be true only when all permitted subdivisions have
-      been performed and a mininimum of 2 subdivisions have been performed.
-      This insures all faces are quads and each quad has at most one extraordinary
-      vertex and the approximate patches will have C2 continuity with any
-      neighboring exact patches.
-    srf_cv[5][5]
-      CVs for a uniform cubic NURBS patch.
-      If a patch cv srf_cv[j][j] does not exist or cannot be set, then all three
-      coordinates of srf_cv[j][j] are set to ON_UNSET_VALUE.
-    patch_type - [out]
-      patch_type[0] 
-        the type of cubic bispan for the 4x4 grid (srf_cv[0][0] ... srf_cv[3][3])
-      patch_type[1] 
-        the type of cubic bispan for the 4x4 grid (srf_cv[1][0] ... srf_cv[4][3])
-      patch_type[2] 
-        the type of cubic bispan for the 4x4 grid (srf_cv[1][1] ... srf_cv[4][4])
-      patch_type[3] 
-        the type of cubic bispan for the 4x4 grid (srf_cv[0][1] ... srf_cv[3][4])
-  Returns:
-    0 - 4:
-    Number of bispans set in srf_cv[5][5]
-  */
-  unsigned int GetLimitSubSurfaceMultiPatchCV(
-    bool bEnableApproximatePatch,
-    double srf_cv[5][5][3],
-    ON_SubDLimitNurbsFragment::BispanType patch_type[4]
-    );
 
 private:
   unsigned int SetLimitSubSurfaceExactCVs(
@@ -500,12 +478,17 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 //
 // m_saved_points_flags
 //
-#define ON_SUBD_CACHE_TYPE_MASK (0x1FU)
+//#define ON_SUBD_CACHE_TYPE_MASK (0x0FU)
+//#define ON_SUBD_CACHE_POINT_FLAG_MASK (0x20U)
+//#define ON_SUBD_CACHE_DISPLACEMENT_FLAG_MASK (0x40U)
+//#define ON_SUBD_CACHE_LIMIT_FLAG_MASK (0x80U)
+#define ON_SUBD_CACHE_TYPE_MASK ON_SubDComponentBase::SavedPointsFlags::SubDTypeMask
 
-#define ON_SUBD_CACHE_POINT_FLAG_MASK (0x20U)
-#define ON_SUBD_CACHE_DISPLACEMENT_FLAG_MASK (0x40U)
-#define ON_SUBD_CACHE_LIMIT_FLAG_MASK (0x80U)
-#define ON_SUBD_CACHE_FLAGS_MASK (ON_SUBD_CACHE_POINT_FLAG_MASK|ON_SUBD_CACHE_DISPLACEMENT_FLAG_MASK|ON_SUBD_CACHE_LIMIT_FLAG_MASK)
+#define ON_SUBD_CACHE_POINT_FLAG_MASK ON_SubDComponentBase::SavedPointsFlags::SubdivisionPointIsSet
+#define ON_SUBD_CACHE_DISPLACEMENT_FLAG_MASK ON_SubDComponentBase::SavedPointsFlags::DisplacementVectorIsSet
+#define ON_SUBD_CACHE_LIMIT_FLAG_MASK ON_SubDComponentBase::SavedPointsFlags::LimitPointIsSet
+
+#define ON_SUBD_CACHE_FLAGS_MASK ON_SubDComponentBase::SavedPointsFlags::CachedPointMask
 
 #define ON_SUBD_CACHE_TYPE(cache_subd_flags) (ON_SUBD_CACHE_TYPE_MASK&(cache_subd_flags))
 #define ON_SUBD_CACHE_FLAGS(cache_subd_flags) (ON_SUBD_CACHE_FLAGS_MASK&(cache_subd_flags))
@@ -572,6 +555,9 @@ public:
 
 
   unsigned int DumpTopology(
+    const unsigned int validate_max_vertex_id,
+    const unsigned int validate_max_edge_id,
+    const unsigned int validate_max_face_id,
     ON_2udex vertex_id_range,
     ON_2udex edge_id_range,
     ON_2udex face_id_range,
@@ -585,7 +571,7 @@ private:
 public:
   unsigned int m_level_index = ON_UNSET_UINT_INDEX;
 
-  ON_SubD::SubDType m_subdivision_type = ON_SubD::SubDType::Unset;
+  ON_SubD::SubDType m_subdivision_type = ON_SubD::SubDType::QuadCatmullClark;
 
   unsigned char m_ordinary_vertex_valence = 0; // 0 = none, 4 = quads, 6 = triangles
   unsigned char m_ordinary_face_edge_count = 0; // 0 = none, 4 = quads, 3 = triangles
@@ -1089,12 +1075,6 @@ public:
 
   unsigned int EdgeFlags() const;
 
-  ON_SubDLimitMesh UpdateLimitSurfaceMesh(
-      const ON_SubD& subd,
-      const class ON_SubDDisplayParameters& display_parameters
-      ) const;
-
-  unsigned int LimitSurfaceMeshFragmentCount() const;
 
 private:
   mutable ON_SubDAggregates m_aggregates;
@@ -1189,6 +1169,13 @@ public:
   const class ON_SubDFace* FaceFromId(
     unsigned int face_id
     ) const;
+
+  unsigned int MaximumVertexId() const;
+  unsigned int MaximumEdgeId() const;
+  unsigned int MaximumFaceId() const;
+
+  bool IsValid() const;
+  void ResetId();
 
 private:
 
@@ -1304,14 +1291,20 @@ private:
   ON_SubDEdge* m_unused_edge = nullptr;
   ON_SubDFace* m_unused_face = nullptr;
 
-  ON__UINT_PTR* AllocateOversizedElementQWERTY(
+  unsigned int m_max_fspv_id = 0;
+  unsigned int m_max_fspe_id = 0;
+  unsigned int m_max_fspf_id = 0;
+
+  unsigned int m_reserved = 0;
+
+  ON__UINT_PTR* AllocateOversizedElement(
     size_t* capacity
     );
   void  ReturnOversizedElement(
     size_t capacity,
     ON__UINT_PTR* a
     );
-  static size_t OversizedElementCapacityQWERTY(
+  static size_t OversizedElementCapacity(
     size_t count
     );
 
@@ -1328,34 +1321,40 @@ private:
 
 class ON_SubDimple
 {
+private:
+  static std::atomic<ON__UINT64> Internal_RuntimeSerialNumberGenerator;
+
+public:
+  /*
+  Returns:
+    A runtime serial number identifying this ON_SubDimple instance.
+  Remarks:
+    ON_SubD is a shared pointer to an implementation. As such, there can
+    be multiple ON_SubD instances that reference the same implementation.
+    The runtime serial number uniquely identifies a particular instance
+    of an implementation.
+    The empty subd has runtime serial number = 0.
+  */  
+  const ON__UINT64 RuntimeSerialNumber;
+
 #if defined(ON_SUBD_CENSUS)
   ON_SubDImpleCensusCounter m_census_counter;
 #endif
 public:
-  ON_SubDimple() = default;
+  ON_SubDimple();
   ~ON_SubDimple();
   ON_SubDimple(const ON_SubDimple&);
+
+  void SetLimitMeshSubDWeakPointer(
+    std::shared_ptr<class ON_SubDimple>& subdimple_sp
+  );
+
 
   bool IsValid(
     const ON_SubD& subd,
     bool bSilentError,
     ON_TextLog*
     ) const;
-
-  //unsigned int MaximumVertexId() const
-  //{
-  //  return m_max_vertex_id;
-  //}
-
-  //unsigned int MaximumEdgeId() const
-  //{
-  //  return m_max_edge_id;
-  //}
-
-  //unsigned int MaximumFaceId() const
-  //{
-  //  return m_max_face_id;
-  //}
 
   bool Write(
          ON_BinaryArchive& archive
@@ -1688,6 +1687,18 @@ private:
   ON_SubDLevel* m_active_level = nullptr; // m_active_level = nullptr or m_active_level = m_levels[m_active_level->m_level_index].
 
 public:
+  unsigned int MaximumVertexId() const
+  {
+    return m_max_vertex_id;
+  }
+  unsigned int MaximumEdgeId() const
+  {
+    return m_max_edge_id;
+  }
+  unsigned int MaximumFaceId() const
+  {
+    return m_max_face_id;
+  }
   /*
   Returns:
     Active level
@@ -1781,275 +1792,6 @@ private:
 
 
 
-
-
-//////////////////////////////////////////////////////////////////////////
-//
-// ON_SubDQuadFaceMesher
-//
-
-class ON_SubDQuadFacePatcher
-{
-public:
-  ON_SubDLimitNurbsFragment m_patch_fragment = ON_SubDLimitNurbsFragment::Empty;
-  unsigned int m_display_density = 0;
-  unsigned int m_patch_count = 0;
-  ON__UINT_PTR m_fragment_callback_context = 0;
-  bool (*m_fragment_callback_function)(ON__UINT_PTR, const class ON_SubDLimitNurbsFragment*) = nullptr;
-  bool m_bCallbackResult = false;
-  
-  bool Send4x4Patch(
-    unsigned int display_density,
-    const class ON_SubDFaceRegion& face_region,
-    ON_SubDLimitNurbsFragment::BispanType bispan_type
-    );
-  
-  bool Send5x5Patch(
-    unsigned int display_density,
-    const class ON_SubDFaceRegion& face_region,
-    const ON_SubDLimitNurbsFragment::BispanType bispan_type[4]
-    );
-};
-
-class ON_SubDQuadFaceMesher
-{
-public:
-  ON_SubDQuadFaceMesher() = default;
-
-  ~ON_SubDQuadFaceMesher()
-  {
-    if (nullptr != m__buffer)
-    {
-      delete[] m__buffer;
-      m__buffer = nullptr;
-      m__buffer_capacity = 0;
-    }
-  }
-
-  enum class Output : unsigned int
-  {
-    unset = 0,
-    mesh = 1,
-    patches = 2
-  };
-
-  ON_SubDQuadFaceMesher::Output m_output = ON_SubDQuadFaceMesher::Output::unset;
-
-  // The m_display_density parameter determines the density of output.
-  unsigned int m_display_density = 0;
-
-private:
-  unsigned int m_reserved = 0;
-public:
-
-  //////////////////////////////////////////////////////////////////////////////////
-  //
-  // SubD limit surface mesh output
-  //
-  // The mesh has m_count x m_count quads, where m_count = 2^m_mesh_density.
-  // There are (m_count+1)*(m_count+1) points in the mesh.
-  unsigned int m_count = 0;
-  unsigned int m_capacity = 0;
-
-
-  // Point(i,j) = (m_points + i*m_point_stride0 + j*m_point_stride1)[0,1,2]
-  size_t m_point_stride0 = 0;
-  size_t m_point_stride1 = 0;
-  double* m_points = nullptr;
-
-  // Normal(i,j) = (m_normals + i*m_normal_stride0 + j*m_normal_stride1)[0,1,2]
-  size_t m_normal_stride0 = 0;
-  size_t m_normal_stride1 = 0;
-  double* m_normals = nullptr;
-
-  //////////////////////////////////////////////////////////////////////////////////
-  //
-  // SubD limit surface NURBS patch output
-  //
-  class ON_SubDQuadFacePatcher* m_patcher = nullptr;
-
-  /*
-  Description:
-    Allocates memory this ON_SubDQuadFaceMesher manages (m_buffer) and
-    uses it for the m_points and m_normals arrays.
-  */
-  bool SetDestinationToLocalMeshBuffer(
-    unsigned int mesh_density
-    );
-
-  /*
-  Description:
-    Set the first coordinate of every point to ON_UNSET_VALUE.
-  */
-  bool UnsetMeshPoints();
-
-  /*
-  Description:
-    Uses memory on fragment as the destination and sets the m_points and m_normals
-    arrays on this to point to appropriate locations in fragment.m_P and fragment.m_N.
-  */
-  bool SetDestinationToMeshFragment(
-    unsigned int mesh_density,
-    class ON_SubDLimitMeshFragment& mesh_fragment
-    );
-
-  bool SetDestinationToPatchFragment(
-    class ON_SubDQuadFacePatcher& patcher
-    );
-
-  bool GetLimitMesh(
-    const ON_SubDFaceRegion& face_region,
-    const ON_SubDFace* face
-    );
-
-  bool GetLimitPatches(
-    const ON_SubDFaceRegion& face_region,
-    const ON_SubDFace* face
-    );
-
-private:
-  double* Internal_Buffer(size_t buffer_capacity);
-
-  size_t m__buffer_capacity = 0;
-  double* m__buffer = nullptr;
-
-  /*
-  Description:
-    Get values of cubic uniform B-spline basis functions times 6.
-  Parameters:
-    t - [in] 0.0 <= t <= 1.0
-      Evaluation parameter
-    b - [out]
-      t^3,
-      (1 + 3t + 3t^2 - 3t^3)
-      (1 + 3(1-t) + 3(1-t)^2 - 3(1-t)^3)
-      (1-t)^3
-  Remarks:
-    If C0, C1, C2, C3 are the control points for a span
-    of a uniform cubic B-spline and the domain of the
-    span is 0 <= t <= 1, then
-    C(t) = (b[0]*C0 + b[1]*C1 + b[2]*C2 + b[3]*C3)/6.
-  */
-  static void Get6xCubicBasis(
-    double t,
-    double b6[4]
-    );
-
- /*
-  Description:
-    Get values of derviatives of cubic uniform B-spline basis functions.
-  Parameters:
-    t - [in] 0.0 <= t <= 1.0
-      Evaluation parameter
-    b - [out]
-      t^3,
-      (1 + 3t + 3t^2 - 3t^3)
-      (1 + 3(1-t) + 3(1-t)^2 - 3(1-t)^3)
-      (1-t)^3
-  Remarks:
-    If C0, C1, C2, C3 are the control points for a span
-    of a uniform cubic B-spline and the domain of the
-    span is 0 <= t <= 1, then the first derivative is
-    C'(t) = (b[0]*C0 + b[1]*C1 + b[2]*C2 + b[3]*C3).
-  */
-  static void GetCubicBasisDerivative(
-    double t,
-    double b[4]
-    );
-  
-  /*
-  Description:
-    Calcululate a quad mesh from the bi-cubic uniform B-spline surface.
-  Parameters:
-  Returns:
-    true:
-      successful
-    false:
-      failure
-  */
-  bool EvaluateSurface(
-    unsigned int count,
-    unsigned int point_i0,
-    unsigned int point_j0
-    ) const; 
-
-  bool GetLimitSubMeshOrPatch(
-    const ON_SubDFaceRegion& face_region,
-    class ON_SubDQuadNeighborhood* qft, // may be destroyed
-    unsigned int display_density,
-    unsigned int point_i0,
-    unsigned int point_j0
-    );
-
-private:
-  bool Internal_EvaluateSurfaceNormalBackup1(
-    double s,
-    double t,
-    unsigned int count,
-    unsigned int i,
-    unsigned int j,
-    double* N
-    ) const; 
-  bool Internal_EvaluateSurfaceNormalBackup2(
-    const double* P00,
-    unsigned int count,
-    unsigned int i,
-    unsigned int j,
-    double* N
-    ) const; 
-  // Workspaces used by GetLimitSubMesh()
-  double m_srf_cv[4][4][3];
-  ON_SubD_FixedSizeHeap m_fshx[5];
-
-  ON_SubD_FixedSizeHeap* CheckOutLocalFixedSizeHeap()
-  {
-    const size_t count = sizeof(m_fshx) / sizeof(m_fshx[0]);
-    for (size_t i = 0; i < count; i++)
-    {
-      if ( false == m_fshx[i].InUse() )
-        return &m_fshx[i];
-    }
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  }
-
-  bool ReturnLocalFixedSizeHeap(ON_SubD_FixedSizeHeap* fsh)
-  {
-    if ( nullptr == fsh)
-      return ON_SUBD_RETURN_ERROR(false);
-
-    const size_t count = sizeof(m_fshx) / sizeof(m_fshx[0]);
-    for (size_t i = 0; i < count; i++)
-    {
-      if (fsh == &m_fshx[i])
-      {
-        m_fshx[i].Reset();
-        return true;
-      }
-    }
-
-    return false; // not an error
-  }
-
-  void ReturnAllFixedSizeHeaps()
-  {
-    const size_t count = sizeof(m_fshx) / sizeof(m_fshx[0]);
-    for (size_t i = 0; i < count; i++)
-    {
-      m_fshx[i].Reset();
-    }
-  }
-
-private:
-  void SetDestinationInitialize(
-    ON_SubDQuadFaceMesher::Output output
-    );
-
-
-private:
-  // copies not supported
-  ON_SubDQuadFaceMesher(const ON_SubDQuadFaceMesher&) = delete;
-  ON_SubDQuadFaceMesher& operator=(const ON_SubDQuadFaceMesher&) = delete;
-};
 
 
 class ON_SubDArchiveIdMap
@@ -2227,6 +1969,14 @@ public:
     ON_SubDLimitMeshFragment* fragment
     );
 
+  /*
+  After all fragments have been collected, it's necessary to seal
+  the edges of the fragments along shared subd edges because the
+  locations and normals are computed by evaluating different
+  sides.
+  */
+  void SealEdges();
+
   const ON_RTree& FragmentTree() const;
 
   void ClearTree();
@@ -2253,7 +2003,14 @@ public:
   // ON_SubDimple.
   std::weak_ptr<class ON_SubDimple> m_subdimple_wp;
 
-  void ClearFragmentFacePointers();
+  void SetSubDWeakPointer(
+    const ON_SubDFace* subd_first_face,
+    std::shared_ptr<class ON_SubDimple>& subdimple_sp
+    );
+
+  void ClearFragmentFacePointers(
+    bool bResetSubDWeakPtr
+    );
 
 private:
   ON_RTree* m_fragment_tree = nullptr;

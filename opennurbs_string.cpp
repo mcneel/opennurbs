@@ -24,36 +24,69 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#include "opennurbs_atomic_op.h"
-
 /////////////////////////////////////////////////////////////////////////////
-// Empty strings point at empty_astring
+// Empty strings point at empty_wstring
 
-
-struct ON_aStringHeader
+class ON_aStringHeader
 {
+private:
+  ON_aStringHeader() = delete;
+
+public:
+  ~ON_aStringHeader() = default;
+  ON_aStringHeader(const ON_aStringHeader&) = default;
+  ON_aStringHeader& operator=(const ON_aStringHeader&) = default;
+
+public:
+  ON_aStringHeader(
+    int initial_ref_count,
+    int capacity
+  )
+    : ref_count(initial_ref_count)
+    , string_capacity(capacity)
+  {}
+
+public:
   // NOTE WELL: 
   //  ref_count must be a signed 32-bit integer type that
   //  supports atomic increment/decrement operations.
-	int   ref_count;       // reference count (>=0 or -1 for empty string)
-	int   string_length;   // does not include nullptr terminator
-	int   string_capacity; // does not include nullptr terminator
-  char* string_array() {return (char*)(this+1);}
+  std::atomic<int> ref_count;
+	int string_length=0; // does not include null terminator
+	int string_capacity; // does not include null terminator
+
+public:
+	char* string_array() {return (char*)(this+1);}
 };
 
-static struct {
+class ON_Internal_Empty_aString
+{
+private:
+  ON_Internal_Empty_aString(const ON_Internal_Empty_aString&) = delete;
+  ON_Internal_Empty_aString& operator=(const ON_Internal_Empty_aString&) = delete;
+
+public: 
+  ON_Internal_Empty_aString()
+    : header(-1,0)
+  {}
+  ~ON_Internal_Empty_aString() = default;
+
+
+public:
   ON_aStringHeader header;
-  char           s;  
-} empty_astring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
+  char s = 0;    
+};
+
+static ON_Internal_Empty_aString empty_astring;
 static const ON_aStringHeader* pEmptyStringHeader = &empty_astring.header;
 static const char* pEmptyaString = &empty_astring.s;
 
 
-static void ON_aStringHeader_DecrementRefCountAndDeleteIfZero(struct ON_aStringHeader* hdr)
+static void ON_aStringHeader_DecrementRefCountAndDeleteIfZero(class ON_aStringHeader* hdr)
 {
   if (nullptr == hdr || hdr == pEmptyStringHeader)
     return;
-  const int ref_count = ON_AtomicDecrementInt32(&hdr->ref_count);
+  //const int ref_count = ON_AtomicDecrementInt32(&hdr->ref_count);
+  const int ref_count = --hdr->ref_count;
   if (0 == ref_count)
   {
     // zero entire header to help prevent crashes from corrupt string bug
@@ -114,7 +147,7 @@ bool ON_String::IsValid(
       break;
     if (string_length > string_capacity)
       break;
-    const int ref_count = hdr->ref_count;
+    const int ref_count = (int)(hdr->ref_count);
     if (ref_count <= 0)
       break;
     const char* s1 = s + string_length;
@@ -161,26 +194,27 @@ bool ON_String::IsValid(
 
 ON_aStringHeader* ON_String::IncrementedHeader() const
 {
-  ON_aStringHeader* p = (ON_aStringHeader*)m_s;
-  if (nullptr == p)
+  ON_aStringHeader* hdr = (ON_aStringHeader*)m_s;
+  if (nullptr == hdr)
     return nullptr;
   
-  p--;
-  if (p == pEmptyStringHeader)
+  hdr--;
+  if (hdr == pEmptyStringHeader)
     return nullptr;
 
-  ON_AtomicIncrementInt32(&p->ref_count);
-  return p;
+  //ON_AtomicIncrementInt32(&hdr->ref_count);
+  ++hdr->ref_count;
+  return hdr;
 }
 
 ON_aStringHeader* ON_String::Header() const
 {
-  ON_aStringHeader* p = (ON_aStringHeader*)m_s;
-  if (p)
-    p--;
+  ON_aStringHeader* hdr = (ON_aStringHeader*)m_s;
+  if (hdr)
+    hdr--;
   else
-    p = &empty_astring.header;
-  return p;
+    hdr = &empty_astring.header;
+  return hdr;
 }
 
 void ON_String::Create()
@@ -191,7 +225,7 @@ void ON_String::Create()
 void ON_String::Destroy()
 {
   ON_aStringHeader* hdr = Header();
-  if (hdr != pEmptyStringHeader && nullptr != hdr && hdr->ref_count > 0)
+  if (hdr != pEmptyStringHeader && nullptr != hdr && (int)(hdr->ref_count) > 0)
     ON_aStringHeader_DecrementRefCountAndDeleteIfZero(hdr);
 	Create();
 }
@@ -228,12 +262,9 @@ char* ON_String::CreateArray( int capacity )
   if ( capacity > 0 ) 
   {
     // This scope does not need atomic operations
-		ON_aStringHeader* p =
-			(ON_aStringHeader*)onmalloc( sizeof(ON_aStringHeader) + (capacity+1)*sizeof(*m_s) );
-		p->ref_count = 1;
-		p->string_length = 0;
-		p->string_capacity = capacity;
-		m_s = p->string_array();
+		void* buffer = onmalloc( sizeof(ON_aStringHeader) + (capacity+1)*sizeof(*m_s) );
+    ON_aStringHeader* hdr = new (buffer) ON_aStringHeader(1,capacity);
+		m_s = hdr->string_array();
     memset( m_s, 0, (capacity+1)*sizeof(*m_s) );
     return m_s;
   }
@@ -246,7 +277,7 @@ void ON_String::CopyArray()
   // Call CopyArray() before modifying array contents.
   // hdr0 = original header
   ON_aStringHeader* hdr0 = Header();
-  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && hdr0->ref_count > 1 ) 
+  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && (int)(hdr0->ref_count) > 1 ) 
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -282,7 +313,7 @@ char* ON_String::ReserveArray( size_t array_capacity )
   {
 		CreateArray(capacity);
   }
-  else if ( hdr0->ref_count > 1 ) 
+  else if ( (int)(hdr0->ref_count) > 1 ) 
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -326,7 +357,7 @@ void ON_String::ShrinkArray()
       Destroy();
       Create();
     }
-    else if ( hdr0->ref_count > 1 ) 
+    else if ( (int)(hdr0->ref_count) > 1 ) 
     {
       // Calling Create() here insures hdr0 remains valid until we decrement below.
       Create();

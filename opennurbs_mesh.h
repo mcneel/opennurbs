@@ -1940,6 +1940,21 @@ public:
     ) const;
 
   /*
+  Parameters:
+    ci - [in]
+      A component index with type of 
+      ON_COMPONENT_INDEX::TYPE::mesh_vertex or 
+      ON_COMPONENT_INDEX::TYPE::meshtop_vertex.
+  Return:
+    If ci correctly identifes a mesh topology vertex, then
+    component index with type of ON_COMPONENT_INDEX::TYPE::meshtop_vertex is returned.
+    Otherwise ON_COMPONENT_INDEX::UnsetComponentIndex is returned.
+  */
+  const ON_COMPONENT_INDEX TopVertexComponentIndex(
+    ON_COMPONENT_INDEX ci
+  ) const;
+
+  /*
   Description:
     Get the 3d point location of a vertex.
   Parameters:
@@ -4684,6 +4699,29 @@ public:
     );
   ~ON_MeshComponentRef();
   ON_MeshComponentRef& operator=(const ON_MeshComponentRef&);
+
+  /*
+  Description:
+    Dictionary compare:
+      1) Compare m_mesh pointer values as unsigned values
+      2) ON_COMPONENT_INDEX::Compare() m_mesh_ci values
+  */
+  static int Compare(const ON_MeshComponentRef* lhs, const ON_MeshComponentRef* rhs);
+
+  /*
+  Description:
+    Dictionary compare:
+      1) Compare m_mesh pointer values as unsigned values
+      2) ON_COMPONENT_INDEX::Compare() m_mesh_ci values
+  */
+  static int Compare2(const ON_MeshComponentRef* const * lhs, const ON_MeshComponentRef *const* rhs);
+
+  /*
+  Description:
+    Compare m_mesh pointer values as unsigned values.
+    Ignore m_mesh_ci values.
+  */
+  static int CompareMeshPointer(const ON_MeshComponentRef* lhs, const ON_MeshComponentRef* rhs);
 
 private:
   // referenced mesh

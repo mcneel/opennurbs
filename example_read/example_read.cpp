@@ -341,8 +341,8 @@ int main( int argc, const char *argv[] )
         ON::CloseFile(dump_fp);
       }
 
-      const char* sDumpFilename = arg+5;
-      FILE* text_fp = ON::OpenFile(sDumpFilename,"w");
+      const ON_wString sDumpFilename = ON_FileSystemPath::ExpandUser(arg + 5);
+      FILE* text_fp = ON::OpenFile(sDumpFilename,L"w");
       if ( text_fp )
       {
         dump_fp = text_fp;
@@ -390,7 +390,7 @@ int main( int argc, const char *argv[] )
       continue;
     }
 
-    ON_wString ws_arg = arg;
+    ON_wString ws_arg = ON_FileSystemPath::ExpandUser(arg);
     const wchar_t* wchar_arg = ws_arg;
 
     if ( ON::IsDirectory(wchar_arg) )

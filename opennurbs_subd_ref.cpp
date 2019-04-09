@@ -89,6 +89,7 @@ class ON_SubD& ON_SubDRef::NewSubD()
 {
   ON_SubD* subd = new ON_SubD();
   ON_SubD* managed_subd = SetSubDForExperts(subd);
+  managed_subd->SetSubDType(ON_SubD::SubDType::QuadCatmullClark);
   return *managed_subd;
 }
 
@@ -201,6 +202,35 @@ ON_SubDComponentRef& ON_SubDComponentRef::operator=(ON_SubDComponentRef&& src)
 }
 
 #endif
+
+
+int ON_SubDComponentRef::Compare(const ON_SubDComponentRef* lhs, const ON_SubDComponentRef* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  const ON__UINT64 lhs_sn = lhs->m_subd_ref.SubD().RuntimeSerialNumber();
+  const ON__UINT64 rhs_sn = rhs->m_subd_ref.SubD().RuntimeSerialNumber();
+  if (lhs_sn < rhs_sn)
+    return -1;
+  if (lhs_sn > rhs_sn)
+    return 1;
+  return ON_COMPONENT_INDEX::Compare(&lhs->m_component_index, &rhs->m_component_index);
+}
+
+int ON_SubDComponentRef::Compare2(const ON_SubDComponentRef* const* lhs, const ON_SubDComponentRef* const* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  return ON_SubDComponentRef::Compare(*lhs, *rhs);
+}
 
 ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
@@ -399,11 +429,10 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
+      case ON_SubDComponentLocation::LimitSurface:
+        // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = vertex->ControlNetBoundingBox();
-        break;
-      case ON_SubDComponentLocation::LimitSurface:
-        bbox = vertex->LimitSurfaceBoundingBox(SubD());
         break;
       }
     }
@@ -415,11 +444,10 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
+      case ON_SubDComponentLocation::LimitSurface:
+        // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = edge->ControlNetBoundingBox();
-        break;
-      case ON_SubDComponentLocation::LimitSurface:
-        bbox = edge->LimitSurfaceBoundingBox(SubD());
         break;
       }
     }
@@ -431,11 +459,10 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
+      case ON_SubDComponentLocation::LimitSurface:
+        // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = face->ControlNetBoundingBox();
-        break;
-      case ON_SubDComponentLocation::LimitSurface:
-        bbox = face->LimitSurfaceBoundingBox(SubD());
         break;
       }
     }
@@ -460,6 +487,369 @@ bool ON_SubDComponentRef::GetBBox(
   boxmax[2] = bbox.m_max.z;
 
   return bbox.IsValid();
+}
+
+
+void ON_SubDComponentRefList::Internal_Destroy()
+{
+  for (unsigned int i = 0; i < m_list.UnsignedCount(); i++)
+  {
+    ON_SubDComponentRef* p = m_list[i];
+    m_list[i] = nullptr;
+    if (nullptr != p)
+      delete p;
+  }
+  m_list.SetCount(0);
+  m_bIsClean = false;
+}
+
+void ON_SubDComponentRefList::Internal_CopyFrom(const ON_SubDComponentRefList& src)
+{
+  const unsigned int count = src.m_list.UnsignedCount();
+  m_list.Reserve(count);
+  m_list.SetCount(0);
+  for (unsigned int i = 0; i < count; i++)
+  {
+    const ON_SubDComponentRef* p = src.m_list[i];
+    if (nullptr == p)
+      m_list.Append(nullptr);
+    else
+      m_list.Append(new ON_SubDComponentRef(*p));
+
+    m_subd_count = src.m_subd_count;
+    m_subd_vertex_smooth_count = src.m_subd_vertex_smooth_count;
+    m_subd_vertex_dart_count = src.m_subd_vertex_dart_count;
+    m_subd_vertex_crease_count = src.m_subd_vertex_crease_count;
+    m_subd_vertex_corner_count = src.m_subd_vertex_corner_count;
+    m_subd_edge_smooth_count = src.m_subd_edge_smooth_count;
+    m_subd_edge_crease_count = src.m_subd_edge_crease_count;
+    m_subd_face_count = src.m_subd_face_count;
+
+    m_bIsClean = src.m_bIsClean;
+  }
+}
+
+ON_SubDComponentRefList::~ON_SubDComponentRefList()
+{
+  Internal_Destroy();
+}
+
+ON_SubDComponentRefList::ON_SubDComponentRefList(const ON_SubDComponentRefList& src)
+{
+  Internal_CopyFrom(src);
+}
+
+ON_SubDComponentRefList& ON_SubDComponentRefList::operator=(const ON_SubDComponentRefList& src)
+{
+  if (this != &src)
+  {
+    Internal_Destroy();
+    Internal_CopyFrom(src);
+  }
+  return *this;
+}
+
+bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r, int i)
+{
+  if (r.SubD().IsEmpty())
+    return false;
+
+  bool rc = false;
+  ON_SubDComponentPtr cptr = r.ComponentPtr();
+  switch (cptr.ComponentType())
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+    {
+      const ON_SubDVertex* v = cptr.Vertex();
+      if (nullptr == v)
+        break;
+      switch (v->m_vertex_tag)
+      {
+      case ON_SubD::VertexTag::Smooth:
+        m_subd_vertex_smooth_count += i;
+        rc = true;
+        break;
+      case ON_SubD::VertexTag::Crease:
+        m_subd_vertex_crease_count += i;
+        rc = true;
+        break;
+      case ON_SubD::VertexTag::Corner:
+        m_subd_vertex_corner_count += i;
+        rc = true;
+        break;
+      case ON_SubD::VertexTag::Dart:
+        m_subd_vertex_dart_count += i;
+        rc = true;
+        break;
+      }
+    }
+    break;
+
+  case ON_SubDComponentPtr::Type::Edge:
+    {
+      const ON_SubDEdge* e = cptr.Edge();
+      if (nullptr == e)
+        break;
+      switch (e->m_edge_tag)
+      {
+      case ON_SubD::EdgeTag::Smooth:
+      case ON_SubD::EdgeTag::X:
+        m_subd_edge_smooth_count += i;
+        rc = true;
+        break;
+      case ON_SubD::EdgeTag::Crease:
+        m_subd_edge_crease_count += i;
+        rc = true;
+        break;
+      }
+    }
+    break;
+
+  case ON_SubDComponentPtr::Type::Face:
+    if (nullptr != cptr.Face())
+    {
+      m_subd_face_count += i;
+      rc = true;
+    }
+    break;
+  }
+
+  return rc;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & subd_ref, ON_COMPONENT_INDEX ci, ON_SubDComponentLocation component_location)
+{
+  for (;;)
+  {
+    if (subd_ref.SubD().IsEmpty())
+      break;
+    if (false == ci.IsSubDComponentIndex())
+      break;
+    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, ci, component_location));
+    return Append(&r);
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & subd_ref, ON_SubDComponentPtr component_ptr, ON_SubDComponentLocation component_location)
+{
+  for (;;)
+  {
+    if (subd_ref.SubD().IsEmpty())
+      break;
+    if (false == component_ptr.IsNull())
+      break;
+    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, component_ptr, component_location));
+    return Append(&r);
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDComponentRef* src_ref)
+{
+  for (;;)
+  {
+    if (nullptr == src_ref)
+      break;
+    if (src_ref->SubD().IsEmpty())
+      break;
+    if (false == Internal_UpdateCount(*src_ref,1))
+      break;
+    m_list.Append(new ON_SubDComponentRef(*src_ref));
+    m_bIsClean = false;
+    return **(m_list.Last());
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(ON_SubDComponentRef*& ref)
+{
+  for (;;)
+  {
+    if (nullptr == ref)
+      break;
+    if (ref->SubD().IsEmpty())
+      break;
+    if (false == Internal_UpdateCount(*ref,1))
+      break;
+    m_list.Append(ref);
+    m_bIsClean = false;
+    return *ref;
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
+  const ON_SubD& subd,
+  ON_COMPONENT_INDEX ci,
+  ON_SubDComponentLocation component_location
+)
+{
+  for (;;)
+  {
+    if (subd.IsEmpty())
+      break;
+    return Append(ON_SubDRef::CreateReferenceForExperts(subd),ci,component_location);
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
+  const ON_SubD& subd,
+  ON_SubDComponentPtr component_ptr,
+  ON_SubDComponentLocation component_location
+)
+{
+  for (;;)
+  {
+    if (subd.IsEmpty())
+      break;
+    return Append(ON_SubDRef::CreateReferenceForExperts(subd),component_ptr,component_location);
+  }
+  return ON_SubDComponentRef::Empty;
+}
+
+
+int ON_SubDComponentRefList::Clean()
+{
+  if (m_bIsClean)
+    return m_list.UnsignedCount();
+
+  const unsigned dirty_count = m_list.UnsignedCount();
+
+  ((ON_SimpleArray< const ON_SubDComponentRef* > *)(&m_list))->QuickSort(ON_SubDComponentRef::Compare2);
+
+  m_subd_count = 0;
+  m_subd_vertex_smooth_count = 0;
+  m_subd_vertex_dart_count = 0;
+  m_subd_vertex_crease_count = 0;
+  m_subd_vertex_corner_count = 0;
+  m_subd_edge_smooth_count = 0;
+  m_subd_edge_crease_count = 0;
+  m_subd_face_count = 0;
+
+  unsigned int clean_count = 0;
+  const ON_SubDComponentRef* prev_scr = nullptr;
+  for (unsigned int i = 0; i < dirty_count; i++)
+  {
+    ON_SubDComponentRef* scr = m_list[i];
+    if (nullptr == scr)
+      continue;
+    if (
+      0 == ON_SubDComponentRef::Compare(prev_scr, scr)
+      || false == Internal_UpdateCount(*scr,1)
+      )
+    {
+      delete scr;
+      continue;
+    }
+    if (nullptr == prev_scr || prev_scr->SubD().RuntimeSerialNumber() != scr->SubD().RuntimeSerialNumber())
+      m_subd_count++;
+    m_list[clean_count++] = scr;
+    prev_scr = scr;
+  }
+  for (unsigned i = clean_count; i < dirty_count; i++)
+    m_list[i] = nullptr;
+  m_list.SetCount(clean_count);
+  m_bIsClean = true;
+  return clean_count;
+}
+
+int ON_SubDComponentRefList::Count() const
+{
+  return m_list.Count();
+}
+
+void ON_SubDComponentRefList::Remove(int i)
+{
+  ON_SubDComponentRef* p = TransferForExperts(i);
+  if (nullptr != p)
+    delete p;
+}
+
+ON_SubDComponentRef * ON_SubDComponentRefList::TransferForExperts(int i)
+{
+  ON_SubDComponentRef * p = (i >= 0 && i < m_list.Count()) ? m_list[i] : nullptr;
+  if (p != nullptr)
+  {
+    Internal_UpdateCount(*p, -1);
+    m_bIsClean = false;
+  }
+  return p;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::operator[](int i) const
+{
+  const ON_SubDComponentRef * p = (i >= 0 && i < m_list.Count()) ? m_list[i] : nullptr;
+  return (nullptr == p) ? ON_SubDComponentRef::Empty : *p;
+}
+
+int ON_SubDComponentRefList::SubDCount() const
+{
+  return m_bIsClean ? m_subd_count : 0;
+}
+
+int ON_SubDComponentRefList::VertexCount() const
+{
+  return
+    m_subd_vertex_smooth_count
+    + m_subd_vertex_dart_count
+    + m_subd_vertex_crease_count
+    + m_subd_vertex_corner_count;
+}
+
+int ON_SubDComponentRefList::VertexCount(ON_SubD::VertexTag vertex_tag) const
+{
+  int c = 0;
+  switch (vertex_tag)
+  {
+  case ON_SubD::VertexTag::Smooth:
+    c = m_subd_vertex_smooth_count;
+    break;
+  case ON_SubD::VertexTag::Crease:
+    c = m_subd_vertex_crease_count;
+    break;
+  case ON_SubD::VertexTag::Corner:
+    c = m_subd_vertex_corner_count;
+    break;
+  case ON_SubD::VertexTag::Dart:
+    c = m_subd_vertex_dart_count;
+    break;
+  }
+
+  return c;
+}
+
+int ON_SubDComponentRefList::EdgeCount() const
+{
+  return m_subd_edge_crease_count + m_subd_edge_smooth_count;
+}
+
+int ON_SubDComponentRefList::EdgeCount(ON_SubD::EdgeTag edge_tag) const
+{
+  int c = 0;
+  switch (edge_tag)
+  {
+  case ON_SubD::EdgeTag::Unset:
+    break;
+  case ON_SubD::EdgeTag::Smooth:
+    c = m_subd_edge_smooth_count;
+    break;
+  case ON_SubD::EdgeTag::Crease:
+    c = m_subd_edge_crease_count;
+    break;
+  }
+  return c;
+}
+
+int ON_SubDComponentRefList::FaceCount() const
+{
+  return m_subd_face_count;
+}
+
+int ON_SubDComponentRefList::ComponentCount() const
+{
+  return m_list.Count();
 }
 
 

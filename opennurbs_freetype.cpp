@@ -2032,8 +2032,20 @@ unsigned int ON_FreeTypeGetGlyphMetrics(
   return glyph_index;
 }
 
+
 bool ON_FreeTypeGetGlyphOutline(
   const ON_FontGlyph* glyph,
+  ON_OutlineFigure::Type figure_type,
+  class ON_Outline& outline
+)
+{
+  const unsigned int glyph_index = 0;
+  return ON_FreeTypeGetGlyphOutline(glyph, glyph_index, figure_type, outline);
+}
+
+bool ON_FreeTypeGetGlyphOutline(
+  const ON_FontGlyph* glyph,
+  unsigned int glyph_index,
   ON_OutlineFigure::Type figure_type,
   class ON_Outline& outline
 )
@@ -2061,9 +2073,12 @@ bool ON_FreeTypeGetGlyphOutline(
     }
   }
 
-  const unsigned int  glyph_index = glyph->FontGlyphIndex();
-  if (glyph_index <= 0)
-    return false;
+  if (0 == glyph_index)
+  {
+    glyph_index = glyph->FontGlyphIndex();
+    if (glyph_index <= 0)
+      return false;
+  }
   
   FT_Face ft_face = (FT_Face)(ON_Font::FreeTypeFace(font));
   if (nullptr == ft_face)

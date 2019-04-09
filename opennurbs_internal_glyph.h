@@ -130,7 +130,7 @@ public:
   const class ON_FontGlyph* FindGlyph(
     const ON__UINT32 unicode_code_point
   ) const;
-  
+
   // returns pointer to the persistent glyph item
   const ON_FontGlyph* InsertGlyph(
     const ON_FontGlyph& glyph
@@ -142,7 +142,7 @@ private:
   friend class ON_Font;
   friend class ON_FontGlyph;
   unsigned int m_glyph_count = 0;
-  unsigned int m_reserved = 0;
+  mutable ON_SleepLock m_sleep_lock;
   ON_SimpleArray< const class ON_FontGlyph* > m_glyphs;
 };
 

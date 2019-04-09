@@ -892,4 +892,26 @@ private:
   int m_pattern_index = -1;
 };
 
+//Part of a boundary. An element has a curve subdomain and a flag to say 
+//whether that piece of curve should be reversed
+class ON_CLASS ON_CurveRegionBoundaryElement
+{
+public :
+  ON_CurveRegionBoundaryElement();
+  ON_CurveRegionBoundaryElement(const ON_CurveRegionBoundaryElement& src);
+  ~ON_CurveRegionBoundaryElement();
+  ON_CurveRegionBoundaryElement& operator=(const ON_CurveRegionBoundaryElement& src);
+  int m_curve_id;
+  ON_Interval m_subdomain;
+  bool m_bReversed;
+};
+
+//A list of curve subdomains that form a closed boundary with active space on the left.
+typedef ON_ClassArray<ON_CurveRegionBoundaryElement> ON_CurveRegionBoundary;
+
+//A list of region boundaries that bound a single connected region of the plane.
+//The first boundary is always the outer boundary.
+typedef ON_ClassArray<ON_CurveRegionBoundary> ON_CurveRegion;
+
+
 #endif

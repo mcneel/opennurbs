@@ -528,6 +528,43 @@ void ON_SimpleArray<T>::Append( int count, const T* buffer )
   }
 }
 
+
+template <class T>
+void ON_SimpleArray<T>::Prepend( int count, const T* buffer ) 
+{
+  if ( count > 0 && nullptr != buffer ) 
+  {
+    const size_t sizeof_buffer = count * sizeof(T);
+    void* temp = nullptr;
+    if ( count + m_count > m_capacity ) 
+    {
+      int newcapacity = NewCapacity();
+      if ( newcapacity < count + m_count )
+        newcapacity = count + m_count;
+      if ( buffer >= m_a && buffer < (m_a + m_capacity) )
+      {
+        // buffer is in the block of memory about to be reallocated
+        temp = onmalloc(sizeof_buffer);
+        memcpy(temp, buffer, sizeof_buffer);
+        buffer = (const T*)temp;
+      }
+      Reserve( newcapacity );
+    }
+
+    const size_t count0 = (size_t)m_count;
+    const size_t count1 = count0 + ((size_t)count);
+    T* p0 = m_a;
+    T* p = p0 + count0;
+    T* p1 = m_a + count1;
+    while (p > p0)
+      *(--p1) = *(--p);
+    memcpy( (void*)(m_a), (void*)(buffer), sizeof_buffer );
+    if (nullptr != temp)
+      onfree(temp);
+    m_count = (int)count1;
+  }
+}
+
 template <class T>
 void ON_SimpleArray<T>::Insert( int i, const T& x ) 
 {

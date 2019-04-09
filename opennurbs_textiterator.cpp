@@ -379,7 +379,7 @@ void ON_TextBuilder::SetReadingFontDefinition(bool b)
 
 void ON_TextBuilder::FinishFontDef()
 {
-  m_bReadingFontDefinition = false;
+  SetReadingFontDefinition(false);
 }
 
 void ON_TextBuilder::FlushText(size_t count, ON__UINT32* cp)
@@ -475,7 +475,7 @@ void ON_TextBuilder::CharSet(const wchar_t* value)  // \fcharsetN
   if (sp > value)
   {
     //if (m_font_table_level >= 0 && m_level >= m_font_table_level)
-    if(m_bReadingFontDefinition)
+    if(ReadingFontDefinition())
     {
       // This is a charset specification in a font definition in the font table
       // the value is convertable to a codepage to use for interpreting the text chars
@@ -492,7 +492,7 @@ void ON_TextBuilder::CodePage(const wchar_t* value)  // \cpgN
   if (sp > value)
   {
     //if (m_font_table_level >= 0 && m_level >= m_font_table_level)
-    if(m_bReadingFontDefinition)
+    if(ReadingFontDefinition())
     {
       // This is a codepage specification in a font definition in the font table
       m_current_props.SetCodePage(codepage);
@@ -1098,23 +1098,42 @@ void ON_TextRunBuilder::FinishFontDef()
     size_t cpcount = ON_TextRun::CodepointCount(RunCodePoints(m_current_run));
     if (0 != cpcount)
     {
-      ON_wString str;
-      ON_TextContext::ConvertCodepointsToString((int)cpcount, RunCodePoints(m_current_run), str);
-      if (!str.IsEmpty())
+      ON_wString rtf_fontname_string;
+      ON_TextContext::ConvertCodepointsToString((int)cpcount, RunCodePoints(m_current_run), rtf_fontname_string);
+      if (!rtf_fontname_string.IsEmpty())
       {
-        str.Remove(L';');  // facename delimiter from rtf
+        rtf_fontname_string.Remove(L';');  // facename delimiter from rtf
 
-        if (!IsValidFontName(str))
+        if (!IsValidFontName(rtf_fontname_string))
         {
           ON_ERROR("Invalid font name found in rtf string");
-          str = L"Arial";
+          rtf_fontname_string = L"Arial";
         }
+
+        const ON_Font* managed_font = ON_Font::GetManagedFont(rtf_fontname_string);
+        if (nullptr == managed_font)
+          managed_font = &ON_Font::Default;
+        rtf_fontname_string = managed_font->RichTextFontName();
+
         ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
         fn_key.m_rtf_font_index = m_font_index;
-        fn_key.m_rtf_font_name = str;
+        fn_key.m_rtf_font_name = rtf_fontname_string;
         fn_key.m_codepage = m_current_props.CodePage();
         fn_key.m_charset = m_current_props.CharSet();
       }
+    }
+
+    if (m_current_run.Type() == ON_TextRun::RunType::kFontdef && m_level == m_font_table_level)
+    {
+      if (m_font_stack.Count() > 0 && m_prop_stack.Count() > 0)
+      {
+        m_current_font = *m_font_stack.Last();  // pop
+        m_font_stack.Remove();
+        m_current_props = *m_prop_stack.Last(); // pop
+        m_prop_stack.Remove();
+      }
+      m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+        m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
     }
     SetReadingFontDefinition(false);
   }
@@ -1896,7 +1915,6 @@ const ON_wString ON_RtfStringBuilder::OutputString()
 // or to store the definition for the nth font in the font table
 void ON_RtfStringBuilder::FontTag(const wchar_t* value)
 {
-
   if (SkippingFacename())
     return;
 
@@ -1906,6 +1924,14 @@ void ON_RtfStringBuilder::FontTag(const wchar_t* value)
   {
     if (ReadingFontTable())
     {
+      if (m_current_run.Type() == ON_TextRun::RunType::kFonttbl && m_level == m_font_table_level)
+      {
+        m_string_out += m_current_run.TextString();
+        m_current_run.EmptyText();
+        m_current_run.SetTerminated(true);
+        PushRun(m_current_run);
+        m_have_rtf = true;
+      }
       m_current_run.SetType(ON_TextRun::RunType::kFontdef);
       if (!SettingFacename())
       {
@@ -2416,108 +2442,112 @@ bool ON_RtfParser::ProcessTag(const wchar_t* name, const wchar_t* value, bool op
   if( tagname.IsEmpty() )
     return false;
 
+  bool rc = true;
+
   const bool bOrdinalIgnoreCase = true;
 
-  if (0 == tagname.CompareOrdinal(tagRtf, bOrdinalIgnoreCase))
-  {
-    m_in_real_rtf = true;
-    m_builder.BeginHeader();
-  }
-  else if (0 == tagname.CompareOrdinal(tagFontTable, bOrdinalIgnoreCase))
-    m_builder.BeginFontTable();
-  else if(0 == tagname.CompareOrdinal(tagDefaultFont,bOrdinalIgnoreCase)      && 0 != value && 0 != value[0])
-    m_builder.DefaultFont(value);
-  else if(0 == tagname.CompareOrdinal(tagFont,bOrdinalIgnoreCase)             && 0 != value && 0 != value[0])
-    m_builder.FontTag(value);
-  else if(0 == tagname.CompareOrdinal(tagFontSize,bOrdinalIgnoreCase)         && 0 != value && 0 != value[0])
-    m_builder.FontSize(value);
-  else if (0 == tagname.CompareOrdinal(tagCharSet, bOrdinalIgnoreCase)        && 0 != value && 0 != value[0])
-    m_builder.CharSet(value);
-  else if (0 == tagname.CompareOrdinal(tagCodePage, bOrdinalIgnoreCase)       && 0 != value && 0 != value[0])
-    m_builder.CodePage(value);
+if (0 == tagname.CompareOrdinal(tagRtf, bOrdinalIgnoreCase))
+{
+  m_in_real_rtf = true;
+  m_builder.BeginHeader();
+}
+else if (0 == tagname.CompareOrdinal(tagFontTable, bOrdinalIgnoreCase))
+m_builder.BeginFontTable();
+else if (0 == tagname.CompareOrdinal(tagDefaultFont, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.DefaultFont(value);
+else if (0 == tagname.CompareOrdinal(tagFont, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.FontTag(value);
+else if (0 == tagname.CompareOrdinal(tagFontSize, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.FontSize(value);
+else if (0 == tagname.CompareOrdinal(tagCharSet, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.CharSet(value);
+else if (0 == tagname.CompareOrdinal(tagCodePage, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.CodePage(value);
 
-  else if(0 == tagname.CompareOrdinal(tagNewline,bOrdinalIgnoreCase))
-    m_builder.Newline();
-  else if(0 == tagname.CompareOrdinal(tagParagraph,bOrdinalIgnoreCase))
-   m_builder.Paragraph();
-  else if(0 == tagname.CompareOrdinal(tagParagraphDefaults,bOrdinalIgnoreCase))
-    m_builder.ParagraphDefaults();
-  else if(0 == tagname.CompareOrdinal(tagSection,bOrdinalIgnoreCase))
-    m_builder.Section();
-  else if(0 == tagname.CompareOrdinal(tagTabulator,bOrdinalIgnoreCase))
-    m_builder.Tab();
+else if (0 == tagname.CompareOrdinal(tagNewline, bOrdinalIgnoreCase))
+m_builder.Newline();
+else if (0 == tagname.CompareOrdinal(tagParagraph, bOrdinalIgnoreCase))
+m_builder.Paragraph();
+else if (0 == tagname.CompareOrdinal(tagParagraphDefaults, bOrdinalIgnoreCase))
+m_builder.ParagraphDefaults();
+else if (0 == tagname.CompareOrdinal(tagSection, bOrdinalIgnoreCase))
+m_builder.Section();
+else if (0 == tagname.CompareOrdinal(tagTabulator, bOrdinalIgnoreCase))
+m_builder.Tab();
 
-  else if(0 == tagname.CompareOrdinal(tagBold,bOrdinalIgnoreCase))
-    m_builder.Bold(value);
-  else if(0 == tagname.CompareOrdinal(tagItalic,bOrdinalIgnoreCase))
-    m_builder.Italic(value);
-  else if (0 == tagname.CompareOrdinal(tagUnderLine, bOrdinalIgnoreCase))
-  {
-    if((*value) == L'0')
-      m_builder.UnderlineOff();
-    else
-      m_builder.UnderlineOn();
-  }
-  else if (0 == tagname.CompareOrdinal(tagUnderLineNone, bOrdinalIgnoreCase))
+else if (0 == tagname.CompareOrdinal(tagBold, bOrdinalIgnoreCase))
+m_builder.Bold(value);
+else if (0 == tagname.CompareOrdinal(tagItalic, bOrdinalIgnoreCase))
+m_builder.Italic(value);
+else if (0 == tagname.CompareOrdinal(tagUnderLine, bOrdinalIgnoreCase))
+{
+  if ((*value) == L'0')
     m_builder.UnderlineOff();
-  else if(0 == tagname.CompareOrdinal(tagStrikeThrough,bOrdinalIgnoreCase))
-    m_builder.Strikethrough(value);
+  else
+    m_builder.UnderlineOn();
+}
+else if (0 == tagname.CompareOrdinal(tagUnderLineNone, bOrdinalIgnoreCase))
+m_builder.UnderlineOff();
+else if (0 == tagname.CompareOrdinal(tagStrikeThrough, bOrdinalIgnoreCase))
+m_builder.Strikethrough(value);
 
-  else if(0 == tagname.CompareOrdinal(tagSuperscript,bOrdinalIgnoreCase))
-    m_builder.Superscript();
-  else if(0 == tagname.CompareOrdinal(tagSubscript,bOrdinalIgnoreCase))
-    m_builder.Subscript();
-  else if(0 == tagname.CompareOrdinal(tagNoSuperSub,bOrdinalIgnoreCase))
-    m_builder.NoSuperSub();
-                                                                                            
-  else if(0 == tagname.CompareOrdinal(tagColorTable,bOrdinalIgnoreCase))
-    m_builder.BeginColorTable();
-  else if(0 == tagname.CompareOrdinal(tagColorRed,bOrdinalIgnoreCase)         && 0 != value && 0 != value[0])
-    m_builder.ColorRed(value);
-  else if(0 == tagname.CompareOrdinal(tagColorGreen,bOrdinalIgnoreCase)       && 0 != value && 0 != value[0])
-    m_builder.ColorGreen(value);
-  else if(0 == tagname.CompareOrdinal(tagColorBlue,bOrdinalIgnoreCase)        && 0 != value && 0 != value[0])
-    m_builder.ColorBlue(value);
-  else if(0 == tagname.CompareOrdinal(tagColorForeground,bOrdinalIgnoreCase)  && 0 != value && 0 != value[0])
-    m_builder.ColorForeground(value);
-  else if(0 == tagname.CompareOrdinal(tagColorBackground,bOrdinalIgnoreCase)  && 0 != value && 0 != value[0])
-    m_builder.ColorBackground(value);
+else if (0 == tagname.CompareOrdinal(tagSuperscript, bOrdinalIgnoreCase))
+m_builder.Superscript();
+else if (0 == tagname.CompareOrdinal(tagSubscript, bOrdinalIgnoreCase))
+m_builder.Subscript();
+else if (0 == tagname.CompareOrdinal(tagNoSuperSub, bOrdinalIgnoreCase))
+m_builder.NoSuperSub();
 
-  else if (0 == tagname.CompareOrdinal(tagStackFraction, bOrdinalIgnoreCase))
-    m_builder.SetStackScale(value);
-  else if (0 == tagname.CompareOrdinal(tagStackText, bOrdinalIgnoreCase))
-    m_builder.StackFraction(value);
-  else if (0 == tagname.CompareOrdinal(tagStackEnd, bOrdinalIgnoreCase))
-    m_builder.StackEnd();
+else if (0 == tagname.CompareOrdinal(tagColorTable, bOrdinalIgnoreCase))
+m_builder.BeginColorTable();
+else if (0 == tagname.CompareOrdinal(tagColorRed, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.ColorRed(value);
+else if (0 == tagname.CompareOrdinal(tagColorGreen, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.ColorGreen(value);
+else if (0 == tagname.CompareOrdinal(tagColorBlue, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.ColorBlue(value);
+else if (0 == tagname.CompareOrdinal(tagColorForeground, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.ColorForeground(value);
+else if (0 == tagname.CompareOrdinal(tagColorBackground, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+m_builder.ColorBackground(value);
 
-  else if (0 == ON_wString::CompareOrdinal(name, tagField, bOrdinalIgnoreCase))
-    m_builder.TextField(value);
+else if (0 == tagname.CompareOrdinal(tagStackFraction, bOrdinalIgnoreCase))
+m_builder.SetStackScale(value);
+else if (0 == tagname.CompareOrdinal(tagStackText, bOrdinalIgnoreCase))
+m_builder.StackFraction(value);
+else if (0 == tagname.CompareOrdinal(tagStackEnd, bOrdinalIgnoreCase))
+m_builder.StackEnd();
 
-  else if (0 == ON_wString::CompareOrdinal(name, tagUniCpCount, bOrdinalIgnoreCase))
-    m_builder.UniCpCount(value);
-  else if (0 == ON_wString::CompareOrdinal(name, tagUniCharDec, bOrdinalIgnoreCase))
-    m_builder.UniDecimal(value);
-  else if (0 == ON_wString::CompareOrdinal(name, tagUniTwoDest, bOrdinalIgnoreCase))
-    m_builder.UniEmbeddedDest(value);
-  else if (0 == ON_wString::CompareOrdinal(name, tagUniDest, bOrdinalIgnoreCase))
-    m_builder.UniDest(value);
+else if (0 == ON_wString::CompareOrdinal(name, tagField, bOrdinalIgnoreCase))
+m_builder.TextField(value);
 
-  else if (0 == ON_wString::CompareOrdinal(name, taglquote, bOrdinalIgnoreCase))
-    m_builder.LQuote();
-  else if (0 == ON_wString::CompareOrdinal(name, tagrquote, bOrdinalIgnoreCase))
-    m_builder.RQuote();
-  else if (0 == ON_wString::CompareOrdinal(name, tagldblquote, bOrdinalIgnoreCase))
-    m_builder.LDblQuote();
-  else if (0 == ON_wString::CompareOrdinal(name, tagrdblquote, bOrdinalIgnoreCase))
-    m_builder.RDblQuote();
-  else if (0 == ON_wString::CompareOrdinal(name, tagbullet, bOrdinalIgnoreCase))
-    m_builder.Bullet();
-  else if (0 == ON_wString::CompareOrdinal(name, tagendash, bOrdinalIgnoreCase))
-    m_builder.EnDash();
-  else if (0 == ON_wString::CompareOrdinal(name, tagemdash, bOrdinalIgnoreCase))
-    m_builder.EmDash();
+else if (0 == ON_wString::CompareOrdinal(name, tagUniCpCount, bOrdinalIgnoreCase))
+m_builder.UniCpCount(value);
+else if (0 == ON_wString::CompareOrdinal(name, tagUniCharDec, bOrdinalIgnoreCase))
+m_builder.UniDecimal(value);
+else if (0 == ON_wString::CompareOrdinal(name, tagUniTwoDest, bOrdinalIgnoreCase))
+m_builder.UniEmbeddedDest(value);
+else if (0 == ON_wString::CompareOrdinal(name, tagUniDest, bOrdinalIgnoreCase))
+m_builder.UniDest(value);
 
-  return true;
+else if (0 == ON_wString::CompareOrdinal(name, taglquote, bOrdinalIgnoreCase))
+m_builder.LQuote();
+else if (0 == ON_wString::CompareOrdinal(name, tagrquote, bOrdinalIgnoreCase))
+m_builder.RQuote();
+else if (0 == ON_wString::CompareOrdinal(name, tagldblquote, bOrdinalIgnoreCase))
+m_builder.LDblQuote();
+else if (0 == ON_wString::CompareOrdinal(name, tagrdblquote, bOrdinalIgnoreCase))
+m_builder.RDblQuote();
+else if (0 == ON_wString::CompareOrdinal(name, tagbullet, bOrdinalIgnoreCase))
+m_builder.Bullet();
+else if (0 == ON_wString::CompareOrdinal(name, tagendash, bOrdinalIgnoreCase))
+m_builder.EnDash();
+else if (0 == ON_wString::CompareOrdinal(name, tagemdash, bOrdinalIgnoreCase))
+m_builder.EmDash();
+else
+rc = false;
+
+  return rc;
 }
 
 // Called after '\\*' is read
@@ -2543,6 +2573,8 @@ bool ON_RtfParser::ReadOptionalTag()
     {
     case ON_UnicodeCodePoint::ON_Backslash:
       rc = ReadTag(true);
+      if (!rc && m_suspend_to_close == 0)
+        m_suspend_to_close = 1;
       break;
     default:   // terminates an optional tag
       end_of_tag = true;
@@ -2625,7 +2657,7 @@ bool ON_RtfParser::Parse()
 
   while(!end_of_string)
   {
-    if (m_ti.AtBackslashTic())
+    if (m_suspend_to_close <= 0 && m_ti.AtBackslashTic())
     {
       // parse the entire contiguous MBCS string up to <OTHER>
       // \`XX\`XX...\`XX<OTHER>
@@ -2639,6 +2671,22 @@ bool ON_RtfParser::Parse()
 
     if(false == m_ti.ReadCodePoint(rtf_code_point))
       break;
+
+    if (m_suspend_to_close > 0)
+    {
+      switch (rtf_code_point)
+      {
+      case L'}':
+        m_suspend_to_close--;
+        break;
+      case L'{':
+        m_suspend_to_close++;
+        break;
+      }
+      if (m_suspend_to_close == 0)
+        m_ti.Back();
+      continue;
+    }
 
     // Found a single byte character
     switch (rtf_code_point)
@@ -2694,12 +2742,12 @@ bool ON_RtfParser::Parse()
           case '*':
             ReadOptionalTag();
             break;
-          case 'n':
-            //FlushCurText(m_builder.m_current_codepoints);
-            m_builder.GroupEnd();
-            ProcessTag(L"par", nullptr, false);
-            m_builder.GroupBegin();
-            break;
+          //case 'n':
+          //  //FlushCurText(m_builder.m_current_codepoints);
+          //  m_builder.GroupEnd();
+          //  ProcessTag(L"par", nullptr, false);
+          //  m_builder.GroupBegin();
+          //  break;
           default:
             // Tag names are always low ascii alphabetic
             m_ti.Back();
@@ -2787,7 +2835,7 @@ unsigned int RtfComposer::GetFacenameKey(const ON_Font* font, ON_SimpleArray< wc
     return 0;
   // Depending on what created the RTF, the face name in the RTF can be a 
   // PostScript name, LOGFONT.lfFaceName, IDWriteFont family name, ...
-  const ON_wString rtf_facename = font->QuartetName(); // ON_Font::RichTextFontName(font, true);
+  const ON_wString rtf_facename = font->QuartetName(ON_Font::NameLocale::English);
 
   if (rtf_facename.IsEmpty())
     return 0;
@@ -3163,10 +3211,11 @@ bool RtfComposer::Compose(
         temp.Format(L"{\\f%d %s;}", fi, fonttable[fi]);
         fonttable_string += temp;
       }
-      fonttable_string += "}";
+      fonttable_string += "}\\fs40 ";
       rtf += fonttable_string;
     }
     rtf += run_strings;
+    // backing out the change made for RH-49725 because it causes the problem reported in RH-50733
     rtf += L"\\par}";
   }
   else

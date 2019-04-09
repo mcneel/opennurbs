@@ -522,17 +522,28 @@ void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
 
 void ON_TextLog::Print( const ON_wString& string )
 {
-  const wchar_t* s = static_cast< const wchar_t* >(string);
+  const ON_wString local(string); // increment reference count to insure s is valid for the duration of this call.
+  const wchar_t* s = static_cast< const wchar_t* >(local);
   if ( s && *s )
+  {
+    if (m_beginning_of_line && m_indent.IsNotEmpty())
+      AppendText(static_cast<const char*>(m_indent));
     AppendText(s);
+  }
 }
 
 void ON_TextLog::Print( const ON_String& string )
 {
-  const char* s = static_cast< const char* >(string);
-  if ( s && *s )
+  const ON_String local(string); // increment reference count to insure s is valid for the duration of this call.
+  const char* s = static_cast< const char* >(local);
+  if (s && *s)
+  {
+    if (m_beginning_of_line && m_indent.IsNotEmpty())
+      AppendText(static_cast<const char*>(m_indent));
     AppendText(s);
+  }
 }
+
 
 void ON_TextLog::PrintString( const char* s )
 {
@@ -548,7 +559,6 @@ void ON_TextLog::PrintNewLine()
 {
   Print("\n");
 }
-
 
 void ON_TextLog::PrintString( const wchar_t* s )
 {

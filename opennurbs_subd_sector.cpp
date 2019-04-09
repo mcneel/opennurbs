@@ -970,7 +970,7 @@ ON_SubDSectorType ON_SubDSectorType::Create(
     sector_face_count++;
     if ( sector_face_count > vertex_face_count )
       return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
-    if (face0 == local_sit.NextFace(true))
+    if (face0 == local_sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
     {
       double corner_sector_angle_radians 
           = (ON_SubD::VertexTag::Corner == vertex_tag)

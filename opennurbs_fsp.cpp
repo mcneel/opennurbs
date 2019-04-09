@@ -10,6 +10,14 @@
 
 ON_FixedSizePool::ON_FixedSizePool()
 {
+  ////const size_t sz = sizeof(*this);
+  ////ON_TextLog::Null.Print("L%d", sz); // supress compile errors.
+  // sz = 72 bytes before step 2 fixes for https://mcneel.myjetbrains.com/youtrack/issue/RH-49375
+  //
+  // private data members will be rearranged but the size cannot change so that the
+  // C++ public SDK remains stable.
+  //
+
   memset(this,0,sizeof(*this));
 }
 
@@ -38,8 +46,7 @@ ON_FixedSizePool& ON_FixedSizePool::operator=(ON_FixedSizePool&& src)
 {
   if (this != &src)
   {
-    Destroy();
-    
+    Destroy();    
     m_first_block = src.m_first_block;
     m_al_element_stack = src.m_al_element_stack;
     m_al_block = src.m_al_block;
@@ -49,7 +56,6 @@ ON_FixedSizePool& ON_FixedSizePool::operator=(ON_FixedSizePool&& src)
     m_block_element_count = src.m_block_element_count;
     m_active_element_count = src.m_active_element_count;
     m_total_element_count = src.m_total_element_count;
-
     memset(&src,0,sizeof(*this));
   }
   return *this;
@@ -62,7 +68,6 @@ size_t ON_FixedSizePool::SizeofElement() const
 {
   return m_sizeof_element;
 }
-
 
 bool ON_FixedSizePool::Create( 
         size_t sizeof_element, 
@@ -173,25 +178,8 @@ size_t ON_FixedSizePool::TotalElementCount() const
   return m_total_element_count;
 }
 
-//static void DebugIsValid(const ON_FixedSizePool* p)
-//{
-//  if( !p->IsValid() )
-//    p->IsValid();
-//}
-
 void* ON_FixedSizePool::AllocateDirtyElement()
 {
-  //static unsigned int debug_count = 0;
-  //debug_count++;
-  //const unsigned int debug_count_mark = 21432;
-  //if (21432 == debug_count)
-  //{
-  //  // A conditional breakpoint is too slow for large values of debug_count
-  //  debug_count = debug_count_mark; // <- breakpoint here
-  //}
-
-  //DebugIsValid(this);
-
   void* p;  
 
   if ( 0 != m_al_element_stack )
@@ -199,7 +187,6 @@ void* ON_FixedSizePool::AllocateDirtyElement()
     // use item on the returned stack first.
     p = m_al_element_stack;
     m_al_element_stack = *((void**)m_al_element_stack);
-    //DebugIsValid(this);
   }
   else
   {
@@ -258,7 +245,6 @@ void* ON_FixedSizePool::AllocateDirtyElement()
       }
 
       m_al_element_array = (void*)(((char*)m_al_block)+2*sizeof(void*));
-      //DebugIsValid(this);
     }
     m_al_count--;
     p = m_al_element_array;
@@ -267,8 +253,6 @@ void* ON_FixedSizePool::AllocateDirtyElement()
   }
 
   m_active_element_count++;
-
-  //DebugIsValid(this);
 
   return p;
 }
@@ -354,7 +338,7 @@ bool ON_FixedSizePool::IsValid() const
       }
       
       total_element_count += block_element_count;
-      if (total_element_count > m_total_element_count)
+      if (total_element_count > (size_t)m_total_element_count)
       {
         ON_ERROR("m_total_element_count is not correct or some other serious problem.");
         return false;
@@ -367,7 +351,7 @@ bool ON_FixedSizePool::IsValid() const
       }
     }
 
-    if (total_element_count != m_total_element_count)
+    if (total_element_count != (size_t)m_total_element_count)
     {
       ON_ERROR("m_total_element_count or m_al_element_array is not correct or some other serious problem.");
       return false;
@@ -380,10 +364,8 @@ bool ON_FixedSizePool::IsValid() const
     return false;
   }
 
-
   return true;
 }
-
 
 void* ON_FixedSizePool::AllocateElement()
 {
@@ -414,6 +396,43 @@ void ON_FixedSizePool::ReturnElement(void* p)
   }
 }
 
+void* ON_FixedSizePool::ThreadSafeAllocateDirtyElement()
+{
+  void* p = nullptr;
+  {
+    if ( m_sleep_lock.GetLock() )
+    {
+      p = AllocateDirtyElement();
+      m_sleep_lock.ReturnLock();
+    }
+  }
+  return p;
+}
+
+void* ON_FixedSizePool::ThreadSafeAllocateElement()
+{
+  void* p = nullptr;
+  {
+    if ( m_sleep_lock.GetLock() )
+    {
+      p = AllocateElement();
+      m_sleep_lock.ReturnLock();
+    }
+  }
+  return p;
+}
+
+void ON_FixedSizePool::ThreadSafeReturnElement(void* p)
+{
+  if (nullptr != p)
+  {
+    if ( m_sleep_lock.GetLock() )
+    {
+      ReturnElement(p);
+      m_sleep_lock.ReturnLock();
+    }
+  }
+}
 
 ON_FixedSizePoolIterator::ON_FixedSizePoolIterator()
   : m_fsp(0)
@@ -446,21 +465,6 @@ void ON_FixedSizePoolIterator::Reset()
   m_it_element = 0;
 }
 
-//////void* ON_FixedSizePool::FirstElement()
-//////{
-//////  if ( m_first_block && m_total_element_count > 0 )
-//////  {
-//////    m_qwerty_it_block = m_first_block;
-//////    m_qwerty_it_element = (void*)(((char*)m_qwerty_it_block)+2*sizeof(void*)); // m_qwerty_it_element points to first element in m_first_block
-//////  }
-//////  else
-//////  {
-//////    m_qwerty_it_block = 0;
-//////    m_qwerty_it_element = 0;
-//////  }
-//////  return m_qwerty_it_element;
-//////}
-
 void* ON_FixedSizePoolIterator::FirstElement()
 {
   if ( m_fsp && m_fsp->m_first_block && m_fsp->m_total_element_count > 0 )
@@ -475,33 +479,6 @@ void* ON_FixedSizePoolIterator::FirstElement()
   }
   return m_it_element;
 }
-
-//////void* ON_FixedSizePool::NextElement()
-//////{
-//////  if ( m_qwerty_it_element )
-//////  {
-//////    m_qwerty_it_element = (void*)(((char*)m_qwerty_it_element) + m_sizeof_element);
-//////    if ( m_qwerty_it_element == m_al_element_array )
-//////    {
-//////      m_qwerty_it_block = 0;
-//////      m_qwerty_it_element = 0;
-//////    }
-//////    else if ( m_qwerty_it_element == *((void**)(((char*)m_qwerty_it_block) + sizeof(void*))) )
-//////    {
-//////      // m_qwerty_it_element  = "end" pointer which means we are at the end of m_qwerty_it_block
-//////      m_qwerty_it_block = *((void**)m_qwerty_it_block); // m_qwerty_it_block = "next" block
-//////      m_qwerty_it_element = (0 != m_qwerty_it_block)    // m_qwerty_it_element points to first element in m_qwerty_it_block
-//////                   ? (void*)(((char*)m_qwerty_it_block)+2*sizeof(void*))
-//////                   : 0;
-//////      if ( m_qwerty_it_element == m_al_element_array )
-//////      {
-//////        m_qwerty_it_block = 0;
-//////        m_qwerty_it_element = 0;
-//////      }
-//////    }
-//////  }
-//////  return m_qwerty_it_element;
-//////}
 
 void* ON_FixedSizePoolIterator::NextElement()
 {
@@ -541,42 +518,6 @@ void* ON_FixedSizePoolIterator::CurrentElement() const
   return m_it_element;
 }
 
-//////void* ON_FixedSizePool::FirstElement(size_t element_index)
-//////{
-//////  const char* block;
-//////  const char* block_end;
-//////  const char* next_block;
-//////  size_t block_count;
-//////
-//////  m_qwerty_it_block = 0;
-//////  m_qwerty_it_element = 0;
-//////  if ( element_index < m_total_element_count )
-//////  {
-//////    for ( block = (const char*)m_first_block; 0 != block; block = next_block )
-//////    {
-//////      if ( block == m_al_block )
-//////      {
-//////        next_block = 0;
-//////        block_end = (const char*)m_al_element_array;
-//////      }
-//////      else
-//////      {
-//////        next_block = *((const char**)block);
-//////        block_end =  *((const char**)(block + sizeof(void*)));
-//////      }
-//////      block_count = (block_end - block)/m_sizeof_element;
-//////      if ( element_index < block_count )
-//////      {
-//////        m_qwerty_it_block = (void*)block;
-//////        m_qwerty_it_element = ((void*)(block + (2*sizeof(void*) + element_index*m_sizeof_element)));
-//////        break;
-//////      }
-//////      element_index -= block_count;
-//////    }
-//////  }
-//////  return m_qwerty_it_element;
-//////}
-
 void* ON_FixedSizePoolIterator::FirstElement(size_t element_index)
 {
   const char* block;
@@ -586,7 +527,7 @@ void* ON_FixedSizePoolIterator::FirstElement(size_t element_index)
 
   m_it_block = 0;
   m_it_element = 0;
-  if ( m_fsp && element_index < m_fsp->m_total_element_count )
+  if ( m_fsp && element_index < (size_t)(m_fsp->m_total_element_count) )
   {
     for ( block = (const char*)m_fsp->m_first_block; 0 != block; block = next_block )
     {
@@ -640,25 +581,6 @@ size_t ON_FixedSizePool::BlockElementCount( const void* block ) const
   return (block_end - block_head)/m_sizeof_element;
 }
 
-//////void* ON_FixedSizePool::FirstBlock( size_t* block_element_count )
-//////{
-//////  if ( m_first_block && m_total_element_count > 0 )
-//////  {
-//////    m_qwerty_it_block = m_first_block;
-//////    m_qwerty_it_element = (void*)(((char*)m_qwerty_it_block)+2*sizeof(void*)); // m_qwerty_it_element points to first element in m_first_block
-//////    if ( 0 != block_element_count )
-//////      *block_element_count = BlockElementCount(m_qwerty_it_block);
-//////  }
-//////  else
-//////  {
-//////    m_qwerty_it_block = 0;
-//////    m_qwerty_it_element = 0;
-//////    if ( 0 != block_element_count )
-//////      *block_element_count = 0;
-//////  }
-//////  return m_qwerty_it_element;
-//////}
-
 void* ON_FixedSizePoolIterator::FirstBlock( size_t* block_element_count )
 {
   if ( m_fsp && m_fsp->m_first_block && m_fsp->m_total_element_count > 0 )
@@ -677,37 +599,6 @@ void* ON_FixedSizePoolIterator::FirstBlock( size_t* block_element_count )
   }
   return m_it_element;
 }
-
-//////void* ON_FixedSizePool::NextBlock( size_t* block_element_count )
-//////{
-//////  if ( 0 != m_qwerty_it_block 
-//////       && m_qwerty_it_block != m_al_block
-//////       && m_qwerty_it_element == (void*)(((char*)m_qwerty_it_block)+2*sizeof(void*)) )
-//////  {
-//////    m_qwerty_it_block = *((void**)m_qwerty_it_block);
-//////    if ( m_qwerty_it_block == m_al_element_array )
-//////    {
-//////      m_qwerty_it_block = 0;
-//////      m_qwerty_it_element = 0;
-//////      if ( 0 != block_element_count )
-//////        *block_element_count = 0;
-//////    }
-//////    else
-//////    {
-//////      m_qwerty_it_element = (void*)(((char*)m_qwerty_it_block)+2*sizeof(void*)); // m_qwerty_it_element points to first element in m_first_block
-//////      if ( 0 != block_element_count )
-//////        *block_element_count = BlockElementCount(m_qwerty_it_block);
-//////    }
-//////  }
-//////  else
-//////  {
-//////    m_qwerty_it_block = 0;
-//////    m_qwerty_it_element = 0;
-//////    if ( 0 != block_element_count )
-//////      *block_element_count = 0;
-//////  }
-//////  return m_qwerty_it_element;
-//////}
 
 void* ON_FixedSizePoolIterator::NextBlock( size_t* block_element_count )
 {
@@ -742,7 +633,7 @@ void* ON_FixedSizePoolIterator::NextBlock( size_t* block_element_count )
 
 void* ON_FixedSizePool::Element(size_t element_index) const
 {
-  if (element_index < m_total_element_count)
+  if (element_index < (size_t)m_total_element_count)
   {
     const char* block;
     const char* block_end;
@@ -830,7 +721,6 @@ size_t ON_FixedSizePool::ElementIndex(const void* element_pointer) const
   return ON_MAX_SIZE_T;
 }
 
-
 void* ON_FixedSizePool::ElementFromId(
   size_t id_offset,
   unsigned int id
@@ -841,6 +731,12 @@ void* ON_FixedSizePool::ElementFromId(
   const char* next_block;
   unsigned int i0, i1;
   size_t count;
+  if (id_offset < sizeof(void*))
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too small.");
+    return nullptr;
+  }
   if (id_offset + sizeof(id) > m_sizeof_element)
   {
     // caller is confused.
@@ -888,5 +784,190 @@ void* ON_FixedSizePool::ElementFromId(
   }
 
   return nullptr;
+}
+
+unsigned int ON_FixedSizePool::MaximumElementId(
+  size_t id_offset
+) const
+{
+  const char* block;
+  const char* block_end;
+  const char* next_block;
+  unsigned int maximum_id = 0;
+  if (id_offset < sizeof(void*))
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too small.");
+    return 0;
+  }
+  if (id_offset + sizeof(maximum_id) > m_sizeof_element)
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too large.");
+    return 0;
+  }
+
+  for (block = (const char*)m_first_block; 0 != block; block = next_block)
+  {
+    if (block == m_al_block)
+    {
+      next_block = nullptr;
+      block_end = (const char*)m_al_element_array;
+      block += (2 * sizeof(void*));
+    }
+    else
+    {
+      next_block = *((const char**)block);
+      block += sizeof(void*);
+      block_end = *((const char**)(block));
+      block += sizeof(void*);
+    }
+
+    unsigned int i1 = *((const unsigned int*)(block_end-(m_sizeof_element-id_offset)));
+    if (i1 > maximum_id)
+      maximum_id = i1;
+  }
+
+  return maximum_id;
+}
+
+bool ON_FixedSizePool::ElementIdIsIncreasing(
+  size_t id_offset
+) const
+{
+  const char* block;
+  const char* block_end;
+  const char* next_block;
+  const unsigned int* i0;
+  const unsigned int* i1;
+  unsigned int prev_id = 0;
+  unsigned int id;
+  bool bFirstId = true;
+  size_t count;
+  if (0 != ( m_sizeof_element % sizeof(id)) )
+  {
+    // caller is confused.
+    ON_ERROR("m_sizeof_element must be a multiple of sizeof(unsigned int).");
+    return nullptr;
+  }
+  if (id_offset < sizeof(void*) )
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too small.");
+    return nullptr;
+  }
+  if (id_offset + sizeof(prev_id) > m_sizeof_element)
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too large.");
+    return nullptr;
+  }
+
+  const size_t delta_i = m_sizeof_element / sizeof(id);
+  for (block = (const char*)m_first_block; 0 != block; block = next_block)
+  {
+    if (block == m_al_block)
+    {
+      next_block = nullptr;
+      block_end = (const char*)m_al_element_array;
+      block += (2 * sizeof(void*));
+    }
+    else
+    {
+      next_block = *((const char**)block);
+      block += sizeof(void*);
+      block_end = *((const char**)(block));
+      block += sizeof(void*);
+    }
+
+    count = (block_end - block)/m_sizeof_element;
+    if (0 == count)
+      continue;
+
+    i0 = ((const unsigned int*)(block + id_offset));
+    i1 = ((const unsigned int*)(block_end-(m_sizeof_element-id_offset)));
+
+    if (bFirstId)
+    {
+      prev_id = *i0;
+      bFirstId = false;
+      i0 += delta_i;
+    }
+    while (i0 <= i1)
+    {
+      id = *i0;
+      if (id <= prev_id)
+        return false;
+      prev_id = id;
+      i0 += delta_i;
+    }
+  }
+
+  return true;
+}
+
+unsigned int ON_FixedSizePool::ResetElementId(
+  size_t id_offset,
+  unsigned int initial_id
+)
+{
+  const char* block;
+  const char* block_end;
+  const char* next_block;
+  unsigned int* i0;
+  unsigned int* i1;
+  unsigned int id = initial_id;
+  size_t count;
+  if (0 != ( m_sizeof_element % sizeof(id)) )
+  {
+    // caller is confused.
+    ON_ERROR("m_sizeof_element must be a multiple of sizeof(unsigned int).");
+    return 0;
+  }
+  if (id_offset < sizeof(void*))
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too small.");
+    return 0;
+  }
+  if (id_offset + sizeof(id) > m_sizeof_element)
+  {
+    // caller is confused.
+    ON_ERROR("id_offset is too large.");
+    return 0;
+  }
+
+  const size_t delta_i = m_sizeof_element / sizeof(id);
+  for (block = (const char*)m_first_block; 0 != block; block = next_block)
+  {
+    if (block == m_al_block)
+    {
+      next_block = nullptr;
+      block_end = (const char*)m_al_element_array;
+      block += (2 * sizeof(void*));
+    }
+    else
+    {
+      next_block = *((const char**)block);
+      block += sizeof(void*);
+      block_end = *((const char**)(block));
+      block += sizeof(void*);
+    }
+
+    count = (block_end - block)/m_sizeof_element;
+    if (0 == count)
+      continue;
+
+    i0 = ((unsigned int*)(block + id_offset));
+    i1 = ((unsigned int*)(block_end-(m_sizeof_element-id_offset)));
+
+    while (i0 <= i1)
+    {
+      *i0 = id++;
+      i0 += delta_i;
+    }
+  }
+
+  return id;
 }
 

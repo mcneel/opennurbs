@@ -543,5 +543,38 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_Material>;
 //  will occur when user data back pointers are not updated.
 #endif
 
+class ON_CLASS ON_PhysicallyBasedMaterial
+{
+public:
+  class ParametersNames
+  {
+  public:
+    static ON_wString BaseColor(void);
+    static ON_wString BRDF(void);
+    static ON_wString Subsurface(void);
+    static ON_wString SubsurfaceScatteringColor(void);
+    static ON_wString SubsurfaceScatteringRadius(void);
+    static ON_wString Specular(void);
+    static ON_wString SpecularTint(void);
+    static ON_wString Metallic(void);
+    static ON_wString Roughness(void);
+    static ON_wString Anisotropic(void);
+    static ON_wString AnisotropicRotation(void);
+    static ON_wString Sheen(void);
+    static ON_wString SheenTint(void);
+    static ON_wString Clearcoat(void);
+    static ON_wString ClearcoatRoughness(void);
+    static ON_wString OpacityIor(void);
+    static ON_wString Opacity(void);
+    static ON_wString OpacityRoughness(void);
+    static ON_wString Emission(void);
+    static ON_wString AmbientOcclusion(void);
+    static ON_wString Smudge(void);
+    static ON_wString Displacement(void);
+    static ON_wString Normal(void);
+    static ON_wString Bump(void);
+  };
+};
+
 #endif
 

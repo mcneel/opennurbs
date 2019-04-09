@@ -583,7 +583,7 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
 
 void ON_SubD::ShareContentsFrom(ON_SubD& src_subd)
 {
-  if (this == &ON_SubD::Empty || &src_subd != &ON_SubD::Empty)
+  if (this == &ON_SubD::Empty || &src_subd == &ON_SubD::Empty)
   {
     ON_SubDIncrementErrorCount();
   }
@@ -634,9 +634,55 @@ void ON_SubD::CopyHelper(const ON_SubD& src)
     subdimple = new ON_SubDimple(*src_subdimple);
   }
   m_subdimple_sp = std::shared_ptr<ON_SubDimple>(subdimple);
+  if (nullptr != subdimple)
+    subdimple->SetLimitMeshSubDWeakPointer(m_subdimple_sp);
 }
 
+void ON_SubDimple::SetLimitMeshSubDWeakPointer(
+  std::shared_ptr<class ON_SubDimple>& subdimple_sp
+  )
+{
+  // update weak ptrs on limit mesh
+  const unsigned int level_count = m_levels.UnsignedCount();
+  for (unsigned level_index = 0; level_index < level_count; level_index++)
+  {
+    ON_SubDLevel* level = m_levels[level_index];
+    if (nullptr == level)
+      continue;
+    ON_SubDLimitMeshImpl* limple = level->m_limit_mesh.SubLimple();
+    if (nullptr == limple)
+      continue;
+    limple->SetSubDWeakPointer(level->m_face[0],subdimple_sp);
+  }
+}
+
+void ON_SubDLimitMeshImpl::SetSubDWeakPointer(
+  const ON_SubDFace* subd_first_face,
+  std::shared_ptr<class ON_SubDimple>& subdimple_sp
+)
+{
+  for (;;)
+  {
+    const ON_SubDimple* subdimple = subdimple_sp.get();
+    if (nullptr == subdimple)
+      break;
+    if (nullptr == subd_first_face)
+      break;
+    if (nullptr == m_first_fragment)
+      break;
+    if (m_first_fragment->m_face != subd_first_face)
+      break;
+    m_subdimple_wp = subdimple_sp;
+    return;
+  }
+
+  // It's no longer clear that the subd used to create this limit mesh exist.
+  ClearFragmentFacePointers(true);
+}
+
+
 ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
+  : RuntimeSerialNumber(++ON_SubDimple::Internal_RuntimeSerialNumberGenerator)
 {
   const bool bCopyComponentStatus = true;
 
@@ -668,6 +714,12 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     if ( src.m_active_level == src_level )
       m_active_level = level;
   }
+  if (src.m_max_vertex_id > m_max_vertex_id)
+    m_max_vertex_id = src.m_max_vertex_id;
+  if (src.m_max_edge_id > m_max_edge_id)
+    m_max_edge_id = src.m_max_edge_id;
+  if (src.m_max_face_id > m_max_face_id)
+    m_max_face_id = src.m_max_face_id;
 }
 
 bool ON_SubDLevel::IsEmpty() const

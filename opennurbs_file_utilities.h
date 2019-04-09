@@ -343,6 +343,9 @@ public:
       host name or disk letter followed by a directory separator, then host name or disk letter
       is deleted.  This is useful when using paths from a Windows platform on a
       non-Windows platform.
+    bExpandUser - [in]
+      If the path begins with ~ and ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId::UserHomeDirectory ) 
+      is not empty, then the ~ is replaced with absolute path of user's home directory.
     directory_separator - [in]
       If 0 == directory_separator, then the first directory separator
       is kept when condensing occurs.
@@ -358,9 +361,31 @@ public:
     bool bTrimRight,
     bool bAllowWindowsUNCHostNameOrDiskLetter,
     bool bDeleteWindowsUNCHostNameOrDiskLetter,
+    bool bExpandUser,
     const wchar_t directory_separator,
     const wchar_t* dirty_path
     );
+
+  static const ON_wString CleanPath(
+    bool bTrimLeft,
+    bool bTrimRight,
+    bool bAllowWindowsUNCHostNameOrDiskLetter,
+    bool bDeleteWindowsUNCHostNameOrDiskLetter,
+    const wchar_t directory_separator,
+    const wchar_t* dirty_path
+    );
+
+  /*
+  Description:
+    If the path begins with ~ and ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId::UserHomeDirectory ) 
+    is not empty, then the ~ is replaced with absolute path of user's home directory.
+  */
+  static const ON_wString ExpandUser(
+    const char* dirty_path
+  );
+  static const ON_wString ExpandUser(
+    const wchar_t* dirty_path
+  );
 
   /*
   Parameters:
@@ -536,13 +561,36 @@ public:
     bool bAppendTrailingDirectorySeparator
   );
 
-  // ids used by ON_FileSystemPath::GetPath()
+  /// <summary>
+  /// ON_FileSystemPath::PathId identifies a collection of commonly used directories.
+  /// Use ON_FileSystemPath::PlatformPath() to get the name of the directory.
+  /// </summary>
   enum class PathId : unsigned int
   {
+    ///<summary>
+    /// The current user's home directory.
+    ///</summary>
     Unset = 0,
+
+    ///<summary>
+    /// The current user's desktop directory.
+    ///</summary>
     DesktopDirectory = 1,
+
+    ///<summary>
+    /// The current user's documents directory.
+    ///</summary>
     DocumentsDirectory = 2,
-    DownloadsDirectory = 3
+
+    ///<summary>
+    /// The current user's downloads directory.
+    ///</summary>
+    DownloadsDirectory = 3,
+
+    ///<summary>
+    /// The current user's home directory.
+    ///</summary>
+    HomeDirectory = 4
   };
 
   /*

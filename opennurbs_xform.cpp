@@ -1169,45 +1169,282 @@ int ON_Xform::Compare( const ON_Xform& rhs ) const
   return 0;
 }
 
+
+
+static
+ON_Interval BoundEVals( const ON_Xform& M )
+{
+	// assume M is Linear().
+	// Bound the eigenvalues.  Spectrum ( M ) \in [emin, emax]
+	// that is if lambda is a eigenvalue of M then emin<=Re(lambda)<=emax
+	// Uses Gershgorin circle theorem.
+	
+	ON_Interval SpectrumHull; 
+	for (int i = 0; i < 3; i++)
+	{
+		double R = 0.0;
+		for (int j = 0; j < 3; j++)
+			if (j != i) R += fabs( M[i][j] );
+		ON_Interval GCircle ( M[i][i] - R , M[i][i] + R );
+		if (i == 0)
+			SpectrumHull = GCircle;
+		else
+			SpectrumHull.Union(GCircle);
+	}
+	return SpectrumHull;
+}
+
+// Given a Linear transformation L.  return an interval containing Spectrum(L^T *L)
+static ON_Interval ApproxSpectrumLTL(const ON_Xform& L)
+{
+	// L.IsLinear() is a precondition
+
+	// LTL = L^T * L
+	ON_Xform LTL = L;
+	LTL.Transpose();
+	LTL = LTL * L;
+
+	return  BoundEVals(LTL);
+}
+
+// Given a linear transformation bound distance to group of orthogonal transformations
+//    dist ( L, O(3) ) < ApproxDist2Ortho(L)
+// L = R * P   is the polar decomposition of L.  R is the closest rotation to L and
+//   P = (L^T * L)^(-1/2)
+// So || L-R || = || R*( P - I ) || = || P - I || = || (L^T L)^(1/2) - I || 
+static double ApproxDist2Ortho(const ON_Xform& L)
+{
+	// L.IsLinear() is a precondition
+
+	ON_Interval Spec = ApproxSpectrumLTL(L);
+	if (Spec[0] < 0) Spec[0] = 0.0;
+	Spec[0] = sqrt(Spec[0]) - 1.0;
+	Spec[1] = sqrt(Spec[1]) - 1.0;		// contains Spectrum of (L^T L)^(-1/2) - I
+	double dist = fabs(Spec[0]);
+	if (dist < fabs(Spec[1]))
+		dist = fabs(Spec[1]);
+
+	return dist;
+}
+
 int ON_Xform::IsSimilarity() const
 {
-  int rc = 0;
-  if (IsAffine())
-  {
-    const double tol = 1.0e-4;
-    const double dottol = 1.0e-3;
-    const double det = Determinant();
-	// GBA (28-Nov-17) note: det = lambda^3 when this xform is a dialation by lambda.
-	// The new threshold allows for lambda~>1e-5.  I had an example of
-	// a change of coordintes from millimeters to meters (lambda=1e-3) that
-	// was not being reported as a similarity transformation.
-    if ( fabs(det) > ON_EPSILON )
-    {
-      const ON_3dVector X(m_xform[0][0],m_xform[1][0],m_xform[2][0]);
-      const ON_3dVector Y(m_xform[0][1],m_xform[1][1],m_xform[2][1]);
-      const ON_3dVector Z(m_xform[0][2],m_xform[1][2],m_xform[2][2]);
-      const double sx = X.Length();
-      const double sy = Y.Length();
-      const double sz = Z.Length();
-      if (   
-        sx > 0.0 && sy > 0.0 && sz > 0.0 
-        && fabs(sx-sy) <= tol
-        && fabs(sy-sz) <= tol
-        && fabs(sz-sx) <= tol )
-      {
-        const double xy = (X*Y)/(sx*sy);
-        const double yz = (Y*Z)/(sy*sz);
-        const double zx = (Z*X)/(sz*sx);
-        if ( fabs(xy) <= dottol && fabs(yz) <= dottol && fabs(zx) <= dottol )
-        {
-          rc = (det > 0.0) ? 1 : -1;
-        }
-      }
-    }
-  }
-
-  return rc;
+	return IsSimilarity(ON_ZERO_TOLERANCE);
 }
+
+int ON_Xform::IsSimilarity(double tol) const
+{
+	// This function does not construt a similarity transformation,  
+	// ( see ON_Xform::DecomposeSimilarity() for this ).  It mearly 
+	// indicates that this transformation is sufficiently close to a similatiry.
+	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
+	// Indicates that this is very close to being a similar tranformation.
+	// This calculations is based on approximations and is only  
+	// reliable if tolerance << 1.0. 
+	int rval = 0;
+	if (IsAffine())
+	{
+		// L = Linear component of this. 
+		// LTL = L^T * L
+		//  *this is similar iff Spectrum(LTL) = lambda, for real lambda!=0.0
+		ON_Xform L = (*this);
+		L.Linearize();
+
+
+		ON_Interval Spectrum = ApproxSpectrumLTL(L);
+		double lambda = Spectrum.Mid();
+		double dist = Spectrum.Length() / 2.0;
+		if (dist < tol && fabs(lambda)>dist )
+		{
+			double det = L.Determinant();
+			rval = (det > 0) ? 1 : -1;
+		}
+	}
+	return rval;
+}
+
+
+int ON_Xform::DecomposeSimilarity(ON_3dVector& T, double& dilation, ON_Xform& R, double tolerance) const
+{
+	int rval = 0;
+	if (IsAffine())
+	{
+		ON_Xform L;
+		DecomposeAffine(T, L);
+
+		/* Three cases:
+		I. L is within OrthogonalTol of being orthogonal then just return R = Linear
+		(this is an optimization to avoid doing an eigen solve)
+		II. Linear<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+		test the final solution to see if |*this-R|<tolerance .
+		III. Otherwise return 0
+		*/
+		const double OrthogonalTol = 100 * ON_EPSILON;
+
+		ON_Interval Spectrum = ApproxSpectrumLTL(L);
+
+		double dist = Spectrum.Length()/2.0;
+		if (dist<OrthogonalTol)
+		{
+			// Case I.
+			double det = L.Determinant();
+			dilation = pow(fabs(det), 1.0 / 3.0);
+			if (det < 0)
+				dilation *= -1.0;
+			R = ON_Xform(1.0 / dilation)*L;
+			R.Orthogonalize(10*ON_EPSILON);			// tune-it up.
+			rval = (det > 0) ? 1 : -1;
+		}
+
+		else if (dist < 10 * tolerance || tolerance>1.0)
+		{
+			// Case II.
+			ON_Xform Q;		// ortho change of coordinate matrix
+			ON_3dVector lambda;
+			ON_3dVector Ttrash;
+			if (L.DecomposeAffine(Ttrash, R, Q, lambda))
+			{
+				// Find the min and max eigen-values
+				int mini=0, maxi=0;
+				double l0 = ON_DBL_MAX;
+				double l1 = ON_DBL_MIN;
+				for (int i = 0; i < 3; i++)
+				{
+					if (lambda[i] < l0)
+					{
+						mini = i; l0 = lambda[i];
+					}
+					if (l1< lambda[i])
+					{
+						maxi = i; l1 = lambda[i];
+					}
+				}
+				double err = (lambda[maxi] - lambda[mini]) / 2.0;
+				if (err > tolerance)
+					rval = 0;
+				else
+				{
+					dilation = (lambda[mini] + lambda[maxi]) / 2.0;
+					rval = (dilation > 0) ? 1 : -1;
+					//dilation;
+				}
+			}			
+		}
+	}
+	return rval;
+}
+
+
+bool ON_Xform::DecomposeSymmetric(ON_Xform& Q, ON_3dVector& diagonal) const
+{
+	bool rc = false;
+	if (IsLinear())
+	{
+		bool symmetric  = ( m_xform[0][1] == m_xform[1][0] && 
+			m_xform[0][2] == m_xform[2][0] && 
+			m_xform[1][2] == m_xform[2][1]  );
+		if (symmetric)
+		{
+			ON_3dVector evec[3];
+			rc = ON_Sym3x3EigenSolver(m_xform[0][0], m_xform[1][1], m_xform[2][2],
+				m_xform[0][1], m_xform[1][2], m_xform[0][2],
+				&diagonal.x, evec[0],
+				&diagonal.y, evec[1],
+				&diagonal.z, evec[2]);
+			if (rc)
+			{
+				Q = ON_Xform(ON_3dPoint::Origin, evec[0], evec[1], evec[2]);
+			}
+		}
+	}
+	return rc;
+}
+
+
+int ON_Xform::DecomposeRigid(ON_3dVector& T,  ON_Xform& R, double tolerance) const
+{
+	int rval = 0;
+	if (IsAffine())
+	{
+		ON_Xform Linear;
+		DecomposeAffine(T, Linear);
+
+		
+		/* Three cases:
+			I. Linear is within OrthogonalTol of being orthogonal then just return R = Linear
+				  (this is an optimization to avoid doing an eigen solve)
+			II. Linear~~<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+					test the final solution to see if |*this-R|<tolerance .
+			III. Otherwise return 0
+
+			Note:
+			A.  I and III are fast and do almost nothing, while II is more involved.
+			B.  Use a large tolerance setting to find the nearest rigid motion to a this transformation.
+		*/
+		const double OrthogonalTol = ON_ZERO_TOLERANCE;
+
+		double dist = ApproxDist2Ortho(Linear);
+		if(dist<OrthogonalTol)
+		{
+			// Case I.
+			R = Linear;
+			R.Orthogonalize(.001);
+			double det = Linear.Determinant();
+			rval = (det > 0) ? 1: -1;
+		}
+
+		else if (dist < 10*tolerance || tolerance>1.0)
+		{
+			// Case II.
+			// Closest orthogonal matrix is given by polar decomposition
+			// BHP Horn, http://people.csail.mit.edu/bkph/articles/Nearest_Orthonormal_Matrix.pdf
+			ON_Xform Q;
+			ON_3dVector lambda;
+			if (DecomposeAffine(T, R, Q, lambda))
+			{
+				// Is ||R - Linear|| = || R ( I -  Q lam QT ) || = || I -  Q lam QT ||= || Q QT - Q lam QT ||= || I - lam ||
+				double err = 0.0;
+				for (int i = 0; i < 3; i++)
+				{
+					double x = fabs(1.0 - lambda[i]);
+					if (x > err)
+						err = x;
+				}
+				if (err < tolerance)
+				{
+					double det = lambda[0] * lambda[1] * lambda[2];
+					rval = (det > 0) ? 1 : -1;
+				}
+			}
+		}
+	}
+	return rval;
+}
+
+int ON_Xform::IsRigid(double tolerance) const
+{ 
+	// This function does not construt a rigid transformation,  
+	// ( see ON_Xform::DecomposeRigid() for this ).  It mearly 
+	// indicates that this trasformation is sufficiently close to a rigid one.
+	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
+	// Indicates that this is very close to being a rigid tranformation.
+	// This calculations is based on approximations and is only  
+	// reliable if tolerance << 1.0. 
+	int rval = 0;
+	if (IsAffine())
+	{
+		// L = Linearized version of this. 
+		// LTL = L^T * L
+		ON_Xform L = (*this);
+		L.Linearize();
+
+		double dist = ApproxDist2Ortho(L);
+
+		rval = (dist < tolerance);
+	}
+	return rval;
+}
+
 
 bool ON_Xform::IsAffine() const
 {
@@ -1217,6 +1454,160 @@ bool ON_Xform::IsAffine() const
     && 0.0 == m_xform[3][2] 
     && 1.0 == m_xform[3][3] 
     && IsValid());
+}
+
+void ON_Xform::Affineize()
+{
+	m_xform[3][0] = m_xform[3][0] = m_xform[3][0] = 0.0;
+	m_xform[3][3] = 1.0;
+}
+
+
+bool ON_Xform::IsLinear() const
+{
+	return (IsAffine() 
+		&& 0.0 == m_xform[0][3]
+		&& 0.0 == m_xform[1][3]
+		&& 0.0 == m_xform[2][3]);
+}
+
+void ON_Xform::Linearize()
+{
+	Affineize();
+	m_xform[0][3] = m_xform[1][3] = m_xform[2][3] = 0.0;
+	m_xform[3][3] = 1.0;
+}
+
+bool ON_Xform::IsRotation() const
+{
+	bool rc = false;
+	if (IsLinear())
+	{
+		ON_Xform RTR = (*this);
+		RTR.Transpose();
+		RTR = RTR * (*this);
+		rc = RTR.IsIdentity(ON_ZERO_TOLERANCE) && Determinant()>0;
+	}
+	return rc;
+}
+
+bool ON_Xform::Orthogonalize(double tol)
+{
+	bool rc = false;
+	if (IsAffine())
+	{
+		ON_3dVector T;
+		ON_Xform L;
+		DecomposeAffine(T, L);
+		ON_Xform LTL = L;
+		LTL.Transpose();
+		LTL = LTL * L;
+		if (!LTL.IsIdentity(tol))
+		{
+			// Gram - Schmidt
+			ON_3dVector V[3];
+			V[0] = ON_3dVector(m_xform[0]);
+			V[1] = ON_3dVector(m_xform[1]);
+			V[2] = ON_3dVector(m_xform[2]);
+			rc = true;
+			for (int i = 0; rc && i < 3; i++)
+			{
+				for (int j = 0; j < i; j++)
+					V[i] -= V[i] * V[j] * V[j];
+				rc = V[i].Unitize();
+			}
+			if (rc)
+			{
+				*(reinterpret_cast<ON_3dVector*>(m_xform[0])) = V[0];
+				*(reinterpret_cast<ON_3dVector*>(m_xform[1])) = V[1];
+				*(reinterpret_cast<ON_3dVector*>(m_xform[2])) = V[2];
+			}
+		}
+		else
+			rc = true;
+	}
+	return rc;
+}
+
+
+bool ON_Xform::DecomposeAffine(ON_3dVector& T, ON_Xform& R,
+	ON_Xform& Q, ON_3dVector& lambda) const
+{
+	bool rc = false;
+	if (IsAffine())
+	{
+		ON_Xform L;
+		DecomposeAffine(T, L);
+		ON_Xform LT = L;
+		LT.Transpose();
+		ON_Xform LTL = LT * L;
+
+		rc = LTL.DecomposeSymmetric(Q, lambda);
+		if (rc)
+		{
+			rc = (lambda[0] > 0 && lambda[1] > 0 && lambda[2] > 0);
+			if(rc)
+			{
+				lambda[0] = sqrt(lambda[0]);
+				lambda[1] = sqrt(lambda[1]);
+				lambda[2] = sqrt(lambda[2]);
+				ON_Xform QT = Q;
+				QT.Transpose();
+				ON_Xform Diag = ON_Xform::DiagonalTransformation(1.0 / lambda[0], 1.0 / lambda[1], 1.0 / lambda[2]);
+				R = Q * Diag * QT;
+				R = L * R;
+
+				if (R.Determinant() < 0)
+				{
+					R = ON_Xform(-1) * R;
+					lambda = -1 * lambda;
+				}
+				R.Orthogonalize(ON_ZERO_TOLERANCE);  // tune it up - tol should be <= that in 
+																							// Is_Rotation()
+			}
+		}
+	}
+	return rc;
+}
+
+
+
+
+bool ON_Xform::DecomposeAffine(ON_3dVector& T, ON_Xform& L) const
+{
+	bool rc = IsAffine();
+	if (rc)
+	{
+		T = ON_3dVector(m_xform[0][3], m_xform[1][3], m_xform[2][3]);
+		L = (*this);
+		L.m_xform[0][3] = L.m_xform[1][3] = L.m_xform[2][3] = 0.0;
+	}
+	return rc;
+}
+
+
+// Suppose the transformation is given by f(x) = Lx + B. If L is invertible then
+// f(x) = L ( x + L^(-1) B) so T = L^(-1) B.
+bool ON_Xform::DecomposeAffine(ON_Xform& L, ON_3dVector& T) const
+{
+	bool rc = IsAffine();
+	if (rc)
+	{
+		ON_Xform Linv = *this;
+		rc = Linv.Invert();
+		if (rc)
+		{
+			T = - ON_3dVector( Linv[0][3], Linv[1][3], Linv[2][3] );
+			L = (*this);
+			L[0][3] = L[1][3] = L[2][3] = 0.0;
+		}
+		/*
+			TODO: A more thourough solution would be to take a tolerance and
+			compute the best approximate T using psuodoinvese and comparing it
+			using the tolerance.
+		*/
+	}
+	return rc;
 }
 
 
@@ -1238,8 +1629,22 @@ bool ON_Xform::IsZero4x4() const
   
 bool ON_Xform::IsZeroTransformation() const
 {
-  return (1.0 == m_xform[3][3] && IsZero());
+	return IsZeroTransformation(0.0);
 }
+
+bool ON_Xform::IsZeroTransformation(double tol) const
+{
+	bool rc = true;
+	for(int i=0; rc && i<4; i++)
+		for (int j = 0; rc && j < 4; j++)
+		{
+			if (i == 3 && j == 3)
+				continue;
+			rc = fabs(m_xform[i][j]) < tol;
+		}
+  return (rc && 1.0 == m_xform[3][3] );
+}
+
 
 void ON_Xform::Transpose()
 {
@@ -1568,6 +1973,77 @@ void ON_Xform::Rotation(   // (not strictly a rotation)
 
   *this = T1*R*T0;
 }
+
+void  ON_Xform::RotationZYX(double yaw, double pitch, double roll)
+{
+	ON_Xform Rx;
+	Rx.Rotation(roll, ON_3dVector::XAxis, ON_3dPoint::Origin);
+	ON_Xform Ry;
+	Ry.Rotation( pitch, ON_3dVector::YAxis, ON_3dPoint::Origin);
+	ON_Xform Rz;
+	Rz.Rotation(yaw, ON_3dVector::ZAxis, ON_3dPoint::Origin);
+	(*this) = Rz * Ry * Rx;
+}
+
+void  ON_Xform::RotationZYZ(double alpha, double beta, double gamma)
+{
+	ON_Xform Rz;
+	Rz.Rotation(gamma, ON_3dVector::ZAxis, ON_3dPoint::Origin);
+	ON_Xform Ry;
+	Ry.Rotation(beta, ON_3dVector::YAxis, ON_3dPoint::Origin);
+	ON_Xform Rzz;
+	Rzz.Rotation(alpha, ON_3dVector::ZAxis, ON_3dPoint::Origin);
+	(*this) = Rzz * Ry * Rz;
+}
+
+bool ON_Xform::GetYawPitchRoll(double& yaw, double& pitch, double& roll)const
+{
+	bool rc = IsRotation();
+	if (rc)
+	{
+		if(
+       (m_xform[1][0] == 0.0 &&  m_xform[0][0] == 0.0)
+       ||
+			  (m_xform[2][1] == 0.0 &&  m_xform[2][2] == 0.0) ||
+			  (fabs(m_xform[2][0])>=1.0) )
+		{
+			pitch = (m_xform[2][0] > 0) ? -ON_PI / 2.0 : ON_PI / 2.0;
+			yaw = atan2(-m_xform[0][1], m_xform[1][1] );
+			roll = 0.0;
+		}
+		else
+		{
+			yaw = atan2(m_xform[1][0], m_xform[0][0]);
+			roll = atan2(m_xform[2][1], m_xform[2][2]);
+			pitch = asin(-m_xform[2][0]);
+		}
+	}
+	return rc;
+}
+
+bool ON_Xform::GetEulerZYZ(double& alpha, double& beta, double& gamma)const
+{
+	bool rc = IsRotation();
+	if(rc)
+	{
+		if ((fabs(m_xform[2][2]) >= 1.0) ||
+			(m_xform[1][2] == 0.0 &&  m_xform[0][2] == 0.0) ||
+			(m_xform[2][1] == 0.0 &&  m_xform[2][0] == 0.0))
+		{
+			beta = (m_xform[2][2] > 0) ? 0.0 : ON_PI;
+			alpha = atan2(-m_xform[0][1], m_xform[1][1]);
+			gamma = 0.0;
+		}
+		else
+		{
+			beta = acos(m_xform[2][2]);
+			alpha = atan2(m_xform[1][2], m_xform[0][2]);
+			gamma = atan2(m_xform[2][1], -m_xform[2][0]);
+		}
+	}
+	return rc;
+}
+
 
 void ON_Xform::Mirror(
   ON_3dPoint point_on_mirror_plane,

@@ -35,10 +35,10 @@
 #define LOCKED_BIT     (0x08U)
 #define HIDDEN_BIT     (0x10U)
 
-// A mark is a tool used in a wide variety of ways bay 
-// calculations. Its value is unpredictable outside the scope
-// of a specific code block. High quality calculations with
-// save and restore mark state, but this is not always the case.
+// A mark is a tool used in a wide variety of ways by calculations. 
+// Its value is unpredictable outside the scope of a specific code block. 
+// High quality calculations will save and restore mark state, 
+// but this is not always the case.
 // This state is not saved in archives.
 #define RUNTIME_MARK_BIT (0x20U)
 
@@ -132,9 +132,45 @@ bool ON_ComponentStatus::operator!=(ON_ComponentStatus b)
   return (m_status_flags&ALL_MASK) != (b.m_status_flags&ALL_MASK);
 }
 
+const ON_ComponentStatus ON_ComponentStatus::LogicalAnd(ON_ComponentStatus lhs, ON_ComponentStatus rhs)
+{
+  ON_ComponentStatus x;
+  x.m_status_flags = (lhs.m_status_flags & rhs.m_status_flags);
+  return x;
+}
+
+const ON_ComponentStatus ON_ComponentStatus::LogicalOr(ON_ComponentStatus lhs, ON_ComponentStatus rhs)
+{
+  ON_ComponentStatus x;
+  x.m_status_flags = (lhs.m_status_flags | rhs.m_status_flags);
+  return x;
+}
+
+bool ON_ComponentStatus::StatusCheck(
+  ON_ComponentStatus candidate,
+  ON_ComponentStatus status_pass,
+  ON_ComponentStatus status_fail
+)
+{
+  if (0 != ON_ComponentStatus::LogicalAnd(candidate, status_pass).m_status_flags)
+    return true;
+  if (0 != ON_ComponentStatus::LogicalAnd(candidate, status_fail).m_status_flags)
+    return false;
+  if (0 == status_fail.m_status_flags)
+    return true;
+  if (0 != status_pass.m_status_flags)
+    return false;
+  return true;
+}
+
 bool ON_ComponentStatus::IsClear() const
 {
   return (0 == (m_status_flags&ALL_MASK));
+}
+
+bool ON_ComponentStatus::IsNotClear() const
+{
+  return (0 != (m_status_flags&ALL_MASK));
 }
 
 unsigned int ON_ComponentStatus::SetStatus(

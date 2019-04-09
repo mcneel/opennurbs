@@ -41,6 +41,7 @@
 #include "opennurbs_unicode.h"      /* unicode string conversion */
 
 #if defined(ON_CPLUSPLUS)
+#include "opennurbs_sleeplock.h"
 #include "opennurbs_topology.h"
 #include "opennurbs_cpp_base.h"     // for safe use of STL classes as private data members
 #include "opennurbs_locale.h"

@@ -716,7 +716,7 @@ static bool SetLimitPointSectorCheck(
   limit_point_sector_face = sit.IncrementToCrease(-1);
   unsigned int sector_face_count = 0;
   const ON_SubDFace* sector_face0 = sit.CurrentFace();
-  for (const ON_SubDFace* sector_face = sector_face0; nullptr != sector_face && sector_face_count <= vertex_face_count; sector_face = sit.NextFace(true))
+  for (const ON_SubDFace* sector_face = sector_face0; nullptr != sector_face && sector_face_count <= vertex_face_count; sector_face = sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
   {
     if (sector_face == sector_face0 && sector_face_count == vertex_face_count && vertex->IsSmoothOrDart())
     {
@@ -781,6 +781,11 @@ bool ON_SubDVertex::SetSavedLimitPoint(
 
       // set the point
       *lp = limit_point;
+
+      // first limit point location wins
+      ON_SubDLimitMeshFragment::SealPoints(true, m_limit_point.m_limitP, lp->m_limitP);
+
+      // it is expected that the limit normal and tangents will be substantually different.
       lp->m_next_sector_limit_point = nullptr;
 
       // append the point to the vertex's linked list.

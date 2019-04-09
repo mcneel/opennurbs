@@ -1663,7 +1663,7 @@ ON_ModelComponentReference ONX_Model::Internal_AddModelComponent(
     const ON_NameHash name_hash 
       = bIsEmbeddedFileReference
       ? original_name_hash
-      : ON_NameHash::Create(name_parent_id,name);
+      : ON_NameHash::Create(name_parent_id,name,ON_ModelComponent::UniqueNameIgnoresCase(component_type));
 
     int manifest_item_index = ON_UNSET_INT_INDEX;
     const bool bIndexRequired = ON_ModelComponent::IndexRequired(component_type);
@@ -3961,6 +3961,71 @@ bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
   return ( 0 == ON_UuidCompare(rdk_plugin_id,docud.m_uuid) && docud.m_goo.m_value >= 4 && 0 != docud.m_goo.m_goo );
 }
 
+bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  int version = 0;
+  if (!a.ReadInt(&version))
+    return false;
+
+  if (4 != version)
+    return false;
+
+  //Read out the document data, and throw it away.
+  {
+    int slen = 0;
+    if (!a.ReadInt(&slen))
+      return 0;
+    if (slen <= 0)
+      return 0;
+    if (slen + 4 > docud.m_goo.m_value)
+      return 0;
+    ON_String s;
+    s.SetLength(slen);
+    if (!a.ReadChar(slen, s.Array()))
+      return 0;
+  }
+
+  unsigned int iCount = 0;
+  if (!a.ReadInt(&iCount))
+    return false;
+
+  int unpacked = 0;
+
+  for (unsigned int i = 0; i < iCount; i++)
+  {
+    ON_wString sPath;
+    if (!a.ReadString(sPath))
+      return false;
+
+    size_t size;
+    if (!a.ReadCompressedBufferSize(&size))
+      return false;
+
+    auto* buffer = new unsigned char[size];
+    bool bFailedCRC = false;
+    if (a.ReadCompressedBuffer(size, buffer, &bFailedCRC))
+    {
+      if (!bFailedCRC)
+      {
+        embedded_files_as_buffers.Append(buffer);
+        paths.Append(sPath);
+        unpacked++;
+      }
+      else
+      {
+        delete[] buffer;
+      }
+    }
+  }
+
+  return unpacked > 0;
+}
+
 
 bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data)
 {
@@ -3979,7 +4044,8 @@ bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wSt
     if ( !a.ReadString(rdk_xml_document_data) )
       return false;
   }
-  else if ( 3 == version )
+  else if ( 3 == version || 4 == version) //Version 4 files are exactly the same as version 3, but with an size_t (for the number of buffers) 
+                                          //and the actual compressed buffers containing the embedded files
   {
     // UTF-8 string
     int slen = 0;
@@ -4532,13 +4598,31 @@ static const ON_wString Internal_DumpModelfileName(
     text_file_path += L"original";
   else
     text_file_path += L"copy";
+
 #if defined(ON_RUNTIME_WIN)
-  text_file_path += L"_WinOS";
+#if defined(ON_64BIT_RUNTIME)
+  text_file_path += L"_Win64";
+#elif defined(ON_32BIT_RUNTIME)
+  text_file_path += L"_Win32";
+#else
+  text_file_path += L"_Win";
+#endif
 #elif defined(ON_RUNTIME_APPLE_MACOS)
   text_file_path += L"_MacOS";
 #elif defined(ON_RUNTIME_APPLE_IOS)
   text_file_path += L"_iOS";
+#elif defined(ON_RUNTIME_APPLE)
+  text_file_path += L"_AppleOS";
+#elif defined(ON_RUNTIME_ANDROID)
+  text_file_path += L"_AndroidOS";
 #endif
+
+#if defined(ON_DEBUG)
+  text_file_path += L"Debug";
+#else
+  text_file_path += L"Release";
+#endif
+
   text_file_path += L".txt";
   return text_file_path;
 }

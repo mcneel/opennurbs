@@ -1205,4 +1205,15 @@ public:
                             //     [ CV(i)[0], ..., CV(i)[m_dim] ].
 };
 
+/* Adjust the second point to be within the domains, when the first point is 
+   on the edge of on of the domains and some other conditions hold.
+   This function is here because it is needed in several places.  It is not
+   meant for general use.
+   */
+
+ON_DECL
+bool ON_Adjust2ndPointToDomain(const ON_2dPoint& First, ON_2dPoint& Second, 
+                                   const ON_Interval dom[2]);
+
+
 #endif

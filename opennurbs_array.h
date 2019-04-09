@@ -136,6 +136,7 @@ public:
 
   void Append( int, const T* );      // Append copy of an array T[count]
 
+  void Prepend( int, const T* );      // Prepend copy of an array T[count]
 
   void Insert( int, const T& );      // Insert copy of element. Uses
                                      // memmove() to perform any

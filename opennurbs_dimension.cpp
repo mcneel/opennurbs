@@ -734,7 +734,7 @@ bool ON_DimLinear::GetTextXform(
   if (text_outside && ON_DimStyle::ContentAngleStyle::Horizontal != text_angle_style && UseDefaultTextPoint())
   {
     // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
-    double x = text_width * 0.5 + text_gap;
+    double x = (text_width * 0.5) + (text_gap * 3.0);
     if (force_text == ON_Dimension::ForceText::Left || force_text == ON_Dimension::ForceText::HintLeft)
     {
       if (arrowflipped[0]) 
@@ -1884,7 +1884,15 @@ bool ON_DimLinear::GetDisplayLines(
     }
   }
 
-  if (
+  if (ArrowIsFlipped(0) && ArrowIsFlipped(1))
+  {
+    // Don't draw dimline between extensions if arrows are flipped
+    lines[3].from = m_plane.PointAt(m_def_pt_2.x, m_dimline_pt.y);
+    lines[3].to = lines[2].to;
+    lines[2].to = m_plane.PointAt(0.0, m_dimline_pt.y);
+    isline[3] = true;
+  }
+  else if (
     ON_DimStyle::TextLocation::InDimLine == text_location
     || ON::TextOrientation::InView == text_orientation
     || ON_DimStyle::ContentAngleStyle::Aligned != text_angle_style
@@ -4099,13 +4107,13 @@ bool ON_DimRadial::GetTextXform(
 
   // Text position adjustment
   ON_2dVector shift(0.0, 0.0);
-  shift.y = -line_height / 2.0;
   if (ON_DimStyle::TextLocation::AboveDimLine == text_location)
-    shift.y = text_gap + text_height;
+    shift.y = text_gap;
+  if (ON_DimStyle::TextLocation::InDimLine == text_location)
+    shift.y = -line_height/2.0;
 
   shift.x = text_gap;
   shift.x += landing_length;
-  //shift.x += text_width / 2.0;
 
   if (-ON_SQRT_EPSILON > tail_dir.x)  // text to left
   {
@@ -4430,22 +4438,13 @@ bool ON_DimRadial::GetDisplayLines(
   if (landing_dir.Unitize())
   {
     double landinglength = dimstyle->LeaderLandingLength() * dimscale;
-    ON_3dPoint kink_point = plane.PointAt(kneept2d.x, kneept2d.y);
-    ON_3dPoint dimline_point = plane.PointAt(dimlinept2d.x, dimlinept2d.y);
+    //ON_3dPoint kink_point = plane.PointAt(kneept2d.x, kneept2d.y);
+    //ON_3dPoint dimline_point = plane.PointAt(dimlinept2d.x, dimlinept2d.y);
 
     const ON_DimStyle::TextLocation text_location = dimstyle->DimRadialTextLocation();
 
-    if (
-      (ON_DimStyle::ContentAngleStyle::Horizontal == alignment && ON_2dPoint::UnsetPoint != kneept2d) 
-      || ON_DimStyle::TextLocation::AboveDimLine == text_location
-      )
-    {
-      if (!dimstyle->LeaderHasLanding() && fabs(dimline_point.x - kink_point.x) < ON_ZERO_TOLERANCE)
-        landinglength = dimstyle->TextHeight() * dimscale;
-    }
-
     if(ON_DimStyle::TextLocation::AboveDimLine == text_location && ON::TextOrientation::InView != dimstyle->DimRadialTextOrientation())
-      landinglength += text_rect[1].DistanceTo(text_rect[0]);
+      landinglength += text_rect[1].DistanceTo(text_rect[0]);  // Add text width to draw under the text
 
     if (0.0 < landinglength)
     {

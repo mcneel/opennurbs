@@ -1573,10 +1573,10 @@ private:
   double m_dNorthAngle = 0.0;
   int m_iStartDay = 1;
   int m_iStartMonth = 6;
-  int m_iStartYear = 2012;
+  int m_iStartYear = 2010;
   int m_iEndDay = 1;
   int m_iEndMonth = 6;
-  int m_iEndYear = 2010;
+  int m_iEndYear = 2012;
   int m_iStartHour = 6;
   int m_iStartMinutes = 0;
   int m_iStartSeconds = 0;

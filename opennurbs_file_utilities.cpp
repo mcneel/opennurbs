@@ -769,6 +769,27 @@ const ON_wString ON_FileSystemPath::CleanPath(
   bool bDeleteWindowsUNCHostNameOrDiskLetter,
   const wchar_t directory_separator,
   const wchar_t* dirty_path
+)
+{
+  return ON_FileSystemPath::CleanPath(
+    bTrimLeft,
+    bTrimRight,
+    bAllowWindowsUNCHostNameOrDiskLetter,
+    bDeleteWindowsUNCHostNameOrDiskLetter,
+    false,
+    directory_separator,
+    dirty_path
+  );
+}
+
+const ON_wString ON_FileSystemPath::CleanPath(
+  bool bTrimLeft,
+  bool bTrimRight,
+  bool bAllowWindowsUNCHostNameOrDiskLetter,
+  bool bDeleteWindowsUNCHostNameOrDiskLetter,
+  bool bExpandUser,
+  const wchar_t directory_separator,
+  const wchar_t* dirty_path
   )
 {
   ON_wString local_dirty_path(dirty_path);
@@ -778,6 +799,8 @@ const ON_wString ON_FileSystemPath::CleanPath(
     local_dirty_path.TrimRight();
   if ( local_dirty_path.IsEmpty() )
     return ON_wString_CleanPathFailed();
+  if (bExpandUser)
+    local_dirty_path = ON_FileSystemPath::ExpandUser(local_dirty_path);
 
   dirty_path = local_dirty_path;
 
@@ -971,6 +994,45 @@ const ON_wString ON_FileSystemPath::CleanPath(
     clean_path = clean_tail;
 
   return clean_path;
+}
+
+const ON_wString ON_FileSystemPath::ExpandUser(
+  const char* dirty_path
+)
+{
+  const ON_wString dirty_local_path(dirty_path);
+  return ON_FileSystemPath::ExpandUser(static_cast<const wchar_t*>(dirty_local_path));
+}
+
+const ON_wString ON_FileSystemPath::ExpandUser(
+  const wchar_t* dirty_path
+)
+{
+  for(;;)
+  {
+    if (nullptr == dirty_path)
+      break;
+    if (ON_wString::Tilde != dirty_path[0])
+      break;
+    if (false == ON_FileSystemPath::IsDirectorySeparator(dirty_path[1], true))
+      break;
+    ON_wString expanduser_path = ON_FileSystemPath::PlatformPath(ON_FileSystemPath::PathId::HomeDirectory);
+    if (expanduser_path.IsEmpty())
+      break;
+    const wchar_t dir_seps[3]
+      =
+    {
+      ON_FileSystemPath::DirectorySeparator,
+      ON_FileSystemPath::AlternateDirectorySeparator,
+      0
+    };
+    expanduser_path.TrimRight(dir_seps);
+    if (expanduser_path.IsEmpty())
+      break;
+    expanduser_path += ON_wString(dirty_path + 1);
+    return expanduser_path;
+  }
+  return ON_wString(dirty_path);
 }
 
 bool ON_FileSystem::PathExists(
@@ -1699,7 +1761,7 @@ bool ON_FileSystemPath::IsValidFileName(
   return true;
 }
 
-const ON_wString ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId path_id )
+const ON_wString ON_FileSystemPath::PlatformPath(ON_FileSystemPath::PathId path_id)
 {
 #if defined(ON_RUNTIME_WIN)
   KNOWNFOLDERID platform_path_id;
@@ -1710,16 +1772,25 @@ const ON_wString ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId path
 #endif
 
 #if defined(ON_INTERNAL_SET_LOCAL_DIRECTORY_ID)
-  switch ( path_id)
+  switch (path_id)
   {
   case ON_FileSystemPath::PathId::DesktopDirectory:
-    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID( FOLDERID_Desktop, NSDesktopDirectory );
+    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(FOLDERID_Desktop, NSDesktopDirectory);
     break;
   case ON_FileSystemPath::PathId::DocumentsDirectory:
-    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID( FOLDERID_Documents, NSDocumentDirectory );
+    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(FOLDERID_Documents, NSDocumentDirectory);
     break;
   case ON_FileSystemPath::PathId::DownloadsDirectory:
-    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID( FOLDERID_Downloads, NSDownloadsDirectory );
+    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(FOLDERID_Downloads, NSDownloadsDirectory);
+    break;
+  case ON_FileSystemPath::PathId::HomeDirectory:
+//#if defined(ON_RUNTIME_WIN)
+//    platform_path_id = FOLDERID_Profile;
+//#elif defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+//     platform_path_id = NSUserDirectory;
+//#endif
+    ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(FOLDERID_Profile, NSUserDirectory);
+    //ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(FOLDERID_Profile, NSHomeDirectory);
     break;
   default:
     return ON_wString::EmptyString;
@@ -1750,17 +1821,17 @@ const ON_wString ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId path
 #elif defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
 
   NSArray *apple_paths = NSSearchPathForDirectoriesInDomains(platform_path_id, NSUserDomainMask, YES);
-  if ([apple_paths count] > 0)  
+  if ([apple_paths count] > 0)
   {
-    NSString* apple_path = [apple_paths objectAtIndex:0];
-    if ( nullptr != apple_path )
+    NSString* apple_path = [apple_paths objectAtIndex : 0];
+    if (nullptr != apple_path)
     {
       ON_wString s;
       const int len = (int)apple_path.length;
       s.SetLength(len);
       int idx;
-      for ( idx=0; idx<len; idx++)
-        s[idx] = [apple_path characterAtIndex: idx];
+      for (idx = 0; idx < len; idx++)
+        s[idx] = [apple_path characterAtIndex : idx];
       s[idx] = 0;
       path = s;
     }
@@ -1768,9 +1839,49 @@ const ON_wString ON_FileSystemPath::PlatformPath( ON_FileSystemPath::PathId path
 
 #else
 
-  ON_ERROR("Function not implemented.");
+  if (ON_FileSystemPath::PathId::HomeDirectory != path_id)
+  {
+    ON_ERROR("Function not implemented.");
+  }
 
 #endif
+
+  path.TrimLeftAndRight();
+
+  // See if environment variables will
+  if (ON_FileSystemPath::PathId::HomeDirectory == path_id && path.IsEmpty())
+  {
+    const wchar_t dir_seps[4] = {
+      ON_FileSystemPath::DirectorySeparator,
+      ON_FileSystemPath::AlternateDirectorySeparator,
+      ON_wString::Space,
+      0
+    };
+    for (;;)
+    {
+      path = ON_wString(getenv("HOME"));
+      path.TrimLeftAndRight();
+      path.TrimRight(dir_seps);
+      if ( ON_FileSystem::IsDirectory(path) )
+        break;
+
+#if defined(ON_RUNTIME_WIN)
+      path = ON_wString(getenv("USERPROFILE"));
+      path.TrimLeftAndRight();
+      path.TrimRight(dir_seps);
+      if ( ON_FileSystem::IsDirectory(path) )
+        break;
+
+      path = ON_wString(getenv("HOMEDRIVE")) + ON_wString(getenv("HOMEPATH"));
+      path.TrimLeftAndRight();
+      path.TrimRight(dir_seps);
+      if ( ON_FileSystem::IsDirectory(path) )
+        break;
+#endif
+      path = ON_wString::EmptyString;
+      break;
+    }
+  }
 
   return path;
 }

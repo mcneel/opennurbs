@@ -2671,6 +2671,39 @@ ON_Brep* ON_Extrusion::BrepForm(ON_Brep* brep) const
   return BrepForm(brep, true);
 }
 
+static int GetSmoothSideCount(const ON_Extrusion& E)
+
+{
+  ON_SimpleArray<const ON_Curve*> profile_curves;
+  const int profile_count = E.GetProfileCurves(profile_curves );
+  if ( profile_count < 1 || profile_count != profile_curves.Count() )
+    return profile_count;
+  int side_count = 0;
+  for ( int profile_index = 0; profile_index < profile_count; profile_index++ ){
+    const ON_Curve* profile_segment = profile_curves[profile_index];
+    double t0 = ON_UNSET_VALUE;
+    double t1 = ON_UNSET_VALUE;
+    if ( !profile_segment->GetDomain(&t0,&t1) 
+          || !ON_IsValid(t0)
+          || !ON_IsValid(t1) 
+          || !(t0 < t1)
+        )
+      return profile_count;
+    double t = t1;
+    while ( GetNextProfileSegmentDiscontinuity(profile_segment,t0,t1,&t) ){
+      if ( t0 < t && t < t1 ){
+        side_count++;
+        t0 = t;
+        t = t1;
+        continue;
+      }
+      break;
+    }
+    side_count++;
+  }
+  return side_count;
+}
+
 ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
 {
   if ( brep )
@@ -2726,18 +2759,22 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
 
   int cap_count = (3==is_capped) ? 2 : (0 != is_capped ? 1 : 0);
 
-  newbrep->m_S.Reserve(profile_count + cap_count);
-  newbrep->m_F.Reserve(profile_count + cap_count);
-  newbrep->m_L.Reserve((1 + cap_count)*profile_count);
+  //27 Nov 2018 - Chuck - if a kinky profile gets split up, 
+  //there will be more than profile_count side faces. See RH-49655.
+  int side_count = (bSmoothFaces ) ? GetSmoothSideCount(*this) : profile_count;
+
+  newbrep->m_S.Reserve(side_count + cap_count);
+  newbrep->m_F.Reserve(side_count + cap_count);
+  newbrep->m_L.Reserve((1 + cap_count)*side_count);
 
   // Note: 
   //  If the profiles have kinks and bSplitKinkyFaces
   //  is true, then the m_C2, m_T, m_C3 and m_E arrays will
   //  generally be longer than these initial reservations.
-  newbrep->m_C2.Reserve((4 + cap_count)*profile_count);
-  newbrep->m_T.Reserve((4 + cap_count)*profile_count);
-  newbrep->m_C3.Reserve(4*profile_count);
-  newbrep->m_E.Reserve(4*profile_count);
+  newbrep->m_C2.Reserve((4 + cap_count)*side_count);
+  newbrep->m_T.Reserve((4 + cap_count)*side_count);
+  newbrep->m_C3.Reserve(4*side_count);
+  newbrep->m_E.Reserve(4*side_count);
 
 
   int vidmap[4] = {0,1,2,3};

@@ -1470,6 +1470,7 @@ public:
 
   static const ON_PlaneEquation UnsetPlaneEquation; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
   static const ON_PlaneEquation ZeroPlaneEquation; // (0.0,0.0,0.0,0.0)
+  static const ON_PlaneEquation NanPlaneEquation; // (ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN)
 
   ON_PlaneEquation();
 

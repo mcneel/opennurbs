@@ -144,6 +144,9 @@ public:
     object names is some type of tree.
   Remarks:
     Currently, layers are the only object type where this property is true.
+    This function should be called "NameIncludesParent" because it 
+    also applies to components like materials and geometry objects
+    that are not reqired to have a unique name.
   */
   static bool UniqueNameIncludesParent(
     ON_ModelComponent::Type component_type
@@ -153,10 +156,13 @@ public:
   Parameters:
     component_type - [in]
   Returns:
-    True if component names ignore case when testing for equality.
+    True if component name ignores case when testing for equality.
   Remarks:
     Currently all other component types except for groups ignore 
     case when testing for equality.
+    This function should be called "NameIgnoresCase" because it 
+    also applies to components like materials and geometry objects
+    that are not reqired to have a unique name.
   */
   static bool UniqueNameIgnoresCase(
     ON_ModelComponent::Type component_type
@@ -1445,6 +1451,15 @@ private:
 public:
   // For internal use.  Never call this function.
   static unsigned int Internal_SystemComponentHelper();
+
+private:
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 )
+  // C4251: ... needs to have dll-interface to be used by clients of class ...
+  // This warning is not correct. 
+  // Internal_RuntimeSerialNumberGenerator is private and all code that manages m_mcr_lists is explicitly implemented in the DLL.
+  static std::atomic<ON__UINT64> Internal_RuntimeSerialNumberGenerator;
+#pragma ON_PRAGMA_WARNING_POP
 };
 
 
