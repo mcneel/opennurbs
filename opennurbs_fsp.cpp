@@ -3,7 +3,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -46,7 +46,7 @@ ON_FixedSizePool& ON_FixedSizePool::operator=(ON_FixedSizePool&& src)
 {
   if (this != &src)
   {
-    Destroy();    
+    Destroy();
     m_first_block = src.m_first_block;
     m_al_element_stack = src.m_al_element_stack;
     m_al_block = src.m_al_block;
@@ -69,8 +69,8 @@ size_t ON_FixedSizePool::SizeofElement() const
   return m_sizeof_element;
 }
 
-bool ON_FixedSizePool::Create( 
-        size_t sizeof_element, 
+bool ON_FixedSizePool::Create(
+        size_t sizeof_element,
         size_t element_count_estimate,
         size_t block_element_capacity
         )
@@ -121,14 +121,14 @@ bool ON_FixedSizePool::Create(
 
   // Set m_al_count = capacity of the first block.
 
-  // If the estimated number of elements is not too big, 
+  // If the estimated number of elements is not too big,
   // then make the first block that size.
   if ( element_count_estimate > 0 )
   {
     // this is the first block and it has a custom size
     if ( 8*m_block_element_count >= element_count_estimate )
       m_al_count = element_count_estimate;
-    else 
+    else
       m_al_count = 8*m_block_element_count; // first block will be large
   }
   else
@@ -149,7 +149,7 @@ void ON_FixedSizePool::ReturnAll()
     //////m_qwerty_it_element = 0;
     m_al_block = m_first_block;
     m_al_element_array = (void*)(((char*)m_al_block) + 2*sizeof(void*));
-    m_al_count = BlockElementCapacity(m_first_block); 
+    m_al_count = BlockElementCapacity(m_first_block);
     m_active_element_count = 0;
     m_total_element_count = 0;
   }
@@ -180,7 +180,7 @@ size_t ON_FixedSizePool::TotalElementCount() const
 
 void* ON_FixedSizePool::AllocateDirtyElement()
 {
-  void* p;  
+  void* p;
 
   if ( 0 != m_al_element_stack )
   {
@@ -226,7 +226,7 @@ void* ON_FixedSizePool::AllocateDirtyElement()
           m_first_block = p;
           // If the call to Create() specified a positive element_count_estimate,
           // then m_sizeof_block needs to be reset for any future block allocations.
-          
+
         }
         else
         {
@@ -279,7 +279,7 @@ bool ON_FixedSizePool::IsValid() const
       const bool bBlockIsAlBlock = (block == m_al_block);
 
       capacity = BlockElementCapacity(block);
-      count 
+      count
         = bSkipCcountCheck
         ? 0xFFFFFFFF :
         BlockElementCount(block);
@@ -336,7 +336,7 @@ bool ON_FixedSizePool::IsValid() const
         sizeof_block_allocated = sizeof_block_total;
         block_element_count = block_element_capacity;
       }
-      
+
       total_element_count += block_element_count;
       if (total_element_count > (size_t)m_total_element_count)
       {
@@ -382,7 +382,7 @@ void ON_FixedSizePool::ReturnElement(void* p)
     if ( m_active_element_count <= 0 )
     {
       // If you get this error, something is seriously wrong.
-      // You may be returning the same element multiple times or 
+      // You may be returning the same element multiple times or
       // you may be returning pointers that are not from this pool.
       // In any case, you're probably going to be crashing sometime soon.
       ON_ERROR("ON_FixedSizePool::ReturnElement - no active elements exist.");
@@ -571,7 +571,7 @@ size_t ON_FixedSizePool::BlockElementCount( const void* block ) const
   if ( 0 == block || m_sizeof_element <= 0 )
     return 0;
 
-  const char* block_end 
+  const char* block_end
     = (block == m_al_block && m_al_count > 0)
     ? ((const char*)m_al_element_array)
     : *((const char**)(((const char*)block)+sizeof(void*)));
@@ -602,7 +602,7 @@ void* ON_FixedSizePoolIterator::FirstBlock( size_t* block_element_count )
 
 void* ON_FixedSizePoolIterator::NextBlock( size_t* block_element_count )
 {
-  if ( 0 != m_it_block 
+  if ( 0 != m_it_block
        && m_it_block != m_fsp->m_al_block
        && m_it_element == (void*)(((char*)m_it_block)+2*sizeof(void*)) )
   {
@@ -848,19 +848,19 @@ bool ON_FixedSizePool::ElementIdIsIncreasing(
   {
     // caller is confused.
     ON_ERROR("m_sizeof_element must be a multiple of sizeof(unsigned int).");
-    return nullptr;
+    return false;
   }
   if (id_offset < sizeof(void*) )
   {
     // caller is confused.
     ON_ERROR("id_offset is too small.");
-    return nullptr;
+    return false;
   }
   if (id_offset + sizeof(prev_id) > m_sizeof_element)
   {
     // caller is confused.
     ON_ERROR("id_offset is too large.");
-    return nullptr;
+    return false;
   }
 
   const size_t delta_i = m_sizeof_element / sizeof(id);
@@ -970,4 +970,3 @@ unsigned int ON_FixedSizePool::ResetElementId(
 
   return id;
 }
-
