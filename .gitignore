@@ -1,4 +1,6 @@
 *.o
+*.metaproj
+*.3dm
 
 # output from example_test
 example_test_log_*.txt
