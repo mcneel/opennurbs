@@ -660,7 +660,7 @@ bool ON_SubD_FixedSizeHeap::ReturnPtrArray(
     m_p_index -= capacity;
     return true;
   }
-  return ON_SUBD_RETURN_ERROR(nullptr);
+  return ON_SUBD_RETURN_ERROR(false);
 }
 
 
@@ -1388,4 +1388,3 @@ void ON_SubDHeap::ReturnArray(
   }
   return;
 }
-
