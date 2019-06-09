@@ -115,7 +115,8 @@ private:
 #if defined(ON_COMPILER_CLANG)
     std::atomic<int> m_lock_value;
 #else
-  std::atomic<int> m_lock_value = ON_Lock::UnlockedValue;
+  //std::atomic<int> m_lock_value = ON_Lock::UnlockedValue;
+  std::atomic_int m_lock_value = {ON_Lock::UnlockedValue};
 #endif
 #pragma ON_PRAGMA_WARNING_POP
 };
