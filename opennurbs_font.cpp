@@ -6782,7 +6782,7 @@ const ON_wString ON_Font::FamilyNameFromDirtyName(
 #if defined(ON_RUNTIME_ANDROID)
       const ON_Font* font = installed_fonts[(int)i];
 #else
-      const ON_Font* font = installed_fonts[i];
+      const ON_Font* font = installed_fonts[(int)i];
 #endif
       if (nullptr == font)
         continue;
@@ -6845,7 +6845,7 @@ const ON_wString ON_Font::FamilyNameFromDirtyName(
 #if defined(ON_RUNTIME_ANDROID)
         InternalHashToName e = a[(int)i];
 #else
-        InternalHashToName e = a[i];
+        InternalHashToName e = a[(int)i];
 #endif
         if (candidate.m_dirty_name_hash == e.m_dirty_name_hash)
         {
