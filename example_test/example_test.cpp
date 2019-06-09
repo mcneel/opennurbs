@@ -565,6 +565,8 @@ static ON_String Internal_PlatformId(bool bVerbose)
 #elif defined(ON_RUNTIME_ANDROID)
     "Android"
 #else
+    "Linux"
+#else
     "Runtime"
 #endif
     ;
