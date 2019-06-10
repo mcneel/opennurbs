@@ -540,7 +540,7 @@ typedef ON__UINT32 wchar_t;
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
-#if defined(ON_RUNTIME_ANDROID)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
 #include "android_uuid/uuid.h"
 #else
 #include <uuid/uuid.h>
@@ -618,9 +618,6 @@ typedef ON__UINT32 wchar_t;
 
 #if defined(ON_RUNTIME_APPLE)
 
-// To handle single stroke fonts on MacOS, we need freetype tools.
-// See ON_AppleFontGetGlyphOutline() for details.
-// freetype linking is broken in current project // #define OPENNURBS_FREETYPE_SUPPORT
 
 #if defined(ON_COMPILER_CLANG)
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE

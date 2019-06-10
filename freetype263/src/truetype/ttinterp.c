@@ -5779,8 +5779,8 @@
 #endif /* TT_CONFIG_OPTION_SUBPIXEL_HINTING */
         exc->zp0.org[point].x = TT_MulFix14( distance,
                                              exc->GS.freeVector.x );
-      exc->zp0.org[point].y = TT_MulFix14( distance,
-                                           exc->GS.freeVector.y ),
+      exc->zp0.org[point].y = TT_MulFix14(distance,
+        exc->GS.freeVector.y);
       exc->zp0.cur[point]   = exc->zp0.org[point];
     }
 #ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING

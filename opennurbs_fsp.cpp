@@ -848,19 +848,19 @@ bool ON_FixedSizePool::ElementIdIsIncreasing(
   {
     // caller is confused.
     ON_ERROR("m_sizeof_element must be a multiple of sizeof(unsigned int).");
-    return nullptr;
+    return false;
   }
   if (id_offset < sizeof(void*) )
   {
     // caller is confused.
     ON_ERROR("id_offset is too small.");
-    return nullptr;
+    return false;
   }
   if (id_offset + sizeof(prev_id) > m_sizeof_element)
   {
     // caller is confused.
     ON_ERROR("id_offset is too large.");
-    return nullptr;
+    return false;
   }
 
   const size_t delta_i = m_sizeof_element / sizeof(id);

@@ -3139,7 +3139,7 @@ double ON_NurbsCurve::GetCubicBezierApproximation(
 {
   const double failed_rc = ON_DBL_QNAN;
 
-  if (nullptr == this)
+  if (ThisIsNullptr(false))
     return failed_rc;
   if (m_order < 2)
     return failed_rc;
@@ -3306,10 +3306,7 @@ double ON_NurbsSurface::GetCubicBezierApproximation(
 {
   const double failed_rc = ON_DBL_QNAN;
 
-  if (nullptr == this)
-    return failed_rc;
-
-  if (nullptr == this)
+  if ( ThisIsNullptr(false) )
     return failed_rc;
   if (this->m_order[0] < 2 || this->m_order[1] < 2)
     return failed_rc;
