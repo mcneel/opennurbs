@@ -92,7 +92,7 @@ bool ON_3dmRevisionHistory::CreateTimeIsSet() const
   memset(&jan_1_1970,0,sizeof(jan_1_1970));
   jan_1_1970.tm_mday = 1;    /* day of the month - [1,31] */
   jan_1_1970.tm_year = 70;   /* years since 1900 */
-  return ( ON_CompareRevisionHistoryTime(&jan_1_1970,&m_create_time) >= 0 );
+  return ( ON_CompareRevisionHistoryTime(&jan_1_1970,&m_create_time) <= 0 );
 }
 /*
 Returns:

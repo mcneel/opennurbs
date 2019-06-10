@@ -1129,7 +1129,8 @@ local uInt longest_match(s, cur_match)
          * are always equal when the other bytes match, given that
          * the hash keys are equal and that HASH_BITS >= 8.
          */
-        scan += 2, match++;
+        scan += 2;
+        match++;
         Assert(*scan == *match, "match[2]?");
 
         /* We check for insufficient lookahead only every 8th comparison;
@@ -1202,7 +1203,8 @@ local uInt longest_match_fast(s, cur_match)
      * are always equal when the other bytes match, given that
      * the hash keys are equal and that HASH_BITS >= 8.
      */
-    scan += 2, match += 2;
+    scan += 2;
+    match += 2;
     Assert(*scan == *match, "match[2]?");
 
     /* We check for insufficient lookahead only every 8th comparison;
@@ -1582,7 +1584,8 @@ local block_state deflate_slow(s, flush)
 
         /* Find the longest match, discarding those <= prev_length.
          */
-        s->prev_length = s->match_length, s->prev_match = s->match_start;
+        s->prev_length = s->match_length;
+        s->prev_match = s->match_start;
         s->match_length = MIN_MATCH-1;
 
         if (hash_head != NIL && s->prev_length < s->max_lazy_match &&

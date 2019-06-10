@@ -2898,57 +2898,6 @@ bool ON_DimStyle::Read(
       rc = true;
       break;
     }
-    /*
-    u = static_cast<unsigned int>(m_dim_text_location);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dimradial_text_location);
-    if (!file.WriteInt(u)) break;
-
-
-    u = static_cast<unsigned int>(m_text_vertical_alignment);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_leader_vertical_alignment);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_text_horizontal_alignment);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_leader_horizontal_alignment);
-    if (!file.WriteInt(u)) break;
-
-
-    u = static_cast<unsigned int>(m_dim_text_vertical_alignment);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dimradial_text_vertical_alignment);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_text_orientation);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_leader_text_orientation);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dim_text_orientation);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dimradial_text_orientation);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dim_text_angle_style);
-    if (!file.WriteInt(u)) break;
-
-    u = static_cast<unsigned int>(m_dimradial_text_angle_style);
-    if (!file.WriteInt(u)) break;
-
-    if (!file.WriteBool(m_text_underlined)) break;
-
-    // END chunk version 1.4 information
-    
-    
-    */
 
     // Feb 2017 added enum values
     u = static_cast<unsigned int>(m_dim_text_location);
@@ -2966,7 +2915,7 @@ bool ON_DimStyle::Read(
 
     u = static_cast<unsigned int>(m_text_horizontal_alignment);
     if (!file.ReadInt(&u)) break;
-    m_text_horizontal_alignment = ON::TextHorizontalAlignment(u);
+    m_text_horizontal_alignment = ON::TextHorizontalAlignmentFromUnsigned(u);
 
     u = static_cast<unsigned int>(m_leader_text_vertical_alignment);
     if (!file.ReadInt(&u)) break;
@@ -2974,7 +2923,7 @@ bool ON_DimStyle::Read(
 
     u = static_cast<unsigned int>(m_leader_text_horizontal_alignment);
     if (!file.ReadInt(&u)) break;
-    m_leader_text_horizontal_alignment = ON::TextHorizontalAlignment(u);
+    m_leader_text_horizontal_alignment = ON::TextHorizontalAlignmentFromUnsigned(u);
 
     u = static_cast<unsigned int>(m_text_orientation);
     if (!file.ReadInt(&u)) break;

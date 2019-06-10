@@ -654,7 +654,7 @@
 			};
 			buildConfigurationList = DF86E6191D26CEDA00A4A7E7 /* Build configuration list for PBXProject "freetype" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,

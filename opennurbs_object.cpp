@@ -1775,6 +1775,28 @@ bool ON_Object::IsValid(ON_TextLog* text_log) const
   return true;
 }
 
+bool ON_Object::ThisIsNullptr(
+  bool bSilentError
+) const
+{
+  // CLang warns that these tests may be ommitted because in "well-defined C++ code"
+  // they are always false. 
+  //
+  // Earth to CLang: 
+  //   This tool to find code that is not well formed, alert us to that fact, 
+  //   but not potentiall not crash so our loyal customers don't loose their work.
+  //
+  // return (this == nullptr);
+  // return ( nullptr == this );
+  if (0 != ((ON__UINT_PTR)this))
+    return false;
+
+  if (false == bSilentError)
+    ON_ERROR("this is nullptr.");
+
+  return true;
+}
+
 bool ON_Object::IsCorrupt(
   bool bRepair,
   bool bSilentError,
@@ -1782,12 +1804,7 @@ bool ON_Object::IsCorrupt(
 ) const
 {
   bool rc = true;
-  if (this == nullptr)
-  {
-    if (false == bSilentError)
-      ON_ERROR("this is nullptr.");
-  }
-  else
+  if (false == ThisIsNullptr(bSilentError) )
   {
     switch (ObjectType())
     {

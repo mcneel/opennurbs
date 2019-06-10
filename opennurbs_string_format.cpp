@@ -803,11 +803,11 @@ int ON_String::FormatVargsIntoBuffer(
   if (0 == buffer || buffer_capacity <= 0)
     return -1;
   buffer[0] = 0;
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);
-#if defined(ON_RUNTIME_ANDROID)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   int len = vsnprintf(buffer, buffer_capacity, format, args_copy);
 #else
   int len = vsnprintf_l(buffer, buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
@@ -854,12 +854,12 @@ int ON_String::FormatVargsOutputCount(
   if ( nullptr == format || 0 == format[0] )
     return 0;
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);
 
-#if defined(ON_RUNTIME_ANDROID)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   int len = vsnprintf(nullptr, 0, format, args_copy);
 #else
   int len = vsnprintf_l(nullptr, 0, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
@@ -1076,9 +1076,17 @@ int ON_wString::FormatVargsIntoBuffer(
   va_end(args_copy);
   
 #else
+
+#if defined(ON_COMPILER_GNU)
+  va_list args_copy;
+  va_copy (args_copy, args);
+  int len = vswprintf(buffer, buffer_capacity, format, args_copy);
+  va_end(args_copy);
+#else
   // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
   // will be use for the decimal point in formatted printing.
   int len = _vswprintf_p_l(buffer, buffer_capacity, format, ON_Locale::Ordinal.NumericLocalePtr(), args);
+#endif
 #endif
   if (((size_t)len) >= buffer_capacity)
     len = -1;
@@ -1215,8 +1223,37 @@ int ON_wString::FormatVargsOutputCount(
   }
   return -1;
 #else
+#if defined(ON_COMPILER_GNU)
+  wchar_t stack_buffer[1024];
+  ON_wStringBuffer buffer(stack_buffer, sizeof(stack_buffer) / sizeof(stack_buffer[0]));
+  size_t buffer_capacity = buffer.m_buffer_capacity;
+  for(;;)
+  {
+    va_list args_copy;
+    va_copy(args_copy, args);
+
+    const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
+    va_end(args_copy);
+    if (formatted_string_count >= 0)
+    {
+      // formatted_string_count = number of wchar_t elements not including null terminator
+      return formatted_string_count;
+    }
+    if ( buffer_capacity >= 1024*16*16*16 )
+      break;
+    buffer_capacity *= 16;
+    if (false == buffer.GrowBuffer(buffer_capacity))
+      break;
+    if (nullptr == buffer.m_buffer)
+      break;
+    if (buffer_capacity < buffer.m_buffer_capacity)
+      break;
+  }
+  return -1;
+#else
   // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
   // will be use for the decimal point in formatted printing.
   return _vscwprintf_p_l(format, ON_Locale::Ordinal.NumericLocalePtr(), args);
+#endif
 #endif
 }
