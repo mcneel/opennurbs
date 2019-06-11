@@ -948,7 +948,7 @@ int ON_VARGS_FUNC_CDECL ON_wString::FormatIntoBuffer(
   return rc;
 }
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 
 static const wchar_t* ConvertToCLangFormat(
   const wchar_t* format,
@@ -1057,7 +1057,7 @@ int ON_wString::FormatVargsIntoBuffer(
   if ( nullptr == format || 0 == format[0] )
     return 0;
   
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // CLang requires %ls to properly format a const wchar_t* parameter
   wchar_t clang_format_stack_buffer[128];
   ON_wStringBuffer clang_format_buffer(clang_format_stack_buffer, sizeof(clang_format_stack_buffer) / sizeof(clang_format_stack_buffer[0]));
@@ -1126,7 +1126,7 @@ int ON_wString::FormatVargsOutputCount(
   if ( nullptr == format || 0 == format[0] )
     return 0;
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
   // Unlike _vscwprintf_p_l(), CLang's vswprintf() does not tell you how many characters would have 
   // been written if there was space enough in the buffer. 
   // It reports an error when there is not enough space.  
