@@ -1554,7 +1554,7 @@ bool ON_SubDLimitMesh::GetFaceCenterPointAndNormal(
   const unsigned int n = fragment->m_grid.m_side_segment_count;
   const unsigned int P_dex = fragment->IsCompleteFragment() ? (n*(n + 2) / 2) : 0;
   if (P_dex >= (unsigned int)fragment->m_P_count)
-    return nullptr;
+    return false;
   const double* fragment_P = fragment->m_P + (P_dex * fragment->m_P_stride);
   const double* fragment_N = fragment->m_N + (P_dex * fragment->m_N_stride);
   if (nullptr != P)

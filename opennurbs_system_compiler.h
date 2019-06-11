@@ -373,7 +373,8 @@
 #define ON_PRAGMA_WARNING_PUSH GCC diagnostic push // Gnu gcc warning state push
 #define ON_PRAGMA_WARNING_POP GCC diagnostic pop // Gnu gcc warning state pop
 #define ON_PRAGMA_WARNING_DISABLE_GNU(ON_PRAGMA_WARNING_DISABLE_param) GCC diagnostic ignored ON_PRAGMA_WARNING_DISABLE_param  // Apple CLang warning disable
-
+// same as for clang, see above
+#define ON_CLANG_CONSTRUCTOR_BUG
 
 #if defined(__GNUC__) && (__GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 7))
 // C++11 noexcept and Rvalue references are in gcc 4.7 and later
