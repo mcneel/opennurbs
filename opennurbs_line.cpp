@@ -133,7 +133,7 @@ bool ON_Line::ClosestPointTo( const ON_3dPoint& point, double *t ) const
     const ON_3dVector D = Direction();
     const double DoD = D.LengthSquared();
     if ( DoD > 0.0 ) {
-      if ( point.DistanceTo(from) <= point.DistanceTo(to) ) {
+      if ( (point - from).LengthSquared() <= (point - to).LengthSquared() ) {
         *t = ((point - from)*D)/DoD;
       }
       else {
