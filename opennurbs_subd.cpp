@@ -11277,6 +11277,9 @@ unsigned int ON_SubD::SetVertexTags(
         const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
         if (nullptr == edge)
           continue;
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wtautological-compare")
+#pragma ON_PRAGMA_WARNING_DISABLE_GNU("-Wtautological-compare")
         // The next if (min_face_count > min_face_count) should be if (min_face_count > max_face_count)
         // and is a bug that will not be fixed in 6.x because it exposes other bugs below.
         // Without the fix, max_face_count is always 0xFFFEU and the continue always occurs.
@@ -11290,6 +11293,7 @@ unsigned int ON_SubD::SetVertexTags(
           min_face_count = edge->m_face_count;
         else if (edge->m_face_count > max_face_count)
           max_face_count = edge->m_face_count;
+#pragma ON_PRAGMA_WARNING_POP
       }
 
       if (max_face_count > 2)

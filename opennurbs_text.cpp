@@ -593,7 +593,7 @@ bool ON_TextContent::Create(
   case ON::AnnotationType::Diameter:
   case ON::AnnotationType::Radius:
     h_align = dimstyle->LeaderTextHorizontalAlignment();
-    v_align = dimstyle->LeaderTextVerticalAlignment();
+    v_align = ON::TextVerticalAlignment::MiddleOfTop; //dimstyle->LeaderTextVerticalAlignment();
     break;
   }
 

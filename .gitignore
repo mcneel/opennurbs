@@ -1,8 +1,19 @@
 *.o
 *.swp
+*.metaproj
+*.3dm
 
 # output from example_test
 example_test_log_*.txt
+
+# linux
+*.a
+example_brep/example_brep
+example_convert/example_convert
+example_read/example_read
+example_test/example_test
+example_userdata/example_userdata
+example_write/example_write
 
 # Xcode
 #

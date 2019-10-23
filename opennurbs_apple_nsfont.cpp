@@ -875,8 +875,11 @@ bool ON_AppleFontGetGlyphOutline(
   }
   
   CGPathRef applePath = CTFontCreatePathForGlyph(appleFont, appleGlyphIndex, nullptr);
-  if (nullptr == applePath)
-    return false;
+  
+  // NOTE WELL: applePath = nullptr for space, tab and so on.
+  // We still need to get the advance for these code points.
+  // NO // if (nullptr == applePath)
+  // NO //   return false;
 
   unsigned int font_design_units_per_M = CTFontGetUnitsPerEm(appleFont);
   const CGFloat point_size = CTFontGetSize(appleFont);
@@ -888,8 +891,11 @@ bool ON_AppleFontGetGlyphOutline(
   
   ON_AppleGlyphOutlineAccumlator acc;
   acc.BeginGlyphOutline(font_design_units_per_M, figure_type, &outline);
-  CGPathApply(applePath, &acc, ON_AppleGlyphOutlineAccumlator::Internal_PathApplierFunction);
-  CGPathRelease(applePath);
+  if ( nullptr != applePath)
+  {
+    CGPathApply(applePath, &acc, ON_AppleGlyphOutlineAccumlator::Internal_PathApplierFunction);
+    CGPathRelease(applePath);
+  }
   acc.EndOutline();
 
   // Add Glyph metrics to outline

@@ -466,6 +466,7 @@ double ON_HatchLine::AngleDegrees() const
     double angle_degrees = m_angle_radians*(180.0/ON_PI);
     if (angle_degrees >= 360.0)
       angle_degrees = 0.0;
+    return angle_degrees;
   }
   return m_angle_radians; // UNSET VALUE OR NaN
 }

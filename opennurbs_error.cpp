@@ -624,7 +624,7 @@ void ON_ErrorEvent::Dump(
 
 bool ON_ErrorLog::EnableLogging()
 {
-  if (nullptr == this)
+  if ( 0 == ((ON__UINT_PTR)this) )
     return false;
   if (this == ON_ACTIVE_ERROR_LOG)
     return true;

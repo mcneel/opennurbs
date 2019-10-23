@@ -882,7 +882,7 @@ ON_NameHash ON_NameHash::Create(
   if ( bEmpty )
     return ON_NameHash::EmptyNameHash;
 
-  hash.m_parent_id = name_parent_id,
+  hash.m_parent_id = name_parent_id;
   hash.m_flags = (UTF32_length & ON_NameHash::flags_length_mask);
   if (false == bIgnoreCase)
     hash.m_flags |= ON_NameHash::flags_case_sensitive;

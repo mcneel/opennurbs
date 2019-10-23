@@ -357,17 +357,19 @@ const ON_2iPoint ON_4iRect::BottomRight(void) const { return ON_2iPoint(right, b
 
 bool ON_4iRect::IntersectRect(const ON_4iRect * r1, const ON_4iRect * r2)
 {
-	left = ON_Max(r1->left, r2->left);
-	top = ON_Max(r1->top, r2->top);
-	right = ON_Min(r1->right, r2->right);
-	bottom = ON_Min(r1->bottom, r2->bottom);
+  left = ON_Max(r1->left, r2->left);
+  right = ON_Min(r1->right, r2->right);
+  if (right > left)
+  {
+    top = ON_Max(r1->top, r2->top);
+    bottom = ON_Min(r1->bottom, r2->bottom);
+    if (bottom > top)
+      return true;
+  }
 
-	if (IsRectEmpty()) {
-		// degenerate rectangle
-		SetRectEmpty();
-		return false;
-	}
-	return true;
+  // degenerate rectangle at this point...
+  SetRectEmpty();
+  return false;
 }
 
 bool ON_4iRect::IntersectRect(const ON_4iRect & r1, const ON_4iRect & r2) { return IntersectRect(&r1, &r2); }

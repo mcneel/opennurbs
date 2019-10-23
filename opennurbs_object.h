@@ -539,7 +539,18 @@ public:
   */
   virtual bool IsValid( class ON_TextLog* text_log = nullptr ) const;
 
-    /*
+  /*
+  Description:
+    Tests to see if this is null in ways that will prevent compilers like
+    CLang from thinking the test is not necessary. 
+    The reason the runtime test is being performed is to find bugs that call 
+    member functions on null pointers.
+  */
+  bool ThisIsNullptr(
+    bool bSilentError
+  ) const;
+
+  /*
   Description:
     Check for corrupt data values that are likely to cause crashes.
   Parameters:

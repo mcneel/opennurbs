@@ -618,9 +618,6 @@ typedef ON__UINT32 wchar_t;
 
 #if defined(ON_RUNTIME_APPLE)
 
-// To handle single stroke fonts on MacOS, we need freetype tools.
-// See ON_AppleFontGetGlyphOutline() for details.
-// freetype linking is broken in current project // #define OPENNURBS_FREETYPE_SUPPORT
 
 #if defined(ON_COMPILER_CLANG)
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
