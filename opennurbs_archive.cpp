@@ -7211,7 +7211,7 @@ bool ON_BinaryArchive::Begin3dmTable(
   if ( table == ON_3dmArchiveTableType::start_section )
   {
     // m_3dm_version is set during reading of the start section.
-    if (0 != m_3dm_version)
+    if (0 != m_3dm_version && ON::archive_mode::read3dm == Mode())
     {
       ON_ERROR("Archive m_3dm_version is set during start section reading.");
       return End3dmTable(table,false);
