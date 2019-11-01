@@ -30,44 +30,80 @@ ON_OBJECT_IMPLEMENT(ON_NurbsCurve,ON_Curve,"4ED7D4DD-E947-11d3-BFE5-0010830122F0
 Description:
   Helper to make a deep copy (duplicate memory) from src to dest
 */
-static void ON_NurbsCurve_copy_member_data( const ON_NurbsCurve& src, ON_NurbsCurve& dest )
+void ON_NurbsCurve::Internal_DeepCopyFrom( const ON_NurbsCurve& src )
 {
-  int i;
-  dest.m_dim       = src.m_dim;
-  dest.m_is_rat    = src.m_is_rat;
-  dest.m_order     = src.m_order;
-  dest.m_cv_count  = src.m_cv_count;
-  dest.m_cv_stride = dest.m_is_rat ? dest.m_dim+1 : dest.m_dim;
-  if ( src.m_knot ) 
+  if (this == &src)
   {
-    // copy knot array
-    i = dest.KnotCount();
-    dest.ReserveKnotCapacity( i );
-    memcpy( dest.m_knot, src.m_knot, i*sizeof(*dest.m_knot) );
+    ON_ERROR("this and &src must be different.");
+    return;
   }
-  if ( src.m_cv ) 
+
+  // erase tags
+  m_knot_capacity_and_tags &= ON_NurbsCurve::masks::knot_capacity;
+
+  const int knot_capacity = (nullptr != src.m_knot) ? src.KnotCount() : 0;
+  if (knot_capacity > 0)
   {
-    // copy cv array
-    dest.ReserveCVCapacity( dest.m_cv_stride*dest.m_cv_count );
-    const int dst_cv_size = dest.CVSize()*sizeof(*dest.m_cv);
-    const int src_stride = src.m_cv_stride;
-    const int dst_stride = dest.m_cv_stride;
-    const double *src_cv = src.CV(0);
-    double *dst_cv = dest.m_cv;
-    if ( src_stride == dst_stride ) 
+    ReserveKnotCapacity(knot_capacity);
+    if ( nullptr != m_knot ) 
+      memcpy( m_knot, src.m_knot, knot_capacity*sizeof(m_knot[0]) );
+  }
+  else if (nullptr != m_knot && KnotCapacity() > 0)
+  {
+    onfree(m_knot);
+    m_knot = nullptr;
+    m_knot_capacity_and_tags = 0;
+  }
+
+  int cv_count = (src.m_cv_count>0) ? src.m_cv_count : 0;
+  int cv_stride = (src.m_dim > 0) ? ((src.m_is_rat) ? (src.m_dim + 1) : src.m_dim) : 0;
+  const int cv_capacity = (nullptr != src.m_cv) ? (cv_count*cv_stride) : 0;
+  if (cv_capacity > 0)
+  {
+    ReserveCVCapacity(cv_capacity);
+    if ( nullptr != m_cv ) 
     {
-      memcpy( dst_cv, src_cv, dest.m_cv_count*dst_stride*sizeof(*dst_cv) );
-    }
-    else 
-    {
-      for ( i = 0; i < dest.m_cv_count; i++ )
+      // copy cv array
+      const int src_stride = src.m_cv_stride;
+      const double *src_cv = src.m_cv;
+      double *dst_cv = m_cv;
+      if (src_stride == cv_stride)
       {
-        memcpy( dst_cv, src_cv, dst_cv_size );
-        dst_cv += dst_stride;
-        src_cv += src_stride;
+        memcpy(dst_cv, src_cv, cv_capacity * sizeof(dst_cv[0]));
+      }
+      else
+      {
+        const size_t sizeof_cv = (size_t)(cv_stride * sizeof(dst_cv[0]));
+        for (int i = 0; i < cv_count; i++)
+        {
+          memcpy(dst_cv, src_cv, sizeof_cv);
+          dst_cv += cv_stride;
+          src_cv += src_stride;
+        }
       }
     }
   }
+  else
+  {
+    if (nullptr != m_cv && m_cv_capacity > 0)
+    {
+      onfree(m_cv);
+      m_cv = nullptr;
+    }
+    m_cv_capacity = 0;
+    cv_count = 0;
+    cv_stride = 0;
+  }
+  
+  m_dim       = src.m_dim;
+  m_is_rat    = src.m_is_rat;
+  m_order     = src.m_order;
+  m_cv_count  = cv_count;
+  m_cv_stride = cv_stride;
+
+  // copy tags
+  const unsigned int src_tags = (src.m_knot_capacity_and_tags & ON_NurbsCurve::masks::all_tags);
+  m_knot_capacity_and_tags |= src_tags;
 }
 
 /*
@@ -75,17 +111,22 @@ Description:
   Helper to move (shallow copy) from src to dest
 */
 #if defined(ON_HAS_RVALUEREF)
-static void ON_NurbsCurve_move_member_data( const ON_NurbsCurve& src, ON_NurbsCurve& dest )
+void ON_NurbsCurve::Internal_ShallowCopyFrom( const ON_NurbsCurve& src )
 {
-  dest.m_dim           = src.m_dim;
-  dest.m_is_rat        = src.m_is_rat;
-  dest.m_order         = src.m_order;
-  dest.m_cv_count      = src.m_cv_count;
-  dest.m_knot_capacity = src.m_knot_capacity;
-  dest.m_knot          = src.m_knot;
-  dest.m_cv_stride     = src.m_cv_stride;
-  dest.m_cv_capacity   = src.m_cv_capacity;
-  dest.m_cv            = src.m_cv;
+  if (this == &src)
+  {
+    ON_ERROR("this and &src must be different.");
+    return;
+  }
+  m_dim            = src.m_dim;
+  m_is_rat         = src.m_is_rat;
+  m_order          = src.m_order;
+  m_cv_count       = src.m_cv_count;
+  m_knot_capacity_and_tags = src.m_knot_capacity_and_tags;
+  m_knot           = src.m_knot;
+  m_cv_stride      = src.m_cv_stride;
+  m_cv_capacity    = src.m_cv_capacity;
+  m_cv             = src.m_cv;
 }
 #endif
 
@@ -93,28 +134,28 @@ static void ON_NurbsCurve_move_member_data( const ON_NurbsCurve& src, ON_NurbsCu
 Description:
   Helper to clear (set all member vars to zero)
 */
-static void ON_NurbsCurve_zero_member_data( ON_NurbsCurve& dest )
+void ON_NurbsCurve::Internal_InitializeToZero()
 {
-  dest.m_dim = 0;
-  dest.m_is_rat = 0;
-  dest.m_order = 0;
-  dest.m_cv_count = 0;
-  dest.m_knot_capacity = 0;
-  dest.m_knot = 0;
-  dest.m_cv_stride = 0;
-  dest.m_cv_capacity = 0;
-  dest.m_cv = 0;
+  m_dim = 0;
+  m_is_rat = 0;
+  m_order = 0;
+  m_cv_count = 0;
+  m_knot_capacity_and_tags = 0;
+  m_knot = 0;
+  m_cv_stride = 0;
+  m_cv_capacity = 0;
+  m_cv = 0;
 }
 
 /*
 Description:
   Helper to make a deep copy (duplicate memory) from src to dest
 */
-static void ON_NurbsCurve_delete_member_data( ON_NurbsCurve& dest )
+void ON_NurbsCurve::Internal_Destroy()
 {
-  double* cv = ( dest.m_cv && dest.m_cv_capacity ) ? dest.m_cv : 0;
-  double* knot = ( dest.m_knot && dest.m_knot_capacity ) ? dest.m_knot : 0;
-  ON_NurbsCurve_zero_member_data(dest);
+  double* cv = (nullptr != m_cv && CVCapacity() > 0 ) ? m_cv : nullptr;
+  double* knot = (nullptr != m_knot && KnotCapacity() > 0 ) ? m_knot : nullptr;
+  Internal_InitializeToZero();
   if ( cv )
     onfree(cv);
   if ( knot )
@@ -124,23 +165,24 @@ static void ON_NurbsCurve_delete_member_data( ON_NurbsCurve& dest )
 ON_NurbsCurve::ON_NurbsCurve() ON_NOEXCEPT
 {
   ON__SET__THIS__PTR(m_s_ON_NurbsCurve_ptr);
-  ON_NurbsCurve_zero_member_data(*this);
+  Internal_InitializeToZero();
 }
 
 ON_NurbsCurve::ON_NurbsCurve( const ON_NurbsCurve& src )
   : ON_Curve(src)
 {
   ON__SET__THIS__PTR(m_s_ON_NurbsCurve_ptr);
-  ON_NurbsCurve_zero_member_data(*this);
-  ON_NurbsCurve_copy_member_data(src,*this);
+  Internal_InitializeToZero();
+  Internal_DeepCopyFrom(src);
 }
 
 ON_NurbsCurve& ON_NurbsCurve::operator=( const ON_NurbsCurve& src )
 {
   if ( this != &src ) 
   {
+    Internal_Destroy(); // consider removing this so "expert" knots and cv can be used.
     ON_Curve::operator=(src);
-    ON_NurbsCurve_copy_member_data(src,*this);
+    Internal_DeepCopyFrom(src);
   }
   return *this;
 }
@@ -151,18 +193,18 @@ ON_NurbsCurve::ON_NurbsCurve( ON_NurbsCurve&& src) ON_NOEXCEPT
   : ON_Curve(std::move(src))
 {
   ON__SET__THIS__PTR(m_s_ON_NurbsCurve_ptr);
-  ON_NurbsCurve_move_member_data(src,*this);
-  ON_NurbsCurve_zero_member_data(src);
+  Internal_ShallowCopyFrom(src);
+  src.Internal_InitializeToZero();
 }
 
 ON_NurbsCurve& ON_NurbsCurve::operator=( ON_NurbsCurve&& src)
 {
   if ( this != &src )
   {
-    ON_NurbsCurve_delete_member_data(*this);
+    Internal_Destroy();
     ON_Curve::operator=(std::move(src));
-    ON_NurbsCurve_move_member_data(src,*this);
-    ON_NurbsCurve_zero_member_data(src);
+    Internal_ShallowCopyFrom(src);
+    src.Internal_InitializeToZero();
   }
   return *this;
 }
@@ -221,8 +263,8 @@ unsigned int ON_NurbsCurve::SizeOf() const
 {
   unsigned int sz = ON_Curve::SizeOf();
   sz += (sizeof(*this) - sizeof(ON_Curve));
-  sz += m_knot_capacity*sizeof(*m_knot);
-  sz += m_cv_capacity*sizeof(*m_cv);
+  sz += KnotCapacity()*sizeof(*m_knot);
+  sz += CVCapacity()*sizeof(*m_cv);
   return sz;
 }
 
@@ -404,18 +446,18 @@ bool ON_NurbsCurve::Create(
 void ON_NurbsCurve::Destroy()
 {
   DestroyCurveTree();
-  ON_NurbsCurve_delete_member_data(*this);
+  Internal_Destroy();
 }
 
 void ON_NurbsCurve::EmergencyDestroy()
 {
-  ON_NurbsCurve_zero_member_data(*this);
+  Internal_InitializeToZero();
 }
 
 
 void ON_NurbsCurve::Initialize()
 {
-  ON_NurbsCurve_zero_member_data(*this);
+  Internal_InitializeToZero();
 }
 
 ON_NurbsCurve& ON_NurbsCurve::operator=(const ON_BezierCurve& src)
@@ -724,7 +766,8 @@ bool ON_NurbsCurve::Write(
      ) const
 {
   // NOTE - check legacy I/O code if changed
-  bool rc = file.Write3dmChunkVersion(1,0);
+  const int minor_version = (file.Archive3dmVersion() >= 60);
+  bool rc = file.Write3dmChunkVersion(1,minor_version);
   if (rc)
   {
     if (rc) rc = file.WriteInt( m_dim );
@@ -763,6 +806,12 @@ bool ON_NurbsCurve::Write(
       }
     }
 
+    if (rc && minor_version >= 1)
+    {
+      // April 2019 Chunk version 1.1 - added SubDFriendlyTag
+      const bool bSubDFriendlyTag = SubDFriendlyTag();
+      rc = file.WriteBool(bSubDFriendlyTag);
+    }
   }
   return rc;
 }
@@ -825,6 +874,15 @@ bool ON_NurbsCurve::Read(
         rc = file.ReadDouble( cv_size, CV(i) );
       }
     }
+
+    if (rc && minor_version >= 1)
+    {
+      // April 2019 Chunk version 1.1 - added SubDFriendlyTag
+      bool bSubDFriendlyTag = false;
+      rc = file.ReadBool(&bSubDFriendlyTag);
+      if (bSubDFriendlyTag)
+        SetSubDFriendlyTag(bSubDFriendlyTag);
+    }
   }
   if ( !rc )
     Destroy();
@@ -870,6 +928,109 @@ bool ON_NurbsCurve::SetDomain( double t0, double t1 )
   return rc;
 }
 
+
+static ON_NurbsCurve* MoveSeamPeriodicKnot(const ON_NurbsCurve& crv, int knot_index)
+
+{
+  int dg = crv.Degree();
+  if (dg < 2)
+    return 0;
+  if (!crv.IsPeriodic())
+    return 0;
+  if (knot_index < dg || knot_index >= crv.KnotCount()-dg)
+    return 0;
+  int sc = crv.SpanCount(); 
+  if (sc < crv.KnotCount()-2*dg+1)//Not all knots are simple
+    return 0;
+  const double* knots = &crv.m_knot[dg-1];
+  int distinct_cvc = crv.CVCount()-dg;
+  double dom_len = crv.Domain().Length();
+  ON_NurbsCurve* pNC = ON_NurbsCurve::New(crv);
+  int curr = dg-1;
+  for (int i=knot_index; i<sc+dg-1; i++){
+    pNC->SetKnot(curr, pNC->Knot(i));
+    curr++;
+  }
+
+  for (int i=0; i<=knot_index-dg+1; i++){
+    pNC->SetKnot(curr, knots[i] + dom_len);
+    curr++;
+  }
+
+  for (int i=0; i<dg-1; i++){
+    pNC->SetKnot(curr+i, pNC->Knot(curr+i-1)+pNC->Knot(dg+i) - pNC->Knot(dg+i-1));
+    pNC->SetKnot(dg-2-i, pNC->Knot(dg-i-1) - pNC->Knot(curr-1-i) + pNC->Knot(curr-2-i));
+  }
+
+  int cv_id = knot_index-dg+1;
+  for (int i=0; i<pNC->CVCount(); i++){
+    ON_4dPoint cv;
+    crv.GetCV(cv_id%distinct_cvc, cv);
+    pNC->SetCV(i, cv);
+    cv_id++;
+  }
+
+  return pNC;
+}
+
+
+static ON_NurbsCurve* MoveSeamPeriodic(const ON_Curve& crv, double t)
+
+{
+  ON_NurbsCurve nc;
+  double s = t;
+  const ON_NurbsCurve*pNC = ON_NurbsCurve::Cast(&crv);
+  if (pNC)
+    nc = *pNC;
+  else {
+    if (!crv.GetNurbFormParameterFromCurveParameter(t, &s))
+      return 0;
+    if (!crv.GetNurbForm(nc))
+      return 0;
+  }
+  if (!nc.IsPeriodic())
+    return 0;
+  //Make sure all interior knots are simple
+
+  int sc = nc.SpanCount(); 
+  if (sc < nc.KnotCount()-2*nc.Degree()+1)//Not all knots are simple
+    return 0;
+
+  int knot_index = -1;
+  for (int i=0; i<nc.KnotCount(); i++){
+    if (nc.Knot(i) > s){
+      knot_index = i;
+      break;
+    }
+  }
+  if (knot_index < nc.Degree() || knot_index > nc.KnotCount()-nc.Degree())
+    return 0;
+
+  double k0 = nc.Knot(knot_index-1);
+  double d0 = s-k0;
+  double k1 = nc.Knot(knot_index);
+  double d1 = k1-s;
+  bool bInsert = true;
+  if (d0<=d1){
+    if (d0 < ON_ZERO_TOLERANCE*k0){
+      knot_index--;
+      bInsert = false;
+    }
+  }
+  else {
+    if (d1 < ON_ZERO_TOLERANCE*k1)
+      bInsert = false;
+  }
+
+  if (bInsert && !nc.InsertKnot(s, 1))
+    return 0;
+
+  return MoveSeamPeriodicKnot(nc, knot_index);
+
+}
+
+
+
 bool ON_NurbsCurve::ChangeClosedCurveSeam( double t )
 {
   bool rc = IsClosed();
@@ -890,8 +1051,16 @@ bool ON_NurbsCurve::ChangeClosedCurveSeam( double t )
     if ( old_dom.Includes(k,true) )
     {
       ON_NurbsCurve left, right;
-      // TODO - if periodic - dont' put multi knot in middle
-      //if ( IsPeriodic() ){} else
+      // TODO - if periodic - dont' put multi knot in middle.  
+      bool bGotIt = false;
+      if ( IsPeriodic() ){//This only works if the curve has only simple knots
+        ON_NurbsCurve* pMovedNC = MoveSeamPeriodic(*this, t);
+        if (pMovedNC){
+          *this = *pMovedNC;
+          delete pMovedNC;
+        }
+      }
+      if (!bGotIt)
       {
         ON_Curve* pleft = &left;
         ON_Curve* pright = &right;
@@ -2034,9 +2203,11 @@ bool ON_NurbsCurve::ZeroCVs()
 {
   bool rc = false;
   int i;
-  if ( m_cv ) {
-    if ( m_cv_capacity > 0 ) {
-      memset( m_cv, 0, m_cv_capacity*sizeof(*m_cv) );
+  if ( m_cv ) 
+  {
+    if ( CVCapacity() > 0 )
+    {
+      memset( m_cv, 0, CVCapacity()*sizeof(*m_cv) );
       if ( m_is_rat ) {
         for ( i = 0; i < m_cv_count; i++ ) {
           SetWeight( i, 1.0 );
@@ -2067,77 +2238,123 @@ bool ON_NurbsCurve::IsClamped( // determine if knot vector is clamped
   return ON_IsKnotVectorClamped( m_order, m_cv_count, m_knot, end );
 }
   
+bool ON_NurbsCurve::IsNatural(int end) const
+{
+  bool rc = false;
+  ON_3dPoint CV0, CV2, P;
+  ON_3dVector D1, D2;
+  const ON_Interval domain(Domain());
+  for (int pass = ((0==end||2==end) ? 0 : 1); pass < ((1==end||2==end)?2 : 1); ++pass)
+  {
+    ON_BezierCurve span;
+    if (false == ConvertSpanToBezier(((0 == pass) ? 0 : (m_cv_count - m_order)), span) || span.m_order < 2)
+      return false;
+    int i0 = (0 == pass) ? 0 : span.m_order - 1;
+    int di = (0 == pass) ? 1 : -1;
+    if (span.m_order > 2)
+      di *= 2;
+    if (false == span.GetCV(i0, CV0))
+      return false;
+    if (false == span.GetCV(i0 + di, CV2))
+      return false;
+    Ev2Der(domain[pass], P, D1, D2, (0 == pass) ? 1 : -1);
+    const double d2 = D2.Length();
+    const double tol = CV0.DistanceTo(CV2)*1.0e-8;
+    if (false == (d2 <= tol))
+      return false;
+    rc = true;      
+  }
+  return rc;
+}
+
+int ON_NurbsCurve::CVCapacity() const
+{
+  // If m_cv_capacity > 0, then m_cv[] was allocated by onmalloc(sz)/onrealloc(...,sz)
+  // where sz = m_cv_capacity*sizeof(double).
+  return m_cv_capacity; // number of doubles in m_cv
+}
 
 bool ON_NurbsCurve::ReserveCVCapacity(int desired_capacity)
 {
-  // If m_cv_capacity == 0 and m_cv != nullptr, then the user
-  // has hand built the ON_NurbsCurve.m_cv array and is responsible
-  // for making sure it's always big enough.
-  bool rc = true;
-  if ( desired_capacity > m_cv_capacity ) {
-    if ( !m_cv ) {
-      // no cv array - allocate one
-      m_cv = (double*)onmalloc(desired_capacity*sizeof(*m_cv));
-      if ( !m_cv ) {
-        rc = false;
-      }
-      else {
-        m_cv_capacity = desired_capacity;
-      }
-    }
-    else if ( m_cv_capacity > 0 ) {
-      // existing m_cv[] is too small and the fact that
-      // m_cv_capacity > 0 indicates that ON_NurbsCurve is
-      // managing the m_cv[] memory, so we need to grow
-      // the m_cv[] array.
-      m_cv = (double*)onrealloc(m_cv,desired_capacity*sizeof(*m_cv));
-      if ( !m_cv ) {
-        rc = false;
-        m_cv_capacity = 0;
-      }
-      else {
-        m_cv_capacity = desired_capacity;
-      }
-    }
+  if (nullptr != m_cv && 0 == m_cv_capacity)
+  {
+    // If m_cv_capacity == 0 and m_cv != nullptr, then the "expert" user
+    // has hand built the ON_NurbsCurve.m_cv array and is responsible
+    // for making sure it's always big enough.
+    return true;
   }
+
+  const int current_capacity = (nullptr != m_cv && m_cv_capacity > 0) ? m_cv_capacity : 0;
+  if ( desired_capacity > current_capacity )
+  {
+    m_cv = (0 == current_capacity)
+      ? (double*)onmalloc(desired_capacity*sizeof(*m_cv))
+      : (double*)onrealloc(m_cv,desired_capacity*sizeof(*m_cv));
+    m_cv_capacity = ( nullptr != m_cv ) ? desired_capacity : 0;
+  }
+
+  const bool rc = (m_cv_capacity >= desired_capacity);
   return rc;
+}
+
+int ON_NurbsCurve::KnotCapacity() const
+{
+  const int knot_capacity 
+    = (nullptr == m_knot) 
+    ? 0 
+    : ((int)(m_knot_capacity_and_tags & ON_NurbsCurve::masks::knot_capacity));
+  return knot_capacity;
+}
+
+void ON_NurbsCurve::UnmanageKnotForExperts(
+  int& knot_capacity,
+  double*& knot
+)
+{
+  knot_capacity = KnotCapacity();
+  knot = m_knot;
+  m_knot_capacity_and_tags &= ON_NurbsCurve::masks::all_tags; // knot_capacity = 0;  
+  m_knot = nullptr;
+}
+
+void ON_NurbsCurve::ManageKnotForExperts(
+  int knot_capacity,
+  double* knot
+)
+{
+  // Unconditionally set m_knot and KnotCapacity().
+  // (Do not free preexisting m_knot.)
+  const unsigned int tags = (m_knot_capacity_and_tags & ON_NurbsCurve::masks::all_tags);
+  const unsigned int new_knot_capacity = (knot_capacity > 0) ? (((unsigned int)knot_capacity) & ON_NurbsCurve::masks::knot_capacity) : 0U;
+  m_knot_capacity_and_tags = (tags | new_knot_capacity);
+  m_knot = knot;
 }
 
 bool ON_NurbsCurve::ReserveKnotCapacity(int desired_capacity)
 {
-  // If m_knot_capacity == 0 and m_knot != nullptr, then the user
-  // has hand built the ON_NurbsCurve.m_knot array and is responsible
-  // for making sure it's always big enough.
-  bool rc = true;
-  if ( desired_capacity > m_knot_capacity ) {
-    if ( !m_knot ) {
-      // no knot array - allocate one
-      m_knot = (double*)onmalloc(desired_capacity*sizeof(*m_knot));
-      if ( !m_knot ) {
-        m_knot_capacity = 0;
-        rc = false;
-      }
-      else {
-        m_knot_capacity = desired_capacity;
-      }
-    }
-    else if ( m_knot_capacity > 0 ) {
-      // existing m_knot[] is too small and the fact that
-      // m_knot_capacity > 0 indicates that ON_NurbsCurve is
-      // managing the m_knot[] memory, so we need to grow
-      // the m_knot[] array.
-      m_knot = (double*)onrealloc(m_knot,desired_capacity*sizeof(*m_knot));
-      if ( !m_knot ) {
-        rc = false;
-        m_knot_capacity = 0;
-      }
-      else {
-        m_knot_capacity = desired_capacity;
-      }
-    }
+  const int current_knot_capacity = KnotCapacity();
+
+  if (nullptr != m_knot && 0 == current_knot_capacity)
+  {
+    // If knot_capacity == 0 and m_knot != nullptr, then the "expert" user
+    // has hand built the ON_NurbsCurve.m_knot array and is responsible
+    // for making sure it's always big enough.
+    return true;
   }
+
+  if ( desired_capacity > current_knot_capacity )
+  {
+    double* knot 
+      = ( 0 == current_knot_capacity )
+      ? (double*)onmalloc(desired_capacity*sizeof(knot[0]))
+      : (double*)onrealloc(m_knot,desired_capacity*sizeof(knot[0]));
+    this->ManageKnotForExperts((nullptr != knot) ? desired_capacity : 0, knot);
+  }
+
+  bool rc = (nullptr != m_knot && KnotCapacity() >= desired_capacity);
   return rc;
 }
+
 
 bool ON_NurbsCurve::ConvertSpanToBezier( int span_index, ON_BezierCurve& bez ) const
 {
@@ -2506,7 +2723,7 @@ static bool IncrementNurbDegree(ON_NurbsCurve& N)
     i+=mult;
   }
   //zero out N's cvs
-  memset(N.m_cv, 0, N.m_cv_capacity*sizeof(double));
+  memset(N.m_cv, 0, N.CVCapacity()*sizeof(double));
   int cvdim = N.CVSize();
   const double* cvM;
   double* cvN;
@@ -2595,9 +2812,12 @@ bool ON_NurbsCurve::ChangeDimension( int desired_dimension )
     //const int cv_size0 = CVSize();
     const int cv_size1 = m_is_rat ? desired_dimension + 1 : desired_dimension;
     const int cv_stride1 = (m_cv_stride < cv_size1) ? cv_size1 : m_cv_stride;
-    if ( m_cv_stride < cv_stride1 && m_cv_capacity > 0 ) {
-      m_cv_capacity = cv_stride1*m_cv_count;
-      m_cv = (double*)onrealloc( m_cv, m_cv_capacity*sizeof(*m_cv) );
+    if ( m_cv_stride < cv_stride1 && CVCapacity() > 0 )
+    {
+      const int new_cv_capacity = cv_stride1*m_cv_count;
+      m_cv = (double*)onrealloc( m_cv, new_cv_capacity*sizeof(*m_cv) );
+      if (nullptr != m_cv)
+        m_cv_capacity = new_cv_capacity;
     }
     for ( i = CVCount()-1; i >= 0; i-- ) {
       cv0 = CV(i);
@@ -3058,7 +3278,7 @@ int ON_NurbsCurve::GetNurbForm( ON_NurbsCurve& curve,
 
   // 4 May 2007 Dale Lear
   //   I'm replacing the call to operator= with a call to
-  //   ON_NurbsCurveCopyHelper().  The operator= call
+  //   Internal_DeepCopyFrom().  The operator= call
   //   was copying userdata and that does not happen for
   //   any other GetNurbForm overrides.  Copying userdata
   //   in GetNurbForm is causing trouble in Make2D and 
@@ -3068,8 +3288,10 @@ int ON_NurbsCurve::GetNurbForm( ON_NurbsCurve& curve,
   // curve = *this; // copied user data
 
   curve.DestroyRuntimeCache(true);
-  if ( this != &curve )
-    ON_NurbsCurve_copy_member_data(*this,curve); // does not copy user data
+  if (this != &curve)
+  {
+    curve.Internal_DeepCopyFrom(*this); // does not copy user data
+  }
 
   if ( subdomain ) 
   {
@@ -4139,4 +4361,237 @@ int ON_NurbsCurve::RemoveSingularSpans()
   }
 
   return singular_span_count;
+}
+
+bool ON_NurbsCurve::SubDFriendlyTag() const
+{
+  if (0 != (m_knot_capacity_and_tags & ON_NurbsCurve::masks::subdfriendly_tag))
+  {
+    if (IsSubDFriendly(true))
+      return true;
+    // Something modified NURBS properties after the tag was set.
+    const_cast<ON_NurbsCurve*>(this)->SetSubDFriendlyTag(false);
+  }
+  return false;
+}
+
+void ON_NurbsCurve::SetSubDFriendlyTag(
+  bool bSubDFriendlyTag
+)
+{
+  if (bSubDFriendlyTag && IsSubDFriendly(true))
+    m_knot_capacity_and_tags |= ON_NurbsCurve::masks::subdfriendly_tag;
+  else
+    m_knot_capacity_and_tags &= ~ON_NurbsCurve::masks::subdfriendly_tag;
+}
+
+static bool Internal_IsSubDFriendlyEnd(
+  int endex,
+  const double* cubic_cpan_knots,
+  const ON_3dPoint& cv0,
+  const ON_3dPoint& cv1,
+  const ON_3dPoint& cv2
+)
+{
+  ON_3dPoint Q;
+  if (0 == endex)
+  {
+    Q = (cubic_cpan_knots[0] == cubic_cpan_knots[2] && cubic_cpan_knots[3] < cubic_cpan_knots[5])
+      ? ((2.0*cv0 + cv2) / 3.0)
+      : (0.5*(cv0 + cv2))
+      ;
+  }
+  else
+  {
+    Q = (cubic_cpan_knots[0] < cubic_cpan_knots[2] && cubic_cpan_knots[3] == cubic_cpan_knots[5])
+      ? ((cv0 + 2.0*cv2) / 3.0)
+      : (0.5*(cv0 + cv2))
+      ;
+  }
+  const double d = cv0.DistanceTo(cv2);
+  const double tol = 1.0e-6*d;
+  const double e = cv1.DistanceTo(Q);
+  return (e <= tol);
+}
+
+bool ON_NurbsCurve::IsSubDFriendly(
+  bool bPermitCreases
+) const
+{
+  for (;;)
+  {
+    if (m_dim <= 0)
+      break;
+    if (false != m_is_rat)
+      break;
+    if (4 != m_order)
+      break;
+    if (m_cv_count < 4)
+      break;
+    if (nullptr == m_knot)
+      break;
+    if (m_cv_stride < m_dim)
+      break;
+    if (nullptr == m_cv)
+      break;
+
+    // knots must be piecewise uniform
+    const ON_SubD::SubDFriendlyKnotType knot_type = ON_SubD::NurbsKnotType(m_order, m_cv_count, m_knot);
+    if (ON_SubD::SubDFriendlyKnotType::Unset == knot_type || ON_SubD::SubDFriendlyKnotType::Unfriendly == knot_type)
+      return false;
+    if (ON_SubD::SubDFriendlyKnotType::ClampedPiecewiseUniform == knot_type && false == bPermitCreases)
+      return false;
+
+    ON_3dPoint CV[2] = { ON_3dPoint::NanPoint,ON_3dPoint::NanPoint };
+    if (false == GetCV(0, CV[0]))
+      break;
+    if (false == GetCV(1, CV[1]))
+      break;
+    bool bAllEqual = CV[0] == CV[1];
+    if (bAllEqual)
+    {
+      // All CVs must be equal - curve is a "point" used in lofting to a point.
+      for (int i = 2; bAllEqual && i < m_cv_count; ++i)
+      {
+        bAllEqual = GetCV(i, CV[1]) && CV[0] == CV[1];
+      }
+      if (false == bAllEqual)
+        break;
+    }
+    
+    // curve must be periodic or natural
+    bool bNaturalEnds = (m_cv_count >= 6 && IsPeriodic());
+    if ( false == bNaturalEnds)
+    {
+      // test ends for natural end conditions
+      ON_3dPoint P[3];
+      bNaturalEnds = true;
+      for (int endex = 0; endex < 2 && bNaturalEnds; ++endex)
+      {
+        const int cv_dex = (0 == endex) ? 0 : ( CVCount() - 3);
+        for (int j = 0; j < 3 && bNaturalEnds; ++j)
+          bNaturalEnds = GetCV(cv_dex+j, P[j]);
+        if (false == bNaturalEnds)
+          break;
+        const double* span_knots = m_knot + ((0 == endex) ? 0 : (m_cv_count - m_order));
+        bNaturalEnds = Internal_IsSubDFriendlyEnd(endex, span_knots, P[0], P[1], P[2]);
+      }
+    }
+
+    if ( bNaturalEnds && ON_SubD::SubDFriendlyKnotType::ClampedPiecewiseUniform == knot_type )
+    {
+      // Interior triple knots must be natural on either side of the triple knot.
+      // Interior triple knots are used to place kinks inside the curve.
+      ON_3dPoint P[5];
+      const unsigned int knot_count = (unsigned int)KnotCount();    
+      const double* knot = m_knot;
+      for (unsigned int knot_dex = 3; knot_dex < knot_count - 4U && bNaturalEnds; ++knot_dex)
+      {
+        if (knot[knot_dex] == knot[knot_dex + 1])
+        {
+          // This tests that the 2nd derivative is zero when evaluated from both below and above knot[knot_dex].
+          bNaturalEnds =
+            knot[knot_dex - 1] < knot[knot_dex]
+            // tested above to enter this scope // && knot[knot_dex] == knot[knot_dex+1]
+            && knot[knot_dex + 1] == knot[knot_dex + 2]
+            && knot[knot_dex + 2] < knot[knot_dex + 3]
+            && GetCV(knot_dex - 2, P[0])
+            && GetCV(knot_dex - 1, P[1])
+            && GetCV(knot_dex, P[2])
+            && GetCV(knot_dex + 1, P[3])
+            && GetCV(knot_dex + 2, P[4])
+            && Internal_IsSubDFriendlyEnd(1,knot+knot_dex-3, P[0], P[1], P[2])
+            && Internal_IsSubDFriendlyEnd(0,knot+knot_dex, P[2], P[3], P[4]);
+          ++knot_dex;
+        }
+      }
+    }
+
+    if (false == bNaturalEnds)
+      break;
+
+    return true;
+  }
+
+  return false;
+}
+
+ON_SubD::SubDFriendlyKnotType ON_SubD::NurbsKnotType(
+  int order,
+  int cv_count,
+  const double* knots
+)
+{
+  return ON_SubD::NurbsKnotType(order, cv_count, knots, nullptr);
+}
+
+ON_SubD::SubDFriendlyKnotType ON_SubD::NurbsKnotType(
+    int order,
+    int cv_count,
+    const double* knots,
+    ON_SimpleArray<double>* triple_knots
+  )
+{
+  if (nullptr != triple_knots)
+    triple_knots->SetCount(0);
+  for (;;)
+  {
+    if (4 != order || cv_count < order || nullptr == knots)
+      break;
+
+    const double delta = knots[3] - knots[2];
+    if (false == (delta > 0.0))
+      break;
+
+    const double deltatol = ON_SQRT_EPSILON * delta;
+
+    const bool bClamped0 = knots[0] == knots[1] && knots[1] == knots[2];
+    const bool bClamped1 = knots[cv_count - 1] == knots[cv_count] && knots[cv_count] == knots[cv_count + 1];
+    if (bClamped0 && nullptr != triple_knots)
+      triple_knots->Append(knots[2]);
+
+    const bool bClamped = bClamped0 && bClamped1;
+    const bool bUnclamped =
+      (false == bClamped)
+      && fabs(knots[1] - knots[0] - delta) <= deltatol
+      && fabs(knots[2] - knots[1] - delta) <= deltatol
+      && fabs(knots[cv_count] - knots[cv_count - 1] - delta) <= deltatol
+      && fabs(knots[cv_count + 1] - knots[cv_count] - delta) <= deltatol
+      ;
+    if ( bClamped == bUnclamped)
+      break;
+
+    bool bPiecewiseUniform = false;
+    for (int knot_dex = 3; knot_dex < cv_count - 1; ++knot_dex)
+    {
+      const double d = knots[knot_dex + 1] - knots[knot_dex];
+      if (0.0 == d)
+      {
+        if (bClamped && knots[knot_dex + 2] == knots[knot_dex])
+        {
+          bPiecewiseUniform = true;
+          ++knot_dex;
+          if (bClamped1 && nullptr != triple_knots)
+            triple_knots->Append(knots[knot_dex]);
+          continue;
+        }
+      }
+      else
+      {
+        if (fabs(d - delta) <= deltatol)
+          continue;
+      }
+      return ON_SubD::SubDFriendlyKnotType::Unfriendly;
+    }
+
+    if (bClamped1 && nullptr != triple_knots)
+      triple_knots->Append(knots[cv_count - 1]);
+
+    return
+      bClamped
+      ? (bPiecewiseUniform ? ON_SubD::SubDFriendlyKnotType::ClampedPiecewiseUniform : ON_SubD::SubDFriendlyKnotType::ClampedUniform)
+      : ON_SubD::SubDFriendlyKnotType::UnclampedUniform;
+  }
+
+  return ON_SubD::SubDFriendlyKnotType::Unfriendly;
 }

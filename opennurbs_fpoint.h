@@ -176,7 +176,7 @@ public:
 
   /*
   Returns:
-    true if at least one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -353,7 +353,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -774,7 +774,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -1036,7 +1036,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 

@@ -1306,6 +1306,13 @@ bool ON_PolyCurve::HasGapAt(int segment_index) const
   ON_3dPoint P1 = c1->PointAtStart();
   // Note:  The point compare test should be the same
   //        as the one used in ON_Curve::IsClosed().
+  //
+  // June 2019 - sometime in the past decade ON_PolyCurve::HasGap()
+  // changed and the test here is different from ON_Curve::IsClosed().
+  // The initial "Note" no longer applies becaue it's no longer
+  // clear why the current ON_PolyCurve::HasGap() elimiated the "b c"
+  // test that remained in ON_Curve::IsClosed().
+
   if ( false == ON_PointsAreCoincident( 3, false, &P0.x, &P1.x ) )
   {
     // To fix RR 13325 I allow a little more leeway for arcs.

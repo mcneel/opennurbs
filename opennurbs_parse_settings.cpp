@@ -1181,15 +1181,15 @@ bool ON_ParseSettings::IsDigitSeparator(ON__UINT32 c) const
   switch(c)
   {
   case 0x002C: // comma
-    return ParseCommaAsDigitSeparator();
+    return ParseCommaAsDigitSeparator(); // default = true
     break;
 
   case 0x002E: // full stop (period)
-    return ParseFullStopAsDigitSeparator();
+    return ParseFullStopAsDigitSeparator(); // default = false
     break;
 
   case 0x0020: // space
-    return ParseSpaceAsDigitSeparator();
+    return ParseSpaceAsDigitSeparator(); // default = true
     break;
 
   case 0x00A0: // no-break space
@@ -1205,6 +1205,13 @@ bool ON_ParseSettings::IsDigitSeparator(ON__UINT32 c) const
   case 0x202F: // narrow no-break
     return ParseNoBreakThinSpaceAsDigitSeparator();
     break;
+
+  case 0x066C: // UNICODE ARABIC THOUSANDS SEPARATOR
+    // Intended to be used with eastern arabic numerials, 
+    // but its lexical function is always a thousands separator.
+    return false;
+    break;
+
   }
 
   return false;
@@ -1220,6 +1227,18 @@ bool ON_ParseSettings::IsDecimalPoint(ON__UINT32 c) const
 
   case 0x002E: // full stop (period)
     return ParseFullStopAsDecimalPoint();
+    break;
+
+  case 0x2396: // UNICODE DECIMAL SEPARATOR KEY SYMBOL
+    // Intended to be used as a symbol on keyboards,
+    // but its lexical function is always a decimal point.
+    return true;
+    break;
+
+  case 0x066B: // UNICODE ARABIC DECIMAL SEPARATOR
+    // Intended to be used with eastern arabic numerials, 
+    // but its lexical function is always a decimal point.
+    return true;
     break;
   }
   return false;

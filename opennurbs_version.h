@@ -1,4 +1,4 @@
-﻿/* $NoKeywords: $ */
+/* $NoKeywords: $ */
 /*
 //
 // Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -97,16 +97,16 @@
 //
 // The build process modifies version.h and sets
 // RMA_SRC_SVN_REVISION = "<git revision SHA-1 hash>"
-// before compiling applications.		
-//		
+// before compiling applications.
+//
 
-#define OPENNURBS_GIT_REVISION_HASH RMA_GIT_REVISION_HASH_STRING		
+#define OPENNURBS_GIT_REVISION_HASH RMA_GIT_REVISION_HASH_STRING
 #define OPENNURBS_GIT_BRANCH_NAME RMA_GIT_BRANCH_NAME_STRING
 
 ////////////////////////////////////////////////////////////////
 //
-// OPENNURBS_VERSION_QUARTET_STRING is a macro whose value is the 
-// opennurbs version quartet as a string.  
+// OPENNURBS_VERSION_QUARTET_STRING is a macro whose value is the
+// opennurbs version quartet as a string.
 //
 #define OPENNURBS_VERSION_QUARTET_STRING  RMA_VERSION_WITH_PERIODS_STRING
 #define OPENNURBS_VERSION_QUARTET_WSTRING RMA_VERSION_WITH_PERIODS_WSTRING
@@ -115,11 +115,11 @@
 
 ////////////////////////////////////////////////////////////////
 //
-// ON_VERSION_NUMBER_FEBDAYS(year) is a macro whose value is 
-// the number of days in the month of February in a specified 
-// year.  
+// ON_VERSION_NUMBER_FEBDAYS(year) is a macro whose value is
+// the number of days in the month of February in a specified
+// year.
 //
-// In almost every situation, it is best to used the function 
+// In almost every situation, it is best to used the function
 // call ON_DaysInMonthOfGregorianYear(year,2) to get this value.
 // The ON_VERSION_NUMBER_FEBDAYS macro is for rare and unusual
 // situations where the C preprocessor needs this value.
@@ -132,8 +132,8 @@
 
 ////////////////////////////////////////////////////////////////
 //
-// ON_VERSION_NUMBER_DAYOFYEAR(year, month, day_of_month) is a macro 
-// whose value is the cardinal day of the year for the 
+// ON_VERSION_NUMBER_DAYOFYEAR(year, month, day_of_month) is a macro
+// whose value is the cardinal day of the year for the
 // specified year, month and day_of_month.
 //
 // In almost every situation, it is best to used the function call
@@ -176,7 +176,7 @@
 //   1: Windows build
 //   2: Mac build
 //
-// NOTE WELL: 
+// NOTE WELL:
 //   ON_VERSION_NUMBER_PLATFORM_ID(branch) must be a value between 0 and 3.
 #define ON_VERSION_NUMBER_PLATFORM_ID(branch) \
    (((branch) > 0x0U) ? (0x02U - ((branch) % 0x02U)) : 0x0U)
@@ -190,8 +190,8 @@
 //
 // In almost every situation, it is best to used the function call
 // ON_VersionNumberConstruct(major,minor,year,month,day_of_month,branch)
-// to get this value.  The ON_VERSION_NUMBER_CTOR macro is for 
-// rare and unusual situations where the C preprocessor needs 
+// to get this value.  The ON_VERSION_NUMBER_CTOR macro is for
+// rare and unusual situations where the C preprocessor needs
 // this value.
 //
 #define ON_VERSION_NUMBER_CTOR(major,minor,year,month,day_of_month,branch) \
@@ -202,10 +202,10 @@
 
 ////////////////////////////////////////////////////////////////
 //
-// OPENNURBS_VERSION_NUMBER is a macro whose value is the 
-// opennurbs version number.  
+// OPENNURBS_VERSION_NUMBER is a macro whose value is the
+// opennurbs version number.
 //
-// Always use ON::Version() when you need this value. 
+// Always use ON::Version() when you need this value.
 // The OPENNURBS_VERSION_NUMBER macro is for rare and unusual
 // situations where the C preprocessor needs this value.
 //
@@ -213,5 +213,15 @@
           OPENNURBS_VERSION_MAJOR, OPENNURBS_VERSION_MINOR, \
           OPENNURBS_VERSION_YEAR, OPENNURBS_VERSION_MONTH, OPENNURBS_VERSION_DAY_OF_MONTH, \
           OPENNURBS_VERSION_BRANCH )
+
+// Jan 2017
+//  November 2016 Rhino 7 WIP writes version 6 files.
+//  October 23 1019, Rhino 7 WIP writes version 7 files.
+//
+// More generally, in a stable release product, OPENNURBS_CURRENT_ARCHIVE_VERSION = OPENNURBS_VERSION_MAJOR*10.
+// But for some period of time at the beginning of the Rhino (N+1) WIP developement cycle,
+// Rhino (N+1) WIP writes Rhino N files. That's why OPENNURBS_CURRENT_ARCHIVE_VERSION
+// is sometimes (OPENNURBS_VERSION_MAJOR*10) and is sometimes ((OPENNURBS_VERSION_MAJOR-1)*10)
+#define OPENNURBS_CURRENT_ARCHIVE_VERSION 70
 
 #endif

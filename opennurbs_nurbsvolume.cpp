@@ -1361,8 +1361,8 @@ ON_NurbsSurface* ON_NurbsCage::IsoSurface(
   nurbs_curve.m_cv_count = nurbs_curve.m_order;
   nurbs_curve.ReserveCVCapacity(nurbs_curve.m_dim*nurbs_curve.m_cv_count);
   nurbs_curve.m_cv_stride = nurbs_curve.m_dim;
-  nurbs_curve.m_knot = m_knot[dir] + span_index;
-  nurbs_curve.m_knot_capacity = 0;
+  // nurbs_curve.m_knot[] shares memory with m_knot[dir] + span_index. nurbs_curve destructor does not free nurbs_curve.m_knot[]
+  nurbs_curve.ManageKnotForExperts(0, m_knot[dir] + span_index);
 
   int ii,jj,kk;
   /*

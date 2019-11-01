@@ -309,11 +309,11 @@ bool ON_Text::GetTextXform(
   ON_Xform rotation_xf(ON_Xform::IdentityTransformation);
   ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
   ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
+  ON_3dVector view_z = nullptr == vp ? ON_3dVector::ZAxis : vp->CameraZ();
 
   if ( ON::TextOrientation::InView == dimstyle->TextOrientation() )  // Draw text horizontal and flat to the screen
   {
     ON_Xform tp2sxf;        // Text point to view plane rotation
-    ON_3dVector view_z = ON_CrossProduct(view_x, view_y);
     ON_3dPoint text_point_3d = Plane().origin;
     ON_3dVector text_xdir = textobjectplane.xaxis;
     ON_3dVector text_ydir = textobjectplane.yaxis;
@@ -349,25 +349,38 @@ bool ON_Text::GetTextXform(
         text_center = (text_corners[0] + text_corners[2]) / 2.0;
         ON_3dVector text_xdir = textobjectplane.xaxis;
         ON_3dVector text_ydir = textobjectplane.yaxis;
+        ON_3dVector text_zdir = textobjectplane.zaxis;
         if (nullptr != model_xform)
         {
           text_xdir.Transform(*model_xform);
           text_ydir.Transform(*model_xform);
+          text_zdir.Transform(*model_xform);
         }
         if (fabs(textrotation) > ON_SQRT_EPSILON)
         {
           text_xdir.Rotate(textrotation, textobjectplane.zaxis);
           text_ydir.Rotate(textrotation, textobjectplane.zaxis);
         }
-        bool fx = (-0.01 > view_x * text_xdir); // text xdir doesn't match view xdir
-        bool fy = (-0.01 > view_y * text_ydir); // text ydir doesn't match view ydir
-        ON_Xform mxf;  // Mirror xform for backwards text
-        if (fx)
+
+        bool flip_x = false;
+        bool flip_y = false;
+
+        const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(80.001 * ON_DEGREES_TO_RADIANS);
+        CalcTextFlip(
+          text_xdir, text_ydir, text_zdir,
+          view_x, view_y, view_z,
+          model_xform,
+          fliptol,
+          flip_x,
+          flip_y);
+
+        ON_Xform mxf;  // Mirror xform for backwards text to adjust DrawForward
+        if (flip_x)
         {
           mxf.Mirror(text_center, ON_3dVector::XAxis);
           textscale_xf = textscale_xf * mxf;
         }
-        if (fy)
+        if (flip_y)
         {
           mxf.Mirror(text_center, ON_3dVector::YAxis);
           textscale_xf = textscale_xf * mxf;

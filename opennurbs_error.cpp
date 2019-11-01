@@ -124,6 +124,13 @@ static void ON_IncrementWarningCount()
   ON_WARNING_COUNT++;
 }
 
+void ON_SubDIncrementErrorCount()
+{
+  ON_ERROR_COUNT++;
+  ON_SubD::ErrorCount++;
+} 
+
+
 bool ON_IsNotValid()
 {
   return false;

@@ -450,7 +450,7 @@ private:
 #define ON_IS_VALID_FLOAT(x)  ((x) != ON_UNSET_FLOAT && (x) != ON_UNSET_POSITIVE_FLOAT && ON_IS_FINITE_FLOAT(x))
 #define ON_IS_UNSET_DOUBLE(x) (ON_UNSET_VALUE == (x) || ON_UNSET_POSITIVE_VALUE == (x))
 #define ON_IS_UNSET_FLOAT(x) (ON_UNSET_FLOAT == (x) || ON_UNSET_POSITIVE_FLOAT == (x))
-#define ON_IS_NAN(x) (!((x)==(x))
+#define ON_IS_NAN(x) (!((x)==(x)))
 
 ON_DECL
 float ON_ArrayDotProduct( // returns AoB
@@ -1632,6 +1632,9 @@ ON_DECL
 int ON_Compare2dex( const ON_2dex* a, const ON_2dex* b);
 
 ON_DECL
+int ON_Compare2udex(const ON_2udex* a, const ON_2udex* b);
+
+ON_DECL
 int ON_Compare3dex( const ON_3dex* a, const ON_3dex* b);
 
 ON_DECL
@@ -2280,5 +2283,47 @@ Returns
   of f is at least the value of x.
 */
 ON_DECL float ON_FloatCeil(double x);
+
+/*
+Description:
+  Determine if a polyline is convex.
+Parameters:
+  point_dim - [in]
+    2 or 3
+  point_count - [in]
+  points - [in]
+    If point_count >= 4 and the first and last points are equal, 
+    then the zero length segment between those points is ignored.
+  point_stride - [in]
+    number of doubles between points (>=point_dim)
+  bStrictlyConvex - [in]
+    If false, colinear segments are considered convex.  
+Returns
+  True if the polyline is convex.
+*/
+ON_DECL bool ON_IsConvexPolyline(
+  size_t point_dim,
+  size_t point_count,
+  const double* points,
+  size_t point_stride,
+  bool bStrictlyConvex
+);
+
+/*
+Description:
+  Determine if a polyline is convex.
+Parameters:
+  points - [in]
+    If points.Count() >= 4 and the first and last points are equal, 
+    then the zero length segment between those points is ignored.
+  bStrictlyConvex - [in]
+    If false, colinear segments are considered convex.  
+Returns
+  True if the polyline is convex.
+*/
+ON_DECL bool ON_IsConvexPolyline(
+  const ON_SimpleArray<ON_3dPoint>& points,
+  bool bStrictlyConvex
+);
 
 #endif

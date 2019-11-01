@@ -25,7 +25,7 @@
 //  The classes have no size but effect performance.  Use only in
 //  debugging situations. Never ship a release with ON_SUBD_CENSUS defined.
 //
-class ON_SUBD_CLASS ON_CensusCounter
+class ON_CLASS ON_CensusCounter
 {
 public:
   enum class Class : unsigned int
@@ -51,7 +51,7 @@ public:
   static void Clear();
 };
 
-class ON_SUBD_CLASS ON_SubDCensusCounter
+class ON_CLASS ON_SubDCensusCounter
 {
 public:
   ON_SubDCensusCounter() ON_NOEXCEPT;
@@ -62,7 +62,7 @@ public:
   //ON_SubDCensusCounter& operator=( ON_SubDCensusCounter&& ) ON_NOEXCEPT;
 };
 
-class ON_SUBD_CLASS ON_SubDRefCensusCounter
+class ON_CLASS ON_SubDRefCensusCounter
 {
 public:
   ON_SubDRefCensusCounter() ON_NOEXCEPT;
@@ -74,7 +74,7 @@ public:
 };
 
 
-class ON_SUBD_CLASS ON_SubDImpleCensusCounter
+class ON_CLASS ON_SubDImpleCensusCounter
 {
 public:
   ON_SubDImpleCensusCounter() ON_NOEXCEPT;
@@ -85,27 +85,27 @@ public:
   //ON_SubDImplCensusCounter& operator=( ON_SubDImplCensusCounter&& ) ON_NOEXCEPT;
 };
 
-class ON_SUBD_CLASS ON_SubDLimitMeshCensusCounter
+class ON_CLASS ON_SubDMeshCensusCounter
 {
 public:
-  ON_SubDLimitMeshCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDLimitMeshCensusCounter() ON_NOEXCEPT;
-  ON_SubDLimitMeshCensusCounter(const ON_SubDLimitMeshCensusCounter&) ON_NOEXCEPT;
-  ON_SubDLimitMeshCensusCounter& operator=(const ON_SubDLimitMeshCensusCounter&) = default;
-  //ON_SubDLimitMeshCensusCounter( ON_SubDLimitMeshCensusCounter&& ) ON_NOEXCEPT;
-  //ON_SubDLimitMeshCensusCounter& operator=( ON_SubDLimitMeshCensusCounter&& ) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter() ON_NOEXCEPT;
+  ~ON_SubDMeshCensusCounter() ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter& operator=(const ON_SubDMeshCensusCounter&) = default;
+  //ON_SubDMeshCensusCounter( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
+  //ON_SubDMeshCensusCounter& operator=( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
 };
 
 
-class ON_SUBD_CLASS ON_SubDLimitMeshImplCensusCounter
+class ON_CLASS ON_SubDMeshCensusCounter
 {
 public:
-  ON_SubDLimitMeshImplCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDLimitMeshImplCensusCounter() ON_NOEXCEPT;
-  ON_SubDLimitMeshImplCensusCounter(const ON_SubDLimitMeshImplCensusCounter&) ON_NOEXCEPT;
-  ON_SubDLimitMeshImplCensusCounter& operator=(const ON_SubDLimitMeshImplCensusCounter&) ON_NOEXCEPT;
-  ON_SubDLimitMeshImplCensusCounter( ON_SubDLimitMeshImplCensusCounter&& ) ON_NOEXCEPT;
-  ON_SubDLimitMeshImplCensusCounter& operator=( ON_SubDLimitMeshImplCensusCounter&& ) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter() ON_NOEXCEPT;
+  ~ON_SubDMeshCensusCounter() ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter& operator=(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
+  ON_SubDMeshCensusCounter& operator=( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
 };
 
 #endif
@@ -120,6 +120,44 @@ public:
 #if !defined(OPENNURBS_SUBD_INC_)
 #define OPENNURBS_SUBD_INC_
 
+/// <summary>
+/// ON_SubDTextureDomainType identifies the way face 2d texture coordinate domains are set.
+/// </summary>
+enum class ON_SubDTextureDomainType : unsigned char
+{
+  ///<summary>
+  /// Texture domains are not set.
+  ///</summary>
+  Unset = 0,
+
+  ///<summary>
+  /// Each face texture domain is a unique rectangle of normlized texture space. 
+  ///</summary>
+  PerFace = 1,
+
+  ///<summary>
+  /// Each face texture domain is a unique rectangle of normlized texture space. 
+  /// When possible, faces are partitioned into quad groups. Adjactent members
+  /// of the group are assigned adjacent rectangles in texture space.
+  ///</summary>
+  Packed = 2,
+
+  ///<summary>
+  /// All face texture domain values are zero.
+  ///</summary>
+  Zero = 3,
+
+  ///<summary>
+  /// All face texture domain values are nan.
+  ///</summary>
+  Nan = 4,
+
+  ///<summary>
+  /// Code outside of opennurbs set the values. No other information is available.
+  ///</summary>
+  Custom = 7,
+};
+
 class ON_CLASS ON_SubDVertexPtr
 {
 public:
@@ -131,34 +169,96 @@ public:
   static const ON_SubDVertexPtr Null;
 
   bool IsNull() const;
+  bool IsNotNull() const;
+
+  /*
+  Returns:
+    True if this vertex is active in its parent subd or other
+    relevent context.
+  Remarks:
+    When a component is in use, IsActive() = true. 
+    If was used and then deleted, IsActive() is false.
+  */
+  bool IsActive() const;
 
   class ON_SubDVertex* Vertex() const;
 
-  ON__UINT_PTR VertexPtrMark() const;
+  ON__UINT_PTR VertexDirection() const;
 
-  ON_ComponentStatus Status() const;
+  const ON_ComponentStatus Status() const;
 
-  static
-  class ON_SubDVertexPtr Create(
+  static const ON_SubDVertexPtr Create(
     const class ON_SubDVertex* vertex
     );
 
   /*
   Parameters:
     vertex - [in]
-    mark - [in]
+    vertex_direction - [in]
       zero or one
   */
-  static
-  class ON_SubDVertexPtr Create(
+  static const ON_SubDVertexPtr Create(
     const class ON_SubDVertex* vertex,
-    ON__UINT_PTR vertex_mark
+    ON__UINT_PTR vertex_direction
     );
 
-  static
-  class ON_SubDVertexPtr Create(
+  static const ON_SubDVertexPtr Create(
     const class ON_SubDComponentPtr& vertex_component
     );
+
+  /*
+  Returns:
+    The current value of the component mark ( m_status->RuntimeMark() ).
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  */
+  bool Mark() const;
+
+  /*
+  Description:
+    Clears (sets to false) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool ClearMark() const;
+
+  /*
+  Description:
+    Sets (sets to true) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark() const;
+
+  /*
+  Description:
+    Sets the value of the component mark to bMark.
+  Parameter:
+    bMark - [in]
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark(
+    bool bMark
+  ) const;
 };
 
 
@@ -176,14 +276,88 @@ public:
 
   static const ON_SubDEdgePtr Null;
 
+  /*
+  Returns:
+    True if this->Edge() is nullptr.
+  */
   bool IsNull() const;
 
+  /*
+  Returns:
+    True if this->Edge() is not nullptr.
+  */
+  bool IsNotNull() const;
+
+
+  /*
+  Returns:
+    True if this->Edge() is not nullptr and both vertex pointers are not null as well.
+  */
+  bool IsNotNullAndVerticesAreNotNull() const;
+
+  /*
+  Returns:
+    True if this edge is active in its parent subd or other
+    relevent context.
+  Remarks:
+    When a component is in use, IsActive() = true. 
+    If was used and then deleted, IsActive() is false.
+  */
+  bool IsActive() const;
+
+
+  /*
+  Returns:
+    The ON_SubDEdge this points at.
+  */
   class ON_SubDEdge* Edge() const;
 
   /*
   Returns:
-    0: the edge is oriented from Edge()->Vertex(0) to Edge()->Vertex(1).
-    1: the edge is oriented from Edge()->Vertex(1) to Edge()->Vertex(0).
+    If Edge() is not nullptr, Edge()->m_id is returned.
+    Otherwise, 0 is returned.
+  */
+  unsigned int EdgeId() const;
+  
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->FaceCount() is returned.
+    Otherwise, 0 is returned.
+  */
+  unsigned int EdgeFaceCount() const;
+    
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsSmooth() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsSmooth() const;
+    
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsCrease() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsCrease() const;
+   
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsHardCrease() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsHardCrease() const;
+   
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsDartCrease() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsDartCrease() const;
+
+  /*
+  Returns:
+    0: this ON_SubDEdgePtr is oriented from Edge()->Vertex(0) to Edge()->Vertex(1).
+    1: this ON_SubDEdgePtr is oriented from Edge()->Vertex(1) to Edge()->Vertex(0).
   */
   ON__UINT_PTR EdgeDirection() const;
 
@@ -193,30 +367,114 @@ public:
       0: return Edge()->Vertex(EdgeDirection())
       1: return Edge()->Vertex(1-EdgeDirection())
   Returns:
-    The vertex with EdgeDirection() taken into account.
+    The requested vertex with EdgeDirection() taken into account.
     nullptr if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const class ON_SubDVertex* RelativeVertex(
-  int relative_vertex_index
+    int relative_vertex_index
   ) const;
-
-
-  ON_ComponentStatus Status() const;
 
   /*
   Returns:
-    A pointer to the same edge with the direction flipped
+    The vector from RelativeVertex(0)->ControlNetPoint() to RelativeVertex(1)->ControlNetPoint(),
+    or ON_3dVector::NanVector if the relative vertex pointers are nullptr.
   */
-  ON_SubDEdgePtr Reversed() const;
+  const ON_3dVector RelativeDirection() const;
 
-  static ON_SubDEdgePtr Create(
+  /*
+  Returns:
+    this->Edge()->m_status.
+  */
+  const ON_ComponentStatus Status() const;
+
+  /*
+  Returns:
+    A ON_SubDEdgePtr pointing at the same edge with the direction reversed from this.
+  */
+  const ON_SubDEdgePtr Reversed() const;
+
+
+  /*
+  Parameters:
+    edge - [in]
+  Returns:
+    An ON_SubDEdgePtr pointing at edge with direction = 0 (not reversed).
+  */
+  static const ON_SubDEdgePtr Create(
+    const class ON_SubDEdge* edge
+    );
+
+  /*
+  Parameters:
+    edge - [in]
+    direction - [in]
+      0: not reversed
+      1: reversed
+  Returns:
+    An ON_SubDEdgePtr pointing at edge with the specified direction.
+  */
+  static const ON_SubDEdgePtr Create(
     const class ON_SubDEdge* edge,
     ON__UINT_PTR direction
     );
 
-  static ON_SubDEdgePtr Create(
+  static const ON_SubDEdgePtr Create(
     const class ON_SubDComponentPtr& edge_component
     );
+
+  /*
+  Returns:
+    The current value of the component mark ( m_status->RuntimeMark() ).
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  */
+  bool Mark() const;
+
+  /*
+  Description:
+    Clears (sets to false) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool ClearMark() const;
+
+  /*
+  Description:
+    Sets (sets to true) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark() const;
+
+  /*
+  Description:
+    Sets the value of the component mark to bMark.
+  Parameter:
+    bMark - [in]
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark(
+    bool bMark
+  ) const;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -235,21 +493,111 @@ public:
 
   bool IsNull() const;
 
-  class ON_SubDFace* Face() const;
+  bool IsNotNull() const;
 
+  /*
+  Returns:
+    True if this face is active in its parent subd or other
+    relevent context.
+  Remarks:
+    When a component is in use, IsActive() = true. 
+    If was used and then deleted, IsActive() is false.
+  */
+  bool IsActive() const;
+
+
+  class ON_SubDFace* Face() const;
+  
+  /*
+  Returns:
+    If Face() is not nullptr, Face()->m_id is returned.
+    Otherwise, 0 is returned.
+  */
+  unsigned int FaceId() const;
+
+  /*
+  Returns:
+    If Face() is not nullptr, Face()->EdgeCount() is returned.
+    Otherwise, 0 is returned.
+  */
+  unsigned int FaceEdgeCount() const;
+  
   ON__UINT_PTR FaceDirection() const;
 
-  ON_ComponentStatus Status() const;
+  const ON_ComponentStatus Status() const;
 
-  static
-  class ON_SubDFacePtr Create(
+  static const ON_SubDFacePtr Create(
     const class ON_SubDFace* face,
     ON__UINT_PTR direction
     );
 
-  static ON_SubDFacePtr Create(
+  static const ON_SubDFacePtr Create(
     const class ON_SubDComponentPtr& face_component
     );
+
+  static int Compare(
+    const ON_SubDFacePtr* lhs,
+    const ON_SubDFacePtr* rhs
+  );
+
+  static int CompareFacePointer(
+    const ON_SubDFacePtr* lhs,
+    const ON_SubDFacePtr* rhs
+  );
+
+  /*
+  Returns:
+    The current value of the component mark ( m_status->RuntimeMark() ).
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  */
+  bool Mark() const;
+
+  /*
+  Description:
+    Clears (sets to false) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool ClearMark() const;
+
+  /*
+  Description:
+    Sets (sets to true) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark() const;
+
+  /*
+  Description:
+    Sets the value of the component mark to bMark.
+  Parameter:
+    bMark - [in]
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark(
+    bool bMark
+  ) const;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -267,6 +615,10 @@ public:
 
   static const ON_SubDComponentPtr Null; //  // nullptr, type = unset, mark = 0
 
+  /// <summary>
+  /// ON_SubDComponentPtr::Type identifies the type of subdivision component referenced by
+  /// the ON_SubDComponentPtr.
+  /// </summary>
   enum class Type : unsigned char
   {
     Unset = 0,
@@ -297,10 +649,24 @@ public:
     const ON_SubDComponentPtr* b
     );
 
-  static int Compare(
+  /*
+  Description:
+    Dictionary compares type and ComponentBase() pointer as an unsigned.
+  */
+  static int CompareComponent(
     const ON_SubDComponentPtr* a,
     const ON_SubDComponentPtr* b
-    );
+  );
+
+  /*
+  Description:
+    Dictionary compares type, ComponentBase() pointer as an unsigned,
+    and ComponentDirection().
+  */
+  static int CompareComponentAndDirection(
+    const ON_SubDComponentPtr* a,
+    const ON_SubDComponentPtr* b
+  );
 
 
   /*
@@ -310,6 +676,16 @@ public:
   bool IsNull() const;
   bool IsNotNull() const;
 
+  /*
+  Returns:
+    True if this component is active in its parent subd or other
+    relevent context.
+  Remarks:
+    When a component is in use, IsActive() = true. 
+    If was used and then deleted, IsActive() is false.
+  */
+  bool IsActive() const;
+
   ON_SubDComponentPtr::Type ComponentType() const;
 
   class ON_SubDComponentBase* ComponentBase() const;
@@ -317,25 +693,70 @@ public:
   class ON_SubDEdge* Edge() const;
   class ON_SubDFace* Face() const;
 
-  ON_SubDVertexPtr VertexPtr() const;
-  ON_SubDEdgePtr EdgePtr() const;
-  ON_SubDFacePtr FacePtr() const;
+  const ON_SubDVertexPtr VertexPtr() const;
+  const ON_SubDEdgePtr EdgePtr() const;
+  const ON_SubDFacePtr FacePtr() const;
 
-  ON_COMPONENT_INDEX ComponentIndex() const;
+  unsigned int ComponentId() const;
+
+  const ON_COMPONENT_INDEX ComponentIndex() const;
+
+  const ON_3dPoint ControlNetCenterPoint() const;
+  const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /*
+  Returns:
+    A value suitable for hash table used based on the component type and id.
+  */
+  ON__UINT16 Hash16FromTypeAndId() const;
+
+
+  /*
+  Returns:
+    A value suitable for hash table used based on the value of ComponentBase().
+  */
+  ON__UINT32 Hash32FromPointer() const;
 
   /*
   Returns:
     0 or 1.
-    The interpretation of the mark varies depending on the context.
-    For vertices, this is the vertex mark.
-    For edges, this is generally an index into ON_SubDEdge.m_vertex[]
-    or a direction flag with 1 indicating a reversed direction.
-    For face, this is generally an orientation flag with 1 indicating
-    a reversed (clockwise) orientation.
+    A runtime bit property on this ON_SubDComponentPtr. 
+    The use of this value varies depending on the context.
+    Frequently, 0 means the referenced component is being used with its
+    natural orientation and 1 means the referenced component is being used
+    with the reverse of its natrual oreientation.
   */
-  ON__UINT_PTR ComponentMark() const;
+  ON__UINT_PTR ComponentDirection() const;
 
-  ON_ComponentStatus Status() const;
+  /*
+  Returns:
+    An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
+    with ON_SubDComponentPtr.ComponentDirection() = 0.
+  */
+  const ON_SubDComponentPtr ClearComponentDirection() const;
+
+  /*
+  Returns:
+    An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
+    with ON_SubDComponentPtr.ComponentDirection() = 1.
+  */
+  const ON_SubDComponentPtr SetComponentDirection() const;
+
+  /*
+  Returns:
+    An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
+    with ON_SubDComponentPtr.ComponentDirection() = 1.
+  */
+  const ON_SubDComponentPtr SetComponentDirection(ON__UINT_PTR dir) const;
+
+  /*
+  Returns:
+    An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
+    with ComponentDirection() = 1 - this->ComponentDirection().
+  */
+  const ON_SubDComponentPtr ToggleComponentDirection() const;
+
+  const ON_ComponentStatus Status() const;
 
   /*
   Returns:
@@ -368,16 +789,64 @@ public:
     ON_ComponentStatus status
     );
 
-  ON_SubDComponentPtr ClearMark() const;
+  /*
+  Returns:
+    The current value of the component mark ( m_status->RuntimeMark() ).
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  */
+  bool Mark() const;
 
-  ON_SubDComponentPtr SetMark() const;
+  /*
+  Description:
+    Clears (sets to false) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool ClearMark() const;
 
-  ON_SubDComponentPtr ToggleMark() const;
+  /*
+  Description:
+    Sets (sets to true) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark() const;
+
+  /*
+  Description:
+    Sets the value of the component mark to bMark.
+  Parameter:
+    bMark - [in]
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark(
+    bool bMark
+  ) const;
 
   static
   const ON_SubDComponentPtr CreateNull(
     ON_SubDComponentPtr::Type component_type,
-    bool bMark
+    ON__UINT_PTR component_direction
     );
 
   static
@@ -398,19 +867,19 @@ public:
   static
   const ON_SubDComponentPtr Create(
     const class ON_SubDVertex* vertex,
-    ON__UINT_PTR vertex_mark
+    ON__UINT_PTR vertex_direction
     );
 
   static
   const ON_SubDComponentPtr Create(
     const class ON_SubDEdge* edge,
-    ON__UINT_PTR edge_mark
+    ON__UINT_PTR edge_direction
     );
 
   static
   const ON_SubDComponentPtr Create(
     const class ON_SubDFace* face,
-    ON__UINT_PTR face_mark
+    ON__UINT_PTR face_direction
     );
   
   static
@@ -441,18 +910,190 @@ public:
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentPtr>;
 #endif
 
+class ON_CLASS ON_SubDComponentPtrPair
+{
+public:
+  // For performance reasons, m_ptrpair is not initialized and no constructors are declared
+  // or implemented.  If you require initialization, then use x = ON_SubDComponentPtrPair::Null
+  // or x = ON_SubDComponentPtr::Create(first_ptr,second_ptr).
+  ON_SubDComponentPtr m_pair[2];
 
-#if defined(OPENNURBS_SUBD_WIP)
+public:
+  static const ON_SubDComponentPtrPair Create(ON_SubDComponentPtr first_ptr, ON_SubDComponentPtr second_ptr);
 
-#if 1
-// SuD is exported from opennurbs DLL
-#define ON_SUBD_CLASS ON_CLASS
-#else
-// SuD is not exported from opennurbs DLL
-#define ON_SUBD_CLASS
+  /*
+  Description:
+    Dictionary order compare using ON_SubDComponentPtr::CompareComponent() on each element.
+  */
+  static int CompareComponent(const ON_SubDComponentPtrPair * lhs, const ON_SubDComponentPtrPair * rhs);
+
+  /*
+  Description:
+    Dictionary order compare using ON_SubDComponentPtr::CompareComponentAndDirection() on each element.
+  */
+  static int CompareComponentAndDirection(const ON_SubDComponentPtrPair * lhs, const ON_SubDComponentPtrPair * rhs);
+
+  /*
+  Description:
+    Compare first pointer value.
+  */
+  static int CompareFirstPointer(const ON_SubDComponentPtrPair * lhs, const ON_SubDComponentPtrPair * rhs);
+
+  /*
+  Returns:
+    A pair with components in the opposite order
+  */
+  const ON_SubDComponentPtrPair SwapPair() const;
+
+  /*
+  Returns:
+    First ON_SubDComponentPt in the pair.
+  */
+  const ON_SubDComponentPtr First() const;
+
+  /*
+  Returns:
+    Second ON_SubDComponentPt in the pair.
+  */
+  const ON_SubDComponentPtr Second() const;
+
+  /*
+  Returns:
+    If both points have the same type, that type is returned.
+    Otherwise ON_SubDComponentPtr::Type::Unset is returned.
+  */
+  ON_SubDComponentPtr::Type ComponentType() const;
+
+public:
+  const static ON_SubDComponentPtrPair Null;
+
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentPtrPair>;
 #endif
 
-class ON_SUBD_CLASS ON_SubDComponentRegionIndex
+class ON_CLASS ON_SubDComponentPtrPairHashTable : ON_Hash32Table
+{
+public:
+  ON_SubDComponentPtrPairHashTable();
+
+  ON_SubDComponentPtrPairHashTable(const class ON_SubD& subd);
+  
+  ~ON_SubDComponentPtrPairHashTable() = default;
+  
+  bool AddComponentPair(
+    ON_SubDComponentPtr first_component,
+    ON_SubDComponentPtr second_component
+  );
+
+  bool AddVertexPair(
+    const class ON_SubDVertex* first_v,
+    const class ON_SubDVertex* second_v
+  );
+
+  bool AddEdgePair(
+    const class ON_SubDEdge* first_e,
+    const class ON_SubDEdge* second_e
+  );
+
+  bool AddEdgePair(
+    const class ON_SubDEdge* first_e,
+    const ON_SubDEdgePtr second_eptr
+  );
+
+  bool AddFacePair(
+    const class ON_SubDFace* first_f,
+    const class ON_SubDFace* second_f
+  );
+
+  const ON_SubDComponentPtrPair PairFromSecondComponentPtr(
+    ON_SubDComponentPtr second_component
+  );
+
+  const ON_SubDComponentPtrPair PairFromSecondVertex(
+    const class ON_SubDVertex* second_v
+  );
+
+  const ON_SubDComponentPtrPair PairFromSecondEdge(
+    const class ON_SubDEdge* second_e
+  );
+
+private:
+  ON_FixedSizePool m_pairs_fsp;
+
+private:
+  ON_SubDComponentPtrPairHashTable(const ON_SubDComponentPtrPairHashTable&) = delete;
+  ON_SubDComponentPtrPairHashTable& operator=(const ON_SubDComponentPtrPairHashTable&) = delete;
+};
+
+
+class ON_CLASS ON_SubDVertexSurfacePointCoefficient
+{
+public: 
+  ON_SubDVertexSurfacePointCoefficient() = default;
+  ~ON_SubDVertexSurfacePointCoefficient() = default;
+  ON_SubDVertexSurfacePointCoefficient(const ON_SubDVertexSurfacePointCoefficient&) = default;
+  ON_SubDVertexSurfacePointCoefficient& operator=(const ON_SubDVertexSurfacePointCoefficient&) = default;
+
+public:
+
+  // ON_SubDVertexSurfacePointCoefficient::Zero.m_c = 0.0
+  static const ON_SubDVertexSurfacePointCoefficient Zero;
+
+  // ON_SubDVertexSurfacePointCoefficient::Nan.m_c = ON_DBL_QNAN
+  static const ON_SubDVertexSurfacePointCoefficient Nan;
+
+  // ON_SubDVertexSurfacePointCoefficient::Unset.m_c = ON_UNSET_VALUE
+  static const ON_SubDVertexSurfacePointCoefficient Unset;
+
+  static const ON_SubDVertexSurfacePointCoefficient Create(
+    const ON_SubDVertex* limit_point_vertex,
+    const ON_SubDVertex* ring_vertex,
+    double x
+  );
+
+public: 
+  static int CompareSurfacePointVertexId(
+    const ON_SubDVertexSurfacePointCoefficient* lhs,
+    const ON_SubDVertexSurfacePointCoefficient* rhs
+  );
+
+  static int CompareRingVertexId(
+    const ON_SubDVertexSurfacePointCoefficient* lhs,
+    const ON_SubDVertexSurfacePointCoefficient* rhs
+  );
+
+  static int CompareSurfacePointAndRingVertexId(
+    const ON_SubDVertexSurfacePointCoefficient* lhs,
+    const ON_SubDVertexSurfacePointCoefficient* rhs
+  );
+
+  static int CompareRingAndSurfacePointVertexId(
+    const ON_SubDVertexSurfacePointCoefficient* lhs,
+    const ON_SubDVertexSurfacePointCoefficient* rhs
+  );
+
+
+public:
+  const ON_SubDVertex* m_limit_point_vertex = nullptr;
+  const ON_SubDVertex* m_ring_vertex = nullptr;
+  // The limit point of m_limit_point_vertex
+  // = sum of m_c*m_ring_vertex->ControlNetPoint()
+  // for every point in the ring of m_limit_point_vertex, including m_limit_point_vertex.
+  double m_c = 0.0;
+
+public:
+  unsigned int SurfacePointVertexId() const;
+  unsigned int RingVertexId() const;
+  double Coefficient() const;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDVertexSurfacePointCoefficient>;
+#endif
+
+class ON_CLASS ON_SubDComponentRegionIndex
 {
 public:
   ON_SubDComponentRegionIndex() = default;
@@ -586,7 +1227,7 @@ public:
   );
 };
 
-class ON_SUBD_CLASS ON_SubDComponentRegion
+class ON_CLASS ON_SubDComponentRegion
 {
 public:
   ON_SubDComponentRegion() = default;
@@ -614,7 +1255,7 @@ public:
     that run from the level N edge subdivision point to the 
     level N face subdivision point.
 
-    m_level0_component = ON_SubDComponentPtr::CreateNull(component_type, bComponentMark),
+    m_level0_component = ON_SubDComponentPtr::CreateNull(component_type, bComponentDirection?1:0),
        (m_level0_component.IsNull() will be true)
     m_level0_component_id = ON_SubDComponentRegion::NewTransientId()
     m_subdivision_count = subdivision_count,
@@ -623,7 +1264,7 @@ public:
   */
   static const ON_SubDComponentRegion CreateSubdivisionRegion(
     ON_SubDComponentPtr::Type component_type,
-    bool bComponentMark,
+    bool bComponentDirection,
     unsigned short subdivision_count,
     bool bAssignTransientId
   );
@@ -657,7 +1298,7 @@ public:
     Compares 
     m_level0_component.ComponentType(), 
     m_level0_component_id,
-    m_level0_component.ComponentMark(),
+    m_level0_component.ComponentDirection(),
     the entire sub region,
     and m_level0_component.m_ptr.
   */
@@ -671,9 +1312,9 @@ public:
     Compares 
     m_level0_component.ComponentType(), 
     m_level0_component_id,
-    m_level0_component.ComponentMark().
+    m_level0_component.ComponentDirection().
   */
-  static int CompareTypeIdMark(
+  static int CompareTypeIdDirection(
     const ON_SubDComponentRegion* lhs,
     const ON_SubDComponentRegion* rhs
     );
@@ -683,11 +1324,11 @@ public:
     Compares 
     m_level0_component.ComponentType(), 
     m_level0_component_id,
-    m_level0_component.ComponentMark(),
+    m_level0_component.ComponentDirection(),
     and the m_region_index[] values for the 
     minimum subdivision count lhs and rhs.    
   */
-  static int CompareTypeIdMarkMinimumSubregion(
+  static int CompareTypeIdDirectionMinimumSubregion(
     const ON_SubDComponentRegion* lhs,
     const ON_SubDComponentRegion* rhs
     );
@@ -697,10 +1338,10 @@ public:
     Compares 
     m_level0_component.ComponentType(), 
     m_level0_component_id,
-    m_level0_component.ComponentMark(),
+    m_level0_component.ComponentDirection(),
     and the entire sub region.
   */
-  static int CompareTypeIdMarkSubregion(
+  static int CompareTypeIdDirectionSubregion(
     const ON_SubDComponentRegion* lhs,
     const ON_SubDComponentRegion* rhs
     );
@@ -837,7 +1478,7 @@ public:
   static bool IsPersistentId(unsigned int id);
 };
 
-class ON_SUBD_CLASS ON_SubDFaceRegion
+class ON_CLASS ON_SubDFaceRegion
 {
 public:
   ON_SubDFaceRegion() = default;
@@ -884,7 +1525,7 @@ public:
 };
 
 
-class ON_SUBD_CLASS ON_SubDFaceRegionAndNurbs
+class ON_CLASS ON_SubDFaceRegionAndNurbs
 {
 public:
   ON_SubDFaceRegionAndNurbs() = default;
@@ -901,25 +1542,13 @@ public:
 };
 
 
-/*
-Description:
-  The ON_SubDComponentLocation enum is used when an ON_SubD component 
-  is referenced and it is important to distinguish between the
-  component's location in the SubD control net and its location
-  in the SubD limit surface.
-*/
-enum class ON_SubDComponentLocation : unsigned char
-{
-  Unset = 0,
-  ControlNet = 1,
-  LimitSurface = 2
-};
+
 
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubD
 //
-class ON_SUBD_CLASS ON_SubD : public ON_Geometry
+class ON_CLASS ON_SubD : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_SubD);
 
@@ -948,7 +1577,59 @@ public:
   */
   ON__UINT64 RuntimeSerialNumber() const;
 
-#pragma region RH_C_SHARED_ENUM [ON_SubD::VertexTag] [Rhino.Geometry.SubD.SubDVertexTag] [nested:byte]
+  /*
+  Returns:
+    A runtime serial number that is incremented every time a the active level,
+    vertex location, vertex or edge flag, or subd topology is changed.
+  */
+  ON__UINT64 ContentSerialNumber() const;
+
+  /*
+  Description:
+    Change the content serial number.
+    This should be done ONLY when the active level,
+    vertex location, vertex or edge flag, or subd topology is changed.
+  Returns:
+    The new value of ConentSerialNumber().
+  Remarks:
+    The value can change by any amount and core editing
+    functions typically take care of changing the content serial number.
+    A "top level" user of ON_SubD should never need to call this function.
+  */
+  ON__UINT64 ChangeContentSerialNumberForExperts();
+
+  /*
+  Description:
+    Get the SubD appearance (surface or control net);
+  Returns:
+    ON_SubDComponentLocation::Surface or ON_SubDComponentLocation::ControlNet.
+  */
+  ON_SubDComponentLocation SubDAppearance() const;
+
+  /*
+  Description:
+    Set the SubD appearance (surface or control net).
+  Parameters:
+    subd_appearance - [in]
+      ON_SubDComponentLocation::Surface or ON_SubDComponentLocation::ControlNet.
+  Remarks:
+    This makes no changes to the information that defines the SubD.
+    It does not require regeneration of the ON_SubDMeshFragments.
+    Application display will need to be updated.
+  */
+  void SetSubDAppearance(ON_SubDComponentLocation subd_appearance) const;
+
+  /*
+  Description:
+    Get the SubD appearance (surface or control net);
+  Returns:
+    ON_SubDComponentLocation::Surface or ON_SubDComponentLocation::ControlNet.
+  */
+  static ON_SubDComponentLocation ToggleSubDAppearanceValue(ON_SubDComponentLocation subd_appearance);
+  static ON_SubDComponentLocation DefaultSubDAppearance; // = ON_SubDComponentLocation::Surface
+
+public:
+#pragma region RH_C_SHARED_ENUM [ON_SubD::VertexTag] [Rhino.Geometry.SubDVertexTag] [byte]
   /// <summary>
   /// SubD::VertexTag identifies the type of subdivision vertex.  Different tags use
   /// different subdivision algorithms to determine where the subdivision point and
@@ -958,15 +1639,17 @@ public:
   enum class VertexTag : unsigned char
   {
     ///<summary>
-    /// Not a valid vertex tag and the default value for ON_SubDVertex::m_vertex_tag.
-    /// This encourages developers to thoughtfully initialize ON_SubDVertex::m_vertex_tag.
+    /// Not a valid vertex tag and the default value for ON_SubDVertex.m_vertex_tag.
+    /// This encourages developers to thoughtfully initialize ON_SubDVertex.m_vertex_tag
+    /// or use ON_SubD.UpdateAllTagsAndSectorCoefficients() to automatically set the
+    /// m_vertex_tag values at an appropriate time.
     ///</summary>
     Unset = 0,
 
     ///<summary>
     /// Must be an interior vertex.
-    /// All edges ending at a smooth vertex must be tagged as ON_SubD::EdgeTag::Smooth
-    /// and have 2 faces. 
+    /// All edges attached to a smooth vertex must be tagged as ON_SubD::EdgeTag::Smooth
+    /// and must have 2 faces. 
     ///</summary>
     Smooth = 1,
 
@@ -975,6 +1658,9 @@ public:
     /// Exactly two edges ending at a crease vertex must be tagged as ON_SubD::EdgeTag::Crease and may
     /// have 1 or 2 faces. 
     /// All other edges ending at a crease must be tagged as tagON_SubD::EdgeTag::Smooth and have 2 faces.
+    /// Below P = ON_SubDVertex.ControlNetPoint() and Ai = ON_SubDVertex.Edge(i)->OtherEndVertex()->ControlNetPoint().
+    /// A crease vertex subdivision point is (6*P + A1 + A2)/8.
+    /// A crease vertex limit surface point is (4*P + A1 + A2)/6.
     ///</summary>
     Crease = 2,
 
@@ -983,14 +1669,16 @@ public:
     /// The location of a corner vertex is fixed. 
     /// The all subdivision points and the limit point are at the initial vertex location.
     /// The edges ending at a corner vertex can be smooth or crease edges.
+    /// A corner vertex subdivision point is P where P = ON_SubDVertex.ControlNetPoint().
+    /// A corner vertex limit surface point is P where P = ON_SubDVertex.ControlNetPoint().
     ///</summary>
     Corner = 3,
 
     ///<summary>
     /// Must be an interior vertex.  
-    /// Every edge ending at a dart vertex must have 2 faces.
-    /// Exactly one edge ending at a dart vertex must be tagged as ON_SubD::EdgeTag::Crease
-    /// and every otherr edge must be tagged as tagON_SubD::EdgeTag::smooth.
+    /// Every edge attached to a dart vertex must have 2 faces.
+    /// Exactly one edge attached to a dart vertex must be tagged as ON_SubD::EdgeTag::Crease
+    /// and every other attached edge must be tagged as tagON_SubD::EdgeTag::smooth.
     ///</summary>
     Dart = 4
   };
@@ -1011,31 +1699,9 @@ public:
     ON_SubD::VertexTag vertex_tag
   );
 
-#pragma region RH_C_SHARED_ENUM [ON_SubD::EdgeTag] [Rhino.Geometry.SubD.SubDEdgeTag] [nested:byte]
-  /// <summary>
-  /// SubD::EdgeTag identifies the type of subdivision edge.  Different tags use
-  /// different subdivision algorithms to determine where the subdivision point is located.
-  /// </summary>  
-  enum class EdgeTag : unsigned char
-  {
-    ///<summary>
-    /// Not a valid edge tag and the default value for ON_SubDEdge::m_edge_tag.
-    /// This encourages developers to thoughtfully initialize ON_SubDEdge::m_edge_tag.
-    ///</summary>
-    Unset = 0,
 
-    ///<summary>
-    /// One or two of the edge's vertices must be tagged as ON_SubD::VertexTag::Smooth.
-    /// The edge must have exactly two faces.
-    ///</summary>
-    Smooth = 1,
-
-    ///<summary>
-    /// Both of the edge's vertices must be tagged as not ON_SubD::VertexTag::Smooth.
-    /// The edge can have any number of faces.
-    ///</summary>
-    Crease = 2,
-
+  #if 0
+  // .NET code that generates enums in hash pragma region R-H_C_S-H-ARED_ENUM cannot handle if 0.
     ///<summary>
     /// Reserved for version 2 of the ON_SubD project.
     /// Currently this tag is not used and is invalid.
@@ -1049,24 +1715,57 @@ public:
     /// ON_SubDEdge::m_sharpness = 1 is identical to ON_SubD::EdgeTag::Crease.
     ///</summary>
     Sharp = 3,
+#endif
+
+#pragma region RH_C_SHARED_ENUM [ON_SubD::EdgeTag] [Rhino.Geometry.SubDEdgeTag] [byte]
+  /// <summary>
+  /// SubD::EdgeTag identifies the type of subdivision edge.  Different tags use
+  /// different subdivision algorithms to calculate the subdivision point.
+  /// </summary>  
+  enum class EdgeTag : unsigned char
+  {
+    ///<summary>
+    /// Not a valid edge tag and the default value for ON_SubDEdge.m_edge_tag.
+    /// This encourages developers to thoughtfully initialize ON_SubDEdge.m_edge_tag.
+    /// or use ON_SubD.UpdateAllTagsAndSectorCoefficients() to automatically set the
+    /// m_edge_tag values at an appropriate time.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// At least one the edge's vertices must be tagged as ON_SubD::VertexTag::Smooth.
+    /// The edge must have exactly two faces.
+    /// The edge's subdivision point is (A1 + A2 + S(f1) + S(f2))/4, where 
+    /// Ai = ON_SubDEdge.Vertex(i)->ControlNetPoint() and
+    /// S(fi) = ON_SubDEdge.Face(i)->SubdivisionPoint().
+    ///</summary>
+    Smooth = 1,
+
+    ///<summary>
+    /// Both of the edge's vertices must be tagged as ON_SubD::VertexTag::Dart,
+    /// ON_SubD::VertexTag::Crease, or ON_SubD::VertexTag::Corner. 
+    /// (The vertex tags can be different.) The edge can have any number of faces.
+    /// The edge's subdivision point is (A1+A2)/2 where Ai = ON_SubDEdge.Vertex(i)->ControlNetPoint().
+    ///</summary>
+    Crease = 2,
                  
     ///<summary>
-    /// This tag appears only on edges that have exactly two neighboring faces
-    /// and neither end vertex is tagged as ON_SubD::VertexTag::Smooth.
-    /// The level 1 subdivision point for a level 0 edge tagged as ON_SubD::EdgeTag::X 
+    /// This tag appears only on level 0 edges that have exactly two neighboring faces
+    /// and both of the edge's vertices are tagged as ON_SubD::VertexTag::Dart,
+    /// ON_SubD::VertexTag::Crease, or ON_SubD::VertexTag::Corner.
+    /// The level 1 subdivision point for a level 0 edge tagged as ON_SubD::EdgeTag::SmoothX 
     /// is the standard smooth edge subdivision point.
     /// When subdivided, the new subdivision vertex will be tagged
     /// as ON_SubD::VertexTag::Smooth and the subdivided edges will
-    /// be tagged as ON_SubD::EdgeTag::Smooth.  Thus, the tag ON_SubD::EdgeTag::X
-    /// should only appear at level 0.
+    /// be tagged as ON_SubD::EdgeTag::Smooth.  
+    /// The tag ON_SubD::EdgeTag::SmoothX can only appear on a level 0 edge.
     /// This tag exists because the ON_SubD subdivision
     /// algorithm requires any edge with both end vertices
     /// tagged as not smooth must be subdivided at its midpoint.
-    /// Sector iterators treat "X" edges as smooth.
-    /// Both edge end weights must be set so the smooth
-    /// subdivided edges will be valid.    
+    /// Sector iterators treat "SmoothX" edges as smooth.
+    /// Both edge m_sector_coefficient[] values must be set so the smooth subdivided edges will be valid.
     ///</summary>
-    X = 4
+    SmoothX = 4
   };
 #pragma endregion
 
@@ -1087,27 +1786,6 @@ public:
   );
 
   
-#pragma region RH_C_SHARED_ENUM [ON_SubD::FacetType] [Rhino.Geometry.SubD.SubDFacetType] [nested:byte]
-  /// <summary>
-  /// SubD::FacetType reports the default facet type for subdivision algorithms.
-  /// </summary>  
-  enum class FacetType : unsigned char
-  {
-    ///<summary> Not a valid facet type. </summary>
-    Unset = 0,
-
-    ///<summary> Triangle </summary>
-    Tri = 3,
-
-    ///<summary> Quadrangle </summary>
-    Quad = 4
-  };
-#pragma endregion
-
-  static ON_SubD::FacetType FacetTypeFromUnsigned( 
-    unsigned int facet_type_as_unsigned
-    );
-  
   //enum class VertexEdgeOrder : unsigned char
   //{
   //  unset = 0,
@@ -1124,7 +1802,7 @@ public:
   //  unsigned int vertex_edge_order_as_unsigned
   //  );
 
-#pragma region RH_C_SHARED_ENUM [ON_SubD::VertexFacetType] [Rhino.Geometry.SubD.VertexFacetType] [nested:byte]
+#pragma region RH_C_SHARED_ENUM [ON_SubD::VertexFacetType] [Rhino.Geometry.SubDVertexFacetType] [byte]
 
   ///<summary>Summarizes the number of edges in faces in the whole object.</summary>
   enum class VertexFacetType : unsigned char
@@ -1149,69 +1827,40 @@ public:
   static ON_SubD::VertexFacetType VertexFacetTypeFromUnsigned( 
     unsigned int vertex_facet_type_as_unsigned
     );
-
-#pragma region RH_C_SHARED_ENUM [ON_SubD::SubDType] [Rhino.Geometry.SubD.SubDType] [nested:byte]
+  
+#pragma region RH_C_SHARED_ENUM [ON_SubD::ChainType] [Rhino.Geometry.SubDChainType] [byte]
   /// <summary>
-  /// Subdivision algorithm.
-  /// </summary>  
-  enum class SubDType : unsigned char
+  /// SubD::ChainType specifies what edge and vertex tag tests are used when creating edge chains.
+  /// </summary>
+  enum class ChainType : unsigned char
   {
     ///<summary>
-    /// Not a valid subdivision type.
+    /// Unset.
     ///</summary>
     Unset = 0,
 
     ///<summary>
-    /// Built-in Loop-Warren triangle with Bernstein-Levin-Zorin creases and darts.
+    /// All types of edges and vertices can be in the chain.
     ///</summary>
-    TriLoopWarren = 3,
+    MixedTag = 1,
 
     ///<summary>
-    /// Built-in Catmull-Clark quad with Bernstein-Levin-Zorin creases and darts.
+    /// Every edge in an edge chain has the same smooth/crease property.
     ///</summary>
-    QuadCatmullClark = 4,
+    EqualEdgeTag = 2,
 
     ///<summary>
-    /// Custom triangle face algorithm. (Not built-in. Provided for use by 3rd party developers.)
+    /// Every edge in an edge chain has the same smooth/crease edge tag 
+    /// and interior vertices have the corresponding smooth/crease vertex tag.
     ///</summary>
-    CustomTri = 5,
-    
-    ///<summary>
-    /// Custom quad facet algorithm. (Not built-in. Provided for use by 3rd party developers.)
-    ///</summary>
-    CustomQuad = 6,
-
-    ///<summary>
-    /// Custom algorithm. (Not built-in. Provided for use by 3rd party developers.)
-    ///</summary>
-    Custom = 7
-
-    // All values must be <= 15; i.e., (((unsigned char)0xF0U) & subd_type)) must be zero.
+    EqualEdgeAndVertexTag = 3
   };
 #pragma endregion
-
-  static ON_SubD::SubDType SubDTypeFromUnsigned( 
-    unsigned int subd_type_as_unsigned
-    );
-
-  static ON_SubD::SubDType DefaultSubDType();
-
-  static unsigned int FacetEdgeCount(
-    ON_SubD::FacetType facet_type
-    );
-
-  static unsigned int FacetEdgeCount(
-    ON_SubD::SubDType subd_type
-    );
 
   /*
   Parameters:
     sit - [in]
       vertex sector iterator
-    component_ring_capacity - [in]
-      capacity of component_ring[] array
-      1 + center_vertex.m_edge_count + center_vertex.m_face_count 
-      will be large enough.
     component_ring - [out]
       A sorted list of ON_SubDComponentPtr values are returned in component_ring[]
       component_ring[0] is the central vertex.
@@ -1219,6 +1868,10 @@ public:
       component_ring[2] and subsequent components with even indices are sector faces.
       For edge components (i is odd), component_ring[i].ComponentMark() is the index of
       the center vertex in ON_SubDEge.m_vertex[].
+    component_ring_capacity - [in]
+      capacity of component_ring[] array
+      1 + center_vertex.m_edge_count + center_vertex.m_face_count
+      will be large enough.
   Returns:
     Number of components set in component_ring[].
     
@@ -1246,8 +1899,8 @@ public:
   */
   static unsigned int GetSectorComponentRing(
     const class ON_SubDSectorIterator& sit,
-    size_t component_ring_capacity,
-    ON_SubDComponentPtr* component_ring
+    ON_SubDComponentPtr* component_ring,
+    size_t component_ring_capacity
     );
 
  /*
@@ -1306,8 +1959,8 @@ public:
     );
 
   static bool ComponentRingIsValid(
-    size_t component_ring_count,
-    const ON_SubDComponentPtr* component_ring
+    const ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count
     );
 
   /*
@@ -1315,33 +1968,29 @@ public:
     Number of points in the subdivision ring or 0 if the call fails.
   */
   static unsigned int GetSectorSubdivsionPointRing(
-    ON_SubD::SubDType subd_type,
-    size_t component_ring_count,
     const ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count,
+    double* point_ring,
     size_t point_ring_capacity,
-    size_t point_ring_stride,
-    double* point_ring
+    size_t point_ring_stride
     );
 
   static unsigned int GetSectorSubdivisionPointRing(
-    ON_SubD::SubDType subd_type,
-    size_t component_ring_count,
     const ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count,
     ON_SimpleArray<ON_3dPoint>& subd_point_ring
     );
 
   static unsigned int GetSectorPointRing(
-    ON_SubD::SubDType subd_type,
     bool bSubdivideIfNeeded,
-    size_t component_ring_count,
     const ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count,
+    double* subd_point_ring,
     size_t subd_point_ring_capacity,
-    size_t subd_point_ring_stride,
-    double* subd_point_ring
+    size_t subd_point_ring_stride
     );
 
   static unsigned int GetSectorPointRing(
-    ON_SubD::SubDType subd_type,
     bool bSubdivideIfNeeded,
     size_t component_ring_count,
     const ON_SubDComponentPtr* component_ring,
@@ -1349,16 +1998,14 @@ public:
     );
 
   static unsigned int GetSectorPointRing(
-    ON_SubD::SubDType subd_type,
     bool bSubdivideIfNeeded,
     const class ON_SubDSectorIterator& sit,
+    double* point_ring,
     size_t point_ring_capacity,
-    size_t point_ring_stride,
-    double* point_ring
+    size_t point_ring_stride
     );
 
   static unsigned int GetSectorPointRing(
-    ON_SubD::SubDType subd_type,
     bool bSubdivideIfNeeded,
     const class ON_SubDSectorIterator& sit,
     ON_SimpleArray<ON_3dPoint>& point_ring
@@ -1400,66 +2047,19 @@ public:
     you want a crash proof call.
   */
   static unsigned int GetQuadSectorPointRing(
-    ON_SubD::SubDType subd_type,
     bool bFirstPass,
     bool bSecondPass,
     const class ON_SubDVertex* vertex0,
-    size_t component_ring_count,
     const class ON_SubDComponentPtr* component_ring,
-    size_t point_ring_stride,
-    double* point_ring
-    );
-
-  /*
-  Parameters:
-    subd_type - [in]
-      A tri based subdivision algorithm.
-    bFirstPass - [in]
-      If bFirstPass is true and the components are in standard form for the vertex
-      and subdivision type, then locations of the component vertices opposite the 
-      center vertex are returned in the point ring.
-    bSecondPass - [in]
-      If bSecondPass is true and the first pass is disable or does not succeed,
-      then the component subdivision locations are returned in the point ring.
-    vertex0 - [in]
-      If not null, then vertex0->m_edges and vertex0->m_faces must
-      be radially sorted and span a single sector and component_ring[]
-      is ignored.
-    component_ring_count - [in]
-      If vertex0 is null, then component_ring_count specifies the number
-      of components in the component_ring[] array.
-    component_ring[] - [in]
-      If vertex0 is null, then component_ring[0] is the central vertex,
-      component_ring[1] and subsequent components with odd indices are
-      sector edges, component_ring[2] and subsequent components with even
-      indices are sector faces, all sorted radially.
-    point_ring_stride - [in]
-    point_ring - [out]
-      point locations are returned here.
-  Returns:
-    Number of points in the subdivision ring or 0 if the call fails.
-    The number of  points is 1 + ON_SubD::ComponentRingEdgeCount(component_ring_count).
-  Remarks:
-    No validation checking is performed.  This function will crash
-    if the input is not valid.  Call GetSubdivisionPointRing() if
-    you want a crash proof call.
-  */
-  static unsigned int GetTriSectorPointRing(
-    ON_SubD::SubDType subd_type,
-    bool bFirstPass,
-    bool bSecondPass,
-    const class ON_SubDVertex* vertex0,
     size_t component_ring_count,
-    const class ON_SubDComponentPtr* component_ring,
-    size_t point_ring_stride,
-    double* point_ring
+    double* point_ring,
+    size_t point_ring_stride
     );
 
   static const class ON_SubDVertex* SubdivideSector(
-    ON_SubD::SubDType subd_type,
     const class ON_SubDVertex* center_vertex,
-    size_t component_ring_count,
     const class ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count,
     class ON_SubD_FixedSizeHeap& fsh
     );
 
@@ -1477,45 +2077,81 @@ public:
     unsigned int sector_face_count
     );
 
+#pragma region RH_C_SHARED_ENUM [ON_SubD::SubDFriendlyKnotType] [Rhino.Geometry.SubDFriendlyKnotType] [byte]
+  /// <summary>
+  /// ON_SubD::SubDFriendlyKnotType identifies the types of subd friendly NURBS knot vectors.
+  /// SubD friendly NURBS curves and surfacaes are always cubic and nonrational.
+  /// Any time there is a multiple knot, the 2nd derivative is zero at the corresponding parameter.
+  /// SubD friendly NURBS curves are either periodic or have zero 2nd derivative at the ends.
+  /// </summary>    
+  enum class SubDFriendlyKnotType : unsigned char
+  {
+    ///<summary>
+    /// Not a valid type. Used to indicate the type has not been set and to encourage developers to explicitly specify a type.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// NURBS knot vector is an unclamped uniform cubic knot vector. 
+    /// Every knot interval has the same length.
+    /// Every knot has multiplicity 1. 
+    ///</summary>
+    UnclampedUniform = 1,
+
+    ///<summary>
+    /// NURBS knot vector is a clamped uniform cubic knot vector. 
+    /// Every interior knot interval has the same length.
+    /// End knots have multiplicity 3 and interior knots have multiplicity 1.
+    ///</summary>
+    ClampedUniform = 2,
+
+    ///<summary>
+    /// NURBS knot vector is a clamped piecewise uniform cubic knot vector.
+    /// All nonzero knot intervals have the same length.
+    /// End knots have multiplicity 3 and interior knots have multiplicity 1 or 3.
+    /// Interior knots with multiplicity 3 correspond to interior SubD creases.
+    ///</summary>
+    ClampedPiecewiseUniform = 4,
+
+    ///<summary>
+    /// NURBS knot vector is not subd friendly.
+    ///</summary>
+    Unfriendly = 127
+  };
+ #pragma endregion
+
   /*
+  Parameters:
+    order - [in]
+      NURBS knot vector order.
+    cv_count - [in]
+      Number of NURBS knot vector control points.
+    knots - [in]
+      NURBS knot vector. This is an array of (cv_count+2) knot values.
   Returns:
-    Type of facets the basic subdivision algorithm requires.  
-    ON_SubD::FacetType::Quad if subd_type is ON_SubD::SubDType::TriLoopWarren.
-    ON_SubD::FacetType::Tri if subd_type is ON_SubD::SubDType::QuadCatmullClark.
-    ON_SubD::FacetType::Unset otherwise.
-  Remark:
-    All built in subdivision algorithm will handle faces with 3 or more edges.
-  */  
-  static ON_SubD::FacetType FacetTypeFromSubDType(
-    ON_SubD::SubDType subd_type
-    );
+    SubD friendly knot vector type.
+  Remarks:
+    If order is not 4, cv_count is not valid, or knot is nullptr, then
+    ON_SubD::SubDFriendlyKnotType::Unfriendly is returned.
+  */
+  static ON_SubD::SubDFriendlyKnotType NurbsKnotType(
+    int order,
+    int cv_count,
+    const double* knots
+  );
 
-  static ON_SubD::SubDType SubDTypeFromFacetType(
-    ON_SubD::FacetType facet_type
-    );
+  static ON_SubD::SubDFriendlyKnotType NurbsKnotType(
+    int order,
+    int cv_count,
+    const double* knots,
+    ON_SimpleArray<double>* triple_knots
+  );
 
-  static bool PointRingHasFacePoints(
-    ON_SubD::SubDType subd_type
-    );
-
-  /*
-  Returns:
-    true if facet_type is ON_SubD::FacetType::Tri or ON_SubD::FacetType::Quad.
-  */  
-  static bool IsQuadOrTriFacetType(
-    ON_SubD::FacetType facet_type
-    );
-
-  /*
-  Returns:
-    true if subd_type is ON_SubD::SubDType::TriLoopWarren or ON_SubD::SubDType::QuadCatmullClark.
-  */  
-  static bool IsQuadOrTriSubDType(
-    ON_SubD::SubDType subd_type
-    );
 
   ON_SubD() ON_NOEXCEPT;
   virtual ~ON_SubD();
+
+
 
   /*
   Description:
@@ -1700,15 +2336,146 @@ public:
     level_zero_mesh - [in]
     from_mesh_parameters - [in]
       To get the smoothest possible result, pass nullptr 
-      or ON_SubDFromMeshOptions::Smooth. To get a sub-D with interior 
-      creases use other static ON_SubDFromMeshOptions values or
+      or ON_ToSubDParameters::Smooth. To get a sub-D with interior 
+      creases use other static ON_ToSubDParameters values or
       create one with custom settings.
   */
   static ON_SubD* CreateFromMesh( 
     const class ON_Mesh* level_zero_mesh,
-    const class ON_SubDFromMeshOptions* from_mesh_parameters,
+    const class ON_ToSubDParameters* from_mesh_parameters,
     ON_SubD* subd
     );
+
+  /*
+  Description:
+    Creates a SubD box
+  Parameters:
+    corners - [in] 
+      Box corners.
+      The bottom quad is specified by the first 4 points
+      and the top quad specified by the last 4 points.
+    edge_tag - [in]
+      If edge_tag = ON_SubD::EdgeTag::Crease, then the box will have 
+      creases and corners. Otherwise the box will be smooth.
+    facecount_x - [in] Number of faces in x direction
+    facecount_y - [in] Number of faces in y direction
+    facecount_z - [in] Number of faces in z direction
+    destination_subd [out] - 
+      If destination_subd is not null, make the SubD box there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  static ON_SubD* CreateSubDBox(
+    const ON_3dPoint corners[8],
+    ON_SubD::EdgeTag edge_tag,
+    unsigned int facecount_x,
+    unsigned int facecount_y,
+    unsigned int facecount_z,
+    ON_SubD* destination_subd
+  );
+
+  /*
+  Description:
+    Creates a SubD sphere with 24 quad faces
+  Parameters:
+    sphere - [in]
+      Location, size and orientation of the sphere
+    destination_subd [out] -
+      If destination_subd is not null, make the SubD box there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  //static ON_SubD* CreateSubDSphere(
+  //  const ON_Sphere sphere,
+  //  ON_SubD* destination_subd);
+
+  /*
+  Description:
+    Creates a SubD cylinder
+  Parameters:
+    box - [in]
+      Location, size and orientation of the cylinder
+    facecount_around - [in] Number of faces around the cylinder
+    facecount_length - [in] Number of faces in the axis direction
+    facecouont_z - [in] Number of faces in z direction
+    destination_subd [out] -
+      If destination_subd is not null, make the SubD box there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  //static ON_SubD* CreateSubDCylinder(
+  //  const ON_Cylinder& cylinder,
+  //  unsigned int facecount_around,
+  //  unsigned int facecount_length,
+  //  ON_SubD* destination_subd);
+
+  /*
+  Description:
+    Creates a SubD cone
+  Parameters:
+    cone - [in]
+      Location, size and orientation of the cone
+    facecount_around - [in] Number of faces around the cone
+    facecount_length - [in] Number of faces in the axis direction
+    destination_subd [out] -
+      If destination_subd is not null, make the SubD cone there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  //static ON_SubD* CreateSubDCone(
+  //  const ON_Cone& cone,
+  //  unsigned int facecount_around,
+  //  unsigned int facecount_length,
+  //  ON_SubD* destination_subd);
+
+  /*
+  Description:
+    Creates a SubD truncated cone
+  Parameters:
+    cone - [in]
+      Location, size and orientation of the cone
+    truncate_param - [in] 0.0 < truncate_param <= 1.0
+        Normalized parameter for truncation
+        0.0: Base of cone
+        1.0: Tip of cone
+    facecount_around - [in] Number of faces around the cone
+    facecount_length - [in] Number of faces in the axis direction
+    destination_subd [out] -
+      If destination_subd is not null, make the SubD cone there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  //static ON_SubD* CreateSubDTruncatedCone(
+  //  const ON_Cone& cone,
+  //  const double truncate_param,
+  //  unsigned int facecount_around,
+  //  unsigned int facecount_length,
+  //  ON_SubD* destination_subd);
+
+  /*
+  Description:
+    Creates a SubD torus
+  Parameters:
+    torus - [in]
+      Location, size and orientation of the torus
+    major_facecount - [in] Number of faces around the major axis
+    minor_facecount - [in] Number of faces around the minor axis
+    destination_subd [out] -
+      If destination_subd is not null, make the SubD torus there
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  //static ON_SubD* CreaptSubDTorus(
+  //  ON_Torus& torus,
+  //  unsigned int major_facecount,
+  //  unsigned int minor_facecount,
+  //  ON_SubD* destination_subd);
 
   unsigned int DumpTopology(
     ON_TextLog&
@@ -1734,8 +2501,6 @@ public:
     Delete all contents release all memory used by this ON_SubD.
   */
   void Destroy();
-
-  ON_SubD::SubDType ActiveLevelSubDType() const;
 
   /*
   Returns:
@@ -1781,15 +2546,15 @@ public:
   Description:
     Get aggregate edge demographics for the subd.
   Returns:
-    Bitwise or of ON_ComponentAttributes::EdgeFlags values for every edge in the subd.
+    Bitwise or of ON_ComponentAttributes::EdgeAttributes values for every edge in the subd.
   */
-  unsigned int EdgeFlags() const;
+  unsigned int AggregateEdgeAttributes() const;
   
   /////////////////////////////////////////////////////////
   //
   // Component (Vertex, Edge, Face) access
   //
-  ON_SubDComponentPtr ComponentPtrFromComponentIndex(
+  const ON_SubDComponentPtr ComponentPtrFromComponentIndex(
     ON_COMPONENT_INDEX component_index
     ) const;
 
@@ -1816,9 +2581,23 @@ public:
   unsigned int VertexCount() const;
 
   const class ON_SubDVertex* FirstVertex() const;
+  const class ON_SubDVertex* LastVertex() const;
 
+  /*
+  Example:
+    ON_SubDVertexIterator vit = subd.VertexIterator();
+    for ( const ON_SubDVertex* v = vit.FirstVertex(); nullptr != v; v = vit.NextVertex())
+    {
+      ...
+    }
+  */
   class ON_SubDVertexIterator VertexIterator() const;
 
+  /*
+  Description:
+    Avoid using this class. It is more efficient to use
+    an ON_SubDVertexIterator returned by VertexIterator().
+  */
   class ON_SubDVertexArray VertexArray() const;
 
   /*
@@ -1841,9 +2620,23 @@ public:
   unsigned int EdgeCount() const;
 
   const class ON_SubDEdge* FirstEdge() const;
+  const class ON_SubDEdge* LastEdge() const;
 
+  /*
+  Example:
+    ON_SubDEdgeIterator eit = subd.EdgeIterator();
+    for ( const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
+    {
+      ...
+    }
+  */
   class ON_SubDEdgeIterator EdgeIterator() const;
 
+  /*
+  Description:
+    Avoid using this class. It is more efficient to use
+    an ON_SubDEdgeIterator returned by EdgeIterator().
+  */
   class ON_SubDEdgeArray EdgeArray() const;
 
   /*
@@ -1866,9 +2659,23 @@ public:
   unsigned int FaceCount() const;
 
   const class ON_SubDFace* FirstFace() const;
+  const class ON_SubDFace* LastFace() const;
 
+  /*
+  Example:
+    ON_SubDFaceIterator fit = subd.FaceIterator();
+    for ( const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+    {
+      ...
+    }
+  */
   class ON_SubDFaceIterator FaceIterator() const;
 
+  /*
+  Description:
+    Avoid using this class. It is more efficient to use
+    an ON_SubDFaceIterator returned by FaceIterator().
+  */
   class ON_SubDFaceArray FaceArray() const;
 
   /*
@@ -1966,10 +2773,118 @@ public:
     ON_ComponentStatus status_to_copy
     ) const;
 
+  /*
+  Description:
+    Delete components in cptr_list[]. 
+    If a vertex is in cptr_list[], the vertex and every edge and face attached
+    to the vertex are deleted.
+    If an edge is in cptr_list[], the edge and every face attached
+    to the edge are deleted.
+    If a face is in cptr_list[], the face is deleted.
+  Parameters:
+    cptr_list - [in]
+    cptr_count - [in]
+      length of cptr_list[] array.
+    bMarkDeletedFaceEdges - [in]
+      If true, surviving edges attached to delete faces 
+      have their runtmime mark set.
+  Returns:
+    1: some state settings changed on the component.
+    1: some state setting changed on the component.
+  */
   bool DeleteComponents(
     const ON_SubDComponentPtr* cptr_list,
-    size_t cptr_count
+    size_t cptr_count,
+    bool bMarkDeletedFaceEdges
     );
+
+  bool DeleteComponentsForExperts(
+    const ON_SubDComponentPtr* cptr_list,
+    size_t cptr_count,
+    bool bDeleteIsolatedEdges,
+    bool bUpdateTagsAndCoefficients,
+    bool bMarkDeletedFaceEdges
+    );
+
+
+  /////////////////////////////////////////////////////////
+  //
+  // Topology Queries
+  //
+
+  /*
+  Description:
+    Determine solid orientation of the active level.
+  Returns:
+    +2     subd is a solid but orientation cannot be computed
+    +1     subd is a solid with outward facing normals
+    -1     subd is a solid with inward facing normals
+     0     subd is not a solid
+  See Also:
+    ON_SubD::IsSolid
+  */
+ int SolidOrientation() const;
+
+  /*
+  Description:
+    Test subd to see if the active level is a solid.  
+    A "solid" is a closed oriented manifold.
+  Returns:
+    true       subd is a solid
+    fals       subd is not a solid
+  See Also:
+    ON_SubDp::SolidOrientation
+    ON_SubDp::IsManifold
+  */
+  bool IsSolid() const;
+  
+  /*
+  Description:
+    Test subd to see if the active level is an oriented manifold.
+  Parameters:
+    bIsOriented - [out]
+      True if every edge that has two faces is oriented.
+      Note that non-manifold edges are ignored.
+    bHasBoundary - [in]
+      True if there is at least one edge with a single face.
+  Returns:
+    True if the subd is a manifold (has at lease one face and every edge has 1 or 2 faces).
+    False if the subd is not a manifold (has no faces or at least one edge with 0 or 3 or more faces)
+  See Also:
+    ON_SubDp::IsSolid
+  */
+  bool IsManifold(
+    bool& bIsOriented,
+    bool& bHasBoundary
+    ) const;
+
+  bool IsManifold() const;
+
+
+
+    /*
+  Description:
+    Automatically get a  boundary from a seed edge.
+  Parameters:
+    first_edge - [in]
+      An edge with FaceCount() <= 1. 
+      The search for the second edge occurs and first_edge.RelativeVertex(1)
+      and all edges added to boundary_edge_chain[] have FaceCount() = first_edge.Edge()->FaceCount().
+    bUseEdgeMarks -[in]
+      If true, only unmarked edges will be added to boundary_edge_chain[]
+      and they will be marked when added to boundary_edge_chain[].
+    boundary_edge_chain - [out]
+      Edge chain beginning with first_edge. 
+      When true is returned, boundary_edge_chain[] has 3 or more edges and is a closed loop.
+      When false is returned, boundary_edge_chain[] will contain an open chain with 0 or more edges.
+  Returns:
+    true if boundary_edge_chain[] is a closed loop of 3 or more boundary edges.
+  */
+  static bool GetBoundaryEdgeChain(
+    ON_SubDEdgePtr first_edge,
+    bool bUseEdgeMarks,
+    ON_SimpleArray< ON_SubDEdgePtr >& boundary_edge_chain
+  );
 
   /////////////////////////////////////////////////////////
   //
@@ -1977,11 +2892,24 @@ public:
   //
 
   unsigned int MergeColinearEdges(
+    bool bMergeBoundaryEdges,
+    bool bMergeInteriorCreaseEdges,
+    bool bMergeInteriorSmoothEdges,
     double distance_tolerance,
     double maximum_aspect,
     double sin_angle_tolerance
     );
 
+  /*
+  Description:
+    Merge consecutive edges into a single edge.
+  eptr0 - [in]
+    first edge (will not be deleted)
+  eptr1 - [in]
+    second edge (will be deleted if edges can be merged)
+  Returns:
+    Merged edge (eptr0) or ON_SubDEdgePtr::Null if edges could not be merged
+  */
   ON_SubDEdgePtr MergeEdges(
     ON_SubDEdgePtr eptr0,
     ON_SubDEdgePtr eptr1
@@ -1993,28 +2921,13 @@ public:
     );
 
   // returns true if all facets are consistently oriented
-  bool IsOriented(
-    unsigned int level_index
-    ) const;
+  bool IsOriented() const;
 
   // reverses the orientation of all facets
-  bool ReverseOrientation(
-    unsigned int level_index
-    ) const;
+  bool ReverseOrientation() const;
 
   // Attempts to orient all facet to match the first facet.
-  bool Orient(
-    unsigned int level_index
-    ) const;
-
-  /*
-  Description:
-    Interior vertices (smooth and dart) must have at least three faces.
-    Concave corner vertices must have at least two faces.
-  */
-  bool RepairInvalidSectors(
-    unsigned int level_index
-    );
+  bool Orient() const;
 
   /*
   Description:
@@ -2030,6 +2943,9 @@ public:
     then the edge's midpoint is used.
   Returns:
     A pointer to the new edge or nullptr if the input is not valid.
+  Remarks:    
+    After all editing operations are completed, you must call this->UpdateEdgeSectorCoefficients(true) before
+    evaluation.
   */
   const class ON_SubDEdge* SplitEdge(
     class ON_SubDEdge* edge,
@@ -2051,8 +2967,7 @@ public:
     The inserted edge runs from face->Vertex(fvi0) to face->Vertex(fvi1).
     ON_SubDEdge.Face(0) is the original face and ON_SubDEdge::Face(1) is 
     the added face.
-    The first edge of the input face remains the first edge of face.  
-    The inserted edge is the first edge of the added face.
+    The first edge of both faces is the inserted edge.
   */
   const class ON_SubDEdge* SplitFace(
     class ON_SubDFace* face,
@@ -2060,13 +2975,54 @@ public:
     unsigned int fvi1
     );
 
-  const class ON_SubDVertex* TriangulateFace(
-    class ON_SubDFace* face
+  /*
+  Description:
+    Split a face into two faces by inserting and edge connecting the
+    specified vertices.
+  Parameters:
+    face - [in]
+      A face with at least four edges.
+    v0 - [in]
+    v1 - [in]
+      Vertices on the face boundary.
+  Returns:
+    A pointer to the inserted edge.
+    The inserted edge runs from v0 to v1.
+    ON_SubDEdge.Face(0) is the original face and ON_SubDEdge::Face(1) is 
+    the added face.
+    The first edge of the input face remains the first edge of face.  
+    The inserted edge is the first edge of the added face.
+  */
+  const class ON_SubDEdge* SplitFace(
+    class ON_SubDFace* face,
+    const class ON_SubDVertex* v0,
+    const class ON_SubDVertex* v1
     );
 
-  const class ON_SubDFace* MergeFaces(
-    class ON_SubDEdge* edge
+  /*
+  Description:
+    Replace a face with a triangle fan  by adding a single new vertex at fan_center_point 
+    and adding tringle made from the face's edes to the center point.
+  Parameters:
+    face - [in]
+      This face is replaced with a triangle fan and becomes the first triangle in the fan.
+    fan_center_point - [in]
+      If valid, this point is used as the fan's center.
+      Otherwise the centriod of the face's vertices is used s the fan's center.
+      When in doubt, pass ON_3dPoint::UnsetPoint.
+    bMarkFaces - [in]
+      If true, face and new triangles are marked.
+      Existing marks are not modified.
+  Returns:
+    If successfull, the new vertex at the center of the triangle fan.
+    Otherwise, nullptr is returned.
+  */
+  const class ON_SubDVertex* ReplaceFaceWithTriangleFan(
+    class ON_SubDFace* face,
+    ON_3dPoint fan_center_point,
+    bool bMarkFaces
     );
+
 
 
   /*
@@ -2175,9 +3131,54 @@ public:
     bool bUnsetSectorCoefficientsOnly
     );
 
+
   /*
   Descripiton:
-    Clears the ON_ComponentState
+    Clears the m_status.RuntimeMark() for every vertex, edge and face.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearComponentMarks() const;
+
+  /*
+  Descripiton:
+    Clears the m_status.RuntimeMark() for every vertex.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearVertexMarks() const;
+
+  /*
+  Descripiton:
+    Clears the m_status.RuntimeMark() for every edge.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearEdgeMarks() const;
+
+  /*
+  Descripiton:
+    Clears the m_status.RuntimeMark() for every face.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearFaceMarks() const;
+
+  /*
+  Descripiton:
+    Selectively clear m_status.RuntimeMark()
+  Parameters:
+    bClearVertexMarks - [in]
+      If true, m_status.ClearRuntimeMark() is called for every vertex.
+    bClearEdgeMarks - [in]
+      If true, m_status.ClearRuntimeMark() is called for every edge.
+    bClearFaceMarks - [in]
+      If true, m_status.ClearRuntimeMark() is called for every face.
+    marked_component_list - [out]
+      If not nullptr, then pointer to components that were marked 
+      are returned in this marked_component_list[]
+  Returns:
+    Number of marks that were cleared.
   */
   unsigned int ClearComponentMarks(
     bool bClearVertexMarks,
@@ -2198,6 +3199,43 @@ public:
     ON_SimpleArray< const class ON_SubDComponentBase* >& marked_component_list
   ) const;
 
+  unsigned int UnselectComponents(
+    bool bUnselectAllVertices,
+    bool bUnselectAllEdges,
+    bool bUnselectAllFaces
+  ) const;
+
+  /*
+  Description:
+    Save the current component status of the indictated subd components.
+  Parameters:
+    bGetVertexStatus - [in]
+    bGetEdgeStatus - [in]
+    bGetFaceStatus - [in]
+    bClearStatus - [in]
+      If true, the bits in status_mask will also be cleared for the components.
+    status_mask - [in]
+      Status bits to save.
+    component_list - [out]
+    status_list - [out]
+      component_list[] and status_list[] are parallel arrays for components with
+      a matching status bit set.
+  */
+  unsigned int GetComponentStatus(
+    bool bGetVertexStatus,
+    bool bGetEdgeStatus,
+    bool bGetFaceStatus,
+    bool bClearStatus,
+    ON_ComponentStatus status_mask,
+    ON_SimpleArray< const class ON_SubDComponentBase* >& component_list,
+    ON_SimpleArray< ON_ComponentStatus >& status_list
+  ) const;
+
+  unsigned int SetComponentStatus(
+    ON_ComponentStatus status_mask,
+    const ON_SimpleArray< const class ON_SubDComponentBase* >& component_list,
+    const ON_SimpleArray< ON_ComponentStatus >& status_list
+  ) const;
 
   /*
   Description:
@@ -2206,16 +3244,41 @@ public:
     xform - [in]
     ci_list - [in]
     ci_count - [in]
+    component_location - [in]
+      Select between applying the tranform to the control net (faster)
+      or the surface points (slower).
   Returns:
     Number of vertex locations that changed.
   */
   unsigned int TransformComponents(
     const ON_Xform& xform,
     const ON_COMPONENT_INDEX* ci_list,
-    size_t ci_count
+    size_t ci_count,
+    ON_SubDComponentLocation component_location
     );
 
   unsigned int TransformComponents(
+    const ON_Xform& xform,
+    const ON_SubDComponentPtr* cptr_list,
+    size_t cptr_count,
+    ON_SubDComponentLocation component_location
+    );
+
+  /*
+  Description:
+    Extrude entire subd bay adding a ring of faces around the boundary and moving the original subd.
+  */
+  unsigned int Extrude(
+    const ON_Xform& xform
+  );
+
+  unsigned int ExtrudeComponents(
+    const ON_Xform& xform,
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count
+    );
+
+  unsigned int ExtrudeComponents(
     const ON_Xform& xform,
     const ON_SubDComponentPtr* cptr_list,
     size_t cptr_count
@@ -2225,6 +3288,7 @@ public:
     const ON_Xform& xform,
     const ON_COMPONENT_INDEX* ci_list,
     size_t ci_count,
+    bool bExtrudeBoundaries,
     bool bPermitNonManifoldEdgeCreation,
     ON_SubD::EdgeTag original_edge_tag,
     ON_SubD::EdgeTag moved_edge_tag
@@ -2234,10 +3298,24 @@ public:
     const ON_Xform& xform,
     const ON_SubDComponentPtr* cptr_list,
     size_t cptr_count,
+    bool bExtrudeBoundaries,
     bool bPermitNonManifoldEdgeCreation,
     ON_SubD::EdgeTag original_edge_tag,
     ON_SubD::EdgeTag moved_edge_tag
     );
+
+private:
+  unsigned int Internal_ExtrudeComponents(
+    const ON_Xform& xform,
+    const ON_SubDComponentPtr* cptr_list,
+    size_t cptr_count,
+    bool bExtrudeBoundaries,
+    bool bPermitNonManifoldEdgeCreation,
+    ON_SubD::EdgeTag original_edge_tag,
+    ON_SubD::EdgeTag moved_edge_tag
+    );
+
+public:
 
   /*
   Parameters:
@@ -2301,56 +3379,19 @@ public:
     ON_SubD::EdgeTag edge_tag
   );
 
-  /////*
-  ////Description:
-  ////  Apply the built-in triangle subdivision subdivision algorithm globally.
-  ////Returns:
-  ////  New level.
-  ////*/
-  ////unsigned int TriSubdivision();
-
-  ////unsigned int GetSector(
-  ////  const class ON_SubDFace* face,
-  ////  ON__UINT_PTR face_vertex_index,
-  ////  class ON_SubDVertex& sector
-  ////  ) const;
-
-  ////unsigned int GetSector(
-  ////  const class ON_SubDVertex* vertex,
-  ////  const ON_SubDFace* face,
-  ////  class ON_SubDVertex& sector
-  ////  ) const;
-
-  ////unsigned int GetSector(
-  ////  const ON_SubDVertex* vertex,
-  ////  ON_SubDFacePtr face_ptr,
-  ////  class ON_SubDVertex& sector
-  ////  ) const;
-
-  ////unsigned int GetSector(
-  ////  const class ON_SubDVertex* vertex,
-  ////  const class ON_SubDEdge* smooth_edge,
-  ////  ON_SubDVertex& sector
-  ////  ) const;
-
-  ////unsigned int GetSector(
-  ////  const ON_SubDEdge* smooth_edge,
-  ////  ON__UINT_PTR smooth_edge_end_index,
-  ////  ON_SubDVertex& sector
-  ////  ) const;
-
-  ////unsigned int GetSector(
-  ////  ON_SubDEdgePtr smooth_edge_ptr,
-  ////  class ON_SubDVertex& sector
-  ////  ) const;
+  /*
+  Description:
+    Remove all interior creases.
+  Returns:
+    Number of edges converted from crease to smooth.
+  */
+  unsigned int RemoveAllCreases();
 
   /*
   Description:
-    Apply the built-in subdivision algorithm and save the results
+    Apply the Catmull-Clark subdivision algorithm and save the results
     in this ON_SubD.
   Parameters:
-    subd_type - [in]
-      unset will use the current subdivision type.
     level_index - [in]
       Level where subdivision starts
     count - [in] > 0
@@ -2359,19 +3400,35 @@ public:
     Number of subdivision steps that succeeded. 
     (= count when everything works, < count when input is not valid)
   */
-  bool Subdivide(
-    ON_SubD::SubDType subd_type,
-    unsigned int level_index,
+  bool GlobalSubdivide(
     unsigned int count
     );
 
+  bool GlobalSubdivide();
+
   /*
+  Description:
+    Apply the Catmull-Clark subdivision algorithm to the faces in face_list[].
+  Parameters:
+    face_list - [in]
+      faces to subdivide
+    face_count - [in]
+      number of components.
   Returns:
-    Active level subdivison type.
+    true if successful.
   */
-  bool SetSubDType(
-    ON_SubD::SubDType subd_type
-    );
+  bool LocalSubdivide(
+    class ON_SubDFace const*const* face_list,
+    size_t face_count
+  );
+
+  bool LocalSubdivide(
+    const ON_SimpleArray< const class ON_SubDFace* >& face_list
+  );
+
+  bool LocalSubdivide(
+    const ON_SimpleArray<ON_COMPONENT_INDEX>& face_list
+  );
 
   /*
   Description:
@@ -2389,6 +3446,45 @@ public:
     ON_SubD::VertexTag vertex_tag,
     const double* P
     );
+
+  /*
+  Description:
+    Search for a vertex with a specificed control net point.
+  Parameters:
+    control_net_point - [in]
+      Look for a vertex with this value for ControlNetPoint().
+    tolerance - [in]
+      Use 0.0 when in doubt. 
+      If > 0.0, then the vertex closest to control_net_point 
+      will be returned if the distance from that vertex to control_net_point
+      is <= distance_tolerance.
+  Returns:
+    An ON_SubDVertex pointer or nullptr if none exists.
+  */
+  const class ON_SubDVertex* FindVertex(
+    const double* control_net_point,
+    double distance_tolerance
+  ) const;
+
+  /*
+  Description:
+    Search for a vertex with a specificed control net point. If one does not
+    exist, add a new one.
+  Parameters:
+    control_net_point - [in]
+      Look for a vertex with this value for ControlNetPoint().
+    tolerance - [in]
+      Use 0.0 when in doubt.
+      If > 0.0, then the vertex closest to control_net_point
+      will be returned if the distance from that vertex to control_net_point
+      is <= distance_tolerance.
+  Returns:
+    An ON_SubDVertex pointer or nullptr if none exists.
+    */
+  const class ON_SubDVertex* FindOrAddVertex(
+    const double* control_net_point,
+    double distance_tolerance
+  );
 
   /*
   Parameters:
@@ -2410,7 +3506,7 @@ public:
     then ON_SubD::EdgeTag::Crease is returned.
    
     If edge_face_count is 2 and both vertex tags are set and both are not ON_SubD::VertexTag::Smooth,
-   then ON_SubD::EdgeTag::X is returned.
+   then ON_SubD::EdgeTag::SmoothX is returned.
 
    Otherwise, ON_SubD::EdgeTag::Unset is returned.
   */
@@ -2447,6 +3543,39 @@ public:
 
   /*
   Description:
+    Search for an edge connecting v0 and v1.
+  Parameters:
+    v0 - [in]
+    v1 - [in]
+      The edge begins at v0 and ends at v1.
+      The edge will be on the same level as the vertices.
+  Returns:
+    An ON_SubDEdgePtr to a connecting edge or ON_SubDEdgePtr::Null if none exists.
+  */
+  const ON_SubDEdgePtr FindEdge(
+    const class ON_SubDVertex* v0,
+    const class ON_SubDVertex* v1
+    ) const;
+
+  /*
+  Description:
+    Search for an edge connecting v0 and v1. If none exists, then add one.
+  Parameters:
+    v0 - [in]
+    v1 - [in]
+      The edge begins at v0 and ends at v1.
+      The edge will be on the same level as the vertices.
+  Returns:
+    An ON_SubDEdgePtr to a connecting edge or ON_SubDEdgePtr::Null if none exists.
+  */
+  const ON_SubDEdgePtr FindOrAddEdge(
+    class ON_SubDVertex* v0,
+    class ON_SubDVertex* v1
+    );
+
+
+  /*
+  Description:
     Add an edge to the subd.
   Parameters:
     edge_tag - [in]
@@ -2454,7 +3583,7 @@ public:
         Edge tag is not known at this time.
       ON_SubD::EdgeTag::Smooth
         Smooth edge. If both vertices are tagged as not smooth, the
-        tag on the returned edge will be ON_SubD::EdgeTag::X.  This
+        tag on the returned edge will be ON_SubD::EdgeTag::SmoothX.  This
         tag is changed to ON_SubD::EdgeTag::Smooth on the first
         subdivision step.
       ON_SubD::EdgeTag::Crease.
@@ -2496,38 +3625,239 @@ public:
     class ON_SubDVertex* v1,
     double v1_sector_coefficient
     );
- 
-  class ON_SubDFace* AddFace(
-    unsigned int edge_count,
-    const class ON_SubDEdgePtr* edge
-    );
 
+  /*
+  Parameters:
+    edge0 - [in]
+    edge1 - [in]
+    edge2 - [in]
+     The face will be oriented so the boundary has the edges
+     in the order (edge0, edge1, edge2).
+     Consecutive edges must have a single common vertex.
+     The orientations of the ON_SubDEdgePtr elements in the 
+     face's edge list are automatically calculated.
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
   class ON_SubDFace* AddTriangleFace(
-    class ON_SubDEdge* edge0, bool bReverseEdge0,
-    class ON_SubDEdge* edge1, bool bReverseEdge1,
-    class ON_SubDEdge* edge2, bool bReverseEdge2
+    class ON_SubDEdge* edge0,
+    class ON_SubDEdge* edge1,
+    class ON_SubDEdge* edge2
     );
 
+  /*
+  Parameters:
+    edge_count - [in]
+      Must be >= 3.
+    edge0 - [in]
+    edge1 - [in]
+    edge2 - [in]
+     The ON_SubDEdgePtr parameters must be oriented so that for consecutive pairs of edges, 
+     edge0.RelativeVertex(1) and edges1.RelativeVertex(0) are same vertex. 
+     The face will be oriented so the boundary has the edges
+     in the order (edge0, edge1, edge2).
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
   class ON_SubDFace* AddTriangleFace(
     ON_SubDEdgePtr edge0,
     ON_SubDEdgePtr edge1,
     ON_SubDEdgePtr edge2
     );
 
+  /*
+  Parameters:
+    edge0 - [in]
+    edge1 - [in]
+    edge2 - [in]
+    edge3 - [in]
+     The face will be oriented so the boundary has the edges
+     in the order (edge0, edge1, edge2. edge3).
+     Consecutive edges must have a single common vertex.
+     The orientations of the ON_SubDEdgePtr elements in the 
+     face's edge list are automatically calculated.
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
   class ON_SubDFace* AddQuadFace(
-    class ON_SubDEdge* edge0, bool bReverseEdge0,
-    class ON_SubDEdge* edge1, bool bReverseEdge1,
-    class ON_SubDEdge* edge2, bool bReverseEdge2,
-    class ON_SubDEdge* edge3, bool bReverseEdge3
+    class ON_SubDEdge* edge0,
+    class ON_SubDEdge* edge1,
+    class ON_SubDEdge* edge2,
+    class ON_SubDEdge* edge3
     );
-
+ 
+  /*
+  Parameters:
+    edge_count - [in]
+      Must be >= 3.
+    edge0 - [in]
+    edge1 - [in]
+    edge2 - [in]
+    edge3 - [in]
+     The ON_SubDEdgePtr parameters must be oriented so that for consecutive pairs of edges, 
+     edge0.RelativeVertex(1) and edges1.RelativeVertex(0) are same vertex. 
+     The face will be oriented so the boundary has the edges
+     in the order (edge0, edge1, edge2,edge3).
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
   class ON_SubDFace* AddQuadFace(
     ON_SubDEdgePtr edge0,
     ON_SubDEdgePtr edge1,
     ON_SubDEdgePtr edge2,
     ON_SubDEdgePtr edge3
     );
+
+  /*
+  Parameters:
+    edges[] - [in]
+     edges[] must have 3 or more elements.
+     edges[i] and edges[(i+1)%edge_count] must have a single common vertex.
+     The face will be oriented so the boundary has the edges
+     in the order (edges[0], edges[1], ..., edges[edge_count-1]).
+     The orientations of the ON_SubDEdgePtr elements in the 
+     face's edge list are automatically calculated.
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
+  class ON_SubDFace* AddFace(
+    const ON_SimpleArray<ON_SubDEdge*>& edges
+    );
+
+  /*
+  Parameters:
+    edges[] - [in]
+     edges[] must have 3 or more elements.
+     The ON_SubDEdgePtr parameters must be oriented so that
+     edges[i].RelativeVertex(1) and edges[(i+1)%edge_count].RelativeVertex(0)
+     are the same vertex.
+     The face will be oriented so the boundary has the edges
+     in the order (edges[0], edges[1], ..., edges[edge_count-1]).
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
+  class ON_SubDFace* AddFace(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+    );
+
+  /*
+  Parameters:
+    edge_count - [in]
+      Must be >= 3.
+    edges[] - [in]
+     edges[i] and edges[(i+1)%edge_count] must have a single common vertex.
+     The face will be oriented so the boundary has the edges
+     in the order (edges[0], edges[1], ..., edges[edge_count-1]).
+     The orientations of the ON_SubDEdgePtr elements in the 
+     face's edge list are automatically calculated.
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
+  class ON_SubDFace* AddFace(
+    class ON_SubDEdge * const * edges,
+    unsigned int edge_count
+    );
+
+  /*
+  Parameters:
+    edge_count - [in]
+      Must be >= 3.
+    edges[] - [in]
+     The ON_SubDEdgePtr parameters must be oriented so that
+     edges[i].RelativeVertex(1) and edges[(i+1)%edge_count].RelativeVertex(0)
+     are the same vertex.
+     The face will be oriented so the boundary has the edges
+     in the order (edges[0], edges[1], ..., edges[edge_count-1]).
+  Returns:
+    A pointer to the added face. 
+    The returned face is managed by the subd.
+  */
+  class ON_SubDFace* AddFace(
+    const class ON_SubDEdgePtr* edges,
+    unsigned int edge_count
+    );
+
+  /*
+  Parameters:
+    candidate_face - [in]
+      If this face was previously deleted and is not currently used,
+      it will be reused. This allows editing operations that merge
+      faces to have the result of the merge be returned in a face
+      that was part of the input set.
+    edge_count - [in]
+      Must be >= 3.
+    edge[] - [in]
+      The edge list must be sorted and correct oriented
+      (edge[i].RelativeVertex(1) == edge[(i+1)%edge_count].RelativeVertex(0)).
+  */
+  class ON_SubDFace* AddFace(
+    const ON_SubDFace* candidate_face,
+    const class ON_SubDEdgePtr* edge,
+    unsigned int edge_count
+    );
+
+public:
+
+#pragma region RH_C_SHARED_ENUM [ON_SubD::PatchStyle] [Rhino.Geometry.SubDPatchStyle] [byte]
+  /// <summary>
+  /// SubD::PatchStyle identifies the style of patch used to fill holes.
+  /// </summary>
+  enum class PatchStyle : unsigned char
+  {
+    ///<summary>
+    /// Not a valid style.
+    /// This encourages developers to thoughtfully select a patch style and can 
+    /// be used to indicate a UI control is not initialized.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// Automatically choose a patch style that will generally create a good looking result.
+    /// If a hole boundary is not convex, it is triangulated. Otherwise:
+    /// If a hole has 3 edges, a single triangle face is used.
+    /// If a hole has 4 edges, a single quad face is used.
+    /// If a hole has 5 or more edges and an odd number of edges, a triangle fan is used. 
+    /// If a hole has 6 or more edges and an even number of edges, a quad fan is used. 
+    ///</summary>
+    Automatic = 1, 
+
+    ///<summary>
+    /// A single face is used under all conditions.
+    ///</summary>
+    SingleFace = 2,
+
+    ///<summary>
+    /// A triangle fan used under all conditions. The center of the fan
+    /// is the average of the hole boundary vertex control net points.
+    ///</summary>
+    TriangleFan = 3,
+
+    ///<summary>
+    /// If the hole boundary has an even mumber of edges, a quad fan is used.
+    /// Otherwise a triangle fan is used. The center of the fan
+    /// is the average of the hole boundary vertex control net points.
+    ///</summary>
+    QuadOrTriangleFan = 4,
+
+    ///<summary>
+    /// The hole boundary is triangluated.
+    /// Typically this style is selected when a boundary not convex 
+    /// and the other styles produce faces with overlapping regions.
+    ///</summary>
+    Triangulated = 5
+  };
+#pragma endregion
+
+
   
+public:
   /*
   Description:
     Expert user tool to insert an edge in the face's edge array.
@@ -2631,6 +3961,21 @@ public:
     ON_SubDEdgePtr& removed_edge
     );
 
+
+  /*
+  Description:
+    Expert user tool to remove all edge and vertex connnections from a face
+  Parameters:
+    face - [in]
+  Remarks:
+    This tool is used during editing of a SubD and the 
+    connections are removed even if the result is an invalid face or edge.
+    It is up to the expert user to make enough changes to create a valid SubD.
+  */
+  bool RemoveFaceConnections(
+    ON_SubDFace* face
+  );
+
   bool GrowVertexEdgeArray(
     ON_SubDVertex* v,
     size_t capacity
@@ -2648,12 +3993,64 @@ public:
     size_t capacity
     );
 
+////#if defined(OPENNURBS_PLUS)
+////  /*
+////  Description:
+////    Get the limit surface point location and normal for 
+////    the face's center from the limit mesh grid.
+////  Parameters:
+////    face - [in]
+////      A face in this SubD.
+////    P - [out]
+////      P = limit surface location or ON_3dPoint::NanPoint if not available.
+////    N - [out]
+////      N = limit surface unit normal or ON_3dVector::NanVector if not available.
+////  Returns:
+////    True if the point and normal were set from the limit mesh frament.
+////    False if the limit mesh fragment was not found and nan values were returned.
+////  */
+////  // TODO - remove this and remove cached limit mesh.
+////  bool GetFaceCenterPointAndNormalX(
+////    const class ON_SubDFace* face,
+////    double* P,
+////    double* N
+////  ) const;
+////#endif
   
+////#if defined(OPENNURBS_PLUS)
+////  /*
+////  Description:
+////    Get the limit surface point location and normal for 
+////    the edge's midpoint from the limit mesh grid.
+////  Parameters:
+////    edge - [in]
+////      An edge in this SubD.
+////    edge_face_index - [in]
+////      Index of the face to use for the normal. If the edge is a crease, then
+////      each attached face may have a different normal. Pass 0 when in doubt.
+////    P - [out]
+////      P = limit surface location or ON_3dPoint::NanPoint if not available.
+////    N - [out]
+////      N = limit surface unit normal or ON_3dVector::NanVector if not available.
+////  Returns:
+////    True if the point and normal were set from the limit mesh frament.
+////    False if the limit mesh fragment was not found and nan values were returned.
+////  */
+////  // TODO - remove this and remove cached limit mesh.
+////  bool GetEdgeCenterPointAndNormalX(
+////    const class ON_SubDEdge* edge,
+////    unsigned int edge_face_index,
+////    double* P,
+////    double* N
+////  ) const;
+////#endif
 
 
-
-  void ClearLimitSurfaceMesh() const;
-
+  /*
+  Description:
+    Clear all cached evaluation information (meshes, surface points, boundiang boxes, ...) 
+    that depends on edge tags, vertex tags, and the location of vertex control points.
+  */
   void ClearEvaluationCache() const;
 
 
@@ -2677,7 +4074,7 @@ public:
 
 #pragma region RH_C_SHARED_ENUM [ON_SubD::NurbsSurfaceType] [Rhino.Geometry.SubD.NurbsSurfaceType] [nested:byte]
   /// <summary>
-  /// ON_SubD::NurbsSurfaceType specifies what type of NURBS surfaces are returned by ON_SubD.GetLimitSurfaceNurbs()
+  /// ON_SubD::NurbsSurfaceType specifies what type of NURBS surfaces are returned by ON_SubD.GetSurfaceNurbsFragments()
   /// </summary>
   enum class NurbsSurfaceType : unsigned char
   {
@@ -2719,6 +4116,184 @@ public:
 
 
 
+
+
+
+public:
+  /*
+  Parameters:
+    minimum_rectangle_count - [in]
+      >= 1 minimum number of rectangles in texture domain
+    image_width - [in]
+    image_height = [in]
+      If a texture image size is known, pass it here. Otherwise pass 0.0 for both parameters.
+  Returns:
+    Suggested way to partition a texture coodinate domain into rectangles.
+    ON_2udex.i = "x" count
+    ON_2udex.j = "y" count
+    For example (3,2) would mean divide the 2d texture domain into 3 segments across and 2 segments vertically.
+  */
+  static const ON_2udex TextureDomainGridSize(
+    unsigned minimum_rectangle_count,
+    double image_width,
+    double image_height
+  );
+
+  static unsigned int TextureImageSuggestedMinimumSize(
+    ON_2udex grid_size
+  );
+
+  /*
+  Returns:
+    Suggesting minimum number of pixels for a texture image width and height for this SubD.
+  */
+  unsigned int TextureImageSuggestedMinimumSize() const;
+
+  /*
+  Parameters:
+    normalize_texture_domain_delta - [in]
+      > 0.0 and <= 1.0
+    count - [in]
+      >= 1 number of rectangles
+    image_width - [in]
+    image_height = [in]
+      If a texture image size is known, pass it here. Otherwise pass 0.0 for both parameters.
+      When available, it is used to avoid have different rectangles share pixels.
+    quad_texture_domain - [out]
+      Each quad will have texture domain
+      minimum point = (x0,y0)
+      maximum point = (x0+quad_texture_domain,y0+quad_texture_domain)
+      where (x0,y0) is the normalized coord
+    quad_texture_delta - [out]
+      To move from one quad to the next in the same row, increment the x-coordinate by quad_texture_delta.
+      To move from the last quad in a row to the first quad in the next row,
+      set x-coordinate = to the next in the same row, increment the x-coordinate by quad_texture_delta.
+
+  Returns:
+    number of quads per row and column in the region.
+  */
+  static const ON_2udex GetTextureDomainAndDelta(
+    unsigned minimum_rectangle_count,
+    double image_width,
+    double image_height,
+    ON_2dVector& quad_texture_domain,
+    ON_2dVector& quad_texture_delta
+  );
+
+
+  static ON_SubDTextureDomainType TextureDomainTypeFromUnsigned(
+    unsigned int texture_domain_type_as_unsigned
+  );
+
+  static const ON_wString TextureDomainTypeToString(
+    ON_SubDTextureDomainType texture_domain_type
+    );
+
+
+  /*
+  Description:
+    Set the default texture coordinate domain on each face.
+  Parameters:
+    texture_domain_type - [in]
+      Type of texture coordinates. 
+      If ON_SubDTextureDomainType::Unset or ON_SubDTextureDomainType::Custom,
+      is passed, the type setting  is changed but no changes are made to texture coordinats.
+      When in doubt and performance may be an issue, pass false.
+      If true, then, where possible, texture domains are set so
+      quad grid regions have neighboring texture domains.
+      On subds with large regions quad grids, this produces a result that
+      looks better when default surface parameter texture coordinates are used.
+      However, this requires a calculation that can be slow on subs with lots of faces.
+    bLazy - [in]
+      If true and if texture_domain_type == TextureDomainType(), 
+      then nothing is done and true is returned.
+    bSetFragmentTextureCoordinates
+      When in doubt, pass true.
+      If true and if the faces have cached fragments, then after the domains are set the
+      fragments texture domains and their texture coordinates are set as well.
+  Remarks:
+    SubD texture domains and coordinates are a mutable property.
+    They can be changed by rendering applications as needed.
+    Call SetTextureCoordinates() to restore them to the default values.
+  */
+  bool SetTextureDomains(
+    ON_SubDTextureDomainType texture_domain_type,
+    bool bLazy,
+    bool bSetFragmentTextureCoordinates
+  ) const;
+
+  ON_SubDTextureDomainType TextureDomainType() const;
+
+  static bool SetTextureDomains(
+    ON_SubDFaceIterator& fit,
+    ON_SubDTextureDomainType texture_domain_type,
+    bool bSetFragmentTextureCoordinates
+  );
+
+  /*
+  Description:
+    Use the current default texture domain values on each face
+    to set the currently cached ON_MeshFragment texture coordinates.
+    The subd's TextureMappingTag() property is set to
+    ON_TextureMapping::SurfaceParameterTextureMapping.
+  Remarks:
+    SubD texture domains and coordinates are a mutable property.
+    They can be changed by rendering applications as needed.
+    Call SetTextureCoordinatesFromFaceDomains() to restore them to the default values.
+  */
+  bool SetTextureCoordinatesFromFaceDomains() const;
+
+  /*
+  Description:
+    Use the current default texture domain values on each face
+    to set the currently cached ON_MeshFragment texture coordinates.
+  Parameters:
+    fit - [in]
+      faces to set.
+  */
+  static bool SetTextureCoordinatesFromFaceDomains(
+    ON_SubDFaceIterator& fit
+  );
+
+  /*
+  Description:
+    Use a texture mapping function to set currently cached
+    ON_SubDMeshFragment m_T[] values.
+  Parameters:
+    mapping - [in]
+    subd_xform - [in]
+      If not nullptr, the mapping calculation is performed as
+      if the subd were transformed by subd_xform; the
+      location of the subd is not changed.
+    bLazy - [in]
+      If true and the m_T[] values were set using the same
+      mapping parameters, then no calculation is performed.
+  Returns:
+    True if successful.
+  Remarks:
+    SubD texture domains and coordinates are a mutable property.
+    They can be changed by rendering applications as needed.
+    Call SetTextureCoordinatesFromFaceDomains() to restore them to the default values.
+  */
+  bool SetTextureCoordinates(
+    const class ON_TextureMapping& mapping,
+    const class ON_Xform* subd_xform,
+    bool bLazy
+  ) const;
+     
+  /*
+  Returns:
+    The current texture mapping tag. This tag is set by SetTextureCoordinatesFromFaceDomains()
+    and SetTextureCoordinates().
+  Remarks:
+    SubD texture domains and coordinates are a mutable property.
+    They can be changed by rendering applications as needed.
+    Call SetTextureCoordinatesFromFaceDomains() to restore them to the default values.
+  */
+  const ON_MappingTag TextureMappingTag() const;
+
+  void SetTextureMappingTag(const class ON_MappingTag&) const;
+
 public:
   /*
   Description:
@@ -2739,8 +4314,8 @@ public:
   void ShareDimple(const ON_SubD&);
   void SwapDimple(ON_SubD&);
 
-  void ShareDimple(const class ON_SubDLimitMeshImpl&);
-  void SwapDimple(class ON_SubDLimitMeshImpl& );
+  void ShareDimple(const class ON_SubDMeshImpl&);
+  void SwapDimple(class ON_SubDMeshImpl& );
 
 private:
   class ON_SubDimple* SubDimple(bool bCreateIfNeeded);
@@ -2748,6 +4323,7 @@ private:
   class ON_SubDLevel* ActiveLevelPointer();
 
   void CopyHelper(const ON_SubD&);
+
 
 private:
   friend class ON_SubDRef;
@@ -2763,14 +4339,13 @@ public:
   // The ON_SubD code increments ON_SubD::ErrorCount everytime something
   // unexpected happens. This is useful for debugging.
   static unsigned int ErrorCount;
-};
-
+}; 
 
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDRef
 //
-class ON_SUBD_CLASS ON_SubDRef
+class ON_CLASS ON_SubDRef
 {
 #if defined(ON_SUBD_CENSUS)
 private:
@@ -2796,28 +4371,50 @@ public:
 
   /*
   Returns:
-    Number of references to the ON_SubD, including the one by this ON_SubDRef.
+    Number of references to the managed ON_SubD, including the one by this ON_SubDRef.
   */
   unsigned int ReferenceCount() const;
 
   /*
   Description:
-    Allocates a new ON_SubD and has this ON_SubDRef reference it.
+    Allocates a new empty ON_SubD and has this ON_SubDRef reference it.
   */
   class ON_SubD& NewSubD();
-
 
   /*
   Description:
     Allocates a new ON_SubD and has this ON_SubDRef reference it.
+  Parameters:
+    src - [in]
+      The new ON_SubD managed by this ON_SubDRef will be a copy of src.SubD().
+  Returns:
+    A reference to the new ON_SubD managed by this ON_SubDRef.
   */
   class ON_SubD& CopySubD(
     const ON_SubDRef& src
     );
+
+  /*
+  Description:
+    Allocates a new ON_SubD and has this ON_SubDRef reference it.
+  Parameters:
+    src - [in]
+      The new ON_SubD managed by this ON_SubDRef will be a copy of src.
+  Returns:
+    A reference to the new ON_SubD managed by this ON_SubDRef.
+  */
   class ON_SubD& CopySubD(
     const ON_SubD& src
     );
 
+  /*
+  Description:
+    If ReferenceCount() > 1, then have this ON_SubDRef reference a 
+    new copy. Otherwise do nothing. The result being that this will
+    be the unique reference to the ON_SubD managed by this ON_SubDRef.
+  Returns:
+    A reference to the ON_SubD uniquely managed by this ON_SubDRef.
+  */
   class ON_SubD& UniqueSubD();
   
   /*
@@ -2899,7 +4496,7 @@ private:
 class ON_SubDComponentMarksClearAndRestore
 {
 public:
-  // Constructor saves current component marks on subd.
+  // Constructor saves current component RuntimeMark() settings.
   ON_SubDComponentMarksClearAndRestore(
     ON_SubD& subd
   );
@@ -2921,15 +4518,17 @@ public:
   // Call DisableRestore() to prevent the destructor from restoring saved marks.
   void DisableRestore();
 
-  const ON_SimpleArray< const class ON_SubDComponentBase* >& SavedMarkedComponentList() const;
+  const ON_SimpleArray< const class ON_SubDComponentBase* >& ComponentList() const;
 
 private:
   ON_SubD m_subd;
-  ON_SimpleArray< const class ON_SubDComponentBase* > m_saved_marked_component_list;
+
+  ON_SimpleArray< const class ON_SubDComponentBase* > m_component_list;
+
   bool m_bRestore = true;
-  bool m_bReserved1 = false;
-  bool m_bReserved2 = false;
-  bool m_bReserved3 = false;
+  unsigned char m_reserved1 = 0;
+  unsigned char m_reserved2 = 0;
+  unsigned char m_reserved3 = 0;
   unsigned int m_reserved4 = 0;
 
 private:
@@ -2942,7 +4541,7 @@ private:
 //
 // ON_SubDSectorType
 //
-class ON_SUBD_CLASS ON_SubDSectorType
+class ON_CLASS ON_SubDSectorType
 {
 public:
   ON_SubDSectorType() = default;
@@ -3051,10 +4650,6 @@ public:
   double SectorWeight() const;
 
 
-  ON_SubD::SubDType SubDType() const;
-
-  ON_SubD::FacetType FacetType() const;
-
   unsigned int FacetEdgeCount() const;
 
   ON_SubD::VertexTag VertexTag() const;
@@ -3089,45 +4684,54 @@ public:
 
   /*
   Returns:
-    a value >= 0 and <= ON_SubDSectorType::MaximumAngleIndex
+    a value >= 0 and <= ON_SubDSectorType::MaximumCornerAngleIndex
   */
   unsigned int CornerSectorAngleIndex() const;
 
   /*
   Description:
-    An angle index value of ON_SubDSectorType::MaximumAngleIndex indicates
+    An angle index value of ON_SubDSectorType::MaximumCornerAngleIndex indicates
     the angle is 2pi radians.
   */
-  static const unsigned int MaximumAngleIndex; // = 72
+  enum : unsigned int
+  {
+    MaximumCornerAngleIndex = 72
+  };
+
+  // ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
+  static const double MinimumCornerAngleRadians;
+
+  // ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
+  static const double MaximumCornerAngleRadians;
 
   /*
   Parameters:
-    angle_radians - [in] (0.0 <= angle_radians <= 2*ON_PI
+    angle_radians - [in] (0.0 <= angle_radians <= 2*ON_PI)
       The angle between the bounding crease edges
   Returns:
-    angle_index: >= 0 and <= ON_SubDSectorType::MaximumCornerSectorIndex
-      | angle_radians - angle_index/M * 2pi | <= 1/2 * 1/M * 2pi,
-      where M = ON_SubDSectorType::MaximumAngleIndex
-    ON_UNSET_UINT_INDEX
-      angle_radians is not valid and the calculation failed.
+    If angle_radians is valid input, then the value angle_index is returned.
+    The value angle_index is selected so that
+    (0 < angle_index < ON_SubDSectorType::MaximumCornerSectorIndex) and
+    fabs(angle_index*angle_quantum - angle_radians) is as small as possible, where
+    angle_quantum =  (2.0*ON_PI)/ON_SubDSectorType::MaximumCornerSectorIndex.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
   */
-  static unsigned int AngleIndexFromAngleRadians(
+  static unsigned int CornerAngleIndexFromCornerAngleRadians(
     double angle_radians
     );
 
   /*
   Convert and angle index into radians
   Parameters:
-    angle_index - [in]
-      0 to ON_SubDSectorType::MaximumAngleIndex.
+    corner_angle_index - [in]
+      0 to ON_SubDSectorType::MaximumCornerAngleIndex.
   Returns:
     If angle_index is valid, the corresponding angle in radians is returned.
-      = angle_index / ON_SubDSectorType::MaximumAngleIndex * 2 * ON_PI
-        (double division performed)
+      = (angle_index / ((double)ON_SubDSectorType::MaximumCornerAngleIndex)) * ON_2PI
     Otherwise ON_UNSET_VALUE is returned.
   */
-  static double AngleRadiansFromAngleIndex(
-    unsigned int angle_index
+  static double AngleRadiansFromCornerAngleIndex(
+    unsigned int corner_angle_index
     );
 
   /*
@@ -3205,13 +4809,11 @@ public:
     (valence + 1) for tri subds
   */
   static unsigned int SectorPointRingCountFromEdgeCount(
-    ON_SubD::SubDType subd_type,
     ON_SubD::VertexTag vertex_tag,
     unsigned int sector_edge_count
     );
 
   static unsigned int SectorPointRingCountFromFaceCount(
-    ON_SubD::SubDType subd_type,
     ON_SubD::VertexTag vertex_tag,
     unsigned int sector_face_count
     );
@@ -3250,8 +4852,6 @@ public:
     0: 
       failed to caclulate weight
     ON_SubDSectorType::UnsetSectorWeight:
-      subd_type was set ON_SubD::SubDType::Unset
-      and was required to calculate the weight.
       This typically happens when a SubD control net is being 
       created and a facet type is not specified.  
       The weights will be calculated at the first subdivision.
@@ -3263,17 +4863,14 @@ public:
     level is being constructed.
   */
   static double CreaseSectorWeight(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count
     );
 
   static double DartSectorWeight(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count
     );
 
   static double CornerSectorWeight(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count,
     double corner_sector_angle_radians
     );
@@ -3352,7 +4949,6 @@ public:
     identify.
   */
   static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
     ON_SubD::VertexTag vertex_tag,
     unsigned int sector_face_count,
     double corner_sector_angle_radians
@@ -3369,7 +4965,6 @@ public:
     An ON_SubDSectorType for the sector identified by sit.
   */
   static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
     const ON_SubDSectorIterator& sit
     );
 
@@ -3386,13 +4981,11 @@ public:
     An ON_SubDSectorType for the sector containing the face.
   */
   static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
     const class ON_SubDFace* face,
     unsigned int face_vertex_index
     );
   
   static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
     const class ON_SubDFace* face,
     const class ON_SubDVertex* vertex
     );
@@ -3410,7 +5003,6 @@ public:
     An ON_SubDSectorType for the sector containing the edge.
   */
   static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
     const class ON_SubDEdge* edge,
     unsigned int edge_vertex_index
     );
@@ -3427,7 +5019,6 @@ public:
     by the input parameters.
   */
   static ON_SubDSectorType CreateSmoothSectorType(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count
     );
 
@@ -3443,7 +5034,6 @@ public:
     by the input parameters.
   */
   static ON_SubDSectorType CreateCreaseSectorType(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count
     );
 
@@ -3459,7 +5049,6 @@ public:
     by the input parameters.
   */
   static ON_SubDSectorType CreateDartSectorType(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count
     );
 
@@ -3477,7 +5066,6 @@ public:
     by the input parameters.
   */
   static ON_SubDSectorType CreateCornerSectorType(
-    ON_SubD::SubDType subd_type,
     unsigned int sector_face_count,
     double sector_corner_angle_radians
     );
@@ -3498,34 +5086,27 @@ public:
 
     For an interior vertex (smooth or dart), the coefficents are ordered
     so that one iteration of subdivision is given by:
-    ON_SubD::SubDType::TriLoopWarren case:
-      S*Transpose(V, E[0], E[1], ..., E[N-1])
-    ON_SubD::SubDType::QuadCatmullClark case:
-      S*Transpose(V, E[0], F[0], E[1], F[1], ..., E[N-1], F[N-1]).
+    S*Transpose(V, E[0], F[0], E[1], F[1], ..., E[N-1], F[N-1]).
     For a dart vertex, E[0] is the point at the end of the creased edge.
 
 
     For a boundary vertex (crease or corner), the coefficents are ordered
     so that one iteration of subdivision is given by:
-    ON_SubD::SubDType::TriLoopWarren case:
-      S*Transpose(V, E[0], E[1], ..., E[N-1]).
-    ON_SubD::SubDType::QuadCatmullClark case:
-      S*Transpose(V, E[0], F[0], E[1], F[1], ..., F[N-2], E[N-1]).
+    S*Transpose(V, E[0], F[0], E[1], F[1], ..., F[N-2], E[N-1]).
 
     N = edge valence = number of edges in the sector.
     E[i] = end of i-th edge radiating from V.
-    In the ON_SubD::SubDType::QuadCatmullClark case, F[i] = point on the quad 
-    that is opposite V.
+    F[i] = point on the quad that is opposite V.
     The edges and faces are ordered radially so that the face for F[i]
     lies between the edges for E[i] and E[(i+1)%N].
 
   Parameters:
-    matrix_capacity - [in]
-      S[] can store any RxR matrix with R <= matrix_capacity.
     S - [out]
       subdivision matrix
       Matrix coefficent (i,j) = S[i][j]
       0 <= i < R, 0 <= j < R, R = ON_SubDSectorType.PointRingCount()
+    matrix_capacity - [in]
+      S[] can store any RxR matrix with R <= matrix_capacity.
 
   Returns:
     R > 0: 
@@ -3533,26 +5114,26 @@ public:
     0: Invalid input
   */
   unsigned int GetSubdivisionMatrix(
-    size_t matrix_capacity,
-    double** S
+    double** S,
+    size_t matrix_capacity
     ) const;
 
   /*
   Parameters:
-    S_capacity - [in]
-      Number of elements in S[] array
     S - [out]
       subdivision matrix. 
       Matrix coefficent (i,j) = S[i*R + j],
       0 <= i < R, 0 <= j < R, R = ON_SubDSectorType.PointRingCount()
+    S_capacity - [in]
+      Number of elements in S[] array
   Returns:
      0: Invalid input.
     >0: Number of rows and columns in S.
         This number is always ON_SubDSectorType.PointRingCount().
   */
   unsigned int GetSubdivisionMatrix(
-    size_t S_capacity,
-    double* S
+    double* S,
+    size_t S_capacity
     ) const;
 
   /*
@@ -3647,10 +5228,10 @@ public:
       subdominant eigenvalue.
   */
   double GetSubdominantEigenvectors(
-    size_t E1_capacity,
     double* E1,
-    size_t E2_capacity,
-    double* E2
+    size_t E1_capacity,
+    double* E2,
+    size_t E2_capacity
     ) const;
 
   /*
@@ -3675,19 +5256,19 @@ public:
     >0: Number of evaluation coefficients in the L*ev[] arrays.
         This number is always ON_SubDSectorType.PointRingCount().
   */
-  unsigned int GetLimitSurfaceEvaluationCoefficients(
-    size_t LPev_capacity,
+  unsigned int GetSurfaceEvaluationCoefficients(
     double* LPev,
-    size_t LT0ev_capacity,
+    size_t LPev_capacity,
     double* LT0ev,
-    size_t LT1ev_capacity,
-    double* LT1ev
+    size_t LT0ev_capacity,
+    double* LT1ev,
+    size_t LT1ev_capacity
     ) const;
 
-  // LimitSurfaceNormalSign() is a debugging tool - slow and not useful in general
-  double LimitSurfaceNormalSign() const;
+  // SurfaceNormalSign() is a debugging tool - slow and not useful in general
+  double SurfaceNormalSign() const;
 
-  bool LimitEvaluationCoefficientsAvailable() const;
+  bool SurfaceEvaluationCoefficientsAvailable() const;
 
   /*
   Parameters:
@@ -3707,28 +5288,27 @@ public:
       Invalid input or the eigenvalues for this sector typoe are not available.
   */
   unsigned int GetAllEigenvalues(
-    size_t eigenvalues_capacity,
-    double* eigenvalues
+    double* eigenvalues,
+    size_t eigenvalues_capacity
     );
 
-  /*
-  Description:
-    The subdivision matrix for all cases is known.
-    A complete set of eigenvalues are available for some cases.
-  Parameters:
-    facet_type - [in]
-    vertex_tag - [in]
-    sector_edge_count - [in]
-      The input parameters identify the subdivision case.
-  Returns:
-    R > 0: Eigenvalues are known.  There subdivison matrix is R x R.
-    0: Eigenvalues for this case are not known.
-  */
-  static unsigned int AllEigenvaluesAvailableKnown(
-    ON_SubD::SubDType subd_type,
-    ON_SubD::VertexTag vertex_tag,
-    unsigned int sector_edge_count
-    );
+  /////*
+  ////Description:
+  ////  The subdivision matrix for all cases is known.
+  ////  A complete set of eigenvalues are available for some cases.
+  ////Parameters:
+  ////  facet_type - [in]
+  ////  vertex_tag - [in]
+  ////  sector_edge_count - [in]
+  ////    The input parameters identify the subdivision case.
+  ////Returns:
+  ////  R > 0: Eigenvalues are known.  There subdivison matrix is R x R.
+  ////  0: Eigenvalues for this case are not known.
+  ////*/
+  ////static unsigned int AllEigenvaluesAvailableKnown(
+  ////  ON_SubD::VertexTag vertex_tag,
+  ////  unsigned int sector_edge_count
+  ////  );
 
   /*
   Description:
@@ -3763,12 +5343,11 @@ public:
     ) const;
 
 private:
-  ON_SubD::SubDType m_subd_type = ON_SubD::SubDType::Unset;
-  ON_SubD::FacetType m_facet_type = ON_SubD::FacetType::Unset;
   ON_SubD::VertexTag m_vertex_tag = ON_SubD::VertexTag::Unset;
   unsigned char m_reserved1 = 0;
+  unsigned short m_reserved2 = 0;
   unsigned int m_hash = 0; // SetHash() sets this field, SectorTypeHash() returns its value.
-  unsigned int m_corner_sector_angle_index = 0; // >= 0 and <= ON_SubDSectorType::MaximumAngleIndex
+  unsigned int m_corner_sector_angle_index = 0; // >= 0 and <= ON_SubDSectorType::MaximumCornerAngleIndex
   unsigned int m_sector_face_count = 0;
   double m_sector_weight = 0.0;
   double m_sector_theta = 0.0;
@@ -3837,8 +5416,7 @@ private:
 
   /*
   Parameters:
-    subd_type - [in]
-    sector_theta - [in]
+    sector_theta - [in] 0 < sector_theta <= 2*ON_PI
       value from one of the sector theta functions.
       ON_SubDEdge::SectorTheta()
       ON_SubDEdge::SmoothSectorTheta()
@@ -3848,47 +5426,43 @@ private:
   Returns:
     0: 
       failed to caclulate weight
-    ON_UNSET_VALUE: 
-      subd_type was set ON_SubD::SubDType::Unset
-      and the tagged end weight cannot be calculated until 
-      the facet type is known.  This typically happens
-      when a SubD control net is being created and
-      a facet type is not specified.  The weights will
-      be calculated at the first subdivision.
+    ON_SubDSectorType::ErrorSectorWeight: 
+      sector_theta is not valid.
     0 < w < 1:
-      If ON_SubD::SubDType::QuadCatmullClark == subd_type, 
-      then the returned value is 
+      The returned value is 
       1/2 + 1/3*cos(sector_angle_radians). (1/6 <= w <= 5/6)
-      If ON_SubD::SubDType::TriLoopWarren == subd_type, 
-      then the returned value is
-      1/3 + 1/3*cos(sector_angle_radians). (0 < w <= 2/3)
   Remarks:
     This is a useful tool when calling AddEdge while a subdivision
     level is being constructed.
   */
   static double SectorWeightFromTheta(
-    ON_SubD::SubDType subd_type,
     double sector_theta
     );
 };
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDLimitMeshFragment
+// ON_SubDMeshFragment
 //
 //  Meshes of ON_SubD limit surface are calculated in fragments.
 //
-class ON_SUBD_CLASS ON_SubDLimitMeshFragmentGrid
+class ON_CLASS ON_SubDMeshFragmentGrid
 {
 public:
   // No construction for performance reasons. 
-  // If you require initialization, use = ON_SubDLimitMeshFragmentGrid::Empty
+  // use = ON_SubDMeshFragmentGrid::Empty
+  // QuadGridFromSideSegmentCount(...)
+  // or QuadGridFromDisplayDensity(...) to initialize.
   //
-  //ON_SubDLimitMeshFragmentGrid() = default;
-  //~ON_SubDLimitMeshFragmentGrid() = default;
-  //ON_SubDLimitMeshFragmentGrid(const ON_SubDLimitMeshFragmentGrid&) = default;
-  //ON_SubDLimitMeshFragmentGrid& operator=(const ON_SubDLimitMeshFragmentGrid&) = default;
-  static const ON_SubDLimitMeshFragmentGrid Empty;
+  //ON_SubDMeshFragmentGrid() = default;
+  //~ON_SubDMeshFragmentGrid() = default;
+  //ON_SubDMeshFragmentGrid(const ON_SubDMeshFragmentGrid&) = default;
+  //ON_SubDMeshFragmentGrid& operator=(const ON_SubDMeshFragmentGrid&) = default;
+
+
+  static const ON_SubDMeshFragmentGrid Empty;
+
+  static const ON_SubDMeshFragmentGrid OneQuadGrid;
 
   /*
   Description:
@@ -3897,7 +5471,7 @@ public:
     side_segment_count - [in]
       number quads in each row and column of the quad grid.
         side_segment_count >= 1
-        side_segment_count <= ON_SubDLimitMesh::MaximumSideSegmentCount
+        side_segment_count <= ON_SubDMesh::MaximumSideSegmentCount
         side_segment_count must be a power of 2
 
     level_of_detail - [in]
@@ -3907,22 +5481,17 @@ public:
       ...
       If 4^level_of_detail > maximum quad count, then a single quad is returned.
   */
-  static ON_SubDLimitMeshFragmentGrid Quads(
+  static ON_SubDMeshFragmentGrid QuadGridFromSideSegmentCount(
     unsigned int side_segment_count,
     unsigned int level_of_detail
     );
 
-  static ON_SubDLimitMeshFragmentGrid Tris(
-    unsigned int side_segment_count,
+  static ON_SubDMeshFragmentGrid QuadGridFromDisplayDensity(
+    unsigned int display_density,
     unsigned int level_of_detail
     );
 
-  static ON_SubDLimitMeshFragmentGrid Facets(
-    ON_SubD::FacetType facet_type,
-    unsigned int side_segment_count,
-    unsigned int level_of_detail
-    );
-
+private:
   /*
   Description:
     Get mesh facet quads that index into a grid of points.
@@ -3946,22 +5515,28 @@ public:
   static unsigned int SetQuads(
     unsigned int side_segment_count,
     unsigned int level_of_detail,
+    unsigned int* quads,
     size_t quad_capacity,
     size_t quad_stride,
-    unsigned int* quads,
+    unsigned int* sides,
     size_t side_capacity,
-    size_t side_stride,
-    unsigned int* sides
+    size_t side_stride
     );
 
-
+public:
   unsigned int SideSegmentCount() const;
+
+  /*
+  Returns:
+    SideSegmentCount() + 1;
+  */
+  unsigned int SidePointCount() const;
 
   /*
   Description:
     The GridId() is persistent and unique based on the contents of the
     grid. It is intended to be used in render applications that store
-    copies of ON_SubDLimitMeshFragmentGrid settings in things like
+    copies of ON_SubDMeshFragmentGrid settings in things like
     vertex object buffers and want a reliable way to index into them.
     The Empty grid has id = 0;
   Returns:
@@ -3976,49 +5551,127 @@ public:
   */
   unsigned int GridId() const;
 
+
+  unsigned int GridFaceCount() const;
+
   /*
   Returns:
-    3 for tris, 4 for quads, 0 for unset.
+    Total number of points in the grid = SidePointCount()*SidePointCount().
   */
-  unsigned int GridFacetSideCount() const;
+  unsigned int GridPointCount() const;
 
+  /*
+  Parameters:
+    grid_point_index - [in]
+      0 <= grid_point_index < GridPointCount().
+    grid_parameters = [out]
+      normalize parameters for that point.
+      These could be used in the role of surface evaluation parameters
+      for texture mapping applications.
+  Returns:
+    True if grid_point_index was valid and grid_parameters was returned.
+  */
   bool GetGridParameters(
     unsigned int grid_point_index,
     double grid_parameters[2]
     ) const;
 
-  
+  /*
+  Parameters:
+    grid_point_index - [in]
+      0 <= grid_point_index < GridPointCount().
+  Returns:
+    Grid (i,j) for that grid_point_index.  
+    0 <= i < SidePointCount()
+    0 <= j < SidePointCount()
+  */
+  const ON_2udex Grid2dexFromPointIndex(
+    unsigned int grid_point_index
+  )  const;
+
+  /*
+  Parameters:
+    i - [in]
+      0 <= i < SidePointCount()
+    j - [in]
+      0 <= j < SidePointCount()
+  Returns:
+    0 <= grid_point_index < GridPointCount().
+  */
+  unsigned int PointIndexFromGrid2dex(
+    unsigned int i,
+    unsigned int j
+  )  const;
+
+  /*
+  Returns:
+    A number between 0 and 8 or ON_UNSET_INT_INDEX.
+    SideSegmentCount() = 2^DisplayDensity().
+  */
+  unsigned int DisplayDensity() const;
+
+  unsigned int LevelOfDetail() const;
+
 private:
   unsigned char m_reserved;
 
 public:
-
-  ON_SubD::FacetType m_F_type;
+  unsigned char m_reserved1 = 0;
   unsigned char m_side_segment_count; // = 2^n for non-empty grids (0 <= n <= 8)
-  unsigned short m_F_count;   // = m_side_count*m_side_count
+  unsigned short m_F_count;   // = m_side_segment_count*m_side_segment_count
   unsigned short m_F_level_of_detail; // 0 = highest, > 0 = reduced
   unsigned short m_F_stride;
   const unsigned int* m_F;
   const unsigned int* m_S; // [4*m_side_segment_count + 1] indices that form the polyline boundary.
-  const ON_SubDLimitMeshFragmentGrid* m_prev_level_of_detail; // nullptr or the previous level with more facets.
-  const ON_SubDLimitMeshFragmentGrid* m_next_level_of_detail; // nullptr or the next level with fewer facets.
+  const ON_SubDMeshFragmentGrid* m_prev_level_of_detail; // nullptr or the previous level with more facets.
+  const ON_SubDMeshFragmentGrid* m_next_level_of_detail; // nullptr or the next level with fewer facets.
 };
 
-class ON_SUBD_CLASS ON_SubDLimitMeshFragment
+class ON_CLASS ON_SubDMeshFragment
 {
 public:
   // No construction for performance reasons. 
-  // If you require initialization, use = ON_SubDLimitMeshFragment::Empty
+  // If you require initialization, use = ON_SubDMeshFragment::Empty
   //
-  //ON_SubDLimitMeshFragment() = default;
-  //~ON_SubDLimitMeshFragment() = default;
-  //ON_SubDLimitMeshFragment(const ON_SubDLimitMeshFragment&) = default;
-  //ON_SubDLimitMeshFragment& operator=(const ON_SubDLimitMeshFragment&) = default;
-  
-  // Every field of ON_SubDLimitMeshFragment::Empty is zero.
-  static const ON_SubDLimitMeshFragment Empty;
+  //ON_SubDMeshFragment() = default;
+  //~ON_SubDMeshFragment() = default;
+  //ON_SubDMeshFragment(const ON_SubDMeshFragment&) = default;
+  //ON_SubDMeshFragment& operator=(const ON_SubDMeshFragment&) = default;
 
-  static const unsigned int MaximumSideSegmentCount;
+  bool CopyFrom( const ON_SubDMeshFragment& src_fragment );
+
+  /*
+  Parameters:
+    src_fragment - [in]
+      fragment to copy
+    display_density - [in]
+      The desired display density of the copy.
+
+      If display_density = ON_UNSET_UINT_INDEX, then this->m_P_capacity must
+      be at least srf_fragment.m_P_count, all points are copied, and 
+      this->m_grid = srf_fragment.m_grid.
+
+      Otherwise, src_fragment must have enough points to provide 
+      the specified denisity and this must have enough 
+      point capacity to store the specified density.
+
+    this - [out]
+      This must have a point capacity large enough to accomodate the
+      requested display density.
+
+  */
+  bool CopyFrom( 
+    const ON_SubDMeshFragment& src_fragment,
+    unsigned int display_density
+  );
+  
+  // Every field of ON_SubDMeshFragment::Empty is zero.
+  static const ON_SubDMeshFragment Empty;
+
+  enum : unsigned int
+  {
+    MaximumSideSegmentCount = (1U << ON_SubDDisplayParameters::MaximumDensity)
+  };
   
   /*
   Returns:
@@ -4040,9 +5693,6 @@ public:
 
   /*
   Parameters:
-    facet_type - [in]
-      ON_SubD::FacetType::Quad or ON_SubD::FacetType::Tri
-
     display_density - [in]
       >= 0
   Returns:
@@ -4053,7 +5703,6 @@ public:
     quads and the other is a trianglular collection of triangles.
   */
   static unsigned int PointCountFromDisplayDensity(
-    ON_SubD::FacetType facet_type,
     unsigned int display_density
     );
 
@@ -4141,10 +5790,10 @@ public:
   static bool SealAdjacentSides(
     bool bTestNearEqual,
     bool bCopyNormals,
-    const ON_SubDLimitMeshFragment& src_fragment,
+    const ON_SubDMeshFragment& src_fragment,
     unsigned int i0,
     unsigned int i1,
-    ON_SubDLimitMeshFragment& dst_fragment,
+    ON_SubDMeshFragment& dst_fragment,
     unsigned int j0,
     unsigned int j1
   );
@@ -4185,6 +5834,43 @@ public:
     double* dst
     );
 
+  /*
+  Returns:
+    Number of mesh quads in a full sized fragment with the specified mesh density.
+  */
+  static unsigned int FullFragmentMeshQuadCountFromDensity(
+    unsigned int mesh_density
+  );
+
+  /*
+  Returns:
+    Number of mesh quads in a half sized fragment with the specified mesh density.
+  */
+  static unsigned int HalfFragmentMeshQuadCountFromDensity(
+    unsigned int mesh_density
+  );
+
+  /*
+  Returns:
+    Number of mesh points in a full sized fragment with the specified mesh density.
+  */
+  static unsigned int FullFragmentMeshPointCountFromDensity(
+    unsigned int mesh_density
+  );
+
+  /*
+  Returns:
+    Number of mesh points in a half sized fragment with the specified mesh density.
+  */
+  static unsigned int HalfFragmentMeshPointCountFromDensity(
+    unsigned int mesh_density
+  );
+
+private:
+  // This field overlaps with ON_FixedSizePoolElement.m_next when a fixed size pool is managing the fragments.
+  // When m_reserved != 0, the framgment is uninitialized. 
+  ON__UINT64 m_reserved;
+
 public:
   const class ON_SubDFace* m_face;
 
@@ -4205,6 +5891,201 @@ public:
   //   for that fragment.  m_face_vertex_index[0,1,3] = a value > ON_SubDFace::MaximumEdgeCount
   unsigned short m_face_vertex_index[4];
 
+  const class ON_SubDFace* SubDFace() const;
+
+  const bool HasValidPointAndNormalGrid() const;
+
+  /*
+  Returns:
+    True if the fragment covers the entire SubD face.
+  */
+  bool IsFullFaceFragment() const;
+
+  /*
+  Returns:
+    True if the fragment covers a corner of the SubD face.
+  */
+  bool IsFaceCornerFragment() const;
+  
+  /*
+  Returns:
+    If IsFaceCornerFragment() is true, then the index of the face's vertex for the corner is returned.
+    Otherwise, ON_UNSET_UINT_INDEX is returned.
+  */
+  unsigned int FaceCornerIndex() const;
+
+  /*
+  Returns:
+    Number of fragments that cover this face. 1 for quads and N>= 3 for faces with N sides when N != 4.
+  */
+  unsigned int FaceFragmentCount() const;
+
+  /*
+  Returns:
+    First fragment for this->m_face.
+  */
+  const ON_SubDMeshFragment* FirstFaceFragment() const;
+
+  /*
+  Returns:
+    Last fragment for this->m_face.
+  */
+  const ON_SubDMeshFragment* LastFaceFragment() const;
+
+  /*
+  Parameters:
+    bReturnLastFromFirstFirst - in
+      If false and this is the first fragment, then nullptr is returned.
+      If true and this is the first fragment, then LastFaceFragment() is returned.
+  Returns:
+    Previous fragment for this->m_face.
+  */
+  const ON_SubDMeshFragment* PreviousFaceFragment(
+    bool bReturnLastFromFirstFirst
+  ) const;
+
+  /*
+  Parameters:
+    bReturnFirstFromLast - in
+      If false and this is the last fragment, then nullptr is returned.
+      If true and this is the last fragment, then FirstFaceFragment() is returned.
+  Returns:
+    Next fragment for this->m_face.
+  */
+  const ON_SubDMeshFragment* NextFaceFragment(
+    bool bReturnFirstFromLast
+  ) const;
+
+  /*
+  Parameters:
+    fragments_capacity - in
+      Capacity of the fragments[] array.
+    fragments[] - out
+      Fragments are returned here.
+  */
+  unsigned int GetFaceFragments(
+    const ON_SubDMeshFragment** fragments,
+    size_t fragments_capacity
+    ) const;
+
+  unsigned int GetFaceFragments(
+    ON_SimpleArray<const ON_SubDMeshFragment*>& fragments
+  ) const;
+
+  /*
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+  */
+  const ON_3dPoint VertexPoint(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+  const ON_3dPoint VertexPoint(
+    ON_2udex grid2dex
+  ) const;
+  const ON_3dPoint VertexPoint(
+    unsigned grid_point_index
+  ) const;
+
+  /*
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+  */
+  const ON_3dVector VertexNormal(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+  const ON_3dVector VertexNormal(
+    ON_2udex grid2dex
+  ) const;
+  const ON_3dVector VertexNormal(
+    unsigned grid_point_index
+  ) const;
+  
+  /*
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+    The texture coordinates calculated by iterpolating the m_ctrlnetT[] values.
+  */
+  const ON_3dPoint VertexTextureCoordinateFromCorners(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+  const ON_3dPoint VertexTextureCoordinateFromCorners(
+    ON_2udex grid2dex
+  ) const;
+  const ON_3dPoint VertexTextureCoordinateFromCorners(
+    unsigned grid_point_index
+  ) const;
+  
+  /*
+  Description:
+    Get the texture coordinate for the specified fragment grid point.
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+    The texture coordinate for the specified fragment grid point.
+    TextureCoordinateDimension() reports the number of coordinates to set.
+    When it is 2, the z coordinate of the returned point is 0.0.
+  */
+  const ON_3dPoint VertexTextureCoordinate(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+  const ON_3dPoint VertexTextureCoordinate(
+    ON_2udex grid2dex
+  ) const;
+  const ON_3dPoint VertexTextureCoordinate(
+    unsigned grid_point_index
+  ) const;
+
+  /*
+  Description:
+    Set the texture coordinate for the specified fragment grid point.
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+    unsigned texture_coordinate_dimension - [in]
+      2 or 3
+    texture_coordinate - [in]
+      Texture coordinates are mutable and are often modified on an otherwise const fragment.
+  Returns:
+    True if input was valid and the texture coordinate was set.
+  */
+  bool SetVertexTextureCoordinate(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j,
+    ON_3dPoint texture_coordinate
+  ) const;
+  bool SetVertexTextureCoordinate(
+    ON_2udex grid2dex,
+    ON_3dPoint texture_coordinate
+  ) const;
+  bool SetVertexTextureCoordinate(
+    unsigned grid_point_index,
+    ON_3dPoint texture_coordinate
+  ) const;
+
+  bool TextureCoordinatesExist() const;
+  void SetTextureCoordinatesExist(bool TextureCoordinatesExist) const;
+
   /*
   Parameters:
     grid_side_index - [in]
@@ -4213,10 +6094,10 @@ public:
   Returns:
     The subd edge that is on the identified side of the grid.
   */
-  const class ON_SubDEdgePtr EdgePtr(
+  const class ON_SubDEdgePtr SubDEdgePtr(
     unsigned int grid_side_index
     ) const;
-  const class ON_SubDEdge* Edge(
+  const class ON_SubDEdge* SubDEdge(
     unsigned int grid_side_index
     ) const;
 
@@ -4225,12 +6106,12 @@ public:
     grid_corner_index - [in]
       grid side N is between corner index N and corner index (N+1)%4.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
-  const class ON_SubDVertexPtr VertexPtr(
+  const class ON_SubDVertexPtr SubDVertexPtr(
     unsigned int grid_corner_index
     ) const;
 
@@ -4239,12 +6120,12 @@ public:
     grid_corner_index - [in]
       grid side N is between corner index N and corner index (N+1)%4.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
-  const class ON_SubDVertex* Vertex(
+  const class ON_SubDVertex* SubDVertex(
     unsigned int grid_corner_index
     ) const;
 
@@ -4256,9 +6137,9 @@ public:
   Returns:
     Limit surface location at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
   const ON_3dPoint CornerPoint(
@@ -4272,9 +6153,9 @@ public:
   Returns:
     Limit surface normal at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
   const ON_3dVector CornerNormal(
@@ -4288,14 +6169,13 @@ public:
   Returns:
     Limit surface frame at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
-  bool GetCornerFrame(
-    unsigned int grid_corner_index,
-    ON_Plane& frame
+  const ON_Plane CornerFrame(
+    unsigned int grid_corner_index
   ) const;
 
   /*
@@ -4305,9 +6185,9 @@ public:
   Returns:
     Limit surface location at the midde of the grid side or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
   const ON_3dPoint SidePoint(
@@ -4321,9 +6201,9 @@ public:
   Returns:
     Limit surface normal at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
   const ON_3dVector SideNormal(
@@ -4337,14 +6217,13 @@ public:
   Returns:
     Limit surface frame at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
-  bool GetSideFrame(
-    unsigned int grid_side_index,
-    ON_Plane& frame
+  const ON_Plane SideFrame(
+    unsigned int grid_side_index
   ) const;
 
   /*
@@ -4354,20 +6233,17 @@ public:
   Returns:
     Limit surface location at the center of the grid side or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
     correspond to half of original SuD edges.
   */
   const ON_3dPoint CenterPoint(
   ) const;
 
-  const ON_3dVector CenterNormal(
-  ) const;
+  const ON_3dVector CenterNormal() const;
 
-  bool GetCenterFrame(
-    ON_Plane& frame
-  ) const;
+  const ON_Plane CenterFrame() const;
 
 private:
   bool Internal_GetFrameHelper(
@@ -4384,85 +6260,346 @@ public:
   */
   ON_ComponentStatus Status() const;
 
-  /*
-  Returns:
-    True if this fragment covers a portion of the original SubD face.
-  Remarks:
-    For partial fragments (IsPartialFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsPartialFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
-  */
-  bool IsPartialFragment() const;
-
-  /*
-  Returns:
-    True if this fragment covers an entire subd face.
-  */
-  bool IsCompleteFragment() const;
-
   bool Transform(
     const ON_Xform& xform
     );  
 
+  ON_SubDMeshFragment* m_next_fragment;
+  ON_SubDMeshFragment* m_prev_fragment;
+
   unsigned short m_face_fragment_count; // Number of fragments that will be delivered for this face.
   unsigned short m_face_fragment_index; // First fragment has index = 0. Last fragment has index = m_face_fragment_count-1.
 
-  // For quad based subdivision algorithms, the mesh fragment
-  // is a tesselation of a rectangular shaped surface,
-  // there are m_side_count quad edges along each side of the tesselation,
-  // there are a total of m_side_count X m_side_count quads, and
+  // The mesh fragment is a grid of quads.
+  // There are m_side_count quad edges along each side of the tesselation,
+  // There are a total of m_side_count X m_side_count quads, and
   // m_P_count = (m_side_count+1)*(m_side_count+1).
-  //
-  // For trangle based subdivision algorithms, the mesh fragment 
-  // is a tesselation of a triangular shaped surface,
-  // there are m_side_count triangle edges along each side of the tesselation,
-  // there are a total of m_side_count X m_side_count triangles, and
-  // m_P_count = (m_side_count+1)*(m_side_count+2)/2.
-  //
 
-  // Number of points
-  unsigned short m_P_count;
-  unsigned short m_P_capacity;
+public:
+  enum : unsigned
+  {
+    MaximumVertexCount = 0x3FFF
+  };
 
-  // points
+  /*
+  Returns:
+    Number of vertices in the mesh fragment grid.
+    VertexCount() should be identical to m_grid.GridPointCount().
+    VertexCapacity() should be >= VertexCount().
+  */
+  unsigned VertexCount() const;
+
+  /*
+  Description:
+    Sets number of fragment vertices being used (number of elements being used in the m_P[], m_N[], and m_T[] arrays).
+  Parameters:
+    vertex_count - [in]
+      A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
+  */
+  bool SetVertexCount(size_t vertex_count);
+
+  /*
+  Returns:
+    Capactity for vertices in the mesh fragment grid.
+    VertexCapacity() should be >= VertexCount().
+    VertexCount() should be identical to m_grid.PointCount().
+  */
+  unsigned VertexCapacity() const;
+
+  /*
+  Description:
+    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], and m_T[] arrays).
+    The memory for the arrays is managed by something besides this ON_SubDManagedMeshFragment instance.
+  Parameters:
+    vertex_capacity - [in]
+      A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
+  Returns:
+    True if successful
+  */
+  bool SetUnmanagedVertexCapacity(size_t vertex_capacity);
+
+
+  /*
+  Description:
+    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], and m_T[] arrays).
+    The memory for the arrays is managed by something besides this ON_SubDManagedMeshFragment instance.
+  Parameters:
+    vertex_capacity - [in]
+      A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
+  Returns:
+    True if successful
+  */
+  bool ReserveManagedVertexCapacity(size_t vertex_capacity);
+
+  /*
+  Returns:
+    True if the memory in the m_P[], m_N[], and m_T[] is managed by this ON_SubDManagedMeshFragment instance.
+  */
+  bool ManagedArrays() const;
+
+  bool DeleteManagedArrays();
+
+  /*
+  Returns:
+    True if the memory in the m_P[], m_N[], and m_T[] is managed by something besides this ON_SubDManagedMeshFragment instance.
+  */
+  bool UnmanagedArrays() const;
+
+private:
+  friend class ON_SubDManagedMeshFragment;
+  friend class ON_SubDMeshImpl;
+  // Number of grid vertices and capacity of arrays in certain conditions.
+  enum : unsigned short
+  {
+    ValueMask = 0x3FFF, // maximum vertex count and capacity
+    EtcMask = 0xC000,
+    EtcControlNetQuadBit = 0x8000, // bit is on m_vertex_count_etc. Set means 4 m_ctrlnetP[] points are set.
+    EtcTextureCoordinatesExistBit = 0x4000, // bit is on m_vertex_count_etc
+    EtcManagedArraysBit = 0x8000, // bit is on m_vertex_capacity_etc. Set means this class manages the m_P[], m_N[], and m_T[] arrays.
+  };
+  mutable unsigned short m_vertex_count_etc;
+  mutable unsigned short m_vertex_capacity_etc;
+  static void Internal_Set3dPointArrayToNan(double* a, size_t a_count, size_t a_stride);
+
+private:
+  // corners for control net display in grid order (counter-clockwise quad order must swap [2] and[3])
+  double m_ctrlnetP[4][3];
+
+  // Normal used for shading the control net display.
+  double m_ctrlnetN[3];
+
+  // The fragment's default corner texture coordinates in grid order.
+  //  m_ctrlnetT[0] (bbox min = lower left)
+  //  m_ctrlnetT[1] (lower right)
+  //  m_ctrlnetT[2] (upper left)
+  //  m_ctrlnetT[3] (bbox max = upper right)
+  mutable double m_ctrlnetT[4][3]; 
+
+public:
+  ///////////////////////////////////////////////////////////////////////////////////
+  //
+  // 3-dimensional grid vertex points
+  //
+  // Depending on the strides, m_P[], m_N[], and m_T[] can be separate or interlaced.
+  //
+  // The stride m_P_stride and memory m_P references is managed by some other class or function.
+  // Never modify m_P_stride, m_P, or the values in m_P.
+  // Use m_grid functions to get point indices and quad face indices.
+  double* m_P; // surface points
   size_t m_P_stride;
-  // The memory m_P references is managed by some other class or function.
-  // Never modify the values in m_P.
-  double* m_P;
+  const double* PointArray(ON_SubDComponentLocation subd_appearance)const;
+  size_t PointArrayStride(ON_SubDComponentLocation subd_appearance)const;
+  unsigned PointArrayCount(ON_SubDComponentLocation subd_appearance) const;
 
-  // surface normals parallel to m_P[] array
+public:
+
+  /*
+  Description:
+    Create a one quad fragment with 
+    m_P = this->m_ctrlnetP[], m_P_stride = 3
+    m_N = this->m_ctrlnetN, m_N_stride = 0
+    m_T = this->m_ctrlnetT, m_T_stride = 3
+    NOTE WELL: 
+    1) "this" must remain in scope and unchanged while the returned value
+    is used because the returned value references memory in thism_ctrlnetX[] arrays.
+    2) The next/prev pointers on the returned fragment are copied from this,
+    but the returned value is not reciprocally referenced by next/prev in the linked list.
+  Returns:
+    A control net quad fragment that can be used locally when the SubDAppearance
+    is ON_SubDComponentLocation::ControlNet.
+    The points, normals, and texture_coordinates of the returned fragment
+    are the control net quad points, normals, and texture coordinates
+    of this fragment. m_grid is a single quad grid.
+  */
+  const ON_SubDMeshFragment ControlNetQuadFragmentForExperts() const;
+
+  /*
+  Parameters:
+    bGridOrder - [in]
+      If true, then points are returned in fragment grid order.
+      Otherwise, points are returned in counter-clockwise quad order.
+    quad_points - [out]
+    quad_normal - [out]
+  */
+  bool GetControlNetQuad(
+    bool bGridOrder,
+    ON_3dPoint quad_points[4],
+    ON_3dVector& quad_normal
+  ) const;
+
+  const ON_3dPoint ControlNetQuadPoint(
+    bool bGridOrder,
+    unsigned point_index
+  ) const;
+
+  /*
+  Parameters:
+    bGridOrder - [in]
+      If true, then points are returned in fragment grid order.
+      Otherwise, points are returned in counter-clockwise quad order.
+    quad_points - [in]
+  */
+  void SetControlNetQuad(
+    bool bGridOrder,
+    const ON_3dPoint quad_points[4],
+    ON_3dVector quad_normal
+  );
+
+  void UnsetControlNetQuad();
+
+  const ON_BoundingBox SurfaceBoundingBox() const;
+  const ON_BoundingBox ControlNetQuadBoundingBox() const;
+  const ON_BoundingBox BoundingBox(ON_SubDComponentLocation subd_appearance) const;
+
+public:
+  /*
+  Returns:
+    If grid vertex points are available, then VertexCount() is returned.
+    Otherwise 0 is returned.
+  */
+  unsigned int PointCount() const;
+  unsigned int PointCapacity() const;
+
+  ///////////////////////////////////////////////////////////////////////////////////
+  //
+  // 3-dimensional grid vertex surface normals
+  //
+  // The m_N[] and m_P[] arrays are parallel. 
+  // Depending on the strides, m_P[], m_N[], and m_T[] can be separate or interlaced.
+  //
+  // If m_N is not nullptr and m_N_stride>0, then m_N[] can accomodate up to m_P_capacity normals.
+  // If m_N is not nullptr and m_N_stride=0, then m_N[] can accomodate a single normal (flat shaded polygon face).
+  // The stride m_N_stride and memory m_N references is managed by some other class or function.
+  // Never modify m_N_stride, m_N, or the values in m_N.
+  // Use m_grid functions to get normal indices and quad face indices.
+  // Note well: m_N_stride can be 0 when the normal is constant (control net face normal for example).
+  double* m_N; // surface normals
   size_t m_N_stride;
-  // If m_N is not nullptr, then it can accomodate up to m_P_capacity normals.
-  // The memory m_N references is managed by some other class or function.
-  // Never modify the values in m_N.
-  double* m_N;
+  const double* NormalArray(ON_SubDComponentLocation subd_appearance)const;
+  size_t NormalArrayStride(ON_SubDComponentLocation subd_appearance)const;
+  unsigned NormalArrayCount(ON_SubDComponentLocation subd_appearance) const;
+
+public:
+  /*
+  Returns:
+    If grid vertex surface normals are available, then VertexCount() is returned.
+    Otherwise 0 is returned.
+  */
+  unsigned int NormalCount() const;
+  unsigned int NormalCapacity() const;
+
+  ///////////////////////////////////////////////////////////////////////////////////
+  //
+  // 3d vertex texture coordinates.
+  //
+  // Depending on the strides, m_P[], m_N[], and m_T[] can be separate or interlaced.
+  //
+  // If m_T is not nullptr and m_T_stride>0, then m_T[] can accomodate up to m_P_capacity textures coordinates.
+  // Otherwise there are no texture coordinates.
+  // Never modify m_T_stride, m_T.
+  // Use m_grid functions to get texture indices and quad face indices.
+  // Note well: m_T_stride can be 0 when the texture coordinate is constant (one color per face for example)
+  mutable double* m_T;
+  mutable size_t m_T_stride;
+
+  const double* TextureCoordinateArray(ON_SubDComponentLocation subd_appearance)const;
+  size_t TextureCoordinateArrayStride(ON_SubDComponentLocation subd_appearance)const;
+  unsigned TextureCoordinateArrayCount(ON_SubDComponentLocation subd_appearance) const;   
+public:
+  /*
+  Returns:
+    If grid texture coordinates are available, then VertexCount() is returned.
+    Otherwise 0 is returned.
+  */
+  unsigned int TextureCoordinateCount() const;
+  unsigned int TextureCoordinateCapacity() const;
+
+
+  /*
+  Description:
+    Sets the values of each fragment's m_ctrlnetT[] member.
+  Parameters:
+    bSetTextureCoordinates
+      If true, the texture coordinate corners are used ti set the fragment's m_T[]
+      values after m_ctrlnetT[] is set.
+  */
+  void SetTextureCoordinateCorners(
+    bool bGridOrder,
+    const ON_2dPoint texture_coordinate_corners[4],
+    bool bSetTextureCoordinates
+  ) const;
+
+  void SetTextureCoordinateCorners(
+    bool bGridOrder,
+    const ON_2dPoint texture_coordinate_corners[4],
+    double s0,
+    double s1,
+    double t0,
+    double t1,
+    bool bSetTextureCoordinates
+  ) const;
+
+  void SetTextureCoordinateCorners(
+    bool bGridOrder,
+    const ON_3dPoint texture_coordinate_corners[4],
+    bool bSetTextureCoordinates
+  ) const;
+
+  /*
+  Description:
+    Get the texture coordinate corners.
+  Parameters:
+    bGridOrder - [in]
+      If true, then points are returned in fragment grid order.
+      Otherwise, points are returned in counter-clockwise quad order.
+    texture_coordinate_corners - [out]
+  */
+
+  bool GetTextureCoordinteCorners(
+    bool bGridOrder,
+    ON_3dPoint texture_coordinate_corners[4]
+  ) const;
+
+  /*
+  Description:
+    Set the texture coordinates in m_T[] from the values in m_ctrlnetT[].
+  */
+  void SetTextureCoordinatesFromCorners() const;
+
+  // Normalized grid parameters useful for appling a texture to the grid are available
+  // from m_grid functions.
   
-  // quads or tris
-  ON_SubDLimitMeshFragmentGrid m_grid; // 
+  // Information to resolve m_P[], m_N[], and m_T[] into a grid of NxN quads.
+  ON_SubDMeshFragmentGrid m_grid;
 
-  ON_BoundingBox m_bbox;
+  const ON_SubDMeshFragmentGrid& Grid(ON_SubDComponentLocation subd_appearance) const;
 
-  ON_SubDLimitMeshFragment* m_next_fragment;
-  ON_SubDLimitMeshFragment* m_prev_fragment;
+  // 3d bounding box of grid vertex points.
+  ON_BoundingBox m_surface_bbox;
+public:
+  /*
+  Returns:
+    Amount of memory needed for the fragment, the m_P[], and the m_N[] arrays.
+  */
+  static size_t SizeofFragment(unsigned int display_density);
 };
 
-class ON_SUBD_CLASS ON_SubDManagedLimitMeshFragment : public ON_SubDLimitMeshFragment
+class ON_CLASS ON_SubDManagedMeshFragment : public ON_SubDMeshFragment
 {
 public:
-  ON_SubDManagedLimitMeshFragment() ON_NOEXCEPT;
-  ~ON_SubDManagedLimitMeshFragment() ON_NOEXCEPT;
-  ON_SubDManagedLimitMeshFragment(const ON_SubDManagedLimitMeshFragment&) ON_NOEXCEPT;
-  ON_SubDManagedLimitMeshFragment& operator=(const ON_SubDManagedLimitMeshFragment&) ON_NOEXCEPT;
+  ON_SubDManagedMeshFragment() ON_NOEXCEPT;
+  ~ON_SubDManagedMeshFragment() ON_NOEXCEPT;
+  ON_SubDManagedMeshFragment(const ON_SubDManagedMeshFragment&) ON_NOEXCEPT;
+  ON_SubDManagedMeshFragment& operator=(const ON_SubDManagedMeshFragment&) ON_NOEXCEPT;
 
-  static ON_SubDManagedLimitMeshFragment Create(const ON_SubDLimitMeshFragment& src) ON_NOEXCEPT;
+  static ON_SubDManagedMeshFragment Create(const ON_SubDMeshFragment& src) ON_NOEXCEPT;
 
 #if defined(ON_HAS_RVALUEREF)
   // rvalue copy constructor
-  ON_SubDManagedLimitMeshFragment( ON_SubDManagedLimitMeshFragment&& ) ON_NOEXCEPT;
+  ON_SubDManagedMeshFragment( ON_SubDManagedMeshFragment&& ) ON_NOEXCEPT;
 
   // rvalue assignment operator
-  ON_SubDManagedLimitMeshFragment& operator=( ON_SubDManagedLimitMeshFragment&& ) ON_NOEXCEPT;
+  ON_SubDManagedMeshFragment& operator=( ON_SubDManagedMeshFragment&& ) ON_NOEXCEPT;
 #endif
 
   void Clear() ON_NOEXCEPT;
@@ -4470,74 +6607,35 @@ public:
   void Destroy() ON_NOEXCEPT;
 
   bool ReserveCapacity(
-    ON_SubD::FacetType facet_type,
     unsigned int mesh_density
     ) ON_NOEXCEPT;
 
 private:
-  void CopyHelper(const ON_SubDLimitMeshFragment& src);
+  void CopyHelper(const ON_SubDMeshFragment& src);
   size_t m_storage_capacity = 0;
   double* m_storage = nullptr;
 };
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDDisplayParameters
+// ON_SubDMesh
 //
-//  A collection of parameters that are passed to functions that
-//  calculate a various representations of the limit surface.
-//
-class ON_SUBD_CLASS ON_SubDDisplayParameters
-{
-public:
-  static const ON_SubDDisplayParameters Empty;
 
-  // Parameters for the default limit surface display mesh.
-  static const ON_SubDDisplayParameters DefaultDisplayMeshParameters;
-
-  /*
-  Description:
-    In most applications, the caller sets the mesh_density
-    and leaves the other parameters set to the default
-    values.
-  */
-  static ON_SubDDisplayParameters CreateFromDisplayDensity(
-    unsigned int display_density
-    );
-
-  ON_SubDDisplayParameters() = default;
-  ~ON_SubDDisplayParameters() = default;
-  ON_SubDDisplayParameters(const ON_SubDDisplayParameters&) = default;
-  ON_SubDDisplayParameters& operator=(const ON_SubDDisplayParameters&) = default;
-
-  unsigned int m_display_density = 0;
-
-  bool m_bUseMultipleThreads = false;
-
-  // Edge sealing takes extra time and can be skipped if
-  // adjacent faces can have mesh fragments whose shared vertex
-  // locations are nearly (but generally not exactly) equal.
-  bool m_bSkipEdgeSealing = false;
-
-  ON_Terminator* m_terminator = nullptr;
-  // optional progress reporting
-  ON_ProgressReporter* m_progress_reporter = nullptr;
-  ON_Interval m_progress_reporter_interval = ON_Interval::ZeroToOne;
-};
-
-//////////////////////////////////////////////////////////////////////////
-//
-// ON_SubDLimitMesh
-//
-class ON_SUBD_CLASS ON_SubDLimitMesh
+/// <summary>
+/// ON_SubDMesh is used to store a traditional quad mesh of either
+/// a SubgD surface or SubD control net. It is typically used for 
+/// rendering and user interface selection cacluations.
+/// It is a list of ON_SubDMeshFragment classes.
+/// </summary>
+class ON_CLASS ON_SubDMesh
 {
 #if defined(ON_SUBD_CENSUS)
 private:
-  ON_SubDLimitMeshCensusCounter m_census_counter;
+  ON_SubDMeshCensusCounter m_census_counter;
 #endif
 
 public:
-  static const ON_SubDLimitMesh Empty;
+  static const ON_SubDMesh Empty;
 
   /*
   Returns:
@@ -4547,15 +6645,7 @@ public:
     This is a runtime number. It is not saved in archives and begins
     at 1 with each new runtime instance of the opennurbs library.
   */
-  unsigned int ContentSerialNumber() const;
-
-  enum : unsigned int
-  {
-    DefaultDisplayDensity = 4, // default limit mesh density 16x16 quads per SubD quad 16 = 2^4
-    MaximumDisplayDensity = 8  // 8 (256x256 quads per SubD quad 256 = 2^8)
-    //MaximumLevelOfDetail = 0, // 0 = most facets per fragment
-    //MinimumLevelOfDetail = 8 // 8 = fewest facets per fragment
-  };
+  ON__UINT64 ContentSerialNumber() const;
 
 
 
@@ -4574,28 +6664,69 @@ public:
     ON_Mesh* destination_mesh
   ) const;
 
-  ON_SubDLimitMesh() = default;
-  ~ON_SubDLimitMesh() = default;
-  ON_SubDLimitMesh(const ON_SubDLimitMesh&) = default;
-  ON_SubDLimitMesh& operator=(const ON_SubDLimitMesh&) = default;
+
+  /*
+  Description:
+  Parameters:
+    mesh_density - [in]
+      Larger numbers return denser meshes.
+    destination_mesh - [in]
+      If destination_mesh is not nullptr, then the returned mesh
+      will be store here. Otherwise the returned mesh will be 
+      allocated with a call to new ON_Mesh().
+  Returns:
+    If this limit mesh is not empty, an ON_Mesh representation of this limit mesh.
+    Othewise, nullptr.
+  */
+  ON_Mesh* ToMesh(
+    unsigned int mesh_density,
+    ON_Mesh* destination_mesh
+  ) const;
+
+  /*
+  Description:
+  Parameters:
+    frit - [in]
+      A fragment iterator from an ON_SubDMesh or ON_SubD.
+    mesh_density - [in]
+      Larger numbers return denser meshes.
+      MinimumMeshDensity() <= mesh_density <= MaximumMeshDensity()
+    destination_mesh - [in]
+      If destination_mesh is not nullptr, then the returned mesh
+      will be store here. Otherwise the returned mesh will be 
+      allocated with a call to new ON_Mesh().
+  Returns:
+    If this limit mesh is not empty, an ON_Mesh representation of this limit mesh.
+    Othewise, nullptr.
+  */
+  static ON_Mesh* ToMesh(
+    class ON_SubDMeshFragmentIterator& frit,
+    unsigned int mesh_density,
+    ON_Mesh* destination_mesh
+  );
+
+  ON_SubDMesh() = default;
+  ~ON_SubDMesh() = default;
+  ON_SubDMesh(const ON_SubDMesh&) = default;
+  ON_SubDMesh& operator=(const ON_SubDMesh&) = default;
 
   
 #if defined(ON_HAS_RVALUEREF)
   // rvalue copy constructor
-  ON_SubDLimitMesh( ON_SubDLimitMesh&& ) ON_NOEXCEPT;
+  ON_SubDMesh( ON_SubDMesh&& ) ON_NOEXCEPT;
   // rvalue assignment operator
-  ON_SubDLimitMesh& operator=( ON_SubDLimitMesh&& );
+  ON_SubDMesh& operator=( ON_SubDMesh&& );
 #endif
 
-  ON_SubDLimitMesh Copy() const;
+  ON_SubDMesh Copy() const;
 
-  ON_SubDLimitMesh& CopyFrom(
-    const ON_SubDLimitMesh& src
+  ON_SubDMesh& CopyFrom(
+    const ON_SubDMesh& src
     );
 
   static void Swap(
-    ON_SubDLimitMesh& a,
-    ON_SubDLimitMesh& b
+    ON_SubDMesh& a,
+    ON_SubDMesh& b
     );
 
   bool Transform( 
@@ -4605,7 +6736,7 @@ public:
   unsigned int DisplayDensity() const;
   ON_SubDDisplayParameters DisplayParameters() const;
   unsigned int FragmentCount() const;
-  const ON_SubDLimitMeshFragment* FirstFragment() const; // linked list of mesh fragments
+  const ON_SubDMeshFragment* FirstFragment() const; // linked list of mesh fragments
 
   /*
   Parameters:
@@ -4616,7 +6747,7 @@ public:
     fragments for the face and this is the first on. The others
     follow using m_next_fragment.
   */
-  const ON_SubDLimitMeshFragment* FaceFragment(
+  const ON_SubDMeshFragment* FaceFragment(
   const class ON_SubDFace* face
   ) const;
 
@@ -4675,7 +6806,7 @@ public:
 
   /*
   Description:
-    The ON__INT_PTRs in the tree are const ON_SubDLimitMeshFragment* pointers.
+    The ON__INT_PTRs in the tree are const ON_SubDMeshFragment* pointers.
   */
   const ON_RTree& FragmentTree() const;
 
@@ -4694,8 +6825,6 @@ public:
 
   bool IsEmpty() const;
 
-  ON_SubD::FacetType GridType() const;
-
   ON_BoundingBox BoundingBox() const;
 
   bool GetTightBoundingBox(
@@ -4710,53 +6839,52 @@ public:
 public:
   /*
   Description:
-    Pretend this function and ON_SubDLimitMeshImpl do not exist.
+    Pretend this function and ON_SubDMeshImpl do not exist.
   Returns:
     Something that you are pretending does not exist.
   Remarks:
-    It is intentional that the definition of ON_SubDLimitMeshImpl class is not
+    It is intentional that the definition of ON_SubDMeshImpl class is not
     available in the opennurbs library interface (not in a header file).
-    The size and design of ON_SubDLimitMeshImpl will change constantly.
+    The size and design of ON_SubDMeshImpl will change constantly.
     If you choose to hack and whack so you can dereference an
-    ON_SubDLimitMeshImpl* pointer, then your code will crash unpredictably.
+    ON_SubDMeshImpl* pointer, then your code will crash unpredictably.
   */
-  class ON_SubDLimitMeshImpl* SubLimple() const;
+  class ON_SubDMeshImpl* SubLimple() const;
   unsigned int SubLimpleUseCount() const;
 
 private:
 #pragma ON_PRAGMA_WARNING_PUSH
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 ) 
-  friend class ON_SubDLimitMeshImpl;
+  friend class ON_SubDMeshImpl;
   // C4251: ... needs to have dll-interface to be used by clients of class ...
   // m_impl_sp is private and all code that manages m_impl_sp is explicitly implemented in the DLL.
 private:
-  std::shared_ptr< class ON_SubDLimitMeshImpl > m_impl_sp;
+  std::shared_ptr< class ON_SubDMeshImpl > m_impl_sp;
 #pragma ON_PRAGMA_WARNING_POP
 
 };
 
 
-
-class ON_SUBD_CLASS ON_SubDSectorLimitPoint
+class ON_CLASS ON_SubDSectorSurfacePoint
 {
 public:
   // For performance reasons, the default the data members are
   // not initialized by the default constructor
-  // Use = ON_SubDSectorLimitPoint::Unset when initialization is required
-  static const ON_SubDSectorLimitPoint Unset; // all doubles are ON_UNSET_VALUE, all pointer are nullptr
-  static const ON_SubDSectorLimitPoint Nan;   // all doubles are ON_DBL_QNAN, all pointer are nullptr
-  static const ON_SubDSectorLimitPoint Zero;  // all doubles are 0.0, all pointer are nullptr
+  // Use = ON_SubDSectorSurfacePoint::Unset when initialization is required
+  static const ON_SubDSectorSurfacePoint Unset; // all doubles are ON_UNSET_VALUE, all pointer are nullptr
+  static const ON_SubDSectorSurfacePoint Nan;   // all doubles are ON_DBL_QNAN, all pointer are nullptr
+  static const ON_SubDSectorSurfacePoint Zero;  // all doubles are 0.0, all pointer are nullptr
   
   /*
   Returns:
-    true if m_limitP[0] is a nan (like ON_DBL_QNAN).
+    true if m_limitP[0] is ON_UNSET_VALUE.
     false otherwise.
   */
   bool IsUnset() const;
 
   /*
   Returns:
-    true if m_limitP[0] is ON_UNSET_VALUE.
+    true if m_limitP[0] is a nan (like ON_DBL_QNAN).
     false otherwise.
   */
   bool IsNan() const;
@@ -4774,7 +6902,9 @@ public:
     one nonzero coordinate.
     false otherwise.
   */
-  bool IsSet() const;
+  bool IsSet(
+    bool bUndefinedNormalIsPossible
+  ) const;
 
   bool Transform(
     const ON_Xform& xform
@@ -4786,39 +6916,47 @@ public:
   double m_limitT2[3]; // second unit tangent
   double m_limitN[3];  // unit normal (same direction as m_limitT1 x m_limitT2)
 
-  // When an ON_SubDVertex has a single sector, these pointers are both null.
+  // When an ON_SubDVertex has a single sector, (ON_SubDVertex.IsSingleSectorVertex() is true),
+  // these pointers are both null.
   // When an ON_SubDVertex has a multiple sectors, 
   // m_sector_face is the "first" face in the sector and
   // m_next_sector_limit_point is used to create a linked list.
   // (The "first" face in a sector is the one ON_SubDSectorIterator.IncrementToCrease(-1) returns.)
-  const class ON_SubDSectorLimitPoint* m_next_sector_limit_point; // nullptr for vertices with one sector
+  const class ON_SubDSectorSurfacePoint* m_next_sector_limit_point; // nullptr for vertices with one sector
   const class ON_SubDFace* m_sector_face;                         // nullptr for vertices with one sector
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDComponentBase
 //
-class ON_SUBD_CLASS ON_SubDComponentBase
+class ON_CLASS ON_SubDComponentBase
 {
 public:
   static const ON_SubDComponentBase Unset;
-
-  ///*
-  //Returns:
-  //  True if component is not nullptr, component->m_id > 0 and component->m_archive_id != ON_UNSET_UINT_INDEX.
-  //*/
-  //static bool IsActive(
-  //  const ON_SubDComponentBase* component
-  //  );
-
+  
+  /*
+  Returns:
+    True if this component is active in its parent subd or other
+    relevent context.
+  Remarks:
+    When a component is in use, IsActive() = true. 
+    If was used and then deleted, IsActive() is false.
+  */
+  bool IsActive() const;
+    
 public:
   ON_SubDComponentBase() = default;
   ~ON_SubDComponentBase() = default;
   ON_SubDComponentBase(const ON_SubDComponentBase&) = default;
   ON_SubDComponentBase& operator=(const ON_SubDComponentBase&) = default;
+
+public:
+  static int CompareId(
+    const ON_SubDComponentBase* lhs,
+    const ON_SubDComponentBase* rhs
+  );
+
 
 public:
   // The audience for this comment is anybody who wants to change the data
@@ -4851,13 +6989,81 @@ private:
   mutable unsigned int m_archive_id = 0;  
   
 public:
-  unsigned short m_level = 0;
+
+  /*
+  Returns:
+    Subdivision level (0 to 255)
+  */
+  unsigned const SubdivisionLevel() const;
+
+  /*
+  Parameters:
+    level - [in]
+      Subdivision level (0 to 255)
+  */
+  void SetSubdivisionLevel(unsigned level);
+
   
 public:
   const ON_ComponentStatus Status() const;
 
+
 public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
+
+  /*
+  Returns:
+    The current value of the component mark ( m_status->RuntimeMark() ).
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  */
+  bool Mark() const;
+
+  /*
+  Description:
+    Clears (sets to false) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool ClearMark() const;
+
+  /*
+  Description:
+    Sets (sets to true) the value of the component mark.
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark() const;
+
+  /*
+  Description:
+    Sets the value of the component mark to bMark.
+  Parameter:
+    bMark - [in]
+  Remarks:
+    SubD components have a mutable runtime  mark that can be used 
+    in any context where a single thread cares about the marks.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+  Returns:
+    Input value of Mark().
+  */
+  bool SetMark(
+    bool bMark
+  ) const;
 
 public:
   
@@ -4869,81 +7075,139 @@ public:
   Description:
     Set the saved subdivision point.
   Parameters:
-    subdivision_point_type - [in]
-      Specifies subdivision algorithm.
-      Use ON_SubD::SubDType::Unset to clear the cache.
     subdivision_point - [in]
       includes displacement if it exists
   Returns:
     true if successful
   */
   bool SetSavedSubdivisionPoint(
-    ON_SubD::SubDType subd_type,
     const double subdivision_point[3]
     ) const;
 
   bool GetSavedSubdivisionPoint(
-    ON_SubD::SubDType subd_type,
     double subdivision_point[3]
     ) const;
 
-  ON_SubD::SubDType SavedSubdivisionPointType() const;
+  void ClearSavedSubdivisionPoint() const;
 
   /*
-  Description:
-    Clears saved subdivision information for this component.
+  Returns:
+    Saved subdivision point. If a point has not been saved,
+    ON_3dPoint::NanPoint is returned.
   */
-  void ClearSavedSubdivisionPoint() const;
+  const ON_3dPoint SavedSubdivisionPoint() const;
+
+  /*
+  Returns:
+    True if the subdivision point is cached.
+  */
+  bool SavedSubdivisionPointIsSet() const;
 
   //////////////////////////////////////////////////////////////
   //
   // displacement applied to subdivision point
   //
-  bool SetDisplacement(
-    ON_SubD::SubDType subd_type,
+  bool SetSubdivisionDisplacement(
     const double displacement[3]
     );
 
-  bool GetDisplacement(
-    ON_SubD::SubDType subd_type,
+  bool GetSubdivisionDisplacement(
     double displacement[3]
     ) const;
   
-  ON_SubD::SubDType DisplacementType() const;
+  /*
+  Returns:
+    subdivision displacement. If a displacement has not been set,
+    ON_3dPoint::ZeroVector is returned.
+  */
+  const ON_3dVector SubdivisionDisplacement() const;
 
-  void ClearDisplacement() const;
+  /*
+  Returns:
+    True if the subdivision displacment vector is valid and not zero.
+  */
+  bool SubdivisionDisplacementIsNonzero() const;
+
+
+  void ClearSubdivisionDisplacement() const;
 
 protected:
+  friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
+  friend class ON_SubDHeap;
   enum SavedPointsFlags : unsigned char
   {
-    // (m_saved_points_flags & SubDTypeMask) is an ON_SubD::SubDType value for the cached points.
-    SubDTypeMask = 0x0F,
+    // if ( 0 != (m_saved_points_flags & ControlNetFragmentBit), then ON_subDFace.m_control_net_mesh_fragments are set.
+    // Otherwise means any information in ON_subDFace.m_control_net_mesh_fragments is invalid and must be recalculated.
+    ControlNetFragmentBit = 0x10,
 
     // if ( 0 != (m_saved_points_flags & SubDDisplacementVIsSet), then m_cache_subd_P is set.
-    SubdivisionPointIsSet = 0x20,
+    SubdivisionPointBit = 0x20,
 
     // if ( 0 != (m_saved_points_flags & SubDDisplacementVIsSet), then m_displacementV is set.
-    DisplacementVectorIsSet = 0x40,
+    SubdivisionDisplacementBit = 0x40,
 
-    // if ( 0 != (m_saved_points_flags & LimitPointIsSet), then ON_subDVertex.m_limit* values are set.
-    LimitPointIsSet = 0x80,
+    // if ( 0 != (m_saved_points_flags & SurfacePointBit), then ON_subDVertex.m_limit* values are set.
+    // ON_SubDVertex: Set means one or more sector limit surface points are saved in ON_SubDVertex.m_limit_point.
+    // ON_SubDEdge: Set means the limit surface NURBS curve control points are cached.
+    // ON_SubDFace: Set means limit surface mesh fragments are saved in ON_SubDFace.m_surface_mesh_fragments.
+    // Unset means any information in the fields identified above is invalid and must be recalculated.
+    SurfacePointBit = 0x80,
 
-    // SubdivisionPointIsSet | DisplacementVectorIsSet | LimitPointIsSet
-    CachedPointMask = 0xE0
+    // ControlNetFragmentBit | SubdivisionPointBit | SubdivisionDisplacementBit | SurfacePointBit
+    CachedPointMask = 0xF0
   };
 
   // m_saved_points_flags is a bit field based on ON_SubDComponentBase::SavePointsFlags values.
-  // GetLimitPoint( bUseSavedLimitPoint=true ) can change the value of m_saved_points_flags
+  // GetSurfacePoint( bUseSavedSurfacePoint=true ) can change the value of m_saved_points_flags
+  void Internal_SetSavedSurfacePointFlag(bool bSavedSurfacePointFlag) const;
+  void Internal_SetSavedControlNetFragmentFlag(bool bSavedControlNetFragmentFlag) const;
   mutable unsigned char m_saved_points_flags = 0U;
+
+  unsigned char m_level = 0U;
+
+private:
+  unsigned char m_reserved_byte = 0U;
 
 public:
 
   // All the faces with the same nonzero value of m_group_id are in the same "group".
   // SDK interface on ON_SubD will be added after we get a better idea of how this
   // feature will be used.
-  unsigned int m_group_id = 0U;
+  mutable unsigned int m_group_id = 0U;
 
 protected:
+  /*
+  Description:
+    Clears the flags indicating the saved subdivision point and surface point information 
+    is current.
+  */
+  void Internal_ClearSubdivisionPointAndSurfacePointFlags() const;
+
+  /*
+  Description:
+    Clears the flag indicating the saved subdivision point is current.
+  */
+  void Internal_ClearSubdivisionPointFlag() const;
+
+  /*
+  Description:
+    Clears the flag indicating the saved surface point information is current.
+  */
+  void Internal_ClearSurfacePointFlag() const;
+
+  /*
+  Description:
+    Clears the flag indicating that ON_SubDFace.m_control_net_fragment is current.
+  */
+  void Internal_ClearControlNetFragmentFlag() const;
+
+  bool Internal_SubdivisionPointFlag() const;
+
+  bool Internal_SurfacePointFlag() const;
+
+  bool Internal_ControlNetFragmentFlag() const;
+
+  void Internal_TransformComponentBase(bool bTransformationSavedSubdivisionPoint, const class ON_Xform& xform);
   // GetSubdivisionPoint( bUseSavedSubdivisionPoint=true ) can change the value of m_cache_subd_P
   mutable double m_saved_subd_point1[3]; // saved subdivision point
 
@@ -4980,14 +7244,78 @@ protected:
   void CopyBaseFrom(
     const ON_SubDComponentBase* src
     );
+
+private:
+  ON_SubDComponentPtr m_reserved; // reserved for the symmetric component when symmetry is implemnted.
+};
+
+////////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDVertexEdgeProperties
+//
+class ON_CLASS ON_SubDVertexEdgeProperties
+{
+public:
+  ON_SubDVertexEdgeProperties() = default;
+  ~ON_SubDVertexEdgeProperties() = default;
+  ON_SubDVertexEdgeProperties(const ON_SubDVertexEdgeProperties&) = default;
+  ON_SubDVertexEdgeProperties& operator=(const ON_SubDVertexEdgeProperties&) = default;
+
+public:
+  static const ON_SubDVertexEdgeProperties Zero; // all member values are zero.
+
+public:
+  // Number of null edges
+  unsigned short m_null_edge_count = 0;
+
+  // Number of edges tags ON_SubD::EdgeTag::Unset
+  unsigned short m_unset_edge_count = 0;
+
+  // Number of edges tags ON_SubD::EdgeTag::Smooth or ON_SubD::EdgeTag::SmoothX
+  unsigned short m_smooth_edge_count = 0;
+
+  // Number of edges tags ON_SubD::EdgeTag::Crease
+  unsigned short m_crease_edge_count = 0;
+
+  // Number of wire edges (0 attached faces)
+  unsigned short m_wire_edge_count = 0;
+
+  // Number of boundary edges (1 attached face)
+  unsigned short m_boundary_edge_count = 0;
+
+  // Number of interior edges (2 attached faces)
+  unsigned short m_interior_edge_count = 0;
+
+  // Number of nonmanifold edges (3 or more attached faces)
+  unsigned short m_nonmanifold_edge_count = 0;
+
+  // Minimum value of attached edges's m_face_count.
+  unsigned short m_min_edge_face_count = 0;
+
+  // Maximum value of attached edges's m_face_count.
+  unsigned short m_max_edge_face_count = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDVertex
 //
-class ON_SUBD_CLASS ON_SubDVertex : public ON_SubDComponentBase
+class ON_CLASS ON_SubDVertex : public ON_SubDComponentBase
 {
+public:
+  ON_SubDVertex() = default;
+  ~ON_SubDVertex() = default;
+  ON_SubDVertex(const ON_SubDVertex&) = default;
+  ON_SubDVertex& operator=(const ON_SubDVertex&) = default;
+
+public:
+  /*
+  Description:
+    Clears saved subdivision and limit surface information 
+    for this component.
+  */
+  void ClearSavedSubdivisionPoints() const;  
+
 public:
   static const ON_SubDVertex Empty;  
 
@@ -5040,8 +7368,8 @@ public:
     const class ON_Xform& xform
     );
 
-  bool SetLocation(
-    ON_3dPoint location,
+  bool SetControlNetPoint(
+    ON_3dPoint control_net_point,
     bool bClearNeighborhoodCache
   );
 
@@ -5050,10 +7378,11 @@ public:
 
 
 public:
-  ON_COMPONENT_INDEX ComponentIndex() const;
-  ON_SubDComponentPtr ComponentPtr() const;
+  const ON_COMPONENT_INDEX ComponentIndex() const;
+  const ON_SubDComponentPtr ComponentPtr() const;
 
 public:
+  // m_prev_vertex, m_next_vertex must be the first data members of ON_SubDVertex
   const class ON_SubDVertex* m_prev_vertex = nullptr; // linked list of vertices on this level
   const class ON_SubDVertex* m_next_vertex = nullptr; // linked list of vertices on this level
 
@@ -5086,25 +7415,54 @@ public:
   //   may be used in m_faces[].
   const class ON_SubDFace** m_faces = nullptr;
 
+  /*
+  Description:
+    Expert user tool to remove an edge from the vertex's m_edges[] array.
+  Remarks:
+    Does not modify the edge. If the vertex is referenced by the edge,
+    then the vertex must be removed from edge's m_vertex[] array.
+  */
+  bool RemoveEdgeFromArray(
+    const class ON_SubDEdge* f
+    );
+
+  /*
+  Description:
+    Expert user tool to remove a face from the vertex's m_faces[] array.
+  Remarks:
+    Does not modify the face or any edges. The faces edges must be updated accordingly.
+  */
+  bool RemoveFaceFromArray(
+    const class ON_SubDFace* f
+    );
+
 public:
-  double m_P[3]; // vertex location
+  double m_P[3]; // vertex control net location
+  
+  ///<summary>
+  /// The SubD vertex control net point.
+  ///</summary>
+  const ON_3dPoint ControlNetPoint() const;
 
 private:
   // Cached limit point and limit normal
-  // GetLimitPoint( bUseSavedLimitPoint=true ) can change the value of m_limit_point.
+  // GetSurfacePoint( bUseSavedSurfacePoint=true ) can change the value of m_limit_point.
   // If the limit point is set and vertex has a single sector, then 
   // m_limit_point.m_sector_face = nullptr and m_limit_point.m_next_sector_limit_point = nullptr.
   // If the limit point is set and vertex has a multiple sectors, then 
   // m_limit_point.m_sector_face = first face in the sector.
   // If multiple limit points are set, then they are in a linked list
-  // traversed using the ON_SubDSectorLimitPoint.m_next_sector_limit_point.
+  // traversed using the ON_SubDSectorSurfacePoint.m_next_sector_limit_point.
   // The second and any additional limit points are managed by a fixed size pool.
-  // Calling ClearLimitPoint() will return these to the pool.
-  mutable ON_SubDSectorLimitPoint m_limit_point = ON_SubDSectorLimitPoint::Unset;
+  // Calling ClearSurfacePoint() will return these to the pool.
+  mutable ON_SubDSectorSurfacePoint m_limit_point = ON_SubDSectorSurfacePoint::Unset;
 
 public:
-  static const unsigned int MaximumEdgeCount;
-  static const unsigned int MaximumFaceCount;
+  enum : unsigned int
+  {
+    MaximumEdgeCount = 0xFFF0U,
+    MaximumFaceCount = 0xFFF0U
+  };
 
   static int CompareUnorderedEdges(
     const ON_SubDVertex* a,
@@ -5160,49 +7518,26 @@ public:
 
   unsigned int FaceArrayIndex(
     const ON_SubDFace* face
-    ) const;
-
-  ON_SubD::FacetType FirstFaceFacetType() const;
+  ) const;
 
   /*
-  Returns 
-    true if m_vertex_tag is ON_SubD::VertexTag::Crease, ON_SubD::VertexTag::Corner or ON_SubD::VertexTag::Dart.
+  Description:
+    Expert user tool to replace reference to old_face with a reference to new_face.
+  Parameters:
+    old_face = [in]      
+      Cannot be nullptr.
+    new_face = [in]
+      If new_face is nullptr, old_face is simply removed.
+  Returns:
+    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occured is returned.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
+  Remarks:
+    No modifications are made to old_face or new_face.
   */
-  bool IsTagged() const;
-
-  ///*
-  //Parameters:
-  //  subd_type - [in]
-  //    Specifies subdivision algorithm
-  //  vertex_tag_filter - [in]
-  //    If vertex_tag is not ON_SubD::VertexTag::Unset and vertex_tag != m_vertex_tag,
-  //    then false is returned.  This parameter can be used when a smooth or crease
-  //    vertex is explicity required.  
-  //  bTestFaces - [in]
-  //    If true, and the edge and face count tests succeed, then the faces in the 
-  //    vertex m_faces[] array are tested to insure they are 
-  //    quads (ccquad subdivisiontype) or tris (lwtri subdivisiontype).
-  //Returns:
-  //  If m_vertex_tag is ON_SubD::Vertex::Tag::smooth, 
-  //  and the number of edges = number of faces, 
-  //  and there are 4 (ccquad subdivisiontype) or 6 (lwtri subdivisiontype) edges,
-  //  and bTestFaces is false or the faces pass the face test,
-  //  then true is returned.
-  //  
-  //  If m_vertex_tag is ON_SubD::Vertex::Tag::crease, 
-  //  and the number of edges = 1 + number of faces, 
-  //  and there are 3 (ccquad subdivisiontype) or 4 (lwtri subdivisiontype) edges,
-  //  and bTestFaces is false or the faces pass the face test,
-  //  then true is returned.
-
-  //  In all other cases, false is returned.
-  //*/
-  //bool IsOrdinary(
-  //  ON_SubD::SubDType subd_type,
-  //  ON_SubD::VertexTag vertex_tag_filter,
-  //  bool bTestFaces
-  //  ) const;
-
+  unsigned int ReplaceFaceInArray(
+    const ON_SubDFace* old_face,
+    const ON_SubDFace* new_face
+    );
 
   /*
   Returns:
@@ -5244,13 +7579,15 @@ public:
   Returns:
     True if m_vertex_tag is ON_SubD::VertexTag::Crease or ON_SubD::VertexTag::Corner or ON_SubD::VertexTag::Dart.
   */
-  bool IsCreaseOrCornerOrDart() const;
+  bool IsDartOrCreaseOrCorner() const;
 
   /*
   Returns:
     True if m_vertex_tag is ON_SubD::VertexTag::Smooth or ON_SubD::VertexTag::Dart.
   */
   bool IsSmoothOrDart() const;
+
+  const ON_SubDVertexEdgeProperties EdgeProperties() const;
 
   /*
   Description:
@@ -5270,93 +7607,169 @@ public:
     In this situation, it is possible that the vertex, as the center of a
     sector, is standard.
   */
-  bool IsStandard(
-    ON_SubD::SubDType subd_type
-    ) const;
+  bool IsStandard() const;
+
+  /*
+  Description:
+    A single sector vertex is a smooth vertex, a dart vertex, or a manifold boundary
+    vertex.
+  Returns:
+    True if the vertex has a single sector and, consequently, a single
+    limit surface normal.
+
+  */
+  bool IsSingleSectorVertex() const;
+
+  /*
+  Description:
+    A manifold boundary vertex is a crease or corner vertex with 2 creased edges, 
+    each attached to a single face, and all other edges are smooth edges attached 
+    to two faces. There is a single sector at a manifold boundary vertex.
+  Returns:
+    True if the vertex has a single sector and, consequently, a single
+    limit surface normal.
+
+  */
+  bool IsManifoldBoundaryVertex() const;
+
+  /*
+  Description:
+    A vertex has interior vertex topology if
+    EdgeCount() >= 2,
+    EdgeCount() == FaceCount(),
+    and every attached edge has two attached faces.
+  Returns:
+    True if the vertex has interior vertex toplology.
+  Remarks:
+    Tags are ignored. This property is often used during construction
+    and modification when tags are not set.
+  */
+  bool HasInteriorVertexTopology() const;
+
+  /*
+  Description:
+    A vertex has boundary vertex topology if
+    EdgeCount() >= 2,
+    EdgeCount() == 1+FaceCount(),
+    two attached edges are attached to one face,
+    the remaining edges are attached to two faces.
+  Returns:
+    True if the vertex has interior vertex toplology.
+  Remarks:
+    Tags are ignored. This property is often used during construction
+    and modification when tags are not set.
+  */
+  bool HasBoundaryVertexTopology() const;
 
   /*
   Parameters:
-    subdivision_point_type - [in]
-      Selects subdivision algorithm. Must be either
-      ON_SubD::SubDType::TriLoopWarren or ON_SubD::SubDType::QuadCatmullClark.
     bUseSavedSubdivisionPoint - [in]
       If there is a saved subdivision point and bUseSavedSubdivisionPoint
       is true, then the saved value is returned.
     subdivision_point - [out]
+      The SubD vertex Catmull-Clark subdivision point is returned here.
   Returns:
     true if successful
   */
   bool GetSubdivisionPoint(
-    ON_SubD::SubDType subdivision_point_type,
-    bool bUseSavedSubdivisionPoint,
     double subdivision_point[3]
     ) const;
 
-  /*
-  Parameters:
-    facet_type - [in]
-      Selects subdivision algorithm.
-    bUseSavedLimitPoint - [in]
-      If there is a saved limit point and normal and bUseSavedLimitPoint
-      is true, then the saved value is used.
-    limit_point - [out]
-  Returns:
-    true if successful
-  */
-  bool GetLimitPoint(
-    ON_SubD::SubDType subd_type,
-    const ON_SubDFace* sector_face,
-    bool bUseSavedLimitPoint,
-    class ON_SubDSectorLimitPoint& limit_point
-    ) const;
+  ///<summary>
+  /// The SubD vertex Catmull-Clark subdivision point.
+  ///</summary>
+  const ON_3dPoint SubdivisionPoint() const;
 
   /*
   Description:
-    If there is a saved limit point, then its location is returned in limit_point[].
+    Evaluates the Catmull-Clark subdivision point ignoring all cached information.
+    This function is typically used in testing and debugging code and 
+    in ordinary cases, it is faster and better to call SubdivisionPoint() 
+    or GetSubdivisionPoint().
   Parameters:
-    limit_point - [out]
-  Returns:
-    ON_SubD::SubDType::Unset: No saved limit point. The input value of limit_point[] is not changed.
-    Otherwise: The type of saved SubD limit point and its location is returned in limit_point[].
+    subdivision_point - [out]
+      The vertex Catmull-Clark subdivision point is returned here.
   */
-  ON_SubD::SubDType GetSavedLimitPointLocation(
-    double limit_point[3]
+  bool EvaluateCatmullClarkSubdivisionPoint(
+    double subdivision_point[3]
   ) const;
 
   /*
-  Description:
-    Save limit point and limit normal for future use.
   Parameters:
-    subd_type - [in]
-    limit_point - [in]
-    limit_normal - [in]
+   sector_face - [in]
+      A face in the sector of interest
+    limit_point - [out]
   Returns:
     true if successful
   */
-  bool SetSavedLimitPoint(
-    ON_SubD::SubDType subd_type,
-    const ON_SubDSectorLimitPoint limit_point
+  bool GetSurfacePoint(
+    const ON_SubDFace* sector_face,
+    class ON_SubDSectorSurfacePoint& limit_point
     ) const;
 
-  void ClearSavedLimitPoints() const;
-
-  /*
-  Returns:
-    ON_SubD::SubDType::TriLoopWarren
-      The vertex limit point and normal are saved for Loop trianglular subdivision.
-    ON_SubD::SubDType::QuadCatmullClark
-      The vertex limit point and normal are saved for Catmull-Clark quad subdivision.
-    ON_SubD::SubDType::Unset
-      The vertex limit point and normal are not saved.
-  */
-  ON_SubD::SubDType SavedLimitPointType() const;
+  bool GetSurfacePoint(
+    const ON_SubDFace* sector_face,
+    bool bUndefinedNormalIsPossible,
+    class ON_SubDSectorSurfacePoint& limit_point
+    ) const;
 
   /*
   Description:
-    Report what type of facet or facets use this vertex.
+    If there is a saved limit surface point, then its location is returned in surface_point[].
+  Parameters:
+    surface_point - [out]
+  Returns:
+    True if a saved limit surface point is returned.
+    False if there is no saved limit surface point. The input value of surface_point[] is not changed.
   */
-  ON_SubD::VertexFacetType VertexFacetTypes() const;
+  bool GetSavedSurfacePoint(
+    double surface_point[3]
+  ) const;
 
+  bool GetSurfacePoint(
+    double surface_point[3]
+  ) const;
+
+  ///<summary>
+  /// The SubD vertex Catmull-Clark limit surface point.
+  ///</summary>
+  const ON_3dPoint SurfacePoint() const;
+
+  /*
+  Parameters:
+    subd_appearance - [in]
+      If ON_SubDComponentLocation::ControlNet, then this->ControlNetPoint() is returned.
+      If ON_SubDComponentLocation::Surface, then this->SurfacePoint() is returned.
+      Otherwise ON_3dPoint::NanPoint is returned.
+  */
+  const ON_3dPoint Point(ON_SubDComponentLocation subd_appearance) const;
+
+
+  /*
+  Description:
+    Save limit surface point and limit normal for future use.
+  Parameters:
+    bUndefinedNormalIsPossible - [in]
+      true if an undefined normal might occur
+    surface_point - [in]
+  Returns:
+    true if successful
+  Remarks:
+    ClearSavedSubdivisionPoints() clears any saved limit points.
+  */
+  bool SetSavedSurfacePoint(
+    bool bUndefinedNormalIsPossible,
+    const ON_SubDSectorSurfacePoint surface_point
+    ) const;
+
+  void ClearSavedSurfacePoints() const;
+   
+  /*
+  Returns:
+    true
+      The vertex limit point and at least one sector normal are saved for Catmull-Clark quad subdivision.
+  */
+  bool SurfacePointIsSet() const;
 
   /*
   Description:
@@ -5364,21 +7777,42 @@ public:
     cached subdivision information that needs to be recalculated.
   */
   void VertexModifiedNofification() const;
+  
+  /*
+  Returns:
+    Number of edges attached to this vertex with Edge().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedEdgeCount() const;
+
+  /*
+  Returns:
+    Number of faces attached to this vertex with Face().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedFaceCount() const;
+
+  /*
+  Description:
+    Expert user tool to unset ON_SubEdge.m_sector_coefficent[] values for
+    edges attached to this vertex.
+  Parameters:
+    relative_edge_end_dex - [in]
+      0: unset vertex edge sector coefficient at the end where the edges
+      attaches to this vertex.
+      1: unset vertex edge sector coefficient at the end where the edges
+      attaches to the other vertex.
+      2: unset vertex edge sector coefficients at both ends of the edge.
+  */
+  void UnsetSectorCoefficientsForExperts(
+    unsigned int relative_edge_end_dex
+  ) const;
 
 private:
-  static bool GetQuadPoint(
+  static bool Internal_GetCatmullClarkSubdivisionPoint(
     const class ON_SubDVertex* vertex, // smooth or dart
-    bool bUseSavedSubdivisionPoint,
     double vertex_point[3]
     );
 
-  static bool GetTriPoint(
-    const class ON_SubDVertex* vertex, // smooth or dart
-    bool bUseSavedSubdivisionPoint,
-    double vertex_point[3]
-    );
-
-  static unsigned int GetFacePointSum(
+  static unsigned int Internal_GetFacePointSum(
     const ON_SubDFace* face,
     const ON_SubDVertex* vertex,
     double* facePsum // sum of points that are not immediately adjacent to vertex
@@ -5397,9 +7831,8 @@ private:
   Returns:
     true if successful
   */
-  static bool GetGeneralQuadSubdivisionPoint(
+  static bool Internal_GetGeneralQuadSubdivisionPoint(
     const class ON_SubDVertex* vertex,
-    bool bUseSavedSubdivisionPoint,
     double vertex_point[3]
     );
 
@@ -5409,7 +7842,7 @@ private:
     const ON_SubDVertex* src,
     bool bCopyEdgeArray,
     bool bCopyFaceArray,
-    bool bCopyLimitPointList
+    bool bCopySurfacePointList
     );
 };
 
@@ -5417,8 +7850,22 @@ private:
 //
 // ON_SubDEdge
 //
-class ON_SUBD_CLASS ON_SubDEdge : public ON_SubDComponentBase
+class ON_CLASS ON_SubDEdge : public ON_SubDComponentBase
 {
+public:
+  ON_SubDEdge() = default;
+  ~ON_SubDEdge() = default;
+  ON_SubDEdge(const ON_SubDEdge&) = default;
+  ON_SubDEdge& operator=(const ON_SubDEdge&) = default;
+
+public:
+  /*
+  Description:
+    Clears saved subdivision and limit surface information 
+    for this component.
+  */
+  void ClearSavedSubdivisionPoints() const;  
+
 public:
   static const ON_SubDEdge Empty;
   
@@ -5472,7 +7919,7 @@ public:
     const class ON_Xform& xform
     );
 
-  ON_BoundingBox ControlNetBoundingBox() const;
+  const ON_BoundingBox ControlNetBoundingBox() const;
 
 
   /*
@@ -5486,19 +7933,30 @@ public:
   Description:
     Expert user tool to unset sector coefficients.
   */
-  void UnsetSectorCoefficients() const;
+  void UnsetSectorCoefficientsForExperts() const;
+
+  /*
+  Description:
+    Expert user tool to set sector coefficients.
+  Returns:
+    True if values were modified.
+  */
+  bool UpdateEdgeSectorCoefficientsForExperts(
+    bool bUnsetEdgeSectorCoefficientsOnly
+    );
 
 public:
-  ON_COMPONENT_INDEX ComponentIndex() const;
-  ON_SubDComponentPtr ComponentPtr() const;
+  const ON_COMPONENT_INDEX ComponentIndex() const;
+  const ON_SubDComponentPtr ComponentPtr() const;
 
 public:
+  // m_prev_edge, m_next_edge must be the first data members of ON_SubDEdge
   const class ON_SubDEdge* m_prev_edge = nullptr; // linked list of edges on this level
   const class ON_SubDEdge* m_next_edge = nullptr; // linked list of edges on this level
 
 public:
   // When checking the edge tag, it is important to consider what
-  // should happen in the ON_SubD::EdgeTag::X case.  It is strongly
+  // should happen in the ON_SubD::EdgeTag::SmoothX case.  It is strongly
   // suggested that you use the member functions ON_SubDEdge::IsSmooth()
   // and ON_SubDEdge::IsCrease() instead of comparing m_edge_tag to 
   // ON_SubD::EdgeTag values.
@@ -5522,7 +7980,10 @@ public:
   //  The value of ON_SubDFacePtr.FaceDirection() is 1 if the
   //  edge's natural orientation from m_vertex[0] to m_vertex[1]
   //  is opposited the face's boundary orientation.
-  static const unsigned int MaximumFaceCount;
+  enum : unsigned int
+  {
+    MaximumFaceCount = 0xFFF0U
+  };
   unsigned short m_face_count = 0;
   unsigned short m_facex_capacity = 0;
   ON_SubDFacePtr m_face2[2];
@@ -5557,7 +8018,7 @@ public:
   // The edge's subdivision vertex will be tagged as ON_SubD::VertexTag::Smooth
   // and both subdivision edges will be tagged as ON_SubD::EdgeTag::Smooth.
   //
-  // If the value of m_edge_tag is ON_SubD::EdgeTag::X, then the edge
+  // If the value of m_edge_tag is ON_SubD::EdgeTag::SmoothX, then the edge
   // must have exactly two neighboring faces,
   // both vertices must be tagged and the m_sector_coefficient[]
   // values are calculated by ON_SubDSectorType::SectorWeight().
@@ -5570,9 +8031,13 @@ public:
   // and both end vertices are tagged, that is a severe error
   // condition and the edge is subdivided at its midpoint.
   //
-  // If the value of m_edge_tag is ON_SubD::EdgeTag::X
+  // If the value of m_edge_tag is ON_SubD::EdgeTag::SmoothX
   // and both end vertices are not tagged, that is a severe error
   // condition and the edge is subdivided at its midpoint.
+  //
+  // m_sector_coefficient[tagged_end] = 1/2 + 1/3*cos(theta)
+  // where "theta" = tagged end "theta" (which depends on vertex tag (dart/crease/corner), 
+  // the number of faces in the sector, and the crease angle when the tagged end is a corner).  
   double m_sector_coefficient[2];
 
   // If m_edge_tag is not ON_SubD::EdgeTag::Sharp, then m_sharpness is ignored.
@@ -5583,14 +8048,36 @@ public:
   // For this reason, m_sharpness must be > 0 and < 1.
   double m_sharpness = 0.0; 
 
+private:
+  // Cached limit curve
+  // GetEdgeSurfaceCurveControlPoints( bUseSavedSurfacePoint=true ) can change the value of m_limit_curve.
+  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags), then
+  // m_limit_curve is the edge's limit surface curve.
+  // The memory is managed by the parent ON_SubD. 
+  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags),
+  // then any information in m_limit_mesh_fragments is dirty
+  // and should not be used.
+  // ClearSavedSubdivisionPoints() zeros
+  // the appropriate bit of m_saved_points_flags.
+
+  friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
+  friend class ON_SubDHeap;
+  mutable class ON_SubDEdgeSurfaceCurve* m_limit_curve = nullptr;
+
 public:
   unsigned int FaceCount() const;
 
-  ON_SubDFacePtr FacePtr(
+  /*
+  Returns:
+    True if the edge has two faces and with opposite face directions.
+  */
+  bool IsInteriorEdge() const;
+
+  const ON_SubDFacePtr FacePtr(
     unsigned int i
     ) const;
 
-  ON_SubDFacePtr FacePtr(
+  const ON_SubDFacePtr FacePtrFromFace(
     const class ON_SubDFace* f
     ) const;
 
@@ -5642,9 +8129,35 @@ public:
     ON_SubDFacePtr face_ptr
   );
 
+  /*
+  Description:
+    Expert user tool to replace reference to old_face with a reference to new_face.
+    Existing orientation is copied.  No changes are made to old_face and new_face and
+    their edge references must be updated accordingly.
+  Parameters:
+    old_face = [in]
+      Cannot be nullptr.
+    new_face = [in]
+      If new_face is nullptr, old_face is simply removed.
+  Returns:
+    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occured is returned.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
+  Remarks:
+    No modifications are made to old_face or new_face.
+  */
+  unsigned int ReplaceFaceInArray(
+    const ON_SubDFace* old_face,
+    const ON_SubDFace* new_face
+  );
+
   const class ON_SubDVertex* Vertex(
     unsigned int i
     ) const;
+
+  unsigned int VertexArrayIndex(
+    const class ON_SubDVertex* v
+    ) const;
+
 
   /*
   Description:
@@ -5656,24 +8169,61 @@ public:
     If vertex is not nullptr and exactly one of m_vertex[] is equal to vertex, 
     then the other m_vertex[] pointer is returned.
     In any other case, nullptr is returned.
+  See Also:
+    ON_SubDEdge.NeighborFace()
   */
   const ON_SubDVertex* OtherEndVertex(
     const ON_SubDVertex* vertex
     ) const;
 
   /*
+  Parameters:
+    vertex0 - [in]
+    vertex1 - [in]
+    bIgnoreOrientation - [in]
+      If false, then the returned edge must have vertices (vertex0, vertex1).
+      If true, then the returned edge may have vertices (vertex0, vertex1) or (vertex1, vertex0).
   Returns:
-    If vertex is set, then the location is returned. 
+    If an edge connects the input vertices, it is returned. Otherwise nullptr is returned.
+  */
+  static const ON_SubDEdge* FromVertices(
+    const ON_SubDVertex* vertex0,
+    const ON_SubDVertex* vertex1,
+    bool bIgnoreOrientation
+  );
+
+  static const ON_SubDEdgePtr FromVertices(
+    const ON_SubDVertex* vertex0,
+    const ON_SubDVertex* vertex1
+  );
+
+  /*
+  Parameters:
+    i - [in]
+      0 or 1.
+  Returns:
+    If i is 0 or 1 and vertex[i] is set, then vertex[i]->ControlNetPoint() is returned. 
     Otherwise ON_3dPoint::NanPoint is returned.
   */
-  const ON_3dPoint EndPoint( unsigned int i ) const;
+  const ON_3dPoint ControlNetPoint( unsigned int i ) const;
 
   /*
   Returns:
-    If vertices are set, then the vector from m_vertex[0] to m_vertex[1] is returned.
+    If vertices are set, then the vector from m_vertex[0]->ControlNetPoint() 
+    to m_vertex[1]->ControlNetPoint() is returned.
     Otherwise ON_3dVector::NanVector is returned.
   */
-  const ON_3dVector Direction() const;
+  const ON_3dVector ControlNetDirection() const;
+
+  /*
+  Returns:
+    If vertices are set and v is an end of the edge,
+    then the vector from v to OtherEndVertex(v) is returned.
+    Otherwise ON_3dVector::NanVector is returned.
+  */
+  const ON_3dVector ControlNetDirectionFrom(
+    const ON_SubDVertex* v
+  ) const;
 
   /*
   Description:
@@ -5718,8 +8268,27 @@ public:
     ) const;
 
   /*
+  Parameters:
+    edge_vertex_index - [in]
+      0 or 1 identifying which end of this edge to check.
+    i - [in]
+      Index of the face in this edge's face array.
   Returns:
-    True if m_edge_tag is ON_SubD::EdgeTag::Smooth or ON_SubD::EdgeTag::X.
+    The edge adjacent to this edge in this->Face(i).
+    The orientation is with respect to this->Face(i).
+  */
+  const ON_SubDEdgePtr AdjacentEdgePtr(
+    unsigned int edge_vertex_index,
+    unsigned int i
+    ) const;
+
+  const ON_SubDEdge* AdjacentEdge(
+    unsigned int edge_vertex_index,
+    unsigned int i
+    ) const;
+  /*
+  Returns:
+    True if m_edge_tag is ON_SubD::EdgeTag::Smooth or ON_SubD::EdgeTag::SmoothX.
     False in all other cases.
   */
   bool IsSmooth() const;
@@ -5729,7 +8298,7 @@ public:
     True if m_edge_tag is ON_SubD::EdgeTag::Smooth.
   Remarks:
     Expert user function.
-    This is used in rare cases when level 0 edges tagged as ON_SubD::EdgeTag::X
+    This is used in rare cases when level 0 edges tagged as ON_SubD::EdgeTag::SmoothX
     need special handling in low level evaluation code. Typical SDK level functions
     and anything related to runtime user interface should call IsSmooth().
   */
@@ -5737,10 +8306,10 @@ public:
   
   /*
   Returns:
-    True if m_edge_tag is ON_SubD::EdgeTag::X.
+    True if m_edge_tag is ON_SubD::EdgeTag::SmoothX.
   Remarks:
     Expert user function.
-    This is used in rare cases when level 0 edges tagged as ON_SubD::EdgeTag::X
+    This is used in rare cases when level 0 edges tagged as ON_SubD::EdgeTag::SmoothX
     need special handling in low level evaluation code. Typical SDK level functions
     and anything related to runtime user interface should call IsSmooth().
     An edge tagged as "X" can occur at level 0. It is subdivided as a smooth
@@ -5780,15 +8349,21 @@ public:
 
   /*
   Returns:
-    bitwise or of applicable ON_ComponentAttributes::EdgeFlags values.
+    bitwise or of applicable ON_ComponentAttributes::EdgeAttributes values.
+  Remarks:
+    ON_ComponentAttributes::EdgeAttributes has subsets of mutually exclusive
+    edge attributes.  If the edge is valid, then exactly one bit from each 
+    mutually exclusive set of properties will be set.
+    If an edge is not valie, then all bits for a set may be clear. 
+    For example, if the edge has nullptr values in m_vertex[] 
+    or the vertex control point locations are unset or nan, 
+    then neither the ON_ComponentAttributes::EdgeAttributes::Open bit
+    nor ON_ComponentAttributes::EdgeAttributes::Closed bit will be set.
   */
-  unsigned int EdgeFlags() const;
+  unsigned int EdgeAttributes() const;
 
   /*
   Parameters:
-    subdivision_point_type - [in]
-      Selects subdivision algorithm. Must be either
-      ON_SubD::SubDType::TriLoopWarren or ON_SubD::SubDType::QuadCatmullClark.
     bUseSavedSubdivisionPoint - [in]
       If there is a saved subdivision point and bUseSavedSubdivisionPoint
       is true, then the saved value is returned.
@@ -5797,10 +8372,35 @@ public:
     true if successful
   */
   bool GetSubdivisionPoint(
-    ON_SubD::SubDType subdivision_point_type,
-    bool bUseSavedSubdivisionPoint,
     double subdivision_point[3]
     ) const;
+
+  ///<summary>
+  /// The SubD edge Catmull-Clark subdivision point.
+  ///</summary>
+  const ON_3dPoint SubdivisionPoint() const;
+
+  /*
+  Description:
+    Evaluates the Catmull-Clark subdivision point ignoring all cached information.
+    This function is typically used in testing and debugging code and
+    in ordinary cases, it is faster and better to call SubdivisionPoint()
+    or GetSubdivisionPoint().
+  Parameters:
+    subdivision_point - [out]
+      The edge Catmull-Clark subdivision point is returned here.
+  */
+  bool EvaluateCatmullClarkSubdivisionPoint(
+    double subdivision_point[3]
+  ) const;
+
+  const ON_3dPoint ControlNetCenterPoint() const;
+  const ON_3dVector ControlNetCenterNormal(
+    unsigned int edge_face_index
+  ) const;
+
+
+
 
   /*
   Parameters:
@@ -5822,12 +8422,25 @@ public:
 
   /*
   Returns:
-    0: m_vertex[0] is tagged and m_vertex[1] is not tagged.
-    1: m_vertex[0] is tagged and m_vertex[1] is not tagged.
-    2: m_vertex[0] and m_vertex[1] are both tagged.
-    3: neither m_vertex[0] nor m_vertex[1] is tagged.
+    Set bTagged[i] = m_vertex[0]->IsDartOrCreaseOrCorner().
+    0: bTagged[0] is true and bTagged[1] is false.
+    1: bTagged[0] is false and bTagged[1] is true.
+    2: bTagged[0] and Tagged[1] are both true.
+    3: bTagged[0] and Tagged[1] are both false.
   */
   unsigned int TaggedEndIndex() const;
+
+  /*
+  Returns:
+    Number of end vertices with Vertex().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedVertexCount() const;
+
+  /*
+  Returns:
+    Number of faces attached to this edge with Face().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedFaceCount() const;
 
 private:
   static unsigned int GetFacePointSum(
@@ -5850,22 +8463,37 @@ private:
 //
 // ON_SubDFace
 //
-class ON_SUBD_CLASS ON_SubDFace : public ON_SubDComponentBase
+class ON_CLASS ON_SubDFace : public ON_SubDComponentBase
 {
+public:
+  ON_SubDFace() = default;
+  ~ON_SubDFace() = default;
+  ON_SubDFace(const ON_SubDFace&) = default;
+  ON_SubDFace& operator=(const ON_SubDFace&) = default;
+
+public:
+  /*
+  Description:
+    Clears saved subdivision and limit surface information
+    for this component.
+  */
+  void ClearSavedSubdivisionPoints() const;
+
+
 public:
   static const ON_SubDFace Empty;
 
-  bool Write (
+  bool Write(
     class ON_BinaryArchive& archive
-    ) const;
+  ) const;
 
-  static bool Read (
+  static bool Read(
     class ON_BinaryArchive& archive,
     class ON_SubD& subd,
     class ON_SubDFace*& face
-    );
+  );
 
-  
+
   /*
   Parameters:
     bIncludeVertices - [in]
@@ -5873,7 +8501,7 @@ public:
     bIncludeEdges - [in]
       If true, then attached edges are included.
   Returns:
-    A ON_ComponentStatusLogicalOr() of this vertex's status and the 
+    A ON_ComponentStatusLogicalOr() of this vertex's status and the
     specified attached components.
   See Also:
     ON_SubDComponentBase::Status()
@@ -5889,10 +8517,10 @@ public:
 
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
-      If the transformation is being applied to every vertex, edge and 
+      If the transformation is being applied to every vertex, edge and
       face in every level of a subdivision object, and the transformation
-      is an isometry (rotation, translation, ...), a uniform scale, or a 
-      composition of these types, then set 
+      is an isometry (rotation, translation, ...), a uniform scale, or a
+      composition of these types, then set
       bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
@@ -5904,13 +8532,13 @@ public:
   bool Transform(
     bool bTransformationSavedSubdivisionPoint,
     const class ON_Xform& xform
-    );
+  );
 
-  ON_BoundingBox ControlNetBoundingBox() const;
+  const ON_BoundingBox ControlNetBoundingBox() const;
 
 
-  ON_COMPONENT_INDEX ComponentIndex() const;
-  ON_SubDComponentPtr ComponentPtr() const;
+  const ON_COMPONENT_INDEX ComponentIndex() const;
+  const ON_SubDComponentPtr ComponentPtr() const;
 
   /*
   Description:
@@ -5920,15 +8548,101 @@ public:
   void FaceModifiedNofification() const;
 
 public:
+  // m_prev_face, m_next_face must be the first data members of ON_SubDFace
   const class ON_SubDFace* m_prev_face = nullptr;  // linked list of faces on this level
   const class ON_SubDFace* m_next_face = nullptr;  // linked list of faces on this level
+
+private:
+  // Location of this face's default 2d texture coordinates ("surface parameter") in normaized 2d texture coordinates
+  mutable double m_texture_coordinate_origin[2] = {};
+  mutable double m_texture_coordinate_delta[2] = {};
+
+  enum TextureCoordinateBits : unsigned char
+  {
+    None = 0,
+
+    // 4 ways the texture domain can be rotated for a face when packing is applied.
+    // These enum values must be 0,1,2,3
+    PackingRotate0 = 0,
+    PackingRotate90 = 1,
+    PackingRotate180 = 2,
+    PackingRotate270 = 3,
+
+    // bits mask for packing rotation setting
+    PackingRotateMask = 3,
+
+    UnusedBit1 = 0x04U,
+    UnusedBit2 = 0x08U,
+    UnusedBitsMask = 0x0CU,
+
+    // bits for TextureCoordinateDomainType()
+    DomainTypeMask = 0xF0U,
+  };
+  mutable unsigned char m_texture_coordinate_bits = 0;
+
+private:
+  unsigned char m_reserved1 = 0;
+  unsigned short m_reserved2 = 0;
+
+public:
+  const bool TextureDomainIsSet() const;
+
+  /*
+  Description:
+    Set the rectangle in 2d texture space that will be used by this face
+    for generating default "surface mapping" texture coordinates.
+    The lower left corner will be origin.
+    The upper right corner will be delta.
+  Parameters:
+    origin - [in]
+    delta - [in]
+      >= 0.0;
+    packing_rotation_degrees - [in]
+      must be a mulitple of 90.
+  */
+  void SetTextureDomain(
+    ON_SubDTextureDomainType texture_domain_type,
+    ON_2dPoint origin,
+    ON_2dVector delta,
+    int packing_rotation_degrees
+  ) const;
+
+  const ON_2dPoint TextureDomainOrigin() const;
+
+  const ON_2dVector TextureDomainDelta() const;
+
+  ON_SubDTextureDomainType TextureDomainType() const;
+
+  /*
+  Returns:
+    0, 90, 180, or 270
+  */
+  unsigned TextureDomainRotationDegrees() const;
+
+  double TextureDomainRotationRadians() const;
+  /*
+  Parameters:
+    bGridOrder - [in]
+      false: counter clockwise quad order.
+      true: fragment grid order
+    bNormalized - [in]
+      false: corners of the (x0,x0+dx) x (y0,y0+dy) square are returned where
+      (x0,y0) = TextureCoordinateDomainOrigin() and
+      (dx,dy) = TextureCoordinateDomainDelta().
+      true: corners of the (0,1) x (0,1) square are returned.
+    corner_index - [in]
+  Returns:
+    Specified texture coordinate corner value.
+  */
+  const ON_2dPoint TextureDomainCorner(
+    bool bGridOrder,
+    bool bNormalized,
+    int corner_index
+  ) const;
 
 public:
   unsigned int m_zero_face_id = 0;   // id of level zero face
   unsigned int m_parent_face_id = 0; // id of previous level face
-
-private:
-  unsigned int m_reserved = 0; // id of previous level face
 
 public:
   // Array of m_edge_count edges that form the boundary of the face.
@@ -5945,27 +8659,90 @@ public:
   //  The value of ON_SubDEdgePtr.EdgeDirection() is 1 if the
   //  edge's natural orientation from m_vertex[0] to m_vertex[1]
   //  is opposited the face's boundary orientation.
-  static const unsigned int MaximumEdgeCount;
+  enum : unsigned int
+  {
+    MaximumEdgeCount = 0xFFF0U
+  };
   unsigned short m_edge_count = 0;
   unsigned short m_edgex_capacity = 0;
 
   ON_SubDEdgePtr m_edge4[4];
   ON_SubDEdgePtr* m_edgex = nullptr;
 
+  /*
+  Returns:
+    A linked list of limit mesh fragments that cover this face.
+    Nullptr if none are currently available.
+
+    If the face is a quad, there is a single fragment. If the
+    face is an n-gon with 4 != n, then the list has n fragments.
+    The i-th fragment covers the subdivision quad with its 
+    corner at Vertex(i).
+
+  Remarks:
+    Use the returned fragments immediately or make a 
+    copies you manage for later use.
+
+    Use ON_SubD.UpdateSurfaceMeshCache(false) or ON_SubD.UpdateSurfaceMeshCache(true)
+    to create the face fragments.
+
+    ON_SubDFace.ClearSavedSubdivisionPoints() removes any saved
+    fragments and is called when the face or nearby components
+    are modified.
+  */
+  const class ON_SubDMeshFragment* MeshFragments() const;
+
+
+  const ON_3dPoint ControlNetCenterPoint() const;
+
+  const ON_3dVector ControlNetCenterNormal() const;
+
+  const ON_Plane ControlNetCenterFrame() const;
+
+  bool IsConvex() const;
+
+  bool IsNotConvex() const;
+
+  bool IsPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
+
+  bool IsNotPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
+
+private:
+  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags), then
+  // m_limit_mesh_fragments is a linked list of m_edge_count
+  // fragments available from MeshFragments() and managed 
+  // by the parent ON_SubD. 
+  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags),
+  // then any information in m_limit_mesh_fragments is dirty
+  // and should not be used.
+  // ClearSavedSubdivisionPoints() zeros
+  // the appropriate bit of m_saved_points_flags.
+  friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
+  friend class ON_SubDHeap;
+
+  // Mesh fragment(s) for this face
+  mutable class ON_SubDMeshFragment* m_mesh_fragments = nullptr;
+
+private:
+
 public:
   unsigned int EdgeCount() const;
 
-  ON_SubDEdgePtr EdgePtr(
+  const ON_SubDEdgePtr EdgePtr(
     unsigned int i
     ) const;
 
-  ON_SubDEdgePtr EdgePtr(
+  const ON_SubDEdgePtr EdgePtrFromEdge(
     const class ON_SubDEdge* e
     ) const;
 
   const class ON_SubDVertex* Vertex(
     unsigned int i
     ) const;
+
+  const ON_3dPoint ControlNetPoint(
+    unsigned int i
+  ) const;
 
   unsigned int VertexIndex(
     const ON_SubDVertex* vertex
@@ -6024,22 +8801,30 @@ public:
     ON_SubDEdge* edge_to_insert
   );
 
+  /////*
+  ////Description:
+  ////  Expert user tool to replace one edge with another in the face's edge array.
+  ////Parameters:
+  ////  edge_to_remove - [in]
+  ////  edge_to_insert - [in]
+  ////   The inserted edge is assigned the same boundary orientation specified
+  ////   in edgeptr_to_insert.
+  ////Remarks:
+  ////  Does not modify the edge. The corresponding reference to this face must
+  ////  be removed from the first edge and added to the second edge.
+  ////*/
+  ////bool ReplaceEdgeInArray(
+  ////  unsigned int fei0,
+  ////  ON_SubDEdge* edge_to_remove,
+  ////  ON_SubDEdgePtr edgeptr_to_insert
+  ////);
+
   /*
   Description:
-    Expert user tool to replace one edge with another in the face's edge array.
-  Parameters:
-    edge_to_remove - [in]
-    edge_to_insert - [in]
-     The inserted edge is assigned the same boundary orientation specified
-     in edgeptr_to_insert.
-  Remarks:
-    Does not modify the edge. The corresponding reference to this face must
-    be removed from the first edge and added to the second edge.
+    Rotates the edge array so that Edge(fei0) becomes the first edge in the edge array.
   */
-  bool ReplaceEdgeInArray(
-    unsigned int fei0,
-    ON_SubDEdge* edge_to_remove,
-    ON_SubDEdgePtr edgeptr_to_insert
+  bool RotateEdgeArray(
+    unsigned int fei0
   );
 
   const ON_SubDEdge* PrevEdge(
@@ -6088,36 +8873,36 @@ public:
     const ON_SubDEdge* edge
     ) const;
 
-  ///*
-  //Parameters:
-  //  subd_type - [in]
-  //  bTestFaces - [in]
-  //    If true, then false is returned if any neighboring face is not
-  //    a quad (ccquad subdivision type) or tri (lwtri subdivsion type).
-  //*/
-  //bool IsOrdinary(
-  //  ON_SubD::SubDType subd_type,
-  //  bool bTestFaces
-  //  ) const;
-
   /*
   Parameters:
-    subdivision_point_type - [in]
-      Selects subdivision algorithm. Must be either
-      ON_SubD::SubDType::TriLoopWarren or ON_SubD::SubDType::QuadCatmullClark.
-    bUseSavedSubdivisionPoint - [in]
-      If there is a saved subdivision point and bUseSavedSubdivisionPoint
-      is true, then the saved value is returned.
     subdivision_point - [out]
       The average of the face vertex locations.
   Returns:
     true if successful
   */
   bool GetSubdivisionPoint(
-    ON_SubD::SubDType subdivision_point_type,
-    bool bUseSavedSubdivisionPoint,
     double subdivision_point[3]
     ) const;
+
+  ///<summary>
+  /// The SubD face Catmull-Clark subdivision point.
+  ///</summary>
+  const ON_3dPoint SubdivisionPoint() const;
+  
+  /*
+  Description:
+    Evaluates the Catmull-Clark subdivision point ignoring all cached information.
+    This function is typically used in testing and debugging code and
+    in ordinary cases, it is faster and better to call SubdivisionPoint()
+    or GetSubdivisionPoint().
+  Parameters:
+    subdivision_point - [out]
+      The Catmull-Clark face subdivision point is returned here.
+  */
+  bool EvaluateCatmullClarkSubdivisionPoint(
+    double subdivision_point[3]
+  ) const;
+
 
   /*
   Description:
@@ -6144,19 +8929,55 @@ public:
   Remarks:
     The knots for the bicubic b-spline surface are uniform.
   */
-  bool GetQuadLimitSurface(
+  bool GetQuadSurface(
+    double* limit_surface_cv,
     size_t limit_surface_cv_stride0,
-    size_t limit_surface_cv_stride1,
-    double* limit_surface_cv
+    size_t limit_surface_cv_stride1
     ) const;
 
-  bool GetQuadLimitSurface(
+  bool GetQuadSurface(
     class ON_NurbsSurface& limit_surface
     ) const;
 
-  bool GetQuadLimitSurface(
+  bool GetQuadSurface(
     class ON_BezierSurface& limit_surface
     ) const;
+
+  /*
+  Returns:
+    Number of edges in the face's boundary with Edge().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedEdgeCount() const;
+
+  /*
+  Returns:
+    Number of vertices in the face's boundary with Vertex().m_status.RuntimeMark() = true;
+  */
+  unsigned int MarkedVertexCount() const;
+
+  /*
+  Description:
+    Set the mark of every vertex attached to this face.
+  Returns:
+    Number of marks changed.
+  */
+  unsigned int SetVertexMarks(
+    bool bMark
+    ) const;
+
+  /*
+  Description:
+    Set the mark of every boundary edge attached to this face.
+  Returns:
+    Number of marks changed.
+  */
+  unsigned int SetEdgeMarks(
+    bool bMark
+    ) const;
+
+  unsigned int GetEdgeArray(
+    ON_SimpleArray< ON_SubDEdgePtr >& face_edge_array
+  ) const;
 
 private:
   friend  class ON_SubDArchiveIdMap;
@@ -6170,7 +8991,12 @@ private:
 //
 // ON_SubDVertexArray
 //
-class ON_SUBD_CLASS ON_SubDVertexArray
+
+/*
+Description:
+  Avoid using ON_SubDVertexArray. ON_SubDVertexIterator is more efficient and a better choice.
+*/
+class ON_CLASS ON_SubDVertexArray
 {
 public:
   ON_SubDVertexArray(
@@ -6221,7 +9047,12 @@ private:
 //
 // ON_SubDEdgeArray
 //
-class ON_SUBD_CLASS ON_SubDEdgeArray
+
+/*
+Description:
+  Avoid using ON_SubDEdgeArray. ON_SubDEdgeIterator is more efficient and a better choice.
+*/
+class ON_CLASS ON_SubDEdgeArray
 {
 public:
   ON_SubDEdgeArray(
@@ -6272,7 +9103,12 @@ private:
 //
 // ON_SubDFaceArray
 //
-class ON_SUBD_CLASS ON_SubDFaceArray
+
+/*
+Description:
+  Avoid using ON_SubDFaceArray. ON_SubDFaceIterator is more efficient and a better choice.
+*/
+class ON_CLASS ON_SubDFaceArray
 {
 public:
   ON_SubDFaceArray(
@@ -6323,15 +9159,17 @@ private:
 //
 // ON_SubDVertexIterator
 //
-class ON_SUBD_CLASS ON_SubDVertexIterator
+class ON_CLASS ON_SubDVertexIterator
 {
 public:
-  // The ON_SubD member function
-  // ON_SubDVertexIterator ON_SubD::VertexIterator(subd_level_index)
-  // is the best way to get a vertex iterator.
+  // The best way to get an ON_SubDVertexIterator is so use the ON_SubD member function
+  // ON_SubDVertexIterator vit = subd.VertexIterator();
   ON_SubDVertexIterator(
     const class ON_SubD& subd
     );
+
+  // The best way to get an ON_SubDVertexIterator is so use the ON_SubD member function
+  // ON_SubDVertexIterator vit = subd.VertexIterator();
   ON_SubDVertexIterator(
     const class ON_SubDRef& subd_ref
     );
@@ -6525,21 +9363,71 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDEdgeIterator
+// ON_SubDVertexIdIterator
 //
-class ON_SUBD_CLASS ON_SubDEdgeIterator
+
+class ON_SubDVertexIdIterator : private ON_FixedSizePoolIterator
 {
 public:
-  // The ON_SubD member function
-  // ON_SubDEdgeIterator ON_SubD::EdgeIterator()
-  // is the best way to get an edge iterator from an ON_SubD.
+  ON_SubDVertexIdIterator() = default;
+  ~ON_SubDVertexIdIterator() = default;
+  ON_SubDVertexIdIterator(const ON_SubDVertexIdIterator&) = default;
+  ON_SubDVertexIdIterator& operator=(const ON_SubDVertexIdIterator&) = default;
+
+public:
+  ON_SubDVertexIdIterator(const ON_SubDRef& subd_ref);
+  ON_SubDVertexIdIterator(const ON_SubD& subd);
+
+public:
+  /*
+  Description:
+    In general, you want to use a ON_SubDVertexIterator to loop through SubD vertices.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every vertex on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The vertex with the smallest id.
+  */
+  const ON_SubDVertex* FirstVertex();
+
+  /*
+  Description:
+    In general, you want to use a ON_SubDVertexIterator to loop through SubD vertices.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every vertex on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The vertex in order of increasing id.
+  */
+  const ON_SubDVertex* NextVertex();
+
+  /*
+  Returns:
+    The most recently returned vertex from a call to FirstVertex() or NextVertex().
+  */
+  const ON_SubDVertex* CurrentVertex() const;
+
+private:
+  friend class ON_SubDHeap;
+  ON_SubDRef m_subd_ref;
+  void Internal_Init();
+};
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDEdgeIterator
+//
+class ON_CLASS ON_SubDEdgeIterator
+{
+public:
+  // The best way to get an ON_SubDEdgeIterator is so use the ON_SubD member function
+  // ON_SubDEdgeIterator eit = subd.EdgeIterator();
   ON_SubDEdgeIterator(
     const class ON_SubD& subd
     );
 
-  // The ON_SubDRef member function
-  // ON_SubDEdgeIterator ON_SubDRef::EdgeIterator()
-  // is the best way to get an edge iterator from an ON_SubDRef.
+  // The best way to get an ON_SubDEdgeIterator is so use the ON_SubD member function
+  // ON_SubDEdgeIterator eit = subd.EdgeIterator();
   ON_SubDEdgeIterator(
     const class ON_SubDRef& subd_ref
     );
@@ -6733,21 +9621,71 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDFaceIterator
+// ON_SubDEdgeIdIterator
 //
-class ON_SUBD_CLASS ON_SubDFaceIterator
+
+class ON_SubDEdgeIdIterator : private ON_FixedSizePoolIterator
 {
 public:
-  // The ON_SubD member function
-  //   ON_SubDFaceIterator ON_SubD::FaceIterator()
-  // is the best way to get a face iterator from an ON_SubD.
+  ON_SubDEdgeIdIterator() = default;
+  ~ON_SubDEdgeIdIterator() = default;
+  ON_SubDEdgeIdIterator(const ON_SubDEdgeIdIterator&) = default;
+  ON_SubDEdgeIdIterator& operator=(const ON_SubDEdgeIdIterator&) = default;
+
+public:
+  ON_SubDEdgeIdIterator(const ON_SubDRef& subd_ref);
+  ON_SubDEdgeIdIterator(const ON_SubD& subd);
+
+public:
+  /*
+  Description:
+    In general, you want to use a ON_SubDEdgeIterator to loop through SubD edges.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every edge on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The edge with the smallest id.
+  */
+  const ON_SubDEdge* FirstEdge();
+
+  /*
+  Description:
+    In general, you want to use a ON_SubDEdgeIterator to loop through SubD edges.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every edge on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The edge in order of increasing id.
+  */
+  const ON_SubDEdge* NextEdge();
+
+  /*
+  Returns:
+    The most recently returned edge from a call to FirstEdge() or NextEdge().
+  */
+  const ON_SubDEdge* CurrentEdge() const;
+
+private:
+  friend class ON_SubDHeap;
+  ON_SubDRef m_subd_ref;
+  void Internal_Init();
+};
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDFaceIterator
+//
+class ON_CLASS ON_SubDFaceIterator
+{
+public:
+  // The best way to get an ON_SubDFaceIterator is so use the ON_SubD member function
+  // ON_SubDFaceIterator fit = subd.FaceIterator();
   ON_SubDFaceIterator(
     const class ON_SubD& subd
     );
 
-  // The ON_SubDRef member function
-  //   ON_SubDFaceIterator ON_SubDRef::FaceIterator()
-  // is the best way to get a face iterator from an ON_SubDRef.
+  // The best way to get an ON_SubDFaceIterator is so use the ON_SubD member function
+  // ON_SubDFaceIterator fit = subd.FaceIterator();
   ON_SubDFaceIterator(
     const class ON_SubDRef& subd_ref
     );
@@ -6943,9 +9881,61 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 //
+// ON_SubDFaceIdIterator
+//
+
+class ON_SubDFaceIdIterator : private ON_FixedSizePoolIterator
+{
+public:
+  ON_SubDFaceIdIterator() = default;
+  ~ON_SubDFaceIdIterator() = default;
+  ON_SubDFaceIdIterator(const ON_SubDFaceIdIterator&) = default;
+  ON_SubDFaceIdIterator& operator=(const ON_SubDFaceIdIterator&) = default;
+
+public:
+  ON_SubDFaceIdIterator(const ON_SubDRef& subd_ref);
+  ON_SubDFaceIdIterator(const ON_SubD& subd);
+
+public:
+  /*
+  Description:
+    In general, you want to use a ON_SubDFaceIterator to loop through SubD faces.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every face on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The face with the smallest id.
+  */
+  const ON_SubDFace* FirstFace();
+
+  /*
+  Description:
+    In general, you want to use a ON_SubDFaceIterator to loop through SubD faces.
+    This is a special tool for unusual sitiations wheh it is necessary to
+    iteratate through every face on every level of a SubD in order
+    of increasing m_id value. 
+  Returns:
+    The face in order of increasing id.
+  */
+  const ON_SubDFace* NextFace();
+
+  /*
+  Returns:
+    The most recently returned face from a call to FirstFace() or NextFace().
+  */
+  const ON_SubDFace* CurrentFace() const;
+
+private:
+  friend class ON_SubDHeap;
+  ON_SubDRef m_subd_ref;
+  void Internal_Init();
+};
+
+//////////////////////////////////////////////////////////////////////////
+//
 // ON_SubDComponentIterator
 //
-class ON_SUBD_CLASS ON_SubDComponentIterator
+class ON_CLASS ON_SubDComponentIterator
 {
 public:
   static const ON_SubDComponentIterator Empty;
@@ -7056,12 +10046,194 @@ private:
   ON_SubDComponentPtr m_cptr_current = ON_SubDComponentPtr::Null;
 };
 
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDMeshFragmentIterator
+//
+
+class ON_CLASS ON_SubDMeshFragmentIterator
+{
+public:
+  ON_SubDMeshFragmentIterator() = default;
+  ~ON_SubDMeshFragmentIterator() = default;
+  ON_SubDMeshFragmentIterator(const ON_SubDMeshFragmentIterator&);
+  ON_SubDMeshFragmentIterator& operator=(const ON_SubDMeshFragmentIterator&);
+
+public:
+  ON_SubDMeshFragmentIterator(const class ON_SubDMesh limit_mesh);
+  ON_SubDMeshFragmentIterator(ON_SubDRef& subd_ref);
+  ON_SubDMeshFragmentIterator(const ON_SubD& subd);
+  ON_SubDMeshFragmentIterator(const ON_SubDFaceIterator& fit);
+
+public:
+  const ON_SubDMeshFragment* FirstFragment();
+  const ON_SubDMeshFragment* NextFragment();
+  const ON_SubDMeshFragment* CurrentFragment();
+
+  bool IsEmpty() const;
+
+  const ON_SubD& SubD() const;
+
+  /*
+  Returns
+    ON_SubDComponentLocation::Surface or ON_SubDComponentLocation::ControlNet
+  */
+  ON_SubDComponentLocation SubDAppearance() const;
+  
+  /*
+  Parameters:
+    subd_appearance_override - [in]
+      ON_SubDComponentLocation::Unset - appearance controlled by SubD().SubDAppearance().
+      ON_SubDComponentLocation::Surface
+      ON_SubDComponentLocation::ControlNet
+  Returns
+    ON_SubDComponentLocation::Surface or ON_SubDComponentLocation::ControlNet
+  */
+  void SetSubDAppearanceOverride(ON_SubDComponentLocation subd_appearance_override);
+
+
+  /*
+  Returns:
+    Density setting used to create the fragments and the maximum mesh density
+    these fragments can deliver.
+  Remarks:
+    0: a single mesh quad per SubD quad 
+    1: 4 mesh quads per SubD quad (n mesh quads per SubD n-gon when n != 4)
+    d: 4^d mesh quads per SubD quad (n*(4^(d-1)) mesh quads per SubD n-gon when n != 4)
+  */
+  unsigned int MaximumMeshDensity() const;
+
+
+  /*
+  Returns:
+    Minimum mesh density that can be extracted from these fragments.
+  Remarks:
+    0 = all fragments are full sized.
+    1 = there are half sixed fragments because the SubD has n-gons with n != 4.
+  */
+  unsigned int MinimumMeshDensity() const;
+
+  /*
+  Parameters:
+    candidate_mesh_density - [in]
+  Returns:
+    If candidate_mesh_density > MeshDensity(), then MeshDensity() is returned.
+    If candidate_mesh_density < MinimumMeshDensity(), then MinimumMeshDensity() is returned.
+    Otherwise, candidate_mesh_density is returned.
+  */
+  unsigned int ClampMeshDensity(
+    unsigned int candidate_mesh_density
+  ) const;
+
+  /*
+  Returns:
+    Total number of fragments.
+  */
+  unsigned int FragmentCount() const;
+
+  /*
+  Returns:
+    Total number of full sized fragments. 
+  Remarks:
+    A full sized fragment covers an entire quad face.
+  */
+  unsigned int FullSizeFragmentCount() const;
+
+  /*
+  Returns:
+    Total number of half sized fragments. 
+  Remarks:
+    A half sized fragment covers the corner of an N-gon and are used when N != 4.
+  */
+  unsigned int HalfSizeFragmentCount() const;
+
+
+  /*
+  Parameters:
+    full_size_fragment_count - [out]
+      Number of full sized fragments. These cover an entire quad face.
+    half_size_fragment_count - [out]
+      Number of half sized fragments. These cover a corner of an N-gon
+      and are used when N != 4.
+  Returns:
+    Total number of fragments.
+  */
+  unsigned int GetFragmentCounts(
+    unsigned int& full_size_fragment_count,
+    unsigned int& half_size_fragment_count
+  ) const;
+
+  /*
+  Parameters:
+    mesh_density - [in]
+      MinimumMeshDensity() <= mesh_density <= MeshDensity()
+  Returns:
+    Total number of mesh quads in at the specified mesh density.
+  */
+  unsigned int TotalQuadCount(unsigned int mesh_density) const;
+
+  /*
+  Parameters:
+    mesh_density - [in]
+      MinimumMeshDensity() <= mesh_density <= MeshDensity()
+  Returns:
+    Total number of mesh points delivered at the specified mesh density.
+  */
+  unsigned int TotalPointCount(unsigned int mesh_density) const;
+
+  /*
+  Returns:
+    Total number of mesh quads delivered at MaximumMeshDensity().
+  */
+  unsigned int MaximumDensityQuadCount() const;
+
+  /*
+  Parameters:
+    mesh_density - [in]
+      MinimumMeshDensity() <= mesh_density <= MeshDensity()
+  Returns:
+    Total number of mesh points delivered at MaximumMeshDensity().
+  */
+  unsigned int MaximumDensityPointCount() const;
+
+  const ON_BoundingBox SurfaceBoundingBox() const;
+  const ON_BoundingBox ControlNetQuadBoundingBox() const;
+  /*
+  Returns:
+    If this->SubDAppearance() is ON_SubDComponentLocation::ControlNet, then this->ControlNetQuadBoundingBox() is returned.
+    Otherwise this->SurfaceBoundingBox() returned.
+  */
+  const ON_BoundingBox BoundingBox() const;
+
+private:
+  void Internal_CopyFrom(const ON_SubDMeshFragmentIterator& src);
+
+  ON_SubDMesh m_limit_mesh;
+  ON_SubD m_subd;
+  ON_SubDFaceIterator m_fit;
+  const ON_SubDMeshFragment* m_current_fragment = nullptr;
+  bool m_bFromFaceFragments = false;
+  mutable bool m_bHaveCounts = false;
+
+  // used to override the appearance of SubD().SubDApperance().
+  ON_SubDComponentLocation m_subd_appearance_override = ON_SubDComponentLocation::Unset;
+
+  mutable unsigned int m_maximum_mesh_density = 0; // See MaximumMeshDensity() comment
+
+  // full sized fragment count (for quads)
+  mutable unsigned int m_full_size_fragment_count = 0;
+
+  // half sized fragment count (for n-gons with n != 4)
+  mutable unsigned int m_half_size_fragment_count = 0;
+};
+
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDSectorIterator
 //
 
-class ON_SUBD_CLASS ON_SubDSectorIterator
+class ON_CLASS ON_SubDSectorIterator
 {
 public:
   static const ON_SubDSectorIterator Empty;
@@ -7371,7 +10543,7 @@ private:
 //
 // ON_SubDFaceEdgeIterator
 //
-class ON_SUBD_CLASS ON_SubDFaceEdgeIterator
+class ON_CLASS ON_SubDFaceEdgeIterator
 {
 public:
   ON_SubDFaceEdgeIterator();
@@ -7431,6 +10603,31 @@ public:
   */
   const ON_SubDEdge* PrevEdge();
 
+
+  /*
+  Parameters:
+    bReturnNullAtFirstEdge = [in]
+      If true and the next edge would be FirstEdge(), the nullptr is returned
+      and CurrentEdge() is not changed.
+  Description:
+    Increments the iterator and returns the edge.
+  */
+  const ON_SubDEdge* NextEdge(
+    bool bReturnNullAtFirstEdge
+  );
+
+  /*
+  Parameters:
+    bReturnNullAtLastEdge = [in]
+      If true and the previous edge would be FirstEdge(), the nullptr is returned
+      and CurrentEdge() is not changed.
+  Description:
+    Decrements the iterator and returns the edge.
+  */
+  const ON_SubDEdge* PrevEdge(
+    bool bReturnNullAtFirstEdge
+  );
+
   /*
   Returns:
   Current edge.
@@ -7450,17 +10647,17 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDFromMeshOptions
+// ON_ToSubDParameters
 //
-class ON_SUBD_CLASS ON_SubDFromMeshOptions
+class ON_CLASS ON_ToSubDParameters
 {
 public:
 
-  // Default construction is identical to ON_SubDFromMeshOptions::Smooth.
-  ON_SubDFromMeshOptions() = default;
-  ~ON_SubDFromMeshOptions() = default;
-  ON_SubDFromMeshOptions(const ON_SubDFromMeshOptions&) = default;
-  ON_SubDFromMeshOptions& operator=(const ON_SubDFromMeshOptions&) = default;
+  // Default construction is identical to ON_ToSubDParameters::Smooth.
+  ON_ToSubDParameters() = default;
+  ~ON_ToSubDParameters() = default;
+  ON_ToSubDParameters(const ON_ToSubDParameters&) = default;
+  ON_ToSubDParameters& operator=(const ON_ToSubDParameters&) = default;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
@@ -7468,21 +10665,21 @@ public:
   //
 
   // No interior creases and no corners.
-  static const ON_SubDFromMeshOptions Smooth;
+  static const ON_ToSubDParameters Smooth;
   
   // Create an interior sub-D crease along coincident input mesh edges
   // where the vertex normal directions at one end differ by at 
   // least 30 degrees.
-  static const ON_SubDFromMeshOptions InteriorCreaseAtMeshCrease;
+  static const ON_ToSubDParameters InteriorCreaseAtMeshCrease;
 
   // Create an interior sub-D crease along all coincident input mesh edges.
-  static const ON_SubDFromMeshOptions InteriorCreaseAtMeshEdge;
+  static const ON_ToSubDParameters InteriorCreaseAtMeshEdge;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
   // Custom interior crease options
   //
-#pragma region RH_C_SHARED_ENUM [SubD::InteriorCreaseOption] [Rhino.Geometry.SubD.InteriorCreaseOption] [nested:byte]
+#pragma region RH_C_SHARED_ENUM [SubD::InteriorCreaseOption] [Rhino.Geometry.SubDCreationOptions.InteriorCreaseOption] [nested:byte]
   ///<summary>
   ///Defines how interior creases are treated.
   ///</summary>
@@ -7505,7 +10702,7 @@ public:
   };
 #pragma endregion
 
-  static ON_SubDFromMeshOptions::InteriorCreaseOption InteriorCreaseOptionFromUnsigned(
+  static ON_ToSubDParameters::InteriorCreaseOption InteriorCreaseOptionFromUnsigned(
     unsigned int interior_crease_option_as_unsigned
     );
 
@@ -7514,20 +10711,20 @@ public:
     interior_crease_option - [in]
   */
   void SetInteriorCreaseOption(
-    ON_SubDFromMeshOptions::InteriorCreaseOption interior_crease_option
+    ON_ToSubDParameters::InteriorCreaseOption interior_crease_option
     );
 
   /*
   Returns:
     The interior crease option.
   */
-  ON_SubDFromMeshOptions::InteriorCreaseOption InteriorCreaseTest() const;
+  ON_ToSubDParameters::InteriorCreaseOption InteriorCreaseTest() const;
 
 
   /*
   Description:
     When the interior crease option is 
-    ON_SubDFromMeshOptions::InteriorCreaseOption::AtMeshCreases,
+    ON_ToSubDParameters::InteriorCreaseOption::AtMeshCreases,
     the value of MinimumCreaseAngleRadians() determines which
     coincident input mesh edges generate sub-D creases.
 
@@ -7547,7 +10744,7 @@ public:
   /*
   Description:
     When the interior crease option is 
-    ON_SubDFromMeshOptions::InteriorCreaseOption::AtMeshCreases,
+    ON_ToSubDParameters::InteriorCreaseOption::AtMeshCreases,
     the value of MinimumCreaseAngleRadians() determines which
     coincident input mesh edges generate sub-D creases.
 
@@ -7568,8 +10765,8 @@ public:
   Returns:
     The currently selected interior crease option.
   */
-  ON_SubDFromMeshOptions::InteriorCreaseOption CopyInteriorCreaseTest(
-    ON_SubDFromMeshOptions source_options
+  ON_ToSubDParameters::InteriorCreaseOption CopyInteriorCreaseTest(
+    ON_ToSubDParameters source_options
     );
 
 
@@ -7580,13 +10777,13 @@ public:
 
   // Look for convex corners at sub-D vertices with 2 edges
   // that have an included angle <= 90 degrees.
-  static const ON_SubDFromMeshOptions ConvexCornerAtMeshCorner;
+  static const ON_ToSubDParameters ConvexCornerAtMeshCorner;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
   // Custom convex corner options
   //
-#pragma region RH_C_SHARED_ENUM [SubD::ConvexCornerOption] [Rhino.Geometry.SubD.ConvexCornerOption] [nested:byte]
+#pragma region RH_C_SHARED_ENUM [SubD::ConvexCornerOption] [Rhino.Geometry.SubDCreationOptions.ConvexCornerOption] [nested:byte]
   ///<summary>
   ///Defines how convex corners are treated.
   ///</summary>
@@ -7606,7 +10803,7 @@ public:
   };
 #pragma endregion
 
-  static ON_SubDFromMeshOptions::ConvexCornerOption ConvexCornerOptionFromUnsigned(
+  static ON_ToSubDParameters::ConvexCornerOption ConvexCornerOptionFromUnsigned(
     unsigned int convex_corner_option_as_unsigned
     );
 
@@ -7615,14 +10812,14 @@ public:
     convex_corner_option - [in]
   */
   void SetConvexCornerOption(
-    ON_SubDFromMeshOptions::ConvexCornerOption convex_corner_option
+    ON_ToSubDParameters::ConvexCornerOption convex_corner_option
     );
 
   /*
   Returns:
     The currently selected convex corner option.
   */
-  ON_SubDFromMeshOptions::ConvexCornerOption ConvexCornerTest() const;
+  ON_ToSubDParameters::ConvexCornerOption ConvexCornerTest() const;
 
   /*
   Description:
@@ -7681,29 +10878,95 @@ public:
   Returns:
     The currently selected convex corner option.
   */
-  ON_SubDFromMeshOptions::ConvexCornerOption CopyConvexCornerTest(
-    ON_SubDFromMeshOptions source_parameters
+  ON_ToSubDParameters::ConvexCornerOption CopyConvexCornerTest(
+    ON_ToSubDParameters source_parameters
     );
+
+  /*
+  Returns:
+    false - In ON_SubD::CreateFromMesh(), input mesh vertex locations will be used to set subd vertex control net locations.
+    true - In ON_SubD::CreateFromMesh(), input mesh vertex locations will be used to set subd vertex limit surface locations.
+  Remark:
+    Interpolation computation is available in Rhino, Rhino compute, Rhino Inside,
+    Grasshopper. Interpolation computation is not available in the opennurbs IO toolkit.
+  */
+  bool InterpolateMeshVertices() const;
+
+  /*
+  Parameters:
+    false
+      In ON_SubD::CreateFromMesh(), input mesh vertex locations will be used to set subd vertex control net locations.
+      This is the fastest and most robust way to create a subd from a mesh.
+    true
+      In ON_SubD::CreateFromMesh(), input mesh vertex locations will be used to set subd vertex limit surface locations.
+      If there are a large number of vertices, this option can require lots of computation.
+  Remark:
+    Interpolation computation is available in Rhino, Rhino compute, Rhino Inside,
+    Grasshopper. Interpolation computation is not available in the opennurbs IO toolkit.
+  */
+  void SetInterpolateMeshVertices(
+    bool bInterpolateMeshVertices
+  );
+
+  /*
+  Returns:
+    true - In ON_SubD::CreateFromMesh(), colinear boundary edges belonging to the same face are merged into a single edge.
+    false - In ON_SubD::CreateFromMesh(), each mesh boundary edge becomes a SubD boundary edge.
+  */
+  bool MergeColinearBoundaryEdges() const;
+
+  /*
+  Parameters:
+    bMergeColinearBoundaryEdges - [in]
+      true 
+        In ON_SubD::CreateFromMesh(), colinear boundary edges belonging to the same face are merged into a single edge.
+        In general, this is the best choice and leads to the highest quality of SubD object.
+      false
+        In ON_SubD::CreateFromMesh(), each mesh boundary edge becomes a SubD boundary edge.
+        Use this when the boundary topology of the mesh and SubD should be identical.
+  */
+  void SetMergeColinearBoundaryEdges(
+    bool bMergeColinearBoundaryEdges
+  );
+
+  /*
+  Returns:
+    true - In ON_SubD::CreateFromMesh(), colinear interior edges between two faces are merged into a single edge.
+    false - In ON_SubD::CreateFromMesh(), each mesh interior edge becomes a SubD interior edge.
+  */
+  bool MergeColinearInteriorEdges() const;
+
+  /*
+  Parameters:
+  bMergeColinearInteriorEdges - [in]
+    true
+      In ON_SubD::CreateFromMesh(), colinear interior edges between two faces are merged into a single edge.
+      In general, this is the best choice and leads to the highest quality of SubD object.
+    false
+      In ON_SubD::CreateFromMesh(), each mesh interior edge becomes a SubD interior edge.
+      Use this when the interior topology of the mesh and SubD should be identical.
+  */
+  void SetMergeColinearInteriorEdges(
+    bool bMergeColinearInteriorEdges
+  );
 
   
-  ///////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Sub-D type option
-  //
-  ON_SubD::SubDType SubDType() const;
-
-  void SetSubDType(
-    ON_SubD::SubDType subd_type
-    );
-
 private:
-  ON_SubD::SubDType m_subd_type = ON_SubD::SubDType::Unset;
-  unsigned char m_reserved1 = 0;
-  unsigned short m_reserved2 = 0;
+  enum : unsigned char
+  {
+    MergeColinearBoundaryEdgesMask = 1,
+    MergeColinearInteriorEdgesMask = 2
+  };
+  unsigned char m_merge_edges_bits = 0; // clear bit (0) = "true, set bit (1) = "false"
 
-  ON_SubDFromMeshOptions::InteriorCreaseOption m_interior_crease_option = ON_SubDFromMeshOptions::InteriorCreaseOption::None;
-  ON_SubDFromMeshOptions::ConvexCornerOption m_convex_corner_option = ON_SubDFromMeshOptions::ConvexCornerOption::None;
+  bool m_bInterpolateMeshVertices = false;
+
+  ON_ToSubDParameters::InteriorCreaseOption m_interior_crease_option = ON_ToSubDParameters::InteriorCreaseOption::None;
+  ON_ToSubDParameters::ConvexCornerOption m_convex_corner_option = ON_ToSubDParameters::ConvexCornerOption::None;
+
   unsigned short m_maximum_convex_corner_edge_count = 2U;
+
+  unsigned short m_reserved3 = 0;
 
   double m_minimum_crease_angle_radians = ON_PI/6.0; // 30 degrees in radians
   double m_maximum_convex_corner_angle_radians = 0.501*ON_PI; // 90 degrees (+ a smidge) in radians
@@ -7716,7 +10979,7 @@ private:
 //  Used when an ON_SubD vertex, edge or face needs to be sent around as
 //  a piece of ON_Geometry.
 //
-class ON_SUBD_CLASS ON_SubDComponentRef : public ON_Geometry
+class ON_CLASS ON_SubDComponentRef : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_SubDComponentRef);
 public:
@@ -7741,38 +11004,41 @@ public:
   Parameters:
     subd_ref - [in]
     component_index - [in]
-    bLimitSurface - [in]
-      true - the reference is to the limit surface location
-      false - the reference is to the control net location
+    component_location - [in]
   */
-  static ON_SubDComponentRef Create(
+  static const ON_SubDComponentRef Create(
     const ON_SubDRef& subd_ref,
     ON_COMPONENT_INDEX component_index,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
     );
 
-  static ON_SubDComponentRef Create(
+  static const ON_SubDComponentRef Create(
     const ON_SubDRef& subd_ref,
     ON_SubDComponentPtr component_ptr,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
     );
 
-  static ON_SubDComponentRef Create(
+  static const ON_SubDComponentRef Create(
     const ON_SubDRef& subd_ref,
     const class ON_SubDVertex* vertex,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
     );
 
-  static ON_SubDComponentRef Create(
+  static const ON_SubDComponentRef Create(
     const ON_SubDRef& subd_ref,
     const class ON_SubDEdge* edge,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
     );
 
-  static ON_SubDComponentRef Create(
+  static const ON_SubDComponentRef Create(
     const ON_SubDRef& subd_ref,
     const class ON_SubDFace* face,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
     );
 
   void Clear();
@@ -7786,6 +11052,15 @@ public:
   ON_SubDComponentPtr ComponentPtr() const;
 
   ON_SubDComponentLocation ComponentLocation() const;
+
+  /*
+  The interpretation of this value depends on the context.
+  */
+  ON__UINT_PTR ReferenceId() const;
+
+  void SetReferenceId(
+    ON__UINT_PTR reference_id
+  );
 
   const class ON_SubDVertex* Vertex() const;
 
@@ -7801,6 +11076,7 @@ private:
   ON_SubDComponentPtr m_component_ptr = ON_SubDComponentPtr::Null;
   ON_COMPONENT_INDEX m_component_index = ON_COMPONENT_INDEX::UnsetComponentIndex;
   ON_SubDComponentLocation m_component_location =  ON_SubDComponentLocation::Unset;
+  ON__UINT_PTR m_reference_id = 0;
 
 public:
   // overrides of virtual ON_Object functions
@@ -7834,13 +11110,15 @@ public:
   const ON_SubDComponentRef& Append(
     const ON_SubDRef& subd_ref,
     ON_COMPONENT_INDEX ci,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
   );
 
   const ON_SubDComponentRef& Append(
     const ON_SubDRef& subd_ref,
     ON_SubDComponentPtr component_ptr,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
   );
 
   /*
@@ -7848,6 +11126,7 @@ public:
     Appends a copy of src_ref and returns a pointer to the ON_SubDComponentRef
     managed by this class.
   */
+  const ON_SubDComponentRef& Append(const ON_SubDComponentRef& src_ref);
   const ON_SubDComponentRef& Append(const ON_SubDComponentRef* src_ref);
 
   /*
@@ -7866,13 +11145,15 @@ public:
   const ON_SubDComponentRef& AppendForExperts(
     const ON_SubD& subd,
     ON_COMPONENT_INDEX ci,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
   );
 
   const ON_SubDComponentRef& AppendForExperts(
     const ON_SubD& subd,
     ON_SubDComponentPtr component_ptr,
-    ON_SubDComponentLocation component_location
+    ON_SubDComponentLocation component_location,
+    ON__UINT_PTR reference_id
   );
 
   /*
@@ -7982,7 +11263,7 @@ private:
 //
 //  Used in selection tests to return a point and parameters on a component.
 //
-class ON_SUBD_CLASS ON_SubDComponentPoint
+class ON_CLASS ON_SubDComponentPoint
 {
 public:
   static const ON_SubDComponentPoint Unset;
@@ -7994,10 +11275,10 @@ public:
 
   /*
   Description:
-    Compares the m_component_ptr values.  This function is useful for sorting
-    arrays of ON_SubDComponentPoint values remove duplicates.
+    Dictionary compare of component type, component pointer, and component direction (partial).
+    This function is useful for sorting arrays of ON_SubDComponentPoint values remove duplicates.
   */
-  static int CompareComponentPtr(
+  static int CompareComponentAndDirection(
     const ON_SubDComponentPoint* a,
     const ON_SubDComponentPoint* b
     );
@@ -8021,7 +11302,7 @@ public:
 //
 // ON_SubDMatrix
 //
-class ON_SUBD_CLASS ON_SubDMatrix
+class ON_CLASS ON_SubDMatrix
 {
 public:
   ON_SubDMatrix() = default;
@@ -8050,34 +11331,36 @@ public:
   bool IsValid() const;
 
   bool IsValidPointRing(
+    const double* point_ring,
     size_t point_ring_count,
-    size_t point_ring_stride,
-    const double* point_ring
+    size_t point_ring_stride
     ) const;
 
   bool EvaluateSubdivisionPoint(
     unsigned int component_index,
+    const double* point_ring,
     size_t point_ring_count,
     size_t point_ring_stride,
-    const double* point_ring,
     double subd_point[3]
     ) const;
 
-  bool EvaluateLimitPoint(
+  bool EvaluateSurfacePoint(
+    const double* point_ring,
     size_t point_ring_count,
     size_t point_ring_stride,
-    const double* point_ring,
+    bool bUndefinedNormalIsPossible,
     double limit_point[3],
     double limit_tangent1[3],
     double limit_tangent2[3],
     double limit_normal[3]
     ) const;
 
-  bool EvaluateLimitPoint(
+  bool EvaluateSurfacePoint(
+    const double* point_ring,
     size_t point_ring_count,
     size_t point_ring_stride,
-    const double* point_ring,
-    class ON_SubDSectorLimitPoint& limit_point
+    bool bUndefinedNormalIsPossible,
+    class ON_SubDSectorSurfacePoint& limit_point
     ) const;
 
   /*
@@ -8233,8 +11516,8 @@ public:
     );
 
   double TestComponentRing(
-    size_t component_ring_count,
-    const ON_SubDComponentPtr* component_ring
+    const ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count
     ) const;
 
   /*
@@ -8254,12 +11537,11 @@ public:
     limit_normal - [out]
   */
   static double TestEvaluation(
-    ON_SubD::SubDType subd_type,
     const unsigned int subd_recursion_count,
     ON_SubDSectorIterator sit,
     ON_SimpleArray<ON_SubDComponentPtr>& component_ring,
     ON_SimpleArray< ON_3dPoint >& subd_points,
-    class ON_SubDSectorLimitPoint& limit_point
+    class ON_SubDSectorSurfacePoint& limit_point
     );
 
 private:
@@ -8273,7 +11555,11 @@ private:
 // ON_SubD_FixedSizeHeap
 //
 
-class ON_SUBD_CLASS ON_SubD_FixedSizeHeap
+/*
+Description:
+  A ON_SubD_FixedSizeHeap is used to manage heap used for a local subdivision.
+*/
+class ON_CLASS ON_SubD_FixedSizeHeap
 {
 private:
   static unsigned int m__sn_factory;
@@ -8288,23 +11574,36 @@ public:
 
   /*
   Description:
-    Reserve enough room to accomodate a face
-    with one extraordinary vertex. 
+    Reserve enough room to for a subdivision of a vertex sector.
   Parameters:
-    subd_type - [in]
-    extraordinary_valence - [in]
+    sector_edge_count - [in]
+      Number of edges in the sector.
   */
   bool ReserveSubDWorkspace(
-    ON_SubD::SubDType subd_type,
-    unsigned int extraordinary_valence
+    unsigned int sector_edge_count
     );
 
+  /*
+  Description:
+    Reserve enough room for a local subdivide the neighborhood of center_face.
+  Parameters:
+    center_face0 - [in]
+  */
   bool ReserveSubDWorkspace(
-    size_t vertex_capacity,
-    size_t edge_capacity,
-    size_t face_capacity,
-    size_t array_capacity
+    const ON_SubDFace* center_face0
     );
+
+private:
+  bool Internal_ReserveSubDWorkspace(
+    size_t vertex_capacity,
+    size_t face_capacity,
+    size_t array_capacity,
+    bool bEnableHashTable
+    );
+
+  bool Internal_ReserveSubDWorkspace_HashTable();
+
+public:
 
   /*
   Description:
@@ -8322,33 +11621,83 @@ public:
 
    ON_SubDVertex* AllocateVertex(
     const double vertexP[3],
-    unsigned int edge_capacity,
-    unsigned int face_capacity
+    unsigned int edge_capacity
     );
 
+  /*
+  Description:
+    Allocate a vertex located at the vertex0 subdivision point. 
+    
+  Parameters:
+    vertex0 - [in]
+    edge_capacity - [in]
+      If the returned vertex will be interior in a local subdivision,
+      then pass vertex0->EdgeCount().
+      If the returned vertex will be an outer ring vertex in a local subdivision,
+      then pass 3.
+  */
   ON_SubDVertex* AllocateVertex(
     const ON_SubDVertex* vertex0,
-    ON_SubD::SubDType subd_type,
-    bool bUseSavedSubdivisionPoint,
-    unsigned int edge_capacity,
-    unsigned int face_capacity
+    unsigned int edge_capacity
     );
 
+  /*
+  Description:
+    Allocate a vertex located at the edge0 subdivision point. 
+    The vertex will have an edge and face capacity of 4.
+  Parameters:
+    edge0 - [in]
+  */
   ON_SubDVertex* AllocateVertex(
-    const ON_SubDEdge* edge0,
-    ON_SubD::SubDType subd_type,
-    bool bUseSavedSubdivisionPoint,
-    unsigned int edge_capacity,
-    unsigned int face_capacity
+    const ON_SubDEdge* edge0
     );
 
-  ON_SubDVertex* AllocateVertex(
-    const ON_SubDFace* face0,
-    ON_SubD::SubDType subd_type,
-    bool bUseSavedSubdivisionPoint,
-    unsigned int edge_capacity,
-    unsigned int face_capacity
+  /*
+  Description:
+    Find or allocate a vertex located at the edge0 subdivision point. 
+    The vertex will have an edge and face capacity of 4.
+  Parameters:
+    edge0 - [in]
+  Remarks: 
+    In order for FindOrAllocateVertex() to find a vertex, that vertex must 
+    have been created  by an earlier call to FindOrAllocateVertex().
+    Typically, AllocateVertex(edge0) is used for center face boundary edges
+    and FindOrAllocateVertex(edge0) is used for ring edges.
+  */
+  ON_SubDVertex* FindOrAllocateVertex(
+    const ON_SubDEdge* edge0
     );
+
+  /*
+  Description:
+    Find or allocate a vertex and the face subdivision point. The vertex will have an
+    edge and face capacity of face0->EdgeCount().
+  Parameters:
+    face0 - [in]
+      outer face in a local subdivision situation
+  Remarks: 
+    In order for FindOrAllocateVertex() to find a vertex, that vertex must 
+    have been created  by an earlier call to FindOrAllocateVertex().
+    Typically, AllocateVertex(edge0) is used for the center face and
+    and FindOrAllocateVertex(edge0) is used for ring faces.
+  */
+  ON_SubDVertex* FindOrAllocateVertex(
+    const ON_SubDFace* face0
+    );
+
+
+  /*
+  Description:
+    Allocate a vertex located at the sector_face0 subdivision point. 
+    The vertex will have an edge and face capacity of 3.
+  Parameters:
+    sector_face0 - [in]
+      A face in a vertex sector.
+  */
+  ON_SubDVertex* AllocateSectorFaceVertex(
+    const ON_SubDFace* sector_face0
+    );
+
 
   /*
   Parameters:
@@ -8374,7 +11723,7 @@ public:
     If v0 or v1 is not null, then ON_SubDEdge.m_level is set to the
     maximum of v0->m_level or v1->m_level.
   */
-  ON_SubDEdge* AllocateEdge(
+  const ON_SubDEdgePtr AllocateEdge(
     ON_SubDVertex* v0,
     double v0_sector_weight,
     ON_SubDVertex* v1,
@@ -8382,13 +11731,28 @@ public:
     );
 
   /*
+  Description:
+    NOTE WELL: 
+    In order for FindOrAllocateEdge() to find an edge, that edge must have been created 
+    by an earlier call to FindOrAllocateEdge().
+  */
+  const ON_SubDEdgePtr FindOrAllocateEdge(
+    ON_SubDVertex* v0,
+    double v0_sector_weight,
+    ON_SubDVertex* v1,
+    double v1_sector_weight
+    );
+
+  private:
+  /*
   Returns:
     A face with all field values zero (same values as ON_SubDEdge::Face), except ON_SubDFace.m_id.
   */
-  ON_SubDFace* AllocateFace(
+  ON_SubDFace* Internal_AllocateFace(
     unsigned int zero_face_id,
     unsigned int parent_face_id
     );
+  public:
 
   ON_SubDFace* AllocateQuad(
     unsigned int zero_face_id,
@@ -8396,10 +11760,13 @@ public:
     const ON_SubDEdgePtr eptrs[4]
     );
 
-  ON_SubDFace* AllocateTri(
+  ON_SubDFace* AllocateQuad(
     unsigned int zero_face_id,
     unsigned int parent_face_id,
-    const ON_SubDEdgePtr eptrs[3]
+    ON_SubDEdgePtr e0,
+    ON_SubDEdgePtr e1,
+    ON_SubDEdgePtr e2,
+    ON_SubDEdgePtr e3
     );
 
   /*
@@ -8429,13 +11796,11 @@ public:
       from AllocatePtrArray().
   */
   bool ReturnPtrArray(
-    unsigned int capacity,
-    void* p
+    void* p,
+    unsigned int capacity
     );
 
 private:
-  //unsigned int m_max_valence = 0;
- 
   ON_SubDVertex* m_v = nullptr;
   unsigned int m_v_capacity = 0;
   unsigned int m_v_index = 0;
@@ -8453,12 +11818,28 @@ private:
   unsigned int m_p_index = 0;
 
 private:
+  // Used to find level 1 subdivision vertex from level 0 component
+  class ON_SubD_FixedSizeHeap_ComponentPairHashElement** m_hash_table = nullptr;
+  class ON_SubD_FixedSizeHeap_ComponentPairHashElement* m_hash_elements = nullptr;
+  unsigned int m_h_capacity = 0; // m_hash_table[] capacity.
+  unsigned int m_h_count = 0; // 0xFFFFFFFFU means hash is disabled
+  enum : unsigned int
+  {
+    DisabledHashCount = 0xFFFFFFFFU
+  };
+
+  bool Internal_HashEnabled() const;
+  unsigned int Internal_Hash(ON_SubDComponentPtr component0);
+  class ON_SubDVertex* Internal_HashFindVertex1(unsigned int hash, ON_SubDComponentPtr component0);
+  void Internal_HashAddPair(unsigned int hash, ON_SubDComponentPtr component0, class ON_SubDVertex* vertex1);
+
+private:
   // copies not supported
   ON_SubD_FixedSizeHeap(const ON_SubD_FixedSizeHeap&) = delete;
   ON_SubD_FixedSizeHeap& operator=(const ON_SubD_FixedSizeHeap&) = delete;
 };
 
-class ON_SUBD_CLASS ON_SubDEdgeChain
+class ON_CLASS ON_SubDEdgeChain
 {
 public:
   ON_SubDEdgeChain() = default;
@@ -8475,6 +11856,52 @@ public:
   //
   // Edge chain tools
   //
+  /*
+  Description:
+    Sort edges into a chains
+
+  Parameters:
+    unsorted_edges - [in]
+      To sort an array in place, pass the same array as both parameters.
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      then all of the edges that share that vertex are ignored.
+      The edges can be from one or more SubDs.
+
+    unsigned int minimum_chain_length - [in]
+      minimum number of edges to consider for a chain.
+
+    sorted_edges - [out]
+      The sorted_edges[] has the edges grouped into edge chains.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+
+      When sorted_edges[i].RelativeVertex(1) != sorted_edges[i+1].RelativeVertex(0),
+      a chain ends at sorted_edges[i] and another begins at sorted_edges[i+1].
+
+      The first edge in every chain has the same orientation as the input edge
+      from unsorted_edges[].
+
+  Returns:
+    Number of chains in sorted_edges[].
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+
+  /////////////////////////////////////////////////////////
+  //
+  // Edge chain tools
+  //
 
   /*
   Description:
@@ -8484,14 +11911,37 @@ public:
     search_direction - [in]
       ON_ChainDirection::Previous or ON_ChainDirection::Next.
       The search direction is relative to this->EdgeDirection().
-    bStopAtTagChange - [in]
-      If true and the edge is smooth, the chain will stop if it encounters a vertex that is not smooth.
-      If true and the edge is a crease, the chain will stop if it encounters a vertex is smooth.
+    chain_type - [in]
+      Determines what edge/vertex tag conditions must be satisified by the neighbor.
+  Returns:
+    The next or previous edge in the chain if it exists.
+    Otherwise, nullptr is returned.
+  Remarks:
+    When multiple edges are candidates, there is a bias to preserve smooth/crease and a bias to
+    preserve face count. If the biases don't reduce the list of candidates to one or bStopAtBreak is true
+    and a creaase/smooth break is encountered, then ON_SubDEdgePtr::Null is returned.
+  */
+  static const ON_SubDEdgePtr EdgeChainNeighbor(
+    ON_SubDEdgePtr starting_edge,
+    ON_ChainDirection search_direction,
+    ON_SubD::ChainType chain_type
+  );
+
+  /*
+  Description:
+    Get the neighboring link in an edge chain.
+  Parameters:
+    starting_edge - [in]
+    search_direction - [in]
+      ON_ChainDirection::Previous or ON_ChainDirection::Next.
+      The search direction is relative to this->EdgeDirection().
+    chain_type - [in]
+      Determines what edge/vertex tag conditions must be satisified by the neighbor.
     bEnableStatusCheck - [in]
     status_pass - [in]
     status_fail - [in]
       If bEnableStatusFilter is false, then no status checks are performed.
-      If bEnableStatusFilter is true, ON_ComponentStatus(candidate_edge->m_status,status_pass,status_fail)
+      If bEnableStatusFilter is true, ON_ComponentStatus::StatusCheck(candidate_edge->m_status,status_pass,status_fail)
       must be true for candidate_edge to be returned.
   Returns:
     The next or previous edge in the chain if it exists.
@@ -8504,7 +11954,7 @@ public:
   static const ON_SubDEdgePtr EdgeChainNeighbor(
     ON_SubDEdgePtr starting_edge,
     ON_ChainDirection search_direction,
-    bool bStopAtTagChange,
+    ON_SubD::ChainType chain_type,
     bool bEnableStatusCheck,
     ON_ComponentStatus status_pass,
     ON_ComponentStatus status_fail
@@ -8531,9 +11981,9 @@ public:
     edge_chain - [in/out]
   */
   static void ReverseEdgeChain(
-    size_t edge_count,
-    ON_SubDEdgePtr* edge_chain
-  );
+    ON_SubDEdgePtr* edge_chain,
+    size_t edge_count
+    );
   
   /*
   Description:
@@ -8569,8 +12019,8 @@ public:
     True if edge_chain[] is valid.
   */
   static bool IsValidEdgeChain(
-    size_t edge_count,
     const ON_SubDEdgePtr* edge_chain,
+    size_t edge_count,
     bool bCheckForDuplicateEdges
   );
 
@@ -8597,7 +12047,23 @@ public:
     const ON_SubDVertex* vertex
   ) const;
 
+  /*
+  Returns:
+    True if the edge chain has 3 or more edges that form a closed loop.
+  */
   bool IsClosedLoop() const;
+
+  /*
+  Parameters:
+    bStrictlyConvex - [in]
+      If true, then a colinear pair of edges is not considered convex.
+  Returns:
+    True if the edge chain has 3 or more edges that forma a convex loop.
+  */
+  bool IsConvexLoop(
+    bool bStrictlyConvex
+  ) const;
+
 
   unsigned int BeginEdgeChain(
     ON_SubDRef subd_ref,
@@ -8611,9 +12077,9 @@ public:
 
   unsigned int BeginEdgeChain(
     ON_SubDRef subd_ref,
-    size_t edge_count,
-    const ON_SubDEdge*const* initial_edge_chain
-  );
+    const ON_SubDEdge*const* initial_edge_chain,
+    size_t edge_count
+    );
 
   unsigned int BeginEdgeChain(
     ON_SubDRef subd_ref,
@@ -8627,9 +12093,9 @@ public:
 
   unsigned int BeginEdgeChain(
     ON_SubDRef subd_ref,
-    size_t edge_count,
-    const ON_SubDEdgePtr* initial_edge_chain
-  );
+    const ON_SubDEdgePtr* initial_edge_chain,
+    size_t edge_count
+    );
 
   unsigned int EdgeCount() const;
 
@@ -8665,12 +12131,12 @@ public:
 
   unsigned int AddOneNeighbor(
     ON_ChainDirection direction,
-    bool bStopAtTagChange
+    ON_SubD::ChainType chain_type
     );
 
   unsigned int AddAllNeighbors(
     ON_ChainDirection direction,
-    bool bStopAtTagChange
+    ON_SubD::ChainType chain_type
     );
 
   unsigned int AddEdge(
@@ -8692,6 +12158,7 @@ private:
   ON_ComponentStatus m_status_check_pass = ON_ComponentStatus::NoneSet;
   ON_ComponentStatus m_status_check_fail = ON_ComponentStatus::Selected;
 };
+
 
 #if defined(ON_COMPILING_OPENNURBS)
 /*
@@ -8770,8 +12237,6 @@ private:
   static const ON_SHA1_Hash Internal_FaceSHA1(const ON_Mesh* mesh);
   static const ON_SHA1_Hash Internal_VertexSHA1(const ON_Mesh* mesh);
 };
-#endif
-
 #endif
 
 #endif

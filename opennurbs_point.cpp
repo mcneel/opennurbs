@@ -176,9 +176,35 @@ static bool Internal_IsUnsetDouble(
   return false;
 }
 
+static bool Internal_IsNanDouble(
+  size_t count,
+  const double* a
+)
+{
+  const double * e = a + count;
+  while (a < e)
+  {
+    double x = *a++;
+    if (x == x)
+      continue;
+    return true;
+  }
+  return false;
+}
+
 bool ON_2dPoint::IsUnset() const
 {
   return Internal_IsUnsetDouble(2, &x);
+}
+
+bool ON_2dPoint::IsNan() const
+{
+  return Internal_IsNanDouble(2, &x);
+}
+
+bool ON_2dPoint::IsUnsetOrNan() const
+{
+  return Internal_IsUnsetDouble(2, &x) || Internal_IsNanDouble(2, &x);
 }
 
 bool ON_3dPoint::IsUnset() const
@@ -186,9 +212,29 @@ bool ON_3dPoint::IsUnset() const
   return Internal_IsUnsetDouble(3, &x);
 }
 
+bool ON_3dPoint::IsNan() const
+{
+  return Internal_IsNanDouble(3, &x);
+}
+
+bool ON_3dPoint::IsUnsetOrNan() const
+{
+  return Internal_IsUnsetDouble(3, &x) || Internal_IsNanDouble(3, &x);
+}
+
 bool ON_4dPoint::IsUnset() const
 {
   return Internal_IsUnsetDouble(4, &x);
+}
+
+bool ON_4dPoint::IsNan() const
+{
+  return Internal_IsNanDouble(4, &x);
+}
+
+bool ON_4dPoint::IsUnsetOrNan() const
+{
+  return Internal_IsUnsetDouble(4, &x) || Internal_IsNanDouble(4, &x);
 }
 
 bool ON_2dVector::IsUnset() const
@@ -196,9 +242,29 @@ bool ON_2dVector::IsUnset() const
   return Internal_IsUnsetDouble(2, &x);
 }
 
+bool ON_2dVector::IsNan() const
+{
+  return Internal_IsNanDouble(2, &x);
+}
+
+bool ON_2dVector::IsUnsetOrNan() const
+{
+  return Internal_IsUnsetDouble(2, &x) || Internal_IsNanDouble(2, &x);
+}
+
 bool ON_3dVector::IsUnset() const
 {
   return Internal_IsUnsetDouble(3, &x);
+}
+
+bool ON_3dVector::IsNan() const
+{
+  return Internal_IsNanDouble(3, &x);
+}
+
+bool ON_3dVector::IsUnsetOrNan() const
+{
+  return Internal_IsUnsetDouble(3, &x) || Internal_IsNanDouble(3, &x);
 }
 
 int ON_2dVector::Compare(
@@ -517,26 +583,26 @@ ON_Interval::Length() const
 bool
 ON_Interval::IsIncreasing() const
 {
-  return ( m_t[0] < m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return ( ON_UNSET_VALUE < m_t[0] && m_t[0] < m_t[1] && m_t[1] < ON_UNSET_POSITIVE_VALUE ) ? true : false;
 }
 
 bool
 ON_Interval::IsDecreasing() const
 {
-  return ( m_t[0] > m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return (ON_UNSET_POSITIVE_VALUE > m_t[0] && m_t[0] > m_t[1] && m_t[1] > ON_UNSET_VALUE) ? true : false;
 }
 
 bool
 ON_Interval::IsInterval() const
 {
-  return ( m_t[0] != m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return ( IsIncreasing() || IsDecreasing() ) ? true : false;
 }
 
 
 bool
 ON_Interval::IsSingleton() const
 {
-  return ( m_t[0] == m_t[1] && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return (ON_UNSET_VALUE < m_t[0] && m_t[0] == m_t[1] && m_t[1] < ON_UNSET_POSITIVE_VALUE) ? true : false;
 }
 
 bool
@@ -554,8 +620,7 @@ ON_Interval::IsEmptySet() const
 bool
 ON_Interval::IsValid() const
 {
-  // 05/29/2007 TimH. Changed 0 to 1.
-  return ( ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) );
+  return (ON_UNSET_VALUE < m_t[0] && m_t[0] < ON_UNSET_POSITIVE_VALUE && ON_UNSET_VALUE < m_t[1] && m_t[1] < ON_UNSET_POSITIVE_VALUE);
 }
 
 bool 
@@ -567,8 +632,6 @@ ON_Interval::MakeIncreasing()		// returns true if resulting interval IsIncreasin
 	}
 	return IsIncreasing();
 }
-
-
 
 int ON_Interval::Compare(const ON_Interval& lhs, const ON_Interval& rhs)
 {
@@ -2159,8 +2222,10 @@ bool ON_2fPoint::IsZero() const
 
 bool ON_2fPoint::IsNotZero() const
 {
-  // the && (x == x && y == y) insures no coordinate is a Nan.
-  return (x != 0.0f ||  y != 0.0f) && (x == x && y == y);
+  return
+    (x != 0.0f || y != 0.0f)
+    && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT)
+    && (x != ON_UNSET_POSITIVE_FLOAT && y != ON_UNSET_POSITIVE_FLOAT);
 }
 
 ON_2fPoint operator*(int d, const ON_2fPoint& p)
@@ -2596,8 +2661,11 @@ bool ON_3fPoint::IsZero() const
 
 bool ON_3fPoint::IsNotZero() const
 {
-  // the && (x == x && y == y) insures no coordinate is a Nan.
-  return (x != 0.0f || y != 0.0f || z != 0.0f) && (x == x && y == y && z == z);
+  // the && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && z != ON_UNSET_FLOAT) insures no coordinate is a Nan.
+  return
+    (x != 0.0f || y != 0.0f || z != 0.0f)
+    && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && z != ON_UNSET_FLOAT)
+    && (x != ON_UNSET_POSITIVE_FLOAT && y != ON_UNSET_POSITIVE_FLOAT && z != ON_UNSET_POSITIVE_FLOAT);
 }
 
 ON_3fPoint operator*(int d, const ON_3fPoint& p)
@@ -3398,8 +3466,11 @@ bool ON_2fVector::IsZero() const
 
 bool ON_2fVector::IsNotZero() const
 {
-  // the && (x == x && y == y) insures no coordinate is a Nan.
-  return (x != 0.0f || y != 0.0f) && (x == x && y == y);
+  // the && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT) insures no coordinate is a Nan.
+  return
+    (x != 0.0f || y != 0.0f)
+    && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT)
+    && (x != ON_UNSET_POSITIVE_FLOAT && y != ON_UNSET_POSITIVE_FLOAT);
 }
 
 // set this vector to be perpendicular to another vector
@@ -3905,8 +3976,11 @@ bool ON_3fVector::IsZero() const
 
 bool ON_3fVector::IsNotZero() const
 {
-  // the && (x == x && y == y && z == z) insures no coordinate is a Nan.
-  return (x != 0.0f || y != 0.0f || z != 0.0f) && (x == x && y == y && z == z);
+  // the && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && z != ON_UNSET_FLOAT) insures no coordinate is a Nan.
+  return
+    (x != 0.0f || y != 0.0f || z != 0.0f) 
+    && (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && z != ON_UNSET_FLOAT)
+    && (x != ON_UNSET_POSITIVE_FLOAT && y != ON_UNSET_POSITIVE_FLOAT && z != ON_UNSET_POSITIVE_FLOAT);
 }
 
 ON_3fVector operator*(int d, const ON_3fVector& v)
@@ -4371,8 +4445,12 @@ bool ON_2dPoint::IsZero() const
 
 bool ON_2dPoint::IsNotZero() const
 {
-  // the && (x == x && y == y) insures no coordinate is a Nan.
-  return (x != 0.0 || y != 0.0) && (x == x && y == y);
+  // the && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE) insures no coordinate is a Nan.
+  return
+    (x != 0.0 || y != 0.0) 
+    && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE)
+    && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE)
+    ;
 }
 
 ON_2dPoint operator*(int i, const ON_2dPoint& p)
@@ -4824,8 +4902,11 @@ bool ON_3dPoint::IsZero() const
 
 bool ON_3dPoint::IsNotZero() const
 {
-  // the && (x == x && y == y && z == z) insures no coordinate is a Nan.
-  return (x != 0.0 || y != 0.0 || z != 0.0) && (x == x && y == y && z == z);
+  // the && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE) insures no coordinate is a Nan.
+  return
+    (x != 0.0 || y != 0.0 || z != 0.0)
+    && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE)
+    && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE && z != ON_UNSET_POSITIVE_VALUE);
 }
 
 ON_3dPoint operator*(int i, const ON_3dPoint& p)
@@ -5718,8 +5799,13 @@ bool ON_2dVector::IsZero() const
 
 bool ON_2dVector::IsNotZero() const
 {
-  // the && (x == x && y == y) insures no coordinate is a Nan.
-  return (x != 0.0 || y != 0.0) && (x == x && y == y);
+{
+  // the && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE) insures no coordinate is a Nan.
+  return
+    (x != 0.0 || y != 0.0)
+    && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE)
+    && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE);
+}
 }
 
 bool ON_2dVector::IsUnitVector() const
@@ -6371,8 +6457,11 @@ bool ON_3dVector::IsZero() const
 
 bool ON_3dVector::IsNotZero() const
 {
-  // the && (x == x && y == y && z == z) insures no coordinate is a Nan.
-  return (x != 0.0 ||  y != 0.0 || z != 0.0) && (x == x && y == y && z == z);
+  // the && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE) insures no coordinate is a Nan.
+  return
+    (x != 0.0 || y != 0.0 || z != 0.0)
+    && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE)
+    && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE && z != ON_UNSET_POSITIVE_VALUE);
 }
 
 bool ON_3dVector::IsUnitVector() const
@@ -7509,7 +7598,30 @@ bool ON_PlaneEquation::operator!=( const ON_PlaneEquation& eq ) const
   return (x!=eq.x || y!=eq.y || z!=eq.z || d!=eq.d)?true:false;
 }
 
-
+// Find the maximum absolute value of a array of (possibly homogeneous) points 
+double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count)
+{
+  double norm = 0;
+  if (is_rat)
+  {
+    for (int i = 0; i < count; i++)
+    {
+      double w = fabs(data[i*(dim+1) + dim ]);
+      double norm_i = 0;
+      for (int j = 0; j < dim; j++)
+        norm_i = ON_Max(norm_i, fabs(data[i*(dim+1) + j]));
+      if (norm_i > norm * w)
+        norm = norm_i / w;
+    }
+  }
+  else
+  {
+    int n = dim * count;
+    for (int i = 0; i < n; i++)
+      norm = ON_Max(norm, fabs(data[i]));
+  }
+  return norm;
+}
 
 int ON_Get3dConvexHull( 
           const ON_SimpleArray<ON_3dPoint>& points, 

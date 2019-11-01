@@ -28,7 +28,7 @@ class ON_CLASS ON_Dimension : public ON_Annotation
 public:
 #pragma region RH_C_SHARED_ENUM [ON_Dimension::ForceArrow] [Rhino.Geometry.Dimension.ForceArrow] [nested:int]
   /// <summary>
-  /// Arrowheads forced Inside, or Outside of extension lines, or moved to fit.
+  /// OBSOLETE enum do not use.
   /// </summary>
   enum class ForceArrow : unsigned int
   {
@@ -46,7 +46,7 @@ public:
 
 #pragma region RH_C_SHARED_ENUM [ON_Dimension::ForceText] [Rhino.Geometry.Dimension.ForceText] [nested:int]
   /// <summary>
-  /// Text forced Inside, Right or Left of extension lines, or moved to fit (Auto).
+  /// OBSOLETE enum do not use.
   /// </summary>
   enum class ForceText : unsigned int
   {
@@ -58,9 +58,9 @@ public:
     Right = 2,
     /// <summary> </summary>
     Left = 3,
-    /// <summary> If override isn't specified and text doesn't fit, move it right </summary>
+    /// <summary> </summary>
     HintRight = 4,
-    /// <summary> If override isn't specified and text doesn't fit, move it left </summary>
+    /// <summary> </summary>
     HintLeft = 5,
   };
 #pragma endregion
@@ -170,12 +170,42 @@ public:
     ON_3dPoint points[13],
     bool ispoint[13]);
 
-
+  // Obsolete
+  ON_DEPRECATED_MSG("ON_Dimension::ArrowFit(const ON_DimStyle* parent_style)")
   ON_Dimension::ForceArrow ForceArrowPosition() const;
+
+  ON_DEPRECATED_MSG("ON_Dimension::SetArrowFit(const ON_DimStyle* parent_style,ON_DimStyle::arrow_fit arrowfit)")
   void SetForceArrowPosition(ForceArrow force);
 
+  ON_DEPRECATED_MSG("ON_Dimension::TextFit(const ON_DimStyle* parent_style)")
   ON_Dimension::ForceText ForceTextPosition() const;
+
+  ON_DEPRECATED_MSG("ON_Dimension::SetTextFit(const ON_DimStyle* parent_style,ON_DimStyle::text_fit textfit)")
   void SetForceTextPosition(ForceText force);
+
+  void SetForceDimLine(
+    const ON_DimStyle* parent_style,
+    bool forcedimline
+  );
+
+  bool ForceDimLine(
+    const ON_DimStyle* parent_style) const;
+
+  void SetTextFit(
+    const ON_DimStyle* parent_style,
+    ON_DimStyle::text_fit textfit);
+
+  ON_DimStyle::text_fit TextFit(
+    const ON_DimStyle* parent_style) const;
+
+  void SetArrowFit(
+    const ON_DimStyle* parent_style,
+    ON_DimStyle::arrow_fit arrowfit);
+
+  ON_DimStyle::arrow_fit ArrowFit(
+    const ON_DimStyle* parent_style) const;
+
+
 
 protected:
   ON_wString            m_user_text = L"<>";            // If user overridden, or "<>" to use default
@@ -188,8 +218,8 @@ protected:
   mutable bool          m_flip_arrow_1 = false;
   mutable bool          m_flip_arrow_2 = false;
   mutable bool          m_text_outside = false;
-  ForceArrow            m_force_arrows = ForceArrow::Auto;
-  ForceText             m_force_textpos = ForceText::Auto;
+  unsigned int          m_reserved98 = 0;
+  unsigned int          m_reserved99 = 0;
 
 
   // UUID of detail if dimension is in page space measuring model space geometry
@@ -415,6 +445,7 @@ public:
     bool arrowflipped,
     bool from_the_back,
     ON_Xform& arrow_xform_out) const;
+
 
 protected:
   ON_2dPoint m_def_pt_2 = ON_2dPoint::UnsetPoint;

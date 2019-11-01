@@ -211,6 +211,11 @@ public:
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
   bool QuickSort( int (*)(const T*,const T*) );
 
+  //////////
+  // Sorts the array using the quick sort algorithma and then removes duplicates.
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
+  bool QuickSortAndRemoveDuplicates( int (*)(const T*,const T*) );
+
   /*
   Description:
     Sort() fills in the index[] array so that 

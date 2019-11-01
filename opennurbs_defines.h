@@ -135,8 +135,10 @@
 #if defined(PI)
 #define ON_PI           PI
 #else
-#define ON_PI           3.141592653589793238462643
+#define ON_PI 3.141592653589793238462643
 #endif
+
+#define ON_2PI (2.0*ON_PI)
 
 #define ON_DEGREES_TO_RADIANS (ON_PI/180.0)
 #define ON_RADIANS_TO_DEGREES (180.0/ON_PI)
@@ -324,6 +326,13 @@ double ON_DoubleFromFloat(
   float x
 );
 
+/*
+Returns:
+  A nonzero runtime unsigned that is incremented every call to ON_NextContentSerialNumber().
+  This value is useful as a "content serial number" that can be used to detect
+  when the content of an object has changed.
+*/
+ON__UINT64 ON_NextContentSerialNumber();
 
 ON_END_EXTERNC
 
@@ -399,10 +408,13 @@ bool ON_IsNullPtr(const ON__INT_PTR ptr);
 #define ON_RELATIVE_CURVATURE_TOLERANCE 0.05
 
 /* default value for angle tolerances = 1 degree */
-#define ON_DEFAULT_ANGLE_TOLERANCE (ON_PI/180.0)
+#define ON_DEFAULT_ANGLE_TOLERANCE_RADIANS (ON_PI/180.0)
+#define ON_DEFAULT_ANGLE_TOLERANCE_DEGREES (ON_DEFAULT_ANGLE_TOLERANCE_RADIANS * 180.0/ON_PI)
+#define ON_DEFAULT_ANGLE_TOLERANCE ON_DEFAULT_ANGLE_TOLERANCE_RADIANS
 #define ON_DEFAULT_ANGLE_TOLERANCE_COSINE 0.99984769515639123915701155881391
 #define ON_MINIMUM_ANGLE_TOLERANCE (ON_DEFAULT_ANGLE_TOLERANCE/10.0)
 
+#define ON_DEFAULT_DISTANCE_TOLERANCE_MM 0.01
 
 /*
 */
@@ -553,6 +565,9 @@ public:
   ON_4dex(const ON_4dex&) = default;
   ON_4dex& operator=(const ON_4dex&) = default;
 
+
+	int operator[](int i) const;
+	int& operator[](int i);
 public:
   // do not initialize i, j, k, l for performance reasons
   int i;
@@ -672,6 +687,24 @@ enum class ON_ChainDirection : unsigned char
   ///</summary>
   Both = 3
 };
+
+///<summary>
+///Style of color gradient
+///</summary>
+enum class ON_GradientType : int
+{
+  ///<summary>No gradient</summary>
+  None = 0,
+  ///<summary>Linear (or axial) gradient between two points</summary>
+  Linear = 1,
+  ///<summary>Radial (or spherical) gradient using a center point and a radius</summary>
+  Radial = 2,
+  ///<summary>Disabled linear gradient. Useful for keeping gradient information around, but not having it displayed</summary>
+  LinearDisabled = 3,
+  ///<summary>Disabled radial gradient. Useful for keeping gradient information around, but not having it displayed</summary>
+  RadialDisabled = 4
+};
+
 
 // OpenNurbs enums
 class ON_CLASS ON
@@ -1972,14 +2005,22 @@ public:
     morph_control_object =    0x20000, // some type of ON_MorphControl
     subd_object          =    0x40000, // some type of ON_SubD, ON_SubDRef, ON_SubDComponentRef, ON_SubD....
     loop_object          =    0x80000, // some type of ON_BrepLoop
-    brepvertex_filter    =   0x100000, // selection filter value - not a real object type (ON_BrepEdge, ON_SubDVertex)
+    brepvertex_filter    =   0x100000, // selection filter value - not a real object type (ON_BrepVertex)
     polysrf_filter       =   0x200000, // selection filter value - not a real object type
-    edge_filter          =   0x400000, // selection filter value - not a real object type (ON_BrepEdge, ON_SubDEdge)
+    edge_filter          =   0x400000, // selection filter value - not a real object type (ON_BrepEdge with associated ON_BrepTrim)
     polyedge_filter      =   0x800000, // selection filter value - not a real object type
+
+
+    // NOTE WELL: 
+    //  The "mesh" vertex/edge/face filters and "meshcomponent_reference"
+    //  are used to identify ON_Mesh and ON_SubD components. 
+    //  By the time subd_object was added, there were not enough unused bits
+    //  for separate subd component filters.
     meshvertex_filter    = 0x01000000, // selection filter value - not a real object type (ON_MeshTopologyVertex, ON_SubDVertex)
     meshedge_filter      = 0x02000000, // selection filter value - not a real object type (ON_MeshTopologyEdge, ON_SubDEdge)
     meshface_filter      = 0x04000000, // selection filter for ON_Mesh triangle, quad, ngon, or ON_SubDFace - not a real object type
-    meshcomponent_reference = 0x07000000, // an ON_MeshComponentRef or ON_SubDComponentRef
+    meshcomponent_reference = 0x07000000, // an ON_MeshComponentRef or ON_SubDComponentRef)
+    
     cage_object          = 0x08000000, // some type of ON_NurbsCage
     phantom_object       = 0x10000000,
     clipplane_object     = 0x20000000,
@@ -2237,6 +2278,13 @@ public:
     /// Attach point at right text horizontal advance (not glyph bounding box)
     /// </summary>
     Right = 2,
+    /// <summary>
+    /// Used for Leaders only
+    /// Attach point adjusts to Right or Left depending on leader tail direction in view
+    /// If tail direction is to the Left, alignment is Right
+    /// If tail direction is to the Right, alignment is Left
+    /// </summary>
+    Auto = 3,
   };
 #pragma endregion
 
@@ -2353,6 +2401,8 @@ public:
     subd_edge = 72,   // m_index = ON_SubDEdge.m_id
     subd_face = 73,   // m_index = ON_SubDFace.m_id
 
+    hatch_loop = 81,  // m_index = ON_Hatch::m_loops[] array index
+
     dim_linear_point       = 100,
     dim_radial_point       = 101,
     dim_angular_point      = 102,
@@ -2376,6 +2426,13 @@ public:
   */
   static 
   ON_COMPONENT_INDEX::TYPE Type(int i);
+
+  /*
+  Description:
+    Compare on m_type (as an int).
+  */
+  static
+  int CompareType( const ON_COMPONENT_INDEX* lhs, const ON_COMPONENT_INDEX* rhs);
 
   /*
   Description:
@@ -2427,7 +2484,7 @@ public:
   /*
   Returns:
     True if m_type is set to a TYPE enum value between
-    brep_vertex and polycurve_segment.
+    brep_vertex and dim_leader_point.
   */
   bool IsSet() const;
 
@@ -2524,6 +2581,12 @@ public:
   */
   bool IsAnnotationComponentIndex() const;
 
+  /*
+  Returns:
+  True if m_type = hatch_loop and m_index >= 0.
+  */
+  bool IsHatchLoopComponentIndex() const;
+
   void Dump( 
     class ON_TextLog& text_log 
     )const;
@@ -2564,6 +2627,8 @@ public:
     extrusion_wall_surface    Use ON_Extrusion::WallSurface() to get 3d wall surface
     extrusion_cap_surface      0 = bottom cap, 1 = top cap
     extrusion_path            -1 = entire path, 0 = start of path, 1 = end of path
+
+    hatch_loop         ON_Hatch::m_loops[] array index  
 
     dim_linear_point   linear dimension point index
     dim_radial_point   radial dimension point index

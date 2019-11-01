@@ -10,8 +10,6 @@
 
 #include "opennurbs_subd_data.h"
 
-#if defined(OPENNURBS_SUBD_WIP)
-
 ON_SubD* ON_SubDSectorType::SectorRingSubD(
   double radius,
   double sector_angle_radians,
@@ -39,14 +37,8 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
   if (F != N && F + 1 != N)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  const ON_SubD::SubDType subdivision_type = SubDType();
   const ON_SubD::VertexTag vertex_tag = VertexTag();
-
-  const unsigned f_edge_count = ON_SubD::FacetEdgeCount(subdivision_type);
-  if (3 != f_edge_count && 4 != f_edge_count)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  const unsigned int ring_ei_delta = f_edge_count - 2;
+  const unsigned int ring_ei_delta = 2;
 
   if (nullptr == subd)
     subd = new ON_SubD;
@@ -96,12 +88,12 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
     break;
   }
 
-  unsigned int sector_angle_index = ON_SubDSectorType::AngleIndexFromAngleRadians(sector_angle_radians);
-  if (sector_angle_index <= ON_SubDSectorType::MaximumAngleIndex
-    && fabs(ON_SubDSectorType::AngleRadiansFromAngleIndex(sector_angle_index) - sector_angle_radians) <= 1.0e-6
+  unsigned int sector_angle_index = ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(sector_angle_radians);
+  if (sector_angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex
+    && fabs(ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(sector_angle_index) - sector_angle_radians) <= 1.0e-6
     )
   {
-    sector_angle_radians = ON_SubDSectorType::AngleRadiansFromAngleIndex(sector_angle_index);
+    sector_angle_radians = ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(sector_angle_index);
   }
   else
   {
@@ -138,9 +130,9 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
       }
       else
       {
-        ON_SubDMatrix::EvaluateCosAndSin(2*sector_angle_index*vi, (R-1)*ON_SubDSectorType::MaximumAngleIndex,&cos_a,&sin_a);
+        ON_SubDMatrix::EvaluateCosAndSin(2*sector_angle_index*vi, (R-1)*ON_SubDSectorType::MaximumCornerAngleIndex,&cos_a,&sin_a);
       }
-      const double r = (3 == f_edge_count) || (1 == (vi%2)) ? radius : (2.0*radius);
+      const double r = (1 == (vi%2)) ? radius : (2.0*radius);
       vertexP.x = r*cos_a;
       vertexP.y = r*sin_a;
     }
@@ -174,31 +166,23 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
   ON_SubDEdgePtr f_edgeptr[4] = {};
 
   f_vertex[0] = V[0];
-  f_vertex[f_edge_count - 1] = const_cast<ON_SubDVertex*>(E[0]->m_vertex[1]);
-  f_edge[f_edge_count - 1] = E[0];
+  f_vertex[3] = const_cast<ON_SubDVertex*>(E[0]->m_vertex[1]);
+  f_edge[3] = E[0];
   for (unsigned int vfi = 0; vfi < F; vfi++)
   {
-    f_edge[0] = f_edge[f_edge_count - 1];
-    f_edge[f_edge_count-1] = E[(vfi + 1) % N];
+    f_edge[0] = f_edge[3];
+    f_edge[3] = E[(vfi + 1) % N];
     f_vertex[1] = const_cast<ON_SubDVertex*>(f_edge[0]->m_vertex[1]);
-    f_vertex[f_edge_count - 1] = const_cast<ON_SubDVertex*>(f_edge[f_edge_count - 1]->m_vertex[1]);
+    f_vertex[3] = const_cast<ON_SubDVertex*>(f_edge[3]->m_vertex[1]);
 
     f_edgeptr[0] = ON_SubDEdgePtr::Create(f_edge[0], 0);
-    f_edgeptr[f_edge_count - 1] = ON_SubDEdgePtr::Create(f_edge[f_edge_count - 1], 1);
-    if (4 == f_edge_count)
-    {
-      f_vertex[2] = V[2 + 2 * vfi];
-      f_edge[1] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[1], ON_SubDSectorType::IgnoredSectorWeight, f_vertex[2], ON_SubDSectorType::IgnoredSectorWeight);
-      f_edge[2] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[2], ON_SubDSectorType::IgnoredSectorWeight, f_vertex[3], ON_SubDSectorType::IgnoredSectorWeight);
-      f_edgeptr[1] = ON_SubDEdgePtr::Create(f_edge[1], 0);
-      f_edgeptr[2] = ON_SubDEdgePtr::Create(f_edge[2], 0);
-    }
-    else
-    {
-      f_edge[1] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[1], ON_SubDSectorType::IgnoredSectorWeight, f_vertex[2], ON_SubDSectorType::IgnoredSectorWeight);
-      f_edgeptr[1] = ON_SubDEdgePtr::Create(f_edge[1], 0);
-    }
-    subd->AddFace(f_edge_count, f_edgeptr);
+    f_edgeptr[3] = ON_SubDEdgePtr::Create(f_edge[3], 1);
+    f_vertex[2] = V[2 + 2 * vfi];
+    f_edge[1] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[1], ON_SubDSectorType::IgnoredSectorWeight, f_vertex[2], ON_SubDSectorType::IgnoredSectorWeight);
+    f_edge[2] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[2], ON_SubDSectorType::IgnoredSectorWeight, f_vertex[3], ON_SubDSectorType::IgnoredSectorWeight);
+    f_edgeptr[1] = ON_SubDEdgePtr::Create(f_edge[1], 0);
+    f_edgeptr[2] = ON_SubDEdgePtr::Create(f_edge[2], 0);
+    subd->AddFace(f_edgeptr,4);
   }
 
   return subd;
@@ -248,38 +232,6 @@ static bool TestPoint(
   return true;
 }
 
-//double ON_QNaN()
-//{
-//  const char* sIgnored = "";
-//  return nan(sIgnored);
-//}
-//
-//bool ON_IsNaN(double x)
-//{
-//  return (0 != isnan(x));
-//}
-//
-//void ON_SetToQNaN(double* x)
-//{
-//  if (nullptr != x)
-//    *x = ON_QNaN();
-//}
-//
-//bool ON_IsNaN(ON_3dPoint& point)
-//{
-//  return (ON_IsNaN(point.x) || ON_IsNaN(point.y) || ON_IsNaN(point.z));
-//}
-//
-//void ON_SetToQNaN(ON_3dPoint* point)
-//{
-//  if (nullptr != point)
-//  {
-//    point->x = ON_QNaN();
-//    point->y = ON_QNaN();
-//    point->z = ON_QNaN();
-//  }
-//}
-
 static bool ClearCachedPoints(
   unsigned int component_ring_count,
   const ON_SubDComponentPtr* component_ring
@@ -290,21 +242,20 @@ static bool ClearCachedPoints(
   ON_SubDVertex* vertex = component_ring[0].Vertex();
   if ( nullptr == vertex)
     return ON_SUBD_RETURN_ERROR(false);
-  vertex->ClearSavedSubdivisionPoint();
-  vertex->ClearSavedLimitPoints();
+  vertex->ClearSavedSubdivisionPoints();
   for (unsigned int i = 1; i < component_ring_count; i++)
   {
     ON_SubDEdge* edge = component_ring[i].Edge();
     if ( nullptr == edge)
       return ON_SUBD_RETURN_ERROR(false);
-    edge->ClearSavedSubdivisionPoint();
+    edge->ClearSavedSubdivisionPoints();
     i++;
     if (i >= component_ring_count)
       break;
     ON_SubDFace* face = component_ring[i].Face();
     if ( nullptr == face)
       return ON_SUBD_RETURN_ERROR(false);
-    face->ClearSavedSubdivisionPoint();
+    face->ClearSavedSubdivisionPoints();
   }
   return true;
 }
@@ -316,9 +267,6 @@ double ON_SubDMatrix::TestEvaluation() const
 
   if (!m_sector_type.IsValid())
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
-
-  const ON_SubD::SubDType subd_type = m_sector_type.SubDType();
-  //ON_SubD::VertexTag center_vertex_tag = m_sector_type.VertexTag();
 
   const unsigned int F = m_sector_type.FaceCount();
   if (0 == F)
@@ -399,7 +347,7 @@ double ON_SubDMatrix::TestEvaluation() const
 
       const_cast<ON_SubDVertex*>(vertex_ring[vi])->m_P[Pi] = 1.0;
 
-      if ( R != ON_SubD::GetSectorPointRing(subd_type,false,component_ring_count,component_ring,_ringP0))
+      if ( R != ON_SubD::GetSectorPointRing(false,component_ring_count,component_ring,_ringP0))
         return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
       const ON_3dPoint* ringP0 = _ringP0.Array();
 
@@ -416,7 +364,7 @@ double ON_SubDMatrix::TestEvaluation() const
         return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
       }
 
-      if ( R != ON_SubD::GetSectorSubdivisionPointRing(subd_type,component_ring_count,component_ring,_ringP1))
+      if ( R != ON_SubD::GetSectorSubdivisionPointRing(component_ring, component_ring_count,_ringP1))
         return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
       const ON_3dPoint* ringP1 = _ringP1.Array();
 
@@ -482,12 +430,12 @@ double ON_SubDMatrix::TestEvaluation() const
 }
 
 static bool GetSectorLimitPointHelper(
-  ON_SubD::SubDType subdivision_type,
   const ON_SubDSectorIterator& sit,
-  ON_SubDSectorLimitPoint& limit_point
+  bool bUndefinedNormalIsPossible,
+  ON_SubDSectorSurfacePoint& limit_point
   )
 {
-  const ON_SubDSectorType sector_type = ON_SubDSectorType::Create(subdivision_type,sit);
+  const ON_SubDSectorType sector_type = ON_SubDSectorType::Create(sit);
   if (false == sector_type.IsValid())
     return  ON_SUBD_RETURN_ERROR(false);
 
@@ -508,7 +456,8 @@ static bool GetSectorLimitPointHelper(
     point_ring_capacity = R;
   }
 
-  if ( R != ON_SubD::GetSectorPointRing(subdivision_type,true,sit,point_ring_capacity,point_ring_stride,point_ring) )
+  const unsigned int point_ring_count = ON_SubD::GetSectorPointRing( true, sit, point_ring, point_ring_capacity, point_ring_stride);
+  if ( R != point_ring_count )
      return  ON_SUBD_RETURN_ERROR(false);
 
   bool rc = false;
@@ -518,7 +467,7 @@ static bool GetSectorLimitPointHelper(
     if (R != SM.m_R || nullptr == SM.m_LP)
       break;
 
-    if (false == SM.EvaluateLimitPoint(R, point_ring_stride, point_ring, limit_point))
+    if (false == SM.EvaluateSurfacePoint(point_ring, R, point_ring_stride, bUndefinedNormalIsPossible, limit_point))
       break;
 
     rc = true;
@@ -533,8 +482,8 @@ static bool GetSectorLimitPointHelper(
     : ON_SUBD_RETURN_ERROR(false);
 }
 
-static ON_SubDSectorLimitPoint* LimitPointPool(
-  const ON_SubDSectorLimitPoint* pReturnToPool // If nullptr, then one is allocated
+static ON_SubDSectorSurfacePoint* LimitPointPool(
+  const ON_SubDSectorSurfacePoint* pReturnToPool // If nullptr, then one is allocated
   )
 {
   static ON_FixedSizePool limit_point_fsp;
@@ -542,26 +491,37 @@ static ON_SubDSectorLimitPoint* LimitPointPool(
   {
     if (nullptr != pReturnToPool)
       return ON_SUBD_RETURN_ERROR(nullptr);
-    limit_point_fsp.Create(sizeof(ON_SubDSectorLimitPoint), 0, 0);
+    static ON_SleepLock initialize_lock;
+    initialize_lock.GetLock();
+    if (0 == limit_point_fsp.SizeofElement())
+      limit_point_fsp.Create(sizeof(ON_SubDSectorSurfacePoint), 0, 0);
+    initialize_lock.ReturnLock();
   }
 
   if (nullptr != pReturnToPool)
   {
-    limit_point_fsp.ReturnElement((void*)pReturnToPool);
+    limit_point_fsp.ThreadSafeReturnElement((void*)pReturnToPool);
     return nullptr;
   }
 
-  ON_SubDSectorLimitPoint* lp = (ON_SubDSectorLimitPoint*)limit_point_fsp.AllocateDirtyElement();  
+  ON_SubDSectorSurfacePoint* lp = (ON_SubDSectorSurfacePoint*)limit_point_fsp.ThreadSafeAllocateDirtyElement();  
   if (nullptr == lp)
     return ON_SUBD_RETURN_ERROR(nullptr);
   return lp;
 }
 
-bool ON_SubDVertex::GetLimitPoint(
-  ON_SubD::SubDType subd_type,
+bool ON_SubDVertex::GetSurfacePoint(
   const ON_SubDFace* sector_face,
-  bool bUseSavedLimitPoint,
-  ON_SubDSectorLimitPoint& limit_point
+  ON_SubDSectorSurfacePoint& limit_point
+) const
+{
+  return GetSurfacePoint( sector_face, false, limit_point);
+}
+
+bool ON_SubDVertex::GetSurfacePoint(
+  const ON_SubDFace* sector_face,
+  bool bUndefinedNormalIsPossible,
+  ON_SubDSectorSurfacePoint& limit_point
   ) const
 {
   bool rc = false;
@@ -581,14 +541,14 @@ bool ON_SubDVertex::GetLimitPoint(
     if (false == rc)
     {
       // sector_face is not referenced by this vertex
-      limit_point = ON_SubDSectorLimitPoint::Unset;
+      limit_point = ON_SubDSectorSurfacePoint::Unset;
       return ON_SUBD_RETURN_ERROR(false);
     }
   }
   
-  if (bUseSavedLimitPoint && subd_type == SavedLimitPointType() )
+  if (this->SurfacePointIsSet() )
   {
-    if (nullptr == m_limit_point.m_sector_face)
+    if (nullptr == m_limit_point.m_sector_face && nullptr == m_limit_point.m_next_sector_limit_point)
     {
       // single sector
       limit_point = m_limit_point;
@@ -599,13 +559,13 @@ bool ON_SubDVertex::GetLimitPoint(
     if (nullptr == sector_face)
     {
       // this vertex has multiple sectors
-      limit_point = ON_SubDSectorLimitPoint::Unset;
+      limit_point = ON_SubDSectorSurfacePoint::Unset;
       return ON_SUBD_RETURN_ERROR(false);
     }
 
     if (nullptr == sit.Initialize(sector_face, 0, this))
     {
-      limit_point = ON_SubDSectorLimitPoint::Unset;
+      limit_point = ON_SubDSectorSurfacePoint::Unset;
       return ON_SUBD_RETURN_ERROR(false);
     }
 
@@ -614,11 +574,11 @@ bool ON_SubDVertex::GetLimitPoint(
     if (nullptr == limit_point_sector_face)
     {
       // no creases 
-      limit_point = ON_SubDSectorLimitPoint::Unset;
+      limit_point = ON_SubDSectorSurfacePoint::Unset;
       return ON_SUBD_RETURN_ERROR(false);
     }
     
-    for (const ON_SubDSectorLimitPoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
+    for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
     {
       if (limit_point_sector_face == lp->m_sector_face)
       {
@@ -634,56 +594,109 @@ bool ON_SubDVertex::GetLimitPoint(
 
   if (nullptr == (nullptr == sector_face ? sit.Initialize(this) : sit.Initialize(sector_face, 0, this)))
   {
-    limit_point = ON_SubDSectorLimitPoint::Unset;
+    limit_point = ON_SubDSectorSurfacePoint::Unset;
     return ON_SUBD_RETURN_ERROR(false);
   }
 
   if (nullptr == sit.Initialize(sector_face,0,this))
   {
-    limit_point = ON_SubDSectorLimitPoint::Unset;
+    limit_point = ON_SubDSectorSurfacePoint::Unset;
     return ON_SUBD_RETURN_ERROR(false);
   }
 
   limit_point_sector_face = sit.IncrementToCrease(-1);
 
-  rc = GetSectorLimitPointHelper(subd_type, sit, limit_point);
+  rc = GetSectorLimitPointHelper( sit, bUndefinedNormalIsPossible, limit_point);
 
   if (false == rc)
   {
-    limit_point = ON_SubDSectorLimitPoint::Unset;
+    limit_point = ON_SubDSectorSurfacePoint::Unset;
     return ON_SUBD_RETURN_ERROR(false);
   }
-
-  limit_point.m_sector_face = limit_point_sector_face;
+    
+  limit_point.m_sector_face = this->IsSingleSectorVertex() ? nullptr : limit_point_sector_face;
   
-  if (bUseSavedLimitPoint)
-  {
-    ON_SubDSectorLimitPoint saved_limit_point = limit_point;
-    saved_limit_point.m_next_sector_limit_point = (ON_SubDSectorLimitPoint*)1; // causes unnecessary test to be skipped
-    SetSavedLimitPoint(subd_type, saved_limit_point);
-  }
+  ON_SubDSectorSurfacePoint saved_limit_point = limit_point;
+  saved_limit_point.m_next_sector_limit_point = (ON_SubDSectorSurfacePoint*)1; // causes unnecessary test to be skipped
+  SetSavedSurfacePoint( bUndefinedNormalIsPossible, saved_limit_point);
 
   return rc;
 }
 
-ON_SubD::SubDType ON_SubDVertex::GetSavedLimitPointLocation(
+bool ON_SubDVertex::GetSavedSurfacePoint(
   double limit_point[3]
 ) const
 {
-  const ON_SubD::SubDType subd_type = SavedLimitPointType();
-  if (ON_SubD::SubDType::Unset != subd_type)
+  const bool rc = SurfacePointIsSet();
+  if (rc)
   {
     limit_point[0] = m_limit_point.m_limitP[0];
     limit_point[1] = m_limit_point.m_limitP[1];
     limit_point[2] = m_limit_point.m_limitP[2];
   }
-  return subd_type;
+  return rc;
+}
+
+const ON_3dPoint ON_SubDVertex::SurfacePoint() const
+{
+  ON_3dPoint limit_point(ON_3dPoint::NanPoint);
+  return GetSurfacePoint(&limit_point.x) ? limit_point : ON_3dPoint::NanPoint;
+
+}
+
+const ON_3dPoint ON_SubDVertex::Point(ON_SubDComponentLocation point_location) const
+{
+  switch (point_location)
+  {
+  case ON_SubDComponentLocation::ControlNet:
+    return this->ControlNetPoint();
+    break;
+  case ON_SubDComponentLocation::Surface:
+    return this->SurfacePoint();
+    break;
+  }
+  return ON_3dPoint::NanPoint;
 }
 
 
+
+bool ON_SubDVertex::GetSurfacePoint(
+  double limit_point[3]
+) const
+{
+  if (nullptr == limit_point)
+    return false;
+
+  bool rc = SurfacePointIsSet();
+  if ( rc )
+  {
+    limit_point[0] = m_limit_point.m_limitP[0];
+    limit_point[1] = m_limit_point.m_limitP[1];
+    limit_point[2] = m_limit_point.m_limitP[2];
+  }
+  else
+  {
+    ON_SubDSectorSurfacePoint lp;
+    rc = GetSurfacePoint(Face(0), true, lp);
+    if (rc)
+    {
+      limit_point[0] = lp.m_limitP[0];
+      limit_point[1] = lp.m_limitP[1];
+      limit_point[2] = lp.m_limitP[2];
+    }
+    else
+    {
+      limit_point[0] = ON_DBL_QNAN;
+      limit_point[1] = ON_DBL_QNAN;
+      limit_point[2] = ON_DBL_QNAN;
+    }
+  }
+  return rc;
+}
+
 static bool SetLimitPointSectorCheck(
   const ON_SubDVertex* vertex,
-  ON_SubDSectorLimitPoint& limit_point
+  ON_SubDSectorSurfacePoint& limit_point
   )
 {
   const unsigned int vertex_face_count = vertex->m_face_count;
@@ -749,33 +762,32 @@ static bool SetLimitPointSectorCheck(
   return true;
 }
 
-bool ON_SubDVertex::SetSavedLimitPoint(
-  ON_SubD::SubDType subd_type,
-  ON_SubDSectorLimitPoint limit_point
+bool ON_SubDVertex::SetSavedSurfacePoint(
+  bool bUndefinedNormalIsPossible,
+  ON_SubDSectorSurfacePoint limit_point
   ) const
 {
   const bool bSkipSectorCheck = (1U == (ON__UINT_PTR)limit_point.m_next_sector_limit_point);
   limit_point.m_next_sector_limit_point = nullptr;
 
-  if ( ON_SubD::SubDType::Unset != subd_type 
-    && limit_point.IsSet()
+  if ( limit_point.IsSet(bUndefinedNormalIsPossible)
     && (bSkipSectorCheck || SetLimitPointSectorCheck(this,limit_point))
     )
   {
     if (nullptr == limit_point.m_sector_face 
       || ON_UNSET_VALUE == m_limit_point.m_limitP[0]
-      || 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags)
+      || false == Internal_SurfacePointFlag()
       )
     {
       // vertex has 1 sector or this is the first cached limit point
-      ClearSavedLimitPoints();
+      this->ClearSavedSurfacePoints();
       m_limit_point = limit_point;
       m_limit_point.m_next_sector_limit_point = nullptr;
     }
     else
     {
       // get a point from the pool
-      ON_SubDSectorLimitPoint* lp = LimitPointPool(nullptr);
+      ON_SubDSectorSurfacePoint* lp = LimitPointPool(nullptr);
       if ( nullptr == lp)
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -783,59 +795,314 @@ bool ON_SubDVertex::SetSavedLimitPoint(
       *lp = limit_point;
 
       // first limit point location wins
-      ON_SubDLimitMeshFragment::SealPoints(true, m_limit_point.m_limitP, lp->m_limitP);
+      ON_SubDMeshFragment::SealPoints(true, m_limit_point.m_limitP, lp->m_limitP);
 
       // it is expected that the limit normal and tangents will be substantually different.
       lp->m_next_sector_limit_point = nullptr;
 
       // append the point to the vertex's linked list.
-      const ON_SubDSectorLimitPoint* p = &m_limit_point;
+      const ON_SubDSectorSurfacePoint* p = &m_limit_point;
       while(nullptr != p->m_next_sector_limit_point)
       {
         p = p->m_next_sector_limit_point;
       }
 
-      const_cast<ON_SubDSectorLimitPoint*>(p)->m_next_sector_limit_point = lp;
+      const_cast<ON_SubDSectorSurfacePoint*>(p)->m_next_sector_limit_point = lp;
     }
 
-    if ( subd_type != ON_SubD::SubDTypeFromUnsigned(m_saved_points_flags & ON_SUBD_CACHE_TYPE_MASK) )
-      m_saved_points_flags = 0U;
-
-    m_saved_points_flags |= (ON_SUBD_CACHE_LIMIT_FLAG_MASK | ((unsigned char)subd_type));
+    Internal_SetSavedSurfacePointFlag(true);
 
     return true;
   }
 
-  ClearSavedLimitPoints();
-
-  if (ON_SubD::SubDType::Unset != subd_type)
-    return ON_SUBD_RETURN_ERROR(false);
-
-  return true;
+  return ON_SUBD_RETURN_ERROR(false);
 }
 
-void ON_SubDVertex::ClearSavedLimitPoints() const
+
+void ON_SubDVertex::ClearSavedSurfacePoints() const
 {
-  ON_SUBD_CACHE_CLEAR_LIMIT_FLAG(m_saved_points_flags);
+  // clear vertex specific cache
+  Internal_ClearSurfacePointFlag();
   if (ON_UNSET_VALUE != m_limit_point.m_limitP[0] && nullptr != m_limit_point.m_sector_face)
   {
     // return multiple sector limit points to pool
-    const ON_SubDSectorLimitPoint* next_p = m_limit_point.m_next_sector_limit_point;
-    for (const ON_SubDSectorLimitPoint* p = next_p; nullptr != p; p = next_p)
+    const ON_SubDSectorSurfacePoint* next_p = m_limit_point.m_next_sector_limit_point;
+    for (const ON_SubDSectorSurfacePoint* p = next_p; nullptr != p; p = next_p)
     {
       next_p = p->m_next_sector_limit_point;
       LimitPointPool(p);
     }
   }
-  m_limit_point = ON_SubDSectorLimitPoint::Unset;
+  m_limit_point = ON_SubDSectorSurfacePoint::Unset;
 }
 
-ON_SubD::SubDType ON_SubDVertex::SavedLimitPointType() const
+void ON_SubDVertex::ClearSavedSubdivisionPoints() const
 {
-  return 
-    (0 != (ON_SUBD_CACHE_LIMIT_FLAG_MASK & m_saved_points_flags))
-    ? ((ON_SubD::SubDType)ON_SUBD_CACHE_TYPE(m_saved_points_flags))
-    : ON_SubD::SubDType::Unset;
+  // clear vertex specific limit point cache
+  ClearSavedSurfacePoints();
+  // clear general subdivision point cache
+  ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
 }
 
-#endif
+bool ON_SubDVertex::SurfacePointIsSet() const
+{
+  const bool rc = Internal_SurfacePointFlag();
+  if (false == rc)
+  {
+    this->ClearSavedSurfacePoints();
+  }
+  return rc;
+}
+
+
+void ON_SubDEdge::ClearSavedSubdivisionPoints() const
+{
+  // considering using a global pool for the limit curve cache - not yet.
+  ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
+}
+
+const ON_SubDMeshFragment * ON_SubDFace::MeshFragments() const
+{
+  // NOTE:
+  // Clearing the ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit bit
+  // on m_saved_points_flags is used to mark mesh fragmants as dirty. 
+  // They need to be regerated before being used.
+  return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_points_flags)) ? m_mesh_fragments : nullptr;
+}
+
+void ON_SubDFace::ClearSavedSubdivisionPoints() const
+{
+  // considering using a global pool for the limit fragment cache - not yet.
+  ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
+}
+
+const ON_3dPoint ON_SubDFace::ControlNetCenterPoint() const
+{
+  if (m_edge_count < 3)
+    return ON_3dPoint::NanPoint;
+  ON_3dPoint center(0.0, 0.0, 0.0);
+  const ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi, ++eptr)
+  {
+    if (4 == fvi)
+    {
+      eptr = m_edgex;
+      if ( nullptr == eptr)
+        return ON_3dPoint::NanPoint;
+    }
+    const ON_SubDVertex* v = eptr->RelativeVertex(0);
+    if ( nullptr == v)
+      return ON_3dPoint::NanPoint;
+    center += v->ControlNetPoint();
+  }
+  const double c = (double)m_edge_count;
+  center.x /= c;
+  center.y /= c;
+  center.z /= c;
+  return center;
+}
+
+const ON_3dVector ON_SubDFace::ControlNetCenterNormal() const
+{
+  if (4 == m_edge_count)
+  {
+    // faster code for most common case
+    const ON_SubDVertex* v[4] = { m_edge4[0].RelativeVertex(0),m_edge4[1].RelativeVertex(0),m_edge4[2].RelativeVertex(0),m_edge4[3].RelativeVertex(0)};
+    if (nullptr == v[0] || nullptr == v[1] || nullptr == v[2] || nullptr == v[3])
+      return ON_3dVector::NanVector;
+    const ON_3dVector A = ON_3dPoint(v[2]->m_P) - ON_3dPoint(v[0]->m_P);
+    const ON_3dVector B = ON_3dPoint(v[3]->m_P) - ON_3dPoint(v[1]->m_P);
+    const ON_3dVector N = ON_CrossProduct(A, B);
+    return N.UnitVector();
+  }
+
+  if (3 == m_edge_count)
+  {
+    // faster code for 2nd most common case
+    const ON_SubDVertex* v[3] = { m_edge4[0].RelativeVertex(0),m_edge4[1].RelativeVertex(0),m_edge4[2].RelativeVertex(0)};
+    if (nullptr == v[0] || nullptr == v[1] || nullptr == v[2])
+      return ON_3dVector::NanVector;
+    const ON_3dPoint C0(v[0]->m_P);
+    const ON_3dVector A = ON_3dPoint(v[1]->m_P) - C0;
+    const ON_3dVector B = ON_3dPoint(v[2]->m_P) - C0;
+    const ON_3dVector N = ON_CrossProduct(A, B);
+    return N.UnitVector();
+  }
+
+  // less common cases
+  const ON_3dPoint C = ControlNetCenterPoint();
+  if (false == (C.x == C.x))
+    return ON_3dVector::NanVector;
+
+  // If the face is planar (convex or non-convex), this will return
+  // the plane's normal with the correct orientation.
+  // Otherwise this will return a good choice of normal for
+  // a non-planar face.
+  ON_3dVector A;
+  ON_3dVector B = ControlNetPoint(m_edge_count - 1) - C;
+  ON_3dVector N = ON_3dVector::ZeroVector;
+  for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi)
+  {
+    A = B;
+    B = ControlNetPoint(fvi) - C;
+    N += ON_CrossProduct(A, B); // do not untize this and then the code works for non-convex faces too.
+  }
+
+  return N.UnitVector();
+}
+
+bool ON_SubDFace::IsConvex() const
+{
+  const ON_3dVector N = ControlNetCenterNormal();
+  if (N.IsNotZero())
+  {
+    if (3 == m_edge_count)
+      return true;
+    ON_3dPoint P = ControlNetPoint(m_edge_count - 2);
+    ON_3dPoint Q = ControlNetPoint(m_edge_count - 1);
+    ON_3dVector A;
+    ON_3dVector B = Q - P;
+    for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi)
+    {
+      P = Q;
+      Q = ControlNetPoint(fvi);
+      A = B;
+      B = Q - P;
+      const ON_3dVector AxB = ON_CrossProduct(A, B);
+      const double d = AxB*N;
+      if ( false == (d > 0.0) && false == AxB.IsZero() )
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ON_SubDFace::IsNotConvex() const
+{
+  const ON_3dVector N = ControlNetCenterNormal();
+  if (N.IsNotZero())
+  {
+    if (3 == m_edge_count)
+      return false;
+    bool bIsNotConvex = false;
+    ON_3dPoint P = ControlNetPoint(m_edge_count - 2);
+    ON_3dPoint Q = ControlNetPoint(m_edge_count - 1);
+    ON_3dVector A;
+    ON_3dVector B = Q - P;
+    for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi)
+    {
+      P = Q;
+      Q = ControlNetPoint(fvi);
+      A = B;
+      B = Q - P;
+      const ON_3dVector AxB = ON_CrossProduct(A, B);
+      const double d = AxB * N;
+      if (false == (d == d))
+        return false; // nan
+      if (false == (d > 0.0) && false == AxB.IsZero())
+        bIsNotConvex = true;
+    }
+    return bIsNotConvex;
+  }
+  return false;
+}
+
+bool ON_SubDFace::IsPlanar(double planar_tolerance) const
+{
+  const ON_3dPoint C = ControlNetCenterPoint();
+  const ON_3dVector N = ControlNetCenterNormal();
+  if (C.IsValid() && N.IsNotZero())
+  {
+    if (3 == m_edge_count)
+      return true;
+    if (false == (planar_tolerance >= 0.0))
+      planar_tolerance = ON_ZERO_TOLERANCE;
+    const ON_SubDEdgePtr* eptr = m_edge4;
+    double d0 = 0.0;
+    double d1 = 0.0;
+    for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi, ++eptr)
+    {
+      if (4 == fvi)
+      {
+        eptr = m_edgex;
+        if (nullptr == eptr)
+          return false;
+      }
+      const ON_SubDVertex* v = eptr->RelativeVertex(0);
+      if (nullptr == v)
+        return false;
+      const double d = (ON_3dPoint(v->m_P) - C)*N;
+      if (false == (d == d))
+        return false; // nan
+      if (d < d0)
+        d0 = d;
+      else if (d > d1)
+        d1 = d;
+      else
+        continue;
+      if ((d1 - d0) > planar_tolerance)
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+
+bool ON_SubDFace::IsNotPlanar(double planar_tolerance) const
+{
+  const ON_3dPoint C = ControlNetCenterPoint();
+  const ON_3dVector N = ControlNetCenterNormal();
+  if (C.IsValid() && N.IsNotZero())
+  {
+    if (3 == m_edge_count)
+      return false;
+    if (false == (planar_tolerance >= 0.0))
+      planar_tolerance = ON_ZERO_TOLERANCE;
+    const ON_SubDEdgePtr* eptr = m_edge4;
+    double d0 = 0.0;
+    double d1 = 0.0;
+    bool bNotPlanar = false;
+    for (unsigned short fvi = 0; fvi < m_edge_count; ++fvi, ++eptr)
+    {
+      if (4 == fvi)
+      {
+        eptr = m_edgex;
+        if (nullptr == eptr)
+          return false;
+      }
+      const ON_SubDVertex* v = eptr->RelativeVertex(0);
+      if (nullptr == v)
+        return false;
+      const double d = (ON_3dPoint(v->m_P) - C)*N;
+      if (false == (d == d))
+        return false; // nan
+      if (d < d0)
+        d0 = d;
+      else if (d > d1)
+        d1 = d;
+      else
+        continue;
+      if ((d1 - d0) > planar_tolerance)
+        bNotPlanar = true;
+    }
+    return bNotPlanar;
+  }
+  return false;
+}
+
+
+const ON_Plane ON_SubDFace::ControlNetCenterFrame() const
+{
+  const ON_3dPoint C = ControlNetCenterPoint();
+  const ON_3dVector N = ControlNetCenterNormal();
+  if (C.IsValid() && N.IsNotZero())
+  {
+    // TODO - better choices for x and y axes
+    ON_Plane center_frame;
+    if (center_frame.CreateFromNormal(C, N))
+      return center_frame;
+  }
+  return ON_Plane::NanPlane;
+}

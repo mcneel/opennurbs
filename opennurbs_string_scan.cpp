@@ -148,20 +148,21 @@ int ON_wString::ScanBufferVargs(
   va_list args
   )
 {
-#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (nullptr == buffer || nullptr == format)
     return -1;
-  return swscanf(buffer, format, args);
-#else
-  if (nullptr == buffer || nullptr == format || nullptr == args)
-    return -1;
-  return swscanf_l(buffer, ON_Locale::InvariantCulture.NumericLocalePtr(), format, args);
-#endif
-#else
-  if (nullptr == buffer || nullptr == format || nullptr == args)
+  
+#if defined(ON_RUNTIME_WIN)
+  if (nullptr == args)
     return -1;
   return _vswscanf_s_l(buffer, format, ON_Locale::InvariantCulture.NumericLocalePtr(), args);
+#elif defined(ON_RUNTIME_APPLE)
+  if (nullptr == args)
+    return -1;
+  return swscanf_l(buffer, _c_locale, format, args);
+#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+  return swscanf(buffer, format, args);
+#else
+  return swscanf(buffer, format, args);
 #endif
 }
 

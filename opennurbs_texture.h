@@ -294,6 +294,13 @@ public:
   // other texture settings.
   bool m_bOn = true;
 
+  // If false, the texture color values should be correctly by the linear workflow pre-process gamma value (in the document)
+  // if linear workflow is on.  Otherwise, if the values is true, the values should be used raw from the texture.
+  bool m_bTreatAsLinear = false;
+
+  bool reserved2 = false;
+  bool reserved3 = false;
+
   // do not change TYPE enum values - they are saved in 3dm files.
   // The "TYPE" setting controls how the pixels in the bitmap
   // are interpreted.
@@ -301,9 +308,36 @@ public:
   {
     no_texture_type = 0U,
 
-    bitmap_texture       = 1U, // "standard" image texture.
+    bitmap_texture       = 1U, // "standard" image texture.  // Deprecated.  Use Diffuse.
+    diffuse_texture      = 1U, // ideally albedo.
     bump_texture         = 2U, // bump map - see m_bump_scale comment
-    transparency_texture = 3U, // value = alpha (see m_tranparancy_id)
+    transparency_texture = 3U, // value = alpha (see m_tranparancy_id)  Deprecated.  Use Opacity.  No change needed to functionality - transparency in Rhino has always meant opacity.
+    opacity_texture      = 3U, // value = alpha.
+
+    // The following textures are only for PBR materials
+    // They are not supported by the basic ON_Material definition, and should only be used when
+    // rendering physically based (PBR) materials.
+    pbr_base_color_texture            = 1U,   //Reuse diffuse texture.
+    pbr_subsurface_texture            = 10U,
+    pbr_subsurface_scattering_texture = 11U,
+    pbr_subsurface_scattering_radius_texture  = 12U,
+    pbr_metallic_texture              = 13U,
+    pbr_specular_texture              = 14U,
+    pbr_specular_tint_texture         = 15U,
+    pbr_roughness_texture             = 16U,
+    pbr_anisotropic_texture           = 17U,
+    pbr_anisotropic_rotation_texture  = 18U,
+    pbr_sheen_texture                 = 19U,
+    pbr_sheen_tint_texture            = 20U,
+    pbr_clearcoat_texture             = 21U,
+    pbr_clearcoat_roughness_texture   = 22U,
+    pbr_opacity_ior_texture           = 23U,
+    pbr_opacity_roughness_texture     = 24U,
+    pbr_emission_texture              = 25U,
+    pbr_ambient_occlusion_texture     = 26U,
+    //pbr_smudge_texture                = 27U,
+    pbr_displacement_texture          = 28U,
+	pbr_clearcoat_bump_texture        = 29U,
 
     // emap_texture is OBSOLETE - set m_mapping_channel_id = ON_MappingChannel::emap_mapping
     emap_texture = 86U // spherical environment mapping.

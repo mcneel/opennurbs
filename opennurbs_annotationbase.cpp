@@ -24,6 +24,7 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+#include "opennurbs_textiterator.h"
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Annotation, ON_Geometry, "B5802E0C-5B16-43C9-BD43-A3E0AC18203B");
 
 ON::AnnotationType ON::AnnotationTypeFromUnsigned( 
@@ -589,21 +590,112 @@ ON_3dVector ON_Annotation::GetDefaultHorizontal(const ON_Plane& plane)
   return ON_3dVector::XAxis;
 }
 
+void ON_Annotation::CalcTextFlip(
+  const ON_3dVector& text_xdir, const ON_3dVector& text_ydir, const ON_3dVector& text_zdir,
+  const ON_3dVector& view_xdir, const ON_3dVector& view_ydir, const ON_3dVector& view_zdir,
+  const ON_Xform* model_xform,
+  const double fliptol,
+  bool& flip_x,
+  bool& flip_y)
+{
+
+  double XoX = text_xdir * view_xdir;
+  double XoY = text_xdir * view_ydir;
+  double YoX = text_ydir * view_xdir;
+  double YoY = text_ydir * view_ydir;
+  bool from_the_back = (view_zdir * text_zdir < 0.0);
+  if (nullptr != model_xform && model_xform->Determinant() < 0.0)
+    from_the_back = !from_the_back;
+
+  double upsign = 1.0;
+
+  // This part shifts text to the correct side of the dimension line
+  if (fabs(XoX) > fabs(XoY)) // more horizontal
+  {
+    if (YoY > 0.0)
+      upsign = 1.0;
+    else
+      upsign = -1.0;
+  }
+  else  // more vertical
+  {
+    if (from_the_back)
+    {
+      if (YoX < 0.0)
+      {
+        if (XoX < fliptol)
+          upsign = 1.0;
+        else
+          upsign = -1.0;
+      }
+      else
+      {
+        if (XoX > -fliptol)
+          upsign = -1.0;
+        else
+          upsign = 1.0;
+      }
+    }
+    else
+    {
+      if (YoX > 0.0)
+      {
+        if (XoX > fliptol)
+          upsign = 1.0;
+        else
+          upsign = -1.0;
+      }
+      else
+      {
+        if (XoX < -fliptol)
+          upsign = -1.0;
+        else
+          upsign = 1.0;
+      }
+    }
+  }
+  flip_x = false;
+  flip_y = false;
+  if (from_the_back)
+    upsign = -upsign;
+  flip_x = upsign < 0.0;
+  if (from_the_back)
+    flip_y = !flip_x;
+  else
+    flip_y = flip_x;
+}
+
+
 const ON_wString ON_Annotation::PlainText() const
 {
-  return (nullptr == m_text)
-    ? ON_wString::EmptyString
-    : m_text->PlainText();
+  if (nullptr == m_text)
+    return ON_wString::EmptyString;
+  const ON_TextRunArray* runs = m_text->TextRuns(true);
+  if (nullptr != runs && 0 == runs->Count())
+    BoundingBox();  // Side effect of building text runs
+  return m_text->PlainText();
 }
 
 const ON_wString ON_Annotation::PlainTextWithFields() const
 {
-  const ON_TextContent* text = Text();
-
-  return (nullptr == text)
-    ? ON_wString::EmptyString
-    : text->PlainTextWithFields();
+  if (nullptr == m_text)
+    return ON_wString::EmptyString;
+  const ON_TextRunArray* runs = m_text->TextRuns(true);
+  if (nullptr != runs && 0 == runs->Count())
+    BoundingBox();
+  return m_text->PlainTextWithFields();
 }
+
+const ON_wString  ON_Annotation::PlainTextWithFields(ON_SimpleArray<ON_3dex>* runmap) const
+{
+  if (nullptr == m_text)
+    return ON_wString::EmptyString;
+  const ON_TextRunArray* runs = m_text->TextRuns(true);
+  if (nullptr != runs && 0 == runs->Count())
+    BoundingBox();
+  return m_text->PlainTextWithFields(runmap);
+}
+
 
 const ON_wString ON_Annotation::RichText() const
 {
@@ -1249,6 +1341,29 @@ bool ON_Annotation::ReplaceTextString(
   else
     return text->ReplaceTextString(RtfString, Type(), dimstyle);
 }
+
+
+bool ON_Annotation::RunReplaceString(
+  const ON_DimStyle* dimstyle,
+  const wchar_t* repl_str,
+  int start_run_idx,
+  int start_run_pos,
+  int end_run_idx,
+  int end_run_pos)
+{
+  ON_TextContent* text_content = Text();
+  if (nullptr == text_content)
+    return false;
+  bool rc = text_content->RunReplaceString(repl_str, start_run_idx, start_run_pos, end_run_idx, end_run_pos);
+
+  text_content->ComposeText();
+  
+  text_content->RebuildRuns(Type(), dimstyle);
+
+  
+  return rc;
+}
+
 
 ////double ON_Annotation::Height() const
 ////{
@@ -2823,6 +2938,23 @@ void ON_Annotation::SetDimScale(const ON_DimStyle* parent_style, double value)
   }
 }
 
+wchar_t ON_Annotation::DecimalSeparator(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::DecimalSeparator).DecimalSeparator();
+}
+
+void ON_Annotation::SetDecimalSeparator(const ON_DimStyle* parent_style, wchar_t separator)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (separator != parent_style->DecimalSeparator());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetDecimalSeparator(separator);
+    override_style->SetFieldOverride(ON_DimStyle::field::DecimalSeparator, bCreate);
+  }
+}
+
 const class ON_Font& ON_Annotation::Font(const ON_DimStyle* parent_style) const
 {
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::Font).Font();
@@ -2909,7 +3041,6 @@ ON::LengthUnitSystem ON_Annotation::AlternateDimensionLengthDisplayUnit(
     model_sn = parent_style->ModelSerialNumber();
   return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::AlternateDimensionLengthDisplay).DimensionLengthDisplayUnit(model_sn);
 }
-
 //--------------------------------
 
 bool ON_Annotation::ClearRtfFmt(const wchar_t* fmt_str_on, const wchar_t* fmt_str_off, ON_wString& rtf_in)

@@ -2216,6 +2216,10 @@ public:
     ON_Color&
     );
 
+  bool ReadColor(
+    ON_4fColor&
+  );
+
   bool ReadPoint (
     ON_2dPoint&
     );
@@ -2511,6 +2515,10 @@ public:
   bool WriteColor (
     const ON_Color&
     );
+
+  bool WriteColor(
+    const ON_4fColor&
+  );
 
   bool WritePoint (
     const ON_2dPoint&
@@ -3030,13 +3038,12 @@ public:
     ) const;
 
   /*
+  Remarks:
+    In a stable commercially released Rhino version N, CurrentArchiveVersion() = 10*N.
+    In "early" Rhino N WIP, CurrentArchiveVersion() = 10*(N-1).
+    In "later" Rhino N WIP, CurrentArchiveVersion() = 10*N.
   Returns:
-    10*OPENNURBS_VERSION_MAJOR 
-    (The Rhino <OPENNURBS_VERSION_MAJOR> opennurbs file version.)
-    This is the value of version to pass to ON_BinaryArchive
-    functions like Write3dmStartSection() when you want to use the 
-    the current opennurbs version number and you do not want to have
-    to update your code when this version number changes.    
+    The current 3dm archive version that is saved by Rhino.
   */
   static int CurrentArchiveVersion();
 

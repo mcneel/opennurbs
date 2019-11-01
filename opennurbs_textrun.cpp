@@ -1018,24 +1018,6 @@ void ON_TextRun::SetUnicodeString(ON__UINT32*& dest, size_t count, const ON__UIN
   }
 }
 
-static int ConvertCpToWChar(ON__UINT32 cp, wchar_t wch[3])
-{
-  unsigned int error_status = 0;
-  int ok = ON_ConvertUTF32ToWideChar(
-    0,               //int bTestByteOrder,
-    &cp,             //const ON__UINT32* sUTF32,
-    1,               //int sUTF32_count,
-    wch,             //wchar_t* sWideChar,
-    3,               //int sWideChar_count,
-    &error_status,   //unsigned int* error_status,
-    0xFFFFFFFF,      //unsigned int error_mask,
-    0xFFFD,          //ON__UINT32 error_code_point,
-    0                //const ON__UINT32** sNextUTF32
-    );
-
-  return ok;
-}
-
 int ON_TextRun::WrapTextRun(
   int call_count,         // recursion depth
   int start_char_offset,  // char offset in cp array
@@ -1064,12 +1046,21 @@ int ON_TextRun::WrapTextRun(
     linewidth = 0.0;
   }
 
-  const ON__UINT32* cp = UnicodeString();
-  int cpcount = (int)CodepointCount(cp);
+  const wchar_t* display_string = DisplayString();
+
+  size_t wcscount = 0;
+  if (nullptr != display_string)
+    wcscount = wcslen(display_string);
+
   const ON_Font* font = Font();
   if (nullptr == font)
     return 0;
   double height_scale = HeightScale(font); // Font units to world units
+
+  ON_SimpleArray< const ON_FontGlyph*> glyph_list;
+  ON_TextBox text_box;
+
+  ON_FontGlyph::GetGlyphList(display_string, font, ON_NextLine, glyph_list, text_box);
 
   const ON_FontGlyph* Aglyph = font->CodePointGlyph((ON__UINT32)L'A');
   if (nullptr == Aglyph)
@@ -1091,19 +1082,19 @@ int ON_TextRun::WrapTextRun(
   //double runwidth0 = 0.0; // run width including trailing spaces
   if (0 == start_char_offset)  // using the whole run
   {
-    runwidth = Advance().x;
+    //runwidth = Advance().x;
+    runwidth = text_box.m_advance.i * height_scale;
   }
   else // Part of the run has already been picked off and added to the previous line
   {
     // Find width of remaining characters
-    for (int ci = start_char_offset; ci < cpcount; ci++)
+    for (int ci = start_char_offset; ci < (int)wcscount; ci++)
     {
-      const ON_FontGlyph* gi = font->CodePointGlyph(cp[ci]);
-      wchar_t wch[3] = { 0, 0, 0 };
+      const ON_FontGlyph* gi = glyph_list[ci];
+
       if (nullptr != gi)
       {
-        int wccnt = ConvertCpToWChar(gi->CodePoint(), wch);
-        if (1 == wccnt)
+        //if (not surrogate pair)
         {
           const ON_TextBox glyph_box = gi->GlyphBox();
           double charwidth = glyph_box.m_advance.i * height_scale;
@@ -1118,7 +1109,8 @@ int ON_TextRun::WrapTextRun(
 #pragma endregion Run Width
 
 #pragma region Whole Run
-  if (runwidth + linewidth <= wrapwidth || 2 > cpcount)
+  wchar_t* temp_display_str = (wchar_t*)onmalloc((wcscount + 1) * sizeof(wchar_t));
+  if (runwidth + linewidth <= wrapwidth || 2 > wcscount)
   {
     // Adding this entire run won't go past wrap width
     // or the run has only 0 or 1 character and can't be wrapped
@@ -1133,10 +1125,15 @@ int ON_TextRun::WrapTextRun(
       else
       {
         if (0 != start_char_offset)
-          newrun->SetUnicodeString(cpcount - start_char_offset, cp + start_char_offset);
+        {
+          wcsncpy(temp_display_str, display_string + start_char_offset, wcscount - start_char_offset);
+          temp_display_str[wcscount - start_char_offset] = 0;
+          newrun->SetDisplayString(temp_display_str);
+        }
         linewidth += runwidth;
       }
       newruns.AppendRun(newrun);
+      onfree(temp_display_str);
       return 1; // 1 new run was added
     }
   }
@@ -1149,14 +1146,11 @@ int ON_TextRun::WrapTextRun(
   double curwidth = 0.0;
   double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
 
-  for (int ci = start_char_offset; ci < cpcount; ci++)
+  for (int ci = start_char_offset; ci < (int)wcscount; ci++)
   {
-    const ON_FontGlyph* gi = font->CodePointGlyph(cp[ci]);
-    wchar_t wch[3] = { 0, 0, 0 };
+    const ON_FontGlyph* gi = glyph_list[ci];
     if (nullptr != gi)
     {
-      int wccnt = ConvertCpToWChar(gi->CodePoint(), wch);
-      if (1 == wccnt)
       {
         const ON_TextBox glyph_box = gi->GlyphBox();
         curwidth += glyph_box.m_advance.i * height_scale;
@@ -1177,7 +1171,9 @@ int ON_TextRun::WrapTextRun(
             if (nullptr != newrun)
             {
               *newrun = *this;
-              newrun->SetUnicodeString(run_length, cp + start_char_offset);
+              wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
+              temp_display_str[run_length] = 0;
+              newrun->SetDisplayString(temp_display_str);
               newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
               newruns.AppendRun(newrun);
             }
@@ -1198,9 +1194,10 @@ int ON_TextRun::WrapTextRun(
           }
 
           int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
+          onfree(temp_display_str);
           return new_count + wrapcount;
         }
-        if (iswspace(wch[0]))
+        if (iswspace(display_string[ci]))
         {
           found_space = true;
           last_space = ci;
@@ -1213,12 +1210,13 @@ int ON_TextRun::WrapTextRun(
   if (nullptr != newrun)
   {
     *newrun = *this;
-    newrun->SetUnicodeString(run_length, cp + start_char_offset);
+    wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
+    temp_display_str[run_length] = 0;
     newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
     newruns.AppendRun(newrun);
     new_count += 1;
   }
-
+  onfree(temp_display_str);
   return new_count;
 }
 

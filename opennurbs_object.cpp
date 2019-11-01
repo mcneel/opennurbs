@@ -46,6 +46,8 @@ unsigned int ON_IsRhinoApplicationId(
     return 5;
   if (ON_rhino6_id == id)
     return 6;
+  if (ON_rhino7_id == id)
+    return 7;
   return 0;
 }
 
@@ -59,6 +61,8 @@ unsigned int ON_IsOpennurbsApplicationId(
     return 5;
   if (ON_opennurbs6_id == id)
     return 6;
+  if (ON_opennurbs7_id == id)
+    return 7;
   return 0;
 }
 

@@ -261,13 +261,13 @@ public:
   // Description:
   //   Get number of parameters of "knots".
   // Parameters:
-  //   knots - [out] an array of length SpanCount()+1 is filled in
+  //   span_parameters - [out] an array of length SpanCount()+1 is filled in
   //       with the parameters where the curve is not smooth (C-infinity).
   // Returns:
   //   true if successful
   virtual
   bool GetSpanVector(
-        double* knots
+        double* span_parameters
         ) const = 0; // 
 
   //////////

@@ -159,7 +159,6 @@ bool ON_Leader::GetBBox( // returns true if successful
   //return GetBBox(&ON_DimStyle::Default, 1.0, ON_3dVector::XAxis, ON_3dVector::YAxis, bbox_min, bbox_max, grow);
 }
 
-
 bool ON_Leader::GetTextXform(
   const ON_Viewport* vp,
   const ON_DimStyle* dimstyle,
@@ -185,20 +184,38 @@ bool ON_Leader::GetTextXform(
   if (nullptr == text)
     return true;
 
-  if ( DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash() )
+  ON_2dVector tail_dir = TailDirection(dimstyle);
+  ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
+  ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
+  ON_Plane objectplane = Plane();
+  ON::TextHorizontalAlignment halign = dimstyle->LeaderTextHorizontalAlignment();
+  ON::TextVerticalAlignment valign = dimstyle->LeaderTextVerticalAlignment();
+  if (ON::TextHorizontalAlignment::Auto == halign)
+  {
+    double xdotx = objectplane.xaxis * view_x;
+    if (tail_dir.x < -0.00001)
+      xdotx = -xdotx;
+    if (xdotx > -0.00001)
+      halign = ON::TextHorizontalAlignment::Left;
+    else
+      halign = ON::TextHorizontalAlignment::Right;
+  }
+  ON::TextHorizontalAlignment last_halign = text->RuntimeHorizontalAlignment();
+  text->SetRuntimeHorizontalAlignment(halign);
+
+  if (last_halign != halign)
+  {
+    const_cast<ON_TextContent*>(text)->SetAlignment(halign, valign);
+  }
+  if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash() )
   {
     ON_wString rtfstr = text->RtfText();
-    ON_Plane objectplane = Plane();
     const_cast<ON_TextContent*>(text)->Create(
       rtfstr, ON::AnnotationType::Leader, dimstyle,
       text->TextIsWrapped(), text->FormattingRectangleWidth(), text->TextRotationRadians());
 
-    ON::TextHorizontalAlignment halign = dimstyle->LeaderTextHorizontalAlignment();
-    ON::TextVerticalAlignment valign = dimstyle->LeaderTextVerticalAlignment();
     const_cast<ON_TextContent*>(text)->SetAlignment(halign, valign);
   }
-
-  ON_2dVector tail_dir = TailDirection(dimstyle);
 
   // Find center of scaled text
   double textblock_width = 0.0;
@@ -294,9 +311,6 @@ bool ON_Leader::GetTextXform(
 
       textcenter_xf.m_xform[0][3] = -text_center.x;
       textcenter_xf.m_xform[1][3] = -text_center.y + text_shift.y;
-
-      ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
-      ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
 
       if(ON::TextOrientation::InView == dimstyle->LeaderTextOrientation())
       {

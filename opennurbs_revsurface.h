@@ -406,6 +406,11 @@ public:
          double c
          ) const override;
 
+
+  ON_Arc IsoArc(
+    double curve_parameter
+  ) const;
+
   /*
   Description:
     Removes the portions of the surface outside of the specified interval.

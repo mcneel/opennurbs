@@ -148,12 +148,29 @@ public:
     ON__UINT64 callback_delta
     );
 
+
+  /*
+  Description:
+    If bAllow is true, the worker thread cancellation handling (escape key presses etc) will cause RequestTermination to be called.
+    If bAllow is false, cancellation must be implemented through the callback function, otherwise all cancellation will be disabled.
+  Parameters:
+    bAllow - [in] (see above)
+  */
+  void SetAllowDefaultCancellationHandling(bool bAllow);
+
+  /*
+  Description:
+    returns true if default cancellation processing is allowed, otherwise false.  See SetAllowDefaultCancellationHandling
+  */
+  bool AllowDefaultCancellationHandling(void) const;
+
 private:
   bool (*m_callback_function)(ON__UINT_PTR) = nullptr;
   ON__UINT_PTR m_callback_context = 0;
   ON__UINT64 m_previous_query_clock = 0;
   bool m_bTerminationRequested = false;
-  bool m_reserved1[7];
+  bool m_bAllowDefaultCancellationHandling = true;
+  bool m_reserved1[6];
   ON__UINT_PTR m_thread_id = 0;
   ON__UINT64 m_reserved2[2];
 };

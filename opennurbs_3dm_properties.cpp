@@ -514,7 +514,7 @@ bool ON_3dmProperties::Write(ON_BinaryArchive& file) const
     = file.ArchiveFullPath().IsEmpty()
     ? m_3dmArchiveFullPathName
     : file.ArchiveFullPath();
-  if (archive_full_path.IsNotEmpty())
+  if (rc && archive_full_path.IsNotEmpty())
   {
     if (!file.BeginWrite3dmChunk(TCODE_PROPERTIES_AS_FILE_NAME, 0))
       return false;

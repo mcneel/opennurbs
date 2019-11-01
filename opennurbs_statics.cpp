@@ -93,12 +93,26 @@ ON__UINT64 ON_TestClass::internal_CtorSerialNumberGenerator = 0;
 ON__UINT64 ON_TestClass::internal_PopulationCounter = 0;
 #endif
 
+ON__UINT64 ON_NextContentSerialNumber()
+{
+  static ON__UINT64 serial_number = 0;
+  // If it's ever an issue with multiple threads, 
+  // this value can be made atomic, but that will slow down performance.
+  return (0 != ++serial_number) ? serial_number : ++serial_number;
+}
+
+
 // It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
 // be constructed before any instance of a class derived from ON_ModelComponent.
 // That is why it is above the ClassId stuff in this .cpp file.
 std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(0);
 
 std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
+
+ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
+
+const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
+const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
 ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
@@ -165,11 +179,15 @@ const ON_UUID ON_rhino5_id = { 0x60515f84, 0x8f7f, 0x41da,{ 0x80, 0x1d, 0x1c, 0x
 // {06BB1079-5A56-47A1-AD6D-0B45183D894B}
 const ON_UUID ON_rhino6_id = { 0x6bb1079, 0x5a56, 0x47a1,{ 0xad, 0x6d, 0xb, 0x45, 0x18, 0x3d, 0x89, 0x4b } };
 
+// {78464C2C-9AEB-456E-8C27-865A524F5CA0}
+const ON_UUID ON_rhino7_id = { 0x78464c2c, 0x9aeb, 0x456e,{ 0x8c, 0x27, 0x86, 0x5a, 0x52, 0x4f, 0x5c, 0xa0 } };
+
+
 // ON_rhino_id is always set to the value for the current version
 // of Rhino.  ON_rhino_id is the id that should be used as the
 // userdata application id for userdata class definitions that are
 // in the core Rhino executable.
-const ON_UUID ON_rhino_id = ON_rhino6_id;
+const ON_UUID ON_rhino_id = ON_rhino7_id;
 
 // Used to identifiy userdata read from V2 files
 // which were written before userdata had application ids.
@@ -196,12 +214,15 @@ const ON_UUID ON_opennurbs5_id = { 0xc8cda597, 0xd957, 0x4625,{ 0xa4, 0xb3, 0xa0
 // {7B0B585D-7A31-45D0-925E-BDD7DDF3E4E3}
 const ON_UUID ON_opennurbs6_id = { 0x7b0b585d, 0x7a31, 0x45d0,{ 0x92, 0x5e, 0xbd, 0xd7, 0xdd, 0xf3, 0xe4, 0xe3 } };
 
+// {523bfe6e-ef49-4b75-a8d6-253faf5044d3}
+const ON_UUID ON_opennurbs7_id = { 0x523bfe6e, 0xef49, 0x4b75,{ 0xa8, 0xd6, 0x25, 0x3f, 0xaf, 0x50, 0x44, 0xd3 } };
+
 
 // ON_opennurbs_id is always set to the value for the current version
 // of opennurbs.  ON_opennurbs_id is the id that should be used as
 // the userdata application id for userdata classes definitions that
 // are in the opennurbs library.
-const ON_UUID ON_opennurbs_id = ON_opennurbs6_id;
+const ON_UUID ON_opennurbs_id = ON_opennurbs7_id;
 
 const ON_UuidPairList ON_UuidPairList::EmptyList;
 
@@ -491,6 +512,8 @@ const wchar_t ON_wString::Backslash = (wchar_t)ON_UnicodeCodePoint::ON_Backslash
 const wchar_t ON_wString::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
 const wchar_t ON_wString::Pipe = (wchar_t)ON_UnicodeCodePoint::ON_Pipe;
 const wchar_t ON_wString::Tilde = (wchar_t)ON_UnicodeCodePoint::ON_Tilde;
+const wchar_t ON_wString::DecimalAsPeriod = (wchar_t)ON_UnicodeCodePoint::ON_Period;
+const wchar_t ON_wString::DecimalAsComma = (wchar_t)ON_UnicodeCodePoint::ON_Comma;
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
 // ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
@@ -812,6 +835,8 @@ const ON_Color ON_Color::Gray160(160, 160, 160);
 const ON_Color ON_Color::Gray230(230, 230, 230);
 const ON_Color ON_Color::Gray250(250, 250, 250);
 
+const ON_4fColor ON_4fColor::Unset;
+
 const ON_UuidIndex ON_UuidIndex::NilIndex = ON_UuidIndex();
 const ON_UuidPtr ON_UuidPtr::NilPtr = ON_UuidPtr();
 
@@ -852,6 +877,12 @@ static ON_Plane ON_Plane_NanPlane()
   return nan_plane;
 }
 const ON_Plane ON_Plane::NanPlane(ON_Plane_NanPlane());
+
+// ON_SubDDisplayParameters statics before ON_MeshParamters statics
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDDisplayParameters);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Course = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::CourseDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Default = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::DefaultDensity);
+
 
 // {F15F67AA-4AF9-4B25-A3B8-517CEDDAB134}
 const ON_UUID ON_MeshParameters::RhinoLegacyMesherId = { 0xf15f67aa, 0x4af9, 0x4b25,{ 0xa3, 0xb8, 0x51, 0x7c, 0xed, 0xda, 0xb1, 0x34 } };
@@ -1446,6 +1477,9 @@ static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
   return tm;
 }
 const ON_TextureMapping ON_TextureMapping::SurfaceParameterTextureMapping(SurfaceParameterTextureMappingInitializer());
+
+const ON_MappingTag ON_MappingTag::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MappingTag);
+const ON_MappingTag ON_MappingTag::SurfaceParameterMapping(ON_TextureMapping::SurfaceParameterTextureMapping,nullptr);
 
 const ON_LinetypeSegment ON_LinetypeSegment::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LinetypeSegment);
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);
@@ -2283,20 +2317,25 @@ const ON_HatchPattern ON_HatchPattern::Grid60(Internal_LineHatchPatternInit(-7))
 const ON_HatchPattern ON_HatchPattern::Plus(Internal_LineHatchPatternInit(-8));      // index = -8, id set, unique and persistent
 const ON_HatchPattern ON_HatchPattern::Squares(Internal_LineHatchPatternInit(-9));   // index = -9, id set, unique and persistent
 
-#if defined(OPENNURBS_SUBD_WIP)
+
+const ON_Mesh ON_Mesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Mesh);
+const ON_MeshRef ON_MeshRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshRef);
 
 unsigned int ON_SubD::ErrorCount = 0;
 
-const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
+const ON_SubDVertexEdgeProperties ON_SubDVertexEdgeProperties::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDVertexEdgeProperties); 
+
 const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
 const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
 const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
+const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
+const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
 
 const ON_SubDEdgeChain ON_SubDEdgeChain::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDEdgeChain);
 
-static ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint_Init(double x)
+static ON_SubDSectorSurfacePoint ON_SubDSectorLimitPoint_Init(double x)
 {
-  ON_SubDSectorLimitPoint lp;
+  ON_SubDSectorSurfacePoint lp;
   memset(&lp, 0, sizeof(lp));
 
   lp.m_limitP[0] = x;
@@ -2318,13 +2357,14 @@ static ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint_Init(double x)
   return lp;
 }
 
-const ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint::Unset = ON_SubDSectorLimitPoint_Init(ON_UNSET_VALUE);
-const ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint::Nan = ON_SubDSectorLimitPoint_Init(ON_DBL_QNAN);
-const ON_SubDSectorLimitPoint ON_SubDSectorLimitPoint::Zero = ON_SubDSectorLimitPoint_Init(0.0);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Unset = ON_SubDSectorLimitPoint_Init(ON_UNSET_VALUE);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Nan = ON_SubDSectorLimitPoint_Init(ON_DBL_QNAN);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Zero = ON_SubDSectorLimitPoint_Init(0.0);
 
-const unsigned int ON_SubDLimitMeshFragment::MaximumSideSegmentCount = (1U << ON_SubDLimitMesh::MaximumDisplayDensity); // = 2^ON_SubDLimitMesh::MaximumDisplayDensity
+const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Zero = ON_SubDVertexSurfacePointCoefficient::Create(nullptr,nullptr,0.0);
+const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Nan = ON_SubDVertexSurfacePointCoefficient::Create(nullptr,nullptr,ON_DBL_QNAN);
+const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Unset = ON_SubDVertexSurfacePointCoefficient::Create(nullptr,nullptr,ON_UNSET_VALUE);
 
-const unsigned int ON_SubDSectorType::MaximumAngleIndex = 72;
 const double ON_SubDSectorType::IgnoredCornerSectorAngle = 0.0;
 const double ON_SubDSectorType::UnsetCornerSectorAngle = -8881.0;
 const double ON_SubDSectorType::ErrorCornerSectorAngle = -9991.0;
@@ -2337,10 +2377,6 @@ const double ON_SubDSectorType::IgnoredSectorWeight = 0.0;
 const double ON_SubDSectorType::UnsetSectorWeight = -8883.0;
 const double ON_SubDSectorType::ErrorSectorWeight = -9993.0;
 
-const unsigned int ON_SubDVertex::MaximumEdgeCount = 0xFFF0U;
-const unsigned int ON_SubDVertex::MaximumFaceCount = 0xFFF0U;
-const unsigned int ON_SubDEdge::MaximumFaceCount = 0xFFF0U;
-const unsigned int ON_SubDFace::MaximumEdgeCount = 0xFFF0U;
 
 const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegionIndex);
 
@@ -2396,23 +2432,26 @@ const ON_AggregateComponentStatus ON_AggregateComponentStatus::NotCurrent = ON_A
 
 const ON_SubDComponentPoint ON_SubDComponentPoint::Unset = ON_SubDComponentPoint();
 
-static ON_SubDLimitMeshFragmentGrid EmptyLimitMeshFragmentGridInit()
+static ON_SubDMeshFragmentGrid EmptyLimitMeshFragmentGridInit()
 {
-  ON_SubDLimitMeshFragmentGrid empty;
+  ON_SubDMeshFragmentGrid empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
 }
 
-static ON_SubDLimitMeshFragment EmptyLimitMeshFragmentInit()
+static ON_SubDMeshFragment EmptyLimitMeshFragmentInit()
 {
-  ON_SubDLimitMeshFragment empty;
+  ON_SubDMeshFragment empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
 }
 
-const ON_SubDLimitMeshFragmentGrid ON_SubDLimitMeshFragmentGrid::Empty = EmptyLimitMeshFragmentGridInit();
-const ON_SubDLimitMeshFragment ON_SubDLimitMeshFragment::Empty = EmptyLimitMeshFragmentInit();
+const ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::Empty = EmptyLimitMeshFragmentGridInit();
+const ON_SubDMeshFragment ON_SubDMeshFragment::Empty = EmptyLimitMeshFragmentInit();
 
+
+
+const ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::OneQuadGrid = ON_SubDMeshFragmentGrid::QuadGridFromSideSegmentCount(1, 0);
 
 static ON_SubDComponentBase UnsetComponentBaseInit()
 {
@@ -2459,38 +2498,33 @@ const ON_SubDVertex ON_SubDVertex::Empty = EmptyVertexInit();
 const ON_SubDEdge ON_SubDEdge::Empty = EmptyEdgeInit();
 const ON_SubDFace ON_SubDFace::Empty = EmptyFaceInit();
 
-const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDDisplayParameters);
-const ON_SubDDisplayParameters ON_SubDDisplayParameters::DefaultDisplayMeshParameters = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDLimitMesh::DefaultDisplayDensity);
-
 const ON_SubD ON_SubD::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubD);
 const ON_SubDRef ON_SubDRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDRef);
-const ON_SubDLimitMesh ON_SubDLimitMesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDLimitMesh);
+const ON_SubDMesh ON_SubDMesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMesh);
 const ON_SubDSectorType ON_SubDSectorType::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDSectorType);
 const ON_SubDMatrix ON_SubDMatrix::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMatrix);
 const ON_SubDComponentRef ON_SubDComponentRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRef);
 
-static ON_SubDFromMeshOptions ON_SubDCreaseParameters_CreaseAt(
-  ON_SubDFromMeshOptions::InteriorCreaseOption crease_type
+static ON_ToSubDParameters ON_SubDCreaseParameters_CreaseAt(
+  ON_ToSubDParameters::InteriorCreaseOption crease_type
   )
 {
-  ON_SubDFromMeshOptions cp;
+  ON_ToSubDParameters cp;
   cp.SetInteriorCreaseOption(crease_type);
   return cp;
 }
 
-static ON_SubDFromMeshOptions ON_SubDCreaseParameters_ConvexCorners()
+static ON_ToSubDParameters ON_SubDCreaseParameters_ConvexCorners()
 {
-  ON_SubDFromMeshOptions cp;
-  cp.SetConvexCornerOption(ON_SubDFromMeshOptions::ConvexCornerOption::AtMeshCorner);
+  ON_ToSubDParameters cp;
+  cp.SetConvexCornerOption(ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner);
   return cp;
 }
 
-const ON_SubDFromMeshOptions ON_SubDFromMeshOptions::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromMeshOptions);
-const ON_SubDFromMeshOptions ON_SubDFromMeshOptions::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshOptions::InteriorCreaseOption::AtMeshCrease);
-const ON_SubDFromMeshOptions ON_SubDFromMeshOptions::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshOptions::InteriorCreaseOption::AtMeshEdge);
-const ON_SubDFromMeshOptions ON_SubDFromMeshOptions::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
-
-#endif
+const ON_ToSubDParameters ON_ToSubDParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ToSubDParameters);
+const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease);
+const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge);
+const ON_ToSubDParameters ON_ToSubDParameters::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
 
 unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
 {

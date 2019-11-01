@@ -886,11 +886,56 @@ public:
     );
 
 
-  bool IsClamped( // determine if knot vector is clamped
+  /*
+  Description:
+    Test the knot vector to see if it is clamped.
+  Parameters:
+    dir:
+      0: first parameter
+      1: second parameter
+    end:
+     0: test start
+     1: test end
+     2: test start and end.
+  */  bool IsClamped(
+        int dir,
+        int end = 2
+        ) const;
+
+  /*
+  Description:
+    Test the side of a surface to see if it's natural (Zero 2nd derivative).
+  Parameters:
+    dir:
+      0: first parameter
+      1: second parameter
+    end:
+     0: test start
+     1: test end
+     2: test start and end.
+  */
+  bool IsNatural( // determine if knot vector is clamped
         int dir,    // dir 0 = "s", 1 = "t"
         int end = 2 // end to check: 0 = start, 1 = end, 2 = start and end
         ) const;
-  
+
+  /*
+  Description:
+    Test a surface to see if it's natural (Zero 2nd derivative) on an iso curve.
+  Parameters:
+    dir:
+      0: first parameter
+      1: second parameter
+    t_count - [in]
+    t - [in]
+      t[] is a list of parameters to check.
+  */
+  bool IsNatural( // determine if knot vector is clamped
+    int dir,    // dir 0 = "s", 1 = "t"
+    size_t t_count,
+    const double* t
+    ) const;
+
   double SuperfluousKnot(
            int dir,    // dir 0 = "s", 1 = "t"
            int end  // 0 = start, 1 = end

@@ -30,13 +30,13 @@ static bool HasErrorsOrWarnings(ON_TextLog* log, const char* operation)
   ON_String msg;
   if (ON_GetErrorCount() > 0)
   {
-    msg.Format("%d errors: %s", ON_GetErrorCount(), operation);
+    msg.Format("%d errors: %s\n", ON_GetErrorCount(), operation);
     log->Print(msg);
     return true;
   }
   if (ON_GetWarningCount() > 0)
   {
-    msg.Format("%d warnings: %s", ON_GetErrorCount(), operation);
+    msg.Format("%d warnings: %s\n", ON_GetErrorCount(), operation);
     log->Print(msg);
     return true;
   }
@@ -162,7 +162,7 @@ int main(int argc, const char *argv[])
   // Write file
   model.m_sStartSectionComments = "Converted by example_convert.exe";
   bool outrc = model.Write(output, version, dump);
-  if (HasErrorsOrWarnings(dump, "writing output file"))
+  if (HasErrorsOrWarnings(dump, "writing output file\n"))
     return 1;
   
   if (outrc)

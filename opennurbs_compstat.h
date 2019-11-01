@@ -247,11 +247,26 @@ public:
   // RuntimeMark
   //
   bool RuntimeMark() const;
-  unsigned int SetRuntimeMark(
+
+  /*
+  Returns:
+    Input value of RuntimeMark();
+  */
+  bool SetRuntimeMark(
    bool bRuntimeMark
   );
-  unsigned int SetRuntimeMark();
-  unsigned int ClearRuntimeMark();
+
+  /*
+  Returns:
+    Input value of RuntimeMark();
+  */
+  bool SetRuntimeMark();
+
+  /*
+  Returns:
+    Input value of RuntimeMark();
+  */
+  bool ClearRuntimeMark();
 
   //////////////////////////////////////////////////////////////////////////
   //

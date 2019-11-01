@@ -16,7 +16,6 @@ ON_Terminator::ON_Terminator()
   m_reserved1[3] = false;
   m_reserved1[4] = false;
   m_reserved1[5] = false;
-  m_reserved1[6] = false;
   m_reserved2[0] = 0;
   m_reserved2[1] = 0;
 }
@@ -82,6 +81,16 @@ void ON_Terminator::RequestTermination(
 bool ON_Terminator::TerminationRequested( ON_Terminator* terminator )
 {
   return TerminationRequestedExpert( terminator, CLOCKS_PER_SEC/10 );
+}
+
+void ON_Terminator::SetAllowDefaultCancellationHandling(bool bAllow)
+{
+  m_bAllowDefaultCancellationHandling = bAllow;
+}
+
+bool ON_Terminator::AllowDefaultCancellationHandling(void) const
+{
+  return m_bAllowDefaultCancellationHandling;
 }
 
 bool ON_Terminator::TerminationRequestedExpert(

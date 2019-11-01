@@ -79,6 +79,7 @@ void ON_TextContent::Internal_CopyFrom(
   {
     m__wrapped_runs = new ON_TextRunArray(*src.m__wrapped_runs);
   }
+  m_runtime_halign = src.m_runtime_halign;
 }
 
 ON_TextContent::ON_TextContent(const ON_TextContent& src)
@@ -362,6 +363,11 @@ const ON_wString ON_TextContent::PlainTextWithFields() const
   return Internal_GetPlainText(false, false);
 }
 
+const ON_wString ON_TextContent::PlainTextWithFields(ON_SimpleArray<ON_3dex>* runmap) const
+{
+  return Internal_GetPlainText(false, false, runmap);
+}
+
 
 const ON_wString ON_TextContent::PlainText() const
 {
@@ -414,6 +420,13 @@ ON_SHA1_Hash ON_TextRunArray::TextRunArrayContentHash(
 
 ON_SHA1_Hash ON_TextContent::TextContentHash() const
 {
+  size_t size = sizeof(*this);
+  size_t runs_offset = ((bool*)&m__runs) - ((bool*)this);
+  size_t wrap_offset = ((bool*)&m_bWrapText) - ((bool*)this);
+  size = size; // 216
+  runs_offset = runs_offset; // 56
+  wrap_offset = wrap_offset; // 50
+
   return TextContentHash(true, true);
 }
 
@@ -487,10 +500,17 @@ ON_SHA1_Hash ON_TextContent::TextContentHash(
 
 const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, bool wrapped) const
 {
+  return Internal_GetPlainText(evaluate_fields, wrapped, nullptr);
+}
+
+const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, bool wrapped, ON_SimpleArray<ON_3dex>* runmap) const
+{
   ON_wString plaintext;
   ON_TextRunArray* runs = TextRuns(!wrapped);
   if (nullptr == runs)
     return plaintext;
+  if (nullptr != runmap)
+    runmap->Empty();
 
   int runcount = runs->Count();
   int nlcount = 0;
@@ -520,7 +540,17 @@ const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, boo
         const wchar_t* str = evaluate_fields
           ? run->DisplayString()
           : run->TextString();
-        plaintext += str;
+        if (nullptr != str)
+        {
+          if (nullptr != runmap)
+          {
+            ON_3dex& map = runmap->AppendNew();
+            map.i = ri;
+            map.j = plaintext.Length();
+            map.k = (int)wcslen(str);
+          }
+          plaintext += str;
+        }
       }
       else if (multiline)
       {
@@ -654,6 +684,84 @@ bool ON_TextContent::RebuildRuns(
   return rc;
 }
 
+
+bool ON_TextContent::RunReplaceString(
+  const wchar_t* repl_str,
+  int start_run_idx,
+  int start_run_pos,
+  int end_run_idx,
+  int end_run_pos)
+{
+  if (nullptr == repl_str)
+    repl_str = L"";
+  const ON_TextRunArray* text_runs = TextRuns(true);
+  if (nullptr == text_runs)
+    return false;
+  if (0 > start_run_idx || 0 > start_run_pos || start_run_idx > end_run_idx || end_run_idx >= text_runs->Count())
+    return false;
+  const ON_TextRun* start_run = (*text_runs)[start_run_idx];
+  const ON_TextRun* end_run = (*text_runs)[end_run_idx];
+  if (nullptr == start_run || nullptr == end_run)
+    return false;
+  if (start_run->Type() != ON_TextRun::RunType::kText && start_run->Type() != ON_TextRun::RunType::kField)
+    return false;
+  if (end_run->Type() != ON_TextRun::RunType::kText && end_run->Type() != ON_TextRun::RunType::kField)
+    return false;
+  ON_wString start_run_string = start_run->TextString();
+  ON_wString end_run_string = end_run->TextString();
+  int start_string_length = start_run_string.Length();
+  int end_string_length = end_run_string.Length();
+  if (start_run_pos >= start_string_length || end_run_pos >= end_string_length)
+    return false;
+
+  ON_wString new_string;
+  if (start_run_pos > 0)
+    new_string = start_run_string.Left(start_run_pos);
+  new_string += repl_str;
+  if (end_run_idx == start_run_idx)
+    new_string += start_run_string.Right(end_string_length - end_run_pos - 1);
+
+  ON__UINT32* cp = nullptr;
+  int cpcount = ON_TextContext::ConvertStringToCodepoints(new_string, cp);
+
+  ON_TextContent* new_text_content = Duplicate();
+  ON_TextRunArray* new_text_runs = new_text_content->TextRuns(true);
+  ON_TextRun* new_start_run = ON_TextRun::GetManagedTextRun(*(*text_runs)[start_run_idx]);
+  new_start_run->SetUnicodeString(cpcount, cp);
+  new_text_runs->RemoveRun(start_run_idx);
+  new_text_runs->InsertRun(start_run_idx, new_start_run);
+
+  int remcount = 0;
+  for (int ri = start_run_idx+1; ri < end_run_idx; ri++)
+  {
+    new_text_runs->RemoveRun(ri);
+    remcount++;
+  }
+  end_run_idx -= remcount;
+
+  if (end_run_idx > start_run_idx)
+  {
+    if (end_run_pos < end_string_length - 1)
+    {
+      new_string = end_run_string.Right(end_string_length - end_run_pos - 1);
+      ON_TextRun* new_end_run = ON_TextRun::GetManagedTextRun(*(*text_runs)[end_run_idx]);
+
+      cp = nullptr;
+      cpcount = ON_TextContext::ConvertStringToCodepoints(new_string, cp);
+      new_end_run->SetUnicodeString(cpcount, cp);
+      new_text_runs->RemoveRun(end_run_idx);
+      new_text_runs->InsertRun(end_run_idx, new_end_run);
+    }
+    else
+      new_text_runs->RemoveRun(end_run_idx);
+  }
+
+  m__runs = *new_text_runs;
+
+  return true;
+}
+
+
 //-----------------------
 
 void ON_TextContent::Internal_SetRunTextHeight(double height)
@@ -667,6 +775,17 @@ void ON_TextContent::Internal_SetRunTextHeight(double height)
   ON_TextContent::MeasureTextContent(this, true, false);
   if (wrapped)
     WrapText(w);
+}
+
+
+ON::TextHorizontalAlignment ON_TextContent::RuntimeHorizontalAlignment() const
+{
+  return m_runtime_halign;
+}
+
+void ON_TextContent::SetRuntimeHorizontalAlignment(ON::TextHorizontalAlignment halign) const
+{
+  m_runtime_halign = halign;
 }
 
 void ON_TextContent::GetAlignment(ON::TextHorizontalAlignment& horz, ON::TextVerticalAlignment& vert) const
@@ -2018,7 +2137,8 @@ bool ON_TextContent::FormatTolerance(
     double tol_uv = dimstyle->ToleranceUpperValue();
     tol_uv *= length_factor;
 
-    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, bracket_stack_frac, sTol))
+    wchar_t decimal_char = dimstyle->DecimalSeparator();
+    if (ON_TextContent::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, bracket_stack_frac, decimal_char, sTol))
     {
       formatted_string += ON_wString::PlusMinusSymbol;
       formatted_string += sTol;
@@ -2047,10 +2167,11 @@ bool ON_TextContent::FormatTolerance(
       tol_lv_sign = L'+';
     tol_lv = fabs(tol_lv);
 
+    wchar_t decimal_char = dimstyle->DecimalSeparator();
     ON_wString sTol_uv, sTol_lv;
     // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
-    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sTol_uv) &&
-        ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sTol_lv))
+    if (ON_TextContent::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, decimal_char, sTol_uv) &&
+      ON_TextContent::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, decimal_char, sTol_lv))
     {
       formatted_string += L" [[";
       formatted_string += L"|";
@@ -2073,10 +2194,12 @@ bool ON_TextContent::FormatTolerance(
     
     tol_uv = distance + tol_uv;
     tol_lv = distance - tol_lv;
+
+    wchar_t decimal_char = dimstyle->DecimalSeparator();
     ON_wString sDist_u, sDist_l;
     // Can't use stacked fractions in tolerances because run stacking isn't recursive in ON_Text
-    if (ON_NumberFormatter::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, sDist_u) &&
-      ON_NumberFormatter::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, sDist_l))
+    if (ON_TextContent::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, false, decimal_char, sDist_u) &&
+      ON_TextContent::FormatLength(tol_lv, dim_length_display, 0.0, tolprecision, zs, false, decimal_char, sDist_l))
     {
       formatted_string += L" [[";
       formatted_string += L"|";
@@ -2136,7 +2259,8 @@ bool ON_TextContent::FormatDistance(
   if (fabs(distance) < pow(10.0, -(precision + 1)))
     distance = 0.0;
 
-  ON_NumberFormatter::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, formatted_string);
+  wchar_t decimal_char = dimstyle->DecimalSeparator();
+  ON_TextContent::FormatLength(distance, dim_length_display, roundoff, precision, zs, bracket_stack_frac, decimal_char, formatted_string);
   return true;
 }
 
@@ -2279,7 +2403,9 @@ bool ON_TextContent::FormatAngleMeasurement(
           double roundoff = dimstyle->AngleRoundOff();
           int resolution = dimstyle->AngleResolution();
           ON_DimStyle::suppress_zero suppress = dimstyle->AngleZeroSuppress();
-          ON_NumberFormatter::FormatAngleStringDecimal(angle, resolution, roundoff, suppress, sAngle);
+
+          wchar_t decimal_char = dimstyle->DecimalSeparator();
+          ON_TextContent::FormatAngleStringDecimal(angle, resolution, roundoff, suppress, decimal_char, sAngle);
           if (ON_DimStyle::angle_format::DecimalDegrees == dimstyle->AngleFormat())
             sAngle += ON_wString::DegreeSymbol;
           else if (ON_DimStyle::angle_format::Radians == dimstyle->AngleFormat())
@@ -2289,7 +2415,8 @@ bool ON_TextContent::FormatAngleMeasurement(
         }
         else if (ON_DimStyle::angle_format::DegMinSec == dimstyle->AngleFormat())
         {
-          ON_NumberFormatter::FormatAngleStringDMS(angle_radians, sAngle);
+          wchar_t decimal_char = dimstyle->DecimalSeparator();
+          ON_TextContent::FormatAngleStringDMS(angle_radians, decimal_char, sAngle);
         }
 
         formatted_string += sAngle;
@@ -2301,6 +2428,103 @@ bool ON_TextContent::FormatAngleMeasurement(
     }
   }
   return true;
+}
+
+bool ON_TextContent::FormatLength(
+  double distance,
+  ON_DimStyle::LengthDisplay output_lengthdisplay,
+  double round_off,
+  int resolution,
+  ON_DimStyle::suppress_zero zero_suppress,
+  bool bracket_fractions,
+  wchar_t decimal_char,
+  ON_wString & output)
+{
+  bool rc = ON_NumberFormatter::FormatLength( distance, output_lengthdisplay,  round_off,  resolution, zero_suppress,  bracket_fractions, output);
+  if (rc && ON_wString::DecimalAsPeriod != decimal_char)
+    output.Replace(ON_wString::DecimalAsPeriod, decimal_char);
+  return rc;
+}
+
+bool ON_TextContent::FormatAngleStringDMS(
+  double angle_degrees,
+  wchar_t decimal_char,
+  ON_wString& formatted_string)
+{
+  bool rc = ON_NumberFormatter::FormatAngleStringDMS(angle_degrees, formatted_string);
+  if (rc && ON_wString::DecimalAsPeriod != decimal_char)
+    formatted_string.Replace(ON_wString::DecimalAsPeriod, decimal_char);
+  return rc;
+}
+
+bool ON_TextContent::FormatAngleStringDecimal(
+  double angle_radians,
+  int resolution,
+  double roundoff,
+  ON_DimStyle::suppress_zero zero_suppression,
+  wchar_t decimal_char,
+  ON_wString& formatted_string)
+{
+  bool rc = ON_NumberFormatter::FormatAngleStringDecimal(angle_radians, resolution, roundoff, zero_suppression, formatted_string);
+  if (rc && ON_wString::DecimalAsPeriod != decimal_char)
+    formatted_string.Replace(ON_wString::DecimalAsPeriod, decimal_char);
+  return rc;
+}
+
+bool ON_TextContent::FormatArea(
+  double area_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  double area = area_in;
+
+  if (nullptr == dimstyle)
+    dimstyle = &ON_DimStyle::Default;
+
+  const ON_DimStyle::LengthDisplay dim_length_display =
+    alt
+    ? dimstyle->AlternateDimensionLengthDisplay()
+    : dimstyle->DimensionLengthDisplay();
+
+  const ON::LengthUnitSystem dim_us
+    = alt
+    ? dimstyle->AlternateDimensionLengthDisplayUnit(0)
+    : dimstyle->DimensionLengthDisplayUnit(0);
+
+  double length_factor =
+    alt
+    ? dimstyle->AlternateLengthFactor()
+    : dimstyle->LengthFactor();
+
+  double unit_length_factor = ON::UnitScale(units_in, dim_us);
+  area = unit_length_factor * unit_length_factor * length_factor * area_in;
+
+  double roundoff = alt ? dimstyle->AlternateRoundOff() : dimstyle->RoundOff();
+  int precision = alt ? dimstyle->AlternateLengthResolution() : dimstyle->LengthResolution();
+  ON_DimStyle::suppress_zero zs = alt ? dimstyle->AlternateZeroSuppress() : dimstyle->ZeroSuppress();
+
+  if (fabs(area) < pow(10.0, -(precision + 1)))
+    area = 0.0;
+
+  wchar_t decimal_char = dimstyle->DecimalSeparator();
+
+  ON_DimStyle::OBSOLETE_length_format output_format = ON_DimStyle::OBSOLETE_length_format::Decimal;
+
+  bool rc = ON_NumberFormatter::FormatNumber(
+    area,
+    output_format,
+    roundoff,
+    precision,
+    zs,
+    false,
+    formatted_string);
+
+  if (rc && ON_wString::DecimalAsPeriod != decimal_char)
+    formatted_string.Replace(ON_wString::DecimalAsPeriod, decimal_char);
+
+  return rc;
 }
 
 ON::TextVerticalAlignment ON::TextVerticalAlignmentFromUnsigned(
@@ -2330,6 +2554,7 @@ ON::TextHorizontalAlignment ON::TextHorizontalAlignmentFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Left);
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Center);
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Right);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Auto);
   }
   ON_ERROR("invalid vertical_alignment_as_unsigned parameter.");
   return (ON::TextHorizontalAlignment::Left);

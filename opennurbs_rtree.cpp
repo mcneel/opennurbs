@@ -2675,8 +2675,9 @@ double CalcRectVolumeHelper(const ON_RTreeBBox* a_rect)
   r += d * d;
   d = (a_rect->m_max[2] - a_rect->m_min[2]);
   r += d * d;
-  r = sqrt(r*0.5); // r = sqrt((dx^2 + dy^2 + dz^2)/2);
-  return (r * r * r * 4.1887902047863909846168578443727); // 4/3 pi r^3
+  //r = sqrt(r*0.5); // r = sqrt((dx^2 + dy^2 + dz^2)/2);
+  //return (r * r * r * 4.1887902047863909846168578443727); // 4/3 pi r^3
+  return r;
 #elif ( 2 == ON_RTree_NODE_DIM )
   // 2d bounding circle volume
   d = (a_rect->m_max[0] - a_rect->m_min[0]);

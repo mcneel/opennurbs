@@ -397,7 +397,7 @@ public:
   {
     Solid    = 0,  // uses entity color
     Lines    = 1,  // pat file definition
-    Gradient = 2,  // uses a fill color function
+    //Gradient = 2,  // uses a fill color function
   };
 
   static ON_HatchPattern::HatchFillType HatchFillTypeFromUnsigned(
@@ -882,6 +882,64 @@ public:
     false - no loops in input array or an error adding them
   */
   bool ReplaceLoops(ON_SimpleArray<const ON_Curve*>& loops);
+
+#if defined(OPENNURBS_GRADIENT_WIP)
+  /*
+  Description:
+    Returns gradient fill type for this hatch
+  */
+  ON_GradientType GetGradientType() const;
+  
+  /*
+  Description:
+    Set the gradient fill type for this hatch
+  */
+  void SetGradientType(ON_GradientType gt);
+
+  /*
+  Description:
+    Get list of color stops used for gradient drawing.
+  */
+  void GetGradientColors(ON_SimpleArray<ON_ColorStop>& colors) const;
+
+  /*
+  Description:
+    Set list of color stops used for gradient drawing.
+  */
+  bool SetGradientColors(const ON_SimpleArray<ON_ColorStop>& colors);
+
+  /*
+  Description:
+    Get gradient repeat factor for gradient drawing.
+    > 1 repeat reflected number of times between start and end point
+    < -1 repeat wrap number of times between start and end point
+    any other value does not affect repeat on a gradient
+  */
+  double GetGradientRepeat() const;
+  
+  /*
+  Description:
+    Set gradient repeat factor for gradient drawing
+    > 1 repeat reflected number of times between start and end point
+    < -1 repeat wrap number of times between start and end point
+    any other value does not affect repeat on a gradient
+  Returns:
+    True if the repeat factor was successfully set
+  */
+  bool SetGradientRepeat(double repeat);
+
+  /*
+  Description:
+    Get the start and end points for gradient drawing in 3d
+  */
+  void GetGradientEndPoints(ON_3dPoint& startPoint, ON_3dPoint& endPoint) const;
+
+  /*
+  Description:
+    Set the start and end points for gradient drawing
+  */
+  bool SetGradientEndPoints(ON_3dPoint startpoint, ON_3dPoint endPoint);
+#endif
 
 private:
   ON_Plane m_plane;
