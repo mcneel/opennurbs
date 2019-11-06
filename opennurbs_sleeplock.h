@@ -168,6 +168,15 @@ public:
   */
   ON_SleepLockGuard(class ON_SleepLock& sleep_lock);
 
+  // Used by The ThreadSafe...() functions and for expert users 
+  // to use when managing memory controlled by this pool. Best
+  // to ingnore this unless you have a very clear idea of what
+  // you are doing, why you are doing it, and when you are doing it.
+  // Otherwise, you'll find yourself waiting forever on a nested
+  // access request. 
+  ON_SleepLockGuard(class ON_FixedSizePool& fsp);
+
+
   /*
   Description:
     Calls sleep_lock.GetLock(interval_wait_msecs,max_wait_msecs).

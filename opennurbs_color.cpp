@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,16 +19,16 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
 ON_Color::ON_Color(unsigned int colorref)
-  : m_color(colorref) 
+  : m_color(colorref)
 {
-  // No adjustments are required on big endian computers because all 
-  // unsigned int conversion and all IO preserves the order of the 
+  // No adjustments are required on big endian computers because all
+  // unsigned int conversion and all IO preserves the order of the
   // ON_Color::m_RGBA[4] bytes.
 }
 
@@ -50,8 +50,8 @@ unsigned int ON_Color::WindowsRGB() const
 
 ON_Color::operator unsigned int() const
 {
-  // No adjustments are required on big endian computers because all 
-  // unsigned int conversion and all IO preserves the order of the 
+  // No adjustments are required on big endian computers because all
+  // unsigned int conversion and all IO preserves the order of the
   // ON_Color::m_RGBA[4] bytes.
   return m_color;
 }
@@ -84,25 +84,25 @@ int ON_Color::Alpha() const
 { return m_RGBA[ON_Color::kAlphaByteIndex];}
 
 double ON_Color::FractionRed() const
-{ 
+{
   //return Red()/255.0;
   return m_RGBA[ON_Color::kRedByteIndex]*0.003921568627450980392156862745; // better fodder for optimizer
 }
 
-double ON_Color::FractionGreen() const       
-{ 
+double ON_Color::FractionGreen() const
+{
   //return Green()/255.0;
   return m_RGBA[ON_Color::kGreenByteIndex]*0.003921568627450980392156862745; // better fodder for optimizer
 }
 
-double ON_Color::FractionBlue() const       
-{ 
+double ON_Color::FractionBlue() const
+{
   //return Blue()/255.0;
   return m_RGBA[ON_Color::kBlueByteIndex]*0.003921568627450980392156862745; // better fodder for optimizer
 }
 
-double ON_Color::FractionAlpha() const       
-{ 
+double ON_Color::FractionAlpha() const
+{
   //return Alpha()/255.0;
   return m_RGBA[ON_Color::kAlphaByteIndex]*0.003921568627450980392156862745; // better fodder for optimizer
 }
@@ -119,23 +119,23 @@ void ON_Color::SetFractionalRGB(double r,double g,double b)
 
 void ON_Color::SetAlpha(int alpha)
 {
-	if (alpha < 0 ) alpha = 0; else if ( alpha > 255 ) alpha = 255;	
+	if (alpha < 0 ) alpha = 0; else if ( alpha > 255 ) alpha = 255;
 	m_RGBA[ON_Color::kAlphaByteIndex] = (unsigned char)alpha;
 }
 
 void ON_Color::SetFractionalAlpha(double alpha)
 {
-	if (alpha < 0.0 ) alpha = 0.0; else if ( alpha > 1.0 ) alpha = 1.0;	
+	if (alpha < 0.0 ) alpha = 0.0; else if ( alpha > 1.0 ) alpha = 1.0;
   SetAlpha((int)(alpha*255.0));
 }
 
 void
 ON_Color::SetRGBA( int red, int green, int blue, int alpha )
 {
-	if (red   < 0 ) red   = 0; else if ( red   > 255 ) red   = 255;	
-	if (green < 0 ) green = 0; else if ( green > 255 ) green = 255;	
-	if (blue  < 0 ) blue  = 0; else if ( blue  > 255 ) blue  = 255;	
-	if (alpha < 0 ) alpha = 0; else if ( alpha > 255 ) alpha = 255;	
+	if (red   < 0 ) red   = 0; else if ( red   > 255 ) red   = 255;
+	if (green < 0 ) green = 0; else if ( green > 255 ) green = 255;
+	if (blue  < 0 ) blue  = 0; else if ( blue  > 255 ) blue  = 255;
+	if (alpha < 0 ) alpha = 0; else if ( alpha > 255 ) alpha = 255;
   m_RGBA[ON_Color::kRedByteIndex] = (unsigned char)red;
   m_RGBA[ON_Color::kGreenByteIndex] = (unsigned char)green;
   m_RGBA[ON_Color::kBlueByteIndex] = (unsigned char)blue;
@@ -146,9 +146,9 @@ void
 ON_Color::SetFractionalRGBA( double red, double green, double blue, double alpha )
 {
   int r,g,b,a;
-	if (red   < 0.0 ) red   = 0.0; else if ( red   > 1.0 ) red   = 1.0;	
-	if (green < 0.0 ) green = 0.0; else if ( green > 1.0 ) green = 1.0;	
-	if (blue  < 0.0 ) blue  = 0.0; else if ( blue  > 1.0 ) blue  = 1.0;	
+	if (red   < 0.0 ) red   = 0.0; else if ( red   > 1.0 ) red   = 1.0;
+	if (green < 0.0 ) green = 0.0; else if ( green > 1.0 ) green = 1.0;
+	if (blue  < 0.0 ) blue  = 0.0; else if ( blue  > 1.0 ) blue  = 1.0;
 	if (alpha < 0.0 ) alpha = 0.0; else if ( alpha > 1.0 ) alpha = 1.0;
 
   red   *= 255.0;
@@ -172,8 +172,8 @@ ON_Color::SetFractionalRGBA( double red, double green, double blue, double alpha
 
 double ON_Color::Hue() const
 {
-  // returns 0 to 2*pi 
-  // 0    = red,  pi/3   = yellow, 2*pi/3 = green, 
+  // returns 0 to 2*pi
+  // 0    = red,  pi/3   = yellow, 2*pi/3 = green,
   // pi   = cyan, 4*pi/3 = blue,   5*pi/3 = magenta,
   // 2*pi = red
   double h;
@@ -192,7 +192,7 @@ double ON_Color::Hue() const
     }
     else if ( g == maxrgb)
       h = 2.0 + (b - r)*d;
-    else 
+    else
       h = 4.0 + (r - g)*d;
     h *= ON_PI/3.0;
   }
@@ -229,10 +229,10 @@ double ON_Color::Value() const
   return (maxrgb/255.0);
 }
 
-void ON_Color::SetHSV( 
-       double hue,         // hue in radians 
+void ON_Color::SetHSV(
+       double hue,         // hue in radians
        double saturation, // satuation 0.0 = gray, 1.0 = saturated
-       double value       // value     
+       double value       // value
        )
 {
   int i;
@@ -250,15 +250,15 @@ void ON_Color::SetHSV(
       if ( hue < 0.0 )
         hue += 6.0;
       i = (int)floor(hue);
-    }    
-    f = hue - i;    
+    }
+    f = hue - i;
     p = value * ( 1.0 - saturation);
     q = value * ( 1.0 - ( saturation * f) );
     t = value * ( 1.0 - ( saturation * ( 1.0 - f) ) );
     switch( i)
     {
     case 0:
-      r = value; g = t; b = p; break;      
+      r = value; g = t; b = p; break;
     case 1:
       r = q; g = value; b = p; break;
     case 2:
@@ -268,11 +268,170 @@ void ON_Color::SetHSV(
     case 4:
       r = t; g = p; b = value; break;
     case 5:
-      r = value; g = p; b = q; break;      
+      r = value; g = p; b = q; break;
     default:
       r = 0; g = 0; b = 0; break; // to keep lint quiet
-    }    
+    }
   }
   SetFractionalRGB(r,g,b);
 }
 
+ON_ColorStop::ON_ColorStop(const ON_Color& color, double position)
+  : m_color(color)
+  , m_position(position)
+{
+}
+
+ON_4fColor::ON_4fColor()
+{
+  for (int i = 0; i < 4; i++)
+  {
+    m_color[i] = ON_UNSET_FLOAT;
+  }
+}
+
+//Note that these function will set the alpha correctly from ON_Colors "inverted" alpha.
+ON_4fColor::ON_4fColor(const ON_Color& in)
+{
+  *this = in;
+}
+
+ON_4fColor& ON_4fColor::operator=(const ON_Color& in)
+{
+  SetRed((float)in.FractionRed());
+  SetGreen((float)in.FractionGreen());
+  SetBlue((float)in.FractionBlue());
+  SetAlpha(1.0f - (float)in.FractionAlpha());
+  return *this;
+}
+
+//Will invert the opacity alpha to transparency.
+ON_4fColor::operator ON_Color(void) const
+{
+  ON_Color out;
+  out.SetFractionalRGBA(Red(), Green(), Blue(), 1.0 - Alpha());
+  return out;
+}
+
+float ON_4fColor::Red(void) const   { return m_color[0];}
+void ON_4fColor::SetRed(float f)    { m_color[0] = f;}
+
+float ON_4fColor::Green(void) const { return m_color[1];}
+void ON_4fColor::SetGreen(float f)  { m_color[1] = f;}
+
+float ON_4fColor::Blue(void) const  { return m_color[2]; }
+void ON_4fColor::SetBlue(float f)   { m_color[2] = f; }
+
+float ON_4fColor::Alpha(void) const { return m_color[3]; }
+void ON_4fColor::SetAlpha(float f)  { m_color[3] = f; }
+
+void ON_4fColor::SetRGBA(float r, float g, float b, float a)
+{
+  m_color[0] = r;
+  m_color[1] = g;
+  m_color[2] = b;
+  m_color[3] = a;
+}
+
+bool ON_4fColor::IsValid(class ON_TextLog* text_log) const
+{
+  for (int i = 0; i < 4; i++)
+  {
+    if (ON_IS_UNSET_FLOAT(m_color[i]))
+      return false;
+  }
+  return true;
+}
+
+
+
+bool ON_ColorStop::Write(ON_BinaryArchive& archive) const
+{
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 0);
+  if (!rc)
+    return false;
+
+  for (;;)
+  {
+    rc = archive.WriteColor(m_color);
+    if (!rc) break;
+    rc = archive.WriteDouble(m_position);
+    if (!rc) break;
+
+    break;
+  }
+
+  if (!archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_ColorStop::Read(ON_BinaryArchive& file)
+{
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version);
+  if (!rc)
+    return false;
+  for (;;)
+  {
+    rc = (1 == major_version);
+    if (!rc) break;
+    rc = file.ReadColor(m_color);
+    if (!rc) break;
+    rc = file.ReadDouble(&m_position);
+    if (!rc) break;
+
+    break;
+  }
+  if (!file.EndRead3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+
+static int CompareNans(double a, double b)
+{
+  if (a == a)
+  {
+    if (b == b)
+    {
+      return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    }
+    // a is not a NAN, b is a NAN
+    return -1; // a < b - NAN's are last
+  }
+  else if (b == b)
+  {
+    // a is a NAN, b is not a NAN
+    return -1; // b < a - NAN's are last
+  }
+  return 0; // a and b are both NaNs
+}
+
+static int CompareDouble(double a, double b)
+{
+  return ((a < b) ? -1 : ((a > b) ? 1 : (a == b ? 0 : CompareNans(a, b))));
+}
+
+// < 0 if this < arg, 0 ir this==arg, > 0 if this > arg
+int ON_4fColor::Compare(const ON_4fColor& b) const
+{
+  int rc = CompareDouble(Red(), b.Red());
+  if (0 != rc)
+    return rc;
+
+  rc = CompareDouble(Green(), b.Green());
+  if (0 != rc)
+    return rc;
+
+  rc = CompareDouble(Blue(), b.Blue());
+  if (0 != rc)
+    return rc;
+
+  rc = CompareDouble(Alpha(), b.Alpha());
+
+  return rc;
+}

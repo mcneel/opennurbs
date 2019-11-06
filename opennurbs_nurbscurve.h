@@ -941,9 +941,31 @@ public:
     double delta = 1.0 
     );
 
-  bool IsClamped( // determine if knot vector is clamped
-        int = 2 // end to check: 0 = start, 1 = end, 2 = start and end
+  /*
+  Description:
+    Test the knot vector to see if it is clamped.
+  Parameters:
+    end:
+     0: test start
+     1: test end
+     2: test start and end.
+  */
+  bool IsClamped(
+        int end = 2
         ) const;
+
+  /*
+  Description:
+    Test the start or end of a curve to see if it's natural (Zero 2nd derivative).
+  Parameters:
+    end:
+     0: test start
+     1: test end
+     2: test start and end.
+  */
+  bool IsNatural( 
+    int end = 2  
+  ) const;
   
   double SuperfluousKnot(
            int // 0 = start, 1 = end
@@ -1002,9 +1024,57 @@ public:
   bool ReserveCVCapacity(
     int // number of doubles to reserve
     );
+
+  /*
+  Returns:
+    If this class is managing m_cv, then CVCapacity() is the number of doubles
+    m_cv[] can accomodate. Otherwise, CVCapacity() is 0.
+  */
+  int CVCapacity() const;
+
   bool ReserveKnotCapacity(
     int // number of doubles to reserve
     );
+
+  /*
+  Returns:
+    If this class is managing m_knot, then KnotCapacity() is the number of doubles
+    m_knot[] can accomodate. Otherwise, KnotCapacity() is 0.
+  */
+  int KnotCapacity() const;
+
+  /*
+  Description:
+    Unconditionally transfer knot managment to caller and zero m_knot and KnotCapacity().
+  Parameters:
+    knot_capacity - [out]
+      knot_capacity is set to input value of KnotCapacity() and then KnotCapacity() is set to 0.
+    knot - [out]
+      knot is set to input value of m_knot and then this->m_knot is set to nullptr.
+  Remarks:
+    If knot_capacity > 0, then knot points to memory allocated by onmalloc()/onrealloc().
+  */
+  void UnmanageKnotForExperts(
+    int& knot_capacity,
+    double*& knot
+  );
+
+  /*
+  Description:
+    Unconditionally transfer knot management to this NURBS curve.
+    Sets KnotCapacity() to knot_capacity and m_knot to knot.
+    If knot_capacity > 0, then knot must point to memory allocated by onmalloc()/onrealloc().
+  Parameters:
+    knot_capacity - [in]
+      KnotCapacity() is set to knot_capacity.
+    knot - [in]
+      m_knot is set to knot. 
+  */
+  void ManageKnotForExperts(
+    int knot_capacity,
+    double* knot
+  );
+
 
   //////////
   // returns the length of the control polygon
@@ -1139,6 +1209,42 @@ public:
   bool Reparameterize( double c );
 
 
+ public:
+   /*
+   Returns:
+     True if this curve was explicitly tagged as SubDFriendly and is currently SubDFriendly.
+   */
+   bool SubDFriendlyTag() const;
+
+ public:
+   /*
+   Returns:
+     True if this NURBS curve is cubic, non-rational, uniform, and is either periodic or has clamped end knots.
+   Parameters:
+     bPermitCreases - [in]
+       If true, then a curve with clamped end knots may have interior triple knots.
+   Remarks:
+     The value of SubDFriendlyTag() is ignored.
+   See Also:
+     SubDFriendlyTag().
+   */
+   bool IsSubDFriendly(
+     bool bPermitCreases
+   ) const;
+
+   /*
+   Description:
+     Set the curve's SubDFriendlyTag() property.
+   Parameters:
+     bSubDFriendlyTag - [in]
+       If bSubDFriendlyTag is true and IsSubDFriendly(true) is true,
+       then the SubDFriendlyTag() property is set to true. 
+       Otherwise the SubDFriendlyTag property is set to false.
+   */
+   void SetSubDFriendlyTag(
+     bool bSubDFriendlyTag
+   );
+
 
   /////////////////////////////////////////////////////////////////
   // Implementation
@@ -1167,17 +1273,24 @@ public:
 
   // knot vector memory
 
-  int     m_knot_capacity;  // If m_knot_capacity > 0, then m_knot[]
-                            // is an array of at least m_knot_capacity
-                            // doubles whose memory is managed by the
-                            // ON_NurbsCurve class using onmalloc(),
-                            // onrealloc(), and onfree().
-                            // If m_knot_capacity is 0 and m_knot is
-                            // not nullptr, then  m_knot[] is assumed to
-                            // be big enough for any requested operation
-                            // and m_knot[] is not deleted by the
-                            // destructor.
+private:
+  enum masks : unsigned int
+  {
+    knot_capacity = 0x0FFFFFFFU,
+    subdfriendly_tag = 0x80000000U,
+    all_tags = 0xF0000000U,
+  };
+  unsigned int m_knot_capacity_and_tags;
+  // unsigned int tags = (m_knot_capacity_and_tags & ON_NurbsCurve::masks::tags);
+  // unsigned intknot_capacity = (m_knot_capacity_and_tags & ON_NurbsCurve::masks::knot_capacity_mask);
+  // If knot_capacity > 0, then m_knot[] is an array of at least knot_capacity
+  // doubles whose memory is managed by the ON_NurbsCurve class using 
+  // onmalloc(), onrealloc(), and onfree().
+  // If knot_capacity is 0 and m_knot is not nullptr, then  m_knot[] is assumed to
+  // be big enough for any requested operation and m_knot[] is not deleted by the
+  // destructor.
 
+public:
   double* m_knot;           // Knot vector. ( The knot vector has length
                             // m_order+m_cv_count-2. )
   
@@ -1186,6 +1299,7 @@ public:
   int     m_cv_stride;      // The pointer to start of "CV[i]" is
                             //   m_cv + i*m_cv_stride.
 
+public:
   int     m_cv_capacity;    // If m_cv_capacity > 0, then m_cv[] is an array
                             // of at least m_cv_capacity doubles whose
                             // memory is managed by the ON_NurbsCurve
@@ -1195,6 +1309,7 @@ public:
                             // for any requested operation and m_cv[] is not
                             // deleted by the destructor.
 
+public:
   double* m_cv;             // Control points.
                             //   - The i-th control point begins at
                             //     CV(i) = m_cv + (i*m_cv_stride).
@@ -1203,6 +1318,17 @@ public:
                             //   - If m_is_rat is true, then the i-th control
                             //     point is stored in HOMOGENEOUS form and is
                             //     [ CV(i)[0], ..., CV(i)[m_dim] ].
+
+private:
+  #if defined(ON_HAS_RVALUEREF)
+  void Internal_ShallowCopyFrom(const ON_NurbsCurve& src);
+  #endif
+private:
+  void Internal_DeepCopyFrom(const ON_NurbsCurve& src);
+private:
+  void Internal_InitializeToZero();
+private:
+  void Internal_Destroy();
 };
 
 /* Adjust the second point to be within the domains, when the first point is 

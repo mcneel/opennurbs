@@ -368,6 +368,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_subd_ref.cpp \
 	opennurbs_subd_ring.cpp \
 	opennurbs_subd_sector.cpp \
+	opennurbs_subd_texture.cpp \
 	opennurbs_sum.cpp \
 	opennurbs_sumsurface.cpp \
 	opennurbs_surface.cpp \
@@ -543,6 +544,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_subd_ref.o \
 	opennurbs_subd_ring.o \
 	opennurbs_subd_sector.o \
+	opennurbs_subd_texture.o \
 	opennurbs_sum.o \
 	opennurbs_sumsurface.o \
 	opennurbs_surface.o \

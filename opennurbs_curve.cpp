@@ -585,7 +585,10 @@ bool ON_Curve::IsClosed() const
     {
       // Note:  The point compare test should be the same
       //        as the one used in ON_PolyCurve::HasGap().
-      //
+      // June 2019 - sometime in the past decade ON_PolyCurve::HasGap()
+      // changed and the test there is different from this test.
+      // The initial "Note" no longer applies becaue it's no longer
+      // clear why the current ON_PolyCurve::HasGap() was changed.
       if ( ON_PointsAreCoincident( dim, false, a, p ) ) 
       {
         if (    Evaluate( d.ParameterAt(1.0/3.0), 0, dim, b, 0 ) 
@@ -593,7 +596,7 @@ bool ON_Curve::IsClosed() const
            )
         {
           if (    false == ON_PointsAreCoincident( dim, false, a, b ) 
-               && false == ON_PointsAreCoincident( dim, false, p, c ) 
+               && false == ON_PointsAreCoincident( dim, false, a, c ) 
                && false == ON_PointsAreCoincident( dim, false, p, b ) 
                && false == ON_PointsAreCoincident( dim, false, p, c ) 
              )
@@ -2515,6 +2518,10 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
     if (a->tan_dot <= context->dot_tol && b->tan_dot > context->dot_tol) return 1;
     if (a->dist < b->dist) return -1;
     if (a->dist > b->dist) return 1;
+    if (a->id[0] < b->id[0]) return -1;
+    if (a->id[0] > b->id[0]) return 1;
+    if (a->id[1] < b->id[1]) return -1;
+    if (a->id[1] > b->id[1]) return 1;
     return 0;
   }
   else {
@@ -2522,6 +2529,10 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
     if (a->dist > b->dist) return 1;
     if (a->tan_dot > b->tan_dot) return -1;
     if (a->tan_dot < b->tan_dot) return 1;
+    if (a->id[0] < b->id[0]) return -1;
+    if (a->id[0] > b->id[0]) return 1;
+    if (a->id[1] < b->id[1]) return -1;
+    if (a->id[1] > b->id[1]) return 1;
     return 0;
   }
 }
@@ -2841,6 +2852,8 @@ static bool GetCurveEndData(int count,
                        ON_SimpleArray<CurveJoinEndData>& EData)
 
 {
+  join_tol = join_tol * join_tol;
+
   EData.Reserve(count);
   bool bHaveTans = (StartTans && EndTans) ? true : false;
   if (dot_tol < 0.0)
@@ -2863,7 +2876,7 @@ static bool GetCurveEndData(int count,
         const ON_3dPoint& Pi = (endi) ? EndPoints[i] : StartPoints[i];
         for (int endj=0; endj<2; endj++){
           const ON_3dPoint& Pj = (endj) ? EndPoints[j] : StartPoints[j];
-          dist[endi][endj] = Pi.DistanceTo(Pj);
+          dist[endi][endj] = (Pi-Pj).LengthSquared();
           if (dist[endi][endj] >= join_tol)
             bDoIt[endi][endj] = false;
         }

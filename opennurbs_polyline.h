@@ -122,10 +122,33 @@ public:
     double tolerance = 0.0 
     ) const;
 
+  /*
+  Description:
+    Determine if a polyline is convex.
+  Parameters:
+    bStrictlyConvex - [in]
+      If false, colinear segments are considered convex.  
+  Returns
+    True if the polyline is a closed, convex loop.
+  */
+  bool IsConvexLoop(
+    bool bStrictlyConvex
+  ) const;
+
 
   // Returns:
   //   Length of the polyline.
   double Length() const;
+
+
+  // Parameters:
+  //   segment_index - [in] zero based segment index
+  // Returns:
+  //   line = point[segment_index] -> point[segment_index+1]
+  ON_Line Segment(
+    int segment_index
+  ) const;
+
 
   // Parameters:
   //   segment_index - [in] zero based segment index
@@ -220,7 +243,8 @@ Parameters:
   InPlines - [in] Array of polylines to be joined (not modified)
   OutPlines - [out] Resulting joined polylines and copies of polylines that were not joined to anything
                     are appended.
-  join_tol - [in] Distance tolerance used to decide if endpoints are close enough
+  join_tol - [in] Distance tolerance used to decide if endpoints are close enough. Curves or segments with length
+                  less than join_tol are NOT collapsed and can cause problems when endpoints do not match exactly.
   kink_tol - [in] Angle in radians.  If > 0.0, then curves within join_tol will only be joined if the angle between them
                   is less than kink_tol. If <= 0, then the angle will be ignored and only join_tol will be used.
   bUseTanAngle - [in] If true, choose the best match using angle between tangents.  

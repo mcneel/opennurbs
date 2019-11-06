@@ -5890,7 +5890,8 @@ const wchar_t* ON_TextDot::FontFace() const
 
 void ON_TextDot::SetFontFace( const wchar_t* font_face )
 {
-  SetDotText(font_face, true, m_font_face);
+  m_font_face = font_face;
+  m_font_face.TrimLeftAndRight();
 }
 
 static void SetDisplayBitsFromBool(

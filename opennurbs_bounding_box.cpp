@@ -991,16 +991,13 @@ unsigned int ON_ClippingRegion::TransformPoint(
   if (y < -w) out |= 0x04; else if (y > w) out |= 0x08;
   z = xform[8]*cv[0] + xform[9]*cv[1] + xform[10]*cv[2] + xform[11];
   if (z < -w) out |= 0x10; else if (z > w) out |= 0x20;
-  if ( w <= 0.0 )
+  if ( false == (w > 0.0) )
   {
-    w = (0.0==w) ? 1.0 : 1.0/w;
+    if (0.0 == w || false == ON_IsValid(w))
+      w = 1.0;
     out |= 0x80000000;
   }
-  else
-  {
-    w = 1.0/w;
-  }
-  Q.x = x*w; Q.y = y*w; Q.z = z*w;
+  Q.x = x/w; Q.y = y/w; Q.z = z/w;
   return out;
 }
 
@@ -1412,6 +1409,7 @@ bool ON_ClippingRegionPoints::AppendClipPoints(
   }
   return true;
 }
+
 
 bool ON_ClippingRegionPoints::AppendClipPoint(
   ON_3dPoint clip_point,

@@ -70,11 +70,19 @@ ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
   case ON_COMPONENT_INDEX::extrusion_cap_surface:    t = ON_COMPONENT_INDEX::extrusion_cap_surface;    break;
   case ON_COMPONENT_INDEX::extrusion_path:           t = ON_COMPONENT_INDEX::extrusion_path;           break;
 
+  case ON_COMPONENT_INDEX::subd_vertex:        t = ON_COMPONENT_INDEX::subd_vertex;        break;
+  case ON_COMPONENT_INDEX::subd_edge:          t = ON_COMPONENT_INDEX::subd_edge;          break;
+  case ON_COMPONENT_INDEX::subd_face:          t = ON_COMPONENT_INDEX::subd_face;          break;
+
+  case ON_COMPONENT_INDEX::hatch_loop:         t = ON_COMPONENT_INDEX::hatch_loop;         break;
+
   case ON_COMPONENT_INDEX::dim_linear_point:   t = ON_COMPONENT_INDEX::dim_linear_point;   break;
   case ON_COMPONENT_INDEX::dim_radial_point:   t = ON_COMPONENT_INDEX::dim_radial_point;   break;
   case ON_COMPONENT_INDEX::dim_angular_point:  t = ON_COMPONENT_INDEX::dim_angular_point;  break;
   case ON_COMPONENT_INDEX::dim_ordinate_point: t = ON_COMPONENT_INDEX::dim_ordinate_point; break;
   case ON_COMPONENT_INDEX::dim_text_point:     t = ON_COMPONENT_INDEX::dim_text_point;     break;
+  case ON_COMPONENT_INDEX::dim_centermark_point:     t = ON_COMPONENT_INDEX::dim_centermark_point;     break;
+  case ON_COMPONENT_INDEX::dim_leader_point:         t = ON_COMPONENT_INDEX::dim_leader_point;         break;
   }
   return t;
 }
@@ -267,6 +275,11 @@ bool  ON_COMPONENT_INDEX::IsPointCloudComponentIndex() const
   return ( ON_COMPONENT_INDEX::pointcloud_point == m_type && m_index >= 0 );
 }
 
+bool  ON_COMPONENT_INDEX::IsHatchLoopComponentIndex() const
+{
+  return (ON_COMPONENT_INDEX::hatch_loop == m_type && m_index >= 0);
+}
+
 static void ToStringHelper( ON_COMPONENT_INDEX ci, char* buffer, size_t sizeof_buffer )
 {
   char* str = buffer;
@@ -323,11 +336,19 @@ static void ToStringHelper( ON_COMPONENT_INDEX ci, char* buffer, size_t sizeof_b
   case ON_COMPONENT_INDEX::extrusion_cap_surface:    s = "ON_COMPONENT_INDEX::extrusion_cap_surface";    break;
   case ON_COMPONENT_INDEX::extrusion_path:           s = "ON_COMPONENT_INDEX::extrusion_path";           break;
 
+  case ON_COMPONENT_INDEX::subd_vertex:        s = "ON_COMPONENT_INDEX::subd_vertex";        break;
+  case ON_COMPONENT_INDEX::subd_edge:          s = "ON_COMPONENT_INDEX::subd_edge";          break;
+  case ON_COMPONENT_INDEX::subd_face:          s = "ON_COMPONENT_INDEX::subd_face";          break;
+
+  case ON_COMPONENT_INDEX::hatch_loop:         s = "ON_COMPONENT_INDEX::hatch_loop";         break;
+
   case ON_COMPONENT_INDEX::dim_linear_point:   s = "ON_COMPONENT_INDEX::dim_linear_point";   break;
   case ON_COMPONENT_INDEX::dim_radial_point:   s = "ON_COMPONENT_INDEX::dim_radial_point";   break;
   case ON_COMPONENT_INDEX::dim_angular_point:  s = "ON_COMPONENT_INDEX::dim_angular_point";  break;
   case ON_COMPONENT_INDEX::dim_ordinate_point: s = "ON_COMPONENT_INDEX::dim_ordinate_point"; break;
   case ON_COMPONENT_INDEX::dim_text_point:     s = "ON_COMPONENT_INDEX::dim_text_point";     break;
+  case ON_COMPONENT_INDEX::dim_centermark_point:     s = "ON_COMPONENT_INDEX::dim_centermark_point";     break;
+  case ON_COMPONENT_INDEX::dim_leader_point:         s = "ON_COMPONENT_INDEX::dim_leader_point";         break;
 
   default: s = 0; break;
   }
@@ -458,6 +479,16 @@ bool ON_COMPONENT_INDEX::IsSet() const
   case ON_COMPONENT_INDEX::subd_edge:
   case ON_COMPONENT_INDEX::subd_face:
 
+  case ON_COMPONENT_INDEX::hatch_loop:
+
+  case ON_COMPONENT_INDEX::dim_linear_point:
+  case ON_COMPONENT_INDEX::dim_radial_point:
+  case ON_COMPONENT_INDEX::dim_angular_point:
+  case ON_COMPONENT_INDEX::dim_ordinate_point:
+  case ON_COMPONENT_INDEX::dim_text_point:
+  case ON_COMPONENT_INDEX::dim_centermark_point:
+  case ON_COMPONENT_INDEX::dim_leader_point:
+
     rc = (m_index != -1);
     break;
 
@@ -469,14 +500,32 @@ bool ON_COMPONENT_INDEX::IsSet() const
 }
 
 
-int ON_COMPONENT_INDEX::Compare( const ON_COMPONENT_INDEX* a, const ON_COMPONENT_INDEX* b )
+int ON_COMPONENT_INDEX::CompareType( const ON_COMPONENT_INDEX* lhs, const ON_COMPONENT_INDEX* rhs )
 {
-  int i = ((int)a->m_type) - ((int)b->m_type);
-  if ( 0 == i )
-  {
-    i = a->m_index - b->m_index;
-  }
-  return i;
+  const int lhs_i = (int)lhs->m_type;
+  const int rhs_i = (int)rhs->m_type;
+  if (lhs_i < rhs_i)
+    return -1;
+  if (lhs_i > rhs_i)
+    return 1;
+  return 0;
+}
+
+
+int ON_COMPONENT_INDEX::Compare( const ON_COMPONENT_INDEX* lhs, const ON_COMPONENT_INDEX* rhs )
+{
+  const int lhs_i = (int)lhs->m_type;
+  const int rhs_i = (int)rhs->m_type;
+  if (lhs_i < rhs_i)
+    return -1;
+  if (lhs_i > rhs_i)
+    return 1;
+
+  if (lhs->m_index < rhs->m_index)
+    return -1;
+  if (lhs->m_index > rhs->m_index)
+    return 1;
+  return 0;
 }
 
 bool ON_COMPONENT_INDEX::operator==(const ON_COMPONENT_INDEX& other) const
@@ -775,7 +824,7 @@ bool ON_ObjRef_IRefID::Read( ON_BinaryArchive& archive )
 
 bool ON_ObjRef::Write( ON_BinaryArchive& archive ) const
 {
-  bool rc = archive.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 1, 2 );
+  bool rc = archive.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 1, 3 );
   if ( !rc )
     return false;
 
@@ -822,6 +871,10 @@ bool ON_ObjRef::Write( ON_BinaryArchive& archive ) const
 
     // 1.2 IO fields
     rc = archive.WriteInterval(m_evp.m_s[2]);
+    if (!rc) break;
+
+    // 1.3 IO fields
+    rc = archive.WriteInt((int)m_osnap_mode);
     if (!rc) break;
 
     break;
@@ -884,6 +937,13 @@ bool ON_ObjRef::Read( ON_BinaryArchive& archive )
       {
         rc = archive.ReadInterval(m_evp.m_s[2]);
         if (!rc) break;
+        if (minor_version >= 3)
+        {
+          int osmode = 0;
+          rc = archive.ReadInt(&osmode);
+          if (!rc) break;
+          m_osnap_mode = ON::OSnapMode(osmode);
+        }
       }
     }
 

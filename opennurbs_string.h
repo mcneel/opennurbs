@@ -2152,6 +2152,8 @@ public:
   static const wchar_t Underscore;      // Unicode LOW LINE U+005F
   static const wchar_t Pipe;            // Unicode VERTICAL LINE U+007C
   static const wchar_t Tilde;           // Unicode TILDE U+007E
+  static const wchar_t DecimalAsPeriod; // Unicode PERIOD U+002E	
+  static const wchar_t DecimalAsComma;  // Unicode COMMA U+002C
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
   // Never cast these values as "char"

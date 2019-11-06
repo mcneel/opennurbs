@@ -214,4 +214,74 @@ private:
   };
 };
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// Class ON_ColorStop
+// 
+// Combination of a color and a single value. Typically used for defining
+// gradient fills over a series of colors.
+class ON_CLASS ON_ColorStop
+{
+public:
+  ON_ColorStop() = default;
+  ON_ColorStop(const ON_Color& color, double position);
+
+  bool Write(class ON_BinaryArchive& archive) const;
+  bool Read(class ON_BinaryArchive& archive);
+
+  ON_Color m_color = ON_Color::UnsetColor;
+  double m_position = 0;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_ColorStop>;
+#endif
+
+
+class ON_CLASS ON_4fColor
+{
+public:
+  ON_4fColor();
+  ~ON_4fColor() = default;
+  ON_4fColor(const ON_4fColor&) = default;
+  ON_4fColor& operator=(const ON_4fColor&) = default;
+
+  static const ON_4fColor Unset;
+
+  //Note that these function will set the alpha correctly from ON_Colors "inverted" alpha.
+  ON_4fColor(const ON_Color&);
+  ON_4fColor& operator=(const ON_Color&);
+
+  //Will invert the opacity alpha to transparency.
+  operator ON_Color(void) const;
+
+  float Red(void) const;
+  void SetRed(float);
+
+  float Green(void) const;
+  void SetGreen(float);
+
+  float Blue(void) const;
+  void SetBlue(float);
+
+  //Alpha in ON_4fColor is OPACITY - not transparency as in ON_Color.
+  float Alpha(void) const;
+  void SetAlpha(float);
+
+  void SetRGBA(float r, float g, float b, float a);
+
+  bool IsValid(class ON_TextLog* text_log = nullptr) const;
+
+  // < 0 if this < arg, 0 ir this==arg, > 0 if this > arg
+  int Compare(const ON_4fColor&) const;
+
+private:
+  float m_color[4];
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fColor>;
+#endif
+
+
 #endif

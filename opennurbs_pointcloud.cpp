@@ -78,6 +78,16 @@ ON_PointCloud& ON_PointCloud::operator=( const ON_PointCloud& src )
   return *this;
 }
 
+ON_PointCloud::ON_PointCloud(const ON_3dPoint* P0, int count) : m_P(count)
+{
+  m_P.Create(3, false, count, 3, P0[0]);
+}
+
+ON_PointCloud::ON_PointCloud(const double* P0, int dim, bool is_rat, int count) : m_P(count)
+{
+  m_P.Create(dim, is_rat, count, dim + is_rat, P0);
+}
+
 ON_PointCloud::~ON_PointCloud()
 {
   Destroy();

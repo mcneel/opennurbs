@@ -897,7 +897,6 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
     return nullptr;
   }
 
-#if defined(OPENNURBS_SUBD_WIP)
   if (ON::object_type::mesh_object == archive_object->ObjectType())
   {
     const ON_Mesh* mesh = ON_Mesh::Cast(archive_object);
@@ -931,7 +930,6 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
         return mesh;
     }
   }
-#endif // defined(OPENNURBS_SUBD_WIP)
   
   // no conversion required.
   return nullptr;

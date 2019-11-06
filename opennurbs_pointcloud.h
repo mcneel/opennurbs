@@ -34,6 +34,11 @@ public:
     );
   ON_PointCloud( const ON_PointCloud& );
   ~ON_PointCloud();
+
+  ON_PointCloud(const ON_3dPoint* P0, int count);
+
+  // 0<dim<4 stride is dim+is_rat
+  ON_PointCloud(const double* P0, int dim, bool is_rat, int count); 
   ON_PointCloud& operator=( const ON_PointCloud& );
 
   ON_3dPoint& operator[](int);

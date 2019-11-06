@@ -40,7 +40,8 @@ int APIENTRY DllMain( HANDLE hModule,
     bRunning = true;
   }
 
-  switch( ul_reason_for_call ) {
+  switch( ul_reason_for_call ) 
+  {
 
   case DLL_PROCESS_ATTACH:
     ON_ClassId::IncrementMark(); // make sure each DLL that each process that 

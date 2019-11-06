@@ -264,6 +264,20 @@ double ON_CleanNumber(
   return value;
 }
 
+const ON_wString& ON_NTimesPowerOf10AsStringFail(const ON_wString& g_format, bool bLogError)
+{
+  // The number being formatted might be bogus.
+  // This can occur when values are not properly initialized.
+  if (bLogError) // <- good place for debugging breakpoint
+  {
+    ON_ERROR("Unexpected result."); 
+  }
+
+  // g_format is a valid string representation of the input value, so
+  // the user is seeing something that is correct, but may have
+  // scientific notation or lots of digits.
+  return g_format;
+}
 
 static
 const ON_wString ON_NTimesPowerOf10AsString(
@@ -278,18 +292,29 @@ const ON_wString ON_NTimesPowerOf10AsString(
   if (nullptr != clean_value)
     *clean_value = value;
 
-  // returns n*(10^e) as a pretty string.  
-  //const ON__UINT64 ten = 10;
+  if ( false == ON_IsValid(value) )
+    return ON_NTimesPowerOf10AsStringFail(g_format,false); // value is a nan or UNSET value.
 
+  // ON__UINT64 range is 0 to 18,446,744,073,709,551,615 = 1.8...e19
+  const double max_pretty_value = 1.0e18; // must be <= 18,446,744,073,709,551,615 ( 20 decimal digits )
+  const double min_pretty_value = 1.0 / max_pretty_value;
+  if (fabs(value) >= max_pretty_value || fabs(value) <= min_pretty_value)
+    return ON_NTimesPowerOf10AsStringFail(g_format,false); // value is too big or too small for a "pretty" format.
+  
+
+  // returns n*(10^e) as a "pretty" string - no exponential notation that disturbs users.
   ON__UINT64 q = 1;
   ON__UINT64 i = 0;
   ON__UINT64 f = 0;
-
 
   if (e >= 0)
   {
     for (int ie = 0; ie < e; ie++)
       q *= 10;
+
+    if (fabs((double)n)*fabs((double)q) >= max_pretty_value)
+      return ON_NTimesPowerOf10AsStringFail(g_format,false);
+
     i = n*q;
     f = 0;
   }
@@ -298,6 +323,9 @@ const ON_wString ON_NTimesPowerOf10AsString(
     // e is negative
     for (int ie = 0; ie > e; ie--)
       q *= 10;
+    if (fabs((double)n) <= min_pretty_value*fabs((double)q))
+      return ON_NTimesPowerOf10AsStringFail(g_format,false);
+
     i = n / q;
     f = n % q;
   }
@@ -311,7 +339,7 @@ const ON_wString ON_NTimesPowerOf10AsString(
         *clean_value = x;
       return ON_wString::FormatToString(L"%llu", i);
     }
-    wchar_t sf[32] = { 0 };
+    wchar_t sf[32] = { 0 }; // 32 is more than enough to hold the maximum of 20 digits
     size_t sf_capacity = sizeof(sf) / sizeof(sf[i]);
     size_t sfi = 0;
     for (ON__UINT64 r = q / 10; r > 0 && sfi < sf_capacity; r /= 10)
@@ -329,8 +357,7 @@ const ON_wString ON_NTimesPowerOf10AsString(
     }
   }
 
-  ON_ERROR("Unexpected result.");
-  return g_format;
+  return ON_NTimesPowerOf10AsStringFail(g_format,false);
 }
 
 

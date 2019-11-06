@@ -435,24 +435,19 @@ bool ON_IsKnotVectorUniform(
   if (rc)
   {
     const double delta = knot[order-1] - knot[order-2];
-    const double delta_tol = ON_SQRT_EPSILON*delta;
-    int i0, i1;
-    double d;
-    if ( ON_IsKnotVectorClamped(order,cv_count,knot) )
+    rc = (0.0 != delta && delta > ON_UNSET_VALUE && delta < ON_UNSET_POSITIVE_VALUE);
+    if (rc)
     {
-      i0 = order;
-      i1 = cv_count;
-    }
-    else
-    {
-      i0 = 1;
-      i1 = ON_KnotCount(order,cv_count);
-    }
-    for (/*empty*/; i0 < i1 && rc; i0++ )
-    {
-      d = knot[i0] - knot[i0-1];
-      if ( fabs(d - delta) > delta_tol )
-        rc = false;
+      const int i0 = ON_IsKnotVectorClamped(order, cv_count, knot, 0) ? order : 1;
+      const int i1 = ON_IsKnotVectorClamped(order, cv_count, knot, 1) ? cv_count : ON_KnotCount(order, cv_count);
+      double k0 = knot[i0 - 1];
+      const double delta_tol = fabs(ON_SQRT_EPSILON*delta);
+      for (int i = i0; i < i1 && rc; ++i)
+      {
+        const double d = knot[i] - k0;
+        rc = fabs(d - delta) <= delta_tol;
+        k0 = knot[i];
+      }
     }
   }
   return rc;
@@ -984,32 +979,37 @@ bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
           )
 {
   // Grevielle abscissae for a given knot vector
-  double x, t0; 
-  int gi, periodic_check;
-
   if ( order < 2 || cv_count < order || !knot || !g )
     return false;
   
   const int g_count = (bPeriodic) ? cv_count-order+1 : cv_count;
   
-  if (order == 2) {
+  if (order == 2)
+  {
     // g[i] = knot[i] in degree 1 case
-    memcpy( g, knot, g_count*sizeof(*g) );
+    for (int i = 0; i < g_count; i++)
+      g[i] = knot[i];
   }    
-  else {
+  else 
+  {
     // g = (knot[i]+...+knot[i+degree-1])/degree
-    t0 = knot[order-2];
-    gi = 0;
-    periodic_check = (bPeriodic) ? order-2 : 0;
-    while (gi < g_count) {
-      x = ON_GrevilleAbcissa( order, knot++ );
-      if ( periodic_check ) {
-        periodic_check--;
-        if ( x < t0 )
-          continue;
+    const double t0 = knot[order-2];
+    if (bPeriodic)
+    {
+      for (int i = 0; i < order - 1; ++i)
+      {
+        g[i] = ON_GrevilleAbcissa(order, knot + i);
+        if (g[i] >= t0)
+        {
+          knot += ((i > 0 && (t0 - g[i - 1]) < (g[i] - t0)) ? (i - 1) : i);
+          break;
+        }
       }
-      g[gi++] = x;
     }
+    for ( int i = 0; i < g_count; ++i)
+      g[i] = ON_GrevilleAbcissa( order, knot+i );
+    if (bPeriodic && g[0] < t0)
+      g[0] = t0;
   }
   
   return true;

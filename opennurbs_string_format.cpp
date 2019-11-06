@@ -1224,6 +1224,9 @@ int ON_wString::FormatVargsOutputCount(
   return -1;
 #else
 #if defined(ON_COMPILER_GNU)
+  // 31 May 2019 S. Baer (RH-52038)
+  // TODO: The following code needs to be tested. This was added by request from a user that needed
+  // a GCC compile. This is obviously a cut and paste of the above clang code
   wchar_t stack_buffer[1024];
   ON_wStringBuffer buffer(stack_buffer, sizeof(stack_buffer) / sizeof(stack_buffer[0]));
   size_t buffer_capacity = buffer.m_buffer_capacity;

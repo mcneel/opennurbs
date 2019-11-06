@@ -2173,20 +2173,10 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmBitmap(&bitmap);
         if ( rc==0 )
           break; // end of bitmap table
-
-        for (;;)
-        {
-          if ( rc < 0 ) 
-            break;
-
-          if ( AddModelComponentForExperts(bitmap,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
-          {
-            delete bitmap;
-            continue;
-          }
-
+        if (rc < 0)
           break;
-        }
+        if ( AddModelComponentForExperts(bitmap,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
+          delete bitmap;
       }
     }
 
@@ -2209,19 +2199,10 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmTextureMapping(&texture_mapping);
         if ( rc==0 )
           break; // end of texture_mapping table
-        for (;;)
-        {
-          if ( rc < 0 ) 
-            break;
-
-          if (AddModelComponentForExperts(texture_mapping, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
-          {
-            delete texture_mapping;
-            continue;
-          }
-
+        if ( rc < 0 ) 
           break;
-        }
+        if (AddModelComponentForExperts(texture_mapping, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
+          delete texture_mapping;
       }
     }
     
@@ -2251,36 +2232,22 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmMaterial(&material);
         if ( rc==0 )
           break; // end of material table
-        for (;;)
-        {
-          if ( rc < 0 ) 
-          {
-            break;
-          }
-
-          bool bSetAsCurrent = 
-            (bSetCurrentById && settings_current_id == material->Id())
-            || (bSetCurrentByIndex && settings_current_index == material->Index());
-
-          if ( AddModelComponentForExperts(material,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
-          {
-            delete material;
-            continue;
-          }
-
-          if (bSetAsCurrent)
-          {
-            m_settings.SetCurrentMaterialId(material->Id());
-            bSetCurrentById = false;
-            bSetCurrentByIndex = false;
-          }
-
-          material = nullptr;
-
+        if (rc < 0)
           break;
-        }
-        if ( nullptr != material)
+        // index or id might be modified by AddModelComponentForExperts()
+        const bool bSetAsCurrent =
+          (bSetCurrentById && settings_current_id == material->Id())
+          || (bSetCurrentByIndex && settings_current_index == material->Index());
+        if ( AddModelComponentForExperts(material,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
+        {
           delete material;
+        }
+        else if (bSetAsCurrent)
+        {
+          m_settings.SetCurrentMaterialId(material->Id());
+          bSetCurrentById = false;
+          bSetCurrentByIndex = false;
+        }
       }
     }
 
@@ -2310,22 +2277,17 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmLinetype(&line_pattern);
         if ( rc==0 )
           break; // end of linetype table
-        if ( rc < 0 ) 
-        {
-          continue;
-        }
-
-        bool bSetAsCurrent = 
+        if (rc < 0)
+          break;
+        // index or id might be modified by AddModelComponentForExperts()
+        const bool bSetAsCurrent =
           (bSetCurrentById && settings_current_id == line_pattern->Id())
           || (bSetCurrentByIndex && settings_current_index == line_pattern->Index());
-
         if ( AddModelComponentForExperts(line_pattern,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
         {
           delete line_pattern;
-          continue;
         }
-
-        if (bSetAsCurrent)
+        else if (bSetAsCurrent)
         {
           m_settings.SetCurrentLinePatternId(line_pattern->Id());
           bSetCurrentById = false;
@@ -2359,22 +2321,17 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmLayer(&layer);
         if ( rc==0 )
           break; // end of layer table
-        if ( rc < 0 ) 
-        {
-          continue;
-        }
-
-        bool bSetAsCurrent =
+        if (rc < 0)
+          break;
+        // index or id might be modified by AddModelComponentForExperts()
+        const bool bSetAsCurrent =
           (bSetCurrentById && settings_current_id == layer->Id())
           || (bSetCurrentByIndex && settings_current_index == layer->Index());
-
         if (AddModelComponentForExperts(layer, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
         {
           delete layer;
-          continue;
         }
-
-        if (bSetAsCurrent)
+        else if (bSetAsCurrent)
         {
           m_settings.SetCurrentLayerId(layer->Id());
           bSetCurrentById = false;
@@ -2432,21 +2389,10 @@ bool ONX_Model::IncrementalReadBegin(
         rc = archive.Read3dmGroup(&group);
         if ( rc==0 )
           break; // end of group table
-
-        for (;;)
-        {
-          if ( rc < 0 ) 
-          {
-            break;
-          }
-
-          if (AddModelComponentForExperts(group, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
-          {
-            delete group;
-            continue;
-          }
+        if (rc < 0)
           break;
-        }
+        if (AddModelComponentForExperts(group, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
+          delete group;
       }
     }
     
@@ -2476,21 +2422,16 @@ bool ONX_Model::IncrementalReadBegin(
         if ( rc==0 )
           break; // end of dimstyle table
         if ( rc < 0 ) 
-        {
           break;
-        }
-
-        bool bSetAsCurrent = 
+        // index or id might be modified by AddModelComponentForExperts()
+        const bool bSetAsCurrent =
           (bSetCurrentById && settings_current_id == dimension_style->Id())
           || (bSetCurrentByIndex && settings_current_index == dimension_style->Index());
-
         if (AddModelComponentForExperts(dimension_style, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
         {
           delete dimension_style;
-          continue;
         }
-
-        if (bSetAsCurrent)
+        else if (bSetAsCurrent)
         {
           m_settings.SetCurrentDimensionStyleId(dimension_style->Id());
           bSetCurrentById = false;
@@ -2517,24 +2458,11 @@ bool ONX_Model::IncrementalReadBegin(
         ON_ModelGeometryComponent* model_light = nullptr;
         rc = archive.Read3dmModelLight(&model_light);
         if (rc == 0)
-        {
           break; // end of light table
-        }
-        for (;;)
-        {
-          if ( rc < 0 ) 
-          {
-            break;
-          }
-           
-          if (AddModelComponentForExperts(model_light, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
-          {
-            delete model_light;
-            continue;
-          }
-
+        if ( rc < 0 ) 
           break;
-        }
+        if (AddModelComponentForExperts(model_light, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
+          delete model_light;
       }
     }
 
@@ -2565,18 +2493,15 @@ bool ONX_Model::IncrementalReadBegin(
           break; // end of hatchpattern table
         if ( rc < 0 ) 
           break;
-
-        bool bSetAsCurrent =
+        // index or id might be modified by AddModelComponentForExperts()
+        const bool bSetAsCurrent =
           (bSetCurrentById && settings_current_id == hatch_pattern->Id())
           || (bSetCurrentByIndex && settings_current_index == hatch_pattern->Index());
-
         if (AddModelComponentForExperts(hatch_pattern, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
         {
           delete hatch_pattern;
-          continue;
         }
-
-        if (bSetAsCurrent)
+        else if (bSetAsCurrent)
         {
           m_settings.SetCurrentHatchPatternId(hatch_pattern->Id());
           bSetCurrentById = false;
@@ -2606,12 +2531,8 @@ bool ONX_Model::IncrementalReadBegin(
           break; // end of instance definition table
         if ( rc < 0 ) 
           break;
-
         if (AddModelComponentForExperts(instance_definition, bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty())
-        {
           delete instance_definition;
-          continue;
-        }
       }
     }
     
@@ -2757,9 +2678,7 @@ bool ONX_Model::IncrementalReadFinish(
         if ( rc == 0 )
           break; // end of history record table
         if ( rc < 0 ) 
-        {
           break;
-        }
         if ( AddModelComponentForExperts(pHistoryRecord,bManageComponents,bResolveIdAndNameConflicts,bUpdateComponentIdentification).IsEmpty() )
         {
           delete pHistoryRecord;
@@ -3020,13 +2939,13 @@ bool ONX_Model::Write(
 {
   if ( 0 != version )
   {
-    if (    version < 2 
-         || version > ON_BinaryArchive::CurrentArchiveVersion()
-         || (version >= 50 && 0 != (version%10))
-         || (version < 50 && version > ON_BinaryArchive::CurrentArchiveVersion()/10)
-         )
+    if ( 
+      version < 2
+      || version > ON_BinaryArchive::CurrentArchiveVersion()
+      || (version < 50 && version > ON_BinaryArchive::CurrentArchiveVersion()/10)
+      || (version >= 50 && 0 != (version % 10))
+      )
     {
-      // version must be 0, 2, 3, 4, 5 or 50
       version = 0;
       if ( error_log) error_log->Print("ONX_Model::Write version parameter = %d; it must be 0, or >= 2 and <= %d, or a multiple of 10 >= 50 and <= %d.\n",
                       version,ON_BinaryArchive::CurrentArchiveVersion()/10,ON_BinaryArchive::CurrentArchiveVersion());

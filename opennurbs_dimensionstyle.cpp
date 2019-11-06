@@ -421,6 +421,10 @@ ON_DimStyle::field ON_DimStyle::FieldFromUnsigned(
     // OBSOLETE // //ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::OBSOLETE_AlternateDimensionUnitSystem_);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::DimensionLengthDisplay);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::AlternateDimensionLengthDisplay);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ForceDimLine);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::TextFit);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ArrowFit);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::DecimalSeparator);
   }
   if (field_as_unsigned > static_cast<unsigned int>(ON_DimStyle::field::AlternateDimensionLengthDisplay))
   {
@@ -488,6 +492,38 @@ ON_DimStyle::OBSOLETE_length_format ON_DimStyle::OBSOLETE_LengthFormatFromUnsign
   return (ON_DimStyle::OBSOLETE_length_format::Decimal);
 }
 
+ON_DimStyle::arrow_fit ON_DimStyle::ArrowFitFromUnsigned(
+  unsigned int arrow_fit_as_unsigned
+)
+{
+  switch (arrow_fit_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::arrow_fit::Auto);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::arrow_fit::ArrowsInside);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::arrow_fit::ArrowsOutside);
+  }
+  ON_ERROR("invalid arrow_fit_as_unsigned parameter.");
+  return (ON_DimStyle::arrow_fit::Auto);
+}
+
+ON_DimStyle::text_fit ON_DimStyle::TextFitFromUnsigned(
+  unsigned int text_fit_as_unsigned
+)
+{
+  switch (text_fit_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::Auto);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::TextInside);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::TextRight);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::TextLeft);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::TextHintRight);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::text_fit::TextHintLeft);
+  }
+  ON_ERROR("invalid text_fit_as_unsigned parameter.");
+  return (ON_DimStyle::text_fit::Auto);
+}
+
+
 ON_DimStyle::OBSOLETE_length_format ON_DimStyle::OBSOLETE_LengthFormatFromLengthDisplay(
   ON_DimStyle::LengthDisplay dimension_length_display,
   ON::LengthUnitSystem model_unit_system
@@ -551,7 +587,7 @@ ON_DimStyle::suppress_zero ON_DimStyle::ZeroSuppressFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::suppress_zero::SuppressZeroFeetAndZeroInches);
     break;
   }
-  ON_ERROR("invalid suppress_ero_as_unsigned parameter.");
+  ON_ERROR("invalid suppress_zero_as_unsigned parameter.");
   return ON_DimStyle::suppress_zero::None;
 }
 
@@ -1239,7 +1275,8 @@ void ON_DimStyle::Internal_ContentChange() const
 
 ON_DimStyle::ON_DimStyle()
   : ON_ModelComponent(ON_ModelComponent::Type::DimStyle)
-{}
+{
+}
 
 struct V5_to_V6_field_id_map 
 {
@@ -2102,7 +2139,12 @@ bool ON_DimStyle::CompareFields(const ON_DimStyle& style) const
     m_dimradial_text_orientation == style.m_dimradial_text_orientation &&
     m_dim_text_angle_style == style.m_dim_text_angle_style &&
     m_dimradial_text_angle_style == style.m_dimradial_text_angle_style &&
-    m_text_underlined == style.m_text_underlined 
+    m_text_underlined == style.m_text_underlined &&
+    
+    m_bForceDimLine == style.m_bForceDimLine &&
+    m_ArrowFit == style.m_ArrowFit &&
+    m_TextFit == style.m_TextFit &&
+    m_decimal_separator == style.m_decimal_separator
     )
     return true;
   else
@@ -2142,7 +2184,7 @@ bool ON_DimStyle::Write(
   ON_BinaryArchive& file // serialize definition to binary archive
   ) const
 {
-  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 7))
+  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 9))
     return false;
 
   bool rc = false;
@@ -2470,6 +2512,19 @@ bool ON_DimStyle::Write(
     u = static_cast<unsigned int>(m_centermark_style);
     if (!file.WriteInt(u)) break;
     // END chunk version 1.7 information
+
+    if (!file.WriteBool(m_bForceDimLine)) break;
+
+    u = static_cast<unsigned int>(m_TextFit);
+    if (!file.WriteInt(u)) break;
+
+    u = static_cast<unsigned int>(m_ArrowFit);
+    if (!file.WriteInt(u)) break;
+    // END chunk version 1.8 information
+
+    u = static_cast<unsigned int>(m_decimal_separator);
+    if (!file.WriteInt(u)) break;
+    // END chunk version 1.9 information
 
     rc = true;
     break;
@@ -2998,6 +3053,33 @@ bool ON_DimStyle::Read(
     m_centermark_style = ON_DimStyle::CentermarkStyleFromUnsigned(u);
     // END chunk version 1.7 information
 
+    if (minor_version <= 7)
+    {
+      rc = true;
+      break;
+    }
+
+    if (!file.ReadBool(&m_bForceDimLine)) break;
+
+    u = static_cast<unsigned int>(m_TextFit);
+    if (!file.ReadInt(&u)) break;
+    m_TextFit = ON_DimStyle::TextFitFromUnsigned(u);
+
+    u = static_cast<unsigned int>(m_ArrowFit);
+    if (!file.ReadInt(&u)) break;
+    m_ArrowFit = ON_DimStyle::ArrowFitFromUnsigned(u);
+    // END chunk version 1.8 information
+
+    if (minor_version <= 8)
+    {
+      rc = true;
+      break;
+    }
+    u = static_cast<unsigned int>(m_decimal_separator);
+    if (!file.ReadInt(&u)) break;
+    m_decimal_separator = (wchar_t)u;
+    // END chunk version 1.9 information
+
     rc = true;
     break;
   }
@@ -3502,6 +3584,11 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_dimradial_text_angle_style));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_text_underlined));
     
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_ArrowFit));
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_TextFit));
+
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_decimal_separator));
+
     // Save hash in mutable m_text_position_properties_hash
     m_text_position_properties_hash = sha1.Hash();
   }
@@ -3576,7 +3663,13 @@ const class ON_SHA1_Hash& ON_DimStyle::ContentHash() const
 
     sha1.AccumulateBool(m_draw_forward);
     sha1.AccumulateBool(m_signed_ordinate);
-    
+
+    sha1.AccumulateBool(static_cast<unsigned int>(m_bForceDimLine));
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_ArrowFit));
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_TextFit));
+
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_decimal_separator));
+
     // Save hash in mutable m_content_hash
     m_content_hash = sha1.Hash();
   }
@@ -4804,6 +4897,62 @@ void ON_DimStyle::SetTextUnderlined(bool underlined)
   Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::TextUnderlined);
 }
 
+bool ON_DimStyle::ForceDimLine() const
+{
+  return m_bForceDimLine;
+}
+void ON_DimStyle::SetForceDimLine(bool forcedimline)
+{
+  if (m_bForceDimLine != forcedimline)
+  {
+    m_bForceDimLine = forcedimline;
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ForceDimLine);
+}
+
+void ON_DimStyle::SetArrowFit(ON_DimStyle::arrow_fit arrowfit)
+{
+  if (m_ArrowFit != arrowfit)
+  {
+    m_ArrowFit = arrowfit;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ArrowFit);
+}
+
+ON_DimStyle::arrow_fit ON_DimStyle::ArrowFit() const
+{
+  return m_ArrowFit;
+}
+
+void ON_DimStyle::SetTextFit(ON_DimStyle::text_fit textfit)
+{
+  if (m_TextFit != textfit)
+  {
+    m_TextFit = textfit;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::TextFit);
+}
+
+ON_DimStyle::text_fit ON_DimStyle::TextFit() const
+{
+  return m_TextFit;
+}
+
+void ON_DimStyle::SetDecimalSeparator(wchar_t separator)
+{
+  if(separator == ON_wString::DecimalAsComma)
+    m_decimal_separator = ON_wString::DecimalAsComma;
+  else
+    m_decimal_separator = ON_wString::DecimalAsPeriod;
+}
+
+wchar_t ON_DimStyle::DecimalSeparator() const 
+{
+  return m_decimal_separator;
+}
+
 ON__UINT32* ON_DimStyle::Internal_GetOverrideParentBit(ON_DimStyle::field field_id, ON__UINT32* mask) const
 {
   unsigned int bitdex = 0;
@@ -5377,7 +5526,18 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
     case ON_DimStyle::field::AlternateDimensionLengthDisplay:
       ON_INTERNAL_UPDATE_PROPERTY(AlternateDimensionLengthDisplay);
       break;
-
+    case ON_DimStyle::field::ForceDimLine:
+      ON_INTERNAL_UPDATE_PROPERTY(ForceDimLine);
+      break;
+    case ON_DimStyle::field::TextFit:
+      ON_INTERNAL_UPDATE_PROPERTY(TextFit);
+      break;
+    case ON_DimStyle::field::ArrowFit:
+      ON_INTERNAL_UPDATE_PROPERTY(ArrowFit);
+      break;
+    case ON_DimStyle::field::DecimalSeparator:
+      ON_INTERNAL_UPDATE_PROPERTY(DecimalSeparator);
+      break;
     default:
       ON_ERROR("The switch statement in this function has gaps!");
       SetFieldOverride(field_id, false);

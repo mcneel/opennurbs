@@ -1616,6 +1616,13 @@ public:
     const ON_Xform* bbox_xform
     ) const;
   
+  /*
+  Description:
+    Gets or sets the description, or contents, of the viewport.
+  */
+  ON_wString Description() const;
+  bool SetDescription(const wchar_t* description);
+  
 protected:
 
   // These boolean status flags are set to true when

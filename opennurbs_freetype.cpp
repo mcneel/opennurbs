@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -33,18 +33,18 @@
 
 // FreeType Licensing:
 //
-//// Retrieved March 22, 2017 
+//// Retrieved March 22, 2017
 //// https://www.freetype.org/freetype2/docs/index.html
 ////What is FreeType?
 ////
-////FreeType is a software font engine that is designed to be small, efficient, 
-////highly customizable, and portable while capable of producing high-quality 
+////FreeType is a software font engine that is designed to be small, efficient,
+////highly customizable, and portable while capable of producing high-quality
 ////output (glyph images). It can be used in graphics libraries, display servers,
 ////font conversion tools, text image generation tools, and many other products as well.
 ////
-////Note that FreeType is a font service and doesn't provide APIs to perform 
-////higher-level features like text layout or graphics processing 
-////(e.g., colored text rendering, ‘hollowing’, etc.). However, it greatly 
+////Note that FreeType is a font service and doesn't provide APIs to perform
+////higher-level features like text layout or graphics processing
+////(e.g., colored text rendering, â€˜hollowingâ€™, etc.). However, it greatly
 ////simplifies these tasks by providing a simple, easy to use, and uniform
 ////interface to access the content of font files.
 ////
@@ -52,12 +52,12 @@
 ////FreeType License and the GNU Public License, Version 2. It can thus
 ////be used by any kind of projects, be they proprietary or not.
 ////
-////Please note that ‘FreeType’ is also called ‘FreeType 2’, to
-////distinguish it from the old, deprecated ‘FreeType 1’ library,
+////Please note that â€˜FreeTypeâ€™ is also called â€˜FreeType 2â€™, to
+////distinguish it from the old, deprecated â€˜FreeType 1â€™ library,
 ////a predecessor no longer maintained and supported.
 ////
 //// http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT
-//// 
+////
 ////                    The FreeType Project LICENSE
 ////                    ----------------------------
 ////
@@ -108,7 +108,7 @@
 ////  encourage you to use the following text:
 ////
 ////   """
-////    Portions of this software are copyright © <year> The FreeType
+////    Portions of this software are copyright Â© <year> The FreeType
 ////    Project (www.freetype.org).  All rights reserved.
 ////   """
 ////
@@ -266,7 +266,7 @@ public:
   ON_FontFileBuffer(const ON_FontFileBuffer& src)
   {
     Internal_CopyFrom(src);
-  } 
+  }
 
   ON_FontFileBuffer& operator=(const ON_FontFileBuffer& src)
   {
@@ -499,9 +499,9 @@ bool ON_FreeType::IsDamagedCharMap(
 {
   if (nullptr == cmap || nullptr == cmap->face)
     return true;
-  
+
   bool rc = false;
-  
+
   switch (cmap->encoding)
   {
   case FT_ENCODING_APPLE_ROMAN:
@@ -555,7 +555,7 @@ bool ON_FreeType::UseUnicodeAsAppleRomanCharCode(FT_Face face)
   //
   // It appears that for these fonts, passing a Unicode code point value
   // to the cmap[] idenfied as "FT_ENCODING_APPLE_ROMAN" will get the correct
-  // glyph id. 
+  // glyph id.
   //
   // I have verified that the way opennurbs handles FT_ENCODING_APPLE_ROMAN charmaps
   // and the funciton ON_MapUnicodeToAppleRoman() works correctly with all the
@@ -583,7 +583,7 @@ bool ON_FreeType::UseUnicodeAsAppleRomanCharCode(FT_Face face)
     // Linguist's Software Romantic 2.0 generated with Altsys Fontographer 4.1 9/17/96
     // Linguist's Software SansSerif 2.0 generated with Altsys Fontographer 4.1 9/17/96
     // Linguist's Software Technic 2.0 generated with Altsys Fontographer 4.1 9/17/96
-    // 
+    //
     // So far, all styles with these face names have the buggy cmap[].
     if (ON_String::EqualOrdinal(face->family_name, "CityBlueprint", false))
       return true;
@@ -602,7 +602,7 @@ bool ON_FreeType::UseUnicodeAsAppleRomanCharCode(FT_Face face)
 const ON_wString ON_FreeType::EncodingTypeToString( FT_Encoding charmap_encoding )
 {
   ON_wString e;
-  
+
   switch (charmap_encoding)
   {
   case FT_ENCODING_NONE:           e = L"FT_ENCODING_NONE"; break;
@@ -619,14 +619,14 @@ const ON_wString ON_FreeType::EncodingTypeToString( FT_Encoding charmap_encoding
   case FT_ENCODING_ADOBE_EXPERT:   e = L"FT_ENCODING_ADOBE_EXPERT"; break;
   case FT_ENCODING_ADOBE_CUSTOM:   e = L"FT_ENCODING_ADOBE_CUSTOM"; break;
   case FT_ENCODING_APPLE_ROMAN:    e = L"FT_ENCODING_APPLE_ROMAN"; break;
-  default: 
+  default:
     e = ON_wString::FormatToString(
       L"((FT_Encoding)%u)",
       static_cast<unsigned int>(charmap_encoding)
     );
     break;
   }
-  
+
   return e;
 }
 
@@ -639,8 +639,8 @@ const ON_wString ON_FreeType::CharmapPlatformEncodingDescription( const FT_CharM
   ON_wString encoding;
   switch (cmap->platform_id)
   {
-  case 0: 
-    platform = L"Unicode"; 
+  case 0:
+    platform = L"Unicode";
     switch (cmap->encoding_id)
     {
     case 0: encoding = L"Unicode 1.0 semantics [deprecated]"; break;
@@ -653,7 +653,7 @@ const ON_wString ON_FreeType::CharmapPlatformEncodingDescription( const FT_CharM
     }
     break;
 
-  case 1: 
+  case 1:
     platform = L"Apple Script Manager";
     switch (cmap->encoding_id)
     {
@@ -704,7 +704,7 @@ const ON_wString ON_FreeType::CharmapPlatformEncodingDescription( const FT_CharM
     break;
 
   case 3:
-    platform = L"Windows"; 
+    platform = L"Windows";
     switch (cmap->encoding_id)
     {
     case  0: encoding = L"Symbol"; break;
@@ -747,7 +747,7 @@ bool ON_FontGlyph::TestFreeTypeFaceCharMaps(
   ON_TextLog* text_log
 ) const
 {
-  // In order for false to be returned, charmaps[] have to exist and 
+  // In order for false to be returned, charmaps[] have to exist and
   // an explicit error has to be detected. Otherwise, true is returned.
   const ON_Font* font = Font();
   if (nullptr == font)
@@ -847,7 +847,7 @@ bool ON_FontGlyph::TestFreeTypeFaceCharMaps(
 
     if (bHaveCharCode)
     {
-      bHaveCharMap 
+      bHaveCharMap
         = FT_Err_Ok == FT_Set_Charmap(face, charmap)
         && charmap == face->charmap;
       if (bHaveCharMap)
@@ -896,7 +896,7 @@ bool ON_FontGlyph::TestFreeTypeFaceCharMaps(
         if (glyph_index != gid)
         {
           s += ON_wString::FormatToString(L"ERROR(expected glyph index %u)",glyph_index);
-        }                
+        }
       }
       text_log->Print(L"%ls\n", static_cast<const wchar_t*>(s));
     }
@@ -904,7 +904,7 @@ bool ON_FontGlyph::TestFreeTypeFaceCharMaps(
 
   // restore face charmap state
   FT_Set_Charmap(face, charmap0);
-  
+
   return rc;
 }
 
@@ -944,15 +944,15 @@ unsigned int ON_FreeType::GlyphId(
   // and they can map different unicode code points. These typically are
   // Windows UCS-2 and Windows UCS-4 cmaps. UCS-2 and UCS-4 values subsets of Unicode.
   //
-  // In fonts like CityBlueprint and CountryBlueprint (which many customers use), there 
+  // In fonts like CityBlueprint and CountryBlueprint (which many customers use), there
   // is no FT_ENCODING_UNICODE charmap but there is a viable FT_ENCODING_APPLE_ROMAN charmap.
   //
   // As we discover fonts that customers use, we will add support for their charmaps.
   //
   // TrueType platform_id and encoding_id. The encoding id is platform specific.
-  // platform_id-encoding_id 
+  // platform_id-encoding_id
   //
-  //  0-* "Apple *code" - encoding id varies 
+  //  0-* "Apple *code" - encoding id varies
   //
   //  1-0 Apple Roman (256 codes - see ON_MapAppleRomanToUnicode())
   //  1-* Apple (encoding id = script manager)
@@ -971,7 +971,7 @@ unsigned int ON_FreeType::GlyphId(
   //  4-* Custom
   //
   // http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=iws-chapter08
-  // 
+  //
   const FT_Encoding encoding_pass[]
   {
     FT_ENCODING_UNICODE,
@@ -1100,7 +1100,7 @@ static bool Internal_CreateFontBufferFromDirectWrite(
     ON_WARNING("Multiple font files.");
     numfiles = 1;
   }
-  
+
   Microsoft::WRL::ComPtr<IDWriteFontFile> dwriteFontFile = nullptr;
   hr = dwriteFontFace->GetFiles(&numfiles, &dwriteFontFile);
   if (FAILED(hr))
@@ -1193,11 +1193,11 @@ static bool Internal_CreateFontBufferFromDirectWrite(
   cleanLogFont.lfOrientation = 0;
   if (cleanLogFont.lfWeight < 1 || cleanLogFont.lfWeight > 999)
     cleanLogFont.lfWeight = 400;
-  if (0 != cleanLogFont.lfItalic) 
+  if (0 != cleanLogFont.lfItalic)
     cleanLogFont.lfItalic = 1;
-  if (0 != cleanLogFont.lfUnderline) 
+  if (0 != cleanLogFont.lfUnderline)
     cleanLogFont.lfUnderline = 1;
-  if (0 != cleanLogFont.lfStrikeOut) 
+  if (0 != cleanLogFont.lfStrikeOut)
     cleanLogFont.lfStrikeOut = 1;
   if (ON_Font::WindowsConstants::logfont_symbol_charset != cleanLogFont.lfCharSet)
     cleanLogFont.lfCharSet = ON_Font::WindowsConstants::logfont_default_charset;
@@ -1265,7 +1265,7 @@ static bool Internal_CreateFontBufferFromGDI(
     {
       ON_ERROR("onmalloc(buffer_capacity) failed.");
       break;
-    }    
+    }
     memset(buffer, 0, buffer_capacity);
 
     const DWORD buffer_size = ::GetFontData(font_hdc, dwTable, dwOffset, buffer, buffer_capacity);
@@ -1317,7 +1317,7 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromWindowsFont(
     //  The DirectWrite approach yields better results in some cases.
     //  For example, the Yu Gothic in Windows 10
     //    The font_buffer created by DirectWrite results in an FT_Face
-    //    with 3 charmaps (2 Uniocde) and the font_buffer created by 
+    //    with 3 charmaps (2 Uniocde) and the font_buffer created by
     //    GDI has 0 charmaps which means getting a glyph from a code point
     //    is not possible.
     const bool bHaveBuffer
@@ -1331,7 +1331,7 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromWindowsFont(
       continue;
     if (nullptr == font_buffer.Buffer())
       continue;
-    
+
     int font_face_index = 0;
     FT_Face face = nullptr;
     FT_Error rc = FT_New_Memory_Face(
@@ -1371,19 +1371,19 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRe
 {
   if (nullptr == fontRef)
     return nullptr;
-  
+
   // determine file path for CTFont
   CFURLRef fontURLRef = (CFURLRef) CTFontCopyAttribute (fontRef, kCTFontURLAttribute);
-  
+
   NSURL* fontURL = (NSURL*) CFBridgingRelease (fontURLRef);
   const char* path = fontURL.path.UTF8String;
-  
+
   // Search all the faces in this font file for a face that matches the NSFont family and style
   FT_Face ftFace;
   FT_Error err = FT_New_Face (ON_FreeType::Library(), path, 0, &ftFace);    // get first face
   if (err)
     return nullptr;     // that didn't work
-  
+
   const int numFaces = (int)ftFace->num_faces; // determine number of faces in the font file
 
   ON_FreeTypeFace* rc = new ON_FreeTypeFace();
@@ -1392,7 +1392,7 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRe
     rc->m_face = ftFace;
     return rc;       // only one face, so this must be the right one
   }
-  
+
   int faceIndex = 0;
   for (;;)
   {
@@ -1409,10 +1409,10 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRe
       rc->m_face = ftFace;
       return rc;
     }
-    
+
     // No match.  Step to next face.
     FT_Done_Face (ftFace);
-    
+
     FT_Error err = FT_New_Face (ON_FreeType::Library(), path, ++faceIndex, &ftFace);
     if (ftFace == nullptr || err || faceIndex >= numFaces) {
       // Ran out of faces to inspect or FT_New_Face returned an error.
@@ -1420,7 +1420,7 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRe
       break;
     }
   }
-  
+
   // When no match found, use first face in font file as the default face.
   FT_New_Face (ON_FreeType::Library(), path, 0, &ftFace);    // get first face
 
@@ -1513,20 +1513,20 @@ unsigned int ON_FreeTypeGetFontUnitsPerM(
     font = font->ManagedFont();
     if (nullptr == font)
       break;
-  
+
     const ON__UINT_PTR ft_face_as_uint = ON_Font::FreeTypeFace(font);
     if (0 == ft_face_as_uint)
       break;
-    
+
     FT_Face ft_face = (FT_Face)ft_face_as_uint;
-    
+
     unsigned int freetypeUPM =  (unsigned int)ft_face->units_per_EM;
     if (freetypeUPM > 0 && freetypeUPM < 0xFFFFFFF)
       return freetypeUPM;
-    
+
     break;
   }
-  
+
   return 0;
 }
 
@@ -1564,15 +1564,15 @@ void ON_FreeTypeGetFontMetrics(
     return 0;
 
 
-    
-  const unsigned int glyph_id 
+
+  const unsigned int glyph_id
     = glyph->FontGlyphIdIsSet()
     ? (unsigned int)glyph->FontGlyphId()
     : ON_FreeType::GlyphId(face, glyph->CodePoint());
   if (0 == glyph_id)
     return 0;
     */
-  
+
   // Turns out that checking H and I doesn't work very well for some
   // fonts designed for Asian languages, symbol fonts, and emoji fonts.
   const ON_FontGlyph Iglyph(font, 'I');
@@ -1625,8 +1625,8 @@ public:
   ~ON_FreeTypeOutlineAccumlator() = default;
 
   bool AddFreeTypeFiguresToOutline(
-    FT_Face ft_face, 
-    FT_UInt font_glyph_id, 
+    FT_Face ft_face,
+    FT_UInt font_glyph_id,
     ON_Outline& outline
   );
 
@@ -1641,7 +1641,7 @@ private:
 //    ON_Outline* destination_outline,
 //    FT_Face ft_face, FT_UInt font_glyph_id, FT_Orientation* ft_orientation
 //  );
-//  
+//
 //  bool BeginGlyphOutline(
 //    ON__UINT32 font_units_per_em,
 //    bool bSingleStrokeFont,
@@ -1714,8 +1714,8 @@ const ON_TextBox ON_TextBox_CreateFromFreeTypeGlyphMetrics(
 }
 
 bool ON_FreeTypeOutlineAccumlator::AddFreeTypeFiguresToOutline(
-  FT_Face ft_face, 
-  FT_UInt font_glyph_id, 
+  FT_Face ft_face,
+  FT_UInt font_glyph_id,
   ON_Outline& outline
 )
 {
@@ -1742,7 +1742,7 @@ bool ON_FreeTypeOutlineAccumlator::AddFreeTypeFiguresToOutline(
     if (FT_Err_Ok != FT_Get_Glyph(ft_face->glyph, &ft_glyph))
       break;
     if (nullptr == ft_glyph)
-      break;    
+      break;
 
     if (FT_GLYPH_FORMAT_OUTLINE != ft_glyph->format)
       break;
@@ -1758,7 +1758,7 @@ bool ON_FreeTypeOutlineAccumlator::AddFreeTypeFiguresToOutline(
     }
 
     m_ft_orientation = FT_Outline_Get_Orientation(&ft_outline);
-    m_end_figure_point_type 
+    m_end_figure_point_type
       = (ON_OutlineFigure::Type::SingleStroke == outline.FigureType())
      ? ON_OutlineFigurePoint::Type::EndFigureOpen
      : ON_OutlineFigurePoint::Type::EndFigureClosed;
@@ -1786,9 +1786,9 @@ bool ON_FreeTypeOutlineAccumlator::AddFreeTypeFiguresToOutline(
   return rc;
 }
 
-int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc( 
-  const FT_Vector* to, 
-  void* user 
+int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc(
+  const FT_Vector* to,
+  void* user
 )
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
@@ -1806,8 +1806,8 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineMoveToFunc(
 }
 
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToFunc(
-  const FT_Vector* to, 
-  void* user 
+  const FT_Vector* to,
+  void* user
 )
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
@@ -1821,8 +1821,8 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToFunc(
 }
 
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToCloseContourFunc(
-  const FT_Vector* to, 
-  void* user 
+  const FT_Vector* to,
+  void* user
 )
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
@@ -1831,19 +1831,19 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineLineToCloseContourFunc
 
   a->EndFigure(a->m_end_figure_point_type);
   a->m_prev_point = *to;
-  
+
   return FT_Err_Ok;
 }
 
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc(
   const FT_Vector* control,
-  const FT_Vector* to, 
-  void* user 
+  const FT_Vector* to,
+  void* user
 )
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
   if (nullptr == a)
-    return FT_Err_Invalid_Argument;   
+    return FT_Err_Invalid_Argument;
 
   a->AppendQuadraticBezier(Internal_To2fPoint(control),Internal_To2fPoint(to));
   a->m_prev_point = *to;
@@ -1854,8 +1854,8 @@ int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineConicToFunc(
 int ON_FreeTypeOutlineAccumlator::Internal_FreeTypeOutlineCubicToFunc(
   const FT_Vector* control1,
   const FT_Vector* control2,
-  const FT_Vector* to, 
-  void* user 
+  const FT_Vector* to,
+  void* user
 )
 {
   ON_FreeTypeOutlineAccumlator* a = (ON_FreeTypeOutlineAccumlator*)user;
@@ -1890,7 +1890,7 @@ bool ON_FreeTypeLoadGlyph(
 #endif
   for (int pass = bLoadRenderBitmap ? 1 : pass0; pass < 2; pass++)
   {
-    FT_Int32 ft_face_load_no_scale_flag 
+    FT_Int32 ft_face_load_no_scale_flag
       = (0 == pass)
       ? 0
       : FT_LOAD_NO_SCALE;
@@ -1905,10 +1905,10 @@ bool ON_FreeTypeLoadGlyph(
       /*
         Avoid use of FT_LOAD_NO_SCALE
         https://www.freetype.org/freetype2/docs/reference/ft2-base_interface.html#FT_LOAD_NO_SCALE
-          If the font is ‘tricky’ (see FT_FACE_FLAG_TRICKY for more), using FT_LOAD_NO_SCALE 
-          usually yields meaningless outlines because the subglyphs must be scaled and 
-          positioned with hinting instructions. This can be solved by loading the font 
-          without FT_LOAD_NO_SCALE and setting the character size to ‘font->units_per_EM’.
+          If the font is â€˜trickyâ€™ (see FT_FACE_FLAG_TRICKY for more), using FT_LOAD_NO_SCALE
+          usually yields meaningless outlines because the subglyphs must be scaled and
+          positioned with hinting instructions. This can be solved by loading the font
+          without FT_LOAD_NO_SCALE and setting the character size to â€˜font->units_per_EMâ€™.
       */
 #if defined(ON_RUNTIME_WIN)
       // Unit Systems:
@@ -1974,7 +1974,7 @@ bool ON_FreeTypeLoadGlyph(
 unsigned int ON_FreeTypeGetGlyphMetrics(
   const ON_FontGlyph* glyph,
   class ON_TextBox& glyph_metrics_in_font_design_units
-)  
+)
 {
   glyph_metrics_in_font_design_units = ON_TextBox::Unset;
 
@@ -1994,7 +1994,7 @@ unsigned int ON_FreeTypeGetGlyphMetrics(
 
   FT_Face face = (FT_Face)ft_face_as_uint;
 
-  const unsigned int glyph_index 
+  const unsigned int glyph_index
     = glyph->FontGlyphIndexIsSet()
     ? glyph->FontGlyphIndex()
     : ON_FreeType::GlyphId(face, glyph->CodePoint());
@@ -2015,7 +2015,7 @@ unsigned int ON_FreeTypeGetGlyphMetrics(
   ////  }
   ////#endif
 
-  
+
   const bool bLoadRenderBitmap = false;
   // bLoadRenderBitmap = false means we load using FT_LOAD_NO_SCALE
   // This won't work for "tricky" font faces that render glyphs using composites.
@@ -2024,7 +2024,7 @@ unsigned int ON_FreeTypeGetGlyphMetrics(
 
   if ( nullptr == face->glyph)
     return 0;
-  
+
   // Because ft_load_flags includes FT_LOAD_NO_SCALE, the
   // face->glyph->metrics units are expressed in font design units.
   glyph_metrics_in_font_design_units = ON_TextBox_CreateFromFreeTypeGlyphMetrics(&face->glyph->metrics);
@@ -2079,7 +2079,7 @@ bool ON_FreeTypeGetGlyphOutline(
     if (glyph_index <= 0)
       return false;
   }
-  
+
   FT_Face ft_face = (FT_Face)(ON_Font::FreeTypeFace(font));
   if (nullptr == ft_face)
     return false;
@@ -2133,10 +2133,10 @@ void ON_Font::DumpFreeTypeFace(
 
   s = face->family_name;
   text_log.Print("Family name = %ls\n", static_cast<const wchar_t*>(s));
-  
+
   s = face->style_name;
   text_log.Print("Style name = %ls\n", static_cast<const wchar_t*>(s));
-  
+
   FT_Long style_mask = 0xFFFF;
   s = ON_FreeType::StyleFlagsToString(face->style_flags);
   if ( 0 != (style_mask&face->style_flags) || s.IsNotEmpty() )
@@ -2171,7 +2171,7 @@ void ON_Font::DumpFreeTypeFace(
     }
   }
   text_log.PopIndent();
-  
+
   text_log.PopIndent();
 
   return;

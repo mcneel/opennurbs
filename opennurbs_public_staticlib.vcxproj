@@ -161,6 +161,7 @@
     <ClInclude Include="opennurbs_compress.h" />
     <ClInclude Include="opennurbs_compstat.h" />
     <ClInclude Include="opennurbs_cone.h" />
+    <ClInclude Include="opennurbs_convex_poly.h" />
     <ClInclude Include="opennurbs_crc.h" />
     <ClInclude Include="opennurbs_curve.h" />
     <ClInclude Include="opennurbs_curveonsurface.h" />
@@ -318,6 +319,7 @@
     <ClCompile Include="opennurbs_compress.cpp" />
     <ClCompile Include="opennurbs_compstat.cpp" />
     <ClCompile Include="opennurbs_cone.cpp" />
+    <ClCompile Include="opennurbs_convex_poly.cpp" />
     <ClCompile Include="opennurbs_crc.cpp" />
     <ClCompile Include="opennurbs_curve.cpp" />
     <ClCompile Include="opennurbs_curveonsurface.cpp" />
@@ -434,6 +436,7 @@
     <ClCompile Include="opennurbs_subd_ref.cpp" />
     <ClCompile Include="opennurbs_subd_ring.cpp" />
     <ClCompile Include="opennurbs_subd_sector.cpp" />
+    <ClCompile Include="opennurbs_subd_texture.cpp" />
     <ClCompile Include="opennurbs_sum.cpp" />
     <ClCompile Include="opennurbs_sumsurface.cpp" />
     <ClCompile Include="opennurbs_surface.cpp" />

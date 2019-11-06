@@ -3407,6 +3407,14 @@ int ON_Compare2dex( const ON_2dex* a, const ON_2dex* b)
 }
 
 
+int ON_Compare2udex(const ON_2udex* a, const ON_2udex* b)
+{
+  if (a->i < b->i) return -1;
+  if (b->i < a->i) return 1;
+  return (b->j < a->j) - (a->j < b->j);
+}
+
+
 int ON_Compare3dex( const ON_3dex* a, const ON_3dex* b)
 {
   int d;

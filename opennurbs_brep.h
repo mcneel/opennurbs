@@ -118,6 +118,7 @@ public:
   //   number of edges that begin or end at this vertex.
   int EdgeCount() const;
 
+
   /////////////////////////////////////////////////////////////////
   // Implementation
 
@@ -331,6 +332,7 @@ public:
     to be set to ON_UNSET_VALUE by calling UnsetPlineEdgeParameters().
   */
   void UnsetPlineEdgeParameters();
+
 
   // index of 3d curve in m_C3[] array
   // (edge.m_curve also points to m_C3[m_c3i])
@@ -1142,6 +1144,7 @@ public:
     Pointer to the surface geometry used by the face.   
   */
   const ON_Surface* SurfaceOf() const;
+
 
 
   ON_SimpleArray<int> m_li; // loop indices (outer loop is m_li[0])

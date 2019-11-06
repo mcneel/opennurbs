@@ -10,9 +10,6 @@
 
 #include "opennurbs_subd_data.h"
 
-#if defined(OPENNURBS_SUBD_WIP)
-
-
 bool ON_SubDQuadNeighborhood::IsValid() const
 {
   unsigned int count = 0;
@@ -163,7 +160,7 @@ bool ON_SubDQuadNeighborhood::IsValid() const
 
     if (m_bBoundaryCrease[fi])
     {
-      // A tag of ON_SubD::EdgeTag::X is an error here
+      // A tag of ON_SubD::EdgeTag::SmoothX is an error here
       if ( false == quad_edge[fi]->IsCrease() )
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -186,7 +183,7 @@ bool ON_SubDQuadNeighborhood::IsValid() const
       if (nullptr == side_face[fi])
         return ON_SUBD_RETURN_ERROR(false);
 
-      // A tag of ON_SubD::EdgeTag::X is permitted here
+      // A tag of ON_SubD::EdgeTag::SmoothX is permitted here
       if ( 2 != quad_edge[fi]->m_face_count)
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -395,10 +392,10 @@ void ON_SubDQuadNeighborhood::Internal_Destroy(bool bReinitialize)
     m_bCenterEdgeLimitPoint[2] = false;
     m_bCenterEdgeLimitPoint[3] = false;
 
-    m_center_edge_limit_point[0] = ON_SubDSectorLimitPoint::Nan;
-    m_center_edge_limit_point[1] = ON_SubDSectorLimitPoint::Nan;
-    m_center_edge_limit_point[2] = ON_SubDSectorLimitPoint::Nan;
-    m_center_edge_limit_point[3] = ON_SubDSectorLimitPoint::Nan;
+    m_center_edge_limit_point[0] = ON_SubDSectorSurfacePoint::Nan;
+    m_center_edge_limit_point[1] = ON_SubDSectorSurfacePoint::Nan;
+    m_center_edge_limit_point[2] = ON_SubDSectorSurfacePoint::Nan;
+    m_center_edge_limit_point[3] = ON_SubDSectorSurfacePoint::Nan;
 
     for (unsigned int i = 0; i < 4; i++)
     {
@@ -673,7 +670,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   {
     if (
       nullptr != m_center_edges[i]
-      && ON_SubD::EdgeTag::X != m_center_edges[i]->m_edge_tag
+      && ON_SubD::EdgeTag::SmoothX != m_center_edges[i]->m_edge_tag
       && (bCenterEdgeIsSmooth[i] != bCenterEdgeIsCrease[i])
       )
     {
@@ -1220,7 +1217,7 @@ bool ON_SubDQuadNeighborhood::GetSubdivisionPoint(
     if (nullptr==vertex)
       break;
     double Q[3];
-    if (!vertex->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,true,Q))
+    if (!vertex->GetSubdivisionPoint(Q))
       break;
     subdivision_point[0] = Q[0];
     subdivision_point[1] = Q[1];
@@ -1244,7 +1241,7 @@ bool ON_SubDQuadNeighborhood::GetSubdivisionPoint(
     if (nullptr==edge)
       break;
     double Q[3];
-    if (!edge->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,true,Q))
+    if (!edge->GetSubdivisionPoint(Q))
       break;
     subdivision_point[0] = Q[0];
     subdivision_point[1] = Q[1];
@@ -1269,7 +1266,7 @@ bool ON_SubDQuadNeighborhood::GetSubdivisionPoint(
     if (nullptr==face)
       break;
     double Q[3];
-    if (!face->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,true,Q))
+    if (!face->GetSubdivisionPoint(Q))
       break;
     subdivision_point[0] = Q[0];
     subdivision_point[1] = Q[1];
@@ -1287,8 +1284,6 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
 {
   if (nullptr == m_face_grid[1][1] || quadrant_index > 4)
     return ON_SUBD_RETURN_ERROR(0);
-
-  const bool bUseSavedSubdivisionPoint = true;
 
   ON_2dex dex;
   ON_2dex deltadex;
@@ -1311,7 +1306,7 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
     // is calculated here because if face->GetSubdivisionPoint() fails,
     // nothing below should succeed. The value of Q[2] is assigned to m_srf_cv1[2][2]
     // after the 8 ring points are successfully calculated.
-    if (!face->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[2]))
+    if (!face->GetSubdivisionPoint( Q[2]))
       return ON_SUBD_RETURN_ERROR(0);
 
     // faces_vertices[] face, in counterclockwise order.  
@@ -1326,11 +1321,11 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
     {
       if (nullptr == faces_vertices[fei])
         return ON_SUBD_RETURN_ERROR(0);
-      if (!faces_vertices[fei]->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[0]))
+      if (!faces_vertices[fei]->GetSubdivisionPoint( Q[0]))
         return ON_SUBD_RETURN_ERROR(0);
       if (nullptr == m_center_edges[fei])
         return ON_SUBD_RETURN_ERROR(0);
-      if (!m_center_edges[fei]->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[1]))
+      if (!m_center_edges[fei]->GetSubdivisionPoint( Q[1]))
         return ON_SUBD_RETURN_ERROR(0);
 
       dex = srf_cv_dex[2 * fei];
@@ -1390,20 +1385,20 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
           const ON_SubDEdge* edge = m_edge_grid[side_fvi][0];
           if (nullptr == edge)
             return ON_SUBD_RETURN_ERROR(0);
-          if (!edge->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[0]))
+          if (!edge->GetSubdivisionPoint(Q[0]))
             return ON_SUBD_RETURN_ERROR(0);
 
           const ON_2dex fdex = ON_SubDQuadNeighborhood::GridDex(3, side_fvi, 1, 0);
           face = m_face_grid[fdex.i][fdex.j];
           if (nullptr == face)
             return ON_SUBD_RETURN_ERROR(0);
-          if (!face->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[1]))
+          if (!face->GetSubdivisionPoint(Q[1]))
             return ON_SUBD_RETURN_ERROR(0);
 
           edge = m_edge_grid[side_fvi][1];
           if (nullptr == edge)
             return ON_SUBD_RETURN_ERROR(0);
-          if (!edge->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[2]))
+          if (!edge->GetSubdivisionPoint(Q[2]))
             return ON_SUBD_RETURN_ERROR(0);
         }
 
@@ -1481,7 +1476,7 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
         const ON_SubDFace* face_ij = m_face_grid[dex.i][dex.j];
         if (nullptr == face_ij)
           return ON_SUBD_RETURN_ERROR(0);
-        if (!face_ij->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, Q[0]))
+        if (!face_ij->GetSubdivisionPoint(Q[0]))
           return ON_SUBD_RETURN_ERROR(0);
         P1[0] = Q[0][0]; P1[1] = Q[0][1]; P1[2] = Q[0][2];
       }
@@ -1669,7 +1664,6 @@ bool ON_SubDQuadNeighborhood::Internal_GetApproximateCV(
   }
   
   bool bHaveApproximateCV;
-  const bool bUseSavedSubdivisionPoint = true;
   if (nullptr != e)
   {
     const int extraordinary_vertex_index = ExtraordinaryCenterVertexIndex(ON_SubD::VertexTag::Crease, 4);
@@ -1687,11 +1681,11 @@ bool ON_SubDQuadNeighborhood::Internal_GetApproximateCV(
     }
     else
     {
-      bHaveApproximateCV = e->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, bUseSavedSubdivisionPoint, approximate_cv);
+      bHaveApproximateCV = e->GetSubdivisionPoint(approximate_cv);
     }
   }
   else if ( nullptr != f && 4 == f->m_edge_count )
-    bHaveApproximateCV = f->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark,bUseSavedSubdivisionPoint,approximate_cv);
+    bHaveApproximateCV = f->GetSubdivisionPoint(approximate_cv);
   else
   {
     bHaveApproximateCV = false;
@@ -1710,7 +1704,7 @@ static double ON_SubDQuadFaceTopology_CopySectorWeight(
   if (nullptr == e0 || nullptr == e0v)
     return ON_SUBD_RETURN_ERROR(false);
 
-  if (ON_SubD::EdgeTag::Smooth != e0->m_edge_tag && ON_SubD::EdgeTag::X != e0->m_edge_tag )
+  if (ON_SubD::EdgeTag::Smooth != e0->m_edge_tag && ON_SubD::EdgeTag::SmoothX != e0->m_edge_tag )
     return ON_SubDSectorType::IgnoredSectorWeight;
 
   if (e0v == e0->m_vertex[0])
@@ -1722,7 +1716,7 @@ static double ON_SubDQuadFaceTopology_CopySectorWeight(
   return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
 }
 
-static ON_SubDEdge* ON_SubDQuadFaceTopology_SubdivideEdge(
+static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
   ON_SubD_FixedSizeHeap& fsh,
   ON_SubDVertex* qv1,
   const ON_SubDVertex* qv0,
@@ -1730,25 +1724,25 @@ static ON_SubDEdge* ON_SubDQuadFaceTopology_SubdivideEdge(
   )
 {
   if (nullptr == qv1 || nullptr == e0)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
-  ON_SubDVertex* v1 = fsh.AllocateVertex(e0,ON_SubD::SubDType::QuadCatmullClark,true,4,4);
+  ON_SubDVertex* v1 = fsh.AllocateVertex(e0);
   if (nullptr == v1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   double v0_weight;
   if ( e0->IsSmooth() && nullptr != qv0)
   {
     // qv1 is the subdivision point of qv0.
     if ( qv1->m_vertex_tag != qv0->m_vertex_tag )
-      return ON_SUBD_RETURN_ERROR(nullptr);
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     if ( ON_SubD::VertexTag::Smooth == qv0->m_vertex_tag)
       v0_weight = ON_SubDSectorType::IgnoredSectorWeight;
     else
     {
       v0_weight = ON_SubDQuadFaceTopology_CopySectorWeight(e0, qv0);
       if (false == ON_SubDSectorType::IsValidSectorWeightValue(v0_weight,false))
-        return ON_SUBD_RETURN_ERROR(nullptr);
+        return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     }
   }
   else
@@ -1756,48 +1750,49 @@ static ON_SubDEdge* ON_SubDQuadFaceTopology_SubdivideEdge(
 
   const double v1_weight = ON_SubDSectorType::IgnoredSectorWeight;
 
-  ON_SubDEdge* e1 = fsh.AllocateEdge(qv1,v0_weight,v1,v1_weight);
+  ON_SubDEdgePtr ep1 = fsh.AllocateEdge(qv1,v0_weight,v1,v1_weight);
+  ON_SubDEdge* e1 = ep1.Edge();
   if (nullptr == e1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   if (e1->m_edge_tag != e0->m_edge_tag)
   {
     // On the first subdivision step,
-    // e0 with tag ON_SubD::EdgeTag::X turns into 
+    // e0 with tag ON_SubD::EdgeTag::SmoothX turns into 
     // e1 with tag ON_SubD::EdgeTag::Smooth.
-    if ( ON_SubD::EdgeTag::Smooth != e1->m_edge_tag || ON_SubD::EdgeTag::X != e0->m_edge_tag)
-      return ON_SUBD_RETURN_ERROR(nullptr);
+    if ( ON_SubD::EdgeTag::Smooth != e1->m_edge_tag || ON_SubD::EdgeTag::SmoothX != e0->m_edge_tag)
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   }
 
-  return e1;
+  return ep1;
 }
 
 static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
   ON_SubD_FixedSizeHeap& fsh,
   const ON_SubDFace* f0,
-  ON_SubDEdge* e1[2],
+  ON_SubDEdgePtr e1[2],
   double at_crease_weight
   )
 {
   ON_SubDVertex* v[4];
-  if (nullptr == f0 || nullptr == e1[0] || nullptr == e1[1])
+  if (nullptr == f0 || nullptr == e1[0].Edge() || nullptr == e1[1].Edge())
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v[0] = const_cast<ON_SubDVertex*>(e1[0]->m_vertex[0]);
-  if (nullptr == v[0] || v[0] != e1[1]->m_vertex[0])
+  v[0] = const_cast<ON_SubDVertex*>(e1[0].RelativeVertex(0));
+  if (nullptr == v[0] || v[0] != e1[1].RelativeVertex(0))
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v[1] = const_cast<ON_SubDVertex*>(e1[0]->m_vertex[1]);
+  v[1] = const_cast<ON_SubDVertex*>(e1[0].RelativeVertex(1));
   if (nullptr == v[1] )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v[3] = const_cast<ON_SubDVertex*>(e1[1]->m_vertex[1]);
+  v[3] = const_cast<ON_SubDVertex*>(e1[1].RelativeVertex(1));
   if (nullptr == v[3] )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   if (v[1] == v[0] || v[3] == v[0] || v[1] == v[3])
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v[2] = fsh.AllocateVertex(f0,ON_SubD::SubDType::QuadCatmullClark,true,4,4);
+  v[2] = fsh.FindOrAllocateVertex(f0);
   if ( nullptr == v[2])
     return ON_SUBD_RETURN_ERROR(nullptr);
 
@@ -1805,20 +1800,15 @@ static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
   const double v2_weight = ON_SubDSectorType::IgnoredSectorWeight;
   const double v3_weight = (ON_SubD::VertexTag::Crease == v[3]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorWeight;
 
-  ON_SubDEdge* e12 = fsh.AllocateEdge(v[1],v1_weight,v[2],v2_weight);
-  if ( nullptr == e12)
+  ON_SubDEdgePtr e12 = fsh.AllocateEdge(v[1],v1_weight,v[2],v2_weight);
+  if ( nullptr == e12.Edge())
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  ON_SubDEdge* e23 = fsh.AllocateEdge(v[2],v2_weight,v[3],v3_weight);
-  if ( nullptr == e23)
+  ON_SubDEdgePtr e23 = fsh.AllocateEdge(v[2],v2_weight,v[3],v3_weight);
+  if ( nullptr == e23.Edge())
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  ON_SubDEdgePtr f1_epts[4] = {
-    ON_SubDEdgePtr::Create(e1[0], 0),
-    ON_SubDEdgePtr::Create(e12, 0),
-    ON_SubDEdgePtr::Create(e23, 0),
-    ON_SubDEdgePtr::Create(e1[1], 1)
-  };
+  ON_SubDEdgePtr f1_epts[4] = { e1[0], e12, e23, e1[1].Reversed() };
 
   ON_SubDFace* f1 = fsh.AllocateQuad(f0->m_zero_face_id, f0->m_id, f1_epts);
   if ( nullptr == f1)
@@ -1839,13 +1829,11 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( m_fsh == &fsh )
     return ON_SUBD_RETURN_ERROR(false);
 
-  const ON_SubD::SubDType subd_type = ON_SubD::SubDType::QuadCatmullClark;
-
   // When a smooth subdivision edge ends at a vertex that is a subdivision point
   // of a creased original edge, this is the value to assign to the new
   // edge's m_vertex_weight. The "2" is there because there would be 2
   // sector faces if the subdivision was complete.
-  const double at_crease_weight = ON_SubDSectorType::CreaseSectorWeight(subd_type,2);
+  const double at_crease_weight = ON_SubDSectorType::CreaseSectorWeight(2);
   
   if ( m_fsh == q1ft->m_fsh)
     q1ft->m_fsh = nullptr;
@@ -1883,8 +1871,22 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   const ON_SubDVertex* qv0 = qf0_vertices[0];
-  if ( nullptr == qv0 || qv0->m_face_count > qv0->m_edge_count)
+  if ( nullptr == qv0 )
     return ON_SUBD_RETURN_ERROR(false);
+
+  if (nullptr == qv0 || qv0->m_face_count > qv0->m_edge_count)
+  {
+    if (ON_SubD::VertexTag::Corner == qv0->m_vertex_tag)
+    {
+      // nonmanifold case can have face_count > edge_count
+      if ( qv0->m_edge_count < 3 )
+        return ON_SUBD_RETURN_ERROR(false);
+    }
+    else
+    {
+      return ON_SUBD_RETURN_ERROR(false);
+    }
+  }
 
   const unsigned int N = qv0->m_edge_count;
   if (N < ON_SubDSectorType::MinimumSectorEdgeCount(qv0->m_vertex_tag))
@@ -1911,10 +1913,10 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     : ON_SubDSectorIterator::StopAt::AnyCrease
     ;
 
-  if ( false == fsh.ReserveSubDWorkspace( subd_type, N) )
+  if ( false == fsh.ReserveSubDWorkspace(qf0) )
     return ON_SUBD_RETURN_ERROR(false);
 
-  ON_SubDVertex* qv1 = fsh.AllocateVertex(qv0,subd_type,true,N,qv0->m_face_count);
+  ON_SubDVertex* qv1 = fsh.AllocateVertex(qv0,N);
   if ( nullptr == qv1 )
     return ON_SUBD_RETURN_ERROR(false);
   //qv1->m_vertex_facet_type = ON_SubD::VertexFacetType::Quad;
@@ -1926,17 +1928,17 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
   ON_SubDFace* face_grid1[3][3] = {};
   ON_SubDVertex* vertex_grid1[4][4] = {};
-  ON_SubDEdge* edge_grid1[4][2] = {};
+  ON_SubDEdgePtr edge_grid1[4][2] = {};
 
   // edge1 = new edge from qv1 to edge0 subdivision point
-  ON_SubDEdge* edge1 = ON_SubDQuadFaceTopology_SubdivideEdge(fsh,qv1,qv0,edge0);
-  if (nullptr == edge1)
+  ON_SubDEdgePtr edgep1 = ON_SubDQuadFaceTopology_SubdivideEdge(fsh,qv1,qv0,edge0);
+  if (edgep1.IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   // prepare to rotate coutnerclockwise around qv0, 
   // subdividing edges and adding new faces
   const ON_SubDEdge* e0[2] = {nullptr, edge0};
-  ON_SubDEdge* e1[2] = {nullptr, edge1};
+  ON_SubDEdgePtr e1[2] = {ON_SubDEdgePtr::Null, edgep1};
   const ON_SubDFace* f0 = qf0;
   ON_SubDFace* f1 = nullptr;
   bool bAtBoundaryCrease = false;
@@ -1951,10 +1953,10 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       return ON_SUBD_RETURN_ERROR(false);
     e1[0] = e1[1];
     if (edge0 == e0[1])
-      e1[1] = edge1; // back to where we started
+      e1[1] = edgep1; // back to where we started
     else
       e1[1] = ON_SubDQuadFaceTopology_SubdivideEdge(fsh, qv1, qv0, e0[1]);
-    if (nullptr == e1[1])
+    if (e1[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
     f1 = ON_SubDQuadFaceTopology_SubdivideFace(fsh, f0, e1, at_crease_weight);
@@ -1966,8 +1968,8 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       face_grid1[0][1] = f1;
       vertex_grid1[0][1] = const_cast<ON_SubDVertex*>(f1->Vertex(3));
       vertex_grid1[0][2] = const_cast<ON_SubDVertex*>(f1->Vertex(2));
-      edge_grid1[3][0] = const_cast<ON_SubDEdge*>(f1->Edge(1));
-      edge_grid1[3][1] = const_cast<ON_SubDEdge*>(f1->Edge(3));
+      edge_grid1[3][0] = f1->EdgePtr(1);
+      edge_grid1[3][1] = f1->EdgePtr(3);
     }
 
     if (0 == i)
@@ -1995,7 +1997,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
     if (bAtBoundaryCrease)
     {
-      e1[1]->m_edge_tag = ON_SubD::EdgeTag::Crease;
+      e1[1].Edge()->m_edge_tag = ON_SubD::EdgeTag::Crease;
       break;
     }
 
@@ -2055,8 +2057,8 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
     e0[0] = edge0;
     e0[1] = nullptr;
-    e1[0] = edge1;
-    e1[1] = nullptr;
+    e1[0] = edgep1;
+    e1[1] = ON_SubDEdgePtr::Null;
     f1 = nullptr;
     for (unsigned int i = 0; i < N - edge_mark; i++)
     {
@@ -2066,7 +2068,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
         return ON_SUBD_RETURN_ERROR(false);
       e1[1] = e1[0];
       e1[0] =  ON_SubDQuadFaceTopology_SubdivideEdge(fsh, qv1, qv0, e0[0]);
-      if (nullptr == e1[0])
+      if (e1[0].IsNull())
         return ON_SUBD_RETURN_ERROR(false);
 
       f1 = ON_SubDQuadFaceTopology_SubdivideFace(fsh, f0, e1, at_crease_weight);
@@ -2082,7 +2084,6 @@ bool ON_SubDQuadNeighborhood::Subdivide(
         bFinished = (nullptr == f0 && ON_SubD::EdgeTag::Crease == e0[0]->m_edge_tag && qv1->m_face_count+1 == qv1->m_edge_count);
         if (false == bFinished)
           return ON_SUBD_RETURN_ERROR(false);
-        //qv1->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset; // edges no longer radially sorted
         break;
       }
     }
@@ -2099,42 +2100,41 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     face_grid1[1][0] = f1;
     vertex_grid1[1][0] = const_cast<ON_SubDVertex*>(f1->Vertex(1));
     vertex_grid1[2][0] = const_cast<ON_SubDVertex*>(f1->Vertex(2));
-    edge_grid1[0][0] = const_cast<ON_SubDEdge*>(f1->Edge(0));
-    edge_grid1[0][1] = const_cast<ON_SubDEdge*>(f1->Edge(2));
+    edge_grid1[0][0] = f1->EdgePtr(0);
+    edge_grid1[0][1] = f1->EdgePtr(2);
   }
 
   // Add the 7 remaining elements to vertex_grid1[][]
   if (false == bBoundaryCrease1[0])
   {
-    vertex_grid1[3][0] = fsh.AllocateVertex(m_edge_grid[q0fvi][1],ON_SubD::SubDType::QuadCatmullClark,true,2,1);
+    vertex_grid1[3][0] = fsh.AllocateVertex(m_edge_grid[q0fvi][1]);
     if ( nullptr == vertex_grid1[3][0])
       return ON_SUBD_RETURN_ERROR(false);
   }
 
-  vertex_grid1[3][1] = fsh.AllocateVertex(qf0_vertices[1],ON_SubD::SubDType::QuadCatmullClark,true,3,2);
+  vertex_grid1[3][1] = fsh.AllocateVertex(qf0_vertices[1],3);
   if ( nullptr == vertex_grid1[3][1])
     return ON_SUBD_RETURN_ERROR(false);
 
-
-  vertex_grid1[3][2] = fsh.AllocateVertex(qf0_edges[1],ON_SubD::SubDType::QuadCatmullClark,true,3,2);
+  vertex_grid1[3][2] = fsh.AllocateVertex(qf0_edges[1]);
   if ( nullptr == vertex_grid1[3][2])
     return ON_SUBD_RETURN_ERROR(false);
 
-  vertex_grid1[3][3] = fsh.AllocateVertex(qf0_vertices[2],ON_SubD::SubDType::QuadCatmullClark,true,2,1);
+  vertex_grid1[3][3] = fsh.AllocateVertex(qf0_vertices[2],2);
   if ( nullptr == vertex_grid1[3][3])
     return ON_SUBD_RETURN_ERROR(false);
 
-  vertex_grid1[2][3] = fsh.AllocateVertex(qf0_edges[2],ON_SubD::SubDType::QuadCatmullClark,true,3,2);
+  vertex_grid1[2][3] = fsh.AllocateVertex(qf0_edges[2]);
   if ( nullptr == vertex_grid1[2][3])
     return ON_SUBD_RETURN_ERROR(false);
 
-  vertex_grid1[1][3] = fsh.AllocateVertex(qf0_vertices[3],ON_SubD::SubDType::QuadCatmullClark,true,3,2);
+  vertex_grid1[1][3] = fsh.AllocateVertex(qf0_vertices[3],3);
   if ( nullptr == vertex_grid1[1][3])
     return ON_SUBD_RETURN_ERROR(false);
 
   if (false == bBoundaryCrease1[3])
   {
-    vertex_grid1[0][3] = fsh.AllocateVertex(m_edge_grid[(q0fvi+3)%4][0],ON_SubD::SubDType::QuadCatmullClark,true,2,1);
+    vertex_grid1[0][3] = fsh.AllocateVertex(m_edge_grid[(q0fvi+3)%4][0]);
     if ( nullptr == vertex_grid1[0][3])
       return ON_SUBD_RETURN_ERROR(false);
   }
@@ -2145,7 +2145,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[3][1], 
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[0], qf0_vertices[1])
     );
-  if ( nullptr == edge_grid1[1][0])
+  if ( edge_grid1[1][0].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[1][1] = fsh.AllocateEdge(
@@ -2154,7 +2154,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[3][2],
     at_crease_weight // ignored unless vertex_grid1[3][2] is tagged as a crease
     );
-  if ( nullptr == edge_grid1[1][1])
+  if (edge_grid1[1][1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[2][0] = fsh.AllocateEdge(
@@ -2163,7 +2163,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[2][3],
     at_crease_weight // ignored unless vertex_grid1[2][3] is tagged as a crease
     );
-  if ( nullptr == edge_grid1[2][0])
+  if (edge_grid1[2][0].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[2][1] = fsh.AllocateEdge(
@@ -2172,20 +2172,19 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[1][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[3], qf0_vertices[3])
     );
-  if ( nullptr == edge_grid1[2][1])
+  if (edge_grid1[2][1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   // Add the 5 remaining elements to face_grid1[][]
-  ON_SubDEdge* fedges[4];
-  ON_SubDEdgePtr feptrs[4];
+  ON_SubDEdgePtr fedges[4];
   if (false == bBoundaryCrease1[0])
   {
-    fedges[0] = nullptr;
-    fedges[1] = nullptr;
+    fedges[0] = ON_SubDEdgePtr::Null;
+    fedges[1] = ON_SubDEdgePtr::Null;
     fedges[2] = edge_grid1[1][0];
     fedges[3] = edge_grid1[0][1];
 
-    if (nullptr == fedges[2] || nullptr == fedges[3] )
+    if (fedges[2].IsNull() || fedges[3].IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[0] = fsh.AllocateEdge(
@@ -2194,7 +2193,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       vertex_grid1[3][0],
       at_crease_weight // ignored unless vertex_grid1[3][0] is tagged as a crease
       );
-    if (nullptr == fedges[0])
+    if (fedges[0].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
     // m_edge_grid[q0fvi][1]
     fedges[1] = fsh.AllocateEdge(
@@ -2203,26 +2202,26 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       vertex_grid1[3][1],
       ON_SubDQuadFaceTopology_CopySectorWeight(m_edge_grid[q0fvi][1], qf0_vertices[1])
       );
-    if (nullptr == fedges[1])
+    if (fedges[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
-    feptrs[0] = ON_SubDEdgePtr::Create(fedges[0],0);
-    feptrs[1] = ON_SubDEdgePtr::Create(fedges[1],0);
-    feptrs[2] = ON_SubDEdgePtr::Create(fedges[2],1);
-    feptrs[3] = ON_SubDEdgePtr::Create(fedges[3],1);
-
-    face_grid1[2][0] = fsh.AllocateQuad(zero_face_id, parent_face_id, feptrs);
+    face_grid1[2][0] = fsh.AllocateQuad(zero_face_id, parent_face_id,
+      fedges[0],
+      fedges[1],
+      fedges[2].Reversed(),
+      fedges[3].Reversed()
+      );
     if (nullptr == face_grid1[2][0])
       return ON_SUBD_RETURN_ERROR(false);
   }
 
   // face_grid1[2][1]
   fedges[0] = edge_grid1[1][0];
-  fedges[1] = nullptr;
+  fedges[1] = ON_SubDEdgePtr::Null;
   fedges[2] = edge_grid1[1][1];
-  fedges[3] = ON_SUBD_EDGE_POINTER(face_grid1[1][1]->m_edge4[1].m_ptr);
+  fedges[3] = face_grid1[1][1]->m_edge4[1];
 
-  if (nullptr == fedges[0] || nullptr == fedges[2] || nullptr == fedges[3] )
+  if ( fedges[0].IsNull() || fedges[2].IsNull() || fedges[3].IsNull() )
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[1] = fsh.AllocateEdge(
@@ -2231,25 +2230,28 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[3][2],
     ON_SubDSectorType::IgnoredSectorWeight
     );
-  if (nullptr == fedges[1])
+  if (fedges[1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
-  feptrs[0] = ON_SubDEdgePtr::Create(fedges[0],0);
-  feptrs[1] = ON_SubDEdgePtr::Create(fedges[1],0);
-  feptrs[2] = ON_SubDEdgePtr::Create(fedges[2],1);
-  feptrs[3] = ON_SubDEdgePtr::Create(fedges[3],1);
 
-  face_grid1[2][1] = fsh.AllocateQuad(zero_face_id, parent_face_id, feptrs);
+  face_grid1[2][1] = fsh.AllocateQuad(
+    zero_face_id,
+    parent_face_id, 
+    fedges[0],
+    fedges[1],
+    fedges[2].Reversed(),
+    fedges[3].Reversed()
+  );
   if (nullptr == face_grid1[2][1])
     return ON_SUBD_RETURN_ERROR(false);
 
   // face_grid1[2][2]
   fedges[0] = edge_grid1[1][1];
-  fedges[1] = nullptr;
-  fedges[2] = nullptr;
+  fedges[1] = ON_SubDEdgePtr::Null;
+  fedges[2] = ON_SubDEdgePtr::Null;
   fedges[3] = edge_grid1[2][0];
 
-  if (nullptr == fedges[0] || nullptr == fedges[3] )
+  if ( fedges[0].IsNull() || fedges[3].IsNull() )
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[1] = fsh.AllocateEdge(
@@ -2258,7 +2260,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[3][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[1], qf0_vertices[2])
     );
-  if (nullptr == fedges[1])
+  if (fedges[1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[2] = fsh.AllocateEdge(
@@ -2267,25 +2269,27 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[2][3],
     ON_SubDSectorType::IgnoredSectorWeight
     );
-  if (nullptr == fedges[2])
+  if (fedges[2].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
-  feptrs[0] = ON_SubDEdgePtr::Create(fedges[0],0);
-  feptrs[1] = ON_SubDEdgePtr::Create(fedges[1],0);
-  feptrs[2] = ON_SubDEdgePtr::Create(fedges[2],0);
-  feptrs[3] = ON_SubDEdgePtr::Create(fedges[3],1);
-
-  face_grid1[2][2] = fsh.AllocateQuad(zero_face_id, parent_face_id, feptrs);
+  face_grid1[2][2] = fsh.AllocateQuad(
+    zero_face_id, 
+    parent_face_id, 
+    fedges[0],
+    fedges[1],
+    fedges[2],
+    fedges[3].Reversed()
+    );
   if (nullptr == face_grid1[2][2])
     return ON_SUBD_RETURN_ERROR(false);
 
   // face_grid1[1][2]  
-  fedges[0] = ON_SUBD_EDGE_POINTER(face_grid1[1][1]->m_edge4[2].m_ptr);
+  fedges[0] = face_grid1[1][1]->m_edge4[2];
   fedges[1] = edge_grid1[2][0];
-  fedges[2] = nullptr;
+  fedges[2] = ON_SubDEdgePtr::Null;
   fedges[3] = edge_grid1[2][1];
 
-  if (nullptr == fedges[0] || nullptr == fedges[1] || nullptr == fedges[3] )
+  if (fedges[0].IsNull() || fedges[1].IsNull() ||fedges[3].IsNull() )
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[2] = fsh.AllocateEdge(
@@ -2294,26 +2298,27 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[1][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[2], qf0_vertices[3])
     );
-  if (nullptr == fedges[2])
+  if (fedges[2].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
-  feptrs[0] = ON_SubDEdgePtr::Create(fedges[0],1);
-  feptrs[1] = ON_SubDEdgePtr::Create(fedges[1],0);
-  feptrs[2] = ON_SubDEdgePtr::Create(fedges[2],0);
-  feptrs[3] = ON_SubDEdgePtr::Create(fedges[3],1);
-
-  face_grid1[1][2] = fsh.AllocateQuad(zero_face_id, parent_face_id, feptrs);
+  face_grid1[1][2] = fsh.AllocateQuad(
+    zero_face_id, parent_face_id,
+    fedges[0].Reversed(),
+    fedges[1],
+    fedges[2],
+    fedges[3].Reversed()
+  );
   if (nullptr == face_grid1[1][2])
     return ON_SUBD_RETURN_ERROR(false);
 
   if (false == bBoundaryCrease1[3])
   {
     fedges[0] = edge_grid1[2][1];
-    fedges[1] = nullptr;
-    fedges[2] = nullptr;
+    fedges[1] = ON_SubDEdgePtr::Null;
+    fedges[2] = ON_SubDEdgePtr::Null;
     fedges[3] = edge_grid1[3][0];
 
-    if (nullptr == fedges[0] || nullptr == fedges[3] )
+    if ( fedges[0].IsNull() || fedges[3].IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[1] = fsh.AllocateEdge(
@@ -2322,7 +2327,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       vertex_grid1[0][3],
       ON_SubDSectorType::IgnoredSectorWeight
       );
-    if (nullptr == fedges[1])
+    if ( fedges[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[2] = fsh.AllocateEdge(
@@ -2331,15 +2336,16 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       vertex_grid1[0][2],
       ON_SubDSectorType::IgnoredSectorWeight
       );
-    if (nullptr == fedges[2])
+    if ( fedges[2].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
-    feptrs[0] = ON_SubDEdgePtr::Create(fedges[0],0);
-    feptrs[1] = ON_SubDEdgePtr::Create(fedges[1],0);
-    feptrs[2] = ON_SubDEdgePtr::Create(fedges[2],0);
-    feptrs[3] = ON_SubDEdgePtr::Create(fedges[3],1);
-
-    face_grid1[0][2] = fsh.AllocateQuad(zero_face_id, parent_face_id, feptrs);
+    face_grid1[0][2] = fsh.AllocateQuad(
+      zero_face_id, parent_face_id,
+      fedges[0],
+      fedges[1],
+      fedges[2],
+      fedges[3].Reversed()
+    );
     if (nullptr == face_grid1[0][2])
       return ON_SUBD_RETURN_ERROR(false);
   }
@@ -2364,8 +2370,8 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   {
     unsigned int j = (q0fvi + i) % 4;
     q1ft->m_bBoundaryCrease[j] = bBoundaryCrease1[i];
-    q1ft->m_edge_grid[j][0] = edge_grid1[i][0];
-    q1ft->m_edge_grid[j][1] = edge_grid1[i][1];
+    q1ft->m_edge_grid[j][0] = edge_grid1[i][0].Edge();
+    q1ft->m_edge_grid[j][1] = edge_grid1[i][1].Edge();
     q1ft->m_center_edges[j] = face_grid1[1][1]->Edge(i);
 
     dex = ON_SubDQuadNeighborhood::GridDex(4,q0fvi,i,0);
@@ -2382,23 +2388,26 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( m_bExtraordinaryCornerVertex[q0fvi] )
   {
     // evaluate extraordinary limit point as soon as possible and then save it for future use.
-    ON_SubDSectorLimitPoint limit_point;
-    const ON_SubD::SubDType subd_type_local_scope = ON_SubD::SubDType::QuadCatmullClark;
+    ON_SubDSectorSurfacePoint limit_point;
 
     const ON_SubDFace* qv0_sector_face = this->m_face_grid[1][1];
     const ON_SubDFace* qv1_sector_face = q1ft->m_face_grid[1][1];
 
-    if (subd_type_local_scope == qv0->SavedLimitPointType() && qv0->GetLimitPoint(subd_type_local_scope,qv0_sector_face,true,limit_point) && limit_point.IsSet())
+    if (
+      qv0->SurfacePointIsSet() 
+      && qv0->GetSurfacePoint(qv0_sector_face,limit_point)
+      && limit_point.IsSet(false)
+      )
     {
       limit_point.m_sector_face = qv1_sector_face; // qv1's sector face
       limit_point.m_next_sector_limit_point = nullptr; // sector checks are required to get "first" face
-      qv1->SetSavedLimitPoint(subd_type_local_scope,limit_point);
+      qv1->SetSavedSurfacePoint(false,limit_point);
     }
-    else if (qv1->GetLimitPoint(subd_type_local_scope, qv1_sector_face, true, limit_point))
+    else if (qv1->GetSurfacePoint( qv1_sector_face, limit_point))
     {
       limit_point.m_sector_face = qv0_sector_face;
       limit_point.m_next_sector_limit_point = nullptr; // sector checks are required to get "first" face
-      qv0->SetSavedLimitPoint(subd_type_local_scope,limit_point);
+      qv0->SetSavedSurfacePoint(false,limit_point);
     }
   }
 
@@ -2473,10 +2482,10 @@ ON_2dex ON_SubDQuadNeighborhood::DeltaDex(
 
 
 
-bool ON_SubDFace::GetQuadLimitSurface(
+bool ON_SubDFace::GetQuadSurface(
+  double* limit_surface_cv,
   size_t limit_surface_cv_stride0,
-  size_t limit_surface_cv_stride1,
-  double* limit_surface_cv
+  size_t limit_surface_cv_stride1
   ) const
 {
   double srf_cv[4][4][3];
@@ -2511,7 +2520,7 @@ bool ON_SubDFace::GetQuadLimitSurface(
   return true;
 }
 
-bool ON_SubDFace::GetQuadLimitSurface(
+bool ON_SubDFace::GetQuadSurface(
 class ON_NurbsSurface& nurbs_surface
   ) const
 {
@@ -2524,7 +2533,7 @@ class ON_NurbsSurface& nurbs_surface
   {
     return false;
   }
-  if (false == GetQuadLimitSurface(nurbs_surface.m_cv_stride[0], nurbs_surface.m_cv_stride[1], nurbs_surface.m_cv))
+  if (false == GetQuadSurface(nurbs_surface.m_cv, nurbs_surface.m_cv_stride[0], nurbs_surface.m_cv_stride[1]))
     return false;
 
   // evaluation domain will be [0,1] x [0,1]
@@ -2538,7 +2547,7 @@ class ON_NurbsSurface& nurbs_surface
   return true;
 }
 
-bool ON_SubDFace::GetQuadLimitSurface(
+bool ON_SubDFace::GetQuadSurface(
 class ON_BezierSurface& bezier_surface
   ) const
 {
@@ -2567,7 +2576,7 @@ class ON_BezierSurface& bezier_surface
   nurbs_surface.m_knot_capacity[0] = 0;
   nurbs_surface.m_knot_capacity[1] = 0;
 
-  if (false == GetQuadLimitSurface(nurbs_surface))
+  if (false == GetQuadSurface(nurbs_surface))
     return false;
 
   if (false == nurbs_surface.ClampEnd(0, 2))
@@ -2583,219 +2592,31 @@ class ON_BezierSurface& bezier_surface
 
 ON_SubDFaceNeighborhood::~ON_SubDFaceNeighborhood()
 {
-  ReserveCapacity(ON_SubD::SubDType::Unset,nullptr);
+  ReserveCapacity(nullptr);
 }
 
 bool ON_SubDFaceNeighborhood::ReserveCapacity(
-  ON_SubD::SubDType subd_type,
   const ON_SubDFace* face
   )
 {
   m_face0 = nullptr;
-  m_subd_type = ON_SubD::SubDType::Unset;
   m_center_vertex1 = nullptr;
   m_face1_count = 0;
   m_face1 = nullptr;
 
-  unsigned int v_capacity =  0;
-  unsigned int e_capacity =  0;
-  unsigned int f_capacity =  0;
-  unsigned int a_capacity =  0;
-  
-  for (;;)
-  {
-    if (nullptr == face)
-      break;
-
-    const unsigned int N = face->m_edge_count;
-    if (N <= 2)
-      break;
-
-    // ordinary valence
-    //const unsigned short V0 
-    //  = (ON_SubD::FacetType::Quad == ON_SubD::FacetTypeFromSubDType(subd_type))
-    //  ? 4
-    //  : 6;
-    // set E = extraordinary vertex valence overhead
-    unsigned int S = 0;
-    //unsigned int E = 0;
-    const ON_SubDEdgePtr* edges = face->m_edge4;
-    ON__UINT_PTR edge_ptr;
-    const ON_SubDEdge* edge;
-    const ON_SubDVertex* vertex;
-    unsigned int i;
-    for (i = 0; i < N; i++, edges++)
-    {
-      if (4 == i)
-      {
-        if (nullptr == face->m_edgex)
-          return ON_SUBD_RETURN_ERROR(false);
-        edges = face->m_edgex;
-      }
-      edge_ptr = edges->m_ptr;
-      edge = ON_SUBD_EDGE_POINTER(edge_ptr);
-      if (nullptr == edge)
-        break;
-      vertex = edge->m_vertex[ON_SUBD_EDGE_DIRECTION(edge_ptr)];
-      if (nullptr == vertex)
-        break;
-      if (vertex->m_edge_count < 2 )
-        break;
-      if (vertex->m_edge_count < vertex->m_face_count )
-        break;
-      S += vertex->m_edge_count;
-      //if (vertex->m_edge_count > V0 )
-      //  E += (vertex->m_edge_count - V0);
-    }
-    if (i != N)
-      break;
-
-    if (ON_SubD::SubDType::QuadCatmullClark == subd_type)
-    {
-      f_capacity =  S;
-      e_capacity =  3*S - N;
-      v_capacity =  2*(S - N) + 1;
-      a_capacity =  4*f_capacity + 2*e_capacity + 2*v_capacity;
-    }
-    else if (ON_SubD::SubDType::TriLoopWarren == subd_type)
-    {
-      // todo -- add tri support
-      // (remember to add 4 to a_capacity for the ON_SubDFaceNeighborhood.m_face1[] array
-      //  when N = 3).
-      break;
-    }
-    else
-    {
-      break;
-    }
-
-    return m_fsh.ReserveSubDWorkspace(v_capacity, e_capacity, f_capacity, a_capacity);
-  }
-
-  m_fsh.ReserveSubDWorkspace(0,0,0,0);
-  if (ON_SubD::SubDType::Unset == subd_type && nullptr == face )
-    return true;
-  return ON_SUBD_RETURN_ERROR(false);
+  // reserve enough room to store the subdivided face and all neighboring components.
+  return m_fsh.ReserveSubDWorkspace(face);
 }
 
 
 bool ON_SubDFaceNeighborhood::Subdivide(
-  ON_SubD::SubDType subd_type,
   const ON_SubDFace* face
   )
 {
-  if (false == ReserveCapacity(subd_type, face))
+  if (false == ReserveCapacity(face))
     return ON_SUBD_RETURN_ERROR(false);
-
-  if (ON_SubD::SubDType::QuadCatmullClark == subd_type)
-    return ON_SubDFaceNeighborhood::QuadSubdivideHelper(face);
-
-  if (ON_SubD::SubDType::TriLoopWarren == subd_type)
-    return ON_SubDFaceNeighborhood::TriSubdivideHelper(face);
-
-  return ON_SUBD_RETURN_ERROR(false);
+  return ON_SubDFaceNeighborhood::QuadSubdivideHelper(face);
 }
-
-
-bool ON_SubDFaceNeighborhood::TriSubdivideHelper(
-  const ON_SubDFace* face
-  )
-{
-  // todo - add tri support
-  return ON_SUBD_RETURN_ERROR(false);
-}
-
-////static bool RadialSort(
-////  unsigned int vertex1_sort_mark,
-////  ON_SubDVertex* vertex
-////  )
-////{
-////  if (nullptr == vertex || vertex->m_face_count > vertex->m_edge_count)
-////    return ON_SUBD_RETURN_ERROR(false);
-////
-////  if ( 0 == vertex1_sort_mark)
-////    return true;
-////
-////  unsigned int e0_count = vertex1_sort_mark+1;
-////  unsigned int f0_count= vertex1_sort_mark;
-////  unsigned int e_count = vertex->m_edge_count;
-////  unsigned int f_count = vertex->m_face_count;
-////  if (e0_count > e_count || f0_count > f_count)
-////    return ON_SUBD_RETURN_ERROR(false);
-////
-////  ON__UINT_PTR stack_buffer[40];
-////  ON__UINT_PTR* buffer = 0;
-////  if (e0_count <= sizeof(stack_buffer) / sizeof(stack_buffer[0]))
-////    buffer = stack_buffer;
-////  else
-////  {
-////    buffer = new (std::nothrow) ON__UINT_PTR[e0_count];
-////    if ( nullptr == buffer)
-////      return ON_SUBD_RETURN_ERROR(false);
-////  }
-////
-////  unsigned int i, j;
-////  ON__UINT_PTR* a;
-////  
-////  a = (ON__UINT_PTR*)vertex->m_edges;
-////  for (i = 0; i < e0_count; i++)
-////  {
-////    buffer[i] = a[i];
-////  }
-////  j = 0;
-////  for (i = e0_count; i < e_count; i++)
-////  {
-////    a[j++] = a[i];
-////  }
-////  for (i = 0; i < e0_count; i++)
-////  {
-////    a[j++] = buffer[i];
-////  }
-////
-////  a = (ON__UINT_PTR*)vertex->m_faces;
-////  for (i = 0; i < f0_count; i++)
-////  {
-////    buffer[i] = a[i];
-////  }
-////  j = 0;
-////  for (i = f0_count; i < f_count; i++)
-////  {
-////    a[j++] = a[i];
-////  }
-////  for (i = 0; i < f0_count; i++)
-////  {
-////    a[j++] = buffer[i];
-////  }
-////
-////  if ( buffer != stack_buffer)
-////    delete[] buffer;
-////  vertex->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::radial;
-////  return true;
-////}
-
-
-#if defined(ON_DEBUG)
-
-//// debugging tool. If a call to this function is left in release code, the compile will fail (on purpose).
-//static void ON_DEBUG_SubDBreakPoint(const ON_SubDFace* face)
-//{
-//  for (;;)
-//  {
-//    if (nullptr == face)
-//      break;
-//    if (0 != face->m_level)
-//      break;
-//    if (34 != face->m_id)
-//      break;
-//    ON_TextLog::Null.Print("Breakpoint here."); // does nothing prevents warning as error 
-//    break;
-//  }
-//#if !defined(ON_DEBUG)
-//#error Do not use ON_DEBUG_SubDBreakPoint() in release builds.
-//#endif
-//}
-
-#endif
 
 bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   const ON_SubDFace* face
@@ -2803,39 +2624,35 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 {
   // input face is valid and space is reserved.
   //ON_DEBUG_SubDBreakPoint(face);
-
-
-  const ON_SubD::SubDType subd_type = ON_SubD::SubDType::QuadCatmullClark;
   
   // When a smooth subdivision edge ends at a vertex that is a subdivision point
   // of a creased original edge, this is the value to assign to the new
   // edge's m_vertex_weight. The "2" is there because there would be 2
   // sector faces if the subdivision was complete.
-  const double at_crease2_weight = ON_SubDSectorType::CreaseSectorWeight(subd_type,2);
+  const double at_crease2_weight = ON_SubDSectorType::CreaseSectorWeight(2);
 
   const unsigned int N = face->m_edge_count;
 
   const unsigned int zero_face_id = face->m_zero_face_id;
   const unsigned int parent_face_id = face->m_parent_face_id;
 
-  const bool bUseSavedSubdivisionPoint = true;
-
-  ON_SubDSectorLimitPoint limit_point;
+  ON_SubDSectorSurfacePoint limit_point;
 
   // create central vertex
-  ON_SubDVertex* center_vertex1 = m_fsh.AllocateVertex(face,subd_type,bUseSavedSubdivisionPoint,N,N);
+  ON_SubDVertex* center_vertex1 = m_fsh.FindOrAllocateVertex(face);
   if ( nullptr == center_vertex1)
+    return ON_SUBD_RETURN_ERROR(false);
+  if ( 1 != center_vertex1->m_id)
     return ON_SUBD_RETURN_ERROR(false);
 
   const ON_SubDVertex* vertex0 = face->Vertex(0);
   if ( nullptr == vertex0 )
     return ON_SUBD_RETURN_ERROR(false);
-  const bool bFirstVertexHasValence2 = (2 == vertex0->m_edge_count && 2 == vertex0->m_face_count && vertex0->IsSmoothOrDart());
 
   const ON_SubDEdge* edge0 = nullptr;
   ON__UINT_PTR edge0_dir = 0;
   ON_SubDVertex* vertex1 = nullptr;
-  ON_SubDEdge* edge1 = nullptr;
+  ON_SubDEdgePtr edge1 = ON_SubDEdgePtr::Null;
 
   // Calculate 2*N subdivison vertices on the boundary of input "face"
   // and N subdivision edge that radiate from center_vertex1 to the input face edge's subdivison points.
@@ -2860,28 +2677,32 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     if (vertex0->m_edge_count < 2)
       return ON_SUBD_RETURN_ERROR(false);
    
-    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calcualtethe 
+    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calcualte the 
     // limit mesh and limit cubic surfaces when the original face is not a quad.  
     // For these calculations, we need to calculate and save the limit point for extraordinary
     // verticies while enough information is available to calculate it.  Doing the calculation
     // before calling m_fsh.AllocateVertex(), insures the information will be copied to vertex1.
-    if ( false == vertex0->GetLimitPoint(subd_type,face,true,limit_point) )
+    if ( false == vertex0->GetSurfacePoint(face,limit_point) )
       return ON_SUBD_RETURN_ERROR(false);
-    vertex1 = m_fsh.AllocateVertex(vertex0,subd_type,bUseSavedSubdivisionPoint,vertex0->m_edge_count,vertex0->m_edge_count);
+    vertex1 = m_fsh.AllocateVertex(vertex0,vertex0->m_edge_count);
     if ( nullptr == vertex1)
       return ON_SUBD_RETURN_ERROR(false);
-    if (nullptr != limit_point.m_sector_face || subd_type != vertex1->SavedLimitPointType() )
+    if ( 2*i+2 != vertex1->m_id )
+      return ON_SUBD_RETURN_ERROR(false);
+    if (nullptr != limit_point.m_sector_face || false == vertex1->SurfacePointIsSet() )
     {
       // While there may be multiple sectors around vertex0, the only limit point 
       // that matters is this local subdivision is the one for vertex0 in the sector containing the input face.
-      limit_point.m_next_sector_limit_point = (ON_SubDSectorLimitPoint*)1; // causes unnecessary test to be skipped
+      limit_point.m_next_sector_limit_point = (ON_SubDSectorSurfacePoint*)1; // causes unnecessary test to be skipped
       limit_point.m_sector_face = nullptr;
-      vertex1->SetSavedLimitPoint(subd_type, limit_point);
+      vertex1->SetSavedSurfacePoint( false, limit_point);
     }
 
     // This vertex is either a crease (3 edges, 2 faces) or a smooth ordinary vertex (4 edges, 4 faces).
-    vertex1 = m_fsh.AllocateVertex(edge0,subd_type,bUseSavedSubdivisionPoint,4,4);
+    vertex1 = m_fsh.AllocateVertex(edge0);
     if ( nullptr == vertex1)
+      return ON_SUBD_RETURN_ERROR(false);
+    if ( 2*i+3 != vertex1->m_id )
       return ON_SUBD_RETURN_ERROR(false);
 
     edge1 = m_fsh.AllocateEdge(
@@ -2890,7 +2711,11 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       vertex1,
       at_crease2_weight // ingored unless vertex1 is tagged as a crease
       );
-    if ( nullptr == edge1)
+    if ( edge1.IsNull() )
+      return ON_SUBD_RETURN_ERROR(false);
+    if ( 0 != edge1.EdgeDirection() )
+      return ON_SUBD_RETURN_ERROR(false);
+    if ( i+1 != edge1.EdgeId() )
       return ON_SUBD_RETURN_ERROR(false);
   }
 
@@ -2902,12 +2727,11 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   // ring_vertex1[1] = subdivision vertex on input face->Vertex(i)
   // ring_vertex1[2] = subdivision vertex on input face->Edge(i)
   ON_SubDVertex* ring_vertex1[4] = { nullptr, nullptr, nullptr, vertex1 };
-
-
+  
   // Calculate the 2*N subdivison edges on the boundary of input "face"
   // and N subdivision faces.
   ON_SubDFace* face1 = nullptr;
-  ON_SubDEdgePtr face1_eptrs[4] = {ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Create(edge1, 1)};
+  ON_SubDEdgePtr face1_eptrs[4] = {ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,edge1.Reversed()};
   face_m_edges = face->m_edge4;
   for (unsigned int i = 0; i < N; i++, face_m_edges++)
   {
@@ -2946,9 +2770,9 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       ring_vertex1[1],
       ON_SubDQuadFaceTopology_CopySectorWeight(prev_edge0, vertex0)
       );
-    if ( nullptr == edge1 )
+    if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
-    face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1, 0);
+    face1_eptrs[1] = edge1;
 
 
     edge1 = m_fsh.AllocateEdge(
@@ -2957,9 +2781,9 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       ring_vertex1[2],
       ON_SubDSectorType::IgnoredSectorWeight
       );
-    if ( nullptr == edge1 )
+    if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
-    face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1, 0);
+    face1_eptrs[2] = edge1;
 
     face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
     if ( nullptr == face1)
@@ -3029,9 +2853,6 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     ring_vertex1[2]->m_edges[1] = face1_eptrs[1];
     ring_vertex1[2]->m_edges[2] = face1_eptrs[2];
 
-    if (bFirstVertexHasValence2)
-      continue;
-
     const ON_SubDFace* neighbor_face0 = edge0->NeighborFacePtr(face, false).Face();
     if (nullptr == neighbor_face0)
     {
@@ -3042,100 +2863,20 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       }
       continue;
     }
-    vertex1 = nullptr;
-    if (i > 0 && 2 == vertex0->m_edge_count && 2 == vertex0->m_face_count && 4 == ring_vertex1[0]->m_edge_count)
-    {
-      // uncommon valence 2 case that can be handled here
-      edge1 = ON_SUBD_EDGE_POINTER(ring_vertex1[0]->m_edges[3].m_ptr);
-      if ( nullptr == edge1 )
-        return ON_SUBD_RETURN_ERROR(false);
-      vertex1 = const_cast<ON_SubDVertex*>(edge1->m_vertex[1]);
-      if (nullptr == vertex1)
-        return ON_SUBD_RETURN_ERROR(false);
-    }
+    // when the vertex0 has two faces and two edges, the 2nd edge will get the vertex1 created
+    // the previous time through this loop because the hash table lookup will find it.
+    vertex1 = m_fsh.FindOrAllocateVertex(neighbor_face0);
     if (nullptr == vertex1)
-    {
-      vertex1 = m_fsh.AllocateVertex(neighbor_face0, subd_type, bUseSavedSubdivisionPoint, 4, 2);
-      if (nullptr == vertex1)
-        return ON_SUBD_RETURN_ERROR(false);
-    }
+      return ON_SUBD_RETURN_ERROR(false);
     edge1 = m_fsh.AllocateEdge(
       ring_vertex1[2],
       at_crease2_weight, // ingored unless ring_vertex1[0] is tagged as a crease
       vertex1,
       ON_SubDSectorType::IgnoredSectorWeight
       );
-    if (nullptr == edge1)
+    if ( edge1.IsNull())
       return ON_SUBD_RETURN_ERROR(false);
-  }
-
-  if (bFirstVertexHasValence2)
-  {
-    // extremely uncommon case that requires this mess ...
-    ON_SimpleArray<const ON_SubDFace*> neighbors(N);
-    face_m_edges = face->m_edge4;
-    for (unsigned int i = 0; i < N; i++, face_m_edges++)
-    {
-      if (4 == i)
-        face_m_edges = face->m_edgex;
-      const ON__UINT_PTR edge0_ptr = face_m_edges->m_ptr;
-      edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr);
-      neighbors.Append(edge0->NeighborFacePtr(face, edge0->IsHardCrease()).Face());
-    }
-
-    ON_SimpleArray<ON_SubDVertex*> neighbors_vertex1(N);
-    face_m_edges = face->m_edge4;
-    for (unsigned int i = 0; i < N; i++, face_m_edges++)
-    {
-      if (4 == i)
-        face_m_edges = face->m_edgex;
-      const ON__UINT_PTR edge0_ptr = face_m_edges->m_ptr;
-      edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr);
-      if (0 == i)
-      {
-        ring_vertex1[0] = ring_vertex1[3];
-        ring_vertex1[1] = const_cast<ON_SubDVertex*>(center_vertex1->m_next_vertex);
-        ring_vertex1[2] = const_cast<ON_SubDVertex*>(ring_vertex1[1]->m_next_vertex);
-      }
-      else
-      {
-        ring_vertex1[0] = ring_vertex1[2];
-        ring_vertex1[1] = const_cast<ON_SubDVertex*>(ring_vertex1[0]->m_next_vertex);
-        ring_vertex1[2] = const_cast<ON_SubDVertex*>(ring_vertex1[1]->m_next_vertex);
-      }
-
-
-      const ON_SubDFace* neighbor_face0 = edge0->NeighborFacePtr(face, edge0->IsHardCrease()).Face();
-      if (nullptr == neighbor_face0)
-      {
-        neighbors_vertex1.Append(nullptr);
-        continue;
-      }
-      for (unsigned int j = 0; j < i; j++)
-      {
-        if (neighbor_face0 == neighbors[j])
-        {
-          vertex1 = neighbors_vertex1[j];
-          break;
-        }
-      }
-      if (nullptr == vertex1)
-      {
-        vertex1 = m_fsh.AllocateVertex(neighbor_face0, subd_type, bUseSavedSubdivisionPoint, 4, 2);
-        if (nullptr == vertex1)
-          return ON_SUBD_RETURN_ERROR(false);
-      }
-      neighbors_vertex1.Append(vertex1);
-      edge1 = m_fsh.AllocateEdge(
-        ring_vertex1[2],
-        at_crease2_weight, // ingored unless ring_vertex1[0] is tagged as a crease
-        vertex1,
-        ON_SubDSectorType::IgnoredSectorWeight
-      );
-      if (nullptr == edge1)
-        return ON_SUBD_RETURN_ERROR(false);
-    }
-  }
+  } 
 
   /////////////////////////////////////////////////////////////////////////////////
   //
@@ -3160,14 +2901,13 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
     // vertex0 = face->Vertex(i)
     vertex0 = edge0_duo[1]->m_vertex[ON_SUBD_EDGE_DIRECTION(face_m_edges->m_ptr)];
-    //const bool bCornerVertexIsDart = vertex0->IsDart();
-    //const bool bCornerVertexIsCreaseOrCorner = bCornerVertexIsDart ? false : vertex0->IsCreaseOrCorner();
+    if ( nullptr == vertex0 || vertex0->m_edge_count < 2)
+      return ON_SUBD_RETURN_ERROR(false);
 
     edge0_duo_bIsHardCrease[0] = edge0_duo_bIsHardCrease[1];
     edge0_duo_bIsDartCrease[0] = edge0_duo_bIsDartCrease[1];
     edge0_duo_bIsHardCrease[1] = edge0_duo[1]->IsHardCrease();
     edge0_duo_bIsDartCrease[1] = edge0_duo_bIsHardCrease[1] ? false : edge0_duo[1]->IsDartCrease();
-    //const bool bDartCreaseSituation = edge0_duo_bIsDartCrease[0] || edge0_duo_bIsDartCrease[1];
 
     // neighbor0_duo[0] = original face neighbor across edge0_duo[0]
     // neighbor0_duo[1] = original face neighbor across edge0_duo[1]
@@ -3219,6 +2959,13 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       continue;
     }
 
+    if (nullptr == neighbor0_duo[0] && nullptr == neighbor0_duo[1])
+    {
+      // This is an error condition that we can tolerate and still get a partial result.
+      ON_SubDIncrementErrorCount();
+      continue;
+    }
+
     if (nullptr == neighbor0_duo[0] || nullptr == edge1_quartet[0])
     {
       if (false == edge0_duo_bIsHardCrease[0])
@@ -3239,25 +2986,27 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       }
     }
 
-    if (neighbor0_duo[0] == neighbor0_duo[1])
+    if ( neighbor0_duo[0] == neighbor0_duo[1] 
+      && 2 == vertex0->m_edge_count
+      && 2 == vertex0->m_face_count
+      )
     {
-      // special case
-      if ( nullptr == neighbor0_duo[0] || 2 == vertex0->m_edge_count)
-      {
-        // This is an error condition that we can tolerate and still get a partial result.
-        ON_SubDIncrementErrorCount();
-        continue;
-      }
-      if (nullptr == edge1_quartet[0] || nullptr == edge1_quartet[3] || edge1_quartet[0]->m_vertex[0] != edge1_quartet[3]->m_vertex[0] )
-      {
-        // This is an error condition that we can tolerate and still get a partial result.
-        ON_SubDIncrementErrorCount();
-        continue;
-      }
+      // vertex0 is a valence 2 vertex
+      face1_eptrs[0] = ON_SubDEdgePtr::Create(edge1_quartet[1],1);
+      face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1_quartet[0],0);
+      face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1_quartet[3],1);
+      face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1_quartet[2],1);
+      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+      if ( nullptr == face1)
+        return ON_SUBD_RETURN_ERROR(false);
       continue;
     }
 
-    if (vertex0->m_face_count <= 1 || vertex0->m_edge_count <= 2)
+    if (
+      neighbor0_duo[0] == neighbor0_duo[1]
+      || vertex0->m_face_count <= 1 
+      || vertex0->m_edge_count <= 2
+      )
     {
       // This is an error condition that we can tolerate and still get a partial result.
       ON_SubDIncrementErrorCount();
@@ -3267,19 +3016,6 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     /////////////////////////////////////////////////////////////////////////////////
     //
     // There is at least one outer subdivision quads around the inner corner subd quad at face->Vertex(i)
-
-    if (2 == vertex0->m_edge_count && 2 == vertex0->m_face_count)
-    {
-      // valance 2 special case
-      face1_eptrs[0] = ON_SubDEdgePtr::Create(edge1_quartet[2],1);
-      face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1_quartet[3],0);
-      face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1_quartet[0],1);
-      face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1_quartet[1],1);
-      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
-      if ( nullptr == face1)
-        return ON_SUBD_RETURN_ERROR(false);
-      continue;
-    }
 
     if ( vertex0 != sit.Initialize(face,0,i) )
       return ON_SUBD_RETURN_ERROR(false);
@@ -3293,7 +3029,6 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     {
       return ON_SUBD_RETURN_ERROR(false);
     }
-
 
     const unsigned int vertex_face_count = vertex0->m_face_count;
     const ON_SubDFace* face0 = nullptr;
@@ -3317,19 +3052,19 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
       const bool b3FaceCase = (neighbor0_duo[0] == edge0->NeighborFace(face0, false));
       
-      face1_corners[1] = m_fsh.AllocateVertex(edge0,subd_type,bUseSavedSubdivisionPoint,3,2);
+      face1_corners[1] = m_fsh.FindOrAllocateVertex(edge0);
       face1_corners[2] = const_cast<ON_SubDVertex*>(edge1_quartet[3]->m_vertex[1]);
       face1_corners[3] = ring_vertex1[2];
 
-      edge1 = m_fsh.AllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[1], at_crease2_weight);
-      if ( nullptr == edge1 )
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[1], at_crease2_weight);
+      if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
-      face1_eptrs[0] = ON_SubDEdgePtr::Create(edge1, 0);
+      face1_eptrs[0] = edge1;
 
-      edge1 = m_fsh.AllocateEdge(face1_corners[1], at_crease2_weight, face1_corners[2], ON_SubDSectorType::IgnoredSectorWeight);
-      if ( nullptr == edge1 )
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[1], at_crease2_weight, face1_corners[2], ON_SubDSectorType::IgnoredSectorWeight);
+      if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
-      face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1, 0);   
+      face1_eptrs[1] = edge1;   
 
       face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1_quartet[3],1);
       face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1_quartet[2],1);
@@ -3351,9 +3086,9 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       else
       {
         edge0 = sit.CurrentEdge(1);
-        if ( nullptr == edge1 )
+        if ( nullptr == edge0 )
           return ON_SUBD_RETURN_ERROR(false);
-        vertex1 = m_fsh.AllocateVertex(edge0,subd_type,bUseSavedSubdivisionPoint,3,2);
+        vertex1 = m_fsh.FindOrAllocateVertex(edge0);
       }
       if ( nullptr == vertex1 )
         return ON_SUBD_RETURN_ERROR(false);
@@ -3367,18 +3102,18 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       }
       else
       {
-        edge1 = m_fsh.AllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[3], at_crease2_weight );
-        if ( nullptr == edge1 )
+        edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[3], at_crease2_weight );
+        if ( edge1.IsNull() )
           return ON_SUBD_RETURN_ERROR(false);
-        face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1, 1);
+        face1_eptrs[3] = edge1.Reversed();
       }
 
       face1_eptrs[0] = ON_SubDEdgePtr::Create(edge1_quartet[1], 1);
       face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1_quartet[0], 0);
-      edge1 = m_fsh.AllocateEdge(face1_corners[2],  ON_SubDSectorType::IgnoredSectorWeight, face1_corners[3], at_crease2_weight);
-      if ( nullptr == edge1 )
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[2],  ON_SubDSectorType::IgnoredSectorWeight, face1_corners[3], at_crease2_weight);
+      if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
-      face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1, 0);
+      face1_eptrs[2] = edge1;
 
       face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
       if ( nullptr == face1 )
@@ -3537,18 +3272,18 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
               edge0 = sit.CurrentEdge(0);
               if (nullptr==edge0)
                 return ON_SUBD_RETURN_ERROR(false);
-              vertex1 = m_fsh.AllocateVertex(edge0,subd_type,bUseSavedSubdivisionPoint,3,2);
+              vertex1 = m_fsh.FindOrAllocateVertex(edge0);
             }
             break;
           case 2:
-            vertex1 = m_fsh.AllocateVertex(face0,subd_type,bUseSavedSubdivisionPoint,3,2);
+            vertex1 = m_fsh.FindOrAllocateVertex(face0);
             break;
           case 3:
             {
               edge0 = sit.CurrentEdge(1);
               if (nullptr == edge0)
                 return ON_SUBD_RETURN_ERROR(false);
-              vertex1 = m_fsh.AllocateVertex(edge0,subd_type,bUseSavedSubdivisionPoint,3,2);
+              vertex1 = m_fsh.FindOrAllocateVertex(edge0);
             }
             break;
           }
@@ -3561,66 +3296,67 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
       for (int j = 0; j < 4; j++)
       {
-        edge1 = ON_SUBD_EDGE_POINTER(face1_eptrs[j].m_ptr);
-        if (nullptr == edge1)
+        if (false == face1_eptrs[j].IsNull())
+          continue;
+      
+        edge1 = ON_SubDEdgePtr::Null;
+        switch (j)
         {
-          switch (j)
+        case 0:
           {
-          case 0:
-            {
-              edge0 = sit.CurrentEdge(0);
-              if (nullptr == edge0)
-                return ON_SUBD_RETURN_ERROR(false);
-              edge1 = m_fsh.AllocateEdge(
-                face1_corners[0],
-                ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0),
-                face1_corners[1],
-                at_crease2_weight
-              );
-              if ( 0 == sit_limit && edge0 == sit_first_edge0 )
-                sit_first_eptr1 = ON_SubDEdgePtr::Create(edge1, 0);
-            }
-            break;
-          case 1:
-            edge1 = m_fsh.AllocateEdge(
+            edge0 = sit.CurrentEdge(0);
+            if (nullptr == edge0)
+              return ON_SUBD_RETURN_ERROR(false);
+            edge1 = m_fsh.FindOrAllocateEdge(
+              face1_corners[0],
+              ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0),
               face1_corners[1],
-              at_crease2_weight,
-              face1_corners[2],
-              ON_SubDSectorType::IgnoredSectorWeight
-            );
-            break;
-          case 2:
-            edge1 = m_fsh.AllocateEdge(
-              face1_corners[2],
-              ON_SubDSectorType::IgnoredSectorWeight,
-              face1_corners[3],
               at_crease2_weight
             );
-            break;
-          case 3:
-            {
-              edge0 = sit.CurrentEdge(1);
-              if (nullptr == edge0)
-                return ON_SUBD_RETURN_ERROR(false);
-              edge1 = m_fsh.AllocateEdge(
-                face1_corners[3],
-                at_crease2_weight,                
-                face1_corners[0],
-                ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0)
-              );
-            }
-            break;
+            if ( 0 == sit_limit && edge0 == sit_first_edge0 )
+              sit_first_eptr1 = edge1;
           }
-          if ( nullptr == edge1 )
-            return ON_SUBD_RETURN_ERROR(false);
-          face1_eptrs[j] = ON_SubDEdgePtr::Create(edge1, 0);
+          break;
+        case 1:
+          edge1 = m_fsh.FindOrAllocateEdge(
+            face1_corners[1],
+            at_crease2_weight,
+            face1_corners[2],
+            ON_SubDSectorType::IgnoredSectorWeight
+          );
+          break;
+        case 2:
+          edge1 = m_fsh.FindOrAllocateEdge(
+            face1_corners[2],
+            ON_SubDSectorType::IgnoredSectorWeight,
+            face1_corners[3],
+            at_crease2_weight
+          );
+          break;
+        case 3:
+          {
+            edge0 = sit.CurrentEdge(1);
+            if (nullptr == edge0)
+              return ON_SUBD_RETURN_ERROR(false);
+            edge1 = m_fsh.FindOrAllocateEdge(
+              face1_corners[3],
+              at_crease2_weight,                
+              face1_corners[0],
+              ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0)
+            );
+          }
+          break;
         }
+        if ( edge1.IsNull() )
+          return ON_SUBD_RETURN_ERROR(false);
+        face1_eptrs[j] = edge1;
       }
 
       face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
       if ( nullptr == face1 )
         return ON_SUBD_RETURN_ERROR(false);
     }
+
     for(;;)
     {
       if (bFinishedCorner)
@@ -3635,7 +3371,6 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   }
 
   m_center_vertex1 = center_vertex1;
-  m_subd_type = subd_type;
   m_face0 = face;
   m_face1 = m_center_vertex1->m_faces;
   m_face1_count = m_center_vertex1->m_face_count;
@@ -3643,4 +3378,92 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   return true;
 }
 
-#endif
+unsigned int ON_SubDVertexSurfacePointCoefficient::SurfacePointVertexId() const
+{
+  return (nullptr != m_limit_point_vertex) ? m_limit_point_vertex->m_id : 0U;
+}
+
+unsigned int ON_SubDVertexSurfacePointCoefficient::RingVertexId() const
+{
+  return (nullptr != m_ring_vertex) ? m_ring_vertex->m_id : 0U;
+}
+
+double ON_SubDVertexSurfacePointCoefficient::Coefficient() const
+{
+  return m_c;
+}
+
+//#if 0
+//static void DebugAt(const ON_SubDVertexSurfacePointCoefficient& c)
+//{
+//  if (856 == c.LimitPointVertexId() && 857==c.RingVertexId())
+//    ON_TextLog::Null.Print("breakpoint here");
+//}
+//#endif
+const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Create(
+  const ON_SubDVertex* limit_point_vertex,
+  const ON_SubDVertex* ring_vertex,
+  double x
+)
+{
+  ON_SubDVertexSurfacePointCoefficient c;
+  c.m_limit_point_vertex = limit_point_vertex;
+  c.m_ring_vertex = ring_vertex;
+  c.m_c = x;
+  //DebugAt(c)
+  return c;
+}
+
+int ON_SubDVertexSurfacePointCoefficient::CompareSurfacePointVertexId(
+  const ON_SubDVertexSurfacePointCoefficient* lhs,
+  const ON_SubDVertexSurfacePointCoefficient* rhs
+)
+{
+  const ON_SubDVertex* lhs_v = (nullptr == lhs) ? nullptr : lhs->m_limit_point_vertex;
+  const ON_SubDVertex* rhs_v = (nullptr == rhs) ? nullptr : rhs->m_limit_point_vertex;
+  return ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+}
+
+int ON_SubDVertexSurfacePointCoefficient::CompareRingVertexId(
+  const ON_SubDVertexSurfacePointCoefficient* lhs,
+  const ON_SubDVertexSurfacePointCoefficient* rhs
+)
+{
+  const ON_SubDVertex* lhs_v = (nullptr == lhs) ? nullptr : lhs->m_ring_vertex;
+  const ON_SubDVertex* rhs_v = (nullptr == rhs) ? nullptr : rhs->m_ring_vertex;
+  return ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+}
+
+int ON_SubDVertexSurfacePointCoefficient::CompareSurfacePointAndRingVertexId(
+  const ON_SubDVertexSurfacePointCoefficient* lhs,
+  const ON_SubDVertexSurfacePointCoefficient* rhs
+)
+{
+  const ON_SubDVertex* lhs_v = (nullptr == lhs) ? nullptr : lhs->m_limit_point_vertex;
+  const ON_SubDVertex* rhs_v = (nullptr == rhs) ? nullptr : rhs->m_limit_point_vertex;
+  int rc = ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+  if (0 == rc)
+  {
+    lhs_v = (nullptr == lhs) ? nullptr : lhs->m_ring_vertex;
+    rhs_v = (nullptr == rhs) ? nullptr : rhs->m_ring_vertex;
+    rc = ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+  }
+  return rc;
+}
+
+int ON_SubDVertexSurfacePointCoefficient::CompareRingAndSurfacePointVertexId(
+  const ON_SubDVertexSurfacePointCoefficient* lhs,
+  const ON_SubDVertexSurfacePointCoefficient* rhs
+)
+{
+  const ON_SubDVertex* lhs_v = (nullptr == lhs) ? nullptr : lhs->m_ring_vertex;
+  const ON_SubDVertex* rhs_v = (nullptr == rhs) ? nullptr : rhs->m_ring_vertex;
+  int rc = ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+  if (0 == rc)
+  {
+    lhs_v = (nullptr == lhs) ? nullptr : lhs->m_limit_point_vertex;
+    rhs_v = (nullptr == rhs) ? nullptr : rhs->m_limit_point_vertex;
+    rc = ON_SubDComponentBase::CompareId(lhs_v, rhs_v);
+  }
+  return rc;
+}

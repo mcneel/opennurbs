@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -90,7 +90,7 @@ void
 ON_Material::Dump( ON_TextLog& dump ) const
 {
   ON_ModelComponent::Dump(dump);
-  
+
   dump.Print("ambient rgb = "); dump.PrintRGB( m_ambient ); dump.Print("\n");
   dump.Print("diffuse rgb = "); dump.PrintRGB( m_diffuse ); dump.Print("\n");
   dump.Print("emmisive rgb = "); dump.PrintRGB( m_emission ); dump.Print("\n");
@@ -139,7 +139,7 @@ bool ON_Material::Write( ON_BinaryArchive& archive ) const
   const int minor_version = 0;
   if (!archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,major_version,minor_version))
     return false;
-  
+
   bool rc = false;
   for (;;)
   {
@@ -204,7 +204,7 @@ bool ON_Material::Write( ON_BinaryArchive& archive ) const
       break;
     if ( !archive.WriteDouble(m_refraction_glossiness))
       break;
-    if ( !archive.WriteDouble(m_fresnel_index_of_refraction)) 
+    if ( !archive.WriteDouble(m_fresnel_index_of_refraction))
       break;
     if ( !archive.WriteUuid(m_rdk_material_instance_id))
       break;
@@ -303,14 +303,14 @@ bool ON_Material::Read( ON_BinaryArchive& archive )
       break;
     if ( !archive.ReadDouble(&m_refraction_glossiness))
       break;
-    if ( !archive.ReadDouble(&m_fresnel_index_of_refraction)) 
+    if ( !archive.ReadDouble(&m_fresnel_index_of_refraction))
       break;
     if ( !archive.ReadUuid(m_rdk_material_instance_id))
       break;
     if ( !archive.ReadBool(&m_bUseDiffuseTextureAlphaForObjectTransparencyTexture))
       break;
 
-    rc = true; 
+    rc = true;
     break;
   }
   if (!archive.EndRead3dmChunk())
@@ -326,7 +326,7 @@ bool ON_Material::Internal_WriteV5( ON_BinaryArchive& file ) const
     // V2 or V3 file format
     rc = Internal_WriteV3(file);
   }
-  else 
+  else
   {
     // V4 file format
 
@@ -485,16 +485,16 @@ bool ON_Material::Internal_ReadV5( ON_BinaryArchive& file )
           if ( rc ) rc = file.ReadColor( m_reflection );
           if ( rc ) rc = file.ReadColor( m_transparent );
 
-          if ( rc 
-               && file.ArchiveOpenNURBSVersion() < 200912010 
-               && 128 == m_transparent.Red() 
+          if ( rc
+               && file.ArchiveOpenNURBSVersion() < 200912010
+               && 128 == m_transparent.Red()
                && 128 == m_transparent.Green()
                && 128 == m_transparent.Blue()
                )
           {
             // Prior to 1 Dec 2009 the ON_Material::Defaults() set
             // m_transparent to 128,128,128.  This was the wrong
-            // value for the default.  This "hack" is here to 
+            // value for the default.  This "hack" is here to
             // make it appear that the default was always white.
             m_transparent = m_diffuse;
           }
@@ -851,7 +851,7 @@ ON::object_type ON_Material::ObjectType() const
    return ON::material_object;
 }
 
-int ON_Material::FindTexture( const wchar_t* filename, 
+int ON_Material::FindTexture( const wchar_t* filename,
                               ON_Texture::TYPE type,
                               int i0
                               ) const
@@ -859,7 +859,7 @@ int ON_Material::FindTexture( const wchar_t* filename,
   int i, count = m_textures.Count();
   for (i = ((i0 < 0) ? 0 : (i0+1)); i < count; i++ )
   {
-    if (    type != m_textures[i].m_type 
+    if (    type != m_textures[i].m_type
          && type != ON_Texture::TYPE::no_texture_type )
     {
       continue;
@@ -912,7 +912,7 @@ double ON_Material::FresnelReflectionCoefficient(
     y = x + 1.0; // y = c*(g+c) + 1.0
     if ( !(y != 0.0) )
       break; // y is NAN or zero
-  
+
     y = (x - 1.0)/y; // y = (c*(g+c) - 1.0)/(c*(g+c) + 1.0)
 
     x =  0.5*z*z*(1.0 + y*y);
@@ -922,7 +922,7 @@ double ON_Material::FresnelReflectionCoefficient(
     if ( !ON_IS_FINITE(x) )
       break; // x is infinity
 
-    return x; // x is 
+    return x; // x is
   }
 
   return 1.0; // error occured
@@ -1186,6 +1186,9 @@ int ON_Texture::Compare(const ON_Texture& a, const ON_Texture& b)
     rc = CompareDouble(a.m_blend_RGB3, b.m_blend_RGB3);
     if (rc) break;
 
+    rc = ((int)(a.m_bTreatAsLinear ? 1 : 0)) - ((int)(b.m_bTreatAsLinear ? 1 : 0));
+    if (rc) break;
+
     break;
   }
 
@@ -1263,6 +1266,9 @@ int ON_Texture::CompareAppearance(const ON_Texture& a, const ON_Texture& b)
     rc = CompareDouble(a.m_blend_RGB3, b.m_blend_RGB3);
     if (rc) break;
 
+    rc = ((int)(a.m_bTreatAsLinear ? 1 : 0)) - ((int)(b.m_bTreatAsLinear ? 1 : 0));
+    if (rc) break;
+
     break;
   }
 
@@ -1299,12 +1305,82 @@ int ON_Material::CompareNameAndIds( const ON_Material& a, const ON_Material& b )
     rc = ON_UuidCompare(a.m_textures[i].m_texture_id, b.m_textures[i].m_texture_id);
   }
 
-  return rc;  
+  return rc;
 }
 
 
 int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material& b )
 {
+  const auto a_pbr = a.PhysicallyBased();
+  const auto b_pbr = b.PhysicallyBased();
+  if (a_pbr.Supported() && !b_pbr.Supported())
+    return -1;
+  if (!a_pbr.Supported() && b_pbr.Supported())
+    return 1;
+
+  if (a_pbr.Supported() && b_pbr.Supported())
+  {
+    int rc = a_pbr.BaseColor().Compare(a_pbr.BaseColor());
+    if (rc) return rc;
+
+    rc = ((int)a_pbr.BRDF()) - ((int)b_pbr.BRDF());
+    if (rc) return rc;
+
+    rc = CompareDouble(a_pbr.Subsurface(), b_pbr.Subsurface());
+    if (0 != rc) return rc;
+
+    rc = a_pbr.SubsurfaceScatteringColor().Compare(b_pbr.SubsurfaceScatteringColor());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.SubsurfaceScatteringRadius(), b_pbr.SubsurfaceScatteringRadius());
+    if (0 != rc) return rc;
+    
+    rc = CompareDouble(a_pbr.Metallic(), b_pbr.Metallic());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Specular(), b_pbr.Specular());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.SpecularTint(), b_pbr.SpecularTint());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Roughness(), b_pbr.Roughness());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Sheen(), b_pbr.Sheen());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.SheenTint(), b_pbr.SheenTint());
+    if (0 != rc) return rc;
+
+    //rc = CompareDouble(a_pbr.ReflectiveIOR(), b_pbr.ReflectiveIOR());
+    //if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Anisotropic(), b_pbr.Anisotropic());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.AnisotropicRotation(), b_pbr.AnisotropicRotation());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Clearcoat(), b_pbr.Clearcoat());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.ClearcoatRoughness(), b_pbr.ClearcoatRoughness());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Opacity(), b_pbr.Opacity());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.OpacityIOR(), b_pbr.OpacityIOR());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.OpacityRoughness(), b_pbr.OpacityRoughness());
+    if (0 != rc) return rc;
+
+    rc = a_pbr.Emission().Compare(b_pbr.Emission());
+    return rc;
+  }
+
   int rc = a.m_ambient.Compare(b.m_ambient);
   if (rc) return rc;
 
@@ -1328,39 +1404,76 @@ int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material
 
   rc = ((int)a.m_bDisableLighting) - ((int)b.m_bDisableLighting);
 
-  return rc;  
+  return rc;
 }
 
 
-int ON_Material::CompareReflectionAttributes( const ON_Material& a, const ON_Material& b )
+int ON_Material::CompareReflectionAttributes(const ON_Material& a, const ON_Material& b)
 {
-  int rc = a.m_reflection.Compare( b.m_reflection );
-  if (0 != rc) return rc;
+  const auto a_pbr = a.PhysicallyBased();
+	const auto b_pbr = b.PhysicallyBased();
+	if (a_pbr.Supported() && !b_pbr.Supported())
+		return -1;
+	if (!a_pbr.Supported() && b_pbr.Supported())
+		return 1;
 
-  rc = CompareDouble(a.m_index_of_refraction,b.m_index_of_refraction);
-  if (0 != rc) return rc;
-
-  rc = CompareDouble(a.m_reflectivity,b.m_reflectivity);
-  if (0 != rc) return rc;
-
-  rc = CompareDouble(a.m_shine,b.m_shine);
-  if (0 != rc) return rc;
-
-  rc = (a.m_bFresnelReflections?1:0) - (b.m_bFresnelReflections?1:0);
-  if (0 != rc) return rc;
-  if ( a.m_bFresnelReflections )
-  {
-    rc = CompareDouble(a.m_fresnel_index_of_refraction,b.m_fresnel_index_of_refraction);
+	if (a_pbr.Supported() && b_pbr.Supported())
+	{
+    int rc = CompareDouble(a_pbr.Metallic(), b_pbr.Metallic());
     if (0 != rc) return rc;
-  }
 
-  rc = CompareDouble(a.m_reflection_glossiness,b.m_reflection_glossiness);
-  if (0 != rc) return rc;
+    rc = CompareDouble(a_pbr.Specular(), b_pbr.Specular());
+    if (0 != rc) return rc;
 
-  rc = CompareDouble(a.m_refraction_glossiness,b.m_refraction_glossiness);
+    rc = CompareDouble(a_pbr.SpecularTint(), b_pbr.SpecularTint());
+    if (0 != rc) return rc;
 
+    rc = CompareDouble(a_pbr.Roughness(), b_pbr.Roughness());
+    if (0 != rc) return rc;
 
-  return rc;  
+    //rc = CompareDouble(a_pbr.ReflectiveIOR(), b_pbr.ReflectiveIOR());
+    //if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Anisotropic(), b_pbr.Anisotropic());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.AnisotropicRotation(), b_pbr.AnisotropicRotation());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.Clearcoat(), b_pbr.Clearcoat());
+    if (0 != rc) return rc;
+
+    rc = CompareDouble(a_pbr.ClearcoatRoughness(), b_pbr.ClearcoatRoughness());
+    
+    return rc;
+	}
+
+	int rc = a.m_reflection.Compare(b.m_reflection);
+	if (0 != rc) return rc;
+
+	rc = CompareDouble(a.m_index_of_refraction, b.m_index_of_refraction);
+	if (0 != rc) return rc;
+
+	rc = CompareDouble(a.m_reflectivity, b.m_reflectivity);
+	if (0 != rc) return rc;
+
+	rc = CompareDouble(a.m_shine, b.m_shine);
+	if (0 != rc) return rc;
+
+	rc = (a.m_bFresnelReflections ? 1 : 0) - (b.m_bFresnelReflections ? 1 : 0);
+	if (0 != rc) return rc;
+	if (a.m_bFresnelReflections)
+	{
+		rc = CompareDouble(a.m_fresnel_index_of_refraction, b.m_fresnel_index_of_refraction);
+		if (0 != rc) return rc;
+	}
+
+	rc = CompareDouble(a.m_reflection_glossiness, b.m_reflection_glossiness);
+	if (0 != rc) return rc;
+
+	rc = CompareDouble(a.m_refraction_glossiness, b.m_refraction_glossiness);
+
+	return rc;
 }
 
 int ON_Material::CompareTextureAttributes(const ON_Material& a, const ON_Material& b)
@@ -1473,11 +1586,11 @@ const ON_UUID ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_class_id_ctor 
 const ON_UUID ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_userdata_uuid_ctor =
 { 0xb63ed079, 0xcf67, 0x416c, { 0x80, 0xd, 0x22, 0x2, 0x3a, 0xe1, 0xbe, 0x21 } };
 
-// CRhRdkUserData::m_application_uuid value 
+// CRhRdkUserData::m_application_uuid value
 //  = CRhRdkRhinoPlugIn::RhinoPlugInUuid()
 //  = CRhRdkRhinoPlugIn::m_uuidRhinoPlugIn
 //  = 16592D58-4A2F-401D-BF5E-3B87741C1B1B
-// From 
+// From
 //  file: http://subversion.mcneel.com/rhino/6/trunk/src4/rhino4/Plug-ins/RDK/RDK/RhRcmRhinoPlugIn.cpp
 //  revision: 102101
 //
@@ -1561,7 +1674,7 @@ bool ON_RdkMaterialInstanceIdObsoleteUserData::DeleteAfterRead(
   ON_Material* mat = ON_Material::Cast(parent_object);
   if (mat && mat->RdkMaterialInstanceIdIsNil())
     mat->SetRdkMaterialInstanceId(m_rdk_material_instance_id);
-  
+
   // Returning true will cause the ON_BinaryArchive::ReadObject()
   // plumbing to delete this user data.
   return true;
@@ -1606,11 +1719,11 @@ static const char* ParsePast(const char* token, const char* s)
 {
   if (0 == token || token[0] <= 32)
     return 0;
-  
+
   s = ParsePastWhiteSpace(s);
   if (0 == s || s[0] <= 32)
     return 0;
-  
+
   for (/*empty init*/; ToUpper(*s) == ToUpper(*token); s++, token++)
   {
     if (0 == *s)
@@ -1644,7 +1757,7 @@ bool ON_RdkMaterialInstanceIdObsoleteUserData::Read(
       rc = true;
       break;
     }
-    
+
     ON_String str((char)0, (int)s_length);
     if (str.Length() < s_length)
       break;
@@ -1696,7 +1809,7 @@ bool ON_RdkMaterialInstanceIdObsoleteUserData::Write(
     "<render-content-manager-data>\n"
     "<material instance-id=\"";
    s += ON_UuidToString(m_rdk_material_instance_id, s__rdk_material_instance_id);
-   s += 
+   s +=
     "\" name=\"\" />\n"
     "</render-content-manager-data>\n"
     "</xml>";
@@ -1820,6 +1933,10 @@ ON_Color ON_Material::PreviewColor(void) const
 
 bool ON_Material::UseDiffuseTextureAlphaForObjectTransparencyTexture() const
 {
+  //Physically based materials do not support alpha transparency (at the moment).
+  if (PhysicallyBased().Supported())
+    return false;
+
   return m_bUseDiffuseTextureAlphaForObjectTransparencyTexture;
 }
 
@@ -1833,7 +1950,7 @@ void ON_Material::SetUseDiffuseTextureAlphaForObjectTransparencyTexture(
     IncrementContentVersionNumber();
   }
 }
-  
+
 bool ON_Material::FresnelReflections() const
 {
   return m_bFresnelReflections;
@@ -1892,9 +2009,9 @@ bool ON_Texture::Write(
   ) const
 {
   const int major_version = 1;
-  const int minor_version 
+  const int minor_version
     = binary_archive.Archive3dmVersion() >= 60
-    ? 1
+    ? (binary_archive.Archive3dmVersion() >= 70 ? 2 : 1)
     : 0;
 
   bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,major_version,minor_version);
@@ -1964,9 +2081,16 @@ bool ON_Texture::Write(
 
       if ( minor_version <= 0 )
         break;
-      
+
       // version 1.1 added m_image_file_reference
       rc = m_image_file_reference.Write(true,binary_archive);
+      if (!rc) break;
+
+      if ( minor_version <= 1 )
+        break;
+      
+      // version 1.2 added m_bTreatAsLinear
+      rc = binary_archive.WriteBool(m_bTreatAsLinear);
       if (!rc) break;
 
       break;
@@ -2050,6 +2174,7 @@ const ON_SHA1_Hash ON_Texture::ContentHash() const
   sha1.AccumulateDouble(m_blend_RGB2);
   sha1.AccumulateDouble(m_blend_RGB3);
   sha1.AccumulateInteger32(m_blend_order);
+  sha1.AccumulateBool(m_bTreatAsLinear);
   return sha1.Hash();
 }
 
@@ -2076,15 +2201,34 @@ void ON_Texture::SetMappingChannel(
   m_mapping_channel_id = mapping_channel_id;
 }
 
-ON_Texture::TYPE ON_Texture::TypeFromUnsigned( unsigned int type_as_unsigned )
+ON_Texture::TYPE ON_Texture::TypeFromUnsigned(unsigned int type_as_unsigned)
 {
-  switch(type_as_unsigned)
+  switch (type_as_unsigned)
   {
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::no_texture_type );
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::bitmap_texture);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::bump_texture);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::emap_texture);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::transparency_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::no_texture_type);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::diffuse_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::bump_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::emap_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::opacity_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_subsurface_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_subsurface_scattering_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_subsurface_scattering_radius_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_metallic_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_specular_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_specular_tint_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_roughness_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_anisotropic_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_anisotropic_rotation_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_sheen_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_sheen_tint_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_roughness_texture);
+	ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_bump_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_opacity_ior_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_opacity_roughness_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_emission_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_ambient_occlusion_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_displacement_texture);
   }
 
   ON_ERROR("Invalid type_as_unsigned value.");
@@ -2242,6 +2386,12 @@ bool ON_Texture::Read(
         rc = m_image_file_reference.Read(binary_archive);
         if (!rc) break;
 
+        if (minor_version <= 1)
+          break;
+
+        rc = binary_archive.ReadBool(&m_bTreatAsLinear);
+        if (!rc) break;
+
         break;
       }
     }
@@ -2343,7 +2493,7 @@ ON_TextureMapping::TEXTURE_SPACE ON_TextureMapping::TextureSpaceFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TEXTURE_SPACE::single);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TEXTURE_SPACE::divided);
   }
-  
+
   ON_ERROR("Invalid texture_space_as_unsigned value.");
   return ON_TextureMapping::TEXTURE_SPACE::single;
 }
@@ -2355,7 +2505,7 @@ const ON_wString ON_TextureMapping::SpaceToString(ON_TextureMapping::TEXTURE_SPA
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TEXTURE_SPACE::single);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TEXTURE_SPACE::divided);
   }
-  
+
   ON_ERROR("Invalid texture_mapping_space value.");
   return ON_wString::EmptyString;
 }
@@ -2484,11 +2634,11 @@ ON_Xform ON_Texture::GetPictureShrinkSurfaceTransformation(
   const ON_Xform* error_return
 )
 {
-  const class ON_Surface* original_srf 
+  const class ON_Surface* original_srf
     = (nullptr != original && 1 == original->m_F.Count())
     ? original->m_F[0].SurfaceOf()
     : nullptr;
-  const class ON_Surface* shrunk_srf 
+  const class ON_Surface* shrunk_srf
     = (nullptr != shrunk && 1 == shrunk->m_F.Count())
     ? shrunk->m_F[0].SurfaceOf()
     : nullptr;
@@ -2506,7 +2656,7 @@ ON_Xform ON_Texture::GetPictureShrinkSurfaceTransformation(
 )
 {
   ON_Interval original_udomain;
-  ON_Interval original_vdomain; 
+  ON_Interval original_vdomain;
   ON_Interval shrunk_udomain;
   ON_Interval shrunk_vdomain;
   if (nullptr != original)
@@ -2750,7 +2900,7 @@ int IntersectBoxRayHelper(const ON_3dPoint& rst, const ON_3dVector& n, int dir, 
         || Q.z < -(1.0+ON_SQRT_EPSILON) || Q.z > (1.0+ON_SQRT_EPSILON)
         )
   {
-    // The ray's intersection with the plane missed the 
+    // The ray's intersection with the plane missed the
     // (-1,+1)x(-1,+1) square that is the side of the box.
     t0 = ON_UNSET_VALUE;
   }
@@ -2768,7 +2918,7 @@ int IntersectBoxRayHelper(const ON_3dPoint& rst, const ON_3dVector& n, int dir, 
         || Q.z < -(1.0+ON_SQRT_EPSILON) || Q.z > (1.0+ON_SQRT_EPSILON)
         )
   {
-    // The ray's intersection with the plane missed the 
+    // The ray's intersection with the plane missed the
     // (-1,+1)x(-1,+1) square that is the side of the box.
     t1 = ON_UNSET_VALUE;
     if ( ON_UNSET_VALUE == t0 )
@@ -2793,7 +2943,7 @@ int IntersectBoxRayHelper(const ON_3dPoint& rst, const ON_3dVector& n, int dir, 
 }
 
 
-int ON_TextureMapping::EvaluatePlaneMapping( 
+int ON_TextureMapping::EvaluatePlaneMapping(
   const ON_3dPoint& P,
   const ON_3dVector& N,
   ON_3dPoint* T
@@ -2821,7 +2971,7 @@ int ON_TextureMapping::EvaluatePlaneMapping(
 	rst.x = 0.5*rst.x + 0.5;
 	rst.y = 0.5*rst.y + 0.5;
 
-  // Apply texture coordinate transformation 
+  // Apply texture coordinate transformation
   *T = m_uvw*rst;
 
   //See docs - if m_bCapped is false, then planar is truely flat.
@@ -2831,7 +2981,7 @@ int ON_TextureMapping::EvaluatePlaneMapping(
   return 1;
 }
 
-int ON_TextureMapping::EvaluateSphereMapping( 
+int ON_TextureMapping::EvaluateSphereMapping(
 											  const ON_3dPoint& P,
 											  const ON_3dVector& N,
 											  ON_3dPoint* T
@@ -2844,15 +2994,15 @@ int ON_TextureMapping::EvaluateSphereMapping(
   ON_3dPoint rst(m_Pxyz*P);
 	const double r = ((const ON_3dVector*)(&rst.x))->Length();
 	double t0, t1;
-	
+
 	if ( ON_TextureMapping::PROJECTION::ray_projection == m_projection )
 	{
 		ON_3dVector n(m_Nxyz*N);
-		// Shoot a ray from P in the direction N and see if it 
+		// Shoot a ray from P in the direction N and see if it
 		// hits the sphere.
-		int rc = ON_SolveQuadraticEquation( (n.x*n.x+n.y*n.y+n.z*n.z), 
-			2.0*(rst.x*n.x+rst.y*n.y+rst.z*n.z), 
-			(rst.x*rst.x+rst.y*rst.y+rst.z*rst.z) - 1.0, 
+		int rc = ON_SolveQuadraticEquation( (n.x*n.x+n.y*n.y+n.z*n.z),
+			2.0*(rst.x*n.x+rst.y*n.y+rst.z*n.z),
+			(rst.x*rst.x+rst.y*rst.y+rst.z*rst.z) - 1.0,
 			&t0, &t1 );
 		if (rc >= 0 )
 		{
@@ -2863,17 +3013,17 @@ int ON_TextureMapping::EvaluateSphereMapping(
 			rst = rst + t0*n;
 		}
 	}
-	
+
 	// convert sphere 3d location to longitude, latitude, radius
-	double longitude = (0.0 != rst.y || 0.0 != rst.x) 
-		? atan2(rst.y,rst.x) 
+	double longitude = (0.0 != rst.y || 0.0 != rst.x)
+		? atan2(rst.y,rst.x)
 		: 0.0;
-	double latitude = (0.0 != rst.z) 
-		? atan2(rst.z,((const ON_2dVector*)(&rst.x))->Length()) 
+	double latitude = (0.0 != rst.z)
+		? atan2(rst.z,((const ON_2dVector*)(&rst.x))->Length())
 		: 0.0;
 	if ( latitude > ON_PI )
 		latitude -= 2.0*ON_PI;
-	
+
   // convert longitude to normalized texture coordinate
 	rst.x = 0.5*longitude/ON_PI;
 	if ( rst.x < -ON_EPSILON )
@@ -2889,17 +3039,17 @@ int ON_TextureMapping::EvaluateSphereMapping(
     rst.y = 0.0;
 	else if ( rst.y > 1.0 )
 		  rst.y = 1.0;
-	
+
   // radius is already normalized
 	rst.z = r;
-	
+
   // apply texture coordinate transformation
 	*T = m_uvw*rst;
 
   return 1;
 }
 
-int ON_TextureMapping::EvaluateCylinderMapping( 
+int ON_TextureMapping::EvaluateCylinderMapping(
 												const ON_3dPoint& P,
 												const ON_3dVector& N,
 												ON_3dPoint* T
@@ -2917,17 +3067,17 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 	double t, t0, t1;
 	int side0, side1;
 	PROJECTION mapping_proj = m_projection;
-	
+
 	side0 = 0;
 	if ( ON_TextureMapping::PROJECTION::ray_projection == mapping_proj )
 	{
 		ON_3dVector n(m_Nxyz*N);
 		t = 0.0;
-		
+
 		if ( m_bCapped )
 		{
 			// shoot at caps
-			//  The < t check prevents overflow when the 
+			//  The < t check prevents overflow when the
 			//  ray is nearly parallel to the cap.
 			t = fabs(n.z)*on__overflow_tol;
 			if ( fabs(1.0+rst.z) < t && fabs(1.0-rst.z) < t )
@@ -2940,7 +3090,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 				if ( fabs(1.0+Q.z) > ON_SQRT_EPSILON
 					|| (Q.x*Q.x + Q.y*Q.y) > 1.0 + 2.0*ON_SQRT_EPSILON + ON_EPSILON )
 				{
-          // The ray's intersection with the bottom plane missed the 
+          // The ray's intersection with the bottom plane missed the
           // radius 1 disk that is the bottom of the cylinder.
 					side0 = 0;
 				}
@@ -2950,7 +3100,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 				if ( fabs(1.0-Q.z) > ON_SQRT_EPSILON
 					|| (Q.x*Q.x + Q.y*Q.y) > 1.0 + 2.0*ON_SQRT_EPSILON + ON_EPSILON )
 				{
-          // The ray's intersection with the top plane missed the 
+          // The ray's intersection with the top plane missed the
           // radius 1 disk that is the top of the cylinder.
 					side1 = 0;
 				}
@@ -2965,11 +3115,11 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 				}
 			}
 		}
-		
+
 		// shoot ray at the cylinder wall
-		int rc = ON_SolveQuadraticEquation( (n.x*n.x+n.y*n.y), 
-			2.0*(rst.x*n.x+rst.y*n.y), 
-			(rst.x*rst.x+rst.y*rst.y) - 1.0, 
+		int rc = ON_SolveQuadraticEquation( (n.x*n.x+n.y*n.y),
+			2.0*(rst.x*n.x+rst.y*n.y),
+			(rst.x*rst.x+rst.y*rst.y) - 1.0,
 			&t0, &t1 );
 		if (rc >= 0 )
 		{
@@ -2986,9 +3136,9 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 			}
 			else if ( 1 != BestHitHelper(t0,t) )
 			{
-				// The cylinder is capped and the ray hit the cap, 
-        // hit the infinite cylinder wall, and the wall 
-        // hit is "first".  If the ray hits the finite 
+				// The cylinder is capped and the ray hit the cap,
+        // hit the infinite cylinder wall, and the wall
+        // hit is "first".  If the ray hits the finite
         // cylinder wall, the I will use the wall hit.
 				t1 = rst.z + t0*n.z;
 				if ( t1 >= -(1.0+ON_SQRT_EPSILON) && t1 <= 1.0+ON_SQRT_EPSILON )
@@ -3001,14 +3151,14 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 				}
 			}
 		}
-		
+
 		if ( side0 > 1 )
 		{
 			// best hit is on a cap
 			rst = rst + t*n;
 		}
 	}
-	
+
 	if ( m_bCapped && 0 == side0 )
 	{
     if ( fabs(rst.z) > 1.0+ON_SQRT_EPSILON )
@@ -3030,19 +3180,19 @@ int ON_TextureMapping::EvaluateCylinderMapping(
       }
     }
 	}
-	
+
 	if ( 2 == side0 || 3 == side0 )
 	{
-    // The cylinder is capped and P maps to 
+    // The cylinder is capped and P maps to
     // the top (1 == side0) or bottom (2 == side0)
 
     if ( 2 == side0 )
     {
       // This is the same convention as box mapping.
-      // Put another way, if you change the mapping 
+      // Put another way, if you change the mapping
       // between box and cylinder, you get the same
       // picture on the top and bottom.
-      rst.x = -rst.x; 
+      rst.x = -rst.x;
     }
 
 		if ( ON_TextureMapping::TEXTURE_SPACE::divided == m_texture_space )
@@ -3059,7 +3209,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
 		  rst.y /= r;
 	  }
 
-    
+
     // convert to normalized texture coordinates
 		rst.x = 0.5*rst.x + 0.5;
     if ( rst.x < 0.0) rst.x = 0.0; else if (rst.x > 1.0) rst.x = 1.0;
@@ -3071,7 +3221,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
       // bottom uses 4/6 <= x <= 5/6 region of the texture map.
       // top uses 5/6 <= x <= 1 region of the texture map.
 			rst.x = (2.0 + side0 + rst.x)/6.0;
-		} 
+		}
 	}
 	else
 	{
@@ -3103,14 +3253,14 @@ int ON_TextureMapping::EvaluateCylinderMapping(
     }
     side0 = 1;
 	}
-	rst.z = r;	
-	
+	rst.z = r;
+
 	*T = m_uvw*rst;
 
   return side0;
 }
 
-int ON_TextureMapping::EvaluateBoxMapping( 
+int ON_TextureMapping::EvaluateBoxMapping(
 										   const ON_3dPoint& P,
 										   const ON_3dVector& N,
 										   ON_3dPoint* T
@@ -3128,7 +3278,7 @@ int ON_TextureMapping::EvaluateBoxMapping(
 
 	int side0, side1;
 	double t0, t1;
-	
+
 	side0 = 0;
 	t0 = 0.0;
 
@@ -3139,10 +3289,10 @@ int ON_TextureMapping::EvaluateBoxMapping(
   //  4 =  front side (y=+1)
   //  5 =  bottom side (z=-1)
   //  6 =  top side (z=+1)
-	
+
   if ( ON_TextureMapping::PROJECTION::ray_projection == m_projection )
 	{
-		
+
 		if ( m_bCapped )
 		{
 			// intersect ray with top and bottom
@@ -3167,7 +3317,7 @@ int ON_TextureMapping::EvaluateBoxMapping(
 			// ray hit the box
 			rst = rst + t0*n;
 		}
-	} 
+	}
 
   if ( 0 == side0 )
   {
@@ -3180,14 +3330,14 @@ int ON_TextureMapping::EvaluateBoxMapping(
     {
       side0 = 2*side1 + 1;
     }
-    else 
+    else
     {
       side0 = 2*side1 + 2;
     }
-    
+
     //if ( fabs(t1) <= 1.0+ON_SQRT_EPSILON )...
     //// The point is inside the box.  If the normal
-    //// is not zero, then use it to choose the side 
+    //// is not zero, then use it to choose the side
     //// used for the closest point projection.
 
     side1 = ( fabs(n.x) >= fabs(n.y) ) ? 0 : 1;
@@ -3206,7 +3356,7 @@ int ON_TextureMapping::EvaluateBoxMapping(
   }
 
 	double shift = 0.0;
-	
+
   // side flag
   //  1 =  left side (x=-1)
   //  2 =  right side (x=+1)
@@ -3217,27 +3367,27 @@ int ON_TextureMapping::EvaluateBoxMapping(
 
 	switch(side0)
 	{
-	case 1: // x = -1 
-		rst.x = -rst.y; 
-		rst.y =  rst.z; 
+	case 1: // x = -1
+		rst.x = -rst.y;
+		rst.y =  rst.z;
 		shift =  3.0;
 		break;
 	case 2: // x = +1
-		rst.x =  rst.y;     
-		rst.y =  rst.z; 
+		rst.x =  rst.y;
+		rst.y =  rst.z;
 		shift =  1.0;
 		break;
 	case 3: // y = -1
-		rst.y =  rst.z; 
+		rst.y =  rst.z;
 		shift =  0.0;
 		break;
 	case 4: // y = +1
-		rst.x = -rst.x; 
-		rst.y =  rst.z; 
+		rst.x = -rst.x;
+		rst.y =  rst.z;
 		shift =  2.0;
 		break;
 	case 5: // z = -1
-		rst.x = -rst.x; 
+		rst.x = -rst.x;
 		shift =  4.0;
 		break;
 	case 6: // z = +1
@@ -3249,14 +3399,14 @@ int ON_TextureMapping::EvaluateBoxMapping(
   rst.x = 0.5*rst.x + 0.5;
   rst.y = 0.5*rst.y + 0.5;
 	rst.z = 0.0;
-	
+
 	if( ON_TextureMapping::TEXTURE_SPACE::divided == m_texture_space)
 	{
     rst.x = (shift + rst.x)/(m_bCapped ? 6.0 : 4.0);
 	}
 
 	*T = m_uvw*rst;
-  
+
   return side0;
 }
 
@@ -3325,7 +3475,7 @@ int ON_TextureMapping::Evaluate(
 	default:
 		rc = EvaluatePlaneMapping(P,N,T);
 		break;
-	}	
+	}
   return rc;
 }
 
@@ -3407,8 +3557,8 @@ ON__UINT32 ON_TextureMapping::MappingCRC() const
           //   Should brep's render meshes be included in the crc?
           //   The texture that is being mapped is actually
           //   being applied to the brep by the render mesh's
-          //   m_T[] values and some users will want to see 
-          //   the "picture" on the brep mapped to the 
+          //   m_T[] values and some users will want to see
+          //   the "picture" on the brep mapped to the
           //   "picture" on the
           //   target.
         }
@@ -3445,12 +3595,12 @@ bool ON_TextureMapping::RequiresVertexNormals() const
   if ( ON_TextureMapping::TYPE::srfp_mapping == m_type )
     return false;
 
-	if(m_projection == ON_TextureMapping::PROJECTION::ray_projection) 
+	if(m_projection == ON_TextureMapping::PROJECTION::ray_projection)
     return true;
 
-  if(m_type == ON_TextureMapping::TYPE::box_mapping) 
+  if(m_type == ON_TextureMapping::TYPE::box_mapping)
     return true;
-	if(m_type == ON_TextureMapping::TYPE::cylinder_mapping && m_bCapped) 
+	if(m_type == ON_TextureMapping::TYPE::cylinder_mapping && m_bCapped)
     return true;
 
 	return false;
@@ -3461,7 +3611,7 @@ bool ON_TextureMapping::IsPeriodic(void) const
 	return (m_type == ON_TextureMapping::TYPE::sphere_mapping || m_type == ON_TextureMapping::TYPE::cylinder_mapping);
 }
 
-bool ON_TextureMapping::HasMatchingTextureCoordinates( 
+bool ON_TextureMapping::HasMatchingTextureCoordinates(
        const ON_Mesh& mesh,
        const ON_Xform* mesh_xform
        ) const
@@ -3473,7 +3623,7 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
   return rc;
 }
 
-bool ON_TextureMapping::HasMatchingTextureCoordinates( 
+bool ON_TextureMapping::HasMatchingTextureCoordinates(
        const ON_MappingTag& tag,
        const ON_Xform* mesh_xform
        ) const
@@ -3495,9 +3645,9 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
     // alwasy independent of 3d location but
     // the transformations are often set.
     if ( ON_TextureMapping::TYPE::srfp_mapping != m_type
-         && mesh_xform 
+         && mesh_xform
          && mesh_xform->IsValid()
-         && !mesh_xform->IsZero() 
+         && !mesh_xform->IsZero()
          && !tag.m_mesh_xform.IsZero()
        )
     {
@@ -3550,26 +3700,26 @@ bool GetSPTCHelper(
     for ( i = 1; i < vcnt; i++ )
     {
       u = S[i].x;
-      if      (u < srf_udom.m_t[0]) srf_udom.m_t[0] = u; 
-      else if (u > srf_udom.m_t[1]) srf_udom.m_t[1] = u; 
+      if      (u < srf_udom.m_t[0]) srf_udom.m_t[0] = u;
+      else if (u > srf_udom.m_t[1]) srf_udom.m_t[1] = u;
       v = S[i].y;
-      if      (v < srf_vdom.m_t[0]) srf_vdom.m_t[0] = v; 
-      else if (v > srf_vdom.m_t[1]) srf_vdom.m_t[1] = v; 
+      if      (v < srf_vdom.m_t[0]) srf_vdom.m_t[0] = v;
+      else if (v > srf_vdom.m_t[1]) srf_vdom.m_t[1] = v;
     }
-    if (    !srf_udom.IsIncreasing() 
+    if (    !srf_udom.IsIncreasing()
          || !srf_vdom.IsIncreasing() )
     {
       return false;
     }
   }
 
-  bool bHaveUVWXform =   mapping.m_uvw.IsValid() 
-                     && !mapping.m_uvw.IsIdentity() 
+  bool bHaveUVWXform =   mapping.m_uvw.IsValid()
+                     && !mapping.m_uvw.IsIdentity()
                      && !mapping.m_uvw.IsZero();
 
   if ( mesh.HasPackedTextureRegion() )
   {
-    // Packed textures are not compatible with the use 
+    // Packed textures are not compatible with the use
     // of m_uvw.  m_uvw is ignored in this block
     // of code on purpose.  //SEE BELOW
     const ON_Interval tex_udom = mesh.m_packed_tex_domain[0];
@@ -3593,13 +3743,13 @@ bool GetSPTCHelper(
 		}
 
 	    // (u, v) = known surface parameter
-	    if ( mesh.m_packed_tex_rotate ) 
+	    if ( mesh.m_packed_tex_rotate )
 	    {
         // verify this by checking with mesher
 	       a = 1.0 - srf_vdom.NormalizedParameterAt( v );
 	       b = srf_udom.NormalizedParameterAt( u );
 	    }
-	    else 
+	    else
 	    {
 	      a = srf_udom.NormalizedParameterAt( u );
 	      b = srf_vdom.NormalizedParameterAt( v );
@@ -3655,7 +3805,7 @@ bool GetSPTCHelper(
 
 
 bool ON_TextureMapping::GetTextureCoordinates(
-          const ON_Mesh& mesh, 
+          const ON_Mesh& mesh,
           ON_SimpleArray<ON_3fPoint>& T,
           const ON_Xform* mesh_xform,
           bool bLazy,
@@ -3758,15 +3908,15 @@ bool ON_TextureMapping::GetTextureCoordinates(
     double w;
     int sd;
 
-		if (ON_TextureMapping::PROJECTION::clspt_projection == m_projection 
+		if (ON_TextureMapping::PROJECTION::clspt_projection == m_projection
       && (ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type || ON_TextureMapping::TYPE::brep_mapping_primitive == m_type)
       && nullptr != m_mapping_primitive)
 		{
       rc = false;
 		}
 		else if ( mesh_N &&
-          (   ON_TextureMapping::PROJECTION::ray_projection == m_projection 
-           || ON_TextureMapping::TYPE::box_mapping == m_type 
+          (   ON_TextureMapping::PROJECTION::ray_projection == m_projection
+           || ON_TextureMapping::TYPE::box_mapping == m_type
            || ON_TextureMapping::TYPE::cylinder_mapping == m_type
            || ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type
 		   )
@@ -3845,8 +3995,8 @@ bool ON_TextureMapping::GetTextureCoordinates(
 	return rc;
 }
 
-static 
-void ThreeToTwoHelper( 
+static
+void ThreeToTwoHelper(
       const ON_SimpleArray<ON_3fPoint>& T3,
       ON_SimpleArray<ON_2fPoint>& T2
       )
@@ -3867,8 +4017,8 @@ void ThreeToTwoHelper(
 }
 
 bool ON_TextureMapping::GetTextureCoordinates(
-            const ON_Mesh& mesh, 
-            ON_SimpleArray<ON_2fPoint>& T, 
+            const ON_Mesh& mesh,
+            ON_SimpleArray<ON_2fPoint>& T,
             const ON_Xform* mesh_xform,
             bool bLazy,
             ON_SimpleArray<int>* Tside
@@ -3938,8 +4088,8 @@ bool ON_TextureMapping::GetTextureCoordinates(
 }
 
 
-//bool ON_Mesh::GetSurfaceParameterTextureXform( 
-//          class ON_Xform& StoT 
+//bool ON_Mesh::GetSurfaceParameterTextureXform(
+//          class ON_Xform& StoT
 //          ) const
 //
 //{
@@ -3952,7 +4102,7 @@ bool ON_TextureMapping::GetTextureCoordinates(
 //  const ON_Interval texture_u_domain(m_tex_domain[0]);
 //  const ON_Interval texture_v_domain(m_tex_domain[1]);
 //  bool bRotateTexture = m_srf_tex_rotate;
-//  if (   surface_u_domain.IsInterval() 
+//  if (   surface_u_domain.IsInterval()
 //      && surface_v_domain.IsInterval()
 //      && texture_u_domain.IsInterval()
 //      && texture_v_domain.IsInterval()
@@ -4012,11 +4162,11 @@ public:
   bool m_bHasPrincipalCurvatures;
   bool m_bHasHiddenVertices;
 
-  bool m_bHasCachedTextures;  
+  bool m_bHasCachedTextures;
   ON_SimpleArray< ON_TextureCoordinates* > m_TC;
 
-  // m_vuse[] is an array of length = original number of 
-  // vertices in m_mesh and m_vuse[vi] = number of faces 
+  // m_vuse[] is an array of length = original number of
+  // vertices in m_mesh and m_vuse[vi] = number of faces
   // that reference vertex vi. If this vertex needs to be
   // split, vuse[vi] is decremented.  The ultimate goal
   // is to split a few times as needed so we don't
@@ -4057,10 +4207,10 @@ void ON__CChangeTextureCoordinateHelper::ChangeTextureCoordinate(int* Fvi, int f
 }
 
 
-ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper( 
+ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper(
     ON_Mesh& mesh,
     int newvcnt,
-    float*& mesh_T ) 
+    float*& mesh_T )
 : m_mesh(mesh)
 , m_mesh_dV(0)
 , m_vuse_count(0)
@@ -4093,7 +4243,7 @@ ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper(
   }
 
   m_bHasVertexNormals = m_mesh.HasVertexNormals();
-  if ( m_bHasVertexNormals ) 
+  if ( m_bHasVertexNormals )
     m_mesh.m_N.Reserve(vcnt+newvcnt);
 
   m_bHasVertexTextures = m_mesh.HasTextureCoordinates();
@@ -4154,8 +4304,8 @@ int ON__CChangeTextureCoordinateHelper::DupVertex(int vi)
 {
   if ( 0 == m_vuse_count )
   {
-    // m_vuse[] is an array of length = original number of 
-    // vertices in m_mesh and m_vuse[vi] = number of faces 
+    // m_vuse[] is an array of length = original number of
+    // vertices in m_mesh and m_vuse[vi] = number of faces
     // that reference vertex vi. If this vertex needs to be
     // split, vuse[vi] is decremented.  The ultimate goal
     // is to split a few times as needed so we don't
@@ -4343,7 +4493,7 @@ int IntersectBoxSideRayHelper(int side, const ON_3dPoint& rst, const ON_3dVector
 }
 
 static
-bool EvBoxSideTextureCoordinateHelper2( 
+bool EvBoxSideTextureCoordinateHelper2(
                        int side,
                        const ON_TextureMapping& box_mapping,
 										   const ON_3dPoint& P,
@@ -4375,7 +4525,7 @@ bool EvBoxSideTextureCoordinateHelper2(
   //  4 =  front side (y=+1)
   //  5 =  bottom side (z=-1)
   //  6 =  top side (z=+1)
-	
+
   if ( ON_TextureMapping::PROJECTION::ray_projection == box_mapping.m_projection )
 	{
     double s;
@@ -4384,10 +4534,10 @@ bool EvBoxSideTextureCoordinateHelper2(
 		  // ray hit the box side
 		  rst = rst + s*n;
     }
-	} 
+	}
 
 	double shift = 0.0;
-	
+
   // side flag
   //  1 =  left side (x=-1)
   //  2 =  right side (x=+1)
@@ -4398,27 +4548,27 @@ bool EvBoxSideTextureCoordinateHelper2(
 
 	switch(side)
 	{
-	case 1: // x = -1 
-		rst.x = -rst.y; 
-		rst.y =  rst.z; 
+	case 1: // x = -1
+		rst.x = -rst.y;
+		rst.y =  rst.z;
 		shift =  3.0;
 		break;
 	case 2: // x = +1
-		rst.x =  rst.y;     
-		rst.y =  rst.z; 
+		rst.x =  rst.y;
+		rst.y =  rst.z;
 		shift =  1.0;
 		break;
 	case 3: // y = -1
-		rst.y =  rst.z; 
+		rst.y =  rst.z;
 		shift =  0.0;
 		break;
 	case 4: // y = +1
-		rst.x = -rst.x; 
-		rst.y =  rst.z; 
+		rst.x = -rst.x;
+		rst.y =  rst.z;
 		shift =  2.0;
 		break;
 	case 5: // z = -1
-		rst.x = -rst.x; 
+		rst.x = -rst.x;
 		shift =  4.0;
 		break;
 	case 6: // z = +1
@@ -4433,20 +4583,20 @@ bool EvBoxSideTextureCoordinateHelper2(
   rst.x = 0.5*rst.x + 0.5;
   rst.y = 0.5*rst.y + 0.5;
 	rst.z = 0.0;
-	
+
 	if( ON_TextureMapping::TEXTURE_SPACE::divided == box_mapping.m_texture_space)
 	{
     rst.x = (shift + rst.x)/(box_mapping.m_bCapped ? 6.0 : 4.0);
 	}
 
 	*T = box_mapping.m_uvw*rst;
-  
+
   return true;
 }
 
 static
 bool EvBoxSideTextureCoordinateHelper1(
-          const ON_Mesh& mesh, 
+          const ON_Mesh& mesh,
           const ON_Xform* mesh_xform,
           int vi,
           int side,
@@ -4560,17 +4710,17 @@ static
 float TcDistanceHelper(const ON_2fPoint& tc)
 {
   float dx = (tc.x > 0.5f) ? (1.0f-tc.x) : tc.x;
-  if ( dx < 0.0f) 
+  if ( dx < 0.0f)
     return 0.0f;
   float dy = (tc.y > 0.5f) ? (1.0f-tc.y) : tc.y;
-  if ( dy < 0.0f) 
+  if ( dy < 0.0f)
     return 0.0f;
   return (dx < dy) ? dx : dy;
 }
 
 static
-void AdjustSingleBoxTextureCoordinatesHelper( 
-          ON_Mesh& mesh, 
+void AdjustSingleBoxTextureCoordinatesHelper(
+          ON_Mesh& mesh,
           const ON_Xform* mesh_xform,
           float* mesh_T,
           int    mesh_T_stride,
@@ -4664,7 +4814,7 @@ void AdjustSingleBoxTextureCoordinatesHelper(
     return;
 
   ON__CChangeTextureCoordinateHelper helper(mesh,vcnt+newvcnt,mesh_T);
-  
+
   const int mflist_count = mflist.Count();
 
   for ( k = 0; k < mflist_count; k++ )
@@ -4678,13 +4828,13 @@ void AdjustSingleBoxTextureCoordinatesHelper(
       {
         helper.ChangeTextureCoordinate(fvi,j,mf.tc[j].x,mf.tc[j].y,mesh_T,mesh_T_stride);
       }
-    }    
+    }
   }
 }
 
-static 
-void AdjustMeshPeriodicTextureCoordinatesHelper( 
-          ON_Mesh& mesh, 
+static
+void AdjustMeshPeriodicTextureCoordinatesHelper(
+          ON_Mesh& mesh,
           const ON_Xform* mesh_xform,
           float* mesh_T,
           int    mesh_T_stride,
@@ -4759,7 +4909,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
 
     t = Tx[vi]; // t = "u" texture coordinate
     if ( t < ang0 )
-    {      
+    {
       quad[vi] = 1; q |= 1; // longitude < pi/2
       ftc_count++;
     }
@@ -4804,7 +4954,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
     }
 
     // ftc.fi will be set to fi if a texture coordinate needs to be adjusted
-    ftc.fi = -1; 
+    ftc.fi = -1;
 
     ftc.Tx[0] = Tx[Fvi[0]];
     ftc.Tx[1] = Tx[Fvi[1]];
@@ -4814,7 +4964,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
     if ( 0 != (8&q) )
     {
       // see if check for north/south sphere mapping poles and fix them
-      if ( 8 == ftc.quad[0] ) 
+      if ( 8 == ftc.quad[0] )
       {
         t0 = (8 == ftc.quad[3]) ? ON_UNSET_FLOAT : ftc.Tx[3];
         t1 = (8 == ftc.quad[1]) ? ON_UNSET_FLOAT : ftc.Tx[1];
@@ -4826,7 +4976,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
           ftc.fi = fi;
         }
       }
-      if ( 8 == ftc.quad[1] ) 
+      if ( 8 == ftc.quad[1] )
       {
         t0 = (8 == ftc.quad[0]) ? ON_UNSET_FLOAT : ftc.Tx[0];
         t1 = (8 == ftc.quad[2]) ? ON_UNSET_FLOAT : ftc.Tx[2];
@@ -4838,7 +4988,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
           ftc.fi = fi;
         }
       }
-      if ( 8 == ftc.quad[2] ) 
+      if ( 8 == ftc.quad[2] )
       {
         int k = (Fvi[2] == Fvi[3]) ? 0 : 3;
         t0 = (8 == ftc.quad[1]) ? ON_UNSET_FLOAT : ftc.Tx[1];
@@ -4856,7 +5006,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
           ftc.fi = fi;
         }
       }
-      if ( 8 == ftc.quad[3] && Fvi[2] != Fvi[3] ) 
+      if ( 8 == ftc.quad[3] && Fvi[2] != Fvi[3] )
       {
         t0 = (8 == ftc.quad[2]) ? ON_UNSET_FLOAT : ftc.Tx[2];
         t1 = (8 == ftc.quad[0]) ? ON_UNSET_FLOAT : ftc.Tx[0];
@@ -4900,7 +5050,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
         }
         if (f0 >= f1 )
         {
-          // "most" of the face is on the left side of the texture 
+          // "most" of the face is on the left side of the texture
           // If a vertex is on the right side, clamp its tc to 0.
           if ( 4 == ftc.quad[0] ) {ftc.Tx[0] = 0.0f; ftc.fi = fi;}
           if ( 4 == ftc.quad[1] ) {ftc.Tx[1] = 0.0f; ftc.fi = fi;}
@@ -4909,7 +5059,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
         }
         else
         {
-          // "most" of the face is on the right side of the texture 
+          // "most" of the face is on the right side of the texture
           // If a vertex is on the left side, clamp its tc to two_pi_tc.
           if ( 1 == ftc.quad[0] ) {ftc.Tx[0] = twopitc; ftc.fi = fi;}
           if ( 1 == ftc.quad[1] ) {ftc.Tx[1] = twopitc; ftc.fi = fi;}
@@ -4922,7 +5072,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
     if ( ftc.fi >= 0 )
     {
       // face will require special handling
-      ftc_list.Append(ftc);    
+      ftc_list.Append(ftc);
     }
   }
 
@@ -4998,8 +5148,8 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
 }
 
 static
-bool SeamCheckHelper( const ON_TextureMapping& mp, 
-                      double& two_pi_tc, 
+bool SeamCheckHelper( const ON_TextureMapping& mp,
+                      double& two_pi_tc,
                       ON_SimpleArray<int>& Tside,
                       ON_SimpleArray<int>*& Tsd )
 {
@@ -5049,7 +5199,7 @@ static inline bool HasSharedVertices(const ON_Mesh& mesh)
 }
 
 
-const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates( 
+const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
         const class ON_TextureMapping& mapping,
 				const class ON_Xform* mesh_xform,
         bool bLazy
@@ -5097,7 +5247,7 @@ const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
 
   TC->m_tag.Set(mapping);
   if (    mesh_xform && mesh_xform->IsValid()
-       && !mesh_xform->IsIdentity() 
+       && !mesh_xform->IsIdentity()
        && !mesh_xform->IsZero()
      )
   {
@@ -5134,7 +5284,7 @@ const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
 }
 
 bool ON_Mesh::SetTextureCoordinates(
-                  const class ON_TextureMapping& mapping, 
+                  const class ON_TextureMapping& mapping,
                   const class ON_Xform* mesh_xform,
                   bool bLazy
                   )
@@ -5147,7 +5297,7 @@ bool ON_Mesh::SetTextureCoordinates(
   ON_SimpleArray<int> Tside;
   ON_SimpleArray<int>* Tsd = 0;
   ON_TextureMapping mp = mapping;
-  
+
   double two_pi_tc = 1.0;
 
   bool bSeamCheck = SeamCheckHelper( mp, two_pi_tc, Tside, Tsd ) && HasSharedVertices(*this);
@@ -5165,15 +5315,15 @@ bool ON_Mesh::SetTextureCoordinates(
     // were already once seam checked. So seam check can be skipped now.
     bSeamCheck = false;
   }
-  
+
   if (rc)
   {
     // update the texture coordinate tag
     m_Ttag.Set(mapping);
-    if (    mesh_xform 
-         && mesh_xform->IsValid() 
-         && !mesh_xform->IsIdentity() 
-         && !mesh_xform->IsZero() 
+    if (    mesh_xform
+         && mesh_xform->IsValid()
+         && !mesh_xform->IsIdentity()
+         && !mesh_xform->IsZero()
        )
     {
       m_Ttag.m_mesh_xform  = *mesh_xform;
@@ -5264,8 +5414,8 @@ bool ON_MappingChannel::Read( ON_BinaryArchive& archive )
     {
       // 1.1 field added 6 June 2006
       if (rc) rc = archive.ReadXform(m_object_xform);
-      if (rc 
-          && archive.ArchiveOpenNURBSVersion() < 200610030 
+      if (rc
+          && archive.ArchiveOpenNURBSVersion() < 200610030
           && m_object_xform.IsZero()
           )
       {
@@ -5357,7 +5507,7 @@ bool ON_MaterialRef::Write( ON_BinaryArchive& archive ) const
     //if (rc) rc = archive.WriteArray( m_mapping_channels );
     if (rc) rc = archive.WriteInt(0);
 
-    // 23 May 2006 added 
+    // 23 May 2006 added
     if (rc) rc = archive.WriteUuid( m_material_backface_id );
     if (rc) rc = archive.WriteInt( m_material_source );
 
@@ -5421,7 +5571,7 @@ bool ON_MappingRef::Write( ON_BinaryArchive& archive ) const
   {
     if (rc) rc = archive.WriteUuid( m_plugin_id );
     if (rc) rc = archive.WriteArray( m_mapping_channels );
-    
+
     if ( !archive.EndWrite3dmChunk() )
       rc = false;
   }
@@ -5491,7 +5641,7 @@ void ON_ObjectRenderingAttributes::EnableAdvancedTexturePreview(bool b)
 {
   if ( b )
     m_bits |= 1;    // set bit 1
-  else 
+  else
     m_bits &= 0xFE; // clear bit 1
 }
 
@@ -5523,7 +5673,7 @@ bool ON_RenderingAttributes::IsValid( ON_TextLog* text_log ) const
           return false;
         }
       }
-    }    
+    }
   }
   return true;
 }
@@ -5554,7 +5704,7 @@ bool ON_ObjectRenderingAttributes::IsValid( ON_TextLog* text_log ) const
           return false;
         }
       }
-    }    
+    }
   }
 
   return true;
@@ -5638,12 +5788,12 @@ const ON_MappingRef* ON_ObjectRenderingAttributes::MappingRef(
     {
       if ( plugin_id == mr->m_plugin_id )
         return mr;
-    }    
+    }
   }
 
   //ALB 2013.12.03
   //Fixes http://mcneel.myjetbrains.com/youtrack/issue/RH-5730
-  //I'm sick of this bug being considered irrelavent, and since I've decided to go out of my way to 
+  //I'm sick of this bug being considered irrelavent, and since I've decided to go out of my way to
   //Sort out as many mapping problems as I can, I'm fixing this one like this.
   if (m_mappings.Count() > 0)
   {
@@ -5653,8 +5803,8 @@ const ON_MappingRef* ON_ObjectRenderingAttributes::MappingRef(
   return 0;
 }
 
-ON_MappingRef* ON_ObjectRenderingAttributes::AddMappingRef( 
-  const ON_UUID& plugin_id 
+ON_MappingRef* ON_ObjectRenderingAttributes::AddMappingRef(
+  const ON_UUID& plugin_id
   )
 {
   ON_MappingRef* mr = 0;
@@ -5665,7 +5815,7 @@ ON_MappingRef* ON_ObjectRenderingAttributes::AddMappingRef(
     {
       if ( plugin_id == mr->m_plugin_id )
         break;
-    }    
+    }
   }
 
   if ( !mr )
@@ -5677,18 +5827,18 @@ ON_MappingRef* ON_ObjectRenderingAttributes::AddMappingRef(
   return mr;
 }
 
-bool ON_ObjectRenderingAttributes::DeleteMappingRef( 
-  const ON_UUID& plugin_id 
+bool ON_ObjectRenderingAttributes::DeleteMappingRef(
+  const ON_UUID& plugin_id
   )
 {
   const ON_MappingRef* mr = MappingRef(plugin_id);
-  if ( mr ) 
+  if ( mr )
     m_mappings.Remove( (int)(mr - m_mappings.Array()) ); // safe ptr to in conversion
-  return (0 != mr);  
+  return (0 != mr);
 }
 
-const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel( 
-  const ON_UUID& plugin_id, 
+const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel(
+  const ON_UUID& plugin_id,
   const ON_UUID& mapping_id
   ) const
 {
@@ -5708,8 +5858,8 @@ const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel(
   return 0;
 }
 
-const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel( 
-  const ON_UUID& plugin_id, 
+const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel(
+  const ON_UUID& plugin_id,
   int mapping_channel_id
   ) const
 {
@@ -5732,7 +5882,7 @@ const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel(
 
 
 bool ON_ObjectRenderingAttributes::AddMappingChannel(
-        const ON_UUID& plugin_id, 
+        const ON_UUID& plugin_id,
         int mapping_channel_id,
         const ON_UUID& mapping_id
         )
@@ -5754,7 +5904,7 @@ bool ON_ObjectRenderingAttributes::AddMappingChannel(
 }
 
 bool ON_ObjectRenderingAttributes::DeleteMappingChannel(
-  const ON_UUID& plugin_id, 
+  const ON_UUID& plugin_id,
   int mapping_channel_id
   )
 {
@@ -5763,7 +5913,7 @@ bool ON_ObjectRenderingAttributes::DeleteMappingChannel(
 }
 
 bool ON_ObjectRenderingAttributes::DeleteMappingChannel(
-  const ON_UUID& plugin_id, 
+  const ON_UUID& plugin_id,
   const ON_UUID& mapping_id
   )
 {
@@ -5772,7 +5922,7 @@ bool ON_ObjectRenderingAttributes::DeleteMappingChannel(
 }
 
 bool ON_ObjectRenderingAttributes::ChangeMappingChannel(
-  const ON_UUID& plugin_id, 
+  const ON_UUID& plugin_id,
   int old_mapping_channel_id,
   int new_mapping_channel_id
   )
@@ -5781,7 +5931,7 @@ bool ON_ObjectRenderingAttributes::ChangeMappingChannel(
   return mr ? mr->ChangeMappingChannel(old_mapping_channel_id,new_mapping_channel_id) : false;
 }
 
-const ON_MappingChannel* ON_MappingRef::MappingChannel( 
+const ON_MappingChannel* ON_MappingRef::MappingChannel(
   const ON_UUID& mapping_id
   ) const
 {
@@ -5797,7 +5947,7 @@ const ON_MappingChannel* ON_MappingRef::MappingChannel(
   return 0;
 }
 
-const ON_MappingChannel* ON_MappingRef::MappingChannel( 
+const ON_MappingChannel* ON_MappingRef::MappingChannel(
   int mapping_channel_id
   ) const
 {
@@ -5899,7 +6049,7 @@ bool ON_RenderingAttributes::Read( ON_BinaryArchive& archive )
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version );
-  if (!rc) 
+  if (!rc)
     return false;
   for(;;)
   {
@@ -5922,7 +6072,7 @@ bool ON_ObjectRenderingAttributes::Write( ON_BinaryArchive& archive ) const
     return false;
   for(;;)
   {
-    // DO NOT CALL ON_RenderingAttributes::Write 
+    // DO NOT CALL ON_RenderingAttributes::Write
     rc = archive.WriteArray(m_materials);
     if ( !rc ) break;
     rc = archive.WriteArray(m_mappings);
@@ -5952,14 +6102,14 @@ bool ON_ObjectRenderingAttributes::Read( ON_BinaryArchive& archive )
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version );
-  if (!rc) 
+  if (!rc)
     return false;
   for(;;)
   {
     rc = ( 1 == major_version && minor_version >= 1 );
     if (!rc) break;
 
-    // DO NOT CALL ON_RenderingAttributes::Read 
+    // DO NOT CALL ON_RenderingAttributes::Read
     if (rc) rc = archive.ReadArray(m_materials);
     if (!rc) break;
     if (rc) rc = archive.ReadArray(m_mappings);
@@ -6035,9 +6185,9 @@ bool ON_TextureMapping::SetPlaneMapping(
   ON_3dVector yaxis = plane.yaxis;
   ON_3dVector zaxis = plane.zaxis;
 
-  // Any "cleanup" needs to be done here 
+  // Any "cleanup" needs to be done here
   // to xaxis, yaxis, zaxis.
-  
+
   double sx,sy,sz;
   if ( 0.0 == (sx = dx.Length())) sx = 2.0;
   if ( 0.0 == (sy = dy.Length())) sy = 2.0;
@@ -6045,9 +6195,9 @@ bool ON_TextureMapping::SetPlaneMapping(
 
   // The plane mapping matrix m_Pxyz transforms the
   // world coordinate rectangle to a (-1<=r<=1,
-  // on plane to a 
+  // on plane to a
   // 1 X 1 square in the xy plane centered at the
-  // origin.  
+  // origin.
 
   // m_Pxyz = surface point transformation
   ON_3dVector X = (2.0/sx)*xaxis;
@@ -6139,7 +6289,7 @@ bool ON_TextureMapping::SetBoxMapping(const ON_Plane& plane,
                                       ON_Interval dx,
                                       ON_Interval dy,
                                       ON_Interval dz,
-                                      bool bCapped 
+                                      bool bCapped
                                       )
 {
   bool rc = SetPlaneMapping(plane,dx,dy,dz);
@@ -6221,10 +6371,10 @@ bool ON_TextureMapping::GetMappingPlane(ON_Plane& plane,
   S.z = 1.0/S.z;
 
   xform.m_xform[0][0] *= S.x; xform.m_xform[0][1] *= S.x; xform.m_xform[0][2] *= S.x;
-  xform.m_xform[0][3] *= S.x;  
-  
+  xform.m_xform[0][3] *= S.x;
+
   xform.m_xform[1][0] *= S.y; xform.m_xform[1][1] *= S.y; xform.m_xform[1][2] *= S.y;
-  xform.m_xform[1][3] *= S.y;  
+  xform.m_xform[1][3] *= S.y;
 
   xform.m_xform[2][0] *= S.z; xform.m_xform[2][1] *= S.z; xform.m_xform[2][2] *= S.z;
   xform.m_xform[2][3] *= S.z;
@@ -6239,7 +6389,7 @@ bool ON_TextureMapping::GetMappingPlane(ON_Plane& plane,
     return false;
 
   plane.origin.Set(inv.m_xform[0][3],inv.m_xform[1][3],inv.m_xform[2][3]);
-  xform.m_xform[0][3] = 0.0; 
+  xform.m_xform[0][3] = 0.0;
   xform.m_xform[1][3] = 0.0;
   xform.m_xform[2][3] = 0.0;
   plane.xaxis = &xform.m_xform[0][0];
@@ -6297,6 +6447,616 @@ bool ON_TextureMapping::GetMappingSphere(ON_Sphere& sphere) const
 
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Class ON_PBRMaterial
+//
+
+#define SUPPORT_PBR_USERDATA_SERIALIZATION
+
+class ON_PhysicallyBasedMaterialUserData : public ON_UserData
+{
+private:
+  ON_OBJECT_DECLARE(ON_PhysicallyBasedMaterialUserData);
+
+
+  bool GetDescription(ON_wString & description)
+  {
+    description = L"ON_PhysicallyBasedMaterialUserData";
+    return true;
+  }
+
+public:
+  ON_PhysicallyBasedMaterialUserData()
+  {
+    m_userdata_uuid = ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData);
+    m_application_uuid = ON_opennurbs6_id;
+    m_userdata_copycount = 1;
+  }
+
+  ~ON_PhysicallyBasedMaterialUserData() {}
+
+
+  ON_PhysicallyBasedMaterialUserData(const ON_PhysicallyBasedMaterialUserData& src)
+    : ON_UserData(src)
+  {
+    m_userdata_copycount = src.m_userdata_copycount;
+    m_parameters = src.m_parameters;
+  }
+
+  ON_PhysicallyBasedMaterialUserData& operator=(const ON_PhysicallyBasedMaterialUserData& src)
+  {
+    if (this != &src)
+    {
+      ON_UserData::operator = (src);
+      m_parameters = src.m_parameters;
+    }
+    return *this;
+  }
+
+private:
+  // ON_Object overrides
+#if defined SUPPORT_PBR_USERDATA_SERIALIZATION
+  bool Write(ON_BinaryArchive& archive) const override
+  {
+    ON_ASSERT(IsValid());
+
+    const int chunk_version = 1;
+    if (false == archive.BeginWrite3dmAnonymousChunk(chunk_version))
+      return false;
+
+    bool rc = m_parameters.Write(archive);
+
+    if (!archive.EndWrite3dmChunk())
+    {
+      rc = false;
+    }
+
+    return rc;
+  }
+
+  bool Read(ON_BinaryArchive& archive) override
+  {
+    int chunk_version = 0;
+    if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
+      return false;
+
+    bool rc = false;
+
+    if (chunk_version == 1)
+    {
+      rc = m_parameters.Read(archive);
+    }
+
+    if (!archive.EndRead3dmChunk())
+    {
+      rc = false;
+    }
+
+    ON_ASSERT(IsValid());
+    return rc;
+  }
+
+  bool Archive() const override
+  {
+    return true;
+  }
+#else
+  bool Archive() const override
+  {
+    return false;
+  }
+#endif
+
+  bool IsValid(class ON_TextLog* text_log = nullptr) const override
+  {
+    if (!m_parameters.IsValid(text_log))
+      return false;
+
+    return ON_UserData::IsValid(text_log);
+  }
+
+public:
+  struct Parameters
+  {
+#if defined SUPPORT_PBR_USERDATA_SERIALIZATION
+    bool Write(ON_BinaryArchive& binary_archive) const
+    {
+      if (!binary_archive.WriteColor(base_color)) return false;
+      if (!binary_archive.WriteInt((int)brdf)) return false;
+      if (!binary_archive.WriteDouble(subsurface)) return false;
+      if (!binary_archive.WriteColor(subsurface_scattering_color)) return false;
+      if (!binary_archive.WriteDouble(subsurface_scattering_radius)) return false;
+      if (!binary_archive.WriteDouble(metallic)) return false;
+      if (!binary_archive.WriteDouble(specular)) return false;
+      if (!binary_archive.WriteDouble(specular_tint)) return false;
+      if (!binary_archive.WriteDouble(roughness)) return false;
+      if (!binary_archive.WriteDouble(anisotropic)) return false;
+      if (!binary_archive.WriteDouble(anisotropic_rotation)) return false;
+      if (!binary_archive.WriteDouble(sheen)) return false;
+      if (!binary_archive.WriteDouble(sheen_tint)) return false;
+      if (!binary_archive.WriteDouble(clearcoat)) return false;
+      if (!binary_archive.WriteDouble(clearcoat_roughness)) return false;
+      if (!binary_archive.WriteDouble(opacity_IOR)) return false;
+      if (!binary_archive.WriteDouble(opacity)) return false;
+      if (!binary_archive.WriteDouble(opacity_roughness)) return false;
+      if (!binary_archive.WriteColor(emission)) return false;
+      
+      return true;
+    }
+
+    bool Read(ON_BinaryArchive& binary_archive)
+    {
+      if (!binary_archive.ReadColor(base_color)) return false;                          
+      if (!binary_archive.ReadInt((int*)&brdf)) return false;
+      if (!binary_archive.ReadDouble(&subsurface)) return false;
+      if (!binary_archive.ReadColor(subsurface_scattering_color)) return false;
+      if (!binary_archive.ReadDouble(&subsurface_scattering_radius)) return false;
+      if (!binary_archive.ReadDouble(&metallic)) return false;
+      if (!binary_archive.ReadDouble(&specular)) return false;
+      if (!binary_archive.ReadDouble(&specular_tint)) return false;
+      if (!binary_archive.ReadDouble(&roughness)) return false;
+      if (!binary_archive.ReadDouble(&anisotropic)) return false;
+      if (!binary_archive.ReadDouble(&anisotropic_rotation)) return false;
+      if (!binary_archive.ReadDouble(&sheen)) return false;
+      if (!binary_archive.ReadDouble(&sheen_tint)) return false;
+      if (!binary_archive.ReadDouble(&clearcoat)) return false;
+      if (!binary_archive.ReadDouble(&clearcoat_roughness)) return false;
+      if (!binary_archive.ReadDouble(&opacity_IOR)) return false;
+      if (!binary_archive.ReadDouble(&opacity)) return false;
+      if (!binary_archive.ReadDouble(&opacity_roughness)) return false;
+      if (!binary_archive.ReadColor(emission)) return false;
+      
+      return true;
+    }
+#endif
+
+    bool IsValid(class ON_TextLog* text_log = nullptr) const
+    {
+      //!base_color.IsValid() means that PBR is not supported.
+      //if (!base_color.IsValid()) return false;
+      if (ON_UNSET_VALUE == subsurface) return false;
+      if (!subsurface_scattering_color.IsValid()) return false;
+      if (ON_IS_UNSET_DOUBLE(subsurface_scattering_radius)) return false;
+      if (ON_IS_UNSET_DOUBLE(metallic)) return false;
+      if (ON_IS_UNSET_DOUBLE(specular)) return false;
+      if (ON_IS_UNSET_DOUBLE(specular_tint)) return false;
+      if (ON_IS_UNSET_DOUBLE(roughness)) return false;
+      if (ON_IS_UNSET_DOUBLE(anisotropic)) return false;
+      if (ON_IS_UNSET_DOUBLE(anisotropic_rotation)) return false;
+      if (ON_IS_UNSET_DOUBLE(sheen)) return false;
+      if (ON_IS_UNSET_DOUBLE(sheen_tint)) return false;
+      if (ON_IS_UNSET_DOUBLE(clearcoat)) return false;
+      if (ON_IS_UNSET_DOUBLE(clearcoat_roughness)) return false;
+      if (ON_IS_UNSET_DOUBLE(opacity_IOR)) return false;
+      if (ON_IS_UNSET_DOUBLE(opacity)) return false;
+      if (ON_IS_UNSET_DOUBLE(opacity_roughness)) return false;
+      if (!emission.IsValid()) return false;
+
+      return true;
+    }
+
+    ON_4fColor base_color = ON_4fColor::Unset;
+    double subsurface = 0.0;
+    ON_4fColor subsurface_scattering_color = ON_Color::White;
+    double subsurface_scattering_radius = 0.0;
+    double metallic = 0.0;
+    double specular = 0.5;
+    double specular_tint = 0.0;
+    double roughness = 1.0;
+    double anisotropic = 0.0;
+    double anisotropic_rotation = 0.0;
+    double sheen = 0.0;
+    double sheen_tint = 0.0;
+    double clearcoat = 0.0;
+    double clearcoat_roughness = 0.0;
+    double opacity_IOR = 1.52;
+    double opacity = 1.0;
+    double opacity_roughness = 0.0;
+    ON_4fColor emission = ON_Color::Black;
+    ON_PhysicallyBasedMaterial::BRDFs brdf = ON_PhysicallyBasedMaterial::BRDFs::GGX;
+  } m_parameters;
+};
+
+ON_UUID ON_Material::PhysicallyBasedUserdataId(void)
+{
+  // {5694E1AC-40E6-44F4-9CA9-3B6D0E8C4440}
+  static const ON_UUID id = { 0x5694e1ac, 0x40e6, 0x44f4,{ 0x9c, 0xa9, 0x3b, 0x6d, 0xe, 0x8c, 0x44, 0x40 } };
+
+  return id;
+}
+
+ON_OBJECT_IMPLEMENT(ON_PhysicallyBasedMaterialUserData, ON_UserData, "5694E1AC-40E6-44F4-9CA9-3B6D0E8C4440");
+
+class ON_PhysicallyBasedMaterial::Impl
+{
+public:
+  Impl(ON_Material& mat)
+    : material(&mat),
+      m_pDummy(nullptr)
+  {
+  }
+
+  ~Impl()
+  {
+    delete m_pDummy;
+  }
+
+  const ON_PhysicallyBasedMaterialUserData& UserData() const
+  {
+    const auto pUD = material->GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData));
+    if (pUD)
+    {
+      return static_cast<const ON_PhysicallyBasedMaterialUserData&>(*pUD);
+    }
+
+    if (m_pDummy)
+    {
+      return *m_pDummy;
+    }
+
+    //This is the const version
+    m_pDummy = new ON_PhysicallyBasedMaterialUserData();
+    return *m_pDummy;
+  }
+
+
+  ON_PhysicallyBasedMaterialUserData& UserData()
+  {
+    auto pUD = material->GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData));
+    if (pUD)
+    {
+      return static_cast<ON_PhysicallyBasedMaterialUserData&>(*pUD);
+    }
+
+    ON_PhysicallyBasedMaterialUserData* p = nullptr;
+
+    if (nullptr == m_pDummy)
+    {
+      p = new ON_PhysicallyBasedMaterialUserData();
+    }
+    else
+    {
+      p = m_pDummy;
+      m_pDummy = nullptr;
+    }
+
+    material->AttachUserData(p);
+
+    return *p;
+  }
+
+  ON_Material* material;
+
+  mutable ON_PhysicallyBasedMaterialUserData* m_pDummy;
+};
+
+
+
+
+
+ON_4fColor ON_PhysicallyBasedMaterial::BaseColor(void) const
+{
+  return Implementation().UserData().m_parameters.base_color;
+}
+
+void ON_PhysicallyBasedMaterial::SetBaseColor(const ON_4fColor& c)
+{
+  Implementation().UserData().m_parameters.base_color = c;
+}
+
+ON_PhysicallyBasedMaterial::BRDFs ON_PhysicallyBasedMaterial::BRDF(void) const
+{
+  return Implementation().UserData().m_parameters.brdf;
+}
+
+void ON_PhysicallyBasedMaterial::SetBRDF(const BRDFs& b)
+{
+  Implementation().UserData().m_parameters.brdf = b;
+}
+
+double ON_PhysicallyBasedMaterial::Subsurface(void) const
+{
+  return Implementation().UserData().m_parameters.subsurface;
+}
+
+void ON_PhysicallyBasedMaterial::SetSubsurface(double d)
+{
+  Implementation().UserData().m_parameters.subsurface = d;
+}
+
+ON_4fColor ON_PhysicallyBasedMaterial::SubsurfaceScatteringColor(void) const
+{
+  return Implementation().UserData().m_parameters.subsurface_scattering_color;
+}
+
+void ON_PhysicallyBasedMaterial::SetSubsurfaceScatteringColor(const ON_4fColor& c)
+{
+  Implementation().UserData().m_parameters.subsurface_scattering_color = c;
+}
+
+double ON_PhysicallyBasedMaterial::SubsurfaceScatteringRadius(void) const
+{
+  return Implementation().UserData().m_parameters.subsurface_scattering_radius;
+}
+
+void ON_PhysicallyBasedMaterial::SetSubsurfaceScatteringRadius(double d)
+{
+  Implementation().UserData().m_parameters.subsurface_scattering_radius = d;
+}
+
+double ON_PhysicallyBasedMaterial::Metallic(void) const
+{
+  return Implementation().UserData().m_parameters.metallic;
+}
+
+void ON_PhysicallyBasedMaterial::SetMetallic(double d)
+{
+  Implementation().UserData().m_parameters.metallic = d;
+}
+
+double ON_PhysicallyBasedMaterial::Specular(void) const
+{
+  return Implementation().UserData().m_parameters.specular;
+}
+
+double ON_PhysicallyBasedMaterial::ReflectiveIOR(void) const
+{
+  const double d2 = Specular() * 0.08;
+  return sqrt(d2);
+}
+
+void ON_PhysicallyBasedMaterial::SetReflectiveIOR(double ior)
+{
+  const double d = (ior - 1.0) / (ior + 1.0);
+  SetSpecular(d*d / 0.08);
+}
+
+void ON_PhysicallyBasedMaterial::SetSpecular(double d)
+{
+  Implementation().UserData().m_parameters.specular = d;
+}
+
+double ON_PhysicallyBasedMaterial::SpecularTint(void) const
+{
+  return Implementation().UserData().m_parameters.specular_tint;
+}
+
+void ON_PhysicallyBasedMaterial::SetSpecularTint(double d)
+{
+  Implementation().UserData().m_parameters.specular_tint = d;
+}
+
+double ON_PhysicallyBasedMaterial::Roughness(void) const
+{
+  return Implementation().UserData().m_parameters.roughness;
+}
+
+void ON_PhysicallyBasedMaterial::SetRoughness(double d)
+{
+  Implementation().UserData().m_parameters.roughness = d;
+}
+
+double ON_PhysicallyBasedMaterial::Anisotropic(void) const
+{
+  return Implementation().UserData().m_parameters.anisotropic;
+}
+
+void ON_PhysicallyBasedMaterial::SetAnisotropic(double d)
+{
+  Implementation().UserData().m_parameters.anisotropic = d;
+}
+
+double ON_PhysicallyBasedMaterial::AnisotropicRotation(void) const
+{
+  return Implementation().UserData().m_parameters.anisotropic_rotation;
+}
+
+void ON_PhysicallyBasedMaterial::SetAnisotropicRotation(double d)
+{
+  Implementation().UserData().m_parameters.anisotropic_rotation = d;
+}
+
+double ON_PhysicallyBasedMaterial::Sheen(void) const
+{
+  return Implementation().UserData().m_parameters.sheen;
+}
+
+void ON_PhysicallyBasedMaterial::SetSheen(double d)
+{
+  Implementation().UserData().m_parameters.sheen = d;
+}
+
+double ON_PhysicallyBasedMaterial::SheenTint(void) const
+{
+  return Implementation().UserData().m_parameters.sheen_tint;
+}
+
+void ON_PhysicallyBasedMaterial::SetSheenTint(double d)
+{
+  Implementation().UserData().m_parameters.sheen_tint = d;
+}
+
+double ON_PhysicallyBasedMaterial::Clearcoat(void) const
+{
+  return Implementation().UserData().m_parameters.clearcoat;
+}
+
+void ON_PhysicallyBasedMaterial::SetClearcoat(double d)
+{
+  Implementation().UserData().m_parameters.clearcoat = d;
+}
+
+double ON_PhysicallyBasedMaterial::ClearcoatRoughness(void) const
+{
+  return Implementation().UserData().m_parameters.clearcoat_roughness;
+}
+
+void ON_PhysicallyBasedMaterial::SetClearcoatRoughness(double d)
+{
+  Implementation().UserData().m_parameters.clearcoat_roughness = d;
+}
+
+double ON_PhysicallyBasedMaterial::OpacityIOR(void) const
+{
+  return Implementation().UserData().m_parameters.opacity_IOR;
+}
+
+void ON_PhysicallyBasedMaterial::SetOpacityIOR(double d)
+{
+  Implementation().UserData().m_parameters.opacity_IOR = d;
+}
+
+double ON_PhysicallyBasedMaterial::Opacity(void) const
+{
+  return Implementation().UserData().m_parameters.opacity;
+}
+
+void ON_PhysicallyBasedMaterial::SetOpacity(double d)
+{
+  Implementation().UserData().m_parameters.opacity = d;
+}
+
+double ON_PhysicallyBasedMaterial::OpacityRoughness(void) const
+{
+  return Implementation().UserData().m_parameters.opacity_roughness;
+}
+
+void ON_PhysicallyBasedMaterial::SetOpacityRoughness(double d)
+{
+  Implementation().UserData().m_parameters.opacity_roughness = d;
+}
+
+bool ON_PhysicallyBasedMaterial::IsValid(class ON_TextLog* text_log) const
+{
+  return Implementation().UserData().m_parameters.IsValid(text_log);
+}
+
+ON_4fColor ON_PhysicallyBasedMaterial::Emission(void) const
+{
+  return Implementation().UserData().m_parameters.emission;
+}
+
+void ON_PhysicallyBasedMaterial::SetEmission(ON_4fColor d)
+{
+  Implementation().UserData().m_parameters.emission = d;
+}
+
+ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_Material& src)
+  : _pImpl(new Impl(const_cast<ON_Material&>(src)))
+{
+}
+
+ON_PhysicallyBasedMaterial::~ON_PhysicallyBasedMaterial()
+{
+  delete _pImpl;
+}
+
+
+ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedMaterial& src)
+  : _pImpl(new Impl(*src._pImpl->material))
+{
+}
+
+ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void)
+{
+  return ON_PhysicallyBasedMaterial(*this);
+}
+
+const ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void) const
+{
+  return ON_PhysicallyBasedMaterial(*this);
+}
+
+
+const ON_PhysicallyBasedMaterial::Impl& ON_PhysicallyBasedMaterial::Implementation(void) const
+{
+  return *_pImpl;
+}
+
+ON_PhysicallyBasedMaterial::Impl& ON_PhysicallyBasedMaterial::Implementation(void)
+{
+  return *_pImpl;
+}
+
+
+bool ON_PhysicallyBasedMaterial::Supported(void) const
+{
+  return BaseColor().IsValid();
+}
+
+void ON_PhysicallyBasedMaterial::SynchronizeLegacyMaterial(void)
+{
+  auto& mat = *Implementation().material;
+
+  const bool bIsMetal = Metallic() > 0.5;
+
+  mat.SetDiffuse(bIsMetal ? ON_Color::Black : (ON_Color)BaseColor());
+
+  const double reflectivity = bIsMetal ? 1.0 : 1.0 - Roughness();
+
+  mat.SetFresnelReflections(!bIsMetal);
+
+  mat.SetReflectivity(reflectivity);
+  mat.SetTransparency(1.0 - Opacity());
+  mat.SetAmbient(ON_Color::Black);
+
+  //Gloss
+  mat.SetShine(ON_Material::MaxShine * reflectivity);
+
+  if (bIsMetal)
+  {
+    mat.SetSpecular(BaseColor());
+    mat.m_reflection = BaseColor();
+  }
+  else
+  {
+    const int bf = (int)(255.0 * reflectivity);
+    mat.SetSpecular(ON_Color(bf, bf, bf));
+    mat.m_reflection = ON_Color::White;
+  }
+
+  mat.m_reflection_glossiness = Roughness();
+  mat.m_refraction_glossiness = OpacityRoughness();
+
+  mat.SetEmission(Emission());
+
+  mat.m_index_of_refraction = OpacityIOR();
+
+  //No need to do the textures, because the ones that are supported are in the right channels already.
+}
+
+int ON_PhysicallyBasedMaterial::FindTexture(const wchar_t* filename, ON_Texture::TYPE type, int i0) const
+{
+  return Material().FindTexture(filename, type, i0);
+}
+
+int ON_PhysicallyBasedMaterial::AddTexture(const ON_Texture& tx)
+{
+  return Material().AddTexture(tx);
+}
+
+int ON_PhysicallyBasedMaterial::AddTexture(const wchar_t* filename, ON_Texture::TYPE type)
+{
+  return Material().AddTexture(filename, type);
+}
+
+int ON_PhysicallyBasedMaterial::DeleteTexture(const wchar_t* filename, ON_Texture::TYPE type)
+{
+  return Material().DeleteTexture(filename, type);
+}
+
+ON_Material& ON_PhysicallyBasedMaterial::Material(void)
+{
+  return *Implementation().material;
+}
+
+const ON_Material& ON_PhysicallyBasedMaterial::Material(void) const
+{
+  return *Implementation().material;
+}
+
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BaseColor(void) { return L"pbr-base-color"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BRDF(void) { return L"pbr-brdf"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Subsurface(void) { return L"pbr-subsurface"; }
@@ -6312,13 +7072,8 @@ ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Sheen(void) { return L"p
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SheenTint(void) { return L"pbr-sheen-tint"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Clearcoat(void) { return L"pbr-clearcoat"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatRoughness(void) { return L"pbr-clearcoat-roughness"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatBump(void) { return L"pbr-clearcoat-bump"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityIor(void) { return L"pbr-opacity-ior"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Opacity(void) { return L"pbr-opacity"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityRoughness(void) { return L"pbr-opacity-roughness"; }
 ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Emission(void) { return L"pbr-emission"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::AmbientOcclusion(void) { return L"pbr-ambient-occlusion"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Smudge(void) { return L"pbr-smudge"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Displacement(void) { return L"pbr-displacement"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Normal(void) { return L"pbr-normal"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Bump(void) { return L"pbr-bump"; }
-

@@ -1,0 +1,17 @@
+# EditorConfig is awesome:http://EditorConfig.org
+
+# ignore .editorconfig files above this
+root = true
+
+[*]
+charset = utf-8
+
+# source code
+[*.{cpp,h,c}]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+# windows-specific project files
+[*.{vcxproj,sln,vcxproj.filters,props}]
+charset = utf-8-bom

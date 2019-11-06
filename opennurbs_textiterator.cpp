@@ -1821,6 +1821,8 @@ void ON_RtfStringBuilder::GroupBegin()
   PushRun(m_current_run);
   
   m_current_run.AddControl(L"{");
+  m_current_run.SetType(ON_TextRun::RunType::kText);
+  m_current_run.ClearHasContent();
   m_have_rtf = true;
   m_level++;
 }
@@ -2161,14 +2163,23 @@ bool ON_RtfStringBuilder::AppendCodePoint(ON__UINT32 codept)
   if ((SettingFacename() || SkippingFacename()) && m_current_run.Type() == ON_TextRun::RunType::kFontdef)
     return true;
 
-  if (!m_have_rtf)
+  if (m_current_run.Type() == ON_TextRun::RunType::kText)
   {
-    if (MakeBold())
+    if (MakeBold() && !m_current_run.IsBold())
+    {
       m_current_run.AddControl(L"\\b");
-    if (MakeItalic())
+      m_current_run.SetBold(true);
+    }
+    if (MakeItalic() && !m_current_run.IsItalic())
+    {
       m_current_run.AddControl(L"\\i");
-    if (MakeUnderline())
+      m_current_run.SetItalic(true);
+    }
+    if (MakeUnderline() && !m_current_run.IsUnderlined())
+    {
       m_current_run.AddControl(L"\\ul");
+      m_current_run.SetUnderlined(true);
+    }
     m_have_rtf = true;
   }
 
@@ -3133,14 +3144,29 @@ bool RtfComposer::Compose(
             run_strings += L"\\b";
             addspace = true;
           }
+          else if(style_bold)
+          {
+            run_strings += L"\\b0";
+            addspace = true;
+          }
           if (run_font->IsItalic())
           {
             run_strings += L"\\i";
             addspace = true;
           }
+          else if (style_italic)
+          {
+            run_strings += L"\\i0";
+            addspace = true;
+          }
           if (run_font->IsUnderlined())
           {
             run_strings += L"\\ul";
+            addspace = true;
+          }
+          else if (style_underline)
+          {
+            run_strings += L"\\ul0";
             addspace = true;
           }
           if (addspace)
@@ -3199,7 +3225,6 @@ bool RtfComposer::Compose(
 
     rtf.Format(L"{\\rtf1");
     if (0 < nfont)
-
     {
       ON_wString fonttable_string;
       temp.Format(L"\\deff%d", deffont_key);
@@ -3211,9 +3236,18 @@ bool RtfComposer::Compose(
         temp.Format(L"{\\f%d %s;}", fi, fonttable[fi]);
         fonttable_string += temp;
       }
-      fonttable_string += "}\\fs40 ";
       rtf += fonttable_string;
+
     }
+
+    rtf += L"}\\fs40";
+    if (style_bold)
+      rtf += L"\\b";
+    if (style_italic)
+      rtf += L"\\i";
+    if (style_underline)
+      rtf += L"\\ul";
+
     rtf += run_strings;
     // backing out the change made for RH-49725 because it causes the problem reported in RH-50733
     rtf += L"\\par}";
