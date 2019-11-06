@@ -26,8 +26,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#if defined(OPENNURBS_SUBD_WIP)
-
 /////////////////////////////////////////////////////////
 //
 // Built-in quad subdivision
@@ -542,8 +540,8 @@ static unsigned int GetQuadCreaseEigenvalues(
 }
 
 unsigned int ON_SubDSectorType::GetAllEigenvalues(
-  size_t eigenvalues_capacity,
-  double* eigenvalues
+  double* eigenvalues,
+  size_t eigenvalues_capacity
   )
 {
   if ( 0 == eigenvalues_capacity)
@@ -564,7 +562,6 @@ unsigned int ON_SubDSectorType::GetAllEigenvalues(
   if ( 0  == R || (nullptr != eigenvalues && eigenvalues_capacity < R))
     return ON_SUBD_RETURN_ERROR(0);
 
-  const ON_SubD::SubDType subdivision_type = SubDType();
   const ON_SubD::VertexTag vertex_tag = VertexTag();
   const unsigned int N = EdgeCount();
 
@@ -573,56 +570,50 @@ unsigned int ON_SubDSectorType::GetAllEigenvalues(
 
   if (ON_SubD::VertexTag::Smooth == vertex_tag)
   {
-    if (ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
+    if (nullptr == eigenvalues)
+    {
+      // caller is asking if eigenvalues are available
+      return R;
+    }
+    eigenvalues[0] = 1.0;
+
+    double a = (3 * N - 7);
+    double b = (N >= 6) ? ((5 * N - 30)*N + 49) : ((5 * N*N + 49) - 30 * N);
+    double c = sqrt(b);
+    double d = 0.125;
+    unsigned int D = N;
+    while (D > 0 && 0 == (D % 2))
+    {
+      D /= 2;
+      d *= 0.5;
+    }
+    d /= ((double)D);
+
+    eigenvalues[1] = d*(a + c);
+    eigenvalues[2] = d*(a - c);
+
+    for (unsigned int k = 1; k < N; k++)
+    {
+      double e2[2];
+      GetQuadSubdivisionMatrix_eigenvalue_pair(k, N, e2);
+      eigenvalues[2 * k + 1] = e2[0];
+      eigenvalues[2 * k + 2] = e2[1];
+    }
+
+    // return sorted in decreasing order
+    ON_SortDoubleArrayDecreasing(eigenvalues + 1, R - 1);
+  }
+  else if (ON_SubD::VertexTag::Crease == vertex_tag)
+  {
+    if (N <= 20)
     {
       if (nullptr == eigenvalues)
       {
         // caller is asking if eigenvalues are available
         return R;
       }
-      eigenvalues[0] = 1.0;
-
-      double a = (3 * N - 7);
-      double b = (N >= 6) ? ((5 * N - 30)*N + 49) : ((5 * N*N + 49) - 30 * N);
-      double c = sqrt(b);
-      double d = 0.125;
-      unsigned int D = N;
-      while (D > 0 && 0 == (D % 2))
-      {
-        D /= 2;
-        d *= 0.5;
-      }
-      d /= ((double)D);
-
-      eigenvalues[1] = d*(a + c);
-      eigenvalues[2] = d*(a - c);
-
-      for (unsigned int k = 1; k < N; k++)
-      {
-        double e2[2];
-        GetQuadSubdivisionMatrix_eigenvalue_pair(k, N, e2);
-        eigenvalues[2 * k + 1] = e2[0];
-        eigenvalues[2 * k + 2] = e2[1];
-      }
-
-      // return sorted in decreasing order
-      ON_SortDoubleArrayDecreasing(eigenvalues + 1, R - 1);
-    }
-  }
-  else if (ON_SubD::VertexTag::Crease == vertex_tag)
-  {
-    if (ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
-    {
-      if (N <= 20)
-      {
-        if (nullptr == eigenvalues)
-        {
-          // caller is asking if eigenvalues are available
-          return R;
-        }
-        if (R != GetQuadCreaseEigenvalues(N, R, eigenvalues) || !(1.0 == eigenvalues[0]))
-          return ON_SUBD_RETURN_ERROR(0);
-      }
+      if (R != GetQuadCreaseEigenvalues(N, R, eigenvalues) || !(1.0 == eigenvalues[0]))
+        return ON_SUBD_RETURN_ERROR(0);
     }
   }
 
@@ -757,8 +748,8 @@ bool ON_SubDMatrix::EvaluateCosAndSin(
 
 
 unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
-  size_t S_capacity,
-  double** S
+  double** S,
+  size_t S_capacity
   ) const
 {
   if ( S_capacity < 3 || nullptr == S )
@@ -780,16 +771,16 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
       return ON_SUBD_RETURN_ERROR(0);
   }
 
-  const ON_SubD::SubDType subd_type = SubDType();
-  //const ON_SubD::VertexTag vertex_tag = VertexTag();
   const unsigned int N = EdgeCount();
 
-  if (ON_SubD::SubDType::QuadCatmullClark != subd_type)
-    return ON_SUBD_RETURN_ERROR(0); // todo -- add tri support
   
   if (this->IsSmoothSector() || this->IsDartSector())
   {
-    if (N < 3 || R < 7)
+    // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth and Dart
+    // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+    // for more details on how this case is handled.
+    // Valence 2 has R = 5, N = 5
+    if (N < 2 || R < 5)
       return ON_SUBD_RETURN_ERROR(0);
 
     /*
@@ -817,69 +808,153 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
     double* y;
     double* x1;
 
-    // first row
-    x = S[0];
-    *x++ = a;
-    x1 = x + R;
-    while (x < x1)
+    if (5 == R)
     {
-      *x++ = b;
-      *x++ = c;
+      if (this->IsDartSector())
+      {
+        // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
+        // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+        // for more details on how this case is handled.
+        //
+        // Dart Valence 2 subdivision matrix special case.
+        S[0][0] = 1.0 / 8.0;
+        S[0][1] = 3.0 / 8.0;
+        S[0][2] = 1.0 / 16.0;
+        S[0][3] = 3.0 / 8.0;
+        S[0][4] = 1.0 / 16.0;
+
+        // creased edge subdivision
+        S[1][0] = 1.0 / 2.0;
+        S[1][1] = 1.0 / 2.0;
+        S[1][2] = 0.0;
+        S[1][3] = 0.0;
+        S[1][4] = 0.0;
+
+        S[2][0] = 1.0 / 4.0;
+        S[2][1] = 1.0 / 4.0;
+        S[2][2] = 1.0 / 4.0;
+        S[2][3] = 1.0 / 4.0;
+        S[2][4] = 0.0;
+
+        // smooth edge subdivision
+        // k = 2, theta = 2pi/2 = pi, cos(theta) = cos(pi) = -1
+        S[3][0] = 1.0 / 8.0;  // = 3/4 + cos(theta)/4
+        S[3][1] = 1.0 / 8.0;  // deviates from general case because P0 is a corner of both quads attached to edge(C,P1)
+        S[3][2] = 1.0 / 16.0;
+        S[3][3] = 5.0 / 8.0;  // = 3/4 - cos(theta)/4
+        S[3][4] = 1.0 / 16.0;
+
+        S[4][0] = 1.0 / 4.0;
+        S[4][1] = 1.0 / 4.0;
+        S[4][2] = 0.0;
+        S[4][3] = 1.0 / 4.0;
+        S[4][4] = 1.0 / 4.0;
+      }
+      else
+      {
+        // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
+        // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+        // for more details on how this case is handled.
+        //
+        // Smooth Valence 2 subdivision matrix special case.
+        S[0][0] = 1.0 / 8.0;
+        S[0][1] = 3.0 / 8.0;
+        S[0][2] = 1.0 / 16.0;
+        S[0][3] = 3.0 / 8.0;
+        S[0][4] = 1.0 / 16.0;
+
+        S[1][0] = 3.0 / 8.0;
+        S[1][1] = 3.0 / 8.0;
+        S[1][2] = 1.0 / 16.0;
+        S[1][3] = 1.0 / 8.0;
+        S[1][4] = 1.0 / 16.0;
+
+        S[2][0] = 1.0 / 4.0;
+        S[2][1] = 1.0 / 4.0;
+        S[2][2] = 1.0 / 4.0;
+        S[2][3] = 1.0 / 4.0;
+        S[2][4] = 0.0;
+
+        S[3][0] = 3.0 / 8.0;
+        S[3][1] = 1.0 / 8.0;
+        S[3][2] = 1.0 / 16.0;
+        S[3][3] = 3.0 / 8.0;
+        S[3][4] = 1.0 / 16.0;
+
+        S[4][0] = 1.0 / 4.0;
+        S[4][1] = 1.0 / 4.0;
+        S[4][2] = 0.0;
+        S[4][3] = 1.0 / 4.0;
+        S[4][4] = 1.0 / 4.0;
+      }
     }
-
-    // second row
-    x = S[1];
-    x1 = x + R - 2;
-    *x++ = d_center;
-    const double* E = x;
-    *x++ = d_ring;
-    *x++ = e;
-    *x++ = e;
-    while (x < x1)
-      *x++ = 0.0;
-    *x++ = e;
-    *x++ = e;
-
-    // third row
-    x = S[2];
-    x1 = x + R;
-    *x++ = f;
-    const double* F = x;
-    *x++ = f;
-    *x++ = f;
-    *x++ = f;
-    while (x < x1)
-      *x++ = 0.0;
-
-    unsigned int k = 0;
-    const unsigned int kmax = R - 1;
-
-    for (unsigned int i = 3; i < R; i += 2)
+    else
     {
-      x = S[i];
-      y = S[i + 1];
-      k = (k + (kmax - 2)) % kmax;
-      *x++ = d_center;
-      *y++ = f;
-      x1 = x + kmax;
+      // first row
+      x = S[0];
+      *x++ = a;
+      x1 = x + R;
       while (x < x1)
       {
-        *x++ = E[k];
-        *y++ = F[k];
-        k = (k + 1) % kmax;
+        *x++ = b;
+        *x++ = c;
+      }
+
+      // second row
+      x = S[1];
+      x1 = x + R - 2;
+      *x++ = d_center;
+      const double* E = x;
+      *x++ = d_ring;
+      *x++ = e;
+      *x++ = e;
+      while (x < x1)
+        *x++ = 0.0;
+      *x++ = e;
+      *x++ = e;
+
+      // third row
+      x = S[2];
+      x1 = x + R;
+      *x++ = f;
+      const double* F = x;
+      *x++ = f;
+      *x++ = f;
+      *x++ = f;
+      while (x < x1)
+        *x++ = 0.0;
+
+      unsigned int k = 0;
+      const unsigned int kmax = R - 1;
+
+      for (unsigned int i = 3; i < R; i += 2)
+      {
+        x = S[i];
+        y = S[i + 1];
+        k = (k + (kmax - 2)) % kmax;
+        *x++ = d_center;
+        *y++ = f;
+        x1 = x + kmax;
+        while (x < x1)
+        {
+          *x++ = E[k];
+          *y++ = F[k];
+          k = (k + 1) % kmax;
+        }
+      }
+
+      if (this->IsDartSector())
+      {
+        // fix creased edge row
+        x = S[1];
+        x1 = x + R;
+        *x++ = 0.5; // center vertex
+        *x++ = 0.5; // crease edge vertex
+        while (x < x1)
+          *x++ = 0.0;
       }
     }
 
-    if (this->IsDartSector())
-    {
-      // fix creased edge row
-      x = S[1];
-      x1 = x + R;
-      *x++ = 0.5; // center vertex
-      *x++ = 0.5; // crease edge vertex
-      while (x < x1)
-        *x++ = 0.0;
-    }
     return R;
   }
 
@@ -1007,8 +1082,8 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
 }
 
 unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
-  size_t S_capacity,
-  double* S
+  double* S,
+  size_t S_capacity
   ) const
 {
   if ( S_capacity < 9 || nullptr == S )
@@ -1030,7 +1105,7 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
     Srows[i] = Srows[i-1] + R;
   }
 
-  const unsigned int rc = GetSubdivisionMatrix(R,Srows);
+  const unsigned int rc = GetSubdivisionMatrix(Srows, R);
   
   delete[] Srows;
 
@@ -1048,36 +1123,54 @@ double ON_SubDSectorType::SubdominantEigenvalue() const
   if (F < 1)
     return ON_SUBD_RETURN_ERROR(rc_error);
 
-  if (ON_SubD::SubDType::QuadCatmullClark == SubDType())
+  switch (VertexTag())
   {
-    switch (VertexTag())
+  case ON_SubD::VertexTag::Unset:
+    break;
+
+  case ON_SubD::VertexTag::Smooth:
+    if (1 == (R % 2))
     {
-    case ON_SubD::VertexTag::Unset:
-      break;
+      // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
+      // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+      // for more details on how this case is handled.
+      //
+      // R = 5 is the valence 2 case.
+      // In this case the evaluation matrix is 5x5 and the eigenvalues are 
+      // In this case the evaluation matrix is 5x5 and the eigenvalues are 
+      // 1, 1/4, 1/4, -1/4, 1/8.
+      // The multiplicity of 1/4 is two, but -1/4 is also a subdominant eigenvalue.
+      // This function returns 1/4 when R = 5 and tag = Smooth.
 
-    case ON_SubD::VertexTag::Smooth:
-      if (1 == (R % 2))
-      {
-        double cos_2pi_over_F, cos_pi_over_F, lambda;
-        ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos_2pi_over_F, &lambda);
-        ON_SubDMatrix::EvaluateCosAndSin(1, F, &cos_pi_over_F, &lambda);
-        lambda = (5.0 + cos_2pi_over_F + 3.0*cos_pi_over_F*sqrt(2.0*(1.0 + cos_2pi_over_F/9.0)))/16.0;
-        return lambda;
-      }
-      break;
-
-    case ON_SubD::VertexTag::Dart:
-      if (1 == (R % 2))
-        return 0.5;
-      break;
-
-
-    case ON_SubD::VertexTag::Corner:
-    case ON_SubD::VertexTag::Crease:
-      if (0 == (R % 2))
-        return 0.5;
-      break;
+      double cos_2pi_over_F, cos_pi_over_F, lambda;
+      ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos_2pi_over_F, &lambda);
+      ON_SubDMatrix::EvaluateCosAndSin(1, F, &cos_pi_over_F, &lambda);
+      lambda = (5.0 + cos_2pi_over_F + 3.0*cos_pi_over_F*sqrt(2.0*(1.0 + cos_2pi_over_F/9.0)))/16.0;
+      return lambda;
     }
+    break;
+
+  case ON_SubD::VertexTag::Dart:
+    // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
+    // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+    // for more details on how this case is handled.
+    //
+    // R = 5 is the valence 2 case.
+    // In this case the evaluation matrix is 5x5 and the eigenvalues are 
+    // 1, 1/2, 1/4, sqrt(2)/8, -sqrt(2)/8.
+    // All eigenvalues have multiplicity 1, including the subdominant 1/2.
+    // This function returns 1/2 when R = 5 and tag = Dart.
+
+    if (1 == (R % 2))
+      return 0.5;
+    break;
+
+
+  case ON_SubD::VertexTag::Corner:
+  case ON_SubD::VertexTag::Crease:
+    if (0 == (R % 2))
+      return 0.5;
+    break;
   }
 
   return ON_SUBD_RETURN_ERROR(rc_error);
@@ -1089,22 +1182,69 @@ unsigned int ON_SubDSectorType::SubdominantEigenvalueMulitiplicity() const
   if (false == IsValid() )
     return 0;
 
-  if (ON_SubD::SubDType::QuadCatmullClark == m_subd_type)
+  // Catmull-Clark quad subdivision special cases
+  if (ON_SubD::VertexTag::Crease == m_vertex_tag)
   {
-    // Catmull-Clark quad subdivision special case
-    if (ON_SubD::VertexTag::Crease == m_vertex_tag && 1 == m_sector_face_count)
-      return 1;
+    if (0 == m_sector_face_count)
+    {
+      // "wire" edges (no faces)
+      // In this case the evaluation matrix is 3x3 and the eigenvalues are 
+      // 1, 1/2, 1/4.
+      // All eigenvalues have multiplicity 1, including the subdominant 1/2.
+      return 1; // for the 1/2
+    }
+    if (1 == m_sector_face_count)
+    {
+      // single face 
+      // In this case the evaluation matrix is 4x4 and the eigenvalues are 
+      // 1, 1/2, 1/4, 1/4. 
+      // The Jordan block for 1/4, 1/4 had a 1 on the super diagonal.
+      return 1; // for the 1/2
+    }
+  }
+  else if (2 == m_sector_face_count)
+  {
+    // valance 2 special cases
+    if (ON_SubD::VertexTag::Smooth == m_vertex_tag)
+    {
+      // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
+      // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+      // for more details on how this case is handled.
+      //
+      // In this case the evaluation matrix is 5x5 and the eigenvalues are
+      // 1, 1/4, 1/4, -1/4, 1/8.
+      // The multiplicity of 1/4 is two, but -1/4 is also a subdominant eigenvalue.
+      // For valence >= 3 the Smooth eigenvalues are 1, 1/4, 1/4, smaller values ...
+      return 2; // for the 1/4, 1/4 pair
+    }
+
+    if (ON_SubD::VertexTag::Dart == m_vertex_tag)
+    {
+      // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
+      // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
+      // for more details on how this case is handled.
+      //
+      // In this case the evaluation matrix is 5x5 and the eigenvalues are 
+      // 1, 1/2, 1/4, sqrt(2)/8, -sqrt(2)/8.
+      // All eigenvalues have multiplicity 1, including the subdominant 1/2.
+      return 1; // for the 1/2
+    }
+
   }
 
+  // For a Corner vertex with valence = 0 (wire edges), the matrix is 3x3 and the eigenvalues are 1, 1/2, 1/2.
+  // For a Corner vertex with valence = 1 (single face), the matrix is 4x4 and the eigenvalues are 1, 1/2, 1/2, 1/4.
+  // For a Smooth vertex with valence >= 3, the eigenvalues are 1, 1/4, 1/4, smaller values ...
+  // For a Dart vertex with valence >= 3, the eigenvalues are 1, 1/2, 1/2, smaller values ...
   return 2;
 }
 
 double ON_SubDSectorType::GetSubdominantEigenvectors(
-    size_t E1_capacity,
-    double* E1,
-    size_t E2_capacity,
-    double* E2
-    ) const
+  double* E1,
+  size_t E1_capacity,
+  double* E2,
+  size_t E2_capacity
+) const
 {
   const double rc_error = ON_UNSET_VALUE;
   const double lambda = SubdominantEigenvalue();
@@ -1144,100 +1284,150 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
 
   double y, cos0, cos1, sin0, sin1;
 
-  if (ON_SubD::SubDType::QuadCatmullClark == SubDType())
+  switch (VertexTag())
   {
-    switch (VertexTag())
+  case ON_SubD::VertexTag::Unset:
+    break;
+
+  case ON_SubD::VertexTag::Smooth:
+    if (1 == (R % 2))
     {
-    case ON_SubD::VertexTag::Unset:
-      break;
-
-    case ON_SubD::VertexTag::Smooth:
-      if (1 == (R % 2))
+      if (nullptr != E1)
       {
-        if (nullptr != E1)
+        // cos0 = cos(2pi * 0/F)
+        // sin0 = sin(2pi * 0/F)
+        // cos1 = cos(2pi * 1/F)
+        // sin1 = sin(2pi * 1/F)
+        cos0 = 1.0;
+        sin0 = 0.0;
+        ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
+        //y = 0.5*(3.0 * sqrt((1.0 + cos1 / 9.0) / (1.0 + cos1)) - 1.0);
+        y = 2.0*(4.0*lambda - 1.0) / (1.0 + cos1) - 1;
+        E1[0] = 0.0;
+        E2[0] = 0.0;
+        E1[1] = sin0;
+        E2[1] = cos0;
+        unsigned int i = 2;
+        for (;;)
         {
-          // cos0 = cos(2pi * 0/F)
-          // sin0 = sin(2pi * 0/F)
-          // cos1 = cos(2pi * 1/F)
-          // sin1 = sin(2pi * 1/F)
-          cos0 = 1.0;
-          sin0 = 0.0;
-          ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
-          //y = 0.5*(3.0 * sqrt((1.0 + cos1 / 9.0) / (1.0 + cos1)) - 1.0);
-          y = 2.0*(4.0*lambda - 1.0) / (1.0 + cos1) - 1;
-          E1[0] = 0.0;
-          E2[0] = 0.0;
-          E1[1] = sin0;
-          E2[1] = cos0;
-          unsigned int i = 2;
-          for (;;)
-          {
-            E1[i] = y*(sin0 + sin1);
-            E2[i] = y*(cos0 + cos1);
-            i++;
-            if (i==R)
-              break;
-            E1[i] = sin1;
-            E2[i] = cos1;
-            i++;
-            cos0 = cos1;
-            sin0 = sin1;
-            ON_SubDMatrix::EvaluateCosAndSin(i, F, &cos1, &sin1);
-            // E1[] and E2[] values are symmetric and we could stop halfway and copy
-            // current loop debugged and tested Feb 10, 2015
-          }
+          E1[i] = y*(sin0 + sin1);
+          E2[i] = y*(cos0 + cos1);
+          i++;
+          if (i==R)
+            break;
+          E1[i] = sin1;
+          E2[i] = cos1;
+          i++;
+          cos0 = cos1;
+          sin0 = sin1;
+          ON_SubDMatrix::EvaluateCosAndSin(i, F, &cos1, &sin1);
+          // E1[] and E2[] values are symmetric and we could stop halfway and copy
+          // current loop debugged and tested Feb 10, 2015
         }
-        return lambda;
       }
-      break;
+      return lambda;
+    }
+    break;
 
-    case ON_SubD::VertexTag::Dart:
-      if (1 == (R % 2))
+  case ON_SubD::VertexTag::Dart:
+    if (1 == (R % 2))
+    {
+      if (nullptr != E1)
       {
-        if (nullptr != E1)
+        // cos0 = cos(2pi * 0/F)
+        // sin0 = sin(2pi * 0/F)
+        // cos1 = cos(2pi * 1/F)
+        // sin1 = sin(2pi * 1/F)
+        cos0 = 1.0;
+        sin0 = 0.0;
+        ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
+        E1[0] = 0.0;
+        E2[0] = 0.0;
+        E1[1] = sin0;
+        E2[1] = cos0;
+        unsigned int i = 2;
+        for (;;)
         {
-          // cos0 = cos(2pi * 0/F)
-          // sin0 = sin(2pi * 0/F)
-          // cos1 = cos(2pi * 1/F)
-          // sin1 = sin(2pi * 1/F)
-          cos0 = 1.0;
-          sin0 = 0.0;
-          ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
-          E1[0] = 0.0;
-          E2[0] = 0.0;
-          E1[1] = sin0;
-          E2[1] = cos0;
-          unsigned int i = 2;
-          for (;;)
-          {
-            E1[i] = sin0 + sin1;
-            E2[i] = cos0 + cos1;
-            i++;
-            if (i==R)
-              break;
-            E1[i] = sin1;
-            E2[i] = cos1;
-            i++;
-            cos0 = cos1;
-            sin0 = sin1;
-            ON_SubDMatrix::EvaluateCosAndSin(i, F, &cos1, &sin1);
-            // E1[] and E2[] values are symmetric and we could stop halfway and copy
-            // current loop debugged and tested Feb 10, 2015
-          }
+          E1[i] = sin0 + sin1;
+          E2[i] = cos0 + cos1;
+          i++;
+          if (i==R)
+            break;
+          E1[i] = sin1;
+          E2[i] = cos1;
+          i++;
+          cos0 = cos1;
+          sin0 = sin1;
+          ON_SubDMatrix::EvaluateCosAndSin(i, F, &cos1, &sin1);
+          // E1[] and E2[] values are symmetric and we could stop halfway and copy
+          // current loop debugged and tested Feb 10, 2015
         }
-        return lambda;
       }
-      break;
+      return lambda;
+    }
+    break;
 
-    case ON_SubD::VertexTag::Corner:
-      if (0 == (R % 2))
+  case ON_SubD::VertexTag::Corner:
+    if (0 == (R % 2))
+    {
+      const unsigned int sector_angle_index = CornerSectorAngleIndex();
+      const unsigned int M = ON_SubDSectorType::MaximumCornerAngleIndex;
+      //const unsigned int I = ((2*sector_angle_index <= M) ? sector_angle_index : (M-sector_angle_index));
+      const unsigned int I = 2*((2*sector_angle_index <= M) ? sector_angle_index : (M-sector_angle_index));
+      // F faces, F-1 interior smooth edges and 2 boundary edges
+      // theta = (i/M*2pi)/F
+      cos1 = 1.0; // = cos(0)
+      sin1 = 0.0; // = sin(0)
+      E1[0] = 0.0;
+      E2[0] = 0.0;
+      unsigned int i = 1;
+      for (;;)
       {
-        const unsigned int sector_angle_index = CornerSectorAngleIndex();
-        const unsigned int M = ON_SubDSectorType::MaximumAngleIndex;
-        //const unsigned int I = ((2*sector_angle_index <= M) ? sector_angle_index : (M-sector_angle_index));
-        const unsigned int I = 2*((2*sector_angle_index <= M) ? sector_angle_index : (M-sector_angle_index));
+        cos0 = cos1;
+        sin0 = sin1;
+        ON_SubDMatrix::EvaluateCosAndSin((i/2 + 1)*I,F*M,&cos1,&sin1);
+        E1[i] = sin0;
+        E2[i] = cos0;
+        i++;
+        E1[i] = sin0+sin1;
+        E2[i] = cos0+cos1;
+        i++;
+        if (R - 1 == i)
+        {
+          E1[i] = sin1; // = sin(pi)
+          E2[i] = cos1; // = cos(pi)
+          break;
+        }
+      }
+      return lambda;
+    }
+    break;
+
+  case ON_SubD::VertexTag::Crease:
+    if (0 == (R % 2))
+    {
+      if (1 == F)
+      {
+        // one face and 2 boundary edges
+        // E1 = eigenvector with eigenvalue = 1/2
+        E1[0] =  0.0; // center point coefficients
+        E1[1] =  1.0; // initial boundary edge point coefficient
+        E1[2] =  0.0; // face point coefficient
+        E1[3] = -1.0; // final boundary edge point coefficient
+
+
+        // (0,0,1,0) = eigenvector with eigenvalue = 1/4.
+        // E2 is not an eigenvector
+        // S * E2 = (1/4, 1/4, 2/5, 1/4)
+        E2[0] =  1.0; // center point coefficients
+        E2[1] = -2.0; // boundary edge point coefficient
+        E2[2] = -5.0; // face point coefficient
+        E2[3] = -2.0; // boundary edge point coefficient
+      }
+      else
+      {
         // F faces, F-1 interior smooth edges and 2 boundary edges
-        // theta = (i/M*2pi)/F
+        // theta = pi/F
         cos1 = 1.0; // = cos(0)
         sin1 = 0.0; // = sin(0)
         E1[0] = 0.0;
@@ -1247,7 +1437,7 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
         {
           cos0 = cos1;
           sin0 = sin1;
-          ON_SubDMatrix::EvaluateCosAndSin((i/2 + 1)*I,F*M,&cos1,&sin1);
+          ON_SubDMatrix::EvaluateCosAndSin(i/2 + 1,F,&cos1,&sin1);
           E1[i] = sin0;
           E2[i] = cos0;
           i++;
@@ -1261,64 +1451,11 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
             break;
           }
         }
-        return lambda;
       }
-      break;
 
-    case ON_SubD::VertexTag::Crease:
-      if (0 == (R % 2))
-      {
-        if (1 == F)
-        {
-          // one face and 2 boundary edges
-          // E1 = eigenvector with eigenvalue = 1/2
-          E1[0] =  0.0; // center point coefficients
-          E1[1] =  1.0; // initial boundary edge point coefficient
-          E1[2] =  0.0; // face point coefficient
-          E1[3] = -1.0; // final boundary edge point coefficient
-
-
-          // (0,0,1,0) = eigenvector with eigenvalue = 1/4.
-          // E2 is not an eigenvector
-          // S * E2 = (1/4, 1/4, 2/5, 1/4)
-          E2[0] =  1.0; // center point coefficients
-          E2[1] = -2.0; // boundary edge point coefficient
-          E2[2] = -5.0; // face point coefficient
-          E2[3] = -2.0; // boundary edge point coefficient
-        }
-        else
-        {
-          // F faces, F-1 interior smooth edges and 2 boundary edges
-          // theta = pi/F
-          cos1 = 1.0; // = cos(0)
-          sin1 = 0.0; // = sin(0)
-          E1[0] = 0.0;
-          E2[0] = 0.0;
-          unsigned int i = 1;
-          for (;;)
-          {
-            cos0 = cos1;
-            sin0 = sin1;
-            ON_SubDMatrix::EvaluateCosAndSin(i/2 + 1,F,&cos1,&sin1);
-            E1[i] = sin0;
-            E2[i] = cos0;
-            i++;
-            E1[i] = sin0+sin1;
-            E2[i] = cos0+cos1;
-            i++;
-            if (R - 1 == i)
-            {
-              E1[i] = sin1; // = sin(pi)
-              E2[i] = cos1; // = cos(pi)
-              break;
-            }
-          }
-        }
-
-        return lambda;
-      }
-      break;
+      return lambda;
     }
+    break;
   }
 
   return ON_SUBD_RETURN_ERROR(rc_error);
@@ -1352,7 +1489,7 @@ static double ON_SubDSectorType_LimitSurfaceNormalSign(
   return z;
 }
 
-double ON_SubDSectorType::LimitSurfaceNormalSign() const
+double ON_SubDSectorType::SurfaceNormalSign() const
 {
   const double rc_error = ON_UNSET_VALUE;
   if (false == IsValid())
@@ -1368,7 +1505,7 @@ double ON_SubDSectorType::LimitSurfaceNormalSign() const
   double* L1 = LP + R;
   double* L2 = L1 + R;
 
-  if (R != GetLimitSurfaceEvaluationCoefficients(R,LP,R,L1,R,L2))
+  if (R != GetSurfaceEvaluationCoefficients(LP, R, L1, R, L2, R))
     return ON_SUBD_RETURN_ERROR(rc_error);
 
   double sector_angle;
@@ -1394,7 +1531,7 @@ double ON_SubDSectorType::LimitSurfaceNormalSign() const
   return z;
 }
 
-bool ON_SubDSectorType::LimitEvaluationCoefficientsAvailable() const
+bool ON_SubDSectorType::SurfaceEvaluationCoefficientsAvailable() const
 {
   if (IsValid())
   {
@@ -1411,13 +1548,13 @@ bool ON_SubDSectorType::LimitEvaluationCoefficientsAvailable() const
 
 
 
-unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
-  size_t LP_capacity,
+unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
   double* LP,
-  size_t L1_capacity,
+  size_t LP_capacity,
   double* L1,
-  size_t L2_capacity,
-  double* L2
+  size_t L1_capacity,
+  double* L2,
+  size_t L2_capacity
   ) const
 {
   const double lambda = SubdominantEigenvalue();
@@ -1467,34 +1604,61 @@ unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
   double p, q, y, z, cos0, cos1, sin0, sin1;
   bool b180degreeCorner = false;
 
-  if (ON_SubD::SubDType::QuadCatmullClark == SubDType())
+  switch (VertexTag())
   {
-    switch (VertexTag())
+  case ON_SubD::VertexTag::Unset:
+    break;
+
+  case ON_SubD::VertexTag::Smooth:
+    if (R >= 5 && 1 == (R % 2))
     {
-    case ON_SubD::VertexTag::Unset:
-      break;
-
-    case ON_SubD::VertexTag::Smooth:
-      if (1 == (R % 2))
+      if (nullptr != LP)
       {
-        if (nullptr != LP)
+        // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
+        //
+        // General case code works for R = 5 case: LP[5] = {2/7, 2/7, 1/14, 2/7, 1/14};
+        LP[0] = dF / (5.0 + dF); // center point coefficient
+        y = dF * (dF + 5.0);
+        p = 4.0 / y; // edge point coefficient
+        q = 1.0 / y; // face point coefficient
+        for (unsigned int i = 1; i < R; i++)
         {
-          //if ( R == GetQuadSmoothLevFromCache(F,R,LP,R,L1,R,L2) )
-          //  return R;
-          // Lpev[]
-          LP[0] = dF / (5.0 + dF); // center point coefficient
-          y = dF*(dF + 5.0);
-          p = 4.0 / y; // edge point coefficient
-          q = 1.0 / y; // face point coefficient
-          for (unsigned int i = 1; i < R; i++)
-          {
-            LP[i] = p;
-            i++;
-            LP[i] = q;
-          }
+          LP[i] = p;
+          i++;
+          LP[i] = q;
         }
+      }
 
-        if (nullptr != L1)
+      if (nullptr != L1)
+      {
+        if (5 == R)
+        {
+          // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
+          //
+          // Evaluation matrix has eigenvalues 1, 1/4, 1/4, -1/4, 1/8,
+          // so we have a well defined limit point and 3 subdominant eigenvalues. 
+          // The 1 eigenspace is 1 dimensional and spanned by (1,1,1,1,1).
+          // The 1/4 eigenspace is 2 dimensional and spanned by (0,1,0,-1,0) and (0,0,1,0,-1).
+          // The -1/4 eigenspace is 1 dimensional and spanned by (2,-1,0,-1,0).
+          // The 1/8 is 1 dimensional and spanned by (1,1,-6,1,-6).
+          // The general case code below will divide by zero when y is evaluated because cos1 = -1.
+          // Turns out there is 1 well defined tangent vector (Q1-Q0) (quad points)
+
+          // This is a "pseudo" limit tangent
+          L1[0] = 0.0;
+          L1[1] = 1.0;
+          L1[2] = 0.0;
+          L1[3] = -1.0;
+          L1[4] = 0.0;
+
+          // This is a bonafide limit tangent
+          L2[0] = 0.0;
+          L2[1] = 0.0;
+          L2[2] = 1.0;
+          L2[3] = 0.0;
+          L2[4] = -1.0;
+        }
+        else
         {
           // cos0 = cos(2pi * 0/F)
           // sin0 = sin(2pi * 0/F)
@@ -1503,7 +1667,7 @@ unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
           cos0 = 1.0;
           sin0 = 0.0;
           ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
-          y =  2.0* (lambda - 0.125*(3.0 + cos1))/(1.0 + cos1);
+          y = 2.0* (lambda - 0.125*(3.0 + cos1)) / (1.0 + cos1);
           L1[0] = 0.0;
           L1[1] = cos0;
           L2[0] = 0.0;
@@ -1511,8 +1675,8 @@ unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
           unsigned int i = 2;
           for (;;)
           {
-            L1[i] = y*(cos0 + cos1);
-            L2[i] = y*(sin0 + sin1);
+            L1[i] = y * (cos0 + cos1);
+            L2[i] = y * (sin0 + sin1);
             i++;
             if (i == R)
               break;
@@ -1526,108 +1690,122 @@ unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
             // current loop debugged and tested Feb 10, 2015
           }
         }
-        return R;
       }
-      break;
+      return R;
+    }
+    break;
 
-    case ON_SubD::VertexTag::Dart:
-      if (1 == (R % 2))
+  case ON_SubD::VertexTag::Dart:
+    if (1 == (R % 2))
+    {
+      ON_Matrix Sbuffer;
+      const double*const* S = nullptr;
+      double* E1 = nullptr;
+      double* E2 = nullptr;
+      if (F > 5)
       {
-        ON_Matrix Sbuffer;
-        const double*const* S = nullptr;
-        double* E1 = nullptr;
-        double* E2 = nullptr;
-        if (F > 5)
-        {
-          if (false == Sbuffer.Create(R+2,R))
-            return ON_SUBD_RETURN_ERROR(0);
-          if (R != ON_SubDSectorType::GetSubdivisionMatrix(R, Sbuffer.m))
-            return ON_SUBD_RETURN_ERROR(0);
-          S = Sbuffer.m;
-          E1 = Sbuffer.m[R];
-          E2 = Sbuffer.m[R+1];
-        }
-        const double* termination_tolerances = nullptr;
-        double* eigenvectors[2] = { E1, E2 };
-        double eigenprecision[2] = { 0 };
-        double eigenpivots[3] = { 0 };
+        if (false == Sbuffer.Create(R+2,R))
+          return ON_SUBD_RETURN_ERROR(0);
+        if (R != ON_SubDSectorType::GetSubdivisionMatrix(Sbuffer.m, R))
+          return ON_SUBD_RETURN_ERROR(0);
+        S = Sbuffer.m;
+        E1 = Sbuffer.m[R];
+        E2 = Sbuffer.m[R+1];
+      }
+      const double* termination_tolerances = nullptr;
+      double* eigenvectors[2] = { E1, E2 };
+      double eigenprecision[2] = { 0 };
+      double eigenpivots[3] = { 0 };
 
-        if (nullptr != LP)
+      if (nullptr != LP)
+      {
+        switch (F)
         {
-          switch (F)
+        case 2:
+          // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
+          //
+          // Evaluation matrix is 5x5 with has eigenvalues 1, 1/2, 1/4, sqrt(2)/8, - sqrt(2)/8.
+          LP[0] = 8.0 / 31.0;
+          LP[1] = 10.0 / 31.0;
+          LP[2] = 3.0 / 62.0;
+          LP[3] = 10.0 / 31.0;
+          LP[4] = 3.0 / 62.0;
+          break;
+
+        case 3:
+          LP[0] = 243/19.0;
+          LP[1] = 130/19.0;
+          LP[2] = 1.0;
+          LP[3] = 120/19.0;
+          LP[4] = 29/19.0;
+          //LP[5] = 120/19.0;
+          //LP[6] = 1.0;
+          break;
+        case 4:
+          LP[0] = 752/29.0;
+          LP[1] = 210/29.0;
+          LP[2] = 1.0;
+          LP[3] = 160/29.0;
+          LP[4] = 44/29.0;
+          LP[5] = 180/29.0; 
+          //LP[6] = 44/29.0;
+          //LP[7] = 160/29.0;
+          //LP[8] = 1.0;
+          break;
+        case 5:
+          LP[0] = 43.222764462468341719; 
+          LP[1] = 7.4578211569974673376; 
+          LP[2] = 1.0;
+          LP[3] = 5.0843576860050653249; 
+          LP[4] = 1.4771459186191773181; 
+          LP[5] = 5.7257510234301278178;
+          LP[6] = 1.5305953634045991926;
+          //LP[7] = 5.7257510234301278178; 
+          //LP[8] = 1.4771459186191773181;
+          //LP[9] = 5.0843576860050653249;
+          //LP[10] = 1.0000000000000000000;
+          break;
+        default:
           {
-          case 3:
-            LP[0] = 243/19.0;
-            LP[1] = 130/19.0;
-            LP[2] = 1.0;
-            LP[3] = 120/19.0;
-            LP[4] = 29/19.0;
-            //LP[5] = 120/19.0;
-            //LP[6] = 1.0;
-            break;
-          case 4:
-            LP[0] = 752/29.0;
-            LP[1] = 210/29.0;
-            LP[2] = 1.0;
-            LP[3] = 160/29.0;
-            LP[4] = 44/29.0;
-            LP[5] = 180/29.0; 
-            //LP[6] = 44/29.0;
-            //LP[7] = 160/29.0;
-            //LP[8] = 1.0;
-            break;
-          case 5:
-            LP[0] = 43.222764462468341719; 
-            LP[1] = 7.4578211569974673376; 
-            LP[2] = 1.0;
-            LP[3] = 5.0843576860050653249; 
-            LP[4] = 1.4771459186191773181; 
-            LP[5] = 5.7257510234301278178;
-            LP[6] = 1.5305953634045991926;
-            //LP[7] = 5.7257510234301278178; 
-            //LP[8] = 1.4771459186191773181;
-            //LP[9] = 5.0843576860050653249;
-            //LP[10] = 1.0000000000000000000;
-            break;
-          default:
+            // TODO
+            // Finish general case formula for dominant eigenvector of Transpose(S)
+            // Until I derive the formula, I can get the dominant eigenvector as the kernel of the matrix (S - I).
+            // This calculation has plenty of precision, but it's a less elegant way to get the solution.
+            if (nullptr == S)
+              return ON_SUBD_RETURN_ERROR(0);
+            const double lambda_local = 1.0;
+            const unsigned int lambda_multiplicity = 1;
+            if (lambda_multiplicity != ON_GetEigenvectors(R, S, true, lambda_local, lambda_multiplicity, termination_tolerances, eigenvectors, eigenprecision, eigenpivots))
+              return ON_SUBD_RETURN_ERROR(0);
+            if (E1[0] < 0.0)
             {
-              // TODO
-              // Finish general case formula for dominant eigenvector of Transpose(S)
-              // Until I derive the formula, I can get the dominant eigenvector as the kernel of the matrix (S - I).
-              // This calculation has plenty of precision, but it's a less elegant way to get the solution.
-              if (nullptr == S)
-                return ON_SUBD_RETURN_ERROR(0);
-              const double lambda_local = 1.0;
-              const unsigned int lambda_multiplicity = 1;
-              if (lambda_multiplicity != ON_GetEigenvectors(R, S, true, lambda_local, lambda_multiplicity, termination_tolerances, eigenvectors, eigenprecision, eigenpivots))
-                return ON_SUBD_RETURN_ERROR(0);
-              if (E1[0] < 0.0)
-              {
-                for ( unsigned int i = 0; i < R; i++ )
-                  E1[i] = -E1[i];
-              }
-              for (unsigned int i = 0; i < R; i++)
-              {
-                if (E1[i] < 0.0)
-                  return ON_SUBD_RETURN_ERROR(0);
-              }
-              LP[0] = E1[0];
-              LP[1] = E1[1];
-              unsigned int i0 = 2;
-              unsigned int i1 = R-1;
-              while (i0 <= i1)
-              {
-                LP[i0] = (E1[i0] == E1[i1]) ? E1[i0] : 0.5*(E1[i0] + E1[i1]);
-                i0++;
-                i1--;
-              }
+              for ( unsigned int i = 0; i < R; i++ )
+                E1[i] = -E1[i];
             }
-            break;
+            for (unsigned int i = 0; i < R; i++)
+            {
+              if (E1[i] < 0.0)
+                return ON_SUBD_RETURN_ERROR(0);
+            }
+            LP[0] = E1[0];
+            LP[1] = E1[1];
+            unsigned int i0 = 2;
+            unsigned int i1 = R-1;
+            while (i0 <= i1)
+            {
+              LP[i0] = (E1[i0] == E1[i1]) ? E1[i0] : 0.5*(E1[i0] + E1[i1]);
+              i0++;
+              i1--;
+            }
           }
+          break;
+        }
 
+        if (F >= 3)
+        {
           // The code below works for all F >= 3.
           const double* q0 = &LP[2];
-          double* q1 = &LP[R-1];
+          double* q1 = &LP[R - 1];
           while (q0 < q1)
             *q1-- = *q0++;
           double LPsum = 0.0;
@@ -1636,272 +1814,304 @@ unsigned int ON_SubDSectorType::GetLimitSurfaceEvaluationCoefficients(
           for (unsigned int i = 0; i < R; i++)
             LP[i] /= LPsum;
         }
+      }
 
-        if (nullptr != L1)
+      if (nullptr != L1)
+      {
+        switch (F)
         {
-          switch (F)
+        case 2:
+          // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
+          //
+          // Evaluation matrix is 5x5 with has eigenvalues 1, 1/2, 1/4, sqrt(2)/8, - sqrt(2)/8.
+          // The multiplicity of the subdominant eigen value is 1/2 and there is a single well defined
+          // tangent in the limit surface. The other is a "fake" tangent that is close enough.
+
+          // This is pseudo tangent associated with the eigenvalue 1/4
+          // (1/4)^n goes to zero much faster than (1/2)^n, but ...
+          // If the 5 points were translated so the limit point was zero 
+          // and then a rotation about the origin were applied so bonafide limit tangent
+          // was parallel to the x-axis (L2*(C,P0,Q0,P1,P1) = 0), then, as n goes to infinity,
+          // Q0 - Q1 would be the farthest point from the x-axis.
+          // the 5 
+          L1[0] = 0.0;
+          L1[1] = 0.0;
+          L1[2] = -1.0;
+          L1[3] = 0.0;
+          L1[4] = 1.0;
+
+          // This is a bonafide limit tangent associated with the eigenvalue 1/2.
+          // I
+          L2[0] = 4.0; // 2^2
+          L2[1] = 6.0; 
+          L2[2] = -1.0; 
+          L2[3] = -8.0;
+          L2[4] = -1.0;
+          break;
+
+        case 3:
+          L1[0] = -9/4.0; // -L2[0]/4
+          L1[1] = -3.0;
+          L1[2] = 1/2.0;
+          L1[3] = 3.0; 
+          L1[4] = 3/4.0;
+          L1[5] = 1;
+          L1[6] = 0;
+
+          L2[0] = 9.0; // 3^2
+          L2[1] = 12.0; 
+          L2[2] =  -3; 
+          L2[3] = -16;  // -16  // -3, -16 = L2[3] = -16, -3
+          L2[4] =  -3;  //  -3
+          L2[5] = 0; 
+          L2[6] = 1;
+          break;
+
+        case 4:
+          L1[0] = -4.0;  // -L2[0]/4
+          L1[1] = -7.0; 
+          L1[2] = 1/2.0; 
+          L1[3] = 3.0; 
+          L1[4] = 3/2.0; 
+          L1[5] = 4.0; 
+          L1[6] = 1.0; 
+          L1[7] = 1; 
+          L1[8] = 0;
+
+          L2[0] = 16.0; // 4^2
+          L2[1] = 28.0;
+          L2[2] =  -3;
+          L2[3] = -16;
+          L2[4] = -7.0;   // -3, -16, L2[4], -16, -3
+          L2[5] = -16; 
+          L2[6] =  -3;
+          L2[7] = 0;
+          L2[8] = 1;
+          break;
+
+        case 5:
+          L1[0] = -6.25; // -L2[0]/4
+          L1[1] = -14.208203932499369089;
+          L1[2] = 0.50000000000000000000;
+          L1[3] = 3.0000000000000000000;
+          L1[4] = 1.9635254915624211362;
+          L1[5] = 5.8541019662496845446;
+          L1[6] = 2.3680339887498948482; 
+          L1[7] = 4.6180339887498948482;
+          L1[8] = 1.1545084971874737121;
+          L1[9]  = 1;
+          L1[10] = 0;
+
+          L2[0] = 25.0; // 5^2
+          L2[1] = 56.832815729997476357;
+          L2[2] =  -3;
+          L2[3] = -16;
+          L2[4] = -9.4721359549995793928;
+          L2[5] = -25.888543819998317571; // -3, -16, ..., L2[5], ..., -16, -3
+          L2[6] = -9.4721359549995793928;
+          L2[7] = -16; // -16 
+          L2[8] =  -3; //  -3
+          L2[9]  = 0;
+          L2[10] = 1;
+          break;
+
+        default:
           {
-          case 3:
-            L1[0] = -9/4.0; // -L2[0]/4
-            L1[1] = -3.0;
-            L1[2] = 1/2.0;
-            L1[3] = 3.0; 
-            L1[4] = 3/4.0;
-            L1[5] = 1;
-            L1[6] = 0;
+            // TODO
+            // Finish general case formula for subdominant eigenvectors of Transpose(S)
+            // Until I derive the formula, I can get the subdominant eigenvectors as the kernel of the matrix (S - 1/2*I).
+            // This calculation has plenty of precision, but it's a less elegant way to get the solution.
+            if (nullptr == S)
+              return ON_SUBD_RETURN_ERROR(0);
+            const double lambda_local = SubdominantEigenvalue();
+            if (!(lambda_local > 0.0 && lambda_local < 1.0))
+              return ON_SUBD_RETURN_ERROR(0);
+            const unsigned int lambda_multiplicity = 2;
+            if (lambda_multiplicity != ON_GetEigenvectors(R, S, true, lambda_local, lambda_multiplicity, termination_tolerances, eigenvectors, eigenprecision, eigenpivots))
+              return ON_SUBD_RETURN_ERROR(0);
 
-            L2[0] = 9.0; // 3^2
-            L2[1] = 12.0; 
-            L2[2] =  -3; 
-            L2[3] = -16;  // -16  // -3, -16 = L2[3] = -16, -3
-            L2[4] =  -3;  //  -3
-            L2[5] = 0; 
-            L2[6] = 1;
-            break;
-          case 4:
-            L1[0] = -4.0;  // -L2[0]/4
-            L1[1] = -7.0; 
-            L1[2] = 1/2.0; 
-            L1[3] = 3.0; 
-            L1[4] = 3/2.0; 
-            L1[5] = 4.0; 
-            L1[6] = 1.0; 
-            L1[7] = 1; 
-            L1[8] = 0;
+            const double E[2][2] = { { E1[R - 2], E2[R - 2] }, { E1[R - 1], E2[R - 1] } };
 
-            L2[0] = 16.0; // 4^2
-            L2[1] = 28.0;
-            L2[2] =  -3;
-            L2[3] = -16;
-            L2[4] = -7.0;   // -3, -16, L2[4], -16, -3
-            L2[5] = -16; 
-            L2[6] =  -3;
-            L2[7] = 0;
-            L2[8] = 1;
-            break;
-          case 5:
-            L1[0] = -6.25; // -L2[0]/4
-            L1[1] = -14.208203932499369089;
-            L1[2] = 0.50000000000000000000;
-            L1[3] = 3.0000000000000000000;
-            L1[4] = 1.9635254915624211362;
-            L1[5] = 5.8541019662496845446;
-            L1[6] = 2.3680339887498948482; 
-            L1[7] = 4.6180339887498948482;
-            L1[8] = 1.1545084971874737121;
-            L1[9]  = 1;
-            L1[10] = 0;
+            const double det = E[0][0] * E[1][1] - E[0][1] * E[1][0];
+            if (!(0.0 != det))
+              return 0;
 
-            L2[0] = 25.0; // 5^2
-            L2[1] = 56.832815729997476357;
-            L2[2] =  -3;
-            L2[3] = -16;
-            L2[4] = -9.4721359549995793928;
-            L2[5] = -25.888543819998317571; // -3, -16, ..., L2[5], ..., -16, -3
-            L2[6] = -9.4721359549995793928;
-            L2[7] = -16; // -16 
-            L2[8] =  -3; //  -3
-            L2[9]  = 0;
-            L2[10] = 1;
-            break;
-          default:
+            const double EtoL[2][2] = {
+              { E[1][1] / det, (0.0 == E[0][1]) ? 0.0 : (-E[0][1] / det) },
+              { (0.0 == E[1][0]) ? 0.0 : (-E[1][0] / det), E[0][0] / det } };
+
+            for (unsigned int i = 0; i < R; i++)
             {
-              // TODO
-              // Finish general case formula for subdominant eigenvectors of Transpose(S)
-              // Until I derive the formula, I can get the subdominant eigenvectors as the kernel of the matrix (S - 1/2*I).
-              // This calculation has plenty of precision, but it's a less elegant way to get the solution.
-              if (nullptr == S)
-                return ON_SUBD_RETURN_ERROR(0);
-              const double lambda_local = SubdominantEigenvalue();
-              if (!(lambda_local > 0.0 && lambda_local < 1.0))
-                return ON_SUBD_RETURN_ERROR(0);
-              const unsigned int lambda_multiplicity = 2;
-              if (lambda_multiplicity != ON_GetEigenvectors(R, S, true, lambda_local, lambda_multiplicity, termination_tolerances, eigenvectors, eigenprecision, eigenpivots))
-                return ON_SUBD_RETURN_ERROR(0);
-
-              const double E[2][2] = { { E1[R - 2], E2[R - 2] }, { E1[R - 1], E2[R - 1] } };
-
-              const double det = E[0][0] * E[1][1] - E[0][1] * E[1][0];
-              if (!(0.0 != det))
-                return 0;
-
-              const double EtoL[2][2] = {
-                { E[1][1] / det, (0.0 == E[0][1]) ? 0.0 : (-E[0][1] / det) },
-                { (0.0 == E[1][0]) ? 0.0 : (-E[1][0] / det), E[0][0] / det } };
-
-              for (unsigned int i = 0; i < R; i++)
-              {
-                L1[i] = E1[i] * EtoL[0][0] + E2[i] * EtoL[1][0];
-                L2[i] = E1[i] * EtoL[0][1] + E2[i] * EtoL[1][1];
-              }
-
-              const double int_tol = 1e-12;
-              double x;
-              for (unsigned int i = 0; i < R; i++)
-              {
-                x = floor(L1[i]+0.49);
-                if (fabs(x - L1[i]) <= int_tol)
-                  L1[i] = x;
-                x = floor(L2[i]+0.49);
-                if (fabs(x - L2[i]) <= int_tol)
-                  L2[i] = x;
-              }
-
-              L1[0]     = -0.25*F*F;
-              L1[R - 2] = 1.0;
-              L1[R - 1] = 0.0;
-
-              L2[0]   = F*F;
-              L2[2]   = -3.0;
-              L2[3]   = -16.0;
-              L2[R-4] = -16.0;
-              L2[R-3] =  -3.0;
-              L2[R-2] =   0.0;
-              L2[R-1] =   1.0;
-
-              // L2[2, ..., R-1] is symmetric about L2[2+R/2]
-              unsigned int i0 = 4;
-              unsigned int i1 = R - 5;
-              while (i0 < i1)
-              {
-                if (L2[i0] != L2[i1])
-                {
-                  x = 0.5*(L2[i0] + L2[i1]);
-                  L2[i0] = x;
-                  L2[i1] = x;
-                }
-                i0++;
-                i1--;
-              }
+              L1[i] = E1[i] * EtoL[0][0] + E2[i] * EtoL[1][0];
+              L2[i] = E1[i] * EtoL[0][1] + E2[i] * EtoL[1][1];
             }
-            break;
+
+            const double int_tol = 1e-12;
+            double x;
+            for (unsigned int i = 0; i < R; i++)
+            {
+              x = floor(L1[i]+0.49);
+              if (fabs(x - L1[i]) <= int_tol)
+                L1[i] = x;
+              x = floor(L2[i]+0.49);
+              if (fabs(x - L2[i]) <= int_tol)
+                L2[i] = x;
+            }
+
+            L1[0]     = -0.25*F*F;
+            L1[R - 2] = 1.0;
+            L1[R - 1] = 0.0;
+
+            L2[0]   = F*F;
+            L2[2]   = -3.0;
+            L2[3]   = -16.0;
+            L2[R-4] = -16.0;
+            L2[R-3] =  -3.0;
+            L2[R-2] =   0.0;
+            L2[R-1] =   1.0;
+
+            // L2[2, ..., R-1] is symmetric about L2[2+R/2]
+            unsigned int i0 = 4;
+            unsigned int i1 = R - 5;
+            while (i0 < i1)
+            {
+              if (L2[i0] != L2[i1])
+              {
+                x = 0.5*(L2[i0] + L2[i1]);
+                L2[i0] = x;
+                L2[i1] = x;
+              }
+              i0++;
+              i1--;
+            }
           }
-        }
-        return R;
-      }
-      break;
-
-
-    case ON_SubD::VertexTag::Corner:
-      if (0 == (R % 2))
-      {
-        const unsigned int angle_index = CornerSectorAngleIndex();
-        if ( 36 == angle_index && F > 1)
-          b180degreeCorner = true; // use crease calculation
-        else
-        {
-          // the corner angle alpha is not equal to pi (180 degrees)
-          // so limit tangents will not be parallel
-          // Lpev[]
-          LP[0] = 1.0; // center point coefficient
-          for (unsigned int i = 1; i < R; i++)
-            LP[i++] = 0.0; // all face and edge coefficients = 0
-
-          L1[0] = -1.0; // center point coefficient
-          L1[1] = 1.0; // initial boundary edge point coefficient
-          L1[R - 1] = 0.0; // final boundary edge point coefficient
-
-          // The sign of s is selected to keep the normal pointing "up".
-          double s = (2 * angle_index <= ON_SubDSectorType::MaximumAngleIndex) ? 1.0 : -1.0;
-          L2[0] = -s; // center point coefficient
-          L2[1] = 0.0; // initial boundary edge point coefficient
-          L2[R - 1] = s; // final boundary edge point coefficient
-          for (unsigned int i = 2; i + 1 < R; i++)
-          {
-            L1[i] = 0.0; // all face and interior edge coefficients = 0
-            L2[i] = 0.0; // all face and interior edge coefficients = 0
-          }
-
-          if (36 == angle_index && 1 == F && 4 == R)
-          {
-            // This case has no good solution.
-            L2[0] = -1.0;
-            L2[1] = 0.0;
-            L2[2] = 1.0;
-            L2[3] = 0.0;
-          }
-
-          // TODO deal with 180 degree "corner case".  
-          // L0 and L1 are the same as above. L2 will be similar to the crease case
-          return R;
+          break;
         }
       }
-      if ( false == b180degreeCorner)
-        break;
-
-    case ON_SubD::VertexTag::Crease:
-      // NOTE: In the case when there are 2 crease edes and a single face,
-      // The Catmull-Clark subdivision matrix is singular.
-      if (0 == (R % 2))
-      {
-        // Lpev[]
-        if (b180degreeCorner)
-        {
-          LP[0] = 1.0; // center point coefficient
-          for (unsigned int i = 1; i < R; i++)
-            LP[i++] = 0.0; // all face and edge coefficients = 0
-        }
-        else
-        {
-          LP[0] = 2.0 / 3.0; // center point coefficient
-          LP[1] = LP[R - 1] = 1.0 / 6.0;  // boundary edge point coefficients
-          for (unsigned int i = 2; i + 1 < R; i++)
-            LP[i++] = 0.0; // all face and interior edge coefficients = 0
-        }
-
-        // Using L1[] computes the tangent to the crease curve. This
-        // curve is a uniform cubic spline with control points
-        // (..., final crease edge point, center point, initial crease edge point, ...)
-        L1[  0] =  0.0; // center point coefficient
-        L1[  1] =  1.0; // initial boundary edge point coefficient
-        L1[R-1] = -1.0; // final boundary edge point coefficient
-        for (unsigned int i = 2; i+1 < R; i++)
-          L1[i] = 0.0; // all face and interior edge coefficients = 0
-
-        // Using L2[] computes a tangent that points from the limit point
-        // into the subdivision surface.
-        if (1 == F)
-        {
-          // This is the special where IsCatmullClarkCreaseOneFaceCase() returns true.
-          // Catmull-Clark subdivison,
-          // center vertex is a crease vertex,
-          // one face and two crease edges.
-          L2[0] = -2.0; // center point coefficients
-          L2[1] =  1.0; // boundary edge point coefficient
-          L2[2] =  0.0; // face point coefficient
-          L2[3] =  1.0; // boundary edge point coefficient
-        }
-        else
-        {
-          // F faces, F-1 interior smooth edges and 2 boundary edges
-          // theta = pi/F
-          cos0 = 1.0; // cos(0)
-          sin0 = 0.0; // sin(0)
-          ON_SubDMatrix::EvaluateCosAndSin(1,F,&cos1,&sin1); // cos1 = cos(pi/F), sin1 = sin(pi/F)
-          z = (1.0 + cos1) / sin1;
-          L2[0] = -sin1;  // center point coefficients
-          L2[1] = -0.25*z*(1.0 + 2.0*cos1); // initial boundary edge point coefficient
-          L2[2] = 0.25*(sin0 + sin1); // first interior face point coefficient
-          L2[R-1] = L2[1];            // final boundary edge point coefficient
-          unsigned int i = 3;
-          for (;;)
-          {
-            cos0 = cos1;
-            sin0 = sin1;
-            ON_SubDMatrix::EvaluateCosAndSin(i/2 + 1, F, &cos1, &sin1);
-            L2[i] = sin0; // interior edge point coefficient
-            i++;
-            L2[i] = 0.25*(sin0 + sin1); // interior face point coefficient
-            i++;
-            if ( i >= R-1 )
-              break;
-          }
-        }
-
-        return R;
-      }
-      break;
+      return R;
     }
+    break;
+
+
+  case ON_SubD::VertexTag::Corner:
+    if (0 == (R % 2))
+    {
+      const unsigned int angle_index = CornerSectorAngleIndex();
+      if ( 36 == angle_index && F > 1)
+        b180degreeCorner = true; // use crease calculation
+      else
+      {
+        // the corner angle alpha is not equal to pi (180 degrees)
+        // so limit tangents will not be parallel
+        // Lpev[]
+        LP[0] = 1.0; // center point coefficient
+        for (unsigned int i = 1; i < R; i++)
+          LP[i++] = 0.0; // all face and edge coefficients = 0
+
+        L1[0] = -1.0; // center point coefficient
+        L1[1] = 1.0; // initial boundary edge point coefficient
+        L1[R - 1] = 0.0; // final boundary edge point coefficient
+
+        // The sign of s is selected to keep the normal pointing "up".
+        double s = (2 * angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex) ? 1.0 : -1.0;
+        L2[0] = -s; // center point coefficient
+        L2[1] = 0.0; // initial boundary edge point coefficient
+        L2[R - 1] = s; // final boundary edge point coefficient
+        for (unsigned int i = 2; i + 1 < R; i++)
+        {
+          L1[i] = 0.0; // all face and interior edge coefficients = 0
+          L2[i] = 0.0; // all face and interior edge coefficients = 0
+        }
+
+        if (36 == angle_index && 1 == F && 4 == R)
+        {
+          // This case has no good solution.
+          L2[0] = -1.0;
+          L2[1] = 0.0;
+          L2[2] = 1.0;
+          L2[3] = 0.0;
+        }
+
+        // TODO deal with 180 degree "corner case".  
+        // L0 and L1 are the same as above. L2 will be similar to the crease case
+        return R;
+      }
+    }
+    if ( false == b180degreeCorner)
+      break;
+
+  case ON_SubD::VertexTag::Crease:
+    // NOTE: In the case when there are 2 crease edes and a single face,
+    // The Catmull-Clark subdivision matrix is singular.
+    if (0 == (R % 2))
+    {
+      // Lpev[]
+      if (b180degreeCorner)
+      {
+        LP[0] = 1.0; // center point coefficient
+        for (unsigned int i = 1; i < R; i++)
+          LP[i++] = 0.0; // all face and edge coefficients = 0
+      }
+      else
+      {
+        LP[0] = 2.0 / 3.0; // center point coefficient
+        LP[1] = LP[R - 1] = 1.0 / 6.0;  // boundary edge point coefficients
+        for (unsigned int i = 2; i + 1 < R; i++)
+          LP[i++] = 0.0; // all face and interior edge coefficients = 0
+      }
+
+      // Using L1[] computes the tangent to the crease curve. This
+      // curve is a uniform cubic spline with control points
+      // (..., final crease edge point, center point, initial crease edge point, ...)
+      L1[  0] =  0.0; // center point coefficient
+      L1[  1] =  1.0; // initial boundary edge point coefficient
+      L1[R-1] = -1.0; // final boundary edge point coefficient
+      for (unsigned int i = 2; i+1 < R; i++)
+        L1[i] = 0.0; // all face and interior edge coefficients = 0
+
+      // Using L2[] computes a tangent that points from the limit point
+      // into the subdivision surface.
+      if (1 == F)
+      {
+        // This is the special where IsCatmullClarkCreaseOneFaceCase() returns true.
+        // Catmull-Clark subdivison,
+        // center vertex is a crease vertex,
+        // one face and two crease edges.
+        L2[0] = -2.0; // center point coefficients
+        L2[1] =  1.0; // boundary edge point coefficient
+        L2[2] =  0.0; // face point coefficient
+        L2[3] =  1.0; // boundary edge point coefficient
+      }
+      else
+      {
+        // F faces, F-1 interior smooth edges and 2 boundary edges
+        // theta = pi/F
+        cos0 = 1.0; // cos(0)
+        sin0 = 0.0; // sin(0)
+        ON_SubDMatrix::EvaluateCosAndSin(1,F,&cos1,&sin1); // cos1 = cos(pi/F), sin1 = sin(pi/F)
+        z = (1.0 + cos1) / sin1;
+        L2[0] = -sin1;  // center point coefficients
+        L2[1] = -0.25*z*(1.0 + 2.0*cos1); // initial boundary edge point coefficient
+        L2[2] = 0.25*(sin0 + sin1); // first interior face point coefficient
+        L2[R-1] = L2[1];            // final boundary edge point coefficient
+        unsigned int i = 3;
+        for (;;)
+        {
+          cos0 = cos1;
+          sin0 = sin1;
+          ON_SubDMatrix::EvaluateCosAndSin(i/2 + 1, F, &cos1, &sin1);
+          L2[i] = sin0; // interior edge point coefficient
+          i++;
+          L2[i] = 0.25*(sin0 + sin1); // interior face point coefficient
+          i++;
+          if ( i >= R-1 )
+            break;
+        }
+      }
+
+      return R;
+    }
+    break;
   }
 
   return ON_SUBD_RETURN_ERROR(0);
@@ -1913,9 +2123,9 @@ bool ON_SubDMatrix::IsValid() const
 }
 
 bool ON_SubDMatrix::IsValidPointRing(
+  const double* point_ring,
   size_t point_ring_count,
-  size_t point_ring_stride,
-  const double* point_ring
+  size_t point_ring_stride
   ) const
 {
   return ( point_ring_count >= 4 && point_ring_stride >= 3 && nullptr != point_ring && m_R == point_ring_count);
@@ -1923,15 +2133,15 @@ bool ON_SubDMatrix::IsValidPointRing(
 
 bool ON_SubDMatrix::EvaluateSubdivisionPoint(
   unsigned int element_index,
+  const double* point_ring,
   size_t point_ring_count,
   size_t point_ring_stride,
-  const double* point_ring,
   double subd_point[3]
   ) const
 {
   if ( nullptr == m_S || element_index >= m_R )
     return ON_SUBD_RETURN_ERROR(false);
-  if (false == IsValidPointRing(point_ring_count,point_ring_stride,point_ring))
+  if (false == IsValidPointRing(point_ring,point_ring_count,point_ring_stride))
     return ON_SUBD_RETURN_ERROR(false);
  
   subd_point[0] = 0.0;
@@ -1952,19 +2162,21 @@ bool ON_SubDMatrix::EvaluateSubdivisionPoint(
   return true;
 }
 
-bool ON_SubDMatrix::EvaluateLimitPoint(
+bool ON_SubDMatrix::EvaluateSurfacePoint(
+  const double* point_ring,
   size_t point_ring_count,
   size_t point_ring_stride,
-  const double* point_ring,
-  ON_SubDSectorLimitPoint& limit_point
+  bool bUndefinedNormalIsPossible,
+  ON_SubDSectorSurfacePoint& limit_point
   ) const
 {
   limit_point.m_next_sector_limit_point = nullptr;
   limit_point.m_sector_face = nullptr;
-  return EvaluateLimitPoint(
+  return EvaluateSurfacePoint(
+    point_ring,
     point_ring_count,
     point_ring_stride,
-    point_ring,
+    bUndefinedNormalIsPossible,
     limit_point.m_limitP,
     limit_point.m_limitT1,
     limit_point.m_limitT2,
@@ -1972,13 +2184,105 @@ bool ON_SubDMatrix::EvaluateLimitPoint(
     );
 }
 
-bool ON_SubDMatrix::EvaluateLimitPoint(
+static bool Internal_GetAlterateTangent(
+  const ON_SubDMatrix& subd_matrix,
+  unsigned int Ldex,
   size_t point_ring_count,
   size_t point_ring_stride,
   const double* point_ring,
+  const double L[3][3],
+  double* alternate_tangent
+)
+{
+  if (point_ring_count < 4 || point_ring_stride < 3 || nullptr == point_ring)
+    return false;
+
+  if (2 == Ldex)
+  {
+    if ( 4 == subd_matrix.m_R && ON_SubD::VertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
+    {
+      // valence 2 crease case when crease edges are colinear
+      // F = face point, C = crease vertex point.
+      // Default tangents:
+      //   L[1] = ON_3dPoint(point_ring +  point_ring_stride) - ON_3dPoint(point_ring + 3 * point_ring_stride);
+      const ON_3dPoint C(point_ring);
+      const ON_3dPoint Q(point_ring + 2 * point_ring_stride);
+      ON_3dVector V(Q - C);
+      if (V.IsNotZero())
+      {
+        alternate_tangent[0] = V.x;
+        alternate_tangent[1] = V.y;
+        alternate_tangent[2] = V.z;
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+static bool Internal_GetAlterateNormal(
+  const ON_SubDMatrix& subd_matrix,
+  size_t point_ring_count,
+  size_t point_ring_stride,
+  const double* point_ring,
+  double L[3][3],
+  bool bHaveAlternateL[3],
+  double alternate_normal[3]
+)
+{
+  if (point_ring_count < 4 || point_ring_stride < 3 || nullptr == point_ring)
+    return false;
+
+  if ( 4 == subd_matrix.m_R && ON_SubD::VertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
+  {
+    // valence 2 crease case when crease edges are colinear
+    // F = face point, C = crease vertex point.
+    ON_3dVector N(ON_3dVector::ZeroVector);
+    if (false == bHaveAlternateL[2])
+    {
+      bHaveAlternateL[2] = Internal_GetAlterateTangent(subd_matrix, 2, point_ring_count, point_ring_stride, point_ring, L, L[2]);
+      if (bHaveAlternateL[2])
+      {
+        ON_3dVector T1(L[1]);
+        ON_3dVector T2(L[2]);
+        N = ON_CrossProduct(T1, T2).UnitVector();
+      }
+    }
+    if (N.IsZero())
+    {
+      N = ON_CrossProduct(L[1], L[2]).UnitVector();
+      if (N.IsZero())
+      {
+        const ON_3dPoint C(point_ring);
+        const ON_3dPoint P0(point_ring + 1 * point_ring_stride); // end of crease leaving C
+        const ON_3dPoint Q(point_ring + 2 * point_ring_stride);
+        const ON_3dPoint P1(point_ring + 1 * point_ring_stride); // end of crease entering C
+        const ON_3dVector A = (P0 - P1).UnitVector();
+        const ON_3dVector B = (Q - C).UnitVector();
+        N = ON_CrossProduct(A, B).UnitVector();
+      }
+    }
+    if (N.IsNotZero())
+    {
+      alternate_normal[0] = N.x;
+      alternate_normal[1] = N.y;
+      alternate_normal[2] = N.z;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool ON_SubDMatrix::EvaluateSurfacePoint(
+  const double* point_ring,
+  size_t point_ring_count,
+  size_t point_ring_stride,
+  bool bUndefinedNormalIsPossible,
   double limit_point[3],
-  double limit_tangent0[3],
   double limit_tangent1[3],
+  double limit_tangent2[3],
   double limit_normal[3]
   ) const
 {
@@ -1996,24 +2300,24 @@ bool ON_SubDMatrix::EvaluateLimitPoint(
     limit_normal[2] = ON_DBL_QNAN;
   }
 
-  if (nullptr != limit_tangent0)
-  {
-    limit_tangent0[0] = ON_DBL_QNAN;
-    limit_tangent0[1] = ON_DBL_QNAN;
-    limit_tangent0[2] = ON_DBL_QNAN;
-  }
-
   if (nullptr != limit_tangent1)
   {
     limit_tangent1[0] = ON_DBL_QNAN;
     limit_tangent1[1] = ON_DBL_QNAN;
     limit_tangent1[2] = ON_DBL_QNAN;
   }
+
+  if (nullptr != limit_tangent2)
+  {
+    limit_tangent2[0] = ON_DBL_QNAN;
+    limit_tangent2[1] = ON_DBL_QNAN;
+    limit_tangent2[2] = ON_DBL_QNAN;
+  }
   
   if (nullptr == m_LP || nullptr == m_L1 || nullptr == m_L2 )
     return ON_SUBD_RETURN_ERROR(false);
   
-  if (false == IsValidPointRing(point_ring_count,point_ring_stride,point_ring))
+  if (false == IsValidPointRing(point_ring,point_ring_count,point_ring_stride))
     return ON_SUBD_RETURN_ERROR(false);
 
   double x, y, z, c, L[3][3] = { {0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0} };
@@ -2049,38 +2353,82 @@ bool ON_SubDMatrix::EvaluateLimitPoint(
     limit_point[1] = L[0][1];
     limit_point[2] = L[0][2];
   }
-  if (nullptr != limit_tangent0)
+
+  if (nullptr == limit_tangent1 && nullptr == limit_tangent2 && nullptr == limit_normal)
+    return true;
+
+  bool bHaveAlternateL[3] = {};
+  for (unsigned int Ldex = 1; Ldex < 3; ++Ldex)
   {
-    limit_tangent0[0] = L[1][0];
-    limit_tangent0[1] = L[1][1];
-    limit_tangent0[2] = L[1][2];
-    if (0.0 == limit_tangent0[0] && 0.0 == limit_tangent0[1] && 0.0 == limit_tangent0[2])
+    if (0.0 == L[Ldex][0] && 0.0 == L[Ldex][1] && 0.0 == L[Ldex][2])
     {
-      ON_ERROR("limit_tangent0[0] = zero vector");
+      Internal_GetAlterateTangent(*this, Ldex, point_ring_count, point_ring_stride, point_ring, L, L[Ldex]);
+      bHaveAlternateL[Ldex] = true;
     }
   }
+
+  ON_3dVector T1(L[1]);
+  T1.Unitize();  
+
+  ON_3dVector T2(L[2]);
+  T2.Unitize();  
+
+  ON_3dVector N = ON_CrossProduct(T1, T2);
+  N.Unitize();
+  if (N.IsZero())
+  {
+    Internal_GetAlterateNormal(
+      *this,
+      point_ring_count,
+      point_ring_stride,
+      point_ring,
+      L,
+      bHaveAlternateL,
+      &N.x
+    );
+  }
+
   if (nullptr != limit_tangent1)
   {
-    limit_tangent1[0] = L[2][0];
-    limit_tangent1[1] = L[2][1];
-    limit_tangent1[2] = L[2][2];
+    limit_tangent1[0] = T1.x;
+    limit_tangent1[1] = T1.y;
+    limit_tangent1[2] = T1.z;
     if (0.0 == limit_tangent1[0] && 0.0 == limit_tangent1[1] && 0.0 == limit_tangent1[2])
     {
-      ON_ERROR("limit_tangent1[0] = zero vector");
+      if (false == bUndefinedNormalIsPossible)
+      {
+        ON_ERROR("limit_tangent1[0] = zero vector");
+        bUndefinedNormalIsPossible = true; // one error is sufficient
+      }
     }
   }
+
+  if (nullptr != limit_tangent2)
+  {
+    limit_tangent2[0] = T2.x;
+    limit_tangent2[1] = T2.y;
+    limit_tangent2[2] = T2.z;
+    if (0.0 == limit_tangent2[0] && 0.0 == limit_tangent2[1] && 0.0 == limit_tangent2[2])
+    {
+      if ( false == bUndefinedNormalIsPossible )
+      {
+        ON_ERROR("limit_tangent2[0] = zero vector");
+        bUndefinedNormalIsPossible = true; // one error is sufficient
+      }
+    }
+  }
+
   if (nullptr != limit_normal)
   {
-    ((ON_3dVector*)L[1])->Unitize();
-    ((ON_3dVector*)L[2])->Unitize();
-    ON_3dVector N = ON_CrossProduct(L[1], L[2]);
-    N.Unitize();
     limit_normal[0] = N.x;
     limit_normal[1] = N.y;
     limit_normal[2] = N.z;
     if (0.0 == limit_normal[0] && 0.0 == limit_normal[1] && 0.0 == limit_normal[2])
     {
-      ON_ERROR("limit_normal[0] = zero vector");
+      if ( false == bUndefinedNormalIsPossible )
+      {
+        ON_ERROR("limit_normal[0] = zero vector");
+      }
     }
   }
 
@@ -2251,12 +2599,6 @@ unsigned int ON_SubDMatrix::SetFromSectorType(
   if (false == sector_type.IsValid() )
     return SetTypeAndValenceFailure();
 
-  if (ON_SubD::SubDType::QuadCatmullClark != sector_type.SubDType())
-  {
-    // support for tri subd is not ready yet
-    return SetTypeAndValenceFailure();
-  }
-
   const unsigned int R = sector_type.PointRingCount();
   if (R < 3)
     return SetTypeAndValenceFailure();
@@ -2270,10 +2612,10 @@ unsigned int ON_SubDMatrix::SetFromSectorType(
   double* L1 = LP + R;
   double* L2 = L1 + R;
 
-  const bool bLimitEvaluationCoefficientsAvailable = sector_type.LimitEvaluationCoefficientsAvailable();
+  const bool bLimitEvaluationCoefficientsAvailable = sector_type.SurfaceEvaluationCoefficientsAvailable();
   if (bLimitEvaluationCoefficientsAvailable)
   {
-    if (R != sector_type.GetLimitSurfaceEvaluationCoefficients(R, LP, R, L1, R, L2))
+    if (R != sector_type.GetSurfaceEvaluationCoefficients(LP, R, L1, R, L2, R))
       return SetTypeAndValenceFailure();
   }
   else
@@ -2288,7 +2630,7 @@ unsigned int ON_SubDMatrix::SetFromSectorType(
     m__max_R = R;
   }
   
-  if (R != sector_type.GetSubdivisionMatrix(R, m__S.m))
+  if (R != sector_type.GetSubdivisionMatrix(m__S.m, R))
     return SetTypeAndValenceFailure();
   
   m_sector_type = sector_type;
@@ -2374,7 +2716,7 @@ double ON_SubDMatrix::TestMatrix() const
   double rc = 0.0;
 
 
-  const bool bTestLimitEvaluation = m_sector_type.LimitEvaluationCoefficientsAvailable();
+  const bool bTestLimitEvaluation = m_sector_type.SurfaceEvaluationCoefficientsAvailable();
 
   // Eigen information test
   ON_SimpleArray<double> buffer;
@@ -2383,13 +2725,13 @@ double ON_SubDMatrix::TestMatrix() const
   double* LP = E2 + m_R;
   double* L1 = LP + m_R;
   double* L2 = L1 + m_R;
-  double d = m_sector_type.GetSubdominantEigenvectors(m_R,E1,m_R,E2);
+  double d = m_sector_type.GetSubdominantEigenvectors(E1, m_R, E2, m_R);
   if (!(d == lambda))
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
 
   if (bTestLimitEvaluation)
   {
-    if (!m_sector_type.GetLimitSurfaceEvaluationCoefficients(m_R, LP, m_R, L1, m_R, L2))
+    if (!m_sector_type.GetSurfaceEvaluationCoefficients(LP, m_R, L1, m_R, L2, m_R))
       return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
   }
   else
@@ -2551,7 +2893,7 @@ double ON_SubDMatrix::TestMatrix() const
     }
 
     // See if L1 and L2 can produce a reasonable normal in the simplist possible case
-    double z = m_sector_type.LimitSurfaceNormalSign();
+    double z = m_sector_type.SurfaceNormalSign();
     if (!(z > 0.0))
       return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
   }
@@ -2569,16 +2911,6 @@ double ON_SubDMatrix::TestEvaluation(
   ON_TextLog* text_log
   )
 {
-
-  ON_SubD::SubDType subd_types[] = {
-    ON_SubD::SubDType::QuadCatmullClark,
-    ON_SubD::SubDType::TriLoopWarren,
-  };
-  const char* subd_type_names[sizeof(subd_types) / sizeof(subd_types[0])] = { 
-    "ccquad",
-    "lwtri"
-  };
-
   ON_SubD::VertexTag vertex_tags[] = { 
     ON_SubD::VertexTag::Smooth
     ,ON_SubD::VertexTag::Crease
@@ -2600,23 +2932,10 @@ double ON_SubDMatrix::TestEvaluation(
     : ON_SubDSectorType::UnsetCornerSectorAngle;
 
 
-  ON_SubD::SubDType subdivision_type = sector_type.SubDType();
   ON_SubD::VertexTag vertex_tag = sector_type.VertexTag();
   
-  size_t subd_type_count = sizeof(subd_types) / sizeof(subd_types[0]);
+  size_t subd_type_count = 1;
   size_t subd_type_index0 = 0;
-  if (ON_SubD::IsQuadOrTriSubDType(subdivision_type))
-  {
-    for (size_t subd_type_index = 0; subd_type_index < subd_type_count; subd_type_index++)
-    {
-      if (subdivision_type == subd_types[subd_type_index])
-      {
-        subd_type_index0 = subd_type_index;
-        subd_type_count = subd_type_index + 1;
-        break;
-      }
-    }
-  }
 
   if ( 0 == subd_type_index0 && 2 == subd_type_count)
     subd_type_count = 1; // tri stuff no ready
@@ -2635,7 +2954,7 @@ double ON_SubDMatrix::TestEvaluation(
         if (ON_SubD::VertexTag::Corner == vertex_tag && ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) )
         {
           unsigned int angle_dex = sector_type.CornerSectorAngleIndex();
-          if (angle_dex <= ON_SubDSectorType::MaximumAngleIndex)
+          if (angle_dex <= ON_SubDSectorType::MaximumCornerAngleIndex)
           {
             corner_sector_angle_index0 = angle_dex;
             corner_sector_angle_index1 = angle_dex+1;
@@ -2660,71 +2979,65 @@ double ON_SubDMatrix::TestEvaluation(
   unsigned int fail_count = 0;
   double max_d = 0.0;
   const unsigned int maximum_fail_count = 10;
-  for (size_t subd_type_index = subd_type_index0; subd_type_index < subd_type_count; subd_type_index++)
+
+  const char* sSubDTypeName = "ccquad";
+
+  for (size_t vertex_tag_index = vertex_tag_index0; vertex_tag_index < vertex_tag_count; vertex_tag_index++)
   {
-    const ON_SubD::SubDType subd_type = subd_types[subd_type_index];
+    const ON_SubD::VertexTag vertex_tag_for_scope = vertex_tags[vertex_tag_index];
+    const char* sVertexTagName = vertex_tag_names[vertex_tag_index];
 
-    const char* sSubDTypeName = subd_type_names[subd_type_index];
+    unsigned int Fmin = ON_SubDSectorType::MinimumSectorFaceCount(vertex_tag_for_scope);
+    if ( minimum_sector_face_count > Fmin )
+      Fmin = minimum_sector_face_count;
 
-    for (size_t vertex_tag_index = vertex_tag_index0; vertex_tag_index < vertex_tag_count; vertex_tag_index++)
+    unsigned int angle_i0 = corner_sector_angle_index0;
+    unsigned int angle_i1 = corner_sector_angle_index1;
+    if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
     {
-      const ON_SubD::VertexTag vertex_tag_for_scope = vertex_tags[vertex_tag_index];
-      const char* sVertexTagName = vertex_tag_names[vertex_tag_index];
+      angle_i0 = 2;
+      angle_i1 = ON_SubDSectorType::MaximumCornerAngleIndex/2 - 1;
+    }
 
-      unsigned int Fmin = ON_SubDSectorType::MinimumSectorFaceCount(vertex_tag_for_scope);
-      if ( minimum_sector_face_count > Fmin )
-        Fmin = minimum_sector_face_count;
-
-      unsigned int angle_i0 = corner_sector_angle_index0;
-      unsigned int angle_i1 = corner_sector_angle_index1;
-      if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
+    for (unsigned int F = Fmin; F <= Fmax; F++)
+    {
+      for (unsigned int corner_sector_angle_index = angle_i0; corner_sector_angle_index < angle_i1; corner_sector_angle_index++)
       {
-        angle_i0 = 2;
-        angle_i1 = ON_SubDSectorType::MaximumAngleIndex/2 - 1;
-      }
+        double angle_radians = corner_sector_angle_radians;
+        if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == angle_radians)
+          angle_radians = ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(corner_sector_angle_index);
 
-      for (unsigned int F = Fmin; F <= Fmax; F++)
-      {
-        for (unsigned int corner_sector_angle_index = angle_i0; corner_sector_angle_index < angle_i1; corner_sector_angle_index++)
+        ON_SubDSectorType test_sector_type = ON_SubDSectorType::Create( vertex_tag_for_scope, F, angle_radians);
+
+        if (false == test_sector_type.SurfaceEvaluationCoefficientsAvailable())
+          continue;
+        const unsigned int N = test_sector_type.EdgeCount();
+        double d = ON_SubDMatrix::FromCache(test_sector_type).TestEvaluation();
+        if (d >= 0.0)
         {
-          double angle_radians = corner_sector_angle_radians;
-          if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == angle_radians)
-            angle_radians = ON_SubDSectorType::AngleRadiansFromAngleIndex(corner_sector_angle_index);
-
-          ON_SubDSectorType test_sector_type = ON_SubDSectorType::Create(subd_type, vertex_tag_for_scope, F, angle_radians);
-
-          if (false == test_sector_type.LimitEvaluationCoefficientsAvailable())
-            continue;
-          const unsigned int N = test_sector_type.EdgeCount();
-          double d = ON_SubDMatrix::FromCache(test_sector_type).TestEvaluation();
-          if (d >= 0.0)
-          {
-            pass_count++;
-            if (d > max_d)
-              max_d = d;
-          }
-          else
-          {
-            fail_count++;
-          }
-          if (nullptr != text_log)
-          {
-            ON_String test_description;
-            if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope)
-              test_description.Format("%s, %s, %u faces, %u edges, angle = %u/%u 2pi", sSubDTypeName, sVertexTagName, F, N, corner_sector_angle_index, ON_SubDSectorType::MaximumAngleIndex);
-            else
-              test_description.Format("%s, %s, %u faces, %u edges", sSubDTypeName, sVertexTagName, F, N);
-
-            if (d >= 0.0)
-              text_log->Print("Test( %s) passed. Deviation = %g\n", (const char*)test_description, d);
-            else
-              text_log->Print("Test( %s ) failed\n", (const char*)test_description);
-          }
-          if (ON_SubD::VertexTag::Corner != vertex_tag_for_scope)
-            break;
-          if (fail_count >= maximum_fail_count)
-            break;
+          pass_count++;
+          if (d > max_d)
+            max_d = d;
         }
+        else
+        {
+          fail_count++;
+        }
+        if (nullptr != text_log)
+        {
+          ON_String test_description;
+          if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope)
+            test_description.Format("%s, %s, %u faces, %u edges, angle = %u/%u 2pi", sSubDTypeName, sVertexTagName, F, N, corner_sector_angle_index, ON_SubDSectorType::MaximumCornerAngleIndex);
+          else
+            test_description.Format("%s, %s, %u faces, %u edges", sSubDTypeName, sVertexTagName, F, N);
+
+          if (d >= 0.0)
+            text_log->Print("Test( %s) passed. Deviation = %g\n", (const char*)test_description, d);
+          else
+            text_log->Print("Test( %s ) failed\n", (const char*)test_description);
+        }
+        if (ON_SubD::VertexTag::Corner != vertex_tag_for_scope)
+          break;
         if (fail_count >= maximum_fail_count)
           break;
       }
@@ -2734,6 +3047,7 @@ double ON_SubDMatrix::TestEvaluation(
     if (fail_count >= maximum_fail_count)
       break;
   }
+
 
   if (text_log)
   {
@@ -2763,8 +3077,8 @@ static void TestPrecision(
 }
 
 double ON_SubDMatrix::TestComponentRing(
-    size_t component_ring_count,
-    const ON_SubDComponentPtr* component_ring
+  const ON_SubDComponentPtr* component_ring,
+  size_t component_ring_count
   ) const
 {
   const double rc_error = ON_UNSET_VALUE;
@@ -2783,7 +3097,6 @@ double ON_SubDMatrix::TestComponentRing(
   if (m_R != R)
     return ON_SUBD_RETURN_ERROR(rc_error);
 
-  const ON_SubD::SubDType subd_type = m_sector_type.SubDType();
   const ON_SubD::VertexTag vertex_tag = m_sector_type.VertexTag();
   const unsigned int face_edge_count = m_sector_type.FacetEdgeCount();
   const bool bSubdivideFaces = (R == F+N+1 && 4 == face_edge_count);
@@ -2792,16 +3105,16 @@ double ON_SubDMatrix::TestComponentRing(
   if (nullptr == center_vertex)
     return ON_SUBD_RETURN_ERROR(rc_error);
 
-  if (vertex_tag != center_vertex->m_vertex_tag || center_vertex->IsStandard(subd_type))
+  if (vertex_tag != center_vertex->m_vertex_tag || center_vertex->IsStandard())
     return ON_UNSET_VALUE; // not an error - need a round of subdivision before matrix can be used
 
   ON_SimpleArray<ON_3dPoint> point_ring_array;
-  if ( R != ON_SubD::GetSectorPointRing(subd_type,false,component_ring_count,component_ring,point_ring_array) )
+  if ( R != ON_SubD::GetSectorPointRing(false,component_ring_count,component_ring,point_ring_array) )
     return ON_SUBD_RETURN_ERROR(rc_error);
   const ON_3dPoint* vertexR = point_ring_array.Array();
 
   ON_3dPoint Q;
-  if (false == center_vertex->GetSubdivisionPoint(subd_type, false, &Q.x))
+  if (false == center_vertex->EvaluateCatmullClarkSubdivisionPoint(&Q.x))
     return ON_SUBD_RETURN_ERROR(rc_error);
 
   double Pdelta = 0.0;
@@ -2809,7 +3122,7 @@ double ON_SubDMatrix::TestComponentRing(
   double Fdelta = 0.0;
 
   ON_3dPoint P = ON_3dPoint::Origin;
-  if (false == EvaluateSubdivisionPoint(0,R,3,&vertexR[0].x,P))
+  if (false == EvaluateSubdivisionPoint(0, &vertexR[0].x, R,3,P))
     return ON_SUBD_RETURN_ERROR(rc_error);
   double d = P.DistanceTo(Q);
   TestPrecision(d, Pdelta);
@@ -2820,11 +3133,11 @@ double ON_SubDMatrix::TestComponentRing(
     if (nullptr == edge)
       return ON_SUBD_RETURN_ERROR(rc_error);
 
-    if (false == edge->GetSubdivisionPoint(subd_type, false, &Q.x))
+    if (false == edge->EvaluateCatmullClarkSubdivisionPoint(&Q.x))
       return ON_SUBD_RETURN_ERROR(rc_error);
 
     P = ON_3dPoint::Origin;
-    if (false == EvaluateSubdivisionPoint(i,R,3,&vertexR[0].x,P))
+    if (false == EvaluateSubdivisionPoint(i, &vertexR[0].x, R,3,P))
       return ON_SUBD_RETURN_ERROR(rc_error);
 
     double dist_PQ = P.DistanceTo(Q);
@@ -2841,11 +3154,11 @@ double ON_SubDMatrix::TestComponentRing(
     if (face_edge_count != face->m_edge_count)
       return ON_SUBD_RETURN_ERROR(rc_error);
 
-    if (false == face->GetSubdivisionPoint(subd_type, false, &Q.x))
+    if (false == face->EvaluateCatmullClarkSubdivisionPoint(&Q.x))
       return ON_SUBD_RETURN_ERROR(rc_error);
 
     P = ON_3dPoint::Origin;
-    if (false == EvaluateSubdivisionPoint(i,R,3,&vertexR[0].x,P))
+    if (false == EvaluateSubdivisionPoint(i, &vertexR[0].x, R,3,P))
       return ON_SUBD_RETURN_ERROR(rc_error);
 
     dist_PQ = P.DistanceTo(Q);
@@ -2862,28 +3175,20 @@ double ON_SubDMatrix::TestComponentRing(
 }
 
 double ON_SubDMatrix::TestEvaluation(
-  ON_SubD::SubDType subd_type,
   const unsigned int subd_recursion_count,
   ON_SubDSectorIterator sit,
   ON_SimpleArray<ON_SubDComponentPtr>& component_ring,
   ON_SimpleArray< ON_3dPoint >& subd_points,
-  ON_SubDSectorLimitPoint& limit_point
+  ON_SubDSectorSurfacePoint& limit_point
   )
 {
   const double rc_error = ON_UNSET_VALUE;
-  limit_point = ON_SubDSectorLimitPoint::Unset;
+  limit_point = ON_SubDSectorSurfacePoint::Unset;
 
   component_ring.SetCount(0);
   subd_points.SetCount(0);
 
-  if (ON_SubD::SubDType::QuadCatmullClark != subd_type)
-    return ON_SUBD_RETURN_ERROR(rc_error); // TODO add support for ON_SubD::SubDType::TriLoopWarren
-
-  const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd_type);
-  if (ON_SubD::FacetType::Tri != facet_type && ON_SubD::FacetType::Quad != facet_type)
-    return ON_SUBD_RETURN_ERROR(rc_error);
-
-  const ON_SubDSectorType sector_type = ON_SubDSectorType::Create(subd_type,sit);
+  const ON_SubDSectorType sector_type = ON_SubDSectorType::Create(sit);
 
   const unsigned int component_ring_count = ON_SubD::GetSectorComponentRing(sit,component_ring);
   if ( component_ring_count < 4 || component_ring_count != sector_type.ComponentRingCount())
@@ -2895,7 +3200,7 @@ double ON_SubDMatrix::TestEvaluation(
     return ON_SUBD_RETURN_ERROR(rc_error);
   if ( F != sector_type.FaceCount())
     return ON_SUBD_RETURN_ERROR(rc_error);    
-  const unsigned int R = N + ((ON_SubD::FacetType::Quad == facet_type) ? F : 0);
+  const unsigned int R = N + F;
   if (R != sector_type.PointRingCount())
     return ON_SUBD_RETURN_ERROR(rc_error);
 
@@ -2905,13 +3210,12 @@ double ON_SubDMatrix::TestEvaluation(
   const ON_3dPoint* point_ringEnd = point_ring + R*(subd_recursion_count+1);
 
   unsigned int rc = ON_SubD::GetSectorPointRing(
-    subd_type,
     true, // bSubdivideIfNeeded,
-    component_ring_count,
     component_ring.Array(),
+    component_ring_count,
+    &point_ring[0].x,
     R,
-    3, // point_ring_stride,
-    &point_ring[0].x
+    3 // point_ring_stride,
     );
 
   if (rc != R)
@@ -2928,7 +3232,7 @@ double ON_SubDMatrix::TestEvaluation(
     const ON_SubDVertex* v0 = nullptr;
     for (unsigned int recursion_level = 0; recursion_level < subd_recursion_count; recursion_level++)
     {
-      const ON_SubDVertex* v1 = ON_SubD::SubdivideSector(subd_type, v0, component_ring_count, element, fsh[recursion_level%2]);
+      const ON_SubDVertex* v1 = ON_SubD::SubdivideSector( v0, element, component_ring_count, fsh[recursion_level%2]);
       if ( nullptr == v1 || N != v1->m_edge_count || F != v1->m_face_count)
         return ON_SUBD_RETURN_ERROR(rc_error);
       if (0 == recursion_level)
@@ -2937,7 +3241,7 @@ double ON_SubDMatrix::TestEvaluation(
         {
           // subdivision was reqiured to get initial point ring.
           v0 = v1;
-          v1 = ON_SubD::SubdivideSector(subd_type, v0, component_ring_count, element, fsh[recursion_level % 2]);
+          v1 = ON_SubD::SubdivideSector( v0, element, component_ring_count, fsh[recursion_level % 2]);
           if (nullptr == v1 || N != v1->m_edge_count || F != v1->m_face_count)
             return ON_SUBD_RETURN_ERROR(rc_error);
         }
@@ -2954,7 +3258,7 @@ double ON_SubDMatrix::TestEvaluation(
         if ( nullptr == v )
           return ON_SUBD_RETURN_ERROR(rc_error);
         subd_points.AppendNew() = v->m_P;
-        if (ON_SubD::FacetType::Quad == facet_type && i < F)
+        if (i < F)
         {
           const ON_SubDFace* f = v1->Face(i);
           if ( nullptr == f )
@@ -2983,7 +3287,7 @@ double ON_SubDMatrix::TestEvaluation(
       for (unsigned int i = 0; i < R; i++)
       {
         ON_3dPoint P(ON_3dPoint::Origin);
-        if ( false == SM.EvaluateSubdivisionPoint(i,R,point_ring_stride,&point_ring1[0].x,P) )
+        if ( false == SM.EvaluateSubdivisionPoint(i, &point_ring1[0].x, R,point_ring_stride,P) )
           return ON_SUBD_RETURN_ERROR(rc_error);
         d = P.DistanceTo(point_ring2[i]);
         if (d > maxd)
@@ -2994,11 +3298,11 @@ double ON_SubDMatrix::TestEvaluation(
   }
 
   // calculate limit point using ON_SubDVertex evaluation code
-  ON_SubDSectorLimitPoint center_vertex_limit_point = ON_SubDSectorLimitPoint::Unset; 
-  center_vertex->GetLimitPoint(subd_type,sector_face,true,center_vertex_limit_point);
+  ON_SubDSectorSurfacePoint center_vertex_limit_point = ON_SubDSectorSurfacePoint::Unset; 
+  center_vertex->GetSurfacePoint(sector_face,center_vertex_limit_point);
   
   // calculate limit point using matrix
-  if ( false == SM.EvaluateLimitPoint( R, point_ring_stride, &point_ring0[0].x, limit_point ) )
+  if ( false == SM.EvaluateSurfacePoint(&point_ring0[0].x, R, point_ring_stride, false, limit_point ) )
     return ON_SUBD_RETURN_ERROR(rc_error);
 
   // calculate limit point deviation (should be nearly zero)
@@ -3767,4 +4071,3 @@ unsigned int ON_SubDMatrix_GetJordonDecomposition(
 }
 #endif
 
-#endif

@@ -88,6 +88,7 @@
 #include "opennurbs_sphere.h"         // simple 3d sphere
 #include "opennurbs_box.h"            // simple 3d box
 #include "opennurbs_torus.h"          // simple 3d torus
+#include "opennurbs_convex_poly.h"    // simple 3d simplex and 3d convex polyhedra 
 #include "opennurbs_bezier.h"         // simple bezier and polynomial curves and surfaces
 #include "opennurbs_math.h"           // utilities for performing simple calculations
 #include "opennurbs_intersect.h"      // utilities for performing simple intersections
@@ -119,7 +120,9 @@
 #include "opennurbs_pointcloud.h"     // point set
 #include "opennurbs_curveproxy.h"     // proxy curve provides a way to use an existing curve
 #include "opennurbs_surfaceproxy.h"   // proxy surface provides a way to use another surface
-#include "opennurbs_mesh.h"           // render mesh object
+#include "opennurbs_mesh.h"           // mesh object
+
+
 #include "opennurbs_pointgrid.h"      // point grid object
 #include "opennurbs_linecurve.h"      // line as a paramtric curve object
 #include "opennurbs_arccurve.h"       // arc/circle as a paramtric curve object

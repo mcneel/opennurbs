@@ -417,6 +417,18 @@ public:
   */
   bool IsUnset() const;
 
+  /*
+  Returns:
+    True if any coordinate is a nan.
+  */
+  bool IsNan() const;
+
+  /*
+  Returns:
+    True if any coordinate is ON_UNSET_VALUE, ON_UNSET_POSITIVE_VALUE, or a nan
+  */
+  bool IsUnsetOrNan() const;
+
   // set 2d point value
   void Set(double x,double y);
 
@@ -440,7 +452,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -603,6 +615,18 @@ public:
   */
   bool IsUnset() const;
 
+  /*
+  Returns:
+    True if any coordinate is a nan.
+*/
+  bool IsNan() const;
+
+  /*
+  Returns:
+    True if any coordinate is ON_UNSET_VALUE, ON_UNSET_POSITIVE_VALUE, or a nan
+  */
+  bool IsUnsetOrNan() const;
+
   // set 3d point value
   void Set(double x,double y,double z);
 
@@ -631,7 +655,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -838,6 +862,18 @@ public:
   */
   bool IsUnset() const;
 
+  /*
+  Returns:
+    True if any coordinate is a nan.
+*/
+  bool IsNan() const;
+
+  /*
+  Returns:
+    True if any coordinate is ON_UNSET_VALUE, ON_UNSET_POSITIVE_VALUE, or a nan
+  */
+  bool IsUnsetOrNan() const;
+
   // set 4d point value
   void Set(double x,double y,double z,double w);
 
@@ -999,6 +1035,18 @@ public:
   */
   bool IsUnset() const;
 
+  /*
+  Returns:
+    True if any coordinate is a nan.
+*/
+  bool IsNan() const;
+
+  /*
+  Returns:
+    True if any coordinate is ON_UNSET_VALUE, ON_UNSET_POSITIVE_VALUE, or a nan
+  */
+  bool IsUnsetOrNan() const;
+
   // set 2d vector value
   void Set(double x,double y);
 
@@ -1081,7 +1129,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -1318,6 +1366,18 @@ public:
   */
   bool IsUnset() const;
 
+  /*
+  Returns:
+    True if any coordinate is a nan.
+  */
+  bool IsNan() const;
+
+  /*
+  Returns:
+    True if any coordinate is ON_UNSET_VALUE, ON_UNSET_POSITIVE_VALUE, or a nan
+  */
+  bool IsUnsetOrNan() const;
+
   // set 3d vector value
   void Set(double x,double y,double z);
 
@@ -1406,7 +1466,7 @@ public:
 
   /*
   Returns:
-    true if at lease one coordinate is not zero and no coordinates are nans.
+    true if at lease one coordinate is not zero and no coordinates are unset or nans.
   */
   bool IsNotZero() const;
 
@@ -1947,6 +2007,10 @@ ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
     const ON_3dVector&, // Y
     const ON_3dVector&  // Z 
     );
+
+// Find the largest absolute value of coordinates from an array of points (possibly homogeneous).
+ON_DECL
+double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count);
 
 ///////////////////////////////////////////////////////////////
 //

@@ -229,7 +229,10 @@ bool ON_NumberFormatter::FormatNumber(
       {
         if (0 != wholenumber)
         {
-          sFormat.Format(L"%d ", (int)wholenumber);
+          if (0 != numerator)
+            sFormat.Format(L"%d ", (int)wholenumber);
+          else
+            sFormat.Format(L"%d", (int)wholenumber);
         }
 
         if (0 != numerator)

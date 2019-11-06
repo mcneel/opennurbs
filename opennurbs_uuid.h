@@ -63,6 +63,7 @@ extern ON_EXTERN_DECL const ON_UUID ON_rhino3_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino4_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino5_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino6_id;
+extern ON_EXTERN_DECL const ON_UUID ON_rhino7_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino_id;
 
 // Application ids for usedata written by versions
@@ -85,6 +86,7 @@ extern ON_EXTERN_DECL const ON_UUID ON_v4_userdata_id;
 extern const ON_UUID ON_opennurbs4_id;
 extern const ON_UUID ON_opennurbs5_id;
 extern const ON_UUID ON_opennurbs6_id;
+extern const ON_UUID ON_opennurbs7_id;
 #endif
 extern ON_EXTERN_DECL const ON_UUID ON_opennurbs_id;
 
@@ -98,6 +100,7 @@ Returns:
   0: id is not a Rhino application id
   N: id == ON_rhinoN_id, where "N" = 2,3,4,5,6,...
 */
+ON_DECL
 unsigned int ON_IsRhinoApplicationId(
   ON_UUID id
   );
@@ -112,6 +115,7 @@ Returns:
   0: id is not an opennurbs application id
   N: id == ON_opennurbsN_id, where "N" = 4,5,6,...
 */
+ON_DECL
 unsigned int ON_IsOpennurbsApplicationId(
   ON_UUID id
   );

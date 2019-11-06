@@ -55,6 +55,9 @@ void  ON_SubDimple::ClearLevelContents(
   if (nullptr == level)
     return;
 
+  if (level == m_active_level)
+    ChangeContentSerialNumber();
+
   level->ResetFaceArray();
   level->ResetEdgeArray();
   level->ResetVertexArray();
@@ -101,7 +104,10 @@ void ON_SubDimple::ClearHigherSubdivisionLevels(
     if (nullptr != m_active_level && m_active_level->m_level_index > max_level_index)
     {
       if ( level_count > max_level_index )
-      m_active_level = m_levels[max_level_index];
+      {
+        m_active_level = m_levels[max_level_index];
+        ChangeContentSerialNumber();
+      }
     }
 
     while (level_count > max_level_index+1)
@@ -139,6 +145,7 @@ void ON_SubDimple::ClearLowerSubdivisionLevels(
     if (nullptr != m_active_level && m_active_level->m_level_index < min_level_index)
     {
       m_active_level = m_levels[min_level_index];
+      ChangeContentSerialNumber();
     }
 
     for ( unsigned int level_index = 0; level_index < min_level_index; level_index++)
@@ -162,17 +169,17 @@ void ON_SubDimple::ClearLowerSubdivisionLevels(
 
       for (ON_SubDVertex* vertex = level->m_vertex[0]; nullptr != vertex; vertex = const_cast<ON_SubDVertex*>(vertex->m_next_vertex))
       {
-        vertex->m_level = new_level_index;
+        vertex->SetSubdivisionLevel(new_level_index);
       }
 
       for (ON_SubDEdge* edge = level->m_edge[0]; nullptr != edge; edge = const_cast<ON_SubDEdge*>(edge->m_next_edge))
       {
-        edge->m_level = new_level_index;
+        edge->SetSubdivisionLevel(new_level_index);
       }
 
       for (ON_SubDFace* face = level->m_face[0]; nullptr != face; face = const_cast<ON_SubDFace*>(face->m_next_face))
       {
-        face->m_level = new_level_index;
+        face->SetSubdivisionLevel(new_level_index);
         face->m_parent_face_id = 0;
         face->m_zero_face_id = face->m_id;
       }
@@ -196,6 +203,7 @@ void ON_SubDimple::Destroy()
   }
   m_levels.Destroy();
   m_heap.Destroy();
+  m_subd_content_serial_number = 0;
 }
 
 ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
@@ -204,6 +212,7 @@ ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
   {
     unsigned int level_index = (m_levels.UnsignedCount() > 0) ? (m_levels.UnsignedCount()-1) : 0U;
     m_active_level = SubDLevel(level_index,bCreateIfNeeded && 0 == m_levels.UnsignedCount());    
+    ChangeContentSerialNumber();
   }
   return m_active_level;
 }
@@ -221,8 +230,11 @@ class ON_SubDLevel* ON_SubDimple::SubDLevel(
     level = new ON_SubDLevel();
     level->m_level_index = level_index;
     m_levels.Append(level);
-    if ( nullptr == m_active_level )
+    if (nullptr == m_active_level)
+    {
       m_active_level = level;
+      ChangeContentSerialNumber();
+    }
   }
 
   return level;
@@ -268,15 +280,148 @@ void ON_SubDAggregates::UpdateBoundingBox(
       }
     }
   }
-  m_bbox = bbox;
+  m_controlnet_bbox = bbox;
   m_bDirtyBoundingBox = false;
 }
 
-ON_BoundingBox ON_SubDLevel::BoundingBox() const
+ON_BoundingBox ON_SubDLevel::ControlNetBoundingBox() const
 {
   if ( m_aggregates.m_bDirtyBoundingBox )
     m_aggregates.UpdateBoundingBox(this);
-  return m_aggregates.m_bbox;
+  return m_aggregates.m_controlnet_bbox;
+}
+
+void  ON_SubDAggregates::UpdateTopologicalAttributes(
+  const ON_SubDLevel* level
+)
+{
+  m_topological_attributes = 0;
+  if (nullptr == level)
+    return;
+
+  if (m_bDirtyBoundingBox)
+  {
+    UpdateBoundingBox(level);
+    if (m_bDirtyBoundingBox)
+      return;
+  }
+
+  bool bIsManifold = level->m_edge_count >= 3 && level->m_face_count >= 1;
+  bool bIsOriented = bIsManifold;
+  bool bHasBoundary = false;
+
+  for (const ON_SubDEdge* e = level->m_edge[0]; nullptr != e; e = e->m_next_edge)
+  {
+    if (1 == e->m_face_count)
+    {
+      bHasBoundary = true;
+      if (false == bIsManifold && false == bIsOriented)
+        break;
+    }
+    else if (2 == e->m_face_count)
+    {
+      if (ON_SUBD_FACE_DIRECTION(e->m_face2[0].m_ptr) == ON_SUBD_FACE_DIRECTION(e->m_face2[1].m_ptr))
+      {
+        bIsOriented = false;
+        if (bHasBoundary && false == bIsManifold)
+          break;
+      }
+    }
+    else
+    {
+      bIsManifold = false;
+      bIsOriented = false;
+      if (bHasBoundary)
+        break;
+    }
+  }
+
+  double vol = 0.0;
+  if (bIsManifold && bIsOriented && false == bHasBoundary)
+  {
+    const ON_3dVector B(m_controlnet_bbox.IsValid() ? ON_3dVector(m_controlnet_bbox.Center()) : ON_3dVector::ZeroVector);
+    ON_3dVector P, Q, R;
+    for (const ON_SubDFace* f = level->m_face[0]; nullptr != f && vol == vol; f = f->m_next_face)
+    {
+      if (false == f->GetSubdivisionPoint( &P.x))
+      {
+        vol = ON_DBL_QNAN;
+        break;
+      }
+      P -= B;
+      const unsigned count = f->EdgeCount();
+      if (count < 3)
+      {
+        vol = ON_DBL_QNAN;
+        break;
+      }
+      const ON_SubDVertex* v = f->Vertex(count - 1);
+      if (nullptr == v || false == v->GetSubdivisionPoint( &R.x))
+      {
+        vol = ON_DBL_QNAN;
+        break;
+      }
+      R -= B;
+      for (unsigned fvi = 0; fvi < count; fvi++)
+      {
+        Q = R;
+        v = f->Vertex(fvi);
+        if (nullptr == v || false == v->GetSubdivisionPoint( &R.x))
+        {
+          vol = ON_DBL_QNAN;
+          break;
+        }
+        R -= B;
+        // ON_TripleProduct(P, Q, R) = 6x signed volume of tetrahedron with trangle base (P,Q,R) and apex B.
+        vol += ON_TripleProduct(P, Q, R);
+      }
+    }
+  }
+
+  // bit 1 indicates m_topological_attributes is set.
+  m_topological_attributes = 1;
+
+  if (bIsManifold)
+    m_topological_attributes |= 2;
+  if (bIsOriented)
+    m_topological_attributes |= 4;
+  if (bHasBoundary)
+    m_topological_attributes |= 8;
+  
+  if (vol > 0.0)
+    m_topological_attributes |= 16;
+  else if (vol < 0.0)
+    m_topological_attributes |= 32;
+}
+
+bool ON_SubDAggregates::GetTopologicalAttributes(bool & bIsManifold, bool & bIsOriented, bool & bHasBoundary, int & solid_orientation) const
+{
+  // if m_bDirtyBoundingBox is true, then m_topological_attributes is dirty as well.
+  const unsigned int topological_attributes = m_bDirtyBoundingBox ? 0U : m_topological_attributes;
+
+  bIsManifold = 0 != (2 & topological_attributes);
+  bIsOriented = 0 != (4 & topological_attributes);
+  bHasBoundary = 0 != (8 & topological_attributes);
+  if (bIsManifold && bIsOriented && false == bHasBoundary)
+  {
+    if (0 != (16 & topological_attributes))
+      solid_orientation = 1;
+    else if (0 != (32 & topological_attributes))
+      solid_orientation = -1;
+    else
+      solid_orientation = 2;
+  }
+  else
+    solid_orientation = 0;
+
+  return (0 != topological_attributes);
+}
+
+bool ON_SubDAggregates::GetTopologicalAttributes(const ON_SubDLevel * level, bool &bIsManifold, bool & bIsOriented, bool & bHasBoundary, int & solid_orientation)
+{
+  if ( (m_bDirtyBoundingBox || 0 == m_topological_attributes) && nullptr != level)
+    UpdateTopologicalAttributes(level);
+  return GetTopologicalAttributes(bIsManifold, bIsOriented, bHasBoundary, solid_orientation);
 }
 
 ON_AggregateComponentStatus ON_SubDLevel::AggregateComponentStatus() const
@@ -286,28 +431,28 @@ ON_AggregateComponentStatus ON_SubDLevel::AggregateComponentStatus() const
   return m_aggregates.m_aggregate_status;
 }
 
-void ON_SubDAggregates::UpdateEdgeFlags(
+void ON_SubDAggregates::UpdateAggregateEdgeAttributes(
   const ON_SubDLevel* level
   )
 {
   if (nullptr != level)
   {
-    unsigned int edge_flags = 0;
+    unsigned int bits = 0;
     for (const ON_SubDEdge* e = level->m_edge[0]; nullptr != e; e = e->m_next_edge)
-      edge_flags |= e->EdgeFlags();
-    m_edge_flags = edge_flags;
+      bits |= e->EdgeAttributes();
+    m_aggregate_edge_attributes = bits;
   }
-  m_bDirtyEdgeFlags = 0;
+  m_bDirtyEdgeAttributes = false;
 }
 
 unsigned int ON_SubDLevel::EdgeFlags() const
 {
-  if (m_aggregates.m_bDirtyEdgeFlags)
-    m_aggregates.UpdateEdgeFlags(this);
-  return m_aggregates.m_edge_flags;
+  if (m_aggregates.m_bDirtyEdgeAttributes)
+    m_aggregates.UpdateAggregateEdgeAttributes(this);
+  return m_aggregates.m_aggregate_edge_attributes;
 }
 
-unsigned int ON_SubD::EdgeFlags() const
+unsigned int ON_SubD::AggregateEdgeAttributes() const
 {
   return ActiveLevel().EdgeFlags();
 }
@@ -428,7 +573,7 @@ static void TransformVector(
   V[2] = z;
 }
 
-bool ON_SubDSectorLimitPoint::Transform(
+bool ON_SubDSectorSurfacePoint::Transform(
   const ON_Xform& xform
   )
 {
@@ -450,44 +595,46 @@ bool ON_SubDVertex::Transform(
   )
 {
   TransformPoint(&xform.m_xform[0][0],m_P);
-  if (0 != ON_SUBD_CACHE_DISPLACEMENT_FLAG(m_saved_points_flags))
-    TransformVector(&xform.m_xform[0][0],m_displacement_V);
 
-  if (ON_SubD::SubDType::Unset != SavedSubdivisionPointType())
+  Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
+
+  // TODO:
+  //   If the vertex 
+  //     is tagged as ON_SubD::VertexTag::Corner
+  //     and bTransformationSavedSubdivisionPoint is true, 
+  //     and the corner sector(s) contains interior smooth edges,
+  //     and the transformation changes the angle between a corner sector's crease boundary, 
+  //   then the sector's interior smooth edge's m_sector_coefficient[] could change
+  //   and invalidate the subdivison points and limit points.
+  //   This is only possible for uncommon (in practice) transformations
+  //   and corner sectors and will require a fair bit of testing for 
+  //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
+  //   at a higher level when these types of transformations are encountered.
+  if ( bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag() )
   {
-    if (bTransformationSavedSubdivisionPoint)
-      TransformPoint(&xform.m_xform[0][0], m_saved_subd_point1);
-    else
-      ClearSavedSubdivisionPoint();
+    for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
+      const_cast<ON_SubDSectorSurfacePoint*>(lp)->Transform(xform);
   }
-  if (ON_SubD::SubDType::Unset != this->SavedLimitPointType())
-  {
-    if (bTransformationSavedSubdivisionPoint)
-    {
-      for (const ON_SubDSectorLimitPoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
-        const_cast< ON_SubDSectorLimitPoint* >(lp)->Transform(xform);
-    }
-    else
-      ClearSavedLimitPoints();
-  }
+  else
+    Internal_ClearSurfacePointFlag();
+
   return true;
 }
 
-bool ON_SubDVertex::SetLocation(
-  ON_3dPoint location,
+bool ON_SubDVertex::SetControlNetPoint(
+  ON_3dPoint control_net_point,
   bool bClearNeighborhoodCache
 )
 {
-  if (false == location.IsValid())
+  if (false == control_net_point.IsValid())
     return false;
 
-  if (!(m_P[0] == location.x && m_P[1] == location.y && m_P[2] == location.z))
+  if (!(m_P[0] == control_net_point.x && m_P[1] == control_net_point.y && m_P[2] == control_net_point.z))
   {
-    m_P[0] = location.x;
-    m_P[1] = location.y;
-    m_P[2] = location.z;
-    ClearSavedSubdivisionPoint();
-    ClearSavedLimitPoints();
+    m_P[0] = control_net_point.x;
+    m_P[1] = control_net_point.y;
+    m_P[2] = control_net_point.z;
+    ClearSavedSubdivisionPoints();
 
     if (bClearNeighborhoodCache)
     {
@@ -496,7 +643,7 @@ bool ON_SubDVertex::SetLocation(
         ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
         if (nullptr == edge)
           continue;
-        edge->ClearSavedSubdivisionPoint();
+        edge->ClearSavedSubdivisionPoints();
         ON_SubDFacePtr* fptr = edge->m_face2;
         for (unsigned short efi = 0; efi < edge->m_face_count; efi++, fptr++)
         {
@@ -509,7 +656,7 @@ bool ON_SubDVertex::SetLocation(
           ON_SubDFace* face = ON_SUBD_FACE_POINTER(fptr->m_ptr);
           if (nullptr == face)
             continue;
-          face->ClearSavedSubdivisionPoint();
+          face->ClearSavedSubdivisionPoints();
 
           ON_SubDEdgePtr* eptr = face->m_edge4;
           for (unsigned short fei = 0; fei < face->m_edge_count; fei++, eptr++)
@@ -526,8 +673,7 @@ bool ON_SubDVertex::SetLocation(
             ON_SubDVertex* fvertex = const_cast<ON_SubDVertex*>(fedge->m_vertex[ON_SUBD_EDGE_DIRECTION(eptr->m_ptr)]);
             if (nullptr == fvertex)
               continue;
-            fvertex->ClearSavedSubdivisionPoint();
-            fvertex->ClearSavedLimitPoints();
+            fvertex->ClearSavedSubdivisionPoints();
           }
         }
       }
@@ -537,7 +683,7 @@ bool ON_SubDVertex::SetLocation(
   return true;
 }
 
-bool ON_SubDEdge::Transform(
+void ON_SubDComponentBase::Internal_TransformComponentBase(
   bool bTransformationSavedSubdivisionPoint,
   const class ON_Xform& xform
   )
@@ -545,13 +691,24 @@ bool ON_SubDEdge::Transform(
   if (0 != ON_SUBD_CACHE_DISPLACEMENT_FLAG(m_saved_points_flags))
     TransformVector(&xform.m_xform[0][0],m_displacement_V);
 
-  if (ON_SubD::SubDType::Unset != SavedSubdivisionPointType())
+  if ( SavedSubdivisionPointIsSet() )
   {
     if (bTransformationSavedSubdivisionPoint)
       TransformPoint(&xform.m_xform[0][0], m_saved_subd_point1);
     else
-      ClearSavedSubdivisionPoint();
+      ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_points_flags);
   }
+}
+
+bool ON_SubDEdge::Transform(
+  bool bTransformationSavedSubdivisionPoint,
+  const class ON_Xform& xform
+  )
+{
+  Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
+
+    Internal_ClearSurfacePointFlag();
+
   return true;
 }
 
@@ -560,16 +717,16 @@ bool ON_SubDFace::Transform(
   const class ON_Xform& xform
   )
 {
-  if (0 != ON_SUBD_CACHE_DISPLACEMENT_FLAG(m_saved_points_flags))
-    TransformVector(&xform.m_xform[0][0],m_displacement_V);
+  Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
 
-  if (ON_SubD::SubDType::Unset != SavedSubdivisionPointType())
+  if (bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag() )
   {
-    if (bTransformationSavedSubdivisionPoint)
-      TransformPoint(&xform.m_xform[0][0], m_saved_subd_point1);
-    else
-      ClearSavedSubdivisionPoint();
+    for (ON_SubDMeshFragment* f = m_mesh_fragments; nullptr != f; f = f->m_next_fragment)
+      f->Transform(xform);
   }
+  else
+    Internal_ClearSurfacePointFlag();
+
   return true;
 }
 
@@ -582,22 +739,28 @@ bool ON_SubDLevel::Transform(
 
   m_aggregates.m_bDirtyBoundingBox = true;
 
-  for (const ON_SubDVertex* vertex = m_vertex[0]; nullptr != vertex && rc; vertex = vertex->m_next_vertex)
+  for (const ON_SubDVertex* vertex = m_vertex[0]; nullptr != vertex; vertex = vertex->m_next_vertex)
   {
-    rc = const_cast<ON_SubDVertex*>(vertex)->Transform(bTransformationSavedSubdivisionPoint,xform);
+    if (false == const_cast<ON_SubDVertex*>(vertex)->Transform(bTransformationSavedSubdivisionPoint, xform))
+      rc = false;
   }
   
-  for (const ON_SubDEdge* edge = m_edge[0]; nullptr != edge && rc; edge = edge->m_next_edge)
+  for (const ON_SubDEdge* edge = m_edge[0]; nullptr != edge; edge = edge->m_next_edge)
   {
-    rc = const_cast<ON_SubDEdge*>(edge)->Transform(bTransformationSavedSubdivisionPoint,xform);
+    if (false == const_cast<ON_SubDEdge*>(edge)->Transform(bTransformationSavedSubdivisionPoint, xform))
+      rc = false;
   }
   
-  for (const ON_SubDFace* face = m_face[0]; nullptr != face && rc; face = face->m_next_face)
+  for (const ON_SubDFace* face = m_face[0]; nullptr != face; face = face->m_next_face)
   {
-    rc = const_cast<ON_SubDFace*>(face)->Transform(bTransformationSavedSubdivisionPoint,xform);
+    if (false == const_cast<ON_SubDFace*>(face)->Transform(bTransformationSavedSubdivisionPoint, xform))
+      rc = false;
   }
 
-  if (false == m_limit_mesh.Transform(xform))
+  if (false == m_surface_mesh.Transform(xform))
+    rc = false;
+  
+  if (false == m_control_net_mesh.Transform(xform))
     rc = false;
 
   if (rc)
@@ -607,7 +770,7 @@ bool ON_SubDLevel::Transform(
 }
 
 
-bool ON_SubDLimitMesh::Transform(
+bool ON_SubDMesh::Transform(
   const ON_Xform& xform
   )
 {
@@ -617,7 +780,7 @@ bool ON_SubDLimitMesh::Transform(
     return true;
   if (xform.IsZero())
     return false;
-  ON_SubDLimitMeshImpl* impl = m_impl_sp.get();
+  ON_SubDMeshImpl* impl = m_impl_sp.get();
   if ( nullptr == impl )
     return true; // transform applied to empty mesh is true on purpose.  Changing to false will break other code.
   return impl->Transform(xform);
@@ -673,40 +836,71 @@ bool ON_SubDimple::Transform(
 
 }
 
-bool ON_SubDLimitMeshFragment::Transform(
+bool ON_SubDMeshFragment::Transform(
   const ON_Xform& xform
   )
 {
-  if (0 == m_P_count)
+  const unsigned count = PointCount();
+  if (0 == count)
   {
-    m_bbox = ON_BoundingBox::EmptyBoundingBox;
+    m_surface_bbox = ON_BoundingBox::EmptyBoundingBox;
     return true;
   }
-  if ( false == ON_TransformPointList(3,false,m_P_count,(int)m_P_stride,m_P,xform) )
+  if ( false == ON_TransformPointList(3,false, count,(int)m_P_stride,m_P,xform) )
     return ON_SUBD_RETURN_ERROR(false);
-  if ( false == ON_TransformVectorList(3,m_P_count,(int)m_P_stride,m_N,xform) )
-    return ON_SUBD_RETURN_ERROR(false);
-  ON_GetPointListBoundingBox(3,0,m_P_count,(int)m_P_stride,m_P,&m_bbox.m_min.x,&m_bbox.m_max.x,false);
+  if (count == NormalCount())
+  {
+    if (false == ON_TransformVectorList(3, count, (int)m_N_stride, m_N, xform))
+      return ON_SUBD_RETURN_ERROR(false);
+  }
+  if (0 != (ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_count_etc))
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      const ON_3dPoint A(m_ctrlnetP[i]);
+      if (A.IsValid())
+      {
+        const ON_3dPoint B = xform * A;
+        m_ctrlnetP[i][0] = B.x;
+        m_ctrlnetP[i][1] = B.y;
+        m_ctrlnetP[i][2] = B.z;
+      }
+    }
+  }
+  if (0 != (ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_capacity_etc))
+  {
+    const ON_3dVector A(m_ctrlnetN);
+    if (A.IsNotZero())
+    {
+      ON_3dVector B = xform * A;
+      if ( A.IsUnitVector() && false == B.IsUnitVector() )
+        B = B.UnitVector();
+      m_ctrlnetN[0] = B.x;
+      m_ctrlnetN[1] = B.y;
+      m_ctrlnetN[2] = B.z;
+    }
+  }
+  ON_GetPointListBoundingBox(3,0,count,(int)m_P_stride,m_P,&m_surface_bbox.m_min.x,&m_surface_bbox.m_max.x,false);
   return true;
 }
 
-bool ON_SubDLimitMeshImpl::Transform(
+bool ON_SubDMeshImpl::Transform(
   const ON_Xform& xform
   )
 {
   m_bbox = ON_BoundingBox::EmptyBoundingBox;
   ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-  for ( const ON_SubDLimitMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
+  for ( const ON_SubDMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
   {
-    if ( false == const_cast<ON_SubDLimitMeshFragment*>(fragment)->Transform(xform) )
+    if ( false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(xform) )
       return ON_SUBD_RETURN_ERROR(false);
     if ( fragment == m_first_fragment )
-      bbox = fragment->m_bbox;
+      bbox = fragment->m_surface_bbox;
     else
-      bbox.Union(fragment->m_bbox);
+      bbox.Union(fragment->m_surface_bbox);
   }
   m_bbox = bbox;
-  m_limit_mesh_content_serial_number = ON_SubDLimitMeshImpl::Internal_NextContentSerialNumber();
+  ChangeContentSerialNumber();
   return true;
 }
 
@@ -726,7 +920,7 @@ ON_BoundingBox ON_SubDVertex::ControlNetBoundingBox() const
 
 
 
-ON_BoundingBox ON_SubDEdge::ControlNetBoundingBox() const
+const ON_BoundingBox ON_SubDEdge::ControlNetBoundingBox() const
 {
   ON_BoundingBox bbox;
   if (nullptr != m_vertex[0] && nullptr != m_vertex[1])
@@ -739,7 +933,7 @@ ON_BoundingBox ON_SubDEdge::ControlNetBoundingBox() const
   return bbox;
 }
 
-ON_BoundingBox ON_SubDFace::ControlNetBoundingBox() const
+const ON_BoundingBox ON_SubDFace::ControlNetBoundingBox() const
 {
   ON_BoundingBox bbox;
   ON_3dPoint P[16];

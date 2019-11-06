@@ -779,6 +779,50 @@ bool ON_RevSurface::GetNurbFormParameterFromSurfaceParameter(
   return rc;
 }
 
+ON_Arc ON_RevSurface::IsoArc(
+  double curve_parameter
+) const
+{
+  for (;;)
+  {
+    if (nullptr == m_curve)
+      break;
+    // 8 December 2003 Chuck - fix iso extraction bug
+    //   when m_angle[0] != 0.
+    ON_Circle circle;
+    ON_3dPoint P = m_curve->PointAt(curve_parameter);
+    if (false == P.IsValid())
+      break;
+    circle.plane.origin = m_axis.ClosestPointTo(P);
+    circle.plane.zaxis = m_axis.Tangent();
+    circle.plane.xaxis = P - circle.plane.origin;
+    circle.radius = circle.plane.xaxis.Length();
+    if (!circle.plane.xaxis.Unitize())
+    {
+      // 8 December 2003 Dale Lear - get valid zero radius
+      //   arc/circle when revolute hits the axis.
+      // First: try middle of revolute for x-axis
+      P = m_curve->PointAt(m_curve->Domain().ParameterAt(0.5));
+      ON_3dPoint Q = m_axis.ClosestPointTo(P);
+      circle.plane.xaxis = P - Q;
+      if (!circle.plane.xaxis.Unitize())
+      {
+        // Then: just use a vector perp to zaxis
+        circle.plane.xaxis.PerpendicularTo(circle.plane.zaxis);
+      }
+    }
+    circle.plane.yaxis = ON_CrossProduct(circle.plane.zaxis, circle.plane.xaxis);
+    circle.plane.yaxis.Unitize();
+    circle.plane.UpdateEquation();
+    ON_Arc arc(circle, m_angle);
+    return arc;
+  }
+  ON_Arc arc;
+  arc.plane = ON_Plane::NanPlane;
+  arc.radius = ON_DBL_QNAN;
+  return arc;
+}
+
 
 ON_Curve* ON_RevSurface::IsoCurve( int dir, double c ) const
 {

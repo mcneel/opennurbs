@@ -605,7 +605,7 @@ ON_HatchPattern::HatchFillType ON_HatchPattern::HatchFillTypeFromUnsigned(
   {
     ON_ENUM_FROM_UNSIGNED_CASE(ON_HatchPattern::HatchFillType::Solid);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_HatchPattern::HatchFillType::Lines);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_HatchPattern::HatchFillType::Gradient);
+    //ON_ENUM_FROM_UNSIGNED_CASE(ON_HatchPattern::HatchFillType::Gradient);
   }
   ON_ERROR("Invalid hatch_fill_type_as_unsigned value.");
   return ON_HatchPattern::HatchFillType::Solid;
@@ -721,9 +721,9 @@ void ON_HatchPattern::Dump( ON_TextLog& dump) const
   case ON_HatchPattern::HatchFillType::Lines:
     dump.Print( "fill type: Lines");
     break;
-  case ON_HatchPattern::HatchFillType::Gradient:
-    dump.Print( "fill type: Gradient");
-    break;
+  //case ON_HatchPattern::HatchFillType::Gradient:
+  //  dump.Print( "fill type: Gradient");
+  //  break;
   }
   dump.Print( "\n");
 
@@ -1484,6 +1484,7 @@ void ON_Hatch::Dump( ON_TextLog& dump) const
   dump.Print("Pattern scale: %g\n", PatternScale());
   ON_3dPoint p = this->BasePoint();
   dump.Print("Base point: %g, %g, %g\n", p.x, p.y, p.z);
+  dump.Print("2d base point: %g, %g\n", m_basepoint.x, m_basepoint.y);
   dump.Print("Plane origin: %g, %g, %g\n", m_plane.origin.x, m_plane.origin.y, m_plane.origin.z);
   dump.Print("Plane x axis: %g, %g, %g\n", m_plane.xaxis.x, m_plane.xaxis.y, m_plane.xaxis.z);
   dump.Print("Plane y axis: %g, %g, %g\n", m_plane.yaxis.x, m_plane.yaxis.y, m_plane.yaxis.z);
@@ -1711,15 +1712,20 @@ double arbaxisRotation(const ON_Plane& plane)
 static void UnrotateHatch(ON_Hatch* hatch)
 {
   double a = arbaxisRotation(hatch->Plane());
+
   ON_Plane& plane = *(ON_Plane*)(&hatch->Plane());
   if(fabs(a) > ON_ZERO_TOLERANCE)
   {
+    ON_2dPoint base2 = hatch->BasePoint2d();
     plane.Rotate(-a, plane.zaxis);
     for(int i = 0; i < hatch->LoopCount(); i++)
     {
       ON_Curve* pC = (ON_Curve*)hatch->Loop(i)->Curve();
       pC->Rotate(a, ON_3dVector::ZAxis, ON_3dPoint::Origin);
     }
+    base2.Rotate(a, ON_2dPoint::Origin);
+    hatch->SetBasePoint(base2);
+
     //hatch->SetPatternRotation(hatch->PatternRotation()+a);
   }
   // Project world origin to hatch plane and set hatch plane origin to the result
@@ -1735,11 +1741,16 @@ static void UnrotateHatch(ON_Hatch* hatch)
       ON_Curve* pC = (ON_Curve*)hatch->Loop(i)->Curve();
       pC->Translate(V);
     }
+
+    ON_2dPoint base2 = hatch->BasePoint2d();
+    base2 = base2 + ON_2dVector(-P.x, -P.y);
+    hatch->SetBasePoint(base2);
+
     P = plane.PointAt(P.x, P.y);
     plane.origin = P;
   }
 }
-
+  
 bool ON_Hatch::Transform( const ON_Xform& xform)
 {
   if( fabs( fabs( xform.Determinant()) - 1.0) > 1.0e-4)
@@ -1761,7 +1772,11 @@ bool ON_Hatch::Transform( const ON_Xform& xform)
     for( int i = 0; i < LoopCount(); i++)
       m_loops[i]->m_p2dCurve->Transform( T);
   }
-  int rc = m_plane.Transform( xform);
+  
+  ON_3dPoint base = m_plane.PointAt(m_basepoint.x, m_basepoint.y);
+  base.Transform(xform);
+  int rc = m_plane.Transform(xform);
+  SetBasePoint(base);
 
   //ON_3dVector x = m_plane.xaxis;
   //x.Transform(xform);
@@ -2043,3 +2058,357 @@ ON_CurveRegionBoundaryElement& ON_CurveRegionBoundaryElement::operator=(const ON
 }
 
 
+#if defined(OPENNURBS_GRADIENT_WIP)
+
+
+class ON_CLASS ON_GradientColorData : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_GradientColorData);
+public:
+  ON_GradientColorData();
+  ~ON_GradientColorData() = default;
+
+  ON_GradientColorData(const ON_GradientColorData&) = default;
+  ON_GradientColorData& operator=(const ON_GradientColorData&) = default;
+
+  //ON_GradientColorData(const ON_GradientColorData&);
+  //ON_GradientColorData& operator=(const ON_GradientColorData&);
+
+  static ON_GradientColorData* FromObject( const ON_Object* );
+  static ON_GradientColorData* FromObject(ON_Object* obj, bool createAndAttachIfMissing);
+
+  // override virtual ON_Object::Dump function
+  void Dump(ON_TextLog& text_log) const override;
+
+  // override virtual ON_Object::SizeOf function
+  unsigned int SizeOf() const override;
+
+  // override virtual ON_Object::DataCRC function
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
+
+  // override virtual ON_Object::Write function
+  bool Write(ON_BinaryArchive& binary_archive) const override;
+
+  // override virtual ON_Object::Read function
+  bool Read(ON_BinaryArchive& binary_archive) override;
+
+  // override virtual ON_UserData::GetDescription function
+  bool GetDescription(ON_wString& description) override;
+
+  // override virtual ON_UserData::Archive function
+  bool WriteToArchive(
+    const class ON_BinaryArchive& archive,
+    const class ON_Object* parent_object
+  ) const override;
+
+  // override virtual ON_UserData::Transform function
+  bool Transform(const ON_Xform&) override;
+
+  ON_GradientType m_gradient_type = ON_GradientType::Linear;
+  ON_3dPoint m_start = ON_3dPoint::UnsetPoint;
+  ON_3dPoint m_end = ON_3dPoint::UnsetPoint;
+  double m_repeat = 0;
+  ON_SimpleArray<ON_ColorStop> m_colors;
+
+//private:
+  //void Internal_CopyFrom(const ON_GradientColorData&);
+};
+
+ON_OBJECT_IMPLEMENT(ON_GradientColorData, ON_UserData, "0C1AD613-4EFA-4F47-A147-4D79D77FCB0C");
+
+ON_GradientColorData::ON_GradientColorData()
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_GradientColorData);
+  m_application_uuid = ON_opennurbs6_id;
+  m_userdata_copycount = 1;
+}
+
+//void ON_GradientColorData::Internal_CopyFrom(const ON_GradientColorData & src)
+//{
+//  m_gradient_type = src.m_gradient_type;
+//  m_start = src.m_start;
+//  m_end = src.m_end;
+//  m_repeat = src.m_repeat;
+//  m_colors = src.m_colors;
+//}
+//
+//ON_GradientColorData::ON_GradientColorData(const ON_GradientColorData &src)
+//  : ON_UserData(src)
+//{
+//  Internal_CopyFrom(src);
+//}
+
+ON_GradientColorData* ON_GradientColorData::FromObject(const ON_Object* p)
+{
+  return p
+    ? ON_GradientColorData::Cast(p->GetUserData(ON_CLASS_ID(ON_GradientColorData)))
+    : nullptr;
+}
+
+//ON_GradientColorData & ON_GradientColorData::operator=(const ON_GradientColorData & src)
+//{
+//  if (this != &src)
+//  {
+//    ON_UserData::operator=(src);
+//    Internal_CopyFrom(src);
+//  }
+//  return *this;
+//}
+
+ON_GradientColorData* ON_GradientColorData::FromObject(ON_Object* obj, bool createAndAttachIfMissing)
+{
+  if (nullptr == obj)
+    return nullptr;
+  ON_GradientColorData* rc = ON_GradientColorData::Cast(obj->GetUserData(ON_CLASS_ID(ON_GradientColorData)));
+  if (nullptr == rc && createAndAttachIfMissing)
+  {
+    rc = new ON_GradientColorData();
+    if (!obj->AttachUserData(rc))
+    {
+      delete rc;
+      return nullptr;
+    }
+  }
+  return rc;
+}
+
+bool ON_GradientColorData::GetDescription(ON_wString& description)
+{
+  description = L"Color Gradient UserData";
+  return true;
+}
+
+bool ON_GradientColorData::WriteToArchive(const ON_BinaryArchive & archive, const ON_Object * parent_object) const
+{
+  return (archive.Archive3dmVersion() >= 60);
+}
+
+unsigned int ON_GradientColorData::SizeOf() const
+{
+  unsigned int sz = ON_UserData::SizeOf();
+  sz += sizeof(*this) - sizeof(ON_UserData);
+  sz += m_colors.SizeOfArray();
+  return sz;
+}
+
+ON__UINT32 ON_GradientColorData::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_gradient_type), &m_gradient_type);
+  current_remainder = m_start.DataCRC(current_remainder);
+  current_remainder = m_end.DataCRC(current_remainder);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_repeat), &m_repeat);
+  current_remainder = m_colors.DataCRC(current_remainder);
+  return current_remainder;
+}
+
+void ON_GradientColorData::Dump(ON_TextLog& text_log) const
+{
+  switch (m_gradient_type)
+  {
+  case ON_GradientType::None:
+    text_log.Print("None gradient\n");
+    break;
+  case ON_GradientType::Linear:
+    text_log.Print("Linear gradient\n");
+    break;
+  case ON_GradientType::Radial:
+    text_log.Print("Radial gradient\n");
+    break;
+  case ON_GradientType::LinearDisabled:
+    text_log.Print("Linear(disabled) gradient\n");
+    break;
+  case ON_GradientType::RadialDisabled:
+    text_log.Print(L"Radial(disabled) gradient\n");
+    break;
+  default:
+    break;
+  }
+
+  text_log.PushIndent();
+  text_log.Print("points ");
+  text_log.Print(m_start);
+  text_log.Print("-");
+  text_log.Print(m_end);
+  text_log.Print("\nrepeat %d\n", m_repeat);
+  text_log.PopIndent();
+}
+
+bool ON_GradientColorData::Write(ON_BinaryArchive& archive) const
+{
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 0);
+  if (!rc)
+    return false;
+
+  for (;;)
+  {
+    rc = archive.WriteInt((int)m_gradient_type);
+    if (!rc) break;
+    rc = archive.WritePoint(m_start);
+    if (!rc) break;
+    rc = archive.WritePoint(m_end);
+    if (!rc) break;
+    rc = archive.WriteDouble(m_repeat);
+    if (!rc) break;
+
+    int count = m_colors.Count();
+    rc = archive.WriteInt(count);
+    if (!rc) break;
+
+    for (int i = 0; i < count && rc; i++)
+    {
+      rc = m_colors[i].Write(archive);
+      if (!rc) break;
+    }
+    if (!rc) break;
+
+    break;
+  }
+
+  if (!archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_GradientColorData::Read(ON_BinaryArchive& archive)
+{
+  m_colors.SetCount(0);
+
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version);
+  if (!rc)
+    return false;
+
+  for (;;)
+  {
+    rc = (1 == major_version);
+    if (!rc) break;
+
+    int gt = (int)ON_GradientType::None;
+    rc = archive.ReadInt(&gt);
+    if (gt < (int)ON_GradientType::None || gt >(int)ON_GradientType::RadialDisabled)
+      rc = false;
+    if (!rc) break;
+    m_gradient_type = (ON_GradientType)gt;
+
+    rc = archive.ReadPoint(m_start);
+    if (!rc) break;
+    rc = archive.ReadPoint(m_end);
+    if (!rc) break;
+    rc = archive.ReadDouble(&m_repeat);
+    if (!rc) break;
+    int count = 0;
+    rc = archive.ReadInt(&count);
+    if (!rc) break;
+
+    m_colors.Reserve(count);
+    for (int i = 0; i < count && rc; i++)
+    {
+      ON_ColorStop cs;
+      rc = cs.Read(archive);
+      if (!rc) break;
+
+      m_colors.Append(cs);
+    }
+    if (!rc) break;
+
+    break;
+  }
+
+  if (!archive.EndRead3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_GradientColorData::Transform(const ON_Xform& xform)
+{
+  m_start.Transform(xform);
+  m_end.Transform(xform);
+  return ON_UserData::Transform(xform);
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+ON_GradientType ON_Hatch::GetGradientType() const
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (data)
+    return data->m_gradient_type;
+  return ON_GradientType::None;
+}
+
+void ON_Hatch::SetGradientType(ON_GradientType gt)
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (nullptr == data && ON_GradientType::None == gt)
+    return;
+
+  data = ON_GradientColorData::FromObject(this, true);
+  if (data)
+    data->m_gradient_type = gt;
+}
+
+void ON_Hatch::GetGradientColors(ON_SimpleArray<ON_ColorStop>& colors) const
+{
+  colors.Empty();
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (data)
+    colors = data->m_colors;
+}
+bool ON_Hatch::SetGradientColors(const ON_SimpleArray<ON_ColorStop>& colors)
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this, true);
+  if (nullptr == data)
+    return false;
+  data->m_colors = colors;
+  return true;
+}
+
+double ON_Hatch::GetGradientRepeat() const
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (data)
+    return data->m_repeat;
+  return 0;
+}
+bool ON_Hatch::SetGradientRepeat(double repeat)
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (nullptr == data && 0 == repeat)
+    return true;
+
+  data = ON_GradientColorData::FromObject(this, true);
+  if (nullptr == data)
+    return false;
+  
+  data->m_repeat = repeat;
+  return true;
+}
+
+void ON_Hatch::GetGradientEndPoints(ON_3dPoint& startPoint, ON_3dPoint& endPoint) const
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
+  if (nullptr == data)
+  {
+    startPoint = ON_3dPoint::UnsetPoint;
+    endPoint = ON_3dPoint::UnsetPoint;
+    return;
+  }
+
+  startPoint = data->m_start;
+  endPoint = data->m_end;
+}
+bool ON_Hatch::SetGradientEndPoints(ON_3dPoint startpoint, ON_3dPoint endpoint)
+{
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this, true);
+  if (nullptr == data)
+    return false;
+
+  data->m_start = startpoint;
+  data->m_end = endpoint;
+  return true;
+}
+
+#endif

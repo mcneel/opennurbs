@@ -283,8 +283,12 @@ unsigned int ON_ComponentStatus::ClearStates(
       s1 &= ~HIGHLIGHTED_BIT;
     }
 
+    // preserve value of runtime mark bit on m_status_flags
     const unsigned char mark = (m_status_flags&RUNTIME_MARK_BIT);
+
+    // change m_status_flags to new value
     m_status_flags = (s1|mark);
+
     return 1;
   }
 
@@ -388,33 +392,33 @@ bool ON_ComponentStatus::RuntimeMark() const
 
 }
 
-unsigned int ON_ComponentStatus::SetRuntimeMark(
+bool ON_ComponentStatus::SetRuntimeMark(
   bool bRuntimeMark
 )
 {
   return bRuntimeMark ? SetRuntimeMark() : ClearRuntimeMark();
 }
 
-unsigned int ON_ComponentStatus::SetRuntimeMark()
+bool ON_ComponentStatus::SetRuntimeMark()
 {
   const unsigned char c = (m_status_flags | RUNTIME_MARK_BIT);
   if (c != m_status_flags)
   {
     m_status_flags = c;
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
-unsigned int ON_ComponentStatus::ClearRuntimeMark()
+bool ON_ComponentStatus::ClearRuntimeMark()
 {
   const unsigned char c = (m_status_flags & ~RUNTIME_MARK_BIT);
   if (c != m_status_flags)
   {
     m_status_flags = c;
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 

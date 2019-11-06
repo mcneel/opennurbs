@@ -1188,6 +1188,34 @@ ON_BinaryArchive::ReadColor( ON_Color& color )
 }
 
 bool
+ON_BinaryArchive::ReadColor(ON_4fColor& color)
+{
+  float f = 0.f;
+
+  bool rc = ReadFloat(&f);
+  if (rc)
+  {
+    color.SetRed(f);
+    rc = ReadFloat(&f);
+  }
+  if (rc)
+  {
+    color.SetGreen(f);
+    rc = ReadFloat(&f);
+  }
+  if (rc)
+  {
+    color.SetBlue(f);
+    rc = ReadFloat(&f);
+  }
+  if (rc)
+  {
+    color.SetAlpha(f);
+  }
+  return rc;
+}
+
+bool
 ON_BinaryArchive::ReadPoint (
   ON_2dPoint& p
   )
@@ -3200,6 +3228,16 @@ ON_BinaryArchive::WriteColor( const ON_Color& color )
 {
   unsigned int colorref = color;
   return WriteByte( 4, (const unsigned char*)&colorref ); // WriteByte prevents big endian swaps
+}
+
+bool
+ON_BinaryArchive::WriteColor(const ON_4fColor& color)
+{
+  if (!WriteFloat(color.Red())) return false;
+  if (!WriteFloat(color.Green())) return false;
+  if (!WriteFloat(color.Blue())) return false;
+  if (!WriteFloat(color.Alpha())) return false;
+  return true;
 }
 
 bool
@@ -7065,15 +7103,6 @@ bool ON_BinaryArchive::Save3dmPreviewImage() const
   return m_bSave3dmPreviewImage;
 }
 
-
-
-int ON_BinaryArchive::CurrentArchiveVersion()
-{
-  // Latest version of opennurbs binary archives supported by
-  // this version of opennurbs.
-  return ON::VersionMajor()*10; // *10 means 64-bit chunk values
-}
-
 void ON_BinaryArchive::SetModelSerialNumber(
   unsigned int model_serial_number,
   unsigned int reference_model_serial_number,
@@ -7211,7 +7240,7 @@ bool ON_BinaryArchive::Begin3dmTable(
   if ( table == ON_3dmArchiveTableType::start_section )
   {
     // m_3dm_version is set during reading of the start section.
-    if (0 != m_3dm_version)
+    if (0 != m_3dm_version && ON::archive_mode::read3dm == Mode())
     {
       ON_ERROR("Archive m_3dm_version is set during start section reading.");
       return End3dmTable(table,false);
@@ -7497,7 +7526,6 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
     ON_ERROR("3dm archive version must be 2, 3, 4, 50 or 60");
     return End3dmTable(ON_3dmArchiveTableType::start_section,false);
   }
-
 
   m_crc_error_count = 0;
   m_critical_error_count = 0;
@@ -16541,7 +16569,7 @@ ON_BinaryArchive::SetArchive3dmVersion(int v)
   // 5 was used for early V5 betas with 4 byte chunk lengths
   // 50 is used for V5 files with 8 bytes chunk lengths.
   // 60, 70, ... will be used for Rhino V6, V7, etc.
-  if ( (v >= 1 && v <= 5) || ( v >= 50 && 0 == (v % 10) ) )
+  if ( (v >= 1 && v <= 5) || ( v >= 50 && 0 == (v % 10) && v <= ON_BinaryArchive::CurrentArchiveVersion() ) )
   {
     m_3dm_version = v;
     rc = true;
@@ -16970,8 +16998,13 @@ bool ON_WriteMultipleObjectArchive(
     model.AddManagedModelComponent( mg, bResolveIdAndNameConflicts );
   }
 
-  if (version < ON_BinaryArchive::CurrentArchiveVersion()-1 || version > ON_BinaryArchive::CurrentArchiveVersion())
+  if ( (0 != version % 10)
+    || version < ON_BinaryArchive::CurrentArchiveVersion() - 10
+    || version > ON_BinaryArchive::CurrentArchiveVersion()
+    )
+  {
     version = ON_BinaryArchive::CurrentArchiveVersion();
+  }
   model.m_sStartSectionComments = "Archive created by ON_WriteMultipleObjectArchive";
   bool rc = model.Write(archive, version );
 

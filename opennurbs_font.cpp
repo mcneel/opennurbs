@@ -1687,6 +1687,114 @@ const ON_Font* ON_FontFaceQuartet::BoldItalicFace() const
   return m_bold_italic;
 }
 
+ON_FontFaceQuartet::Member ON_FontFaceQuartet::QuartetMember(
+  const ON_Font* font
+) const
+{
+  if (nullptr == font || m_quartet_name.IsEmpty())
+    return ON_FontFaceQuartet::Member::Unset;
+  
+  if (
+    false == m_quartet_name.EqualOrdinal(font->QuartetName(ON_Font::NameLocale::Localized), true)
+    && false == m_quartet_name.EqualOrdinal(font->QuartetName(ON_Font::NameLocale::English), true)
+    )
+    return ON_FontFaceQuartet::Member::Unset;
+  
+  ON_FontFaceQuartet::Member m[2] = { ON_FontFaceQuartet::Member ::Unset,ON_FontFaceQuartet::Member::Unset};
+  if ( font->IsItalicOrOblique() )
+  {
+    m[0] = ON_FontFaceQuartet::Member::Italic;
+    m[1] = ON_FontFaceQuartet::Member::BoldItalic;
+  }
+  else 
+  {
+    m[0] = ON_FontFaceQuartet::Member::Regular;
+    m[1] = ON_FontFaceQuartet::Member::Bold;
+  }
+  
+  const ON_Font* q[2] = { Face(m[0]),Face(m[1]) };
+  
+  if (font == q[0])
+    return m[0];
+  if (font == q[1])
+    return m[1];
+
+  ON_wString s[4];
+  for (int i = 0; i < 2; i++)
+  {
+    if (nullptr == q[i])
+      continue;
+
+#if defined(ON_RUNTIME_WIN)
+    // style, weight, and LOGFONT name is the most reliable way to uniquely identify quartet members on Windows.
+    // We've already matched style.
+    if (q[i]->FontWeight() != font->FontWeight())
+      continue;
+    s[0] = q[i]->WindowsLogfontName(ON_Font::NameLocale::Localized);
+    s[1] = q[i]->WindowsLogfontName(ON_Font::NameLocale::English);
+    s[2] = font->WindowsLogfontName(ON_Font::NameLocale::Localized);
+    s[3] = font->WindowsLogfontName(ON_Font::NameLocale::English);
+#else
+    // style and PostScript name is the most reliable way to uniquely identify quartet members on Mac OS.
+    // We've already matched style.
+    s[0] = q[i]->PostScriptName(ON_Font::NameLocale::Localized);
+    s[1] = q[i]->PostScriptName(ON_Font::NameLocale::English);
+    s[2] = font->PostScriptName(ON_Font::NameLocale::Localized);
+    s[3] = font->PostScriptName(ON_Font::NameLocale::English);
+#endif
+    if (s[0].IsNotEmpty() && (s[0].EqualOrdinal(s[2], true) || s[0].EqualOrdinal(s[3], true)))
+      return m[i];
+    if (s[1].IsNotEmpty() && (s[1].EqualOrdinal(s[2], true) || s[1].EqualOrdinal(s[3], true)))
+      return m[i];
+  }
+  return ON_FontFaceQuartet::Member::Unset;
+}
+
+const ON_Font* ON_FontFaceQuartet::Face(
+  ON_FontFaceQuartet::Member member
+) const
+{
+  switch (member)
+  {
+  case ON_FontFaceQuartet::Member::Regular:
+    return m_regular;
+  case ON_FontFaceQuartet::Member::Bold:
+    return m_bold;
+  case ON_FontFaceQuartet::Member::Italic:
+    return m_italic;
+  case ON_FontFaceQuartet::Member::BoldItalic:
+    return m_bold_italic;
+  }
+  return nullptr;
+}
+
+const ON_Font* ON_FontFaceQuartet::ClosestFace(
+  ON_FontFaceQuartet::Member member
+) const
+{
+  bool bPreferBold = false;
+  bool bPreferItalic = false;
+  switch (member)
+  {
+  case ON_FontFaceQuartet::Member::Regular:
+    break;
+  case ON_FontFaceQuartet::Member::Bold:
+    bPreferBold = true;
+    break;
+  case ON_FontFaceQuartet::Member::Italic:
+    bPreferItalic = true;
+    break;
+  case ON_FontFaceQuartet::Member::BoldItalic:
+    bPreferItalic = true;
+    bPreferBold = true;
+    break;
+  default:
+    return nullptr;
+  }
+  return ClosestFace(bPreferBold,bPreferItalic);
+}
+
+
 const ON_Font* ON_FontFaceQuartet::Face(
   bool bBold,
   bool bItalic
@@ -1820,6 +1928,23 @@ int ON_FontList::CompareFamilyAndFaceName(ON_Font const* const* lhs, ON_Font con
   return rc;
 }
 
+int ON_FontList::CompareFamilyAndWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs)
+{
+  ON_ManagedFonts_CompareFontPointer(lhs, rhs);
+  int rc = ON_wString::CompareOrdinal(
+    lhs_font->FamilyName(ON_Font::NameLocale::LocalizedFirst),
+    rhs_font->FamilyName(ON_Font::NameLocale::LocalizedFirst),
+    true
+  );
+  if (0 == rc)
+    rc = ON_wString::CompareOrdinal(
+      lhs_font->WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst),
+      rhs_font->WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst),
+      true
+    );
+  return rc;
+}
+
 int ON_FontList::CompareWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs)
 {
   ON_ManagedFonts_CompareFontPointer(lhs, rhs);
@@ -1923,6 +2048,19 @@ int ON_FontList::CompareWeightStretchStyle(
     return rc;
 
   return 0;
+}
+
+
+int ON_FontList::CompareStretch(
+  ON_Font const* const* lhs, 
+  ON_Font const* const* rhs
+  )
+{
+  ON_ManagedFonts_CompareFontPointer(lhs, rhs);
+  const int lhs_font_stretch = (int)static_cast<unsigned char>(lhs_font->FontStretch());
+  const int rhs_font_stretch = (int)static_cast<unsigned char>(rhs_font->FontStretch());
+  const int rc = (lhs_font_stretch - rhs_font_stretch);
+  return rc;
 }
 
 int ON_FontList::CompareUnderlinedStrikethroughPointSize(
@@ -4171,10 +4309,18 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
   m_quartet_list.Reserve(32 + font_count / 4);
 
   const ON_Font* f = nullptr;
-  const ON_Font* upright6[6] = {};
-  const ON_Font* italic6[6] = {};
+  const unsigned max_stretch_dex = 10;
+  const unsigned max_weight_dex = 10;
+  // quartet_fonts[stretch_dex][upright,italic][weight_dex]
+  // = all fonts in the quartet arranged by stretch, slant, and weight.
+  const ON_Font* quartet_fonts[11][2][11] = {};
+  // count[stretch_dex][upright,italic] = number of weights available for that stretch and slant
+  unsigned int count[10][2] = {};
 
-  for (unsigned int i = 0; i < font_count; i++)
+  unsigned stretch_dex_range[2] = { 0U,0U };
+
+  unsigned next_i = 0U;
+  for (unsigned i = 0; i < font_count; i = (i < next_i) ? next_i : (i+1))
   {
     f = a[i];
     if (nullptr == f)
@@ -4184,115 +4330,138 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
     if (quartet_name.IsEmpty())
       continue;
 
-    memset(upright6, 0, sizeof(upright6));
-    memset(italic6, 0, sizeof(italic6));
-    
-    const ON_Font** sextet = (f->IsItalic()) ? italic6 : upright6;
-    if (ON_Font::Weight::Normal == f->FontWeight())
-      sextet[2] = f;
-    else if (ON_Font::Weight::Medium == f->FontWeight())
-      sextet[3] = f;
-    else if (f->IsBold())
-      sextet[4] = f;
-    else if (f->IsLight())
-      sextet[1] = f;
-    else
-      continue;
-
-    while(i+1 < font_count)
+    memset(quartet_fonts, 0, sizeof(quartet_fonts));
+    memset(count, 0, sizeof(count));
+    const unsigned medium_stretch_dex = (unsigned)static_cast<unsigned char>(ON_Font::Stretch::Medium);
+    unsigned stretch_dex = medium_stretch_dex;
+    unsigned slant_dex;
+    unsigned weight_dex;
+    unsigned quartet_count = 0;
+    for ( next_i = i; next_i < font_count; ++next_i)
     {
-      f = a[i + 1];
+      f = a[next_i];
       if (nullptr == f)
         break;
       if (false == quartet_name.EqualOrdinal(f->QuartetName(), true))
         break;
-      i++;
 
-      const unsigned int f_weight = static_cast<unsigned char>(f->FontWeight());
-      sextet = (f->IsItalic()) ? italic6 : upright6;
-      if (ON_Font::Weight::Normal == f->FontWeight())
-        sextet[2] = f;
-      else if (ON_Font::Weight::Medium == f->FontWeight())
-        sextet[3] = f;
-      else if (f->IsBold())
+      stretch_dex = static_cast<unsigned char>(f->FontStretch());
+      if (stretch_dex < 1 || stretch_dex >= max_stretch_dex)
+        continue;
+      weight_dex = static_cast<unsigned char>(f->FontWeight());
+      if (weight_dex < 1 || weight_dex >= max_weight_dex)
+        continue;
+      slant_dex = f->IsItalicOrOblique() ? 1U : 0U;
+      if (nullptr != quartet_fonts[stretch_dex][slant_dex][weight_dex])
+        continue;
+      if (0 == quartet_count)
       {
-        if (nullptr == sextet[4])
-          sextet[4] = f;
-        else if (f_weight < static_cast<unsigned char>(sextet[4]->FontWeight()))
-        {
-          if (nullptr == sextet[5])
-            sextet[5] = sextet[4];
-          sextet[4] = f;
-        }
-        else if (nullptr != sextet[5] && f_weight > static_cast<unsigned char>(sextet[5]->FontWeight()))
-          sextet[5] = f;
+        stretch_dex_range[0] = stretch_dex;
+        stretch_dex_range[1] = stretch_dex;
       }
-      else if (f->IsLight())
-      {
-        if (nullptr == sextet[1])
-          sextet[1] = f;
-        else if (f_weight > static_cast<unsigned char>(sextet[1]->FontWeight()))
-        {
-          if ( nullptr == sextet[0])
-            sextet[0] = sextet[1];
-          sextet[1] = f;
-        }
-        else if (nullptr != sextet[0] && f_weight < static_cast<unsigned char>(sextet[0]->FontWeight()))
-          sextet[0] = f;
-      }
+      else if (stretch_dex < stretch_dex_range[0])
+        stretch_dex_range[0] = stretch_dex;
+      else if (stretch_dex > stretch_dex_range[1])
+        stretch_dex_range[1] = stretch_dex;
+      quartet_fonts[stretch_dex][slant_dex][weight_dex] = f;
+      ++count[stretch_dex][slant_dex];
+      ++quartet_count;
     }
+    if (0 == quartet_count)
+      continue;
 
-    for (int sex_dex = 0; sex_dex < 2; sex_dex++)
+    if (stretch_dex_range[0] < stretch_dex_range[1])
     {
-      sextet = (1==sex_dex) ? italic6 : upright6;
-
-      if (nullptr == sextet[2])
+      // Need to pick the stretch_dex with the most members.
+      // This happens on Mac OS (where no reliable "LOGFONT" name exists) and
+      // with damaged Windows fonts that don't have a "LOFGONT" name set.
+      // Pick the one closest to ON_Font::Stretch::Medium with the most faces
+      stretch_dex = medium_stretch_dex;
+      for (unsigned k = 1; k <= medium_stretch_dex; ++k)
       {
-        sextet[2] = sextet[3];
-        sextet[3] = nullptr;
-      }
-      else if (nullptr == sextet[4])
-      {
-        sextet[4] = sextet[3];
-        sextet[3] = nullptr;
-      }
-
-      if (nullptr != sextet[2])
-      {
-        if (nullptr != sextet[5]) 
-          sextet[4] = sextet[5];
-        continue;
-      }
-
-      if (nullptr != sextet[1] && nullptr != sextet[4])
-      {
-        sextet[2] = sextet[1];
-        continue;
-      }
-
-      if (nullptr != sextet[1])
-      {
-        if (nullptr != sextet[0])
-        {
-          sextet[2] = sextet[0];
-          sextet[4] = sextet[1];
-        }
-        else
-        {
-          sextet[2] = sextet[1];
-        }
-        continue;
-      }
-
-      if (nullptr != sextet[4])
-      {
-        sextet[2] = sextet[4];
-        sextet[4] = sextet[5];
-        continue;
+        const unsigned k0 = medium_stretch_dex - k;
+        const unsigned k1 = medium_stretch_dex + k;
+        if (k0 > 0 && (count[k0][0] + count[k0][1]) > (count[stretch_dex][0] + count[stretch_dex][1]))
+          stretch_dex = k0;
+        if (k1 < max_stretch_dex && (count[k1][0] + count[k1][1]) >(count[stretch_dex][0] + count[stretch_dex][1]))
+          stretch_dex = k1;
       }
     }
+    else
+      stretch_dex = stretch_dex_range[0];
 
-    ON_FontFaceQuartet q(quartet_name,upright6[2],upright6[4],italic6[2],italic6[4]);
+    if (count[stretch_dex][0] + count[stretch_dex][1] <= 0)
+      continue;
+
+    const unsigned normal_weight_dex = (unsigned)static_cast<unsigned char>(ON_Font::Weight::Normal);
+    const unsigned medium_weight_dex = (unsigned)static_cast<unsigned char>(ON_Font::Weight::Medium);
+    const unsigned bold_weight_dex = (unsigned)static_cast<unsigned char>(ON_Font::Weight::Bold);
+
+    const ON_Font* pairs[2][2] = {};
+    for (slant_dex = 0; slant_dex < 2; slant_dex++)
+    {
+      if ( count[stretch_dex][slant_dex] <= 2 )
+      {
+        // 0, 1 or 2 available weights.
+        // If there is 1 face it must be the "Regular" face.
+        // If there are 2 faces, the lightest will be "Regular" and the heaviest will be bold.
+        int pair_dex = 0;
+        for (int j = 1; j < max_weight_dex && pair_dex < 2; ++j)
+        {
+          if (nullptr != quartet_fonts[stretch_dex][slant_dex][j])
+            pairs[slant_dex][pair_dex++] = quartet_fonts[stretch_dex][slant_dex][j];
+        }
+        continue;
+      }
+
+      // 3 or more available weights (Bahnshrift, Helvetica Neue, ...)
+      unsigned regular_dex
+        = (nullptr != quartet_fonts[stretch_dex][slant_dex][normal_weight_dex])
+        ? normal_weight_dex
+        : medium_weight_dex;
+      while (nullptr == quartet_fonts[stretch_dex][slant_dex][regular_dex] && regular_dex > 0)
+        --regular_dex;
+
+      unsigned bold_dex
+        = (nullptr != quartet_fonts[stretch_dex][slant_dex][bold_weight_dex])
+        ? bold_weight_dex
+        : regular_dex+1;
+      while (nullptr == quartet_fonts[stretch_dex][slant_dex][bold_dex] && bold_dex < max_weight_dex)
+        ++bold_dex;
+
+      if (nullptr != quartet_fonts[stretch_dex][slant_dex][regular_dex] && nullptr == quartet_fonts[stretch_dex][slant_dex][bold_dex] )
+      {
+        if (regular_dex > 0)
+        {
+          for (unsigned j = regular_dex - 1; j > 0; --j)
+          {
+            if (nullptr == quartet_fonts[stretch_dex][slant_dex][j])
+              continue;
+            bold_dex = regular_dex;
+            regular_dex = j;
+            break;
+          }
+        }
+      }
+      else if (nullptr == quartet_fonts[stretch_dex][slant_dex][regular_dex] && nullptr != quartet_fonts[stretch_dex][slant_dex][bold_dex] )
+      {
+        if (bold_dex > 0)
+        {
+          for (unsigned j = bold_dex - 1; j > 0; --j)
+          {
+            if (nullptr == quartet_fonts[stretch_dex][slant_dex][j])
+              continue;
+            regular_dex = j;
+            break;
+          }
+        }
+      }
+
+      pairs[slant_dex][0] = quartet_fonts[stretch_dex][slant_dex][regular_dex];
+      pairs[slant_dex][1] = quartet_fonts[stretch_dex][slant_dex][bold_dex];
+    }
+
+    ON_FontFaceQuartet q(quartet_name,pairs[0][0],pairs[0][1],pairs[1][0],pairs[1][1]);
     if (q.IsEmpty())
       continue;
 
@@ -6125,11 +6294,367 @@ const ON_wString ON_Font::WindowsLogfontName() const
   return WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst);
 }
 
+class Internal_FakeWindowsLogfontName
+{
+public:
+  ~Internal_FakeWindowsLogfontName() = default;
+  Internal_FakeWindowsLogfontName(const Internal_FakeWindowsLogfontName&) = default;
+  Internal_FakeWindowsLogfontName() = default;
+  Internal_FakeWindowsLogfontName& operator=(const Internal_FakeWindowsLogfontName&) = default;
+
+  Internal_FakeWindowsLogfontName(
+    const wchar_t* family_name,
+    const wchar_t* postscript_name,
+    const wchar_t* fake_logfont_name,
+    ON_FontFaceQuartet::Member quartet_member
+  )
+  : m_fake_logfont_name(fake_logfont_name)
+  , m_family_and_postcript_name_hash(Internal_FakeWindowsLogfontName::NameHash(family_name, postscript_name))
+  , m_quartet_member(quartet_member)
+  // for debugging
+  //, m_family_name(family_name)
+  //, m_postscript_name(postscript_name)
+  {
+    m_fake_logfont_name.TrimLeftAndRight();
+    if (
+      m_fake_logfont_name.EqualOrdinal(family_name, true)
+      || (ON_FontFaceQuartet::Member::Unset != quartet_member && m_fake_logfont_name.IsEmpty())
+      || m_family_and_postcript_name_hash.IsZeroDigentOrEmptyContentHash()
+      )
+    {
+      ON_ERROR("Invalid input.");
+      m_fake_logfont_name = ON_wString::EmptyString;
+      m_family_and_postcript_name_hash = ON_SHA1_Hash::EmptyContentHash;
+      m_quartet_member = ON_FontFaceQuartet::Member::Unset;
+    }
+  }
+
+  static const ON_SHA1_Hash NameHash(
+    const wchar_t* family_name,
+    const wchar_t* postscript_name
+  )
+  {
+    if (nullptr == family_name || 0 == family_name[0])
+      return ON_SHA1_Hash::EmptyContentHash;
+    if (nullptr == postscript_name || 0 == postscript_name[0])
+      return ON_SHA1_Hash::EmptyContentHash;
+
+    ON_wString s1(family_name);
+    s1.Remove(ON_wString::Space);
+    s1.Remove(ON_wString::HyphenMinus);
+    s1.TrimLeftAndRight();
+    if (s1.IsEmpty())
+      return ON_SHA1_Hash::EmptyContentHash;
+        
+    ON_wString s2(postscript_name);
+    s2.Remove(ON_wString::Space);
+    s2.Remove(ON_wString::HyphenMinus);
+    s2.TrimLeftAndRight();
+    if (s2.IsEmpty())
+      return ON_SHA1_Hash::EmptyContentHash;
+
+    // add a hypen between family and postscript name
+    // to insure hash for Family = A and postscript = BC
+    // is different from hash for Family = AB and postscript = C
+    s1 += ON_wString::HyphenMinus;
+    s1 += s2;
+       
+    return s1.ContentHash(ON_StringMapOrdinalType::MinimumOrdinal);
+  }
+
+  static int CompareFamilyAndPostscriptNameHash(
+    const Internal_FakeWindowsLogfontName* lhs,
+    const Internal_FakeWindowsLogfontName* rhs
+    )
+  {
+    if (lhs == rhs)
+      return 0;
+    // nulls sort last
+    if (nullptr == lhs)
+      return 1;
+    if (nullptr == rhs)
+      return -1;
+    return ON_SHA1_Hash::Compare(lhs->m_family_and_postcript_name_hash, rhs->m_family_and_postcript_name_hash);
+  }
+
+  const ON_SHA1_Hash QuartetFamilyAndPostscriptNameHash() const
+  {
+    return m_family_and_postcript_name_hash;
+  }
+  
+  ON_FontFaceQuartet::Member QuartetMember() const
+  {
+    return m_quartet_member;
+  }
+
+  const ON_wString FakeWindowsLogfontName() const
+  {
+    return m_fake_logfont_name;
+  }
+
+private:
+  ON_SHA1_Hash m_family_and_postcript_name_hash = ON_SHA1_Hash::EmptyContentHash;
+  ON_wString m_fake_logfont_name = ON_wString::EmptyString;
+  ON_FontFaceQuartet::Member m_quartet_member = ON_FontFaceQuartet::Member::Unset;
+
+  // for debugging
+  //const ON_wString m_family_name = ON_wString::EmptyString;
+  //const ON_wString m_postscript_name = ON_wString::EmptyString;
+};
+
+const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
+  ON_wString family_name,
+  ON_wString postscript_name
+)
+{
+  // This function is used to partition Apple fonts into groups with
+  // at most 4 faces and assign a face windows logfont name to the group.
+  //
+  // This is required for archaic font selection interfaces, like ones in Rhino 6 and 7, 
+  // that use quartets of regular/italic/bold/bold-italic to specify fonts.
+  //
+  // Because modern fonts can have many faces (Helvetica Neue has 14 as of 2019)
+  // and those faces dont' fit the 1970's LOGFONT model of regular/italic/bold/bold-italic.
+  // American Typewriter and Avenir are other example of commonly used fonts that have 
+  // more than 4 faces and don't have fit well into the regular/italic/bold/bold-italic UI.
+  //
+  // It fixes bugs like
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-37074
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-53129
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-53430
+  //
+
+  family_name.TrimLeftAndRight();
+  postscript_name.TrimLeftAndRight();
+  if (family_name.IsEmpty() || postscript_name.IsEmpty())
+    return ON_wString::EmptyString;
+
+  static Internal_FakeWindowsLogfontName fake_names[] = 
+  {
+    // Quartets that need a fake LOGFONT name different from family_name in order to 
+    // appear in an archaic quartet name + regular/bold/italic/bold-italic UI
+    //
+    // Internal_FakeWindowsLogfontName(family_name,postscript_name,fake_logfont_name,member);
+
+    // Cominations that are not explicitly specified are correctly handled by using the family name as the fake logfont name.
+    // The explicity fake logfont name should always be different from the family name.
+    Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-Light",          L"American Typewriter Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-Semibold",       L"American Typewriter Semibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-CondensedLight", L"American Typewriter Condensed Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-Condensed",      L"American Typewriter Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-CondensedBold",  L"American Typewriter Condensed", ON_FontFaceQuartet::Member::Bold),
+
+    Internal_FakeWindowsLogfontName(L"Apple Braille", L"AppleBraille-Outline6Dot",  L"Apple Braille Outline 6 Dot", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple Braille", L"AppleBraille-Outline8Dot",  L"Apple Braille Outline 8 Dot", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple Braille", L"AppleBraille-Pinpoint6Dot", L"Apple Braille Pinpoint 6 Dot", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple Braille", L"AppleBraille-Pinpoint8Dot", L"Apple Braille Pinpoint 8 Dot", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-Thin", L"Apple SD Gothic Neo Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-UltraLight", L"Apple SD Gothic Neo Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-Light", L"Apple SD Gothic Neo Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-Medium", L"Apple SD Gothic Neo Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-SemiBold", L"Apple SD Gothic Neo Semibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-ExtraBold", L"Apple SD Gothic Neo Extra Bold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Apple SD Gothic Neo", L"AppleSDGothicNeo-Heavy", L"Apple SD Gothic Neo Heavy", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Arial Hebrew", L"ArialHebrew-Light", L"Arial Hebrew Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Arial Hebrew Scholar", L"ArialHebrewScholar-Light", L"Arial Hebrew Scholar Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Book",          L"Avenir Book", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BookOblique",   L"Avenir Book", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Light",         L"Avenir Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-LightOblique",  L"Avenir Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Medium",        L"Avenir Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-MediumOblique", L"Avenir Medium", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Heavy",         L"Avenir Heavy", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-HeavyOblique",  L"Avenir Heavy", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Black",         L"Avenir Black", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BlackOblique",  L"Avenir-Black", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLight", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLightItalic", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-Medium", L"Avenir Next Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-MediumItalic", L"Avenir Next Medium", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-DemiBold", L"Avenir Next Demibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-DemiBoldItalic", L"Avenir Next Demibold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-Heavy", L"Avenir Next Heavy", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-HeavyItalic", L"Avenir Next Heavy", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-UltraLight", L"Avenir Next Condensed Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-UltraLightItalic", L"Avenir Next Condensed Ultralight", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-Medium", L"Avenir Next Condensed Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-MediumItalic", L"Avenir Next Condensed Medium", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-DemiBold", L"Avenir Next Condensed Demibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-DemiBoldItalic", L"Avenir Next Condensed Demibold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-Heavy", L"Avenir Next Condensed Heavy", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Avenir Next Condensed", L"AvenirNextCondensed-HeavyItalic", L"Avenir Next Condensed Heavy", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Baskerville", L"Baskerville-SemiBold", L"Baskerville Semibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Baskerville", L"Baskerville-SemiBoldItalic", L"Baskerville Semibold", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Chalkboard SE", L"ChalkboardSE-Light", L"Chalkboard SE Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Charter", L"Charter-Black", L"Charter Black", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Charter", L"Charter-BlackItalic", L"Charter Black", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Copperplate", L"Copperplate-Light", L"Copperplate Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Damascus", L"DamascusLight", L"Damascus Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Damascus", L"DamascusMedium", L"Damascus Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Damascus", L"DamascusSemiBold", L"Damascus Semibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedMedium", L"Futura Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedExtraBold", L"Futura Condensed", ON_FontFaceQuartet::Member::Bold),
+
+    Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-Light", L"Gill Sans Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-LightItalic", L"Gill Sans Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-SemiBold", L"Gill Sans Semibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-SemiBoldItalic", L"Gill Sans Semibold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-UltraBold", L"Gill Sans Ultrabold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Helvetica", L"Helvetica-Light", L"Helvetica Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica", L"Helvetica-LightOblique", L"Helvetica Light", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-UltraLight",       L"Helvetica Neue Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-UltraLightItalic", L"Helvetica Neue Ultralight",  ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-Thin",             L"Helvetica Neue Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-ThinItalic",       L"Helvetica Neue Thin", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-Light",            L"Helvetica Neue Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-LightItalic",      L"Helvetica Neue Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-Medium",           L"Helvetica Neue Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-MediumItalic",     L"Helvetica Neue Medium", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-CondensedBold",    L"Helvetica Neue Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Helvetica Neue", L"HelveticaNeue-CondensedBlack",   L"Helvetica Neue Condensed", ON_FontFaceQuartet::Member::Bold),
+
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W3", L"Hiragino Sans W3", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W6", L"Hiragino Sans W6", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W0", L"Hiragino Sans W0", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W1", L"Hiragino Sans W1", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W2", L"Hiragino Sans W2", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W4", L"Hiragino Sans W4", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W5", L"Hiragino Sans W5", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W7", L"Hiragino Sans W7", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W8", L"Hiragino Sans W8", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Hiragino Sans", L"HiraginoSans-W9", L"Hiragino Sans W9", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Hoefler Text", L"HoeflerText-Ornaments", L"Hoefler Text Ornaments", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari", L"ITFDevanagari-Light", L"ITF Devanagari Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari", L"ITFDevanagari-Medium", L"ITF Devanagari Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari", L"ITFDevanagari-Demi", L"ITF Devanagari Demibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari Marathi", L"ITFDevanagariMarathi-Light", L"ITF Devanagari Marathi Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari Marathi", L"ITFDevanagariMarathi-Medium", L"ITF Devanagari Marathi Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"ITF Devanagari Marathi", L"ITFDevanagariMarathi-Demi", L"ITF Devanagari Marathi Demibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Kohinoor Bangla", L"KohinoorBangla-Light", L"Kohinoor Bangla Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Bangla", L"KohinoorBangla-Medium", L"Kohinoor Bangla Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Bangla", L"KohinoorBangla-Semibold", L"Kohinoor Bangla Semibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Kohinoor Devanagari", L"KohinoorDevanagari-Light", L"Kohinoor Devanagari Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Devanagari", L"KohinoorDevanagari-Medium", L"Kohinoor Devanagari Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Devanagari", L"KohinoorDevanagari-Semibold", L"Kohinoor Devanagari Semibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Kohinoor Telugu", L"KohinoorTelugu-Light", L"Kohinoor Telugu Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Telugu", L"KohinoorTelugu-Medium", L"Kohinoor Telugu Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Kohinoor Telugu", L"KohinoorTelugu-Semibold", L"Kohinoor Telugu Semibold", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Muna", L"MunaBlack", L"Muna Black", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Optima", L"Optima-ExtraBlack", L"Optima Black", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Papyrus", L"Papyrus-Condensed", L"Papyrus Condensed", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Phosphate", L"Phosphate-Inline", L"Phosphate Inline", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Phosphate", L"Phosphate-Solid", L"Phosphate Solid", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"PingFang HK", L"PingFangHK-Ultralight", L"PingFang HK Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang HK", L"PingFangHK-Thin", L"PingFang HK Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang HK", L"PingFangHK-Light", L"PingFang HK Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang HK", L"PingFangHK-Medium", L"PingFang HK Medium", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"PingFang SC", L"PingFangSC-Ultralight", L"PingFang SC Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang SC", L"PingFangSC-Thin", L"PingFang SC Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang SC", L"PingFangSC-Light", L"PingFang SC Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang SC", L"PingFangSC-Medium", L"PingFang SC Medium", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"PingFang TC", L"PingFangTC-Ultralight", L"PingFang TC Ultralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang TC", L"PingFangTC-Thin", L"PingFang TC Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang TC", L"PingFangTC-Light", L"PingFang TC Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"PingFang TC", L"PingFangTC-Medium", L"PingFang TC Medium", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Light", L"Skia Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Black", L"Skia Black", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Condensed", L"Skia Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Black-Condensed", L"Skia Condensed Black", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Light-Condensed", L"Skia Condensed Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Extended", L"Skia Extended", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Black-Extended", L"Skia Extended Black", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Skia", L"Skia-Regular_Light-Extended", L"Skia Extended Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Songti SC", L"STSongti-SC-Light", L"Songti SC Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Songti SC", L"STSongti-SC-Black", L"Songti SC Black", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Songti TC", L"STSongti-TC-Light", L"Songti TC Light", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Sukhumvit Set", L"SukhumvitSet-Light", L"Sukhumvit Set Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Sukhumvit Set", L"SukhumvitSet-Medium", L"Sukhumvit Set Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Sukhumvit Set", L"SukhumvitSet-SemiBold", L"Sukhumvit Set Semibold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Sukhumvit Set", L"SukhumvitSet-Thin", L"Sukhumvit Set Thin", ON_FontFaceQuartet::Member::Regular),
+
+    Internal_FakeWindowsLogfontName(L"Thonburi", L"Thonburi-Light", L"Thonburi Light", ON_FontFaceQuartet::Member::Regular),
+  };
+
+  static bool bFakeNamesAreSorted = false;
+  if (false == bFakeNamesAreSorted)
+  {
+    bFakeNamesAreSorted = true;
+    qsort(fake_names, sizeof(fake_names) / sizeof(fake_names[0]), sizeof(fake_names[0]), (int(*)(const void*,const void*))Internal_FakeWindowsLogfontName::CompareFamilyAndPostscriptNameHash);
+  }
+  
+  const Internal_FakeWindowsLogfontName key(family_name, postscript_name, L"", ON_FontFaceQuartet::Member::Unset);
+  const Internal_FakeWindowsLogfontName* fake_name 
+    = (const Internal_FakeWindowsLogfontName*)bsearch((const void*)&key, (const void*)fake_names, sizeof(fake_names) / sizeof(fake_names[0]), sizeof(fake_names[0]), (int(*)(const void*, const void*))Internal_FakeWindowsLogfontName::CompareFamilyAndPostscriptNameHash);
+  if (
+      fake_name
+      && ON_FontFaceQuartet::Member::Unset != fake_name->QuartetMember()
+      && false == fake_name->QuartetFamilyAndPostscriptNameHash().IsZeroDigentOrEmptyContentHash()
+      && fake_name->FakeWindowsLogfontName().IsNotEmpty()
+      )
+  {
+    // this family is complicated enough that it
+    // has to be partitioned into multiple fake Windows LOGFONT quartets.
+    return fake_name->FakeWindowsLogfontName();
+  }
+
+  return family_name; // use family_name as the fake LOGFONT name
+}
+
 const ON_wString ON_Font::QuartetName(
   ON_Font::NameLocale name_locale
 ) const
 {
-  // This may need adjustment for MacOS.
+  // The Windows OS partitions a font family (which can have many face) into
+  // subsets with at most 4 faces that can be tagged regular/italic/bold/bold-italic
+  // and assigns each subset a unique "LOGFONT" name. Note that some subsets may
+  // have fewer than 4 faces because there isn't an italic or bold member.
+  // There are Windows OS font picking tools that use
+  // LOGFONT name + regular/italic/bold/bold-italic to select a particular face
+  // and these work ok because Windows OS generates the quartets and all applications
+  // choosing to use the archaic regular/italic/bold/bold-italic font UI have consistent
+  // quartets.
+  //
+  // Modern Mac OS does not have native font selection UI that uses the 
+  // archaic regular/italic/bold/bold-italic approach.
+  //
+  // On Mac OS, opennurbs generates a fake LOGFONT name because Rhino 6 and 7 use
+  // the archaic regular/italic/bold/bold-italic font UI on oth Windows and Mac.
+  // Helvetica Neue, American Typewriter, and Avenir are examples of common
+  // Mac OS font families that do not fit well with the 
+  // archaic regular/italic/bold/bold-italic font UI. Code in
+  // opennurbs_apple_nsfont.cpp is used to assign fake LOGFONT names for fonts
+  // like these.
   return WindowsLogfontName(name_locale);
 }
 
@@ -6163,7 +6688,12 @@ bool ON_Font::IsBoldInQuartet() const
 
     if (nullptr == regular)
       return true; // no regular in this quartet.
-    
+
+    if (this == bold)
+      return true;
+    if (this == regular)
+      return false;
+
     const unsigned int font_weight = static_cast<unsigned char>(FontWeight());
     const unsigned int regular_weight = static_cast<unsigned char>(regular->FontWeight());
     const unsigned int bold_weight = static_cast<unsigned char>(bold->FontWeight());
@@ -7569,43 +8099,28 @@ void ON_Font::Dump(ON_TextLog& dump) const
     dump.Print(L"PointSize = annotation default\n");
   }
 
-  bool bInQuartet = false;
-  for(;;)
+  const ON_FontFaceQuartet q = this->InstalledFontQuartet();
+  const ON_FontFaceQuartet::Member m = q.QuartetMember(this);
+  switch (m)
   {
-    const ON_FontFaceQuartet q = this->InstalledFontQuartet();
-    if (q.QuartetName().IsEmpty())
-      break;
-
-    const bool bQuartetItalic = (ON_Font::Style::Italic == m_font_style || ON_Font::Style::Oblique == m_font_style);
-    const ON_Font* regular = bQuartetItalic ? q.ItalicFace() : q.RegularFace();
-    const ON_Font* bold = bQuartetItalic ? q.BoldItalicFace() : q.BoldFace();
-    const ON_Font* quartet_face;
-    if (nullptr != regular && FontWeight() == regular->FontWeight())
-      quartet_face = regular;
-    else if (nullptr != bold && FontWeight() == bold->FontWeight())
-      quartet_face = bold;
-    else
-       quartet_face = nullptr;
-    if (nullptr == quartet_face)
-      break;
-
-    bInQuartet = true;
-    if (quartet_face == q.RegularFace())
-      dump.Print("Quartet: %ls (Regular member)\n", static_cast<const wchar_t*>(q.QuartetName()));
-    else if (quartet_face == q.BoldFace())
-      dump.Print("Quartet: %ls (Bold member)\n", static_cast<const wchar_t*>(q.QuartetName()));
-    else if (quartet_face == q.ItalicFace())
-      dump.Print("Quartet: %ls (Italic member)\n", static_cast<const wchar_t*>(q.QuartetName()));
-    else if (quartet_face == q.BoldItalicFace())
-      dump.Print("Quartet: %ls (Bold-Italic member)\n", static_cast<const wchar_t*>(q.QuartetName()));
-    else
-      bInQuartet = false;
-
+  case ON_FontFaceQuartet::Member::Regular:
+    dump.Print("Quartet: %ls (Regular member)\n", static_cast<const wchar_t*>(q.QuartetName()));
+    break;
+  case ON_FontFaceQuartet::Member::Bold:
+    dump.Print("Quartet: %ls (Bold member)\n", static_cast<const wchar_t*>(q.QuartetName()));
+    break;
+  case ON_FontFaceQuartet::Member::Italic:
+    dump.Print("Quartet: %ls (Italic member)\n", static_cast<const wchar_t*>(q.QuartetName()));
+    break;
+  case ON_FontFaceQuartet::Member::BoldItalic:
+    dump.Print("Quartet: %ls (Bold-Italic member)\n", static_cast<const wchar_t*>(q.QuartetName()));
+    break;
+  case ON_FontFaceQuartet::Member::Unset:
+  default:
+    dump.Print("Quartet: None\n");
     break;
   }
 
-  if (false == bInQuartet)
-    dump.Print("Quartet: None\n");
 
   s = ON_Font::WeightToWideString(FontWeight());
   if( s.IsEmpty())
@@ -7717,6 +8232,13 @@ void ON_Font::Dump(ON_TextLog& dump) const
       dump.PushIndent();
       ON_Font::DumpCTFont(apple_font, dump);
       dump.PopIndent();
+      if (nullptr != apple_font && ON_Font::Origin::AppleFont == m_font_origin)
+      {
+        if (m_apple_font_weight_trait >= -1.0 && m_apple_font_weight_trait <= 1.0)
+          dump.Print(L"Apple font weight trait = %g\n", m_apple_font_weight_trait);
+        if (m_apple_font_width_trait >= -1.0 && m_apple_font_width_trait <= 1.0)
+          dump.Print(L"Apple font width trait = %g\n", m_apple_font_width_trait);
+      }
     }
 #elif defined(OPENNURBS_FREETYPE_SUPPORT)
 // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
@@ -9363,6 +9885,11 @@ bool ON_Font::IsUpright() const
   return (ON_Font::Style::Upright == m_font_style);
 }
 
+bool ON_Font::IsItalicOrOblique() const
+{
+  return (ON_Font::Style::Italic == m_font_style || ON_Font::Style::Oblique == m_font_style);
+}
+
 bool ON_Font::IsOblique()
 {
   return (ON_Font::Style::Oblique == m_font_style);
@@ -9550,10 +10077,31 @@ bool ON_Font::SetAppleFontWeightTrait(
 
 double ON_Font::AppleFontWeightTrait() const
 {
-  return 
+  // old function that cannot be changed because it would break the SDK.
+  return
     (m_apple_font_weight_trait >= -1.0 && m_apple_font_weight_trait <= 1.0)
     ? m_apple_font_weight_trait
     : ON_Font::AppleFontWeightTraitFromWeight(this->FontWeight());
+}
+
+double ON_Font::AppleFontWeightTraitEx() const
+{
+  return
+    ON_Font::Origin::AppleFont == FontOrigin()
+    && m_apple_font_weight_trait >= -1.0
+    && m_apple_font_weight_trait <= 1.0
+    ? m_apple_font_weight_trait
+    : ON_UNSET_VALUE;
+}
+
+double ON_Font::AppleFontWidthTrait() const
+{
+  return
+    ON_Font::Origin::AppleFont == FontOrigin()
+    && m_apple_font_width_trait >= -1.0
+    && m_apple_font_width_trait <= 1.0
+    ? m_apple_font_width_trait
+    : ON_UNSET_VALUE;
 }
 
 bool ON_Font::IsValidPointSize(
@@ -11345,6 +11893,153 @@ bool ON_ManagedFonts::GetFontMetricsInFontDesignUnits(
   return false;
 }
 
+void ON_ManagedFonts::Internal_SetFakeWindowsLogfontName(
+  const ON_Font * font,
+  const ON_wString fake_loc_logfont_name, 
+  const ON_wString fake_en_logfont_name
+)
+{
+  if (nullptr == font)
+    return;
+  const_cast<ON_Font * >(font)->m_loc_windows_logfont_name = fake_loc_logfont_name;
+  const_cast<ON_Font * >(font)->m_en_windows_logfont_name = fake_en_logfont_name;
+}
+
+void ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(
+  ON_SimpleArray<const ON_Font*>& device_list
+)
+{
+  // Windows divides font families (which can have many faces) 
+  // into LOGFONT subsets identified by a logfont name.
+  // A LOGFONT subset can have at most 4 faces and typically 
+  // they are regular/bold/italic/bold-italic variations of 
+  // a face and all have matching stretch.
+  //
+  // This all goes back to the 1970's and early user interfaces
+  // that selected fonts based on a name, bold=true/false, italic=true/false
+  // style inteface. This type of archaic font selection interface is way 
+  // too simple to accomodate the rich font families are currently in use.
+  // Newer font families can have dozens of faces with severeal weights,
+  // several widths, and an upright and italic version of each of these.
+  // However, that does not prevent applications like Rhino 6/7 
+  // from attempting to use the inadequate and archic bold/italic font
+  // selection interface to select a font from a rich list of modern fonts.
+  //
+  // This function is used on non Windows platforms to partition 
+  // the installed font families into subsets with the same
+  // width and set a unique fake LOGFONT name. Later sorting will
+  // choose up to four faces from each subset to use as the 
+  // regular/bold/italic/bold-italic representatives.
+
+  // Assign a fake logfont name.
+  const unsigned int font_count = device_list.UnsignedCount();
+  for (unsigned int i = 0; i < font_count; ++i)
+  {
+    const ON_Font* f0 = device_list[i];
+    if (nullptr == f0)
+      continue;
+
+    ON_wString fake_loc_logfont_name = ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
+      f0->FamilyName(ON_Font::NameLocale::LocalizedFirst),
+      f0->PostScriptName(ON_Font::NameLocale::LocalizedFirst)
+    );
+    if (fake_loc_logfont_name.IsEmpty())
+      continue;
+    ON_wString fake_en_logfont_name = ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
+      f0->FamilyName(ON_Font::NameLocale::English),
+      f0->PostScriptName(ON_Font::NameLocale::English)
+    );
+    if (fake_en_logfont_name.IsEmpty())
+      fake_en_logfont_name = fake_loc_logfont_name;
+    else if (false == fake_loc_logfont_name.EqualOrdinal(fake_en_logfont_name, true))
+    {
+      const bool bLocalFaceIsFamilyName = fake_loc_logfont_name.EqualOrdinal(f0->FamilyName(ON_Font::NameLocale::LocalizedFirst), true);
+      const bool bEnglishFaceIsFamilyName = fake_en_logfont_name.EqualOrdinal(f0->FamilyName(ON_Font::NameLocale::English), true);
+      if (bLocalFaceIsFamilyName && false == bEnglishFaceIsFamilyName)
+        fake_loc_logfont_name = fake_en_logfont_name;
+      else if (bEnglishFaceIsFamilyName && false == bLocalFaceIsFamilyName)
+        fake_en_logfont_name = fake_loc_logfont_name;
+    }
+
+    ON_ManagedFonts::Internal_SetFakeWindowsLogfontName(
+      f0,
+      fake_loc_logfont_name,
+      fake_en_logfont_name
+    );
+  }
+
+  // Sort device_list by font family and current fake LOGFONT name
+  device_list.QuickSort(ON_FontList::CompareFamilyAndWindowsLogfontName);
+  ON_SimpleArray<const ON_Font*> quartet_candidates(128);
+  bool bSortAgain = false;
+  for (unsigned int i = 0; i < font_count; ++i)
+  {
+    const ON_Font* f0 = device_list[i];
+    if (nullptr == f0)
+      continue;
+
+    quartet_candidates.SetCount(0);
+    quartet_candidates.Append(f0);
+    while( (i + 1) < font_count )
+    {
+      const ON_Font* f = device_list[i + 1];
+      if (nullptr == f || 0 != ON_FontList::CompareFamilyAndWindowsLogfontName(&f0, &f))
+        break;
+      quartet_candidates.Append(f);
+      ++i;
+    }
+    const unsigned int quartet_candidate_count = quartet_candidates.UnsignedCount();
+    if (quartet_candidate_count < 2)
+      continue;
+
+    // members in a fake LOGFONT quartet should have the same stretch
+    quartet_candidates.QuickSort(ON_FontList::CompareStretch);
+
+    // See which subset of family gets to use the family name as 
+    // the fake logfont name.
+    const int medium_stretch = (int)((unsigned)(ON_Font::Stretch::Medium));
+    ON_Font::Stretch stretch0 = quartet_candidates[0]->FontStretch();
+    int delta_stretch = abs(medium_stretch - ((int)((unsigned)(stretch0))));
+    bool bNeedToModifyFakeName = false;
+    for (unsigned int j = 0; j < quartet_candidate_count; ++j)
+    {
+      const ON_Font::Stretch stretch = quartet_candidates[j]->FontStretch();
+      int ds = abs(medium_stretch - ((int)((unsigned)(stretch))));
+      if (ds < delta_stretch)
+      {
+        stretch0 = stretch;
+        delta_stretch = ds;
+        bNeedToModifyFakeName = true;
+      }
+    }
+
+    if (false == bNeedToModifyFakeName)
+      continue; // we cannot use stretch to distinguish between family members
+
+    // If a family member's stretch is not stretch0, modify its names.
+    for (unsigned int j = 0; j < quartet_candidate_count; ++j)
+    {
+      const ON_Font* f = quartet_candidates[j];
+      const ON_Font::Stretch stretch = f->FontStretch();
+      if (stretch == stretch0)
+        continue;
+      ON_wString suffix = L" (";
+      suffix += ON_Font::StretchToWideString(stretch);
+      if (suffix.Length() < 3)
+        continue;
+      suffix += L")";
+      const ON_wString loc_name = f->m_loc_windows_logfont_name+suffix;
+      const ON_wString en_name = f->m_en_windows_logfont_name+suffix;
+      ON_ManagedFonts::Internal_SetFakeWindowsLogfontName(f,loc_name,en_name);
+      bSortAgain = true;
+    }
+  }
+
+  if (bSortAgain)
+    device_list.QuickSort(ON_FontList::CompareFamilyAndWindowsLogfontName);
+
+}
+
 const ON_FontList& ON_ManagedFonts::InstalledFonts()
 {
   if (0 == List.m_installed_fonts.Count())
@@ -11355,6 +12050,7 @@ const ON_FontList& ON_ManagedFonts::InstalledFonts()
     ON_ManagedFonts::Internal_GetWindowsInstalledFonts(device_list);
 #elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
     ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(device_list);
+    ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(device_list);
 #endif
     if (device_list.Count() > 0)
     {
@@ -11364,3 +12060,5 @@ const ON_FontList& ON_ManagedFonts::InstalledFonts()
   }
   return List.m_installed_fonts;
 }
+
+

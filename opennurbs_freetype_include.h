@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,18 +17,18 @@
 
 // FreeType Licensing:
 //
-//// Retrieved March 22, 2017 
+//// Retrieved March 22, 2017
 //// https://www.freetype.org/freetype2/docs/index.html
 ////What is FreeType?
 ////
-////FreeType is a software font engine that is designed to be small, efficient, 
-////highly customizable, and portable while capable of producing high-quality 
+////FreeType is a software font engine that is designed to be small, efficient,
+////highly customizable, and portable while capable of producing high-quality
 ////output (glyph images). It can be used in graphics libraries, display servers,
 ////font conversion tools, text image generation tools, and many other products as well.
 ////
-////Note that FreeType is a font service and doesn't provide APIs to perform 
-////higher-level features like text layout or graphics processing 
-////(e.g., colored text rendering, ‘hollowing’, etc.). However, it greatly 
+////Note that FreeType is a font service and doesn't provide APIs to perform
+////higher-level features like text layout or graphics processing
+////(e.g., colored text rendering, â€˜hollowingâ€™, etc.). However, it greatly
 ////simplifies these tasks by providing a simple, easy to use, and uniform
 ////interface to access the content of font files.
 ////
@@ -36,12 +36,12 @@
 ////FreeType License and the GNU Public License, Version 2. It can thus
 ////be used by any kind of projects, be they proprietary or not.
 ////
-////Please note that ‘FreeType’ is also called ‘FreeType 2’, to
-////distinguish it from the old, deprecated ‘FreeType 1’ library,
+////Please note that â€˜FreeTypeâ€™ is also called â€˜FreeType 2â€™, to
+////distinguish it from the old, deprecated â€˜FreeType 1â€™ library,
 ////a predecessor no longer maintained and supported.
 ////
 //// http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT
-//// 
+////
 ////                    The FreeType Project LICENSE
 ////                    ----------------------------
 ////
@@ -92,7 +92,7 @@
 ////  encourage you to use the following text:
 ////
 ////   """
-////    Portions of this software are copyright © <year> The FreeType
+////    Portions of this software are copyright Â© <year> The FreeType
 ////    Project (www.freetype.org).  All rights reserved.
 ////   """
 ////
@@ -219,8 +219,8 @@
 //   This header file is not included in opennurbs.h because
 //   FreeType 2.6.3 has deeply nested includes and uses angle brackets
 //   in its include files (instead of double quotes and relative paths like opennurbs),
-//   the directory ./freetype263/include must be in the "system" includes path. 
-//   It is not feasable or reasonable for all projects that include opennurbs.h to have the 
+//   the directory ./freetype263/include must be in the "system" includes path.
+//   It is not feasable or reasonable for all projects that include opennurbs.h to have the
 //   freetype includes directory in the system includes path.
 
 #if defined(OPENNURBS_FREETYPE_SUPPORT)

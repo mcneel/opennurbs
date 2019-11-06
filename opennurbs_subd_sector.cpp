@@ -101,18 +101,6 @@ bool ON_SubDSectorType::IsValid() const
   if ( 0 == m_hash)
     return ON_SUBD_RETURN_ERROR(false);
 
-  switch (m_subd_type)
-  {
-  case ON_SubD::SubDType::TriLoopWarren:
-  case ON_SubD::SubDType::QuadCatmullClark:
-  case ON_SubD::SubDType::CustomTri:
-  case ON_SubD::SubDType::CustomQuad:
-    break;
-  default:
-    return ON_SUBD_RETURN_ERROR(false);
-    break;
-  }
-
   if ( m_sector_face_count < ON_SubDSectorType::MinimumSectorFaceCount(m_vertex_tag))
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -131,21 +119,21 @@ bool ON_SubDSectorType::IsValid() const
   case ON_SubD::VertexTag::Crease:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::CreaseSectorWeight(m_subd_type,m_sector_face_count)))
+    if (!(m_sector_weight == ON_SubDSectorType::CreaseSectorWeight(m_sector_face_count)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
   case ON_SubD::VertexTag::Corner:
-    if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians < 2.0*ON_PI))
+    if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians < ON_2PI))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::CornerSectorWeight(m_subd_type,m_sector_face_count,m_corner_sector_angle_radians)))
+    if (!(m_sector_weight == ON_SubDSectorType::CornerSectorWeight(m_sector_face_count,m_corner_sector_angle_radians)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
   case ON_SubD::VertexTag::Dart:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::DartSectorWeight(m_subd_type,m_sector_face_count)))
+    if (!(m_sector_weight == ON_SubDSectorType::DartSectorWeight(m_sector_face_count)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
@@ -162,30 +150,10 @@ ON_SubD::VertexTag ON_SubDSectorType::VertexTag() const
   return m_vertex_tag;
 }
 
-ON_SubD::SubDType ON_SubDSectorType::SubDType() const
-{
-  return m_subd_type;
-}
-
-ON_SubD::FacetType ON_SubDSectorType::FacetType() const
-{
-  return ON_SubD::FacetTypeFromSubDType(m_subd_type);
-}
 
 unsigned int ON_SubDSectorType::FacetEdgeCount() const
 {
-  switch (FacetType())
-  {
-  case ON_SubD::FacetType::Tri:
-    return 3;
-    break;
-  case ON_SubD::FacetType::Quad:
-    return 4;
-    break;
-  default:
-    break;
-  }
-  return 0;
+  return 4;
 }
 
 double ON_SubDSectorType::CornerSectorAngleRadians() const
@@ -220,17 +188,17 @@ bool ON_SubDSectorType::IsCreaseSector() const
 
 bool ON_SubDSectorType::IsCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumAngleIndex);
+  return (m_vertex_tag == ON_SubD::VertexTag::Corner && m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 bool ON_SubDSectorType::IsConvexCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index >=  ON_SubDSectorType::MaximumAngleIndex);
+  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index >=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 bool ON_SubDSectorType::IsConcaveCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumAngleIndex);
+  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 
@@ -279,7 +247,6 @@ unsigned int ON_SubDSectorType::ComponentRingCount() const
 unsigned int ON_SubDSectorType::PointRingCount() const
 {
   return ON_SubDSectorType::SectorPointRingCountFromFaceCount(
-    m_subd_type,
     m_vertex_tag,
     m_sector_face_count
     );
@@ -299,23 +266,32 @@ double ON_SubDSectorType::DartSectorTheta(
   )
 {
   if (sector_face_count >= 2)
-    return (2.0*ON_PI / ((double)sector_face_count));
+    return (ON_2PI / ((double)sector_face_count));
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorTheta);
 }
 
-unsigned int ON_SubDSectorType::AngleIndexFromAngleRadians(
+unsigned int ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(
   double corner_sector_angle_radians
   )
 {
   corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
   if (ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians))
   {
-    const double max_index = ON_SubDSectorType::MaximumAngleIndex;
-    unsigned int i = (unsigned int)floor(max_index*(corner_sector_angle_radians / (2.0*ON_PI)));
-    if (i < ON_SubDSectorType::MaximumAngleIndex)
+    if (corner_sector_angle_radians <= ON_SubDSectorType::MinimumCornerAngleRadians)
+      return 1;
+    if (corner_sector_angle_radians >= ON_SubDSectorType::MaximumCornerAngleRadians)
+      return ON_SubDSectorType::MaximumCornerAngleIndex - 1;
+
+    const double max_index = ON_SubDSectorType::MaximumCornerAngleIndex;
+    unsigned int i = (unsigned int)floor(max_index*(corner_sector_angle_radians / ON_2PI));
+    if (i >= ON_SubDSectorType::MaximumCornerAngleIndex - 1)
+      i = ON_SubDSectorType::MaximumCornerAngleIndex - 1;
+    else if (i < 1)
+      i = 1;
+    else if (i < ON_SubDSectorType::MaximumCornerAngleIndex-1)
     {
-      double a0 = ON_SubDSectorType::AngleRadiansFromAngleIndex(i);
-      double a1 = ON_SubDSectorType::AngleRadiansFromAngleIndex(i+1);
+      double a0 = ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(i);
+      double a1 = ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(i+1);
       double d0 = fabs(a0 - corner_sector_angle_radians);
       double d1 = fabs(a1 - corner_sector_angle_radians);
       if (d1 < d0)
@@ -326,14 +302,61 @@ unsigned int ON_SubDSectorType::AngleIndexFromAngleRadians(
   return ON_SUBD_RETURN_ERROR(ON_UNSET_UINT_INDEX);
 }
 
-double ON_SubDSectorType::AngleRadiansFromAngleIndex(
+double ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(
   unsigned int corner_sector_angle_index
   )
 {
-  if (corner_sector_angle_index <= ON_SubDSectorType::MaximumAngleIndex)
+  if (corner_sector_angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex)
   {
-    const double max_index = ON_SubDSectorType::MaximumAngleIndex;
-    return (corner_sector_angle_index / max_index)*2.0*ON_PI;
+    //const double max_index = ON_SubDSectorType::MaximumCornerAngleIndex;
+    double corner_angle_radians;
+    switch (corner_sector_angle_index)
+    {
+    case 0:
+      corner_angle_radians = 0.0;
+      break;
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/12):
+      corner_angle_radians = ON_PI/6.0;
+      break;
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/8):
+      corner_angle_radians = 0.25*ON_PI;
+      break;
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/6):
+      corner_angle_radians = ON_PI/3.0;
+      break;
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/4):
+      corner_angle_radians = 0.5*ON_PI;
+      break;
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/3):
+      corner_angle_radians = ON_2PI/3.0;
+      break;      
+    case (3*ON_SubDSectorType::MaximumCornerAngleIndex*8):
+      corner_angle_radians = 0.75*ON_PI;
+      break;
+    case (5*ON_SubDSectorType::MaximumCornerAngleIndex/12):
+      corner_angle_radians = (5.0*ON_PI)/6.0;
+      break;      
+    case (ON_SubDSectorType::MaximumCornerAngleIndex/2):
+      corner_angle_radians = ON_PI;
+      break;
+    case (5*ON_SubDSectorType::MaximumCornerAngleIndex/8):
+      corner_angle_radians = 1.25*ON_PI;
+      break;
+    case (3*ON_SubDSectorType::MaximumCornerAngleIndex/2):
+      corner_angle_radians = 1.5*ON_PI;
+      break;
+    case (7*ON_SubDSectorType::MaximumCornerAngleIndex/8):
+      corner_angle_radians = 1.75*ON_PI;
+      break;
+    case ON_SubDSectorType::MaximumCornerAngleIndex:
+      corner_angle_radians = ON_2PI;
+      break;
+
+    default:
+      corner_angle_radians = ((double)(corner_sector_angle_index))*ON_SubDSectorType::MinimumCornerAngleRadians;
+      break;
+    }
+    return corner_angle_radians;
   }
   return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
 }
@@ -348,15 +371,15 @@ double ON_SubDSectorType::CornerSectorThetaFromCornerAngle(
     && sector_face_count <= ON_SubDVertex::MaximumFaceCount
     )
   {
-    unsigned int corner_index = ON_SubDSectorType::AngleIndexFromAngleRadians(corner_sector_angle_radians);
-    if (corner_index <= ON_SubDSectorType::MaximumAngleIndex)
+    unsigned int corner_index = ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(corner_sector_angle_radians);
+    if (corner_index <= ON_SubDSectorType::MaximumCornerAngleIndex)
     {
-      if (2*corner_index > ON_SubDSectorType::MaximumAngleIndex)
+      if (2*corner_index > ON_SubDSectorType::MaximumCornerAngleIndex)
       {
         // concave corner - theta = (2 pi - corner_sector_angle_radians)/sector_face_count
-        corner_index = ON_SubDSectorType::MaximumAngleIndex - corner_index;
+        corner_index = ON_SubDSectorType::MaximumCornerAngleIndex - corner_index;
       }
-      double a = ((corner_index/((double)ON_SubDSectorType::MaximumAngleIndex))*ON_PI)/((double)sector_face_count);
+      double a = ((corner_index/((double)ON_SubDSectorType::MaximumCornerAngleIndex))*ON_PI)/((double)sector_face_count);
       return a;
     }
   }
@@ -378,7 +401,14 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
 
   if (edges[0] == edges[1])
-    return ON_SUBD_RETURN_ERROR(0.0);
+  {
+    // occurs in nonmanifold cases like RH-49843
+    // When an interior nonmanifold edge terminates a corner
+    // and is the only crease edge is a sector for some
+    // faces attached to the edge. 
+    return ON_SubDSectorType::MaximumCornerAngleRadians;
+    //return ON_SUBD_RETURN_ERROR(0.0);
+  }
 
   ON__UINT_PTR edge_ends[2] = { ON_SUBD_EDGE_DIRECTION(sector_boundary_edge0_ptr.m_ptr), ON_SUBD_EDGE_DIRECTION(sector_boundary_edge1_ptr.m_ptr) };
 
@@ -407,7 +437,7 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
   // In reality, we will be lucky if we get 3 digits of precision in the trig functions
   // using the dot and cross of unitized differences.
   double cos_alpha = A*B;
-  double sin_alpha = ON_CrossProduct(A, B).Length();
+  double sin_alpha = ON_CrossProduct(A, B).Length(); // NOTE WELL:: sin_alpha >= 0.0 or is invalid
   
   const double trig_zero_tol = 0.002;
   if (fabs(cos_alpha) <= trig_zero_tol)
@@ -419,34 +449,38 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
   {
     // valid sin and cos and no NaNs
     const double trig_one_tol = 0.999;
+    double alpha = ON_DBL_QNAN;
+
     if ( 0.0 == cos_alpha || fabs(sin_alpha) >= trig_one_tol)
-      return (sin_alpha < 0.0) ? 1.5*ON_PI : 0.5*ON_PI;
-
-    if ( 0.0 == sin_alpha || fabs(cos_alpha) >= trig_one_tol)
-      return (cos_alpha < 0.0) ? ON_PI : 0.0;
-
-    double alpha = atan2(sin_alpha, cos_alpha);
-    if (!ON_IsValid(alpha))
-      return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
-
-    if (alpha < 0.0)
+      alpha = (sin_alpha < 0.0) ? 1.5*ON_PI : 0.5*ON_PI;
+    else if ( 0.0 == sin_alpha || fabs(cos_alpha) >= trig_one_tol)
+      alpha = (cos_alpha < 0.0) ? ON_PI : 0.0;
+    else
     {
-      alpha += 2.0*ON_PI;
-      if ( alpha >= 2.0*ON_PI )
-        alpha = 0.0;
+      alpha = atan2(sin_alpha, cos_alpha);
+      if (!ON_IsValid(alpha))
+        return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
+
+      if (alpha < 0.0)
+      {
+        alpha += 2.0*ON_PI;
+        if (alpha >= 2.0*ON_PI)
+          alpha = 0.0;
+      }
     }
 
     if (alpha >= 0.0 && alpha <= (1.0 + ON_EPSILON)*2.0*ON_PI)
     {
-      if (alpha >= 2.0*ON_PI)
-      {
-        alpha = 0.0;
-      }
-      else if ( fabs(alpha - ON_PI) <= 0.002 )
+      if (alpha <= ON_SubDSectorType::MinimumCornerAngleRadians)
+        alpha = ON_SubDSectorType::MinimumCornerAngleRadians;
+      else if (alpha >= ON_SubDSectorType::MaximumCornerAngleRadians)
+        alpha = ON_SubDSectorType::MaximumCornerAngleRadians;
+      else if (fabs(alpha - ON_PI) <= 0.002)
       {
         // straight "corner"
         alpha = ON_PI;
       }
+
       return alpha;
     }
   }
@@ -459,26 +493,11 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
 
 
 double ON_SubDSectorType::SectorWeightFromTheta(
-  ON_SubD::SubDType subdivision_type,
   double sector_theta
   )
 {
   if (!(sector_theta > 0.0 && sector_theta <= ON_PI))
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
-
-  const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subdivision_type);
-
-  switch (facet_type)
-  {
-  case ON_SubD::FacetType::Tri:
-  case ON_SubD::FacetType::Quad:
-    break;
-
-  default:
-    // bogus facet type
-    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
-    break;
-  }
 
   double cos_theta = cos(sector_theta);
 
@@ -494,26 +513,12 @@ double ON_SubDSectorType::SectorWeightFromTheta(
   else if (abs_cos_theta + cos_tol >= 1.0)
     cos_theta = (cos_theta < 0.0) ? -1.0 : 1.0;
 
-  double a, wrange[2];
-
-  if (ON_SubD::FacetType::Tri == facet_type)
-  {
-    // Triangle case: w = 1/3 + 1/3*cos(theta);
-    a = 1.0 / 3.0;
-    wrange[0] = 0.0;
-    wrange[1] = 2.0 / 3.0;
-  }
-  else
-  {
-    // Quadrangle case: w = 1/2 + 1/3*cos(theta);
-    a = 0.5;
-    wrange[0] = 1.0 / 6.0;
-    wrange[1] = 5.0 / 6.0;
-  }
+  // Quadrangle case: w = 1/2 + 1/3*cos(theta);
+  const double  wrange[2] = { 1.0 / 6.0, 5.0 / 6.0 };
 
   if (cos_theta > -1.0 && cos_theta < 1.0)
   {
-    const double w = a + cos_theta / 3.0;
+    const double w = 0.5 + cos_theta / 3.0;
     if (w > wrange[0] && w < wrange[1])
       return w;
     if (w <= wrange[0])
@@ -528,7 +533,7 @@ double ON_SubDSectorType::SectorWeightFromTheta(
   if (cos_theta <= -1.0)
     return wrange[0];
 
-  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight); // error
+  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
 }
 
 double ON_SubDSectorType::SectorWeight() const
@@ -548,7 +553,7 @@ bool ON_SubDSectorType::IsValidCornerSectorAngleRadians(
   double corner_sector_angle_radians
   )
 {
-  return (corner_sector_angle_radians >= 0.0 && corner_sector_angle_radians <= 2.0*ON_PI);
+  return (corner_sector_angle_radians >= 0.0 && corner_sector_angle_radians <= ON_2PI);
 }
 
 double ON_SubDSectorType::ClampCornerSectorAngleRadians(
@@ -556,14 +561,16 @@ double ON_SubDSectorType::ClampCornerSectorAngleRadians(
   )
 {
   if ( corner_sector_angle_radians < -ON_PI )
-    corner_sector_angle_radians += 2.0*ON_PI;
+    corner_sector_angle_radians += ON_2PI;
   else if ( corner_sector_angle_radians > 3.0*ON_PI )
     corner_sector_angle_radians -= 2.0*ON_PI;
   const double angle_tol = 0.25*(ON_PI/180.0); // 1/4 degree.
   if (fabs(corner_sector_angle_radians - ON_PI) <= angle_tol)
     return ON_PI;
-  if (fabs(corner_sector_angle_radians - 2.0*ON_PI) <= angle_tol)
-    return 2.0*ON_PI;
+  if (fabs(corner_sector_angle_radians + ON_PI) <= angle_tol)
+    return -ON_PI;
+  if (fabs(corner_sector_angle_radians - ON_2PI) <= angle_tol)
+    return ON_2PI;
   return corner_sector_angle_radians;
 }
 
@@ -574,50 +581,39 @@ double ON_SubDSectorType::SmoothSectorWeight()
 }
 
 double ON_SubDSectorType::CreaseSectorWeight(
-  ON_SubD::SubDType subdivision_type,
   unsigned int sector_face_count
   )
 {
   if (sector_face_count < 1)
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
-  if (false == ON_SubD::IsQuadOrTriSubDType(subdivision_type))
-    return ON_SubDSectorType::UnsetSectorWeight;
   double sector_theta = ON_SubDSectorType::CreaseSectorTheta(sector_face_count);
-  return ON_SubDSectorType::SectorWeightFromTheta(subdivision_type, sector_theta);
+  return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
 }
 
 double ON_SubDSectorType::DartSectorWeight(
-  ON_SubD::SubDType subdivision_type,
   unsigned int sector_face_count
   )
 {
   if (sector_face_count < 2)
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
-  if (false == ON_SubD::IsQuadOrTriSubDType(subdivision_type))
-    return ON_SubDSectorType::UnsetSectorWeight;
   double sector_theta = ON_SubDSectorType::DartSectorTheta(sector_face_count);
-  return ON_SubDSectorType::SectorWeightFromTheta(subdivision_type, sector_theta);
+  return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
 }
 
 double ON_SubDSectorType::CornerSectorWeight(
-  ON_SubD::SubDType subdivision_type,
   unsigned int sector_face_count,
   double corner_sector_angle_radians
   )
 {
-  if ( ON_SubD::SubDType::Unset == subdivision_type)
-    return ON_SubDSectorType::UnsetSectorWeight;
-
   corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
   if (ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) 
     && sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubD::VertexTag::Corner)
     && sector_face_count <= ON_SubDVertex::MaximumFaceCount
-    && ON_SubD::IsQuadOrTriSubDType(subdivision_type)
     )
   {
     const double sector_theta = ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count,corner_sector_angle_radians);
     if (sector_theta >= 0.0)
-      return ON_SubDSectorType::SectorWeightFromTheta(subdivision_type, sector_theta);
+      return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
 }
@@ -640,22 +636,9 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
   if (nullptr == b)
     return 1;
   
-  int rc = CompareUnsinged((unsigned int)a->m_subd_type,(unsigned int)b->m_subd_type);
+  int rc = 0;
   for (;;)
   {
-    if (0 != rc)
-    {
-      // bias towards ccquad, then lwtri, then exotics
-      if ( ON_SubD::SubDType::QuadCatmullClark == a->m_subd_type)
-        rc = -1;
-      else if ( ON_SubD::SubDType::QuadCatmullClark == b->m_subd_type)
-        rc = 1;
-      else if ( ON_SubD::SubDType::TriLoopWarren == a->m_subd_type)
-        rc = -1;
-      else if ( ON_SubD::SubDType::TriLoopWarren == b->m_subd_type)
-        rc = 1;
-      break;
-    }
     rc = CompareUnsinged((unsigned int)a->m_vertex_tag,(unsigned int)b->m_vertex_tag);
     if (0 != rc)
     {
@@ -693,7 +676,6 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
 void ON_SubDSectorType::SetHash()
 {
   unsigned int hash = 0;
-  hash = ON_CRC32(hash,sizeof(m_subd_type),&m_subd_type);
   hash = ON_CRC32(hash,sizeof(m_vertex_tag),&m_vertex_tag);
   hash = ON_CRC32(hash,sizeof(m_sector_face_count),&m_sector_face_count);
   if ( ON_SubD::VertexTag::Corner == m_vertex_tag)
@@ -724,118 +706,84 @@ static bool ON_SubDSectorType_IsValidFaceCountForCreate(
   return ( 0 == sector_face_count || ON_UNSET_UINT_INDEX == sector_face_count || ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count));
 }
 
-static bool ON_SubDSectorType_IsValidTypes(
-  ON_SubD::SubDType subd_type,
-  ON_SubD::VertexTag vertex_tag,
-  ON_SubD::FacetType facet_type
-  )
-{
-  if (ON_SubD::SubDType::Unset == subd_type && ON_SubD::FacetType::Unset == facet_type )
-    return true;
-  if (ON_SubD::FacetType::Unset != facet_type)
-    return true;
-  return false;
-}
-
 ON_SubDSectorType ON_SubDSectorType::CreateSmoothSectorType(
-  ON_SubD::SubDType subd_type,
   unsigned int sector_face_count
   )
 {
   const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Smooth;
   if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
   {
-    const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd_type);
-    if (ON_SubDSectorType_IsValidTypes(subd_type,vertex_tag,facet_type))
-    {
-      ON_SubDSectorType st;
-      st.m_subd_type = subd_type;
-      st.m_facet_type = facet_type;
-      st.m_vertex_tag = vertex_tag;
-      st.m_sector_face_count 
-        = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
-        ? sector_face_count
-        : 0;
-      st.m_sector_weight 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::IgnoredSectorWeight
-        :  ON_SubDSectorType::UnsetSectorWeight;
-      st.m_sector_theta 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::SmoothSectorTheta
-        : ON_SubDSectorType::UnsetSectorTheta;
-      st.SetHash();
-      return st;
-    }
+    ON_SubDSectorType st;
+    st.m_vertex_tag = vertex_tag;
+    st.m_sector_face_count 
+      = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
+      ? sector_face_count
+      : 0;
+    st.m_sector_weight 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::IgnoredSectorWeight
+      :  ON_SubDSectorType::UnsetSectorWeight;
+    st.m_sector_theta 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::SmoothSectorTheta
+      : ON_SubDSectorType::UnsetSectorTheta;
+    st.SetHash();
+    return st;
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
 }
 
 ON_SubDSectorType ON_SubDSectorType::CreateCreaseSectorType(
-  ON_SubD::SubDType subd_type,
   unsigned int sector_face_count
   )
 {
   const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Crease;
   if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
   {
-    const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd_type);
-    if (ON_SubDSectorType_IsValidTypes(subd_type,vertex_tag,facet_type))
-    {
-      ON_SubDSectorType st;
-      st.m_subd_type = subd_type;
-      st.m_facet_type = facet_type;
-      st.m_vertex_tag = vertex_tag;
-      st.m_sector_face_count 
-        = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
-        ? sector_face_count
-        : 0;
-      st.m_sector_weight 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::CreaseSectorWeight(subd_type,sector_face_count)
-        : ON_SubDSectorType::UnsetSectorWeight;
-      st.m_sector_theta 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::CreaseSectorTheta(sector_face_count)
-        : ON_SubDSectorType::UnsetSectorTheta;
-      st.SetHash();
-      return st;
-    }
+    ON_SubDSectorType st;
+    st.m_vertex_tag = vertex_tag;
+    st.m_sector_face_count 
+      = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
+      ? sector_face_count
+      : 0;
+    st.m_sector_weight 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::CreaseSectorWeight(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorWeight;
+    st.m_sector_theta 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::CreaseSectorTheta(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorTheta;
+    st.SetHash();
+    return st;
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
 }
 
 
 ON_SubDSectorType ON_SubDSectorType::CreateDartSectorType(
-  ON_SubD::SubDType subd_type,
   unsigned int sector_face_count
   )
 {
   const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Dart;
   if ( ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count) )
   {
-    const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd_type);
-    if (ON_SubDSectorType_IsValidTypes(subd_type,vertex_tag,facet_type))
-    {
-      ON_SubDSectorType st;
-      st.m_subd_type = subd_type;
-      st.m_facet_type = facet_type;
-      st.m_vertex_tag = vertex_tag;
-      st.m_sector_face_count 
-        = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
-        ? sector_face_count
-        : 0;
-      st.m_sector_weight 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::DartSectorWeight(subd_type,sector_face_count)
-        : ON_SubDSectorType::UnsetSectorWeight;
-      st.m_sector_theta 
-        = (st.m_sector_face_count>0)
-        ? ON_SubDSectorType::DartSectorTheta(sector_face_count)
-        : ON_SubDSectorType::UnsetSectorTheta;
-      st.SetHash();
-      return st;
-    }
+    ON_SubDSectorType st;
+    st.m_vertex_tag = vertex_tag;
+    st.m_sector_face_count 
+      = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
+      ? sector_face_count
+      : 0;
+    st.m_sector_weight 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::DartSectorWeight(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorWeight;
+    st.m_sector_theta 
+      = (st.m_sector_face_count>0)
+      ? ON_SubDSectorType::DartSectorTheta(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorTheta;
+    st.SetHash();
+    return st;
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
 }
@@ -843,7 +791,6 @@ ON_SubDSectorType ON_SubDSectorType::CreateDartSectorType(
 
 
 ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
-  ON_SubD::SubDType subd_type,
   unsigned int sector_face_count,
   double corner_sector_angle_radians
   )
@@ -867,36 +814,30 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
     const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Corner;
     if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
     {
-      const ON_SubD::FacetType facet_type = ON_SubD::FacetTypeFromSubDType(subd_type);
-      if (ON_SubDSectorType_IsValidTypes(subd_type,vertex_tag,facet_type))
+      unsigned int corner_sector_angle_index 
+        = (ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
+        ? 0
+        : ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(corner_sector_angle_radians);
+      if (corner_sector_angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex)
       {
-        unsigned int corner_sector_angle_index 
-          = (ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
-          ? 0
-          : ON_SubDSectorType::AngleIndexFromAngleRadians(corner_sector_angle_radians);
-        if (corner_sector_angle_index <= ON_SubDSectorType::MaximumAngleIndex)
-        {
-          ON_SubDSectorType st;
-          st.m_subd_type = subd_type;
-          st.m_facet_type = facet_type;
-          st.m_vertex_tag = vertex_tag;
-          st.m_sector_face_count 
-            = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
-            ? sector_face_count
-            : 0;
-          st.m_sector_weight 
-            = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
-            ? ON_SubDSectorType::CornerSectorWeight(subd_type, sector_face_count, corner_sector_angle_radians)
-            : ON_SubDSectorType::UnsetSectorWeight;
-          st.m_sector_theta 
-            = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
-            ? ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count, corner_sector_angle_radians)
-            : ON_SubDSectorType::UnsetSectorTheta;
-          st.m_corner_sector_angle_index = (unsigned char)corner_sector_angle_index;
-          st.m_corner_sector_angle_radians = corner_sector_angle_radians;
-          st.SetHash();
-          return st;
-        }
+        ON_SubDSectorType st;
+        st.m_vertex_tag = vertex_tag;
+        st.m_sector_face_count 
+          = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
+          ? sector_face_count
+          : 0;
+        st.m_sector_weight 
+          = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
+          ? ON_SubDSectorType::CornerSectorWeight( sector_face_count, corner_sector_angle_radians)
+          : ON_SubDSectorType::UnsetSectorWeight;
+        st.m_sector_theta 
+          = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
+          ? ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count, corner_sector_angle_radians)
+          : ON_SubDSectorType::UnsetSectorTheta;
+        st.m_corner_sector_angle_index = (unsigned char)corner_sector_angle_index;
+        st.m_corner_sector_angle_radians = corner_sector_angle_radians;
+        st.SetHash();
+        return st;
       }
     }
   }
@@ -905,28 +846,27 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
 
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::SubDType subd_type,
   ON_SubD::VertexTag vertex_tag,
   unsigned int sector_face_count,
   double corner_sector_angle_radians
   )
 {
-  if ( ON_SubD::SubDType::Unset == subd_type && ON_SubD::VertexTag::Unset == vertex_tag && 0 == sector_face_count)
+  if (ON_SubD::VertexTag::Unset == vertex_tag && 0 == sector_face_count)
     return ON_SubDSectorType::Empty;
 
   switch (vertex_tag)
   {
   case ON_SubD::VertexTag::Smooth:
-    return ON_SubDSectorType::CreateSmoothSectorType(subd_type,sector_face_count);
+    return ON_SubDSectorType::CreateSmoothSectorType(sector_face_count);
     break;
   case ON_SubD::VertexTag::Crease:
-    return ON_SubDSectorType::CreateCreaseSectorType(subd_type,sector_face_count);
+    return ON_SubDSectorType::CreateCreaseSectorType(sector_face_count);
     break;
   case ON_SubD::VertexTag::Corner:
-    return ON_SubDSectorType::CreateCornerSectorType(subd_type,sector_face_count,corner_sector_angle_radians);
+    return ON_SubDSectorType::CreateCornerSectorType(sector_face_count,corner_sector_angle_radians);
     break;
   case ON_SubD::VertexTag::Dart:
-    return ON_SubDSectorType::CreateDartSectorType(subd_type,sector_face_count);
+    return ON_SubDSectorType::CreateDartSectorType(sector_face_count);
     break;
   }
 
@@ -934,7 +874,6 @@ ON_SubDSectorType ON_SubDSectorType::Create(
 }
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::SubDType subd_type,
   const ON_SubDSectorIterator& sit
   )
 {
@@ -976,7 +915,7 @@ ON_SubDSectorType ON_SubDSectorType::Create(
           = (ON_SubD::VertexTag::Corner == vertex_tag)
           ? ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(edge0ptr,local_sit.CurrentEdgePtr(0))
           : 0.0;
-      return ON_SubDSectorType::Create(subd_type,vertex_tag,sector_face_count,corner_sector_angle_radians);
+      return ON_SubDSectorType::Create(vertex_tag,sector_face_count,corner_sector_angle_radians);
     }
   }
 
@@ -984,7 +923,6 @@ ON_SubDSectorType ON_SubDSectorType::Create(
 }
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::SubDType subd_type,
   const class ON_SubDFace* face,
   unsigned int face_vertex_index
   )
@@ -995,11 +933,10 @@ ON_SubDSectorType ON_SubDSectorType::Create(
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
   ON_SubDSectorIterator sit;
   sit.Initialize(face,0,face_vertex_index);
-  return ON_SubDSectorType::Create(subd_type,sit);
+  return ON_SubDSectorType::Create(sit);
 }
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::SubDType subd_type,
   const class ON_SubDFace* face,
   const class ON_SubDVertex* vertex
   )
@@ -1011,12 +948,11 @@ ON_SubDSectorType ON_SubDSectorType::Create(
   unsigned int face_vertex_index = face->VertexIndex(vertex);
   if (face_vertex_index >= face->m_edge_count)
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
-  return ON_SubDSectorType::Create(subd_type,face,face_vertex_index);
+  return ON_SubDSectorType::Create(face,face_vertex_index);
 }
 
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::SubDType subd_type,
   const class ON_SubDEdge* edge,
   unsigned int edge_vertex_index
   )
@@ -1030,5 +966,5 @@ ON_SubDSectorType ON_SubDSectorType::Create(
   if (nullptr == face)
     return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
 
-  return ON_SubDSectorType::Create(subd_type,face,vertex);
+  return ON_SubDSectorType::Create(face,vertex);
 }

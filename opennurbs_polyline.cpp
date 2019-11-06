@@ -171,6 +171,21 @@ double ON_Polyline::Length() const
   return d;
 }
 
+ON_Line ON_Polyline::Segment(int segment_index) const
+{
+  ON_Line line;
+  if (segment_index >= 0 && segment_index < m_count - 1)
+  {
+    line.from = m_a[segment_index];
+    line.to = m_a[segment_index + 1];
+  }
+  else
+  {
+    line = ON_Line::ZeroLine;
+  }
+  return line;
+}
+
 ON_3dVector ON_Polyline::SegmentDirection( int segment_index ) const
 {
   ON_3dVector v;
@@ -374,5 +389,102 @@ bool ON_Polyline::CreateStarPolygon(
   else
     Destroy();
   return rc;
+}
+
+bool ON_IsConvexPolyline(
+  size_t point_dim,
+  size_t point_count,
+  const double* points,
+  size_t point_stride,
+  bool bStrictlyConvex
+)
+{
+  if (point_dim < 2 || point_dim > 3 || point_count < 3 || nullptr == points || point_stride < point_dim)
+    return false;
+
+  const double* p;
+  ON_3dPoint P[2];
+
+  p = points + (point_stride*(point_count - 1));
+  P[0] = ON_3dPoint(p[0], p[1], (3 == point_dim) ? p[2] : 0.0);
+
+  p = points;
+  P[1] = ON_3dPoint(points[0], p[1], (3 == point_dim) ? p[2] : 0.0);
+
+  if (P[0] == P[1])
+  {
+    --point_count;
+    if (point_count < 3)
+      return false;
+    p = points + (point_stride*(point_count - 1));
+    P[0] = ON_3dPoint(p[0], p[1], (3 == point_dim) ? p[2] : 0.0);
+  }
+
+  ON_3dVector D[2] = { ON_3dVector::NanVector, P[1]-P[0]};
+  if (false == D[1].IsNotZero())
+    return false;
+  ON_SimpleArray<ON_3dVector> C(point_count);
+  ON_3dVector maxN = ON_3dVector::ZeroVector;
+  double maxNlen = 0.0;
+  for (size_t i = 0; i < point_count; ++i)
+  {
+    p = points + (point_stride*((i+1)%point_count));
+    P[0] = P[1];
+    P[1] = ON_3dPoint(p[0], p[1], (3 == point_dim) ? p[2] : 0.0);
+    D[0] = D[1];
+    D[1] = P[1] - P[0];
+    if (false == D[1].IsNotZero())
+      return false;
+    const ON_3dVector N = ON_CrossProduct(D[0], D[1]);
+    const double Nlen = N.Length();
+    if (Nlen > maxNlen)
+    {
+      maxNlen = Nlen;
+      maxN = N;
+    }
+    else if (false == (Nlen > 0.0))
+    {
+      if ( bStrictlyConvex || false == (D[0]*D[1] > 0.0) )
+        return false;
+    }
+    C.Append(N.UnitVector());
+  }
+
+  maxN = maxN.UnitVector();
+  for (size_t i = 0; i < point_count; ++i)
+  {
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+    double d = maxN * C[(unsigned int)i];
+#else
+    double d = maxN * C[i];
+#endif
+    if ( false == ((bStrictlyConvex) ? (d > 0.0) : (d >= 0.0)) )
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_IsConvexPolyline(
+  const ON_SimpleArray<ON_3dPoint>& points,
+  bool bStrictlyConvex
+)
+{
+  return ON_IsConvexPolyline(
+    3,
+    points.UnsignedCount(),
+    (const double*)(points.Array()),
+    3,
+    bStrictlyConvex
+  );
+}
+
+
+bool ON_Polyline::IsConvexLoop(bool bStrictlyConvex) const
+{
+  if (false == IsClosed())
+    return false;
+  const ON_SimpleArray<ON_3dPoint>& points = *this;
+  return ON_IsConvexPolyline(points, bStrictlyConvex);
 }
 

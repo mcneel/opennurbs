@@ -17,6 +17,214 @@
 #if !defined(OPENNURBS_MESH_INC_)
 #define OPENNURBS_MESH_INC_
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDComponentLocation] [Rhino.Geometry.SubDComponentLocation] [byte]
+  /// <summary>
+  /// The ON_SubDComponentLocation enum is used when an ON_SubD component
+  /// is referenced and it is important to distinguish between the
+  /// component's location in the SubD control net and its location
+  /// in the SubD limit surface.
+  /// </summary>
+enum class ON_SubDComponentLocation : unsigned char
+{
+  ///<summary>
+  /// Not a valid component location and used to indicate the value is not initialized.
+  ///</summary>
+  Unset = 0,
+
+  ///<summary>
+  /// The component's location in the SubD control net.
+  ///</summary>
+  ControlNet = 1,
+
+  ///<summary>
+  /// The component's location in the SubD limit surface.
+  ///</summary>
+  Surface = 2
+};
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDDisplayParameters
+//
+//  A collection of parameters that are passed to functions that
+//  calculate a various representations of ON_SubD objects.
+//
+
+class ON_CLASS ON_SubDDisplayParameters
+{
+public:
+  ON_SubDDisplayParameters() = default;
+  ~ON_SubDDisplayParameters() = default;
+  ON_SubDDisplayParameters(const ON_SubDDisplayParameters&) = default;
+  ON_SubDDisplayParameters& operator=(const ON_SubDDisplayParameters&) = default;
+
+public:
+  enum : unsigned int
+  {
+    CourseDensity = 2,  // (2^2 = 4, 4x4 = 16 quads per SubD quad)
+    DefaultDensity = 4, // (2^4 = 16, 16x16 = 256 quads per SubD quad)
+    MaximumDensity = 6  // (2^6 = 64, 64x64 = 4096 quads per SubD quad)
+  };
+
+public:
+  static const ON_SubDDisplayParameters Empty;
+
+  // Parameters for the default limit surface display mesh.
+  // m_display_density = ON_SubDMesh::DefaultDisplayDensity
+  static const ON_SubDDisplayParameters Course;
+
+  // Parameters for the default limit surface display mesh.
+  // m_display_density = ON_SubDMesh::DefaultDisplayDensity
+  static const ON_SubDDisplayParameters Default;
+
+  /*
+  Description:
+    In most applications, the caller sets the mesh_density
+    and leaves the other parameters set to the default
+    values.
+  */
+  static const ON_SubDDisplayParameters CreateFromDisplayDensity(
+    unsigned int display_density
+    );
+
+  // TODO - add functional interface and hide implementation
+
+public:
+  // 0 <= m_display_density <= ON_SubDDisplayParameters::MaximumDensity
+  // If n = m_display_density, then each SubD quad face will have 
+  // a grid of 2^n x 2^n mesh quads for a total of 2^(2n) mesh quads.
+  // n   grid size    total number of mesh faces per SubD quad
+  // 0     1 x 1             1
+  // 1     2 x 2             4
+  // 2     4 x 4            16
+  // 3     8 x 8            64
+  // 4    16 x 16          128
+  // 5    32 x 32        1,024
+  // 6    64 x 64        4,096
+  unsigned int DisplayDensity() const;
+
+  void SetDisplayDensity(
+    unsigned int display_density
+  );
+
+
+  /*
+  Description:
+    The MeshLocation() property determines if the mesh is
+    on the SubD's control net or the SubD's surface.
+  */
+  ON_SubDComponentLocation MeshLocation() const;
+
+  /*
+  Description:
+    The MeshLocation() property determines if the mesh is
+    on the SubD's control net or the SubD's surface.
+  Parameters:
+    mesh_location - [in]
+  */
+  void SetMeshLocation(ON_SubDComponentLocation mesh_location);
+
+  // By default, limit surface mesh quads for each subd face are grouped into 
+  // a single ON_Mesh n-gon. 
+  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
+  bool AddNgons() const;
+  void SetAddNgons(
+    bool bAddNgons
+  );
+
+  // By default, limit surface mesh quads for each subd face are grouped into 
+  // a single ON_Mesh n-gon. 
+  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
+  bool AddFakeEvaluationParameters() const;
+  void SetAddFakeEvaluationParameters(
+    bool bAddFakeEvaluationParameters
+  );
+
+  unsigned char EncodeAsUnsignedChar() const;
+  static const ON_SubDDisplayParameters DecodeFromUnsignedChar(
+    unsigned char encoded_parameters
+  );
+
+private:
+  enum : unsigned char
+  {
+    // do not change these values - they control how m_subd_mesh_parameters is set
+    // and the value of m_subd_mesh_parameters is saved in 3dm archives.
+    subd_mesh_density_mask = 0x07,
+    subd_mesh_location_bit = 0x08,
+    subd_mesh_skip_ngons_bit = 0x10,
+    subd_mesh_skip_fakeevalparams_bit = 0x20,
+    subd_mesh_nondefault_bit = 0x80
+  };
+
+private:
+  // 0 <= m_display_density <= ON_SubDDisplayParameters::MaximumDensity
+  // If n = m_display_density, then each SubD quad face will have 
+  // a grid of 2^n x 2^n mesh quads for a total of 2^(2n) mesh quads.
+  // n   grid size    total number of mesh faces per SubD quad
+  // 0     1 x 1             1
+  // 1     2 x 2             4
+  // 2     4 x 4            16
+  // 3     8 x 8            64
+  // 4    16 x 16          128
+  // 5    32 x 32        1,024
+  // 6    64 x 64        4,096
+  unsigned int m_display_density = 0;
+
+  // If m_bControlNetMesh is false, a mesh of the limit surface is produced.
+  // If m_bControlNetMesh is true, a mesh of the subdivided control net is produced.
+  bool m_bControlNetMesh = false;
+
+  // By default, limit surface mesh quads for each subd face are grouped into 
+  // a single ON_Mesh n-gon. 
+  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
+  bool m_bSkipMeshNgons = false;
+
+  // By default, fake evaluation parameters are assigned to mesh
+  // vertex locations and used to set normalized texture coordinates.  
+  // If you don't want fake evaluation parameters, then set m_bSkipFakeEvaluationParameters = true;
+  bool m_bSkipFakeEvaluationParameters = false;
+
+private:
+  unsigned char m_reserved2 = 0;
+  unsigned int m_reserved3 = 0;
+  unsigned int m_reserved4 = 0;
+  ON__UINT_PTR m_reserved5 = 0;
+  double m_reserved6 = 0.0;
+
+
+  // TODO - split this class into two - what's above and one derived from that with what's below.
+public:
+  bool UseMultipleThreads() const;
+  void SetUseMultipleThreads(
+    bool bUseMultipleThreads
+  );
+
+  ON_Terminator* Terminator() const;
+  void SetTerminator(
+    ON_Terminator* terminator
+  );
+
+  ON_ProgressReporter* ProgressReporter() const;  
+  const ON_Interval ProgressReporterInterval() const;
+  void SetProgressReporter(
+    ON_ProgressReporter* progress_reporter,
+    ON_Interval progress_reporter_interval
+  );
+
+private:
+  bool m_bUseMultipleThreads = false;
+   
+private:
+  ON_Terminator* m_terminator = nullptr;
+
+private:
+  // optional progress reporting
+  ON_ProgressReporter* m_progress_reporter = nullptr;
+  ON_Interval m_progress_reporter_interval = ON_Interval::ZeroToOne;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class  ON_Mesh
@@ -342,6 +550,14 @@ public:
   );
 
 public:
+  void SetSubDDisplayParameters(
+    const class ON_SubDDisplayParameters& subd_mesh_parameters
+    );
+
+  const ON_SubDDisplayParameters SubDDisplayParameters() const;
+  
+
+public:
   // false - skip stage 2 mesh refinement step
   // true  - (default) do stage 2 mesh refinement step
   const bool Refine() const;
@@ -451,19 +667,6 @@ public:
   void SetMinimumEdgeLength(
     double minimum_edge_length
   );
-
-  /*
-  Returns:
-    SubD display mesh density.
-  Example:
-    Use ON_MeshParameters to control the density of a SubD limit mesh.
-    ON_MeshParameters mp = ...;
-    ON_Mesh* mesh = subd->GetLimitSurfaceMesh(
-      ON_SubDDisplayParameters::CreateFromDisplayDensity( mp.SubDDisplayMeshDensity() ),
-      nullptr
-      );
-  */
-  unsigned int SubDDisplayMeshDensity() const;
 
 public:
   // edges longer than MaximumEdgeLength() will
@@ -584,7 +787,10 @@ private:
   unsigned char m_texture_range = 2;
   unsigned char m_face_type = 0;
 
-  unsigned char m_reserved1 = 0;
+  // Uses ON_SubDDisplayParameters::EncodeAsUnsignedChar() / ON_SubDDisplayParameters::DecodeFromUnsignedChar() 
+  // to save ON_SubDDisplayParameters settings in this class.
+  // (Done this way to avoid breaking the C++ public SDK.)
+  unsigned char m_subd_mesh_parameters = 0;
 
   int m_grid_min_count = 0;
   int m_grid_max_count = 0;     
@@ -638,9 +844,11 @@ private:
   // END Pangolin parameters
   //
   //////////////////////////////////////////////////////////
+private:
+  unsigned int m_subd_stuff_reserved5 = 0;
 
 private:
-  ON__UINT_PTR m_reserved5 = 0;
+  ON__UINT_PTR m_reserved6 = 0;
 };
 
 ON_DECL
@@ -944,7 +1152,6 @@ public:
     const class ON_3dPointListRef& vertex_list,
     ON_PlaneEquation& face_plane_equation
     ) const;
-
 };
 
 
@@ -1503,6 +1710,36 @@ public:
     const unsigned int* ngon_fi,
     ON_SimpleArray<unsigned int>& ngon_vi
     );
+
+  /*
+Description:
+  Get a list of vertices that form any boundary of a set of faces.
+  This includes inner boundaries.
+Parameters:
+  mesh_vertex_list - [in]
+  mesh_face_list - [in]
+  vertex_face_map - [in]
+    null or a vertex map made from the information in
+    mesh_vertex_list and mesh_face_list.
+  ngon_fi_count - [in]
+    length of ngon_fi[] array
+  ngon_fi - [in]
+    An array of length ngon_fi_count that contains the indices
+    of the faces that form the ngon.
+  ngon_vi - [out]
+    An array of vertex indices that make the ngon boundary.
+Returns:
+  Number of vertices in the ngon outer boundary or 0 if the input is
+  not valid.
+*/
+  static unsigned int FindNgonBoundary(
+    const class ON_3dPointListRef& mesh_vertex_list,
+    const class ON_MeshFaceList& mesh_face_list,
+    const unsigned int *const* vertex_face_map,
+    size_t ngon_fi_count,
+    const unsigned int* ngon_fi,
+    ON_SimpleArray<unsigned int>& ngon_vi
+  );
 
   /*
   Description:
@@ -2095,6 +2332,18 @@ public:
   */
   bool TopFaceIsHidden( int topfi ) const;
 
+  /*
+  Parameters:
+    topei - [in]
+      m_tope[] index
+  Returns:
+    true if the edge 
+    has 2 distinct vertices,
+    2 or more attached faces,
+    and all attached faces reference the same ON_Mesh vertices along this edge.
+  */
+  bool IsWeldedEdge( int topei ) const;
+
   //////////
   // m_topv_map[] has length m_mesh.VertexCount() and 
   // m_topv[m_topv_map[vi]] is the topological mesh vertex that is assocated
@@ -2189,6 +2438,11 @@ class ON_CLASS ON_MappingTag
 {
 public:
   ON_MappingTag();
+  ON_MappingTag(const ON_TextureMapping& mapping,const ON_Xform* xform);
+
+  static const ON_MappingTag Unset;
+  static const ON_MappingTag SurfaceParameterMapping;
+
   void Default();
   bool Write(ON_BinaryArchive&) const;
   bool Read(ON_BinaryArchive&);
@@ -2231,10 +2485,10 @@ public:
   // m_mesh_xform to zero so that compares will work right.
   //
   // 
-  ON_UUID                 m_mapping_id;   // ON_TextureMapping::m_mapping_id
-  ON_TextureMapping::TYPE m_mapping_type; // ON_TextureMapping::m_type
-  ON__UINT32              m_mapping_crc;  // ON_TextureMapping::MappingCRC()
-  ON_Xform                m_mesh_xform;
+  ON_UUID  m_mapping_id = ON_nil_uuid;   // ON_TextureMapping::m_mapping_id
+  ON_TextureMapping::TYPE m_mapping_type = ON_TextureMapping::TYPE::no_mapping; // ON_TextureMapping::m_type
+  ON__UINT32 m_mapping_crc = 0;  // ON_TextureMapping::MappingCRC()
+  ON_Xform m_mesh_xform = ON_Xform::IdentityTransformation;
 };
 
 class ON_CLASS ON_TextureCoordinates
@@ -2268,6 +2522,10 @@ public:
   ON_Mesh( const ON_Mesh& );
   ON_Mesh& operator=( const ON_Mesh& );
   ~ON_Mesh();
+
+public:
+  static const ON_Mesh Empty;
+
 
 
   // Override of virtual ON_Object::MemoryRelocate
@@ -2376,6 +2634,14 @@ public:
     true if there are zero vertices or zero faces.
   */
   bool IsEmpty() const;
+
+
+  /*
+  Returns
+    true if there are vertices and faces.
+  */
+
+  bool IsNotEmpty() const;
 
   // creation
   bool SetVertex(
@@ -2510,6 +2776,49 @@ public:
     );
 
   /*
+Description:
+  Delete the portions of the mesh identified in ci_list[].
+Parameters:
+  ci_list - [in]
+    List of components to delete.
+  ci_list_count - [in]
+    Number of elements in the ci_list[] array.
+    Can be zero if you are using this function to remove
+    unused vertices or empty ngons.
+  bIgnoreInvalidComponents - [in]
+    If true, invalid elements in ci_list[] are ignored.
+    If false and ci_list[] contains an invalid element,
+    then no changes are made and false is returned.
+  bRemoveDegenerateFaces - [in]
+    If true, remove degenerate faces.
+  bCullUnusedVertices - [in]
+    Remove vertices that are not referenced by a face.
+    Pass true unless you have a good reason for keeping
+    unreferenced vertices.
+  bRemoveEmptyNgons - [in]
+    Remove ngons that are empty.
+    Pass true unless you have a good reason for keeping
+    empty ngons.
+  faceMap - [i]
+    If anything other than nullptr is passed in, then
+    faceMap[fi] is the index of the new face after the
+    removal of vertices, faces, etc.
+    This needs to be allocated to be at least m_F.Count() long.
+Returns:
+  True: succesful
+  False: failure - no changes.
+*/
+  bool DeleteComponents(
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count,
+    bool bIgnoreInvalidComponents,
+    bool bRemoveDegenerateFaces,
+    bool bRemoveUnusedVertices,
+    bool bRemoveEmptyNgons,
+    unsigned int* faceMap
+  );
+
+  /*
   Description:
     Calls the detailed version of DeleteComponents() with
     bool bIgnoreInvalidComponents = true;
@@ -2545,6 +2854,35 @@ public:
   bool DeleteComponent(
     ON_COMPONENT_INDEX ci
     );
+
+  /*
+  Description:
+    Merge faces like ON_SubD::MergeFaces() does.
+  Parameters:
+    ci_list - [in]
+      vertices, edges, and faces that trigger merging.
+  Returns:
+    If ngons were added, then the index of the first added ngon is returned.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
+  */
+  unsigned int MergeFaceSets(
+    const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+  );
+
+  /*
+  Description:
+    Merge faces like ON_SubD::MergeFaces() does.
+  Parameters:
+    ci_list - [in]
+      vertices, edges, and faces that trigger merging.
+  Returns:
+    If ngons were added, then the index of the first added ngon is returned.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
+  */
+  unsigned int DissolveOrDelete(
+    const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+  );
+
 
   /*
   Description:
@@ -2785,6 +3123,14 @@ public:
 
   int CullUnusedVertices(); // returns number of culled vertices
 
+  /*
+  Description:
+    Removes degenerate and unused mesh components.
+  Returns:
+    Number of removed components;
+  */
+ unsigned int CullDegenerates();
+
   // Description:
   //   Removes any unreferenced objects from arrays, reindexes as needed,
   //   and shrinks arrays to minimum required size.
@@ -2912,6 +3258,8 @@ public:
           bool bIgnoreVertexNormals = false,
           bool bIgnoreTextureCoordinates = false
           );
+
+  unsigned int RemoveAllCreases();
 
   void Append( const ON_Mesh& ); // appends a copy of mesh to this and updates
                                  // indices of appended mesh parts
@@ -3507,7 +3855,7 @@ public:
     in m_V[], then you must call UpdateDoublePrecisionVertices().
   Remarks:
     If double precision vertices are not present, this function
-    does nothing.
+    creates them.
   */
   void UpdateDoublePrecisionVertices();
 
@@ -3652,6 +4000,85 @@ public:
     class ON_MeshNgonBuffer& ngon_buffer,
     ON_COMPONENT_INDEX ci
     ) const;
+
+  unsigned int AddNgons(
+    const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+  );
+
+  /*
+  Description:
+    Add a new ngon to the mesh.
+    Does not allow the creation of inner boundaries.
+  Parameters:
+    ngon_fi[]
+      An array of distinct ON_Mesh.m_F[] face indices referencing
+      a set of connected faces.
+  Returns:
+    index of the new n-gon.
+    -1: If input information is not valid.
+  */
+  int AddNgon(
+    const ON_SimpleArray<unsigned int>& ngon_fi
+    );
+
+    /*
+  Description:
+    Add a new ngon to the mesh.
+  Parameters:
+    ngon_fi[]
+      An array of distinct ON_Mesh.m_F[] face indices referencing
+      a set of connected faces.
+    bPermitHoles
+      If true, also ngons that contain inner boundaries are allowed.
+  Returns:
+    index of the new n-gon.
+    -1: If input information is not valid.
+  */
+  int AddNgon(
+    const ON_SimpleArray<unsigned int>& ngon_fi,
+    bool bPermitHoles
+    );
+
+  /*
+  Description:
+    Add a new ngon to the mesh.
+    Does not allow the creation of inner boundaries.
+  Parameters:
+    Fcount - [in]
+      Number of face that make up the ngon.
+    ngon_fi[]
+      An array of N distinct ON_Mesh.m_F[] face indices referencing
+      a set of connected faces.
+  Returns:
+    index of the new n-gon.
+    -1: If input information is not valid.
+  */
+  int AddNgon(
+    unsigned int Fcount, 
+    const unsigned int* ngon_fi
+    );
+
+  /*
+  Description:
+    Add a new ngon to the mesh.
+  Parameters:
+    Fcount - [in]
+      Number of face that make up the ngon.
+    ngon_fi[]
+      An array of N distinct ON_Mesh.m_F[] face indices referencing
+      a set of connected faces.
+    bPermitHoles
+      If true, also ngons that contain inner boundaries are allowed.
+  Returns:
+    index of the new n-gon.
+    -1: If input information is not valid.
+*/
+  int AddNgon(
+    unsigned int Fcount,
+    const unsigned int* ngon_fi,
+    bool bPermitHoles
+  );
+
 
   /*
   Description:
@@ -4105,7 +4532,38 @@ public:
       - Otherwise, ngon_map[fi] = -1.
   */
   const unsigned int* CreateNgonMap();
-  
+
+  /*
+  Description:
+    Expert user function to construct n-gon map even on const objects
+    after the expert user did something that made the current one invalid.
+  map [in-out]:
+      The map must have at least m_F elements
+      It is modified to match the new ngon map, if true is returned.
+  Returns:
+  A value indicating if the mesh has ngon information.
+  The map is an array of length m_F.Count(), ngon_map[]
+      - If ngon_map[fi] >= 0, then ON_MeshFace.m_F[fi] belongs
+        to ON_Mesh.Ngon(ngon_map[fi]).
+      - Otherwise, ngon_map[fi] = -1.
+  */
+  bool CreateNgonMap(unsigned int* ngon_map) const;
+
+
+  /*
+Description:
+  Expert user function to construct n-gon map even on const objects
+  after the expert user did something that made the current one invalid.
+map [out]:
+    The map is modified to match the new ngon map, if true is returned.
+Returns:
+A value indicating if the mesh has ngon information.
+The map is an array of length m_F.Count(), ngon_map[]
+    - If ngon_map[fi] >= 0, then ON_MeshFace.m_F[fi] belongs
+      to ON_Mesh.Ngon(ngon_map[fi]).
+    - Otherwise, ngon_map[fi] = -1.
+*/
+  bool CreateNgonMap(ON_SimpleArray<unsigned int>& map) const;
 
   /*
   Description:
@@ -4351,6 +4809,115 @@ private:
   bool WriteFaceArray( int, int, ON_BinaryArchive& ) const;
   bool ReadFaceArray( int, int, ON_BinaryArchive& );
   bool SwapEdge_Helper( int, bool );
+};
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_MeshRef
+//
+class ON_CLASS ON_MeshRef
+{
+public:
+  static const ON_MeshRef Empty;
+
+  ON_MeshRef() ON_NOEXCEPT;
+  ~ON_MeshRef();
+  ON_MeshRef(const ON_MeshRef& src) ON_NOEXCEPT;
+  ON_MeshRef& operator=(const ON_MeshRef& src);
+
+#if defined(ON_HAS_RVALUEREF)
+  // rvalue copy constructor
+  ON_MeshRef( ON_MeshRef&& ) ON_NOEXCEPT;
+  // rvalue assignment operator
+  ON_MeshRef& operator=( ON_MeshRef&& );
+#endif
+
+  const class ON_Mesh& Mesh() const;
+
+  /*
+  Returns:
+    Number of references to the managed ON_Mesh, including the one by this ON_MeshRef.
+  */
+  unsigned int ReferenceCount() const;
+
+  /*
+  Description:
+    Allocates a new empty ON_Mesh and has this ON_MeshRef reference it.
+  */
+  class ON_Mesh& NewMesh();
+
+  /*
+  Description:
+    Allocates a new ON_Mesh and has this ON_MeshRef reference it.
+  Parameters:
+    src - [in]
+      The new ON_Mesh managed by this ON_MeshRef will be a copy of src.Mesh().
+  Returns:
+    A reference to the new ON_Mesh managed by this ON_MeshRef.
+  */
+  class ON_Mesh& CopyMesh(
+    const ON_MeshRef& src
+    );
+
+  /*
+  Description:
+    Allocates a new ON_Mesh and has this ON_MeshRef reference it.
+  Parameters:
+    src - [in]
+      The new ON_Mesh managed by this ON_MeshRef will be a copy of src.
+  Returns:
+    A reference to the new ON_Mesh managed by this ON_MeshRef.
+  */
+  class ON_Mesh& CopyMesh(
+    const ON_Mesh& src
+    );
+
+  /*
+  Description:
+    If ReferenceCount() > 1, then have this ON_MeshRef reference a 
+    new copy. Otherwise do nothing. The result being that this will
+    be the unique reference to the ON_Mesh managed by this ON_MeshRef.
+  Returns:
+    A reference to the ON_Mesh uniquely managed by this ON_MeshRef.
+  */
+  class ON_Mesh& UniqueMesh();
+  
+  /*
+  Description:
+    Remove this reference to the managed ON_Mesh. 
+    If this is the last reference, then the managed ON_Mesh is deleted.
+  */
+  void Clear();
+
+public:
+  /*
+  Description:
+    Expert user function to have this ON_MeshRef manage mesh.
+  Parameters:
+    mesh - [in/out]
+      mesh must point to an ON_Mesh that was constructed on the heap using
+      an operator new call with a public ON_Mesh constructor.
+  Returns:
+    a pointer to the managed mesh
+  Example:
+    ON_Mesh* mesh = new ON_Mesh(...);
+    ON_MeshRef mesh_ref;
+    ON_Mesh* managed_mesh = mesh_ref.SetMesh(mesh);
+    // mesh = nullptr
+    // managed_mesh = pointer you can use
+  */
+  class ON_Mesh* SetMeshForExperts(
+    class ON_Mesh*& mesh
+    );
+  
+private:
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 ) 
+  // C4251: ... needs to have dll-interface to be used by clients of class ...
+  // m_mesh_sp is private and all code that manages m_mesh_sp is explicitly implemented in the DLL.
+private:
+  std::shared_ptr<class ON_Mesh> m_mesh_sp;
+#pragma ON_PRAGMA_WARNING_POP
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -60,7 +60,7 @@ static ON__UINT32 MapCodePointOrdinal(
   ON_StringMapOrdinalType map_type
   )
 {
-  // Converts ordinal "char" and "wchar_t" element values in the 
+  // Converts ordinal "char" and "wchar_t" element values in the
   // range 0x00 to maximum_singleton_value to "ingore case" ordinal equivalents.
   // The returned value is always <= input value.
   //
@@ -173,13 +173,13 @@ static ON__UINT32 MapCodePointOrdinal(
     {
     case 0x0130U: // LATIN CAPITAL LETTER I WITH DOT ABOVE
       if (ON_StringMapOrdinalType::MinimumOrdinal == map_type || ON_StringMapOrdinalType::LowerOrdinal == map_type)
-        return 0x0069U; // 0x0069U: LATIN SMALL LETTER i
+        return 0x0069U; // 0x0069U:Â LATIN SMALL LETTER i
       return unicode_code_point;
       break;
 
     case 0x0131U: // LATIN SMALL LETTER DOTLESS I
       if (ON_StringMapOrdinalType::MinimumOrdinal == map_type || ON_StringMapOrdinalType::UpperOrdinal == map_type)
-        return 0x0049U; // 0x0049U LATIN CAPITAL LETTER I
+        return 0x0049U; // 0x0049UÂ LATIN CAPITAL LETTER I
       return unicode_code_point;
       break;
 
@@ -190,7 +190,7 @@ static ON__UINT32 MapCodePointOrdinal(
 
     case 0x0149U: // LATIN SMALL LETTER N PRECEDED BY APOSTROPHE
       if (ON_StringMapOrdinalType::MinimumOrdinal == map_type || ON_StringMapOrdinalType::UpperOrdinal == map_type)
-        return 0x004EU; // 0x004EU LATIN CAPITAL LETTER N
+        return 0x004EU; // 0x004EUÂ LATIN CAPITAL LETTER N
       return unicode_code_point;
       break;
 
@@ -287,7 +287,7 @@ static ON__UINT32 MapCodePointOrdinal(
 
     return unicode_code_point;
   }
-  
+
 
 
   if (unicode_code_point < 0x0370)
@@ -555,7 +555,7 @@ int ON_StringCompareOrdinalUTF8(
 
   unsigned int c1, c2;
   int i;
-  const int element_count 
+  const int element_count
     = (element_count1 <= element_count2)
     ? element_count1
     : element_count2;
@@ -584,7 +584,7 @@ int ON_StringCompareOrdinalUTF8(
         return 1;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*string1++))
@@ -612,7 +612,7 @@ int ON_StringCompareOrdinalUTF16(
 
   unsigned int c1, c2;
   int i;
-  const int element_count 
+  const int element_count
     = (element_count1 <= element_count2)
     ? element_count1
     : element_count2;
@@ -641,7 +641,7 @@ int ON_StringCompareOrdinalUTF16(
         return 1;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*string1++))
@@ -669,7 +669,7 @@ int ON_StringCompareOrdinalUTF32(
 
   unsigned int c1, c2;
   int i;
-  const int element_count 
+  const int element_count
     = (element_count1 <= element_count2)
     ? element_count1
     : element_count2;
@@ -698,7 +698,7 @@ int ON_StringCompareOrdinalUTF32(
         return 1;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*string1++))
@@ -828,7 +828,7 @@ int ON_String::ComparePath(
       }
       count2++;
     }
-    
+
     if (count1 > 0 || count2 > 0)
     {
       // TODO
@@ -875,9 +875,9 @@ bool ON_String::EqualPath(
   CHAR_STRING_EQUAL_PREAMBLE(path1,element_count1,path2,element_count2);
 
   unsigned int c1=0, c2=0;
-  const int element_count 
-    = (element_count1 <= element_count2) 
-    ? element_count1 
+  const int element_count
+    = (element_count1 <= element_count2)
+    ? element_count1
     : element_count2;
   int i;
   const bool bOrdinalIgnoreCase = ON_FileSystemPath::PlatformPathIgnoreCase();
@@ -902,7 +902,7 @@ bool ON_String::EqualPath(
         return false;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*path1++))
@@ -986,7 +986,7 @@ int ON_wString::ComparePath(
       }
       count2++;
     }
-    
+
     if (count1 > 0 || count2 > 0)
     {
       // TODO
@@ -1037,9 +1037,9 @@ bool ON_wString::EqualPath(
   WIDE_STRING_EQUAL_PREAMBLE(path1,element_count1,path2,element_count2);
 
   unsigned int c1=0, c2=0;
-  const int element_count 
-    = (element_count1 <= element_count2) 
-    ? element_count1 
+  const int element_count
+    = (element_count1 <= element_count2)
+    ? element_count1
     : element_count2;
   int i;
   const bool bOrdinalIgnoreCase = ON_FileSystemPath::PlatformPathIgnoreCase();
@@ -1064,7 +1064,7 @@ bool ON_wString::EqualPath(
         return false;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*path1++))
@@ -1159,7 +1159,7 @@ static unsigned int Internal_NameAttributeWideCharRank(
   // 43 - (hyphen)
   // 44 A
   // 45 B
-  // 46 C  
+  // 46 C
   // ...
   // 69 Z
   // 70 a
@@ -1285,7 +1285,7 @@ static unsigned int Internal_NameAttributeWideCharRank(
 
   // 32 to 41 numerals 0 to 9 handled before this switch
 
-  case 0x27: // 42 ' (apostrophe) 
+  case 0x27: // 42 ' (apostrophe)
     rank = 42;
     break;
   case 0x2D: // 43 - (hyphen)
@@ -1301,7 +1301,7 @@ static unsigned int Internal_NameAttributeWideCharRank(
     break;
   }
 
-  return rank; 
+  return rank;
 }
 
 int ON_wString::CompareAttributeName(
@@ -1400,29 +1400,29 @@ int ON_String::CompareNoCase( const unsigned char* s) const
 
 bool ON_String::Equal(
   const ON_String& other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
   return ON_String::Equal(
-    static_cast<const char*>(*this), 
-    this->Length(), 
-    static_cast<const char*>(other_string), 
-    other_string.Length(), 
+    static_cast<const char*>(*this),
+    this->Length(),
+    static_cast<const char*>(other_string),
+    other_string.Length(),
     locale,
     bIgnoreCase );
 }
 
 bool ON_String::Equal(
   const char* other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
   return ON_String::Equal(
-    static_cast<const char*>(*this), 
-    this->Length(), 
-    other_string, 
+    static_cast<const char*>(*this),
+    this->Length(),
+    other_string,
     -1,
     locale,
     bIgnoreCase );
@@ -1431,7 +1431,7 @@ bool ON_String::Equal(
 bool ON_String::Equal(
   const char* string1,
   const char* string2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1443,7 +1443,7 @@ bool ON_String::Equal(
   int element_count1,
   const char* string2,
   int element_count2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1467,16 +1467,16 @@ bool ON_String::Equal(
 
 int ON_String::Compare(
   const ON_String& other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_String::Compare( 
+  return ON_String::Compare(
     static_cast< const char* >(*this),
     this->Length(),
     static_cast< const char* >(other_string),
     other_string.Length(),
-    locale, 
+    locale,
     bIgnoreCase
     );
 }
@@ -1484,16 +1484,16 @@ int ON_String::Compare(
 
 int ON_String::Compare(
   const char* other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_String::Compare( 
+  return ON_String::Compare(
     static_cast< const char* >(*this),
     this->Length(),
     other_string,
     -1,
-    locale, 
+    locale,
     bIgnoreCase
     );
 }
@@ -1501,7 +1501,7 @@ int ON_String::Compare(
 int ON_String::Compare(
   const char* string1,
   const char* string2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1513,7 +1513,7 @@ int ON_String::Compare(
   int element_count1,
   const char* string2,
   int element_count2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1522,10 +1522,10 @@ int ON_String::Compare(
   // TODO
   //  Actually do an invariant culture compare
   //  This involves NFC normalization and then using the correct CE to compare values.
-  //  
+  //
   return ON_String::CompareOrdinal( string1, -1, string2, -1, bIgnoreCase );
   //int n = (element_count1 <= element_count2) ? element_count1 : element_count2;
-  //int rc 
+  //int rc
   //  = bIgnoreCase
   //  ? _strnicmp_l(string1, string2, (size_t)n, locale.StringCollateAndMapLocalePtr())
   //  : _strncmp_l(string1, string2, n, locale.StringCollateAndMapLocalePtr());
@@ -1541,11 +1541,11 @@ int ON_String::Compare(
   // TODO
   //  Actually do an invariant culture compare
   //  This involves NFC normalization and then using the correct CE to compare values.
-  //  
+  //
   return ON_String::CompareOrdinal( string1, -1, string2, -1, bIgnoreCase );
 
   //int n = (element_count1 <= element_count2) ? element_count1 : element_count2;
-  //int rc 
+  //int rc
   //  = bIgnoreCase
   //  ? strncasecmp_l(string1, string2, n, locale.StringCollateAndMapLocalePtr())
   //  : strncmp_l(string1, string2, n, locale.StringCollateAndMapLocalePtr());
@@ -1564,11 +1564,11 @@ int ON_String::Compare(
 
 bool ON_wString::Equal(
   const ON_wString& other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_wString::Equal( 
+  return ON_wString::Equal(
     static_cast< const wchar_t* >(*this),
     this->Length(),
     static_cast< const wchar_t* >(other_string),
@@ -1580,11 +1580,11 @@ bool ON_wString::Equal(
 
 bool ON_wString::Equal(
   const wchar_t* other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_wString::Equal( 
+  return ON_wString::Equal(
     static_cast< const wchar_t* >(*this),
     this->Length(),
     other_string,
@@ -1597,7 +1597,7 @@ bool ON_wString::Equal(
 bool ON_wString::Equal(
   const wchar_t* string1,
   const wchar_t* string2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1609,7 +1609,7 @@ bool ON_wString::Equal(
   int element_count1,
   const wchar_t* string2,
   int element_count2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1627,11 +1627,11 @@ bool ON_wString::Equal(
 
 int ON_wString::Compare(
   const ON_wString& other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_wString::Compare( 
+  return ON_wString::Compare(
     static_cast< const wchar_t* >(*this),
     this->Length(),
     static_cast< const wchar_t* >(other_string),
@@ -1643,11 +1643,11 @@ int ON_wString::Compare(
 
 int ON_wString::Compare(
   const wchar_t* other_string,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   ) const
 {
-  return ON_wString::Compare( 
+  return ON_wString::Compare(
     static_cast< const wchar_t* >(*this),
     this->Length(),
     other_string,
@@ -1660,7 +1660,7 @@ int ON_wString::Compare(
 int ON_wString::Compare(
   const wchar_t* string1,
   const wchar_t* string2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1672,7 +1672,7 @@ int ON_wString::Compare(
   int element_count1,
   const wchar_t* string2,
   int element_count2,
-  const class ON_Locale& locale, 
+  const class ON_Locale& locale,
   bool bIgnoreCase
   )
 {
@@ -1683,13 +1683,13 @@ int ON_wString::Compare(
 
 #if defined(ON_RUNTIME_WIN)
   const bool bIsIsInvariantCulture = locale.IsInvariantCulture();
-  wchar_t buffer[ON_Locale::BUFFER_MAXIMUM_CAPACITY];  
-  const wchar_t* locale_name 
-    = bIsIsInvariantCulture 
+  wchar_t buffer[ON_Locale::BUFFER_MAXIMUM_CAPACITY];
+  const wchar_t* locale_name
+    = bIsIsInvariantCulture
     ? LOCALE_NAME_INVARIANT
     : locale.GetWindowsLocaleName(buffer,sizeof(buffer)/sizeof(buffer[0]));
-  
-  const DWORD flags = ( bIgnoreCase ) 
+
+  const DWORD flags = ( bIgnoreCase )
     ? ((bIsIsInvariantCulture) ? NORM_IGNORECASE : LINGUISTIC_IGNORECASE)
     : 0;
 
@@ -1711,20 +1711,20 @@ int ON_wString::Compare(
   if (rc == CSTR_GREATER_THAN)
     return 1;
 
-  
+
 #elif defined(ON_RUNTIME_APPLE)
 
-  // I need a tool that is similar to 
+  // I need a tool that is similar to
   //
   //  wcscoll_l(const wchar_t*, const wchar_t*, locale_t )
   //
   // but it needs to take a count (n) and I need one that ignores case.
   //
   // It appears wcsncasecmp_l() does use locale to map case, but then does an ordinal compare.
-  // 
-  // 
+  //
+  //
   //int n = (element_count1 <= element_count2) ? element_count1 : element_count2;
-  //int rc 
+  //int rc
   //  = bIgnoreCase
   //  ? wcsncasecmp_l(string1, string2, (size_t)n, locale.StringCollateAndMapLocalePtr())
   //  : wcsncmp(string1, string2, (size_t)n);
@@ -1754,7 +1754,7 @@ int ON_wString::Compare(
 bool operator==( const ON_String& lhs, const ON_String& rhs )
 {
   const int length = lhs.Length();
-  return 
+  return
     (length == rhs.Length())
     &&  ON_String::EqualOrdinal(
     static_cast<const char*>(lhs),
@@ -2041,14 +2041,14 @@ bool ON_String::EqualOrdinal(
   ) const
 {
   const int length = Length();
-  return 
-    (length == other_string.Length()) 
+  return
+    (length == other_string.Length())
     && ON_String::EqualOrdinal(
     static_cast< const char* >(*this),
     length,
     static_cast< const char* >(other_string),
     length,
-    bOrdinalIgnoreCase 
+    bOrdinalIgnoreCase
     );
 }
 
@@ -2064,7 +2064,7 @@ bool ON_String::EqualOrdinal(
     length,
     other_string,
     length,
-    bOrdinalIgnoreCase 
+    bOrdinalIgnoreCase
     );
 }
 
@@ -2135,14 +2135,14 @@ bool ON_wString::EqualOrdinal(
   ) const
 {
   const int length = Length();
-  return 
+  return
     (length == other_string.Length())
     && ON_wString::EqualOrdinal(
     static_cast< const wchar_t* >(*this),
     length,
     static_cast< const wchar_t* >(other_string),
     length,
-    bOrdinalIgnoreCase 
+    bOrdinalIgnoreCase
     );
 }
 
@@ -2158,7 +2158,7 @@ bool ON_wString::EqualOrdinal(
     length,
     other_string,
     length,
-    bOrdinalIgnoreCase 
+    bOrdinalIgnoreCase
     );
 }
 
@@ -2202,7 +2202,7 @@ bool ON_wString::EqualOrdinal(
         return false;
     }
   }
-  
+
   for (/*empty init*/; i < element_count1; i++)
   {
     if ( 0 != (*string1++))
@@ -2388,7 +2388,7 @@ int ON_String::MapStringOrdinal(
   }
   else if ( 0 == mapped_string_capacity )
     return element_count; // no +1 here
-  
+
   if ( element_count > mapped_string_capacity )
     return 0;
 
@@ -2479,7 +2479,7 @@ int ON_wString::MapStringOrdinal(
   }
   else if ( 0 == mapped_string_capacity )
     return element_count; // no +1 here
-  
+
   if ( element_count > mapped_string_capacity )
     return 0;
 
@@ -2527,7 +2527,7 @@ ON_String ON_String::MapString(
   int element_count
   )
 {
-  bool bMappingNullTerminator; 
+  bool bMappingNullTerminator;
 
   if (element_count < 0)
   {
@@ -2538,16 +2538,16 @@ ON_String ON_String::MapString(
   }
   else
   {
-    bMappingNullTerminator 
-      = element_count > 0 
-      && nullptr != string 
-      && 0 == string[element_count-1] 
+    bMappingNullTerminator
+      = element_count > 0
+      && nullptr != string
+      && 0 == string[element_count-1]
       && (1 == element_count || 0 != string[element_count-2])
       ;
   }
 
   int mapped_string_capacity = ON_String::MapString(locale,map_type,string,element_count,nullptr,0);
-  
+
   if (mapped_string_capacity > 0)
   {
     ON_String mapped_string;
@@ -2557,8 +2557,8 @@ ON_String ON_String::MapString(
     mapped_string.ReserveArray(mapped_string_capacity);
 
     // Set mapped_string ON_wString header length value to mapped_length.
-    int mapped_string_length 
-      = ( bMappingNullTerminator ) 
+    int mapped_string_length
+      = ( bMappingNullTerminator )
       ? (mapped_string_capacity-1)
       : mapped_string_capacity;
     mapped_string.SetLength(mapped_string_length);
@@ -2578,7 +2578,7 @@ ON_wString ON_wString::MapString(
   int element_count
   )
 {
-  bool bMappingNullTerminator; 
+  bool bMappingNullTerminator;
 
   if (element_count < 0)
   {
@@ -2589,16 +2589,16 @@ ON_wString ON_wString::MapString(
   }
   else
   {
-    bMappingNullTerminator 
-      = element_count > 0 
-      && nullptr != string 
-      && 0 == string[element_count-1] 
+    bMappingNullTerminator
+      = element_count > 0
+      && nullptr != string
+      && 0 == string[element_count-1]
       && (1 == element_count || 0 != string[element_count-2])
       ;
   }
 
   int mapped_string_capacity = ON_wString::MapString(locale,map_type,string,element_count,nullptr,0);
-  
+
   if (mapped_string_capacity > 0)
   {
     ON_wString mapped_string;
@@ -2608,8 +2608,8 @@ ON_wString ON_wString::MapString(
     mapped_string.ReserveArray(mapped_string_capacity);
 
     // Set mapped_string ON_wString header length value to mapped_length.
-    int mapped_string_length 
-      = ( bMappingNullTerminator ) 
+    int mapped_string_length
+      = ( bMappingNullTerminator )
       ? (mapped_string_capacity-1)
       : mapped_string_capacity;
     mapped_string.SetLength(mapped_string_length);

@@ -2152,6 +2152,16 @@ public:
 class ON_CLASS ON_FontFaceQuartet
 {
 public:
+
+  enum class Member : unsigned char
+  {
+    Unset = 0,
+    Regular = 1,
+    Bold = 2,
+    Italic = 3,
+    BoldItalic = 4
+  };
+
   ON_FontFaceQuartet() = default;
   ~ON_FontFaceQuartet() = default;
   ON_FontFaceQuartet(const ON_FontFaceQuartet&) = default;
@@ -2192,6 +2202,38 @@ public:
   const class ON_Font* BoldFace() const;
   const class ON_Font* ItalicFace() const;
   const class ON_Font* BoldItalicFace() const;
+
+  /*
+  Parameters:
+    font - [in]
+      Font to test
+  Returns:
+    If font exactly matches a quartet member, that member is identified.
+    Otherwise, ON_FontFaceQuartet::Member::Unset is returned.
+  */
+  ON_FontFaceQuartet::Member QuartetMember(
+    const ON_Font* font
+  ) const;
+
+  /*
+  Parameters:
+    member - [in]
+  Returns:
+    Specified quartet member.
+  */
+  const ON_Font* Face(
+    ON_FontFaceQuartet::Member member
+  ) const;
+
+  /*
+  Parameters:
+    member - [in]
+  Returns:
+    Closest quartet member.
+  */
+  const ON_Font* ClosestFace(
+    ON_FontFaceQuartet::Member member
+  ) const;
 
   const ON_Font* Face(
     bool bBold,
@@ -3590,6 +3632,24 @@ public:
   const ON_wString WindowsLogfontName() const;
 
   /*
+  Description:
+    On non-WIndows platforms like Mac OS, iOS, and Android, this function can
+    be used to generate fake windows logfont names. 
+    For fonts that have at most 4 faces with the same stretch and variations
+    in weight and slant, the  family_name is a good choice. 
+    For fonts that have many faces, like Helvetica Neue on Mac OS,
+    this funciton will generate names that act like a Windows LOGFONT name
+    for use in archaic name + regular/bold/italic/bold-italic font selction
+    user interfaces.
+  Returns:
+    A fake windows logfont name.
+  */
+  static const ON_wString FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
+    ON_wString family_name,
+    ON_wString postscript_name
+  );
+
+  /*
   Returns:
      Name of the quartet for this font. See ON_FontFaceQuartet for more details.
   */
@@ -4755,6 +4815,13 @@ public:
   double AppleFontWeightTrait() const;
 
   /*
+  Returns:
+    If the font is created from a CTFont, the weight trait,
+    otherwise ON_UNSET_VALUE;
+  */
+  double AppleFontWeightTraitEx() const;
+
+  /*
   Description:
     Don't use this old function.  If you have a font and want a face in
     the same famliy with a different weight, then call 
@@ -4945,17 +5012,32 @@ public:
 
   /*
   Returns:
+    true if FontStyle() is ON_Font::Style::Italic or  is ON_Font::Style::Oblique.
+    Otherwise false.
+  Remarks:
+    The face is sloped so the top is to the left of the base. This is extremely rare.
+    NOTE WELL:
+      When the term "oblique" appears in a face names or descriptions,
+      it generally means the face is an italic face.
+  */
+  bool IsItalicOrOblique() const;
+
+  /*
+  Returns:
     true if FontStyle() is ON_Font::Style::Oblique.
     false if FontStyle() is ON_Font::Style::Upright or .ON_Font::Style::Italic.
   Remarks:
     The face is sloped so the top is to the left of the base. This is extremely rare.
-    NOTE WELL: 
+    NOTE WELL:
       When the term "oblique" appears in a face names or descriptions,
       it generally means the face is an italic face.
   */
   bool IsOblique(); // ERROR - missing const
-  
+
+
   ON_Font::Stretch FontStretch() const;
+
+  double AppleFontWidthTrait() const;
 
   /*
   Description:
@@ -5330,7 +5412,7 @@ private:
   mutable ON_SHA1_Hash m_font_characteristics_hash;
 
 private:
-  double m_reserved2 = 0.0;
+  double m_apple_font_width_trait = ON_UNSET_VALUE;
   double m_reserved3 = 0.0;
   double m_reserved4 = 0.0;
 
@@ -5766,6 +5848,7 @@ public:
   static int CompareFamilyName(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareFamilyAndFaceName(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareFamilyAndWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs);
 
   static int CompareEnglishPostScriptName(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareEnglishFamilyName(ON_Font const* const* lhs, ON_Font const* const* rhs);
@@ -5775,6 +5858,7 @@ public:
   static int CompareQuartetName(ON_Font const* const* lhs, ON_Font const* const* rhs);
 
   static int CompareWeightStretchStyle(ON_Font const* const* lhs, ON_Font const* const* rhs);
+  static int CompareStretch(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareUnderlinedStrikethroughPointSize(ON_Font const* const* lhs, ON_Font const* const* rhs);
 
   unsigned int AddFont(

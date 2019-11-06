@@ -496,6 +496,9 @@ void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
     case ON_COMPONENT_INDEX::subd_face:
       Print("subd_face(%d)",ci.m_index);
       break;
+    case ON_COMPONENT_INDEX::hatch_loop:
+      Print("hatch_loop(%d)", ci.m_index);
+      break;
     case ON_COMPONENT_INDEX::dim_linear_point:
       Print("dim_linear_point(%d)",ci.m_index);
       break;
@@ -510,6 +513,12 @@ void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
       break;
     case ON_COMPONENT_INDEX::dim_text_point:
       Print("dim_text_point(%d)",ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::dim_centermark_point:
+      Print("dim_centermark_point(%d)", ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::dim_leader_point:
+      Print("dim_leader_point(%d)", ci.m_index);
       break;
     case ON_COMPONENT_INDEX::no_type:
       Print("no_type(%d)",ci.m_index);

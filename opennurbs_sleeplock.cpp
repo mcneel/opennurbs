@@ -177,6 +177,11 @@ ON_SleepLockGuard::ON_SleepLockGuard(class ON_SleepLock& sleep_lock)
   m_bIsManagingLock = m_sleep_lock.GetLock();
 }
 
+ON_SleepLockGuard::ON_SleepLockGuard(class ON_FixedSizePool& fsp)
+  : m_sleep_lock(fsp.m_sleep_lock)
+{
+  m_bIsManagingLock = m_sleep_lock.GetLock();
+}
 
 ON_SleepLockGuard::ON_SleepLockGuard(
   class ON_SleepLock& sleep_lock,

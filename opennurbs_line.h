@@ -41,7 +41,7 @@ public:
 
   /*
   Returns:
-    True if from != to.
+    True if from != to and both from and to are valid.
   */
   bool IsValid() const;
 
@@ -440,7 +440,6 @@ public:
 	//	Ensure !IsDegenerate() to gaurentee meaningful result
 	ON_PlaneEquation PlaneEquation() const;
 
-
 	/*
 	Description:
 		Evaluate point on triangle.
@@ -455,6 +454,10 @@ public:
 	ON_3dPoint PointAt(
 		double s1, double s2
 	) const;
+
+	// Returns:
+	//	Evaluation of PointAt(1/3.0, 1/3.0);
+	ON_3dPoint Centroid() const;
 
 	/*
 	Description:
@@ -548,8 +551,5 @@ the result will be false.
 */
 ON_DECL
 bool operator!=(const ON_Triangle& a, const ON_Triangle& b);
-
-
-
 
 #endif

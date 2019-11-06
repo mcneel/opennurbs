@@ -26,14 +26,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-void ON_SubD::ClearLimitSurfaceMesh() const
-{
-  const ON_SubDLevel* level = ActiveLevelConstPointer();
-
-  if ( nullptr != level )
-    level->m_limit_mesh = ON_SubDLimitMesh::Empty;
-}
-
 bool ON_SubDFaceRegionBreakpoint(
   unsigned int level0_face_id,
   const class ON_SubDComponentRegionIndex& region_index
@@ -111,7 +103,7 @@ const ON_SubDComponentRegion ON_SubDComponentRegion::Create(
 
 const ON_SubDComponentRegion ON_SubDComponentRegion::CreateSubdivisionRegion(
   ON_SubDComponentPtr::Type component_type,
-  bool bComponentMark,
+  bool bComponentDirection,
   unsigned short subdivision_count,
   bool bAssignTransientId
 )
@@ -119,7 +111,7 @@ const ON_SubDComponentRegion ON_SubDComponentRegion::CreateSubdivisionRegion(
   ON_SubDComponentRegion r;
   r.m_region_index = ON_SubDComponentRegionIndex::Unset;
   r.m_region_index.m_subdivision_count = subdivision_count;
-  r.m_level0_component = ON_SubDComponentPtr::CreateNull(component_type, bComponentMark);
+  r.m_level0_component = ON_SubDComponentPtr::CreateNull(component_type, bComponentDirection);
 
   if (bAssignTransientId)
   {
@@ -164,7 +156,7 @@ const ON_SubDComponentRegion ON_SubDComponentRegion::CreateSubdivisionRegion(
 ////    : *this;
 ////}
 
-int ON_SubDComponentRegion::CompareTypeIdMark(
+int ON_SubDComponentRegion::CompareTypeIdDirection(
   const ON_SubDComponentRegion* lhs,
   const ON_SubDComponentRegion* rhs
 )
@@ -185,7 +177,7 @@ int ON_SubDComponentRegion::CompareTypeIdMark(
   if (lhs->m_level0_component_id > rhs->m_level0_component_id)
     return 1;
 
-  rc = (0 != lhs->m_level0_component.ComponentMark() ? (int)1 : (int)0) - (0 != lhs->m_level0_component.ComponentMark() ? (int)1 : (int)0);
+  rc = (0 != lhs->m_level0_component.ComponentDirection() ? (int)1 : (int)0) - (0 != lhs->m_level0_component.ComponentDirection() ? (int)1 : (int)0);
   if (0 != rc)
     return rc;
 
@@ -234,7 +226,7 @@ int ON_SubDComponentRegionIndex::CompareMinimumSubregion(
   return 0;
 }
 
-int ON_SubDComponentRegion::CompareTypeIdMarkMinimumSubregion(
+int ON_SubDComponentRegion::CompareTypeIdDirectionMinimumSubregion(
   const ON_SubDComponentRegion* lhs,
   const ON_SubDComponentRegion* rhs
 )
@@ -242,14 +234,14 @@ int ON_SubDComponentRegion::CompareTypeIdMarkMinimumSubregion(
   if (lhs == rhs)
     return 0;
 
-  const int rc = ON_SubDComponentRegion::CompareTypeIdMark(lhs, rhs);
+  const int rc = ON_SubDComponentRegion::CompareTypeIdDirection(lhs, rhs);
   if (0 != rc)
     return rc;
 
   return ON_SubDComponentRegionIndex::CompareMinimumSubregion( &lhs->m_region_index, &rhs->m_region_index);
 }
 
-int ON_SubDComponentRegion::CompareTypeIdMarkSubregion(
+int ON_SubDComponentRegion::CompareTypeIdDirectionSubregion(
   const ON_SubDComponentRegion* lhs,
   const ON_SubDComponentRegion* rhs
 )
@@ -257,7 +249,7 @@ int ON_SubDComponentRegion::CompareTypeIdMarkSubregion(
   if (lhs == rhs)
     return 0;
 
-  int rc = ON_SubDComponentRegion::CompareTypeIdMark(lhs, rhs);
+  int rc = ON_SubDComponentRegion::CompareTypeIdDirection(lhs, rhs);
   if (0 == rc)
   {
     rc = ON_SubDComponentRegionIndex::CompareMinimumSubregion(&lhs->m_region_index, &rhs->m_region_index);
@@ -282,7 +274,7 @@ int ON_SubDComponentRegion::Compare(
   if (lhs == rhs)
     return 0;
 
-  const int rc = ON_SubDComponentRegion::CompareTypeIdMarkSubregion(lhs, rhs);
+  const int rc = ON_SubDComponentRegion::CompareTypeIdDirectionSubregion(lhs, rhs);
   if (0 != rc)
     return rc;
 
@@ -362,7 +354,7 @@ void ON_SubDComponentRegion::PushAdjusted(
 {
   if (
     ON_SubDComponentPtr::Type::Edge == m_level0_component.ComponentType()
-    && 0 != m_level0_component.ComponentMark()
+    && 0 != m_level0_component.ComponentDirection()
     && region_index <= 1
     )
   {
@@ -798,7 +790,7 @@ wchar_t* ON_SubDComponentPtr::ToString(
         break;
       case ON_SubDComponentPtr::Type::Edge:
         if ( s+2 < s1 )
-          *s++ = (ComponentMark()) ? '-' : '+';
+          *s++ = (ComponentDirection()) ? '-' : '+';
         c = 'e';
         break;
       case ON_SubDComponentPtr::Type::Face:
@@ -1003,7 +995,7 @@ ON__UINT32 ON_SubDComponentRegionIndex::ToCompressedRegionIndex(
 void ON_SubDComponentRegionIndex::FromCompressedRegionIndex(
   ON__UINT32 compressed_region_index,
   unsigned short* subdivision_count,
-  unsigned short region_index[]
+  unsigned short* region_index
 )
 {
   const ON__UINT32 count = (compressed_region_index >> 24);
@@ -1125,7 +1117,7 @@ static bool Internal_Seal3d(const double* src, double* dst, double tol )
 }
 
 
-bool ON_SubDLimitMeshFragment::SealPoints(
+bool ON_SubDMeshFragment::SealPoints(
   bool bTestNearEqual,
   const double* src,
   double* dst
@@ -1139,7 +1131,7 @@ bool ON_SubDLimitMeshFragment::SealPoints(
   return true;
 }
 
-bool ON_SubDLimitMeshFragment::SealNormals(
+bool ON_SubDMeshFragment::SealNormals(
   bool bTestNearEqual,
   const double* src,
   double* dst
@@ -1153,13 +1145,13 @@ bool ON_SubDLimitMeshFragment::SealNormals(
   return true;
 }
 
-bool ON_SubDLimitMeshFragment::SealAdjacentSides(
+bool ON_SubDMeshFragment::SealAdjacentSides(
   bool bTestNearEqual,
   bool bCopyNormals,
-  const ON_SubDLimitMeshFragment& src_fragment,
+  const ON_SubDMeshFragment& src_fragment,
   unsigned int i0,
   unsigned int i1,
-  ON_SubDLimitMeshFragment& dst_fragment,
+  ON_SubDMeshFragment& dst_fragment,
   unsigned int j0,
   unsigned int j1
 )
@@ -1196,7 +1188,7 @@ bool ON_SubDLimitMeshFragment::SealAdjacentSides(
     {
       src = &src_fragment.m_P[src_fragment.m_grid.m_S[i]*src_stride];
       dst = &dst_fragment.m_P[dst_fragment.m_grid.m_S[j]*dst_stride];
-      if (false == ON_SubDLimitMeshFragment::SealPoints(bTestNearEqual,src,dst))
+      if (false == ON_SubDMeshFragment::SealPoints(bTestNearEqual,src,dst))
       {
         ON_SUBD_ERROR("Point locations failed near equal test.");
         return false;
@@ -1212,7 +1204,7 @@ bool ON_SubDLimitMeshFragment::SealAdjacentSides(
       {
         src = &src_fragment.m_N[src_fragment.m_grid.m_S[i] * src_stride];
         dst = &dst_fragment.m_N[dst_fragment.m_grid.m_S[j] * dst_stride];
-        if (false == ON_SubDLimitMeshFragment::SealNormals(bTestNearEqual,src,dst))
+        if (false == ON_SubDMeshFragment::SealNormals(bTestNearEqual,src,dst))
         {
           ON_SUBD_ERROR("Normal locations failed near equal test.");
           return false;
@@ -1541,11 +1533,20 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
   {
 
     unsigned int archive_id_partition[4] = {};
-    level.SetArchiveId(archive_id_partition);
+    bool bLevelLinkedListIncreasingId[3] = {};
+    level.SetArchiveId(*subdimple,archive_id_partition,bLevelLinkedListIncreasingId);
+
     if (archive_id_partition[1] - archive_id_partition[0] != subd_vertex_count)
       break;
 
-    for (const ON_SubDVertex* vertex = level.m_vertex[0]; nullptr != vertex; vertex = vertex->m_next_vertex)
+    // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
+    // with components in an order that is not increasing in id and it is critical that the next three for
+    // loops iterate the level's components in order of increasing id.
+    ON_SubDLevelComponentIdIterator idit;
+
+    // must iterate vertices in order of increasing id
+    idit.Initialize(bLevelLinkedListIncreasingId[0], ON_SubDComponentPtr::Type::Vertex, *subdimple, level);
+    for (const ON_SubDVertex* vertex = idit.FirstVertex(); nullptr != vertex; vertex = idit.NextVertex())
     {
       unsigned int vi = vertex->ArchiveId();
       if (vi < 1 || vi > subd_vertex_count)
@@ -1561,7 +1562,9 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
     ngon_spans.Reserve(mesh_ngon_count);
     unsigned int max_ngon_face_count = 0;
     mesh_face_count = 0;
-    for (const ON_SubDFace* face = level.m_face[0]; nullptr != face; face = face->m_next_face)
+    // must iterate faces in order of increasing id
+    idit.Initialize(bLevelLinkedListIncreasingId[2], ON_SubDComponentPtr::Type::Face, *subdimple, level);
+    for (const ON_SubDFace* face = idit.FirstFace(); nullptr != face; face = idit.NextFace())
     {
       ON_MeshFace meshf = {};
 
@@ -1599,7 +1602,7 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
       else
       {
         ON_3dPoint center_point;
-        if (false == face->GetSubdivisionPoint(ON_SubD::SubDType::QuadCatmullClark, true, center_point))
+        if (false == face->GetSubdivisionPoint( center_point))
           continue;
 
         ON_2udex ngon_span = { mesh->m_F.UnsignedCount(), 0 };
@@ -1728,10 +1731,8 @@ void ON_SubD::ClearEvaluationCache() const
 
   if (nullptr != level)
   {
-    level->ClearEdgeFlags();
-    level->ClearBoundingBox();
-    level->ClearSubdivisonAndLimitPoints();
-    level->m_limit_mesh = ON_SubDLimitMesh::Empty;
+    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts();
+    level->ClearEvaluationCache();
   }
 }
 

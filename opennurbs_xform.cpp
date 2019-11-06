@@ -867,6 +867,9 @@ const ON_Xform operator*(const ON_Xform& xform, double c)
 
 ON_2dPoint ON_Xform::operator*( const ON_2dPoint& p ) const
 {
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   const double x = p.x; // optimizer should put x,y in registers
   const double y = p.y;
   double xh[2], w;
@@ -880,6 +883,9 @@ ON_2dPoint ON_Xform::operator*( const ON_2dPoint& p ) const
 
 ON_3dPoint ON_Xform::operator*( const ON_3dPoint& p ) const
 {
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   const double x = p.x; // optimizer should put x,y,z in registers
   const double y = p.y;
   const double z = p.z;
@@ -910,6 +916,9 @@ ON_4dPoint ON_Xform::operator*( const ON_4dPoint& h ) const
 
 ON_2dVector ON_Xform::operator*( const ON_2dVector& v ) const
 {
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   const double x = v.x; // optimizer should put x,y in registers
   const double y = v.y;
   double xh[2];
@@ -921,6 +930,9 @@ ON_2dVector ON_Xform::operator*( const ON_2dVector& v ) const
 
 ON_3dVector ON_Xform::operator*( const ON_3dVector& v ) const
 {
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   const double x = v.x; // optimizer should put x,y,z in registers
   const double y = v.y;
   const double z = v.z;

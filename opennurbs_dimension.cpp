@@ -77,8 +77,6 @@ void ON_Dimension::Internal_CopyFrom(const ON_Dimension& src)
   m_detail_measured = src.m_detail_measured;
   m_flip_arrow_1 = src.m_flip_arrow_1;
   m_flip_arrow_2 = src.m_flip_arrow_2;
-  m_force_arrows = src.m_force_arrows;
-  m_force_textpos = src.m_force_textpos;
 }
 
 bool ON_Dimension::IsValid(ON_TextLog* text_log) const
@@ -294,23 +292,90 @@ void ON_Dimension::SetDetailMeasured(ON_UUID uuid)
 
 ON_Dimension::ForceArrow ON_Dimension::ForceArrowPosition() const
 {
-  return m_force_arrows;
+  ON_ERROR("Use ON_Dimension::ArrowFit(const ON_DimStyle* parent_style)");
+  return ON_Dimension::ForceArrow::Auto;
 }
 
 void ON_Dimension::SetForceArrowPosition(ON_Dimension::ForceArrow force)
 {
-  m_force_arrows = force;
+  // 
+  ON_ERROR("Use ON_Dimension::SetArrowFit(const ON_DimStyle* parent_style,ON_DimStyle::arrow_fit arrowfit)");
 }
 
 ON_Dimension::ForceText ON_Dimension::ForceTextPosition() const
 {
-  return m_force_textpos;
+  ON_ERROR("Use ON_Dimension::TextFit(const ON_DimStyle* parent_style)");
+  return ON_Dimension::ForceText::Auto;
 }
 
 void ON_Dimension::SetForceTextPosition(ON_Dimension::ForceText force)
 {
-  m_force_textpos = force;
+  ON_ERROR("Use ON_Dimension::SetTextFit(const ON_DimStyle* parent_style,ON_DimStyle::text_fit textfit)");
 }
+//--------------------------------
+
+void ON_Dimension::SetForceDimLine(
+  const ON_DimStyle* parent_style,
+  bool force_dimline
+)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (force_dimline != parent_style->ForceDimLine());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetForceDimLine(force_dimline);
+    override_style->SetFieldOverride(ON_DimStyle::field::ForceDimLine, bCreate);
+  }
+}
+
+bool ON_Dimension::ForceDimLine(
+  const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::ForceDimLine).ForceDimLine();
+
+}
+
+void ON_Dimension::SetTextFit(
+  const ON_DimStyle* parent_style,
+  ON_DimStyle::text_fit textfit)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (textfit != parent_style->TextFit());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetTextFit(textfit);
+    override_style->SetFieldOverride(ON_DimStyle::field::TextFit, bCreate);
+  }
+}
+
+ON_DimStyle::text_fit ON_Dimension::TextFit(
+  const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::TextFit).TextFit();
+}
+
+void ON_Dimension::SetArrowFit(
+  const ON_DimStyle* parent_style,
+  ON_DimStyle::arrow_fit arrowfit)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (arrowfit != parent_style->ArrowFit());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetArrowFit(arrowfit);
+    override_style->SetFieldOverride(ON_DimStyle::field::TextFit, bCreate);
+  }
+}
+
+ON_DimStyle::arrow_fit ON_Dimension::ArrowFit(
+  const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::ArrowFit).ArrowFit();
+}
+
 
 //----------------------------------------------------------
 // Class ON_DimLinear
@@ -365,6 +430,9 @@ bool ON_Dimension::Internal_WriteDimension(
     if (!ON_Annotation::Internal_WriteAnnotation(archive))
       break;
 
+    const ON_DimStyle& ds = archive.ArchiveCurrentDimStyle();
+
+
     if (!archive.WriteString(m_user_text))
       break;
     if (!archive.WriteDouble(0.0)) // OBSOLETE m_text_rotation
@@ -377,8 +445,8 @@ bool ON_Dimension::Internal_WriteDimension(
       break;
     if (!archive.WriteBool(m_flip_arrow_2))
       break;
-    unsigned int u = static_cast<unsigned int>(m_force_arrows);
-    if (!archive.WriteInt(u))
+    const unsigned int legacy_arrow_fit = static_cast<unsigned int>(ArrowFit(&ds));
+    if (!archive.WriteInt(legacy_arrow_fit))
       break;
     if (!archive.WriteUuid(m_detail_measured))
       break;
@@ -386,8 +454,8 @@ bool ON_Dimension::Internal_WriteDimension(
       break;
 
     // content_version 1
-    const unsigned int force_textpos_as_unsigned = static_cast<unsigned int>(m_force_textpos);
-    if (!archive.WriteInt(force_textpos_as_unsigned))
+    const unsigned int legacy_text_fit = static_cast<unsigned int>(TextFit(&ds));
+    if (!archive.WriteInt(legacy_text_fit))
       break;
 
     rc = true;
@@ -410,6 +478,9 @@ bool ON_Dimension::Internal_ReadDimension(
   if (false == archive.BeginRead3dmAnonymousChunk(&content_version))
     return false;
 
+  unsigned int legacy_arrow_fit = 0;
+  unsigned int legacy_text_fit = 0;
+
   bool rc = false;
   for (;;)
   {
@@ -431,14 +502,14 @@ bool ON_Dimension::Internal_ReadDimension(
       break;
     if (!archive.ReadBool(&m_flip_arrow_2))
       break;
-    unsigned int u = static_cast<unsigned int>(m_force_arrows);
-    if (!archive.ReadInt(&u))
+    if (!archive.ReadInt(&legacy_arrow_fit))
       break;
-    m_force_arrows = ON_Dimension::ForceArrowFromUnsigned(u);
     if (!archive.ReadUuid(m_detail_measured))
       break;
     if (!archive.ReadDouble(&m_distance_scale))
       break;
+    if (ON_nil_uuid == m_detail_measured)
+      m_distance_scale = 1.0;
 
     if (content_version <= 0)
     {
@@ -447,10 +518,8 @@ bool ON_Dimension::Internal_ReadDimension(
     }
 
     // content_version 1
-    unsigned int force_textpos_as_unsigned = static_cast<unsigned int>(m_force_textpos);
-    if (!archive.ReadInt(&force_textpos_as_unsigned))
+    if (!archive.ReadInt(&legacy_text_fit))
       break;
-    m_force_textpos = ON_Dimension::ForceTextFromUnsigned(force_textpos_as_unsigned);
 
     rc = true;
     break;
@@ -458,6 +527,23 @@ bool ON_Dimension::Internal_ReadDimension(
 
   if (!archive.EndRead3dmChunk())
     rc = false;
+
+  const unsigned int version_v7_may_8_2019 = ON_VersionNumberConstruct(7, 0, 2019, 5, 8, 0);
+  if (rc && archive.ArchiveOpenNURBSVersion() < version_v7_may_8_2019 )
+  {
+    // may 2019 - "arrow fit" and "text fit" moved from member settings on ON_Dimension
+    // to settings on ON_DimStyle.
+    // The file being read is older than the change.
+    const ON_DimStyle::arrow_fit new_arrow_fit = ON_DimStyle::ArrowFitFromUnsigned((unsigned int)legacy_arrow_fit);
+    const ON_DimStyle::text_fit new_text_fit = ON_DimStyle::TextFitFromUnsigned((unsigned int)legacy_text_fit);
+    const ON_DimStyle& ds = archive.ArchiveCurrentDimStyle();
+    bool bSetArrowFit = (new_arrow_fit != ArrowFit(&ds));
+    if (bSetArrowFit)
+      SetArrowFit(&ds, new_arrow_fit);
+    bool bSetTextFit = (new_text_fit != TextFit(&ds));
+    if (bSetTextFit)
+      SetTextFit(&ds, new_text_fit);
+  }
 
   return rc;
 }
@@ -640,7 +726,7 @@ bool ON_DimLinear::GetTextXform(
   ON_Xform text_rotation(1.0);          // Text rotation around text plane origin point
 
   // The amount past vertical where text flips to the other orientation
-  const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(80.0*ON_PI / 180.0);
+  const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(80.001 * ON_DEGREES_TO_RADIANS);
 
   ON_3dPoint text_center = ON_3dPoint::Origin;
   // Text starts out approximately centered at origin
@@ -665,12 +751,12 @@ bool ON_DimLinear::GetTextXform(
   // See if arrows and text will all fit inside extension lines
   // or what has to be moved outside
   bool arrowflipped[2] = { false, false };
-  //{ ArrowIsFlipped(0), ArrowIsFlipped(1) };  // manual override
-  ON_Dimension::ForceArrow force_arrow = ForceArrowPosition();
-  if (ForceArrow::Outside == force_arrow)
+  
+  ON_DimStyle::arrow_fit arrow_fit = dimstyle->ArrowFit();
+  if (ON_DimStyle::arrow_fit::ArrowsOutside == arrow_fit)
     arrowflipped[0] = arrowflipped[1] = true;
 
-  ON_Dimension::ForceText force_text = ForceTextPosition();
+  ON_DimStyle::text_fit text_fit = dimstyle->TextFit();
 
   bool text_outside = false;
   double dist = Measurement();
@@ -687,12 +773,13 @@ bool ON_DimLinear::GetTextXform(
 
   double total_text_width = (ON_DimStyle::ContentAngleStyle::Horizontal == text_angle_style) ? text_height : text_width;
 
-  if (force_text == ON_Dimension::ForceText::Left || force_text == ON_Dimension::ForceText::Right)
+  if (text_fit == ON_DimStyle::text_fit::TextLeft || text_fit == ON_DimStyle::text_fit::TextRight)
   {
     total_text_width = 0.0;
     text_outside = true;
   }
-  else if (force_text == ON_Dimension::ForceText::Inside)
+  //else if (force_text == ON_Dimension::ForceText::Inside)
+  else if (text_fit == ON_DimStyle::text_fit::TextInside)
   {
     total_text_width = 0.0;
     text_outside = false;
@@ -702,7 +789,7 @@ bool ON_DimLinear::GetTextXform(
 
   static double arrow_width_factor = 1.1;
   double total_arrow_width = asz * arrow_width_factor * 2;
-  if (ForceArrow::Outside == force_arrow)
+  if (ON_DimStyle::arrow_fit::ArrowsOutside == arrow_fit)
     total_arrow_width = 0.0;
 
   if (total_arrow_width + total_text_width > dist)     // arrows + text dont fit
@@ -712,13 +799,14 @@ bool ON_DimLinear::GetTextXform(
     {
       // move text outside
       text_outside = true;
-      if (total_arrow_width > dist && ForceArrow::Auto == force_arrow)  // arrows dont fit either
+      if (total_arrow_width > dist && ON_DimStyle::arrow_fit::Auto == arrow_fit)  // arrows dont fit either
       {
         arrowflipped[0] = true;
         arrowflipped[1] = true;
       }
     }
-    else if (ForceArrow::Auto == force_arrow)       // text fits
+    //else if (ForceArrow::Auto == force_arrow)       // text fits
+    else if (ON_DimStyle::arrow_fit::Auto == arrow_fit)       // text fits
     {
       // flip arrows
       arrowflipped[0] = true;
@@ -735,9 +823,9 @@ bool ON_DimLinear::GetTextXform(
   {
     // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
     double x = (text_width * 0.5) + (text_gap * 3.0);
-    if (force_text == ON_Dimension::ForceText::Left || force_text == ON_Dimension::ForceText::HintLeft)
+    if (text_fit == ON_DimStyle::text_fit::TextLeft || text_fit == ON_DimStyle::text_fit::TextHintLeft)
     {
-      if (arrowflipped[0]) 
+      if (arrowflipped[0])
         x += (asz * arrow_width_factor);
       text_pt = ArrowPoint1().x < ArrowPoint2().x ? ArrowPoint1() : ArrowPoint2();
       text_pt.x -= x;
@@ -745,7 +833,7 @@ bool ON_DimLinear::GetTextXform(
     else  // right or auto
     {
       if (arrowflipped[1])
-        x += asz * (arrow_width_factor);
+        x += (asz * arrow_width_factor);
       text_pt = ArrowPoint1().x < ArrowPoint2().x ? ArrowPoint2() : ArrowPoint1();
       text_pt.x += x;
     }
@@ -795,70 +883,25 @@ bool ON_DimLinear::GetTextXform(
     }
   }
 
-  double XoX = dim_xaxis * view_xdir;
-  double XoY = dim_xaxis * view_ydir;
-  double YoX = dim_yaxis * view_xdir;
-  double YoY = dim_yaxis * view_ydir;
-  bool from_the_back = (view_zdir * dim_zaxis < 0.0);
-  if (nullptr != model_xform && model_xform->Determinant() < 0.0)
-    from_the_back = !from_the_back;
+  bool flip_x = false;
+  bool flip_y = false;
 
-  double upsign = 1.0;
-
-  // This part shifts text to the correct side of the dimension line
-  if (fabs(XoX) > fabs(XoY)) // more horizontal
-  {
-    if (YoY > 0.0)
-      upsign = 1.0;
-    else
-      upsign = -1.0;
-  }
-  else  // more vertical
-  {
-    if (from_the_back)
-    {
-      if (YoX < 0.0)
-      {
-        if (XoX < fliptol)
-          upsign = 1.0;
-        else
-          upsign = -1.0;
-      }
-      else
-      {
-        if (XoX > -fliptol)
-          upsign = -1.0;
-        else
-          upsign = 1.0;
-      }
-    }
-    else
-    {
-      if (YoX > 0.0)
-      {
-        if (XoX > fliptol)
-          upsign = 1.0;
-        else
-          upsign = -1.0;
-      }
-      else
-      {
-        if (XoX < -fliptol)
-          upsign = -1.0;
-        else
-          upsign = 1.0;
-      }
-    }
-  }
+  CalcTextFlip(
+    dim_xaxis, dim_yaxis, dim_zaxis,
+    view_xdir, view_ydir, view_zdir,
+    model_xform,
+    fliptol,
+    flip_x,
+    flip_y);
 
   if (ON_DimStyle::TextLocation::AboveDimLine == text_location)
   {
     // Moves the text to AboveLine if that's the alignment mode
-    double d = (text_height * 0.5 + text_gap) * upsign;
-    //if (from_the_back)
-    //  d = -d;
+    double dy = flip_y ? -1.0 : 1.0;
+    double d = (text_height * 0.5 + text_gap) * dy;
     text_pt.y += d;
   }
+
 
   ON_3dPoint text_point_3d = Plane().PointAt(text_pt.x, text_pt.y);  // 3d text point
   dimplane_to_textpoint = ON_Xform::TranslationTransformation(text_point_3d - Plane().origin);  // Move from dimplane origin to text point
@@ -893,23 +936,13 @@ bool ON_DimLinear::GetTextXform(
   }
   else if (draw_forward)
   {
-    bool fx = false;
-    bool fy = false;
-    if (from_the_back)
-      upsign = -upsign;
-    fx = upsign < 0.0;
-    if (from_the_back)
-      fy = !fx;
-    else
-      fy = fx;
-
     ON_Xform mxf;  // Mirror xform for backwards text to adjust DrawForward
-    if (fx)
+    if (flip_x)
     {
       mxf.Mirror(text_center, ON_3dVector::XAxis);
       text_xform_out = text_xform_out * mxf;
     }
-    if (fy)
+    if (flip_y)
     {
       mxf.Mirror(text_center, ON_3dVector::YAxis);
       text_xform_out = text_xform_out * mxf;
@@ -1859,32 +1892,36 @@ bool ON_DimLinear::GetDisplayLines(
   isline[2] = true;
   isline[3] = false;
 
-  if (UseDefaultTextPoint() && ON_DimStyle::TextLocation::InDimLine != text_location)
+  if (/*UseDefaultTextPoint() &&*/ ON_DimStyle::TextLocation::InDimLine != text_location)
   {
-    // If the dimline is under the text, and the text extends past the end of the dimline,
-    // make the dim line as long as the text if the text is offset sideways from the 
-    // extension lines.
-    // If the text overlaps the extensions in both directions, it is centered and the
-    // dimension line will hang out just a little each way, so don't do it in that case
-    double t0, t1;
-    lines[2].ClosestPointTo(text_rect[0], &t0);
-    lines[2].ClosestPointTo(text_rect[1], &t1);
-    if (fabs(t0 - t1) > 0.00001) // if text rect has some width
+    if (m_use_default_text_point || fabs(m_user_text_point.y - m_dimline_pt.y) < style->TextGap() * dimscale * 0.75)
     {
-      if (t0 > t1)
+      // If the dimline is under the text, and the text extends past the end of the dimline,
+      // make the dim line as long as the text if the text is offset sideways from the 
+      // extension lines.
+      // If the text is within 3/4 * text gap of default vertical position, draw the extended line
+      // If the text overlaps the extensions in both directions, it is centered and the
+      // dimension line will hang out just a little each way, so don't do it in that case
+      double t0, t1;
+      lines[2].ClosestPointTo(text_rect[0], &t0);
+      lines[2].ClosestPointTo(text_rect[1], &t1);
+      if (fabs(t0 - t1) > 0.00001) // if text rect has some width
       {
-        double t = t0; t0 = t1; t1 = t;
+        if (t0 > t1)
+        {
+          double t = t0; t0 = t1; t1 = t;
+        }
+        ON_Line l = lines[2];
+        if (t0 < 0.0 && t1 < 1.0)
+          l.from = lines[2].PointAt(t0);
+        if (t1 > 1.0 && t0 > 0.0)
+          l.to = lines[2].PointAt(t1);
+        lines[2] = l;
       }
-      ON_Line l = lines[2];
-      if (t0 < 0.0 && t1 < 1.0)
-        l.from = lines[2].PointAt(t0);
-      if (t1 > 1.0 && t0 > 0.0)
-        l.to = lines[2].PointAt(t1);
-      lines[2] = l;
     }
   }
 
-  if (ArrowIsFlipped(0) && ArrowIsFlipped(1))
+  if (ArrowIsFlipped(0) && ArrowIsFlipped(1) && !style->ForceDimLine())
   {
     // Don't draw dimline between extensions if arrows are flipped
     lines[3].from = m_plane.PointAt(m_def_pt_2.x, m_dimline_pt.y);
@@ -1959,6 +1996,7 @@ void ON_DimLinear::GetArrowXform(
   xf = xf * xfs;
   arrow_xform_out = xf;
 }
+
 
 //----------------------------------------------------------
 // Class ON_DimAngular
@@ -2853,7 +2891,7 @@ bool ON_DimAngular::GetTextXform(
   if (!text->Get3dCorners(cp))
     return false;
 
-  text_center = (cp[0] * dimscale + cp[2] * dimscale) / 2.0;
+  text_center = (cp[0] + cp[2]) / 2.0;
   text_width = (cp[1].x - cp[0].x) * dimscale;
   text_height = (cp[3].y - cp[0].y) * dimscale;
 
@@ -2866,93 +2904,90 @@ bool ON_DimAngular::GetTextXform(
 
   bool arrowflipped[2] = { false, false };
   bool text_outside = false;
-  ON_Dimension::ForceText force_text = ForceTextPosition();
-  ON_Dimension::ForceArrow force_arrow = ForceArrowPosition();
-  if (ForceArrow::Outside == force_arrow)
+
+  ON_DimStyle::arrow_fit arrow_fit = dimstyle->ArrowFit();
+  if (ON_DimStyle::arrow_fit::ArrowsOutside == arrow_fit)
     arrowflipped[0] = arrowflipped[1] = true;
-  else if (ForceArrow::Inside == force_arrow)
-    arrowflipped[0] = arrowflipped[1] = false;
-  //else if (ON_PI < Measurement())  // No flipping 
-  //  arrowflipped[0] = arrowflipped[1] = false;
-  //else // Flipping arrows won't happen on more than half-circle angles
+
+  ON_DimStyle::text_fit text_fit = dimstyle->TextFit();
+
+  // See if arrows and text will all fit inside extension lines
+  // or what has to be moved outside
+  double asz = dimstyle->ArrowSize() * dimscale;
+  double dist = Radius() * Measurement();
+
+  double total_text_width = text_width;
+  if (text_fit != ON_DimStyle::text_fit::Auto)
+    total_text_width = 0.0;
+  else if (0.0 < total_text_width)
+    total_text_width += text_gap;
+
+  if (text_fit != ON_DimStyle::text_fit::Auto &&
+      text_fit != ON_DimStyle::text_fit::TextInside)
+    text_outside = true;
+
+  static double arrow_width_factor = 1.5;
+  double total_arrow_width = asz * arrow_width_factor * 2;  // min arrow tail space is asz/2
+
+  if (arrowflipped[0])
+    total_arrow_width -= (asz * arrow_width_factor);
+  if (arrowflipped[1])
+    total_arrow_width -= (asz * arrow_width_factor);
+
+  if (total_arrow_width + total_text_width > dist)     // arrows + text dont fit
   {
-    // See if arrows and text will all fit inside extension lines
-    // or what has to be moved outside
-    double asz = dimstyle->ArrowSize() * dimscale;
-    double dist = Radius() * Measurement();
-
-    double total_text_width = text_width;
-    if (force_text != ON_Dimension::ForceText::Auto)
-      total_text_width = 0.0;
-    else if (0.0 < total_text_width)
-      total_text_width += text_gap;
-
-    if (force_text != ON_Dimension::ForceText::Auto &&
-      force_text != ON_Dimension::ForceText::Inside)
-      text_outside = true;
-
-    static double arrow_width_factor = 1.5;
-    double total_arrow_width = asz * arrow_width_factor * 2;  // min arrow tail space is asz/2
-
-    if (arrowflipped[0])
-      total_arrow_width -= (asz * arrow_width_factor);
-    if (arrowflipped[1])
-      total_arrow_width -= (asz * arrow_width_factor);
-
-    if (total_arrow_width + total_text_width > dist)     // arrows + text dont fit
+    if (total_text_width > dist)   // text doesnt fit
     {
-      if (total_text_width > dist)   // text doesnt fit
+      // move text outside
+      text_outside = true;
+      if (total_arrow_width > dist && ON_DimStyle::arrow_fit::Auto == arrow_fit)  // arrows dont fit either
       {
-        // move text outside
-        text_outside = true;
-        if (total_arrow_width > dist && ForceArrow::Auto == force_arrow)  // arrows dont fit either
-        {
-          arrowflipped[0] = true;
-          arrowflipped[1] = true;
-        }
-      }
-      else if (ForceArrow::Auto == force_arrow)      // text fits
-      {
-        // flip arrows
         arrowflipped[0] = true;
         arrowflipped[1] = true;
       }
     }
-
-    // Dimension's ON_TextContent display text is stored at wcs origin coords until it is drawn
-    // text_xform positions text at the 3d point and rotation to draw
-    if (fabs(text_pt_2d.x) < ON_SQRT_EPSILON && fabs(text_pt_2d.y) < ON_SQRT_EPSILON)
-      text_pt_2d.Set(0.0, 0.0);
-
-    if (text_outside && ON_DimStyle::ContentAngleStyle::Horizontal != text_angle_style && UseDefaultTextPoint())
+    else if (ON_DimStyle::arrow_fit::Auto == arrow_fit)      // text fits
     {
-      double radius = Radius();
-      // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
-      double x = text_width * 0.5 + text_gap;
-      if (force_text == ON_Dimension::ForceText::Left)
+      // flip arrows
+      arrowflipped[0] = true;
+      arrowflipped[1] = true;
+    }
+  }
+
+  // Dimension's ON_TextContent display text is stored at wcs origin coords until it is drawn
+  // text_xform positions text at the 3d point and rotation to draw
+  if (fabs(text_pt_2d.x) < ON_SQRT_EPSILON && fabs(text_pt_2d.y) < ON_SQRT_EPSILON)
+    text_pt_2d.Set(0.0, 0.0);
+
+  if (text_outside && ON_DimStyle::ContentAngleStyle::Horizontal != text_angle_style && UseDefaultTextPoint())
+  {
+    double radius = Radius();
+    // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
+    double x = text_width * 0.5 + text_gap;
+    if (text_fit == ON_DimStyle::text_fit::TextLeft)
+    {
+      //if (arrowflipped[0])
+      x += 1.5 * asz * arrow_width_factor;
+      text_pt_2d = ArrowPoint1();
+      if (0.0 < radius)
       {
-        //if (arrowflipped[0])
-          x += 1.5 * asz * arrow_width_factor;
-        text_pt_2d = ArrowPoint1();
-        if (0.0 < radius)
-        {
-          double d_ang = x / radius;
-          text_pt_2d.Rotate(-d_ang, ON_2dPoint::Origin);
-        }
+        double d_ang = x / radius;
+        text_pt_2d.Rotate(-d_ang, ON_2dPoint::Origin);
       }
-      else
+    }
+    else
+    {
+      //if (arrowflipped[1])
+      x += asz * arrow_width_factor;
+      text_pt_2d = ArrowPoint2();
+      if (0.0 < radius)
       {
-        //if (arrowflipped[1])
-          x += asz * arrow_width_factor;
-        text_pt_2d = ArrowPoint2();
-        if (0.0 < radius)
-        {
-          double d_ang = x / radius;
-          text_pt_2d.Rotate(d_ang, ON_2dPoint::Origin);
-        }
+        double d_ang = x / radius;
+        text_pt_2d.Rotate(d_ang, ON_2dPoint::Origin);
       }
     }
   }
+
   FlipArrow(0, arrowflipped[0]);
   FlipArrow(1, arrowflipped[1]);
 
@@ -4195,13 +4230,17 @@ bool ON_DimRadial::GetTextXform(
         if (fx)
         {
           mxf.Mirror(text_center, textplane.xaxis);
-          text_xform_out = text_xform_out * mxf;
+          textpt_xf = textpt_xf * mxf;
         }
         if (fy)
         {
           mxf.Mirror(ON_3dPoint::Origin, textplane.yaxis);
-          text_xform_out = text_xform_out * mxf;
+          textpt_xf = textpt_xf * mxf;
         }
+        text_xform_out = ON_Xform::DiagonalTransformation(dimscale, dimscale, dimscale);
+        text_xform_out = textrot_xf * text_xform_out;
+        text_xform_out = textpt_xf * text_xform_out;
+        text_xform_out = dimplane_xf * text_xform_out;
       }
     }
   }

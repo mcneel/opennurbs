@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -125,7 +125,7 @@ enum ON_UnicodeEncoding ON_IsUTFByteOrderMark(
   const void* buffer,
   size_t sizeof_buffer
   )
-{  
+{
   if ( 0 != buffer && sizeof_buffer >= 2 )
   {
     const unsigned char* b = static_cast<const unsigned char*>(buffer);
@@ -345,7 +345,7 @@ static int ON_DecodeUTF8Helper(
   char c;
 
   c = sUTF8[0];
-   
+
   if ( 0 == (0x80 & c) )
   {
     // 1 byte ASCII encoding: 0xxxxxxx
@@ -452,7 +452,7 @@ static int ON_DecodeUTF8Helper(
     *value = u;
     return 4;
   }
-  
+
   if ( 0xF8 == ( 0xFC & c) )
   {
     // 5 byte character encoding: 111110xx, 10xxxxxx, 10xxxxxx, 10xxxxxx, 10xxxxxx
@@ -601,7 +601,7 @@ int ON_DecodeUTF8(
     *unicode_code_point = sUTF8[0];
     return 1;
   }
-  
+
   c = sUTF8[0];
   if ( 0xC0 == ( 0xE0 & c) && sUTF8_count >= 2 )
   {
@@ -705,7 +705,7 @@ int ON_DecodeUTF8(
       // skip to next UTF-8 start elemement
       for ( /*empty for initializer*/; i0 < sUTF8_count; i0++ )
       {
-        // Search for the next element of sUTF8[] that is the 
+        // Search for the next element of sUTF8[] that is the
         // start of a UTF-8 encoding sequence.
         c = sUTF8[i0];
         if (    0 == (0x80 & c)     // ASCII 0 - 127
@@ -731,14 +731,14 @@ int ON_DecodeUTF8(
     *unicode_code_point = u0;
     return i0;
   }
-  
-  if ( i0 < sUTF8_count 
-       && u0 >= 0xD800 && u0 <= 0xDBFF 
+
+  if ( i0 < sUTF8_count
+       && u0 >= 0xD800 && u0 <= 0xDBFF
        && (0 == error_status || 8 == error_status)
-       && 0 != (4 & e->m_error_mask) 
+       && 0 != (4 & e->m_error_mask)
      )
   {
-    // See if a UFT-16 surrogate pair was incorrectly encoded 
+    // See if a UFT-16 surrogate pair was incorrectly encoded
     // as two consecutive UTF-8 sequences.
     u1 = 0xFFFFFFFF;
     i1 = ON_DecodeUTF8Helper(sUTF8+i0,sUTF8_count-i0,&u1,&error_status);
@@ -748,8 +748,8 @@ int ON_DecodeUTF8(
       sUTF16[0] = (ON__UINT16)u0;
       sUTF16[1] = (ON__UINT16)u1;
       u0 = 0xFFFFFFFF;
-      if ( 2 == ON_ConvertUTF16ToUTF32(false,sUTF16,2,&u0,1,&error_status,0,0,0) 
-           && 0 == error_status 
+      if ( 2 == ON_ConvertUTF16ToUTF32(false,sUTF16,2,&u0,1,&error_status,0,0,0)
+           && 0 == error_status
            && ON_IsValidUnicodeCodePoint(u0)
          )
       {
@@ -860,7 +860,7 @@ int ON_DecodeUTF16(
     return 0;
   }
 
-  // Search for the next element of sUTF16[] that is a 
+  // Search for the next element of sUTF16[] that is a
   // valid UTF-16 encoding sequence.
   int i;
   for ( i = 1; i < sUTF16_count; i++ )
@@ -870,8 +870,8 @@ int ON_DecodeUTF16(
       // valid single UTF-16 code unit
       break;
     }
-    if ( i+1 < sUTF16_count 
-         && sUTF16[i] >= 0xD800 && sUTF16[i] < 0xDC00 
+    if ( i+1 < sUTF16_count
+         && sUTF16[i] >= 0xD800 && sUTF16[i] < 0xDC00
          && sUTF16[i+1] >= 0xDC00 && sUTF16[i+1] < 0xE000
        )
     {
@@ -1136,7 +1136,7 @@ int ON_DecodeSwapByteUTF16(
     return 0;
   }
 
-  // Search for the next element of sUTF16[] that is a 
+  // Search for the next element of sUTF16[] that is a
   // valid UTF-16 encoding sequence.
   p1 = (ON__UINT8*)&w1;
   p += sizeof(sUTF16[0]);
@@ -1256,7 +1256,7 @@ int ON_ConvertUTF8ToUTF8(
     *sNextInputUTF8 = sInputUTF8+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -1351,7 +1351,7 @@ int ON_ConvertUTF8ToUTF16(
     *sNextUTF8 = sUTF8+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -1441,7 +1441,7 @@ int ON_ConvertUTF8ToUTF32(
     *sNextUTF8 = sUTF8+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -1566,7 +1566,7 @@ int ON_ConvertUTF16ToUTF8(
     *sNextUTF16 = sUTF16+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -1691,7 +1691,7 @@ int ON_ConvertUTF16ToUTF16(
     *sNextInputUTF16 = sInputUTF16+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -1814,7 +1814,7 @@ int ON_ConvertUTF16ToUTF32(
     *sNextUTF16 = sUTF16+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -2020,7 +2020,7 @@ int ON_ConvertUTF32ToUTF8(
     *sNextUTF32 = sUTF32+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -2132,7 +2132,7 @@ int ON_ConvertUTF32ToUTF16(
     *sNextUTF32 = sUTF32+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -2256,7 +2256,7 @@ int ON_ConvertUTF32ToUTF32(
     *sNextUTF16 = sUTF16+i;
   if ( error_status )
     *error_status = e.m_error_status;
-  
+
   return output_count;
 }
 
@@ -2619,7 +2619,7 @@ const ON_wString ON_wString::FromUnicodeCodePoints(
 )
 {
   const bool bErrorCodePointIsValid = ON_IsValidUnicodeCodePoint(error_code_point);
-  
+
   if (nullptr == code_points)
     return ON_wString::EmptyString;
 
@@ -2675,7 +2675,7 @@ const ON_wString ON_wString::FromUnicodeCodePoints(
     error_code_point,
     nullptr
   );
-  
+
   if (wchar_count <= 0)
     return ON_wString::EmptyString;
 
@@ -2707,22 +2707,22 @@ ON__UINT32 ON_MapRTFcharsetToWindowsCodePage(
 {
   //  From the Microsoft version of the RTF ver 1.9 spec available on MSDN
   //
-  //  \fcharsetN:  	Specifies the character set of a font in the font table.If this appears, it implies that bytes in runs 
+  //  \fcharsetN:  	Specifies the character set of a font in the font table.If this appears, it implies that bytes in runs
   //    tagged with the associated \fN are character codes in the codepage corresponding to the charset N.
   //    Use this codepage to convert the codes to Unicode using a function like the Windows MultiByteToWideChar().
-  //    See also the \cpgN control word, which, if it appears, supersedes the codepage given by \fcharsetN.Values for N are defined, 
-  //    for example, in the Windows header file wingdi.h(e.g., see ANSI_CHARSET) and are repeated here together with the corresponding 
+  //    See also the \cpgN control word, which, if it appears, supersedes the codepage given by \fcharsetN.Values for N are defined,
+  //    for example, in the Windows header file wingdi.h(e.g., see ANSI_CHARSET) and are repeated here together with the corresponding
   //    Windows or Mac codepages for convenience:charset	codepage	Windows / Mac name
 
-  //  A font may have a different character set from the character set of the document. For example, the Symbol font has the 
-  //    same characters in the same code positions both on the Macintosh and in Windows. Typically, RTF fonts use the code page 
-  //    corresponding to the \fcharsetN control word in their \fonttbl description. If the charset doesn’t exist, the codepage 
-  //    may be given by the \cpgN control word, for which the code page is N. If the \cpgN does appear, it supersedes the code 
-  //    page corresponding to the \fcharsetN. 
-  //    For such cases, codepage conversions can be avoided altogether by using the Unicode \uN notation for characters. 
-  //    In addition, file names (used in field instructions and in embedded fonts) may not necessarily be the same as the character 
-  //    set of the document; the \cpgN control word can change the character set for these file names as well. 
-  //  
+  //  A font may have a different character set from the character set of the document. For example, the Symbol font has the
+  //    same characters in the same code positions both on the Macintosh and in Windows. Typically, RTF fonts use the code page
+  //    corresponding to the \fcharsetN control word in their \fonttbl description. If the charset doesnâ€™t exist, the codepage
+  //    may be given by the \cpgN control word, for which the code page is N. If the \cpgN does appear, it supersedes the code
+  //    page corresponding to the \fcharsetN.
+  //    For such cases, codepage conversions can be avoided altogether by using the Unicode \uN notation for characters.
+  //    In addition, file names (used in field instructions and in embedded fonts) may not necessarily be the same as the character
+  //    set of the document; the \cpgN control word can change the character set for these file names as well.
+  //
 
   ON__UINT32 cp;
   switch (rtf_charset)
@@ -2752,7 +2752,7 @@ ON__UINT32 ON_MapRTFcharsetToWindowsCodePage(
   case 162: cp = 1254; break;         // Turkish
   case 163: cp = 1258; break;         // Vietnamese
   case 177: cp = 1255; break;         // Hebrew
-  case 178: cp = 1256; break;         // Arabic 
+  case 178: cp = 1256; break;         // Arabic
   case 179: cp = default_code_page; break; // Arabic Traditional (old)
   case 180: cp = default_code_page; break; // Arabic user (old)
   case 181: cp = default_code_page; break; // Hebrew user (old)
@@ -2805,7 +2805,7 @@ static int ON_Internal_ConvertMSSBCPToWideChar(
     ON__UINT32 unicode_code_point;
     if (c < 0x80)
       unicode_code_point = c;
-    else 
+    else
     {
       if (c <= 0xFF && nullptr != sb_code_page_0x80_to_0xFF_to_unicode )
       {
@@ -2837,7 +2837,7 @@ static int ON_Internal_ConvertMSSBCPToWideChar(
     while (s < s1)
       *s++ = *w++;
   }
-  
+
   while (s < sWideCharMax)
   {
     *s++ = 0;
@@ -2938,7 +2938,7 @@ int ON_ConvertMSMBCPToWideChar(
 #if defined(ON_RUNTIME_WIN)
   // Starting with Windows Vista, the function does not drop illegal code points when dwFlags=0.
   // It replaces illegal sequences with U+FFFD (encoded as appropriate for the specified codepage).
-  DWORD dwFlags = 0; 
+  DWORD dwFlags = 0;
   int sWideChar_count = ::MultiByteToWideChar(windows_code_page, dwFlags, sMBCS, sMBCS_count, sWideChar, sWideChar_capacity);
   if (sWideChar_count < 0)
     sWideChar_count = 0;

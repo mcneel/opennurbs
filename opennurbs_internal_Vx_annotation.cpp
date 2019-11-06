@@ -814,17 +814,21 @@ ON_Leader* ON_Leader::CreateFromV5Leader(
   V6_leader->Internal_SetDimStyleFromV5Annotation(V5_leader,annotation_context);
   const ON_DimStyle& parent_dim_style = annotation_context->ParentDimStyle();
 
-  ON_2dVector textdir;
-  if (V5_leader.GetTextDirection(textdir))
-  {
-    ON_3dVector dir;
-    dir.Set(textdir.x, textdir.y, 0.0);
-    if (0.0 > dir * plane.xaxis)
-    {
-      // override
-      V6_leader->SetLeaderTextHorizontalAlignment(&parent_dim_style, ON::TextHorizontalAlignment::Right);
-    }
-  }
+  //ON_2dVector textdir;
+  //if (V5_leader.GetTextDirection(textdir))
+  //{
+  //  ON_3dVector dir;
+  //  dir.Set(textdir.x, textdir.y, 0.0);
+  //  if (0.0 > dir * plane.xaxis)
+  //  {
+  //    // override
+  //    V6_leader->SetLeaderTextHorizontalAlignment(&parent_dim_style, ON::TextHorizontalAlignment::Right);
+  //  }
+  //}
+  
+  // ON::TextHorizontalAlignment::Auto behaves like all V5 leaders did
+  V6_leader->SetLeaderTextHorizontalAlignment(&parent_dim_style, ON::TextHorizontalAlignment::Auto);
+
 
   // updates any m_overrides to be current and updates content hash.
   parent_dim_style.ContentHash();

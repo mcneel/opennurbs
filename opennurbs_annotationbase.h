@@ -183,6 +183,16 @@ public:
   // Use this function when you don't have a known horizontal direction
   static ON_3dVector GetDefaultHorizontal(const ON_Plane& plane);
 
+
+  static void CalcTextFlip(
+    const ON_3dVector& text_xdir, const ON_3dVector& text_ydir, const ON_3dVector& text_zdir,
+    const ON_3dVector& view_xdir, const ON_3dVector& view_ydir, const ON_3dVector& view_zdir,
+    const ON_Xform* model_xform,
+    const double flip_tol,
+    bool& flip_x,
+    bool& flip_y);
+
+
   /*
   Returns:
     Rich text that can contain rich text formatting instructions.
@@ -203,6 +213,18 @@ public:
   Field results may be cached from previous evaluation
   */
   const ON_wString PlainTextWithFields() const;
+
+  /*
+  Finds the positions and lengths of substrings in the string returned by PlainTextWithFields()
+    That string is the plain text (no rtf formatting) with field source unevaluated
+    Each 3dex in the array is 
+    i: run index, 
+    j: position in the string where text from run[i] starts, 
+    k: length of text from run[i]
+
+  Returns the same string that PlainTextWithFields() returns
+  */
+  const ON_wString PlainTextWithFields(ON_SimpleArray<ON_3dex>* runmap) const;
 
   // Return the id of the main (parent) dimstyle used by this object.
   // The style with this id should not be used directly if there is 
@@ -376,6 +398,15 @@ public:
     const wchar_t* RtfString,
     const ON_DimStyle* dimstyle
   );
+
+  bool RunReplaceString(
+    const ON_DimStyle* dimstyle,
+    const wchar_t* str,
+    int start_run_idx,
+    int start_run_pos,
+    int end_run_idx,
+    int end_run_pos);
+
 
   void GetAlignment(ON::TextHorizontalAlignment& horz, ON::TextVerticalAlignment& vert) const;
   void SetAlignment(ON::TextHorizontalAlignment horz, ON::TextVerticalAlignment vert);
@@ -746,6 +777,9 @@ public:
   double DimScale(const ON_DimStyle* parent_style) const;
   void SetDimScale(const ON_DimStyle* parent_style, double scale);
 
+  wchar_t DecimalSeparator(const ON_DimStyle* parent_style) const;
+  void SetDecimalSeparator(const ON_DimStyle* parent_style, wchar_t separator);
+
   ON_DimStyle::LengthDisplay DimensionLengthDisplay(const ON_DimStyle* parent_style) const;
   void SetDimensionLengthDisplay(const ON_DimStyle* parent_style, ON_DimStyle::LengthDisplay length_display);
 
@@ -842,6 +876,8 @@ public:
   static bool FirstCharTextProperties(const wchar_t* rtf_in, bool& bold, bool& italic, bool& underline, ON_wString& facename);
   
   const ON_Font* FirstCharFont() const;
+
+  friend class ON_Dimension;
 };
 
 

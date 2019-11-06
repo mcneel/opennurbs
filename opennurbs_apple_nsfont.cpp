@@ -184,9 +184,8 @@ bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
   const ON_wString face_name = ON_Font::AppleCTFontFaceName(apple_font);
   
   // Set Windows LOGFONT.lfFaceName to something not empty there is some hope this
-  // font might work in Rhino 5 for Windows too.
-  // https://mcneel.myjetbrains.com/youtrack/issue/RH-37074
-  const ON_wString windows_logfont_name = family_name;
+  // font might work in Rhino 6/7 for Windows too.
+  const ON_wString windows_logfont_name = ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(family_name, postscript_name);
   
   const bool rc = postscript_name.IsNotEmpty() || family_name.IsNotEmpty();
   if (rc)
@@ -259,7 +258,7 @@ bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
         
         if (nullptr != appleWidth)
         {
-          double x = apple_font_weight_trait;
+          double x = apple_font_width_trait;
           if ( CFNumberGetValue(appleWidth, kCFNumberFloat64Type, &x) && -1.0 <= x && x <= 1.0 )
           {
             // Use the kCTFontWidthTrait key to access the normalized proportion trait from the font traits dictionary.
@@ -321,6 +320,14 @@ bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
     m_panose1 = ON_Font::AppleCTFontPANOSE1(apple_font);
     
     SetFontOrigin(ON_Font::Origin::AppleFont);
+
+    if (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0)
+      m_apple_font_weight_trait = apple_font_weight_trait;
+
+    if (-1.0 <= apple_font_width_trait && apple_font_width_trait <= 1.0)
+      m_apple_font_width_trait = apple_font_width_trait;
+    else
+      m_apple_font_width_trait = ON_UNSET_VALUE;
   }
   
   return rc;

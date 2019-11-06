@@ -16,6 +16,20 @@
 #if !defined(OPENNURBS_FSP_INC_)
 #define OPENNURBS_FSP_INC_
 
+class ON_CLASS ON_FixedSizePoolElement
+{
+private:
+  // ON_FixedSizePoolElement is never instantiated 
+  ON_FixedSizePoolElement() = delete;
+  ~ON_FixedSizePoolElement() = delete;
+  ON_FixedSizePoolElement(const ON_FixedSizePoolElement&) = delete;
+  ON_FixedSizePoolElement operator=(const ON_FixedSizePoolElement&) = delete;
+
+public:
+  // next element - intentionally not initialized because instantiation is not permitted.
+  ON_FixedSizePoolElement* m_next;
+};
+
 class ON_CLASS ON_FixedSizePool
 {
 public:
@@ -288,7 +302,18 @@ private:
 
   unsigned int m_active_element_count = 0; // number of active elements
   unsigned int m_total_element_count = 0;  // total number of elements (active + returned)
+
+private:
+  // Used by The ThreadSafe...() functions and for expert users 
+  // to use when managing memory controlled by this pool. Best
+  // to ingnore this unless you have a very clear idea of what
+  // you are doing, why you are doing it, and when you are doing it.
+  // Otherwise, you'll find yourself waiting forever on a nested
+  // access request. 
+  friend class ON_SleepLockGuard;
   ON_SleepLock m_sleep_lock;
+
+private:
   unsigned int m_reserved0 = 0;
 
   

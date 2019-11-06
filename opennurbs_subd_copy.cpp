@@ -26,11 +26,9 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#if defined(OPENNURBS_SUBD_WIP)
-
 unsigned int ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(ON__UINT_PTR ptr)
 {
-  return (unsigned int)(ptr/(ON_SUBD_ELEMENT_FLAGS_MASK+1));
+  return (unsigned int)(ptr/(ON_SUBD_COMPONENT_FLAGS_MASK+1));
 }
 
 ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
@@ -38,7 +36,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   )
 {
   ON__UINT_PTR archive_id = (nullptr == vertex) ? 0 : vertex->ArchiveId();
-  return ON_SubDComponentPtr::Create((const ON_SubDVertex*)(archive_id*(ON_SUBD_ELEMENT_FLAGS_MASK+1)));
+  return ON_SubDComponentPtr::Create((const ON_SubDVertex*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
 ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
@@ -46,7 +44,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
   )
 {
   ON__UINT_PTR archive_id = (nullptr == edge) ? 0 : edge->ArchiveId();
-  return ON_SubDComponentPtr::Create((const ON_SubDEdge*)(archive_id*(ON_SUBD_ELEMENT_FLAGS_MASK+1)));
+  return ON_SubDComponentPtr::Create((const ON_SubDEdge*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
 ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
@@ -54,7 +52,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
   )
 {
   ON__UINT_PTR archive_id = (nullptr == face) ? 0 : face->ArchiveId();
-  return ON_SubDComponentPtr::Create((const ON_SubDFace*)(archive_id*(ON_SUBD_ELEMENT_FLAGS_MASK+1)));
+  return ON_SubDComponentPtr::Create((const ON_SubDFace*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
 ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
@@ -62,7 +60,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   )
 {
   ON_SubDComponentPtr ptr = FromVertex(vertex_ptr.Vertex());
-  ptr.m_ptr |= vertex_ptr.VertexPtrMark();
+  ptr.m_ptr |= vertex_ptr.VertexDirection();
   return ptr;
 }
 
@@ -122,10 +120,10 @@ ON_SubDVertex* ON_SubDArchiveIdMap::CopyVertex(
   }
 
   // convert vertex->m_limit_point[].m_sector_face pointers to archive_id values
-  for (const ON_SubDSectorLimitPoint* p = &vertex->m_limit_point; nullptr != p; p = p->m_next_sector_limit_point)
+  for (const ON_SubDSectorSurfacePoint* p = &vertex->m_limit_point; nullptr != p; p = p->m_next_sector_limit_point)
   {
     ptr = ON_SubDArchiveIdMap::FromFace(p->m_sector_face);
-    const_cast<ON_SubDSectorLimitPoint*>(p)->m_sector_face = (const ON_SubDFace*)ptr.m_ptr;
+    const_cast<ON_SubDSectorSurfacePoint*>(p)->m_sector_face = (const ON_SubDFace*)ptr.m_ptr;
   }
   
   return vertex;
@@ -213,7 +211,7 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeVertexPtr(
     ON__UINT_PTR vptr = (ON__UINT_PTR)(vertex[i]);
     vertex[i] = nullptr;
     const unsigned int archive_id = ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(vptr);
-    // future use // ON__UINT_PTR flags = ON_SUBD_ELEMENT_FLAGS(vptr);
+    // future use // ON__UINT_PTR flags = ON_SUBD_COMPONENT_FLAGS(vptr);
     if (0 == archive_id || archive_id < m_archive_id_partition[0] || archive_id >= m_archive_id_partition[1])
     {
       ON_ERROR("Invalid vertex archive id.");
@@ -264,7 +262,7 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeEdgePtr(
     if ( i == edgeN_capacity )
       eptr = edgeX;
     const unsigned int archive_id = ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(eptr->m_ptr);
-    ON__UINT_PTR flags = ON_SUBD_ELEMENT_FLAGS(eptr->m_ptr);
+    ON__UINT_PTR flags = ON_SUBD_COMPONENT_FLAGS(eptr->m_ptr);
     eptr->m_ptr = 0;
     if (0 == archive_id || archive_id < m_archive_id_partition[1] || archive_id >= m_archive_id_partition[2])
     {
@@ -288,7 +286,7 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeEdgePtr(
       ON_ERROR("archive_id != edge->ArchiveId().");
       continue;
     }
-    *eptr = ON_SubDEdgePtr::Create(edge,ON_SUBD_ELEMENT_MARK(flags));
+    *eptr = ON_SubDEdgePtr::Create(edge,ON_SUBD_COMPONENT_DIRECTION(flags));
   }
   return true;
 }
@@ -315,7 +313,7 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeFacePtr(
     if ( i == faceN_capacity )
       fptr = faceX;
     const unsigned int archive_id = ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(fptr->m_ptr);
-    ON__UINT_PTR flags = ON_SUBD_ELEMENT_FLAGS(fptr->m_ptr);
+    ON__UINT_PTR flags = ON_SUBD_COMPONENT_FLAGS(fptr->m_ptr);
     fptr->m_ptr = 0;
     if (0 == archive_id || archive_id < m_archive_id_partition[2] || archive_id >= m_archive_id_partition[3])
     {
@@ -339,7 +337,7 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeFacePtr(
       ON_ERROR("archive_id != face->ArchiveId().");
       continue;
     }
-    *fptr = ON_SubDFacePtr::Create(face,ON_SUBD_ELEMENT_MARK(flags));
+    *fptr = ON_SubDFacePtr::Create(face,ON_SUBD_COMPONENT_DIRECTION(flags));
   }
   return true;
 }
@@ -541,7 +539,7 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
     // convert ON_SubDVertex.m_faces[]
     ConvertArchiveIdToRuntimeFacePtr(v->m_face_count,v->m_face_capacity,(ON_SubDFacePtr*)v->m_faces,0,nullptr);
 
-    for (const ON_SubDSectorLimitPoint* p = &v->m_limit_point; nullptr != p; p = p->m_next_sector_limit_point)
+    for (const ON_SubDSectorSurfacePoint* p = &v->m_limit_point; nullptr != p; p = p->m_next_sector_limit_point)
     {
       if ( 0 != p->m_sector_face )
         ConvertArchiveIdToRuntimeFacePtr(1,1,(ON_SubDFacePtr*)&p->m_sector_face,0,nullptr);
@@ -635,10 +633,20 @@ void ON_SubD::CopyHelper(const ON_SubD& src)
   }
   m_subdimple_sp = std::shared_ptr<ON_SubDimple>(subdimple);
   if (nullptr != subdimple)
-    subdimple->SetLimitMeshSubDWeakPointer(m_subdimple_sp);
+    subdimple->SetManagedMeshSubDWeakPointers(m_subdimple_sp);
 }
 
-void ON_SubDimple::SetLimitMeshSubDWeakPointer(
+ON__UINT64 ON_SubDimple::ContentSerialNumber() const
+{
+  return m_subd_content_serial_number;
+}
+
+ON__UINT64 ON_SubDimple::ChangeContentSerialNumber() const
+{
+  return (m_subd_content_serial_number = ON_NextContentSerialNumber());
+}
+
+void ON_SubDimple::SetManagedMeshSubDWeakPointers(
   std::shared_ptr<class ON_SubDimple>& subdimple_sp
   )
 {
@@ -649,14 +657,16 @@ void ON_SubDimple::SetLimitMeshSubDWeakPointer(
     ON_SubDLevel* level = m_levels[level_index];
     if (nullptr == level)
       continue;
-    ON_SubDLimitMeshImpl* limple = level->m_limit_mesh.SubLimple();
-    if (nullptr == limple)
-      continue;
-    limple->SetSubDWeakPointer(level->m_face[0],subdimple_sp);
+    ON_SubDMeshImpl* surface_mesh_imple = level->m_surface_mesh.SubLimple();
+    if (nullptr != surface_mesh_imple)
+      surface_mesh_imple->SetSubDWeakPointer(level->m_face[0], subdimple_sp);
+    ON_SubDMeshImpl* control_net_mesh_imple = level->m_control_net_mesh.SubLimple();
+    if (nullptr != control_net_mesh_imple)
+      control_net_mesh_imple->SetSubDWeakPointer(level->m_face[0], subdimple_sp);
   }
 }
 
-void ON_SubDLimitMeshImpl::SetSubDWeakPointer(
+void ON_SubDMeshImpl::SetSubDWeakPointer(
   const ON_SubDFace* subd_first_face,
   std::shared_ptr<class ON_SubDimple>& subdimple_sp
 )
@@ -709,7 +719,7 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     ON_SubDLevel* level = SubDLevel(level_index,true);
     if (nullptr == level)
       break;
-    if (false == level->CopyHelper(*src_level, eptrlist, *this, bCopyComponentStatus))
+    if (false == level->CopyHelper(src, *src_level, eptrlist, *this, bCopyComponentStatus))
       break;
     if ( src.m_active_level == src_level )
       m_active_level = level;
@@ -720,6 +730,9 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     m_max_edge_id = src.m_max_edge_id;
   if (src.m_max_face_id > m_max_face_id)
     m_max_face_id = src.m_max_face_id;
+
+  m_subd_appearance = src.m_subd_appearance;
+  ChangeContentSerialNumber();
 }
 
 bool ON_SubDLevel::IsEmpty() const
@@ -731,10 +744,169 @@ bool ON_SubDLevel::IsEmpty() const
     );
 }
 
+int ON_SubDComponentBaseLink::CompareId(ON_SubDComponentBaseLink const*const* lhs, ON_SubDComponentBaseLink const*const* rhs)
+{
+  unsigned int lhs_id = (*lhs)->m_id;
+  unsigned int rhs_id = (*rhs)->m_id;
+  if (lhs_id < rhs_id)
+    return -1;
+  if (lhs_id > rhs_id)
+    return 1;
+  return 0;
+}
+
+
+
+
+void ON_SubDLevelComponentIdIterator::Initialize(
+  bool bLevelLinkedListIncreasingId,
+  ON_SubDComponentPtr::Type ctype,
+  const ON_SubDimple& subdimple,
+  const ON_SubDLevel& level
+)
+{
+  m_bLevelLinkedListIncreasingId = false;
+  m_ctype = ctype;
+  m_level_index = (unsigned short)level.m_level_index;
+  m_count = 0;
+  m_prev_id = 0;
+  m_first = nullptr;
+  m_current = nullptr;
+
+  switch (ctype)
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+      m_first = (const ON_SubDComponentBaseLink*)level.m_vertex[0];
+      break;
+  case ON_SubDComponentPtr::Type::Edge:
+      m_first = (const ON_SubDComponentBaseLink*)level.m_edge[0];
+      break;
+  case ON_SubDComponentPtr::Type::Face:
+      m_first = (const ON_SubDComponentBaseLink*)level.m_face[0];
+      break;
+  default:
+    m_first = nullptr;
+    break;
+  }
+
+  if (nullptr == m_first)
+    return;
+
+  m_bLevelLinkedListIncreasingId = bLevelLinkedListIncreasingId;
+
+  if (false == m_bLevelLinkedListIncreasingId)
+  {
+    subdimple.InitializeComponentIdIterator(ctype, m_cidit);
+  }
+}
+
+const ON_SubDVertex* ON_SubDLevelComponentIdIterator::FirstVertex()
+{
+  return (ON_SubDComponentPtr::Type::Vertex == m_ctype) ? (const ON_SubDVertex*)InternalFirst() : nullptr;
+}
+
+const ON_SubDVertex* ON_SubDLevelComponentIdIterator::NextVertex()
+{
+  return (ON_SubDComponentPtr::Type::Vertex == m_ctype) ? (const ON_SubDVertex*)InternalNext() : nullptr;
+}
+
+const ON_SubDEdge* ON_SubDLevelComponentIdIterator::FirstEdge()
+{
+  return (ON_SubDComponentPtr::Type::Edge == m_ctype) ? (const ON_SubDEdge*)InternalFirst() : nullptr;
+}
+
+const ON_SubDEdge* ON_SubDLevelComponentIdIterator::NextEdge()
+{
+  return (ON_SubDComponentPtr::Type::Edge == m_ctype) ? (const ON_SubDEdge*)InternalNext() : nullptr;
+}
+
+const ON_SubDFace* ON_SubDLevelComponentIdIterator::FirstFace()
+{
+  return (ON_SubDComponentPtr::Type::Face == m_ctype) ? (const ON_SubDFace*)InternalFirst() : nullptr;
+}
+
+const ON_SubDFace* ON_SubDLevelComponentIdIterator::NextFace()
+{
+  return (ON_SubDComponentPtr::Type::Face == m_ctype) ? (const ON_SubDFace*)InternalNext() : nullptr;
+}    
+
+const ON_SubDComponentBase* ON_SubDLevelComponentIdIterator::InternalFirst()
+{
+  m_prev_id = 0;
+  if (nullptr == m_first)
+    return nullptr;
+  m_current = nullptr;
+  if (m_bLevelLinkedListIncreasingId)
+  {
+    m_current = m_first;
+  }
+  else
+  {
+    for (const ON_SubDComponentBase* c = m_cidit.FirstComponent(); nullptr != c; c = m_cidit.NextComponent())
+    {
+      if (m_level_index != c->SubdivisionLevel())
+        continue;
+      m_current = (const ON_SubDComponentBaseLink*)c;
+      break;
+    }
+  }
+  if (nullptr != m_current)
+  {
+    if (m_current->m_id <= m_prev_id)
+    {
+      // When this happens, searching by component id will be broken in the destination of the SubD copy.
+      // It is a very serious bug, but we continue so something will get saved to the archive or be created in the copy.
+      ON_SUBD_ERROR("Iterator is not in order of increasing id.");
+    }
+    else
+      m_prev_id = m_current->m_id;
+    m_count = 1;
+  }
+  return m_current;
+}
+
+
+const ON_SubDComponentBase* ON_SubDLevelComponentIdIterator::InternalNext()
+{
+  if (nullptr == m_first || nullptr == m_current)
+    return nullptr;
+  if (m_bLevelLinkedListIncreasingId)
+  {
+    m_current = m_current->m_next;
+  }
+  else
+  {
+    m_current = nullptr;
+    for (const ON_SubDComponentBase* c = m_cidit.NextComponent(); nullptr != c; c = m_cidit.NextComponent())
+    {
+      if (m_level_index != c->SubdivisionLevel())
+        continue;
+      m_current = (const ON_SubDComponentBaseLink*)c;
+      break;
+    }
+  }
+  if (nullptr != m_current)
+  {
+    if (m_current->m_id <= m_prev_id)
+    {
+      // When this happens, searching by component id will be broken in the destination of the SubD copy.
+      // It is a very serious bug, but we continue so something will get saved to the archive or be created in the copy.
+      ON_SUBD_ERROR("Iterator is not in order of increasing id.");
+    }
+    else
+      m_prev_id = m_current->m_id;
+    ++m_count;
+  }
+  return m_current;
+}
+
+
+
 bool ON_SubDLevel::CopyHelper(
-  const ON_SubDLevel& src,
+  const class ON_SubDimple& src_subdimple,
+  const ON_SubDLevel& src_level,
   class ON_SubDArchiveIdMap& eptrlist,
-  class ON_SubDimple& subdimple,
+  class ON_SubDimple& dest_subdimple,
   bool bCopyComponentStatus
   )
 {
@@ -742,22 +914,31 @@ bool ON_SubDLevel::CopyHelper(
 
   eptrlist.Reset();
 
-  m_limit_mesh.Clear();
+  m_surface_mesh.Clear();
+  m_control_net_mesh.Clear();
 
   for (;;)
   {
-    if ( 0 == src.SetArchiveId(eptrlist.m_archive_id_partition) )
+    bool bLevelLinkedListIncreasingId[3] = {};
+    if ( 0 == src_level.SetArchiveId(src_subdimple, eptrlist.m_archive_id_partition, bLevelLinkedListIncreasingId) )
       break;
 
     unsigned int archive_id = 1;
     if ( archive_id != eptrlist.m_archive_id_partition[0])
       break;
 
-    for (const ON_SubDVertex* source_vertex = src.m_vertex[0]; nullptr != source_vertex; source_vertex = source_vertex->m_next_vertex, archive_id++)
+    // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
+    // with components in an order that is not increasing in id and it is critical that the next three for
+    // loops iterate the level's components in order of increasing id.
+    ON_SubDLevelComponentIdIterator src_idit;
+
+    // must iterate source vertices in order of increasing id
+    src_idit.Initialize(bLevelLinkedListIncreasingId[0], ON_SubDComponentPtr::Type::Vertex, src_subdimple, src_level);
+    for (const ON_SubDVertex* source_vertex = src_idit.FirstVertex(); nullptr != source_vertex; source_vertex = src_idit.NextVertex(), archive_id++)
     {
       if (archive_id != source_vertex->ArchiveId())
         break;
-      ON_SubDVertex* vertex = eptrlist.AddCopy(source_vertex,subdimple);
+      ON_SubDVertex* vertex = eptrlist.AddCopy(source_vertex,dest_subdimple);
       if (nullptr == vertex )
         break;
       if (archive_id != vertex->ArchiveId())
@@ -769,11 +950,13 @@ bool ON_SubDLevel::CopyHelper(
     if ( archive_id != eptrlist.m_archive_id_partition[1])
       break;
 
-    for (const ON_SubDEdge* source_edge = src.m_edge[0]; nullptr != source_edge; source_edge = source_edge->m_next_edge, archive_id++)
+    // must iterate source edges in order of increasing id
+    src_idit.Initialize(bLevelLinkedListIncreasingId[1], ON_SubDComponentPtr::Type::Edge, src_subdimple, src_level);
+    for (const ON_SubDEdge* source_edge = src_idit.FirstEdge(); nullptr != source_edge; source_edge = src_idit.NextEdge(), archive_id++)
     {
       if (archive_id != source_edge->ArchiveId())
         break;
-      ON_SubDEdge* edge = eptrlist.AddCopy(source_edge,subdimple);
+      ON_SubDEdge* edge = eptrlist.AddCopy(source_edge,dest_subdimple);
       if (nullptr == edge )
         break;
       if (archive_id != edge->ArchiveId())
@@ -785,11 +968,13 @@ bool ON_SubDLevel::CopyHelper(
     if ( archive_id != eptrlist.m_archive_id_partition[2])
       break;
 
-    for (const ON_SubDFace* source_face = src.m_face[0]; nullptr != source_face; source_face = source_face->m_next_face, archive_id++)
+    // must iterate source faces in order of increasing id
+    src_idit.Initialize(bLevelLinkedListIncreasingId[2], ON_SubDComponentPtr::Type::Face, src_subdimple, src_level);
+    for (const ON_SubDFace* source_face = src_idit.FirstFace(); nullptr != source_face; source_face = src_idit.NextFace(), archive_id++)
     {
       if (archive_id != source_face->ArchiveId())
         break;
-      ON_SubDFace* face = eptrlist.AddCopy(source_face,subdimple);
+      ON_SubDFace* face = eptrlist.AddCopy(source_face,dest_subdimple);
       if (nullptr == face )
         break;
       if (archive_id != face->ArchiveId())
@@ -804,42 +989,44 @@ bool ON_SubDLevel::CopyHelper(
     if (0 == eptrlist.ConvertArchiveIdsToRuntimePointers())
       break;
 
-    if (false == src.m_limit_mesh.IsEmpty())
+    for (int meshdex = 0; meshdex < 2; meshdex++)
     {
-      ON_SubDLimitMesh local_limit_mesh;
-      local_limit_mesh.CopyFrom(src.m_limit_mesh);
-      for (const ON_SubDLimitMeshFragment* fragment = local_limit_mesh.FirstFragment(); nullptr != fragment; fragment = fragment->m_next_fragment)
+      ON_SubDMesh* src_mesh = (0==meshdex) ? (&src_level.m_surface_mesh) : (&src_level.m_control_net_mesh);
+      ON_SubDMesh* this_mesh = (0 == meshdex) ? (&m_surface_mesh) : (&m_control_net_mesh);
+      if (false == src_mesh->IsEmpty())
       {
-        if (nullptr != fragment->m_face)
+        ON_SubDMesh local_subd_mesh;
+        local_subd_mesh.CopyFrom(*src_mesh);
+        for (const ON_SubDMeshFragment* fragment = local_subd_mesh.FirstFragment(); nullptr != fragment; fragment = fragment->m_next_fragment)
         {
-          archive_id = fragment->m_face->ArchiveId();
-          ON_SubDComponentPtr cptr = ON_SubDArchiveIdMap::FromFace(fragment->m_face);
-          ON_SubDFacePtr fptr = cptr.FacePtr();
-          const_cast< ON_SubDLimitMeshFragment* >(fragment)->m_face = nullptr;
-          if (0 != archive_id)
+          if (nullptr != fragment->m_face)
           {
-            if (eptrlist.ConvertArchiveIdToRuntimeFacePtr(1, 1, &fptr, 0, nullptr))
+            archive_id = fragment->m_face->ArchiveId();
+            ON_SubDComponentPtr cptr = ON_SubDArchiveIdMap::FromFace(fragment->m_face);
+            ON_SubDFacePtr fptr = cptr.FacePtr();
+            const_cast<ON_SubDMeshFragment*>(fragment)->m_face = nullptr;
+            if (0 != archive_id)
             {
-              const_cast< ON_SubDLimitMeshFragment* >(fragment)->m_face = fptr.Face();
-              if ( nullptr != fragment->m_face)
-                continue;
+              if (eptrlist.ConvertArchiveIdToRuntimeFacePtr(1, 1, &fptr, 0, nullptr))
+              {
+                const_cast<ON_SubDMeshFragment*>(fragment)->m_face = fptr.Face();
+                if (nullptr != fragment->m_face)
+                  continue;
+              }
             }
           }
+          local_subd_mesh = ON_SubDMesh::Empty;
+          break;
         }
-        local_limit_mesh = ON_SubDLimitMesh::Empty;
-        break;
+        if (false == local_subd_mesh.IsEmpty())
+          ON_SubDMesh::Swap(*this_mesh, local_subd_mesh);
       }
-      if (false == local_limit_mesh.IsEmpty())
-        ON_SubDLimitMesh::Swap(m_limit_mesh,local_limit_mesh);
     }
 
     this->ClearArchiveId();
 
-    this->m_level_index = src.m_level_index;
-    this->m_subdivision_type = src.m_subdivision_type;
-    this->m_ordinary_vertex_valence = src.m_ordinary_vertex_valence;
-    this->m_ordinary_face_edge_count = src.m_ordinary_face_edge_count;
-    this->m_aggregates = src.m_aggregates;
+    this->m_level_index = src_level.m_level_index;
+    this->m_aggregates = src_level.m_aggregates;
     this->m_aggregates.MarkAllAsNotCurrent();
 
     rc = true;
@@ -847,12 +1034,10 @@ bool ON_SubDLevel::CopyHelper(
   }
 
   eptrlist.Reset();
-  src.ClearArchiveId();
+  src_level.ClearArchiveId();
 
   if ( false == rc )
     return ON_SUBD_RETURN_ERROR(false);
 
   return rc;
 }
-
-#endif

@@ -783,6 +783,36 @@ bool ON_SimpleArray<T>::QuickSort( int (*compar)(const T*,const T*) )
 }
 
 template <class T>
+bool ON_SimpleArray<T>::QuickSortAndRemoveDuplicates( int (*compar)(const T*,const T*) )
+{
+  bool rc = false;
+  if ( m_a && m_count > 0 && compar )
+  {
+    if (m_count > 1)
+    {
+      ON_qsort(m_a, m_count, sizeof(T), (int(*)(const void*, const void*))compar);
+      const T* prev_ele = &m_a[0];
+      int clean_count = 1;
+      for (int i = 1; i < m_count; ++i)
+      {
+        if (0 == compar(prev_ele, &m_a[i]))
+          continue; // duplicate
+        if (i > clean_count)
+          m_a[clean_count] = m_a[i];
+        ++clean_count;
+      }
+      if (clean_count < m_count)
+      {
+        memset( (void*)(&m_a[clean_count]), 0, (m_count-clean_count)*sizeof(T) );
+        SetCount(clean_count);
+      }
+    }
+    rc = true;
+  }
+  return rc;
+}
+
+template <class T>
 bool ON_SimpleArray<T>::Sort( ON::sort_algorithm sa, int* index, int (*compar)(const T*,const T*) ) const
 {
   bool rc = false;
@@ -1154,6 +1184,11 @@ ON_ClassArray<T>& ON_ClassArray<T>::operator=( ON_ClassArray<T>&& src ) ON_NOEXC
 {
   if( this != &src ) 
   {
+    // TODO - investigate why we should use std::move(src)
+    // instead of the code below
+    //ON_ClassArray<T>::operator=(std::move(src));
+    // Then investigate why the change was requested only for class array.
+    // What about the other dynamic array classes?
     this->Destroy();
     m_a = src.m_a;
     m_count = src.m_count;

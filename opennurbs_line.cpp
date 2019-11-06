@@ -133,7 +133,7 @@ bool ON_Line::ClosestPointTo( const ON_3dPoint& point, double *t ) const
     const ON_3dVector D = Direction();
     const double DoD = D.LengthSquared();
     if ( DoD > 0.0 ) {
-      if ( point.DistanceTo(from) <= point.DistanceTo(to) ) {
+      if ((point - from).LengthSquared() <= (point - to).LengthSquared()) {
         *t = ((point - from)*D)/DoD;
       }
       else {
@@ -726,6 +726,11 @@ ON_3dPoint ON_Triangle::PointAt(double s1, double s2) const
 	return (1 - s1 - s2)* m_V[0] + s1*m_V[1] + s2*m_V[2];
 }
 
+ON_3dPoint ON_Triangle::Centroid() const
+{
+	return PointAt(1.0/3.0, 1.0/3.0);
+}
+
 bool ON_Triangle::ClosestPointTo(const ON_3dPoint & P, double * s1, double * s2) const
 {
 	bool rc = false;
@@ -875,5 +880,4 @@ bool operator!=(const ON_Triangle & a, const ON_Triangle & b)
 					a.m_V[1] != b.m_V[1] ||
 					a.m_V[2] != b.m_V[2]);
 }
-
 

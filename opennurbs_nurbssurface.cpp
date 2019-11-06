@@ -1017,7 +1017,7 @@ static bool FromCurve( ON_NurbsCurve& crv,
   {
     onfree( srf.m_cv );
   }
-  srf.m_cv_capacity = crv.m_cv_capacity;
+  srf.m_cv_capacity = crv.CVCapacity();
   srf.m_cv = crv.m_cv;
   crv.m_cv_capacity = 0;
   crv.m_cv = 0;
@@ -1027,10 +1027,12 @@ static bool FromCurve( ON_NurbsCurve& crv,
   }
   srf.m_order[dir] = crv.m_order;
   srf.m_cv_count[dir] = crv.m_cv_count;
-  srf.m_knot_capacity[dir] = crv.m_knot_capacity;
-  srf.m_knot[dir] = crv.m_knot;
-  crv.m_knot_capacity = 0;
-  crv.m_knot = 0;
+  // transfer knot vector from crv to srf.m_knot[dir]
+  crv.UnmanageKnotForExperts(
+    srf.m_knot_capacity[dir],
+    srf.m_knot[dir]
+  );
+
   srf.m_cv_stride[dir] = crv.m_cv_stride;
   srf.m_cv_stride[1-dir] = srf_cv_size;
   return true;
@@ -2209,6 +2211,165 @@ bool ON_NurbsSurface::IsClamped( // determine if knot vector is clamped
   return rc;
 }
 
+bool ON_NurbsSurface::IsNatural(int dir, int end) const
+{
+  if (dir < 0 || dir > 1 || end < 0 || end > 2)
+    return false;
+
+  const ON_Interval domain = Domain(dir);
+  size_t parameter_count = 0;
+  double parameter_list[2] = {ON_DBL_QNAN,ON_DBL_QNAN};
+  if (0 == end || 2 == end)
+    parameter_list[parameter_count++] = domain[0];
+  if (1 == end || 2 == end)
+    parameter_list[parameter_count++] = domain[1];
+  return ON_NurbsSurface::IsNatural(dir, parameter_count, parameter_list);
+}
+
+bool ON_NurbsSurface::IsNatural(
+  int dir, 
+  size_t parameter_count,
+  const double* parameter_list
+) const
+{
+  if (dir < 0 || dir > 1 || parameter_count < 1 || nullptr == parameter_list)
+    return false;
+
+  const int degree_dir = Degree(dir);
+  if (degree_dir < 1)
+    return false;
+
+  const ON_Interval domain[2] = { Domain(0), Domain(1) };
+  ON_SimpleArray<double> g(m_cv_count[1 - dir]);
+  const int g_count = m_cv_count[1 - dir];
+  g.SetCount(g_count);
+  if (false == ON_GetGrevilleAbcissae( // get Greville abcissae from knots
+    m_order[1 - dir],
+    m_cv_count[1 - dir],
+    m_knot[1 - dir],
+    false,
+    g.Array()
+  ))
+    return false;
+
+  int gdex0 = 0;
+  int gdex1 = g_count;
+  if (0 == dir)
+  {
+    // 0 = south, 1 = east, 2 = north, 3 = west
+    if (IsSingular(0))
+      ++gdex0; // skip south side singular check - 2nd der is tiny and noisy
+    if (IsSingular(2))
+      --gdex1; // skip north side singular check - 2nd der is tiny and noisy
+  }
+  else
+  {
+    // 0 = south, 1 = east, 2 = north, 3 = west
+    if (IsSingular(3))
+      ++gdex0; // skip west side singular check - 2nd der is tiny and noisy
+    if (IsSingular(1))
+      --gdex1; // skip east side singular check - 2nd der is tiny and noisy
+  }
+  while (gdex0 < gdex1 && false == domain[1 - dir].Includes(g[gdex0]))
+    ++gdex0;
+  while (gdex0 < gdex1 && false == domain[1 - dir].Includes(g[gdex1-1]))
+    --gdex1;
+
+  if (gdex0 >= gdex1)
+    return false;
+
+  const int knot_count_dir = KnotCount(dir);
+  int quadrant;
+  int cv0dex[2] = {};
+  int cv2dex[2] = {};
+  int hint[2] = { 0,0 };
+  double st[2] = { ON_DBL_QNAN, ON_DBL_QNAN };
+  ON_3dVector D1[2], D2[2], Duv;
+  ON_3dPoint CV0, CV2, P;
+
+  bool bIsNatural = false;
+  for (size_t tdex = 0; tdex < parameter_count; ++tdex)
+  {
+    const double t = parameter_list[tdex];
+    if (false == domain[dir].Includes(t))
+      return false;
+    for (int side = -1; side <= 1; side += 2)
+    {
+      const int span_index = ON_NurbsSpanIndex(m_order[dir], m_cv_count[dir], m_knot[dir], t, side, hint[dir]);
+      if (span_index < 0 || span_index + 2*degree_dir > knot_count_dir)
+        return false;
+      const ON_Interval span_domain(m_knot[dir][span_index + degree_dir-1], m_knot[dir][span_index + degree_dir]);
+      if (false == span_domain.Includes(t))
+        return false;
+      cv0dex[dir] = span_index;
+      if (t == span_domain[0])
+      {
+        quadrant = 1;
+        cv2dex[dir] = cv0dex[dir] + 2;
+      }
+      else if (t == span_domain[1])
+      {
+        quadrant = (0 == dir) ? 2 : 4;
+        cv0dex[dir] += degree_dir;
+        cv2dex[dir] = cv0dex[dir] - 2;
+      }
+      else
+      {
+        cv2dex[dir] = cv0dex[dir] + 3;
+        quadrant = 0;
+      }
+
+      if ( cv0dex[0] < 0 || cv0dex[0] >= m_cv_count[0] || cv0dex[1] < 0 || cv0dex[1] >= m_cv_count[1] )
+      {
+        // bug in this code or invalid surface
+        ON_ERROR("cv0dex out of bounds");
+        return false;
+      }
+      if ( cv2dex[0] < 0 || cv2dex[0] >= m_cv_count[0] || cv2dex[1] < 0 || cv2dex[1] >= m_cv_count[1] )
+      {
+        // bug in this code or invalid surface
+        ON_ERROR("cv1dex out of bounds");
+        return false;
+      }
+
+      st[dir] = t;
+      hint[dir] = span_index;
+      hint[1 - dir] = 0;
+      for (int gi = gdex0; gi < gdex1; gi++)
+      {
+        st[1 - dir] = g[gi];
+        if (false == domain[1 - dir].Includes(st[1 - dir]))
+          continue;
+        if (false == Ev2Der(st[0], st[1], P, D1[0], D1[1], D2[0], Duv, D2[1], quadrant, hint))
+          return false;
+        cv0dex[1 - dir] = gi;
+        cv2dex[1 - dir] = gi;
+        if (false == GetCV(cv0dex[0], cv0dex[1], CV0))
+          return false;
+        if (false == GetCV(cv2dex[0], cv2dex[1], CV2))
+          return false;
+        const double d2 = D2[dir].Length();
+        const double tol = CV0.DistanceTo(CV2)*1.0e-8;
+        if (false == (d2 <= tol))
+          return false;
+        bIsNatural = true;      
+      }
+      if (false == bIsNatural)
+        return false;
+
+      if (-1 == side && t == span_domain[1] && t < domain[dir][1])
+      {
+        if (degree_dir >= 3 && m_knot[dir][span_index + degree_dir] < m_knot[dir][span_index + degree_dir + 2])
+          break; // other side evaluations are equal
+        continue;
+      }
+      break;
+    }
+  }
+
+  return bIsNatural;
+}
+
 static void ConvertToCurve( const ON_NurbsSurface& srf, int dir, ON_NurbsCurve& crv )
 {
   // DO NOT MAKE THIS FUNCTION PUBLIC - IT IS DELICATE AND DEDICATED TO USE IN THIS FILE
@@ -2315,10 +2476,9 @@ static void ConvertFromCurve( ON_NurbsCurve& crv, int dir, ON_NurbsSurface& srf 
       srf.m_knot[dir] = 0;
       srf.m_knot_capacity[dir] = 0;
     }
-    srf.m_knot[dir] = crv.m_knot;
-    srf.m_knot_capacity[dir] = crv.m_knot_capacity;
-    crv.m_knot = 0;
-    crv.m_knot_capacity = 0;
+
+    // transfer crv.m_knot to srf.m_knot[dir]
+    crv.UnmanageKnotForExperts(srf.m_knot_capacity[dir], srf.m_knot[dir]);
   }
 }
 
@@ -2359,10 +2519,12 @@ bool ON_NurbsSurface::InsertKnot(
     else 
     {
       ON_NurbsCurve crv;
-      crv.m_knot = m_knot[dir];
-      crv.m_knot_capacity = m_knot_capacity[dir];
-      m_knot[dir] = 0;
+      
+      // transfer knot vector from srf.m_knot[dir] to crv
+      crv.ManageKnotForExperts(m_knot_capacity[dir], m_knot[dir]);
+      m_knot[dir] = nullptr;
       m_knot_capacity[dir] = 0;
+
       crv.ReserveKnotCapacity(CVCount(dir)+knot_multiplicity);
       ConvertToCurve(*this,dir,crv);
       rc = crv.InsertKnot(knot_value,knot_multiplicity);
@@ -2512,10 +2674,12 @@ bool ON_NurbsSurface::IncreaseDegree(
     else
     {
       ON_NurbsCurve crv;
-      crv.m_knot = m_knot[dir];
-      crv.m_knot_capacity = m_knot_capacity[dir];
+
+      // transfer knot vector from srf.m_knot[dir] to crv
+      crv.ManageKnotForExperts(m_knot_capacity[dir], m_knot[dir]);
       m_knot[dir] = 0;
       m_knot_capacity[dir] = 0;
+
       ConvertToCurve(*this,dir,crv);
       rc = crv.IncreaseDegree(desired_degree);
       ConvertFromCurve(crv,dir,*this);
@@ -2857,9 +3021,9 @@ int ON_NurbsSurface::CreateRuledSurface(
 
   if ( m_knot[0] && m_knot_capacity[0] > 0 )
     onfree(m_knot[0]);
-  m_knot[0] = nurbs_curveA.m_knot;
-  m_knot_capacity[0] = nurbs_curveA.m_knot_capacity;
-  nurbs_curveA.m_knot_capacity = 0;
+
+  // transfer knot vector from nurbs_curveA to srf.m_knot[0]
+  nurbs_curveA.UnmanageKnotForExperts(m_knot_capacity[0], m_knot[0]);
 
   // Fill in linear knots
   ReserveKnotCapacity( 1, 2 );
@@ -3008,9 +3172,9 @@ int ON_NurbsSurface::CreateConeSurface(
 
     if ( m_knot[0] && m_knot_capacity[0] > 0 )
       onfree(m_knot[0]);
-    m_knot[0] = nurbs_curve.m_knot;
-    m_knot_capacity[0] = nurbs_curve.m_knot_capacity;
-    nurbs_curve.m_knot_capacity = 0;
+
+    // Transfer knot vector from nurbs_curve to srf.m_knot[0].
+    nurbs_curve.UnmanageKnotForExperts(m_knot_capacity[0], m_knot[0]);
 
     // Fill in linear knots
     ReserveKnotCapacity( 1, 2 );

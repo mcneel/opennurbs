@@ -408,6 +408,9 @@ void ON_Brep::SetTolerancesBoxesAndFlags(
 static
 bool CheckForMatchingVertexIndices( int i, int j, int corner_vi[4] )
 {
+  if (corner_vi[i] == corner_vi[j])
+    return true;
+
   bool rc = false;
   if ( corner_vi[i] >= 0 || corner_vi[j] >= 0 )
   {
@@ -421,12 +424,9 @@ bool CheckForMatchingVertexIndices( int i, int j, int corner_vi[4] )
       corner_vi[j] = corner_vi[i];
       rc = true;
     }
-    else if ( corner_vi[i] == corner_vi[j] )
-    {
-      rc = true;
-    }
   }
-  return true;
+
+  return rc;
 }
 
 
@@ -3274,6 +3274,7 @@ static bool ON_BrepRemoveSlits(ON_BrepLoop& L)
         }
       }
     }
+    pB->MatchTrimEnds(nL);
     pB->SetTrimBoundingBoxes(nL, true);
   }
   return true;

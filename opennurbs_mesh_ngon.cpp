@@ -26,6 +26,8 @@ const class ON_MeshNgon* ON_MeshNgonBuffer::CreateFromMeshFaceIndex(
   const class ON_MeshFace* mesh_face = ( mesh && face_index < mesh->m_F.UnsignedCount() )
                                      ? &mesh->m_F[face_index] 
                                      : 0;
+  if (nullptr == mesh_face || false == mesh_face->IsValid(mesh->m_V.Count()))
+    return nullptr;
   return CreateFromMeshFace(mesh_face,face_index);
 }
   
@@ -762,7 +764,7 @@ const unsigned int* ON_Mesh::NgonMap(
   return fdex_to_ndex_map;
 }
 
-const unsigned int* ON_Mesh::CreateNgonMap()
+bool ON_Mesh::CreateNgonMap(ON_SimpleArray<unsigned int>& map) const
 {
   unsigned int* ngon_map = 0;
   const ON_MeshNgon* ngon;
@@ -770,17 +772,18 @@ const unsigned int* ON_Mesh::CreateNgonMap()
   unsigned int ngon_index;
   unsigned int j;
 
-  m_NgonMap.SetCount(0);
-
   const unsigned int ngon_count = m_Ngon.UnsignedCount();
   
   const unsigned int meshFcount = m_F.UnsignedCount();
-  if  ( meshFcount <= 0 )
-    return 0;
+  if (meshFcount <= 0)
+  {
+    map.SetCount(0);
+    return false;
+  }
 
-  m_NgonMap.Reserve(meshFcount);
-  m_NgonMap.SetCount(meshFcount);
-  ngon_map = m_NgonMap.Array();
+  map.Reserve(meshFcount);
+  map.SetCount(meshFcount);
+  ngon_map = map.Array();
 
   for ( fi = 0; fi < meshFcount; fi++ )
     ngon_map[fi] = ON_UNSET_UINT_INDEX;
@@ -806,8 +809,27 @@ const unsigned int* ON_Mesh::CreateNgonMap()
     }
   }
 
-  return ngon_map;
+  return true;
 }
+
+bool ON_Mesh::CreateNgonMap(unsigned int* map) const
+{
+  ON_SimpleArray<unsigned int> new_map {};
+  new_map.SetArray(map, m_F.Count(), m_F.Count());
+  
+  if (!CreateNgonMap(new_map)) return false;
+  new_map.KeepArray();
+  return true;
+}
+
+const unsigned int* ON_Mesh::CreateNgonMap()
+{
+  if (!CreateNgonMap(m_NgonMap)) return nullptr;
+
+  return m_NgonMap.Array();
+}
+
+
 
 bool ON_Mesh::ModifyNgon(
   unsigned int ngon_index,
@@ -892,6 +914,335 @@ bool ON_Mesh::ModifyNgon(
   }
 
   return false;
+}
+
+static bool Internal_ListContainNgon(
+  unsigned int count,
+  const int* fi,
+  ON_SimpleArray< const ON_MeshNgon* >& tested_ngons, 
+  const ON_MeshNgon* ngon
+)
+{
+  if (nullptr == ngon || ngon->m_Fcount <= 0)
+    return true; // nothing to test.
+
+  if (ngon->m_Fcount > count)
+    return false;
+
+  if (tested_ngons.Search(ngon) >= 0)
+    return true; // already tested this ngon
+
+  // fi[] is a sorted list
+  for (unsigned int k = 0; k < ngon->m_Fcount; ++k)
+  {
+    if (nullptr == ON_BinarySearchIntArray((int)ngon->m_fi[k], fi, count))
+      return false; // ngon->m_fi[k] is not in fi[]
+  }
+
+  if (ngon->m_Fcount > 1)
+    tested_ngons.Append(ngon); // no need to test this one again
+
+  // Every index in ngon->m_fi[] is also in fi[]
+  return true;
+}
+
+unsigned int ON_Mesh::AddNgons(
+  const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+)
+{
+  const int ci_count = ci_list.UnsignedCount();
+  if (ci_count < 2)
+    return 0;
+
+  const int face_count = FaceCount();
+  if (face_count < 2)
+    return 0;
+  const int ngon_count = NgonCount();
+  const unsigned int ngon_ucount = NgonUnsignedCount();
+
+  /////////////////////
+  //
+  // fi_list[] = list of faces to be merged into ngons
+  ON_SimpleArray<int> fi_list(ci_count);
+  ON_COMPONENT_INDEX ci;
+  for (int i = 0; i < ci_count; ++i)
+  {
+    ci = ci_list[i];
+    if (ci.m_index < 0)
+      continue;
+    switch (ci.m_type)
+    {
+    case ON_COMPONENT_INDEX::TYPE::mesh_face:
+      if (ci.m_index < face_count)
+        fi_list.Append(ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::TYPE::mesh_ngon:
+      if (ci.m_index < ngon_count)
+      {
+        const ON_MeshNgon* ngon = Ngon(ci.m_index);
+        if (nullptr == ngon)
+          break;
+        for (unsigned j = 0; j < ngon->m_Fcount; ++j)
+        {
+          const int fi = ngon->m_fi[j];
+          if (fi >= 0 && fi < face_count)
+            fi_list.Append(fi);
+        }
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  fi_list.QuickSortAndRemoveDuplicates(ON_CompareIncreasing<int>);
+  const int fi_count = fi_list.Count();
+  if (fi_count < 2)
+    return 0;
+
+  /////////////////////
+  //
+  // Partition fi_list[] into subsets where each subset will be a new ngon.
+  const ON_MeshTopology& top = Topology();
+  if (face_count != top.m_topf.Count())
+    return 0;
+
+  const int edge_count = top.TopEdgeCount();
+
+  ON_SimpleArray<bool> face_available_buffer(face_count);
+  face_available_buffer.SetCount(face_count);
+  face_available_buffer.Zero();
+  bool* face_available = face_available_buffer.Array();
+
+  for (int i = 0; i < fi_count; ++i)
+    face_available[fi_list[i]] = true;
+
+  /////////////////////
+  //
+  // ngon_faces[] is the same set of indiced that are in fi_list[], but with indices for 
+  // each new ngon grouped together.
+  // ngon_partition[] is used to find the new ngon subsets.
+  // If i0 = ngon_partition[j] && i1 = ngon_partition[j+1], then
+  // (ngon_faces[i0],...,ngon_faces[i1-1]) are the face indices for a new ngon.
+  //
+  ON_SimpleArray<int> ngon_faces(fi_count);
+  ON_SimpleArray<unsigned int> ngon_partition(64);
+
+  const unsigned int* ngon_map = (ngon_count > 0) ? NgonMap(true) : nullptr;
+
+  ON_SimpleArray< const ON_MeshNgon* > old_ngons_inside_new_ngon(32);
+
+  for (int i = 0; i < fi_count; ++i)
+  {
+    const int face_index = fi_list[i];
+    if (false == face_available[face_index])
+      continue; // face is no longer available.
+
+    // find the new ngon contain face_index.
+    face_available[face_index] = false;
+    const unsigned int count0 = ngon_faces.UnsignedCount();
+    unsigned int i0 = 0;
+    unsigned int i1 = count0;
+    ngon_partition.Append(count0);
+    ngon_faces.Append(face_index);
+    for (;;)
+    {
+      i0 = i1;
+      i1 = ngon_faces.Count();
+      if (i0 >= i1)
+        break;
+      for (/*empty init*/; i0 < i1; ++i0)
+      {
+        const int fi = ngon_faces[i0];
+        const ON_MeshTopologyFace& topf = top.m_topf[fi];
+        const int fe_count = topf.IsQuad() ? 4 : 3;
+        for (int fei = 0; fei < fe_count; ++fei)
+        {
+          int ei = topf.m_topei[fei];
+          if (ei < 0 || ei >= edge_count)
+            continue;
+          const ON_MeshTopologyEdge& tope = top.m_tope[ei];
+          if (2 != tope.m_topf_count)
+            continue;
+          if (2 != tope.m_topf_count || false == top.IsWeldedEdge(ei))
+            continue;
+          int neighbor_fi = tope.m_topfi[(fi == tope.m_topfi[0]) ? 1 : 0];
+          if (neighbor_fi < 0 || neighbor_fi >= face_count || false == face_available[neighbor_fi])
+            continue;
+          face_available[neighbor_fi] = false;
+          ngon_faces.Append(neighbor_fi);
+        }
+      }
+    }
+
+    const unsigned new_ngon_F_count = ngon_faces.UnsignedCount() - count0;
+    int* new_ngon_fi = ngon_faces.Array() + count0;
+    ON_SortIntArray(ON::sort_algorithm::quick_sort, new_ngon_fi, new_ngon_F_count);
+    bool bSkipNewNgon = (new_ngon_F_count < 2);
+    if (false == bSkipNewNgon && nullptr != ngon_map)
+    {
+      old_ngons_inside_new_ngon.SetCount(0);
+
+      // Make sure the new ngon doesn't contain proper subsets of existing ngons.
+      for (unsigned j = 0; j < new_ngon_F_count; ++j)
+      {
+        int fi = new_ngon_fi[j];
+        const unsigned int ngon_dex = ngon_map[fi];
+        if (ngon_dex >= ngon_ucount)
+          continue;
+        const ON_MeshNgon* existing_ngon = Ngon(ngon_dex);
+        if (nullptr == existing_ngon)
+          continue;
+        if (false == Internal_ListContainNgon(new_ngon_F_count, new_ngon_fi, old_ngons_inside_new_ngon, existing_ngon))
+        {
+          // existing ngon has faces that are not in new ngon.
+          bSkipNewNgon = true;
+          break;
+        }
+        if (existing_ngon->m_Fcount == new_ngon_F_count)
+        {
+          // new ngon and existing ngon are the same.
+          bSkipNewNgon = true;
+          break;
+        }
+      }
+    }
+    if (bSkipNewNgon)
+    {
+      ngon_faces.SetCount(count0);
+      ngon_partition.Remove();
+    }
+  }
+
+  if (ngon_partition.UnsignedCount() < 1 || ngon_faces.UnsignedCount() < 2)
+    return 0;
+
+  ngon_partition.Append(ngon_faces.UnsignedCount());
+
+  bool bRemoveddNgons = false;
+  if (nullptr != ngon_map)
+  {
+    // Delete ngons that are being merged into bigger ngons
+    ON_SimpleArray<bool> delete_old_ngon(ngon_count);
+    delete_old_ngon.SetCount(ngon_count);
+    for (int j = 0; j < ngon_faces.Count(); ++j)
+    {
+      unsigned ngon_dex = ngon_map[ngon_faces[j]];
+      if (ngon_dex < ngon_ucount)
+        delete_old_ngon[ngon_dex] = true;
+    }
+    for (int j = ngon_count; j > 0; --j)
+    {
+      unsigned int ngon_dex = (unsigned int)(j - 1);
+      if (delete_old_ngon[ngon_dex])
+      {
+        RemoveNgon(ngon_dex);
+        bRemoveddNgons = true;
+      }
+    }
+  }
+
+  // Add new ngons
+  unsigned int new_ngon_count = 0;
+  unsigned int i1 = ngon_partition[0];
+  for (unsigned int i = 1; i < ngon_partition.UnsignedCount(); ++i)
+  {
+    const unsigned int i0 = i1;
+    i1 = ngon_partition[i];
+    if (i0 + 2 <= i1)
+    {
+      if (AddNgon(i1 - i0, (const unsigned int*)(ngon_faces.Array() + i0)) >= 0)
+        ++new_ngon_count;
+    }
+  }
+
+  if (bRemoveddNgons || new_ngon_count > 0)
+  {
+    // clean up ngon storage
+    m_NgonMap.SetCount(0);
+    int count = 0;
+    for (int i = 0; i < m_Ngon.Count(); ++i)
+    {
+      ON_MeshNgon* n = m_Ngon[i];
+      if (nullptr == n)
+        continue;
+      m_Ngon[count++] = n;
+    }
+    m_Ngon.SetCount(count);
+    NgonMap(true);
+  }
+
+  return new_ngon_count;
+}
+
+int ON_Mesh::AddNgon(const ON_SimpleArray<unsigned int>& ngon_fi)
+{
+  return AddNgon(ngon_fi.UnsignedCount(), ngon_fi.Array());
+}
+
+int ON_Mesh::AddNgon(const ON_SimpleArray<unsigned int>& ngon_fi, bool bPermitHoles)
+{
+  return AddNgon(ngon_fi.UnsignedCount(), ngon_fi.Array(), bPermitHoles);
+}
+
+int ON_Mesh::AddNgon(
+  unsigned int Fcount,
+  const unsigned int* ngon_fi
+)
+{
+  return AddNgon(Fcount, ngon_fi, false);
+}
+
+int ON_Mesh::AddNgon(
+  unsigned int Fcount,
+  const unsigned int* ngon_fi,
+  bool bPermitHoles
+)
+{
+  unsigned int ngon_index = ON_UNSET_UINT_INDEX;
+  if (Fcount < 1 || nullptr == ngon_fi)
+    return ngon_index;
+
+  ON_SimpleArray<unsigned int> ngon_vi;
+  const ON_3dPointListRef mesh_vertex_list(this);
+  const ON_MeshFaceList& mesh_face_list(this);
+  const unsigned int *const* vertex_face_map = nullptr;
+
+  const int face_count = m_F.Count();
+  const unsigned int ngon_count0 = HasNgons() ? NgonUnsignedCount() : 0U;
+  bool bCheckNgonMap = (ngon_count0 > 0 && face_count == m_NgonMap.Count());
+  for (unsigned int i = 0; i < Fcount; ++i)
+  {
+    unsigned int fi = ngon_fi[i];
+    if (fi >= (unsigned int)face_count)
+      return ngon_index;
+    if (bCheckNgonMap && m_NgonMap[fi] < ngon_count0)
+      return ngon_index; // input faces are already in an ngon
+  }
+
+  unsigned int vi_count;
+  if (bPermitHoles)
+    vi_count = ON_MeshNgon::FindNgonBoundary(
+      mesh_vertex_list,
+      mesh_face_list,
+      vertex_face_map,
+      Fcount,
+      ngon_fi,
+      ngon_vi
+    );
+  else
+    vi_count = ON_MeshNgon::FindNgonOuterBoundary(
+      mesh_vertex_list,
+      mesh_face_list,
+      vertex_face_map,
+      Fcount,
+      ngon_fi,
+      ngon_vi
+    );
+
+  if (vi_count < 3 || ngon_vi.Count() < 3)
+    return ngon_index; // 
+
+  return AddNgon(ngon_vi.UnsignedCount(), ngon_vi.Array(), Fcount, ngon_fi);
 }
 
 int ON_Mesh::AddNgon(
@@ -3660,26 +4011,27 @@ const ON_MeshNgon* ON_Mesh::NgonFromComponentIndex(
   return ngon;
 }
 
-unsigned int ON_MeshNgon::FindNgonOuterBoundary(
+static unsigned int FindNgonBoundary_Helper(
   const ON_3dPointListRef& mesh_vertex_list,
   const ON_MeshFaceList& mesh_face_list,
   const unsigned int *const* vertex_face_map,
   size_t ngon_fi_count,
   const unsigned int* ngon_fi,
-  ON_SimpleArray<unsigned int>& ngon_vi
-  )
+  ON_SimpleArray<unsigned int>& ngon_vi,
+  bool permitOnlyOneBoundary
+)
 {
   const unsigned int mesh_vertex_count = mesh_vertex_list.PointCount();
   const unsigned int ngon_boundary_index = 1;
   unsigned int boundary_edge_count;
 
 
-  for(;;)
+  for (;;)
   {
-    if ( mesh_vertex_count <= 0 || ON_UNSET_UINT_INDEX == mesh_vertex_count )
+    if (mesh_vertex_count <= 0 || ON_UNSET_UINT_INDEX == mesh_vertex_count)
       break;
 
-    if ( ngon_fi_count <= 0 || 0 == ngon_fi )
+    if (ngon_fi_count <= 0 || 0 == ngon_fi)
       break;
 
     ON_SimpleArray<struct NgonNeighbors> ngon_nbr_map;
@@ -3692,14 +4044,14 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
       (unsigned int)ngon_fi_count,
       ngon_fi,
       ngon_nbr_map.Array()
-      );
+    );
 
-    if ( boundary_edge_count <= 0 )
+    if (boundary_edge_count <= 0)
       break;
 
     ngon_vi.SetCount(0);
     ngon_vi.Reserve(boundary_edge_count);
-    if ( !GetNgonBoundarySegments(
+    if (!GetNgonBoundarySegments(
       mesh_face_list,
       (unsigned int)ngon_fi_count,
       ngon_fi,
@@ -3707,10 +4059,10 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
       ngon_nbr_map.Array(),
       &ngon_vi,
       0
-      ))
+    ))
       break;
 
-    if ( boundary_edge_count != ngon_vi.UnsignedCount() )
+    if (permitOnlyOneBoundary && boundary_edge_count != ngon_vi.UnsignedCount())
       break; // inner boundaries exist - ngon has holes
 
     return ngon_vi.UnsignedCount();
@@ -3719,6 +4071,47 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
   // failure
   ngon_vi.SetCount(0);
   return 0;
+}
+
+
+unsigned int ON_MeshNgon::FindNgonOuterBoundary(
+  const ON_3dPointListRef& mesh_vertex_list,
+  const ON_MeshFaceList& mesh_face_list,
+  const unsigned int *const* vertex_face_map,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi
+  )
+{
+  return FindNgonBoundary_Helper(
+    mesh_vertex_list,
+    mesh_face_list,
+    vertex_face_map,
+    ngon_fi_count,
+    ngon_fi,
+    ngon_vi,
+    true
+  );
+}
+
+unsigned int ON_MeshNgon::FindNgonBoundary(
+  const ON_3dPointListRef& mesh_vertex_list,
+  const ON_MeshFaceList& mesh_face_list,
+  const unsigned int *const* vertex_face_map,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi
+)
+{
+  return FindNgonBoundary_Helper(
+    mesh_vertex_list,
+    mesh_face_list,
+    vertex_face_map,
+    ngon_fi_count,
+    ngon_fi,
+    ngon_vi,
+    false
+  );
 }
 
 unsigned int ON_MeshNgon::GetBoundarySides(
@@ -4660,7 +5053,7 @@ ON_Plane ON_Plane::FromPointList(
   //
   // Find a plane to project the 3d points to.
   //
-  ON_3dVector N(ON_3dVector::UnsetVector);
+  ON_3dVector N(ON_3dVector::ZeroVector);
   ON_3dVector X(ON_3dVector::UnsetVector);
   if ( point_index_count <= 4 )
   {
@@ -4680,7 +5073,8 @@ ON_Plane ON_Plane::FromPointList(
     if ( X.Length() < Pi1.DistanceTo(Pi0) )
       X = Pi1-Pi0;
   }
-  else
+
+  if (N == ON_3dVector::ZeroVector)
   {
     // find far apart points
     unsigned int i0 = 0;
@@ -4774,7 +5168,7 @@ ON_Plane ON_Plane::FromPointList(
 
 
 
-const ON_MeshNgonIterator ON_MeshNgonIterator::EmptyMeshNgonIterator;
+const ON_MeshNgonIterator ON_MeshNgonIterator::EmptyMeshNgonIterator ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshNgonIterator);
 
 ON_MeshNgonIterator::ON_MeshNgonIterator(
   const class ON_Mesh* mesh

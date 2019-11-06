@@ -3,7 +3,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -77,23 +77,32 @@ void ON_SubD_FixedSizeHeap::Destroy()
   m_e_capacity = 0;
   m_f_capacity = 0;
   m_p_capacity = 0;
-  void* p[4] = { m_v, m_e, m_f, m_p };
+  m_h_capacity = 0;
+  m_h_count = 0;
+  void* p[6] = { m_v, m_e, m_f, m_p, m_hash_table, m_hash_elements };
   m_v = nullptr;
   m_e = nullptr;
   m_f = nullptr;
   m_p = nullptr;
+  m_hash_table = nullptr;
+  m_hash_elements = nullptr;
   ON_SubD__Free(p[0]);
   ON_SubD__Free(p[1]);
   ON_SubD__Free(p[2]);
   ON_SubD__Free(p[3]);
+  ON_SubD__Free(p[4]);
+  ON_SubD__Free(p[5]);
 }
 
 void ON_SubD_FixedSizeHeap::Reset()
 {
+  if (m_h_capacity > 0)
+    memset(m_hash_table, 0, m_h_capacity * sizeof(*m_hash_table));
   m_v_index = 0;
   m_e_index = 0;
   m_f_index = 0;
   m_p_index = 0;
+  m_h_count = 0;
 }
 
 bool ON_SubD_FixedSizeHeap::InUse() const
@@ -101,29 +110,79 @@ bool ON_SubD_FixedSizeHeap::InUse() const
   return (m_v_index > 0 || m_e_index > 0 || m_f_index>0 || m_p_index>0);
 }
 
+class ON_SubD_FixedSizeHeap_ComponentPairHashElement
+{
+public:
+  //static const ON_SubD_FixedSizeHeap_ComponentPairHashElement Empty;
+  ON_SubDComponentPtrPair m_pair;
+  ON_SubD_FixedSizeHeap_ComponentPairHashElement* m_next;
 
-bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
+};
+
+bool ON_SubD_FixedSizeHeap::Internal_ReserveSubDWorkspace_HashTable()
+{
+  const unsigned int hash_capacity = (m_v_capacity > 0) ? (m_v_capacity / 4 + 1) : 0;
+  m_h_count = 0;
+  if (hash_capacity > m_h_capacity)
+  {
+    m_h_capacity = 0;
+    if (nullptr != m_hash_elements)
+    {
+      ON_SubD__Free(m_hash_elements);
+      m_hash_elements = nullptr;
+    }
+    if (nullptr != m_hash_table)
+    {
+      ON_SubD__Free(m_hash_table);
+      m_hash_table = nullptr;
+    }
+    m_hash_table = (ON_SubD_FixedSizeHeap_ComponentPairHashElement**)ON_SubD__Allocate(hash_capacity * sizeof(*m_hash_table));
+    if (nullptr == m_hash_table)
+      return false;
+    m_hash_elements = (ON_SubD_FixedSizeHeap_ComponentPairHashElement*)ON_SubD__Allocate(m_v_capacity * sizeof(*m_hash_elements));
+    if (nullptr == m_hash_elements)
+    {
+      ON_SubD__Free(m_hash_table);
+      m_hash_table = nullptr;
+      return false;
+    }
+    m_h_capacity = hash_capacity;
+  }
+  if ( m_h_capacity > 0 && nullptr != m_hash_table)
+    memset(m_hash_table, 0, m_h_capacity * sizeof(*m_hash_table));
+  return true;
+}
+
+bool ON_SubD_FixedSizeHeap::Internal_ReserveSubDWorkspace(
   size_t vertex_capacity,
-  size_t edge_capacity,
   size_t face_capacity,
-  size_t array_capacity
+  size_t array_capacity,
+  bool bEnableHash
   )
 {
-  if (0 == vertex_capacity || (0 == edge_capacity && 0 == face_capacity && 0 == array_capacity))
+  if ( vertex_capacity <= 0 || face_capacity <= 0 || array_capacity <= 0)
   {
     Destroy();
-    return true;
+    return ON_SUBD_RETURN_ERROR(false);
   }
-
-  if (m_v_capacity >= vertex_capacity && m_e_capacity >= edge_capacity && m_f_capacity >= face_capacity && m_p_capacity >= array_capacity)
+  const size_t edge_capacity = vertex_capacity + face_capacity - 1; // Euler formula
+  if (m_v_capacity >= vertex_capacity
+    && m_e_capacity >= edge_capacity
+    && m_f_capacity >= face_capacity
+    && m_p_capacity >= array_capacity
+    )
   {
     Reset();
+    if (bEnableHash)
+      Internal_ReserveSubDWorkspace_HashTable();
+    else
+      m_h_count = ON_SubD_FixedSizeHeap::DisabledHashCount;
     return true;
   }
 
   Destroy();
 
-  size_t max_capacity = 0xFFFFFFF0U;
+  size_t max_capacity = 0xFFFFFFU;
   if (vertex_capacity > max_capacity || edge_capacity > max_capacity || face_capacity > max_capacity || array_capacity > max_capacity)
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -146,6 +205,11 @@ bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
     m_e_capacity = (unsigned int)edge_capacity;
     m_f_capacity = (unsigned int)face_capacity;
     m_p_capacity = (unsigned int)array_capacity;
+
+    if (bEnableHash)
+      Internal_ReserveSubDWorkspace_HashTable();
+    else
+      m_h_count = ON_SubD_FixedSizeHeap::DisabledHashCount;
     return true;
   }
 
@@ -154,62 +218,186 @@ bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-
 bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
-  ON_SubD::SubDType subdivision_type,
-  unsigned int extraordinary_valence
+  unsigned int sector_edge_count
   )
 {
-  if (0 == extraordinary_valence)
+  if (0 == sector_edge_count)
   {
     Destroy();
     return true;
   }
 
-  // capacity depends on extraordinary_valence and subdivision_type
+  const unsigned int k = (sector_edge_count <= 4) ? 0 : (sector_edge_count - 4);
+  const unsigned int v_capacity = 16 + 2 * k;
+  const unsigned int f_capacity = 9 + k;
+  const unsigned int p_capacity = 8*v_capacity + 2 * k;
 
-  bool bTri = (ON_SubD::SubDType::TriLoopWarren == subdivision_type);
-
-  unsigned int ordinary_valence = bTri ? 6 : 4;
-
-  if (extraordinary_valence < ordinary_valence)
-    extraordinary_valence = ordinary_valence;
-
-  // When ON_SubD::FacetType::Unset == facet_type,
-  // the maximum of quad or tri capcacity is used.
-  // For all but the face array, tri capacity < quad capacity.
-
-  const unsigned int v_capacity
-    = bTri
-    ? (extraordinary_valence + 6)
-    : (2 * extraordinary_valence + 8); // quads
-
-  const unsigned int e_capacity
-    = bTri
-    ? (extraordinary_valence + 14)
-    : (3 * extraordinary_valence + 12); // quads or unset
-  
-  // const unsigned int f_capacity = extraordinary_valence + 7 for tris
-  // const unsigned int f_capacity = extraordinary_valence + 5 for quads
-  // 7 is alwasy used to accomodate unset as well
-  const unsigned int f_capacity = extraordinary_valence + 7;
-
-  const unsigned int p_capacity = 2*(ordinary_valence*v_capacity + (extraordinary_valence - ordinary_valence));
-
-  return ReserveSubDWorkspace(v_capacity, e_capacity, f_capacity, p_capacity);
+  return Internal_ReserveSubDWorkspace(v_capacity, f_capacity, p_capacity, false);
 }
 
+static unsigned int Internal_AtLeast4(unsigned int n)
+{
+  return (n > 4U) ? n : 4U;
+}
+
+bool ON_SubD_FixedSizeHeap::ReserveSubDWorkspace(
+  const ON_SubDFace* center_face0
+  )
+{
+  unsigned int v_capacity =  0;
+  unsigned int f_capacity =  0;
+  unsigned int a_capacity =  0;
+
+  for (;;)
+  {
+    if (nullptr == center_face0)
+      break;
+
+    const unsigned int N = center_face0->m_edge_count;
+    if (N <= 2)
+      break;
+
+    unsigned int S = 0;  // Set S = sum of the number of edges attached to each vertex of center_face0.
+    unsigned int T = Internal_AtLeast4(N);  // Set T = capacity required for vertex edge arrays on face subdivision vertices
+    unsigned int X = 0;
+    bool bValenceTwoVertices = false; // bValenceTwoVertices = true if center_face0 has a valence 2 vertex and we need the hash table
+    {
+      const ON_SubDEdgePtr* edges = center_face0->m_edge4;
+      ON__UINT_PTR edge_ptr;
+      const ON_SubDEdge* edge;
+      const ON_SubDVertex* vertex;
+      const ON_SubDFace* vertex_face;
+      unsigned int fei;
+      edge = center_face0->Edge(N - 1);
+      if (nullptr == edge)
+        break;
+      bool bEdgeIsHardCrease[2] = { false, edge->IsHardCrease() };
+      for (fei = 0; fei < N; fei++, edges++)
+      {
+        if (4 == fei)
+        {
+          edges = center_face0->m_edgex;
+          if (nullptr == edges)
+            break;
+        }
+        edge_ptr = edges->m_ptr;
+        edge = ON_SUBD_EDGE_POINTER(edge_ptr);
+        if (nullptr == edge)
+          break;
+        bEdgeIsHardCrease[0] = bEdgeIsHardCrease[1];
+        bEdgeIsHardCrease[1] = edge->IsHardCrease();
+        vertex = edge->m_vertex[ON_SUBD_EDGE_DIRECTION(edge_ptr)];
+        if (nullptr == vertex)
+          break;
+        if (vertex->m_edge_count < 2)
+          break;
+        if (vertex->m_edge_count < vertex->m_face_count)
+          break;
+        S += vertex->m_edge_count;
+        X += Internal_AtLeast4(vertex->m_edge_count);
+        if ( bEdgeIsHardCrease[0] && bEdgeIsHardCrease[1] && vertex->IsCreaseOrCorner() )
+        {
+          // If this vertex has multiple sectors, the other sectors are isolated from center_face0 by hard creases.
+          continue;
+        }
+        if (2 == vertex->m_edge_count)
+        {
+          // ring face has valence 2 vertex and the subdivision point for vertex_face
+          // may be reference by 2 different edges from center_face0
+          bValenceTwoVertices = true;
+        }
+        for (unsigned short vfi = 0; vfi < vertex->m_face_count; ++vfi)
+        {
+          vertex_face = vertex->m_faces[vfi];
+          if (nullptr == vertex_face || center_face0 == vertex_face)
+            continue;
+          T += Internal_AtLeast4(vertex_face->m_edge_count);
+        }
+      }
+      if (fei != N)
+        break;
+    }
+
+    // NOTE: S >= 2*N
+    v_capacity =  2*(S - N) + 1; // maximum possible and occurs when all face0 edges are distinct and smooth
+    f_capacity =  S;  // maximum possible and occurs when all face0 edges are distinct and smooth
+
+    // T = capacity required for vertex edge arrays on face subdivision vertices
+    // 4*(S-N) = capacity required for vertex edge arrays on edge subdivision vertices
+    // X = capacity required for vertex edge arrays on vertex subdivision vertices
+    //
+    a_capacity = 2*( X + T + 4 * (S - N) ); // Twice the number of edges from all subdivision vertices.
+
+    return Internal_ReserveSubDWorkspace(
+      v_capacity,
+      f_capacity,
+      a_capacity,
+      (0U == center_face0->SubdivisionLevel()) || bValenceTwoVertices
+    );
+  }
+
+  Destroy();
+  if (nullptr == center_face0 )
+    return true;
+
+  return ON_SUBD_RETURN_ERROR(false);
+}
+
+bool ON_SubD_FixedSizeHeap::Internal_HashEnabled() const
+{
+  return (ON_SubD_FixedSizeHeap::DisabledHashCount != m_h_count && m_h_capacity > 0);
+}
+
+unsigned int ON_SubD_FixedSizeHeap::Internal_Hash(ON_SubDComponentPtr component0)
+{
+  return Internal_HashEnabled() ? (((unsigned int)component0.Hash16FromTypeAndId()) % m_h_capacity) : 0U;
+}
+
+ON_SubDVertex* ON_SubD_FixedSizeHeap::Internal_HashFindVertex1(unsigned int hash, ON_SubDComponentPtr component0)
+{
+  if (Internal_HashEnabled())
+  {
+    for (ON_SubD_FixedSizeHeap_ComponentPairHashElement* e = m_hash_table[hash]; nullptr != e; e = e->m_next)
+    {
+      if (component0.m_ptr == e->m_pair.m_pair[0].m_ptr)
+        return e->m_pair.m_pair[1].Vertex();
+    }
+  }
+  return nullptr;
+}
+
+void ON_SubD_FixedSizeHeap::Internal_HashAddPair(unsigned int hash, ON_SubDComponentPtr component0, class ON_SubDVertex* vertex1)
+{
+  if (Internal_HashEnabled())
+  {
+    if (vertex1->m_id == m_v_index)
+    {
+      ON_SubD_FixedSizeHeap_ComponentPairHashElement* e = &m_hash_elements[vertex1->m_id - 1];
+      e->m_pair.m_pair[0] = component0;
+      e->m_pair.m_pair[1] = ON_SubDComponentPtr::Create(vertex1);
+      e->m_next = m_hash_table[hash];
+      m_hash_table[hash] = e;
+      ++m_h_count;
+    }
+    else
+    {
+      ON_SUBD_ERROR("unexpected has table state");
+    }
+  }
+}
 
 ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
   const double vertexP[3],
-  unsigned int edge_capacity,
-  unsigned int face_capacity
+  unsigned int edge_capacity
   )
 {
   if (nullptr == m_v || m_v_index >= m_v_capacity)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if (edge_capacity + face_capacity + m_p_index >= m_p_capacity )
+  const unsigned int face_capacity = edge_capacity;
+
+  if (edge_capacity + face_capacity + m_p_index > m_p_capacity )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   ON__UINT_PTR* a = nullptr;
@@ -228,7 +416,7 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
   memset(v, 0, sizeof(*v));
   if (m_v_index > 0)
   {
-    // code in ON_SubDFaceNeighborhood.Subdivide() relies on 
+    // code in ON_SubDFaceNeighborhood.Subdivide() relies on
     // m_next_vertex being set this way.
     m_v[m_v_index - 1].m_next_vertex = v;
     v->m_prev_vertex = &m_v[m_v_index - 1];
@@ -260,114 +448,178 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 
 ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
   const ON_SubDVertex* vertex0,
-  ON_SubD::SubDType subdivision_type,
-  bool bUseSavedSubdivisionPoint,
-  unsigned int edge_capacity,
-  unsigned int face_capacity
+  unsigned int edge_capacity
   )
 {
   if ( nullptr == vertex0)
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   double subdP[3];
-  if (false == vertex0->GetSubdivisionPoint(subdivision_type,bUseSavedSubdivisionPoint,subdP))
+  if (false == vertex0->GetSubdivisionPoint(subdP))
     return ON_SUBD_RETURN_ERROR(nullptr);
-  ON_SubDVertex* v1 = AllocateVertex(subdP,edge_capacity,face_capacity);
-  
-  if ( nullptr == v1)
+  ON_SubDVertex* v1 = AllocateVertex(subdP, edge_capacity);
+
+  if (nullptr == v1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v1->m_level = vertex0->m_level+1;
-  
+  v1->SetSubdivisionLevel( vertex0->SubdivisionLevel() + 1 );
+
   v1->m_vertex_tag = vertex0->m_vertex_tag;
 
-  //if ( ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Quad;
-  //else if ( ON_SubD::SubDType::TriLoopWarren == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Tri;
-
-  if (bUseSavedSubdivisionPoint && subdivision_type == vertex0->SavedLimitPointType())
+  if (vertex0->SurfacePointIsSet())
   {
-    ON_SubDSectorLimitPoint limit_point;
-    if (vertex0->GetLimitPoint(subdivision_type, vertex0->m_faces[0], bUseSavedSubdivisionPoint, limit_point))
+    // copy any cached limit point from vertex0 to v1.
+    ON_SubDSectorSurfacePoint limit_point;
+    if (vertex0->GetSurfacePoint(vertex0->m_faces[0], limit_point))
     {
       if (nullptr == limit_point.m_sector_face)
       {
-        limit_point.m_next_sector_limit_point = (const ON_SubDSectorLimitPoint*)1;
-        v1->SetSavedLimitPoint(subdivision_type, limit_point);
+        limit_point.m_next_sector_limit_point = (const ON_SubDSectorSurfacePoint*)1;
+        v1->SetSavedSurfacePoint(true, limit_point);
       }
     }
   }
-  
+
+  return v1;
+}
+
+ON_SubDVertex * ON_SubD_FixedSizeHeap::FindOrAllocateVertex(const ON_SubDEdge * edge0)
+{
+  if ( nullptr == edge0)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  const ON_SubDComponentPtr component0 = ON_SubDComponentPtr::Create(edge0);
+  const unsigned int hash = Internal_Hash(component0);
+  ON_SubDVertex* v1 = Internal_HashFindVertex1(hash, component0);
+
+  if (nullptr != v1)
+  {
+    // found the previously allocated vertex
+    if (((unsigned int)v1->m_edge_capacity) < 4)
+    {
+      ON_SUBD_ERROR("edge capacity was too small when vertex was created.");
+    }
+    return v1;
+  }
+
+  v1 = AllocateVertex(edge0);
+  if (nullptr == v1)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  Internal_HashAddPair(hash, component0, v1);
+
   return v1;
 }
 
 ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
-  const ON_SubDEdge* edge0,
-  ON_SubD::SubDType subdivision_type,
-  bool bUseSavedSubdivisionPoint,
-  unsigned int edge_capacity,
-  unsigned int face_capacity
+  const ON_SubDEdge* edge0
   )
 {
   if ( nullptr == edge0)
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
+
   double subdP[3];
-  if (false == edge0->GetSubdivisionPoint(subdivision_type,bUseSavedSubdivisionPoint,subdP))
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  
-  ON_SubDVertex* v1 = AllocateVertex(subdP,edge_capacity,face_capacity);
-  if ( nullptr == v1)
+  if (false == edge0->GetSubdivisionPoint(subdP))
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v1->m_level = edge0->m_level+1;
-  
-  if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::X == edge0->m_edge_tag)
+  const unsigned int edge_capacity = 4;
+  ON_SubDVertex* v1 = AllocateVertex(subdP, edge_capacity);
+  if (nullptr == v1)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  v1->SetSubdivisionLevel( edge0->SubdivisionLevel() + 1 );
+
+  if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::SmoothX == edge0->m_edge_tag)
     v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
   else if (ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
     v1->m_vertex_tag = ON_SubD::VertexTag::Crease;
 
-  //if ( ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Quad;
-  //else if ( ON_SubD::SubDType::TriLoopWarren == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Tri;
-
   return v1;
 }
 
-ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
-  const ON_SubDFace* face0,
-  ON_SubD::SubDType subdivision_type,
-  bool bUseSavedSubdivisionPoint,
-  unsigned int edge_capacity,
-  unsigned int face_capacity
-  )
+ON_SubDVertex * ON_SubD_FixedSizeHeap::FindOrAllocateVertex(const ON_SubDFace * face0)
 {
-  if ( nullptr == face0)
+  const unsigned int face0_edge_count = (nullptr != face0) ? ((unsigned int)face0->m_edge_count) : 0U;
+  if (face0_edge_count < 3)
     return ON_SUBD_RETURN_ERROR(nullptr);
+
+  const ON_SubDComponentPtr component0 = ON_SubDComponentPtr::Create(face0);
+  const unsigned int hash = Internal_Hash(component0);
+  ON_SubDVertex* v1 = Internal_HashFindVertex1(hash, component0);
+
+  if (nullptr != v1)
+  {
+    // found the previously allocated vertex
+    if (((unsigned int)v1->m_edge_capacity) < face0->m_edge_count)
+    {
+      ON_SUBD_ERROR("edge capacity was too small when vertex was created.");
+    }
+    return v1;
+  }
 
   double subdP[3];
-  if (false == face0->GetSubdivisionPoint(subdivision_type,bUseSavedSubdivisionPoint,subdP))
+  if (false == face0->GetSubdivisionPoint(subdP))
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  ON_SubDVertex* v1 = AllocateVertex(subdP,edge_capacity,face_capacity);
-  if ( nullptr == v1)
+  v1 = AllocateVertex(subdP, face0_edge_count );
+  if (nullptr == v1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  v1->m_level = face0->m_level+1;
-
+  v1->SetSubdivisionLevel( face0->SubdivisionLevel() + 1 );
   v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
 
-  //if ( ON_SubD::SubDType::QuadCatmullClark == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Quad;
-  //else if ( ON_SubD::SubDType::TriLoopWarren == subdivision_type)
-  //  v1->m_vertex_facet_type = ON_SubD::VertexFacetType::Tri;
+  Internal_HashAddPair(hash, component0, v1);
 
   return v1;
 }
 
-ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
+
+ON_SubDVertex * ON_SubD_FixedSizeHeap::AllocateSectorFaceVertex(const ON_SubDFace * sector_face0)
+{
+  if (nullptr == sector_face0)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  double subdP[3];
+  if (false == sector_face0->GetSubdivisionPoint(subdP))
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  ON_SubDVertex* v1 = AllocateVertex(subdP, 3 );
+  if (nullptr == v1)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  v1->SetSubdivisionLevel( sector_face0->SubdivisionLevel() + 1 );
+  v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
+  return v1;
+}
+
+
+const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::FindOrAllocateEdge(ON_SubDVertex * v0, double v0_sector_weight, ON_SubDVertex * v1, double v1_sector_weight)
+{
+  if ( nullptr == v0 || nullptr == v0->m_edges)
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  if ( nullptr == v1 || nullptr == v1->m_edges)
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  for (unsigned short v0ei = 0; v0ei < v0->m_edge_count; ++v0ei)
+  {
+    const ON_SubDEdgePtr ep = v0->m_edges[v0ei];
+    if (v0 == ep.RelativeVertex(0))
+    {
+      if (v1 == ep.RelativeVertex(1))
+        return ep;
+    }
+    else if (v0 == ep.RelativeVertex(1))
+    {
+      if (v1 == ep.RelativeVertex(0))
+        return ep.Reversed();
+    }
+    else
+    {
+      ON_SUBD_RETURN_ERROR("Invalid ON_SubDEdgePtr in vertex->m_edge[] array");
+    }
+  }
+
+  return AllocateEdge(v0, v0_sector_weight, v1, v1_sector_weight);
+}
+
+const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
   ON_SubDVertex* v0,
   double v0_sector_weight,
   ON_SubDVertex* v1,
@@ -375,17 +627,17 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
   )
 {
   if ( nullptr != v0 && nullptr == v0->m_edges)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   if ( nullptr != v1 && nullptr == v1->m_edges)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   if (nullptr == m_e || m_e_index >= m_e_capacity)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   bool bTaggedVertex[2];
   if (nullptr != v0)
   {
     if (nullptr == v0->m_edges || v0->m_edge_count >= v0->m_edge_capacity)
-      return ON_SUBD_RETURN_ERROR(nullptr);
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     if (ON_SubD::VertexTag::Smooth == v0->m_vertex_tag)
     {
       bTaggedVertex[0] = false;
@@ -402,7 +654,7 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
   if (nullptr != v1)
   {
     if (nullptr == v1->m_edges || v1->m_edge_count >= v1->m_edge_capacity)
-      return ON_SUBD_RETURN_ERROR(nullptr);
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     if (ON_SubD::VertexTag::Smooth == v1->m_vertex_tag)
     {
       bTaggedVertex[1] = false;
@@ -423,10 +675,10 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
     bTaggedVertex[1] = false;
 
   if ( false == ON_SubDSectorType::IsValidSectorWeightValue(v0_sector_weight, true))
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   if ( false == ON_SubDSectorType::IsValidSectorWeightValue(v1_sector_weight, true))
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   ON_SubDEdge* e = m_e + m_e_index;
   memset(e, 0, sizeof(*e));
@@ -438,13 +690,13 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
   }
 
   e->m_id = ++m_e_index;
-  
+
   if (nullptr != v0)
   {
     e->m_vertex[0] = v0;
     v0->m_edges[v0->m_edge_count++] = ON_SubDEdgePtr::Create(e,0);
     //v0->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
-    e->m_level = v0->m_level;
+    e->SetSubdivisionLevel(v0->SubdivisionLevel());
   }
 
   if (nullptr != v1)
@@ -452,18 +704,18 @@ ON_SubDEdge* ON_SubD_FixedSizeHeap::AllocateEdge(
     e->m_vertex[1] = v1;
     v1->m_edges[v1->m_edge_count++] = ON_SubDEdgePtr::Create(e,1);
     //v1->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
-    if ( e->m_level < v1->m_level)
-      e->m_level = v1->m_level;
+    if ( e->SubdivisionLevel() < v1->SubdivisionLevel())
+      e->SetSubdivisionLevel(v1->SubdivisionLevel());
   }
 
   e->m_sector_coefficient[0] = v0_sector_weight;
   e->m_sector_coefficient[1] = v1_sector_weight;
   e->m_edge_tag = (bTaggedVertex[0] && bTaggedVertex[1]) ? ON_SubD::EdgeTag::Crease : ON_SubD::EdgeTag::Smooth;
 
-  return e;
+  return ON_SubDEdgePtr::Create(e,0);
 }
 
-ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateFace(
+ON_SubDFace* ON_SubD_FixedSizeHeap::Internal_AllocateFace(
   unsigned int zero_face_id,
   unsigned int parent_face_id
   )
@@ -474,7 +726,7 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateFace(
   memset(f, 0, sizeof(*f));
   if (m_f_index > 0)
   {
-    // code in ON_SubDFaceNeighborhood.Subdivide() relies on 
+    // code in ON_SubDFaceNeighborhood.Subdivide() relies on
     // m_next_face being set this way.
     m_f[m_f_index-1].m_next_face = f;
     f->m_prev_face = &m_f[m_f_index-1];
@@ -485,6 +737,20 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateFace(
   f->m_parent_face_id = parent_face_id;
 
   return f;
+}
+
+
+ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateQuad(
+  unsigned int zero_face_id,
+  unsigned int parent_face_id,
+  ON_SubDEdgePtr e0,
+  ON_SubDEdgePtr e1,
+  ON_SubDEdgePtr e2,
+  ON_SubDEdgePtr e3
+)
+{
+  const ON_SubDEdgePtr eptrs[4] = { e0,e1,e2,e3 };
+  return AllocateQuad(zero_face_id, parent_face_id, eptrs);
 }
 
 ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateQuad(
@@ -531,8 +797,8 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateQuad(
     return ON_SUBD_RETURN_ERROR(nullptr);
   if (nullptr == vertices[3] || nullptr == vertices[3]->m_faces || vertices[3]->m_face_count >= vertices[3]->m_face_capacity || vertices[3] != edges[2]->m_vertex[1-edgedirs[2]])
     return ON_SUBD_RETURN_ERROR(nullptr);
-  
-  ON_SubDFace* f = AllocateFace(zero_face_id,parent_face_id);
+
+  ON_SubDFace* f = Internal_AllocateFace(zero_face_id,parent_face_id);
   if (nullptr == f)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
@@ -556,74 +822,11 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateQuad(
   vertices[3]->m_faces[vertices[3]->m_face_count++] = f;
   //vertices[3]->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
 
-  f->m_level = edges[0]->m_level;
+  f->SetSubdivisionLevel( edges[0]->SubdivisionLevel() );
 
   return f;
 }
 
-
-ON_SubDFace* ON_SubD_FixedSizeHeap::AllocateTri(
-  unsigned int zero_face_id,
-  unsigned int parent_face_id,
-  const ON_SubDEdgePtr eptrs[3]
-  )
-{
-  if (nullptr == eptrs)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  ON_SubDEdge* edges[3] = {
-    ON_SUBD_EDGE_POINTER(eptrs[0].m_ptr),
-    ON_SUBD_EDGE_POINTER(eptrs[1].m_ptr),
-    ON_SUBD_EDGE_POINTER(eptrs[2].m_ptr)};
-
-  if (nullptr == edges[0] || edges[0]->m_face_count > 1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  if (nullptr == edges[1] || edges[1]->m_face_count > 1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  if (nullptr == edges[2] || edges[2]->m_face_count > 1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  ON__UINT_PTR edgedirs[3] = {
-    ON_SUBD_EDGE_DIRECTION(eptrs[0].m_ptr),
-    ON_SUBD_EDGE_DIRECTION(eptrs[1].m_ptr),
-    ON_SUBD_EDGE_DIRECTION(eptrs[2].m_ptr)};
-
-  ON_SubDVertex* vertices[3] = {
-    const_cast<ON_SubDVertex*>(edges[0]->m_vertex[edgedirs[0]]),
-    const_cast<ON_SubDVertex*>(edges[1]->m_vertex[edgedirs[1]]),
-    const_cast<ON_SubDVertex*>(edges[2]->m_vertex[edgedirs[2]])};
-
-  if (nullptr == vertices[0] || nullptr == vertices[0]->m_faces || vertices[0]->m_face_count >= vertices[0]->m_face_capacity || vertices[0] != edges[2]->m_vertex[1-edgedirs[2]])
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  if (nullptr == vertices[1] || nullptr == vertices[1]->m_faces || vertices[1]->m_face_count >= vertices[1]->m_face_capacity || vertices[1] != edges[0]->m_vertex[1-edgedirs[0]])
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  if (nullptr == vertices[2] || nullptr == vertices[2]->m_faces || vertices[2]->m_face_count >= vertices[2]->m_face_capacity || vertices[2] != edges[1]->m_vertex[1-edgedirs[1]])
-    return ON_SUBD_RETURN_ERROR(nullptr);
-  
-  ON_SubDFace* f = AllocateFace(zero_face_id,parent_face_id);
-  if (nullptr == f)
-    return ON_SUBD_RETURN_ERROR(nullptr);
-
-  f->m_edge_count = 3;
-  f->m_edge4[0] = eptrs[0];
-  f->m_edge4[1] = eptrs[1];
-  f->m_edge4[2] = eptrs[2];
-
-  edges[0]->m_face2[edges[0]->m_face_count++] = ON_SubDFacePtr::Create(f,edgedirs[0]);
-  edges[1]->m_face2[edges[1]->m_face_count++] = ON_SubDFacePtr::Create(f,edgedirs[1]);
-  edges[2]->m_face2[edges[2]->m_face_count++] = ON_SubDFacePtr::Create(f,edgedirs[2]);
-
-  vertices[0]->m_faces[vertices[0]->m_face_count++] = f;
-  //vertices[0]->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
-  vertices[1]->m_faces[vertices[1]->m_face_count++] = f;
-  //vertices[1]->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
-  vertices[2]->m_faces[vertices[2]->m_face_count++] = f;
-  //vertices[2]->m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
-
-  f->m_level = edges[0]->m_level;
-
-  return f;
-}
 ON__UINT_PTR* ON_SubD_FixedSizeHeap::AllocatePtrArray(
   unsigned int capacity,
   bool bZeroMemory
@@ -632,7 +835,7 @@ ON__UINT_PTR* ON_SubD_FixedSizeHeap::AllocatePtrArray(
   if (0 == capacity)
     return nullptr;
 
-  if (nullptr == m_p || capacity + m_p_index >= m_p_capacity)
+  if (nullptr == m_p || capacity + m_p_index > m_p_capacity)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   ON__UINT_PTR* p = m_p + m_p_index;
@@ -651,8 +854,8 @@ ON__UINT_PTR* ON_SubD_FixedSizeHeap::AllocatePtrArray(
 }
 
 bool ON_SubD_FixedSizeHeap::ReturnPtrArray(
-  unsigned int capacity,
-  void* p
+  void* p,
+  unsigned int capacity
   )
 {
   if (nullptr != m_p && capacity <= m_p_index && p == m_p + (m_p_index - capacity))
@@ -703,7 +906,7 @@ class ON_SubDVertex* ON_SubDHeap::AllocateVertexAndSetId(unsigned int& max_verte
   // In order for m_fspv.ElementFromId() to work, it is critical that
   // once a vertex is allocated from m_fspv, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDVertex* v;
   if (m_unused_vertex)
@@ -737,6 +940,7 @@ void ON_SubDHeap::ReturnVertex(class ON_SubDVertex* v)
   {
     ReturnVertexEdgeAndFaceArrays(v);
     (&v->m_id)[1] = ON_UNSET_UINT_INDEX; // m_archive_id == ON_UNSET_UINT_INDEX marks the fixed size pool element as unused
+    v->m_status = ON_ComponentStatus::Deleted;
     v->m_next_vertex = m_unused_vertex;
     m_unused_vertex = v;
     // NO! // m_fspv.ReturnElement(v);
@@ -749,7 +953,7 @@ class ON_SubDEdge* ON_SubDHeap::AllocateEdgeAndSetId(unsigned int& max_edge_id)
   // In order for m_fspe.ElementFromId() to work, it is critical that
   // once a edge is allocated from m_fspe, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDEdge* e;
   if (m_unused_edge)
@@ -784,6 +988,7 @@ void ON_SubDHeap::ReturnEdge(class ON_SubDEdge* e)
     if (nullptr != e->m_facex)
       ReturnArray(e->m_facex_capacity,(ON__UINT_PTR*)e->m_facex);
     (&e->m_id)[1] = ON_UNSET_UINT_INDEX; // m_archive_id == ON_UNSET_UINT_INDEX marks the fixed size pool element as unused
+    e->m_status = ON_ComponentStatus::Deleted;
     e->m_next_edge = m_unused_edge;
     m_unused_edge = e;
     // NO! // m_fspe.ReturnElement(e);
@@ -793,16 +998,37 @@ void ON_SubDHeap::ReturnEdge(class ON_SubDEdge* e)
 
 class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(unsigned int& max_face_id)
 {
+  return AllocateFaceAndSetId(nullptr, max_face_id);
+}
+
+class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(const ON_SubDFace* candidate_face, unsigned int& max_face_id)
+{
   // In order for m_fspf.ElementFromId() to work, it is critical that
   // once a face is allocated from m_fspf, the value of m_id never
   // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to 
+  // in binary archives in order for ON_COMPONENT_INDEX values to
   // persist in binary archives.
   ON_SubDFace* f;
   if (m_unused_face)
   {
-    f = m_unused_face;
-    m_unused_face = (ON_SubDFace*)(m_unused_face->m_next_face);
+    f = nullptr;
+    if (nullptr != candidate_face && candidate_face != m_unused_face)
+    {
+      for (f = m_unused_face; nullptr != f; f = const_cast<ON_SubDFace*>(f->m_next_face))
+      {
+        if (candidate_face == f->m_next_face)
+        {
+          f->m_next_face = f->m_next_face->m_next_face;
+          f = const_cast<ON_SubDFace*>(candidate_face);
+          break;
+        }
+      }
+    }
+    if (nullptr == f)
+    {
+      f = m_unused_face;
+      m_unused_face = const_cast<ON_SubDFace*>(m_unused_face->m_next_face);
+    }
     const unsigned int id = f->m_id;
     if (ON_UNSET_UINT_INDEX == (&f->m_id)[1])
     {
@@ -830,6 +1056,7 @@ void ON_SubDHeap::ReturnFace(class ON_SubDFace* f)
   {
     ReturnArray(f->m_edgex_capacity,(ON__UINT_PTR*)f->m_edgex);
     (&f->m_id)[1] = ON_UNSET_UINT_INDEX; // m_archive_id == ON_UNSET_UINT_INDEX marks the fixed size pool element as unused
+    f->m_status = ON_ComponentStatus::Deleted;
     f->m_next_face = m_unused_face;
     m_unused_face = f;
     // NO! // m_fspf.ReturnElement(f);
@@ -853,6 +1080,11 @@ void ON_SubDHeap::Clear()
   m_fsp5.ReturnAll();
   m_fsp9.ReturnAll();
   m_fsp17.ReturnAll();
+  m_limit_block_pool.ReturnAll();
+
+  m_unused_full_fragments = nullptr;
+  m_unused_half_fragments = nullptr;
+  m_unused_limit_curves = nullptr;
 
   m_unused_vertex = nullptr;
   m_unused_edge = nullptr;
@@ -953,8 +1185,8 @@ unsigned int ON_SubDHeap::MaximumFaceId() const
 
 bool ON_SubDHeap::IsValid() const
 {
-  return m_fspv.ElementIdIsIncreasing(ON_SubDHeap::m_offset_vertex_id) 
-    && m_fspe.ElementIdIsIncreasing(ON_SubDHeap::m_offset_edge_id) 
+  return m_fspv.ElementIdIsIncreasing(ON_SubDHeap::m_offset_vertex_id)
+    && m_fspe.ElementIdIsIncreasing(ON_SubDHeap::m_offset_edge_id)
     && m_fspf.ElementIdIsIncreasing(ON_SubDHeap::m_offset_face_id);
 }
 
@@ -1002,8 +1234,13 @@ void ON_SubDHeap::ReturnOversizedElement(
     class tagWSItem* p = ((class tagWSItem*)(a - 1)) - 1;
     if (p == m_ws)
     {
-      m_ws = p->m_next;
-      p->m_next->m_prev = 0;
+      if (nullptr != p->m_next)
+      {
+        m_ws = p->m_next;
+        p->m_next->m_prev = 0;
+      }
+      else
+        m_ws = nullptr;
     }
     else
     {
@@ -1389,3 +1626,266 @@ void ON_SubDHeap::ReturnArray(
   return;
 }
 
+bool ON_SubDHeap::Internal_InitializeLimitBlockPool()
+{
+  if (0 == m_limit_block_pool.SizeofElement())
+  {
+    m_sizeof_full_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity);
+    m_sizeof_half_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity-1);
+    m_sizeof_limit_curve = sizeof(ON_SubDEdgeSurfaceCurve);
+    size_t sz =  m_sizeof_full_fragment;
+    if (sz < 4 * m_sizeof_half_fragment)
+      sz = 4 * m_sizeof_half_fragment;
+
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    m_limit_block_pool.Create(sz,0,0);
+    // check size again in case another thread beat this call
+    if (0 == m_limit_block_pool.SizeofElement())
+      m_limit_block_pool.Create(sz, 0, 0);
+  }
+  return (m_limit_block_pool.SizeofElement() > 0);
+}
+
+ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
+  const ON_SubDMeshFragment& src_fragment
+)
+{
+  // When 4 == ON_SubDDisplayParameters::DefaultDensity (setting used in February 2019)
+  // quads get a single fragment with a 16x16 face grid
+  // N-gons with N != 4 get N 8x8 grids.
+  const unsigned int density = (src_fragment.m_face_fragment_count > 1)
+    ? (ON_SubDDisplayParameters::DefaultDensity-1)
+    : ((1==src_fragment.m_face_fragment_count) ? ON_SubDDisplayParameters::DefaultDensity : 0)
+    ;
+  if (0 == density)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  const unsigned short side_seg_count = (unsigned short)ON_SubDMeshFragment::SideSegmentCountFromDisplayDensity(density);
+  const unsigned short vertex_capacity = (side_seg_count + 1)*(side_seg_count + 1);
+  if ( src_fragment.VertexCount() > 0 && src_fragment.VertexCount() < ((unsigned)vertex_capacity) )
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  if (0 == m_limit_block_pool.SizeofElement())
+    Internal_InitializeLimitBlockPool();
+
+  ON_SubDMeshFragment* fragment;
+  {
+    char* p = nullptr;
+    char* p1 = nullptr;
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    if (ON_SubDDisplayParameters::DefaultDensity == density)
+    {
+      if (nullptr == m_unused_full_fragments)
+      {
+        p = (char*)m_limit_block_pool.AllocateDirtyElement();
+        if (nullptr == p)
+          return ON_SUBD_RETURN_ERROR(nullptr);
+        p1 = p + m_limit_block_pool.SizeofElement();
+        m_unused_full_fragments = (ON_FixedSizePoolElement*)p;
+        m_unused_full_fragments->m_next = nullptr;
+        p += m_sizeof_full_fragment;
+        while (p + m_sizeof_full_fragment < p1)
+        {
+          ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
+          ele->m_next = m_unused_full_fragments;
+          m_unused_full_fragments = ele;
+          p += m_sizeof_full_fragment;
+        }
+      }
+      fragment = (ON_SubDMeshFragment*)m_unused_full_fragments;
+      m_unused_full_fragments = m_unused_full_fragments->m_next;
+    }
+    else
+    {
+      if (nullptr == m_unused_half_fragments)
+      {
+        p = (char*)m_limit_block_pool.AllocateDirtyElement();
+        if (nullptr == p)
+          return ON_SUBD_RETURN_ERROR(nullptr);
+        p1 = p + m_limit_block_pool.SizeofElement();
+        m_unused_half_fragments = (ON_FixedSizePoolElement*)p;
+        m_unused_half_fragments->m_next = nullptr;
+        p += m_sizeof_half_fragment;
+        while (p + m_sizeof_half_fragment < p1)
+        {
+          ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
+          ele->m_next = m_unused_half_fragments;
+          m_unused_half_fragments = ele;
+          p += m_sizeof_half_fragment;
+        }
+      }
+      fragment = (ON_SubDMeshFragment*)m_unused_half_fragments;
+      m_unused_half_fragments = m_unused_half_fragments->m_next;
+    }
+    if (nullptr != p)
+    {
+      while (p + m_sizeof_limit_curve < p1)
+      {
+        ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
+        ele->m_next = m_unused_limit_curves;
+        m_unused_limit_curves = ele;
+        p += m_sizeof_limit_curve;
+      }
+    }
+  }
+
+  *fragment = src_fragment;
+  fragment->m_prev_fragment = nullptr;
+  fragment->m_next_fragment = nullptr;
+  double* a = (double*)(fragment + 1);
+  fragment->SetUnmanagedVertexCapacity(vertex_capacity);
+  fragment->SetVertexCount(0);
+  fragment->m_P = a;
+  fragment->m_P_stride = 3;
+  fragment->m_N = a + (vertex_capacity * 3);
+  fragment->m_N_stride = 3;
+  fragment->m_T = a + (vertex_capacity * 6);
+  fragment->m_T_stride = 3;
+
+  if (src_fragment.VertexCount() > 0)
+    fragment->CopyFrom(src_fragment,density);
+
+  return fragment;
+}
+
+bool ON_SubDHeap::ReturnMeshFragment(ON_SubDMeshFragment * fragment)
+{
+  if (nullptr == fragment)
+    return false;
+
+  ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)fragment;
+  if (17 * 17 == fragment->VertexCapacity())
+  {
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
+    ele->m_next = m_unused_full_fragments;
+    m_unused_full_fragments = ele;
+  }
+  else if (9 * 9 == fragment->VertexCapacity())
+  {
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
+    ele->m_next = m_unused_half_fragments;
+    m_unused_half_fragments = ele;
+  }
+  else
+    return ON_SUBD_RETURN_ERROR(false);
+
+  return true;
+}
+
+bool ON_SubDHeap::ReturnMeshFragments(const ON_SubDFace * face)
+{
+  if (nullptr != face)
+  {
+    face->Internal_ClearSurfacePointFlag();
+    face->Internal_ClearControlNetFragmentFlag();
+    ON_SubDMeshFragment* fragment = face->m_mesh_fragments;
+    face->m_mesh_fragments = nullptr;
+    while (nullptr != fragment)
+    {
+      if (face != fragment->m_face)
+        return ON_SUBD_RETURN_ERROR(false);
+      ON_SubDMeshFragment* next_fragment = fragment->m_next_fragment;
+      if (false == ReturnMeshFragment(fragment))
+        return false;
+      fragment = next_fragment;
+    }
+  }
+  return true;
+}
+
+class ON_SubDEdgeSurfaceCurve* ON_SubDHeap::AllocateEdgeSurfaceCurve(
+  unsigned int cv_capacity
+)
+{
+  if (cv_capacity < 1 || cv_capacity > ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  if (0 == m_limit_block_pool.SizeofElement())
+    Internal_InitializeLimitBlockPool();
+
+  ON_SubDEdgeSurfaceCurve* limit_curve;
+  double* cvx = nullptr;
+
+  {
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    if (
+      nullptr == m_unused_limit_curves
+      || ( cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr == m_unused_limit_curves->m_next)
+      )
+    {
+      char* p = (char*)m_limit_block_pool.AllocateDirtyElement();
+      if (nullptr == p)
+        return ON_SUBD_RETURN_ERROR(nullptr);
+      char* p1 = p + m_limit_block_pool.SizeofElement();
+      while (p + m_sizeof_limit_curve < p1)
+      {
+        ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
+        ele->m_next = m_unused_limit_curves;
+        m_unused_limit_curves = ele;
+        p += m_sizeof_limit_curve;
+      }
+    }
+
+    limit_curve = (ON_SubDEdgeSurfaceCurve*)m_unused_limit_curves;
+    m_unused_limit_curves = m_unused_limit_curves->m_next;
+    if (cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)
+    {
+      cvx = (double*)m_unused_limit_curves;
+      m_unused_limit_curves = m_unused_limit_curves->m_next;
+    }
+  }
+
+  memset(limit_curve, 0, sizeof(*limit_curve));
+  limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity;
+  if (nullptr != cvx)
+  {
+    // increase capacity
+    limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity;
+    limit_curve->m_cvx = cvx;
+    double* p1 = cvx + 3 * (ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity-ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity);
+    while (cvx < p1)
+      *cvx++ = ON_DBL_QNAN;
+  }
+
+  return limit_curve;
+}
+
+bool ON_SubDHeap::ReturnEdgeSurfaceCurve(
+  class ON_SubDEdgeSurfaceCurve* limit_curve
+)
+{
+  if (nullptr != limit_curve)
+  {
+    limit_curve->m_cv_count = 0;
+    ON_FixedSizePoolElement* ele0 = (ON_FixedSizePoolElement*)limit_curve;
+    ON_FixedSizePoolElement* ele1 = (ON_FixedSizePoolElement*)limit_curve->m_cvx;
+    if (nullptr != ele1)
+    {
+      ((unsigned int*)ele1)[2] = 0; // zero cv_count and cv_capacity - to limit crashes caused by rogue references
+      ele0->m_next = ele1;
+    }
+    else
+      ele1 = ele0;
+    ((unsigned int*)ele0)[2] = 0; // zero cv_count and cv_capacity - to limit crashes caused by rogue references
+    ON_SleepLockGuard guard(m_limit_block_pool);
+    ele1->m_next = m_unused_limit_curves;
+    m_unused_limit_curves = ele0;
+  }
+  return true;
+}
+
+bool ON_SubDHeap::ReturnEdgeSurfaceCurve(
+  const class ON_SubDEdge* edge
+)
+{
+  bool rc = true;
+  ON_SubDEdgeSurfaceCurve* limit_curve = (nullptr != edge) ? edge->m_limit_curve : nullptr;
+  if (nullptr != limit_curve)
+  {
+    edge->Internal_ClearSurfacePointFlag();
+    edge->m_limit_curve = nullptr;
+    rc = ReturnEdgeSurfaceCurve(limit_curve);
+  }
+  return rc;
+}

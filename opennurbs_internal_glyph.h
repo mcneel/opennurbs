@@ -57,6 +57,17 @@ public:
   static void Internal_GetAppleInstalledCTFonts(ON_SimpleArray<const ON_Font*>& platform_font_list);
 #endif
 
+private:
+  static void Internal_SetFakeWindowsLogfontNames(
+    ON_SimpleArray<const ON_Font*>& device_list
+  );
+  static void Internal_SetFakeWindowsLogfontName(
+    const ON_Font* font,
+    const ON_wString fake_loc_logfont_name,
+    const ON_wString fake_en_logfont_name
+  );
+public:
+
   // sorts nulls to end of lists
   static int CompareFontPointer(ON_Font const* const* lhs, ON_Font const* const* rhs);
 

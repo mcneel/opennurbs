@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,11 +17,12 @@
 #if !defined(OPENNURBS_MATERIAL_INC_)
 #define OPENNURBS_MATERIAL_INC_
 
+class ON_PhysicallyBasedMaterial;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class ON_Material
-// 
+//
 class ON_CLASS ON_Material : public ON_ModelComponent
 {
   ON_OBJECT_DECLARE(ON_Material);
@@ -45,7 +46,7 @@ public:
       is nullptr
   Returns:
     If ON_Material::Cast(model_component_ref.ModelComponent()) is not nullptr,
-    that pointer is returned.  Otherwise, none_return_value is returned. 
+    that pointer is returned.  Otherwise, none_return_value is returned.
   */
   static const ON_Material* FromModelComponentRef(
     const class ON_ModelComponentReference& model_component_reference,
@@ -53,31 +54,31 @@ public:
     );
 
   // compare everything except Index() value.
-  static int Compare( 
+  static int Compare(
     const ON_Material& a,
     const ON_Material& b
     );
 
   // compare Id(), Name(), m_rdk_material_instance_id
-  static int CompareNameAndIds( 
+  static int CompareNameAndIds(
     const ON_Material& a,
     const ON_Material& b
     );
 
-  // Compare all settings (color, reflection, texture, plug-in id) 
-  // that effect the appearance.
+  // Compare all settings (color, reflection, texture, plug-in id)
+  // that affect the appearance.
   // Ignore Index(), Id(), Name(), m_rdk_material_instance_id.
-  static int CompareAppearance( 
+  static int CompareAppearance(
     const ON_Material& a,
     const ON_Material& b
     );
 
-  static int CompareColorAttributes( 
+  static int CompareColorAttributes(
     const ON_Material& a,
     const ON_Material& b
     );
 
-  static int CompareReflectionAttributes( 
+  static int CompareReflectionAttributes(
     const ON_Material& a,
     const ON_Material& b
     );
@@ -97,15 +98,15 @@ public:
   /*
   Parameters:
     fresnel_index_of_refraction - [in]
-      ON_Material::Material::Default.m_fresnel_index_of_refraction 
+      ON_Material::Material::Default.m_fresnel_index_of_refraction
       is a good default
     N - [in]
       3d surface normal
     R - [in]
       3d reflection direction
   Returns:
-    1.0: 
-      The input values were not valid or the calculation failed due to 
+    1.0:
+      The input values were not valid or the calculation failed due to
       a divide by zero or some other numerical arithmetic failure.
     fresnel reflection coefficient
       1/2 * ((g-c)/(g+c))^2 * (1 + ( (c*(g+c) -1)/(c*(g+c) + 1) )^2)
@@ -149,9 +150,9 @@ public:
     ) override;
 
   ON::object_type ObjectType() const override;
-  
+
   /////////////////////////////////////////////////////////////////
-  // Interface 
+  // Interface
 
   ON_Color Ambient() const;
   ON_Color Diffuse() const;
@@ -177,7 +178,7 @@ public:
 
   // ID of the last plug-in to modify this material
   ON_UUID MaterialPlugInId() const;
-  void SetMaterialPlugInId( 
+  void SetMaterialPlugInId(
     ON_UUID plugin_id
     );
 
@@ -242,7 +243,7 @@ public:
   void SetDisableLighting(
     bool bDisableLighting
     );
-  
+
   //If m_bUseDiffuseTextureAlphaForObjectTransparencyTexture is true, the alpha channel
   //of the texture in m_textures with m_type=bitmap_texture is used in addition to any
   //textures with m_type=transparency_texture.
@@ -250,7 +251,7 @@ public:
   void SetUseDiffuseTextureAlphaForObjectTransparencyTexture(
     bool bUseDiffuseTextureAlphaForObjectTransparencyTexture
     );
-  
+
   //////////////////////////////////////////////////////////////
   //
   // Reflection and Refraction settings
@@ -272,9 +273,20 @@ public:
   //the function that the layer manager uses to color the little material swatch, for example.
   ON_Color PreviewColor() const;
 
+
+  //Physically based material interface.  Use this interface to set and get PBR parameters
+  //and to check if this material supports PBR.
+  //NOTE WELL - ON_PhysicallyBasedMaterial contains a pointer to this - the scope of the ON_PhysicallyBasedMaterial
+  //object must not exceed the scope of the material that it originally came from.  Ideal usage is material.PhysicallyBased().Function()
+  const ON_PhysicallyBasedMaterial PhysicallyBased(void) const;
+  ON_PhysicallyBasedMaterial PhysicallyBased(void);
+
+  //Internal use only
+  static ON_UUID PhysicallyBasedUserdataId(void);
+
 private:
   // The value of m_rdk_material_id idetifies an RDK (rendering development kit)
-  // material. Multiple materials in a Rhino model can refer to the same 
+  // material. Multiple materials in a Rhino model can refer to the same
   // RDK material id.  In V5 this value is stored in user data.  In V6 it is
   // saved in the m_rdk_material_id field.
   ON_UUID m_rdk_material_instance_id = ON_nil_uuid;
@@ -309,7 +321,7 @@ public:
 
   /*
   m_reflection_glossiness:
-    Default is 0.0. 
+    Default is 0.0.
     Values from 0.0 to 1.0 make sense.
     - 0.0 reflections are perfectly specular.
     - t > 0.0 permits reflection ray direction to vary
@@ -319,7 +331,7 @@ public:
 
   /*
   m_refraction_glossiness:
-    Default is 0.0. 
+    Default is 0.0.
     Values from 0.0 to 1.0 make sense.
     - 0.0 refractions are perfectly specular.
     - t > 0.0 permits refraction ray direction to vary
@@ -330,7 +342,7 @@ public:
   /*
   m_index_of_refraction:
     Default is 1.0.
-    Physically, the index of refraction is >= 1.0 and is 
+    Physically, the index of refraction is >= 1.0 and is
     the value (speed of light in vacum)/(speed of light in material).
     Some rendering algorithms set m_index_of_refraction to zero or
     values < 1.0 to generate desirable effects.
@@ -340,15 +352,15 @@ public:
   /*
   m_fresnel_index_of_refraction:
     Default is 1.56.
-    This is the value ON:Material::FresnelReflectionCoefficient() passes 
+    This is the value ON:Material::FresnelReflectionCoefficient() passes
     as the first parameter to ON_FresnelReflectionCoefficient().
-    - Glass material types can be simulated with 
+    - Glass material types can be simulated with
       m_index_of_refraction ~ 1.56
       m_fresnel_index_of_refraction ~ 1.56
-    - Thin glass can be simulated with 
+    - Thin glass can be simulated with
       m_fresnel_index_of_refraction = 1.56
       m_index_of_refraction = 0.0
-    - Porcelain type materials can be simulated with 
+    - Porcelain type materials can be simulated with
       m_fresnel_index_of_refraction = 1.56
       m_index_of_refraction = 1.0
       m_transparency = 0.0
@@ -363,18 +375,18 @@ public:
       3d reflection direction
   Returns:
     If m_bFresnelReflections is false, then 1.0 is returned.
-    If m_bFresnelReflections is true, then the value of the fresnel 
+    If m_bFresnelReflections is true, then the value of the fresnel
     reflection coefficient is returned. In typical rendering applications,
     the reflection term is multiplied by the fresnel reflection coefficient
     before it is added to the diffuse color.
     If any input is not valid or the calculation fails, then 1.0 is returned.
   Remarks:
-    When m_bFresnelReflections is true, the calculation is performed by 
+    When m_bFresnelReflections is true, the calculation is performed by
     calling ON_FresnelReflectionCoefficient() with m_fresnel_index_of_refraction
     as the fresnel index of refraction.
   */
   double FresnelReflectionCoefficient(
-    ON_3dVector N, 
+    ON_3dVector N,
     ON_3dVector R
     ) const;
 
@@ -402,12 +414,12 @@ public:
     filename - [in]  If nullptr, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
                 any texture type matches.
-    i0 - [in] If i0 is < 0, the search begins at 
+    i0 - [in] If i0 is < 0, the search begins at
               m_textures[0], if i0 >= m_textures.Count(),
               -1 is returnd, otherwise, the search begins
               at m_textures[i0+1].
   Example:
-    Iterate through all the the bitmap textures on 
+    Iterate through all the the bitmap textures on
     a material.
 
           ON_Material& mat = ...;
@@ -415,9 +427,9 @@ public:
           int bitmap_texture_count = 0;
           for(;;)
           {
-            ti = mat.FindTexture( 
-                        nullptr, 
-                        ON_Texture::TYPE::bitmap_texture, 
+            ti = mat.FindTexture(
+                        nullptr,
+                        ON_Texture::TYPE::bitmap_texture,
                         ti );
 
             if ( ti < 0 )
@@ -457,14 +469,14 @@ public:
     textures to the material.  If you need to do something
     different, then just work on the m_textures[] array.
   */
-  int AddTexture( 
+  int AddTexture(
     const ON_Texture& tx
     );
 
   /*
   Description:
     If there is a texture with a matching type, that texture's
-    filename is modified, otherwise a new texture is added.    
+    filename is modified, otherwise a new texture is added.
   Parameters:
     filename - [in] new filename
     type - [in]
@@ -477,7 +489,7 @@ public:
   */
   int AddTexture(
     const wchar_t* filename,
-    ON_Texture::TYPE type 
+    ON_Texture::TYPE type
     );
 
   /*
@@ -492,15 +504,15 @@ public:
   */
   int DeleteTexture(
     const wchar_t* filename,
-    ON_Texture::TYPE type 
+    ON_Texture::TYPE type
     );
 
   ON_ObjectArray<ON_Texture> m_textures;
 
   /*
   Description:
-    Used to provide per face material support. 
-    The parent object reference a basic material. 
+    Used to provide per face material support.
+    The parent object reference a basic material.
     When a brep face or mesh facet wants to use
     a material besides the base material, it specifies
     a channelSupports material channel.  The default
@@ -508,17 +520,17 @@ public:
     material.  A channel of n > 0 means that face
     used the material with id m_material_channel[n-1].
     If (n-1) >= m_material_channel.Count(), then the base
-    material is used.  The value of 
+    material is used.  The value of
     m_material_channel[n].m_id is persistent.  The
     value of m_material_channel[n].m_i is a runtime
-    index in the CRhinoDoc::m_material_table[].  If 
+    index in the CRhinoDoc::m_material_table[].  If
     CRhinoDoc::m_material_table[m_i].m_uuid != m_id,
     then m_id is assumed to be correct.
   */
   ON_SimpleArray<ON_UuidIndex> m_material_channel;
-  
+
 private:
-  ON_UUID m_plugin_id = ON_nil_uuid; 
+  ON_UUID m_plugin_id = ON_nil_uuid;
 
 private:
   bool Internal_ReadV3( ON_BinaryArchive& archive, int minor_version );
@@ -539,42 +551,179 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Material*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_Material>;
 
 // NO! // ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_Material>;
-//  It is a serious error to have an ON_ClassArray<ON_Material> and crashes 
+//  It is a serious error to have an ON_ClassArray<ON_Material> and crashes
 //  will occur when user data back pointers are not updated.
 #endif
 
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Class ON_PBRMaterial
+//
 class ON_CLASS ON_PhysicallyBasedMaterial
 {
 public:
-  class ParametersNames
+  ON_PhysicallyBasedMaterial(const ON_Material& src);
+  ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedMaterial& src);
+  virtual ~ON_PhysicallyBasedMaterial();
+
+  virtual bool IsValid(class ON_TextLog* text_log = nullptr) const;
+
+  /////////////////////////////////////////////////////////////////
+  // Interface
+public:
+  //Call this function to determine if the material supports a PBR definition.
+  //A material will support PBR if the base color is set.  All other values are set
+  //to defaults that will produce a simple plaster-like surface.
+  virtual bool Supported(void) const;
+
+  //Reflectance model to use.  Default is GGX.  Renderers do not need to support a specific
+  //model, but certain material definitions may specify in the hope that a renderer will support.
+  //GGX support is built into Rhino (Cycles, display)
+  enum class BRDFs : int
   {
-  public:
-    static ON_wString BaseColor(void);
-    static ON_wString BRDF(void);
-    static ON_wString Subsurface(void);
-    static ON_wString SubsurfaceScatteringColor(void);
-    static ON_wString SubsurfaceScatteringRadius(void);
-    static ON_wString Specular(void);
-    static ON_wString SpecularTint(void);
-    static ON_wString Metallic(void);
-    static ON_wString Roughness(void);
-    static ON_wString Anisotropic(void);
-    static ON_wString AnisotropicRotation(void);
-    static ON_wString Sheen(void);
-    static ON_wString SheenTint(void);
-    static ON_wString Clearcoat(void);
-    static ON_wString ClearcoatRoughness(void);
-    static ON_wString OpacityIor(void);
-    static ON_wString Opacity(void);
-    static ON_wString OpacityRoughness(void);
-    static ON_wString Emission(void);
-    static ON_wString AmbientOcclusion(void);
-    static ON_wString Smudge(void);
-    static ON_wString Displacement(void);
-    static ON_wString Normal(void);
-    static ON_wString Bump(void);
+    GGX = 0,          //http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+    Ward = 1,         //https://pdfs.semanticscholar.org/330e/59117d7da6c794750730a15f9a178391b9fe.pdf
   };
+
+  virtual BRDFs BRDF(void) const;
+  virtual void SetBRDF(const BRDFs&);
+
+  virtual ON_4fColor BaseColor(void) const;
+  virtual void SetBaseColor(const ON_4fColor&);
+
+  //Controls diffuse shape using a subsurface approximation.  If full subsurface transport is
+  //implemented, acts as a mix between diffuse and SSS
+  virtual double Subsurface(void) const;
+  virtual void SetSubsurface(double);
+
+  //Color for full subsurface transport if implemented
+  virtual ON_4fColor SubsurfaceScatteringColor(void) const;
+  virtual void SetSubsurfaceScatteringColor(const ON_4fColor&);
+
+  //Radius for full subsurface transport if implemented
+  virtual double SubsurfaceScatteringRadius(void) const;
+  virtual void SetSubsurfaceScatteringRadius(double);
+
+  //The metallic-ness (0 = dielectric, 1 = metallic). This is a linear blend between two
+  //different models.The metallic model has no diffuse component and also has a tinted incident
+  //specular, equal to the base color
+  virtual double Metallic(void) const;
+  virtual void SetMetallic(double);
+
+  //Incident specular amount.  Linked to Ior property below.
+  //specular=((ior−1)/(ior+1))2/0.08
+  virtual double Specular(void) const;
+  virtual void SetSpecular(double);
+
+  //Reflective Ior - see specular amount above.  Linked to Specular property
+  virtual double ReflectiveIOR(void) const;
+  virtual void SetReflectiveIOR(double);
+
+  //A concession for artistic control that tints incident specular towards the base color.
+  //Grazing specular is still achromatic.
+  //Tints the facing specular reflection using the base color, while glancing reflection remains white.
+  //Normal dielectrics have colorless reflection, so this parameter is not technically physically correct and is provided for faking the appearance of materials with complex surface structure.
+  virtual double SpecularTint(void) const;
+  virtual void SetSpecularTint(double);
+
+  //Surface roughness, controls both diffuse and specular response
+  virtual double Roughness(void) const;
+  virtual void SetRoughness(double);
+
+  //Degree of anisotropy. This controls the aspect ratio of the specular highlight. (0 = isotropic, 1 = maximally anisotropic)
+  virtual double Anisotropic(void) const;
+  virtual void SetAnisotropic(double);
+
+  //Rotates the direction of anisotropy, with 1.0 going full circle.
+  virtual double AnisotropicRotation(void) const;
+  virtual void SetAnisotropicRotation(double);
+
+  //An additional grazing component, primarily intended for cloth.
+  //Amount of soft velvet like reflection near edges, for simulating materials such as cloth.
+  virtual double Sheen(void) const;
+  virtual void SetSheen(double);
+
+  //Amount to tint sheen towards base color
+  virtual double SheenTint(void) const;
+  virtual void SetSheenTint(double);
+
+  //A second, special-purpose specular lobe - Extra white specular layer on top of others. This is useful for materials like car paint and the like.
+  virtual double Clearcoat(void) const;
+  virtual void SetClearcoat(double);
+
+  //Controls clearcoat glossiness (0 = a “satin” appearance, 1 = a “gloss” appearance)
+  virtual double ClearcoatRoughness(void) const;
+  virtual void SetClearcoatRoughness(double);
+
+  //Index of refraction for transmission.
+  virtual double OpacityIOR(void) const;
+  virtual void SetOpacityIOR(double);
+
+  //Mix between fully opaque surface at zero and fully glass like transmission at one.
+  virtual double Opacity(void) const;
+  virtual void SetOpacity(double);
+
+  //Controls roughness used for transmitted light.
+  virtual double OpacityRoughness(void) const;
+  virtual void SetOpacityRoughness(double);
+
+  //Controls emission - uses base color.
+  virtual ON_4fColor Emission(void) const;
+  virtual void SetEmission(ON_4fColor);
+
+  //Texture access functions - exactly the same as ON_Material.  Provided for ease of use.
+  int FindTexture(const wchar_t* filename, ON_Texture::TYPE type, int i0 = -1) const;
+  int AddTexture(const ON_Texture& tx);
+  int AddTexture( const wchar_t* filename, ON_Texture::TYPE type);
+  int DeleteTexture(const wchar_t* filename, ON_Texture::TYPE type);
+
+  //Access the referenced ON_Material.
+  ON_Material& Material(void);
+  const ON_Material& Material(void) const;
+
+  //Call this function to set the ON_Material up to represent the PBR material as well as possible.
+  void SynchronizeLegacyMaterial(void);
+
+public:
+    ON_DEPRECATED class ON_CLASS ParametersNames
+    {
+    public:
+      ON_DEPRECATED static ON_wString BaseColor(void);
+      ON_DEPRECATED static ON_wString BRDF(void);
+      ON_DEPRECATED static ON_wString Subsurface(void);
+      ON_DEPRECATED static ON_wString SubsurfaceScatteringColor(void);
+      ON_DEPRECATED static ON_wString SubsurfaceScatteringRadius(void);
+      ON_DEPRECATED static ON_wString Specular(void);
+      ON_DEPRECATED static ON_wString SpecularTint(void);
+      ON_DEPRECATED static ON_wString Metallic(void);
+      ON_DEPRECATED static ON_wString Roughness(void);
+      ON_DEPRECATED static ON_wString Anisotropic(void);
+      ON_DEPRECATED static ON_wString AnisotropicRotation(void);
+      ON_DEPRECATED static ON_wString Sheen(void);
+      ON_DEPRECATED static ON_wString SheenTint(void);
+      ON_DEPRECATED static ON_wString Clearcoat(void);
+      ON_DEPRECATED static ON_wString ClearcoatRoughness(void);
+      ON_DEPRECATED static ON_wString ClearcoatBump(void);
+      ON_DEPRECATED static ON_wString OpacityIor(void);
+      ON_DEPRECATED static ON_wString Opacity(void);
+      ON_DEPRECATED static ON_wString OpacityRoughness(void);
+      ON_DEPRECATED static ON_wString Emission(void);
+  };
+
+private:
+  class Impl;
+  Impl* _pImpl;
+  const Impl& Implementation(void) const;
+  Impl& Implementation(void);
+
+  //Ban copying - usage should be material.PhysicallyBased().Function()
+  ON_PhysicallyBasedMaterial& operator=(const ON_Material& src) = delete;
+  ON_PhysicallyBasedMaterial& operator=(const ON_PhysicallyBasedMaterial& src) = delete;
+  friend ON_Material;
 };
+
+
 
 #endif
 

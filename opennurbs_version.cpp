@@ -160,6 +160,14 @@ const wchar_t* ON::VersionQuartetAsWideString()
   return OPENNURBS_VERSION_QUARTET_WSTRING;
 }
 
+int ON_BinaryArchive::CurrentArchiveVersion()
+{
+  // Latest version of opennurbs binary archives supported by
+  // this version of opennurbs.
+  return OPENNURBS_CURRENT_ARCHIVE_VERSION;
+}
+
+
 bool ON_TestVersionNumber(
   unsigned int major,
   unsigned int minor,

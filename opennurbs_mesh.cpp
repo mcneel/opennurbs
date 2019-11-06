@@ -282,10 +282,10 @@ bool ON_MeshFace::Repair(
   int fvi_count = 0;
   f.vi[0] = f.vi[1] = f.vi[2] = f.vi[3] = -1;
   
-  if ( vi[0] >= 0 && vi[0] < mesh_vertex_count )
+  if ( vi[0] >= 0 && vi[0] < mesh_vertex_count && V[vi[0]].IsValid() )
     f.vi[fvi_count++] = vi[0];
 
-  if ( vi[1] >= 0 && vi[1] < mesh_vertex_count && f.vi[0] != vi[1] )
+  if (vi[1] >= 0 && vi[1] < mesh_vertex_count && f.vi[0] != vi[1] && V[vi[1]].IsValid())
   {
     if ( 0 == fvi_count || V[f.vi[0]] != V[vi[1]] )
       f.vi[fvi_count++] = vi[1];
@@ -294,7 +294,7 @@ bool ON_MeshFace::Repair(
   if ( fvi_count < 1 )
     return false;
 
-  if ( vi[2] >= 0 && vi[2] < mesh_vertex_count && f.vi[0] != vi[2] && f.vi[1] != vi[2] && V[f.vi[0]] != V[vi[2]] )
+  if ( vi[2] >= 0 && vi[2] < mesh_vertex_count && f.vi[0] != vi[2] && f.vi[1] != vi[2] && V[vi[2]].IsValid() && V[f.vi[0]] != V[vi[2]] )
   {
     if ( 1 == fvi_count || V[f.vi[1]] != V[vi[2]] )
       f.vi[fvi_count++] = vi[2];
@@ -303,7 +303,7 @@ bool ON_MeshFace::Repair(
   if ( fvi_count < 2 )
     return false;
 
-  if ( vi[3] >= 0 && vi[3] < mesh_vertex_count && f.vi[0] != vi[3] && f.vi[1] != vi[3] && f.vi[2] != vi[3] && V[f.vi[0]] != V[vi[3]] && V[f.vi[1]] != V[vi[3]] )
+  if ( vi[3] >= 0 && vi[3] < mesh_vertex_count && f.vi[0] != vi[3] && f.vi[1] != vi[3] && f.vi[2] != vi[3] && V[vi[3]].IsValid() && V[f.vi[0]] != V[vi[3]] && V[f.vi[1]] != V[vi[3]] )
   {
     if ( 2 == fvi_count || V[f.vi[2]] != V[vi[3]] )
       f.vi[fvi_count++] = vi[3];
@@ -336,10 +336,10 @@ bool ON_MeshFace::Repair(
   int fvi_count = 0;
   f.vi[0] = f.vi[1] = f.vi[2] = f.vi[3] = -1;
   
-  if ( vi[0] >= 0 && vi[0] < mesh_vertex_count )
+  if ( vi[0] >= 0 && vi[0] < mesh_vertex_count && V[vi[0]].IsValid() )
     f.vi[fvi_count++] = vi[0];
 
-  if ( vi[1] >= 0 && vi[1] < mesh_vertex_count && f.vi[0] != vi[1] )
+  if (vi[1] >= 0 && vi[1] < mesh_vertex_count && f.vi[0] != vi[1] && V[vi[1]].IsValid())
   {
     if ( 0 == fvi_count || V[f.vi[0]] != V[vi[1]] )
       f.vi[fvi_count++] = vi[1];
@@ -348,7 +348,7 @@ bool ON_MeshFace::Repair(
   if ( fvi_count < 1 )
     return false;
 
-  if ( vi[2] >= 0 && vi[2] < mesh_vertex_count && f.vi[0] != vi[2] && f.vi[1] != vi[2] && V[f.vi[0]] != V[vi[2]] )
+  if ( vi[2] >= 0 && vi[2] < mesh_vertex_count && f.vi[0] != vi[2] && f.vi[1] != vi[2] && V[vi[2]].IsValid() && V[f.vi[0]] != V[vi[2]] )
   {
     if ( 1 == fvi_count || V[f.vi[1]] != V[vi[2]] )
       f.vi[fvi_count++] = vi[2];
@@ -357,7 +357,7 @@ bool ON_MeshFace::Repair(
   if ( fvi_count < 2 )
     return false;
 
-  if ( vi[3] >= 0 && vi[3] < mesh_vertex_count && f.vi[0] != vi[3] && f.vi[1] != vi[3] && f.vi[2] != vi[3] && V[f.vi[0]] != V[vi[3]] && V[f.vi[1]] != V[vi[3]] )
+  if ( vi[3] >= 0 && vi[3] < mesh_vertex_count && f.vi[0] != vi[3] && f.vi[1] != vi[3] && f.vi[2] != vi[3] && V[vi[3]].IsValid() && V[f.vi[0]] != V[vi[3]] && V[f.vi[1]] != V[vi[3]] )
   {
     if ( 2 == fvi_count || V[f.vi[2]] != V[vi[3]] )
       f.vi[fvi_count++] = vi[3];
@@ -3741,8 +3741,16 @@ bool ON_Mesh::IsEmpty() const
 {
   // Deep sigh.  
   // The "this == &ON_Mesh::Empty" check is to handle the case when 
-  // confused developers const cast ON_Mesh::Empty and modify it.
-  return (0 == VertexUnsignedCount() && 0 == FaceUnsignedCount());
+  // confused developers const cast ON_Mesh::Empty and then modify it.
+  return (0 == VertexUnsignedCount() && 0 == FaceUnsignedCount()) || (this == &ON_Mesh::Empty);
+}
+
+bool ON_Mesh::IsNotEmpty() const
+{
+  // Deep sigh.  
+  // The "this != &ON_Mesh::Empty" check is to handle the case when 
+  // confused developers const cast ON_Mesh::Empty and then modify it.
+  return ( VertexUnsignedCount() > 0 && FaceUnsignedCount() > 0 && this != &ON_Mesh::Empty);
 }
 
 bool ON_Mesh::SetVertex(
@@ -4886,6 +4894,17 @@ static int CompareMeshPoint(const void* a,const void* b,void* ptr)
   return 0;
 }
 
+unsigned int ON_Mesh::RemoveAllCreases()
+{
+  unsigned int vertex_count0 = this->VertexUnsignedCount();
+  bool bChanged = this->CombineIdenticalVertices(true, true);
+  const unsigned int vertex_count1 = this->VertexUnsignedCount();
+
+  if (vertex_count0 == vertex_count1 && bChanged)
+    vertex_count0 = vertex_count1 + 1;
+  return (vertex_count0 - vertex_count1);
+}
+
 bool ON_Mesh::CombineIdenticalVertices(
                                 bool bIgnoreVertexNormals,
                                 bool bIgnoreTextureCoordinates
@@ -5121,6 +5140,7 @@ bool ON_Mesh::CombineIdenticalVertices(
 
       mesh.DestroyPartition();
       mesh.DestroyTopology();
+      mesh.m_S.Destroy();
 
       if ( mesh.m_V.Capacity() > 4*mesh.m_V.Count() && mesh.m_V.Capacity() > 50 )
       {
@@ -5701,7 +5721,17 @@ void ON_MeshParameters::SetSimplePlanes(
   Internal_SetBoolHelper(bSimplePlanes, &m_bSimplePlanes);
 }
 
-
+void ON_MeshParameters::SetSubDDisplayParameters(
+  const ON_SubDDisplayParameters& subd_parameters
+)
+{
+  m_subd_mesh_parameters = subd_parameters.EncodeAsUnsignedChar();
+}
+  
+const ON_SubDDisplayParameters ON_MeshParameters::SubDDisplayParameters() const
+{
+  return ON_SubDDisplayParameters::DecodeFromUnsignedChar(m_subd_mesh_parameters);
+}
 
 const bool ON_MeshParameters::Refine() const
 {
@@ -5820,23 +5850,6 @@ void ON_MeshParameters::SetTolerance(
 ) 
 {
   Internal_SetDoubleHelper(tolerance, 0.0, ON_UNSET_VALUE, &m_tolerance);
-}
-
-unsigned int ON_MeshParameters::SubDDisplayMeshDensity() const
-{
-  // If this was set using the "slider", 
-  const int mesh_density_percentage = GeometrySettingsDensityPercentage(-1);
-
-  const double relative_density
-    = (mesh_density_percentage >= 0)
-    ? (((double)mesh_density_percentage) / 100.0)
-    : RelativeTolerance();
-
-  if (false == (relative_density >= 0.0 && relative_density <= 1.0))
-    return ON_SubDLimitMesh::DefaultDisplayDensity;
-
-  unsigned int subd_mesh_density = (unsigned int)floor(relative_density*ON_SubDLimitMesh::MaximumDisplayDensity);
-  return subd_mesh_density;
 }
 
 const double ON_MeshParameters::RelativeTolerance() const
@@ -6023,6 +6036,26 @@ ON_MeshParameters::ON_MeshParameters(
     SetRelativeTolerance(density);
     SetRefine((density < 0.65));
     SetSimplePlanes((0.0 == density));
+
+
+    unsigned int subd_display_density = ON_SubDDisplayParameters::Default.DisplayDensity();
+
+    if (density <= ON_ZERO_TOLERANCE)
+      subd_display_density = 1;
+    else if (density < 1.0/6.0)
+      subd_display_density = ON_SubDDisplayParameters::CourseDensity;
+    else if (density < 1.0/3.0)
+      subd_display_density = (ON_SubDDisplayParameters::DefaultDensity+ON_SubDDisplayParameters::CourseDensity)/2;
+    else if (density <= 0.75)
+      subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
+    else if (density <= 1.0-ON_ZERO_TOLERANCE)
+      subd_display_density = (ON_SubDDisplayParameters::DefaultDensity+ON_SubDDisplayParameters::MaximumDensity)/2;
+    else if (density >= 1.0 - ON_ZERO_TOLERANCE)
+      subd_display_density = ON_SubDDisplayParameters::MaximumDensity;
+
+    ON_SubDDisplayParameters subd_parameters(ON_SubDDisplayParameters::Default);
+    subd_parameters.SetDisplayDensity(subd_display_density);
+    SetSubDDisplayParameters(subd_parameters);
   }
 }
 
@@ -7838,8 +7871,19 @@ void ON_Mesh::DeleteMeshParameters()
   }
 }
 
+static bool isValid3fPoint(const ON_3fPoint* a)
+{
+  return (ON_IS_VALID_FLOAT(a->x) && ON_IS_VALID_FLOAT(a->y) && ON_IS_VALID_FLOAT(a->z)) ? true : false;
+}
+
 static int compare3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
 {
+  const bool aValid = isValid3fPoint(a);
+  const bool bValid = isValid3fPoint(b);
+  if (aValid != bValid)
+    return (aValid ? -1 : 1); // invalid points sort to end.
+  if (false == aValid)
+    return 0; // all invalid points are "equal"
   if ( a->x < b->x ) return -1;
   if ( a->x > b->x ) return  1;
   if ( a->y < b->y ) return -1;
@@ -7849,8 +7893,20 @@ static int compare3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
   return 0;
 }
 
+
+static bool isValid3dPoint(const ON_3dPoint* a)
+{
+  return (ON_IS_VALID(a->x) && ON_IS_VALID(a->y) && ON_IS_VALID(a->z)) ? true : false;
+}
+
 static int compare3dPoint( const ON_3dPoint* a, const ON_3dPoint* b )
 {
+  const bool aValid = isValid3dPoint(a);
+  const bool bValid = isValid3dPoint(b);
+  if (aValid != bValid)
+    return (aValid ? -1 : 1); // invalid points sort to end.
+  if (false == aValid)
+    return 0; // all invalid points are "equal"
   if ( a->x < b->x ) return -1;
   if ( a->x > b->x ) return  1;
   if ( a->y < b->y ) return -1;
@@ -7863,7 +7919,12 @@ static int compare3dPoint( const ON_3dPoint* a, const ON_3dPoint* b )
 typedef int (*ON_COMPAR_LPVOID_LPVOID)(const void*,const void*);
 
 static 
-unsigned int GetPointMap(unsigned int pt_count, const ON_3fPoint* fV, const ON_3dPoint* dV, ON_SimpleArray<unsigned int>& pt_map)
+unsigned int GetRemoveDegenerateFacesPointMap(
+  unsigned int pt_count,
+  const ON_3fPoint* fV,
+  const ON_3dPoint* dV,
+  ON_SimpleArray<unsigned int>& pt_map
+)
 {
   // Faster than ON_Mesh::GetVertexLocationIds()
   //  This static is used only in CullDegenerateFaces().
@@ -7904,6 +7965,15 @@ unsigned int GetPointMap(unsigned int pt_count, const ON_3fPoint* fV, const ON_3
           map[index[vt0++]] = max_pt_index;
         }
       }
+
+      // invalid points are sorted to the end
+      vt1 = pt_count;
+      while (vt1-- > 0)
+      {
+        if (isValid3dPoint(dV + index[vt1]))
+          break;
+        map[index[vt1]] = ON_UNSET_UINT_INDEX; // invalid point get invalid index
+      }
     }
     else
     {
@@ -7916,6 +7986,15 @@ unsigned int GetPointMap(unsigned int pt_count, const ON_3fPoint* fV, const ON_3
         while ( vt0 < vt1 ) {
           map[index[vt0++]] = max_pt_index;
         }
+      }
+
+      // invalid points are sorted to the end
+      vt1 = pt_count;
+      while (vt1-- > 0)
+      {
+        if (isValid3fPoint(fV + index[vt1]))
+          break;
+        map[index[vt1]] = ON_UNSET_UINT_INDEX; // invalid point get invalid index
       }
     }
     onfree(index);
@@ -7942,6 +8021,49 @@ unsigned int ON_Mesh::CullDegenerateFaces()
   const unsigned int face_count1 = m_F.UnsignedCount();
 
   return (face_count0 > face_count1) ? face_count0 - face_count1 : 0;
+}
+
+unsigned int ON_Mesh::CullDegenerates()
+{
+  const int mesh_vertex_count0 = VertexCount();
+  const int mesh_face_count0 = FaceCount();
+  const int mesh_quad_count0 = QuadCount();
+  const int mesh_tri_count0 = TriangleCount();
+
+  // now cull bad faces, invalid vertices, and unreferenced vertices
+  DeleteComponents(
+    nullptr,
+    0,
+    true,
+    true,
+    true,
+    true
+    );
+
+  const int mesh_vertex_count1 = VertexUnsignedCount();
+  const int mesh_face_count1 = FaceUnsignedCount();
+  const int mesh_quad_count1 = QuadCount();
+  const int mesh_tri_count1 = TriangleCount();
+  if (
+    mesh_vertex_count0 == mesh_vertex_count1
+    && mesh_face_count0 == mesh_face_count1
+    && mesh_quad_count0 == mesh_quad_count1
+    && mesh_tri_count0 == mesh_tri_count1
+    )
+    return 0;
+
+  int rc = abs(mesh_vertex_count1 - mesh_vertex_count0) + abs(mesh_face_count1 - mesh_face_count0);
+  if (0 == rc)
+  {
+    // need to return nonzero if a degenerate quad got changed into a triangle
+    rc = abs(mesh_quad_count1 - mesh_quad_count0);
+    if (0 == rc)
+    {
+      rc = abs(mesh_tri_count1 - mesh_tri_count0);
+    }
+  }
+
+  return (unsigned int)rc;
 }
 
 int ON_Mesh::CullUnusedVertices()
@@ -8552,6 +8674,82 @@ int* ON_MeshTopology::GetIntArray(int length)
   }
   return a;
 }
+
+bool ON_MeshTopology::IsWeldedEdge(int top_ei) const
+{
+  if (top_ei < 0 || top_ei >= m_tope.Count() || nullptr == m_mesh)
+    return false;
+
+  const ON_MeshTopologyEdge& e = m_tope[top_ei];
+  if (e.m_topf_count <= 1 || e.m_topvi[0] < 0 || e.m_topvi[1] < 0)
+    return false;
+
+  const int face_count = m_topf.Count();
+  if (face_count < 2 || face_count != m_mesh->FaceCount())
+    return false;
+
+  if (e.m_topvi[0] < 0 || e.m_topvi[1] < 0 || e.m_topvi[0] == e.m_topvi[1] )
+    return false;
+  const int topv_count = m_topv.Count();
+  if (e.m_topvi[0] >= topv_count || e.m_topvi[1] >= topv_count || topv_count < 3)
+    return false;
+
+  const int meshv_count = m_mesh->VertexCount();
+  if (meshv_count < topv_count || meshv_count != m_topv_map.Count())
+    return false;
+  if (1 == m_topv[e.m_topvi[0]].m_v_count && 1 == m_topv[e.m_topvi[0]].m_v_count)
+    return true;
+
+  // need to examine faces
+  int mesh_vi[2] = { -1,-1 };
+  for (int efi = 0; efi < e.m_topf_count; ++efi)
+  {
+    int top_fi = e.m_topfi[efi];
+    if (top_fi < 0 || top_fi >= face_count)
+      return false;
+    const ON_MeshTopologyFace& f = m_topf[top_fi];
+    const int fe_count = f.IsTriangle() ? 3 : 4;
+    int fvi[2] = { -1, -1 };
+    for (int fei = 0; fei < fe_count; ++fei)
+    {
+      if (top_ei != f.m_topei[fei])
+        continue;
+      const ON_MeshFace& mf = m_mesh->m_F[top_fi];
+      const bool bRev = f.m_reve[fei];
+      fvi[bRev?1:0] = mf.vi[(fei + fe_count - 1) % fe_count];
+      fvi[bRev?0:1] = mf.vi[fei];
+      if (fvi[0] < 0 || fvi[0] >= meshv_count)
+        return false;
+      if (fvi[1] < 0 || fvi[1] >= meshv_count)
+        return false;
+      if (m_topv_map[fvi[0]] != e.m_topvi[0] || m_topv_map[fvi[1]] != e.m_topvi[1])
+      {
+        ON_ERROR("Bug in this loop or bad mesh topology.");
+        fvi[0] = -1;
+        fvi[1] = -1;
+        continue;
+      }
+      break;
+    }
+    if (0 == efi)
+    {
+      if (fvi[0] < 0 || fvi[1] < 0 || fvi[0] == fvi[1])
+        return false;
+      mesh_vi[0] = fvi[0];
+      mesh_vi[1] = fvi[1];
+    }
+    else
+    {
+      if (mesh_vi[0] != fvi[0])
+        return false;
+      if (mesh_vi[1] != fvi[1])
+        return false;
+    }
+  }
+
+  return (mesh_vi[0] >= 0 && mesh_vi[1]);
+}
+
 
 bool ON_MeshTopologyFace::IsTriangle() const
 {
@@ -10489,7 +10687,7 @@ bool ON_Mesh::IsValidMeshComponentIndex(
       break;
 
     case ON_COMPONENT_INDEX::mesh_face:
-      if (ci.m_type >= m_F.Count())
+      if (ci.m_index >= m_F.Count())
         rc = false;
       break;
 
@@ -10766,6 +10964,16 @@ bool ON_MeshTopology::TopFaceIsHidden( int topfi ) const
 ON_MappingTag::ON_MappingTag()
 {
   Default();
+}
+
+ON_MappingTag::ON_MappingTag(const ON_TextureMapping & mapping, const ON_Xform * xform)
+{
+  Default();
+  Set(mapping);
+  if (
+    ON_TextureMapping::TYPE::no_mapping != mapping.m_type && ON_TextureMapping::TYPE::srfp_mapping != mapping.m_type
+    && nullptr != xform && xform->IsValid() && false == xform->IsIdentity(ON_ZERO_TOLERANCE) && false == xform->IsZero())
+    m_mesh_xform = *xform;
 }
 
 void ON_MappingTag::Dump( ON_TextLog& text_log ) const
@@ -11575,43 +11783,43 @@ static int compare2dPoint(const void* a, const void* b)
   return 0;
 }
 
-static int compare3fPoint(const void* a, const void* b)
-{
-  const float* af = (const float*)a;
-  const float* bf = (const float*)b;
-  if (af[0] < bf[0])
-    return -1;
-  if (af[0] > bf[0])
-    return 1;
-  if (af[1] < bf[1])
-    return -1;
-  if (af[1] > bf[1])
-    return 1;
-  if (af[2] < bf[2])
-    return -1;
-  if (af[2] > bf[2])
-    return 1;
-  return 0;
-}
-
-static int compare3dPoint(const void* a, const void* b)
-{
-  const double* af = (const double*)a;
-  const double* bf = (const double*)b;
-  if (af[0] < bf[0])
-    return -1;
-  if (af[0] > bf[0])
-    return 1;
-  if (af[1] < bf[1])
-    return -1;
-  if (af[1] > bf[1])
-    return 1;
-  if (af[2] < bf[2])
-    return -1;
-  if (af[2] > bf[2])
-    return 1;
-  return 0;
-}
+//static int compare3fPoint(const void* a, const void* b)
+//{
+//  const float* af = (const float*)a;
+//  const float* bf = (const float*)b;
+//  if (af[0] < bf[0])
+//    return -1;
+//  if (af[0] > bf[0])
+//    return 1;
+//  if (af[1] < bf[1])
+//    return -1;
+//  if (af[1] > bf[1])
+//    return 1;
+//  if (af[2] < bf[2])
+//    return -1;
+//  if (af[2] > bf[2])
+//    return 1;
+//  return 0;
+//}
+//
+//static int compare3dPoint(const void* a, const void* b)
+//{
+//  const double* af = (const double*)a;
+//  const double* bf = (const double*)b;
+//  if (af[0] < bf[0])
+//    return -1;
+//  if (af[0] > bf[0])
+//    return 1;
+//  if (af[1] < bf[1])
+//    return -1;
+//  if (af[1] > bf[1])
+//    return 1;
+//  if (af[2] < bf[2])
+//    return -1;
+//  if (af[2] > bf[2])
+//    return 1;
+//  return 0;
+//}
 
 
 static int comparedUnsignedPair(const void* a, const void* b)
@@ -11672,9 +11880,9 @@ static unsigned int* ON_GetPointLocationIdsHelper(
   {
     // Dictionary sort the 3d points (sort on x, then y, then z).
     if (nullptr != dPoints)
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, dPoints, Vcount, point_stride*sizeof(dPoints[0]), compare3dPoint);
+      ON_Sort(ON::sort_algorithm::quick_sort, Vid, dPoints, Vcount, point_stride*sizeof(dPoints[0]), (ON_COMPAR_LPVOID_LPVOID)compare3dPoint);
     else
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, fPoints, Vcount, point_stride*sizeof(fPoints[0]), compare3fPoint);
+      ON_Sort(ON::sort_algorithm::quick_sort, Vid, fPoints, Vcount, point_stride*sizeof(fPoints[0]), (ON_COMPAR_LPVOID_LPVOID)compare3fPoint);
   }
     
   // Assign a unique temporary id to each group of coincident points.
@@ -12143,17 +12351,112 @@ bool ON_Mesh::DeleteComponents(
 }
 
 bool ON_Mesh::DeleteComponents(
-    const ON_COMPONENT_INDEX* ci_list,
-    size_t ci_count,
-    bool bIgnoreInvalidComponents,
-    bool bRemoveDegenerateFaces,
-    bool bRemoveUnusedVertices,
-    bool bRemoveEmptyNgons
-    )
+  const ON_COMPONENT_INDEX* ci_list,
+  size_t ci_count,
+  bool bIgnoreInvalidComponents,
+  bool bRemoveDegenerateFaces,
+  bool bRemoveUnusedVertices,
+  bool bRemoveEmptyNgons
+)
 {
-  if ( ci_count <= 0  && false == bRemoveUnusedVertices && false == bRemoveEmptyNgons )
+  return DeleteComponents(ci_list, ci_count,
+    bIgnoreInvalidComponents, bRemoveDegenerateFaces, bRemoveUnusedVertices, bRemoveEmptyNgons,
+    nullptr);
+}
+
+static int Internal_FaceDegenerateAreaCheck(
+  ON_MeshFace& f,
+  int vertex_count,
+  const ON_3fPoint* fV,
+  const ON_3dPoint* dV
+)
+{
+  // returns:
+  // 0: f is degenerate
+  // 1: f is not degenerate
+  // 2: f was a degenerate quad and fixed to be a good triangle
+  ON_3dPoint V[4];
+  double a[2];
+  const double atol = 1.0e-36; // a hair bigger than the smallest positive normalized float.
+  if (nullptr != dV)
+  {
+    V[0] = dV[f.vi[0]];
+    V[1] = dV[f.vi[1]];
+    V[2] = dV[f.vi[2]];
+    V[3] = dV[f.vi[3]];
+  }
+  else
+  {
+    V[0] = fV[f.vi[0]];
+    V[1] = fV[f.vi[1]];
+    V[2] = fV[f.vi[2]];
+    V[3] = fV[f.vi[3]];
+  }
+
+  if (f.IsTriangle())
+  {
+    a[0] = ON_CrossProduct(V[1]-V[0],V[2]-V[0]).Length();
+    return (a[0] > atol) ? 1 : 0;
+  }
+  
+  a[0] = V[0].DistanceTo(V[2]);
+  a[1] = V[1].DistanceTo(V[3]);
+
+  // discard L shaped quads
+  if (false == (a[0] > atol && a[1] > atol))
+    return 0;
+
+  if (a[0] <= a[1] * 1e-8)
+    return 0; // quad is L shaped at floating point precision
+  if (a[1] <= a[0] * 1e-8)
+    return 0; // quad is L shaped at floating point precision
+
+  if (a[0] <= a[1])
+  {
+    a[0] = ON_CrossProduct(V[1] - V[0], V[2] - V[0]).Length();
+    a[1] = ON_CrossProduct(V[2] - V[0], V[3] - V[0]).Length();
+    if (a[0] > atol)
+    {
+      if (a[1] > atol)
+        return 1;
+      f.vi[3] = -1;
+    }
+    else if (a[1] > atol)
+      f.vi[1] = -1;
+  }
+  else if (a[1] < a[0] )
+  {
+    a[0] = ON_CrossProduct(V[2] - V[1], V[3] - V[1]).Length();
+    a[1] = ON_CrossProduct(V[3] - V[1], V[2] - V[1]).Length();
+    if (a[0] > atol)
+    {
+      if (a[1] > atol)
+        return 1;
+      f.vi[0] = -1;
+    }
+    else if (a[1] > atol)
+      f.vi[2] = -1;
+  }
+  else
+    return 0; // nan snuck through
+
+  const bool bRepaired = (nullptr != dV) ? f.Repair(vertex_count, dV) : f.Repair(vertex_count, fV);
+  return bRepaired ? 2 : 0;
+}
+
+bool ON_Mesh::DeleteComponents(
+  const ON_COMPONENT_INDEX* ci_list,
+  size_t ci_count,
+  bool bIgnoreInvalidComponents,
+  bool bRemoveDegenerateFaces,
+  bool bRemoveUnusedVertices,
+  bool bRemoveEmptyNgons,
+  unsigned int* faceMap
+)
+{
+  if (ci_count <= 0 && false == bRemoveUnusedVertices && false == bRemoveEmptyNgons && false == bRemoveDegenerateFaces)
     return true;
-  if ( 0 == ci_list && ci_count > 0 )
+  if (0 == ci_list && ci_count > 0)
     return false;
 
   const ON_MeshTopology* top = m_top.IsValid() ? &m_top : 0;
@@ -12168,38 +12471,38 @@ bool ON_Mesh::DeleteComponents(
   unsigned int* point_id_map_fvi = (unsigned int*)point_id_map_f.vi;
 
 
-  if ( false == bIgnoreInvalidComponents )
+  if (false == bIgnoreInvalidComponents)
   {
-    for ( size_t i = 0; i < ci_count; i++ )
+    for (size_t i = 0; i < ci_count; i++)
     {
       cdex = (unsigned int)(ci_list[i].m_index);
-      switch(ci_list[i].m_type)
+      switch (ci_list[i].m_type)
       {
       case ON_COMPONENT_INDEX::mesh_vertex:
-        if ( cdex >= vertex_count0 )
+        if (cdex >= vertex_count0)
           return false;
         break;
       case ON_COMPONENT_INDEX::meshtop_vertex:
-        if ( cdex >= topvertex_count0 )
+        if (cdex >= topvertex_count0)
           return false;
         break;
       case ON_COMPONENT_INDEX::meshtop_edge:
-        if ( cdex >= topedge_count0 )
+        if (cdex >= topedge_count0)
           return false;
         break;
       case ON_COMPONENT_INDEX::mesh_face:
-        if ( cdex >= face_count0 )
+        if (cdex >= face_count0)
           return false;
         break;
       case ON_COMPONENT_INDEX::mesh_ngon:
-        if ( cdex >= ngon_count0 )
+        if (cdex >= ngon_count0)
           return false;
         break;
       }
     }
   }
 
-  if ( vertex_count0 <= 0 )
+  if (vertex_count0 <= 0)
     return (face_count0 <= 0);
 
   ON_SimpleArray<unsigned int> vertex_status_buffer(vertex_count0);
@@ -12207,10 +12510,19 @@ bool ON_Mesh::DeleteComponents(
   vertex_status_buffer.Zero();
   unsigned int* vertex_status = vertex_status_buffer.Array();
 
-  ON_SimpleArray<unsigned int> face_status_buffer(face_count0);
-  face_status_buffer.SetCount(face_count0);
-  face_status_buffer.Zero();
-  unsigned int* face_status = face_status_buffer.Array();
+  ON_SimpleArray<unsigned int> face_status_buffer;
+  unsigned int* face_status;
+  if (faceMap == nullptr)
+  {
+    face_status_buffer.SetCapacity(face_count0);
+    face_status_buffer.SetCount(face_count0);
+    face_status = face_status_buffer.Array();
+  }
+  else
+  {
+    face_status = faceMap;
+  }
+  memset(face_status, 0, m_F.UnsignedCount() * sizeof(unsigned int));
 
   bool bDoomedFaces = false;
   bool bDoomedVertices = false;
@@ -12219,13 +12531,13 @@ bool ON_Mesh::DeleteComponents(
 
   const unsigned int* fvi;
 
-  for ( size_t i = 0; i < ci_count; i++ )
+  for (size_t i = 0; i < ci_count; i++)
   {
     cdex = (unsigned int)(ci_list[i].m_index);
-    switch(ci_list[i].m_type)
+    switch (ci_list[i].m_type)
     {
     case ON_COMPONENT_INDEX::mesh_vertex:
-      if ( cdex < vertex_count0 )
+      if (cdex < vertex_count0)
       {
         bDoomedVertices = true;
         vertex_status[cdex] = ON_UNSET_UINT_INDEX;
@@ -12233,42 +12545,42 @@ bool ON_Mesh::DeleteComponents(
       break;
 
     case ON_COMPONENT_INDEX::meshtop_vertex:
-      if ( cdex < topvertex_count0 )
+      if (cdex < topvertex_count0)
       {
         const ON_MeshTopologyVertex& tv = top->m_topv[cdex];
-        for ( int tvi = 0; tvi < tv.m_v_count; tvi++ )
+        for (int tvi = 0; tvi < tv.m_v_count; tvi++)
         {
-          const unsigned int vi =(unsigned int)(tv.m_vi[tvi]); 
-          if ( vi < vertex_count0 )
+          const unsigned int vi = (unsigned int)(tv.m_vi[tvi]);
+          if (vi < vertex_count0)
           {
             bDoomedVertices = true;
             vertex_status[vi] = ON_UNSET_UINT_INDEX;
           }
-        }        
+        }
       }
       break;
 
     case ON_COMPONENT_INDEX::meshtop_edge:
-      if ( cdex < topedge_count0 )
+      if (cdex < topedge_count0)
       {
         const ON_MeshTopologyEdge& te = top->m_tope[cdex];
-        if ( 0 != te.m_topfi )
+        if (0 != te.m_topfi)
         {
-          for ( int j = 0; j < te.m_topf_count; j++ )
+          for (int j = 0; j < te.m_topf_count; j++)
           {
-            fi =(unsigned int)(te.m_topfi[j]);
-            if ( fi < face_count0 )
+            fi = (unsigned int)(te.m_topfi[j]);
+            if (fi < face_count0)
             {
               bDoomedFaces = true;
               face_status[fi] = ON_UNSET_UINT_INDEX;
             }
-          }        
+          }
         }
       }
       break;
 
     case ON_COMPONENT_INDEX::mesh_face:
-      if ( cdex < face_count0 )
+      if (cdex < face_count0)
       {
         bDoomedFaces = true;
         face_status[cdex] = ON_UNSET_UINT_INDEX;
@@ -12276,25 +12588,25 @@ bool ON_Mesh::DeleteComponents(
       break;
 
     case ON_COMPONENT_INDEX::mesh_ngon:
-      if ( cdex < ngon_count0 )
+      if (cdex < ngon_count0)
       {
         const ON_MeshNgon* ngon = Ngon(cdex);
-        if ( 0 != ngon )
+        if (0 != ngon)
         {
           const int ngon_index = cdex;
           bDoomedNgons = true;
           m_NgonMap.SetCount(0);
-          if ( 0 != ngon->m_fi )
+          if (0 != ngon->m_fi)
           {
-            for ( unsigned int j = 0; j < ngon->m_Fcount; j++ )
+            for (unsigned int j = 0; j < ngon->m_Fcount; j++)
             {
               fi = ngon->m_fi[j];
-              if ( fi < face_count0 )
+              if (fi < face_count0)
               {
                 bDoomedFaces = true;
                 face_status[fi] = ON_UNSET_UINT_INDEX;
               }
-            }        
+            }
           }
           RemoveNgon(ngon_index);
         }
@@ -12308,12 +12620,25 @@ bool ON_Mesh::DeleteComponents(
   const unsigned int* point_id_map = nullptr;
   if (bRemoveDegenerateFaces)
   {
+    // point_id_map[vi0] == point_id_map[vi1] if and only if m_V[vi0] == m_V[vi1].
+    const unsigned int point_count = m_V.UnsignedCount();
     ON_3fPoint* fV = m_V.Array();
     ON_3dPoint* dV = HasDoublePrecisionVertices() ? DoublePrecisionVertices().Array() : 0;
-    point_id_count = GetPointMap(m_V.UnsignedCount(), fV, dV, point_id_map_buffer);
+    if (nullptr != dV)
+    {
+      ON_3dPoint* p1 = dV + point_count;
+      const ON_3dPoint badp(ON_DBL_MAX, ON_DBL_MAX, ON_DBL_MAX);
+      for (ON_3dPoint* p = dV; p < p1; ++p)
+      {
+        if (p->IsValid())
+          continue;
+        *p = badp; // so bad points will sort las
+      }
+    }
+    point_id_count = GetRemoveDegenerateFacesPointMap(point_count, fV, dV, point_id_map_buffer);
     if (point_id_count > 0
       && point_id_count <= point_id_map_buffer.UnsignedCount()
-      && m_V.UnsignedCount() == point_id_map_buffer.UnsignedCount()
+      && point_count == point_id_map_buffer.UnsignedCount()
       )
     {
       point_id_map = point_id_map_buffer.Array();
@@ -12325,103 +12650,89 @@ bool ON_Mesh::DeleteComponents(
   }
 
   unsigned int face_count1 = 0;
-  for ( fi = 0; fi < face_count0; fi++ )
   {
-    if ( 0 == face_status[fi] )
+    const ON_3fPoint* fV = m_V.Array();
+    const ON_3dPoint* dV = HasDoublePrecisionVertices() ? DoublePrecisionVertices().Array() : 0;
+    for (fi = 0; fi < face_count0; fi++)
     {
-      fvi = (const unsigned int*)m_F[fi].vi;
-      for ( unsigned int j = 0; j < 4; j++ )
+      if (0 != face_status[fi])
+        continue; // this face status is already known
+      
+      ON_MeshFace& f0 = m_F[fi];
+      fvi = (const unsigned int*)f0.vi;
+      for (unsigned int j = 0; j < 4; j++)
       {
-        if ( fvi[j] >= vertex_count0 || ON_UNSET_UINT_INDEX == vertex_status[fvi[j]] )
+        if (fvi[j] >= vertex_count0 || ON_UNSET_UINT_INDEX == vertex_status[fvi[j]])
         {
           bDoomedFaces = true;
           face_status[fi] = ON_UNSET_UINT_INDEX;
           break;
         }
       }
-      if ( 0 == face_status[fi] )
+      if (ON_UNSET_UINT_INDEX == face_status[fi])
+        continue; // f0 has invalid vertex indices
+        
+      if (point_id_count > 0)
       {
-        if (point_id_count > 0)
+        // if point_id_count > 0, then bRemoveDegenerateFaces = true.
+        // set point_id_map_f.vi[] to values of "topological indices"
+        point_id_map_fvi[0] = point_id_map[f0.vi[0]];
+        point_id_map_fvi[1] = point_id_map[f0.vi[1]];
+        point_id_map_fvi[2] = point_id_map[f0.vi[2]];
+        point_id_map_fvi[3] = point_id_map[f0.vi[3]];
+        if (false == point_id_map_f.IsValid(point_id_count))
         {
-          ON_MeshFace& f0 = m_F[fi];
-          // set f.vi[] to values of topological indices
+          // point_id_map_f invalid means we have a degenerate quad or worse.
+
+          if (f0.IsQuad() && (point_id_map_f.vi[0] == point_id_map_f.vi[2] || point_id_map_f.vi[1] == point_id_map_f.vi[3]))
           {
-            unsigned int f0vi = (unsigned int)f0.vi[0];
-            point_id_map_fvi[0] = (f0vi >= vertex_count0) ? ON_UNSET_UINT_INDEX : point_id_map[f0vi];
-
-            f0vi = (unsigned int)f0.vi[1];
-            point_id_map_fvi[1] = (f0vi >= vertex_count0) ? ON_UNSET_UINT_INDEX : point_id_map[f0vi];
-
-            f0vi = (unsigned int)f0.vi[2];
-            point_id_map_fvi[2] = (f0vi >= vertex_count0) ? ON_UNSET_UINT_INDEX : point_id_map[f0vi];
-
-            f0vi = (unsigned int)f0.vi[3];
-            point_id_map_fvi[3] = (f0vi >= vertex_count0) ? ON_UNSET_UINT_INDEX : point_id_map[f0vi];
+            // "L" quads just get deleted.
+            bDoomedFaces = true;
+            face_status[fi] = ON_UNSET_UINT_INDEX;
+            continue;
           }
 
-          if (!point_id_map_f.IsValid(point_id_count))
+          // the corners of face f0 are not perfect. We either have to convert a quad to a triangle
+          // or we have a degenerate face.
+          if ((nullptr != dV) ? f0.Repair(vertex_count0, dV) : f0.Repair(vertex_count0, fV))
           {
-            // determine if a degenerate quad can be made into a valid triangle.
-            if (point_id_map_fvi[0] == point_id_map_fvi[1] || point_id_map_fvi[0] >= point_id_count)
-            {
-              f0.vi[0] = f0.vi[1];
-              f0.vi[1] = f0.vi[2];
-              f0.vi[2] = f0.vi[3];
-              point_id_map_fvi[0] = point_id_map_fvi[1];
-              point_id_map_fvi[1] = point_id_map_fvi[2];
-              point_id_map_fvi[2] = point_id_map_fvi[3];
-            }
-
-            if (point_id_map_fvi[1] == point_id_map_fvi[2] || point_id_map_fvi[1] >= point_id_count)
-            {
-              f0.vi[1] = f0.vi[2];
-              f0.vi[2] = f0.vi[3];
-              point_id_map_fvi[1] = point_id_map_fvi[2];
-              point_id_map_fvi[2] = point_id_map_fvi[3];
-            }
-
-            if (point_id_map_fvi[2] >= point_id_count)
-            {
-              f0.vi[2] = f0.vi[3];
-              point_id_map_fvi[2] = point_id_map_fvi[3];
-            }
-
-            if (point_id_map_fvi[3] >= point_id_count)
-            {
-              f0.vi[3] = f0.vi[2];
-              point_id_map_fvi[3] = point_id_map_fvi[2];
-            }
-            else if (point_id_map_fvi[0] == point_id_map_fvi[3] && point_id_map_fvi[2] != point_id_map_fvi[3])
-            {
-              f0.vi[0] = f0.vi[1];
-              f0.vi[1] = f0.vi[2];
-              f0.vi[2] = f0.vi[3];
-              point_id_map_fvi[0] = point_id_map_fvi[1];
-              point_id_map_fvi[1] = point_id_map_fvi[2];
-              point_id_map_fvi[2] = point_id_map_fvi[3];
-            }
-
-            if (!f0.IsValid(vertex_count0) || !point_id_map_f.IsValid(point_id_count))
-            {
-              // face cannot be repaired by juggling vertex indices
-              bDoomedFaces = true;
-              face_status[fi] = ON_UNSET_UINT_INDEX;
-              continue;
-            }
-            else
-            {
-              bModifiedFaces = true;
-            }
-
+            // f0 what an invalid quad fixed to be a valid triangle
+            bModifiedFaces = true;
+          }
+          else
+          {
+            // face cannot be repaired by juggling vertex indices
+            bDoomedFaces = true;
+            face_status[fi] = ON_UNSET_UINT_INDEX;
+            continue;
           }
         }
 
-
-        face_status[fi] = face_count1++;
-        for ( unsigned int j = 0; j < 4; j++ )
+        switch (Internal_FaceDegenerateAreaCheck(f0, (int)vertex_count0, fV, dV))
         {
-          vertex_status[fvi[j]] = 1; // vertex is referenced by a face
+        case 0:
+          bDoomedFaces = true;
+          face_status[fi] = ON_UNSET_UINT_INDEX;
+          break;
+
+        case 1:
+          // f0 is totally valid
+          break;
+
+        case 2:
+          // f0 what an invalid quad fixed to be a valid triangle
+          bModifiedFaces = true;
+          break;
         }
+
+        if (ON_UNSET_UINT_INDEX == face_status[fi])
+          continue;
+      }
+
+      face_status[fi] = face_count1++;
+      for (unsigned int j = 0; j < 4; j++)
+      {
+        vertex_status[fvi[j]] = 1; // vertex is referenced by a face
       }
     }
   }
@@ -12448,7 +12759,7 @@ bool ON_Mesh::DeleteComponents(
     }
   }
 
-  if ( 0 == vertex_count1 && 0 == face_count1 )
+  if ( 0 == vertex_count1 || 0 == face_count1 )
   {
     Destroy();
     return true;
@@ -12634,6 +12945,7 @@ bool ON_Mesh::DeleteComponents(
     m_invalid_count = 0;
     m_quad_count = 0;
     m_triangle_count = 0;
+    SetClosed(-1);
   }
 
   if ( bRemoveEmptyNgons )
@@ -13719,5 +14031,1162 @@ bool ON_MeshCache::Transform(
       rc = false;
   }
   return rc;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_MeshRef
+//
+
+ON_MeshRef::ON_MeshRef() ON_NOEXCEPT
+{}
+
+ON_MeshRef::~ON_MeshRef()
+{
+  m_mesh_sp.reset();
+}
+
+ON_MeshRef::ON_MeshRef(const ON_MeshRef& src) ON_NOEXCEPT
+  : m_mesh_sp(src.m_mesh_sp)
+{}
+
+ON_MeshRef& ON_MeshRef::operator=(const ON_MeshRef& src)
+{
+  if ( this != &src )
+    m_mesh_sp = src.m_mesh_sp;
+  return *this;
+}
+
+#if defined(ON_HAS_RVALUEREF)
+// rvalue copy constructor
+ON_MeshRef::ON_MeshRef( ON_MeshRef&& src) ON_NOEXCEPT
+  : m_mesh_sp(std::move(src.m_mesh_sp))
+{}
+
+// rvalue assignment operator
+ON_MeshRef& ON_MeshRef::operator=(ON_MeshRef&& src)
+{
+  m_mesh_sp.reset();
+  m_mesh_sp = std::move(src.m_mesh_sp);
+  return *this;
+}
+#endif
+
+const class ON_Mesh& ON_MeshRef::Mesh() const
+{
+  const ON_Mesh* mesh = m_mesh_sp.get();
+  if ( nullptr == mesh )
+    mesh = &ON_Mesh::Empty;
+  return *mesh;
+}
+
+unsigned int ON_MeshRef::ReferenceCount() const
+{
+  return (unsigned int)m_mesh_sp.use_count();
+}
+
+void ON_MeshRef::Clear()
+{
+  m_mesh_sp.reset();
+}
+
+class ON_Mesh& ON_MeshRef::NewMesh()
+{
+  ON_Mesh* mesh = new ON_Mesh();
+  ON_Mesh* managed_mesh = SetMeshForExperts(mesh);
+  return *managed_mesh;
+}
+
+class ON_Mesh& ON_MeshRef::CopyMesh(
+  const ON_MeshRef& src
+  )
+{
+  return CopyMesh(src.Mesh());
+}
+
+class ON_Mesh& ON_MeshRef::CopyMesh(
+  const ON_Mesh& src
+  )
+{
+  ON_Mesh* mesh_copy = new ON_Mesh(src);
+  ON_Mesh* managed_mesh = SetMeshForExperts(mesh_copy);
+  return *managed_mesh;
+}
+
+class ON_Mesh& ON_MeshRef::UniqueMesh()
+{
+  const ON_Mesh& mesh = Mesh();
+  if (m_mesh_sp.use_count() > 1 )
+    return CopyMesh(mesh);
+  return const_cast< ON_Mesh& >(mesh);
+}
+
+class ON_Mesh* ON_MeshRef::SetMeshForExperts(
+  class ON_Mesh*& mesh
+  )
+{
+  Clear();
+  ON_Mesh* managed_mesh = ( mesh == &ON_Mesh::Empty ) ? nullptr : mesh;
+  mesh = nullptr;
+  if (nullptr != managed_mesh )
+    m_mesh_sp = std::shared_ptr<class ON_Mesh>(managed_mesh);
+  return managed_mesh;
+}
+
+
+
+unsigned int ON_Mesh::DissolveOrDelete(
+  const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+)
+{
+  // Dissolve edges and vertices, delete faces
+  const unsigned int bailout_rc = ON_UNSET_UINT_INDEX;
+
+  const int ci_list_count = ci_list.UnsignedCount();
+  if (ci_list_count <= 0)
+    return bailout_rc;
+
+
+  const int mesh0_vertex_count = this->VertexCount();
+  if (mesh0_vertex_count < 3)
+    return bailout_rc;
+  const int mesh0_face_count = this->FaceCount();
+  if (mesh0_face_count < 1)
+    return bailout_rc;
+
+  const ON_MeshTopology& top0 = Topology();
+  const int top0_vertex_count = top0.m_topv.Count();
+
+
+  ON_SimpleArray<ON_COMPONENT_INDEX> faces(ci_list_count);
+  ON_SimpleArray<ON_COMPONENT_INDEX> edges_and_vertices(ci_list_count);
+  ON_SimpleArray<ON_2dex> edges(ci_list_count);
+
+  for (int i = 0; i < ci_list_count; ++i)
+  {
+    ON_COMPONENT_INDEX ci = ci_list[i];
+    if (ci.m_index < 0)
+      continue;
+    switch (ci.m_type)
+    {
+    case ON_COMPONENT_INDEX::TYPE::mesh_vertex:
+      if ( ci.m_index < mesh0_vertex_count)
+        edges_and_vertices.Append(ci);
+      break;
+
+    case ON_COMPONENT_INDEX::TYPE::meshtop_vertex:
+      // must save input top vertex as an ordinary vertex index
+      // because input topology indices will be changed if faces are deleted.
+      if (ci.m_index < top0_vertex_count)
+      {
+        const ON_MeshTopologyVertex& v = top0.m_topv[ci.m_index];
+        if (v.m_v_count > 0 && nullptr != v.m_vi)
+        {
+          ON_COMPONENT_INDEX vci(ON_COMPONENT_INDEX::TYPE::mesh_vertex, v.m_vi[0]);
+          if ( vci.m_index >= 0 && vci.m_index < mesh0_vertex_count)
+            edges_and_vertices.Append(vci);
+        }
+      }
+      break;
+
+    case ON_COMPONENT_INDEX::TYPE::meshtop_edge:
+      // must save input edge as a pair of ordinary vertex indices
+      // because input topology indices will be changed if faces are deleted.
+      if ( ci.m_index < top0.m_tope.Count())
+      {
+        const ON_MeshTopologyEdge& e = top0.m_tope[ci.m_index];
+        ON_2dex evdex(-1, -1);
+        int* evi = &evdex.i;
+        for (int j = 0; j < 2; j++)
+        {
+          if (e.m_topvi[j] < 0 || e.m_topvi[j] >= top0_vertex_count)
+            break;
+          const ON_MeshTopologyVertex& v = top0.m_topv[e.m_topvi[j]];
+          if (v.m_v_count > 0 && nullptr != v.m_vi)
+            evi[j] = v.m_vi[0];
+        }
+        if (evdex.i > evdex.j)
+        {
+          const int x = evdex.i;
+          evdex.i = evdex.j;
+          evdex.j = x;
+        }
+        if (0 <= evdex.i && evdex.i < evdex.j && evdex.j < mesh0_vertex_count)
+          edges.Append(evdex);
+      }
+      break;
+
+    case ON_COMPONENT_INDEX::TYPE::mesh_face:
+      faces.Append(ci);
+      break;
+
+    case ON_COMPONENT_INDEX::TYPE::mesh_ngon:
+      {
+        // must convert ngon to a bucnh of face indices
+        const ON_MeshNgon* ngon = this->Ngon(ci.m_index);
+        if (nullptr == ngon || nullptr == ngon->m_fi)
+          break;
+        ON_COMPONENT_INDEX fci(ON_COMPONENT_INDEX::TYPE::mesh_face, -1);
+        for (unsigned nfi = 0; nfi < ngon->m_Fcount; ++nfi)
+        {
+          fci.m_index = ngon->m_fi[nfi];
+          if ( fci.m_index < mesh0_face_count)
+            faces.Append(fci);
+        }
+      }
+      break;
+    };
+  }
+
+
+  // delete the faces in a way that does not change ordinary vertex indices
+  DeleteComponents(
+    faces.Array(),
+    faces.UnsignedCount(),
+    true, // bIgnoreInvalidComponents,
+    true, // bRemoveDegenerateFaces,
+    false, // bRemoveUnusedVertices CRITICAL to preserve vertex index values
+    true, // bRemoveEmptyNgons,
+    nullptr // unsigned int* faceMap
+  );
+
+  if (FaceCount() <= 0)
+  {
+    Destroy();
+    return bailout_rc;
+  }
+
+  if (mesh0_vertex_count != VertexCount())
+    return bailout_rc; // vertex array was modified
+
+  if (edges.Count() > 0 || edges_and_vertices.Count() > 0)
+  {
+    // convert ordinary vertex indices into top1 indices
+    const ON_MeshTopology& top1 = Topology();
+    const int top1_vertex_count = top1.m_topv.Count();
+    const int top1_edge_count = top1.m_tope.Count();
+    if (mesh0_vertex_count == top1.m_topv_map.Count())
+    {
+      // get a clean list of top1.m_topv[] indices
+      int vertex_count = 0;
+      for (int i = 0; i < edges_and_vertices.Count(); ++i)
+      {
+        ON_COMPONENT_INDEX ci = edges_and_vertices[i];
+        ci.m_type = ON_COMPONENT_INDEX::TYPE::meshtop_vertex;
+        ci.m_index = top1.m_topv_map[ci.m_index];
+        if (ci.m_index >= 0 && ci.m_index < top1_vertex_count)
+          edges_and_vertices[vertex_count++] = ci;
+      }
+      edges_and_vertices.SetCount(vertex_count);
+      edges_and_vertices.QuickSortAndRemoveDuplicates(ON_COMPONENT_INDEX::Compare);
+      vertex_count = edges_and_vertices.Count();
+
+      // now add edges to edges_and_vertices[]
+      ON_COMPONENT_INDEX eci(ON_COMPONENT_INDEX::TYPE::meshtop_edge, -1);
+      for (int i = 0; i < edges.Count(); i++)
+      {
+        ON_2dex evi = edges[i];
+        const int topv[2] = { top1.m_topv_map[evi.i],top1.m_topv_map[evi.j] };
+        if (
+          topv[0] != topv[1]
+          && topv[0] >= 0 && topv[0] < top1_vertex_count
+          && topv[1] >= 0 && topv[1] < top1_vertex_count
+          )
+        {
+          const ON_MeshTopologyVertex& v0 = top1.m_topv[topv[0]];
+          if ( v0.m_tope_count > 0 && nullptr != v0.m_topei )
+          {
+            // find the edge connecting the two vertices
+            for (int k = 0; k < v0.m_tope_count; ++k)
+            {
+              eci.m_index = v0.m_topei[k];
+              if (eci.m_index >= 0 && eci.m_index < top1_edge_count)
+              {
+                const ON_MeshTopologyEdge& e = top1.m_tope[eci.m_index];
+                if (
+                  (e.m_topvi[0] == topv[0] && e.m_topvi[1] == topv[1])
+                  || (e.m_topvi[0] == topv[1] && e.m_topvi[1] == topv[0]))
+                {
+                  edges_and_vertices.Append(eci);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // dissolve the edges and vertices by merging faces
+  unsigned int rc 
+    = (edges_and_vertices.Count() > 0)
+    ? MergeFaceSets(edges_and_vertices)
+    : bailout_rc;
+
+  // Finally, we can remove unused vertices.
+  DeleteComponents(
+    nullptr,
+    0,
+    true, // bIgnoreInvalidComponents,
+    true, // bRemoveDegenerateFaces,
+    true, // bRemoveUnusedVertices,
+    true, // bRemoveEmptyNgons,
+    nullptr // unsigned int* faceMap
+  );
+
+  return rc;
+}
+
+static void Internal_WeldNgonCandiate(
+  const ON_Mesh& mesh,
+  const ON_MeshTopology& top,
+  unsigned char* fmarks,
+  const unsigned char xmark,
+  const ON_SimpleArray<unsigned>& ngon_fi
+)
+{
+  const unsigned ngon_face_count = ngon_fi.UnsignedCount();
+  if (ngon_face_count < 2)
+    return;
+
+  // Assumption fmarks[] has no xmark.
+  // Set xmark for all faces referenced in ngon_fi[] and
+  // use that mark to find interior vertices that need
+  // to be welded before the ngon can be created.
+  for (unsigned nfi = 0; nfi < ngon_face_count; ++nfi)
+    fmarks[ngon_fi[nfi]] |= xmark;
+
+  for (unsigned nfi = 0; nfi < ngon_face_count; ++nfi)
+  {
+    const int fi = ngon_fi[nfi];
+    const ON_MeshTopologyFace& f = top.m_topf[fi];
+    const int fv_count = f.IsTriangle() ? 3 : 4;
+    int* fvi = const_cast<int*>( mesh.m_F[fi].vi );
+    for (int fei = 0; fei < fv_count; ++fei)
+    {
+      const int evi = (0 == f.m_reve[fei]) ? 1 : 0;
+      const ON_MeshTopologyEdge& fe = top.m_tope[f.m_topei[fei]];
+      const int topvi = fe.m_topvi[evi];
+      const ON_MeshTopologyVertex& v = top.m_topv[topvi];
+      if (v.m_v_count <= 1 || nullptr == v.m_vi)
+        continue;
+      int mesh_vi[2] = { fvi[fei],fvi[fei] };
+      for (int pass = 0; pass < 2; ++pass)
+      {
+        for (int vei = 0; vei < v.m_v_count; ++vei)
+        {
+          const ON_MeshTopologyEdge& ve = top.m_tope[f.m_topei[fei]];
+          for (int efi = 0; efi < ve.m_topf_count; ++efi)
+          {
+            const int f1i = ve.m_topfi[efi];
+            if (fi == f1i)
+              continue;
+            if (0 == (fmarks[f1i] |= xmark))
+              continue; // this face is not in the ngon
+            const ON_MeshTopologyFace& f1 = top.m_topf[f1i];
+            int* f1vi = const_cast<int*>( mesh.m_F[f1i].vi );
+            const int f1v_count = f1.IsTriangle() ? 3 : 4;
+            for (int f1ei = 0; f1ei < f1v_count; ++f1ei)
+            {
+              const int k = (0 == f1.m_reve[f1ei]) ? 1 : 0;
+              const ON_MeshTopologyEdge& f1e = top.m_tope[f1.m_topei[f1ei]];
+              if (topvi == f1e.m_topvi[k])
+              {
+                if (0 == pass)
+                {
+                  if (f1vi[f1ei] < mesh_vi[0])
+                    mesh_vi[0] = f1vi[f1ei];
+                  else if (f1vi[f1ei] > mesh_vi[1])
+                    mesh_vi[1] = f1vi[f1ei];
+                }
+                else
+                {
+                  // weld all faces in ngon to use vertex mesh_vi[0]
+                  if (2 == f1ei && f1vi[2] == f1vi[3])
+                  {
+                    f1vi[2] = mesh_vi[0];
+                    f1vi[3] = mesh_vi[0];
+                  }
+                  else
+                  {
+                    f1vi[f1ei] = mesh_vi[0];
+                  }
+                }
+              }
+            }
+            if (3 == f1v_count)
+              f1vi[3] = f1vi[2];
+          }
+        }
+        if (0 == pass)
+        {
+          if (mesh_vi[0] == mesh_vi[1])
+            break;
+        }
+        else
+        {
+          // weld all faces in ngon to use vertex mesh_vi[0]
+          if (2 == fei && fvi[2] == fvi[3])
+          {
+            fvi[2] = mesh_vi[0];
+            fvi[3] = mesh_vi[0];
+          }
+          else
+          {
+            fvi[fei] = mesh_vi[0];
+          }
+        }
+      }
+    }
+  }
+
+  // clear the xmarks set above
+  const unsigned char mask = ~xmark;
+  for (unsigned nfi = 0; nfi < ngon_face_count; ++nfi)
+    fmarks[ngon_fi[nfi]] &= mask;
+}
+
+static void Internal_GrowNgon(
+  const ON_MeshTopology& top,
+  unsigned char* emarks,
+  unsigned char* fmarks,
+  unsigned char etest_mask,
+  unsigned char etest_result,
+  unsigned char ftest_mask,
+  unsigned char ftest_result,
+  const unsigned char merged_mark,
+  ON_SimpleArray<unsigned>& ngon_fi
+)
+{
+  if (ngon_fi.Count() <= 0)
+    return;
+
+  const int face_count = top.m_topf.Count();
+
+  for (int nfi = 0; nfi < ngon_fi.Count(); ++nfi)
+    fmarks[ngon_fi[nfi]] |= merged_mark;
+
+  etest_mask |= merged_mark;
+  etest_result &= ~merged_mark;
+
+  ftest_mask |= merged_mark;
+  ftest_result &= ~merged_mark;
+
+  for (int nfi = 0; nfi < ngon_fi.Count(); ++nfi)
+  {
+    const int f0i = ngon_fi[nfi];
+    const ON_MeshTopologyFace& f0 = top.m_topf[f0i];
+    const int f0_ecount = f0.IsTriangle() ? 3 : 4;
+    for (int fei = 0; fei < f0_ecount; ++fei)
+    {
+      const int ei = f0.m_topei[fei];
+      if (ei < 0 || ei > top.m_tope.Count())
+        continue;
+      if (etest_result != (emarks[ei] & etest_mask))
+        continue;
+      emarks[ei] |= merged_mark;
+      const ON_MeshTopologyEdge& e = top.m_tope[ei];
+      if (2 != e.m_topf_count || nullptr == e.m_topfi)
+        continue;
+      const int efi = (f0i != e.m_topfi[0]) ? 0 : 1;
+      const int f1i = e.m_topfi[efi];
+      if (f1i < 0 || f1i >= face_count)
+        continue;
+      if (ftest_result != (fmarks[f1i] & ftest_mask))
+        continue;
+      fmarks[f1i] |= merged_mark;
+      ngon_fi.Append(f1i);
+    }
+  }
+}
+
+static void Internal_AddMarkToFaceAndEdgesAndVertices(
+  const ON_Mesh& mesh,
+  const ON_MeshTopology& top,
+  const unsigned int* ngon0_map,
+  int face_index,
+  const unsigned char mark,
+  unsigned char* fmarks,
+  unsigned char* emarks,
+  unsigned char* vmarks
+)
+{
+  if (0 == mark || face_index < 0 || face_index > top.m_topf.Count())
+    return;
+  if (nullptr == fmarks && nullptr == emarks && nullptr == vmarks)
+    return;
+
+  unsigned fi_count = 1;
+  const int* fi_list = &face_index;
+  if (nullptr != ngon0_map)
+  {
+    const unsigned ni = ngon0_map[face_index];
+    if (ni < mesh.NgonUnsignedCount())
+    {
+      const ON_MeshNgon* ngon = mesh.Ngon(ni);
+      if (ngon->m_Fcount > 1 && nullptr != ngon->m_fi)
+      {
+        for (unsigned nfi = 0; nfi < ngon->m_Fcount; ++nfi)
+        {
+          if (face_index == (int)(ngon->m_fi[nfi]))
+          {
+            fi_count = ngon->m_Fcount;
+            fi_list = (const int*)ngon->m_fi;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  for (unsigned nfi = 0; nfi < fi_count; ++nfi)
+  {
+    int fi = fi_list[nfi];
+    if (fi < 0 || fi >= top.m_topf.Count())
+      continue;
+    if (nullptr != fmarks)
+      fmarks[fi] |= mark;
+    if (nullptr != emarks || nullptr != vmarks)
+    {
+      const ON_MeshTopologyFace& f = top.m_topf[fi];
+      //const int fecount = f.IsTriangle() ? 3 : 4;
+      const int tope_count = top.m_tope.Count();
+      const int topv_count = top.m_topv.Count();
+      for (int fei = 0; fei < 4; fei++)
+      {
+        const int ei = f.m_topei[fei];
+        if (ei < 0 || ei >= tope_count)
+          continue;
+        if (nullptr != emarks)
+          emarks[ei] |= mark;
+        if (nullptr != vmarks)
+        {
+          const ON_MeshTopologyEdge& e = top.m_tope[ei];
+          for (int evi = 0; evi < 2; ++evi)
+          {
+            const int topvi = e.m_topvi[evi];
+            if (topvi < 0 || topvi >= topv_count)
+              continue;
+            vmarks[topvi] |= mark;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+static void Internal_AddMarkToNgonInteriorEdges(
+  const ON_Mesh& mesh,
+  const ON_MeshTopology& top,
+  const unsigned int* ngon0_map,
+  int face_index,
+  const unsigned char interior_edge_mark,
+  unsigned char* emarks
+)
+{
+  if (nullptr == ngon0_map)
+    return;
+  const int face_count = top.m_topf.Count();
+  const int edge_count = top.m_tope.Count();
+  if (face_index < 0 || face_index >= face_count)
+    return;
+  const unsigned ni = ngon0_map[face_index];
+  if (ni >= mesh.NgonUnsignedCount())
+    return;
+  const ON_MeshNgon* ngon = mesh.Ngon(ni);
+  if (nullptr == ngon || ngon->m_Fcount < 2 || nullptr == ngon->m_fi)
+    return;
+
+  for (unsigned nfi = 0; nfi < ngon->m_Fcount; ++nfi)
+  {
+    const int fi = (int)ngon->m_fi[nfi];
+    if (fi < 0 || fi >= face_count)
+      continue;
+    const ON_MeshTopologyFace& f = top.m_topf[fi];
+    const int f_ecount = f.IsTriangle() ? 3 : 4;
+    for (int fei = 0; fei < f_ecount; ++fei)
+    {
+      const int ei = f.m_topei[fei];
+      if (ei < 0 || ei >= edge_count)
+        continue;
+      const ON_MeshTopologyEdge& e = top.m_tope[ei];
+      if (2 != e.m_topf_count || nullptr == e.m_topfi)
+        continue;
+      const int f1i = e.m_topfi[(fi != e.m_topfi[0]) ? 0 : 1];
+      if (ni == ngon0_map[f1i])
+        emarks[ei] |= interior_edge_mark;
+    }
+  }
+}
+
+static void Internal_WeldAndAddNgon(
+  ON_Mesh& mesh,
+  const ON_MeshTopology& top,
+  const unsigned char xmark,
+  unsigned char* fmarks,
+   ON_SimpleArray<unsigned>& ngon_fi
+)
+{
+  if (ngon_fi.Count() < 2)
+    return;
+
+  // ngons must be welded and MergeFaces supports making an ngon across an unwelded edge.
+  Internal_WeldNgonCandiate(mesh,top,fmarks,xmark,ngon_fi);
+
+  if (
+    2 == ngon_fi.Count() 
+    &&ngon_fi[0] != ngon_fi[1]
+    && mesh.m_F[ngon_fi[0]].IsTriangle() 
+    && mesh.m_F[ngon_fi[1]].IsTriangle()
+    )
+  {
+    // make a single quad face
+    ON_MeshFace f[2] = {mesh.m_F[ngon_fi[0]],mesh.m_F[ngon_fi[1]]};
+    for (int f0ei = 0; f0ei < 3; ++f0ei)
+    {
+      const int f0vi[2] = { f[0].vi[f0ei],f[0].vi[(f0ei + 1) % 3] };
+      for (int f1ei = 0; f1ei < 3; ++f1ei)
+      {
+        const int f1vi[2] = { f[1].vi[f1ei],f[1].vi[(f1ei + 1) % 3] };
+        if (f0vi[0] != f1vi[1] || f0vi[1] != f1vi[0])
+          continue;
+        // merge triangles into a quad
+        ON_MeshFace q;
+        q.vi[f0ei] = f[0].vi[f0ei];
+        q.vi[(f0ei+1)%4] = f[1].vi[(f1ei+2)%3];
+        q.vi[(f0ei+2)%4] = f[0].vi[(f0ei+1)%3];
+        q.vi[(f0ei+3)%4] = f[0].vi[(f0ei+2)%3];
+        if (q.IsQuad() && q.IsValid(mesh.m_V.Count()))
+        {
+          mesh.m_F[ngon_fi[0]] = q;
+          q.vi[0] = -1;
+          q.vi[1] = -1;
+          q.vi[2] = -1;
+          q.vi[3] = -1;
+          mesh.m_F[ngon_fi[1]] = q;
+          ngon_fi.SetCount(1);
+          mesh.AddNgon(1, ngon_fi.Array());
+          return;
+        }
+      }
+    }
+  }
+
+  mesh.AddNgon(ngon_fi.UnsignedCount(), ngon_fi.Array());
+}
+
+unsigned int ON_Mesh::MergeFaceSets(
+  const ON_SimpleArray<ON_COMPONENT_INDEX>& ci_list
+)
+{
+  const unsigned int bailout_rc = ON_UNSET_UINT_INDEX;
+
+  const int ci_list_count = ci_list.UnsignedCount();
+  if (ci_list_count <= 0)
+    return bailout_rc;
+
+  const int vertex_count = VertexCount();
+  const int face_count = FaceCount();
+  if (face_count < 1 || vertex_count < 3)
+    return bailout_rc;
+
+
+  const ON_MeshTopology& top = Topology();
+  if (top.m_topf.Count() != face_count)
+    return bailout_rc;
+
+  const int topv_count = top.m_topv.Count();
+  const int tope_count = top.m_tope.Count();
+
+  if (topv_count < 3 || topv_count > vertex_count || tope_count < 3)
+    return bailout_rc;
+
+  ON_SimpleArray<unsigned char> vmarks_buffer(topv_count);
+  vmarks_buffer.SetCount(topv_count);
+  vmarks_buffer.Zero();
+  unsigned char* vmarks = vmarks_buffer.Array();
+
+  ON_SimpleArray<unsigned char> emarks_buffer(tope_count);
+  emarks_buffer.SetCount(tope_count);
+  emarks_buffer.Zero();
+  unsigned char* emarks = emarks_buffer.Array();
+
+  ON_SimpleArray<unsigned char> fmarks_buffer(face_count);
+  fmarks_buffer.SetCount(face_count);
+  fmarks_buffer.Zero();
+  unsigned char* fmarks = fmarks_buffer.Array();
+
+
+  const unsigned char in_ci_list_mark = 1;
+  const unsigned char vmark = 2;
+  const unsigned char emark = 4;
+  const unsigned char fmark = 8;
+  const unsigned char xmark = 0x10;
+  const unsigned char v_list_mark = vmark | in_ci_list_mark;
+  const unsigned char e_list_mark = emark | in_ci_list_mark;
+  const unsigned char f_list_mark = fmark | in_ci_list_mark;
+  const unsigned char v_x_mark = vmark | xmark;
+  const unsigned char e_x_mark = emark | xmark;
+  //const unsigned char f_x_mark = fmark | xmark;
+  const unsigned char merged_mark = 0x80; // face has been merged
+
+  ON_MeshNgonBuffer ngon_buffer;
+
+  unsigned ngon0_count = this->NgonCount();
+  const unsigned int* ngon0_map = ( ngon0_count > 0) ? this->NgonMap(true) : nullptr;
+
+  // Mark faces, edges, and vertices referenced in ci_list[]
+  // by setting bits in fmarks[], emarks[], and vmarks[]
+  for (int i = 0; i < ci_list_count; ++i)
+  {
+    ON_COMPONENT_INDEX ci = ci_list[i];
+    if (ci.m_index < 0)
+      continue;
+    switch (ci.m_type)
+    {
+    case ON_COMPONENT_INDEX::mesh_vertex:
+      // convert ci.m_index from a ON_COMPONENT_INDEX::mesh_vertex 
+      // to a ON_COMPONENT_INDEX::meshtop_vertex index.
+      if (ci.m_index >= vertex_count)
+        break;
+      ci.m_index = top.m_topv_map[ci.m_index];
+      if (ci.m_index < 0)
+        break;
+      // no break here
+    case ON_COMPONENT_INDEX::meshtop_vertex:
+      if (ci.m_index < topv_count)
+      {
+        const ON_MeshTopologyVertex& v = top.m_topv[ci.m_index];
+        if (nullptr == v.m_topei || v.m_tope_count < 2)
+          break;
+
+        // validate the vertex
+        unsigned ni[2] = { ON_UNSET_UINT_INDEX,ON_UNSET_UINT_INDEX };
+        bool bValid = (v.m_tope_count >= 2 && nullptr != v.m_topei);
+        for (int vei = 0; vei < v.m_tope_count && bValid; ++vei)
+        {
+          int topei = v.m_topei[vei];
+          bValid = (topei >= 0 && topei < tope_count);
+          if (bValid)
+          {
+            const ON_MeshTopologyEdge& e = top.m_tope[topei];
+            bValid = (nullptr != e.m_topfi && e.m_topf_count >= 1 && e.m_topf_count <= 2);
+            for (int efi = 0; efi < e.m_topf_count && bValid; ++efi)
+            {
+              int fi = e.m_topfi[efi];
+              bValid = (fi >= 0 && fi < face_count);
+              if (nullptr != ngon0_map && ni[0] == ni[1])
+              {
+                const unsigned k = ngon0_map[fi];
+                const ON_MeshNgon* ngon = (k < ngon0_count) ? Ngon(k) : nullptr;
+                if (nullptr != ngon && ngon->m_Fcount >= 2 && nullptr != ngon->m_fi)
+                {
+                  if (ON_UNSET_UINT_INDEX == ni[0])
+                    ni[0] = k;
+                  ni[1] = k;
+                }
+                else
+                {
+                  // this face is not part of an ngon - stop checking
+                  ni[0] = ON_UNSET_UINT_INDEX;
+                  ni[1] = 0;
+                }
+              }
+            }
+          }
+        }
+        if (false == bValid)
+          break;
+        if (ON_UNSET_UINT_INDEX != ni[0] && ni[0] == ni[1])
+          break; // v is inside an ngon
+
+        vmarks[ci.m_index] |= v_list_mark;
+
+        // add a vmark to every face touching this vertex
+        for (int vei = 0; vei < v.m_tope_count; ++vei)
+        {
+          const ON_MeshTopologyEdge& e = top.m_tope[v.m_topei[vei]];
+          for (int efi = 0; efi < e.m_topf_count; ++efi)
+            Internal_AddMarkToFaceAndEdgesAndVertices(*this, top, ngon0_map, e.m_topfi[efi], vmark, fmarks, nullptr, nullptr);
+        }
+      }
+      break;
+
+    case ON_COMPONENT_INDEX::meshtop_edge:
+      if (ci.m_index < tope_count)
+      {
+        const ON_MeshTopologyEdge& e = top.m_tope[ci.m_index];
+        if (nullptr == e.m_topfi || 2 != e.m_topf_count)
+          continue;
+        if (e.m_topvi[0] < 0 || e.m_topvi[0] >= topv_count)
+          continue;
+        if (e.m_topvi[1] < 0 || e.m_topvi[1] >= topv_count)
+          continue;
+        if (e.m_topfi[0] < 0 || e.m_topfi[0] >= face_count)
+          continue;
+        if (e.m_topfi[1] < 0 || e.m_topfi[1] >= face_count)
+          continue;
+
+        if (nullptr != ngon0_map)
+        {
+          const unsigned ni[2] = { ngon0_map[e.m_topfi[0]],ngon0_map[e.m_topfi[1]] };
+          if (ni[0] < ngon0_count && ni[0] == ni[1])
+            continue; // edge is inside an ngon
+        }
+
+        emarks[ci.m_index] |= e_list_mark;
+
+        // add an emark to face tounching this edge
+        vmarks[e.m_topvi[0]] |= emark;
+        vmarks[e.m_topvi[1]] |= emark;
+        for (int efi = 0; efi < e.m_topf_count; ++efi)
+        {
+          const int fi = e.m_topfi[efi];
+          Internal_AddMarkToFaceAndEdgesAndVertices(*this, top, ngon0_map, fi, emark, fmarks, nullptr, nullptr);
+          Internal_AddMarkToNgonInteriorEdges(*this, top, ngon0_map, fi, e_list_mark, emarks);
+        }
+      }
+      break;
+
+    case ON_COMPONENT_INDEX::mesh_face:
+      if (ci.m_index >= face_count)
+        break;
+      if (ngon0_count > 0)
+      {
+        const unsigned ni = ngon0_map[ci.m_index];
+        if (ni < ngon0_count )
+        {
+          const ON_MeshNgon* ngon = Ngon(ni);
+          if (nullptr != ngon && ngon->m_Fcount > 1 && nullptr != ngon->m_fi)
+          {
+            ci.m_type = ON_COMPONENT_INDEX::mesh_ngon;
+            ci.m_index = (int)ni;
+          }
+        }
+      }
+      // no break here;
+    case ON_COMPONENT_INDEX::mesh_ngon:
+      if (ON_COMPONENT_INDEX::mesh_face == ci.m_type || ci.m_index < NgonCount())
+      {
+        const ON_MeshNgon* ngon = 
+          (ON_COMPONENT_INDEX::mesh_face == ci.m_type)
+          ? ngon_buffer.CreateFromMeshFaceIndex(this,ci.m_index)
+          : Ngon(ci.m_index);
+        if (nullptr == ngon || nullptr == ngon->m_fi || ngon->m_Fcount <  1)
+          break;
+        for (unsigned nfi = 0; nfi < ngon->m_Fcount; ++nfi)
+        {
+          int fi = ngon->m_fi[nfi];
+          if (fi >= 0 && fi < face_count)
+          {
+            const ON_MeshTopologyFace& f = top.m_topf[fi];
+            bool bValidFace = true;
+            for (int fei = 0; fei < 4 && bValidFace; fei++)
+            {
+              const int ei = f.m_topei[fei];
+              bValidFace = (ei >= 0 && ei < tope_count);
+              if (bValidFace)
+              {
+                const ON_MeshTopologyEdge& e = top.m_tope[ei];
+                for (int evi = 0; evi < 2 && bValidFace; ++evi)
+                {
+                  int topvi = e.m_topvi[evi];
+                  bValidFace = (topvi >= 0 && topvi < topv_count);
+                }
+              }
+            }
+
+            if (bValidFace)
+            {
+              fmarks[fi] |= f_list_mark;
+              Internal_AddMarkToFaceAndEdgesAndVertices(*this, top, ngon0_map, fi, fmark, fmarks, emarks, vmarks);
+            }
+          }
+        }
+      }
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  // Resolve multi-marked faces and remove all marked faces from ngons.
+  unsigned int fmark_face_count = 0;
+  unsigned int vmark_face_count = 0;
+  unsigned int emark_face_count = 0;
+
+  for (int fi = 0; fi < face_count; ++fi)
+  {
+    if (f_list_mark == ( fmarks[fi] & f_list_mark ))
+    {
+      fmarks[fi] = (f_list_mark | xmark);
+      ++fmark_face_count;
+    }
+    else if (emark == (fmarks[fi] & e_list_mark))
+    {
+      fmarks[fi] = emark;
+      ++emark_face_count;
+    }
+    else if (vmark == (fmarks[fi] & v_list_mark))
+    {
+      fmarks[fi] = vmark;
+      ++vmark_face_count;
+    }
+    else
+    {
+      fmarks[fi] = 0;
+    }
+  }
+
+  unsigned int emark_count = 0;
+  if (emark_face_count >= 2)
+  {
+    // ignore edges that are part of a boundary of a face in ci_list[]
+    emark_face_count = 0;
+    for (int ei = 0; ei < tope_count; ++ei)
+    {
+      unsigned char m = emarks[ei];
+      emarks[ei] = 0;
+      if (e_list_mark != m)
+        continue;
+      const ON_MeshTopologyEdge& e = top.m_tope[ei];
+      for (int efi = 0; efi < e.m_topf_count && 0 != m; ++efi)
+      {
+        const int fi = e.m_topfi[efi];
+        if (emark != fmarks[fi] && e_x_mark != fmarks[fi])
+          m = 0;
+      }
+      if (0 != m)
+      {
+        emarks[ei] = e_list_mark;
+        ++emark_count;
+        for (int efi = 0; efi < e.m_topf_count && 0 != m; ++efi)
+        {
+          const int fi = e.m_topfi[efi];
+          Internal_AddMarkToFaceAndEdgesAndVertices(*this, top, ngon0_map, fi, emark, fmarks, emarks, vmarks);
+          if (emark == fmarks[fi])
+          {
+            fmarks[fi] |= xmark;
+            ++emark_face_count;
+          }
+        }
+      }
+    }
+  }
+  if (0 == emark_count)
+    emark_face_count = 0;
+
+  unsigned int vmark_count = 0;
+  if (vmark_face_count >= 2)
+  {
+    // ignore vertices that belong to faces or edges in ci_list[]
+    vmark_face_count = 0;
+    for (int topvi = 0; topvi < topv_count; ++topvi)
+    {
+      unsigned char m = vmarks[topvi];
+      vmarks[topvi] = 0;
+      if (v_list_mark != m)
+        continue;
+      const ON_MeshTopologyVertex& v = top.m_topv[topvi];
+      for (int vei = 0; vei < v.m_tope_count && 0 != m; ++vei)
+      {
+        const int ei = v.m_topei[vei];
+        if (0 != (emarks[ei] & (fmark|emark)) )
+          m = 0;
+        else
+        {
+          const ON_MeshTopologyEdge& e = top.m_tope[ei];
+          for (int efi = 0; efi < e.m_topf_count && 0 != m; ++efi)
+          {
+            const int fi = e.m_topfi[efi];
+            if (vmark != fmarks[fi] && v_x_mark != fmarks[fi])
+              m = 0;
+          }
+        }
+      }
+      if (0 != m)
+      {
+        vmarks[topvi] = v_list_mark;
+        ++vmark_count;
+        for (int vei = 0; vei < v.m_tope_count && 0 != m; ++vei)
+        {
+          const int ei = v.m_topei[vei];
+          emarks[ei] |= vmark;
+          const ON_MeshTopologyEdge& e = top.m_tope[ei];
+          for (int efi = 0; efi < e.m_topf_count && 0 != m; ++efi)
+          {
+            const int fi = e.m_topfi[efi];
+            Internal_AddMarkToFaceAndEdgesAndVertices(*this, top, ngon0_map, fi, vmark, fmarks, nullptr, vmarks);
+            Internal_AddMarkToNgonInteriorEdges(*this, top, ngon0_map, fi, vmark, emarks);
+            if (vmark == fmarks[fi])
+            {
+              fmarks[fi] |= xmark;
+              ++vmark_face_count;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (0 == vmark_count)
+    vmark_face_count = 0;
+
+  unsigned max_ngon_face_count = fmark_face_count;
+  if (max_ngon_face_count < emark_face_count)
+    max_ngon_face_count = emark_face_count;
+  if (max_ngon_face_count < vmark_face_count)
+    max_ngon_face_count = vmark_face_count;
+
+  if (max_ngon_face_count < 2 )
+    return bailout_rc;
+
+  ON_SimpleArray<unsigned> ngon_fi(max_ngon_face_count);
+
+  if (ngon0_count > 0)
+  {
+    // remove ngons that include marked faces
+    const unsigned int* ngon_map = ( ngon0_count > 0) ? this->NgonMap(true) : nullptr;
+    for (int fi = 0; fi < face_count; ++fi)
+    {
+      if (0 != (fmarks[fi] & xmark))
+      {
+        unsigned int ngon_index = (nullptr != ngon_map) ? ngon_map[fi] : ON_UNSET_UINT_INDEX;
+        if (ngon_index < ngon0_count)
+          ngon_fi.Append(ngon_index);
+      }
+    }
+    ngon_fi.QuickSortAndRemoveDuplicates(ON_CompareDecreasing< unsigned>);
+    for (int i = 0; i < ngon_fi.Count(); ++i)
+      this->RemoveNgon((unsigned)ngon_fi[i]);
+    this->RemoveEmptyNgons();
+
+    // Any ngons with indices >= ngon0_count are ngons added by the code below.
+    ngon0_count = this->NgonCount();
+
+
+    ngon_fi.SetCount(0);
+  }
+
+  // zero x mark in fmarks[] because it is used in Internal_WeldAndAddNgon()
+  for (int fi = 0; fi < face_count; ++fi)
+    fmarks[fi] &= ~xmark;
+
+  for (int fi = 0; fi < face_count; ++fi)
+  {
+    if (f_list_mark != (fmarks[fi] & (f_list_mark | merged_mark)))
+      continue; // face not in ci_list[] or already merged
+
+    // seed ngon with this face
+    ngon_fi.SetCount(0);
+    fmarks[fi] |= merged_mark;
+    ngon_fi.Append((unsigned)fi);
+
+    // grow ngon by adding other faces in ci_list[] that share and edge with a face in the ngon.
+    Internal_GrowNgon(
+      top, emarks, fmarks,
+      0, // etest_mask,
+      0, // etest_result,
+      f_list_mark, // ftest_mask,
+      f_list_mark, // ftest_result,
+      merged_mark,
+      ngon_fi
+    );
+
+    // weld ngon vertices and then add ngon
+    Internal_WeldAndAddNgon(*this, top, xmark, fmarks, ngon_fi);
+  }
+
+  for (int ei = 0; ei < tope_count; ++ei)
+  {
+    if ( e_list_mark != (emarks[ei] & (e_list_mark | merged_mark)) )
+      continue; // edge not in ci_list[] or already merged
+    emarks[ei] |= merged_mark;
+    const ON_MeshTopologyEdge& e = top.m_tope[ei];
+
+    // seed ngon with faces attached to this edge
+    ngon_fi.SetCount(0);
+    for (int efi = 0; efi < e.m_topf_count; ++efi)
+    {
+      const int fi = e.m_topfi[efi];
+      if (fi < 0 || fi >= face_count)
+        break;
+      if (emark != (fmarks[fi] & (emark|fmark|in_ci_list_mark|merged_mark)))
+        break;
+      fmarks[fi] |= merged_mark;
+      ngon_fi.Append(fi);
+    }
+
+    // grow ngon by jumping accross edges in ci_list[]
+    Internal_GrowNgon(
+      top, emarks, fmarks,
+      e_list_mark | fmark, // etest_mask,
+      e_list_mark, // etest_result,
+      emark | fmark, // ftest_mask,
+      emark, // ftest_result,
+      merged_mark,
+      ngon_fi
+    );
+
+    // weld ngon vertices and then add ngon
+    Internal_WeldAndAddNgon(*this, top, xmark, fmarks, ngon_fi);
+  }
+
+
+  unsigned int mark_mask = v_list_mark | merged_mark;
+  for (int vi = 0; vi < topv_count; ++vi)
+  {
+    if (v_list_mark != (vmarks[vi] & mark_mask))
+      continue; // edge not in ci_list[] or already merged
+    vmarks[vi] |= merged_mark;
+    const ON_MeshTopologyVertex& v = top.m_topv[vi];
+
+    // seed ngon with faces attached to this vertex
+    ngon_fi.SetCount(0);
+    for (int vei = 0; vei < v.m_tope_count; ++vei)
+    {
+      const ON_MeshTopologyEdge& e = top.m_tope[v.m_topei[vei]];
+      for (int efi = 0; efi < e.m_topf_count; ++efi)
+      {
+        int fi = e.m_topfi[efi];
+        if (fi < 0 || fi >= face_count)
+          continue;
+        if (vmark != (fmarks[fi] & (vmark|emark|fmark|in_ci_list_mark|merged_mark)))
+          continue;
+        fmarks[fi] |= merged_mark;
+        ngon_fi.Append(fi);
+      }
+    }
+
+    // grow ngon by jumping across edges with a vmark
+    Internal_GrowNgon(
+      top, emarks, fmarks,
+      vmark, // etest_mask,
+      vmark, // etest_result,
+      vmark | emark | fmark, // ftest_mask,
+      vmark, // ftest_result,
+      merged_mark,
+      ngon_fi
+    );
+
+    // weld ngon vertices and then add ngon
+    Internal_WeldAndAddNgon(*this, top, xmark, fmarks, ngon_fi);
+  }
+
+  // clean up
+  DeleteComponents(
+    nullptr,
+    0,
+    true, // bIgnoreInvalidComponents
+    true, // bRemoveDegenerateFaces
+    true, // bRemoveUnusedVertices
+    true  // bRemoveEmptyNgons
+    );
+
+  const unsigned ngon1_count = this->NgonCount();
+
+  // return index where new ngons begin
+  return (ngon1_count > ngon0_count) ? ngon0_count : bailout_rc;
 }
 

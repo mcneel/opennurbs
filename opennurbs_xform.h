@@ -122,10 +122,17 @@ public:
 
   // All non-commutative operations have "this" as left hand side and
   // argument as right hand side.
+
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   ON_2dPoint operator*( const ON_2dPoint& ) const;
   ON_3dPoint operator*( const ON_3dPoint& ) const;
   ON_4dPoint operator*( const ON_4dPoint& ) const;
   
+  // Note well: The right hand column and bottom row have an important effect 
+  // when transforming a Euclidean point and have no effect when transforming a vector. 
+  // Be sure you understand the differences between vectors and points when applying a 4x4 transformation.
   ON_2dVector operator*( const ON_2dVector& ) const;
   ON_3dVector operator*( const ON_3dVector& ) const;
   
@@ -1494,7 +1501,7 @@ public:
     const double* world_points
     );
 
-  /*
+ /*
   Description:
     Append the clipping point and clipping flag value.
   */

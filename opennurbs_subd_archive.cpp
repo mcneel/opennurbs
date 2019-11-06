@@ -26,9 +26,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#if defined(OPENNURBS_SUBD_WIP)
-
-static bool WriteDouble3(
+static bool Internal_WriteDouble3(
   const double x[3],
   ON_BinaryArchive& archive
   )
@@ -42,7 +40,7 @@ static bool WriteDouble3(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-static bool ReadDouble3(
+static bool Internal_ReadDouble3(
   ON_BinaryArchive& archive,
   double x[3]
   )
@@ -56,6 +54,90 @@ static bool ReadDouble3(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
+enum : unsigned char
+{
+  ON_SubDComponentArchiveAnonymousChunkMark = 254U,
+  ON_SubDComponentArchiveEndMark = 255U
+};
+
+static bool Internal_ReadComponentAdditionSize(ON_BinaryArchive& archive, unsigned char valid_sz, unsigned char* sz)
+{
+  if (archive.Archive3dmVersion() < 70)
+  {
+    return ON_SUBD_RETURN_ERROR(false);
+  }
+
+  if (0 == valid_sz)
+    return ON_SUBD_RETURN_ERROR(false);
+  *sz = (1 == valid_sz) ? 2 : 1;
+  if (false == archive.ReadChar(sz))
+    return ON_SUBD_RETURN_ERROR(false);
+  if ( 0 != *sz && valid_sz != *sz )
+    return ON_SUBD_RETURN_ERROR(false);
+  return true;
+}
+
+static bool Internal_WriteComponentAdditionSize(bool bHaveAddition, ON_BinaryArchive& archive, unsigned char sz)
+{
+  if (archive.Archive3dmVersion() < 70)
+  {
+    return ON_SUBD_RETURN_ERROR(false);
+  }
+
+  if (0 == sz)
+    return ON_SUBD_RETURN_ERROR(false);
+  if (false == bHaveAddition)
+    sz = 0;
+  if (false == archive.WriteChar(sz))
+    return ON_SUBD_RETURN_ERROR(false);
+  return true;
+}
+
+static bool Internal_FinishReadingComponentAdditions(ON_BinaryArchive& archive)
+{
+  if (archive.Archive3dmVersion() < 70)
+  {
+    return ON_SUBD_RETURN_ERROR(false);
+  }
+
+  unsigned char sz = 1;
+  if ( false == archive.ReadChar(&sz))
+    return ON_SUBD_RETURN_ERROR(false);
+
+  for (;;)
+  {
+    if (ON_SubDComponentArchiveEndMark == sz)
+      return true;
+    if (ON_SubDComponentArchiveAnonymousChunkMark == sz)
+    {
+      // skip an addition a future version added as an anonymous chunk
+      int v = 0;
+      if (false == archive.BeginRead3dmAnonymousChunk(&v))
+        break;
+      if (false == archive.EndRead3dmChunk())
+        break;
+    }
+    else if ( sz > 0 )
+    {
+      // skip an addition a future version added as a fixed number of bytes
+      if (false == archive.SeekForward(sz))
+        break;
+    }
+    sz = 0;
+    if (false == archive.ReadChar(&sz))
+      break;
+  }
+  return ON_SUBD_RETURN_ERROR(false);
+}
+
+static bool Internal_FinishWritingComponentAdditions(ON_BinaryArchive& archive)
+{
+  if (archive.Archive3dmVersion() < 70)
+    return ON_SUBD_RETURN_ERROR(false);
+  const unsigned char sz = ON_SubDComponentArchiveEndMark;
+  return archive.WriteChar(sz);
+}
+
 static bool WriteBase(
   const ON_SubDComponentBase* base,
   ON_BinaryArchive& archive
@@ -65,7 +147,7 @@ static bool WriteBase(
   {
     unsigned int archive_id = base->ArchiveId();
     unsigned int id = base->m_id;
-    unsigned short level = base->m_level;
+    unsigned short level = (unsigned short)base->SubdivisionLevel();
     if (!archive.WriteInt(archive_id))
       break;
     if (!archive.WriteInt(id))
@@ -73,36 +155,57 @@ static bool WriteBase(
     if (!archive.WriteShort(level))
       break;
 
-    double P[3], V[3];
-    bool bHaveP = false;
-    bool bHaveV = false;
-    ON_SubD::SubDType subd_P_type = base->SavedSubdivisionPointType();
-    ON_SubD::SubDType subd_V_type = base->DisplacementType();
-    if (ON_SubD::SubDType::Unset != subd_P_type)
-      bHaveP = base->GetSavedSubdivisionPoint(subd_P_type, P);
-
-    if (ON_SubD::SubDType::Unset != subd_V_type)
-      bHaveV = base->GetSavedSubdivisionPoint(subd_V_type, V);
-
-    unsigned char cP = bHaveP ? ((unsigned char)subd_P_type) : 0U;
-    if (!archive.WriteChar(cP))
-      break;
-    if (0 != cP)
+    if (archive.Archive3dmVersion() < 70)
     {
-      if (!WriteDouble3(P,archive))
+      // version 6 3dm files
+      double P[3], V[3];
+      const bool bHaveP = base->GetSavedSubdivisionPoint(P);
+      const bool bHaveV = base->GetSubdivisionDisplacement(V);
+
+      unsigned char cP = bHaveP ? 4U : 0U;
+      if (!archive.WriteChar(cP))
+        break;
+      if (0 != cP)
+      {
+        if (!Internal_WriteDouble3(P, archive))
+          break;
+      }
+
+      unsigned char cV = bHaveV ? 4U : 0U;
+      if (!archive.WriteChar(cV))
+        break;
+      if (0 != cV)
+      {
+        if (!Internal_WriteDouble3(V, archive))
+          break;
+      }
+      return true;
+    }
+    
+    // version 7 3dm files and later
+
+    // 24 byte displacement addition
+    double V[3];
+    const bool bWriteDisplacement = base->GetSubdivisionDisplacement(V);
+    if ( false == Internal_WriteComponentAdditionSize(bWriteDisplacement,archive,24) )
+      break;
+    if (bWriteDisplacement)
+    {
+      if (!archive.WriteDouble(3,V))
         break;
     }
 
-    unsigned char cV = bHaveV ? ((unsigned char)subd_V_type) : 0U;
-    if (!archive.WriteChar(cV))
+    // 4 byte group id addition
+    const bool bWriteGroupId = base->m_group_id > 0;
+    if (false == Internal_WriteComponentAdditionSize(bWriteGroupId, archive, 4))
       break;
-    if (0 != cV)
+    if (bWriteGroupId)
     {
-      if (!WriteDouble3(V,archive))
+      if (!archive.WriteInt(base->m_group_id))
         break;
     }
 
-    return true;
+    return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -125,37 +228,73 @@ static bool ReadBase(
     if (!archive.ReadShort(&level))
       break;
 
-    unsigned char cP = 0U;
-    unsigned char cV = 0U;
-    double P[3], V[3];
-
-    if (!archive.ReadChar(&cP))
-      break;
-    if (0 != cP)
-    {
-      if (!ReadDouble3(archive,P))
-        break;
-    }
-
-    if (!archive.ReadChar(&cV))
-      break;
-    if (0 != cV)
-    {
-      if (!ReadDouble3(archive,V))
-        break;
-    }
-
     base.m_id = id;
     base.SetArchiveId(archive_id);
-    base.m_level = level;
-    if ( 0 != cP )
-      base.SetSavedSubdivisionPoint(ON_SubD::SubDTypeFromUnsigned(cP),P);
-    if ( 0 != cV )
-      base.SetDisplacement(ON_SubD::SubDTypeFromUnsigned(cV),V);
+    base.SetSubdivisionLevel(level);
 
+    if (archive.Archive3dmVersion() < 70)
+    {
+      unsigned char cP = 0U;
+      unsigned char cV = 0U;
+      double P[3], V[3];
 
-    return true;
+      if (!archive.ReadChar(&cP))
+        break;
+      if (0 != cP)
+      {
+        if (!Internal_ReadDouble3(archive, P))
+          break;
+      }
+
+      if (!archive.ReadChar(&cV))
+        break;
+      if (0 != cV)
+      {
+        if (!Internal_ReadDouble3(archive, V))
+          break;
+        const unsigned int no_displacement_version = ON_VersionNumberConstruct(7, 0, 2019, 6, 12, 0);
+        const unsigned int archive_opennurbs_version = archive.ArchiveOpenNURBSVersion();
+        if (archive_opennurbs_version <= no_displacement_version)
+        {
+          cV = 0;
+          V[0] = 0.0;
+          V[1] = 0.0;
+          V[2] = 0.0;
+        }
+      }
+      if (4 == cP)
+        base.SetSavedSubdivisionPoint(P);
+      if (4 == cV)
+        base.SetSubdivisionDisplacement(V);
+      return true;
+    }
+
+    // read additions
+    unsigned char sz;
+
+    // 24 byte displacement addition
+    if (false == Internal_ReadComponentAdditionSize(archive, 24, &sz))
+      break;
+    if (0 != sz)
+    {
+      double V[3] = {};
+      if (!archive.ReadDouble(V))
+        break;
+      base.SetSubdivisionDisplacement(V);
+    }
+
+    // 4 byte group id addition
+    if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
+      break;
+    if (0 != sz)
+    {
+      if (!archive.ReadInt(&base.m_group_id))
+        break;
+    }
+    
+    return Internal_FinishReadingComponentAdditions(archive);
   }
+
   return ON_SUBD_RETURN_ERROR(false);
 }
 
@@ -168,7 +307,7 @@ static bool WriteArchiveIdAndFlags(
 {
   if (!archive.WriteInt(archive_id))
     return ON_SUBD_RETURN_ERROR(false);
-  unsigned char flags = (unsigned char)ON_SUBD_ELEMENT_FLAGS(ptr_flags);
+  unsigned char flags = (unsigned char)ON_SUBD_COMPONENT_FLAGS(ptr_flags);
   if (!archive.WriteChar(flags))
     return ON_SUBD_RETURN_ERROR(false);
   return true;
@@ -189,22 +328,22 @@ static bool ReadArchiveIdAndFlagsIntoComponentPtr(
   if (!archive.ReadChar(&flags))
     return ON_SUBD_RETURN_ERROR(false);
   element_ptr = archive_id;
-  element_ptr *= (ON_SUBD_ELEMENT_FLAGS_MASK+1);
-  element_ptr += (flags & ON_SUBD_ELEMENT_FLAGS_MASK);
+  element_ptr *= (ON_SUBD_COMPONENT_FLAGS_MASK+1);
+  element_ptr += (flags & ON_SUBD_COMPONENT_FLAGS_MASK);
   return true;
 }
 
 static bool WriteSavedLimitPointList(
   unsigned int vertex_face_count,
-  ON_SubD::SubDType subd_type,
-  const ON_SubDSectorLimitPoint& limit_point,
+  bool bHaveLimitPoint,
+  const ON_SubDSectorSurfacePoint& limit_point,
   ON_BinaryArchive& archive
   )
 {
   unsigned int limit_point_count = 0;
-  const ON_SubDSectorLimitPoint* p;
+  const ON_SubDSectorSurfacePoint* p;
 
-  if (ON_SubD::SubDType::Unset != subd_type)
+  if (bHaveLimitPoint)
   {
     for (p = &limit_point; nullptr != p && limit_point_count <= vertex_face_count; p = p->m_next_sector_limit_point)
     {
@@ -220,12 +359,12 @@ static bool WriteSavedLimitPointList(
     if (limit_point_count > vertex_face_count)
       limit_point_count = 0;
   }
-  if ( 0 == limit_point_count )
-    subd_type = ON_SubD::SubDType::Unset;
+  if (0 == limit_point_count)
+    bHaveLimitPoint = false;
 
   for (;;)
   {
-    unsigned char c = (unsigned char)subd_type;
+    unsigned char c = bHaveLimitPoint ? 4 : 0;
     if (!archive.WriteChar(c))
       break;
 
@@ -238,13 +377,13 @@ static bool WriteSavedLimitPointList(
     p = &limit_point;
     for (unsigned int i = 0; i < limit_point_count; i++, p = p->m_next_sector_limit_point )
     {
-      if (!WriteDouble3(limit_point.m_limitP, archive))
+      if (!Internal_WriteDouble3(limit_point.m_limitP, archive))
         break;
-      if (!WriteDouble3(limit_point.m_limitT1, archive))
+      if (!Internal_WriteDouble3(limit_point.m_limitT1, archive))
         break;
-      if (!WriteDouble3(limit_point.m_limitT2, archive))
+      if (!Internal_WriteDouble3(limit_point.m_limitT2, archive))
         break;
-      if (!WriteDouble3(limit_point.m_limitN, archive))
+      if (!Internal_WriteDouble3(limit_point.m_limitN, archive))
         break;
       if (!WriteArchiveIdAndFlags(limit_point.m_sector_face ? limit_point.m_sector_face->ArchiveId() : 0, 0, archive))
         break;
@@ -257,8 +396,7 @@ static bool WriteSavedLimitPointList(
 static bool ReadSavedLimitPointList(
   ON_BinaryArchive& archive,
   unsigned int vertex_face_count,
-  ON_SubD::SubDType& limitP_type,
-  ON_SimpleArray< ON_SubDSectorLimitPoint > limit_points
+  ON_SimpleArray< ON_SubDSectorSurfacePoint > limit_points
   )
 {
   limit_points.SetCount(0);
@@ -286,14 +424,14 @@ static bool ReadSavedLimitPointList(
 
     for ( unsigned int i = 0; i < limit_point_count; i++ )
     {
-      ON_SubDSectorLimitPoint limit_point = ON_SubDSectorLimitPoint::Unset;
-      if (!ReadDouble3(archive,limit_point.m_limitP))
+      ON_SubDSectorSurfacePoint limit_point = ON_SubDSectorSurfacePoint::Unset;
+      if (!Internal_ReadDouble3(archive,limit_point.m_limitP))
         break;
-      if (!ReadDouble3(archive,limit_point.m_limitT1))
+      if (!Internal_ReadDouble3(archive,limit_point.m_limitT1))
         break;
-      if (!ReadDouble3(archive,limit_point.m_limitT2))
+      if (!Internal_ReadDouble3(archive,limit_point.m_limitT2))
         break;
-      if (!ReadDouble3(archive,limit_point.m_limitN))
+      if (!Internal_ReadDouble3(archive,limit_point.m_limitN))
         break;
       ON_SubDFacePtr fptr = ON_SubDFacePtr::Null;
       if (!ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr.m_ptr))
@@ -304,7 +442,9 @@ static bool ReadSavedLimitPointList(
     if (limit_point_count != limit_points.UnsignedCount() )
       break;
 
-    limitP_type = ON_SubD::SubDTypeFromUnsigned(c);
+    if (4 != c)
+      limit_points.SetCount(0);
+
     return true;
   }
   return ON_SUBD_RETURN_ERROR(false);
@@ -542,25 +682,6 @@ static bool ReadFacePtrList(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-static bool SkipReadingLaterAdditions(
-  ON_BinaryArchive& archive,
-  unsigned char skip_mark
-  )
-{
-  if ( 0 == skip_mark)
-    return true;
-
-  if (1 == skip_mark)
-  {
-    // TODO ADD THIS // return archive.SkipReadingChunk(); //
-    return ON_SUBD_RETURN_ERROR(false);
-  }
-
-  // TODO ADD THIS return archive.SkipReadingBytes( skip_mark );
-  return ON_SUBD_RETURN_ERROR(false);
-}
-
-
 
 bool ON_SubDVertex::Write(
   ON_BinaryArchive& archive
@@ -576,25 +697,29 @@ bool ON_SubDVertex::Write(
     //  break;
     //if (!archive.WriteChar((unsigned char)m_vertex_facet_type))
     //  break;
-    if (!WriteDouble3(m_P,archive))
+    if (!Internal_WriteDouble3(m_P,archive))
       break;
     if (!archive.WriteShort(m_edge_count))
       break;
     if (!archive.WriteShort(m_face_count))
       break;
-    if (!WriteSavedLimitPointList(m_face_count,SavedLimitPointType(),m_limit_point, archive))
+    if (!WriteSavedLimitPointList(m_face_count, this->SurfacePointIsSet(), m_limit_point, archive))
       break;
     if (!WriteEdgePtrList(m_edge_count,m_edge_capacity,m_edges,0,nullptr, archive))
       break;
     if (!WriteFacePtrList(m_face_count,m_face_capacity,(const ON_SubDFacePtr*)m_faces,0,nullptr, archive))
       break;
 
-    // mark end with a 0 byte
-    // If (when) new stuff is added, the value will be the number of bytes that are added
-    // or 1 if a chunk is added.
-    if (!archive.WriteChar((unsigned char)0U))
-      break;
-    return true;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      // mark end with a 0 byte
+      if (!archive.WriteChar((unsigned char)0U))
+        break;
+      return true;
+    }
+
+
+    return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -621,8 +746,7 @@ bool ON_SubDVertex::Read(
     unsigned short edge_count = 0;
     unsigned short face_count = 0;
 
-    ON_SubD::SubDType limitP_type = ON_SubD::SubDType::Unset;
-    ON_SimpleArray<ON_SubDSectorLimitPoint> limit_points;
+    ON_SimpleArray<ON_SubDSectorSurfacePoint> limit_points;
 
     if (!ReadBase(archive,base))
       break;
@@ -632,19 +756,19 @@ bool ON_SubDVertex::Read(
     //  break;
     //if (!archive.ReadChar(&vertex_facet_type))
     //  break;
-    if (!ReadDouble3(archive,P))
+    if (!Internal_ReadDouble3(archive,P))
       break;
     if (!archive.ReadShort(&edge_count))
       break;
     if (!archive.ReadShort(&face_count))
       break;
 
-    if (!ReadSavedLimitPointList(archive, face_count, limitP_type, limit_points))
+    if (!ReadSavedLimitPointList(archive, face_count, limit_points))
       break;
 
     ON_SubDVertex* v = subdimple->AllocateVertex(
       ON_SubD::VertexTagFromUnsigned(vertex_tag),
-      base.m_level,
+      base.SubdivisionLevel(),
       P,
       edge_count,
       face_count
@@ -666,31 +790,29 @@ bool ON_SubDVertex::Read(
       break;
     v->m_face_count = face_count;
 
-
-    unsigned char skip_mark = 0;
-    if (!archive.ReadChar(&skip_mark))
-      break;
-
-    if (!SkipReadingLaterAdditions(archive,skip_mark))
-      break;
-
-    if (ON_SubD::SubDType::Unset != limitP_type)
+    for (unsigned int i = 0; i < limit_points.UnsignedCount(); i++)
     {
-      for (unsigned int i = 0; i < limit_points.UnsignedCount(); i++)
+      ON_SubDSectorSurfacePoint limit_point = limit_points[i];
+      limit_point.m_next_sector_limit_point = (const ON_SubDSectorSurfacePoint*)1U; // skips checks
+      if (false == v->SetSavedSurfacePoint( true, limit_point))
       {
-        ON_SubDSectorLimitPoint limit_point = limit_points[i];
-        limit_point.m_next_sector_limit_point = (const ON_SubDSectorLimitPoint*)1U; // skips checks
-        if (false == v->SetSavedLimitPoint(limitP_type, limit_point))
-        {
-          v->ClearSavedLimitPoints();
-          break;
-        }
+        v->ClearSavedSurfacePoints();
+        break;
       }
     }
 
     vertex = v;
 
-    return true;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      unsigned char sz = 1;
+      if (!archive.ReadChar(&sz) || 0 != sz)
+        break;
+      return true;
+    }
+
+    // read additions
+    return Internal_FinishReadingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -717,13 +839,15 @@ bool ON_SubDEdge::Write(
     if (!WriteFacePtrList(m_face_count,sizeof(m_face2)/sizeof(m_face2[0]),m_face2,m_facex_capacity,m_facex, archive))
       break;
 
-    // mark end with a 0 byte
-    // If (when) new stuff is added, the value will be the number of bytes that are added
-    // or 1 if a chunk is added.
-    if (!archive.WriteChar((unsigned char)0U))
-      break;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      // mark end with a 0 byte
+      if (!archive.WriteChar((unsigned char)0U))
+        break;
+      return true;
+    }
 
-    return true;
+    return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -764,10 +888,9 @@ bool ON_SubDEdge::Read(
     if (!ReadVertexList(archive, vertex_count, 2, v))
       break;
 
-
     ON_SubDEdge* e = subdimple->AllocateEdge(
       ON_SubD::EdgeTagFromUnsigned(edge_tag),
-      base.m_level,
+      base.SubdivisionLevel(),
       face_count
       );
 
@@ -787,17 +910,17 @@ bool ON_SubDEdge::Read(
       break;
     e->m_face_count = face_count;
    
-    unsigned char skip_mark = 0;
-    if (!archive.ReadChar(&skip_mark))
-      break;
-
-    if (!SkipReadingLaterAdditions(archive,skip_mark))
-      break;
-
     edge = e;
 
-    return true;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      unsigned char sz;
+      if (false == archive.ReadChar(&sz) || 0 != sz)
+        break;
+      return true;
+    }
 
+    return Internal_FinishReadingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -819,13 +942,37 @@ bool ON_SubDFace::Write(
     if (!WriteEdgePtrList(m_edge_count,sizeof(m_edge4)/sizeof(m_edge4[0]),m_edge4,m_edgex_capacity,m_edgex, archive))
       break;
 
-    // mark end with a 0 byte
-    // If (when) new stuff is added, the value will be the number of bytes that are added
-    // or 1 if a chunk is added.
-    if (!archive.WriteChar((unsigned char)0U))
-      break;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      unsigned char sz = 0;
+      if (!archive.WriteChar(sz))
+        break;
+      return true;
+    }
 
-    return true;
+    // write 34 byte texture domain
+    const bool bWriteTextureDomain = TextureDomainIsSet();
+    if (false == Internal_WriteComponentAdditionSize(bWriteTextureDomain, archive, 34))
+      break;
+    if (bWriteTextureDomain)
+    {
+      const unsigned char domain_type = static_cast<unsigned char>(TextureDomainType());
+      if (!archive.WriteChar(domain_type))
+        break;
+
+      const unsigned packing_rot = TextureDomainRotationDegrees();
+      const unsigned char packing_rot_dex = (unsigned char)(packing_rot/90U);
+      if (!archive.WriteChar(packing_rot_dex))
+        break;
+      const ON_2dPoint texture_domain_origin = TextureDomainOrigin();
+      if (!archive.WriteDouble(2, &texture_domain_origin.x))
+        break;
+      const ON_2dVector texture_domain_delta = TextureDomainDelta();
+      if (!archive.WriteDouble(2, &texture_domain_delta.x))
+        break;
+    }
+
+    return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
@@ -859,7 +1006,7 @@ bool ON_SubDFace::Read(
       break;
 
     ON_SubDFace* f = subdimple->AllocateFace(
-      base.m_level,
+      base.SubdivisionLevel(),
       edge_count
       );
 
@@ -875,23 +1022,48 @@ bool ON_SubDFace::Read(
       break;
     f->m_edge_count = edge_count;
     
-    unsigned char skip_mark = 0;
-    if (!archive.ReadChar(&skip_mark))
-      break;
-
-    if (!SkipReadingLaterAdditions(archive,skip_mark))
-      break;
-
     face = f;
 
-    return true;
+    if (archive.Archive3dmVersion() < 70)
+    {
+      unsigned char sz;
+      if (false == archive.ReadChar(&sz) || 0 != sz)
+        break;
+      return true;
+    }
 
+    // read additions
+    unsigned char sz;
+    if (false == Internal_ReadComponentAdditionSize(archive, 34, &sz))
+      break;
+    if ( 0 != sz)
+    {
+      // 34 bytes of texture domain information
+      unsigned char domain_type;
+      if (!archive.ReadChar(&domain_type))
+        break;
+      unsigned char packing_rot_dex = 0;
+      if (!archive.ReadChar(&packing_rot_dex))
+        break;
+      const unsigned packing_rot = ((unsigned int)packing_rot_dex) * 90U;
+      ON_2dPoint texture_domain_origin(ON_2dPoint::Origin);
+      if (!archive.ReadDouble(2, &texture_domain_origin.x))
+        break;
+      ON_2dVector texture_domain_delta(ON_2dVector::ZeroVector);
+      if (!archive.ReadDouble(2, &texture_domain_delta.x))
+        break;
+      f->SetTextureDomain(ON_SubD::TextureDomainTypeFromUnsigned(domain_type), texture_domain_origin, texture_domain_delta, packing_rot);
+    }
+
+    return Internal_FinishReadingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
 }
 
 unsigned int ON_SubDLevel::SetArchiveId(
-  unsigned int archive_id_partition[4]
+  const ON_SubDimple& subdimple,
+  unsigned int archive_id_partition[4],
+  bool bLevelLinkedListIncreasingId[3]
   ) const
 {
   unsigned int archive_id = 1;
@@ -900,21 +1072,81 @@ unsigned int ON_SubDLevel::SetArchiveId(
   //archive_id_partition[2] = 0;
   //archive_id_partition[3] = 0;
 
-  archive_id_partition[0] = archive_id;
-  for (const ON_SubDVertex* v = m_vertex[0]; nullptr != v; v = v->m_next_vertex)
+  const ON_SubDComponentPtr::Type component_type[3] = {
+    ON_SubDComponentPtr::Type::Vertex,
+    ON_SubDComponentPtr::Type::Edge,
+    ON_SubDComponentPtr::Type::Face
+  };
+
+  const ON_SubDComponentBaseLink* first_link[3] = {
+    (const ON_SubDComponentBaseLink*)m_vertex[0],
+    (const ON_SubDComponentBaseLink*)m_edge[0],
+    (const ON_SubDComponentBaseLink*)m_face[0]
+  };
+
+
+  for (unsigned int listdex = 0; listdex < 3; listdex++)
   {
-    v->SetArchiveId(archive_id++);
+    bLevelLinkedListIncreasingId[listdex] = false;
+    unsigned int prev_id = 0;
+    archive_id_partition[listdex] = archive_id;
+    unsigned int linked_list_count = 0;
+    for (const ON_SubDComponentBaseLink* clink = first_link[listdex]; nullptr != clink; clink = clink->m_next)
+    {
+      ++linked_list_count;
+      if (prev_id < clink->m_id)
+      {
+        bLevelLinkedListIncreasingId[listdex] = true;
+        prev_id = clink->m_id;
+        clink->SetArchiveId(archive_id++);
+        continue;
+      }
+
+      bLevelLinkedListIncreasingId[listdex] = false;
+
+      // m_id values are not increasing in the linked list. 
+      // This happens when the subd is edited  and components are deleted 
+      // and then added back later. 
+
+      // Finish counting components in the linked list.
+      for (clink = clink->m_next; nullptr != clink; clink = clink->m_next)
+        ++linked_list_count;
+
+      // Now iteratate the fixed size pool (which always iterates in increasing id order),
+      // skip components not on this level, and set archive id of the ones on this level.
+      unsigned int cidit_level_count = 0;
+      archive_id = archive_id_partition[listdex];
+      ON_SubDComponentIdIterator cidit;
+      subdimple.InitializeComponentIdIterator(component_type[listdex],cidit);
+      const unsigned level_index = this->m_level_index;
+      prev_id = 0;
+      for (const ON_SubDComponentBase* c = cidit.FirstComponent(); nullptr != c; c = cidit.NextComponent())
+      {
+        if (prev_id >= c->m_id)
+        {
+          // This is a serious error!
+          // Contine because this allows us to save something do the disk in these bad cases.
+          ON_SUBD_ERROR("The m_id values of the active components in the fixed size pool are corrupt.");
+        }
+        else
+        {
+          prev_id = c->m_id;
+        }
+        if (level_index != c->SubdivisionLevel())
+          continue;
+        ++cidit_level_count;
+        c->SetArchiveId(archive_id++);
+      }
+      if (cidit_level_count != linked_list_count)
+      {
+        // This is a serious error!
+        // Contine because this allows us to save something do the disk in these bad cases.
+        ON_SUBD_ERROR("The m_level values of the active components in the fixed size pool are corrupt.");
+      }
+      break;
+    }
   }
-  archive_id_partition[1] = archive_id;
-  for (const ON_SubDEdge* e = m_edge[0]; nullptr != e; e = e->m_next_edge)
-  {
-    e->SetArchiveId(archive_id++);
-  }
-  archive_id_partition[2] = archive_id;
-  for (const ON_SubDFace* f = m_face[0]; nullptr != f; f = f->m_next_face)
-  {
-    f->SetArchiveId(archive_id++);
-  }
+
   archive_id_partition[3] = archive_id;
 
   return archive_id-1;
@@ -923,21 +1155,17 @@ unsigned int ON_SubDLevel::SetArchiveId(
 
 void ON_SubDLevel::ClearArchiveId() const
 {
+  // archive ids can be cleared in any order.
   for (const ON_SubDVertex* v = m_vertex[0]; nullptr != v; v = v->m_next_vertex)
-  {
     v->SetArchiveId(0);
-  }
   for (const ON_SubDEdge* e = m_edge[0]; nullptr != e; e = e->m_next_edge)
-  {
     e->SetArchiveId(0);
-  }
   for (const ON_SubDFace* f = m_face[0]; nullptr != f; f = f->m_next_face)
-  {
     f->SetArchiveId(0);
-  }
 }
 
 bool ON_SubDLevel::Write(
+  const ON_SubDimple& subdimple,
   ON_BinaryArchive& archive
   ) const
 {
@@ -949,21 +1177,26 @@ bool ON_SubDLevel::Write(
   {
     if (!archive.WriteShort((unsigned short)m_level_index))
       break;
-    if (!archive.WriteChar((unsigned char)m_subdivision_type))
+
+    // from early days when there was a possibility of different types of subdivision algorithm
+    // 4,4,4 means catmull clark quad
+    if (!archive.WriteChar((unsigned char)4))
       break;
-    if (!archive.WriteChar(m_ordinary_vertex_valence))
+    if (!archive.WriteChar((unsigned char)4))
       break;
-    if (!archive.WriteChar(m_ordinary_face_edge_count))
+    if (!archive.WriteChar((unsigned char)4))
       break;   
-    ON_BoundingBox bbox = m_aggregates.m_bDirtyBoundingBox ? ON_BoundingBox::EmptyBoundingBox : m_aggregates.m_bbox;
+
+    ON_BoundingBox bbox = m_aggregates.m_bDirtyBoundingBox ? ON_BoundingBox::EmptyBoundingBox : m_aggregates.m_controlnet_bbox;
     if (!archive.WriteDouble(3,bbox[0]))
       break;
     if (!archive.WriteDouble(3,bbox[1]))
       break;
 
 
-    unsigned int archive_id_partition[4] = { 0 };
-    SetArchiveId(archive_id_partition);
+    unsigned int archive_id_partition[4] = {};
+    bool bLevelLinkedListIncreasingId[3] = {};
+    SetArchiveId(subdimple, archive_id_partition, bLevelLinkedListIncreasingId);
 
     if (!archive.WriteInt(4,archive_id_partition))
       break;
@@ -971,7 +1204,15 @@ bool ON_SubDLevel::Write(
     const ON_SubDVertex* v = nullptr;
     const ON_SubDEdge* e = nullptr;
     const ON_SubDFace* f = nullptr;
-    for (v = m_vertex[0]; nullptr != v; v = v->m_next_vertex)
+
+    // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
+    // with components in an order that is not increasing in id and it is critical that the next three for
+    // loops iterate the level's components in order of increasing id.
+    ON_SubDLevelComponentIdIterator idit;
+
+    // must iterate vertices in order of increasing id
+    idit.Initialize(bLevelLinkedListIncreasingId[0], ON_SubDComponentPtr::Type::Vertex, subdimple, *this);
+    for (v = idit.FirstVertex(); nullptr != v; v = idit.NextVertex())
     {
       if( !v->Write(archive) )
         break;
@@ -979,7 +1220,9 @@ bool ON_SubDLevel::Write(
     if ( nullptr != v )
       break;
 
-    for (e = m_edge[0]; nullptr != e; e = e->m_next_edge)
+    // must iterate edges in order of increasing id
+    idit.Initialize(bLevelLinkedListIncreasingId[1], ON_SubDComponentPtr::Type::Edge, subdimple, *this);
+    for (e = idit.FirstEdge(); nullptr != e; e = idit.NextEdge())
     {
       if( !e->Write(archive) )
         break;
@@ -987,7 +1230,9 @@ bool ON_SubDLevel::Write(
     if ( nullptr != e )
       break;
 
-    for (f = m_face[0]; nullptr != f; f = f->m_next_face)
+    // must iterate faces in order of increasing id
+    idit.Initialize(bLevelLinkedListIncreasingId[2], ON_SubDComponentPtr::Type::Face, subdimple, *this);
+    for (f = idit.FirstFace(); nullptr != f; f = idit.NextFace())
     {
       if( !f->Write(archive) )
         break;
@@ -999,10 +1244,11 @@ bool ON_SubDLevel::Write(
     unsigned char c = 0;
     if (archive.Save3dmRenderMesh(ON::object_type::subd_object) || archive.Save3dmAnalysisMesh(ON::object_type::subd_object))
     {
-      if (false == m_limit_mesh.IsEmpty())
+      // no reason to save the m_control_net_mesh
+      if (false == m_surface_mesh.IsEmpty())
       {
         c = 0;
-        // c = 1; TODO change to c = 1 when ON_SubDLimitMesh::Write()/Read() actually work
+        // c = 1; TODO change to c = 1 when ON_SubDMesh::Write()/Read() actually work
       }
     }
     
@@ -1052,23 +1298,25 @@ bool ON_SubDLevel::Read(
     if (!archive.ReadShort(&level_index))
       break;
     m_level_index = level_index;
-    unsigned char c = 0;
-    if (!archive.ReadChar(&c))
+
+    // from early days when there was a possibility of different types of subdivision algorithm
+    unsigned char ignored_c[3] = {};
+    if (!archive.ReadChar(&ignored_c[0]))
       break;
-    m_subdivision_type = ON_SubD::SubDTypeFromUnsigned(c);
-    if (!archive.ReadChar(&m_ordinary_vertex_valence))
+    if (!archive.ReadChar(&ignored_c[1]))
       break;
-    if (!archive.ReadChar(&m_ordinary_face_edge_count))
+    if (!archive.ReadChar(&ignored_c[2]))
       break;   
-    ON_BoundingBox bbox;
-    if (!archive.ReadDouble(3,bbox[0]))
+
+    ON_BoundingBox controlnet_bbox;
+    if (!archive.ReadDouble(3, controlnet_bbox[0]))
       break;
-    if (!archive.ReadDouble(3,bbox[1]))
+    if (!archive.ReadDouble(3, controlnet_bbox[1]))
       break;
-    if (bbox.IsValid())
+    if (controlnet_bbox.IsValid())
     {
       m_aggregates.m_bDirtyBoundingBox = false;
-      m_aggregates.m_bbox = bbox;
+      m_aggregates.m_controlnet_bbox = controlnet_bbox;
     }
     else
     {
@@ -1139,7 +1387,7 @@ bool ON_SubDLevel::Read(
     if (0 == minor_version )
       break;
 
-    c = 0;
+    unsigned char c = 0;
     if (!archive.ReadChar(&c))
       break;
 
@@ -1169,7 +1417,8 @@ bool ON_SubDimple::Write(
 {
   const_cast< ON_SubDHeap* >(&m_heap)->ClearArchiveId();
 
-  if ( !archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 0) )
+  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 1;
+  if ( !archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version) )
     return ON_SUBD_RETURN_ERROR(false);
   bool rc = false;
   for (;;)
@@ -1201,11 +1450,27 @@ bool ON_SubDimple::Write(
 
     for (level_index = 0; level_index < level_count; level_index++)
     {
-      if ( !m_levels[level_index]->Write(archive) )
+      if ( !m_levels[level_index]->Write(*this,archive) )
         break;
     }
     if (level_index < level_count)
       break;
+
+
+    if (minor_version <= 0)
+    {
+      rc = true;
+      break;
+    }
+
+    // minor version = 1 addtions
+    const unsigned char texture_domain_type = static_cast<unsigned char>(TextureDomainType());
+    if (false == archive.WriteChar(texture_domain_type))
+      break;
+
+    if (false == m_texture_mapping_tag.Write(archive))
+      break;
+
     rc = true;
     break;
   }
@@ -1281,6 +1546,17 @@ bool ON_SubDimple::Read(
     if ( level_index != level_count)
       break;
 
+    if (minor_version >= 1)
+    {
+      unsigned char texture_domain_type = static_cast<unsigned char>(ON_SubDTextureDomainType::Unset);
+      if (false == archive.ReadChar(&texture_domain_type))
+        break;
+      m_texture_domain_type = ON_SubD::TextureDomainTypeFromUnsigned(texture_domain_type);
+
+      if (false == m_texture_mapping_tag.Read(archive))
+        break;
+    }
+
     rc = true;
     break;
   }
@@ -1330,6 +1606,11 @@ bool ON_SubDimple::Read(
     {
       ON_SUBD_ERROR("Correct m_max_verrtex/edge/face_id differs from value saved in 3dm archive.");
     }
+  }
+
+  if (minor_version >= 1)
+  {
+
   }
 
   if (rc)
@@ -1761,5 +2042,3 @@ bool ON_SubDMeshProxyUserData::WriteToArchive(
   return false;
 }
  
-
-#endif

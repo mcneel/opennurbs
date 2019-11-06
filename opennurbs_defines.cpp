@@ -2317,6 +2317,32 @@ ON_4dex::ON_4dex(
   , l(lValue)
 {}
 
+int ON_4dex::operator[](int ind) const
+{ 
+	switch (ind) {
+	case 0:
+		return i;
+	case 1:
+		return j;
+	case 2:
+		return k;
+	}
+	return l;
+}
+
+int& ON_4dex::operator[](int ind)
+{
+	switch (ind) {
+	case 0:
+		return i;
+	case 1:
+		return j;
+	case 2:
+		return k;
+	}
+	return l;
+}
+
 ON_2udex::ON_2udex(
   unsigned int iValue,
   unsigned int jValue)

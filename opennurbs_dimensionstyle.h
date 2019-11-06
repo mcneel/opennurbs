@@ -856,8 +856,28 @@ public:
     /// </summary>
     AlternateDimensionLengthDisplay = 110,
 
+    /// <summary>
+    /// Force dimension line to draw when text is moved outside
+    /// </summary>
+    ForceDimLine = 111,
+
+    /// <summary>
+    /// Arrow position when arrows won't fit between extensions
+    /// </summary>
+    ArrowFit = 112,
+
+    /// <summary>
+    /// Text position when text won't fit between extensions
+    /// </summary>
+    TextFit = 113,
+
+    /// <summary>
+    /// Character to use for decimal separator in dimension text
+    /// </summary>
+    DecimalSeparator = 114,
+
     /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
-    Count = 111
+    Count = 115
   };
   
 #pragma endregion
@@ -1038,6 +1058,50 @@ public:
   );
    
 
+#pragma region RH_C_SHARED_ENUM [ON_DimStyle::arrow_fit] [Rhino.DocObjects.DimensionStyle.ArrowFit] [nested:byte]
+  /// <summary>
+  /// Arrow display position inside or outside extension lines
+  /// </summary>
+  enum class arrow_fit : unsigned char
+  {
+    /// <summary> Auto - Display when space permits </summary>
+    Auto = 0,
+    /// <summary> Force arrows inside extensions </summary>
+    ArrowsInside = 1,
+    /// <summary> Force arrows outside extensions </summary>
+    ArrowsOutside = 2,
+  };
+#pragma endregion
+
+  static ON_DimStyle::arrow_fit ArrowFitFromUnsigned(
+    unsigned int arrow_fit_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON_DimStyle::text_fit] [Rhino.DocObjects.DimensionStyle.TextFit] [nested:byte]
+  /// <summary>
+  /// Text display position inside or outside extension lines
+  /// </summary>
+  enum class text_fit : unsigned char
+  {
+    /// <summary> Auto - Display inside when space permits </summary>
+    Auto = 0,
+    /// <summary> Force text inside extensions </summary>
+    TextInside = 1,
+    /// <summary> Force text outside to the right of extensions </summary>
+    TextRight = 2,
+    /// <summary> Force text outside to the left of extensions </summary>
+    TextLeft = 3,
+    /// <summary> Move text outside to the right of extensions when it won't fit inside </summary>
+    TextHintRight = 4,
+    /// <summary> Move text outside to the left of extensions when it won't fit inside  </summary>
+    TextHintLeft = 5,
+  };
+#pragma endregion
+
+  static ON_DimStyle::text_fit TextFitFromUnsigned(
+    unsigned int text_fit_as_unsigned
+  );
+     
   static ON_DimStyle::LengthDisplay LengthDisplayFromUnitsAndFormat(
     ON::LengthUnitSystem units, 
     ON_DimStyle::OBSOLETE_length_format lengthformat
@@ -1094,6 +1158,7 @@ public:
   ON::LengthUnitSystem AlternateDimensionLengthDisplayUnit(
     unsigned int model_sn
     ) const;
+
 
 private:
   /*
@@ -1797,13 +1862,13 @@ public:
     True if zero_suppression is a valid setting when
     DimensionLengthDiplay = dimension_length_display
   Remarks:
-   LengthDisplay: Inch fractional – No zero suppression matches
-   LengthDisplay : FeetAndInches – Zero suppress can be
+   LengthDisplay: Inch fractional â€“ No zero suppression matches
+   LengthDisplay : FeetAndInches â€“ Zero suppress can be
                                               None, 
                                               Suppress zero feet,
                                               Suppress zero inches or
                                               Suppress zero feet and zero inches.
-   LengthDisplay : ModelUnits or any Decimal mode – Zero suppress can be
+   LengthDisplay : ModelUnits or any Decimal mode â€“ Zero suppress can be
                                               None,
                                               Suppress leading,
                                               Suppress trailing or
@@ -1932,6 +1997,18 @@ public:
   bool TextUnderlined() const;
   void SetTextUnderlined(bool underlined);
 
+  bool ForceDimLine() const;
+  void SetForceDimLine(bool forcedimline);
+
+  void SetArrowFit(ON_DimStyle::arrow_fit arrowfit);
+  ON_DimStyle::arrow_fit ArrowFit() const;
+
+  void SetTextFit(ON_DimStyle::text_fit textfit);
+  ON_DimStyle::text_fit TextFit() const;
+
+  void SetDecimalSeparator(wchar_t separator);
+  wchar_t DecimalSeparator() const;
+
   //double ModelSize() const;
   //void SetModelSize(double size);
   //double PaperSize() const;
@@ -2051,7 +2128,11 @@ private:
     
 
   bool m_bAlternate                                = false;      // (dimalt) display alternate dimension string (or not)
-
+  
+  bool m_bForceDimLine                             = true;                         // 4/30/2019
+  ON_DimStyle::arrow_fit m_ArrowFit                = ON_DimStyle::arrow_fit::Auto; // 4/30/2019
+  ON_DimStyle::text_fit m_TextFit                  = ON_DimStyle::text_fit::Auto;  // 4/30/2019
+  wchar_t m_decimal_separator                      = ON_wString::DecimalAsPeriod;
 
   ON_wString m_prefix;              // string preceding dimension value string
   ON_wString m_suffix;              // string following dimension value string
@@ -2063,8 +2144,8 @@ private:
   bool   m_bSuppressExtension1                     = false;   // flag to not draw extension lines
   bool   m_bSuppressExtension2                     = false;   // flag to not draw extension lines
   bool   m_bReserved1 = false;
-  bool   m_bReserved2 = false; 
-  
+  bool   m_bReserved2 = false;
+
   // m_field_override_count
   //   number of ON_DimStyle::field settings that are independent of the parent dimension style.
   //   (not inherited from)
@@ -2153,6 +2234,10 @@ private:
 
   double          m_fixed_extension_len            = 1.0;        // Fixed extension line length if m_fixed_extension_len_on is true
   bool            m_fixed_extension_len_on         = false;     // true: use fixed_extension_len, false: don't use m_fixed_extension_len
+    
+  unsigned char   m_ReservedChar1                  = 0;
+  unsigned short  m_ReservedShort1 = 0;
+  unsigned int    m_ReservedInt1 = 0;
 
   double          m_text_rotation                  = 0.0;              // Dimension text rotation around text point (radians)
   int             m_alternate_tolerance_resolution = 4; // for decimal, digits past the decimal point, fractions: 1/2^n
@@ -2160,6 +2245,9 @@ private:
 
   bool            m_suppress_arrow1                = false;            // false: dont suppress, true: suppress
   bool            m_suppress_arrow2                = false;            // false: dont suppress, true: suppress
+
+  unsigned short  m_ReservedShort2                 = 0;
+
   int             m_textmove_leader                = 0;                // 0: move text anywhere, 1: add leader when moving text
   int             m_arclength_sym                  = 0;                // 0: symbol before dim text, 1: symbol above dim text, no symbol
   double          m_stack_textheight_fraction      = 0.7;              // fraction of main text height
@@ -2174,7 +2262,8 @@ private:
   ON_DimStyle::suppress_zero   m_ang_zero_suppress = ON_DimStyle::suppress_zero::None;
 
   bool            m_alt_below = false;                  // true: display alternate text below main text
-                                                        // false: display alternate text after main text
+
+  // false: display alternate text after main text
   ON_Arrowhead::arrow_type m_arrow_type_1          = ON_Arrowhead::arrow_type::SolidTriangle;      // Arrow types for ON_Dimension derived dimensions
   ON_Arrowhead::arrow_type m_arrow_type_2          = ON_Arrowhead::arrow_type::SolidTriangle;
   ON_Arrowhead::arrow_type m_leader_arrow_type     = ON_Arrowhead::arrow_type::SolidTriangle;
@@ -2194,10 +2283,12 @@ private:
   ON_DimStyle::leader_curve_type   m_leader_curve_type          = ON_DimStyle::leader_curve_type::Polyline;
   double              m_leader_content_angle       = 0.0;
   bool                m_leader_has_landing         = true;
+
   double              m_leader_landing_length      = 1.0;
 
   bool                m_draw_forward               = true;
   bool                m_signed_ordinate            = true;
+
   ON_ScaleValue       m_scale_value                = ON_ScaleValue::OneToOne;
 
   // Unit system for dimension rendering sizes like text height, and arrow head length.

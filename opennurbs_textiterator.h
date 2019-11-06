@@ -546,6 +546,16 @@ public:
     {
       return m_text;
     }
+
+    const bool HasContent()
+    {
+      return m_has_content;
+    }
+
+    const void ClearHasContent()
+    {
+      m_has_content = false;
+    }
     
   private:
     bool                   m_has_content = false;

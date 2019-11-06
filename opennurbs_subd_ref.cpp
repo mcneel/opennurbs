@@ -26,8 +26,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#if defined(OPENNURBS_SUBD_WIP)
-
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDRef
@@ -89,7 +87,6 @@ class ON_SubD& ON_SubDRef::NewSubD()
 {
   ON_SubD* subd = new ON_SubD();
   ON_SubD* managed_subd = SetSubDForExperts(subd);
-  managed_subd->SetSubDType(ON_SubD::SubDType::QuadCatmullClark);
   return *managed_subd;
 }
 
@@ -166,6 +163,8 @@ ON_SubDComponentRef::ON_SubDComponentRef(const ON_SubDComponentRef& src) ON_NOEX
   , m_subd_ref(src.m_subd_ref)
   , m_component_ptr(src.m_component_ptr)
   , m_component_index(src.m_component_index)
+  , m_component_location(src.m_component_location)
+  , m_reference_id(src.m_reference_id)
 {}
 
 ON_SubDComponentRef& ON_SubDComponentRef::operator=(const ON_SubDComponentRef& src)
@@ -176,6 +175,8 @@ ON_SubDComponentRef& ON_SubDComponentRef::operator=(const ON_SubDComponentRef& s
     m_subd_ref = src.m_subd_ref;
     m_component_ptr = src.m_component_ptr;
     m_component_index = src.m_component_index;
+    m_component_location = src.m_component_location;
+    m_reference_id = src.m_reference_id;
   }
   return *this;
 }
@@ -186,6 +187,8 @@ ON_SubDComponentRef::ON_SubDComponentRef( ON_SubDComponentRef&& src ) ON_NOEXCEP
   , m_subd_ref(std::move(src.m_subd_ref))
   , m_component_ptr(src.m_component_ptr)
   ,  m_component_index(src.m_component_index)
+  , m_component_location(src.m_component_location)
+  , m_reference_id(src.m_reference_id)
 {}
 
 ON_SubDComponentRef& ON_SubDComponentRef::operator=(ON_SubDComponentRef&& src)
@@ -197,6 +200,8 @@ ON_SubDComponentRef& ON_SubDComponentRef::operator=(ON_SubDComponentRef&& src)
     m_subd_ref = std::move(src.m_subd_ref);
     m_component_ptr = src.m_component_ptr;
     m_component_index = src.m_component_index;
+    m_component_location = src.m_component_location;
+    m_reference_id = src.m_reference_id;
   }
   return *this;
 }
@@ -232,24 +237,27 @@ int ON_SubDComponentRef::Compare2(const ON_SubDComponentRef* const* lhs, const O
   return ON_SubDComponentRef::Compare(*lhs, *rhs);
 }
 
-ON_SubDComponentRef ON_SubDComponentRef::Create(
+const ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
   ON_COMPONENT_INDEX component_index,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
   )
 {
   ON_SubDComponentPtr component_ptr = subd_ref.SubD().ComponentPtrFromComponentIndex(component_index);
-  return ON_SubDComponentRef::Create(subd_ref,component_ptr,component_location);
+  return ON_SubDComponentRef::Create(subd_ref,component_ptr,component_location,reference_id);
 }
 
-ON_SubDComponentRef ON_SubDComponentRef::Create(
+const ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
   ON_SubDComponentPtr component_ptr,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
   )
 {
   ON_SubDComponentRef component_ref;
   component_ref.m_subd_ref = subd_ref;
+  component_ref.m_reference_id = reference_id;
   bool bValidInput = false;
   switch (component_ptr.ComponentType())
   {
@@ -302,31 +310,34 @@ ON_SubDComponentRef ON_SubDComponentRef::Create(
   return ON_SUBD_RETURN_ERROR(component_ref);
 }
 
-ON_SubDComponentRef ON_SubDComponentRef::Create(
+const ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
   const class ON_SubDVertex* vertex,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
   )
 {
-  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(vertex),component_location);
+  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(vertex),component_location,reference_id);
 }
 
-ON_SubDComponentRef ON_SubDComponentRef::Create(
+const ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
   const class ON_SubDEdge* edge,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
   )
 {
-  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(edge),component_location);
+  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(edge),component_location,reference_id);
 }
 
-ON_SubDComponentRef ON_SubDComponentRef::Create(
+const ON_SubDComponentRef ON_SubDComponentRef::Create(
   const ON_SubDRef& subd_ref,
   const class ON_SubDFace* face,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
   )
 {
-  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(face),component_location);
+  return ON_SubDComponentRef::Create(subd_ref, ON_SubDComponentPtr::Create(face),component_location,reference_id);
 }
 
 void ON_SubDComponentRef::Clear()
@@ -336,6 +347,7 @@ void ON_SubDComponentRef::Clear()
   m_subd_ref.Clear();
   m_component_ptr = ON_SubDComponentPtr::Null;
   m_component_index = ON_COMPONENT_INDEX::UnsetComponentIndex;
+  m_reference_id = 0;
 }
 
 ON_SubDRef ON_SubDComponentRef::SubDRef() const
@@ -378,11 +390,23 @@ const class ON_SubDFace* ON_SubDComponentRef::Face() const
   return m_component_ptr.Face();
 }
 
+ON__UINT_PTR ON_SubDComponentRef::ReferenceId() const
+{
+  return m_reference_id;
+}
+
+void ON_SubDComponentRef::SetReferenceId(
+  ON__UINT_PTR reference_id
+)
+{
+  m_reference_id = reference_id;
+}
+
 bool ON_SubDComponentRef::IsValid(ON_TextLog* text_log) const
 {
   return (
     m_component_ptr.IsNotNull() 
-    && (ON_SubDComponentLocation::ControlNet == m_component_location || ON_SubDComponentLocation::LimitSurface == m_component_location)
+    && (ON_SubDComponentLocation::ControlNet == m_component_location || ON_SubDComponentLocation::Surface == m_component_location)
     && false == SubD().IsEmpty()
     );
 }
@@ -429,7 +453,7 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
-      case ON_SubDComponentLocation::LimitSurface:
+      case ON_SubDComponentLocation::Surface:
         // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = vertex->ControlNetBoundingBox();
@@ -444,7 +468,7 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
-      case ON_SubDComponentLocation::LimitSurface:
+      case ON_SubDComponentLocation::Surface:
         // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = edge->ControlNetBoundingBox();
@@ -459,7 +483,7 @@ bool ON_SubDComponentRef::GetBBox(
         break;
       switch (m_component_location)
       {
-      case ON_SubDComponentLocation::LimitSurface:
+      case ON_SubDComponentLocation::Surface:
         // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = face->ControlNetBoundingBox();
@@ -593,7 +617,7 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
       switch (e->m_edge_tag)
       {
       case ON_SubD::EdgeTag::Smooth:
-      case ON_SubD::EdgeTag::X:
+      case ON_SubD::EdgeTag::SmoothX:
         m_subd_edge_smooth_count += i;
         rc = true;
         break;
@@ -617,7 +641,12 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
   return rc;
 }
 
-const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & subd_ref, ON_COMPONENT_INDEX ci, ON_SubDComponentLocation component_location)
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(
+  const ON_SubDRef & subd_ref,
+  ON_COMPONENT_INDEX ci, 
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
+  )
 {
   for (;;)
   {
@@ -625,13 +654,18 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & su
       break;
     if (false == ci.IsSubDComponentIndex())
       break;
-    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, ci, component_location));
+    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, ci, component_location, reference_id));
     return Append(&r);
   }
   return ON_SubDComponentRef::Empty;
 }
 
-const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & subd_ref, ON_SubDComponentPtr component_ptr, ON_SubDComponentLocation component_location)
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(
+  const ON_SubDRef & subd_ref, 
+  ON_SubDComponentPtr component_ptr, 
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
+)
 {
   for (;;)
   {
@@ -639,10 +673,15 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDRef & su
       break;
     if (false == component_ptr.IsNull())
       break;
-    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, component_ptr, component_location));
+    const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, component_ptr, component_location,reference_id));
     return Append(&r);
   }
   return ON_SubDComponentRef::Empty;
+}
+
+const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDComponentRef& src_ref)
+{
+  return Append(&src_ref);
 }
 
 const ON_SubDComponentRef& ON_SubDComponentRefList::Append(const ON_SubDComponentRef* src_ref)
@@ -682,14 +721,15 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(ON_SubDComp
 const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
   const ON_SubD& subd,
   ON_COMPONENT_INDEX ci,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
 )
 {
   for (;;)
   {
     if (subd.IsEmpty())
       break;
-    return Append(ON_SubDRef::CreateReferenceForExperts(subd),ci,component_location);
+    return Append(ON_SubDRef::CreateReferenceForExperts(subd),ci,component_location,reference_id);
   }
   return ON_SubDComponentRef::Empty;
 }
@@ -697,14 +737,15 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
 const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
   const ON_SubD& subd,
   ON_SubDComponentPtr component_ptr,
-  ON_SubDComponentLocation component_location
+  ON_SubDComponentLocation component_location,
+  ON__UINT_PTR reference_id
 )
 {
   for (;;)
   {
     if (subd.IsEmpty())
       break;
-    return Append(ON_SubDRef::CreateReferenceForExperts(subd),component_ptr,component_location);
+    return Append(ON_SubDRef::CreateReferenceForExperts(subd),component_ptr,component_location,reference_id);
   }
   return ON_SubDComponentRef::Empty;
 }
@@ -851,6 +892,3 @@ int ON_SubDComponentRefList::ComponentCount() const
 {
   return m_list.Count();
 }
-
-
-#endif
