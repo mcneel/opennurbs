@@ -35,7 +35,7 @@ ON_GNU_WARNING_FLAGS = -Wall \
 	-Wno-overloaded-virtual \
 	-Wno-switch \
 	-Wno-unknown-pragmas \
-	-Wno-unused-private-field
+#	-Wno-unused-private-field // didn't work on Rasbian with GCC 8.3.0
 	
 #	-Wno-inconsistent-missing-override \
 
@@ -62,6 +62,8 @@ LINK = $(CCC)
 LINKFLAGS =
 # below necessary LINKFLAGS on Linux for the UUID library
 #LINKFLAGS = -luuid
+# below necessary LINKFLAGS on Linux / Raspberry Pi 4 for UUID and atomic libraries
+LINKFLAGS = -luuid -latomic
 
 ###############################################################
 
