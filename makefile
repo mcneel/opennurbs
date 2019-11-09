@@ -63,7 +63,7 @@ LINKFLAGS =
 # below necessary LINKFLAGS on Linux for the UUID library
 #LINKFLAGS = -luuid
 # below necessary LINKFLAGS on Linux / Raspberry Pi 4 for UUID and atomic libraries
-LINKFLAGS = -luuid -latomic
+#LINKFLAGS = -luuid -latomic
 
 ###############################################################
 
