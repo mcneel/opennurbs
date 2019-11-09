@@ -35,7 +35,9 @@ ON_GNU_WARNING_FLAGS = -Wall \
 	-Wno-overloaded-virtual \
 	-Wno-switch \
 	-Wno-unknown-pragmas \
-#	-Wno-unused-private-field // didn't work on Rasbian with GCC 8.3.0
+	-Wno-unused-private-field
+# Note that -Wno-unused-private-field may throw unrecognized option
+# error. This happened at least on GCC 8.3.0 in Rasbian Buster.
 	
 #	-Wno-inconsistent-missing-override \
 
