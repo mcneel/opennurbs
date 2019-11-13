@@ -26,7 +26,7 @@ For more information, see ["What is openNURBS?"](https://developer.rhino3d.com/g
 
 Please see ["Getting started"](https://developer.rhino3d.com/guides/opennurbs/getting-started/) for more information about openNURBS including supported compilers, build instructions, and a description of the examples.
 
-There's also a collection of [example 3dm files](https://www.rhino3d.com/download/opennurbs/6/opennurbs6samples) available for testing.
+There's also a collection of [example 3dm files](example_files/) available for testing.
 
 ## Questions?
 
