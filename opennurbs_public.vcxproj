@@ -474,6 +474,9 @@
     <ResourceCompile Include="opennurbs.rc" />
     <ResourceCompile Include="opennurbs_public_version.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="opennurbs.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

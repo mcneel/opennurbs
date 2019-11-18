@@ -469,6 +469,9 @@
     <ClCompile Include="opennurbs_zlib.cpp" />
     <ClCompile Include="opennurbs_zlib_memory.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="opennurbs.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
