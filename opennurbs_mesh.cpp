@@ -2726,7 +2726,25 @@ bool ON_Mesh::Transform(
   if (false == bIsValid_fV)
     m_V.SetCount(0);
 
-  const bool bIsValid_dV = (vertex_count == m_dV.UnsignedCount());
+  bool bIsValid_dV = (vertex_count == m_dV.UnsignedCount());
+
+  // 2 Jan 2020 S. Baer (RH-54464)
+  // If the transform is moving the mesh into or out of "beyond single precision",
+  // set up double precision vertices in order to get our best possible precision
+  // after the transform.
+  if (false == bIsValid_dV)
+  {
+    ON_BoundingBox bbox = BoundingBox();
+    ON_BoundingBox transformed_bbox = bbox;
+    transformed_bbox.Transform(xform);
+    if (ON_BeyondSinglePrecision(bbox, nullptr) || ON_BeyondSinglePrecision(transformed_bbox, nullptr))
+    {
+      UpdateDoublePrecisionVertices();
+      bIsValid_dV = (vertex_count == m_dV.UnsignedCount());
+    }
+  }
+
+
   if (false == bIsValid_dV)
     m_dV.SetCount(0);
 

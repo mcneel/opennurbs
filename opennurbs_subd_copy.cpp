@@ -619,6 +619,8 @@ ON_SubD& ON_SubD::operator=(const ON_SubD& src)
   {
     this->Destroy();
     this->CopyHelper(src);
+    // The next line copies user data
+    ON_Geometry::operator=(src);
   }
   return *this;
 }
@@ -706,8 +708,9 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
       continue;
     if (nullptr == src_level->m_edge[0])
       continue;
-    if (nullptr == src_level->m_face[0])
-      continue;
+    // it's ok to have subd with just vertices and edges.
+    //NO//if (nullptr == src_level->m_face[0])
+    //NO//  continue;
     break;
   }
 
@@ -732,6 +735,10 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     m_max_face_id = src.m_max_face_id;
 
   m_subd_appearance = src.m_subd_appearance;
+  m_texture_domain_type = src.m_texture_domain_type;
+  m_texture_mapping_tag = src.m_texture_mapping_tag;
+  m_symmetry = src.m_symmetry;
+
   ChangeContentSerialNumber();
 }
 

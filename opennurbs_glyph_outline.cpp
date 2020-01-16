@@ -619,26 +619,23 @@ const ON_BoundingBox ON_OutlineFigure::BoundingBox() const
     ON_2fPoint bbox_cv_min = bbox_min;
     ON_2fPoint bbox_cv_max = bbox_max;
     
-    for (ON__UINT32 i = 0; i <= figure_end_dex; i++)
+    for (ON__UINT32 i = 0U; i < figure_end_dex; ++i)
     {
       const ON__UINT32 degree = ON_OutlineFigure::Internal_SegmentDegree(i);
-      if (0 == degree)
+      if (degree < 1U || degree > 3U)
         continue;
-
-      ON_OutlineFigurePoint p = a[i];
-      if (false == p.IsOnFigure())
-      continue;
+      // a[i] = start of bezier (line,quadratic,or cubic)
+      ON_OutlineFigurePoint p = a[i+degree]; // p = a[i+degree] = end of bezier (line,quadratic,or cubic)
       Internal_GrowBBox(p.m_point, p.m_point, bbox_min, bbox_max);
-      if (degree < 2)
-        continue;
-
-      p = a[++i];
-      Internal_GrowBBox(p.m_point, p.m_point, bbox_cv_min, bbox_cv_max);
-
-      if (3 == degree)
+      if (degree >= 2U)
       {
-        p = a[++i];
+        p = a[++i]; // p = 1st interior cv of a quadratic or cubic bezier
         Internal_GrowBBox(p.m_point, p.m_point, bbox_cv_min, bbox_cv_max);
+        if (3U == degree)
+        {
+          p = a[++i]; // p = 2nd interior cv of a cubic bezier
+          Internal_GrowBBox(p.m_point, p.m_point, bbox_cv_min, bbox_cv_max);
+        }
       }
     }
 
@@ -660,21 +657,21 @@ const ON_BoundingBox ON_OutlineFigure::BoundingBox() const
     ON_OutlineFigurePoint cv[4];
     cv[3] = a[0]; // to suppress potintial uninitialized memory warning
 
-    for (ON__UINT32 i = 0; i <= figure_end_dex; i++)
+    for (ON__UINT32 i = 0U; i < figure_end_dex; ++i)
     {
       const ON__UINT32 degree = ON_OutlineFigure::Internal_SegmentDegree(i);
-      if (degree < 1 || degree > 3)
-        continue;
-      cv[0] = a[i++];
-      cv[1] = a[i];
-      cv[2] = a[i+1];
+      if (degree < 2U || degree > 3U)
+        continue; // correct to continue when degree = 1
+      cv[0] = a[i]; // [a[i] = start of quadratic or cubic bezier
+      cv[1] = a[++i]; // 1st interior cv of a  quadratic or cubic bezer
       bbox_cv_min = cv[1].m_point;
       bbox_cv_max = bbox_cv_min;
-      if (3 == degree)
+      cv[2] = a[i + 1]; // end of quadratic bezier or penultimate cv of a cubic bezier
+      if (3U == degree)
       {
         Internal_GrowBBox(cv[2].m_point, cv[2].m_point, bbox_cv_min, bbox_cv_max);
-        i++;
-        cv[3] = a[i+1];
+        ++i;
+        cv[3] = a[i + 1]; // end of a cubic bezier
       }
 
       if (

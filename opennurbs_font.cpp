@@ -1632,6 +1632,110 @@ int ON_FontFaceQuartet::CompareQuartetName(
   return ON_wString::CompareOrdinal(lhs->m_quartet_name, rhs->m_quartet_name, true);
 }
 
+ON::RichTextStyle ON::RichTextStyleFromUnsigned(unsigned int u)
+{
+  switch (u)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::RichTextStyle::Unset);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::RichTextStyle::Windows10SDK);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::RichTextStyle::AppleOSXSDK);
+  };
+  ON_ERROR("Invalid ON::RichTextStyle value.");
+  return ON::RichTextStyle::Unset;
+}
+
+ON::RichTextStyle ON::RichTextStyleFromCurrentPlatform()
+{
+  return
+#if defined(ON_RUNTIME_WIN)
+    ON::RichTextStyle::Windows10SDK
+#elif defined(ON_RUNTIME_APPLE)
+    ON::RichTextStyle::AppleOSXSDK
+#else
+    ON::RichTextStyle::Unset
+#endif
+    ;
+}
+
+const ON_wString ON_FontFaceQuartet::RichTextSample(
+  ON::RichTextStyle rich_text_style
+) const
+{
+  const wchar_t* quartet_name = static_cast<const wchar_t*>(m_quartet_name);
+  if (nullptr == quartet_name)
+    return ON_wString::EmptyString;
+  if ( nullptr == m_regular && nullptr == m_bold && nullptr == m_italic && nullptr == m_bold_italic)
+    return ON_wString::EmptyString;
+
+  const ON_wString regular_ps = (nullptr != m_regular) ? m_regular->PostScriptName() : ON_wString::EmptyString;
+  const ON_wString bold_ps = (nullptr != m_bold) ? m_bold->PostScriptName() : ON_wString::EmptyString;
+  const ON_wString italic_ps = (nullptr != m_italic) ? m_italic->PostScriptName() : ON_wString::EmptyString;
+  const ON_wString bold_italic_ps = (nullptr != m_bold_italic) ? m_bold_italic->PostScriptName() : ON_wString::EmptyString;
+
+  const ON_wString not_available(L"Not available.");
+  const ON_wString regular = regular_ps.IsNotEmpty() ? regular_ps : not_available;
+  const ON_wString bold = bold_ps.IsNotEmpty() ? bold_ps : not_available;
+  const ON_wString italic = italic_ps.IsNotEmpty() ? italic_ps : not_available;
+  const ON_wString bold_italic = bold_italic_ps.IsNotEmpty() ? bold_italic_ps : not_available;
+
+  ON_wString sample;
+  switch (rich_text_style)
+  {
+  case ON::RichTextStyle::Unset:
+    break;
+
+  case ON::RichTextStyle::Windows10SDK:
+    // font table uses Windows LOGFONT name and \b \i to select faces
+    sample = ON_wString::FormatToString(L"{\\rtf1\\deff0{\\fonttbl{\\f0 %ls;}}\\fs40", quartet_name);
+    sample += ON_wString::FormatToString(L"{\\f0 Windows 10 LOGFONT Quartet: %ls}{\\par}", quartet_name);
+    if (nullptr != m_regular)
+      sample += ON_wString::FormatToString(L"{\\f0 Regular: %ls}{\\par}", static_cast<const wchar_t*>(regular_ps));
+    if (nullptr != m_bold)
+      sample += ON_wString::FormatToString(L"{\\f0\\b Bold: %ls}{\\par}", static_cast<const wchar_t*>(bold_ps));
+    if (nullptr != m_italic)
+      sample += ON_wString::FormatToString(L"{\\f0\\i Italic: %ls}{\\par}", static_cast<const wchar_t*>(italic_ps));
+    if (nullptr != m_bold_italic)
+      sample += ON_wString::FormatToString(L"{\\f0\\b\\i Bold Italic: %ls}{\\par}", static_cast<const wchar_t*>(bold_italic_ps));
+    sample += ON_wString(L"\\par}");
+    break;
+
+  case ON::RichTextStyle::AppleOSXSDK:
+    // font table uses unique PostScript names for each face
+    if (regular_ps.IsNotEmpty() || bold_ps.IsNotEmpty() || italic_ps.IsNotEmpty() || bold_italic_ps.IsNotEmpty())
+    {
+      sample = ON_wString::FormatToString(L"{\\rtf1\\deff0{\\fonttbl");
+      int fdex = 0;
+      if (regular_ps.IsNotEmpty())
+        sample += ON_wString::FormatToString(L"{\\f%d %ls;}", fdex++, static_cast<const wchar_t*>(regular_ps));
+      if (bold_ps.IsNotEmpty())
+        sample += ON_wString::FormatToString(L"{\\f%d %ls;}", fdex++, static_cast<const wchar_t*>(bold_ps));
+      if (italic_ps.IsNotEmpty())
+        sample += ON_wString::FormatToString(L"{\\f%d %ls;}", fdex++, static_cast<const wchar_t*>(italic_ps));
+      if (bold_italic_ps.IsNotEmpty())
+        sample += ON_wString::FormatToString(L"{\\f%d %ls;}", fdex++, static_cast<const wchar_t*>(bold_italic_ps));
+      sample += ON_wString(L"}\\fs40");
+
+      sample += ON_wString::FormatToString(L"{\\f0 Apple OS X Fake Quartet: %ls}{\\par}", quartet_name);
+      fdex = 0;
+      if (nullptr != m_regular)
+        sample += ON_wString::FormatToString(L"{\\f%d Regular: %ls}{\\par}", fdex++, static_cast<const wchar_t*>(regular_ps));
+      if (nullptr != m_bold)
+        sample += ON_wString::FormatToString(L"{\\f%d\\b Bold: %ls}{\\par}", fdex++, static_cast<const wchar_t*>(bold_ps));
+      if (nullptr != m_italic)
+        sample += ON_wString::FormatToString(L"{\\f%d\\i Italic: %ls}{\\par}", fdex++, static_cast<const wchar_t*>(italic_ps));
+      if (nullptr != m_bold_italic)
+        sample += ON_wString::FormatToString(L"{\\f%d\\b\\i Bold Italic: %ls}{\\par}", fdex++, static_cast<const wchar_t*>(bold_italic_ps));
+      sample += ON_wString(L"\\par}");
+    }
+    break;
+
+  default:
+    break;
+  }
+  return sample;
+}
+
+
 bool ON_FontFaceQuartet::HasRegularFace() const
 {
   return (nullptr != RegularFace());
@@ -6504,8 +6608,29 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     Internal_FakeWindowsLogfontName(L"Damascus", L"DamascusMedium", L"Damascus Medium", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Damascus", L"DamascusSemiBold", L"Damascus Semibold", ON_FontFaceQuartet::Member::Regular),
 
-    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedMedium", L"Futura Condensed", ON_FontFaceQuartet::Member::Regular),
-    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedExtraBold", L"Futura Condensed", ON_FontFaceQuartet::Member::Bold),
+    // DINPro https://mcneel.myjetbrains.com/youtrack/issue/RH-54627
+    // DO NOT try making a fake quartet that combines regular/bold.
+    // The last parameter for all DINPro "fake quartets" must be ON_FontFaceQuartet::Member::Regular.
+    // When text is created and then later edited the, the Mac RTF used by Eto and the "composed" RTF used by Rhino 
+    // are not currently capable looking at the "fake quartet" information and preserving the font. So the Mac users get
+    // to see 5 "fake quartets" for DINPro. The "fix" is to return to the Rhino 5 Mac font UI.
+    Internal_FakeWindowsLogfontName(L"DINPro", L"DINPro-Regular", L"DINPro Regular", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"DINPro", L"DINPro-Bold",    L"DINPro Bold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"DINPro", L"DINPro-Light",   L"DINPro Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"DINPro", L"DINPro-Medium",  L"DINPro Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"DINPro", L"DINPro-Black",   L"DINPro Black", ON_FontFaceQuartet::Member::Regular),
+
+    // Futura https://mcneel.myjetbrains.com/youtrack/issue/RH-56085
+    // DO NOT try making a fake quartet that combines regular/bold.
+    // The last parameter for all Futura "fake quartets" must be ON_FontFaceQuartet::Member::Regular.
+    // When text is created and then later edited the, the Mac RTF used by Eto and the "composed" RTF used by Rhino 
+    // are not currently capable looking at the "fake quartet" information and preserving the font. So the Mac users get
+    // to see 5 "fake quartets" for Futura. The "fix" is to return to the Rhino 5 Mac font UI.
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-Medium",             L"Futura Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-Bold",               L"Futura Bold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-MediumItalic",       L"Futura Medium Italic", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedMedium",    L"Futura Condensed Medium", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Futura", L"Futura-CondensedExtraBold", L"Futura Condensed ExtraBold", ON_FontFaceQuartet::Member::Regular),
 
     Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-Light", L"Gill Sans Light", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-LightItalic", L"Gill Sans Light", ON_FontFaceQuartet::Member::Italic),

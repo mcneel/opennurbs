@@ -1924,6 +1924,8 @@ public:
   double y;
   double z;
   double d; // 4th coefficient of the plane equation.
+
+  void Dump(class ON_TextLog&) const;
 };
 
 #if defined(ON_DLL_TEMPLATE)

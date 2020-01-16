@@ -1417,7 +1417,7 @@ bool ON_SubDimple::Write(
 {
   const_cast< ON_SubDHeap* >(&m_heap)->ClearArchiveId();
 
-  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 1;
+  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 2;
   if ( !archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version) )
     return ON_SUBD_RETURN_ERROR(false);
   bool rc = false;
@@ -1469,6 +1469,10 @@ bool ON_SubDimple::Write(
       break;
 
     if (false == m_texture_mapping_tag.Write(archive))
+      break;
+
+    // minor version = 2 addtions
+    if (false == m_symmetry.Write(archive))
       break;
 
     rc = true;
@@ -1555,6 +1559,12 @@ bool ON_SubDimple::Read(
 
       if (false == m_texture_mapping_tag.Read(archive))
         break;
+
+      if (minor_version >= 2)
+      {
+        if (false == m_symmetry.Read(archive))
+          break;
+      }
     }
 
     rc = true;

@@ -418,6 +418,13 @@ ON_SubD* ON_SubD::CreateFromMesh(
           i0++;
           i1--;
         }
+        // Flip middle edge if odd number of edges
+        if (i0 == i1)
+        {
+          int k = mesh_edges[i0].i;
+          mesh_edges[i0].i = mesh_edges[i0].j;
+          mesh_edges[i0].j = k;
+        }
       }
 
       // the ngon created a single subd face
@@ -673,8 +680,8 @@ ON_SubD* ON_SubD::CreateFromMesh(
     // Later, some of the ON_SubD::EdgeTag::Smooth tags are changed to ON_SubD::EdgeTag::Crease or ON_SubD::EdgeTag::SmoothX.
     mesh_edge.e
       = (mesh_edge.i <= mesh_edge.j)
-      ? new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorWeight, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorWeight)
-      : new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorWeight, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorWeight);
+      ? new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorCoefficient, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorCoefficient)
+      : new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorCoefficient, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorCoefficient);
     mesh_edges[mesh_edge_map[i]].e = mesh_edge.e;
     for (i++; i < mesh_edges.UnsignedCount(); i++)
     {
@@ -807,7 +814,7 @@ ON_SubD* ON_SubD::CreateFromMesh(
       if (tagged_end_index < 2)
       {
         // sector weight will be calculated when facet type is set
-        const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[tagged_end_index] = ON_SubDSectorType::UnsetSectorWeight;
+        const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[tagged_end_index] = ON_SubDSectorType::UnsetSectorCoefficient;
       }
       else if (2 == tagged_end_index)
       {
@@ -817,8 +824,8 @@ ON_SubD* ON_SubD::CreateFromMesh(
           // first subdivision will convert edge to smooth
           const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubD::EdgeTag::SmoothX;
           // sector weights will be calculated when facet type is set
-          const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[0] = ON_SubDSectorType::UnsetSectorWeight;
-          const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[1] = ON_SubDSectorType::UnsetSectorWeight;
+          const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[0] = ON_SubDSectorType::UnsetSectorCoefficient;
+          const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[1] = ON_SubDSectorType::UnsetSectorCoefficient;
         }
         else
         {

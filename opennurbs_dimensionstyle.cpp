@@ -321,6 +321,7 @@ ON_DimStyle::field ON_DimStyle::FieldFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::TextGap);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::TextHeight);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::DimTextLocation);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::MaskFrameType);
     // OBSOLETE // //ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::OBSOLETE_LengthFormat_);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::LengthResolution);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::AngleFormat);
@@ -844,12 +845,14 @@ const ON_SHA1_Hash& ON_TextMask::ContentHash() const
   if (m_content_hash.IsZeroDigest())
   {
     ON_SHA1 sha1;
-    unsigned int u[2] = {
+    unsigned int u[3] = {
       (m_bDrawMask ? 1U : 0U),
-      (unsigned int)(static_cast<unsigned char>(m_mask_type))
+      (unsigned int)(static_cast<unsigned char>(m_mask_type)),
+      (unsigned int)(static_cast<unsigned char>(m_mask_frame))
     };
     sha1.AccumulateUnsigned32(u[0]);
     sha1.AccumulateUnsigned32(u[1]);
+    sha1.AccumulateUnsigned32(u[2]);
     sha1.AccumulateUnsigned32(m_mask_color);
     sha1.AccumulateDouble(m_mask_border);
     m_content_hash = sha1.Hash();
@@ -910,6 +913,20 @@ void ON_TextMask::SetMaskFillType(ON_TextMask::MaskType  type)
   }
 }
 
+ON_TextMask::MaskFrame ON_TextMask::MaskFrameType() const
+{
+  return m_mask_frame;
+}
+
+void ON_TextMask::SetMaskFrameType(ON_TextMask::MaskFrame frame) 
+{
+  if (m_mask_frame != frame)
+  {
+    m_mask_frame = frame;
+    m_content_hash = ON_SHA1_Hash::ZeroDigest;
+  }
+}
+
 ON_Color ON_TextMask::MaskColor() const
 {
   return m_mask_color;
@@ -951,12 +968,25 @@ ON_TextMask::MaskType ON_TextMask::MaskTypeFromUnsigned(
   return ON_TextMask::MaskType::BackgroundColor;
 }
 
+ON_TextMask::MaskFrame ON_TextMask::MaskFrameFromUnsigned(
+  unsigned int mask_frame_as_unsigned
+)
+{
+  switch (mask_frame_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::NoFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RectFrame);
+  }
+  ON_ERROR("mask_type_as_unsigned parameter is not valid");
+  return ON_TextMask::MaskFrame::NoFrame;
+}
+
 
 bool ON_TextMask::Write(
   ON_BinaryArchive& archive
 ) const
 {
-  const int chunk_version = 0;
+  const int chunk_version = 1;  // Oct. 9, 2019 - mask_frame
   if (!archive.BeginWrite3dmAnonymousChunk(chunk_version))
     return false;
 
@@ -975,6 +1005,11 @@ bool ON_TextMask::Write(
       break;
     // DO NOT write m_content_hash
     // END of chunk_version = 0 information
+
+    const unsigned int mask_frame_as_unsigned = (unsigned int)(static_cast<unsigned char>(m_mask_frame));
+    if (!archive.WriteInt(mask_frame_as_unsigned))
+      break;
+    // END of chunk_version = 1 information
 
     rc = true;
     break;
@@ -1010,6 +1045,14 @@ bool ON_TextMask::Read(
     if (!archive.ReadDouble(&m_mask_border))
       break;
     // END of chunk_version = 0 information
+
+    if (chunk_version > 0)
+    {
+      unsigned int mask_frame_as_unsigned = (unsigned int)(static_cast<unsigned char>(m_mask_frame));
+      if (!archive.ReadInt(&mask_frame_as_unsigned))
+        break;
+      m_mask_frame = ON_TextMask::MaskFrameFromUnsigned(mask_frame_as_unsigned);
+    }
 
     rc = true;
     break;
@@ -5223,6 +5266,9 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
     case ON_DimStyle::field::DimTextLocation:
       ON_INTERNAL_UPDATE_PROPERTY(DimTextLocation);
       break;
+    case ON_DimStyle::field::MaskFrameType:
+      ON_INTERNAL_UPDATE_PROPERTY(MaskFrameType);
+      break;
     case ON_DimStyle::field::LengthResolution:
       ON_INTERNAL_UPDATE_PROPERTY(LengthResolution);
       break;
@@ -5687,6 +5733,7 @@ void ON_DimStyle::SetTextMask(const ON_TextMask& mask)
   SetMaskColor(local_mask.MaskColor());
   SetMaskFillType(local_mask.MaskFillType());
   SetMaskBorder(local_mask.MaskBorder());
+  SetMaskFrameType(local_mask.MaskFrameType());
 }
 
 void ON_DimStyle::Internal_SetTextMask(
@@ -5745,6 +5792,29 @@ void ON_DimStyle::SetMaskFillType(ON_TextMask::MaskType source)
   text_mask.SetMaskFillType(source);
   Internal_SetTextMask(text_mask);
   Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::MaskColorSource);
+}
+
+ON_TextMask::MaskFrame  ON_DimStyle::MaskFrameType() const
+{
+  // This function is for legacy compatibility.
+  // In October 2016, text mask information was moved from
+  // a collection of individual values on ON_DimStyle to
+  // an ON_TextMask class and a single ON_TextMask m_text_mask member
+  // on ON_DimStyle.
+  return TextMask().MaskFrameType();
+}
+
+void ON_DimStyle::SetMaskFrameType(ON_TextMask::MaskFrame source)
+{
+  // This function is for legacy compatibility.
+  // In October 2016, text mask information was moved from
+  // a collection of individual values on ON_DimStyle to
+  // an ON_TextMask class and a single ON_TextMask m_text_mask member
+  // on ON_DimStyle.
+  ON_TextMask text_mask = TextMask();
+  text_mask.SetMaskFrameType(source);
+  Internal_SetTextMask(text_mask);
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::MaskFrameType);
 }
 
 ON_Color ON_DimStyle::MaskColor() const

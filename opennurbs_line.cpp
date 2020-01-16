@@ -95,7 +95,10 @@ double ON_Line::Length() const
 
 ON_3dVector ON_Line::Direction() const
 {
-  return (to-from);
+  return (ON_UNSET_VALUE < to.x && to.x < ON_UNSET_POSITIVE_VALUE && ON_UNSET_VALUE <from.x && from.x < ON_UNSET_POSITIVE_VALUE) 
+    ? (to-from)
+    : (ON_3dPoint::UnsetPoint == from && ON_3dPoint::UnsetPoint == to ? ON_3dVector::UnsetVector : ON_3dVector::NanVector)
+    ;
 }
 
 ON_3dVector ON_Line::Tangent() const

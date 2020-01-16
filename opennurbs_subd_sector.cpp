@@ -91,9 +91,9 @@ public:
 
 
 
-double ON_SubDSectorType::SectorWeightCalculationError()
+double ON_SubDSectorType::SectorCoefficientCalculationError()
 {
-  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
 
 bool ON_SubDSectorType::IsValid() const
@@ -112,28 +112,28 @@ bool ON_SubDSectorType::IsValid() const
   case ON_SubD::VertexTag::Smooth:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::IgnoredSectorWeight))
+    if (!(m_sector_coefficient == ON_SubDSectorType::IgnoredSectorCoefficient))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
   case ON_SubD::VertexTag::Crease:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::CreaseSectorWeight(m_sector_face_count)))
+    if (!(m_sector_coefficient == ON_SubDSectorType::CreaseSectorCoefficient(m_sector_face_count)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
   case ON_SubD::VertexTag::Corner:
     if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians < ON_2PI))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::CornerSectorWeight(m_sector_face_count,m_corner_sector_angle_radians)))
+    if (!(m_sector_coefficient == ON_SubDSectorType::CornerSectorCoefficient(m_sector_face_count,m_corner_sector_angle_radians)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
   case ON_SubD::VertexTag::Dart:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
-    if (!(m_sector_weight == ON_SubDSectorType::DartSectorWeight(m_sector_face_count)))
+    if (!(m_sector_coefficient == ON_SubDSectorType::DartSectorCoefficient(m_sector_face_count)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
@@ -492,12 +492,12 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
 
 
 
-double ON_SubDSectorType::SectorWeightFromTheta(
+double ON_SubDSectorType::SectorCoefficientFromTheta(
   double sector_theta
   )
 {
   if (!(sector_theta > 0.0 && sector_theta <= ON_PI))
-    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 
   double cos_theta = cos(sector_theta);
 
@@ -533,20 +533,20 @@ double ON_SubDSectorType::SectorWeightFromTheta(
   if (cos_theta <= -1.0)
     return wrange[0];
 
-  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
 
-double ON_SubDSectorType::SectorWeight() const
+double ON_SubDSectorType::SectorCoefficient() const
 {
-  return m_sector_weight;
+  return m_sector_coefficient;
 }
 
-bool ON_SubDSectorType::IsValidSectorWeightValue(
+bool ON_SubDSectorType::IsValidSectorCoefficientValue(
   double weight_value,
-  bool bAllowUnsetTaggedEndWeight
+  bool bAllowUnsetTaggedEndCoefficient
   )
 {
-  return ((weight_value >= 0.0 && weight_value < 1.0) || (bAllowUnsetTaggedEndWeight && ON_SubDSectorType::UnsetSectorWeight == weight_value));
+  return ((weight_value >= 0.0 && weight_value < 1.0) || (bAllowUnsetTaggedEndCoefficient && ON_SubDSectorType::UnsetSectorCoefficient == weight_value));
 }
 
 bool ON_SubDSectorType::IsValidCornerSectorAngleRadians(
@@ -575,32 +575,32 @@ double ON_SubDSectorType::ClampCornerSectorAngleRadians(
 }
 
 
-double ON_SubDSectorType::SmoothSectorWeight()
+double ON_SubDSectorType::SmoothSectorCoefficient()
 {
-  return ON_SubDSectorType::IgnoredSectorWeight;
+  return ON_SubDSectorType::IgnoredSectorCoefficient;
 }
 
-double ON_SubDSectorType::CreaseSectorWeight(
+double ON_SubDSectorType::CreaseSectorCoefficient(
   unsigned int sector_face_count
   )
 {
   if (sector_face_count < 1)
-    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
   double sector_theta = ON_SubDSectorType::CreaseSectorTheta(sector_face_count);
-  return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
+  return ON_SubDSectorType::SectorCoefficientFromTheta(sector_theta);
 }
 
-double ON_SubDSectorType::DartSectorWeight(
+double ON_SubDSectorType::DartSectorCoefficient(
   unsigned int sector_face_count
   )
 {
   if (sector_face_count < 2)
-    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
   double sector_theta = ON_SubDSectorType::DartSectorTheta(sector_face_count);
-  return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
+  return ON_SubDSectorType::SectorCoefficientFromTheta(sector_theta);
 }
 
-double ON_SubDSectorType::CornerSectorWeight(
+double ON_SubDSectorType::CornerSectorCoefficient(
   unsigned int sector_face_count,
   double corner_sector_angle_radians
   )
@@ -613,9 +613,9 @@ double ON_SubDSectorType::CornerSectorWeight(
   {
     const double sector_theta = ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count,corner_sector_angle_radians);
     if (sector_theta >= 0.0)
-      return ON_SubDSectorType::SectorWeightFromTheta(sector_theta);
+      return ON_SubDSectorType::SectorCoefficientFromTheta(sector_theta);
   }
-  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorWeight);
+  return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
 
 static int CompareUnsinged(unsigned int a, unsigned int b)
@@ -719,10 +719,10 @@ ON_SubDSectorType ON_SubDSectorType::CreateSmoothSectorType(
       = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
       ? sector_face_count
       : 0;
-    st.m_sector_weight 
+    st.m_sector_coefficient
       = (st.m_sector_face_count>0)
-      ? ON_SubDSectorType::IgnoredSectorWeight
-      :  ON_SubDSectorType::UnsetSectorWeight;
+      ? ON_SubDSectorType::IgnoredSectorCoefficient
+      :  ON_SubDSectorType::UnsetSectorCoefficient;
     st.m_sector_theta 
       = (st.m_sector_face_count>0)
       ? ON_SubDSectorType::SmoothSectorTheta
@@ -746,10 +746,10 @@ ON_SubDSectorType ON_SubDSectorType::CreateCreaseSectorType(
       = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
       ? sector_face_count
       : 0;
-    st.m_sector_weight 
+    st.m_sector_coefficient
       = (st.m_sector_face_count>0)
-      ? ON_SubDSectorType::CreaseSectorWeight(sector_face_count)
-      : ON_SubDSectorType::UnsetSectorWeight;
+      ? ON_SubDSectorType::CreaseSectorCoefficient(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorCoefficient;
     st.m_sector_theta 
       = (st.m_sector_face_count>0)
       ? ON_SubDSectorType::CreaseSectorTheta(sector_face_count)
@@ -774,10 +774,10 @@ ON_SubDSectorType ON_SubDSectorType::CreateDartSectorType(
       = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
       ? sector_face_count
       : 0;
-    st.m_sector_weight 
+    st.m_sector_coefficient
       = (st.m_sector_face_count>0)
-      ? ON_SubDSectorType::DartSectorWeight(sector_face_count)
-      : ON_SubDSectorType::UnsetSectorWeight;
+      ? ON_SubDSectorType::DartSectorCoefficient(sector_face_count)
+      : ON_SubDSectorType::UnsetSectorCoefficient;
     st.m_sector_theta 
       = (st.m_sector_face_count>0)
       ? ON_SubDSectorType::DartSectorTheta(sector_face_count)
@@ -826,10 +826,10 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
           = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
           ? sector_face_count
           : 0;
-        st.m_sector_weight 
+        st.m_sector_coefficient
           = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
-          ? ON_SubDSectorType::CornerSectorWeight( sector_face_count, corner_sector_angle_radians)
-          : ON_SubDSectorType::UnsetSectorWeight;
+          ? ON_SubDSectorType::CornerSectorCoefficient( sector_face_count, corner_sector_angle_radians)
+          : ON_SubDSectorType::UnsetSectorCoefficient;
         st.m_sector_theta 
           = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
           ? ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count, corner_sector_angle_radians)

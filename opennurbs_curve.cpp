@@ -2278,7 +2278,7 @@ ON_Curve* ON_TrimCurve(
   else if ( trim_parameters.IsIncreasing() )
   {
     trimmed_curve = curve.DuplicateCurve();
-    if( !trimmed_curve->Trim(trim_parameters) )
+    if(!trimmed_curve || !trimmed_curve->Trim(trim_parameters) )
     {
       delete trimmed_curve;
       trimmed_curve = 0;

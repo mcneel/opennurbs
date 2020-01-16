@@ -17,13 +17,6 @@
 #if !defined OPENNURBS_WIP_INC__
 #define OPENNURBS_WIP_INC__
 
-// These SubD WIP defines can be deleted once we are 100% certain
-// they are not used in any code. They existed when SubD was a WIP
-// project that had to be conditionally added/removed from Rhino.
-#define OPENNURBS_SUBD_WIP
-#define RHINO_SUBD_WIP
-#define RHINO_SUBD_GRIPS_WIP
-
 // Annotation table is being prototyped and on hold
 // until V6 ships.
 //#define OPENNURBS_ANNOTATION_TABLE_WIP

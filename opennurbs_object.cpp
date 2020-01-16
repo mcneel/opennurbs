@@ -1389,7 +1389,7 @@ bool ON_Object::DetachUserData( ON_UserData* p )
 
 
 ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
-{
+ {
   ON_UserData* prev = nullptr;
   ON_UserData* p;
   for ( p = m_userdata_list; p; prev = p, p = p->m_userdata_next ) 

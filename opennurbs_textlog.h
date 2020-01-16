@@ -52,6 +52,18 @@ public:
   */
   static ON_TextLog Null;
 
+  /*
+  Returns:
+    True if this is ON_TextLog::Null.
+  */
+  bool IsNull() const;
+
+  /*
+  Returns:
+    True if the text is being used to calculate a geometric content SHA1 hash
+    and non-geometry information that varies based on time, computer, or user 
+    should not be printed.
+  */
   bool IsTextHash() const;
 
 public:

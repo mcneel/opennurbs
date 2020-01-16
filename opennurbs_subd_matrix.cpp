@@ -971,7 +971,7 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
     if (N < 2 || R < 4)
       return ON_SUBD_RETURN_ERROR(0);
 
-    const double w = this->SectorWeight();
+    const double w = this->SectorCoefficient();
 
     double* x;
     double* y;

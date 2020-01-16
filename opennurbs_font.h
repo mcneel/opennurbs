@@ -2180,6 +2180,13 @@ public:
     const ON_FontFaceQuartet* rhs
   );
 
+  /*
+  Returns a sample rich text string demonstrating the faces in the quartet.
+  */
+  const ON_wString RichTextSample(
+    ON::RichTextStyle rich_text_style
+  ) const;
+
 public:
   static const ON_FontFaceQuartet Empty;
 

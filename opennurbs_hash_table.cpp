@@ -41,6 +41,16 @@ ON__UINT32 ON_Hash32TableItem::HashTableSerialNumber() const
   return m_internal_hash_table_sn;
 }
 
+ON__UINT32 ON_Hash32TableItem::HashTableItemHash() const
+{
+  return m_internal_hash32;
+}
+
+void ON_Hash32TableItem::ClearHashTableSerialNumberForExperts()
+{
+  m_internal_hash_table_sn = 0;
+}
+
 //#define ON_DEBUG_ON_Hash32Table_ValidateEachTransaction
 
 #if defined(ON_DEBUG_ON_Hash32Table_ValidateEachTransaction)

@@ -41,6 +41,37 @@ public:
     const ON_UUID& id
     );
 
+  /*
+  Returns:
+    If this item has been added to an ON_Hash32Table.AddItem(hash32,item pointer) then the 
+    value of hash3d passed as the first argument to ON_Hash32Table.AddItem(hash32,item pointer)
+    is returned. This is the value the ON_Hash32Table uses for this item.
+    Othewise 0 is returned.
+  Remarks:
+    This function is useful when copying hash tables.
+
+    count = src_hash_table.ItemCount();
+    MyHashTableItems src_items[count]; // items added to src_hash_table 
+
+    // copy src_hash_table
+    MyHashTableItems copied_items[count];
+    copied_items = src_items;
+    for (unsigned i = 0; i < count; ++i)
+    {
+      ON_SubDSurfaceInterpolatortHash32TableItem& hitem = copied_items[i];
+      hitem.ClearHashTableSerialNumberForExperts();
+      m_htable.AddItem(hitem.HashTableItemHash(), &hitem);
+    }
+  */
+  ON__UINT32 HashTableItemHash() const;
+
+  /*
+  Description:
+    Useful when copying hash tables to remove the hash table reference from
+    a copied hash item. Never remove the hash table reference from an item
+    that is still in a hash table.
+  */
+  void ClearHashTableSerialNumberForExperts();
 private:
   friend class ON_Hash32Table;
   mutable ON_Hash32TableItem* m_internal_next = nullptr;

@@ -82,6 +82,7 @@
 
 
 #include "opennurbs_line.h"           // simple line
+#include "opennurbs_symmetry.h"
 #include "opennurbs_polyline.h"       // simple polyline
 #include "opennurbs_cylinder.h"       // simple 3d elliptical cylinder
 #include "opennurbs_cone.h"           // simple 3d right circular cone

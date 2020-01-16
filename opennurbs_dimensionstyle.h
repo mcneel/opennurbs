@@ -114,7 +114,28 @@ public:
 #pragma endregion
 
   static ON_TextMask::MaskType MaskTypeFromUnsigned(
-    unsigned int mask_type_as_unsigned
+    unsigned int mask_border_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON_TextMask::MaskFrame] [Rhino.DocObjects.DimensionStyle.MaskFrame] [nested:byte]
+  /// <summary>
+  /// Draw a frame stroke around the text mask area
+  /// </summary>
+  enum class MaskFrame : unsigned char
+  {
+    /// <summary>
+    /// Text mask frame not drawn
+    /// </summary>
+    NoFrame = 0,
+    /// <summary>
+    /// Text mask frame outline rectangle drawn
+    /// </summary>
+    RectFrame = 1,
+  };
+#pragma endregion
+
+  static ON_TextMask::MaskFrame MaskFrameFromUnsigned(
+    unsigned int mask_frame_as_unsigned
   );
 
 public:
@@ -156,6 +177,10 @@ public:
   // Can be background color or a specific color
   ON_TextMask::MaskType  MaskFillType() const;
   void SetMaskFillType(ON_TextMask::MaskType  source);
+  
+  // Determines whether or not to draw a rectangular frame around a text mask
+  ON_TextMask::MaskFrame MaskFrameType() const;
+  void SetMaskFrameType(ON_TextMask::MaskFrame frame);
 
   /*
   Returns:
@@ -196,8 +221,8 @@ public:
 private:
   bool                   m_bDrawMask = false;
   ON_TextMask::MaskType m_mask_type = ON_TextMask::MaskType::BackgroundColor;
-  
-  unsigned char m_reserved1 = 0;
+  ON_TextMask::MaskFrame m_mask_frame = ON_TextMask::MaskFrame::NoFrame;
+
   unsigned char m_reserved2 = 0;
 
   ON_Color               m_mask_color = ON_Color::White;
@@ -630,6 +655,8 @@ public:
     DimTextLocation                = 10,
  
      //OBSOLETE_LengthFormat_                   = 11,
+    /// <summary>Text mask frame</summary>
+    MaskFrameType                  = 11,
 
     /// <summary></summary>
     LengthResolution               = 12,
@@ -1721,6 +1748,10 @@ public:
   // Determines where to get the color to draw a Text Mask
   ON_TextMask::MaskType  MaskFillType() const;
   void SetMaskFillType(ON_TextMask::MaskType  source);
+
+  // Determines whether to draw a frame around a Text Mask
+  ON_TextMask::MaskFrame  MaskFrameType() const;
+  void SetMaskFrameType(ON_TextMask::MaskFrame  source);
 
   ON_Color MaskColor() const;  // Only works right if MaskColorSource returns 1.
   // Does not return viewport background color

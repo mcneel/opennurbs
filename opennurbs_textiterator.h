@@ -874,12 +874,13 @@ public:
     int m_facename_key = -1;
   };
 
-
   static bool Compose(
     const ON_TextContent* text,
-    const ON_DimStyle* dimstyle,
-    const ON_wString default_fontname,
-    ON_wString& rtf);
+    ON_wString& rtf,
+    bool bForceRtf);
+
+ static const ON_wString ComposeAppleRTF(
+    const ON_TextContent* text);
 
   static bool RecomposeRTF();
   static void SetRecomposeRTF(bool b);
@@ -889,8 +890,8 @@ private:
 
   RtfComposer();
 
-  static unsigned int GetFacenameKey(const ON_Font* font, ON_SimpleArray< wchar_t[34] >& fonttable);
-  static unsigned int GetFacenameKey(const wchar_t* facename, ON_SimpleArray< wchar_t[34] >& fonttable);
+  static unsigned int GetFacenameKey(const ON_Font* font, ON_ClassArray< ON_wString >& fonttable);
+  static unsigned int GetFacenameKey(const wchar_t* facename, ON_ClassArray< ON_wString >& fonttable);
   static unsigned int GetColorKey(ON_Color color, ON_SimpleArray< unsigned int >& colortable);
   static bool FormatTextHeight(double height, ON_wString& str);
 };

@@ -377,7 +377,8 @@ bool ON_SubD::SetTextureCoordinatesFromFaceDomains() const
 {
   if (ON_SubDTextureDomainType::Unset == this->TextureDomainType())
   {
-    if (false == SetTextureDomains(ON_SubDTextureDomainType::PerFace, false, false))
+    // uset default to packed
+    if (false == SetTextureDomains(ON_SubDTextureDomainType::Packed, false, false))
       return false;
   }
   ON_SubDFaceIterator fit(*this);
