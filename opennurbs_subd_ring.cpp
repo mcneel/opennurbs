@@ -467,7 +467,7 @@ static double Subdivide_CenterVertexSectorWeight(
   )
 {
   if ( ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
-    return ON_SubDSectorType::IgnoredSectorWeight;
+    return ON_SubDSectorType::IgnoredSectorCoefficient;
   if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::SmoothX == edge0->m_edge_tag)
   {
     if (vertex0 == edge0->m_vertex[0])
@@ -570,9 +570,9 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
   ON_SubD::EdgeTag edge1_tag = (ON_SubD::EdgeTag::SmoothX == edge0_tag) ? ON_SubD::EdgeTag::Smooth : edge0_tag;
   const double at_crease_weight 
     = ON_SubD::EdgeTag::Crease == edge1_tag
-    ? ON_SubDSectorType::CreaseSectorWeight(5-K)
-    : ON_SubDSectorType::IgnoredSectorWeight;
-  ON_SubDEdgePtr edge1 = fsh.AllocateEdge(v1[0], Subdivide_CenterVertexSectorWeight(edge0,vertex0), vertex1, ON_SubDSectorType::IgnoredSectorWeight );
+    ? ON_SubDSectorType::CreaseSectorCoefficient(5-K)
+    : ON_SubDSectorType::IgnoredSectorCoefficient;
+  ON_SubDEdgePtr edge1 = fsh.AllocateEdge(v1[0], Subdivide_CenterVertexSectorWeight(edge0,vertex0), vertex1, ON_SubDSectorType::IgnoredSectorCoefficient );
   if (edge1.IsNull())
     return ON_SUBD_RETURN_ERROR(nullptr);
   edge1.Edge()->m_edge_tag = edge1_tag;
@@ -607,7 +607,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
       v1[K] = fsh.AllocateVertex(edge0);
       if (nullptr == v1[K])
         return ON_SUBD_RETURN_ERROR(nullptr);
-      e1[K] = fsh.AllocateEdge(v1[0], Subdivide_CenterVertexSectorWeight(edge0, vertex0), v1[K], ON_SubDSectorType::IgnoredSectorWeight);
+      e1[K] = fsh.AllocateEdge(v1[0], Subdivide_CenterVertexSectorWeight(edge0, vertex0), v1[K], ON_SubDSectorType::IgnoredSectorCoefficient);
       if (e1[K].IsNull())
         return ON_SUBD_RETURN_ERROR(nullptr);
       e1[K].Edge()->m_edge_tag = edge1_tag;
@@ -617,8 +617,8 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
 
     // quads
     v1[2] = fsh.AllocateSectorFaceVertex(face0 );
-    e1[1] = fsh.AllocateEdge(v1[1], at_crease_weight, v1[2], ON_SubDSectorType::IgnoredSectorWeight);
-    e1[2] = fsh.AllocateEdge(v1[2], ON_SubDSectorType::IgnoredSectorWeight, v1[3], at_crease_weight);
+    e1[1] = fsh.AllocateEdge(v1[1], at_crease_weight, v1[2], ON_SubDSectorType::IgnoredSectorCoefficient);
+    e1[2] = fsh.AllocateEdge(v1[2], ON_SubDSectorType::IgnoredSectorCoefficient, v1[3], at_crease_weight);
     f1epts[1] = e1[1];
     f1epts[2] = e1[2];
     if (nullptr == fsh.AllocateQuad(face0->m_zero_face_id, face0->m_id, f1epts) )

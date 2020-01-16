@@ -2087,6 +2087,38 @@ void ON_Xform::Mirror(
   m_xform[3][3] = 1.0;
 }
 
+const ON_Xform ON_Xform::MirrorTransformation(
+  ON_PlaneEquation mirror_plane
+)
+{
+  const ON_PlaneEquation e = mirror_plane.UnitizedPlaneEquation();
+  const ON_3dVector N(e.x, e.y, e.z);
+  ON_3dVector V = (-2.0*e.d)*N;
+  ON_Xform mirror;
+  mirror.m_xform[0][0] = 1 - 2.0*N.x*N.x;
+  mirror.m_xform[0][1] = -2.0*N.x*N.y;
+  mirror.m_xform[0][2] = -2.0*N.x*N.z;
+  mirror.m_xform[0][3] = V.x;
+
+  mirror.m_xform[1][0] = -2.0*N.y*N.x;
+  mirror.m_xform[1][1] = 1.0 - 2.0*N.y*N.y;
+  mirror.m_xform[1][2] = -2.0*N.y*N.z;
+  mirror.m_xform[1][3] = V.y;
+
+  mirror.m_xform[2][0] = -2.0*N.z*N.x;
+  mirror.m_xform[2][1] = -2.0*N.z*N.y;
+  mirror.m_xform[2][2] = 1.0 - 2.0*N.z*N.z;
+  mirror.m_xform[2][3] = V.z;
+
+  mirror.m_xform[3][0] = 0.0;
+  mirror.m_xform[3][1] = 0.0;
+  mirror.m_xform[3][2] = 0.0;
+  mirror.m_xform[3][3] = 1.0;
+
+  return mirror;
+}
+
+
 
 
 bool ON_Xform::ChangeBasis( 

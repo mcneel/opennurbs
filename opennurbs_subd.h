@@ -375,6 +375,40 @@ public:
   ) const;
 
   /*
+  Parameters:
+    relative_vertex_index - [in]
+      0: return Edge()->Vertex(EdgeDirection())
+      1: return Edge()->Vertex(1-EdgeDirection())
+  Returns:
+    The requested vertex control net point EdgeDirection() taken into account.
+    ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
+  */
+  const ON_3dPoint RelativeControlNetPoint(
+    int relative_vertex_index
+  ) const;
+
+  const ON_Line RelativeControlNetLine() const;
+
+  const ON_3dVector RelativeControlNetDirection() const;
+
+  /*
+  Parameters:
+    relative_vertex_index - [in]
+  Returns:
+    If Edge() not nullptr, then
+    If (relative_vertex_index = 0), returns Edge()->m_sector_coefficient(EdgeDirection())
+    If (relative_vertex_index = 0), returns Edge()->m_sector_coefficient(1-EdgeDirection())
+    Otherwise ON_SubDSectorType::ErrorSectorCoefficient is returned.
+  Remarks:
+    The name "sector coefficient" is used because is is a property of the
+    vertex's sector (every edge in vertex sector has the same value at the tagged vertex).
+    The sector coefficient does not change which a subdivision is applied.
+  */
+  double RelativeSectorCoefficient(
+    int relative_vertex_index
+    ) const;
+
+  /*
   Returns:
     The vector from RelativeVertex(0)->ControlNetPoint() to RelativeVertex(1)->ControlNetPoint(),
     or ON_3dVector::NanVector if the relative vertex pointers are nullptr.
@@ -421,6 +455,33 @@ public:
   static const ON_SubDEdgePtr Create(
     const class ON_SubDComponentPtr& edge_component
     );
+
+  /*
+  Parameters:
+    edge - [in]
+    start_vertex - [in]
+      One of the edge's vertices.
+  Returns:
+     An ON_SubDEdgePtr pointing at edge with RelativeVertex(0) = start_vertex.
+  */
+  static const ON_SubDEdgePtr CreateFromStartVertex(
+    const class ON_SubDEdge* edge,
+    const ON_SubDVertex* start_vertex
+  );
+
+  /*
+  Parameters:
+    edge - [in]
+    end_vertex - [in]
+      One of the edge's vertices.
+  Returns:
+     An ON_SubDEdgePtr pointing at edge with RelativeVertex(1) = end_vertex.
+  */
+  static const ON_SubDEdgePtr CreateFromEndVertex(
+    const class ON_SubDEdge* edge,
+    const ON_SubDVertex* end_vertex
+  );
+
 
   /*
   Returns:
@@ -525,6 +586,12 @@ public:
   ON__UINT_PTR FaceDirection() const;
 
   const ON_ComponentStatus Status() const;
+
+  /*
+  Returns:
+    A ON_SubDFacePtr pointing at the same face with the direction reversed from this.
+  */
+  const ON_SubDFacePtr Reversed() const;
 
   static const ON_SubDFacePtr Create(
     const class ON_SubDFace* face,
@@ -963,6 +1030,21 @@ public:
     Otherwise ON_SubDComponentPtr::Type::Unset is returned.
   */
   ON_SubDComponentPtr::Type ComponentType() const;
+
+  /*
+  Returns true if First() is ON_SubDComponentPtr::Null.
+  */
+  bool FirstIsNull() const;
+
+  /*
+  Returns true if Second() is ON_SubDComponentPtr::Null.
+  */
+  bool SecondIsNull() const;
+
+  /*
+  Returns true if both First() and Second() are ON_SubDComponentPtr::Null.
+  */
+  bool BothAreNull() const;
 
 public:
   const static ON_SubDComponentPtrPair Null;
@@ -1541,9 +1623,6 @@ public:
   class ON_NurbsSurface* m_nurbs_surface = nullptr;
 };
 
-
-
-
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubD
@@ -1853,7 +1932,24 @@ public:
     /// Every edge in an edge chain has the same smooth/crease edge tag 
     /// and interior vertices have the corresponding smooth/crease vertex tag.
     ///</summary>
-    EqualEdgeAndVertexTag = 3
+    EqualEdgeAndVertexTag = 3,
+
+    ///<summary>
+    /// Every edge in an edge chain has the same smooth/crease property
+    /// and every edge has the same number of faces.
+    /// If the edges have 1 face, then interior vertices have valence = 3.
+    /// If the edges have 2 faces, then interior vertices have valence = 4.
+    ///</summary>
+    EqualEdgeTagAndOrdinary = 4,
+
+    ///<summary>
+    /// Every edge in an edge chain has the same smooth/crease edge tag,
+    /// every edge has the same number of faces,
+    /// and interior vertices have the corresponding smooth/crease vertex tag.
+    /// If the edges have 1 face, then interior vertices have valence = 3.
+    /// If the edges have 2 faces, then interior vertices have valence = 4.
+    ///</summary>
+    EqualEdgeAndVertexTagAndOrdinary = 5
   };
 #pragma endregion
 
@@ -2610,7 +2706,11 @@ public:
   */
   const class ON_SubDVertex* VertexFromId(
     unsigned int vertex_id
-    ) const;
+  ) const;
+
+  const class ON_SubDVertex* VertexFromComponentIndex(
+    ON_COMPONENT_INDEX component_index
+  ) const;
 
   /////////////////////////////////////////////////////////
   //
@@ -2651,6 +2751,10 @@ public:
     unsigned int edge_id
     ) const;
 
+  const class ON_SubDEdge* EdgeFromComponentIndex(
+    ON_COMPONENT_INDEX component_index
+  ) const;
+
   /////////////////////////////////////////////////////////
   //
   // Face access
@@ -2689,6 +2793,12 @@ public:
   const class ON_SubDFace* FaceFromId(
     unsigned int face_id
     ) const;
+
+
+  const class ON_SubDFace* FaceFromComponentIndex(
+    ON_COMPONENT_INDEX component_index
+  ) const;
+
 
   /////////////////////////////////////////////////////////
   //
@@ -2910,12 +3020,17 @@ public:
   Returns:
     Merged edge (eptr0) or ON_SubDEdgePtr::Null if edges could not be merged
   */
-  ON_SubDEdgePtr MergeEdges(
+  ON_SubDEdgePtr MergeConsecutiveEdges(
     ON_SubDEdgePtr eptr0,
     ON_SubDEdgePtr eptr1
     );
 
-  static bool EdgesCanBeMerged(
+  /*
+  Returns:
+    True if eptr0.RelativeVetex(1) == eptr1.RelativeVetex(0) and both edges
+    have the same set of faces.
+  */
+  static bool EdgesAreConsecutive(
     ON_SubDEdgePtr eptr0,
     ON_SubDEdgePtr eptr1
     );
@@ -3099,7 +3214,7 @@ public:
       sector weights will be checked and updated as needed.
   Returns:
     Number of edges that had a tag value changed or sector
-    coefficient set to ON_SubDSectorType::UnsetSectorWeight.
+    coefficient set to ON_SubDSectorType::UnsetSectorCoefficient.
   Remarks:
     It is easiest to call UpdateAllTagsAndSectorCoefficients().
   */
@@ -3123,7 +3238,7 @@ public:
       sector weights will be checked and updated as needed.
   Returns:
     Number of edges that had a tag value changed or sector
-    coefficient set to ON_SubDSectorType::UnsetSectorWeight.
+    coefficient set to ON_SubDSectorType::UnsetSectorCoefficient.
   Remarks:
     It is easiest to call UpdateAllTagsAndSectorCoefficients().
   */
@@ -3378,6 +3493,7 @@ public:
     size_t cptr_count,
     ON_SubD::EdgeTag edge_tag
   );
+
 
   /*
   Description:
@@ -4054,6 +4170,19 @@ public:
   void ClearEvaluationCache() const;
 
 
+  /*
+  Description:
+    Clear all cached evaluation information (meshes, surface points, boundiang boxes, ...)
+    that depends on the vertex's control point location or tag. 
+  Parameter:
+    vertex - [in]
+  */
+  void ClearNeighborhoodEvaluationCache(
+    const ON_SubDVertex* vertex,
+    bool bTagChanged
+    ) const;
+
+
  /*
   Description:
     Get a mesh of the subdivision control net.
@@ -4068,6 +4197,9 @@ public:
   class ON_Mesh* GetControlNetMesh(
     class ON_Mesh* mesh
     ) const;
+
+
+
 
 
 
@@ -4488,6 +4620,143 @@ private:
 #pragma ON_PRAGMA_WARNING_POP
 };
 
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentList
+//
+class ON_CLASS ON_SubDComponentList
+{
+public:
+  ON_SubDComponentList() = default;
+  ~ON_SubDComponentList() = default;
+  ON_SubDComponentList(const ON_SubDComponentList&);
+  ON_SubDComponentList& operator=(const ON_SubDComponentList&);
+
+public:
+  static const ON_SubDComponentList Empty;
+
+public:
+  unsigned CreateFromMarkedComponents(const ON_SubD& subd, bool bComponentInListMark);
+  unsigned CreateFromMarkedVertices(const ON_SubD& subd, bool bVertexInListMark);
+  unsigned CreateFromMarkedEdges(const ON_SubD& subd, bool bEdgeInListMark);
+  unsigned CreateFromMarkedFaces(const ON_SubD& subd, bool bFaceInListMark);
+
+  unsigned CreateFromComponentList(const ON_SubD& subd, const ON_SimpleArray<ON_COMPONENT_INDEX>& component_list);
+  unsigned CreateFromComponentList(const ON_SubD& subd, const ON_SimpleArray<ON_SubDComponentPtr>& component_list);
+
+  unsigned CreateFromVertexIdList(const ON_SubD& subd, const ON_SimpleArray<unsigned>& free_vertex_ids);
+  unsigned CreateFromVertexList(const ON_SubD& subd, const ON_SimpleArray<ON_SubDVertexPtr>& free_vertices);
+  unsigned CreateFromVertexList(const ON_SubD& subd, const ON_SimpleArray<const ON_SubDVertex*>& free_vertices);
+
+  void Destroy();
+
+  /*
+  Returns:
+    Number of removed components.
+  */
+  unsigned int RemoveAllComponents();
+
+  /*
+  Returns:
+    Number of removed components.
+  */
+  unsigned int RemoveAllVertices();
+
+  /*
+  Returns:
+    Number of removed components.
+  */
+  unsigned int RemoveAllEdges();
+
+  /*
+  Returns:
+    Number of removed components.
+  */
+  unsigned int RemoveAllFaces();
+
+  /*
+  Returns:
+    SubD runtime serial number.
+  */
+  ON__UINT64 SubDRuntimeSerialNumber() const;
+
+  /*
+  Returns:
+    SubD content serial number when this list was created or the last
+    time UpdateContentSerialNumber() was run.
+  */
+  ON__UINT64 SubDContentSerialNumber() const;
+
+  unsigned int Count() const;
+
+  /*
+  operator[] returns ON_SubDComponentPtr::Null when index is out of bounds.
+  */
+  const ON_SubDComponentPtr operator[](int) const;
+  const ON_SubDComponentPtr operator[](unsigned int) const;
+  const ON_SubDComponentPtr operator[](ON__INT64) const;
+  const ON_SubDComponentPtr operator[](ON__UINT64) const;
+#if defined(ON_RUNTIME_APPLE)
+  const ON_SubDComponentPtr operator[](size_t) const;
+#endif
+
+  const ON_SimpleArray< ON_SubDComponentPtr >& ComponentList() const;
+
+  const ON_SubD& SubD() const;
+
+  /*
+  Description:
+    Update the saved subd content serial number to the current value of SubD().ContentSerialNumber().
+  Returns:
+    Updated value of subd content serial number.
+  */
+  ON__UINT64 UpdateContentSerialNumber();
+
+  /*
+  Description:
+    Change the component list to reference components in a different subd.
+  Parameters:
+    new_subd - [in]
+      subd to replace current referenced subd
+    bUpdateDeletedComponents - [in]
+      false: current components that are deleted will be ignored.
+      true: if the corresponding component in new_sub is not deleted, it
+      will be added to the list.
+  Returns:
+    Number of components in list after updating.
+  */
+  unsigned int UpdateSubDForExperts(const ON_SubD& subd, bool bUpdateDeletedComponents);
+
+
+private:
+  unsigned Internal_Create(
+    const ON_SubD& subd,
+    bool bAddVertices,
+    bool bAddEdges,
+    bool bAddFaces,
+    bool bComponentInListMark,
+    unsigned marked_component_count
+  );
+
+  unsigned Internal_RemoveComponents(
+    bool bRemoveVertices,
+    bool bRemoveEdges,
+    bool bRemoveFaces
+  );
+
+private:
+  ON__UINT64 m_subd_runtime_serial_number = 0;
+  ON__UINT64 m_subd_content_serial_number = 0;
+
+  unsigned m_subd_vertex_count = 0;
+  unsigned m_subd_edge_count = 0;
+  unsigned m_subd_face_count = 0;
+  unsigned m_reserved = 0;
+
+private:
+  ON_SubD m_subd; // keeps subd dimple in scope while m_component_list[] is active
+  ON_SimpleArray< ON_SubDComponentPtr > m_component_list;
+};
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -4496,9 +4765,9 @@ private:
 class ON_SubDComponentMarksClearAndRestore
 {
 public:
-  // Constructor saves current component RuntimeMark() settings.
+  // Constructor saves current component RuntimeMark() settings and then clears them.
   ON_SubDComponentMarksClearAndRestore(
-    ON_SubD& subd
+    const ON_SubD& subd
   );
 
   // Destructor restores saved marks.
@@ -4559,7 +4828,7 @@ public:
 
   /////////////////////////////////////////////////////////////////////////////////////
   //
-  // Sector Weights
+  // Sector Coefficients
   //
   /////////////////////////////////////////////////////////////////////////////////////
   //
@@ -4644,10 +4913,10 @@ public:
   Returns:
     w: 0.0 <= w < 1.0
       w = sector theta value.
-    ON_SubDSectorType::ErrorSectorWeight
+    ON_SubDSectorType::ErrorSectorCoefficient
       This ON_SubDSectorType is not valid and the calculation failed.
   */
-  double SectorWeight() const;
+  double SectorCoefficient() const;
 
 
   unsigned int FacetEdgeCount() const;
@@ -4839,9 +5108,9 @@ public:
 public:
   /*
   Returns:
-    ON_SubDSectorType::IgnoredSectorWeight
+    ON_SubDSectorType::IgnoredSectorCoefficient
   */
-  static double SmoothSectorWeight();
+  static double SmoothSectorCoefficient();
   
   /*
   Parameters:
@@ -4851,7 +5120,7 @@ public:
   Returns:
     0: 
       failed to caclulate weight
-    ON_SubDSectorType::UnsetSectorWeight:
+    ON_SubDSectorType::UnsetSectorCoefficient:
       This typically happens when a SubD control net is being 
       created and a facet type is not specified.  
       The weights will be calculated at the first subdivision.
@@ -4862,15 +5131,15 @@ public:
     This is a useful tool when calling AddEdge while a subdivision
     level is being constructed.
   */
-  static double CreaseSectorWeight(
+  static double CreaseSectorCoefficient(
     unsigned int sector_face_count
     );
 
-  static double DartSectorWeight(
+  static double DartSectorCoefficient(
     unsigned int sector_face_count
     );
 
-  static double CornerSectorWeight(
+  static double CornerSectorCoefficient(
     unsigned int sector_face_count,
     double corner_sector_angle_radians
     );
@@ -4901,33 +5170,33 @@ public:
   static const double ErrorSectorTheta; // = -9992.0;
 
 
-  // This value is is used to set sector weights when the
+  // This value is is used to set edge sector coefficients when the
   // actual value is not needed. This occurs at both ends
   // of a creased edge and when the end of a smooth edge
   // is a smooth vertex.
-  static const double IgnoredSectorWeight; // = 0.0;
+  static const double IgnoredSectorCoefficient; // = 0.0;
 
-  // This value is used to mark sector weights that need to be
+  // This value is used to mark edge sector coefficients that need to be
   // set in the future when more information is available.
   // It is typically used when creating a subD control net
   // and the facet type is not known. Any value < 0.0 and not
   // equal to ON_UNSET_VALUE would work. The fact that the actual
   // value is -999.0 has no other significance.
-  static const double UnsetSectorWeight; // = -8883.0;
+  static const double UnsetSectorCoefficient; // = -8883.0;
 
-  // This value is indicate a sector weight calculation failed.
-  static const double ErrorSectorWeight; // = -9993.0;
+  // This value indicates an edge sector coefficient calculation failed.
+  static const double ErrorSectorCoefficient; // = -9993.0;
 
-  static bool IsValidSectorWeightValue(
+  static bool IsValidSectorCoefficientValue(
     double weight_value,
-    bool bAllowUnsetTaggedEndWeight
+    bool bAllowUnsetTaggedEndCoefficient
     );
 
   /*
   Returns:
-    ON_SubDSectorType::ErrorSectorWeight and calls debug breakpoint
+    ON_SubDSectorType::ErrorSectorCoefficient and calls debug breakpoint
   */
-  static double SectorWeightCalculationError();
+  static double SectorCoefficientCalculationError();
 
   
   /*
@@ -5349,7 +5618,7 @@ private:
   unsigned int m_hash = 0; // SetHash() sets this field, SectorTypeHash() returns its value.
   unsigned int m_corner_sector_angle_index = 0; // >= 0 and <= ON_SubDSectorType::MaximumCornerAngleIndex
   unsigned int m_sector_face_count = 0;
-  double m_sector_weight = 0.0;
+  double m_sector_coefficient = 0.0;
   double m_sector_theta = 0.0;
   double m_corner_sector_angle_radians = 0.0;  
   
@@ -5426,7 +5695,7 @@ private:
   Returns:
     0: 
       failed to caclulate weight
-    ON_SubDSectorType::ErrorSectorWeight: 
+    ON_SubDSectorType::ErrorSectorCoefficient: 
       sector_theta is not valid.
     0 < w < 1:
       The returned value is 
@@ -5435,7 +5704,7 @@ private:
     This is a useful tool when calling AddEdge while a subdivision
     level is being constructed.
   */
-  static double SectorWeightFromTheta(
+  static double SectorCoefficientFromTheta(
     double sector_theta
     );
 };
@@ -7136,15 +7405,11 @@ protected:
   friend class ON_SubDHeap;
   enum SavedPointsFlags : unsigned char
   {
-    // if ( 0 != (m_saved_points_flags & ControlNetFragmentBit), then ON_subDFace.m_control_net_mesh_fragments are set.
-    // Otherwise means any information in ON_subDFace.m_control_net_mesh_fragments is invalid and must be recalculated.
-    ControlNetFragmentBit = 0x10,
-
-    // if ( 0 != (m_saved_points_flags & SubDDisplacementVIsSet), then m_cache_subd_P is set.
-    SubdivisionPointBit = 0x20,
-
     // if ( 0 != (m_saved_points_flags & SubDDisplacementVIsSet), then m_displacementV is set.
-    SubdivisionDisplacementBit = 0x40,
+    SubdivisionDisplacementBit = 0x20,
+
+    // if ( 0 != (m_saved_points_flags & SubdivisionPointBit), then m_cache_subd_P is set.
+    SubdivisionPointBit = 0x40,
 
     // if ( 0 != (m_saved_points_flags & SurfacePointBit), then ON_subDVertex.m_limit* values are set.
     // ON_SubDVertex: Set means one or more sector limit surface points are saved in ON_SubDVertex.m_limit_point.
@@ -7157,10 +7422,41 @@ protected:
     CachedPointMask = 0xF0
   };
 
+  enum ModifiedFlags : unsigned char
+  {
+    // if ( 0 != (m_saved_points_flags & Modified1Bit), then the component has been modified and
+    // cached subdivision information needs to be recalculated.
+    Modified1Bit = 0x01,
+
+    // if ( 0 != (m_saved_points_flags & Modified2Bit), then the component is adjacent to
+    // a modified component and cached subdivision information needs to be recalculated.
+    Modified2Bit = 0x02,
+
+    // ModifiedFlagsMask = Modified1Bit | Modified2Bit
+    // if ( 0 != (m_saved_points_flags & ModifiedFlagsMask), then any cached subdivision information
+    // on that component needs to be recalculated.
+    ModifiedFlagsMask = 0x03
+  };
+
   // m_saved_points_flags is a bit field based on ON_SubDComponentBase::SavePointsFlags values.
   // GetSurfacePoint( bUseSavedSurfacePoint=true ) can change the value of m_saved_points_flags
   void Internal_SetSavedSurfacePointFlag(bool bSavedSurfacePointFlag) const;
-  void Internal_SetSavedControlNetFragmentFlag(bool bSavedControlNetFragmentFlag) const;
+  void Internal_SetModified1Flag() const;
+  void Internal_SetModified2Flag() const;
+
+  /*
+  Returns:
+    True if Modified1Bit or Modified2Bit is set.
+  */
+  bool Internal_Modified1IsSet() const;
+
+  /*
+  Returns:
+    True if Modified1Bit or Modified2Bit is set.
+  */
+  bool Internal_Modified1or2IsSet() const;
+
+  void Internal_ClearModifiedFlags() const;
   mutable unsigned char m_saved_points_flags = 0U;
 
   unsigned char m_level = 0U;
@@ -7195,17 +7491,9 @@ protected:
   */
   void Internal_ClearSurfacePointFlag() const;
 
-  /*
-  Description:
-    Clears the flag indicating that ON_SubDFace.m_control_net_fragment is current.
-  */
-  void Internal_ClearControlNetFragmentFlag() const;
-
   bool Internal_SubdivisionPointFlag() const;
 
   bool Internal_SurfacePointFlag() const;
-
-  bool Internal_ControlNetFragmentFlag() const;
 
   void Internal_TransformComponentBase(bool bTransformationSavedSubdivisionPoint, const class ON_Xform& xform);
   // GetSubdivisionPoint( bUseSavedSubdivisionPoint=true ) can change the value of m_cache_subd_P
@@ -7264,9 +7552,62 @@ public:
 public:
   static const ON_SubDVertexEdgeProperties Zero; // all member values are zero.
 
+  /*
+  Returns:
+    True if there are no null edges and there are two edges with a single face and all remaining edges have two faces.
+  Remarks:
+    Tags are ignored.
+  */
+  bool HasInteriorVertexTopology() const;
+
+  /*
+  Returns:
+    True if there are no null edges and there are at least two edges and they all have two faces.
+  Remarks:
+    Tags are ignored.
+  */
+  bool HasBoundaryVertexTopology() const;
+
+  /*
+  Returns:
+    HasInteriorVertexTopology() || HasBoundaryVertexTopology().
+  */
+  bool HasManifoldVertexTopology() const;
+
+  /*
+  Returns:
+    True if there are no null edges and there is an edge with zero faces or an edge with three or more faces.
+  Remarks:
+    Tags are ignored.
+  */
+  bool HasNonmanifoldVertexTopology() const;
+
+  /*
+  Returns:
+    Number of edges.
+  */
+  unsigned EdgeCount() const;
+
 public:
   // Number of null edges
   unsigned short m_null_edge_count = 0;
+
+
+  /////////////////////////////////////////////////////
+  //
+  // Vertex attached component counts
+  //
+
+  // vertex->m_edge_count 
+  unsigned short m_edge_count = 0;
+
+  // vertex->m_face_count 
+  unsigned short m_face_count = 0;
+
+  /////////////////////////////////////////////////////
+  //
+  // Edge tag counts
+  //
 
   // Number of edges tags ON_SubD::EdgeTag::Unset
   unsigned short m_unset_edge_count = 0;
@@ -7276,6 +7617,11 @@ public:
 
   // Number of edges tags ON_SubD::EdgeTag::Crease
   unsigned short m_crease_edge_count = 0;
+
+  /////////////////////////////////////////////////////
+  //
+  // Edge topology counts
+  //
 
   // Number of wire edges (0 attached faces)
   unsigned short m_wire_edge_count = 0;
@@ -7288,6 +7634,12 @@ public:
 
   // Number of nonmanifold edges (3 or more attached faces)
   unsigned short m_nonmanifold_edge_count = 0;
+
+
+  /////////////////////////////////////////////////////
+  //
+  // Edge face counts
+  //
 
   // Minimum value of attached edges's m_face_count.
   unsigned short m_min_edge_face_count = 0;
@@ -7590,6 +7942,38 @@ public:
   const ON_SubDVertexEdgeProperties EdgeProperties() const;
 
   /*
+  Parameters:
+    eptr0 - [out]
+    eptr1 - [out]
+      If a vertex has exactly two attached edges, each of which has a single attached face,
+      then these edges are returned in the order the appear in the vertex's edge list. 
+      (RelativeVertex(0) = this vertex). Othwerise the parameters are set to null.
+  Returns:
+    True if the vertex has exactly two attached edges, each of which has a single attached face.
+    False otherwise.
+  */
+  bool GetBoundaryVertexEdges(
+    ON_SubDEdgePtr* eptr0,
+    ON_SubDEdgePtr* eptr1
+  ) const;
+
+  /*
+  Parameters:
+    vei0 - [out]
+    vei1 - [out]
+      If a vertex has exactly two attached edges, each of which has a single attached face,
+      then the indices of those edges in the vertex's edge list are returned. 
+      Othewise ON_UNSET_UINT_INDEX is returned.
+  Returns:
+    True if the vertex has exactly two attached edges, each of which has a single attached face.
+    False otherwise.
+  */
+  bool GetBoundaryVertexEdgeIndices(
+    unsigned* vei0,
+    unsigned* vei1
+  ) const;
+
+  /*
   Description:
     A "standard" vertex is one where the standard subdivsion matrix for that vertex
     can be used to calculate the subdivision point. 
@@ -7771,6 +8155,12 @@ public:
   */
   bool SurfacePointIsSet() const;
 
+
+  const ON_Plane VertexFrame(
+    ON_SubDComponentLocation subd_appearance
+  ) const;
+
+
   /*
   Description:
     Call this function if the vertex is modified and it will clear any
@@ -7789,6 +8179,31 @@ public:
     Number of faces attached to this vertex with Face().m_status.RuntimeMark() = true;
   */
   unsigned int MarkedFaceCount() const;
+
+  /*
+  Returns:
+    Minimum number of edges for any face attached to this vertex.
+  */
+  unsigned int MinimumFaceEdgeCount() const;
+
+  /*
+  Returns:
+    Maximum number of edges for any face attached to this vertex.
+  */
+  unsigned int MaximumFaceEdgeCount() const;
+
+
+  /*
+  Returns:
+    Minimum number of faces for any edge attached to this vertex.
+  */
+  unsigned int MinimumEdgeFaceCount() const;
+
+  /*
+  Returns:
+    Maximum number of faces for any edge attached to this vertex.
+  */
+  unsigned int MaximumEdgeFaceCount() const;
 
   /*
   Description:
@@ -7838,6 +8253,8 @@ private:
 
 private:
   friend class ON_SubDArchiveIdMap;
+  friend class ON_SubDEdge;
+  friend class ON_SubDFace;
   void CopyFrom(
     const ON_SubDVertex* src,
     bool bCopyEdgeArray,
@@ -7921,6 +8338,11 @@ public:
 
   const ON_BoundingBox ControlNetBoundingBox() const;
 
+  const ON_Plane CenterFrame(
+    ON_SubDComponentLocation subd_appearance
+  ) const;
+
+
 
   /*
   Description:
@@ -7986,12 +8408,12 @@ public:
   };
   unsigned short m_face_count = 0;
   unsigned short m_facex_capacity = 0;
-  ON_SubDFacePtr m_face2[2];
+  ON_SubDFacePtr m_face2[2] = {};
   ON_SubDFacePtr* m_facex = nullptr;
 
   // m_vertex[0] = vertex at the start of the edge.
   // m_vertex[1] = vertex at the end of the edge.
-  const class ON_SubDVertex* m_vertex[2];
+  const class ON_SubDVertex* m_vertex[2] = {};
 
   // If the value of vertex->m_vertex_tag is not ON_SubD::VertexTag::Smooth,
   // then that vertex is "tagged". 
@@ -8012,7 +8434,7 @@ public:
   //
   // If the value of m_edge_tag is ON_SubD::EdgeTag::Smooth and
   // exactly one end vertex is tagged, then the m_sector_coefficient[]
-  // value for the tagged end is calculated by ON_SubDSectorType::SectorWeight().
+  // value for the tagged end is calculated by ON_SubDSectorType::SectorCoefficient().
   // tagged_weight*tagged_vertex + (1.0 - tagged_weight)*untagged_vertex
   // is used when combining the edge ends.
   // The edge's subdivision vertex will be tagged as ON_SubD::VertexTag::Smooth
@@ -8021,7 +8443,7 @@ public:
   // If the value of m_edge_tag is ON_SubD::EdgeTag::SmoothX, then the edge
   // must have exactly two neighboring faces,
   // both vertices must be tagged and the m_sector_coefficient[]
-  // values are calculated by ON_SubDSectorType::SectorWeight().
+  // values are calculated by ON_SubDSectorType::SectorCoefficient().
   // When the edge is subdivided, the midpoint of the edge is the 
   // location of the edge.s subdivision point.
   // The edge's subdivision vertex will be tagged as ON_SubD::VertexTag::Smooth
@@ -8037,8 +8459,12 @@ public:
   //
   // m_sector_coefficient[tagged_end] = 1/2 + 1/3*cos(theta)
   // where "theta" = tagged end "theta" (which depends on vertex tag (dart/crease/corner), 
-  // the number of faces in the sector, and the crease angle when the tagged end is a corner).  
-  double m_sector_coefficient[2];
+  // the number of faces in the sector, and the control net crease angle when the tagged end is a corner.  
+  //
+  // The name "sector coefficient" is used because the value is a property of the
+  // vertex's sector (every smooth edge inside a vertex sector has the same value at the tagged vertex).
+  // The sector coefficient does not change which a subdivision is applied.
+  double m_sector_coefficient[2] = {};
 
   // If m_edge_tag is not ON_SubD::EdgeTag::Sharp, then m_sharpness is ignored.
   // If m_edge_tag is ON_SubD::EdgeTag::Sharp, then m_sharpness controls how hard/soft
@@ -8206,6 +8632,8 @@ public:
     Otherwise ON_3dPoint::NanPoint is returned.
   */
   const ON_3dPoint ControlNetPoint( unsigned int i ) const;
+
+  const ON_Line ControlNetLine() const;
 
   /*
   Returns:
@@ -8451,6 +8879,8 @@ private:
 
 private:
   friend class ON_SubDArchiveIdMap;
+  friend class ON_SubDVertex;
+  friend class ON_SubDFace;
   void CopyFrom(
     const ON_SubDEdge* src,
     bool bReverseEdge,
@@ -8981,6 +9411,9 @@ public:
 
 private:
   friend  class ON_SubDArchiveIdMap;
+  friend class ON_SubDVertex;
+  friend class ON_SubDEdge;
+
   void CopyFrom(
     const ON_SubDFace* src,
     bool bCopyEdgeArray
@@ -11411,8 +11844,7 @@ public:
   //
   // If the facet type is quad, and C is a standard interior vertex,
   // then the "standard vertex ring" is the list of 2*N+1 points 
-  // (C, P[0], Q[0], ...., P[N-1], Q[N-1]), where Q[I] is the average of the
-  // four corners of the quad F[i].
+  // (C, P[0], Q[0], ...., P[N-1], Q[N-1]), where Q[I] is the vertex of quad F[i] diagonally across from C.
   //
   // If the facet type is quad, and C is a standard boundary vertex,
   // then the "standard vertex ring" is the list of 2*N points 
@@ -11670,6 +12102,18 @@ public:
 
   /*
   Description:
+    Allocate a vertex located at the edge0 subdivision point.
+    The vertex will have an edge and face capacity of 4.
+  Parameters:
+    edge0 - [in]
+  */
+  ON_SubDVertex* AllocateEdgeSubdivisionVertex(
+    bool bUseFindOrAllocate,
+    const ON_SubDEdge * edge0
+  );
+
+  /*
+  Description:
     Find or allocate a vertex and the face subdivision point. The vertex will have an
     edge and face capacity of face0->EdgeCount().
   Parameters:
@@ -11706,13 +12150,13 @@ public:
       If v0 null or ON_SubD::VertexTag::Smooth == v0->m_vertex_tag, and v1 is null or tagged,
       then m_sector_weight[0] is set to v0_sector_weight.
       In all other cases the value of v0_sector_weight is ignored and m_sector_weight[0]
-      is set to ON_SubDSectorType::IgnoredSectorWeight.
+      is set to ON_SubDSectorType::IgnoredSectorCoefficient.
     v1 - [in]
     v1_sector_weight - [in]
       If v1 null or ON_SubD::VertexTag::Smooth == v1->m_vertex_tag, and v0 is null or tagged,
       then m_sector_weight[1] is set to v1_sector_weight.
       In all other cases the value of v1_sector_weight is ignored and m_sector_weight[1]
-      is set to ON_SubDSectorType::IgnoredSectorWeight.
+      is set to ON_SubDSectorType::IgnoredSectorCoefficient.
   Returns:
     An edge.
     The vertex parameter information is used to set the ON_SubDEdge.m_vertex[] 
@@ -11742,6 +12186,16 @@ public:
     ON_SubDVertex* v1,
     double v1_sector_weight
     );
+
+  const ON_SubDEdgePtr AllocateEdge(
+    bool bUseFindOrAllocatEdge,
+    ON_SubDVertex* v0,
+    double v0_sector_weight,
+    ON_SubDVertex* v1,
+    double v1_sector_weight
+  );
+
+
 
   private:
   /*
@@ -11870,31 +12324,78 @@ public:
     unsigned int minimum_chain_length - [in]
       minimum number of edges to consider for a chain.
 
-    sorted_edges - [out]
-      The sorted_edges[] has the edges grouped into edge chains.
+    edge_chains - [out]
+      The edge_chains[] has the edges grouped into edge chains.
 
       In an edge chain subsequent edges share a common vertex; i.e.
-      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+      edge_chains[i].RelativeVertex(1) == edge_chains[i+1].RelativeVertex(0).
 
-      When sorted_edges[i].RelativeVertex(1) != sorted_edges[i+1].RelativeVertex(0),
-      a chain ends at sorted_edges[i] and another begins at sorted_edges[i+1].
+      When edge_chains[i].RelativeVertex(1) != edge_chains[i+1].RelativeVertex(0),
+      a chain ends at edge_chains[i] and another begins at edge_chains[i+1].
 
       The first edge in every chain has the same orientation as the input edge
-      from unsorted_edges[].
+      from edge_chains[].
 
   Returns:
-    Number of chains in sorted_edges[].
+    Number of chains in edge_chains[].
   */
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
     unsigned int minimum_chain_length,
-    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
 
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
     unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+  );
+
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDComponentPtr >& unsorted_edges,
+    unsigned int minimum_chain_length,
     ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SubD& subd,
+    const ON_SimpleArray< ON_COMPONENT_INDEX >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+  );
+
+  /*
+  Description:
+    Orient edges[] into edge chains preserving the order of edges[].
+  Returns:
+    Number of chains in edge_chains[].
+  */
+  static unsigned int OrientEdgesIntoEdgeChains(
+    const ON_SubD& subd,
+    const ON_SimpleArray< ON_COMPONENT_INDEX >& edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+  );
+
+  /*
+  Description:
+    Orient edges[] into edge chains preserving the order of edges[].
+  Returns:
+    Number of chains in edge_chains[].
+  */
+  static unsigned int OrientEdgesIntoEdgeChains(
+    const ON_SimpleArray< const ON_SubDEdge* >& edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+  );
+
+  /*
+  Description:
+    Orient edges[] into edge chains preserving the order of edges[].
+  Returns:
+    Number of chains in edge_chains[].
+  */
+  static unsigned int OrientEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDComponentPtr >& edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
 
 
@@ -12157,6 +12658,222 @@ private:
   bool m_bEnableStatusCheck = false;
   ON_ComponentStatus m_status_check_pass = ON_ComponentStatus::NoneSet;
   ON_ComponentStatus m_status_check_fail = ON_ComponentStatus::Selected;
+};
+
+class ON_CLASS ON_SubDComponentFilter
+{
+public:
+  ON_SubDComponentFilter() = default;
+  ~ON_SubDComponentFilter() = default;
+  ON_SubDComponentFilter(const ON_SubDComponentFilter&) = default;
+  ON_SubDComponentFilter& operator=(const ON_SubDComponentFilter&) = default;
+
+public:
+
+  ///<summary>
+  /// No filters are set and all components are accepted.
+  ///</summary>
+  static const ON_SubDComponentFilter Unset;
+
+  ///<summary>
+  /// Only vertices are accepted.
+  ///</summary>
+  static const ON_SubDComponentFilter OnlyVertices;
+
+  ///<summary>
+  /// Only edges are accepted.
+  ///</summary>
+  static const ON_SubDComponentFilter OnlyEdges;
+
+  ///<summary>
+  /// Only faces are accepted.
+  ///</summary>
+  static const ON_SubDComponentFilter OnlyFaces;
+
+  /*
+  Parameters:
+    bAcceptVertices - [in]
+      If true, all vertices are accepted. Otherwise, all vertices are rejected.
+    bAcceptEdges - [in]
+      If true, all edges are accepted. Otherwise all edges are rejected.
+    bAcceptFaces - [in]
+      If true, all faces are accepted. Otherwise all faces are rejected.
+  */
+  static const ON_SubDComponentFilter Create(
+    bool bAcceptVertices,
+    bool bAcceptEdges,
+    bool bAcceptFaces
+  );
+
+public:
+  ///<summary>
+  /// Topology filters.
+  ///</summary>
+  enum class Topology : unsigned char
+  {
+    ///<summary>
+    /// No topology filter.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// A boundary vertex has a single sector bounded by two boundary edges.
+    /// A boundary edge has a single face.
+    /// A boundary face has at least one boundary edge.
+    ///</summary>
+    Boundary = 1,
+
+    ///<summary>
+    /// An interior vertex has the same number of edges and faces and all edges are interior.
+    /// An interior edge has two faces.
+    /// An interior face has all interior edges.
+    ///</summary>
+    Interior = 2,
+
+    ///<summary>
+    /// A nonmanifold vertex is a vertex that is neither boundary nor interior.
+    /// A nonmanifold edge is an edge that is neither boundary nor interior.
+    /// A nonmanifold face is a face that is neither boundary nor interior.
+    ///</summary>
+    Nonmanifold = 4,
+
+    ///<summary>
+    /// A component that is either boundary or interior.
+    ///</summary>
+    BoundaryOrInterior = 3,
+
+    ///<summary>
+    /// A component that is either boundary or nonmanifold.
+    ///</summary>
+    BoundaryOrNonmanifold = 5,
+
+    ///<summary>
+    /// A component that is either interior or nonmanifold
+    ///</summary>
+    InteriorOrNonmanifold = 6
+  };
+
+  bool AcceptComponent(
+    const class ON_Geometry* geometry
+  ) const;
+
+  bool AcceptComponent(
+    ON_COMPONENT_INDEX component_index,
+    const class ON_Geometry* geometry
+  ) const;
+
+  bool AcceptComponent(
+    const class ON_SubDComponentRef* cref
+  ) const;
+
+  /*
+  Returns:
+    True if the filter accepts the component. False otherwise.
+  */
+  bool AcceptComponent(ON_SubDComponentPtr cptr) const;
+
+  /*
+  Returns:
+    True if the filter accepts the vertex. False otherwise.
+  */
+  bool AcceptVertex(ON_SubDVertexPtr vptr) const;
+
+  /*
+  Returns:
+    True if the filter accepts the edge. False otherwise.
+  */
+  bool AcceptEdge(ON_SubDEdgePtr eptr) const;
+
+  /*
+  Returns:
+    True if the filter accepts the face. False otherwise.
+  */
+  bool AcceptFace(ON_SubDFacePtr fptr) const;
+
+  /*
+  Returns:
+    True if the filter accepts the vertex. False otherwise.
+  */
+  bool AcceptVertex(const ON_SubDVertex* v) const;
+
+  /*
+  Returns:
+    True if the filter accepts the edge. False otherwise.
+  */
+  bool AcceptEdge(const ON_SubDEdge* e) const;
+  
+  /*
+  Returns:
+    True if the filter accepts the face. False otherwise.
+  */
+  bool AcceptFace(const ON_SubDFace* f) const;  
+
+  void SetAcceptVertices(bool bAcceptVertices);
+
+  bool AcceptVertices() const;
+
+  void SetAcceptEdges(bool bAcceptEdges);
+
+  bool AcceptEdges() const;
+
+  void SetAcceptFaces(bool bAcceptFaces);
+
+  bool AcceptFaces() const;
+
+  void SetVertexTopologyFilter(ON_SubDComponentFilter::Topology vertex_topology_filter);
+
+  void ClearVertexTopologyFilter();
+
+  ON_SubDComponentFilter::Topology VertexTopologyFilter() const;
+
+  void SetEdgeTopologyFilter(ON_SubDComponentFilter::Topology edge_topology_filter);
+
+  ON_SubDComponentFilter::Topology EdgeTopologyFilter() const;
+
+  void ClearEdgeTopologyFilter();
+
+  void SetFaceTopologyFilter(ON_SubDComponentFilter::Topology face_topology_filter);
+
+  ON_SubDComponentFilter::Topology FaceTopologyFilter() const;
+
+  void ClearFaceTopologyFilter();
+
+  bool AcceptVertexTag(ON_SubD::VertexTag vertex_tag) const;
+
+  void AddAcceptedVertexTag(ON_SubD::VertexTag vertex_tag);
+
+  void ClearVertexTagFilter();
+
+  bool AcceptEdgeTag(ON_SubD::EdgeTag edge_tag) const;
+
+  void AddAcceptedEdgeTag(ON_SubD::EdgeTag edge_tag);
+
+  void ClearEdgeTagFilter();
+
+  bool AcceptFaceEdgeCount(
+    unsigned face_edge_count
+  ) const;
+
+  void SetFaceEdgeCountFilter(
+    unsigned minimum_face_edge_count,
+    unsigned maximum_face_edge_count
+  );
+  
+  void ClearFaceEdgeCountFilter();
+
+private:
+  bool m_bRejectVertices = false;
+  ON_SubDComponentFilter::Topology m_vertex_topology_filter = ON_SubDComponentFilter::Topology::Unset;
+  ON_SubD::VertexTag m_vertex_tag_filter[4] = {};
+
+  bool m_bRejectEdges = false;
+  ON_SubDComponentFilter::Topology m_edge_topology_filter = ON_SubDComponentFilter::Topology::Unset;
+  ON_SubD::EdgeTag m_edge_tag_filter[2] = {};
+
+  bool m_bRejectFaces = false;
+  ON_SubDComponentFilter::Topology m_face_topology_filter = ON_SubDComponentFilter::Topology::Unset;
+  unsigned m_minimum_face_edge_count = 0U;
+  unsigned m_maximum_face_edge_count = 0U;
 };
 
 

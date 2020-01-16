@@ -651,6 +651,22 @@ const ON_3fVector ON_3fVector::ZAxis(0.0f, 0.0f, 1.0f);
 
 const ON_WindingNumber ON_WindingNumber::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindingNumber);
 
+const double ON_Symmetry::ZeroTolerance = 1.0e-8;
+
+const ON_Symmetry ON_Symmetry::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Symmetry);
+
+// {3C6C7ABD-F3D5-41C2-96C9-DB9AEAF06E90}
+const ON_UUID ON_Symmetry::ReflectId =
+{ 0x3c6c7abd, 0xf3d5, 0x41c2, { 0x96, 0xc9, 0xdb, 0x9a, 0xea, 0xf0, 0x6e, 0x90 } };
+
+// {C1592254-DEAC-4E8E-B01E-0522450E03F7}
+const ON_UUID ON_Symmetry::RotateId =
+{ 0xc1592254, 0xdeac, 0x4e8e, { 0xb0, 0x1e, 0x5, 0x22, 0x45, 0xe, 0x3, 0xf7 } };
+
+// {9133927D-5A4E-4DDD-9924-EF3A6360C19A}
+const ON_UUID ON_Symmetry::ReflectAndRotateId =
+{ 0x9133927d, 0x5a4e, 0x4ddd, { 0x99, 0x24, 0xef, 0x3a, 0x63, 0x60, 0xc1, 0x9a } };
+
 static ON_BoundingBox BoundingBoxInit(double x)
 {
   ON_BoundingBox bbox;
@@ -848,10 +864,14 @@ const ON_PlaneEquation ON_PlaneEquation::UnsetPlaneEquation(ON_UNSET_VALUE, ON_U
 const ON_PlaneEquation ON_PlaneEquation::ZeroPlaneEquation(0.0, 0.0, 0.0, 0.0);
 const ON_PlaneEquation ON_PlaneEquation::NanPlaneEquation(ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN);
 
-const ON_Plane ON_xy_plane(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis);
-const ON_Plane ON_yz_plane(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis);
-const ON_Plane ON_zx_plane(ON_3dPoint::Origin, ON_3dVector::ZAxis, ON_3dVector::XAxis);
-const ON_Plane ON_Plane::World_xy = ON_xy_plane;
+const ON_Plane ON_Plane::World_xy(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis);
+const ON_Plane ON_Plane::World_yz(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis);
+const ON_Plane ON_Plane::World_zx(ON_3dPoint::Origin, ON_3dVector::ZAxis, ON_3dVector::XAxis);
+
+// obsolete names for world planes
+const ON_Plane ON_xy_plane = ON_Plane::World_xy;
+const ON_Plane ON_yz_plane = ON_Plane::World_yz;
+const ON_Plane ON_zx_plane = ON_Plane::World_zx;
 
 static ON_Plane ON_Plane_UnsetPlane()
 {
@@ -2330,6 +2350,8 @@ const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
 const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
 const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
+const ON_SubDComponentList ON_SubDComponentList::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentList);
+
 
 const ON_SubDEdgeChain ON_SubDEdgeChain::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDEdgeChain);
 
@@ -2373,9 +2395,9 @@ const double ON_SubDSectorType::SmoothSectorTheta = 0.5*ON_PI;
 const double ON_SubDSectorType::UnsetSectorTheta = -8882.0;
 const double ON_SubDSectorType::ErrorSectorTheta = -9992.0;
 
-const double ON_SubDSectorType::IgnoredSectorWeight = 0.0;
-const double ON_SubDSectorType::UnsetSectorWeight = -8883.0;
-const double ON_SubDSectorType::ErrorSectorWeight = -9993.0;
+const double ON_SubDSectorType::IgnoredSectorCoefficient = 0.0;
+const double ON_SubDSectorType::UnsetSectorCoefficient = -8883.0;
+const double ON_SubDSectorType::ErrorSectorCoefficient = -9993.0;
 
 
 const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegionIndex);
@@ -2525,6 +2547,11 @@ const ON_ToSubDParameters ON_ToSubDParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_I
 const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease);
 const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge);
 const ON_ToSubDParameters ON_ToSubDParameters::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
+
+const ON_SubDComponentFilter ON_SubDComponentFilter::Unset = ON_SubDComponentFilter::Create(true, true, true);
+const ON_SubDComponentFilter ON_SubDComponentFilter::OnlyVertices = ON_SubDComponentFilter::Create(true, false, false);
+const ON_SubDComponentFilter ON_SubDComponentFilter::OnlyEdges = ON_SubDComponentFilter::Create(false, true, false);
+const ON_SubDComponentFilter ON_SubDComponentFilter::OnlyFaces = ON_SubDComponentFilter::Create(false, false, true);
 
 unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
 {

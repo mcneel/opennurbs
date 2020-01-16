@@ -195,6 +195,7 @@ ON_INC = opennurbs.h \
 	opennurbs_sumsurface.h \
 	opennurbs_surface.h \
 	opennurbs_surfaceproxy.h \
+	opennurbs_symmetry.h \
 	opennurbs_system.h \
 	opennurbs_system_compiler.h \
 	opennurbs_system_runtime.h \
@@ -373,6 +374,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_sumsurface.cpp \
 	opennurbs_surface.cpp \
 	opennurbs_surfaceproxy.cpp \
+	opennurbs_symmetry.cpp \
 	opennurbs_terminator.cpp \
 	opennurbs_text.cpp \
 	opennurbs_text_style.cpp \
@@ -549,6 +551,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_sumsurface.o \
 	opennurbs_surface.o \
 	opennurbs_surfaceproxy.o \
+	opennurbs_symmetry.o \
 	opennurbs_terminator.o \
 	opennurbs_text.o \
 	opennurbs_text_style.o \

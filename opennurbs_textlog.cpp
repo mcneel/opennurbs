@@ -1043,6 +1043,10 @@ bool ON_TextLog::IsTextHash() const
   return (nullptr != dynamic_cast<const ON_TextHash*>(this));
 }
 
+bool ON_TextLog::IsNull() const
+{
+  return this == &ON_TextLog::Null;
+}
 
 ON_StringMapType ON_TextHash::StringMapType() const
 {

@@ -1160,6 +1160,11 @@ bool ON_Annotation::EqualTextPositionProperties(
     : text->EqualTextPositionProperties( Type(), dimstyle );
 }
 
+static bool DimstyleHasMask(const ON_DimStyle* dimstyle)
+{
+  return (nullptr == dimstyle || dimstyle->DrawTextMask() || dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame);
+}
+
 const ON_SHA1_Hash ON_Annotation::Internal_GetBBox_InputHash(
   const ON_Viewport* vp,
   const ON_DimStyle* dimstyle,
@@ -1185,7 +1190,12 @@ const ON_SHA1_Hash ON_Annotation::Internal_GetBBox_InputHash(
   {
     // This return ON_TextContent.m_mbox
     // which is a cached value
-    sha1.AccumulateBoundingBox(m_text->BoundingBox());
+    const ON_BoundingBox textbbox = m_text->BoundingBox();
+    sha1.AccumulateBoundingBox(textbbox);
+    if (textbbox.IsNotEmpty() && DimstyleHasMask(dimstyle))
+    {
+      sha1.AccumulateDouble(dimstyle->MaskBorder());
+    }
   }
 
   sha1.Accumulate2dPoint(text_point);
@@ -1206,12 +1216,27 @@ bool ON_Annotation::Internal_GetBBox_TextGlyphBox(
   text_glyph_box = ON_BoundingBox::UnsetBoundingBox;
   if (m_text)
   {
+    text_glyph_box = m_text->BoundingBox();
+
+    // if mask, grow 2d bbox
+    if (text_glyph_box.IsNotEmpty() && DimstyleHasMask(dimstyle))
+    {
+      ON_3dPoint bmin = text_glyph_box.Min();
+      ON_3dPoint bmax = text_glyph_box.Max();
+      double d = dimstyle->MaskBorder();
+      bmin.x -= d;
+      bmin.y -= d;
+      bmax.x += d;
+      bmax.y += d;
+      text_glyph_box.m_min = bmin;
+      text_glyph_box.m_max = bmax;
+    }
+
     ON_Xform txf;
     // 20 June 2017 S. Baer (RH-39835)
     // GetTextXform can change cached information. Make sure this
     // is called before m_text->BoundingBox()
     bool b = GetTextXform(vp, dimstyle, dimscale, txf);
-    text_glyph_box = m_text->BoundingBox();
     if (b)
     {
       text_glyph_box.Transform(txf);
@@ -2060,6 +2085,23 @@ void ON_Annotation::SetMaskFillType(const ON_DimStyle* parent_style, ON_TextMask
   }
 }
 
+ON_TextMask::MaskFrame ON_Annotation::MaskFrameType(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::MaskFrameType).MaskFrameType();
+}
+
+void ON_Annotation::SetMaskFrameType(const ON_DimStyle* parent_style, ON_TextMask::MaskFrame value)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (value != parent_style->MaskFrameType());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetMaskFrameType(value);
+    override_style->SetFieldOverride(ON_DimStyle::field::MaskFrameType, bCreate);
+  }
+}
+
 ON_Color ON_Annotation::MaskColor(const ON_DimStyle* parent_style) const
 {
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::MaskColor).MaskColor();
@@ -2103,6 +2145,7 @@ void ON_Annotation::SetTextMask(const ON_DimStyle* parent_style, const ON_TextMa
   SetMaskColor(parent_style, local_mask.MaskColor());
   SetMaskFillType(parent_style, local_mask.MaskFillType());
   SetMaskBorder(parent_style, local_mask.MaskBorder());
+  SetMaskFrameType(parent_style, local_mask.MaskFrameType());
 }
 
 double ON_Annotation::FixedExtensionLength(const ON_DimStyle* parent_style) const
@@ -3325,6 +3368,49 @@ const ON_Font* ON_Annotation::FirstCharFont() const
   return &ON_Font::Default;
 }
 
+bool ON_Annotation::IsAllBold() const
+{
+  return IsAllFormat(&ON_Font::IsBold);
+}
+
+bool ON_Annotation::IsAllItalic() const
+{
+  return IsAllFormat(&ON_Font::IsItalic);
+}
+
+bool ON_Annotation::IsAllUnderlined() const
+{
+  return IsAllFormat(&ON_Font::IsUnderlined);
+}
+
+bool ON_Annotation::IsAllFormat(bool (ON_Font::*func)() const) const
+{
+  if (nullptr == func)
+    return false;
+  const ON_TextContent* text = Text();
+  if (nullptr == text)
+    return false;
+
+  const ON_TextRunArray* runs = text->TextRuns(true);
+  if (nullptr == runs)
+    return false;
+
+  for (int i = 0; i < runs->Count(); i++)
+  {
+    const ON_TextRun* run = (*runs)[i];
+    if (nullptr == run)
+      continue;
+    ON_TextRun::RunType type = run->Type();
+    if (ON_TextRun::RunType::kText == type ||
+      ON_TextRun::RunType::kField == type ||
+      ON_TextRun::RunType::kFieldValue == type)
+    {
+      if (!(run->Font()->*func)())
+        return false;
+    }
+  }
+  return true;
+}
 
 
 

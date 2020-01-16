@@ -832,6 +832,15 @@ bool ON_SubDimple::Transform(
 
   }
 
+  if (m_symmetry.IsSet())
+  {
+    m_symmetry = m_symmetry.TransformConditionally(xform);
+  }
+  else
+  {
+    m_symmetry = ON_Symmetry::Unset;
+  }
+
   return rc;
 
 }

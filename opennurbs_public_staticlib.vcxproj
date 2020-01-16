@@ -22,32 +22,32 @@
     <ProjectGuid>{23288C65-E3EB-4D09-A648-22E1636EB40F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>opennurbs_public_staticlib</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -258,6 +258,7 @@
     <ClInclude Include="opennurbs_sumsurface.h" />
     <ClInclude Include="opennurbs_surface.h" />
     <ClInclude Include="opennurbs_surfaceproxy.h" />
+    <ClInclude Include="opennurbs_symmetry.h" />
     <ClInclude Include="opennurbs_system.h" />
     <ClInclude Include="opennurbs_system_compiler.h" />
     <ClInclude Include="opennurbs_system_runtime.h" />
@@ -441,6 +442,7 @@
     <ClCompile Include="opennurbs_sumsurface.cpp" />
     <ClCompile Include="opennurbs_surface.cpp" />
     <ClCompile Include="opennurbs_surfaceproxy.cpp" />
+    <ClCompile Include="opennurbs_symmetry.cpp" />
     <ClCompile Include="opennurbs_terminator.cpp" />
     <ClCompile Include="opennurbs_testclass.cpp" />
     <ClCompile Include="opennurbs_text.cpp" />

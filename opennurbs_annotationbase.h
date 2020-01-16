@@ -619,6 +619,10 @@ public:
   ON_TextMask::MaskType  MaskFillType(const ON_DimStyle* parent_style) const;
   void SetMaskFillType(const ON_DimStyle* parent_style, ON_TextMask::MaskType  source);
 
+  // Determines whether to draw a frame around a text mask
+  ON_TextMask::MaskFrame  MaskFrameType(const ON_DimStyle* parent_style) const;
+  void SetMaskFrameType(const ON_DimStyle* parent_style, ON_TextMask::MaskFrame source);
+
   ON_Color MaskColor(const ON_DimStyle* parent_style) const;  // Only works right if MaskColorSource returns 1.
   void SetMaskColor(const ON_DimStyle* parent_style, ON_Color color);   // Does not return viewport background color
 
@@ -876,6 +880,19 @@ public:
   static bool FirstCharTextProperties(const wchar_t* rtf_in, bool& bold, bool& italic, bool& underline, ON_wString& facename);
   
   const ON_Font* FirstCharFont() const;
+
+private:
+    bool IsAllFormat(bool (ON_Font::*func)() const) const;
+
+public:
+  // true if all of the text is bold
+  bool IsAllBold() const;
+
+  // true if all of the text is italic
+  bool IsAllItalic() const;
+
+  // true if all of the text is underlined
+  bool IsAllUnderlined() const;
 
   friend class ON_Dimension;
 };

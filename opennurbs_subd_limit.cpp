@@ -1705,7 +1705,7 @@ static double ON_SubDQuadFaceTopology_CopySectorWeight(
     return ON_SUBD_RETURN_ERROR(false);
 
   if (ON_SubD::EdgeTag::Smooth != e0->m_edge_tag && ON_SubD::EdgeTag::SmoothX != e0->m_edge_tag )
-    return ON_SubDSectorType::IgnoredSectorWeight;
+    return ON_SubDSectorType::IgnoredSectorCoefficient;
 
   if (e0v == e0->m_vertex[0])
     return e0->m_sector_coefficient[0];
@@ -1718,6 +1718,7 @@ static double ON_SubDQuadFaceTopology_CopySectorWeight(
 
 static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
   ON_SubD_FixedSizeHeap& fsh,
+  bool bUseFindOrAllocate,
   ON_SubDVertex* qv1,
   const ON_SubDVertex* qv0,
   const ON_SubDEdge* e0
@@ -1726,7 +1727,7 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
   if (nullptr == qv1 || nullptr == e0)
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
-  ON_SubDVertex* v1 = fsh.AllocateVertex(e0);
+  ON_SubDVertex* v1 = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate,e0);
   if (nullptr == v1)
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
@@ -1737,20 +1738,20 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
     if ( qv1->m_vertex_tag != qv0->m_vertex_tag )
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     if ( ON_SubD::VertexTag::Smooth == qv0->m_vertex_tag)
-      v0_weight = ON_SubDSectorType::IgnoredSectorWeight;
+      v0_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
     else
     {
       v0_weight = ON_SubDQuadFaceTopology_CopySectorWeight(e0, qv0);
-      if (false == ON_SubDSectorType::IsValidSectorWeightValue(v0_weight,false))
+      if (false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_weight,false))
         return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     }
   }
   else
-    v0_weight = ON_SubDSectorType::IgnoredSectorWeight;
+    v0_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
 
-  const double v1_weight = ON_SubDSectorType::IgnoredSectorWeight;
+  const double v1_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
 
-  ON_SubDEdgePtr ep1 = fsh.AllocateEdge(qv1,v0_weight,v1,v1_weight);
+  ON_SubDEdgePtr ep1 = fsh.AllocateEdge(bUseFindOrAllocate,qv1,v0_weight,v1,v1_weight);
   ON_SubDEdge* e1 = ep1.Edge();
   if (nullptr == e1)
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
@@ -1796,9 +1797,9 @@ static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
   if ( nullptr == v[2])
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  const double v1_weight = (ON_SubD::VertexTag::Crease == v[1]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorWeight;
-  const double v2_weight = ON_SubDSectorType::IgnoredSectorWeight;
-  const double v3_weight = (ON_SubD::VertexTag::Crease == v[3]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorWeight;
+  const double v1_weight = (ON_SubD::VertexTag::Crease == v[1]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
+  const double v2_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+  const double v3_weight = (ON_SubD::VertexTag::Crease == v[3]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
 
   ON_SubDEdgePtr e12 = fsh.AllocateEdge(v[1],v1_weight,v[2],v2_weight);
   if ( nullptr == e12.Edge())
@@ -1833,7 +1834,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   // of a creased original edge, this is the value to assign to the new
   // edge's m_vertex_weight. The "2" is there because there would be 2
   // sector faces if the subdivision was complete.
-  const double at_crease_weight = ON_SubDSectorType::CreaseSectorWeight(2);
+  const double at_crease_weight = ON_SubDSectorType::CreaseSectorCoefficient(2);
   
   if ( m_fsh == q1ft->m_fsh)
     q1ft->m_fsh = nullptr;
@@ -1892,6 +1893,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if (N < ON_SubDSectorType::MinimumSectorEdgeCount(qv0->m_vertex_tag))
     return ON_SUBD_RETURN_ERROR(false);
 
+  // When qv0 is a valence 2 vertex with trianglar faces, we need to use find or allocate.
+  const bool bUseFindOrAllocate = (2 == N  && 3 == qv0->MinimumFaceEdgeCount());
+
   ON_SubDSectorIterator sit;
   if ( nullptr == sit.Initialize(qf0,0,qv0) )
     return ON_SUBD_RETURN_ERROR(false);
@@ -1931,7 +1935,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   ON_SubDEdgePtr edge_grid1[4][2] = {};
 
   // edge1 = new edge from qv1 to edge0 subdivision point
-  ON_SubDEdgePtr edgep1 = ON_SubDQuadFaceTopology_SubdivideEdge(fsh,qv1,qv0,edge0);
+  ON_SubDEdgePtr edgep1 = ON_SubDQuadFaceTopology_SubdivideEdge(fsh, bUseFindOrAllocate,qv1,qv0,edge0);
   if (edgep1.IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -1955,7 +1959,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     if (edge0 == e0[1])
       e1[1] = edgep1; // back to where we started
     else
-      e1[1] = ON_SubDQuadFaceTopology_SubdivideEdge(fsh, qv1, qv0, e0[1]);
+      e1[1] = ON_SubDQuadFaceTopology_SubdivideEdge(fsh, bUseFindOrAllocate, qv1, qv0, e0[1]);
     if (e1[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
@@ -2067,7 +2071,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       if (nullptr == e0[0])
         return ON_SUBD_RETURN_ERROR(false);
       e1[1] = e1[0];
-      e1[0] =  ON_SubDQuadFaceTopology_SubdivideEdge(fsh, qv1, qv0, e0[0]);
+      e1[0] =  ON_SubDQuadFaceTopology_SubdivideEdge(fsh, bUseFindOrAllocate, qv1, qv0, e0[0]);
       if (e1[0].IsNull())
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -2107,7 +2111,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   // Add the 7 remaining elements to vertex_grid1[][]
   if (false == bBoundaryCrease1[0])
   {
-    vertex_grid1[3][0] = fsh.AllocateVertex(m_edge_grid[q0fvi][1]);
+    // When the level 0 vertex is valence 2 and the neignboring faces are triangles,
+    // this vertex needs to be added to the hash table
+    vertex_grid1[3][0] = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate, m_edge_grid[q0fvi][1]);
     if ( nullptr == vertex_grid1[3][0])
       return ON_SUBD_RETURN_ERROR(false);
   }
@@ -2116,7 +2122,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( nullptr == vertex_grid1[3][1])
     return ON_SUBD_RETURN_ERROR(false);
 
-  vertex_grid1[3][2] = fsh.AllocateVertex(qf0_edges[1]);
+  vertex_grid1[3][2] = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate, qf0_edges[1]);
   if ( nullptr == vertex_grid1[3][2])
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -2124,7 +2130,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( nullptr == vertex_grid1[3][3])
     return ON_SUBD_RETURN_ERROR(false);
 
-  vertex_grid1[2][3] = fsh.AllocateVertex(qf0_edges[2]);
+  vertex_grid1[2][3] = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate, qf0_edges[2]);
   if ( nullptr == vertex_grid1[2][3])
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -2134,14 +2140,15 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
   if (false == bBoundaryCrease1[3])
   {
-    vertex_grid1[0][3] = fsh.AllocateVertex(m_edge_grid[(q0fvi+3)%4][0]);
+    vertex_grid1[0][3] = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate, m_edge_grid[(q0fvi + 3) % 4][0]);
     if ( nullptr == vertex_grid1[0][3])
       return ON_SUBD_RETURN_ERROR(false);
   }
 
   edge_grid1[1][0] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[2][1], 
-    ON_SubDSectorType::IgnoredSectorWeight,
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[3][1], 
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[0], qf0_vertices[1])
     );
@@ -2149,8 +2156,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[1][1] = fsh.AllocateEdge(
-    vertex_grid1[2][2], 
-    ON_SubDSectorType::IgnoredSectorWeight,
+    bUseFindOrAllocate,
+    vertex_grid1[2][2],
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[3][2],
     at_crease_weight // ignored unless vertex_grid1[3][2] is tagged as a crease
     );
@@ -2158,8 +2166,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[2][0] = fsh.AllocateEdge(
-    vertex_grid1[2][2], 
-    ON_SubDSectorType::IgnoredSectorWeight,
+    bUseFindOrAllocate,
+    vertex_grid1[2][2],
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[2][3],
     at_crease_weight // ignored unless vertex_grid1[2][3] is tagged as a crease
     );
@@ -2167,8 +2176,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   edge_grid1[2][1] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[1][2],
-    ON_SubDSectorType::IgnoredSectorWeight,
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[1][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[3], qf0_vertices[3])
     );
@@ -2188,8 +2198,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[0] = fsh.AllocateEdge(
+      bUseFindOrAllocate,
       vertex_grid1[2][0],
-      ON_SubDSectorType::IgnoredSectorWeight,
+      ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex_grid1[3][0],
       at_crease_weight // ignored unless vertex_grid1[3][0] is tagged as a crease
       );
@@ -2197,8 +2208,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       return ON_SUBD_RETURN_ERROR(false);
     // m_edge_grid[q0fvi][1]
     fedges[1] = fsh.AllocateEdge(
+      bUseFindOrAllocate,
       vertex_grid1[3][0],
-      ON_SubDSectorType::IgnoredSectorWeight,
+      ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex_grid1[3][1],
       ON_SubDQuadFaceTopology_CopySectorWeight(m_edge_grid[q0fvi][1], qf0_vertices[1])
       );
@@ -2225,10 +2237,11 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[1] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[3][1],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[1], qf0_vertices[1]),
     vertex_grid1[3][2],
-    ON_SubDSectorType::IgnoredSectorWeight
+    ON_SubDSectorType::IgnoredSectorCoefficient
     );
   if (fedges[1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
@@ -2255,8 +2268,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[1] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[3][2],
-    ON_SubDSectorType::IgnoredSectorWeight,
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[3][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[1], qf0_vertices[2])
     );
@@ -2264,10 +2278,11 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[2] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[3][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[2], qf0_vertices[2]),
     vertex_grid1[2][3],
-    ON_SubDSectorType::IgnoredSectorWeight
+    ON_SubDSectorType::IgnoredSectorCoefficient
     );
   if (fedges[2].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
@@ -2293,8 +2308,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     return ON_SUBD_RETURN_ERROR(false);
 
   fedges[2] = fsh.AllocateEdge(
+    bUseFindOrAllocate,
     vertex_grid1[2][3],
-    ON_SubDSectorType::IgnoredSectorWeight,
+    ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[1][3],
     ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[2], qf0_vertices[3])
     );
@@ -2322,19 +2338,21 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[1] = fsh.AllocateEdge(
+      bUseFindOrAllocate,
       vertex_grid1[1][3],
       ON_SubDQuadFaceTopology_CopySectorWeight(m_edge_grid[(q0fvi+3)%4][0], qf0_vertices[3]),
       vertex_grid1[0][3],
-      ON_SubDSectorType::IgnoredSectorWeight
+      ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( fedges[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
 
     fedges[2] = fsh.AllocateEdge(
+      bUseFindOrAllocate,
       vertex_grid1[0][3],
       at_crease_weight, // ingored unless vertex_grid1[0][3] is tagged as a crease
       vertex_grid1[0][2],
-      ON_SubDSectorType::IgnoredSectorWeight
+      ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( fedges[2].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
@@ -2396,18 +2414,18 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     if (
       qv0->SurfacePointIsSet() 
       && qv0->GetSurfacePoint(qv0_sector_face,limit_point)
-      && limit_point.IsSet(false)
+      && limit_point.IsSet(true)
       )
     {
       limit_point.m_sector_face = qv1_sector_face; // qv1's sector face
       limit_point.m_next_sector_limit_point = nullptr; // sector checks are required to get "first" face
-      qv1->SetSavedSurfacePoint(false,limit_point);
+      qv1->SetSavedSurfacePoint(true,limit_point);
     }
     else if (qv1->GetSurfacePoint( qv1_sector_face, limit_point))
     {
       limit_point.m_sector_face = qv0_sector_face;
       limit_point.m_next_sector_limit_point = nullptr; // sector checks are required to get "first" face
-      qv0->SetSavedSurfacePoint(false,limit_point);
+      qv0->SetSavedSurfacePoint(true,limit_point);
     }
   }
 
@@ -2629,7 +2647,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   // of a creased original edge, this is the value to assign to the new
   // edge's m_vertex_weight. The "2" is there because there would be 2
   // sector faces if the subdivision was complete.
-  const double at_crease2_weight = ON_SubDSectorType::CreaseSectorWeight(2);
+  const double at_crease2_weight = ON_SubDSectorType::CreaseSectorCoefficient(2);
 
   const unsigned int N = face->m_edge_count;
 
@@ -2707,7 +2725,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
     edge1 = m_fsh.AllocateEdge(
       center_vertex1,
-      ON_SubDSectorType::IgnoredSectorWeight,
+      ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex1,
       at_crease2_weight // ingored unless vertex1 is tagged as a crease
       );
@@ -2766,7 +2784,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
     edge1 = m_fsh.AllocateEdge(
       ring_vertex1[0],
-      ON_SubDSectorType::IgnoredSectorWeight,
+      ON_SubDSectorType::IgnoredSectorCoefficient,
       ring_vertex1[1],
       ON_SubDQuadFaceTopology_CopySectorWeight(prev_edge0, vertex0)
       );
@@ -2779,7 +2797,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       ring_vertex1[1],
       ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0),
       ring_vertex1[2],
-      ON_SubDSectorType::IgnoredSectorWeight
+      ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
@@ -2872,7 +2890,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       ring_vertex1[2],
       at_crease2_weight, // ingored unless ring_vertex1[0] is tagged as a crease
       vertex1,
-      ON_SubDSectorType::IgnoredSectorWeight
+      ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( edge1.IsNull())
       return ON_SUBD_RETURN_ERROR(false);
@@ -3061,7 +3079,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
         return ON_SUBD_RETURN_ERROR(false);
       face1_eptrs[0] = edge1;
 
-      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[1], at_crease2_weight, face1_corners[2], ON_SubDSectorType::IgnoredSectorWeight);
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[1], at_crease2_weight, face1_corners[2], ON_SubDSectorType::IgnoredSectorCoefficient);
       if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
       face1_eptrs[1] = edge1;   
@@ -3110,7 +3128,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
       face1_eptrs[0] = ON_SubDEdgePtr::Create(edge1_quartet[1], 1);
       face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1_quartet[0], 0);
-      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[2],  ON_SubDSectorType::IgnoredSectorWeight, face1_corners[3], at_crease2_weight);
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[2],  ON_SubDSectorType::IgnoredSectorCoefficient, face1_corners[3], at_crease2_weight);
       if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
       face1_eptrs[2] = edge1;
@@ -3322,13 +3340,13 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
             face1_corners[1],
             at_crease2_weight,
             face1_corners[2],
-            ON_SubDSectorType::IgnoredSectorWeight
+            ON_SubDSectorType::IgnoredSectorCoefficient
           );
           break;
         case 2:
           edge1 = m_fsh.FindOrAllocateEdge(
             face1_corners[2],
-            ON_SubDSectorType::IgnoredSectorWeight,
+            ON_SubDSectorType::IgnoredSectorCoefficient,
             face1_corners[3],
             at_crease2_weight
           );

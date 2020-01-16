@@ -10,7 +10,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="example_roundtrip.cpp">
+    <ClCompile Include="example_convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

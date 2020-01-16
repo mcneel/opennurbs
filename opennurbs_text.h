@@ -189,10 +189,32 @@ public:
 
   /*
   Returns:
-    Raw text that can contain rich text formatting instructions.
+    Rhino clean rich text that is currently saved on this instance.
+    The text can contain text formatting instructions.
     Fields are not evaluated.
   */
   const ON_wString RichText() const;
+
+  /*
+  Returns:
+    Rich text suitable for initializing SDK controls on the current platform (Windows or Apple OS X).
+    The returned string is alwasy rich text (never plain text).
+    The returned rich text is always generated directly from the runs.
+    This text is typically different from the Rhino clean rich text returned by the RichText() command.
+  */
+  const ON_wString PlatformRichTextFromRuns() const;
+
+  
+  /*
+  Parameters:
+    rich_text_style - [in]
+      Type of rich text to return.
+  Returns:
+    The returned string is alwasy rich text (never plain text).
+    The returned rich text is always generated directly from the runs.
+    This text is typically different from the Rhino clean rich text returned by the RichText() command.
+  */
+  const ON_wString RichTextFromRuns(ON::RichTextStyle rich_text_style) const;
 
   /*
   Returns:
@@ -228,6 +250,7 @@ public:
   and '\r''\n' for hard returns
   */
   const ON_wString WrappedPlainTextWithFields() const;
+
 
 private:
   void Internal_SetRunTextHeight(double height);
@@ -324,6 +347,7 @@ public:
 
   ON_Mesh* Get2dPickMesh() const;
   ON_Mesh* Get3dPickMesh() const;
+  ON_Mesh* Get3dMaskPickMesh(double maskoffset) const;
 
   // Returns pointer to either m_runs, the basic parsed and evaluated text
   // or m_wrapped_runs which is the runs after text wrapping
@@ -352,6 +376,10 @@ public:
   //) const;
 
   //void SetCurrentDimStyle(const ON_DimStyle* dimstyle) const;
+
+  // Returns the default font for this text content.
+  // Typically, that would be the font from the dimstyle
+  const ON_Font& DefaultFont() const;
 
   ON::TextHorizontalAlignment RuntimeHorizontalAlignment() const;
   void SetRuntimeHorizontalAlignment(ON::TextHorizontalAlignment halign) const;
@@ -399,7 +427,13 @@ private:
   mutable ON_SHA1_Hash   m_text_content_bbox_hash = ON_SHA1_Hash::ZeroDigest;
   mutable ON_BoundingBox m_text_content_bbox = ON_BoundingBox::EmptyBoundingBox;
   
-  ON__INT_PTR m_reserved0 = (ON__INT_PTR)0;
+  // Stores a pointer to the top level installed font for the entire textContent
+  // May be overridden by font in individual runs
+  // Dec. 12, 2019
+  mutable const ON_Font* m_default_font = &ON_Font::Default;
+  //ON__INT_PTR m_reserved0 = (ON__INT_PTR)0;
+
+
 public:
   friend class ON_Text;
 
@@ -556,14 +590,22 @@ public:
     bool alternate,                     // Primary or alternate
     ON_wString& formatted_string);      // Output
 
-  static bool FormatArea(
-    double area,
-    ON_DimStyle::LengthDisplay output_lengthdisplay,
-    double round_off,
-    int resolution,
-    ON_DimStyle::suppress_zero zero_suppress,
-    wchar_t decimal_char,
-    ON_wString& output);
+  // Volume formatting
+  static bool FormatVolume(
+    double volume,
+    ON::LengthUnitSystem units_in,
+    const ON_DimStyle* dimstyle,
+    bool alternate,                     // Primary or alternate
+    ON_wString& formatted_string);      // Output
+
+  private:
+  static bool FormatAreaOrVolume(
+    double area_or_volume,
+    bool format_area,
+    ON::LengthUnitSystem units_in,
+    const ON_DimStyle* dimstyle,
+    bool alternate,                     // Primary or alternate
+    ON_wString& formatted_string);      // Output
 
 
 };

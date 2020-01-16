@@ -673,49 +673,53 @@ public:
   virtual void SetEmission(ON_4fColor);
 
   //Texture access functions - exactly the same as ON_Material.  Provided for ease of use.
-  int FindTexture(const wchar_t* filename, ON_Texture::TYPE type, int i0 = -1) const;
-  int AddTexture(const ON_Texture& tx);
-  int AddTexture( const wchar_t* filename, ON_Texture::TYPE type);
-  int DeleteTexture(const wchar_t* filename, ON_Texture::TYPE type);
+  virtual int FindTexture(const wchar_t* filename, ON_Texture::TYPE type, int i0 = -1) const;
+  virtual int AddTexture(const ON_Texture& tx);
+  virtual int AddTexture( const wchar_t* filename, ON_Texture::TYPE type);
+  virtual int DeleteTexture(const wchar_t* filename, ON_Texture::TYPE type);
 
   //Access the referenced ON_Material.
-  ON_Material& Material(void);
-  const ON_Material& Material(void) const;
+  virtual ON_Material& Material(void);
+  virtual const ON_Material& Material(void) const;
 
   //Call this function to set the ON_Material up to represent the PBR material as well as possible.
-  void SynchronizeLegacyMaterial(void);
+  virtual void SynchronizeLegacyMaterial(void);
+
+  //Expert function to remove all PBR data from a material
+  virtual void Destroy(void);
 
 public:
-    ON_DEPRECATED class ON_CLASS ParametersNames
+    class ON_CLASS ParametersNames
     {
     public:
-      ON_DEPRECATED static ON_wString BaseColor(void);
-      ON_DEPRECATED static ON_wString BRDF(void);
-      ON_DEPRECATED static ON_wString Subsurface(void);
-      ON_DEPRECATED static ON_wString SubsurfaceScatteringColor(void);
-      ON_DEPRECATED static ON_wString SubsurfaceScatteringRadius(void);
-      ON_DEPRECATED static ON_wString Specular(void);
-      ON_DEPRECATED static ON_wString SpecularTint(void);
-      ON_DEPRECATED static ON_wString Metallic(void);
-      ON_DEPRECATED static ON_wString Roughness(void);
-      ON_DEPRECATED static ON_wString Anisotropic(void);
-      ON_DEPRECATED static ON_wString AnisotropicRotation(void);
-      ON_DEPRECATED static ON_wString Sheen(void);
-      ON_DEPRECATED static ON_wString SheenTint(void);
-      ON_DEPRECATED static ON_wString Clearcoat(void);
-      ON_DEPRECATED static ON_wString ClearcoatRoughness(void);
-      ON_DEPRECATED static ON_wString ClearcoatBump(void);
-      ON_DEPRECATED static ON_wString OpacityIor(void);
-      ON_DEPRECATED static ON_wString Opacity(void);
-      ON_DEPRECATED static ON_wString OpacityRoughness(void);
-      ON_DEPRECATED static ON_wString Emission(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString BaseColor(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString BRDF(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Subsurface(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString SubsurfaceScatteringColor(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString SubsurfaceScatteringRadius(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Specular(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString SpecularTint(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Metallic(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Roughness(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Anisotropic(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString AnisotropicRotation(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Sheen(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString SheenTint(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Clearcoat(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString ClearcoatRoughness(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString ClearcoatBump(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString OpacityIor(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Opacity(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString OpacityRoughness(void);
+      ON_DEPRECATED_MSG("Use CRhRdkMaterial::PhysicallyBased::ParameterNames") static ON_wString Emission(void);
   };
 
 private:
   class Impl;
-  Impl* _pImpl;
   const Impl& Implementation(void) const;
   Impl& Implementation(void);
+
+  unsigned char _impl[64];
 
   //Ban copying - usage should be material.PhysicallyBased().Function()
   ON_PhysicallyBasedMaterial& operator=(const ON_Material& src) = delete;

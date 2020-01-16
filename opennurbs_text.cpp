@@ -41,6 +41,7 @@ void ON_TextContent::Internal_Destroy()
   m_annotation_type = ON_TextContent::Empty.m_annotation_type;
   m_dimstyle_text_position_properties_hash = ON_TextContent::Empty.m_dimstyle_text_position_properties_hash;
   Internal_ClearTextContentHash();
+  m_default_font = &ON_Font::Default;
 }
 
 ON_TextContent::~ON_TextContent()
@@ -79,6 +80,9 @@ void ON_TextContent::Internal_CopyFrom(
   {
     m__wrapped_runs = new ON_TextRunArray(*src.m__wrapped_runs);
   }
+
+  m_default_font = src.m_default_font;
+
   m_runtime_halign = src.m_runtime_halign;
 }
 
@@ -342,20 +346,50 @@ bool ON_TextContent::Internal_ParseRtf(
   bool rc = parser.Parse();
   if (rc)
     rc = ON_TextContent::MeasureTextContent(this, true, false);
+  if (rc)
+    m_default_font = &dimstyle->Font();
   if (rc && bComposeAndUpdateRtf)
   {
-    rc = RtfComposer::Compose(this, dimstyle, default_fontname, str);
+    rc = RtfComposer::Compose(this, str, false);
     if (rc)
     {
       m_text = str;
     }
   }
+
   return rc;
 }
 
 const ON_wString ON_TextContent::RichText() const
 {
   return m_text;
+}
+
+const ON_wString ON_TextContent::RichTextFromRuns(ON::RichTextStyle rich_text_style) const
+{
+  ON_wString rich_text;
+
+  switch (rich_text_style)
+  {
+  case ON::RichTextStyle::Windows10SDK:
+    if (!RtfComposer::Compose(this, rich_text, true))
+      rich_text.Empty();
+    break;
+
+  case ON::RichTextStyle::AppleOSXSDK:
+    rich_text = RtfComposer::ComposeAppleRTF(this);
+    break;
+
+  default:
+    break;
+  };
+
+  return rich_text;
+}
+
+const ON_wString ON_TextContent::PlatformRichTextFromRuns() const
+{
+  return RichTextFromRuns(ON::RichTextStyleFromCurrentPlatform());
 }
 
 const ON_wString ON_TextContent::PlainTextWithFields() const
@@ -1356,6 +1390,25 @@ ON_Mesh* ON_TextContent::Get3dPickMesh() const
   return mesh;
 }
 
+ON_Mesh* ON_TextContent::Get3dMaskPickMesh(double maskoffset) const
+{
+  ON_3dPoint corners[4];
+  if (Get3dMaskCorners(maskoffset, corners))
+  {
+    ON_Mesh* mesh = new ON_Mesh(1, 4, false, false);
+    if (nullptr != mesh)
+    {
+      mesh->SetVertex(0, corners[0]);
+      mesh->SetVertex(1, corners[1]);
+      mesh->SetVertex(2, corners[2]);
+      mesh->SetVertex(3, corners[3]);
+      mesh->SetQuad(0, 0, 1, 2, 3);
+      return mesh;
+    }
+  }
+  return Get3dPickMesh();
+}
+
 
 bool ON_TextContent::Get2dSize(bool raw, double& width, double& height) const
 {
@@ -1386,8 +1439,7 @@ bool ON_TextContent::Get3dCorners(ON_3dPoint corners[4]) const
 {
   if (nullptr == corners)
     return false;
-  bool rc = false;
-  ON_2dPoint corners2d[4];
+  bool rc = false;  ON_2dPoint corners2d[4];
   if (Get2dCorners(corners2d))
   {
     corners[0] = ON_Plane::World_xy.PointAt(corners2d[0].x, corners2d[0].y);
@@ -1744,11 +1796,19 @@ const wchar_t* ON_TextContent::RtfText() const
   return m_text;
 }
 
+const ON_Font& ON_TextContent::DefaultFont() const
+{
+  if (nullptr != m_default_font)
+    return *m_default_font;
+  else
+    return ON_Font::Default;
+}
+
 bool ON_TextContent::ComposeText()
 {
   ON_wString rtf;
   ON_wString nothing;
-  if (RtfComposer::Compose(this, nullptr, nothing, rtf))
+  if (RtfComposer::Compose(this, rtf, false))
   {
     m_text = rtf;
     return true;
@@ -2478,7 +2538,28 @@ bool ON_TextContent::FormatArea(
   bool alt,
   ON_wString& formatted_string)
 {
-  double area = area_in;
+  return ON_TextContent::FormatAreaOrVolume(area_in, true, units_in, dimstyle, alt, formatted_string);
+}
+
+bool ON_TextContent::FormatVolume(
+  double volume_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  return ON_TextContent::FormatAreaOrVolume(volume_in, false, units_in, dimstyle, alt, formatted_string);
+}
+
+bool ON_TextContent::FormatAreaOrVolume(
+  double area_or_volume_in,
+  bool format_area,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  double value = area_or_volume_in;
 
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
@@ -2499,21 +2580,23 @@ bool ON_TextContent::FormatArea(
     : dimstyle->LengthFactor();
 
   double unit_length_factor = ON::UnitScale(units_in, dim_us);
-  area = unit_length_factor * unit_length_factor * length_factor * area_in;
+  value = format_area ? 
+    unit_length_factor * unit_length_factor * length_factor * area_or_volume_in :
+    unit_length_factor * unit_length_factor * unit_length_factor * length_factor * area_or_volume_in;
 
   double roundoff = alt ? dimstyle->AlternateRoundOff() : dimstyle->RoundOff();
   int precision = alt ? dimstyle->AlternateLengthResolution() : dimstyle->LengthResolution();
   ON_DimStyle::suppress_zero zs = alt ? dimstyle->AlternateZeroSuppress() : dimstyle->ZeroSuppress();
 
-  if (fabs(area) < pow(10.0, -(precision + 1)))
-    area = 0.0;
+  if (fabs(value) < pow(10.0, -(precision + 1)))
+    value = 0.0;
 
   wchar_t decimal_char = dimstyle->DecimalSeparator();
 
   ON_DimStyle::OBSOLETE_length_format output_format = ON_DimStyle::OBSOLETE_length_format::Decimal;
 
   bool rc = ON_NumberFormatter::FormatNumber(
-    area,
+    value,
     output_format,
     roundoff,
     precision,

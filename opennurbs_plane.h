@@ -512,9 +512,14 @@ public:
   */
   bool Flip();
 
-// world plane coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis); 
-	const static
-	ON_Plane World_xy;	
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis); 
+  const static ON_Plane World_xy;
+
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis); 
+  const static ON_Plane World_yz;
+
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::ZAxis, ON_3dVector::XAxis); 
+  const static ON_Plane World_zx;
 
   // All values are ON_UNSET_VALUE.
 	const static

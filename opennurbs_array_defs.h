@@ -799,6 +799,7 @@ bool ON_SimpleArray<T>::QuickSortAndRemoveDuplicates( int (*compar)(const T*,con
           continue; // duplicate
         if (i > clean_count)
           m_a[clean_count] = m_a[i];
+        prev_ele = &m_a[clean_count];
         ++clean_count;
       }
       if (clean_count < m_count)

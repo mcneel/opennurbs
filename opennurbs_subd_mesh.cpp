@@ -1736,5 +1736,16 @@ void ON_SubD::ClearEvaluationCache() const
   }
 }
 
+void ON_SubD::ClearNeighborhoodEvaluationCache(const ON_SubDVertex * vertex, bool bTagChanged) const
+{
+  const ON_SubDLevel* level = ActiveLevelConstPointer();
+
+  if (nullptr != level)
+  {
+    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts();
+    level->ClearNeighborhoodEvaluationCache(vertex, bTagChanged);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////
 

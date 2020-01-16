@@ -1976,6 +1976,34 @@ public:
   //
   /////////////////////////////////////////////////////////////////////////////
 
+
+  /// <summary>
+  /// Rich text style
+  ///
+  /// The way rich text specifies fonts and other information depends on what
+  /// created the rich text. The interpretation of the rich text "specification"
+  /// varies widely and depends on the application, platform, and operating system.
+  /// </summary>  
+  enum class RichTextStyle : unsigned char
+  {
+    /// <summary>Unset" </summary>
+    Unset = 0,
+
+    /// <summary>Rich text for use with the Windows 10 SDK. The font table uses Windows LOGFONT names. </summary>
+    Windows10SDK = 1,
+
+    /// <summary>Rich text for use with the Apple OS X SDK. The font table uses Postscript names. </summary>
+    AppleOSXSDK = 2,
+  };
+  static ON::RichTextStyle RichTextStyleFromUnsigned(unsigned int u);
+
+  /*
+  Returns:
+    ON::RichTextStyle::Windows10SDK on Windows and ON::RichTextStyle::AppleOSXSDK on OS X.
+  */
+  static ON::RichTextStyle RichTextStyleFromCurrentPlatform();
+
+
   //// object_type ///////////////////////////////////////////////////
   enum object_type
   {

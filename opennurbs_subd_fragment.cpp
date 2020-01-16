@@ -1201,13 +1201,17 @@ bool ON_SubDMeshFragment::Internal_GetFrameHelper(
     if (P.IsValid() && Z.IsNotZero())
     {
       const ON_3dPoint Q(VertexPoint(Q_dex));
-      ON_3dVector V = (Q - P).UnitVector();
-      ON_3dVector X = (V - (frame.zaxis*V)*V).UnitVector();
-      if (X.IsUnitVector())
+      const ON_3dVector V = (Q - P).UnitVector();
+      const ON_3dVector X = (V - (Z*V)*Z).UnitVector();
+      const ON_3dVector Y = ON_CrossProduct(Z, X).UnitVector();
+      if ( X.IsUnitVector() && Y.IsUnitVector() 
+        && fabs(X*Z) <= ON_SQRT_EPSILON
+        && fabs(Y*Z) <= ON_SQRT_EPSILON
+        )
       {
         frame.origin = P;
         frame.xaxis = X;
-        frame.yaxis = ON_CrossProduct(Z, X);
+        frame.yaxis = Y;
         frame.zaxis = Z;
         frame.UpdateEquation();
       }

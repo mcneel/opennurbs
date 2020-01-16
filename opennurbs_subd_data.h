@@ -469,22 +469,19 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 //
 // m_saved_points_flags
 //
-#define ON_SUBD_CACHE_CTRLNETFRAG_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::ControlNetFragmentBit
 #define ON_SUBD_CACHE_POINT_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SubdivisionPointBit
 #define ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SubdivisionDisplacementBit
 #define ON_SUBD_CACHE_LIMITLOC_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit
 #define ON_SUBD_CACHE_FLAGS_MASK ON_SubDComponentBase::SavedPointsFlags::CachedPointMask
 
 #define ON_SUBD_CACHE_FLAGS(cache_subd_flags) (ON_SUBD_CACHE_FLAGS_MASK&(cache_subd_flags))
-#define ON_SUBD_CACHE_CTRLNETFRAG_FLAG(cache_subd_flags) (ON_SUBD_CACHE_CTRLNETFRAG_FLAG_BIT&(cache_subd_flags))
 #define ON_SUBD_CACHE_POINT_FLAG(cache_subd_flags) (ON_SUBD_CACHE_POINT_FLAG_BIT&(cache_subd_flags))
 #define ON_SUBD_CACHE_DISPLACEMENT_FLAG(cache_subd_flags) (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT&(cache_subd_flags))
 #define ON_SUBD_CACHE_LIMITLOC_FLAG(cache_subd_flags) (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT&(cache_subd_flags))
 
-#define ON_SUBD_CACHE_CLEAR_CTRLNETFRAG_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT))
-#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SUBD_CACHE_CTRLNETFRAG_FLAG_BIT))
-#define ON_SUBD_CACHE_CLEAR_DISPLACEMENT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SUBD_CACHE_CTRLNETFRAG_FLAG_BIT))
-#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SUBD_CACHE_CTRLNETFRAG_FLAG_BIT))
+#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_DISPLACEMENT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -1163,6 +1160,8 @@ public:
   }
 
   void ClearEvaluationCache() const;
+
+  void ClearNeighborhoodEvaluationCache(const ON_SubDVertex * vertex, bool bTagChanged) const;
 
   void ClearTopologicalAttributes() const
   {
@@ -1947,7 +1946,7 @@ public:
     double sin_angle_tolerance
     );
 
-  ON_SubDEdgePtr MergeEdges(
+  ON_SubDEdgePtr MergeConsecutiveEdges(
     ON_SubDEdgePtr eptr0,
     ON_SubDEdgePtr eptr1
     );
@@ -2095,6 +2094,12 @@ private:
   unsigned int Internal_GlobalQuadSubdivideFace(
     const ON_SubDFace* face
     );
+
+
+private:
+  ON_Symmetry m_symmetry;
+
+public:
 
 
 

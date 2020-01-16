@@ -6683,6 +6683,22 @@ public:
     delete m_pDummy;
   }
 
+  bool UserDataExists(void) const
+  {
+    const auto pUD = material->GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData));
+    return nullptr != pUD;
+  }
+
+  void RemoveUserData(void) const
+  {
+    auto pUD = material->GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData));
+
+    if (material->DetachUserData(pUD))
+    {
+      delete pUD;
+    }
+  }
+
   const ON_PhysicallyBasedMaterialUserData& UserData() const
   {
     const auto pUD = material->GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData));
@@ -6944,19 +6960,22 @@ void ON_PhysicallyBasedMaterial::SetEmission(ON_4fColor d)
 }
 
 ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_Material& src)
-  : _pImpl(new Impl(const_cast<ON_Material&>(src)))
 {
+  //Placement new - create the impl in the stack allocated space.
+  new (&_impl) Impl(const_cast<ON_Material&>(src));
 }
 
 ON_PhysicallyBasedMaterial::~ON_PhysicallyBasedMaterial()
 {
-  delete _pImpl;
+  //delete _pImpl;
+  //Call the dtor, don't release the memory
+  Implementation().~Impl();
 }
 
 
 ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedMaterial& src)
-  : _pImpl(new Impl(*src._pImpl->material))
 {
+  new (&_impl) Impl(*src.Implementation().material);
 }
 
 ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void)
@@ -6972,18 +6991,30 @@ const ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void) const
 
 const ON_PhysicallyBasedMaterial::Impl& ON_PhysicallyBasedMaterial::Implementation(void) const
 {
-  return *_pImpl;
+  return *reinterpret_cast<const ON_PhysicallyBasedMaterial::Impl*>(_impl);
 }
 
 ON_PhysicallyBasedMaterial::Impl& ON_PhysicallyBasedMaterial::Implementation(void)
 {
-  return *_pImpl;
+  return *reinterpret_cast<ON_PhysicallyBasedMaterial::Impl*>(_impl);
 }
 
 
 bool ON_PhysicallyBasedMaterial::Supported(void) const
 {
+  if (!Implementation().UserDataExists())
+    return false;
+
   return BaseColor().IsValid();
+}
+
+void ON_PhysicallyBasedMaterial::Destroy(void)
+{
+  ON_Material& mat = *Implementation().material;
+  Implementation().~Impl();
+  new (&_impl) Impl(const_cast<ON_Material&>(mat));
+
+  Implementation().RemoveUserData();
 }
 
 void ON_PhysicallyBasedMaterial::SynchronizeLegacyMaterial(void)

@@ -838,6 +838,10 @@ Notes:
     ON_3dVector normal_to_mirror_plane
     );
 
+  static const ON_Xform MirrorTransformation(
+    ON_PlaneEquation mirror_plane
+  );
+
   // Description: The ChangeBasis() function is overloaded 
   //   and provides several
   //   ways to compute a change of basis transformation.
