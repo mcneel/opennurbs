@@ -1448,7 +1448,8 @@ ON_FreeTypeFace* ON_FreeType::CreateFace(
   f = ON_FreeType::Internal_CreateFaceFromWindowsFont(&logfont);
 
 #elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-  f = ON_FreeType::Internal_CreateFaceFromAppleFont(font.AppleCTFont());
+  bool bIsSubstituteFont = false;
+  f = ON_FreeType::Internal_CreateFaceFromAppleFont(font.AppleCTFont(bIsSubstituteFont));
 #endif
 
   // Create empty holder so this function doesn't repeatedly

@@ -90,6 +90,7 @@ ON_SubDVertex* ON_SubDArchiveIdMap::CopyVertex(
   if ( nullptr == source_vertex )
     return ON_SUBD_RETURN_ERROR(nullptr);
   ON_SubDVertex* vertex = subdimple.AllocateVertex(
+    source_vertex->m_id,
     source_vertex->m_vertex_tag,
     source_vertex->m_level,
     source_vertex->m_P,
@@ -137,6 +138,7 @@ ON_SubDEdge* ON_SubDArchiveIdMap::CopyEdge(
   if ( nullptr == source_edge )
     return ON_SUBD_RETURN_ERROR(nullptr);
   ON_SubDEdge* edge = subdimple.AllocateEdge(
+    source_edge->m_id,
     source_edge->m_edge_tag,
     source_edge->m_level,
     source_edge->m_face_count);
@@ -175,7 +177,7 @@ ON_SubDFace* ON_SubDArchiveIdMap::CopyFace(
 {
   if ( nullptr == source_face )
     return ON_SUBD_RETURN_ERROR(nullptr);
-  ON_SubDFace* face = subdimple.AllocateFace(source_face->m_level,source_face->m_edge_count);
+  ON_SubDFace* face = subdimple.AllocateFace( source_face->m_id, source_face->m_level,source_face->m_edge_count);
   if ( nullptr == face )
     return ON_SUBD_RETURN_ERROR(nullptr);
   
@@ -643,9 +645,24 @@ ON__UINT64 ON_SubDimple::ContentSerialNumber() const
   return m_subd_content_serial_number;
 }
 
-ON__UINT64 ON_SubDimple::ChangeContentSerialNumber() const
+ON__UINT64 ON_SubDimple::ChangeContentSerialNumber(
+  bool bChangePreservesSymmetry
+) const
 {
-  return (m_subd_content_serial_number = ON_NextContentSerialNumber());
+  const bool bUpdateSymmetricObjectContentSerialNumber
+    = bChangePreservesSymmetry
+    && m_subd_content_serial_number > 0
+    && m_symmetry.IsSet()
+    && m_subd_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
+    ;
+  
+  m_subd_content_serial_number = ON_NextContentSerialNumber();
+  if (bUpdateSymmetricObjectContentSerialNumber)
+    m_symmetry.SetSymmetricObjectContentSerialNumber(m_subd_content_serial_number);
+  else
+    m_symmetry.ClearSymmetricObjectContentSerialNumber();
+
+  return m_subd_content_serial_number;
 }
 
 void ON_SubDimple::SetManagedMeshSubDWeakPointers(
@@ -727,19 +744,19 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     if ( src.m_active_level == src_level )
       m_active_level = level;
   }
-  if (src.m_max_vertex_id > m_max_vertex_id)
-    m_max_vertex_id = src.m_max_vertex_id;
-  if (src.m_max_edge_id > m_max_edge_id)
-    m_max_edge_id = src.m_max_edge_id;
-  if (src.m_max_face_id > m_max_face_id)
-    m_max_face_id = src.m_max_face_id;
 
   m_subd_appearance = src.m_subd_appearance;
   m_texture_domain_type = src.m_texture_domain_type;
   m_texture_mapping_tag = src.m_texture_mapping_tag;
+
   m_symmetry = src.m_symmetry;
 
-  ChangeContentSerialNumber();
+  ChangeContentSerialNumber(false);
+
+  if (src.m_subd_content_serial_number == src.m_symmetry.SymmetricObjectContentSerialNumber())
+    m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+  else
+    m_symmetry.ClearSymmetricObjectContentSerialNumber();
 }
 
 bool ON_SubDLevel::IsEmpty() const
@@ -761,9 +778,6 @@ int ON_SubDComponentBaseLink::CompareId(ON_SubDComponentBaseLink const*const* lh
     return 1;
   return 0;
 }
-
-
-
 
 void ON_SubDLevelComponentIdIterator::Initialize(
   bool bLevelLinkedListIncreasingId,

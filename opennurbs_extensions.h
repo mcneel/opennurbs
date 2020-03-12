@@ -1545,13 +1545,50 @@ public:
   //
   // BEGIN Render Development Toolkit (RDK) information
   //
+  // The following functions allow the developer access to the information saved per document or per-object in the 3dm file by the 
+  // RDK plug-in, built into Rhino.  There are two parts to this information - the XML data that constitutes the information
+  // about materials, textures and environments in addition to some of the document settings such as sun data, skylighting
+  // ground plane and so on - and the embedded support files which are saved as byte-per-byte copies of the actual file data
+  // for the original files.  Typically, these embedded files will be textured used by materials, environments or decals.
+
+  // Call this function to determine if RDK document information has been saved in this model and can be read using the GetRDKDocumentInfomation function.
+  // Returns true if RDK document information is available.
   static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
+
+  // This function returns the entire XML associated with the RDK document data for this file.  The XML will include details about
+  // materials, textures and environments as well as sun, skylighting, ground plane and so on.
+  // Returns true if RDK document information is available.
   static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data);
 
-  //This is only supported for Version 6 files onwards.
+  // This function returns the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
+  // Typically, these files will be used by materials and environments.  Rhino unpacks these files into a folder with the suffix "embedded_files" next to the
+  // 3dm file on disk.
+  // This is only supported for Version 6 files onwards.
+  // Returns true if embedded files were found.
+  ON_DEPRECATED_MSG("This function is deprecated as it did not return the buffer sizes, making it useless")
   static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers);
 
+  // This function returns the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
+  // Typically, these files will be used by materials and environments.  Rhino unpacks these files into a folder with the suffix "embedded_files" next to the
+  // 3dm file on disk.
+  // This is only supported for Version 6 files onwards.
+  // Returns true if embedded files were found.
+  static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes);
+
+  // This function returns the paths of the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
+  // This function is similar to GetRDKEmbeddedFiles, but is faster and uses less memory to return only the paths.  Use the paths (exactly the strings returned from this function) to 
+  // extract the embedded files using GetRDKEmbeddedFile
+  static bool GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths);
+
+  // This function extracts one embedded file from the support files written with this document.  Use the exact path as returned from GetRDKEmbeddedFilePaths
+  static bool GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes);
+
+  // Call this function to determine if RDK object information has saved in this model and can be read using the GetRDKObjectInformation function.
+  // Returns true if RDK object information is available.
   static bool IsRDKObjectInformation(const ON_UserData& objectud);
+
+  // This function returns the entire XML associated with the RDK object.  The XML includes details about decals.
+  // Returns true if RDK object information is available.
   static bool GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data);
   //
   // END Render Development Toolkit (RDK) information

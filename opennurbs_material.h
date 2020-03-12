@@ -511,23 +511,69 @@ public:
 
   /*
   Description:
-    Used to provide per face material support.
-    The parent object reference a basic material.
-    When a brep face or mesh facet wants to use
-    a material besides the base material, it specifies
-    a channelSupports material channel.  The default
-    material channel is 0 and that indicates the base
-    material.  A channel of n > 0 means that face
-    used the material with id m_material_channel[n-1].
-    If (n-1) >= m_material_channel.Count(), then the base
-    material is used.  The value of
-    m_material_channel[n].m_id is persistent.  The
-    value of m_material_channel[n].m_i is a runtime
-    index in the CRhinoDoc::m_material_table[].  If
-    CRhinoDoc::m_material_table[m_i].m_uuid != m_id,
-    then m_id is assumed to be correct.
+    The m_material_channel[] array is used to provide per face rendering material support for ON_SubD and ON_Brep objects.
+    ON_Mesh objects to not support per face render materials.
+    The application specifies a base ON_Material for rendering the subd or brep and a way to find materials from ON_UUID values.
+    ON_Material.Id() retuns the id for any given material.
+
+    ON_BrepFace::MaterialChannelIndex() and ON_SubDFace::MaterialChannelIndex()
+    specify a material channel index. If this value is 0, then the base
+    material is used to render the face. Otherwise the material with
+    id = base.MaterialChannelIdFromIndex( face.MaterialChannelIndex() )
+    is used to render the face. 
   */
   ON_SimpleArray<ON_UuidIndex> m_material_channel;
+
+  enum : int
+  {
+    ///<summary>
+    /// Material channel index values stored in the ON_UuidIndex.m_i field of elements in the m_material_channel[] array
+    /// must be between 0 and ON_Material::MaximumMaterialChannelIndex, inclusive.
+    ///</summary>
+    MaximumMaterialChannelIndex = 65535
+  };
+
+  /*
+  Parameters:
+    material_channel_index - [in]      
+  Returns:
+    If material_channel_index > 0, the m_id ON_UUID value of the first element in the 
+    m_material_channel[] array with material_channel_index = ON_Uuid_index.m_i is returned. 
+    This id identifies an ON_Material.
+    Otherwise ON_nil_uuid is returned.
+  */
+  const ON_UUID MaterialChannelIdFromIndex(
+    int material_channel_index
+  ) const;
+
+  /*
+  Parameters:
+    material_channel_id - [in]
+  Returns:
+    If material_channel_id is not nil, the m_i index value of the first element in the
+    m_material_channel[] array with material_channel_id = ON_Uuid_index.m_id is returned.
+    Otherwise 0 is returned.
+  */
+  int MaterialChannelIndexFromId(
+    ON_UUID material_channel_id
+  ) const;
+
+  /*
+  Parameters:
+    material_channel_id - [in]
+    bAddIdIfNotPresent - [in]
+  Returns:
+    If material_channel_id is not nil, the m_i index value of the first element in the
+    m_material_channel[] array with material_channel_id = ON_Uuid_index.m_id is returned.
+    If material_channel_id is not nil an no element of the m_material_channel[] array 
+    has a matching id, a new element is added with a unique channel index > 0 and that 
+    index is returned.
+    Otherwise 0 is returned.
+  */
+  int MaterialChannelIndexFromId(
+    ON_UUID material_channel_id,
+    bool bAddIdIfNotPresent
+  );
 
 private:
   ON_UUID m_plugin_id = ON_nil_uuid;

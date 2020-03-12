@@ -262,7 +262,8 @@ bool ON_TextContent::Internal_ParseRtf(
   bool bComposeAndUpdateRtf
 )
 {
-  if (nullptr == rtf_string)
+  const ON_wString rtf_w_string(rtf_string);
+  if (rtf_w_string.IsEmpty())
     return false;
 
   dimstyle = &ON_DimStyle::DimStyleOrDefault(dimstyle);
@@ -271,51 +272,6 @@ bool ON_TextContent::Internal_ParseRtf(
     = (nullptr != dimstyle)
     ? dimstyle->TextPositionPropertiesHash()
     : ON_TextContent::Empty.DimStyleTextPositionPropertiesHash();
-
-  // If the rtf string default font facename is different that the 
-  // dimstyle font facename, change the rtf string to match the dimstyle
-  // This can happen when there's an existing annotation with rtf text 
-  // because of some formatting and the style has been changed to use 
-  // a different font.
-  // The intent is to leave any font changes in place and replace 
-  // only the font used for text not explicitly set to some other font
-  ON_wString default_fontname = ON_Font::RichTextFontName(&dimstyle->Font(),true);
-  ON_wString rtf_w_string(rtf_string);
-  int ix = rtf_w_string.Find(L"{\\rtf1");
-  if (ix != -1)
-  {
-    ON_wString dimstyle_facename = ON_Font::RichTextFontName(&dimstyle->Font(),true);
-    int idxdeff = rtf_w_string.Find(L"\\deff", ix + 5);
-    int deff = 0;
-    const wchar_t* n = rtf_w_string.Array() + idxdeff + 5;
-    const wchar_t* r = ON_wString::ToNumber(n, 0, &deff);
-    if (nullptr != r)
-    {
-      int idxftbl = rtf_w_string.Find(L"\\fonttbl");
-      if (idxftbl > 0)
-      {
-        ON_wString fmt;
-        fmt.Format(L"\\f%d", deff);
-        idxdeff = rtf_w_string.Find(fmt, idxftbl + 8);
-        if (idxdeff > 0)
-        {
-          int idxface = rtf_w_string.Find(L" ", idxdeff);
-          int idx1 = rtf_w_string.Find(L";", idxface);
-          if (idx1 > 0)
-          {
-            default_fontname = rtf_w_string.SubString(idxface + 1, idx1 - idxface - 1);
-            if (0 != default_fontname.CompareOrdinal(dimstyle_facename, true))
-            {
-              ON_wString t1 = rtf_w_string.Left(idxface + 1);
-              ON_wString t2 = rtf_w_string.Right(rtf_w_string.Length() - idx1);
-              rtf_w_string = t1 + default_fontname.Array();
-              rtf_w_string = rtf_w_string + t2;
-            }
-          }
-        }
-      }
-    }
-  }
 
   // Turn off recomposing a rtf string for the text
   // so that the source string stored on the text is 
@@ -347,7 +303,7 @@ bool ON_TextContent::Internal_ParseRtf(
   if (rc)
     rc = ON_TextContent::MeasureTextContent(this, true, false);
   if (rc)
-    m_default_font = &dimstyle->Font();
+    m_default_font = &dimstyle->ParentDimStyleFont();
   if (rc && bComposeAndUpdateRtf)
   {
     rc = RtfComposer::Compose(this, str, false);
@@ -1022,7 +978,6 @@ bool ON_TextContent::WrapText(double wrapwidth) const
 void ON_TextContent::Dump(ON_TextLog& text_log) const // for debugging
 {}
 
-
 bool ON_TextContent::Write(
   ON_BinaryArchive&  archive
 ) const
@@ -1030,12 +985,57 @@ bool ON_TextContent::Write(
   const int content_version = 0;
   if (false == archive.BeginWrite3dmAnonymousChunk(content_version))
     return false;
-
+  
   bool rc = false;
   for (;;)
   {
-    if (!archive.WriteString(m_text))
+    bool bRichTextStringSaved = false;
+    for (;;)
+    {
+      // NEVER commit code with this define set.
+      //
+      // This code is used by developers to create files used to test
+      // code and UI for handing situations when a font is not installed
+      // on a device.
+      //
+      // To create a missing font test .3dm file, you must modify code 
+      // int opennurbs_font.cpp and in opennurbs_text.cpp. 
+      // Search for CREATE_MISSING_FONT_TEST_3DM_FILE to find the locations.
+//#define CREATE_MISSING_FONT_TEST_3DM_FILE
+#if defined(CREATE_MISSING_FONT_TEST_3DM_FILE)
+      if (m_text.Length() > 7 && ON_wString::EqualOrdinal( L"{\\rtf1\\", 7, static_cast<const wchar_t*>(m_text), 7, false) )
+      {
+        // All fonts in the LOGFONT with MISSING_FONT_TEST_valid_logfont_name 
+        // will be saved as a family named missing_family_name. 
+        // The initial space and terminating ;} are a hack to get the entry in the rtf font table.
+        // Keep in mind this is developer hack code for creating files to test
+        // handling of missing fonts. Customers never run this code.
+        const ON_wString MISSING_FONT_TEST_valid_font_rtf_name(L" Courier New;}");
+        if (m_text.Find(static_cast<const wchar_t*>(MISSING_FONT_TEST_valid_font_rtf_name)))
+        {
+          const ON_wString missing_font_rtf_name(L" Missing Font Test;}");
+          ON_wString modified_text(static_cast<const wchar_t*>(m_text));
+          if (modified_text.Replace(static_cast<const wchar_t*>(MISSING_FONT_TEST_valid_font_rtf_name), static_cast<const wchar_t*>(missing_font_rtf_name)) > 0)
+          {
+            if (!archive.WriteString(modified_text))
+              break;
+            bRichTextStringSaved = true;
+            break;
+          }
+        }
+      }
+#endif
+      // write correct m_text
+      if (!archive.WriteString(m_text))
+        break;
+
+      bRichTextStringSaved = true;
       break;
+    }
+
+    if (false == bRichTextStringSaved)
+      break;
+
     // obsolete plane was always world xy
     if (!archive.WritePlane(ON_Plane::World_xy))
       break;

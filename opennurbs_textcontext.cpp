@@ -249,4 +249,67 @@ const ON_Font* ON_TextContent::FirstCharFont() const
   return &ON_Font::Default;
 }
 
+//static
+bool ON_TextContent::GetRichTextFontTable(
+  const ON_wString rich_text,
+  ON_ClassArray< ON_wString >& font_table
+) 
+{
+  int table_pos = rich_text.Find(L"\\fonttbl");
+  if (table_pos < 0)
+    return false;
+
+  const wchar_t* rtf = rich_text.Array();
+  int open = 1;
+  int table_len = 0;
+  int len = rich_text.Length();
+  for (int i = table_pos + 8; i < len && open > 0; i++)
+  {
+    if (L'{' == rich_text[i])
+    {
+      open++;
+    }
+    else if (L'}' == rich_text[i])
+    {
+      open--;
+      table_len = i;
+    }
+  }
+
+  for (int i = table_pos + 8; i < table_len; i++)
+  {
+    int font_pos = rich_text.Find(L"\\f", i);
+    if (font_pos > i)
+    {
+      for (int j = font_pos + 2; j < table_len; j++)
+      {
+        if (rtf[j] == L' ')
+        {
+          for (int si = 0; si + j < table_len; si++)
+          {
+            if (rich_text[si + j] != L' ')
+            {
+              j += si;
+              break;
+            }
+          }
+          for (int ni = 1; ni + j < table_len; ni++)
+          {
+            if (rtf[ni + j] == L';' || rtf[ni + j] == L'}')
+            {
+              font_table.AppendNew() = rich_text.SubString(j, ni);
+              i = ni + j;
+              j = len;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+
+
 //--------------------------------------------------------------------

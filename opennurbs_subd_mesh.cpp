@@ -1616,7 +1616,7 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
 
         const ON_SubDVertex* vertex = face->Vertex(0);
         meshf.vi[1] = (nullptr != vertex) ? vertex->ArchiveId() : 0;
-        if (meshf.vi[1] < 1 || meshf.vi[1] >= (int)subd_vertex_count)
+        if (meshf.vi[1] < 1 || meshf.vi[1] > (int)subd_vertex_count)
           continue;
         meshf.vi[1]--;
 
@@ -1731,7 +1731,7 @@ void ON_SubD::ClearEvaluationCache() const
 
   if (nullptr != level)
   {
-    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts();
+    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts(false);
     level->ClearEvaluationCache();
   }
 }
@@ -1742,7 +1742,7 @@ void ON_SubD::ClearNeighborhoodEvaluationCache(const ON_SubDVertex * vertex, boo
 
   if (nullptr != level)
   {
-    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts();
+    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts(false);
     level->ClearNeighborhoodEvaluationCache(vertex, bTagChanged);
   }
 }

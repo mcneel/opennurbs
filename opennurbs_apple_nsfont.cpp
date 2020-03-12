@@ -464,22 +464,25 @@ const ON_wString ON_Font::AppleCTFontFaceName(
   return ON_wString::EmptyString;
 }
 
-CTFontRef ON_Font::AppleCTFont() const
+CTFontRef ON_Font::AppleCTFont(bool& bIsSubstituteFont) const
 {
   // Using PointSize() added January 2018.
+  bIsSubstituteFont = false;
   const double pointSize
   = ON_Font::IsValidPointSize(m_point_size)
   ? m_point_size
   : 0.0;
-  return ON_Font::AppleCTFont(pointSize);
+  return ON_Font::AppleCTFont(pointSize, bIsSubstituteFont);
 }
 
  CTFontRef ON_Font::AppleCTFont(
-   const wchar_t* name,
-   double pointSize
+   const wchar_t* postscript_name,
+   double pointSize,
+   bool& bIsSubstituteFont
 )
 {
-  ON_wString local_name(name);
+  bIsSubstituteFont = false;
+  ON_wString local_name(postscript_name);
   local_name.TrimLeftAndRight();
   if (local_name.IsEmpty())
     return nullptr;
@@ -498,25 +501,28 @@ CTFontRef ON_Font::AppleCTFont() const
   if (false == bHavePointSize)
     appleFont = ON_Font::AppleCTFontSetSize(appleFont, 0.0, true);
   
-  // DEBUGGING TEST
   if (nullptr != appleFont)
   {
-    ON_wString postscript_name = ON_Font::AppleCTFontPostScriptName(appleFont);
-    if ( false == ON_wString::EqualOrdinal(postscript_name,local_name,true) )
-      return appleFont;
+    const ON_wString ctfont_postscript_name = ON_Font::AppleCTFontPostScriptName(appleFont);
+    if (false == ON_wString::EqualOrdinal(ctfont_postscript_name, local_name, true))
+      bIsSubstituteFont = true;
   }
   
   return appleFont;
 }
 
 
-CTFontRef ON_Font::AppleCTFont(double pointSize) const
+CTFontRef ON_Font::AppleCTFont(double pointSize, bool& bIsSubstituteFont) const
 {
   const bool bHavePointSize = ( pointSize > 0.0 );
   const CGFloat size = (CGFloat)(bHavePointSize ? pointSize : 1000.0 );
   
   CTFontRef appleCTFont = nullptr;
+  ON_wString appleCTFontPostscriptName;
+  bIsSubstituteFont = false;
+  
   const ON_Font* installed_font = nullptr;
+  bool bInstalledFontIsSubstitute = false;
   ON_wString tested_names[7];
   for(int name_dex = 0; name_dex < 7; name_dex++)
   {
@@ -525,7 +531,10 @@ CTFontRef ON_Font::AppleCTFont(double pointSize) const
     {
       installed_font = InstalledFont(true);
       if (nullptr == installed_font)
+      {
+        bInstalledFontIsSubstitute = true;
         installed_font = &ON_Font::Default;
+      }
     }
 
     switch (name_dex)
@@ -559,9 +568,7 @@ CTFontRef ON_Font::AppleCTFont(double pointSize) const
     {
       for ( int i = 0; i < name_dex; i++ )
       {
-        if (tested_names[name_dex].IsEmpty())
-          continue;
-        if ( ON_wString::EqualOrdinal(name,tested_names[name_dex],true) )
+        if ( ON_wString::EqualOrdinal(name,tested_names[i],true) )
         {
           name = ON_wString::EmptyString;
           break;
@@ -572,21 +579,24 @@ CTFontRef ON_Font::AppleCTFont(double pointSize) const
       continue;
     tested_names[name_dex] = name;
     
-    CTFontRef appleCTFontWithName = ON_Font::AppleCTFont(name,size);
-    if (nullptr == appleCTFontWithName)
+    bool bCandidateIsSubstitute = false;
+    CTFontRef candidate = ON_Font::AppleCTFont(name, size, bCandidateIsSubstitute);
+    if (nullptr == candidate)
       continue;
-    const ON_wString postscript_name = ON_Font::AppleCTFontPostScriptName(appleCTFontWithName);
-    if ( ON_wString::EqualOrdinal(postscript_name,name,true))
+    const ON_wString candidate_name = ON_Font::AppleCTFontPostScriptName(candidate);
+    
+    if (nullptr == appleCTFont || ON_wString::EqualOrdinal(name,candidate_name,true))
     {
       if (nullptr != appleCTFont)
         CFRelease(appleCTFont);
-      appleCTFont = appleCTFontWithName;
-      break;
+      appleCTFont = candidate;
+      appleCTFontPostscriptName = candidate_name;
+      bIsSubstituteFont = bCandidateIsSubstitute || bInstalledFontIsSubstitute;
+      if (ON_wString::EqualOrdinal(name, appleCTFontPostscriptName, true))
+        break;
     }
-    if ( nullptr == appleCTFont )
-      appleCTFont = appleCTFontWithName;
     else
-      CFRelease(appleCTFontWithName);
+      CFRelease(candidate);
   }
   
   if ( nullptr != appleCTFont && false == bHavePointSize)
@@ -634,7 +644,8 @@ void ON_AppleFontGetFontMetrics(
     if (nullptr == font)
       break;
     
-    CTFontRef appleFont = font->AppleCTFont();
+    bool bIsSubstituteFont = false;
+    CTFontRef appleFont = font->AppleCTFont(bIsSubstituteFont);
     if (nullptr == appleFont)
       break;
     
@@ -972,7 +983,8 @@ unsigned int ON_AppleFontGetGlyphMetrics(
   if (nullptr == font)
     return 0;
 
-  CTFontRef appleFont = font->AppleCTFont();
+  bool bIsSubstituteFont = false;
+  CTFontRef appleFont = font->AppleCTFont(bIsSubstituteFont);
   if (nullptr == appleFont)
     return 0;
 
@@ -1042,7 +1054,8 @@ bool ON_AppleFontGetGlyphOutline(
   }
 #endif
 
-  CTFontRef appleFont = font->AppleCTFont();
+  bool bIsSubstituteFont = false;
+  CTFontRef appleFont = font->AppleCTFont(bIsSubstituteFont);
   if (nullptr == appleFont)
     return false;
 

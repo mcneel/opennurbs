@@ -268,6 +268,19 @@ public:
   */
   bool ClearRuntimeMark();
 
+  ON__UINT8 MarkBits() const;
+
+  ON__UINT8 SetMarkBits(ON__UINT8 bits);
+
+  /*
+  Returns:
+    (0==mark_bits) ? RuntimeMark() : (mark_bits == MarkBits()
+  */
+  bool IsMarked(
+    ON__UINT8 mark_bits
+  ) const;
+
+
   //////////////////////////////////////////////////////////////////////////
   //
   // Selection
@@ -490,7 +503,18 @@ public:
 
 private:
   friend class ON_AggregateComponentStatus;
+
+  // NOTE:
+  // Hidden, Selected, ..., Mark() bool values are saved
+  // as single bits on m_status_flags.
   unsigned char m_status_flags = 0U;
+
+  // extra bits for advanced marking
+  // no rules for use and runtime only - never saved in 3dm archives
+  // NOTE: Mark() and MarkBits() are independent.
+  //   bool Mark() is a bit on m_status_flags.
+  //   ON__UINT8 MarkBits() returns m_mark_bits.
+  ON__UINT8 m_mark_bits = 0U;
 };
 
 
@@ -614,7 +638,9 @@ private:
 
 private:
   unsigned char m_current = 0; // 0 = empty, 1 = current, 2 = dirty
-  unsigned short m_reserved2 = 0;
+
+private:
+  unsigned char m_reserved1 = 0;
     
 private:
   // number of components

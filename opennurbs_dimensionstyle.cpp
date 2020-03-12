@@ -3457,6 +3457,16 @@ const ON_Font& ON_DimStyle::Font() const
   return (nullptr != m_managed_font) ? *m_managed_font : ON_Font::Default;
 }
 
+const ON_Font& ON_DimStyle::ParentDimStyleFont() const
+{
+  // If this dimstyle has a parent dimstyle and this dimstyle's font overrides the parent dimstyle's font,
+  // then the parent dimstyle's font is returned. Otherwise this dimstyle's font is returned.
+  return
+    (nullptr != m_parent_dimstyle_managed_font && false == (ON_nil_uuid == ParentId()) && IsFieldOverride(ON_DimStyle::field::Font) ) 
+    ? *m_parent_dimstyle_managed_font 
+    : Font();
+}
+
 const bool ON_DimStyle::FontSubstituted() const
 {
   return
@@ -5205,6 +5215,7 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
   {
     SetParentId(parent.Id());
   }
+  m_parent_dimstyle_managed_font = parent.m_managed_font;
 
   // leave the Unset, Name, Index fields as is. They cannot be overridden
   for (unsigned int i = static_cast<unsigned int>(ON_DimStyle::field::Index)+1; i < static_cast<unsigned int>(ON_DimStyle::field::Count); i++)

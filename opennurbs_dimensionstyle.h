@@ -1324,6 +1324,13 @@ public:
 
   /*
   Returns:
+    If a parent dimstyle is in play, this is the managed font used by the parent dimstyle.
+    Otherwise, this is the font returned by Font().
+  */
+  const class ON_Font& ParentDimStyleFont() const;
+
+  /*
+  Returns:
     A copy of the font_characteristics information.
   Remarks:
     You probably want to use Font(). This function is only useful
@@ -2339,7 +2346,10 @@ private:
   bool m_text_underlined = false; // extra/extended line under text block in leaders and radial dimensions
 
 private:
-  ON__UINT_PTR m_reserved = 0;
+  // The parent dimstyle's managed font.
+  // Use the ParentDimStyleFont() member function to query this field.
+  // 
+  const ON_Font* m_parent_dimstyle_managed_font = nullptr;
 
 private:
   void Internal_ContentChange() const;

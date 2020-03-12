@@ -272,6 +272,11 @@ public:
     size_t id_offset
     ) const;
 
+  /*
+  Returns:
+    If successful, (1 + maximum assigned id value) is returned.
+    Otherwise 0 is returned.
+  */
   unsigned int ResetElementId(
     size_t id_offset,
     unsigned int initial_id

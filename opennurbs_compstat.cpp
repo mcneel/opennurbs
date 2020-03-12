@@ -392,6 +392,14 @@ bool ON_ComponentStatus::RuntimeMark() const
 
 }
 
+bool ON_ComponentStatus::IsMarked(
+  ON__UINT8 mark_bits
+) const
+{
+  return (0 == mark_bits) ? (0 != (m_status_flags & RUNTIME_MARK_BIT)) : (mark_bits == m_mark_bits);
+}
+
+
 bool ON_ComponentStatus::SetRuntimeMark(
   bool bRuntimeMark
 )
@@ -419,6 +427,18 @@ bool ON_ComponentStatus::ClearRuntimeMark()
     return true;
   }
   return false;
+}
+
+ON__UINT8 ON_ComponentStatus::MarkBits() const
+{
+  return m_mark_bits;
+}
+
+ON__UINT8 ON_ComponentStatus::SetMarkBits(ON__UINT8 bits)
+{
+  const ON__UINT8 rc = m_mark_bits;
+  m_mark_bits = bits;
+  return rc;
 }
 
 

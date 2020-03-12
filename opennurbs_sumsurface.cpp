@@ -48,11 +48,11 @@ ON_SumSurface* ON_SumSurface::New( const ON_SumSurface& rev_surface )
   return new ON_SumSurface(rev_surface);
 }
 
-ON_SumSurface::ON_SumSurface() : m_basepoint(0.0,0.0,0.0)
+ON_SumSurface::ON_SumSurface()
 {
   ON__SET__THIS__PTR(m_s_ON_SumSurface_ptr);
-  m_curve[0] = 0;
-  m_curve[1] = 0;
+  m_curve[0] = nullptr;
+  m_curve[1] = nullptr;
 }
 
 ON_SumSurface::~ON_SumSurface()
@@ -68,25 +68,41 @@ void ON_SumSurface::Destroy()
   {
     if ( m_curve[i] ) {
       delete m_curve[i];
-      m_curve[i] = 0;
+      m_curve[i] = nullptr;
     }
   }
-  m_bbox.Destroy();
-  m_basepoint.Set(0.0,0.0,0.0);
+  m_bbox = ON_BoundingBox::EmptyBoundingBox;
+  m_basepoint = ON_3dPoint::Origin;
 }
 
 void ON_SumSurface::EmergencyDestroy()
 {
-  m_curve[0] = 0;
-  m_curve[1] = 0;
+  m_curve[0] = nullptr;
+  m_curve[1] = nullptr;
+  m_bbox = ON_BoundingBox::EmptyBoundingBox;
+  m_basepoint = ON_3dPoint::Origin;
 }
 
-ON_SumSurface::ON_SumSurface( const ON_SumSurface& src )
+void ON_SumSurface::Internal_CopyFrom(const ON_SumSurface& src)
+{
+  m_curve[0] = nullptr;
+  m_curve[1] = nullptr;
+  for ( int i = 0; i < 2; i++ )
+  {
+    if ( nullptr != src.m_curve[i] ) 
+      m_curve[i] = src.m_curve[i]->DuplicateCurve();
+  }
+  m_basepoint = src.m_basepoint;
+  m_bbox = src.m_bbox;
+}
+
+ON_SumSurface::ON_SumSurface( const ON_SumSurface& src ) 
+  : ON_Surface(src)
 {
   ON__SET__THIS__PTR(m_s_ON_SumSurface_ptr);
-  m_curve[0] = 0;
-  m_curve[1] = 0;
-  *this = src;
+  m_curve[0] = nullptr;
+  m_curve[1] = nullptr;
+  Internal_CopyFrom(src);
 }
 
 unsigned int ON_SumSurface::SizeOf() const
@@ -113,18 +129,8 @@ ON_SumSurface& ON_SumSurface::operator=(const ON_SumSurface& src )
   if ( this != &src ) 
   {
     Destroy();
-    for ( int i = 0; i < 2; i++ )
-    {
-      if ( src.m_curve[i] ) 
-      {
-        ON_Object* obj = src.m_curve[i]->DuplicateCurve();
-        m_curve[i] = ON_Curve::Cast(obj);
-        if ( !m_curve[i] )
-          delete obj;
-      }
-    }
-    m_basepoint = src.m_basepoint;
-    m_bbox = src.m_bbox;
+    ON_Surface::operator=(src);
+    Internal_CopyFrom(src);
   }
   return *this;
 }

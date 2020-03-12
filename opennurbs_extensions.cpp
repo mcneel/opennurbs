@@ -3882,35 +3882,126 @@ bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
 
 bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers)
 {
+  ON_SimpleArray<size_t> dummy;
+  return GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, dummy);
+}
+
+
+//Returns the number of embedded files
+static unsigned int SkipArchiveToFiles(ON_Read3dmBufferArchive& archive, int iGooLen)
+{
+  if (!archive.ReadMode())
+    return 0;
+
+  int version = 0;
+  if (!archive.ReadInt(&version))
+    return 0;
+
+  if (4 != version)
+    return 0;
+
+  //Read out the document data, and throw it away.
+  {
+    int slen = 0;
+    if (!archive.ReadInt(&slen))
+      return 0;
+    if (slen <= 0)
+      return 0;
+    if (slen + 4 > iGooLen)
+      return 0;
+    ON_String s;
+    s.SetLength(slen);
+    if (!archive.ReadChar(slen, s.Array()))
+      return 0;
+  }
+
+  unsigned int iCount = 0;
+  if (!archive.ReadInt(&iCount))
+    return 0;
+
+  return iCount;
+}
+
+static bool SeekPastCompressedBuffer(ON_BinaryArchive& archive)
+{
+  if (!archive.ReadMode())
+    return false;
+
+  bool rc = false;
+  unsigned int buffer_crc0 = 0;
+  char method = 0;
+
+  size_t sizeof__outbuffer;
+  if (!archive.ReadCompressedBufferSize(&sizeof__outbuffer))
+    return false;
+
+  if (0 == sizeof__outbuffer)
+    return true;
+
+  if (!archive.ReadInt(&buffer_crc0)) // 32 bit crc of uncompressed buffer
+    return false;
+
+  if (!archive.ReadChar(&method))
+    return false;
+
+  if (method != 0 && method != 1)
+    return false;
+
+  switch (method)
+  {
+  case 0: // uncompressed
+    rc = archive.SeekForward(sizeof__outbuffer);
+    break;
+  case 1: // compressed
+  {
+    ON__UINT32 tcode = 0;
+    ON__INT64  big_value = 0;
+    rc = archive.BeginRead3dmBigChunk(&tcode, &big_value);
+    if (rc)
+      rc = archive.EndRead3dmChunk();
+  }
+  break;
+  }
+
+  return rc;
+}
+
+bool ONX_Model::GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths)
+{
   if (!ONX_Model::IsRDKDocumentInformation(docud))
     return false;
 
   ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
 
-  int version = 0;
-  if (!a.ReadInt(&version))
+  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
+
+  if (0 == iCount)
     return false;
 
-  if (4 != version)
-    return false;
-
-  //Read out the document data, and throw it away.
+  for (unsigned int i = 0; i < iCount; i++)
   {
-    int slen = 0;
-    if (!a.ReadInt(&slen))
-      return 0;
-    if (slen <= 0)
-      return 0;
-    if (slen + 4 > docud.m_goo.m_value)
-      return 0;
-    ON_String s;
-    s.SetLength(slen);
-    if (!a.ReadChar(slen, s.Array()))
-      return 0;
+    ON_wString sPath;
+    if (!a.ReadString(sPath))
+      return false;
+
+    paths.Append(sPath);
+
+    SeekPastCompressedBuffer(a);
   }
 
-  unsigned int iCount = 0;
-  if (!a.ReadInt(&iCount))
+  return paths.Count() > 0;
+}
+
+bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
+  
+  if (0 == iCount)
     return false;
 
   int unpacked = 0;
@@ -3933,6 +4024,7 @@ bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArr
       {
         embedded_files_as_buffers.Append(buffer);
         paths.Append(sPath);
+        buffer_sizes.Append(size);
         unpacked++;
       }
       else
@@ -3943,6 +4035,53 @@ bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArr
   }
 
   return unpacked > 0;
+}
+
+bool ONX_Model::GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
+
+  if (0 == iCount)
+    return false;
+
+  for (unsigned int i = 0; i < iCount; i++)
+  {
+    ON_wString sPath;
+    if (!a.ReadString(sPath))
+      return false;
+
+    if (0 == sPath.ComparePath(path))
+    {
+      size_t size;
+      if (!a.ReadCompressedBufferSize(&size))
+        return false;
+
+      bytes.Destroy();
+      bytes.Reserve(size);
+
+      bool bFailedCRC = false;
+      bool bRet = a.ReadCompressedBuffer(size, bytes.Array(), &bFailedCRC);
+
+      if (!bRet || bFailedCRC)
+      {
+        return false;
+      }
+
+      bytes.SetCount((int)size);
+      return true;
+    }
+    else
+    {
+      SeekPastCompressedBuffer(a);
+    }
+  }
+
+  return false;
 }
 
 

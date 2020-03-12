@@ -703,15 +703,6 @@ static int MatchingSupport(const ON_4dex& A, const ON_4dex& B)
   return (i == 4) ? nsup : -1;
 }
 
-static int Gregdebugcounter = 0;
-
-
-static void DebugCounter()
-{
-#ifdef ON_DEBUG
-  Gregdebugcounter++;
-#endif
-}
 
 // Gilbert Johnson Keerthi  algorithm
 
@@ -850,7 +841,6 @@ bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
 
 				if (Simp.GetClosestPointToOrigin(Bary))
 				{
-					DebugCounter();
 					bFirstPass = false;
 					v = Simp.Evaluate(Bary);
 					vlenlast = vlen;

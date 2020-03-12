@@ -1008,6 +1008,22 @@ void ON_SubDFace::ClearSavedSubdivisionPoints() const
   ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
 }
 
+
+unsigned int ON_SubDVertex::VertexId() const
+{
+  return m_id;
+}
+
+unsigned int ON_SubDEdge::EdgeId() const
+{
+  return m_id;
+}
+
+unsigned int ON_SubDFace::FaceId() const
+{
+  return m_id;
+}
+
 const ON_3dPoint ON_SubDFace::ControlNetCenterPoint() const
 {
   if (m_edge_count < 3)

@@ -523,6 +523,14 @@ public:
 
   const ON_Font* FirstCharFont() const;
 
+  // Get the exact strings in the RTF font table and add them to font_table[]
+  // Example
+  // Input  rich_text = {\rtf1\deff0{\fonttbl{\f0 ArialMT;}{\f1 SegoeUI;}}\f0 \fs40{\f1 This is Segoe UI}}
+  // returns font_table[] = { "ArialMT", "SegoeUI"}
+  static bool GetRichTextFontTable(
+    const ON_wString rich_text,
+    ON_ClassArray< ON_wString >& font_table
+  );
 
   // Dimension text formatting
   static bool FormatDistance(

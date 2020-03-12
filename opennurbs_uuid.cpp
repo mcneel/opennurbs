@@ -481,6 +481,10 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
 
 }
  
+ON_UuidIndex::ON_UuidIndex(ON_UUID id, int index)
+  : m_id(id)
+  , m_i(index)
+{}
 int ON_UuidIndex::CompareIdAndIndex( const ON_UuidIndex* a, const ON_UuidIndex* b )
 {
   int i;

@@ -362,6 +362,14 @@ void ON_TextBuilder::GroupEnd()
   m_level--;
 }
 
+void ON_TextBuilder::RunBegin()
+{
+}
+
+void ON_TextBuilder::RunEnd()
+{
+}
+
 bool ON_TextBuilder::ReadingFontTable()
 {
   return (m_level >= m_font_table_level);
@@ -1184,6 +1192,38 @@ void ON_TextRunBuilder::GroupEnd()   // '}'
   m_level--;
 }
 
+void ON_TextRunBuilder::RunBegin()  // like { with no pushing properties
+{
+  int cp32_count = m_current_codepoints.Count();
+  if (cp32_count > 0)
+  {
+    FlushText(cp32_count, m_current_codepoints.Array());
+    m_current_codepoints.Empty();
+  }
+  FinishCurrentRun();
+
+  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+}
+
+
+void ON_TextRunBuilder::RunEnd()   // like '}' with no popping properties
+{
+  int cp32_count = m_current_codepoints.Count();
+  if (cp32_count > 0)
+  {
+    FlushText(cp32_count, m_current_codepoints.Array());
+    m_current_codepoints.Empty();
+  }
+  FinishCurrentRun();
+  
+  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+    m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+
+  if (m_level <= m_font_table_level)
+    m_font_table_level = 10000;
+}
+
 void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
 {
   if (count < 1 || 0 == cp || 0 == cp[0])
@@ -1863,6 +1903,39 @@ void ON_RtfStringBuilder::GroupEnd()
   m_current_run = PopRun();
 }
 
+void ON_RtfStringBuilder::RunBegin()
+{
+  // not skipping the color table or we're not in it
+  if (!SkipColorTbl() || m_current_run.Type() != ON_TextRun::RunType::kColortbl)
+    m_string_out += m_current_run.TextString();
+
+  m_current_run.EmptyText();
+  m_current_run.SetTerminated(true);
+
+  m_current_run.SetType(ON_TextRun::RunType::kText);
+  m_current_run.ClearHasContent();
+  m_have_rtf = true;
+}
+
+void ON_RtfStringBuilder::RunEnd()
+{
+  if (m_current_run.Type() != ON_TextRun::RunType::kColortbl)
+  {
+    if (m_level >= 0)
+    {
+      if (m_current_run.Type() == ON_TextRun::RunType::kFonttbl)
+      {
+        m_font_table_level = 10000;
+      }
+      m_string_out = m_string_out + m_current_run.TextString();
+      m_current_run.EmptyText();
+    }
+  }
+
+  if (m_current_run.Type() == ON_TextRun::RunType::kColortbl)
+    SetInColorTable(false);
+}
+
 void ON_RtfStringBuilder::BeginFontTable()
 {
   m_font_table_level = m_level;
@@ -2304,6 +2377,31 @@ void ON_RtfFirstChar::GroupEnd()
   m_level--;
 }
 
+void ON_RtfFirstChar::RunBegin()
+{
+  m_have_rtf = true;
+}
+
+void ON_RtfFirstChar::RunEnd()
+{
+  if (m_current_run.Type() == ON_TextRun::RunType::kFontdef)
+  {
+    // String is a font facename. Make a font with that facename
+    // and a font definition run
+    ON_wString str;
+    str = m_current_run.Text();
+    if (!str.IsEmpty())
+    {
+      str.Remove(L';');  // facename delimiter from rtf
+      ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
+      fn_key.m_rtf_font_index = m_font_index;
+      fn_key.m_rtf_font_name = str;
+      fn_key.m_charset = m_current_props.CharSet();
+      fn_key.m_codepage = m_current_props.CodePage();
+    }
+  }
+}
+
 void ON_RtfFirstChar::BeginFontTable()
 {
   m_font_table_level = m_level;
@@ -2725,9 +2823,9 @@ bool ON_RtfParser::Parse()
           case ON_UnicodeCodePoint::ON_LineSeparator:
           case ON_UnicodeCodePoint::ON_ParagraphSeparator:
             FlushCurText(m_builder.m_current_codepoints);
-            m_builder.GroupEnd();
+            m_builder.RunEnd();
             ProcessTag(L"par", nullptr, false);
-            m_builder.GroupBegin();
+            m_builder.RunBegin();
             break;
 
           case '\'':
@@ -3007,11 +3105,12 @@ bool RtfComposer::Compose(
   bool chg_strikeout = false;
   bool chg_facename = false;
 
-  // First facename is from the ON_TextContent
+  // First facename is from the ON_TextContent (style_font)
   // Any after that are from runs
   ON_ClassArray< ON_wString > fonttable(8);
 
-  // Creates a fonttable entry the first time
+  // Creates a fonttable entry if the font isn't in the fonttable
+  // Returns the table index if it is
   unsigned int stylefont_key = GetFacenameKey(style_fontname, fonttable);
 
   int runcount = runs->Count();
@@ -3060,7 +3159,7 @@ bool RtfComposer::Compose(
           if (!chg_strikeout)
             chg_strikeout = run_font->IsStrikethrough() != style_strikeout;
 
-          const ON_wString& run_fontname = run_font->RichTextFontName();
+          const ON_wString run_fontname = run_font->RichTextFontName();
           if (run_fontname.IsEmpty())
             return false;
           unsigned int run_font_key = GetFacenameKey(run_fontname, fonttable);
@@ -3091,6 +3190,17 @@ bool RtfComposer::Compose(
         )
       {
         runholders.AppendNew() = run;
+        const ON_Font* run_font = run->Font();
+        if (nullptr != run_font)
+        {
+          const ON_wString run_fontname = run_font->RichTextFontName();
+          if (!run_fontname.IsEmpty())
+          {
+            unsigned int run_font_key = GetFacenameKey(run_fontname, fonttable);
+            if (!chg_facename)
+              chg_facename = run_font_key != stylefont_key;
+          }
+        }
       }
     }
   } // end of getting runinfo
@@ -3114,6 +3224,7 @@ bool RtfComposer::Compose(
     {
       if (make_rtf || (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0))
       {
+        unsigned int run_font_key = ON_UNSET_UINT_INDEX;
         if (make_rtf)
         {
           const ON_Font* run_font = run->Font();
@@ -3124,7 +3235,7 @@ bool RtfComposer::Compose(
           run_strings += L"{";
           bool addspace = false;
 
-          unsigned int run_font_key = GetFacenameKey(run_font, fonttable);
+          run_font_key = GetFacenameKey(run_font, fonttable);
           temp.Format(L"\\f%d", run_font_key);
           run_strings += temp;
           addspace = true;
@@ -3182,19 +3293,47 @@ bool RtfComposer::Compose(
         {
           GetRunText(run, run_strings, make_rtf);
         }
+
+        if (ri < runcount - 1)
+        {
+          ON_TextRun* par_run = runholders[ri+1];
+          if (nullptr != par_run && (ON_TextRun::RunType::kNewline == par_run->Type() || ON_TextRun::RunType::kParagraph == par_run->Type()))
+          {
+            const ON_Font* par_run_font = par_run->Font();
+            if (nullptr != par_run_font)
+            {
+              unsigned int par_run_font_key = GetFacenameKey(par_run_font, fonttable);
+              if (par_run_font_key == run_font_key)
+              {
+                run_strings += L"\\par";
+                ri++;
+              }
+            }
+          }
+        }
         if (make_rtf)
           run_strings += L"}";
       }
-      else
+      else // not making rtf, just collect text from runs
       {
         GetRunText(run, run_strings, make_rtf);
       }
     }
-    else if (ri < runcount - 1 && multiline && (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type()))
+    else if (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type())
     {
       if (make_rtf)
-        run_strings += L"{\\par}";
-      else
+      {
+        temp = L"{\\par}";
+        const ON_Font* par_run_font = run->Font();
+        if (nullptr != par_run_font)
+        {
+          unsigned int par_run_font_key = GetFacenameKey(par_run_font, fonttable);
+          if(par_run_font_key != stylefont_key)
+          temp.Format(L"{\\f%d \\par}", par_run_font_key);
+        }
+        run_strings += temp;
+      }
+      else if(ri < runcount - 1 && multiline)   // not making rtf
         run_strings += L"\n";
     }
   }  // end of collecting run text
@@ -3230,7 +3369,10 @@ bool RtfComposer::Compose(
 
     }
 
-    rtf += L"}\\fs40";
+    temp.Format(L"}\\f%d \\fs40", stylefont_key);
+    rtf += temp;
+
+    //rtf += L"}\\fs40";
     if (style_bold)
       rtf += L"\\b";
     if (style_italic)
@@ -3240,7 +3382,7 @@ bool RtfComposer::Compose(
 
     rtf += run_strings;
     // backing out the change made for RH-49725 because it causes the problem reported in RH-50733
-    rtf += L"\\par}";
+    rtf += L"}";
   }
   else
   {
@@ -3249,6 +3391,7 @@ bool RtfComposer::Compose(
   return true;
 }
 
+// Turns on or off composing for debugging
 bool RtfComposer::m_bComposeRTF = true;
 bool RtfComposer::RecomposeRTF()
 {
@@ -3257,6 +3400,15 @@ bool RtfComposer::RecomposeRTF()
 void RtfComposer::SetRecomposeRTF(bool b)
 {
   RtfComposer::m_bComposeRTF = b;
+}
+
+static const ON_wString Internal_PostScriptNameIfAvailable(const ON_Font& managed_font)
+{
+  ON_wString style_fontname = managed_font.PostScriptName();
+  if (style_fontname.IsNotEmpty())
+    return style_fontname;
+
+  return ON_wString::FormatToString(L"Postscript-name-not-available-%u", managed_font.ManagedFontSerialNumber());
 }
 
 const ON_wString RtfComposer::ComposeAppleRTF(
@@ -3273,9 +3425,7 @@ const ON_wString RtfComposer::ComposeAppleRTF(
 
 
   const ON_Font& style_font = text->DefaultFont();
-  const ON_wString style_fontname = style_font.PostScriptName();
-  if (style_fontname.IsEmpty())
-    return rtf_string;
+  const ON_wString style_fontname = Internal_PostScriptNameIfAvailable(style_font);
 
   // First facename is from the ON_TextContent
   // Any after that are from runs
@@ -3347,9 +3497,7 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       if (nullptr == run_font)
         continue;
 
-      const ON_wString& run_fontname = run_font->PostScriptName();
-      if (run_fontname.IsEmpty())
-        return rtf_string;
+      const ON_wString& run_fontname = Internal_PostScriptNameIfAvailable(*run_font);
 
       // add properties for this string
       run_strings += L"{";
@@ -3398,25 +3546,49 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       {
         GetRunText(run, run_strings, true_bool);
       }
+
+      if (ri < runcount - 2)
+      {
+        ON_TextRun* par_run = runholders[ri + 1];
+        if (nullptr != par_run && (ON_TextRun::RunType::kNewline == par_run->Type() || ON_TextRun::RunType::kParagraph == par_run->Type()))
+        {
+          const ON_Font* par_run_font = par_run->Font();
+          if (nullptr != par_run_font)
+          {
+            const ON_wString& par_run_fontname = Internal_PostScriptNameIfAvailable(*par_run_font);
+            if (!par_run_fontname.IsEmpty())
+            {
+              unsigned int par_run_font_key = GetFacenameKey(par_run_fontname, fonttable);
+              if (par_run_font_key == run_font_key)
+              {
+                run_strings += L"\\\n";
+                ri++;
+              }
+            }
+          }
+        }
+      }
+
       run_strings += L"}";
     }
     else if (ri < runcount - 1 && multiline && (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type()))
     {
-      run_strings += L"{\\par}";
+      temp = L"{\\par}";
+      const ON_Font* run_font = run->Font();
+      if (nullptr != run_font)
+      {
+        const ON_wString run_fontname = Internal_PostScriptNameIfAvailable(*run_font);
+        unsigned int run_font_key = GetFacenameKey(run_fontname, fonttable);
+        if(run_font_key != deffont_key)
+          temp.Format(L"{\\f%d \\par}", run_font_key);
+      }
+      run_strings += temp;
     }
   }  // end of collecting run text
 
   int nfont = fonttable.Count();
   if (run_strings.Length() > 0)
   {
-    // deff0 means use font0 for the default font throughout the string.
-    // If we include font0 in the font table, when we send
-    // the string back to the RTF control, the font listed as
-    // font0 will be used instead of the default font for the 
-    // style.
-    // So the default font is listed as 0 and there is no
-    // entry in the table for font0.
-
     rtf_string.Format(L"{\\rtf1");
     if (0 < nfont)
     {
@@ -3432,10 +3604,12 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       rtf_string += fonttable_string;
     }
 
-    rtf_string += L"}\\fs40";
+    temp.Format(L"}\\f%d \\fs40", deffont_key);
+    rtf_string += temp;
+    //rtf_string += L"}\\fs40";
 
     rtf_string += run_strings;
-    rtf_string += L"\\par}";
+    rtf_string += L"}";
   }
   return rtf_string;
 }

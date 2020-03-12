@@ -107,7 +107,7 @@ const ON_wString ON_Symmetry::SymmetryCoordinatesToString(ON_Symmetry::Coordinat
 
 bool ON_Symmetry::Write(ON_BinaryArchive& archive) const
 {
-  if (false == archive.BeginWrite3dmAnonymousChunk(2))
+  if (false == archive.BeginWrite3dmAnonymousChunk(3))
     return false;
 
   bool rc = false;
@@ -164,6 +164,11 @@ bool ON_Symmetry::Write(ON_BinaryArchive& archive) const
     if (false == archive.WriteChar(ucoordinates))
       break;
 
+    // ON_Symmetry::Coordinates added Feb 11, 2020 chunk version 3
+    if ( false == archive.WriteBigInt(SymmetricObjectContentSerialNumber()) )
+      break;
+
+    rc = true;
     break;
   }
   if (false == archive.EndWrite3dmChunk())
@@ -288,6 +293,14 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
     if (ON_Symmetry::Coordinates::Unset != symmetry_coordinates && m_coordinates != symmetry_coordinates)
       m_coordinates = symmetry_coordinates;
     
+    if (chunk_version < 3)
+      break;
+
+    ON__UINT64 symmetric_object_content_serial_number = 0;
+    rc = archive.ReadBigInt(&symmetric_object_content_serial_number);
+    if (rc)
+      SetSymmetricObjectContentSerialNumber(symmetric_object_content_serial_number);
+
     break;
   }
 
@@ -469,6 +482,111 @@ const ON_Symmetry ON_Symmetry::TransformUnconditionally(const ON_Xform& xform) c
     break;
   }
   return ON_Symmetry::Unset;
+}
+
+static bool Internal_SamePlane(const ON_Symmetry* lhs, const ON_Symmetry* rhs, double zero_tolerance)
+{
+  const ON_PlaneEquation lhs_e = lhs->ReflectionPlane().UnitizedPlaneEquation();
+  const ON_PlaneEquation rhs_e = rhs->ReflectionPlane().UnitizedPlaneEquation();
+  return
+    fabs(lhs_e.x - rhs_e.x) <= zero_tolerance
+    && fabs(lhs_e.y - rhs_e.y) <= zero_tolerance
+    && fabs(lhs_e.z - rhs_e.z) <= zero_tolerance
+    && fabs(lhs_e.d - rhs_e.d) <= zero_tolerance
+    ;
+}
+
+static bool Internal_SameRotation(const ON_Symmetry* lhs, const ON_Symmetry* rhs, double zero_tolerance)
+{
+  const ON_Line lhs_l = lhs->RotationAxis();
+  const ON_Line rhs_l = rhs->RotationAxis();
+  if (
+    lhs_l.DistanceTo(rhs_l.from) <= zero_tolerance
+    && lhs_l.DistanceTo(rhs_l.to) <= zero_tolerance
+    && rhs_l.DistanceTo(lhs_l.from) <= zero_tolerance
+    && rhs_l.DistanceTo(lhs_l.to) <= zero_tolerance
+    )
+  {
+    const ON_3dVector lhs_t = lhs->RotationAxis().Tangent();
+    const ON_3dVector rhs_t = lhs->RotationAxis().Tangent();
+    const double lhs_a = lhs->RotationAngleRadians();
+    const double rhs_a = ((lhs_t * rhs_t < 0.0) ? -1.0 : 1.0) * rhs->RotationAngleRadians();
+    if (fabs(lhs_a - rhs_a) <= zero_tolerance)
+    {
+      // a point 1 unit from the common axis will rotate within zero tolrance
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool Internal_SameTransformation(const ON_Xform lhs_x, const ON_Xform rhs_x, double zero_tolerance)
+{
+  return (lhs_x * rhs_x.Inverse()).IsIdentity(zero_tolerance) && (rhs_x * lhs_x.Inverse()).IsIdentity(zero_tolerance);
+}
+
+static bool Internal_SameTransformation(const ON_Symmetry* lhs, const ON_Symmetry* rhs, double zero_tolerance)
+{
+  ON_Xform lhs_x;
+  ON_Xform rhs_x;
+  if (lhs->InversionOrder() != rhs->InversionOrder())
+    return false;
+  if (lhs->CyclicOrder() != rhs->CyclicOrder())
+    return false;
+  if (lhs->InversionOrder() > 1 && false == Internal_SameTransformation(lhs->InversionTransform(), rhs->InversionTransform(), zero_tolerance))
+    return false;
+  if (lhs->CyclicOrder() > 1 && false == Internal_SameTransformation(lhs->CyclicTransform(), rhs->CyclicTransform(), zero_tolerance))
+    return false;
+  return true;
+}
+
+
+int ON_Symmetry::CompareSymmetryTransformation(const ON_Symmetry* lhs, const ON_Symmetry* rhs, double zero_tolerance)
+{
+  for (;;)
+  {
+    const ON_Symmetry::Type lhs_type = (nullptr != lhs) ? lhs->SymmetryType() : ON_Symmetry::Type::Unset;
+    const ON_Symmetry::Type rhs_type = (nullptr != rhs) ? rhs->SymmetryType() : ON_Symmetry::Type::Unset;
+    if (lhs_type != rhs_type)
+      break;
+
+    if (ON_Symmetry::Type::Unset == lhs_type)
+      return 0; // both are unset
+
+    if (false == (zero_tolerance >= 0.0 && zero_tolerance < ON_UNSET_POSITIVE_FLOAT))
+      zero_tolerance = ON_Symmetry::ZeroTolerance;
+
+    switch (lhs_type)
+    {
+    case ON_Symmetry::Type::Unset:
+      break;
+
+    case ON_Symmetry::Type::Reflect:
+      if (Internal_SamePlane(lhs, rhs, zero_tolerance))
+        return 0;
+      break;
+
+    case ON_Symmetry::Type::Rotate:
+      if (Internal_SameRotation(lhs, rhs, zero_tolerance))
+        return 0;
+      break;
+
+    case ON_Symmetry::Type::ReflectAndRotate:
+      if (Internal_SamePlane(lhs, rhs, zero_tolerance) && Internal_SameRotation(lhs, rhs, zero_tolerance))
+        return 0;
+      break;
+
+    case ON_Symmetry::Type::Inversion:
+    case ON_Symmetry::Type::Cyclic:
+      if (Internal_SameTransformation(lhs, rhs, zero_tolerance))
+        return 0;
+
+    default:
+      break;
+    }
+  }
+
+  return ON_Symmetry::Compare(lhs, rhs);
 }
 
 const ON_Symmetry ON_Symmetry::CreateInversionSymmetry(
@@ -1076,7 +1194,6 @@ const ON_Xform ON_Symmetry::MotifTransformation(
   return x;
 }
 
-
 const ON_Xform ON_Symmetry::Internal_ReflectAndRotateTransformation(unsigned index) const
 {
   ON_Xform r = Internal_RotationXform(index / 2, m_cyclic_order);
@@ -1084,3 +1201,38 @@ const ON_Xform ON_Symmetry::Internal_ReflectAndRotateTransformation(unsigned ind
     r = r * m_inversion_transform;
   return r;
 }
+
+ON_SHA1_Hash ON_Symmetry::Sha1Hash() const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateBytes(&m_type, sizeof(m_type));
+  sha1.AccumulateBytes(&m_coordinates, sizeof(m_coordinates));
+  sha1.AccumulateInteger8(m_inversion_order);
+  sha1.AccumulateInteger32(m_cyclic_order);
+  sha1.AccumulateId(m_id);
+  sha1.AccumulateDoubleArray(16, &m_inversion_transform.m_xform[0][0]);
+  sha1.AccumulateDoubleArray(16, &m_cyclic_transform.m_xform[0][0]);
+  sha1.AccumulateDoubleArray(4,&m_reflection_plane.x);
+  sha1.Accumulate3dPoint(m_rotation_axis.from);
+  sha1.Accumulate3dPoint(m_rotation_axis.to);
+  return sha1.Hash();
+}
+
+void ON_Symmetry::SetSymmetricObjectContentSerialNumber(ON__UINT64 symmetric_object_content_serial_number) const
+{
+  if (0 == symmetric_object_content_serial_number)
+    ClearSymmetricObjectContentSerialNumber(); // so a debugger breakpoint can be set in one place to watching clearing
+  else
+    m_symmetric_object_content_serial_number = symmetric_object_content_serial_number;
+}
+
+void ON_Symmetry::ClearSymmetricObjectContentSerialNumber() const
+{
+  m_symmetric_object_content_serial_number = 0U;
+}
+
+ON__UINT64 ON_Symmetry::SymmetricObjectContentSerialNumber() const
+{
+  return m_symmetric_object_content_serial_number;
+}
+

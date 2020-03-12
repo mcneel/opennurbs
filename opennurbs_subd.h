@@ -259,6 +259,15 @@ public:
   bool SetMark(
     bool bMark
   ) const;
+
+
+  ON__UINT8 MarkBits() const;
+
+  ON__UINT8 SetMarkBits(
+    ON__UINT8 mark_bits
+  ) const;
+
+  ON__UINT8 ClearMarkBits() const;
 };
 
 
@@ -536,6 +545,14 @@ public:
   bool SetMark(
     bool bMark
   ) const;
+
+  ON__UINT8 MarkBits() const;
+
+  ON__UINT8 SetMarkBits(
+    ON__UINT8 mark_bits
+  ) const;
+
+  ON__UINT8 ClearMarkBits() const;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -665,6 +682,14 @@ public:
   bool SetMark(
     bool bMark
   ) const;
+
+  ON__UINT8 MarkBits() const;
+
+  ON__UINT8 SetMarkBits(
+    ON__UINT8 mark_bits
+  ) const;
+
+  ON__UINT8 ClearMarkBits() const;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -741,6 +766,11 @@ public:
     True if the ComponentBase() pointer is nullptr. Note that type and mark may be set.
   */
   bool IsNull() const;
+
+  /*
+  Returns:
+    True if type is set and ComponentBase() pointer is not nullptr. Note that mark may be set as well.
+  */
   bool IsNotNull() const;
 
   /*
@@ -815,13 +845,13 @@ public:
     with ON_SubDComponentPtr.ComponentDirection() = 1.
   */
   const ON_SubDComponentPtr SetComponentDirection(ON__UINT_PTR dir) const;
-
+   
   /*
   Returns:
     An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
     with ComponentDirection() = 1 - this->ComponentDirection().
   */
-  const ON_SubDComponentPtr ToggleComponentDirection() const;
+  const ON_SubDComponentPtr Reversed() const;
 
   const ON_ComponentStatus Status() const;
 
@@ -909,6 +939,14 @@ public:
   bool SetMark(
     bool bMark
   ) const;
+
+  ON__UINT8 MarkBits() const;
+
+  ON__UINT8 SetMarkBits(
+    ON__UINT8 mark_bits
+  ) const;
+
+  ON__UINT8 ClearMarkBits() const;
 
   static
   const ON_SubDComponentPtr CreateNull(
@@ -1012,6 +1050,13 @@ public:
   */
   const ON_SubDComponentPtrPair SwapPair() const;
 
+
+  /*
+  Returns:
+    A pair with components reversed.
+  */
+  const ON_SubDComponentPtrPair ReversedPair() const;
+
   /*
   Returns:
     First ON_SubDComponentPt in the pair.
@@ -1032,19 +1077,34 @@ public:
   ON_SubDComponentPtr::Type ComponentType() const;
 
   /*
-  Returns true if First() is ON_SubDComponentPtr::Null.
+    Returns FIrst().IsNull().
   */
   bool FirstIsNull() const;
 
   /*
-  Returns true if Second() is ON_SubDComponentPtr::Null.
+    Returns Second().IsNull().
   */
   bool SecondIsNull() const;
 
   /*
-  Returns true if both First() and Second() are ON_SubDComponentPtr::Null.
+    Returns First().IsNull() && Second().IsNull().
   */
   bool BothAreNull() const;
+  
+  /*
+    Returns First().IsNotNull().
+  */
+  bool FirstIsNotNull() const;
+
+  /*
+    Returns Second().IsNotNull().
+  */
+  bool SecondIsNotNull() const;
+
+  /*
+    Returns FirstIsNotNull() && SecondIsNotNull().
+  */
+  bool BothAreNotNull() const;
 
 public:
   const static ON_SubDComponentPtrPair Null;
@@ -1668,6 +1728,14 @@ public:
     Change the content serial number.
     This should be done ONLY when the active level,
     vertex location, vertex or edge flag, or subd topology is changed.
+  Parameters:
+    bChangePreservesSymmetry - [in]
+      When in doubt, pass false.
+      If the change preserves global symmtery, then pass true.
+      (For example, a global subdivide preserves all types of symmetry.)
+      Note well:
+        Transformations do not preserve symmetries that are
+        set with respect to world coordinate systems.
   Returns:
     The new value of ConentSerialNumber().
   Remarks:
@@ -1675,7 +1743,9 @@ public:
     functions typically take care of changing the content serial number.
     A "top level" user of ON_SubD should never need to call this function.
   */
-  ON__UINT64 ChangeContentSerialNumberForExperts();
+  ON__UINT64 ChangeContentSerialNumberForExperts(
+    bool bChangePreservesSymmetry
+  );
 
   /*
   Description:
@@ -2244,6 +2314,7 @@ public:
   );
 
 
+
   ON_SubD() ON_NOEXCEPT;
   virtual ~ON_SubD();
 
@@ -2442,6 +2513,15 @@ public:
     ON_SubD* subd
     );
 
+private:
+  static ON_SubD* Internal_CreateFromMeshWithValidNgons(
+    const class ON_Mesh* level_zero_mesh_with_valid_ngons,
+    const class ON_ToSubDParameters* from_mesh_parameters,
+    ON_SubD* subd
+  );
+
+public:
+
   /*
   Description:
     Creates a SubD box
@@ -2618,8 +2698,10 @@ public:
   Paramters:
     max_level_index - [in] 
       Remove all levels after max_level_index
+  Returns:
+    Number of removed levels.
   */
-  void ClearHigherSubdivisionLevels(
+  unsigned int ClearHigherSubdivisionLevels(
     unsigned int max_level_index
     );
 
@@ -2629,10 +2711,19 @@ public:
   Paramters:
     min_level_index - [in] 
       Remove all levels before min_level_index
+  Returns:
+    Number of removed levels.
   */
-  void ClearLowerSubdivisionLevels(
+  unsigned int ClearLowerSubdivisionLevels(
     unsigned int min_level_index
     );
+
+  /*
+  Remove all levels except the active level.
+  Returns: 
+    Number of removed levels.
+  */
+  unsigned ClearInactiveLevels();
 
   bool IsEmpty() const;
   bool IsNotEmpty() const;
@@ -2908,6 +2999,11 @@ public:
     bool bMarkDeletedFaceEdges
     );
 
+  bool DeleteComponents(
+    const ON_SimpleArray<ON_SubDComponentPtr>& cptr_list,
+    bool bMarkDeletedFaceEdges
+  );
+
   bool DeleteComponentsForExperts(
     const ON_SubDComponentPtr* cptr_list,
     size_t cptr_count,
@@ -2915,6 +3011,40 @@ public:
     bool bUpdateTagsAndCoefficients,
     bool bMarkDeletedFaceEdges
     );
+
+  /*
+  Description:
+    Delete marked components.
+  Parameters:
+    bDeleteMarkedComponents - [in]
+      If true, marked components are deleted.
+      If false, unmarked components are deleted.      
+    mark_bits - [in]
+      A component is marked if component.m_status.IsMarked(mark_bits) is true.
+  */
+  bool DeleteMarkedComponents(
+    bool bDeleteMarkedComponents,
+    ON__UINT8 mark_bits,
+    bool bMarkDeletedFaceEdges
+  );
+
+  /*
+  Description:
+    Delete marked components.
+  Parameters:
+    bDeleteMarkedComponents - [in]
+      If true, marked components are deleted.
+      If false, unmarked components are deleted.
+    mark_bits - [in]
+      A component is marked if component.m_status.IsMarked(mark_bits) is true.
+  */
+  bool DeleteMarkedComponentsForExperts(
+    bool bDeleteMarkedComponents,
+    ON__UINT8 mark_bits,
+    bool bDeleteIsolatedEdges,
+    bool bUpdateTagsAndCoefficients,
+    bool bMarkDeletedFaceEdges
+  );
 
 
   /////////////////////////////////////////////////////////
@@ -3249,6 +3379,109 @@ public:
 
   /*
   Descripiton:
+    Sets the m_group_id value to 0 for every vertex, edge and face.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearGroupIds() const;
+
+  /*
+  Descripiton:
+    Sets the m_group_id value to 0 for every vertex.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearVertexGroupIds() const;
+
+  /*
+  Descripiton:
+    Sets the m_group_id value to 0 for every edge.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearEdgeGroupIds() const;
+
+  /*
+  Descripiton:
+    Sets the m_group_id value to 0 for every face.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearFaceGroupIds() const;
+
+  /*
+  Descripiton:
+    Sets the m_group_id value to 0 for the specified components.
+  Parameters:
+    bClearVertexGroupIds - [in]
+      If true, m_group_id for every vertex is set to zero.
+    bClearEdgeGroupIds - [in]
+      If true, m_group_id for every edge is set to zero.
+    bClearFaceGroupIds - [in]
+      If true, m_group_id for every face is set to zero.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearComponentGroupIds(
+    bool bClearVertexGroupIds,
+    bool bClearEdgeGroupIds,
+    bool bClearFaceGroupIds
+  ) const;
+
+
+  /*
+  Descripiton:
+    Sets the m_status.MarkBits() value to 0 for every vertex, edge and face.
+  Returns:
+    Number of marks that were cleared.
+  */
+  unsigned int ClearMarkBits() const;
+
+  /*
+  Descripiton:
+    Sets the m_status.MarkBits() value to 0 for every vertex.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearVertexMarkBits() const;
+
+  /*
+  Descripiton:
+    Sets the m_status.MarkBits() value to 0 for every edge.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearEdgeMarkBits() const;
+
+  /*
+  Descripiton:
+    Sets the m_status.MarkBits() value to 0 for every face.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearFaceMarkBits() const;
+
+  /*
+  Descripiton:
+    Sets the m_status.MarkBits() value to 0 for the specified components.
+  Parameters:
+    bClearVertexMarkBits - [in]
+      If true, m_status.MarkBits() for every vertex is set to zero.
+    bClearEdgeMarkBits - [in]
+      If true, m_status.MarkBits() for every edge is set to zero.
+    bClearFaceMarkBits - [in]
+      If true, m_status.MarkBits() for every face is set to zero.
+  Returns:
+    Number of group id values that were changed.
+  */
+  unsigned int ClearComponentMarkBits(
+    bool bClearVertexMarkBits,
+    bool bClearEdgeMarkBits,
+    bool bClearFaceMarkBits
+  ) const;
+
+  /*
+  Descripiton:
     Clears the m_status.RuntimeMark() for every vertex, edge and face.
   Returns:
     Number of marks that were cleared.
@@ -3312,6 +3545,24 @@ public:
     bool bIncludeEdges,
     bool bIncludeFaces,
     ON_SimpleArray< const class ON_SubDComponentBase* >& marked_component_list
+  ) const;
+
+  /*
+  Parameters:
+    bAddMarkedComponents - [in]
+      If true, marked components are added to component_list[].
+      If false, unmarked components are added to component_list[].
+    mark_bits - [in]
+      If mark_bits is zero, then a component is "marked" if component.Mark() is true.
+      Otherwise a component is "marked" if mark_bits = component.MarkBits().
+   */
+   unsigned int GetMarkedComponents(
+    bool bAddMarkedComponents,
+    ON__UINT8 mark_bits,
+    bool bIncludeVertices,
+    bool bIncludeEdges,
+    bool bIncludeFaces,
+    ON_SimpleArray< class ON_SubDComponentPtr >& component_list
   ) const;
 
   unsigned int UnselectComponents(
@@ -3404,9 +3655,7 @@ public:
     const ON_COMPONENT_INDEX* ci_list,
     size_t ci_count,
     bool bExtrudeBoundaries,
-    bool bPermitNonManifoldEdgeCreation,
-    ON_SubD::EdgeTag original_edge_tag,
-    ON_SubD::EdgeTag moved_edge_tag
+    bool bPermitNonManifoldEdgeCreation
     );
 
   unsigned int ExtrudeComponents(
@@ -3414,10 +3663,8 @@ public:
     const ON_SubDComponentPtr* cptr_list,
     size_t cptr_count,
     bool bExtrudeBoundaries,
-    bool bPermitNonManifoldEdgeCreation,
-    ON_SubD::EdgeTag original_edge_tag,
-    ON_SubD::EdgeTag moved_edge_tag
-    );
+    bool bPermitNonManifoldEdgeCreation
+  );
 
 private:
   unsigned int Internal_ExtrudeComponents(
@@ -3425,10 +3672,8 @@ private:
     const ON_SubDComponentPtr* cptr_list,
     size_t cptr_count,
     bool bExtrudeBoundaries,
-    bool bPermitNonManifoldEdgeCreation,
-    ON_SubD::EdgeTag original_edge_tag,
-    ON_SubD::EdgeTag moved_edge_tag
-    );
+    bool bPermitNonManifoldEdgeCreation
+  );
 
 public:
 
@@ -3561,6 +3806,32 @@ public:
   class ON_SubDVertex* AddVertex(
     ON_SubD::VertexTag vertex_tag,
     const double* P
+    );
+
+  /*
+  Description:
+    Expert user tool to add a vertex with specified information. This function
+    is useful when copying portions of an existing SubD to a new SubD.
+  Parameters:
+    candidate_vertex_id - [in]
+      If candidate_vertex_id is > 0 and is available, 
+      the returned value with have id = candidate_vertex_id.
+      Otherwise a new id will be assigned.
+    vertex_tag - [in]
+      Pass ON_SubD::VertexTag::Unset if not known.
+    P - [in]
+      nullptr or a 3d point.
+   initial_edge_capacity - [in]
+     Initial capacity of the m_edges[] array. Pass 0 if unknown.
+   initial_face_capacity - [in]
+     Initial capacity of the m_faces[] array. Pass 0 if unknown.
+  */
+  class ON_SubDVertex* AddVertexForExperts(
+    unsigned int candidate_vertex_id,
+    ON_SubD::VertexTag vertex_tag,
+    const double* P,
+    unsigned int initial_edge_capacity,
+    unsigned int initial_face_capacity
     );
 
   /*
@@ -3727,12 +3998,13 @@ public:
     edge_tag - [in]
       This expert user function does not automatically set the edge tag.
     v0 - [in]
-    v0_sector_coefficient - [in]
-    v1 - [in]
-    v1_sector_coefficient - [in]
       The edge begins at v0 and ends at v1.
-      The edge will be on the same level as the vertices.
-      The edges sector weights are set
+    v0_sector_coefficient - [in]
+      Pass ON_SubDSectorType::UnsetSectorCoefficient if unknown.
+    v1 - [in]
+      The edge begins at v0 and ends at v1.
+    v1_sector_coefficient - [in]
+      Pass ON_SubDSectorType::UnsetSectorCoefficient if unknown.
   */
   class ON_SubDEdge* AddEdgeWithSectorCoefficients(
     ON_SubD::EdgeTag edge_tag,
@@ -3741,6 +4013,38 @@ public:
     class ON_SubDVertex* v1,
     double v1_sector_coefficient
     );
+
+  /*
+  Description:
+    Expert user tool to add an edge with specified information. This function
+    is useful when copying portions of an existing SubD to a new SubD.
+  Parameters:
+    candidate_edge_id - [in]
+      If candidate_edge_id is > 0 and is available,
+      the returned edge with have id = candidate_edge_id.
+      Otherwise a new id will be assigned.
+    edge_tag - [in]
+      Pass ON_SubD::EdgeTag::Unset if not known.
+    v0 - [in]
+      The edge begins at v0 and ends at v1.
+    v0_sector_coefficient - [in]
+      Pass ON_SubDSectorType::UnsetSectorCoefficient if unknown.
+    v1 - [in]
+      The edge begins at v0 and ends at v1.
+    v1_sector_coefficient - [in]
+      Pass ON_SubDSectorType::UnsetSectorCoefficient if unknown.
+   initial_face_capacity - [in]
+     Initial face capacity. Pass 0 if unknown.
+  */
+  class ON_SubDEdge* AddEdgeForExperts(
+    unsigned int candidate_edge_id,
+    ON_SubD::EdgeTag edge_tag,
+    class ON_SubDVertex* v0,
+    double v0_sector_coefficient,
+    class ON_SubDVertex* v1,
+    double v1_sector_coefficient,
+    unsigned int initial_face_capacity
+  );
 
   /*
   Parameters:
@@ -3902,19 +4206,18 @@ public:
 
   /*
   Parameters:
-    candidate_face - [in]
-      If this face was previously deleted and is not currently used,
-      it will be reused. This allows editing operations that merge
-      faces to have the result of the merge be returned in a face
-      that was part of the input set.
+    candidate_face_id - [in]
+      If candidate_face_id is > 0 and is available,
+      the returned face with have id = candidate_face_id.
+      Otherwise a new id will be assigned.
+    edge[] - [in]
+      The edge[] array must be sorted and correct oriented
+      (edge[i].RelativeVertex(1) == edge[(i+1)%edge_count].RelativeVertex(0)).
     edge_count - [in]
       Must be >= 3.
-    edge[] - [in]
-      The edge list must be sorted and correct oriented
-      (edge[i].RelativeVertex(1) == edge[(i+1)%edge_count].RelativeVertex(0)).
   */
-  class ON_SubDFace* AddFace(
-    const ON_SubDFace* candidate_face,
+  class ON_SubDFace* AddFaceForExperts(
+    unsigned candidate_face_id,
     const class ON_SubDEdgePtr* edge,
     unsigned int edge_count
     );
@@ -4108,58 +4411,6 @@ public:
     ON_SubDFace* f,
     size_t capacity
     );
-
-////#if defined(OPENNURBS_PLUS)
-////  /*
-////  Description:
-////    Get the limit surface point location and normal for 
-////    the face's center from the limit mesh grid.
-////  Parameters:
-////    face - [in]
-////      A face in this SubD.
-////    P - [out]
-////      P = limit surface location or ON_3dPoint::NanPoint if not available.
-////    N - [out]
-////      N = limit surface unit normal or ON_3dVector::NanVector if not available.
-////  Returns:
-////    True if the point and normal were set from the limit mesh frament.
-////    False if the limit mesh fragment was not found and nan values were returned.
-////  */
-////  // TODO - remove this and remove cached limit mesh.
-////  bool GetFaceCenterPointAndNormalX(
-////    const class ON_SubDFace* face,
-////    double* P,
-////    double* N
-////  ) const;
-////#endif
-  
-////#if defined(OPENNURBS_PLUS)
-////  /*
-////  Description:
-////    Get the limit surface point location and normal for 
-////    the edge's midpoint from the limit mesh grid.
-////  Parameters:
-////    edge - [in]
-////      An edge in this SubD.
-////    edge_face_index - [in]
-////      Index of the face to use for the normal. If the edge is a crease, then
-////      each attached face may have a different normal. Pass 0 when in doubt.
-////    P - [out]
-////      P = limit surface location or ON_3dPoint::NanPoint if not available.
-////    N - [out]
-////      N = limit surface unit normal or ON_3dVector::NanVector if not available.
-////  Returns:
-////    True if the point and normal were set from the limit mesh frament.
-////    False if the limit mesh fragment was not found and nan values were returned.
-////  */
-////  // TODO - remove this and remove cached limit mesh.
-////  bool GetEdgeCenterPointAndNormalX(
-////    const class ON_SubDEdge* edge,
-////    unsigned int edge_face_index,
-////    double* P,
-////    double* N
-////  ) const;
-////#endif
 
 
   /*
@@ -7249,12 +7500,16 @@ public:
   //   Once assigned, m_id is never changed and that allows ON_SubD component
   //   indices to work.
 
-  // Id assigned to this component.  Never modify this value.  It is assigned
-  // by allocators and used to find the component from an ON_COMPONENT_INDEX.
+  // Id assigned to this component. NEVER MODIFY THE m_id VALUE.  
+  // It is assigned by allocators and used to find the component 
+  // from an ON_COMPONENT_INDEX.
   unsigned int m_id = 0;
 
 private:
   // The m_archive_id must be immediately after the m_id field.
+  // A value of ON_UNSET_UINT_INDEX indicate the component was
+  // in use and then deleted. See ON_SubDHeap Return...() functions
+  // for more details.
   mutable unsigned int m_archive_id = 0;  
   
 public:
@@ -7284,8 +7539,10 @@ public:
   Returns:
     The current value of the component mark ( m_status->RuntimeMark() ).
   Remarks:
-    SubD components have a mutable runtime  mark that can be used 
+    SubD components have a mutable runtime  mark that can be used
     in any context where a single thread cares about the marks.
+    Any code can use Mark() at any time. You cannot assume that
+    other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
     components that are in a certain context specfic state.
   */
@@ -7295,8 +7552,10 @@ public:
   Description:
     Clears (sets to false) the value of the component mark.
   Remarks:
-    SubD components have a mutable runtime  mark that can be used 
+    SubD components have a mutable runtime  mark that can be used
     in any context where a single thread cares about the marks.
+    Any code can use Mark() at any time. You cannot assume that
+    other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
     components that are in a certain context specfic state.
   Returns:
@@ -7308,8 +7567,10 @@ public:
   Description:
     Sets (sets to true) the value of the component mark.
   Remarks:
-    SubD components have a mutable runtime  mark that can be used 
+    SubD components have a mutable runtime  mark that can be used
     in any context where a single thread cares about the marks.
+    Any code can use Mark() at any time. You cannot assume that
+    other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
     components that are in a certain context specfic state.
   Returns:
@@ -7325,6 +7586,8 @@ public:
   Remarks:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
+    Any code can use Mark() at any time. You cannot assume that
+    other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
     components that are in a certain context specfic state.
   Returns:
@@ -7333,6 +7596,73 @@ public:
   bool SetMark(
     bool bMark
   ) const;
+
+  /*
+  Returns:
+    The current value of the component mark bits ( m_status->MarkBits() ).
+  Remarks:
+    Mark() and MarkBits() are independent.
+
+    SubD components have a mutable runtime mark bits that can be used
+    in any context where a single thread cares about the mark bits value.
+    Any code can use MarkBits() at any time. You cannot assume that
+    other functions including const will not change their value.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state. 
+
+    MarkBits() is used in more complex calculations where the single true/false
+    provided by Mark() is not sufficient. Typically MarkBits() is used when
+    a collecection of components needs to be partitioned into more than two 
+    sets or when the value of Mark() cannot be changed.
+  */
+  ON__UINT8 MarkBits() const;
+
+  /*
+  Returns:
+    Set the component mark bits ( m_status->SetMarkBits( mark_bits ) ).
+  Remarks:
+    Mark() and MarkBits() are independent.
+
+    SubD components have a mutable runtime mark bits that can be used
+    in any context where a single thread cares about the mark bits value.
+    Any code can use MarkBits() at any time. You cannot assume that
+    other functions including const will not change their value.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+
+    MarkBits() is used in more complex calculations where the single true/false
+    provided by Mark() is not sufficient. Typically MarkBits() is used when
+    a collecection of components needs to be partitioned into more than two
+    sets or when the value of Mark() cannot be changed.
+  Returns:
+    Input value of MarkBits().
+  */
+  ON__UINT8 SetMarkBits(
+    ON__UINT8 mark_bits
+  ) const;
+
+  /*
+  Returns:
+    Set the component mark bits to 0 ( m_status->SetMarkBits( 0 ) ).
+  Remarks:
+    Mark() and MarkBits() are independent.
+
+    SubD components have a mutable runtime mark bits that can be used
+    in any context where a single thread cares about the mark bits value.
+    Any code can use MarkBits() at any time. You cannot assume that
+    other functions including const will not change their value.
+    It is widely used in many calculations to keep track of sets of
+    components that are in a certain context specfic state.
+
+    MarkBits() is used in more complex calculations where the single true/false
+    provided by Mark() is not sufficient. Typically MarkBits() is used when
+    a collecection of components needs to be partitioned into more than two
+    sets or when the value of Mark() cannot be changed.
+  Returns:
+    Input value of MarkBits().
+  */
+  ON__UINT8 ClearMarkBits() const;
+
 
 public:
   
@@ -7460,10 +7790,6 @@ protected:
   mutable unsigned char m_saved_points_flags = 0U;
 
   unsigned char m_level = 0U;
-
-private:
-  unsigned char m_reserved_byte = 0U;
-
 public:
 
   // All the faces with the same nonzero value of m_group_id are in the same "group".
@@ -7562,7 +7888,7 @@ public:
 
   /*
   Returns:
-    True if there are no null edges and there are at least two edges and they all have two faces.
+    True if there are no null edges, exactly two boundary edges, and any other edges have two faces.
   Remarks:
     Tags are ignored.
   */
@@ -7659,6 +7985,10 @@ public:
   ~ON_SubDVertex() = default;
   ON_SubDVertex(const ON_SubDVertex&) = default;
   ON_SubDVertex& operator=(const ON_SubDVertex&) = default;
+
+public:
+  unsigned int VertexId() const;
+
 
 public:
   /*
@@ -7787,6 +8117,26 @@ public:
   bool RemoveFaceFromArray(
     const class ON_SubDFace* f
     );
+
+  /*
+  Parameters:
+    bApplyInputTagBias - [in]
+      If bApplyInputTagBias is true, the current tag value is used
+      to choose between possible output results. When in doubt, pass false.
+    bReturnBestGuessWhenInvalid
+      If bReturnBestGuessWhenInvalid is true and the topology and current edges
+      tags do not meet the conditions for a valid vertex, then a best guess for 
+      a vertex tag is returned. Otherwise ON_SubD::VertexTag::Unset is returned.
+      When in doubt pass false and check for unset before using.
+  Returns:
+    The suggested value for this vertices tag based on its current tag value and
+    its current edges. Assumes the vertex and edge topology are correct and the 
+    edge tags are correctly set.
+  */
+  ON_SubD::VertexTag SuggestedVertexTag(
+    bool bApplyInputTagBias,
+    bool bReturnBestGuessWhenInvalid
+  ) const;
 
 public:
   double m_P[3]; // vertex control net location
@@ -8046,6 +8396,36 @@ public:
   bool HasBoundaryVertexTopology() const;
 
   /*
+  Returns:
+    If this vertex has two boundary edges, they are returned in the pair with
+    BoundaryEdgePair().First().EdgePtr().RelativeVetex(0) and
+    BoundaryEdgePair().Second().EdgePtr().RelativeVetex(0)
+    equal to this vertex.
+    Otherwise ON_SubDComponentPtrPair::Null is returned.
+  */
+  const ON_SubDComponentPtrPair BoundaryEdgePair() const;
+
+  /*
+  Returns:
+    If this vertex has two creased edges, they are returned in the pair.
+    Otherwise ON_SubDComponentPtrPair::Null is returned.
+  */
+  const ON_SubDComponentPtrPair CreasedEdgePair(
+    bool bInteriorEdgesOnly
+  ) const;
+
+
+  /*
+  Returns:
+    If this vertex has one creased edge, it is returned.
+    Otherwise ON_SubDEdgePtr::Null is returned.
+  */
+  const ON_SubDEdgePtr CreasedEdge(
+    bool bInteriorEdgesOnly
+  ) const;
+
+
+  /*
   Parameters:
     bUseSavedSubdivisionPoint - [in]
       If there is a saved subdivision point and bUseSavedSubdivisionPoint
@@ -8175,10 +8555,29 @@ public:
   unsigned int MarkedEdgeCount() const;
 
   /*
+  Description:
+    Clears all marks on edges.
+  Returns:
+    true if all edges are not null.
+    false if any edges are null.
+  */
+  bool ClearEdgeMarks() const;
+
+  /*
   Returns:
     Number of faces attached to this vertex with Face().m_status.RuntimeMark() = true;
   */
   unsigned int MarkedFaceCount() const;
+
+
+  /*
+  Description:
+    Clears all marks on faces.
+  Returns:
+    true if all faces are not null.
+    false if any faces are null.
+  */
+  bool ClearFaceMarks() const;
 
   /*
   Returns:
@@ -8274,6 +8673,9 @@ public:
   ~ON_SubDEdge() = default;
   ON_SubDEdge(const ON_SubDEdge&) = default;
   ON_SubDEdge& operator=(const ON_SubDEdge&) = default;
+
+public:
+  unsigned int EdgeId() const;
 
 public:
   /*
@@ -8491,13 +8893,35 @@ private:
   mutable class ON_SubDEdgeSurfaceCurve* m_limit_curve = nullptr;
 
 public:
-  unsigned int FaceCount() const;
 
   /*
   Returns:
-    True if the edge has two faces and with opposite face directions.
+    Number of distinct non-nullptr vertices.
+    If the edge is valid, this will be 2.
   */
-  bool IsInteriorEdge() const;
+  unsigned int VertexCount() const;
+   
+  unsigned int FaceCount() const;
+
+  /*
+  Parameters:
+    bRequireSameFaceOrientation - [in]
+      If true, the attached faces must use the edge with opposite directions (oriented manifold).
+  Returns:
+    True if the edge has two distinct faces.
+  */
+  bool HasInteriorEdgeTopology(
+    bool bRequireOppositeFaceDirections
+  ) const;
+
+  /*
+  Parameters:
+    bRequireSameFaceOrientation - [in]
+      If true, the attached faces must use the edge with opposite directions (oriented manifold).
+  Returns:
+    True if the edge has two distinct faces.
+  */
+  bool HasBoundaryEdgeTopology() const;
 
   const ON_SubDFacePtr FacePtr(
     unsigned int i
@@ -8902,6 +9326,9 @@ public:
   ON_SubDFace& operator=(const ON_SubDFace&) = default;
 
 public:
+  unsigned int FaceId() const;
+
+public:
   /*
   Description:
     Clears saved subdivision and limit surface information
@@ -9012,7 +9439,43 @@ private:
 
 private:
   unsigned char m_reserved1 = 0;
-  unsigned short m_reserved2 = 0;
+
+private:
+  // The application specifies a base ON_Material used to render the subd this face belongs to.
+  // If m_material_channel_index > 0 AND face_material_id = base.MaterialChannelIdFromIndex(m_material_channel_index)
+  // is not nil, then face_material_id identifies an override rendering material for this face.
+  // Othewise base will be used to render this face.
+  mutable unsigned short m_material_channel_index = 0;
+
+public:
+  /*
+  Description:
+    Set this face's rendering material channel index.
+
+  Parameters:
+    material_channel_index - [in]
+      A value between 0 and ON_Material::MaximumMaterialChannelIndex, inclusive.
+      This value is typically 0 or the value returned from ON_Material::MaterialChannelIndexFromId().
+
+  Remarks:
+    If base_material is the ON_Material assigned to render this subd and
+    ON_UUID face_material_id = base_material.MaterialChannelIdFromIndex( material_channel_index )
+    is not nil, then face_material_id identifies an override rendering material for this face.
+    Otherwise base_material is used to reneder this face.
+  */
+  void SetMaterialChannelIndex(int material_channel_index) const;
+
+  /*
+  Returns:
+    This face's rendering material channel index.
+
+    Remarks:
+    If base_material is the ON_Material assigned to render this subd, MaterialChannelIndex() > 0,
+    and ON_UUID face_material_id = base_material.MaterialChannelIdFromIndex( face.MaterialChannelIndex() )
+    is not nil, then face_material_id identifies an override rendering material for this face.
+    Otherwise base_material is used to reneder this face.
+  */
+  int MaterialChannelIndex() const;
 
 public:
   const bool TextureDomainIsSet() const;
@@ -9178,6 +9641,28 @@ public:
     const ON_SubDVertex* vertex
     ) const;
 
+  /*
+  Returns;
+    If the vertex is in this face's boundary, pair of face boundary edges at the vertex is returned 
+    with face boundary orientations, that is vertex = pair.First().EdgePtr().RelativeVertex(1)
+    and vertex = pair.Second().EdgePtr().RelativeVertex(0). Otherwise, ON_SubDComponentPtrPair::Null
+    is returned.
+  */
+  const ON_SubDComponentPtrPair VertexEdgePair(
+    const ON_SubDVertex* vertex
+  ) const;
+
+  /*
+  Returns;
+    If the vertex is in this face's boundary, pair of face boundary edges at the vertex is returned
+    with face boundary orientations, that is vertex = pair.First().EdgePtr().RelativeVertex(1)
+    and vertex = pair.Second().EdgePtr().RelativeVertex(0). Otherwise, ON_SubDComponentPtrPair::Null
+    is returned.
+  */
+  const ON_SubDComponentPtrPair VertexEdgePair(
+    unsigned vertex_index
+  ) const;
+
   const class ON_SubDEdge* Edge(
     unsigned int i
     ) const;
@@ -9186,6 +9671,11 @@ public:
     unsigned int i
     ) const;
 
+  /*
+  Returns:
+    If e is part of the face's boundary, then the index of the edge is returned.
+    Otherwise, ON_UNSET_UINT_INDEX is returned.
+  */
   unsigned int EdgeArrayIndex(
     const ON_SubDEdge* e
     ) const;
@@ -10791,7 +11281,8 @@ public:
       initial iterator orientation.
   Returns:
     The requested edge or nullptr if the iterator is not initialized, 
-    has terminated, or is not valid.
+    has terminated, or is not valid. 
+    When the sector iterator is initialized and valid, sit.CenterVertex() = CurrentEdge(*).RelativeVertex(0).
   */
   const ON_SubDEdge* CurrentEdge(
     unsigned int face_side_index
@@ -10948,13 +11439,12 @@ private:
 
   // m_current_eptr[0].Edge() = "prev" side edge
   // m_current_eptr[1].Edge() = "next" side edge
-  // When m_current_eptr[i].Edge() is not null, 
-  // center vertex = m_current_eptr[i].Edge()->m_vertex[m_current_eptr[i].Direction()]
-  ON_SubDEdgePtr m_current_eptr[2]; // default = { ON_SubDEdgePtr::Null, ON_SubDEdgePtr::Null };
+  // center vertex = m_current_eptr[i].RelativeVertex(0)
+  ON_SubDEdgePtr m_current_eptr[2] = {}; // default = { ON_SubDEdgePtr::Null, ON_SubDEdgePtr::Null };
 
   unsigned int m_initial_fvi = 0;
   unsigned int m_current_fvi = 0;
-  unsigned int m_current_fei[2];  // default = { 0, 0 }; // "prev" and "next"
+  unsigned int m_current_fei[2] = {};  // default = { 0, 0 }; // "prev" and "next"
 
   // m_initial_face_dir 
   // 0: "next" means clockwise with respect to the initial face's orientation.
@@ -12655,9 +13145,9 @@ private:
   ON_SubDRef m_subd_ref;
   ON_SimpleArray<ON_SubDEdgePtr> m_edge_chain;
   ON_UniqueTester m_unique_tester;
-  bool m_bEnableStatusCheck = false;
   ON_ComponentStatus m_status_check_pass = ON_ComponentStatus::NoneSet;
   ON_ComponentStatus m_status_check_fail = ON_ComponentStatus::Selected;
+  bool m_bEnableStatusCheck = false;
 };
 
 class ON_CLASS ON_SubDComponentFilter

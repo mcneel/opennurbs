@@ -243,6 +243,13 @@ public:
 
   static int Compare(const ON_Symmetry* lhs, const ON_Symmetry* rhs);
 
+  /*
+  Returns:
+    0 if the symmetry transformations are the same to tolerance.
+    Otherwise returns ON_Symmetry::Compare(lhs,rhs). 
+  */
+  static int CompareSymmetryTransformation(const ON_Symmetry* lhs, const ON_Symmetry* rhs, double zero_tolerance);
+
 public:
   /*
   Returns:
@@ -437,6 +444,34 @@ public:
   */
   const ON_Symmetry TransformUnconditionally(const ON_Xform& xform) const;
 
+public:
+  /*
+  Returns:
+    A SHA1 hash value that uniquely identifies the symmetry settings.
+  Remarks:
+    The symmetric object content serial number is not incuded in the hash.
+  */
+  ON_SHA1_Hash Sha1Hash() const;
+
+  /*
+  Description:
+    Set the mutable value returned by SymmetricObjectContentSerialNumber().
+  */
+  void SetSymmetricObjectContentSerialNumber(ON__UINT64 symmetric_object_content_serial_number) const;
+
+  /*
+  Description:
+    Set the mutable value returned by SymmetricObjectContentSerialNumber() to 0.
+  */
+  void ClearSymmetricObjectContentSerialNumber() const;
+
+  /*
+  Returns:
+    Set a runtime serial number that corresponded to the content of the symmetric object 
+    after it the application verified it was symmetric.
+  */
+  ON__UINT64 SymmetricObjectContentSerialNumber() const;
+
 private:
   static const double ZeroTolerance;
   
@@ -452,7 +487,7 @@ private:
   // m_cyclic_order (0 = unset, 1 = identity (no cyclic), >= 2 cyclic order (non-identity cyclic)
   unsigned int m_cyclic_order = 0;
 
-  ON__UINT_PTR m_reserved2 = 0;
+  mutable ON__UINT64 m_symmetric_object_content_serial_number = 0;
 
   // id is a preset value for the 3 built in symmetries and user defined for others
   ON_UUID m_id = ON_nil_uuid;
@@ -468,6 +503,14 @@ private:
 
   // Set when type is Rotate or ReflectAndRotate
   ON_Line m_rotation_axis = ON_Line::NanLine;
+
+private:
+  ON__UINT_PTR m_reservedX = 0;
+  ON__UINT_PTR m_reservedY = 0;
+  double m_reservedA = 0.0;
+  double m_reservedB = 0.0;
+  double m_reservedC = 0.0;
+  double m_reservedD = 0.0;
 
 private:
   static int Internal_CompareDouble(const double* lhs, const double* rhs, size_t count);

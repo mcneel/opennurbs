@@ -57,7 +57,7 @@ static bool Internal_ReadDouble3(
 enum : unsigned char
 {
   ON_SubDComponentArchiveAnonymousChunkMark = 254U,
-  ON_SubDComponentArchiveEndMark = 255U
+  ON_SubDComponentArchiveAdditionEndMark = 255U
 };
 
 static bool Internal_ReadComponentAdditionSize(ON_BinaryArchive& archive, unsigned char valid_sz, unsigned char* sz)
@@ -69,10 +69,9 @@ static bool Internal_ReadComponentAdditionSize(ON_BinaryArchive& archive, unsign
 
   if (0 == valid_sz)
     return ON_SUBD_RETURN_ERROR(false);
-  *sz = (1 == valid_sz) ? 2 : 1;
   if (false == archive.ReadChar(sz))
     return ON_SUBD_RETURN_ERROR(false);
-  if ( 0 != *sz && valid_sz != *sz )
+  if ( 0 != *sz && valid_sz != *sz && ON_SubDComponentArchiveAdditionEndMark != *sz )
     return ON_SUBD_RETURN_ERROR(false);
   return true;
 }
@@ -106,7 +105,7 @@ static bool Internal_FinishReadingComponentAdditions(ON_BinaryArchive& archive)
 
   for (;;)
   {
-    if (ON_SubDComponentArchiveEndMark == sz)
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
       return true;
     if (ON_SubDComponentArchiveAnonymousChunkMark == sz)
     {
@@ -120,7 +119,9 @@ static bool Internal_FinishReadingComponentAdditions(ON_BinaryArchive& archive)
     else if ( sz > 0 )
     {
       // skip an addition a future version added as a fixed number of bytes
-      if (false == archive.SeekForward(sz))
+      // use archive.ReadByte(sz,buffer) instead of archive.SeekForward(sz) so CRC is properly calculated.
+      char buffer[256];
+      if (false == archive.ReadByte(sz,buffer))
         break;
     }
     sz = 0;
@@ -134,7 +135,7 @@ static bool Internal_FinishWritingComponentAdditions(ON_BinaryArchive& archive)
 {
   if (archive.Archive3dmVersion() < 70)
     return ON_SUBD_RETURN_ERROR(false);
-  const unsigned char sz = ON_SubDComponentArchiveEndMark;
+  const unsigned char sz = ON_SubDComponentArchiveAdditionEndMark;
   return archive.WriteChar(sz);
 }
 
@@ -273,8 +274,11 @@ static bool ReadBase(
     unsigned char sz;
 
     // 24 byte displacement addition
+    sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 24, &sz))
       break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
     if (0 != sz)
     {
       double V[3] = {};
@@ -284,8 +288,11 @@ static bool ReadBase(
     }
 
     // 4 byte group id addition
+    sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
       break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
     if (0 != sz)
     {
       if (!archive.ReadInt(&base.m_group_id))
@@ -767,6 +774,7 @@ bool ON_SubDVertex::Read(
       break;
 
     ON_SubDVertex* v = subdimple->AllocateVertex(
+      base.m_id, // serialization must preserve ON_SubDVertex.m_id
       ON_SubD::VertexTagFromUnsigned(vertex_tag),
       base.SubdivisionLevel(),
       P,
@@ -889,6 +897,7 @@ bool ON_SubDEdge::Read(
       break;
 
     ON_SubDEdge* e = subdimple->AllocateEdge(
+      base.m_id, // serialization must preserve ON_SubDEdge.m_id
       ON_SubD::EdgeTagFromUnsigned(edge_tag),
       base.SubdivisionLevel(),
       face_count
@@ -972,6 +981,32 @@ bool ON_SubDFace::Write(
         break;
     }
 
+    //////if ( ON::Version() >= ON_VersionNumberConstruct(7, 0, 2020, 2, 18, 0) )
+    {
+      ////// https://mcneel.myjetbrains.com/youtrack/issue/RH-56820
+      ////// Today is Feb 3, 2020.
+      ////// We need to give Rhino 7 WIP users until Feb 18, 2020 to get automatically 
+      ////// updated before we can save the material index in 3dm archives.
+      ////// This is because there was a bug in Internal_FinishReadingComponentAdditions()
+      ////// that failed to keep the chunk CRCs up to date when older versions of Rhino
+      ////// skipped over newer information. 
+      ////// This CRC bug was fixed Feb 3, 2020 and made available to customers Feb 4, 2020.
+      ////// On or after Feb 18, 2020, this comment and the if ( ON::Version() >= ON_VersionNumberConstruct(7, 0, 2020, 2, 18, 0) )....
+      ////// check can be removed.
+      //
+      // Done Feb 20, 2020.  The comment can be deleted in March 2020 or later because by then this code will have been well tested.
+
+      const int material_channel_index = MaterialChannelIndex();
+      const bool bWriteMaterialChannelIndex = (material_channel_index > 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex);
+      if (false == Internal_WriteComponentAdditionSize(bWriteMaterialChannelIndex, archive, 4))
+        break;
+      if (bWriteMaterialChannelIndex)
+      {
+        if (!archive.WriteInt(material_channel_index))
+          break;
+      }
+    }
+
     return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
@@ -1006,6 +1041,7 @@ bool ON_SubDFace::Read(
       break;
 
     ON_SubDFace* f = subdimple->AllocateFace(
+      base.m_id, // serialzation must preserve ON_SubDFace.m_id
       base.SubdivisionLevel(),
       edge_count
       );
@@ -1034,8 +1070,12 @@ bool ON_SubDFace::Read(
 
     // read additions
     unsigned char sz;
+    
+    sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 34, &sz))
       break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
     if ( 0 != sz)
     {
       // 34 bytes of texture domain information
@@ -1053,6 +1093,20 @@ bool ON_SubDFace::Read(
       if (!archive.ReadDouble(2, &texture_domain_delta.x))
         break;
       f->SetTextureDomain(ON_SubD::TextureDomainTypeFromUnsigned(domain_type), texture_domain_origin, texture_domain_delta, packing_rot);
+    }
+
+    sz = 0;
+    if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
+      break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
+    if (0 != sz)
+    {
+      // 4 bytes of material channel index
+      int material_channel_index = 0;
+      if (false == archive.ReadInt(&material_channel_index))
+        break;
+      f->SetMaterialChannelIndex(material_channel_index);
     }
 
     return Internal_FinishReadingComponentAdditions(archive);
@@ -1087,7 +1141,9 @@ unsigned int ON_SubDLevel::SetArchiveId(
 
   for (unsigned int listdex = 0; listdex < 3; listdex++)
   {
-    bLevelLinkedListIncreasingId[listdex] = false;
+    bLevelLinkedListIncreasingId[listdex] 
+      = nullptr != first_link[listdex] 
+      && first_link[listdex]->m_id > 0U;
     unsigned int prev_id = 0;
     archive_id_partition[listdex] = archive_id;
     unsigned int linked_list_count = 0;
@@ -1096,18 +1152,17 @@ unsigned int ON_SubDLevel::SetArchiveId(
       ++linked_list_count;
       if (prev_id < clink->m_id)
       {
-        bLevelLinkedListIncreasingId[listdex] = true;
         prev_id = clink->m_id;
         clink->SetArchiveId(archive_id++);
         continue;
       }
 
+      // the for(..) scope we are currently in is exited below.
       bLevelLinkedListIncreasingId[listdex] = false;
 
       // m_id values are not increasing in the linked list. 
       // This happens when the subd is edited  and components are deleted 
       // and then added back later. 
-
       // Finish counting components in the linked list.
       for (clink = clink->m_next; nullptr != clink; clink = clink->m_next)
         ++linked_list_count;
@@ -1417,7 +1472,7 @@ bool ON_SubDimple::Write(
 {
   const_cast< ON_SubDHeap* >(&m_heap)->ClearArchiveId();
 
-  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 2;
+  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 3;
   if ( !archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version) )
     return ON_SUBD_RETURN_ERROR(false);
   bool rc = false;
@@ -1436,11 +1491,11 @@ bool ON_SubDimple::Write(
     if (!archive.WriteInt(level_count))
       break;
 
-    if (!archive.WriteInt(m_max_vertex_id))
+    if (!archive.WriteInt(MaximumVertexId()))
       break;
-    if (!archive.WriteInt(m_max_edge_id))
+    if (!archive.WriteInt(MaximumEdgeId()))
       break;
-    if (!archive.WriteInt(m_max_face_id))
+    if (!archive.WriteInt(MaximumFaceId()))
       break;
 
     // a global bounding box was saved before May 2015.
@@ -1475,6 +1530,10 @@ bool ON_SubDimple::Write(
     if (false == m_symmetry.Write(archive))
       break;
 
+    // runtime content number used to compare with the on on m_symmetry
+    if (false == archive.WriteBigInt(ContentSerialNumber()))
+      break;
+
     rc = true;
     break;
   }
@@ -1497,9 +1556,12 @@ bool ON_SubDimple::Read(
     return ON_SUBD_RETURN_ERROR(false);
   bool rc = false;
 
-  unsigned int max_vertex_id = 0;
-  unsigned int max_edge_id = 0;
-  unsigned int max_face_id = 0;
+
+  // Code before Feb 10, 2020 cared about these values
+  unsigned int obsolete_archive_max_vertex_id = 0;
+  unsigned int obsolete_archive_max_edge_id = 0;
+  unsigned int obsolete_archive_max_face_id = 0;
+  ON__UINT64 saved_content_serial_number = 0;
 
   for (;;)
   {
@@ -1511,11 +1573,11 @@ bool ON_SubDimple::Read(
       break;
     const unsigned int level_count = i;
 
-    if (!archive.ReadInt(&max_vertex_id))
+    if (!archive.ReadInt(&obsolete_archive_max_vertex_id))
       break;
-    if (!archive.ReadInt(&max_edge_id))
+    if (!archive.ReadInt(&obsolete_archive_max_edge_id))
       break;
-    if (!archive.ReadInt(&max_face_id))
+    if (!archive.ReadInt(&obsolete_archive_max_face_id))
       break;
 
 
@@ -1536,17 +1598,6 @@ bool ON_SubDimple::Read(
       m_active_level = level;
     }
 
-
-    const unsigned int heap_max_vertex_id = m_heap.MaximumVertexId();
-    const unsigned int heap_max_edge_id = m_heap.MaximumEdgeId();
-    const unsigned int heap_max_face_id = m_heap.MaximumFaceId();
-    if (m_max_vertex_id < heap_max_vertex_id)
-      m_max_vertex_id = heap_max_vertex_id;
-    if (m_max_edge_id < heap_max_edge_id)
-      m_max_edge_id = heap_max_edge_id;
-    if (m_max_face_id < heap_max_face_id)
-      m_max_face_id = heap_max_face_id;
-
     if ( level_index != level_count)
       break;
 
@@ -1564,6 +1615,12 @@ bool ON_SubDimple::Read(
       {
         if (false == m_symmetry.Read(archive))
           break;
+
+        if (minor_version >= 3)
+        {
+          if (false == archive.ReadBigInt(&saved_content_serial_number))
+            break;
+        }
       }
     }
 
@@ -1574,54 +1631,24 @@ bool ON_SubDimple::Read(
     rc = false;
 
   // Heap id validation. Always an error if max_heap_..._id > m_max_..._id.
-  if (false == m_heap.IsValid())
+  if (false == m_heap.IsValid(false,nullptr))
   {
     ON_SUBD_ERROR("m_heap.IsValid() is false.");
-    m_heap.ResetId(); // breaks component id references, but this is a serious error.
-  }
-  const unsigned int max_heap_vertex_id = m_heap.MaximumVertexId();
-  const unsigned int max_heap_edge_id = m_heap.MaximumEdgeId();
-  const unsigned int max_heap_face_id = m_heap.MaximumFaceId();
-  if (m_max_vertex_id < max_heap_vertex_id)
-  {
-    ON_SUBD_ERROR("m_max_vertex_id is too small.");
-    m_max_vertex_id = max_heap_vertex_id;
-  }
-  if (m_max_edge_id < max_heap_edge_id)
-  {
-    ON_SUBD_ERROR("m_max_edge_id is too small.");
-    m_max_edge_id = max_heap_edge_id;
-  }
-  if (m_max_face_id < max_heap_face_id)
-  {
-    ON_SUBD_ERROR("m_max_face_id is too small.");
-    m_max_face_id = max_heap_face_id;
-  }
-  
-  if (max_vertex_id > m_max_vertex_id)
-    m_max_vertex_id = max_vertex_id;
-  if (max_edge_id > m_max_edge_id)
-    m_max_edge_id = max_edge_id;
-  if (max_face_id > m_max_face_id)
-    m_max_face_id = max_face_id;
-  
-  const unsigned int archive_version = archive.ArchiveOpenNURBSVersion();
-  const unsigned int bad_counts_cutoff_version = ON_VersionNumberConstruct(6, 12, 2018, 12, 12, 0);
-  if (archive_version > bad_counts_cutoff_version)
-  {
-    if( m_max_vertex_id != max_vertex_id
-      || m_max_edge_id != max_edge_id
-      || m_max_face_id != max_face_id
-      )
-    {
-      ON_SUBD_ERROR("Correct m_max_verrtex/edge/face_id differs from value saved in 3dm archive.");
-    }
+    m_heap.ResetIds(); // breaks component id references, but this is a serious error.
   }
 
-  if (minor_version >= 1)
-  {
+  const bool bSetSymmetricObjectContentSerialNumber
+    = saved_content_serial_number > 0
+    && m_symmetry.IsSet()
+    && saved_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
+    ;
 
-  }
+  ChangeContentSerialNumber(false);
+
+  if ( bSetSymmetricObjectContentSerialNumber )
+    m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+  else
+    m_symmetry.ClearSymmetricObjectContentSerialNumber();
 
   if (rc)
     return true;

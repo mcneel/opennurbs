@@ -910,37 +910,117 @@ ON_SubDHeap::~ON_SubDHeap()
   Destroy();
 }
 
-class ON_SubDVertex* ON_SubDHeap::AllocateVertexAndSetId(unsigned int& max_vertex_id)
+class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
+  ON_FixedSizePool& fspc,
+  ON_SubDComponentBase*& unused_list,
+  unsigned int& max_id,
+  unsigned int candidate_id
+)
 {
-  // In order for m_fspv.ElementFromId() to work, it is critical that
-  // once a vertex is allocated from m_fspv, the value of m_id never
-  // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to
-  // persist in binary archives.
-  ON_SubDVertex* v;
-  if (m_unused_vertex)
+  // fspc is a m_fspv / m_fspe / m_fspf fixed size pool on an ON_SubDHeap.
+  // unused_list is the corresponding m_unused_vertex / m_unused_edge / m_unused_face list on that ON_SubDHeap.
+  
+
+  // In order for m_fspv.ElementFromId(), m_fspe.ElementFromId() , m_fspf.ElementFromId() 
+  // to work, it is critical that once a vertex/edge/face is allocated from m_fspv/mfspe/mfspf
+  // the value of m_id never changes.  This is imporant because the value of m_id must persist
+  // in binary archives in order for ON_COMPONENT_INDEX values to persist in binary archives.
+
+  ON_SubDComponentBaseLink* c;
+  if (candidate_id >3000000000U)
   {
-    v = m_unused_vertex;
-    m_unused_vertex = (ON_SubDVertex*)(m_unused_vertex->m_next_vertex);
-    const unsigned int id = v->m_id;
-    if (ON_UNSET_UINT_INDEX == (&v->m_id)[1])
+    // Requests for a candidate_id value above 3 billion are ignored to insure
+    // there is plenty of room for ids. 
+    // It's almost certainly a bug if candidate_id > several millon or so.
+    candidate_id = 0; 
+  }
+
+  if (nullptr != unused_list && candidate_id <= max_id)
+  {
+    ON_SubDComponentBaseLink* prev = nullptr;
+
+    if (candidate_id > 0 && candidate_id != unused_list->m_id)
     {
-      memset(v, 0, sizeof(*v));
-      v->m_id = id;
+      // Caller wants a specific id. If it's found here, the context is probably
+      // some editing code where the caller deleted the component and now wants it back
+      // to preserve the id structure.
+
+      for (prev = static_cast<ON_SubDComponentBaseLink*>(unused_list); nullptr != prev; prev = const_cast<ON_SubDComponentBaseLink*>(prev->m_next))
+      {
+        // If candidate_id is somewhere in the unused list after the first element, return it.
+        if (nullptr != prev->m_next && candidate_id == prev->m_next->m_id)
+          break;
+      }
+    }
+
+    if (nullptr != prev)
+    {
+      // The candidate was found somewhere in the unused_list after the first element.
+      c = const_cast<ON_SubDComponentBaseLink*>(prev->m_next);
+      prev->m_next = c->m_next;
     }
     else
     {
-      // something is modifying ids of returned elements
+      // Return element at the head of the unusued list.
+      c = static_cast<ON_SubDComponentBaseLink*>(unused_list);
+      unused_list = const_cast<ON_SubDComponentBaseLink*>(c->m_next);
+    }
+    const unsigned int id = c->m_id;
+    if (ON_UNSET_UINT_INDEX == (&c->m_id)[1] && c->m_status.IsDeleted() )
+    {
+      // When a vertex/edge/face is put on the unused list, m_archive_id is set to ON_UNSET_UINT_INDEX and m_status = ON_ComponentStatus::Deleted.
+      memset(c, 0, fspc.SizeofElement());
+      c->m_id = id;
+    }
+    else
+    {
+      // Something is modifying returned elements. This is a serious bug.
       ON_SubDIncrementErrorCount();
-      v->m_id = ++max_vertex_id;
+      memset(c, 0, fspc.SizeofElement());
+      c->m_id = ++max_id;
     }
   }
   else
   {
-    v = (class ON_SubDVertex*)m_fspv.AllocateElement();
-    v->m_id = ++max_vertex_id;
+    if (candidate_id > max_id)
+    {
+      // Caller wants a specific id. This is common when copying subds
+      // and some of the components of the original subd were deleted.
+      max_id = candidate_id;
+    }
+    else
+    {
+#if defined(ON_DEBUG)
+      // TEMPORARY ERROR CHECK added Feb 2020 to test new code. Can be removed in April 2020 or earlier if needed.
+      // Ask Dale Lear if confused.
+      if (0 != candidate_id)
+      {
+        ON_SUBD_ERROR("Unable to assign candidate_id");
+      }
+#endif
+      // otherwise assign the next id to this component.
+      candidate_id = ++max_id;
+    }
+
+    // allocate a new vertex.
+    c = (ON_SubDComponentBaseLink*)fspc.AllocateElement();
+    c->m_id = candidate_id;
   }
-  return v;
+  return c;
+}
+
+
+class ON_SubDVertex* ON_SubDHeap::AllocateVertexAndSetId(unsigned int candidate_vertex_id)
+{
+  ON_SubDComponentBase* unused_list = m_unused_vertex;
+  ON_SubDComponentBase* c = ON_SubDHeap::Internal_AllocateComponentAndSetId(
+    m_fspv,
+    unused_list,
+    m_max_vertex_id,
+    candidate_vertex_id
+  );
+  m_unused_vertex = static_cast<ON_SubDVertex*>(unused_list);
+  return static_cast<ON_SubDVertex*>(c);
 }
 
 void ON_SubDHeap::ReturnVertex(class ON_SubDVertex* v)
@@ -957,37 +1037,19 @@ void ON_SubDHeap::ReturnVertex(class ON_SubDVertex* v)
   }
 }
 
-class ON_SubDEdge* ON_SubDHeap::AllocateEdgeAndSetId(unsigned int& max_edge_id)
+class ON_SubDEdge* ON_SubDHeap::AllocateEdgeAndSetId(
+  unsigned int candidate_edge_id
+  )
 {
-  // In order for m_fspe.ElementFromId() to work, it is critical that
-  // once a edge is allocated from m_fspe, the value of m_id never
-  // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to
-  // persist in binary archives.
-  ON_SubDEdge* e;
-  if (m_unused_edge)
-  {
-    e = m_unused_edge;
-    m_unused_edge = (ON_SubDEdge*)(m_unused_edge->m_next_edge);
-    const unsigned int id = e->m_id;
-    if (ON_UNSET_UINT_INDEX == (&e->m_id)[1])
-    {
-      memset(e, 0, sizeof(*e));
-      e->m_id = id;
-    }
-    else
-    {
-      // something is modifying ids of returned elements
-      ON_SubDIncrementErrorCount();
-      e->m_id = ++max_edge_id;
-    }
-  }
-  else
-  {
-    e = (class ON_SubDEdge*)m_fspe.AllocateElement();
-    e->m_id = ++max_edge_id;
-  }
-  return e;
+  ON_SubDComponentBase* unused_list = m_unused_edge;
+  ON_SubDComponentBase* c = ON_SubDHeap::Internal_AllocateComponentAndSetId(
+    m_fspe,
+    unused_list,
+    m_max_edge_id,
+    candidate_edge_id
+  );
+  m_unused_edge = static_cast<ON_SubDEdge*>(unused_list);
+  return static_cast<ON_SubDEdge*>(c);
 }
 
 void ON_SubDHeap::ReturnEdge(class ON_SubDEdge* e)
@@ -1005,58 +1067,19 @@ void ON_SubDHeap::ReturnEdge(class ON_SubDEdge* e)
   }
 }
 
-class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(unsigned int& max_face_id)
+class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(
+  unsigned int candidate_face_id
+)
 {
-  return AllocateFaceAndSetId(nullptr, max_face_id);
-}
-
-class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(const ON_SubDFace* candidate_face, unsigned int& max_face_id)
-{
-  // In order for m_fspf.ElementFromId() to work, it is critical that
-  // once a face is allocated from m_fspf, the value of m_id never
-  // changes.  This is imporant because the value of m_id must persist
-  // in binary archives in order for ON_COMPONENT_INDEX values to
-  // persist in binary archives.
-  ON_SubDFace* f;
-  if (m_unused_face)
-  {
-    f = nullptr;
-    if (nullptr != candidate_face && candidate_face != m_unused_face)
-    {
-      for (f = m_unused_face; nullptr != f; f = const_cast<ON_SubDFace*>(f->m_next_face))
-      {
-        if (candidate_face == f->m_next_face)
-        {
-          f->m_next_face = f->m_next_face->m_next_face;
-          f = const_cast<ON_SubDFace*>(candidate_face);
-          break;
-        }
-      }
-    }
-    if (nullptr == f)
-    {
-      f = m_unused_face;
-      m_unused_face = const_cast<ON_SubDFace*>(m_unused_face->m_next_face);
-    }
-    const unsigned int id = f->m_id;
-    if (ON_UNSET_UINT_INDEX == (&f->m_id)[1])
-    {
-      memset(f, 0, sizeof(*f));
-      f->m_id = id;
-    }
-    else
-    {
-      // something is modifying ids of returned elements
-      ON_SubDIncrementErrorCount();
-      f->m_id = ++max_face_id;
-    }
-  }
-  else
-  {
-    f = (class ON_SubDFace*)m_fspf.AllocateElement();
-    f->m_id = ++max_face_id;
-  }
-  return f;
+  ON_SubDComponentBase* unused_list = m_unused_face;
+  ON_SubDComponentBase* c = ON_SubDHeap::Internal_AllocateComponentAndSetId(
+    m_fspf,
+    unused_list,
+    m_max_face_id,
+    candidate_face_id
+  );
+  m_unused_face = static_cast<ON_SubDFace*>(unused_list);
+  return static_cast<ON_SubDFace*>(c);
 }
 
 void ON_SubDHeap::ReturnFace(class ON_SubDFace* f)
@@ -1083,12 +1106,15 @@ void ON_SubDHeap::Clear()
     onfree(p);
     p = next;
   }
+
   m_fspv.ReturnAll();
   m_fspe.ReturnAll();
   m_fspf.ReturnAll();
+
   m_fsp5.ReturnAll();
   m_fsp9.ReturnAll();
   m_fsp17.ReturnAll();
+
   m_limit_block_pool.ReturnAll();
 
   m_unused_full_fragments = nullptr;
@@ -1098,6 +1124,10 @@ void ON_SubDHeap::Clear()
   m_unused_vertex = nullptr;
   m_unused_edge = nullptr;
   m_unused_face = nullptr;
+
+  m_max_vertex_id = 0;
+  m_max_edge_id = 0;
+  m_max_face_id = 0;
 }
 
 void ON_SubDHeap::Destroy()
@@ -1176,35 +1206,76 @@ const class ON_SubDFace* ON_SubDHeap::FaceFromId(
   return face;
 }
 
-unsigned int ON_SubDHeap::MaximumVertexId() const
+static bool ON_SubDHeapIsNotValid(bool bSilentError)
 {
-  return m_fspv.MaximumElementId(ON_SubDHeap::m_offset_vertex_id);
+  ON_SubDIncrementErrorCount();
+  return bSilentError ? false : ON_IsNotValid();
 }
 
-unsigned int ON_SubDHeap::MaximumEdgeId() const
+bool ON_SubDHeap::IsValid(
+  bool bSilentError,
+  ON_TextLog* text_log
+) const
 {
-  return m_fspe.MaximumElementId(ON_SubDHeap::m_offset_edge_id);
+  if (false == m_fspv.ElementIdIsIncreasing(ON_SubDHeap::m_offset_vertex_id))
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_fspv.ElementIdIsIncreasing() is false.");
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  if (false == m_fspe.ElementIdIsIncreasing(ON_SubDHeap::m_offset_edge_id))
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_fspe.ElementIdIsIncreasing() is false.");
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  if (false == m_fspf.ElementIdIsIncreasing(ON_SubDHeap::m_offset_face_id))
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_fspf.ElementIdIsIncreasing() is false.");
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  const unsigned max_fspv_max_id = m_fspv.MaximumElementId(ON_SubDHeap::m_offset_vertex_id);
+  if (m_max_vertex_id != max_fspv_max_id)
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_max_vertex_id = %u != %u = m_fspv.MaximumElementId()\n", m_max_vertex_id, max_fspv_max_id);
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  const unsigned max_fspe_max_id = m_fspe.MaximumElementId(ON_SubDHeap::m_offset_edge_id);
+  if (m_max_edge_id != max_fspe_max_id)
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_max_edge_id = %u != %u = m_fspe.MaximumElementId()\n", m_max_edge_id, max_fspe_max_id);
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  const unsigned max_fspf_max_id = m_fspf.MaximumElementId(ON_SubDHeap::m_offset_face_id);
+  if (m_max_face_id != max_fspf_max_id)
+  {
+    if (nullptr != text_log)
+      text_log->Print("m_max_face_id = %u != %u = m_fspf.MaximumElementId()\n", m_max_face_id, max_fspf_max_id);
+    return ON_SubDHeapIsNotValid(bSilentError);
+  }
+
+  return true;
 }
 
-unsigned int ON_SubDHeap::MaximumFaceId() const
-{
-  return m_fspf.MaximumElementId(ON_SubDHeap::m_offset_face_id);
-}
-
-
-bool ON_SubDHeap::IsValid() const
-{
-  return m_fspv.ElementIdIsIncreasing(ON_SubDHeap::m_offset_vertex_id)
-    && m_fspe.ElementIdIsIncreasing(ON_SubDHeap::m_offset_edge_id)
-    && m_fspf.ElementIdIsIncreasing(ON_SubDHeap::m_offset_face_id);
-}
-
-void ON_SubDHeap::ResetId()
+void ON_SubDHeap::ResetIds()
 {
   const unsigned int first_id = 1;
-  m_fspv.ResetElementId(ON_SubDHeap::m_offset_vertex_id,first_id);
-  m_fspe.ResetElementId(ON_SubDHeap::m_offset_edge_id,first_id);
-  m_fspf.ResetElementId(ON_SubDHeap::m_offset_face_id,first_id);
+  const unsigned int next_vertex_id = m_fspv.ResetElementId(ON_SubDHeap::m_offset_vertex_id,first_id);
+  const unsigned int next_edge_id = m_fspe.ResetElementId(ON_SubDHeap::m_offset_edge_id,first_id);
+  const unsigned int next_face_id = m_fspf.ResetElementId(ON_SubDHeap::m_offset_face_id,first_id);
+
+  // m_max_..._id  =  maximum assigned id = m_next_..._id - 1
+  m_max_vertex_id = (next_vertex_id > first_id) ? (next_vertex_id - 1U) : 0U;
+  m_max_edge_id = (next_edge_id > first_id) ? (next_edge_id - 1U) : 0U;
+  m_max_face_id = (next_face_id > first_id) ? (next_face_id - 1U) : 0U;
 }
 
 size_t ON_SubDHeap::OversizedElementCapacity(size_t count)
