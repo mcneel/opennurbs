@@ -1348,6 +1348,13 @@ public:
   ON__UINT64 RuntimeSerialNumber() const;
 
   /*
+  Returns:
+    The next ON_ModelComponent instance will have runtime serial number
+    >= ON_ModelComponent::NextRuntimeSerialNumber();
+  */
+  static ON__UINT64 NextRuntimeSerialNumber();
+
+  /*
   Description:
     Whenever an attribute is changed, the content version number is incremented.
     The ContentVersionNumber() is commonly used by consumers of the model 
@@ -1422,7 +1429,6 @@ private:
   ON__UINT16 m_locked_status = 0;
   ON__UINT16 m_set_status = 0;
   ON_ComponentStatus m_component_status = ON_ComponentStatus::NoneSet;
-  ON__UINT8 m_reserved1 = 0;
   ON__UINT16 m_reserved2 = 0;
 
   // m_component_index is the index of the component in the model identified 

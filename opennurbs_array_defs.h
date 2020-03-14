@@ -494,6 +494,11 @@ void ON_SimpleArray<T>::Append( const T& x )
       p = (T*)temp;
     }
     Reserve(newcapacity);
+    if (nullptr == m_a)
+    {
+      ON_ERROR("allocation failure");
+      return;
+    }
   }
   m_a[m_count++] = *p;
   if (p != &x)
@@ -1572,11 +1577,21 @@ void ON_ClassArray<T>::Append( const T& x )
         T temp;   // ON_*Array<> templates do not require robust copy constructor.
         temp = x; // ON_*Array<> templates require a robust operator=.
         Reserve( newcapacity );
+        if (nullptr == m_a)
+        {
+          ON_ERROR("allocation failure");
+          return;
+        }
         m_a[m_count++] = temp;
         return;
       }
     }
     Reserve(newcapacity);
+    if (nullptr == m_a)
+    {
+      ON_ERROR("allocation failure");
+      return;
+    }
   }
   m_a[m_count++] = x;
 }

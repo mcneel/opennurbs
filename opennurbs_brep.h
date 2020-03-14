@@ -57,8 +57,13 @@ public:
   // archives and may be changed by some computations.
   mutable ON_U m_vertex_user; 
 
+public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
+private:
+  ON__UINT16 m_reserved1 = 0U;
+
+public:
   // index of the vertex in the ON_Brep.m_V[] array
   int m_vertex_index = -1;
 
@@ -198,8 +203,13 @@ public:
   // archives and may be changed by some computations.
   mutable ON_U m_edge_user;
 
+public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
+private:
+  ON__UINT16 m_reserved1 = 0U;
+
+public:
   // index of edge in ON_Brep.m_E[] array
   int m_edge_index = -1;    
 
@@ -412,8 +422,13 @@ public:
   // archives and may be changed by some computations.
   mutable ON_U m_trim_user;
 
+public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
+private:
+  ON__UINT16 m_reserved1 = 0U;
+
+public:
   int m_trim_index = -1;  // index of trim in ON_Brep.m_T[] array
 
   // types of trim - access through m_type member.  Also see m_iso and ON_Surface::ISO
@@ -846,8 +861,13 @@ public:
   // archives and may be changed by some computations.
   mutable ON_U m_loop_user;
 
+public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
+private:
+  ON__UINT16 m_reserved1 = 0U;
+
+public:
   int m_loop_index = -1;  // index of loop in ON_Brep.m_L[] array
 
   enum TYPE {
@@ -949,8 +969,13 @@ public:
   // archives and may be changed by some computations.
   mutable ON_U m_face_user;
 
+public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
+private:
+  ON__UINT16 m_reserved1 = 0U;
+
+public:
   int m_face_index = -1;  // index of face in ON_Brep.m_F[] array
 
   ON_BrepFace();
@@ -1152,20 +1177,43 @@ public:
   bool m_bRev = false;         // true if face orientation is opposite
                        //      of natural surface orientation
 
-  // m_face_material_channel provides a way to have individual
-  // brep faces use a rendering material that is different
-  // from the rendering material used by the parent brep.
-  // If m_face_material_channel is zero 
-  // channel and m_face_material_channel.m_j is the back face
-  // materal. The default is (0,0) which indicates the face
-  // should use the parent brep's material.
-  // If "mat" is the brep's rendering material and
-  // 0 < m_material_channel.m_i < mat.m_material_channel.Count(),
-  // then this face should use the material with id
-  // mat.m_material_channel[face.m_material_channel.m_i-1].m_id.
-  // If m_material_channel.m_i or the id is invalid in any way,
-  // then the default should be used.
+  // The application specifies a base ON_Material used to render the brep this face belongs to.
+  // If m_material_channel_index > 0 AND face_material_id = base.MaterialChannelIdFromIndex(m_material_channel_index)
+  // is not nil, then face_material_id identifies an override rendering material for this face.
+  // Othewise base will be used to render this face.
   int m_face_material_channel = 0;
+
+public:
+  /*
+  Description:
+    Set this face's rendering material channel index.
+
+  Parameters:
+    material_channel_index - [in]
+      A value between 0 and ON_Material::MaximumMaterialChannelIndex, inclusive.
+      This value is typically 0 or the value returned from ON_Material::MaterialChannelIndexFromId().
+
+  Remarks:
+    If base_material is the ON_Material assigned to render this brep and
+    ON_UUID face_material_id = base_material.MaterialChannelIdFromIndex( material_channel_index )
+    is not nil, then face_material_id identifies an override rendering material for this face.
+    Otherwise base_material is used to reneder this face.
+  */
+  void SetMaterialChannelIndex(int material_channel_index) const;
+
+  /*
+  Returns:
+    This face's rendering material channel index.
+
+    Remarks:
+    If base_material is the ON_Material assigned to render this subd, MaterialChannelIndex() > 0,
+    and ON_UUID face_material_id = base_material.MaterialChannelIdFromIndex( face.MaterialChannelIndex() )
+    is not nil, then face_material_id identifies an override rendering material for this face.
+    Otherwise base_material is used to reneder this face.
+  */
+  int MaterialChannelIndex() const;
+
+public:
 
   // Persistent id for this face.  Default is ON_nil_uuid.
   ON_UUID m_face_uuid = ON_nil_uuid;

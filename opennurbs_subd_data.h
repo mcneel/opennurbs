@@ -1268,17 +1268,22 @@ public:
   ON_SubDHeap();
   ~ON_SubDHeap();
 
-  class ON_SubDVertex* AllocateVertexAndSetId(unsigned int& max_vertex_id);
+private:
+  static class ON_SubDComponentBase* Internal_AllocateComponentAndSetId(
+    ON_FixedSizePool& fspc,
+    ON_SubDComponentBase*& unused_list,
+    unsigned int& max_id,
+    unsigned int candidate_id
+  );
 
+public:
+  class ON_SubDVertex* AllocateVertexAndSetId(unsigned int candidate_vertex_id);
   void ReturnVertex(class ON_SubDVertex* v);
 
-  class ON_SubDEdge* AllocateEdgeAndSetId(unsigned int& max_edge_id);
-
+  class ON_SubDEdge* AllocateEdgeAndSetId(unsigned int candidate_edge_id);
   void ReturnEdge(class ON_SubDEdge* e);
 
-  class ON_SubDFace* AllocateFaceAndSetId(unsigned int& max_face_id);
-  class ON_SubDFace* AllocateFaceAndSetId(const ON_SubDFace* candidate_face, unsigned int& max_face_id);
-
+  class ON_SubDFace* AllocateFaceAndSetId(unsigned int candidate_face_id);
   void ReturnFace(class ON_SubDFace* f);
 
   /*
@@ -1299,16 +1304,62 @@ public:
     unsigned int face_id
     ) const;
 
-  unsigned int MaximumVertexId() const;
-  unsigned int MaximumEdgeId() const;
-  unsigned int MaximumFaceId() const;
+  /*
+  Returns:
+    Maximum vertex id assigned to a vertex managed by this heap.
+  Remarks:
+    The next vertex that is created (not reused from m_unused_vertex) will
+    be assigned id = MaximumVertexId() + 1;
+  */
+  unsigned int MaximumVertexId() const
+  {
+    return m_max_vertex_id;
+  }
 
-  bool IsValid() const;
-  void ResetId();
+  /*
+  Returns:
+    Maximum edge id assigned to an edge managed by this heap.
+  Remarks:
+    The next edge that is created (not reused from m_unused_edge) will
+    be assigned id = MaximumEdgeId() + 1;
+  */
+  unsigned int MaximumEdgeId() const
+  {
+    return m_max_edge_id;
+  }
+
+  /*
+  Returns:
+    Maximum face id assigned to a face managed by this heap.
+  Remarks:
+    The next face that is created (not reused from m_unused_face) will
+    be assigned id = MaximumFaceId() + 1;
+  */
+  unsigned int MaximumFaceId() const
+  {
+    return m_max_face_id;
+  }
+
+public:
+  /*
+  Returns:
+    True if this heap and the ids are valid.
+  Remarks:
+    If false is returned, ResetIds() generally will make the heap valid.
+  */
+  bool IsValid(
+    bool bSilentError,
+    ON_TextLog* text_log
+  ) const;
+
+  /*
+  Description:
+     Resets all ids to begin with 1. 
+     This breaks persistent id references, but will restore ability for the heap to work correctly.
+  */
+  void ResetIds();
 
 private:
-
-
   /*
   Returns:
   Array of count ON__UINT_PTR
@@ -1522,17 +1573,32 @@ private:
   // Used to allocate edge curves
   size_t m_sizeof_limit_curve = 0;
   class ON_FixedSizePoolElement* m_unused_limit_curves = nullptr;
-   
+  
+  // list of vertices previously allocated from m_fspv and returned by ReturnVertex().
+  ON_SubDVertex* m_unused_vertex = nullptr; 
 
-  ON_SubDVertex* m_unused_vertex = nullptr;
+  // list of edges previously allocated from m_fspv and returned by ReturnVertex().
   ON_SubDEdge* m_unused_edge = nullptr;
+
+  // list of faces previously allocated from m_fspv and returned by ReturnVertex().
   ON_SubDFace* m_unused_face = nullptr;
 
-  unsigned int m_max_fspv_id = 0;
-  unsigned int m_max_fspe_id = 0;
-  unsigned int m_max_fspf_id = 0;
+  // Maximum vertex id assigned to a vertex in m_fspv.
+  // If m_unused_vertex is not nullptr, some vertices are currently deleted.
+  // Deleted vertices can be reused, but their id is never changed.
+  unsigned int m_max_vertex_id = 0;
 
-  unsigned int m_reserved = 0;
+  // Maximum edge id assigned to an edge in m_fspe.
+  // If m_unused_edge is not nullptr, some edges are currently deleted.
+  // Deleted edges can be reused, but their id is never changed.
+  unsigned int m_max_edge_id = 0;
+
+  // Maximum face id assigned to a face in m_fspf.
+  // If m_unused_face is not nullptr, some faces are currently deleted.
+  // Deleted faces can be reused, but their id is never changed.
+  unsigned int m_max_face_id = 0;
+
+  unsigned int m_reserved2 = 0;
 
   ON__UINT_PTR* AllocateOversizedElement(
     size_t* capacity
@@ -1584,12 +1650,22 @@ public:
   /*
   Description:
     Change the content serial number. 
+  Parameters:
+    bChangePreservesSymmetry - [in]
+      When in doubt, pass false.
+      If the change preserves global symmtery, then pass true.
+      (For example, a global subdivide preserves all types of symmetry.)
+      Note well: 
+        Transformations do not preserve symmetries that are
+        set with respect to world coordinate systems.
   Returns:
     The new value of ConentSerialNumber().
   Remarks:
     The value can change by any amount.
   */
-  ON__UINT64 ChangeContentSerialNumber() const;
+  ON__UINT64 ChangeContentSerialNumber(
+    bool bChangePreservesSymmetry
+  ) const;
 
 private:
   mutable ON__UINT64 m_subd_content_serial_number = 0;
@@ -1691,6 +1767,16 @@ public:
     double v1_sector_weight
     );
 
+  class ON_SubDEdge* AddEdge(
+    unsigned int candidate_edge_id,
+    ON_SubD::EdgeTag edge_tag,
+    ON_SubDVertex* v0,
+    double v0_sector_weight,
+    ON_SubDVertex* v1,
+    double v1_sector_weight,
+    unsigned initial_face_capacity
+  );
+
   /*
   Description:
     Split and edge.
@@ -1715,10 +1801,10 @@ public:
     );
 
   class ON_SubDFace* AddFace(
-    const ON_SubDFace* candidate_face,
+    unsigned int candidate_face_id,
     unsigned int edge_count,
     const ON_SubDEdgePtr* edge
-    );
+  );
 
   /*
   Description:
@@ -1750,7 +1836,19 @@ public:
     const double* P
     )
   {
-    class ON_SubDVertex* v = m_heap.AllocateVertexAndSetId(m_max_vertex_id);
+    return AllocateVertex( 0U, vertex_tag, level, P, 0, 0);
+  }
+
+  class ON_SubDVertex* AllocateVertex(
+    unsigned int candidate_id,
+    ON_SubD::VertexTag vertex_tag,
+    unsigned int level,
+    const double* P,
+    unsigned int edge_capacity,
+    unsigned int face_capacity
+    )
+  {
+    class ON_SubDVertex* v = m_heap.AllocateVertexAndSetId( candidate_id);
     v->SetSubdivisionLevel(level);
     v->m_vertex_tag = vertex_tag;
     if (nullptr != P)
@@ -1759,19 +1857,6 @@ public:
       v->m_P[1] = P[1];
       v->m_P[2] = P[2];
     }
-    return v;
-  }
-
-  class ON_SubDVertex* AllocateVertex(
-    ON_SubD::VertexTag vertex_tag,
-    unsigned int level,
-    const double* P,
-    unsigned int edge_capacity,
-    unsigned int face_capacity
-    )
-  {
-    class ON_SubDVertex* v = AllocateVertex(vertex_tag,level,P);
-
     if (edge_capacity > 0 && edge_capacity < ON_SubDVertex::MaximumEdgeCount )
       m_heap.GrowVertexEdgeArray(v,edge_capacity);
     if (face_capacity > 0 && face_capacity < ON_SubDVertex::MaximumFaceCount )
@@ -1797,31 +1882,33 @@ public:
     m_heap.ReturnVertex(v);
   }
 
-  class ON_SubDEdge* AllocateEdge(
+  ON_SubDEdge* AllocateEdge(
     ON_SubD::EdgeTag edge_tag
-    )
+  )
   {
-    class ON_SubDEdge* e = m_heap.AllocateEdgeAndSetId(m_max_edge_id);
+    ON_SubDEdge* e = m_heap.AllocateEdgeAndSetId(0U);
     e->m_edge_tag = edge_tag;
     return e;
   }
 
-  class ON_SubDEdge* AllocateEdge(
+  ON_SubDEdge* AllocateEdge(
+    unsigned int candidate_edge_id,
     ON_SubD::EdgeTag edge_tag,
     unsigned int level,
     unsigned int face_capacity
     )
   {
-    class ON_SubDEdge* e = AllocateEdge(edge_tag);
+    ON_SubDEdge* e = m_heap.AllocateEdgeAndSetId( candidate_edge_id);
+    e->m_edge_tag = edge_tag;
     e->SetSubdivisionLevel(level);
     if (face_capacity > 0 && face_capacity <= ON_SubDEdge::MaximumFaceCount )
       m_heap.GrowEdgeFaceArray(e,face_capacity);
     return e;
   }
 
-  const class ON_SubDEdge* AddEdgeToLevel(class ON_SubDEdge* e)
+  const ON_SubDEdge* AddEdgeToLevel(class ON_SubDEdge* e)
   {
-    class ON_SubDLevel* subd_level = SubDLevel(e->SubdivisionLevel(),true);
+    ON_SubDLevel* subd_level = SubDLevel(e->SubdivisionLevel(),true);
     return (subd_level) ? subd_level->AddEdge(e) : nullptr;
   }
 
@@ -1838,22 +1925,17 @@ public:
 
   class ON_SubDFace* AllocateFace()
   {
-    class ON_SubDFace* f = m_heap.AllocateFaceAndSetId(m_max_face_id);
+    class ON_SubDFace* f = m_heap.AllocateFaceAndSetId( 0U);
     return f;
   }
-
-  class ON_SubDFace* AllocateFace(const ON_SubDFace* candidate_face)
-  {
-    class ON_SubDFace* f = m_heap.AllocateFaceAndSetId(candidate_face, m_max_face_id);
-    return f;
-  }
-
+  
   class ON_SubDFace* AllocateFace(
+    unsigned int candidate_face_id,
     unsigned int level,
     unsigned int edge_capacity
     )
   {
-    class ON_SubDFace* f = AllocateFace();
+    class ON_SubDFace* f = m_heap.AllocateFaceAndSetId(candidate_face_id);
     if (nullptr != f)
     {
       f->SetSubdivisionLevel(level);
@@ -1898,19 +1980,29 @@ public:
   /*
   Description:
     Removes every level above max_level_index
+  Returns:
+    Number of removed levels.
   */
-  void ClearHigherSubdivisionLevels(
+  unsigned int ClearHigherSubdivisionLevels(
     unsigned int max_level_index
     );
   
   /*
   Description:
     Removes every level below min_level_index
+  Returns:
+    Number of removed levels.
   */
-  void ClearLowerSubdivisionLevels(
+  unsigned int ClearLowerSubdivisionLevels(
     unsigned int min_level_index
     );
 
+  /*
+  Remove all levels except the active level.
+  Returns:
+    Number of removed levels.
+  */
+  unsigned int ClearInactiveLevels();
 
   void ClearLevelContents(
     ON_SubDLevel* level
@@ -2001,11 +2093,6 @@ public:
     ) const;
 
 private:
-  unsigned int m_max_vertex_id = 0;
-  unsigned int m_max_edge_id = 0;
-  unsigned int m_max_face_id = 0;
-
-
   mutable ON_SubDComponentLocation m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   
   mutable ON_SubDTextureDomainType m_texture_domain_type = ON_SubDTextureDomainType::Unset;
@@ -2018,16 +2105,41 @@ private:
 public:
   unsigned int MaximumVertexId() const
   {
-    return m_max_vertex_id;
+    return m_heap.MaximumVertexId();
   }
   unsigned int MaximumEdgeId() const
   {
-    return m_max_edge_id;
+    return m_heap.MaximumEdgeId();
   }
   unsigned int MaximumFaceId() const
   {
-    return m_max_face_id;
+    return m_heap.MaximumFaceId();
   }
+
+  //void IncreaseMaximumVertexId(
+  //  unsigned new_maximum_vertex_id
+  //)
+  //{
+  //  if (new_maximum_vertex_id > m_dimple_max_vertex_id && new_maximum_vertex_id + 1 < ON_UNSET_UINT_INDEX)
+  //    m_dimple_max_vertex_id = new_maximum_vertex_id;
+  //}
+
+  //void IncreaseMaximumEdgeId(
+  //  unsigned new_maximum_edge_id
+  //)
+  //{
+  //  if (new_maximum_edge_id > m_dimple_max_edge_id && new_maximum_edge_id + 1 < ON_UNSET_UINT_INDEX)
+  //    m_dimple_max_edge_id = new_maximum_edge_id;
+  //}
+
+  //void IncreaseMaximumFaceId(
+  //  unsigned new_maximum_face_id
+  //)
+  //{
+  //  if (new_maximum_face_id > m_dimple_max_face_id && new_maximum_face_id + 1 < ON_UNSET_UINT_INDEX)
+  //    m_dimple_max_face_id = new_maximum_face_id;
+  //}
+
   /*
   Returns:
     Active level

@@ -83,7 +83,8 @@ public:
     box_mapping      = 5,
     mesh_mapping_primitive = 6, // m_mapping_primitive is an ON_Mesh 
     srf_mapping_primitive  = 7, // m_mapping_primitive is an ON_Surface
-    brep_mapping_primitive = 8  // m_mapping_primitive is an ON_Brep
+    brep_mapping_primitive = 8,  // m_mapping_primitive is an ON_Brep
+    ocs_mapping = 9              // same as plane_mapping - used to differentiate between OCS and plane mapping in the UI
   };
 
   static ON_TextureMapping::TYPE TypeFromUnsigned( 

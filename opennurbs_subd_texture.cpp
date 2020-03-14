@@ -488,6 +488,13 @@ bool ON_SubD::SetTextureCoordinates(
     //  The mesh topology, 3d vertex locations, 3d vertex normals
     //  CANNOT be modified to insert "texture seams."
     // 
+
+    ON_Xform P_xform, N_xform;
+    if (subd_xform && ON_TextureMapping::TYPE::srfp_mapping != mt)
+    {
+      subd_xform->GetMappingXforms(P_xform, N_xform);
+    }
+
     ON_3dPoint tc;
     ON_SubDMeshFragmentIterator frit(*this);
     for (const ON_SubDMeshFragment* fragment = frit.FirstFragment(); nullptr != fragment; fragment = frit.NextFragment())
@@ -514,10 +521,18 @@ bool ON_SubD::SetTextureCoordinates(
       const size_t N_stride = (N_count == P_count) ? fragment->m_N_stride : 0;
       for (double* T1 = T + T_stride * T_count; T < T1; T += T_stride, P += P_stride, N += N_stride)
       {
-        if (ON_TextureMapping::TYPE::srfp_mapping != mt)
+        if (ON_TextureMapping::TYPE::srfp_mapping == mt)
           tc = ON_3dPoint(T[0], T[1], 0.0);
-        else if (false == mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc))
-          tc = ON_3dPoint::NanPoint;
+        else
+        {
+          bool ok = subd_xform ?
+            mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc, P_xform, N_xform) :
+            mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc);
+
+          if(!ok)
+            tc = ON_3dPoint::NanPoint;
+        }
+          
         if (bApplyUVW)
           tc = mapping.m_uvw * tc;
         T[0] = tc.x;
@@ -602,6 +617,23 @@ void ON_SubDFace::SetTextureDomain(
   }
 }
 
+void ON_SubDFace::SetMaterialChannelIndex(int material_channel_index) const
+{
+  if ( material_channel_index >= 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex )
+  {
+    m_material_channel_index = (unsigned short)material_channel_index;
+  }
+  else
+  {
+    ON_ERROR("Invalid material_channel_index value.");
+    m_material_channel_index = 0;
+  }
+}
+
+int ON_SubDFace::MaterialChannelIndex() const
+{
+  return (int)m_material_channel_index;
+}
 
 const bool ON_SubDFace::TextureDomainIsSet() const
 {

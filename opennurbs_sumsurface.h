@@ -33,10 +33,10 @@ public:
   // for expert users
   // surface-PointAt(s,t) 
   //  = m_curve[0]->PointAt(s) + m_curve[1]->PointAt(t) + m_basepoint;
-  ON_Curve*  m_curve[2]; // m_curve[0] and m_curve[1] are deleted by ~ON_SumSuface.  
+  ON_Curve* m_curve[2] = {}; // m_curve[0] and m_curve[1] are deleted by ~ON_SumSuface.  
                          // Use a ON_ProxyCurve if this is problem.
-  ON_3dVector m_basepoint;
-  ON_BoundingBox m_bbox; // lazy evaluation used in ON_SumSurface::BoundingBox()
+  ON_3dVector m_basepoint = ON_3dPoint::Origin;
+  ON_BoundingBox m_bbox = ON_BoundingBox::EmptyBoundingBox; // lazy evaluation used in ON_SumSurface::BoundingBox()
 
 public:
 
@@ -56,6 +56,9 @@ public:
   ON_SumSurface( const ON_SumSurface& );
   ON_SumSurface& operator=(const ON_SumSurface&);
 
+private:
+  void Internal_CopyFrom(const ON_SumSurface&);
+public:
   /*
   Description:
     Extrude a curve to create a surface.

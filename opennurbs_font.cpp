@@ -3768,18 +3768,21 @@ const ON_Font* ON_FontList::Internal_FromNames(
   key.m_font_weight = prefered_weight;
   key.m_font_stretch = prefered_stretch;
   key.m_font_style = prefered_style;
-
-
+  
   const bool bKeyHasFamilyAndFace = key.m_loc_family_name.IsNotEmpty() && key.m_loc_face_name.IsNotEmpty();
+  const bool bKeyHasPostScriptName = key.m_loc_postscript_name.IsNotEmpty();
+  const bool bKeyWindowsLogfontName = key.m_loc_windows_logfont_name.IsNotEmpty();
 
   if (false == bKeyHasFamilyAndFace)
     bRequireFaceMatch = false;
 
   int pass_count = 0;
 
+  int postscript_name_pass[2] = { -1, -1 };
+
   // First compare family AND face name. In general, there will not be multiple
   // fonts with the same family and face name combination.
-  if (key.m_loc_family_name.IsNotEmpty() && key.m_loc_face_name.IsNotEmpty())
+  if (bKeyHasFamilyAndFace)
   {
     sorted_lists[pass_count] = &m_by_family_name;
     compare_funcs[pass_count] = ON_FontList::CompareFamilyAndFaceName;
@@ -3793,7 +3796,7 @@ const ON_Font* ON_FontList::Internal_FromNames(
 #if defined(ON_RUNTIME_WIN)
   // On Windows, check LOGFONT.lfFaceName before PostScript
   // It is common for 4 distinct faces to have the same LOGFONT lfFaceName.
-  if (key.m_loc_windows_logfont_name.IsNotEmpty())
+  if (bKeyWindowsLogfontName)
   {
     sorted_lists[pass_count] = &m_by_windows_logfont_name;
     compare_funcs[pass_count] = ON_FontList::CompareWindowsLogfontName;
@@ -3809,21 +3812,23 @@ const ON_Font* ON_FontList::Internal_FromNames(
   // On Windows, when simulated fonts or OpenType variable face fonts are in use,
   // it is very common for distict faces to have the same PostScript font name.
   // It is less common in MacOS.
-  if (key.m_loc_postscript_name.IsNotEmpty())
+  if (bKeyHasPostScriptName)
   {
     sorted_lists[pass_count] = &m_by_postscript_name;
     compare_funcs[pass_count] = ON_FontList::ComparePostScriptName;
+    postscript_name_pass[0] = pass_count;
     pass_count++;
 
     sorted_lists[pass_count] = &m_by_english_postscript_name;
     compare_funcs[pass_count] = ON_FontList::CompareEnglishPostScriptName;
+    postscript_name_pass[1] = pass_count;
     pass_count++;
   }
 
 #if !defined(ON_RUNTIME_WIN)
   // Windows LOGFONT.lfFaceName checked after PostScript
   // It is common for 4 distinct faces to have the same LOGFONT lfFaceName.
-  if (key.m_loc_windows_logfont_name.IsNotEmpty())
+  if (bKeyWindowsLogfontName)
   {
     sorted_lists[pass_count] = &m_by_windows_logfont_name;
     compare_funcs[pass_count] = ON_FontList::CompareWindowsLogfontName;
@@ -3858,6 +3863,8 @@ const ON_Font* ON_FontList::Internal_FromNames(
   unsigned int font_dev = 0xFFFFFFFF;
 
   const ON_Font* pkey = &key;
+
+  const ON_Font* postscript_name_match_candidate = nullptr;
 
   for (int pass = 0; pass < pass_count; pass++)
   {
@@ -3901,6 +3908,23 @@ const ON_Font* ON_FontList::Internal_FromNames(
             continue;
         }
 
+        // If we're on a Mac, the PostScript name is the most reliable identification
+        // and it overrides the subsequent name tests when we have a single installed font that is an exact match.
+        const bool bUniquePostScriptNameMatch 
+          = (subset.i+1 == subset.j)
+          && (pass == postscript_name_pass[0] || pass == postscript_name_pass[1])
+          ;
+        if (bUniquePostScriptNameMatch)
+        {
+          if (nullptr == postscript_name_match_candidate)
+            postscript_name_match_candidate = candidate;
+          else if (postscript_name_match_candidate != candidate)
+          {
+            // localized and english names produced different candidates.
+            postscript_name_match_candidate = nullptr;
+          }
+        }
+
         if (bMatchUnderlineStrikethroughAndPointSize)
         {
           if (candidate->IsUnderlined() != bUnderlined)
@@ -3929,10 +3953,17 @@ const ON_Font* ON_FontList::Internal_FromNames(
           continue;
 
         candidate_dev = ON_Font::WeightStretchStyleDeviation(prefered_weight, prefered_stretch, prefered_style, candidate);
+        // On Apple, we need to try all passes to make sure we check the postscript name.
+      // On Apple platforms we have to keep testing
         if (0 == candidate_dev)
         {
+#if defined(ON_RUNTIME_APPLE)
+          if (postscript_name_match_candidate == candidate)
+            return candidate;
+#else
           if ( bCandidateFamilyAndFaceMatch || false == bKeyHasFamilyAndFace)
             return candidate;
+#endif
         }
 
         if (
@@ -3946,6 +3977,22 @@ const ON_Font* ON_FontList::Internal_FromNames(
         }
       }
     }
+  }
+
+  if (nullptr != postscript_name_match_candidate && font != postscript_name_match_candidate)
+  {
+    if (nullptr == font)
+    {
+      font = postscript_name_match_candidate;
+    }
+#if defined(ON_RUNTIME_APPLE)
+    else
+    {
+      // ON Apple platforms, the postscript name is the most reliable indentification
+      if (false == ON_wString::EqualOrdinal(font->PostScriptName(), postscript_name_match_candidate->PostScriptName(), true))
+        font = postscript_name_match_candidate;
+    }
+#endif
   }
 
   return font;
@@ -6240,7 +6287,8 @@ bool ON_Font::SetFromAppleFontName(
   bool rc = false;
 #if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   // If the current computer has the same Apple font, this will return the highest fidelity match.
-  CTFontRef appleFont = ON_Font::AppleCTFont(apple_font_name,point_size);
+  bool bIsSubstituteFont = false;
+  CTFontRef appleFont = ON_Font::AppleCTFont(apple_font_name,point_size, bIsSubstituteFont);
   if (nullptr != appleFont)
   {
     // In some cases, the NSfont.fontName is different from apple_font_name
@@ -6637,6 +6685,18 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-SemiBold", L"Gill Sans Semibold", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-SemiBoldItalic", L"Gill Sans Semibold", ON_FontFaceQuartet::Member::Italic),
     Internal_FakeWindowsLogfontName(L"Gill Sans", L"GillSans-UltraBold", L"Gill Sans Ultrabold", ON_FontFaceQuartet::Member::Regular),
+
+    // Gill Sans Std https://mcneel.myjetbrains.com/youtrack/issue/RH-57050
+    //  Gill Sans Std is a customize version of Gill Sans that some customer was using.
+    //  It is not the Gill Sans that ships with modern versions of Mac OS or Windows.
+    //  The next line insures the fake Mac LOGFONT name is the same as the one
+    //  Windows uses and insures a file created on Mac/Windows and then read on Windows/Mac 
+    //  will have identical Rhino RTF in the .3dm file.
+    //  This is a cosmetic change that will reduce confusion when developers are looking
+    //  at text that uses this rare font and will feel more comfortable if the name Windows
+    //  automatically assigns to the LOGFONT is an exact match with the fake LOGFONT name
+    //  used in Mac OS. 
+    Internal_FakeWindowsLogfontName(L"Gill Sans Std", L"GillSansStd-Light", L"Gill Sans Std Light", ON_FontFaceQuartet::Member::Regular),
 
     Internal_FakeWindowsLogfontName(L"Helvetica", L"Helvetica-Light", L"Helvetica Light", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Helvetica", L"Helvetica-LightOblique", L"Helvetica Light", ON_FontFaceQuartet::Member::Italic),
@@ -7037,6 +7097,20 @@ static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
     // SD Stroke Open Type Font
     InternalHashToName(L"SDstroke"), // Family
     InternalHashToName(L"SDstroke-latin"), // PostScript
+
+
+    // Single line fonts
+    // Included here for now until 
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-57328
+    // Gets fonts with the field 10 description set.
+    InternalHashToName(L"SLF-RHN Architect"), // Family
+    InternalHashToName(L"SLF-RHN-Architect"), // PostScript
+
+    InternalHashToName(L"SLF-RHN Industrial"), // Family
+    InternalHashToName(L"SLF-RHN-Industrial"), // PostScript
+
+    InternalHashToName(L"SLF-RHN White Linen"), // Family
+    InternalHashToName(L"SLF-RHN-WhiteLiinen"), // PostScript
   };
 
   static InternalHashToName double_stroke_name_map[] = 
@@ -7149,7 +7223,8 @@ static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
   if (nullptr != e)
     return ON_OutlineFigure::Type::Perimeter;
 
-  return ON_OutlineFigure::Type::Unknown;
+  // return Unset instead of Unknown in this internal tool
+  return ON_OutlineFigure::Type::Unset;
 }
 
 static bool Internal_IsEngravingFont(
@@ -7240,8 +7315,51 @@ ON_OutlineFigure::Type ON_OutlineFigure::FigureTypeFromFontName(
   return Internal_FigureTypeFromHashedFontName(&key);
 }
 
+ON_OutlineFigure::Type ON_OutlineFigure::FigureTypeFromField10Description(
+  const ON_wString field_10_description
+)
+{
+  ON_wString description(field_10_description);
+
+  // ignore white space and hyphens
+  description.Remove(ON_wString::Space);
+  description.Remove(ON_wString::Tab);
+  description.Remove(ON_wString::HyphenMinus);
+
+  const int description_len = description.Length();
+
+  if (description_len > 0)
+  {
+    const ON_wString s[2] = {
+      ON_wString(L"singlestroke"),
+      ON_wString(L"doublestroke")
+    };
+    const ON_OutlineFigure::Type t[2] = {
+      ON_OutlineFigure::Type::SingleStroke,
+      ON_OutlineFigure::Type::DoubleStroke
+    };
+    size_t count = sizeof(t) / sizeof(t[0]);
+    for (size_t i = 0; i < count; ++i)
+    {
+      const int s_len = s[i].Length();
+      if (description_len > s_len)
+        continue;
+      for (int j = 0; j < description_len - s_len; ++j)
+      {
+        if ( ON_wString::EqualOrdinal(s[i], s_len, field_10_description, s_len, true) )
+          return t[i];
+      }
+    }
+  }
+
+  return ON_OutlineFigure::Type::Unset;
+}
+
 ON_OutlineFigure::Type ON_Font::OutlineFigureType() const
 {
+  if (m_outline_figure_type != ON_OutlineFigure::Type::Unset)
+    return m_outline_figure_type;
+
   const ON_wString names[] =
   {
     FamilyName(),
@@ -7287,8 +7405,9 @@ ON_OutlineFigure::Type ON_Font::OutlineFigureType() const
       )
       return figure_type;
   }
-  return ON_OutlineFigure::Type::Unknown;
+  return ON_OutlineFigure::Type::Unknown; // unknown means don't try again
 }
+
 
 bool ON_Font::IsSingleStrokeFont() const
 {
@@ -7630,7 +7749,9 @@ const ON_SHA1_Hash ON_Font::FontNameHash(
       if (bStopAtHyphen)
       {
         // The hyphens in these special cases are integral parts of the 
-          // family part of the PostScript name and cannot terminate hashing.
+        // family part of the PostScript name and cannot terminate hashing.
+        if (font_name == (font_name0 + 6) && ON_wString::EqualOrdinal(L"Arial-Black", 11, font_name0, 11, true))
+          continue;
         if (font_name == (font_name0 + 3) && ON_wString::EqualOrdinal(L"MS-", 3, font_name0, 3, true))
           continue;
         if (font_name == (font_name0 + 4) && ON_wString::EqualOrdinal(L"OCR-A", 5, font_name0, 5, true))
@@ -7642,7 +7763,17 @@ const ON_SHA1_Hash ON_Font::FontNameHash(
         if (font_name == (font_name0 + 13) && ON_wString::EqualOrdinal(L"MecSoft_Font-1", 14, font_name0, 14, true))
           continue;
 
-        // Terminate hashing at this hypen
+        // Single Line Font face names include the following. The hypen after SLF and the hyphen after RHN-
+        // are part of the face name.
+        // SLF-RHN-Architect
+        // SLF-RHN-Industrial
+        // SLF-RHN-WhiteLiinen (yup, Linen with ii)
+        if (font_name == (font_name0 + 4) && ON_wString::EqualOrdinal(L"SLF-", 4, font_name0, 4, true))
+          continue;
+        if (font_name == (font_name0 + 8) && ON_wString::EqualOrdinal(L"SLF-RHN-", 8, font_name0, 8, true))
+          continue;
+
+        // Terminate hashing at this hypen because it separates the family name from the face name in a postscript name.
         break;
       }
       continue;
@@ -7661,6 +7792,66 @@ const ON_SHA1_Hash ON_Font::FontNameHash(
   }
   return sha1.Hash();
 }
+
+int ON_Font::CompareFontName(const ON_wString& lhs, const ON_wString& rhs)
+{
+  return ON_Font::CompareFontNameWideChar(lhs,rhs);
+}
+
+int ON_Font::CompareFontNameWideChar(const wchar_t* lhs, const wchar_t* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (ON_Font::FontNameHash(lhs, false) == ON_Font::FontNameHash(rhs, false))
+    return 0;
+  return ON_wString::CompareOrdinal(lhs, rhs, true);
+}
+
+int ON_Font::CompareFontNamePointer(const ON_wString* lhs, const ON_wString* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  return ON_Font::CompareFontName(*lhs, *rhs);
+}
+
+
+int ON_Font::CompareFontNameToHyphen(const ON_wString& lhs, const ON_wString& rhs)
+{
+  return ON_Font::CompareFontNameToHyphenWideChar(lhs, rhs);
+}
+
+int ON_Font::CompareFontNameToHyphenWideChar(const wchar_t* lhs, const wchar_t* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  if (ON_Font::FontNameHash(lhs, true) == ON_Font::FontNameHash(rhs, true))
+    return 0;
+  return ON_wString::CompareOrdinal(lhs, rhs, true);
+}
+
+int ON_Font::CompareFontNameToHyphenPointer(const ON_wString* lhs, const ON_wString* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  return ON_Font::CompareFontNameToHyphen(*lhs, *rhs);
+}
+
 
 static bool IsAtoZ(
   const wchar_t* s
@@ -7974,7 +8165,8 @@ bool ON_Font::SetFromPostScriptName(
   // For example, the some of the 14 or so faces Helvetica Neue 
   // are not round tripped using the NSFont by name creation and
   // are round tripped by using the CTFont API.
-  CTFontRef apple_font = ON_Font::AppleCTFont(postscript_font_name,0.0);
+  bool bIsSubstituteFont = false;
+  CTFontRef apple_font = ON_Font::AppleCTFont(postscript_font_name,0.0, bIsSubstituteFont);
   if (nullptr != apple_font)
   {
     return SetFromAppleCTFont(apple_font,true);
@@ -8213,6 +8405,25 @@ void ON_Font::Dump(ON_TextLog& dump) const
     {
       dump.Print(L"Origin = %ls\n", static_cast<const wchar_t*>(s));
     }
+       
+    s = ON_wString::EmptyString;
+    const ON_OutlineFigure::Type outline_figure_type = this->OutlineFigureType();
+    switch (outline_figure_type)
+    {
+    case ON_OutlineFigure::Type::Unset: break;
+    case ON_OutlineFigure::Type::Unknown: break;
+    case ON_OutlineFigure::Type::SingleStroke: s = L"Engraving - single stroke"; break;
+    case ON_OutlineFigure::Type::DoubleStroke: s = L"Engraving - double stroke"; break;
+    case ON_OutlineFigure::Type::Perimeter: s = L"Perimeter"; break;
+    case ON_OutlineFigure::Type::NotPerimeter: s = L"Not a perimeter"; break;
+    case ON_OutlineFigure::Type::Mixed: s = L"Mixed"; break;
+    default: s = ON_wString::FormatToString(L"%u", static_cast<unsigned int>(outline_figure_type)); break;
+    };
+
+    if (s.IsNotEmpty())
+    {
+      dump.Print(L"Outline type = %ls\n", static_cast<const wchar_t*>(s));
+    }
   }
 
   if (ON_Font::IsValidPointSize(m_point_size))
@@ -8333,27 +8544,17 @@ void ON_Font::Dump(ON_TextLog& dump) const
 
 #if defined(ON_OS_WINDOWS_GDI)
     {
-      // LOGFONT details
       const LOGFONT logfont = this->WindowsLogFont(0, nullptr);
-      //TEXTMETRIC logfont_tm;
-      //bool bHaveTextMetric 
-      //  = logfont.lfHeight > 0 
-      //  && ON_Font::GetWindowsTextMetrics(MM_TEXT, nullptr, logfont, logfont_tm);
-      //if ( bHaveTextMetric )
-      //  dump.Print(L"Windows LOGFONT and TEXTMETRIC:\n");
-      //else
-      //  dump.Print(L"Windows LOGFONT:\n");
-      //ON_TextLogIndent indent_logfont(dump);
       ON_Font::DumpLogfont(&logfont, dump);
-      //if (bHaveTextMetric)
-      //{
-      //  ON_Font::DumpTextMetric(&logfont_tm, dump);
-      //}
     }
 #elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
     {
-      CTFontRef apple_font = AppleCTFont();
-      dump.Print(L"Apple Core Text font:\n");
+      bool bIsSubstituteFont = false;
+      CTFontRef apple_font = AppleCTFont(bIsSubstituteFont);
+      if (bIsSubstituteFont)
+        dump.Print(L"Apple Core Text font (substitute):\n");
+      else
+        dump.Print(L"Apple Core Text font:\n");
       dump.PushIndent();
       ON_Font::DumpCTFont(apple_font, dump);
       dump.PopIndent();
@@ -8869,6 +9070,8 @@ ON_Font::ON_Font(
 
   m_panose1 = dwrite_font_information.m_panose1;
 
+  m_outline_figure_type = dwrite_font_information.m_outline_figure_type;
+
   this->SetSimulated(
     dwrite_font_information.m_bSimulatedBold,
     false,
@@ -8961,22 +9164,84 @@ bool ON_Font::Write(
     // version 1.5 explicit names in loc and en and PANOSE1 settings
     if (!file.WriteString(m_locale_name))
       break;
-    if (!file.WriteString(m_loc_postscript_name))
+
+    bool bFontNamesSaved = false;
+    for(;;)
+    {
+      // NEVER commit code with this define set.
+      //
+      // This code is used by developers to create files used to test
+      // code and UI for handing situations when a font is not installed
+      // on a device.
+      //
+      // To create a missing font test .3dm file, you must modify code 
+      // int opennurbs_font.cpp and in opennurbs_text.cpp. 
+      // Search for CREATE_MISSING_FONT_TEST_3DM_FILE to find the locations.
+//#define CREATE_MISSING_FONT_TEST_3DM_FILE
+#if defined(CREATE_MISSING_FONT_TEST_3DM_FILE)
+      // All fonts in the Family with MISSING_FONT_TEST_valid_family_name 
+      // will be saved as a family named missing_family_name.
+      const ON_wString MISSING_FONT_TEST_valid_font_family_name(L"Courier New");
+      if (MISSING_FONT_TEST_valid_font_family_name == FamilyName() && FaceName().IsNotEmpty())
+      {
+        // Write Missing Font names
+        const ON_wString missing_font_family_name(L"Missing Font Test");
+        const ON_wString missing_font_face_name(FaceName());
+        const ON_wString missing_font_logfont_name(missing_font_family_name);
+        ON_wString missing_font_postscript_name = missing_font_family_name + L"-" + missing_font_face_name;
+        missing_font_postscript_name.Remove(ON_wString::Space);
+        // local and english postscript name
+        if (!file.WriteString(missing_font_postscript_name))
+          break;
+        if (!file.WriteString(missing_font_postscript_name))
+          break;
+        // local and english logfont name
+        if (!file.WriteString(missing_font_logfont_name))
+          break;
+        if (!file.WriteString(missing_font_logfont_name))
+          break;
+        // local and english family name
+        if (!file.WriteString(missing_font_family_name))
+          break;
+        if (!file.WriteString(missing_font_family_name))
+          break;
+        // local and english face name
+        if (!file.WriteString(missing_font_face_name))
+          break;
+        if (!file.WriteString(missing_font_face_name))
+          break;
+
+        bFontNamesSaved = true;
+        break;
+      }
+#endif
+
+      // write correct names
+      if (!file.WriteString(m_loc_postscript_name))
+        break;
+      if (!file.WriteString(m_en_postscript_name))
+        break;
+      if (!file.WriteString(m_loc_windows_logfont_name))
+        break;
+      if (!file.WriteString(m_en_windows_logfont_name))
+        break;
+      if (!file.WriteString(m_loc_family_name))
+        break;
+      if (!file.WriteString(m_en_family_name))
+        break;
+      if (!file.WriteString(m_loc_face_name))
+        break;
+      if (!file.WriteString(m_en_face_name))
+        break;
+
+      bFontNamesSaved = true;
       break;
-    if (!file.WriteString(m_en_postscript_name))
-      break;
-    if (!file.WriteString(m_loc_windows_logfont_name))
-      break;
-    if (!file.WriteString(m_en_windows_logfont_name))
-      break;
-    if (!file.WriteString(m_loc_family_name))
-      break;
-    if (!file.WriteString(m_en_family_name))
-      break;
-    if (!file.WriteString(m_loc_face_name))
-      break;
-    if (!file.WriteString(m_en_face_name))
-      break;
+    }
+
+    if (false == bFontNamesSaved)
+      break; // errors writing font names
+
+
     if (!m_panose1.Write(file))
       break;
 
@@ -9183,7 +9448,7 @@ bool ON_Font::Read(
       else
         *this = ON_Font::Default;
       Internal_SetFontCharacteristicsFromUnsigned(fc);
-      if (windows_logfont_name.IsNotEmpty())
+      if (postscript_name.IsNotEmpty())
       {
         m_loc_postscript_name = postscript_name;
         m_en_postscript_name = postscript_name;

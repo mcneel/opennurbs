@@ -535,27 +535,49 @@ void ON_FontGlyph::Dump(
 ) const
 {
   ON_wString s;
-  const ON_FontGlyph* g = this;
-  bool bPrintMaps = false;
-  for (int pass = 0; pass < 2; pass++)
+  const ON_FontGlyph* g[2] = { this, bIncludeSubstitute ? this->SubstituteGlyph() : nullptr };
+  ON_wString apple_substitute_postscript_name;
+
+#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  if (nullptr == g[1] )
   {
-    if (nullptr == g)
+    // Apple glyph substitution is handled differently from Windows
+    // because Apple's font SDK is more limited and finding the best
+    // font from a codepoint is not easily done.
+    const ON_Font* glyph_font = g[0]->Font();
+    if (nullptr != glyph_font)
+    {
+      bool bIsSubstituteFont = false;
+      CTFontRef apple_font = glyph_font->AppleCTFont(0.0, bIsSubstituteFont);
+      if (bIsSubstituteFont && nullptr != apple_font)
+      {
+        apple_substitute_postscript_name = glyph_font->AppleCTFontPostScriptName(apple_font);
+        apple_substitute_postscript_name.TrimLeftAndRight();
+        if (apple_substitute_postscript_name.IsNotEmpty())
+          g[1] = g[0];
+      }
+    }
+  }
+#endif
+
+  const bool bAppleSubstitute = apple_substitute_postscript_name.IsNotEmpty();
+  bool bPrintMaps = false;
+  for (int pass = 0; pass < (nullptr != g[1] ? 2 : 1); pass++)
+  {
+    if (nullptr == g[pass])
       break;
 
-    if (pass > 0)
-    {
-      if (false == bIncludeSubstitute)
-        break;
-      s += L" -> substitute: ";
-    }
 
-    if ( ON_IsValidUnicodeCodePoint(g->CodePoint()) )
+    if (pass > 0)
+      s += L" -> substitute: ";
+
+    if ( ON_IsValidUnicodeCodePoint(g[pass]->CodePoint()) )
     {
-      const unsigned int code_point = g->CodePoint();
-      const unsigned int glyph_index = g->FontGlyphIndex();
+      const unsigned int code_point = g[pass]->CodePoint();
+      const unsigned int glyph_index = (1 == pass || false == bAppleSubstitute) ? g[pass]->FontGlyphIndex() : 0;
       wchar_t w[8] = { 0 };
       ON_EncodeWideChar(code_point, 7, w);
-      const ON_Font* font = g->Font();
+      const ON_Font* font = g[pass]->Font();
       s += ON_wString::FormatToString(
         L"[%ls] U+%04X",
         w,
@@ -566,7 +588,10 @@ void ON_FontGlyph::Dump(
       {
         if (nullptr != font)
         {
-          const ON_wString font_description = (font) ? font->Description() : ON_wString::EmptyString;
+          const ON_wString font_description 
+            = (1 == pass && bAppleSubstitute)
+            ? apple_substitute_postscript_name
+            : ((font) ? font->Description() : ON_wString::EmptyString);
           unsigned int font_sn = (font) ? font->RuntimeSerialNumber() : 0;
           s += ON_wString::FormatToString(
             L" %ls <%u>",
@@ -585,14 +610,14 @@ void ON_FontGlyph::Dump(
         s += ON_wString::FormatToString(L" glyph index = %u", glyph_index);
         bPrintMaps = bIncludeCharMaps;
       }
-      else if (bIncludeFont)
+      else
       {
         s += L" (no glyph)";
       }
 
-      const ON_TextBox gbox = g->FontUnitGlyphBox();
-      const bool bGlyphBoxIsSet = gbox.IsSet() || g->GlyphBox().IsSet();
-      const bool bManagedGlyph = (g->IsManaged());
+      const ON_TextBox gbox = g[pass]->FontUnitGlyphBox();
+      const bool bGlyphBoxIsSet = gbox.IsSet() || g[pass]->GlyphBox().IsSet();
+      const bool bManagedGlyph = (g[pass]->IsManaged());
       if (bManagedGlyph)
       {
         if (false == bGlyphBoxIsSet)
@@ -616,11 +641,10 @@ void ON_FontGlyph::Dump(
     {
       s =+ L"ON_FontGlyph::Unset";
     }
-    const ON_FontGlyph* sub_g = g->SubstituteGlyph();
-    if (nullptr == sub_g)
+    if (nullptr == g[1])
       break;
+
     bPrintMaps = false;
-    g = sub_g;
   }
 
   if (s.IsEmpty())
@@ -632,10 +656,10 @@ void ON_FontGlyph::Dump(
 #if !defined(ON_RUNTIME_APPLE) && defined(OPENNURBS_FREETYPE_SUPPORT)
   // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
   // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
-  if ( bPrintMaps && nullptr != g )
+  if ( bPrintMaps && nullptr != g[0] )
   {
     text_log.PushIndent();
-    g->TestFreeTypeFaceCharMaps(&text_log);
+    g[nullptr != g[1] ? 1 : 0]->TestFreeTypeFaceCharMaps(&text_log);
     text_log.PopIndent();
   }
 #endif

@@ -3319,8 +3319,8 @@ void ON_DimAngular::Set2dDefPoint1(ON_2dPoint pt)
     m_plane.Rotate(xdir.y, xdir.x, m_plane.zaxis);
     m_vec_2.Rotate(-xdir.y, xdir.x);
     m_dimline_pt.Rotate(-xdir.y, xdir.x, ON_2dPoint::Origin);
-    m_ext_offset_1 = r;
   }
+  m_ext_offset_1 = r;
 }
 
 void ON_DimAngular::Set2dDefPoint2(ON_2dPoint pt)

@@ -256,7 +256,98 @@ static void Internal_CreateFromMesh_ValidateNonmanifoldVertex(
   return;
 }
 
+class ON_NgonBoundaryChecker
+{
+public:
+  /*
+  Parametes:
+    ngon  - [in]
+      ngon to test
+    mesh [in]
+      mesh that ngon is a part of
+    bMustBeOriented - [in]
+      If true, the faces in the ngon must be compatibly oriented
+  */
+  bool IsSimpleNgon(
+    const class ON_MeshNgon* ngon,
+    const class ON_Mesh* mesh,
+    bool bMustBeOriented
+  );
+
+  enum : unsigned int
+  {
+    HashTableSize = 256
+  };
+
+private:
+  void Internal_Reset();
+  class ON_NgonBoundaryComponent* Internal_AddVertex(unsigned int vertex_index);
+  class ON_NgonBoundaryComponent* Internal_AddEdge(unsigned int vertex_index0, unsigned int vertex_index1, bool bMustBeOriented);
+  static unsigned int Internal_VertexHashIndex(unsigned int vertex_index);
+  static unsigned int Internal_EdgeHashIndex(unsigned int vertex_index0, unsigned int vertex_index1);
+  void Internal_InitialzeFixedSizePool();
+
+  void Internal_ReturnIsNotSimple();
+
+  // m_fsp manages the memory used for boundary components.
+  ON_FixedSizePool m_fsp;
+  class ON_NgonBoundaryComponent* m_hash_table[ON_NgonBoundaryChecker::HashTableSize] = {};
+  unsigned m_vertex_count = 0;
+  unsigned m_edge_count = 0;
+  bool m_bIsSimple = false;
+  bool m_bIsNotSimple = false;
+};
+
 ON_SubD* ON_SubD::CreateFromMesh(
+  const class ON_Mesh* level_zero_mesh,
+  const class ON_ToSubDParameters* from_mesh_options,
+  ON_SubD* subd
+)
+{
+  ON_Mesh* local_copy = nullptr;
+  if (nullptr != level_zero_mesh)
+  {
+    // remove ngons with holes and other damaged ngons so the underlying faces get used.
+
+    ON_NgonBoundaryChecker bc;
+    const bool bMustBeOrientedNgon = false;
+
+    const unsigned ngon_count = level_zero_mesh->NgonUnsignedCount();
+    ON_SimpleArray<unsigned> ngons_with_holes(ngon_count);
+    for (unsigned ni = 0; ni < ngon_count; ++ni)
+    {
+      const class ON_MeshNgon* ngon = level_zero_mesh->Ngon(ni);
+      if ( nullptr == ngon)
+        continue;
+      if (ngon->m_Vcount < 3 || ngon->m_Fcount <= 1)
+        continue;
+      if ( false == bc.IsSimpleNgon(ngon, level_zero_mesh,bMustBeOrientedNgon) )
+        ngons_with_holes.Append(ni);
+    }
+
+    for (;;)
+    {
+      if (0 == ngons_with_holes.UnsignedCount())
+        break;
+      local_copy = new ON_Mesh(*level_zero_mesh);
+      if (nullptr == local_copy)
+        break;
+      if (ngon_count != local_copy->NgonUnsignedCount())
+        break;
+      const unsigned removed_count = local_copy->RemoveNgons(ngons_with_holes.UnsignedCount(), ngons_with_holes.Array());
+      if (removed_count > 0)
+        level_zero_mesh = local_copy;
+      break;
+    }
+  }
+
+  ON_SubD* subd_from_mesh = Internal_CreateFromMeshWithValidNgons(level_zero_mesh, from_mesh_options, subd);
+  if (nullptr != local_copy)
+    delete local_copy;
+  return subd_from_mesh;
+}
+
+ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   const class ON_Mesh* level_zero_mesh,
   const class ON_ToSubDParameters* from_mesh_options,
   ON_SubD* subd
@@ -1461,5 +1552,380 @@ ON_SubD* ON_SubD::CreateSubDBox(
   //subd->UpdateAllTagsAndSectorCoefficients(true);
 
  return subd;
+}
+
+
+/*
+The ONLY use for this class is in a calculation to determine if an ngon has a single simple outer boundary.
+*/
+class ON_NgonBoundaryComponent
+{
+public:
+  enum class Type : unsigned char
+  {
+    Unset = 0,
+    Vertex = 1,
+    Edge = 2
+  };
+
+  static const ON_NgonBoundaryComponent Unset;
+
+  unsigned int IsBoundaryVertex() const;
+
+  unsigned int IsBoundaryEdge() const;
+
+  ON_NgonBoundaryComponent::Type m_type = ON_NgonBoundaryComponent::Type::Unset;
+  mutable unsigned char m_mark = 0;
+  unsigned char m_face_count = 0; // 0, 1, 2, or 3 = number of faces attached to this edge. 3 means 3 or more
+  unsigned char m_attached_count = 0; // 0, 1, or 2 = number of values set in m_attached_to[]
+
+  unsigned int m_index = 0;
+
+  // If this component is a vertex, these will be the first two edges attached to the vertex.
+  // If this component is an edge, these will be the vertices at the start and end.
+  ON_NgonBoundaryComponent* m_attached_to[2] = {};
+
+private:
+  bool Internal_IsAttachedToTwo(ON_NgonBoundaryComponent::Type attached_type) const;
+  friend class ON_NgonBoundaryChecker;
+  // hash table pointer
+  // m_next is a list in a ON_NgonBoundaryChecker.m_vertex_hash_table[] element.
+  ON_NgonBoundaryComponent* m_next = nullptr;
+};
+
+bool ON_NgonBoundaryComponent::Internal_IsAttachedToTwo(ON_NgonBoundaryComponent::Type attached_type) const
+{
+  return
+    2 == m_attached_count
+    && nullptr != m_attached_to[0]
+    && nullptr != m_attached_to[1]
+    && m_attached_to[0] != m_attached_to[1]
+    && attached_type == m_attached_to[0]->m_type
+    && attached_type == m_attached_to[1]->m_type
+    ;
+}
+
+unsigned int ON_NgonBoundaryComponent::IsBoundaryVertex() const
+{
+  return
+    ON_NgonBoundaryComponent::Type::Vertex == m_type
+    && 0 == m_face_count
+    && Internal_IsAttachedToTwo(ON_NgonBoundaryComponent::Type::Edge)
+    && 1 == m_attached_to[0]->m_face_count
+    && 1 == m_attached_to[1]->m_face_count
+    ;
+}
+
+unsigned int ON_NgonBoundaryComponent::IsBoundaryEdge() const
+{
+  return
+    ON_NgonBoundaryComponent::Type::Edge == m_type
+    && 1 == m_face_count
+    && Internal_IsAttachedToTwo(ON_NgonBoundaryComponent::Type::Vertex)
+    && 0 == m_attached_to[0]->m_face_count
+    && 0 == m_attached_to[1]->m_face_count
+    ;
+}
+
+const ON_NgonBoundaryComponent ON_NgonBoundaryComponent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_NgonBoundaryComponent);
+
+void ON_NgonBoundaryChecker::Internal_ReturnIsNotSimple()
+{
+  m_bIsSimple = false;
+  m_bIsNotSimple = true;
+}
+
+void ON_NgonBoundaryChecker::Internal_Reset()
+{
+  m_fsp.ReturnAll();
+  for (unsigned i = 0; i < ON_NgonBoundaryChecker::HashTableSize; ++i)
+    m_hash_table[i] = nullptr;
+  m_vertex_count = 0;
+  m_edge_count = 0;
+  m_bIsSimple = false;
+  m_bIsNotSimple = false;
+}
+
+unsigned int ON_NgonBoundaryChecker::Internal_VertexHashIndex(unsigned int vertex_index)
+{
+  return ON_CRC32(0, sizeof(vertex_index), &vertex_index) % ON_NgonBoundaryChecker::HashTableSize;
+}
+
+
+unsigned int ON_NgonBoundaryChecker::Internal_EdgeHashIndex(unsigned int vertex_index0, unsigned int vertex_index1)
+{
+  return (vertex_index0 < vertex_index1)
+    ? (ON_CRC32(vertex_index0, sizeof(vertex_index1), &vertex_index1) % ON_NgonBoundaryChecker::HashTableSize)
+    : (ON_CRC32(vertex_index1, sizeof(vertex_index0), &vertex_index0) % ON_NgonBoundaryChecker::HashTableSize)
+    ;
+}
+
+void ON_NgonBoundaryChecker::Internal_InitialzeFixedSizePool()
+{
+  if (0 == m_fsp.SizeofElement())
+    m_fsp.Create(sizeof(ON_NgonBoundaryComponent), 0, 0);
+}
+
+ON_NgonBoundaryComponent* ON_NgonBoundaryChecker::Internal_AddVertex(unsigned int vertex_index)
+{
+  if (m_bIsNotSimple)
+    return nullptr;
+
+  const unsigned hash_index = ON_NgonBoundaryChecker::Internal_VertexHashIndex(vertex_index);
+  ON_NgonBoundaryComponent* v;
+  for (
+    v = m_hash_table[hash_index];
+    nullptr != v;
+    v = v->m_next
+    )
+  {
+    if (ON_NgonBoundaryComponent::Type::Vertex == v->m_type && vertex_index == v->m_index)
+      return v;
+  }
+  if (nullptr == v)
+  {
+    Internal_InitialzeFixedSizePool();
+    v = (ON_NgonBoundaryComponent*)m_fsp.AllocateElement();
+    v->m_type = ON_NgonBoundaryComponent::Type::Vertex;
+    v->m_index = vertex_index;
+    v->m_next = m_hash_table[hash_index];
+    m_hash_table[hash_index] = v;
+    ++m_vertex_count;
+  }
+  return v;
+}
+
+ON_NgonBoundaryComponent* ON_NgonBoundaryChecker::Internal_AddEdge(unsigned int vertex_index0, unsigned int vertex_index1, bool bMustBeOriented)
+{
+  if (m_bIsNotSimple)
+    return nullptr;
+
+  if (vertex_index0 == vertex_index1)
+    return (Internal_ReturnIsNotSimple(),nullptr);
+
+  ON_NgonBoundaryComponent* v[2] = { Internal_AddVertex(vertex_index0), Internal_AddVertex(vertex_index1) };
+  if (nullptr == v[0] || nullptr == v[1])
+    return (Internal_ReturnIsNotSimple(), nullptr);
+
+  const unsigned hash_index = ON_NgonBoundaryChecker::Internal_EdgeHashIndex(vertex_index0, vertex_index1);
+  ON_NgonBoundaryComponent* e;
+  for (
+    e = m_hash_table[hash_index];
+    nullptr != e;
+    e = e->m_next
+    )
+  {
+    if (
+      ON_NgonBoundaryComponent::Type::Edge == e->m_type
+      &&
+      ((e->m_attached_to[0] == v[0] && e->m_attached_to[1] == v[1]) || (e->m_attached_to[0] == v[1] && e->m_attached_to[1] == v[0]))
+      )
+    {
+      if (1 == e->m_face_count)
+      {
+        if (bMustBeOriented)
+        {
+          if (e->m_attached_to[0] != v[1] || e->m_attached_to[1] != v[0])
+          {
+            // The 2 faces attached to this edge are not compatibly oriented.
+            return (Internal_ReturnIsNotSimple(), nullptr);
+          }
+        }
+        // this is an interior edge
+        e->m_face_count = 2;
+        return e;
+      }
+      // nonmanifold edge
+      return (Internal_ReturnIsNotSimple(), nullptr);
+    }
+  }
+
+  e = (ON_NgonBoundaryComponent*)m_fsp.AllocateElement();
+  e->m_type = ON_NgonBoundaryComponent::Type::Edge;
+  e->m_face_count = 1;
+  e->m_attached_count = 2;
+  e->m_attached_to[0] = v[0];
+  e->m_attached_to[1] = v[1];
+  e->m_next = m_hash_table[hash_index];
+  m_hash_table[hash_index] = e;
+  ++m_edge_count;
+  return e;
+}
+
+
+bool ON_NgonBoundaryChecker::IsSimpleNgon(
+  const class ON_MeshNgon* ngon,
+  const class ON_Mesh* mesh,
+  bool bMustBeOriented
+)
+{
+  Internal_Reset();
+
+  if (nullptr == ngon || nullptr == mesh)
+    return (Internal_ReturnIsNotSimple(),false);
+
+  const unsigned ngon_face_count = ngon->m_Fcount;
+  if (ngon_face_count < 1 || nullptr == ngon->m_fi)
+    return (Internal_ReturnIsNotSimple(), false);
+
+  const int mesh_vertex_count = mesh->VertexCount();
+  const unsigned mesh_face_count = mesh->m_F.UnsignedCount();
+  if (mesh_vertex_count < 3 || mesh_face_count < 1)
+    return (Internal_ReturnIsNotSimple(), false);
+
+  const ON_MeshFace* a = mesh->m_F.Array();
+  for (unsigned i = 0; i < ngon_face_count; ++i)
+  {
+    const unsigned fi = ngon->m_fi[i];
+    if (fi >= mesh_face_count)
+      return (Internal_ReturnIsNotSimple(), false); // invalid face index in this ngon
+    const int* fvi = a[fi].vi;
+    if (fvi[0] < 0 || fvi[0] >= mesh_vertex_count)
+      return (Internal_ReturnIsNotSimple(), false); // invalid face in this ngon
+    if (fvi[1] < 0 || fvi[1] >= mesh_vertex_count)
+      return (Internal_ReturnIsNotSimple(), false); // invalid face in this ngon
+    if (fvi[2] < 0 || fvi[2] >= mesh_vertex_count)
+      return (Internal_ReturnIsNotSimple(), false); // invalid face in this ngon
+    if (fvi[3] < 0 || fvi[3] >= mesh_vertex_count)
+      return (Internal_ReturnIsNotSimple(), false); // invalid face in this ngon
+
+    if (nullptr == this->Internal_AddEdge(fvi[0], fvi[1], bMustBeOriented))
+      return (Internal_ReturnIsNotSimple(), false);
+    if (nullptr == this->Internal_AddEdge(fvi[1], fvi[2], bMustBeOriented))
+      return (Internal_ReturnIsNotSimple(), false);
+    if (fvi[2] != fvi[3])
+    {
+      if (nullptr == this->Internal_AddEdge(fvi[2], fvi[3], bMustBeOriented))
+        return (Internal_ReturnIsNotSimple(), false);
+    }
+    if (nullptr == this->Internal_AddEdge(fvi[3], fvi[0], bMustBeOriented))
+      return (Internal_ReturnIsNotSimple(), false);
+  }
+
+  if (m_edge_count < 3 || m_vertex_count < 3)
+    return (Internal_ReturnIsNotSimple(), false);
+
+  // A simple ngon has Euler number = ( V - E + F) = 1.
+  if (m_vertex_count + ngon_face_count != m_edge_count + 1)
+    return (Internal_ReturnIsNotSimple(), false); // wrong Euler number
+
+  // set vertex attachments
+  for (unsigned hash_index = 0; hash_index < ON_NgonBoundaryChecker::HashTableSize; ++hash_index)
+  {
+    for (ON_NgonBoundaryComponent* e = m_hash_table[hash_index]; nullptr != e; e = e->m_next)
+    {
+      if (1 != e->m_face_count)
+        continue;
+      for (unsigned evi = 0; evi < 2; ++evi)
+      {
+        ON_NgonBoundaryComponent* v = e->m_attached_to[evi];
+        if (v->m_attached_count >= 2)
+          return (Internal_ReturnIsNotSimple(), false); // vertex is attached to 3 or more boundary edges
+        v->m_attached_to[v->m_attached_count++] = e;
+      }
+    }
+  }
+
+  bool bBoundaryIsMarked = false;
+  ON_FixedSizePoolIterator fspit(m_fsp);
+  for (ON_NgonBoundaryComponent* e = (ON_NgonBoundaryComponent * )fspit.FirstElement(); nullptr != e; e = (ON_NgonBoundaryComponent * )fspit.NextElement())
+  {
+    if (1 != e->m_face_count)
+      continue; // vertex components alwasy have m_face_count = 0;
+
+    // e is a boundary edge
+    if (bBoundaryIsMarked)
+    {
+      if (0 == e->m_mark)
+      {
+        // this is a boundary edge that part of the boundary we marked. The ngon is not simple.
+        return (Internal_ReturnIsNotSimple(), false);
+      }
+    }
+    else
+    {
+      if ( false == e->IsBoundaryEdge())
+        return (Internal_ReturnIsNotSimple(), false);
+
+      // e is the first boundary edge in the pool
+      if (0 != e->m_mark)
+      {
+        ON_ERROR("Bug in this code - all edges should have m_mark = 0 at this point.");
+        return (Internal_ReturnIsNotSimple(), false);
+      }
+
+      // Walk along the boundary beginning at e0 and mark every edge in the boundary.
+      ON_NgonBoundaryComponent* e0 = e;
+      ON_NgonBoundaryComponent* v0 = e0->m_attached_to[0];
+      if ( nullptr == v0 || 0 != v0->m_mark)
+      {
+        ON_ERROR("Bug in this code - vertices should have m_mark = 0 at this point.");
+        return (Internal_ReturnIsNotSimple(), false);
+      }
+      if (false == v0->IsBoundaryVertex())
+        return (Internal_ReturnIsNotSimple(), false);
+
+      ON_NgonBoundaryComponent* e1 = e0;
+      ON_NgonBoundaryComponent* v1 = v0;
+      for (unsigned i = 0; i < m_edge_count; ++i) // counter limits infinite loop if there is a bug
+      {
+        if (0 != v1->m_mark)
+          return (Internal_ReturnIsNotSimple(), false);
+        if (0 != e1->m_mark)
+          return (Internal_ReturnIsNotSimple(), false);
+
+        // mark v1 and e1 as part of the boundary.
+        v1->m_mark = 1;
+        e1->m_mark = 1;
+
+        // set v1 = "next" vertex in the boundary
+        if ( v1 == e1->m_attached_to[0])
+          v1 = e1->m_attached_to[1];
+        else if (v1 == e1->m_attached_to[1])
+        {
+          if (bMustBeOriented)
+            return (Internal_ReturnIsNotSimple(), false);
+          v1 = e1->m_attached_to[0];
+        }
+        else
+          return (Internal_ReturnIsNotSimple(), false);
+
+        if (nullptr == v1)
+          return (Internal_ReturnIsNotSimple(), false);
+
+        // set e1 = "next" edge in the boundary
+        if (e1 == v1->m_attached_to[0])
+          e1 = v1->m_attached_to[1];
+        else if (e1 == v1->m_attached_to[1])
+          e1 = v1->m_attached_to[0];
+        else
+          return (Internal_ReturnIsNotSimple(), false);
+
+        if ( nullptr == e1)
+          return (Internal_ReturnIsNotSimple(), false);
+
+        if (e0 == e1 || v0 == v1)
+        {
+          if (e0 == e1 && v0 == v1)
+          {
+            // all edges and vertices in this boundary are marked. There should be no unmarked boundary edges.
+            bBoundaryIsMarked = true;
+            break;
+          }
+          return (Internal_ReturnIsNotSimple(), false);
+        }
+
+        if (false == v1->IsBoundaryVertex())
+          return (Internal_ReturnIsNotSimple(), false);
+        if (false == e1->IsBoundaryEdge())
+          return (Internal_ReturnIsNotSimple(), false);
+      }
+      if ( false == bBoundaryIsMarked)
+        return (Internal_ReturnIsNotSimple(), false); // for loop finished without marking a boundary
+    }
+  }
+
+  m_bIsSimple = (bBoundaryIsMarked && false == m_bIsNotSimple);
+  return m_bIsSimple;
 }
 

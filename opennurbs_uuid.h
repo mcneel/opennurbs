@@ -307,6 +307,8 @@ public:
   ON_UuidIndex(const ON_UuidIndex&) = default;
   ON_UuidIndex& operator=(const ON_UuidIndex&) = default;
 
+  ON_UuidIndex(ON_UUID id, int index);
+
   /*
   Dictionary compare m_id and then m_i.
   */

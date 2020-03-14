@@ -278,6 +278,8 @@ public:
   virtual void FlushText(size_t count, ON__UINT32* cp_array);
   virtual void GroupBegin();
   virtual void GroupEnd();
+  virtual void RunBegin();
+  virtual void RunEnd();
   virtual void FinishFontDef();
   virtual bool ReadingFontTable();
   virtual bool ReadingFontDefinition();
@@ -376,6 +378,8 @@ public:
   void FlushText(size_t count, ON__UINT32* cp_array) override;
   void GroupBegin() override;
   void GroupEnd() override;
+  void RunBegin() override;
+  void RunEnd() override;
   void FinishFontDef() override;
   bool AppendCodePoint(ON__UINT32 codept) override;
   void FormatChange() override;
@@ -637,6 +641,8 @@ public:
   
   void GroupBegin() override;
   void GroupEnd() override;
+  void RunBegin() override;
+  void RunEnd() override;
 
   void BeginHeader() override;
   void BeginFontTable() override;
@@ -808,6 +814,8 @@ public:
 
   void GroupBegin() override;
   void GroupEnd() override;
+  void RunBegin() override;
+  void RunEnd() override;
 
   void BeginHeader() override;
   void BeginFontTable() override;

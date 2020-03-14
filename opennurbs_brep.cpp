@@ -937,6 +937,24 @@ void ON_BrepFace::Dump( ON_TextLog& dump ) const
 }
 
 
+void ON_BrepFace::SetMaterialChannelIndex(int material_channel_index) const
+{
+  if (material_channel_index >= 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex)
+  {
+    const_cast<ON_BrepFace*>(this)->m_face_material_channel = material_channel_index;
+  }
+  else
+  {
+    ON_ERROR("Invalid material_channel_index value.");
+    const_cast<ON_BrepFace*>(this)->m_face_material_channel = 0;
+  }
+}
+
+int ON_BrepFace::MaterialChannelIndex() const
+{
+  return m_face_material_channel;
+}
+
 /*
 int ON_BrepFace::MaterialIndex() const
 {
@@ -1152,6 +1170,8 @@ ON_Brep::~ON_Brep()
 { 
   DestroyMesh(ON::any_mesh,true);
   // everything is in array classes that destroy themselves.
+  delete m_region_topology;
+  m_region_topology = 0;
 }
 
 unsigned int ON_Brep::SizeOf() const
@@ -6107,8 +6127,8 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
   ON_BoundingBox local_bbox;
 
   // Test vertexes first, this will quickly give us a base bbox to work with. 
-  int i, ict = m_V.Count();
-  for (i = 0; ict > i; i++)
+  int vct = m_V.Count();
+  for (int i = 0; vct > i; i++)
   {
     if (m_V[i].GetTightBoundingBox(local_bbox, bGrowBox, xform))
       bGrowBox = true;
@@ -6116,8 +6136,8 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
 
   ON_SimpleArray<ON_Curve*> iso_curves;
   ON_SimpleArray<double> greville_abcissae;
-  ict = m_F.Count();
-  for (i = 0; ict > i; i++)
+  int fct = m_F.Count();
+  for (int i = 0; fct > i; i++)
   {
     const ON_BrepFace& face = m_F[i];
 
@@ -6159,28 +6179,28 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
       }
     }
 
-    ict = iso_curves.Count();
-    for (i = 0; ict > i; i++)
+    int ict = iso_curves.Count();
+    for (int j = 0; ict > j; j++)
     {
-      if (nullptr == iso_curves[i])
+      if (nullptr == iso_curves[j])
         continue;
 
       // See if entire iso_curve bbox is included in current local bbox, it is
       // not necessary to calculate the tight bounding box. 
       // Continue to next iso_curve if it is.
-      if (false == local_bbox.Includes(iso_curves[i]->BoundingBox()))
+      if (false == local_bbox.Includes(iso_curves[j]->BoundingBox()))
       {
-        if (iso_curves[i]->GetTightBoundingBox(local_bbox, bGrowBox, xform))
+        if (iso_curves[j]->GetTightBoundingBox(local_bbox, bGrowBox, xform))
           bGrowBox = true;
       }
 
-      delete iso_curves[i];
-      iso_curves[i] = nullptr;
+      delete iso_curves[j];
+      iso_curves[j] = nullptr;
     }
   }
 
-  ict = m_E.Count();
-  for (i = 0; ict > i; i++)
+  int ect = m_E.Count();
+  for (int i = 0; ect > i; i++)
   {
     // See if entire edge bbox is included in current local bbox, it is
     // not necessary to calculate the tight bounding box. 
@@ -8616,13 +8636,17 @@ void ON_Brep::DeleteFace(ON_BrepFace& face, bool bDeleteFaceEdges )
 }
 
 static void PropagateLabel(const ON_Brep& B, 
-                           ON_SimpleArray<int>& fids,
-                           int label
-                           )
+  const ON_SimpleArray<int>& fids,
+  int label, 
+  ON_SimpleArray<int>& new_fids
+)
+
 //on input, each face in fids must have m_face_user.i = label
 {
-  if (fids.Count() == 0) return;
-  ON_SimpleArray<int> new_fids(B.m_F.Count());
+  if (fids.Count() == 0) 
+    return;
+  new_fids.SetCount(0);
+  new_fids.Reserve(B.m_F.Count());
   for (int face_i=0; face_i<fids.Count(); face_i++)
   {
     const ON_BrepFace& F = B.m_F[fids[face_i]];
@@ -8663,8 +8687,22 @@ static void PropagateLabel(const ON_Brep& B,
       }
     }
   }
-  PropagateLabel(B, new_fids, label);
   return;
+}
+
+static void PropagateLabel(const ON_Brep& B, 
+  ON_SimpleArray<int>& fids,
+  int label
+)
+
+{
+  ON_SimpleArray<int> new_fids;
+  for (int i=0; i<B.m_F.Count(); i++){
+    PropagateLabel(B, fids, label, new_fids);
+    if (new_fids.Count() == 0)
+      return;
+    fids = new_fids;
+  }
 }
 
 
@@ -10001,8 +10039,10 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
     m_bbox = src.m_bbox;
     m_is_solid = src.m_is_solid;
 
-    if (nullptr != src.m_region_topology)
+    if (nullptr != src.m_region_topology){
       m_region_topology = new ON_BrepRegionTopology(*src.m_region_topology);
+      m_region_topology->m_brep = this;
+    }
   }
   return *this;
 }

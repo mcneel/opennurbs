@@ -45,7 +45,14 @@ ON_SubDimple::~ON_SubDimple()
 
 void ON_SubDimple::Clear()
 {
+  m_subd_appearance = ON_SubD::DefaultSubDAppearance;
+  m_texture_domain_type = ON_SubDTextureDomainType::Unset;
+  m_texture_mapping_tag = ON_MappingTag::Unset;
+  for (unsigned i = 0; i < m_levels.UnsignedCount(); ++i)
+    delete m_levels[i];
+  m_active_level = nullptr;
   m_heap.Clear();
+  m_symmetry = ON_Symmetry::Unset;
 }
 
 void  ON_SubDimple::ClearLevelContents(
@@ -56,7 +63,7 @@ void  ON_SubDimple::ClearLevelContents(
     return;
 
   if (level == m_active_level)
-    ChangeContentSerialNumber();
+    ChangeContentSerialNumber(false);
 
   level->ResetFaceArray();
   level->ResetEdgeArray();
@@ -94,10 +101,12 @@ void  ON_SubDimple::ClearLevelContents(
 
 }
 
-void ON_SubDimple::ClearHigherSubdivisionLevels(
+unsigned int ON_SubDimple::ClearHigherSubdivisionLevels(
   unsigned int max_level_index
   )
 {
+  const unsigned int original_level_count = m_levels.UnsignedCount();
+
   if (max_level_index+1 < m_levels.UnsignedCount())
   {
     unsigned int level_count = m_levels.UnsignedCount();
@@ -106,7 +115,7 @@ void ON_SubDimple::ClearHigherSubdivisionLevels(
       if ( level_count > max_level_index )
       {
         m_active_level = m_levels[max_level_index];
-        ChangeContentSerialNumber();
+        ChangeContentSerialNumber(false);
       }
     }
 
@@ -120,7 +129,7 @@ void ON_SubDimple::ClearHigherSubdivisionLevels(
       if (level_count != m_levels.UnsignedCount())
       {
         Clear();
-        return;
+        break;
       }
 
       if ( nullptr == level )
@@ -131,10 +140,12 @@ void ON_SubDimple::ClearHigherSubdivisionLevels(
       delete level;
     }
   }
+
+  return original_level_count - m_levels.UnsignedCount();
 }
 
 
-void ON_SubDimple::ClearLowerSubdivisionLevels(
+unsigned int ON_SubDimple::ClearLowerSubdivisionLevels(
   unsigned int min_level_index
   )
 {
@@ -145,7 +156,7 @@ void ON_SubDimple::ClearLowerSubdivisionLevels(
     if (nullptr != m_active_level && m_active_level->m_level_index < min_level_index)
     {
       m_active_level = m_levels[min_level_index];
-      ChangeContentSerialNumber();
+      ChangeContentSerialNumber(false);
     }
 
     for ( unsigned int level_index = 0; level_index < min_level_index; level_index++)
@@ -188,6 +199,16 @@ void ON_SubDimple::ClearLowerSubdivisionLevels(
     }
     m_levels.SetCount(new_level_index);
   }
+
+  return original_level_count - m_levels.UnsignedCount();
+}
+
+unsigned int ON_SubDimple::ClearInactiveLevels()
+{
+  const unsigned active_level_index = this->ActiveLevelIndex();
+  unsigned c1 = ClearHigherSubdivisionLevels(active_level_index);
+  unsigned c0 = ClearLowerSubdivisionLevels(active_level_index);
+  return c0 + c1;
 }
 
 void ON_SubDimple::Destroy()
@@ -212,7 +233,7 @@ ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
   {
     unsigned int level_index = (m_levels.UnsignedCount() > 0) ? (m_levels.UnsignedCount()-1) : 0U;
     m_active_level = SubDLevel(level_index,bCreateIfNeeded && 0 == m_levels.UnsignedCount());    
-    ChangeContentSerialNumber();
+    ChangeContentSerialNumber(false);
   }
   return m_active_level;
 }
@@ -233,7 +254,7 @@ class ON_SubDLevel* ON_SubDimple::SubDLevel(
     if (nullptr == m_active_level)
     {
       m_active_level = level;
-      ChangeContentSerialNumber();
+      ChangeContentSerialNumber(false);
     }
   }
 
@@ -790,6 +811,8 @@ bool ON_SubDimple::Transform(
   const ON_Xform& xform
   )
 {
+  const ON__UINT64 content_serial_number0 = ContentSerialNumber();
+
   if (false == xform.IsValid())
     return false;
   if (xform.IsZero())
@@ -832,9 +855,31 @@ bool ON_SubDimple::Transform(
 
   }
 
+
   if (m_symmetry.IsSet())
   {
+    const ON_Symmetry symmetry0 = m_symmetry;
     m_symmetry = m_symmetry.TransformConditionally(xform);
+    bool bSetContentSerialNumber = false;
+    if (content_serial_number0 == symmetry0.SymmetricObjectContentSerialNumber())
+    {
+      // see if the transformed object will still be symmetric.
+      if (ON_Symmetry::Coordinates::Object == m_symmetry.SymmetryCoordinates())
+      {
+        // object is still symmetric.
+        bSetContentSerialNumber = true;
+      }
+      else if (ON_Symmetry::Coordinates::World == m_symmetry.SymmetryCoordinates())
+      {
+        // if transform didn't move the symmetric
+        if ( 0 == ON_Symmetry::CompareSymmetryTransformation(&symmetry0, &m_symmetry, ON_UNSET_VALUE) )
+          bSetContentSerialNumber = true;
+      }
+    }
+    if (bSetContentSerialNumber)
+      m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+    else
+      m_symmetry.ClearSymmetricObjectContentSerialNumber();
   }
   else
   {

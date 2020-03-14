@@ -1066,6 +1066,101 @@ void ON_Material::SetReflectivity( double reflectivity )
     m_reflectivity = reflectivity;
 }
 
+const ON_UUID ON_Material::MaterialChannelIdFromIndex(
+  int material_channel_index
+) const
+{
+  for (;;)
+  {
+    if (material_channel_index <= 0)
+      break;
+    const int count = m_material_channel.Count();
+    if (count <= 0)
+      break;
+    const ON_UuidIndex* a = m_material_channel.Array();
+    for ( const ON_UuidIndex* a1 = a + count; a < a1; ++a )
+    {
+      if (material_channel_index == a->m_i)
+        return a->m_id;
+    }
+    break;
+  }
+
+  return ON_nil_uuid;
+}
+
+int ON_Material::MaterialChannelIndexFromId(
+  ON_UUID material_channel_id
+) const
+{
+  for (;;)
+  {
+    if (ON_nil_uuid == material_channel_id)
+      break;
+    const unsigned count = m_material_channel.UnsignedCount();
+    if (0 == count)
+      break;
+    const ON_UuidIndex* a = m_material_channel.Array();
+    for ( const ON_UuidIndex* a1 = a + count; a < a1; ++a)
+    {
+      if (material_channel_id == a->m_id)
+        return a->m_i;
+    }
+    break;
+  }
+
+  return 0;
+}
+
+int  ON_Material::MaterialChannelIndexFromId(
+  ON_UUID material_channel_id,
+  bool bAddIdIfNotPresent
+)
+{
+  for (;;)
+  {
+    if (ON_nil_uuid == material_channel_id)
+      break;
+    int unused_index = 0;
+
+    const int count = m_material_channel.Count();
+    if (count > 0)
+    {
+      const ON_UuidIndex* a = m_material_channel.Array();
+      for (const ON_UuidIndex* a1 = a + count; a < a1; ++a)
+      {
+        if (material_channel_id == a->m_id)
+          return a->m_i;
+        if (a->m_i > unused_index)
+          unused_index = a->m_i;
+      }
+    }
+
+    if (false == bAddIdIfNotPresent)
+      break;
+    if (count >= ON_Material::MaximumMaterialChannelIndex)
+      break; // some rogue actor filled the m_material_channel[] array.
+
+    ++unused_index;
+    if ( unused_index <= 0 || unused_index > ON_Material::MaximumMaterialChannelIndex)
+    {
+      // int overflow or too big for a material channel index
+      for (unused_index = 1; unused_index <= count + 1; ++unused_index)
+      {
+        if (ON_nil_uuid == MaterialChannelIdFromIndex(unused_index))
+          break;
+      }
+    }
+    const ON_UuidIndex ui(material_channel_id, unused_index);
+    m_material_channel.Append(ui);
+    return ui.m_i;
+  }
+
+  return 0;
+}
+
+
+
 bool operator==( const ON_Material& a, const ON_Material& b )
 {
   return (0 == ON_Material::Compare(a,b));
@@ -1518,8 +1613,28 @@ int ON_Material::CompareAppearance( const ON_Material& a, const ON_Material& b )
   if ( 0 == rc )
     rc = CompareTextureAttributesAppearance(a,b);
 
-  if ( 0 == rc )
-    rc = ON_UuidCompare( &a.m_plugin_id, &b.m_plugin_id );
+  // This was added because the plugin uuid for a material gets changed to
+  // universal uuid by RhRdkCreateImportedMaterial.  In the case of import_vrml
+  // that happens just before it's added to the material table.  That breaks the
+  // comparison unless you know that and change your plugin id before checking
+  // to see if the material exists.  This is a change that Dale L did for me to work
+  // around that.
+  if (0 == rc)
+  {
+    static const ON_UUID uuidUniversal =
+    {
+      // {99999999-9999-9999-9999-999999999999}
+      0x99999999, 0x9999, 0x9999, { 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99 }
+    };
+    if (
+      0 != ON_UuidCompare(&uuidUniversal, &a.m_plugin_id)
+      &&
+      0 != ON_UuidCompare(&uuidUniversal, &b.m_plugin_id)
+      )
+    {
+      rc = ON_UuidCompare(&a.m_plugin_id, &b.m_plugin_id);
+    }
+  }
 
   return rc;
 }
@@ -2430,6 +2545,7 @@ ON_TextureMapping::TYPE ON_TextureMapping::TypeFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::mesh_mapping_primitive);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::srf_mapping_primitive);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::brep_mapping_primitive);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::ocs_mapping);
   }
 
   ON_ERROR("Invalid type_as_unsigned value.");
@@ -2449,6 +2565,7 @@ const ON_wString ON_TextureMapping::TypeToString(ON_TextureMapping::TYPE texture
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::mesh_mapping_primitive);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::srf_mapping_primitive);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::brep_mapping_primitive);
+  ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::ocs_mapping);
   }
 
   ON_ERROR("Invalid texture_mapping_type value.");
@@ -3420,7 +3537,7 @@ int ON_TextureMapping::Evaluate(
         ) const
 {
   int rc;
-  ON_3dPoint Q = P*P_xform;
+  ON_3dPoint Q = P_xform*P;
   if ( ON_TextureMapping::PROJECTION::ray_projection == m_projection )
   {
     // need a transformed normal
@@ -3579,6 +3696,7 @@ ON__UINT32 ON_TextureMapping::MappingCRC() const
       case ON_TextureMapping::TYPE::cylinder_mapping:
       case ON_TextureMapping::TYPE::sphere_mapping:
       case ON_TextureMapping::TYPE::box_mapping:
+      case ON_TextureMapping::TYPE::ocs_mapping:
       default:
         break;
       }
@@ -5835,6 +5953,12 @@ bool ON_ObjectRenderingAttributes::DeleteMappingRef(
   if ( mr )
     m_mappings.Remove( (int)(mr - m_mappings.Array()) ); // safe ptr to in conversion
   return (0 != mr);
+}
+
+//static
+int ON_ObjectRenderingAttributes::OCSMappingChannelId(void)
+{
+  return 100000;
 }
 
 const ON_MappingChannel* ON_ObjectRenderingAttributes::MappingChannel(

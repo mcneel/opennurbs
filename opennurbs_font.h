@@ -939,6 +939,26 @@ public:
   );
 
   /*
+  Description:
+    Opennurbs searches the description saved in field 10 of the name table
+    for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
+    to identify fonts that are desgned for engraving (and which tend to render poorly when
+    used to dispaly text devices like screens, monitors, and printers).
+    The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
+  Parameters:
+    field_10_description - [in]
+      Field 10 string from the font name table.
+  Returns:
+    If the description contains "single stroke", returns ON_OutlineFigure::Type::SingleStroke.
+    If the description contains "double stroke", returns ON_OutlineFigure::Type::DoubleStroke.
+    Otherwise returns ON_OutlineFigure::Type::Unset;
+  */
+  static ON_OutlineFigure::Type FigureTypeFromField10Description(
+    const ON_wString field_10_description
+  );
+
+
+  /*
   Returns:
     Figure orientation.
   */
@@ -2128,6 +2148,16 @@ public:
   ON_wString m_loc_gdi_subfamily_name;
   ON_wString m_en_gdi_subfamily_name;
 
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESCRIPTION, ... )
+  // Opennurbs searches the description saved in field 10 of the name table
+  // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
+  // to identify fonts that are desgned for engraving (and which tend to render poorly when
+  // used to dispaly text devices like screens, monitors, and printers).
+  // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
+  ON_wString m_loc_field_10_description;
+  ON_wString m_en_field_10_description;
+
+
   // from IDWriteGdiInterop.ConvertFontToLOGFONT
   LOGFONT m_gdi_interop_logfont;
 
@@ -2146,6 +2176,8 @@ public:
   ON_FontGlyph m_xbox;
 
   ON_PANOSE1 m_panose1;
+
+  ON_OutlineFigure::Type m_outline_figure_type = ON_OutlineFigure::Type::Unset;
 };
 #endif
 
@@ -3571,7 +3603,7 @@ public:
   
   /*
   Returns:
-    The font's Family name.
+    The font's family name.
   Remarks:
     Typically a font family has many faces.
 
@@ -3593,7 +3625,7 @@ public:
   
   /*
   Returns:
-    The font's Family name.
+    The font's face name.
   Remarks:
     Typically a font family has many faces and the face name gives a clue about the
     weight, stretch, and style of the face.
@@ -4123,22 +4155,48 @@ public:
     );
     
   /*
+  Parameters
+    bIsSubstituteFont - [out]
+      true if the returned CTFontRef was a substitute automatically
+      created by Mac OS.
   Returns:
     An Apple CTFontRef managed by the Apple platform.
     Do not delete this font.
   */
-  CTFontRef AppleCTFont() const;
+  CTFontRef AppleCTFont(
+    bool& bIsSubstituteFont
+  ) const;
 
   /*
+  Parameters
+    bIsSubstituteFont - [out]
+      true if the returned CTFontRef was a substitute automatically
+      created by Mac OS.
   Returns:
     An Apple CTFontRef managed by the Apple platform.
     Do not delete this font.
   */
-  CTFontRef AppleCTFont(double point_size) const;
+  CTFontRef AppleCTFont(
+    double point_size,
+    bool& bIsSubstituteFont
+  ) const;
     
+  /*
+  Parameters
+    postscript_name - [in]
+      PostScript name of the desired font
+    point_size - [in]
+    bIsSubstituteFont - [out]
+      true if the returned CTFontRef was a substitute automatically
+      created by Mac OS (failed to match postscript name).
+  Returns:
+    An Apple CTFontRef managed by the Apple platform.
+    Do not delete this font.
+  */
   static CTFontRef AppleCTFont(
-    const wchar_t* name,
-    double point_size
+    const wchar_t* postscript_name,
+    double point_size,
+    bool& bIsSubstituteFont
   );
 
     
@@ -4308,15 +4366,151 @@ public:
       If true, the hash calculation terminates at the first hyphen.
       This is useful when font_name is a PostScript name and you
       don't want to include face weight or style information in the hash.
+
+      For example, if bStopAtHyphen is true, then the four PostScript names
+      "Calibri", "Calibri-Bold", "Calibri-Italic", and "Calibri-BoldItalic" 
+      have the same hash.
+
+      There are some fonts where a hyphen is an integral part of the font face name.
+      Examples include "Arial-Black", "AvenirLT-Roman", "MecSoftFont-1", "MS-Gothic",
+      "MS-PGothic", "MS-UIGothic", "SLF-RHN-Architect", "SLF-RHN-Industrial", 
+      "SLF-RHN-WhiteLiinen", and so on.
+      These hyphens are exempt from the bStopAtHyphen check.
   Returns:
-    A hash of the font_name parameter that ignores spaces, hyphens, and case.
-    For example, the three names "Yu Gothic Regular", "YuGothic-Regular", 
+    A hash of the font_name parameter that ignores spaces, hyphens, underbars, and case.
+    For example, the four names "Yu Gothic Regular", "YuGothic-Regular", 
     "YUGOTHICREGULAR", and "yugothicregular" have the same FontNameHash(). 
     The hash will be identical for UTF-16 and UTF-32 encodings.
   */
   static const ON_SHA1_Hash FontNameHash(
     const wchar_t* font_name,
     bool bStopAtHyphen
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,false) and ON_Font::FontNameHash(rsh,false) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontName(
+    const ON_wString& lhs,
+    const ON_wString& rhs
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,false) and ON_Font::FontNameHash(rsh,false) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontNameWideChar(
+    const wchar_t* lhs,
+    const wchar_t* rhs
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,false) and ON_Font::FontNameHash(rsh,false) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontNamePointer(
+    const ON_wString* lhs,
+    const ON_wString* rhs
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+    Ignore portions of PostScript names after the hyphen that separates the 
+    font family and font face. 
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,true) and ON_Font::FontNameHash(rsh,true) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontNameToHyphen(
+    const ON_wString& lhs,
+    const ON_wString& rhs
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+    Ignore portions of PostScript names after the hyphen that separates the
+    font family and font face.
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,true) and ON_Font::FontNameHash(rsh,true) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontNameToHyphenPointer(
+    const ON_wString* lhs,
+    const ON_wString* rhs
+  );
+
+  /*
+  Description:
+    Compare the font names ignoring hyphens, underbars, and spaces.
+    Ignore portions of PostScript names after the hyphen that separates the
+    font family and font face.
+  Paramaters:
+    lhs - [in]
+      font name to compare
+    rhs - [in]
+      font name to compare
+  Returns:
+    If ON_Font::FontNameHash(lsh,true) and ON_Font::FontNameHash(rsh,true) are equal,
+    then 0 is returned.
+    Otherwise ON_wString::CompareOrdinal(lhs,rhs,true) is returned.
+  Remarks:
+    Useful for sorting font names.
+  */
+  static int CompareFontNameToHyphenWideChar(
+    const wchar_t* lhs,
+    const wchar_t* rhs
   );
 
   /*
@@ -4445,6 +4639,18 @@ public:
   struct IDWriteFont* WindowsDWriteFont() const;
 
   static const ON_wString PostScriptNameFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+
+  // Returns the desription saved in field 10. 
+  // Opennurbs searches the description saved in field 10 of the name table
+  // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
+  // to identify fonts that are desgned for engraving (and which tend to render poorly when
+  // used to dispaly text devices like screens, monitors, and printers).
+  // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
+  static const ON_wString Field10DescriptionFromWindowsDWriteFont(
     struct IDWriteFont* dwrite_font,
     const wchar_t* preferedLocale
   );
@@ -5420,7 +5626,14 @@ private:
 
 private:
   double m_apple_font_width_trait = ON_UNSET_VALUE;
-  double m_reserved3 = 0.0;
+
+private:
+  ON_OutlineFigure::Type m_outline_figure_type = ON_OutlineFigure::Type::Unset;
+
+private:
+  ON__UINT8 m_reserved1 = 0;
+  ON__UINT16 m_reserved2 = 0;
+  ON__UINT32 m_reserved3 = 0;
   double m_reserved4 = 0.0;
 
 private:

@@ -694,6 +694,12 @@ ON_ModelComponent::ON_ModelComponent(
   }
 }
 
+ON__UINT64 ON_ModelComponent::NextRuntimeSerialNumber()
+{
+  const ON__UINT64 last_runtime_serial_number(ON_ModelComponent::Internal_RuntimeSerialNumberGenerator);
+  return (last_runtime_serial_number + 1);
+}
+
 ON__UINT64 ON_ModelComponent::RuntimeSerialNumber() const
 {
   return m_runtime_serial_number;

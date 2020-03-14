@@ -112,6 +112,12 @@ public:
     const ON_UUID& mapping_id
     ) const;
 
+  /*
+  Returns:
+    The mapping channel id to use when calling MappingChannel to retrieve the OCS mapping if there is one.
+    See CRhinoTextureMapping::OcsMappingTransformForObject for an easy helper function to get the transform per object
+  */
+  static int OCSMappingChannelId(void);
 
   /*
   Parameters:

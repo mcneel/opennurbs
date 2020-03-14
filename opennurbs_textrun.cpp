@@ -1061,6 +1061,7 @@ int ON_TextRun::WrapTextRun(
   ON_TextBox text_box;
 
   ON_FontGlyph::GetGlyphList(display_string, font, ON_NextLine, glyph_list, text_box);
+  int glyph_count = glyph_list.Count();
 
   const ON_FontGlyph* Aglyph = font->CodePointGlyph((ON__UINT32)L'A');
   if (nullptr == Aglyph)
@@ -1088,18 +1089,15 @@ int ON_TextRun::WrapTextRun(
   else // Part of the run has already been picked off and added to the previous line
   {
     // Find width of remaining characters
-    for (int ci = start_char_offset; ci < (int)wcscount; ci++)
+    for (int ci = start_char_offset; ci < wcscount && ci < glyph_count; ci++)
     {
       const ON_FontGlyph* gi = glyph_list[ci];
 
       if (nullptr != gi)
       {
-        //if (not surrogate pair)
-        {
-          const ON_TextBox glyph_box = gi->GlyphBox();
-          double charwidth = glyph_box.m_advance.i * height_scale;
-          runwidth += charwidth;
-        }
+        const ON_TextBox glyph_box = gi->GlyphBox();
+        double charwidth = glyph_box.m_advance.i * height_scale;
+        runwidth += charwidth;
       }
     }
   }
@@ -1146,62 +1144,73 @@ int ON_TextRun::WrapTextRun(
   double curwidth = 0.0;
   double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
 
+  int sp_count = 0;
   for (int ci = start_char_offset; ci < (int)wcscount; ci++)
   {
-    const ON_FontGlyph* gi = glyph_list[ci];
-    if (nullptr != gi)
+    if ((ci + 1) < wcscount &&
+      display_string[ci] >= 0xD800 && display_string[ci] < 0xDC00 &&
+      display_string[ci + 1] >= 0xDC00 && display_string[ci + 1] < 0xE000)
     {
+      sp_count++;
+      continue;
+    }
+
+    int gi = ci - sp_count;
+    if (gi >= glyph_count)
+      break;
+
+    const ON_FontGlyph* glyph = glyph_list[gi];
+    if (nullptr != glyph)
+    {
+      const ON_TextBox glyph_box = glyph->GlyphBox();
+      curwidth += glyph_box.m_advance.i * height_scale;
+      run_length++;
+
+      if (linewidth + curwidth > wrapwidth) // reached wrapping width
       {
-        const ON_TextBox glyph_box = gi->GlyphBox();
-        curwidth += glyph_box.m_advance.i * height_scale;
-        run_length++;
+        if (found_space) // store run up to last space
+          run_length = last_space - start_char_offset + 1;
+        else if (0.0 < linewidth) // A line is already started
+          run_length = 0;
+        else  // no space yet - store run up to this char position
+          run_length = ci - start_char_offset;
 
-        if (linewidth + curwidth > wrapwidth) // reached wrapping width
+        if (0 < run_length)
         {
-          if (found_space) // store run up to last space
-            run_length = last_space - start_char_offset + 1;
-          else if (0.0 < linewidth) // A line is already started
-            run_length = 0;
-          else  // no space yet - store run up to this char position
-            run_length = ci - start_char_offset;
-
-          if (0 < run_length)
+          ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
+          if (nullptr != newrun)
           {
-            ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
-            if (nullptr != newrun)
-            {
-              *newrun = *this;
-              wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
-              temp_display_str[run_length] = 0;
-              newrun->SetDisplayString(temp_display_str);
-              newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
-              newruns.AppendRun(newrun);
-            }
+            *newrun = *this;
+            wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
+            temp_display_str[run_length] = 0;
+            newrun->SetDisplayString(temp_display_str);
+            newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
+            newruns.AppendRun(newrun);
           }
-          // add a soft return
-          ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
-          if (nullptr != lfrun)
-          {
-            lfrun->SetFont(Font());
-            lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
-            lfrun->SetTextHeight(this->TextHeight());
-            newruns.AppendRun(lfrun);
-
-            // Starting a new line now
-            linewidth = 0.0;
-            curwidth = 0.0;
-            y_offset -= linefeedheight;
-          }
-
-          int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
-          onfree(temp_display_str);
-          return new_count + wrapcount;
         }
-        if (iswspace(display_string[ci]))
+        // add a soft return
+        ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
+        if (nullptr != lfrun)
         {
-          found_space = true;
-          last_space = ci;
+          lfrun->SetFont(Font());
+          lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
+          lfrun->SetTextHeight(this->TextHeight());
+          newruns.AppendRun(lfrun);
+
+          // Starting a new line now
+          linewidth = 0.0;
+          curwidth = 0.0;
+          y_offset -= linefeedheight;
         }
+
+        int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
+        onfree(temp_display_str);
+        return new_count + wrapcount;
+      }
+      if (iswspace(display_string[ci]))
+      {
+        found_space = true;
+        last_space = ci;
       }
     }
   }
