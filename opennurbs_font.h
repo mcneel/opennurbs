@@ -2148,6 +2148,30 @@ public:
   ON_wString m_loc_gdi_subfamily_name;
   ON_wString m_en_gdi_subfamily_name;
 
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME, ... )
+  ON_wString m_loc_weight_stretch_style_model_name;
+  ON_wString m_en_weight_stretch_style_model_name;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_COPYRIGHT_NOTICE, ... )
+  ON_wString m_loc_field_0_copyright;
+  ON_wString m_en_field_0_copyright;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_VERSION_STRINGS, ... )
+  ON_wString m_loc_field_5_version;
+  ON_wString m_en_field_5_version;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_TRADEMARK, ... )
+  ON_wString m_loc_field_7_trademark;
+  ON_wString m_en_field_7_trademark;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_MANUFACTURER, ... )
+  ON_wString m_loc_field_8_manufacturer;
+  ON_wString m_en_field_8_manufacturer;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESIGNER, ... )
+  ON_wString m_loc_field_9_designer;
+  ON_wString m_en_field_9_designer;
+
   // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESCRIPTION, ... )
   // Opennurbs searches the description saved in field 10 of the name table
   // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
@@ -2157,6 +2181,25 @@ public:
   ON_wString m_loc_field_10_description;
   ON_wString m_en_field_10_description;
 
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_FONT_VENDOR_URL, ... )
+  ON_wString m_loc_field_11_vendor_URL;
+  ON_wString m_en_field_11_vendor_URL;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESIGNER_URL, ... )
+  ON_wString m_loc_field_12_designer_URL;
+  ON_wString m_en_field_12_designer_URL;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_LICENSE_DESCRIPTION, ... )
+  ON_wString m_loc_field_13_license;
+  ON_wString m_en_field_13_license;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_LICENSE_INFO_URL, ... )
+  ON_wString m_loc_field_14_license_URL;
+  ON_wString m_en_field_14_license_URL;
+
+  // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME, ... )
+  ON_wString m_loc_field_20_postscript_cid; // NOT the same as PostScriptName
+  ON_wString m_en_field_20_postscript_cid;
 
   // from IDWriteGdiInterop.ConvertFontToLOGFONT
   LOGFONT m_gdi_interop_logfont;
@@ -4643,6 +4686,36 @@ public:
     const wchar_t* preferedLocale
   );
 
+  // DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME
+  static const ON_wString WeightStretchStyleModelFamilyNameFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_0_CopyrightFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_5_VersionFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_7_TrademarkFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_8_ManufacturerFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_9_DesignerFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
 
   // Returns the desription saved in field 10. 
   // Opennurbs searches the description saved in field 10 of the name table
@@ -4650,7 +4723,32 @@ public:
   // to identify fonts that are desgned for engraving (and which tend to render poorly when
   // used to dispaly text devices like screens, monitors, and printers).
   // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
-  static const ON_wString Field10DescriptionFromWindowsDWriteFont(
+  static const ON_wString Field_10_DescriptionFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_11_VendorURLFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_12_DesignerURLFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_13_LicenseFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_14_LicenseURLFromWindowsDWriteFont(
+    struct IDWriteFont* dwrite_font,
+    const wchar_t* preferedLocale
+  );
+
+  static const ON_wString Field_20_PostScriptCIDNameFromWindowsDWriteFont(
     struct IDWriteFont* dwrite_font,
     const wchar_t* preferedLocale
   );

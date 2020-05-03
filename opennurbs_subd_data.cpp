@@ -191,8 +191,7 @@ unsigned int ON_SubDimple::ClearLowerSubdivisionLevels(
       for (ON_SubDFace* face = level->m_face[0]; nullptr != face; face = const_cast<ON_SubDFace*>(face->m_next_face))
       {
         face->SetSubdivisionLevel(new_level_index);
-        face->m_parent_face_id = 0;
-        face->m_zero_face_id = face->m_id;
+        face->m_level_zero_face_id = face->m_id;
       }
 
       m_levels[new_level_index] = level;
@@ -445,11 +444,16 @@ bool ON_SubDAggregates::GetTopologicalAttributes(const ON_SubDLevel * level, boo
   return GetTopologicalAttributes(bIsManifold, bIsOriented, bHasBoundary, solid_orientation);
 }
 
-ON_AggregateComponentStatus ON_SubDLevel::AggregateComponentStatus() const
+const ON_AggregateComponentStatusEx ON_SubDLevel::AggregateComponentStatus() const
 {
   if (false == m_aggregates.m_aggregate_status.IsCurrent())
     m_aggregates.UpdateAggregateComponentStatus(this);
   return m_aggregates.m_aggregate_status;
+}
+
+ON__UINT64 ON_SubDLevel::ComponentStatusSerialNumber() const
+{
+  return m_aggregates.m_aggregate_status.ComponentStatusSerialNumber();
 }
 
 void ON_SubDAggregates::UpdateAggregateEdgeAttributes(

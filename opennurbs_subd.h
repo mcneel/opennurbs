@@ -1683,6 +1683,75 @@ public:
   class ON_NurbsSurface* m_nurbs_surface = nullptr;
 };
 
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDFromMeshParameters
+//
+class ON_CLASS ON_SubDFromSurfaceParameters
+{
+public:
+
+  // Default construction is identical to ON_SubDFromMeshParameters::Smooth.
+  ON_SubDFromSurfaceParameters() = default;
+  ~ON_SubDFromSurfaceParameters() = default;
+  ON_SubDFromSurfaceParameters(const ON_SubDFromSurfaceParameters&) = default;
+  ON_SubDFromSurfaceParameters& operator=(const ON_SubDFromSurfaceParameters&) = default;
+
+  static const ON_SubDFromSurfaceParameters Default;
+  static const ON_SubDFromSurfaceParameters DefaultWithCorners;
+  static const ON_SubDFromSurfaceParameters ControlNet;
+  static const ON_SubDFromSurfaceParameters ControlNetWithCorners;
+
+#pragma region RH_C_SHARED_ENUM [ON_SubDFromSurfaceParameters::Methods] [Rhino.Geometry.SubDFromSurfaceMethods] [byte]
+  /// <summary>
+  /// ON_SubDFromSurfaceParameters::Method are ways to create a SubD from a surface.
+  /// </summary>
+  enum class Methods : unsigned char
+  {
+    /// <summary>
+    /// Used to indicate the method is not set.
+    /// </summary>
+    Unset = 0,
+
+    /// <summary>
+    /// The surface is approximated with a SubD friendly NURBS surface and the SubD is created
+    /// to match the subd friendly nurbs surface. 
+    /// If the input surface is a subd friendly NURBS surface, the subd and surface have the same geometry.
+    /// </summary>
+    SubDFriendlyFit = 1,
+
+    /// <summary>
+    /// The surface is converted to a NURBS surface and then a subd with one face per NURBS bispan 
+    /// is created by using an appropriate subset of the NURBS surface control net.
+    /// If the input surface is a subd friendly NURBS surface, the subd and surface have the same geometry.
+    /// </summary>
+    FromNurbsControlNet = 2
+  };
+#pragma endregion
+
+  ON_SubDFromSurfaceParameters::Methods Method() const;
+
+  void SetMethod(
+    ON_SubDFromSurfaceParameters::Methods method
+    );
+
+  bool Corners() const;
+
+  void SetCorners(
+    bool bCorners
+    );
+
+private:
+  ON_SubDFromSurfaceParameters::Methods m_method = ON_SubDFromSurfaceParameters::Methods::SubDFriendlyFit;
+  bool m_bCorners = false;
+  unsigned short m_reserved1 = 0;
+  unsigned int m_reserved2 = 0;
+  double m_reserved3 = 0.0;
+  double m_reserved4 = 0.0;
+};
+
+
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubD
@@ -1722,6 +1791,13 @@ public:
     vertex location, vertex or edge flag, or subd topology is changed.
   */
   ON__UINT64 ContentSerialNumber() const;
+
+  /*
+  Returns:
+    A runtime serial number that is incremented every time a component status
+    (locked, hidden, selected, highlighted, ...) is changed.
+  */
+  ON__UINT64 ComponentStatusSerialNumber() const;
 
   /*
   Description:
@@ -1952,8 +2028,9 @@ public:
   //  );
 
 #pragma region RH_C_SHARED_ENUM [ON_SubD::VertexFacetType] [Rhino.Geometry.SubDVertexFacetType] [byte]
-
-  ///<summary>Summarizes the number of edges in faces in the whole object.</summary>
+  /// <summary>
+  /// Summarizes the number of edges in faces in the whole object.
+  /// </summary>
   enum class VertexFacetType : unsigned char
   {
     ///<summary>Not a valid vertex face type.</summary>
@@ -2503,20 +2580,86 @@ public:
     level_zero_mesh - [in]
     from_mesh_parameters - [in]
       To get the smoothest possible result, pass nullptr 
-      or ON_ToSubDParameters::Smooth. To get a sub-D with interior 
-      creases use other static ON_ToSubDParameters values or
+      or ON_SubDFromMeshParameters::Smooth. To get a sub-D with interior 
+      creases use other static ON_SubDFromMeshParameters values or
       create one with custom settings.
   */
   static ON_SubD* CreateFromMesh( 
     const class ON_Mesh* level_zero_mesh,
-    const class ON_ToSubDParameters* from_mesh_parameters,
+    const class ON_SubDFromMeshParameters* from_mesh_parameters,
     ON_SubD* subd
     );
+
+public:
+#pragma region RH_C_SHARED_ENUM [ON_SubD::AutomaticMeshToSubDContext] [Rhino.Geometry.SubDAutomaticMeshToSubDContext] [byte]
+  /// <summary>
+  /// ON_SubD::AutomaticMeshToSubDContext indentifies a context where meshes can automatically
+  /// be converted to subds.
+  /// </summary>
+  enum class AutomaticMeshToSubDContext : unsigned char
+  {
+    ///<summary>
+    /// Indicates the context has not been initialized.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// A mesh in a Rhino 5 3dm file that is a representation of a box mode T-spline.
+    /// By default, these meshes are automatically converted to subds.
+    ///</summary>
+    Rhino5BoxModeTSpline = 1,
+
+    ///<summary>
+    /// A mesh in an FBX file that has nonzero values for either preview division levels or render division levels.
+    /// Some FBX files created by Maya save subdivision objects as meshes with nonzero division level values.
+    /// By default, FBX division levels are ignored.
+    ///</summary>
+    FBXMeshWithDivisionLevels = 2
+  };
+#pragma endregion
+
+  /*
+  Returns:
+    true if SubDs are automatically created when an ON_Mesh is found in the specified context.
+    false otherwise.
+  */
+  static bool AutomaticMeshToSubD(
+    ON_SubD::AutomaticMeshToSubDContext context
+  );
+
+  /*
+  Parameters:
+    context - [in]
+      Situation where an ON_Mesh can automatically be converted into a subd.
+    bAutomaticallyCreateSubD - [in]
+      true if SubDs are automatically created when an ON_Mesh is found in the specified context.
+      false otherwise.
+  */
+  static void SetAutomaticMeshToSubD(
+    ON_SubD::AutomaticMeshToSubDContext context,
+    bool bAutomaticallyCreateSubD
+    );
+
+  /*
+  Parameters:
+    context - [in]
+      If context is ON_SubD::AutomaticMeshToSubDContext::Unset, all defaults will be restored.
+      Otherwise, the default for the specific context will be restored.
+  */
+  static void AutomaticMeshToSubDRestoreDefaults(
+    ON_SubD::AutomaticMeshToSubDContext context
+    );
+
+private:
+  static const  bool AutomaticRhino5BoxModeTSplineToSubDDefault; // = true
+  static const bool AutomaticFBXMeshWithDivisionLevelsToSubDDefault; // = false
+  static bool AutomaticRhino5BoxModeTSplineToSubD; // current setting
+  static bool AutomaticFBXMeshWithDivisionLevelsToSubD; // current setting
 
 private:
   static ON_SubD* Internal_CreateFromMeshWithValidNgons(
     const class ON_Mesh* level_zero_mesh_with_valid_ngons,
-    const class ON_ToSubDParameters* from_mesh_parameters,
+    const class ON_SubDFromMeshParameters* from_mesh_parameters,
     ON_SubD* subd
   );
 
@@ -3045,6 +3188,43 @@ public:
     bool bUpdateTagsAndCoefficients,
     bool bMarkDeletedFaceEdges
   );
+
+public:
+  /*
+  Description:
+    Removes all per face material channel index overrides on the active level.
+  Returns:
+    Number of changed faces.
+  Remarks:
+    Per face material channel indices are a mutable property on ON_SubDFace and are set with ON_SubDFace.SetMaterialChannelIndex().
+  */
+  unsigned int ClearPerFaceMaterialChannelIndices();
+
+  /*
+  Returns:
+    True if one or more faces on the active level have per face material channel index overrides.
+  Remarks:
+    Per face material channel indices are a mutable property on ON_SubDFace and are set with ON_SubDFace.SetMaterialChannelIndex().
+  */
+  bool HasPerFaceMaterialChannelIndices() const;
+
+  /*
+  Description:
+    Removes all per face color overrides on the active level.
+  Returns:
+    Number of changed faces.
+  Remarks:
+    Per face colors are a mutable property on ON_SubDFace and are set with ON_SubDFace.SetPerFaceColor().
+  */
+  unsigned int ClearPerFaceColors() const;
+
+  /*
+  Returns:
+    True if one or more faces on the active level have per face color overrides.
+  Remarks:
+    Per face colors are a mutable property on ON_SubDFace and are set with ON_SubDFace.SetPerFaceColor().
+  */
+  bool HasPerFaceColors() const;
 
 
   /////////////////////////////////////////////////////////
@@ -9450,7 +9630,7 @@ private:
 public:
   /*
   Description:
-    Set this face's rendering material channel index.
+    Set the per face rendering material channel index.
 
   Parameters:
     material_channel_index - [in]
@@ -9466,6 +9646,13 @@ public:
   void SetMaterialChannelIndex(int material_channel_index) const;
 
   /*
+  Description:
+    Remove the per face rendering material channel index.
+    The face will use the material assigned to the subd object.
+  */
+  void ClearMaterialChannelIndex() const;
+
+  /*
   Returns:
     This face's rendering material channel index.
 
@@ -9476,6 +9663,41 @@ public:
     Otherwise base_material is used to reneder this face.
   */
   int MaterialChannelIndex() const;
+
+private:
+  // The application specifies a base ON_Material used to render the subd this face belongs to.
+  // If m_material_channel_index > 0 AND face_material_id = base.MaterialChannelIdFromIndex(m_material_channel_index)
+  // is not nil, then face_material_id identifies an override rendering material for this face.
+  // Othewise base will be used to render this face.
+  mutable ON_Color m_per_face_color = ON_Color::UnsetColor;
+
+public:
+
+  /*
+  Description:
+    Set per face color.
+
+  Parameters:
+    color - [in]
+  */
+  void SetPerFaceColor(
+    ON_Color color
+    ) const;
+
+  /*
+  Description:
+    Remove per face color setting. The face will use the color assigned to the subd object.
+  */
+  void ClearPerFaceColor() const;
+
+  /*
+  Returns:
+    Per face color. A value of ON_Color::UnsetColor indicates the face uses the color assigned to the subd object.
+  */
+  const ON_Color PerFaceColor() const;
+
+
+
 
 public:
   const bool TextureDomainIsSet() const;
@@ -9534,8 +9756,7 @@ public:
   ) const;
 
 public:
-  unsigned int m_zero_face_id = 0;   // id of level zero face
-  unsigned int m_parent_face_id = 0; // id of previous level face
+  unsigned int m_level_zero_face_id = 0;   // id of level zero face
 
 public:
   // Array of m_edge_count edges that form the boundary of the face.
@@ -11570,17 +11791,17 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_ToSubDParameters
+// ON_SubDFromMeshParameters
 //
-class ON_CLASS ON_ToSubDParameters
+class ON_CLASS ON_SubDFromMeshParameters
 {
 public:
 
-  // Default construction is identical to ON_ToSubDParameters::Smooth.
-  ON_ToSubDParameters() = default;
-  ~ON_ToSubDParameters() = default;
-  ON_ToSubDParameters(const ON_ToSubDParameters&) = default;
-  ON_ToSubDParameters& operator=(const ON_ToSubDParameters&) = default;
+  // Default construction is identical to ON_SubDFromMeshParameters::Smooth.
+  ON_SubDFromMeshParameters() = default;
+  ~ON_SubDFromMeshParameters() = default;
+  ON_SubDFromMeshParameters(const ON_SubDFromMeshParameters&) = default;
+  ON_SubDFromMeshParameters& operator=(const ON_SubDFromMeshParameters&) = default;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
@@ -11588,24 +11809,24 @@ public:
   //
 
   // No interior creases and no corners.
-  static const ON_ToSubDParameters Smooth;
+  static const ON_SubDFromMeshParameters Smooth;
   
   // Create an interior sub-D crease along coincident input mesh edges
   // where the vertex normal directions at one end differ by at 
   // least 30 degrees.
-  static const ON_ToSubDParameters InteriorCreaseAtMeshCrease;
+  static const ON_SubDFromMeshParameters InteriorCreaseAtMeshCrease;
 
   // Create an interior sub-D crease along all coincident input mesh edges.
-  static const ON_ToSubDParameters InteriorCreaseAtMeshEdge;
+  static const ON_SubDFromMeshParameters InteriorCreaseAtMeshEdge;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
   // Custom interior crease options
   //
 #pragma region RH_C_SHARED_ENUM [SubD::InteriorCreaseOption] [Rhino.Geometry.SubDCreationOptions.InteriorCreaseOption] [nested:byte]
-  ///<summary>
-  ///Defines how interior creases are treated.
-  ///</summary>
+  /// <summary>
+  /// Defines how interior creases are treated.
+  /// </summary>
   enum class InteriorCreaseOption : unsigned char
   {
     ///<summary>The interior creases option is not defined.</summary>
@@ -11625,7 +11846,7 @@ public:
   };
 #pragma endregion
 
-  static ON_ToSubDParameters::InteriorCreaseOption InteriorCreaseOptionFromUnsigned(
+  static ON_SubDFromMeshParameters::InteriorCreaseOption InteriorCreaseOptionFromUnsigned(
     unsigned int interior_crease_option_as_unsigned
     );
 
@@ -11634,20 +11855,20 @@ public:
     interior_crease_option - [in]
   */
   void SetInteriorCreaseOption(
-    ON_ToSubDParameters::InteriorCreaseOption interior_crease_option
+    ON_SubDFromMeshParameters::InteriorCreaseOption interior_crease_option
     );
 
   /*
   Returns:
     The interior crease option.
   */
-  ON_ToSubDParameters::InteriorCreaseOption InteriorCreaseTest() const;
+  ON_SubDFromMeshParameters::InteriorCreaseOption InteriorCreaseTest() const;
 
 
   /*
   Description:
     When the interior crease option is 
-    ON_ToSubDParameters::InteriorCreaseOption::AtMeshCreases,
+    ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCreases,
     the value of MinimumCreaseAngleRadians() determines which
     coincident input mesh edges generate sub-D creases.
 
@@ -11667,7 +11888,7 @@ public:
   /*
   Description:
     When the interior crease option is 
-    ON_ToSubDParameters::InteriorCreaseOption::AtMeshCreases,
+    ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCreases,
     the value of MinimumCreaseAngleRadians() determines which
     coincident input mesh edges generate sub-D creases.
 
@@ -11688,8 +11909,8 @@ public:
   Returns:
     The currently selected interior crease option.
   */
-  ON_ToSubDParameters::InteriorCreaseOption CopyInteriorCreaseTest(
-    ON_ToSubDParameters source_options
+  ON_SubDFromMeshParameters::InteriorCreaseOption CopyInteriorCreaseTest(
+    ON_SubDFromMeshParameters source_options
     );
 
 
@@ -11700,16 +11921,16 @@ public:
 
   // Look for convex corners at sub-D vertices with 2 edges
   // that have an included angle <= 90 degrees.
-  static const ON_ToSubDParameters ConvexCornerAtMeshCorner;
+  static const ON_SubDFromMeshParameters ConvexCornerAtMeshCorner;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //
   // Custom convex corner options
   //
 #pragma region RH_C_SHARED_ENUM [SubD::ConvexCornerOption] [Rhino.Geometry.SubDCreationOptions.ConvexCornerOption] [nested:byte]
-  ///<summary>
-  ///Defines how convex corners are treated.
-  ///</summary>
+  /// <summary>
+  /// Defines how convex corners are treated.
+  /// </summary>
   enum class ConvexCornerOption : unsigned char
   {
     ///<summary>The option is not set.</summary>
@@ -11726,7 +11947,7 @@ public:
   };
 #pragma endregion
 
-  static ON_ToSubDParameters::ConvexCornerOption ConvexCornerOptionFromUnsigned(
+  static ON_SubDFromMeshParameters::ConvexCornerOption ConvexCornerOptionFromUnsigned(
     unsigned int convex_corner_option_as_unsigned
     );
 
@@ -11735,14 +11956,14 @@ public:
     convex_corner_option - [in]
   */
   void SetConvexCornerOption(
-    ON_ToSubDParameters::ConvexCornerOption convex_corner_option
+    ON_SubDFromMeshParameters::ConvexCornerOption convex_corner_option
     );
 
   /*
   Returns:
     The currently selected convex corner option.
   */
-  ON_ToSubDParameters::ConvexCornerOption ConvexCornerTest() const;
+  ON_SubDFromMeshParameters::ConvexCornerOption ConvexCornerTest() const;
 
   /*
   Description:
@@ -11801,8 +12022,8 @@ public:
   Returns:
     The currently selected convex corner option.
   */
-  ON_ToSubDParameters::ConvexCornerOption CopyConvexCornerTest(
-    ON_ToSubDParameters source_parameters
+  ON_SubDFromMeshParameters::ConvexCornerOption CopyConvexCornerTest(
+    ON_SubDFromMeshParameters source_parameters
     );
 
   /*
@@ -11884,8 +12105,8 @@ private:
 
   bool m_bInterpolateMeshVertices = false;
 
-  ON_ToSubDParameters::InteriorCreaseOption m_interior_crease_option = ON_ToSubDParameters::InteriorCreaseOption::None;
-  ON_ToSubDParameters::ConvexCornerOption m_convex_corner_option = ON_ToSubDParameters::ConvexCornerOption::None;
+  ON_SubDFromMeshParameters::InteriorCreaseOption m_interior_crease_option = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
+  ON_SubDFromMeshParameters::ConvexCornerOption m_convex_corner_option = ON_SubDFromMeshParameters::ConvexCornerOption::None;
 
   unsigned short m_maximum_convex_corner_edge_count = 2U;
 
@@ -13056,33 +13277,105 @@ public:
   ) const;
 
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     const ON_SubDEdge* initial_edge
   );
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     const ON_SimpleArray<const ON_SubDEdge* >& initial_edge_chain
   );
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     const ON_SubDEdge*const* initial_edge_chain,
     size_t edge_count
     );
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     ON_SubDEdgePtr initial_edge
   );
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     const ON_SimpleArray<ON_SubDEdgePtr>& initial_edge_chain
   );
 
+  /*
+  Parameters:
+    persistent_subd_id - [in]
+      If this edge chain needs to persist in a 3dm archive, then persistent_subd_id
+      should identify the subd in its current context.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+      If the edge chain is being used in a runtime context and will not be saved in a 3dm archive
+      or otherwise serialized, then persistent_subd_id can be ON_nil_uuid.
+
+  */
   unsigned int BeginEdgeChain(
+    ON_UUID persistent_subd_id,
     ON_SubDRef subd_ref,
     const ON_SubDEdgePtr* initial_edge_chain,
     size_t edge_count
@@ -13141,9 +13434,66 @@ public:
 
   void ClearEdgeChain();
 
+  /*
+  Returns:
+    The persistent id of the parent subd object.
+    If the context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+    If the context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  */
+  const ON_UUID PersistentSubDId() const;
+
+  bool HasPersistentEdgeIds() const;
+
+  bool HasRuntimeEdgePtrs() const;
+
+  bool SetPersistentEdgeIdsFromRuntimeEdgePtrs() const;
+    
+  /*
+  Description:
+    In situations where this edge chain is being read from a 3dm archive,
+    or a similar serialization context, this function uses the saved edge
+    id information to initialize the runtime ON_SubDEdgePtr information.
+  Parameters:
+    persistent_subd_id - [in]
+      This id is passed to insure it matches the saved persistent_subd_id. 
+      The source of the id depends on the context of the model managing the subd.
+      If that context is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If that context is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  Returns:
+    True if successful.
+    False if not successful.
+  */
+  bool SetRuntimeEdgePtrsFromPersistentSubD(
+    ON_UUID persistent_subd_id,
+    ON_SubDRef persistent_subd_ref
+  );
+
+  bool Write(class ON_BinaryArchive& archive) const;
+  bool Read(class ON_BinaryArchive& archive);
+  void Dump(class ON_TextLog& text_log) const;
+
 private:
   ON_SubDRef m_subd_ref;
   ON_SimpleArray<ON_SubDEdgePtr> m_edge_chain;
+
+
+  // If m_persistent_subd_id, then the id identifies the parent subd in the model.
+  // In an ONX_Model, this is the ON_ModelGeometryComponent.Id() value
+  // of the corresponding ON_SubD in the ONX_Model.
+  // In Rhino, this is the CRhinoObject.ModelObjectId() value
+  // of the corresponding CRhinoSubDObject in the CRhinoDoc.
+  ON_UUID m_persistent_subd_id = ON_nil_uuid;
+
+  // If m_persistent_subd_id is set and m_persistent_edge_id[] is not empty,
+  // m_persistent_edge_id[] is a list of edge ids and orientations.
+  // unsigned id = m_persistent_edge_id[] & 0xFFFFFFFF.
+  // reversed orientation = (0 != (m_persistent_edge_id[] & 0x8000000000000000)).
+  // The persistent id information is saved in 3dm archives. When that archive is read,
+  // the SetRuntimeEdgePtrsFromPersistentSubD() can be used to set the runtime edge chain values.
+  // These mutable fields are set by Write and used by Read.
+  mutable ON_SimpleArray<unsigned int> m_persistent_edge_id;
+  mutable ON_SimpleArray<ON__UINT8> m_persistent_edge_orientation; // 0 = not reversed, 1 = reversed.
+
   ON_UniqueTester m_unique_tester;
   ON_ComponentStatus m_status_check_pass = ON_ComponentStatus::NoneSet;
   ON_ComponentStatus m_status_check_fail = ON_ComponentStatus::Selected;
@@ -13370,7 +13720,7 @@ private:
 #if defined(ON_COMPILING_OPENNURBS)
 /*
 The ON_SubDAsUserData class is used to attach a subd to it proxy mesh
-when writing V6 files in commerical rhino.
+when writing V6 files in commercial rhino.
 */
 class ON_SubDMeshProxyUserData : public ON_UserData
 {

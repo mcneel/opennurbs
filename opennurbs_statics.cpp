@@ -114,6 +114,7 @@ ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocati
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
 
+
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
 ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
 int ON_ClassId::m_mark0 = 0;
@@ -2343,6 +2344,80 @@ const ON_MeshRef ON_MeshRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshRef);
 
 unsigned int ON_SubD::ErrorCount = 0;
 
+const bool ON_SubD::AutomaticRhino5BoxModeTSplineToSubDDefault = true;
+const bool ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubDDefault = false;
+
+bool ON_SubD::AutomaticRhino5BoxModeTSplineToSubD = ON_SubD::AutomaticRhino5BoxModeTSplineToSubDDefault;
+bool ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubD = ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubDDefault;
+
+
+void ON_SubD::AutomaticMeshToSubDRestoreDefaults(
+  ON_SubD::AutomaticMeshToSubDContext context
+  )
+{
+  switch (context)
+  {
+  case ON_SubD::AutomaticMeshToSubDContext::Unset:
+  default:
+    ON_SubD::AutomaticRhino5BoxModeTSplineToSubD = ON_SubD::AutomaticRhino5BoxModeTSplineToSubDDefault;
+    ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubD = ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubDDefault;
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::Rhino5BoxModeTSpline:
+    ON_SubD::AutomaticRhino5BoxModeTSplineToSubD = ON_SubD::AutomaticRhino5BoxModeTSplineToSubDDefault;
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::FBXMeshWithDivisionLevels:
+    ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubD = ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubDDefault;
+    break;
+  }
+}
+
+bool ON_SubD::AutomaticMeshToSubD(
+  ON_SubD::AutomaticMeshToSubDContext context
+)
+{
+  bool bAutomaticallyCreateSubD;
+  switch (context)
+  {
+  case ON_SubD::AutomaticMeshToSubDContext::Unset:
+    bAutomaticallyCreateSubD = false;
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::Rhino5BoxModeTSpline:
+    bAutomaticallyCreateSubD = ON_SubD::AutomaticRhino5BoxModeTSplineToSubD;
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::FBXMeshWithDivisionLevels:
+    bAutomaticallyCreateSubD = ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubD;
+    break;
+  default:
+    bAutomaticallyCreateSubD = false;
+    break;
+  }
+  return bAutomaticallyCreateSubD;
+}
+
+void ON_SubD::SetAutomaticMeshToSubD(
+  ON_SubD::AutomaticMeshToSubDContext context,
+  bool bAutomaticallyCreateSubD
+)
+{
+  // remove possiblity of hacks to use this as a char value
+  bAutomaticallyCreateSubD = bAutomaticallyCreateSubD ? true : false;
+
+  switch (context)
+  {
+  case ON_SubD::AutomaticMeshToSubDContext::Unset:
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::Rhino5BoxModeTSpline:
+    ON_SubD::AutomaticRhino5BoxModeTSplineToSubD = bAutomaticallyCreateSubD;
+    break;
+  case ON_SubD::AutomaticMeshToSubDContext::FBXMeshWithDivisionLevels:
+    ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubD = bAutomaticallyCreateSubD;
+    break;
+  default:
+    break;
+  }
+}
+
+
 const ON_SubDVertexEdgeProperties ON_SubDVertexEdgeProperties::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDVertexEdgeProperties); 
 
 const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
@@ -2434,22 +2509,27 @@ static ON_ComponentStatus ON_ComponentStatus_AllSet()
 }
 const ON_ComponentStatus ON_ComponentStatus::AllSet = ON_ComponentStatus_AllSet();
 
-static ON_AggregateComponentStatus ON_AggregateComponentStatus_Empty()
+static ON_AggregateComponentStatus ON_Internal_AggregateComponentStatus_Init(int k)
 {
   ON_AggregateComponentStatus s;
   memset(&s, 0, sizeof(s));
+  if (1 == k)
+    s.MarkAsNotCurrent();
   return s;
 }
-const ON_AggregateComponentStatus ON_AggregateComponentStatus::Empty = ON_AggregateComponentStatus_Empty();
+const ON_AggregateComponentStatus ON_AggregateComponentStatus::Empty = ON_Internal_AggregateComponentStatus_Init(0);
+const ON_AggregateComponentStatus ON_AggregateComponentStatus::NotCurrent = ON_Internal_AggregateComponentStatus_Init(1);
 
-static ON_AggregateComponentStatus ON_AggregateComponentStatus_NotCurrent()
+
+static ON_AggregateComponentStatusEx ON_Internal_AggregateComponentStatusEx_Init(int k)
 {
-  ON_AggregateComponentStatus s;
-  memset(&s, 0, sizeof(s));
-  s.MarkAsNotCurrent();
+  ON_AggregateComponentStatusEx s(ON_Internal_AggregateComponentStatus_Init(k));
+  *((ON__UINT64*)(((char*)(&s)) + sizeof(ON_AggregateComponentStatus))) = 0; // m_component_status_serial_number = 0 
   return s;
 }
-const ON_AggregateComponentStatus ON_AggregateComponentStatus::NotCurrent = ON_AggregateComponentStatus_NotCurrent();
+const ON_AggregateComponentStatusEx ON_AggregateComponentStatusEx::Empty = ON_Internal_AggregateComponentStatusEx_Init(0);
+const ON_AggregateComponentStatusEx ON_AggregateComponentStatusEx::NotCurrent = ON_Internal_AggregateComponentStatusEx_Init(1);
+
 
 
 const ON_SubDComponentPoint ON_SubDComponentPoint::Unset = ON_SubDComponentPoint();
@@ -2527,26 +2607,45 @@ const ON_SubDSectorType ON_SubDSectorType::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(O
 const ON_SubDMatrix ON_SubDMatrix::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMatrix);
 const ON_SubDComponentRef ON_SubDComponentRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRef);
 
-static ON_ToSubDParameters ON_SubDCreaseParameters_CreaseAt(
-  ON_ToSubDParameters::InteriorCreaseOption crease_type
+static ON_SubDFromMeshParameters ON_SubDCreaseParameters_CreaseAt(
+  ON_SubDFromMeshParameters::InteriorCreaseOption crease_type
   )
 {
-  ON_ToSubDParameters cp;
+  ON_SubDFromMeshParameters cp;
   cp.SetInteriorCreaseOption(crease_type);
   return cp;
 }
 
-static ON_ToSubDParameters ON_SubDCreaseParameters_ConvexCorners()
+static ON_SubDFromMeshParameters ON_SubDCreaseParameters_ConvexCorners()
 {
-  ON_ToSubDParameters cp;
-  cp.SetConvexCornerOption(ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner);
+  ON_SubDFromMeshParameters cp;
+  cp.SetConvexCornerOption(ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner);
   return cp;
 }
 
-const ON_ToSubDParameters ON_ToSubDParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ToSubDParameters);
-const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease);
-const ON_ToSubDParameters ON_ToSubDParameters::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge);
-const ON_ToSubDParameters ON_ToSubDParameters::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromMeshParameters);
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease);
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge);
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
+
+const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromSurfaceParameters);
+
+static const ON_SubDFromSurfaceParameters Internal_InitSubDFromSurfaceParameters(
+  ON_SubDFromSurfaceParameters::Methods method,
+  bool bCorners
+  )
+{
+  ON_SubDFromSurfaceParameters p;
+  if (ON_SubDFromSurfaceParameters::Methods::Unset != method)
+    p.SetMethod(method);
+  p.SetCorners(bCorners);
+  return p;
+}
+
+const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::DefaultWithCorners = Internal_InitSubDFromSurfaceParameters(ON_SubDFromSurfaceParameters::Methods::Unset, true);
+const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::ControlNet = Internal_InitSubDFromSurfaceParameters(ON_SubDFromSurfaceParameters::Methods::FromNurbsControlNet, false);
+const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::ControlNetWithCorners = Internal_InitSubDFromSurfaceParameters(ON_SubDFromSurfaceParameters::Methods::FromNurbsControlNet, true);
+
 
 const ON_SubDComponentFilter ON_SubDComponentFilter::Unset = ON_SubDComponentFilter::Create(true, true, true);
 const ON_SubDComponentFilter ON_SubDComponentFilter::OnlyVertices = ON_SubDComponentFilter::Create(true, false, false);

@@ -1096,7 +1096,7 @@ public:
     could be called.
   Remarks:
     About the only good use for this function is when a model compoenent is
-    peristent and the name is needed for a formatted string.  For any
+    persistent and the name is needed for a formatted string.  For any
     other use, call the Name() function and store the result in an
     ON_wString.  This function is dangerous because the returned pointer
     will be invalid if SetName() is called.

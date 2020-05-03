@@ -404,7 +404,7 @@ bool ON_NumberFormatter::FormatAngleStringDMS(double angle_radians, ON_wString& 
     minutes = minutes % 60;
 
     degrees *= sign;
-    formatted_string.Format(L"%d%c %d\' %d\"", degrees, ON_wString::DegreeSymbol, minutes, seconds);
+    formatted_string.Format(L"%d%lc %d\' %d\"", degrees, ON_wString::DegreeSymbol, minutes, seconds);
     rc = true;
   }
   return rc;

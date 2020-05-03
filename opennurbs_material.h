@@ -281,6 +281,10 @@ public:
   const ON_PhysicallyBasedMaterial PhysicallyBased(void) const;
   ON_PhysicallyBasedMaterial PhysicallyBased(void);
 
+  //Returns a material that is the best approximation of the original, but as a physically based material.
+  //the returned material is guaranteed to return true to material.PhysicallyBased().IsSupported()
+  ON_Material ConvertToPhysicallyBased(void) const;
+
   //Internal use only
   static ON_UUID PhysicallyBasedUserdataId(void);
 

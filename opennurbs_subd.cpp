@@ -1513,43 +1513,43 @@ bool ON_SubDComponentPtrPair::BothAreNotNull() const
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_ToSubDParameters
+// ON_SubDFromMeshParameters
 //
 
-ON_ToSubDParameters::ConvexCornerOption ON_ToSubDParameters::ConvexCornerOptionFromUnsigned(
+ON_SubDFromMeshParameters::ConvexCornerOption ON_SubDFromMeshParameters::ConvexCornerOptionFromUnsigned(
   unsigned int convex_corner_option_as_unsigned
   )
 {
   switch (convex_corner_option_as_unsigned)
   {
-	case (unsigned int)ON_ToSubDParameters::ConvexCornerOption::Unset:
-		return ON_ToSubDParameters::ConvexCornerOption::Unset;
-	case (unsigned int)ON_ToSubDParameters::ConvexCornerOption::None:
-		return ON_ToSubDParameters::ConvexCornerOption::None;
-	case (unsigned int)ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner:
-		return ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner;
+	case (unsigned int)ON_SubDFromMeshParameters::ConvexCornerOption::Unset:
+		return ON_SubDFromMeshParameters::ConvexCornerOption::Unset;
+	case (unsigned int)ON_SubDFromMeshParameters::ConvexCornerOption::None:
+		return ON_SubDFromMeshParameters::ConvexCornerOption::None;
+	case (unsigned int)ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner:
+		return ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner;
   default:
     break;
   }
-	return ON_ToSubDParameters::ConvexCornerOption::Unset;
+	return ON_SubDFromMeshParameters::ConvexCornerOption::Unset;
 }
 
-void ON_ToSubDParameters::SetConvexCornerOption(
-  ON_ToSubDParameters::ConvexCornerOption convex_corner_option
+void ON_SubDFromMeshParameters::SetConvexCornerOption(
+  ON_SubDFromMeshParameters::ConvexCornerOption convex_corner_option
   )
 {
-  m_convex_corner_option = ON_ToSubDParameters::ConvexCornerOptionFromUnsigned((unsigned int)convex_corner_option);
+  m_convex_corner_option = ON_SubDFromMeshParameters::ConvexCornerOptionFromUnsigned((unsigned int)convex_corner_option);
 }
 
-ON_ToSubDParameters::ConvexCornerOption ON_ToSubDParameters::ConvexCornerTest() const
+ON_SubDFromMeshParameters::ConvexCornerOption ON_SubDFromMeshParameters::ConvexCornerTest() const
 {
   switch (m_convex_corner_option)
   {
-  case ON_ToSubDParameters::ConvexCornerOption::Unset:
-  case ON_ToSubDParameters::ConvexCornerOption::None:
+  case ON_SubDFromMeshParameters::ConvexCornerOption::Unset:
+  case ON_SubDFromMeshParameters::ConvexCornerOption::None:
     return m_convex_corner_option;
 
-  case ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner:
+  case ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner:
     if ( m_maximum_convex_corner_edge_count >= 2 
          && m_maximum_convex_corner_edge_count <= ON_SubDVertex::MaximumEdgeCount
          && m_maximum_convex_corner_angle_radians >= 0.0
@@ -1559,10 +1559,10 @@ ON_ToSubDParameters::ConvexCornerOption ON_ToSubDParameters::ConvexCornerTest() 
     break;
   }
 
-  return ON_ToSubDParameters::ConvexCornerOption::Unset;
+  return ON_SubDFromMeshParameters::ConvexCornerOption::Unset;
 }
 
-void ON_ToSubDParameters::SetMaximumConvexCornerEdgeCount(
+void ON_SubDFromMeshParameters::SetMaximumConvexCornerEdgeCount(
   unsigned int maximum_convex_corner_edge_count
   )
 {
@@ -1570,12 +1570,12 @@ void ON_ToSubDParameters::SetMaximumConvexCornerEdgeCount(
     m_maximum_convex_corner_edge_count = (unsigned short)maximum_convex_corner_edge_count;
 }
 
-unsigned int ON_ToSubDParameters::MaximumConvexCornerEdgeCount() const
+unsigned int ON_SubDFromMeshParameters::MaximumConvexCornerEdgeCount() const
 {
   return m_maximum_convex_corner_edge_count;
 }
 
-void ON_ToSubDParameters::SetMaximumConvexCornerAngleRadians(
+void ON_SubDFromMeshParameters::SetMaximumConvexCornerAngleRadians(
   double maximum_convex_corner_angle_radians
   )
 {
@@ -1583,13 +1583,13 @@ void ON_ToSubDParameters::SetMaximumConvexCornerAngleRadians(
     m_maximum_convex_corner_angle_radians = maximum_convex_corner_angle_radians;
 }
 
-double ON_ToSubDParameters::MaximumConvexCornerAngleRadians() const
+double ON_SubDFromMeshParameters::MaximumConvexCornerAngleRadians() const
 {
   return m_maximum_convex_corner_angle_radians;
 }
 
-ON_ToSubDParameters::ConvexCornerOption ON_ToSubDParameters::CopyConvexCornerTest(
-  ON_ToSubDParameters source_parameters
+ON_SubDFromMeshParameters::ConvexCornerOption ON_SubDFromMeshParameters::CopyConvexCornerTest(
+  ON_SubDFromMeshParameters source_parameters
   )
 {
   SetConvexCornerOption(source_parameters.ConvexCornerTest());
@@ -1598,12 +1598,12 @@ ON_ToSubDParameters::ConvexCornerOption ON_ToSubDParameters::CopyConvexCornerTes
   return ConvexCornerTest();
 }
 
-bool ON_ToSubDParameters::InterpolateMeshVertices() const
+bool ON_SubDFromMeshParameters::InterpolateMeshVertices() const
 {
   return m_bInterpolateMeshVertices;
 }
 
-void ON_ToSubDParameters::SetInterpolateMeshVertices(
+void ON_SubDFromMeshParameters::SetInterpolateMeshVertices(
   bool bInterpolateMeshVertices
 )
 {
@@ -1611,34 +1611,34 @@ void ON_ToSubDParameters::SetInterpolateMeshVertices(
   m_bInterpolateMeshVertices = false;
 }
 
-bool ON_ToSubDParameters::MergeColinearBoundaryEdges() const
+bool ON_SubDFromMeshParameters::MergeColinearBoundaryEdges() const
 {
   // clear bit means true, set bit means false
-  return (0 == (ON_ToSubDParameters::MergeColinearBoundaryEdgesMask & m_merge_edges_bits));
+  return (0 == (ON_SubDFromMeshParameters::MergeColinearBoundaryEdgesMask & m_merge_edges_bits));
 }
 
-void ON_ToSubDParameters::SetMergeColinearBoundaryEdges(
+void ON_SubDFromMeshParameters::SetMergeColinearBoundaryEdges(
   bool bAllowColinearBoundaryEdges
 )
 {
-  const unsigned char mask = ON_ToSubDParameters::MergeColinearBoundaryEdgesMask;
+  const unsigned char mask = ON_SubDFromMeshParameters::MergeColinearBoundaryEdgesMask;
   if (false == bAllowColinearBoundaryEdges)
     m_merge_edges_bits |= mask; // set bit
   else
     m_merge_edges_bits &= ~mask; // clear bit
 }
 
-bool ON_ToSubDParameters::MergeColinearInteriorEdges() const
+bool ON_SubDFromMeshParameters::MergeColinearInteriorEdges() const
 {
   // clear bit means true, set bit means false
-  return (0 == (ON_ToSubDParameters::MergeColinearInteriorEdgesMask & m_merge_edges_bits));
+  return (0 == (ON_SubDFromMeshParameters::MergeColinearInteriorEdgesMask & m_merge_edges_bits));
 }
 
-void ON_ToSubDParameters::SetMergeColinearInteriorEdges(
+void ON_SubDFromMeshParameters::SetMergeColinearInteriorEdges(
   bool bAllowColinearInteriorEdges
 )
 {
-  const unsigned char mask = ON_ToSubDParameters::MergeColinearInteriorEdgesMask;
+  const unsigned char mask = ON_SubDFromMeshParameters::MergeColinearInteriorEdgesMask;
   if (false == bAllowColinearInteriorEdges)
     m_merge_edges_bits |= mask; // set bit
   else
@@ -1646,19 +1646,19 @@ void ON_ToSubDParameters::SetMergeColinearInteriorEdges(
 }
 
 
-void ON_ToSubDParameters::SetInteriorCreaseOption(
-  ON_ToSubDParameters::InteriorCreaseOption interior_crease_option
+void ON_SubDFromMeshParameters::SetInteriorCreaseOption(
+  ON_SubDFromMeshParameters::InteriorCreaseOption interior_crease_option
   )
 {
-  m_interior_crease_option = ON_ToSubDParameters::InteriorCreaseOptionFromUnsigned((unsigned int)interior_crease_option);
+  m_interior_crease_option = ON_SubDFromMeshParameters::InteriorCreaseOptionFromUnsigned((unsigned int)interior_crease_option);
 }
 
-ON_ToSubDParameters::InteriorCreaseOption ON_ToSubDParameters::InteriorCreaseTest() const
+ON_SubDFromMeshParameters::InteriorCreaseOption ON_SubDFromMeshParameters::InteriorCreaseTest() const
 {
   return m_interior_crease_option;
 }
 
-void ON_ToSubDParameters::SetMinimumCreaseAngleRadians(
+void ON_SubDFromMeshParameters::SetMinimumCreaseAngleRadians(
   double minimum_crease_angle_radians
   )
 {
@@ -1667,13 +1667,13 @@ void ON_ToSubDParameters::SetMinimumCreaseAngleRadians(
 }
 
 
-double ON_ToSubDParameters::MinimumCreaseAngleRadians() const
+double ON_SubDFromMeshParameters::MinimumCreaseAngleRadians() const
 {
   return m_minimum_crease_angle_radians;
 }
 
-ON_ToSubDParameters::InteriorCreaseOption ON_ToSubDParameters::CopyInteriorCreaseTest(
-  ON_ToSubDParameters source_parameters
+ON_SubDFromMeshParameters::InteriorCreaseOption ON_SubDFromMeshParameters::CopyInteriorCreaseTest(
+  ON_SubDFromMeshParameters source_parameters
   )
 {
   SetInteriorCreaseOption(source_parameters.InteriorCreaseTest());
@@ -1681,29 +1681,54 @@ ON_ToSubDParameters::InteriorCreaseOption ON_ToSubDParameters::CopyInteriorCreas
   return InteriorCreaseTest();
 }
 
-ON_ToSubDParameters::InteriorCreaseOption ON_ToSubDParameters::InteriorCreaseOptionFromUnsigned(
+ON_SubDFromMeshParameters::InteriorCreaseOption ON_SubDFromMeshParameters::InteriorCreaseOptionFromUnsigned(
   unsigned int interior_crease_option_as_unsigned
   )
 {
   switch (interior_crease_option_as_unsigned)
   {
-  case (unsigned int)ON_ToSubDParameters::InteriorCreaseOption::Unset:
-    return ON_ToSubDParameters::InteriorCreaseOption::Unset;
+  case (unsigned int)ON_SubDFromMeshParameters::InteriorCreaseOption::Unset:
+    return ON_SubDFromMeshParameters::InteriorCreaseOption::Unset;
     break;
-  case (unsigned int)ON_ToSubDParameters::InteriorCreaseOption::None:
-    return ON_ToSubDParameters::InteriorCreaseOption::None;
+  case (unsigned int)ON_SubDFromMeshParameters::InteriorCreaseOption::None:
+    return ON_SubDFromMeshParameters::InteriorCreaseOption::None;
     break;
-  case (unsigned int)ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease:
-    return ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease;
+  case (unsigned int)ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease:
+    return ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease;
     break;
-  case (unsigned int)ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge:
-    return ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge;
+  case (unsigned int)ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge:
+    return ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge;
     break;
   default:
     break;
   }
 
-  return ON_ToSubDParameters::InteriorCreaseOption::Unset;
+  return ON_SubDFromMeshParameters::InteriorCreaseOption::Unset;
+}
+
+
+ON_SubDFromSurfaceParameters::Methods ON_SubDFromSurfaceParameters::Method() const
+{
+  return m_method;
+}
+
+void ON_SubDFromSurfaceParameters::SetMethod(
+  ON_SubDFromSurfaceParameters::Methods method
+  )
+{
+  m_method = method;
+}
+
+bool ON_SubDFromSurfaceParameters::Corners() const
+{
+  return m_bCorners;
+}
+
+void ON_SubDFromSurfaceParameters::SetCorners(
+  bool bCorners
+  )
+{
+  m_bCorners = bCorners ? true : false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -3267,8 +3292,10 @@ void ON_SubDFace::CopyFrom(
 
   m_next_face = nullptr;
 
-  m_zero_face_id = src->m_zero_face_id;
-  m_parent_face_id = src->m_parent_face_id;
+  m_material_channel_index = src->m_material_channel_index;
+  m_per_face_color = src->m_per_face_color;
+
+  m_level_zero_face_id = src->m_level_zero_face_id;
 
   if (bCopyEdgeArray)
   {
@@ -4127,6 +4154,12 @@ ON__UINT64 ON_SubD::ContentSerialNumber() const
 {
   ON_SubDimple* subdimple = m_subdimple_sp.get();
   return (nullptr != subdimple) ? subdimple->ContentSerialNumber() : 0;
+}
+
+ON__UINT64 ON_SubD::ComponentStatusSerialNumber() const
+{
+  ON_SubDimple* subdimple = m_subdimple_sp.get();
+  return (nullptr != subdimple) ? subdimple->ComponentStatusSerialNumber() : 0;
 }
 
 ON__UINT64 ON_SubD::ChangeContentSerialNumberForExperts(
@@ -6111,8 +6144,39 @@ unsigned int ON_SubDLevel::DumpTopology(
     }
     text_log.Print(" }\n");
 
+
+
+    bool bNeedComma = false;
+
+    const ON_Color per_face_color = f->PerFaceColor();
+    if (ON_Color::UnsetColor != per_face_color)
+    {
+      if (bNeedComma)
+        text_log.Print(", ");
+      else
+        text_log.Print("Per face");
+      bNeedComma = true;
+      text_log.Print("face color=(");
+      text_log.PrintColor(per_face_color);
+      text_log.Print(")");
+    }
+
+    const int per_face_material_channel_index = f->MaterialChannelIndex();
+    if (0 != per_face_material_channel_index)
+    {
+      if (bNeedComma)
+        text_log.Print(", ");
+      else
+        text_log.Print("Per face");
+      bNeedComma = true;
+      text_log.Print(" material channel index=%d", per_face_material_channel_index);
+    }
+    if (bNeedComma)
+      text_log.PrintNewLine();
+
     if (f->TextureDomainIsSet())
     {
+      bNeedComma = true;
       const ON_wString s = ON_SubD::TextureDomainTypeToString(f->TextureDomainType());
       const bool bGridOrder = true;
       const bool bNormalized = false;
@@ -6122,84 +6186,14 @@ unsigned int ON_SubDLevel::DumpTopology(
         f->TextureDomainCorner(bGridOrder,bNormalized,2),
         f->TextureDomainCorner(bGridOrder,bNormalized,3)
       };
-      text_log.Print("%ls texture domain. Grid corners: (%g,%g), (%g,%g), (%g,%g), (%g,%g)\n",
+      text_log.Print("%ls texture domain. Grid corners: (%g,%g), (%g,%g), (%g,%g), (%g,%g)",
         static_cast<const wchar_t*>(s),
         corners[0].x, corners[0].y,
         corners[1].x, corners[1].y,
         corners[2].x, corners[2].y,
         corners[3].x, corners[3].y
       );
-      ////const ON_SubDMeshFragment *fragments = f->MeshFragments();
-      ////if (nullptr != fragments)
-      ////{
-      ////ON_TextLogIndent indent1(text_log);
-      ////  unsigned short fragment_count = 0;
-      ////  const unsigned short expected_fragment_count = (unsigned short)((4 == face_edge_count) ? 1 : face_edge_count);
-      ////  ON_3dPoint fragmentT[4];
-      ////  bool bDamagedOrIncompleteFragments = false;
-      ////  for (unsigned short fragdex = 0; fragdex <= expected_fragment_count && nullptr != fragments; fragdex++, fragments = fragments->m_next_fragment)
-      ////  {
-      ////    ++fragment_count;
-      ////    if (expected_fragment_count != fragments->m_face_fragment_count)
-      ////    {
-      ////      bDamagedOrIncompleteFragments = true;
-      ////      break;
-      ////    }
-      ////    if (fragdex != fragments->m_face_fragment_index)
-      ////    {
-      ////      bDamagedOrIncompleteFragments = true;
-      ////      break;
-      ////    }
-      ////  }
-      ////  if (expected_fragment_count == fragment_count)
-      ////  {
-      ////    fragments = f->MeshFragments();
-      ////    if (1 == fragment_count)
-      ////    {
-      ////      if (fragments->GetTextureCoordinteCorners(bGridOrder, fragmentT))
-      ////      {
-      ////        text_log.Print("Quad face fragment texture corners = (%g,%g,%g), (%g,%g,%g), (%g,%g,%g), (%g,%g,%g)\n",
-      ////          fragmentT[0].x, fragmentT[0].y, fragmentT[0].z,
-      ////          fragmentT[1].x, fragmentT[1].y, fragmentT[1].z,
-      ////          fragmentT[2].x, fragmentT[2].y, fragmentT[2].z,
-      ////          fragmentT[3].x, fragmentT[3].y, fragmentT[3].z
-      ////        );
-      ////      }
-      ////      else
-      ////      {
-      ////        text_log.Print("Quad face fragment texture corners not available.\n");
-      ////      }
-      ////    }
-      ////    else
-      ////    {
-      ////      text_log.Print("%u face fragments.\n", (unsigned)expected_fragment_count);
-      ////      ON_TextLogIndent indent2(text_log);
-      ////      for (unsigned short fragdex = 0; fragdex <= expected_fragment_count && nullptr != fragments; fragdex++, fragments = fragments->m_next_fragment)
-      ////      {
-      ////        if (fragments->GetTextureCoordinteCorners(bGridOrder, fragmentT))
-      ////        {
-      ////          text_log.Print("fragment[%u] texture corners = (%g,%g,%g), (%g,%g,%g), (%g,%g,%g), (%g,%g,%g)\n",
-      ////            (unsigned)fragdex,
-      ////            fragmentT[0].x, fragmentT[0].y, fragmentT[0].z,
-      ////            fragmentT[1].x, fragmentT[1].y, fragmentT[1].z,
-      ////            fragmentT[2].x, fragmentT[2].y, fragmentT[2].z,
-      ////            fragmentT[3].x, fragmentT[3].y, fragmentT[3].z
-      ////          );
-      ////        }
-      ////        else
-      ////        {
-      ////          text_log.Print("fragment[%u] texture corners not available.\n", (unsigned)fragdex);
-      ////        }
-      ////      }
-      ////    }
-      ////  }
-      ////  else if (nullptr == fragments)
-      ////  {
-      ////    bDamagedOrIncompleteFragments = true;
-      ////  }
-      ////  if (bDamagedOrIncompleteFragments )
-      ////    text_log.Print("Damaged or incomplete mesh fragments.\n");
-      ////}
+      text_log.PrintNewLine();
     }
 
     text_log.PopIndent();
@@ -6285,7 +6279,7 @@ void ON_SubD::DestroyRuntimeCache( bool bDelete )
       if (level)
       {
         level->ClearEvaluationCache();
-        level->AggregateComponentStatus().MarkAsNotCurrent();
+        level->MarkAggregateComponentStatusAsNotCurrent();
       }
     }
     dimple->ChangeContentSerialNumber(false);
@@ -7618,7 +7612,7 @@ const ON_ComponentStatus ON_SubDComponentBase::Status() const
 
 bool ON_SubDComponentBase::IsActive() const
 {
-  return (m_id >= 0 && m_archive_id != ON_UNSET_UINT_INDEX);
+  return (m_id > 0 && m_archive_id != ON_UNSET_UINT_INDEX);
 }
 
 
@@ -9639,8 +9633,9 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
   if (f0_edge_count < 3)
     return 0;
 
-  const unsigned int parent_face_id = f0->m_id;
-  const unsigned int zero_face_id = (0 == f0->SubdivisionLevel()) ? parent_face_id : f0->m_zero_face_id;
+  const int material_channel_index = f0->MaterialChannelIndex();
+  const ON_Color per_face_color = f0->PerFaceColor();
+  const unsigned int level_zero_face_id = (0 == f0->SubdivisionLevel()) ? f0->m_id : f0->m_level_zero_face_id;
 
   if (nullptr == f0->m_subd_point1)
   {
@@ -9735,8 +9730,9 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     ON_SubDFace* f1 = AddFace(4, f1edges);
     if (nullptr != f1)
     {
-      f1->m_zero_face_id = zero_face_id;
-      f1->m_parent_face_id = parent_face_id;
+      f1->SetMaterialChannelIndex(material_channel_index);
+      f1->SetPerFaceColor(per_face_color);
+      f1->m_level_zero_face_id = level_zero_face_id;
       f1_count++;
     }
   }
@@ -11328,7 +11324,7 @@ unsigned int ON_SubDLevel::GetComponentsWithSetStates(
   if (states_filter.IsClear())
     return 0;
 
-  ON_AggregateComponentStatus acs = AggregateComponentStatus();
+  const ON_AggregateComponentStatusEx acs = AggregateComponentStatus();
 
   ON_ComponentStatus as = acs.AggregateStatus();
   if (bAllEqualStates)
@@ -12389,7 +12385,7 @@ unsigned int ON_SubDimple::DeleteComponents(
     for (unsigned short efi = 0; efi < edge_face_count; efi++, fptr0++)
     {
       if (2 == efi)
-        fptr0 = edge->m_face2;
+        fptr0 = edge->m_facex;
       const ON_SubDFace* face = fptr0->Face();
       if (nullptr == face || ON_UNSET_UINT_INDEX == face->ArchiveId())
         continue;
@@ -15803,22 +15799,25 @@ bool ON_SubDEdgeChain::IsConvexLoop(bool bStrictlyConvex) const
 
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   const ON_SubDEdge* initial_edge
 )
 {
-  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, ON_SubDEdgePtr::Create(initial_edge, 0));
+  return ON_SubDEdgeChain::BeginEdgeChain(persistent_subd_id, subd_ref, ON_SubDEdgePtr::Create(initial_edge, 0));
 }
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   const ON_SimpleArray<const ON_SubDEdge* >& initial_edge_chain
 )
 {
-  return BeginEdgeChain(subd_ref, initial_edge_chain.Array(), initial_edge_chain.UnsignedCount());
+  return BeginEdgeChain(persistent_subd_id, subd_ref, initial_edge_chain.Array(), initial_edge_chain.UnsignedCount());
 }
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   const ON_SubDEdge*const* initial_edge_chain,
   size_t edge_count
@@ -15834,7 +15833,7 @@ unsigned int ON_SubDEdgeChain::BeginEdgeChain(
     return 0;
 
   if ( 1 == edge_count)
-    return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, ON_SubDEdgePtr::Create(initial_edge_chain[0], 0));
+    return ON_SubDEdgeChain::BeginEdgeChain(persistent_subd_id, subd_ref, ON_SubDEdgePtr::Create(initial_edge_chain[0], 0));
 
   const ON_SubDEdge* e0 = initial_edge_chain[0];
   if (nullptr == e0 || nullptr == e0->m_vertex[0] || nullptr == e0->m_vertex[1] )
@@ -15860,26 +15859,29 @@ unsigned int ON_SubDEdgeChain::BeginEdgeChain(
     eptr_chain.Append(eptr);
   }
 
-  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref,eptr_chain);
+  return ON_SubDEdgeChain::BeginEdgeChain(persistent_subd_id, subd_ref,eptr_chain);
 }
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   ON_SubDEdgePtr eptr
 )
 {
-  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, &eptr, 1);
+  return ON_SubDEdgeChain::BeginEdgeChain(persistent_subd_id, subd_ref, &eptr, 1);
 }
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   const ON_SimpleArray<ON_SubDEdgePtr>& initial_edge_chain
 )
 {
-  return ON_SubDEdgeChain::BeginEdgeChain(subd_ref, initial_edge_chain.Array(), initial_edge_chain.UnsignedCount() );
+  return ON_SubDEdgeChain::BeginEdgeChain(persistent_subd_id, subd_ref, initial_edge_chain.Array(), initial_edge_chain.UnsignedCount() );
 }
 
 unsigned int ON_SubDEdgeChain::BeginEdgeChain(
+  ON_UUID persistent_subd_id,
   ON_SubDRef subd_ref,
   const ON_SubDEdgePtr* initial_edge_chain,
   size_t edge_count
@@ -15887,6 +15889,7 @@ unsigned int ON_SubDEdgeChain::BeginEdgeChain(
 {
   ClearEdgeChain();
 
+  m_persistent_subd_id = persistent_subd_id;
   m_subd_ref = subd_ref;
 
   if (edge_count <= 0 || m_subd_ref.SubD().IsEmpty())
@@ -15937,6 +15940,252 @@ unsigned int ON_SubDEdgeChain::BeginEdgeChain(
   return m_edge_chain.UnsignedCount();
 }
 
+const ON_UUID ON_SubDEdgeChain::PersistentSubDId() const
+{
+  return m_persistent_subd_id;
+}
+
+bool ON_SubDEdgeChain::HasPersistentEdgeIds() const
+{
+  const unsigned count = this->EdgeCount();
+  return
+    count > 0
+    && count == m_persistent_edge_id.UnsignedCount()
+    && count == m_persistent_edge_orientation.UnsignedCount()
+    ;
+}
+
+bool ON_SubDEdgeChain::HasRuntimeEdgePtrs() const
+{
+  const unsigned count = this->EdgeCount();
+  return
+    count > 0
+    && count == this->m_edge_chain.UnsignedCount()
+    && m_subd_ref.SubD().EdgeCount() > 0
+    ;
+}
+
+bool ON_SubDEdgeChain::SetPersistentEdgeIdsFromRuntimeEdgePtrs() const
+{
+  m_persistent_edge_id.SetCount(0);
+  m_persistent_edge_orientation.SetCount(0); 
+  const unsigned count = (m_subd_ref.SubD().EdgeCount() > 0) ? m_edge_chain.UnsignedCount() : 0;
+  bool rc = count > 0;
+  if (rc)
+  {
+    m_persistent_edge_id.Reserve(count);
+    m_persistent_edge_orientation.Reserve(count);
+    for (unsigned i = 0; i < count; ++i)
+    {
+      const ON_SubDEdgePtr eptr = m_edge_chain[i];
+      const unsigned edge_id = eptr.EdgeId();
+      if (edge_id <= 0)
+        break;
+      if (false == eptr.IsActive())
+        break;
+      m_persistent_edge_id.Append(edge_id);
+      m_persistent_edge_orientation.Append(0 == eptr.EdgeDirection() ? 0 : 1);
+    }
+    if (count != m_persistent_edge_id.UnsignedCount() || count != m_persistent_edge_orientation.UnsignedCount())
+    {
+      rc = false;
+      m_persistent_edge_id.SetCount(0);
+      m_persistent_edge_orientation.SetCount(0);
+    }
+  }
+  return rc;
+}
+
+bool ON_SubDEdgeChain::SetRuntimeEdgePtrsFromPersistentSubD(
+  ON_UUID persistent_subd_id,
+  ON_SubDRef persistent_subd_ref
+)
+{
+  bool rc = true;
+  m_edge_chain.SetCount(0);
+  const unsigned count = m_persistent_edge_id.UnsignedCount();
+  const ON_SubD& subd = persistent_subd_ref.SubD();
+  if (count > 0 && count == m_persistent_edge_orientation.UnsignedCount() && subd.EdgeCount() > 0)
+  {
+    rc = false;
+    ON_SimpleArray<ON_SubDEdgePtr> local_edge_chain(count);
+    for (unsigned i = 0; i < count; ++i)
+    {
+      const ON_SubDEdge* e = subd.EdgeFromId(m_persistent_edge_id[i]);
+      if (nullptr == e)
+        break;
+      const ON_SubDEdgePtr eptr = ON_SubDEdgePtr::Create(e, (1 == m_persistent_edge_orientation[i]) ? 1 : 0);
+      local_edge_chain.Append(eptr);
+    }
+    if (count == local_edge_chain.UnsignedCount())
+    {
+      if (ON_SubDEdgeChain::IsValidEdgeChain(local_edge_chain, false))
+      {
+        m_edge_chain = local_edge_chain;
+        rc = true;
+      }
+    }
+  }
+  if (persistent_subd_ref.SubD().RuntimeSerialNumber() != m_subd_ref.SubD().RuntimeSerialNumber())
+    m_subd_ref = persistent_subd_ref;
+  if (ON_UuidIsNotNil(persistent_subd_id) && 0 != ON_UuidCompare(m_persistent_subd_id, persistent_subd_id))
+    m_persistent_subd_id = persistent_subd_id;
+  return rc;
+}
+
+bool ON_SubDEdgeChain::Write(class ON_BinaryArchive& archive) const
+{
+  // This write has to work if a read happened but the m_edge_chain[] was never set.
+  if (m_edge_chain.UnsignedCount() > 0)
+    SetPersistentEdgeIdsFromRuntimeEdgePtrs();
+  const unsigned count = m_persistent_edge_id.UnsignedCount();
+
+  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (false == archive.WriteUuid(m_persistent_subd_id))
+      break;
+    if (false == archive.WriteInt(count))
+      break;
+    if (count > 0)
+    {
+      if (false == archive.WriteArray(m_persistent_edge_id))
+        break;
+      if (false == archive.WriteArray(m_persistent_edge_orientation))
+        break;
+    }
+
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_SubDEdgeChain::Read(class ON_BinaryArchive& archive)
+{
+  *this = ON_SubDEdgeChain::Empty;
+
+  int chunk_version = 0;
+  if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (chunk_version < 1)
+      break;
+    if (false == archive.ReadUuid(m_persistent_subd_id))
+      break;
+    unsigned int count = 0;
+    if (false == archive.ReadInt(&count))
+      break;
+    if (count > 0)
+    {
+      if (false == archive.ReadArray(m_persistent_edge_id))
+        break;
+      if (false == archive.ReadArray(m_persistent_edge_orientation))
+        break;
+    }
+
+    if (count != m_persistent_edge_id.UnsignedCount() || count != m_persistent_edge_orientation.UnsignedCount())
+    {
+      m_persistent_edge_id.SetCount(0);
+      m_persistent_edge_orientation.SetCount(0);
+    }
+
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndRead3dmChunk())
+    rc = false;
+
+  // At some point, the caller will need to find the subd for this edge chain and call SetRuntimeEdgePtrsFromPersistentSubD().
+
+  return rc;
+}
+
+void ON_SubDEdgeChain::Dump(class ON_TextLog& text_log) const
+{
+  const unsigned edge_count = EdgeCount();
+  const ON__UINT64 subd_sn = m_subd_ref.SubD().EdgeCount() > 0 ? m_subd_ref.SubD().RuntimeSerialNumber() : 0;
+  const bool bSubDIdIsNotNil = ON_UuidIsNotNil(m_persistent_subd_id);
+  if (edge_count > 0 && (0 != subd_sn || bSubDIdIsNotNil))
+  {
+    if (0 != subd_sn)
+    {
+      text_log.Print(L"SubD[%" PRIu64 "]", subd_sn);
+      if (bSubDIdIsNotNil)
+      {
+        text_log.Print(L" persistent subd id = ");
+        text_log.Print(m_persistent_subd_id);
+      }
+    }
+    else
+    {
+      text_log.Print(L"Persistent subd id = ");
+      text_log.Print(m_persistent_subd_id);
+    }
+    text_log.Print("%u edges.\n", edge_count);
+
+    const bool bPrintEdgePtr = (subd_sn != 0 && edge_count == m_edge_chain.UnsignedCount());
+    const bool bPrintPersistentEdgeId = 
+      false == bPrintEdgePtr
+      && edge_count == m_persistent_edge_id.UnsignedCount()
+      && edge_count == m_persistent_edge_orientation.UnsignedCount();
+    ON_TextLogIndent indent1(text_log);
+    if (bPrintEdgePtr || bPrintPersistentEdgeId)
+    {
+      const wchar_t plus_minus[3] = { '+', '-', '?' };
+      for (unsigned i = 0; i < edge_count; ++i)
+      {
+        if (0 != i)
+          text_log.Print(L", ");
+        unsigned sign_dex = 2;
+        unsigned edge_id = 0;
+        if (bPrintEdgePtr)
+        {
+          const ON_SubDEdgePtr eptr = m_edge_chain[i];
+          sign_dex = 0 != eptr.EdgeDirection() ? 1 : 0;
+          edge_id = eptr.EdgeId();
+        }
+        else if (bPrintPersistentEdgeId)
+        {
+          sign_dex = 0 != m_persistent_edge_orientation[i] ? 1 : 0;
+          edge_id = m_persistent_edge_id[i];
+        }
+        text_log.Print(L"%lce%u", plus_minus[sign_dex], edge_id);
+        if (i == 5 && edge_count > 15)
+        {
+          text_log.Print(L", ...");
+          i = edge_count - 5;
+        }
+      }
+    }
+    else
+    {
+      text_log.Print("Corrupt edge list.");
+    }
+  }
+  else if( 0 == edge_count)
+  {
+    text_log.Print("Empty subd edge chain.");
+  }
+  else
+  {
+    text_log.Print("Corrupt subd edge chain.");
+  }
+  text_log.PrintNewLine();
+
+}
+
 void ON_SubDEdgeChain::ClearEdgeChain()
 {
   m_edge_chain.SetCount(0);
@@ -15945,7 +16194,13 @@ void ON_SubDEdgeChain::ClearEdgeChain()
 
 unsigned int ON_SubDEdgeChain::EdgeCount() const
 {
-  return m_edge_chain.UnsignedCount();
+  const unsigned edge_count = m_edge_chain.UnsignedCount();
+  if (edge_count > 0)
+    return edge_count;
+  const unsigned id_count = (ON_UuidIsNotNil(this->m_persistent_subd_id)) ? m_persistent_edge_id.UnsignedCount() : 0;
+  if (id_count > 0 && id_count == m_persistent_edge_orientation.UnsignedCount())
+    return id_count;
+  return 0;
 }
 
 void ON_SubDEdgeChain::SetStatusCheck(

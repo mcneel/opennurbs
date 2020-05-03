@@ -553,7 +553,7 @@ public:
 
   bool m_bDirtyEdgeAttributes = false;
   bool m_bDirtyBoundingBox = false;
-  ON_AggregateComponentStatus m_aggregate_status = ON_AggregateComponentStatus::Empty;
+  ON_AggregateComponentStatusEx m_aggregate_status = ON_AggregateComponentStatusEx::Empty;
   unsigned int m_aggregate_edge_attributes = 0;
 
 private:
@@ -1147,7 +1147,9 @@ public:
     ON_ComponentStatus status_to_copy
     ) const;
 
-  ON_AggregateComponentStatus AggregateComponentStatus() const;
+  const ON_AggregateComponentStatusEx AggregateComponentStatus() const;
+
+  ON__UINT64 ComponentStatusSerialNumber() const;
 
   void MarkAggregateComponentStatusAsNotCurrent() const
   {
@@ -1646,6 +1648,15 @@ public:
     vertex location, vertex or edge flag, or subd topology is chaned.
   */
   ON__UINT64 ContentSerialNumber() const;
+
+  /*
+  Returns:
+    A runtime serial number that is incremented every time a component status
+    (locked, hidden, selected, highlighted, ...) is changed.
+  */
+  ON__UINT64 ComponentStatusSerialNumber() const;
+
+  const ON_AggregateComponentStatusEx AggregateComponentStatus() const;
 
   /*
   Description:

@@ -725,7 +725,7 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
 }
 
 ON_SubDFace* ON_SubD_FixedSizeHeap::Internal_AllocateFace(
-  unsigned int zero_face_id,
+  unsigned int level_zero_face_id,
   unsigned int parent_face_id
   )
 {
@@ -742,8 +742,8 @@ ON_SubDFace* ON_SubD_FixedSizeHeap::Internal_AllocateFace(
   }
 
   f->m_id = ++m_f_index;
-  f->m_zero_face_id = (0 == zero_face_id) ? parent_face_id : zero_face_id;
-  f->m_parent_face_id = parent_face_id;
+  f->ClearPerFaceColor();
+  f->m_level_zero_face_id = (0 == level_zero_face_id) ? parent_face_id : level_zero_face_id;
 
   return f;
 }
@@ -1072,14 +1072,16 @@ class ON_SubDFace* ON_SubDHeap::AllocateFaceAndSetId(
 )
 {
   ON_SubDComponentBase* unused_list = m_unused_face;
-  ON_SubDComponentBase* c = ON_SubDHeap::Internal_AllocateComponentAndSetId(
+  ON_SubDFace* f = static_cast<ON_SubDFace*>( ON_SubDHeap::Internal_AllocateComponentAndSetId(
     m_fspf,
     unused_list,
     m_max_face_id,
     candidate_face_id
-  );
+  ) );
   m_unused_face = static_cast<ON_SubDFace*>(unused_list);
-  return static_cast<ON_SubDFace*>(c);
+  if (nullptr != f)
+    f->ClearPerFaceColor();
+  return f;
 }
 
 void ON_SubDHeap::ReturnFace(class ON_SubDFace* f)

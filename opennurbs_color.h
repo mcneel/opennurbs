@@ -193,6 +193,115 @@ public:
          double v // value     
          );
 
+  ///<summary>
+  /// Formats used by ON_Color::ToText() and ON_Color::ToString().
+  ///</summary>
+  enum class TextFormat: unsigned char
+  {
+    ///<summary>
+    /// Indicates no format has been selected. Empty text is created.
+    ///</summary>
+    Unset = 0,
+
+    ///<summary>
+    /// red,green,blue as floating point values from  0.0 to 1.0.
+    ///</summary>
+    FractionalRGB = 1,
+
+    ///<summary>
+    /// red,green,blue as floating point values from 0.0 to 1.0. alpha is appended if it is not zero.
+    ///</summary>
+    FractionalRGBa = 2,
+
+    ///<summary>
+    /// red,green,blue,alpha as floating point values from 0.0 to 1.0.
+    ///</summary>
+    FractionalRGBA = 3,
+
+    ///<summary>
+    /// red,green,blue as decimal integers from 0 to 255.
+    ///</summary>
+    DecimalRGB = 4,
+
+    ///<summary>
+    /// red,green,blue as decimal integers from 0 to 255. alpha is appended if it is not zero.
+    ///</summary>
+    DecimalRGBa = 5,
+
+    ///<summary>
+    /// red,green,blue,alpha as decimal integers from 0 to 255.
+    ///</summary>
+    DecimalRGBA = 6,
+
+    ///<summary>
+    /// red,green,blue as hexadecimal integers from 0 to 255.
+    ///</summary>
+    HexadecimalRGB = 7,
+
+    ///<summary>
+    /// red,green,blue as hexadecimal integers from 0 to 255. alpha is appended if it is not zero.
+    ///</summary>
+    HexadecimalRGBa = 8,
+
+    ///<summary>
+    /// red,green,blue,alpha as hexadecimal integers from 0 to 255.
+    ///</summary>
+    HexadecimalRGBA = 9,
+
+    ///<summary>
+    /// hue (0 to 2pi), saturation (0 to 1), value (0 to 1) as floating point values.
+    ///</summary>
+    HSV = 10,
+
+    ///<summary>
+    /// hue (0 to 2pi), saturation (0 to 1), value (0 to 1) as floating point values. alpha (0 to 1) is appended if it is not zero.
+    ///</summary>
+    HSVa = 11,
+
+    ///<summary>
+    /// hue (0 to 2pi), saturation (0 to 1), value (0 to 1), alpha (0 to 1) as floating point values.
+    ///</summary>
+    HSVA = 12,
+  };
+
+  /*
+  Parameters:
+    format - [in]
+    separator - [in]
+    character to sepearate numbers (unicode code point - UTF-16 surrogate pairs not supported)
+      pass 0 for default.
+    bFormatUnsetColor - [in]
+      If true, ON_Color::UnsetColor will return "UnsetColor". Otherwise ON_Color::UnsetColor will return the empty string.
+    text_log - [in]
+      destination of the text.
+  */
+  const ON_wString ToString(
+    ON_Color::TextFormat format,
+    wchar_t separator,
+    bool bFormatUnsetColor,
+    class ON_TextLog& text_log
+  ) const;
+
+  /*
+  Parameters:
+    format - [in]
+      If format is ON_Color::TextFormat::Unset, then text_log.ColorFormat is used.
+    separator - [in]
+    character to sepearate numbers (unicode code point - UTF-16 surrogate pairs not supported)
+      pass 0 for default.
+    bFormatUnsetColor - [in]
+      If true, ON_Color::UnsetColor will return "UnsetColor". Otherwise ON_Color::UnsetColor will return the empty string.
+    text_log - [in]
+      destination of the text.
+  */
+  void ToText(
+    ON_Color::TextFormat format,
+    wchar_t separator,
+    bool bFormatUnsetColor,
+    class ON_TextLog& text_log
+  ) const;
+
+
 private:
   union {
     // On little endian (Intel) computers, m_color has the same byte order

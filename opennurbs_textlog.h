@@ -45,6 +45,65 @@ public:
   */
   ON_TextLog( ON_wString& s );
 
+
+  //////////////////////////////////////////////////////////////
+  //
+  // Level of detail interface
+  //
+
+  /// <summary>
+  /// ON_TextLog::LevelOfDetail determines ow much detail is printed. Functions that have an ON_TextLog
+  /// parameter, like the Dump() functions, may use the level of detail to tailor their output.
+  /// may use the level of detail to tailor their output.
+  /// </summary>
+  enum class LevelOfDetail : unsigned char
+  {
+    /// <summary>
+    /// A brief summary or synopsis.
+    /// </summary>
+    Minimum = 0,
+
+    /// <summary>
+    /// The default level of detail.
+    /// </summary>
+    Medium = 1,
+
+    /// <summary>
+    /// A verbose description that may be so long it obscures the important points.
+    /// </summary>
+    Maximum = 2
+  };
+
+  static ON_TextLog::LevelOfDetail LevelOfDetailFromUnsigned(
+    unsigned int level_of_detail
+  );
+
+  /*
+  Description:
+    Set the level of detail to print.
+  Parameters:
+    level_of_detail - [in]
+      (default = ON_TextLog::LevelOfDetail::Medium)
+  */
+  void SetLevelOfDetail(ON_TextLog::LevelOfDetail level_of_detail);
+
+  /*
+  Returns:
+    Level of detail to print
+    0 = minimum level of detail
+    4 = maximum level of detail
+  */
+  ON_TextLog::LevelOfDetail GetLevelOfDetail() const;
+
+  /*
+  Parameter:
+    level_of_detail - [in]
+  Returns:
+    True if this text log's level of detail the same or more detailed than
+    the amount specified by level_of_detail.
+  */
+  bool LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail level_of_detail);
+
   /*
   Description:
     ON_TextLog::Null is a silent text log and can be used when no output
@@ -74,6 +133,15 @@ public:
 
   void SetFloatFormat( const char* ); // default is %g
   void GetFloatFormat( ON_String& ) const;
+
+  void SetColorFormat(ON_Color::TextFormat color_format);
+  ON_Color::TextFormat GetColorFormat();
+
+  /*
+  Description:
+    Returns color format to the default ON_Color::TextFormat::DecimalRGBa
+  */
+  void ClearColorFormat();
 
   void PushIndent();
   void PopIndent();
@@ -166,6 +234,18 @@ public:
 
   /*
   Description:
+    Same as calling Print(" ");
+  */
+  void PrintSpace();
+
+  /*
+  Description:
+    Same as calling Print("\t");
+  */
+  void PrintTab();
+
+  /*
+  Description:
     Print an unformatted ASCII string of any length.
   Parameters:
     s - [in] nullptr terminated ASCII string.
@@ -180,7 +260,17 @@ public:
   */
   void PrintString( const wchar_t* s );
   
-  void PrintRGB( const ON_Color& );
+  /*
+  Description:
+    Print color using the format ON_Color::TextFormat::DecimalRGB.
+  */
+  void PrintRGB( const ON_Color& color);
+
+  /*
+  Description:
+    Print color using ON_Color::ToText(this->GetColorFormat(),0,true,*this);
+  */
+  void PrintColor(const ON_Color& color);
 
   /*
   Description:
@@ -293,8 +383,9 @@ private:
   int m_indent_count = 0;
 
   const bool m_bNullTextLog = false;
-  ON__UINT8 m_reserved0 = 0;
-  ON__UINT16 m_reserved1 = 0;
+  ON_TextLog::LevelOfDetail m_level_of_detail = ON_TextLog::LevelOfDetail::Medium;
+  ON_Color::TextFormat m_color_format = ON_Color::TextFormat::DecimalRGBa;
+  ON__UINT8 m_reserved1 = 0;
 
 private:
   ON_TextLog( const ON_TextLog& ) = delete;
@@ -332,6 +423,40 @@ private:
   // (no implementations)
   ON_TextLogIndent(const ON_TextLogIndent&);
   ON_TextLogIndent& operator=(const ON_TextLogIndent&);
+};
+
+
+/*
+Description:
+  ON_TextLogLevelOfDetail is a class used with ON_TextLog to push and pop level of detail.
+*/
+class ON_CLASS ON_TextLogLevelOfDetail
+{
+public:
+
+  // The constructor saves the current level of detail and then sets the level of detail to level_of_detail.
+  ON_TextLogLevelOfDetail(
+    class ON_TextLog& text_log,
+    ON_TextLog::LevelOfDetail level_of_detail
+  );
+
+  // The destructor restores the level ot detail the saved value.
+  ~ON_TextLogLevelOfDetail();
+
+  /*
+  Returns:
+    Level of detail the text log had when the constructor was called.
+  */
+  ON_TextLog::LevelOfDetail SavedLevelOfDetail() const;
+
+private:
+  ON_TextLogLevelOfDetail() = delete;
+  ON_TextLogLevelOfDetail(const ON_TextLogLevelOfDetail&) = delete;
+  ON_TextLogLevelOfDetail& operator=(const ON_TextLogLevelOfDetail&) = delete;
+
+private:
+  class ON_TextLog& m_text_log;
+  const ON_TextLog::LevelOfDetail m_saved_level_of_detail;
 };
 
 class ON_CLASS ON_TextHash : public ON_TextLog

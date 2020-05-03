@@ -724,7 +724,7 @@ public:
   /*
   Parameters:
     parent_idef_uuid - [in]
-      The peristent id of the parent idef that contains the (possibly deeply nested)
+      The persistent id of the parent idef that contains the (possibly deeply nested)
       instance definion this reference refers to.
     parent_reference_file - [in]
       the file for the parent idef.
@@ -771,7 +771,7 @@ private:
   //  iref.m_parent_reference_file = idefA.FileReference().
   //  iref.m_nested_reference_file = idefX.FileReference().
   // 
-  // is used to identify idefX in a peristent way.
+  // is used to identify idefX in a persistent way.
   //
   bool m_bReferenceToNestedLinkedIdef = false;
   ON_UUID m_parent_idef_uuid = ON_nil_uuid; // persistent id
