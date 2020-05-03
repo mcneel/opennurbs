@@ -942,10 +942,14 @@ bool ON_SubDFace::Write(
   {
     if (!WriteBase(this,archive))
       break;
-    if (!archive.WriteInt(m_zero_face_id))
+    if (!archive.WriteInt(m_level_zero_face_id))
       break;
-    if (!archive.WriteInt(m_parent_face_id))
+
+    // OBSOLETE parent face id
+    const int obsolete_parent_face_id = 0;
+    if (!archive.WriteInt(obsolete_parent_face_id))
       break;
+
     if (!archive.WriteShort(m_edge_count))
       break;
     if (!WriteEdgePtrList(m_edge_count,sizeof(m_edge4)/sizeof(m_edge4[0]),m_edge4,m_edgex_capacity,m_edgex, archive))
@@ -981,30 +985,26 @@ bool ON_SubDFace::Write(
         break;
     }
 
-    //////if ( ON::Version() >= ON_VersionNumberConstruct(7, 0, 2020, 2, 18, 0) )
+    // 4 byte render material channel index
+    const int material_channel_index = MaterialChannelIndex();
+    const bool bWriteMaterialChannelIndex = (material_channel_index > 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex);
+    if (false == Internal_WriteComponentAdditionSize(bWriteMaterialChannelIndex, archive, 4))
+      break;
+    if (bWriteMaterialChannelIndex)
     {
-      ////// https://mcneel.myjetbrains.com/youtrack/issue/RH-56820
-      ////// Today is Feb 3, 2020.
-      ////// We need to give Rhino 7 WIP users until Feb 18, 2020 to get automatically 
-      ////// updated before we can save the material index in 3dm archives.
-      ////// This is because there was a bug in Internal_FinishReadingComponentAdditions()
-      ////// that failed to keep the chunk CRCs up to date when older versions of Rhino
-      ////// skipped over newer information. 
-      ////// This CRC bug was fixed Feb 3, 2020 and made available to customers Feb 4, 2020.
-      ////// On or after Feb 18, 2020, this comment and the if ( ON::Version() >= ON_VersionNumberConstruct(7, 0, 2020, 2, 18, 0) )....
-      ////// check can be removed.
-      //
-      // Done Feb 20, 2020.  The comment can be deleted in March 2020 or later because by then this code will have been well tested.
-
-      const int material_channel_index = MaterialChannelIndex();
-      const bool bWriteMaterialChannelIndex = (material_channel_index > 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex);
-      if (false == Internal_WriteComponentAdditionSize(bWriteMaterialChannelIndex, archive, 4))
+      if (!archive.WriteInt(material_channel_index))
         break;
-      if (bWriteMaterialChannelIndex)
-      {
-        if (!archive.WriteInt(material_channel_index))
-          break;
-      }
+    }
+
+    // 4 byte per face color
+    const ON_Color per_face_color = PerFaceColor();
+    const bool bWritePerFaceColor = (ON_Color::UnsetColor != per_face_color);
+    if (false == Internal_WriteComponentAdditionSize(bWritePerFaceColor, archive, 4))
+      break;
+    if (bWritePerFaceColor)
+    {
+      if (!archive.WriteColor(per_face_color))
+        break;
     }
 
     return Internal_FinishWritingComponentAdditions(archive);
@@ -1027,15 +1027,15 @@ bool ON_SubDFace::Read(
       break;
 
     ON_SubDComponentBase base = ON_SubDComponentBase::Unset;
-    unsigned int zero_face_id = 0;
-    unsigned int parent_face_id = 0;
+    unsigned int level_zero_face_id = 0;
+    unsigned int obsolete_parent_face_id = 0;
     unsigned short edge_count = 0;
 
     if (!ReadBase(archive,base))
       break;
-    if (!archive.ReadInt(&zero_face_id))
+    if (!archive.ReadInt(&level_zero_face_id))
       break;
-    if (!archive.ReadInt(&parent_face_id))
+    if (!archive.ReadInt(&obsolete_parent_face_id))
       break;
     if (!archive.ReadShort(&edge_count))
       break;
@@ -1051,8 +1051,7 @@ bool ON_SubDFace::Read(
 
     f->ON_SubDComponentBase::operator=(base);
 
-    f->m_zero_face_id = zero_face_id;
-    f->m_parent_face_id = parent_face_id;
+    f->m_level_zero_face_id = level_zero_face_id;
 
     if (!ReadEdgePtrList(archive,edge_count,sizeof(f->m_edge4)/sizeof(f->m_edge4[0]),f->m_edge4,f->m_edgex_capacity,f->m_edgex))
       break;
@@ -1107,6 +1106,20 @@ bool ON_SubDFace::Read(
       if (false == archive.ReadInt(&material_channel_index))
         break;
       f->SetMaterialChannelIndex(material_channel_index);
+    }
+
+    sz = 0;
+    if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
+      break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
+    if (0 != sz)
+    {
+      // 4 bytes of per face color
+      ON_Color per_face_color = ON_Color::UnsetColor;
+      if (false == archive.ReadColor(per_face_color))
+        break;
+      f->SetPerFaceColor(per_face_color);
     }
 
     return Internal_FinishReadingComponentAdditions(archive);

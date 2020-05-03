@@ -685,7 +685,7 @@ public:
   /*
   Description:
     Attach a user string to the object.  This information will
-    perisist through copy construction, operator=, and file IO.
+    persist through copy construction, operator=, and file IO.
   Parameters:
     key - [in] id used to retrieve this string.
     string_value - [in] 
@@ -1113,6 +1113,10 @@ public:
 
   Returns:
     Aggregate information about the object's component states.
+
+  Remarks:
+    This function "should" return a const ON_AggregateComponentStatusEx,
+    but that requires breaking the C++ SDK.
   */
   virtual
   ON_AggregateComponentStatus AggregateComponentStatus() const;

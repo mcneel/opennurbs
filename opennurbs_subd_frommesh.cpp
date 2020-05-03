@@ -300,7 +300,7 @@ private:
 
 ON_SubD* ON_SubD::CreateFromMesh(
   const class ON_Mesh* level_zero_mesh,
-  const class ON_ToSubDParameters* from_mesh_options,
+  const class ON_SubDFromMeshParameters* from_mesh_options,
   ON_SubD* subd
 )
 {
@@ -349,7 +349,7 @@ ON_SubD* ON_SubD::CreateFromMesh(
 
 ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   const class ON_Mesh* level_zero_mesh,
-  const class ON_ToSubDParameters* from_mesh_options,
+  const class ON_SubDFromMeshParameters* from_mesh_options,
   ON_SubD* subd
   )
 {
@@ -366,7 +366,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   ON_Workspace ws;
 
   if (nullptr == from_mesh_options)
-    from_mesh_options = &ON_ToSubDParameters::Smooth;
+    from_mesh_options = &ON_SubDFromMeshParameters::Smooth;
 
   ON_3dPointListRef mesh_points(level_zero_mesh);
   const unsigned int mesh_point_count = mesh_points.PointCount();
@@ -416,12 +416,12 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   double max_cos_crease_angle = ON_UNSET_VALUE;
   double min_crease_angle_radians = -ON_UNSET_VALUE;
 
-  ON_ToSubDParameters::InteriorCreaseOption crease_test 
+  ON_SubDFromMeshParameters::InteriorCreaseOption crease_test 
     = (nullptr != from_mesh_options)
     ? from_mesh_options->InteriorCreaseTest()
-    : ON_ToSubDParameters::InteriorCreaseOption::None;
+    : ON_SubDFromMeshParameters::InteriorCreaseOption::None;
 
-  if (ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease == crease_test && nullptr != pointNormal )
+  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease == crease_test && nullptr != pointNormal )
   {
     double min_angle = from_mesh_options->MinimumCreaseAngleRadians();
     if (min_angle >= 0.0 && min_angle < ON_PI)
@@ -438,12 +438,12 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
     }
     else
     {
-      crease_test = ON_ToSubDParameters::InteriorCreaseOption::None;
+      crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
     }
   }
-  else if (ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge != crease_test)
+  else if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge != crease_test)
   {
-    crease_test = ON_ToSubDParameters::InteriorCreaseOption::None;
+    crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
   }
   
   // Get sub-D edge list
@@ -604,7 +604,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
   unsigned int* Nid = nullptr;
   unsigned int nextNid = 0;
-  if (ON_ToSubDParameters::InteriorCreaseOption::AtMeshCrease == crease_test)
+  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease == crease_test)
   {
     Nid = (unsigned int*)ws.GetIntMemory(mesh_point_count);
     memset(Nid, 0, mesh_point_count*sizeof(Nid[0]));
@@ -705,7 +705,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   {
     // set the normal ids from the ON_Mesh m_V[] indices
     struct ON_MeshNGonEdge& mesh_edge_ref = mesh_edges[i];
-    if (ON_ToSubDParameters::InteriorCreaseOption::AtMeshEdge == crease_test)
+    if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge == crease_test)
     {
       // All coincident mesh vertices generate interior creases
       mesh_edge_ref.Ni = mesh_edge_ref.i;
@@ -966,7 +966,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   if ( false == new_subd->IsOriented() )
     new_subd->Orient();
 
-  if (ON_ToSubDParameters::ConvexCornerOption::AtMeshCorner == from_mesh_options->ConvexCornerTest())
+  if (ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner == from_mesh_options->ConvexCornerTest())
   {
     // Add corners
     ON_SubDVertexIterator vit(*new_subd);

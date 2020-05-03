@@ -598,6 +598,23 @@ bool ON_BrepFaceArray::Read( ON_BinaryArchive& file )
           {
             rc = file.ReadUuid( m_a[i].m_face_uuid );
           }
+
+          if (rc && minor_version >= 2)
+          {
+            // chunk version 1.2 and later has per face colors
+            bool bHavePerFaceColors = false;
+            rc = file.ReadBool(&bHavePerFaceColors);
+            if (rc && bHavePerFaceColors)
+            {
+              for (i = 0; rc && i < count; i++)
+              {
+                ON_Color per_face_color = ON_Color::UnsetColor;
+                rc = file.ReadColor(per_face_color);
+                if (rc && ON_Color::UnsetColor != per_face_color)
+                  m_a[i].SetPerFaceColor(per_face_color);
+              }
+            }
+          }
         }
       }
       else 
@@ -617,7 +634,10 @@ bool ON_BrepFaceArray::Write( ON_BinaryArchive& file ) const
   bool rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
   if (rc) 
   {
-    rc = file.Write3dmChunkVersion(1,1); // 1.1 added m_face_uuid
+    // 1.1 added m_face_uuid
+    // 1.2 added m_per_face_color
+    const int minor_version = file.Archive3dmVersion() >= 70 ? 2 : 1;
+    rc = file.Write3dmChunkVersion(1, minor_version);
 
     // chunk version 1.0 and later
     const int count = Count();
@@ -631,6 +651,27 @@ bool ON_BrepFaceArray::Write( ON_BinaryArchive& file ) const
     for ( i = 0; rc && i < count; i++ )
     {
       rc = file.WriteUuid( m_a[i].m_face_uuid );
+    }
+
+    if (rc && minor_version >= 2)
+    {
+      // 1.2 added optional per face colors
+      bool bHavePerFaceColors = false;
+      for (i = 0; rc && i < count; i++)
+      {
+        if (ON_Color::UnsetColor != m_a[i].PerFaceColor())
+        {
+          bHavePerFaceColors = true;
+          break;
+        }
+      }
+
+      rc = file.WriteBool(bHavePerFaceColors);
+      if (rc && bHavePerFaceColors)
+      {
+        for (i = 0; rc && i < count; i++)
+          rc = file.WriteColor(m_a[i].PerFaceColor());
+      }
     }
 
     if ( !file.EndWrite3dmChunk() )

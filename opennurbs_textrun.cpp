@@ -257,17 +257,30 @@ ON_TextRunArray::ON_TextRunArray(const ON_TextRunArray& src)
 
 ON_StackedText::~ON_StackedText()
 {
+  // NOTE WELL:
+  //  https://mcneel.myjetbrains.com/youtrack/issue/RH-57616
+  //  ON_StackedText::Empty is a global const instance.
+  //  Compilers like VS 2019 16.5.0 set the memory for that instance to read-only.
+  //  This destructor must not write to memory used by const instances.
+  //
+  // m_top_run, m_bottom_run, and m_parent_run are set to nullptr to prevent crashes 
+  // if in-place classes are referenced after destruction.
+  // This is done because bugs are better than crashes in the released product.
+
   if (nullptr != m_top_run)
   {
     ON_TextRun::ReturnManagedTextRun(m_top_run);
+    m_top_run = nullptr;
   }
   if (nullptr != m_bottom_run)
   {
     ON_TextRun::ReturnManagedTextRun(m_bottom_run);
+    m_bottom_run = nullptr;
   }
-  m_top_run = nullptr;
-  m_bottom_run = nullptr;
-  m_parent_run = nullptr;
+  if (nullptr != m_parent_run)
+  {
+    m_parent_run = nullptr;
+  }
 }
 
 ON_StackedText::ON_StackedText(const ON_StackedText& src)

@@ -5496,6 +5496,8 @@ int ON_MappingChannel::Compare( const ON_MappingChannel& other ) const
   int rc = m_mapping_channel_id - other.m_mapping_channel_id;
   if (!rc)
     rc = ON_UuidCompare(m_mapping_id,other.m_mapping_id);
+  if (!rc)
+    rc = m_object_xform.Compare(other.m_object_xform);
   return rc;
 }
 
@@ -7110,6 +7112,27 @@ ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void)
 const ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void) const
 {
   return ON_PhysicallyBasedMaterial(*this);
+}
+
+ON_Material ON_Material::ConvertToPhysicallyBased(void) const
+{
+  if (PhysicallyBased().Supported())
+    return *this;
+
+  //Copy all of the textures and the old-school parameters first.
+  ON_Material material(*this);
+  auto pbr = material.PhysicallyBased();
+
+  const bool bMetal = m_transparency < 0.01 && !m_bFresnelReflections && m_reflectivity > 0.99;
+  const bool bGlass = m_transparency > 0.99;
+
+  pbr.SetBaseColor(bMetal ? m_reflection : bGlass ? m_transparent : m_diffuse);
+  pbr.SetMetallic(bMetal ? 1.0 : 0.0);
+  pbr.SetRoughness(bMetal ? m_reflection_glossiness : 1.0 - m_reflectivity);
+  pbr.SetOpacity(1.0 - m_transparency);
+  pbr.SetOpacityIOR(m_index_of_refraction);
+
+  return material;
 }
 
 

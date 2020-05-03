@@ -524,6 +524,14 @@ private:
 // ON_AggregateComponentStatus
 //
 //
+
+
+/*
+ON_AggregateComponentStatus is obsolte.
+It exists because the virtual interface on ON_Object and the member on ON_Brep
+cannot be changed without breakky the pubic C++ SDK.
+Whenever possible, use ON_AggregateComponentStatusEx.
+*/
 class ON_CLASS ON_AggregateComponentStatus
 {
 public:
@@ -534,6 +542,9 @@ public:
   ~ON_AggregateComponentStatus() = default;
   ON_AggregateComponentStatus(const ON_AggregateComponentStatus&) = default;
   ON_AggregateComponentStatus& operator=(const ON_AggregateComponentStatus&) = default;
+
+  ON_AggregateComponentStatus(const class ON_AggregateComponentStatusEx&);
+  ON_AggregateComponentStatus& operator=(const class ON_AggregateComponentStatusEx&);
 
   /*
   Description:
@@ -663,6 +674,131 @@ private:
 
   // number of damaged components
   unsigned int m_damaged_count = 0;
+};
+
+class ON_CLASS ON_AggregateComponentStatusEx : private ON_AggregateComponentStatus
+{
+public:
+  static const ON_AggregateComponentStatusEx Empty;
+  static const ON_AggregateComponentStatusEx NotCurrent;
+
+  ON_AggregateComponentStatusEx() = default;
+  ~ON_AggregateComponentStatusEx() = default;
+  ON_AggregateComponentStatusEx(const ON_AggregateComponentStatusEx&) = default;
+  ON_AggregateComponentStatusEx& operator=(const ON_AggregateComponentStatusEx&) = default;
+
+  ON_AggregateComponentStatusEx(const ON_AggregateComponentStatus&);
+  ON_AggregateComponentStatusEx& operator=(const ON_AggregateComponentStatus&);
+
+  /*
+  Returns:
+    A runtime serial number that is incremented every time a component status setting 
+    changes, even when the actual counts may be unknown.
+    If the returned value is 0, status information is unknown.
+  */
+  ON__UINT64 ComponentStatusSerialNumber() const;
+
+  /*
+  Description:
+    Sets all states to clear.
+    Marks status as current.
+    Does not change compoent count
+  Returns
+    true if successful.
+    false if information is not current and ClearAllStates() failed.
+  */
+  bool ClearAllStates();
+
+  /*
+  Description:
+    Sets all states specified by states_to_clear to clear.
+    Does not change current mark.
+    Does not change compoent count.
+  Returns
+    true if successful.
+    false if information is not current and ClearAggregateStatus() failed.
+  */
+  bool ClearAggregateStatus(
+    ON_ComponentStatus states_to_clear
+  );
+
+  /*
+  Description:
+    Add the status information in component_status to this aggregate status.
+  Parameters:
+    component_status - [in]
+  Returns:
+    true if successful.
+    false if information is not current and Add failed.
+  */
+  bool Add(
+    ON_ComponentStatus component_status
+  );
+
+  /*
+  Description:
+    Add the status information in aggregate_status to this aggregate status.
+  Parameters:
+    aggregate_status - [in]
+  Returns:
+    true if successful.
+    false if information is not current and Add failed.
+  */
+  bool Add(
+    const ON_AggregateComponentStatus& aggregate_status
+  );
+
+  /*
+  Returns:
+    true if this is empty
+    false if not empty.
+  */
+  bool IsEmpty() const;
+
+  /*
+  Returns:
+    true if the information is current (valid, up to date, ...).
+    false if the information is not current.
+  Remarks:
+    If the information is not current, all counts are zero and states are clear.
+  */
+  bool IsCurrent() const;
+
+  /*
+  Description:
+    Mark the information as not current.
+    Erases all information.
+  */
+  void MarkAsNotCurrent();
+
+  ON_ComponentStatus AggregateStatus() const;
+
+  unsigned int ComponentCount() const;
+
+  /*
+  Returns:
+    Number of compoents that are selected or persistently selected.
+  */
+  unsigned int SelectedCount() const;
+
+  /*
+  Returns:
+    Number of compoents that are persistently selected.
+  */
+  unsigned int SelectedPersistentCount() const;
+
+  unsigned int HighlightedCount() const;
+
+  unsigned int HiddenCount() const;
+
+  unsigned int LockedCount() const;
+
+  unsigned int DamagedCount() const;
+
+private:
+  // Whenever component status changes, m_runtime_serial_number is changed by calling Internal_ChangeStatusSerialNumber().
+  void Internal_ChangeStatusSerialNumber();
+  ON__UINT64 m_component_status_serial_number = 0;
 };
 
 //////////////////////////////////////////////////////////////////////////

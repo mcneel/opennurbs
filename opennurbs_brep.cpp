@@ -825,6 +825,7 @@ ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
     m_bRev  = src.m_bRev;
     m_face_material_channel = src.m_face_material_channel;
     m_face_uuid = src.m_face_uuid;
+    m_per_face_color = src.m_per_face_color;
     if ( m_render_mesh ) {
       delete m_render_mesh;
       m_render_mesh = 0;
@@ -846,7 +847,6 @@ ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
     if ( src.m_preview_mesh ) {
       m_preview_mesh = new ON_Mesh(*src.m_preview_mesh);
     }    
-    //m_material_index = src.m_material_index;
   }
   return *this;
 }
@@ -927,27 +927,52 @@ bool ON_BrepFace::IsValid( ON_TextLog* text_log ) const
 void ON_BrepFace::Dump( ON_TextLog& dump ) const
 {
   dump.Print("ON_BrepFace[%d]:",m_face_index);
+  bool bNeedComma = false;
   if ( ON_UuidCompare(m_face_uuid,ON_nil_uuid) )
   {
-    dump.Print(" (");
+    if (bNeedComma)
+      dump.Print(",");
+    dump.Print(" FaceId=");
     dump.Print(m_face_uuid);
-    dump.Print(" )");
+    bNeedComma = true;
+  }
+  if (ON_Color::UnsetColor != m_per_face_color)
+  {
+    if (bNeedComma)
+      dump.Print(",");
+    dump.Print(" PerFaceColor=(");
+    dump.PrintColor(m_per_face_color);
+    dump.Print(")");
+  }
+  if (0 != m_face_material_channel)
+  {
+    if (bNeedComma)
+      dump.Print(",");
+    dump.Print(" PerFaceMaterialChannel=");
+    dump.Print("%d", m_face_material_channel);
   }
   dump.Print("\n");
 }
 
-
 void ON_BrepFace::SetMaterialChannelIndex(int material_channel_index) const
 {
-  if (material_channel_index >= 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex)
+  if (material_channel_index > 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex)
   {
     const_cast<ON_BrepFace*>(this)->m_face_material_channel = material_channel_index;
   }
   else
   {
-    ON_ERROR("Invalid material_channel_index value.");
-    const_cast<ON_BrepFace*>(this)->m_face_material_channel = 0;
+    if (0 != material_channel_index)
+    {
+      ON_ERROR("Invalid material_channel_index value.");
+    }
+    ClearMaterialChannelIndex(); // makes it easier to detect when the per face setting is cleared.
   }
+}
+
+void ON_BrepFace::ClearMaterialChannelIndex() const
+{
+  const_cast<ON_BrepFace*>(this)->m_face_material_channel = 0;
 }
 
 int ON_BrepFace::MaterialChannelIndex() const
@@ -955,17 +980,84 @@ int ON_BrepFace::MaterialChannelIndex() const
   return m_face_material_channel;
 }
 
-/*
-int ON_BrepFace::MaterialIndex() const
+void ON_BrepFace::SetPerFaceColor(
+  ON_Color color
+  ) const
 {
-  return m_material_index;
+  if (ON_Color::UnsetColor == color)
+    ClearPerFaceColor(); // makes it easier to detect when the per face setting is cleared.
+  else
+    m_per_face_color = color;
 }
 
-void ON_BrepFace::SetMaterialIndex(int mi)
+void ON_BrepFace::ClearPerFaceColor() const
 {
-  m_material_index = (mi>0) ? mi : -1;
+  m_per_face_color = ON_Color::UnsetColor;
 }
-*/
+
+
+const ON_Color ON_BrepFace::PerFaceColor() const
+{
+  return m_per_face_color;
+}
+
+
+unsigned int ON_Brep::ClearPerFaceMaterialChannelIndices()
+{
+  unsigned change_count = 0;
+  const unsigned face_count = m_F.UnsignedCount();
+  const ON_BrepFace* f = m_F.Array();
+  for (unsigned fi = 0; fi < face_count; ++fi)
+  {
+    if (0 != f[fi].m_face_material_channel)
+    {
+      f[fi].ClearMaterialChannelIndex();
+      ++change_count;
+    }
+  }
+  return change_count;
+}
+
+bool ON_Brep::HasPerFaceMaterialChannelIndices() const
+{
+  const unsigned face_count = m_F.UnsignedCount();
+  const ON_BrepFace* f = m_F.Array();
+  for (unsigned fi = 0; fi < face_count; ++fi)
+  {
+    if (0 != f[fi].m_face_material_channel)
+      return true;
+  }
+  return false;
+}
+
+unsigned int ON_Brep::ClearPerFaceColors() const
+{
+  unsigned change_count = 0;
+  const unsigned face_count = m_F.UnsignedCount();
+  const ON_BrepFace* f = m_F.Array();
+  for (unsigned fi = 0; fi < face_count; ++fi)
+  {
+    if (ON_Color::UnsetColor != f[fi].m_per_face_color)
+    {
+      f[fi].ClearPerFaceColor();
+      ++change_count;
+    }
+  }
+  return change_count;
+}
+
+bool ON_Brep::HasPerFaceColors() const
+{
+  const unsigned face_count = m_F.UnsignedCount();
+  const ON_BrepFace* f = m_F.Array();
+  for (unsigned fi = 0; fi < face_count; ++fi)
+  {
+    if (ON_Color::UnsetColor != f[fi].m_per_face_color)
+      return true;
+  }
+  return false;
+}
+
 
 const ON_Mesh* ON_BrepFace::Mesh( ON::mesh_type mt ) const
 {
@@ -1157,6 +1249,37 @@ ON_Brep::ON_Brep()
 { 
   ON__SET__THIS__PTR(m_s_ON_Brep_ptr);
   Initialize();
+
+  /*
+  const size_t sz = sizeof(*this);
+  const char* p0 = (char*)(this);
+  const char* p1 = (char*)(&m_bbox);
+  const char* p2 = (char*)(&m_region_topology);
+  const char* p3 = (char*)(&m_aggregate_status);
+  const char* p4 = (char*)(&m_is_solid);
+  const char* p5 = (char*)(&m_sleep_lock);
+  const char* p100 = (char*)(this+1);
+
+  const size_t offset1 = (p1 - p0);
+  const size_t offset2 = (p2 - p0);
+  const size_t offset3 = (p3 - p0);
+  const size_t offset4 = (p4 - p0);
+  const size_t offset5 = (p5 - p0);
+  const size_t offset100 = (p100 - p0);
+  ON_TextLog::Null.Print(L"", sz, offset1, offset2, offset3, offset4, offset5, offset100);
+
+  //BEFORE:
+  //  offset1	216
+  //  offset2	264
+  //  offset3	272
+  //  offset4	304
+  //  offset5	308
+  //  offset100	312
+  //  sz	312
+
+  //  AFTER
+  //  ...
+  */
 }
 
 ON_Brep::ON_Brep(const ON_Brep& src) : ON_Geometry(src)
@@ -9008,7 +9131,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     face_copy.m_bbox = face.m_bbox;
     face_copy.m_domain[0] = face.m_domain[0];
     face_copy.m_domain[1] = face.m_domain[1];
-    //face_copy.m_material_index = face.m_material_index;
+    face_copy.m_per_face_color = face.m_per_face_color;
     // do NOT duplicate meshes here
 
     // duplicate loops and trims
@@ -11137,7 +11260,7 @@ ON_BrepVertex& ON_Brep::NewPointOnFace(
   
   ON_BrepVertex& vertex = NewVertex( point );
   ON_BrepLoop& loop = NewLoop( ON_BrepLoop::ptonsrf, face );
-  ON_BrepTrim& trim = NewTrim(false,loop,-1);
+  ON_BrepTrim& trim = NewTrim(false, loop, -1);
 
   vertex.m_tolerance = 0.0;
   trim.m_type = ON_BrepTrim::ptonsrf;

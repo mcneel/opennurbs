@@ -47,6 +47,27 @@ ON_TextLogIndent::~ON_TextLogIndent()
     m_text_log.PopIndent();
 }
 
+ON_TextLogLevelOfDetail::ON_TextLogLevelOfDetail(
+  class ON_TextLog& text_log,
+  ON_TextLog::LevelOfDetail level_of_detail
+)
+  : m_text_log(text_log)
+  , m_saved_level_of_detail(text_log.GetLevelOfDetail())
+{
+  m_text_log.SetLevelOfDetail(level_of_detail);
+}
+
+ON_TextLogLevelOfDetail::~ON_TextLogLevelOfDetail()
+{
+  m_text_log.SetLevelOfDetail(m_saved_level_of_detail);
+}
+
+ON_TextLog::LevelOfDetail ON_TextLogLevelOfDetail::SavedLevelOfDetail() const
+{
+  return m_saved_level_of_detail;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 ON_TextLog::ON_TextLog()
@@ -81,6 +102,58 @@ ON_TextLog::ON_TextLog( ON_wString& wstr )
 
 ON_TextLog::~ON_TextLog()
 {
+}
+
+
+ON_TextLog::LevelOfDetail ON_TextLog::LevelOfDetailFromUnsigned(
+  unsigned int level_of_detail
+)
+{
+  switch (level_of_detail)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextLog::LevelOfDetail::Minimum);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextLog::LevelOfDetail::Medium);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextLog::LevelOfDetail::Maximum);
+  }
+  ON_ERROR("Invalid level_of_detail parameter value");
+  return (ON_TextLog::LevelOfDetail::Medium);
+}
+
+void ON_TextLog::SetLevelOfDetail(ON_TextLog::LevelOfDetail level_of_detail)
+{
+  if (false == IsNull() && false == IsTextHash())
+  {
+    if (level_of_detail == ON_TextLog::LevelOfDetailFromUnsigned(static_cast<unsigned int>(level_of_detail)))
+      m_level_of_detail = level_of_detail;
+  }
+}
+
+ON_TextLog::LevelOfDetail ON_TextLog::GetLevelOfDetail() const
+{
+  return m_level_of_detail;
+}
+
+bool ON_TextLog::LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail level_of_detail)
+{
+  return static_cast<unsigned int>(m_level_of_detail) >= static_cast<unsigned int>(level_of_detail);
+}
+
+void ON_TextLog::SetColorFormat(ON_Color::TextFormat color_format)
+{
+  if (ON_Color::TextFormat::Unset == color_format)
+    ClearColorFormat();
+  else
+    m_color_format = (color_format);
+}
+
+ON_Color::TextFormat ON_TextLog::GetColorFormat()
+{
+  return m_color_format;
+}
+
+void ON_TextLog::ClearColorFormat()
+{
+  m_color_format = ON_Color::TextFormat::DecimalRGBa;
 }
 
 void ON_TextLog::SetDoubleFormat(const char* sFormat)
@@ -569,6 +642,17 @@ void ON_TextLog::PrintNewLine()
   Print("\n");
 }
 
+void ON_TextLog::PrintSpace()
+{
+  Print("\n");
+}
+
+void ON_TextLog::PrintTab()
+{
+  Print("\t");
+}
+
+
 void ON_TextLog::PrintString( const wchar_t* s )
 {
   if (s && *s)
@@ -579,12 +663,14 @@ void ON_TextLog::PrintString( const wchar_t* s )
   }
 }
 
-void ON_TextLog::PrintRGB( const ON_Color& color )
+void ON_TextLog::PrintRGB(const ON_Color& color)
 {
-  if ( color == ON_UNSET_COLOR )
-    Print("ON_UNSET_COLOR");
-  else
-    Print("%d %d %d",color.Red(),color.Green(),color.Blue());
+  color.ToText(ON_Color::TextFormat::DecimalRGB, 0, true, *this);
+}
+
+void ON_TextLog::PrintColor(const ON_Color& color)
+{
+  color.ToText(this->GetColorFormat(), 0, true, *this);
 }
 
 void ON_TextLog::PrintCurrentTime()

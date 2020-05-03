@@ -149,6 +149,14 @@ public:
   bool SetPointOnObjectValue( int value_id, const ON_ObjRef& oref, ON_3dPoint point );
   bool SetUuidValue(     int value_id, ON_UUID uuid );
   bool SetStringValue(   int value_id, const wchar_t* s );
+  /*
+  Parameters:
+    edge_chain - [in]
+      edge_chain.PersistentSubDId() must be non-nil and identify the parent subd in the model.
+      If the model is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If the model is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  */
+  bool SetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain& edge_chain);
   bool SetGeometryValue( int value_id, ON_Geometry* g);
   bool SetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory& polyedge );
 
@@ -196,7 +204,16 @@ public:
   bool SetStringValues(   int value_id, int count, const wchar_t* const* s );
   bool SetStringValues(   int value_id, const ON_ClassArray<ON_wString>& s );
   bool SetGeometryValues( int value_id, const ON_SimpleArray<ON_Geometry*> a);
-  bool SetPolyEdgeValues( int value_id, int count, const ON_PolyEdgeHistory* a );
+  /*
+  Parameters:
+    edge_chain - [in]
+      edge_chain.PersistentSubDId() must be non-nil and identify the parent subd in the model.
+      If the model is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If the model is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  */
+  bool SetSubDEdgeChainValues(int value_id, const ON_ClassArray<ON_SubDEdgeChain>& edge_chains);
+  bool SetSubDEdgeChainValues(int value_id, const ON_SimpleArray<const ON_SubDEdgeChain*>& edge_chains);
+  bool SetPolyEdgeValues(int value_id, int count, const ON_PolyEdgeHistory* a);
 
   /*
   Description:
@@ -217,6 +234,7 @@ public:
   bool GetBrepValue( int value_id, const ON_Brep*& ) const;
   bool GetMeshValue( int value_id, const ON_Mesh*& ) const;
   bool GetGeometryValue( int value_id, const ON_Geometry*& ) const;
+  bool GetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain*& edge_chain) const;
   bool GetUuidValue( int value_id, ON_UUID* uuid ) const;
   bool GetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory*& polyedge ) const;
 
@@ -230,6 +248,7 @@ public:
   int GetColorValues( int value_id, ON_SimpleArray<ON_Color>& ) const;
   int GetObjRefValues( int value_id, ON_ClassArray<ON_ObjRef>& objects ) const;
   int GetGeometryValues( int value_id, ON_SimpleArray<const ON_Geometry*>& ) const;
+  int GetSubDEdgeChainValues(int value_id, ON_SimpleArray<const ON_SubDEdgeChain*>& edge_chains) const;
   int GetUuidValues( int value_id, ON_SimpleArray<ON_UUID>& ) const;
   int GetPolyEdgeValues( int value_id, ON_SimpleArray<const ON_PolyEdgeHistory*>& ) const;
 

@@ -7330,6 +7330,7 @@ ON_OutlineFigure::Type ON_OutlineFigure::FigureTypeFromField10Description(
 
   if (description_len > 0)
   {
+    description.MakeLowerOrdinal();
     const ON_wString s[2] = {
       ON_wString(L"singlestroke"),
       ON_wString(L"doublestroke")
@@ -7341,14 +7342,8 @@ ON_OutlineFigure::Type ON_OutlineFigure::FigureTypeFromField10Description(
     size_t count = sizeof(t) / sizeof(t[0]);
     for (size_t i = 0; i < count; ++i)
     {
-      const int s_len = s[i].Length();
-      if (description_len > s_len)
-        continue;
-      for (int j = 0; j < description_len - s_len; ++j)
-      {
-        if ( ON_wString::EqualOrdinal(s[i], s_len, field_10_description, s_len, true) )
-          return t[i];
-      }
+      if (description.Find(s[i]) >= 0)
+        return t[i];
     }
   }
 

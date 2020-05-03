@@ -2367,9 +2367,12 @@ public:
   bool ReadComponentIndex( ON_COMPONENT_INDEX& );
 
   bool ReadArray( ON_SimpleArray<bool>& );
-  bool ReadArray( ON_SimpleArray<char>& );
-  bool ReadArray( ON_SimpleArray<short>& );
-  bool ReadArray( ON_SimpleArray<int>& );
+  bool ReadArray(ON_SimpleArray<char>&);
+  bool ReadArray(ON_SimpleArray<short>&);
+  bool ReadArray(ON_SimpleArray<int>&);
+  bool ReadArray(ON_SimpleArray<unsigned char>&);
+  bool ReadArray(ON_SimpleArray<unsigned short>&);
+  bool ReadArray(ON_SimpleArray<unsigned int>&);
   bool ReadArray( ON_SimpleArray<float>& );
   bool ReadArray( ON_SimpleArray<double>& );
   bool ReadArray( ON_SimpleArray<ON_Color>& );
@@ -2663,6 +2666,11 @@ public:
   bool WriteArray( const ON_SimpleArray<char>& );
   bool WriteArray( const ON_SimpleArray<short>& );
   bool WriteArray( const ON_SimpleArray<int>& );
+
+  bool WriteArray(const ON_SimpleArray<unsigned char>&);
+  bool WriteArray(const ON_SimpleArray<unsigned short>&);
+  bool WriteArray(const ON_SimpleArray<unsigned int>&);
+
   bool WriteArray( const ON_SimpleArray<float>& );
   bool WriteArray( const ON_SimpleArray<double>& );
 
