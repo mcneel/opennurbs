@@ -621,7 +621,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
     e1[2] = fsh.AllocateEdge(v1[2], ON_SubDSectorType::IgnoredSectorCoefficient, v1[3], at_crease_weight);
     f1epts[1] = e1[1];
     f1epts[2] = e1[2];
-    if (nullptr == fsh.AllocateQuad(face0->m_zero_face_id, face0->m_id, f1epts) )
+    if (nullptr == fsh.AllocateQuad(face0->m_level_zero_face_id, face0->m_id, f1epts) )
       return ON_SUBD_RETURN_ERROR(nullptr);
       
     if (i + 1 == N)

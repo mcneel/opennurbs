@@ -276,6 +276,96 @@ void ON_Color::SetHSV(
   SetFractionalRGB(r,g,b);
 }
 
+
+const ON_wString ON_Color::ToString(
+  ON_Color::TextFormat format,
+  wchar_t separator,
+  bool bFormatUnsetColor,
+  class ON_TextLog& text_log
+) const
+{
+  ON_wString s;
+  if (ON_Color::UnsetColor == *this)
+  {
+    if (bFormatUnsetColor)
+      s = L"ON_Color::UnsetColor";
+  }
+  else
+  {
+    if (0 != Alpha())
+    {
+      // handle conditional alpha case
+      switch (format)
+      {
+      case ON_Color::TextFormat::FractionalRGBa:
+        format = ON_Color::TextFormat::FractionalRGBA;
+        break;
+      case ON_Color::TextFormat::DecimalRGBa:
+        format = ON_Color::TextFormat::DecimalRGBA;
+        break;
+      case ON_Color::TextFormat::HexadecimalRGBa:
+        format = ON_Color::TextFormat::HexadecimalRGBA;
+        break;
+      case ON_Color::TextFormat::HSVa:
+        format = ON_Color::TextFormat::HSVA;
+        break;
+      }
+    }
+
+    if (0 == separator)
+      separator = ',';
+
+    switch (format)
+    {
+    case ON_Color::TextFormat::Unset:
+      // intentionally returns empty string.
+      break;
+    case ON_Color::TextFormat::FractionalRGB:
+    case ON_Color::TextFormat::FractionalRGBa: // nonzero alpha handled above
+      s = ON_wString::FormatToString(L"%g%lc%g%lc%g", FractionRed(), separator, FractionGreen(), separator, FractionBlue());
+      break;
+    case ON_Color::TextFormat::FractionalRGBA:
+      s = ON_wString::FormatToString(L"%g%lc%g%lc%g%lc%g", FractionRed(), separator, FractionGreen(), separator, FractionBlue(), separator, FractionAlpha());
+      break;
+    case ON_Color::TextFormat::DecimalRGB:
+    case ON_Color::TextFormat::DecimalRGBa: // nonzero alpha handled above
+      s = ON_wString::FormatToString(L"%d%lc%d%lc%d", Red(), separator, Green(), separator, Blue());
+      break;
+    case ON_Color::TextFormat::DecimalRGBA:
+      s = ON_wString::FormatToString(L"%d%lc%d%lc%d%lc%d", Red(), separator, Green(), separator, Blue(), separator, Alpha());
+      break;
+    case ON_Color::TextFormat::HexadecimalRGB:
+    case ON_Color::TextFormat::HexadecimalRGBa: // nonzero alpha handled above
+      s = ON_wString::FormatToString(L"%02x%lc%02x%lc%02x", Red(), separator, Green(), separator, Blue());
+      break;
+    case ON_Color::TextFormat::HexadecimalRGBA:
+      s = ON_wString::FormatToString(L"%02x%lc%02x%lc%02x%lc%02x", Red(), separator, Green(), separator, Blue(), separator, Alpha());
+      break;
+    case ON_Color::TextFormat::HSV:
+    case ON_Color::TextFormat::HSVa: // nonzero alpha handled above
+      s = ON_wString::FormatToString(L"%g%lc%g%lc%g", Hue(), separator, Saturation(), separator, Value());
+      break;
+    case ON_Color::TextFormat::HSVA:
+      s = ON_wString::FormatToString(L"%g%lc%g%lc%g%lc%g", Hue(), separator, Saturation(), separator, Value(), separator, FractionAlpha());
+      break;
+    }
+  }
+  return s;
+}
+
+
+void ON_Color::ToText(
+  ON_Color::TextFormat format,
+  wchar_t separator,
+  bool bFormatUnsetColor,
+  class ON_TextLog& text_log
+) const
+{
+  const ON_wString s = ToString(format, separator, bFormatUnsetColor, text_log);
+  if (s.IsNotEmpty())
+    text_log.Print(L"%ls", static_cast<const wchar_t*>(s));
+}
+
 ON_ColorStop::ON_ColorStop(const ON_Color& color, double position)
   : m_color(color)
   , m_position(position)

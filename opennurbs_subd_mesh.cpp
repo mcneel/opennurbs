@@ -501,8 +501,8 @@ bool ON_SubDFaceRegion::IsValid(
 
   const unsigned short face_region_subdivision_count = m_face_region.SubdivisionCount();
 
-  bool bPeristentVertex[4] = { bIsQuad, bIsQuad, true, bIsQuad };
-  bool bPeristentEdge[4] = { bIsQuad, true, true, bIsQuad };
+  bool bPersistentVertex[4] = { bIsQuad, bIsQuad, true, bIsQuad };
+  bool bPersistentEdge[4] = { bIsQuad, true, true, bIsQuad };
   for (unsigned short i = bIsQuad?0:1; i < face_region_subdivision_count && i < ON_SubDComponentRegionIndex::IndexCapacity; i++)
   {
     const unsigned short r = m_face_region.m_region_index.m_index[i];
@@ -512,12 +512,12 @@ bool ON_SubDFaceRegion::IsValid(
         ON_SUBD_ERROR("Unexpected value in face_region.m_region_index[].");
       return false;
     }
-    bPeristentVertex[(r+1)%4] = false;
-    bPeristentVertex[(r+2)%4] = false;
-    bPeristentVertex[(r+3)%4] = false;
-    bPeristentEdge[(r+1)%4] = false;
-    bPeristentEdge[(r+2)%4] = false;
-    if (false == bPeristentVertex[r] && false == bPeristentEdge[r] && false == bPeristentEdge[(r + 3) % 4] )
+    bPersistentVertex[(r+1)%4] = false;
+    bPersistentVertex[(r+2)%4] = false;
+    bPersistentVertex[(r+3)%4] = false;
+    bPersistentEdge[(r+1)%4] = false;
+    bPersistentEdge[(r+2)%4] = false;
+    if (false == bPersistentVertex[r] && false == bPersistentEdge[r] && false == bPersistentEdge[(r + 3) % 4] )
       break;
   }
    
@@ -529,7 +529,7 @@ bool ON_SubDFaceRegion::IsValid(
     const bool bEmptyEdge = m_edge_region[ei].IsEmptyRegion();
     if (bEmptyEdge)
     {
-      if ( bPeristentEdge[ei])
+      if ( bPersistentEdge[ei])
       {
         if (false == bSilentError)
           ON_SUBD_ERROR("Unexpected empty edge in m_edge_region[].");
@@ -552,7 +552,7 @@ bool ON_SubDFaceRegion::IsValid(
       return false;
     }
 
-    if (bPeristentEdge[ei])
+    if (bPersistentEdge[ei])
     {
       if (false == m_edge_region[ei].IsPersistentId())
       {
@@ -601,7 +601,7 @@ bool ON_SubDFaceRegion::IsValid(
 
   for (unsigned int vi = 0; vi < 4; vi++)
   {
-    if (bPeristentVertex[vi])
+    if (bPersistentVertex[vi])
     {
       if (false == ON_SubDComponentRegion::IsPersistentId(m_vertex_id[vi]))
       {

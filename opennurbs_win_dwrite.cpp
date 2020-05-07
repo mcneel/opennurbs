@@ -457,6 +457,23 @@ void ON_Font::DumpWindowsDWriteFont(
   // Other names:
   Internal_DWriteFontInformation info_strings[] =
   {
+    // field 4
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_FULL_NAME,L"DWrite full name"),
+
+    // field 6
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,L"DWrite PostScript name"),
+
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES,L"GDI family name"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES,L"GDI sub-family name"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME,L"DWrite weight-stretch-style model family name"),
+
+    // other fields - useful when trying to compare fonts / bugs from different computers
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_COPYRIGHT_NOTICE,L"DWrite field 0 copyright"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_VERSION_STRINGS,L"DWrite field 5 version"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_TRADEMARK,L"DWrite field 7 trademark"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_MANUFACTURER,L"DWrite field 8 manufacturer"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESIGNER,L"DWrite field 9 designer/foundary"),
+
     // DWRITE_INFORMATIONAL_STRING_DESCRIPTION gets field 10 from the ttf file.
     // Opennurbs searches the description saved in field 10 of the name table
     // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
@@ -465,13 +482,14 @@ void ON_Font::DumpWindowsDWriteFont(
     // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
     Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESCRIPTION,L"DWrite field 10 description"),
 
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_FULL_NAME,L"DWrite full name"),
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME,L"DWrite PostScript name"),
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES,L"GDI family name"),
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES,L"GDI sub-family name"),
-
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME,L"Dwrite PostScript CID findfont name")
+    // other fields - useful when trying to compare fonts / bugs from different computers
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_FONT_VENDOR_URL,L"DWrite field 11 vendor URL"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESIGNER_URL,L"DWrite field 12 designer URL"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_LICENSE_DESCRIPTION,L"DWrite field 13 license"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_LICENSE_INFO_URL,L"DWrite field 14 license URL"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME,L"Dwrite field 20 PostScript CID findfont name")
   };
+
   const size_t info_strings_count = sizeof(info_strings) / sizeof(info_strings[0]);
   for (size_t i = 0; i < info_strings_count; i++)
   {
@@ -490,7 +508,7 @@ void ON_Font::DumpWindowsDWriteFont(
   // to identify fonts that are desgned for engraving (and which tend to render poorly when
   // used to dispaly text devices like screens, monitors, and printers).
   // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
-  const ON_wString field_10_description = ON_Font::Field10DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
+  const ON_wString field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
   text_log.Print(L"ON_Font field 10 description = \"%ls\"\n", static_cast<const wchar_t*>(field_10_description));
    
   bool bGotLogfont = false;
@@ -650,15 +668,9 @@ const ON_wString ON_Font::PostScriptNameFromWindowsDWriteFont(
   return ON_wString::EmptyString;
 }
 
-
-// Returns the desription saved in field 10. 
-// Opennurbs searches the description saved in field 10 of the name table
-// for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
-// to identify fonts that are desgned for engraving (and which tend to render poorly when
-// used to dispaly text devices like screens, monitors, and printers).
-// The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
-const ON_wString ON_Font::Field10DescriptionFromWindowsDWriteFont(
+static const ON_wString Internal_InfoStringFromWindowsDWriteFont(
   struct IDWriteFont* dwrite_font,
+  enum DWRITE_INFORMATIONAL_STRING_ID info_string_id,
   const wchar_t* preferedLocale
 )
 {
@@ -667,87 +679,270 @@ const ON_wString ON_Font::Field10DescriptionFromWindowsDWriteFont(
     if (nullptr == dwrite_font)
       break;
     BOOL exists = false;
-    Microsoft::WRL::ComPtr<IDWriteLocalizedStrings> descriptions = nullptr;
-    HRESULT hr = dwrite_font->GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_DESCRIPTION, &descriptions, &exists);
+    Microsoft::WRL::ComPtr<IDWriteLocalizedStrings> info_string = nullptr;
+    HRESULT hr = dwrite_font->GetInformationalStrings(info_string_id, &info_string, &exists);
     if (FAILED(hr))
       break;
     ON_wString loc_description;
     ON_wString en_description;
     if (exists)
-      Internal_GetLocalizeStrings(preferedLocale, descriptions.Get(), loc_description, en_description);
+      Internal_GetLocalizeStrings(preferedLocale, info_string.Get(), loc_description, en_description);
 
     return loc_description.IsNotEmpty() ? loc_description : en_description;
   }
   return ON_wString::EmptyString;
 }
 
+const ON_wString ON_Font::WeightStretchStyleModelFamilyNameFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_0_CopyrightFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_COPYRIGHT_NOTICE, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_5_VersionFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_VERSION_STRINGS, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_7_TrademarkFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_TRADEMARK, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_8_ManufacturerFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_MANUFACTURER, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_9_DesignerFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_DESIGNER, preferedLocale);
+}
+
+// Returns the desription saved in field 10. 
+// Opennurbs searches the description saved in field 10 of the name table
+// for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
+// to identify fonts that are desgned for engraving (and which tend to render poorly when
+// used to dispaly text devices like screens, monitors, and printers).
+// The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
+const ON_wString ON_Font::Field_10_DescriptionFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font,DWRITE_INFORMATIONAL_STRING_DESCRIPTION, preferedLocale);
+}
+
+
+const ON_wString ON_Font::Field_11_VendorURLFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_FONT_VENDOR_URL, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_12_DesignerURLFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_DESIGNER_URL, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_13_LicenseFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_LICENSE_DESCRIPTION, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_14_LicenseURLFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_LICENSE_INFO_URL, preferedLocale);
+}
+
+const ON_wString ON_Font::Field_20_PostScriptCIDNameFromWindowsDWriteFont(
+  struct IDWriteFont* dwrite_font,
+  const wchar_t* preferedLocale
+)
+{
+  return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME, preferedLocale);
+}
+
 void ON_WindowsDWriteFontInformation::Dump(ON_TextLog& text_log) const
 {
   text_log.Print("IDWriteFont:\n");
+
+  const bool bTerse = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Medium);
+  const bool bChatty = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Medium);
+  const bool bVerbose = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Maximum);
+
   ON_TextLogIndent indent1(text_log);
-  if (m_prefered_locale.IsNotEmpty())
-    text_log.Print("Prefered locale = \"%ls\"\n", static_cast<const wchar_t*>(m_prefered_locale));
-  if (FamilyName().IsNotEmpty())
+  if ( bVerbose )
   {
-    if ( FaceName().IsNotEmpty())
-      text_log.Print("Iteration index = family[%d].font[%u]\n", m_family_index, m_family_font_index);
-    else
-      text_log.Print("Iteration index = family[%d]\n", m_family_index);
+    if (m_prefered_locale.IsNotEmpty())
+      text_log.Print("Prefered locale = \"%ls\"\n", static_cast<const wchar_t*>(m_prefered_locale));
+    if (FamilyName().IsNotEmpty())
+    {
+      if (FaceName().IsNotEmpty())
+        text_log.Print("Iteration index = family[%d].font[%u]\n", m_family_index, m_family_font_index);
+      else
+        text_log.Print("Iteration index = family[%d]\n", m_family_index);
+    }
   }
 
-  text_log.Print(L"Localized Names:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Family name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_family_name));
-  text_log.Print(L"Face name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_face_name));
-  text_log.Print(L"PostScript name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_postscript_name));
-  text_log.Print(L"GDI LOGFONT name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_gdi_family_name));
-  text_log.Print(L"GDI subfamily name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_gdi_subfamily_name));
-  text_log.Print(L"Full name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_full_name));
-  text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_10_description));
-  text_log.PopIndent();
-
-  text_log.Print(L"English Names:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Family name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_family_name));
-  text_log.Print(L"Face name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_face_name));
-  text_log.Print(L"PostScript name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_postscript_name));
-  text_log.Print(L"GDI LOGFONT name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_gdi_family_name));
-  text_log.Print(L"GDI subfamily name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_gdi_subfamily_name));
-  text_log.Print(L"Full name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_full_name));
-  text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_10_description));
-  text_log.PopIndent();
-
-  if (m_bSimulatedBold || m_bSimulatedOblique || m_bSimulatedOther)
+  ON_wString family_name = m_loc_family_name;
+  ON_wString face_name = m_loc_face_name;
+  ON_wString postscript_name = m_loc_postscript_name;
+  ON_wString logfont_name = m_loc_gdi_family_name;
+  if (false == bChatty)
   {
-    text_log.Print("Simuilations =");
-    if (m_bSimulatedBold)
-      text_log.Print(" BOLD");
-    if (m_bSimulatedOblique)
-      text_log.Print(" OBLIQUE");
-    if (m_bSimulatedOther)
-      text_log.Print(" other");
-    text_log.PrintNewLine();
+    if (family_name.IsEmpty())
+      family_name = m_en_family_name;
+    if (face_name.IsEmpty())
+      face_name = m_en_face_name;
+    if (postscript_name.IsEmpty())
+      postscript_name = m_en_postscript_name;
+    if (logfont_name.IsEmpty())
+      logfont_name = m_en_gdi_family_name;
   }
 
-  const DWRITE_FONT_WEIGHT dwrite_weight = (DWRITE_FONT_WEIGHT)m_weight;
-  const ON_wString weightString = Internal_DWRITE_FONT_WEIGHT_ToString(dwrite_weight);
-  text_log.Print(L"Weight = %ls\n", static_cast<const wchar_t*>(weightString));
+  if (bChatty)
+    text_log.Print(L"Localized Names:\n");
+  else
+    text_log.Print(L"Names:\n");
   
-  const DWRITE_FONT_STYLE dwrite_style = (DWRITE_FONT_STYLE)m_style;
-  const ON_wString styleString = Internal_DWRITE_FONT_STYLE_ToString(dwrite_style);
-  text_log.Print(L"Style = %ls\n", static_cast<const wchar_t*>(styleString));
-  
-  const DWRITE_FONT_STRETCH dwrite_stretch = (DWRITE_FONT_STRETCH)m_stretch;
-  const ON_wString stretchString = Internal_DWRITE_FONT_STRETCH_ToString(dwrite_stretch);
-  text_log.Print(L"Stretch = %ls\n", static_cast<const wchar_t*>(stretchString));
-  
-  text_log.Print("IsSymbolFont = %s.\n",(m_bIsSymbolFont?"true":"false"));
+  text_log.PushIndent();
 
-  if (0 != m_gdi_interop_logfont.lfFaceName[0])
+  text_log.Print(L"Family name = \"%ls\"\n", static_cast<const wchar_t*>(family_name));
+  text_log.Print(L"Face name = \"%ls\"\n", static_cast<const wchar_t*>(face_name));
+  text_log.Print(L"PostScript name = \"%ls\"\n", static_cast<const wchar_t*>(postscript_name));
+  text_log.Print(L"GDI LOGFONT name = \"%ls\"\n", static_cast<const wchar_t*>(logfont_name));
+
+  if ( bChatty )
   {
-    text_log.Print("GDI interop IsSystemFont = %s\n", (m_gdi_interop_logfont_bIsSystemFont ? "true" : "false"));
-    text_log.Print("GDI interop ");
-    ON_Font::DumpLogfont(&m_gdi_interop_logfont, text_log);
+    text_log.Print(L"GDI subfamily name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_gdi_subfamily_name));
+    text_log.Print(L"Full name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_full_name));
+    if ( bVerbose )
+    {
+      text_log.Print(L"Direct Write Weight-Stretch-Style Model Name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_weight_stretch_style_model_name));
+
+      text_log.Print(L"Field 0 Copyright = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_0_copyright));
+      text_log.Print(L"Field 5 Version = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_5_version));
+      text_log.Print(L"Field 7 Trademark = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_7_trademark));
+      text_log.Print(L"Field 8 Manufacturer = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_8_manufacturer));
+      text_log.Print(L"Field 9 Designer = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_9_designer));
+      text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_10_description));
+      text_log.Print(L"Field 11 Vendor URL = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_11_vendor_URL));
+      text_log.Print(L"Field 12 Designer_URL = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_12_designer_URL));
+      text_log.Print(L"Field 13 License = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_13_license));
+      text_log.Print(L"Field 14 License URL = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_14_license_URL));
+      text_log.Print(L"Field 20 PostScript CID Name = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_20_postscript_cid));
+    }
+  }
+
+  if ( false == bVerbose )
+  {
+    if (ON_OutlineFigure::Type::Unset != ON_OutlineFigure::FigureTypeFromField10Description(m_loc_field_10_description))
+      text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_loc_field_10_description));
+    else if (ON_OutlineFigure::Type::Unset != ON_OutlineFigure::FigureTypeFromField10Description(m_en_field_10_description))
+      text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_10_description));
+  }
+
+  text_log.PopIndent();
+
+  if ( bChatty )
+  {
+    text_log.Print(L"English Names:\n");
+    ON_TextLogIndent indent2(text_log);
+    text_log.Print(L"Family name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_family_name));
+    text_log.Print(L"Face name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_face_name));
+    text_log.Print(L"PostScript name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_postscript_name));
+    text_log.Print(L"GDI LOGFONT name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_gdi_family_name));
+    text_log.Print(L"GDI subfamily name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_gdi_subfamily_name));
+    text_log.Print(L"Full name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_full_name));
+
+    if ( bVerbose )
+    {
+      text_log.Print(L"Direct Write Weight-Stretch-Style Model Name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_weight_stretch_style_model_name));
+
+      text_log.Print(L"Field 0 Copyright = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_0_copyright));
+      text_log.Print(L"Field 5 Version = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_5_version));
+      text_log.Print(L"Field 7 Trademark = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_7_trademark));
+      text_log.Print(L"Field 8 Manufacturer = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_8_manufacturer));
+      text_log.Print(L"Field 9 Designer = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_9_designer));
+      text_log.Print(L"Field 10 Description = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_10_description));
+      text_log.Print(L"Field 11 Vendor URL = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_11_vendor_URL));
+      text_log.Print(L"Field 12 Designer_URL = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_12_designer_URL));
+      text_log.Print(L"Field 13 License = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_13_license));
+      text_log.Print(L"Field 14 License URL = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_14_license_URL));
+      text_log.Print(L"Field 20 PostScript CID Name = \"%ls\"\n", static_cast<const wchar_t*>(m_en_field_20_postscript_cid));
+    }
+  }
+
+  if (bChatty)
+  {
+    if (m_bSimulatedBold || m_bSimulatedOblique || m_bSimulatedOther)
+    {
+      text_log.Print("Simuilations =");
+      if (m_bSimulatedBold)
+        text_log.Print(" BOLD");
+      if (m_bSimulatedOblique)
+        text_log.Print(" OBLIQUE");
+      if (m_bSimulatedOther)
+        text_log.Print(" other");
+      text_log.PrintNewLine();
+    }
+
+    const DWRITE_FONT_WEIGHT dwrite_weight = (DWRITE_FONT_WEIGHT)m_weight;
+    const ON_wString weightString = Internal_DWRITE_FONT_WEIGHT_ToString(dwrite_weight);
+    text_log.Print(L"Weight = %ls\n", static_cast<const wchar_t*>(weightString));
+
+    const DWRITE_FONT_STYLE dwrite_style = (DWRITE_FONT_STYLE)m_style;
+    const ON_wString styleString = Internal_DWRITE_FONT_STYLE_ToString(dwrite_style);
+    text_log.Print(L"Style = %ls\n", static_cast<const wchar_t*>(styleString));
+
+    const DWRITE_FONT_STRETCH dwrite_stretch = (DWRITE_FONT_STRETCH)m_stretch;
+    const ON_wString stretchString = Internal_DWRITE_FONT_STRETCH_ToString(dwrite_stretch);
+    text_log.Print(L"Stretch = %ls\n", static_cast<const wchar_t*>(stretchString));
+  }
+
+  if ( bVerbose )
+  {
+    text_log.Print("IsSymbolFont = %s.\n", (m_bIsSymbolFont ? "true" : "false"));
+    if (0 != m_gdi_interop_logfont.lfFaceName[0])
+    {
+      text_log.Print("GDI interop IsSystemFont = %s\n", (m_gdi_interop_logfont_bIsSystemFont ? "true" : "false"));
+      text_log.Print("GDI interop ");
+      ON_Font::DumpLogfont(&m_gdi_interop_logfont, text_log);
+    }
   }
 }
 
@@ -1066,14 +1261,57 @@ unsigned int ON_Font::GetInstalledWindowsDWriteFonts(
           Internal_GetLocalizeStrings(preferedLocale, gdiSubfamilyNames.Get(), fi.m_loc_gdi_subfamily_name, fi.m_en_gdi_subfamily_name);
         }
 
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME, ... )
+        fi.m_en_weight_stretch_style_model_name = ON_Font::WeightStretchStyleModelFamilyNameFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_weight_stretch_style_model_name = ON_Font::WeightStretchStyleModelFamilyNameFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_COPYRIGHT_NOTICE, ... )
+        fi.m_loc_field_0_copyright = ON_Font::Field_0_CopyrightFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_0_copyright = ON_Font::Field_0_CopyrightFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_VERSION_STRINGS, ... )
+        fi.m_loc_field_5_version = ON_Font::Field_5_VersionFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_5_version = ON_Font::Field_5_VersionFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_TRADEMARK, ... )
+        fi.m_loc_field_7_trademark = ON_Font::Field_7_TrademarkFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_7_trademark = ON_Font::Field_7_TrademarkFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_MANUFACTURER, ... )
+        fi.m_loc_field_8_manufacturer = ON_Font::Field_8_ManufacturerFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_8_manufacturer = ON_Font::Field_8_ManufacturerFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESIGNER, ... )
+        fi.m_loc_field_9_designer = ON_Font::Field_9_DesignerFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_9_designer = ON_Font::Field_9_DesignerFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
         // Field 10 Description
         // Opennurbs searches the description saved in field 10 of the name table
         // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
         // to identify fonts that are desgned for engraving (and which tend to render poorly when
         // used to dispaly text devices like screens, monitors, and printers).
         // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
-        fi.m_loc_field_10_description = ON_Font::Field10DescriptionFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
-        fi.m_en_field_10_description = ON_Font::Field10DescriptionFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+        fi.m_loc_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        fi.m_loc_field_11_vendor_URL = ON_Font::Field_11_VendorURLFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_11_vendor_URL = ON_Font::Field_11_VendorURLFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_DESIGNER_URL, ... )
+        fi.m_loc_field_12_designer_URL = ON_Font::Field_12_DesignerURLFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_12_designer_URL = ON_Font::Field_12_DesignerURLFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_LICENSE_DESCRIPTION, ... )
+        fi.m_loc_field_13_license = ON_Font::Field_13_LicenseFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_13_license = ON_Font::Field_13_LicenseFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_LICENSE_INFO_URL, ... )
+        fi.m_loc_field_14_license_URL = ON_Font::Field_14_LicenseURLFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_14_license_URL = ON_Font::Field_14_LicenseURLFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
+
+        // from IDWriteFont.GetInformationalStrings( DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME, ... )
+        fi.m_loc_field_20_postscript_cid = ON_Font::Field_20_PostScriptCIDNameFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
+        fi.m_en_field_20_postscript_cid = ON_Font::Field_20_PostScriptCIDNameFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
 
         BOOL isSystemFont = false;
         LOGFONTW logfont;
@@ -1887,8 +2125,8 @@ bool ON_Font::SetFromWindowsDWriteFont(
     // to identify fonts that are desgned for engraving (and which tend to render poorly when
     // used to dispaly text devices like screens, monitors, and printers).
     // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
-    ON_wString loc_field_10_description = ON_Font::Field10DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
-    ON_wString en_field_10_description = ON_Font::Field10DescriptionFromWindowsDWriteFont(dwrite_font, L"en-us");
+    ON_wString loc_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
+    ON_wString en_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, L"en-us");
     if (ON_OutlineFigure::Type::Unset == m_outline_figure_type)
       m_outline_figure_type = ON_OutlineFigure::FigureTypeFromField10Description(loc_field_10_description);
     if (ON_OutlineFigure::Type::Unset == m_outline_figure_type)

@@ -1811,7 +1811,7 @@ static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
 
   ON_SubDEdgePtr f1_epts[4] = { e1[0], e12, e23, e1[1].Reversed() };
 
-  ON_SubDFace* f1 = fsh.AllocateQuad(f0->m_zero_face_id, f0->m_id, f1_epts);
+  ON_SubDFace* f1 = fsh.AllocateQuad(f0->m_level_zero_face_id, f0->m_id, f1_epts);
   if ( nullptr == f1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
@@ -1851,7 +1851,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( nullptr == qf0 || 4 != qf0->m_edge_count)
     return ON_SUBD_RETURN_ERROR(false);
 
-  const unsigned int zero_face_id = qf0->m_zero_face_id;
+  const unsigned int zero_face_id = qf0->m_level_zero_face_id;
   const unsigned int parent_face_id = qf0->m_id;
 
   const ON_SubDEdge* qf0_edges[4] = {
@@ -2651,8 +2651,8 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
 
   const unsigned int N = face->m_edge_count;
 
-  const unsigned int zero_face_id = face->m_zero_face_id;
-  const unsigned int parent_face_id = face->m_parent_face_id;
+  const unsigned int level_zero_face_id = face->m_level_zero_face_id;
+  const unsigned int parent_face_idX = face->m_id;
 
   ON_SubDSectorSurfacePoint limit_point;
 
@@ -2803,7 +2803,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       return ON_SUBD_RETURN_ERROR(false);
     face1_eptrs[2] = edge1;
 
-    face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+    face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
     if ( nullptr == face1)
       return ON_SUBD_RETURN_ERROR(false);
   }
@@ -3014,7 +3014,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       face1_eptrs[1] = ON_SubDEdgePtr::Create(edge1_quartet[0],0);
       face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1_quartet[3],1);
       face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1_quartet[2],1);
-      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+      face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
       if ( nullptr == face1)
         return ON_SUBD_RETURN_ERROR(false);
       continue;
@@ -3087,7 +3087,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       face1_eptrs[2] = ON_SubDEdgePtr::Create(edge1_quartet[3],1);
       face1_eptrs[3] = ON_SubDEdgePtr::Create(edge1_quartet[2],1);
 
-      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+      face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
       if ( nullptr == face1 )
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -3133,7 +3133,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
         return ON_SUBD_RETURN_ERROR(false);
       face1_eptrs[2] = edge1;
 
-      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+      face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
       if ( nullptr == face1 )
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -3370,7 +3370,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
         face1_eptrs[j] = edge1;
       }
 
-      face1 = m_fsh.AllocateQuad(zero_face_id, parent_face_id, face1_eptrs);
+      face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
       if ( nullptr == face1 )
         return ON_SUBD_RETURN_ERROR(false);
     }

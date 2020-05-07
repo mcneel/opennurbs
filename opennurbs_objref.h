@@ -93,7 +93,7 @@ private:
 public:
   double m_t[4];
   ON_Interval m_s[3]; // curve/surface/cage domains
-  ON_COMPONENT_INDEX m_t_ci; // Not necesarily the same as m_component_index
+  ON_COMPONENT_INDEX m_t_ci; // Not necessarily the same as m_component_index
                              // See comment above for details.
 };
 
@@ -122,7 +122,7 @@ public:
   // ON_InstanceDefinition.m_uuid.
   ON_UUID  m_idef_uuid = ON_nil_uuid;
 
-  // m_geometry_index is the index of the uuid of the pertinant
+  // m_geometry_index is the index of the uuid of the pertinent
   // piece of geometry in the ON_InstanceRef.m_object_uuid[] 
   // array.  This index is identical to the index of the
   // geometry's CRhinoObject in the

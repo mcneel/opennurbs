@@ -645,6 +645,16 @@ ON__UINT64 ON_SubDimple::ContentSerialNumber() const
   return m_subd_content_serial_number;
 }
 
+ON__UINT64 ON_SubDimple::ComponentStatusSerialNumber() const
+{
+  return ActiveLevel().ComponentStatusSerialNumber();
+}
+
+const ON_AggregateComponentStatusEx ON_SubDimple::AggregateComponentStatus() const
+{
+  return ActiveLevel().AggregateComponentStatus();
+}
+
 ON__UINT64 ON_SubDimple::ChangeContentSerialNumber(
   bool bChangePreservesSymmetry
 ) const

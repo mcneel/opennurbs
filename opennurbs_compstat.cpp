@@ -559,6 +559,40 @@ bool ON_ComponentStatus::NoEqualStates(
   return (mask == (s1 ^ s2));
 }
 
+ON_AggregateComponentStatus::ON_AggregateComponentStatus(const ON_AggregateComponentStatusEx& src)
+{
+  memcpy(this, &src, sizeof(*this));
+}
+
+ON_AggregateComponentStatus& ON_AggregateComponentStatus::operator=(const ON_AggregateComponentStatusEx& src)
+{
+  memcpy(this, &src, sizeof(*this));
+  return *this;
+}
+
+ON_AggregateComponentStatusEx::ON_AggregateComponentStatusEx(const ON_AggregateComponentStatus& src)
+  : ON_AggregateComponentStatus(src)
+{
+  Internal_ChangeStatusSerialNumber();
+}
+
+ON_AggregateComponentStatusEx& ON_AggregateComponentStatusEx::operator=(const ON_AggregateComponentStatus& src)
+{
+  ON_AggregateComponentStatus::operator=(src);
+  Internal_ChangeStatusSerialNumber();
+  return *this;
+}
+
+ON__UINT64 ON_AggregateComponentStatusEx::ComponentStatusSerialNumber() const
+{
+  return m_component_status_serial_number;
+}
+
+void ON_AggregateComponentStatusEx::Internal_ChangeStatusSerialNumber()
+{
+  m_component_status_serial_number = ON_NextContentSerialNumber();
+}
+
 bool ON_AggregateComponentStatus::ClearAllStates()
 {
   if (m_current <= 1)
@@ -571,6 +605,12 @@ bool ON_AggregateComponentStatus::ClearAllStates()
     return true;
   }
   return false;
+}
+
+bool ON_AggregateComponentStatusEx::ClearAllStates()
+{
+  Internal_ChangeStatusSerialNumber();
+  return ON_AggregateComponentStatus::ClearAllStates();
 }
 
 bool ON_AggregateComponentStatus::ClearAggregateStatus(
@@ -608,13 +648,32 @@ bool ON_AggregateComponentStatus::ClearAggregateStatus(
   return false;
 }
 
+bool ON_AggregateComponentStatusEx::ClearAggregateStatus(
+  ON_ComponentStatus states_to_clear
+)
+{
+  Internal_ChangeStatusSerialNumber();
+  return ON_AggregateComponentStatus::ClearAggregateStatus(states_to_clear);
+}
+
 bool ON_AggregateComponentStatus::IsEmpty() const
 {
   return (0 == m_current);
 }
+
+bool ON_AggregateComponentStatusEx::IsEmpty() const
+{
+  return ON_AggregateComponentStatus::IsEmpty();
+}
+
 bool ON_AggregateComponentStatus::IsCurrent() const
 {
   return (1 == m_current);
+}
+
+bool ON_AggregateComponentStatusEx::IsCurrent() const
+{
+  return ON_AggregateComponentStatus::IsCurrent();
 }
 
 void ON_AggregateComponentStatus::MarkAsNotCurrent()
@@ -626,9 +685,20 @@ void ON_AggregateComponentStatus::MarkAsNotCurrent()
   }
 }
 
+void ON_AggregateComponentStatusEx::MarkAsNotCurrent()
+{
+  Internal_ChangeStatusSerialNumber();
+  return ON_AggregateComponentStatus::MarkAsNotCurrent();
+}
+
 ON_ComponentStatus ON_AggregateComponentStatus::AggregateStatus() const
 {
   return m_aggregate_status;
+}
+
+ON_ComponentStatus ON_AggregateComponentStatusEx::AggregateStatus() const
+{
+  return ON_AggregateComponentStatus::AggregateStatus();
 }
 
 unsigned int ON_AggregateComponentStatus::ComponentCount() const
@@ -636,9 +706,19 @@ unsigned int ON_AggregateComponentStatus::ComponentCount() const
   return m_component_count;
 }
 
+unsigned int ON_AggregateComponentStatusEx::ComponentCount() const
+{
+  return ON_AggregateComponentStatus::ComponentCount();
+}
+
 unsigned int ON_AggregateComponentStatus::SelectedCount() const
 {
   return m_selected_count;
+}
+
+unsigned int ON_AggregateComponentStatusEx::SelectedCount() const
+{
+  return ON_AggregateComponentStatus::SelectedCount();
 }
 
 unsigned int ON_AggregateComponentStatus::SelectedPersistentCount() const
@@ -646,9 +726,19 @@ unsigned int ON_AggregateComponentStatus::SelectedPersistentCount() const
   return m_selected_persistent_count;
 }
 
+unsigned int ON_AggregateComponentStatusEx::SelectedPersistentCount() const
+{
+  return ON_AggregateComponentStatus::SelectedPersistentCount();
+}
+
 unsigned int ON_AggregateComponentStatus::HighlightedCount() const
 {
   return m_highlighted_count;
+}
+
+unsigned int ON_AggregateComponentStatusEx::HighlightedCount() const
+{
+  return ON_AggregateComponentStatus::HighlightedCount();
 }
 
 unsigned int ON_AggregateComponentStatus::HiddenCount() const
@@ -656,13 +746,29 @@ unsigned int ON_AggregateComponentStatus::HiddenCount() const
   return m_hidden_count;
 }
 
+unsigned int ON_AggregateComponentStatusEx::HiddenCount() const
+{
+  return ON_AggregateComponentStatus::HiddenCount();
+}
+
 unsigned int ON_AggregateComponentStatus::LockedCount() const
 {
   return m_locked_count;
 }
+
+unsigned int ON_AggregateComponentStatusEx::LockedCount() const
+{
+  return ON_AggregateComponentStatus::LockedCount();
+}
+
 unsigned int ON_AggregateComponentStatus::DamagedCount() const
 {
-  return m_locked_count;
+  return m_damaged_count;
+}
+
+unsigned int ON_AggregateComponentStatusEx::DamagedCount() const
+{
+  return ON_AggregateComponentStatus::DamagedCount();
 }
 
 bool ON_AggregateComponentStatus::Add(
@@ -712,6 +818,14 @@ bool ON_AggregateComponentStatus::Add(
   return true;
 }
 
+bool ON_AggregateComponentStatusEx::Add(
+  const ON_AggregateComponentStatus& aggregate_status
+)
+{
+  Internal_ChangeStatusSerialNumber();
+  return ON_AggregateComponentStatus::Add(aggregate_status);
+}
+
 bool ON_AggregateComponentStatus::Add(
   ON_ComponentStatus component_status
   )
@@ -747,6 +861,14 @@ bool ON_AggregateComponentStatus::Add(
   return true;
 }
 
+
+bool ON_AggregateComponentStatusEx::Add(
+  ON_ComponentStatus component_status
+)
+{
+  Internal_ChangeStatusSerialNumber();
+  return ON_AggregateComponentStatus::Add(component_status);
+}
 
 /////////////////////////////////////////////////////////////////
 //

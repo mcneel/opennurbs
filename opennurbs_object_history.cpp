@@ -48,6 +48,7 @@ public:
     uuid_value            = 11,
     point_on_object_value = 12,
     polyedge_value        = 13,
+    subd_edge_chain_value = 14,
 
     // each value type must have a case in ON_Value::CreateValue().
 
@@ -64,11 +65,12 @@ public:
   // The valid id is a nonzero integer the developer
   // assigns to this value.  Developers are responsible
   // for ensuring the 
-  int m_value_id;
+  int m_value_id = -1;
   
   const VALUE_TYPE m_value_type;
 
-  ON_Value( VALUE_TYPE );
+  ON_Value(VALUE_TYPE);
+  ON_Value(const ON_Value& src);
   virtual ~ON_Value();
 
   virtual ON_Value* Duplicate() const=0;
@@ -87,20 +89,24 @@ public:
   virtual int  GetUuids( const ON_UUID*& ) const;
   virtual int  GetObjRefs( ON_ClassArray<ON_ObjRef>& ) const;
   virtual int  GetGeometryPointers( const ON_Geometry* const*& ) const;
+  virtual int  GetSubDEdgeChainPointers(const ON_SubDEdgeChain* const*&) const;
   virtual int  GetStrings( ON_ClassArray<ON_wString>& ) const;
-  virtual int  GetPolyEdgePointers( ON_ClassArray<ON_PolyEdgeHistory>& ) const;
+  virtual int  GetPolyEdgePointers(ON_ClassArray<ON_PolyEdgeHistory>&) const;
 
 private:
   // no implementation
-  ON_Value(); 
-  ON_Value& operator=(const ON_Value&);
+  ON_Value() = delete; 
+  ON_Value& operator=(const ON_Value&) = delete; 
 };
 
 ON_Value::ON_Value( ON_Value::VALUE_TYPE value_type )
          : m_value_type(value_type)
-{
-  m_value_id = -1;
-}
+{}
+
+ON_Value::ON_Value(const ON_Value& src)
+  : m_value_id(src.m_value_id)
+  , m_value_type(src.m_value_type)
+{}
 
 ON_Value::~ON_Value()
 {}
@@ -116,8 +122,9 @@ int  ON_Value::GetXforms( const ON_Xform*& ) const {return 0;}
 int  ON_Value::GetUuids( const ON_UUID*& ) const {return 0;}
 int  ON_Value::GetObjRefs( ON_ClassArray<ON_ObjRef>& ) const {return 0;}
 int  ON_Value::GetGeometryPointers( const ON_Geometry* const*& ) const {return 0;}
+int  ON_Value::GetSubDEdgeChainPointers(const ON_SubDEdgeChain* const*&) const { return 0; }
 int  ON_Value::GetStrings( ON_ClassArray<ON_wString>& ) const {return 0;}
-int  ON_Value::GetPolyEdgePointers( ON_ClassArray<ON_PolyEdgeHistory>& ) const {return 0;}
+int  ON_Value::GetPolyEdgePointers(ON_ClassArray<ON_PolyEdgeHistory>&) const { return 0; }
 
 class ON_DummyValue : public ON_Value
 {
@@ -1395,6 +1402,191 @@ int ON_PolyEdgeHistoryValue::GetPolyEdgePointers( ON_ClassArray<ON_PolyEdgeHisto
   return m_value.Count();
 }
 
+
+///////////////////////////////////////////////////////////////////////
+//
+// ON_SubDEdgeChainHistoryValue saves geometry values in the ON_HistoryRecord::m_value[] array
+//
+
+class ON_SubDEdgeChainHistoryValue : public ON_Value
+{
+public:
+  ON_SubDEdgeChainHistoryValue();
+  ~ON_SubDEdgeChainHistoryValue();
+  ON_SubDEdgeChainHistoryValue(const ON_SubDEdgeChainHistoryValue&);
+  ON_SubDEdgeChainHistoryValue& operator=(const ON_SubDEdgeChainHistoryValue&);
+
+  ON_SimpleArray<ON_SubDEdgeChain*> m_value;
+
+  class ON_Value* Duplicate() const override;
+  int Count() const override;
+  bool ReadHelper(ON_BinaryArchive& archive) override;
+  bool WriteHelper(ON_BinaryArchive& archive) const override;
+  bool ReportHelper(ON_TextLog& text_log) const override;
+  int GetSubDEdgeChainPointers(const ON_SubDEdgeChain* const*&) const override;
+};
+
+ON_SubDEdgeChainHistoryValue::ON_SubDEdgeChainHistoryValue()
+  : ON_Value(ON_Value::subd_edge_chain_value)
+{
+}
+
+ON_SubDEdgeChainHistoryValue::~ON_SubDEdgeChainHistoryValue()
+{
+  int i, count = m_value.Count();
+  for (i = 0; i < count; i++)
+  {
+    ON_SubDEdgeChain* p = m_value[i];
+    if (nullptr != p)
+    {
+      m_value[i] = nullptr;
+      delete p;
+    }
+  }
+}
+
+ON_SubDEdgeChainHistoryValue::ON_SubDEdgeChainHistoryValue(const ON_SubDEdgeChainHistoryValue& src) : ON_Value(src)
+{
+  *this = src;
+}
+
+ON_SubDEdgeChainHistoryValue& ON_SubDEdgeChainHistoryValue::operator=(const ON_SubDEdgeChainHistoryValue& src)
+{
+  if (this != &src)
+  {
+    int i, count = m_value.Count();
+    for (i = 0; i < count; i++)
+    {
+      ON_SubDEdgeChain* p = m_value[i];
+      if (nullptr != p)
+      {
+        m_value[i] = nullptr;
+        delete p;
+      }
+    }
+    m_value.Destroy();
+
+    m_value_id = src.m_value_id;
+
+    count = src.m_value.Count();
+    m_value.Reserve(count);
+    for (i = 0; i < count; i++)
+    {
+      const ON_SubDEdgeChain* src_ptr = src.m_value[i];
+      if (!src_ptr)
+        continue;
+      ON_SubDEdgeChain* ptr = new ON_SubDEdgeChain(*src_ptr);
+      if (ptr)
+        m_value.Append(ptr);
+    }
+  }
+  return *this;
+}
+
+// virtual 
+class ON_Value* ON_SubDEdgeChainHistoryValue::Duplicate() const
+{
+  return new ON_SubDEdgeChainHistoryValue(*this);
+}
+
+// virtual
+int ON_SubDEdgeChainHistoryValue::Count() const
+{
+  return m_value.Count();
+}
+
+// virtual 
+bool ON_SubDEdgeChainHistoryValue::ReadHelper(ON_BinaryArchive& archive)
+{
+  m_value.Destroy();
+
+  int chunk_version = 0;
+  if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (chunk_version < 1)
+      break;
+    int count = 0;
+    if (false == archive.ReadInt(&count))
+      break;
+
+    m_value.Reserve(count);
+    for (int i = 0; i < count; i++)
+    {
+      ON_SubDEdgeChain* c = new ON_SubDEdgeChain();
+      if (false == c->Read(archive))
+        break;
+      m_value.Append(c);
+    }
+    if (count == m_value.Count())
+      rc = true;
+    else
+      m_value.Destroy();
+
+    break;
+  }
+
+  if (!archive.EndRead3dmChunk())
+    rc = false;
+  return rc;
+}
+
+// virtual 
+bool ON_SubDEdgeChainHistoryValue::WriteHelper(ON_BinaryArchive& archive) const
+{
+  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    int count = m_value.Count();
+    for (int i = 0; i < count; ++i)
+    {
+      if (nullptr == m_value[i])
+        count = 0;
+    }
+    if (false == archive.WriteInt(count))
+      break;
+
+    rc = true;
+    for (int i = 0; i < count && rc; i++)
+      rc = m_value[i]->Write(archive);
+
+    break;
+  }
+
+  if (!archive.EndWrite3dmChunk())
+    rc = false;
+  return rc;
+}
+
+// virtual 
+bool ON_SubDEdgeChainHistoryValue::ReportHelper(ON_TextLog& text_log) const
+{
+  text_log.Print("subd edge chain value\n");
+  text_log.PushIndent();
+  int i, count = m_value.Count();
+  for (i = 0; i < count; i++)
+  {
+    if( nullptr != m_value[i])
+      m_value[i]->Dump(text_log);
+  }
+  text_log.PopIndent();
+  return true;
+}
+
+// virtual 
+int ON_SubDEdgeChainHistoryValue::GetSubDEdgeChainPointers(const ON_SubDEdgeChain* const*& a) const
+{
+  a = m_value.Array();
+  return m_value.Count();
+}
+
+
 ///////////////////////////////////////////////////////////////////////
 //
 
@@ -1444,6 +1636,9 @@ ON_Value* ON_Value::CreateValue( int value_type )
     break;
   case polyedge_value:
     value = new ON_PolyEdgeHistoryValue();
+    break;
+  case subd_edge_chain_value:
+    value = new ON_SubDEdgeChainHistoryValue();
     break;
   case force_32bit_enum:
     break;
@@ -1609,8 +1804,9 @@ bool ON_HistoryRecord::SetGeometryValue( int value_id, ON_Geometry* g)
 {
   ON_SimpleArray<ON_Geometry*> a(1);
   a.Append(g);
-  return ( 1 == SetGeometryValues(value_id, a) );
+  return SetGeometryValues(value_id, a);
 }
+
 
 bool ON_HistoryRecord::SetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory& polyedge )
 {
@@ -1907,14 +2103,68 @@ bool ON_HistoryRecord::SetObjRefValues( int value_id, int count, const ON_ObjRef
 }
 
 
-bool ON_HistoryRecord::SetGeometryValues( int value_id, const ON_SimpleArray<ON_Geometry*> a)
+bool ON_HistoryRecord::SetGeometryValues(int value_id, const ON_SimpleArray<ON_Geometry*> a)
 {
-  ON_GeometryValue* v = static_cast<ON_GeometryValue*>(FindValueHelper(value_id,ON_Value::geometry_value,true));
-  if ( v )
+  ON_GeometryValue* v = static_cast<ON_GeometryValue*>(FindValueHelper(value_id, ON_Value::geometry_value, true));
+  if (v)
   {
     v->m_value = a;
   }
   return (0 != v);
+}
+
+bool ON_HistoryRecord::SetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain& edge_chain)
+{
+  ON_SimpleArray<const ON_SubDEdgeChain*> a;
+  a.Append(&edge_chain);
+  return ON_HistoryRecord::SetSubDEdgeChainValues(value_id, a);
+}
+
+bool ON_HistoryRecord::SetSubDEdgeChainValues(int value_id, const ON_ClassArray<ON_SubDEdgeChain>& edge_chains)
+{
+  const unsigned count = edge_chains.UnsignedCount();
+  ON_SimpleArray<const ON_SubDEdgeChain*> a(count);
+  for (unsigned i = 0; i < count; ++i)
+    a.Append(&edge_chains[i]);
+  return ON_HistoryRecord::SetSubDEdgeChainValues(value_id, a);
+}
+
+bool ON_HistoryRecord::SetSubDEdgeChainValues(int value_id, const ON_SimpleArray<const ON_SubDEdgeChain*>& edge_chains)
+{
+  // validate
+  const unsigned count = edge_chains.UnsignedCount();
+  if (count <= 0)
+    return false;
+
+  for (unsigned i = 0; i < count; ++i)
+  {
+    const ON_SubDEdgeChain* c = edge_chains[i];
+    if (nullptr == c)
+      return false;
+    const ON_UUID parent_subd_id = c->PersistentSubDId();
+    if (ON_nil_uuid == parent_subd_id)
+      return false; // a persistent id is reqiured so that update history can find the new subd and update the runtime ON_SubDEdgePtr values.
+    if (c->EdgeCount() <= 0)
+      return false;
+    if (false == c->HasPersistentEdgeIds())
+    {
+      c->SetPersistentEdgeIdsFromRuntimeEdgePtrs();
+      if (false == c->HasPersistentEdgeIds())
+        return false;
+    }
+    m_antecedents.AddUuid(parent_subd_id, true);
+  }
+
+  // copy edge chains and add
+  ON_SubDEdgeChainHistoryValue* v = static_cast<ON_SubDEdgeChainHistoryValue*>(FindValueHelper(value_id, ON_Value::subd_edge_chain_value, true));
+  if ( nullptr != v )
+  {
+    v->m_value.Reserve(count);
+    for (unsigned i = 0; i < count; ++i)
+      v->m_value.Append(new ON_SubDEdgeChain(*edge_chains[i]));
+  }
+
+  return (nullptr != v);
 }
 
 bool ON_HistoryRecord::SetPolyEdgeValues( int value_id,  int count, const ON_PolyEdgeHistory* a )
@@ -2054,6 +2304,19 @@ bool ON_HistoryRecord::GetGeometryValue( int value_id, const ON_Geometry*& g ) c
   if ( v && 1 == v->m_value.Count())
   {
     g = v->m_value[0];
+    rc = true;
+  }
+  return rc;
+}
+
+bool ON_HistoryRecord::GetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain*& edge_chain) const
+{
+  bool rc = false;
+  edge_chain = 0;
+  const ON_SubDEdgeChainHistoryValue* v = static_cast<ON_SubDEdgeChainHistoryValue*>(FindValueHelper(value_id, ON_Value::subd_edge_chain_value, 0));
+  if (v && 1 == v->m_value.Count())
+  {
+    edge_chain = v->m_value[0];
     rc = true;
   }
   return rc;
@@ -2238,6 +2501,20 @@ int ON_HistoryRecord::GetGeometryValues( int value_id, ON_SimpleArray<const ON_G
     int i, count = v->m_value.Count();
     a.Reserve(count);
     for ( i = 0; i < count; i++ )
+      a.Append(v->m_value[i]);
+  }
+  return a.Count();
+}
+
+int ON_HistoryRecord::GetSubDEdgeChainValues(int value_id, ON_SimpleArray<const ON_SubDEdgeChain*>& a) const
+{
+  a.SetCount(0);
+  const ON_SubDEdgeChainHistoryValue* v = static_cast<ON_SubDEdgeChainHistoryValue*>(FindValueHelper(value_id, ON_Value::subd_edge_chain_value, 0));
+  if (v)
+  {
+    int i, count = v->m_value.Count();
+    a.Reserve(count);
+    for (i = 0; i < count; i++)
       a.Append(v->m_value[i]);
   }
   return a.Count();

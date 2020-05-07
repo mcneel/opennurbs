@@ -619,20 +619,102 @@ void ON_SubDFace::SetTextureDomain(
 
 void ON_SubDFace::SetMaterialChannelIndex(int material_channel_index) const
 {
-  if ( material_channel_index >= 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex )
+  if ( material_channel_index > 0 && material_channel_index <= ON_Material::MaximumMaterialChannelIndex )
   {
     m_material_channel_index = (unsigned short)material_channel_index;
   }
   else
   {
-    ON_ERROR("Invalid material_channel_index value.");
-    m_material_channel_index = 0;
+    if (0 != material_channel_index)
+    {
+      ON_ERROR("Invalid material_channel_index value.");
+    }
+    ClearMaterialChannelIndex(); // makes it easier to detect when per face setting is cleared.
   }
+}
+
+void ON_SubDFace::ClearMaterialChannelIndex() const
+{
+  m_material_channel_index = 0;
 }
 
 int ON_SubDFace::MaterialChannelIndex() const
 {
   return (int)m_material_channel_index;
+}
+
+void ON_SubDFace::SetPerFaceColor(
+  ON_Color color
+  ) const
+{
+  if (ON_Color::UnsetColor == color)
+    ClearPerFaceColor(); // makes it easier to detect when the per face setting is cleared.
+  else
+    m_per_face_color = color;
+}
+
+void ON_SubDFace::ClearPerFaceColor() const
+{
+  m_per_face_color = ON_Color::UnsetColor;
+}
+
+
+const ON_Color ON_SubDFace::PerFaceColor() const
+{
+  return m_per_face_color;
+}
+
+
+unsigned int ON_SubD::ClearPerFaceMaterialChannelIndices()
+{
+  unsigned change_count = 0;
+  ON_SubDFaceIterator fit(*this);
+  for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+  {
+    if (0 != f->MaterialChannelIndex())
+    {
+      f->ClearMaterialChannelIndex();
+      ++change_count;
+    }
+  }
+  return change_count;
+}
+
+bool ON_SubD::HasPerFaceMaterialChannelIndices() const
+{
+  ON_SubDFaceIterator fit(*this);
+  for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+  {
+    if (0 != f->MaterialChannelIndex())
+      return true;
+  }
+  return false;
+}
+
+unsigned int ON_SubD::ClearPerFaceColors() const
+{
+  unsigned change_count = 0;
+  ON_SubDFaceIterator fit(*this);
+  for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+  {
+    if (ON_Color::UnsetColor != f->PerFaceColor())
+    {
+      f->ClearPerFaceColor();
+      ++change_count;
+    }
+  }
+  return change_count;
+}
+
+bool ON_SubD::HasPerFaceColors() const
+{
+  ON_SubDFaceIterator fit(*this);
+  for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+  {
+    if (ON_Color::UnsetColor != f->PerFaceColor())
+      return true;
+  }
+  return false;
 }
 
 const bool ON_SubDFace::TextureDomainIsSet() const

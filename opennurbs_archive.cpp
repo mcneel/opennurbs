@@ -2189,6 +2189,51 @@ ON_BinaryArchive::ReadArray( ON_SimpleArray<int>& a )
 }
 
 bool
+ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned char>& a)
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt(&count);
+  if (rc && count > 0) {
+    a.SetCapacity(count);
+    rc = ReadChar(count, a.Array());
+    if (rc)
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned short>& a)
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt(&count);
+  if (rc && count > 0) {
+    a.SetCapacity(count);
+    rc = ReadShort(count, a.Array());
+    if (rc)
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned int>& a)
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt(&count);
+  if (rc && count > 0) {
+    a.SetCapacity(count);
+    rc = ReadInt(count, a.Array());
+    if (rc)
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
 ON_BinaryArchive::ReadArray( ON_SimpleArray<float>& a )
 {
   a.Empty();
@@ -3841,6 +3886,47 @@ ON_BinaryArchive::WriteArray( const ON_SimpleArray<int>& a )
   }
   return rc;
 }
+
+
+bool
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned char>& a)
+{
+  int count = a.Count();
+  if (count < 0)
+    count = 0;
+  bool rc = WriteInt(count);
+  if (rc && count > 0) {
+    rc = WriteChar(count, a.Array());
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned short>& a)
+{
+  int count = a.Count();
+  if (count < 0)
+    count = 0;
+  bool rc = WriteInt(count);
+  if (rc && count > 0) {
+    rc = WriteShort(count, a.Array());
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned int>& a)
+{
+  int count = a.Count();
+  if (count < 0)
+    count = 0;
+  bool rc = WriteInt(count);
+  if (rc && count > 0) {
+    rc = WriteInt(count, a.Array());
+  }
+  return rc;
+}
+
 
 bool
 ON_BinaryArchive::WriteArray( const ON_SimpleArray<float>& a )
@@ -18422,7 +18508,13 @@ bool ON_BinaryArchiveBuffer::Flush()
 
 ON_3dmAnnotationContext::~ON_3dmAnnotationContext()
 {
-  Internal_Destroy();
+  // NOTE WELL:
+  //  https://mcneel.myjetbrains.com/youtrack/issue/RH-57616
+  //  ON_3dmAnnotationContext::Default is a global const instance.
+  //  Compilers like VS 2019 16.5.0 set the memory for that instance to read-only.
+  //  This destructor must not write to memory used by const instances.
+  if ( this != &ON_3dmAnnotationContext::Default)
+    Internal_Destroy();
 }
 
 ON_3dmAnnotationContext::ON_3dmAnnotationContext(const ON_3dmAnnotationContext& src)
