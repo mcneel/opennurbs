@@ -446,8 +446,8 @@ private:
 #define ON_IS_FINITE_FLOAT(x) ((x) <= 3.402823466e+38F && (x) >= -3.402823466e+38F)
 #define ON_IS_INFINITE_FLOAT(x) ((x) > 3.402823466e+38F || (x) < -3.402823466e+38F)
 
-#define ON_IS_VALID(x)  ((x) != ON_UNSET_VALUE && (x) != ON_UNSET_POSITIVE_VALUE && ON_IS_FINITE(x))
-#define ON_IS_VALID_FLOAT(x)  ((x) != ON_UNSET_FLOAT && (x) != ON_UNSET_POSITIVE_FLOAT && ON_IS_FINITE_FLOAT(x))
+#define ON_IS_VALID(x)  ((x) > ON_UNSET_VALUE && (x) < ON_UNSET_POSITIVE_VALUE)
+#define ON_IS_VALID_FLOAT(x)  ((x) > ON_UNSET_FLOAT && (x) < ON_UNSET_POSITIVE_FLOAT)
 #define ON_IS_UNSET_DOUBLE(x) (ON_UNSET_VALUE == (x) || ON_UNSET_POSITIVE_VALUE == (x))
 #define ON_IS_UNSET_FLOAT(x) (ON_UNSET_FLOAT == (x) || ON_UNSET_POSITIVE_FLOAT == (x))
 #define ON_IS_NAN(x) (!((x)==(x)))

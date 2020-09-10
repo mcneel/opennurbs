@@ -1144,30 +1144,35 @@ bool ON_ClampKnotVector(
         )
 {
   // sets initial/final order-2 knot values to match knot[order-2]/knot[cv_count-1]
-  bool rc = false;
+  // Adjusts initial/final order many CVs so that the curve location is unchanged. 
+  // Requires that knot[order-2]< knot[order-1] and/or knot[cv_count-2] < knot[cv_count-1] 
+  // 17-June-2020 Improved error reporting.  
+ bool rc = false;
   int i, i0;
 
-  if ( knot && order >= 2 && cv_count >= order ) {
-    if ( end == 0 || end == 2 ) {
-      if ( cv ) {
-        ON_EvaluateNurbsDeBoor(cv_dim,order,cv_stride,cv,knot,1,0.0,knot[order-2]);
+  if (cv && knot && order >= 2 && cv_count >= order && end>=0 && end<=2 ) {
+    rc = true;
+    if ( end == 0 || end == 2 ) { 
+      if (ON_EvaluateNurbsDeBoor(cv_dim, order, cv_stride, cv, knot, 1, 0.0, knot[order - 2]))
+      {
+        for (i = 0; i < order - 2; i++)
+          knot[i] = knot[order - 2];
       }
-      i0 = order-2;
-      for (i = 0; i < i0; i++)
-        knot[i] = knot[i0];
-      rc = true;
+      else
+        rc = false;
     }
     if ( end == 1 || end == 2 ) {
       i0 = cv_count-order;
       knot += i0;
-      if ( cv ) {
-        cv += i0*cv_stride;
-        ON_EvaluateNurbsDeBoor(cv_dim,order,cv_stride,cv,knot,-1,0.0,knot[order-1]);
+      cv += i0*cv_stride;
+      if (ON_EvaluateNurbsDeBoor(cv_dim, order, cv_stride, cv, knot, -1, 0.0, knot[order - 1]))
+      {
+        i0 = order - 1;
+        for (i = 2 * order - 3; i > i0; i--)
+          knot[i] = knot[i0];
       }
-      i0 = order-1;
-      for (i = 2*order-3; i > i0; i--)
-        knot[i] = knot[i0];
-      rc = true;
+      else
+        rc = false;
     }
   }
   return rc;

@@ -1072,6 +1072,254 @@ unsigned int ON_SubDFaceEdgeIterator::CurrentEdgeIndex() const
   return m_edge_index;
 }
 
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDSectorId
+//
+const ON_SubDSectorId ON_SubDSectorId::Create(
+  const ON_SubDVertex* vertex,
+  const ON_SubDFace* face
+)
+{
+  ON_SubDSectorId sid;
+
+  if (nullptr == face && nullptr != vertex && vertex->IsSingleSectorVertex())
+    face = vertex->Face(0);
+
+  if (nullptr == vertex || nullptr == face)
+  {
+    // Creation of ON_SubDSectorId::Invalid in opennurbs_statics.cpp or 
+    // just another invalid input.
+    sid.m_vertex_id = 0;
+    sid.m_minimum_face_id = 0;
+    sid.m_sector_face_count = 0xFFFFFFFFU;
+    return sid;
+  }
+
+  for (;;)
+  {
+    if (vertex->m_id <= 0 || vertex->m_id >= ON_UNSET_UINT_INDEX)
+      break;
+    if (face->m_id <= 0 || face->m_id >= ON_UNSET_UINT_INDEX)
+      break;
+    if (face->m_edge_count < 3)
+      break;
+    if (vertex->m_edge_count < 2)
+      break;
+    if (vertex->m_face_count < 1)
+      break;
+    const unsigned face_vi = face->VertexIndex(vertex);
+    if (face_vi >= face->m_edge_count)
+      break;
+
+    sid.m_vertex_id = vertex->m_id;
+    sid.m_minimum_face_id = face->m_id;
+    const unsigned short n = vertex->m_face_count;
+    unsigned short crease_face_count = 0;
+    unsigned int expected_crease_count = 0;
+    if (vertex->IsSmoothOrDart())
+    {
+      if (n < 2 || n != vertex->m_edge_count)
+        break;
+      const bool bIsDart = vertex->IsDart();
+      crease_face_count = bIsDart ? 2 : 0;
+      expected_crease_count = bIsDart ? 1 : 0;
+    }
+    else if ( vertex->IsCreaseOrCorner())
+    {
+      const ON_SubDComponentPtrPair pair 
+        = (n + 1 == vertex->m_edge_count && 2==vertex->CreasedEdgeCount(true,true,true,false))
+          ? vertex->BoundaryEdgePair()
+          : ON_SubDComponentPtrPair::Null;
+      if (pair.BothAreNotNull())
+      {
+        // we can avoid using a sector iterator
+        const ON_SubDEdge* e[2] = { pair.First().Edge(),pair.Second().Edge() };
+        if (nullptr == e[0] || nullptr == e[1])
+          break;
+        if (1 != e[0]->m_face_count || 1 != e[1]->m_face_count)
+          break;
+        crease_face_count = 1;
+        expected_crease_count = 2;
+      }
+      else
+      {
+        if (vertex->IsCrease())
+        {
+          if (n != vertex->m_edge_count)
+            return ON_SubDSectorId::Invalid;
+        }
+
+        // complicated case needs to use more time consuming sector iterator 
+        ON_SubDSectorIterator sit0;
+        if ( vertex != sit0.Initialize(face, 0, face_vi))
+          return ON_SubDSectorId::Invalid;
+        ON_SubDSectorIterator sit1(sit0);
+        // advance sit0 until we hit a crease;
+        sid.m_sector_face_count = 1;
+        for (const ON_SubDFace* f = sit0.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease); nullptr != f && sid.m_sector_face_count <= vertex->m_face_count; f = sit0.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
+        {
+          ++sid.m_sector_face_count;
+          if (f->m_id < sid.m_minimum_face_id)
+            sid.m_minimum_face_id = f->m_id;
+        }
+        // advance sit1 until we hit a crease;
+        for (const ON_SubDFace* f = sit1.PrevFace(ON_SubDSectorIterator::StopAt::AnyCrease); nullptr != f && sid.m_sector_face_count <= vertex->m_face_count; f = sit1.PrevFace(ON_SubDSectorIterator::StopAt::AnyCrease))
+        {
+          ++sid.m_sector_face_count;
+          if (f->m_id < sid.m_minimum_face_id)
+            sid.m_minimum_face_id = f->m_id;
+        }
+        break;
+      }
+    }
+    else
+    {
+      break;
+    }
+
+    if (0 == sid.m_sector_face_count)
+    {
+      // we can avoid expensive sector iterator.
+      unsigned int crease_count = 0;
+      const ON_SubDFace* f;
+      for (unsigned short vei = 0; vei < vertex->m_edge_count; ++vei)
+      {
+        const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(vertex->m_edges[vei].m_ptr);
+        if (nullptr == e || 0 == e->m_face_count)
+          return ON_SubDSectorId::Invalid;
+        f = ON_SUBD_FACE_POINTER(e->m_face2[0].m_ptr);
+        if (nullptr == f)
+          return ON_SubDSectorId::Invalid;
+        if (f->m_id < sid.m_minimum_face_id)
+          sid.m_minimum_face_id = f->m_id;
+        if (ON_SubDEdgeTag::Crease == e->m_edge_tag)
+        {
+          ++crease_count;
+          if (crease_count > expected_crease_count)
+            return ON_SubDSectorId::Invalid;
+          if (crease_face_count != e->m_face_count)
+            return ON_SubDSectorId::Invalid;
+          if (1 == crease_face_count)
+            continue;
+        }
+        if (2 != e->m_face_count)
+          return ON_SubDSectorId::Invalid;
+        f = ON_SUBD_FACE_POINTER(e->m_face2[1].m_ptr);
+        if (nullptr == f)
+          return ON_SubDSectorId::Invalid;
+        if (f->m_id < sid.m_minimum_face_id)
+          sid.m_minimum_face_id = f->m_id;
+      }
+      if (crease_count == expected_crease_count)
+        sid.m_sector_face_count = n;
+    }
+    break;
+  }
+
+  return (sid.IsSet() && sid.m_sector_face_count <= vertex->m_face_count) ? sid : ON_SubDSectorId::Invalid;
+}
+
+const ON_SubDSectorId ON_SubDSectorId::CreateFromIds(
+  unsigned int vertex_id,
+  unsigned int minimum_face_id
+)
+{
+  ON_SubDSectorId sid;
+  sid.m_vertex_id = vertex_id;
+  sid.m_minimum_face_id = minimum_face_id;
+  sid.m_sector_face_count = 0;
+  return sid;
+}
+
+int ON_SubDSectorId::Compare(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  if (lhs.m_vertex_id < rhs.m_vertex_id)
+    return -1;
+  if (lhs.m_vertex_id > rhs.m_vertex_id)
+    return 1;
+  if (lhs.m_minimum_face_id < rhs.m_minimum_face_id)
+    return -1;
+  if (lhs.m_minimum_face_id > rhs.m_minimum_face_id)
+    return 1;
+  if (lhs.m_sector_face_count < rhs.m_sector_face_count)
+    return -1;
+  if (lhs.m_sector_face_count > rhs.m_sector_face_count)
+    return 1;
+  return 0;
+}
+
+int ON_SubDSectorId::CompareFromPointers(const ON_SubDSectorId* lhs, const ON_SubDSectorId* rhs)
+{
+  if (nullptr == lhs || nullptr == rhs)
+  {
+    // sort nullptr to end
+    if (nullptr != lhs)
+      return -1;
+    if (nullptr != rhs)
+      return 1; 
+    return 0;
+  }
+  return ON_SubDSectorId::Compare(*lhs, *rhs);
+}
+
+const unsigned int ON_SubDSectorId::VertexId() const
+{
+  return m_vertex_id;
+}
+
+const unsigned int ON_SubDSectorId::MinimumFaceId() const
+{
+  return m_minimum_face_id;
+}
+
+const unsigned int ON_SubDSectorId::SectorFaceCount() const
+{
+  return m_sector_face_count <= 0x10000U ? m_sector_face_count : 0U;
+}
+
+bool ON_SubDSectorId::IsZero() const
+{
+  return 0 == m_vertex_id && 0 == m_minimum_face_id && 0 == m_sector_face_count;
+}
+
+bool ON_SubDSectorId::IsSet() const
+{
+  // the maximum valid subd vertex face count is 0xFFFF.
+  return m_vertex_id > 0 && m_minimum_face_id > 0 && m_sector_face_count > 0 && m_vertex_id < ON_UNSET_UINT_INDEX&& m_minimum_face_id < ON_UNSET_UINT_INDEX&& m_sector_face_count < 0x10000U;
+}
+
+
+bool ::operator==(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return 0 == ON_SubDSectorId::Compare(lhs, rhs);
+}
+
+bool ::operator!=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return 0 != ON_SubDSectorId::Compare(lhs, rhs);
+}
+
+bool ::operator>(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return ON_SubDSectorId::Compare(lhs, rhs) < 0;
+}
+
+bool ::operator<(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return ON_SubDSectorId::Compare(lhs, rhs) > 0;
+}
+
+bool ::operator>=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return ON_SubDSectorId::Compare(lhs, rhs) >= 0;
+}
+
+bool ::operator<=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+{
+  return ON_SubDSectorId::Compare(lhs, rhs) <= 0;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -1423,7 +1671,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
 
     if (ON_SubDSectorIterator::StopAt::Boundary != stop_at)
     {
-      if (ON_SubD::EdgeTag::Crease == edge->m_edge_tag)
+      if (ON_SubDEdgeTag::Crease == edge->m_edge_tag)
       {
         if (ON_SubDSectorIterator::StopAt::AnyCrease == stop_at)
           break;
@@ -1569,7 +1817,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementToCrease(
     if (nullptr == edge)
       return ON_SUBD_RETURN_ERROR(nullptr);
 
-    if (edge->m_face_count != 2 || ON_SubD::EdgeTag::Crease == edge->m_edge_tag)
+    if (edge->m_face_count != 2 || ON_SubDEdgeTag::Crease == edge->m_edge_tag)
     {
       *this = sit;
       return CurrentFace();

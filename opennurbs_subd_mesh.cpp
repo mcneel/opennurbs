@@ -33,13 +33,13 @@ bool ON_SubDFaceRegionBreakpoint(
 {
 #if defined(ON_DEBUG)
   if (
-    11 != level0_face_id
+    8 != level0_face_id
     )
   {
     return false;
   }
 
-  const unsigned short region_pattern[] = { 3, 3 };
+  const unsigned short region_pattern[] = { 2, 2 }; // { 2, 2, 1 };
   const unsigned short region_pattern_count = (unsigned short)(sizeof(region_pattern) / sizeof(region_pattern[0]));
 
   if (region_index.m_subdivision_count < region_pattern_count)
@@ -392,6 +392,33 @@ unsigned short ON_SubDComponentRegionIndex::Index(
     : 0xFFFF;
 }
 
+const ON_SubDFace* ON_SubDFaceRegion::Level0Face() const
+{
+  return this->m_face_region.m_level0_component.Face();
+}
+
+unsigned int ON_SubDFaceRegion::CornerIndexFromVertexId(
+  unsigned int vertex_id
+) const
+{
+  unsigned corner_index = ON_UNSET_UINT_INDEX;
+  if (vertex_id > 0 && vertex_id < ON_UNSET_UINT_INDEX)
+  {
+    for (unsigned i = 0; i < 4; ++i)
+    {
+      if (vertex_id == this->m_vertex_id[i])
+      {
+        if (ON_UNSET_UINT_INDEX == corner_index)
+          corner_index = i;
+        else
+          return ON_UNSET_UINT_INDEX;
+      }
+    }
+  }
+  return corner_index;
+}
+
+
 void ON_SubDFaceRegion::Push(unsigned int quadrant_index)
 {
   m_face_region.PushAbsolute(quadrant_index);
@@ -411,6 +438,9 @@ void ON_SubDFaceRegion::Push(unsigned int quadrant_index)
   m_vertex_id[(surviving_vi+1)%4] = 0;
   m_vertex_id[(surviving_vi+2)%4] = 0;
   m_vertex_id[(surviving_vi+3)%4] = 0;
+  m_sector_id[(surviving_vi + 1) % 4] = ON_SubDSectorId::Zero;
+  m_sector_id[(surviving_vi + 2) % 4] = ON_SubDSectorId::Zero;
+  m_sector_id[(surviving_vi + 3) % 4] = ON_SubDSectorId::Zero;
 }
 
 bool ON_SubDComponentRegion::IsEmptyRegion() const
@@ -443,6 +473,12 @@ bool ON_SubDFaceRegion::IsValid(
       {
         if (false == bSilentError)
           ON_SUBD_ERROR("m_face_region is empty and m_vertex_id[] is not zero.");
+        return false;
+      }
+      if (false == m_sector_id[vi].IsZero())
+      {
+        if (false == bSilentError)
+          ON_SUBD_ERROR("m_face_region is empty and m_sector_id[] is not zero.");
         return false;
       }
     }
@@ -632,6 +668,32 @@ bool ON_SubDFaceRegion::IsValid(
           return false;
         }
       }
+
+      const unsigned sector_vertex_id = m_sector_id[vi].VertexId();
+      if (0 != sector_vertex_id)
+      {
+        if (sector_vertex_id != m_vertex_id[vi])
+        {
+          if (false == bSilentError)
+            ON_SUBD_ERROR("m_sector_id[].VertexId() is incorrect.");
+          return false;
+        }
+        if (false == m_sector_id[vi].IsSet())
+        {
+          if (false == bSilentError)
+            ON_SUBD_ERROR("m_sector_id[] is missing face information.");
+          return false;
+        }
+      }
+      else
+      {
+        if (false == m_sector_id[vi].IsZero())
+        {
+          if (false == bSilentError)
+            ON_SUBD_ERROR("m_sector_id[] is missing vertex information.");
+          return false;
+        }
+      }
     }
     else if ( 0 != m_vertex_id[vi] )
     {
@@ -639,6 +701,12 @@ bool ON_SubDFaceRegion::IsValid(
       {
         if (false == bSilentError)
           ON_SUBD_ERROR("m_vertex_id[] missing a transient vertex id.");
+        return false;
+      }
+      if (false == m_sector_id[vi].IsZero())
+      {
+        if (false == bSilentError)
+          ON_SUBD_ERROR("Transient vertex has an nonzero m_sector_id[].");
         return false;
       }
     }
@@ -930,6 +998,64 @@ const ON_wString ON_SubDComponentRegion::ToString() const
   return ON_wString::EmptyString;
 }
 
+const ON_wString ON_SubDSectorId::ToString(bool bVerbose) const
+{
+  if (IsZero())
+    return ON_wString(bVerbose ? L"ON_SubDSectorId::Zero" : L"Zero");
+  if (m_sector_face_count > 0xFFFFU)
+    return ON_wString(bVerbose ? L"ON_SubDSectorId::Invalid" : L"Invalid");
+  wchar_t s_buffer[64];
+  if (nullptr != ToString(s_buffer, sizeof(s_buffer) / sizeof(s_buffer[0])))
+  {
+    return bVerbose ? ON_wString::FormatToString(L"ON_SubDSectorId %ls", s_buffer) : ON_wString(s_buffer);
+  }
+  return ON_wString::EmptyString;
+}
+
+wchar_t* ON_SubDSectorId::ToString(
+  wchar_t* s,
+  size_t s_capacity
+) const
+{
+  if (s_capacity <= 0 || nullptr == s)
+    return nullptr;
+
+  *s = 0;
+  wchar_t* s1 = s + (s_capacity - 1);
+  *s1 = 0;
+  if (s < s1)
+  {
+    if (IsZero())
+      *s++ = '0';
+    else if (m_sector_face_count > 0xFFFFU)
+      *s++ = 'X';
+    else if ( s+6 < s1 )
+    {
+      *s++ = 'v';
+      if (nullptr != s && s < s1)
+      {
+        s = Internal_AppendUnsigned(this->m_vertex_id, s, s1);
+        if (nullptr != s && s + 5 < s1)
+        {
+          *s++ = '.';
+          *s++ = 'f';
+          s = Internal_AppendUnsigned(this->m_minimum_face_id, s, s1);
+          if (nullptr != s && s + 2 < s1)
+          {
+            *s++ = 'x';
+            s = Internal_AppendUnsigned(this->m_sector_face_count, s, s1);
+          }
+        }
+      }
+    }
+  }
+
+  if (nullptr != s && s <= s1)
+    *s = 0;
+
+  return s;
+}
+
 
 ON__UINT32 ON_SubDComponentRegionIndex::ToCompressedRegionIndex() const
 {
@@ -1063,7 +1189,7 @@ wchar_t* ON_SubDFaceRegion::ToString(
       *s++ = ')';
   }
 
-  if (nullptr != s && s+4 < s1)
+  if (nullptr != s && s + 4 < s1)
   {
     for (unsigned int i = 0; i < 4 && nullptr != s && s + 4 < s1; i++)
     {
@@ -1081,6 +1207,29 @@ wchar_t* ON_SubDFaceRegion::ToString(
     }
     if (nullptr != s && s < s1)
       *s++ = ')';
+  }
+
+  if (
+    false == m_sector_id[0].IsZero()
+    ||
+    false == m_sector_id[1].IsZero()
+    ||
+    false == m_sector_id[2].IsZero()
+    ||
+    false == m_sector_id[3].IsZero()
+    )
+  {
+    if (nullptr != s && s + 4 < s1)
+    {
+      for (unsigned int i = 0; i < 4 && nullptr != s && s + 4 < s1; i++)
+      {
+        *s++ = ON_wString::Space;
+        *s++ = (0 == i) ? '(' : ',';
+        s = m_sector_id[i].ToString(s, s1 - s);
+      }
+      if (nullptr != s && s < s1)
+        *s++ = ')';
+    }
   }
 
   if (nullptr != s && s <= s1)
@@ -1221,17 +1370,20 @@ bool ON_SubDMeshFragment::SealAdjacentSides(
 class VertexToDuplicate
 {
 public:
+  // ON_SubD information
   const ON_SubDVertex* m_vertex = nullptr;
   const ON_SubDFace* m_face = nullptr;
+  unsigned int m_sector_id = 0; // all the dups for a specific vertex that are in the same sector get a unique nonzero sector id
+
+  // ON_Mesh information
   unsigned int m_mesh_V_index = 0;
   unsigned int m_mesh_F_index = 0;
 
   static int CompareVertexId(const class VertexToDuplicate* a, const class VertexToDuplicate*);
-  static int CompareVertexAndFaceIds(const class VertexToDuplicate* a, const class VertexToDuplicate*);
+  static int CompareVertexIdAndFaceId(const class VertexToDuplicate* a, const class VertexToDuplicate*);
+  static int CompareSectorIdAndFaceId(const class VertexToDuplicate* a, const class VertexToDuplicate*);
 
-  static bool NeedsDuplicated(
-    const ON_SubDVertex* vertex
-    );
+  static bool NeedsDuplicated(const ON_SubDVertex* vertex);
 };
 
 int VertexToDuplicate::CompareVertexId(const class VertexToDuplicate* a, const class VertexToDuplicate* b)
@@ -1252,31 +1404,65 @@ int VertexToDuplicate::CompareVertexId(const class VertexToDuplicate* a, const c
 
   return 0;
 }
-int VertexToDuplicate::CompareVertexAndFaceIds(const class VertexToDuplicate* a, const class VertexToDuplicate* b)
+
+int VertexToDuplicate::CompareVertexIdAndFaceId(const class VertexToDuplicate* a, const class VertexToDuplicate* b)
 {
   if ( a == b )
     return 0;
-  int rc = VertexToDuplicate::CompareVertexId(a,b);
-  if (0 != rc)
-    return rc;
   if (nullptr == a)
     return -1;
   if (nullptr == b)
     return 1;
-  unsigned int a_id = a->m_face ? a->m_face->m_id : 0;
-  unsigned int b_id = b->m_face ? b->m_face->m_id : 0;
+  
+  unsigned int a_id = a->m_vertex ? a->m_vertex->m_id : 0;
+  unsigned int b_id = b->m_vertex ? b->m_vertex->m_id : 0;
   if (a_id < b_id)
     return -1;
   if (a_id > b_id)
     return 1;
+
+  a_id = a->m_face ? a->m_face->m_id : 0;
+  b_id = b->m_face ? b->m_face->m_id : 0;
+  if (a_id < b_id)
+    return -1;
+  if (a_id > b_id)
+    return 1;
+
   return 0;
+}
+
+int VertexToDuplicate::CompareSectorIdAndFaceId(const class VertexToDuplicate* a, const class VertexToDuplicate* b)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1;
+  if (nullptr == b)
+    return 1;
+
+  unsigned int a_id = a->m_sector_id;
+  unsigned int b_id = b->m_sector_id;
+  if (a_id < b_id)
+    return -1;
+  if (a_id > b_id)
+    return 1;
+
+  a_id = a->m_face ? a->m_face->m_id : 0;
+  b_id = b->m_face ? b->m_face->m_id : 0;
+  if (a_id < b_id)
+    return -1;
+  if (a_id > b_id)
+    return 1;
+
+  return 0;
+
 }
 
 bool VertexToDuplicate::NeedsDuplicated(
   const ON_SubDVertex* vertex
   )
 {
-  if ( nullptr == vertex || vertex->m_face_count <= 0 || vertex->m_edge_count < 2 || nullptr == vertex->m_edges )
+  if ( nullptr == vertex || vertex->m_face_count < 2 || vertex->m_edge_count < 2 || nullptr == vertex->m_edges || nullptr == vertex->m_faces)
     return false;
   if (vertex->IsSmooth())
     return false;
@@ -1284,85 +1470,81 @@ bool VertexToDuplicate::NeedsDuplicated(
   for (unsigned int vei = 0; vei < edge_count; vei++)
   {
     const ON_SubDEdge* edge = vertex->Edge(vei);
-    if ( nullptr != edge && false == edge->IsSmooth() && edge->m_face_count > 1 )
+    if (nullptr != edge && false == edge->IsSmooth() && edge->m_face_count > 1)
       return true;
   }
   return false;
 }
 
-static bool ChangeMeshFaceIndex(
-  unsigned int mesh_V_index0,
+static bool Internal_UpdateMeshFaceVertexIndex(
+  ON_Mesh& mesh,
+  unsigned mesh_F_index,
   unsigned int mesh_F_count,
-  ON_Mesh* mesh,
-  VertexToDuplicate& dup,
-  ON_SimpleArray<VertexToDuplicate>& dups_sub_array
+  unsigned mesh_V_index0,
+  unsigned mesh_V_index1
   )
 {
-  int k = dups_sub_array.BinarySearch(&dup,VertexToDuplicate::CompareVertexAndFaceIds);
-  if (k < 0)
+  if (mesh_F_index < mesh_F_count && mesh_V_index0 < mesh_V_index1 )
   {
-    // error.  terminate creation of dups.
-    ON_SubDIncrementErrorCount();
-    return false;
+    unsigned int* fvi = (unsigned int*)(mesh.m_F[mesh_F_index].vi);
+    if (fvi[0] == mesh_V_index0)
+      fvi[0] = mesh_V_index1;
+    if (fvi[1] == mesh_V_index0)
+      fvi[1] = mesh_V_index1;
+    if (fvi[2] == mesh_V_index0)
+      fvi[2] = mesh_V_index1;
+    if (fvi[3] == mesh_V_index0)
+      fvi[3] = mesh_V_index1;
+    return true;
   }
-
-  VertexToDuplicate* dupk = dups_sub_array.Array() + k;
-
-  if (mesh_V_index0 != dup.m_mesh_V_index)
-  {
-    if (mesh_V_index0 == dupk->m_mesh_V_index && dupk->m_mesh_F_index < mesh_F_count)
-    {
-      unsigned int* fvi = (unsigned int*)(mesh->m_F[dupk->m_mesh_F_index].vi);
-      if (fvi[0] == mesh_V_index0)
-        fvi[0] = dup.m_mesh_V_index;
-      if (fvi[1] == mesh_V_index0)
-        fvi[1] = dup.m_mesh_V_index;
-      if (fvi[2] == mesh_V_index0)
-        fvi[2] = dup.m_mesh_V_index;
-      if (fvi[3] == mesh_V_index0)
-        fvi[3] = dup.m_mesh_V_index;
-    }
-  }
-  dupk->m_mesh_V_index = ON_UNSET_UINT_INDEX;
-  dupk->m_mesh_F_index = ON_UNSET_UINT_INDEX;
-  return true;
+  ON_SubDIncrementErrorCount();
+  return false;
 }
 
-static bool DuplicateVerticesAtCreases(
-  ON_Mesh* mesh,
+
+static VertexToDuplicate* Internal_FindMatchingVertexIdAndFaceId(const VertexToDuplicate* key, VertexToDuplicate* vertex_dups, unsigned int vertex_dups_count )
+{
+  return (VertexToDuplicate*)bsearch(key, vertex_dups, vertex_dups_count, sizeof(vertex_dups[0]), (int(*)(const void*, const void*))VertexToDuplicate::CompareVertexIdAndFaceId);
+}
+
+static bool Internal_DuplicateVertices(
+  ON_Mesh& mesh,
   ON_3dPointArray& D,
   ON_SimpleArray<VertexToDuplicate>& dups_array
   )
 {
-  const unsigned int mesh_F_count = mesh->m_F.UnsignedCount();
+  const unsigned int mesh_F_count = mesh.m_F.UnsignedCount();
   const unsigned int mesh_D_count0 = D.UnsignedCount();
 
   const unsigned int dups_count = dups_array.UnsignedCount();
   if (dups_count <= 1)
     return true;
 
-  dups_array.QuickSort(VertexToDuplicate::CompareVertexAndFaceIds);
-  ON_SimpleArray<VertexToDuplicate> dups_sub_array; // for searching
+  unsigned int sector_id = 0;
+
+  dups_array.QuickSortAndRemoveDuplicates(VertexToDuplicate::CompareVertexIdAndFaceId);
+
+  ON_SubDSectorIterator sit;
   VertexToDuplicate* dups = dups_array;
-  VertexToDuplicate dup;
+  VertexToDuplicate key;
   unsigned int i1 = 0;
   for (unsigned int i0 = i1; i0 < dups_count; i0 = i1)
   {
-    dup = dups[i0];
-    if (nullptr == dup.m_vertex)
+    key = dups[i0];
+    if (nullptr == key.m_vertex)
     {
       ON_SubDIncrementErrorCount();
       return false;
     }
     for (i1 = i0 + 1; i1 < dups_count; i1++)
     {
-      int rc = VertexToDuplicate::CompareVertexId(&dup,dups+i1);
+      int rc = VertexToDuplicate::CompareVertexId(&key,dups+i1);
       if (rc < 0)
         break;
       if ( 0 != rc
-          || dup.m_vertex != dups[i1].m_vertex 
-          || dup.m_mesh_V_index != dups[i1].m_mesh_V_index 
-          || dup.m_mesh_V_index >= mesh_D_count0
+          || key.m_vertex != dups[i1].m_vertex 
+          || key.m_mesh_V_index != dups[i1].m_mesh_V_index
+          || key.m_mesh_V_index >= mesh_D_count0
           )
       {
         ON_SubDIncrementErrorCount();
@@ -1373,118 +1555,248 @@ static bool DuplicateVerticesAtCreases(
     if ( i1 == i0+1)
       continue;
 
-    const unsigned int mesh_V_index0 = dup.m_mesh_V_index;
+    const unsigned int mesh_V_index0 = key.m_mesh_V_index;
     const ON_3dPoint P = D[mesh_V_index0];
-    dups_sub_array.SetArray(dups+i0,i1-i0,0);
-    ON_SubDSectorIterator sit;
+    VertexToDuplicate* vertex_dups = dups+i0;
+    const unsigned vertex_dups_count = i1 - i0;
     unsigned int sector_count = 0;
-    bool bDupError = false;
-    for (unsigned int i = i0; i < i1 && false == bDupError; i++)
+    // Set the sector id
+    for (unsigned int k = 0; k < vertex_dups_count; ++k)
     {
-      if (dups[i].m_mesh_V_index >= mesh_D_count0 || dups[i].m_mesh_F_index >= mesh_F_count)
+      if (vertex_dups[k].m_sector_id > 0 )
+        continue; // this was in a previously found sector.
+
+      ++sector_id;
+      ++sector_count;
+
+      // When the priority is encoding creases, we need to divide the faces around this vertex
+      // into sets that are in the same sector. Since a dart vertex has only 1 sector
+      // but the crease edge at a dart needs to have duplicate vertices at both ends,
+      // darts get special case handling.
+
+      if (nullptr == sit.Initialize(vertex_dups[k].m_face, 0, key.m_vertex))
       {
-        if (sector_count > 0
-          && ON_UNSET_UINT_INDEX == dups[i].m_mesh_V_index
-          && ON_UNSET_UINT_INDEX == dups[i].m_mesh_F_index
-          )
-        {
-          // this dup[i] was part of a previously processed sector.
-          continue;
-        }
-        // error.  terminate creation of dups.
+        // not fatal, but don't bother with the vertices in vertex_dups[].
         ON_SubDIncrementErrorCount();
-        bDupError = true;
+        sector_count = 0;
+        break;
+      }
+      if (nullptr == sit.IncrementToCrease(-1))
+      {
+        // not fatal, but don't bother with the vertices in vertex_dups[].
+        ON_SubDIncrementErrorCount();
+        sector_count = 0;
         break;
       }
 
-      if (nullptr == sit.Initialize(dups[i].m_face, 0, dup.m_vertex))
+      if (0 == k && key.m_vertex->IsDart())
       {
-        // error.  terminate creation of dups.
-        ON_SubDIncrementErrorCount();
-        bDupError = true;
-        break;
-      }
-      if ( nullptr == sit.IncrementToCrease(-1) )
-      {
-        // error.  terminate creation of dups.
-        ON_SubDIncrementErrorCount();
-        bDupError = true;
-        break;
-      }
-
-      if (dup.m_vertex->IsDart())
-      {
+        // darts have a single sector, but the dart vertex needs to be duplicated across the creased edge.
         const ON_SubDEdge* edge = sit.CurrentEdge(0);
         if (nullptr == edge || false == edge->IsCrease() || 2 != edge->m_face_count)
         {
+          // not fatal, but don't bother with the vertices in vertex_dups[].
           ON_SubDIncrementErrorCount();
-          bDupError = true;
+          sector_count = 0;
           break;
         }
+
+        // we found the creased edge - duplicate the ON_Mesh vertices at this edge.
         for (unsigned int efi = 0; efi < 2; efi++)
         {
-          dup.m_face = edge->Face(efi);
-          dup.m_mesh_V_index = D.UnsignedCount();
-          D.Append(P);
-          if (false == ChangeMeshFaceIndex(mesh_V_index0, mesh_F_count, mesh, dup, dups_sub_array))
+          key.m_face = edge->Face(efi);
+          VertexToDuplicate* vertex_dup = Internal_FindMatchingVertexIdAndFaceId(&key, vertex_dups, vertex_dups_count);
+          if (nullptr == vertex_dup)
           {
+            // not fatal, but don't bother with the vertices in vertex_dups[].
             ON_SubDIncrementErrorCount();
-            bDupError = true;
+            sector_count = 0;
+            break;
+          }
+          // add a new vertex on either side of the dart's edge
+          vertex_dup->m_mesh_V_index = D.UnsignedCount();
+          D.Append(P);
+          if ( false == Internal_UpdateMeshFaceVertexIndex(mesh, vertex_dup->m_mesh_F_index, mesh_F_count, mesh_V_index0, vertex_dup->m_mesh_V_index) )
+          {
+            // not fatal, but don't bother with the vertices in vertex_dups[].
+            ON_SubDIncrementErrorCount();
+            sector_count = 0;
             break;
           }
         }
-
-        sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease);
-      }
-
-      sector_count++;
-      if (sector_count > 1)
-      {
-        dup.m_mesh_V_index = D.UnsignedCount();
-        D.Append(P);
-      }
-      else
-      {
-        dup.m_mesh_V_index = mesh_V_index0;
-      }
-
-      for (dup.m_face = sit.CurrentFace(); nullptr != dup.m_face && false == bDupError; dup.m_face = sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
-      {
-        if (false == ChangeMeshFaceIndex(mesh_V_index0, mesh_F_count, mesh, dup, dups_sub_array))
+        for (k = 0; k < vertex_dups_count; ++k)
         {
+          vertex_dups[k].m_sector_id = sector_id;
+        }
+        break;
+      }
+
+      // assign the sector id
+      for (key.m_face = sit.CurrentFace(); nullptr != key.m_face; key.m_face = sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
+      {
+        VertexToDuplicate* vertex_dup = Internal_FindMatchingVertexIdAndFaceId(&key, vertex_dups, vertex_dups_count);
+        if (nullptr == vertex_dup)
+        {
+          // not fatal, but don't bother with the vertices in vertex_dups[].
           ON_SubDIncrementErrorCount();
-          bDupError = true;
+          sector_count = 0;
           break;
         }
+        vertex_dup->m_sector_id = sector_id;
       }
-      if (bDupError)
+      if (0 == sector_count)
         break;
-
     }
-    dups_sub_array.SetCapacity(0);
-    if (bDupError)
-      return false;
+
+    if (0 == sector_count)
+      continue;
+
+    if (sector_count > 1)
+    {
+      // sort vertex_dups[] by sector id 
+      ON_qsort(vertex_dups, vertex_dups_count, sizeof(vertex_dups[0]), (int(*)(const void*, const void*))VertexToDuplicate::CompareSectorIdAndFaceId);
+    }
+    
+    unsigned int k1 = 0;
+    for (unsigned int k0 = 0; k0 < vertex_dups_count; k0 = k1)
+    {
+      key = vertex_dups[k0];
+      for (k1 = k0 + 1; k1 < vertex_dups_count; ++k1)
+      {
+        if (key.m_sector_id != vertex_dups[k1].m_sector_id)
+          break;
+      }
+      if (k0 > 0)
+      {
+        // make a new vertex for this sector;
+        key.m_mesh_V_index = D.UnsignedCount();
+        D.Append(P);
+
+        // update ON_Mesh faces in this sector to use new vertex
+        for (unsigned k = k0; k < k1; ++k)
+          Internal_UpdateMeshFaceVertexIndex(mesh, vertex_dups[k].m_mesh_F_index, mesh_F_count, mesh_V_index0, key.m_mesh_V_index);
+      }
+    }
   }
+
   return true;
 }
 
+//static const ON_2dPoint Internal_NgonFakeSurfaceParameter(
+//  const ON_SubDFace* face, 
+//  const ON_2dPoint face_pack_rect_corners[4], 
+//  const ON_2dPoint& center,
+//  unsigned fvi
+//)
+//{
+//  for (;;)
+//  {
+//    if (nullptr == face || face->m_edge_count < 5)
+//      break;
+//    const ON_2dVector diag = face_pack_rect_corners[0] - center;
+//    const double r = 0.5 * ((fabs(diag.y) < fabs(diag.x)) ? fabs(diag.y) : fabs(diag.x));
+//    const double a = (((double)fvi) / ((double)face->m_edge_count))*ON_2PI;
+//    return ON_2dPoint( center.x + r * cos(a), center.y + r*sin(a) );
+//  }
+//  return ON_2dPoint::NanPoint;
+//}
+
 ON_Mesh* ON_SubD::GetControlNetMesh(
-  ON_Mesh* destination_mesh
-  ) const
+  ON_Mesh* destination_mesh,
+  ON_SubDGetControlNetMeshPriority priority
+) const
 {
   if (destination_mesh)
     destination_mesh->Destroy();
+
+  const ON_SubDimple* subdimple = SubDimple();
+  if (nullptr == subdimple)
+    return nullptr; // SubD is empty - not an error
 
   const ON_SubDLevel& level = ActiveLevel();
   if (level.IsEmpty())
     return ON_SUBD_RETURN_ERROR(nullptr);
 
+  if (level.m_vertex_count < 3)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  if (level.m_edge_count < 3)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  if ( level.m_face_count < 1)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  std::unique_ptr< ON_Mesh > up;
+  ON_Mesh* mesh = nullptr;
+  if (nullptr != destination_mesh)
+  {
+    mesh = destination_mesh;
+    *mesh = ON_Mesh::Empty;
+  }
+  else
+  {
+    mesh = new ON_Mesh();
+  }
+
+  bool bSuccess = false;
+  switch (priority)
+  {
+  case ON_SubDGetControlNetMeshPriority::Geometry:
+    {
+      unsigned int archive_id_partition[4] = {};
+      bool bLevelLinkedListIncreasingId[3] = {};
+      level.SetArchiveId(*subdimple, archive_id_partition, bLevelLinkedListIncreasingId);
+      if (archive_id_partition[1] - archive_id_partition[0] == level.m_vertex_count)
+      {
+        // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
+        // with components in an order that is not increasing in id and it is critical that the next three for
+        // loops iterate the level's components in order of increasing id.
+
+        // must iterate vertices in order of increasing id
+        ON_SubDLevelComponentIdIterator vit_by_id;
+        vit_by_id.Initialize(bLevelLinkedListIncreasingId[0], ON_SubDComponentPtr::Type::Vertex, *subdimple, level);
+
+        // must iterate vertices in order of increasing id
+        ON_SubDLevelComponentIdIterator fit_by_id;
+        fit_by_id.Initialize(bLevelLinkedListIncreasingId[2], ON_SubDComponentPtr::Type::Face, *subdimple, level);
+        bSuccess = Internal_GetGeometryControlNetMesh(level, vit_by_id, fit_by_id, *mesh);
+      }
+    }
+    break;
+
+  case ON_SubDGetControlNetMeshPriority::TextureCoordinates:
+    bSuccess = Internal_GetTextureCoordinatesGeometryControlNetMesh(level, *mesh);
+    break;
+  }
+
+  if (false == bSuccess)
+  {
+    if (mesh != destination_mesh)
+      delete mesh;
+    mesh = nullptr;
+  }
+  else
+  {
+    mesh->UpdateSinglePrecisionVertices();
+    if (ON_SubDGetControlNetMeshPriority::TextureCoordinates != priority)
+    {
+      mesh->ComputeFaceNormals();
+      mesh->ComputeVertexNormals();
+    }
+    mesh->BoundingBox();
+  }
+
+  return mesh;
+}
+
+
+bool ON_SubD::Internal_GetGeometryControlNetMesh(
+  const ON_SubDLevel& level,
+  ON_SubDLevelComponentIdIterator& vit_by_id,
+  ON_SubDLevelComponentIdIterator& fit_by_id,
+  ON_Mesh& mesh
+) const
+{
   VertexToDuplicate dup;
   ON_SimpleArray<VertexToDuplicate> dups_array;
-
-  const ON_SubDimple* subdimple = SubDimple();
-  if ( nullptr == subdimple)
-    return nullptr;
 
   const unsigned int subd_vertex_count = level.m_vertex_count;
 
@@ -1506,47 +1818,25 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
       max_ngon_Vcount = face->m_edge_count;
   }
 
-  if (subd_vertex_count < 4 || mesh_face_count < 1 )
+  if (subd_vertex_count < 3 || mesh_face_count < 1 )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  std::unique_ptr< ON_Mesh > up;  
-  ON_Mesh* mesh = nullptr;
-  if (nullptr != destination_mesh)
-    mesh = destination_mesh;
-  else
-  {
-    up = std::make_unique< ON_Mesh >();
-    mesh = up.get();
-  }
-
-  ON_3dPointArray& D = mesh->DoublePrecisionVertices();
-  D.Reserve(subd_vertex_count+mesh_ngon_count);
+  const size_t D_initial_capacity = subd_vertex_count + mesh_ngon_count;
+  ON_3dPointArray& D = mesh.DoublePrecisionVertices();
+  D.Reserve(D_initial_capacity);
   D.SetCount(0);
+  ON_SimpleArray<bool> mesh_VertexNeedsDuplicated(D_initial_capacity);
 
-  mesh->m_F.Reserve(mesh_face_count);
-  mesh->m_F.SetCount(0);
+  mesh.m_F.Reserve(mesh_face_count);
+  mesh.m_F.SetCount(0);
 
   ON_SimpleArray< ON_2udex > ngon_spans(mesh_ngon_count);
 
   bool rc = false;
   for (;;)
   {
-
-    unsigned int archive_id_partition[4] = {};
-    bool bLevelLinkedListIncreasingId[3] = {};
-    level.SetArchiveId(*subdimple,archive_id_partition,bLevelLinkedListIncreasingId);
-
-    if (archive_id_partition[1] - archive_id_partition[0] != subd_vertex_count)
-      break;
-
-    // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
-    // with components in an order that is not increasing in id and it is critical that the next three for
-    // loops iterate the level's components in order of increasing id.
-    ON_SubDLevelComponentIdIterator idit;
-
     // must iterate vertices in order of increasing id
-    idit.Initialize(bLevelLinkedListIncreasingId[0], ON_SubDComponentPtr::Type::Vertex, *subdimple, level);
-    for (const ON_SubDVertex* vertex = idit.FirstVertex(); nullptr != vertex; vertex = idit.NextVertex())
+    for (const ON_SubDVertex* vertex = vit_by_id.FirstVertex(); nullptr != vertex; vertex = vit_by_id.NextVertex())
     {
       unsigned int vi = vertex->ArchiveId();
       if (vi < 1 || vi > subd_vertex_count)
@@ -1554,6 +1844,7 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
       if (D.UnsignedCount()+1 != vi)
         break;
       D.AppendNew() = vertex->m_P;
+      mesh_VertexNeedsDuplicated.AppendNew() = VertexToDuplicate::NeedsDuplicated(vertex);
     }
 
     if (D.UnsignedCount() != subd_vertex_count)
@@ -1563,15 +1854,17 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
     unsigned int max_ngon_face_count = 0;
     mesh_face_count = 0;
     // must iterate faces in order of increasing id
-    idit.Initialize(bLevelLinkedListIncreasingId[2], ON_SubDComponentPtr::Type::Face, *subdimple, level);
-    for (const ON_SubDFace* face = idit.FirstFace(); nullptr != face; face = idit.NextFace())
+    for (const ON_SubDFace* face = fit_by_id.FirstFace(); nullptr != face; face = fit_by_id.NextFace())
     {
       ON_MeshFace meshf = {};
-
+      
       if (face->m_edge_count <= 4)
       {
+        // SubD quad face or 3-gon face gets a single ON_Mesh face
         if (face->m_edge_count < 3)
           continue;
+
+        const bool bQuad = 4 == face->m_edge_count;
 
         for (unsigned short fvi = 0; fvi < face->m_edge_count; fvi++)
         {
@@ -1583,11 +1876,11 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
             break;
           }
           meshf.vi[fvi]--;
-          if (VertexToDuplicate::NeedsDuplicated(vertex))
+          if (mesh_VertexNeedsDuplicated[meshf.vi[fvi]])
           {
             dup.m_vertex = vertex;
             dup.m_face = face;
-            dup.m_mesh_F_index = mesh->m_F.UnsignedCount();
+            dup.m_mesh_F_index = mesh.m_F.UnsignedCount();
             dup.m_mesh_V_index = meshf.vi[fvi];
             dups_array.Append(dup);
           }
@@ -1596,21 +1889,22 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
           continue;
         if ( 3 == face->m_edge_count)
           meshf.vi[3] = meshf.vi[2];
-        mesh->m_F.Append(meshf);
+        mesh.m_F.Append(meshf);
         continue;
       }
-      else
+      else // face->m_edge_count >= 5
       {
+        // SubD n-gon face with n >= 5 gets n ON_Mesh triangles grouped into
         ON_3dPoint center_point;
         if (false == face->GetSubdivisionPoint( center_point))
           continue;
 
-        ON_2udex ngon_span = { mesh->m_F.UnsignedCount(), 0 };
+        ON_2udex ngon_span = { mesh.m_F.UnsignedCount(), 0 };
 
         const unsigned int dup_count0 = dups_array.UnsignedCount();
 
         const unsigned int Dcount0 = D.UnsignedCount();
-        const unsigned int Fcount0 = mesh->m_F.UnsignedCount();
+        const unsigned int Fcount0 = mesh.m_F.UnsignedCount();
         meshf.vi[2] = (int)Dcount0;
         meshf.vi[3] = meshf.vi[2];
 
@@ -1620,15 +1914,16 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
           continue;
         meshf.vi[1]--;
 
-        if (VertexToDuplicate::NeedsDuplicated(vertex))
+        if (mesh_VertexNeedsDuplicated[meshf.vi[1]])
         {
           dup.m_vertex = vertex;
           dup.m_face = face;
-          dup.m_mesh_F_index = mesh->m_F.UnsignedCount();
+          dup.m_mesh_F_index = mesh.m_F.UnsignedCount();
           dup.m_mesh_V_index = meshf.vi[1];
           dups_array.Append(dup);
         }
 
+        mesh_VertexNeedsDuplicated.Append(false);
         D.Append(center_point);
 
         for (unsigned short fvi = 1; fvi <= face->m_edge_count; fvi++)
@@ -1643,28 +1938,31 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
           }
           meshf.vi[1]--;
 
-          if (VertexToDuplicate::NeedsDuplicated(vertex))
+          if (fvi < face->m_edge_count)
           {
-            dup.m_vertex = vertex;
-            dup.m_face = face;
-            dup.m_mesh_F_index = mesh->m_F.UnsignedCount();
-            dup.m_mesh_V_index = meshf.vi[1];
-            dups_array.Append(dup);
+            if (mesh_VertexNeedsDuplicated[meshf.vi[1]])
+            {
+              dup.m_vertex = vertex;
+              dup.m_face = face;
+              dup.m_mesh_F_index = mesh.m_F.UnsignedCount();
+              dup.m_mesh_V_index = meshf.vi[1];
+              dups_array.Append(dup);
+            }
           }
 
-          mesh->m_F.Append(meshf);
+          mesh.m_F.Append(meshf);
         }
-        ngon_span.j = mesh->m_F.UnsignedCount();
+        ngon_span.j = mesh.m_F.UnsignedCount();
 
         unsigned int ngon_face_count = ngon_span.j - ngon_span.i;
-        if (-1 == meshf.vi[0] || ngon_face_count < 3)
+        if ( -1 == meshf.vi[0] || ngon_face_count != face->EdgeCount() )
         {
           D.SetCount(Dcount0);
-          mesh->m_F.SetCount(Fcount0);
+          mesh.m_F.SetCount(Fcount0);
           dups_array.SetCount(dup_count0);
           continue;
         }
-        ngon_span.j = mesh->m_F.UnsignedCount();
+        ngon_span.j = mesh.m_F.UnsignedCount();
         if (ngon_face_count >= 3)
         {
           ngon_spans.Append(ngon_span);
@@ -1674,7 +1972,7 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
       }
     }
 
-    if (mesh->m_F.UnsignedCount() <= 0)
+    if (mesh.m_F.UnsignedCount() <= 0)
       break;
 
     rc = true;
@@ -1685,14 +1983,10 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
   if (false == rc )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if (D.UnsignedCount() < 3 || mesh->m_F.UnsignedCount() < 1)
+  if (D.UnsignedCount() < 3 || mesh.m_F.UnsignedCount() < 1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  DuplicateVerticesAtCreases(mesh,D,dups_array);
-  mesh->UpdateSinglePrecisionVertices();
-  mesh->ComputeFaceNormals();
-  mesh->ComputeVertexNormals();
-  mesh->BoundingBox();
+  Internal_DuplicateVertices( mesh, D, dups_array);
 
   // group all mesh faces that came from the same level zero subd face into an ngon.
   if (ngon_spans.UnsignedCount() > 0 && max_ngon_Vcount >= 3)
@@ -1708,22 +2002,341 @@ ON_Mesh* ON_SubD::GetControlNetMesh(
         continue;
 
       ngon_fi[0] = ngon_span.i;
-      ngon_fi[0] = (unsigned int)mesh->m_F[ngon_fi[0]].vi[0];
+      ngon_fi[0] = (unsigned int)mesh.m_F[ngon_fi[0]].vi[0];
 
       unsigned int ngon_Vcount = 0;
       for (unsigned int i = ngon_span.i; i < ngon_span.j; i++)
       {
         ngon_fi[ngon_Vcount] = i;
-        ngon_vi[ngon_Vcount] = (unsigned int)(mesh->m_F[i].vi[0]);
+        ngon_vi[ngon_Vcount] = (unsigned int)(mesh.m_F[i].vi[0]);
         ngon_Vcount++;
       }
-      mesh->AddNgon(ngon_Vcount, ngon_vi, ngon_Vcount, ngon_fi );
+      mesh.AddNgon(ngon_Vcount, ngon_vi, ngon_Vcount, ngon_fi );
     }
   }
 
-  up.release();
-  return mesh;
+  return true;
 }
+
+bool ON_SubD::Internal_GetTextureCoordinatesGeometryControlNetMesh(
+  const ON_SubDLevel& level,
+  ON_Mesh& mesh
+) const
+{
+  const bool bSetMeshT = 2 * this->TexturePointsAreSet() > this->FaceCount(); // more than half the faces have texture points.
+
+  bool bSubdivide = false; // required if any SubD faces are not quads.
+  unsigned mesh_4gon_count = 0;
+  unsigned mesh_quad_count = 0;
+  for (const ON_SubDFace* f = level.m_face[0]; nullptr != f; f = f->m_next_face)
+  {
+    const unsigned n = f->EdgeCount();
+    if (n < 3)
+      continue;
+
+    if (false == bSubdivide)
+    {
+      if (4 == n)
+      {
+        // subdivision is not required and we have another quad face
+        ++mesh_quad_count;
+        continue;
+      }
+      // first non-quad SubD face - switch to subdivided case
+      bSubdivide = true;
+
+      // each of the previously counted quad faces will generate 9 mesh vertices, 4 mesh faces, and a single ON_MeshNgon.
+      mesh_4gon_count = mesh_quad_count;
+      mesh_quad_count *= 4;
+    }
+
+    // In the subdivided case, each SubD face is represented by n quads in the ON_Mesh.
+    if ( 4 == n)
+      ++mesh_4gon_count;
+    mesh_quad_count += n;
+  }
+
+  if (mesh_quad_count < 1)
+    return ON_SUBD_RETURN_ERROR(false);
+
+  mesh.m_F.Reserve(mesh_quad_count);
+  mesh.m_F.SetCount(0);
+  mesh.m_FN.Reserve(mesh_quad_count);
+  mesh.m_FN.SetCount(0);
+
+  const unsigned mesh_vertex_count = 4 * (mesh_quad_count - 4* mesh_4gon_count) + 9 * mesh_4gon_count;
+  ON_3dPointArray& D = mesh.DoublePrecisionVertices();
+  D.Reserve(mesh_vertex_count);
+  D.SetCount(0);
+  mesh.m_N.Reserve(mesh_vertex_count);
+  mesh.m_N.SetCount(0);
+  mesh.m_S.Reserve(mesh_vertex_count);
+  mesh.m_S.SetCount(0);
+  if (bSetMeshT)
+    mesh.m_T.Reserve(mesh_vertex_count);
+  mesh.m_T.SetCount(0);
+
+  mesh.m_F.Reserve(mesh_quad_count);
+  mesh.m_F.SetCount(0);
+  mesh.m_FN.Reserve(mesh_quad_count);
+  mesh.m_FN.SetCount(0);
+
+  ON_MeshFace mesh_f;
+  ON_2dPoint face_pack_rect_corners[4];
+  ON_3dPoint quadP[4];
+  if (bSubdivide)
+  {
+    ON_3dPoint centerT = ON_3dPoint::NanPoint;
+
+    ON_2dVector ngon_sub_pack_rect_size = ON_2dVector::NanVector;
+    ON_2dVector ngon_sub_pack_rect_delta = ON_2dVector::NanVector;
+    ON_2dPoint quadS[4] = { ON_2dPoint::NanPoint, ON_2dPoint::NanPoint, ON_2dPoint::NanPoint, ON_2dPoint::NanPoint };
+    ON_3dPoint quadT[4] = { ON_3dPoint::NanPoint, ON_3dPoint::NanPoint, ON_3dPoint::NanPoint, ON_3dPoint::NanPoint };
+    ON_3dPoint faceT[2] = { ON_3dPoint ::NanPoint, ON_3dPoint::NanPoint };
+
+
+    ON_SimpleArray<ON_3dPoint> P(64);
+    for (const ON_SubDFace* f = level.m_face[0]; nullptr != f; f = f->m_next_face)
+    {
+      const unsigned n = f->m_edge_count;
+      if (n < 3)
+        continue;
+
+      P.SetCount(0);
+      for (unsigned i = 0; i < n; ++i)
+      {
+        const ON_SubDVertex* v = f->Vertex(i);
+        if (nullptr == v)
+          break;
+        const ON_3dPoint C = v->ControlNetPoint();
+        if (false == C.IsValid())
+          break;
+        P.Append(v->ControlNetPoint());
+      }
+      if (n != P.UnsignedCount())
+        continue;
+
+      quadP[0] = f->ControlNetCenterPoint();
+      if (false == quadP[0].IsValid())
+        continue;
+
+      const ON_3fVector N(f->ControlNetCenterNormal());
+
+      f->GetFacePackRectCorners(false, face_pack_rect_corners);
+      const ON_2dVector face_pack_rect_size = f->PackRectSize();
+
+      if (bSetMeshT)
+      {
+        faceT[0] = f->TexturePoint(n - 1);
+        faceT[1] = f->TexturePoint(0);
+        quadT[0] = f->TextureCenterPoint();
+      }
+
+
+      if (4 == n)
+      {
+        // An ON_SubDFace quad becomes an ON_Mesh ngon made from 4 ON_Mesh quads.
+
+        // center point
+        mesh_f.vi[0] = D.UnsignedCount();
+        D.Append(quadP[0]);
+        mesh.m_N.Append(N);
+        mesh.m_S.Append(f->PackRectOrigin() + 0.5 * f->PackRectSize());
+        if (bSetMeshT)
+          mesh.m_T.Append(ON_2fPoint(quadT[0]));
+
+        ON_MeshNgon* four_gon = mesh.AllocateNgon(8,4);
+        four_gon->m_vi[0] = D.UnsignedCount();
+        four_gon->m_vi[1] = four_gon->m_vi[0] + 1;
+        four_gon->m_vi[2] = four_gon->m_vi[0] + 2;
+        four_gon->m_vi[3] = four_gon->m_vi[0] + 3;
+        four_gon->m_vi[4] = four_gon->m_vi[0] + 4;
+        four_gon->m_vi[5] = four_gon->m_vi[0] + 5;
+        four_gon->m_vi[6] = four_gon->m_vi[0] + 6;
+        four_gon->m_vi[7] = four_gon->m_vi[0] + 7;
+
+        four_gon->m_fi[0] = mesh.m_F.UnsignedCount();
+        four_gon->m_fi[1] = four_gon->m_fi[0] + 1;
+        four_gon->m_fi[2] = four_gon->m_fi[0] + 2;
+        four_gon->m_fi[3] = four_gon->m_fi[0] + 3;
+
+        // add 8 boundary vertices
+        for (unsigned i = 0; i < 4; ++i)
+        {
+          D.Append(P[i]);
+          D.Append(ON_3dPoint::Midpoint(P[i], P[(i + 1) % 4]));
+          mesh.m_N.Append(N);
+          mesh.m_N.Append(N);
+          mesh.m_S.Append(face_pack_rect_corners[i]);
+          mesh.m_S.Append(ON_2dPoint::Midpoint(face_pack_rect_corners[i], face_pack_rect_corners[(i+1)%4]));
+          if (bSetMeshT)
+          {
+            faceT[0] = faceT[1];
+            faceT[1] = f->TexturePoint((i + 1) % 4);
+            mesh.m_T.Append(ON_2fPoint(faceT[0]));
+            mesh.m_T.Append(ON_2fPoint(ON_3dPoint::Midpoint(faceT[0], faceT[1])));
+          }
+        }
+
+        // add 4 ON_Mesh quads that make up the ON_SubDFace quad
+        mesh_f.vi[3] = four_gon->m_vi[7];
+        for (unsigned i = 0; i < 4; ++i)
+        {
+          mesh_f.vi[1] = mesh_f.vi[3];
+          mesh_f.vi[2] = four_gon->m_vi[2 * i];
+          mesh_f.vi[3] = mesh_f.vi[2] + 1;
+          mesh.m_F.Append(mesh_f);
+          mesh.m_FN.Append(N);
+        }
+
+        // add an ON_MeshNgon that represents the ON_SubDFace quad
+        mesh.AddNgon(four_gon);
+      }
+      else
+      {
+        quadP[3] = ON_3dPoint::Midpoint(P[n - 1], P[0]);
+        if (bSetMeshT)
+          quadT[3] = ON_3dPoint::Midpoint(faceT[0], faceT[1]);
+
+
+        const ON_2udex ngon_grid_size
+          = (n >= 5)
+          ? ON_SubDFace::GetNgonSubPackRectSizeAndDelta(n, face_pack_rect_size, ngon_sub_pack_rect_size, ngon_sub_pack_rect_delta)
+          : ON_2udex::Zero;
+
+        // an ON_Mesh n-gon is not possible because the fake packed surface parameters are not continuous across the ON_SubD face.
+        for (unsigned i = 0; i < n; ++i)
+        {
+          if (3 == n)
+          {
+            ON_SubDMeshFragment::Get3gonFaceFragmentPackRectCorners(false, face_pack_rect_corners, i, false, quadS);
+          }
+          else
+          {
+            ON_SubDMeshFragment::GetNgonFaceFragmentPackRectCorners(
+              n,
+              i,
+              false,
+              face_pack_rect_corners,
+              face_pack_rect_size,
+              ngon_grid_size,
+              ngon_sub_pack_rect_size,
+              ngon_sub_pack_rect_delta,
+              quadS
+            );
+          }
+
+          quadP[1] = quadP[3];
+          quadP[2] = P[i];
+          quadP[3] = ON_3dPoint::Midpoint(P[i], P[(i + 1) % n]);
+          if (bSetMeshT)
+          {
+            faceT[0] = faceT[1];
+            faceT[1] = f->TexturePoint((i + 1) % n);
+            quadT[1] = quadT[3];
+            quadT[2] = faceT[0];
+            quadT[3] = ON_3dPoint::Midpoint(faceT[0], faceT[1]);
+          }
+
+          mesh_f.vi[0] = D.UnsignedCount();
+          mesh_f.vi[1] = mesh_f.vi[0] + 1;
+          mesh_f.vi[2] = mesh_f.vi[1] + 1;
+          mesh_f.vi[3] = mesh_f.vi[2] + 1;
+
+          for (unsigned j = 0; j < 4U; ++j)
+          {
+            D.Append(quadP[j]);
+            mesh.m_N.Append(N);
+            mesh.m_S.Append(quadS[j]);
+            if (bSetMeshT)
+              mesh.m_T.Append(ON_2fPoint(quadT[j]));
+          }
+          mesh.m_F.Append(mesh_f);
+          mesh.m_FN.Append(N);
+        }
+      }
+    }
+  }
+  else
+  {
+    // All SubD faces are quads
+    for (const ON_SubDFace* f = level.m_face[0]; nullptr != f; f = f->m_next_face)
+    {
+      if (4 != f->m_edge_count)
+        continue;
+      quadP[3].x = ON_DBL_QNAN;
+      for (unsigned i = 0; i < 4; ++i)
+      {
+        const ON_SubDVertex* v = f->Vertex(i);
+        if (nullptr == v)
+          break;
+        quadP[i] = v->ControlNetPoint();
+        if (false == quadP[i].IsValid())
+          break;
+      }
+      if (false == quadP[3].IsValid())
+        continue;
+      const ON_3fVector N(f->ControlNetCenterNormal());
+      mesh_f.vi[0] = D.UnsignedCount();
+      mesh_f.vi[1] = mesh_f.vi[0] + 1;
+      mesh_f.vi[2] = mesh_f.vi[1] + 1;
+      mesh_f.vi[3] = mesh_f.vi[2] + 1;
+      mesh.m_F.Append(mesh_f);
+      mesh.m_FN.Append(N);
+      for (unsigned i = 0; i < 4U; ++i)
+      {
+        D.Append(quadP[i]);
+        mesh.m_N.Append(N);
+        mesh.m_S.Append(f->PackRectCorner(false, i));
+        if (bSetMeshT)
+          mesh.m_T.Append(ON_2fPoint(f->TexturePoint(i)));
+      }
+    }
+  }
+
+
+  ON_MappingTag mapping_tag = this->TextureMappingTag(false);
+
+  if (mesh.m_S.UnsignedCount() != D.UnsignedCount())
+  {
+    mesh.m_S.Destroy();
+    if (ON_TextureMapping::TYPE::srfp_mapping == mapping_tag.m_mapping_type)
+      mapping_tag = ON_MappingTag::Unset;
+  }
+  else
+  {
+    // set fake surface mapping information
+    mesh.m_srf_domain[0] = ON_Interval::ZeroToOne;
+    mesh.m_srf_domain[1] = ON_Interval::ZeroToOne;
+    mesh.m_srf_scale[0] = 0.0;
+    mesh.m_srf_scale[1] = 0.0;
+    mesh.m_packed_tex_domain[0] = ON_Interval::ZeroToOne;
+    mesh.m_packed_tex_domain[1] = ON_Interval::ZeroToOne;
+    mesh.m_packed_tex_rotate = false;
+
+    if (
+      false == bSetMeshT
+      && (false == mapping_tag.IsSet() || mapping_tag.IsDefaultSurfaceParameterMapping())
+      )
+    {
+      const int count = mesh.m_S.Count();
+      mesh.m_T.Reserve(count);
+      mesh.m_T.SetCount(0);
+      for (int i = 0; i < count; ++i)
+        mesh.m_T.Append(ON_2fPoint(mesh.m_S[i]));
+    }
+  }
+
+  if (bSetMeshT)
+  {
+    if (mesh.m_T.UnsignedCount() != D.UnsignedCount())
+      mesh.m_T.Destroy();
+  }
+  mesh.m_Ttag = mapping_tag;
+
+  return true;
+}
+
 
 void ON_SubD::ClearEvaluationCache() const
 {
@@ -1731,21 +2344,7 @@ void ON_SubD::ClearEvaluationCache() const
 
   if (nullptr != level)
   {
-    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts(false);
+    const_cast<ON_SubD*>(this)->ChangeGeometryContentSerialNumberForExperts(false);
     level->ClearEvaluationCache();
   }
 }
-
-void ON_SubD::ClearNeighborhoodEvaluationCache(const ON_SubDVertex * vertex, bool bTagChanged) const
-{
-  const ON_SubDLevel* level = ActiveLevelConstPointer();
-
-  if (nullptr != level)
-  {
-    const_cast<ON_SubD*>(this)->ChangeContentSerialNumberForExperts(false);
-    level->ClearNeighborhoodEvaluationCache(vertex, bTagChanged);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////
-

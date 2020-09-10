@@ -264,6 +264,14 @@ ON_RandomNumberGenerator::ON_RandomNumberGenerator()
   m_rand_context.mti = 0xFFFFFFFF;
 }
 
+
+ON__UINT32 ON_RandomNumberGenerator::RandomSeed()
+{
+  ON_UUID id;
+  ON_CreateUuid(id);
+  return ON_CRC32(0, sizeof(id), &id);
+}
+
 void ON_RandomNumberGenerator::Seed( ON__UINT32 s )
 {
   on_random_number_seed(s,&m_rand_context);
@@ -271,10 +279,7 @@ void ON_RandomNumberGenerator::Seed( ON__UINT32 s )
 
 void ON_RandomNumberGenerator::Seed()
 {
-  ON_UUID id;
-  ON_CreateUuid(id)
-    ;
-  Seed(ON_CRC32(0, sizeof(id),&id));
+  Seed(ON_RandomNumberGenerator::RandomSeed());
 }
 
 
@@ -292,6 +297,11 @@ double ON_RandomNumberGenerator::RandomDouble(double t0, double t1)
 {
   const double s = ((double)on_random_number(&m_rand_context))/4294967295.0;
   return ((1.0-s)*t0 + s*t1);
+}
+
+double ON_RandomNumberGenerator::RandomDouble(const class ON_Interval& range)
+{
+  return RandomDouble(range.m_t[0], range.m_t[1]);
 }
 
 static void Swap1(size_t count, unsigned char* a, unsigned char* b)

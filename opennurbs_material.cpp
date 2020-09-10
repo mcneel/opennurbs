@@ -1408,71 +1408,68 @@ int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material
 {
   const auto a_pbr = a.PhysicallyBased();
   const auto b_pbr = b.PhysicallyBased();
-  if (a_pbr.Supported() && !b_pbr.Supported())
+  if (a_pbr && !b_pbr)
     return -1;
-  if (!a_pbr.Supported() && b_pbr.Supported())
+  if (!a_pbr && b_pbr)
     return 1;
 
-  if (a_pbr.Supported() && b_pbr.Supported())
+  if (a_pbr && b_pbr)
   {
-    int rc = a_pbr.BaseColor().Compare(a_pbr.BaseColor());
+    int rc = a_pbr->BaseColor().Compare(a_pbr->BaseColor());
     if (rc) return rc;
 
-    rc = ((int)a_pbr.BRDF()) - ((int)b_pbr.BRDF());
+    rc = ((int)a_pbr->BRDF()) - ((int)b_pbr->BRDF());
     if (rc) return rc;
 
-    rc = CompareDouble(a_pbr.Subsurface(), b_pbr.Subsurface());
+    rc = CompareDouble(a_pbr->Subsurface(), b_pbr->Subsurface());
     if (0 != rc) return rc;
 
-    rc = a_pbr.SubsurfaceScatteringColor().Compare(b_pbr.SubsurfaceScatteringColor());
+    rc = a_pbr->SubsurfaceScatteringColor().Compare(b_pbr->SubsurfaceScatteringColor());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.SubsurfaceScatteringRadius(), b_pbr.SubsurfaceScatteringRadius());
+    rc = CompareDouble(a_pbr->SubsurfaceScatteringRadius(), b_pbr->SubsurfaceScatteringRadius());
     if (0 != rc) return rc;
     
-    rc = CompareDouble(a_pbr.Metallic(), b_pbr.Metallic());
+    rc = CompareDouble(a_pbr->Metallic(), b_pbr->Metallic());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Specular(), b_pbr.Specular());
+    rc = CompareDouble(a_pbr->Specular(), b_pbr->Specular());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.SpecularTint(), b_pbr.SpecularTint());
+    rc = CompareDouble(a_pbr->SpecularTint(), b_pbr->SpecularTint());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Roughness(), b_pbr.Roughness());
+    rc = CompareDouble(a_pbr->Roughness(), b_pbr->Roughness());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Sheen(), b_pbr.Sheen());
+    rc = CompareDouble(a_pbr->Sheen(), b_pbr->Sheen());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.SheenTint(), b_pbr.SheenTint());
+    rc = CompareDouble(a_pbr->SheenTint(), b_pbr->SheenTint());
     if (0 != rc) return rc;
 
-    //rc = CompareDouble(a_pbr.ReflectiveIOR(), b_pbr.ReflectiveIOR());
-    //if (0 != rc) return rc;
-
-    rc = CompareDouble(a_pbr.Anisotropic(), b_pbr.Anisotropic());
+    rc = CompareDouble(a_pbr->Anisotropic(), b_pbr->Anisotropic());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.AnisotropicRotation(), b_pbr.AnisotropicRotation());
+    rc = CompareDouble(a_pbr->AnisotropicRotation(), b_pbr->AnisotropicRotation());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Clearcoat(), b_pbr.Clearcoat());
+    rc = CompareDouble(a_pbr->Clearcoat(), b_pbr->Clearcoat());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.ClearcoatRoughness(), b_pbr.ClearcoatRoughness());
+    rc = CompareDouble(a_pbr->ClearcoatRoughness(), b_pbr->ClearcoatRoughness());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Opacity(), b_pbr.Opacity());
+    rc = CompareDouble(a_pbr->Opacity(), b_pbr->Opacity());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.OpacityIOR(), b_pbr.OpacityIOR());
+    rc = CompareDouble(a_pbr->OpacityIOR(), b_pbr->OpacityIOR());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.OpacityRoughness(), b_pbr.OpacityRoughness());
+    rc = CompareDouble(a_pbr->OpacityRoughness(), b_pbr->OpacityRoughness());
     if (0 != rc) return rc;
 
-    rc = a_pbr.Emission().Compare(b_pbr.Emission());
+    rc = a_pbr->Emission().Compare(b_pbr->Emission());
     return rc;
   }
 
@@ -1507,38 +1504,35 @@ int ON_Material::CompareReflectionAttributes(const ON_Material& a, const ON_Mate
 {
   const auto a_pbr = a.PhysicallyBased();
 	const auto b_pbr = b.PhysicallyBased();
-	if (a_pbr.Supported() && !b_pbr.Supported())
+	if (a_pbr && !b_pbr)
 		return -1;
-	if (!a_pbr.Supported() && b_pbr.Supported())
+	if (!a_pbr && b_pbr)
 		return 1;
 
-	if (a_pbr.Supported() && b_pbr.Supported())
+	if (a_pbr && b_pbr)
 	{
-    int rc = CompareDouble(a_pbr.Metallic(), b_pbr.Metallic());
+    int rc = CompareDouble(a_pbr->Metallic(), b_pbr->Metallic());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Specular(), b_pbr.Specular());
+    rc = CompareDouble(a_pbr->Specular(), b_pbr->Specular());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.SpecularTint(), b_pbr.SpecularTint());
+    rc = CompareDouble(a_pbr->SpecularTint(), b_pbr->SpecularTint());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Roughness(), b_pbr.Roughness());
+    rc = CompareDouble(a_pbr->Roughness(), b_pbr->Roughness());
     if (0 != rc) return rc;
 
-    //rc = CompareDouble(a_pbr.ReflectiveIOR(), b_pbr.ReflectiveIOR());
-    //if (0 != rc) return rc;
-
-    rc = CompareDouble(a_pbr.Anisotropic(), b_pbr.Anisotropic());
+    rc = CompareDouble(a_pbr->Anisotropic(), b_pbr->Anisotropic());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.AnisotropicRotation(), b_pbr.AnisotropicRotation());
+    rc = CompareDouble(a_pbr->AnisotropicRotation(), b_pbr->AnisotropicRotation());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.Clearcoat(), b_pbr.Clearcoat());
+    rc = CompareDouble(a_pbr->Clearcoat(), b_pbr->Clearcoat());
     if (0 != rc) return rc;
 
-    rc = CompareDouble(a_pbr.ClearcoatRoughness(), b_pbr.ClearcoatRoughness());
+    rc = CompareDouble(a_pbr->ClearcoatRoughness(), b_pbr->ClearcoatRoughness());
     
     return rc;
 	}
@@ -2049,7 +2043,7 @@ ON_Color ON_Material::PreviewColor(void) const
 bool ON_Material::UseDiffuseTextureAlphaForObjectTransparencyTexture() const
 {
   //Physically based materials do not support alpha transparency (at the moment).
-  if (PhysicallyBased().Supported())
+  if (IsPhysicallyBased())
     return false;
 
   return m_bUseDiffuseTextureAlphaForObjectTransparencyTexture;
@@ -2546,6 +2540,7 @@ ON_TextureMapping::TYPE ON_TextureMapping::TypeFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::srf_mapping_primitive);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::brep_mapping_primitive);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::ocs_mapping);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_TextureMapping::TYPE::false_colors);
   }
 
   ON_ERROR("Invalid type_as_unsigned value.");
@@ -2566,6 +2561,7 @@ const ON_wString ON_TextureMapping::TypeToString(ON_TextureMapping::TYPE texture
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::srf_mapping_primitive);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::brep_mapping_primitive);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::ocs_mapping);
+  ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::false_colors);
   }
 
   ON_ERROR("Invalid texture_mapping_type value.");
@@ -5316,11 +5312,20 @@ static inline bool HasSharedVertices(const ON_Mesh& mesh)
   return mesh.m_V.Count() < ((mesh.TriangleCount() * 3) + (mesh.QuadCount() * 4));
 }
 
-
 const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
+  const class ON_TextureMapping& mapping,
+  const class ON_Xform* mesh_xform,
+  bool bLazy
+)
+{
+  return SetCachedTextureCoordinatesEx(mapping, mesh_xform, bLazy, true);
+}
+
+const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinatesEx(
         const class ON_TextureMapping& mapping,
-				const class ON_Xform* mesh_xform,
-        bool bLazy
+        const class ON_Xform* mesh_xform,
+        bool bLazy,
+        bool bSeamCheck
         )
 {
   if ( mapping.RequiresVertexNormals() && !HasVertexNormals() )
@@ -5330,9 +5335,13 @@ const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
   double two_pi_tc = 1.0;
   ON_SimpleArray<int> Tside;
   ON_SimpleArray<int>* Tsd = 0;
-  bool bSeamCheck = SeamCheckHelper( mp, two_pi_tc, Tside, Tsd ) && HasSharedVertices(*this);
-  if ( bSeamCheck )
-    mp.m_uvw = ON_Xform::IdentityTransformation;
+
+  if (bSeamCheck)
+  {
+    bSeamCheck = SeamCheckHelper(mp, two_pi_tc, Tside, Tsd) && HasSharedVertices(*this);
+    if (bSeamCheck)
+      mp.m_uvw = ON_Xform::IdentityTransformation;
+  }
 
   ON_TextureCoordinates* TC = 0;
   {
@@ -5402,9 +5411,19 @@ const ON_TextureCoordinates* ON_Mesh::SetCachedTextureCoordinates(
 }
 
 bool ON_Mesh::SetTextureCoordinates(
+  const class ON_TextureMapping& mapping,
+  const class ON_Xform* mesh_xform,
+  bool bLazy
+)
+{
+  return SetTextureCoordinatesEx(mapping, mesh_xform, bLazy, true);
+}
+
+bool ON_Mesh::SetTextureCoordinatesEx(
                   const class ON_TextureMapping& mapping,
                   const class ON_Xform* mesh_xform,
-                  bool bLazy
+                  bool bLazy,
+                  bool bSeamCheck
                   )
 {
   if ( mapping.RequiresVertexNormals() && !HasVertexNormals() )
@@ -5418,9 +5437,12 @@ bool ON_Mesh::SetTextureCoordinates(
 
   double two_pi_tc = 1.0;
 
-  bool bSeamCheck = SeamCheckHelper( mp, two_pi_tc, Tside, Tsd ) && HasSharedVertices(*this);
-  if ( bSeamCheck )
-    mp.m_uvw = ON_Xform::IdentityTransformation;
+  if (bSeamCheck)
+  {
+    bSeamCheck = SeamCheckHelper(mp, two_pi_tc, Tside, Tsd) && HasSharedVertices(*this);
+    if (bSeamCheck)
+      mp.m_uvw = ON_Xform::IdentityTransformation;
+  }
 
   // Use mp instead of mapping to call GetTextureCoordinates()
   // because m_uvw must be the identity if we have seams.
@@ -7104,35 +7126,54 @@ ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedM
   new (&_impl) Impl(*src.Implementation().material);
 }
 
-ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void)
+bool ON_Material::IsPhysicallyBased(void) const
 {
-  return ON_PhysicallyBasedMaterial(*this);
+  return nullptr != PhysicallyBased();
 }
 
-const ON_PhysicallyBasedMaterial ON_Material::PhysicallyBased(void) const
+std::shared_ptr<ON_PhysicallyBasedMaterial> ON_Material::PhysicallyBased(void)
 {
-  return ON_PhysicallyBasedMaterial(*this);
+  auto ptr = std::make_shared<ON_PhysicallyBasedMaterial>(*this);
+
+  if (nullptr != ptr && ON_PhysicallyBasedMaterial_Supported(*ptr))
+  {
+    return ptr;
+  }
+
+  return nullptr;
 }
 
-ON_Material ON_Material::ConvertToPhysicallyBased(void) const
+const std::shared_ptr <ON_PhysicallyBasedMaterial> ON_Material::PhysicallyBased(void) const
 {
-  if (PhysicallyBased().Supported())
-    return *this;
+  auto ptr = std::make_shared<ON_PhysicallyBasedMaterial>(*this);
 
-  //Copy all of the textures and the old-school parameters first.
-  ON_Material material(*this);
-  auto pbr = material.PhysicallyBased();
+  if (nullptr != ptr && ON_PhysicallyBasedMaterial_Supported(*ptr))
+  {
+    return ptr;
+  }
+
+  return nullptr;
+}
+
+void ON_Material::ToPhysicallyBased(void)
+{
+  if (IsPhysicallyBased())
+    return;
+
+  //This should always be valid.
+  auto pbr = std::make_shared<ON_PhysicallyBasedMaterial>(*this);
+  ON_ASSERT(pbr != nullptr);
 
   const bool bMetal = m_transparency < 0.01 && !m_bFresnelReflections && m_reflectivity > 0.99;
   const bool bGlass = m_transparency > 0.99;
 
-  pbr.SetBaseColor(bMetal ? m_reflection : bGlass ? m_transparent : m_diffuse);
-  pbr.SetMetallic(bMetal ? 1.0 : 0.0);
-  pbr.SetRoughness(bMetal ? m_reflection_glossiness : 1.0 - m_reflectivity);
-  pbr.SetOpacity(1.0 - m_transparency);
-  pbr.SetOpacityIOR(m_index_of_refraction);
+  pbr->SetBaseColor(bMetal ? m_reflection : bGlass ? m_transparent : m_diffuse);
+  pbr->SetMetallic(bMetal ? 1.0 : 0.0);
+  pbr->SetRoughness(bMetal ? m_reflection_glossiness : 1.0 - m_reflectivity);
+  pbr->SetOpacity(1.0 - m_transparency);
+  pbr->SetOpacityIOR(m_index_of_refraction);
 
-  return material;
+  ON_ASSERT(IsPhysicallyBased());
 }
 
 
@@ -7147,15 +7188,15 @@ ON_PhysicallyBasedMaterial::Impl& ON_PhysicallyBasedMaterial::Implementation(voi
 }
 
 
-bool ON_PhysicallyBasedMaterial::Supported(void) const
+bool ON_PhysicallyBasedMaterial_Supported(const ON_PhysicallyBasedMaterial& material)
 {
-  if (!Implementation().UserDataExists())
+  if (!material.Implementation().UserDataExists())
     return false;
 
-  return BaseColor().IsValid();
+  return material.BaseColor().IsValid();
 }
 
-void ON_PhysicallyBasedMaterial::Destroy(void)
+void ON_PhysicallyBasedMaterial::ToLegacy(void)
 {
   ON_Material& mat = *Implementation().material;
   Implementation().~Impl();

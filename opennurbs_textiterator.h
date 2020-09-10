@@ -893,8 +893,12 @@ public:
   static bool RecomposeRTF();
   static void SetRecomposeRTF(bool b);
 
+  static bool ComposeFS();
+  static void SetComposeFS(bool b);
+
 private:
   static bool m_bComposeRTF;
+  static bool m_bComposeFS;
 
   RtfComposer();
 

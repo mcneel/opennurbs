@@ -124,6 +124,12 @@ static void ON_IncrementWarningCount()
   ON_WARNING_COUNT++;
 }
 
+void ON_BrepIncrementErrorCount()
+{
+  ON_ERROR_COUNT++;
+  ON_Brep::ErrorCount++;
+} 
+
 void ON_SubDIncrementErrorCount()
 {
   ON_ERROR_COUNT++;

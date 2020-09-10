@@ -1101,6 +1101,20 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
     m_is_solid = 0;
   }
 
+  // GBA 3-Sept-20 RH-60112
+  // In V6 and earlier bounding boxes of faces were bounding box of underlying surface.
+  // This can result in enourmous boxes which mess up make2d
+  // In V7 bounding boxes use the trim pbox resulting in resonable boxes.
+  if (file.Archive3dmVersion() < 70 || file.ArchiveOpenNURBSVersion() < 2382395020)
+  {
+    if (!m_bbox.IsEmpty())
+    {
+      ON_BoundingBox orig_box = m_bbox;
+      ClearBoundingBox();
+      BoundingBox();                    // compute bounding box
+      m_bbox.Intersection(orig_box);    
+    }
+  }
   return rc;
 }
 

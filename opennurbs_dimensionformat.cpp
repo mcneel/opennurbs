@@ -377,35 +377,96 @@ bool ON_NumberFormatter::FormatLength(
 
 bool ON_NumberFormatter::FormatAngleStringDMS(double angle_radians, ON_wString& formatted_string)
 {
-  bool rc = false;
+  return ON_NumberFormatter::FormatAngleStringDMS(angle_radians, 2, formatted_string);
+  //bool rc = false;
 
-  int sign = 1;
-  int degrees = 0;
-  int minutes = 0;
-  int seconds = 0;
+  //int sign = 1;
+  //int degrees = 0;
+  //int minutes = 0;
+  //int seconds = 0;
+  //formatted_string.Empty();
+
+  //double angle_degrees = ON_RADIANS_TO_DEGREES * angle_radians;
+  //if (ON_IsValid(angle_degrees))
+  //{
+  //  double d_seconds;
+
+  //  if (angle_degrees < 0.0)
+  //  {
+  //    sign = -1;
+  //    angle_degrees = -angle_degrees;
+  //  }
+
+  //  d_seconds = angle_degrees * 3600;
+  //  seconds = (int)(d_seconds + 0.5);
+  //  minutes = seconds / 60;
+  //  seconds = seconds % 60;
+  //  degrees = minutes / 60;
+  //  minutes = minutes % 60;
+
+  //  degrees *= sign;
+  //  formatted_string.Format(L"%d%lc %d\' %d\"", degrees, ON_wString::DegreeSymbol, minutes, seconds);
+  //  rc = true;
+  //}
+  //return rc;
+}
+
+bool ON_NumberFormatter::FormatAngleStringDMS(double angle_radians, int resolution, ON_wString& formatted_string)
+{
+  bool rc = false;
   formatted_string.Empty();
+  int idegrees = 0;
+  int iminutes = 0;
+  int iseconds = 0;
 
   double angle_degrees = ON_RADIANS_TO_DEGREES * angle_radians;
-  if (ON_IsValid(angle_degrees))
+  int sign = 1;
+  if (angle_degrees < 0.0)
   {
-    double d_seconds;
+    sign = -1;
+    angle_degrees = -angle_degrees;
+  }
+  //double minutes = (angle_degrees - floor(angle_degrees)) * 60.0;
+  double minutes = (angle_degrees - floor(angle_degrees));
+  minutes *= 60.0;
+  double seconds = (minutes - floor(minutes));
+  seconds *= 60.0;
 
-    if (angle_degrees < 0.0)
+  if (resolution < 0)
+    resolution = 0;
+  if (resolution > 6)
+    resolution = 6;
+
+  if (resolution == 0)
+  {
+    idegrees = (int)floor(angle_degrees + 0.5);
+    idegrees *= sign;
+    rc = formatted_string.Format(L"%d%lc", idegrees, ON_wString::DegreeSymbol);
+  }
+  else
+  {
+    idegrees = (int)floor(angle_degrees);
+    if (resolution == 1)
     {
-      sign = -1;
-      angle_degrees = -angle_degrees;
+      iminutes = (int)floor(minutes + 0.5);
+      rc = formatted_string.Format(L"%d%lc %d\'", idegrees, ON_wString::DegreeSymbol, iminutes);
     }
-
-    d_seconds = angle_degrees * 3600;
-    seconds = (int)(d_seconds + 0.5);
-    minutes = seconds / 60;
-    seconds = seconds % 60;
-    degrees = minutes / 60;
-    minutes = minutes % 60;
-
-    degrees *= sign;
-    formatted_string.Format(L"%d%lc %d\' %d\"", degrees, ON_wString::DegreeSymbol, minutes, seconds);
-    rc = true;
+    else
+    {
+      iminutes = (int)floor(minutes);
+      if (resolution == 2)
+      {
+        iseconds = (int)floor(seconds + 0.5);
+        rc = formatted_string.Format(L"%d%lc %d\' %d\"", idegrees, ON_wString::DegreeSymbol, iminutes, iseconds);
+      }
+      else 
+      {
+        iseconds = (int)floor(seconds);
+        ON_wString fmt;
+        fmt.Format(L"%%d%%lc %%d\' %%.%dlf\"", resolution - 2);
+        rc = formatted_string.Format(fmt.Array(), idegrees, ON_wString::DegreeSymbol, iminutes, seconds);
+      }
+    }
   }
   return rc;
 }

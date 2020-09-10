@@ -1086,6 +1086,19 @@ public:
       const ON_ClassArray<ON_SimpleArray<ON_3dVector>>& v_Tangents,
       const ON_ClassArray<ON_SimpleArray<ON_3dVector>>& TwistVectors,
       class ON_NurbsSurface* hermite_surface = 0);
+
+  
+
+public:
+#if defined(ON_COMPILING_OPENNURBS)
+
+  static void ON_Internal_ConvertToCurve(const ON_NurbsSurface& srf, int dir,
+                                         ON_NurbsCurve& crv);
+  static void ON_Internal_ConvertFromCurve(ON_NurbsCurve& crv, int dir,
+                                           ON_NurbsSurface& srf);
+  static bool ON_Internal_MakeKnotVectorsCompatible(
+      ON_NurbsCurve& nurbs_curveA, ON_NurbsCurve& nurbs_curveB);
+#endif  // ON_COMPILING_OPENNURBS
   
 
   /////////////////////////////////////////////////////////////////

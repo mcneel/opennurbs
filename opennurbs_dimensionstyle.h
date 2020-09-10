@@ -1549,6 +1549,12 @@ public:
 
   /*
   Returns:
+    The number of DimStyle fields that are overridden.  Name, Id and Index are not counted.
+  */
+  ON__UINT32 OverrideCount() const;
+
+  /*
+  Returns:
     The content hash of the parent dimstyle. If there is no parent dimstyle, then
     ON_SHA1_Hash::EmptyContent is returned.
   */

@@ -160,7 +160,7 @@ bool ON_SubDQuadNeighborhood::IsValid() const
 
     if (m_bBoundaryCrease[fi])
     {
-      // A tag of ON_SubD::EdgeTag::SmoothX is an error here
+      // A tag of ON_SubDEdgeTag::SmoothX is an error here
       if ( false == quad_edge[fi]->IsCrease() )
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -183,7 +183,7 @@ bool ON_SubDQuadNeighborhood::IsValid() const
       if (nullptr == side_face[fi])
         return ON_SUBD_RETURN_ERROR(false);
 
-      // A tag of ON_SubD::EdgeTag::SmoothX is permitted here
+      // A tag of ON_SubDEdgeTag::SmoothX is permitted here
       if ( 2 != quad_edge[fi]->m_face_count)
         return ON_SUBD_RETURN_ERROR(false);
 
@@ -191,14 +191,14 @@ bool ON_SubDQuadNeighborhood::IsValid() const
       {
         unsigned int dart_count = 0;
         unsigned int crease_count = 0;
-        if ( ON_SubD::VertexTag::Dart == quad_edge[fi]->m_vertex[0]->m_vertex_tag)
+        if ( ON_SubDVertexTag::Dart == quad_edge[fi]->m_vertex[0]->m_vertex_tag)
           dart_count++;
         else if ( quad_edge[fi]->m_vertex[0]->IsCreaseOrCorner())
           crease_count++;
         else
           return ON_SUBD_RETURN_ERROR(false);
 
-        if ( ON_SubD::VertexTag::Dart == quad_edge[fi]->m_vertex[1]->m_vertex_tag)
+        if ( ON_SubDVertexTag::Dart == quad_edge[fi]->m_vertex[1]->m_vertex_tag)
           dart_count++;
         else if ( quad_edge[fi]->m_vertex[1]->IsCreaseOrCorner())
           crease_count++;
@@ -274,7 +274,7 @@ bool ON_SubDQuadNeighborhood::IsValid() const
         {
           if (e->IsSmooth())
             continue;
-          if (e->IsCrease() && ON_SubD::VertexTag::Dart == quad_vertex[fi]->m_vertex_tag)
+          if (e->IsCrease() && ON_SubDVertexTag::Dart == quad_vertex[fi]->m_vertex_tag)
             continue;
         }
         if (false == e->IsCrease())
@@ -386,16 +386,6 @@ void ON_SubDQuadNeighborhood::Internal_Destroy(bool bReinitialize)
     m_bBoundaryCrease[1] = false;
     m_bBoundaryCrease[2] = false;
     m_bBoundaryCrease[3] = false;
-
-    m_bCenterEdgeLimitPoint[0] = false;
-    m_bCenterEdgeLimitPoint[1] = false;
-    m_bCenterEdgeLimitPoint[2] = false;
-    m_bCenterEdgeLimitPoint[3] = false;
-
-    m_center_edge_limit_point[0] = ON_SubDSectorSurfacePoint::Nan;
-    m_center_edge_limit_point[1] = ON_SubDSectorSurfacePoint::Nan;
-    m_center_edge_limit_point[2] = ON_SubDSectorSurfacePoint::Nan;
-    m_center_edge_limit_point[3] = ON_SubDSectorSurfacePoint::Nan;
 
     for (unsigned int i = 0; i < 4; i++)
     {
@@ -618,6 +608,8 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   )
 {
   m_bIsCubicPatch = false;
+
+  // When the original SubD face is an n-gon, it is subdivided into quads and m_initial_subdivision_level = 1.
   const unsigned int delta_subdivision_level 
     = (m_current_subdivision_level > m_initial_subdivision_level)
     ? ((unsigned int)(m_current_subdivision_level - m_initial_subdivision_level))
@@ -670,7 +662,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   {
     if (
       nullptr != m_center_edges[i]
-      && ON_SubD::EdgeTag::SmoothX != m_center_edges[i]->m_edge_tag
+      && ON_SubDEdgeTag::SmoothX != m_center_edges[i]->m_edge_tag
       && (bCenterEdgeIsSmooth[i] != bCenterEdgeIsCrease[i])
       )
     {
@@ -704,7 +696,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       m_vertex_grid[1][2]
     };
 
-    const bool bQuadVertexIsSmoothOrCrease[4] = 
+    const bool bQuadVertexIsSmoothOrCrease[4] =
     {
       quad_vertex[0]->IsSmoothOrCrease(),
       quad_vertex[1]->IsSmoothOrCrease(),
@@ -717,8 +709,9 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       if (false == bExtraordinaryCornerVertex[corner_index])
         continue;
 
-      if (false == bQuadVertexIsSmoothOrCrease[corner_index] && false == quad_vertex[corner_index]->IsCorner())
+      if (quad_vertex[corner_index]->IsDart())
         continue;
+
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+1)%4])
         continue;
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+3)%4])
@@ -799,9 +792,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   {
     m_bExtraordinaryCornerVertex[corner_index] = bExtraordinaryCornerVertex[corner_index];
     if (bExtraordinaryCornerVertex[corner_index])
-    {
       m_extraordinary_corner_vertex_count++;
-    }
   }
 
   m_exact_quadrant_patch_count = 0;
@@ -1035,8 +1026,8 @@ bool ON_SubDQuadNeighborhood::Set(
   m_vertex_grid[0][2] = outer_vertex[10];
   m_vertex_grid[0][1] = outer_vertex[11];
 
-  m_initial_subdivision_level = 0;
-  m_current_subdivision_level = 0;
+  m_initial_subdivision_level = (unsigned char)(center_quad_face->m_level_zero_face_id > 0 ? center_quad_face->SubdivisionLevel() : 0U);
+  m_current_subdivision_level = m_initial_subdivision_level;
   
   SetPatchStatus(0);
   
@@ -1189,7 +1180,7 @@ bool ON_SubDQuadNeighborhood::GetLimitSurfaceCV(
         const ON_SubDVertex* v[2] = { m_vertex_grid[i + di][j + dj], m_vertex_grid[i + 2 * di][j + 2 * dj] };
         if (nullptr == v[0] || nullptr == v[1])
           return ON_SUBD_RETURN_ERROR(false);
-        if (ON_SubD::VertexTag::Crease != v[0]->m_vertex_tag)
+        if (ON_SubDVertexTag::Crease != v[0]->m_vertex_tag)
           return ON_SUBD_RETURN_ERROR(false);
         //dstP = srf_cv[i][j];
         dstP = srf_cv + 3*(i*srf_cv_grid_size+j);
@@ -1279,25 +1270,53 @@ bool ON_SubDQuadNeighborhood::GetSubdivisionPoint(
 }
 
 unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
+  bool bEnableApproximatePatch,
   unsigned int quadrant_index
   )
 {
-  if (nullptr == m_face_grid[1][1] || quadrant_index > 4)
+  // When subdivision_count >= 2, there should be 3 or 4 or more exact quadrants.
+  // When the original SubD face is an n-gon, it is subdivided into quads and m_initial_subdivision_level = 1.
+  const unsigned char subdivision_count
+    = (m_current_subdivision_level > m_initial_subdivision_level)
+    ? m_current_subdivision_level
+    : 0;  if (bEnableApproximatePatch && (subdivision_count < 2 || m_extraordinary_corner_vertex_count > 1))
+  {
+    ON_SUBD_ERROR("bEnableApproximatePatch should be false at this stage.");
+    bEnableApproximatePatch = false;
+  }
+
+  if (nullptr == m_face_grid[1][1] || 4 != m_face_grid[1][1]->m_edge_count || quadrant_index > 4)
     return ON_SUBD_RETURN_ERROR(0);
+
+  // faces_vertices[] face, in counterclockwise order.  
+  // m_center_edges[] are the 4 edges of face in counterclockwise order with 
+  // m_center_edges[0] connecting face_vertices[0] and face_vertices[1].
+  // However, it may be that face->Vertex(0) != face_vertices[0].
+  const ON_SubDVertex* center_vertices[4] = { m_vertex_grid[1][1], m_vertex_grid[2][1], m_vertex_grid[2][2], m_vertex_grid[1][2] };
+  for (unsigned int i = 0; i < 4; i++)
+  {
+    if (nullptr == center_vertices[i])
+      return ON_SUBD_RETURN_ERROR(0);
+    if (nullptr == m_center_edges[i])
+      return ON_SUBD_RETURN_ERROR(0);
+  }
 
   ON_2dex dex;
   ON_2dex deltadex;
   const ON_SubDFace* face;
   unsigned int i;
   double Q[3][3];
-  double* P1;
+  double* P1[3];
 
   if (!ON_IsValid(m_srf_cv1[2][2][0]))
   {
-    // all sub surfaces require inner 3x3 grid of subdivision points
+    // All sub surfaces require inner 3x3 grid of subdivision points
+    // In all cases these are the 9 subdivision points of the central quad
+    // 9 points
+    // = the quad face subdivision point at m_srf_cv1[2][2]
+    // + 4 edge subdivision pointsat m_srf_cv1[2][1], m_srf_cv1[3][2], m_srf_cv1[2][3], m_srf_cv1[1][2]
+    // + 4 vertex subdivision points at m_srf_cv1[1][1], m_srf_cv1[3][1], m_srf_cv1[3][3], m_srf_cv1[1][3] 
     face = m_face_grid[1][1];
-    if (4 != face->m_edge_count)
-      return ON_SUBD_RETURN_ERROR(0);
 
     // The value of m_srf_cv1[2][2][0] is used to determine when the inner 3x3 grid is set, 
     // so its value must be set after the 8 cvs around it are successfully set.
@@ -1306,184 +1325,264 @@ unsigned int ON_SubDQuadNeighborhood::SetLimitSubSurfaceExactCVs(
     // is calculated here because if face->GetSubdivisionPoint() fails,
     // nothing below should succeed. The value of Q[2] is assigned to m_srf_cv1[2][2]
     // after the 8 ring points are successfully calculated.
-    if (!face->GetSubdivisionPoint( Q[2]))
+    if (!face->GetSubdivisionPoint(Q[2]))
+    {
       return ON_SUBD_RETURN_ERROR(0);
+    }
 
-    // faces_vertices[] face, in counterclockwise order.  
-    // m_center_edges[] are the 4 edges of face in counterclockwise order with 
-    // m_center_edges[0] connecting face_vertices[0] and face_vertices[1].
-    // However, it may be that face->Vertex(0) != face_vertices[0].
-    const ON_SubDVertex* faces_vertices[4] = { m_vertex_grid[1][1], m_vertex_grid[2][1], m_vertex_grid[2][2], m_vertex_grid[1][2] };
 
     const ON_2dex srf_cv_dex[8] = { { 1, 1 }, { 2, 1 }, { 3, 1 }, { 3, 2 }, { 3, 3 }, { 2, 3 }, { 1, 3 }, { 1, 2 } };
 
     for (unsigned int fei = 0; fei < 4; fei++)
     {
-      if (nullptr == faces_vertices[fei])
-        return ON_SUBD_RETURN_ERROR(0);
-      if (!faces_vertices[fei]->GetSubdivisionPoint( Q[0]))
-        return ON_SUBD_RETURN_ERROR(0);
-      if (nullptr == m_center_edges[fei])
+      if (!center_vertices[fei]->GetSubdivisionPoint( Q[0]))
         return ON_SUBD_RETURN_ERROR(0);
       if (!m_center_edges[fei]->GetSubdivisionPoint( Q[1]))
         return ON_SUBD_RETURN_ERROR(0);
 
       dex = srf_cv_dex[2 * fei];
-      P1 = m_srf_cv1[dex.i][dex.j];
-      P1[0] = Q[0][0]; P1[1] = Q[0][1]; P1[2] = Q[0][2];
+      P1[0] = m_srf_cv1[dex.i][dex.j];
+      P1[0][0] = Q[0][0]; P1[0][1] = Q[0][1]; P1[0][2] = Q[0][2];
 
       dex = srf_cv_dex[2 * fei + 1];
-      P1 = m_srf_cv1[dex.i][dex.j];
-      P1[0] = Q[1][0]; P1[1] = Q[1][1]; P1[2] = Q[1][2];
+      P1[1] = m_srf_cv1[dex.i][dex.j];
+      P1[1][0] = Q[1][0]; P1[1][1] = Q[1][1]; P1[1][2] = Q[1][2];
     }
 
     // m_srf_cv1[2][2][0] is used to determine when the inner 3x3 grid is set, 
     // so its value must be set after the 8 cvs around it are successfully set.
-    P1 = m_srf_cv1[2][2];
-    P1[0] = Q[2][0]; P1[1] = Q[2][1]; P1[2] = Q[2][2];
+    P1[2] = m_srf_cv1[2][2];
+    P1[2][0] = Q[2][0]; P1[2][1] = Q[2][1]; P1[2][2] = Q[2][2];
   }
 
   const unsigned int fvi_min = (4 == quadrant_index) ? 0 : quadrant_index;
   const unsigned int fvi_max = (4 == quadrant_index) ? 4 : fvi_min+1;
-  unsigned int quadrant_count = 0;
+  unsigned int set_quadrant_count = 0;
+  unsigned int exact_quadrant_count = 0;
   for (unsigned int fvi = fvi_min; fvi < fvi_max; fvi++)
   {
-    if (false == m_bExactQuadrantPatch[fvi])
+    if (m_bExactQuadrantPatch[fvi])
+      ++exact_quadrant_count;
+    else if (false == bEnableApproximatePatch)
       continue;
-    quadrant_count++;
+
+    unsigned int set_cv_count = 9; // 3x3 grid is set
+
     const unsigned int fvi3 = (fvi + 3) % 4;
+
     for (unsigned int side_pass = 0; side_pass < 2; side_pass++)
     {
       const unsigned int side_fvi = (0 == side_pass) ? fvi : fvi3;
 
       dex = ON_SubDQuadNeighborhood::GridDex(5, side_fvi, 1, 0);
       deltadex = ON_SubDQuadNeighborhood::DeltaDex(side_fvi, 1, 0);
-
-      P1 = &m_srf_cv1[dex.i][dex.j][0];
-      if ( !ON_IsValid(P1[0]) )
+      P1[0] = &m_srf_cv1[dex.i][dex.j][0];
+      dex.i += deltadex.i;
+      dex.j += deltadex.j;
+      P1[1] = &m_srf_cv1[dex.i][dex.j][0];
+      dex.i += deltadex.i;
+      dex.j += deltadex.j;
+      P1[2] = &m_srf_cv1[dex.i][dex.j][0];
+      if (ON_IsValid(P1[0][0]) && ON_IsValid(P1[1][0]) && ON_IsValid(P1[2][0]))
       {
-        bool bEvaluateCrease = m_bBoundaryCrease[side_fvi] || m_center_edges[side_fvi]->IsCrease();
-        if (bEvaluateCrease)
-        {
-          ON_2dex Adex = ON_SubDQuadNeighborhood::GridDex(5, side_fvi, 1, 1);
-          ON_2dex Bdex = ON_SubDQuadNeighborhood::GridDex(5, side_fvi, 1, 2);
-          for (i = 0; i < 3; i++)
-          {
-            const double* A = m_srf_cv1[Adex.i][Adex.j];
-            const double* B = m_srf_cv1[Bdex.i][Bdex.j];
-            Q[i][0] = 2.0*A[0] - B[0];
-            Q[i][1] = 2.0*A[1] - B[1];
-            Q[i][2] = 2.0*A[2] - B[2];
-            Adex.i += deltadex.i;
-            Adex.j += deltadex.j;
-            Bdex.i += deltadex.i;
-            Bdex.j += deltadex.j;
-          }
-        }
-        else if ( m_center_edges[side_fvi]->IsSmoothNotX() )
-        {
-          const ON_SubDEdge* edge = m_edge_grid[side_fvi][0];
-          if (nullptr == edge)
-            return ON_SUBD_RETURN_ERROR(0);
-          if (!edge->GetSubdivisionPoint(Q[0]))
-            return ON_SUBD_RETURN_ERROR(0);
+        set_cv_count += 3;
+        continue; // Already set
+      }
 
-          const ON_2dex fdex = ON_SubDQuadNeighborhood::GridDex(3, side_fvi, 1, 0);
-          face = m_face_grid[fdex.i][fdex.j];
-          if (nullptr == face)
-            return ON_SUBD_RETURN_ERROR(0);
-          if (!face->GetSubdivisionPoint(Q[1]))
-            return ON_SUBD_RETURN_ERROR(0);
+      // m_bBoundaryCrease[] is true if m_center_edges[fvi]->IsCrease() is true AND neither end is a dart vertex.
+      // Using bCenterEdgeCrease0 is required to get correct results when bEnableApproximatePatch is true
+      const bool bCenterEdgeCrease = bEnableApproximatePatch ? m_center_edges[side_fvi]->IsCrease() : m_bBoundaryCrease[side_fvi];
 
-          edge = m_edge_grid[side_fvi][1];
-          if (nullptr == edge)
-            return ON_SUBD_RETURN_ERROR(0);
-          if (!edge->GetSubdivisionPoint(Q[2]))
-            return ON_SUBD_RETURN_ERROR(0);
-        }
-
+      if ( bCenterEdgeCrease )
+      {
+        // When approximation is being applied (m_bExactQuadrantPatch[fvi] is false and bEnableApproximatePatch is true),
+        // This technique insures the approximations on either side of the crease 
+        // create a continuous edge.
+        ON_2dex Adex = ON_SubDQuadNeighborhood::GridDex(5, side_fvi, 1, 1);
+        ON_2dex Bdex = ON_SubDQuadNeighborhood::GridDex(5, side_fvi, 1, 2);
         for (i = 0; i < 3; i++)
         {
-          P1 = m_srf_cv1[dex.i][dex.j];
-          P1[0] = Q[i][0]; P1[1] = Q[i][1]; P1[2] = Q[i][2];
-          dex.i += deltadex.i;
-          dex.j += deltadex.j;
+          const double* A = m_srf_cv1[Adex.i][Adex.j];
+          const double* B = m_srf_cv1[Bdex.i][Bdex.j];
+          Q[i][0] = 2.0*A[0] - B[0];
+          Q[i][1] = 2.0*A[1] - B[1];
+          Q[i][2] = 2.0*A[2] - B[2];
+          Adex.i += deltadex.i;
+          Adex.j += deltadex.j;
+          Bdex.i += deltadex.i;
+          Bdex.j += deltadex.j;
         }
       }
-    }
-
-    dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 0);
-    P1 = &m_srf_cv1[dex.i][dex.j][0];
-    if (!ON_IsValid(P1[0]))
-    {
-      if (m_bBoundaryCrease[fvi] && m_bBoundaryCrease[fvi3])
+      else if ( (m_bExactQuadrantPatch[fvi] || subdivision_count >= 2) && m_center_edges[side_fvi]->IsSmoothNotX() )
       {
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 1);
-        Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 2);
-        Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 2);
-        Q[2][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[2][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[2][2] = m_srf_cv1[dex.i][dex.j][2];
+        const ON_SubDEdge* edge = m_edge_grid[side_fvi][0];
+        if (nullptr == edge)
+        {
+          if (m_bExactQuadrantPatch[fvi])
+            return ON_SUBD_RETURN_ERROR(0);
+          Q[0][0] = ON_UNSET_VALUE;
+        }
+        else if (!edge->GetSubdivisionPoint(Q[0]))
+          return ON_SUBD_RETURN_ERROR(0);
 
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 1);
-        //const double c = 4.0;
-        //const double b = -2.0;
-        const double c = -8.0;
-        const double b = 4.0;
-        P1[0] = c*m_srf_cv1[dex.i][dex.j][0] + b*(Q[0][0] + Q[1][0]) + Q[2][0];
-        P1[1] = c*m_srf_cv1[dex.i][dex.j][1] + b*(Q[0][1] + Q[1][1]) + Q[2][1];
-        P1[2] = c*m_srf_cv1[dex.i][dex.j][2] + b*(Q[0][2] + Q[1][2]) + Q[2][2];
-      }
-      else if (m_bBoundaryCrease[fvi])
-      {
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 1);
-        Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 2);
-        Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
+        const ON_2dex fdex = ON_SubDQuadNeighborhood::GridDex(3, side_fvi, 1, 0);
+        face = m_face_grid[fdex.i][fdex.j];
+        if (nullptr == face)
+        {
+          if (m_bExactQuadrantPatch[fvi])
+            return ON_SUBD_RETURN_ERROR(0);
+          Q[1][0] = ON_UNSET_VALUE;
+        }
+        else if (!face->GetSubdivisionPoint(Q[1]))
+          return ON_SUBD_RETURN_ERROR(0);
 
-        P1[0] = 2.0*Q[0][0] - Q[1][0];
-        P1[1] = 2.0*Q[0][1] - Q[1][1];
-        P1[2] = 2.0*Q[0][2] - Q[1][2];
-      }
-      else if (m_bBoundaryCrease[fvi3])
-      {
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 0);
-        Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
-        dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 0);
-        Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
-        Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
-        Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
-
-        P1[0] = 2.0*Q[0][0] - Q[1][0];
-        P1[1] = 2.0*Q[0][1] - Q[1][1];
-        P1[2] = 2.0*Q[0][2] - Q[1][2];
+        edge = m_edge_grid[side_fvi][1];
+        if (nullptr == edge)
+        {
+          if (m_bExactQuadrantPatch[fvi])
+            return ON_SUBD_RETURN_ERROR(0);
+          Q[2][0] = ON_UNSET_VALUE;
+        }
+        else if (!edge->GetSubdivisionPoint(Q[2]))
+          return ON_SUBD_RETURN_ERROR(0);
       }
       else
       {
-        dex = ON_SubDQuadNeighborhood::GridDex(3, fvi, 0, 0);
-        const ON_SubDFace* face_ij = m_face_grid[dex.i][dex.j];
-        if (nullptr == face_ij)
-          return ON_SUBD_RETURN_ERROR(0);
-        if (!face_ij->GetSubdivisionPoint(Q[0]))
-          return ON_SUBD_RETURN_ERROR(0);
-        P1[0] = Q[0][0]; P1[1] = Q[0][1]; P1[2] = Q[0][2];
+        // Need more subdivisions before these can be set.
+        continue;
       }
+
+      for (i = 0; i < 3; i++)
+      {
+        if (ON_IsValid(P1[i][0]))
+        {
+          ++set_cv_count;
+          continue;
+        }
+        if (ON_IsValid(Q[i][0]))
+        {
+          ++set_cv_count;
+          P1[i][0] = Q[i][0];
+          P1[i][1] = Q[i][1];
+          P1[i][2] = Q[i][2];
+        }
+      }
+    }
+
+    if (
+      m_bExactQuadrantPatch[fvi] 
+      ||
+      (false == m_bExtraordinaryCornerVertex[fvi] && bEnableApproximatePatch))
+    {
+      dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 0);
+      P1[0] = &m_srf_cv1[dex.i][dex.j][0];
+      if (ON_IsValid(P1[0][0]))
+      {
+        ++set_cv_count;
+      }
+      else
+      {
+        if ( center_vertices[fvi]->IsSmooth() )
+        {
+          if (4 == center_vertices[fvi]->m_edge_count && 4 == center_vertices[fvi]->m_face_count)
+          {
+            dex = ON_SubDQuadNeighborhood::GridDex(3, fvi, 0, 0);
+            const ON_SubDFace* face_ij = m_face_grid[dex.i][dex.j];
+            if (nullptr == face_ij)
+              return ON_SUBD_RETURN_ERROR(0);
+            if (!face_ij->GetSubdivisionPoint(Q[0]))
+              return ON_SUBD_RETURN_ERROR(0);
+            ++set_cv_count;
+            P1[0][0] = Q[0][0]; P1[0][1] = Q[0][1]; P1[0][2] = Q[0][2];
+          }
+        }
+        else  if (center_vertices[fvi]->IsCrease())
+        {
+          if (m_bBoundaryCrease[fvi] && m_bBoundaryCrease[fvi3])
+          {
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 1);
+            Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 2);
+            Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 2);
+            Q[2][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[2][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[2][2] = m_srf_cv1[dex.i][dex.j][2];
+
+            if (ON_IsValid(Q[0][0]) && ON_IsValid(Q[1][0]) && ON_IsValid(Q[2][0]))
+            {
+              dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 1);
+              if (ON_IsValid(m_srf_cv1[dex.i][dex.j][0]))
+              {
+                const double c = -8.0;
+                const double b = 4.0;
+                ++set_cv_count;
+                P1[0][0] = c * m_srf_cv1[dex.i][dex.j][0] + b * (Q[0][0] + Q[1][0]) + Q[2][0];
+                P1[0][1] = c * m_srf_cv1[dex.i][dex.j][1] + b * (Q[0][1] + Q[1][1]) + Q[2][1];
+                P1[0][2] = c * m_srf_cv1[dex.i][dex.j][2] + b * (Q[0][2] + Q[1][2]) + Q[2][2];
+              }
+            }
+          }
+          else if (m_bBoundaryCrease[fvi] && false == m_bBoundaryCrease[fvi3])
+          {
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 1);
+            Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 0, 2);
+            Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
+
+            if (ON_IsValid(Q[0][0]) && ON_IsValid(Q[1][0]))
+            {
+              ++set_cv_count;
+              P1[0][0] = 2.0 * Q[0][0] - Q[1][0];
+              P1[0][1] = 2.0 * Q[0][1] - Q[1][1];
+              P1[0][2] = 2.0 * Q[0][2] - Q[1][2];
+            }
+          }
+          else if (false == m_bBoundaryCrease[fvi] && m_bBoundaryCrease[fvi3])
+          {
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 1, 0);
+            Q[0][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[0][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[0][2] = m_srf_cv1[dex.i][dex.j][2];
+            dex = ON_SubDQuadNeighborhood::GridDex(5, fvi, 2, 0);
+            Q[1][0] = m_srf_cv1[dex.i][dex.j][0];
+            Q[1][1] = m_srf_cv1[dex.i][dex.j][1];
+            Q[1][2] = m_srf_cv1[dex.i][dex.j][2];
+
+            if (ON_IsValid(Q[0][0]) && ON_IsValid(Q[1][0]))
+            {
+              ++set_cv_count;
+              P1[0][0] = 2.0 * Q[0][0] - Q[1][0];
+              P1[0][1] = 2.0 * Q[0][1] - Q[1][1];
+              P1[0][2] = 2.0 * Q[0][2] - Q[1][2];
+            }
+          }
+          else if (m_bExactQuadrantPatch[fvi])
+          {
+            ON_SUBD_ERROR("Why is this happening?");
+          }
+        }
+      }
+    }
+    if (16 == set_cv_count)
+    {
+      // quadrant with index fvi is set;
+      ++set_quadrant_count;
     }
   }
 
-  return quadrant_count;
+  if (exact_quadrant_count > set_quadrant_count)
+    return ON_SUBD_RETURN_ERROR(set_quadrant_count);
+
+  return set_quadrant_count;
 }
 
 bool ON_SubDQuadNeighborhood::GetLimitSubSurfaceSinglePatchCV(
@@ -1497,8 +1596,8 @@ bool ON_SubDQuadNeighborhood::GetLimitSubSurfaceSinglePatchCV(
   if (false == m_bExactQuadrantPatch[fvi])
     return ON_SUBD_RETURN_ERROR(false);
 
-  unsigned int quadrant_count = SetLimitSubSurfaceExactCVs(fvi);
-  if ( 1 != quadrant_count )
+  const unsigned int set_quadrant_count = SetLimitSubSurfaceExactCVs(false,fvi);
+  if ( 1 != set_quadrant_count )
     return ON_SUBD_RETURN_ERROR(false);
 
   ON_2dex dex;
@@ -1528,7 +1627,7 @@ bool ON_SubDQuadNeighborhood::GetLimitSubSurfaceSinglePatchCV(
 
 
 unsigned int ON_SubDQuadNeighborhood::ExtraordinaryCenterVertexIndex(
-  ON_SubD::VertexTag vertex_tag_filter,
+  ON_SubDVertexTag vertex_tag_filter,
   unsigned int minimum_edge_count_filter
 ) const
 {
@@ -1551,12 +1650,12 @@ unsigned int ON_SubDQuadNeighborhood::ExtraordinaryCenterVertexIndex(
         break;
       if (nullptr == m_vertex_grid[dex.i][dex.j])
         break;
-      if (ON_SubD::VertexTag::Corner != m_vertex_grid[dex.i][dex.j]->m_vertex_tag)
+      if (ON_SubDVertexTag::Corner != m_vertex_grid[dex.i][dex.j]->m_vertex_tag)
       {
         if (((unsigned int)(m_vertex_grid[dex.i][dex.j]->m_edge_count)) < minimum_edge_count_filter)
           break;
         if (
-          ON_SubD::VertexTag::Unset != vertex_tag_filter
+          ON_SubDVertexTag::Unset != vertex_tag_filter
           && m_vertex_grid[dex.i][dex.j]->m_vertex_tag != vertex_tag_filter
           )
         {
@@ -1584,99 +1683,124 @@ bool ON_SubDQuadNeighborhood::Internal_GetApproximateCV(
   const ON_SubDFace* f = nullptr;
   if (0 == j)
   {
-    switch (i)
+    if (nullptr != m_center_edges[0] && m_center_edges[0]->IsSmooth())
     {
-    case 0:
-      if ( false == m_bExtraordinaryCornerVertex[0] )
-        f = m_face_grid[0][0];
-      break;
-    case 1:
-      e = m_edge_grid[0][0];
-      break;
-    case 2:
-      f = m_face_grid[1][0];
-      break;
-    case 3:
-      e = m_edge_grid[0][1];
-      break;
-    case 4:
-      if ( false == m_bExtraordinaryCornerVertex[1] )
-        f = m_face_grid[2][0];
-      break;
+      switch (i)
+      {
+      case 0:
+        if (false == m_bExtraordinaryCornerVertex[0])
+        {
+          const ON_SubDVertex* v = this->CenterVertex(0);
+          if (nullptr != v && v->IsSmooth())
+            f = m_face_grid[0][0];
+        }
+        break;
+      case 1:
+        e = m_edge_grid[0][0];
+        break;
+      case 2:
+        f = m_face_grid[1][0];
+        break;
+      case 3:
+        e = m_edge_grid[0][1];
+        break;
+      case 4:
+        if (false == m_bExtraordinaryCornerVertex[1])
+        {
+          const ON_SubDVertex* v = this->CenterVertex(1);
+          if (nullptr != v && v->IsSmooth())
+            f = m_face_grid[2][0];
+        }
+        break;
+      }
     }
   }
   else if (4 == i)
   {
-    switch (j)
+    if (nullptr != m_center_edges[1] && m_center_edges[1]->IsSmooth())
     {
-    // case 0:  // i = 0; j = 0 handled above
-    case 1:
-      e = m_edge_grid[1][0];
-      break;
-    case 2:
-      f = m_face_grid[2][1];
-      break;
-    case 3:
-      e = m_edge_grid[1][1];
-      break;
-    case 4:
-      if ( false == m_bExtraordinaryCornerVertex[2] )
-        f = m_face_grid[2][2];
-      break;
+      switch (j)
+      {
+        // case 0:  // i = 0; j = 0 handled above
+      case 1:
+        e = m_edge_grid[1][0];
+        break;
+      case 2:
+        f = m_face_grid[2][1];
+        break;
+      case 3:
+        e = m_edge_grid[1][1];
+        break;
+      case 4:
+        if (false == m_bExtraordinaryCornerVertex[2])
+        {
+          const ON_SubDVertex* v = this->CenterVertex(2);
+          if (nullptr != v && v->IsSmooth())
+            f = m_face_grid[2][2];
+        }
+        break;
+      }
     }
   }
   else if (4 == j)
   {
-    switch (i)
+    if (nullptr != m_center_edges[2] && m_center_edges[2]->IsSmooth())
     {
-    case 0:
-      if ( false == m_bExtraordinaryCornerVertex[3] )
-        f = m_face_grid[0][2];
-      break;
-    case 1:
-      e = m_edge_grid[2][1];
-      break;
-    case 2:
-      f = m_face_grid[1][2];
-      break;
-    case 3:
-      e = m_edge_grid[2][0];
-      break;
-    // case 4:  // i = 4; j = 4 handled above
+      switch (i)
+      {
+      case 0:
+        if (false == m_bExtraordinaryCornerVertex[3])
+        {
+          const ON_SubDVertex* v = this->CenterVertex(3);
+          if (nullptr != v && v->IsSmooth())
+            f = m_face_grid[0][2];
+        }
+        break;
+      case 1:
+        e = m_edge_grid[2][1];
+        break;
+      case 2:
+        f = m_face_grid[1][2];
+        break;
+      case 3:
+        e = m_edge_grid[2][0];
+        break;
+        // case 4:  // i = 4; j = 4 handled above
+      }
     }
   }
   else if (0 == i)
   {
-    switch (j)
+    if (nullptr != m_center_edges[3] && m_center_edges[3]->IsSmooth())
     {
-    // case 0:  // i = 0; j = 0 handled above
-    case 1:
-      e = m_edge_grid[3][1];
-      break;
-    case 2:
-      f = m_face_grid[0][1];
-      break;
-    case 3:
-      e = m_edge_grid[3][0];
-      break;
-    // case 4:  // i = 0; j = 4 handled above
+      switch (j)
+      {
+        // case 0:  // i = 0; j = 0 handled above
+      case 1:
+        e = m_edge_grid[3][1];
+        break;
+      case 2:
+        f = m_face_grid[0][1];
+        break;
+      case 3:
+        e = m_edge_grid[3][0];
+        break;
+        // case 4:  // i = 0; j = 4 handled above
+      }
     }
   }
   
   bool bHaveApproximateCV;
   if (nullptr != e)
   {
-    const int extraordinary_vertex_index = ExtraordinaryCenterVertexIndex(ON_SubD::VertexTag::Crease, 4);
+    const int extraordinary_vertex_index = ExtraordinaryCenterVertexIndex(ON_SubDVertexTag::Crease, 4);
     const ON_SubDVertex* extraordinary_vertex
       = (extraordinary_vertex_index >= 0 && extraordinary_vertex_index < 4)
       ? CenterVertex(extraordinary_vertex_index)
       : nullptr;
-    if (
-      (ON_SubD::EdgeTag::Smooth == e->m_edge_tag || ON_SubD::EdgeTag::Crease == e->m_edge_tag)
-      && (e->m_vertex[0] == extraordinary_vertex || e->m_vertex[1] == extraordinary_vertex)
-      )
+    if ( e->m_vertex[0] == extraordinary_vertex || e->m_vertex[1] == extraordinary_vertex )
     {
-      // extraordinary crease vertices
+      // an extraordinary crease vertex is on this edge
       bHaveApproximateCV = false;
     }
     else
@@ -1704,7 +1828,7 @@ static double ON_SubDQuadFaceTopology_CopySectorWeight(
   if (nullptr == e0 || nullptr == e0v)
     return ON_SUBD_RETURN_ERROR(false);
 
-  if (ON_SubD::EdgeTag::Smooth != e0->m_edge_tag && ON_SubD::EdgeTag::SmoothX != e0->m_edge_tag )
+  if (ON_SubDEdgeTag::Smooth != e0->m_edge_tag && ON_SubDEdgeTag::SmoothX != e0->m_edge_tag )
     return ON_SubDSectorType::IgnoredSectorCoefficient;
 
   if (e0v == e0->m_vertex[0])
@@ -1737,7 +1861,7 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
     // qv1 is the subdivision point of qv0.
     if ( qv1->m_vertex_tag != qv0->m_vertex_tag )
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
-    if ( ON_SubD::VertexTag::Smooth == qv0->m_vertex_tag)
+    if ( ON_SubDVertexTag::Smooth == qv0->m_vertex_tag)
       v0_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
     else
     {
@@ -1758,9 +1882,9 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
   if (e1->m_edge_tag != e0->m_edge_tag)
   {
     // On the first subdivision step,
-    // e0 with tag ON_SubD::EdgeTag::SmoothX turns into 
-    // e1 with tag ON_SubD::EdgeTag::Smooth.
-    if ( ON_SubD::EdgeTag::Smooth != e1->m_edge_tag || ON_SubD::EdgeTag::SmoothX != e0->m_edge_tag)
+    // e0 with tag ON_SubDEdgeTag::SmoothX turns into 
+    // e1 with tag ON_SubDEdgeTag::Smooth.
+    if ( ON_SubDEdgeTag::Smooth != e1->m_edge_tag || ON_SubDEdgeTag::SmoothX != e0->m_edge_tag)
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   }
 
@@ -1797,9 +1921,9 @@ static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
   if ( nullptr == v[2])
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  const double v1_weight = (ON_SubD::VertexTag::Crease == v[1]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
+  const double v1_weight = (ON_SubDVertexTag::Crease == v[1]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
   const double v2_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
-  const double v3_weight = (ON_SubD::VertexTag::Crease == v[3]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
+  const double v3_weight = (ON_SubDVertexTag::Crease == v[3]->m_vertex_tag) ? at_crease_weight : ON_SubDSectorType::IgnoredSectorCoefficient;
 
   ON_SubDEdgePtr e12 = fsh.AllocateEdge(v[1],v1_weight,v[2],v2_weight);
   if ( nullptr == e12.Edge())
@@ -1877,7 +2001,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
   if (nullptr == qv0 || qv0->m_face_count > qv0->m_edge_count)
   {
-    if (ON_SubD::VertexTag::Corner == qv0->m_vertex_tag)
+    if (ON_SubDVertexTag::Corner == qv0->m_vertex_tag)
     {
       // nonmanifold case can have face_count > edge_count
       if ( qv0->m_edge_count < 3 )
@@ -1900,7 +2024,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if ( nullptr == sit.Initialize(qf0,0,qv0) )
     return ON_SUBD_RETURN_ERROR(false);
 
-  const bool bIsDartSector = (ON_SubD::VertexTag::Dart == qv0->m_vertex_tag);
+  const bool bIsDartSector = (ON_SubDVertexTag::Dart == qv0->m_vertex_tag);
   const bool bIsCreaseOrCornerSector = qv0->IsCreaseOrCorner();
 
   const bool bBoundaryCrease1[4] = {
@@ -2001,7 +2125,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
 
     if (bAtBoundaryCrease)
     {
-      e1[1].Edge()->m_edge_tag = ON_SubD::EdgeTag::Crease;
+      e1[1].Edge()->m_edge_tag = ON_SubDEdgeTag::Crease;
       break;
     }
 
@@ -2083,9 +2207,9 @@ bool ON_SubDQuadNeighborhood::Subdivide(
         face_grid1_10 = f1;
 
       f0 = sit.PrevFace(stop_at);
-      if (nullptr == f0 || ON_SubD::EdgeTag::Crease == e0[1]->m_edge_tag)
+      if (nullptr == f0 || ON_SubDEdgeTag::Crease == e0[1]->m_edge_tag)
       {
-        bFinished = (nullptr == f0 && ON_SubD::EdgeTag::Crease == e0[0]->m_edge_tag && qv1->m_face_count+1 == qv1->m_edge_count);
+        bFinished = (nullptr == f0 && ON_SubDEdgeTag::Crease == e0[0]->m_edge_tag && qv1->m_face_count+1 == qv1->m_edge_count);
         if (false == bFinished)
           return ON_SUBD_RETURN_ERROR(false);
         break;

@@ -137,7 +137,7 @@ public:
   // true if the limit surface of the center quad is a smooth bi-cubic surface with CVs
   // at the m_vertex_grid[][] locations.
   bool m_bIsCubicPatch = false;
-  unsigned char m_initial_subdivision_level = 0; // parent SubD subdivsion level at source
+  unsigned char m_initial_subdivision_level = 0; // Subdivsion level of the quad from the original SubD. (When the original SubD face is an n-gon, m_initial_subdivision_level=1)
   unsigned char m_current_subdivision_level = 0; // current subdivision level of contents
 
   // m_face_grid[1][1] is extraordinary and interpolation through the limit point
@@ -154,18 +154,9 @@ public:
   bool m_bExactQuadrantPatch[4] = {};
 
   // m_bBoundaryCrease[] = true if the corresponding m_center_edges[] is a crease
-  // and both end vertices are not darts.
+  // AND neither end vertex is a dart.
   unsigned char m_boundary_crease_count = 0;
   bool m_bBoundaryCrease[4] = {};
-
-  // If m_bCenterEdgeLimitPoint[n] is true, then m_center_edge0_limit_point[n] is set.
-  bool m_bCenterEdgeLimitPoint[4] = {};
-
-  // If ON_SubDQuadNeighborhood is being used to calculate NURBS patches,
-  // and there is a single exceptional crease vertex, 
-  // then m_center_edge_limit_point[n] = limit point of the middle of m_center_edges[n]
-  // This information is needed to get NURBS patches near exceptional crease vertices.
-  ON_SubDSectorSurfacePoint m_center_edge_limit_point[4];
 
 public:
   const ON_SubDVertex* m_vertex_grid[4][4] = {}; // vertex net m_quad_face corners = ([1][1], [2][1], [2][2], [1][2])
@@ -214,7 +205,7 @@ public:
   /*
   Parameters:
     vertex_tag_filter - [in]
-      If vertex_tag_filter is not ON_SubD::VertexTag::Unset, then the
+      If vertex_tag_filter is not ON_SubDVertexTag::Unset, then the
       indexed vertex must have the specified tag.
     minimum_edge_count_filter - [in]
       The index vertex must have at least this many edges.
@@ -226,7 +217,7 @@ public:
     ON_UNSET_UINT_INDEX (otherwise)
   */
   unsigned int ExtraordinaryCenterVertexIndex(
-    ON_SubD::VertexTag vertex_tag_filter,
+    ON_SubDVertexTag vertex_tag_filter,
     unsigned int minimum_edge_count_filter
   ) const;
 
@@ -312,7 +303,8 @@ public:
 
 private:
   unsigned int SetLimitSubSurfaceExactCVs(
-    unsigned int  quadrant_index // 0,1,2,3 sets quadrant, 4 sets all non extraordinary patches
+    bool bEnableApproximatePatch,
+    unsigned int  quadrant_index // 0,1,2,3 sets quadrant, 4 sets all non extraordinary patches,
     );
 
 private:
@@ -1101,7 +1093,7 @@ public:
 
   unsigned int UpdateEdgeSectorCoefficients(
     bool bUnsetEdgeSectorCoefficientsOnly
-    );
+    ) const;
 
   /*
   Description:
@@ -1163,8 +1155,8 @@ public:
 
   void ClearEvaluationCache() const;
 
-  void ClearNeighborhoodEvaluationCache(const ON_SubDVertex * vertex, bool bTagChanged) const;
-
+  bool CopyEvaluationCacheForExperts(const ON_SubDLevel& src, class ON_SubDHeap& this_heap);
+    
   void ClearTopologicalAttributes() const
   {
     m_aggregates.ClearTopologicalAttributes();
@@ -1440,6 +1432,11 @@ public:
     const class ON_SubDMeshFragment& src_fragment
   );
 
+  class ON_SubDMeshFragment* CopyMeshFragments(
+    const class ON_SubDFace* source_face,
+    const class ON_SubDFace* destination_face
+  );
+
   /*
   Parameters:
     fragment - [in]
@@ -1462,7 +1459,7 @@ public:
 
   /*
   Description:
-    Allocates limit curves reference by ON_SubDEdge.m_limit_curve    
+    Allocates limit curves reference by ON_SubDEdge.m_limit_curve
     for edges in this SubD.
   Parameters:
     cv_capacity - [in]
@@ -1470,6 +1467,11 @@ public:
   */
   class ON_SubDEdgeSurfaceCurve* AllocateEdgeSurfaceCurve(
     unsigned int cv_capacity
+  );
+
+  class ON_SubDEdgeSurfaceCurve* CopyEdgeSurfaceCurve(
+    const class ON_SubDEdge* source_edge,
+    const class ON_SubDEdge* desination_edge
   );
 
   /*
@@ -1491,6 +1493,13 @@ public:
     const class ON_SubDEdge* edge
   );
 
+  unsigned int AllocateFaceTexturePoints(
+    const class ON_SubDFace* face
+  );
+
+  void ReturnFaceTexturePoints(
+    const class ON_SubDFace* face
+  );
 
 
   /*
@@ -1612,7 +1621,17 @@ private:
   static size_t OversizedElementCapacity(
     size_t count
     );
+  class ON_3dPoint* Allocate3dPointArray(
+    size_t point_capacity
+  );
+  void Return3dPointArray(
+    class ON_3dPoint* point_array
+  );
 
+public:
+  static unsigned int Managed3dPointArrayCapacity(class ON_3dPoint* point_array);
+
+private:
   static size_t m_offset_vertex_id;
   static size_t m_offset_edge_id;
   static size_t m_offset_face_id;
@@ -1647,7 +1666,7 @@ public:
     A runtime serial number that is incremented every time a the active level,
     vertex location, vertex or edge flag, or subd topology is chaned.
   */
-  ON__UINT64 ContentSerialNumber() const;
+  ON__UINT64 GeometryContentSerialNumber() const;
 
   /*
   Returns:
@@ -1660,7 +1679,9 @@ public:
 
   /*
   Description:
-    Change the content serial number. 
+    Change the geoemtry content serial number to indicate something affecting
+    the geometric shape of the subd has changed. This includes topologial changes,
+    vertex and edge tag changes, and changes to vertex control net locations.
   Parameters:
     bChangePreservesSymmetry - [in]
       When in doubt, pass false.
@@ -1670,16 +1691,40 @@ public:
         Transformations do not preserve symmetries that are
         set with respect to world coordinate systems.
   Returns:
-    The new value of ConentSerialNumber().
+    The new value of GeometryConentSerialNumber().
   Remarks:
-    The value can change by any amount.
+    The value can change by any amount. 
+    Changing the geometry content serial number automatically changes
+    the render content serial number.
   */
-  ON__UINT64 ChangeContentSerialNumber(
+  ON__UINT64 ChangeGeometryContentSerialNumber(
     bool bChangePreservesSymmetry
   ) const;
 
+  /*
+  Description:
+    The render content serial number changes whenever a change the might effect
+    rendered appearance changes. This includes both geometry changes and
+    changes that affect rendered appeance including changes to per face colors,
+    per face materials, texture coordinates, and texture mappings.
+  */
+  ON__UINT64 RenderContentSerialNumber() const;
+
+  /*
+  Description:
+    Change the render content serial number to indicate something affecting
+    only rendered appearance has changed. This includes changes to per face colors,
+    per face materials, texture coordinates, and texture mappings.
+  Remarks:
+    Changing the geometry content serial number automatically changes
+    the render content serial number. If you call ChangeGeometryContentSerialNumber(),
+    there is no need to also call ChangeRenderContentSerialNumber().
+  */
+  ON__UINT64 ChangeRenderContentSerialNumber() const;
+
 private:
-  mutable ON__UINT64 m_subd_content_serial_number = 0;
+  mutable ON__UINT64 m_subd_geometry_content_serial_number = 0;
+  mutable ON__UINT64 m_subd_render_content_serial_number = 0;
 
 public:
 
@@ -1771,7 +1816,7 @@ public:
 
 public:
   class ON_SubDEdge* AddEdge(
-    ON_SubD::EdgeTag edge_tag,
+    ON_SubDEdgeTag edge_tag,
     ON_SubDVertex* v0,
     double v0_sector_weight,
     ON_SubDVertex* v1,
@@ -1780,7 +1825,7 @@ public:
 
   class ON_SubDEdge* AddEdge(
     unsigned int candidate_edge_id,
-    ON_SubD::EdgeTag edge_tag,
+    ON_SubDEdgeTag edge_tag,
     ON_SubDVertex* v0,
     double v0_sector_weight,
     ON_SubDVertex* v1,
@@ -1818,6 +1863,27 @@ public:
   );
 
   /*
+  Returns:
+    Capacity of allocated face->m_texture_points[]
+  */
+  unsigned int AllocateFaceTexturePoints(
+    const class ON_SubDFace* face
+  ) const;
+
+  void ReturnFaceTexturePoints(
+    const class ON_SubDFace* face
+  ) const;
+
+  /*
+  Description:
+    Delete texture points from all faces.
+  Returns:
+    Number of faces that had texture points.
+  */
+  unsigned int ClearTexturePoints() const;
+
+
+  /*
   Description:
     Split a face into two faces by inserting and edge connecting the
     specified vertices.
@@ -1842,7 +1908,7 @@ public:
     );
 
   class ON_SubDVertex* AllocateVertex(
-    ON_SubD::VertexTag vertex_tag,
+    ON_SubDVertexTag vertex_tag,
     unsigned int level,
     const double* P
     )
@@ -1852,7 +1918,7 @@ public:
 
   class ON_SubDVertex* AllocateVertex(
     unsigned int candidate_id,
-    ON_SubD::VertexTag vertex_tag,
+    ON_SubDVertexTag vertex_tag,
     unsigned int level,
     const double* P,
     unsigned int edge_capacity,
@@ -1894,7 +1960,7 @@ public:
   }
 
   ON_SubDEdge* AllocateEdge(
-    ON_SubD::EdgeTag edge_tag
+    ON_SubDEdgeTag edge_tag
   )
   {
     ON_SubDEdge* e = m_heap.AllocateEdgeAndSetId(0U);
@@ -1904,7 +1970,7 @@ public:
 
   ON_SubDEdge* AllocateEdge(
     unsigned int candidate_edge_id,
-    ON_SubD::EdgeTag edge_tag,
+    ON_SubDEdgeTag edge_tag,
     unsigned int level,
     unsigned int face_capacity
     )
@@ -1939,19 +2005,31 @@ public:
     class ON_SubDFace* f = m_heap.AllocateFaceAndSetId( 0U);
     return f;
   }
-  
+
   class ON_SubDFace* AllocateFace(
     unsigned int candidate_face_id,
     unsigned int level,
     unsigned int edge_capacity
-    )
+  )
+  {
+    return AllocateFace(candidate_face_id, level, edge_capacity, false);
+  }
+
+  class ON_SubDFace* AllocateFace(
+    unsigned int candidate_face_id,
+    unsigned int level,
+    unsigned int edge_capacity,
+    bool bAllocateTexturePoints
+  )
   {
     class ON_SubDFace* f = m_heap.AllocateFaceAndSetId(candidate_face_id);
     if (nullptr != f)
     {
       f->SetSubdivisionLevel(level);
-      if (edge_capacity > sizeof(f->m_edge4)/sizeof(f->m_edge4[0]) && edge_capacity <= ON_SubDFace::MaximumEdgeCount)
-        m_heap.GrowFaceEdgeArray(f,edge_capacity);
+      if (edge_capacity > sizeof(f->m_edge4) / sizeof(f->m_edge4[0]) && edge_capacity <= ON_SubDFace::MaximumEdgeCount)
+        m_heap.GrowFaceEdgeArray(f, edge_capacity);
+      if (bAllocateTexturePoints)
+        m_heap.AllocateFaceTexturePoints(f);
     }
     return f;
   }
@@ -2072,6 +2150,8 @@ public:
     size_t capacity
     );
 
+  bool CopyEvaluationCacheForExperts(const ON_SubDimple& src);
+
 private:
   friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
   ON_SubDHeap m_heap;
@@ -2095,20 +2175,50 @@ public:
   ) const;
 
 
-  const ON_MappingTag TextureMappingTag() const;
+  const ON_MappingTag TextureMappingTag(bool bIgnoreTextureCoordinateType) const;
   void SetTextureMappingTag(const ON_MappingTag& mapping_tag) const;
 
-  enum ON_SubDTextureDomainType TextureDomainType() const;
-  void SetTextureDomainType(
-    ON_SubDTextureDomainType texture_domain_type
+  enum ON_SubDTextureCoordinateType TextureCoordinateType() const;
+  void SetTextureCoordinateType(
+    ON_SubDTextureCoordinateType texture_coordinate_type
     ) const;
+
+  const ON_SHA1_Hash FragmentTextureCoordinatesTextureSettingsHash() const
+  {
+    return m_fragment_texture_settings_hash;
+  }
+
+  void Internal_SetFragmentTextureCoordinatesTextureSettingsHash(ON_SHA1_Hash hash) const
+  {
+    m_fragment_texture_settings_hash = hash;
+  }
+
+  const ON_SHA1_Hash FragmentColorsSettingsHash() const
+  {
+    return m_fragment_colors_settings_hash;
+  }
+
+  void Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash hash) const
+  {
+    m_fragment_colors_settings_hash = hash;
+  }
+
+  const ON_MappingTag FragmentColorsMappingTag() const;
+  void SetFragmentColorsMappingTag(const ON_MappingTag& mapping_tag) const;
 
 private:
   mutable ON_SubDComponentLocation m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   
-  mutable ON_SubDTextureDomainType m_texture_domain_type = ON_SubDTextureDomainType::Unset;
+  mutable ON_SubDTextureCoordinateType m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   unsigned short m_reserved = 0;
   mutable ON_MappingTag m_texture_mapping_tag;
+  mutable ON_MappingTag m_fragment_colors_mapping_tag;
+
+  // hash of the settings used to create the current fragment texture coordinates
+  mutable ON_SHA1_Hash m_fragment_texture_settings_hash = ON_SHA1_Hash::EmptyContentHash;
+
+  // hash of the settings used to create the current fragment vertex colors
+  mutable ON_SHA1_Hash m_fragment_colors_settings_hash = ON_SHA1_Hash::EmptyContentHash;
 
   ON_SimpleArray< ON_SubDLevel* > m_levels;
   ON_SubDLevel* m_active_level = nullptr; // m_active_level = nullptr or m_active_level = m_levels[m_active_level->m_level_index].
@@ -2164,8 +2274,13 @@ public:
   {
     return (nullptr != m_active_level) ? m_active_level->m_level_index : 0;
   }
-  
+
   ON_SubDLevel* ActiveLevelPointer()
+  {
+    return m_active_level;
+  }
+
+  const ON_SubDLevel* ActiveLevelConstPointer() const
   {
     return m_active_level;
   }
@@ -2542,7 +2657,7 @@ private:
   ON_RTree* m_fragment_tree = nullptr;
 
 private:
-  // A fixed sized memory pool that allocates enough memory for a fragment and its points and normals.
+  // A fixed sized memory pool that allocates enough memory for a fragment and its points, normals, textures, and colors.
   // The fragments never get returned because the pool itself is destroyed in ~ON_SubDMeshImpl().
   ON_FixedSizePool m_fsp;
 };

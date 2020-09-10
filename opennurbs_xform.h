@@ -1544,6 +1544,47 @@ private:
   void* m_buffer = nullptr;
 };
 
+#pragma region
+/// <summary>
+/// ON_PickType specifies what type of pick is occuring.
+/// </summary>
+enum class ON_PickType : unsigned char
+{
+  ///<summary>
+  /// Type has not been set.
+  ///</summary>
+  Unset = 0,
+
+  ///<summary>
+  /// A point pick is centered on a ray in the view frustum. 
+  /// Often the pick region is a small frustum centered on the pick 
+  /// ray defined by a mouse click in viewport. The size of the
+  /// frustum is typically a few pixels in diameter at the most
+  /// likely depth the user is focused on. An object must intersect
+  /// the pick region for it to be considered.
+  ///</summary>
+  PointPick = 1,
+
+  ///<summary>
+  /// The pick region for a window pick is a rectangular frustum inside
+  /// the view frustum. An object must be completely inside the frustum 
+  /// for it to be considered.
+  /// The pick frustum is defined by a rectangle in the view plane. 
+  /// The size of the rectangle has varies widely in aspect and size. 
+  ///</summary>
+  WindowPick = 2,
+
+  ///<summary>
+  /// The pick region for a crossing pick is a rectangular frustum inside
+  /// the view frustum. An object must intersect the frustum 
+  /// for it to be considered.
+  /// The pick frustum is defined by a rectangle in the view plane. 
+  /// The size of the rectangle has varies widely in aspect and size. 
+  ///</summary>
+  CrossingPick = 3
+};
+#pragma endregion
+
 class ON_CLASS ON_PickPoint
 {
 public:
@@ -1556,7 +1597,7 @@ public:
 
   /*
   Returns:
-    +1: a is a better pick pont than b.
+    +1: a is a better pick point than b.
     -1: b is a better pick point than a.
      0: a and b are the same.
   */

@@ -919,7 +919,7 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
       ON_Mesh* mesh = nullptr;
       if ( Archive3dmVersion() < 60 )
       {
-        mesh = subd->GetControlNetMesh(nullptr);
+        mesh = subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
       }
       else if ( ON_Internal_UseSubDMeshProxy(*this) )
       {

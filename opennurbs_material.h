@@ -273,17 +273,22 @@ public:
   //the function that the layer manager uses to color the little material swatch, for example.
   ON_Color PreviewColor() const;
 
+  //Call this function to determine if the material should be treated as Physically Based (ie - a PBR material)
+  //If this function returns true, the call to PhysicallyBased will return a non-null pointer.
+  //If the function returns false, use the legacy interface (Diffuse etc).  Conversion of a non-PBR material to PBR
+  //is possible by calling ConvertToPhysicallyBased.
+  bool IsPhysicallyBased(void) const;
 
   //Physically based material interface.  Use this interface to set and get PBR parameters
   //and to check if this material supports PBR.
-  //NOTE WELL - ON_PhysicallyBasedMaterial contains a pointer to this - the scope of the ON_PhysicallyBasedMaterial
-  //object must not exceed the scope of the material that it originally came from.  Ideal usage is material.PhysicallyBased().Function()
-  const ON_PhysicallyBasedMaterial PhysicallyBased(void) const;
-  ON_PhysicallyBasedMaterial PhysicallyBased(void);
+  //Note - it is very important that the lifetime of the returned pointer is the same as the ON_Material
+  //it was called on.  Once the material is deleted, this pointer is no longer valid.
+  const std::shared_ptr<ON_PhysicallyBasedMaterial> PhysicallyBased(void) const;
+  std::shared_ptr <ON_PhysicallyBasedMaterial> PhysicallyBased(void);
 
-  //Returns a material that is the best approximation of the original, but as a physically based material.
-  //the returned material is guaranteed to return true to material.PhysicallyBased().IsSupported()
-  ON_Material ConvertToPhysicallyBased(void) const;
+  //Convert a legacy material to a PBR material that is the best approximation of the original.
+  //After calling this function, the material is guaranteed to return true to material.IsPhysicallyBased()
+  void ToPhysicallyBased(void);
 
   //Internal use only
   static ON_UUID PhysicallyBasedUserdataId(void);
@@ -622,11 +627,6 @@ public:
   /////////////////////////////////////////////////////////////////
   // Interface
 public:
-  //Call this function to determine if the material supports a PBR definition.
-  //A material will support PBR if the base color is set.  All other values are set
-  //to defaults that will produce a simple plaster-like surface.
-  virtual bool Supported(void) const;
-
   //Reflectance model to use.  Default is GGX.  Renderers do not need to support a specific
   //model, but certain material definitions may specify in the hope that a renderer will support.
   //GGX support is built into Rhino (Cycles, display)
@@ -736,7 +736,7 @@ public:
   virtual void SynchronizeLegacyMaterial(void);
 
   //Expert function to remove all PBR data from a material
-  virtual void Destroy(void);
+  virtual void ToLegacy(void);
 
 public:
     class ON_CLASS ParametersNames
@@ -775,6 +775,7 @@ private:
   ON_PhysicallyBasedMaterial& operator=(const ON_Material& src) = delete;
   ON_PhysicallyBasedMaterial& operator=(const ON_PhysicallyBasedMaterial& src) = delete;
   friend ON_Material;
+  friend bool ON_PhysicallyBasedMaterial_Supported(const ON_PhysicallyBasedMaterial& material);
 };
 
 

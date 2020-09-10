@@ -964,24 +964,24 @@ bool ON_SubDFace::Write(
     }
 
     // write 34 byte texture domain
-    const bool bWriteTextureDomain = TextureDomainIsSet();
-    if (false == Internal_WriteComponentAdditionSize(bWriteTextureDomain, archive, 34))
+    const bool bWritePackRect = PackRectIsSet();
+    if (false == Internal_WriteComponentAdditionSize(bWritePackRect, archive, 34))
       break;
-    if (bWriteTextureDomain)
+    if (bWritePackRect)
     {
-      const unsigned char domain_type = static_cast<unsigned char>(TextureDomainType());
-      if (!archive.WriteChar(domain_type))
+      const unsigned char obsolete_per_face_texture_coordinate_type = ON_SubD::ObsoleteTextureDomainTypeFromTextureCoordinateType(ON_SubDTextureCoordinateType::Packed);
+      if (!archive.WriteChar(obsolete_per_face_texture_coordinate_type))
         break;
 
-      const unsigned packing_rot = TextureDomainRotationDegrees();
+      const unsigned packing_rot = PackRectRotationDegrees();
       const unsigned char packing_rot_dex = (unsigned char)(packing_rot/90U);
       if (!archive.WriteChar(packing_rot_dex))
         break;
-      const ON_2dPoint texture_domain_origin = TextureDomainOrigin();
-      if (!archive.WriteDouble(2, &texture_domain_origin.x))
+      const ON_2dPoint pack_rect_origin = PackRectOrigin();
+      if (!archive.WriteDouble(2, &pack_rect_origin.x))
         break;
-      const ON_2dVector texture_domain_delta = TextureDomainDelta();
-      if (!archive.WriteDouble(2, &texture_domain_delta.x))
+      const ON_2dVector pack_rect_size = PackRectSize();
+      if (!archive.WriteDouble(2, &pack_rect_size.x))
         break;
     }
 
@@ -1007,6 +1007,54 @@ bool ON_SubDFace::Write(
         break;
     }
 
+    // PackId
+    const unsigned pack_id = PackId();
+    const bool bPackId = (pack_id > 0U);
+    if (false == Internal_WriteComponentAdditionSize(bPackId, archive, 4))
+      break;
+    if (bPackId)
+    {
+      if (!archive.WriteInt(pack_id))
+        break;
+    }
+
+    // Custom texture coordintes
+    const bool bTexturePoints = this->TexturePointsAreSet();
+    if (false == Internal_WriteComponentAdditionSize(bTexturePoints, archive, 4))
+      break;
+    if (bTexturePoints)
+    {
+      // The number of texture points varies from face to face (EdgeCount()).
+      // The maximum size that can be saved in a single component addition is 253 bytes.
+      // So, texture points are saved in 10 point chunks ( 10*sizeof(ON_3dPoint) = 240 <= 243.
+      const unsigned texture_point_count = this->EdgeCount();
+      const unsigned ten_point_chunk_count = texture_point_count / 10;
+      const unsigned left_over_points_count = texture_point_count % 10;
+      const ON_3dPoint* a = this->m_texture_points;
+      const unsigned char sizeof_ten_points = (unsigned char)(10 * sizeof(ON_3dPoint)); // sizeof_ten_points = 240 <= 243
+      bool bContinue = archive.WriteInt(ten_point_chunk_count);
+      if ( false == bContinue)
+        break;
+
+      // write the 10 point chunks
+      for (unsigned i = 0; bContinue && i < ten_point_chunk_count; ++i)
+      {
+        bContinue = Internal_WriteComponentAdditionSize(true, archive, sizeof_ten_points);
+        bContinue = bContinue && archive.WriteDouble(30, (const double*)a);
+        a += 10;
+      }
+
+      // write the "left over" points
+      if (bContinue && left_over_points_count > 0)
+      {
+        const unsigned char sizeof_left_over_points = (unsigned char)(left_over_points_count * sizeof(ON_3dPoint)); // sizeof_left_over_points < 240
+        bContinue = Internal_WriteComponentAdditionSize(true, archive, sizeof_left_over_points);
+        bContinue = bContinue && archive.WriteDouble(3* left_over_points_count, (const double*)a);
+      }
+      if (false == bContinue)
+        break;
+    }
+
     return Internal_FinishWritingComponentAdditions(archive);
   }
   return ON_SUBD_RETURN_ERROR(false);
@@ -1016,14 +1064,14 @@ bool ON_SubDFace::Read(
   class ON_BinaryArchive& archive,
   class ON_SubD& subd,
   class ON_SubDFace*& face
-  )
+)
 {
   face = nullptr;
 
   for (;;)
   {
     ON_SubDimple* subdimple = const_cast<ON_SubDimple*>(subd.SubDimple());
-    if ( nullptr == subdimple)
+    if (nullptr == subdimple)
       break;
 
     ON_SubDComponentBase base = ON_SubDComponentBase::Unset;
@@ -1031,7 +1079,7 @@ bool ON_SubDFace::Read(
     unsigned int obsolete_parent_face_id = 0;
     unsigned short edge_count = 0;
 
-    if (!ReadBase(archive,base))
+    if (!ReadBase(archive, base))
       break;
     if (!archive.ReadInt(&level_zero_face_id))
       break;
@@ -1044,19 +1092,19 @@ bool ON_SubDFace::Read(
       base.m_id, // serialzation must preserve ON_SubDFace.m_id
       base.SubdivisionLevel(),
       edge_count
-      );
+    );
 
-    if ( nullptr == f )
+    if (nullptr == f)
       break;
 
     f->ON_SubDComponentBase::operator=(base);
 
     f->m_level_zero_face_id = level_zero_face_id;
 
-    if (!ReadEdgePtrList(archive,edge_count,sizeof(f->m_edge4)/sizeof(f->m_edge4[0]),f->m_edge4,f->m_edgex_capacity,f->m_edgex))
+    if (!ReadEdgePtrList(archive, edge_count, sizeof(f->m_edge4) / sizeof(f->m_edge4[0]), f->m_edge4, f->m_edgex_capacity, f->m_edgex))
       break;
     f->m_edge_count = edge_count;
-    
+
     face = f;
 
     if (archive.Archive3dmVersion() < 70)
@@ -1069,29 +1117,31 @@ bool ON_SubDFace::Read(
 
     // read additions
     unsigned char sz;
-    
+
     sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 34, &sz))
       break;
     if (ON_SubDComponentArchiveAdditionEndMark == sz)
       return true; // end of additions
-    if ( 0 != sz)
+    if (0 != sz)
     {
       // 34 bytes of texture domain information
-      unsigned char domain_type;
-      if (!archive.ReadChar(&domain_type))
+      unsigned char obsolete_per_face_texture_coordinate_type = 0;
+      if (!archive.ReadChar(&obsolete_per_face_texture_coordinate_type))
         break;
       unsigned char packing_rot_dex = 0;
       if (!archive.ReadChar(&packing_rot_dex))
         break;
       const unsigned packing_rot = ((unsigned int)packing_rot_dex) * 90U;
-      ON_2dPoint texture_domain_origin(ON_2dPoint::Origin);
-      if (!archive.ReadDouble(2, &texture_domain_origin.x))
+      ON_2dPoint pack_rect_origin(ON_2dPoint::Origin);
+      if (!archive.ReadDouble(2, &pack_rect_origin.x))
         break;
-      ON_2dVector texture_domain_delta(ON_2dVector::ZeroVector);
-      if (!archive.ReadDouble(2, &texture_domain_delta.x))
+      ON_2dVector pack_rect_delta(ON_2dVector::ZeroVector);
+      if (!archive.ReadDouble(2, &pack_rect_delta.x))
         break;
-      f->SetTextureDomain(ON_SubD::TextureDomainTypeFromUnsigned(domain_type), texture_domain_origin, texture_domain_delta, packing_rot);
+
+      if (ON_SubDFace::IsValidPackRect(pack_rect_origin, pack_rect_delta, packing_rot) )
+        f->SetPackRectForExperts(pack_rect_origin, pack_rect_delta, packing_rot);
     }
 
     sz = 0;
@@ -1121,6 +1171,85 @@ bool ON_SubDFace::Read(
         break;
       f->SetPerFaceColor(per_face_color);
     }
+
+
+    // PackId
+    sz = 0;
+    if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
+      break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
+    if (0 != sz)
+    {
+      // 4 bytes of pack id
+      unsigned pack_id = 0U;
+      if (false == archive.ReadInt(&pack_id))
+        break;
+      f->m_pack_id = pack_id;
+    }
+
+
+    // Custom texture coordintes
+    sz = 0;
+    if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
+      break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
+    if (0 != sz)
+    {
+      // The number of texture points varies from face to face (EdgeCount()).
+      // The maximum size that can be saved in a single component addition is 253 bytes.
+      // So, texture points are saved in 10 point chunks ( 10*sizeof(ON_3dPoint) = 240 <= 243.
+      const unsigned texture_point_count = f->EdgeCount();
+      unsigned ten_point_chunk_count = 0xFFFFFFFFU;
+      if (false == archive.ReadInt(&ten_point_chunk_count))
+        break;
+      if (ten_point_chunk_count != texture_point_count / 10)
+        break;
+      const unsigned left_over_points_count = texture_point_count % 10;
+      const unsigned char sizeof_ten_points = (unsigned char)(10 * sizeof(ON_3dPoint)); // sizeof_ten_points = 240 <= 243
+      ON_3dPoint a[10];
+      bool bContinue = true;
+
+      // Even if allocaion fails, we need to read the points so we can get get
+      // future information that is after the points out of the archive.
+      subdimple->AllocateFaceTexturePoints(f);
+      ON_3dPoint* tp = f->m_texture_points;
+
+      // read the 10 point chunks
+      for (unsigned i = 0; bContinue && i < ten_point_chunk_count; ++i)
+      {
+        sz = 0;
+        bContinue = Internal_ReadComponentAdditionSize(archive, sizeof_ten_points, &sz);
+        bContinue = bContinue && (sizeof_ten_points == sz);
+        bContinue = bContinue && archive.ReadDouble(30, (double*)a);
+        if (bContinue && nullptr != tp)
+        {
+          for (unsigned j = 0; j < 10; ++j)
+            *tp++ = a[j];
+        }
+      }
+
+      // read the "left over" points.
+      if (bContinue && left_over_points_count > 0)
+      {
+        const unsigned char sizeof_left_over_points = (unsigned char)(left_over_points_count * sizeof(ON_3dPoint)); // sizeof_left_over_points < 240
+        sz = 0;
+        bContinue = Internal_ReadComponentAdditionSize(archive, sizeof_left_over_points, &sz);
+        bContinue = bContinue && (sizeof_left_over_points == sz);
+        bContinue = bContinue && archive.ReadDouble(3 * left_over_points_count, (double*)a);
+        if (bContinue && nullptr != tp)
+        {
+          for (unsigned j = 0; j < left_over_points_count; ++j)
+            *tp++ = a[j];
+        }
+      }
+      if (false == bContinue)
+        break;
+      if ( nullptr != tp)
+        f->m_texture_status_bits |= ON_SubDFace::TextureStatusBits::TexturePointsSet;
+    }
+
 
     return Internal_FinishReadingComponentAdditions(archive);
   }
@@ -1532,8 +1661,8 @@ bool ON_SubDimple::Write(
     }
 
     // minor version = 1 addtions
-    const unsigned char texture_domain_type = static_cast<unsigned char>(TextureDomainType());
-    if (false == archive.WriteChar(texture_domain_type))
+    const unsigned char obsolete_texture_domain_type = ON_SubD::ObsoleteTextureDomainTypeFromTextureCoordinateType(TextureCoordinateType());
+    if (false == archive.WriteChar(obsolete_texture_domain_type))
       break;
 
     if (false == m_texture_mapping_tag.Write(archive))
@@ -1544,7 +1673,7 @@ bool ON_SubDimple::Write(
       break;
 
     // runtime content number used to compare with the on on m_symmetry
-    if (false == archive.WriteBigInt(ContentSerialNumber()))
+    if (false == archive.WriteBigInt(GeometryContentSerialNumber()))
       break;
 
     rc = true;
@@ -1616,10 +1745,10 @@ bool ON_SubDimple::Read(
 
     if (minor_version >= 1)
     {
-      unsigned char texture_domain_type = static_cast<unsigned char>(ON_SubDTextureDomainType::Unset);
-      if (false == archive.ReadChar(&texture_domain_type))
-        break;
-      m_texture_domain_type = ON_SubD::TextureDomainTypeFromUnsigned(texture_domain_type);
+      unsigned char obsolete_texture_domain_type = 0;
+      if (false == archive.ReadChar(&obsolete_texture_domain_type))
+        break;      
+      m_texture_coordinate_type = ON_SubD::TextureCoordinateTypeFromObsoleteTextureDomainType(obsolete_texture_domain_type);
 
       if (false == m_texture_mapping_tag.Read(archive))
         break;
@@ -1656,10 +1785,55 @@ bool ON_SubDimple::Read(
     && saved_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
     ;
 
-  ChangeContentSerialNumber(false);
+  if (archive.ArchiveOpenNURBSVersion() < 2382394661)
+  {
+    // try to get texture information set correctly when it comes from old files
+    const ON_MappingTag file_tag = this->TextureMappingTag(true);
+    ON_MappingTag new_tag = file_tag;
+    
+    const ON_SubDTextureCoordinateType file_type = this->TextureCoordinateType();
+    ON_SubDTextureCoordinateType new_type = file_type;
+
+    if (ON_TextureMapping::TYPE::srfp_mapping == file_tag.m_mapping_type)
+    {
+      new_tag = ON_MappingTag::SurfaceParameterMapping;
+      if (ON_SubDTextureCoordinateType::FromMapping == file_type || ON_SubDTextureCoordinateType::Unset == file_type)
+        new_type = ON_SubDTextureCoordinateType::Packed;
+    }
+    else
+    {
+      const bool bTagIsSet
+        = ON_TextureMapping::TYPE::srfp_mapping != file_tag.m_mapping_type
+        && ON_TextureMapping::TYPE::no_mapping != file_tag.m_mapping_type
+        && file_tag.IsSet()
+        ;
+      if (ON_SubDTextureCoordinateType::Unset == file_type)
+      {
+        if (bTagIsSet)
+          new_type = ON_SubDTextureCoordinateType::FromMapping;
+        else
+          new_tag = ON_MappingTag::Unset;
+      }
+      else if (ON_SubDTextureCoordinateType::FromMapping == file_type)
+      {
+        if (false == bTagIsSet)
+        {
+          new_tag = ON_MappingTag::Unset;
+          new_type = ON_SubDTextureCoordinateType::Packed;
+        }
+      }
+    }
+
+    if (0 != ON_MappingTag::CompareAll(file_tag, new_tag))
+      this->SetTextureMappingTag(new_tag);
+    if (file_type != new_type)
+      this->SetTextureCoordinateType(new_type);
+  }
+
+  ChangeGeometryContentSerialNumber(false);
 
   if ( bSetSymmetricObjectContentSerialNumber )
-    m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+    m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
   else
     m_symmetry.ClearSymmetricObjectContentSerialNumber();
 
@@ -1810,7 +1984,7 @@ ON_Mesh* ON_SubDMeshProxyUserData::MeshProxyFromSubD(
     subd_copy = new ON_SubD(*subd);
     if (nullptr == subd_copy)
       break;
-    mesh = subd_copy->GetControlNetMesh(nullptr);
+    mesh = subd_copy->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
     if (false == ON_SubDMeshProxyUserData::Internal_MeshHasFaces(mesh))
       break;
     ON_SubDMeshProxyUserData* ud = new ON_SubDMeshProxyUserData();

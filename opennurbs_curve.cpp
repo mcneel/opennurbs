@@ -1839,8 +1839,6 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
        && 0 != m_cv && 0 != m_knot 
        && m_dim > 0
        && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
-       && 0 != m_cv
-       && 0 != m_knot
        && m_knot[m_cv_count-1] - m_knot[m_order-2] > knot_tolerance
        )
   {
@@ -1876,26 +1874,31 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
       {
         if ( i < m_cv_count-2 )
         {
+          // the last span is invalid
           rc = true;
           if ( bRepair )
           {
-            // remove extra knots but do not change end point location
+            // 15-June-2020 
+            // Remove degenerate and small spans at the end, with out changing the domain 
+            // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invarient).
             DestroyRuntimeCache();
-            double* cv = (double*)onmalloc(sizeof_cv);
-            ClampEnd(2);
-            memcpy( cv, CV(m_cv_count-1), sizeof_cv );
-            m_cv_count = i+2;
-            ClampEnd(2);
-            memcpy( CV(m_cv_count-1), cv, sizeof_cv );
-            for ( i = m_cv_count-1; i < m_cv_count+m_order-2; i++ )
-              m_knot[i] = domain[1];
-            onfree(cv);
-            cv = 0;
+  
+            if (knot_tolerance > 0)
+            {
+              // Tune up knots at  end with 0< spacing <knot_tolerance, by setting to domain end.
+              for (j0 = i + 1; j0 < m_cv_count - 1; j0++)  
+                m_knot[j0] = m_knot[m_cv_count - 1];
+            }
+            m_cv_count = i + 2;   // Eliminate knots and CV's from the end.
+
+            // Now that final span is non-degenerate we can ClampEnd
+            ClampEnd(1);
+ 
           }
           else
             return rc;
         }
-        break; // there at least one valid span
+        break; // the last span is non degenerate
       }
     }
 
@@ -1906,26 +1909,39 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
       {
         if ( i > m_order-1 )
         {
+          // the first span is invalid
           rc = true;
           if ( bRepair )
           {
-            // remove extra knots but do not change end point location
+            // 15-June-2020 
+             // Remove degenerate and small spans at the end, with out changing the domain 
+             // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invarient). 
             DestroyRuntimeCache();
-            i -= (m_order-1);
-            double* cv = (double*)onmalloc(sizeof_cv);
-            ClampEnd(2);
-            memcpy(cv,CV(0),sizeof_cv);
-            for ( j0 = 0, j1 = i; j1 < m_cv_count; j0++, j1++ )
-              memcpy(CV(j0),CV(j1),sizeof_cv);
-            for ( j0 = 0, j1 = i; j1 < m_cv_count+m_order-2; j0++, j1++ )
-              m_knot[j0] = m_knot[j1];
+            if (knot_tolerance > 0)
+            {
+              // Tune up knots at start with 0< spacing <knot_tolerance, by setting to domain start.
+              for (j0 = i - 1; j0 > m_order - 2; j0--)
+                m_knot[j0] = m_knot[m_order - 2];
+            }
+
+            // This is a hack way of eliminating knots and CV's from the start.
+            // Warning!!   m_cv and m_knot need to be restored before we exit this function
+
+            i = i - (m_order - 1);
+            m_cv += m_cv_stride * i ;  
+            m_knot += i;
             m_cv_count -= i;
-            ClampEnd(2);
-            memcpy( CV(0), cv, sizeof_cv );
-            for ( i = 0; i <= m_order-2; i++ )
-              m_knot[i] = domain[0];
-            onfree(cv);
-            cv = 0;
+            ClampEnd(0);    // ...This hack works because ClampEnd does not reallocate cv or knot arrays
+            m_cv -= m_cv_stride * i ;
+            m_knot -= i ;
+
+ 
+            for (j0 = 0, j1 = i; j0 < m_cv_count; j0++, j1++)
+              memcpy(CV(j0), CV(j1), sizeof_cv);
+          
+            for (j0 = 0, j1 = i; j0 < m_cv_count+m_order-2; j0++, j1++)
+              m_knot[j0] = m_knot[j1];
+            
           }
           else
             return rc;

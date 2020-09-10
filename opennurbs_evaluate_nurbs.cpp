@@ -727,29 +727,35 @@ bool ON_EvaluateNurbsBasis(
   //   fail to be one by a bit or two when knot
   //   values are large.
   x = 1.0-ON_SQRT_EPSILON;
-  if ( N[0] > x )
+  if ( N[0] >= x )
   {
-    if ( N[0] != 1.0 && N[0] < 1.0 + ON_SQRT_EPSILON )
+    if ( N[0] != 1.0 && N[0] <= 1.0 + ON_SQRT_EPSILON )
     {
       r = 1;
-      for ( j = 1; j <= d && r; j++ )
+      for ( j = 1; j <= d; j++ )
       {
-        if ( N[j] != 0.0 )
+        if (N[j] != 0.0)
+        {
           r = 0;
+          break;
+        }
       }
       if (r)
         N[0] = 1.0;
     }
   }
-  else if ( N[d] > x )
+  else if ( N[d] >= x )
   {
-    if ( N[d] != 1.0 && N[d] < 1.0 + ON_SQRT_EPSILON )
+    if ( N[d] != 1.0 && N[d] <= 1.0 + ON_SQRT_EPSILON )
     {
       r = 1;
-      for ( j = 0; j < d && r; j++ )
+      for ( j = 0; j < d; j++ )
       {
         if ( N[j] != 0.0 )
+        {
           r = 0;
+          break;
+        }
       }
       if (r)
         N[d] = 1.0;
@@ -1320,8 +1326,8 @@ bool ON_EvaluateNurbsDeBoor(
  *                 argument.  In most cases, you can avoid resetting knots
  *                 by carefully choosing the value of "side" and "mult_k".
  *  TL_EvDeBoor()
- *   0: successful
- *      -1: knot[order-2] == knot[order-1]
+ *   true: successful
+ *   false: knot[order-2] == knot[order-1]
  *
  * COMMENTS:
  *

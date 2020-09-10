@@ -26,81 +26,208 @@
 ////////////////////////////////////////////////////////////////
 */
 
-struct ON_MeshNGonEdge
+class ON_MeshNGonEdge
 {
-  unsigned int i;
-  unsigned int j;
-  unsigned int Ni;
-  unsigned int Nj;
-  unsigned int ngon_index;
-  ON_SubD::EdgeTag edge_tag;
-  class ON_SubDEdge* e;
+public:
+  // In ON_Mesh to ON_SubD, there is a ON_MeshNGonEdge for each mesh ngon edge.
+  // So, for an interior edge, there will be 2 ON_MeshNGonEdge values, one
+  // for each attached ngon.
+  // Sorting ON_MeshNGonEdge by m_u.mesh_edge_id will group the these
+  // edges together.
+  static const ON_MeshNGonEdge Unset;
+  static const ON_MeshNGonEdge Create(
+    unsigned candidate_subd_face_id,
+    unsigned mesh_Vi, 
+    unsigned mesh_Vj,
+    const unsigned int* mesh_point_id
+  );
+
+  const ON_MeshNGonEdge Reversed() const
+  {
+    if (IsSet())
+    {
+      ON_MeshNGonEdge e = *this;
+
+      e.m_mesh_Vi = m_mesh_Vj;
+      e.m_mesh_Vj = m_mesh_Vi;
+
+      if (2 == m_u_status)
+      {
+        e.m_u.subd_edgeptr = m_u.subd_edgeptr.Reversed();
+      }
+
+      return e;
+    }
+    return ON_MeshNGonEdge::Unset;
+  }
+
+  static int CompareMeshEdgeTopologyId(const void* lhs, const void* rhs);
+
+  /*
+  Returns:
+    True if a and b reference the same topological edge and the normals
+    at both ends of the edge are different
+  */
+  static bool TagEdgeAsCrease(
+    const ON_MeshNGonEdge& a,
+    const ON_MeshNGonEdge& b,
+    const unsigned int* mesh_point_id
+  );
+
+  const ON_2udex PointIds(
+    const unsigned int* mesh_point_id
+  ) const
+  {
+    return (nullptr != mesh_point_id) ? ON_2udex(mesh_point_id[m_mesh_Vi], mesh_point_id[m_mesh_Vj]) : ON_2udex::Zero;
+  }
+
+
+  unsigned int m_sud_face_id; // likely ON_SubDFace.m_id value (unless invlalid input causes some to be skipped)
+  unsigned int m_mesh_Vi; // ON_Mesh vertex index
+  unsigned int m_mesh_Vj; // ON_Mesh vertex index
+
+private:
+  unsigned char m_u_status; // 0 = u is unset, 1 = m_u.mesh_edge_topology_id is set, 2 = m_u.subd_edgeptr is set
+  union
+  {
+    ON_2udex mesh_edge_topology_id; // uniquely identifies mesh edge toplogically - independent of vertex order
+    ON_SubDEdgePtr subd_edgeptr;
+  } m_u;
+
+public:
+
+  const ON_2udex EdgeTopologyId() const
+  {
+    return 1 == m_u_status ? m_u.mesh_edge_topology_id : ON_2udex::Zero;
+  }
+
+  const ON_SubDEdgePtr EdgePtr() const
+  {
+    return 2 == m_u_status ? m_u.subd_edgeptr : ON_SubDEdgePtr::Null;
+  }
+
+  bool SetEdgePtr(ON_SubDEdgePtr eptr)
+  {
+    if (1 == m_u_status)
+    {
+      m_u_status = eptr.IsNull() ? 0 : 2;
+      m_u.subd_edgeptr = eptr;
+      return true;
+    }
+    return ON_SUBD_RETURN_ERROR(false);
+  }
+
+  bool IsSet() const
+  {
+    return 0 != m_u_status;
+  }
+
 };
 
-static int compareUnorderedEdge(const void* a, const void* b)
+static ON_MeshNGonEdge Internal_CreateUnsetMeshNGonEdge()
+{
+  ON_MeshNGonEdge unset;
+  memset(&unset, 0, sizeof(unset));
+  return unset;
+}
+
+const ON_MeshNGonEdge ON_MeshNGonEdge::Unset = Internal_CreateUnsetMeshNGonEdge();
+
+const ON_MeshNGonEdge ON_MeshNGonEdge::Create(
+  unsigned candidate_sud_face_id,
+  unsigned mesh_Vi,
+  unsigned mesh_Vj,
+  const unsigned int* mesh_point_id
+)
+{
+  for(;;)
+  {
+    if (candidate_sud_face_id <= 0)
+      break;
+    if (mesh_Vi == mesh_Vj)
+      break;
+    ON_MeshNGonEdge e = ON_MeshNGonEdge::Unset;
+    const unsigned a = mesh_point_id[mesh_Vi];
+    const unsigned b = mesh_point_id[mesh_Vj];
+    if (a < b)
+    {
+      e.m_u.mesh_edge_topology_id.i = a;
+      e.m_u.mesh_edge_topology_id.j = b;
+      e.m_u_status = 1;
+    }
+    else if (a > b)
+    {
+      e.m_u.mesh_edge_topology_id.i = b;
+      e.m_u.mesh_edge_topology_id.j = a;
+      e.m_u_status = 1;
+    }
+    else
+      break;
+    e.m_mesh_Vi = mesh_Vi;
+    e.m_mesh_Vj = mesh_Vj;
+    e.m_sud_face_id = candidate_sud_face_id;
+    return e;
+  }
+  return ON_SUBD_RETURN_ERROR(ON_MeshNGonEdge::Unset);
+}
+
+
+
+int ON_MeshNGonEdge::CompareMeshEdgeTopologyId(const void* lhs, const void* rhs)
 {
   // compare location ids
-  unsigned int ea[2] = { ((const unsigned int*)a)[0], ((const unsigned int*)a)[1] };
-  unsigned int eb[2] = { ((const unsigned int*)b)[0], ((const unsigned int*)b)[1] };
+  const ON_2udex lhs_edge_topology_id = ((const ON_MeshNGonEdge*)lhs)->EdgeTopologyId();
+  const ON_2udex rhs_edge_topology_id = ((const ON_MeshNGonEdge*)rhs)->EdgeTopologyId();
 
-  // unordered compare
-  unsigned int k;
-  if (ea[0] > ea[1])
-  {
-    k = ea[0];
-    ea[0] = ea[1];
-    ea[1] = k;
-  }
-  if (eb[0] > eb[1])
-  {
-    k = eb[0];
-    eb[0] = eb[1];
-    eb[1] = k;
-  }
-
-  // compare
-  if (ea[0] < eb[0])
+  if (lhs_edge_topology_id.i < rhs_edge_topology_id.i)
     return -1;
-  if (ea[0] > eb[0])
+  if (lhs_edge_topology_id.i > rhs_edge_topology_id.i)
     return 1;
 
-  if (ea[1] < eb[1])
+  if (lhs_edge_topology_id.j < rhs_edge_topology_id.j)
     return -1;
-  if (ea[1] > eb[1])
+  if (lhs_edge_topology_id.j > rhs_edge_topology_id.j)
     return 1;
 
   return 0;
 }
 
-static bool TagCoincidentEdgeAsCrease(
+bool ON_MeshNGonEdge::TagEdgeAsCrease(
   const ON_MeshNGonEdge& a,
-  const ON_MeshNGonEdge& b
+  const ON_MeshNGonEdge& b,
+  const unsigned int* mesh_point_id
   )
 {
-  if (a.i == b.i && a.j == b.j)
+  if (1 != a.m_u_status || 1 != b.m_u_status 
+    || a.m_u.mesh_edge_topology_id.i != b.m_u.mesh_edge_topology_id.i 
+    || a.m_u.mesh_edge_topology_id.j != b.m_u.mesh_edge_topology_id.j
+    )
   {
-    // a and b are coincident and have the same direction
-    if (a.Ni != b.Ni && a.Nj != b.Nj)
-      return true;
+    // a and b should currently have equal topology ids
+    return ON_SUBD_RETURN_ERROR(false);
   }
-  else if (a.i == b.j && a.j == b.i)
+
+  const bool bFlipA = (a.m_u.mesh_edge_topology_id.i != mesh_point_id[a.m_mesh_Vi]) ? true : false;
+  const bool bFlipB = (b.m_u.mesh_edge_topology_id.i != mesh_point_id[b.m_mesh_Vi]) ? true : false;
+
+  if (bFlipA == bFlipB)
   {
-    // a and b are coincident and have opposite directions
-    if (a.Ni != b.Nj && a.Nj != b.Ni)
-      return true;
+    // a and b have the same direction
+    if (a.m_mesh_Vi != b.m_mesh_Vi && a.m_mesh_Vj != b.m_mesh_Vj)
+      return true; // ON_Mesh vertex indices are different at both ends
   }
   else
   {
-    // a and b are not coincident
-    // The calling code expects a and be to be coninicdent
-    ON_SubDIncrementErrorCount();
+    // a and b have opposite directions
+    if (a.m_mesh_Vi != b.m_mesh_Vj && a.m_mesh_Vj != b.m_mesh_Vi)
+      return true; // ON_Mesh vertex indices are different at both ends
   }
 
   return false;
 }
 
 static bool Internal_CandidateTagIsBetterCreaseEnd(
-  ON_SubD::VertexTag current_tag,
+  ON_SubDVertexTag current_tag,
   const ON_SubDVertex* candidate
 )
 {
@@ -108,23 +235,23 @@ static bool Internal_CandidateTagIsBetterCreaseEnd(
     return false;
   switch(current_tag)
   {
-  case ON_SubD::VertexTag::Unset:
-    if (ON_SubD::VertexTag::Unset != candidate->m_vertex_tag )
+  case ON_SubDVertexTag::Unset:
+    if (ON_SubDVertexTag::Unset != candidate->m_vertex_tag )
       return true;
     break;
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     if (candidate->IsDartOrCreaseOrCorner())
       return true;
     break;
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     if (candidate->IsCreaseOrCorner())
       return true;
     break;
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     if (candidate->IsCorner())
       return true;
     break;
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     break;
   default:
     break;
@@ -162,7 +289,7 @@ static bool Internal_CreateFromMesh_ValidateNonmanifoldVertexSector(
     const ON_SubDVertex* v1 = e1->OtherEndVertex(v);
     if (nullptr == v1)
     {
-      ON_SUBD_ERROR("invalid subd topology.");
+      ON_SUBD_ERROR("invalid SubD topology.");
       return false; // invalid topology
     }
     const double d = dir * e1->ControlNetDirectionFrom(v);
@@ -182,7 +309,7 @@ static bool Internal_CreateFromMesh_ValidateNonmanifoldVertexSector(
 
   if (nullptr == other_crease)
   {
-    ON_SUBD_ERROR("bug in nonmanifold mesh to subd code.");
+    ON_SUBD_ERROR("bug in nonmanifold mesh to SubD code.");
     return false;
   }
   if (other_crease != e)
@@ -190,21 +317,21 @@ static bool Internal_CreateFromMesh_ValidateNonmanifoldVertexSector(
 
   if (nullptr == best_candidate_edge)
   {
-    ON_SUBD_ERROR("bug in nonmanifold mesh to subd code.");
+    ON_SUBD_ERROR("bug in nonmanifold mesh to SubD code.");
     return false;
   }
 
   // make  best_candidate_edge a crease so corner sector is valid
-  const_cast<ON_SubDEdge*>(best_candidate_edge)->m_edge_tag = ON_SubD::EdgeTag::Crease;
+  const_cast<ON_SubDEdge*>(best_candidate_edge)->m_edge_tag = ON_SubDEdgeTag::Crease;
   const ON_SubDVertexEdgeProperties best_ep = best_canditate_v1->EdgeProperties();
 
-  ON_SubD::VertexTag vtag;
+  ON_SubDVertexTag vtag;
   if ( 1 == best_ep.m_crease_edge_count && 2 == best_ep.m_min_edge_face_count && 2 == best_ep.m_max_edge_face_count)
-    vtag = ON_SubD::VertexTag::Dart;
+    vtag = ON_SubDVertexTag::Dart;
   else if ( 2 == best_ep.m_crease_edge_count && best_ep.m_max_edge_face_count <= 2 )
-    vtag = ON_SubD::VertexTag::Crease;
+    vtag = ON_SubDVertexTag::Crease;
   else
-    vtag = ON_SubD::VertexTag::Corner;
+    vtag = ON_SubDVertexTag::Corner;
 
   if (false == Internal_CandidateTagIsBetterCreaseEnd(vtag, best_canditate_v1))
     const_cast<ON_SubDVertex*>(best_canditate_v1)->m_vertex_tag = vtag;
@@ -218,7 +345,7 @@ static void Internal_CreateFromMesh_ValidateNonmanifoldVertex(
 {
   if (
     nullptr == v
-    || ON_SubD::VertexTag::Corner != v->m_vertex_tag
+    || ON_SubDVertexTag::Corner != v->m_vertex_tag
     )
     return;
 
@@ -227,7 +354,7 @@ static void Internal_CreateFromMesh_ValidateNonmanifoldVertex(
     const ON_SubDEdge* e = v->Edge(vei);
     if (
       nullptr == e
-      || ON_SubD::EdgeTag::Crease != e->m_edge_tag
+      || ON_SubDEdgeTag::Crease != e->m_edge_tag
       || e->m_face_count <= 2
       )
       continue;
@@ -244,7 +371,7 @@ static void Internal_CreateFromMesh_ValidateNonmanifoldVertex(
         sit.Initialize(f, 1, v);
         if (e != sit.CurrentEdge(0))
         {
-          ON_SUBD_ERROR("bug in nonmanifold mesh to subd code.");
+          ON_SUBD_ERROR("bug in nonmanifold mesh to SubD code.");
           continue;
         }
       }
@@ -347,8 +474,34 @@ ON_SubD* ON_SubD::CreateFromMesh(
   return subd_from_mesh;
 }
 
+static double Internal_FaceCornerAngleRadians(const ON_SubDVertex* v, const ON_SubDFace* f)
+{
+  for (;;)
+  {
+    if (nullptr == f)
+      break;
+
+    if (false == f->IsConvex())
+      break;
+
+    // We could remove the f->IsConvex() test, but it might make make a bad situaton worse.
+    // As of May 2020, nobody has complained about this approach.
+    // the code below assumes the face is convex
+
+    const unsigned fvi = f->VertexIndex(v);
+    const ON_SubDComponentPtrPair pair = f->VertexEdgePair(fvi);
+    if (false == pair.BothAreNotNull())
+      break;
+    const double a = ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(pair.First().EdgePtr().Reversed(), pair.Second().EdgePtr());
+    if (false == (a > 0.0 && a < ON_PI))
+      break;
+    return a;
+  }
+  return ON_DBL_QNAN;
+}
+
 ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
-  const class ON_Mesh* level_zero_mesh,
+  const class ON_Mesh* mesh,
   const class ON_SubDFromMeshParameters* from_mesh_options,
   ON_SubD* subd
   )
@@ -360,7 +513,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       subdimple->Clear();
   }
 
-  if (nullptr == level_zero_mesh)
+  if (nullptr == mesh)
     return nullptr;
 
   ON_Workspace ws;
@@ -368,120 +521,106 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   if (nullptr == from_mesh_options)
     from_mesh_options = &ON_SubDFromMeshParameters::Smooth;
 
-  ON_3dPointListRef mesh_points(level_zero_mesh);
-  const unsigned int mesh_point_count = mesh_points.PointCount();
+  ON_3dPointListRef mesh_points(mesh);
+  const unsigned mesh_point_count = mesh_points.PointCount();
   if (mesh_point_count < 3)
     return nullptr;
 
-  const ON_MeshFaceList mesh_face_list(level_zero_mesh);
+  const ON_MeshFaceList mesh_face_list(mesh);
   const unsigned int mesh_face_count = mesh_face_list.FaceCount();
   if ( mesh_face_count < 1 )
     return nullptr;
 
-  const ON_3fVector* pointNormal
-    = level_zero_mesh->HasVertexNormals()
-    ? level_zero_mesh->m_N.Array()
-    : nullptr;
-
-  const_cast<ON_Mesh*>(level_zero_mesh)->NgonMap(true);
-  ON_MeshNgonIterator ngonit(level_zero_mesh);
+  const_cast<ON_Mesh*>(mesh)->NgonMap(true);
+  ON_MeshNgonIterator ngonit(mesh);
   if (nullptr == ngonit.FirstNgon())
     return nullptr;
   
-  unsigned int* Vindex = (unsigned int*)ws.GetIntMemory(mesh_point_count);
-  unsigned int* Vid = level_zero_mesh->GetVertexLocationIds(0, (unsigned int*)ws.GetIntMemory(mesh_point_count), Vindex);
-  if (nullptr == Vid)
+  ////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Conceptually sort the vertices of mesh into groups that are at the same 3d location.
+  // For each group of mesh vertices at a particular spot, there will typically be
+  // one SubD vertex. However, mesh vertices that are not referenced by mesh faces
+  // are ignored so it is possible that some mesh vertices will not have a corresponding 
+  // SubD vertex.
+  //
+  // mesh_point_count = mesh->MeshVertexCount();
+  // mesh_point_id[]
+  //   mesh_point_id[] has mesh_point_count values.
+  //   mesh_point_id[i] = mesh_point_id[j] if and only if mesh->m_V[i] and mesh->m_V[j] are coincident.
+  //   Values in mesh_point_id[] run from 0 to mesh_point_id_count-1.
+  //   There are mesh_point_id_count unique locations.
+  // mesh_point_map[] is a permutation of (0, ..., mesh_point_count-1).
+  //   mesh_point_map[] sorts mesh->m_V[] into groups of vertices with the same mesh_id / location.
+  //   0 == mesh_point_id[mesh_point_map[0]] <= ... <= mesh_point_id[mesh_point_map[mesh_point_count-1]] = mesh_point_id_count-1.
+  // mesh_vertex_status[] mesh_point_id_count char values.
+  //   mesh_vertex_status[mesh_vi] = 1 if that mesh vertex id/location has a corresponding SubD vertex. 0 if the mesh vertex will be ignored.
+  unsigned int* buffer1 = (unsigned int*)ws.GetIntMemory(mesh_point_count);
+  const unsigned int* mesh_point_id = mesh->GetVertexLocationIds(0, (unsigned int*)ws.GetIntMemory(mesh_point_count), buffer1);
+  if (nullptr == mesh_point_id)
     return nullptr;
-  unsigned int VidCount = Vid[Vindex[mesh_point_count - 1]] + 1;
-  unsigned char* vertexIsReferenced = (unsigned char*)ws.GetMemory(VidCount*sizeof(vertexIsReferenced[0]));
-  memset(vertexIsReferenced, 0, VidCount*sizeof(vertexIsReferenced[0]));
-  // Vid[]
-  //   Vid[] has mesh_point_count values.
-  //   Vid[i] = Vid[j] if and only if mesh->m_V[i] and mesh->m_V[j] are coincident.
-  //   Values in Vid[] run from 0 to VidCount-1.
-  //   There are VidCount unique locations.
-  // Vindex[] is a permutation of (0, ..., mesh_point_count-1)
-  //   0 == Vid[Vindex[0]] <= ... <= Vid[Vindex[mesh_point_count-1]] = VidCount-1.
+  const unsigned int* mesh_point_map = buffer1;
 
+  // mesh_point_id_count = number of unique vertex locations in mesh->m_V[] array.
+  const unsigned mesh_point_id_count = mesh_point_id[mesh_point_map[mesh_point_count - 1]] + 1;
 
-  //const bool bConcaveCornerTest 
-  //  =  nullptr != crease_parameters 
-  //  && crease_parameters->ConcaveCornerTestIsEnabled();
-
-  //const double min_cos_concave_corner_angle 
-  //  = bConcaveCornerTest
-  //  ? (crease_parameters->MaximumConcaveCornerAngleRadians() < ON_PI ? cos(crease_parameters->MaximumConcaveCornerAngleRadians()) : -2.0)
-  //  : 2.0;
-
-  double max_cos_crease_angle = ON_UNSET_VALUE;
-  double min_crease_angle_radians = -ON_UNSET_VALUE;
+  unsigned char* mesh_vertex_status = (unsigned char*)ws.GetMemory(mesh_point_id_count*sizeof(mesh_vertex_status[0]));
+  memset(mesh_vertex_status, 0, mesh_point_id_count*sizeof(mesh_vertex_status[0]));
 
   ON_SubDFromMeshParameters::InteriorCreaseOption crease_test 
     = (nullptr != from_mesh_options)
-    ? from_mesh_options->InteriorCreaseTest()
+    ? from_mesh_options->GetInteriorCreaseOption()
     : ON_SubDFromMeshParameters::InteriorCreaseOption::None;
 
-  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease == crease_test && nullptr != pointNormal )
-  {
-    double min_angle = from_mesh_options->MinimumCreaseAngleRadians();
-    if (min_angle >= 0.0 && min_angle < ON_PI)
-    {
-      min_crease_angle_radians = min_angle;
-      if ( 0.0 == min_crease_angle_radians)
-        max_cos_crease_angle = 1.0;
-      else
-      {
-        max_cos_crease_angle = cos(min_crease_angle_radians);
-        if ( max_cos_crease_angle >= 1.0 )
-          max_cos_crease_angle = 1.0-ON_EPSILON;
-      }
-    }
-    else
-    {
-      crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
-    }
-  }
-  else if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge != crease_test)
+  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge != crease_test)
   {
     crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
   }
-  
-  // Get sub-D edge list
+    
+  ////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Get mesh edge list
+  // 
   unsigned int subd_vertex_count = 0;
   unsigned int mesh_edge_count = 0;
   unsigned int max_subd_face_edge_count = 0;
-  ON_SimpleArray<struct ON_MeshNGonEdge> mesh_edges(4 * level_zero_mesh->m_F.UnsignedCount());
-  struct ON_MeshNGonEdge mesh_edge = {};
+  ON_SimpleArray<ON_MeshNGonEdge> mesh_edges(4 * mesh->m_F.UnsignedCount());
 
   unsigned int quad_vi[4];
   ON_MeshNGonEdge quad_edges[4] = {};
 
   bool bMergeColinearEdges = false;
 
-  const ON_MeshFaceList level_zero_mesh_face_list(level_zero_mesh);
-
-  unsigned int subd_face_index = 0;
+  unsigned int subd_face_count = 0;
+  unsigned int mesh_Vi;
+  unsigned int mesh_Vj;
   for (const ON_MeshNgon* ngon = ngonit.FirstNgon(); nullptr != ngon; ngon = ngonit.NextNgon())
   {
     if (ngon->m_Vcount < 3 || ngon->m_Fcount < 1)
       continue;
 
-    const int ngon_orientation = ngon->Orientation(level_zero_mesh_face_list, false);
+    const int ngon_orientation = ngon->Orientation(mesh_face_list, false);
 
     if (0 != ngon_orientation)
     {
-      mesh_edge.ngon_index = subd_face_index;
-
       unsigned int ngon_edge_count = 0;
-      mesh_edge.j = ngon->m_vi[0];
+      mesh_Vj = ngon->m_vi[0];
       for (unsigned int nvi = 1; nvi <= ngon->m_Vcount; nvi++)
       {
-        mesh_edge.i = mesh_edge.j;
-        mesh_edge.j = ngon->m_vi[nvi % ngon->m_Vcount];
-        if (Vid[mesh_edge.i] == Vid[mesh_edge.j])
+        mesh_Vi = mesh_Vj;
+        mesh_Vj = ngon->m_vi[nvi % ngon->m_Vcount];
+        if (mesh_point_id[mesh_Vi] == mesh_point_id[mesh_Vj])
+          continue; // coincident vertex locations
+        ON_MeshNGonEdge& mesh_edge = mesh_edges.AppendNew();
+        mesh_edge = ON_MeshNGonEdge::Create(subd_face_count+1, mesh_Vi, mesh_Vj, mesh_point_id);
+        if (mesh_edge.IsSet())
+        {
+
+          ngon_edge_count++;
           continue;
-        mesh_edges.Append(mesh_edge);
-        ngon_edge_count++;
+        }
+        ngon_edge_count = 0;
+        break;
       }
       if (ngon_edge_count < 3)
       {
@@ -497,29 +636,19 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
         unsigned int i1 = mesh_edge_count + ngon_edge_count - 1;
         while (i0 < i1)
         {
-          mesh_edge = mesh_edges[i0];
-          mesh_edges[i0] = mesh_edges[i1];
-          int k = mesh_edge.i;
-          mesh_edge.i = mesh_edge.j;
-          mesh_edge.j = k;
-          mesh_edges[i1] = mesh_edge;
-          k = mesh_edges[i0].i;
-          mesh_edges[i0].i = mesh_edges[i0].j;
-          mesh_edges[i0].j = k;
+          const ON_MeshNGonEdge mesh_edge = mesh_edges[i0];
+          mesh_edges[i0] = mesh_edges[i1].Reversed();
+          mesh_edges[i1] = mesh_edge.Reversed();
           i0++;
           i1--;
         }
         // Flip middle edge if odd number of edges
         if (i0 == i1)
-        {
-          int k = mesh_edges[i0].i;
-          mesh_edges[i0].i = mesh_edges[i0].j;
-          mesh_edges[i0].j = k;
-        }
+          mesh_edges[i0] = mesh_edges[i0].Reversed();
       }
 
       // the ngon created a single subd face
-      subd_face_index++;
+      ++subd_face_count;
 
       if (ngon_edge_count >= 4)
         bMergeColinearEdges = true;
@@ -538,21 +667,27 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
           continue;
 
         unsigned int quad_edge_count = 0;        
-        mesh_edge.ngon_index = subd_face_index;
-        mesh_edge.j = quad_vi[0];
+        mesh_Vj = quad_vi[0];
         for (unsigned int fvi = 1; fvi <= 4; fvi++)
         {
-          mesh_edge.i = mesh_edge.j;
-          mesh_edge.j = quad_vi[fvi % 4];
-          if (Vid[mesh_edge.i] == Vid[mesh_edge.j])
+          mesh_Vi = mesh_Vj;
+          mesh_Vj = quad_vi[fvi % 4];
+          if (mesh_point_id[mesh_Vi] == mesh_point_id[mesh_Vj])
+            continue; // coincident vertex locations (always happens on a tri face and can happen on invalid faces)
+          quad_edges[quad_edge_count] = ON_MeshNGonEdge::Create(subd_face_count+1, mesh_Vi, mesh_Vj, mesh_point_id);
+          if (quad_edges[quad_edge_count].IsSet())
+          {
+            ++quad_edge_count;
             continue;
-          quad_edges[quad_edge_count++] = mesh_edge;
+          }
+          quad_edge_count = 0;
+          break;
         }
         if (quad_edge_count >= 3)
         {
           // each quad/triangle in the ON_Mesh ngon created a subd face
           mesh_edges.Append(quad_edge_count,quad_edges);
-          subd_face_index++;
+          ++subd_face_count;
           if( quad_edge_count > max_subd_face_edge_count)
             max_subd_face_edge_count = quad_edge_count;
         }
@@ -565,21 +700,19 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
     for (/*empty init*/; mesh_edge_count < mesh_edges.UnsignedCount(); mesh_edge_count++)
     {
-      mesh_edge = mesh_edges[mesh_edge_count];
-      if (0 == vertexIsReferenced[Vid[mesh_edge.i]])
+      const ON_MeshNGonEdge& mesh_edge = mesh_edges[mesh_edge_count];
+      if (0 == mesh_vertex_status[mesh_point_id[mesh_edge.m_mesh_Vi]])
       {
-        vertexIsReferenced[Vid[mesh_edge.i]] = 1;
+        mesh_vertex_status[mesh_point_id[mesh_edge.m_mesh_Vi]] = 1;
         subd_vertex_count++;
       }
-      if (0 == vertexIsReferenced[Vid[mesh_edge.j]])
+      if (0 == mesh_vertex_status[mesh_point_id[mesh_edge.m_mesh_Vj]])
       {
-        vertexIsReferenced[Vid[mesh_edge.j]] = 1;
+        mesh_vertex_status[mesh_point_id[mesh_edge.m_mesh_Vj]] = 1;
         subd_vertex_count++;
       }
     }
   }
-
-  const unsigned int subd_face_count = subd_face_index;
 
   if (subd_vertex_count < 3 || mesh_edge_count < 3 || subd_face_count < 1)
     return nullptr;
@@ -602,234 +735,232 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   bool bHasTaggedVertices = false;
   bool bHasNonmanifoldCornerVertices = false;
 
-  unsigned int* Nid = nullptr;
-  unsigned int nextNid = 0;
-  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease == crease_test)
-  {
-    Nid = (unsigned int*)ws.GetIntMemory(mesh_point_count);
-    memset(Nid, 0, mesh_point_count*sizeof(Nid[0]));
-    nextNid = 1;
-  }
-
-  ON_SimpleArray< ON_SubDVertex* > V(subd_vertex_count);
-  VidCount = 0;
-
+  //////////////////////////////////////////////////////////////////////
+  //
+  // create subd vertices
+  //
+  // subd_V[mesh_vi] = subd vertex that corresponds to mesh->m_V[].
+  // Note that when mesh-m_V[i] and mesh->m_V[j] are the same point, 
+  // then subd_V[i] = subd_V[j]. 
+  // This is common and it happens when mesh_point_id_count < mesh_point_count
+  // (some distinct mesh points in the mesh->m_V[] array have the same location).
+  ON_SubDVertex** subd_V = (ON_SubDVertex**)ws.GetMemory(mesh_point_count * sizeof(subd_V[0]));
+  memset(subd_V, 0, mesh_point_count * sizeof(subd_V[0]));
   for (unsigned int i = 0; i < mesh_point_count;/*empty iterator*/)
   {
-    const unsigned int vid0 = Vid[Vindex[i]];
+    const unsigned int vid0 = mesh_point_id[mesh_point_map[i]];
+    if (0 == mesh_vertex_status[vid0])
+    {
+      // no edges reference this vertex.
+      ++i;
+      continue;
+    }
+
     unsigned int j;
     for (j = i + 1; j < mesh_point_count; j++)
     {
-      if (vid0 != Vid[Vindex[j]])
+      if (vid0 != mesh_point_id[mesh_point_map[j]])
         break;
     }
 
-    if (1 == vertexIsReferenced[vid0])
+    const ON_3dPoint P = mesh_points[mesh_point_map[i]];
+    ON_SubDVertex* subd_vertex = new_subd->AddVertex(ON_SubDVertexTag::Smooth, &P.x);
+    while (i < j)
+      subd_V[mesh_point_map[i++]] = subd_vertex;
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////
+  //
+  // If we are adding interior crease, set the mesh_edge_ref.m_mesh_Ni / m_mesh_Nj values used to detect creases.
+  //
+  if ( ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge != crease_test )
+  {
+    crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //
+  // Create SubD edges.
+  // 
+  // An subd interior edge will have 2 consecutive element in mesh_edges[].
+  // A subd non-manifold edge with k faces with have k consecutive element in mesh_edges[].
+  // A subd boundary edge will have 1 element in mesh_edges[].
+  // A subd wire edge will have 1 element in mesh_edges[].
+  //
+
+  // mesh_edge_map[] is used to sort the sort mesh_edges[] into groups that correspond to the same SubD edge.
+  // The order of mesh_edges[] cannot be changed because the current order is neede to efficiently create the SubD faces.
+  unsigned int* mesh_edge_map = (unsigned int*)ws.GetMemory(mesh_edges.UnsignedCount() * sizeof(mesh_edge_map[0]));
+  ON_Sort(
+    ON::sort_algorithm::quick_sort,
+    mesh_edge_map, mesh_edges.Array(),
+    mesh_edges.UnsignedCount(),
+    sizeof(ON_MeshNGonEdge),
+    ON_MeshNGonEdge::CompareMeshEdgeTopologyId
+  );
+
+  for (unsigned int i = 0; i < mesh_edges.UnsignedCount(); /*empty iterator*/)
+  {
+    const ON_MeshNGonEdge& mesh_edge0 = mesh_edges[mesh_edge_map[i]];
+    const ON_2udex topology_id0 = mesh_edge0.EdgeTopologyId();
+
+    // get the group of mesh_edges[] that will use the same SubD edge.
+    // and determine if that edge should be tagged as a crease.
+    ON_SubDEdgeTag edge_tag = ON_SubDEdgeTag::Smooth;
+    unsigned j = i + 1;
+    for (/*empty init*/; j < mesh_edges.UnsignedCount(); ++j)
     {
-      // vertex is referenced by an edge
-      if (nullptr != Nid)
+      ON_MeshNGonEdge& mesh_edge1 = mesh_edges[mesh_edge_map[j]];
+      const ON_2udex topology_id1 = mesh_edge1.EdgeTopologyId();
+      if (topology_id0.i != topology_id1.i || topology_id0.j != topology_id1.j)
+        break;
+      if (ON_SubDFromMeshParameters::InteriorCreaseOption::None != crease_test)
       {
-        // When there are 2 or more coincident vertices, 
-        // set normal ids used to detect creased edges.
-        // This for loop finds normals that should be considered "equal" because
-        // the angle between them is <= crease_parameters->MinimumCreaseAngleRadians()
-        for (unsigned int k = i; k < j; k++)
+        if (ON_MeshNGonEdge::TagEdgeAsCrease(mesh_edge0, mesh_edge1, mesh_point_id))
+          edge_tag = ON_SubDEdgeTag::Crease;
+      }
+    }
+    if ( j-i != 2 )
+      edge_tag = ON_SubDEdgeTag::Crease; // wire, boundary, or non-manifold edge
+
+    // create the SubD edge.
+    ON_SubDVertex* v0[2] = { subd_V[mesh_edge0.m_mesh_Vi],  subd_V[mesh_edge0.m_mesh_Vj] };
+    ON_SubDEdge* e
+      = (nullptr != v0[0] && nullptr != v0[1] && v0[0]->m_id != v0[1]->m_id)
+      ? new_subd->AddEdgeWithSectorCoefficients(edge_tag, v0[0], ON_SubDSectorType::IgnoredSectorCoefficient, v0[1], ON_SubDSectorType::IgnoredSectorCoefficient)
+      : nullptr;
+
+    // Change the mesh_edges[].m_u from the topology id to an ON_SubDEdgePtr.
+    // We need the ON_SubDEdgePtr below to create SubD faces.
+    ON_SubDEdgePtr eptr = ON_SubDEdgePtr::Null;
+    for (/*empty init*/; i < j; ++i)
+    {
+      ON_MeshNGonEdge& mesh_edge = mesh_edges[mesh_edge_map[i]];
+      if (nullptr != e)
+      {
+        const ON_SubDVertex* v[2] = { subd_V[mesh_edge.m_mesh_Vi],  subd_V[mesh_edge.m_mesh_Vj] };
+        if (v0[0] == v[0] && v0[1] == v[1])
+          eptr = ON_SubDEdgePtr::Create(e, 0);
+        else if (v0[0] == v[1] && v0[1] == v[0])
+          eptr = ON_SubDEdgePtr::Create(e, 1);
+        else
         {
-          if (ON_UNSET_UINT_INDEX == Nid[Vindex[k]])
-            continue;
-
-          ON_3dVector N0 = pointNormal[Vindex[k]];
-          if (false == N0.Unitize())
-          {
-            Nid[Vindex[k]] = ON_UNSET_UINT_INDEX;
-            continue;
-          }
-
-          unsigned int thisNid = Nid[Vindex[k]];
-
-          // search for "equal" normals
-          for (unsigned int n = k + 1; n < j; n++)
-          {
-            if (0 != Nid[Vindex[n]] && 0 != thisNid)
-              continue;
-            ON_3dVector N1 = pointNormal[Vindex[n]];
-            if (false == N1.Unitize())
-            {
-              Nid[Vindex[k]] = ON_UNSET_UINT_INDEX;
-              continue;
-            }
-            double cos_N0_N1_angle = (N0 == N1) ? 1.0 : N0*N1;
-            if (cos_N0_N1_angle >= max_cos_crease_angle)
-            {
-              // Angle between N0 and N1 is <= crease_parameters->MinimumCreaseAngleRadians()
-              // so they must have the same id.
-              if (0 == thisNid)
-              {
-                if (0 == Nid[Vindex[n]])
-                {
-                  thisNid = nextNid++;
-                  Nid[Vindex[n]] = thisNid;
-                }
-                else
-                {
-                  thisNid = Nid[Vindex[n]];
-                }
-                Nid[Vindex[k]] = thisNid;
-              }
-              continue;
-            }
-          }
-
-          if (0 == thisNid)
-						Nid[Vindex[k]] = nextNid++;
+          ON_SUBD_ERROR("There is a bug in the code above. This should not happen.");
+          eptr = ON_SubDEdgePtr::Null;
         }
       }
-
-      const ON_3dPoint P = mesh_points[Vindex[i]];
-      ON_SubDVertex* subd_vertex = new_subd->AddVertex(ON_SubD::VertexTag::Smooth, &P.x);
-      V.Append(subd_vertex);
-      while (i < j)
-        Vid[Vindex[i++]] = VidCount;
-      VidCount++;
-    }
-    else
-    {
-      // unreferenced vertex
-      while (i < j)
-        Vid[Vindex[i++]] = ON_UNSET_UINT_INDEX;
-    }
-  }
-
-  // change mesh_edges[].i and .j from mesh vertex index to to sub-D vertex id.
-  for (unsigned int i = 0; i < mesh_edges.UnsignedCount(); i++)
-  {
-    // set the normal ids from the ON_Mesh m_V[] indices
-    struct ON_MeshNGonEdge& mesh_edge_ref = mesh_edges[i];
-    if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge == crease_test)
-    {
-      // All coincident mesh vertices generate interior creases
-      mesh_edge_ref.Ni = mesh_edge_ref.i;
-      mesh_edge_ref.Nj = mesh_edge_ref.j;
-    }
-    else if (nullptr != Nid)
-    {
-      // Coincident mesh vertices with different vertex normals generate interior creases
-      mesh_edge_ref.Ni = Nid[mesh_edge_ref.i];
-      mesh_edge_ref.Nj = Nid[mesh_edge_ref.j];
-    }
-    else
-    {
-      // no interior creases
-      mesh_edge_ref.Ni = 0;
-      mesh_edge_ref.Nj = 0;
-    }
-
-    // convert ON_Mesh m_V[] indices into sub-D vertex ids.
-    mesh_edge_ref.i = Vid[mesh_edge_ref.i];
-    mesh_edge_ref.j = Vid[mesh_edge_ref.j];
-  }
-
-  // sort the edges
-  unsigned int* mesh_edge_map = (unsigned int*)ws.GetMemory(mesh_edges.UnsignedCount()*sizeof(mesh_edge_map[0]));
-  ON_Sort(ON::sort_algorithm::quick_sort, mesh_edge_map, mesh_edges.Array(), mesh_edges.UnsignedCount(), sizeof(mesh_edge), compareUnorderedEdge);
-
-  // change mesh_edges[].e to a temporary edge id
-  ON__UINT_PTR subd_edge_index = 0;
-  for (unsigned int i = 0; i < mesh_edges.UnsignedCount(); /*empty iterator*/)
-  {
-    // first instance of a new edge
-    mesh_edge = mesh_edges[mesh_edge_map[i]];
-    mesh_edge.edge_tag = ON_SubD::EdgeTag::Smooth;
-    mesh_edges[mesh_edge_map[i]].e = (ON_SubDEdge*)subd_edge_index;
-
-    unsigned int i0 = i;
-    for (i++; i < mesh_edges.UnsignedCount() && 0 == compareUnorderedEdge(&mesh_edge, &mesh_edges[mesh_edge_map[i]]); i++)
-    {
-      // There were multiple ON_Mesh vertices at at least one end of this edge.
-      // If the crease_parmeters specified to search for a crease and the
-      // angle between ON_Mesh vertex normals exceeded the crease tolerance,
-      // then the edge will be a crease.
-      if (ON_SubD::EdgeTag::Smooth == mesh_edge.edge_tag)
+      else
       {
-        if (TagCoincidentEdgeAsCrease(mesh_edges[mesh_edge_map[i]],mesh_edge))
-          mesh_edge.edge_tag = ON_SubD::EdgeTag::Crease;
+        eptr = ON_SubDEdgePtr::Null;
       }
-      mesh_edges[mesh_edge_map[i]].e = (ON_SubDEdge*)subd_edge_index; // duplicate edge
-    }
-
-    while (i0 < i)
-      mesh_edges[mesh_edge_map[i0++]].edge_tag = mesh_edge.edge_tag;
-
-    subd_edge_index++;
-  }
-
-  // Create the sub-D edges.
-  for (unsigned int i = 0; i < mesh_edges.UnsignedCount(); /*empty iterator*/)
-  {
-    mesh_edge = mesh_edges[mesh_edge_map[i]];
-    subd_edge_index = (ON__UINT_PTR)mesh_edge.e;
-    // Later, some of the ON_SubD::EdgeTag::Smooth tags are changed to ON_SubD::EdgeTag::Crease or ON_SubD::EdgeTag::SmoothX.
-    mesh_edge.e
-      = (mesh_edge.i <= mesh_edge.j)
-      ? new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorCoefficient, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorCoefficient)
-      : new_subd->AddEdgeWithSectorCoefficients(mesh_edge.edge_tag, V[mesh_edge.j], ON_SubDSectorType::IgnoredSectorCoefficient, V[mesh_edge.i], ON_SubDSectorType::IgnoredSectorCoefficient);
-    mesh_edges[mesh_edge_map[i]].e = mesh_edge.e;
-    for (i++; i < mesh_edges.UnsignedCount(); i++)
-    {
-      if (subd_edge_index == (ON__UINT_PTR)mesh_edges[mesh_edge_map[i]].e)
-      {
-        mesh_edges[mesh_edge_map[i]].e = mesh_edge.e;
-        continue;
-      }
-      break;
+      mesh_edge.SetEdgePtr(eptr);
     }
   }
 
-  // Create the sub-D faces.
+  //////////////////////////////////////////////////////////////////////
+  //
+  // Create the SubD faces.
+  //
+  //  mesh_edges[] is ordered in groups that form the boundary of each SubD face.
+  //  All the edges that form a boundary of a face have the same m_sud_face_id value.
+  //  If the input mesh is completely valid, this will also be ON_SubDFace m_id value.
+  //  If the input mesh is damaged, some boundaries will not generate a corresponding SubD face.
+  // 
+  const ON_SubDFromMeshParameters::TextureCoordinatesOption texture_coordinates_option
+    = nullptr != from_mesh_options
+    ? from_mesh_options->GetTextureCoordinatesOption()
+    : ON_SubDFromMeshParameters::TextureCoordinatesOption::None;
+  const bool bAutomaticTextureCoordinates = ON_SubDFromMeshParameters::TextureCoordinatesOption::Automatic == texture_coordinates_option;
+  
+
+  // At most one of bCopyMeshMappingTag, bCopyMeshTextureCoordinates, or bPackedTextureCoordinates is true.
+  const bool bCopyMeshMappingTag
+    = (bAutomaticTextureCoordinates || ON_SubDFromMeshParameters::TextureCoordinatesOption::CopyMapping == texture_coordinates_option)
+    && mesh->m_Ttag.IsSet()
+    ;
+  const bool bCopyMeshTextureCoordinates
+    = false == bCopyMeshMappingTag
+    && (bAutomaticTextureCoordinates || ON_SubDFromMeshParameters::TextureCoordinatesOption::CopyCoordinates == texture_coordinates_option)
+    && mesh->HasTextureCoordinates()
+    ;
+  const bool bPackedTextureCoordinates
+    = false == bCopyMeshMappingTag
+    && false == bCopyMeshTextureCoordinates
+    && (bAutomaticTextureCoordinates || ON_SubDFromMeshParameters::TextureCoordinatesOption::Packed == texture_coordinates_option)
+    && mesh->HasTextureCoordinates()
+    ;
+
   ON_SimpleArray< ON_SubDEdgePtr > EP(max_subd_face_edge_count);
-  unsigned int mesh_edge_index = 0;
-  for ( subd_face_index = 0; subd_face_index < subd_face_count; subd_face_index++ )
+  ON_SimpleArray< ON_3dPoint > face_texture_points(bCopyMeshTextureCoordinates ? max_subd_face_edge_count : 0);
+  for (unsigned i = 0; i < mesh_edges.UnsignedCount(); /*empty iterator*/)
   {
-    while (mesh_edge_index < mesh_edges.UnsignedCount() && mesh_edges[mesh_edge_index].ngon_index < subd_face_index)
-      mesh_edge_index++;
-
-    if (mesh_edges[mesh_edge_index].ngon_index != subd_face_index)
-      continue;
-
     EP.SetCount(0);
-    while (mesh_edge_index < mesh_edges.UnsignedCount() && mesh_edges[mesh_edge_index].ngon_index == subd_face_index)
+    face_texture_points.SetCount(0);
+    const unsigned candidate_sud_face_id = mesh_edges[i].m_sud_face_id;
+    unsigned j = i;
+    for (/*empty init*/; j < mesh_edges.UnsignedCount(); ++j)
     {
-      mesh_edge = mesh_edges[mesh_edge_index];
-      EP.Append(ON_SubDEdgePtr::Create(mesh_edge.e, mesh_edge.i <= mesh_edge.j ? 0 : 1));
-      mesh_edge_index++;
+      const ON_MeshNGonEdge& mesh_edge = mesh_edges[j];
+      if (candidate_sud_face_id != mesh_edge.m_sud_face_id)
+        break;
+      const ON_SubDEdgePtr eptr = mesh_edge.EdgePtr();
+      if (eptr.IsNotNull())
+      {
+        EP.Append(eptr);
+        const ON_SubDVertex* debug_eptr_v[2] = { eptr.RelativeVertex(0), eptr.RelativeVertex(1) };
+        const ON_SubDVertex* debug_mesh_v[2] = { subd_V[mesh_edge.m_mesh_Vi], subd_V[mesh_edge.m_mesh_Vj] };
+        const bool bOK = debug_eptr_v[0] == debug_mesh_v[0] && debug_eptr_v[1] == debug_mesh_v[1];
+        if (false == bOK) ON_SUBD_ERROR("XXX");
+        if (bCopyMeshTextureCoordinates)
+          face_texture_points.Append(ON_3dPoint(mesh->m_T[mesh_edge.m_mesh_Vi]));
+      }
     }
-
-    if (EP.UnsignedCount() >= 3)
-      new_subd->AddFace(EP.Array(), EP.UnsignedCount());
+    const unsigned edge_count = EP.UnsignedCount();
+    ON_SubDFace* f 
+      = (edge_count >= 3 && j - i == edge_count)
+      ?  new_subd->AddFace(EP.Array(), EP.UnsignedCount())
+      : nullptr;
+    if (nullptr != f)
+    {
+      if (bCopyMeshTextureCoordinates)
+        new_subd->AddFaceTexturePoints(f, face_texture_points.Array(), face_texture_points.UnsignedCount() );
+    }
+    const unsigned actual_subd_face_id = (nullptr != f) ? f->m_id : 0;
+    for ( /*empty init*/; i < j; ++i)
+      mesh_edges[i].m_sud_face_id = actual_subd_face_id;
   }
 
-  // Apply "ON_SubD::EdgeTag::Crease" tag to boundary and non-manifold edges and their vertices.
+  // Apply "ON_SubDEdgeTag::Crease" tag to boundary and non-manifold edges and their vertices.
   unsigned int interior_crease_count = 0;
   for (const ON_SubDEdge* edge = new_subd->FirstEdge(); nullptr != edge; edge = edge->m_next_edge)
   {
-    if (2 == edge->m_face_count && ON_SubD::EdgeTag::Smooth == edge->m_edge_tag)
+    // Note: edges are created before faces and we set the edge tag when the edges are created
+    // assuming that face creation will go as expected. If the mesh is damaged, the face may not 
+    // be created. So, we need to check both edge->m_face_count and edge->m_edge_tag.
+    if (2 == edge->m_face_count && ON_SubDEdgeTag::Smooth == edge->m_edge_tag)
       continue;
 
+    const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubDEdgeTag::Crease;
+
     bHasTaggedVertices = true;
+    const ON_SubDVertexTag vtag
+      = (1 == edge->m_face_count || 2 == edge->m_face_count)
+      ? ON_SubDVertexTag::Crease
+      : ON_SubDVertexTag::Corner; // wire edge or non-manifold edge
 
-    const ON_SubD::VertexTag vtag
-      = (edge->m_face_count > 2)
-      ? ON_SubD::VertexTag::Corner
-      : ON_SubD::VertexTag::Crease;
 
-    const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubD::EdgeTag::Crease;
+    // Depending on the number of creased edges, a vertex on an interior crease here that
+    // is tagged as ON_SubDVertexTag::Crease  here may get changed 
+    // to ON_SubDVertexTag::Dart or ON_SubDVertexTag::Corner below.
+
     for (unsigned int j = 0; j < 2; j++)
     {
       const ON_SubDVertex* vertex = edge->m_vertex[j];
-      if (ON_SubD::VertexTag::Smooth == vertex->m_vertex_tag)
+      if (ON_SubDVertexTag::Smooth == vertex->m_vertex_tag)
       {
         const_cast<ON_SubDVertex*>(vertex)->m_vertex_tag = vtag;
-        if (ON_SubD::VertexTag::Corner == vtag && edge->m_face_count > 2)
+        if (ON_SubDVertexTag::Corner == vtag && edge->m_face_count > 2)
           bHasNonmanifoldCornerVertices = true;
       }
     }
@@ -847,50 +978,38 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
   if (interior_crease_count > 0)
   {
-    // Any interior vertex that has exactly one creased edges must be tagged as a dart.
-    unsigned int k = 0;
-    for (const ON_SubDEdge* edge = new_subd->FirstEdge(); nullptr != edge; edge = edge->m_next_edge)
+    // Any interior vertex that has exactly one creased edge must be tagged as a dart.
+    // Any interior vertex that has more than two creased edges must be tagged as a corner.
+    unsigned int k = 0; // k = number of interior creases we've tested
+    for (const ON_SubDEdge* edge = new_subd->FirstEdge(); nullptr != edge && k < interior_crease_count; edge = edge->m_next_edge)
     {
-      if (2 != edge->m_face_count || ON_SubD::EdgeTag::Crease != edge->m_edge_tag)
+      if (2 != edge->m_face_count || ON_SubDEdgeTag::Crease != edge->m_edge_tag)
         continue;
 
-      if ( ON_SubD::VertexTag::Crease != edge->m_vertex[0]->m_vertex_tag
-          && ON_SubD::VertexTag::Crease != edge->m_vertex[1]->m_vertex_tag)
+      k++; // processing another interior crease.
+
+      if ( ON_SubDVertexTag::Crease != edge->m_vertex[0]->m_vertex_tag
+          && ON_SubDVertexTag::Crease != edge->m_vertex[1]->m_vertex_tag)
         continue;
 
-      unsigned int dart_index = 0;
-      unsigned int dart_count = 0;
       for (unsigned int j = 0; j < 2; j++)
       {
         const ON_SubDVertex* vertex = edge->m_vertex[j];
-        if (ON_SubD::VertexTag::Crease != vertex->m_vertex_tag)
-          continue;
-        const ON_SubDVertexEdgeProperties ep = vertex->EdgeProperties();
+        if (ON_SubDVertexTag::Crease != vertex->m_vertex_tag)
+          continue; // this vertex has already been processed.
 
+        const ON_SubDVertexEdgeProperties ep = vertex->EdgeProperties();
         if ( 0 == ep.m_null_edge_count && 0 == ep.m_unset_edge_count )
         {
-          if (1 == ep.m_crease_edge_count && ep.m_smooth_edge_count >= 1 && 2 == ep.m_min_edge_face_count && 2 == ep.m_max_edge_face_count)
+          if (ep.m_crease_edge_count >= 3)
           {
-            dart_index = j;
-            ++dart_count;
+            const_cast<ON_SubDVertex*>(edge->m_vertex[j])->m_vertex_tag = ON_SubDVertexTag::Corner;
+          }
+          else if (1 == ep.m_crease_edge_count && ep.m_smooth_edge_count >= 1 && 2 == ep.m_min_edge_face_count && 2 == ep.m_max_edge_face_count)
+          {
+            const_cast<ON_SubDVertex*>(edge->m_vertex[j])->m_vertex_tag = ON_SubDVertexTag::Dart;
           }
         }
-      }
-
-      if (dart_count == 1)
-      {
-        const_cast<ON_SubDVertex*>(edge->m_vertex[dart_index])->m_vertex_tag = ON_SubD::VertexTag::Dart;
-        k++;
-        if (k == interior_crease_count)
-          break;
-      }
-      else if (dart_count == 2)
-      {
-        const_cast<ON_SubDVertex*>(edge->m_vertex[0])->m_vertex_tag = ON_SubD::VertexTag::Dart;
-        const_cast<ON_SubDVertex*>(edge->m_vertex[1])->m_vertex_tag = ON_SubD::VertexTag::Dart;
-        k++;
-        if (k == interior_crease_count)
-          break;
       }
     }
   }
@@ -899,7 +1018,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   {
     for (const ON_SubDEdge* edge = new_subd->FirstEdge(); nullptr != edge; edge = edge->m_next_edge)
     {
-      if (ON_SubD::EdgeTag::Smooth != edge->m_edge_tag)
+      if (ON_SubDEdgeTag::Smooth != edge->m_edge_tag)
         continue;
       const unsigned int tagged_end_index = edge->TaggedEndIndex();
       if (tagged_end_index < 2)
@@ -913,34 +1032,34 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
         if (2 == edge->m_face_count)
         {
           // first subdivision will convert edge to smooth
-          const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubD::EdgeTag::SmoothX;
+          const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubDEdgeTag::SmoothX;
           // sector weights will be calculated when facet type is set
           const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[0] = ON_SubDSectorType::UnsetSectorCoefficient;
           const_cast<ON_SubDEdge*>(edge)->m_sector_coefficient[1] = ON_SubDSectorType::UnsetSectorCoefficient;
         }
         else
         {
-          const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubD::EdgeTag::Crease;
+          const_cast<ON_SubDEdge*>(edge)->m_edge_tag = ON_SubDEdgeTag::Crease;
         }
       }
     }
 
     for (const ON_SubDVertex* vertex = new_subd->FirstVertex(); nullptr != vertex; vertex = vertex->m_next_vertex)
     {
-      if (ON_SubD::VertexTag::Crease != vertex->m_vertex_tag)
+      if (ON_SubDVertexTag::Crease != vertex->m_vertex_tag)
         continue;
       unsigned int vertex_creased_edge_count = 0;
       const unsigned int vertex_edge_count = vertex->m_edge_count;
       for (unsigned int j = 0; j < vertex_edge_count; j++)
       {
         const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(vertex->m_edges[j].m_ptr);
-        if (ON_SubD::EdgeTag::Crease == edge->m_edge_tag)
+        if (ON_SubDEdgeTag::Crease == edge->m_edge_tag)
         {
           if (vertex_creased_edge_count >= 2)
           {
             // Three or more creased edges end at this vertex.
             // It must be subdivided as a corner vertex.
-            const_cast<ON_SubDVertex*>(vertex)->m_vertex_tag = ON_SubD::VertexTag::Corner;
+            const_cast<ON_SubDVertex*>(vertex)->m_vertex_tag = ON_SubDVertexTag::Corner;
             break;
           }
           vertex_creased_edge_count++;
@@ -966,87 +1085,114 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   if ( false == new_subd->IsOriented() )
     new_subd->Orient();
 
-  if (ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner == from_mesh_options->ConvexCornerTest())
+  const double max_convex_angle_radians = from_mesh_options->MaximumConvexCornerAngleRadians();
+  const bool bLookForConvexCorners 
+    = ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner == from_mesh_options->GetConvexCornerOption() 
+    && max_convex_angle_radians > 0.0
+    && max_convex_angle_radians < ON_PI
+    ;
+  const double min_concave_angle_radians = from_mesh_options->MinimumConcaveCornerAngleRadians();
+  const bool bLookForConcaveCorners
+    = ON_SubDFromMeshParameters::ConcaveCornerOption::AtMeshCorner == from_mesh_options->GetConcaveCornerOption()
+    && min_concave_angle_radians > ON_PI
+    && min_concave_angle_radians < ON_2PI
+    ;
+  if (bLookForConvexCorners || bLookForConcaveCorners)
   {
     // Add corners
     ON_SubDVertexIterator vit(*new_subd);
-    ON_SubDEdge* e[2];
-    const ON_SubDFace* f;
-    const ON_SubDVertex* v[4];
-    ON_3dPoint P[4];
-    ON_3dVector T[4];
-    ON_3dVector N[4];
-    double NoN[4];
-    const double a = from_mesh_options->MaximumConvexCornerAngleRadians();
-    if (a > 0.0 && a < ON_PI)
+    for (ON_SubDVertex* vertex = const_cast<ON_SubDVertex*>(vit.FirstVertex()); nullptr != vertex; vertex = const_cast<ON_SubDVertex*>(vit.NextVertex()))
     {
-      const double NoNtol = 0.2588190451; // sin(15 degrees)
-      const double min_cos_corner_angle = cos(a);
-      for (ON_SubDVertex* vertex = const_cast<ON_SubDVertex*>(vit.FirstVertex()); nullptr != vertex; vertex = const_cast<ON_SubDVertex*>(vit.NextVertex()))
+      if (ON_SubDVertexTag::Crease != vertex->m_vertex_tag)
+        continue;
+      if ( 1 + vertex->m_face_count != vertex->m_edge_count )
+        continue;
+
+      ON_SubDComponentPtrPair boundary_pair = boundary_pair = vertex->BoundaryEdgePair();
+      if (false == boundary_pair.BothAreNotNull())
+        continue;
+
+      bool bConvexCorner
+        = bLookForConvexCorners
+        && vertex->m_edge_count <= from_mesh_options->MaximumConvexCornerEdgeCount()
+        ;
+      bool bConcaveCorner
+        = bLookForConcaveCorners
+        && vertex->m_edge_count >= from_mesh_options->MinimumConcaveCornerEdgeCount()
+        ;
+
+      if (false == bConvexCorner && false == bConcaveCorner)
+        continue;
+
+      // add up angles of faces at this vertex
+      // If the faces are not coplanar, this sum can exceed 2pi.
+      double vertex_angle_radians = 0.0;
+      for (unsigned short vei = 0; vei < vertex->m_face_count; ++vei)
       {
-        if (ON_SubD::VertexTag::Crease != vertex->m_vertex_tag)
-          continue;
-        if (2 != vertex->m_edge_count)
-          continue;
-        e[0] = ON_SUBD_EDGE_POINTER(vertex->m_edges[0].m_ptr);
-        e[1] = ON_SUBD_EDGE_POINTER(vertex->m_edges[1].m_ptr);
-        if (nullptr == e[0] || 1 != e[0]->m_face_count || ON_SubD::EdgeTag::Crease != e[0]->m_edge_tag)
-          continue;
-        if (nullptr == e[1] || 1 != e[1]->m_face_count || ON_SubD::EdgeTag::Crease != e[1]->m_edge_tag)
-          continue;
-        f = ON_SUBD_FACE_POINTER(e[0]->m_face2[0].m_ptr);
-        if (nullptr == f)
-          continue;
-        if (f != ON_SUBD_FACE_POINTER(e[1]->m_face2[0].m_ptr))
-          continue;
-
-        const unsigned int vi = f->VertexIndex(vertex);
-        if (vi >= 4)
-          continue;
-        ON_SubDEdgePtr eptr[2];
-        if (e[0] == f->Edge(vi))
+        const double a = Internal_FaceCornerAngleRadians(vertex, vertex->m_faces[vei]);
+        if (false == (a > 0.0 && a < ON_PI) )
         {
-          eptr[0] = ON_SubDEdgePtr::Create(e[0], vertex == e[0]->m_vertex[1] ? 1 : 0);
-          eptr[1] = ON_SubDEdgePtr::Create(e[1], vertex == e[1]->m_vertex[1] ? 1 : 0);
+          vertex_angle_radians = ON_DBL_QNAN;
+          break;
         }
-        else if (e[1] == f->Edge(vi))
-        {
-          eptr[1] = ON_SubDEdgePtr::Create(e[0], vertex == e[0]->m_vertex[1] ? 1 : 0);
-          eptr[0] = ON_SubDEdgePtr::Create(e[1], vertex == e[1]->m_vertex[1] ? 1 : 0);
-        }
-        const double corner_angle_radians = ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(eptr[0], eptr[1]);
-        if (!(corner_angle_radians > 0.0 && corner_angle_radians < ON_PI))
-          continue;
-
-        // ocnvex quad restriction - for now
-        if (4 != f->m_edge_count)
-          continue;
-        v[0] = vertex;
-        v[1] = f->Vertex((vi + 1) % 4);
-        v[2] = f->Vertex((vi + 2) % 4);
-        v[3] = f->Vertex((vi + 3) % 4);
-        if (nullptr == v[0] || nullptr == v[1] || nullptr == v[2] || nullptr == v[3])
-          continue;
-        for (int i = 0; i < 4; i++)
-          P[i] = ON_3dPoint(v[i]->m_P);
-        for (int i = 0; i < 4; i++)
-          T[i] = P[(i + 1) % 4] - P[i];
-        for (int i = 0; i < 4; i++)
-          N[i] = -ON_CrossProduct(T[i], T[(i + 3) % 4]).UnitVector();
-        for (int i = 0; i < 4; i++)
-          NoN[i] = N[i] * N[(i + 1) % 4];
-        if (false == (NoN[0] >= NoNtol && NoN[1] >= NoNtol && NoN[2] >= NoNtol && NoN[3] >= NoNtol))
-          continue;
-        const double cos_corner_angle = ON_CrossProduct(T[0], T[3]).Length();
-        if (false == (cos_corner_angle >= min_cos_corner_angle))
-          continue;
-        vertex->m_vertex_tag = ON_SubD::VertexTag::Corner;
+        vertex_angle_radians += a;
       }
+      if (false == (vertex_angle_radians > 0.0))
+        continue;
+
+      bConvexCorner = bConvexCorner && vertex_angle_radians <= max_convex_angle_radians;
+      bConcaveCorner = bConcaveCorner && vertex_angle_radians >= min_concave_angle_radians;
+      if (bConvexCorner ? 0 : 1 == bConcaveCorner ? 0 : 1)
+        continue;
+
+      // Finally, test the angle between the boundary edges. That angle must also pass the min/max tests.
+      // This test cannot be done earlier, because we need to know if we are making a concave or convex corner
+      // to do this test correctly.
+      const double boundary_angle_radians = ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(boundary_pair.First().EdgePtr(), boundary_pair.Second().EdgePtr());
+      if (false == boundary_angle_radians > 0.0 && boundary_angle_radians < ON_PI)
+        continue; // the angle is always acute because it does not look at the active side
+      if (bConvexCorner)
+      {
+        if (false == (boundary_angle_radians <= max_convex_angle_radians))
+          continue;
+      }
+      else if (bConcaveCorner)
+      {
+        if (false == ((ON_2PI - boundary_angle_radians) >= min_concave_angle_radians))
+          continue;
+      }
+      else
+        continue; // should never get here
+
+
+      vertex->m_vertex_tag = ON_SubDVertexTag::Corner;        
     }
   }
 
   new_subd->UpdateEdgeSectorCoefficients(false);
 
+
+
+  if (bCopyMeshMappingTag)
+  {
+    new_subd->SetTextureMappingTag(mesh->m_Ttag);
+    new_subd->SetTextureCoordinateType(ON_SubDTextureCoordinateType::FromMapping);
+  }
+  else if (bCopyMeshTextureCoordinates)
+  {
+    new_subd->SetTextureMappingTag(ON_MappingTag::Unset);
+    new_subd->SetTextureCoordinateType(ON_SubDTextureCoordinateType::FromFaceTexturePoints);
+  }
+  else if (bPackedTextureCoordinates)
+  {
+    new_subd->SetTextureMappingTag(ON_MappingTag::Unset);
+    new_subd->SetTextureCoordinateType(ON_SubDTextureCoordinateType::Packed);
+  }
+  else
+  {
+    new_subd->SetTextureMappingTag(ON_MappingTag::Unset);
+    new_subd->SetTextureCoordinateType(ON_SubDTextureCoordinateType::Unset);
+  }
 
   return new_subd;
 }
@@ -1069,14 +1215,14 @@ static ON_SubDVertex* IndexVertex(
 
 ON_SubD* ON_SubD::CreateSubDBox(
   const ON_3dPoint corners[8],
-  ON_SubD::EdgeTag edge_tag,
+  ON_SubDEdgeTag edge_tag,
   unsigned int facecount_x,
   unsigned int facecount_y,
   unsigned int facecount_z,
   ON_SubD* subd)
 {
-  if (ON_SubD::EdgeTag::Crease != edge_tag)
-    edge_tag = ON_SubD::EdgeTag::Smooth;
+  if (ON_SubDEdgeTag::Crease != edge_tag)
+    edge_tag = ON_SubDEdgeTag::Smooth;
 
   if (nullptr == subd)
     subd = new ON_SubD;
@@ -1129,13 +1275,13 @@ ON_SubD* ON_SubD::CreateSubDBox(
           ccnt++;
         if (ccnt > 0) // On some face
         {
-          ON_SubD::VertexTag vtag = ON_SubD::VertexTag::Smooth;
-          if (edge_tag == ON_SubD::EdgeTag::Crease)
+          ON_SubDVertexTag vtag = ON_SubDVertexTag::Smooth;
+          if (edge_tag == ON_SubDEdgeTag::Crease)
           {
             if(ccnt == 2)  // On some edge
-              vtag = ON_SubD::VertexTag::Crease;
+              vtag = ON_SubDVertexTag::Crease;
             else if(ccnt == 3)  // On some corner
-              vtag = ON_SubD::VertexTag::Corner;
+              vtag = ON_SubDVertexTag::Corner;
           }
           ON_3dPoint P(corners[0] + (xdir * (dx * ix)) + (ydir * (dy * iy)) + (zdir * (dz * iz)));
           vert_index[ix][iy][iz] = vertex.Count();
@@ -1213,7 +1359,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int ix = 0; ix < facecount_x; ix++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, 0), IndexVertex(vertex, vert_index, ix + 1, iy, 0));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, 0), IndexVertex(vertex, vert_index, ix + 1, iy, 0));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1230,7 +1376,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iy = 0; iy < facecount_y; iy++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, 0), IndexVertex(vertex, vert_index, ix, iy + 1, 0));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, 0), IndexVertex(vertex, vert_index, ix, iy + 1, 0));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1268,7 +1414,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int ix = 0; ix < facecount_x; ix++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, facecount_z), IndexVertex(vertex, vert_index, ix + 1, iy, facecount_z));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, facecount_z), IndexVertex(vertex, vert_index, ix + 1, iy, facecount_z));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1285,7 +1431,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iy = 0; iy < facecount_y; iy++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, facecount_z), IndexVertex(vertex, vert_index, ix, iy + 1, facecount_z));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, iy, facecount_z), IndexVertex(vertex, vert_index, ix, iy + 1, facecount_z));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1323,7 +1469,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int ix = 0; ix < facecount_x; ix++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, 0, iz), IndexVertex(vertex, vert_index, ix + 1, 0, iz));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, 0, iz), IndexVertex(vertex, vert_index, ix + 1, 0, iz));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1340,7 +1486,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iz = 0; iz < facecount_z; iz++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, 0, iz), IndexVertex(vertex, vert_index, ix, 0, iz + 1));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, 0, iz), IndexVertex(vertex, vert_index, ix, 0, iz + 1));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1378,7 +1524,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int ix = 0; ix < facecount_x; ix++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, facecount_y, iz), IndexVertex(vertex, vert_index, ix + 1, facecount_y, iz));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, facecount_y, iz), IndexVertex(vertex, vert_index, ix + 1, facecount_y, iz));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1395,7 +1541,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iz = 0; iz < facecount_z; iz++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, facecount_y, iz), IndexVertex(vertex, vert_index, ix, facecount_y, iz + 1));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, ix, facecount_y, iz), IndexVertex(vertex, vert_index, ix, facecount_y, iz + 1));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1433,7 +1579,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int iy = 0; iy < facecount_y; iy++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy + 1, iz));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy + 1, iz));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
 
           // mac compile warning // ON_3dPoint p0 = row.Last()->RelativeVertex(0)->ControlNetPoint();
@@ -1454,7 +1600,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iz = 0; iz < facecount_z; iz++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy, iz + 1));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy, iz + 1));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
 
           // mac compile warning // ON_3dPoint p0 = col.Last()->RelativeVertex(0)->ControlNetPoint();
@@ -1509,7 +1655,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& row = face_edges[0].AppendNew();
         for (unsigned int iy = 0; iy < facecount_y; iy++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, facecount_x, iy, iz), IndexVertex(vertex, vert_index, facecount_x, iy + 1, iz));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, facecount_x, iy, iz), IndexVertex(vertex, vert_index, facecount_x, iy + 1, iz));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
@@ -1526,7 +1672,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
         ON_ClassArray< ON_SubDEdgePtr >& col = face_edges[1].AppendNew();
         for (unsigned int iz = 0; iz < facecount_z; iz++)
         {
-          e = subd->AddEdge(ON_SubD::EdgeTag::Smooth, IndexVertex(vertex, vert_index, facecount_x, iy, iz), IndexVertex(vertex, vert_index, facecount_x, iy, iz + 1));
+          e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, facecount_x, iy, iz), IndexVertex(vertex, vert_index, facecount_x, iy, iz + 1));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
         }
       }
