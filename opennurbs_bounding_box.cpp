@@ -1931,6 +1931,13 @@ bool ON_BoundingBox::SwapCoordinates( int i, int j )
   return rc;
 }
 
+bool ON_BoundingBox::Expand(ON_3dVector delta)
+{
+  m_min -= delta;
+  m_max += delta;
+  return IsValid();
+}
+
 bool ON_BoundingBox::IsDisjoint( const ON_BoundingBox& other_bbox ) const
 {
   if ( m_min.x > m_max.x || other_bbox.m_min.x > other_bbox.m_max.x 

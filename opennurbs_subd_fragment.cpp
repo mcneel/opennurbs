@@ -63,34 +63,95 @@ unsigned ON_SubDMeshFragment::VertexCapacity() const
   return (m_vertex_capacity_etc & ON_SubDMeshFragment::ValueMask);
 }
 
+bool ON_SubDMeshFragment::Internal_ManagedArraysAreInterlaced()
+{
+  return ON_SubDMeshFragment::ManagedDoublesPerVertex == ON_SubDMeshFragment::Managed_3d_stride;
+}
+
+size_t ON_SubDMeshFragment::Internal_Managed3dArrayOffset(size_t vertex_capacity)
+{
+  return (vertex_capacity > 0)
+    ? (3 * (ON_SubDMeshFragment::Internal_ManagedArraysAreInterlaced() ? 1 : vertex_capacity))
+    : 0;
+}
+
+void ON_SubDMeshFragment::Internal_LayoutArrays(
+  bool bManagedArray,
+  double* PNTC_array,
+  size_t vertex_capacity
+)
+{
+  this->SetVertexCount(0);
+
+  if (nullptr == PNTC_array || vertex_capacity < 4 || vertex_capacity > ((size_t)ON_SubDMeshFragment::MaximumVertexCount) )
+  {
+    PNTC_array = nullptr;
+    vertex_capacity = 0;
+    bManagedArray = false;
+  }
+  if (bManagedArray)
+  {
+    unsigned short etc = (m_vertex_capacity_etc & ON_SubDMeshFragment::EtcMask);
+    etc |= ON_SubDMeshFragment::EtcManagedArraysBit;
+    m_vertex_capacity_etc = (unsigned short)vertex_capacity;
+    m_vertex_capacity_etc |= etc;
+  }
+  else
+  {
+    this->SetUnmanagedVertexCapacity(vertex_capacity);
+  }
+
+  const size_t offset_3d = (nullptr != PNTC_array) ? ON_SubDMeshFragment::Internal_Managed3dArrayOffset(vertex_capacity) : 0;
+  m_P = PNTC_array;
+  m_P_stride = ON_SubDMeshFragment::Managed_3d_stride;
+  m_N = m_P + offset_3d;
+  m_N_stride = ON_SubDMeshFragment::Managed_3d_stride;
+  m_T = m_N + offset_3d;
+  m_T_stride = ON_SubDMeshFragment::Managed_3d_stride;
+  m_C = (ON_Color*)(m_T + offset_3d);
+  m_C_stride = ON_SubDMeshFragment::Managed_color_stride;
+}
+
 bool ON_SubDMeshFragment::ManagedArrays() const
 {
-  const size_t capacity = (ON_SubDMeshFragment::ValueMask & m_vertex_capacity_etc);
+  const size_t vertex_capacity = (ON_SubDMeshFragment::ValueMask & m_vertex_capacity_etc);
+  const size_t offset_3d = ON_SubDMeshFragment::Internal_Managed3dArrayOffset(vertex_capacity);
   return (
     0 != (ON_SubDMeshFragment::EtcManagedArraysBit & m_vertex_capacity_etc)
-    && capacity > 0
-    && 3 == m_P_stride && 3 == m_N_stride && 3 == m_T_stride
+    && vertex_capacity > 0
+    && ON_SubDMeshFragment::Managed_3d_stride == m_P_stride
+    && ON_SubDMeshFragment::Managed_3d_stride == m_N_stride
+    && ON_SubDMeshFragment::Managed_3d_stride == m_T_stride
+    && ON_SubDMeshFragment::Managed_color_stride == m_C_stride
     && nullptr != m_P
-    && m_N == m_P + (capacity * 3)
-    && m_T == m_N + (capacity * 3)
+    && m_N == m_P + offset_3d
+    && m_T == m_N + offset_3d
+    && m_C == (const ON_Color*)(m_T + offset_3d)
     ) ? true : false;
 }
 
 bool ON_SubDMeshFragment::DeleteManagedArrays()
 {
+  DeleteManagedCurvatureCapacity();
   if (ManagedArrays())
   {
-    void* ptr = m_P;
-    m_vertex_count_etc &= ON_SubDMeshFragment::EtcMask;
-    m_vertex_capacity_etc &= ON_SubDMeshFragment::EtcMask;
-    m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcManagedArraysBit;
+    double* managed_array = m_P;
+    m_vertex_count_etc &= ON_SubDMeshFragment::EtcControlNetQuadBit;
+    m_vertex_capacity_etc = 0;
     m_P = nullptr;
     m_N = nullptr;
     m_T = nullptr;
+    m_C = nullptr;
+    m_K = nullptr;
     m_P_stride = 0;
     m_N_stride = 0;
     m_T_stride = 0;
-    onfree(ptr);
+    m_C_stride = 0;
+    if (nullptr != managed_array)
+    {
+      // Allocated in ON_SubDMeshFragment::ReserveManagedVertexCapacity()
+      delete[] managed_array;
+    }
     return true;
   }
   return false;
@@ -137,16 +198,33 @@ bool ON_SubDMeshFragment::ReserveManagedVertexCapacity(size_t vertex_capacity)
       return true;
     DeleteManagedArrays();
   }
-  unsigned short etc = m_vertex_capacity_etc &= ON_SubDMeshFragment::EtcMask;
-  etc |= ON_SubDMeshFragment::EtcManagedArraysBit;
-  double* p = (double*)onmalloc(9 * vertex_capacity);
-  m_P = p;
-  m_P_stride = 3;
-  m_N = m_P + (vertex_capacity*m_P_stride);
-  m_N_stride = 3;
-  m_T = m_N + (vertex_capacity*m_N_stride);
-  m_T_stride = 3;
-  return true;
+
+  // p will be deleted in ON_SubDMeshFragment::DeleteManagedArrays().
+  double* managed_doubles = new(std::nothrow) double[ON_SubDMeshFragment::ManagedDoublesPerVertex * vertex_capacity];
+  Internal_LayoutArrays(true, managed_doubles, vertex_capacity);
+  return (this->VertexCapacity() >= vertex_capacity);
+}
+
+bool ON_SubDMeshFragment::ReserveManagedCurvatureCapacity() const
+{
+  const size_t current_capacity = (size_t)(ON_SubDMeshFragment::ValueMask & m_vertex_capacity_etc);
+  if (nullptr == m_K && current_capacity > 0)
+  {
+    m_K = new(std::nothrow) ON_SurfaceCurvature[current_capacity];
+    m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcCurvaturesExistBit; // m_K[] content is unset.
+  }
+  return (nullptr != m_K && current_capacity > 0);
+}
+
+
+void ON_SubDMeshFragment::DeleteManagedCurvatureCapacity() const
+{
+  if (nullptr != m_K)
+  {
+    delete[] m_K;
+    m_K = nullptr;
+    m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcCurvaturesExistBit; // m_K[] content is unset.
+  }
 }
 
 unsigned ON_SubDMeshFragment::VertexCount() const
@@ -158,7 +236,7 @@ bool ON_SubDMeshFragment::SetVertexCount(size_t vertex_count)
 {
   if (vertex_count < 0 || vertex_count > VertexCapacity())
     return ON_SUBD_RETURN_ERROR(false);
-  unsigned short etc = m_vertex_count_etc & ON_SubDMeshFragment::EtcMask;
+  const unsigned short etc = m_vertex_count_etc & ON_SubDMeshFragment::EtcMask;
   m_vertex_count_etc = ((unsigned short)vertex_count) | etc;
   return true;
 }
@@ -173,6 +251,16 @@ unsigned int ON_SubDMeshFragment::NormalCount() const
   return (nullptr != m_N && m_N_stride >= 3) ? VertexCount() : 0U;
 }
 
+unsigned int ON_SubDMeshFragment::CurvatureCount() const
+{
+  return (nullptr != m_K) ? VertexCount() : 0U;
+}
+
+unsigned int ON_SubDMeshFragment::ColorCount() const
+{
+  return (nullptr != m_C && m_C_stride >= 1) ? VertexCount() : 0U;
+}
+
 unsigned int ON_SubDMeshFragment::PointCapacity() const
 {
   return (nullptr != m_P && m_P_stride >= 3) ? VertexCapacity() : 0U;
@@ -181,6 +269,17 @@ unsigned int ON_SubDMeshFragment::PointCapacity() const
 unsigned int ON_SubDMeshFragment::NormalCapacity() const
 {
   return (nullptr != m_N && m_N_stride >= 3) ? VertexCapacity() : 0U;
+}
+
+
+unsigned int ON_SubDMeshFragment::CurvatureCapacity() const
+{
+  return (nullptr != m_K) ? VertexCapacity() : 0U;
+}
+
+unsigned int ON_SubDMeshFragment::ColorCapacity() const
+{
+  return (nullptr != m_C && m_C_stride >= 1) ? VertexCapacity() : 0U;
 }
 
 const double* ON_SubDMeshFragment::PointArray(ON_SubDComponentLocation subd_appearance)const
@@ -211,6 +310,262 @@ size_t ON_SubDMeshFragment::NormalArrayStride(ON_SubDComponentLocation subd_appe
 unsigned ON_SubDMeshFragment::NormalArrayCount(ON_SubDComponentLocation subd_appearance) const
 {
   return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 4U : NormalCount();
+}
+
+const ON_SurfaceCurvature* ON_SubDMeshFragment::CurvatureArray(ON_SubDComponentLocation subd_appearance)const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? &m_ctrlnetK[0] : m_K;
+}
+
+unsigned ON_SubDMeshFragment::CurvatureArrayCount(ON_SubDComponentLocation subd_appearance) const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 4U : CurvatureCount();
+}
+
+
+const ON_Color* ON_SubDMeshFragment::ColorArray(ON_SubDComponentLocation subd_appearance) const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? &m_ctrlnetC[0] : m_C;
+}
+
+size_t ON_SubDMeshFragment::ColorArrayStride(ON_SubDComponentLocation subd_appearance) const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 1 : m_C_stride;
+}
+
+
+unsigned ON_SubDMeshFragment::ColorArrayCount(ON_SubDComponentLocation subd_appearance) const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 4U : ColorCount();
+}
+
+bool ON_SubDMeshFragment::ColorsExist() const
+{
+  return (nullptr != m_C && m_C_stride > 0 && 0 != (m_vertex_capacity_etc & ON_SubDMeshFragment::EtcColorsExistBit));
+}
+
+void ON_SubDMeshFragment::SetColorsExist(bool bColorsExist) const
+{
+  if (bColorsExist)
+    m_vertex_capacity_etc |= ON_SubDMeshFragment::EtcColorsExistBit;
+  else
+    m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcColorsExistBit;
+}
+
+bool ON_SubDMeshFragment::CurvaturesExist() const
+{
+  return (nullptr != m_K && 0 != (m_vertex_capacity_etc & ON_SubDMeshFragment::EtcCurvaturesExistBit));
+}
+
+void ON_SubDMeshFragment::SetCurvaturesExist(bool bSetCurvaturesExist) const
+{
+  if (bSetCurvaturesExist)
+    m_vertex_capacity_etc |= ON_SubDMeshFragment::EtcCurvaturesExistBit;
+  else
+    m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcCurvaturesExistBit;
+}
+
+bool ON_SubDMeshFragment::SetColors(ON_Color color) const
+{
+  bool bColorsExist = false;
+  for (;;)
+  {
+    m_ctrlnetC[0] = color;
+    m_ctrlnetC[1] = color;
+    m_ctrlnetC[2] = color;
+    m_ctrlnetC[3] = color;
+    const ON_SubDComponentLocation subd_appearance = ON_SubDComponentLocation::Surface;
+
+    const unsigned count = PointArrayCount(subd_appearance);
+    if (count <= 0)
+      break;
+    if (count != ColorArrayCount(subd_appearance))
+      break;
+
+    ON_Color* C = const_cast<ON_Color*>(ColorArray(subd_appearance));
+    if (nullptr == C)
+      break;
+
+    bColorsExist = (ON_Color::UnsetColor != color);
+    for (const ON_Color* C1 = C + count; C < C1; ++C)
+      *C = color;
+    break;
+  }
+  SetColorsExist(bColorsExist);
+  return ColorsExist();
+}
+
+bool ON_SubDMeshFragment::SetColorsFromCallback(
+  const ON_MappingTag& fragment_colors_mapping_tag,
+  const ON_SubD& subd,
+  ON__UINT_PTR callback_context,
+  const ON_Color(*color_callback)(
+    ON__UINT_PTR callback_context,
+    const ON_MappingTag& mapping_tag,
+    const ON_SubD& subd,
+    ON_SubDComponentPtr cptr,
+    const ON_3dPoint& P,
+    const ON_3dVector& N,
+    const ON_3dPoint& T,
+    const ON_SurfaceCurvature& K
+    )
+) const
+{
+  bool bColorsExist = false;
+  for (;;)
+  {
+    m_ctrlnetC[0] = ON_Color::UnsetColor;
+    m_ctrlnetC[1] = ON_Color::UnsetColor;
+    m_ctrlnetC[2] = ON_Color::UnsetColor;
+    m_ctrlnetC[3] = ON_Color::UnsetColor;
+
+    if (nullptr == color_callback)
+    {
+      // removing vertex colors.
+      break;
+    }
+
+    const ON_SubDComponentLocation subd_appearance = ON_SubDComponentLocation::Surface;
+    const unsigned count = PointArrayCount(subd_appearance);
+    if (count <= 0)
+      break;
+    if (count != ColorArrayCount(subd_appearance))
+      break;
+ 
+    const double* P = PointArray(subd_appearance);
+    const size_t Pstride = PointArrayStride(subd_appearance);
+    if (nullptr == P || Pstride < 3)
+      break;
+
+    ON_Color* C = const_cast<ON_Color*>(ColorArray(subd_appearance));
+    if (nullptr == C)
+      break;
+
+    const double nan3[3] = { ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN };
+
+    const double* N = NormalArray(subd_appearance);
+    const size_t Nstride = (nullptr != N) ? NormalArrayStride(subd_appearance) : 0;
+    if (nullptr == N)
+      N = nan3;
+
+    const double* T = TextureCoordinateArray(subd_appearance);
+    const size_t Tstride = (nullptr != T) ? TextureCoordinateArrayStride(subd_appearance) : 0;
+    if (nullptr == T)
+      T = nan3;
+
+    const ON_SurfaceCurvature* K = CurvatureArray(subd_appearance);
+    const size_t Kstride = (nullptr != K) ? 1 : 0;
+    if (nullptr == K)
+      K = &ON_SurfaceCurvature::Nan;
+
+    const ON_SubDComponentPtr cptr = ON_SubDComponentPtr::Create(m_face);
+    for (const double* P1 = P + Pstride * count; P < P1; P += Pstride, ++C)
+    {
+      // Never give the callback access to fragment array pointers.
+      const ON_3dPoint callbackP(P);
+      const ON_3dVector callbackN(N);
+      const ON_3dPoint callbackT(T);
+      const ON_SurfaceCurvature callbackK(*K);
+      const ON_Color callbackC = color_callback(callback_context, fragment_colors_mapping_tag, subd, cptr, callbackP, callbackN, callbackT, callbackK);
+      if (callbackC != ON_Color::UnsetColor)
+        bColorsExist = true;
+      *C = callbackC;
+      N += Nstride;
+      T += Tstride;
+      K += Kstride;
+    }
+    break;
+  }
+  
+  SetColorsExist(bColorsExist);
+  if (bColorsExist)
+  {
+    m_ctrlnetC[0] = CornerColor(0);
+    m_ctrlnetC[1] = CornerColor(1);
+    m_ctrlnetC[2] = CornerColor(2);
+    m_ctrlnetC[3] = CornerColor(3);
+  }
+
+  return ColorsExist();
+}
+
+bool ON_SubD::SetFragmentColorsFromCallback(
+  bool bLazySet,
+  ON_SHA1_Hash fragment_colors_settings_hash,
+  ON_MappingTag fragment_colors_mapping_tag,
+  ON__UINT_PTR callback_context,
+  const ON_Color(*color_callback)(
+    ON__UINT_PTR callback_context,
+    const ON_MappingTag& mapping_tag,
+    const ON_SubD& subd,
+    ON_SubDComponentPtr cptr, 
+    const ON_3dPoint& P, 
+    const ON_3dVector& N, 
+    const ON_3dPoint& T, 
+    const ON_SurfaceCurvature& K)
+) const
+{
+  if (bLazySet && fragment_colors_settings_hash == FragmentColorsSettingsHash())
+    return true;
+
+  bool bFragmentVetexColorsSet = false;
+  const ON_SubDimple* subdimple = this->SubDimple();
+  if (nullptr != subdimple)
+  {
+    ON_SubDMeshFragmentIterator fragit(*this);
+    for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
+    {
+      const bool b = frag->SetColorsFromCallback(
+        fragment_colors_mapping_tag,
+        *this,
+        callback_context,
+        color_callback
+      );
+      if (b)
+        bFragmentVetexColorsSet = true;
+    }
+    if (bFragmentVetexColorsSet)
+    {
+      subdimple->Internal_SetFragmentColorsSettingsHash(fragment_colors_settings_hash);
+      SetFragmentColorsMappingTag(fragment_colors_mapping_tag);
+      ChangeRenderContentSerialNumber();
+    }
+    else
+    {
+      subdimple->Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash::EmptyContentHash);
+      this->SetFragmentColorsMappingTag(ON_MappingTag::Unset);
+    }
+  }
+
+  return bFragmentVetexColorsSet;
+}
+
+void ON_SubD::ClearFragmentColors(
+  bool bClearFragmentColorsMappingTag
+)
+{
+  if (bClearFragmentColorsMappingTag)
+    SetFragmentColorsMappingTag(ON_MappingTag::Unset);
+  SetFragmentColorsFromCallback(false, ON_SHA1_Hash::EmptyContentHash, ON_MappingTag::Unset, 0, nullptr );
+}
+
+const ON_SHA1_Hash ON_SubD::FragmentColorsSettingsHash() const
+{
+  const ON_SubDimple* subdimple = this->SubDimple();
+  return (nullptr != subdimple) ? subdimple->FragmentColorsSettingsHash() : ON_SHA1_Hash::EmptyContentHash;
+}
+
+void ON_SubD::SetFragmentColorsMappingTag(const ON_MappingTag& colors_mapping_tag) const
+{
+  const ON_SubDimple* dimple = SubDimple();
+  if (nullptr != dimple)
+    dimple->SetFragmentColorsMappingTag(colors_mapping_tag);
+}
+
+const ON_MappingTag ON_SubD::FragmentColorsMappingTag() const
+{
+  const ON_SubDimple* dimple = SubDimple();
+  return (nullptr != dimple) ? dimple->FragmentColorsMappingTag() : ON_MappingTag::Unset;
 }
 
 const ON_3dPoint ON_SubDMeshFragment::ControlNetQuadPoint(
@@ -245,6 +600,8 @@ const ON_SubDMeshFragment ON_SubDMeshFragment::ControlNetQuadFragmentForExperts(
     q.m_vertex_count_etc |= (ON_SubDMeshFragment::EtcTextureCoordinatesExistBit&m_vertex_count_etc);
 
     q.m_vertex_capacity_etc = 4;
+    q.m_vertex_capacity_etc |= (ON_SubDMeshFragment::EtcColorsExistBit & m_vertex_capacity_etc);
+    q.m_vertex_capacity_etc |= (ON_SubDMeshFragment::EtcCurvaturesExistBit & m_vertex_capacity_etc);
 
     // 4 quad corner points in grid order with stride = 3
     q.m_P = const_cast<double*>(&m_ctrlnetP[0][0]);
@@ -257,6 +614,11 @@ const ON_SubDMeshFragment ON_SubDMeshFragment::ControlNetQuadFragmentForExperts(
     // 4 quad corner texture coordinates in grid order with stride = 3
     q.m_T = const_cast<double*>(&m_ctrlnetT[0][0]);
     q.m_T_stride = 3;
+
+    q.m_C = const_cast<ON_Color*>(&m_ctrlnetC[0]);
+    q.m_C_stride = 1;
+
+    q.m_K = const_cast<ON_SurfaceCurvature*>(&m_ctrlnetK[0]);
 
     // The grid is a single quad
     q.m_grid = ON_SubDMeshFragmentGrid::OneQuadGrid;
@@ -480,7 +842,7 @@ ON_SubDManagedMeshFragment& ON_SubDManagedMeshFragment::operator=( ON_SubDManage
 
 bool ON_SubDManagedMeshFragment::ReserveCapacity(
   unsigned int display_density
-  ) ON_NOEXCEPT
+) ON_NOEXCEPT
 {
   Clear();
 
@@ -508,8 +870,10 @@ bool ON_SubDManagedMeshFragment::ReserveCapacity(
   const size_t P_stride = 3;
   const size_t N_stride = 3;
   const size_t T_stride = 3;
+  const size_t C_stride = 1;
 
-  size_t storage_capacity = (P_stride + N_stride + T_stride)*V_capacity;
+  // storage_capacity holds = 3 point coords + 3 normal coords + 3 texture point coords + an ON_Color + unused 4 bytes.
+  size_t storage_capacity = ON_SubDMeshFragment::ManagedDoublesPerVertex * V_capacity;
   if (storage_capacity > m_storage_capacity || nullptr == m_storage)
   {
     if (m_storage_capacity > 0 && nullptr != m_storage)
@@ -525,16 +889,11 @@ bool ON_SubDManagedMeshFragment::ReserveCapacity(
   }
 
   UnsetControlNetQuad();
-  SetUnmanagedVertexCapacity(V_capacity);
+  // ON_SubDManagedMeshFragment manages m_storage and m_P[]/m_N[]/m_T[]/m_C[] are not managed by ON_SubDMeshFragment.
+  // (ON_SubDManagedMeshFragment is a legacy class that should not be used and this confusing situation is 
+  // an artifact from early code.)
+  Internal_LayoutArrays(false, m_storage, V_capacity);
   SetVertexCount(V_capacity);
-
-  m_P_stride = P_stride;
-  m_N_stride = N_stride;
-  m_T_stride = T_stride;
-
-  m_P = m_storage;
-  m_N = m_storage + (3*V_capacity);
-  m_T = m_storage + (6*V_capacity);
 
   m_surface_bbox = ON_BoundingBox::NanBoundingBox;
 
@@ -556,6 +915,7 @@ void ON_SubDManagedMeshFragment::Destroy() ON_NOEXCEPT
   memset(this, 0, sizeof(*this));
   if ( nullptr != p)
     delete[] p;
+  this->DeleteManagedCurvatureCapacity();
 }
 
 void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
@@ -571,6 +931,8 @@ void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
   m_N_stride = 0;
   m_T = nullptr;
   m_T_stride = 0;
+  m_C = nullptr;
+  m_C_stride = 0;
   m_surface_bbox = ON_BoundingBox::NanBoundingBox;
   const size_t V_count = src.VertexCount();
   if (0 == V_count)
@@ -597,18 +959,50 @@ void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
     return;
   }
 
+  const unsigned C_count = src.ColorCount();
+  if (0 != C_count && V_count != C_count)
+  {
+    ON_SUBD_ERROR("invalid counts");
+    return;
+  }
+
   m_ctrlnetT[0][0] = src.m_ctrlnetT[0][0];
   m_ctrlnetT[0][1] = src.m_ctrlnetT[0][1];
+  m_ctrlnetT[0][2] = src.m_ctrlnetT[0][2];
   m_ctrlnetT[1][0] = src.m_ctrlnetT[1][0];
   m_ctrlnetT[1][1] = src.m_ctrlnetT[1][1];
+  m_ctrlnetT[1][2] = src.m_ctrlnetT[1][2];
   m_ctrlnetT[2][0] = src.m_ctrlnetT[2][0];
   m_ctrlnetT[2][1] = src.m_ctrlnetT[2][1];
+  m_ctrlnetT[2][2] = src.m_ctrlnetT[2][2];
   m_ctrlnetT[3][0] = src.m_ctrlnetT[3][0];
   m_ctrlnetT[3][1] = src.m_ctrlnetT[3][1];
+  m_ctrlnetT[3][2] = src.m_ctrlnetT[3][2];
+
+  m_ctrlnetC[0] = src.m_ctrlnetC[0];
+  m_ctrlnetC[1] = src.m_ctrlnetC[1];
+  m_ctrlnetC[2] = src.m_ctrlnetC[2];
+  m_ctrlnetC[3] = src.m_ctrlnetC[3];
+
+  m_ctrlnetK[0] = src.m_ctrlnetK[0];
+  m_ctrlnetK[1] = src.m_ctrlnetK[1];
+  m_ctrlnetK[2] = src.m_ctrlnetK[2];
+  m_ctrlnetK[3] = src.m_ctrlnetK[3];
+
+  m_pack_rect[0][0] = src.m_pack_rect[0][0];
+  m_pack_rect[0][1] = src.m_pack_rect[0][1];
+  m_pack_rect[1][0] = src.m_pack_rect[1][0];
+  m_pack_rect[1][1] = src.m_pack_rect[1][1];
+  m_pack_rect[2][0] = src.m_pack_rect[2][0];
+  m_pack_rect[2][1] = src.m_pack_rect[2][1];
+  m_pack_rect[3][0] = src.m_pack_rect[3][0];
+  m_pack_rect[3][1] = src.m_pack_rect[3][1];
+
   m_surface_bbox = src.m_surface_bbox;
   m_grid = src.m_grid;
 
-  const size_t storage_capacity = 9U * V_count;
+  // 10 = 3 point coordinates + 3 normal coordinates + 3 texture coordinates + a double to provide double aligned color memory
+  const size_t storage_capacity = 10U * V_count;
   m_storage = new(std::nothrow) double[storage_capacity];
   if (nullptr == m_storage)
   {
@@ -696,6 +1090,31 @@ void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
     p += m_T_stride;
     src_p += src_p_stride;
   }
+
+  const ON_Color* src_c;
+  size_t src_c_stride;
+  if (C_count > 0)
+  {
+    src_c = src.m_C;
+    src_c_stride = src.m_C_stride;
+  }
+  else
+  {
+    src_c = &ON_Color::UnsetColor;
+    src_c_stride = 0;
+  }
+  m_C = (ON_Color*)(m_storage + (9 * V_count));
+  m_C_stride = 1;
+  ON_Color* c = m_C;
+  ON_Color* c1 = c + (m_C_stride * V_count);
+  while (c < c1)
+  {
+    *c = *src_c;
+    c += m_C_stride;
+    src_c += src_c_stride;
+  }
+
+  // TODO - copy m_K as needed
 
   ON_3dPoint quad_points[4];
   ON_3dVector quad_normal;
@@ -1115,6 +1534,57 @@ const ON_3dPoint ON_SubDMeshFragment::CornerPoint(
   return ON_3dPoint(m_P + (i*m_P_stride));
 }
 
+const ON_Color ON_SubDMeshFragment::CornerColor(
+  unsigned int grid_corner_index
+) const
+{
+  if (grid_corner_index >= 4 || nullptr == m_C || m_C_stride <= 0 || nullptr == m_grid.m_S)
+    return ON_Color::UnsetColor;
+
+  const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
+
+  return m_C[i * m_C_stride];
+}
+
+const ON_SurfaceCurvature ON_SubDMeshFragment::CornerCurvature(unsigned int grid_corner_index) const
+{
+  if (grid_corner_index >= 4 || nullptr == m_K || nullptr == m_grid.m_S)
+    return ON_SurfaceCurvature::Nan;
+
+  const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
+
+  return m_K[i];
+}
+
+const ON_3dPoint ON_SubDMeshFragment::TextureCoordinateCorner(
+  unsigned int grid_corner_index
+) const
+{
+  return
+    (grid_corner_index < 4)
+    ? ON_3dPoint(m_ctrlnetT[grid_corner_index][0], m_ctrlnetT[grid_corner_index][1], m_ctrlnetT[grid_corner_index][2])
+    : ON_3dPoint::NanPoint;
+}
+
+const ON_2dPoint ON_SubDMeshFragment::PackRectCorner(
+  unsigned int grid_corner_index
+) const
+{
+  return 
+    (grid_corner_index < 4)
+    ? ON_2dPoint(m_pack_rect[grid_corner_index][0], m_pack_rect[grid_corner_index][1])
+    : ON_2dPoint::NanPoint;
+}
+
+const ON_2dPoint  ON_SubDMeshFragment::PackRectCenter() const
+{
+  return ON_2dPoint(
+    0.25 * (m_pack_rect[0][0] + m_pack_rect[1][0] + m_pack_rect[2][0] + m_pack_rect[3][0]),
+    0.25 * (m_pack_rect[0][1] + m_pack_rect[1][1] + m_pack_rect[2][1] + m_pack_rect[3][1])
+  );
+}
+
+
 const ON_3dVector ON_SubDMeshFragment::CornerNormal(unsigned int grid_corner_index) const
 {
   if ( grid_corner_index >= 4 || nullptr == m_N || m_N_stride <= 0 || nullptr == m_grid.m_S )
@@ -1182,6 +1652,27 @@ const ON_3dVector ON_SubDMeshFragment::CenterNormal() const
   const unsigned int i = (m_grid.m_side_segment_count*(m_grid.m_side_segment_count + 2)) / 2;
 
   return ON_3dVector(m_N + (i*m_N_stride));
+}
+
+
+const ON_3dPoint ON_SubDMeshFragment::CenterTextureCoordinate() const
+{
+  if (nullptr == m_T || (m_T_stride != 0 && m_T_stride < 3) || m_grid.m_side_segment_count <= 0 || nullptr == m_grid.m_S)
+    return ON_3dPoint::NanPoint;
+
+  if (1 == m_grid.m_side_segment_count)
+  {
+    const ON_3dPoint T(
+      (m_T[0] + m_T[m_T_stride] + m_T[2 * m_T_stride] + m_T[3 * m_T_stride]),
+      (m_T[1] + m_T[1 + m_T_stride] + m_T[1 + 2 * m_T_stride] + m_T[1 + 3 * m_T_stride]),
+      (m_T[2] + m_T[2 + m_T_stride] + m_T[2 + 2 * m_T_stride] + m_T[2 + 3 * m_T_stride])
+    );
+    return T;
+  }
+
+  const unsigned int i = (m_grid.m_side_segment_count * (m_grid.m_side_segment_count + 2)) / 2;
+
+  return ON_3dPoint(m_T + (i * m_T_stride));
 }
 
 bool ON_SubDMeshFragment::Internal_GetFrameHelper(
@@ -1693,14 +2184,17 @@ bool ON_SubDMeshImpl::ReserveCapacity(
   if ( subd_fragment_count < 1 )
     return ON_SUBD_RETURN_ERROR(false);
 
-  size_t sizeof_PNT = 9*fragment_point_count*sizeof(double);
+  // note sizeof(double) = 2*sizeof(ON_Color) so we have
+  // room for 3d poitns, 3d normals, 3d texture points, a color array
+  // and a currently unused array of 32 bit elements.
+  size_t sizeof_PNTC = ON_SubDMeshFragment::ManagedDoublesPerVertex*fragment_point_count*sizeof(double);
   size_t sizeof_fragment = sizeof(ON_SubDMeshFragment);
   if (0 != sizeof_fragment % sizeof(double))
   {
     sizeof_fragment = (1 + sizeof_fragment / sizeof(double))*sizeof(double);
   }
 
-  if( false == m_fsp.Create(sizeof_fragment + sizeof_PNT,subd_fragment_count,0))
+  if( false == m_fsp.Create(sizeof_fragment + sizeof_PNTC,subd_fragment_count,0))
     return ON_SUBD_RETURN_ERROR(false);
 
   m_display_density = display_density;
@@ -1709,7 +2203,10 @@ bool ON_SubDMeshImpl::ReserveCapacity(
   return true;
 }
 
-size_t ON_SubDMeshFragment::SizeofFragment(unsigned int display_density)
+size_t ON_SubDMeshFragment::SizeofFragment(
+  unsigned int display_density,
+  bool bCurvatureArray
+)
 {
   if (display_density > ON_SubDDisplayParameters::MaximumDensity)
     return ON_SUBD_RETURN_ERROR(0);
@@ -1722,7 +2219,13 @@ size_t ON_SubDMeshFragment::SizeofFragment(unsigned int display_density)
   size_t sz = sizeof(ON_SubDMeshFragment);
   while (0 != (sz % sizeof(double)))
     ++sz;
-  sz += vertex_capacity * 9 * sizeof(double); // 8=3+3+3 (3d points in m_P[], 3d vectors in m_N[], and 3d points in m_T[]).
+
+  const size_t doubles_per_vertex
+    = 10 // 6 = 3+3 = 3d points in m_P[] and 3d vectors in m_N[] and 3d points in m_T[] and a color in m_C[] (sizeof(m_C[0]) <= sizeof(double))
+    + (size_t)((bCurvatureArray ? sizeof(ON_SurfaceCurvature)/sizeof(double) : 0))
+    ;
+  const size_t sizeof_doubles = doubles_per_vertex * sizeof(double);
+  sz += vertex_capacity * sizeof_doubles;
   return sz;
 }
 
@@ -1760,18 +2263,34 @@ bool ON_SubDMeshFragment::CopyFrom(
   m_ctrlnetT[0][0] = src_fragment.m_ctrlnetT[0][0];
   m_ctrlnetT[0][1] = src_fragment.m_ctrlnetT[0][1];
   m_ctrlnetT[0][2] = src_fragment.m_ctrlnetT[0][2];
-
   m_ctrlnetT[1][0] = src_fragment.m_ctrlnetT[1][0];
   m_ctrlnetT[1][1] = src_fragment.m_ctrlnetT[1][1];
   m_ctrlnetT[1][2] = src_fragment.m_ctrlnetT[1][2];
-
   m_ctrlnetT[2][0] = src_fragment.m_ctrlnetT[2][0];
   m_ctrlnetT[2][1] = src_fragment.m_ctrlnetT[2][1];
   m_ctrlnetT[2][2] = src_fragment.m_ctrlnetT[2][2];
-
   m_ctrlnetT[3][0] = src_fragment.m_ctrlnetT[3][0];
   m_ctrlnetT[3][1] = src_fragment.m_ctrlnetT[3][1];
   m_ctrlnetT[3][2] = src_fragment.m_ctrlnetT[3][2];
+
+  m_ctrlnetC[0] = src_fragment.m_ctrlnetC[0];
+  m_ctrlnetC[1] = src_fragment.m_ctrlnetC[1];
+  m_ctrlnetC[2] = src_fragment.m_ctrlnetC[2];
+  m_ctrlnetC[3] = src_fragment.m_ctrlnetC[3];
+
+  m_ctrlnetK[0] = src_fragment.m_ctrlnetK[0];
+  m_ctrlnetK[1] = src_fragment.m_ctrlnetK[1];
+  m_ctrlnetK[2] = src_fragment.m_ctrlnetK[2];
+  m_ctrlnetK[3] = src_fragment.m_ctrlnetK[3];
+
+  m_pack_rect[0][0] = src_fragment.m_pack_rect[0][0];
+  m_pack_rect[0][1] = src_fragment.m_pack_rect[0][1];
+  m_pack_rect[1][0] = src_fragment.m_pack_rect[1][0];
+  m_pack_rect[1][1] = src_fragment.m_pack_rect[1][1];
+  m_pack_rect[2][0] = src_fragment.m_pack_rect[2][0];
+  m_pack_rect[2][1] = src_fragment.m_pack_rect[2][1];
+  m_pack_rect[3][0] = src_fragment.m_pack_rect[3][0];
+  m_pack_rect[3][1] = src_fragment.m_pack_rect[3][1];
 
   if ( display_density > 8 && ON_UNSET_UINT_INDEX != display_density)
     return ON_SUBD_RETURN_ERROR(false);
@@ -1952,6 +2471,35 @@ bool ON_SubDMeshFragment::CopyFrom(
         ON_SubDMeshFragment::Internal_Set3dPointArrayToNan(m_T, V_count, m_T_stride);
       }
     }
+
+    if (V_count <= ColorCapacity())
+    {
+      // copy m_C[]
+      if (V_count <= src_fragment.ColorCount())
+      {
+        SetColorsExist(true);
+        ON_Color*c = m_C;
+        const size_t c_stride = m_C_stride;
+        i_stride = di * src_fragment.m_C_stride;
+        j_stride = m * dj * src_fragment.m_C_stride;
+        for (unsigned int j = 0; j < m; j += dj)
+        {
+          const ON_Color* src_c = src_fragment.m_C + j * j_stride;
+          for (unsigned int i = 0; i < m; i += di)
+          {
+            *c = *src_c;
+            c += c_stride;
+            src_c += i_stride;
+          }
+        }
+      }
+      else
+      {
+        ON_Color* c = m_C;
+        for (ON_Color* c1 = c + V_count * m_C_stride; c < c1; c += m_C_stride)
+          *c = ON_Color::UnsetColor;
+      }
+    }
   }
 
   SetVertexCount(V_count);
@@ -1973,24 +2521,13 @@ ON_SubDMeshFragment* ON_SubDMeshImpl::CopyCallbackFragment(
   if ( 0 == callback_fragment->PointCount() || 0 == callback_fragment->NormalCount() )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  // m_fsp.AllocateElement() allocates room for the fragment and the m_P[], m_N[], and m_T[] arrays.
+  // m_fsp.AllocateElement() allocates room for the fragment and the m_P[], m_N[], m_T[], and m_C[] arrays.
   ON_SubDMeshFragment* fragment = (ON_SubDMeshFragment*)m_fsp.AllocateElement();
   if ( nullptr == fragment)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  double* P = (double*)(fragment + 1);
-  double* N = P + 3 * m_fragment_point_count;
-  double* T = N + 3 * m_fragment_point_count;
-
-  fragment->SetUnmanagedVertexCapacity(m_fragment_point_count); // m_fsp manages array memory
-  fragment->SetVertexCount(m_fragment_point_count);
-  fragment->m_P = P;
-  fragment->m_P_stride = 3;
-  fragment->m_N = N;
-  fragment->m_N_stride = 3;
-  fragment->m_T = T;
-  fragment->m_T_stride = 3;
-
+  // The memory for the arrays in this case is managed by m_fsp[].
+  fragment->Internal_LayoutArrays(false, (double*)(fragment + 1), m_fragment_point_count);
   fragment->CopyFrom(*callback_fragment);
 
   ChangeContentSerialNumber();
@@ -2710,6 +3247,50 @@ void ON_SubDMesh::Swap(
   }
 }
 
+void ON_SubDDisplayParameters::Dump(class ON_TextLog& text_log) const
+{
+  text_log.Print(L"DisplayDensity = %u", DisplayDensity());
+  switch (DisplayDensity())
+  {
+  case ON_SubDDisplayParameters::ExtraCoarseDensity:
+    text_log.Print(L" (ExtraCoarse)");
+    break;
+  case ON_SubDDisplayParameters::CoarseDensity:
+    text_log.Print(L" (Coarse)");
+    break;
+  case ON_SubDDisplayParameters::MediumDensity:
+    text_log.Print(L" (Medium)");
+    break;
+  case ON_SubDDisplayParameters::FineDensity:
+    text_log.Print(L" (Fine)");
+    break;
+  case ON_SubDDisplayParameters::ExtraFineDensity:
+    text_log.Print(L" (ExtraFine)");
+    break;
+  case ON_SubDDisplayParameters::MaximumDensity:
+    text_log.Print(L" (Maximum)");
+    break;
+  }
+  text_log.PrintNewLine();
+
+  text_log.Print(L"MeshLocation = ");
+  switch (MeshLocation())
+  {
+  case ON_SubDComponentLocation::Unset:
+    text_log.Print(L"Unset\n");
+    break;
+  case ON_SubDComponentLocation::ControlNet:
+    text_log.Print(L"ControlNet\n");
+    break;
+  case ON_SubDComponentLocation::Surface:
+    text_log.Print(L"Surface\n");
+    break;
+  default:
+    text_log.Print(L"invalid (%u)\n",static_cast<unsigned char>(MeshLocation()));
+    break;
+  }
+}
+
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(
   unsigned int display_density
   )
@@ -2720,6 +3301,76 @@ const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensit
   ON_SubDDisplayParameters limit_mesh_parameters;
   limit_mesh_parameters.m_display_density = display_density;
   return limit_mesh_parameters;
+}
+
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromMeshDensity(
+  double normalized_mesh_density
+)
+{
+  normalized_mesh_density = ON_MeshParameters::ClampMeshDensityValue(normalized_mesh_density);
+
+  if (normalized_mesh_density >= 0.0 && normalized_mesh_density <= 1.0)
+  {
+    if (0.0 == normalized_mesh_density)
+      return ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MinimumDensity);
+    if (1.0 == normalized_mesh_density)
+      return ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MaximumDensity);
+
+
+    unsigned int subd_display_density = ON_SubDDisplayParameters::Default.DisplayDensity();
+
+
+    // The assignment of slider_value to subd_display_density was arrived at with a long testing period
+    // including all of Rhino 6 limited subd support and ending with Rhino 7 WIP in June 2020.
+    // June 2020 mapping of slide_value to subd_display_density
+    //
+    //  [0.0, ON_ZERO_TOLERANCE] -> 1 = ExtraCoarseDensity
+    //  (ON_ZERO_TOLERANCE, 0.17) -> 2 = CoarseDensity
+    //  [0.17, 0.33) -> 3 = MediumDensity
+    //  [0.33, 0.75] -> 4 = FineDensity
+    //  (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
+    //  [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
+    //  Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
+    //
+    // Beginning June 20, 2020 the values were slightly adjusted so "simple mesh" UI documentation 
+    // can use more friendly looking values.
+    // 
+    //  [0.0, ON_ZERO_TOLERANCE] -> 1 = ExtraCoarseDensity
+    //  (ON_ZERO_TOLERANCE, 0.20) -> 2 = CoarseDensity
+    //  [0.20, 0.35) -> 3 = MediumDensity
+    //  [0.35, 0.75] -> 4 = FineDensity
+    //  (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
+    //  [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
+    //  Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
+    //
+    // If you make changes, you must provide name and YouTrack issues link so there is a clear
+    // history of the reasons the changes were made. You must also update the comments in the
+    // function declaration.
+    // Always include the SubD Rhino Logo in your tests.
+    //
+    // Be conservative about returning values > 4. 
+    // 5 generates 1024 mesh quads per subd quad and 6 generates 4096 mesh quads per subd quad.
+    //
+    // Values of subd_display_density < 4 are visibly chunky on simple subd models (spheres, Rhino subd logo, ...)
+    //
+    if (normalized_mesh_density <= ON_ZERO_TOLERANCE)
+      subd_display_density = ON_SubDDisplayParameters::ExtraCoarseDensity;
+    else if (normalized_mesh_density < 0.20)
+      subd_display_density = ON_SubDDisplayParameters::CoarseDensity;
+    else if (normalized_mesh_density < 0.35)
+      subd_display_density = ON_SubDDisplayParameters::MediumDensity;
+    else if (normalized_mesh_density <= 0.75)
+      subd_display_density = ON_SubDDisplayParameters::FineDensity;
+    else if (normalized_mesh_density <= 1.0 - ON_ZERO_TOLERANCE)
+      subd_display_density = ON_SubDDisplayParameters::ExtraFineDensity;
+    else if (normalized_mesh_density >= 1.0 - ON_ZERO_TOLERANCE)
+      subd_display_density = ON_SubDDisplayParameters::MaximumDensity;
+
+    return ON_SubDDisplayParameters::CreateFromDisplayDensity(subd_display_density);
+  }
+
+  ON_ERROR("Invalid slider_value parameter.");
+  return ON_SubDDisplayParameters::Default;
 }
 
 unsigned int ON_SubDDisplayParameters::DisplayDensity() const
@@ -2743,34 +3394,12 @@ void ON_SubDDisplayParameters::SetMeshLocation(ON_SubDComponentLocation mesh_loc
   m_bControlNetMesh = (ON_SubDComponentLocation::ControlNet == mesh_location) ? true : false;
 }
 
-bool ON_SubDDisplayParameters::AddNgons() const
-{
-  return m_bSkipMeshNgons ? false : true;
-}
-
-void ON_SubDDisplayParameters::SetAddNgons(bool bAddNgons)
-{
-  m_bSkipMeshNgons = bAddNgons ? false : true;
-}
-
-bool ON_SubDDisplayParameters::AddFakeEvaluationParameters() const
-{
-  return m_bSkipFakeEvaluationParameters ? false : true;
-}
-
-void ON_SubDDisplayParameters::SetAddFakeEvaluationParameters(bool bAddFakeEvaluationParameters)
-{
-  m_bSkipFakeEvaluationParameters = bAddFakeEvaluationParameters ? false : true;
-}
-
 unsigned char ON_SubDDisplayParameters::EncodeAsUnsignedChar() const
 {
   unsigned char encoded_parameters;
   if (
     ON_SubDDisplayParameters::Default.m_display_density == m_display_density
     && ON_SubDDisplayParameters::Default.MeshLocation() == MeshLocation()
-    && ON_SubDDisplayParameters::Default.m_bSkipMeshNgons == m_bSkipMeshNgons
-    && ON_SubDDisplayParameters::Default.m_bSkipFakeEvaluationParameters == m_bSkipFakeEvaluationParameters
     )
   {
     // use defaults
@@ -2792,24 +3421,12 @@ unsigned char ON_SubDDisplayParameters::EncodeAsUnsignedChar() const
       ? ON_SubDDisplayParameters::subd_mesh_location_bit
       : 0;
 
-    const unsigned char skip_ngons
-      = (m_bSkipMeshNgons)
-      ? ON_SubDDisplayParameters::subd_mesh_skip_ngons_bit
-      : 0;
-
-    const unsigned char skip_fakeevalparams
-      = (m_bSkipFakeEvaluationParameters)
-      ? ON_SubDDisplayParameters::subd_mesh_skip_fakeevalparams_bit
-      : 0;
-
     const unsigned char nondefault_settings = ON_SubDDisplayParameters::subd_mesh_nondefault_bit;
 
     encoded_parameters
       = nondefault_settings
       | density_as_char
       | location
-      | skip_ngons
-      | skip_fakeevalparams
       ;
   }
   return encoded_parameters;
@@ -2825,28 +3442,22 @@ const ON_SubDDisplayParameters ON_SubDDisplayParameters::DecodeFromUnsignedChar(
   {
     const unsigned char density = (ON_SubDDisplayParameters::subd_mesh_density_mask & encoded_parameters);
     const unsigned char location = (ON_SubDDisplayParameters::subd_mesh_location_bit & encoded_parameters);
-    const unsigned char skip_ngons = (ON_SubDDisplayParameters::subd_mesh_skip_ngons_bit & encoded_parameters);
-    const unsigned char skip_fakeevalparams = (ON_SubDDisplayParameters::subd_mesh_skip_fakeevalparams_bit & encoded_parameters);
     p.m_display_density = (unsigned int)density;
     if (0 != location)
       p.SetMeshLocation( ON_SubDComponentLocation::ControlNet );
-    if (0 != skip_ngons)
-      p.m_bSkipMeshNgons = true;
-    if (0 != skip_fakeevalparams)
-      p.m_bSkipFakeEvaluationParameters = true;
   }
 
   return p;
 }
 
-bool ON_SubDDisplayParameters::UseMultipleThreads() const
+ON_SubDDisplayParameters::Context ON_SubDDisplayParameters::ContextForExperts() const
 {
-  return m_bUseMultipleThreads;
+  return m_context;
 }
 
-void ON_SubDDisplayParameters::SetUseMultipleThreads(bool bUseMultipleThreads)
+void ON_SubDDisplayParameters::SetContextForExperts(ON_SubDDisplayParameters::Context context)
 {
-  m_bUseMultipleThreads = bUseMultipleThreads ? true : false;
+  m_context = context;
 }
 
 ON_Terminator * ON_SubDDisplayParameters::Terminator() const

@@ -153,10 +153,11 @@ bool ON_Leader::GetBBox( // returns true if successful
   bool grow          // true means grow box
   ) const
 {
-  return false;
-  // This doesn't seem to be useful and gives the wrong answer most of the time
-  // when the dimstyle is wrong
-  //return GetBBox(&ON_DimStyle::Default, 1.0, ON_3dVector::XAxis, ON_3dVector::YAxis, bbox_min, bbox_max, grow);
+  // Even though this doesn't apply view info properly, it has a side-effect of creating runs
+  // so that text query functions will work properly.  
+  // I'm adding it back here to make Opennurbs ONx model support for reading and not displaying
+  // files work better wrt text queries
+  return GetAnnotationBoundingBox(nullptr, nullptr, 1.0, bbox_min, bbox_max, grow ? true : false);
 }
 
 bool ON_Leader::GetTextXform(
@@ -187,6 +188,7 @@ bool ON_Leader::GetTextXform(
   ON_2dVector tail_dir = TailDirection(dimstyle);
   ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
   ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
+  ON_3dVector view_z = ON_CrossProduct(view_x, view_y);
   ON_Plane objectplane = Plane();
   ON::TextHorizontalAlignment halign = dimstyle->LeaderTextHorizontalAlignment();
   ON::TextVerticalAlignment valign = dimstyle->LeaderTextVerticalAlignment();
@@ -207,7 +209,7 @@ bool ON_Leader::GetTextXform(
   {
     const_cast<ON_TextContent*>(text)->SetAlignment(halign, valign);
   }
-  if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash() )
+  if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
   {
     ON_wString rtfstr = text->RtfText();
     const_cast<ON_TextContent*>(text)->Create(
@@ -222,158 +224,167 @@ bool ON_Leader::GetTextXform(
   double textblock_height = 0.0;
   double line_height = 1.0;
 
+  ON_2dPoint text_corners[4];
+  ON_2dPoint text_center;
+  ON_2dPoint text_pt(0.0, 0.0);
+  if (text->Get2dCorners(text_corners)) // Gets unscaled 3d size
   {
-    ON_2dPoint text_corners[4];
-    ON_2dPoint text_center;
-    ON_2dPoint text_pt(0.0, 0.0);
-    if (text->Get2dCorners(text_corners)) // Gets unscaled 3d size
+    text_center = (text_corners[0] + text_corners[2]) / 2.0;
+    textblock_width = (text_corners[1].x - text_corners[0].x);
+    textblock_height = (text_corners[3].y - text_corners[0].y);
+    line_height = dimstyle->TextHeight();
+
+    ON_2dVector text_shift;
+    text_shift.x = 0.0;
+    text_shift.y = 0.0;
+
+    // LeaderAttachStyle - Vertical alignment of text with leader text point
+    ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
+    switch (attach)
     {
-      text_center = (text_corners[0] + text_corners[2]) / 2.0;
-      textblock_width  = (text_corners[1].x - text_corners[0].x);
-      textblock_height = (text_corners[3].y - text_corners[0].y);
-      line_height = dimstyle->TextHeight();
-
-      ON_2dVector text_shift;
-      text_shift.x = 0.0;
+    case ON::TextVerticalAlignment::Top:
+      text_shift.y = -textblock_height / 2.0;
+      break;
+    case ON::TextVerticalAlignment::MiddleOfTop:
+      text_shift.y = -(textblock_height / 2.0) + (line_height / 2.0);
+      break;
+    case ON::TextVerticalAlignment::BottomOfTop:
+      text_shift.y = -(textblock_height / 2.0) + line_height;
+      break;
+    case ON::TextVerticalAlignment::Middle:
       text_shift.y = 0.0;
+      break;
+    case ON::TextVerticalAlignment::MiddleOfBottom:
+      text_shift.y = (textblock_height / 2.0) - (line_height / 2.0);
+      break;
+    case ON::TextVerticalAlignment::Bottom:
+      text_shift.y = textblock_height / 2.0;
+      break;
+    case ON::TextVerticalAlignment::BottomOfBoundingBox:
+      text_shift.y = (textblock_height / 2.0) + (dimstyle->TextGap());   /*(line_height / 10.0);*/
+      break;
+    }
 
-      // LeaderAttachStyle - Vertical alignment of text with leader text point
-      ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
-      switch (attach)
-      {
-      case ON::TextVerticalAlignment::Top:
-        text_shift.y = -textblock_height / 2.0;
-        break;
-      case ON::TextVerticalAlignment::MiddleOfTop:
-        text_shift.y = -(textblock_height / 2.0) + (line_height / 2.0);
-        break;
-      case ON::TextVerticalAlignment::BottomOfTop:
-        text_shift.y = -(textblock_height / 2.0) + line_height;
-        break;
-      case ON::TextVerticalAlignment::Middle:
-        text_shift.y = 0.0;
-        break;
-      case ON::TextVerticalAlignment::MiddleOfBottom:
-        text_shift.y = (textblock_height / 2.0) - (line_height / 2.0);
-        break;
-      case ON::TextVerticalAlignment::Bottom:
-        text_shift.y = textblock_height / 2.0;
-        break;
-      case ON::TextVerticalAlignment::BottomOfBoundingBox:
-        text_shift.y = (textblock_height / 2.0) + (dimstyle->TextGap());   /*(line_height / 10.0);*/
-        break;
-      }
+    // 2d Point at center of text but without vertical alignment shift
+    ON_2dPoint text_pt2(0.0, 0.0);
+    if (0 < m_points.Count())
+      text_pt2 = m_points[m_points.Count() - 1];
 
-      // 2d Point at center of text but without vertical alignment shift
-      ON_2dPoint text_pt2(0.0, 0.0);
-      if (0 < m_points.Count())
-        text_pt2 = m_points[m_points.Count() - 1];
+    double landing_length = 0.0;
+    if (dimstyle->LeaderHasLanding())
+      landing_length = dimstyle->LeaderLandingLength();
+    double text_gap = dimstyle->TextGap();
+    double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
 
-      double landing_length = 0.0;
-      if(dimstyle->LeaderHasLanding())
-        landing_length = dimstyle->LeaderLandingLength();
-      double text_gap = dimstyle->TextGap();
-      double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
-
-      text_pt2 = text_pt2 + (tail_dir * x_offset);
+    text_pt2 = text_pt2 + (tail_dir * x_offset);
 
 
-      // Move from Origin to leader plane
-      const ON_Plane& leaderplane = Plane();
+    // Move from Origin to leader plane
+    const ON_Plane& leaderplane = Plane();
 
-      ON_2dVector text_dir(1.0, 0.0);     // Horizontal to cplane - ON_DimStyle::ContentAngleStyle::Horizontal
-      ON_DimStyle::ContentAngleStyle textangle_style = dimstyle->LeaderContentAngleStyle();
+    ON_2dVector text_dir(1.0, 0.0);     // Horizontal to cplane - ON_DimStyle::ContentAngleStyle::Horizontal
+    ON_DimStyle::ContentAngleStyle textangle_style = dimstyle->LeaderContentAngleStyle();
 
-      if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style)
-      {
-        text_dir = tail_dir;
-        if (text_dir.x < 0.0)
-          text_dir = -text_dir;
-      }
-      else if (ON_DimStyle::ContentAngleStyle::Rotated == textangle_style)
-      {
-        text_dir = tail_dir;  // Already has rotation included
-      }
-      if (!text_dir.Unitize())
-        text_dir.Set(1.0, 0.0);
+    if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style)
+    {
+      text_dir = tail_dir;
+      if (text_dir.x < 0.0)
+        text_dir = -text_dir;
+    }
+    else if (ON_DimStyle::ContentAngleStyle::Rotated == textangle_style)
+    {
+      text_dir = tail_dir;  // Already has rotation included
+    }
+    if (!text_dir.Unitize())
+      text_dir.Set(1.0, 0.0);
 
-      ON_Xform textscale_xf(ON_Xform::DiagonalTransformation(dimscale));
-      ON_Xform textcenter_xf(ON_Xform::IdentityTransformation);        // Centers text block at origin
-      ON_Xform textrotation_xf(ON_Xform::IdentityTransformation);      // Text rotation around origin
+    ON_Xform textscale_xf(ON_Xform::DiagonalTransformation(dimscale));
+    ON_Xform textcenter_xf(ON_Xform::IdentityTransformation);        // Centers text block at origin
+    ON_Xform textrotation_xf(ON_Xform::IdentityTransformation);      // Text rotation around origin
 
-      ON_Xform world_to_leader_xf(ON_Xform::IdentityTransformation);   // WCS plane to leader plane rotation
-      world_to_leader_xf.Rotation(ON_Plane::World_xy, leaderplane);    // Rotate text from starting text plane (wcs) to leader plane
+    ON_Xform world_to_leader_xf(ON_Xform::IdentityTransformation);   // WCS plane to leader plane rotation
+    world_to_leader_xf.Rotation(ON_Plane::World_xy, leaderplane);    // Rotate text from starting text plane (wcs) to leader plane
 
-      ON_Xform leader_to_text_pt_xf(ON_Xform::IdentityTransformation); // Leader plane to text point translation
+    ON_Xform leader_to_text_pt_xf(ON_Xform::IdentityTransformation); // Leader plane to text point translation
+    leader_to_text_pt_xf = ON_Xform::TranslationTransformation(text_pt2);
 
-      textrotation_xf.Rotation(text_dir.y, text_dir.x, ON_3dVector::ZAxis, ON_3dPoint::Origin);
+    textrotation_xf.Rotation(text_dir.y, text_dir.x, ON_3dVector::ZAxis, ON_3dPoint::Origin);
 
+    textcenter_xf.m_xform[0][3] = -text_center.x;
+    textcenter_xf.m_xform[1][3] = -text_center.y + text_shift.y;
 
-      textcenter_xf.m_xform[0][3] = -text_center.x;
-      textcenter_xf.m_xform[1][3] = -text_center.y + text_shift.y;
-
-      if(ON::TextOrientation::InView == dimstyle->LeaderTextOrientation())
-      {
-        const ON_Plane& ldrplane = Plane();
-        ON_3dVector view_z = ON_CrossProduct(view_x, view_y);
-        ON_3dPoint text_point_3d = Plane().PointAt(text_pt2.x, text_pt2.y);
-        textrotation_xf.Rotation(text_point_3d, ldrplane.xaxis, ldrplane.yaxis, ldrplane.zaxis, text_point_3d, view_x, view_y, view_z);
-        leader_to_text_pt_xf = ON_Xform::TranslationTransformation(text_pt2);
-        text_xform_out = textscale_xf * textcenter_xf;
-        text_xform_out = leader_to_text_pt_xf * text_xform_out;
-        text_xform_out = world_to_leader_xf * text_xform_out;
-        text_xform_out = textrotation_xf * text_xform_out;
-        return true;
-      }
-      else
-        if (dimstyle->DrawForward())
-      {
-        ON_Xform dxf(ON_Xform::IdentityTransformation);
-        dxf = textrotation_xf * dxf;
-        dxf = world_to_leader_xf * dxf;
-        ON_3dVector x(ON_3dVector::XAxis);
-        ON_3dVector y(ON_3dVector::YAxis);
-        //ON_3dVector x(leaderplane.xaxis);
-        //ON_3dVector y(leaderplane.yaxis);
-        x.Transform(dxf);
-        y.Transform(dxf);
-        if (nullptr != model_xform)
-        {
-          x.Transform(*model_xform);
-          y.Transform(*model_xform);
-        }
-        double xovx = view_x * x;
-        double yovy = view_y * y;
-        bool fx = (0.00015 >= xovx);
-        bool fy = (0.00015 >= yovy);
-        if (fx || fy)
-        {
-          double xovy = x * view_y;
-          if (0.99985 > xovy)
-          {
-            ON_Xform mxf(ON_Xform::IdentityTransformation);
-            if (fx)
-            {
-              mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::XAxis);
-              textcenter_xf = textcenter_xf * mxf;
-            }
-            if (fy)
-            {
-              mxf.Mirror(ON_3dPoint(text_center), ON_3dVector::YAxis);
-              textcenter_xf.m_xform[1][3] = -text_center.y - text_shift.y;
-              textcenter_xf = textcenter_xf * mxf;
-            }
-          }
-        }
-      }
-
-      leader_to_text_pt_xf = ON_Xform::TranslationTransformation(text_pt2);
-
+    if (ON::TextOrientation::InView == dimstyle->LeaderTextOrientation())
+    {
+      const ON_Plane& ldrplane = Plane();
+      ON_3dPoint text_point_3d = Plane().PointAt(text_pt2.x, text_pt2.y);
+      textrotation_xf.Rotation(text_point_3d, ldrplane.xaxis, ldrplane.yaxis, ldrplane.zaxis, text_point_3d, view_x, view_y, view_z);
       text_xform_out = textscale_xf * textcenter_xf;
-      text_xform_out = textrotation_xf * text_xform_out;
       text_xform_out = leader_to_text_pt_xf * text_xform_out;
       text_xform_out = world_to_leader_xf * text_xform_out;
+      text_xform_out = textrotation_xf * text_xform_out;
+      return true;
     }
+    else if (dimstyle->DrawForward())
+    {
+      if (dimstyle->DrawForward())
+      {
+        // Check if the text is right-reading by comparing
+        // text plane x and y, rotated by text rotation angle,
+        // to view right and up
+
+        ON_3dVector text_xdir = leaderplane.xaxis;
+        ON_3dVector text_ydir = leaderplane.yaxis;
+        ON_3dVector text_zdir = leaderplane.zaxis;
+        if (text_zdir * view_z < 0.0)
+        {
+          ON_Xform xfr = textrotation_xf.Inverse();
+          text_xdir.Transform(xfr);
+          text_ydir.Transform(xfr);
+          text_zdir.Transform(xfr);
+        }
+        else
+        {
+          text_xdir.Transform(textrotation_xf);
+          text_ydir.Transform(textrotation_xf);
+          text_zdir.Transform(textrotation_xf);
+        }
+
+        if (nullptr != model_xform)
+        {
+          text_xdir.Transform(*model_xform);
+          text_ydir.Transform(*model_xform);
+          text_zdir.Transform(*model_xform);
+        }
+
+        bool flip_x = false;
+        bool flip_y = false;
+        const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(88.0 * ON_DEGREES_TO_RADIANS);
+        CalcTextFlip(
+          text_xdir, text_ydir, text_zdir,
+          view_x, view_y, view_z,
+          model_xform,
+          fliptol,
+          flip_x,
+          flip_y);
+
+        ON_Xform mxf;
+        if (flip_x)
+        {
+          mxf.Mirror(ON_3dPoint::Origin, ON_3dVector::XAxis);
+          textscale_xf = textscale_xf * mxf;
+        }
+        if (flip_y)
+        {
+          mxf.Mirror(ON_3dPoint::Origin, ON_3dVector::YAxis);
+          textscale_xf = textscale_xf * mxf;
+        }
+      }
+    }
+
+    text_xform_out = textscale_xf * textcenter_xf;
+    text_xform_out = textrotation_xf * text_xform_out;
+    text_xform_out = leader_to_text_pt_xf * text_xform_out;
+    text_xform_out = world_to_leader_xf * text_xform_out;
   }
   return true;
 }
@@ -601,14 +612,14 @@ bool ON_Leader::Create(
   if (nullptr != leader_text)
   {
     text = new ON_TextContent;
-    if (!text->Create(leader_text, Type(), dimstyle, bWrapped, rect_width, 0.0))
+    if (text->Create(leader_text, Type(), dimstyle, bWrapped, rect_width, 0.0))
+      SetText(text);
+    else
     {
       delete text;
       text = 0;
-      return false;
     }
   }
-  SetText(text);
 
   return true;
 }

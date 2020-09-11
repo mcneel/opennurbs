@@ -46,7 +46,7 @@ ON_SubDimple::~ON_SubDimple()
 void ON_SubDimple::Clear()
 {
   m_subd_appearance = ON_SubD::DefaultSubDAppearance;
-  m_texture_domain_type = ON_SubDTextureDomainType::Unset;
+  m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   m_texture_mapping_tag = ON_MappingTag::Unset;
   for (unsigned i = 0; i < m_levels.UnsignedCount(); ++i)
     delete m_levels[i];
@@ -63,7 +63,7 @@ void  ON_SubDimple::ClearLevelContents(
     return;
 
   if (level == m_active_level)
-    ChangeContentSerialNumber(false);
+    ChangeGeometryContentSerialNumber(false);
 
   level->ResetFaceArray();
   level->ResetEdgeArray();
@@ -115,7 +115,7 @@ unsigned int ON_SubDimple::ClearHigherSubdivisionLevels(
       if ( level_count > max_level_index )
       {
         m_active_level = m_levels[max_level_index];
-        ChangeContentSerialNumber(false);
+        ChangeGeometryContentSerialNumber(false);
       }
     }
 
@@ -156,7 +156,7 @@ unsigned int ON_SubDimple::ClearLowerSubdivisionLevels(
     if (nullptr != m_active_level && m_active_level->m_level_index < min_level_index)
     {
       m_active_level = m_levels[min_level_index];
-      ChangeContentSerialNumber(false);
+      ChangeGeometryContentSerialNumber(false);
     }
 
     for ( unsigned int level_index = 0; level_index < min_level_index; level_index++)
@@ -223,7 +223,8 @@ void ON_SubDimple::Destroy()
   }
   m_levels.Destroy();
   m_heap.Destroy();
-  m_subd_content_serial_number = 0;
+  m_subd_geometry_content_serial_number = 0;
+  m_subd_render_content_serial_number = 0;
 }
 
 ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
@@ -232,7 +233,7 @@ ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
   {
     unsigned int level_index = (m_levels.UnsignedCount() > 0) ? (m_levels.UnsignedCount()-1) : 0U;
     m_active_level = SubDLevel(level_index,bCreateIfNeeded && 0 == m_levels.UnsignedCount());    
-    ChangeContentSerialNumber(false);
+    ChangeGeometryContentSerialNumber(false);
   }
   return m_active_level;
 }
@@ -253,7 +254,7 @@ class ON_SubDLevel* ON_SubDimple::SubDLevel(
     if (nullptr == m_active_level)
     {
       m_active_level = level;
-      ChangeContentSerialNumber(false);
+      ChangeGeometryContentSerialNumber(false);
     }
   }
 
@@ -625,7 +626,7 @@ bool ON_SubDVertex::Transform(
 
   // TODO:
   //   If the vertex 
-  //     is tagged as ON_SubD::VertexTag::Corner
+  //     is tagged as ON_SubDVertexTag::Corner
   //     and bTransformationSavedSubdivisionPoint is true, 
   //     and the corner sector(s) contains interior smooth edges,
   //     and the transformation changes the angle between a corner sector's crease boundary, 
@@ -815,7 +816,7 @@ bool ON_SubDimple::Transform(
   const ON_Xform& xform
   )
 {
-  const ON__UINT64 content_serial_number0 = ContentSerialNumber();
+  const ON__UINT64 geometry_content_serial_number0 = GeometryContentSerialNumber();
 
   if (false == xform.IsValid())
     return false;
@@ -865,7 +866,7 @@ bool ON_SubDimple::Transform(
     const ON_Symmetry symmetry0 = m_symmetry;
     m_symmetry = m_symmetry.TransformConditionally(xform);
     bool bSetContentSerialNumber = false;
-    if (content_serial_number0 == symmetry0.SymmetricObjectContentSerialNumber())
+    if (geometry_content_serial_number0 == symmetry0.SymmetricObjectContentSerialNumber())
     {
       // see if the transformed object will still be symmetric.
       if (ON_Symmetry::Coordinates::Object == m_symmetry.SymmetryCoordinates())
@@ -881,7 +882,7 @@ bool ON_SubDimple::Transform(
       }
     }
     if (bSetContentSerialNumber)
-      m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+      m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
     else
       m_symmetry.ClearSymmetricObjectContentSerialNumber();
   }

@@ -177,7 +177,7 @@ ON_SubDFace* ON_SubDArchiveIdMap::CopyFace(
 {
   if ( nullptr == source_face )
     return ON_SUBD_RETURN_ERROR(nullptr);
-  ON_SubDFace* face = subdimple.AllocateFace( source_face->m_id, source_face->m_level,source_face->m_edge_count);
+  ON_SubDFace* face = subdimple.AllocateFace( source_face->m_id, source_face->m_level,source_face->m_edge_count, source_face->TexturePointsAreSet());
   if ( nullptr == face )
     return ON_SUBD_RETURN_ERROR(nullptr);
   
@@ -640,9 +640,14 @@ void ON_SubD::CopyHelper(const ON_SubD& src)
     subdimple->SetManagedMeshSubDWeakPointers(m_subdimple_sp);
 }
 
-ON__UINT64 ON_SubDimple::ContentSerialNumber() const
+ON__UINT64 ON_SubDimple::GeometryContentSerialNumber() const
 {
-  return m_subd_content_serial_number;
+  return m_subd_geometry_content_serial_number;
+}
+
+ON__UINT64 ON_SubDimple::RenderContentSerialNumber() const
+{
+  return m_subd_render_content_serial_number;
 }
 
 ON__UINT64 ON_SubDimple::ComponentStatusSerialNumber() const
@@ -655,24 +660,31 @@ const ON_AggregateComponentStatusEx ON_SubDimple::AggregateComponentStatus() con
   return ActiveLevel().AggregateComponentStatus();
 }
 
-ON__UINT64 ON_SubDimple::ChangeContentSerialNumber(
+ON__UINT64 ON_SubDimple::ChangeGeometryContentSerialNumber(
   bool bChangePreservesSymmetry
 ) const
 {
   const bool bUpdateSymmetricObjectContentSerialNumber
     = bChangePreservesSymmetry
-    && m_subd_content_serial_number > 0
+    && m_subd_geometry_content_serial_number > 0
     && m_symmetry.IsSet()
-    && m_subd_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
+    && m_subd_geometry_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
     ;
   
-  m_subd_content_serial_number = ON_NextContentSerialNumber();
+  m_subd_geometry_content_serial_number = ON_NextContentSerialNumber();
+  m_subd_render_content_serial_number = m_subd_geometry_content_serial_number; // changing content automatically changes render content.
   if (bUpdateSymmetricObjectContentSerialNumber)
-    m_symmetry.SetSymmetricObjectContentSerialNumber(m_subd_content_serial_number);
+    m_symmetry.SetSymmetricObjectContentSerialNumber(m_subd_geometry_content_serial_number);
   else
     m_symmetry.ClearSymmetricObjectContentSerialNumber();
 
-  return m_subd_content_serial_number;
+  return m_subd_geometry_content_serial_number;
+}
+
+ON__UINT64 ON_SubDimple::ChangeRenderContentSerialNumber() const
+{
+  m_subd_render_content_serial_number = ON_NextContentSerialNumber();
+  return m_subd_render_content_serial_number;
 }
 
 void ON_SubDimple::SetManagedMeshSubDWeakPointers(
@@ -756,15 +768,15 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
   }
 
   m_subd_appearance = src.m_subd_appearance;
-  m_texture_domain_type = src.m_texture_domain_type;
+  m_texture_coordinate_type = src.m_texture_coordinate_type;
   m_texture_mapping_tag = src.m_texture_mapping_tag;
 
   m_symmetry = src.m_symmetry;
 
-  ChangeContentSerialNumber(false);
+  ChangeGeometryContentSerialNumber(false);
 
-  if (src.m_subd_content_serial_number == src.m_symmetry.SymmetricObjectContentSerialNumber())
-    m_symmetry.SetSymmetricObjectContentSerialNumber(ContentSerialNumber());
+  if (src.m_subd_geometry_content_serial_number == src.m_symmetry.SymmetricObjectContentSerialNumber())
+    m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
   else
     m_symmetry.ClearSymmetricObjectContentSerialNumber();
 }

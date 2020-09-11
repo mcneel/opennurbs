@@ -562,13 +562,13 @@ unsigned int ON_SubDSectorType::GetAllEigenvalues(
   if ( 0  == R || (nullptr != eigenvalues && eigenvalues_capacity < R))
     return ON_SUBD_RETURN_ERROR(0);
 
-  const ON_SubD::VertexTag vertex_tag = VertexTag();
+  const ON_SubDVertexTag vertex_tag = VertexTag();
   const unsigned int N = EdgeCount();
 
   if (false == ON_SubD::IsValidSectorEdgeCount(vertex_tag, N))
     return ON_SUBD_RETURN_ERROR(0);
 
-  if (ON_SubD::VertexTag::Smooth == vertex_tag)
+  if (ON_SubDVertexTag::Smooth == vertex_tag)
   {
     if (nullptr == eigenvalues)
     {
@@ -603,7 +603,7 @@ unsigned int ON_SubDSectorType::GetAllEigenvalues(
     // return sorted in decreasing order
     ON_SortDoubleArrayDecreasing(eigenvalues + 1, R - 1);
   }
-  else if (ON_SubD::VertexTag::Crease == vertex_tag)
+  else if (ON_SubDVertexTag::Crease == vertex_tag)
   {
     if (N <= 20)
     {
@@ -1125,10 +1125,10 @@ double ON_SubDSectorType::SubdominantEigenvalue() const
 
   switch (VertexTag())
   {
-  case ON_SubD::VertexTag::Unset:
+  case ON_SubDVertexTag::Unset:
     break;
 
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     if (1 == (R % 2))
     {
       // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
@@ -1150,7 +1150,7 @@ double ON_SubDSectorType::SubdominantEigenvalue() const
     }
     break;
 
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
     // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
     // for more details on how this case is handled.
@@ -1166,8 +1166,8 @@ double ON_SubDSectorType::SubdominantEigenvalue() const
     break;
 
 
-  case ON_SubD::VertexTag::Corner:
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Corner:
+  case ON_SubDVertexTag::Crease:
     if (0 == (R % 2))
       return 0.5;
     break;
@@ -1183,7 +1183,7 @@ unsigned int ON_SubDSectorType::SubdominantEigenvalueMulitiplicity() const
     return 0;
 
   // Catmull-Clark quad subdivision special cases
-  if (ON_SubD::VertexTag::Crease == m_vertex_tag)
+  if (ON_SubDVertexTag::Crease == m_vertex_tag)
   {
     if (0 == m_sector_face_count)
     {
@@ -1205,7 +1205,7 @@ unsigned int ON_SubDSectorType::SubdominantEigenvalueMulitiplicity() const
   else if (2 == m_sector_face_count)
   {
     // valance 2 special cases
-    if (ON_SubD::VertexTag::Smooth == m_vertex_tag)
+    if (ON_SubDVertexTag::Smooth == m_vertex_tag)
     {
       // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Smooth
       // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
@@ -1218,7 +1218,7 @@ unsigned int ON_SubDSectorType::SubdominantEigenvalueMulitiplicity() const
       return 2; // for the 1/4, 1/4 pair
     }
 
-    if (ON_SubD::VertexTag::Dart == m_vertex_tag)
+    if (ON_SubDVertexTag::Dart == m_vertex_tag)
     {
       // April 2019 Dale Lear - Catmull Clark Valence 2 Evaluation: Dart
       // See comments in ON_SubDSectorType::GetSurfaceEvaluationCoefficients()
@@ -1286,10 +1286,10 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
 
   switch (VertexTag())
   {
-  case ON_SubD::VertexTag::Unset:
+  case ON_SubDVertexTag::Unset:
     break;
 
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     if (1 == (R % 2))
     {
       if (nullptr != E1)
@@ -1329,7 +1329,7 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
     }
     break;
 
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     if (1 == (R % 2))
     {
       if (nullptr != E1)
@@ -1367,7 +1367,7 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
     }
     break;
 
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     if (0 == (R % 2))
     {
       const unsigned int sector_angle_index = CornerSectorAngleIndex();
@@ -1403,7 +1403,7 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
     }
     break;
 
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     if (0 == (R % 2))
     {
       if (1 == F)
@@ -1496,7 +1496,7 @@ double ON_SubDSectorType::SurfaceNormalSign() const
     return ON_SUBD_RETURN_ERROR(rc_error);
 
   const unsigned int R = PointRingCount();
-  const ON_SubD::VertexTag vertex_tag = VertexTag();
+  const ON_SubDVertexTag vertex_tag = VertexTag();
 
   ON_SimpleArray<double> buffer;
   double* LP = buffer.Reserve(3*R);
@@ -1512,14 +1512,14 @@ double ON_SubDSectorType::SurfaceNormalSign() const
 
   switch (vertex_tag)
   {
-  case ON_SubD::VertexTag::Smooth:
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Smooth:
+  case ON_SubDVertexTag::Dart:
     sector_angle = 2.0*ON_PI;
     break;
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     sector_angle = 0.5*ON_PI;
     break;
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     sector_angle = CornerSectorAngleRadians();
     break;
   default:
@@ -1536,7 +1536,7 @@ bool ON_SubDSectorType::SurfaceEvaluationCoefficientsAvailable() const
   if (IsValid())
   {
     // Available as of March 23, 2015
-    //if (ON_SubD::VertexTag::Dart == m_vertex_tag && FaceCount() > 5)
+    //if (ON_SubDVertexTag::Dart == m_vertex_tag && FaceCount() > 5)
     //{
     //  // temporary limit
     //  return false;
@@ -1606,10 +1606,10 @@ unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
 
   switch (VertexTag())
   {
-  case ON_SubD::VertexTag::Unset:
+  case ON_SubDVertexTag::Unset:
     break;
 
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     if (R >= 5 && 1 == (R % 2))
     {
       if (nullptr != LP)
@@ -1695,7 +1695,7 @@ unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
     }
     break;
 
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     if (1 == (R % 2))
     {
       ON_Matrix Sbuffer;
@@ -1993,7 +1993,7 @@ unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
     break;
 
 
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     if (0 == (R % 2))
     {
       const unsigned int angle_index = CornerSectorAngleIndex();
@@ -2040,7 +2040,7 @@ unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
     if ( false == b180degreeCorner)
       break;
 
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     // NOTE: In the case when there are 2 crease edes and a single face,
     // The Catmull-Clark subdivision matrix is singular.
     if (0 == (R % 2))
@@ -2199,7 +2199,7 @@ static bool Internal_GetAlterateTangent(
 
   if (2 == Ldex)
   {
-    if ( 4 == subd_matrix.m_R && ON_SubD::VertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
+    if ( 4 == subd_matrix.m_R && ON_SubDVertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
     {
       // valence 2 crease case when crease edges are colinear
       // F = face point, C = crease vertex point.
@@ -2234,7 +2234,7 @@ static bool Internal_GetAlterateNormal(
   if (point_ring_count < 4 || point_ring_stride < 3 || nullptr == point_ring)
     return false;
 
-  if ( 4 == subd_matrix.m_R && ON_SubD::VertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
+  if ( 4 == subd_matrix.m_R && ON_SubDVertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
   {
     // valence 2 crease case when crease edges are colinear
     // F = face point, C = crease vertex point.
@@ -2911,11 +2911,11 @@ double ON_SubDMatrix::TestEvaluation(
   ON_TextLog* text_log
   )
 {
-  ON_SubD::VertexTag vertex_tags[] = { 
-    ON_SubD::VertexTag::Smooth
-    ,ON_SubD::VertexTag::Crease
-    ,ON_SubD::VertexTag::Corner
-    ,ON_SubD::VertexTag::Dart
+  ON_SubDVertexTag vertex_tags[] = { 
+    ON_SubDVertexTag::Smooth
+    ,ON_SubDVertexTag::Crease
+    ,ON_SubDVertexTag::Corner
+    ,ON_SubDVertexTag::Dart
   };
   const char* vertex_tag_names[sizeof(vertex_tags) / sizeof(vertex_tags[0])] = {
     "smooth"
@@ -2927,12 +2927,12 @@ double ON_SubDMatrix::TestEvaluation(
   unsigned int corner_sector_angle_index0 = ON_UNSET_UINT_INDEX-1;
   unsigned int corner_sector_angle_index1 = ON_UNSET_UINT_INDEX;
   const double corner_sector_angle_radians 
-    = (ON_SubD::VertexTag::Corner == sector_type.VertexTag())
+    = (ON_SubDVertexTag::Corner == sector_type.VertexTag())
     ? sector_type.CornerSectorAngleRadians()
     : ON_SubDSectorType::UnsetCornerSectorAngle;
 
 
-  ON_SubD::VertexTag vertex_tag = sector_type.VertexTag();
+  ON_SubDVertexTag vertex_tag = sector_type.VertexTag();
   
   size_t subd_type_count = 1;
   size_t subd_type_index0 = 0;
@@ -2943,7 +2943,7 @@ double ON_SubDMatrix::TestEvaluation(
   size_t vertex_tag_count = sizeof(vertex_tags) / sizeof(vertex_tags[0]);
   size_t vertex_tag_index0 = 0;
 
-  if (ON_SubD::VertexTag::Unset != vertex_tag)
+  if (ON_SubDVertexTag::Unset != vertex_tag)
   {
     for (size_t vertex_tag_index = vertex_tag_index0; vertex_tag_index < vertex_tag_count; vertex_tag_index++)
     {
@@ -2951,7 +2951,7 @@ double ON_SubDMatrix::TestEvaluation(
       {
         vertex_tag_index0 = vertex_tag_index;
         vertex_tag_count = vertex_tag_index + 1;
-        if (ON_SubD::VertexTag::Corner == vertex_tag && ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) )
+        if (ON_SubDVertexTag::Corner == vertex_tag && ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) )
         {
           unsigned int angle_dex = sector_type.CornerSectorAngleIndex();
           if (angle_dex <= ON_SubDSectorType::MaximumCornerAngleIndex)
@@ -2984,7 +2984,7 @@ double ON_SubDMatrix::TestEvaluation(
 
   for (size_t vertex_tag_index = vertex_tag_index0; vertex_tag_index < vertex_tag_count; vertex_tag_index++)
   {
-    const ON_SubD::VertexTag vertex_tag_for_scope = vertex_tags[vertex_tag_index];
+    const ON_SubDVertexTag vertex_tag_for_scope = vertex_tags[vertex_tag_index];
     const char* sVertexTagName = vertex_tag_names[vertex_tag_index];
 
     unsigned int Fmin = ON_SubDSectorType::MinimumSectorFaceCount(vertex_tag_for_scope);
@@ -2993,7 +2993,7 @@ double ON_SubDMatrix::TestEvaluation(
 
     unsigned int angle_i0 = corner_sector_angle_index0;
     unsigned int angle_i1 = corner_sector_angle_index1;
-    if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
+    if (ON_SubDVertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians)
     {
       angle_i0 = 2;
       angle_i1 = ON_SubDSectorType::MaximumCornerAngleIndex/2 - 1;
@@ -3004,7 +3004,7 @@ double ON_SubDMatrix::TestEvaluation(
       for (unsigned int corner_sector_angle_index = angle_i0; corner_sector_angle_index < angle_i1; corner_sector_angle_index++)
       {
         double angle_radians = corner_sector_angle_radians;
-        if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == angle_radians)
+        if (ON_SubDVertexTag::Corner == vertex_tag_for_scope && ON_SubDSectorType::UnsetCornerSectorAngle == angle_radians)
           angle_radians = ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(corner_sector_angle_index);
 
         ON_SubDSectorType test_sector_type = ON_SubDSectorType::Create( vertex_tag_for_scope, F, angle_radians);
@@ -3026,7 +3026,7 @@ double ON_SubDMatrix::TestEvaluation(
         if (nullptr != text_log)
         {
           ON_String test_description;
-          if (ON_SubD::VertexTag::Corner == vertex_tag_for_scope)
+          if (ON_SubDVertexTag::Corner == vertex_tag_for_scope)
             test_description.Format("%s, %s, %u faces, %u edges, angle = %u/%u 2pi", sSubDTypeName, sVertexTagName, F, N, corner_sector_angle_index, ON_SubDSectorType::MaximumCornerAngleIndex);
           else
             test_description.Format("%s, %s, %u faces, %u edges", sSubDTypeName, sVertexTagName, F, N);
@@ -3036,7 +3036,7 @@ double ON_SubDMatrix::TestEvaluation(
           else
             text_log->Print("Test( %s ) failed\n", (const char*)test_description);
         }
-        if (ON_SubD::VertexTag::Corner != vertex_tag_for_scope)
+        if (ON_SubDVertexTag::Corner != vertex_tag_for_scope)
           break;
         if (fail_count >= maximum_fail_count)
           break;
@@ -3097,7 +3097,7 @@ double ON_SubDMatrix::TestComponentRing(
   if (m_R != R)
     return ON_SUBD_RETURN_ERROR(rc_error);
 
-  const ON_SubD::VertexTag vertex_tag = m_sector_type.VertexTag();
+  const ON_SubDVertexTag vertex_tag = m_sector_type.VertexTag();
   const unsigned int face_edge_count = m_sector_type.FacetEdgeCount();
   const bool bSubdivideFaces = (R == F+N+1 && 4 == face_edge_count);
 

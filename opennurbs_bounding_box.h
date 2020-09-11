@@ -560,6 +560,16 @@ public:
 
   bool SwapCoordinates( int, int );
 
+ /*
+ Description:
+   Expand the box by adding delta to m_max and subtracting
+   it from m_min.  So, when delta is positive and the interval is 
+   increasing this function expands the box on each side.
+ Returns:
+   true if the result is Valid.  
+ */
+  bool Expand(ON_3dVector delta);
+
   ON_3dPoint m_min;
   ON_3dPoint m_max;
 };

@@ -556,6 +556,55 @@ ON_SHA1_Hash ON_Viewport::ViewProjectionContentHash() const
   return m_projection_content_sha1;
 }
 
+ON_Viewport* ON_Viewport::ShallowCopy(ON_Viewport* destination) const
+{
+  if (nullptr == destination)
+    destination = new ON_Viewport();
+  else
+  {
+    destination->PurgeUserData();
+    if (this == destination)
+      return destination; // The caller is probably confused but this is what they should get.
+    *destination = ON_Viewport::DefaultTopViewYUp; // default ctor values
+  }
+
+#define ON_INTERNAL_SHALLOW_FIELD_COPY(field) destination->field = this->field
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bValidCamera);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bValidFrustum);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bValidPort);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bValidCameraFrame);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_projection);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bLockCamUp);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bLockCamDir);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_bLockCamLoc);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frustum_symmetry_flags);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamLoc);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamDir);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamUp);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamX);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamY);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_CamZ);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_left);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_right);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_bottom);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_top);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_near);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_frus_far);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_left);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_right);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_bottom);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_top);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_near);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_port_far);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_target_point);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_viewport_id);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_clip_mods);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m_clip_mods_inverse);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m__MIN_NEAR_DIST);
+  ON_INTERNAL_SHALLOW_FIELD_COPY(m__MIN_NEAR_OVER_FAR);
+#undef ON_INTERNAL_SHALLOW_COPY
+  return destination;
+}
 
 bool ON_Viewport::IsValidCameraLocation(
   ON_3dPoint candidate_point
@@ -4348,10 +4397,12 @@ void ON_Viewport::GetViewScale( double* x, double* y ) const
        && 1.0 == m_clip_mods.m_xform[3][3]
      )
   {
+    // 04 May 2020 S. Baer (RH-37076)
+    // Allow for negative scale values. See comments in SetViewScale
     double sx = m_clip_mods.m_xform[0][0];
     double sy = m_clip_mods.m_xform[1][1];
-    if (    sx > ON_ZERO_TOLERANCE
-         && sy > ON_ZERO_TOLERANCE
+    if (    fabs(sx) > ON_ZERO_TOLERANCE
+         && fabs(sy) > ON_ZERO_TOLERANCE
          && 0.0 == m_clip_mods.m_xform[0][1]
          && 0.0 == m_clip_mods.m_xform[0][2]
          && 0.0 == m_clip_mods.m_xform[1][0]
@@ -4386,10 +4437,18 @@ bool ON_Viewport::SetViewScale( double x, double y )
   //   and it is hard to be sure that we could accurately extract these values
   //   when calling GetViewScale.  Removing the requirement to have one of the
   //   values == 1
+  // 04 May 2020 S. Baer (RH-37076)
+  //   Users are requesting mirrored parallel viewports (reflected ceiling plans).
+  //   Removing the limitation that this function imposes of only positive values
+  //   allowed for scaling to see if a -1.0 for x is what these users are after.
+  //   Scaling values are not saved with the 3dm file so this is not a long term
+  //   solution for supporting RCP viewports. What this does do is let us have users
+  //   experiment with a -1.0 horizontal scale in a custom display mode and tell
+  //   us if this is the desired display that they are after.
   bool rc = false;
   if ( IsParallelProjection()
-       && x > ON_ZERO_TOLERANCE && ON_IsValid(x) 
-       && y > ON_ZERO_TOLERANCE && ON_IsValid(y) 
+       && fabs(x) > ON_ZERO_TOLERANCE && ON_IsValid(x) 
+       && fabs(y) > ON_ZERO_TOLERANCE && ON_IsValid(y) 
        // && (1.0 == x || 1.0 == y)
        )
   {
@@ -4426,7 +4485,7 @@ double ON_Viewport::ClipCoordDepthBias( double relative_depth_bias, double clip_
       //
       // Note that there "should" be a small adjustment to the
       // x and y coordinates that is not performed by tweaking
-      // the z clipping coordiante
+      // the z clipping coordinate
       //    z += vp->ClipCoordDepthBias( rel_bias, z, w );
       // but the effect is actually better when the goal is to
       // make wires that are on shaded surfaces appear because

@@ -84,7 +84,8 @@ public:
     mesh_mapping_primitive = 6, // m_mapping_primitive is an ON_Mesh 
     srf_mapping_primitive  = 7, // m_mapping_primitive is an ON_Surface
     brep_mapping_primitive = 8,  // m_mapping_primitive is an ON_Brep
-    ocs_mapping = 9              // same as plane_mapping - used to differentiate between OCS and plane mapping in the UI
+    ocs_mapping = 9,             // same as plane_mapping - used to differentiate between OCS and plane mapping in the UI
+    false_colors = 10 // some kind of false color mapping used to set per vertex colors.
   };
 
   static ON_TextureMapping::TYPE TypeFromUnsigned( 

@@ -24,6 +24,65 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+
+const ON_Color ON_Color::RandomColor()
+{
+  return RandomColor(ON_RandomNumberGenerator::RandomSeed());
+}
+
+
+const ON_Color ON_Color::RandomColor(
+  ON_Interval hue_range,
+  ON_Interval saturation_range,
+  ON_Interval value_range
+)
+{
+  return RandomColor(ON_RandomNumberGenerator::RandomSeed(), hue_range, saturation_range, value_range);
+}
+
+const ON_Color ON_Color::RandomColor(
+  ON__UINT32 seed
+)
+{
+  return ON_Color::RandomColor(seed, ON_Interval::ZeroToTwoPi, ON_Interval::Singleton(1.0), ON_Interval::Singleton(1.0));
+}
+
+const ON_Color ON_Color::RandomColor(
+  ON__UINT32 seed,
+  ON_Interval hue_range,
+  ON_Interval saturation_range,
+  ON_Interval value_range
+)
+{
+  ON_RandomNumberGenerator rg;
+  rg.Seed(seed + 1U); // the +1 is so the colors for seeds (0,1,2,3,4,5 are more vistually distinct)
+  const double h = hue_range.IsSingleton() ? hue_range.m_t[0] : rg.RandomDouble(hue_range);
+  double s = saturation_range.IsSingleton() ? saturation_range.m_t[0] : rg.RandomDouble(saturation_range);
+  if (s > ON_UNSET_VALUE && s < ON_UNSET_POSITIVE_VALUE)
+  {
+    if (s < 0.0)
+      s = 0.0;
+    else if (s > 1.0)
+      s = 1.0;
+  }
+  else
+    s = 1.0;
+  double v = value_range.IsSingleton() ? value_range.m_t[0] : rg.RandomDouble(value_range);
+  if (v > ON_UNSET_VALUE && v < ON_UNSET_POSITIVE_VALUE)
+  {
+    if (v < 0.0)
+      v = 0.0;
+    else if (v > 1.0)
+      v = 1.0;
+  }
+  else
+    v = 1.0;
+  ON_Color color = ON_Color::UnsetColor;
+  if (ON_IsValid(h) && ON_IsValid(s) && ON_IsValid(v))
+    color.SetHSV( fmod(h,ON_2PI), s, v );
+  return color;
+}
+
 ON_Color::ON_Color(unsigned int colorref)
   : m_color(colorref)
 {

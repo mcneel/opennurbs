@@ -64,6 +64,14 @@ public:
     const ON_2fPoint& rhs
     );
 
+  /*
+  Returns:
+    (A+B)/2
+  Remarks:
+    Exact when coordinates are equal and prevents overflow.
+  */
+  static const ON_2fPoint Midpoint(const ON_2fPoint& A, const ON_2fPoint& B);
+
   explicit ON_2fPoint(const ON_3fPoint& );     // from 3f point
   explicit ON_2fPoint(const ON_4fPoint& );     // from 4f point
   explicit ON_2fPoint(const ON_2fVector& );    // from 2f vector
@@ -238,6 +246,14 @@ public:
     const ON_3fPoint& lhs,
     const ON_3fPoint& rhs
     );
+
+  /*
+  Returns:
+    (A+B)/2
+  Remarks:
+    Exact when coordinates are equal and prevents overflow.
+  */
+  static const ON_3fPoint Midpoint(const ON_3fPoint& A, const ON_3fPoint& B);
 
   explicit ON_3fPoint(float x,float y,float z);
   explicit ON_3fPoint(const ON_2fPoint& );     // from 2f point

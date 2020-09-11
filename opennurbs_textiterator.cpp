@@ -3369,10 +3369,13 @@ bool RtfComposer::Compose(
 
     }
 
-    temp.Format(L"}\\f%d \\fs40", stylefont_key);
+    if(!ComposeFS())
+      temp.Format(L"}\\f%d", stylefont_key);
+    else
+      temp.Format(L"}\\f%d \\fs40", stylefont_key);
+
     rtf += temp;
 
-    //rtf += L"}\\fs40";
     if (style_bold)
       rtf += L"\\b";
     if (style_italic)
@@ -3400,6 +3403,17 @@ bool RtfComposer::RecomposeRTF()
 void RtfComposer::SetRecomposeRTF(bool b)
 {
   RtfComposer::m_bComposeRTF = b;
+}
+
+// Turns on or off adding \FS40 to composed strings
+bool RtfComposer::m_bComposeFS = true;
+bool RtfComposer::ComposeFS()
+{
+  return RtfComposer::m_bComposeFS;
+}
+void RtfComposer::SetComposeFS(bool b)
+{
+  RtfComposer::m_bComposeFS = b;
 }
 
 static const ON_wString Internal_PostScriptNameIfAvailable(const ON_Font& managed_font)
@@ -3604,9 +3618,12 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       rtf_string += fonttable_string;
     }
 
-    temp.Format(L"}\\f%d \\fs40", deffont_key);
+    if (!ComposeFS())
+      temp.Format(L"}\\f%d", deffont_key);
+    else
+      temp.Format(L"}\\f%d \\fs40", deffont_key);
+
     rtf_string += temp;
-    //rtf_string += L"}\\fs40";
 
     rtf_string += run_strings;
     rtf_string += L"}";

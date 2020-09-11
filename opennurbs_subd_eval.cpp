@@ -37,50 +37,50 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
   if (F != N && F + 1 != N)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  const ON_SubD::VertexTag vertex_tag = VertexTag();
+  const ON_SubDVertexTag vertex_tag = VertexTag();
   const unsigned int ring_ei_delta = 2;
 
   if (nullptr == subd)
     subd = new ON_SubD;
 
-  ON_SubD::VertexTag vertex_tag0;
-  ON_SubD::VertexTag vertex_tag1;
-  ON_SubD::EdgeTag edge_tag0;
-  ON_SubD::EdgeTag edge_tag1;
+  ON_SubDVertexTag vertex_tag0;
+  ON_SubDVertexTag vertex_tag1;
+  ON_SubDEdgeTag edge_tag0;
+  ON_SubDEdgeTag edge_tag1;
 
   switch (vertex_tag)
   {
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     sector_angle_radians = 2.0*ON_PI;
-    vertex_tag0 = ON_SubD::VertexTag::Smooth;
-    vertex_tag1 = ON_SubD::VertexTag::Smooth;
-    edge_tag0 = ON_SubD::EdgeTag::Smooth;
-    edge_tag1 = ON_SubD::EdgeTag::Smooth;
+    vertex_tag0 = ON_SubDVertexTag::Smooth;
+    vertex_tag1 = ON_SubDVertexTag::Smooth;
+    edge_tag0 = ON_SubDEdgeTag::Smooth;
+    edge_tag1 = ON_SubDEdgeTag::Smooth;
     break;
 
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     if ( !(sector_angle_radians > 0.0 && sector_angle_radians < 2.0*ON_PI) )
       sector_angle_radians = 0.5*ON_PI;
-    vertex_tag0 = ON_SubD::VertexTag::Crease;
-    vertex_tag1 = ON_SubD::VertexTag::Crease;
-    edge_tag0 = ON_SubD::EdgeTag::Crease;
-    edge_tag1 = ON_SubD::EdgeTag::Crease;
+    vertex_tag0 = ON_SubDVertexTag::Crease;
+    vertex_tag1 = ON_SubDVertexTag::Crease;
+    edge_tag0 = ON_SubDEdgeTag::Crease;
+    edge_tag1 = ON_SubDEdgeTag::Crease;
     break;
 
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     sector_angle_radians = CornerSectorAngleRadians();
-    vertex_tag0 = ON_SubD::VertexTag::Crease;
-    vertex_tag1 = ON_SubD::VertexTag::Crease;
-    edge_tag0 = ON_SubD::EdgeTag::Crease;
-    edge_tag1 = ON_SubD::EdgeTag::Crease;
+    vertex_tag0 = ON_SubDVertexTag::Crease;
+    vertex_tag1 = ON_SubDVertexTag::Crease;
+    edge_tag0 = ON_SubDEdgeTag::Crease;
+    edge_tag1 = ON_SubDEdgeTag::Crease;
     break;
 
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     sector_angle_radians = 2.0*ON_PI;
-    vertex_tag0 = ON_SubD::VertexTag::Crease;
-    vertex_tag1 = ON_SubD::VertexTag::Smooth;
-    edge_tag0 = ON_SubD::EdgeTag::Crease;
-    edge_tag1 = ON_SubD::EdgeTag::Smooth;
+    vertex_tag0 = ON_SubDVertexTag::Crease;
+    vertex_tag1 = ON_SubDVertexTag::Smooth;
+    edge_tag0 = ON_SubDEdgeTag::Crease;
+    edge_tag1 = ON_SubDEdgeTag::Smooth;
     break;
 
   default:
@@ -109,7 +109,7 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
 
   for (unsigned int vi = 0; vi < R; vi++)
   {
-    ON_SubD::VertexTag vertex_tag_vi;
+    ON_SubDVertexTag vertex_tag_vi;
     if ( 0 == vi )
       vertex_tag_vi = vertex_tag; // center vertex
     else if ( 1 == vi )
@@ -117,7 +117,7 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
     else if ( R == vi+1 && N > F )
       vertex_tag_vi = vertex_tag1; // last edge
     else
-      vertex_tag_vi = ON_SubD::VertexTag::Smooth; // interior edge or an outer face vertex
+      vertex_tag_vi = ON_SubDVertexTag::Smooth; // interior edge or an outer face vertex
 
     if (radius > 0.0)
     {
@@ -143,15 +143,15 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
   
   for (unsigned int vei = 0; vei < N; vei++)
   {
-    ON_SubD::EdgeTag edge_tag_vei;
+    ON_SubDEdgeTag edge_tag_vei;
     if ( 0 == vei )
       edge_tag_vei = edge_tag0; // first edge
     else if ( vei+1 == N )
       edge_tag_vei = edge_tag1; // last edge
     else
-      edge_tag_vei = ON_SubD::EdgeTag::Smooth; // interior edge
+      edge_tag_vei = ON_SubDEdgeTag::Smooth; // interior edge
 
-    double w0 = (ON_SubD::EdgeTag::Smooth == edge_tag_vei) ? smooth_edge_w0 : ON_SubDSectorType::IgnoredSectorCoefficient;
+    double w0 = (ON_SubDEdgeTag::Smooth == edge_tag_vei) ? smooth_edge_w0 : ON_SubDSectorType::IgnoredSectorCoefficient;
     unsigned int ev1i = 1 + vei*ring_ei_delta;
     E.Append(
       subd->AddEdgeWithSectorCoefficients(
@@ -178,8 +178,8 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
     f_edgeptr[0] = ON_SubDEdgePtr::Create(f_edge[0], 0);
     f_edgeptr[3] = ON_SubDEdgePtr::Create(f_edge[3], 1);
     f_vertex[2] = V[2 + 2 * vfi];
-    f_edge[1] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[1], ON_SubDSectorType::IgnoredSectorCoefficient, f_vertex[2], ON_SubDSectorType::IgnoredSectorCoefficient);
-    f_edge[2] = subd->AddEdgeWithSectorCoefficients(ON_SubD::EdgeTag::Smooth, f_vertex[2], ON_SubDSectorType::IgnoredSectorCoefficient, f_vertex[3], ON_SubDSectorType::IgnoredSectorCoefficient);
+    f_edge[1] = subd->AddEdgeWithSectorCoefficients(ON_SubDEdgeTag::Smooth, f_vertex[1], ON_SubDSectorType::IgnoredSectorCoefficient, f_vertex[2], ON_SubDSectorType::IgnoredSectorCoefficient);
+    f_edge[2] = subd->AddEdgeWithSectorCoefficients(ON_SubDEdgeTag::Smooth, f_vertex[2], ON_SubDSectorType::IgnoredSectorCoefficient, f_vertex[3], ON_SubDSectorType::IgnoredSectorCoefficient);
     f_edgeptr[1] = ON_SubDEdgePtr::Create(f_edge[1], 0);
     f_edgeptr[2] = ON_SubDEdgePtr::Create(f_edge[2], 0);
     subd->AddFace(f_edgeptr,4);
@@ -473,7 +473,7 @@ static bool GetSectorLimitPointHelper(
 
     if (
       false == bUndefinedNormalIsPossible
-      && ON_SubD::VertexTag::Crease == SM.m_sector_type.VertexTag()
+      && ON_SubDVertexTag::Crease == SM.m_sector_type.VertexTag()
       && R >= 5
       && *((const ON_3dPoint*)(point_ring+ point_ring_stride)) == *((const ON_3dPoint*)(point_ring + (R-1)* point_ring_stride))
       )
@@ -661,9 +661,55 @@ const ON_3dPoint ON_SubDVertex::SurfacePoint() const
 {
   ON_3dPoint limit_point(ON_3dPoint::NanPoint);
   return GetSurfacePoint(&limit_point.x) ? limit_point : ON_3dPoint::NanPoint;
-
 }
 
+const ON_3dVector ON_SubDVertex::SurfaceNormal(
+  const ON_SubDFace* sector_face,
+  bool bUndefinedNormalPossible
+) const
+{
+  for (;;)
+  {
+    if (m_face_count < 1 || nullptr == m_faces)
+    {
+      ON_ERROR("No faces on this vertex.");
+      break;
+    }
+
+    if (nullptr == sector_face && IsCreaseOrCorner())
+    {
+      const ON_SubDComponentPtrPair crease_pair = this->CreasedEdgePair(false);
+      const ON_SubDEdge* e[2] = { crease_pair.First().Edge(), crease_pair.Second().Edge() };
+      if (nullptr == e[0] || 1 != e[0]->m_face_count || nullptr == e[1] || 1 != e[1]->m_face_count)
+      {
+        ON_ERROR("sector_face must be specified in this case.");
+        break;
+      }
+    }
+
+    if (nullptr == sector_face)
+      sector_face = m_faces[0];
+    ON_SubDSectorSurfacePoint limit_point;
+    bool rc = ON_SubDVertex::GetSurfacePoint(
+      sector_face,
+      bUndefinedNormalPossible,
+      limit_point
+    );
+    if (false == rc)
+      break;
+    const ON_3dVector N(limit_point.m_limitN);
+    if (false == bUndefinedNormalPossible && N.IsZero())
+      break;
+    return N;
+  }
+
+  return ON_3dVector::NanVector;
+}
+
+const ON_SubDSectorSurfacePoint& ON_SubDVertex::SectorSurfacePointForExperts() const
+{
+  return this->m_limit_point;
+}
 
 const ON_Plane ON_SubDVertex::VertexFrame(
   ON_SubDComponentLocation subd_appearance

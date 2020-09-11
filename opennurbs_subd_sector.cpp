@@ -40,7 +40,7 @@ public:
 
   static ON_SubDSectorType Create(
     ON_SubD::SubDType subd_type,
-    ON_SubD::VertexTag vertex_tag,
+    ON_SubDVertexTag vertex_tag,
     unsigned int sector_edge_count,
     double sector_angle_radians
     );
@@ -72,7 +72,7 @@ public:
     );
 
   ON_SubD::SubDType m_subd_type = ON_SubD::SubDType::Unset;
-  ON_SubD::VertexTag m_vertex_tag = ON_SubD::VertexTag::Unset;
+  ON_SubDVertexTag m_vertex_tag = ON_SubDVertexTag::Unset;
 
 private:
   unsigned char m_reserved1 = 0;
@@ -109,28 +109,28 @@ bool ON_SubDSectorType::IsValid() const
 
   switch (m_vertex_tag)
   {
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
     if (!(m_sector_coefficient == ON_SubDSectorType::IgnoredSectorCoefficient))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
     if (!(m_sector_coefficient == ON_SubDSectorType::CreaseSectorCoefficient(m_sector_face_count)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians < ON_2PI))
       return ON_SUBD_RETURN_ERROR(false);
     if (!(m_sector_coefficient == ON_SubDSectorType::CornerSectorCoefficient(m_sector_face_count,m_corner_sector_angle_radians)))
       return ON_SUBD_RETURN_ERROR(false);
     break;
 
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     if (!(m_corner_sector_angle_radians == ON_SubDSectorType::IgnoredCornerSectorAngle))
       return ON_SUBD_RETURN_ERROR(false);
     if (!(m_sector_coefficient == ON_SubDSectorType::DartSectorCoefficient(m_sector_face_count)))
@@ -145,7 +145,7 @@ bool ON_SubDSectorType::IsValid() const
   return true;
 }
 
-ON_SubD::VertexTag ON_SubDSectorType::VertexTag() const
+ON_SubDVertexTag ON_SubDSectorType::VertexTag() const
 {
   return m_vertex_tag;
 }
@@ -159,46 +159,46 @@ unsigned int ON_SubDSectorType::FacetEdgeCount() const
 double ON_SubDSectorType::CornerSectorAngleRadians() const
 {
   return 
-    (ON_SubD::VertexTag::Corner == m_vertex_tag) 
+    (ON_SubDVertexTag::Corner == m_vertex_tag) 
     ? m_corner_sector_angle_radians
     : ON_SubDSectorType::ErrorCornerSectorAngle;
 }
 
 unsigned int ON_SubDSectorType::CornerSectorAngleIndex() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner) ? m_corner_sector_angle_index : ON_UNSET_UINT_INDEX;
+  return (m_vertex_tag == ON_SubDVertexTag::Corner) ? m_corner_sector_angle_index : ON_UNSET_UINT_INDEX;
 }
 
 bool ON_SubDSectorType::IsSmoothSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Smooth);
+  return (m_vertex_tag == ON_SubDVertexTag::Smooth);
 }
 
 
 bool ON_SubDSectorType::IsDartSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Dart);
+  return (m_vertex_tag == ON_SubDVertexTag::Dart);
 }
 
 
 bool ON_SubDSectorType::IsCreaseSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Crease);
+  return (m_vertex_tag == ON_SubDVertexTag::Crease);
 }
 
 bool ON_SubDSectorType::IsCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
+  return (m_vertex_tag == ON_SubDVertexTag::Corner && m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 bool ON_SubDSectorType::IsConvexCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index >=  ON_SubDSectorType::MaximumCornerAngleIndex);
+  return (m_vertex_tag == ON_SubDVertexTag::Corner && 2*m_corner_sector_angle_index >=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 bool ON_SubDSectorType::IsConcaveCornerSector() const
 {
-  return (m_vertex_tag == ON_SubD::VertexTag::Corner && 2*m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
+  return (m_vertex_tag == ON_SubDVertexTag::Corner && 2*m_corner_sector_angle_index <=  ON_SubDSectorType::MaximumCornerAngleIndex);
 }
 
 
@@ -208,19 +208,19 @@ unsigned int ON_SubDSectorType::EdgeCount() const
   {
     switch (m_vertex_tag)
     {
-    case ON_SubD::VertexTag::Smooth:
+    case ON_SubDVertexTag::Smooth:
       return m_sector_face_count;
       break;
 
-    case ON_SubD::VertexTag::Crease:
+    case ON_SubDVertexTag::Crease:
       return m_sector_face_count + 1;
       break;
 
-    case ON_SubD::VertexTag::Corner:
+    case ON_SubDVertexTag::Corner:
       return m_sector_face_count + 1;
       break;
 
-    case ON_SubD::VertexTag::Dart:
+    case ON_SubDVertexTag::Dart:
       return m_sector_face_count;
       break;
 
@@ -367,7 +367,7 @@ double ON_SubDSectorType::CornerSectorThetaFromCornerAngle(
     double corner_sector_angle_radians
     )
 {
-  if (sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubD::VertexTag::Corner)
+  if (sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubDVertexTag::Corner)
     && sector_face_count <= ON_SubDVertex::MaximumFaceCount
     )
   {
@@ -607,7 +607,7 @@ double ON_SubDSectorType::CornerSectorCoefficient(
 {
   corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
   if (ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) 
-    && sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubD::VertexTag::Corner)
+    && sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubDVertexTag::Corner)
     && sector_face_count <= ON_SubDVertex::MaximumFaceCount
     )
   {
@@ -643,9 +643,9 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
     if (0 != rc)
     {
       // bias towards valid tags
-      if ( ON_SubD::VertexTag::Unset == b->m_vertex_tag)
+      if ( ON_SubDVertexTag::Unset == b->m_vertex_tag)
         rc = -1;
-      else if ( ON_SubD::VertexTag::Unset == a->m_vertex_tag)
+      else if ( ON_SubDVertexTag::Unset == a->m_vertex_tag)
         rc = 1;
       break;
     }
@@ -659,7 +659,7 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
         rc = 1;
       break;
     }
-    if (ON_SubD::VertexTag::Corner == a->m_vertex_tag)
+    if (ON_SubDVertexTag::Corner == a->m_vertex_tag)
     {
       rc = CompareUnsinged(a->m_corner_sector_angle_index, b->m_corner_sector_angle_index);
       if (0 != rc)
@@ -678,7 +678,7 @@ void ON_SubDSectorType::SetHash()
   unsigned int hash = 0;
   hash = ON_CRC32(hash,sizeof(m_vertex_tag),&m_vertex_tag);
   hash = ON_CRC32(hash,sizeof(m_sector_face_count),&m_sector_face_count);
-  if ( ON_SubD::VertexTag::Corner == m_vertex_tag)
+  if ( ON_SubDVertexTag::Corner == m_vertex_tag)
     hash = ON_CRC32(hash,sizeof(m_corner_sector_angle_index),&m_corner_sector_angle_index);
   if ( 0 == hash )
     hash = 1;
@@ -691,7 +691,7 @@ unsigned int ON_SubDSectorType::SectorTypeHash() const
 }
 
 static bool ON_SubDSectorType_IsValidFaceCount(
-  ON_SubD::VertexTag vertex_tag,
+  ON_SubDVertexTag vertex_tag,
   unsigned int sector_face_count
   )
 {
@@ -699,7 +699,7 @@ static bool ON_SubDSectorType_IsValidFaceCount(
 }
 
 static bool ON_SubDSectorType_IsValidFaceCountForCreate(
-  ON_SubD::VertexTag vertex_tag,
+  ON_SubDVertexTag vertex_tag,
   unsigned int sector_face_count
   )
 {
@@ -710,7 +710,7 @@ ON_SubDSectorType ON_SubDSectorType::CreateSmoothSectorType(
   unsigned int sector_face_count
   )
 {
-  const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Smooth;
+  const ON_SubDVertexTag vertex_tag = ON_SubDVertexTag::Smooth;
   if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
   {
     ON_SubDSectorType st;
@@ -737,7 +737,7 @@ ON_SubDSectorType ON_SubDSectorType::CreateCreaseSectorType(
   unsigned int sector_face_count
   )
 {
-  const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Crease;
+  const ON_SubDVertexTag vertex_tag = ON_SubDVertexTag::Crease;
   if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
   {
     ON_SubDSectorType st;
@@ -765,7 +765,7 @@ ON_SubDSectorType ON_SubDSectorType::CreateDartSectorType(
   unsigned int sector_face_count
   )
 {
-  const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Dart;
+  const ON_SubDVertexTag vertex_tag = ON_SubDVertexTag::Dart;
   if ( ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count) )
   {
     ON_SubDSectorType st;
@@ -811,7 +811,7 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
     || ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians)
     )
   {
-    const ON_SubD::VertexTag vertex_tag = ON_SubD::VertexTag::Corner;
+    const ON_SubDVertexTag vertex_tag = ON_SubDVertexTag::Corner;
     if (ON_SubDSectorType_IsValidFaceCountForCreate(vertex_tag,sector_face_count))
     {
       unsigned int corner_sector_angle_index 
@@ -846,26 +846,26 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
 
 
 ON_SubDSectorType ON_SubDSectorType::Create(
-  ON_SubD::VertexTag vertex_tag,
+  ON_SubDVertexTag vertex_tag,
   unsigned int sector_face_count,
   double corner_sector_angle_radians
   )
 {
-  if (ON_SubD::VertexTag::Unset == vertex_tag && 0 == sector_face_count)
+  if (ON_SubDVertexTag::Unset == vertex_tag && 0 == sector_face_count)
     return ON_SubDSectorType::Empty;
 
   switch (vertex_tag)
   {
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     return ON_SubDSectorType::CreateSmoothSectorType(sector_face_count);
     break;
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     return ON_SubDSectorType::CreateCreaseSectorType(sector_face_count);
     break;
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     return ON_SubDSectorType::CreateCornerSectorType(sector_face_count,corner_sector_angle_radians);
     break;
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     return ON_SubDSectorType::CreateDartSectorType(sector_face_count);
     break;
   }
@@ -884,11 +884,11 @@ ON_SubDSectorType ON_SubDSectorType::Create(
 
   ON_SubDSectorIterator local_sit(sit);
 
-  const ON_SubD::VertexTag vertex_tag = center_vertex->m_vertex_tag;
+  const ON_SubDVertexTag vertex_tag = center_vertex->m_vertex_tag;
 
   const ON_SubDFace* face0;
   ON_SubDEdgePtr edge0ptr = ON_SubDEdgePtr::Null;
-  if (ON_SubD::VertexTag::Smooth == vertex_tag)
+  if (ON_SubDVertexTag::Smooth == vertex_tag)
   {
     face0 = local_sit.CurrentFace();
     if (nullptr == face0 )
@@ -912,7 +912,7 @@ ON_SubDSectorType ON_SubDSectorType::Create(
     if (face0 == local_sit.NextFace(ON_SubDSectorIterator::StopAt::AnyCrease))
     {
       double corner_sector_angle_radians 
-          = (ON_SubD::VertexTag::Corner == vertex_tag)
+          = (ON_SubDVertexTag::Corner == vertex_tag)
           ? ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(edge0ptr,local_sit.CurrentEdgePtr(0))
           : 0.0;
       return ON_SubDSectorType::Create(vertex_tag,sector_face_count,corner_sector_angle_radians);

@@ -1216,6 +1216,13 @@ bool ON_Annotation::Internal_GetBBox_TextGlyphBox(
   text_glyph_box = ON_BoundingBox::UnsetBoundingBox;
   if (m_text)
   {
+    ON_Xform txf;
+    // 20 June 2017 S. Baer (RH-39835)
+    // GetTextXform can change cached information. Make sure this
+    // is called before m_text->BoundingBox()
+    // 23 June, 2020 - Lowell - Moved it above m_text->BoundingBox()
+    bool b = GetTextXform(vp, dimstyle, dimscale, txf);
+
     text_glyph_box = m_text->BoundingBox();
 
     // if mask, grow 2d bbox
@@ -1232,11 +1239,6 @@ bool ON_Annotation::Internal_GetBBox_TextGlyphBox(
       text_glyph_box.m_max = bmax;
     }
 
-    ON_Xform txf;
-    // 20 June 2017 S. Baer (RH-39835)
-    // GetTextXform can change cached information. Make sure this
-    // is called before m_text->BoundingBox()
-    bool b = GetTextXform(vp, dimstyle, dimscale, txf);
     if (b)
     {
       text_glyph_box.Transform(txf);

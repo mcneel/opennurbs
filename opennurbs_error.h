@@ -142,7 +142,8 @@ public:
     Assert = 3,    // ON_ASSERT (do not use ON_ASSERT - write code that handles errors and calls ON_ERROR)
     Custom = 4,
     SubDError = 5, // call to ON_SubDIncrementErrorCount()
-    NotValid = 6   // call to ON_IsNotValid()
+    BrepError = 6, // call to ON_BrepIncrementErrorCount()
+    NotValid = 7   // call to ON_IsNotValid()
   };
 
   static const char* TypeToString(

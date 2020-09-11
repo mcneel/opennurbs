@@ -1209,26 +1209,30 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
   }
   else
   {
-    //const ON_3fPoint* fV = m_V.Array();
+    const ON_3fPoint* fV = m_V.Array();
     for ( fi = 0; fi < facet_count; fi++ ) 
     {
-      // This test was too harsh for float precision meshes
-      // with nearly degnerate faces after they are transformed
-      // by a transform with a reasonable sized translation 
-      // component.
-      // See bug http://dev.mcneel.com/bugtrack/?q=87465
+      // This test is considered relatively harsh for float precision meshes with nearly degnerate faces
+      // after they are transformed by a transform with a reasonable sized translation 
+      // component, as in https://mcneel.myjetbrains.com/youtrack/issue/RH-10177.
+      // However, removing this creates unreasonable pressure on double precision meshes, because, after being 
+      // trasformed to double precision, a wrongly valid single-precision-collapsed-edge mesh makes an
+      // invalid double-precision mesh altogether. This cannot be tolerated.
+      // The goal should be to have invalid single-precision-only meshes be treated by MeshRepair when created.
+      // See https://mcneel.myjetbrains.com/youtrack/issue/RH-54563 and
+      /// https://mcneel.myjetbrains.com/youtrack/issue/RH-30283
 
-      //if ( !m_F[fi].IsValid( vertex_count, fV ) ) 
-      //{
-      //  if ( text_log )
-      //  {
-      //    if ( !m_F[fi].IsValid( vertex_count) )
-      //      text_log->Print("ON_Mesh.m_F[%d].vi[] has invalid vertex indices.\n",fi);
-      //    else
-      //      text_log->Print("ON_Mesh.m_F[%d] has degenerate float precision vertex locations.\n",fi);
-      //  }
-      //  return ON_MeshIsNotValid(bSilentError);
-      //}
+      if ( !m_F[fi].IsValid( vertex_count, fV ) ) 
+      {
+        if ( text_log )
+        {
+          if ( !m_F[fi].IsValid( vertex_count) )
+            text_log->Print("ON_Mesh.m_F[%d].vi[] has invalid vertex indices.\n",fi);
+          else
+            text_log->Print("ON_Mesh.m_F[%d] has degenerate float precision vertex locations.\n",fi);
+        }
+        return ON_MeshIsNotValid(bSilentError);
+      }
 
       if ( !m_F[fi].IsValid( vertex_count ) ) 
       {
@@ -1254,6 +1258,66 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
   }
 
   return true;
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, ON_SHA1_Hash hash, const wchar_t* prefix, bool bNewLine)
+{
+  if (nullptr != prefix && 0 != prefix[0])
+    text_log.Print(L"%ls ", prefix);
+  hash.Dump(text_log);
+  if (bNewLine)
+    text_log.PrintNewLine();
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_3fVector>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  ON_SHA1_Accumulate3fVectorArray(sha1,a);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_2fPoint>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  ON_SHA1_Accumulate2fPointArray(sha1,a);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_3fPoint>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  ON_SHA1_Accumulate3fPointArray(sha1,a);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_2dPoint>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  ON_SHA1_Accumulate2dPointArray(sha1,a);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_3dPoint>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  ON_SHA1_Accumulate3dPointArray(sha1,a);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_MeshFace>& F, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  const ON_MeshFace* aa = F.Array();
+  const ON__INT32* e = (nullptr != aa) ? &aa[0].vi[0] : nullptr;
+  const size_t count = F.UnsignedCount() * sizeof(aa[0]) / sizeof(e[0]);
+  sha1.AccumulateInteger32Array(count,e);
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
 }
 
 void ON_Mesh::Dump( ON_TextLog& dump ) const
@@ -1292,9 +1356,11 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   dump.Print("%d mesh vertices:\n",m_V.Count());
   {
     dump.PushIndent();
+    Internal_PrintMeshArrayHash(dump, m_V, L"m_V array hash", true);
     const ON_3dPoint* D = 0;
     if ( bDoubles )
     {
+      Internal_PrintMeshArrayHash(dump, m_dV, L"m_dV array hash", true);
       D = DoublePrecisionVertices().Array();
     }
     for (i = 0; i < vcount; i++)
@@ -1330,6 +1396,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
     dump.Print("%d mesh vertex normals:\n",m_N.Count());
     {
       dump.PushIndent();
+      Internal_PrintMeshArrayHash(dump, m_N, L"m_N array hash", true);
       for (i = 0; i < vcount; i++)
       {
         if ( i == half_max && 2*half_max < vcount )
@@ -1352,6 +1419,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
     dump.Print("%d mesh vertex texture coordinates:\n",m_T.Count());
     {
       dump.PushIndent();
+      Internal_PrintMeshArrayHash(dump, m_T, L"m_T array hash", true);
       for (i = 0; i < vcount; i++)
       {
         if ( i == half_max && 2*half_max < vcount )
@@ -1377,6 +1445,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
     dump.Print("%d mesh vertex surface parameters:\n",m_S.Count());
     {
       dump.PushIndent();
+      Internal_PrintMeshArrayHash(dump, m_S, L"m_S array hash", true);
       for (i = 0; i < vcount; i++)
       {
         if ( i == half_max && 2*half_max < vcount )
@@ -1397,6 +1466,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   dump.Print("%d mesh faces:\n",m_F.Count());
   {
     dump.PushIndent();
+    Internal_PrintMeshArrayHash(dump, m_F, L"m_F array hash", true);
     for (i = 0; i < fcount; i++)
     {
       if ( i == half_max && 2*half_max < fcount )
@@ -5198,6 +5268,18 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   bool bHasDoubles             = (0 == vcount0 || HasSynchronizedDoubleAndSinglePrecisionVertices());
   bool bHasNgonMap             = (NgonCount() > 0 && 0 != NgonMap());
 
+  bool bSetMeshParameters = true;
+  const ON_MeshParameters* mp = nullptr;
+  ON_SHA1_Hash mp_hash = ON_SHA1_Hash::EmptyContentHash;
+  if (0 != vcount0)
+  {
+    mp = this->MeshParameters();
+    if (nullptr == mp)
+      bSetMeshParameters = false;
+    else
+      mp_hash = mp->GeometrySettingsHash();
+  }
+
   bool bHasSurfaceDomain
     = bHasSurfaceParameters
     && (0 == vcount0 || (m_srf_domain[0].IsIncreasing() && m_srf_domain[1].IsIncreasing()));
@@ -5230,6 +5312,31 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
       continue;
 
     merged_count++;
+
+    if (bSetMeshParameters)
+    {
+      const ON_MeshParameters* this_mesh_mp = m->MeshParameters();
+      if (nullptr == this_mesh_mp)
+        bSetMeshParameters = false;
+      else
+      {
+        const ON_SHA1_Hash this_mesh_mp_hash = this_mesh_mp->GeometrySettingsHash();
+        if (nullptr == mp)
+        {
+          // first mesh parameters.
+          mp = this_mesh_mp;
+          mp_hash = this_mesh_mp_hash;
+        }
+        else
+        {
+          if (this_mesh_mp_hash != mp_hash)
+          {
+            // variable mesh paramters - means output gets none.
+            bSetMeshParameters = false;
+          }
+        }
+      }
+    }
 
     int fcount1 = m->m_F.Count();
     if ( fcount1 > 0 )
@@ -5557,6 +5664,12 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
 
   if ( NgonCount() > 0 && bHasNgonMap )
     CreateNgonMap();
+
+  if (bSetMeshParameters && nullptr != mp && mp != this->MeshParameters())
+  {
+    // Appending to an empty this and all appendees have matching mesh parameters.
+    this->SetMeshParameters(*mp);
+  }
 }
 
 void ON_Mesh::Append( const ON_Mesh& m )
@@ -5739,16 +5852,37 @@ void ON_MeshParameters::SetSimplePlanes(
   Internal_SetBoolHelper(bSimplePlanes, &m_bSimplePlanes);
 }
 
+ON_SubDComponentLocation ON_SubDComponentLocationFromUnsigned(
+  unsigned int loc_as_unsigned
+)
+{
+  switch (loc_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDComponentLocation::Unset);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDComponentLocation::ControlNet);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDComponentLocation::Surface);
+  }
+
+  ON_ERROR("Invalid loc_as_unsigned parameter");
+  return ON_SubDComponentLocation::Unset;
+}
+
+
 void ON_MeshParameters::SetSubDDisplayParameters(
   const ON_SubDDisplayParameters& subd_parameters
 )
 {
-  m_subd_mesh_parameters = subd_parameters.EncodeAsUnsignedChar();
+  const unsigned char subd_mesh_paramters_as_char = subd_parameters.EncodeAsUnsignedChar();
+  if (subd_mesh_paramters_as_char != m_subd_mesh_parameters_as_char)
+  {
+    m_geometry_settings_hash = ON_SHA1_Hash::ZeroDigest;
+    m_subd_mesh_parameters_as_char = subd_mesh_paramters_as_char;
+  }
 }
   
 const ON_SubDDisplayParameters ON_MeshParameters::SubDDisplayParameters() const
 {
-  return ON_SubDDisplayParameters::DecodeFromUnsignedChar(m_subd_mesh_parameters);
+  return ON_SubDDisplayParameters::DecodeFromUnsignedChar(m_subd_mesh_parameters_as_char);
 }
 
 const bool ON_MeshParameters::Refine() const
@@ -6055,26 +6189,138 @@ ON_MeshParameters::ON_MeshParameters(
     SetRefine((density < 0.65));
     SetSimplePlanes((0.0 == density));
 
-
-    unsigned int subd_display_density = ON_SubDDisplayParameters::Default.DisplayDensity();
-
-    if (density <= ON_ZERO_TOLERANCE)
-      subd_display_density = 1;
-    else if (density < 1.0/6.0)
-      subd_display_density = ON_SubDDisplayParameters::CourseDensity;
-    else if (density < 1.0/3.0)
-      subd_display_density = (ON_SubDDisplayParameters::DefaultDensity+ON_SubDDisplayParameters::CourseDensity)/2;
-    else if (density <= 0.75)
-      subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
-    else if (density <= 1.0-ON_ZERO_TOLERANCE)
-      subd_display_density = (ON_SubDDisplayParameters::DefaultDensity+ON_SubDDisplayParameters::MaximumDensity)/2;
-    else if (density >= 1.0 - ON_ZERO_TOLERANCE)
-      subd_display_density = ON_SubDDisplayParameters::MaximumDensity;
-
-    ON_SubDDisplayParameters subd_parameters(ON_SubDDisplayParameters::Default);
-    subd_parameters.SetDisplayDensity(subd_display_density);
+    ON_SubDDisplayParameters subd_parameters = ON_SubDDisplayParameters::CreateFromMeshDensity(density);
     SetSubDDisplayParameters(subd_parameters);
   }
+}
+
+double ON_MeshParameters::ClampMeshDensityValue(double slider_value)
+{
+  // Make "fuzzy" values of 0.0, 0.5, and 1.0 exactly 0, 0.5, and 1.0 so
+  // siders of various int resolutions and code that uses float instead 
+  // of double precision values behaves in the expected way.
+  if (slider_value >= -ON_SQRT_EPSILON && slider_value <= ON_SQRT_EPSILON)
+    slider_value = 0.0;
+  else if (slider_value >= (0.5 - ON_SQRT_EPSILON) && slider_value <= (0.5 + ON_SQRT_EPSILON))
+    slider_value = 0.5;
+  else if (slider_value >= (1.0 - ON_SQRT_EPSILON) && slider_value <= (1.0 + ON_SQRT_EPSILON))
+    slider_value = 1.0;
+  else if (false == (slider_value >= 0.0 && slider_value <= 1.0))
+  {
+    // If you get this error, your user interface code has a bug.
+    ON_ERROR("Invalid slider_value - defaulting to 0.5");
+    slider_value = 0.5; // invalid input treated as 0.5.
+  }
+
+  return slider_value;
+}
+
+const ON_wString ON_MeshParameters::Description() const
+{
+  ON_wString description;
+  const double silder_value = this->MeshDensity();
+
+  const ON_SHA1_Hash hash = this->GeometrySettingsHash();
+  if (hash == ON_MeshParameters::FastRenderMesh.GeometrySettingsHash())
+    description = ON_wString(L"Fast");
+  else if (hash == ON_MeshParameters::QualityRenderMesh.GeometrySettingsHash())
+    description = ON_wString(L"Quality");
+  else if (silder_value >= 0.0 && silder_value <= 1.0)
+    description = ON_wString::FormatToString(L"Density(%g%%)", ON_MeshParameters::MeshDensityAsPercentage(silder_value));
+  else if (hash == ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsHash())
+    description = ON_wString(L"DefaultAnalysis");
+  else if (hash == ON_MeshParameters::DefaultMesh.GeometrySettingsHash())
+    description = ON_wString(L"Default");
+  else
+  {
+    description = ON_wString(L"Custom(");
+    description += hash.ToString(true);
+    description += L")";
+  }
+
+  return description;
+}
+
+const ON_MeshParameters ON_MeshParameters::CreateFromMeshDensity(double slider_value)
+{
+  return ON_MeshParameters(ON_MeshParameters::ClampMeshDensityValue(slider_value));
+}
+
+double ON_MeshParameters::MeshDensityAsPercentage(double slider_value)
+{
+  if (slider_value >= 0.0 && slider_value <= 1.0)
+  {
+    const double percent_fuzz_tol = 1.0e-4;
+    const double slider_percent = slider_value * 100.0; // percent = slider_value as a percentage.
+    const double n = floor(slider_percent + 0.25);
+    if (fabs(n - slider_percent) <= percent_fuzz_tol)
+      return n; // slider_percent is within fuzz of being an integer - return the integer
+
+    const double p = 100.0*(floor(1024.0 * slider_value + 0.25) / 1024.0);
+    if (fabs(p - slider_percent) <= percent_fuzz_tol)
+      return p; // slider_percent is within fuzz of 100.0*(N/1024.0). Return 100.0*(N/1024.0).
+
+    return slider_percent; // return percentage with no fuzz removal
+  }
+  return ON_DBL_QNAN; // not a percent
+}
+
+double ON_MeshParameters::MeshDensity() const
+{
+  for (;;)
+  {
+    const double candidate_density = this->RelativeTolerance();
+    if (false == (candidate_density >= 0.0 && candidate_density <= 1.0))
+      break; // invalid candidate_density
+    
+    // 5 fast tests for quick rejection
+    if ((this->m_bSimplePlanes ? 1 : 0) != ((0.0 == candidate_density) ? 1 : 0))
+      break;
+    if (false == (this->m_grid_angle_radians == 0.0))
+      break;
+    if (false == (this->m_grid_amplification == 0.0))
+      break;
+    if (false == (this->m_refine_angle_radians == 0.0))
+      break;
+    if (this->SubDDisplayParameters().DisplayDensity() != ON_SubDDisplayParameters::CreateFromMeshDensity(candidate_density).DisplayDensity())
+      break;
+
+    // Now build one with the candidate_density slider value
+    ON_MeshParameters candidate_mp = ON_MeshParameters::CreateFromMeshDensity(candidate_density);
+
+#define ON_COPY_MESH_PARAMETERS_MEMBER(M) candidate_mp.M = this->M
+    // ignore these paramters do not control the mesh density.
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_bCustomSettings);
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_bCustomSettingsEnabled);
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_bComputeCurvature);
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_bDoublePrecision);
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_bClosedObjectPostProcess);
+    ON_COPY_MESH_PARAMETERS_MEMBER(m_texture_range);
+    if (ON_nil_uuid == this->m_mesher_id)
+    {
+      // Pangolin parameters do not apply
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_mesher_id);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_bEvaluatorBasedTessellation);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_min_num_segments);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_angle_tol_in_degrees);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_max_dist_between_points);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_min_parametric_ratio);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_angle_tol_in_degrees);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_max_edge_length);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_min_edge_length);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_min_edge_length_ratio_uv);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_max_aspect_ratio);
+      ON_COPY_MESH_PARAMETERS_MEMBER(m_smoothing_passes);
+    }
+#undef ON_COPY_MESH_PARAMETERS_MEMBER
+
+    if (0 != ON_MeshParameters::Compare(candidate_mp, *this))
+      break;
+
+    // These mesh parameters will create the same mesh geometry as ON_MeshParameters::CreateFromMeshDensity().
+    return candidate_density;
+  }
+  return ON_DBL_QNAN;
 }
 
 double ON_MeshParameters::MinimumEdgeLengthFromTolerance( 
@@ -6148,43 +6394,66 @@ bool operator!=(const ON_MeshParameters& a, const ON_MeshParameters& b)
 
 void ON_MeshParameters::Dump( ON_TextLog& text_log ) const
 {
+  const ON_wString description = this->Description();
+  text_log.Print(L"Description: %ls\n", static_cast<const wchar_t*>(description));
   text_log.Print(L"Gridding:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Min grid count = %d\n",m_grid_min_count);
-  text_log.Print(L"Max grid count = %d\n",m_grid_max_count);
-  text_log.Print(L"Gridding angle = %g radians (%g degrees)\n",GridAngleRadians(),GridAngleDegrees());
-  text_log.Print(L"Aspect ratio = %g\n",m_grid_aspect_ratio);
-  text_log.Print(L"Amplification = %g\n",m_grid_amplification);
-  text_log.PopIndent();
+  {
+    const ON_TextLogIndent indent1(text_log);
+    text_log.Print(L"Min grid count = %d\n", m_grid_min_count);
+    text_log.Print(L"Max grid count = %d\n", m_grid_max_count);
+    text_log.Print(L"Gridding angle = %g radians (%g degrees)\n", GridAngleRadians(), GridAngleDegrees());
+    text_log.Print(L"Aspect ratio = %g\n", m_grid_aspect_ratio);
+    text_log.Print(L"Amplification = %g\n", m_grid_amplification);
+  }
 
   text_log.Print(L"Refining:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Refine = %ls\n", m_bRefine? L"true" : L"false");
-  text_log.Print(L"Refine angle = %g radians (%g degrees)\n",RefineAngleRadians(),RefineAngleDegrees());
-  text_log.PopIndent();
+  {
+    const ON_TextLogIndent indent1(text_log);
+    text_log.Print(L"Refine = %ls\n", m_bRefine ? L"true" : L"false");
+    text_log.Print(L"Refine angle = %g radians (%g degrees)\n", RefineAngleRadians(), RefineAngleDegrees());
+  }
 
   text_log.Print(L"Metrics:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Tolerance from size 1 object = %g (relative tolerance = %g)\n",ON_MeshParameters::ToleranceFromObjectSize(RelativeTolerance(),1.0),RelativeTolerance());
-  text_log.Print(L"Minimum tolerance = %g\n",MinimumTolerance());
-  text_log.Print(L"Tolerance = %g\n",m_tolerance);
-  text_log.Print(L"Min edge length = %g\n",m_min_edge_length);
-  text_log.Print(L"Max edge length = %g\n",m_max_edge_length);
-  text_log.PopIndent();
+  {
+    const ON_TextLogIndent indent1(text_log);
+    text_log.Print(L"Tolerance from size 1 object = %g (relative tolerance = %g)\n", ON_MeshParameters::ToleranceFromObjectSize(RelativeTolerance(), 1.0), RelativeTolerance());
+    text_log.Print(L"Minimum tolerance = %g\n", MinimumTolerance());
+    text_log.Print(L"Tolerance = %g\n", m_tolerance);
+    text_log.Print(L"Min edge length = %g\n", m_min_edge_length);
+    text_log.Print(L"Max edge length = %g\n", m_max_edge_length);
+  }
+
+  text_log.Print(L"SubDMeshParameters:\n");
+  {
+    const ON_TextLogIndent indent1(text_log);
+    this->SubDDisplayParameters().Dump(text_log);
+  }
 
   text_log.Print(L"Misceleanous:\n");
-  text_log.PushIndent();
-  text_log.Print(L"Face type = %d\n",m_face_type );
-  text_log.Print(L"Compute curvature = %ls\n",m_bComputeCurvature?L"true":L"false");
-  text_log.Print(L"Texture range = %d\n",m_texture_range);
-  text_log.Print(L"Simple planes = %ls\n",m_bSimplePlanes?L"true":L"false");
-  text_log.Print(L"Jagged Seams = %ls\n",m_bJaggedSeams?L"true":L"false");
-  text_log.Print(L"Double Precision = %ls\n",m_bDoublePrecision?L"true":L"false");
-  text_log.Print(L"Closed object mesh healing = %ls\n",ClosedObjectPostProcess()?L"true":L"false");
-  text_log.Print(L"Custom settings = %ls\n",m_bCustomSettings?L"true":L"false");
+  {
+    const ON_TextLogIndent indent1(text_log);
+    text_log.Print(L"Face type = %d\n", m_face_type);
+    text_log.Print(L"Compute curvature = %ls\n", m_bComputeCurvature ? L"true" : L"false");
+    text_log.Print(L"Texture range = %d\n", m_texture_range);
+    text_log.Print(L"Simple planes = %ls\n", m_bSimplePlanes ? L"true" : L"false");
+    text_log.Print(L"Jagged Seams = %ls\n", m_bJaggedSeams ? L"true" : L"false");
+    text_log.Print(L"Double Precision = %ls\n", m_bDoublePrecision ? L"true" : L"false");
+    text_log.Print(L"Closed object mesh healing = %ls\n", ClosedObjectPostProcess() ? L"true" : L"false");
+  }
 
-  
-  text_log.PopIndent();
+  text_log.Print(L"Custom:\n");
+  {
+    const ON_TextLogIndent indent1(text_log);
+    text_log.Print(L"Custom settings = %ls\n", m_bCustomSettings ? L"true" : L"false");
+    text_log.Print(L"Custom settings enabled = %ls\n", m_bCustomSettingsEnabled ? L"true" : L"false");
+    const ON_UUID id = MesherId();
+    if (ON_UuidIsNotNil(id))
+    {
+      text_log.Print(L"Mesher ID = ");
+      text_log.Print(id);
+      text_log.PrintNewLine();
+    }
+  }
 }
 
 static double ON_MeshParameters_SHA1Double(double t, double default_value)
@@ -6210,14 +6479,34 @@ int ON_MeshParameters::CompareGeometrySettings(
 
 ON_SHA1_Hash ON_MeshParameters::ContentHash() const
 {
-  // Discuss any changes with Dale Lear
+  // Please discuss any changes with Dale Lear
+
+  // These values are intentionally ignored
+  //   m_bCustomSettingsEnabled
+  //   m_bDoublePrecision
+
   // Use ON_MeshParameters::GeometrySettingsHash() if you want to ignore any of these values, like m_bComputeCurvature.
   ON_SHA1 sha1;
   sha1.AccumulateBool(m_bCustomSettings);
   sha1.AccumulateBool(m_bComputeCurvature); 
   sha1.AccumulateUnsigned32(m_texture_range);
+  sha1.AccumulateUnsigned32(m_bClosedObjectPostProcess);
+
   const ON_SHA1_Hash geometry_settings_hash = GeometrySettingsHash();
   sha1.AccumulateSubHash(geometry_settings_hash);
+
+  if (ON_UuidIsNil(m_mesher_id))
+  {
+    // When m_mesher_id is nil, the Pangolin parameters are not included in 
+    // GeometrySettingsHash() because they do not apply.
+    // Since ContentHash() is a hash of every ON_MeshParameters setting,
+    // the Pangolin get accumulated here.
+    sha1.AccumulateId(m_mesher_id);
+
+    // Pangolin parameters
+    Internal_AccumulatePangolinParameters(ON_MeshParameters::DefaultMesh, sha1);
+  }
+
   return sha1.Hash();
 }
 
@@ -6253,7 +6542,22 @@ void ON_MeshParameters::Internal_AccumulatePangolinParameters(
 
 ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
 {
-  // Discuss any changes with Dale Lear
+  // Please discuss any changes with Dale Lear
+
+  // These values are intentionally ignored.
+  //   m_bCustomSettings
+  //   m_bCustomSettingsEnabled
+  //   m_bComputeCurvature
+  //   m_bDoublePrecision
+  //   m_bClosedObjectPostProcess
+  //   m_texture_range
+  //   If they are included here, Rhino will remesh when it should not because it treats
+  //   Texture coordinates as a mutable property (const_cast widely used in Rhino).
+  //   Curvature is added/removed from analysis mode as needed.
+  //   Custom settings controls where the mesh settings come from and when they 
+  //   match what was used to create an existing mesh, a remesh is extremely wasteful,
+  //   ClosedObjectPostProcess is added/removed as needed and is a hack to cover up core bugs.
+
   if (m_geometry_settings_hash.IsZeroDigest())
   {
     ON_SHA1 sha1;
@@ -6276,16 +6580,21 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_refine_angle_radians,0.0));
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_grid_amplification,1.0));
     sha1.AccumulateUnsigned32(m_face_type);
-    sha1.AccumulateBool(m_bClosedObjectPostProcess);
 
-    // The Pangolin parameters and any other, parameters we add in the future,
-    // contribute to the SHA1 only when they differ from default values.
-    // This keeps old SHA-1 values correct and prevents remeshing when openning
-    // old files.
-    sha1.AccumulateId(m_mesher_id);
+    // SubD meshing parameters
+    sha1.AccumulateBytes(&m_subd_mesh_parameters_as_char, sizeof(m_subd_mesh_parameters_as_char));    
 
-    // Pangolin parameters
-    Internal_AccumulatePangolinParameters(ON_MeshParameters::DefaultMesh,sha1);
+    if (ON_UuidIsNotNil(m_mesher_id))
+    {
+      // The Pangolin parameters and any other, parameters we add in the future,
+      // contribute to the SHA1 only when they differ from default values.
+      // This keeps old SHA-1 values correct and prevents remeshing when openning
+      // old files.
+      sha1.AccumulateId(m_mesher_id);
+
+      // Pangolin parameters
+      Internal_AccumulatePangolinParameters(ON_MeshParameters::DefaultMesh, sha1);
+    }
     
     m_geometry_settings_hash = sha1.Hash();
   }
@@ -6330,16 +6639,29 @@ const int ON_MeshParameters::GeometrySettingsDensityPercentage(
   int no_match_found_result
   ) const
 {
-  for ( int n = 0; n <= 100; n++ )
+  const double slider_value = this->MeshDensity();
+  if (slider_value >= 0.0 && slider_value <= 1.0)
   {
-    double density = (50 == n) ? 0.5 : (n/100.0);
-    ON_MeshParameters mp_at_n(density);
-    
-    mp_at_n.m_bDoublePrecision = m_bDoublePrecision;
-    mp_at_n.m_texture_range = m_texture_range;
-
-    if ( 0 == ON_MeshParameters::CompareGeometrySettings(mp_at_n,*this) )
+    const int n = (int)floor(100.0 * slider_value + 0.4999);
+    if (n >= 0 && n <= 100)
       return n;
+
+    // The code BELOW is slower and less reliable. Different platforms and code convert 
+    // user interface int values to normalized double "slider value" slightly differently.
+    // (Some user interface controls use int ranges that are not multiples of 10 or are greater than 100).
+    // The code ABOVE will insures if a "simple slider" user interface set the mesh parameters,
+    // then this function will return an integer between 0 and 100 that produces
+    // identical or nearly identical meshing parameters.
+    //
+    // NO //for (int n = 0; n <= 100; n++)
+    // NO //{
+    // NO //  double density = (50 == n) ? 0.5 : (n / 100.0);
+    // NO //  ON_MeshParameters mp_at_n = ON_MeshParameters::CreateFromMeshDensity(density);
+    // NO //  mp_at_n.m_bDoublePrecision = m_bDoublePrecision;
+    // NO //  mp_at_n.m_texture_range = m_texture_range;
+    // NO //  if (0 == ON_MeshParameters::CompareGeometrySettings(mp_at_n, *this))
+    // NO //    return n;
+    // NO //}
   }
   return no_match_found_result;
 }
@@ -6353,7 +6675,7 @@ ON__UINT32 ON_MeshParameters::DataCRC(ON__UINT32 current_remainder) const
 
 bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
 {
-  int minor_version = 4;
+  int minor_version = 5; 
   bool rc = file.Write3dmChunkVersion(1,minor_version);
   if (rc) 
   {
@@ -6393,6 +6715,12 @@ bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
 
     // added for chunk version 1.4 - 3 March 2011
     if (rc) rc = file.WriteBool( m_bCustomSettingsEnabled );
+
+    if (rc)
+    {
+      // added for chunk version 1.5 - June 19, 2020
+      SubDDisplayParameters().Write(file);
+    }
   }
   return rc;
 }
@@ -6463,6 +6791,13 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
           if ( rc && minor_version >= 4 )
           {
             rc = file.ReadBool(&m_bCustomSettingsEnabled);
+            if (rc && minor_version >= 5)
+            {
+              ON_SubDDisplayParameters subdp = ON_SubDDisplayParameters::Default;
+              rc = subdp.Read(file);
+              if (rc)
+                SetSubDDisplayParameters(subdp);
+            }
           }
         }
       }
@@ -6471,6 +6806,60 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
   return rc;
 }
 
+bool ON_SubDDisplayParameters::Write(class ON_BinaryArchive& archive) const
+{
+  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+    return false;
+  bool rc = false;
+  for(;;)
+  {
+    const unsigned int display_density = this->DisplayDensity();
+    if (false == archive.WriteInt(display_density))
+      break;
+
+    const ON_SubDComponentLocation loc = this->MeshLocation();
+    const unsigned int loc_as_unsigned = static_cast<unsigned char>(loc);
+    if (false == archive.WriteInt(loc_as_unsigned))
+      break;
+
+    rc = true;
+    break;
+  }
+  if (false == archive.EndWrite3dmChunk())
+    rc = false;
+  return rc;
+}
+
+bool ON_SubDDisplayParameters::Read(class ON_BinaryArchive& archive)
+{
+  *this = ON_SubDDisplayParameters::Default;
+  int chunk_version = 0;
+  if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
+    return false;
+  bool rc = false;
+  for (;;)
+  {
+    if (chunk_version <= 0)
+      break;
+
+    unsigned int display_density = this->DisplayDensity();
+    if (false == archive.ReadInt(&display_density))
+      break;
+    SetDisplayDensity(display_density);
+
+    unsigned int loc_as_unsigned = static_cast<unsigned char>(this->MeshLocation());
+    if (false == archive.ReadInt(&loc_as_unsigned))
+      break;
+    const ON_SubDComponentLocation loc = ON_SubDComponentLocationFromUnsigned(loc_as_unsigned);
+    SetMeshLocation(loc);
+
+    rc = true;
+    break;
+  }
+  if (false == archive.EndRead3dmChunk())
+    rc = false;
+  return rc;
+}
 
 
 ON_MeshCurvatureStats::ON_MeshCurvatureStats()
@@ -8178,6 +8567,33 @@ void ON_Mesh::Cleanup(bool bRemoveNgons)
 //
 //   ON_SurfaceCurvature
 //
+const ON_SurfaceCurvature ON_SurfaceCurvature::CreateFromPrincipalCurvatures(
+  double k1,
+  double k2
+)
+{
+  ON_SurfaceCurvature k;
+  k.k1 = k1;
+  k.k2 = k2;
+  return k;
+}
+
+bool ON_SurfaceCurvature::IsSet() const
+{
+  return (ON_UNSET_VALUE < k1&& k1 < ON_UNSET_POSITIVE_VALUE&& ON_UNSET_VALUE < k2&& k2 < ON_UNSET_POSITIVE_VALUE);
+}
+
+bool ON_SurfaceCurvature::IsZero() const
+{
+  return (0.0 == k1 && 0.0 == k2);
+}
+
+bool ON_SurfaceCurvature::IsUnset() const
+{
+  return IsSet() ? false : true;
+}
+
+
 double ON_SurfaceCurvature::GaussianCurvature() const
 {
   return k1*k2;
@@ -8211,23 +8627,6 @@ double ON_SurfaceCurvature::MaximumRadius() const
   k = ( k > 1.0e-300 ) ? 1.0/k : 1.0e300; // 1/k = maximum radius of curvature
   return k;
 }
-
-//double ON_SurfaceCurvature::NormalCurvature(const ON_3dVector& tangent) const
-//{
-//  double c = tangent*e1;
-//  double s = tangent*e2;
-//  return k1*c*c + k2*s*s;
-//}
-
-//double ON_SurfaceCurvature::NormalSectionCurvature( const ON_3dVector& section_normal, const ON_3dVector& surface_normal ) const
-//{
-//  ON_3dVector tangent = ON_CrossProduct( section_normal, surface_normal );
-//  if ( fabs(tangent.x) <= ON_SQRT_EPSILON && fabs(tangent.y) <= ON_SQRT_EPSILON && fabs(tangent.z) <= ON_SQRT_EPSILON )
-//    tangent.Zero();
-//  else
-//    tangent.Unitize();
-//  return NormalCurvature(tangent);
-//}
 
 ON_MeshTopology::ON_MeshTopology() 
 : m_mesh(0)
@@ -10978,34 +11377,112 @@ bool ON_MeshTopology::TopFaceIsHidden( int topfi ) const
   return m_mesh ? m_mesh->FaceIsHidden(topfi) : false;
 }
 
-
 ON_MappingTag::ON_MappingTag()
 {
   Default();
+}
+
+const ON_Xform ON_MappingTag::Transform() const
+{
+  return TransformIsIdentity() ? ON_Xform::IdentityTransformation : m_mesh_xform;
+}
+
+bool ON_MappingTag::TransformIsIdentity() const
+{
+  return ON_MappingTag::TransformTreatedIsIdentity(&m_mesh_xform);
+}
+
+bool ON_MappingTag::TransformTreatedIsIdentity(const ON_Xform* xform)
+{
+  if (nullptr == xform)
+    return true; // a missing xform is treated as the idenity.
+  if (xform->IsIdentity(ON_ZERO_TOLERANCE))
+    return true;
+  if (xform->IsZero())
+    return true; // zero is not a valid mapping object xform
+  if (!xform->IsValid())
+    return true; // an invalid object xform is treated as the identity
+  return false; // a valid non zero, non identity xform is actually used.
 }
 
 ON_MappingTag::ON_MappingTag(const ON_TextureMapping & mapping, const ON_Xform * xform)
 {
   Default();
   Set(mapping);
-  if (
-    ON_TextureMapping::TYPE::no_mapping != mapping.m_type && ON_TextureMapping::TYPE::srfp_mapping != mapping.m_type
-    && nullptr != xform && xform->IsValid() && false == xform->IsIdentity(ON_ZERO_TOLERANCE) && false == xform->IsZero())
+  if ( false == ON_MappingTag::TransformTreatedIsIdentity(xform))
     m_mesh_xform = *xform;
 }
 
 void ON_MappingTag::Dump( ON_TextLog& text_log ) const
 {
-  text_log.Print("Texture/color coordinates tag:\n");
-  text_log.PushIndent();
-  text_log.Print("mapping id: "); text_log.Print(m_mapping_id); text_log.Print("\n");
-  text_log.Print("mapping crc: %08x\n",m_mapping_crc);
-  text_log.Print("mesh xform:\n");
-  text_log.PushIndent(); text_log.Print(m_mesh_xform); text_log.PopIndent();
-  text_log.PushIndent();
-  text_log.Print(m_mesh_xform);
-  text_log.PopIndent();
-  text_log.PopIndent();
+  text_log.Print("Texture/color mapping tag:\n");
+  if (text_log.IsTextHash())
+  {
+    // The code is a mess with respect to mapping tags and they are
+    // often mutable or changed with const/cast in unpredictable ways.
+    text_log.Print("  ...\n");
+    return;
+  }
+
+  const ON_TextLogIndent indent1(text_log);
+
+  if (0 == ON_MappingTag::CompareAll(ON_MappingTag::Unset, *this))
+  {
+    text_log.Print("ON_MappingTag::Unset\n");
+  }
+  else if (0 == ON_MappingTag::CompareAll(ON_MappingTag::SurfaceParameterMapping, *this))
+  {
+    text_log.Print("ON_MappingTag::SurfaceParameterMapping\n");
+  }
+  else
+  {
+    text_log.Print("mapping type = ");
+    switch (m_mapping_type)
+    {
+    case  ON_TextureMapping::TYPE::no_mapping:
+      text_log.Print("none");
+      break;
+    case  ON_TextureMapping::TYPE::srfp_mapping:
+      text_log.Print("srfp");
+      break;
+    case  ON_TextureMapping::TYPE::plane_mapping:
+      text_log.Print("plane");
+      break;
+    case  ON_TextureMapping::TYPE::cylinder_mapping:
+      text_log.Print("cylinder");
+      break;
+    case  ON_TextureMapping::TYPE::sphere_mapping:
+      text_log.Print("sphere");
+      break;
+    case  ON_TextureMapping::TYPE::box_mapping:
+      text_log.Print("box");
+      break;
+    case  ON_TextureMapping::TYPE::mesh_mapping_primitive:
+      text_log.Print("mesh primative");
+      break;
+    case  ON_TextureMapping::TYPE::srf_mapping_primitive:
+      text_log.Print("srf primative");
+      break;
+    case  ON_TextureMapping::TYPE::brep_mapping_primitive:
+      text_log.Print("brep primative");
+      break;
+    case  ON_TextureMapping::TYPE::ocs_mapping:
+      text_log.Print("ocs");
+      break;
+    }
+    text_log.Print("\n");
+
+    text_log.Print("mapping id = ");
+    text_log.Print(m_mapping_id);
+    if (m_mapping_id == ON_MappingTag::SurfaceParameterMapping.m_mapping_id)
+      text_log.Print(" = ON_MappingTag::SurfaceParameterMapping.m_mapping_id");
+    text_log.PrintNewLine();
+
+    text_log.Print("mapping crc: %08x\n", m_mapping_crc);
+    text_log.Print("mesh xform:\n");
+    const ON_TextLogIndent indent2(text_log);
+    text_log.Print(m_mesh_xform);
+  }
 }
 
 void ON_MappingTag::Transform( const ON_Xform& xform )
@@ -11049,6 +11526,60 @@ bool ON_MappingTag::IsDefaultSurfaceParameterMapping() const
 }
 
 
+const ON_SHA1_Hash ON_MappingTag::Hash() const
+{
+  bool bHashType = true;
+  bool bHashIdAndCRC = false;
+  bool bHashXform = false;
+  switch (m_mapping_type)
+  {
+  case ON_TextureMapping::TYPE::no_mapping:
+    bHashType = false;
+    break;
+  case ON_TextureMapping::TYPE::srfp_mapping:
+    break;
+  case ON_TextureMapping::TYPE::plane_mapping:
+  case ON_TextureMapping::TYPE::cylinder_mapping:
+  case ON_TextureMapping::TYPE::sphere_mapping:
+  case ON_TextureMapping::TYPE::box_mapping:
+  case ON_TextureMapping::TYPE::mesh_mapping_primitive:
+  case ON_TextureMapping::TYPE::srf_mapping_primitive:
+  case ON_TextureMapping::TYPE::brep_mapping_primitive:
+  case ON_TextureMapping::TYPE::ocs_mapping:
+    if (IsSet())
+    {
+      bHashIdAndCRC = true;
+      if (false == m_mesh_xform.IsIdentity(ON_ZERO_TOLERANCE) && false == m_mesh_xform.IsZero() && m_mesh_xform.IsValid())
+        bHashXform = true;
+    }
+    else
+      bHashType = false; // bogus mapping - treat as unset 
+    break;
+  default:
+    // Perhaps somebody added a value to the enum after June 2020 and failed to update this code?
+    ON_ERROR("Invalid m_mapping_type value.");
+    break;
+  }
+
+  ON_SHA1 sha1;
+  if (bHashType)
+  {
+    const unsigned char u = (unsigned char)m_mapping_type;
+    sha1.AccumulateBytes(&u,1);
+  }
+  if (bHashIdAndCRC)
+  {
+    sha1.AccumulateId(m_mapping_id);
+    sha1.AccumulateInteger32(m_mapping_crc);
+  }
+  if (bHashXform)
+  {
+    sha1.AccumulateTransformation(m_mesh_xform);
+  }
+  return sha1.Hash();
+}
+
+
 void ON_MappingTag::Default()
 {
   memset(this,0,sizeof(*this));
@@ -11056,6 +11587,36 @@ void ON_MappingTag::Default()
   m_mesh_xform.m_xform[1][1] = 1.0;
   m_mesh_xform.m_xform[2][2] = 1.0;
   m_mesh_xform.m_xform[3][3] = 1.0;
+}
+
+
+int ON_MappingTag::CompareAll(const ON_MappingTag& lhs, const ON_MappingTag& rhs)
+{
+  const unsigned lhs_type = static_cast<unsigned int>(lhs.m_mapping_type);
+  const unsigned rhs_type = static_cast<unsigned int>(rhs.m_mapping_type);
+  if (lhs_type < rhs_type)
+    return -1;
+  if (lhs_type > rhs_type)
+    return 1;
+  int rc = ON_UuidCompare(lhs.m_mapping_id, rhs.m_mapping_id);
+  if (0 != rc)
+    return rc;
+  if (lhs.m_mapping_crc < rhs.m_mapping_crc)
+    return -1;
+  if (lhs.m_mapping_crc > rhs.m_mapping_crc)
+    return 1;
+  return  lhs.m_mesh_xform.Compare(rhs.m_mesh_xform);
+}
+
+int ON_MappingTag::CompareAllFromPointer(const ON_MappingTag* lhs, const ON_MappingTag* rhs)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == rhs)
+    return -1;
+  return ON_MappingTag::CompareAll(*lhs, *rhs);
 }
 
 int ON_MappingTag::Compare( 
@@ -11072,7 +11633,10 @@ int ON_MappingTag::Compare(
   }
   if ( !rc && bCompareCRC )
   {
-    rc = ((int)m_mapping_crc) - ((int)other.m_mapping_crc);
+    if (m_mapping_crc < other.m_mapping_crc)
+      return -1;
+    if (m_mapping_crc > other.m_mapping_crc)
+      return 1;
   }
   if ( !rc && bCompareXform )
   {
@@ -11380,6 +11944,104 @@ bool ON_V5_MeshDoubleVertices::Transform( const ON_Xform& xform )
   }
   return true;
 }
+
+ON_Mesh* ON_Mesh::OffsetMesh(const double distance, const ON_3dVector& direction) const
+{
+  if (0.0 == distance)
+    return nullptr;
+
+  ON_3fVector VN;
+  ON_3dVector N;
+  ON_3dPoint P;
+
+  int k, tvi, vi;
+
+  //Make the topology for the old mesh in the event that it does not already exist.
+  Topology();
+
+  ON_Mesh* new_mesh = Duplicate();
+  if (nullptr == new_mesh)
+    return nullptr;
+
+  if (!new_mesh->HasVertexNormals())
+    new_mesh->ComputeVertexNormals();
+
+  // D = double precision vertices
+  ON_3dPoint* D = 0;
+  if (new_mesh->HasDoublePrecisionVertices())
+  {
+    if (new_mesh->m_dV.Count() > 0)
+      D = new_mesh->m_dV.Array();
+    else
+      new_mesh->DestroyDoublePrecisionVertices();
+  }
+
+  const ON_MeshTopology& top = new_mesh->Topology();
+
+  if (false == top.IsValid() || false == new_mesh->HasVertexNormals())
+  {
+    delete new_mesh;
+    return nullptr;
+  }
+
+  for (tvi = 0; tvi < top.m_topv.Count(); tvi++)
+  {
+    N = ON_3dVector::ZeroVector;
+    const ON_MeshTopologyVertex& topv = top.m_topv[tvi];
+    if (direction == ON_3dVector::UnsetVector)
+    {
+      // Per-vertex offset direction
+      for (k = 0; k < topv.m_v_count; k++)
+      {
+        vi = topv.m_vi[k];
+        VN = new_mesh->m_N[vi];
+        N.x += VN.x; N.y += VN.y; N.z += VN.z;
+      }
+    }
+    else
+    {
+      // Single offset direction for all vertices
+      N = direction;
+    }
+    N.Unitize();
+    N = distance * N;
+    for (k = 0; k < topv.m_v_count; k++)
+    {
+      vi = topv.m_vi[k];
+      if (0 != D)
+      {
+        // double precision calculation
+        P = D[vi];
+        P = P + N;
+        D[vi] = P;
+      }
+      else
+      {
+        // single precision calculation
+        P = new_mesh->m_V[vi];
+        P = P + N;
+        new_mesh->m_V[vi] = P;
+      }
+    }
+  }
+
+  if (0 != D)
+  {
+    new_mesh->UpdateSinglePrecisionVertices();
+  }
+
+  new_mesh->DestroyPartition();
+  new_mesh->DestroyRuntimeCache();
+  new_mesh->DestroyTopology();
+  new_mesh->InvalidateVertexBoundingBox();
+  new_mesh->InvalidateVertexNormalBoundingBox();
+  new_mesh->InvalidateCurvatureStats();
+
+  return new_mesh;
+}
+
+
+
 
 bool ON_Mesh::HasSynchronizedDoubleAndSinglePrecisionVertices() const
 {
@@ -14089,6 +14751,17 @@ ON_MeshRef& ON_MeshRef::operator=(ON_MeshRef&& src)
   return *this;
 }
 #endif
+
+bool ON_MeshRef::IsEmpty() const
+{
+  const ON_Mesh* mesh = m_mesh_sp.get();
+  return (nullptr == mesh);
+}
+
+bool ON_MeshRef::IsNotEmpty() const
+{
+  return (false == IsEmpty());
+}
 
 const class ON_Mesh& ON_MeshRef::Mesh() const
 {

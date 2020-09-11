@@ -589,19 +589,19 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
         break;
       switch (v->m_vertex_tag)
       {
-      case ON_SubD::VertexTag::Smooth:
+      case ON_SubDVertexTag::Smooth:
         m_subd_vertex_smooth_count += i;
         rc = true;
         break;
-      case ON_SubD::VertexTag::Crease:
+      case ON_SubDVertexTag::Crease:
         m_subd_vertex_crease_count += i;
         rc = true;
         break;
-      case ON_SubD::VertexTag::Corner:
+      case ON_SubDVertexTag::Corner:
         m_subd_vertex_corner_count += i;
         rc = true;
         break;
-      case ON_SubD::VertexTag::Dart:
+      case ON_SubDVertexTag::Dart:
         m_subd_vertex_dart_count += i;
         rc = true;
         break;
@@ -616,12 +616,12 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
         break;
       switch (e->m_edge_tag)
       {
-      case ON_SubD::EdgeTag::Smooth:
-      case ON_SubD::EdgeTag::SmoothX:
+      case ON_SubDEdgeTag::Smooth:
+      case ON_SubDEdgeTag::SmoothX:
         m_subd_edge_smooth_count += i;
         rc = true;
         break;
-      case ON_SubD::EdgeTag::Crease:
+      case ON_SubDEdgeTag::Crease:
         m_subd_edge_crease_count += i;
         rc = true;
         break;
@@ -839,21 +839,21 @@ int ON_SubDComponentRefList::VertexCount() const
     + m_subd_vertex_corner_count;
 }
 
-int ON_SubDComponentRefList::VertexCount(ON_SubD::VertexTag vertex_tag) const
+int ON_SubDComponentRefList::VertexCount(ON_SubDVertexTag vertex_tag) const
 {
   int c = 0;
   switch (vertex_tag)
   {
-  case ON_SubD::VertexTag::Smooth:
+  case ON_SubDVertexTag::Smooth:
     c = m_subd_vertex_smooth_count;
     break;
-  case ON_SubD::VertexTag::Crease:
+  case ON_SubDVertexTag::Crease:
     c = m_subd_vertex_crease_count;
     break;
-  case ON_SubD::VertexTag::Corner:
+  case ON_SubDVertexTag::Corner:
     c = m_subd_vertex_corner_count;
     break;
-  case ON_SubD::VertexTag::Dart:
+  case ON_SubDVertexTag::Dart:
     c = m_subd_vertex_dart_count;
     break;
   }
@@ -866,17 +866,17 @@ int ON_SubDComponentRefList::EdgeCount() const
   return m_subd_edge_crease_count + m_subd_edge_smooth_count;
 }
 
-int ON_SubDComponentRefList::EdgeCount(ON_SubD::EdgeTag edge_tag) const
+int ON_SubDComponentRefList::EdgeCount(ON_SubDEdgeTag edge_tag) const
 {
   int c = 0;
   switch (edge_tag)
   {
-  case ON_SubD::EdgeTag::Unset:
+  case ON_SubDEdgeTag::Unset:
     break;
-  case ON_SubD::EdgeTag::Smooth:
+  case ON_SubDEdgeTag::Smooth:
     c = m_subd_edge_smooth_count;
     break;
-  case ON_SubD::EdgeTag::Crease:
+  case ON_SubDEdgeTag::Crease:
     c = m_subd_edge_crease_count;
     break;
   }

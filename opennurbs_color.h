@@ -64,6 +64,57 @@ public:
     kAlphaByteIndex = 3
   };
 
+  /*
+  Returns:
+    A random color.
+  */
+  static const ON_Color RandomColor();
+
+  /*
+  Parameters:
+    seed - [in]
+    hue_range - [in]
+      range of hues. Use ON_Interval::ZeroToTwoPi for all hues.
+    saturation_range - [in]
+      range of saturations. Use ON_Interval::ZeroToOne for all saturations.
+    value_range - [in]
+      range of values. Use ON_Interval::ZeroToOne for all values.
+  Returns:
+     A color generated from seed. The color for a given seed will always be the same.
+  */
+  static const ON_Color RandomColor(
+    ON_Interval hue_range,
+    ON_Interval saturation_range,
+    ON_Interval value_range
+  );
+
+  /*
+  Returns:
+   A color generated from seed. The color for a given seed will always be the same.
+  */
+  static const ON_Color RandomColor(
+    ON__UINT32 seed
+  );
+
+  /*
+  Parameters:
+    seed - [in]
+    hue_range - [in]
+      range of hues. Use ON_Interval::ZeroToTwoPi for all hues.
+    saturation_range - [in]
+      range of saturations. Use ON_Interval::ZeroToOne for all saturations.
+    value_range - [in]
+      range of values. Use ON_Interval::ZeroToOne for all values.
+  Returns:
+     A color generated from seed. The color for a given seed will always be the same.
+  */
+  static const ON_Color RandomColor(
+    ON__UINT32 seed,
+    ON_Interval hue_range,
+    ON_Interval saturation_range,
+    ON_Interval value_range
+  );
+
   // If you need to use shifting to convert RGBA components to and from
   // an unsigned int ON_COlor value and you want your code to work 
   // on both little and big endian computers, use the RGBA_shift enum.

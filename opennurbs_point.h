@@ -60,6 +60,12 @@ public:
 
   ON_Interval(double t0,double t1);
 
+  /*
+  Returns:
+    ON_Interval(t,t).
+  */
+  static const ON_Interval Singleton(double t);
+
 public:
   // Interval = (m_t[0], m_t[1])
   double m_t[2];
@@ -203,6 +209,20 @@ public:
     bool bProperSubSet = false
     ) const;
 
+  /*
+  Description:
+    value is clamped to the range of this interval.  
+    Assumes this interval is not Decreasing().
+  Parameters:
+    value -[in/out]  value is set to x in interval 
+        such that |x - value|<= |x - y| for all y in this interval
+  Returns:
+    -1 if value<Min()
+    0  if value in interval
+    +1 if value>Max()
+  */
+  int Clamp(double& value) const;
+
   /* 
   Description:
     Test a pair of interval to see if they have a non-empty intersection.
@@ -282,6 +302,13 @@ public:
          const ON_Interval&, 
          const ON_Interval&
          );
+
+  /////////////////////////
+  // Expand the interval by adding delta to m_t[1] and subtracting
+  // it from m_t[0].  So, when delta is positive and the interval is 
+  // increasing this function expands the interval on each side.
+  // returns true if the result is increasing.  
+  bool Expand(double delta);
 };
 
 
@@ -315,6 +342,15 @@ public:
     const ON_2dPoint& lhs,
     const ON_2dPoint& rhs
     );
+
+  /*
+  Returns:
+    (A+B)/2
+  Remarks:
+    Exact when coordinates are equal and prevents overflow.
+  */
+  static const ON_2dPoint Midpoint(const ON_2dPoint& A, const ON_2dPoint& B);
+
 
   explicit ON_2dPoint(double x,double y);
 #if defined(OPENNURBS_WALL)
@@ -515,6 +551,14 @@ public:
     const ON_3dPoint& lhs,
     const ON_3dPoint& rhs
     );
+
+  /*
+  Returns:
+    (A+B)/2
+  Remarks:
+    Exact when coordinates are equal and prevents overflow.
+  */
+  static const ON_3dPoint Midpoint(const ON_3dPoint& A, const ON_3dPoint& B);
 
 public:
   explicit ON_3dPoint(double x,double y,double z);
@@ -2055,8 +2099,23 @@ double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count)
 class ON_CLASS ON_SurfaceCurvature
 {
 public:
+  static const ON_SurfaceCurvature CreateFromPrincipalCurvatures(
+    double k1,
+    double k2
+  );
+
+  static const ON_SurfaceCurvature Nan;
+  static const ON_SurfaceCurvature Zero;
+
+public:
   double k1, k2; // principal curvatures
 
+public:
+  bool IsSet() const;
+  bool IsZero() const;
+  bool IsUnset() const;
+
+public:
   double GaussianCurvature() const;
   double MeanCurvature() const;
   double MinimumRadius() const;
@@ -3567,12 +3626,6 @@ Parameters
 Returns a point in dom.  
 */
 ON_2dPoint ON_DECL ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2]);
-
-
-
-
-
-
 
 #endif
 

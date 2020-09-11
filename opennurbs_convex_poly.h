@@ -101,6 +101,9 @@ public:
   ON_3dPoint Vertex(int i) const;
   ON_3dPoint& Vertex(int i);
 
+  /* Maximum absolute value of vertex coordinates*/
+  double MaximumCoordinate() const;
+
   /*
   Description:
     Get Simplex's 3d axis aligned bounding box.
@@ -177,6 +180,7 @@ private:
   bool Closest3plex(ON_4dPoint& Bary) const;
   bool Closest2plex(ON_4dPoint& Bary) const;
   bool Closest1plex(ON_4dPoint& Bary) const;
+  static bool RoundBarycentricCoordinate(ON_4dPoint& Bary);
 };
 
 
@@ -202,9 +206,10 @@ public:
 
   /*
   Description:
-    Let K be this ON_ConvexPoly then for a non-zero vector W the support Support(W) is a point x in K that maximizes
-       min arg     x * W
+    Let K be this ON_ConvexPoly then for a non-zero vector W the support Support(W) are point in K defined by
+       arg max     x * W
         x \in K
+     This  method returns one of these points in Support(W). 
      i0 is an optional initial index seed value.  It may provide a performance enhancement toward finding
      a minimizer.
    */
@@ -243,6 +248,59 @@ public:
       v += B[3] * Vertex(dex.l);
     return v;
   };
+
+  /*
+Description:
+  Computes the closest point on this convex polytope from a point P0.
+Parameters:
+  P0 - [in]  Base Point for closest point
+  dex -[out] 
+  bary - [out] Evaluate(dex,bary) is the closest point on this polyhedran
+  maximum_distance - [in ] optional upper bound on distance
+
+Returns:
+   Returns true if a closest point is found and it is within optional maximum_distance bound;
+
+Details:
+  Setting maximum_distance can speedup the calculation in cases where dist(P0, *this)>maximum_distance.
+*/
+  bool GetClosestPoint( ON_3dPoint P0,
+    ON_4dex& dex, ON_4dPoint& bary, 
+    double maximum_distance = ON_DBL_MAX) const;
+
+   // Expert version of GetClosestPoint. 
+  // dex is used at  input to seed search algorithm.
+  // the points of *this singled out by dex must define a nondegenerate simplex
+  bool GetClosestPointSeeded(ON_3dPoint P0,
+    ON_4dex& dex, ON_4dPoint& Bary,
+    double maximum_distance = ON_DBL_MAX) const;
+
+  /*
+  Description:
+    Computes a pair of points on *this and BHull that achieve the minimum distance between
+    the two convex polytopes.
+  Parameters:
+    BHull - [in]  the other convex polytope 
+    adex, bdex -[out]   Evaluate(adex,bary) is the closest point on this polyhedron
+    bary - [out]        BHull.Evaluate(bdex,bary) is the closest point on BHull.
+    maximum_distance - [in ] optional upper bound on distance
+
+Returns:
+   Returns true if a closest points are found and they are within optional maximum_distance bound;
+
+Details:
+  Setting maximum_distance can speedup the calculation in cases where dist(*this, BHull)>maximum_distance.
+ */
+  bool GetClosestPoint(const ON_ConvexPoly& BHull,
+    ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& bary, 
+    double maximum_distance = ON_DBL_MAX) const;
+
+  // Expert version of GetClosestPoint. 
+// Adex and Bdex are used at  input to seed search algorithm.
+// the points of this-Bhull singled out by Adex and Bdex must define a nondegenerate simplex
+  bool GetClosestPointSeeded(const ON_ConvexPoly& BHull,
+    ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& bary,
+    double maximum_distance = ON_DBL_MAX) const;
 
   /*
   Description:
@@ -300,7 +358,7 @@ public:
   int Count() const override { return m_n; }
   ON_3dVector Vertex(int j) const override;
 
-  // Support map O( Vertes.Count
+  // Support map
   virtual int SupportIndex(ON_3dVector W, int i0) const override;
   virtual double MaximumCoordinate() const override;
 
@@ -347,35 +405,6 @@ private:
 };
 
 
-/*
-
-Computes a closest point between convex polytopes AHull and BHull.
-Returns true if a closest point is found and it is within optional maximum_distance bound;
-
-Specifically, when true is returned parameters (Adex, ABbary) on AHull 
-and  (Bdex, ABbary) on BHull are found such that:
-if   a* = AHull.Evaluate(Adex,ABbary), and 
-     b* = BHull.Evaluate(Bdex,ABbary),
-then 
-     d = dist(a*, b*) <= maximum_distance, and 
-for any  a in AHull and b in BHull
-    dist(a,b) => d. 
-  
-
-Setting maximum_distance = tol can speedup the calculation in cases where d>tol
-
-On input Adex and Bdex are used to define an intial simplex
-use Adex =  Bdex = ON_4dex::Unset if you have no good initial guess
-Notice the result is indepentent of the initial guess.
-
-*/
-ON_DECL
-bool ClosestPoint(const ON_ConvexPoly& AHull, const ON_ConvexPoly& BHull,
-  ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& ABbary, double maximum_distance = ON_DBL_MAX);
-
-ON_DECL
-bool ClosestPoint(const ON_3dPoint P0, const ON_ConvexPoly& poly,
-  ON_4dex& dex, ON_4dPoint& Bary, double maximum_distance = ON_DBL_MAX);
 
 /*
 	Compute Convex hull of 2d points

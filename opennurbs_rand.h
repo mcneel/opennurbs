@@ -112,6 +112,13 @@ public:
   ON_RandomNumberGenerator();
 
   /*
+  Returns:
+    A upredictable seed value for a random number generator.
+    This function is much slower than ON_RandomNumberGenerator::RandomNumber().
+  */
+  static ON__UINT32 RandomSeed();
+
+  /*
   Description:
     Seed the random number generator.
   Parameters:
@@ -142,6 +149,8 @@ public:
     double in the interval [t0,t1]
   */
   double RandomDouble(double t0, double t1);
+
+  double RandomDouble(const class ON_Interval& range);
 
   /*
   Description:

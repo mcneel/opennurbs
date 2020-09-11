@@ -2370,10 +2370,8 @@ bool ON_NurbsSurface::IsNatural(
   return bIsNatural;
 }
 
-static void ConvertToCurve( const ON_NurbsSurface& srf, int dir, ON_NurbsCurve& crv )
-{
-  // DO NOT MAKE THIS FUNCTION PUBLIC - IT IS DELICATE AND DEDICATED TO USE IN THIS FILE
-
+void ON_NurbsSurface::ON_Internal_ConvertToCurve(const ON_NurbsSurface& srf,
+                                                 int dir, ON_NurbsCurve& crv) {
   crv.DestroyCurveTree();
   if (dir)
     dir = 1;
@@ -2423,10 +2421,8 @@ static void ConvertToCurve( const ON_NurbsSurface& srf, int dir, ON_NurbsCurve& 
   }
 }
 
-static void ConvertFromCurve( ON_NurbsCurve& crv, int dir, ON_NurbsSurface& srf )
-{
-  // DO NOT MAKE THIS FUNCTION PUBLIC - IT IS DELICATE AND DEDICATED TO USE IN THIS FILE
-
+void ON_NurbsSurface::ON_Internal_ConvertFromCurve(ON_NurbsCurve& crv, int dir,
+                                                   ON_NurbsSurface& srf) {
   crv.DestroyCurveTree();
   srf.DestroySurfaceTree();
   if (dir)
@@ -2494,9 +2490,9 @@ bool ON_NurbsSurface::ClampEnd(
     dir = 1;
   ON_NurbsCurve crv;
   crv.m_knot = m_knot[dir];
-  ConvertToCurve(*this,dir,crv);
+  ON_Internal_ConvertToCurve(*this,dir,crv);
   bool rc = crv.ClampEnd(end);
-  ConvertFromCurve(crv,dir,*this);
+  ON_Internal_ConvertFromCurve(crv,dir,*this);
   return rc;
 }
 
@@ -2526,9 +2522,9 @@ bool ON_NurbsSurface::InsertKnot(
       m_knot_capacity[dir] = 0;
 
       crv.ReserveKnotCapacity(CVCount(dir)+knot_multiplicity);
-      ConvertToCurve(*this,dir,crv);
-      rc = crv.InsertKnot(knot_value,knot_multiplicity);
-      ConvertFromCurve(crv,dir,*this);
+      ON_Internal_ConvertToCurve(*this, dir, crv);
+      rc = crv.InsertKnot(knot_value, knot_multiplicity);
+      ON_Internal_ConvertFromCurve(crv, dir, *this);
     }
   }
 
@@ -2680,9 +2676,9 @@ bool ON_NurbsSurface::IncreaseDegree(
       m_knot[dir] = 0;
       m_knot_capacity[dir] = 0;
 
-      ConvertToCurve(*this,dir,crv);
+      ON_Internal_ConvertToCurve(*this, dir, crv);
       rc = crv.IncreaseDegree(desired_degree);
-      ConvertFromCurve(crv,dir,*this);
+      ON_Internal_ConvertFromCurve(crv, dir, *this);
     }
   }
 
@@ -2819,8 +2815,7 @@ bool ON_MakeDomainsCompatible(
   return rc;
 }
 
-static
-bool ON_MakeKnotVectorsCompatible(
+bool ON_NurbsSurface::ON_Internal_MakeKnotVectorsCompatible(
        ON_NurbsCurve& nurbs_curveA,
        ON_NurbsCurve& nurbs_curveB
        )
@@ -2975,7 +2970,7 @@ int ON_NurbsSurface::CreateRuledSurface(
   if ( rcB<=0 )
     return 0;
 
-  if ( !ON_MakeKnotVectorsCompatible( nurbs_curveA, nurbs_curveB ) )
+  if ( !ON_Internal_MakeKnotVectorsCompatible( nurbs_curveA, nurbs_curveB ) )
     return false;
 
   if ( nurbs_curveA.m_cv_count != nurbs_curveB.m_cv_count )

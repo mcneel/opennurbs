@@ -1198,6 +1198,17 @@ int ON_Mesh::AddNgon(
   bool bPermitHoles
 )
 {
+  ON_MeshVertexFaceMap* vertexFaceMap = nullptr;
+  return AddNgon_Expert(Fcount, ngon_fi, bPermitHoles, vertexFaceMap);
+}
+
+int ON_Mesh::AddNgon_Expert(
+  unsigned int Fcount,
+  const unsigned int* ngon_fi,
+  bool bPermitHoles,
+  ON_MeshVertexFaceMap* vertexFaceMap
+)
+{
   unsigned int ngon_index = ON_UNSET_UINT_INDEX;
   if (Fcount < 1 || nullptr == ngon_fi)
     return ngon_index;
@@ -1205,7 +1216,6 @@ int ON_Mesh::AddNgon(
   ON_SimpleArray<unsigned int> ngon_vi;
   const ON_3dPointListRef mesh_vertex_list(this);
   const ON_MeshFaceList& mesh_face_list(this);
-  const unsigned int *const* vertex_face_map = nullptr;
 
   const int face_count = m_F.Count();
   const unsigned int ngon_count0 = HasNgons() ? NgonUnsignedCount() : 0U;
@@ -1224,7 +1234,7 @@ int ON_Mesh::AddNgon(
     vi_count = ON_MeshNgon::FindNgonBoundary(
       mesh_vertex_list,
       mesh_face_list,
-      vertex_face_map,
+      vertexFaceMap,
       Fcount,
       ngon_fi,
       ngon_vi
@@ -1233,7 +1243,7 @@ int ON_Mesh::AddNgon(
     vi_count = ON_MeshNgon::FindNgonOuterBoundary(
       mesh_vertex_list,
       mesh_face_list,
-      vertex_face_map,
+      vertexFaceMap,
       Fcount,
       ngon_fi,
       ngon_vi
@@ -3444,6 +3454,7 @@ static unsigned int SetFaceNeighborMap(
   unsigned int mesh_vertex_count,
   const ON_MeshFaceList& mesh_face_list,
   const unsigned int *const* vertex_face_map,
+  ON_MeshVertexFaceMap* vertex_face_map_obj,
   unsigned int face_index_count,
   const unsigned int* face_index_list,
   struct NgonNeighbors* face_nbr_map
@@ -3463,15 +3474,30 @@ static unsigned int SetFaceNeighborMap(
   if ( face_index_count <= 0 || 0 == face_index_list || 0 == face_nbr_map )
     return 0;
 
-  ON_MeshVertexFaceMap vf_map;
-  if ( nullptr == vertex_face_map )
+  ON_MeshVertexFaceMap vf_tmp;
+  ON_MeshVertexFaceMap* vf_map = &vf_tmp;
+
+  const unsigned int* const* localVertexFaceMap = vertex_face_map;
+  if (nullptr == localVertexFaceMap)
   {
-    if ( !vf_map.SetFromFaceList(mesh_vertex_count,mesh_face_list,false) )
+    if (vertex_face_map_obj != nullptr)
+    {
+      localVertexFaceMap = vertex_face_map_obj->VertexFaceMap();
+    }
+  }
+  if (vertex_face_map_obj != nullptr && vertex_face_map == nullptr)
+  {
+    vf_map = vertex_face_map_obj;
+  }
+
+  if (nullptr == localVertexFaceMap)
+  {
+    if ( !vf_map->SetFromFaceList(mesh_vertex_count,mesh_face_list,false) )
       return 0;
-    vertex_face_map = vf_map.VertexFaceMap();
-    if ( 0 == vertex_face_map )
+    localVertexFaceMap = vf_map->VertexFaceMap();
+    if ( 0 == localVertexFaceMap)
       return 0;
-    mesh_vertex_count = vf_map.VertexCount();
+    mesh_vertex_count = vf_map->VertexCount();
   }
 
   memset(face_nbr_map,0,face_index_count*sizeof(face_nbr_map[0]));
@@ -3483,7 +3509,7 @@ static unsigned int SetFaceNeighborMap(
 
     mesh_face_list.QuadFvi(face_index,Fvi);
     viB = Fvi[0];
-    face_listB = ( viB <= mesh_vertex_count ) ? vertex_face_map[viB] : 0;
+    face_listB = ( viB <= mesh_vertex_count ) ? localVertexFaceMap[viB] : 0;
     if ( 0 != face_listB && face_listB[0] <= 1 )
       face_listB = 0;
 
@@ -3497,7 +3523,7 @@ static unsigned int SetFaceNeighborMap(
       boundary_count++;
 
       face_listA = face_listB;
-      face_listB = ( viB <= mesh_vertex_count ) ? vertex_face_map[viB] : 0;
+      face_listB = ( viB <= mesh_vertex_count ) ? localVertexFaceMap[viB] : 0;
       if ( 0 == face_listB )
         continue;
       if ( face_listB[0] <= 1 )
@@ -4015,6 +4041,7 @@ static unsigned int FindNgonBoundary_Helper(
   const ON_3dPointListRef& mesh_vertex_list,
   const ON_MeshFaceList& mesh_face_list,
   const unsigned int *const* vertex_face_map,
+  ON_MeshVertexFaceMap* vertex_face_map_obj,
   size_t ngon_fi_count,
   const unsigned int* ngon_fi,
   ON_SimpleArray<unsigned int>& ngon_vi,
@@ -4041,6 +4068,7 @@ static unsigned int FindNgonBoundary_Helper(
       mesh_vertex_count,
       mesh_face_list,
       vertex_face_map,
+      vertex_face_map_obj,
       (unsigned int)ngon_fi_count,
       ngon_fi,
       ngon_nbr_map.Array()
@@ -4087,6 +4115,28 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
     mesh_vertex_list,
     mesh_face_list,
     vertex_face_map,
+    nullptr,
+    ngon_fi_count,
+    ngon_fi,
+    ngon_vi,
+    true
+  );
+}
+
+unsigned int ON_MeshNgon::FindNgonOuterBoundary(
+  const ON_3dPointListRef& mesh_vertex_list,
+  const ON_MeshFaceList& mesh_face_list,
+  ON_MeshVertexFaceMap* vertex_face_map,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi
+)
+{
+  return FindNgonBoundary_Helper(
+    mesh_vertex_list,
+    mesh_face_list,
+    nullptr,
+    vertex_face_map,
     ngon_fi_count,
     ngon_fi,
     ngon_vi,
@@ -4106,6 +4156,28 @@ unsigned int ON_MeshNgon::FindNgonBoundary(
   return FindNgonBoundary_Helper(
     mesh_vertex_list,
     mesh_face_list,
+    vertex_face_map,
+    nullptr,
+    ngon_fi_count,
+    ngon_fi,
+    ngon_vi,
+    false
+  );
+}
+
+unsigned int ON_MeshNgon::FindNgonBoundary(
+  const ON_3dPointListRef& mesh_vertex_list,
+  const ON_MeshFaceList& mesh_face_list,
+  ON_MeshVertexFaceMap* vertex_face_map,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi
+)
+{
+  return FindNgonBoundary_Helper(
+    mesh_vertex_list,
+    mesh_face_list,
+    nullptr,
     vertex_face_map,
     ngon_fi_count,
     ngon_fi,
@@ -4142,6 +4214,7 @@ unsigned int ON_MeshNgon::GetBoundarySides(
       mesh_vertex_count,
       mesh_face_list,
       vertex_face_map,
+      nullptr,
       ngon_fi_count,
       ngon_fi,
       ngon_nbr_map.Array()
@@ -4193,7 +4266,7 @@ unsigned int ON_Mesh::GetNgonOuterBoundary(
   ON_MeshFaceList mesh_face_list;
   mesh_vertex_list.SetFromMesh(this);
   mesh_face_list.SetFromMesh(this);
-  return ON_MeshNgon::FindNgonOuterBoundary(mesh_vertex_list,mesh_face_list,0,ngon_fi_count,ngon_fi,ngon_vi);
+  return ON_MeshNgon::FindNgonOuterBoundary(mesh_vertex_list,mesh_face_list,(ON_MeshVertexFaceMap*)nullptr,ngon_fi_count,ngon_fi,ngon_vi);
 }
 
 static 

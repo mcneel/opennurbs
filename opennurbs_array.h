@@ -1572,6 +1572,55 @@ template< class T>
 static
 int ON_CompareDecreasing( const T* a, const T* b);
 
+void ON_SHA1_Accumulate2fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2fPoint>& a
+);
+
+void ON_SHA1_Accumulate3fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3fPoint>& a
+);
+
+void ON_SHA1_Accumulate4fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_4fPoint>& a
+);
+
+void ON_SHA1_Accumulate2fVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2fVector>& a
+);
+
+void ON_SHA1_Accumulate3fVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3fVector>& a
+);
+
+void ON_SHA1_Accumulate2dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2dPoint>& a
+);
+
+void ON_SHA1_Accumulate3dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3dPoint>& a
+);
+
+void ON_SHA1_Accumulate4dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_4dPoint>& a
+);
+
+void ON_SHA1_Accumulate2dVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2dVector>& a
+);
+
+void ON_SHA1_Accumulate3dVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3dVector>& a
+);
 
 // definitions of the template functions are in a different file
 // so that Microsoft's developer studio's autocomplete utility
