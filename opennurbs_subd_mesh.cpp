@@ -1819,7 +1819,7 @@ bool ON_SubD::Internal_GetGeometryControlNetMesh(
   }
 
   if (subd_vertex_count < 3 || mesh_face_count < 1 )
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(false);
 
   const size_t D_initial_capacity = subd_vertex_count + mesh_ngon_count;
   ON_3dPointArray& D = mesh.DoublePrecisionVertices();
@@ -1981,10 +1981,10 @@ bool ON_SubD::Internal_GetGeometryControlNetMesh(
 
   level.ClearArchiveId();
   if (false == rc )
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(false);
 
   if (D.UnsignedCount() < 3 || mesh.m_F.UnsignedCount() < 1)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(false);
 
   Internal_DuplicateVertices( mesh, D, dups_array);
 
