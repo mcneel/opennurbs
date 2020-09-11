@@ -889,6 +889,29 @@ ON_BrepLoop* ON_BrepFace::OuterLoop() const
   return 0;
 }
 
+unsigned int ON_BrepFace::PackId() const
+{
+  return  0x10000U * ((unsigned int)m_pack_id_high) + ((unsigned int)m_pack_id_low);
+}
+
+void ON_BrepFace::ClearPackId()
+{
+  m_pack_id_low = 0;
+  m_pack_id_high = 0;
+}
+
+void ON_BrepFace::SetPackIdForExperts(
+  unsigned int pack_id
+)
+{
+  if (0 == pack_id)
+    ClearPackId();
+  else
+  {
+    m_pack_id_low = (ON__UINT16)(pack_id % 0x10000U);
+    m_pack_id_high = (ON__UINT16)(pack_id / 0x10000U);
+  }
+}
 
 bool ON_BrepFace::IsValid( ON_TextLog* text_log ) const
 {
@@ -1581,13 +1604,12 @@ bool ON_Brep::Transform( const ON_Xform& xform )
     // Transforming the bbox makes it grow too large under repeated
     // rotations.  So, we need to reset it.
     face.m_bbox.Destroy();
-    const ON_Surface* srf = face.SurfaceOf();
-    if ( 0 != srf )
-    {
-      face.m_bbox = srf->BoundingBox();
-      if ( face.m_face_index != -1 )
-        m_bbox.Union( face.m_bbox );
-    }
+
+    //GBA 20 May 2020. Brep box now computed from face boxes, instead of surface boxes.
+    face.m_bbox = face.BoundingBox();    
+    if ( face.m_face_index != -1 )
+      m_bbox.Union( face.m_bbox );
+    
 
     // 12 May 2003 Dale Lear - RR 10528
     //     Use surface evaluation to update rendermesh when 
@@ -1600,6 +1622,8 @@ bool ON_Brep::Transform( const ON_Xform& xform )
                      || xform[3][2] != 0.0
                      || xform[3][3] != 1.0
                      );
+    const ON_Surface* srf = face.SurfaceOf();
+
     if ( 0 == srf )
       bEvMesh = false;
 
@@ -2222,6 +2246,9 @@ void ON_Brep::Append( const ON_Brep& b )
 ON_BrepLoop& 
 ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype )
 {
+  // 2 Sept 2020 S. Baer (RH-59952)
+  // Destroy cached bounding box on breps when messing around with loops
+  m_bbox.Destroy();
   m_is_solid = 0;
   int li = m_L.Count();
   m_L.Reserve(li+1);
@@ -2236,6 +2263,9 @@ ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype )
 ON_BrepLoop& 
 ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype, ON_BrepFace& face )
 {
+  // 2 Sept 2020 S. Baer (RH-59952)
+  // Destroy cached bounding box on breps when messing around with loops
+  m_bbox.Destroy();
   m_is_solid = 0;
   ON_BrepLoop& loop = NewLoop( looptype );
   loop.m_fi = face.m_face_index;
@@ -2265,6 +2295,8 @@ ON_BrepLoop* ON_Brep::NewOuterLoop( int face_index )
 ON_BrepFace& ON_Brep::NewFace( int si )
 {
   m_bbox.Destroy();
+  // GBA 28-MAy-2020 RH-58462.  m_bbox is now left unset after this function
+  // This works since ON_BrepFace::BoundingBox() supports lazy evaluation 
   m_is_solid = 0;
   int fi = m_F.Count();
   m_F.Reserve(fi+1);
@@ -2274,11 +2306,8 @@ ON_BrepFace& ON_Brep::NewFace( int si )
   face.m_si = si;
   face.m_brep = this;
   if ( si >= 0 && si < m_S.Count() )
-  {
     face.SetProxySurface(m_S[si]);
-    if ( face.ProxySurface() )
-      face.m_bbox = face.ProxySurface()->BoundingBox();
-  }
+  
   return face;
 }
 
@@ -5439,6 +5468,47 @@ bool ON_Brep::IsValid( ON_TextLog* text_log ) const
 
   }
 
+  // GBA 28-Aug-20 RH-60112 and RH-58462
+  // Adding bounding box (m_bbox) validation tests.  
+  // Brep bounding box is cached and persists across sessions (since at least Rhino 6).
+  // In Rhino6 and earlier, the bounding box included entire underlying surface.
+  // Rhino7 bounding box calculation now uses "shrinked" surfaces.
+  // A bounding box is now reported as invalid if it could be significantly 
+  // reduced by being recalculated.
+  if (!m_bbox.IsEmpty())
+  {
+    if (!m_bbox.IsValid())
+    {
+      if (text_log)
+        text_log->Print("Bounding Box is not valid.\n");
+      return ON_BrepIsNotValid();
+    }
+    else
+    {
+      ON_BoundingBox orig_box = m_bbox;
+      ON_BoundingBox computed_box;
+      {
+        ON_Brep* this_nonconst = const_cast<ON_Brep*>(this);
+        this_nonconst->ClearBoundingBox();
+        computed_box = BoundingBox();
+        this_nonconst->m_bbox = orig_box;    // restore box as it as it was.
+      }
+      // expand the computed_box before we do the incusion test
+      // I'm trying to avoid making a lot of objects created in Rhino 6 and earlier
+      // reporting as Invalid objects in Rhino 7.
+      computed_box.Expand(computed_box.Diagonal() + ON_3dVector(1.0, 1.0, 1.0));
+
+      if (!computed_box.Includes(orig_box))
+      {
+        if (text_log)
+          text_log->Print("Stored Bounding Box extends far outside of computed bounding box.\n");
+        return ON_BrepIsNotValid();
+
+      }
+
+    }
+  }
+
 #if 0
   // validate ON_BrepTrim.m_pline
   for ( ti = 0; ti < trim_count; ti++ )
@@ -6357,6 +6427,9 @@ void ON_BrepFace::ClearBoundingBox()
   m_bbox.Destroy();
 }
 
+
+// ON_BrepFace::GetBBox performs lazy evaluation.  Namely, if m_bbox is invalid then the bounding box is
+// computed and the value is stored in m_bbox to speed future calls.
 bool ON_BrepFace::GetBBox(
           double* box_min, // [3],
           double* box_max, // [3],
@@ -6370,11 +6443,49 @@ bool ON_BrepFace::GetBBox(
        && &m_brep->m_F[m_face_index] == this 
        )
   {
-    const ON_Surface* srf = ProxySurface();
-    if ( srf && srf != this )
+    ON_BoundingBox pbox;
+
+    for (int li = 0; li < LoopCount(); li++)
     {
-      srf->GetBoundingBox( const_cast<ON_BrepFace*>(this)->m_bbox, false );
+      ON_BrepLoop* loop = Loop(li);
+      if (loop && loop->m_type==ON_BrepLoop::outer)
+      {
+        m_brep->SetTrimBoundingBoxes( *loop, true);       // sets loop->m_pbox 
+        loop->GetBoundingBox(pbox, pbox.IsValid());  
+        break;
+      }                                               
     }
+
+    ON_Interval pudom(pbox[0].x, pbox[1].x);
+    ON_Interval pvdom(pbox[0].y, pbox[1].y);
+    // fatten up invervals to get slightly larger boxes.
+    pudom.Expand(.1 * pudom.Length());    
+    pvdom.Expand(.1 * pvdom.Length());
+    ON_Interval Sdom[]= { Domain(0), Domain(1) };
+    bool Used_pbox = false;
+    if (pbox.IsValid() &&
+      (Sdom[0].Includes(pudom, true) || Sdom[1].Includes(pvdom, true)))
+    {
+      ON_Surface* temp_srf = DuplicateSurface();  
+        if (temp_srf)
+        {
+          if (Sdom[0].Includes(pudom, true))
+            temp_srf->Trim(0, pudom);
+          if (Sdom[1].Includes(pvdom, true))
+              temp_srf->Trim(1, pvdom);
+          temp_srf->GetBoundingBox(const_cast<ON_BrepFace*>(this)->m_bbox, false);
+          delete temp_srf;
+          temp_srf = nullptr;
+          Used_pbox = true;
+        }
+    }
+    if (!Used_pbox)
+    {
+      const ON_Surface* srf = ProxySurface();
+      if(srf)
+        srf->GetBoundingBox(const_cast<ON_BrepFace*>(this)->m_bbox, false);
+    }
+    
   }
 
   bool rc = m_bbox.IsValid();
@@ -6417,10 +6528,11 @@ bool ON_Brep::GetBBox(
     {
       if ( m_F[fi].m_face_index == -1 )
         continue;
-      const ON_Surface* srf = m_F[fi].ProxySurface();
-      if ( !srf )
-        continue;
-      srf->GetBoundingBox( bbox, bbox.IsValid() );
+
+      //GBA 20 May 2020. RH-58462. Brep box now computed from face boxes, instead of surface boxes.
+      const ON_BrepFace* f = Face(fi);
+      if(f)
+       f->GetBoundingBox( bbox, bbox.IsValid() );
     }
     ON_Brep* ptr = const_cast<ON_Brep*>(this);
     ptr->m_bbox = bbox;
@@ -8025,22 +8137,34 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
     }
     dump.Print(")\n");
     dump.PushIndent();
-    if ( face.m_render_mesh ) 
+
+    if (nullptr != face.m_render_mesh)
     {
-      const char* mp_style = "Custom";
       const ON_MeshParameters* mp = face.m_render_mesh->MeshParameters();
-      if ( mp )
-      {
-        if ( 0 == ON_MeshParameters::CompareGeometrySettings(*mp,ON_MeshParameters::FastRenderMesh) )
-          mp_style = "Fast";
-        else if ( 0 ==  ON_MeshParameters::CompareGeometrySettings(*mp,ON_MeshParameters::QualityRenderMesh) )
-          mp_style = "Quality";
-      }
-      dump.Print("%s render mesh: %d polygons\n",mp_style,face.m_render_mesh->FaceCount());
+      ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
+      dump.Print(L"Render mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_render_mesh->FaceCount());
     }
-    if ( face.m_analysis_mesh ) {
-      dump.Print("Analysis mesh: %d polygons\n",face.m_analysis_mesh->FaceCount());
+    else
+      dump.Print("Render mesh = nullptr\n");
+
+    if (nullptr != face.m_analysis_mesh) 
+    {
+      const ON_MeshParameters* mp = face.m_analysis_mesh->MeshParameters();
+      ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
+      dump.Print(L"Analysis mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_analysis_mesh->FaceCount());
     }
+    else
+      dump.Print("Analysis mesh = nullptr\n");
+
+    if (nullptr != face.m_preview_mesh)
+    {
+      const ON_MeshParameters* mp = face.m_preview_mesh->MeshParameters();
+      ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
+      dump.Print(L"Preview mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_preview_mesh->FaceCount());
+    }
+    else
+      dump.Print("Preview mesh = nullptr\n");
+
     if ( FaceIsSurface(fi) ) {
       dump.Print("(Face geometry is the same as underlying surface.)\n");
     }
@@ -8685,6 +8809,9 @@ void ON_Brep::DeleteTrim(ON_BrepTrim& trim, bool bDeleteTrimEdges )
 
 void ON_Brep::DeleteLoop(ON_BrepLoop& loop,  bool bDeleteLoopEdges  )
 {
+  // 2 Sept 2020 S. Baer (RH-59952)
+  // Destroy cached bounding box on breps when messing around with loops
+  m_bbox.Destroy();
   m_is_solid = 0;
 
   const int li = loop.m_loop_index;
@@ -8718,6 +8845,9 @@ void ON_Brep::DeleteLoop(ON_BrepLoop& loop,  bool bDeleteLoopEdges  )
         if ( face.m_li[fli] == li ) 
         {
           face.m_li.Remove(fli);
+          // 2 Sept 2020 S. Baer (RH-59952)
+          // clear cached face bbox when a loop is removed
+          face.m_bbox.Destroy();
         }
       }
     }
@@ -9132,6 +9262,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
     face_copy.m_domain[0] = face.m_domain[0];
     face_copy.m_domain[1] = face.m_domain[1];
     face_copy.m_per_face_color = face.m_per_face_color;
+    face_copy.SetMaterialChannelIndex(face.MaterialChannelIndex());
     // do NOT duplicate meshes here
 
     // duplicate loops and trims

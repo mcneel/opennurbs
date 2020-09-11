@@ -3954,6 +3954,8 @@ bool ON_DimRadial::GetAnnotationBoundingBox(
   const ON_TextContent* text = Text();
   ON_3dPoint text_rect[4] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
 
+  dim_box.Destroy();
+
   if (nullptr != text && text->GetTightBoundingBox(dim_box))
   {
     text_rect[0].Set(dim_box.m_min.x, dim_box.m_min.y, 0.0);
@@ -3962,12 +3964,11 @@ bool ON_DimRadial::GetAnnotationBoundingBox(
     text_rect[3].Set(dim_box.m_min.x, dim_box.m_max.y, 0.0);
     for (int i = 0; i < 4; i++)
       text_rect[i].Transform(text_xform);  // Text + gap bounding rect
-  }
 
-  dim_box.Destroy();
-  for (int i = 0; i < 4; i++)
-  {
-    dim_box.Set(text_rect[i], 0 < i ? true : false);
+    for (int i = 0; i < 4; i++)
+    {
+      dim_box.Set(text_rect[i], 0 < i ? true : false);
+    }
   }
 
 #define dimlinecount 9

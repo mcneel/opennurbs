@@ -5254,6 +5254,19 @@ void ON_Font::Internal_CopyFrom(
       && m_font_style == installed_font->FontStyle()
       )
     {
+      if (
+        ON_Font::FontType::ManagedFont == m_font_type
+        && m_runtime_serial_number > 0
+        && 0 == m_managed_face_is_installed)
+      {
+        // When 1 == m_runtime_serial_number, this font is ON_Font::Default 
+        // and its face is installed on this device. Otherwise
+        // this is a managed font being created by some other process.
+        //
+        // See RH-58472 for rare cases when this is required. (A V5 file being read at Rhino startup).
+        m_managed_face_is_installed = 1;
+      }
+
       // Set stretch from installed font.
       m_font_stretch = installed_font->FontStretch();
 

@@ -28,20 +28,27 @@ enum class ON_SubDComponentLocation : unsigned char
 {
   ///<summary>
   /// Not a valid component location and used to indicate the value is not initialized.
+  /// Note well: This value is saved in 3dm archives and cannot be changed.
   ///</summary>
   Unset = 0,
 
   ///<summary>
   /// The component's location in the SubD control net.
+  /// Note well: This value is saved in 3dm archives and cannot be changed.
   ///</summary>
   ControlNet = 1,
 
   ///<summary>
   /// The component's location in the SubD limit surface.
+  /// Note well: This value is saved in 3dm archives and cannot be changed.
   ///</summary>
   Surface = 2
 };
 #pragma endregion
+
+ON_SubDComponentLocation ON_SubDComponentLocationFromUnsigned(
+  unsigned int loc_as_unsigned
+);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -60,22 +67,88 @@ public:
   ON_SubDDisplayParameters& operator=(const ON_SubDDisplayParameters&) = default;
 
 public:
+  void Dump(class ON_TextLog&) const;
+
+public:
   enum : unsigned int
   {
-    CourseDensity = 2,  // (2^2 = 4, 4x4 = 16 quads per SubD quad)
-    DefaultDensity = 4, // (2^4 = 16, 16x16 = 256 quads per SubD quad)
-    MaximumDensity = 6  // (2^6 = 64, 64x64 = 4096 quads per SubD quad)
+    ///<summary>
+    /// Each SubD quad will generate 4 mesh quads in a 2x2 grid.
+    /// A simple meshing density of 0% corresponds to ExtraCoarseDensity.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    ///</summary>
+    ExtraCoarseDensity = 1,
+    MinimumDensity = 1,
+
+    ///<summary>
+    /// Each SubD quad will generate 16 mesh quads in a 4x4 grid.
+    /// A simple meshing density of 1% to 19% corresponds to CoarseDensity.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    ///</summary>
+    CoarseDensity = 2,
+
+    ///<summary>
+    /// Each SubD quad will generate 64 mesh quads in an 8x8 grid.
+    /// A simple meshing density of 20% to 34% corresponds to MediumDensity.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// This density is too low to produce acceptable results on the SubD Rhino Logo and many other models.
+    ///</summary>
+    MediumDensity = 3,
+
+    ///<summary>
+    /// Each SubD quad will generate 256 mesh quads in a 16x16 grid.
+    /// A simple meshing density of 35% to 75% corresponds to FineDensity.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// This is the default value for creating mesh approximations of SubD surface.  
+    /// It produces acceptable results on the SubD Rhino Logo and most other models.
+    ///</summary>
+    FineDensity = 4,
+    DefaultDensity = 4,
+
+    ///<summary>
+    /// Each SubD quad will generate 1024 mesh quads in a 32x32 grid.
+    /// A simple meshing density of 76% to 99% corresponds to ExtraFineDensity.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    ///</summary>
+    ExtraFineDensity = 5,
+
+    ///<summary>
+    /// Each SubD quad will generate 4096 mesh quads in a 64x64 grid.
+    /// A simple meshing density of 100% corresponds to MaximumDensity.
+    /// SubD display density values may never exceed 6 and core code assumes these values are &lt= 6.
+    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// This value creates ridiculously dense meshes and should generally be avoided. 
+    ///</summary>
+    MaximumDensity = 6
   };
 
 public:
   static const ON_SubDDisplayParameters Empty;
 
-  // Parameters for the default limit surface display mesh.
-  // m_display_density = ON_SubDMesh::DefaultDisplayDensity
-  static const ON_SubDDisplayParameters Course;
+  // Parameters for a course limit surface display mesh.
+  // m_display_density = ON_SubDDisplayParameters::ExtraCoarseDensity
+  static const ON_SubDDisplayParameters ExtraCoarse;
+
+  // Parameters for a course limit surface display mesh.
+  // m_display_density = ON_SubDDisplayParameters::CoarseDensity
+  static const ON_SubDDisplayParameters Coarse;
+
+  // Parameters for a medium limit surface display mesh.
+  // To crude for a quality rendering of the SubD Rhino logo.
+  // m_display_density = ON_SubDDisplayParameters::MediumDensity
+  static const ON_SubDDisplayParameters Medium;
 
   // Parameters for the default limit surface display mesh.
-  // m_display_density = ON_SubDMesh::DefaultDisplayDensity
+  // Produces and acceptable rendering of the SubD Rhino logo.
+  // m_display_density = ON_SubDDisplayParameters::FineDensity (default)
+  static const ON_SubDDisplayParameters Fine;
+
+  // Parameters for an extra fine limit surface display mesh.
+  // m_display_density = ON_SubDDisplayParameters::ExtraFineDensity
+  static const ON_SubDDisplayParameters ExtraFine;
+
+  // Parameters for the default limit surface display mesh.
+  // m_display_density = ON_SubDDisplayParameters::DefaultDensity
   static const ON_SubDDisplayParameters Default;
 
   /*
@@ -83,19 +156,47 @@ public:
     In most applications, the caller sets the mesh_density
     and leaves the other parameters set to the default
     values.
+  Parameters:
+    subd_display_density - [in]
+      A value between ON_SubDDisplayParameters::MinimumDensity and ON_SubDDisplayParameters::MaximumDensity.
   */
   static const ON_SubDDisplayParameters CreateFromDisplayDensity(
-    unsigned int display_density
+    unsigned int subd_display_density
     );
 
-  // TODO - add functional interface and hide implementation
+  /*
+  Description:
+    This function creates ON_SubDDisplayParameters from a user interface
+    "slider" like Rhino's simple mesh controls.
+  Parameters:
+    normalized_mesh_density - [in]
+      A double between 0.0 and 1.0
+
+      The table below shows the correpondence between normalized_density and subd display density.
+
+      Mesh density percentage / normalized_mesh_density / subd display density
+      0% ->  [0.0, ON_ZERO_TOLERANCE] -> 1 = MinimumDensity
+      0% to 19% -> (ON_ZERO_TOLERANCE, 0.20) -> 2 = CoarseDensity
+      20% to 34% -> [0.20, 0.35) -> 3 = MediumDensity
+      35% to 75% ->   [0.35, 0.75] -> 4 = FineDensity
+      76% to 99% -> (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
+      100% -> [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
+      
+      Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
+
+   Returns:
+     A valid ON_SubDDisplayParameters with the specified subd display denstity.
+  */
+  static const ON_SubDDisplayParameters CreateFromMeshDensity(
+    double normalized_mesh_density
+  );
 
 public:
   // 0 <= m_display_density <= ON_SubDDisplayParameters::MaximumDensity
   // If n = m_display_density, then each SubD quad face will have 
   // a grid of 2^n x 2^n mesh quads for a total of 2^(2n) mesh quads.
-  // n   grid size    total number of mesh faces per SubD quad
-  // 0     1 x 1             1
+  // n   grid size    total number of mesh quad faces per SubD quad face
+  // 0     1 x 1             1 (avoid 0 - it does not work for n-gons n != 4)
   // 1     2 x 2             4
   // 2     4 x 4            16
   // 3     8 x 8            64
@@ -125,22 +226,6 @@ public:
   */
   void SetMeshLocation(ON_SubDComponentLocation mesh_location);
 
-  // By default, limit surface mesh quads for each subd face are grouped into 
-  // a single ON_Mesh n-gon. 
-  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
-  bool AddNgons() const;
-  void SetAddNgons(
-    bool bAddNgons
-  );
-
-  // By default, limit surface mesh quads for each subd face are grouped into 
-  // a single ON_Mesh n-gon. 
-  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
-  bool AddFakeEvaluationParameters() const;
-  void SetAddFakeEvaluationParameters(
-    bool bAddFakeEvaluationParameters
-  );
-
   unsigned char EncodeAsUnsignedChar() const;
   static const ON_SubDDisplayParameters DecodeFromUnsignedChar(
     unsigned char encoded_parameters
@@ -153,8 +238,8 @@ private:
     // and the value of m_subd_mesh_parameters is saved in 3dm archives.
     subd_mesh_density_mask = 0x07,
     subd_mesh_location_bit = 0x08,
-    subd_mesh_skip_ngons_bit = 0x10,
-    subd_mesh_skip_fakeevalparams_bit = 0x20,
+
+    // If this bit set, then the settings are not current defaults.
     subd_mesh_nondefault_bit = 0x80
   };
 
@@ -176,31 +261,52 @@ private:
   // If m_bControlNetMesh is true, a mesh of the subdivided control net is produced.
   bool m_bControlNetMesh = false;
 
-  // By default, limit surface mesh quads for each subd face are grouped into 
-  // a single ON_Mesh n-gon. 
-  // If you don't want n-gons, then set m_bSkipMeshNgons = true;
-  bool m_bSkipMeshNgons = false;
+public:
+  enum class Context : unsigned char
+  {
+    ///<summary>
+    /// Unknown, unspecified, or unset context. This is typical.
+    ///</summary>
+    Unknown = 0,
 
-  // By default, fake evaluation parameters are assigned to mesh
-  // vertex locations and used to set normalized texture coordinates.  
-  // If you don't want fake evaluation parameters, then set m_bSkipFakeEvaluationParameters = true;
-  bool m_bSkipFakeEvaluationParameters = false;
+    ///<summary>
+    /// These parameters are being used to generate a quad mesh approximations of an ON_SubD.
+    /// Low level meshing code copies input paramters and specifies this context when appropriate.
+    ///</summary>
+    SubDToMesh = 1,
+
+    ///<summary>
+    /// These parameters are being used to generate NURBS surface approximations of an ON_SubD.
+    /// Low level conversion to NURB code copies input paramters and specifies this context when appropriate.
+    ///</summary>
+    SubDToNURBS = 2
+  };
+
+
+  /*
+  Description:
+    Low level mesh creation and ON_SubD to NURBS conversion code
+    occasional looks at the context. Typically it is set in a local
+    copy and no user of the top level ON_SubD SDK needs to be concerned
+    about the context setting. 
+    This setting is not saved in 3dm archives and is ingnored by all compare functions.
+  */
+  ON_SubDDisplayParameters::Context ContextForExperts() const;
+
+  void SetContextForExperts(ON_SubDDisplayParameters::Context context);
 
 private:
+  ON_SubDDisplayParameters::Context m_context = ON_SubDDisplayParameters::Context::Unknown;
+
   unsigned char m_reserved2 = 0;
-  unsigned int m_reserved3 = 0;
+  unsigned char m_reserved3 = 0;
   unsigned int m_reserved4 = 0;
-  ON__UINT_PTR m_reserved5 = 0;
-  double m_reserved6 = 0.0;
+  unsigned int m_reserved5 = 0;
+  ON__UINT_PTR m_reserved6 = 0;
+  double m_reserved7 = 0.0;
 
-
-  // TODO - split this class into two - what's above and one derived from that with what's below.
 public:
-  bool UseMultipleThreads() const;
-  void SetUseMultipleThreads(
-    bool bUseMultipleThreads
-  );
-
+  // TODO - split this class into two - what's above and one derived from that with what's below.
   ON_Terminator* Terminator() const;
   void SetTerminator(
     ON_Terminator* terminator
@@ -213,8 +319,9 @@ public:
     ON_Interval progress_reporter_interval
   );
 
-private:
-  bool m_bUseMultipleThreads = false;
+public:
+  bool Write(class ON_BinaryArchive& archive) const;
+  bool Read(class ON_BinaryArchive& archive);
    
 private:
   ON_Terminator* m_terminator = nullptr;
@@ -363,6 +470,76 @@ public:
   const ON_MeshParameters DefaultAnalysisMesh;
 
   /*
+  Returns:
+    "Fast" if this and ON_MeshParameters::FastRenderMesh have the same geometry settings.
+    "Quality" if this and ON_MeshParameters::QualityRenderMesh have the same geometry settings.
+    "Density(p%)" if this and ON_MeshParameters::CreateFromMeshDensity(p/100.0) have the same geometry settings.
+    "Default" if this and ON_MeshParameters::DefaultMesh have the same geometry settings.
+    "DefaultAnalysis" if this and ON_MeshParameters::DefaultAnalysis have the same geometry settings.
+    Otherwise, "Custom(SHA1)" where SHA1 = this->GeometryHash();
+  */
+  const ON_wString Description() const;
+
+
+  /*
+  Description:
+    This function creates ON_MeshParameters from a user interface
+    "slider" like Rhino's simple mesh controls.
+  Parameters:
+    normalized_density - [in]
+      A double between 0.0 and 1.0.
+      0.0 creates meshes with fewer faces than 1.0.
+
+      Invalid input is treated as 0.5.
+   Returns:
+     A valid ON_MeshParameters with the specified subd display denstity.
+  */
+  static const ON_MeshParameters CreateFromMeshDensity(
+    double normalized_density
+  );
+
+  /*
+  Returns:
+    If these mesh parameters were created from ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density),
+    then normalized_mesh_density is returned.
+    Otherwise, ON_DBL_QNAN is returned.
+  Remarks:
+    The values of m_bDoublePrecision, m_bClosedObjectPostProcess, and m_texture_range can be arbitrary
+    because they do not determine geometry of the resulting mesh and are typically ingored. 
+    You must compare these properties if they matter in your particular context.
+  */
+  double MeshDensity() const;
+
+  /*
+  Description:
+    Convert a mesh density value to a percentage with finite precision fuzz removed.
+  Parameters:
+    normalized_density - [in]
+      valid input is 0.0 <= normalized_density <= 1.0
+  Returns:
+    If normalized_density is valid, 100*normalized_density with fuzz cleaned up is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  */
+  static double MeshDensityAsPercentage(double normalized_density);
+
+  /*
+  Description:
+    This function cleans up normalized_density used in 
+    ON_MeshParameters::CreateFromMeshDensity() 
+    and ON_SubDDisplayParameters CreateFromMeshDensity().
+  Parameters:
+    normalized_density - [in]
+      should be close to being between 0 and 1.
+   Returns:
+      if normalized_density is between 0.0 and 1.0, that value is returned.
+      If normalized_density is a hair smaller than 0.0, then 0.0 is returned.
+      If normalized_density is a hair bigger than 1.0, then 1.0 is returned.
+      Otherwise 0.5 is returned.
+  */
+  static double ClampMeshDensityValue(double normalized_density);
+
+
+  /*
   Description:
     Get a value to use for tolerance based on the relative_tolerance
     and actual size.
@@ -402,17 +579,23 @@ public:
 
   /*
   Description:
-    Tool for provding a simple slider interface.
+    Tool for provding a simple "slider" interface.
   Parameters:
-    density - [in] 0.0 <= density <= 1.0
+    mesh_density - [in] 0.0 <= density <= 1.0
       0 quickly creates coarse meshes.
       1 slowly creates dense meshes.
     min_edge_length - [in]
       > 0.0 custom value
       ON_UNSET_VALUE: for default (0.0001)
+  Remarks:
+    If you are using a user interface "slider" to set mesh parameters, 
+    then you are strongly encouraged to call ON_MeshParameters::CreateFromMeshDensity()
+    instead of using this constructor. 
+    ON_MeshParameters::CreateFromMeshDensity() handles out of bounds input
+    in a predictable way and is easier to search for when examining code.
   */
   ON_MeshParameters(
-    double density,
+    double mesh_density,
     double min_edge_length = ON_UNSET_VALUE
     );
 
@@ -441,14 +624,29 @@ public:
     const ON_MeshParameters& b
     );
 
+  /*
+  Returns:
+    A hash of every ON_MeshParameters setting.
+  Remarks:
+    The hash intentionally ignores m_bCustomSettingsEnabled or m_bDoublePrecision.
+  */
   ON_SHA1_Hash ContentHash() const;
+
+  /*
+  Returns:
+    A hash of values that control mesh geometry.
+  Remarks:
+    Teh has intentionally ignores 
+    m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature, 
+    m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
+    If you need to include those values, call ContentHash().
+  */
   ON_SHA1_Hash GeometrySettingsHash() const;
 
   ON_UUID MesherId() const;
   void SetMesherId(
     ON_UUID
   );
-
 
   /*
   Returns:
@@ -472,6 +670,10 @@ public:
       (0 == ON_MeshParameters::CompareGeometrySettings(*this,ON_MeshParameters(n/100.0))
     no_match_found_result:
       otherwise
+  Remarks:
+    This is a legacy function with roots dating back to Rhino 1.0. 
+    High quality code should use ON_MeshParameters::MeshDensity() or
+    ON_MeshParameters::MeshDensityAsPercentage(ON_MeshParameters::MeshDensity()).
   */
   const int GeometrySettingsDensityPercentage(
     int no_match_found_result
@@ -790,7 +992,7 @@ private:
   // Uses ON_SubDDisplayParameters::EncodeAsUnsignedChar() / ON_SubDDisplayParameters::DecodeFromUnsignedChar() 
   // to save ON_SubDDisplayParameters settings in this class.
   // (Done this way to avoid breaking the C++ public SDK.)
-  unsigned char m_subd_mesh_parameters = 0;
+  unsigned char m_subd_mesh_parameters_as_char = 0;
 
   int m_grid_min_count = 0;
   int m_grid_max_count = 0;     
@@ -845,10 +1047,15 @@ private:
   //
   //////////////////////////////////////////////////////////
 private:
+  // This value is perminantly reserved for use by ON_SubD core code
+  // that is part of public opennurbs.
   unsigned int m_subd_stuff_reserved5 = 0;
 
 private:
-  ON__UINT_PTR m_reserved6 = 0;
+  // NOTE WELL: This value cannot become a managed pointer.
+  // Lots of legacy code manages ON_MeshParameter values in ways
+  // that are incompatible with this class having a managed pointer.
+  ON__UINT64 m_reserved6 = 0;
 };
 
 ON_DECL
@@ -1711,6 +1918,35 @@ public:
     ON_SimpleArray<unsigned int>& ngon_vi
     );
 
+    /*
+  Description:
+    Get a list of vertices that form the boundary of a set of faces.
+  Parameters:
+    mesh_vertex_list - [in]
+    mesh_face_list - [in]
+    vertex_face_map - [in]
+      null or a vertex map made from the information in
+      mesh_vertex_list and mesh_face_list.
+    ngon_fi_count - [in]
+      length of ngon_fi[] array
+    ngon_fi - [in]
+      An array of length ngon_fi_count that contains the indices 
+      of the faces that form the ngon.
+    ngon_vi - [out]
+      An array of vertex indices that make the ngon boundary.        
+  Returns:
+    Number of vertices in the ngon outer boundary or 0 if the input is
+    not valid.
+  */
+  static unsigned int FindNgonOuterBoundary(
+    const class ON_3dPointListRef& mesh_vertex_list,
+    const class ON_MeshFaceList& mesh_face_list,
+    ON_MeshVertexFaceMap* vertex_face_map,
+    size_t ngon_fi_count,
+    const unsigned int* ngon_fi,
+    ON_SimpleArray<unsigned int>& ngon_vi
+    );
+
   /*
 Description:
   Get a list of vertices that form any boundary of a set of faces.
@@ -1736,6 +1972,36 @@ Returns:
     const class ON_3dPointListRef& mesh_vertex_list,
     const class ON_MeshFaceList& mesh_face_list,
     const unsigned int *const* vertex_face_map,
+    size_t ngon_fi_count,
+    const unsigned int* ngon_fi,
+    ON_SimpleArray<unsigned int>& ngon_vi
+  );
+
+    /*
+  Description:
+    Get a list of vertices that form any boundary of a set of faces.
+    This includes inner boundaries.
+  Parameters:
+    mesh_vertex_list - [in]
+    mesh_face_list - [in]
+    vertex_face_map - [in]
+      null or a vertex map made from the information in
+      mesh_vertex_list and mesh_face_list.
+    ngon_fi_count - [in]
+      length of ngon_fi[] array
+    ngon_fi - [in]
+      An array of length ngon_fi_count that contains the indices
+      of the faces that form the ngon.
+    ngon_vi - [out]
+      An array of vertex indices that make the ngon boundary.
+  Returns:
+    Number of vertices in the ngon outer boundary or 0 if the input is
+    not valid.
+  */
+  static unsigned int FindNgonBoundary(
+    const class ON_3dPointListRef& mesh_vertex_list,
+    const class ON_MeshFaceList& mesh_face_list,
+    ON_MeshVertexFaceMap* vertex_face_map,
     size_t ngon_fi_count,
     const unsigned int* ngon_fi,
     ON_SimpleArray<unsigned int>& ngon_vi
@@ -2463,6 +2729,9 @@ public:
                bool bCompareXform = true
                ) const;
 
+  static int CompareAll(const ON_MappingTag& lhs, const ON_MappingTag& rhs);
+  static int CompareAllFromPointer(const ON_MappingTag* lhs, const ON_MappingTag* rhs);
+
   /*
   Returns:
     True if the mapping tag is set.
@@ -2487,8 +2756,33 @@ public:
   // 
   ON_UUID  m_mapping_id = ON_nil_uuid;   // ON_TextureMapping::m_mapping_id
   ON_TextureMapping::TYPE m_mapping_type = ON_TextureMapping::TYPE::no_mapping; // ON_TextureMapping::m_type
-  ON__UINT32 m_mapping_crc = 0;  // ON_TextureMapping::MappingCRC()
+  ON__UINT32 m_mapping_crc = 0;  // ON_TextureMapping::MappingCRC() (from decades ago - a sha1 would be better when SDK can break)
   ON_Xform m_mesh_xform = ON_Xform::IdentityTransformation;
+
+  /*
+  Returns:
+    World space transformation to apply to the object when using this mapping.
+  */
+  const ON_Xform Transform() const;
+
+  /*
+  Returns:
+    True if Transform() will return the identity transformation.
+  */
+  bool TransformIsIdentity() const;
+
+
+  /*
+  Returns:
+    True if ON_MappingTag will consider xform to be the identity transformation.
+  */
+  static bool TransformTreatedIsIdentity(const ON_Xform* xform);
+
+  /*
+  Returns:
+    A sha1 hash the identifies the mapping tag.
+  */
+  const ON_SHA1_Hash Hash() const;
 };
 
 class ON_CLASS ON_TextureCoordinates
@@ -3213,9 +3507,38 @@ Returns:
   */
   bool SetTextureCoordinates( 
           const class ON_TextureMapping& mapping,
-					const class ON_Xform* mesh_xform = 0,
+          const class ON_Xform* mesh_xform = 0,
           bool bLazy = true
           );
+
+  /*
+  Description:
+    Use a texture mapping function to set the m_T[] values.
+  Parameters:
+    mapping - [in]
+    mesh_xform - [in]
+      If not nullptr, the mapping calculation is performed as
+      if the mesh were transformed by mesh_xform; the
+      location of the mesh is not changed.
+    bLazy - [in]
+      If true and the m_T[] values were set using the same
+      mapping parameters, then no calculation is performed.
+    bSeamCheck - [in]
+      If true then some mesh edges might be unwelded to better
+      represent UV discontinuities in the texture mapping.
+      This only happens for the following mappings:
+      Box, Sphere, Cylinder.
+  Returns:
+    True if successful.
+  See Also:
+    ON_TextureMapping::GetTextureCoordinates
+  */
+  bool SetTextureCoordinatesEx(
+    const class ON_TextureMapping& mapping,
+    const class ON_Xform* mesh_xform = 0,
+    bool bLazy = true,
+    bool bSeamCheck = true
+  );
 
   bool HasCachedTextureCoordinates() const;
 
@@ -3225,8 +3548,15 @@ Returns:
 
   const ON_TextureCoordinates* SetCachedTextureCoordinates( 
           const class ON_TextureMapping& mapping,
-					const class ON_Xform* mesh_xform = 0,
+          const class ON_Xform* mesh_xform = 0,
           bool bLazy = true
+          );
+
+  const ON_TextureCoordinates* SetCachedTextureCoordinatesEx(
+          const class ON_TextureMapping& mapping,
+          const class ON_Xform* mesh_xform = 0,
+          bool bLazy = true,
+          bool bSeamCheck = true
           );
 
   bool EvaluateMeshGeometry( const ON_Surface& ); // evaluate surface at tcoords
@@ -3813,6 +4143,27 @@ Returns:
                               ON_SimpleArray<ON_Mesh*>* components
                             ) const;
 
+  /////////////////////////////////////////////////////////////////
+  // 
+  // Mesh offset
+  // 
+
+  /*
+    Description:
+      Offsets a mesh by the input distance
+      
+      distance - [in]
+        Distance to offset
+      direction - [in]
+        If this parameter is ON_3dVector::UnsetVector, offset each vertex in the normal direction
+        orherwise, offset every vertex in the input direction
+    Returns:
+      New mesh that is an offset of a duplicate of this mesh
+      Or nullptr if the input was invalid or the mesh could not be duplicated or offset
+      Caller manages memory of new mesh
+  */
+  ON_Mesh* OffsetMesh(const double distance, const ON_3dVector& direction) const;
+
 
   /////////////////////////////////////////////////////////////////
   // 
@@ -4077,6 +4428,35 @@ Returns:
     unsigned int Fcount,
     const unsigned int* ngon_fi,
     bool bPermitHoles
+  );
+
+  /*
+  Description:
+    Add a new ngon to the mesh.
+    WARNING! The usage of this particular overload is discouraged unless
+    its usage is critical for performance. If vertexFaceMap is set to something
+    other than nullptr, then the value will be filled and can be re-fed to the
+    function.
+  Parameters:
+    Fcount - [in]
+      Number of face that make up the ngon.
+    ngon_fi[]
+      An array of N distinct ON_Mesh.m_F[] face indices referencing
+      a set of connected faces.
+    bPermitHoles
+      If true, also ngons that contain inner boundaries are allowed.
+    faceVertexMap
+      If nullptr, this will be set to a new faceVertexMap. Must be freed with onfree().
+      It is responsability of the user to call onfree() on the created object.
+  Returns:
+    index of the new n-gon.
+    -1: If input information is not valid.
+*/
+  int AddNgon_Expert(
+    unsigned int Fcount,
+    const unsigned int* ngon_fi,
+    bool bPermitHoles,
+    ON_MeshVertexFaceMap* vertexFaceMap
   );
 
 
@@ -4832,6 +5212,29 @@ public:
   ON_MeshRef& operator=( ON_MeshRef&& );
 #endif
 
+  /*
+  Returns:
+    True if no ON_Mesh is being managed by this ON_MeshRef.
+  Remarks:
+    It is alwasy the case that exactly one of IsEmpty() and IsNotEmpty() is true.
+    Both are provided so code using ON_MeshRef can be clean and easily read.
+  */
+  bool IsEmpty() const;
+
+  /*
+  Returns:
+    True if an ON_Mesh is being managed by this ON_MeshRef.
+  Remarks:
+    It is alwasy the case that exactly one of IsEmpty() and IsNotEmpty() is true.
+    Both are provided so code using ON_MeshRef can be clean and easily read.
+  */
+  bool IsNotEmpty() const;
+
+  /*
+  Returns:
+    The mesh being managed by this ON_MeshRef. 
+    If this ON_MeshRef is not managing an ON_Mesh, then ON_Mesh::Empty is returned.
+  */
   const class ON_Mesh& Mesh() const;
 
   /*

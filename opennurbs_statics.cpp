@@ -109,10 +109,28 @@ std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
 
 std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
 
-ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
+const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
+
+// The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
+const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
+
 
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
+
+const ON_SubDSectorId ON_SubDSectorId::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDSectorId);
+const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
+
+const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
+{
+  ON_SubDToBrepParameters p;
+  p.SetPackFaces(bPackedFaces);
+  return p;
+}
+
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDToBrepParameters);
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultUnpacked = Internal_SubDToBrepParameters(false);
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultPacked = Internal_SubDToBrepParameters(true);
 
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
@@ -601,6 +619,8 @@ const ON_Xform ON_Xform::Zero4x4 = ON_Xform_Init(0.0, false);
 const ON_Xform ON_Xform::Unset = ON_Xform_Init(ON_UNSET_VALUE, false);
 const ON_Xform ON_Xform::Nan = ON_Xform_Init(ON_DBL_QNAN, false);
 
+const ON_SurfaceCurvature ON_SurfaceCurvature::Nan = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(ON_DBL_QNAN, ON_DBL_QNAN);
+const ON_SurfaceCurvature ON_SurfaceCurvature::Zero = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(0.0, 0.0);
 
 const ON_2dPoint ON_2dPoint::Origin(0.0, 0.0);
 const ON_2dPoint ON_2dPoint::UnsetPoint(ON_UNSET_VALUE, ON_UNSET_VALUE);
@@ -901,9 +921,12 @@ const ON_Plane ON_Plane::NanPlane(ON_Plane_NanPlane());
 
 // ON_SubDDisplayParameters statics before ON_MeshParamters statics
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDDisplayParameters);
-const ON_SubDDisplayParameters ON_SubDDisplayParameters::Course = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::CourseDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::ExtraCoarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::ExtraCoarseDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Coarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::CoarseDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Medium = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MediumDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Fine = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::FineDensity);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::ExtraFine = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::ExtraFineDensity);
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Default = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::DefaultDensity);
-
 
 // {F15F67AA-4AF9-4B25-A3B8-517CEDDAB134}
 const ON_UUID ON_MeshParameters::RhinoLegacyMesherId = { 0xf15f67aa, 0x4af9, 0x4b25,{ 0xa3, 0xb8, 0x51, 0x7c, 0xed, 0xda, 0xb1, 0x34 } };
@@ -1486,7 +1509,7 @@ const ON_TextureMapping ON_TextureMapping::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(O
 static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
 {
   //// {B988A6C2-61A6-45a7-AAEE-9AED7EF4E316}
-  static const ON_UUID srfp_mapping_id = { 0xb988a6c2, 0x61a6, 0x45a7,{ 0xaa, 0xee, 0x9a, 0xed, 0x7e, 0xf4, 0xe3, 0x16 } };
+  const ON_UUID srfp_mapping_id = { 0xb988a6c2, 0x61a6, 0x45a7,{ 0xaa, 0xee, 0x9a, 0xed, 0x7e, 0xf4, 0xe3, 0x16 } };
 
   ON_TextureMapping tm;
   tm.SetId(srfp_mapping_id);
@@ -2343,6 +2366,7 @@ const ON_Mesh ON_Mesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Mesh);
 const ON_MeshRef ON_MeshRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshRef);
 
 unsigned int ON_SubD::ErrorCount = 0;
+unsigned int ON_Brep::ErrorCount = 0;
 
 const bool ON_SubD::AutomaticRhino5BoxModeTSplineToSubDDefault = true;
 const bool ON_SubD::AutomaticFBXMeshWithDivisionLevelsToSubDDefault = false;
@@ -2607,26 +2631,24 @@ const ON_SubDSectorType ON_SubDSectorType::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(O
 const ON_SubDMatrix ON_SubDMatrix::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMatrix);
 const ON_SubDComponentRef ON_SubDComponentRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRef);
 
-static ON_SubDFromMeshParameters ON_SubDCreaseParameters_CreaseAt(
-  ON_SubDFromMeshParameters::InteriorCreaseOption crease_type
-  )
+static ON_SubDFromMeshParameters Internal_InteriorCreases()
 {
   ON_SubDFromMeshParameters cp;
-  cp.SetInteriorCreaseOption(crease_type);
+  cp.SetInteriorCreaseOption(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge);
   return cp;
 }
 
-static ON_SubDFromMeshParameters ON_SubDCreaseParameters_ConvexCorners()
+static ON_SubDFromMeshParameters Internal_ConvexCornersAndInteriorCreases()
 {
   ON_SubDFromMeshParameters cp;
+  cp.SetInteriorCreaseOption(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge);
   cp.SetConvexCornerOption(ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner);
   return cp;
 }
 
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromMeshParameters);
-const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreaseAtMeshCrease = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshCrease);
-const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreaseAtMeshEdge = ON_SubDCreaseParameters_CreaseAt(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshEdge);
-const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexCornerAtMeshCorner = ON_SubDCreaseParameters_ConvexCorners();
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreases = Internal_InteriorCreases();
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexCornersAndInteriorCreases = Internal_ConvexCornersAndInteriorCreases();
 
 const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromSurfaceParameters);
 

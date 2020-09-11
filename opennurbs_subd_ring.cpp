@@ -104,10 +104,10 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
 
       if (0 == pass)
       {
-        if (ON_SubD::EdgeTag::SmoothX == edge->m_edge_tag)
+        if (ON_SubDEdgeTag::SmoothX == edge->m_edge_tag)
           break; // need to use subdivision point in 2nd pass
-        if (ON_SubD::VertexTag::Smooth == vertex->m_vertex_tag 
-          || ON_SubD::EdgeTag::Crease == edge->m_edge_tag
+        if (ON_SubDVertexTag::Smooth == vertex->m_vertex_tag 
+          || ON_SubDEdgeTag::Crease == edge->m_edge_tag
           || 0.5 == edge->m_sector_coefficient[eptr]
           )
         {
@@ -232,14 +232,14 @@ bool ON_SubD::ComponentRingIsValid(
   if ( vertex->m_face_count < F || nullptr == vertex->m_faces)
     return ON_SUBD_RETURN_ERROR(false);
 
-  const ON_SubD::EdgeTag edge0_tag 
-    = (F+1 == N || (F == N && ON_SubD::VertexTag::Dart == vertex->m_vertex_tag))
-    ? ON_SubD::EdgeTag::Crease
-    : ON_SubD::EdgeTag::Smooth;
-  const ON_SubD::EdgeTag edge1_tag 
+  const ON_SubDEdgeTag edge0_tag 
+    = (F+1 == N || (F == N && ON_SubDVertexTag::Dart == vertex->m_vertex_tag))
+    ? ON_SubDEdgeTag::Crease
+    : ON_SubDEdgeTag::Smooth;
+  const ON_SubDEdgeTag edge1_tag 
     = (F+1 == N)
-    ? ON_SubD::EdgeTag::Crease
-    : ON_SubD::EdgeTag::Smooth;
+    ? ON_SubDEdgeTag::Crease
+    : ON_SubDEdgeTag::Smooth;
 
   unsigned int component_ring_index = 1;
   for (unsigned int i = 0; i < N; i++, component_ring_index++)
@@ -254,7 +254,7 @@ bool ON_SubD::ComponentRingIsValid(
     {
       if (edge0_tag != edge->m_edge_tag)
       {
-        if (  ON_SubD::EdgeTag::Smooth != edge0_tag || ON_SubD::EdgeTag::SmoothX != edge->m_edge_tag )
+        if (  ON_SubDEdgeTag::Smooth != edge0_tag || ON_SubDEdgeTag::SmoothX != edge->m_edge_tag )
           return ON_SUBD_RETURN_ERROR(false);
       }
     }
@@ -262,10 +262,10 @@ bool ON_SubD::ComponentRingIsValid(
     {
       if (edge1_tag != edge->m_edge_tag)
       {
-        if (  ON_SubD::EdgeTag::Smooth != edge1_tag || ON_SubD::EdgeTag::SmoothX != edge->m_edge_tag )
+        if (  ON_SubDEdgeTag::Smooth != edge1_tag || ON_SubDEdgeTag::SmoothX != edge->m_edge_tag )
           return ON_SUBD_RETURN_ERROR(false);
       }
-      if ( ON_SubD::EdgeTag::Crease == edge1_tag)
+      if ( ON_SubDEdgeTag::Crease == edge1_tag)
         continue;
     }
     else
@@ -466,9 +466,9 @@ static double Subdivide_CenterVertexSectorWeight(
   const ON_SubDVertex* vertex0
   )
 {
-  if ( ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
+  if ( ON_SubDEdgeTag::Crease == edge0->m_edge_tag)
     return ON_SubDSectorType::IgnoredSectorCoefficient;
-  if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::SmoothX == edge0->m_edge_tag)
+  if (ON_SubDEdgeTag::Smooth == edge0->m_edge_tag || ON_SubDEdgeTag::SmoothX == edge0->m_edge_tag)
   {
     if (vertex0 == edge0->m_vertex[0])
       return edge0->m_sector_coefficient[0];
@@ -521,7 +521,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
     return ON_SUBD_RETURN_ERROR(nullptr);
   }
   
-  const ON_SubD::EdgeTag edge0_tag = (F+1 == N) ? ON_SubD::EdgeTag::Crease : ON_SubD::EdgeTag::Smooth;
+  const ON_SubDEdgeTag edge0_tag = (F+1 == N) ? ON_SubDEdgeTag::Crease : ON_SubDEdgeTag::Smooth;
 
   //const unsigned int face_edge_count = 4;
   const unsigned int K = 3;
@@ -531,7 +531,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
     return ON_SUBD_RETURN_ERROR(nullptr);
   edges += element_stride;
 
-  if (ON_SubD::EdgeTag::Smooth == edge0_tag)
+  if (ON_SubDEdgeTag::Smooth == edge0_tag)
   {
     if (false == edge0->IsSmooth() )
       return ON_SUBD_RETURN_ERROR(nullptr);
@@ -567,9 +567,9 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
 
   // at_crease weight is used when the cooresponding vertex is a crease.
   // Otherwise, fsh.AllocateEdge() ignores at_crease_weight.
-  ON_SubD::EdgeTag edge1_tag = (ON_SubD::EdgeTag::SmoothX == edge0_tag) ? ON_SubD::EdgeTag::Smooth : edge0_tag;
+  ON_SubDEdgeTag edge1_tag = (ON_SubDEdgeTag::SmoothX == edge0_tag) ? ON_SubDEdgeTag::Smooth : edge0_tag;
   const double at_crease_weight 
-    = ON_SubD::EdgeTag::Crease == edge1_tag
+    = ON_SubDEdgeTag::Crease == edge1_tag
     ? ON_SubDSectorType::CreaseSectorCoefficient(5-K)
     : ON_SubDSectorType::IgnoredSectorCoefficient;
   ON_SubDEdgePtr edge1 = fsh.AllocateEdge(v1[0], Subdivide_CenterVertexSectorWeight(edge0,vertex0), vertex1, ON_SubDSectorType::IgnoredSectorCoefficient );
@@ -580,7 +580,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
   v1[1] = vertex1;
   e1[0] = edge1;
   f1epts[0] = e1[0];
-  edge1_tag = ON_SubD::EdgeTag::Smooth;
+  edge1_tag = ON_SubDEdgeTag::Smooth;
     
   for (unsigned int i = 1; i < N; i++, edges += element_stride, faces += element_stride)
   {
@@ -595,7 +595,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
       edge1_tag = edge0_tag;
       if ( edge1_tag != edge0->m_edge_tag)
         return ON_SUBD_RETURN_ERROR(nullptr);
-      if (ON_SubD::EdgeTag::Smooth == edge1_tag)
+      if (ON_SubDEdgeTag::Smooth == edge1_tag)
       {
         v1[K] = vertex1;
         e1[K] = edge1;
@@ -659,7 +659,7 @@ unsigned int ON_SubD::GetSectorComponentRing(
   if ( nullptr == vertex || vertex->m_edge_count < 2 || vertex->m_face_count < 1)
     return ON_SUBD_RETURN_ERROR(0);
 
-  const ON_SubD::VertexTag center_vertex_tag = vertex->m_vertex_tag;
+  const ON_SubDVertexTag center_vertex_tag = vertex->m_vertex_tag;
 
   ON_SubDSectorIterator localsit(sit);
   const bool bCreases = (nullptr != localsit.IncrementToCrease(-1));
@@ -677,7 +677,7 @@ unsigned int ON_SubD::GetSectorComponentRing(
   if ( nullptr == ring_vertex0 || vertex == ring_vertex0)
     return ON_SUBD_RETURN_ERROR(0);
 
-  if (bCreases && ON_SubD::EdgeTag::Crease != edge0->m_edge_tag)
+  if (bCreases && ON_SubDEdgeTag::Crease != edge0->m_edge_tag)
     return ON_SUBD_RETURN_ERROR(0);
 
   unsigned int component_ring_count = 0;
@@ -702,20 +702,20 @@ unsigned int ON_SubD::GetSectorComponentRing(
       // back to start?
       if (edge == edge0 && ring_vertex == ring_vertex0)
       {
-        if (ON_SubD::VertexTag::Smooth == center_vertex_tag)
+        if (ON_SubDVertexTag::Smooth == center_vertex_tag)
         {
-          if (face == face0 && ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag)
+          if (face == face0 && ON_SubDEdgeTag::Smooth == edge0->m_edge_tag)
             return component_ring_count; // back to start smooth case.
         }
-        if (ON_SubD::VertexTag::Dart == center_vertex_tag)
+        if (ON_SubDVertexTag::Dart == center_vertex_tag)
         {
-          if (nullptr == face && ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
+          if (nullptr == face && ON_SubDEdgeTag::Crease == edge0->m_edge_tag)
             return component_ring_count; // back to start dart case.
         }
-        if (ON_SubD::VertexTag::Corner == center_vertex_tag)
+        if (ON_SubDVertexTag::Corner == center_vertex_tag)
         {
           // occurs in nonmanifold cases like the one in RH-49843
-          if (nullptr == face && ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
+          if (nullptr == face && ON_SubDEdgeTag::Crease == edge0->m_edge_tag)
             return component_ring_count; // back to start corner case.
         }
       }
@@ -730,7 +730,7 @@ unsigned int ON_SubD::GetSectorComponentRing(
     
     if (nullptr == face)
     {
-      if (bCreases && ON_SubD::EdgeTag::Crease == edge->m_edge_tag)
+      if (bCreases && ON_SubDEdgeTag::Crease == edge->m_edge_tag)
         return component_ring_count;
       return ON_SUBD_RETURN_ERROR(0);
     }

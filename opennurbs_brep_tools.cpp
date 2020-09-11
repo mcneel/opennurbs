@@ -485,6 +485,9 @@ ON_BrepLoop* ON_Brep::NewOuterLoop(
        bool boolRev3d[4]
        )
 {
+  // 2 Sept 2020 S. Baer (RH-59952)
+  // Destroy cached bounding box on breps when messing around with loops
+  m_bbox.Destroy();
   m_is_solid = 0;
   if ( face_index < 0 || face_index >= m_F.Count() )
     return nullptr;

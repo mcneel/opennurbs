@@ -299,6 +299,45 @@ int ON_3dPoint::Compare(
   return Internal_DoubleArrayCompare(3, &lhs.x, &rhs.x);
 }
 
+const ON_2dPoint ON_2dPoint::Midpoint(const ON_2dPoint& A, const ON_2dPoint& B)
+{
+  // avoids overflow and exact when coordinates are equal
+  return ON_2dPoint(
+    A.x == B.x ? A.x : (0.5 * A.x + 0.5 * B.x),
+    A.y == B.y ? A.y : (0.5 * A.y + 0.5 * B.y)
+    );
+}
+
+const ON_3dPoint ON_3dPoint::Midpoint(const ON_3dPoint& A, const ON_3dPoint& B)
+{
+  // avoids overflow and exact when coordinates are equal
+  return ON_3dPoint(
+    A.x == B.x ? A.x : (0.5 * A.x + 0.5 * B.x),
+    A.y == B.y ? A.y : (0.5 * A.y + 0.5 * B.y),
+    A.z == B.z ? A.z : (0.5 * A.z + 0.5 * B.z)
+    );
+}
+
+
+const ON_2fPoint ON_2fPoint::Midpoint(const ON_2fPoint& A, const ON_2fPoint& B)
+{
+  // avoids overflow and exact when coordinates are equal
+  return ON_2fPoint(
+    A.x == B.x ? A.x : (0.5f * A.x + 0.5f * B.x),
+    A.y == B.y ? A.y : (0.5f * A.y + 0.5f * B.y)
+  );
+}
+
+const ON_3fPoint ON_3fPoint::Midpoint(const ON_3fPoint& A, const ON_3fPoint& B)
+{
+  // avoids overflow and exact when coordinates are equal
+  return ON_3fPoint(
+    A.x == B.x ? A.x : (0.5f * A.x + 0.5f * B.x),
+    A.y == B.y ? A.y : (0.5f * A.y + 0.5f * B.y),
+    A.z == B.z ? A.z : (0.5f * A.z + 0.5f * B.z)
+  );
+}
+
 int ON_4dPoint::ProjectiveCompare(
   const ON_4dPoint& lhs,
   const ON_4dPoint& rhs
@@ -515,6 +554,12 @@ ON_Interval::Min() const
   return ON_DBL_QNAN;
 }
 
+const ON_Interval ON_Interval::Singleton(double t)
+{
+  return ON_Interval(t, t);
+}
+
+
 void ON_Interval::Destroy()
 {
   *this = ON_Interval::EmptyInterval;
@@ -667,6 +712,21 @@ ON_Interval::Includes( const ON_Interval& other, bool bProperSubSet ) const
       rc = false;
   }
   return rc;
+}
+
+int 
+ON_Interval::Clamp(double& v) const
+{
+  int rval = 0;
+  if (v < m_t[0]) {
+    v = m_t[0];
+    rval = -1;
+  }
+  else if (v > m_t[1]) {
+    v = m_t[1];
+    rval = 1;
+  }
+  return rval;
 }
 
 bool
@@ -936,6 +996,13 @@ bool ON_Interval::Union( // this = union of two args
   return rc;
 }
 
+
+bool ON_Interval::Expand(double delta)
+{
+  m_t[0] -= delta;
+  m_t[1] += delta;
+  return IsIncreasing();
+}
 
 bool ON_3dVector::Decompose( // Computes a, b, c such that this vector = a*X + b*Y + c*Z
        //
@@ -6457,11 +6524,13 @@ bool ON_3dVector::IsZero() const
 
 bool ON_3dVector::IsNotZero() const
 {
-  // the && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE) insures no coordinate is a Nan.
+  // the UNSET tests also insure x, y, and z are not nans.
   return
     (x != 0.0 || y != 0.0 || z != 0.0)
-    && (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE)
-    && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE && z != ON_UNSET_POSITIVE_VALUE);
+    && x > ON_UNSET_VALUE && x < ON_UNSET_POSITIVE_VALUE
+    && y > ON_UNSET_VALUE && y < ON_UNSET_POSITIVE_VALUE
+    && z > ON_UNSET_VALUE && z < ON_UNSET_POSITIVE_VALUE
+    ;
 }
 
 bool ON_3dVector::IsUnitVector() const

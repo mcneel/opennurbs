@@ -65,6 +65,11 @@ public:
     ON_wString& output);
 
   static bool FormatAngleStringDMS(
+    double angle_radians,
+    int resolution,
+    ON_wString& formatted_string);
+
+  static bool FormatAngleStringDMS(
     double angle_degrees,
     ON_wString& formatted_string);
 

@@ -582,6 +582,12 @@ public:
     wchar_t decimal_char,
     ON_wString& formatted_string);
 
+  static bool FormatAngleStringDMS(
+    double angle_degrees,
+    wchar_t decimal_char,
+    int resolution,
+    ON_wString& formatted_string);
+
   static bool FormatAngleStringDecimal(
     double angle_radians,
     int resolution,

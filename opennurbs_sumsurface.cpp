@@ -480,29 +480,37 @@ bool ON_SumSurface::GetSurfaceSize(
   {
     if ( ptr[j] == nullptr )
       continue;
+
     *ptr[j] = 0.0;
-    if ( m_curve[j] == nullptr )
-      rc = false;
 
-
-    if ( ! (*ptr[j] > 0.0) )
+    if (m_curve[j] == nullptr)
     {
-      int i, imax = 64, hint = 0;
-      double length_estimate = 0.0, d = 1.0/((double)imax);
-      ON_Interval cdom = m_curve[j]->Domain();
-      ON_3dPoint pt0 = ON_3dPoint::UnsetPoint;
-      ON_3dPoint pt;
-      for ( i = 0; i <= imax; i++ )
-      {
-        if ( m_curve[j]->EvPoint( cdom.ParameterAt(i*d), pt, 0, &hint ) )
-        {
-          if ( pt0 != ON_3dPoint::UnsetPoint )
-            length_estimate += pt0.DistanceTo(pt);
-          pt0 = pt;
-        }
-      }
-      *ptr[j] = length_estimate;
+      rc = false;
+      continue;
     }
+
+
+    int i, imax = 64, hint = 0;
+    double length_estimate = 0.0;
+    const double d = 1.0 / ((double)imax);
+    ON_Interval cdom = m_curve[j]->Domain();
+    ON_3dPoint pt0 = ON_3dPoint::UnsetPoint;
+    ON_3dPoint pt;
+    for ( i = 0; i <= imax; i++ )
+    {
+      if (m_curve[j]->EvPoint(cdom.ParameterAt(i * d), pt, 0, &hint) && pt.IsValid())
+      {
+        if (pt0 != ON_3dPoint::UnsetPoint)
+          length_estimate += pt0.DistanceTo(pt);
+        pt0 = pt;
+      }
+      else
+        rc = false;
+    }
+    if (length_estimate > 0.0)
+      *ptr[j] = length_estimate;
+    else
+      rc = false;
   }
 
   return rc;

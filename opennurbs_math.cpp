@@ -1971,6 +1971,113 @@ ON_SolveQuadraticEquation(
   return 0;
 }
 
+/* Find solutions of an at most cubic equation
+ *    Solve the cubic equation a*X^3 + b*X^2 + c*X + d = 0.
+*REFERENCE:
+*Numerical Recipes in C, section 5.6
+*/
+int ON_SolveCubicEquation(
+  double a, double b, double c, double d,
+  double* r1, double* r2, double* r3
+)
+{
+  int rc = 0;
+  if (a == 0.0)
+  {
+    if (b == 0.0)
+    {
+      if (c == 0.0)
+      {
+        // no roots
+        rc = -1;
+      }
+      else
+      {
+        // linear equation
+        *r1 = -d / c;
+        rc = 1;
+      }
+    }
+    else
+    {
+      // quadratic equation
+      double rr0, rr1;
+      int qrc = ON_SolveQuadraticEquation(b, c, d, &rr0, &rr1);
+      switch (qrc)
+      {
+      case 0:
+        // two distinct real roots (rr0 < rr1)
+        *r1 = rr0;
+        *r2 = rr1;
+        rc = 2;
+        break;
+      case 1:
+        // one real root (rr0 = rr1)
+        *r1 = rr0;
+        *r2 = rr1;
+        rc = 2;
+        break;
+      case 2:
+        // 2: two complex conjugate roots (rr0 +/- (rr1)*sqrt(-1))
+        *r1 = rr0;
+        *r2 = rr1;
+        rc = 0;
+        break;
+      }
+    }
+  }
+  else
+  {
+    if (a != 1.0)
+    {
+      // convert to normal form equation
+      b = b / a;
+      c = c / a;
+      d = d / a;
+      a = 1.0;
+    }
+
+    double Q = (b*b - 3.0 * c) / 9.0;
+    double R = (2.0 * b*b*b - 9.0* b* c + 27.0 * d) / 54.0;
+
+    if (R*R < Q*Q*Q)
+    {
+      // three real roots
+      double Theta = acos(R / sqrt(Q*Q*Q));
+      *r1 = -2.0 * sqrt(Q) * cos(Theta / 3.0) - b / 3.0;
+      *r2 = -2.0 * sqrt(Q) * cos((Theta + 2.0*ON_PI) / 3.0) - b / 3.0;
+      *r3 = -2.0 * sqrt(Q) * cos((Theta - 2.0*ON_PI) / 3.0) - b / 3.0;
+      // inline bubble sort 
+      if (*r1 > *r2) { double temp = *r1; *r1 = *r2; *r2 = temp; }
+      if (*r2 > *r3) { double temp = *r2; *r2 = *r3; *r3 = temp; }
+      if (*r1 > *r2) { double temp = *r1; *r1 = *r2; *r2 = temp; }
+      rc = 3;
+    }
+    else
+    {
+      double A = pow(fabs(R) + sqrt(R*R - Q * Q*Q), 1.0 / 3.0);
+      if (R > 0)
+        A = -A;
+      double B = 0;
+      if (A != 0.0)
+        B = Q / A;
+      *r1 = (A + B) - b / 3;
+      // the complex congate pair of roots are r2 +/- r3 i
+      *r2 = -(A + B) / 2.0 - b / 3;
+      *r3 = sqrt(3.0 / 2.0)*(A - B);
+      rc = 1;
+    }
+  }
+  return rc;
+}
+
+
+
+
+
+
+
+
 
 int ON_SolveTriDiagonal( int dim, int n, 
                           double* a, const double* b, double* c,

@@ -121,6 +121,18 @@ double ON_3dSimplex::SignedVolume() const
    return vol;
 }
 
+double ON_3dSimplex::MaximumCoordinate() const 
+{
+  double max = 0.0;
+  for (int i = 0; i < Count(); i++)
+  {
+    double m = m_V[i].MaximumCoordinate();
+    if (m > max)
+      max = m;
+  }
+  return max;
+}
+
 ON_BoundingBox ON_3dSimplex::BoundingBox() const
 {
   ON_BoundingBox box;
@@ -360,17 +372,41 @@ bool ON_3dSimplex::Closest1plex(ON_4dPoint& Bary) const
     else
     {
       double b0 = dot / Del2;
+      b0 = 1 - (1 - b0);      // ensure b0 + ( 1- b0) == 1.0 without rounding 
       Bary = ON_4dPoint(1 - b0, b0, 0, 0);
     }
   }
   return rc;
 }
 
+
+// Rounds barycentric coordinates so that the coordinates sum to 1.0 in exact arithmetic.
+bool ON_3dSimplex::RoundBarycentricCoordinate(ON_4dPoint& Bary)
+{
+  int mini = -1;
+  double minc = ON_UNSET_VALUE;
+  for (int i = 0; i < 4; i++)
+  {
+    if (Bary[i] == 0.0) continue;
+    Bary[i] = 1 - (1 - Bary[i]);
+    if (mini < 0 || Bary[i] < minc)
+    {
+      mini = i;
+      minc = Bary[i];
+    }
+  }
+  if (mini >= 0)
+  {
+    Bary[mini] = 1.0 - (Bary[(mini + 1) % 4] + Bary[(mini + 2) % 4] + Bary[(mini + 3) % 4]);
+  }
+  return true;
+}
+
 // closest point to origin for a 2-simplex
 bool ON_3dSimplex::Closest2plex(ON_4dPoint& Bary) const
 {
   bool rc = false;
-  ON_3dVector N = FaceNormal(0);
+  ON_3dVector N = FaceNormal();
   double N2 = N.LengthSquared();
   if (N2 > 0)
   {
@@ -401,10 +437,13 @@ bool ON_3dSimplex::Closest2plex(ON_4dPoint& Bary) const
       bool interior = true;
       for (int j = 0; interior && j < 3; j++)
         interior = SameSign(DetM, C3[j]);
+      Bary[3] = 0.0;
       if (interior)
       {
         for (int i = 0; i < 3; i++)
           Bary[i] = C3[i] / DetM;
+
+        RoundBarycentricCoordinate(Bary);
         rc = true;
       }
       else
@@ -468,6 +507,9 @@ bool ON_3dSimplex::Closest3plex(ON_4dPoint& Bary) const
     {
       for (int i = 0; i < 4; i++)
         Bary[i] = C4[i] / detM;
+
+      RoundBarycentricCoordinate(Bary);
+
       rc = true;
     }
     else
@@ -671,8 +713,8 @@ double ON_ConvexHullPoint2::MaximumCoordinate() const
   return ON_MaximumCoordinate(m_Vert[0], 3, false, m_Vert.Count());
 }
 
-bool ClosestPoint(const ON_3dPoint P0, const ON_ConvexPoly& poly,
-  ON_4dex& dex, ON_4dPoint& Bary, double atmost )
+bool ON_ConvexPoly::GetClosestPointSeeded(ON_3dPoint P0,
+  ON_4dex& dex, ON_4dPoint& Bary, double atmost ) const
 {
   ON_ConvexHullRef CvxPt(&P0, 1);
   // Set pdex to match the support of dex
@@ -682,7 +724,7 @@ bool ClosestPoint(const ON_3dPoint P0, const ON_ConvexPoly& poly,
     if (dex[i] >= 0) 
       pdex[i] = 0;
   }
-  bool rc =  ClosestPoint(CvxPt, poly, pdex, dex, Bary, atmost);
+  bool rc =  GetClosestPointSeeded(CvxPt, dex, pdex, Bary, atmost);
   ON_ConvexPoly::Standardize(dex, Bary);
   return rc;
 }
@@ -705,6 +747,85 @@ static int MatchingSupport(const ON_4dex& A, const ON_4dex& B)
 
 
 // Gilbert Johnson Keerthi  algorithm
+bool ON_ConvexPoly::GetClosestPoint(const ON_ConvexPoly& B,
+  ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& bary,
+  double maximum_distance) const
+{
+  Adex = Bdex = ON_4dex::Unset;
+  return GetClosestPointSeeded(B, Adex, Bdex, bary, maximum_distance);
+};
+
+
+bool ON_ConvexPoly::GetClosestPoint(ON_3dPoint P0,
+  ON_4dex& dex, ON_4dPoint& bary,
+  double maximum_distance ) const
+{
+  dex = ON_4dex::Unset;
+  return GetClosestPointSeeded(P0, dex, bary, maximum_distance);
+}
+
+// Class for a pair of simplicies from a pair of ON_ConvexPoly's
+class GJK_Simplex
+{
+public:
+  ON_3dSimplex Simp;                   // Minkowski sum simplex A - B 
+  ON_4dPoint Bary = ON_4dPoint::Zero;  // represents a point in Simp
+  int Aind[4] = { -1,-1,-1,-1 };        
+  int Bind[4] = { -1,-1,-1,-1 };
+ 
+  // Append new vertex at end 
+  bool AddVertex(const ON_3dVector& v, int aind, int bind);
+  bool RemoveVertex(int i);           // index of vertex pair to remove
+
+  bool Includes(int aind, int bind);  // true if (aind, bind) is a vertex pair in this simplex
+};
+
+bool GJK_Simplex::AddVertex(const ON_3dVector& v, int aind, int bind)
+{
+  bool rc = false;
+  int n0 = Simp.Count();
+  if (n0 < 4)
+  {
+    Simp.AddVertex(v);
+    Aind[n0] = aind;
+    Bind[n0] = bind;
+    if (n0 > 0)
+      Bary[n0] = 0.0;
+    else
+      Bary[n0] = 1.0;
+    rc = true;
+  }
+  return rc;
+}
+
+bool GJK_Simplex::RemoveVertex(int i)
+{
+  bool rc = false;
+  int n0 = Simp.Count();
+  if (i < n0)
+  {
+    Simp.RemoveVertex(i);
+
+    for (int j = i; j < n0-1; j++)
+    {
+      Bary[j] = Bary[j + 1];
+      Aind[j] = Aind[j + 1];
+      Bind[j] = Bind[j + 1];
+    }
+    Bary[n0-1] = 0.0;
+    Aind[n0-1] = Bind[n0-1] = -1;
+  }
+  return rc;
+}
+
+bool GJK_Simplex::Includes(int aind, int bind) // true if (aind, bind) is a vertex pair in this simplex
+{
+  int n0 = Simp.Count();
+  for (int i = 0; i < n0; i++)
+    if (Aind[i] == aind && Bind[i] == bind)
+      return true;
+  return false;
+}
 
 // To supply an inital seed simplex Adex and Bdex must be valid and 
 // have matching support specifically
@@ -713,17 +834,17 @@ static int MatchingSupport(const ON_4dex& A, const ON_4dex& B)
 //     Adex[i]>=0 for some i    for some i
 // By satisfying this condition Adex and Bdex will define a simplex in A - B 
 // Note the result of a ClosestPoint calculation Adex and Bdex satisfy these conditions 
-bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
-  ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& Bary, double atmost)
+bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
+  ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& Bary,
+  double atmost) const
 {
+  const  ON_ConvexPoly& A = *this;
   bool rc = false;
-  if (A.Count() == 0 || B.Count() == 0)
+  if (Count() == 0 || B.Count() == 0)
     return false;
 
-  int Aind[4] = { -1,-1,-1,-1 };
-  int Bind[4] = { -1,-1,-1,-1 };
-  ON_3dSimplex Simp;
-  Bary = ON_4dPoint(1, 0, 0, 0);
+  GJK_Simplex GJK;
+
   ON_3dVector v(0,0,0);
 
 
@@ -733,32 +854,21 @@ bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
   bool bFirstPass = false;       
   if (A.IsValid4Dex(Adex) && B.IsValid4Dex(Bdex) && MatchingSupport(Adex, Bdex)>0 )
   {
-    // Set the initial condition for Aind, Bind and Simp from Adex and Bdex
-    int j = 0;
+    // Set the initial condition for GJK from Adex and Bdex
     int i = 0;
     for (i = 0; i < 4; i++)
     {
       if (Adex[i] < 0 || Bdex[i] < 0)
         continue;
-      int jj;
-      for (jj = 0; jj < j; jj++)
-      {
-        if (Aind[jj] == Adex[i] && Bind[jj] == Bdex[i])
-          break;
-      }
-      if (jj < j)
-        break;
-      Aind[j] = Adex[i];
-      Bind[j] = Bdex[i];
-      ON_3dVector vert = A.Vertex(Aind[j]) - B.Vertex(Bind[j]);
-      Simp.AddVertex(vert);
-      j++;
-    }
 
-    if( i==4) 
-     bFirstPass = true;
-    else
-     bFirstPass = false;
+      if (GJK.Includes(Adex[i], Bdex[i]))
+        break;
+ 
+      ON_3dVector vert = Vertex(Adex[i]) - B.Vertex(Bdex[i]);
+      GJK.AddVertex(vert, Adex[i], Bdex[i]);
+    }
+ 
+    bFirstPass = (i==4);
   }
 	
 	bool done = false;
@@ -769,24 +879,12 @@ bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
 		if (!bFirstPass)
 		{
       // Default initial simplex is a point  A.Vertex(0) - B.Vertex(0);
-			Aind[0] = Bind[0] = 0;
-			Aind[1] = Aind[2] = Aind[3] = -1;
-			Bind[1] = Bind[2] = Bind[3] = -1;
 			v = A.Vertex(0) - B.Vertex(0);
-			vlenlast = ON_DBL_MAX;
+      GJK.AddVertex(v, 0, 0);
+      GJK.Bary[0] = 1.0;
+      vlenlast = ON_DBL_MAX;
 			vlen = v.Length();
-
-			Simp = ON_3dSimplex();
-			Simp.AddVertex(v);
 		}
-		// The key to the implemetation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
-
-		//  These lines are for ON_3dSimplex
-		const bool SimplexReindexing = true;
-
-		// These lines are for ON_JSimplex
-		//const bool SimplexReindexing = false;
-		//ON_JSimplex Simp;
 
 		double mu = 0.0;
 		const double epsilon = 10000.0 * ON_EPSILON;
@@ -810,65 +908,52 @@ bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
         // See RH-30343 for a case where the 2.0 factor is needed
         // WRONG!!!  RH-30343 again.  the 2.0 factor doest't work either
         // TODO: testing... If the support vertex is already in simplex were done
-        int i = 0;  
-        for (i = 0; i < 4; i++)
-        {
-          if (Aind[i] == wA && Bind[i] == wB) break;
-        }
+ 
+        done = GJK.Simp.Count() == 4 || GJK.Includes(wA, wB);
 
         // See 100818MatchPoints.3dm if Bary>0 then we are done since closest point is
         // in the interior of a Simplex 
-        if (i < 4 || Simp.Count()==4)
-          done = true;
-        else
-          done = ((vlen - mu) <= 2.0* mu *epsilon) || mu > atmost  || vlen >= vlenlast ;//TODO "1+" ?? got rid of it
+        double SimpNorm = GJK.Simp.MaximumCoordinate();
+
+          // RH-59237. 24-June-20 Add term  ||Simp||*epsilon to allow for roundoff error in Simp evaluation 
+          // RH-59494. 13-Aug-20 Added a factor of 4.0 to  ||Simp||*epsilon  term. 
+          // RH-59494.CSXBugB 19-Aug-20 increased a factor of 20.0 to  ||Simp||*epsilon  term. 
+        if(!done)
+          done = ((vlen - mu) <= 2.0* mu *epsilon + SimpNorm*20.0*ON_EPSILON ) || mu > atmost  || vlen >= vlenlast ;
       }
 			if (!done)
 			{
-				// n0 is the index of the newly added vertex
-				int n0;
+	
 				if (!bFirstPass)
-				{
-					n0 = Simp.Count();  // this is specific to ON_3dSimplex
-					Simp.AddVertex(W);
-					Aind[n0] = wA;
-					Bind[n0] = wB;
-				}
-				else
-					n0 = Simp.Count() - 1;
+					GJK.AddVertex(W, wA, wB);
 
-
-
-				if (Simp.GetClosestPointToOrigin(Bary))
+        // The key to the implemetation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
+				if (GJK.Simp.GetClosestPointToOrigin(GJK.Bary))
 				{
 					bFirstPass = false;
-					v = Simp.Evaluate(Bary);
+					v = GJK.Simp.Evaluate(GJK.Bary);
 					vlenlast = vlen;
 					vlen = v.Length();
-					int imax = 3;
-					if (SimplexReindexing)
-						imax = n0;
-					for (int i = imax; i >= 0; i--)
-					{
-						if (Bary[i] == 0.0)
-						{
-							Simp.RemoveVertex(i);
-							if (SimplexReindexing)
-							{
-								/*  The JSimplex the indicies are fixed so the following step is not needed.
-										the ON_3dSimplex type does change the index of verticies and this piece of
-										code adjusts for this.*/
-								for (int j = i; j < n0; j++)
-								{
-									Bary[j] = Bary[j + 1];
-									Aind[j] = Aind[j + 1];
-									Bind[j] = Bind[j + 1];
-								}
-								Bary[n0] = 0.0;
-								n0--;
-							}
-						}
-					}
+          if (true)
+          {
+            for (int i = GJK.Simp.Count() - 1; i >= 0; i--)
+            {
+              if (GJK.Bary[i] == 0.0)
+                GJK.RemoveVertex(i);
+            }
+          }
+          else
+          {
+            /* this is error recovery code. it is currenly DISABLED
+            // The last step resulted in crap lets undo it and set done
+            int n = GJK.Simp.Count() - 1;
+            GJK.RemoveVertex(n);
+            GJK.Simp.GetClosestPointToOrigin(GJK.Bary);
+            v = GJK.Simp.Evaluate(GJK.Bary);
+            vlen = v.Length();
+            done = true;
+            */
+          }
 				}
 				else
 				{
@@ -892,28 +977,27 @@ bool ClosestPoint(const ON_ConvexPoly& A, const ON_ConvexPoly& B,
     vlen is nearly 0. but it should be 0.0 
     If (0,0,0) s in the interior of A-B then solution is vlen == 0.0 
     */
-    if (Simp.Count() == 4 && Simp.Volume() > ON_SQRT_EPSILON)
+    if (GJK.Simp.Count() == 4 && GJK.Simp.Volume() > ON_SQRT_EPSILON)
     {
       vlen = 0.0;
     }
 		rc = (vlen <= atmost);
 		if (rc)
 		{
-			if (SimplexReindexing)
+			if (GJK.Simp.Count() > 0)
 			{
-				if (Simp.Count() > 0)
+				for (int i = GJK.Simp.Count(); i < 4; i++)
 				{
-					for (int i = Simp.Count(); i < 4; i++)
-					{
-						Bary[i] = 0.0;
-						Aind[i] = Bind[i] = -1;
-					}
+					GJK.Bary[i] = 0.0;
+					GJK.Aind[i] = GJK.Bind[i] = -1;
 				}
 			}
 
 
-			Adex = ON_4dex(Aind[0], Aind[1], Aind[2], Aind[3]);
-			Bdex = ON_4dex(Bind[0], Bind[1], Bind[2], Bind[3]);
+
+			Adex = ON_4dex(GJK.Aind[0], GJK.Aind[1], GJK.Aind[2], GJK.Aind[3]);
+			Bdex = ON_4dex(GJK.Bind[0], GJK.Bind[1], GJK.Bind[2], GJK.Bind[3]);
+      Bary = GJK.Bary;
 		}
 	}
   return rc;

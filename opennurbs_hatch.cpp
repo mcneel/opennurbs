@@ -2341,11 +2341,7 @@ ON_GradientType ON_Hatch::GetGradientType() const
 
 void ON_Hatch::SetGradientType(ON_GradientType gt)
 {
-  ON_GradientColorData* data = ON_GradientColorData::FromObject(this);
-  if (nullptr == data && ON_GradientType::None == gt)
-    return;
-
-  data = ON_GradientColorData::FromObject(this, true);
+  ON_GradientColorData* data = ON_GradientColorData::FromObject(this, true);
   if (data)
     data->m_gradient_type = gt;
 }

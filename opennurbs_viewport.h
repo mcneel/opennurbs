@@ -65,6 +65,16 @@ public:
 	ON_Viewport& operator=( const ON_Viewport& ) = default;
 
   /*
+  Description:
+    Creates a shallow copy of this (no base class member including user data are copied).
+  Parameters:
+    destination - [in]
+      If destination is not nullptr, then the copy is put in this class. Otherwise, the copy is put
+      into a viewport created by calling new ON_Viewport().
+  */
+  ON_Viewport* ShallowCopy(ON_Viewport* destination) const;
+
+  /*
   Returns:
     A sha1 hash of all the settings that effect view projection matrices.
     view projection, camera location, camera X,Y,Z frame, frustum, port.   

@@ -1567,7 +1567,7 @@ bool ON_SubDEdgeChainHistoryValue::WriteHelper(ON_BinaryArchive& archive) const
 // virtual 
 bool ON_SubDEdgeChainHistoryValue::ReportHelper(ON_TextLog& text_log) const
 {
-  text_log.Print("subd edge chain value\n");
+  text_log.Print("SubD edge chain value\n");
   text_log.PushIndent();
   int i, count = m_value.Count();
   for (i = 0; i < count; i++)
@@ -1626,7 +1626,7 @@ ON_Value* ON_Value::CreateValue( int value_type )
     value = new ON_ObjRefValue();
     break;
   case geometry_value:
-    value = new ON_PolyEdgeHistoryValue();
+    value = new ON_GeometryValue();
     break;
   case uuid_value:
     value = new ON_UuidValue();

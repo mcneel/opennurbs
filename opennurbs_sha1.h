@@ -197,7 +197,15 @@ public:
   */
   const ON_wString ToString(
     bool bUpperCaseHexadecimalDigits
-    ) const;
+  ) const;
+
+  /*
+  Description:
+    Same as ToString but prints EmptyContentSHA1 or ZeroSHA1 for those two special cases. 
+  */
+  const ON_wString ToStringEx(
+    bool bUpperCaseHexadecimalDigits
+  ) const;
 
   bool Read(
     class ON_BinaryArchive& archive
@@ -301,13 +309,54 @@ public:
     const double* a
     );
 
+  /*
+  Description:
+    Add the double value to the SHA1 in a manner that
+    -0.0 and +0.0 will generate identical SHA-1 values
+    and the result is independent of endian byte order.
+  */
+  void AccumulateFloat(
+    float x
+  );
+
+  /*
+  Description:
+    Add the double value to the SHA1 in a manner that
+    -0.0 and +0.0 will generate identical SHA-1 values
+    and the result is independent of endian byte order.
+  */
+  void AccumulateFloatArray(
+    size_t count,
+    const float* a
+  );
+
+  void Accumulate2fPoint(
+    const class ON_2fPoint& point
+  );
+
+  void Accumulate3fPoint(
+    const class ON_3fPoint& point
+  );
+
+  void Accumulate4fPoint(
+    const class ON_4fPoint& point
+  );
+
+  void Accumulate2fVector(
+    const class ON_2fVector& vector
+  );
+
+  void Accumulate3fVector(
+    const class ON_3fVector& vector
+  );
+
   void Accumulate2dPoint(
     const class ON_2dPoint& point
-    );
+  );
 
   void Accumulate3dPoint(
     const class ON_3dPoint& point
-    );
+  );
 
   void Accumulate4dPoint(
     const class ON_4dPoint& point
@@ -315,11 +364,11 @@ public:
 
   void Accumulate2dVector(
     const class ON_2dVector& vector
-    );
+  );
 
   void Accumulate3dVector(
     const class ON_3dVector& vector
-    );
+  );
 
   void AccumulateBoundingBox(
     const class ON_BoundingBox& bbox
@@ -364,6 +413,11 @@ public:
   void AccumulateInteger32(
     ON__INT32 i
     );
+
+  void AccumulateInteger32Array(
+    size_t count,
+    const ON__INT32* a
+  );
   
   void AccumulateUnsigned32(
     ON__UINT32 u

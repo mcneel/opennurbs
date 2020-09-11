@@ -2476,7 +2476,8 @@ bool ON_TextContent::FormatAngleMeasurement(
         else if (ON_DimStyle::angle_format::DegMinSec == dimstyle->AngleFormat())
         {
           wchar_t decimal_char = dimstyle->DecimalSeparator();
-          ON_TextContent::FormatAngleStringDMS(angle_radians, decimal_char, sAngle);
+          int resolution = dimstyle->AngleResolution();
+          ON_TextContent::FormatAngleStringDMS(angle_radians, decimal_char, resolution, sAngle);
         }
 
         formatted_string += sAngle;
@@ -2511,7 +2512,16 @@ bool ON_TextContent::FormatAngleStringDMS(
   wchar_t decimal_char,
   ON_wString& formatted_string)
 {
-  bool rc = ON_NumberFormatter::FormatAngleStringDMS(angle_degrees, formatted_string);
+  return ON_TextContent::FormatAngleStringDMS(angle_degrees, decimal_char, 2, formatted_string);
+}
+
+bool ON_TextContent::FormatAngleStringDMS(
+  double angle_degrees,
+  wchar_t decimal_char,
+  int resolution,
+  ON_wString& formatted_string)
+{
+  bool rc = ON_NumberFormatter::FormatAngleStringDMS(angle_degrees, resolution, formatted_string);
   if (rc && ON_wString::DecimalAsPeriod != decimal_char)
     formatted_string.Replace(ON_wString::DecimalAsPeriod, decimal_char);
   return rc;

@@ -1262,6 +1262,35 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
   if (ON_UNSET_INT_INDEX != dim_style_index)
     this->SetV5_3dmArchiveDimStyleIndex( dim_style_index );
 
+  // July 29, 2020 - Lowell
+  // If somebody has managed to make a V5 file that has text with single "\n" chars to delineate lines,
+  // and marks the text as "wrapped" it displays as text with various length lines.
+  // V5 itself uses '\r\n' to mark hard returns and '\n' to mark lines made by paragraph wrapping
+  // V6 and later ignore '\n' and convert '\r\n' to newlines and wraps the text to the specified 
+  // wrapping width at runtime.
+  // The only example of this kind of text formatting I've seen here is from a file referenced by
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-59675
+  // Uncommenting the following clause will convert all of the '\n' in V5 wrapped text to '\r\n'
+  // causeing V6 to make line breaks at those places.
+  // The text will no longer be "wrapped", but will have hard returns at the end of each line
+  // where it was wrapped in V5.
+  ////////////////////////////////////
+  //if (bInChunk && bIsText)
+  //{
+  //  const wchar_t* s0 = L"\n";
+  //  const wchar_t* s1 = L"\r\n";
+  //  const wchar_t* s2 = L"6C632E28-CF14-49D0-ADEE-DF6ACCAC74F1";
+  //  if (m_usertext.Find(s0) > -1)
+  //  {
+  //    ON_wString usertext(m_usertext);
+  //    usertext.Replace(s1, s2);
+  //    usertext.Replace(s0, s1);
+  //    usertext.Replace(s2, s1);
+  //    m_usertext = usertext;
+  //  }
+  //}
+  ////////////////////////////////////
+
   return rc;
 }
 

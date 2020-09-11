@@ -446,8 +446,8 @@ private:
 #define ON_IS_FINITE_FLOAT(x) ((x) <= 3.402823466e+38F && (x) >= -3.402823466e+38F)
 #define ON_IS_INFINITE_FLOAT(x) ((x) > 3.402823466e+38F || (x) < -3.402823466e+38F)
 
-#define ON_IS_VALID(x)  ((x) != ON_UNSET_VALUE && (x) != ON_UNSET_POSITIVE_VALUE && ON_IS_FINITE(x))
-#define ON_IS_VALID_FLOAT(x)  ((x) != ON_UNSET_FLOAT && (x) != ON_UNSET_POSITIVE_FLOAT && ON_IS_FINITE_FLOAT(x))
+#define ON_IS_VALID(x)  ((x) > ON_UNSET_VALUE && (x) < ON_UNSET_POSITIVE_VALUE)
+#define ON_IS_VALID_FLOAT(x)  ((x) > ON_UNSET_FLOAT && (x) < ON_UNSET_POSITIVE_FLOAT)
 #define ON_IS_UNSET_DOUBLE(x) (ON_UNSET_VALUE == (x) || ON_UNSET_POSITIVE_VALUE == (x))
 #define ON_IS_UNSET_FLOAT(x) (ON_UNSET_FLOAT == (x) || ON_UNSET_POSITIVE_FLOAT == (x))
 #define ON_IS_NAN(x) (!((x)==(x)))
@@ -981,6 +981,27 @@ int ON_SolveQuadraticEquation( // solve a*X^2 + b*X + c = 0
        double, double, double, // a, b, c
        double*, double*        // roots r0 and r1 returned here
        );
+
+/*
+Description:
+  Solve the cubic equation a*X^3 + b*X^2 + c*X + d = 0.
+Inputs:
+  a,b,c,d, polynomial coeficients ( if a==b==c== 0) then failure is returned
+Returns: 
+  number of real roots stored with multiplicity.
+  specifically
+  -1: failure (a == b == c== 0.0 case)
+   0: no real roots ( a==0 and b!=0) two complex conjugate roots (r1 +/- (r2)*sqrt(-1))
+   1: one real root (r1).  Either  ( a==b==0.0) or else( a!=0) and two complex conjugate 
+		roots (r2 +/- (r3)*sqrt(-1))
+   2: two real roots (a==0.0, b!=0.0)  *r1 <= *r2
+   3: three real roots (a!=0.0) *r1 <= *r2 <= *r3
+*/
+ON_DECL
+int ON_SolveCubicEquation(
+  double a, double b, double c, double d,
+  double* r1, double* r2, double* r3
+);
 
 /*
 Returns:

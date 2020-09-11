@@ -59,6 +59,15 @@ const ON_wString ON_SHA1_Hash::ToString(
 {
   return ON_wString::HexadecimalFromBytes(m_digest, sizeof(m_digest),bUpperCaseHexadecimalDigits,false);
 }
+
+const ON_wString ON_SHA1_Hash::ToStringEx(bool bUpperCaseHexadecimalDigits) const
+{
+  if (this->IsEmptyContentHash())
+    return ON_wString(L"EmptyContentSHA1");
+  if (this->IsZeroDigest())
+    return ON_wString(L"ZeroSHA1");
+  return ToString(bUpperCaseHexadecimalDigits);
+}
   
 bool ON_SHA1_Hash::Read(
   class ON_BinaryArchive& archive
@@ -635,11 +644,154 @@ void ON_SHA1::AccumulateDoubleArray(
   }
 }
 
+void ON_SHA1::AccumulateFloat(
+  float x
+)
+{
+  const float v = (0.0f == x ? 0.0f : x);
+  Internal_SwapBigEndianUpdate(&v, sizeof(v));
+}
+
+
+void ON_SHA1::AccumulateFloatArray(
+  size_t count,
+  const float* a
+)
+{
+  if (count > 0 && nullptr != a)
+  {
+    float x, v;
+    const float* a1 = a + count;
+    while (a < a1)
+    {
+      x = *a++;
+      v = (0.0f == x ? 0.0f : x);
+      Internal_SwapBigEndianUpdate(&v, sizeof(v));
+    }
+  }
+}
+
+void ON_SHA1::AccumulateInteger32Array(size_t count, const ON__INT32* a)
+{
+  if (count > 0 && nullptr != a)
+  {
+    const ON__INT32* a1 = a + count;
+    ON__INT32 i;
+    while (a < a1)
+    {
+      i = *a++;
+      Internal_SwapBigEndianUpdate(&i, sizeof(i));
+    }
+  }
+}
+
+void ON_SHA1::Accumulate2fPoint(
+  const class ON_2fPoint& point
+)
+{
+  AccumulateFloatArray(2, &point.x);
+}
+
+void ON_SHA1_Accumulate2fPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_2fPoint>& a
+)
+{
+  const ON_2fPoint* aa = a.Array();
+  const float* f = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(f[0]);
+  sha1.AccumulateFloatArray(count, f);
+}
+
+void ON_SHA1::Accumulate3fPoint(
+  const class ON_3fPoint& point
+)
+{
+  AccumulateFloatArray(3, &point.x);
+}
+
+void ON_SHA1_Accumulate3fPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_3fPoint>& a
+)
+{
+  const ON_3fPoint* aa = a.Array();
+  const float* f = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(f[0]);
+  sha1.AccumulateFloatArray(count, f);
+}
+
+void ON_SHA1::Accumulate4fPoint(
+  const class ON_4fPoint& point
+)
+{
+  AccumulateFloatArray(4, &point.x);
+}
+
+void ON_SHA1_Accumulate4fPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_4fPoint>& a
+)
+{
+  const ON_4fPoint* aa = a.Array();
+  const float* f = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(f[0]);
+  sha1.AccumulateFloatArray(count, f);
+}
+
+void ON_SHA1::Accumulate2fVector(
+  const class ON_2fVector& vector
+)
+{
+  AccumulateFloatArray(2, &vector.x);
+}
+
+void ON_SHA1_Accumulate2fVectorArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_2fVector>& a
+)
+{
+  const ON_2fVector* aa = a.Array();
+  const float* f = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(f[0]);
+  sha1.AccumulateFloatArray(count, f);
+}
+
+void ON_SHA1::Accumulate3fVector(
+  const class ON_3fVector& vector
+)
+{
+  AccumulateFloatArray(3, &vector.x);
+}
+
+void ON_SHA1_Accumulate3fVectorArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_3fVector>& a
+)
+{
+  const ON_3fVector* aa = a.Array();
+  const float* f = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(f[0]);
+  sha1.AccumulateFloatArray(count, f);
+}
+
+
 void ON_SHA1::Accumulate2dPoint(
   const ON_2dPoint& point
   )
 {
   AccumulateDoubleArray(2,&point.x);
+}
+
+void ON_SHA1_Accumulate2dPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_2dPoint>& a
+)
+{
+  const ON_2dPoint* aa = a.Array();
+  const double* d = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(d[0]);
+  sha1.AccumulateDoubleArray(count, d);
 }
 
 void ON_SHA1::Accumulate3dPoint(
@@ -649,11 +801,33 @@ void ON_SHA1::Accumulate3dPoint(
   AccumulateDoubleArray(3,&point.x);
 }
 
+void ON_SHA1_Accumulate3dPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_3dPoint>& a
+)
+{
+  const ON_3dPoint* aa = a.Array();
+  const double* d = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(d[0]);
+  sha1.AccumulateDoubleArray(count, d);
+}
+
 void ON_SHA1::Accumulate4dPoint(
   const ON_4dPoint& point
   )
 {
   AccumulateDoubleArray(4,&point.x);
+}
+
+void ON_SHA1_Accumulate4dPointArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_4dPoint>& a
+)
+{
+  const ON_4dPoint* aa = a.Array();
+  const double* d = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(d[0]);
+  sha1.AccumulateDoubleArray(count, d);
 }
 
 void ON_SHA1::Accumulate2dVector(
@@ -663,11 +837,33 @@ void ON_SHA1::Accumulate2dVector(
   AccumulateDoubleArray(2,&vector.x);
 }
 
+void ON_SHA1_Accumulate2dVectorArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_2dVector>& a
+)
+{
+  const ON_2dVector* aa = a.Array();
+  const double* d = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(d[0]);
+  sha1.AccumulateDoubleArray(count, d);
+}
+
 void ON_SHA1::Accumulate3dVector(
   const ON_3dVector& vector
   )
 {
   AccumulateDoubleArray(3,&vector.x);
+}
+
+void ON_SHA1_Accumulate3dVectorArray(
+  class ON_SHA1& sha1,
+  const ON_SimpleArray<ON_3dVector>& a
+)
+{
+  const ON_3dVector* aa = a.Array();
+  const double* d = (nullptr != aa) ? &aa[0].x : nullptr;
+  const size_t count = a.UnsignedCount() * sizeof(aa[0]) / sizeof(d[0]);
+  sha1.AccumulateDoubleArray(count, d);
 }
 
 void ON_SHA1::AccumulateUnitSystem

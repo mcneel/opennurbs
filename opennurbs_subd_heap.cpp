@@ -533,10 +533,10 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 
   v1->SetSubdivisionLevel( edge0->SubdivisionLevel() + 1 );
 
-  if (ON_SubD::EdgeTag::Smooth == edge0->m_edge_tag || ON_SubD::EdgeTag::SmoothX == edge0->m_edge_tag)
-    v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
-  else if (ON_SubD::EdgeTag::Crease == edge0->m_edge_tag)
-    v1->m_vertex_tag = ON_SubD::VertexTag::Crease;
+  if (ON_SubDEdgeTag::Smooth == edge0->m_edge_tag || ON_SubDEdgeTag::SmoothX == edge0->m_edge_tag)
+    v1->m_vertex_tag = ON_SubDVertexTag::Smooth;
+  else if (ON_SubDEdgeTag::Crease == edge0->m_edge_tag)
+    v1->m_vertex_tag = ON_SubDVertexTag::Crease;
 
   return v1;
 }
@@ -570,7 +570,7 @@ ON_SubDVertex * ON_SubD_FixedSizeHeap::FindOrAllocateVertex(const ON_SubDFace * 
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   v1->SetSubdivisionLevel( face0->SubdivisionLevel() + 1 );
-  v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
+  v1->m_vertex_tag = ON_SubDVertexTag::Smooth;
 
   Internal_HashAddPair(hash, component0, v1);
 
@@ -591,7 +591,7 @@ ON_SubDVertex * ON_SubD_FixedSizeHeap::AllocateSectorFaceVertex(const ON_SubDFac
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   v1->SetSubdivisionLevel( sector_face0->SubdivisionLevel() + 1 );
-  v1->m_vertex_tag = ON_SubD::VertexTag::Smooth;
+  v1->m_vertex_tag = ON_SubDVertexTag::Smooth;
   return v1;
 }
 
@@ -647,14 +647,14 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
   {
     if (nullptr == v0->m_edges || v0->m_edge_count >= v0->m_edge_capacity)
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
-    if (ON_SubD::VertexTag::Smooth == v0->m_vertex_tag)
+    if (ON_SubDVertexTag::Smooth == v0->m_vertex_tag)
     {
       bTaggedVertex[0] = false;
       v0_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
     }
     else
     {
-      bTaggedVertex[0] = (ON_SubD::VertexTag::Unset != v0->m_vertex_tag);
+      bTaggedVertex[0] = (ON_SubDVertexTag::Unset != v0->m_vertex_tag);
     }
   }
   else
@@ -664,14 +664,14 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
   {
     if (nullptr == v1->m_edges || v1->m_edge_count >= v1->m_edge_capacity)
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
-    if (ON_SubD::VertexTag::Smooth == v1->m_vertex_tag)
+    if (ON_SubDVertexTag::Smooth == v1->m_vertex_tag)
     {
       bTaggedVertex[1] = false;
       v1_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
     }
     else
     {
-      bTaggedVertex[1] = (ON_SubD::VertexTag::Unset != v0->m_vertex_tag);
+      bTaggedVertex[1] = (ON_SubDVertexTag::Unset != v0->m_vertex_tag);
       if (bTaggedVertex[0] && bTaggedVertex[1])
       {
         // crease edge - no weights
@@ -719,7 +719,7 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
 
   e->m_sector_coefficient[0] = v0_sector_weight;
   e->m_sector_coefficient[1] = v1_sector_weight;
-  e->m_edge_tag = (bTaggedVertex[0] && bTaggedVertex[1]) ? ON_SubD::EdgeTag::Crease : ON_SubD::EdgeTag::Smooth;
+  e->m_edge_tag = (bTaggedVertex[0] && bTaggedVertex[1]) ? ON_SubDEdgeTag::Crease : ON_SubDEdgeTag::Smooth;
 
   return ON_SubDEdgePtr::Create(e,0);
 }
@@ -1088,6 +1088,12 @@ void ON_SubDHeap::ReturnFace(class ON_SubDFace* f)
 {
   if (nullptr != f)
   {
+    if (f->m_texture_points)
+    {
+      this->Return3dPointArray(f->m_texture_points);
+      f->m_texture_points = nullptr;
+      f->m_texture_status_bits = 0;
+    }
     ReturnArray(f->m_edgex_capacity,(ON__UINT_PTR*)f->m_edgex);
     (&f->m_id)[1] = ON_UNSET_UINT_INDEX; // m_archive_id == ON_UNSET_UINT_INDEX marks the fixed size pool element as unused
     f->m_status = ON_ComponentStatus::Deleted;
@@ -1449,6 +1455,10 @@ bool ON_SubDHeap::GrowFaceEdgeArray(
 {
   if ( nullptr == f)
     return ON_SUBD_RETURN_ERROR(false);
+
+  // The capacity of f->m_texture_points[] must always be 4 + f->m_edgex_capacity
+  const size_t texture_point_capacity0 = f->TexturePointsCapacity();
+
   if ( 0 == capacity )
     capacity = f->m_edge_count+1;
   if ( capacity <= (size_t)(4 + f->m_edgex_capacity))
@@ -1460,11 +1470,85 @@ bool ON_SubDHeap::GrowFaceEdgeArray(
     f->m_edge_count = 0;
     f->m_edgex_capacity = 0;
     f->m_edgex = nullptr;
+    // also remove texture points
+    f->m_texture_status_bits &= ON_SubDFace::TextureStatusBits::NotTexturePointsBitsMask;
+    f->m_texture_points = nullptr;
     return ON_SUBD_RETURN_ERROR(false);
   }
   f->m_edgex = (ON_SubDEdgePtr*)a;
   f->m_edgex_capacity = (unsigned short)xcapacity;
+  if (texture_point_capacity0 > 0)
+  {
+    const size_t texture_point_capacity1 = 4 + xcapacity;
+    if (texture_point_capacity0 < texture_point_capacity1)
+    {
+      ON_3dPoint* texture_points0 = f->m_texture_points;
+      ON_3dPoint* texture_points1 = this->Allocate3dPointArray(texture_point_capacity1);
+      for (size_t i = 0; i < texture_point_capacity0; ++i)
+        texture_points1[i] = texture_points0[i];
+      for (size_t i = texture_point_capacity0; i < texture_point_capacity1; ++i)
+        texture_points1[i] = ON_3dPoint::NanPoint;
+      f->m_texture_points = texture_points1;
+      this->Return3dPointArray(texture_points0);
+    }
+  }
   return true;
+}
+
+unsigned int ON_SubDHeap::Managed3dPointArrayCapacity(class ON_3dPoint* point_array)
+{
+  const unsigned int point_capacity =
+    (nullptr != point_array)
+    ? *((unsigned int*)(((const double*)point_array)-1))
+    : 0;
+  return (point_capacity >= 3 && point_capacity <= ON_SubDFace::MaximumEdgeCount) ? point_capacity : 0;
+}
+
+ON_3dPoint* ON_SubDHeap::Allocate3dPointArray(size_t point_capacity)
+{
+  if (point_capacity <= 0 || point_capacity > ON_SubDFace::MaximumEdgeCount)
+    return nullptr;
+#if defined(ON_64BIT_RUNTIME)
+  if (point_capacity < 5)
+    point_capacity = 5; // maximize use of m_fsp17 chunks.
+#endif
+  const size_t a_capacity = 3 * point_capacity + 1;
+  double* a = 
+#if defined(ON_64BIT_RUNTIME)
+    // when sizeof(void*) = sizeof(double) we can use the fast fixed size pool for faces with 5 or fewer edges.
+    ( a_capacity*sizeof(a[0]) <= m_fsp17.SizeofElement() ) 
+    ? (double*)this->m_fsp17.AllocateDirtyElement()
+    :
+#endif
+    a = (double*)onmalloc(a_capacity * sizeof(a[0]));
+
+  if (nullptr != a)
+  {
+    *((unsigned int*)a) = ((unsigned int)point_capacity);
+    ++a;
+  }
+  return ((ON_3dPoint*)a);
+}
+
+void ON_SubDHeap::Return3dPointArray(class ON_3dPoint* point_array)
+{
+  const size_t point_capacity = ON_SubDHeap::Managed3dPointArrayCapacity(point_array);
+  if (0 == point_capacity)
+  {
+    ON_SUBD_ERROR("point_array is not valid");
+    return;
+  }
+  double* a = ((double*)point_array) - 1;
+#if defined(ON_64BIT_RUNTIME)
+  // when sizeof(void*) = sizeof(double) we can use the fast fixed size pool for faces with 5 or fewer edges.
+  const size_t a_capacity = 3 * point_capacity + 1;
+  if ( a_capacity * sizeof(a[0]) <= m_fsp17.SizeofElement() )
+    this->m_fsp17.ReturnElement(a);
+  else
+#endif
+    onfree(a);
+
+  return;
 }
 
 bool ON_SubDHeap::GrowVertexEdgeArrayByOne(
@@ -1712,8 +1796,9 @@ bool ON_SubDHeap::Internal_InitializeLimitBlockPool()
 {
   if (0 == m_limit_block_pool.SizeofElement())
   {
-    m_sizeof_full_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity);
-    m_sizeof_half_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity-1);
+    const bool bCurvatureArray = false; // change to true when principal and sectional curvatures are needed.
+    m_sizeof_full_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity, bCurvatureArray);
+    m_sizeof_half_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity-1, bCurvatureArray);
     m_sizeof_limit_curve = sizeof(ON_SubDEdgeSurfaceCurve);
     size_t sz =  m_sizeof_full_fragment;
     if (sz < 4 * m_sizeof_half_fragment)
@@ -1814,21 +1899,40 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
   *fragment = src_fragment;
   fragment->m_prev_fragment = nullptr;
   fragment->m_next_fragment = nullptr;
-  double* a = (double*)(fragment + 1);
-  fragment->SetUnmanagedVertexCapacity(vertex_capacity);
-  fragment->SetVertexCount(0);
-  fragment->m_P = a;
-  fragment->m_P_stride = 3;
-  fragment->m_N = a + (vertex_capacity * 3);
-  fragment->m_N_stride = 3;
-  fragment->m_T = a + (vertex_capacity * 6);
-  fragment->m_T_stride = 3;
+
+  // NOTE WELL:
+  //   fragment and fragment array memory are from a single fixed size pool allocation.
+  fragment->Internal_LayoutArrays(false, (double*)(fragment + 1), vertex_capacity);
 
   if (src_fragment.VertexCount() > 0)
     fragment->CopyFrom(src_fragment,density);
 
   return fragment;
 }
+
+
+ON_SubDMeshFragment* ON_SubDHeap::CopyMeshFragments(const ON_SubDFace* source_face, const ON_SubDFace* destination_face)
+{
+  if (nullptr == source_face || nullptr == destination_face || nullptr != destination_face->m_mesh_fragments)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  ON_SubDMeshFragment* prev_dst_fragment = nullptr;
+  for (const ON_SubDMeshFragment* src_fragment = source_face->MeshFragments(); nullptr != src_fragment; src_fragment = src_fragment->m_next_fragment)
+  {
+    ON_SubDMeshFragment* dst_fragment = this->AllocateMeshFragment(*src_fragment);
+    dst_fragment->m_face = destination_face;
+    if (prev_dst_fragment)
+      prev_dst_fragment->m_next_fragment = dst_fragment;
+    else
+    {
+      destination_face->m_mesh_fragments = dst_fragment;
+      destination_face->Internal_SetSavedSurfacePointFlag(true);
+    }
+    prev_dst_fragment = dst_fragment;
+  }
+  return destination_face->m_mesh_fragments;
+}
+
 
 bool ON_SubDHeap::ReturnMeshFragment(ON_SubDMeshFragment * fragment)
 {
@@ -1930,6 +2034,69 @@ class ON_SubDEdgeSurfaceCurve* ON_SubDHeap::AllocateEdgeSurfaceCurve(
   }
 
   return limit_curve;
+}
+
+ON_SubDEdgeSurfaceCurve* ON_SubDHeap::CopyEdgeSurfaceCurve(const ON_SubDEdge* source_edge, const ON_SubDEdge* desination_edge)
+{
+  if ( nullptr == desination_edge || source_edge == desination_edge)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  desination_edge->Internal_ClearSurfacePointFlag();
+  if (source_edge->m_limit_curve == desination_edge->m_limit_curve)
+    desination_edge->m_limit_curve = nullptr;
+  else if (nullptr != desination_edge->m_limit_curve)
+    desination_edge->m_limit_curve->m_cv_count = 0;
+
+  if (nullptr == source_edge)
+  {
+    ReturnEdgeSurfaceCurve(desination_edge);
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  const ON_SubDEdgeSurfaceCurve* source_curve = source_edge->Internal_SurfacePointFlag() ? source_edge->m_limit_curve : nullptr;
+  const unsigned char cv_count = (nullptr != source_curve) ? source_curve->m_cv_count : 0;
+  if (0 == cv_count)
+  {
+    source_edge->Internal_ClearSurfacePointFlag();
+    ReturnEdgeSurfaceCurve(desination_edge);
+    return nullptr;
+  }
+
+  if (cv_count < 2 || cv_count > ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity || (cv_count > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr == source_curve->m_cvx))
+  {
+    source_edge->Internal_ClearSurfacePointFlag();
+    ReturnEdgeSurfaceCurve(desination_edge);
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  ON_SubDEdgeSurfaceCurve* desination_curve = desination_edge->m_limit_curve;
+  if (nullptr != desination_curve && desination_curve->m_cv_capacity < cv_count)
+  {
+    ReturnEdgeSurfaceCurve(desination_edge);
+    desination_curve = nullptr;
+  }
+  if (nullptr == desination_curve)
+  {
+    desination_curve = this->AllocateEdgeSurfaceCurve(cv_count);
+    if (nullptr == desination_curve)
+      return ON_SUBD_RETURN_ERROR(nullptr);
+    if (desination_curve->m_cv_capacity < cv_count)
+    {
+      ReturnEdgeSurfaceCurve(desination_curve);
+      return ON_SUBD_RETURN_ERROR(nullptr);
+    }
+  }
+  const size_t sz5 = sizeof(desination_curve->m_cv5);
+  memcpy(desination_curve->m_cv5, source_curve->m_cv5, sz5);
+  if (cv_count > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr != desination_curve->m_cvx && nullptr != source_curve->m_cvx)
+  {
+    const size_t szx = (cv_count - ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity) * 24;
+    memcpy(desination_curve->m_cvx, source_curve->m_cvx, szx);
+  }
+  desination_curve->m_cv_count = cv_count;
+  desination_edge->m_limit_curve = desination_curve;
+  desination_edge->Internal_SetSavedSurfacePointFlag(true);
+  return desination_curve;
 }
 
 bool ON_SubDHeap::ReturnEdgeSurfaceCurve(

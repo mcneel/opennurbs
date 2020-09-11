@@ -973,7 +973,8 @@ public:
   mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
 
 private:
-  ON__UINT16 m_reserved1 = 0U;
+  // the 4 byte pack id is stored as 2 ON__UINT16 values to prevent breaking the C++ SDK.
+  ON__UINT16 m_pack_id_low = 0; // PackId() = 0x10000*m_pack_id_high + m_pack_id_low;
 
 public:
   int m_face_index = -1;  // index of face in ON_Brep.m_F[] array
@@ -1176,9 +1177,70 @@ public:
   bool m_bRev = false;         // true if face orientation is opposite
                        //      of natural surface orientation
 
+
+  /*
+  Returns:
+    0: unset pack id.
+    > 0: set pack id.
+  Remarks:
+    PackId values assigned to brep faces are inheritied from the PackId values
+    assigned to subd faces when a subd is converted into a brep.
+    These faces are "trivially trimmed" which means the boundary of the face
+    is identical to the boundary of the underlying surface.
+    There are two types of face packs in a subd, quad grid packs and singleton packs.
+    A subd quad grid pack is a set of subd quads that form a rectangular grid.
+    A subd singleton pack is a single face, quad or n-gon, that is not part of
+    a quad grid pack. 
+    There are three types of face packs in a brep created from a subd, 
+    grid packs, star packs and singleton packs.
+    A brep "grid pack" comes from a rectangular grid of subd quads. A grid pack of brep faces can
+    be converted into a single larger trivially trimmed brep face.
+    A brep "star pack" of brep faces comes from a singel subd n-gon (n = 3, 5 or more). The star pack
+    will have n faces with a star center vertex and shared edges radiating from  the star center.
+    A brep "singleton" pack comes from a single subd quad that could not be grouped into a larger
+    subd quad grid pack.
+  */
+  unsigned int PackId() const;
+
+  /*
+  Description:
+    Sets PackId() to zero.
+  */
+  void ClearPackId();
+
+  /*
+  Description:
+    Used by ON_SubD functions that create breps to transmit the subd face ON_SubDFace.PackId() value 
+    to the brep face or faces generated from the subd face.
+    Unless you are an expert and doing something very carefully and very fancy, to not call this function.
+  Remarks:
+    PackId values assigned to brep faces are inheritied from the PackId values
+    assigned to subd faces when a subd is converted into a brep.
+    These faces are "trivially trimmed" which means the boundary of the face
+    is identical to the boundary of the underlying surface.
+    There are two types of face packs in a subd, quad grid packs and singleton packs.
+    A subd quad grid pack is a set of subd quads that form a rectangular grid.
+    A subd singleton pack is a single face, quad or n-gon, that is not part of
+    a quad grid pack.
+    There are three types of face packs in a brep created from a subd,
+    grid packs, star packs and singleton packs.
+    A brep "grid pack" comes from a rectangular grid of subd quads. A grid pack of brep faces can
+    be converted into a single larger trivially trimmed brep face.
+    A brep "star pack" of brep faces comes from a singel subd n-gon (n = 3, 5 or more). The star pack
+    will have n faces with a star center vertex and shared edges radiating from  the star center.
+    A brep "singleton" pack comes from a single subd quad that could not be grouped into a larger
+    subd quad grid pack.
+  */
+  void SetPackIdForExperts(
+    unsigned int pack_id
+  );
+
 private:
   ON__UINT8 m_reserved2 = 0;
-  ON__UINT16 m_reserved3 = 0;
+
+private:
+  // the 4 byte pack id is stored as 2 ON__UINT16 values to prevent breaking the C++ SDK.
+  ON__UINT16 m_pack_id_high = 0; // PackId() = 0x10000*m_pack_id_high + m_pack_id_low;
 
 public:
   // The application specifies a base ON_Material used to render the brep this face belongs to.
@@ -1742,6 +1804,7 @@ public:
     ON_BrepFace::SetMesh
   */
   int GetMesh( ON::mesh_type mesh_type, ON_SimpleArray< const ON_Mesh* >& meshes ) const;
+
 
 
   /*
@@ -4042,6 +4105,13 @@ protected:
   bool ReadV1_LegacyLoop( ON_BinaryArchive&, ON_BrepFace& );
   bool ReadV1_LegacyFaceStuff( ON_BinaryArchive& );
   bool ReadV1_LegacyShellStuff( ON_BinaryArchive& );
+
+  
+
+public:
+  // The ON_Brep code increments ON_Brep::ErrorCount everytime something
+  // unexpected happens. This is useful for debugging.
+  static unsigned int ErrorCount;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4676,5 +4746,26 @@ bool ON_OrderEdgesAroundVertex(const ON_Brep& B, int vid,
   ON_2dex* trim_ends,//Must be at as big as the edge count at the vertex
   bool& bClosed);
 
+
+
+
+
+
+#if defined(ON_COMPILING_OPENNURBS)
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_BrepIncrementErrorCount()
+//
+//  Appears in places where the code traps error conditions.
+//  Putting a breakpoint on the line indicated below is an easy way
+//  to have the debugger break on all error conditions and inspect
+//  the first place something goes wrong in a complex calculation.
+//
+void ON_BrepIncrementErrorCount();  // defined in opennurbs_error.cpp
+#define ON_BREP_ERROR(msg) (ON_BrepIncrementErrorCount(), ON_ERROR(msg))
+#define ON_BREP_RETURN_ERROR(rc) (ON_BrepIncrementErrorCount(), rc)
+#define ON_BREP_RETURN_ERROR_MSG(msg, rc) \
+  (ON_BrepIncrementErrorCount(), ON_ERROR(msg), rc)
+#endif
 
 #endif

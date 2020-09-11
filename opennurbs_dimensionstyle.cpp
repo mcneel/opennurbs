@@ -5209,6 +5209,11 @@ bool ON_DimStyle::HasOverrides() const
   return (m_field_override_parent_count > 0);
 }
 
+ON__UINT32 ON_DimStyle::OverrideCount() const
+{
+  return m_field_override_parent_count;
+}
+
 void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& parent)
 {
   if (ParentId() != parent.Id())
