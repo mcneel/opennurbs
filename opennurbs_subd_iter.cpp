@@ -1290,32 +1290,32 @@ bool ON_SubDSectorId::IsSet() const
 }
 
 
-bool ::operator==(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator==(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return 0 == ON_SubDSectorId::Compare(lhs, rhs);
 }
 
-bool ::operator!=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator!=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return 0 != ON_SubDSectorId::Compare(lhs, rhs);
 }
 
-bool ::operator>(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator>(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return ON_SubDSectorId::Compare(lhs, rhs) < 0;
 }
 
-bool ::operator<(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator<(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return ON_SubDSectorId::Compare(lhs, rhs) > 0;
 }
 
-bool ::operator>=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator>=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return ON_SubDSectorId::Compare(lhs, rhs) >= 0;
 }
 
-bool ::operator<=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
+bool operator<=(ON_SubDSectorId lhs, ON_SubDSectorId rhs)
 {
   return ON_SubDSectorId::Compare(lhs, rhs) <= 0;
 }
