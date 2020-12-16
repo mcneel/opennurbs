@@ -589,6 +589,13 @@ ON_Triangle::ON_Triangle(double x)
 	m_V[0] = m_V[1] = m_V[2] = p;
 }
 
+ON_Triangle::ON_Triangle(const double vertices[9])
+{
+  m_V[0] = ON_3dPoint(vertices);
+  m_V[1] = ON_3dPoint(vertices ? vertices+3 : vertices);
+  m_V[2] = ON_3dPoint(vertices ? vertices+6 : vertices);
+}
+
 ON_Triangle::operator ON_3dPoint*()
 {
 	return m_V;
@@ -734,7 +741,11 @@ ON_3dPoint ON_Triangle::Centroid() const
 	return PointAt(1.0/3.0, 1.0/3.0);
 }
 
-bool ON_Triangle::ClosestPointTo(const ON_3dPoint & P, double * s1, double * s2) const
+bool ON_Triangle::GetBarycentricCoordinates(
+  const ON_3dPoint& P,
+  bool constrainInside,
+  double* s1, double* s2
+) const
 {
 	bool rc = false;
 	// Choose  base vertex v[i0] is closest to P
@@ -761,53 +772,53 @@ bool ON_Triangle::ClosestPointTo(const ON_3dPoint & P, double * s1, double * s2)
 		// use decomposition
 		s[i0] = 1 - s[(i0 + 1) % 3] - s[(i0 + 2) % 3];
 
-		for (int i = 0; i < 3; i++)
-		{
-			if (s[i] < 0)
-			{
-				double t;
-				if (Edge(i).ClosestPointTo(P, &t))	
-				{
-					s = ON_3dPoint( 0,0,0 );
-					if (t < 0)
-					{
-						s[(i + 1) % 3] = 1.0;
-					}
+    if (constrainInside)
+		  for (int i = 0; i < 3; i++)
+			  if (s[i] < 0)
+			  {
+				  double t;
+				  if (Edge(i).ClosestPointTo(P, &t))	
+				  {
+					  s = ON_3dPoint( 0,0,0 );
+					  if (t < 0)
+					  {
+						  s[(i + 1) % 3] = 1.0;
+					  }
 
-					else if (t >= 1.0)
-					{
-						s[(i + 2) % 3] = 1.0;
-					}
-					else
-					{
-						s[(i + 1) % 3] = 1 - t;
-						s[(i + 2) % 3] = t;
-					}
-				}
-				break;
-			}
-		}
+					  else if (t >= 1.0)
+					  {
+						  s[(i + 2) % 3] = 1.0;
+					  }
+					  else
+					  {
+						  s[(i + 1) % 3] = 1 - t;
+						  s[(i + 2) % 3] = t;
+					  }
+				  }
+				  break;
+			  }
 		rc = true;
 	}
 	else
 	{
 		// decomposition failed:
 		// Find closest point to longest edge i0
-		double max = -1;
-		for (int i = 0; i < 3; i++)
+		double max = Edge(0).Direction().LengthSquared();
+    i0 = 0;
+		for (int i = 1; i < 3; i++)
 		{
-			double  len = Edge(i).Length();
-			if (len > max)
+			double lensq = Edge(i).Direction().LengthSquared();
+			if (max < lensq)
 			{
-				i0 = 0;
-				max = len;
+				i0 = i;
+				max = lensq;
 			}
 		}
 		double t;
 		if (Edge(i0).ClosestPointTo(P, &t))
 		{
 			s[(i0 + 1) % 3] = (1 - t);
-			s[(i0 + 1) % 3] = t;
+			s[(i0 + 2) % 3] = t;
 			rc = true;
 		}
 	
@@ -817,6 +828,11 @@ bool ON_Triangle::ClosestPointTo(const ON_3dPoint & P, double * s1, double * s2)
 	if (s2)
 		*s2 = s[2];
 	return rc;
+}
+
+bool ON_Triangle::ClosestPointTo(const ON_3dPoint & P, double * s1, double * s2) const
+{
+  return GetBarycentricCoordinates(P, true, s1, s2);
 }
 
 

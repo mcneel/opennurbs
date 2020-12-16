@@ -737,7 +737,7 @@ double ON_LengthValue::Length(
   if ( ON::LengthUnitSystem::None == context_unit_system.UnitSystem())
     return m_length;
   if ( 
-    m_length_unit_system.MetersPerUnit() == context_unit_system.MetersPerUnit()
+    m_length_unit_system.MetersPerUnit(ON_DBL_QNAN) == context_unit_system.MetersPerUnit(ON_DBL_QNAN)
     && ON::LengthUnitSystem::Unset != context_unit_system.UnitSystem() 
     )
     return m_length;

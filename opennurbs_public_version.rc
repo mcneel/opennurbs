@@ -22,7 +22,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", ""
             VALUE "FileDescription", "Public openNURBS Dynamic Link Library"
-            VALUE "FileVersion", VERSION_WITH_PERIODS
+            VALUE "FileVersion", RMA_VERSION_WITH_PERIODS_STRING
             VALUE "InternalName", "Public openNURBS"
             VALUE "LegalCopyright", COPYRIGHT
             VALUE "LegalTrademarks", "openNURBS is a trademark of Robert McNeel & Associates."

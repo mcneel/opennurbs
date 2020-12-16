@@ -1050,7 +1050,7 @@ double ON::UnitScale(
        && ON::LengthUnitSystem::CustomUnits != us_from
     )
   {
-    const double meters_per_custom_unit = us_to.MetersPerUnit();
+    const double meters_per_custom_unit = us_to.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
       scale *= meters_per_custom_unit;
@@ -1096,7 +1096,7 @@ double ON::UnitScale(
        && ON::LengthUnitSystem::CustomUnits != us_to
      )
   {
-    const double meters_per_custom_unit = us_from.MetersPerUnit();
+    const double meters_per_custom_unit = us_from.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
       scale /= meters_per_custom_unit;
@@ -1132,8 +1132,8 @@ double ON::UnitScale(
     return ON::UnitScale( us_from, us_to );
 
   // uncommon custom units case
-  const double meters_per_unit_from = u_and_t_from.MetersPerUnit();
-  const double meters_per_unit_to = u_and_t_to.MetersPerUnit();
+  const double meters_per_unit_from = u_and_t_from.MetersPerUnit(ON_DBL_QNAN);
+  const double meters_per_unit_to = u_and_t_to.MetersPerUnit(ON_DBL_QNAN);
   if (meters_per_unit_from == meters_per_unit_to)
     return 1.0;
   double scale = 1.0;

@@ -925,9 +925,16 @@ const ON_Font* ON_ManagedFonts::GetFromFontCharacteristics(
     managed_font
   );
 
+  // Lowell - Added additional check for matching underline and strikethrough settings RH-60947
+  unsigned int managed_font_us_dev = ON_Font::UnderlinedStrikethroughDeviation(
+    set_font_characteristics, 
+    managed_font
+  );
+
   if (
     nullptr != managed_font 
     && 0 == managed_font_wss_dev
+    && 0 == managed_font_us_dev
     && point_size == managed_font->PointSize()
     )
   {
@@ -981,7 +988,18 @@ const ON_Font* ON_ManagedFonts::GetFromFontCharacteristics(
       managed_font
     );
 
-    if (nullptr != managed_font && 0 == managed_font_wss_dev)
+    // RH - 60947
+    managed_font_us_dev = ON_Font::UnderlinedStrikethroughDeviation(
+      set_font_characteristics->IsUnderlined(),
+      set_font_characteristics->IsStrikethrough(),
+      managed_font
+    );
+
+
+    if (nullptr != managed_font 
+      && 0 == managed_font_wss_dev
+      && 0 == managed_font_us_dev
+      )
       return managed_font;
 
     break;
@@ -1956,6 +1974,46 @@ unsigned int ON_FontFaceQuartet::FaceCount() const
   if (nullptr != BoldItalicFace())
     face_count++;
   return face_count;
+}
+
+const ON_wString ON_FontFaceQuartet::MemberToString(
+  ON_FontFaceQuartet::Member member
+)
+{
+  switch (member)
+  {
+  case ON_FontFaceQuartet::Member::Unset:
+    return ON_wString(L"Unset");
+    break;
+  case ON_FontFaceQuartet::Member::Regular:
+    return ON_wString(L"Regular");
+    break;
+  case ON_FontFaceQuartet::Member::Bold:
+    return ON_wString(L"Bold");
+    break;
+  case ON_FontFaceQuartet::Member::Italic:
+    return ON_wString(L"Italic");
+    break;
+  case ON_FontFaceQuartet::Member::BoldItalic:
+    return ON_wString(L"Bold-Italic");
+    break;
+  }
+  return ON_wString::EmptyString;
+}
+
+ON_FontFaceQuartet::Member ON_FontFaceQuartet::MemberFromUnsigned(
+  unsigned int member_as_unsigned
+)
+{
+  switch (member_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_FontFaceQuartet::Member::Unset);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_FontFaceQuartet::Member::Regular);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_FontFaceQuartet::Member::Bold);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_FontFaceQuartet::Member::Italic);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_FontFaceQuartet::Member::BoldItalic);
+  }
+  return ON_FontFaceQuartet::Member::Unset;
 }
 
 void ON_FontFaceQuartet::Dump(ON_TextLog& text_log) const

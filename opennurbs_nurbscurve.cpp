@@ -964,9 +964,8 @@ static ON_NurbsCurve* MoveSeamPeriodicKnot(const ON_NurbsCurve& crv, int knot_in
 
   int cv_id = knot_index-dg+1;
   for (int i=0; i<pNC->CVCount(); i++){
-    ON_4dPoint cv;
-    crv.GetCV(cv_id%distinct_cvc, cv);
-    pNC->SetCV(i, cv);
+    double* pcv = crv.CV(cv_id%distinct_cvc);
+    pNC->SetCV(i, ON::intrinsic_point_style, pcv);
     cv_id++;
   }
 
@@ -1012,13 +1011,13 @@ static ON_NurbsCurve* MoveSeamPeriodic(const ON_Curve& crv, double t)
   double d1 = k1-s;
   bool bInsert = true;
   if (d0<=d1){
-    if (d0 < ON_ZERO_TOLERANCE*k0){
+    if (d0 < ON_ZERO_TOLERANCE*fabs(k0)){
       knot_index--;
       bInsert = false;
     }
   }
   else {
-    if (d1 < ON_ZERO_TOLERANCE*k1)
+    if (d1 < ON_ZERO_TOLERANCE*fabs(k1))
       bInsert = false;
   }
 
@@ -1051,13 +1050,14 @@ bool ON_NurbsCurve::ChangeClosedCurveSeam( double t )
     if ( old_dom.Includes(k,true) )
     {
       ON_NurbsCurve left, right;
-      // TODO - if periodic - dont' put multi knot in middle.  
+      // if periodic - dont' put fully multiple knot in middle.  
       bool bGotIt = false;
       if ( IsPeriodic() ){//This only works if the curve has only simple knots
         ON_NurbsCurve* pMovedNC = MoveSeamPeriodic(*this, t);
         if (pMovedNC){
           *this = *pMovedNC;
           delete pMovedNC;
+          bGotIt = true;
         }
       }
       if (!bGotIt)

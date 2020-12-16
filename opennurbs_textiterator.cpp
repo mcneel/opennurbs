@@ -3369,10 +3369,10 @@ bool RtfComposer::Compose(
 
     }
 
-    if(!ComposeFS())
+    if (!RtfComposer::ComposeFS())
       temp.Format(L"}\\f%d", stylefont_key);
     else
-      temp.Format(L"}\\f%d \\fs40", stylefont_key);
+      temp.Format(L"}\\f%d \\fs%d", stylefont_key, RtfComposer::TextEditorFontSize());
 
     rtf += temp;
 
@@ -3414,6 +3414,20 @@ bool RtfComposer::ComposeFS()
 void RtfComposer::SetComposeFS(bool b)
 {
   RtfComposer::m_bComposeFS = b;
+}
+
+int RtfComposer::m_TextEditorSize = 0;
+int RtfComposer::TextEditorFontSize()
+{
+  if (0 < RtfComposer::m_TextEditorSize)
+    return RtfComposer::m_TextEditorSize;
+  else
+    return 18;
+}
+
+void RtfComposer::SetTextEditorFontSize(unsigned int size)
+{
+  RtfComposer::m_TextEditorSize = size;
 }
 
 static const ON_wString Internal_PostScriptNameIfAvailable(const ON_Font& managed_font)
@@ -3618,10 +3632,10 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       rtf_string += fonttable_string;
     }
 
-    if (!ComposeFS())
+    if (!RtfComposer::ComposeFS())
       temp.Format(L"}\\f%d", deffont_key);
     else
-      temp.Format(L"}\\f%d \\fs40", deffont_key);
+      temp.Format(L"}\\f%d \\fs%d", deffont_key, RtfComposer::TextEditorFontSize());
 
     rtf_string += temp;
 

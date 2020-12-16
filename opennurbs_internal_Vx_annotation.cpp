@@ -308,9 +308,7 @@ void ON_Text::Internal_SetObsoleteV5TextObjectInformation(
       break;
 
     const double unit_scale = ON::UnitScale(V5_model_space_object_unit_system, dim_style.UnitSystem());
-    if (!ON_IsValid(unit_scale))
-      break;
-    if (!(unit_scale > 0.0))
+    if (false == ON_IsValidPositiveNumber(unit_scale))
       break;
 
     const double V6_object_text_height = unit_scale*obsolete_V5_text_object_height;

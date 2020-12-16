@@ -158,8 +158,16 @@ static bool Internal_UpdateOverrideCandidateParentId(
 {
   for (;;)
   {
-    if (0 == archive.ReferenceModelSerialNumber() && 0 == archive.InstanceDefinitionModelSerialNumber())
+    if (
+      false == archive.CheckForRemappedIds()
+      && 0 == archive.ReferenceModelSerialNumber()
+      && 0 == archive.InstanceDefinitionModelSerialNumber()
+      )
+    {
       return false; // common situation - no change reqired
+    }
+
+
     if (nullptr == override_candidate)
       break;
     const ON_UUID archive_parent_id = override_candidate->ParentId();
@@ -812,11 +820,23 @@ bool ON_Annotation::IsOverrideStylePointer(
 
 bool ON_Annotation::AllowTextScaling() const
 {
+  // These functions are being added to continue the V5 behavior of
+  // per-object text scaling. There is no user interface
+  // in V6 or V7 that shows this setting or that allows a user
+  // to change this setting.
+  // AllowTextScaling() = false means the effective dimstyle value 
+  // of DimScale() (model space scale factor) is ignored (treated as if it were 1).
   return m_allow_text_scaling;
 }
 
 void ON_Annotation::SetAllowTextScaling(bool scale)
 {
+  // These functions are being added to continue the V5 behavior of
+  // per-object text scaling. There is no user interface
+  // in V6 or V7 that shows this setting or that allows a user
+  // to change this setting.
+  // AllowTextScaling() = false means the effective dimstyle value 
+  // of DimScale() (model space scale factor) is ignored (treated as if it were 1).
   if (scale != m_allow_text_scaling)
   {
     m_allow_text_scaling = scale ? true : false;

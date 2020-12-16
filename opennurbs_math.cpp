@@ -157,6 +157,118 @@ double ON_TestMathFunction( int function_index, double x, double y )
   return z;
 }
 
+bool ON_PassesNanTest()
+{
+
+  bool bPassesAllNanTests = false;
+  for (;;)
+  {
+    const double nan1 = ON_DBL_QNAN;
+    const double nan2 = ON_DBL_QNAN;
+    const double zero = 0.0;
+    const double one = 1.0;
+
+    // nan != * and * != nan should alwasy be true
+    const bool b_NE_test
+      = nan1 != nan1
+      && nan1 != nan2
+      && nan1 != zero
+      && nan1 != one
+      && zero != nan2
+      && one != nan2
+      ;
+
+    // nan op * and * op nan when op is ==, < > <= >= should all be false
+    const bool b_EQ_test
+      = nan1 == nan1
+      || nan1 == nan2
+      || nan1 == zero
+      || nan1 == one
+      || zero == nan2
+      || one == nan2
+      ;
+
+    const bool b_LT_test
+      = nan1 < nan1
+      || nan1 < nan2
+      || nan1 < zero
+      || nan1 < one
+      || zero < nan2
+      || one < nan2
+      ;
+
+    const bool b_GT_test
+      = nan1 > nan1
+      || nan1 > nan2
+      || nan1 > zero
+      || nan1 > one
+      || zero > nan2
+      || one > nan2
+      ;
+
+    const bool b_LE_test
+      = nan1 <= nan1
+      || nan1 <= nan2
+      || nan1 <= zero
+      || nan1 <= one
+      || zero <= nan2
+      || one <= nan2
+      ;
+
+    const bool b_GE_test
+      = nan1 >= nan1
+      || nan1 >= nan2
+      || nan1 >= zero
+      || nan1 >= one
+      || zero >= nan2
+      || one >= nan2
+      ;
+
+    const bool bPassesIEE754NanCompareTests
+      = b_NE_test
+      && false == b_EQ_test
+      && false == b_LT_test
+      && false == b_GT_test
+      && false == b_LE_test
+      && false == b_GE_test
+      ;
+
+    if (false == bPassesIEE754NanCompareTests)
+    {
+      // some opennurbs code will fail.
+      ON_ERROR("This compiler does not conform to the IEEE-754 nan compare specification. Some opennurbs code will fail.");
+      break;
+    }
+
+    const double x[] = {
+      nan1 + one, one + nan1,
+      nan1 - one, one - nan1,
+      nan1 * one, one * nan1,
+      nan1 / one, one / nan1
+    };
+
+    const size_t xcount = sizeof(x) / sizeof(x[0]);
+    bool bPassesNanAritmeticTest = true;
+    for (size_t i = 0; i < xcount && bPassesNanAritmeticTest; ++i)
+    {
+      bPassesNanAritmeticTest = x[i] != x[i];
+    }
+
+    if (false == bPassesNanAritmeticTest)
+    {
+      // some opennurbs code will fail.
+      ON_ERROR("This compiler does not conform to the IEEE-754 nan arithmetic specification. Some opennurbs code will fail.");
+      break;
+    }
+
+    bPassesAllNanTests = true;
+    break;
+  }
+
+
+  return bPassesAllNanTests;
+}
+
 double ON_DegreesFromRadians(
   double angle_in_radians
 )

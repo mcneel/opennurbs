@@ -29,6 +29,16 @@ bool ON_IsValid(double x)
   return ON_IS_VALID(x);
 }
 
+bool ON_IsValidPositiveNumber(double x)
+{
+  return (x > 0.0 && x < ON_UNSET_POSITIVE_VALUE);
+}
+
+bool ON_IsValidNegativeNumber(double x)
+{
+  return (x > ON_UNSET_VALUE && x < 0.0);
+}
+
 int ON_CompareDouble(
   double a,
   double b

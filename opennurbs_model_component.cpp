@@ -1748,7 +1748,8 @@ bool ON_ModelComponent::IsValidComponentName(
 {
   return 
     (length > 0 
-    && length == (size_t)ON_wString::Length(candidate_component_name)
+    && length <= 2147483645
+    && length == (size_t)ON_wString::Length(candidate_component_name,length+1)
     && ON_ModelComponent::IsValidComponentName(candidate_component_name)
     );
 }
@@ -1861,15 +1862,22 @@ bool ON_ModelComponent::IsValidComponentName(
   return rc;
 }
 
+static bool Internal_IsValidComponentNameCodePoint(ON__UINT32 unicode_code_point)
+{
+  return
+    unicode_code_point >= ON_UnicodeCodePoint::ON_Space
+    && 0 != ON_IsValidUnicodeCodePoint(unicode_code_point)
+    && 0 == ON_IsUnicodeC1ControlCodePoint(unicode_code_point)
+    ;
+}
 
 bool ON_ModelComponent::IsValidComponentNameFirstCodePoint(
   ON__UINT32 unicode_code_point
 )
 {
   return
-    ON_IsValidUnicodeCodePoint(unicode_code_point)
-    && unicode_code_point > ON_wString::Space
-    && 127 != unicode_code_point
+    Internal_IsValidComponentNameCodePoint(unicode_code_point)
+    && 0 == ON_IsUnicodeSpaceCodePoint(unicode_code_point)
     && unicode_code_point != '('
     && unicode_code_point != ')'
     && unicode_code_point != '['
@@ -1906,50 +1914,45 @@ bool ON_ModelComponent::IsValidComponentName(
   const wchar_t* candidate_component_name 
   )
 {
-  bool bPermitInternalSpaces = true;
-  bool rc = false;
-  bool bLastCharWasSpace = false;
+  const bool bPermitInternalSpaces = true;
+
+
+  if (nullptr == candidate_component_name || 0 == candidate_component_name[0])
+    return false;
+
   // the first character in a component name cannot be a bracket, space or below
-  if ( nullptr != candidate_component_name 
-       && *candidate_component_name > ON_wString::Space 
-       && *candidate_component_name != '(' 
-       && *candidate_component_name != ')' 
-       && *candidate_component_name != '[' 
-       && *candidate_component_name != ']' 
-       && *candidate_component_name != '{' 
-       && *candidate_component_name != '}' 
-       )
+  const ON__UINT32 c2[2] = { (ON__UINT32)(candidate_component_name[0]), (ON__UINT32)(candidate_component_name[1]) };
+  const ON__UINT32 first_code_point
+    = ON_IsValidUTF32Value(c2[0])
+    ? c2[0]
+    : (ON_IsValidUTF16SurrogatePair(c2[0], c2[1]) ? ON_DecodeUTF16SurrogatePair(c2[0], c2[1],0): 0)
+    ;
+  bool rc = IsValidComponentNameFirstCodePoint(first_code_point);
+
+  bool bLastCharWasSpace = false;
+  for ( const wchar_t* name = candidate_component_name; 0 != *name && rc; name++ )
   {
-    rc = true;
-    for ( const wchar_t* name = candidate_component_name; 0 != *name && rc; name++ ) 
+    const ON__UINT32 c = (ON__UINT32)(name[0]);
+    if (0 == Internal_IsValidComponentNameCodePoint(c))
     {
-#if (2 == ON_SIZEOF_WCHAR_T)
-      if (0 == ON_IsValidUTF16Singleton((ON__UINT32)(name[0])))
+      if (ON_IsValidUTF16SurrogatePair(c, (ON__UINT32)(name[1])))
       {
-        if (ON_IsValidUTF16SurrogatePair((ON__UINT32)(name[0]), (ON__UINT32)(name[1])))
-        {
-          name++;
-          continue;
-        }
-        return false;
-      }
-#elif (4 == ON_SIZEOF_WCHAR_T)
-      if (0 == ON_IsValidUTF32Value((ON__UINT32)(name[0])))
-      {
-        return false;
-      }
-#endif
-      if ( ON_wString::Space == *name )
-      {
-        rc = bPermitInternalSpaces;
-        bLastCharWasSpace = true;
-      }
-      else if ( 127 == *name || *name < ON_wString::Space )
-        rc = false;
-      else
+        // all code points that come from surrogate pairs are permitted
         bLastCharWasSpace = false;
+        name++;
+        continue;
+      }
+      return false;
     }
+    if (ON_IsUnicodeSpaceCodePoint(c))
+    {
+      rc = bPermitInternalSpaces;
+      bLastCharWasSpace = true;
+    }
+    else
+      bLastCharWasSpace = false;
   }
+
   return (rc && !bLastCharWasSpace) ? true : false;
 }
 

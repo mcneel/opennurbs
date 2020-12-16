@@ -1726,7 +1726,7 @@ static void UnrotateHatch(ON_Hatch* hatch)
     base2.Rotate(a, ON_2dPoint::Origin);
     hatch->SetBasePoint(base2);
 
-    //hatch->SetPatternRotation(hatch->PatternRotation()+a);
+    hatch->SetPatternRotation(hatch->PatternRotation()+a);
   }
   // Project world origin to hatch plane and set hatch plane origin to the result
   // Translate hatch 2d curves to get back to the right position

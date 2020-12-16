@@ -1021,6 +1021,31 @@ void ON_SubD::SetPerFaceColorsFromPackId() const
   ChangeRenderContentSerialNumber(); // face color changes.
 }
 
+bool ON_SubD::HasPerFaceColorsFromPackId() const
+{
+  ON_SubDFaceIterator fit(*this);
+  const ON_SubDFace* f = fit.FirstFace();
+  if (nullptr == f)
+    return false;
+  bool bHasPerFaceColorsFromPackId = false;
+  for (/*empty init*/; nullptr != f; f = fit.NextFace())
+  {
+    const ON_Color f_color = f->PerFaceColor();
+    if (((unsigned int)f_color) == ((unsigned int)ON_Color::UnsetColor))
+      continue;
+    const unsigned pack_id = f->PackId();
+    const ON_Color pack_id_color 
+      = (0 == pack_id)
+      ? ON_Color::UnsetColor
+      : ON_Color::RandomColor(pack_id);
+    if (((unsigned int)pack_id_color) != ((unsigned int)f_color))
+      return false;
+    bHasPerFaceColorsFromPackId = true;
+  }
+  return bHasPerFaceColorsFromPackId;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDMeshFragment - texture coordinates

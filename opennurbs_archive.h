@@ -4840,12 +4840,30 @@ public:
     unsigned int reference_model_serial_number,
     unsigned int instance_definition_model_serial_number
     );
+
   /*
   Description:
     Clear() information set by SetModelSerialNumber() do not modify
     ON_ModelComponent model serial number information when the classes
     are read.
-  */  void ClearModelSerialNumber();
+  */  
+  void ClearModelSerialNumber();
+
+  /*
+  Parameters:
+    bCheckForRemappedIds - [in]
+      true if the archive is reading in a situation where component ids may get remapped.
+  */
+  void SetCheckForRemappedIds(
+    bool bCheckForRemappedIds
+  );
+
+  /*
+  Returns:
+    True if the archive is reading in a situation where component ids may get remapped.
+  */
+  bool CheckForRemappedIds() const;
+
   unsigned int ModelSerialNumber() const;
   unsigned int ReferenceModelSerialNumber() const;
   unsigned int InstanceDefinitionModelSerialNumber() const;
@@ -5200,6 +5218,9 @@ public:
 
 private:
   bool m_SetModelComponentSerialNumbers = false;
+  bool m_bCheckForRemappedIds = false;
+  bool m_reservedA = false;
+  bool m_reservedB = false;
   unsigned int m_model_serial_number = 0;
   unsigned int m_reference_model_serial_number = 0;
   unsigned int m_instance_definition_model_serial_number = 0;

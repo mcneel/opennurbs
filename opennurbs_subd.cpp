@@ -35,9 +35,35 @@ ON_SubDToBrepParameters::VertexProcess ON_SubDToBrepParameters::VertexProcessFro
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::None);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG1);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG2);
-    ////ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::GlobalG1);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG1x);
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDToBrepParameters::VertexProcess::None);
+}
+
+const ON_wString ON_SubDToBrepParameters::VertexProcessToString(
+  ON_SubDToBrepParameters::VertexProcess vertex_process
+)
+{
+  const wchar_t* s;
+  switch (vertex_process)
+  {
+  case ON_SubDToBrepParameters::VertexProcess::None:
+    s = L"None";
+    break;
+  case ON_SubDToBrepParameters::VertexProcess::LocalG1:
+    s = L"G1";
+    break;
+  case ON_SubDToBrepParameters::VertexProcess::LocalG2:
+    s = L"G2";
+    break;
+  case ON_SubDToBrepParameters::VertexProcess::LocalG1x:
+    s = L"G1x";
+    break;
+  default:
+    s = L"INVALID";
+    break;
+  }
+  return ON_wString(s);
 }
 
 ON_SubDToBrepParameters::VertexProcess ON_SubDToBrepParameters::ExtraordinaryVertexProcess() const
@@ -109,6 +135,74 @@ void ON_SubDToBrepParameters::SetPackFaces(
 )
 {
   m_bPackFaces = bPackFaces ? true : false;
+}
+
+const ON_wString ON_SubDToBrepParameters::ToString( bool bVerbose ) const
+{
+  const ON_wString exvtx(ON_SubDToBrepParameters::VertexProcessToString(ExtraordinaryVertexProcess()));
+  const ON_wString faces(PackFaces() ? L"Packed" : L"Unpacked");
+
+  const ON_wString s = ON_wString::FormatToString(L"Faces = %ls ExtraordinaryVertex = %ls",
+    static_cast<const wchar_t*>(faces),
+    static_cast<const wchar_t*>(exvtx)
+    );
+
+  return bVerbose ? (ON_wString(L"ON_SubDToBrepParameters: ") + s) : s;
+}
+
+bool ON_SubDToBrepParameters::Read(ON_BinaryArchive& archive)
+{
+  *this = ON_SubDToBrepParameters::Default;
+  int version = 0;
+  if (false == archive.BeginRead3dmAnonymousChunk(&version))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (version < 1)
+      break;
+
+    bool bPackFaces = this->PackFaces();
+    if (false == archive.ReadBool(&bPackFaces))
+      break;
+    this->SetPackFaces(bPackFaces);
+
+    unsigned u = static_cast<unsigned char>(this->ExtraordinaryVertexProcess());
+    if (false == archive.ReadInt(&u))
+      break;
+    ON_SubDToBrepParameters::VertexProcess exvtx = ON_SubDToBrepParameters::VertexProcessFromUnsigned(u);
+    this->SetExtraordinaryVertexProcess(exvtx);
+
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndRead3dmChunk())
+    rc = false;
+  return rc;
+}
+
+bool ON_SubDToBrepParameters::Write(ON_BinaryArchive& archive) const
+{
+  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (false == archive.WriteBool(PackFaces()))
+      break;
+    const unsigned u = static_cast<unsigned char>(this->ExtraordinaryVertexProcess());
+    if (false == archive.WriteInt(u))
+      break;
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndWrite3dmChunk())
+    rc = false;
+  return rc;
 }
 
 ON_SubDComponentPtr::Type ON_SubDComponentPtr::ComponentPtrTypeFromUnsigned(
@@ -4710,6 +4804,65 @@ ON__UINT64 ON_SubD::GeometryContentSerialNumber() const
   return (nullptr != subdimple) ? subdimple->GeometryContentSerialNumber() : 0;
 }
 
+const ON_SubDHash ON_SubD::SubDHash(
+  ON_SubDHashType hash_type,
+  bool bForceUpdate
+) const
+{
+  ON_SubDimple* subdimple = m_subdimple_sp.get();
+  return (nullptr != subdimple) ? subdimple->SubDHash(hash_type,*this, bForceUpdate) : ON_SubDHash::Create(hash_type , *this);
+}
+
+
+const ON_SubDHash ON_SubDimple::SubDHash(
+  ON_SubDHashType hash_type,
+  const ON_SubD& parent_subd,
+  bool bForceUpdate
+) const
+{
+  const unsigned vertex_count = parent_subd.VertexCount();
+  if (0 == vertex_count)
+    return ON_SubDHash::Empty;
+
+  if (ON_SubDHashType::Geometry != hash_type && ON_SubDHashType::Topology != hash_type)
+    return ON_SubDHash::Empty;
+
+  // m_subd_geometry_hash and m_subd_toplology_hash are mutable and use lazy evaluation to stay updated.
+  // subd.GeometryContentSerialNumber() is used to detect stale values.
+  ON_SubDHash& h 
+    = (ON_SubDHashType::Geometry == hash_type) 
+    ? this->m_subd_geometry_hash 
+    : this->m_subd_toplology_hash
+    ;
+
+  const ON__UINT64 rsn = parent_subd.RuntimeSerialNumber();
+  const ON__UINT64 gsn = parent_subd.GeometryContentSerialNumber();
+  if (
+    false == bForceUpdate
+    && h.IsNotEmpty()
+    && hash_type == h.HashType()
+    && rsn > 0 && rsn == h.SubDRuntimeSerialNumber()
+    && gsn > 0 && gsn == h.SubDGeometryContentSerialNumber()
+    && vertex_count == h.VertexCount()
+    && parent_subd.EdgeCount() == h.EdgeCount()
+    && parent_subd.FaceCount() == h.FaceCount()
+    )
+  {
+    // The chached hash values are up to date (or should be).
+    // If h is out of date, something somewhere modified the SubD components and 
+    // failed to change the GeometryContentSerialNumber(). 
+    // All C++ SDK opennurbs code changes gsn after modifying SubD geometry (or it's a bug that should be fixed).
+    // The unwashed masses can do just about anything and that's why the bForceUpdate parameter is supplied.
+    return h;
+  }
+
+  // update cached value
+  h = ON_SubDHash::Create(hash_type,parent_subd);
+
+  // return updated value
+  return h;
+}
+
 ON__UINT64 ON_SubD::RenderContentSerialNumber() const
 {
   const ON_SubDimple* subdimple = m_subdimple_sp.get();
@@ -5954,6 +6107,10 @@ unsigned int ON_SubD::DumpTopology(
 
   const ON_2udex empty_id_range(ON_UNSET_UINT_INDEX, 0);
 
+  ON_SubDVertexIdIterator vidit(*this); 
+  ON_SubDEdgeIdIterator eidit(*this); 
+  ON_SubDFaceIdIterator fidit(*this);
+
   unsigned int error_count = 0;
   for (const ON_SubDLevel* level = lit.First(); nullptr != level; level = lit.Next())
   {
@@ -5980,64 +6137,224 @@ unsigned int ON_SubD::DumpTopology(
       level_vertex_id_range,
       level_edge_id_range, 
       level_face_id_range,
+      vidit,
+      eidit,
+      fidit,
       text_log);
   }
 
   return error_count;
 }
 
-static const ON_SHA1_Hash Internal_VertexHash(const ON_SubDVertex* first_vertex)
+ON_SubDHashType ON_SubDHashTypeFromUnsigned(
+  unsigned int subd_hash_type_as_unsigned
+)
 {
-  ON_SHA1 sha1;
-  for (const ON_SubDVertex* v = first_vertex; nullptr != v; v = v->m_next_vertex)
+  switch (subd_hash_type_as_unsigned)
   {
-    sha1.AccumulateInteger32(v->m_id);
-    sha1.AccumulateBytes(&v->m_vertex_tag,sizeof(v->m_vertex_tag));
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDHashType::Unset);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDHashType::Topology);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDHashType::Geometry);
+  }
+  return ON_SUBD_RETURN_ERROR(ON_SubDHashType::Unset);
+}
+
+const ON_wString ON_SubDHashTypeToString(
+  ON_SubDHashType subd_hash_type,
+  bool bVerbose
+)
+{
+  const wchar_t* name;
+  switch (subd_hash_type)
+  {
+  case ON_SubDHashType::Unset:
+    name = L"Unset";
+    break;
+  case ON_SubDHashType::Topology:
+    name = L"Topology";
+    break;
+  case ON_SubDHashType::Geometry:
+    name = L"Geometry";
+    break;
+  default:
+    name = L"invalid";
+    break;
+  }
+
+  return bVerbose ? (ON_wString(L"ON_SubDHashType::") + ON_wString(name)) : ON_wString(name);
+}
+
+
+
+static void Internal_AccumulateVertexHash(
+  ON_SHA1& sha1,
+  ON_SubDHashType hash_type,
+  const ON_SubDVertex* v
+)
+{
+  sha1.AccumulateInteger32(v->m_id);
+  if (ON_SubDHashType::Geometry == hash_type)
+  {
+    sha1.AccumulateBytes(&v->m_vertex_tag, sizeof(v->m_vertex_tag));
     sha1.AccumulateDoubleArray(3, v->m_P);
+    if (v->SubdivisionDisplacementIsNonzero())
+      sha1.Accumulate3dVector(v->SubdivisionDisplacement());
   }
-  return sha1.Hash();
 }
 
-static const ON_SHA1_Hash Internal_EdgeHash(const ON_SubDEdge* first_edge)
+static const ON_SHA1_Hash Internal_VertexHash(ON_SubDHashType hash_type, const ON_SubDVertex* first_vertex, unsigned int level_index, ON_SubDVertexIdIterator& vidit)
 {
   ON_SHA1 sha1;
-  for (const ON_SubDEdge* e = first_edge; nullptr != e; e = e->m_next_edge)
+  if (ON_SubDHashType::Unset != hash_type)
   {
-    sha1.AccumulateInteger32(e->m_id);
-    sha1.AccumulateBytes(&e->m_edge_tag, sizeof(e->m_edge_tag));
-    sha1.AccumulateInteger32(e->VertexId(0));
-    sha1.AccumulateInteger32(e->VertexId(1));
-  }
-  return sha1.Hash();
-}
-
-static const ON_SHA1_Hash Internal_FaceHash(const ON_SubDFace* first_face)
-{
-  ON_SHA1 sha1;
-  for (const ON_SubDFace* f = first_face; nullptr != f; f = f->m_next_face)
-  {
-    sha1.AccumulateInteger32(f->m_id);
-    sha1.AccumulateInteger16(f->m_edge_count);
-    const ON_SubDEdgePtr* eptr = f->m_edge4;
-    for (unsigned short fei = 0; fei < f->m_edge_count; ++fei, ++eptr)
+    unsigned prev_id = 0;
+    for (const ON_SubDVertex* v = first_vertex; nullptr != v; v = v->m_next_vertex)
     {
-      if (4 == fei)
+      if (prev_id > v->m_id)
       {
-        eptr = f->m_edgex;
-        if (nullptr == eptr)
-          break;
+        // must use slower vidit to get consistent results when complex editing juggles vertex order
+        sha1.Reset();
+        for (v = vidit.FirstVertex(); nullptr != v; v = vidit.NextVertex())
+        {
+          if ( level_index == v->SubdivisionLevel() && v->IsActive() )
+            Internal_AccumulateVertexHash(sha1, hash_type, v);
+        }
+        break;
       }
-      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
-      if (nullptr == e)
-        continue;
-      sha1.AccumulateInteger32(e->m_id);
-      if (0 != ON_SUBD_EDGE_DIRECTION(eptr->m_ptr))
-        sha1.AccumulateBool(true);
+      Internal_AccumulateVertexHash(sha1, hash_type, v);
+      prev_id = v->m_id;
     }
   }
   return sha1.Hash();
 }
 
+const ON_SHA1_Hash ON_SubD::VertexHash(ON_SubDHashType hash_type) const
+{
+  ON_SubDVertexIdIterator vidit(*this);
+  return Internal_VertexHash(hash_type, FirstVertex(), this->ActiveLevelIndex(), vidit);
+}
+
+static void Internal_AccumulateEdgeHash(
+  ON_SHA1& sha1,
+  ON_SubDHashType hash_type,
+  const ON_SubDEdge* e
+)
+{
+  sha1.AccumulateInteger32(e->m_id);
+  sha1.AccumulateInteger32(e->VertexId(0));
+  sha1.AccumulateInteger32(e->VertexId(1));
+  sha1.AccumulateBool(e->IsCrease());
+  if (ON_SubDHashType::Geometry == hash_type)
+  {
+    if (e->SubdivisionDisplacementIsNonzero())
+      sha1.Accumulate3dVector(e->SubdivisionDisplacement());
+  }
+}
+
+
+static const ON_SHA1_Hash Internal_EdgeHash(ON_SubDHashType hash_type, const ON_SubDEdge* first_edge, unsigned int level_index, ON_SubDEdgeIdIterator& eidit)
+{
+  ON_SHA1 sha1;
+  if (ON_SubDHashType::Unset != hash_type)
+  {
+    unsigned prev_id = 0;
+    for (const ON_SubDEdge* e = first_edge; nullptr != e; e = e->m_next_edge)
+    {
+      if (prev_id > e->m_id)
+      {
+        // must use slower eidit to get consistent results when complex editing juggles vertex order
+        sha1.Reset();
+        for (e = eidit.FirstEdge(); nullptr != e; e = eidit.NextEdge())
+        {
+          if (level_index == e->SubdivisionLevel() && e->IsActive())
+            Internal_AccumulateEdgeHash(sha1, hash_type, e);
+        }
+        break;
+      }
+      Internal_AccumulateEdgeHash(sha1, hash_type, e);
+      prev_id = e->m_id;
+    }
+  }
+  return sha1.Hash();
+}
+
+const ON_SHA1_Hash ON_SubD::EdgeHash(ON_SubDHashType hash_type) const
+{
+  ON_SubDEdgeIdIterator eidit(*this);
+  return Internal_EdgeHash(hash_type,FirstEdge(), this->ActiveLevelIndex(), eidit);
+}
+
+static void Internal_AccumulateFaceHash(
+  ON_SHA1& sha1,
+  ON_SubDHashType hash_type,
+  const ON_SubDFace* f
+)
+{
+  sha1.AccumulateInteger32(f->m_id);
+  sha1.AccumulateInteger16(f->m_edge_count);
+  const ON_SubDEdgePtr* eptr = f->m_edge4;
+  for (unsigned short fei = 0; fei < f->m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = f->m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    sha1.AccumulateInteger32(eptr->EdgeId());
+    if (0 != ON_SUBD_EDGE_DIRECTION(eptr->m_ptr))
+      sha1.AccumulateBool(true);
+    if (ON_SubDHashType::Geometry == hash_type)
+    {
+      if (f->SubdivisionDisplacementIsNonzero())
+        sha1.Accumulate3dVector(f->SubdivisionDisplacement());
+    }
+  }
+}
+
+static const ON_SHA1_Hash Internal_FaceHash(ON_SubDHashType hash_type, const ON_SubDFace* first_face, unsigned int level_index, ON_SubDFaceIdIterator& fidit)
+{
+  ON_SHA1 sha1;
+  if (ON_SubDHashType::Unset != hash_type)
+  {
+    unsigned prev_id = 0;
+    for (const ON_SubDFace* f = first_face; nullptr != f; f = f->m_next_face)
+    {
+      if (prev_id > f->m_id)
+      {
+        // must use slower fidit to get consistent results when complex editing juggles vertex order
+        sha1.Reset();
+        for (f = fidit.FirstFace(); nullptr != f; f = fidit.NextFace())
+        {
+          if (level_index == f->SubdivisionLevel() && f->IsActive())
+            Internal_AccumulateFaceHash(sha1, hash_type, f);
+        }
+        break;
+      }
+      Internal_AccumulateFaceHash(sha1, hash_type, f);
+      prev_id = f->m_id;
+    }
+  }
+  return sha1.Hash();
+}
+
+const ON_SHA1_Hash ON_SubD::FaceHash(ON_SubDHashType hash_type) const
+{
+  ON_SubDFaceIdIterator fidit(*this);
+  return Internal_FaceHash(hash_type,FirstFace(), this->ActiveLevelIndex(), fidit);
+}
+
+//const ON_SHA1_Hash ON_SubD::SubDHash(ON_SubDHashType hash_type) const
+//{
+//  ON_SHA1 sha1;
+//  if ( VertexCount() > 0 )
+//    sha1.AccumulateSubHash(VertexHash(hash_type));
+//  if (EdgeCount() > 0)
+//    sha1.AccumulateSubHash(EdgeHash(hash_type));
+//  if (FaceCount() > 0)
+//    sha1.AccumulateSubHash(FaceHash(hash_type));
+//  return sha1.Hash();
+//}
 
 static void Internal_AccumulateFragmentArrayHash(ON_SHA1& sha1, size_t dim, const double* a, unsigned count, size_t stride)
 {
@@ -6051,6 +6368,287 @@ static void Internal_AccumulateFragmentArrayHash(ON_SHA1& sha1, size_t dim, cons
       a += stride;
     }
   }
+}
+
+const ON_SubDHash ON_SubDHash::Create(ON_SubDHashType hash_type, const class ON_SubD& subd)
+{
+  ON_SubDHash h;
+  h.m_hash_type = hash_type;
+  h.m_vertex_count = subd.VertexCount();
+  h.m_edge_count = subd.EdgeCount();
+  h.m_face_count = subd.FaceCount();
+  h.m_subd_runtime_serial_number = subd.RuntimeSerialNumber();
+  if (h.m_vertex_count > 0)
+  {
+    h.m_subd_geometry_content_serial_number = subd.GeometryContentSerialNumber();
+    if (ON_SubDHashType::Unset != hash_type)
+    {
+      h.m_vertex_hash = subd.VertexHash(hash_type);
+      h.m_edge_hash = subd.EdgeHash(hash_type);
+      h.m_face_hash = subd.FaceHash(hash_type);
+    }
+  }
+  return h;
+}
+
+int ON_SubDHash::Compare(const ON_SubDHash& lhs, const ON_SubDHash& rhs)
+{
+  if (lhs.m_vertex_count < rhs.m_vertex_count)
+    return -1;
+  if (lhs.m_vertex_count > rhs.m_vertex_count)
+    return 1;
+
+  if (lhs.m_edge_count < rhs.m_edge_count)
+    return -1;
+  if (lhs.m_edge_count > rhs.m_edge_count)
+    return 1;
+
+  if (lhs.m_face_count < rhs.m_face_count)
+    return -1;
+  if (lhs.m_face_count > rhs.m_face_count)
+    return 1;
+
+  int rc;
+
+  rc = ON_SHA1_Hash::Compare(lhs.m_vertex_hash, rhs.m_vertex_hash);
+  if (0 != rc)
+    return rc;
+
+  rc = ON_SHA1_Hash::Compare(lhs.m_edge_hash, rhs.m_edge_hash);
+  if (0 != rc)
+    return rc;
+
+  return ON_SHA1_Hash::Compare(lhs.m_face_hash, rhs.m_face_hash);
+}
+
+void ON_SubDHash::Dump(ON_TextLog& text_log) const
+{
+  if (text_log.IsTextHash())
+    return; 
+  bool bIsNotEmpty = IsNotEmpty();
+  if (bIsNotEmpty)
+  {
+    switch (this->HashType())
+    {
+    case ON_SubDHashType::Topology:
+      text_log.Print("SubD toplogy hash:\n");
+      break;
+    case ON_SubDHashType::Geometry:
+      text_log.Print("SubD geometry hash:\n");
+      break;
+    default:
+      bIsNotEmpty = false;
+      break;
+    }
+  }
+  if (bIsNotEmpty)
+    text_log.Print("SubD hash: Empty\n");
+  else
+  {
+    const ON_TextLogIndent indent(text_log);
+    const unsigned vcount = this->VertexCount();
+    const unsigned ecount = this->EdgeCount();
+    const unsigned fcount = this->FaceCount();
+
+    if (vcount > 0)
+    {
+      const ON_wString vsha1 = this->VertexHash().ToStringEx(true);
+      text_log.Print(L"%u vertices. SHA1 = %ls\n", vcount, static_cast<const wchar_t*>(vsha1));
+    }
+    else
+      text_log.Print("No vertices.\n");
+
+    if (ecount > 0)
+    {
+      const ON_wString esha1 = this->EdgeHash().ToStringEx(true);
+      text_log.Print(L"%u edges. SHA1 = %ls\n", ecount, static_cast<const wchar_t*>(esha1));
+    }
+    else
+      text_log.Print("No edges.\n");
+
+    if (fcount > 0)
+    {
+      const ON_wString fsha1 = this->FaceHash().ToStringEx(true);
+      text_log.Print(L"%u faces. SHA1 = %ls\n", fcount, static_cast<const wchar_t*>(fsha1));
+    }
+    text_log.Print("No faces.\n");
+  }
+}
+
+bool ON_SubDHash::Write(class ON_BinaryArchive& archive) const
+{
+  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+    return false;
+  bool rc = false;
+  for (;;)
+  {
+    const bool bIsEmpty = IsEmpty();
+    if (false == archive.WriteBool(bIsEmpty))
+      break;
+    if (bIsEmpty)
+    {
+      rc = true;
+      break;
+    }
+    // The SubD runtime serial number and geometry content serial numbers are runtime values.
+    // When appropriate, calling contexts need to take appropriate steps when writing and 
+    // set these after reading.
+    const unsigned char hash_type_as_unsigned = static_cast<unsigned char>(m_hash_type);
+    if (false == archive.WriteChar(hash_type_as_unsigned))
+      break;
+    if (false == archive.WriteInt(m_vertex_count))
+      break;
+    if (false == this->m_vertex_hash.Write(archive))
+      break;
+    if (false == archive.WriteInt(m_edge_count))
+      break;
+    if (false == this->m_edge_hash.Write(archive))
+      break;
+    if (false == archive.WriteInt(m_face_count))
+      break;
+    if (false == this->m_face_hash.Write(archive))
+      break;
+    rc = true;
+    break;
+  }
+  if (false == archive.EndWrite3dmChunk())
+    rc = false;
+  return rc;
+}
+
+bool ON_SubDHash::Read(class ON_BinaryArchive& archive)
+{
+  *this = ON_SubDHash::Empty;
+
+  int chunk_version = 0;
+  if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    bool bIsEmpty = true;
+    if (false == archive.ReadBool(&bIsEmpty))
+      break;
+    if (bIsEmpty)
+    {
+      rc = true;
+      break;
+    }
+
+    // The SubD runtime serial number and geometry content serial numbers are runtime values.
+    // When appropriate, calling contexts need to set these after reading.
+    unsigned char hash_type_as_unsigned = 0;
+    if (false == archive.ReadChar(&hash_type_as_unsigned))
+      break;
+    m_hash_type = ON_SubDHashTypeFromUnsigned(hash_type_as_unsigned);
+
+    if (false == archive.ReadInt(&m_vertex_count))
+      break;
+    if (false == this->m_vertex_hash.Read(archive))
+      break;
+    if (false == archive.ReadInt(&m_edge_count))
+      break;
+    if (false == this->m_edge_hash.Read(archive))
+      break;
+    if (false == archive.ReadInt(&m_face_count))
+      break;
+    if (false == this->m_face_hash.Read(archive))
+      break;
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndRead3dmChunk())
+    rc = false;
+  return rc;
+
+}
+
+ON__UINT64 ON_SubDHash::SubDRuntimeSerialNumber() const
+{
+  return this->m_subd_runtime_serial_number;
+}
+
+ON__UINT64 ON_SubDHash::SubDGeometryContentSerialNumber() const
+{
+  return this->m_subd_geometry_content_serial_number;
+}
+
+bool ON_SubDHash::IsEmpty() const
+{
+  return ON_SubDHashType::Unset == m_hash_type || 0 == m_vertex_count;
+}
+
+bool ON_SubDHash::IsNotEmpty() const
+{
+  return ON_SubDHashType::Unset != m_hash_type && m_vertex_count > 0;
+}
+
+ON_SubDHashType ON_SubDHash::HashType() const
+{
+  return m_hash_type;
+}
+
+unsigned int ON_SubDHash::VertexCount() const
+{
+  return m_vertex_count;
+}
+
+unsigned int ON_SubDHash::EdgeCount() const
+{
+  return m_edge_count;
+}
+
+unsigned int ON_SubDHash::FaceCount() const
+{
+  return m_face_count;
+}
+
+const ON_SHA1_Hash ON_SubDHash::VertexHash() const
+{
+  return m_vertex_hash;
+}
+
+const ON_SHA1_Hash ON_SubDHash::EdgeHash() const
+{
+  return m_edge_hash;
+}
+
+const ON_SHA1_Hash ON_SubDHash::FaceHash() const
+{
+  return m_face_hash;
+}
+
+const ON_SHA1_Hash ON_SubDHash::SubDHash() const
+{
+  ON_SHA1 sha1;
+  if (m_vertex_count > 0)
+    sha1.AccumulateInteger32(m_vertex_count);
+  if (m_edge_count > 0)
+    sha1.AccumulateInteger32(m_edge_count);
+  if (m_face_count > 0)
+    sha1.AccumulateInteger32(m_face_count);
+  if (ON_SubDHashType::Unset != m_hash_type)
+  {
+    if (m_vertex_count > 0)
+      sha1.AccumulateSubHash(m_vertex_hash);
+    if (m_edge_count > 0)
+      sha1.AccumulateSubHash(m_edge_hash);
+    if (m_face_count > 0)
+      sha1.AccumulateSubHash(m_face_hash);
+  }
+  return sha1.Hash();
+}
+
+bool operator==(const ON_SubDHash& lhs, const ON_SubDHash& rhs)
+{
+  return 0 == ON_SubDHash::Compare(lhs, rhs);
+}
+
+bool operator!=(const ON_SubDHash& lhs, const ON_SubDHash& rhs)
+{
+  return 0 != ON_SubDHash::Compare(lhs, rhs);
 }
 
 static const ON_SHA1_Hash Internal_PackRectHash(const ON_SubDFace* first_face)
@@ -6172,6 +6770,9 @@ unsigned int ON_SubDLevel::DumpTopology(
   ON_2udex vertex_id_range,
   ON_2udex edge_id_range,
   ON_2udex face_id_range,
+  ON_SubDVertexIdIterator& vidit,
+  ON_SubDEdgeIdIterator& eidit,
+  ON_SubDFaceIdIterator& fidit,
   ON_TextLog& text_log
 ) const
 {
@@ -6323,9 +6924,10 @@ unsigned int ON_SubDLevel::DumpTopology(
     return 0;
 
   // The hash uniquely identifies the subd level topology and geometry.
-  const ON_SHA1_Hash vhash = Internal_VertexHash(m_vertex[0]);
-  const ON_SHA1_Hash ehash = Internal_EdgeHash(m_edge[0]);
-  const ON_SHA1_Hash fhash = Internal_FaceHash(m_face[0]);
+  const ON_SubDHashType hash_type = ON_SubDHashType::Geometry;
+  const ON_SHA1_Hash vhash = Internal_VertexHash(hash_type, m_vertex[0], this->m_level_index, vidit);
+  const ON_SHA1_Hash ehash = Internal_EdgeHash(hash_type, m_edge[0], this->m_level_index, eidit);
+  const ON_SHA1_Hash fhash = Internal_FaceHash(hash_type, m_face[0], this->m_level_index, fidit);
 
   ON_SHA1 level_sha1;
   level_sha1.AccumulateSubHash(vhash);
@@ -12977,6 +13579,9 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts(const ON_SubDLevel& src, ON_Sub
     )
     return ON_SUBD_RETURN_ERROR(false);
 
+  // The built in fragment cache always has adaptive ON_SubDDisplayParameters::DefaultDensity
+  const unsigned subd_display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(ON_SubDDisplayParameters::DefaultDensity,m_face_count);
+
   ON_SubDVertex* this_vertex;
   const ON_SubDVertex* src_vertex;
   ON_SubDEdgePtr this_veptr, src_veptr;
@@ -13192,7 +13797,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts(const ON_SubDLevel& src, ON_Sub
       if ( false == this_face->SavedSubdivisionPointIsSet())
         this_face->SetSavedSubdivisionPoint(subdivision_point);
       if (nullptr == this_face->MeshFragments() && nullptr != src_face->MeshFragments())
-        this_heap.CopyMeshFragments(src_face, this_face);
+        this_heap.CopyMeshFragments(src_face, subd_display_density, this_face);
     }
   }
 

@@ -299,6 +299,203 @@ enum class ON_SubDEdgeTag : unsigned char
 };
 #pragma endregion
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDHashType] [Rhino.Geometry.SubDHashType] [byte]
+/// <summary>
+/// ON_SubDHashType used used to specify what set of information is hashed (topology or geometry).
+/// </summary>
+enum class ON_SubDHashType : unsigned char
+{
+  /// <summary>
+  /// Unset indicates the hash type still needs to be selected. It is not a valid type
+  /// for calculating a hash.
+  /// </summary>
+  Unset = 0,
+
+  /// <summary>
+  /// A topology hash includes component ids, edge tags, and all topological relationships 
+  /// between vertices, edges, and faces. Note that edge tags are not a mathematically topological
+  /// attribute, however creased edges divide the SubD into strong visual regions and change 
+  /// what many contexts consider to be the connected components. 
+  /// A topology hash ignores vertex control net points.
+  /// </summary>
+  Topology = 1,
+
+  /// <summary>
+  /// A geometry hash includes all information in a toplogy hash.
+  /// In addition, a geometry hash includes vertex tags, vertex control net points, 
+  /// and nonzero subdivision displacements on vertices, edges, and faces.
+  /// If two SubDs have the same geometry hash, then they have identical surface geometry.
+  /// </summary>
+  Geometry = 2
+};
+#pragma endregion
+
+ON_DECL
+ON_SubDHashType ON_SubDHashTypeFromUnsigned(
+  unsigned int subd_hash_type_as_unsigned
+);
+
+ON_DECL
+const ON_wString ON_SubDHashTypeToString(
+  ON_SubDHashType subd_hash_type,
+  bool bVerbose
+);
+
+/// <summary>
+/// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
+/// Typically it is used when a calculation needs to know if the current SubD has is geometrically
+/// identical to a previous SubD. When speed is not important, comparing the current value of
+/// ON_SubD::GeometryHash() to a previously save value of ON_SubD::GeometryHash() is functionally
+/// identical but typically much slower when the SubDs are different.
+/// </summary>
+class ON_CLASS ON_SubDHash
+{
+public:
+  ON_SubDHash() = default;
+  ~ON_SubDHash() = default;
+  ON_SubDHash(const ON_SubDHash&) = default;
+  ON_SubDHash& operator=(const ON_SubDHash&) = default;
+
+public:
+  /// <summary>
+  /// All counts are zero and all hashes are ON_SHA1::EmptyContentHash.
+  /// </summary>
+  static const ON_SubDHash Empty;
+
+  // Saves the counts and hashs of the specified type
+
+
+  /// <summary>
+  /// Saves the counts and hashs of the specified type.
+  /// </summary>
+  /// <param name="hash_type"></param>
+  /// <param name="subd"></param>
+  /// <returns></returns>
+  static const ON_SubDHash Create(ON_SubDHashType hash_type, const class ON_SubD& subd );
+
+  /// <summary>
+  /// Dictionary compare of VertexCount(), EdgeCount(), FaceCount(), VertexHash(), EdgeHash(), and FaceHash() in that order.
+  /// 
+  /// NOTE WELL:
+  /// SubDRuntimeSerialNumber() and SubdGeometryContentSerialNumber() are not compared because the reason this
+  /// class exists is for it to be used to see if two different SubDs have identical content.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>
+  /// -1: lhs < rhs
+  /// 0: lhs == rsh
+  /// 1: lhs > rhs
+  /// </returns>
+  static int Compare(const ON_SubDHash& lhs, const ON_SubDHash& rhs);
+
+  /*
+  Returns:
+    True if vertex count is 0 or HashType is unset.
+  */
+  bool IsEmpty() const;
+
+  /*
+  Returns:
+    True if vertex count is > 0 and HashType is geometry or toplology.
+  */
+  bool IsNotEmpty() const;
+
+  ON_SubDHashType HashType() const;
+
+  /// <summary>
+  /// Returns:
+  ///   If this hash was created from an ON_SubD, then the value of subd.RuntimeSerialNumber() is returned.
+  ///   Otherwise, 0 is returned.
+  /// </summary>
+  /// <returns></returns>
+  ON__UINT64 SubDRuntimeSerialNumber() const;
+
+  /// <summary>
+  /// Returns:
+  ///   If this hash was created from an ON_SubD, then the value of subd.GeometryContentSerialNumber() at the
+  ///   at the instant this hash was created is returned.
+  ///   Otherwise, 0 is returned.
+  /// </summary>
+  /// <returns></returns>
+  ON__UINT64 SubDGeometryContentSerialNumber() const;
+
+  /// <summary>
+  /// Saved value of subd.VertexCount(HashType()).
+  /// </summary>
+  /// <returns></returns>
+  unsigned int VertexCount() const;
+
+  /// <summary>
+  /// Saved value of subd.EdgeCount(HashType()).
+  /// </summary>
+  /// <returns></returns>
+  unsigned int EdgeCount() const;
+
+  /// <summary>
+  /// Saved value of subd.FaceCount(HashType()).
+  /// </summary>
+  /// <returns></returns>
+  unsigned int FaceCount() const;
+
+  /// <summary>
+  /// If two SubDs have identical VertexHash() values, 
+  /// then the SubD vertex information associated with HashType() is identical.
+  /// </summary>
+  /// <returns>
+  /// A SHA1 hash of the SubD's vertex information associated with HashType().
+  /// </returns>
+  const ON_SHA1_Hash VertexHash() const;
+
+  /// <summary>
+  /// If two SubDs have identical EdgeHash() values, 
+  /// then the SubD edge information associated with HashType() is identical.
+  /// </summary>
+  /// <returns>
+  /// A SHA1 hash of the SubD's edge information associated with HashType().
+  /// </returns>
+  const ON_SHA1_Hash EdgeHash() const;
+
+  /// <summary>
+  /// If two SubDs have identical FaceHash() values, 
+  /// then the SubD face information associated with HashType() is identical.
+  /// </summary>
+  /// <returns>
+  /// A SHA1 hash of the SubD's face information associated with HashType().
+  /// </returns>
+  const ON_SHA1_Hash FaceHash() const;
+
+  /// <summary>
+  /// If two SubDs have identical SubDHash() values, 
+  /// then the SubD vertex, edge, and face information associated with HashType() is identical.
+  /// </summary>
+  /// <returns>
+  /// A SHA1 hash of the SubD's vertex, edge, and face information associated with HashType().
+  /// </returns>
+  const ON_SHA1_Hash SubDHash() const;
+
+  void Dump(ON_TextLog&) const;
+  bool Write(class ON_BinaryArchive&) const;
+  bool Read(class ON_BinaryArchive&);
+
+private:
+  friend class ON_SubDimple;
+  ON_SubDHashType m_hash_type = ON_SubDHashType::Unset;
+  unsigned int m_vertex_count = 0;
+  unsigned int m_edge_count = 0;
+  unsigned int m_face_count = 0;
+  ON__UINT64 m_subd_runtime_serial_number = 0;
+  ON__UINT64 m_subd_geometry_content_serial_number = 0;
+  ON_SHA1_Hash m_vertex_hash = ON_SHA1_Hash::EmptyContentHash;
+  ON_SHA1_Hash m_edge_hash = ON_SHA1_Hash::EmptyContentHash;
+  ON_SHA1_Hash m_face_hash = ON_SHA1_Hash::EmptyContentHash;
+};
+
+bool operator==(const ON_SubDHash& lhs, const ON_SubDHash& rhs);
+
+bool operator!=(const ON_SubDHash& lhs, const ON_SubDHash& rhs);
+
+
 class ON_CLASS ON_SubDToBrepParameters
 {
 public:
@@ -336,6 +533,7 @@ public:
     const ON_SubDToBrepParameters* rhs
     );
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDToBrepParameters::VertexProcess] [Rhino.Geometry.SubDToBrepOptions.ExtraordinaryVertexProcessOption] [nested:byte]
   /// <summary>
   /// ON_SubDToBrepParameters::Vertex identifies the options for post processing extraorindary vertices.
   /// </summary>
@@ -349,27 +547,33 @@ public:
     None = 0,
 
     ///<summary>
-    /// The brep vertex is G1. 
-    /// Typically the deviation bewtween the brep and SubD surface is larger than None.
+    /// At extraordinary vertices, the NURBS patches are modified so they are G1 at the extraordinary vertex.
+    /// Typically the deviation bewtween the brep and SubD surface is larger than None and smaller than
+    /// LocalG1x and LocalG2.
     ///</summary>
     LocalG1 = 1,
 
     ///<summary>
-    /// The brep vertex is G2. 
-    /// Typically the deviation bewtween the brep and SubD surface is larger than LocalG1.
+    /// At extraordinary vertices, the NURBS patches are modified so they are G2 at the extraordinary vertex.
+    /// Typically the deviation bewtween the brep and SubD surface is larger than LocalG1 and LocalG1x.
     ///</summary>
     LocalG2 = 2,
 
     ///<summary>
-    /// The brep vertex is G1. 
-    /// Typically the deviation bewtween the brep and SubD surface is larger than None.
-    /// In some cases GlobalG1 produces the most please aesthetic result.
+    /// At extraordinary vertices, the NURBS patches are modified so they are G1 at the extraordinary vertex
+    /// and tend to be closer to G1 along edges near the extraordinary vertex.
+    /// Typically the deviation bewtween the brep and SubD surface is larger than LocalG1 and smaller than LocalG2.
     ///</summary>
-    ///GlobalG1 = 3,
+    LocalG1x = 3,
   };
+#pragma endregion
 
   static ON_SubDToBrepParameters::VertexProcess VertexProcessFromUnsigned(
     unsigned int vertex_process_as_unsigned
+  );
+
+  static const ON_wString VertexProcessToString(
+    ON_SubDToBrepParameters::VertexProcess vertex_process
   );
 
   /*
@@ -407,9 +611,17 @@ public:
     bool bPackFaces
   );
 
+  const ON_wString ToString(
+  bool bVerbose
+  ) const;
+
+  bool Read(ON_BinaryArchive& archive);
+  
+  bool Write(ON_BinaryArchive& archive) const;
+
 private:
   bool m_bPackFaces = false;
-  ON_SubDToBrepParameters::VertexProcess m_extraordinary_vertex_process = ON_SubDToBrepParameters::VertexProcess::LocalG1;
+  ON_SubDToBrepParameters::VertexProcess m_extraordinary_vertex_process = ON_SubDToBrepParameters::VertexProcess::LocalG1x;
   unsigned short m_reserved1 = 0;
   unsigned int m_reserved2 = 0;
   double m_reserved3 = 0.0;
@@ -1613,16 +1825,22 @@ private:
   unsigned int m_sector_face_count = 0;
 };
 
+ON_DECL
 bool operator==(ON_SubDSectorId, ON_SubDSectorId);
 
+ON_DECL
 bool operator!=(ON_SubDSectorId, ON_SubDSectorId);
 
+ON_DECL
 bool operator>(ON_SubDSectorId, ON_SubDSectorId);
 
+ON_DECL
 bool operator<(ON_SubDSectorId, ON_SubDSectorId);
 
+ON_DECL
 bool operator>=(ON_SubDSectorId, ON_SubDSectorId);
 
+ON_DECL
 bool operator<=(ON_SubDSectorId, ON_SubDSectorId);
 
 class ON_CLASS ON_SubDVertexSurfacePointCoefficient
@@ -2325,6 +2543,25 @@ public:
   */
   ON__UINT64 ChangeRenderContentSerialNumber() const;
 
+
+  /*
+  Description:
+    Get a hash that uniquely identifies the topology or geometry of this SubD.
+  Parameters:
+    hash_type - [in]
+     To see what is included in the various hashes, read the documentation for the ON_SubDHashType enum.
+   bForceUpdate - [in]
+     When in doubt pass false.
+     The SubD hashes are mutable and cached. When code properly manages GeometryContentSerialNumber(),
+     then SubDHash(hash_type,false) will alwasys return the correct answer. This is the expected behavior.
+     If code directly modifies SubD components and fails to call ChangeGeometryContentSerialNumberForExperts(),
+     then it is possible a stale hash will be returned. Setting bForceUpdate = true forces the SHA1
+     values to be recalculated from scratch. For extremely large SubDs, this recalculation can be time consuming.
+  */
+  const ON_SubDHash SubDHash(
+    ON_SubDHashType hash_type,
+    bool bForceUpdate
+  ) const;
 
   /*
   Description:
@@ -3341,7 +3578,19 @@ public:
   // Vertex access
   //
 
+  /*
+  Returns:
+    Number of vertices in the active level.
+  */
   unsigned int VertexCount() const;
+
+  /*
+  Parameters:
+    hash_type - [in]
+  Returns:
+    A SHA1 hash of the SubD's vertices.
+  */
+  const ON_SHA1_Hash VertexHash( ON_SubDHashType hash_type ) const;
 
   const class ON_SubDVertex* FirstVertex() const;
   const class ON_SubDVertex* LastVertex() const;
@@ -3384,7 +3633,19 @@ public:
   // Edge access
   //
 
+  /*
+  Returns:
+    Number of edges in the active level.
+  */
   unsigned int EdgeCount() const;
+
+  /*
+  Parameters:
+    hash_type - [in]
+  Returns:
+    A SHA1 hash of the SubD's edges.
+  */
+  const ON_SHA1_Hash EdgeHash(ON_SubDHashType hash_type) const;
 
   const class ON_SubDEdge* FirstEdge() const;
   const class ON_SubDEdge* LastEdge() const;
@@ -3427,7 +3688,19 @@ public:
   // Face access
   //
 
+  /*
+  Returns:
+    Number of faces in the active level.
+  */
   unsigned int FaceCount() const;
+
+  /*
+  Parameters:
+    hash_type - [in]
+  Returns:
+    A SHA1 hash of the SubD's faces.
+  */
+  const ON_SHA1_Hash FaceHash(ON_SubDHashType hash_type) const;
 
   const class ON_SubDFace* FirstFace() const;
   const class ON_SubDFace* LastFace() const;
@@ -3465,7 +3738,6 @@ public:
   const class ON_SubDFace* FaceFromComponentIndex(
     ON_COMPONENT_INDEX component_index
   ) const;
-
 
   /////////////////////////////////////////////////////////
   //
@@ -3665,6 +3937,12 @@ public:
     Otherwise, its per face color is cleared.
   */
   void SetPerFaceColorsFromPackId() const;
+
+  /*
+  Returns:
+    True if per face colors were set by SetPerFaceColorsFromPackId().
+  */
+  bool HasPerFaceColorsFromPackId() const;
 
 
   ///*
@@ -5536,11 +5814,137 @@ private:
   void CopyHelper(const ON_SubD&);
 
   public:
+
     /*
     Returns:
       True if every face has a nonzero PackId and a set PackRect.
     */
     bool FacesArePacked() const;
+
+    /*
+    Description:
+      Validates the face packing.
+      
+      If a face pack contains more than one face, then all of the following are required
+      for that face pack to be valid.
+      - Every face in the pack is a quad.
+      - The quads form a rectangular grid.
+      - All faces in the rectangular grid are quads.
+      - All interior edges in the rectangular grid are smooth.
+      - All interior vertices in the rectangular grid are smooth and have 4 edge and 4 faces.
+      - All edges on the sides of the rectangular grid are either creases or are attached to
+      exactly one face in the rectangular grid.
+      
+    Parameters:
+      bPermitWrapping - [in]
+        If true, then the face pack is allowed to wrap.
+        For example, if bPermitWrapping is true, then a SubD cylinder that is a regular quad grid
+        can have a single face pack.
+      bIfValidThenUpdateFacePackingTopologyHash - [in]
+        When in doubt, pass false to test if all of the current face packing information is
+        completely valid.
+
+        If you are using an add/remove creases edit approach to modify an initially valid packing,
+        then pass true. Otherwise pass false.
+
+        If this parameter is true, the packing is valid, and this->FacePackingSubDTopologyHash()
+        does not match this->SubDTopologyHash(), then this->FacePackingSubDTopologyHash() is updated
+        to the current value of this->SubDTopologyHash().
+
+        If this paramter is false and and this->FacePackingSubDTopologyHash()
+        does not match this->SubDTopologyHash(), then the function returns false.
+    Returns:
+      True if FacesArePacked() is true, the quad grids meet all the conditions described above,
+      this->FacePackingId() is not nil, and either this->FacePackingSubDTopologyHash() is equal to
+      this->SubDTopologyHash() or bIfValidThenUpdateFacePackingTopologyHash is true.
+    */
+    bool FacePackingIsValid(
+      bool bIfValidThenUpdateFacePackingTopologyHash
+    ) const;
+
+private:
+    /*
+    Returns:
+      True if all of the following are satisfied.
+      1. All quads are packed into rectangular grids.
+      2. The pack id is used in those grids is not used by any other face.
+      3. The rectangular grids do not have interior creases.
+      4. The rectangular grids have 4 boundaries (no wrapping).
+      5. Non quads have pack ids that are zero or not shared with a quad.
+    */
+    bool QuadPackingIsValid() const;
+
+public:
+
+    /// <summary>
+    /// The fast and simple face packing uses topology, vertex tags, and edge tags to 
+    /// group quads into rectangular grids. It does not perform geometric feature analysis.
+    /// {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
+    /// </summary>
+    static const ON_UUID FastAndSimpleFacePackingId;
+
+
+    // ADD NEW PackFaces ids above this comment and below FastAndSimplePackFacesId.
+
+
+    /// <summary>
+    /// ON_SubD::DefaultFacePackingId ideitifies the default face packing.
+    /// Code that wants to use the built-in face packing that is currently
+    /// the best option for general use, will specify ON_SubD::DefaultFacePackingId.
+    /// 
+    /// Currently this id is ON_SubD::FastAndSimpleFacePackingId. 
+    /// In the future it may be changed to another id. Code that wants to
+    /// always apply the same face packing will explicitly specify one of
+    /// the built-in face pack ids defined above.
+    /// </summary>
+    static const ON_UUID DefaultFacePackingId;
+
+    static bool IsBuiltInFacePackingId(
+      ON_UUID candidate_id
+    );
+
+    /*
+    Returns:
+      An id that identifies the algorithm used to pack the faces in this subd.
+    */
+    const ON_UUID FacePackingId() const;
+
+    /*
+    Returns:
+      The value of ON_SubDHash::Create(ON_SubDHashType::Topology, *this) when the faces were packed.
+    */
+    const ON_SubDHash FacePackingTopologyHash() const;
+
+    /*
+    Description:
+      Sets the FacePackingTopologyHash() property to Empty.
+      Experts may need to do this when modifying a face packing.
+      After calling ClearFacePackingTopologyHashForExperts(), call
+      FacePackingIsValid(true) to make sure the modified packing was
+      actually valid and update the FacePackingTopologyHash().
+    */
+    void ClearFacePackingTopologyHashForExperts() const;
+
+    /*
+    Description:
+      When a custom algorithm that is not built into ON_SubD is used to pack the
+      faces, this function must be called with an id that uniquely identifies the
+      custom algorithm. The present SubD geometry will be used to set the value
+      of FacePackingTopologyHash().
+    Returns:
+      True if faces are properly packed and custom_packing_id is not nil and unique.
+      Otherwise the packing is reset to the default and false is returned.
+    */
+    bool SetFacePackingIdForExperts(
+      ON_UUID custom_packing_id
+    );
+
+    /*
+    Description:
+      Clear all face pack ids and related information.
+    */
+    void ClearFacePackIds();
+
 
 
 private:
@@ -6837,21 +7241,21 @@ public:
         side_segment_count <= ON_SubDMesh::MaximumSideSegmentCount
         side_segment_count must be a power of 2
 
-    level_of_detail - [in]
+    mesh_density_reduction - [in]
       0: quad count = maximum quad count = (side_count x side_count)
       1: quad count = 1/4 maximum quad count
       1: quad count = 1/16 maximum quad count
       ...
-      If 4^level_of_detail > maximum quad count, then a single quad is returned.
+      If 4^mesh_density_reduction > maximum quad count, then a single quad is returned.
   */
   static ON_SubDMeshFragmentGrid QuadGridFromSideSegmentCount(
     unsigned int side_segment_count,
-    unsigned int level_of_detail
+    unsigned int mesh_density_reduction
     );
 
   static ON_SubDMeshFragmentGrid QuadGridFromDisplayDensity(
     unsigned int display_density,
-    unsigned int level_of_detail
+    unsigned int mesh_density_reduction
     );
 
 private:
@@ -6928,11 +7332,19 @@ public:
     grid_point_index - [in]
       0 <= grid_point_index < GridPointCount().
     grid_parameters = [out]
-      normalize parameters for that point.
-      These could be used in the role of surface evaluation parameters
-      for texture mapping applications.
+      g2dex = Grid2dexFromPointIndex(grid_point_index).
+      grid_parameters[] = {g2dex.i/SideSegmentCount(), g2dex.j/SideSegmentCount()}
   Returns:
     True if grid_point_index was valid and grid_parameters was returned.
+  Remarks:
+    On a SubD quad face, 
+    face->Vertex(0), face->Vertex(1), face->Vertex(2), face->Vertex(3)
+    are the SubD quad corners in counter-clockwise order.
+    When a grid comes from a SubD quad face, the associated grid parameters are:
+    grid_parameters[] = (0,0) at face->Vertex(0),
+    grid_parameters[] = (1,0) at face->Vertex(1),
+    grid_parameters[] = (0,1) at face->Vertex(3),
+    grid_parameters[] = (1,1) at face->Vertex(2),
   */
   bool GetGridParameters(
     unsigned int grid_point_index,
@@ -6947,6 +7359,23 @@ public:
     Grid (i,j) for that grid_point_index.  
     0 <= i < SidePointCount()
     0 <= j < SidePointCount()
+  Remarks:
+    On a SubD quad face,
+    face->Vertex(0), face->Vertex(1), face->Vertex(2), face->Vertex(3)
+    are the SubD quad corners in counter-clockwise order.
+
+    Set 
+    n = grid->GridPointCount()-1 and 
+    k = grid->SideSegmentCount() = (grid->SidePointCount()-1).
+    Note that (k+1)*(k+1) = (n+1) = GridPointCount().
+
+    When a grid comes from a SubD quad face, the associated grid point indices are
+
+    vertex, grid point index, grid point 2dex
+    face->Vertex(0), 0, (0,0)
+    face->Vertex(1), k, (k,0)
+    face->Vertex(2), n-k, (k,k)
+    face->Vertex(3), n, (0,k)
   */
   const ON_2udex Grid2dexFromPointIndex(
     unsigned int grid_point_index
@@ -6960,6 +7389,23 @@ public:
       0 <= j < SidePointCount()
   Returns:
     0 <= grid_point_index < GridPointCount().
+  Remarks:
+    On a SubD quad face,
+    face->Vertex(0), face->Vertex(1), face->Vertex(2), face->Vertex(3)
+    are the SubD quad corners in counter-clockwise order.
+
+    Set
+    n = grid->GridPointCount()-1 and
+    k = grid->SideSegmentCount() = (grid->SidePointCount()-1).
+    Note that (k+1)*(k+1) = (n+1) = GridPointCount().
+
+    When a grid comes from a SubD quad face, the associated grid point indices are
+
+    vertex, grid point index, grid point 2dex
+    face->Vertex(0), 0, (0,0)
+    face->Vertex(1), k, (k,0)
+    face->Vertex(2), n-k, (k,k)
+    face->Vertex(3), n, (0,k)
   */
   unsigned int PointIndexFromGrid2dex(
     unsigned int i,
@@ -6973,7 +7419,32 @@ public:
   */
   unsigned int DisplayDensity() const;
 
+  ON_DEPRECATED_MSG("Identical to DisplayDensityReduction(). Use DisplayDensityReduction() instead because its a better name.")
   unsigned int LevelOfDetail() const;
+
+  /*
+  Description
+    Each grid set has grids of quads that index the identical set of points (normals, texture coordinates, ...).
+    The grid in the set with the maximum number of quads has DisplayDensityReduction() = 0.
+    Additional grids in the set reduce the number of quads by a factor of 4.
+    The intedger on the left is the DisplayDensityReduction value. The value of the right
+    is the number of quads where M = maximum quad count for that grid set. 
+    All nonzero values of M are powers of 4 (4^n). The relationship between 
+    P = number of points in the set and M (the maximum number of quads for the point set)
+    is P = (M/2+1)*(M/2+1).
+    
+    DisplayDensityReduction(): number of quads
+    0: M
+    1: M/4
+    2: M/16
+    3: M/64
+    4: M/256
+    ...
+
+  Returns:
+    The display density reduction from the maximum display density for this grid set.
+  */
+  unsigned int DisplayDensityReduction() const;
 
 private:
   unsigned char m_reserved;
@@ -6981,13 +7452,24 @@ private:
 public:
   unsigned char m_reserved1 = 0;
   unsigned char m_side_segment_count; // = 2^n for non-empty grids (0 <= n <= 8)
-  unsigned short m_F_count;   // = m_side_segment_count*m_side_segment_count
-  unsigned short m_F_level_of_detail; // 0 = highest, > 0 = reduced
+  
+  // m_F_count = number of quads
+  //           = m_side_segment_count*m_side_segment_count
+  // (0,1,4,16,256,1024,4096) Afer 0, each permitted value is 4x previous value
+  unsigned short m_F_count;
+
+  // m_F_level_of_detail is poorly named. It should be named m_F_mesh_density_reduction.
+  // 0 = no reduction (maximum level of detail)
+  // 1 = number of quads reduced by 1/4
+  // 2 = number of quads reduced by 1/16
+  // ...
+  unsigned short m_F_level_of_detail;
+
   unsigned short m_F_stride;
   const unsigned int* m_F;
   const unsigned int* m_S; // [4*m_side_segment_count + 1] indices that form the polyline boundary.
-  const ON_SubDMeshFragmentGrid* m_prev_level_of_detail; // nullptr or the previous level with more facets.
-  const ON_SubDMeshFragmentGrid* m_next_level_of_detail; // nullptr or the next level with fewer facets.
+  const ON_SubDMeshFragmentGrid* m_prev_level_of_detail; // nullptr or the previous level with 4 times the number of quads.
+  const ON_SubDMeshFragmentGrid* m_next_level_of_detail; // nullptr or the next level with 1/4 times the number of quads.
 };
 
 class ON_CLASS ON_SubDMeshFragment
@@ -8503,10 +8985,10 @@ private:
 //
 
 /// <summary>
-/// ON_SubDMesh is used to store a traditional quad mesh of either
-/// a SubgD surface or SubD control net. It is typically used for 
-/// rendering and user interface selection cacluations.
-/// It is a list of ON_SubDMeshFragment classes.
+/// ON_SubDMesh is used to store a high density traditional quad mesh
+/// of a SubD surface or a mesh of a SubD control net. 
+/// In general, is is better to use an ON_SubDMeshFragmentIterator(subd)
+/// that iterates the ON_MeshFragments cached on the ON_SubD. 
 /// </summary>
 class ON_CLASS ON_SubDMesh
 {
@@ -8614,8 +9096,17 @@ public:
     const ON_Xform& xform
     );
 
+  ON_DEPRECATED_MSG("AbsoluteSubDDisplayDensity")
   unsigned int DisplayDensity() const;
+
+  /*
+  Returns:
+    The absolute subd display density used to create this display mesh.
+  */
+  unsigned int AbsoluteSubDDisplayDensity() const;
+  
   ON_SubDDisplayParameters DisplayParameters() const;
+
   unsigned int FragmentCount() const;
   const ON_SubDMeshFragment* FirstFragment() const; // linked list of mesh fragments
 
@@ -12808,7 +13299,6 @@ public:
   */
   unsigned int MaximumMeshDensity() const;
 
-
   /*
   Returns:
     Minimum mesh density that can be extracted from these fragments.
@@ -12817,6 +13307,16 @@ public:
     1 = there are half sixed fragments because the SubD has n-gons with n != 4.
   */
   unsigned int MinimumMeshDensity() const;
+
+  enum : unsigned int
+  {
+    /// <summary>
+    /// Rhino uses this value in MeshDensityFromMaxMeshQuadCount() to se the default level of detail.
+    /// The enum will always exist but the value can change without breaking the SDK. 
+    /// You code must assume this value will change with each service release of Rhino.
+    /// </summary>
+    DefaultMaximumMeshQuadCount = 262144
+  };
 
   /*
   Parameters:
@@ -12923,6 +13423,11 @@ private:
   // used to override the appearance of SubD().SubDApperance().
   ON_SubDComponentLocation m_subd_appearance_override = ON_SubDComponentLocation::Unset;
 
+private:
+  // Rendering density = MaximumMeshDensity() - m_density_reduction.
+  unsigned char m_reserved_density_reduction = 0; // 0 = none
+
+private:
   mutable unsigned int m_maximum_mesh_density = 0; // See MaximumMeshDensity() comment
 
   // full sized fragment count (for quads)

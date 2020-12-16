@@ -29,6 +29,28 @@ int ON_IsValidUnicodeCodePoint(ON__UINT32 u)
   return (u < 0xD800 || (u >= 0xE000 && u <= 0x10FFFF));
 }
 
+int ON_IsUnicodeSpaceCodePoint(
+  ON__UINT32 u
+)
+{
+  // Additional code points may be added in the future.
+  // The goal is to detect code points that typically separate words 
+  // and which should not be at the beginning or end of a word.
+  return
+    ON_UnicodeCodePoint::ON_Space == u
+    || ON_UnicodeCodePoint::ON_NoBreakSpace == u
+    || ON_UnicodeCodePoint::ON_NarrowNoBreakSpace == u
+    || ON_UnicodeCodePoint::ON_ZeroWidthSpace == u
+    ;
+}
+
+int ON_IsUnicodeC1ControlCodePoint(
+  ON__UINT32 u
+)
+{
+  return (u >= 0x0080 && u <= 0x009F);
+}
+
 int ON_IsValidUTF32Value(
   ON__UINT32 c
   )

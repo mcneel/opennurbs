@@ -225,6 +225,31 @@ int ON_IsValidUnicodeCodePoint(
   );
 
 /*
+Returns:
+  True if u is one of ON_UnicodeCodePoint::ON_Space, ON_UnicodeCodePoint::ON_NoBreakSpace,
+  ON_UnicodeCodePoint::ON_NarrowNoBreakSpace, or ON_UnicodeCodePoint::ON_ZeroWidthSpace.
+Remarks:
+  Additional space code points may be added in the future. The goal is to
+  detect code points that separate words.
+*/
+ON_DECL
+int ON_IsUnicodeSpaceCodePoint(
+  ON__UINT32 u
+);
+
+/*
+Returns:
+  True if u >= 0x80 and y <= 0x9F.
+Remarks:
+  Additional space code points may be added in the future. The goal is to
+  detect code points that separate words.
+*/
+ON_DECL
+int ON_IsUnicodeC1ControlCodePoint(
+  ON__UINT32 u
+);
+
+/*
 Description:
   Test a value to determine if it is a valid unicode code point value.
 Parameters:

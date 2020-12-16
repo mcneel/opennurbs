@@ -2175,7 +2175,7 @@ bool ON_DimStyle::CompareFields(const ON_DimStyle& style) const
     m_signed_ordinate == style.m_signed_ordinate &&
 
     m_scale_value.LeftToRightScale() == style.m_scale_value.LeftToRightScale() &&
-    m_unitsystem == style.m_unitsystem &&
+    m_dimstyle_unitsystem == style.m_dimstyle_unitsystem &&
     m_text_orientation == style.m_text_orientation &&
     m_leader_text_orientation == style.m_leader_text_orientation &&
     m_dim_text_orientation == style.m_dim_text_orientation &&
@@ -2478,7 +2478,7 @@ bool ON_DimStyle::Write(
 
     if (!m_scale_value.Write(file)) break;
 
-    u = static_cast<unsigned int>(m_unitsystem);
+    u = static_cast<unsigned int>(this->UnitSystem());
     if (!file.WriteInt(u)) break;
 
     // END chunk version 1.1 information
@@ -2966,9 +2966,11 @@ bool ON_DimStyle::Read(
 
     if (!m_scale_value.Read(file)) break;
 
-    u = static_cast<unsigned int>(m_unitsystem);
+    u = static_cast<unsigned int>(this->UnitSystem());
     if (!file.ReadInt(&u)) break;
-    m_unitsystem = ON::LengthUnitSystemFromUnsigned(u);
+    m_dimstyle_unitsystem = ON::LengthUnitSystemFromUnsigned(u);
+    if (ON::LengthUnitSystem::Unset == m_dimstyle_unitsystem || ON::LengthUnitSystem::CustomUnits == m_dimstyle_unitsystem)
+      m_dimstyle_unitsystem = ON::LengthUnitSystem::None;
     
     // END chunk version 1.1 information
     if (minor_version <= 1)
@@ -3627,7 +3629,7 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_leader_text_horizontal_alignment));
     sha1.AccumulateDouble(m_scale_value.LeftToRightScale());
 
-    sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_unitsystem));
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(this->UnitSystem()));
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_text_orientation));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_leader_text_orientation));
@@ -4555,24 +4557,66 @@ void ON_DimStyle::SetSignedOrdinate(bool allowsigned)
 
 ON::LengthUnitSystem ON_DimStyle::UnitSystem() const
 {
-  return m_unitsystem;
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
+
+  // It is critical that this function never return Unset or CustomUnits.
+  // returning None insures unknown scal values are 1 instead of ON_DBL_QNAN
+  if (ON::LengthUnitSystem::Unset == m_dimstyle_unitsystem || ON::LengthUnitSystem::CustomUnits == m_dimstyle_unitsystem)
+    return ON::LengthUnitSystem::None;
+
+  return m_dimstyle_unitsystem;
 }
 
 void ON_DimStyle::SetUnitSystem(ON::LengthUnitSystem us)
 {
-  if (ON::LengthUnitSystem::CustomUnits == us)
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
+  if (ON::LengthUnitSystem::CustomUnits == us || ON::LengthUnitSystem::Unset == us)
   {
-    ON_ERROR("Annotation styles cannot have custom length units.");
+    ON_ERROR("Annotation styles cannot have unset or custom length units.");
+    us = ON::LengthUnitSystem::Millimeters; // Using None insures scale values are 1 instead of ON_DBL_QNAN
   }
-  else
+
+  if (m_dimstyle_unitsystem != us)
   {
-    if (m_unitsystem != us)
-    {
-      m_unitsystem = us;
-      Internal_ContentChange();
-    }
-    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::UnitSystem);
+    m_dimstyle_unitsystem = us;
+    Internal_ContentChange();
   }
+
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::UnitSystem);
 }
 
 void ON_DimStyle::SetUnitSystemFromContext(
@@ -4581,6 +4625,26 @@ void ON_DimStyle::SetUnitSystemFromContext(
   ON::LengthUnitSystem destination_unit_system
 )
 {
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
+
+
   ON::LengthUnitSystem dim_style_units = ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(UnitSystem()));
 
   switch (dim_style_units)
@@ -4608,7 +4672,7 @@ void ON_DimStyle::SetUnitSystemFromContext(
           const ON_DimStyle& from_name = ON_DimStyle::SystemDimstyleFromName(name_hash);
           if (name_hash == from_name.NameHash() && name_hash != ON_DimStyle::Default.NameHash())
           {
-            dim_style_units = from_name.m_unitsystem;
+            dim_style_units = from_name.UnitSystem();
             continue;
           }
         }
@@ -4619,7 +4683,7 @@ void ON_DimStyle::SetUnitSystemFromContext(
           const ON_DimStyle& from_id = ON_DimStyle::SystemDimstyleFromId(id);
           if (id == from_id.Id() && id != ON_DimStyle::Default.Id() )
           {
-            dim_style_units = from_id.m_unitsystem;
+            dim_style_units = from_id.UnitSystem();
             continue;
           }
         }
@@ -4724,7 +4788,7 @@ static bool Internal_IsUnsetDimstyleUnitSystem(
 
 bool ON_DimStyle::UnitSystemIsSet() const
 {
-  return false == Internal_IsUnsetDimstyleUnitSystem(m_unitsystem);
+  return false == Internal_IsUnsetDimstyleUnitSystem(this->UnitSystem());
 }
 
 void ON_DimStyle::SetDimScale(
@@ -5671,9 +5735,17 @@ double ON_DimStyle::BaselineSpacing() const
 }
 
 //-------------------
+
+static bool Internal_IsValidDimStyleScale(double scale)
+{
+  return ON_IsValidPositiveNumber(scale)  && fabs(scale - 1.0) > ON_ZERO_TOLERANCE;
+}
+
 void ON_DimStyle::Scale(double scale)
 {
-  if (ON_IsValid(scale) && scale > ON_SQRT_EPSILON && 1.0 != scale)
+  // If you modify this code, be sure to update ON_Annotation::ScaleOverrideDimstyle().
+
+  if (Internal_IsValidDimStyleScale(scale))
   {
     m_extextension *= scale;
     m_extoffset *= scale;
@@ -5689,6 +5761,99 @@ void ON_DimStyle::Scale(double scale)
     SetMaskBorder(MaskBorder() * scale);
     Internal_ContentChange();
   }
+}
+
+
+
+double Internal_ScaleOverrideLength(
+  double parent_dimstyle_length,
+  double current_dimstyle_length,
+  double scale
+)
+{
+  // returns scaled dimstyle length
+  const double x = current_dimstyle_length * scale;
+  const double rel_tol = 1.0e-6 * fabs(parent_dimstyle_length);
+  const double abs_tol = ON_ZERO_TOLERANCE;
+  const double delta = fabs(x - parent_dimstyle_length);
+  return (delta <= rel_tol || delta <= abs_tol) ? parent_dimstyle_length : x;
+}
+
+void ON_Annotation::ScaleOverrideDimstyle(
+  const ON_DimStyle* parent_dimstyle,
+  double scale
+)
+{
+  // Dale Lear Setp 2020 https://mcneel.myjetbrains.com/youtrack/issue/RH-60536
+  // I added this function to scale the appearance of annotation
+  // in layout/page views. Using DimScale() does not work in layout/page
+  // views because it only applies to annotation in model space views.
+
+  if (Internal_IsValidDimStyleScale(scale))
+  {
+    // The list of properties here must exactly match what is in void ON_DimStyle::Scale(double scale).
+    const ON_DimStyle d0 = ON_DimStyle::DimStyleOrDefault(parent_dimstyle);
+
+    // x0 = current value (may already be an override and different from the d0 value)
+    // x1 = scaled value (may end up being the d0 value)
+    double x0, x1;
+
+    // m_extextension *= scale;
+    x0 = this->ExtensionLineExtension(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.ExtExtension(), x0, scale);
+    this->SetExtensionLineExtension(parent_dimstyle, x1);
+
+    // m_extoffset *= scale
+    x0 = this->ExtensionLineOffset(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.ExtOffset(), x0, scale);
+    this->SetExtensionLineOffset(parent_dimstyle, x1);
+
+    // m_arrowsize *= scale;
+    x0 = this->ArrowSize(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.ArrowSize(), x0, scale);
+    this->SetArrowSize(parent_dimstyle, x1);
+
+    // m_centermark *= scale;
+    x0 = this->CenterMarkSize(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.CenterMark(), x0, scale);
+    this->SetCenterMarkSize(parent_dimstyle, x1);
+
+    // m_textgap *= scale;
+    x0 = this->TextGap(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.TextGap(), x0, scale);
+    this->SetTextGap(parent_dimstyle, x1);
+    
+    // m_textheight *= scale
+    x0 = this->TextHeight(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.TextHeight(), x0, scale);
+    this->SetTextHeight(parent_dimstyle, x1);
+    
+    // m_dimextension *= scale;
+    x0 = this->DimExtension(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.DimExtension(), x0, scale);
+    this->SetDimExtension(parent_dimstyle, x1);
+    
+    // m_baseline_spacing *= scale;
+    x0 = this->BaselineSpacing(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.BaselineSpacing(), x0, scale);
+    this->SetBaselineSpacing(parent_dimstyle, x1);
+    
+    // m_fixed_extension_len *= scale;
+    x0 = this->FixedExtensionLength(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.FixedExtensionLen(), x0, scale);
+    this->SetFixedExtensionLength(parent_dimstyle, x1);
+    
+    // m_leaderarrowsize *= scale;
+    x0 = this->LeaderArrowSize(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.LeaderArrowSize(), x0, scale);
+    this->SetLeaderArrowSize(parent_dimstyle, x1);
+    
+    // m_leader_landing_length *= scale;
+    x0 = this->LeaderLandingLength(parent_dimstyle);
+    x1 = Internal_ScaleOverrideLength(d0.LeaderLandingLength(), x0, scale);
+    this->SetLeaderLandingLength(parent_dimstyle, x1);
+  }
+
 }
 
 void ON_DimStyle::SetToleranceFormat(ON_DimStyle::tolerance_format format)

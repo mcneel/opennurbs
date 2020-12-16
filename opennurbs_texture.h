@@ -335,9 +335,10 @@ public:
     pbr_opacity_roughness_texture     = 24U,
     pbr_emission_texture              = 25U,
     pbr_ambient_occlusion_texture     = 26U,
-    //pbr_smudge_texture                = 27U,
+    //pbr_smudge_texture                 = 27U,
     pbr_displacement_texture          = 28U,
-	pbr_clearcoat_bump_texture        = 29U,
+    pbr_clearcoat_bump_texture        = 29U,
+    pbr_alpha_texture                 = 30U,
 
     // emap_texture is OBSOLETE - set m_mapping_channel_id = ON_MappingChannel::emap_mapping
     emap_texture = 86U // spherical environment mapping.

@@ -17,6 +17,17 @@
 #if !defined(ON_MATH_INC_)
 #define ON_MATH_INC_
 
+/*
+Returns:
+  True (1) if nan compares and arithmetic agree with IEEE-754.
+  (nan != nan) is true.
+  (nan op x) and (x op nan) is false for op ==, <, >, <=, and >=.
+  (nan op x) and (x op nan) is nan for op == +, -, *, and /.
+  False (0) otherwise.
+*/
+ON_DECL
+bool ON_PassesNanTest();
+
 class ON_3dVector;
 class ON_Interval;
 class ON_Line;
@@ -334,10 +345,24 @@ private:
 Description:
   Test a double to make sure it is a valid number.
 Returns:
-  True if x != ON_UNSET_VALUE and _finite(x) is true.
+  (x > ON_UNSET_VALUE && x < ON_UNSET_POSITIVE_VALUE)
 */
 ON_DECL
 bool ON_IsValid( double x );
+
+/*
+Returns:
+  (x > 0.0 && x < ON_UNSET_POSITIVE_VALUE);
+*/
+ON_DECL
+bool ON_IsValidPositiveNumber(double x);
+
+/*
+Returns:
+  (x > ON_UNSET_VALUE && x < 0.0));
+*/
+ON_DECL
+bool ON_IsValidNegativeNumber(double x);
 
 /*
 Returns:

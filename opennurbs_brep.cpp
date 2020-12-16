@@ -6726,6 +6726,24 @@ ON_Brep::IsSolid() const
   return (bIsManifold && bIsOriented && !bHasBoundary) ? true : false;
 }
 
+void ON_Brep::SetSolidOrientationForExperts(int solid_orientation)
+{
+  switch (solid_orientation)
+  {
+  case 0: // not a solid
+    m_is_solid = 3;
+    break;
+  case 1: // solid with normals pointing out
+    m_is_solid = 1;
+    break;
+  case -1: // solid with normals pointing in
+    m_is_solid = 2;
+    break;
+  default:
+    break;
+  }
+}
+
 int ON_Brep::SolidOrientation() const
 {
   // m_is_solid values:

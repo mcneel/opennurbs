@@ -204,6 +204,20 @@ public:
     const wchar_t* candidate_component_name 
     );
 
+  /*
+  Parameters:
+    candidate_component_name - [in]
+      A null terminated string that is UTF-16 or UTF-32 encoded.
+      When sizeof(wchar_t) >= 4, both UTF-16 surrogate pairs
+      and UTF-32 code point values > 0xFFFF are valid and can
+      appear in the same string.
+  Returns:
+    True if candidate_component_name is a valid component name.
+  Remarks:
+    Component names cannot begin with a (, ), [, ], {, }, or space.
+    These brackets can be the second or later code points.
+    A space can be an interior code point.
+  */
   static bool IsValidComponentName(
     const wchar_t* candidate_component_name 
     );
@@ -211,6 +225,27 @@ public:
   static bool IsValidComponentName(
     const ON_wString& candidate_component_name
     );
+
+  /*
+  Parameters:
+    length - [in]
+      > 0.
+      The expected number of elements before the null terminator in candidate_component_name[].
+    candidate_component_name - [in]
+      A null terminated string that is UTF-16 or UTF-32 encoded.
+      When sizeof(wchar_t) >= 4, both UTF-16 surrogate pairs
+      and UTF-32 code point values > 0xFFFF are valid and can
+      appear in the same string.
+      The capacity of candidate_component_name[] must be >= length+1.
+      This validity test fails if candidate_component_name[length] is not zero
+      or if a null terminator appears before candidate_component_name[length].
+  Returns:
+    True if candidate_component_name is a valid component name.
+  Remarks:
+    Component names cannot begin with a (, ), [, ], {, }, or space.
+    These brackets can be the second or later code points.
+    A space can be an interior code point.
+  */
 
   static bool IsValidComponentName(
     size_t length,
@@ -1392,10 +1427,10 @@ public:
       ON_DimStyle::Default
       ON_DimStyle::DefaultInchDecimal
       ON_DimStyle::DefaultInchFractional
-      ON_DimStyle::DefaultFootInchArchitecture
+      ON_DimStyle::DefaultFootInchArchitectural
       ON_DimStyle::DefaultMillimeterSmall
       ON_DimStyle::DefaultMillimeterLarge
-      ON_DimStyle::DefaultMillimeterArchitecture
+      ON_DimStyle::DefaultMillimeterArchitectural
   */
   bool IsSystemComponent() const;
 

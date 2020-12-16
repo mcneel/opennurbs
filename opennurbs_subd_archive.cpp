@@ -1614,7 +1614,7 @@ bool ON_SubDimple::Write(
 {
   const_cast< ON_SubDHeap* >(&m_heap)->ClearArchiveId();
 
-  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 3;
+  const int minor_version = (archive.Archive3dmVersion() < 70) ? 0 : 4;
   if ( !archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version) )
     return ON_SUBD_RETURN_ERROR(false);
   bool rc = false;
@@ -1672,8 +1672,39 @@ bool ON_SubDimple::Write(
     if (false == m_symmetry.Write(archive))
       break;
 
-    // runtime content number used to compare with the on on m_symmetry
-    if (false == archive.WriteBigInt(GeometryContentSerialNumber()))
+    // minor version = 3 addtions
+    // runtime content number used to compare with the one from the saved on m_symmetry
+    // Dale Lear Sep 2020 - Turns out saving the runtime GeometryContentSerialNumber()
+    // was a bad idea. Doing it the way I came up with today while adding
+    // m_face_packing_topology_hash is much better because all decisions get
+    // made at save time when we have the most reliable infomration. 
+    // I've added bSyncSymmetricContentSerialNumber below, but saving gsn has to stay
+    // so pre-today Rhino can read files saved from post today Rhino.
+    const ON__UINT64 gsn = GeometryContentSerialNumber();
+    if (false == archive.WriteBigInt(gsn))
+      break;
+
+    // minor version = 4 additions
+    // bSyncSymmetricContentSerialNumber = true when any SubD symmetry constraints are up to date.
+    const bool bSyncSymmetricContentSerialNumber
+      = m_symmetry.IsSet()
+      && gsn > 0 && gsn == m_symmetry.SymmetricObjectContentSerialNumber();
+
+    if (false == archive.WriteBool(bSyncSymmetricContentSerialNumber))
+      break;
+
+    if (false == archive.WriteUuid(m_face_packing_id))
+      break;
+
+    const bool bSyncFacePackingHashSerialNumbers
+      = m_face_packing_topology_hash.IsNotEmpty()
+      && this->RuntimeSerialNumber == m_face_packing_topology_hash.SubDRuntimeSerialNumber()
+      && gsn > 0 && gsn == m_face_packing_topology_hash.SubDGeometryContentSerialNumber()
+      ;
+    if (false == archive.WriteBool(bSyncFacePackingHashSerialNumbers))
+      break;
+
+    if (false == m_face_packing_topology_hash.Write(archive))
       break;
 
     rc = true;
@@ -1703,7 +1734,9 @@ bool ON_SubDimple::Read(
   unsigned int obsolete_archive_max_vertex_id = 0;
   unsigned int obsolete_archive_max_edge_id = 0;
   unsigned int obsolete_archive_max_face_id = 0;
-  ON__UINT64 saved_content_serial_number = 0;
+
+  bool bSyncSymmetricContentSerialNumber = false;
+  bool bSyncFacePackingHashSerialNumbers = false;
 
   for (;;)
   {
@@ -1760,8 +1793,30 @@ bool ON_SubDimple::Read(
 
         if (minor_version >= 3)
         {
-          if (false == archive.ReadBigInt(&saved_content_serial_number))
+          ON__UINT64 gsn_at_save_time = 0;
+          if (false == archive.ReadBigInt(&gsn_at_save_time))
             break;
+          if (3 == minor_version)
+          {
+            bSyncSymmetricContentSerialNumber
+              = gsn_at_save_time > 0
+              && m_symmetry.IsSet()
+              && gsn_at_save_time == m_symmetry.SymmetricObjectContentSerialNumber();
+          }
+
+          if (minor_version >= 4)
+          {
+            // minor version = 4 additions
+            if (false == archive.ReadBool(&bSyncSymmetricContentSerialNumber))
+              break;
+
+            if (false == archive.ReadUuid(m_face_packing_id))
+              break;
+            if (false == archive.ReadBool(&bSyncFacePackingHashSerialNumbers))
+              break;
+            if (false == m_face_packing_topology_hash.Read(archive))
+              break;
+          }
         }
       }
     }
@@ -1778,12 +1833,6 @@ bool ON_SubDimple::Read(
     ON_SUBD_ERROR("m_heap.IsValid() is false.");
     m_heap.ResetIds(); // breaks component id references, but this is a serious error.
   }
-
-  const bool bSetSymmetricObjectContentSerialNumber
-    = saved_content_serial_number > 0
-    && m_symmetry.IsSet()
-    && saved_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
-    ;
 
   if (archive.ArchiveOpenNURBSVersion() < 2382394661)
   {
@@ -1832,10 +1881,23 @@ bool ON_SubDimple::Read(
 
   ChangeGeometryContentSerialNumber(false);
 
-  if ( bSetSymmetricObjectContentSerialNumber )
+  if (bSyncSymmetricContentSerialNumber)
     m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
   else
     m_symmetry.ClearSymmetricObjectContentSerialNumber();
+
+  if (bSyncFacePackingHashSerialNumbers)
+  {
+    // When the file was saved, the values of subd.GeometryContentSerialNumber() and
+    // and m_face_packing_topology_hash.SubDGeometryContentSerialNumber() were the same.
+    m_face_packing_topology_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
+    m_face_packing_topology_hash.m_subd_geometry_content_serial_number = this->GeometryContentSerialNumber();
+  }
+  else
+  {
+    m_face_packing_topology_hash.m_subd_runtime_serial_number = 0;
+    m_face_packing_topology_hash.m_subd_geometry_content_serial_number = 0;
+  }
 
   if (rc)
     return true;
