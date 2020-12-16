@@ -218,8 +218,24 @@ int ON_NurbsSurface::KnotCount( int dir ) const
 
 double* ON_NurbsSurface::CV( int i, int j ) const
 {
-  return (m_cv) ? (m_cv + i*m_cv_stride[0] + j*m_cv_stride[1]) : nullptr;
+  const int offset = (i * m_cv_stride[0] + j * m_cv_stride[1]);
+  return (m_cv && offset >= 0) ? (m_cv + offset) : nullptr;
 }
+
+double* ON_NurbsSurface::CV(
+  ON_2dex cvdex
+) const
+{
+  return (cvdex.i >= 0 && cvdex.j >= 0) ? CV(cvdex.i, cvdex.j) : nullptr;
+}
+
+double* ON_NurbsSurface::CV(
+  ON_2udex cvdex
+) const
+{
+  return (cvdex.i < 0x7FFFFFFFU && cvdex.j < 0x7FFFFFFFU) ? CV(cvdex.i, cvdex.j) : nullptr;
+}
+
 
 const ON_4dPoint ON_NurbsSurface::ControlPoint(
   int i,

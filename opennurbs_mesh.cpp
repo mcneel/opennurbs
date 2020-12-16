@@ -3077,23 +3077,31 @@ void ON_Mesh::SetSolidOrientation(int solid_orientation)
 
 
 static 
-int ON_MeshIsManifold_CompareV( const void* a, const void* b )
+int ON_MeshIsManifold_Compare3floats( const void* a, const void* b )
 {
-  return memcmp(a,b,sizeof(ON_3fPoint));
-  /*
-  float d;
+  // NOPE // memcmp thinks -0.0f and 0.0f are different numbers // return memcmp(a,b,sizeof(ON_3fPoint));
+
   const float* fa = (const float*)a;
   const float* fb = (const float*)b;
-  if ( 0.0f == (d = (*fa++ - *fb++)) )
+  for (const float* fa3 = fa + 3; fa < fa3; ++fa, ++fb)
   {
-    if ( 0.0f == (d = (*fa++ - *fb++)) )
-    {
-      if ( 0.0f == (d = (*fa++ - *fb++)) )
-        return 0;
-    }
+    const float x = *fa;
+    const float y = *fb;
+    if (x < y)
+      return -1;
+    if (x > y)
+      return 1;
+    if (x == y)
+      continue; // neither x nor y is a nan
+
+    // at least one of x and y is a nan
+    // use conventaion (not a nan) < (nan) because this code must use a well ordered compare for all values.
+    if (x == x)
+      return -1; // x is not a nan, y is a nan
+    if (y == y)
+      return 1; // x is a nan, y is not a nan
   }
-  return ( d < 0.0f ) ? -1 : 1;
-  */
+  return 0;
 }
 
 static 
@@ -3417,7 +3425,7 @@ bool ON_Mesh::IsManifold(
     if ( bTopologicalTest )
     {
       // coincident vertices are assigned the same vertex id
-      ON_Sort(ON::sort_algorithm::quick_sort,vid,m_V.Array(),vcount,sizeof(m_V[0]),ON_MeshIsManifold_CompareV);
+      ON_Sort(ON::sort_algorithm::quick_sort,vid,m_V.Array(),vcount,sizeof(m_V[0]), ON_MeshIsManifold_Compare3floats);
       ecount = 0;
       v = m_V.Array();
       ecount = 0;
@@ -3428,7 +3436,7 @@ bool ON_Mesh::IsManifold(
         vid[i] = ecount;
         for ( j = i+1; j < vcount; j++ )
         {
-          if ( ON_MeshIsManifold_CompareV(&v,v+vid[j]) )
+          if (ON_MeshIsManifold_Compare3floats(v0,v+vid[j]) )
           {
             ecount++;
             break;
@@ -6168,7 +6176,7 @@ void ON_MeshParameters::SetFaceType(
 
 
 ON_MeshParameters::ON_MeshParameters(
-  double density,
+  double normalized_mesh_density,
   double min_edge_length
   )
 {
@@ -6179,17 +6187,17 @@ ON_MeshParameters::ON_MeshParameters(
   SetRefineAngleRadians(0.0);
   SetMinimumEdgeLength(min_edge_length);
 
-  if ( ON_IsValid(density) )
+  if ( ON_IsValid(normalized_mesh_density) )
   {
-    if ( density < 0.0 )
-      density = 0.0;
-    else if ( density > 1.0 )
-      density = 1.0;
-    SetRelativeTolerance(density);
-    SetRefine((density < 0.65));
-    SetSimplePlanes((0.0 == density));
+    if (normalized_mesh_density < 0.0 )
+      normalized_mesh_density = 0.0;
+    else if (normalized_mesh_density > 1.0 )
+      normalized_mesh_density = 1.0;
+    SetRelativeTolerance(normalized_mesh_density);
+    SetRefine((normalized_mesh_density < 0.65));
+    SetSimplePlanes((0.0 == normalized_mesh_density));
 
-    ON_SubDDisplayParameters subd_parameters = ON_SubDDisplayParameters::CreateFromMeshDensity(density);
+    ON_SubDDisplayParameters subd_parameters = ON_SubDDisplayParameters::CreateFromMeshDensity(normalized_mesh_density);
     SetSubDDisplayParameters(subd_parameters);
   }
 }
@@ -6241,22 +6249,22 @@ const ON_wString ON_MeshParameters::Description() const
   return description;
 }
 
-const ON_MeshParameters ON_MeshParameters::CreateFromMeshDensity(double slider_value)
+const ON_MeshParameters ON_MeshParameters::CreateFromMeshDensity(double normalized_mesh_density)
 {
-  return ON_MeshParameters(ON_MeshParameters::ClampMeshDensityValue(slider_value));
+  return ON_MeshParameters(ON_MeshParameters::ClampMeshDensityValue(normalized_mesh_density));
 }
 
-double ON_MeshParameters::MeshDensityAsPercentage(double slider_value)
+double ON_MeshParameters::MeshDensityAsPercentage(double normalized_mesh_density)
 {
-  if (slider_value >= 0.0 && slider_value <= 1.0)
+  if (normalized_mesh_density >= 0.0 && normalized_mesh_density <= 1.0)
   {
     const double percent_fuzz_tol = 1.0e-4;
-    const double slider_percent = slider_value * 100.0; // percent = slider_value as a percentage.
+    const double slider_percent = normalized_mesh_density * 100.0; // percent = slider_value as a percentage.
     const double n = floor(slider_percent + 0.25);
     if (fabs(n - slider_percent) <= percent_fuzz_tol)
       return n; // slider_percent is within fuzz of being an integer - return the integer
 
-    const double p = 100.0*(floor(1024.0 * slider_value + 0.25) / 1024.0);
+    const double p = 100.0*(floor(1024.0 * normalized_mesh_density + 0.25) / 1024.0);
     if (fabs(p - slider_percent) <= percent_fuzz_tol)
       return p; // slider_percent is within fuzz of 100.0*(N/1024.0). Return 100.0*(N/1024.0).
 
@@ -6282,44 +6290,24 @@ double ON_MeshParameters::MeshDensity() const
       break;
     if (false == (this->m_refine_angle_radians == 0.0))
       break;
-    if (this->SubDDisplayParameters().DisplayDensity() != ON_SubDDisplayParameters::CreateFromMeshDensity(candidate_density).DisplayDensity())
+    const ON_SubDDisplayParameters subdp = this->SubDDisplayParameters();
+    if ( subdp.DisplayDensityIsAbsolute() )
+      break; // mesh dialog "slider" UI is always controls adaptive subd display density
+    if (subdp.DisplayDensity(ON_SubD::Empty) != ON_SubDDisplayParameters::CreateFromMeshDensity(candidate_density).DisplayDensity(ON_SubD::Empty))
       break;
 
     // Now build one with the candidate_density slider value
-    ON_MeshParameters candidate_mp = ON_MeshParameters::CreateFromMeshDensity(candidate_density);
+    const ON_MeshParameters candidate_mp = ON_MeshParameters::CreateFromMeshDensity(candidate_density);
 
-#define ON_COPY_MESH_PARAMETERS_MEMBER(M) candidate_mp.M = this->M
-    // ignore these paramters do not control the mesh density.
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_bCustomSettings);
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_bCustomSettingsEnabled);
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_bComputeCurvature);
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_bDoublePrecision);
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_bClosedObjectPostProcess);
-    ON_COPY_MESH_PARAMETERS_MEMBER(m_texture_range);
-    if (ON_nil_uuid == this->m_mesher_id)
-    {
-      // Pangolin parameters do not apply
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_mesher_id);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_bEvaluatorBasedTessellation);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_min_num_segments);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_angle_tol_in_degrees);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_max_dist_between_points);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_curve_tess_min_parametric_ratio);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_angle_tol_in_degrees);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_max_edge_length);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_min_edge_length);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_min_edge_length_ratio_uv);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_surface_tess_max_aspect_ratio);
-      ON_COPY_MESH_PARAMETERS_MEMBER(m_smoothing_passes);
-    }
-#undef ON_COPY_MESH_PARAMETERS_MEMBER
-
-    if (0 != ON_MeshParameters::Compare(candidate_mp, *this))
+    if (candidate_mp.RelativeTolerance() != candidate_density)
+      break;
+    if (candidate_mp.GeometrySettingsHash() != GeometrySettingsHash())
       break;
 
     // These mesh parameters will create the same mesh geometry as ON_MeshParameters::CreateFromMeshDensity().
     return candidate_density;
   }
+
   return ON_DBL_QNAN;
 }
 
@@ -6697,7 +6685,7 @@ bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
     int mft = m_face_type;
     if ( mft < 0 || mft > 2 ) 
     {
-      ON_ERROR("ON_MeshParameters::Read() - m_face_type out of bounds.");
+      ON_ERROR("ON_MeshParameters::Write() - m_face_type out of bounds.");
       mft = 0;
     }
     if (rc) rc = file.WriteInt(mft);
@@ -6719,10 +6707,92 @@ bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
     if (rc)
     {
       // added for chunk version 1.5 - June 19, 2020
-      SubDDisplayParameters().Write(file);
+      const ON_SubDDisplayParameters subdp = SubDDisplayParameters();
+      rc = subdp.Write(file);
     }
   }
   return rc;
+}
+
+enum ON_MeshParameters::Type ON_MeshParameters::GeometrySettingsType() const
+{
+  const ON_SHA1_Hash mp_hash = GeometrySettingsHash();
+
+  if ( mp_hash == ON_MeshParameters::DefaultMesh.GeometrySettingsHash())
+    return ON_MeshParameters::Type::Default;
+  if ( mp_hash == ON_MeshParameters::FastRenderMesh.GeometrySettingsHash())
+    return ON_MeshParameters::Type::FastRender;
+  if ( mp_hash == ON_MeshParameters::QualityRenderMesh.GeometrySettingsHash())
+    return ON_MeshParameters::Type::QualityRender;
+  if ( mp_hash == ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsHash())
+    return ON_MeshParameters::Type::DefaultAnalysis;
+
+  const double mesh_density = MeshDensity();
+  if (mesh_density == RelativeTolerance())
+    return ON_MeshParameters::Type::FromMeshDensity;
+
+  return ON_MeshParameters::Type::Custom;
+}
+
+static bool Internal_MeshParametersRead_UpdateSubDParameters(
+  const unsigned archive_opennurbs_version,
+  ON_MeshParameters& archive_mp
+)
+{
+  // Returns true if subd settings get updated.
+
+  if (ON_MeshParameters::Type::Custom != archive_mp.GeometrySettingsType())
+    return false; // a current built-in type - common and leave the as is.
+
+  /*
+  The adaptive SubD stuff appeared in early Nov 2020. The Dec 1 2020 date gives the changes
+  time to work through the build and disitrubution processes.
+  */
+  const unsigned before_adaptive_subd_display = ON_VersionNumberConstruct(7, 1, 2020, 12, 1, 0);
+  if (archive_opennurbs_version >= before_adaptive_subd_display)
+    return false;
+
+  // Adaptive SubD meshing was added Nov 11 and the way m_relative_tolerance set the subd density changed.
+  // Version check padded to Dec 1, 2020 to give time for this code to get committed and built into daily distribution. 
+  const ON_SHA1_Hash archive_mp_hash = archive_mp.GeometrySettingsHash();
+  const ON_SubDDisplayParameters archive_subdp = archive_mp.SubDDisplayParameters();
+
+  ON_MeshParameters mp[] = {
+    ON_MeshParameters::DefaultMesh,
+    ON_MeshParameters::FastRenderMesh,
+    ON_MeshParameters::QualityRenderMesh,
+    ON_MeshParameters::DefaultAnalysisMesh,
+    ON_MeshParameters::CreateFromMeshDensity(archive_mp.RelativeTolerance())
+  };
+  const ON_MeshParameters::Type mp_type[] =
+  {
+    ON_MeshParameters::Type::Default,
+    ON_MeshParameters::Type::FastRender,
+    ON_MeshParameters::Type::QualityRender,
+    ON_MeshParameters::Type::DefaultAnalysis,
+    ON_MeshParameters::Type::FromMeshDensity
+  };
+
+  const size_t mp_count = sizeof(mp) / sizeof(mp[0]);
+  for (size_t mp_dex = 0; mp_dex < mp_count; ++mp_dex)
+  {
+    // If the only geometry setting differnce bewteen a built-in type and archive_mp
+    // is the subd meshing parameters, update archive_mp to use the built-in's subd 
+    // meshing parameters.
+    const ON_SubDDisplayParameters mp_subdp = mp[mp_dex].SubDDisplayParameters();
+    mp[mp_dex].SetSubDDisplayParameters(archive_subdp);
+    if (archive_mp_hash == mp[mp_dex].GeometrySettingsHash())
+    {
+      // Update archive_mp to use new SubD defaults in mp_subdp.
+      // This prevents "this" from being treated as customized instead
+      // of one the the defaults and things will work as expected 
+      // going forward in time with this model.
+      archive_mp.SetSubDDisplayParameters(mp_subdp);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool ON_MeshParameters::Read( ON_BinaryArchive& file )
@@ -6796,30 +6866,37 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
               ON_SubDDisplayParameters subdp = ON_SubDDisplayParameters::Default;
               rc = subdp.Read(file);
               if (rc)
-                SetSubDDisplayParameters(subdp);
+              {
+                this->SetSubDDisplayParameters(subdp);
+                Internal_MeshParametersRead_UpdateSubDParameters(file.ArchiveOpenNURBSVersion(), *this);
+              }
             }
           }
         }
       }
     }
   }
+
   return rc;
 }
 
 bool ON_SubDDisplayParameters::Write(class ON_BinaryArchive& archive) const
 {
-  if (false == archive.BeginWrite3dmAnonymousChunk(1))
+  if (false == archive.BeginWrite3dmAnonymousChunk(2))
     return false;
   bool rc = false;
   for(;;)
   {
-    const unsigned int display_density = this->DisplayDensity();
+    const unsigned int display_density = this->m_display_density;
     if (false == archive.WriteInt(display_density))
       break;
 
     const ON_SubDComponentLocation loc = this->MeshLocation();
     const unsigned int loc_as_unsigned = static_cast<unsigned char>(loc);
     if (false == archive.WriteInt(loc_as_unsigned))
+      break;
+
+    if (false == archive.WriteBool(this->m_bDisplayDensityIsAbsolute))
       break;
 
     rc = true;
@@ -6842,16 +6919,25 @@ bool ON_SubDDisplayParameters::Read(class ON_BinaryArchive& archive)
     if (chunk_version <= 0)
       break;
 
-    unsigned int display_density = this->DisplayDensity();
+    unsigned int display_density = this->DisplayDensity(ON_SubD::Empty);
     if (false == archive.ReadInt(&display_density))
       break;
-    SetDisplayDensity(display_density);
+    SetAdaptiveDisplayDensity(display_density);
 
     unsigned int loc_as_unsigned = static_cast<unsigned char>(this->MeshLocation());
     if (false == archive.ReadInt(&loc_as_unsigned))
       break;
     const ON_SubDComponentLocation loc = ON_SubDComponentLocationFromUnsigned(loc_as_unsigned);
     SetMeshLocation(loc);
+
+    if (chunk_version >= 2)
+    {
+      bool bDisplayDensityIsAbsolute = false;
+      if (false == archive.ReadBool(&bDisplayDensityIsAbsolute))
+        break;
+      if (bDisplayDensityIsAbsolute)
+        this->SetAbsoluteDisplayDensity(display_density);
+    }
 
     rc = true;
     break;

@@ -722,6 +722,10 @@ public:
   virtual ON_4fColor Emission(void) const;
   virtual void SetEmission(ON_4fColor);
 
+  //Controls Alpha transparency - 1.0 is fully opaque, 0.0 is non-visible.  Use opacity for refraction - this overrides all other shading.
+  /*virtual*/ double Alpha(void) const;
+  /*virtual*/ void SetAlpha(double);
+
   //Texture access functions - exactly the same as ON_Material.  Provided for ease of use.
   virtual int FindTexture(const wchar_t* filename, ON_Texture::TYPE type, int i0 = -1) const;
   virtual int AddTexture(const ON_Texture& tx);
@@ -737,6 +741,14 @@ public:
 
   //Expert function to remove all PBR data from a material
   virtual void ToLegacy(void);
+
+  //These function just route through to ON_Material - PBR materials need to support the same functionality.
+  //
+  //If UseBaseColorTextureAlphaForObjectAlphaTransparencyTexture returns true, the alpha channel
+  //of the texture in m_textures with m_type=pbr_base_color is used in addition to any
+  //textures with m_type=pbr_alpha_texture.
+  bool UseBaseColorTextureAlphaForObjectAlphaTransparencyTexture() const;
+  void SetUseBaseColorTextureAlphaForObjectAlphaTransparencyTexture(bool);
 
 public:
     class ON_CLASS ParametersNames

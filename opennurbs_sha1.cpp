@@ -875,7 +875,7 @@ void ON_SHA1::AccumulateUnitSystem
   AccumulateLengthUnitSystem(length_unit_system);
   if (ON::LengthUnitSystem::CustomUnits == length_unit_system)
   {
-    AccumulateDouble(unit_system.MetersPerUnit());
+    AccumulateDouble(unit_system.MetersPerUnit(ON_DBL_QNAN));
     AccumulateString(unit_system.UnitSystemName());
   }
 }

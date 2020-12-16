@@ -545,4 +545,69 @@ private:
 	mutable ON_SHA1_Hash m_sha1_hash;
 };
 
+/*
+Description:
+  Test speeds of various hash algoritmhs.
+Parameters:
+  byte_count - [in]
+    Number of bytes to hash. This number is rounded up to the nearest multiple of 1024.
+  crc16 - [in/out]
+    If crc16 is not nullptr, then 16 bit CRC hashing is tested using function ON_CRC16().
+  crc32 - [in/out]
+    If crc32 is not nullptr, then 32 bit CRC hashing is tested using function ON_CRC32().
+  md5_hash - [in/out]
+    If md5_hash is not nullptr, then MD5 hashing is tested using class ON_MD5.
+  sha1_hash - [in/out]
+    If sha1_hash is not nullptr, then SHA-1 hashing is tested class ON_SHA1.
+  elapsed_time_in_seconds - [out]
+    elapsed_time_in_seconds[0] = 16 bit CRC hash time in seconds.
+    elapsed_time_in_seconds[1] = 32 bit CRC hash time in seconds.
+    elapsed_time_in_seconds[2] = MD5 hash time in seconds.
+    elapsed_time_in_seconds[3] = SHA-1 hash time in seconds.
+    If a hash was tested, then number of seconds it took to compute the hash is returned.
+    Otherwise ON_DBL_QNAN is returned.
+*/
+ON_DECL
+void ON_TestHashSpeed(
+  size_t byte_count,
+  ON__UINT16* crc16,
+  ON__UINT32* crc32,
+  ON_MD5_Hash* md5_hash,
+  ON_SHA1_Hash* sha1_hash,
+  double elapsed_time_in_seconds[4]
+);
+
+/*
+Description:
+  Test speeds of various hash algoritmhs and use text_log to print the results.
+Parameters:
+  byte_count - [in]
+    Number of bytes to hash. This number is rounded up to the nearest multiple of 1024.
+  bCRC16 - [in]
+    True to test 16 bit CRC hashing speed.
+  bCRC32 - [in]
+    True to test 32 bit CRC hashing speed.
+  bMD5 - [in]
+    True to test MD5 hashing speed.
+  bSHA1 - [in]
+    True to test SHA-1 hashing speed.
+  text_log - [in]
+    Test results are printed using text_log.
+*/
+ON_DECL
+void ON_TestHashSpeed(
+  size_t byte_count,
+  bool bTestCRC16,
+  bool bTestCRC32,
+  bool bTestMD5,
+  bool bTestSHA1,
+  ON_TextLog& text_log
+);
+
+ON_DECL
+void ON_TestHashSpeed(
+  size_t byte_count,
+  ON_TextLog& text_log
+);
+
 #endif

@@ -303,10 +303,10 @@ const ON_SubDVertex* ON_SubDVertexIdIterator::CurrentVertex() const
 //
 
 void ON_SubDHeap::InitializeEdgeIdIterator(
-  class ON_SubDEdgeIdIterator& vidit
+  class ON_SubDEdgeIdIterator& eidit
 ) const
 {
-  vidit.ON_FixedSizePoolIterator::Create(&m_fspe);
+  eidit.ON_FixedSizePoolIterator::Create(&m_fspe);
 }
 
 void ON_SubDimple::InitializeEdgeIdIterator(

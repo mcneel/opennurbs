@@ -887,7 +887,7 @@ public:
     ON_wString& rtf,
     bool bForceRtf);
 
- static const ON_wString ComposeAppleRTF(
+  static const ON_wString ComposeAppleRTF(
     const ON_TextContent* text);
 
   static bool RecomposeRTF();
@@ -895,10 +895,14 @@ public:
 
   static bool ComposeFS();
   static void SetComposeFS(bool b);
+  static int TextEditorFontSize();
+  static void SetTextEditorFontSize(unsigned int size);
+
 
 private:
   static bool m_bComposeRTF;
   static bool m_bComposeFS;
+  static int m_TextEditorSize;
 
   RtfComposer();
 

@@ -7199,6 +7199,8 @@ void ON_BinaryArchive::SetModelSerialNumber(
   m_model_serial_number = model_serial_number;
   m_reference_model_serial_number = reference_model_serial_number;
   m_instance_definition_model_serial_number = instance_definition_model_serial_number;
+  if (0 != m_reference_model_serial_number || 0 != m_instance_definition_model_serial_number)
+    m_bCheckForRemappedIds = true;
 }
 
 void ON_BinaryArchive::ClearModelSerialNumber()
@@ -7208,6 +7210,19 @@ void ON_BinaryArchive::ClearModelSerialNumber()
   m_reference_model_serial_number = 0;
   m_instance_definition_model_serial_number = 0;
 }
+
+void ON_BinaryArchive::SetCheckForRemappedIds(
+  bool bCheckForRemappedIds
+)
+{
+  this->m_bCheckForRemappedIds = bCheckForRemappedIds ? true : false;
+}
+
+bool ON_BinaryArchive::CheckForRemappedIds() const
+{
+  return this->m_bCheckForRemappedIds;
+}
+
 
 unsigned int ON_BinaryArchive::ModelSerialNumber() const
 {
@@ -11181,7 +11196,7 @@ int ON_BinaryArchive::Internal_Read3dmDimStyle(
             // That's why we are checking for a matching system dimstyle before using the unit
             // system from the file.
             V6_dimstyle->SetUnitSystem(ON::LengthUnitSystem::None);
-            V6_dimstyle->SetUnitSystemFromContext(true,Archive3dmSettings().m_ModelUnitsAndTolerances.m_unit_system.UnitSystem(),ON::LengthUnitSystem::None);            
+            V6_dimstyle->SetUnitSystemFromContext(true,Archive3dmSettings().m_ModelUnitsAndTolerances.m_unit_system.UnitSystem(),ON::LengthUnitSystem::None);
             delete V5_dimstyle;
           }
           else

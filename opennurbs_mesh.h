@@ -73,83 +73,166 @@ public:
   enum : unsigned int
   {
     ///<summary>
-    /// Each SubD quad will generate 4 mesh quads in a 2x2 grid.
-    /// A simple meshing density of 0% corresponds to ExtraCoarseDensity.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// Indicates the SubD display mesh density has not be set.
     ///</summary>
-    ExtraCoarseDensity = 1,
-    MinimumDensity = 1,
+    UnsetDensity = 0,
 
     ///<summary>
-    /// Each SubD quad will generate 16 mesh quads in a 4x4 grid.
-    /// A simple meshing density of 1% to 19% corresponds to CoarseDensity.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// The minimum SubD display density that can be se in Rhino user interface is ExtraCoarseDensity (1).
+    ///</summary>
+    MinimumUserInterfaceDensity = 1,
+
+    ///<summary>
+    /// The maximum SubD display density that can be se in Rhino user interface is ExtraFineDensity (5).
+    ///</summary>
+    MaximumUserInterfaceDensity = 5,
+
+    ///<summary>
+    /// SubD display density values <= MinimumAdaptiveDensity will never be adaptively reduced.
+    /// SubD display density values > MinimumAdaptiveDensity may be adaptively reduced to a value >= MinimumAdaptiveDensity.
+    ///</summary>
+    MinimumAdaptiveDensity = 1,
+
+    ///<summary>
+    /// Each SubD quad will generate 1 display mesh quads in a 1x1 grid.
+    /// This density can only be used with SubDs where every face is a quad.
+    /// User interface code never returns this density. 
+    ///</summary>
+    MinimumDensity = 0,
+
+    ///<summary>
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 4 display mesh quads in a 2x2 grid and each SubD N-gon will generate N display mesh quads.
+    /// Adaptive reductions do not apply to this density.
+    /// This is the minimum SubD display density.
+    ///</summary>
+    ExtraCoarseDensity = 1,
+
+    ///<summary>
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 16 display mesh quads in a 4x4 grid and each SubD N-gon will generate N*4 display mesh quads.
+    /// Adaptive reductions do not apply to this density.
     ///</summary>
     CoarseDensity = 2,
 
     ///<summary>
-    /// Each SubD quad will generate 64 mesh quads in an 8x8 grid.
-    /// A simple meshing density of 20% to 34% corresponds to MediumDensity.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
-    /// This density is too low to produce acceptable results on the SubD Rhino Logo and many other models.
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 64 display mesh quads in an 8x8 grid and each SubD N-gon will generate N*8 display mesh quads.
+    /// When a SubD has more than 8000 faces, adaptive MediumDensity is reduced to CoarseDensity.
     ///</summary>
     MediumDensity = 3,
 
     ///<summary>
-    /// Each SubD quad will generate 256 mesh quads in a 16x16 grid.
-    /// A simple meshing density of 35% to 75% corresponds to FineDensity.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
-    /// This is the default value for creating mesh approximations of SubD surface.  
-    /// It produces acceptable results on the SubD Rhino Logo and most other models.
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 256 display mesh quads in a 16x16 grid and each SubD N-gon will generate N*16 display mesh quads.
+    /// When a SubD has more than 2000 faces, adaptive FineDensity is reduced to adaptive MediumDensity.
     ///</summary>
     FineDensity = 4,
+
+    ///<summary>
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 256 display mesh quads in a 16x16 grid and each SubD N-gon will generate N*16 display mesh quads.
+    /// When a SubD has more than 2000 faces, adaptive DefaultDensity is reduced to adaptive MediumDensity.
+    /// This is the default value for creating mesh approximations of SubD surface.  
+    /// When treadted as an adaptive setting, it produces acceptable results for most SubDs.
+    ///</summary>
     DefaultDensity = 4,
 
     ///<summary>
-    /// Each SubD quad will generate 1024 mesh quads in a 32x32 grid.
-    /// A simple meshing density of 76% to 99% corresponds to ExtraFineDensity.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 1024 display mesh quads in a 32x32 grid and each SubD N-gon will generate N*32 display mesh quads.
+    /// When a SubD has more than 500 faces, adaptive ExtraFineDensity is reduced to adaptive FineDensity.
     ///</summary>
     ExtraFineDensity = 5,
 
     ///<summary>
-    /// Each SubD quad will generate 4096 mesh quads in a 64x64 grid.
-    /// A simple meshing density of 100% corresponds to MaximumDensity.
-    /// SubD display density values may never exceed 6 and core code assumes these values are &lt= 6.
-    /// Use ON_SubDDisplayParameters::CreateFromMeshDensity() to convert normalized meshing density settings to ON_SubDDisplayParameters density enum values.
-    /// This value creates ridiculously dense meshes and should generally be avoided. 
+    /// When interpreted as an absolute SubD display density, each SubD quad will generate 
+    /// 4096 display mesh quads in a 64x64 grid and each SubD N-gon will generate N*64 display mesh quads.
+    /// ON_SubDDisplayParameters.AdaptiveDensity() determines if the subd display density is 
+    /// treated adaptively or absolutely.
+    /// This value creates ridiculously dense display meshes and should generally be avoided. 
+    /// No Rhino user interface will create this value.
     ///</summary>
-    MaximumDensity = 6
+    MaximumDensity = 6,
+  };
+
+  enum : unsigned int
+  {
+    /// <summary>
+    /// When the SubD display density is adaptive (default), AdaptiveMeshQuadMaximum
+    /// specifies the approximate number of display mesh quads to permit before
+    /// reducing the SubD display mesh density. 
+    /// Approximate display mesh quad count = subd.FaceCount()*(4^subd_display_density).
+    /// This enum value may change from release to release as rendering technology improves.
+    /// Make sure your code works for values between 1024 and 134217728. 
+    /// </summary>
+    AdaptiveDisplayMeshQuadMaximum = 512000
   };
 
 public:
   static const ON_SubDDisplayParameters Empty;
 
   // Parameters for a course limit surface display mesh.
-  // m_display_density = ON_SubDDisplayParameters::ExtraCoarseDensity
+  // SubD display density = adaptive ON_SubDDisplayParameters::ExtraCoarseDensity
   static const ON_SubDDisplayParameters ExtraCoarse;
 
   // Parameters for a course limit surface display mesh.
-  // m_display_density = ON_SubDDisplayParameters::CoarseDensity
+  // SubD display density = adaptive ON_SubDDisplayParameters::CoarseDensity
   static const ON_SubDDisplayParameters Coarse;
 
   // Parameters for a medium limit surface display mesh.
-  // To crude for a quality rendering of the SubD Rhino logo.
-  // m_display_density = ON_SubDDisplayParameters::MediumDensity
+  // SubD display density = adaptive ON_SubDDisplayParameters::MediumDensity
+  // Too crude for a quality rendering of the SubD Rhino logo.
   static const ON_SubDDisplayParameters Medium;
 
   // Parameters for the default limit surface display mesh.
   // Produces and acceptable rendering of the SubD Rhino logo.
-  // m_display_density = ON_SubDDisplayParameters::FineDensity (default)
+  // SubD display density = adaptive ON_SubDDisplayParameters::FineDensity (default)
   static const ON_SubDDisplayParameters Fine;
 
   // Parameters for an extra fine limit surface display mesh.
-  // m_display_density = ON_SubDDisplayParameters::ExtraFineDensity
+  // SubD display density = adaptive ON_SubDDisplayParameters::ExtraFineDensity
   static const ON_SubDDisplayParameters ExtraFine;
 
   // Parameters for the default limit surface display mesh.
-  // m_display_density = ON_SubDDisplayParameters::DefaultDensity
+  // SubD display density = adaptive ON_SubDDisplayParameters::DefaultDensity
   static const ON_SubDDisplayParameters Default;
+
+  /*
+  Parameters:
+    adaptive_subd_display_density - [in]
+      A value <= ON_SubDDisplayParameters::MaximumDensity.
+      When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
+      Invalid input values are treated as ON_SubDDisplayParameters::DefaultDensity.
+    subd_face_count - [in]
+      Number of SubD faces. 
+      When subd_face_count = 0, adaptive_subd_display_density is returned.
+  Returns:
+    The absolute SubD display density for SubD with subd_face_count faces.
+    The absolute SubD display density is <= adaptive_subd_display_density and <= ON_SubDDisplayParameters::MaximumDensity.
+  */
+  static unsigned int AbsoluteDisplayDensityFromSubDFaceCount(
+    unsigned adaptive_subd_display_density,
+    unsigned subd_face_count
+  );
+
+  /*
+  Parameters:
+    adaptive_subd_display_density - [in]
+      A value <= ON_SubDDisplayParameters::MaximumDensity.
+      When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
+      Invalid input values are treated as ON_SubDDisplayParameters::DefaultDensity.
+    subd - [in]
+      In the cases when the subd in question is not available, like user interface code that applies in general 
+      and to unknown SubDs, pass ON_SubD::Empty.
+  Returns:
+    The absolute SubD display density for subd.
+    The absolute SubD display density is <= adaptive_subd_display_density and <= ON_SubDDisplayParameters::MaximumDensity.
+  */
+  static unsigned int AbsoluteDisplayDensityFromSubD(
+    unsigned adaptive_subd_display_density,
+    const class ON_SubD& subd
+  );
 
   /*
   Description:
@@ -157,12 +240,33 @@ public:
     and leaves the other parameters set to the default
     values.
   Parameters:
-    subd_display_density - [in]
-      A value between ON_SubDDisplayParameters::MinimumDensity and ON_SubDDisplayParameters::MaximumDensity.
+    adaptive_subd_display_density - [in]
+      A value <= ON_SubDDisplayParameters::MaximumDensity.
+      When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
+      Values < ON_SubDDisplayParameters::MinimumAdaptiveDensity are treated as N_SubDDisplayParameters::MinimumAdaptiveDensity.
+      All other invalid input values are treated as ON_SubDDisplayParameters::DefaultDensity.
+  Returns:
+    A ON_SubDDisplayParameters with adaptive SubD display density.
   */
   static const ON_SubDDisplayParameters CreateFromDisplayDensity(
-    unsigned int subd_display_density
-    );
+    unsigned int adaptive_subd_display_density
+  );
+
+  /*
+  Description:
+    Use of absolute display density is strongly discouraged. 
+    SubDs can have a single face or millions of faces.
+    Adaptive display meshing produces more desirable results in almost all cases.
+  Parameters:
+    absolute_subd_display_density - [in]
+      A value <= ON_SubDDisplayParameters::MaximumDensity.
+      When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
+  Returns:
+    A ON_SubDDisplayParameters that treats the display density value as a constant for all SubDs.
+  */
+  static const ON_SubDDisplayParameters CreateFromAbsoluteDisplayDensity(
+    unsigned int absolute_subd_display_density
+  );
 
   /*
   Description:
@@ -175,14 +279,14 @@ public:
       The table below shows the correpondence between normalized_density and subd display density.
 
       Mesh density percentage / normalized_mesh_density / subd display density
-      0% ->  [0.0, ON_ZERO_TOLERANCE] -> 1 = MinimumDensity
-      0% to 19% -> (ON_ZERO_TOLERANCE, 0.20) -> 2 = CoarseDensity
-      20% to 34% -> [0.20, 0.35) -> 3 = MediumDensity
-      35% to 75% ->   [0.35, 0.75] -> 4 = FineDensity
-      76% to 99% -> (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
-      100% -> [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
+      0% ->  [0.0, ON_ZERO_TOLERANCE] -> 1 = adaptive MinimumUserInterfaceDensity
+      0% to 19% -> (ON_ZERO_TOLERANCE, 0.20) -> 2 = adaptive CoarseDensity
+      20% to 34% -> [0.20, 0.35) -> 3 = adaptive MediumDensity
+      35% to 75% ->   [0.35, 0.75] -> 4 = adaptive FineDensity
+      76% to 99% -> (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = adaptive ExtraFineDensity
+      100% -> [1 - ON_ZERO_TOLERANCE, 1.0] -> 5 = adaptive MaximumUserInterfaceDensity
       
-      Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
+      Invalid input -> adaptive DefaultDensity;
 
    Returns:
      A valid ON_SubDDisplayParameters with the specified subd display denstity.
@@ -192,22 +296,91 @@ public:
   );
 
 public:
-  // 0 <= m_display_density <= ON_SubDDisplayParameters::MaximumDensity
-  // If n = m_display_density, then each SubD quad face will have 
-  // a grid of 2^n x 2^n mesh quads for a total of 2^(2n) mesh quads.
-  // n   grid size    total number of mesh quad faces per SubD quad face
-  // 0     1 x 1             1 (avoid 0 - it does not work for n-gons n != 4)
-  // 1     2 x 2             4
-  // 2     4 x 4            16
-  // 3     8 x 8            64
-  // 4    16 x 16          128
-  // 5    32 x 32        1,024
-  // 6    64 x 64        4,096
+
+  ON_DEPRECATED_MSG("Use DisplayDensity(subd)")
   unsigned int DisplayDensity() const;
 
+  /*
+  Returns:
+    True if the SubD display density setting is adaptive and approximate display
+    mesh quad count is capped at ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum.
+  Remarks:
+    this->DensityIsAdaptive() and this->DensityIsAbsolute() always return opposite bool values.
+    Use the one that makes your code easiest to read and understand.
+  */
+  bool DisplayDensityIsAdaptive() const;
+
+  /*
+  Returns:
+    True if the SubD display density setting is absolute.
+  Remarks:
+    this->DensityIsAdaptive() and this->DensityIsAbsolute() always return opposite bool values.
+    Use the one that makes your code easiest to read and understand.
+  */
+  bool DisplayDensityIsAbsolute() const;
+
+  /*
+  Parameters:
+    subd - [in]
+      Used when the display density is adaptive and subd.FaceCount() > 0. 
+      Ignored when the display density is absolute or subd.FaceCount() = 0.
+
+  Returns:
+    The absolute display density to use when creating display meshes for subd.
+    When adaptive reduction is enabled, subd.FaceCount() is used to determine
+    the appropriate display density.
+
+  Remarks:
+    The chart below shows the relationship between the returned value and the 
+    number of display mesh quads a generated by 1 SubD quad.
+
+    return    display mesh
+    value     quads
+    0             1 =  1x1
+    1             4 =  2x2
+    2            16 =  4x4
+    3            64 =  8x8            
+    4           128 = 16x16
+    5         1,024 = 32x32
+    6         4,096 = 64x64
+  */
+  unsigned int DisplayDensity(
+    const class ON_SubD& subd
+  ) const;
+
+  ON_DEPRECATED_MSG("Use SetAdaptiveDisplayDensity()")
   void SetDisplayDensity(
-    unsigned int display_density
+    unsigned int adaptive_display_density
   );
+
+  /*
+  Description:
+    Set an adaptive SubD display density that caps display mesh quad count at ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum.
+  Parameters:
+    adaptive_display_density - [in]
+      adaptive_display_density <= ON_SubDDisplayParameters::MaximumDensity
+      Values <= ON_SubDDisplayParameters::MinimumAdaptiveDensity will never be adaptively reduced during display mesh creation.
+  Remarks:
+    The use of this setting
+  */
+  void SetAdaptiveDisplayDensity(
+    unsigned int adaptive_display_density
+  );
+
+  /*
+  Description:
+    In almast all cases, you are better off using SetAdaptiveDisplayDensity().
+  Parameters:
+    absolute_display_density - [in]
+      absolute_display_density <= ON_SubDDisplayParameters::MaximumDensity
+  Remarks:
+    The use of this setting 
+  */
+  void SetAbsoluteDisplayDensity(
+    unsigned int absolute_display_density
+  );
+
+public:
 
 
   /*
@@ -238,24 +411,29 @@ private:
     // and the value of m_subd_mesh_parameters is saved in 3dm archives.
     subd_mesh_density_mask = 0x07,
     subd_mesh_location_bit = 0x08,
+    subd_mesh_absolute_density_bit = 0x10,
 
     // If this bit set, then the settings are not current defaults.
     subd_mesh_nondefault_bit = 0x80
   };
 
 private:
-  // 0 <= m_display_density <= ON_SubDDisplayParameters::MaximumDensity
-  // If n = m_display_density, then each SubD quad face will have 
-  // a grid of 2^n x 2^n mesh quads for a total of 2^(2n) mesh quads.
+  // If n = absolute_display_density, then each SubD quad face will have 
+  // a grid of 2^n x 2^n mesh quads for a total of 4^) mesh quads.
   // n   grid size    total number of mesh faces per SubD quad
   // 0     1 x 1             1
   // 1     2 x 2             4
   // 2     4 x 4            16
   // 3     8 x 8            64
-  // 4    16 x 16          128
+  // 4    16 x 16          256
   // 5    32 x 32        1,024
   // 6    64 x 64        4,096
-  unsigned int m_display_density = 0;
+
+  // m_bAbsoluteDisplayDensity determines if m_display_density is adaptive or absolute.
+  bool m_bDisplayDensityIsAbsolute = false; // default must be false so 7.0 to 7.1 transition works correctly
+  unsigned char m_display_density = 0; // SubD display density (0,1,2,3,4,5,6)
+
+  unsigned short m_reserved = 0;
 
   // If m_bControlNetMesh is false, a mesh of the limit surface is produced.
   // If m_bControlNetMesh is true, a mesh of the subdivided control net is produced.
@@ -439,6 +617,58 @@ public:
     unsigned int mesh_parameter_id_as_unsigned
   );
 
+  /// <summary>
+  /// ON_MeshParameter::Type identifies the type of mesh creation settings.
+  /// </summary>
+  enum class Type : unsigned char
+  {
+    /// <summary>
+    /// Not set.
+    /// </summary>
+    Unset = 0,
+
+    /// <summary>
+    /// Default mesh creation settings from ON_MeshParameters::DefaultMesh.
+    /// </summary>
+    Default = 1,
+
+    /// <summary>
+    /// Fast render mesh creation settings from ON_MeshParameters::FastRenderMesh.
+    /// </summary>
+    FastRender = 2,
+
+    /// <summary>
+    /// Quality render mesh creation settings from ON_MeshParameters::QualityRenderMesh.
+    /// </summary>
+    QualityRender = 3,
+
+    /// <summary>
+    /// Default analysis mesh creation settings from ON_MeshParameters::DefaultAnalysisMesh
+    /// </summary>
+    DefaultAnalysis = 4,
+
+    /// <summary>
+    /// Mesh density settings from ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density). 
+    /// The value of normalized_mesh_density is returned by the MeshDensity() property.
+    /// </summary>
+    FromMeshDensity = 5,
+
+    /// <summary>
+    /// Mesh creation settings are set and are not from one of the cases listed above.
+    /// </summary>
+    Custom = 15
+  };
+
+  /*
+  Returns:
+    The type of geometry settings.
+  Remarks:
+    This function will never return ON_MeshParameters::Type::Unset.
+    In particular, if the return value is not ON_MeshParameters::Type::Custom,
+    then the settings come from one of the built-in mesh creation settings.
+  */
+  ON_MeshParameters::Type GeometrySettingsType() const;
+
   /*
   Description:
     Mesh creationg parameters to create the default render mesh.
@@ -486,7 +716,7 @@ public:
     This function creates ON_MeshParameters from a user interface
     "slider" like Rhino's simple mesh controls.
   Parameters:
-    normalized_density - [in]
+    normalized_mesh_density - [in]
       A double between 0.0 and 1.0.
       0.0 creates meshes with fewer faces than 1.0.
 
@@ -495,7 +725,7 @@ public:
      A valid ON_MeshParameters with the specified subd display denstity.
   */
   static const ON_MeshParameters CreateFromMeshDensity(
-    double normalized_density
+    double normalized_mesh_density
   );
 
   /*
@@ -514,13 +744,13 @@ public:
   Description:
     Convert a mesh density value to a percentage with finite precision fuzz removed.
   Parameters:
-    normalized_density - [in]
-      valid input is 0.0 <= normalized_density <= 1.0
+    normalized_mesh_density - [in]
+      valid input is 0.0 <= normalized_mesh_density <= 1.0
   Returns:
     If normalized_density is valid, 100*normalized_density with fuzz cleaned up is returned.
     Otherwise ON_DBL_QNAN is returned.
   */
-  static double MeshDensityAsPercentage(double normalized_density);
+  static double MeshDensityAsPercentage(double normalized_mesh_density);
 
   /*
   Description:
@@ -528,7 +758,7 @@ public:
     ON_MeshParameters::CreateFromMeshDensity() 
     and ON_SubDDisplayParameters CreateFromMeshDensity().
   Parameters:
-    normalized_density - [in]
+    normalized_mesh_density - [in]
       should be close to being between 0 and 1.
    Returns:
       if normalized_density is between 0.0 and 1.0, that value is returned.
@@ -536,7 +766,7 @@ public:
       If normalized_density is a hair bigger than 1.0, then 1.0 is returned.
       Otherwise 0.5 is returned.
   */
-  static double ClampMeshDensityValue(double normalized_density);
+  static double ClampMeshDensityValue(double normalized_mesh_density);
 
 
   /*
@@ -581,9 +811,9 @@ public:
   Description:
     Tool for provding a simple "slider" interface.
   Parameters:
-    mesh_density - [in] 0.0 <= density <= 1.0
-      0 quickly creates coarse meshes.
-      1 slowly creates dense meshes.
+    normalized_mesh_density - [in] 0.0 <= normalized_mesh_density <= 1.0
+      0 quickly creates extremely coarse meshes.
+      1 slowly creates extremely dense meshes.
     min_edge_length - [in]
       > 0.0 custom value
       ON_UNSET_VALUE: for default (0.0001)
@@ -595,7 +825,7 @@ public:
     in a predictable way and is easier to search for when examining code.
   */
   ON_MeshParameters(
-    double mesh_density,
+    double normalized_mesh_density,
     double min_edge_length = ON_UNSET_VALUE
     );
 
@@ -991,7 +1221,7 @@ private:
 
   // Uses ON_SubDDisplayParameters::EncodeAsUnsignedChar() / ON_SubDDisplayParameters::DecodeFromUnsignedChar() 
   // to save ON_SubDDisplayParameters settings in this class.
-  // (Done this way to avoid breaking the C++ public SDK.)
+  // (Done this way to avoid breaking the version 6.0 C++ public SDK because ON_SubDDisplayParameters is to big to add to this class.)
   unsigned char m_subd_mesh_parameters_as_char = 0;
 
   int m_grid_min_count = 0;

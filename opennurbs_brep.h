@@ -2940,6 +2940,22 @@ public:
     bool* pbHasBoundary = nullptr
     ) const;
 
+
+  /*
+  Description:
+    When an expert is 100% certain of a brep's solid orientation, this function
+    can be used to set the SolidOrientation() property.
+  Parameters:
+    solid_orientation - [in]
+      0: not solid,
+      1: oriented manifold solid (no boundary) with outward facing normals.
+     -1: oriented manifold solid (no boundary) with inward facing normals.
+  */
+  void SetSolidOrientationForExperts(
+    int solid_orientation
+  );
+
+
   /*
   Description: 
     Determine if P is inside Brep.  This question only makes sense

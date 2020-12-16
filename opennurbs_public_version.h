@@ -6,7 +6,7 @@
 
 // To update version numbers, edit ..\build\build_dates.msbuild
 #define RMA_VERSION_MAJOR 7
-#define RMA_VERSION_MINOR 0
+#define RMA_VERSION_MINOR 1
 
 ////////////////////////////////////////////////////////////////
 //
@@ -14,10 +14,10 @@
 // first step in each build.
 //
 #define RMA_VERSION_YEAR   2020
-#define RMA_VERSION_MONTH  9
-#define RMA_VERSION_DATE   11
-#define RMA_VERSION_HOUR   14
-#define RMA_VERSION_MINUTE 20
+#define RMA_VERSION_MONTH  12
+#define RMA_VERSION_DATE   8
+#define RMA_VERSION_HOUR   9
+#define RMA_VERSION_MINUTE 49
 
 ////////////////////////////////////////////////////////////////
 //
@@ -35,8 +35,8 @@
 //     3 = build system release build
 #define RMA_VERSION_BRANCH 0
 
-#define VERSION_WITH_COMMAS  7,0,20255,14200
-#define VERSION_WITH_PERIODS 7.0.20255.14200
+#define VERSION_WITH_COMMAS  7,1,20343,9490
+#define VERSION_WITH_PERIODS 7.1.20343.09490
 #define COPYRIGHT "Copyright (C) 1993-2020, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Public OpenNURBS C++ 3dm file IO library."
 
@@ -44,11 +44,11 @@
 #define RMA_VERSION_NUMBER_MAJOR_WSTRING L"7"
 #define RMA_PREVIOUS_VERSION_NUMBER_MAJOR_WSTRING L"6"
 
-#define RMA_VERSION_NUMBER_SR_STRING   "SR0"
-#define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
+#define RMA_VERSION_NUMBER_SR_STRING   "SR1"
+#define RMA_VERSION_NUMBER_SR_WSTRING L"SR1"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "7.0.20255.14200"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"7.0.20255.14200"
+#define RMA_VERSION_WITH_PERIODS_STRING   "7.1.20343.09490"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"7.1.20343.09490"
 
 
 

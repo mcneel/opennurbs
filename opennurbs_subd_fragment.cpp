@@ -1825,6 +1825,13 @@ ON_ComponentStatus ON_SubDMeshFragment::Status() const
 
 unsigned int ON_SubDMeshFragmentGrid::LevelOfDetail() const
 {
+  // A better name for this value is Display Density Reduction.
+  // Identical to ON_SubDMeshFragmentGrid::DisplayDensityReduction().
+  return m_F_level_of_detail;
+}
+
+unsigned int ON_SubDMeshFragmentGrid::DisplayDensityReduction() const
+{
   return m_F_level_of_detail;
 }
 
@@ -1898,16 +1905,22 @@ const ON_2udex ON_SubDMeshFragmentGrid::Grid2dexFromPointIndex(
 {
   for (;;)
   {
+    // On a quad face, first grid points run from face->Vertex(0) to face->Vertex(1).
+    // The "i" grid index increases from face->Vertex(0) to face->Vertex(1).
+    // The "j" grid index increases from face->Vertex(0) to face->Vertex(3).
     const unsigned int side_segment_count = SideSegmentCount();
     if (0 == side_segment_count)
       break;
     const unsigned int grid_side_point_count = side_segment_count + 1;
     if (grid_point_index >= grid_side_point_count * grid_side_point_count)
       break;
+
+    // CORRECT - do not change
     const ON_2udex griddex(
       grid_point_index % grid_side_point_count,
       grid_point_index / grid_side_point_count
     );
+
     return griddex;
   }
   return ON_SUBD_RETURN_ERROR(ON_2udex::Unset);
@@ -1926,7 +1939,9 @@ unsigned int ON_SubDMeshFragmentGrid::PointIndexFromGrid2dex(
     const unsigned int grid_side_point_count = side_segment_count + 1;
     if (i >= grid_side_point_count && j >= grid_side_point_count)
       break;
-    return grid_side_point_count * i + j;
+    // BAD BUG Oct 2020 // return grid_side_point_count * i + j;
+    // Fixed Oct 13, 2020
+    return i + grid_side_point_count * j; // CORRECT - do not change
   }
   return ON_UNSET_UINT_INDEX;
 }
@@ -1945,15 +1960,15 @@ bool ON_SubDMeshFragmentGrid::GetGridParameters(
     const unsigned int grid_side_point_count = side_segment_count + 1;
     if (grid_point_index >= grid_side_point_count*grid_side_point_count)
       break;
-    const unsigned int i = grid_point_index % grid_side_point_count;
+    const ON_2udex g2dex = Grid2dexFromPointIndex(grid_point_index);
+
     grid_parameters[0]
-      = (i < grid_side_point_count)
-      ? (((double)i) / ((double)grid_side_point_count))
+      = (g2dex.i < side_segment_count)
+      ? (((double)g2dex.i) / ((double)side_segment_count))
       : 1.0;
-    const unsigned int j = grid_point_index / grid_side_point_count;
     grid_parameters[1]
-      = (j < grid_side_point_count)
-      ? (((double)j) / ((double)grid_side_point_count))
+      = (g2dex.j < side_segment_count)
+      ? (((double)g2dex.j) / ((double)side_segment_count))
       : 1.0;
     return true;
   }
@@ -1965,19 +1980,19 @@ bool ON_SubDMeshFragmentGrid::GetGridParameters(
 
 ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromSideSegmentCount(
   unsigned int side_segment_count,
-  unsigned int level_of_detail
+  unsigned int mesh_density_reduction
 )
 {
   const unsigned int display_density = ON_SubDMeshFragment::DisplayDensityFromSideSegmentCount(side_segment_count);
   if ( side_segment_count != ON_SubDMeshFragment::SideSegmentCountFromDisplayDensity(display_density) )
     return ON_SUBD_RETURN_ERROR(ON_SubDMeshFragmentGrid::Empty);
-  return ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(display_density,level_of_detail);
+  return ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(display_density, mesh_density_reduction);
 }
 
 
 ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
   unsigned int display_density,
-  unsigned int level_of_detail
+  unsigned int mesh_density_reduction
   )
 {
   static const ON_SubDMeshFragmentGrid* grid_cache[9] = { 0 }; // side_segment_count = 1,2,4,8,16,32,64,128,256
@@ -1988,7 +2003,7 @@ ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
   const ON_SubDMeshFragmentGrid* fragment_grid = grid_cache[display_density];
   if (nullptr != fragment_grid)
   {
-    while ( fragment_grid->m_F_level_of_detail < level_of_detail && nullptr != fragment_grid->m_next_level_of_detail)
+    while ( fragment_grid->m_F_level_of_detail < mesh_density_reduction && nullptr != fragment_grid->m_next_level_of_detail)
       fragment_grid = fragment_grid->m_next_level_of_detail;
     return *fragment_grid;
   }
@@ -2004,7 +2019,7 @@ ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
   if (nullptr != fragment_grid)
   {
     lock.ReturnLock();
-    while ( fragment_grid->m_F_level_of_detail < level_of_detail && nullptr != fragment_grid->m_next_level_of_detail)
+    while ( fragment_grid->m_F_level_of_detail < mesh_density_reduction && nullptr != fragment_grid->m_next_level_of_detail)
       fragment_grid = fragment_grid->m_next_level_of_detail;
     return *fragment_grid;
   }
@@ -2117,7 +2132,7 @@ ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
   fragment_grid = grid_cache[display_density];
   if (nullptr != fragment_grid)
   {
-    while ( fragment_grid->m_F_level_of_detail < level_of_detail && nullptr != fragment_grid->m_next_level_of_detail)
+    while ( fragment_grid->m_F_level_of_detail < mesh_density_reduction && nullptr != fragment_grid->m_next_level_of_detail)
       fragment_grid = fragment_grid->m_next_level_of_detail;
     return *fragment_grid;
   }
@@ -2167,20 +2182,20 @@ void ON_SubDMeshImpl::ClearFragmentFacePointers(
 
 bool ON_SubDMeshImpl::ReserveCapacity(
   unsigned int subd_fragment_count,
-  unsigned int display_density
+  unsigned int absolute_subd_display_density
   )
 {
   ClearTree();
 
-  m_display_density = 0;
+  m_absolute_subd_display_density = 0;
   m_fragment_count = 0;
   m_fragment_point_count = 0;
   m_first_fragment = nullptr;
 
-  if ( display_density > ON_SubDDisplayParameters::MaximumDensity)
+  if (absolute_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
     return ON_SUBD_RETURN_ERROR(false);
 
-  unsigned int fragment_point_count = ON_SubDMeshFragment::PointCountFromDisplayDensity(display_density);
+  unsigned int fragment_point_count = ON_SubDMeshFragment::PointCountFromDisplayDensity(absolute_subd_display_density);
   if ( subd_fragment_count < 1 )
     return ON_SUBD_RETURN_ERROR(false);
 
@@ -2197,7 +2212,7 @@ bool ON_SubDMeshImpl::ReserveCapacity(
   if( false == m_fsp.Create(sizeof_fragment + sizeof_PNTC,subd_fragment_count,0))
     return ON_SUBD_RETURN_ERROR(false);
 
-  m_display_density = display_density;
+  m_absolute_subd_display_density = absolute_subd_display_density;
   m_fragment_point_count = fragment_point_count;
 
   return true;
@@ -2389,7 +2404,10 @@ bool ON_SubDMeshFragment::CopyFrom(
   }
   else
   {
-    // srf_fragment is more dense than target. Copy a subset of the points.
+    // src_fragment is more dense than target. Copy a subset of the points.
+    //
+    // This code appears to be rarely used. It is not well tested.
+    //
     const unsigned int s0 = grid.SideSegmentCount();
     const unsigned int s1 = src_fragment.m_grid.SideSegmentCount();
     unsigned int x = 1;
@@ -2399,7 +2417,7 @@ bool ON_SubDMeshFragment::CopyFrom(
     const unsigned int di = src_fragment.m_grid.PointIndexFromGrid2dex(x, 0);
     const unsigned int dj = src_fragment.m_grid.PointIndexFromGrid2dex(0, x);
 
-    // copy m_P[]
+    // copy from src_fragment.m_P[] to this->m_P[]
     size_t i_stride = di * src_fragment.m_P_stride;
     size_t j_stride = m * dj * src_fragment.m_P_stride;
     for (unsigned int j = 0; j < m; j += dj)
@@ -2417,7 +2435,7 @@ bool ON_SubDMeshFragment::CopyFrom(
 
     if (V_count <= NormalCapacity())
     {
-      // copy m_N[]
+      // copy from src_fragment.m_N[] to this->m_N[]
       if (V_count <= src_fragment.NormalCount())
       {
         p = m_N;
@@ -2445,7 +2463,7 @@ bool ON_SubDMeshFragment::CopyFrom(
 
     if (V_count <= TextureCoordinateCapacity())
     {
-      // copy m_T[]
+      // copy from src_fragment.m_T[] to this->m_T[]
       if (V_count <= src_fragment.TextureCoordinateCount())
       {
         SetTextureCoordinatesExist(true);
@@ -2474,7 +2492,7 @@ bool ON_SubDMeshFragment::CopyFrom(
 
     if (V_count <= ColorCapacity())
     {
-      // copy m_C[]
+      // copy from src_fragment.m_C[] to this->m_C[]
       if (V_count <= src_fragment.ColorCount())
       {
         SetColorsExist(true);
@@ -2879,7 +2897,7 @@ ON_SubDMeshImpl::ON_SubDMeshImpl()
 ON_SubDMeshImpl::ON_SubDMeshImpl( const class ON_SubDMeshImpl& src )
 {
   ChangeContentSerialNumber();
-  if ( nullptr != src.m_first_fragment && ReserveCapacity((unsigned int)src.m_fsp.ActiveElementCount(), src.m_display_density ) )
+  if ( nullptr != src.m_first_fragment && ReserveCapacity((unsigned int)src.m_fsp.ActiveElementCount(), src.m_absolute_subd_display_density) )
   {
     for (const ON_SubDMeshFragment* src_fragment = src.m_first_fragment; nullptr != src_fragment; src_fragment = src_fragment->m_next_fragment)
     {
@@ -2962,18 +2980,21 @@ ON_SubDDisplayParameters ON_SubDMesh::DisplayParameters() const
   const ON_SubDMeshImpl* impl = m_impl_sp.get();
   if (nullptr != impl)
   {
-    ON_SubDDisplayParameters dp;
-    dp.SetDisplayDensity(impl->m_display_density);
-    return dp;
+    return ON_SubDDisplayParameters::CreateFromAbsoluteDisplayDensity(impl->m_absolute_subd_display_density);
   }
   return ON_SubDDisplayParameters::Empty;
 }
 
 unsigned int ON_SubDMesh::DisplayDensity() const
 {
+  return AbsoluteSubDDisplayDensity();
+}
+
+unsigned int ON_SubDMesh::AbsoluteSubDDisplayDensity() const
+{
   const ON_SubDMeshImpl* impl = m_impl_sp.get();
   return (nullptr != impl)
-    ? impl->m_display_density
+    ? impl->m_absolute_subd_display_density
     : 0;
 }
 
@@ -3249,9 +3270,17 @@ void ON_SubDMesh::Swap(
 
 void ON_SubDDisplayParameters::Dump(class ON_TextLog& text_log) const
 {
-  text_log.Print(L"DisplayDensity = %u", DisplayDensity());
-  switch (DisplayDensity())
+  const unsigned display_density = DisplayDensity(ON_SubD::Empty);
+  if (this->DisplayDensityIsAbsolute())
+    text_log.Print(L"Absolute DisplayDensity = %u", display_density);
+  else
+    text_log.Print(L"Adaptive DisplayDensity = %u", display_density);
+
+  switch (display_density)
   {
+  case ON_SubDDisplayParameters::UnsetDensity:
+    text_log.Print(L" (UnsetDensity)");
+    break;
   case ON_SubDDisplayParameters::ExtraCoarseDensity:
     text_log.Print(L" (ExtraCoarse)");
     break;
@@ -3291,15 +3320,86 @@ void ON_SubDDisplayParameters::Dump(class ON_TextLog& text_log) const
   }
 }
 
-const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(
-  unsigned int display_density
-  )
+unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(
+  unsigned adaptive_subd_display_density,
+  unsigned subd_face_count
+)
 {
-  if ( display_density > ON_SubDDisplayParameters::MaximumDensity )
-    return ON_SUBD_RETURN_ERROR(ON_SubDDisplayParameters::Empty);
+  // The returned density must always be >= 2 so we can reliably calculate 
+  // NURBS curve forms of SubD edge curves in that begin/end at an
+  // extraordinary vertex. This is done in
+  // ON_SubDEdge::GetEdgeSurfaceCurveControlPoints().
+  // When there is a better way to get NURBS approsimations of edges that end
+  // at extraordinary vertices, we can reduce min_display_density to 1.
+  const unsigned min_display_density = 1; // adaptive cutoff
+
+#if 1
+  if (adaptive_subd_display_density <= min_display_density)
+    return adaptive_subd_display_density;
+  if (adaptive_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
+    adaptive_subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
+
+  const unsigned max_mesh_quad_count = ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum;
+  unsigned absolute_display_density = adaptive_subd_display_density;
+  unsigned mesh_quad_count = (1 << (2 * absolute_display_density)) * subd_face_count;
+  while (absolute_display_density > min_display_density && mesh_quad_count > max_mesh_quad_count)
+  {
+    --absolute_display_density;
+    mesh_quad_count /= 4;
+  }
+  return absolute_display_density;
+#else
+
+#if !defined(ON_DEBUG)
+  // This insures an accidental commit will never get merged.
+#error NEVER COMMIT THIS CODE!
+#endif
+
+  // used to test contanst densities when debugging.
+  return min_display_density;
+  //return 3;
+  //return ON_SubDDisplayParameters::DefaultDensity;
+
+#endif
+}
+
+unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(
+  unsigned adaptive_subd_display_density,
+  const ON_SubD& subd
+)
+{
+  // If this function changes, then a parallel change must be made in
+  // ON_SubDLevel::CopyEvaluationCacheForExperts(const ON_SubDLevel& src, ON_SubDHeap& this_heap)
+  // so it uses the same automatic density value.
+  return ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(adaptive_subd_display_density,subd.FaceCount());
+}
+
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(
+  unsigned int adaptive_subd_display_density
+)
+{
+  if (adaptive_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
+    return ON_SUBD_RETURN_ERROR(ON_SubDDisplayParameters::Default);
 
   ON_SubDDisplayParameters limit_mesh_parameters;
-  limit_mesh_parameters.m_display_density = display_density;
+  limit_mesh_parameters.m_display_density = (unsigned char)adaptive_subd_display_density;
+  limit_mesh_parameters.m_bDisplayDensityIsAbsolute = false;
+  return limit_mesh_parameters;
+}
+
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromAbsoluteDisplayDensity(
+  unsigned int absolute_subd_display_density
+  )
+{
+  if (absolute_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
+  {
+    ON_SUBD_ERROR("absolute_subd_display_density parameter is too large.");
+    absolute_subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
+  }
+
+  ON_SubDDisplayParameters limit_mesh_parameters;
+  limit_mesh_parameters.m_display_density = (unsigned char)absolute_subd_display_density;
+  limit_mesh_parameters.m_bDisplayDensityIsAbsolute = true;
   return limit_mesh_parameters;
 }
 
@@ -3311,48 +3411,8 @@ const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromMeshDensity(
 
   if (normalized_mesh_density >= 0.0 && normalized_mesh_density <= 1.0)
   {
-    if (0.0 == normalized_mesh_density)
-      return ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MinimumDensity);
-    if (1.0 == normalized_mesh_density)
-      return ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MaximumDensity);
+    unsigned int subd_display_density;
 
-
-    unsigned int subd_display_density = ON_SubDDisplayParameters::Default.DisplayDensity();
-
-
-    // The assignment of slider_value to subd_display_density was arrived at with a long testing period
-    // including all of Rhino 6 limited subd support and ending with Rhino 7 WIP in June 2020.
-    // June 2020 mapping of slide_value to subd_display_density
-    //
-    //  [0.0, ON_ZERO_TOLERANCE] -> 1 = ExtraCoarseDensity
-    //  (ON_ZERO_TOLERANCE, 0.17) -> 2 = CoarseDensity
-    //  [0.17, 0.33) -> 3 = MediumDensity
-    //  [0.33, 0.75] -> 4 = FineDensity
-    //  (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
-    //  [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
-    //  Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
-    //
-    // Beginning June 20, 2020 the values were slightly adjusted so "simple mesh" UI documentation 
-    // can use more friendly looking values.
-    // 
-    //  [0.0, ON_ZERO_TOLERANCE] -> 1 = ExtraCoarseDensity
-    //  (ON_ZERO_TOLERANCE, 0.20) -> 2 = CoarseDensity
-    //  [0.20, 0.35) -> 3 = MediumDensity
-    //  [0.35, 0.75] -> 4 = FineDensity
-    //  (0.75, 1 - ON_ZERO_TOLERANCE) -> 5 = ExtraFineDensity
-    //  [1 - ON_ZERO_TOLERANCE, 1.0] -> 6 = MaximumDensity
-    //  Invalid input -> ON_SubDDisplayParameters::DefaultDensity;
-    //
-    // If you make changes, you must provide name and YouTrack issues link so there is a clear
-    // history of the reasons the changes were made. You must also update the comments in the
-    // function declaration.
-    // Always include the SubD Rhino Logo in your tests.
-    //
-    // Be conservative about returning values > 4. 
-    // 5 generates 1024 mesh quads per subd quad and 6 generates 4096 mesh quads per subd quad.
-    //
-    // Values of subd_display_density < 4 are visibly chunky on simple subd models (spheres, Rhino subd logo, ...)
-    //
     if (normalized_mesh_density <= ON_ZERO_TOLERANCE)
       subd_display_density = ON_SubDDisplayParameters::ExtraCoarseDensity;
     else if (normalized_mesh_density < 0.20)
@@ -3361,27 +3421,69 @@ const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromMeshDensity(
       subd_display_density = ON_SubDDisplayParameters::MediumDensity;
     else if (normalized_mesh_density <= 0.75)
       subd_display_density = ON_SubDDisplayParameters::FineDensity;
-    else if (normalized_mesh_density <= 1.0 - ON_ZERO_TOLERANCE)
+    else if (normalized_mesh_density < 1.0 - ON_ZERO_TOLERANCE)
       subd_display_density = ON_SubDDisplayParameters::ExtraFineDensity;
-    else if (normalized_mesh_density >= 1.0 - ON_ZERO_TOLERANCE)
-      subd_display_density = ON_SubDDisplayParameters::MaximumDensity;
+    else if (normalized_mesh_density <= 1.0 + ON_ZERO_TOLERANCE)
+      subd_display_density = ON_SubDDisplayParameters::ExtraFineDensity;
+    else
+    {
+      ON_ERROR("Bug in some if condition in this function.");
+      subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
+    }
 
     return ON_SubDDisplayParameters::CreateFromDisplayDensity(subd_display_density);
   }
 
-  ON_ERROR("Invalid slider_value parameter.");
+  ON_ERROR("Invalid normalized_mesh_density parameter.");
   return ON_SubDDisplayParameters::Default;
+}
+
+bool ON_SubDDisplayParameters::DisplayDensityIsAdaptive() const
+{
+  return (false == m_bDisplayDensityIsAbsolute) ? true : false;
+}
+
+bool ON_SubDDisplayParameters::DisplayDensityIsAbsolute() const
+{
+  return (true == m_bDisplayDensityIsAbsolute) ? true : false;
 }
 
 unsigned int ON_SubDDisplayParameters::DisplayDensity() const
 {
-  return m_display_density;
+  // ON_SubDDisplayParameters::DisplayDensity() is deprecated.
+  // Use DisplayDensity(subd).
+  return DisplayDensity(ON_SubD::Empty); // Empty dispables reduction
 }
 
-void ON_SubDDisplayParameters::SetDisplayDensity(unsigned int display_density)
+unsigned int ON_SubDDisplayParameters::DisplayDensity(const ON_SubD& subd) const
 {
-  if (display_density <= ON_SubDDisplayParameters::MaximumDensity)
-    m_display_density = display_density;
+  const unsigned display_density = this->m_display_density;
+  return
+    this->DisplayDensityIsAdaptive() ?
+    ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(display_density, subd)
+    : display_density
+    ;
+}
+
+void ON_SubDDisplayParameters::SetDisplayDensity(unsigned int adaptive_display_density)
+{
+  SetAdaptiveDisplayDensity(adaptive_display_density);
+}
+
+void ON_SubDDisplayParameters::SetAdaptiveDisplayDensity(unsigned int adaptive_display_density)
+{
+  if (adaptive_display_density > ON_SubDDisplayParameters::MaximumDensity)
+    adaptive_display_density = ON_SubDDisplayParameters::MaximumDensity;
+  m_display_density = (unsigned char)adaptive_display_density;
+  m_bDisplayDensityIsAbsolute = false;
+}
+
+void ON_SubDDisplayParameters::SetAbsoluteDisplayDensity(unsigned int absolute_display_density)
+{
+  if (absolute_display_density > ON_SubDDisplayParameters::MaximumDensity)
+    absolute_display_density = ON_SubDDisplayParameters::MaximumDensity;
+  m_display_density = (unsigned char)absolute_display_density;
+  m_bDisplayDensityIsAbsolute = true;
 }
 
 ON_SubDComponentLocation ON_SubDDisplayParameters::MeshLocation() const
@@ -3396,9 +3498,12 @@ void ON_SubDDisplayParameters::SetMeshLocation(ON_SubDComponentLocation mesh_loc
 
 unsigned char ON_SubDDisplayParameters::EncodeAsUnsignedChar() const
 {
+  const unsigned char max_display_density = ((unsigned char)ON_SubDDisplayParameters::MaximumDensity);
+  const unsigned char default_display_density = ((unsigned char)ON_SubDDisplayParameters::DefaultDensity);
   unsigned char encoded_parameters;
   if (
-    ON_SubDDisplayParameters::Default.m_display_density == m_display_density
+    (default_display_density == m_display_density || m_display_density > max_display_density)
+    && ON_SubDDisplayParameters::Default.DisplayDensityIsAdaptive() == DisplayDensityIsAdaptive()
     && ON_SubDDisplayParameters::Default.MeshLocation() == MeshLocation()
     )
   {
@@ -3407,18 +3512,22 @@ unsigned char ON_SubDDisplayParameters::EncodeAsUnsignedChar() const
   }
   else
   {
-    const unsigned int density
-      = (m_display_density <= ON_SubDDisplayParameters::MaximumDensity)
+    const unsigned char density
+      = (m_display_density <= max_display_density)
       ? m_display_density
-      : ON_SubDDisplayParameters::DefaultDensity
+      : default_display_density
       ;
 
-    const unsigned char density_as_char
-      = ((unsigned char)(density & ((unsigned int)ON_SubDDisplayParameters::subd_mesh_density_mask)));
+    const unsigned char density_as_char = (density & ON_SubDDisplayParameters::subd_mesh_density_mask);
 
     const unsigned char location
       = (ON_SubDComponentLocation::ControlNet == MeshLocation())
       ? ON_SubDDisplayParameters::subd_mesh_location_bit
+      : 0;
+
+    const unsigned char absoute_density_as_char
+      = m_bDisplayDensityIsAbsolute
+      ? ON_SubDDisplayParameters::subd_mesh_absolute_density_bit
       : 0;
 
     const unsigned char nondefault_settings = ON_SubDDisplayParameters::subd_mesh_nondefault_bit;
@@ -3426,6 +3535,7 @@ unsigned char ON_SubDDisplayParameters::EncodeAsUnsignedChar() const
     encoded_parameters
       = nondefault_settings
       | density_as_char
+      | absoute_density_as_char
       | location
       ;
   }
@@ -3440,11 +3550,13 @@ const ON_SubDDisplayParameters ON_SubDDisplayParameters::DecodeFromUnsignedChar(
 
   if (0 != (ON_SubDDisplayParameters::subd_mesh_nondefault_bit & encoded_parameters))
   {
-    const unsigned char density = (ON_SubDDisplayParameters::subd_mesh_density_mask & encoded_parameters);
-    const unsigned char location = (ON_SubDDisplayParameters::subd_mesh_location_bit & encoded_parameters);
-    p.m_display_density = (unsigned int)density;
-    if (0 != location)
-      p.SetMeshLocation( ON_SubDComponentLocation::ControlNet );
+    const unsigned char density_is_absolute = (ON_SubDDisplayParameters::subd_mesh_absolute_density_bit & encoded_parameters);
+    const unsigned char density_as_char = (ON_SubDDisplayParameters::subd_mesh_density_mask & encoded_parameters);
+    const unsigned char location_ctrl_net = (ON_SubDDisplayParameters::subd_mesh_location_bit & encoded_parameters);
+    p.m_bDisplayDensityIsAbsolute = (0 != density_is_absolute) ? true : false;
+    p.m_display_density = density_as_char;
+    if (0 != location_ctrl_net)
+      p.SetMeshLocation(ON_SubDComponentLocation::ControlNet);
   }
 
   return p;

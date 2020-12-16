@@ -232,7 +232,7 @@ public:
           0 0 0 0
           0 0 0 1
 		An element of the matrix is "zero" if fabs(x) <= zero_tolerance.
-		IsZeroTolerance() is the same as IsZeroTransformation( 0.0 );
+		IsZeroTransformation() is the same as IsZeroTransformation( 0.0 );
   */
 	bool IsZeroTransformation() const;
 	bool IsZeroTransformation(double zero_tolerance ) const;

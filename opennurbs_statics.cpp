@@ -121,6 +121,24 @@ const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDS
 const ON_SubDSectorId ON_SubDSectorId::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDSectorId);
 const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
 
+const ON_SubDHash ON_SubDHash::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDHash);
+
+
+// {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
+const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
+{ 0xc3d8dd54, 0xf8c8, 0x4455, { 0xbb, 0xe, 0x2a, 0x2f, 0x49, 0x88, 0xec, 0x81 } };
+
+// ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
+// algoritm. If a new built-in algorithm is developed that produces generally 
+// better packings and is as fast and reliable as the current default, then
+// ON_SubD::DefaultFacePackingId can be changed. Under no circumstances, should
+// the default be changed to anything that is more than 1.5 times slower than 
+// the either the fast and simple or the current default on large models 
+// like the Mt St Helens Subd. 
+//
+// ** If it's not really fast, then it cannot be the the default. **
+const ON_UUID ON_SubD::DefaultFacePackingId = ON_SubD::FastAndSimpleFacePackingId;
+
 const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
 {
   ON_SubDToBrepParameters p;
@@ -944,6 +962,11 @@ static ON_MeshParameters Internal_ON_MeshParameters_Constants(
   // the change in a comment by the changed value. Include the previous value in
   // your comment. This is crtically important so we can keep track of what we are
   // trying to accomplish.
+  //
+  // You must also update the mesh parameters file reading code so that settings with old defaults
+  // are replaced with setting that have the new defaults AND old defaults get saved in earlier version
+  // 3dm files. This requires somebody with a solid understanding of how ON_MeshParameters::Read()/Write()
+  // works, how saving earlier versions of 3dm fiels works, and how reading old version files works.
 
   switch (selector)
   {
@@ -1043,10 +1066,22 @@ static ON_MeshParameters Internal_ON_MeshParameters_Constants(
     break;
 
   case 3: // ON_MeshParameters::DefaultAnalysisMesh
-          // 7 July 2006 Dale Lear
-          //    I switched from the default constructor to the density=0.5 constructor to fix RR 10330.
-    mp = ON_MeshParameters(0.5, ON_MeshParameters::DefaultMesh.MinimumEdgeLength());
+    // 7 July 2006 Dale Lear Rhino 5
+    //    I switched from the default constructor to the density=0.5 constructor to fix RR 10330.
+    //mp = ON_MeshParameters(0.5, ON_MeshParameters::DefaultMesh.MinimumEdgeLength());
+    //mp.SetTextureRange(1); // m_texture_range must be 1.  Do not change this setting.
+
+    // Rhino 6, 7 defaults;
+    mp = ON_MeshParameters(0.8, ON_MeshParameters::DefaultMesh.MinimumEdgeLength());
     mp.SetTextureRange(1); // m_texture_range must be 1.  Do not change this setting.
+    mp.SetGridAspectRatio(0.0);
+    mp.SetGridAngleRadians(20.0*ON_DEGREES_TO_RADIANS);
+    mp.SetGridAmplification(1.0);
+    mp.SetRefineAngleRadians(20.0 * ON_DEGREES_TO_RADIANS);
+    mp.SetComputeCurvature(true);
+    mp.SetGridMinCount(16);
+    mp.SetSubDDisplayParameters(ON_SubDDisplayParameters::Default);
+    mp.SetRefine(true);
 
     break;
   }
@@ -1070,6 +1105,52 @@ const ON_MeshParameters ON_MeshParameters::DefaultMesh = Internal_ON_MeshParamet
 const ON_MeshParameters ON_MeshParameters::FastRenderMesh = Internal_ON_MeshParameters_Constants(1);
 const ON_MeshParameters ON_MeshParameters::QualityRenderMesh = Internal_ON_MeshParameters_Constants(2);
 const ON_MeshParameters ON_MeshParameters::DefaultAnalysisMesh = Internal_ON_MeshParameters_Constants(3);
+
+bool ON_MeshParameters_AreValid()
+{
+  // This is a validation test to insure the code that sets default mesh parameters
+  // and the code that detects default mesh parameters works correctly.
+  // This validation test passes as of November 2020. If ON_ERROR() is called in this function
+  // it means new bugs have been introduced. These need to be fixed immediately in order to
+  // keep the code that generates display meshes working properly.
+  if (ON_MeshParameters::Type::Default != ON_MeshParameters::DefaultMesh.GeometrySettingsType())
+  {
+    ON_ERROR("ON_MeshParameters::DefaultMesh.GeometrySettingsType() returned an unexpected value.");
+    return false;
+  }
+  if (ON_MeshParameters::Type::FastRender != ON_MeshParameters::FastRenderMesh.GeometrySettingsType())
+  {
+    ON_ERROR("ON_MeshParameters::FastRenderMesh.GeometrySettingsType() returned an unexpected value.");
+    return false;
+  }
+  if (ON_MeshParameters::Type::QualityRender != ON_MeshParameters::QualityRenderMesh.GeometrySettingsType())
+  {
+    ON_ERROR("ON_MeshParameters::QualityRenderMesh.GeometrySettingsType() returned an unexpected value.");
+    return false;
+  }
+  if (ON_MeshParameters::Type::DefaultAnalysis != ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsType())
+  {
+    ON_ERROR("ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsType() returned an unexpected value.");
+    return false;
+  }
+  for (double normalized_mesh_density = 0.0; normalized_mesh_density <= 1.0; normalized_mesh_density += 0.125)
+  {
+    const ON_MeshParameters mp = ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density);
+    if (ON_MeshParameters::Type::FromMeshDensity != mp.GeometrySettingsType())
+    {
+      ON_ERROR("ON_MeshParameters::ON_MeshParameters::CreateFromMeshDensity(...).GeometrySettingsType() returned an unexpected value.");
+      return false;
+    }
+    if (normalized_mesh_density != mp.MeshDensity())
+    {
+      ON_ERROR("ON_MeshParameters::ON_MeshParameters::CreateFromMeshDensity(...).MeshDensity() returned an unexpected value.");
+      return false;
+    }
+  }
+  return true;
+}
+
+const static bool ON_MeshParameters_AreValid_ = ON_MeshParameters_AreValid();
 
 const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmUnitsAndTolerances);
 
@@ -1846,315 +1927,479 @@ static void Internal_SystemDimStyleFinalize(
   dimension_style.ContentHash();
 }
 
+// Static DimStyle definitions
+
+static void DimStyleDefaultInit(ON_DimStyle& ds)
+{
+  ds.SetExtExtension                     (0.5);
+  ds.SetExtOffset                        (0.5);
+  ds.SetArrowSize                        (1.0);
+  ds.SetLeaderArrowSize                  (1.0);
+  ds.SetCenterMark                       (0.5);
+  ds.SetCenterMarkStyle                  (ON_DimStyle::centermark_style::Mark);
+  ds.SetTextGap                          (0.25);
+  ds.SetTextHeight                       (1.0);
+  ds.SetDimTextLocation                  (ON_DimStyle::TextLocation::AboveDimLine);
+  ds.SetDimRadialTextLocation            (ON_DimStyle::TextLocation::InDimLine);
+  ds.SetAngleFormat                      (ON_DimStyle::angle_format::DecimalDegrees);
+  ds.SetAngleResolution                  (2);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::ModelUnits);
+  ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::ModelUnits);
+  ds.SetLengthResolution                 (2);
+  ds.SetAlternateLengthResolution        (2);
+  ds.SetLengthFactor                     (1.0);
+  ds.SetAlternateLengthFactor            (1.0);
+  ds.SetAlternate                        (false);
+  ds.SetForceDimLine                     (true);
+  ds.SetDecimalSeparator                 (L'.');
+  ds.SetPrefix                           (L"");
+  ds.SetSuffix                           (L"");
+  ds.SetAlternatePrefix                  (L" [");
+  ds.SetAlternateSuffix                  (L"]");
+  ds.SetDimExtension                     (0.0);
+  ds.SetSuppressExtension1               (false);
+  ds.SetSuppressExtension2               (false);
+  ds.SetToleranceFormat                  (ON_DimStyle::tolerance_format::None);
+  ds.SetToleranceResolution              (4);
+  ds.SetToleranceUpperValue              (0.0);
+  ds.SetToleranceLowerValue              (0.0);
+  ds.SetToleranceHeightScale             (1.0);
+  ds.SetBaselineSpacing                  (3.0);
+     ON_TextMask tm;
+  ds.SetTextMask                         (tm);
+  ds.SetDimScaleSource                   (0);
+  ds.SetExtensionLineColorSource         (ON::object_color_source::color_from_layer);
+  ds.SetDimensionLineColorSource         (ON::object_color_source::color_from_layer);
+  ds.SetArrowColorSource                 (ON::object_color_source::color_from_layer);
+  ds.SetTextColorSource                  (ON::object_color_source::color_from_layer);
+  ds.SetExtensionLineColor               (ON_Color(0));
+  ds.SetDimensionLineColor               (ON_Color(0));
+  ds.SetArrowColor                       (ON_Color(0));
+  ds.SetTextColor                        (ON_Color(0));
+  ds.SetExtensionLinePlotColorSource     (ON::plot_color_source::plot_color_from_layer);
+  ds.SetDimensionLinePlotColorSource     (ON::plot_color_source::plot_color_from_layer);
+  ds.SetArrowPlotColorSource             (ON::plot_color_source::plot_color_from_layer);
+  ds.SetTextPlotColorSource              (ON::object_color_source::color_from_layer);
+  ds.SetExtensionLinePlotColor           (ON_Color(0));
+  ds.SetDimensionLinePlotColor           (ON_Color(0));
+  ds.SetArrowPlotColor                   (ON_Color(0));
+  ds.SetTextPlotColor                    (ON_Color(0));
+  ds.SetExtensionLinePlotWeightSource    (ON::plot_weight_source::plot_weight_from_layer);
+  ds.SetDimensionLinePlotWeightSource    (ON::plot_weight_source::plot_weight_from_layer);
+  ds.SetExtensionLinePlotWeight          (0.0);
+  ds.SetDimensionLinePlotWeight          (0.0);
+  ds.SetFixedExtensionLen                (1.0);
+  ds.SetFixedExtensionLenOn              (false);
+  ds.SetTextRotation                     (0.0);
+  ds.SetAlternateLengthResolution        (4);
+  ds.SetToleranceHeightScale             (0.6);
+  ds.SetSuppressArrow1                   (false);
+  ds.SetSuppressArrow2                   (false);
+  ds.SetTextMoveLeader                   (0);
+  ds.SetArcLengthSymbol                  (L'\0');
+  ds.SetStackHeightScale                 (0.7);
+  ds.SetStackFractionFormat              (ON_DimStyle::stack_format::StackHorizontal);
+  ds.SetAlternateRoundOff                (0.0);
+  ds.SetRoundOff                         (0.0);
+  ds.SetAngleRoundOff                    (0.0);
+  ds.SetZeroSuppress                     (ON_DimStyle::suppress_zero::None);
+  ds.SetAlternateZeroSuppress            (ON_DimStyle::suppress_zero::None);
+  ds.SetAngleZeroSuppress                (ON_DimStyle::suppress_zero::None);
+  ds.SetAlternateBelow                   (false);
+  ds.SetArrowType1                       (ON_Arrowhead::arrow_type::SolidTriangle);
+  ds.SetArrowType2                       (ON_Arrowhead::arrow_type::SolidTriangle);
+  ds.SetLeaderArrowType                  (ON_Arrowhead::arrow_type::SolidTriangle);
+  ds.SetTextVerticalAlignment            (ON::TextVerticalAlignment::Top);
+  ds.SetTextHorizontalAlignment          (ON::TextHorizontalAlignment::Left);
+  ds.SetLeaderTextVerticalAlignment      (ON::TextVerticalAlignment::MiddleOfTop);
+  ds.SetLeaderTextHorizontalAlignment    (ON::TextHorizontalAlignment::Left);
+  ds.SetLeaderContentAngleStyle          (ON_DimStyle::ContentAngleStyle::Horizontal);
+  ds.SetLeaderCurveType                  (ON_DimStyle::leader_curve_type::Polyline);
+  ds.SetLeaderContentAngleRadians        (0.0);
+  ds.SetLeaderHasLanding                 (false);
+  ds.SetLeaderLandingLength              (1.0);
+  ds.SetDrawForward                      (true);
+  ds.SetSignedOrdinate                   (true);
+  ds.SetDimScale                         (1.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::None);
+  ds.SetTextOrientation                  (ON::TextOrientation::InPlane);
+  ds.SetLeaderTextOrientation            (ON::TextOrientation::InPlane);
+  ds.SetDimTextOrientation               (ON::TextOrientation::InPlane);
+  ds.SetDimRadialTextOrientation         (ON::TextOrientation::InPlane);
+  ds.SetDimTextAngleStyle                (ON_DimStyle::ContentAngleStyle::Aligned);
+  ds.SetDimRadialTextAngleStyle          (ON_DimStyle::ContentAngleStyle::Horizontal);
+  ds.SetTextUnderlined                   (false);
+}
+
+static void DimStyleMillimeterArchitecturalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (1.0);
+  ds.SetArrowSize                        (3.0);
+  ds.SetLeaderArrowSize                  (3.0);
+  ds.SetCenterMark                       (3.0);
+  ds.SetTextGap                          (1.0);
+  ds.SetTextHeight                       (3.0);
+  ds.SetAngleResolution                  (0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::InchesDecimal);
+  ds.SetLengthResolution                 (0);
+  ds.SetBaselineSpacing                  (9.0);
+  ds.SetArrowType1                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetArrowType2                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetLeaderArrowType                  (ON_Arrowhead::arrow_type::OpenArrow);
+  ds.SetDimScale                         (100.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
+}
+
+static void DimStyleMillimeterLargeInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (1.0);
+  ds.SetArrowSize                        (3.5);
+  ds.SetLeaderArrowSize                  (3.5);
+  ds.SetCenterMark                       (3.5);
+  ds.SetTextGap                          (1.0);
+  ds.SetTextHeight                       (3.5);
+  ds.SetAngleResolution                  (0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::InchesDecimal);
+  ds.SetLengthResolution                 (1);
+  ds.SetToleranceHeightScale             (1.0);
+  ds.SetBaselineSpacing                  (10.5);
+  ds.SetLeaderLandingLength              (3.5);
+  ds.SetDimScale                         (100.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
+}
+
+static void DimStyleMillimeterSmallInit (ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (1.0);
+  ds.SetArrowSize                        (3.0);
+  ds.SetLeaderArrowSize                  (3.0);
+  ds.SetCenterMark                       (2.5);
+  ds.SetTextGap                          (0.8);
+  ds.SetTextHeight                       (2.5);
+  ds.SetAngleResolution                  (1);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::InchesDecimal);
+  ds.SetBaselineSpacing                  (7.5);
+  ds.SetLeaderLandingLength              (2.5);
+  ds.SetDimScale                         (10.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
+}
+
+static void DimStyleInchDecimalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (0.125);
+  ds.SetExtOffset                        (0.0625);
+  ds.SetArrowSize                        (0.125);
+  ds.SetLeaderArrowSize                  (0.125);
+  ds.SetCenterMark                       (0.25);
+  ds.SetTextGap                          (0.0625);
+  ds.SetTextHeight                       (0.125);
+  ds.SetAngleResolution                  (0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::InchesDecimal);
+  ds.SetToleranceHeightScale             (1.0);
+  ds.SetBaselineSpacing                  (0.38);
+  ds.SetLeaderLandingLength              (0.125);
+  ds.SetDimScale                         (10.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleInchFractionalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (0.125);
+  ds.SetExtOffset                        (0.0625);
+  ds.SetArrowSize                        (0.1);
+  ds.SetLeaderArrowSize                  (0.1);
+  ds.SetCenterMark                       (0.25);
+  ds.SetTextGap                          (0.0625);
+  ds.SetTextHeight                       (0.125);
+  ds.SetAngleResolution                  (1);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::InchesFractional);
+  ds.SetLengthResolution                 (4);
+  ds.SetDimExtension                     (0.1);
+  ds.SetBaselineSpacing                  (0.38);
+  ds.SetArrowType1                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetArrowType2                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetLeaderArrowType                  (ON_Arrowhead::arrow_type::OpenArrow);
+  ds.SetLeaderLandingLength              (0.125);
+  ds.SetDimScale                         (12.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleFootInchArchitecturalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (0.125);
+  ds.SetExtOffset                        (0.0625);
+  ds.SetArrowSize                        (0.1);
+  ds.SetLeaderArrowSize                  (0.1);
+  ds.SetCenterMark                       (0.25);
+  ds.SetTextGap                          (0.0625);
+  ds.SetTextHeight                       (0.125);
+  ds.SetAngleResolution                  (0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::FeetAndInches);
+  ds.SetAlternateLengthResolution        (1);
+  ds.SetBaselineSpacing                  (0.38);
+  ds.SetZeroSuppress                     (ON_DimStyle::suppress_zero::SuppressZeroFeet);
+  ds.SetArrowType1                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetArrowType2                       (ON_Arrowhead::arrow_type::Tick);
+  ds.SetLeaderArrowType                  (ON_Arrowhead::arrow_type::OpenArrow);
+  ds.SetLeaderLandingLength              (0.125);
+  ds.SetDimScale                         (96.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleFeetDecimalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (0.125);
+  ds.SetExtOffset                        (0.0625);
+  ds.SetArrowSize                        (0.125);
+  ds.SetLeaderArrowSize                  (0.125);
+  ds.SetCenterMark                       (0.25);
+  ds.SetTextGap                          (0.0625);
+  ds.SetTextHeight                       (0.125);
+  ds.SetAngleResolution                  (0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::FeetDecimal);
+  ds.SetBaselineSpacing                  (0.38);
+  ds.SetLeaderLandingLength              (0.125);
+  ds.SetDimScale                         (12.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleModelUnitsDecimalInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (0.125);
+  ds.SetExtOffset                        (0.0625);
+  ds.SetArrowSize                        (0.125);
+  ds.SetLeaderArrowSize                  (0.125);
+  ds.SetCenterMark                       (0.25);
+  ds.SetTextGap                          (0.0625);
+  ds.SetTextHeight                       (0.125);
+  ds.SetAngleResolution                  (0);
+  ds.SetBaselineSpacing                  (0.38);
+  ds.SetLeaderLandingLength              (0.125);
+  ds.SetDimScale                         (10.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleFeetEngraveInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::FeetDecimal);
+  ds.SetTextVerticalAlignment            (ON::TextVerticalAlignment::Bottom);
+  ds.SetDimScale                         (12.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+static void DimStyleMillimeterEngraveInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetExtExtension                     (1.5);
+  ds.SetExtOffset                        (1.5);
+  ds.SetArrowSize                        (3.0);
+  ds.SetLeaderArrowSize                  (3.0);
+  ds.SetCenterMark                       (1.5);
+  ds.SetTextGap                          (0.75);
+  ds.SetTextHeight                       (3.0);
+  ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetBaselineSpacing                  (9.0);
+  ds.SetFixedExtensionLen                (3.0);
+  ds.SetLeaderLandingLength              (3.0);
+  ds.SetDimScale                         (10.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
+}
+
+static void DimStyleModelUnitsEngraveInit(ON_DimStyle& ds)
+{
+  DimStyleDefaultInit(ds);
+  ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetToleranceHeightScale             (1.0);
+  ds.SetTextVerticalAlignment            (ON::TextVerticalAlignment::Bottom);
+  ds.SetDimScale                         (10.0);
+  ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
+}
+
+
 static ON_DimStyle DimStyleDefault()
 {
-  // {25B90869-0022-4E04-B498-98B4175F65FD}
   const ON_UUID id =
   { 0x25b90869, 0x22, 0x4e04,{ 0xb4, 0x98, 0x98, 0xb4, 0x17, 0x5f, 0x65, 0xfd } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Default", -1, id, dimstyle);
-
+  DimStyleDefaultInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
 static ON_DimStyle DimStyleInchDecimal()
 {
-  const ON_UUID id = { 0x2105610c, 0xcfc7, 0x4473,{ 0xa5, 0x80, 0xc3, 0xd9, 0xc, 0xe8, 0xc7, 0xa3 } };
+  const ON_UUID id =
+  { 0x2105610c, 0xcfc7, 0x4473,{ 0xa5, 0x80, 0xc3, 0xd9, 0xc, 0xe8, 0xc7, 0xa3 } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Inch Decimal", -2, id, dimstyle);
-
-  //dimstyle.SetDimScale(10.0);
-  dimstyle.SetDimScale(1.0, ON::LengthUnitSystem::Inches, 10.0, ON::LengthUnitSystem::Inches);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Inches);
-
-  dimstyle.SetExtExtension(0.125);
-  dimstyle.SetExtOffset(0.0625);
-  dimstyle.SetArrowSize(0.125);
-  dimstyle.SetCenterMark(0.25);
-  dimstyle.SetTextGap(0.0625);
-  dimstyle.SetTextHeight(0.125);
-  dimstyle.SetBaselineSpacing(0.375);
-
-
-  dimstyle.SetDimTextLocation(ON_DimStyle::TextLocation::AboveDimLine);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::SolidTriangle);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::SolidTriangle);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::InchesDecimal);
-  dimstyle.SetLengthResolution(2);
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(0);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::InchesDecimal);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-  dimstyle.SetDimExtension(0.0);
-
-  dimstyle.SetLeaderArrowSize(0.125);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::SolidTriangle);
-  dimstyle.SetLeaderLandingLength(0.125);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleInchDecimalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
-
 
 static ON_DimStyle DimStyleInchFractional()
 {
-  const ON_UUID id = { 0x6bcb1506, 0x699f, 0x445d,{ 0xa1, 0x22, 0x4f, 0xc7, 0x78, 0x2b, 0xc4, 0x86 } };
+  const ON_UUID id =
+  { 0x6bcb1506, 0x699f, 0x445d,{ 0xa1, 0x22, 0x4f, 0xc7, 0x78, 0x2b, 0xc4, 0x86 } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Inch Fractional", -3, id, dimstyle);
-
-  //dimstyle.SetDimScale(12.0);
-  dimstyle.SetDimScale(1.0, ON::LengthUnitSystem::Inches, 1.0, ON::LengthUnitSystem::Feet);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Inches);
-
-  dimstyle.SetExtExtension(0.125);
-  dimstyle.SetExtOffset(0.0625);
-  dimstyle.SetArrowSize(0.1);
-  dimstyle.SetCenterMark(0.25);
-  dimstyle.SetTextGap(0.0625);
-  dimstyle.SetTextHeight(0.125);
-  dimstyle.SetBaselineSpacing(0.375);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::Tick);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::Tick);
-
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(1);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::InchesFractional);
-  dimstyle.SetLengthResolution(4);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-  dimstyle.SetDimExtension(0.1);
-
-  dimstyle.SetLeaderArrowSize(0.1);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::SolidTriangle);
-  dimstyle.SetLeaderLandingLength(0.125);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleInchFractionalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-
-static ON_DimStyle DimStyleFootInchArchitecture()
+static ON_DimStyle DimStyleFootInchArchitectural()
 {
-  const ON_UUID id = { 0x50d6ef1b, 0xd1d0, 0x408a,{ 0x86, 0xc0, 0xee, 0x8b, 0x36, 0x8, 0x88, 0x3e } };
+  const ON_UUID id =
+  { 0x50d6ef1b, 0xd1d0, 0x408a,{ 0x86, 0xc0, 0xee, 0x8b, 0x36, 0x8, 0x88, 0x3e } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Foot-Inch Architectural", -4, id, dimstyle);
-
-  //dimstyle.SetDimScale(96.0);
-  dimstyle.SetDimScale(0.125, ON::LengthUnitSystem::Inches, 1.0, ON::LengthUnitSystem::Feet);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Inches);
-
-  dimstyle.SetExtExtension(0.125);
-  dimstyle.SetExtOffset(0.0625);
-  dimstyle.SetArrowSize(0.1);
-  dimstyle.SetCenterMark(0.25);
-  dimstyle.SetTextGap(0.0625);
-  dimstyle.SetTextHeight(0.125);
-  dimstyle.SetBaselineSpacing(0.375);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::Tick);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::Tick);
-
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(0);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::FeetAndInches);
-  dimstyle.SetLengthResolution(3);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-  dimstyle.SetDimExtension(0.1);
-
-  dimstyle.SetLeaderArrowSize(0.1);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::SolidTriangle);
-  dimstyle.SetLeaderLandingLength(0.125);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleFootInchArchitecturalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
-
 
 static ON_DimStyle DimStyleMillimeterSmall()
 {
-  const ON_UUID id = { 0xdbe22573, 0x8cad, 0x4ced,{ 0x89, 0x47, 0x3, 0xa0, 0x48, 0xed, 0xde, 0x56 } };
+  const ON_UUID id =
+  { 0xdbe22573, 0x8cad, 0x4ced,{ 0x89, 0x47, 0x3, 0xa0, 0x48, 0xed, 0xde, 0x56 } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Millimeter Small", -5, id, dimstyle);
-
-  //dimstyle.SetDimScale(10.0);
-  dimstyle.SetDimScale(1.0, ON::LengthUnitSystem::Millimeters, 10.0, ON::LengthUnitSystem::Millimeters);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Millimeters);
-
-  dimstyle.SetExtExtension(1.0);
-  dimstyle.SetExtOffset(0.5);
-  dimstyle.SetArrowSize(3.0);
-  dimstyle.SetCenterMark(2.5);
-  dimstyle.SetTextGap(0.8);
-  dimstyle.SetTextHeight(2.5);
-  dimstyle.SetBaselineSpacing(7.5);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::OpenArrow);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::OpenArrow);
-
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(1);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::Millmeters);
-  dimstyle.SetLengthResolution(2);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-  dimstyle.SetDimExtension(0.0);
-
-  dimstyle.SetLeaderArrowSize(3.0);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::OpenArrow);
-  dimstyle.SetLeaderLandingLength(3.0);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleMillimeterSmallInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
-
 
 static ON_DimStyle DimStyleMillimeterLarge()
 {
-  const ON_UUID id = { 0xf7b30534, 0x773e, 0x45bc,{ 0x9d, 0x87, 0x9d, 0x14, 0x80, 0x9c, 0x96, 0x44 } };
+  const ON_UUID id =
+  { 0xf7b30534, 0x773e, 0x45bc,{ 0x9d, 0x87, 0x9d, 0x14, 0x80, 0x9c, 0x96, 0x44 } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Millimeter Large", -6, id, dimstyle);
-
-  //dimstyle.SetDimScale(100.0);
-  dimstyle.SetDimScale(1.0, ON::LengthUnitSystem::Millimeters, 100.0, ON::LengthUnitSystem::Millimeters);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Millimeters);
-
-  dimstyle.SetExtExtension(1.0);
-  dimstyle.SetExtOffset(0.5);
-  dimstyle.SetArrowSize(3.5);
-  dimstyle.SetCenterMark(3.5);
-  dimstyle.SetTextGap(1.0);
-  dimstyle.SetTextHeight(3.5);
-  dimstyle.SetBaselineSpacing(10.5);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::OpenArrow);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::OpenArrow);
-
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(0);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::Millmeters);
-  dimstyle.SetLengthResolution(1);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-
-  dimstyle.SetDimExtension(0.0);
-
-  dimstyle.SetLeaderArrowSize(3.5);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::OpenArrow);
-  dimstyle.SetLeaderLandingLength(3.5);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleMillimeterLargeInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-
-static ON_DimStyle DimStyleMillimeterArchitecture()
+static ON_DimStyle DimStyleMillimeterArchitectural()
 {
-  const ON_UUID id = { 0xe5a4c08f, 0x23b3, 0x4033,{ 0x90, 0xb2, 0xfb, 0x31, 0xec, 0x45, 0x92, 0x9b } };
+  const ON_UUID id =
+  { 0xe5a4c08f, 0x23b3, 0x4033,{ 0x90, 0xb2, 0xfb, 0x31, 0xec, 0x45, 0x92, 0x9b } };
 
   ON_DimStyle dimstyle;
   DimStyleInit(L"Millimeter Architectural", -7, id, dimstyle);
-  dimstyle.SetUnitSystem(ON::LengthUnitSystem::Millimeters);
-
-  //dimstyle.SetDimScale(100.0);
-  dimstyle.SetDimScale(1.0, ON::LengthUnitSystem::Millimeters, 100.0, ON::LengthUnitSystem::Millimeters);
-
-  dimstyle.SetExtExtension(1.0);
-  dimstyle.SetExtOffset(0.5);
-  dimstyle.SetArrowSize(3.0);
-  dimstyle.SetCenterMark(3.0);
-  dimstyle.SetTextGap(1.0);
-  dimstyle.SetTextHeight(3.0);
-  dimstyle.SetBaselineSpacing(9.0);
-
-  dimstyle.SetArrowType1(ON_Arrowhead::arrow_type::Tick);
-  dimstyle.SetArrowType2(ON_Arrowhead::arrow_type::Tick);
-
-  dimstyle.SetAngleFormat(ON_DimStyle::angle_format::DecimalDegrees);
-  dimstyle.SetAngleResolution(0);
-
-  dimstyle.SetDimensionLengthDisplay(ON_DimStyle::LengthDisplay::Millmeters);
-  dimstyle.SetLengthResolution(0);
-  dimstyle.SetLengthFactor(1.0);
-  dimstyle.SetAlternate(false);
-  dimstyle.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::ModelUnits);
-  dimstyle.SetAlternateLengthResolution(2);
-  dimstyle.SetAlternateLengthFactor(1.0);
-
-
-  dimstyle.SetDimExtension(1.5);
-
-  dimstyle.SetLeaderArrowSize(3.0);
-  dimstyle.SetLeaderArrowType(ON_Arrowhead::arrow_type::OpenArrow);
-  dimstyle.SetLeaderLandingLength(3.0);
-
-  //ValidateCpyStuff(dimstyle);
-
+  DimStyleMillimeterArchitecturalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
+static ON_DimStyle DimStyleFeetDecimal()
+{
+  // {6F4B1840-8A12-4DE9-BF84-6A98B06C508D}
+  const ON_UUID id =
+  { 0x6f4b1840, 0x8a12, 0x4de9, { 0xbf, 0x84, 0x6a, 0x98, 0xb0, 0x6c, 0x50, 0x8d } };
+
+  ON_DimStyle dimstyle;
+  DimStyleInit(L"Feet Decimal", -8, id, dimstyle);
+  DimStyleFeetDecimalInit(dimstyle);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
+
+static ON_DimStyle DimStyleModelUnitsDecimal()
+{
+  const ON_UUID id =
+  { 0x93a38bdf, 0x4c1c, 0x428c, { 0x8b, 0x97, 0x93, 0x59, 0xf1, 0xbd, 0xed, 0x17 } };
+
+  ON_DimStyle dimstyle;
+  DimStyleInit(L"Model Units Decimal", -9, id, dimstyle);
+  DimStyleModelUnitsDecimalInit(dimstyle);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
+
+static ON_DimStyle DimStyleFeetEngrave()
+{
+  const ON_UUID id =
+  { 0xc2d8846b, 0x918d, 0x4779, { 0x96, 0xec, 0x31, 0xb4, 0xe2, 0x75, 0xfb, 0x4e } };
+
+  ON_DimStyle dimstyle;
+  DimStyleInit(L"Feet Engrave", -10, id, dimstyle);
+  DimStyleFeetEngraveInit(dimstyle);
+  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  if (nullptr != font)
+    dimstyle.SetFont(*font);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
+
+static ON_DimStyle DimStyleMillimeterEngrave()
+{
+  const ON_UUID id =
+  { 0x741980ff, 0xde0f, 0x4ed7, { 0xaa, 0x6f, 0xee, 0x91, 0xb3, 0xbe, 0x96, 0xc6 } };
+
+  ON_DimStyle dimstyle;
+  DimStyleInit(L"Millimeter Engrave", -11, id, dimstyle);
+  DimStyleMillimeterEngraveInit(dimstyle);
+  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  if (nullptr != font)
+    dimstyle.SetFont(*font);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
+
+static ON_DimStyle DimStyleModelUnitsEngrave()
+{
+  const ON_UUID id =
+  { 0x2cc3a895, 0x5389, 0x467e, { 0x9d, 0xbe, 0x3a, 0xca, 0xb4, 0x38, 0x60, 0xfa } };
+
+  ON_DimStyle dimstyle;
+  DimStyleInit(L"Model Units Engrave", -12, id, dimstyle);
+  DimStyleModelUnitsEngraveInit(dimstyle);
+  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  if (nullptr != font)
+    dimstyle.SetFont(*font);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
 
 const ON_DimStyle ON_DimStyle::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimStyle);
+
 const ON_DimStyle ON_DimStyle::Default(DimStyleDefault());
+
 const ON_DimStyle ON_DimStyle::DefaultInchDecimal(DimStyleInchDecimal());
 const ON_DimStyle ON_DimStyle::DefaultInchFractional(DimStyleInchFractional());
-const ON_DimStyle ON_DimStyle::DefaultFootInchArchitecture(DimStyleFootInchArchitecture());
+const ON_DimStyle ON_DimStyle::DefaultFootInchArchitecture(DimStyleFootInchArchitectural());
+
 const ON_DimStyle ON_DimStyle::DefaultMillimeterSmall(DimStyleMillimeterSmall());
 const ON_DimStyle ON_DimStyle::DefaultMillimeterLarge(DimStyleMillimeterLarge());
-const ON_DimStyle ON_DimStyle::DefaultMillimeterArchitecture(DimStyleMillimeterArchitecture());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterArchitecture(DimStyleMillimeterArchitectural());
+
+const ON_DimStyle ON_DimStyle::DefaultFeetDecimal(DimStyleFeetDecimal());
+const ON_DimStyle ON_DimStyle::DefaultModelUnitsDecimal(DimStyleModelUnitsDecimal());
+
+const ON_DimStyle ON_DimStyle::DefaultFeetEngrave(DimStyleFeetEngrave());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterEngrave(DimStyleMillimeterEngrave());
+const ON_DimStyle ON_DimStyle::DefaultModelUnitsEngrave(DimStyleModelUnitsEngrave());
 
 const ON_StackedText ON_StackedText::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_StackedText);
 const ON_TextRun ON_TextRun::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextRun);
@@ -2723,7 +2968,12 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_DimStyle::DefaultMillimeterSmall,
       &ON_DimStyle::DefaultMillimeterLarge,
       &ON_DimStyle::DefaultMillimeterArchitecture,
-
+      &ON_DimStyle::DefaultFeetDecimal,
+      &ON_DimStyle::DefaultModelUnitsDecimal,
+      &ON_DimStyle::DefaultFeetEngrave,
+      &ON_DimStyle::DefaultMillimeterEngrave,
+      &ON_DimStyle::DefaultModelUnitsEngrave,
+ 
       &ON_HatchPattern::Solid,
       &ON_HatchPattern::Hatch1,
       &ON_HatchPattern::Hatch2,

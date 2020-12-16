@@ -725,6 +725,14 @@ public:
         int j
         ) const;
 
+  double* CV(
+    ON_2dex cvdex
+  ) const;
+
+  double* CV(
+    ON_2udex cvdex
+  ) const;
+
   /*
   Parameters:
     i - [in]

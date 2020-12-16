@@ -346,6 +346,29 @@ public:
     bool bRequireSetOverrides
   ) const;
 
+
+  /*
+  Description:
+    Conceptually, calling this function applies ON_DimsStyle(scale) to the 
+    dimstyle information used for this annotation. 
+    
+    When an annotation object is in **layout/page space**, this is
+    the only way top get properties like TextHeight() to scale properly. 
+    
+    When an annotation object is in **model space** and 
+    **model space scaling is enabled**,
+    then calling this->SetDimScale(this->DimScale()*scale)
+    will work as well.
+
+  Parameters:
+    parent_dimstyle - [in]
+    scale - [in]
+  */
+  void ScaleOverrideDimstyle(
+    const ON_DimStyle* parent_dimstyle,
+    double scale
+  );
+
 protected:
   static bool Internal_IsOverrideDimStyleCandidate(
     const ON_DimStyle* override_style_candidate,
@@ -432,7 +455,11 @@ public:
   ) const;
 
   // These functions are being added to continue the V5 behavior of
-  // per-object text scaling
+  // per-object text scaling. There is no user interface
+  // in V6 or V7 that shows this setting or that allows a user
+  // to change this setting.
+  // AllowTextScaling() = false means the effective dimstyle value 
+  // of DimScale() (model space scale factor) is ignored (treated as if it were 1).
   bool AllowTextScaling() const;
   void SetAllowTextScaling(bool scale);
 

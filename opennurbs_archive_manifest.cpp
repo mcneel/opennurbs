@@ -698,7 +698,18 @@ ON_NameHash ON_NameHash::Create(
       {
         for (int i = 0; i < UTF32_count; i++)
         {
-          sUTF32[i] = ON_UnicodeMapCodePointOrdinal(ON_StringMapOrdinalType::MinimumOrdinal, sUTF32[i]);
+          if (ON_IsUnicodeSpaceCodePoint(sUTF32[i]))
+            sUTF32[i] = ON_UnicodeCodePoint::ON_Space;
+          else
+            sUTF32[i] = ON_UnicodeMapCodePointOrdinal(ON_StringMapOrdinalType::MinimumOrdinal, sUTF32[i]);
+        }
+      }
+      else
+      {
+        for (int i = 0; i < UTF32_count; i++)
+        {
+          if (ON_IsUnicodeSpaceCodePoint(sUTF32[i]))
+            sUTF32[i] = ON_UnicodeCodePoint::ON_Space;
         }
       }
 

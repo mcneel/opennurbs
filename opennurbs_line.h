@@ -321,6 +321,7 @@ public:
 	ON_Triangle(const ON_3dPoint vertices[3]);
 	ON_Triangle(const ON_3dPoint& a, const ON_3dPoint& b, const ON_3dPoint& c);
 	ON_Triangle(double x);					// Allows Triangle(0.0)  ZeroTriangle 
+  ON_Triangle(const double vertices[9]);
 
 	ON_Triangle(const ON_Triangle& tri) = default;
 	ON_Triangle& operator=(const ON_Triangle& tri) = default;
@@ -472,6 +473,24 @@ public:
 	*/
 	bool ClosestPointTo(
 		const ON_3dPoint& test_point,
+		double* s1, double *s2
+	) const;
+
+  	/*
+	Description:
+		Find the point that is closest to the test_point.
+	Parameters:
+		test_point - [in]
+    constrainInside[in] - if true, variable are inside triangle
+		s1, s2 - [out]	PointAt( *s1, *s2) is the point on the
+										triangle  closest to test_point.
+
+	Returns:
+		true if successful.
+	*/
+	bool GetBarycentricCoordinates(
+		const ON_3dPoint& test_point,
+    bool constrainInside,
 		double* s1, double *s2
 	) const;
 

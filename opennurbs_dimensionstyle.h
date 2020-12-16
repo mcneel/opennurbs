@@ -262,6 +262,11 @@ public:
   static const ON_DimStyle DefaultMillimeterSmall;        // index = -5, unique and persistent id.
   static const ON_DimStyle DefaultMillimeterLarge;        // index = -6, unique and persistent id.
   static const ON_DimStyle DefaultMillimeterArchitecture; // index = -7, unique and persistent id.
+  static const ON_DimStyle DefaultFeetDecimal;            // index = -8, unique and persistent id.
+  static const ON_DimStyle DefaultFeetEngrave;            // index = -9, unique and persistent id.
+  static const ON_DimStyle DefaultMillimeterEngrave;      // index = -10, unique and persistent id.
+  static const ON_DimStyle DefaultModelUnitsDecimal;      // index = -11, unique and persistent id.
+  static const ON_DimStyle DefaultModelUnitsEngrave;      // index = -12, unique and persistent id.
 
 public:
   /*
@@ -1586,7 +1591,7 @@ public:
       In Rhino, use CRhinoDoc.DimStyleContext() to get an ON_DimStyleContext.
       In an ONX_Model, use ONX_Model.DimStyleContext() to get an ON_DimStyleContext.
       In other situations, you can pass on of the system dimstyles like
-      ON_DimStyle::DefaultMillimeterSmall or ON_DimStyle::DefaultMillimeterArchitecture.
+      ON_DimStyle::DefaultMillimeterSmall or ON_DimStyle::DefaultMillimeterArchitectural.
       The worst possible choices are ON_DimStyle::Default or ON_DimStyle::Unset.
     annotation_type - [in]
       ON::AnnotationType::Unset if style will be used for multiple types of annotation
@@ -1965,16 +1970,46 @@ public:
   void SetSignedOrdinate(bool allowsigned);
 
   /// <summary>
-  /// Unit system for dimension rendering sizes like  TextHeight, TextGap, ArrowSize, ExtOffset,
-  /// and dozens of other properties that control the appearance and placement of the components
-  /// used to render a dimension.
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
   ///</summary>
   ON::LengthUnitSystem UnitSystem() const;
 
   /// <summary>
-  /// Unit system for dimension rendering sizes like  TextHeight, TextGap, ArrowSize, ExtOffset,
-  /// and dozens of other properties that control the appearance and placement of the components
-  /// used to render a dimension.
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
   ///</summary>
   void SetUnitSystem(ON::LengthUnitSystem us);
 
@@ -1983,17 +2018,17 @@ public:
     When a dimension style unit system is not set,
     this function examines the context the dimension style is
     being used in and sets the unit system.
+    Ideally, both source_unit_system and destination_unit_system are page space units.
+    Less ideally, both source_unit_system and destination_unit_system are model space units.
   Parameters:
     bUseName - [in]
       Consider the name when assinging a unit system.
       For example, a dimension style name "Millimters Small" would 
       be assinged a unit system of millimeters.
     source_unit_system - [in]
-      unit system in the model or file where the dimension
-      style originated.
+      unit system in the context where the dimension style originated.
     destination_unit_system - [in]
-      unit system in the model or file where the dimension
-      style will be used.
+      unit system in the context where the dimension style will be used.
   */
   void SetUnitSystemFromContext(
     bool bUseName,
@@ -2002,6 +2037,24 @@ public:
   );
 
   /*
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size,
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ...
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  ///
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
   Returns:
     true if the unit system is set to an explicit valid length unit.
   */
@@ -2335,11 +2388,25 @@ private:
 
   ON_ScaleValue       m_scale_value                = ON_ScaleValue::OneToOne;
 
-  // Unit system for dimension rendering sizes like text height, and arrow head length.
-  // m_textheight, m_textgap, m_arrowsize, m_extoffset, and dozens of other properties
-  // that control the appearance and placement of the components used to render
-  // a dimension.
-  ON::LengthUnitSystem m_unitsystem                = ON::LengthUnitSystem::None;
+  /// NOTE WELL: A dimstyle unit system was added in V6, but has never been fully used.
+  /// The idea was this would make it easier to figure out what text height/ arrow size, 
+  /// ... actually meant. Especially in situations where model space and page space have
+  /// different unit systems, and in more complex cases like text in instance definitions
+  /// and inserting annotation from models with mismatched unit systems.
+  /// It is used internally to get some scales properly set and use in limited
+  /// merging contexts.
+  ///   
+  /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
+  /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
+  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// text created in model space will be 3.5 meters high and
+  /// text created in page space will be 3.5 millimeters high.
+  /// 
+  /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
+  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// Text in instance definitions would have a well defined height and references
+  /// to those instance defintions would display predictably in both model space and page space.
+  ON::LengthUnitSystem m_dimstyle_unitsystem                    = ON::LengthUnitSystem::None;
 
   ON::TextOrientation m_text_orientation                        = ON::TextOrientation::InPlane;
   ON::TextOrientation m_leader_text_orientation                 = ON::TextOrientation::InPlane;

@@ -2237,6 +2237,14 @@ public:
     BoldItalic = 4
   };
 
+  static const ON_wString MemberToString(
+    ON_FontFaceQuartet::Member member
+  );
+
+  static ON_FontFaceQuartet::Member MemberFromUnsigned(
+    unsigned int member_as_unsigned
+  );
+
   ON_FontFaceQuartet() = default;
   ~ON_FontFaceQuartet() = default;
   ON_FontFaceQuartet(const ON_FontFaceQuartet&) = default;

@@ -606,6 +606,9 @@ public:
     ON_2udex vertex_id_range,
     ON_2udex edge_id_range,
     ON_2udex face_id_range,
+    ON_SubDVertexIdIterator& vidit,
+    ON_SubDEdgeIdIterator& eidit,
+    ON_SubDFaceIdIterator& fidit,
     ON_TextLog& text_log
   ) const;
 
@@ -1429,11 +1432,13 @@ public:
       The fragment grid must be 16x16 or 8x8.
   */
   class ON_SubDMeshFragment* AllocateMeshFragment(
+    unsigned subd_display_density,
     const class ON_SubDMeshFragment& src_fragment
   );
 
   class ON_SubDMeshFragment* CopyMeshFragments(
     const class ON_SubDFace* source_face,
+    unsigned destination_subd_display_density,
     const class ON_SubDFace* destination_face
   );
 
@@ -1572,15 +1577,30 @@ private:
   // 
   // 16x16 ON_SubDMeshFragment
   // 8x8 ON_SubDMeshFragment
+  // 4x4 ON_SubDMeshFragment
+  // 2x2 ON_SubDMeshFragment
+  // 1x1 ON_SubDMeshFragment
   // ON_SubDEdgeSurfaceCurve
   bool Internal_InitializeLimitBlockPool();
   ON_FixedSizePool m_limit_block_pool;
-  // Used to allocate 16x16 fragments for quads
-  size_t m_sizeof_full_fragment = 0;
-  class ON_FixedSizePoolElement* m_unused_full_fragments = nullptr;
-  // Used to allocate 8x8 fragments for N-gons with N != 4
-  size_t m_sizeof_half_fragment = 0;
-  class ON_FixedSizePoolElement* m_unused_half_fragments = nullptr;
+
+  // m_sizeof_fragment[i] = sizeof of a fragment NxN mesh quads where N = 2^i
+  // m_sizeof_fragment[0] = sizeof of a fragment with 1x1 mesh quads.
+  // m_sizeof_fragment[1] = sizeof of a fragment with 2x2 mesh quads.
+  // m_sizeof_fragment[2] = sizeof of a fragment with 4x4 mesh quads.
+  // m_sizeof_fragment[3] = sizeof of a fragment with 8x8 mesh quads.
+  // m_sizeof_fragment[4] = sizeof of a fragment with 16x16 mesh quads.
+  // ...
+  size_t m_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity + 1] = {};
+
+  // m_unused_fragments[0] = unused 1x1 mesh quad fragments.
+  // m_unused_fragments[1] = unused 2x2 mesh quad fragments.
+  // m_unused_fragments[2] = unused 4x4 mesh quad fragments.
+  // m_unused_fragments[3] = unused 8x8 mesh quad fragments.
+  // m_unused_fragments[4] = unused 16x16 mesh quad fragments.
+  // ...
+  class ON_FixedSizePoolElement* m_unused_fragments[ON_SubDDisplayParameters::MaximumDensity + 1] = {};
+
   // Used to allocate edge curves
   size_t m_sizeof_limit_curve = 0;
   class ON_FixedSizePoolElement* m_unused_limit_curves = nullptr;
@@ -1668,6 +1688,12 @@ public:
   */
   ON__UINT64 GeometryContentSerialNumber() const;
 
+  const ON_SubDHash SubDHash(
+    ON_SubDHashType hash_type,
+    const ON_SubD& parent_subd,
+    bool bForceUpdate
+    ) const;
+
   /*
   Returns:
     A runtime serial number that is incremented every time a component status
@@ -1725,6 +1751,8 @@ public:
 private:
   mutable ON__UINT64 m_subd_geometry_content_serial_number = 0;
   mutable ON__UINT64 m_subd_render_content_serial_number = 0;
+  mutable ON_SubDHash m_subd_geometry_hash = ON_SubDHash::Empty;
+  mutable ON_SubDHash m_subd_toplology_hash = ON_SubDHash::Empty;
 
 public:
 
@@ -2333,6 +2361,29 @@ private:
     const ON_SubDFace* face
     );
 
+public:
+  const ON_UUID FacePackingId() const;
+
+  const ON_SubDHash FacePackingTopologyHash() const;
+
+
+  void SetFacePackingIdAndTopologyHash(
+    ON_UUID custom_packing_id,
+    const ON_SubDHash& current_topology_hash
+  );
+
+  /*
+  Description:
+    Clear all face pack ids and related information.
+  */
+  void ClearFacePackIds();
+
+  void SetFacePackingTopologyHashForExperts(const ON_SubDHash& current_topology_hash) const;
+
+private:
+  ON_UUID m_face_packing_id = ON_nil_uuid;
+  mutable ON_SubDHash m_face_packing_topology_hash = ON_SubDHash::Empty;
+
 
 private:
   ON_Symmetry m_symmetry;
@@ -2579,7 +2630,7 @@ public:
 private:
   ON__UINT64 m_mesh_content_serial_number = 0;
 public:
-  unsigned int m_display_density = 0;
+  unsigned int m_absolute_subd_display_density = 0;
   unsigned int m_fragment_count = 0;
   unsigned int m_fragment_point_count = 0;
   ON_SubDMeshFragment* m_first_fragment = nullptr;
@@ -2587,7 +2638,7 @@ public:
   
   bool ReserveCapacity(
     unsigned int subd_fragment_count,
-    unsigned int display_density
+    unsigned int absolute_subd_display_density
     );
   
   /*

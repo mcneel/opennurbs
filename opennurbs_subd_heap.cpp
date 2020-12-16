@@ -1125,8 +1125,9 @@ void ON_SubDHeap::Clear()
 
   m_limit_block_pool.ReturnAll();
 
-  m_unused_full_fragments = nullptr;
-  m_unused_half_fragments = nullptr;
+  const size_t frag_size_count = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
+  for ( size_t i = 0; i < frag_size_count; ++i)
+    m_unused_fragments[i] = nullptr;
   m_unused_limit_curves = nullptr;
 
   m_unused_vertex = nullptr;
@@ -1797,12 +1798,13 @@ bool ON_SubDHeap::Internal_InitializeLimitBlockPool()
   if (0 == m_limit_block_pool.SizeofElement())
   {
     const bool bCurvatureArray = false; // change to true when principal and sectional curvatures are needed.
-    m_sizeof_full_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity, bCurvatureArray);
-    m_sizeof_half_fragment = ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::DefaultDensity-1, bCurvatureArray);
+    const unsigned frag_size_count = sizeof(m_sizeof_fragment) / sizeof(m_sizeof_fragment[0]);
+    for ( unsigned i = 0; i < frag_size_count ; ++i)
+      m_sizeof_fragment[i] = ON_SubDMeshFragment::SizeofFragment((unsigned)i, bCurvatureArray);
     m_sizeof_limit_curve = sizeof(ON_SubDEdgeSurfaceCurve);
-    size_t sz =  m_sizeof_full_fragment;
-    if (sz < 4 * m_sizeof_half_fragment)
-      sz = 4 * m_sizeof_half_fragment;
+    size_t sz = 2*m_sizeof_fragment[frag_size_count-1];
+    if (sz < 4 * m_sizeof_fragment[frag_size_count - 2])
+      sz = 4 * m_sizeof_fragment[frag_size_count - 2];
 
     ON_SleepLockGuard guard(m_limit_block_pool);
     m_limit_block_pool.Create(sz,0,0);
@@ -1814,17 +1816,24 @@ bool ON_SubDHeap::Internal_InitializeLimitBlockPool()
 }
 
 ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
+  unsigned subd_display_density,
   const ON_SubDMeshFragment& src_fragment
 )
 {
+  if (subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
   // When 4 == ON_SubDDisplayParameters::DefaultDensity (setting used in February 2019)
   // quads get a single fragment with a 16x16 face grid
   // N-gons with N != 4 get N 8x8 grids.
   const unsigned int density = (src_fragment.m_face_fragment_count > 1)
-    ? (ON_SubDDisplayParameters::DefaultDensity-1)
-    : ((1==src_fragment.m_face_fragment_count) ? ON_SubDDisplayParameters::DefaultDensity : 0)
+    ? ((subd_display_density > 0) ? (subd_display_density -1) : ON_UNSET_UINT_INDEX)
+    : ((1==src_fragment.m_face_fragment_count) ? subd_display_density : ON_UNSET_UINT_INDEX)
     ;
-  if (0 == density)
+  if (ON_UNSET_UINT_INDEX == density)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  const unsigned count = (unsigned)(sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]));
+  if (density >= count)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
   const unsigned short side_seg_count = (unsigned short)ON_SubDMeshFragment::SideSegmentCountFromDisplayDensity(density);
@@ -1840,58 +1849,32 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
     char* p = nullptr;
     char* p1 = nullptr;
     ON_SleepLockGuard guard(m_limit_block_pool);
-    if (ON_SubDDisplayParameters::DefaultDensity == density)
+    if (nullptr == m_unused_fragments[density])
     {
-      if (nullptr == m_unused_full_fragments)
+      p = (char*)m_limit_block_pool.AllocateDirtyElement();
+      if (nullptr == p)
+        return ON_SUBD_RETURN_ERROR(nullptr);
+      p1 = p + m_limit_block_pool.SizeofElement();
+      m_unused_fragments[density] = (ON_FixedSizePoolElement*)p;
+      m_unused_fragments[density]->m_next = nullptr;
+      const size_t sizeof_fragment = m_sizeof_fragment[density];        
+      for (p += sizeof_fragment; p + sizeof_fragment <= p1; p += sizeof_fragment)
       {
-        p = (char*)m_limit_block_pool.AllocateDirtyElement();
-        if (nullptr == p)
-          return ON_SUBD_RETURN_ERROR(nullptr);
-        p1 = p + m_limit_block_pool.SizeofElement();
-        m_unused_full_fragments = (ON_FixedSizePoolElement*)p;
-        m_unused_full_fragments->m_next = nullptr;
-        p += m_sizeof_full_fragment;
-        while (p + m_sizeof_full_fragment < p1)
-        {
-          ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
-          ele->m_next = m_unused_full_fragments;
-          m_unused_full_fragments = ele;
-          p += m_sizeof_full_fragment;
-        }
+        ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
+        ele->m_next = m_unused_fragments[density];
+        m_unused_fragments[density] = ele;          
       }
-      fragment = (ON_SubDMeshFragment*)m_unused_full_fragments;
-      m_unused_full_fragments = m_unused_full_fragments->m_next;
     }
-    else
-    {
-      if (nullptr == m_unused_half_fragments)
-      {
-        p = (char*)m_limit_block_pool.AllocateDirtyElement();
-        if (nullptr == p)
-          return ON_SUBD_RETURN_ERROR(nullptr);
-        p1 = p + m_limit_block_pool.SizeofElement();
-        m_unused_half_fragments = (ON_FixedSizePoolElement*)p;
-        m_unused_half_fragments->m_next = nullptr;
-        p += m_sizeof_half_fragment;
-        while (p + m_sizeof_half_fragment < p1)
-        {
-          ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
-          ele->m_next = m_unused_half_fragments;
-          m_unused_half_fragments = ele;
-          p += m_sizeof_half_fragment;
-        }
-      }
-      fragment = (ON_SubDMeshFragment*)m_unused_half_fragments;
-      m_unused_half_fragments = m_unused_half_fragments->m_next;
-    }
+    fragment = (ON_SubDMeshFragment*)m_unused_fragments[density];
+    m_unused_fragments[density] = m_unused_fragments[density]->m_next;
+    
     if (nullptr != p)
     {
-      while (p + m_sizeof_limit_curve < p1)
+      for (/*empty int*/; p + m_sizeof_limit_curve <= p1; p += m_sizeof_limit_curve)
       {
         ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
         ele->m_next = m_unused_limit_curves;
-        m_unused_limit_curves = ele;
-        p += m_sizeof_limit_curve;
+        m_unused_limit_curves = ele;        
       }
     }
   }
@@ -1911,7 +1894,11 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
 }
 
 
-ON_SubDMeshFragment* ON_SubDHeap::CopyMeshFragments(const ON_SubDFace* source_face, const ON_SubDFace* destination_face)
+ON_SubDMeshFragment* ON_SubDHeap::CopyMeshFragments(
+  const ON_SubDFace* source_face,
+  unsigned destination_subd_display_density,
+  const ON_SubDFace* destination_face
+)
 {
   if (nullptr == source_face || nullptr == destination_face || nullptr != destination_face->m_mesh_fragments)
     return ON_SUBD_RETURN_ERROR(nullptr);
@@ -1919,7 +1906,7 @@ ON_SubDMeshFragment* ON_SubDHeap::CopyMeshFragments(const ON_SubDFace* source_fa
   ON_SubDMeshFragment* prev_dst_fragment = nullptr;
   for (const ON_SubDMeshFragment* src_fragment = source_face->MeshFragments(); nullptr != src_fragment; src_fragment = src_fragment->m_next_fragment)
   {
-    ON_SubDMeshFragment* dst_fragment = this->AllocateMeshFragment(*src_fragment);
+    ON_SubDMeshFragment* dst_fragment = this->AllocateMeshFragment(destination_subd_display_density ,*src_fragment);
     dst_fragment->m_face = destination_face;
     if (prev_dst_fragment)
       prev_dst_fragment->m_next_fragment = dst_fragment;
@@ -1939,23 +1926,37 @@ bool ON_SubDHeap::ReturnMeshFragment(ON_SubDMeshFragment * fragment)
   if (nullptr == fragment)
     return false;
 
-  ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)fragment;
-  if (17 * 17 == fragment->VertexCapacity())
+  const size_t count = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
+  size_t i;
+  switch (fragment->VertexCapacity())
   {
-    ON_SleepLockGuard guard(m_limit_block_pool);
-    ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
-    ele->m_next = m_unused_full_fragments;
-    m_unused_full_fragments = ele;
+  case 2 * 2: // 1x1 mesh quad fragment
+    i = 0;
+    break;
+  case 3 * 3: // 2x2 mesh quad fragment
+    i = 1;
+    break;
+  case 5 * 5: // 4x4 mesh quad fragment
+    i = 2;
+    break;
+  case 9 * 9: // 8x8 mesh quad fragment
+    i = 3;
+    break;
+  case 17 * 17: // 16x16 mesh quad fragment
+    i = 4;
+    break;
+  default:
+    i = count;
+    break;
   }
-  else if (9 * 9 == fragment->VertexCapacity())
-  {
-    ON_SleepLockGuard guard(m_limit_block_pool);
-    ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
-    ele->m_next = m_unused_half_fragments;
-    m_unused_half_fragments = ele;
-  }
-  else
+  if (i >= count)
     return ON_SUBD_RETURN_ERROR(false);
+
+  ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)fragment;
+  ON_SleepLockGuard guard(m_limit_block_pool);
+  ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
+  ele->m_next = m_unused_fragments[i];
+  m_unused_fragments[i] = ele;
 
   return true;
 }

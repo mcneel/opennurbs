@@ -1469,6 +1469,9 @@ int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material
     rc = CompareDouble(a_pbr->OpacityRoughness(), b_pbr->OpacityRoughness());
     if (0 != rc) return rc;
 
+    rc = CompareDouble(a_pbr->Alpha(), b_pbr->Alpha());
+    if (0 != rc) return rc;
+
     rc = a_pbr->Emission().Compare(b_pbr->Emission());
     return rc;
   }
@@ -2042,10 +2045,6 @@ ON_Color ON_Material::PreviewColor(void) const
 
 bool ON_Material::UseDiffuseTextureAlphaForObjectTransparencyTexture() const
 {
-  //Physically based materials do not support alpha transparency (at the moment).
-  if (IsPhysicallyBased())
-    return false;
-
   return m_bUseDiffuseTextureAlphaForObjectTransparencyTexture;
 }
 
@@ -2332,12 +2331,13 @@ ON_Texture::TYPE ON_Texture::TypeFromUnsigned(unsigned int type_as_unsigned)
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_sheen_tint_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_roughness_texture);
-	ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_bump_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_clearcoat_bump_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_opacity_ior_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_opacity_roughness_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_emission_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_ambient_occlusion_texture);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_displacement_texture);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Texture::TYPE::pbr_alpha_texture);
   }
 
   ON_ERROR("Invalid type_as_unsigned value.");
@@ -6650,11 +6650,11 @@ private:
   {
     ON_ASSERT(IsValid());
 
-    const int chunk_version = 1;
+    const int chunk_version = 2;
     if (false == archive.BeginWrite3dmAnonymousChunk(chunk_version))
       return false;
 
-    bool rc = m_parameters.Write(archive);
+    bool rc = m_parameters.Write(archive, chunk_version);
 
     if (!archive.EndWrite3dmChunk())
     {
@@ -6672,9 +6672,9 @@ private:
 
     bool rc = false;
 
-    if (chunk_version == 1)
+    if (chunk_version == 1 || chunk_version == 2)
     {
-      rc = m_parameters.Read(archive);
+      rc = m_parameters.Read(archive, chunk_version);
     }
 
     if (!archive.EndRead3dmChunk())
@@ -6709,7 +6709,7 @@ public:
   struct Parameters
   {
 #if defined SUPPORT_PBR_USERDATA_SERIALIZATION
-    bool Write(ON_BinaryArchive& binary_archive) const
+    bool Write(ON_BinaryArchive& binary_archive, int version) const
     {
       if (!binary_archive.WriteColor(base_color)) return false;
       if (!binary_archive.WriteInt((int)brdf)) return false;
@@ -6730,11 +6730,16 @@ public:
       if (!binary_archive.WriteDouble(opacity)) return false;
       if (!binary_archive.WriteDouble(opacity_roughness)) return false;
       if (!binary_archive.WriteColor(emission)) return false;
+
+      if (version >= 2)
+      {
+        if (!binary_archive.WriteDouble(alpha)) return false;
+      }
       
       return true;
     }
 
-    bool Read(ON_BinaryArchive& binary_archive)
+    bool Read(ON_BinaryArchive& binary_archive, int version)
     {
       if (!binary_archive.ReadColor(base_color)) return false;                          
       if (!binary_archive.ReadInt((int*)&brdf)) return false;
@@ -6755,6 +6760,11 @@ public:
       if (!binary_archive.ReadDouble(&opacity)) return false;
       if (!binary_archive.ReadDouble(&opacity_roughness)) return false;
       if (!binary_archive.ReadColor(emission)) return false;
+
+      if (version >= 2)
+      {
+        if (!binary_archive.ReadDouble(&alpha)) return false;
+      }
       
       return true;
     }
@@ -6781,6 +6791,7 @@ public:
       if (ON_IS_UNSET_DOUBLE(opacity)) return false;
       if (ON_IS_UNSET_DOUBLE(opacity_roughness)) return false;
       if (!emission.IsValid()) return false;
+      if (ON_IS_UNSET_DOUBLE(alpha)) return false;
 
       return true;
     }
@@ -6804,6 +6815,7 @@ public:
     double opacity_roughness = 0.0;
     ON_4fColor emission = ON_Color::Black;
     ON_PhysicallyBasedMaterial::BRDFs brdf = ON_PhysicallyBasedMaterial::BRDFs::GGX;
+    double alpha = 1.0;
   } m_parameters;
 };
 
@@ -7107,6 +7119,16 @@ void ON_PhysicallyBasedMaterial::SetEmission(ON_4fColor d)
   Implementation().UserData().m_parameters.emission = d;
 }
 
+double ON_PhysicallyBasedMaterial::Alpha(void) const
+{
+  return Implementation().UserData().m_parameters.alpha;
+}
+
+void ON_PhysicallyBasedMaterial::SetAlpha(double d)
+{
+  Implementation().UserData().m_parameters.alpha = d;
+}
+
 ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_Material& src)
 {
   //Placement new - create the impl in the stack allocated space.
@@ -7194,6 +7216,18 @@ bool ON_PhysicallyBasedMaterial_Supported(const ON_PhysicallyBasedMaterial& mate
     return false;
 
   return material.BaseColor().IsValid();
+}
+
+bool ON_PhysicallyBasedMaterial::UseBaseColorTextureAlphaForObjectAlphaTransparencyTexture() const
+{
+  ON_Material& mat = *Implementation().material;
+  return mat.UseDiffuseTextureAlphaForObjectTransparencyTexture();
+}
+
+void ON_PhysicallyBasedMaterial::SetUseBaseColorTextureAlphaForObjectAlphaTransparencyTexture(bool b)
+{
+  ON_Material& mat = *Implementation().material;
+  mat.SetUseDiffuseTextureAlphaForObjectTransparencyTexture(b);
 }
 
 void ON_PhysicallyBasedMaterial::ToLegacy(void)

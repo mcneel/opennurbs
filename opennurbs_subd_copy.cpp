@@ -767,18 +767,51 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
       m_active_level = level;
   }
 
+  // this ON_SubDimple is an exact copy of src, so they have identical geometry 
+  // and render content.
+  m_subd_geometry_content_serial_number = src.m_subd_geometry_content_serial_number;
+  m_subd_render_content_serial_number = src.m_subd_render_content_serial_number;
+
   m_subd_appearance = src.m_subd_appearance;
   m_texture_coordinate_type = src.m_texture_coordinate_type;
   m_texture_mapping_tag = src.m_texture_mapping_tag;
 
+  m_face_packing_id = src.m_face_packing_id;
+  m_face_packing_topology_hash = src.m_face_packing_topology_hash;
+  m_face_packing_topology_hash.m_subd_runtime_serial_number
+    = (src.RuntimeSerialNumber == src.m_face_packing_topology_hash.SubDRuntimeSerialNumber())
+    ? this->RuntimeSerialNumber
+    : 0;
+  if (0 == m_face_packing_topology_hash.m_subd_runtime_serial_number)
+    m_face_packing_topology_hash.m_subd_geometry_content_serial_number = 0;
+
   m_symmetry = src.m_symmetry;
 
-  ChangeGeometryContentSerialNumber(false);
-
-  if (src.m_subd_geometry_content_serial_number == src.m_symmetry.SymmetricObjectContentSerialNumber())
-    m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
-  else
+  if (m_subd_geometry_content_serial_number != src.m_symmetry.SymmetricObjectContentSerialNumber())
+  {
+    // symmetric content was out of date on src
     m_symmetry.ClearSymmetricObjectContentSerialNumber();
+  }
+
+  if (
+    src.RuntimeSerialNumber == src.m_subd_geometry_hash.SubDRuntimeSerialNumber()
+    && m_subd_geometry_content_serial_number == src.m_subd_geometry_hash.SubDGeometryContentSerialNumber()
+    )
+  {
+    // src.m_subd_geometry_hash is valid - copy it to this.
+    m_subd_geometry_hash = src.m_subd_geometry_hash;
+    m_subd_geometry_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
+  }
+
+  if (
+    src.RuntimeSerialNumber == src.m_subd_toplology_hash.SubDRuntimeSerialNumber()
+    && m_subd_geometry_content_serial_number == src.m_subd_toplology_hash.SubDGeometryContentSerialNumber()
+    )
+  {
+    // src.m_subd_toplology_hash is valid - copy it to this
+    m_subd_toplology_hash = src.m_subd_toplology_hash;
+    m_subd_toplology_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
+  }
 }
 
 bool ON_SubDLevel::IsEmpty() const

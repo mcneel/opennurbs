@@ -133,14 +133,23 @@
 #endif
 
 #if defined(PI)
+/* double precision ON_PI = 3.141592653589793238462643. ON_PI radians = 180 degrees */
 #define ON_PI           PI
 #else
+/* double precision ON_PI = 3.141592653589793238462643. ON_PI radians = 180 degrees */
 #define ON_PI 3.141592653589793238462643
 #endif
 
+/* double precision ON_2PI = 2.0*ON_PI. ON_2PI radians = 360 degrees. */
 #define ON_2PI (2.0*ON_PI)
 
+/* double precision ON_HALFPI = 0.5*ON_PI. ON_HALFPI radians = 90 degrees.  */
+#define ON_HALFPI (0.5*ON_PI)
+
+/* angle_in_degrees = ON_DEGREES_TO_RADIANS*angle_in_radians */
 #define ON_DEGREES_TO_RADIANS (ON_PI/180.0)
+
+/* angle_in_radians = ON_RADIANS_TO_DEGREES*angle_in_degrees */
 #define ON_RADIANS_TO_DEGREES (180.0/ON_PI)
 
 /*
@@ -1384,9 +1393,11 @@ public:
           12.0  = ON::UnitScale( ON::LengthUnitSystem::Feet,   ON::LengthUnitSystem::Inches ) 
 
   Remarks:
-    If you are using custom unit systems, use the version
-    that takes ON_UnitSystem or ON_3dmUnitsAndTolerances 
-    parameters.
+    If you are using custom unit systems, use the version that takes ON_UnitSystem 
+    or ON_3dmUnitsAndTolerances  parameters.
+    If either parameter is ON::LengthUnitSystem::Unset, then ON_DBL_QNAN is returned.
+    If either parameter is ON::LengthUnitSystem::None, then 1.0 is returned.
+    If either parameter is ON::LengthUnitSystem::CustomUnits, then 1.0 is returned.
   */
   static double UnitScale(
       ON::LengthUnitSystem us_from,

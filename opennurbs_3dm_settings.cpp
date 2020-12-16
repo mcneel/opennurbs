@@ -37,7 +37,7 @@ static double ON_Internal_UnitSystemCtorMetersPerUnit(
   switch (length_unit_system)
   {
   case ON::LengthUnitSystem::None:
-    meters_per_unit = 0.0;
+    meters_per_unit = 1.0;
     break;
   case ON::LengthUnitSystem::Angstroms:
   case ON::LengthUnitSystem::Nanometers:
@@ -63,7 +63,7 @@ static double ON_Internal_UnitSystemCtorMetersPerUnit(
   case ON::LengthUnitSystem::AstronomicalUnits:
   case ON::LengthUnitSystem::LightYears:
   case ON::LengthUnitSystem::Parsecs:
-    meters_per_unit = ON::UnitScale(ON::LengthUnitSystem::Meters, length_unit_system);
+    meters_per_unit = ON::UnitScale(length_unit_system, ON::LengthUnitSystem::Meters);
     break;
   case ON::LengthUnitSystem::CustomUnits:
     meters_per_unit = 1.0;
@@ -81,7 +81,7 @@ static double ON_Internal_UnitSystemCtorMetersPerUnit(
 
 ON_UnitSystem::ON_UnitSystem(ON::LengthUnitSystem length_unit_system)
 : m_unit_system(ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(length_unit_system)))
-, m_meters_per_unit(ON_Internal_UnitSystemCtorMetersPerUnit(m_unit_system))
+, m_meters_per_custom_unit(ON_Internal_UnitSystemCtorMetersPerUnit(m_unit_system))
 {}
 
 ON_UnitSystem& ON_UnitSystem::operator=(
@@ -100,7 +100,7 @@ bool ON_UnitSystem::operator==(const ON_UnitSystem& other) const
 
   if ( ON::LengthUnitSystem::CustomUnits == m_unit_system )
   {
-    if ( !(m_meters_per_unit == other.m_meters_per_unit) )
+    if ( !(m_meters_per_custom_unit == other.m_meters_per_custom_unit) )
       return false;
     if ( false == m_custom_unit_name.EqualOrdinal(other.m_custom_unit_name,false) )
       return false;
@@ -116,7 +116,7 @@ bool ON_UnitSystem::operator!=(const ON_UnitSystem& other) const
 
   if ( ON::LengthUnitSystem::CustomUnits == m_unit_system )
   {
-    if ( m_meters_per_unit != other.m_meters_per_unit )
+    if (m_meters_per_custom_unit != other.m_meters_per_custom_unit)
       return true;
     if ( false == m_custom_unit_name.EqualOrdinal(other.m_custom_unit_name,false) )
       return true;
@@ -129,28 +129,17 @@ bool ON_UnitSystem::IsValid() const
 {
   if ( m_unit_system != ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(m_unit_system)) )
   {
-    // bogus enum value
+    // invalid enum value
     return false;
   }
 
-  if (ON::LengthUnitSystem::None == m_unit_system)
-  {
-    if (!(0.0 == m_meters_per_unit))
-      return false;
-  }
-  else
-  {
-    if (!(m_meters_per_unit > 0.0 && m_meters_per_unit < ON_UNSET_POSITIVE_VALUE))
-    {
-      // m_meters_per_unit should be > 0.0 and a valid double
-      return false;
-    }
+  if (ON::LengthUnitSystem::Unset == m_unit_system)
+    return false;
 
-    if (ON::LengthUnitSystem::CustomUnits != m_unit_system)
-    {
-      if (m_meters_per_unit != ON::UnitScale(ON::LengthUnitSystem::Meters, m_unit_system))
-        return false;
-    }
+  if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
+  {
+    if (false == ON_IsValidPositiveNumber(m_meters_per_custom_unit))
+      return false;
   }
 
   return true;
@@ -158,7 +147,7 @@ bool ON_UnitSystem::IsValid() const
 
 bool ON_UnitSystem::IsSet() const
 {
-  return ( ON::LengthUnitSystem::None != m_unit_system && IsValid() );
+  return (ON::LengthUnitSystem::Unset != m_unit_system && ON::LengthUnitSystem::None != m_unit_system && IsValid() );
 }
 
 bool ON_UnitSystem::IsCustomUnitSystem() const
@@ -188,17 +177,18 @@ void ON_UnitSystem::SetCustomUnitSystem(
   double meters_per_custom_unit
   )
 {
+  ON_wString local_str(custom_unit_name);
+  local_str.TrimLeftAndRight();
   m_unit_system = ON::LengthUnitSystem::CustomUnits;
-  m_custom_unit_name = custom_unit_name;
-  m_custom_unit_name.TrimLeftAndRight();
-  if (meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE)
+  m_custom_unit_name = local_str;
+  if ( ON_IsValidPositiveNumber(meters_per_custom_unit) )
   {
-    m_meters_per_unit = meters_per_custom_unit;
+    m_meters_per_custom_unit = meters_per_custom_unit;
   }
   else
   {
     ON_ERROR("Invalid meters_per_custom_unit parameter");
-    m_meters_per_unit = 1.0; // must be > 0.0 and < ON_UNSET_POSITIVE_VALUE
+    m_meters_per_custom_unit = 1.0; // must be > 0.0 and < ON_UNSET_POSITIVE_VALUE
   }
 }
 
@@ -213,7 +203,7 @@ void ON_UnitSystem::SetCustomUnitSystemName(
   {
     const double meters_per_custom_unit
       = bIsCustomUnitSystem
-      ? m_meters_per_unit
+      ? m_meters_per_custom_unit
       : 1.0;
     SetCustomUnitSystem(local_name, meters_per_custom_unit);
   }
@@ -223,24 +213,82 @@ void ON_UnitSystem::SetCustomUnitSystemScale(
   double meters_per_custom_unit
   )
 {
-  const bool bIsCustomUnitSystem = (ON::LengthUnitSystem::CustomUnits == m_unit_system);
-  if (meters_per_custom_unit != m_meters_per_unit || bIsCustomUnitSystem)
+  if (ON_IsValidPositiveNumber(meters_per_custom_unit))
   {
-    if (meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE)
+    const bool bIsCustomUnitSystem = (ON::LengthUnitSystem::CustomUnits == m_unit_system);
+    if (false == (meters_per_custom_unit == m_meters_per_custom_unit) || bIsCustomUnitSystem)
     {
-      ON_wString unit_system_name
+      const ON_wString unit_system_name
         = (ON::LengthUnitSystem::CustomUnits == m_unit_system)
-        ? unit_system_name
+        ? m_custom_unit_name
         : ON_wString::EmptyString;
       SetCustomUnitSystem(unit_system_name, meters_per_custom_unit);
     }
   }
 }
 
+double ON_UnitSystem::MetersPerUnit(
+  double unset_return_value
+) const
+{
+  switch (m_unit_system)
+  {
+  case ON::LengthUnitSystem::None:
+    return 1.0;
+    break;
+  case ON::LengthUnitSystem::CustomUnits:
+    return m_meters_per_custom_unit;
+    break;
+  case ON::LengthUnitSystem::Unset:
+    return unset_return_value;
+    break;
+  default:
+    break;
+  }
+  return ON::UnitScale(m_unit_system, ON::LengthUnitSystem::Meters);
+}
+
+double ON_UnitSystem::MillimetersPerUnit(
+  double unset_return_value
+) const
+{
+  switch (m_unit_system)
+  {
+  case ON::LengthUnitSystem::None:
+    return 1.0;
+    break;
+  case ON::LengthUnitSystem::CustomUnits:
+    return 1000.0*m_meters_per_custom_unit;
+    break;
+  case ON::LengthUnitSystem::Unset:
+    return unset_return_value;
+    break;
+  default:
+    break;
+  }
+  return ON::UnitScale(m_unit_system, ON::LengthUnitSystem::Millimeters);
+}
 
 double ON_UnitSystem::MetersPerUnit() const
 {
-  return m_meters_per_unit;
+  // NOTE WELL:
+  //   https://mcneel.myjetbrains.com/youtrack/issue/RH-60700
+  //   For standard units, this function returns the WRONG value (inverse of the correct value).
+  //   The reason is the Rhino 6 VRay plug-in assumes the incorrect value is returned
+  //   and V6 VRay does not work correctly in Rhino 7 if the correct value is returned.
+  //   After some discussion (see the bug above), we will leave the invers bug in
+  //   ON_UnitSystem::MetersPerUnit(), deprecate ON_UnitSystem::MetersPerUnit(),
+  //   and add a new function that returns the correct answer.
+  if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
+  {
+    // correct answer for custome units - V6 behavior.
+    return m_meters_per_custom_unit; //
+  }
+
+
+  // For standard units, the inverse of the correct answer is returned
+  // to preserve V6 bug so VRay works in Rhino 7.
+  return 1.0/ON_UnitSystem::MetersPerUnit(ON_DBL_QNAN);
 }
 
 ON::LengthUnitSystem ON_UnitSystem::UnitSystem() const
@@ -438,12 +486,20 @@ const ON_wString& ON_UnitSystem::UnitSystemName() const
     break;
 
   case ON::LengthUnitSystem::CustomUnits:
+    if (m_custom_unit_name.IsEmpty())
+    {
+      static ON_wString s_name;
+      ON_Internal_InitUnitSystemName(L"custom units", s_name);
+      return s_name;
+    }
     return m_custom_unit_name;
     break;
 
   case ON::LengthUnitSystem::Unset:
     {
-      return ON_wString::EmptyString;
+    static ON_wString s_name;
+    ON_Internal_InitUnitSystemName(L"unset", s_name);
+    return s_name;
     }
     break;
   }
@@ -493,7 +549,7 @@ bool ON_UnitSystem::Read( ON_BinaryArchive& file )
     {
       m_unit_system = us;
       m_custom_unit_name = custom_unit_name;
-      m_meters_per_unit = meters_per_unit;
+      m_meters_per_custom_unit = meters_per_unit;
     }
     else
     {
@@ -529,9 +585,9 @@ bool ON_UnitSystem::Write( ON_BinaryArchive& file ) const
   {
     if (!file.WriteInt(static_cast<unsigned int>(m_unit_system)))
       break;
-    if (!file.WriteDouble(m_meters_per_unit))
+    if (!file.WriteDouble(ON::LengthUnitSystem::CustomUnits == m_unit_system ? m_meters_per_custom_unit : ON::UnitScale(m_unit_system, ON::LengthUnitSystem::Meters)))
       break;
-    if (!file.WriteString(m_custom_unit_name))
+    if (!file.WriteString(ON::LengthUnitSystem::CustomUnits == m_unit_system ? m_custom_unit_name : ON_wString::EmptyString))
       break;
     rc = true;
     break;
@@ -543,15 +599,22 @@ bool ON_UnitSystem::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-void ON_UnitSystem::Dump( ON_TextLog& dump ) const
+const ON_wString ON_UnitSystem::ToString() const
 {
-  ON_wString sUnitSystem(UnitSystemName());
-  if ( ON::LengthUnitSystem::CustomUnits == m_unit_system)
+  ON_wString str(UnitSystemName());
+  if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
   {
     ON_wString meters_per_unit;
-    meters_per_unit.Format(L" (= %g meters )", m_meters_per_unit);
-    sUnitSystem += meters_per_unit;
+    meters_per_unit.Format(L" (= %g meters )", m_meters_per_custom_unit);
+    str += meters_per_unit;
   }
+  return str;
+
+}
+
+void ON_UnitSystem::Dump( ON_TextLog& dump ) const
+{
+  const ON_wString sUnitSystem(ToString());
   dump.Print("Unit system: %ls\n",static_cast<const wchar_t*>(sUnitSystem));
 }
 
@@ -580,7 +643,7 @@ bool ON_3dmUnitsAndTolerances::Write( ON_BinaryArchive& file ) const
   if ( rc ) rc = file.WriteInt( i );
 
   // added in version 102
-  if ( rc ) rc = file.WriteDouble( m_unit_system.MetersPerUnit() );
+  if ( rc ) rc = file.WriteDouble( m_unit_system.MetersPerUnit(ON_DBL_QNAN));
   if ( rc ) rc = file.WriteString( (ON::LengthUnitSystem::CustomUnits == m_unit_system.UnitSystem() ? m_unit_system.UnitSystemName() : ON_wString::EmptyString) );
   return rc;
 }

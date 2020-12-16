@@ -4231,11 +4231,10 @@ public:
 
   /*
   Returns 
-    true if m_unit_system is a valid ON::LengthUnitSystem enum value,
-    which may be ON::LengthUnitSystem::None.  If m_unit_system is
-    ON::LengthUnitSystem::CustomUnits, then IsValid() returns true
-    if m_custom_unit_scale > 0.0 and false otherwise.
-    The value of m_custom_unit_name is not tested.
+    False if UnitSystem() is ON::LengthUnitSystem::Unset.
+    False if UnitSystem() is ON::LengthUnitSystem::CustomUnits and MetersPerUnits() is not positive.
+    True if UnitSystem() is ON::LengthUnitSystem::None.
+    True otherwise.
   See Also:
     IsSet()
   */  
@@ -4245,10 +4244,14 @@ public:
   bool Write( class ON_BinaryArchive& ) const;
   void Dump( class ON_TextLog& ) const;
 
+  const ON_wString ToString() const;
+
   /*
   Returns
-    true If the unit system is valid and set to something beside
-    ON::no_unit_systm;
+    True if UnitSystem() is neither ON::LengthUnitSystem::Unset nor ON::LengthUnitSystem::None
+    and IsValid() is true.
+  See Also:
+    IsValid()
   */
   bool IsSet() const;
 
@@ -4287,6 +4290,7 @@ public:
     Avoid using this function. Use SetCustomUnitSystem() or SetUnitSystem()
     instead.
   */
+  ON_DEPRECATED_MSG("Use SetCustomUnitSystem()")
   void SetCustomUnitSystemName(
     const wchar_t* custom_unit_name
     );
@@ -4294,25 +4298,72 @@ public:
   /*
   Description:
     Changes the unit system to custom units and sets the custom unit scale.
+  Parameters:
+    meters_per_custom_unit - [in]
+      a positive number
   Remarks:
     Avoid using this function. Use SetCustomUnitSystem() or SetUnitSystem()
     instead.
   */
-  void SetCustomUnitSystemScale(
+  ON_DEPRECATED_MSG("Use SetCustomUnitSystem()")
+    void SetCustomUnitSystemScale(
     double meters_per_custom_unit
     );
 
+  /// NOTE WELL:
+  ///   For standard units, ON_UnitSystem::MetersPerUnit() returns the inverse of the correct value.
+  ///   The reason is the VRay plug-in for Rhino 6 assumes the incorrect value is returned
+  ///   and does not work correctly in Rhino 7 if the correct value is returned.
+  ON_DEPRECATED_MSG("MetersPerUnit() returns the wrong value. Use this->MetersPerUnit(ON_DBL_QNAN)")
   double MetersPerUnit() const;
+
+  /*
+  Parameters:
+    unset_return_value - [in]
+      Value to return when this->UnitSystem() is ON::LengthUnitSystem::Unset.
+      When in doubt, use ON_DBL_QNAN.
+  Returns:
+    If this->UnitSystem() is ON::LengthUnitSystem::CustomUnits, then the value set
+    by SetCustomUnitSystemScale() is returned.
+    If this->UnitSystem() is ON::LengthUnitSystem::Unset, then unset_return_value is returned.
+    If this->UnitSystem() is ON::LengthUnitSystem::None, then 1.0 is returned.
+    Otherwise, ON::UnitScale(this->UnitSystem(), ON::LengthUnitSystem::Meters) is returned.
+  */
+  double MetersPerUnit(
+    double unset_return_value
+  ) const;
+
+  /*
+  Parameters:
+    unset_return_value - [in]
+      Value to return when this->UnitSystem() is ON::LengthUnitSystem::Unset.
+      When in doubt, use ON_DBL_QNAN.
+  Returns:
+    If this->UnitSystem() is ON::LengthUnitSystem::CustomUnits, then the 1000 times the
+    value set by SetCustomUnitSystemScale() is returned.
+    If this->UnitSystem() is ON::LengthUnitSystem::Unset, then unset_return_value is returned.
+    If this->UnitSystem() is ON::LengthUnitSystem::None, then 1.0 is returned.
+    Otherwise, ON::UnitScale(this->UnitSystem(), ON::LengthUnitSystem::Millimeters) is returned.
+  */
+  double MillimetersPerUnit(
+    double unset_return_value
+  ) const;
+
   ON::LengthUnitSystem UnitSystem() const;
+
+  /*
+  Returns:
+    US English lower case plural unit system name (meters, inches, etc.).
+  */
   const ON_wString& UnitSystemName() const;
-
-
 private:
   ON::LengthUnitSystem m_unit_system = ON::LengthUnitSystem::Meters;
   unsigned int m_reserved = 0;
 
-  // The m_custom_unit_... settings apply when m_unit_system = ON::LengthUnitSystem::CustomUnits
-  double m_meters_per_unit = 1.0;  // 1 meter = m_custom_unit_scale custom units
+  // The m_meters_per_custom_unit and m_custom_unit_name values apply when 
+  // m_unit_system = ON::LengthUnitSystem::CustomUnits.
+  // In all other cases they should be ignored.
+  double m_meters_per_custom_unit = 1.0;  // 1 meter = m_meters_per_custom_unit custom units
   ON_wString m_custom_unit_name;   // name of custom units
 };
 #endif
