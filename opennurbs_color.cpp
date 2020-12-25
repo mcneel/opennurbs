@@ -120,7 +120,7 @@ int ON_Color::Compare( const ON_Color& b ) const
   int ac = (int)m_color;
   int bc = (int)b.m_color;
 #if defined(ON_BIG_ENDIAN)
-  unsinged char* swapper = (unsigned char*)&ac;
+  unsigned char* swapper = (unsigned char*)&ac;
   unsigned char c = swapper[0]; swapper[0] = swapper[3]; swapper[3] = c;
   c = swapper[1]; swapper[1] = swapper[2]; swapper[2] = c;
   swapper = (unsigned char*)&bc;
