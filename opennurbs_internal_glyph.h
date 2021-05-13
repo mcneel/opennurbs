@@ -71,8 +71,6 @@ public:
   // sorts nulls to end of lists
   static int CompareFontPointer(ON_Font const* const* lhs, ON_Font const* const* rhs);
 
-  static int CompareFontCharacteristicsHash(ON_Font const* const* lhs, ON_Font const* const* rhs);
-
   /*
   Returns:
     0: failure
@@ -102,9 +100,19 @@ public:
     );
 
 private:
-  ON_ManagedFonts();
+  // The purpose of this nondefault constructor is to create ON_ManagedFonts::List 
+  // in opennurbs_statics.cpp in a way that Apple's CLang will actually compile.
+  // The only instance of ON_ManagedFonts is ON_ManagedFonts::List.
+  ON_ManagedFonts(ON__UINT_PTR zero);
+
   ~ON_ManagedFonts();
 
+private:
+  ON_ManagedFonts() = delete;
+  ON_ManagedFonts(const ON_ManagedFonts&) = delete;
+  ON_ManagedFonts& operator=(const ON_ManagedFonts&) = delete;
+
+private:
   /*
   Parameters:
     managed_font_metrics_in_font_design_units - [in]

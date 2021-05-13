@@ -1535,17 +1535,18 @@ bool ON_RevSurface::GetBBox(    // returns true if successful
         abox.Set(P,false);
         while( m_axis.ClosestPointTo(P,&t) ) // not a loop - used for flow control
         {
-          abox.Set(arc.plane.origin,true);
           // If we cannot construct a valid arc, then P and the point on the axis
           // are added to the bounding box.  One case where this happens is when
           // P is on the axis of revolution.  See bug 84354.
 
           arc.plane.origin = m_axis.PointAt(t);
           arc.plane.xaxis = P-arc.plane.origin;
+          abox.Set(arc.plane.origin,true);
           arc.radius = arc.plane.xaxis.Length();
           if ( !arc.plane.xaxis.Unitize() )
             break;
-          if ( fabs(arc.plane.xaxis*arc.plane.zaxis) > 0.0001 )
+          double dot = arc.plane.xaxis*arc.plane.zaxis;
+          if ( fabs(dot) > 0.0001 )
             break; 
           arc.plane.yaxis = ON_CrossProduct(arc.plane.zaxis,arc.plane.xaxis);
           if ( !arc.plane.yaxis.Unitize() )

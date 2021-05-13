@@ -207,6 +207,38 @@ public:
     bool bUpperCaseHexadecimalDigits
   ) const;
 
+  /*
+  Description:
+    Parse a string of 40 hexadecimal digits to create a SHA-1 hash.
+  Parameters:
+    string_to_parse - [in]
+    bParseLeadinglSpaces - [in]
+      If true, leading space characters are parsed.
+      Otherwise leading space characters cause parsing to fail.
+    bParseInteriorSpace - [in]
+      If true, interior space characters are  parsed.
+      Otherwise interior space characters cause parsing to fail.
+    bParseInteriorHyphen - [in]
+      If true, interior hyphen characters are  parsed.
+      Otherwise interior hyphen characters cause parsing to fail.
+    bIgnoreInternalSpaces - [in]
+      If true, isolated hyphens are ingored until 40 hex digits are read.
+    bIgnoreInternalHyphens - [in]
+      If true, leading spaces and isolated interior spacess are ingored until 40 hex digits are read.
+    failure_return_value - [in]
+      Value to return if string_to_parse cannot be parsed as 40 hex digits.
+  Returns:
+    If parsing is successful, the value of the SHA-1 hash is returned.
+    Otherwise failure_return_value is returned.
+  */
+  static const ON_SHA1_Hash FromString(
+    const ON_wString string_to_parse,
+    bool bParseLeasingSpaces,
+    bool bParseInteriorSpace,
+    bool bParseInteriorHyphen,
+    ON_SHA1_Hash failure_return_value
+  );
+
   bool Read(
     class ON_BinaryArchive& archive
     );
@@ -231,7 +263,20 @@ public:
   */
   bool IsEmptyContentHash() const;
 
+  bool IsZeroDigestOrEmptyContentHash() const;
+
+  ON_DEPRECATED_MSG("Use IsZeroDigestOrEmptyContentHash() instead. (Spelling error in this one's name.")
   bool IsZeroDigentOrEmptyContentHash() const;
+
+  /*
+  Returns:
+    True if this hash is not equal to ON_SHA1_Hash::EmptyContentHash or ON_SHA1_Hash::ZeroDigest.
+  Remarks:
+    ON_SHA1_Hash::EmptyContentHash is the SHA1 of hasing zero bytes and has a non zero digest.
+    ON_SHA1_Hash::ZeroDigest is 20 bytes of zeros. Opennurbs uses ON_SHA1_Hash::ZeroDigest to
+    indicate a SHA1 has is not initialized.
+  */
+  bool IsSet() const;
 
   ON__UINT8 m_digest[20]; 
 };

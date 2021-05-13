@@ -2178,7 +2178,7 @@ bool ON_TextContent::FormatTolerance(
   ON_DimStyle::suppress_zero zs = alt ? dimstyle->AlternateZeroSuppress() : dimstyle->ZeroSuppress();
 
 
-  double length_factor = dimstyle->LengthFactor();
+  double length_factor = 1.0; // dimstyle->LengthFactor();  RH-63775
   double unit_length_factor = ON::UnitScale(units_in, dim_us);
   length_factor *= unit_length_factor;
   if (alt)

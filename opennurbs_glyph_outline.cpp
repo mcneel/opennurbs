@@ -117,6 +117,37 @@ void  ON_Outline::Reverse()
   }
 }
 
+const bool Internal_FigureBoxesAreDisjoint(
+  const ON_BoundingBox& a,
+  const ON_BoundingBox& b
+)
+{
+  // figure boxes are 2d - ignore z.
+  // figures are closed loops, so we can use <= and >= instead of < and >
+  if (a.m_min[0] >= b.m_max[0])
+    return true;
+  if (a.m_max[0] <= b.m_min[0])
+    return true;
+  if (a.m_min[1] >= b.m_max[1])
+    return true;
+  if (a.m_max[1] <= b.m_min[1])
+    return true;
+  return false;
+}
+
+static int Internal_CompareAreaEstimate(ON_OutlineFigure* const* lhs, ON_OutlineFigure* const* rhs)
+{
+  // Used to sort the figures_sorted_by_size[] array which is constructed in a way
+  // that we know all elements are not nullptr and have valid AreaEstimates().
+  const double lhs_area = fabs((*lhs)->AreaEstimate());
+  const double rhs_area = fabs((*rhs)->AreaEstimate());
+  if (lhs_area > rhs_area)
+    return -1; // largest areas are before smaller areas
+  if (lhs_area < rhs_area)
+    return 1; // largest areas are before smaller areas
+  return 0;
+}
+
 void ON_Outline::SortFigures(
   ON_OutlineFigure::Orientation outer_loop_orientation
 )
@@ -139,14 +170,12 @@ void ON_Outline::SortFigures(
   if (figure_count <= 0)
     return;
 
-
   const ON_OutlineFigure::Orientation inner_loop_orientation
     = (ON_OutlineFigure::Orientation::Clockwise == outer_loop_orientation)
     ? ON_OutlineFigure::Orientation::CounterClockwise
     : ON_OutlineFigure::Orientation::Clockwise;
 
-  ON_SimpleArray<ON_OutlineFigure*> outer_figures(figure_count);
-  ON_SimpleArray<ON_OutlineFigure*> inner_figures(figure_count);
+  ON_SimpleArray<ON_OutlineFigure*> sorted_figures(figure_count);
   ON_SimpleArray<ON_OutlineFigure*> ignored_figures(figure_count);
 
   for (int i = 0; i < figure_count; i++)
@@ -169,10 +198,7 @@ void ON_Outline::SortFigures(
           || inner_loop_orientation == figure_orientation)
         )
       {
-        if (outer_loop_orientation == ptr->FigureOrientation())
-          outer_figures.Append(ptr);
-        else
-          inner_figures.Append(ptr);
+        sorted_figures.Append(ptr);
         continue;
       }
 
@@ -187,8 +213,74 @@ void ON_Outline::SortFigures(
     ignored_figures.Append(ptr);
   }
 
-  unsigned int outer_count = outer_figures.UnsignedCount();
-  unsigned int inner_count = inner_figures.UnsignedCount();
+  const unsigned int sorted_figure_count = sorted_figures.UnsignedCount();
+
+  // Sort figures so the ones with largest included area are first.
+  sorted_figures.QuickSort(Internal_CompareAreaEstimate);
+
+  // As we look at each element of sorted_figures[], it gets assigned to
+  // outer_figures[] or inner_figures[]. If it is assigned to inner_figures[],
+  // the smallest figure that contains it is assigned to inner_figures_parent[].
+  //
+  // Over the years, many more complicated approaches to sorting were tried,
+  // all of which attempted to take into account the orientations from the font file. 
+  // It is so common for the orientations in the font files to be wrong, 
+  // that ignoring them is the most efficient and reliable approach to date.
+  // It is extremly common for outer figures to overlap.
+  ON_SimpleArray<ON_OutlineFigure*> outer_figures(sorted_figure_count);
+  ON_SimpleArray<ON_OutlineFigure*> inner_figures(sorted_figure_count);
+  ON_SimpleArray<ON_OutlineFigure*> inner_figures_parent(sorted_figure_count);
+
+  for (  unsigned k = 0; k < sorted_figure_count; ++k)
+  {
+    ON_OutlineFigure* f = sorted_figures[k];
+
+    // This for(int k0; ...) loop finds the smallest larger figure that contains f and uses
+    // the orientation of this containing loop to determine the orientation of f.
+    ON_OutlineFigure* parent_outer_figure = nullptr;
+    for (unsigned k0 = 0; k0 < k; ++k0)
+    {
+      // Given our assumptions, it is impossible for bigger_f to be inside of f.
+      ON_OutlineFigure* bigger_f = sorted_figures[k0];
+      if (false == f->IsInsideOf(bigger_f, false))
+        continue;
+
+      if (outer_loop_orientation == bigger_f->FigureOrientation())
+      {
+        // f is inside of bigger_f and bigger_f is an outer loop.
+        parent_outer_figure = bigger_f;
+      }
+      else if (inner_loop_orientation == bigger_f->FigureOrientation())
+      {
+        // f is inside of bigger_f and bigger_f is an inner loop.
+        // So f is a nested outer (like the registered trademark glyph)
+        parent_outer_figure = nullptr;
+      }
+    }
+
+    if (nullptr == parent_outer_figure)
+    {
+      outer_figures.Append(f);
+      if (inner_loop_orientation == f->FigureOrientation())
+      {
+        // convert this figure to an outer.
+        f->ReverseFigure();
+      }
+    }
+    else
+    {
+      inner_figures.Append(f);
+      inner_figures_parent.Append(parent_outer_figure);
+      if (outer_loop_orientation == f->FigureOrientation())
+      {
+        // convert this figure to an inner
+        f->ReverseFigure();
+      }
+    }
+  }
+
+  const unsigned outer_count = outer_figures.UnsignedCount();
+  const unsigned inner_count = inner_figures.UnsignedCount();
 
   if ( 0 == outer_count )
   {
@@ -196,210 +288,30 @@ void ON_Outline::SortFigures(
     return;
   }
 
-  if (0 == inner_count )
+  if (0 == inner_count)
   {
     return;
   }
 
-  const int winding_number_sign
-    = (ON_OutlineFigure::Orientation::Clockwise == outer_loop_orientation)
-    ? -1
-    : 1;
-
-  const unsigned int outer_and_inner_count = outer_count + inner_count;
-
-  ON_SimpleArray<ON_OutlineFigure*> sorted_figures(figure_count);
-
-  while (sorted_figures.UnsignedCount() < outer_and_inner_count)
+  // Sort figures by outer followed by its inners.
+  sorted_figures.SetCount(0);
+    for (unsigned i = 0; i < outer_count; ++i)
   {
-    const unsigned int sorted_figures_count0 = sorted_figures.UnsignedCount();
-    for (unsigned int outer_dex = 0; outer_dex < outer_count; outer_dex++)
+    ON_OutlineFigure* outer_figure = outer_figures[i];
+    if (nullptr == outer_figure)
+      continue;
+    sorted_figures.Append(outer_figure);
+    for (unsigned j = 0; j < inner_count; ++j)
     {
-      ON_OutlineFigure* outer_figure = outer_figures[outer_dex];
-      if (nullptr == outer_figure)
-        continue;
-      outer_figures[outer_dex] = nullptr;
-      sorted_figures.Append(outer_figure);
-
-      const double outer_area = fabs(outer_figure->AreaEstimate());
-      const ON_BoundingBox outer_bbox = outer_figure->BoundingBox();
-
-      for (unsigned int inner_dex = 0; inner_dex < inner_count; inner_dex++)
+      if (outer_figure == inner_figures_parent[j])
       {
-        ON_OutlineFigure* inner_figure = inner_figures[inner_dex];
-        if (nullptr == inner_figure)
-          continue; // inner_figures[inner_dex] assigned to previous outer figure
-        const double inner_area = fabs(inner_figure->AreaEstimate());
-        if (false == (inner_area < outer_area))
-          continue;
-        const ON_BoundingBox inner_bbox = inner_figure->BoundingBox();
-        if (false == outer_bbox.Includes(inner_bbox))
-          continue;
-        const int wn0 = winding_number_sign * outer_figure->WindingNumber(inner_figure->m_points[0].m_point);
-        if (wn0 <= 0)
-        {
-          // Starting point of inner_figure is inside f and not inside outer_figure.
-          continue;
-        }
-
-        // Based on area, bounding box, and inner starting point winding number, 
-        // inner_figure is either inside of outer_figure or figures intersect.
-        for (unsigned int k = outer_dex + 1; k < outer_count; k++)
-        {
-          const ON_OutlineFigure* f = outer_figures[k];
-          if (nullptr == f)
-            continue;
-          const double f_area = fabs(f->AreaEstimate());
-          if (false == (inner_area < f_area))
-            continue;
-          const ON_BoundingBox f_bbox = f->BoundingBox();
-          if (false == (f_bbox.Includes(inner_bbox)))
-            continue;
-
-          // f is an outer figure and based on area and bounding box, 
-          // inner_figure could be inside of f as well.
-          // Use winding number tests to determine if outer_figure or f is a better choice.
-
-          const int wn1 = winding_number_sign * f->WindingNumber(inner_figure->m_points[0].m_point);
-          if (wn1 > 0)
-          {
-            // Starting point of inner figure is inside f.
-
-            if (wn0 <= 0)
-            {
-              
-              // Setting inner_figure = nullptr prevents it from being assigned to outer_figure.
-              inner_figure = nullptr;
-              break;
-            }
-
-            // Starting point of inner_figure is inside f and inside outer_figure.
-            if (f_area < outer_area && outer_bbox.Includes(f_bbox))
-            {
-              // Outer_figure is larger than f, so f is a better choice for this inner_figure.
-              // Setting inner_figure = nullptr prevents it from being assigned to outer_figure.
-              inner_figure = nullptr;
-              break;
-            }
-
-            if (outer_area < f_area && f_bbox.Includes(outer_bbox))
-            {
-              // f is larger than outer_figure, so outer_figure is a better choice than f.
-              // continue testing other outer figures
-              continue;
-            }
-
-            // If we get here, either some of the figures (outer_figure, inner_figure, f)
-            // intersect or there is a later element in outer_figures[] that will be the 
-            // best choice.
-          }
-          else
-          {
-            // Starting point of inner figure is not inside f.
-            if (wn0 > 0)
-            {
-              // Starting point of inner figure is inside outer_figure and not inside f.
-              // outer_figure is a better choice.
-              continue;
-            }
-          }
-
-          // Ambiguous case and if the outline is valid there is another outer figure
-          // that will be better choice. The following hueristics can prevent
-          // further searching if f is more likely than outer_figure.
-          if (outer_bbox.Includes(f_bbox))
-          {
-            // f is a smaller outer figure so we will prefer it.
-            // Setting inner_figure = nullptr prevents it from being assigned to outer_figure.
-            inner_figure = nullptr;
-            break;
-          }
-
-          if (
-            f->m_figure_index > outer_figure->m_figure_index
-            && inner_figure->m_figure_index > f->m_figure_index
-            )
-          {
-            // The order of the figures in the source information is
-            // ... outer_figure, ..., f, ..., inner_figure.
-            // In general, this indicates f is a better guess that
-            // outer_figure. Setting inner_figure = nullptr here
-            // prevents it from being assigned to outer_figure.
-            // When we got around to testing f, we may find an 
-            // outer_figure[index > k] that is an even better candidate
-            // than f.
-            inner_figure = nullptr;
-            break;
-          }
-        }
-
-        if (nullptr == inner_figure)
-        {
-          // There are other out figures that are better candidates
-          // for holding inner_figure.
-          continue;
-        }
-
-        // inner figure is inside outer_figure
-        inner_figures[inner_dex] = nullptr;
-        sorted_figures.Append(inner_figure);
+        ON_OutlineFigure* inner_figure = inner_figures[j];
+        inner_figures[j] = nullptr;
+        inner_figures_parent[j] = nullptr;
+        if (nullptr != inner_figure)
+          sorted_figures.Append(inner_figure);
       }
     }
-    if (sorted_figures.UnsignedCount() == outer_and_inner_count)
-      break; // finished
-
-    // typically we end up here when an outer figure is incorrect oriented
-    // ComicSans U+0048 (+/- glpyh) is one example of many. In ComicSans U+0048
-    // the + and - figures are disjoint and have opposite orientations.
-    // Convert the largest unused inner figure to an outer figure.
-
-    if (sorted_figures.UnsignedCount() <= sorted_figures_count0)
-      break; // no progress made
-    if (inner_count <= 0)
-      break; // nothing left to try.
-
-    unsigned int largest_inner_area_index = ON_UNSET_UINT_INDEX;
-    double largest_inner_area = 0.0;
-    for (unsigned int inner_dex = 0; inner_dex < inner_count; inner_dex++)
-    {
-      ON_OutlineFigure* inner_figure = inner_figures[inner_dex];
-      if (nullptr == inner_figure)
-        continue; // inner_figures[inner_dex] assigned to previous outer figure
-      const double inner_area = fabs(inner_figure->AreaEstimate());
-      if (inner_area > largest_inner_area)
-      {
-        largest_inner_area = inner_area;
-        largest_inner_area_index = inner_dex;
-      }
-    }
-
-    if (ON_UNSET_UINT_INDEX == largest_inner_area_index)
-      break;
-    ON_OutlineFigure* new_outer_figure = inner_figures[largest_inner_area_index];
-    if (nullptr == new_outer_figure)
-      break;
-
-    // convert new_outer_figure to an outer figure and continue sorting.
-    new_outer_figure->ReverseFigure();
-    if (largest_inner_area_index+1 < inner_count)
-    {
-      inner_figures[largest_inner_area_index] = inner_figures[inner_count - 1];
-      inner_figures[inner_count - 1] = nullptr;
-    }
-    inner_figures.SetCount(inner_count - 1);
-    outer_figures.Append(new_outer_figure);
-    outer_count = outer_figures.UnsignedCount();
-    inner_count = inner_figures.UnsignedCount();
-  }
-
-  if (sorted_figures.UnsignedCount() != outer_and_inner_count)
-  {
-    // unable to sort outer and inner figures.
-    // Input is probably not valid. 
-    // Use original order.
-    ON_ERROR("Unable to sort outer and inner figures.");
-    m_sorted_figure_outer_orientation = ON_OutlineFigure::Orientation::Error;
-    return;
   }
 
   // Put single stroke and other non-perimeter figures on the end.
@@ -803,6 +715,297 @@ double ON_OutlineFigure::BoxArea() const
   }
   return bbox_area;
 }
+
+unsigned ON_OutlineFigure::GetUpToFourPointsOnFigure(ON_2fPoint p[4]) const
+{
+  if (nullptr == p)
+    return 0;
+  
+  unsigned point_count = 0;
+  const ON__UINT32 end_dex = Internal_FigureEndDex(false);
+  if (end_dex > 0)
+  {
+    // p[0] = point at the start
+    const ON_2fPoint p0 = this->m_points[0].m_point;
+    p[point_count++] = p0;
+
+
+    // p[1] = point between start and middle
+    ON_2fPoint prev_p = p0;
+    unsigned i1 = end_dex / 2;
+    if (i1 >= 2)
+    {
+      for (ON__UINT32 i = i1 - 1; i > 0; --i)
+      {
+        if (false == this->m_points[i].IsOnFigure())
+          continue;
+        const ON_2fPoint candidate_p = this->m_points[i].m_point;
+        if (prev_p != candidate_p)
+        {
+          prev_p = candidate_p;
+          p[point_count++] = candidate_p;
+          break;
+        }
+      }
+    }
+
+    // p[2] = point between middle and end
+    for (/*empty init*/; i1 <= end_dex; ++i1)
+    {
+      if (false == this->m_points[i1].IsOnFigure())
+        continue;
+      const ON_2fPoint candidate_p = this->m_points[i1].m_point;
+      if (prev_p != candidate_p)
+      {
+        prev_p = candidate_p;
+        p[point_count++] = candidate_p;
+        break;
+      }
+    }
+
+    // p[3] = point close to end
+    for (ON__UINT32 i = end_dex; i > i1; --i)
+    {
+      if (false == this->m_points[i].IsOnFigure())
+        continue;
+      const ON_2fPoint candidate_p = this->m_points[i].m_point;
+      if (prev_p != candidate_p && p0 != candidate_p)
+      {
+        p[point_count++] = candidate_p;
+        break;
+      }
+    }
+  }
+
+  for (unsigned i = point_count; i < 4; ++i)
+    p[i] = ON_2fPoint::NanPoint;
+  return point_count;
+}
+
+static bool Internal_ExtraInsideOfPolylineText(
+  const ON_OutlineFigure* outer_figure,
+  const ON_OutlineFigure* inner_figure
+)
+{
+  // This function is called when an extra test is needed to be certain
+  // that outer_pline contains inner_pline. Generating the input
+  // for this text and performing this test is computationally expensive.
+  // It is called sparingly.
+
+  if (nullptr == outer_figure || nullptr == inner_figure)
+    return false;
+
+  ON_SimpleArray<ON_2dPoint> outer_pline;
+  outer_figure->GetPolyline(0.0, outer_pline);
+  const unsigned outer_count = outer_pline.UnsignedCount();
+  if (outer_count < 4)
+    return false;
+
+  ON_SimpleArray<ON_2dPoint> inner_pline;
+  inner_figure->GetPolyline(0.0, inner_pline);
+  const unsigned inner_count = inner_pline.UnsignedCount();
+  if (inner_count < 2)
+    return false;
+
+  const ON_2dPoint* a = outer_pline.Array();
+  const ON_2dPoint* b = inner_pline.Array();
+
+  // Bmin, Bmax = bounding box of inner_pline.
+  ON_2dPoint Bmin = b[0];
+  ON_2dPoint Bmax = Bmin;
+  double c;
+  for (unsigned j = 1; j < inner_count; ++j)
+  {
+    c = b[j].x;
+    if (c < Bmin.x)
+      Bmin.x = c;
+    else if (c > Bmax.x)
+      Bmax.x = c;
+    c = b[j].y;
+    if (c < Bmin.y)
+      Bmin.y = c;
+    else if (c > Bmax.y)
+      Bmax.y = c;
+  }
+
+  ON_2dPoint Amin;
+  ON_2dPoint Amax;
+  ON_2dPoint A[2] = { ON_2dPoint::NanPoint,a[0] };
+  ON_2dPoint B[2] = { ON_2dPoint::NanPoint,ON_2dPoint::NanPoint };
+  double alpha[3] = { ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN };
+  for (unsigned i = 1; i < outer_count; ++i)
+  {
+    A[0] = A[1];
+    A[1] = a[i];
+    if (A[0] == A[1])
+      continue;
+
+    // Amin,Amax = bounding box of outer line segment
+
+    if (A[0].x <= A[1].x)
+    {
+      Amin.x = A[0].x;
+      Amax.x = A[1].x;
+    }
+    else
+    {
+      Amin.x = A[1].x;
+      Amax.x = A[0].x;
+    }
+    if (Amax.x < Bmin.x)
+      continue;
+    if (Amin.x > Bmax.x)
+      continue;
+
+    if (A[0].y <= A[1].y)
+    {
+      Amin.y = A[0].y;
+      Amax.y = A[1].y;
+    }
+    else
+    {
+      Amin.y = A[1].y;
+      Amax.y = A[0].y;
+    }
+    if (Amax.y < Bmin.y)
+      continue;
+    if (Amin.y > Bmax.y)
+      continue;
+
+    alpha[0] = ON_DBL_QNAN;
+
+    B[1] = b[0];
+    for (unsigned j = 1; j < inner_count; ++j)
+    {
+      B[0] = B[1];
+      B[1] = b[j];
+      if (B[0] == B[1])
+        continue;
+
+      // line segment bounding box check
+      if (B[0].x < Amin.x && B[1].x < Amin.x)
+        continue;
+      if (B[0].y < Amin.y && B[1].y < Amin.y)
+        continue;
+      if (B[0].x > Amax.x && B[1].x > Amax.x)
+        continue;
+      if (B[0].y > Amax.y && B[1].y > Amax.y)
+        continue;
+
+      if (alpha[0] != alpha[0])
+      {
+        // need to initialize alpha[3] 
+        alpha[0] = A[1].y - A[0].y;
+        alpha[1] = A[0].x - A[1].x;
+        alpha[2] = A[1].x * A[0].y - A[0].x * A[1].y;
+      };
+
+      double h[2] = {
+        alpha[0] * B[0].x + alpha[1] * B[0].y + alpha[2],
+        alpha[0] * B[1].x + alpha[1] * B[1].y + alpha[2]
+      };
+      if (h[0] < 0.0 && h[1] < 0.0)
+        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+      if (h[0] > 0.0 && h[1] > 0.0)
+        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+
+      const double beta[3] =
+      {
+        B[1].y - B[0].y,
+        B[0].x - B[1].x,
+        B[1].x * B[0].y - B[0].x * B[1].y
+      };
+
+      h[0] = beta[0] * B[0].x + beta[1] * B[0].y + beta[2];
+      h[1] = beta[0] * B[1].x + beta[1] * B[1].y + beta[2];
+      if (h[0] < 0.0 && h[1] < 0.0)
+        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+      if (h[0] > 0.0 && h[1] > 0.0)
+        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+
+      // The line segment A[0],A[1] and line segment B[0],B[1] intersect someplace.
+      // The location of the intersection doesn't matter, even if it's one of the end points.
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ON_OutlineFigure::IsInsideOf(
+  const ON_OutlineFigure* outer_figure,
+  bool bPerformExtraChecking
+) const
+{
+  if (nullptr == outer_figure)
+    return false;
+
+  const ON_OutlineFigure::Orientation outer_orientation = outer_figure->FigureOrientation();
+  if (ON_OutlineFigure::Orientation::Clockwise != outer_orientation && ON_OutlineFigure::Orientation::CounterClockwise != outer_orientation)
+    return false;
+
+
+  const ON_BoundingBox this_bbox = this->BoundingBox();
+  const ON_BoundingBox outer_bbox = outer_figure->BoundingBox();
+  if (false == outer_bbox.Includes(this_bbox))
+  {
+    // The bounding boxes are from the glyph outline control polygons.
+    // There are rare case when this f is inside of other_f
+    // but this_bbox is not contained in other_bbox. In practice, this
+    // is quite rare, but that's why "probably" is part of this function's name.
+    return false;
+  }
+
+  const double outer_area = fabs(outer_figure->AreaEstimate());
+  const double this_area = fabs(this->AreaEstimate());
+  if (false == (0.0 < this_area && this_area < outer_area))
+    return false; // this figure is too big to be inside of other_f
+
+  // Check that the 3 standard test points on this are inside of other_f.
+  // Again, it is possible that the 3 test points are inside but some other
+  // point is outside. In practice this is rare and that possibility
+  // is why "probably" is in this function's name.
+
+  const int outer_orientation_sign = ON_OutlineFigure::Orientation::CounterClockwise == outer_orientation ? 1 : -1;
+
+  ON_2fPoint this_p[4];
+  unsigned  this_point_count = this->GetUpToFourPointsOnFigure(this_p);
+
+  for (unsigned i = 0; i < this_point_count; ++i)
+  {
+    // check start point.
+    const int wn = outer_orientation_sign * outer_figure->WindingNumber(this_p[i]);
+    if (1 != wn)
+    {
+      // this_p[i] is not inside of other_f.
+      return false;
+    }
+  }
+
+  if (0 == this_point_count)
+    return false;
+
+  const ON_OutlineFigure::Orientation this_orientation = this->FigureOrientation();
+
+  if (outer_orientation == this_orientation || bPerformExtraChecking)
+  {
+    // The context that calls this function is sorting nested loops.
+    // The orientation of outer_figure has been decided and set at this point.
+    // When this orientation of this is not different, we need more checking
+    // to verify that the orientaion from the font definition file was really "wrong".
+    // The "A crossbar" in Bahnschrift U+00C5 is one of many cases that
+    // require this additional checking. More generally, glyphs with
+    // orientations set correctly and which use overlapping outer 
+    // boundaries need this test to prevent incorrectly. This situation is
+    // common in fonts like Bahnschrift and fonts for Asian language scripts
+    // that have "brush stroke" boundaries that overlap.
+    if (false == Internal_ExtraInsideOfPolylineText(outer_figure, this))
+      return false;
+  }
+
+  return true;
+}
+
 
 ON__UINT32 ON_OutlineFigure::UnitsPerEM() const
 {
@@ -2524,6 +2727,7 @@ bool ON_OutlineFigure::IsValidFigure(
   }
 
   const ON_OutlineFigurePoint* a = m_points.Array();
+
 
   const ON_OutlineFigurePoint figure_start = a[0];
   if (false == figure_start.IsBeginFigurePoint())

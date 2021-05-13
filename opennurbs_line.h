@@ -400,6 +400,16 @@ public:
 		const ON_Xform* xform = nullptr
 	) const;
 
+  // Returns:
+  //   Index of edge opposite to m_V[i] that is longest.
+  //   When lenghts are equal, lowest index has priority.
+  unsigned char LongestEdge() const;
+
+  // Returns:
+  //   Index of edge opposite to m_V[i] that is shortest.
+  //   When lenghts are equal, lowest index has priority.
+  unsigned char ShortestEdge() const;
+
 	// Returns:
 	//   Edge opposite m_V[i]
 	// Specifically, 
@@ -549,6 +559,28 @@ public:
 		const ON_3dVector& delta
 	);
 
+  // Description:
+  //   Split the triangles into two, by choosing an edge and a new point that will appear along the edge.
+  // Parameters:
+  //   edge - [in] Edge index as defined in Edge()
+  //   pt - [in] Point to add as splitter along edge
+  //   out_a - [out] First triangle
+  //   out_b - [out] Second triangle
+  void Split(unsigned char edge, ON_3dPoint pt, ON_Triangle& out_a, ON_Triangle& out_b) const;
+
+  // Description:
+  //   Flip the normal of the triangle, by swapping the points of an edge.
+  // Parameters:
+  //   edge - [in] The edge, as defined in the Edge() method. I.e., edge 0 swaps m_V[1] and m_V[2]
+  void Flip(unsigned char edge = 0);
+
+  // Description:
+  //   Circle the order of points in the triangle, without any influence to any geometric property.
+  // Parameters:
+  //   move - [in] Amounts of rotations in the order of the three points.
+  //               By means of examples, "move" of 1 will move m_V[0] to m_V[1],
+  //               m_V[1] to m_V[2] and m_V[2] to m_V[0].
+  void Spin(unsigned char move);
 
 public:
 	ON_3dPoint m_V[3]; // verticies

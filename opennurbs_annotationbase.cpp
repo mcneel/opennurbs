@@ -598,6 +598,7 @@ ON_3dVector ON_Annotation::GetDefaultHorizontal(const ON_Plane& plane)
   return ON_3dVector::XAxis;
 }
 
+
 void ON_Annotation::CalcTextFlip(
   const ON_3dVector& text_xdir, const ON_3dVector& text_ydir, const ON_3dVector& text_zdir,
   const ON_3dVector& view_xdir, const ON_3dVector& view_ydir, const ON_3dVector& view_zdir,
@@ -3326,7 +3327,7 @@ bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* pa
       textstring = dim->UserText();
     ON_wString rtfstr(textstring);
 
-    const ON_wString newrtf = ON_TextContext::FormatRtfString(rtfstr, parent_style, !bold, bold, !italic, italic, false, false, false, true, fontname);
+    const ON_wString newrtf = ON_TextContext::FormatRtfString(rtfstr, parent_style, false, bold, false, italic, false, false, false, true, fontname);
     if (newrtf.IsNotEmpty())
     {
       if (nullptr != dim)

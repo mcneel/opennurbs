@@ -78,6 +78,9 @@ public:
   // virtual ON_Object override
   ON::object_type ObjectType() const override;
 
+  // virtual ON_Object::SizeOf override
+  unsigned int SizeOf() const override;
+
   // virtual ON_Geometry override
   int Dimension() const override;
 
@@ -204,6 +207,30 @@ public:
     True if the point is hidden.
   */
   bool PointIsHidden( int point_index ) const;
+
+  /*
+  Description:
+    Returns a random subsample of a point cloud.
+  Parameters:
+    source_point_cloud - [in] The point cloud to subsample.
+    subsample_point_count - [in] The number of points to keep.
+    destination_point_cloud - [out] If nullptr, then a new ON_PointCloud() 
+        will be the destination. This can be the source point cloud.
+    progress_reporter - [in] Optional progress reporter, can be nullptr.
+    terminator - [in] Optional terminator, can be nullptr.
+  Returns:
+    A new ON_PointCloud which is a subsample of source_point_cloud.
+    If destination_point_cloud == nullptr, then memory will be allocated for
+    the returned point cloud and becomes the responsibility of the caller.
+  */
+  static ON_PointCloud* RandomSubsample(
+    const ON_PointCloud* source_point_cloud,
+    const unsigned int subsample_point_count,
+    ON_PointCloud* destination_point_cloud,
+    ON_ProgressReporter* progress_reporter,
+    ON_Terminator* terminator
+  );
+
 
   /////////////////////////////////////////////////////////////////
   // Implementation

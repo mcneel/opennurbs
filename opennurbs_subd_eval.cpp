@@ -1022,6 +1022,49 @@ void ON_SubDVertex::ClearSavedSubdivisionPoints() const
   ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
 }
 
+void ON_SubDVertex::ClearSavedSubdivisionPoints(bool bClearNeighborhood) const
+{
+  ClearSavedSubdivisionPoints();
+  if (false == bClearNeighborhood)
+    return;
+
+  for (unsigned short vei = 0; vei < m_edge_count; ++vei)
+  {
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
+    if (nullptr == e)
+      continue;
+    e->ClearSavedSubdivisionPoints();
+    const ON_SubDVertex* other_v = e->OtherEndVertex(this);
+    if (nullptr != other_v)
+      other_v->ClearSavedSubdivisionPoints();
+  }
+  for (unsigned short vfi = 0; vfi < m_face_count; ++vfi)
+  {
+    const ON_SubDFace* f = m_faces[vfi];
+    if (nullptr == f)
+      continue;
+    f->ClearSavedSubdivisionPoints();
+    const ON_SubDEdgePtr* eptr = f->m_edge4;
+    for (unsigned short fei = 0; fei < f->m_edge_count; ++fei, ++eptr)
+    {
+      if (4 == fei)
+      {
+        eptr = f->m_edgex;
+        if (nullptr == eptr)
+          break;
+      }
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+      if (nullptr == e)
+        continue;
+      e->ClearSavedSubdivisionPoints();
+      if (nullptr != e->m_vertex[0])
+        e->m_vertex[0]->ClearSavedSubdivisionPoints();
+      if (nullptr != e->m_vertex[1])
+        e->m_vertex[1]->ClearSavedSubdivisionPoints();
+    }
+  }
+}
+
 bool ON_SubDVertex::SurfacePointIsSet() const
 {
   const bool rc = Internal_SurfacePointFlag();
@@ -1039,6 +1082,35 @@ void ON_SubDEdge::ClearSavedSubdivisionPoints() const
   ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
 }
 
+void ON_SubDEdge::ClearSavedSubdivisionPoints(bool bClearNeighborhood) const
+{
+  ClearSavedSubdivisionPoints();
+  if (false == bClearNeighborhood)
+    return;
+
+  for (unsigned evi = 0; evi < 2; ++evi)
+  {
+    const ON_SubDVertex* v = m_vertex[evi];
+    if (nullptr == v)
+      continue;
+    v->ClearSavedSubdivisionPoints();
+  }
+
+  const ON_SubDFacePtr* fptr = this->m_face2;
+  for (unsigned short efi = 0; efi < m_face_count; ++efi, ++fptr)
+  {
+    if (2 == efi)
+    {
+      fptr = this->m_facex;
+      if (nullptr == fptr)
+        break;
+    }
+    const ON_SubDFace* f = ON_SUBD_FACE_POINTER(fptr->m_ptr);
+    if (nullptr != f)
+      f->ClearSavedSubdivisionPoints();
+  }
+}
+
 const ON_SubDMeshFragment * ON_SubDFace::MeshFragments() const
 {
   // NOTE:
@@ -1052,6 +1124,35 @@ void ON_SubDFace::ClearSavedSubdivisionPoints() const
 {
   // considering using a global pool for the limit fragment cache - not yet.
   ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
+}
+
+void ON_SubDFace::ClearSavedSubdivisionPoints(bool bClearNeighborhood) const
+{
+  ClearSavedSubdivisionPoints();
+  if (false == bClearNeighborhood)
+    return;
+
+  const ON_SubDEdgePtr* eptr = this->m_edge4;
+  for (unsigned short fei = 0; fei < this->m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = this->m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr == e)
+      continue;
+    e->ClearSavedSubdivisionPoints();
+    for (unsigned evi = 0; evi < 2; ++evi)
+    {
+      const ON_SubDVertex* v = e->m_vertex[evi];
+      if (nullptr == v)
+        continue;
+      v->ClearSavedSubdivisionPoints();
+    }    
+  }
 }
 
 

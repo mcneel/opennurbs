@@ -678,6 +678,24 @@ bool ON_Triangle::GetTightBoundingBox(
 	return rc;
 }
 
+unsigned char ON_Triangle::LongestEdge() const
+{
+  double l0 = (m_V[1] - m_V[2]).LengthSquared();
+  double l1 = (m_V[2] - m_V[0]).LengthSquared();
+  double l2 = (m_V[0] - m_V[1]).LengthSquared();
+
+  return l1 < l2 ? ((l2 <= l0) ? 0 : 2) : ((l1 <= l0) ? 0 : 1);
+}
+
+unsigned char ON_Triangle::ShortestEdge() const
+{
+  double l0 = (m_V[1] - m_V[2]).LengthSquared();
+  double l1 = (m_V[2] - m_V[0]).LengthSquared();
+  double l2 = (m_V[0] - m_V[1]).LengthSquared();
+
+  return l2 < l1 ? ((l2 < l0) ? 2 : 0) : ((l1 < l0) ? 1 : 0);
+}
+
 ON_Line ON_Triangle::Edge(int i) const
 {
 	return  ON_Line(m_V[(i + 1) % 3], m_V[(i + 2) % 3]);
@@ -881,6 +899,75 @@ bool ON_Triangle::Translate(const ON_3dVector & delta)
 {
 	const ON_Xform T(ON_Xform::TranslationTransformation(delta));
 	return Transform(T);
+}
+
+void ON_Triangle::Split(unsigned char edge, ON_3dPoint pt, ON_Triangle& out_a, ON_Triangle& out_b) const
+{
+  switch (edge % 3)
+  {
+  case 0:
+    out_a.m_V[0] = m_V[0];
+    out_a.m_V[1] = m_V[1];
+    out_a.m_V[2] = pt;
+    out_b.m_V[0] = m_V[0];
+    out_b.m_V[1] = pt;
+    out_b.m_V[2] = m_V[2];
+    break;
+  case 1:
+    out_a.m_V[0] = m_V[0];
+    out_a.m_V[1] = m_V[1];
+    out_a.m_V[2] = pt;
+    out_b.m_V[0] = pt;
+    out_b.m_V[1] = out_b.m_V[1];
+    out_b.m_V[2] = out_b.m_V[2];
+    break;
+  default: //2
+    out_a.m_V[0] = m_V[0];
+    out_a.m_V[1] = pt;
+    out_a.m_V[2] = m_V[2];
+    out_b.m_V[0] = pt;
+    out_b.m_V[1] = m_V[1];
+    out_b.m_V[2] = m_V[2];
+    break;
+  }
+}
+
+void ON_Triangle::Flip(unsigned char edge)
+{
+  switch (edge % 3)
+  {
+  case 0:
+    std::swap(m_V[1], m_V[2]);
+    break;
+  case 1:
+    std::swap(m_V[2], m_V[0]);
+    break;
+  default: //2
+    std::swap(m_V[0], m_V[1]);
+    break;
+  }
+}
+
+void ON_Triangle::Spin(unsigned char move)
+{
+  ON_3dPoint tmp;
+  switch (move % 3)
+  {
+  case 0:
+    break;
+  case 1:
+    tmp = m_V[0];
+    m_V[0] = m_V[2];
+    m_V[2] = m_V[1];
+    m_V[1] = tmp;
+    break;
+  default: //2
+    tmp = m_V[0];
+    m_V[0] = m_V[1];
+    m_V[1] = m_V[2];
+    m_V[2] = tmp;
+    break;
+  }
 }
 
 

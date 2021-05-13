@@ -100,13 +100,15 @@
 #if !defined(ON_RUNTIME_APPLE_IOS)
 #define ON_RUNTIME_APPLE_MACOS
 
+#if !defined(RHINO_CORE_COMPONENT)
 // Apple:
 //   Defines RHINO_CORE_COMPONENT here.
 //   If we publish an Apple C++ pubic SDK, this will need to be adjusted.
 // Windows:
 //   uses the property sheet RhinoProjectPropertySheets/Rhino.Cpp.common.props
 //   Some build products in Windows are not "core components"
-#define RHINO_CORE_COMPONENT = 1
+#define RHINO_CORE_COMPONENT 1
+#endif
 #endif
 
 #if (defined(__LP64__) || defined(__ppc64__))

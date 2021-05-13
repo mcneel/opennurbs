@@ -1391,6 +1391,70 @@ public:
   double TextHeight() const;
   void SetTextHeight(double height);
 
+  /*
+  Returns:
+    Width of an em space (U+2003), also called a mutton, in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  */
+  double TextWidthOfSpace() const;
+
+  /*
+  Returns:
+    Width of an em space (U+2003), also called a mutton, in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  */
+  double TextWidthOfEmSpace() const;
+
+  /*
+  Returns:
+    Width of an en space (U+2002), also called a nut, in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  */
+  double TextWidthOfEnSpace() const;
+
+  /*
+  Returns:
+    Width of a figure space (U+2007) in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  Remarks:
+    Typically close to the average with of a decimal digit (0123456789) and used
+    to line up colmns of numeric values.
+  */
+  double TextWidthOfFigureSpace() const;
+
+  /*
+  Returns:
+    Width of an ideographic space (U+3000) in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  Remarks:
+    The width of ideographic (CJK) characters.
+  */
+  double TextWidthOfIdeographicSpace() const;
+
+  /*
+  Returns:
+    Width of a medium mathematical space (U+205F) in the same units as TextHeight()
+    using the current settings for TextHeight() and Font().
+  */
+  double TextWidthOfMediumMathematicalSpace() const;
+
+  /*
+  Parameters:
+    unicode_code_point - [in]
+  Returns:
+    The advande for a single code point glyph in the same units as TextHeight() using the current settings
+    for TextHeight() and Font().
+  Remarks:
+    When sequences of code points are rendered, using the per glyph advance does not
+    create the best looking text. Text rendering tools like DirectWrite that look at the 
+    entire string adjust advance based on the locale, neighboring glyphs, and other contextual
+    information.
+  */
+  double TextAdvanceOfCodePoint(
+    unsigned unicode_code_point
+  ) const;
+
+
   /// <summary>
   /// LengthFactor is a rarely used. It applies when a model is being
   /// drawn to a scale and the dimension length values should be

@@ -3657,7 +3657,12 @@ ON__UINT32 ON_TextureMapping::MappingCRC() const
             const ON_2fPoint* tex = mesh->m_T.Array();
             crc32 = ON_CRC32(crc32,mesh->m_T.Count()*sizeof(tex[0]),tex);
           }
-        }
+          // January 7th 2021 Jussi
+          //   Added crc of origin to change the mapping crc to tricker re-mapping
+          //   of custom mesh mapped objects. This is to make the improvements to
+          //   CMeshClosestPointMapper::MatchFaceTC effective on existing models.
+          crc32 = ON_CRC32(crc32, sizeof(ON_3dPoint), &ON_3dPoint::UnsetPoint);
+      }
         break;
 
       case ON_TextureMapping::TYPE::brep_mapping_primitive:

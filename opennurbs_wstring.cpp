@@ -424,7 +424,7 @@ wchar_t* ON_wString::ReserveArray( size_t array_capacity )
   if (array_capacity <= 0)
     return nullptr;
 
-  if (array_capacity > (size_t)ON_String::MaximumStringLength)
+  if (array_capacity > (size_t)ON_wString::MaximumStringLength)
   {
     ON_ERROR("Requested capacity > ON_String::MaximumStringLength");
     return nullptr;
@@ -925,6 +925,156 @@ CFStringRef ON_String::ToAppleCFString() const
 }
 #endif
 
+
+bool ON_String::IsHexDigit(char c)
+{
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+bool ON_String::IsDecimalDigit(char c)
+{
+  return (c >= '0' && c <= '9');
+}
+
+
+bool ON_wString::IsHexDigit(wchar_t c)
+{
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+bool ON_wString::IsDecimalDigit(wchar_t c)
+{
+  return (c >= '0' && c <= '9');
+}
+
+
+bool ON_wString::IsDecimalDigit(
+  wchar_t c,
+  bool bOrdinaryDigitResult,
+  bool bSuperscriptDigitResult,
+  bool bSubscriptDigitResult
+)
+{
+  if (bOrdinaryDigitResult && (c >= '0' && c <= '9'))
+    return true;
+
+  if (bSuperscriptDigitResult)
+  {
+    switch (c)
+    {
+    case 0x2070: // 0
+    case 0x00B9: // 1
+    case 0x00B2: // 2
+    case 0x00B3: // 3
+      return true;
+      break;
+    }
+    if (c >= 0x2074 && c <= 0x2079)
+      return true; // 4,5,6,7,8,9
+  }
+
+  if (bSubscriptDigitResult && (c >= 0x2080 && c <= 0x2089))
+    return true;
+
+  return false;
+}
+
+unsigned ON_wString::DecimalDigitFromWideChar(
+  wchar_t c,
+  bool bAcceptOrdinaryDigit,
+  bool bAcceptSuperscriptDigit,
+  bool bAcceptSubscriptDigit,
+  unsigned invalid_c_result
+)
+{
+  if (bAcceptOrdinaryDigit && (c >= '0' && c <= '9'))
+    return (unsigned)(c - '0');
+
+  if (bAcceptSuperscriptDigit)
+  {
+    if (0x2070 == c || (c >= 0x2074 && c <= 0x2079))
+      return (unsigned)(c - 0x2070);
+    else if (0x00B9 == c)
+      return 1;
+    else if (0x00B2 == c)
+      return 2;
+    else if (0x00B3 == c)
+      return 3;
+  }
+
+  if (bAcceptSubscriptDigit && (c >= 0x2080 && c <= 0x2089))
+    return (unsigned)(c - 0x2080);
+
+  return invalid_c_result;
+}
+
+int ON_wString::PlusOrMinusSignFromWideChar(
+  wchar_t c,
+  bool bAcceptOrdinarySign,
+  bool bAcceptSuperscriptSign,
+  bool bAcceptSubscriptSign
+  )
+{
+  switch (c)
+  {
+
+  case '+': // ordinary plus
+  case 0x2795:
+    return bAcceptOrdinarySign ? 1 : 0;
+    break;
+
+  case '-': // ordinary hyphen-minus
+  case 0x2212:
+  case 0x2796:
+    return bAcceptOrdinarySign ? -1 : 0;
+    break;
+
+  case 0x207A: // superscript +
+    return bAcceptSuperscriptSign ? 1 : 0;
+    break;
+
+  case 0x207B: // superscript -
+    return bAcceptSuperscriptSign ? -1 : 0;
+    break;
+
+  case 0x208A: // subscript +
+    return bAcceptSubscriptSign ? 1 : 0;
+    break;
+
+  case 0x208B: // subscript -
+    return bAcceptSubscriptSign ? -1 : 0;
+    break;
+  }
+
+  return 0;
+}
+
+
+bool ON_wString::IsSlash(
+  wchar_t c,
+  bool bOrdinarySlashResult,
+  bool bFractionSlashResult,
+  bool bDivisionSlashResult,
+  bool bMathematicalSlashResult
+)
+{
+  switch (c)
+  {
+  case ON_UnicodeCodePoint::ON_Slash:
+    return bOrdinarySlashResult ? true : false;
+  case ON_UnicodeCodePoint::ON_FractionSlash:
+    return bFractionSlashResult ? true : false;
+  case ON_UnicodeCodePoint::ON_DivisionSlash:
+    return bDivisionSlashResult ? true : false;
+  case ON_UnicodeCodePoint::ON_MathimaticalSlash:
+    return bMathematicalSlashResult ? true : false;
+  default:
+    break;
+  }
+
+  return false;
+}
+
 int ON_wString::Length() const
 {
   return Header()->string_length;
@@ -1179,6 +1329,15 @@ wchar_t* ON_wString::Array()
 const wchar_t* ON_wString::Array() const
 {
   return ( Header()->string_capacity > 0 ) ? m_s : 0;
+}
+
+const ON_wString ON_wString::Duplicate() const
+{
+  if (Length() <= 0)
+    return ON_wString::EmptyString;
+  ON_wString s = *this;
+  s.CopyArray();
+  return s;
 }
 
 /*
@@ -2504,3 +2663,954 @@ ON_wString ON_wString::Right(int count) const
   return s;
 }
 
+const ON_wString ON_wString::EncodeXMLValue() const
+{
+  return EncodeXMLValue(false);
+}
+
+static unsigned Internal_ToHexDigits(
+  unsigned u,
+  unsigned* hex_digits,
+  size_t hex_buffer_capacity
+)
+{
+  size_t hex_digit_count = 0;
+  while( hex_digit_count < hex_buffer_capacity)
+  {
+    hex_digits[hex_digit_count++] = u % 0x10;
+    u /= 0x10;
+    if (0 == u)
+      return ((unsigned)hex_digit_count);
+  }
+  return 0;
+}
+
+const ON_wString ON_wString::EncodeXMLValue(
+  bool bEncodeCodePointsAboveBasicLatin
+) const
+{
+  const int length0 = this->Length();
+  if (length0 <= 0)
+    return ON_wString::EmptyString;
+
+  const wchar_t* buffer0 = this->Array();
+  if (nullptr == buffer0)
+    return ON_wString::EmptyString;
+  unsigned hex_digits[8] = {};
+  const unsigned hex_digit_capacity = (unsigned)(sizeof(hex_digits) / sizeof(hex_digits[0]));
+
+  const wchar_t* buffer0_end = buffer0 + length0;
+  int length1 = 0;
+  struct ON_UnicodeErrorParameters e;
+  for (const wchar_t* buffer1 = buffer0; buffer1 < buffer0_end; ++buffer1, ++length1)
+  {
+    const wchar_t c = *buffer1;
+    switch (c)
+    {
+    case ON_UnicodeCodePoint::ON_QuotationMark:
+      length1 += 5;
+      break;
+    case ON_UnicodeCodePoint::ON_Ampersand:
+      length1 += 4;
+      break;
+    case ON_UnicodeCodePoint::ON_Apostrophe:
+      length1 += 5;
+      break;
+    case ON_UnicodeCodePoint::ON_LessThanSign:
+      length1 += 3;
+      break;
+    case ON_UnicodeCodePoint::ON_GreaterThanSign:
+      length1 += 3;
+      break;
+    default:
+      if (bEncodeCodePointsAboveBasicLatin && (c  < 0 || c > 127))
+      {
+        e = ON_UnicodeErrorParameters::MaskErrors;
+        ON__UINT32 u = ON_UnicodeCodePoint::ON_ReplacementCharacter;
+        const int decoded_wchar_count = ON_DecodeWideChar(buffer1, (int)(buffer0_end - buffer1), &e, &u);
+        if (decoded_wchar_count > 0 && ON_IsValidUnicodeCodePoint(u))
+        {
+          const unsigned hex_digit_count = Internal_ToHexDigits(u, hex_digits, hex_digit_capacity);
+          if (hex_digit_count > 0)
+          {
+            length1 += hex_digit_count;
+            length1 += 3;
+            buffer1 += (decoded_wchar_count-1);
+          }
+        }
+      }
+    break;
+    }
+  }
+
+  if (length1 <= length0)
+    return *this; // nothing to encode
+
+  ON_wString s;
+  wchar_t* encoded = s.ReserveArray(length1);
+  if (nullptr == encoded)
+    return ON_wString::EmptyString; // catastrophe
+
+  for (const wchar_t* buffer1 = buffer0; buffer1 < buffer0_end; ++buffer1)
+  {
+    *encoded = *buffer1;
+    switch (*encoded)
+    {
+    case ON_UnicodeCodePoint::ON_QuotationMark:
+      *encoded++ = ON_wString::Ampersand;
+      *encoded++ = 'q';
+      *encoded++ = 'u';
+      *encoded++ = 'o';
+      *encoded++ = 't';
+      *encoded++ = ON_wString::Semicolon;
+      break;
+
+    case ON_UnicodeCodePoint::ON_Ampersand:
+      *encoded++ = ON_wString::Ampersand;
+      *encoded++ = 'a';
+      *encoded++ = 'm';
+      *encoded++ = 'p';
+      *encoded++ = ON_wString::Semicolon;
+      break;
+
+    case ON_UnicodeCodePoint::ON_Apostrophe:
+      *encoded++ = ON_wString::Ampersand;
+      *encoded++ = 'a';
+      *encoded++ = 'p';
+      *encoded++ = 'o';
+      *encoded++ = 's';
+      *encoded++ = ON_wString::Semicolon;
+      break;
+
+    case ON_UnicodeCodePoint::ON_LessThanSign:
+      *encoded++ = ON_wString::Ampersand;
+      *encoded++ = 'l';
+      *encoded++ = 't';
+      *encoded++ = ON_wString::Semicolon;
+      break;
+
+    case ON_UnicodeCodePoint::ON_GreaterThanSign:
+      *encoded++ = ON_wString::Ampersand;
+      *encoded++ = 'g';
+      *encoded++ = 't';
+      *encoded++ = ON_wString::Semicolon;
+      break;
+
+    default:
+      if (bEncodeCodePointsAboveBasicLatin && (*encoded < 0  || *encoded > 127))
+      {
+        e = ON_UnicodeErrorParameters::MaskErrors;
+        ON__UINT32 u = ON_UnicodeCodePoint::ON_ReplacementCharacter;
+        const int decoded_wchar_count = ON_DecodeWideChar(buffer1, (int)(buffer0_end - buffer1), &e, &u);
+        if (decoded_wchar_count > 0 && ON_IsValidUnicodeCodePoint(u))
+        {
+          unsigned hex_digit_count = Internal_ToHexDigits(u, hex_digits, hex_digit_capacity);
+          if (hex_digit_count > 0)
+          {
+            *encoded++ = ON_wString::Ampersand;
+            *encoded++ = ON_wString::NumberSign;
+            *encoded++ = 'x';
+            while(hex_digit_count>0)
+            {
+              --hex_digit_count;
+              const unsigned h = hex_digits[hex_digit_count];
+              if (h <= 9)
+                *encoded++ = (wchar_t)('0' + h);
+              else
+                *encoded++ = (wchar_t)('a' + (h - 10));
+            }
+            *encoded = ON_wString::Semicolon;
+            buffer1 += (decoded_wchar_count - 1);
+          }
+        }
+      }
+      ++encoded;
+    }
+  }
+  *encoded = 0;
+  const int encoded_length = (int)(encoded - s.Array());
+  if (encoded_length == length1)
+  {
+    s.SetLength(encoded_length);
+    return s;
+  }
+
+  return ON_wString::EmptyString; // catastrophe!
+}
+
+const ON_wString ON_wString::DecodeXMLValue() const
+{
+  const int length0 = this->Length();
+  if (length0 <= 0)
+    return ON_wString::EmptyString;
+
+  const wchar_t* buffer0 = this->Array();
+  if (nullptr == buffer0)
+    return ON_wString::EmptyString;
+
+  const wchar_t* buffer0_end = buffer0 + length0;
+  for (const wchar_t* buffer1 = buffer0; buffer1 < buffer0_end; ++buffer1)
+  {
+    if (ON_wString::Ampersand != *buffer1)
+      continue;
+    if (nullptr == ON_wString::ParseXMLCharacterEncoding(buffer1, (int)(buffer0_end - buffer1), 0, nullptr))
+      continue;
+
+    // need to copy and modify.
+    ON_wString s = this->Duplicate();
+    if (s.Length() != length0)
+      return ON_wString::EmptyString; // catastrophe!
+    wchar_t* b0 = s.Array();
+    if ( b0 == buffer0)
+      return ON_wString::EmptyString; // catastrophe!
+
+    // skip what we've already parsed
+    wchar_t* b1 = b0 + (buffer1 - buffer0);
+
+    // continue parsing and copying parsed results to s.
+    for (wchar_t c = 0; buffer1 < buffer0_end; *b1++ = c)
+    {
+      c = *buffer1;
+      if (ON_wString::Ampersand == c)
+      {
+        unsigned u = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+        const wchar_t* buffer2 = ON_wString::ParseXMLCharacterEncoding(buffer1, (int)(buffer0_end - buffer1), u, &u);
+        if (buffer2 > buffer1)
+        {
+          buffer1 = buffer2;
+          wchar_t w[8] = {};
+          const int wcount = ON_EncodeWideChar(u, sizeof(w) / sizeof(w[0]), w);
+          if (wcount >= 1)
+          {
+            for (int i = 0; i + 1 < wcount; ++i)
+              *b1++ = w[i]; // UTF-16 or UTF-8 encoding
+            c = w[wcount - 1];
+            continue;
+          }
+        }
+      }
+      ++buffer1;
+    }
+
+    // s is the decoded version of this.
+    s.SetLength(b1 - b0);
+    return s;
+  }
+
+  // nothing to decode
+  return *this;
+}
+
+bool ON_wString::IsXMLSpecialCharacter(wchar_t c)
+{
+  switch (c)
+  {
+  case ON_UnicodeCodePoint::ON_QuotationMark:
+  case ON_UnicodeCodePoint::ON_Ampersand:
+  case ON_UnicodeCodePoint::ON_Apostrophe:
+  case ON_UnicodeCodePoint::ON_LessThanSign:
+  case ON_UnicodeCodePoint::ON_GreaterThanSign:
+    return true;
+    break;
+  }
+
+  return false;
+}
+
+const wchar_t* ON_wString::ParseXMLUnicodeCodePointEncoding(
+  const wchar_t* buffer,
+  int buffer_length,
+  unsigned value_on_failure,
+  unsigned* unicode_code_point
+)
+{
+  /*
+    QUICKLY parse an xml unicode code point encoding.
+  */
+  if (nullptr != unicode_code_point)
+    *unicode_code_point = value_on_failure;
+  if (nullptr == buffer)
+    return nullptr;
+  if (-1 == buffer_length)
+    buffer_length = ON_wString::MaximumStringLength;
+  else if (buffer_length < 4)
+    return nullptr;
+
+  if (ON_wString::Ampersand != buffer[0] || ON_wString::NumberSign != buffer[1])
+    return nullptr;
+
+  if (buffer_length >= 4 && ON_wString::IsDecimalDigit(buffer[2]))
+  {
+    // decimal encoding
+    unsigned n = 0U;
+    int i;
+    for (i = 2; i < buffer_length && n < ON_MaximumCodePoint && ON_wString::IsDecimalDigit(buffer[i]); ++i)
+    {
+      n = 10U * n + (unsigned)(buffer[i] - '0');
+    }
+    if (i <= buffer_length && ON_wString::Semicolon == buffer[i] && ON_IsValidUnicodeCodePoint(n))
+    {
+      if (nullptr != unicode_code_point)
+        *unicode_code_point = n;
+      return buffer + (i + 1);
+    }
+  }
+  else if (buffer_length >= 5 && 'x' == buffer[2] && ON_wString::IsHexDigit(buffer[3]))
+  {
+    // hexadecimal encoding
+    unsigned n = 0U;
+    int i;
+    for (i = 3; i < buffer_length && n < ON_MaximumCodePoint && ON_wString::IsHexDigit(buffer[i]); ++i)
+    {
+      const wchar_t c = buffer[i];
+      if ('0' <= c && c <= '9')
+        n = 16U * n + (unsigned)(c - '0');
+      else if ('a' <= c && c <= 'f')
+        n = 16U * n + 10U + (unsigned)(c - 'a');
+      else if ('A' <= c && c <= 'F')
+        n = 16U * n + 10U + (unsigned)(c - 'A');
+      else
+        break;
+    }
+    if (i <= buffer_length && ON_wString::Semicolon == buffer[i] && ON_IsValidUnicodeCodePoint(n))
+    {
+      if (nullptr != unicode_code_point)
+        *unicode_code_point = n;
+      return buffer + (i + 1);
+    }
+  }
+
+  return nullptr;
+}
+
+
+const wchar_t* ON_wString::ParseXMLCharacterEncoding(
+  const wchar_t* buffer,
+  int buffer_length,
+  unsigned value_on_failure,
+  unsigned* unicode_code_point
+)
+{
+  if (nullptr != unicode_code_point)
+    *unicode_code_point = value_on_failure;
+  if (nullptr == buffer)
+    return nullptr;
+  if (buffer_length < 4 && -1 != buffer_length)
+    return nullptr;
+
+  if (ON_wString::Ampersand != buffer[0])
+    return nullptr;
+
+  if (ON_UnicodeCodePoint::ON_NumberSign == buffer[1])
+    return ParseXMLUnicodeCodePointEncoding(buffer, buffer_length, value_on_failure, unicode_code_point);
+
+  if (-1 == buffer_length)
+    buffer_length = ON_wString::MaximumStringLength;
+
+  unsigned u = 0;
+  switch(buffer[1])
+  {
+
+  case 'a':
+    if (buffer_length >= 5
+      && 'm' == buffer[2]
+      && 'p' == buffer[3]
+      && ON_wString::Semicolon == buffer[4]
+      )
+    {
+      buffer += 5;
+      u = ON_UnicodeCodePoint::ON_Ampersand;
+    }
+    else if (buffer_length >= 6
+      && 'p' == buffer[2]
+      && 'o' == buffer[3]
+      && 's' == buffer[4]
+      && ON_wString::Semicolon == buffer[5]
+      )
+    {
+      buffer += 6;
+      u = ON_UnicodeCodePoint::ON_Apostrophe;
+    }
+    break;
+
+  case 'g':
+    if (buffer_length >= 4
+      && 't' == buffer[2] 
+      && ON_wString::Semicolon == buffer[3]
+      )
+    {
+      buffer += 4;
+      u = ON_UnicodeCodePoint::ON_GreaterThanSign;
+    }
+    break;
+
+  case 'l':
+    if (buffer_length >= 4
+      && 't' == buffer[2]
+      && ON_wString::Semicolon == buffer[3]
+      )
+    {
+      buffer += 4;
+      u = ON_UnicodeCodePoint::ON_LessThanSign;
+    }
+    break;
+
+  case 'q':
+    if (buffer_length >= 6
+      && 'u' == buffer[2]
+      && 'o' == buffer[3]
+      && 't' == buffer[4]
+      && ON_wString::Semicolon == buffer[5]
+      )
+    {
+      buffer += 6;
+      u = ON_UnicodeCodePoint::ON_QuotationMark;
+    }
+    break;
+  }
+
+  if (0 == u)
+    return nullptr;
+
+  // successfully parsed
+  if (nullptr != unicode_code_point)
+    *unicode_code_point = u;
+
+  return buffer;
+}
+
+const ON_wString ON_wString::RichTextExample(
+  ON_wString rich_text_font_name,
+  bool bBold,
+  bool bItalic,
+  bool bBoldItalic,
+  bool bUnderline
+)
+{
+  rich_text_font_name.TrimLeftAndRight();
+  if (rich_text_font_name.IsEmpty())
+    rich_text_font_name = ON_Font::Default.RichTextFontName();
+
+  // {\rtf1\deff0{\fonttbl{\f0 <FACENAME>;}}
+  // \f0 \fs23
+  // {\f0 <FACENAME> Rich Text Example:\par}
+  // {\f0 Regular}{\f0\ul underlined\par}
+  // {\f0\b Bold}{\f0\b\ul underlined\par}
+  // {\f0\i Italic}{\f0\i\ul underlined\par}
+  // {\f0\b\i Bold-Italic}{\f0\b\i\ul underlined\par}
+  // {\par}}
+
+  ON_wString s = ON_wString(L"{\\rtf1\\deff0{\\fonttbl{\\f0 ") + rich_text_font_name + ON_wString(L";}}");
+
+  // Specify a base font and size
+  s += ON_wString(L"\\f0 \\fs23");
+
+  // Sample text
+  s += ON_wString(L"{\\f0 ") + rich_text_font_name + ON_wString(L" rich text example:\\par}");
+
+  s += ON_wString(L"{\\f0 Regular"); 
+  if (bUnderline)
+    s += ON_wString(L" }{\\f0\\ul underlined");
+  s += ON_wString(L"\\par}");
+
+  if (bBold)
+  {
+    s += ON_wString(L"{\\f0\\b Bold}");
+    if (bUnderline) 
+      s += ON_wString(L" }{\\f0\\b\\ul underlined");
+    s += ON_wString(L"\\par}");
+  }
+
+  if (bItalic)
+  {
+    s += ON_wString(L"{\\f0\\i Italic}");
+    if (bUnderline) 
+      s += ON_wString(L" }{\\f0\\i\\ul underlined");
+    s += ON_wString(L"\\par}");
+  }
+
+  if (bBoldItalic)
+  {
+    s += ON_wString(L"{\\f0\\b\\i Bold-Italic}");
+    if (bUnderline)
+      s += ON_wString(L" }{\\f0\\b\\i\\ul underlined");
+    s += ON_wString(L"\\par}");
+  }
+
+  return s;
+}
+
+const ON_wString ON_wString::RichTextExample(
+  const class ON_FontFaceQuartet* quartet
+)
+{
+  if (nullptr == quartet)
+    return ON_wString::Example(ON_wString::ExampleType::RichText);
+  return ON_wString::RichTextExample(quartet->QuartetName(), quartet->HasBoldFace(), quartet->HasItalicFace(), quartet->HasBoldItalicFace(), true);
+}
+
+const ON_wString ON_wString::RichTextExample(
+  const ON_Font* font
+)
+{
+  if (nullptr == font)
+    font = &ON_Font::Default;
+  const ON_FontFaceQuartet q = font->FontQuartet();
+  if (q.IsNotEmpty())
+  {
+    // restrict example to supported faces
+    // Many fonts (Arial Black, Corsiva, ...) do not have all 4 rich text faces.
+    return ON_wString::RichTextExample(q.QuartetName(), q.HasBoldFace(), q.HasItalicFace(), q.HasBoldItalicFace(), true);
+  }
+
+  return ON_wString::RichTextExample(font->RichTextFontName(), true, true, true, true);
+}
+
+const ON_wString ON_wString::Example(ON_wString::ExampleType t)
+{
+  ON_wString s;
+  switch (t)
+  {
+  case ON_wString::ExampleType::Empty:
+    break;
+
+  case ON_wString::ExampleType::WideChar:
+    s = ON_wString(
+      ON_wString(L"The math teacher said, \"It isn't true that 2")
+      + ON_wString::Superscript3 + ON_wString(L"=3") + ON_wString::Superscript2
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" > 3")
+      + ON_wString::CentSign
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" < 2 ")
+      + ON_wString::RubleSign
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" > ")
+      + ON_wString::EuroSign
+      + ON_wString(L"99.\" ")
+#if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 4
+      + ON_wString((wchar_t)0x1F5D1) // UTF-32 encoding for WASTEBASKET U+1F5D1
+#else
+      + ON_wString((wchar_t)0xD83D) // (0xD83D, 0xDDD1) is the UTF-16 surrogate pair encoding for WASTEBASKET U+1F5D1
+      + ON_wString((wchar_t)0xDDD1)
+#endif
+      + ON_wString(L"!")
+    );
+    break;
+
+  case ON_wString::ExampleType::UTF16:
+    s = ON_wString(
+      ON_wString(L"The math teacher said, \"It isn't true that 2")
+      + ON_wString::Superscript3 + ON_wString(L"=3") + ON_wString::Superscript2
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" > 3")
+      + ON_wString::CentSign
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" < 2 ")
+      + ON_wString::RubleSign
+      + ON_wString(L" & ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" > ")
+      + ON_wString::EuroSign
+      + ON_wString(L"99.\" ")
+      + ON_wString((wchar_t)(wchar_t)0xD83D) // (0xD83D, 0xDDD1) is the UTF-16 surrogate pair encoding for WASTEBASKET U+1F5D1
+      + ON_wString((wchar_t)(wchar_t)0xDDD1)
+      + ON_wString(L"!")
+    );
+    break;
+
+  case ON_wString::ExampleType::RichText:
+    s = ON_wString::RichTextExample(&ON_Font::Default);
+    break;
+
+  case ON_wString::ExampleType::XML:
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin UTF encoded.
+    s = ON_wString(
+      ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2")
+      + ON_wString::Superscript3 + ON_wString(L"=3") + ON_wString::Superscript2
+      + ON_wString(L" &amp; ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" &gt; 3")
+      + ON_wString::CentSign
+      + ON_wString(L" &amp; ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" &lt; 2 ")
+      + ON_wString::RubleSign
+      + ON_wString(L" &amp; ")
+      + ON_wString::GreekCapitalSigma
+      + ON_wString(L" &gt; ")
+      + ON_wString::EuroSign
+      + ON_wString(L"99.&quot; ")
+      + ON_wString((wchar_t)(wchar_t)0xD83D) // (0xD83D, 0xDDD1) is the UTF-16 surrogate pair encoding for WASTEBASKET U+1F5D1
+      + ON_wString((wchar_t)(wchar_t)0xDDD1)
+      + ON_wString(L"!")
+      );
+      break;
+
+  case ON_wString::ExampleType::XMLalternate1:
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin encoded in the &#hhhh; format
+    /// using  lower case hex digits (0123456789abcdef).
+    s = ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2&#xb3;=3&#xb2; &amp; &#x3a3; &gt; 3&#xa2; &amp; &#x3a3; &lt; 2 &#x20bd; &amp; &#x3a3; &gt; &#x20ac;99.&quot; &#x1f5d1;!");
+    break;
+
+  case ON_wString::ExampleType::XMLalternate2:
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin encoded in the hexadecimal &amp;#xhhhh; format
+    /// with  upper case hex digits (0123456789ABCDEF).
+    s = ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2&#xb3;=3&#xb2; &amp; &#x3A3; &gt; 3&#xA2; &amp; &#x3A3; &lt; 2 &#x20BD; &amp; &#x3A3; &gt; &#x20AC;99.&quot; &#x1F5D1;!");
+    break;
+
+  case ON_wString::ExampleType::XMLalternate3:
+    /// The UTF string as an XML value with special characters and code points above 
+    /// basic latin encoded in the decimal code point &amp;#nnnn; format.
+    s = ON_wString(L"The math teacher said, &#34;It isn&#39;t true that 2&#179;=3&#178; &amp; &#931; &#62; 3&#162; &#38; &#931; &#60; 2 &#8381; &#38; &#931; &#62; &#8364;99.&#34; &#128465;!");
+    break;
+
+  default:
+    break;
+  }
+
+  return s.IsNotEmpty() ? s : ON_wString::EmptyString;
+}
+
+const ON_wString ON_wString::FormatToVulgarFraction(int numerator, int denominator)
+{
+  const bool bReduce = true;
+  const bool bMix = true;
+  const bool bUseVulgarFractionCodePoints = true;
+  return ON_wString::FormatToVulgarFraction(numerator, denominator,  bReduce, bMix, 0, bUseVulgarFractionCodePoints);
+}
+
+const ON_wString ON_wString::FormatToVulgarFraction(
+  int numerator,
+  int denominator,
+  bool bReduced,
+  bool bProper,
+  unsigned proper_fraction_separator_cp,
+  bool bUseVulgarFractionCodePoints
+)
+{
+  if (0 == denominator)
+  {
+    // ... Kids these days!
+    return ON_wString::FormatToVulgarFraction(ON_wString::FormatToString(L"%d", numerator), L"0");
+  }
+
+  if (0 == numerator)
+  {
+    if (bReduced)
+      return ON_wString(L"0");
+    if (bUseVulgarFractionCodePoints && 3 == numerator)
+      return ON_wString((wchar_t)0x2189); // Baseball zero for three 0/3 = U+2189
+
+    return ON_wString::FormatToVulgarFraction(L"0", ON_wString::FormatToString(L"%d", denominator));
+  }
+
+  if (bReduced || bProper)
+  {
+    if (denominator < 0)
+    {
+      denominator = -denominator;
+      numerator = -numerator;
+    }
+  }
+
+  if (bReduced && abs(numerator) > 1 && abs(denominator) > 1)
+  {
+    const int gcd = (int)ON_GreatestCommonDivisor((unsigned)(abs(numerator)), (unsigned)denominator);
+    if (gcd > 0)
+    {
+      numerator /= gcd;
+      denominator /= gcd;
+    }
+  }
+
+  int n = 0;
+  if (bProper && abs(numerator) >= denominator)
+  {
+    n = numerator / denominator;
+    numerator = abs(numerator - (n * denominator));
+    if (0 == numerator)
+      return ON_wString::FormatToString(L"%d", n);
+
+    if (0 != proper_fraction_separator_cp && false == ON_IsValidUnicodeCodePoint(proper_fraction_separator_cp))
+      proper_fraction_separator_cp = 0;
+  }
+
+  if (bUseVulgarFractionCodePoints && abs(numerator) < abs(denominator))
+  {
+    unsigned fraction_cp = 0;
+    switch (denominator)
+    {
+    case 2:
+      if (1 == numerator)
+        fraction_cp = 0x00BD;
+      break;
+    case 3:
+      if (1 == numerator)
+        fraction_cp = 0x2153;
+      else if (2 == numerator)
+        fraction_cp = 0x2154;
+      break;
+    case 4:
+      if (1 == numerator)
+        fraction_cp = 0x00BC;
+      else if (3 == numerator)
+        fraction_cp = 0x00BE;
+      break;
+    case 5:
+      if (1 == numerator)
+        fraction_cp = 0x2155;
+      else if (2 == numerator)
+        fraction_cp = 0x2156;
+      else if (3 == numerator)
+        fraction_cp = 0x2157;
+      else if (4 == numerator)
+        fraction_cp = 0x2158;
+      break;
+    case 6:
+      if (1 == numerator)
+        fraction_cp = 0x2159;
+      else if (5 == numerator)
+        fraction_cp = 0x215A;
+      break;
+    case 7:
+      if (1 == numerator)
+        fraction_cp = 0x2150;
+      break;
+    case 8:
+      if (1 == numerator)
+        fraction_cp = 0x215B;
+      else if (3 == numerator)
+        fraction_cp = 0x215C;
+      else if (5 == numerator)
+        fraction_cp = 0x215D;
+      else if (7 == numerator)
+        fraction_cp = 0x215E;
+      break;
+    case 9:
+      if (1 == numerator)
+        fraction_cp = 0x2151;
+      break;
+    case 10:
+      if (1 == numerator)
+        fraction_cp = 0x2152;
+      break;
+    }
+
+    if (fraction_cp > 0 && ON_IsValidUnicodeCodePoint(fraction_cp))
+    {
+      unsigned cp[3] = {};
+      unsigned cp_count = 0;
+      if (0 == n && numerator < 0)
+        cp[cp_count++] = ON_UnicodeCodePoint::ON_HyphenMinus;
+      cp[cp_count++] = fraction_cp;
+      const ON_wString fraction = ON_wString::FromUnicodeCodePoints(cp, cp_count, ON_UnicodeCodePoint::ON_ReplacementCharacter);
+      if (0 == n)
+        return fraction;
+      return ON_wString::FormatToString(L"%d", n) 
+        + ON_wString::FromUnicodeCodePoint(proper_fraction_separator_cp)
+        + fraction;
+    }
+  }
+
+  const ON_wString vulgar_fraction = ON_wString::FormatToVulgarFraction(ON_wString::FormatToString(L"%d", numerator), ON_wString::FormatToString(L"%d", denominator));
+  return
+    (0 == n)
+    ? vulgar_fraction
+    : ON_wString::FormatToString(L"%d", n) + ON_wString::FromUnicodeCodePoint(proper_fraction_separator_cp) + vulgar_fraction;
+}
+
+const ON_wString ON_wString::FormatToVulgarFraction(
+  const ON_wString numerator,
+  const ON_wString denominator
+)
+{
+  return ON_wString::FormatToVulgarFractionNumerator(numerator) + ON_wString::VulgarFractionSlash() + ON_wString::FormatToVulgarFractionDenominator(denominator);
+}
+
+static const ON_wString Internal_VulgarFractionXator(int updown, const ON_wString X)
+{
+  if (0 == updown)
+    return X;
+
+  const int len = X.Length();
+  if (len <= 0)
+    return ON_wString::EmptyString;
+  const wchar_t* s0 = X.Array();
+  if (nullptr == s0)
+    return ON_wString::EmptyString;
+
+
+  bool bReturnAtor = false;
+  ON_wString ator;
+  ator.ReserveArray(len);
+  ON_UnicodeErrorParameters e;
+  int delta = 0;
+  for (int i = 0; i < len; i += ((delta > 0) ? delta : 1))
+  {
+    e = ON_UnicodeErrorParameters::MaskErrors;
+    ON__UINT32 cp0 = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+    delta = ON_DecodeWideChar(s0 + i, len - i, &e, &cp0);
+    ON__UINT32 cp1 
+      = (delta > 0 && ON_IsValidUnicodeCodePoint(cp0))
+      ? (updown > 0 ? ON_UnicodeSuperscriptFromCodePoint(cp0,cp0) : ON_UnicodeSubcriptFromCodePoint(cp0,cp0))
+      : ON_UnicodeCodePoint::ON_ReplacementCharacter;
+    if (cp1 != cp0 && cp1 != ON_UnicodeCodePoint::ON_ReplacementCharacter)
+      bReturnAtor = true;
+    ator += ON_wString::FromUnicodeCodePoint(cp1);
+  }
+
+  return bReturnAtor ? ator : X;
+}
+
+
+const ON_wString ON_wString::FormatToVulgarFractionNumerator(const ON_wString numerator)
+{
+  return Internal_VulgarFractionXator(+1, numerator);
+}
+
+const ON_wString ON_wString::FormatToVulgarFractionDenominator(const ON_wString denominator)
+{
+  return Internal_VulgarFractionXator(-1, denominator);
+}
+
+const ON_wString ON_wString::VulgarFractionSlash()
+{
+  return ON_wString((wchar_t)0x2044);
+}
+
+bool ON_wString::IsHorizontalSpace(wchar_t c, bool bTabResult, bool bNoBreakSpaceResult, bool bZeroWidthSpaceResult)
+{
+  if (((unsigned)c) < 0x2000U)
+  {
+    // extremely common values get a faster switch() statement
+    switch (c)
+    {
+    case ON_UnicodeCodePoint::ON_Tab:
+      return bTabResult ? true : false;
+      break;
+
+    case ON_UnicodeCodePoint::ON_Space:
+    case ON_UnicodeCodePoint::ON_NoBreakSpace:
+      return true;
+
+    default:
+      break;
+    }
+  }
+  else
+  {
+    switch (c)
+    {
+    case ON_UnicodeCodePoint::ON_OghamSpaceMark:
+    case ON_UnicodeCodePoint::ON_EnQuad:
+    case ON_UnicodeCodePoint::ON_EmQuad:
+    case ON_UnicodeCodePoint::ON_EnSpace:
+    case ON_UnicodeCodePoint::ON_EmSpace:
+    case ON_UnicodeCodePoint::ON_ThreePerEmSpace:
+    case ON_UnicodeCodePoint::ON_FourPerEmSpace:
+    case ON_UnicodeCodePoint::ON_SixPerEmSpace:
+    case ON_UnicodeCodePoint::ON_FigureSpace:
+    case ON_UnicodeCodePoint::ON_PunctuationSpace:
+    case ON_UnicodeCodePoint::ON_ThinSpace:
+    case ON_UnicodeCodePoint::ON_HairSpace:
+    case ON_UnicodeCodePoint::ON_MediumMathematicalSpace:
+    case ON_UnicodeCodePoint::ON_IdeographicSpace:
+      return true;
+
+    case ON_UnicodeCodePoint::ON_NoBreakSpace:
+    case ON_UnicodeCodePoint::ON_NarrowNoBreakSpace:
+      return bNoBreakSpaceResult ? true : false;
+      break;
+
+    case ON_UnicodeCodePoint::ON_ZeroWidthSpace:
+    case ON_UnicodeCodePoint::ON_ZeroWidthNonJoiner:
+    case ON_UnicodeCodePoint::ON_ZeroWidthJoiner:
+      return bZeroWidthSpaceResult ? true : false;
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  return false;
+}
+
+bool ON_wString::IsHorizontalSpace(wchar_t c)
+{
+  return ON_wString::IsHorizontalSpace(c, true, true, true);
+}
+
+const wchar_t* ON_wString::ParseHorizontalSpace(const wchar_t* s, int len, bool bParseTab, bool bParseNoBreakSpace, bool bParseZeroWidthSpace)
+{
+  if (nullptr == s || len <= 0)
+    return nullptr;
+
+  int i = 0;
+  for (wchar_t c = s[i]; i < len && ON_wString::IsHorizontalSpace(c, bParseTab, bParseNoBreakSpace, bParseZeroWidthSpace); c = s[++i])
+  {/*empty body*/
+  }
+
+  return s + i;
+}
+
+const wchar_t* ON_wString::ParseHorizontalSpace(const wchar_t* s, int len)
+{
+  return ON_wString::ParseHorizontalSpace(s, len, true, true, true);
+}
+
+const wchar_t* ON_wString::ParseVulgarFraction(const wchar_t* s, int len, int& numerator, int& denomintor)
+{
+  numerator = 0;
+  denomintor = 0;
+
+  if (nullptr == s)
+    return nullptr;
+
+  if (-1 == len)
+    len = ON_wString::Length(s);
+
+  if (len < 3)
+    return nullptr;
+
+
+  // <ordinary digits>/<ordinary digits> is permitted.
+  // <superscript digits>/<subscript digits> is permitted.
+
+  const bool bOrdinary = ON_wString::IsDecimalDigit(*s, true, false, false);
+  const bool bSupSub = false == bOrdinary && ON_wString::IsDecimalDigit(*s, false, true, false);
+  if (false == bOrdinary || bSupSub)
+    return nullptr;
+
+  int x = 0;
+  s = ON_wString::ToNumber(s, 0, &x);
+  if (nullptr == s)
+    return nullptr;
+
+  if (ON_wString::IsSlash(*s,true,true,true,true))
+    ++s;
+  else
+    return nullptr;
+
+  if (false == ON_wString::IsDecimalDigit(*s, bOrdinary, false, bSupSub))
+    return nullptr;
+
+  int y = 0;
+  s = ON_wString::ToNumber(s, 0, &y);
+  if (nullptr == s)
+    return nullptr;
+
+  numerator = x;
+  denomintor = y;
+
+  return s;
+}

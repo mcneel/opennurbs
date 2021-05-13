@@ -492,33 +492,46 @@ const wchar_t* ON_wString::ToNumber(
   if (nullptr == value)
     return nullptr;
 
-  ON__INT64 i;
-  ON__UINT64 u;
-  const wchar_t* rc;
-  if ('-' == buffer[0] && buffer[1] >= '0' && buffer[1] <= '9')
+  ON__INT64 i = value_on_failure;
+  ON__UINT64 u = 0;
+  const wchar_t* rc = nullptr;
+
+  const wchar_t c0 = buffer[0];
+  const int sign = ON_wString::PlusOrMinusSignFromWideChar(c0, true, true, true);
+  if (0 != sign)
+    ++buffer; // c0 is some type of plus or minus sign.
+
+  const bool b0 = ON_wString::IsDecimalDigit(buffer[0], true, false, false);
+  const bool b1 = false == b0 && ON_wString::IsDecimalDigit(buffer[0], false, true, false);
+  const bool b2 = false == b0 && false == b1 && ON_wString::IsDecimalDigit(buffer[0], false, false, true);
+
+  if ((b0 || b1 || b2) && sign == ON_wString::PlusOrMinusSignFromWideChar(c0, b0, b1, b2))
   {
-    rc = ON_wString::ToNumber(buffer + 1, 0, &u);
-    if (nullptr != rc && u <= 9223372036854775808LLU)
+    if (sign < 0)
     {
-      i = -((ON__INT64)u);
+      rc = ON_wString::ToNumber(buffer, 0, &u);
+      if (nullptr != rc && u <= 9223372036854775808LLU)
+      {
+        i = -((ON__INT64)u);
+      }
+      else
+      {
+        i = value_on_failure;
+        rc = nullptr;
+      }
     }
     else
     {
-      i = value_on_failure;
-      rc = nullptr;
-    }
-  }
-  else
-  {
-    rc = ON_wString::ToNumber(buffer, 0, &u);
-    if (nullptr != rc && u <= 9223372036854775807LLU)
-    {
-      i = (ON__INT64)u;
-    }
-    else
-    {
-      i = value_on_failure;
-      rc = nullptr;
+      rc = ON_wString::ToNumber(buffer, 0, &u);
+      if (nullptr != rc && u <= 9223372036854775807LLU)
+      {
+        i = (ON__INT64)u;
+      }
+      else
+      {
+        i = value_on_failure;
+        rc = nullptr;
+      }
     }
   }
 
@@ -540,17 +553,24 @@ const wchar_t* ON_wString::ToNumber(
 
   if (nullptr != buffer)
   {
-    if ('+' == buffer[0])
-      buffer++;
-    if (buffer[0] >= '0' && buffer[0] <= '9')
+    const wchar_t c0 = buffer[0];
+    const int sign = ON_wString::PlusOrMinusSignFromWideChar(c0,true,true,true);
+    if (sign > 0)
+      ++buffer; // c0 is some type of plus sign.
+
+    const bool b0 = ON_wString::IsDecimalDigit(buffer[0], true, false, false);
+    const bool b1 = false == b0 && ON_wString::IsDecimalDigit(buffer[0], false, true, false);
+    const bool b2 = false == b0 && false == b1 && ON_wString::IsDecimalDigit(buffer[0], false, false, true);
+
+    if ((b0 || b1 || b2) && sign == ON_wString::PlusOrMinusSignFromWideChar(c0, b0, b1, b2))
     {
-      ON__UINT64 r = (ON__UINT64)(*buffer++ - '0');
+      ON__UINT64 r = 0;
       for (const wchar_t* s = buffer;/*empty test*/; s++)
       {
-        if (*s >= '0' && *s <= '9')
+        const ON__UINT64 d = (ON__UINT64)ON_wString::DecimalDigitFromWideChar(*s, b0, b1, b2, 10);
+        if (d < 10LLU)
         {
-          ON__UINT64 d = ON__UINT64(*s - '0');
-          ON__UINT64 r1 = r * 10LLU + d;
+          const ON__UINT64 r1 = r * 10LLU + d;
           if (r1 < r)
           {
             // overflow
@@ -663,6 +683,71 @@ const wchar_t* ON_wString::ToNumber(
 #endif
   *value = value_on_failure;
   return nullptr;
+}
+
+const ON_wString ON_wString::ToMemorySize(size_t size_in_bytes)
+{
+  if (size_in_bytes <= 0)
+    return ON_wString(L"0 bytes");
+
+  ON__UINT64 sz = (ON__UINT64)size_in_bytes;
+
+  const wchar_t* units;
+  const ON__UINT64 kb = 1024;
+  const ON__UINT64 mb = kb * kb;
+  const ON__UINT64 gb = kb * mb;
+  const ON__UINT64 tb = kb * gb;
+  const ON__UINT64 pb = kb * tb;
+  if (sz >= pb)
+  {
+    // petabytes
+    sz /= tb;
+    units = L"PB";
+  }
+  else if (sz >= tb)
+  {
+    // terabytes
+    sz /= gb;
+    units = L"TB";
+  }
+  else if (sz >= gb)
+  {
+    // gigabytes
+    sz /= mb;
+    units = L"GB";
+  }
+  else if (sz >= mb)
+  {
+    // megaabytes
+    sz /= kb;
+    units = L"MB";
+  }
+  else if (sz >= kb)
+  {
+    // kilobytes
+    units = L"KB";
+  }
+  else
+  {
+    // bytes
+    return  (1==sz) ? ON_wString(L"1 byte") : ON_wString::FormatToString(L"%u bytes",(unsigned)sz);
+  }
+
+  const ON__UINT64 n = sz / kb;
+  const ON__UINT64 r = sz % kb;
+  if (r > 0 && n < 100)
+  {
+    const double x = ((double)sz)/((double)kb);
+    if (0 == n)
+      return ON_wString::FormatToString(L"0.03f %ls", x, units);
+
+    if (n >= 10)
+      return ON_wString::FormatToString(L"%0.1f %ls", x, units);
+
+    return ON_wString::FormatToString(L"%0.2f %ls", x, units);
+  }
+
+  return ON_wString::FormatToString(L"%u %ls", ((unsigned)n), units);
 }
 
 #undef SIGNED_TO_NUMBER

@@ -371,6 +371,7 @@ public:
   */
   int AscentOfx() const;
 
+
   /*
   Description:
   Parameters:
@@ -449,7 +450,7 @@ public:
   void SetAscentOfx(
     int ascent_of_x
   );
-  
+
   void SetStrikeout(
     int strikeout_position,
     int strikeout_thickness
@@ -474,7 +475,7 @@ public:
   void SetAscentOfx(
     double ascent_of_x
   );
-  
+
   void SetStrikeout(
     double strikeout_position,
     double strikeout_thickness
@@ -536,7 +537,7 @@ private:
   int m_descent = 0;       // min over all glyphs in font of (lowest outline point - baseline point).y
   int m_line_space = 0;    // distance between baselines 
   ON__UINT16 m_ascent_of_capital = 0;
-  ON__UINT16 m_ascent_of_x = 0;
+  ON__UINT16 m_ascent_of_x = 0; // same units as m_ascent_of_capital
 
   int m_strikeout_thickness = 0;      //
   int m_strikeout_position = 0;  // 
@@ -982,6 +983,50 @@ public:
     Bounding box area >= 0
   */
   double BoxArea() const;
+
+  /*
+  Description:
+    Determines if this ON_OutlineFigure is inside of outer_figure.
+  Parameters:
+    outer_figure - [in]
+      When bPerformExtraChecking is false, outer_figure->FigureOrientation() should 
+      be set to what you plan on using when rendering the glyph.
+      The orientation of outer_figur can be either clockwise or counterclockwise
+      and, in the context of the entire glyph, outer_figure can be an inner or outer boundary.
+      For example, the registered trademark glpyh (UNICODE U+00AE) is an example where 
+      four nested figures with alternating orientations are common.
+    bPerformExtraChecking - [in]
+      In general, when sorting glyph outlines as they come froma font file, set
+      outer_figure->FigureOrientation() to what will be used to render the glyph
+      and pass false for bPerformExtraChecking.
+      Details: In the case when bounding boxes and estimated areas and spot checks of winding numbers
+      all indicate that this is inside of other_f, an additional time consuming intersection
+      check is performed when this->FigureOrientation() == other_f->FigureOrientation().
+      When this->FigureOrientation() and other_f->FigureOrientation() are opposited,
+      the additional intersection check is skipped unless bPerformExtraChecking is true.
+  Returns:
+    True if it is very likely that this is not empty and is inside of other_f.
+    False otherwise
+  Remarks:
+  */
+  bool IsInsideOf(
+    const ON_OutlineFigure* outer_figure,
+    bool bPerformExtraChecking
+  ) const;
+
+  /*
+  Description:
+    Get up to four distinct points on the figure.
+    These are useful for winding number tests when sorting figures.
+  Parameters:
+    p - [out]
+      the returned points will be on the figure (not bezier interior control points).
+  Returns:
+    Number of points.
+  */
+  unsigned GetUpToFourPointsOnFigure(
+    ON_2fPoint p[4]
+  ) const;
 
   ON__UINT32 UnitsPerEM() const;
 
@@ -2245,6 +2290,24 @@ public:
     unsigned int member_as_unsigned
   );
 
+  static ON_FontFaceQuartet::Member MemberFromBoldAndItalic(
+    bool bMemberIsBold,
+    bool bMemberIsItalic
+    );
+
+  /*
+  Description:
+    When an exact quartet face bold/italic match is not available, choosing
+    an available quartet face that minimizes ON_FontFaceQuartet::BoldItalicDeviation()
+    is one way to select which available quartet face to use.
+  Returns:
+    A distance between two quartet face members.
+  */
+  static unsigned BoldItalicDeviation(
+    ON_FontFaceQuartet::Member desired_member,
+    ON_FontFaceQuartet::Member available_member
+  );
+
   ON_FontFaceQuartet() = default;
   ~ON_FontFaceQuartet() = default;
   ON_FontFaceQuartet(const ON_FontFaceQuartet&) = default;
@@ -2279,13 +2342,22 @@ public:
   bool HasItalicFace() const;
   bool HasBoldItalicFace() const;
   bool HasAllFaces() const;
+
+
+  /// <returns>True if FaceCount() = 0. (The name may be empty or not empty.)</returns>
   bool IsEmpty() const;
 
-  /*
-  Returns:
-    0,1,2,3 or 4
-  */
+  /// <returns>True if FaceCount() > 0. (The name may be empty or not empty.)</returns>
+  bool IsNotEmpty() const;
+
+  /// <returns>Total number of available faces (0 to 4).</returns>
   unsigned int FaceCount() const;
+
+  /// <returns>Number of faces that are not installed on this device (0 to FaceCount()).</returns>
+  unsigned int NotInstalledFaceCount() const;
+
+  /// <returns>Number of faces that are simulated (0 to FaceCount()).</returns>
+  unsigned int SimulatedFaceCount() const;
 
   const ON_wString QuartetName() const;
   const class ON_Font* RegularFace() const;
@@ -2336,6 +2408,7 @@ public:
   ) const;
 
   void Dump(ON_TextLog& text_log) const;
+
 private:
   ON_wString m_quartet_name;
   const class ON_Font* m_regular = nullptr;
@@ -2481,7 +2554,7 @@ public:
   */
   static ON_Font::Weight FontWeightFromUnsigned(
     unsigned int unsigned_font_weight
-    );
+  );
 
   /*
   Description:
@@ -2712,6 +2785,18 @@ public:
   static const wchar_t* StyleToWideString(
     ON_Font::Style font_style
   );
+
+
+  /*
+  Returns:
+    If this font is installed or managed, the installed or mangaged font face quartet is returned.
+    Otherwise ON_FontFaceQuartet::Empty is returned.
+    Note that managed font quartets can be enlarged to include missing faces by calling
+    ON_Font::FontFromRichTextProperties(). Installed font quartets exactly match
+    what is installed on the current defice.
+    if this font is not a member of an installed face quartet.
+  */
+  const ON_FontFaceQuartet FontQuartet() const;
 
   /*
   Returns:
@@ -3026,6 +3111,8 @@ public:
   const ON_Font* ManagedFont() const;
 
   /*
+  Description:
+    It is better to call ON_Font::FontFromRichTextProperties().
   Parameters:
     rtf_font_name - [in]
       Rich text format name. This name is not well defined and depends on
@@ -3038,8 +3125,9 @@ public:
     bRtfItalic - [in]
       RTF italic flag
   Returns:
-    A managed font to use for this RTF font.
+    A managed font to use for these rich text properties.
   */
+  ON_DEPRECATED_MSG("Call ON_Font::FontFromRichTextProperties()")
   static const ON_Font* ManagedFontFromRichTextProperties(
     const wchar_t* rtf_font_name,
     bool bRtfBold,
@@ -3137,15 +3225,15 @@ public:
   /*
   Parameters:
     bBold - [in]
-      True for a heavy face
+      True for the rich text quartet "bold face" with is typically heavier than the "regular" face.
     bItalic - [in]
-      True for a sloped face
+      True for the rich text quartet "italic" with is typically more slanted than the "regular" face.
     bUnderlined - [in]
       True for an underlined face
     bStrikethrough - [in]
       True for a strikethrough face
   Returns:
-    A managed face in the same family as "this" with the desired rich text properties.
+    ON_Font::ManagedFontFromRichTextProperties(this->RichTextName(),bBold,bItalic,bUnderlined,bStrikethrough);
   */
   const ON_Font* ManagedFamilyMemberWithRichTextProperties(
     bool bBold,
@@ -3159,23 +3247,96 @@ public:
     The list of installed fonts in a class with lots of searching tools.
   */
   static const class ON_FontList& InstalledFontList();
-  
 
   /*
+  Description:
+    Tests InstalledFontList().
+  Parameters:
+    text_log - [in]
+      Summary of the test.
+      If errors are detected, they are printed in error_log.
+  Returns:
+    true: Test passed - no errors detected.
+    false: Test failed.
+  */
+  static bool TestInstalledFontList(
+    class ON_TextLog& text_log
+  );
+  
+  /*
+  Description:
+    This is the best way to get a font from rich text properties.
+  Parameters:
+    rich_text_font_name - [in]
+      Rich text quartet name. If you have an ON_Font, then ON_Font.RichTextName()
+      gets a good choice for this name.
+      * For Windows installed fonts, this is identical to the Windows LOGFONT.lfFaceName.
+      * For MacOS this is an invented name and is chosen to work cross platform as well
+      as possible. For Apple families with up to 4 faces that align with the rich text
+      quartet "regular/bold/italic/bold-italic" faces, things tend to work as expected.
+      for common Apple families like Helvetica Neue with a dozen or so faces that are
+      designed to  work well for western european languages, opennurbs selects 4 faces in
+      the family that tend to align with would many people expect as the rich text
+      "regular/bold/italic/bold-italic" face. Things get dicier with less common
+      families and fonts designed for non-western european languages.
+      Basically, Apple and richt text do not play nicely together.
+
+    bBoldQuartetMember - [in]
+      True to select the heavier members of the rich text quartet.
+
+    bItalicQuartetMember - [in]
+      True to select the more slanted memmers of the rich text quartet.
+
+    bUnderlined - [in]
+      True if you want underlined text.
+      (Underlining is created as a rendering effect and not a separate face.)
+
+    bStrikethrough - [in]
+      True if you want strikethrough text.
+      (Strikethrough is created as a rendering effect and not a separate face.)
+
+  Returns:
+    If there is an installed font, it is returned. Othewise a managed font
+    is returned. When the managed font is not installed, the corresponding
+    member of ON_Font::Default::InstalledQuartet() is used to render the font.
+  */
+  static const ON_Font* FontFromRichTextProperties(
+    ON_wString rich_text_font_name,
+    bool bBoldQuartetMember,
+    bool bItalicQuartetMember,
+    bool bUnderlined,
+    bool bStrikethrough
+  );
+
+
+private:
+  // this must be a managed or installed font.
+  const ON_Font* Internal_DecoratedFont(
+    bool bUnderlined,
+    bool bStrikethrough
+  ) const;
+
+public:
+
+  /*
+  Description:
+    Unless you are certain you want to restrict your choices to installed fonts,
+    it is better to call ON_Font::FontFromRichTextProperties().
   Parameters:
     rtf_font_name - [in]
-      Rich text format name. This name is not well defined and depends on
-      the device and application that created the rich text. On Windows this
-      is often a LOGFONT.lfFaceName. On MacOS it is often a PostScript name.
+      Rich text quartet neame. This name is not well defined and depends on
+      the device and application that created the rich text. For Windows installed
+      fonts, this is identical to the Windows LOGFONT.lfFaceName. 
+      On MacOS this is a name Rhino cooks up and is chosen to
+      work cross platform as well as possible. Apple and richt text do not
+      play nicely together.
     bRtfBold - [in]
-      RTF bold flag
-
+      True to prefer the heavier memmbers of the installed rich text quartet.
     bRtfItalic - [in]
-      RTF italic flag
+      True to prefer the more slanted memmbers of the installed rich text quartet.
   Returns:
-    An installed font to use for this RTF font or nullptr if the current
-    device does not have a font with any family, PostScript, or Windows LOGFONT
-    that has a name matching rtf_font_name.
+    An installed font to use for this rich text face font or nullptr if the current
+    device does not have a in installed font with for this rich text quartet.
   */
   static const ON_Font* InstalledFontFromRichTextProperties(
     const wchar_t* rtf_font_name,
@@ -3413,6 +3574,35 @@ public:
     ON_Font::Default is managed.
   */
   bool IsManagedFont() const;
+
+  /*
+  Returns:
+    True if this is a managed font and the font is installed on this device.
+    False otherwise.
+  Remarks:
+    If this->IsManagedFont() is true, then exactly one of IsManagedInstalledFont() 
+    or IsManagedSubstitutedFont() is true.
+    When this->IsManagedInstalledFont() is true, this->InstalledFont() returns the installed font.
+  */
+  bool IsManagedInstalledFont() const;
+
+  /*
+  Returns:
+    True if this font is a managed font that references a font that is not installed on this computer.
+  Remarks:
+    If this->IsManagedFont() is true, then exactly one of IsManagedInstalledFont()
+    or IsManagedSubstitutedFont() is true.
+    When this->IsManagedSubstitutedFont() is true, this->SubstituteFont() returns the installed font.
+  */
+  bool IsManagedSubstitutedFont() const;
+
+  /*
+  Returns:
+    If this font is a managed font that references a font that is not installed on this computer,
+    then a pointer to the installed font that is the substitue for the missing font is returned.
+    Otherwise nullptr is returned.
+  */
+  const ON_Font* SubstituteFont() const;
   
   /*
   Returns:
@@ -3422,6 +3612,9 @@ public:
     False in all other cases.
   */
   bool IsInstalledFont() const;
+
+private:
+  const ON_Font* Internal_ManagedFontToInstalledFont() const;
 
 public:
   ON_Font();
@@ -3520,7 +3713,7 @@ public:
     unsigned int logfont_charset
     );
 
-  bool SetFontCharacteristics( 
+  bool SetFontCharacteristics(
     double point_size,
     const wchar_t* gdi_logfont_name,
     ON_Font::Weight font_weight,
@@ -3530,7 +3723,25 @@ public:
     bool bStrikethrough,
     double linefeed_ratio,
     unsigned int logfont_charset
-    );
+  );
+
+  bool SetFontCharacteristicsForExperts(
+    double point_size,
+    const ON_wString postscript_name,
+    const ON_wString quartet_name,
+    ON_FontFaceQuartet::Member quartet_member,
+    const ON_wString family_name,
+    const ON_wString face_name,
+    ON_Font::Weight font_weight,
+    ON_Font::Style font_style,
+    ON_Font::Stretch font_stretch,
+    bool bUnderlined,
+    bool bStrikethrough,
+    unsigned char logfont_charset,
+    int windows_logfont_weight,
+    double apple_font_weight_trait,
+    ON_PANOSE1 panose1
+  );
 
 
   /*
@@ -3755,6 +3966,27 @@ public:
 
   /*
   Returns:
+    If known, this font's quartet face (regular, bold, italic, bold-italic).
+    Otherwise ON_FontFaceQuartet::Member::Unset
+  Remarks:
+    For Windows installed fonts, the LOGFONT partition determines the quartet face.
+    On Apple platforms, opennurbs uses a table for common fonts and leaves the rest unset.
+    When unset, this is the best way to determine which quartet member this font represents.
+    In all cases, the absolute weight or the ON_Font.IsBold() is unreliable and should
+    be avoided at all costs.
+  */
+  ON_FontFaceQuartet::Member QuartetFaceMember() const;
+
+  /*
+  Description:
+    Get a string like "Arial (Regular)" that describes this font's quartet.
+  Returns:
+    quartet name + (face)
+  */
+  const ON_wString QuartetDescription() const;
+
+  /*
+  Returns:
     A long description that includes family, face, weight, stretch and style information. 
     Generally not useful for finding matching fonts.
   Remarks:
@@ -3763,7 +3995,12 @@ public:
   */
   const ON_wString Description() const;
 
-    /*
+  const ON_wString WidthWeightSlantDescription() const;
+
+  static const ON_wString WidthWeightSlantDescription(ON_Font::Stretch width, ON_Font::Weight weight, ON_Font::Style slant);
+
+
+  /*
   Description:
     Get a text descripton with family weight, width (stretch), slope (style).
   Parameters:
@@ -3795,6 +4032,44 @@ public:
     bool bIncludeUndelinedAndStrikethrough
   ) const;
 
+
+
+  /*
+  Description:
+    Get a text descripton with family weight, width (stretch), slope (style).
+  Parameters:
+    family_separator - [in]
+      character to place after family name in the description.
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+    weight_width_slope_separator - [in]
+      character to place bewtween weight, stretch, and style descriptions
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+    bIncludeUndelinedAndStrikethrough - [in]
+      If true, underlined and strikethrough attributes are appended
+      0 = no separator.
+      0, ON_wSting::HyphenMinus, and ON_wString::Space are common choices.
+    bIncludeNotOnDevice - [in]
+      If true and this->IsManagedSubstitutedFont() is true, then the
+      returned string begins with "[Not on device]" followed by the font's
+      description.
+  Returns:
+    A font description with family name, weight, stretch, and style.
+    If present, the weight, stretch, style, underlined, and strikethrough
+    descriptions begin with a  capital letter followed by lowercase letters.
+  Remarks:
+    A description similar to the PostScript name is returned by
+    DescriptionFamilyWeightStretchStyle(ON_wString::HyphenMinus,0,false).
+    However, this often differs from the actual PostScript name.
+  */
+  const ON_wString Description(
+    ON_Font::NameLocale name_local,
+    wchar_t family_separator,
+    wchar_t weight_width_slope_separator,
+    bool bIncludeUndelinedAndStrikethrough,
+    bool bIncludeNotOnDevice
+  ) const;
 
 private:
   static const ON_wString& Internal_GetName(
@@ -4596,6 +4871,9 @@ public:
   /*
   Returns:
     ON_Font::RichTextFontName(this,false);
+  Remarks:
+    For Windows installed fonts, this is identical to the Windows LOGFONT name.
+    For Apple platforms and rich text quartet names do not play nicely together.
   */
   const ON_wString RichTextFontName() const;
 
@@ -4663,6 +4941,16 @@ public:
 
   void Dump( ON_TextLog& ) const; // for debugging
 
+  
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  // Used to create installed fonts from Apple CTFont
+  ON_Font(
+    ON_Font::FontType font_type,
+    const class ON_AppleCTFontInformation& apple_font_information
+  );
+#endif
+  
+  
 #if defined(ON_OS_WINDOWS_GDI)
 public:
   static void DumpLogfont(
@@ -5236,14 +5524,16 @@ private:
   void Internal_AfterModification();
 
 public:
+
   /*
   Description:
-    User interfaces that want to behave as if there are 3 font weights,
-    light < normal < < bold, can use the functions
-    ON_Font.IsLight(),
-    ON_Font.IsNormalWeight(),
-    ON_Font.IsBold(),
-    to query font weight ranges.
+    User interfaces that want to provide a name + regular/bold/italic/bold-italic
+    font finder must use IsBoldInQuartet() and IsItalicInQuartet().
+
+    This function looks at weight the font designer assigned to the font.
+    This is an unreliable way to determine if a font is "light/regular/bold"
+    compared to other faces in its font family.
+
   Returns:
     True if FontWeight() is lighter than ON_Font::Weight::Normal
   */
@@ -5251,12 +5541,13 @@ public:
 
   /*
   Description:
-    User interfaces that want to behave as if there are 3 font weights,
-    light < normal < < bold, can use the functions
-    ON_Font.IsLight(),
-    ON_Font.IsNormalWeight(),
-    ON_Font.IsBold(),
-    to query font weight ranges.
+    User interfaces that want to provide a name + regular/bold/italic/bold-italic
+    font finder must use IsBoldInQuartet() and IsItalicInQuartet().
+
+    This function looks at weight the font designer assigned to the font.
+    This is an unreliable way to determine if a font is "light/regular/bold"
+    compared to other faces in its font family.
+
   Returns:
     True if FontWeight() is ON_Font::Normal or ON_Font::Weight::Medium
   */
@@ -5264,14 +5555,20 @@ public:
 
   /*
   Description:
-    User interfaces that want to behave as if there are 3 font weights,
-    light < normal < < bold, can use the functions
-    ON_Font.IsLight(),
-    ON_Font.IsNormalWeight(),
-    ON_Font.IsBold(),
-    to query font weight ranges.
+    User interfaces that want to provide a name + regular/bold/italic/bold-italic
+    font finder must use IsBoldInQuartet() and IsItalicInQuartet().
+
+    This function looks at weight the font designer assigned to the font.
+    This is an unreliable way to determine if a font is "light/regular/bold"
+    compared to other faces in its font family.
+
   Returns:
     True if heavier than ON_Font::Weight::Medium.
+
+  Remarks:
+    Just in case you didn't read the description, ON_Font.IsBold() is a terrible
+    way to decide if a font is "bold" in a quartet (regular,bold,italic,bold-italic).
+    Use ON_Font.QuartetFaceMember()
   */
   bool IsBold() const;
 
@@ -5279,18 +5576,36 @@ public:
   Returns:
     True if this font is considered a bold member in its installed font ON_FontFaceQuartet.
   Remarks:
-    In a traditional regular/bold/italic/bold-italic font face interfaces, 
+    In a traditional regular/bold/italic/bold-italic font face interfaces,
     "bold" is relative to the quartet members and cannot be determined
     by inspecting the numerical value of the font's weight. For example,
-    Arial Black has a weight of 900=ON_FontWeight::Weight::Heavy, 
+    Arial Black has a weight of 900=ON_FontWeight::Weight::Heavy,
     but the Arial Black quartet has only two faces, regular and italic.
-    In quartets for fonts with a simulated bold, like AvenirLT-Roman, 
+    In quartets for fonts with a simulated bold, like AvenirLT-Roman,
     the bold member often has a LOGFONT weight of 551 < SemiBold = 600.
     The Windows AvenirLT-Roman quartet has four faces and the bold faces in
     the quartet have weights 551.
   */
   bool IsBoldInQuartet() const;
-  
+
+  /*
+  Returns:
+    True if this font is considered an italic member in its installed font ON_FontFaceQuartet.
+  Remarks:
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
+  */
+  bool IsItalicInQuartet() const;
+
+  /*
+  Remarks:
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
+  */
   ON_Font::Style FontStyle() const;
 
   /*
@@ -5308,14 +5623,17 @@ public:
     );
 
   /*
+  Description:
+    If is better to use IsItalicInQuartet().
+
   Returns:
     true if FontStyle() is ON_Font::Style::Italic.
     false if FontStyle() is ON_Font::Style::Upright or .ON_Font::Style::Oblique.
   Remarks:
-    The face is sloped so the top is to the right of the base.
-    NOTE WELL: 
-      When the term "oblique" appears in a face names or descriptions,
-      it generally means the face is an italic face.
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
   */
   bool IsItalic() const;
 
@@ -5323,9 +5641,11 @@ public:
   Returns:
     true if FontStyle() is ON_Font::Style::Upright.
     false if FontStyle() is ON_Font::Style::Italic or .ON_Font::Style::Oblique.
-  Remark:
-    In face names and descriptions, the terms "Roman", "Normal", or "Regular" 
-    are often used.
+  Remarks:
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
   */
   bool IsUpright() const;
 
@@ -5334,10 +5654,10 @@ public:
     true if FontStyle() is ON_Font::Style::Italic or  is ON_Font::Style::Oblique.
     Otherwise false.
   Remarks:
-    The face is sloped so the top is to the left of the base. This is extremely rare.
-    NOTE WELL:
-      When the term "oblique" appears in a face names or descriptions,
-      it generally means the face is an italic face.
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
   */
   bool IsItalicOrOblique() const;
 
@@ -5346,10 +5666,10 @@ public:
     true if FontStyle() is ON_Font::Style::Oblique.
     false if FontStyle() is ON_Font::Style::Upright or .ON_Font::Style::Italic.
   Remarks:
-    The face is sloped so the top is to the left of the base. This is extremely rare.
-    NOTE WELL:
-      When the term "oblique" appears in a face names or descriptions,
-      it generally means the face is an italic face.
+    When working with rich text you want to use IsItalicInQuartet().
+    For fonts with a slanted regular face like Corsiva,
+    ON_Font.FontStyle() = ON_Font::Style::Italic, ON_Font.IsItalic() = true,
+    and ON_Font.IsItalicInQuartet() = false.
   */
   bool IsOblique(); // ERROR - missing const
 
@@ -5450,6 +5770,8 @@ public:
     True if the font is a known engraving font.
   */
   bool IsEngravingFont() const;
+
+  static const ON_Font* DefaultEngravingFont();
 
   unsigned char LogfontCharSet() const;
   
@@ -5719,7 +6041,7 @@ private:
 
 private:
   // = 1 if this is a managed font and the face is installed on the current device.
-  mutable ON__UINT8 m_managed_face_is_installed = 0;
+  ON__UINT8 m_reserved1 = 0;
 
 private:
   ON_PANOSE1 m_panose1;
@@ -5737,7 +6059,15 @@ private:
   ON_OutlineFigure::Type m_outline_figure_type = ON_OutlineFigure::Type::Unset;
 
 private:
-  ON__UINT8 m_reserved1 = 0;
+  // When then is unset, it is the best way to determine what face this font
+  // corresponds to in its quartet of faces. (regular,bold,italic,bold-italic)
+  // The Windows OS LOGFONT partitions specify this. On Apple we have a table
+  // for common fonts and we make it up on the fly for the rest.
+  // This field is not included in the font hash because it is mutable
+  // and may get changed as the application adds more managed fonts.
+  mutable ON_FontFaceQuartet::Member m_quartet_member = ON_FontFaceQuartet::Member::Unset;
+
+private:
   ON__UINT16 m_reserved2 = 0;
   ON__UINT32 m_reserved3 = 0;
   double m_reserved4 = 0.0;
@@ -5776,11 +6106,38 @@ private:
   //////////////////////////////////////////////////////////////////////////////////
 
 private:
-  // Only managed fonts have a non-null m_free_type_face face.
+  // LEGACY field. Windows opennurbs never uses freetype. 
+  // In rare cases, Apple opennurbs used freetype.
   mutable class ON_FreeTypeFace* m_free_type_face = nullptr;
 
 private:
-  ON__UINT_PTR m_reserved5 = 0;
+  // If this font is a managed font, then m_managed_installed_font_and_bits encodes
+  // 1. The installed font used to render this font
+  // 2. If the installed font is a substituted for font not installed on this device.
+  // If this font is not a managed font, then m_managed_installed_font_and_bits = 0.
+  // LEGACY mutable ON__UINT8 m_managed_face_is_installed = 0; 1 = managed and installed 2 = managed and substituted
+  mutable ON__UINT_PTR m_managed_installed_font_and_bits = 0;
+  static void Internal_SetManagedFontInstalledFont(
+    const ON_Font* managed_font,
+    const ON_Font* installed_font,
+    bool bInstalledFontIsASubstitute
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>
+  /// True if this is a managed font that is installed on this device. False otherwise.
+  /// </returns>
+  bool Internal_ManagedFontIsInstalled() const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>
+  /// True if this is a managed font that is not installed on this device. False otherwise.
+  /// </returns>
+  bool Internal_ManagedFontIsNotInstalled() const;
 
 public:
   /*
@@ -5846,7 +6203,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Font*>;
 class ON_CLASS ON_FontList
 {
 public:
-  ON_FontList() = default;
+  ON_FontList();
 
   /*
   Parameters:
@@ -5858,9 +6215,11 @@ public:
     bool bMatchUnderlineStrikethroughAndPointSize
   );
 
-  ~ON_FontList() = default;
-  ON_FontList(const ON_FontList&) = default;
-  ON_FontList& operator=(const ON_FontList&) = default;
+  ~ON_FontList();
+
+private:
+  ON_FontList(const ON_FontList&) = delete;
+  ON_FontList& operator=(const ON_FontList&) = delete;
 
 public:
   /*
@@ -5870,6 +6229,23 @@ public:
   unsigned int Count() const;
 
   ON_Font::NameLocale NameLocale() const;
+
+  /*
+  Parameters:
+    font_characteristics_hash - [in]
+    bReturnFirst - [in]
+      If there are multiple fonts with the same hash and bReturnFirst is true,
+      then the first font with tht hash is returned.
+      If there are multiple fonts with the same hash and bReturnFirst is false,
+      then nullptr is returned.
+      new style or unset if font style is adequate
+  Returns:
+    A font with the specified font characteristics hash.
+  */
+  const ON_Font* FromFontCharacteristicsHash(
+    ON_SHA1_Hash font_characteristics_hash,
+    bool bReturnFirst
+  ) const;
 
   const ON_Font* FromPostScriptName(
     const wchar_t* postscript_name
@@ -5947,6 +6323,7 @@ public:
     bRtfItalic - [in]
       RTF italic flag
   */
+  ON_DEPRECATED_MSG("Use the static ON_Font::FontFromRichTextProperties()")
   const ON_Font* FromRichTextProperties(
     const wchar_t* rtf_font_name,
     bool bRtfBold,
@@ -6055,7 +6432,7 @@ public:
   ) const;
 
   /*
-  Properties:
+  Parameters:
     family name - [in]
     desired_weight - [in]
     desired_stretch - [in]
@@ -6072,7 +6449,7 @@ public:
   ) const;  
   
   /*
-  Properties:
+  Parameters:
     font - [in]
       Used to identify the family,
     desired_weight - [in]
@@ -6136,6 +6513,12 @@ public:
 
   /*
   Returns:
+    Array of fonts sorted by ON_Font.yFontCharacteristicsHash().
+  */
+  const ON_SimpleArray< const class ON_Font* >& ByFontCharacteristicsHash() const;
+
+  /*
+  Returns:
     Array of font face quartets for this list sorted quartet name.
   Remarks:
     This is pribarily for old-fashioned font selection UI that harkens back
@@ -6170,6 +6553,8 @@ public:
     const wchar_t* quartet_name
   ) const;
 
+  static int CompareFontCharacteristicsHash(ON_Font const* const* lhs, ON_Font const* const* rhs);
+
   static int ComparePostScriptName(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareFamilyName(ON_Font const* const* lhs, ON_Font const* const* rhs);
   static int CompareFamilyAndFaceName(ON_Font const* const* lhs, ON_Font const* const* rhs);
@@ -6200,8 +6585,6 @@ public:
     size_t font_count,
     const ON_Font * const * font_list
   );
-
-
 
 private:
   friend class ON_ManagedFonts;
@@ -6243,35 +6626,15 @@ private:
   // List of recently added fonts unsorted
   mutable ON_SimpleArray< const ON_Font* > m_unsorted;
 
-  // List of fonts sorted by PostScript name 
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_postscript_name;
+  // A single instance is allocated in the default constructor
+  // and freed in the destructor. You may assume this point is valid.
+  // ON_FontListImpl contains the sorted lists.
+  class ON_FontListImpl& m_sorted;
 
-  // List of fonts sorted by Windows LOGFONT.lfFaceName name
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_windows_logfont_name;
-
-  // List of fonts sorted by Family name, then FaceName
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_family_name;
-
-
-  // List of fonts sorted by English PostScript name
-  // Only fonts with m_en_postscript_name != m_loc_postscript_name are included here
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_english_postscript_name;
-
-  // List of fonts sorted by English Windows LOGFONT.lfFaceName name
-  // Only fonts with m_en_windows_logfont_name != m_loc_windows_logfont_name are included here
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_english_windows_logfont_name;
-
-  // List of fonts sorted by English Family name, then English FaceName
-  // Only fonts with m_en_family_name != m_loc_family_name are included here
-  // (Recently added fonts may be in m_unsorted[])
-  mutable ON_SimpleArray< const ON_Font* > m_by_english_family_name;
-
-  mutable ON_SimpleArray< const ON_Font* > m_by_quartet_name;
+  // this reserved block is here to keep sizeof(ON_FontList) unchanged between
+  // Rhino 7.3 and Rhino 7.4 and to insure that any 3rd party code that used ON_FontList
+  // in Rhino 7.3 will continue to work as expected in Rhino 7.4.
+  const ON__UINT_PTR m_reserved[20] = {};
 
   // List of quartets sorted by quartet name.
   mutable ON_ClassArray< ON_FontFaceQuartet > m_quartet_list;

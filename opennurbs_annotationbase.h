@@ -192,7 +192,6 @@ public:
     bool& flip_x,
     bool& flip_y);
 
-
   /*
   Returns:
     Rich text that can contain rich text formatting instructions.
@@ -431,6 +430,11 @@ public:
     int end_run_pos);
 
 
+  // Deprecated - Use 
+  // ON::TextVerticalAlignment ON_Annotation::TextVerticalAlignment(const ON_DimStyle* parent_style) const;
+  // void ON_Annotation::SetTextVerticalAlignment(const ON_DimStyle* parent_style, ON::TextVerticalAlignment style);
+  // ON::TextVerticalAlignment ON_Annotation::LeaderVerticalAlignment(const ON_DimStyle* parent_style) const;
+  // void ON_Annotation::SetLeaderVerticalAlignment(const ON_DimStyle* parent_style, ON::TextVerticalAlignment style);
   void GetAlignment(ON::TextHorizontalAlignment& horz, ON::TextVerticalAlignment& vert) const;
   void SetAlignment(ON::TextHorizontalAlignment horz, ON::TextVerticalAlignment vert);
 

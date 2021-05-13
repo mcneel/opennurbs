@@ -102,27 +102,58 @@ IDWriteGdiInterop* ON_IDWrite::GdiInterop()
 //
 
 static bool Internal_GetLocalizeStrings(
-  const wchar_t* preferedLocale,
+  const ON_wString preferedLocaleDirty,
   IDWriteLocalizedStrings* pIDWriteLocalizedStrings,
   ON_wString& defaultLocaleString,
-  ON_wString& enusLocaleString
+  ON_wString& defaultLocale,
+  ON_wString& enLocaleString,
+  ON_wString& enLocale
 )
 {
   defaultLocaleString = ON_wString::EmptyString;
-  enusLocaleString = ON_wString::EmptyString;
+  defaultLocale = ON_wString::EmptyString;
+  enLocaleString = ON_wString::EmptyString;
+  enLocale = ON_wString::EmptyString;
 
-  wchar_t userDefaultLocale[LOCALE_NAME_MAX_LENGTH + 1] = {};
+
+  // get a clean preferedLocale with reliable storage for the string.
+  ON_wString preferedLocale(preferedLocaleDirty.Duplicate());
+  preferedLocale.TrimLeftAndRight();
   if (ON_wString::EqualOrdinal(preferedLocale, L"GetUserDefaultLocaleName", true))
   {
     // Get the default locale for this user.
+    wchar_t userDefaultLocale[LOCALE_NAME_MAX_LENGTH + 1] = {};
     userDefaultLocale[LOCALE_NAME_MAX_LENGTH] = 0;
     if (0 == ::GetUserDefaultLocaleName(userDefaultLocale, LOCALE_NAME_MAX_LENGTH))
       userDefaultLocale[0];
     userDefaultLocale[LOCALE_NAME_MAX_LENGTH] = 0;
-    preferedLocale = userDefaultLocale;
+    preferedLocale = ON_wString(userDefaultLocale);
+    preferedLocale.TrimLeftAndRight();
   }
 
-  const wchar_t* enusLocaleName = L"en-us";
+  const wchar_t* localeNames[] = 
+  {
+    static_cast<const wchar_t*>(preferedLocale),
+
+    // The preferred English dialect should be listed next
+    L"en-us", // United States
+
+    // Other known English dialects are list below
+    L"en-au", // Australia
+    L"en-bz", // Belize
+    L"en-ca", // Canada
+    L"en-cb", // Caribbean
+    L"en-gb", // Great Britain
+    L"en-in", // India
+    L"en-ie", // Ireland
+    L"en-jm", // Jamaica
+    L"en-nz", // New Zealand
+    L"en-ph", // Philippines
+    L"en-tt", // Trinidad
+    L"en-za", // Southern Africa
+  };
+
+  const int localNamesCount = (int)(sizeof(localeNames)/sizeof(localeNames[0]));
 
   HRESULT hr;
 
@@ -134,10 +165,10 @@ static bool Internal_GetLocalizeStrings(
     return ON_wString::EmptyString;
 
   UINT32 localeIndex = ON_UNSET_UINT_INDEX;
-  UINT32 enusLocaleIndex = ON_UNSET_UINT_INDEX;
-  for (int i = 0; i < 2; i++)
+  UINT32 enLocaleIndex = ON_UNSET_UINT_INDEX;
+  for (int i = 0; i < localNamesCount; i++)
   {
-    const wchar_t* s = (i > 0) ? enusLocaleName : preferedLocale;
+    const wchar_t* s = localeNames[i];
     if (nullptr == s || 0 == s[0])
       continue;
     BOOL exists = 0;
@@ -151,14 +182,20 @@ static bool Internal_GetLocalizeStrings(
       continue;
     if (i > 0)
     {
-      enusLocaleIndex = idx;
+      enLocaleIndex = idx;
+      enLocale = s;
     }
     else
     {
+      // preferred locale
       localeIndex = idx;
-      if (ON_wString::EqualOrdinal(enusLocaleName, -1, s, -1, true))
+      if (
+        0 != s[0] && 0 != s[1] && 0 != s[2] 
+        && ON_wString::EqualOrdinal(L"en-", 3, s, 3, true)
+        )
       {
-        enusLocaleIndex = idx;
+        // preferred local is the preferred English dialect too.
+        enLocaleIndex = idx;
         break;
       }
     }
@@ -168,10 +205,10 @@ static bool Internal_GetLocalizeStrings(
   {
     if (pass > 1)
     {
-      if (defaultLocaleString.IsNotEmpty() || enusLocaleString.IsNotEmpty())
+      if (defaultLocaleString.IsNotEmpty() || enLocaleString.IsNotEmpty())
         break;
     }
-    bool bGetLocaleName = false;
+
     UINT32 i0, i1;
     if (0 == pass)
     {
@@ -183,9 +220,9 @@ static bool Internal_GetLocalizeStrings(
     else if (1 == pass)
     {
 
-      if (ON_UNSET_UINT_INDEX == enusLocaleIndex || enusLocaleIndex == localeIndex )
+      if (ON_UNSET_UINT_INDEX == enLocaleIndex || enLocaleIndex == localeIndex )
         continue;
-      i0 = enusLocaleIndex;
+      i0 = enLocaleIndex;
       i1 = i0 + 1;
     }
     else
@@ -200,7 +237,11 @@ static bool Internal_GetLocalizeStrings(
     {
       ON_wString strStringValue;
       ON_wString strLocaleName;
-      for (int value = 0; value < (bGetLocaleName?2:1); value++)
+      if (i == localeIndex)
+        strLocaleName = preferedLocale;
+      else if (i == enLocaleIndex)
+        strLocaleName = enLocale;
+      for (int value = 0; value < (strLocaleName.IsEmpty()?2:1); value++)
       {
         const bool bStringValuePass = (0 == value);
         UINT32 slen = 0;
@@ -243,17 +284,24 @@ static bool Internal_GetLocalizeStrings(
       if ( pass >= 2 && defaultLocaleString.IsEmpty() )
       {
         defaultLocaleString = strStringValue;
+        defaultLocale = strLocaleName;
       }
 
       if (i == localeIndex)
+      {
         defaultLocaleString = strStringValue;
+        defaultLocale = strLocaleName;
+      }
 
-      if (i == enusLocaleIndex)
-        enusLocaleString = strStringValue;
+      if (i == enLocaleIndex)
+      {
+        enLocaleString = strStringValue;
+        enLocale = strLocaleName;
+      }
 
       if (
         defaultLocaleString.IsNotEmpty()
-        && enusLocaleString.IsNotEmpty()
+        && enLocaleString.IsNotEmpty()
         )
       {
         break;
@@ -262,9 +310,30 @@ static bool Internal_GetLocalizeStrings(
   }
 
   if (defaultLocaleString.IsEmpty())
-    defaultLocaleString = enusLocaleString;
+  {
+    defaultLocaleString = enLocaleString;
+    defaultLocale = enLocale;
+  }
 
   return defaultLocaleString.IsNotEmpty();
+}
+
+
+static bool Internal_GetLocalizeStrings(
+  const wchar_t* preferedLocale,
+  IDWriteLocalizedStrings* pIDWriteLocalizedStrings,
+  ON_wString& defaultLocaleString,
+  ON_wString& enLocaleString
+)
+{
+  ON_wString defaultLocale;
+  ON_wString enusLocale;
+  return Internal_GetLocalizeStrings(
+    preferedLocale,
+    pIDWriteLocalizedStrings,
+    defaultLocaleString, defaultLocale,
+    enLocaleString, enusLocale
+  );
 }
 
 static void Internal_PrintLocalizedNames(
@@ -2190,5 +2259,204 @@ IDWriteFont* ON_Font::WindowsDWriteFont() const
 //
 //
 //
+
+static bool Internal_GetDWriteFamilyName(
+  const IDWriteFont* dwrite_font,
+  const ON_wString preferedLocaleDirty,
+  ON_wString& familyName,
+  ON_wString& locale
+)
+{
+  familyName = ON_wString::EmptyString;
+  locale = ON_wString::EmptyString;
+  if (nullptr == dwrite_font)
+    return false;
+
+  // The name id are list in decreasing order of reliability.
+  DWRITE_INFORMATIONAL_STRING_ID name_id[] =
+  {
+    /// <summary>
+    /// Family name for the weight-stretch-style model.
+    /// </summary>
+    DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME,
+
+    // Typographic family name preferred by the designer. This enables font designers to group more than four fonts in a single family without losing compatibility with
+    // GDI. This name is typically only present if it differs from the GDI-compatible family name.
+    DWRITE_INFORMATIONAL_STRING_TYPOGRAPHIC_FAMILY_NAMES,
+
+    // GDI-compatible family name. Because GDI allows a maximum of four fonts per family, fonts in the same family may have different GDI-compatible family names
+    // (e.g., "Arial", "Arial Narrow", "Arial Black").
+    DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES,
+  };
+
+  const size_t name_id_count = sizeof(name_id) / sizeof(name_id[0]);
+
+  ON_wString preferedLocale(preferedLocaleDirty);
+  preferedLocale.TrimLeftAndRight();
+  if (preferedLocale.IsEmpty())
+    preferedLocale = ON_wString(L"GetUserDefaultLocaleName");
+
+  for (size_t i = 0; i < name_id_count; ++i)
+  {
+    // iterate possible family names finding the best one to return.
+    BOOL exists = false;
+    Microsoft::WRL::ComPtr<IDWriteLocalizedStrings> localizedFamilynames = nullptr;
+    HRESULT hr = const_cast<IDWriteFont*>(dwrite_font)->GetInformationalStrings(name_id[i], &localizedFamilynames, &exists);
+    if (FAILED(hr))
+      break;
+
+    IDWriteLocalizedStrings* familyNames = localizedFamilynames.Get();
+    if (nullptr == familyNames)
+      continue;
+
+    ON_wString defaultName;
+    ON_wString defaultLocale;
+    ON_wString enName;
+    ON_wString enLocale;
+    if (exists)
+    {
+      if (Internal_GetLocalizeStrings(
+        preferedLocale,
+        familyNames,
+        defaultName,
+        defaultLocale,
+        enName,
+        enLocale
+      ))
+      {
+        if (defaultName.IsNotEmpty() && defaultLocale.IsNotEmpty())
+        {
+          familyName = defaultName;
+          locale = defaultLocale;
+          break;
+        }
+      }
+    }
+  }
+
+  return familyName.IsNotEmpty();
+}
+
+static IDWriteTextFormat* Internal_TextFormat(const IDWriteFont* dwriteFont)
+{
+  if (nullptr == dwriteFont)
+    return nullptr;
+
+  ON_wString familyName;
+  ON_wString locale;
+  const bool bHaveFamilyName = Internal_GetDWriteFamilyName(dwriteFont,ON_wString::EmptyString,familyName,locale);
+  if (false == bHaveFamilyName || familyName.IsEmpty() || locale.IsEmpty())
+    return nullptr;
+
+  IDWriteFactory* dwiteFactory = ON_IDWrite::Factory();
+  if (nullptr == dwiteFactory)
+    return nullptr;
+
+  DWRITE_FONT_WEIGHT weight = const_cast<IDWriteFont*>(dwriteFont)->GetWeight();
+  DWRITE_FONT_STYLE style = const_cast<IDWriteFont*>(dwriteFont)->GetStyle();
+  DWRITE_FONT_STRETCH stretch = const_cast<IDWriteFont*>(dwriteFont)->GetStretch();
+
+  float logical_size_dip = 96.0; // 96 DIP ("device-independent pixel") = one inch
+
+  IDWriteTextFormat* dwriteTextFormat = nullptr;
+
+  HRESULT hr = dwiteFactory->CreateTextFormat(
+    static_cast<const wchar_t*>(familyName),
+    nullptr, // use System font collection
+    weight, style, stretch,
+    logical_size_dip,
+    static_cast<const wchar_t*>(locale),
+    &dwriteTextFormat
+  );
+
+  if (SUCCEEDED(hr))
+    hr = dwriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+
+  // Center align (vertically) the text.
+  if (SUCCEEDED(hr))
+    hr = dwriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+
+  if (SUCCEEDED(hr))
+    return dwriteTextFormat;
+
+  return nullptr;
+}
+
+
+//static 
+IDWriteTextLayout* Internal_TextLayout(
+  ON_wString textString,
+  const ON_Font* font,
+  double height
+)
+{
+  if (nullptr == font)
+    return nullptr;
+
+  if (textString.IsEmpty())
+    return nullptr;
+
+  const UINT32 textStringLength = (UINT32)textString.Length();
+
+  // sanity check textStringLength
+  if (textStringLength <= 0 || textStringLength > 1024*1024) 
+    return nullptr;
+
+  IDWriteFactory* dwiteFactory = ON_IDWrite::Factory();
+  if (nullptr == dwiteFactory)
+    return nullptr;
+
+  HRESULT hr = -1;
+  IDWriteTextFormat* dwriteTextFormat = nullptr;
+  IDWriteTextLayout* dwriteTextLayout = nullptr;
+
+  for (;;)
+  {
+    // dwriteFont is managed by opennurbs
+    const IDWriteFont* dwriteFont = font->WindowsDWriteFont();
+    if (nullptr == dwriteFont)
+      break;
+
+    dwriteTextFormat = Internal_TextFormat(dwriteFont);
+    if (nullptr == dwriteTextFormat)
+      break;
+
+    FLOAT maxWidthInPixels = 16384.0f; // The width of the layout box.
+    FLOAT maxHeightInPixels = 128.0f; // The height of the layout box.
+
+    hr = dwiteFactory->CreateTextLayout(
+      static_cast<const wchar_t*>(textString),
+      textStringLength,
+      dwriteTextFormat,
+      maxWidthInPixels,
+      maxHeightInPixels,
+      &dwriteTextLayout
+    );
+    if (nullptr == dwriteTextLayout)
+      break;
+
+    FLOAT fontSizeInDIPs = 96.0; // The font size in DIP units to be set for text in the range specified by textRange.
+
+    const DWRITE_TEXT_RANGE textRange = { 0, textStringLength };
+    
+    if (SUCCEEDED(hr))
+      hr = dwriteTextLayout->SetFontSize(fontSizeInDIPs, textRange);
+
+    if (SUCCEEDED(hr) && font->IsUnderlined())
+      hr = dwriteTextLayout->SetUnderline(TRUE, textRange);
+
+    if (SUCCEEDED(hr) && font->IsStrikethrough())
+      hr = dwriteTextLayout->SetStrikethrough(TRUE, textRange);
+
+    break;
+  }
+
+  if (SUCCEEDED(hr))
+    return dwriteTextLayout;
+
+  // delete stuff here
+
+  return nullptr;
+}
 
 #endif

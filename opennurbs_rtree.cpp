@@ -71,6 +71,8 @@ static void InitRect(ON_RTreeBBox* a_rect);
 static ON_RTreeBBox CombineRectHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB);
 static double CalcRectVolumeHelper(const ON_RTreeBBox* a_rect);
 static bool OverlapHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB);
+static bool OverlapLineHelper(const ON_Line* a_line, const ON_RTreeBBox* a_rectB);
+static bool OverlapInfiniteLineHelper(const ON_Line* a_line, const ON_RTreeBBox* a_rectB);
 static double DistanceToCapsuleAxisHelper(const struct ON_RTreeCapsule* a_capsule, const ON_RTreeBBox* a_rect);
 static void ClassifyHelper(int a_index, int a_group, struct ON_RTreePartitionVars* a_parVars);
 static bool SearchHelper(const ON_RTreeNode* a_node, ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result );
@@ -80,6 +82,8 @@ static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect,
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_SimpleArray<void*> &a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeSphere* a_sphere, ON_RTreeSearchResultCallback& a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeCapsule* a_capsule, ON_RTreeSearchResultCallback& a_result );
+static bool SearchHelper(const ON_RTreeNode* a_node, const class ON_Line* a_line, ON_RTreeSearchResultCallback& a_result);
+static bool SearchInfiniteLineHelper(const ON_RTreeNode* a_node, const class ON_Line* a_line, ON_RTreeSearchResultCallback& a_result);
 
 ////////////////////////////////////////////////////////////////
 //
@@ -668,6 +672,152 @@ bool ON_RTree::CreateMeshFaceTree( const ON_Mesh* mesh )
   return (0 != m_root);
 }
 
+bool ON_SubDRTree::CreateSubDVertexRTree(
+  const ON_SubD& subd,
+  ON_SubDComponentLocation vertex_location
+)
+{
+  // ShareContentsFrom() increments the reference count on m_subdimple_sp
+  // so vertex pointers one this RTree's nodes will be valid for the duration
+  // of the rtree's existence.
+  m_subd.ShareContentsFrom(const_cast<ON_SubD&>(subd));
+
+  this->RemoveAll();
+
+  ON_SubDVertexIterator vit(m_subd);
+
+  for (const ON_SubDVertex* v = vit.FirstVertex(); nullptr != v; v = vit.NextVertex())
+  {
+    const ON_3dPoint P = v->Point(vertex_location);
+    if (false == this->Insert(&P.x, &P.x, (void*)v))
+    {
+      this->RemoveAll();
+      return false;
+    }
+  }
+  return (nullptr != this->Root());
+}
+
+const ON_SubDVertex* ON_SubDRTree::FindVertexAtPoint(
+  const ON_3dPoint P,
+  const double distance_tolerance
+) const
+{
+  ON_SubDRTreeVertexFinder vf;
+  vf = ON_SubDRTreeVertexFinder::Create(P);
+
+  ON_BoundingBox rbox;
+  const ON_3dVector rtol(distance_tolerance, distance_tolerance, distance_tolerance);
+
+  rbox.m_min = vf.m_P - rtol;
+  rbox.m_max = vf.m_P + rtol;
+  // vtree.Search() can return true (found nearby) and false (found exact) because 
+  // ON_SubDRTreeVertexFinder::Callback() cancels the search when a vertex at the exact location
+  // is found.
+  this->Search(&rbox.m_min.x, &rbox.m_max.x, ON_SubDRTreeVertexFinder::Callback, &vf);
+  return vf.m_v;
+}
+
+
+const ON_SubDVertex* ON_SubDRTree::FindMarkedVertexAtPoint(
+  const ON_3dPoint P,
+  const double distance_tolerance
+) const
+{
+  ON_SubDRTreeVertexFinder vf;
+  vf = ON_SubDRTreeVertexFinder::Create(P, false);
+
+  ON_BoundingBox rbox;
+  const ON_3dVector rtol(distance_tolerance, distance_tolerance, distance_tolerance);
+
+  rbox.m_min = vf.m_P - rtol;
+  rbox.m_max = vf.m_P + rtol;
+  // vtree.Search() can return true (found nearby) and false (found exact) because 
+  // ON_SubDRTreeVertexFinder::Callback() cancels the search when a vertex at the exact location
+  // is found.
+  this->Search(&rbox.m_min.x, &rbox.m_max.x, ON_SubDRTreeVertexFinder::Callback, &vf);
+  return vf.m_v;
+}
+
+
+const ON_SubDVertex* ON_SubDRTree::FindUnmarkedVertexAtPoint(
+  const ON_3dPoint P,
+  const double distance_tolerance
+) const
+{
+  ON_SubDRTreeVertexFinder vf;
+  vf = ON_SubDRTreeVertexFinder::Create(P, true);
+
+  ON_BoundingBox rbox;
+  const ON_3dVector rtol(distance_tolerance, distance_tolerance, distance_tolerance);
+
+  rbox.m_min = vf.m_P - rtol;
+  rbox.m_max = vf.m_P + rtol;
+  // vtree.Search() can return true (found nearby) and false (found exact) because 
+  // ON_SubDRTreeVertexFinder::Callback() cancels the search when a vertex at the exact location
+  // is found.
+  this->Search(&rbox.m_min.x, &rbox.m_max.x, ON_SubDRTreeVertexFinder::Callback, &vf);
+  return vf.m_v;
+}
+
+void ON_SubDRTree::Clear()
+{
+  RemoveAll(); // clear the rtree
+  m_subd = ON_SubD::Empty; // clear an references to a subdimple.
+}
+
+const ON_SubD& ON_SubDRTree::SubD() const
+{
+  return m_subd;
+}
+
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Create(const ON_3dPoint P)
+{
+  ON_SubDRTreeVertexFinder vf;
+  vf.m_P = P;
+  return vf;
+}
+
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Create(const ON_3dPoint P, bool bMarkFilter)
+{
+  ON_SubDRTreeVertexFinder vf = ON_SubDRTreeVertexFinder::Create(P);
+  vf.m_bMarkFilterEnabled = true;
+  vf.m_bMarkFilter = bMarkFilter;
+  return vf;
+}
+
+bool ON_SubDRTreeVertexFinder::Callback(void* a_context, ON__INT_PTR a_id)
+{
+  for (;;)
+  {
+    ON_SubDRTreeVertexFinder* vf = (ON_SubDRTreeVertexFinder*)a_context;
+    const ON_SubDVertex* v = (const ON_SubDVertex*)a_id;
+    if (nullptr == v || (vf->m_bMarkFilterEnabled && vf->m_bMarkFilter != v->Mark()))
+      break; // when m_bMarkFilterEnabled is true, only vertices with v->Mark() == m_bMarkFilter can be found.
+    const double d = (vf->m_P - v->ControlNetPoint()).MaximumCoordinate();
+    if (d >= 0.0)
+    {
+      if (nullptr == vf->m_v)
+      {
+        vf->m_v = v;
+        vf->m_distance = d;
+      }
+      else
+      {
+        if (d < vf->m_distance || (d == vf->m_distance && v->m_id < vf->m_v->m_id))
+        {
+          vf->m_v = v;
+          vf->m_distance = d;
+        }
+      }
+      if (0.0 == d)
+        return false; // can't get any closer. Stop searching.
+    }
+    break;
+  }
+  return true;
+}
+
 bool ON_RTree::Insert2d(const double a_min[2], const double a_max[2], int a_element_id)
 {
   const double min3d[3] = {a_min[0],a_min[1],0.0};
@@ -861,6 +1011,129 @@ bool ON_RTree::Search(
   result.m_context = a_context;
   result.m_resultCallback = a_resultCallback;
   return SearchHelper(m_root, a_rect, result);
+}
+
+bool ON_RTree::Search(
+  const ON_Line* a_line,
+  bool ON_CALLBACK_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_data),
+  void* a_context
+) const
+{
+  return ON_RTree::Search(a_line, false, a_resultCallback, a_context);
+}
+
+bool ON_RTree::Search(
+  const ON_Line* a_line,
+  bool infinite,
+  bool ON_CALLBACK_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_data),
+  void* a_context
+) const
+{
+  if (0 == m_root || 0 == a_line)
+    return false;
+
+  ON_RTreeSearchResultCallback result;
+  result.m_context = a_context;
+  result.m_resultCallback = a_resultCallback;
+  if (infinite)
+    return SearchInfiniteLineHelper(m_root, a_line, result);
+  else
+    return SearchHelper(m_root, a_line, result);
+}
+
+class ON_RTreeSearchPolylineResultCallback : public ON_RTreeSearchResultCallback
+{
+public:
+  ON_Workspace* m_ws;
+};
+
+static bool SearchPolylinePart(const ON_RTreeNode* a_node, const ON_Polyline* polyline, int from, int plcount,
+  ON_RTreeSearchPolylineResultCallback& result)
+{
+  if (plcount > 2)
+  {
+    int i, count, innercount;
+
+    if ((count = a_node->m_count) > 0)
+    {
+      const ON_RTreeBranch* branch = a_node->m_branch;
+      if (a_node->IsInternalNode())
+      {
+        innercount = (plcount + 1) / 2;
+        auto bb = (ON_BoundingBox*)result.m_ws->GetMemory(sizeof(ON_BoundingBox) * 2);
+        *bb = polyline->BoundingBox(from, innercount);
+        *(bb + 1) = polyline->BoundingBox(from + innercount - 1, plcount - innercount + 1);
+
+        for (i = 0; i < count; ++i)
+        {
+          if (OverlapHelper((ON_RTreeBBox*)bb, &branch[i].m_rect))
+          {
+            if (!SearchPolylinePart(branch[i].m_child, polyline, from, innercount, result))
+            {
+              return false; // Don't continue searching
+            }
+          }
+          if (OverlapHelper((ON_RTreeBBox*)bb+1, &branch[i].m_rect))
+          {
+            if (!SearchPolylinePart(branch[i].m_child, polyline, from + innercount - 1, plcount - innercount + 1, result))
+            {
+              return false; // Don't continue searching
+            }
+          }
+        }
+      }
+      else
+      {
+        // a_node is a leaf node
+        for (i = 0; i < count; ++i)
+        {
+          for (innercount = 0; innercount < (plcount-1); innercount++)
+          {
+            ON_Line* line = (ON_Line*)(&polyline->Array()[innercount + from]);
+            if (OverlapLineHelper(line, &branch[i].m_rect))
+            {
+              if (result.m_context) ((ON_RTreePolylineContext*)result.m_context)->m_polyline_pointindex = innercount + from;
+              if (!result.m_resultCallback(result.m_context, branch[i].m_id))
+              {
+                // callback canceled search
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  else if (plcount == 2)
+  {
+    ON_Line* line = (ON_Line*)(&polyline->Array()[from]);
+    if (result.m_context) ((ON_RTreePolylineContext*)result.m_context)->m_polyline_pointindex = from;
+    return SearchHelper(a_node, line, result);
+  }
+  else if (plcount < 2)
+  {
+    ON_ERROR("Unexpected plcount");
+    return true;
+  }
+
+  return true;
+}
+
+bool ON_RTree::Search(
+  const ON_Polyline* polyline,
+  bool ON_CALLBACK_CDECL resultCallback(void* a_context, ON__INT_PTR a_id),
+  ON_RTreePolylineContext* a_context
+) const
+{
+  if (0 == m_root || 0 == polyline || nullptr == resultCallback) return false;
+  if (polyline->UnsignedCount() < 2) return true;
+
+  ON_RTreeSearchPolylineResultCallback result;
+  result.m_context = a_context;
+  result.m_resultCallback = resultCallback;
+  ON_Workspace ws;
+  result.m_ws = &ws;
+  return SearchPolylinePart(m_root, polyline, 0, polyline->Count(), result);
 }
 
 bool ON_RTree::Search( 
@@ -3021,6 +3294,21 @@ bool OverlapHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB)
   return true;
 }
 
+// Decide whether a box and a line overlap.
+bool OverlapLineHelper(const ON_Line* line, const ON_RTreeBBox* rect)
+{
+  ON_BoundingBox* bbox = (ON_BoundingBox*)rect;
+  return !bbox->IsDisjoint(*line, false);
+}
+
+// Decide whether a box and an infinite line overlap.
+bool OverlapInfiniteLineHelper(const ON_Line* line, const ON_RTreeBBox* rect)
+{
+  ON_BoundingBox* bbox = (ON_BoundingBox*)rect;
+  return !bbox->IsDisjoint(*line, true);
+}
+
+
 //static bool OverlapHelper(const struct ON_RTreeSphere* a_sphere, const ON_RTreeBBox* a_rect)
 //{
 //  double d[3], t, r;
@@ -3257,6 +3545,8 @@ static double DistanceToCapsuleAxisHelper(const struct ON_RTreeCapsule* a_capsul
 
   return ((const ON_BoundingBox*)a_rect->m_min)->MinimumDistanceTo( *((const ON_Line*)L[0]) );
 }
+
+
 
 // Add a node to the reinsertion list.  All its branches will later
 // be reinserted into the index structure.
@@ -3740,6 +4030,96 @@ bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeCapsule* a_capsule,
 
   return true; // Continue searching
 }
+
+static
+bool SearchInfiniteLineHelper(const ON_RTreeNode* a_node, const ON_Line* a_line, ON_RTreeSearchResultCallback& a_result)
+{
+  // NOTE: 
+   //  Some versions of ON_RTree::Search shrink a_line as the search progresses.
+  int i, count;
+
+  if ((count = a_node->m_count) > 0)
+  {
+    const ON_RTreeBranch* branch = a_node->m_branch;
+    if (a_node->IsInternalNode())
+    {
+      // a_node is an internal node - search m_branch[].m_child as needed
+      for (i = 0; i < count; ++i)
+      {
+        if (OverlapInfiniteLineHelper(a_line, &branch[i].m_rect))
+        {
+          if (!SearchInfiniteLineHelper(branch[i].m_child, a_line, a_result))
+          {
+            return false; // Don't continue searching
+          }
+        }
+      }
+    }
+    else
+    {
+      // a_node is a leaf node - return m_branch[].m_id values
+      for (i = 0; i < count; ++i)
+      {
+        if (OverlapInfiniteLineHelper(a_line, &branch[i].m_rect))
+        {
+          if (!a_result.m_resultCallback(a_result.m_context, branch[i].m_id))
+          {
+            // callback canceled search
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  return true; // Continue searching
+}
+
+
+static
+bool SearchHelper(const ON_RTreeNode* a_node, const ON_Line* a_line, ON_RTreeSearchResultCallback& a_result)
+{
+  // NOTE: 
+   //  Some versions of ON_RTree::Search shrink a_rect as the search progresses.
+  int i, count;
+
+  if ((count = a_node->m_count) > 0)
+  {
+    const ON_RTreeBranch* branch = a_node->m_branch;
+    if (a_node->IsInternalNode())
+    {
+      // a_node is an internal node - search m_branch[].m_child as needed
+      for (i = 0; i < count; ++i)
+      {
+        if (OverlapLineHelper(a_line, &branch[i].m_rect))
+        {
+          if (!SearchHelper(branch[i].m_child, a_line, a_result))
+          {
+            return false; // Don't continue searching
+          }
+        }
+      }
+    }
+    else
+    {
+      // a_node is a leaf node - return m_branch[].m_id values
+      for (i = 0; i < count; ++i)
+      {
+        if (OverlapLineHelper(a_line, &branch[i].m_rect))
+        {
+          if (!a_result.m_resultCallback(a_result.m_context, branch[i].m_id))
+          {
+            // callback canceled search
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  return true; // Continue searching
+}
+
 
 
 // Search in an index tree or subtree for all data retangles that overlap the argument rectangle.

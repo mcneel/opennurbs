@@ -292,6 +292,27 @@ const ON_SubDVertex* ON_SubDVertexIdIterator::NextVertex()
   return nullptr;
 }
 
+
+const ON_SubDVertex* ON_SubDVertexIdIterator::FirstVertexOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDVertex* v = (const ON_SubDVertex*)FirstElement(); nullptr != v; v = (const ON_SubDVertex*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&v->m_id)[1] && level_index == v->SubdivisionLevel())
+      return v;
+  }
+  return nullptr;
+}
+
+const ON_SubDVertex* ON_SubDVertexIdIterator::NextVertexOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDVertex* v = (const ON_SubDVertex*)NextElement(); nullptr != v; v = (const ON_SubDVertex*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&v->m_id)[1] && level_index == v->SubdivisionLevel())
+      return v;
+  }
+  return nullptr;
+}
+
 const ON_SubDVertex* ON_SubDVertexIdIterator::CurrentVertex() const
 {
   return (const ON_SubDVertex*)CurrentElement();
@@ -310,10 +331,10 @@ void ON_SubDHeap::InitializeEdgeIdIterator(
 }
 
 void ON_SubDimple::InitializeEdgeIdIterator(
-  class ON_SubDEdgeIdIterator& vidit
+  class ON_SubDEdgeIdIterator& eidit
 ) const
 {
-  m_heap.InitializeEdgeIdIterator(vidit);
+  m_heap.InitializeEdgeIdIterator(eidit);
 }
 
 void ON_SubDEdgeIdIterator::Internal_Init()
@@ -355,6 +376,26 @@ const ON_SubDEdge* ON_SubDEdgeIdIterator::NextEdge()
   return nullptr;
 }
 
+const ON_SubDEdge* ON_SubDEdgeIdIterator::FirstEdgeOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDEdge* e = (const ON_SubDEdge*)FirstElement(); nullptr != e; e = (const ON_SubDEdge*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&e->m_id)[1] && level_index == e->SubdivisionLevel())
+      return e;
+  }
+  return nullptr;
+}
+
+const ON_SubDEdge* ON_SubDEdgeIdIterator::NextEdgeOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDEdge* e = (const ON_SubDEdge*)NextElement(); nullptr != e; e = (const ON_SubDEdge*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&e->m_id)[1] && level_index == e->SubdivisionLevel())
+      return e;
+  }
+  return nullptr;
+}
+
 const ON_SubDEdge* ON_SubDEdgeIdIterator::CurrentEdge() const
 {
   return (const ON_SubDEdge*)CurrentElement();
@@ -366,17 +407,17 @@ const ON_SubDEdge* ON_SubDEdgeIdIterator::CurrentEdge() const
 //
 
 void ON_SubDHeap::InitializeFaceIdIterator(
-  class ON_SubDFaceIdIterator& vidit
+  class ON_SubDFaceIdIterator& fidit
 ) const
 {
-  vidit.ON_FixedSizePoolIterator::Create(&m_fspf);
+  fidit.ON_FixedSizePoolIterator::Create(&m_fspf);
 }
 
 void ON_SubDimple::InitializeFaceIdIterator(
-  class ON_SubDFaceIdIterator& vidit
+  class ON_SubDFaceIdIterator& fidit
 ) const
 {
-  m_heap.InitializeFaceIdIterator(vidit);
+  m_heap.InitializeFaceIdIterator(fidit);
 }
 
 void ON_SubDFaceIdIterator::Internal_Init()
@@ -417,6 +458,27 @@ const ON_SubDFace* ON_SubDFaceIdIterator::NextFace()
   }
   return nullptr;
 }
+
+const ON_SubDFace* ON_SubDFaceIdIterator::FirstFaceOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDFace* f = (const ON_SubDFace*)FirstElement(); nullptr != f; f = (const ON_SubDFace*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&f->m_id)[1] && level_index == f->SubdivisionLevel())
+      return f;
+  }
+  return nullptr;
+}
+
+const ON_SubDFace* ON_SubDFaceIdIterator::NextFaceOnLevel(unsigned int level_index)
+{
+  for (const ON_SubDFace* f = (const ON_SubDFace*)NextElement(); nullptr != f; f = (const ON_SubDFace*)NextElement())
+  {
+    if (ON_UNSET_UINT_INDEX != (&f->m_id)[1] && level_index == f->SubdivisionLevel())
+      return f;
+  }
+  return nullptr;
+}
+
 
 const ON_SubDFace* ON_SubDFaceIdIterator::CurrentFace() const
 {

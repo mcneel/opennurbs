@@ -2009,7 +2009,7 @@ const ON_DimStyle& ON_DimStyle::SystemDimstyleFromContentHash(
   const ON_SHA1_Hash& content_hash
 )
 {
-  if (false == content_hash.IsZeroDigentOrEmptyContentHash())
+  if (false == content_hash.IsZeroDigestOrEmptyContentHash())
   {
     ON_SimpleArray<const ON_DimStyle*> system_dimstyle_list;
     const unsigned int count = ON_DimStyle::Internal_GetSystemDimstyleList(system_dimstyle_list);
@@ -3544,11 +3544,20 @@ ON_DimStyle* ON_DimStyle::CreateFromFont(
   if ( model_view_text_scale > 0.0 && ON_IsValid(model_view_text_scale))
     destination->SetDimScale(model_view_text_scale);
 
-  const ON_wString font_description = font_characteristics->Description();
+  // Dale Lear RH-63824 May 3, 2021
+  // It is critical that bIncludeNotOnDevice be set to false.
+  // Otherwise missing fonts will have a description beginning with "[Not on device]"
+  // and square brackets are not permitted in names.
+  // This code is inventing a Rhino 6/7 dimstyle name from a V4 text style.
+  // The text style names were unreliable in V4 and we've used the font
+  // description as a proxy for years now.
+  const bool bIncludeNotOnDevice = false;
+
+  const ON_wString font_description = font_characteristics->Description(ON_Font::NameLocale::LocalizedFirst, ON_wString::HyphenMinus, ON_wString::Space, true, bIncludeNotOnDevice);
   if (font_description.IsNotEmpty())
   {
     const ON_wString name
-      = (nullptr == manifest)
+      = (nullptr != manifest)
       ? manifest->UnusedName(ON_ModelComponent::Type::DimStyle, ON_nil_uuid, font_description, nullptr, nullptr, 0, nullptr)
       : font_description;
     destination->SetName(name);
@@ -3752,6 +3761,111 @@ void ON_DimStyle::SetTextGap(double gap)
 double ON_DimStyle::TextHeight() const
 {
   return m_textheight;
+}
+
+double ON_DimStyle::TextAdvanceOfCodePoint(unsigned unicode_code_point) const
+{
+  for (;;)
+  {
+    const double text_height = TextHeight();
+    if (false == text_height > 0.0 && text_height < ON_UNSET_POSITIVE_VALUE)
+      break;
+
+    const ON_Font& font = Font();
+    const ON_FontGlyph* glyph = font.CodePointGlyph(unicode_code_point);
+    if (nullptr == glyph)
+      break;
+
+    const ON_TextBox font_unit_bbox = glyph->FontUnitGlyphBox();
+    const ON_TextBox normalized_bbox = glyph->GlyphBox();
+
+    const ON_FontMetrics& normalized_fm = font.FontMetrics();
+    const ON_FontMetrics& font_unit_fm = font.FontUnitFontMetrics();
+
+    const int normalized_cap_height = normalized_fm.AscentOfCapital();
+    const int normalized_glyph_advance = normalized_bbox.m_advance.i; // positive even for fonts designed for R to L locales
+    const int font_unit_cap_height = font_unit_fm.AscentOfCapital();
+    const int font_unit_glyph_advance = font_unit_bbox.m_advance.i; // positive even for fonts designed for R to L locales
+    
+    const double normalized_scale = normalized_cap_height > 0 ? (((double)normalized_glyph_advance) / ((double)normalized_cap_height)) : 0.0;    
+    const double font_unit_scale = font_unit_cap_height > 0 ? (((double)font_unit_glyph_advance) / ((double)font_unit_cap_height)) : 0.0;
+
+    const double s = (font_unit_scale >= normalized_scale) ? font_unit_scale : normalized_scale;
+
+    const double width_of_space = s * text_height;
+    if (width_of_space > 0.0 && width_of_space < ON_UNSET_POSITIVE_VALUE)
+      return width_of_space;
+
+    break; // damaged or really odd font
+  }
+
+  return 0.0;
+}
+
+double ON_DimStyle::TextWidthOfEmSpace() const
+{
+  // This is the fundemental WidthOfXSpace() function. 
+  // Other WidthOfXSpace() functions call TextWidthOfEmSpace() when TextAdvanceOfCodePoint(obvious code point) fails.
+  // This function may only call TextAdvanceOfCodePoint() and TextHeight().
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_EmSpace);
+  if (false == w > 0.0)
+  {
+    w = TextAdvanceOfCodePoint('M');
+    if (false == w > 0.0)
+    {
+      w = 2.0 * TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_EnSpace);
+      if (false == w > 0.0)
+      {
+        w = 2.0 * TextAdvanceOfCodePoint('N');
+        if (false == w > 0.0)
+        {
+          w = 4.0 * TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_Space);
+          if (false == w > 0.0)
+            w = 1.5 * TextHeight();
+        }
+      }
+    }
+  }
+  return w;
+}
+
+double ON_DimStyle::TextWidthOfEnSpace() const
+{
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_EnSpace);
+  // Don't test 'N' in this function. 
+  // It is critical that 2*TextWidthOfEnSpace() = TextWidthOfEmSpace()
+  // unless the font designer explicitly deviated from this standard.
+  return w > 0.0 ? w : 0.5 * TextWidthOfEmSpace();
+}
+
+double ON_DimStyle::TextWidthOfSpace() const
+{
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_Space);
+  return w > 0.0 ? w : 0.25 * TextWidthOfEmSpace();
+}
+
+double ON_DimStyle::TextWidthOfFigureSpace() const
+{
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_FigureSpace);
+  if (false == w > 0.0)
+  {
+    w = TextAdvanceOfCodePoint('0');
+    if (false == w > 0.0)
+      w = 0.55 * TextWidthOfEmSpace();
+  }
+  return w;
+}
+
+double ON_DimStyle::TextWidthOfIdeographicSpace() const
+{
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_IdeographicSpace);
+  return w > 0.0 ? w : TextWidthOfEmSpace();
+}
+
+double ON_DimStyle::TextWidthOfMediumMathematicalSpace() const
+{
+  double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_MediumMathematicalSpace);
+  return w > 0.0 ? w : (2.0/9.0)*TextWidthOfEmSpace();
 }
 
 void ON_DimStyle::SetTextHeight(double height)

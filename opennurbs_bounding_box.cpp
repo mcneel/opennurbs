@@ -1961,6 +1961,33 @@ bool ON_BoundingBox::IsDisjoint( const ON_BoundingBox& other_bbox ) const
   return false;
 }
 
+bool ON_BoundingBox::IsDisjoint(const ON_Line& line) const
+{
+  return IsDisjoint(line, false);
+}
+
+bool ON_BoundingBox::IsDisjoint(const ON_Line& line, bool infinite) const
+{
+  ON_3dPoint center = Center();
+  ON_3dPoint halfdiag = Diagonal() * 0.5;
+
+  ON_3dVector lc = line.PointAt(0.5) - center;
+  ON_3dVector halfdir = (line.to-line.from) * 0.5;
+  ON_3dVector absdir{ fabs(halfdir.x), fabs(halfdir.y), fabs(halfdir.z) };
+
+  if (!infinite &&
+       (halfdiag.x + absdir.x < fabs(lc.x) ||
+        halfdiag.y + absdir.y < fabs(lc.y) ||
+        halfdiag.z + absdir.z < fabs(lc.z))
+    )
+    return true;
+
+  ON_3dVector cross = ON_3dVector::CrossProduct(halfdir, lc);
+  return ((halfdiag.y * absdir.z + halfdiag.z * absdir.y < fabs(cross.x)) ||
+          (halfdiag.x * absdir.z + halfdiag.z * absdir.x < fabs(cross.y)) ||
+          (halfdiag.x * absdir.y + halfdiag.y * absdir.x < fabs(cross.z)));
+}
+
 bool ON_BoundingBox::Intersection(
           const ON_BoundingBox& a
           )

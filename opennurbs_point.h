@@ -1398,6 +1398,16 @@ public:
   double& operator[](unsigned int);
   double operator[](unsigned int) const;
 
+  static double DotProduct(
+    ON_3dVector A,
+    ON_3dVector B
+  );
+
+  static const ON_3dVector CrossProduct(
+    ON_3dVector A,
+    ON_3dVector B
+  );
+
   /*
   Returns:
     False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
@@ -1534,6 +1544,20 @@ public:
          const ON_3dPoint&, const ON_3dPoint&, const ON_3dPoint& 
          );
 
+  /*
+  Parameters:
+    failure_result - [in]
+      vector to return if this is zero or unset.
+      When in doubt, pass ON_3dVector::NanVector.
+  Returns:
+    If this is nonzero, a vector perpindicular to this.
+    The returned vector is not unitized.
+    Otherwise failure_result is returned.
+  */
+  const ON_3dVector Perpendicular(
+    ON_3dVector failure_result
+  ) const;
+
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
   void Transform( 
@@ -1575,6 +1599,31 @@ public:
   static const ON_PlaneEquation UnsetPlaneEquation; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
   static const ON_PlaneEquation ZeroPlaneEquation; // (0.0,0.0,0.0,0.0)
   static const ON_PlaneEquation NanPlaneEquation; // (ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN,ON_DBL_QNAN)
+
+  static const ON_PlaneEquation WorldXY; // (0,0,1,0)
+  static const ON_PlaneEquation WorldYZ; // (1,0,0,0)
+  static const ON_PlaneEquation WorldZX; // (0,1,0,0)
+
+  /*
+  Returns:
+    If the three points are valid and not colinear, a unitized plane equation is returned.
+    Otherwise ON_PlaneEquation::NanPlaneEquation is returned.
+  */
+  static const ON_PlaneEquation CreateFromThreePoints(
+    ON_3dPoint pointA,
+    ON_3dPoint pointB,
+    ON_3dPoint pointC
+    );
+
+  /*
+  Returns:
+    If point is valid and normal is nonzero, a unitized plane equation is returned.
+    Otherwise ON_PlaneEquation::NanPlaneEquation is returned.
+  */
+  static const ON_PlaneEquation CreateFromPointAndNormal(
+    ON_3dPoint point,
+    ON_3dVector normal
+    );
 
   ON_PlaneEquation();
 
@@ -1620,10 +1669,15 @@ public:
 
   /*
   Description:
-    returns true if x, y, z, d are valid, finite doubles and
-    at least one of x, y or z is not zero.
+    returns true if x, y, z, d are valid, finite doubles and at least one of x, y or z is not zero.
   */
   bool IsSet() const;
+
+  /*
+  Description:
+    returns true if x, y, z, d are valid, finite doubles and x^2 + y^2 + z^2 = 1.
+  */
+  bool IsUnitized() const;
 
   /*
   Description:
@@ -1972,6 +2026,10 @@ public:
   void Dump(class ON_TextLog&) const;
 };
 
+ON_DECL
+const ON_PlaneEquation operator*(const ON_Xform&, const ON_PlaneEquation&);
+
+
 #if defined(ON_DLL_TEMPLATE)
 
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_PlaneEquation>;
@@ -2244,6 +2302,16 @@ public:
   // Returns:
   //   3d bounding box of point list.
   ON_BoundingBox BoundingBox() const;
+
+  // Description: 
+  //   Get 3d axis aligned bounding box
+  //   of a subset of the points.
+  // Parameters:
+  //   from - [in] start of the box calculation
+  //   count - [in] number of items computed
+  // Returns:
+  //   3d bounding box of point list.
+  ON_BoundingBox BoundingBox(int from, int count) const;
 
   // Description:
   //   Get 3d axis aligned bounding box or the union

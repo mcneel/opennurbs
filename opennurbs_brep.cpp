@@ -6458,10 +6458,13 @@ bool ON_BrepFace::GetBBox(
 
     ON_Interval pudom(pbox[0].x, pbox[1].x);
     ON_Interval pvdom(pbox[0].y, pbox[1].y);
-    // fatten up invervals to get slightly larger boxes.
+    // fatten up invervals to get slightly larger boxes...
     pudom.Expand(.1 * pudom.Length());    
     pvdom.Expand(.1 * pvdom.Length());
     ON_Interval Sdom[]= { Domain(0), Domain(1) };
+    // but don't let the fattened intervals extend beyond Sdom
+    pudom.Intersection(Sdom[0]);
+    pvdom.Intersection(Sdom[1]);
     bool Used_pbox = false;
     if (pbox.IsValid() &&
       (Sdom[0].Includes(pudom, true) || Sdom[1].Includes(pvdom, true)))

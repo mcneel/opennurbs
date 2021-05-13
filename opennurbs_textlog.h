@@ -246,20 +246,24 @@ public:
 
   /*
   Description:
-    Print an unformatted ASCII string of any length.
+    Print an unformatted UTF-8 encoded null terminated string.
   Parameters:
-    s - [in] nullptr terminated ASCII string.
+    s - [in] UTF-8 encoded null terminated string.
   */
   void PrintString( const char* s );
+
+  void PrintString(ON_String s);
   
   /*
   Description:
-    Print an unformatted UNICODE string of any length.
+    Print an unformatted UTF-16 or UTF-32 encoded null terminated string.
   Parameters:
-    s - [in] nullptr terminated UNICODE string.
+    s - [in] UTF-16 or UTF-32 encoded null terminated string.
   */
   void PrintString( const wchar_t* s );
   
+  void PrintString(ON_wString s);
+
   /*
   Description:
     Print color using the format ON_Color::TextFormat::DecimalRGB.

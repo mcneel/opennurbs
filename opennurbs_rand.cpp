@@ -304,6 +304,28 @@ double ON_RandomNumberGenerator::RandomDouble(const class ON_Interval& range)
   return RandomDouble(range.m_t[0], range.m_t[1]);
 }
 
+int ON_RandomNumberGenerator::RandomSignedInteger(int i0, int i1)
+{
+  const ON__UINT32 r = RandomNumber();
+  const ON__UINT32 delta = (i0 < i1) ? ((unsigned)(i1 - i0)) : ((unsigned)(i0 - i1));
+  return
+    (0xFFFFFFFFU == delta)
+    ? ((int)r) // avoid delta+1 overflow and crash
+    : (((i0 < i1) ? i0 : i1) + ((int)(r % (delta + 1U))))
+    ;
+}
+
+unsigned int ON_RandomNumberGenerator::RandomUnsignedInteger(unsigned int i0, unsigned int i1)
+{
+  const ON__UINT32 r = RandomNumber();
+  const ON__UINT32 delta = (i0 < i1) ? (i1 - i0) : (i0 - i1);
+  return
+    (0xFFFFFFFFU == delta)
+    ? ((int)r) // avoid delta+1 overflow and crash
+    : (((i0 < i1) ? i0 : i1) + (r % (delta + 1U)))
+    ;
+}
+
 static void Swap1(size_t count, unsigned char* a, unsigned char* b)
 {
   unsigned char t;

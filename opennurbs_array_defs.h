@@ -761,7 +761,95 @@ int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const 
   return rc;
 }
 
+template <class T>
+int ON_SimpleArray<T>::InsertInSortedList(const T& e, int (*compar)(const T*, const T*))
+{
+  const int count = m_count;
+  if (count < 0)
+    return -1;
+  if (0 == count)
+  {
+    Insert(0, e);
+    return 0;
+  }
 
+  const unsigned ucount = ((unsigned)count);
+  unsigned i0 = 0;
+  unsigned i1 = ucount;
+  while (i0 < i1)
+  {
+    const unsigned i = (i0 + i1) / 2;
+    const int c = compar(&e, m_a + i);
+    if (c < 0)
+    {
+      i1 = i;
+    }
+    else if (c > 0)
+    {
+      i0 = i + 1;
+    }
+    else
+    {
+      i1 = i;
+      while (i1 + 1 < ucount && 0 == compar(&e, m_a + (i1 + 1)))
+        ++i1;
+      i0 = i1;
+    }
+  }
+  if (i0 <= ucount)
+  {
+    Insert(i0, e);
+    return ((int)i0);
+  }
+
+  return -1;
+}
+
+
+template <class T>
+int ON_SimpleArray<T>::InsertInSortedList(const T& e, int (*compar)(const T*, const T*), int count)
+{
+  if (count > m_count)
+    count = m_count;
+  if (count < 0)
+    return -1;
+  if (0 == count)
+  {
+    Insert(0, e);
+    return 0;
+  }
+
+  const unsigned ucount = ((unsigned)count);
+  unsigned i0 = 0;
+  unsigned i1 = ucount;
+  while (i0<i1)
+  {
+    const unsigned i = (i0 + i1) / 2;
+    const int c = compar(&e, m_a + i);
+    if (c < 0)
+    {
+      i1 = i;
+    }
+    else if (c > 0)
+    {
+      i0 = i + 1;
+    }
+    else
+    {
+      i1 = i;
+      while (i1 + 1 < ucount && 0 == compar(&e, m_a + (i1 + 1)))
+        ++i1;
+      i0 = i1;
+    }
+  }
+  if (i0 <= ucount)
+  {
+    Insert(i0, e);
+    return ((int)i0);
+  }
+
+  return -1;
+}
 
 template <class T>
 bool ON_SimpleArray<T>::HeapSort( int (*compar)(const T*,const T*) )
@@ -1735,6 +1823,98 @@ int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T
   const T* found = (key&&m_a&&m_count>0) ? (const T*)bsearch( key, m_a, count, sizeof(T), (int(*)(const void*,const void*))compar ) : nullptr;
   return (nullptr != found && found >= m_a) ? ((int)(found - m_a)) : -1;
 }
+
+
+template <class T>
+int ON_ClassArray<T>::InsertInSortedList(const T& e, int (*compar)(const T*, const T*))
+{
+  const int count = m_count;
+  if (count < 0)
+    return -1;
+  if (0 == count)
+  {
+    Insert(0, e);
+    return 0;
+  }
+
+  const unsigned ucount = ((unsigned)count);
+  unsigned i0 = 0;
+  unsigned i1 = ucount;
+  while (i0 < i1)
+  {
+    const unsigned i = (i0 + i1) / 2;
+    const int c = compar(&e, m_a + i);
+    if (c < 0)
+    {
+      i1 = i;
+    }
+    else if (c > 0)
+    {
+      i0 = i + 1;
+    }
+    else
+    {
+      i1 = i;
+      while (i1 + 1 < ucount && 0 == compar(&e, m_a + (i1 + 1)))
+        ++i1;
+      i0 = i1;
+    }
+  }
+  if (i0 <= ucount)
+  {
+    Insert(i0, e);
+    return ((int)i0);
+  }
+
+  return -1;
+}
+
+
+template <class T>
+int ON_ClassArray<T>::InsertInSortedList(const T& e, int (*compar)(const T*, const T*), int count)
+{
+  if (count > m_count)
+    count = m_count;
+  if (count < 0)
+    return -1;
+  if (0 == count)
+  {
+    Insert(0, e);
+    return 0;
+  }
+
+  const unsigned ucount = ((unsigned)count);
+  unsigned i0 = 0;
+  unsigned i1 = ucount;
+  while (i0 < i1)
+  {
+    const unsigned i = (i0 + i1) / 2;
+    const int c = compar(&e, m_a + i);
+    if (c < 0)
+    {
+      i1 = i;
+    }
+    else if (c > 0)
+    {
+      i0 = i + 1;
+    }
+    else
+    {
+      i1 = i;
+      while (i1 + 1 < ucount && 0 == compar(&e, m_a + (i1 + 1)))
+        ++i1;
+      i0 = i1;
+    }
+  }
+  if (i0 <= ucount)
+  {
+    Insert(i0, e);
+    return ((int)i0);
+  }
+
+  return -1;
+}
+
 
 template <class T>
 bool ON_ClassArray<T>::HeapSort( int (*compar)(const T*,const T*) )

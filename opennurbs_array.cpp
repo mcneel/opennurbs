@@ -84,6 +84,13 @@ ON_BoundingBox ON_3dPointArray::BoundingBox() const
   return bbox;
 }
 
+ON_BoundingBox ON_3dPointArray::BoundingBox(int from, int count) const
+{
+  ON_BoundingBox bbox;
+  ON_GetPointListBoundingBox(3, false, count, 3, (m_a) ? &m_a[from].x : 0, &bbox.m_min.x, &bbox.m_max.x, false);
+  return bbox;
+}
+
 bool ON_3dPointArray::GetBoundingBox( 
   ON_BoundingBox& bbox,
   int bGrowBox

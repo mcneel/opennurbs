@@ -475,13 +475,24 @@ unsigned int ON_Mesh::SizeOf() const
   sz += m_N.SizeOfArray();
   sz += m_FN.SizeOfArray();
   sz += m_T.SizeOfArray();
+  sz += m_TC.SizeOfArray();
+  for (unsigned i = 0; i < m_TC.UnsignedCount(); ++i)
+    sz += m_TC[i].m_T.SizeOfArray();
   sz += m_S.SizeOfArray();
   sz += m_K.SizeOfArray();
   sz += m_C.SizeOfArray();  
+  sz += m_H.SizeOfArray();
   sz += m_top.m_topv_map.SizeOfArray();
   sz += m_top.m_topv.SizeOfArray();
   sz += m_top.m_tope.SizeOfArray();
   sz += m_top.m_topf.SizeOfArray();
+  if (nullptr != m_mesh_parameters)
+    sz += sizeof(*m_mesh_parameters);
+  if (nullptr != m_partition)
+  {
+    sz += sizeof(*m_partition);
+    sz += m_partition->m_part.SizeOfArray();
+  }
   return sz;
 }
 
@@ -1350,6 +1361,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   dump.Print("m_srf_domain: (%g,%g)x(%g,%g)\n",m_srf_domain[0][0],m_srf_domain[0][1],m_srf_domain[1][0],m_srf_domain[1][1]);
   dump.Print("m_srf_scale: %g,%g\n",m_srf_scale[0],m_srf_scale[0]);
   dump.Print("m_Ttag:\n"); dump.PushIndent(); m_Ttag.Dump(dump); dump.PopIndent();
+  dump.Print( ON_wString(L"Memory used: ")  + ON_wString::ToMemorySize(this->SizeOf()) + ON_wString(L"\n") );
 
   dump.PushIndent();
 
@@ -6275,6 +6287,12 @@ double ON_MeshParameters::MeshDensityAsPercentage(double normalized_mesh_density
 
 double ON_MeshParameters::MeshDensity() const
 {
+  const bool bIgnoreSubDParameters = false;
+  return MeshDensity(bIgnoreSubDParameters);
+}
+
+double ON_MeshParameters::MeshDensity(bool bIgnoreSubDParameters) const
+{
   for (;;)
   {
     const double candidate_density = this->RelativeTolerance();
@@ -6290,18 +6308,22 @@ double ON_MeshParameters::MeshDensity() const
       break;
     if (false == (this->m_refine_angle_radians == 0.0))
       break;
-    const ON_SubDDisplayParameters subdp = this->SubDDisplayParameters();
-    if ( subdp.DisplayDensityIsAbsolute() )
-      break; // mesh dialog "slider" UI is always controls adaptive subd display density
-    if (subdp.DisplayDensity(ON_SubD::Empty) != ON_SubDDisplayParameters::CreateFromMeshDensity(candidate_density).DisplayDensity(ON_SubD::Empty))
-      break;
+
+    if (false == bIgnoreSubDParameters)
+    {
+      const ON_SubDDisplayParameters subdp = this->SubDDisplayParameters();
+      if (subdp.DisplayDensityIsAbsolute())
+        break; // mesh dialog "slider" UI is always controls adaptive subd display density
+      if (subdp.DisplayDensity(ON_SubD::Empty) != ON_SubDDisplayParameters::CreateFromMeshDensity(candidate_density).DisplayDensity(ON_SubD::Empty))
+        break;
+    }
 
     // Now build one with the candidate_density slider value
     const ON_MeshParameters candidate_mp = ON_MeshParameters::CreateFromMeshDensity(candidate_density);
 
     if (candidate_mp.RelativeTolerance() != candidate_density)
       break;
-    if (candidate_mp.GeometrySettingsHash() != GeometrySettingsHash())
+    if (candidate_mp.GeometrySettingsHash(bIgnoreSubDParameters) != GeometrySettingsHash(bIgnoreSubDParameters))
       break;
 
     // These mesh parameters will create the same mesh geometry as ON_MeshParameters::CreateFromMeshDensity().
@@ -6528,7 +6550,14 @@ void ON_MeshParameters::Internal_AccumulatePangolinParameters(
     sha1.AccumulateInteger32(m_smoothing_passes);
 }
 
+
 ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
+{
+  bool bIgnoreSubDParameters = false;
+  return GeometrySettingsHash(bIgnoreSubDParameters);
+}
+
+ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash(bool bIgnoreSubDParameters) const
 {
   // Please discuss any changes with Dale Lear
 
@@ -6546,7 +6575,7 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
   //   match what was used to create an existing mesh, a remesh is extremely wasteful,
   //   ClosedObjectPostProcess is added/removed as needed and is a hack to cover up core bugs.
 
-  if (m_geometry_settings_hash.IsZeroDigest())
+  if (bIgnoreSubDParameters || m_geometry_settings_hash.IsZeroDigest())
   {
     ON_SHA1 sha1;
     sha1.AccumulateBool(m_bSimplePlanes);
@@ -6569,8 +6598,11 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_grid_amplification,1.0));
     sha1.AccumulateUnsigned32(m_face_type);
 
-    // SubD meshing parameters
-    sha1.AccumulateBytes(&m_subd_mesh_parameters_as_char, sizeof(m_subd_mesh_parameters_as_char));    
+    if (false == bIgnoreSubDParameters)
+    {
+      // SubD meshing parameters
+      sha1.AccumulateBytes(&m_subd_mesh_parameters_as_char, sizeof(m_subd_mesh_parameters_as_char));
+    }
 
     if (ON_UuidIsNotNil(m_mesher_id))
     {
@@ -6584,6 +6616,9 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash() const
       Internal_AccumulatePangolinParameters(ON_MeshParameters::DefaultMesh, sha1);
     }
     
+    if (bIgnoreSubDParameters)
+      return sha1.Hash();
+
     m_geometry_settings_hash = sha1.Hash();
   }
   return m_geometry_settings_hash;
@@ -6714,17 +6749,26 @@ bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
+/*ON_MeshParameters::Type GeometrySettingsType(
+    bool bIgnoreSubDParameters
+  ) const*/
 enum ON_MeshParameters::Type ON_MeshParameters::GeometrySettingsType() const
 {
-  const ON_SHA1_Hash mp_hash = GeometrySettingsHash();
+  const bool bIgnoreSubDParameters = false;
+  return GeometrySettingsType(bIgnoreSubDParameters);
+}
 
-  if ( mp_hash == ON_MeshParameters::DefaultMesh.GeometrySettingsHash())
+enum ON_MeshParameters::Type ON_MeshParameters::GeometrySettingsType(bool bIgnoreSubDParameters) const
+{
+  const ON_SHA1_Hash mp_hash = GeometrySettingsHash(bIgnoreSubDParameters);
+
+  if ( mp_hash == ON_MeshParameters::DefaultMesh.GeometrySettingsHash(bIgnoreSubDParameters))
     return ON_MeshParameters::Type::Default;
-  if ( mp_hash == ON_MeshParameters::FastRenderMesh.GeometrySettingsHash())
+  if ( mp_hash == ON_MeshParameters::FastRenderMesh.GeometrySettingsHash(bIgnoreSubDParameters))
     return ON_MeshParameters::Type::FastRender;
-  if ( mp_hash == ON_MeshParameters::QualityRenderMesh.GeometrySettingsHash())
+  if ( mp_hash == ON_MeshParameters::QualityRenderMesh.GeometrySettingsHash(bIgnoreSubDParameters))
     return ON_MeshParameters::Type::QualityRender;
-  if ( mp_hash == ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsHash())
+  if ( mp_hash == ON_MeshParameters::DefaultAnalysisMesh.GeometrySettingsHash(bIgnoreSubDParameters))
     return ON_MeshParameters::Type::DefaultAnalysis;
 
   const double mesh_density = MeshDensity();
@@ -11544,13 +11588,13 @@ void ON_MappingTag::Dump( ON_TextLog& text_log ) const
       text_log.Print("box");
       break;
     case  ON_TextureMapping::TYPE::mesh_mapping_primitive:
-      text_log.Print("mesh primative");
+      text_log.Print("mesh primitive");
       break;
     case  ON_TextureMapping::TYPE::srf_mapping_primitive:
-      text_log.Print("srf primative");
+      text_log.Print("srf primitive");
       break;
     case  ON_TextureMapping::TYPE::brep_mapping_primitive:
-      text_log.Print("brep primative");
+      text_log.Print("brep primitive");
       break;
     case  ON_TextureMapping::TYPE::ocs_mapping:
       text_log.Print("ocs");
@@ -13193,7 +13237,7 @@ static int Internal_FaceDegenerateAreaCheck(
   else if (a[1] < a[0] )
   {
     a[0] = ON_CrossProduct(V[2] - V[1], V[3] - V[1]).Length();
-    a[1] = ON_CrossProduct(V[3] - V[1], V[2] - V[1]).Length();
+    a[1] = ON_CrossProduct(V[3] - V[1], V[0] - V[1]).Length();
     if (a[0] > atol)
     {
       if (a[1] > atol)

@@ -564,9 +564,9 @@ const ON_wString ON_FileSystemPath::CurrentDirectory(
 
 #elif defined(ON_RUNTIME_APPLE)
 
-  // TODO implement for Apple OS's
-  ON_ERROR("ON_FileSystemPath::CurrentDirectory() not implemented.");
-  return ON_wString::EmptyString;   
+  char sz[PATH_MAX];
+  getcwd(sz, PATH_MAX);
+  return sz;
 
 #else
 

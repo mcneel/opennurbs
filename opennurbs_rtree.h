@@ -139,6 +139,12 @@ struct ON_RTreeNode
   ON_RTreeBranch m_branch[ON_RTree_MAX_NODE_COUNT];
 };
 
+// Passes data about the polyline being intersected
+struct ON_RTreePolylineContext
+{
+  unsigned int m_polyline_pointindex;
+};
+
 struct ON_RTreeSearchResult
 {
   int m_capacity;   // m_id[] array capacity (search terminates when m_count == m_capacity)
@@ -396,7 +402,8 @@ public:
     True if successful.
   */
   bool CreateMeshFaceTree( const class ON_Mesh* mesh );
-  
+
+
   /*
   Description:
     Insert an element into the RTree.
@@ -507,11 +514,30 @@ public:
     void* a_context
     ) const;
 
-  bool Search( 
-    ON_RTreeBBox* a_rect,
+  bool Search(
+    const ON_Line* a_line,
     bool ON_CALLBACK_CDECL resultCallback(void* a_context, ON__INT_PTR a_id),
     void* a_context
-    ) const;
+  ) const;
+
+  bool Search(
+    const ON_Line* a_line,
+    bool infinite,
+    bool ON_CALLBACK_CDECL resultCallback(void* a_context, ON__INT_PTR a_id),
+    void* a_context
+  ) const;
+
+  bool Search(
+    const ON_Polyline* polyline,
+    bool ON_CALLBACK_CDECL resultCallback(void* a_context, ON__INT_PTR a_id),
+    ON_RTreePolylineContext* a_context
+  ) const;
+
+  bool Search(
+    ON_RTreeBBox* a_rect,
+    bool ON_CALLBACK_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_id),
+    void* a_context
+  ) const;
 
   /*
   Description:

@@ -855,7 +855,7 @@ ON_TextRunBuilder::ON_TextRunBuilder(
   bool underlined = dimstyle->Font().IsUnderlined();
   bool strikethrough = dimstyle->Font().IsStrikethrough();
 
-  m_current_font = &style_font;
+  this->SetCurrentFont(&style_font);
   m_current_props.SetColor(color);
   m_current_props.SetHeight(height);
   m_current_props.SetStackScale(stackscale);
@@ -866,7 +866,7 @@ ON_TextRunBuilder::ON_TextRunBuilder(
   m_current_props.SetStrikethrough(strikethrough);
 
   m_current_run.Init(
-    m_current_font,
+    CurrentFont(),
     height,
     stackscale,
     color,
@@ -882,13 +882,13 @@ void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
     default_font = &ON_Font::Default;
   if (nullptr == default_font)
     return;
-  m_current_font = default_font;  // copy of default_font
+  this->SetCurrentFont(default_font);  // copy of default_font
 
   m_in_run = 0;
   m_level = 0;
   m_font_table_level = 10000;
   m_runs = ON_TextRunArray::EmptyArray;
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   // Array for accumulating text codepoints
   m_current_codepoints.Empty();
@@ -903,7 +903,7 @@ void ON_TextRunBuilder::AppendCurrentRun()
     {
       m_runs.AppendRun(run);
     }
-    m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+    m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   }
 }
@@ -913,7 +913,7 @@ bool ON_TextRunBuilder::AppendCodePoint(ON__UINT32 codept)
   if (m_current_codepoints.Count() == 0 && m_current_run.IsStacked() != ON_TextRun::Stacked::kStacked)
   {
     // First codepoint in a run after format changes
-    m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+    m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   }
   m_current_codepoints.Append(codept);
@@ -1019,10 +1019,10 @@ void ON_TextRunBuilder::FinishCurrentRun()
     // Text string is already stored in m_codepoints
     // Find or make a managed font like the current one
     // and store that pointer on the run
-    if (nullptr == m_current_font)
-      m_current_font = &ON_Font::Default;
+    if (nullptr == this->CurrentFont())
+      this->SetCurrentFont(&ON_Font::Default);
 
-    const ON_Font* pManagedFont = m_current_font->ManagedFont();
+    const ON_Font* pManagedFont = this->CurrentFont()->ManagedFont();
 
     if (nullptr != pManagedFont)
     {
@@ -1115,12 +1115,29 @@ void ON_TextRunBuilder::FinishFontDef()
         if (!IsValidFontName(rtf_fontname_string))
         {
           ON_ERROR("Invalid font name found in rtf string");
-          rtf_fontname_string = L"Arial";
+          rtf_fontname_string = ON_Font::Default.RichTextFontName();
+          if (rtf_fontname_string.IsEmpty())
+            rtf_fontname_string = L"Arial";
         }
 
-        const ON_Font* managed_font = ON_Font::GetManagedFont(rtf_fontname_string);
+        // Dale Lear - March 2021 - RH-62974
+        // There are multiple places in the text run, rich text parsing, and Rhino UI code
+        // that need find a font from rich text properties.
+        // They must all do it the same way. If for some reason, you must change this call,
+        // please take the time to create a single function that replaces this call, search
+        // for all the places ON_Font::FontFromRichTextProperties is called in
+        //  src4/rhino/... 
+        //  opennurbs_textrun.cpp
+        //  opennurbs_textiterator.cpp
+        // and replace every call to ON_Font::FontFromRichTextProperties with a call to
+        // your new function.
+        // 
+        // This needs to be the regular face of the rich text quartet.
+        const ON_Font* managed_font = ON_Font::FontFromRichTextProperties(rtf_fontname_string,false,false,false,false);
+
         if (nullptr == managed_font)
           managed_font = &ON_Font::Default;
+
         rtf_fontname_string = managed_font->RichTextFontName();
 
         ON_FaceNameKey& fn_key = m_facename_map.AppendNew();
@@ -1135,12 +1152,12 @@ void ON_TextRunBuilder::FinishFontDef()
     {
       if (m_font_stack.Count() > 0 && m_prop_stack.Count() > 0)
       {
-        m_current_font = *m_font_stack.Last();  // pop
+        this->SetCurrentFont(*m_font_stack.Last());  // pop
         m_font_stack.Remove();
         m_current_props = *m_prop_stack.Last(); // pop
         m_prop_stack.Remove();
       }
-      m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+      m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
         m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
     }
     SetReadingFontDefinition(false);
@@ -1159,10 +1176,10 @@ void ON_TextRunBuilder::GroupBegin()  // {
 
   m_level++;
   // m_current_font starts out as the value from the text object
-  m_font_stack.Append(m_current_font);    // push prev current font
+  m_font_stack.Append(this->CurrentFont());    // push prev current font
   m_prop_stack.Append(m_current_props);   // push prev current height and color
 
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
 }
 
@@ -1179,12 +1196,12 @@ void ON_TextRunBuilder::GroupEnd()   // '}'
   // Pop font and set up for next run
   if (m_font_stack.Count() > 0 && m_prop_stack.Count() > 0)
   {
-    m_current_font = *m_font_stack.Last();  // pop
+    this->SetCurrentFont(*m_font_stack.Last());  // pop
     m_font_stack.Remove();
     m_current_props = *m_prop_stack.Last(); // pop
     m_prop_stack.Remove();
   }
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
 
   if (m_level <= m_font_table_level)
@@ -1202,7 +1219,7 @@ void ON_TextRunBuilder::RunBegin()  // like { with no pushing properties
   }
   FinishCurrentRun();
 
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
   m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
 }
 
@@ -1217,7 +1234,7 @@ void ON_TextRunBuilder::RunEnd()   // like '}' with no popping properties
   }
   FinishCurrentRun();
   
-  m_current_run.Init(m_current_font, m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
+  m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
 
   if (m_level <= m_font_table_level)
@@ -1232,8 +1249,7 @@ void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
   m_current_run.SetUnicodeString(count, cp);
   if(ReadingFontDefinition())
   {
-    // String is a font facename. Make a font with that facename
-    // and a font definition run 
+    // String is a rich text facename. Make a font from that rich text facename and a font definition run 
     m_current_run.SetType(ON_TextRun::RunType::kFontdef);
 
     ON_wString str;
@@ -1242,9 +1258,11 @@ void ON_TextRunBuilder::FlushText(size_t count, ON__UINT32* cp)
     {
       str.Remove(L';');  // facename delimiter from rtf
       m_current_run.SetType(ON_TextRun::RunType::kFontdef);
-      const ON_Font* pManagedFont = ON_Font::GetManagedFont(str);
-      if (nullptr != pManagedFont)
-        m_current_font = pManagedFont;
+      // This is a face name in the rich text font definition table.
+      // We do not have an bold/italic/underline/strikethrough attributes to apply at this stage.
+      const ON_Font* rtf_fonttbl_font = ON_Font::FontFromRichTextProperties(str,false,false,false,false);
+      if (nullptr != rtf_fonttbl_font)
+        this->SetCurrentFont(rtf_fonttbl_font);
     }
   }
   else
@@ -1309,56 +1327,48 @@ static const ON_Font* Internal_UpdateManagedFont(
 
   const ON_Font* new_managed_font = nullptr;
 
-  if (false == ON_wString::EqualOrdinal(local_rtf_name, ON_Font::RichTextFontName(current_managed_font, false), true))
+  const bool bChangeFont = ON_wString::EqualOrdinal(local_rtf_name, ON_Font::RichTextFontName(current_managed_font, false), true)
+    ? false // rich text face name did not change
+    : true // rich text face name changed.
+    ;
+  const bool bChangeBold = (rtf_bBold?1:0) != (current_managed_font->IsBoldInQuartet()?1:0);
+  const bool bChangeItalic = (rtf_bItalic ? 1 : 0) != (current_managed_font->IsItalicInQuartet() ? 1 : 0);
+  const bool bChangeUnderlined = (rtf_bUnderlined?1:0) != (current_managed_font->IsUnderlined()?1:0);
+  const bool bChangeStrikethrough = (rtf_bStrikethrough?1:0) != (current_managed_font->IsStrikethrough()?1:0);
+
+  if (bChangeFont || bChangeBold || bChangeItalic)
   {
-    // changing rich text font name - get everything at once
-   new_managed_font = ON_Font::ManagedFontFromRichTextProperties(
+    // Dale Lear - March 2021 - RH-62974
+    // There are multiple places in the text run, rich text parsing, and Rhino UI code
+    // that need find a font from rich text properties.
+    // They must all do it the same way. If for some reason, you must change this call,
+    // please take the time to create a single function that replaces this call, search
+    // for all the places ON_Font::FontFromRichTextProperties is called in
+    //  src4/rhino/... 
+    //  opennurbs_textrun.cpp
+    //  opennurbs_textiterator.cpp
+    // and replace every call to ON_Font::FontFromRichTextProperties with a call to
+    // your new function.
+    // 
+    //
+    // Changing rich text quartet or member in some way must always
+    // be done using ON_Font::FontFromRichTextProperties().
+    // Otherwise this code will not work right for missing fonts.
+    new_managed_font = ON_Font::FontFromRichTextProperties(
       local_rtf_name,
       rtf_bBold,
       rtf_bItalic,
       rtf_bUnderlined,
       rtf_bStrikethrough
     );
-    if (nullptr != new_managed_font)
-      return new_managed_font;
   }
-
-  // same  rich text font name
-  const bool bCurrentIsBold = current_managed_font->IsBoldInQuartet();
-  const bool bChangeBold = (rtf_bBold != bCurrentIsBold);
-  const bool bChangeItalic = (rtf_bItalic != current_managed_font->IsItalic());
-  const bool bChangeUnderlined = (rtf_bUnderlined != current_managed_font->IsUnderlined());
-  const bool bChangeStrikethrough = (rtf_bStrikethrough != current_managed_font->IsStrikethrough());
-
-  if (false == bChangeBold && false == bChangeItalic)
+  else if (bChangeUnderlined || bChangeStrikethrough)
   {
-    if (bChangeUnderlined || bChangeStrikethrough)
-    {
-      ON_Font f(*current_managed_font);
-      f.SetUnderlined(rtf_bUnderlined);
-      f.SetStrikethrough(rtf_bStrikethrough);
-      new_managed_font = f.ManagedFont();
-    }
-  }
-  else
-  {
-    // changing bold or italic
-    const ON_Font* fontBoldItalic = current_managed_font;
-    ON_FontFaceQuartet q = current_managed_font->InstalledFontQuartet();
-    fontBoldItalic = q.Face(rtf_bBold, rtf_bItalic);
-    if (nullptr == fontBoldItalic && bChangeBold && bChangeItalic)
-      fontBoldItalic = q.Face(bCurrentIsBold, rtf_bItalic);
-    if (nullptr == fontBoldItalic)
-      fontBoldItalic = current_managed_font;
-    if (rtf_bUnderlined || rtf_bStrikethrough)
-    {
-      ON_Font f(*fontBoldItalic);
-      f.SetUnderlined(rtf_bUnderlined);
-      f.SetStrikethrough(rtf_bStrikethrough);
-      new_managed_font = f.ManagedFont();
-    }
-    else
-      new_managed_font = fontBoldItalic->ManagedFont();
+    // The same rich text quartet member with different underline/strikethrough  rendering effects.
+    ON_Font f(*current_managed_font);
+    f.SetUnderlined(rtf_bUnderlined);
+    f.SetStrikethrough(rtf_bStrikethrough);
+    new_managed_font = f.ManagedFont();
   }
 
   if (nullptr != new_managed_font)
@@ -1391,8 +1401,10 @@ void ON_TextRunBuilder::FontTag(const wchar_t* value)
       // Set current font to font corresponding to font_index
       //const ON_Font* pManagedFont = FindFontInMap(nval);
 
-      const ON_Font* pManagedFont = (nullptr == m_current_font)
-        ? &ON_Font::Default : m_current_font->ManagedFont();
+      const ON_Font* pManagedFont = (nullptr == this->CurrentFont())
+        ? &ON_Font::Default 
+        : this->CurrentFont()->ManagedFont()
+        ;
 
       ON_wString rft_font_name = FaceNameFromMap(nval);
       rft_font_name.TrimLeftAndRight();
@@ -1412,7 +1424,7 @@ void ON_TextRunBuilder::FontTag(const wchar_t* value)
 
       if (nullptr != pManagedFont)
       {
-        m_current_font = pManagedFont;
+        this->SetCurrentFont(pManagedFont);
         // Use the rtf settings to update m_current_props
         // to because the current computer may not have an exact font match.
         m_current_props.SetBold(rtf_bBold);
@@ -1482,21 +1494,20 @@ void ON_TextRunBuilder::Bold(const wchar_t* value)
       on = false;
   }
 
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
+  if (nullptr == this->CurrentFont())
+    this->SetCurrentFont(&ON_Font::Default);
 
-  if (false == m_current_font->IsManagedFont() || on != m_current_font->IsBoldInQuartet())
+  const ON_Font* current_font = this->CurrentFont();
+  if (false == current_font->IsManagedFont() || on != current_font->IsBoldInQuartet())
   {
-    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
+    const ON_Font* managed_font = this->CurrentFont()->ManagedFamilyMemberWithRichTextProperties(
       on,
-      m_current_font->IsItalic(),
-      m_current_font->IsUnderlined(),
-      m_current_font->IsStrikethrough()
+      current_font->IsItalicInQuartet(),
+      current_font->IsUnderlined(),
+      current_font->IsStrikethrough()
     );
     if (nullptr != managed_font)
-    {
-      m_current_font = managed_font;
-    }
+      this->SetCurrentFont(managed_font);
   }
   m_current_props.SetBold(on);
 }
@@ -1512,57 +1523,60 @@ void ON_TextRunBuilder::Italic(const wchar_t* value)
       on = false;
   }
 
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
+  if (nullptr == this->CurrentFont())
+    this->SetCurrentFont(&ON_Font::Default);
 
-  if (false == m_current_font->IsManagedFont() || on != m_current_font->IsItalic())
+  const ON_Font* current_font = this->CurrentFont();
+  if (false == current_font->IsManagedFont() || on != current_font->IsItalicInQuartet())
   {
-    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
-      m_current_font->IsBoldInQuartet(),
+    const ON_Font* managed_font = current_font->ManagedFamilyMemberWithRichTextProperties(
+      current_font->IsBoldInQuartet(),
       on,
-      m_current_font->IsUnderlined(),
-      m_current_font->IsStrikethrough()
+      current_font->IsUnderlined(),
+      current_font->IsStrikethrough()
     );
     if (nullptr != managed_font)
-    {
-      m_current_font = managed_font;
-    }
+      this->SetCurrentFont(managed_font);
   }
   m_current_props.SetItalic(on);
 }
 
 void ON_TextRunBuilder::UnderlineOn()
 {
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
-  if ( false == m_current_font->IsManagedFont() || false == m_current_font->IsUnderlined() )
+  if (nullptr == this->CurrentFont())
+    this->SetCurrentFont(&ON_Font::Default);
+
+  const ON_Font* current_font = this->CurrentFont();
+  if ( false == current_font->IsManagedFont() || false == current_font->IsUnderlined() )
   {
-    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
-      m_current_font->IsBoldInQuartet(),
-      m_current_font->IsItalic(),
+    const ON_Font* managed_font = current_font->ManagedFamilyMemberWithRichTextProperties(
+      current_font->IsBoldInQuartet(),
+      current_font->IsItalicInQuartet(),
       true,
-      m_current_font->IsStrikethrough()
+      current_font->IsStrikethrough()
     );
     if (nullptr != managed_font)
-      m_current_font = managed_font;
+      this->SetCurrentFont(managed_font);
   }
   m_current_props.SetUnderlined(true);
 }
 
 void ON_TextRunBuilder::UnderlineOff()
 {
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
-  if ( false == m_current_font->IsManagedFont() || m_current_font->IsUnderlined() )
+  if (nullptr == this->CurrentFont())
+    this->SetCurrentFont(&ON_Font::Default);
+
+  const ON_Font* current_font = this->CurrentFont();
+  if ( false == current_font->IsManagedFont() || current_font->IsUnderlined() )
   {
-    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
-      m_current_font->IsBoldInQuartet(),
-      m_current_font->IsItalic(),
+    const ON_Font* managed_font = current_font->ManagedFamilyMemberWithRichTextProperties(
+      current_font->IsBoldInQuartet(),
+      current_font->IsItalicInQuartet(),
       false,
-      m_current_font->IsStrikethrough()
+      current_font->IsStrikethrough()
     );
     if (nullptr != managed_font)
-      m_current_font = managed_font;
+      this->SetCurrentFont(managed_font);
   }
   m_current_props.SetUnderlined(false);
 }
@@ -1577,20 +1591,20 @@ void ON_TextRunBuilder::Strikethrough(const wchar_t* value)
     else if ('0' == value[0])
       on = false;
   }
-  if (nullptr == m_current_font)
-    m_current_font = &ON_Font::Default;
-  if ( false == m_current_font->IsManagedFont() || on != m_current_font->IsStrikethrough() )
+  if (nullptr == this->CurrentFont())
+    this->SetCurrentFont(&ON_Font::Default);
+
+  const ON_Font* current_font = this->CurrentFont();
+  if ( false == current_font->IsManagedFont() || on != current_font->IsStrikethrough() )
   {
-    const ON_Font* managed_font = m_current_font->ManagedFamilyMemberWithRichTextProperties(
-      m_current_font->IsBoldInQuartet(),
-      m_current_font->IsItalic(),
-      m_current_font->IsUnderlined(),
+    const ON_Font* managed_font = current_font->ManagedFamilyMemberWithRichTextProperties(
+      current_font->IsBoldInQuartet(),
+      current_font->IsItalicInQuartet(),
+      current_font->IsUnderlined(),
       on
     );
     if (nullptr != managed_font)
-    {
-      m_current_font = managed_font;
-    }
+      this->SetCurrentFont(managed_font);
   }
   m_current_props.SetStrikethrough(on);
 }
@@ -2924,8 +2938,11 @@ bool ON_RtfParser::Parse()
       // AppendCodePoint() returns false to stop parsing
       if (m_builder.ReadingFontDefinition() && rtf_code_point == L';')
         m_builder.FinishFontDef();
-      else if (!m_builder.AppendCodePoint(rtf_code_point))
-        return true;
+      else
+      {
+        if (!m_builder.AppendCodePoint(rtf_code_point))
+          return true;
+      }
       break;
     }
   }  // end of big loop for whole string

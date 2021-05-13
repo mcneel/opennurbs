@@ -274,6 +274,9 @@ bool ON_Leader::GetTextXform(
     if (dimstyle->LeaderHasLanding())
       landing_length = dimstyle->LeaderLandingLength();
     double text_gap = dimstyle->TextGap();
+
+    if (ON_TextMask::MaskFrame::RectFrame == dimstyle->MaskFrameType())
+      text_gap = dimstyle->TextMask().MaskBorder();
     double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
 
     text_pt2 = text_pt2 + (tail_dir * x_offset);
