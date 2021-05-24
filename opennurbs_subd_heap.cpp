@@ -27,6 +27,26 @@
 */
 
 
+enum
+{
+  // change bAllFragmentsHaveCurvature to true when principal and sectional curvatures are needed
+  // or delete this enum and always make room for curvatures.
+  ON_Internal_bAllFragmentsHaveCurvature = 0
+};
+
+
+
+const size_t ON_SubDHeap::g_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity + 1] =
+{
+  ON_SubDMeshFragment::SizeofFragment(0, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(1, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(2, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(3, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(4, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(5, ON_Internal_bAllFragmentsHaveCurvature),
+  ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::MaximumDensity, ON_Internal_bAllFragmentsHaveCurvature)
+};
+
 static void* ON_SubD__Allocate(size_t sz)
 {
   if (0 == sz)
@@ -1032,6 +1052,9 @@ void ON_SubDHeap::ReturnVertex(class ON_SubDVertex* v)
     v->m_status = ON_ComponentStatus::Deleted;
     v->m_next_vertex = m_unused_vertex;
     m_unused_vertex = v;
+    // It is critical that v->m_symmetry_set_next remains set
+    // so deleted elements of symmetric SubDs can be found.
+
     // NO! // m_fspv.ReturnElement(v);
     // See comments in AllocateVertexAndSetId();
   }
@@ -1062,6 +1085,9 @@ void ON_SubDHeap::ReturnEdge(class ON_SubDEdge* e)
     e->m_status = ON_ComponentStatus::Deleted;
     e->m_next_edge = m_unused_edge;
     m_unused_edge = e;
+    // It is critical that e->m_symmetry_set_next remains set
+    // so deleted elements of symmetric SubDs can be found.
+
     // NO! // m_fspe.ReturnElement(e);
     // See comments in AllocateVertexAndSetId();
   }
@@ -1099,6 +1125,9 @@ void ON_SubDHeap::ReturnFace(class ON_SubDFace* f)
     f->m_status = ON_ComponentStatus::Deleted;
     f->m_next_face = m_unused_face;
     m_unused_face = f;
+    // It is critical that f->m_symmetry_set_next remains set
+    // so deleted elements of symmetric SubDs can be found.
+
     // NO! // m_fspf.ReturnElement(f);
     // See comments in AllocateVertexAndSetId();
   }
@@ -1123,12 +1152,18 @@ void ON_SubDHeap::Clear()
   m_fsp9.ReturnAll();
   m_fsp17.ReturnAll();
 
-  m_limit_block_pool.ReturnAll();
+  m_full_fragment_display_density = 0;
+  m_full_fragment_count_estimate = 0;
+  m_part_fragment_count_estimate = 0;
+
+  m_fsp_full_fragments.ReturnAll();
+  m_fsp_part_fragments.ReturnAll();
+  m_fsp_oddball_fragments.ReturnAll();
+  m_fsp_limit_curves.ReturnAll();
 
   const size_t frag_size_count = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
-  for ( size_t i = 0; i < frag_size_count; ++i)
+  for (size_t i = 0; i < frag_size_count; ++i)
     m_unused_fragments[i] = nullptr;
-  m_unused_limit_curves = nullptr;
 
   m_unused_vertex = nullptr;
   m_unused_edge = nullptr;
@@ -1286,6 +1321,53 @@ void ON_SubDHeap::ResetIds()
   m_max_edge_id = (next_edge_id > first_id) ? (next_edge_id - 1U) : 0U;
   m_max_face_id = (next_face_id > first_id) ? (next_face_id - 1U) : 0U;
 }
+
+ON_FixedSizePool* ON_SubDHeap::Internal_ComponentFixedSizePool(
+  ON_SubDComponentPtr::Type component_type
+)
+{
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
+  case ON_SubDComponentPtr::Type::Vertex:
+    return &m_fspv;
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    return &m_fspe;
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    return &m_fspf;
+    break;
+  default:
+    break;
+  }
+  return nullptr;
+}
+
+const ON_FixedSizePool* ON_SubDHeap::Internal_ComponentFixedSizePool(
+  ON_SubDComponentPtr::Type component_type
+) const
+{
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
+  case ON_SubDComponentPtr::Type::Vertex:
+    return &m_fspv;
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    return &m_fspe;
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    return &m_fspf;
+    break;
+  default:
+    break;
+  }
+  return nullptr;
+}
+
 
 size_t ON_SubDHeap::OversizedElementCapacity(size_t count)
 {
@@ -1793,26 +1875,94 @@ void ON_SubDHeap::ReturnArray(
   return;
 }
 
-bool ON_SubDHeap::Internal_InitializeLimitBlockPool()
+bool ON_SubDHeap::Internal_InitializeLimitCurvesPool()
 {
-  if (0 == m_limit_block_pool.SizeofElement())
+  if (0 == m_fsp_limit_curves.SizeofElement())
   {
-    const bool bCurvatureArray = false; // change to true when principal and sectional curvatures are needed.
-    const unsigned frag_size_count = sizeof(m_sizeof_fragment) / sizeof(m_sizeof_fragment[0]);
-    for ( unsigned i = 0; i < frag_size_count ; ++i)
-      m_sizeof_fragment[i] = ON_SubDMeshFragment::SizeofFragment((unsigned)i, bCurvatureArray);
-    m_sizeof_limit_curve = sizeof(ON_SubDEdgeSurfaceCurve);
-    size_t sz = 2*m_sizeof_fragment[frag_size_count-1];
-    if (sz < 4 * m_sizeof_fragment[frag_size_count - 2])
-      sz = 4 * m_sizeof_fragment[frag_size_count - 2];
+    unsigned subd_edge_count = 0;
+    // count edge and face to get an estimate of haow many mesh fragments we need to managed.
+    ON_FixedSizePoolIterator fspeit(m_fspe);
+    for (const void* p = fspeit.FirstElement(); nullptr != p; p = fspeit.NextElement())
+    {
+      const ON_SubDEdge* e = (const ON_SubDEdge*)p;
+      if (false == e->IsActive())
+        continue;
+      ++subd_edge_count;
+    }
 
-    ON_SleepLockGuard guard(m_limit_block_pool);
-    m_limit_block_pool.Create(sz,0,0);
-    // check size again in case another thread beat this call
-    if (0 == m_limit_block_pool.SizeofElement())
-      m_limit_block_pool.Create(sz, 0, 0);
+    const size_t sizeof_element = sizeof(ON_SubDEdgeSurfaceCurve);
+
+    Internal_InitializeMeshFragmentPool(
+      sizeof(ON_SubDEdgeSurfaceCurve),
+      subd_edge_count,
+      32,
+      m_fsp_limit_curves
+    );
   }
-  return (m_limit_block_pool.SizeofElement() > 0);
+  return (m_fsp_limit_curves.SizeofElement() > 0);
+}
+
+bool ON_SubDHeap::Internal_InitializeFragmentCountEstimates(
+  unsigned subd_display_density
+)
+{
+  if (0 == m_full_fragment_display_density)
+  {
+    m_full_fragment_display_density 
+      = subd_display_density > 0 
+      ? (subd_display_density <= ON_SubDDisplayParameters::MaximumDensity ? subd_display_density : ON_SubDDisplayParameters::MaximumDensity)
+      : 1U
+      ;
+
+    // Count the number of active faces and fragments needed to mesh them
+    unsigned subd_face_count = 0;
+    unsigned full_frag_count = 0;
+    unsigned part_frag_count = 0;
+
+    ON_FixedSizePoolIterator fspfit(m_fspf);
+    for (const void* p = fspfit.FirstElement(); nullptr != p; p = fspfit.NextElement())
+    {
+      const ON_SubDFace* f = (const ON_SubDFace*)p;
+      if (false == f->IsActive())
+        continue;
+      ++subd_face_count;
+      if (4 == f->m_edge_count)
+        ++full_frag_count; // one full fragment per quad
+      else
+        part_frag_count += f->m_edge_count; // n partial fragments per n-gon when n != 4
+    }
+
+    if (full_frag_count > 0 || part_frag_count > 0)
+    {
+      m_full_fragment_count_estimate = full_frag_count;
+      m_part_fragment_count_estimate = part_frag_count;
+    }
+    else
+    {
+      m_full_fragment_count_estimate = 0;
+      m_part_fragment_count_estimate = 0;
+    }
+  }
+
+  return (m_full_fragment_display_density > 0 && m_full_fragment_display_density <= ON_SubDDisplayParameters::MaximumDensity);
+}
+
+bool ON_SubDHeap::Internal_InitializeMeshFragmentPool(
+  size_t sizeof_element,
+  size_t element_count_estimate,
+  size_t min_fsp_2nd_block_element_count,
+  ON_FixedSizePool& fsp // fsp references either m_fsp_*_fragments or m_fsp_limit_curves.
+)
+{
+  if (0 == fsp.SizeofElement() && sizeof_element > 0)
+  {
+    ON_SleepLockGuard guard(fsp);
+    fsp.CreateForExperts(sizeof_element, element_count_estimate, min_fsp_2nd_block_element_count);
+    // check size again in case another thread beat this call
+    if (0 == fsp.SizeofElement())
+      fsp.CreateForExperts(sizeof_element, element_count_estimate, min_fsp_2nd_block_element_count);
+  }
+  return (fsp.SizeofElement() > 0);
 }
 
 ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
@@ -1826,6 +1976,8 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
   // When 4 == ON_SubDDisplayParameters::DefaultDensity (setting used in February 2019)
   // quads get a single fragment with a 16x16 face grid
   // N-gons with N != 4 get N 8x8 grids.
+
+  // density = density of src_fragment
   const unsigned int density = (src_fragment.m_face_fragment_count > 1)
     ? ((subd_display_density > 0) ? (subd_display_density -1) : ON_UNSET_UINT_INDEX)
     : ((1==src_fragment.m_face_fragment_count) ? subd_display_density : ON_UNSET_UINT_INDEX)
@@ -1841,23 +1993,69 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
   if ( src_fragment.VertexCount() > 0 && src_fragment.VertexCount() < ((unsigned)vertex_capacity) )
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if (0 == m_limit_block_pool.SizeofElement())
-    Internal_InitializeLimitBlockPool();
+  if (0 == m_full_fragment_display_density)
+  {
+    // Lazy initialization of m_full_fragment_display_density is done because
+    // we don't know the display density when SubDs are being constructed.
+    if (false == Internal_InitializeFragmentCountEstimates(subd_display_density))
+      return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+  if (m_full_fragment_display_density <= 0 || m_full_fragment_display_density >= ON_SubDDisplayParameters::MaximumDensity)
+    return ON_SUBD_RETURN_ERROR(nullptr);
+
+  // In all common situations, bUseFullFragmentFSP or bUsePartFragmentFSP is true.
+  const bool bUseFullFragmentFSP = (density == this->m_full_fragment_display_density);
+  const bool bUsePartFragmentFSP = (density+1 == this->m_full_fragment_display_density);
+
+  ON_FixedSizePool& fsp 
+    = bUseFullFragmentFSP
+    ? m_fsp_full_fragments
+    : bUsePartFragmentFSP ? m_fsp_part_fragments : m_fsp_oddball_fragments;
+
+  if (0 == fsp.SizeofElement())
+  {
+    // Lazy initialization of the fragment fixed size pools
+    // is done so that we don't reserve pool memory that never gets used.
+
+    const size_t sizeof_fragment
+      = bUseFullFragmentFSP
+      ? ON_SubDHeap::g_sizeof_fragment[m_full_fragment_display_density]
+      : (bUsePartFragmentFSP ? ON_SubDHeap::g_sizeof_fragment[m_full_fragment_display_density - 1U] : ON_SubDHeap::g_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity])
+      ;
+
+    const size_t fragment_count_estimate
+      = bUseFullFragmentFSP
+      ? m_full_fragment_count_estimate
+      : (bUsePartFragmentFSP ? m_part_fragment_count_estimate : ((unsigned)4U))
+      ;
+
+    const size_t min_fsp_2nd_block_element_count = (bUseFullFragmentFSP || bUsePartFragmentFSP) ? 32 : 1;
+
+    if (false == this->Internal_InitializeMeshFragmentPool(
+      sizeof_fragment,
+      fragment_count_estimate,
+      min_fsp_2nd_block_element_count,
+      fsp
+    ))
+    {
+      return ON_SUBD_RETURN_ERROR(nullptr);
+    }
+  }
 
   ON_SubDMeshFragment* fragment;
   {
     char* p = nullptr;
     char* p1 = nullptr;
-    ON_SleepLockGuard guard(m_limit_block_pool);
+    ON_SleepLockGuard guard(fsp);
     if (nullptr == m_unused_fragments[density])
     {
-      p = (char*)m_limit_block_pool.AllocateDirtyElement();
+      p = (char*)fsp.AllocateDirtyElement();
       if (nullptr == p)
         return ON_SUBD_RETURN_ERROR(nullptr);
-      p1 = p + m_limit_block_pool.SizeofElement();
+      p1 = p + fsp.SizeofElement();
       m_unused_fragments[density] = (ON_FixedSizePoolElement*)p;
       m_unused_fragments[density]->m_next = nullptr;
-      const size_t sizeof_fragment = m_sizeof_fragment[density];        
+      const size_t sizeof_fragment = ON_SubDHeap::g_sizeof_fragment[density];
       for (p += sizeof_fragment; p + sizeof_fragment <= p1; p += sizeof_fragment)
       {
         ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
@@ -1867,16 +2065,6 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
     }
     fragment = (ON_SubDMeshFragment*)m_unused_fragments[density];
     m_unused_fragments[density] = m_unused_fragments[density]->m_next;
-    
-    if (nullptr != p)
-    {
-      for (/*empty int*/; p + m_sizeof_limit_curve <= p1; p += m_sizeof_limit_curve)
-      {
-        ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
-        ele->m_next = m_unused_limit_curves;
-        m_unused_limit_curves = ele;        
-      }
-    }
   }
 
   *fragment = src_fragment;
@@ -1945,6 +2133,12 @@ bool ON_SubDHeap::ReturnMeshFragment(ON_SubDMeshFragment * fragment)
   case 17 * 17: // 16x16 mesh quad fragment
     i = 4;
     break;
+  case 33 * 33: // 32x32 mesh quad fragment
+    i = 5;
+    break;
+  case 65 * 65: // 64x64 mesh quad fragment
+    i = 6;
+    break;
   default:
     i = count;
     break;
@@ -1952,8 +2146,12 @@ bool ON_SubDHeap::ReturnMeshFragment(ON_SubDMeshFragment * fragment)
   if (i >= count)
     return ON_SUBD_RETURN_ERROR(false);
 
+  ON_FixedSizePool& fsp 
+    = (i == m_full_fragment_display_density) ? m_fsp_full_fragments
+    : (i+1 == m_full_fragment_display_density) ? m_fsp_part_fragments : m_fsp_oddball_fragments;
+
   ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)fragment;
-  ON_SleepLockGuard guard(m_limit_block_pool);
+  ON_SleepLockGuard guard(fsp);
   ((unsigned int*)ele)[5] = 0; // zero m_vertex_count_etc and m_vertex_capacity_etc
   ele->m_next = m_unused_fragments[i];
   m_unused_fragments[i] = ele;
@@ -1987,51 +2185,34 @@ class ON_SubDEdgeSurfaceCurve* ON_SubDHeap::AllocateEdgeSurfaceCurve(
 {
   if (cv_capacity < 1 || cv_capacity > ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity)
     return ON_SUBD_RETURN_ERROR(nullptr);
-  if (0 == m_limit_block_pool.SizeofElement())
-    Internal_InitializeLimitBlockPool();
-
-  ON_SubDEdgeSurfaceCurve* limit_curve;
-  double* cvx = nullptr;
-
+  if (0 == this->m_fsp_limit_curves.SizeofElement())
   {
-    ON_SleepLockGuard guard(m_limit_block_pool);
-    if (
-      nullptr == m_unused_limit_curves
-      || ( cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr == m_unused_limit_curves->m_next)
-      )
-    {
-      char* p = (char*)m_limit_block_pool.AllocateDirtyElement();
-      if (nullptr == p)
-        return ON_SUBD_RETURN_ERROR(nullptr);
-      char* p1 = p + m_limit_block_pool.SizeofElement();
-      while (p + m_sizeof_limit_curve < p1)
-      {
-        ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
-        ele->m_next = m_unused_limit_curves;
-        m_unused_limit_curves = ele;
-        p += m_sizeof_limit_curve;
-      }
-    }
-
-    limit_curve = (ON_SubDEdgeSurfaceCurve*)m_unused_limit_curves;
-    m_unused_limit_curves = m_unused_limit_curves->m_next;
-    if (cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)
-    {
-      cvx = (double*)m_unused_limit_curves;
-      m_unused_limit_curves = m_unused_limit_curves->m_next;
-    }
+    if( false == this->Internal_InitializeLimitCurvesPool())
+      return ON_SUBD_RETURN_ERROR(nullptr);
   }
 
-  memset(limit_curve, 0, sizeof(*limit_curve));
-  limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity;
-  if (nullptr != cvx)
+  ON_SubDEdgeSurfaceCurve* limit_curve = nullptr;
+  double* cvx = nullptr;
   {
-    // increase capacity
-    limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity;
-    limit_curve->m_cvx = cvx;
-    double* p1 = cvx + 3 * (ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity-ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity);
-    while (cvx < p1)
-      *cvx++ = ON_DBL_QNAN;
+    ON_SleepLockGuard guard(m_fsp_limit_curves);
+    limit_curve = (ON_SubDEdgeSurfaceCurve*)m_fsp_limit_curves.AllocateDirtyElement();
+    if (cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)
+      cvx = (double*)m_fsp_limit_curves.AllocateDirtyElement();
+  }
+
+  if (nullptr != limit_curve)
+  {
+    memset(limit_curve, 0, sizeof(*limit_curve));
+    limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity;
+    if (nullptr != cvx)
+    {
+      // increase capacity
+      limit_curve->m_cv_capacity = ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity;
+      limit_curve->m_cvx = cvx;
+      double* p1 = cvx + 3 * (ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity - ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity);
+      while (cvx < p1)
+        *cvx++ = ON_DBL_QNAN;
+    }
   }
 
   return limit_curve;
@@ -2091,7 +2272,7 @@ ON_SubDEdgeSurfaceCurve* ON_SubDHeap::CopyEdgeSurfaceCurve(const ON_SubDEdge* so
   memcpy(desination_curve->m_cv5, source_curve->m_cv5, sz5);
   if (cv_count > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr != desination_curve->m_cvx && nullptr != source_curve->m_cvx)
   {
-    const size_t szx = (cv_count - ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity) * 24;
+    const size_t szx = ((size_t)(cv_count - ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)) * 24;
     memcpy(desination_curve->m_cvx, source_curve->m_cvx, szx);
   }
   desination_curve->m_cv_count = cv_count;
@@ -2101,25 +2282,26 @@ ON_SubDEdgeSurfaceCurve* ON_SubDHeap::CopyEdgeSurfaceCurve(const ON_SubDEdge* so
 }
 
 bool ON_SubDHeap::ReturnEdgeSurfaceCurve(
-  class ON_SubDEdgeSurfaceCurve* limit_curve
+  ON_SubDEdgeSurfaceCurve* limit_curve
 )
 {
   if (nullptr != limit_curve)
   {
+    // zero cv_count and cv_capacity - to limit crashes caused by rogue references
     limit_curve->m_cv_count = 0;
+    limit_curve->m_cv_capacity = 0;
     ON_FixedSizePoolElement* ele0 = (ON_FixedSizePoolElement*)limit_curve;
     ON_FixedSizePoolElement* ele1 = (ON_FixedSizePoolElement*)limit_curve->m_cvx;
     if (nullptr != ele1)
     {
-      ((unsigned int*)ele1)[2] = 0; // zero cv_count and cv_capacity - to limit crashes caused by rogue references
-      ele0->m_next = ele1;
+      // zero cv_count and cv_capacity - to limit crashes caused by rogue references
+      ((ON_SubDEdgeSurfaceCurve*)ele1)->m_cv_count = 0;
+      ((ON_SubDEdgeSurfaceCurve*)ele1)->m_cv_capacity = 0;
     }
-    else
-      ele1 = ele0;
-    ((unsigned int*)ele0)[2] = 0; // zero cv_count and cv_capacity - to limit crashes caused by rogue references
-    ON_SleepLockGuard guard(m_limit_block_pool);
-    ele1->m_next = m_unused_limit_curves;
-    m_unused_limit_curves = ele0;
+    ON_SleepLockGuard guard(m_fsp_limit_curves);
+    m_fsp_limit_curves.ReturnElement(ele0);
+    if (nullptr != ele1)
+      m_fsp_limit_curves.ReturnElement(ele1);
   }
   return true;
 }

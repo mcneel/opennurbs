@@ -1639,6 +1639,15 @@ bool ON_Xform::IsZero4x4() const
   return (0.0 == m_xform[3][3] && IsZero());
 }
   
+
+bool ON_Xform::IsZero4x4(double tol) const
+{
+  for (int i = 0; i < 4; i++)
+    for (int j = 0; j < 4; j++)
+      if (false == fabs(m_xform[i][j]) <= tol) return false;
+  return true;
+}
+
 bool ON_Xform::IsZeroTransformation() const
 {
 	return IsZeroTransformation(0.0);
@@ -1652,7 +1661,7 @@ bool ON_Xform::IsZeroTransformation(double tol) const
 		{
 			if (i == 3 && j == 3)
 				continue;
-			rc = fabs(m_xform[i][j]) < tol;
+			rc = fabs(m_xform[i][j]) <= tol;
 		}
   return (rc && 1.0 == m_xform[3][3] );
 }

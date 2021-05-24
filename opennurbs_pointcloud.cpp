@@ -219,6 +219,29 @@ ON::object_type ON_PointCloud::ObjectType() const
   return ON::pointset_object;
 }
 
+unsigned int ON_PointCloud::SizeOf() const
+{
+  // Dale Lear fixed this function in April 2021.
+  // Before that all point clouds were reported to have 
+  // ON_Geometry::SizeOf() bytes.
+
+  size_t sz = ON_Geometry::SizeOf();
+
+  sz += (sizeof(*this) - sizeof(ON_Geometry));
+  sz += (size_t)(m_P.SizeOfArray());
+  sz += (size_t)(m_N.SizeOfArray());
+  sz += (size_t)(m_C.SizeOfArray());
+  sz += (size_t)(m_V.SizeOfArray());
+  sz += (size_t)(m_H.SizeOfArray());
+
+  // Avoid overflowing 4 byte unsigned int
+  // and hope the consumer of this information is 
+  // converting back to size_t before doing arithmetic.
+  // The low 4 bytes are zeroed so small additions won't
+  // overflow unsigned int.
+  return (sz > 0xFFFF0000U) ? 0xFFFF0000U : ((unsigned int)sz);
+}
+
 
 int ON_PointCloud::Dimension() const
 {
@@ -550,3 +573,113 @@ bool ON_PointCloud::PointIsHidden( int point_index ) const
            : false;
 }
 
+ON_PointCloud* ON_PointCloud::RandomSubsample(
+  const ON_PointCloud* source_point_cloud,
+  const unsigned int subsample_point_count,
+  ON_PointCloud* destination_point_cloud,
+  ON_ProgressReporter* progress_reporter,
+  ON_Terminator* terminator
+)
+{
+  if (
+       nullptr == source_point_cloud 
+    || subsample_point_count <= 0 
+    || subsample_point_count >= source_point_cloud->m_P.UnsignedCount()
+    )
+    return nullptr;
+
+  const unsigned int point_count = source_point_cloud->m_P.UnsignedCount();
+  const unsigned int points_to_remove = point_count - subsample_point_count;
+  if (points_to_remove <= 0)
+    return nullptr;
+
+  const bool bHaveNormals = point_count == source_point_cloud->m_N.UnsignedCount();
+  const bool bHaveColors = point_count == source_point_cloud->m_C.UnsignedCount();
+  const bool bHaveValues = point_count == source_point_cloud->m_V.UnsignedCount();
+  const bool bHaveHidden = point_count == source_point_cloud->m_H.UnsignedCount();
+
+  bool bAlloc = false;
+  if (destination_point_cloud)
+  {
+    if (source_point_cloud != destination_point_cloud)
+    {
+      destination_point_cloud->Destroy();
+      *destination_point_cloud = *source_point_cloud;
+    }
+  }
+  else
+  {
+    destination_point_cloud = new ON_PointCloud(*source_point_cloud);
+    bAlloc = true;
+  }
+
+  ON_RandomNumberGenerator gen;
+  gen.Seed();
+
+  unsigned int last_point_count = point_count;
+  for (unsigned int i = 0; i < points_to_remove; i++)
+  {
+    if (terminator && ON_Terminator::TerminationRequested(terminator))
+    {
+      if (source_point_cloud != destination_point_cloud)
+        destination_point_cloud->Destroy();
+      if (bAlloc)
+        delete destination_point_cloud;
+      return nullptr;
+    }
+
+    if (progress_reporter)
+      ON_ProgressReporter::ReportProgress(progress_reporter, i / (double)points_to_remove);
+
+    // For (min <= r < max): min + RandomNumber() % (max-min)
+    const int point_index = gen.RandomNumber() % last_point_count;
+
+    destination_point_cloud->m_P.Swap(point_index, last_point_count);
+    if (bHaveNormals)
+      destination_point_cloud->m_N.Swap(point_index, last_point_count);
+    if (bHaveColors)
+      destination_point_cloud->m_C.Swap(point_index, last_point_count);
+    if (bHaveValues)
+      destination_point_cloud->m_V.Swap(point_index, last_point_count);
+    if (bHaveHidden)
+      destination_point_cloud->m_H.Swap(point_index, last_point_count);
+
+    last_point_count--;
+    if (last_point_count <= 0)
+      break;
+  }
+
+  if (progress_reporter)
+    ON_ProgressReporter::ReportProgress(progress_reporter, 1.0);
+
+  destination_point_cloud->m_P.SetCount(subsample_point_count);
+  destination_point_cloud->m_P.Shrink();
+  if (bHaveNormals)
+  {
+    destination_point_cloud->m_N.SetCount(subsample_point_count);
+    destination_point_cloud->m_N.Shrink();
+  }
+  if (bHaveColors)
+  {
+    destination_point_cloud->m_C.SetCount(subsample_point_count);
+    destination_point_cloud->m_C.Shrink();
+  }
+  if (bHaveValues)
+  {
+    destination_point_cloud->m_V.SetCount(subsample_point_count);
+    destination_point_cloud->m_V.Shrink();
+  }
+  if (bHaveHidden)
+  {
+    destination_point_cloud->m_H.SetCount(subsample_point_count);
+    destination_point_cloud->m_H.Shrink();
+    destination_point_cloud->m_hidden_count = 0;
+    for (unsigned int i = 0; i < destination_point_cloud->m_H.UnsignedCount(); i++)
+    {
+      if (destination_point_cloud->m_H[i])
+        destination_point_cloud->m_hidden_count++;
+    }
+  }
+
+  return destination_point_cloud;
+}

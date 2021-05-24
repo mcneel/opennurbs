@@ -365,8 +365,26 @@ public:
   virtual ~ON_TextRunBuilder();
 
   ON_SimpleArray< const ON_Font* >   m_font_stack;
-  const ON_Font*                     m_current_font = &ON_Font::Default;
 
+  const ON_Font* CurrentFont() const
+  {
+    // Keep this as a simple one-liner that unconditionally returns m_private_current_font.
+    return m_private_current_font;
+  }
+
+  void SetCurrentFont(const ON_Font* font)
+  {
+    // Keep this as a simple one-liner that unconditionally sets m_private_current_font.
+    m_private_current_font = font;
+  }
+
+private:
+  // Please, in order to keep people debugging sane, always use 
+  // CurrentFont() / SetCurrentFont() and never directly
+  // set m_private_current_font.
+  const ON_Font*                     m_private_current_font = &ON_Font::Default;
+
+public:
   ON_TextRun                         m_current_run;
   ON_TextRunArray&                   m_runs;
   ON_TextContent&                    m_text;

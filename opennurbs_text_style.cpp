@@ -153,8 +153,18 @@ static void SetNameFromFontDescription(
   const ON_ComponentManifest& manifest,
   ON_TextStyle& text_style
   )
-{
-  const ON_wString font_description(text_style.Font().Description());
+{ 
+  // Dale Lear RH-63824 May 3, 2021
+  // It is critical that bIncludeNotOnDevice be set to false.
+  // Otherwise missing fonts will have a description beginning with "[Not on device]"
+  // and square brackets are not permitted in names.
+  // This code is inventing a Rhino 6/7 dimstyle name from a V4 text style.
+  // The text style names were unreliable in V4 and we've used the font
+  // description as a proxy for years now.
+  const bool bIncludeNotOnDevice = false;
+
+  const ON_wString font_description(text_style.Font().Description(ON_Font::NameLocale::LocalizedFirst, ON_wString::HyphenMinus, ON_wString::Space, true, bIncludeNotOnDevice));
+
   ON_wString text_style_name = manifest.UnusedName(
     text_style.ComponentType(),
     ON_nil_uuid,

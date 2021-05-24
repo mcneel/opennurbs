@@ -26,10 +26,31 @@
 #include "opennurbs_internal_glyph.h"
 #include "opennurbs_apple_nsfont.h"
 
+class ON_AppleCTFontInformation
+{
+  // "fake class" (for now)
+public:
+  ON_AppleCTFontInformation() = default;
+  ~ON_AppleCTFontInformation() = default;
+  ON_AppleCTFontInformation(const ON_AppleCTFontInformation&) = default;
+  ON_AppleCTFontInformation& operator=(const ON_AppleCTFontInformation&) = default;
+private:
+  ON__UINT_PTR m_nothing = 0;
+};
+
+ON_Font::ON_Font(
+  ON_Font::FontType font_type,
+  const class ON_AppleCTFontInformation& apple_font_information
+)
+: m_font_type(font_type)
+{}
+
 void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
   ON_SimpleArray<const ON_Font*>& platform_font_list
 )
 {
+  ON_AppleCTFontInformation currently_nothing;
+  
   CFDictionaryRef options = nullptr;
   CTFontCollectionRef availableFontCollection = CTFontCollectionCreateFromAvailableFonts(options);
   if (nullptr == availableFontCollection )
@@ -59,7 +80,9 @@ void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
         continue;
     }
     
-    ON_Font* platform_font = new ON_Font();
+    // It is critical that m_font_type = ON_Font::FontType::InstalledFont
+    ON_Font* platform_font = new ON_Font(ON_Font::FontType::InstalledFont,currently_nothing);
+    
     if (false == platform_font->SetFromAppleCTFont(font, false))
     {
       CFRelease(font);
@@ -514,6 +537,22 @@ CTFontRef ON_Font::AppleCTFont(bool& bIsSubstituteFont) const
 
 CTFontRef ON_Font::AppleCTFont(double pointSize, bool& bIsSubstituteFont) const
 {
+  if (this->IsManagedSubstitutedFont())
+  {
+    // March 2021 Dale Lear
+    // Fixes RH-62974 on Mac platform
+    const ON_Font* sub =this->SubstituteFont();
+    if (nullptr != sub &&sub->IsInstalledFont())
+    {
+      if (false == sub->IsManagedSubstitutedFont())
+      {
+        CTFontRef subref = sub->AppleCTFont( pointSize, bIsSubstituteFont);
+        bIsSubstituteFont = true;
+        return subref;
+      }
+    }
+  }
+  
   const bool bHavePointSize = ( pointSize > 0.0 );
   const CGFloat size = (CGFloat)(bHavePointSize ? pointSize : 1000.0 );
   
@@ -1173,346 +1212,6 @@ CTFontRef AppleTollFreeCTFont(NSFont* appleNSFont)
   CTFontRef appleCTFont = (__bridge CTFontRef)(appleNSFont);
   return appleCTFont;
 }
-
-//bool ON_Font::SetFromAppleNSFont( NSFont* apple_font, bool bAnnotationFont )
-//{
-//
-//  if ( false == ON_FONT_MODIFICATION_PERMITTED )
-//    return false;
-//
-//  *this = ON_Font::Unset;
-//
-//  const ON_wString postscript_name = ON_Font::PostScriptNameFromAppleNSFont(apple_font);
-//  const ON_wString family_name = ON_Font::FamilyNameFromAppleNSFont(apple_font);
-//  const ON_wString face_name = ON_Font::FaceNameFromAppleNSFont(apple_font);
-//
-//  // Set Windows LOGFONT.lfFaceName to something not empty there is some hope this
-//  // font might work in Rhino 5 for Windows too.
-//  // https://mcneel.myjetbrains.com/youtrack/issue/RH-37074
-//  const ON_wString windows_logfont_name = family_name;
-//
-//  const bool rc = postscript_name.IsNotEmpty() || family_name.IsNotEmpty();
-//  if (rc)
-//  {
-//    m_loc_postscript_name = postscript_name;
-//    m_en_postscript_name = postscript_name;
-//    m_loc_family_name = family_name;
-//    m_en_family_name = family_name;
-//    m_loc_face_name = face_name;
-//    m_en_face_name = face_name;
-//    m_loc_windows_logfont_name = windows_logfont_name;
-//    m_en_windows_logfont_name = windows_logfont_name;
-//
-//    // Can get font metrics from NSFontDescriptor
-//    // https://developer.apple.com/library/content/documentation/TextFonts/Conceptual/CocoaTextArchitecture/FontHandling/FontHandling.html
-//    // defaultLineHeight(for theFont: NSFont)
-//    // fd.xHeight, fd.ascender, fd.descender, fd.capHeight, fd.defaultLineHeightForFont
-//
-//    // Set weight - used if this font needs sustution on another computer
-//    // https://mcneel.myjetbrains.com/youtrack/issue/RH-37075
-//    NSFontDescriptor* fd = apple_font.fontDescriptor;
-//    NSDictionary* traits = [fd objectForKey: NSFontTraitsAttribute];
-//    NSNumber* weightValue = [traits objectForKey: NSFontWeightTrait];
-//    if (weightValue)
-//    {
-//      const double apple_font_weight_trait = weightValue.doubleValue;
-//      SetAppleFontWeightTrait(apple_font_weight_trait);
-//    }
-//    else if ( 0 != (fd.symbolicTraits & NSFontBoldTrait) )
-//      SetFontWeight(ON_Font::Weight::Bold);
-//    else
-//      SetFontWeight(ON_Font::Weight::Normal);
-//
-//    // Set style - used if this font needs sustution on another computer
-//    if ( 0 != (fd.symbolicTraits & NSFontItalicTrait) )
-//      m_font_style = ON_Font::Style::Italic;
-//    else
-//      m_font_style = ON_Font::Style::Upright;
-//
-//    if ( 0 != (fd.symbolicTraits & NSFontExpandedTrait) )
-//      m_font_stretch = ON_Font::Stretch::Expanded;
-//    else if ( 0 != (fd.symbolicTraits & NSFontCondensedTrait) )
-//      m_font_stretch = ON_Font::Stretch::Condensed;
-//    else
-//      m_font_stretch = ON_Font::Stretch::Medium;
-//
-//    // Saving point size added January 2018.
-//    const double point_size = (double)apple_font.pointSize;
-//    m_point_size
-//      = (false == bAnnotationFont && ON_Font::IsValidPointSize(point_size) && point_size < ((double)ON_Font::AnnotationFontApplePointSize))
-//      ? point_size
-//      : 0.0; // indicates annotation size (units per em) will be used
-//
-//    m_logfont_charset = ON_Font::WindowsConstants::logfont_default_charset;
-//
-//    // do this again because some of the above calls can modify description
-//    m_loc_postscript_name = postscript_name;
-//    m_en_postscript_name = m_loc_postscript_name;
-//    m_loc_family_name = family_name;
-//    m_en_family_name = m_loc_family_name;
-//    m_loc_face_name = face_name;
-//    m_en_face_name = m_loc_face_name;
-//    m_loc_windows_logfont_name = windows_logfont_name;
-//    m_en_windows_logfont_name = m_loc_windows_logfont_name;
-//
-//    SetFontOrigin(ON_Font::Origin::AppleFont);
-//  }
-//
-//  return rc;
-//}
-
-//const ON_wString ON_Font::PostScriptNameFromAppleNSFont(
-//  NSFont* apple_font
-//)
-//{
-//  if (nullptr == apple_font)
-//    return ON_wString::EmptyString;
-//  const ON_String utf8_postscript_name(apple_font.fontName.UTF8String);
-//  ON_wString postscript_name(utf8_postscript_name);
-//  postscript_name.TrimLeftAndRight();
-//  return postscript_name;
-//}
-
-//const ON_wString ON_Font::FamilyNameFromAppleNSFont(
-//  NSFont* apple_font
-//  )
-//{
-//  if (nullptr == apple_font)
-//    return ON_wString::EmptyString;
-//  const ON_String utf8_family_name(apple_font.familyName.UTF8String);
-//  ON_wString family_name(utf8_family_name);
-//  family_name.TrimLeftAndRight();
-//  return family_name;
-//}
-
-
-//const ON_wString ON_Font::AppleDisplayNameFromAppleNSFont(
-//  NSFont* apple_font
-//)
-//{
-//  const ON_String utf8_display_name(apple_font.displayName.UTF8String);
-//  ON_wString display_name(utf8_display_name);
-//  display_name.TrimLeftAndRight();
-//  return display_name;
-//}
-
-
-//const ON_wString ON_Font::FaceNameFromAppleNSFont(
-//  NSFont* apple_font
-//  )
-//{
-//  for(;;)
-//  {
-//    if (nullptr == apple_font)
-//      break;
-//    const ON_wString family_and_face_name = ON_Font::AppleDisplayNameFromAppleNSFont(apple_font);
-//    const ON_wString family_name = ON_Font::FamilyNameFromAppleNSFont(apple_font);
-//    return Internal_FaceNameFromAppleDisplayAndFamilyName(family_and_face_name,family_name);
-//  }
-//
-//  return ON_wString::EmptyString;
-//}
-
-//NSFont* ON_Font::AppleNSFont() const
-//{
-//  // Using PointSize() added January 2018.
-//  const double pointSize
-//  = ON_Font::IsValidPointSize(m_point_size)
-//  ? m_point_size
-//  : 1000.0; // common Apple units per em
-//
-//  NSFont* appleFont = nullptr;
-//  for(;;)
-//  {
-//    appleFont = AppleNSFont(pointSize);
-//    if ( nullptr == appleFont)
-//      break;
-//
-//    if ( m_point_size > 0.0 && pointSize == m_point_size)
-//      break;
-//
-//    const unsigned int upm = CTFontGetUnitsPerEm((CTFontRef)appleFont);
-//    if (upm <= 0 || fabs(upm - pointSize) <= 0.001 )
-//      break;
-//
-//    NSFont* appleFont2 = AppleNSFont(upm);
-//    if (nullptr != appleFont2)
-//      return appleFont2; // goal is to have point size = UPM so there is no scaling / rounding in metrics and glyph outlines.
-//
-//    break;
-//  }
-//
-//  return appleFont;
-//}
-
-//NSFont* ON_Font::AppleNSFont(double pointSize) const
-//{
-//  const double annotation_font_point_size = (double)ON_Font::Constants::AnnotationFontApplePointSize;
-//  NSFont* userFont = nullptr;
-//
-//  // TODO - Use ON_Font::InstalledFontFromNames(...) to search installed fonts instead of the following
-//
-//  for (int pass = 0; pass < 2; pass++)
-//  {
-//    if ( 0 != pass)
-//    {
-//      if ( annotation_font_point_size == pointSize )
-//        continue; // already tried this point size
-//      pointSize = annotation_font_point_size;
-//    }
-//    if ( false ==(pointSize > 0.0) )
-//      continue;
-//
-//    // TODO - replace the following with ON_Font::InstalledFontFromNames(....)
-//
-//    for(int ps_loc = 0; ps_loc < 2; ps_loc++)
-//    {
-//      // NOTE WELL:
-//      //   The post script name is NOT unique for simulated fonts
-//      //   (Bahnschrift and other OpenType variable fonts being one common source of simulated fonts.)
-//      const ON_wString postscript_name
-//      = (0 == ps_loc)
-//      ? m_loc_postscript_name
-//      : m_en_postscript_name;
-//
-//      if (ps_loc > 0 && postscript_name == m_loc_postscript_name)
-//        break;
-//
-//      if (postscript_name.IsNotEmpty())
-//      {
-//        // m_apple_font name was a Mac OS font name (NSFont.fontName = Mac OS FontBook "PostScript" name) on some Apple platform device.
-//        // If the current computer has the same font, this will return the
-//        // highest fidelity match.
-//        const ON_String UTF8_postscript_name(postscript_name);
-//        NSString* fontPostscriptName = [NSString stringWithUTF8String : UTF8_postscript_name];
-//        userFont = [NSFont fontWithName : fontPostscriptName size : pointSize];
-//        if (userFont)
-//          break;
-//      }
-//    }
-//
-//    // Try getting a NSFont by using NSFontManager
-//    NSFontTraitMask traitsStyleStretch = 0;
-//    if (IsItalic())
-//      traitsStyleStretch |= NSItalicFontMask;
-//    if (FontStretch() <= ON_Font::Stretch::Condensed)
-//      traitsStyleStretch |= NSCondensedFontMask;
-//    if (FontStretch() >= ON_Font::Stretch::Expanded)
-//      traitsStyleStretch |= NSExpandedFontMask;
-//
-//    ON_String family_name = FamilyName();    // convert to UTF8
-//    NSString* fontFamilyName = [NSString stringWithUTF8String : family_name];   // font family name
-//
-//    // https://developer.apple.com/documentation/appkit/nsfontmanager/1462332-fontwithfamily
-//    // weight
-//    //   A hint for the weight desired, on a scale of 0 to 15:
-//    //   a value of 5 indicates a normal or book weight,
-//    //   and 9 or more a bold or heavier weight.
-//    //   The weight is ignored if fontTraitMask includes NSBoldFontMask.
-//
-//    int weightFromFontWeight;
-//    switch (FontWeight())
-//    {
-//      case ON_Font::Weight::Thin:
-//        weightFromFontWeight = 2;
-//        break;
-//      case ON_Font::Weight::Ultralight:
-//        weightFromFontWeight = 3;
-//        break;
-//      case ON_Font::Weight::Light:
-//        weightFromFontWeight = 4;
-//        break;
-//      case ON_Font::Weight::Normal:
-//        weightFromFontWeight = 5;
-//        break;
-//      case ON_Font::Weight::Medium:
-//        weightFromFontWeight = 6;
-//        break;
-//      case ON_Font::Weight::Semibold:
-//        weightFromFontWeight = 7;
-//        break;
-//      case ON_Font::Weight::Bold:
-//        weightFromFontWeight = 9;
-//        break;
-//      case ON_Font::Weight::Ultrabold:
-//        weightFromFontWeight = 12;
-//        break;
-//      case ON_Font::Weight::Heavy:
-//        weightFromFontWeight = 15;
-//        break;
-//      default:
-//        weightFromFontWeight = 5;
-//        break;
-//    }
-//    NSFontTraitMask traitsStyleStretchWeight
-//      = IsBoldInQuartet()
-//      ? (traitsStyleStretch | NSBoldFontMask)
-//      : (traitsStyleStretch | NSUnboldFontMask);
-//    userFont = [[NSFontManager sharedFontManager] fontWithFamily:fontFamilyName traits : traitsStyleStretchWeight weight : weightFromFontWeight size : pointSize];
-//    if (userFont)
-//      break;
-//
-//    userFont = [[NSFontManager sharedFontManager] fontWithFamily:fontFamilyName traits : traitsStyleStretch weight : weightFromFontWeight size : pointSize];
-//    if (userFont)
-//      break;
-//
-//    if ( 5 != weightFromFontWeight)
-//    {
-//      userFont = [[NSFontManager sharedFontManager] fontWithFamily:fontFamilyName traits : traitsStyleStretch weight : 5 size : pointSize];
-//      if (userFont)
-//        break;
-//    }
-//
-//    // Try using just FontFaceName()
-//    userFont = [NSFont fontWithName : fontFamilyName size : pointSize];
-//    if (userFont)
-//      break;
-//
-//    // Cannot find an equivalent font.  Just use a system font.
-//    userFont = [NSFont userFontOfSize : pointSize];
-//    if (userFont)
-//      break;
-//
-//    userFont = [NSFont systemFontOfSize : pointSize];
-//    if (userFont)
-//      break;
-//  }
-//
-//  return userFont;
-//}
-
-//void ON_Font::DumpNSFont(
-//  NSFont* apple_font,
-//  ON_TextLog& text_log
-//)
-//{
-//  if (nullptr == apple_font)
-//  {
-//    text_log.Print("NSFont = nullptr\n");
-//    return;
-//  }
-//
-//  text_log.Print("NSFont\n");
-//  text_log.PushIndent();
-//
-//  const ON_wString postscript_name = ON_Font::PostScriptNameFromAppleNSFont(apple_font);
-//  text_log.Print(L"NSFont.fontName: \"%ls\"\n",static_cast<const wchar_t*>(postscript_name));
-//
-//  const ON_wString display_name = ON_Font::AppleDisplayNameFromAppleNSFont(apple_font);
-//  text_log.Print(L"NSFont.displayName: \"%ls\"\n",static_cast<const wchar_t*>(display_name));
-//
-//  const ON_wString family_name = ON_Font::FamilyNameFromAppleNSFont(apple_font);
-//  text_log.Print(L"NSFont.familyName: \"%ls\"\n",static_cast<const wchar_t*>(family_name));
-//
-//  // Apple NSFont and MacOS do not have "face names" as a font attribute.
-//  // This is the "typeface" name shown in Apple FontBook
-//  const ON_wString fake_face_name =  ON_Font::FaceNameFromAppleNSFont(apple_font);
-//  text_log.Print(L"NSFont FontBook typeface: \"%ls\"\n",static_cast<const wchar_t*>(fake_face_name));
-//
-//  const double point_size = (double)apple_font.pointSize;
-//  text_log.Print("NSFont.pointSize: %g\n",point_size);
-//  text_log.PopIndent();
-//}
 
 #endif
 

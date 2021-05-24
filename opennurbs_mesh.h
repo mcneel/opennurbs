@@ -661,13 +661,28 @@ public:
 
   /*
   Returns:
-    The type of geometry settings.
+    The type of geometry settings taking SubD parameters into account.
   Remarks:
     This function will never return ON_MeshParameters::Type::Unset.
     In particular, if the return value is not ON_MeshParameters::Type::Custom,
     then the settings come from one of the built-in mesh creation settings.
   */
   ON_MeshParameters::Type GeometrySettingsType() const;
+
+  /*
+  Returns:
+    The type of geometry settings.
+  Parameters:
+    bIgnoreSubDParameters - [in]
+      If true, SubD meshing parameters are ignored in determining the type.
+  Remarks:
+    This function will never return ON_MeshParameters::Type::Unset.
+    In particular, if the return value is not ON_MeshParameters::Type::Custom,
+    then the settings come from one of the built-in mesh creation settings.
+  */
+  ON_MeshParameters::Type GeometrySettingsType(
+    bool bIgnoreSubDParameters
+  ) const;
 
   /*
   Description:
@@ -730,7 +745,7 @@ public:
 
   /*
   Returns:
-    If these mesh parameters were created from ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density),
+    If these mesh parameters, including the SubD meshing parameters, were created from ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density),
     then normalized_mesh_density is returned.
     Otherwise, ON_DBL_QNAN is returned.
   Remarks:
@@ -739,6 +754,21 @@ public:
     You must compare these properties if they matter in your particular context.
   */
   double MeshDensity() const;
+
+  /*
+  Parameters:
+    bIgnoreSubDParameters - [in]
+      If true, SubD meshing parameters are ignored.
+  Returns:
+    If these mesh parameters were created from ON_MeshParameters::CreateFromMeshDensity(normalized_mesh_density),
+    then normalized_mesh_density is returned.
+    Otherwise, ON_DBL_QNAN is returned.
+  Remarks:
+    The values of m_bDoublePrecision, m_bClosedObjectPostProcess, and m_texture_range can be arbitrary
+    because they do not determine geometry of the resulting mesh and are typically ingored.
+    You must compare these properties if they matter in your particular context.
+  */
+  double MeshDensity(bool bIgnoreSubDParameters ) const;
 
   /*
   Description:
@@ -872,6 +902,22 @@ public:
     If you need to include those values, call ContentHash().
   */
   ON_SHA1_Hash GeometrySettingsHash() const;
+
+  /*
+  Parameters:
+    bIgnoreSubDParameters - [in]
+      If true, the SubD meshing parameters are not hashed.
+  Returns:
+    A hash of values that control mesh geometry.
+  Remarks:
+    Teh has intentionally ignores
+    m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature,
+    m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
+    If you need to include those values, call ContentHash().
+  */
+  ON_SHA1_Hash GeometrySettingsHash(
+    bool bIgnoreSubDParameters
+  ) const;
 
   ON_UUID MesherId() const;
   void SetMesherId(
@@ -1226,7 +1272,7 @@ private:
 
   int m_grid_min_count = 0;
   int m_grid_max_count = 0;     
-  mutable ON_SHA1_Hash m_geometry_settings_hash = ON_SHA1_Hash::ZeroDigest;
+  mutable ON_SHA1_Hash m_geometry_settings_hash = ON_SHA1_Hash::ZeroDigest; // the cached hash includes SubD meshing parameters
 
   ON__UINT32 m_reserved2 = 0;
 

@@ -600,6 +600,7 @@ public:
 
 
   unsigned int DumpTopology(
+    const ON_SubD& parent_subd,
     const unsigned int validate_max_vertex_id,
     const unsigned int validate_max_edge_id,
     const unsigned int validate_max_face_id,
@@ -609,6 +610,7 @@ public:
     ON_SubDVertexIdIterator& vidit,
     ON_SubDEdgeIdIterator& eidit,
     ON_SubDFaceIdIterator& fidit,
+    bool bIncludeSymmetrySet,
     ON_TextLog& text_log
   ) const;
 
@@ -636,7 +638,7 @@ public:
   bool CopyHelper(
     const class ON_SubDimple& src_subdimple,
     const ON_SubDLevel& src_level, 
-    class ON_SubDArchiveIdMap& eptrlist,
+    class ON_SubDArchiveIdMap& archive_id_map,
     class ON_SubDimple& dest_subdimple,
     bool bCopyComponentStatus
     );
@@ -1158,7 +1160,7 @@ public:
 
   void ClearEvaluationCache() const;
 
-  bool CopyEvaluationCacheForExperts(const ON_SubDLevel& src, class ON_SubDHeap& this_heap);
+  bool CopyEvaluationCacheForExperts(class ON_SubDHeap& this_heap, const ON_SubDLevel& src, const class ON_SubDHeap& src_heap);
     
   void ClearTopologicalAttributes() const
   {
@@ -1506,7 +1508,6 @@ public:
     const class ON_SubDFace* face
   );
 
-
   /*
   Description:
     Discard all contents of this ON_SubDHeap.
@@ -1524,12 +1525,152 @@ public:
   size_t SizeOf() const
   {
     size_t sz = sizeof(*this);
-    sz += m_fsp5.SizeofElement()*m_fsp5.TotalElementCount();
-    sz += m_fsp9.SizeofElement()*m_fsp9.TotalElementCount();
-    sz += m_fsp17.SizeofElement()*m_fsp17.TotalElementCount();
-    // todo - include m_ws;
+
+    sz += SizeOfAllPools();
+
+    // For vertices with multiple sectors and multiple limit points,
+    // additional limit points come from a global limit point pool.
+    // In any given subd, this is a small minority of vertices and
+    // this undercounting of memory is a tiny compared with the
+    // pool sizes counted above.
+
+    // For vertices with more than 17 faces or more than 17 edges,
+    // the ON_SubDVertex.m_faces[] and ON_SubDVertex.m_edges[] arrays
+    // are individually allocated. This is not common and the undercount
+    // is tiny compared with the pool sizes counted above.
+
+    // For non-manifold edges with more than 17 faces,
+    // the ON_SubDEdge.m_faces[] array is individually allocated. 
+    // This is extremely uncommon and the undercount
+    // is tiny compared with the pool sizes counted above.
+
+    // For faces with more than 17 edges,
+    // the ON_SubDFace.m_edges[] array is individually allocated. 
+    // This is uncommon and the undercount
+    // is tiny compared with the pool sizes counted above.
+
+    // Add this fudge factor typically more than accounts for 
+    // the uncommon and minimal undercounts that are described above.
+    sz += 8 * (m_fspv.ActiveElementCount() + m_fspe.ActiveElementCount() + m_fspf.ActiveElementCount());
+
     return sz;
   }
+
+  size_t SizeOfAllPools() const
+  {
+    size_t sz = 0;
+    sz += m_fspv.SizeOfPool();
+    sz += m_fspe.SizeOfPool();
+    sz += m_fspf.SizeOfPool();
+    sz += m_fsp5.SizeOfPool();
+    sz += m_fsp9.SizeOfPool();
+    sz += m_fsp17.SizeOfPool();
+    sz += m_fsp_full_fragments.SizeOfPool();
+    sz += m_fsp_part_fragments.SizeOfPool();
+    sz += m_fsp_oddball_fragments.SizeOfPool();
+    sz += m_fsp_limit_curves.SizeOfPool();
+    return sz;
+  }
+
+  size_t SizeOfUnusedPoolElements() const
+  {
+    size_t sz = 0;
+    sz += m_fspv.SizeOfUnusedElements();
+    sz += m_fspe.SizeOfUnusedElements();
+    sz += m_fspf.SizeOfUnusedElements();
+    sz += m_fsp5.SizeOfUnusedElements();
+    sz += m_fsp9.SizeOfUnusedElements();
+    sz += m_fsp17.SizeOfUnusedElements();
+    sz += m_fsp_full_fragments.SizeOfUnusedElements();
+    sz += m_fsp_part_fragments.SizeOfUnusedElements();
+    sz += m_fsp_oddball_fragments.SizeOfUnusedElements();
+    sz += m_fsp_limit_curves.SizeOfUnusedElements();
+    return sz;
+  }
+
+  size_t SizeOfActivePoolElements() const
+  {
+    size_t sz = 0;
+    sz += m_fspv.SizeOfActiveElements();
+    sz += m_fspe.SizeOfActiveElements();
+    sz += m_fspf.SizeOfActiveElements();
+    sz += m_fsp5.SizeOfActiveElements();
+    sz += m_fsp9.SizeOfActiveElements();
+    sz += m_fsp17.SizeOfActiveElements();
+    sz += m_fsp_full_fragments.SizeOfActiveElements();
+    sz += m_fsp_part_fragments.SizeOfActiveElements();
+    sz += m_fsp_oddball_fragments.SizeOfActiveElements();
+    sz += m_fsp_limit_curves.SizeOfActiveElements();
+    return sz;
+  }
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Total operating system heap memory (in bytes) used by the mesh fragments pool.
+  Remarks:
+    SizeOfMeshFragmentPool() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfMeshFragmentsPool() const
+  {
+    return 
+      m_fsp_full_fragments.SizeOfPool() 
+      + m_fsp_part_fragments.SizeOfPool()
+      + m_fsp_oddball_fragments.SizeOfPool()
+      + m_fsp_limit_curves.SizeOfPool();
+  }
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Operating system heap memory (in bytes) that are used by active mesh fragments.
+  Remarks:
+    SizeOfMeshFragmentPool() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfActiveMeshFragments() const
+  {
+    return SizeOfMeshFragmentsPool() - SizeOfUnusedMeshFragments();
+  }
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Operating system heap memory (in bytes) that has been reserved for mesh fragments 
+    but is not currently used by active mesh fragments.
+  Remarks:
+    SizeOfMeshFragmentPool() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfUnusedMeshFragments() const
+  {
+    size_t sz 
+      = m_fsp_full_fragments.SizeOfUnusedElements()
+      + m_fsp_part_fragments.SizeOfUnusedElements()
+      + m_fsp_oddball_fragments.SizeOfUnusedElements()
+      + m_fsp_limit_curves.SizeOfUnusedElements();
+
+    // It has alwasy been the case that count0 = count1 = ON_SubDDisplayParameters::MaximumDensity + 1.
+    // But a wrong answer is better than crashing if somebody incorrectly modifies ON_SubDHeap 
+    // in the far future.
+    const size_t count0 = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
+    const size_t count1 = sizeof(ON_SubDHeap::g_sizeof_fragment) / sizeof(ON_SubDHeap::g_sizeof_fragment[0]);
+    for (size_t i = 0; i < count0 && i < count1; ++i)
+    {
+      const size_t sizeof_fragment = ON_SubDHeap::g_sizeof_fragment[i];
+      // The memory for these fragments is managed by m_fsp_full_fragments or m_fsp_part_fragments.
+      for (const ON_FixedSizePoolElement* e = m_unused_fragments[i]; nullptr != e; e = e->m_next)
+        sz += sizeof_fragment;
+    }
+
+    return sz;
+  }
+
+
+  bool InHeap(ON_SubDComponentPtr cptr) const;
+
+  const ON_SubDComponentPtr InHeap(const class ON_SubDComponentBase* b) const;
 
 private:
   class tagWSItem
@@ -1573,25 +1714,64 @@ private:
   ON_FixedSizePool m_fsp9;  // element = capacity + array of 8 ON__UINT_PTRs
   ON_FixedSizePool m_fsp17; // element = capacity + array of 16 ON__UINT_PTRs
 
-  // This pool is used to manage memory for 
-  // 
-  // 16x16 ON_SubDMeshFragment
-  // 8x8 ON_SubDMeshFragment
-  // 4x4 ON_SubDMeshFragment
-  // 2x2 ON_SubDMeshFragment
-  // 1x1 ON_SubDMeshFragment
-  // ON_SubDEdgeSurfaceCurve
-  bool Internal_InitializeLimitBlockPool();
-  ON_FixedSizePool m_limit_block_pool;
-
-  // m_sizeof_fragment[i] = sizeof of a fragment NxN mesh quads where N = 2^i
-  // m_sizeof_fragment[0] = sizeof of a fragment with 1x1 mesh quads.
-  // m_sizeof_fragment[1] = sizeof of a fragment with 2x2 mesh quads.
-  // m_sizeof_fragment[2] = sizeof of a fragment with 4x4 mesh quads.
-  // m_sizeof_fragment[3] = sizeof of a fragment with 8x8 mesh quads.
-  // m_sizeof_fragment[4] = sizeof of a fragment with 16x16 mesh quads.
+  // g_sizeof_fragment[i] = sizeof of a fragment NxN mesh quads where N = 2^i
+  // g_sizeof_fragment[0] = sizeof of a fragment with 1x1 mesh quads. (quad fragment for density = 0)
+  // g_sizeof_fragment[1] = sizeof of a fragment with 2x2 mesh quads. (quad fragment for density = 1)
+  // g_sizeof_fragment[2] = sizeof of a fragment with 4x4 mesh quads. (quad fragment for density = 2)
+  // g_sizeof_fragment[3] = sizeof of a fragment with 8x8 mesh quads. (quad fragment for density = 3)
+  // g_sizeof_fragment[4] = sizeof of a fragment with 16x16 mesh quads. (quad fragment for density = 4)
   // ...
-  size_t m_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity + 1] = {};
+  static const size_t g_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity + 1];
+
+
+  /*
+  Sets m_full_fragment_display_density, m_full_fragment_count_estimate, m_part_fragment_count_estimate.
+  */
+  bool Internal_InitializeFragmentCountEstimates(
+    unsigned subd_display_density
+  );
+
+  // m_full_fragment_display_density = display density for a full fragment
+  unsigned int m_full_fragment_display_density = 0;
+
+  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
+  // needed. It's ok if we need additionaly fragments later.
+  unsigned int m_full_fragment_count_estimate = 0;
+
+  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
+  // needed. It's ok if we need additionaly fragments later.
+  unsigned int m_part_fragment_count_estimate = 0;
+
+  unsigned int m_reserved0 = 0;
+
+  /*
+  Parameters:
+    fragment_count_estimate - [in]
+      Estimate of the number of fragments that will come from this pool.
+    sizeof_fragment - [in]
+      number of bytes per most common fragment (ON_SubDMeshFragment + vertex arrays)
+    max_sizeof_fragment - [in]
+      number of bytes per maximum possible sized fragment (ON_SubDMeshFragment + vertex arrays)
+      from fsp.
+    fsp - [in/out]
+      fixed size pool to initialize.     
+  */
+  static bool Internal_InitializeMeshFragmentPool(
+    size_t sizeof_element,
+    size_t element_count_estimate,
+    size_t min_2nd_block_element_count,
+    ON_FixedSizePool& fsp // fsp references either m_fsp_*_fragments or m_fsp_limit_curves.
+  );
+
+  // ON_SubDMeshFragments with density = m_full_fragment_display_density are allocated from m_fsp_full_fragments.
+  ON_FixedSizePool m_fsp_full_fragments;
+
+  // ON_SubDMeshFragments with density+1 = m_full_fragment_display_density are allocated from m_fsp_part_fragments.
+  ON_FixedSizePool m_fsp_part_fragments;
+
+  // ON_SubDMeshFragments with density < m_full_fragment_display_density-1 || density > m_full_fragment_display_density
+  // are allocated from m_fsp_oddball_fragments. In all common cases, m_fsp_oddball_fragments is not used.
+  ON_FixedSizePool m_fsp_oddball_fragments;
 
   // m_unused_fragments[0] = unused 1x1 mesh quad fragments.
   // m_unused_fragments[1] = unused 2x2 mesh quad fragments.
@@ -1599,19 +1779,25 @@ private:
   // m_unused_fragments[3] = unused 8x8 mesh quad fragments.
   // m_unused_fragments[4] = unused 16x16 mesh quad fragments.
   // ...
+  // The memory for these fragments is managed by m_fragment_pool.
   class ON_FixedSizePoolElement* m_unused_fragments[ON_SubDDisplayParameters::MaximumDensity + 1] = {};
 
-  // Used to allocate edge curves
-  size_t m_sizeof_limit_curve = 0;
-  class ON_FixedSizePoolElement* m_unused_limit_curves = nullptr;
+  bool Internal_InitializeLimitCurvesPool();
+
+  // Used to allocate edge curves (ON_SubDEdgeSurfaceCurve class that ON_SubDEdge.m_limit_curve points to
+  // The memory for these curves is managed by m_limit_block_pool.
+  ON_FixedSizePool m_fsp_limit_curves;
   
   // list of vertices previously allocated from m_fspv and returned by ReturnVertex().
+  // The memory for these vertices is managed by m_fspv.
   ON_SubDVertex* m_unused_vertex = nullptr; 
 
   // list of edges previously allocated from m_fspv and returned by ReturnVertex().
+  // The memory for these edges is managed by m_fspe.
   ON_SubDEdge* m_unused_edge = nullptr;
 
   // list of faces previously allocated from m_fspv and returned by ReturnVertex().
+  // The memory for these faces is managed by m_fspf.
   ON_SubDFace* m_unused_face = nullptr;
 
   // Maximum vertex id assigned to a vertex in m_fspv.
@@ -1647,6 +1833,15 @@ private:
   void Return3dPointArray(
     class ON_3dPoint* point_array
   );
+
+
+private:
+  ON_FixedSizePool* Internal_ComponentFixedSizePool(
+    ON_SubDComponentPtr::Type component_type
+  );
+  const ON_FixedSizePool* Internal_ComponentFixedSizePool(
+    ON_SubDComponentPtr::Type component_type
+  ) const;
 
 public:
   static unsigned int Managed3dPointArrayCapacity(class ON_3dPoint* point_array);
@@ -1690,9 +1885,14 @@ public:
 
   const ON_SubDHash SubDHash(
     ON_SubDHashType hash_type,
-    const ON_SubD& parent_subd,
     bool bForceUpdate
     ) const;
+
+  const ON_SHA1_Hash VertexHash(ON_SubDHashType hash_type) const;
+
+  const ON_SHA1_Hash EdgeHash(ON_SubDHashType hash_type) const;
+
+  const ON_SHA1_Hash FaceHash(ON_SubDHashType hash_type) const;
 
   /*
   Returns:
@@ -1751,8 +1951,10 @@ public:
 private:
   mutable ON__UINT64 m_subd_geometry_content_serial_number = 0;
   mutable ON__UINT64 m_subd_render_content_serial_number = 0;
-  mutable ON_SubDHash m_subd_geometry_hash = ON_SubDHash::Empty;
+
   mutable ON_SubDHash m_subd_toplology_hash = ON_SubDHash::Empty;
+  mutable ON_SubDHash m_subd_toplology_and_edge_creases_hash = ON_SubDHash::Empty;
+  mutable ON_SubDHash m_subd_geometry_hash = ON_SubDHash::Empty;
 
 public:
 
@@ -2131,6 +2333,36 @@ public:
     return sz;
   }
 
+  size_t SizeOfAllElements() const
+  {
+    return m_heap.SizeOfAllPools();
+  }
+
+  size_t SizeOfActiveElements() const
+  {
+    return m_heap.SizeOfActivePoolElements();
+  }
+
+  size_t SizeOfUnusedElements() const
+  {
+    return m_heap.SizeOfUnusedPoolElements();
+  }
+
+  size_t SizeOfAllMeshFragments() const
+  {
+    return m_heap.SizeOfMeshFragmentsPool();
+  }
+
+  size_t SizeOfActiveMeshFragments() const
+  {
+    return m_heap.SizeOfActiveMeshFragments();
+  }
+
+  size_t SizeOfUnusedMeshFragments() const
+  {
+    return m_heap.SizeOfUnusedMeshFragments();
+  }
+
   bool GlobalSubdivide(
     unsigned int count
     );
@@ -2183,6 +2415,9 @@ public:
 private:
   friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
   ON_SubDHeap m_heap;
+
+public:
+  ON_SubDHeap& Heap();
 
 public:
   void InitializeVertexIdIterator(
@@ -2369,7 +2604,7 @@ public:
 
   void SetFacePackingIdAndTopologyHash(
     ON_UUID custom_packing_id,
-    const ON_SubDHash& current_topology_hash
+    const ON_SubDHash& current_topology_and_creases_hash
   );
 
   /*
@@ -2378,7 +2613,7 @@ public:
   */
   void ClearFacePackIds();
 
-  void SetFacePackingTopologyHashForExperts(const ON_SubDHash& current_topology_hash) const;
+  void SetFacePackingTopologyHashForExperts(const ON_SubDHash& current_topology_and_creases_hash) const;
 
 private:
   ON_UUID m_face_packing_id = ON_nil_uuid;
@@ -2522,6 +2757,13 @@ public:
     ON_SubDFacePtr* faceX
     );
 
+private:
+  bool ConvertArchiveIdToRuntimeSymmetrySetNextPtr(
+    ON_SubDComponentPtr::Type component_type,
+    ON_SubDComponentBase* component
+  );
+
+public:
   static void ValidateArrayCounts(
     unsigned short& array_count,
     size_t arrayN_capacity,
@@ -2530,30 +2772,38 @@ public:
     const void* arrayX
     );
 
-  static ON_SubDComponentPtr FromVertex(
+public:
+  static const ON_SubDComponentPtr FromVertex(
     ON_SubDVertexPtr vertex_ptr
     );
 
-  static ON_SubDComponentPtr FromEdge(
+  static const ON_SubDComponentPtr FromEdge(
     ON_SubDEdgePtr edge_ptr
     );
 
-  static ON_SubDComponentPtr FromFace(
+  static const ON_SubDComponentPtr FromFace(
     ON_SubDFacePtr face_ptr
     );
 
-  static ON_SubDComponentPtr FromVertex(
+  static const ON_SubDComponentPtr FromVertex(
     const ON_SubDVertex* vertex
     );
 
-  static ON_SubDComponentPtr FromEdge(
+  static const ON_SubDComponentPtr FromEdge(
     const ON_SubDEdge* edge
     );
 
-  static ON_SubDComponentPtr FromFace(
+  static const ON_SubDComponentPtr FromFace(
     const ON_SubDFace* face
     );
 
+private:
+  static const ON_SubDComponentPtr FromSymmetrySetNext(
+    ON_SubDComponentPtr::Type component_type,
+    const ON_SubDComponentBase* component
+  );
+
+public:
   static ON_SubDVertex* CopyVertex(
     const ON_SubDVertex* src,
     class ON_SubDimple& subdimple
@@ -2593,6 +2843,9 @@ public:
   unsigned int m_archive_id_partition[4];
 
   unsigned int ConvertArchiveIdsToRuntimePointers();
+
+public:
+  static ON_SubDComponentPtr& SymmetrySetNextForExperts(const ON_SubDComponentBase&);
 
 private:
   bool AddComponentPtr(ON_SubDComponentPtr eptr, unsigned int archive_id);
@@ -2788,7 +3041,7 @@ public:
   };
 
 private:
-  // It is critical that sizeof(ON_SubDEdgeSurfaceCurve) = 6*3*sizeof(double).
+  // It is critical that sizeof(ON_SubDEdgeSurfaceCurve) >= (MaximumControlPointCapacity-MinimumControlPointCapacity)*3*sizeof(double).
   // The edge curve cache relies on this.
   // Do not remove m_reserved* fields.
   ON__UINT64 m_reserved0 = 0; // overlaps with ON_FixedSizePoolElement.m_next.

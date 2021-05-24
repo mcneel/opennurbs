@@ -446,6 +446,19 @@ public:
     bool from_the_back,
     ON_Xform& arrow_xform_out) const;
 
+public:
+	bool GetTextXform(
+		const ON_Xform* model_xform,
+		const ON_3dVector view_x,
+		const ON_3dVector view_y,
+		const ON_3dVector view_z,
+		ON::view_projection projection,
+		bool bDrawForward,
+		const ON_DimStyle* dimstyle,
+		double dimscale,
+		ON_Xform& text_xform_out
+	) const;
+
 
 protected:
   ON_2dPoint m_def_pt_2 = ON_2dPoint::UnsetPoint;

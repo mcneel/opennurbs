@@ -637,6 +637,11 @@ void ON_TextLog::PrintString( const char* s )
   }
 }
 
+void ON_TextLog::PrintString(ON_String s)
+{
+  PrintString(static_cast<const char*>(s));
+}
+
 void ON_TextLog::PrintNewLine()
 {
   Print("\n");
@@ -661,6 +666,11 @@ void ON_TextLog::PrintString( const wchar_t* s )
       AppendText(static_cast<const char*>(m_indent));
     AppendText(s);
   }
+}
+
+void ON_TextLog::PrintString(ON_wString s)
+{
+  PrintString(static_cast<const wchar_t*>(s));
 }
 
 void ON_TextLog::PrintRGB(const ON_Color& color)

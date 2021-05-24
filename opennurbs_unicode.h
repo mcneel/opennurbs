@@ -32,113 +32,325 @@ enum ON_UnicodeEncoding
   ON_UTF_32LE     // UTF-32 little endian CPU byte order
 };
 
+// UTF-8 encodings:
+//   The UTF-8 encoding for codepoint values from 0 to 127 is a single single byte (char).  
+//   The UTF-8 encoding for codepoint values >= 128 require multiple bytes.
+// UTF-16 encodings:
+//   The UTF-16 encoding of every codepoint in this enum except Wastebasket is a single word (unsigned short).
+
+
+
+/// <summary>
+/// Unicode code point values for that are hard to include in code or
+/// are useful for testing encoding and glyph rendering.
+/// Code points &gt;= U+0080 require UTF-8 multiple byte encodings.
+/// Code points &gt;= U+10000 require UTF-16 surrogate pair encodings.
+/// </summary>
 enum ON_UnicodeCodePoint
 {
-  // UTF-8 encodings:
-  //   The UTF-8 encoding for codepoint values from 0 to 127 is a single single byte (char).  
-  //   The UTF-8 encoding for codepoint values >= 128 require multiple bytes.
-  // UTF-16 encodings:
-  //   The UTF-16 encoding of every codepoint in this enum except Wastebasket is a single word (unsigned short).
+  /// <summary>nullptr control U+0000</summary>
+  ON_NullCodePoint = 0x00,
 
-  ON_NullCodePoint = 0x00, // nullptr control U+0000 (decimal 0)
-  ON_Backspace = 0x08, // BACKSPACE control U+0008  (decimal 8)
-  ON_Tab = 0x09, // CHARACTER TABULATION control U+0009  (decimal 9)
-  ON_LineFeed = 0x0A, // LINE FEED control U+000A  (decimal 10)
-  ON_VerticalTab = 0x0B, // LINE TABULATION control U+000B  (decimal 11)
-  ON_FormFeed = 0x0C, // FORM FEED control U+000C  (decimal 12)
-  ON_CarriageReturn = 0x0D, // CARRIAGE RETURN control U+000D  (decimal 13)
-  ON_Escape = 0x1B, // CARRIAGE RETURN control U+001B  (decimal 27)
-  ON_Space = 0x20, // SPACE U+0020  (decimal 32)
-  ON_HyphenMinus = 0x2D, // HYPHEN-MINUS U+002D (decimal 45)
-  ON_Slash = 0x2F, // SOLIDUS U+002F  (decimal 47)
-  ON_Backslash = 0x5C, // REVERSE SOLIDUS U+005C (decimal 92)ere
-  ON_Underscore = 0x5F, // Unicode LOW LINE U+005F
-  ON_Pipe = 0x7C, // VERTICAL LINE U+007C (decimal 124)
-  ON_Tilde = 0x7E, // TILDE U+007E (decimal 126)
-  ON_Period = 0x2E, // PERIOD U+002E (decimal 46)
-  ON_Comma = 0x2C, // COMMA U+002C (decimal 44)
+  /// <summary>BACKSPACE control U+0008</summary>
+  ON_Backspace = 0x08,
 
-  //
-  // NOTE: UTF-8 encodings of the codepoint values below this comment require multiple bytes.
-  //
-  ON_NextLine = 0x0085, // NEXT LINE (NEL) U+0085
-  ON_NoBreakSpace = 0x00A0, // NO-BREAK SPACE (NBSP)
-  ON_NarrowNoBreakSpace = 0x202F, // NARROW NO-BREAK SPACE (NNBSP)
-  ON_ZeroWidthSpace = 0x200B, // ZERO WIDTH SPACE (ZWSP)
+  /// <summary>CHARACTER TABULATION control U+0009</summary>
+  ON_Tab = 0x09,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // Annotation symbols
-  //
-  ON_RadiusSymbol = 0x0052, // LATIN CAPITAL LETTER R U+0052 (decimal 82)
-  ON_DegreeSymbol = 0x00B0, // DEGREE SIGN U+00B0 (decimal 176)
-  ON_PlusMinusSymbol = 0x00B1, // PLUS-MINUS SIGN U+00B1 (decimal 177)
-  ON_DiameterSymbol = 0x00D8, // LATIN CAPITAL LETTER O WITH STROKE U+00D8 (decimal 216)
+  /// <summary>LINE FEED control U+000A</summary>
+  ON_LineFeed = 0x0A,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // Unambiguous format control code points
-  //
-  ON_LineSeparator = 0x2028,      // LINE SEPARATOR U+2028 unambiguous line separator
-  ON_ParagraphSeparator = 0x2029, // PARAGRAPH SEPARATOR U+2028 unambiguous paragraph separator
+  /// <summary>LINE TABULATION control U+000B</summary>
+  ON_VerticalTab = 0x0B,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // Greek, Cyrillic and CJK glyph code points used for testing purposes.
-  //
-  ON_GreekAlpha = 0x03B1, // GREEK SMALL LETTER ALPHA
-  ON_CyrillicCapitalYu = 0x042E, // CYRILLIC CAPITAL LETTER YU
+  /// <summary>FORM FEED control U+000C</summary>
+  ON_FormFeed = 0x0C,
+
+  /// <summary>CARRIAGE RETURN control U+000D</summary>
+  ON_CarriageReturn = 0x0D,
+
+  /// <summary>ESCAPE control U+001B</summary>
+  ON_Escape = 0x1B,
+
+  /// <summary>SPACE U+0020</summary>
+  ON_Space = 0x20,
+
+  /// <summary>NO-BREAK SPACE (NBSP) U+00A0</summary>
+  ON_NoBreakSpace = 0x00A0,
+
+  /// <summary>OGHAM SPACE MARK U+1680</summary>
+  ON_OghamSpaceMark = 0x1680,
+
+  /// <summary>EN QUAD SPACE U+2000</summary>
+  ON_EnQuad = 0x2000,
+
+  /// <summary>EM QUAD SPACE U+2001</summary>
+  ON_EmQuad = 0x2001,
+
+  /// <summary>EN SPACE U+2002 Also known as a nut. (About 1/2 EM SPACE)</summary>
+  ON_EnSpace = 0x2002,
+
+  /// <summary>EM SPACE U+2003 Also known as a mutton.</summary>
+  ON_EmSpace = 0x2003,
+
+  /// <summary>3 per EM SPACE U+2004 (1/3 EM SPACE)</summary>
+  ON_ThreePerEmSpace = 0x2004,
+
+  /// <summary>4 per EM SPACE U+2005 (1/4 EM SPACE)</summary>
+  ON_FourPerEmSpace = 0x2005,
+
+  /// <summary>6 per EM SPACE U+2006 (1/6 EM SPACE)</summary>
+  ON_SixPerEmSpace = 0x2006,
+
+  /// <summary>ZERO WIDTH SPACE (ZWSP) U+200B</summary>
+  ON_ZeroWidthSpace = 0x200B,
+
+  /// <summary>FIGURE SPACE U+2007 Average digit width.</summary>
+  ON_FigureSpace = 0x2007,
+
+  /// <summary>PUNCTUATION SPACE U+2008</summary>
+  ON_PunctuationSpace = 0x2008,
+
+  /// <summary>THIN SPACE U+2009 (1/5 to 1/6 EM SPACE)</summary>
+  ON_ThinSpace = 0x2009,
+
+  /// <summary>HAIR SPACE U+200A (Narrower than THIN SPACE)</summary>
+  ON_HairSpace = 0x200A,
+
+  /// <summary>MEDIUM MATHEMATICAL SPACE U+2025 (about 2/9 EM SPACE)</summary>
+  ON_MediumMathematicalSpace = 0x205F,
+
+  /// <summary>IDEOGRAPHIC SPACE U+3000 The width of ideographic (Chinese, Japanese, Korean) characters.</summary>
+  ON_IdeographicSpace = 0x3000,
+
+  /// <summary>zero with non-joiner (ZWNJ) U+200C</summary>
+  ON_ZeroWidthNonJoiner = 0x200C,
+
+  /// <summary>zero with joiner (ZWJ) U+200D</summary>
+  ON_ZeroWidthJoiner = 0x200D,
+
+  /// <summary>NARROW NO-BREAK SPACE (NNBSP) U+202F</summary>
+  ON_NarrowNoBreakSpace = 0x202F,
+
+  /// <summary>QUOTATION MARK U+0022 (&quot;)</summary>
+  ON_QuotationMark = 0x22,
+
+  /// <summary>NUMBER SIGN U+0023 (#)</summary>
+  ON_NumberSign = 0x23,
+
+  /// <summary>PERCENT SIGN U+0025 (%)</summary>
+  ON_PercentSign = 0x25,
+
+  /// <summary>AMPERSAND U+0026 (&amp;)</summary>
+  ON_Ampersand = 0x26,
+
+  /// <summary>APOSTROPHE U+0027 (&apos;)</summary>
+  ON_Apostrophe = 0x27,
+
+  /// <summary>COMMA U+002C (,)</summary>
+  ON_Comma = 0x2C,
+
+  /// <summary>HYPHEN-MINUS U+002D (-)</summary>
+  ON_HyphenMinus = 0x2D,
+
+  /// <summary>UNAMBIGUOUS HYPHEN U+2010 (&#x2010;)</summary>
+  ON_UnambiguousHyphen = 0x2010,
+
+  /// <summary>NON-BREAKING HYPHEN U+2011</summary>
+  ON_NoBreakHyphen = 0x2011,
+
+  /// <summary>SMALL HYPHEN U+FE63 (&#xFE63;)</summary>
+  ON_SmallHyphen = 0xFE63,
+
+  /// <summary>UNAMBIGUOUS MINUS U+2212 (&#x2212;)</summary>
+  ON_UnambiguousMinus = 0x2212,
+
+  /// <summary>UNAMBIGUOUS MINUS U+2012 (&#x2012;)</summary>
+  ON_FigureDash = 0x2012,
+
+  /// <summary>EN DASH U+2013 (&#x2013;)</summary>
+  ON_EnDash = 0x2013,
+
+  /// <summary>EM DASH U+2014 (&#x2014;)</summary>
+  ON_EmDash = 0x2014,
+
+  /// <summary>PERIOD U+002E (decimal 46) (.)</summary>
+  ON_Period = 0x2E,
+
+  /// <summary>SOLIDUS U+002F (&#x2f;)</summary>
+  ON_Slash = 0x2F,
+
+  /// <summary>FRACTION SLASH U+2044 (&#x2044;)</summary>
+  ON_FractionSlash = 0x2044,
+
+  /// <summary>DIVISION SLASH U+2215 (&#x2215;)</summary>
+  ON_DivisionSlash = 0x2215,
+
+  /// <summary>MATHEMATICAL RISING DIAGONAL U+27CB (&#x27CB;)</summary>
+  ON_MathimaticalSlash = 0x27CB,
+
+  /// <summary>COLON U+003A (:)</summary>
+  ON_Colon = 0x3A,
+
+  /// <summary>SEMICOLON U+003B (;)</summary>
+  ON_Semicolon = 0x3B,
+
+  /// <summary>LESS-THAN SIGN U+003C (&#x3c;)</summary>
+  ON_LessThanSign = 0x3C,
+
+  /// <summary>GREATER-THAN SIGN U+003E (&#x3e;)</summary>
+  ON_GreaterThanSign = 0x3E,
+
+  /// <summary>REVERSE SOLIDUS U+005C (&#x5c;)</summary>
+  ON_Backslash = 0x5C,
+
+  /// <summary>// Unicode LOW LINE U+005F (_)</summary>
+  ON_Underscore = 0x5F,
+
+  /// <summary>VERTICAL LINE U+007C (&#x7c;)</summary>
+  ON_Pipe = 0x7C,
+
+  /// <summary>TILDE U+007E (&#x7e;)</summary>
+  ON_Tilde = 0x7E,
+
+  /// <summary>NEXT LINE (NEL) control U+0085</summary>
+  ON_NextLine = 0x0085,
+
+  /// <summary>LATIN CAPITAL LETTER R U+0052 (decimal 82) (Rhino annotation radius symbol)</summary>
+  ON_RadiusSymbol = 0x0052,
+
+  /// <summary>DEGREE SIGN U+00B0 (X&#xb0;) (Rhino annotation degree symbol)</summary>
+  ON_DegreeSymbol = 0x00B0,
+
+  /// <summary>PLUS-MINUS SIGN U+00B1 (&#xb1;) (Rhino annotation plus/minus symbol)</summary>
+  ON_PlusMinusSymbol = 0x00B1,
+
+  /// <summary>SUPERSCRIPT TWO U+00B2 (X&#xb2;) (Rhino annotation length squared symbol)</summary>
+  ON_Superscript2 = 0x00B2,
+
+  /// <summary>SUPERSCRIPT THREE U+00B3 (X&#xb3;) (Rhino annotation length cubed symbol)</summary>
+  ON_Superscript3 = 0x00B3,
+
+  /// <summary>LATIN CAPITAL LETTER O WITH STROKE U+00D8 (&#xd8;) (Rhino annotation diametersymbol)</summary>
+  ON_DiameterSymbol = 0x00D8,
+
+  /// <summary>LINE SEPARATOR U+2028 unambiguous line separator</summary>
+  ON_LineSeparator = 0x2028,
+
+  /// <summary>PARAGRAPH SEPARATOR U+2028 unambiguous paragraph separator</summary>
+  ON_ParagraphSeparator = 0x2029,
+
+  /// <summary>GREEK CAPITAL LETTER ALPHA U+0391 (&#x391;)</summary>
+  ON_GreekCapitalAlpha = 0x0391,
+
+  /// <summary>GREEK SMALL LETTER ALPHA U+03B1 (&#x3b1;)</summary>
+  ON_GreekAlpha = 0x03B1,
+
+  /// <summary>GREEK CAPITAL LETTER SIGMA U+03A3 (&#x3a3;)</summary>
+  ON_GreekCapitalSigma = 0x03A3,
+
+  /// <summary>GREEK SMALL LETTER SIGMA U+03C3 (&#x3c3;)</summary>
+  ON_GreekSigma = 0x03C3,
+
+  /// <summary>GREEK CAPITAL LETTER OMEGA U+03A9 (&#x3a9;)</summary>
+  ON_GreekCapitalOmega = 0x03A9,
+
+  /// <summary>GREEK SMALL LETTER OMEGA U+03C9 (&#x3c9;)</summary>
+  ON_GreekOmega = 0x03C9,
+
+  /// <summary>CYRILLIC CAPITAL LETTER YU U+042E (&#x42e;) (Used in Cyrillic code point tests)</summary>
+  ON_CyrillicCapitalYu = 0x042E, 
+
+  /// <summary>Simplified Chinese logogram for tree U+6881 (&#x6881;) (Used in CJK code point tests)</summary>
   ON_SimplifiedChineseTree = 0x6881,
+
+  /// <summary>Traditional Chinese logogram for tree U+6A39 (&#x6a39;) (Used in CJK code point tests)</summary>
   ON_TraditionalChineseTree = 0x6A39,
+
+  /// <summary>Japanese logogram for rhinoceros U+7280 (&#x7280;) (Used in CJK code point tests)</summary>
   ON_JapaneseRhinoceros = 0x7280,
+
+  /// <summary>Japanese logogram for tree U+6728 (&#x6728;) (Used in CJK code point tests)</summary>
   ON_JapaneseTree = 0x6728,
+
+  /// <summary>Korean HAN U+D55C (&#xd55c;) (Used in CJK code point tests)</summary>
   ON_KoreanHan = 0xD55C,
+
+  /// <summary>Korean JEONG U+C815 (&#xc815;) (Used in CJK code point tests)</summary>
   ON_KoreanJeong = 0xC815,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // Currency symbols
-  //
-  ON_DollarSign   = 0x0024, // DOLLAR SIGN U+0024
-  ON_CentSign     = 0x00A2, // CENT SIGN U+00A2
-  ON_PoundSign    = 0x00A3, // POUND SIGN U+00A3
-  ON_CurrencySign = 0x00A4, // CURRENCY SIGN U+00A4
-  ON_YenSign      = 0x00A5, // YEN SIGN U+00A5 (Chinese yuan, Japanese yen)
-  ON_EuroSign     = 0x20AC, // EURO SIGN U+20AC
-  ON_PesoSign     = 0x20B1, // PESO SIGN U+20B1
-  ON_RubleSign    = 0x20BD, // RUBLE SIGN U+20BD
+  /// <summary>DOLLAR SIGN U+0024 ($)</summary>
+  ON_DollarSign = 0x0024,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // RECYCLING SYMBOL is useful for testing symbol font substitution
-  //
-  ON_RecyclingSymbol = 0x2672, // UNIVERSAL RECYCLING SYMBOL U+2672 (decimal 9842)
-  ON_BlackRecyclingSymbol = 0x267B, // BLACK UNIVERSAL RECYCLING SYMBOL U+267B (decimal 9851)
+  /// <summary>CENT SIGN U+00A2 (&#xa2;)</summary>
+  ON_CentSign = 0x00A2,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // REPLACEMENT CHARACTER is the conventional glpyh used
-  // to mark locations where UTF encodings contain invalid
-  // information.
-  //
-  ON_ReplacementCharacter = 0xFFFD, // REPLACEMENT CHARACTER U+FFFD (decimal 65533)
+  /// <summary>POUND SIGN U+00A3 (&#xa3;)</summary>
+  ON_PoundSign = 0x00A3,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // WASTEBASKET (Good value for testing UTF-16 surrogte pair handling)
-  // 
-  // wchar_t sWastebasket[] = {0xD83D,0xDDD1,0}; // correct on Windows. (Windows wchar_t strings are UTF-16 encoded).
-  // wchar_t sWastebasket[] = {0x1F5D1,0}; // correct on OS X (OS X wchar_t strings are UTF-32 encoded).
-  //
-  // WASTEBASKET UTF-8 encodeing = (0xF0, 0x9F, 0x97, 0x91)
-  // WASTEBASKET UTF-16 encodeing = ( 0xD83D, 0xDDD1 ) (surrogate pair)
-  ON_Wastebasket = 0x1F5D1, // WASTEBASKET U+1F5D1 (decimal 128465)
+  /// <summary>CURRENCY SIGN U+00A4 (&#xa4;)</summary>
+  ON_CurrencySign = 0x00A4,
 
-  //////////////////////////////////////////////////////////////
-  //
-  // Valid codepoint values are <= 0x10FFFF 
-  // See ON_IsValidUnicodeCodepoint() for additional restrictions.
-  //
+  /// <summary>YEN SIGN U+00A5 (Chinese yuan, Japanese yen) (&#xa5;)</summary>
+  ON_YenSign = 0x00A5,
+
+  /// <summary>EURO SIGN U+20AC (&#x20ac;)</summary>
+  ON_EuroSign = 0x20AC,
+
+  /// <summary>PESO SIGN U+20B1 (&#x20b1;)</summary>
+  ON_PesoSign = 0x20B1,
+
+  /// <summary>RUBLE SIGN U+20BD (&#x20bd;)</summary>
+  ON_RubleSign = 0x20BD,
+
+  /// <summary>
+  /// UNIVERSAL RECYCLING SYMBOL U+2672 (&#x2672;)
+  /// This is a good cold point for testing glyph substitution.
+  /// </summary>
+  ON_RecyclingSymbol = 0x2672,
+
+
+  /// <summary>
+  /// BLACK UNIVERSAL RECYCLING SYMBOL U+267B (&#x267b;)
+  /// This is a good cold point for testing glyph substitution.
+  /// </summary>
+  ON_BlackRecyclingSymbol = 0x267B,
+
+  /// <summary>
+  /// BYTE ORDER MARK (BOM) U+FEFF
+  /// U+FEFF is used at the beginning of UTF encoded text to indicate the 
+  /// byte order being used. It is valid for UTF-8 encoded text to begin
+  /// with the UTF-8 encoding of U+FEFF (0xEF,0xBB,0xBF). 
+  /// This sometimes used to mark a char string as UTF-8 encoded.
+  /// and also occures when UTF-16 and UTF-32 encoded text with a byte 
+  /// order mark is converted to UTF-8 encoded text.
+  /// </summary>
+  ON_ByteOrderMark = 0xFEFF,
+
+  /// <summary>
+  /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
+  /// By convention, U+FFFD is used to mark string elements where 
+  /// an invalid UTF code point encoding was encountered.
+  /// </summary>
+  ON_ReplacementCharacter = 0xFFFD,
+
+  /// <summary>
+  /// WASTEBASKET U+1F5D1 (&#x1f5d1;)
+  /// The wastebasket is a good code point to test glyph rendering and UTF-16 surrogate pair encodings.
+  /// UTF-8 encodeing = (0xF0, 0x9F, 0x97, 0x91)
+  /// UTF-16 encodeing = ( 0xD83D, 0xDDD1 ) (UTF-16surrogate pair)
+  /// </summary>
+  ON_Wastebasket = 0x1F5D1,
+
+  /// <summary>
+  /// The maximum valid unicode code point value is 0x10FFFF.
+  /// </summary>
+  ON_MaximumCodePoint = 0x10FFFF,
+
+  /// <summary>
+  /// The maximum valid unicode code point value is 0x10FFFF.
+  /// See ON_IsValidUnicodeCodepoint() for additional restrictions.
+  /// </summary>
   ON_InvalidCodePoint = 0x110000
 };
 
@@ -3509,5 +3721,78 @@ bool ON_IsUnicodeControlCodePoint(
   ON__UINT32 code_point,
   bool bNullReturnValue
 );
+
+/// <summary>
+/// When possible, converts a code point to a superscript code point. Note that many common fonts
+/// typecast the Unicode digit superscripts as vulgar fraction numerators rather than a proper superscript.
+/// </summary>
+/// <param name="cp">
+/// Unicode code point for which a superscript is desired.
+/// </param>
+/// <param name="no_superscript_cp">
+/// When in doubt, pass cp.
+/// </param>
+/// <returns>
+/// If the code point cp has a Unicode superscript, the code point of the superscript is returned.
+/// Otherwise no_superscript_cp is returned.
+/// </returns>
+ON_DECL
+unsigned ON_UnicodeSuperscriptFromCodePoint(
+  unsigned cp,
+  unsigned no_superscript_cp
+);
+
+/// <summary>
+/// Get the Unicode code point for a decimal digit superscript.
+/// </summary>
+/// <param name="decimal_digit">
+/// 0 &lt;= decimal_digit &lt;= 9
+/// </param>
+/// <returns>
+/// If 0 &lt;= decimal_digit &lt;= 9, then the Unicode code point for the superscript digit is returned.
+/// Otherwise 0 is returned.
+/// </returns>
+ON_DECL
+unsigned ON_UnicodeSuperscriptFromDigit(
+  unsigned decimal_digit
+);
+
+
+/// <summary>
+/// When possible, converts a code point to a subscript code point. Note that many common fonts
+/// typecast the Unicode digit subscripts as vulgar fraction denominators rather than a proper subscript.
+/// </summary>
+/// <param name="cp">
+/// Unicode code point for which a subscript is desired.
+/// </param>
+/// <param name="no_subscript_cp">
+/// When in doubt, pass cp.
+/// </param>
+/// <returns>
+/// If the code point cp has a Unicode subscript, the code point of the subscript is returned.
+/// Otherwise no_subscript_cp is returned.
+/// </returns>
+ON_DECL
+unsigned ON_UnicodeSubcriptFromCodePoint(
+  unsigned cp,
+  unsigned no_subscript_cp
+);
+
+/// <summary>
+/// Get the Unicode code point for a decimal digit subscript.
+/// </summary>
+/// <param name="decimal_digit">
+/// 0 &lt;= decimal_digit &lt;= 9
+/// </param>
+/// <returns>
+/// If 0 &lt;= decimal_digit &lt;= 9, then the Unicode code point for the subscript digit is returned.
+/// Otherwise 0 is returned.
+/// </returns>
+ON_DECL
+unsigned ON_UnicodeSubscriptFromDigit(
+  unsigned decimal_digit
+);
+
+
 #endif
 #endif

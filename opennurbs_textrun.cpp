@@ -540,13 +540,24 @@ void ON_TextRun::Init(
     managed_font = &ON_Font::Default;
   if (
     false == managed_font->IsManagedFont()
-    || managed_font->IsBold() != bold
-    || managed_font->IsItalic() != italic
+    || managed_font->IsBoldInQuartet() != bold // NEVER call IsBold() - it doesn't work with light, heavy, black, ... fonts!
+    || managed_font->IsItalicInQuartet() != italic
     || managed_font->IsUnderlined() != underlined
     || managed_font->IsStrikethrough() != strikethrough
     )
   {
-    managed_font = ON_Font::ManagedFontFromRichTextProperties(
+    // Dale Lear - March 2021 - RH-62974
+    // There are multiple places in the text run, rich text parsing, and Rhino UI code
+    // that need find a font from rich text properties.
+    // They must all do it the same way. If for some reason, you must change this call,
+    // please take the time to create a single function that replaces this call, search
+    // for all the places ON_Font::FontFromRichTextProperties is called in
+    //  src4/rhino/... 
+    //  opennurbs_textrun.cpp
+    //  opennurbs_textiterator.cpp
+    // and replace every call to ON_Font::FontFromRichTextProperties with a call to
+    // your new function.
+    managed_font = ON_Font::FontFromRichTextProperties(
       ON_Font::RichTextFontName(managed_font, true),
       bold,
       italic,

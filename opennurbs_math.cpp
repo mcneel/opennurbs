@@ -4105,8 +4105,8 @@ bool ON_EvPrincipalCurvatures(
         const ON_3dVector& N, // unit normal (use TL_EvNormal())
         double* gauss,        // = Gaussian curvature = kappa1*kappa2
         double* mean,         // = mean curvature = (kappa1+kappa2)/2
-        double* kappa1,       // = largest principal curvature value (may be negative)
-        double* kappa2,       // = smallest principal curvature value (may be negative)
+        double* kappa1,       // = largest (in absolute value) principal curvature (may be negative)
+        double* kappa2,       // = smallest (in absolute value) principal curvature(may be negative)
         ON_3dVector& K1,      // kappa1 unit principal curvature direction
         ON_3dVector& K2       // kappa2 unit principal curvature direction
                               // output K1,K2,N is right handed frame
@@ -4129,8 +4129,8 @@ bool ON_EvPrincipalCurvatures(
         const ON_3dVector& N, // unit normal (use TL_EvNormal())
         double* gauss,        // = Gaussian curvature = kappa1*kappa2
         double* mean,         // = mean curvature = (kappa1+kappa2)/2
-        double* kappa1,       // = largest principal curvature value (may be negative)
-        double* kappa2,       // = smallest principal curvature value (may be negative)
+        double* kappa1,       // = largest (in absolute value) principal curvature (may be negative)
+        double* kappa2,       // = smallest (in absolute value) principal curvature (may be negative)
         ON_3dVector& K1,      // kappa1 unit principal curvature direction
         ON_3dVector& K2       // kappa2 unit principal curvature direction
                               // output K1,K2,N is right handed frame
@@ -4825,7 +4825,7 @@ bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
 	double* e3, ON_3dVector& E3);
 
 static
-bool TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV);
+bool ON_TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV);
 
 /*
 Description:
@@ -4996,7 +4996,7 @@ bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
 	double e[3] = { D,E,0 };
 
 	ON_Matrix V(3, 3);
-	bool rc = TriDiagonalQLImplicit(d, e, 3, &V);
+	bool rc = ON_TriDiagonalQLImplicit(d, e, 3, &V);
 	if (rc)
 	{
 		if (e1) *e1 = d[0];
@@ -5025,7 +5025,7 @@ n - [in]      matrix is n by n
 pV - [out]		If not nullptr the it should be an n by n matix.
 							The kth column will be a normalized eigenvector of d[k]
 */
-bool TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)
+bool ON_TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)
 {
 	/*  Debug code
 	ON_SimpleArray<double> OrigD(n);
@@ -5142,6 +5142,66 @@ bool TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)
 	return true;
 }
 
+unsigned ON_GreatestCommonDivisor(
+  unsigned a,
+  unsigned b
+)
+{
+  // binary GCD algorithm
+  // https://en.wikipedia.org/wiki/Binary_GCD_algorithm
+  unsigned s = 0;
+  while (a != 0 && b != 0)
+  {
+    if (a == b)
+      return a << s; //g* a;
 
+    if ((a & 1))
+    {
+      if ((b & 1))
+      {
+        if (a > b)
+          a = (a - b) >> 1;
+        else
+        {
+          const unsigned t = a;
+          a = (b - a) >> 1;
+          b = t;
+        }
+      }
+      else
+        b >>= 1;
+    }
+    else if ((b & 1))
+      a >>= 1;
+    else
+    {
+      a >>= 1;
+      b >>= 1;
+      ++s; // g <<= 1;
+    }
+  }
 
+  if (a == 0)
+    return b << s;
 
+  if (b == 0)
+    return a << s;
+
+  return 0;
+}
+
+unsigned ON_LeastCommonMultiple(
+  unsigned a,
+  unsigned b
+)
+{
+  if (0 == a || 0 == b)
+    return 0;
+
+  const unsigned gcd = ON_GreatestCommonDivisor(a, b);
+  a /= gcd;
+  b /= gcd;
+
+  // 0 is returned when the a*b*gcd overflows unsigned storage.
+  return (a * b < ON_UINT_MAX / gcd) ? (a * b * gcd) : 0U;
+}

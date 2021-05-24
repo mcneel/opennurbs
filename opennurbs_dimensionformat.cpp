@@ -426,7 +426,7 @@ bool ON_NumberFormatter::FormatAngleStringDMS(double angle_radians, int resoluti
     sign = -1;
     angle_degrees = -angle_degrees;
   }
-  //double minutes = (angle_degrees - floor(angle_degrees)) * 60.0;
+  angle_degrees = RoundOff(angle_degrees, 1e-8);
   double minutes = (angle_degrees - floor(angle_degrees));
   minutes *= 60.0;
   double seconds = (minutes - floor(minutes));
@@ -457,11 +457,30 @@ bool ON_NumberFormatter::FormatAngleStringDMS(double angle_radians, int resoluti
       if (resolution == 2)
       {
         iseconds = (int)floor(seconds + 0.5);
+        if (iseconds >= 60)
+        {
+          iseconds -= 60;
+          iminutes += 1;
+        }
+        if (iminutes >= 60)
+        {
+          iminutes -= 60;
+          idegrees += 1;
+        }
         rc = formatted_string.Format(L"%d%lc %d\' %d\"", idegrees, ON_wString::DegreeSymbol, iminutes, iseconds);
       }
       else 
       {
-        iseconds = (int)floor(seconds);
+        if (seconds >= 60.0)
+        {
+          seconds -= 60.0;
+          iminutes += 1;
+        }
+        if (iminutes >= 60)
+        {
+          iminutes -= 60;
+          idegrees += 1;
+        }
         ON_wString fmt;
         fmt.Format(L"%%d%%lc %%d\' %%.%dlf\"", resolution - 2);
         rc = formatted_string.Format(fmt.Array(), idegrees, ON_wString::DegreeSymbol, iminutes, seconds);

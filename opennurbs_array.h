@@ -201,6 +201,9 @@ public:
   int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
   int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
 
+  int InsertInSortedList(const T&, int (*)(const T*, const T*));
+  int InsertInSortedList(const T&, int (*)(const T*, const T*), int);
+
   //////////
   // Sorts the array using the heap sort algorithm.
   // QuickSort() is generally the better choice.
@@ -553,6 +556,9 @@ public:
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
   int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
   int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
+
+  int InsertInSortedList(const T&, int (*)(const T*, const T*));
+  int InsertInSortedList(const T&, int (*)(const T*, const T*), int);
 
   //////////
   // Sorts the array using the heap sort algorithm.

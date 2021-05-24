@@ -124,12 +124,28 @@
 #if defined(ON_COMPILER_MSC)
 #define ON_DEPRECATED  __declspec(deprecated)
 #define ON_DEPRECATED_MSG(s) [[deprecated(s)]]
+#if defined(OPENNURBS_IN_RHINO)
+#define ON_WIP_SDK
+#define ON_INTERNAL_SDK
+#else
+#define ON_WIP_SDK [[deprecated("Do not use! This function is a work in progress and will change.")]]
+#define ON_INTERNAL_SDK [[deprecated("Do not use! This function is internal.")]]
+#endif
 #elif defined(ON_COMPILER_CLANG)
 #define ON_DEPRECATED  __attribute__((deprecated))
 #define ON_DEPRECATED_MSG(s) [[deprecated(s)]]
+#if defined(OPENNURBS_IN_RHINO)
+#define ON_WIP_SDK
+#define ON_INTERNAL_SDK
+#else
+#define ON_WIP_SDK [[deprecated("Do not use! This function is a work in progress and will change.")]]
+#define ON_INTERNAL_SDK [[deprecated("Do not use! This function is internal.")]]
+#endif
 #else
 #define ON_DEPRECATED
 #define ON_DEPRECATED_MSG(s)
+#define ON_WIP_SDK
+#define ON_INTERNAL_SDK
 #endif
 
 #if defined(PI)
@@ -214,6 +230,13 @@ double ON_RadiansFromDegrees(
 #define ON_FLOAT_EPSILON 1.192092896e-07
 #endif
 #define ON_SQRT_FLOAT_EPSILON 3.452669830725202719e-4
+
+
+#if defined(UINT_MAX)
+#define ON_UINT_MAX UINT_MAX
+#else
+#define ON_UINT_MAX (~(0U))
+#endif
 
 /*
 // In cases where lazy evaluation of a double value is

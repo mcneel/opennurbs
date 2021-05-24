@@ -1,4 +1,5 @@
 #include "opennurbs.h"
+#include "opennurbs.h"
 #include "opennurbs_testclass.h"
 #include "opennurbs_subd_data.h"
 
@@ -514,63 +515,18 @@ static struct ON_UnicodeErrorParameters ON_Internal_UnicodeErrorParameters_Defau
 const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::MaskErrors = ON_Internal_UnicodeErrorParameters_Default(0xFFFFFFFF);
 const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::FailOnErrors = ON_Internal_UnicodeErrorParameters_Default(0);
 
-// ON_wString is UTF-8 encoded
-const char ON_String::Backspace = (char)ON_UnicodeCodePoint::ON_Backspace;
-const char ON_String::Tab = (char)ON_UnicodeCodePoint::ON_Tab;
-const char ON_String::LineFeed = (char)ON_UnicodeCodePoint::ON_LineFeed;
-const char ON_String::VerticalTab = (char)ON_UnicodeCodePoint::ON_VerticalTab;
-const char ON_String::FormFeed = (char)ON_UnicodeCodePoint::ON_FormFeed;
-const char ON_String::CarriageReturn = (char)ON_UnicodeCodePoint::ON_CarriageReturn;
-const char ON_String::Escape = (char)ON_UnicodeCodePoint::ON_Escape;
-const char ON_String::Space = (char)ON_UnicodeCodePoint::ON_Space;
-const char ON_String::HyphenMinus = (char)ON_UnicodeCodePoint::ON_HyphenMinus;
-const char ON_String::Slash = (char)ON_UnicodeCodePoint::ON_Slash;
-const char ON_String::Backslash = (char)ON_UnicodeCodePoint::ON_Backslash;
-const char ON_String::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
-const char ON_String::Pipe = (char)ON_UnicodeCodePoint::ON_Pipe;
-const char ON_String::Tilde = (char)ON_UnicodeCodePoint::ON_Tilde;
-
-// ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
-// ON_wString is UTF-32 encoded when sizeof(wchar_t) = 4
-// Never cast these values as "char"
-// The UTF-8 representation of any Unicode code point with value > 127
-// requires multiple bytes.
-const wchar_t ON_wString::Backspace = (wchar_t)ON_UnicodeCodePoint::ON_Backspace;
-const wchar_t ON_wString::Tab = (wchar_t)ON_UnicodeCodePoint::ON_Tab;
-const wchar_t ON_wString::LineFeed = (wchar_t)ON_UnicodeCodePoint::ON_LineFeed;
-const wchar_t ON_wString::VerticalTab = (wchar_t)ON_UnicodeCodePoint::ON_VerticalTab;
-const wchar_t ON_wString::FormFeed = (wchar_t)ON_UnicodeCodePoint::ON_FormFeed;
-const wchar_t ON_wString::CarriageReturn = (wchar_t)ON_UnicodeCodePoint::ON_CarriageReturn;
-const wchar_t ON_wString::Escape = (wchar_t)ON_UnicodeCodePoint::ON_Escape;
-const wchar_t ON_wString::Space = (wchar_t)ON_UnicodeCodePoint::ON_Space;
-const wchar_t ON_wString::HyphenMinus = (wchar_t)ON_UnicodeCodePoint::ON_HyphenMinus;
-const wchar_t ON_wString::Slash = (wchar_t)ON_UnicodeCodePoint::ON_Slash;
-const wchar_t ON_wString::Backslash = (wchar_t)ON_UnicodeCodePoint::ON_Backslash;
-const wchar_t ON_wString::Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
-const wchar_t ON_wString::Pipe = (wchar_t)ON_UnicodeCodePoint::ON_Pipe;
-const wchar_t ON_wString::Tilde = (wchar_t)ON_UnicodeCodePoint::ON_Tilde;
-const wchar_t ON_wString::DecimalAsPeriod = (wchar_t)ON_UnicodeCodePoint::ON_Period;
-const wchar_t ON_wString::DecimalAsComma = (wchar_t)ON_UnicodeCodePoint::ON_Comma;
-
-#if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
-// ON_wString is UTF-16 encoded when sizeof(wchar_t) = 2
-// ON_wString is UTF-32 encoded when sizeof(wchar_t) = 4
-const wchar_t ON_wString::DegreeSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DegreeSymbol;
-const wchar_t ON_wString::RadiusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_RadiusSymbol;
-const wchar_t ON_wString::DiameterSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DiameterSymbol;
-const wchar_t ON_wString::PlusMinusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_PlusMinusSymbol;
-const wchar_t ON_wString::RecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_RecyclingSymbol;
-const wchar_t ON_wString::ReplacementCharacter = (wchar_t)ON_UnicodeCodePoint::ON_ReplacementCharacter;
-const wchar_t ON_wString::NextLine = (wchar_t)ON_UnicodeCodePoint::ON_NextLine;
-const wchar_t ON_wString::LineSeparator = (wchar_t)ON_UnicodeCodePoint::ON_LineSeparator;
-const wchar_t ON_wString::ParagraphSeparator = (wchar_t)ON_UnicodeCodePoint::ON_ParagraphSeparator;
-const wchar_t ON_wString::NoBreakSpace = (wchar_t)ON_UnicodeCodePoint::ON_NoBreakSpace;
-const wchar_t ON_wString::NarrowNoBreakSpace = (wchar_t)ON_UnicodeCodePoint::ON_NarrowNoBreakSpace;
-const wchar_t ON_wString::ZeroWidthSpace = (wchar_t)ON_UnicodeCodePoint::ON_ZeroWidthSpace;
-#endif
-
 const ON_String ON_String::EmptyString;
+static const ON_String ON_Internal_ByteOrderMark()
+{
+  // UTF-8 encoded byte order mark.
+  const unsigned char bom[3] = {0xEFU,0xBBU,0xBFU};
+  return ON_String((const char*)bom);
+}
+const ON_String ON_String::ByteOrderMark(ON_Internal_ByteOrderMark());
+
 const ON_wString ON_wString::EmptyString;
+const ON_wString ON_wString::ByteOrderMark((wchar_t)ON_UnicodeCodePoint::ON_ByteOrderMark);
+
 const ON_NameHash ON_NameHash::UnsetNameHash ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_NameHash);
 const ON_NameHash ON_NameHash::EmptyNameHash = ON_NameHash::CreateIdAndEmptyName(ON_nil_uuid);
 const ON_wString ON_ModelComponent::ReferencePrefixDelimiter(L" : ");
@@ -690,7 +646,10 @@ const ON_3fVector ON_3fVector::ZAxis(0.0f, 0.0f, 1.0f);
 
 const ON_WindingNumber ON_WindingNumber::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindingNumber);
 
-const double ON_Symmetry::ZeroTolerance = 1.0e-8;
+// Do not increase this tolerance to fix a specific bug.
+// This tolerance is used after input has been cleaned up
+// to detect flaws.
+const double ON_Symmetry::ZeroTolerance = 1.0e-8; 
 
 const ON_Symmetry ON_Symmetry::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Symmetry);
 
@@ -902,6 +861,10 @@ const ON_Line ON_Line::NanLine(ON_3dPoint::NanPoint, ON_3dPoint::NanPoint);
 const ON_PlaneEquation ON_PlaneEquation::UnsetPlaneEquation(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 const ON_PlaneEquation ON_PlaneEquation::ZeroPlaneEquation(0.0, 0.0, 0.0, 0.0);
 const ON_PlaneEquation ON_PlaneEquation::NanPlaneEquation(ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN);
+const ON_PlaneEquation ON_PlaneEquation::WorldXY(0.0, 0.0, 1.0, 0.0);
+const ON_PlaneEquation ON_PlaneEquation::WorldYZ(1.0, 0.0, 0.0, 0.0);
+const ON_PlaneEquation ON_PlaneEquation::WorldZX(0.0, 1.0, 0.0, 0.0);
+
 
 const ON_Plane ON_Plane::World_xy(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis);
 const ON_Plane ON_Plane::World_yz(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis);
@@ -1413,7 +1376,7 @@ ON_Internal_FontGlyphPool ON_Internal_FontGlyphPool::theGlyphItemPool;
 
 // ON_ManagedFonts::List needs to be allocated before ON_Font::Default
 // This list of installed fonts is used to initialize ON_Font::Default.
-ON_ManagedFonts ON_ManagedFonts::List ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ManagedFonts);
+ON_ManagedFonts ON_ManagedFonts::List((ON__UINT_PTR)0);
 
 // The ON_PTR_SEMAPHORE1 parameter to the
 // ON_Font::ON_Font(const ON_Font&) copy ctor triggers special
@@ -2345,7 +2308,7 @@ static ON_DimStyle DimStyleFeetEngrave()
   ON_DimStyle dimstyle;
   DimStyleInit(L"Feet Engrave", -10, id, dimstyle);
   DimStyleFeetEngraveInit(dimstyle);
-  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
   Internal_SystemDimStyleFinalize(dimstyle);
@@ -2360,7 +2323,7 @@ static ON_DimStyle DimStyleMillimeterEngrave()
   ON_DimStyle dimstyle;
   DimStyleInit(L"Millimeter Engrave", -11, id, dimstyle);
   DimStyleMillimeterEngraveInit(dimstyle);
-  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
   Internal_SystemDimStyleFinalize(dimstyle);
@@ -2375,7 +2338,7 @@ static ON_DimStyle DimStyleModelUnitsEngrave()
   ON_DimStyle dimstyle;
   DimStyleInit(L"Model Units Engrave", -12, id, dimstyle);
   DimStyleModelUnitsEngraveInit(dimstyle);
-  const ON_Font* font = ON_Font::InstalledFontFromRichTextProperties(L"SLF-RHN Architect", false, false);
+  const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
   Internal_SystemDimStyleFinalize(dimstyle);
@@ -2695,6 +2658,13 @@ const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
 const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
 const ON_SubDComponentList ON_SubDComponentList::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentList);
+const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubD_ComponentIdTypeAndTag);
+
+const ON_SubDComponentId ON_SubDComponentIdUnset(ON_SubDComponentPtr::Type::Unset, 0U);
+
+// Passes() returns true for every non nullptr component.
+const ON_SubDComponentTest ON_SubDComponentTest::AllPass((ON__UINT_PTR)1);
+const ON_SubDComponentTest ON_SubDComponentTest::AllFail((ON__UINT_PTR)0);
 
 
 const ON_SubDEdgeChain ON_SubDEdgeChain::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDEdgeChain);

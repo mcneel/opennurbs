@@ -558,6 +558,18 @@ public:
     const ON_BoundingBox& other_bbox
     ) const;
 
+  /*
+  Description:
+    Test to see if "this" and line are disjoint (do not intersect or line is included).
+  Parameters:
+    line - [in]
+    infinite - [in] if false or not provided, then the line is considered bounded by start and end points.
+  Returns:
+    True if "this" and line are disjoint.
+  */
+  bool IsDisjoint(const ON_Line& line) const;
+  bool IsDisjoint(const ON_Line& line, bool infinite) const;
+
   bool SwapCoordinates( int, int );
 
  /*

@@ -68,6 +68,70 @@ const ON_wString ON_SHA1_Hash::ToStringEx(bool bUpperCaseHexadecimalDigits) cons
     return ON_wString(L"ZeroSHA1");
   return ToString(bUpperCaseHexadecimalDigits);
 }
+
+const ON_SHA1_Hash ON_SHA1_Hash::FromString(
+  const ON_wString string_to_parse,
+  bool bParseLeasingSpaces,
+  bool bParseInteriorSpace,
+  bool bParseInteriorHyphen,
+  ON_SHA1_Hash failure_return_value
+)
+{
+  const wchar_t* s = static_cast<const wchar_t*>(string_to_parse);
+  if (nullptr == s)
+    return failure_return_value;
+
+  unsigned digit_count = 0;
+  int digits[40] = {};
+  const wchar_t* skipped = nullptr;
+  const int len = string_to_parse.Length();
+  int sdex = 0;
+  for (/* empty init */; sdex < len && digit_count < 40; ++sdex)
+  {
+    const int c = (int)s[sdex];
+    if (c >= '0' && c <= '9')
+    {
+      digits[digit_count++] = (c - '0');
+    }
+    else if (c >= 'A' && c <= 'F')
+    {
+      digits[digit_count++] = (c - 'A') + 10;
+    }
+    else if (c >= 'a' && c <= 'f')
+    {
+      digits[digit_count++] = (c - 'a') + 10;
+    }
+    else  if ((int)(ON_wString::Space) == c)
+    {
+      if (bParseLeasingSpaces && 0 == digit_count)
+        continue; // skip leading white space
+
+      if (bParseInteriorSpace && digit_count > 0 && skipped != s - 1)
+        skipped = s;
+      else
+        break;
+    }
+    else  if ((int)(ON_wString::HyphenMinus) == c)
+    {
+      if (bParseInteriorHyphen && digit_count > 0 && skipped != s - 1)
+        skipped = s;
+      else
+        break;
+    }
+    else
+      break;
+  }
+
+  if (40 != digit_count || sdex > len || (sdex < len && true == ON_wString::IsHexDigit(s[sdex])))
+    return failure_return_value;
+
+  ON_SHA1_Hash h;
+  int i = 0;
+  for(int j = 0; j < 20; ++j, ++i, ++i)
+    h.m_digest[j] = (ON__UINT8)(16 * digits[i] + digits[i + 1]);
+  return h;
+}
+
   
 bool ON_SHA1_Hash::Read(
   class ON_BinaryArchive& archive
@@ -130,11 +194,21 @@ bool ON_SHA1_Hash::IsEmptyContentHash() const
   return 0 == ON_SHA1_Hash::Compare(*this, ON_SHA1_Hash::EmptyContentHash);
 }
 
-bool ON_SHA1_Hash::IsZeroDigentOrEmptyContentHash() const
+bool ON_SHA1_Hash::IsZeroDigestOrEmptyContentHash() const
 {
   return IsZeroDigest() || IsEmptyContentHash();
 }
 
+bool ON_SHA1_Hash::IsSet() const
+{
+  return IsZeroDigestOrEmptyContentHash() ? false : true;
+}
+
+// OBSOLETE - spelling error in name Digent instead of Digest
+bool ON_SHA1_Hash::IsZeroDigentOrEmptyContentHash() const
+{
+  return IsZeroDigestOrEmptyContentHash();
+}
 
 
 int ON_SHA1_Hash::Compare(

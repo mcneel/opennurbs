@@ -1468,4 +1468,5 @@ double ON_CurveOrientationArea(
   bool bReverseCurve
   );
 
+
 #endif

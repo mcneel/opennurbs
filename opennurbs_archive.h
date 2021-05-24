@@ -3070,7 +3070,7 @@ public:
   /*
   Parameters:
     archive_3dm_version - [in]
-      1,2,3,4,5,50,60,...
+      1,2,3,4,5,50,60,70,...
     opennurbs_library_version - [in]
       a number > 100000000
   */
@@ -3087,6 +3087,18 @@ public:
   ///////////////////////////////////////////////////////////////////
   // Step 1: REQUIRED - Write/Read Start Section
   //
+
+  
+  /*
+  Description:
+    In rare cases, experts testing handling of corrupt 3dm files need to
+    write a 3dm archive that is corrupt. In this rare testing situation,
+    those experts should call IntentionallyWriteCorrupt3dmStartSectionForExpertTesting()
+    exactly one time before they begin writing the file. The 32 byte idendifier will
+    replace the 1st 3 spaces with a capital X to mimic a file that became corrupt
+    whle residing on storage media.
+  */
+  void IntentionallyWriteCorrupt3dmStartSectionForExpertTesting();
 
   /*
   Parameters:
@@ -4159,6 +4171,7 @@ public:
     5     an old version 5 3dm archive is being read
     50    a version 5 3dm archive is being read/written
     60    a version 6 3dm archive is being read/written
+    70    a version 7 3dm archive is being read/written
     ...
   See Also:
     ON_BinaryArchive::ArchiveOpenNURBSVersion
@@ -4474,7 +4487,7 @@ private:
   int ReadObjectHelper(ON_Object**);
 
   int m_3dm_version = 0; // 1,2,3,4,5 (obsolete 32-bit chunk sizes)
-                         // 50,60,... (64-bit chunk sizes)
+                         // 50,60,70,... (64-bit chunk sizes)
 
   int m_3dm_v1_layer_index = 0;
   int m_3dm_v1_material_index = 0;
@@ -5219,7 +5232,10 @@ public:
 private:
   bool m_SetModelComponentSerialNumbers = false;
   bool m_bCheckForRemappedIds = false;
-  bool m_reservedA = false;
+  // Expert testers who need to create a corrupt 3dm file
+  // call IntentionallyWriteCorrupt3dmStartSectionForExpertTesting() before writing
+  // the 3dm file.
+  unsigned char m_IntentionallyWriteCorrupt3dmStartSection = 0;
   bool m_reservedB = false;
   unsigned int m_model_serial_number = 0;
   unsigned int m_reference_model_serial_number = 0;
@@ -5527,7 +5543,7 @@ public:
       false - Do not copy the input buffer.  
           In this case you are responsible for making certain the input buffer 
           is valid while this class is in use.
-    archive_3dm_version  - [in] (1,2,3,4,5,50,60,...)
+    archive_3dm_version  - [in] (1,2,3,4,5,50,60,70,...)
     archive_opennurbs_version - [in] 
   */
   ON_Read3dmBufferArchive( 
@@ -5601,7 +5617,7 @@ public:
       If max_sizeof_buffer > 0 and the amount of information saved 
       requires a buffer larger than this size, then writing fails. 
       If max_sizeof_buffer <= 0, then no buffer size limits are enforced.
-    archive_3dm_version  - [in] (0, ,2,3,4,5,50,60,...)
+    archive_3dm_version  - [in] (0, ,2,3,4,5,50,60,70,...)
       Pass 0 or ON_BinaryArchive::CurrentArchiveVersion() to write the
       version of opennurbs archives used by lastest version of Rhino.
     archive_opennurbs_version - [in]
@@ -5688,7 +5704,7 @@ Description:
   Create a simple archive that contains a single or multiple  geometric object(s).
 Parameters:
   archive - [in] destination archive.
-  version - [in] (0, 2, 3, 4,50,60,...) format version.archive version number.
+  version - [in] (0, 2, 3, 4,50,60,70,...) format version.archive version number.
       Version 2 format can be read by Rhino 2 and Rhino 3.  Version
       3 format can be read by Rhino 3.
       Pass 0 or ON_BinaryArchive::CurrentArchiveVersion() to write

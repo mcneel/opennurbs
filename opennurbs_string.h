@@ -17,7 +17,6 @@
 #if !defined(ON_STRING_INC_)
 #define ON_STRING_INC_
 
-
 /*
 Description:
   Sort an index array.
@@ -67,7 +66,7 @@ void ON_Sort(
 Description:
   Sort an index array using a compare function
   that takes an additional pointer that can be used to
-  pass extra informtation.
+  pass extra information.
 Parameters
   method - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort.
@@ -875,6 +874,10 @@ const ON_SHA1_Hash ON_StringContentHash(
   ON_StringMapOrdinalType mapping
 );
 
+/// <summary>
+/// A char string. 
+/// Any multibyte encoding can be used. If the encoding is unknown, assume it is UTF-8.
+/// </summary>
 class ON_CLASS ON_String
 {
 public:
@@ -885,36 +888,134 @@ public:
 
   enum : int
   {
-    // This ON_String::MaximumStringLength value of 100,000,000
-    // is used for string length sanity checking in both ON_String and
-    // ON_wString.
-    // The design of the ON_String and ON_wString classes could support 
-    // string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
-    // a cap of 100 million seems generous enough for current usage
-    // and is small enough to detect many corrupt memory
-    // situations.
-    // This value is used for both ON_String and ON_wString.
+    /// <summary>
+    /// This ON_String::MaximumStringLength value of 100,000,000
+    /// is used for string length sanity checking in both ON_String and
+    /// ON_wString.
+    /// The design of the ON_String and ON_wString classes could support 
+    /// string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
+    /// a cap of 100 million seems generous enough for current usage
+    /// and is small enough to detect many corrupt memory
+    /// situations.
+    /// This value is used for both ON_String and ON_wString.
+    /// </summary>
     MaximumStringLength = 100000000
   };
 
-  // ON_String::EmptyString has length 0.
-  // const char* s = ON_String::EmptyString sets s to "".
+  /// <summary>
+  /// ON_String::EmptyString has length 0.
+  /// const char* s = ON_String::EmptyString sets s = &quot;&quot;;
+  /// </summary>
   static const ON_String EmptyString;
 
-  static const char Backspace;       // Unicode BACKSPACE control U+0008
-  static const char Tab;             // Unicode CHARACTER TABULATION control U+0009
-  static const char LineFeed;        // Unicode LINE FEED control U+000A
-  static const char VerticalTab;     // Unicode LINE TABULATION control U+000B
-  static const char FormFeed;        // Unicode FORM FEED control U+000C
-  static const char CarriageReturn;  // Unicode CHARACTER TABULATION control U+000D
-  static const char Escape;          // Unicode CARRIAGE RETURN control U+001B
-  static const char Space;           // Unicode SPACE U+0020
-  static const char HyphenMinus;     // Unicode SPACE U+002D
-  static const char Slash;           // Unicode SOLIDUS U+002F
-  static const char Backslash;       // Unicode REVERSE SOLIDUS U+005C
-  static const char Underscore;      // Unicode LOW LINE U+005F
-  static const char Pipe;            // Unicode VERTICAL LINE U+007C
-  static const char Tilde;           // Unicode TILDE U+007E
+  /// <summary>
+  /// Even though a char string has endian independent byte order, 
+  /// it is valid for UTF-8 encoded text to begin with the UTF-8 encoding of U+FEFF. 
+  /// A UTF-8 BOM is sometimes used to mark a char string as UTF-8 encoded.
+  /// A UTF-8 BOM can occur when UTF-16 and UTF-32 encoded text with a byte 
+  /// order mark is converted to UTF-8 encoded text. Conversely a UTF-8 BOM
+  /// is sometimes used when UTF-8 encode text will be converted to UTF-16/UTF-32 
+  /// encoded text and a BOM is desired in the result.
+  /// </summary>
+  static const ON_String ByteOrderMark;
+
+  /// <summary>BACKSPACE control U+0008</summary>
+  static const char Backspace = (char)ON_UnicodeCodePoint::ON_Backspace;
+
+  /// <summary>CHARACTER TABULATION control U+0009</summary>
+  static const char Tab = (char)ON_UnicodeCodePoint::ON_Tab;
+
+  /// <summary>LINE FEED control U+000A</summary>
+  static const char LineFeed = (char)ON_UnicodeCodePoint::ON_LineFeed;
+
+  /// <summary>LINE TABULATION control U+000B</summary>
+  static const char VerticalTab = (char)ON_UnicodeCodePoint::ON_VerticalTab;
+
+  /// <summary>FORM FEED control U+000C</summary>
+  static const char FormFeed = (char)ON_UnicodeCodePoint::ON_FormFeed;
+
+  /// <summary>CARRIAGE RETURN control U+000D</summary>
+  static const char CarriageReturn = (char)ON_UnicodeCodePoint::ON_CarriageReturn;
+
+  /// <summary>ESCAPE control U+001B</summary>
+  static const char Escape = (char)ON_UnicodeCodePoint::ON_Escape;
+
+  /// <summary>SPACE U+0020</summary>
+  static const char Space = (char)ON_UnicodeCodePoint::ON_Space;
+
+  /// <summary>QUOTATION MARK U+0022 (&quot;)</summary>
+  static const char QuotationMark = (char)ON_UnicodeCodePoint::ON_QuotationMark;
+
+  /// <summary>NUMBER SIGN U+0023 (#)</summary>
+  static const char NumberSign = (char)ON_UnicodeCodePoint::ON_NumberSign;
+
+  /// <summary>PERCENT SIGN U+0025 (%)</summary>
+  static const char PercentSign = (char)ON_UnicodeCodePoint::ON_PercentSign;
+
+  /// <summary>AMPERSAND U+0026 (&amp;)</summary>
+  static const char Ampersand = (char)ON_UnicodeCodePoint::ON_Ampersand;
+
+  /// <summary>APOSTROPHE U+0027 (&apos;)</summary>
+  static const char Apostrophe = (char)ON_UnicodeCodePoint::ON_Apostrophe;
+
+  /// <summary>COMMA U+002C (,)</summary>
+  static const char Comma = (char)ON_UnicodeCodePoint::ON_Comma;
+
+  /// <summary>HYPHEN-MINUS U+002D (-)</summary>
+  static const char HyphenMinus = (char)ON_UnicodeCodePoint::ON_HyphenMinus;
+
+  /// <summary>PERIOD U+002E (decimal 46) (.)</summary>
+  static const char Period = (char)ON_UnicodeCodePoint::ON_Period;
+
+  /// <summary>SOLIDUS U+002F (&#x2f;)</summary>
+  static const char Slash = (char)ON_UnicodeCodePoint::ON_Slash;
+
+  /// <summary>COLON U+003A (:)</summary>
+  static const char Colon = (char)ON_UnicodeCodePoint::ON_Colon;
+
+  /// <summary>SEMICOLON U+003B (;)</summary>
+  static const char Semicolon = (char)ON_UnicodeCodePoint::ON_Semicolon;
+
+  /// <summary>LESS-THAN SIGN U+003C (&#x3c;)</summary>
+  static const char LessThanSign = (char)ON_UnicodeCodePoint::ON_LessThanSign;
+
+  /// <summary>GREATER-THAN SIGN U+003E (&#x3e;)</summary>
+  static const char GreaterThanSign = (char)ON_UnicodeCodePoint::ON_GreaterThanSign;
+
+  /// <summary>REVERSE SOLIDUS U+005C (&#x5c;)</summary>
+  static const char Backslash = (char)ON_UnicodeCodePoint::ON_Backslash;
+
+  /// <summary>// Unicode LOW LINE U+005F (_)</summary>
+  static const char Underscore = (char)ON_UnicodeCodePoint::ON_Underscore;
+
+  /// <summary>VERTICAL LINE U+007C (&#x7c;)</summary>
+  static const char Pipe = (char)ON_UnicodeCodePoint::ON_Pipe;
+
+  /// <summary>TILDE U+007E (&#x7e;)</summary>
+  static const char Tilde = (char)ON_UnicodeCodePoint::ON_Tilde;
+
+  /// <summary>Period decimal point (.)</summary>
+  static const char DecimalAsPeriod = (char)ON_UnicodeCodePoint::ON_Period;
+
+  /// <summary>Comma decimal point (,)</summary>
+  static const char DecimalAsComma = (char)ON_UnicodeCodePoint::ON_Comma;
+
+
+  /*
+  Parameters:
+    c - [in]
+  Returns:
+    True if c is '0', '1', ..., '9', 'A', 'B', ..., 'F', 'a', 'b', ..., of 'f'.
+  */
+  static bool IsHexDigit(char c);
+
+  /*
+  Parameters:
+    c - [in]
+  Returns:
+    True if c is '0', '1', ..., or '9'.
+  */
+  static bool IsDecimalDigit(char c);
     
 private:
   // Use IsEmpty() or IsNotEmpty() when you want a bool 
@@ -1956,6 +2057,13 @@ public:
 
   /*
   Returns:
+    A duplicate of this that does not share memory with any other string.
+    (A new array is allocated for the returned string.)
+  */
+  const ON_String Duplicate() const;
+
+  /*
+  Returns:
     Total number of bytes of memory used by this class.
     (For use in ON_Object::SizeOf() overrides.
   */
@@ -2122,56 +2230,475 @@ Returns:
 ON_DECL
 bool operator>=(const char* lhs, const ON_String& rhs);
 
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-//
-// ON_wString
-//
-
+/// <summary>
+/// A wide character string. 
+/// The default encoding is the encoding the compiler uses for wchar_t* s = L&quot;...&quot;; strings. 
+/// This is typically 2 byte wchar_t UTF-16 on Windows and 4 byte wchar_t UTF-32 on MacOS. 
+/// However, some MacOS SDK functions return 4 byte wchar_t UTF-16 strings.
+/// </summary>
 class ON_CLASS ON_wString
 {
 public:
-
-  // ON_String::EmptyString has length 0.
-  // const char* s = ON_String::EmptyString sets s to L"".
+  /// <summary>
+  /// ON_String::EmptyString has length 0.
+  /// const char* s = ON_String::EmptyString sets s to L&quot;&quot;.
+  /// </summary>
   static const ON_wString EmptyString;
 
-  static const wchar_t Backspace;       // Unicode BACKSPACE control U+0008
-  static const wchar_t Tab;             // Unicode CHARACTER TABULATION control U+0009
-  static const wchar_t LineFeed;        // Unicode LINE FEED control U+000A
-  static const wchar_t VerticalTab;     // Unicode LINE TABULATION control U+000B
-  static const wchar_t FormFeed;        // Unicode FORM FEED control U+000C
-  static const wchar_t CarriageReturn;  // Unicode CARRIAGE RETURN control U+000D
-  static const wchar_t Escape;          // Unicode CARRIAGE RETURN control U+001B
-  static const wchar_t Space;           // Unicode SPACE U+0020
-  static const wchar_t HyphenMinus;     // Unicode SPACE U+002D
-  static const wchar_t Slash;           // Unicode SOLIDUS U+002F
-  static const wchar_t Backslash;       // Unicode REVERSE SOLIDUS U+005C
-  static const wchar_t Underscore;      // Unicode LOW LINE U+005F
-  static const wchar_t Pipe;            // Unicode VERTICAL LINE U+007C
-  static const wchar_t Tilde;           // Unicode TILDE U+007E
-  static const wchar_t DecimalAsPeriod; // Unicode PERIOD U+002E	
-  static const wchar_t DecimalAsComma;  // Unicode COMMA U+002C
+  /// <summary>
+  /// UTF-16/UTF-32 encoding of the Unicode byte order mark (BOM) U+FEFF.
+  /// </summary>
+  static const ON_wString ByteOrderMark;
+
+  /// <summary>
+  /// Identifies a built in string that can be used for testing.
+  /// </summary>
+  enum class ExampleType : unsigned int
+  {
+    /// <summary>
+    /// ON_wString::EmptyString
+    /// </summary>
+    Empty = 0,
+
+    /// <summary>
+    /// A wchar_t string that contains code points with 2, 3, 4, and 5 hex digit code points.
+    /// Useful for testing what a compiler does with string that have UTF-8 multiple byte encodings and UTF-16 surrogate pair encodings.
+    /// &quot;The math teacher said, &#x5c;&quot;It isn&apos;t true that &#x3a3; &gt; 3&#xa2; &amp; &#x3a3; &lt; 2 &#x20bd; &amp; &#x3a3; &gt; &#x20ac;99.&#x5c;&quot; &#x1f5d1;!&quot;
+    /// </summary>
+    WideChar = 1,
+
+    /// <summary>
+    /// The WideChar string UTF-16 encoded.
+    /// </summary>
+    UTF16 = 51,
+
+    /// <summary>
+    /// The rich text string from ON_wString::RichTextExample(&ON_FOnt::Default).
+    /// </summary>
+    RichText = 90,
+
+    /// <summary>
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin UTF-16 encoded.
+    /// </summary>
+    XML = 101,
+
+    /// <summary>
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin encoded in the &#hhhh; format
+    /// using  lower case hex digits (0123456789abcdef).
+    /// </summary>
+    XMLalternate1 = 102,
+
+    /// <summary>
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// and code points above basic latin encoded in the hexadecimal &amp;#xhhhh; format
+    /// with  upper case hex digits (0123456789ABCDEF).
+    /// </summary>
+    XMLalternate2 = 103,
+
+    /// <summary>
+    /// The WideChar string as an XML value with special characters and code points above 
+    /// basic latin encoded in the decimal code point &amp;#nnnn; format.
+    /// </summary>
+    XMLalternate3 = 104,
+  };
+
+
+  /// <summary>
+  /// A selection of strings that can be used for testing.
+  /// </summary>
+  static const ON_wString Example(ON_wString::ExampleType t);
+
+  /// <summary>
+  /// Get a rich text example.
+  /// </summary>
+  /// <param name="rich_text_face_name"> 
+  /// The rich text font name. 
+  /// This name is not well defined and the best choice can be platform specific. 
+  /// For Windows use the LOGFONT always works.
+  /// For Mac OS the font family name generally works.
+  /// If you have an ON_Font, then ON_Font.RichTextFontName() or ON_Font.FontQuartet().QuartetName() are good choices.
+  /// </param>
+  /// <param name="bBold">Pass true to include a rich text bold face line.</param>
+  /// <param name="bItalic">Pass true to include a rich text italic face line.</param>
+  /// <param name="bBoldItalic">Pass true to include a rich text bold-italic face line.</param>
+  /// <param name="bUnderline">Pass true to include both plain and underline in the sample.</param>
+  /// <returns>
+  /// A rich text example using the specified face and the specified 
+  /// </returns>
+  static const ON_wString RichTextExample(
+    ON_wString rich_text_font_name,
+    bool bBold,
+    bool bItalic,
+    bool bBoldItalic,
+    bool bUnderline
+  );
+
+  /// <summary>
+  /// Get a rich text example.
+  /// </summary>
+  /// <param name="font"> 
+  /// Every rich text face supported by font will be in the sample.
+  /// </param>
+  /// <returns>
+  /// A rich text example using the specified font in all supported rich text faces (regular/bold/italic/bold-italic) in both plain and underline.
+  /// </returns>
+  static const ON_wString RichTextExample(
+    const class ON_Font* font
+  );
+
+  /// <summary>
+  /// Get a rich text example.
+  /// </summary>
+  /// <param name="quartet"> 
+  /// Every rich text face supported by the font quartet will be in the sample.
+  /// </param>
+  /// <returns>
+  /// A rich text example using the specified font in all supported rich text faces (regular/bold/italic/bold-italic) in both plain and underline.
+  /// </returns>
+  static const ON_wString RichTextExample(
+    const class ON_FontFaceQuartet* quartet
+  );
+
+public:
+  /// <summary>BACKSPACE control U+0008</summary>
+  static const wchar_t  Backspace = (wchar_t)ON_UnicodeCodePoint::ON_Backspace;
+
+  /// <summary>CHARACTER TABULATION control U+0009</summary>
+  static const wchar_t  Tab = (wchar_t)ON_UnicodeCodePoint::ON_Tab;
+
+  /// <summary>LINE FEED control U+000A</summary>
+  static const wchar_t  LineFeed = (wchar_t)ON_UnicodeCodePoint::ON_LineFeed;
+
+  /// <summary>LINE TABULATION control U+000B</summary>
+  static const wchar_t  VerticalTab = (wchar_t)ON_UnicodeCodePoint::ON_VerticalTab;
+
+  /// <summary>FORM FEED control U+000C</summary>
+  static const wchar_t  FormFeed = (wchar_t)ON_UnicodeCodePoint::ON_FormFeed;
+
+  /// <summary>CARRIAGE RETURN control U+000D</summary>
+  static const wchar_t  CarriageReturn = (wchar_t)ON_UnicodeCodePoint::ON_CarriageReturn;
+
+  /// <summary>ESCAPE control U+001B</summary>
+  static const wchar_t  Escape = (wchar_t)ON_UnicodeCodePoint::ON_Escape;
+
+  /// <summary>SPACE U+0020</summary>
+  static const wchar_t  Space = (wchar_t)ON_UnicodeCodePoint::ON_Space;
+
+  /// <summary>QUOTATION MARK U+0022 (&quot;)</summary>
+  static const wchar_t  QuotationMark = (wchar_t)ON_UnicodeCodePoint::ON_QuotationMark;
+
+  /// <summary>NUMBER SIGN U+0023 (#)</summary>
+  static const wchar_t  NumberSign = (wchar_t)ON_UnicodeCodePoint::ON_NumberSign;
+
+  /// <summary>PERCENT SIGN U+0025 (%)</summary>
+  static const wchar_t  PercentSign = (wchar_t)ON_UnicodeCodePoint::ON_PercentSign;
+
+  /// <summary>AMPERSAND U+0026 (&amp;)</summary>
+  static const wchar_t  Ampersand = (wchar_t)ON_UnicodeCodePoint::ON_Ampersand;
+
+  /// <summary>APOSTROPHE U+0027 (&apos;)</summary>
+  static const wchar_t  Apostrophe = (wchar_t)ON_UnicodeCodePoint::ON_Apostrophe;
+
+  /// <summary>COMMA U+002C (,)</summary>
+  static const wchar_t  Comma = (wchar_t)ON_UnicodeCodePoint::ON_Comma;
+
+  /// <summary>HYPHEN-MINUS U+002D (-)</summary>
+  static const wchar_t  HyphenMinus = (wchar_t)ON_UnicodeCodePoint::ON_HyphenMinus;
+
+  /// <summary>PERIOD U+002E (decimal 46) (.)</summary>
+  static const wchar_t  Period = (wchar_t)ON_UnicodeCodePoint::ON_Period;
+
+  /// <summary>SOLIDUS U+002F (&#x2f;)</summary>
+  static const wchar_t  Slash = (wchar_t)ON_UnicodeCodePoint::ON_Slash;
+
+  /// <summary>COLON U+003A (:)</summary>
+  static const wchar_t  Colon = (wchar_t)ON_UnicodeCodePoint::ON_Colon;
+
+  /// <summary>SEMICOLON U+003B (;)</summary>
+  static const wchar_t  Semicolon = (wchar_t)ON_UnicodeCodePoint::ON_Semicolon;
+
+  /// <summary>LESS-THAN SIGN U+003C (&#x3c;)</summary>
+  static const wchar_t  LessThanSign = (wchar_t)ON_UnicodeCodePoint::ON_LessThanSign;
+
+  /// <summary>GREATER-THAN SIGN U+003E (&#x3e;)</summary>
+  static const wchar_t  GreaterThanSign = (wchar_t)ON_UnicodeCodePoint::ON_GreaterThanSign;
+
+  /// <summary>REVERSE SOLIDUS U+005C (&#x5c;)</summary>
+  static const wchar_t  Backslash = (wchar_t)ON_UnicodeCodePoint::ON_Backslash;
+
+  /// <summary>// Unicode LOW LINE U+005F (_)</summary>
+  static const wchar_t  Underscore = (wchar_t)ON_UnicodeCodePoint::ON_Underscore;
+
+  /// <summary>VERTICAL LINE U+007C (&#x7c;)</summary>
+  static const wchar_t  Pipe = (wchar_t)ON_UnicodeCodePoint::ON_Pipe;
+
+  /// <summary>TILDE U+007E (&#x7e;)</summary>
+  static const wchar_t  Tilde = (wchar_t)ON_UnicodeCodePoint::ON_Tilde;
+
+  /// <summary>Period decimal point (.)</summary>
+  static const wchar_t DecimalAsPeriod = (wchar_t)ON_UnicodeCodePoint::ON_Period;
+
+  /// <summary>Comma decimal point (,)</summary>
+  static const wchar_t DecimalAsComma = (wchar_t)ON_UnicodeCodePoint::ON_Comma;
 
 #if defined(ON_SIZEOF_WCHAR_T) && ON_SIZEOF_WCHAR_T >= 2
-  // Never cast these values as "char"
-  // The UTF-8 representation of any Unicode code point with value > 127
-  // requires multiple bytes.
-  static const wchar_t RadiusSymbol;    // Unicode LATIN CAPITAL LETTER R U+0052
-  static const wchar_t DegreeSymbol;    // Unicode DEGREE SIGN U+00B0
-  static const wchar_t PlusMinusSymbol; // Unicode PLUS-MINUS SIGN U+00B1
-  static const wchar_t DiameterSymbol;  // Unicode LATIN CAPITAL LETTER O WITH STROKE U+00D8
-  static const wchar_t RecyclingSymbol; // Unicode UNIVERSAL RECYCLING SYMBOL U+2672 (decimal 9842)
-  static const wchar_t ReplacementCharacter; // Unicode REPLACEMENT CHARACTER U+FFFD
-  static const wchar_t NextLine;             // Unicode NEXT LINE (NEL) U+0085
-  static const wchar_t LineSeparator;        // LINE SEPARATOR U+2028 unambiguous line separator
-  static const wchar_t ParagraphSeparator;   // PARAGRAPH SEPARATOR U+2028 unambiguous paragraph separator
-  static const wchar_t NoBreakSpace; // NO-BREAK SPACE (NBSP)
-  static const wchar_t NarrowNoBreakSpace; // NARROW NO-BREAK SPACE (NNBSP)
-  static const wchar_t ZeroWidthSpace; // ZERO WIDTH SPACE (ZWSP)
+public:
+  /// <summary>NEXT LINE (NEL) control U+0085</summary>
+  static const wchar_t  NextLine = (wchar_t)ON_UnicodeCodePoint::ON_NextLine;
+
+  /// <summary>NO-BREAK SPACE (NBSP) U+00A0</summary>
+  static const wchar_t  NoBreakSpace = (wchar_t)ON_UnicodeCodePoint::ON_NoBreakSpace;
+
+  /// <summary>NON-BREAKING HYPHEN U+2011</summary>
+  static const wchar_t  NoBreakHyphen = (wchar_t)ON_UnicodeCodePoint::ON_NoBreakHyphen;
+
+  /// <summary>ZERO WIDTH SPACE (ZWSP) U+200B</summary>
+  static const wchar_t  ZeroWidthSpace = (wchar_t)ON_UnicodeCodePoint::ON_ZeroWidthSpace;
+
+  /// <summary>zero with non-joiner (ZWNJ) U+200C</summary>
+  static const wchar_t  ZeroWidthNonJoiner = (wchar_t)ON_UnicodeCodePoint::ON_ZeroWidthNonJoiner;
+
+  /// <summary>zero with joiner (ZWJ) U+200D</summary>
+  static const wchar_t  ZeroWidthJoiner = (wchar_t)ON_UnicodeCodePoint::ON_ZeroWidthJoiner;
+
+  /// <summary>NARROW NO-BREAK SPACE (NNBSP) U+202F</summary>
+  static const wchar_t  NarrowNoBreakSpace = (wchar_t)ON_UnicodeCodePoint::ON_NarrowNoBreakSpace;
+
+  /// <summary>LATIN CAPITAL LETTER R U+0052 (decimal 82) (Rhino annotation radius symbol)</summary>
+  static const wchar_t  RadiusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_RadiusSymbol;
+
+  /// <summary>DEGREE SIGN U+00B0 (X&#xb0;) (Rhino annotation degree symbol)</summary>
+  static const wchar_t  DegreeSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DegreeSymbol;
+
+  /// <summary>PLUS-MINUS SIGN U+00B1 (&#xb1;) (Rhino annotation plus/minus symbol)</summary>
+  static const wchar_t  PlusMinusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_PlusMinusSymbol;
+
+  /// <summary>SUPERSCRIPT TWO U+00B2 (X&#xb2;) (Rhino annotation length squared symbol)</summary>
+  static const wchar_t  Superscript2 = (wchar_t)ON_UnicodeCodePoint::ON_Superscript2;
+
+  /// <summary>SUPERSCRIPT THREE U+00B3 (X&#xb3;) (Rhino annotation length cubed symbol)</summary>
+  static const wchar_t  Superscript3 = (wchar_t)ON_UnicodeCodePoint::ON_Superscript3;
+
+  /// <summary>LATIN CAPITAL LETTER O WITH STROKE U+00D8 (&#xd8;) (Rhino annotation diametersymbol)</summary>
+  static const wchar_t  DiameterSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DiameterSymbol;
+
+  /// <summary>LINE SEPARATOR U+2028 unambiguous line separator</summary>
+  static const wchar_t  LineSeparator = (wchar_t)ON_UnicodeCodePoint::ON_LineSeparator;
+
+  /// <summary>PARAGRAPH SEPARATOR U+2028 unambiguous paragraph separator</summary>
+  static const wchar_t  ParagraphSeparator = (wchar_t)ON_UnicodeCodePoint::ON_ParagraphSeparator;
+
+  /// <summary>GREEK SMALL LETTER ALPHA (&#x391;)</summary>
+  static const wchar_t GreekCapitalAlpha = (wchar_t)ON_UnicodeCodePoint::ON_GreekCapitalAlpha;
+
+  /// <summary>GREEK SMALL LETTER ALPHA (&#x3b1;)</summary>
+  static const wchar_t GreekAlpha = (wchar_t)ON_UnicodeCodePoint::ON_GreekAlpha;
+
+  /// <summary>GREEK CAPITAL LETTER SIGMA U+03A3 (&#x3a3;)</summary>
+  static const wchar_t GreekCapitalSigma = (wchar_t)ON_UnicodeCodePoint::ON_GreekCapitalSigma;
+
+  /// <summary>GREEK SMALL LETTER SIGMA U+03C3 (&#x3c3;)</summary>
+  static const wchar_t GreekSigma = (wchar_t)ON_UnicodeCodePoint::ON_GreekSigma;
+
+  /// <summary>GREEK SMALL LETTER OMEGA U+03A9 (&#x3a9;)</summary>
+  static const wchar_t  GreekCapitalOmega = (wchar_t)ON_UnicodeCodePoint::ON_GreekCapitalOmega;
+
+  /// <summary>GREEK SMALL LETTER OMEGA U+03C9 (&#x3c9;)</summary>
+  static const wchar_t  GreekOmega = (wchar_t)ON_UnicodeCodePoint::ON_GreekOmega;
+
+  /// <summary>CYRILLIC CAPITAL LETTER YU U+042E (&#x42e;) (Used in Cyrillic code point tests)</summary>
+  static const wchar_t  CyrillicCapitalYu = (wchar_t)ON_UnicodeCodePoint::ON_CyrillicCapitalYu;
+
+  /// <summary>Simplified Chinese logogram for tree U+6881 (&#x6881;) (Used in CJK code point tests)</summary>
+  static const wchar_t  SimplifiedChineseTree = (wchar_t)ON_UnicodeCodePoint::ON_SimplifiedChineseTree;
+
+  /// <summary>Traditional Chinese logogram for tree U+6A39 (&#x6a39;) (Used in CJK code point tests)</summary>
+  static const wchar_t  TraditionalChineseTree = (wchar_t)ON_UnicodeCodePoint::ON_TraditionalChineseTree;
+
+  /// <summary>Japanese logogram for rhinoceros U+7280 (&#x7280;) (Used in CJK code point tests)</summary>
+  static const wchar_t  JapaneseRhinoceros = (wchar_t)ON_UnicodeCodePoint::ON_JapaneseRhinoceros;
+
+  /// <summary>Japanese logogram for tree U+6728 (&#x6728;) (Used in CJK code point tests)</summary>
+  static const wchar_t  JapaneseTree = (wchar_t)ON_UnicodeCodePoint::ON_JapaneseTree;
+
+  /// <summary>Korean HAN U+D55C (&#xd55c;) (Used in CJK code point tests)</summary>
+  static const wchar_t  KoreanHan = (wchar_t)ON_UnicodeCodePoint::ON_KoreanHan;
+
+  /// <summary>Korean JEONG U+C815 (&#xc815;) (Used in CJK code point tests)</summary>
+  static const wchar_t  KoreanJeong = (wchar_t)ON_UnicodeCodePoint::ON_KoreanJeong;
+
+  /// <summary>DOLLAR SIGN U+0024 ($)</summary>
+  static const wchar_t  DollarSign = (wchar_t)ON_UnicodeCodePoint::ON_DollarSign;
+
+  /// <summary>CENT SIGN U+00A2 (&#xa2;)</summary>
+  static const wchar_t  CentSign = (wchar_t)ON_UnicodeCodePoint::ON_CentSign;
+
+  /// <summary>POUND SIGN U+00A3 (&#xa3;)</summary>
+  static const wchar_t  PoundSign = (wchar_t)ON_UnicodeCodePoint::ON_PoundSign;
+
+  /// <summary>CURRENCY SIGN U+00A4 (&#xa4;)</summary>
+  static const wchar_t  CurrencySign = (wchar_t)ON_UnicodeCodePoint::ON_CurrencySign;
+
+  /// <summary>YEN SIGN U+00A5 (Chinese yuan; Japanese yen) (&#xa5;)</summary>
+  static const wchar_t  YenSign = (wchar_t)ON_UnicodeCodePoint::ON_YenSign;
+
+  /// <summary>EURO SIGN U+20AC (&#x20ac;)</summary>
+  static const wchar_t  EuroSign = (wchar_t)ON_UnicodeCodePoint::ON_EuroSign;
+
+  /// <summary>PESO SIGN U+20B1 (&#x20b1;)</summary>
+  static const wchar_t  PesoSign = (wchar_t)ON_UnicodeCodePoint::ON_PesoSign;
+
+  /// <summary>RUBLE SIGN U+20BD (&#x20bd;)</summary>
+  static const wchar_t  RubleSign = (wchar_t)ON_UnicodeCodePoint::ON_RubleSign;
+
+  /// <summary>
+  /// UNIVERSAL RECYCLING SYMBOL U+2672 (&#x2672;)
+  /// This is a good cold point for testing glyph substitution.
+  /// </summary>
+  static const wchar_t  RecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_RecyclingSymbol;
+
+
+  /// <summary>
+  /// BLACK UNIVERSAL RECYCLING SYMBOL U+267B (&#x267b;)
+  /// This is a good cold point for testing glyph substitution.
+  /// </summary>
+  static const wchar_t  BlackRecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_BlackRecyclingSymbol;
+
+  /// <summary>
+  /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
+  /// By convention, U+FFFD is used to mark string elements where 
+  /// an invalid UTF code point encoding was encountered.
+  /// </summary>
+  static const wchar_t  ReplacementCharacter = (wchar_t)ON_UnicodeCodePoint::ON_ReplacementCharacter;
 #endif
+
+  /*
+  Parameters:
+    c - [in]
+  Returns:
+    True if c is '0', '1', ..., '9', 'A', 'B', ..., 'F', 'a', 'b', ..., of 'f'.
+  */
+  static bool IsHexDigit(wchar_t c);
+
+  /*
+  Parameters:
+    c - [in]
+  Returns:
+    True if c is '0', '1', ..., or '9'.
+  */
+  static bool IsDecimalDigit(wchar_t c);
+
+
+  /// <summary>
+  /// Determine if c is a decimal digit.
+  /// </summary>
+  /// <param name="c">
+  /// character to test
+  /// </param>
+  /// <param name="bOrdinaryDigitResult">
+  /// Result to return when c is an ordinary decimal digit (0123456789)
+  /// </param>
+  /// <param name="bSuperscriptDigitResult">
+  /// Result to return when c is a sperscript decimal digit (0123456789)
+  /// </param>
+  /// <param name="bSubscriptDigitResult">
+  /// Result to return when c is a subscript decimal digit (0123456789)
+  /// </param>
+  /// <returns>
+  /// True if c is a decimal digit.
+  /// </returns>
+  static bool IsDecimalDigit(
+    wchar_t c,
+    bool bOrdinaryDigitResult,
+    bool bSuperscriptDigitResult,
+    bool bSubscriptDigitResult
+  );
+
+  static unsigned DecimalDigitFromWideChar(
+    wchar_t c, 
+    bool bAcceptOrdinaryDigit,
+    bool bAcceptSuperscriptDigit,
+    bool bAcceptSubscriptDigit,
+    unsigned invalid_c_result
+  );
+
+  /*
+  Parameters:
+    c - [in]
+      character to test.
+    bAcceptOrdinarySign - [in]
+      ordinary + and - signes are acceptable.
+    bAcceptSuperscriptSign - [in]
+      superscript + and - signes are acceptable.
+    bAcceptSubscriptSign - [in]
+      subscript + and - signes are acceptable.
+  Returns:
+    +1 if c is an acceptable plus sign.
+    -1 if c is an acceptable minus sign.
+    Otherwise, 0 is returned.
+  */
+  static int PlusOrMinusSignFromWideChar(
+    wchar_t c,
+    bool bAcceptOrdinarySign,
+    bool bAcceptSuperscriptSign,
+    bool bAcceptSubscriptSign
+    );
+
+  /// <summary>
+  /// Determine if c is some type opf Unicode slash (solidus).
+  /// </summary>
+  /// <param name="c">
+  /// character to test
+  /// </param>
+  /// <param name="bOrdinarySlashResult">
+  /// Result to return when c is an ordinary slash (solidus) U+002F (/)
+  /// </param>
+  /// <param name="bFractionSlashResult">
+  /// Result to return when c is a fraction slash U+2044 (&#x2044;)
+  /// </param>
+  /// <param name="bDivisionSlashResult">
+  /// Result to return when c is a division slash U+2215 (&#x2215;)
+  /// </param>
+  /// <param name="bMathematicalSlashResult">
+  /// Result to return when c is a mathematical rising diagonal slash U+27CB (&#x27CB;)
+  /// </param>
+  /// <returns></returns>
+  static bool IsSlash(
+    wchar_t c,
+    bool bOrdinarySlashResult,
+    bool bFractionSlashResult,
+    bool bDivisionSlashResult,
+    bool bMathematicalSlashResult
+  );
+
+  /*
+  Parameters:
+    c - [in]
+      character to test.
+    bTabResult - [in]
+      Result to return when c is a horizontal tab.
+    bNoBreakSpaceResult - [in]
+      Result to return when c is some type of no break space.
+    bZeroWidthSpaceResult - [in]
+      Result to return when c is a zero width space code point.
+  Returns:
+    True if c is some type of horizontal space.
+  */
+  static bool IsHorizontalSpace(wchar_t c, bool bTabResult, bool bNoBreakSpaceResult, bool bZeroWidthSpaceResult);
+
+  /*
+  Parameters:
+    c - [in]
+      character to test.
+  Returns:
+    True if c is some type of horizontal space, including horizontal tab and zero width spaces.
+    If you need a more nuanced test, call the version of IsHorizontalSpace() that
+    has bool parameters.
+  */
+  static bool IsHorizontalSpace(wchar_t c);
+
 
 private:
   // Use IsEmpty() or IsNotEmpty() when you want a bool 
@@ -2182,6 +2709,20 @@ public:
 // Constructors
 	ON_wString() ON_NOEXCEPT;
 	ON_wString( const ON_wString& );
+
+  enum : int
+  {
+    // This ON_String::MaximumStringLength value of 100,000,000
+    // is used for string length sanity checking in both ON_String and
+    // ON_wString.
+    // The design of the ON_String and ON_wString classes could support 
+    // string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
+    // a cap of 100 million seems generous enough for current usage
+    // and is small enough to detect many corrupt memory
+    // situations.
+    // This value is used for both ON_String and ON_wString.
+    MaximumStringLength = ON_String::MaximumStringLength
+  };
 
 #if defined(ON_HAS_RVALUEREF)
   // Clone constructor
@@ -2956,6 +3497,207 @@ public:
   
   ON_wString Reverse() const;
 
+  /*
+  Description:
+    Convert a literal string into an XML encoded value.
+
+    < (less-than) is replaced with &lt;
+    > (greater-than) is replaced with &gt;
+    & (ampersand) is replaces with &amp;
+    ' (apostrophe or single quote) is replaced with &apos;
+    " (double-quote) is replaced with &quot;
+
+    Optionally, unocode code points U+hhhh where hhhh >= 0x80 are replaced 
+    with &#xhhhh; using the minimal number of hex digits.
+  Parameters:
+    bUseUnicodeCodePointsForSpecialCharacters - [in]
+      If true, the &#60;, &#62;, &#38;, &#39;, and &#34; encodings are used.
+      If false, the &lt; &gt; &amp;, &apos;, and &quot; encodings are used.
+      When in doubt, pass false.
+    bEncodeCodePointsAboveBasicLatin
+      If true, any code point >= 0x80 is encoded using the XML &xhhhh; format.
+      When human readability is important and the XML will be parsed by a
+      high quality XML reader, pass false. (The XMLspecification supports text
+      files that are UTF=8, UTF-18, or UTF-32 encoded.)
+  Returns:
+    A string with every instance of an xml special character replaced 
+    with its xml encoding and, optionally, every code point > 127 replaced
+    with &xhhhh;.
+  */
+  const ON_wString EncodeXMLValue() const;
+
+  const ON_wString EncodeXMLValue(
+    bool bEncodeCodePointsAboveBasicLatin
+  ) const;
+
+  /*
+  Description:
+    Decode an XML encoded value.
+  Examples:
+    &lt; is replaced with < (less-than).
+    &gt; is replaced with > (greater-than).
+    &amp; is replaced with & (ampersand).
+    &apos; is replaced with ' (apostrophe or single quote).
+    &quot; is replaced with " (double-quote).
+    &#nnnn; where nnnn is a valid decimal unicode code point is replaced with the wide character encode code point.
+    &#xhhhh; where hhhh is a valid hexadecimal unicode code point is replaced with the wide character encode code point.
+  Returns:
+    This string with every instance of an xml encodecharacter encodeding replaced 
+    with the corresponding wide character encodeing of the literal unicode code point.
+  */
+  const ON_wString DecodeXMLValue() const;
+
+  /*
+  Description:
+    Parse one of the following XML chacater encodings.
+    &#nnnn; (nnnn = one of more decimal digits) is parsed to the unicode code point with decimal value nnnn
+    &#xhhhh; (nnnn = one of more hexadecimal digits) is parsed to the unicode code point with hexadecimal value hhhh
+    &lt; is parsed to < (less-than).
+    &gt; is parsed to > (greater-than).
+    &amp; is parsed to & (ampersand).
+    &apos; is parsed to ' (apostrophe or single quote).
+    &quot; is parsed to " (double-quote).
+  Parameters:
+    buffer - [in]
+      buffer to parse. The first character of buffer[] must be the leading ampersand.
+      The buffer must include the terminating semicolon.
+    buffer_length - [in]
+      If -1, then buffer[] must be null terminated.
+      Otherwise buffer_length specifies the number of whcar_t elements
+      that may be parsed.
+    value_on_failure - [in]
+      *unicode_code_point is set to value_on_failure if parsing fails.
+    unicode_code_point - [out]
+      parsed unicode code point. If you do not want the code point, you may pass nullptr.
+  Returns:
+    If parsing is successful, the first element of buffer that was not parsed is returned.
+    Otherwise nullptr is returned.
+  Remarks:
+    Note that the XML 1 (section 2.2 of the WC3 specification) does not permit surrogate pair encodings.
+  */
+  static const wchar_t* ParseXMLCharacterEncoding(
+    const wchar_t* buffer,
+    int buffer_length,
+    unsigned value_on_failure,
+    unsigned* unicode_code_point
+  );
+
+
+  /*
+  Description:
+    Parse an xml encoded unicde code point.
+    &#nnnn; (nnnn = any number of decimal digits)
+    &#xhhhh; (hhhh = any muber of hexadecimal digits)
+  Parameters:
+    buffer - [in]
+      buffer to parse. 
+      The first character of buffer[] must be the leading ampersand.
+      The second character of buffer[] must be the number sign.
+      The buffer must include the terminating semicolon.
+    buffer_length - [in]
+      If -1, then buffer[] must be null terminated.
+      Otherwise buffer_length specifies the number of whcar_t elements
+      that may be parsed.
+    value_on_failure - [in]
+      *unicode_code_point is set to value_on_failure if parsing fails.
+    unicode_code_point - [out]
+      parsed unicode code point. If you do not want the code point, you may pass nullptr.
+  Returns:
+    If parsing is successful, the first element of buffer that was not parsed is returned.
+    Otherwise nullptr is returned.
+  */
+  static const wchar_t* ParseXMLUnicodeCodePointEncoding(
+    const wchar_t* buffer,
+    int buffer_length,
+    unsigned value_on_failure,
+    unsigned* unicode_code_point
+  );
+
+  /*
+  Description:
+    Parse over horizontal space in the string.
+  Parameters:
+    s - [in]
+      string to parse.
+    len - [in]
+      maximum number of characters to parse.
+      You many pass -1 if s is null terminated.
+    bParseTab - [in]
+      True if a horizontal tab should be treated as horizontal space.
+    bParseNoBreakSpace - [in]
+      True if no break space code points should be treated as horizontal space.
+    bParseZeroWidthSpace - [in]
+      True if zero width code points should be treated as horizontal space.
+  Returns:
+    If horizontal spaces were successfully parsed, first character after
+    the horizontal spaces is returned. Otherwise s is returned.
+  */
+  static const wchar_t* ParseHorizontalSpace(
+    const wchar_t* s,
+    int len,
+    bool bParseTab,
+    bool bParseNoBreakSpace,
+    bool bParseZeroWidthSpace
+  );
+
+  /*
+  Description:
+    Parse over horizontal space in the string.
+    This version of ParseHorizontalSpace() treas tabs and zero width code points
+    as horizontal space. If you need more nuanced control, call the override
+    with bool parameters.
+  Parameters:
+    s - [in]
+      string to parse.
+    len - [in]
+      maximum number of characters to parse.
+      You many pass -1 if s is null terminated.
+  Returns:
+    If horizontal spaces were successfully parsed, first character after
+    the horizontal spaces is returned. Otherwise s is returned.
+  */
+  static const wchar_t* ParseHorizontalSpace(
+    const wchar_t* s,
+    int len
+  );
+
+  /*
+  Description:
+    Parse the string s as a vulgar fraction (1/2).
+  Parameters:
+    s - [in]
+      string to parse.
+      s[0] must be a sign or a digit. It can be the ordinary characters or superscripts.
+      If the first digit is an ordinary digit, the the numerator and denominator must all
+      be ordinary digits.
+      If the first digit is a superscript digit, the the numerator must be all superscript
+      digits and the denominator be all subscript digits.
+    len - [in]
+      maximum number of characters to parse.
+      You many pass -1 if s is null terminated.
+    numerator - [out]
+    denominator - [out]
+  Returns:
+    If a vulgar fraction was succesfully parsed, the a pointer to the first character
+    after the vulgar fraction is returned. Otherwise nullptr is returned.
+  */
+  static const wchar_t* ParseVulgarFraction(
+    const wchar_t* s, 
+    int len,
+    int& numerator, 
+    int& denomintor
+  );
+
+  /// <summary>
+  /// Returns true if c is one of the 5 XML special characters 
+  /// &amp; (ampersand),
+  /// &lt; (less than), 
+  /// &gt; (greater than), 
+  /// &quot; (quotation mark), or 
+  /// &apos; (apostrophe).
+  /// </summary>
+  static bool IsXMLSpecialCharacter(wchar_t c);
+
   static wchar_t* Reverse(
     wchar_t* string,
     int element_count
@@ -3357,6 +4099,10 @@ public:
     ON__UINT32 error_code_point
   );
 
+  static const ON_wString FromUnicodeCodePoint(
+    ON__UINT32 code_point
+  );
+
   /*
   Description:
     Each byte value is converted to 2 hexadecimal digits.
@@ -3516,6 +4262,116 @@ public:
     );
 
   /*
+  Returns:
+    A Unicode encoding of the fraction numerator/denominator with the minimum number of characters.
+    The fraction is reduced and the encoding is a short as possible.
+  */
+  static const ON_wString FormatToVulgarFraction(int numerator, int denominator);
+
+  /*
+  Returns:
+    A Unicode encoding of the fraction numerator/denominator with the minimum number of characters.
+  bReduced - [in]
+    When in doubt, pass true.
+    If true, then the reduced fraction will be returned.
+    For example, if bReduced is true, then 2/4 reduces to 1/2.
+  bProper - [in]
+    When in doubt, pass true.
+    If true, then proper fractions will be returned when abs(numerator)>=abs(denominator).
+    For example, if bProper is true, then 4/3 is converted to 1-1/3. 
+    The symbol between the whole number and the proper fraction is specified by
+    mixed_fraction_separator_code_point.
+  proper_fraction_separator_cp - [in]
+    Species the Unicode code point of the symbol used to
+    separate the whole number and the proper fraction.
+
+    When in doubt, pass ON_UnicodeCodePoint::ON_NullCodePoint (0) which will result in the
+    large whole number being next to the proper fraction in a readable and compact manner.
+
+    Other options include:
+
+    Spaces:
+      ON_UnicodeCodePoint::ON_NarrowNoBreakSpace
+      ON_UnicodeCodePoint::ON_NoBreakSpace
+      ON_UnicodeCodePoint::ON_ZeroWidthSpace
+      ON_UnicodeCodePoint::ON_Space
+      ON_UnicodeCodePoint::ON_EnSpace
+      ON_UnicodeCodePoint::ON_EmSpace
+      ON_UnicodeCodePoint::ON_FigureSpace
+      ON_UnicodeCodePoint::ON_MediumMathematicalSpace
+      ON_UnicodeCodePoint::ON_ThinSpace
+      ON_UnicodeCodePoint::ON_HairSpace
+      ON_UnicodeCodePoint::ON_PunctuationSpace
+      ON_UnicodeCodePoint::ON_ThreePerEmSpace
+      ON_UnicodeCodePoint::ON_FourPerEmSpace
+      ON_UnicodeCodePoint::ON_SixPerEmSpace
+
+    Hyphens:
+      ON_UnicodeCodePoint::ON_HyphenMinus
+      ON_UnicodeCodePoint::ON_UnambiguousHyphen
+      ON_UnicodeCodePoint::ON_NoBreakHyphen
+      ON_UnicodeCodePoint::ON_SmallHyphen
+
+    Dashes:
+      ON_UnicodeCodePoint::ON_FigureDash
+      ON_UnicodeCodePoint::ON_EnDash
+      ON_UnicodeCodePoint::ON_EmDash
+
+  bUseVulgarFractionCodePoints - [in]
+    When in doubt, pass true.
+    If true and a single Unicode code point exists for the vulgar fraction
+    (1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 2/5, 3/5, 4/5, 1/6, 5/6, 1/7, 1/8, 3/8, 5/8, 7/8, 1/9, 1/10),
+    then that code point will be used.
+    Otherwise a Unicode superscript digits, ON_UnicodeCodePoint::FractionSlash, and Unicode subscript digits
+    are used.
+  */
+  static const ON_wString FormatToVulgarFraction(
+    int numerator,
+    int denominator,
+    bool bReduced,
+    bool bProper,
+    unsigned int proper_fraction_separator_cp,
+    bool bUseVulgarFractionCodePoints
+    );
+
+  /*
+  numerator - [in]
+    A string (digits, signs, parenthesis).
+  denominator - [in]
+    A string (digits, signs, parenthesis).
+  bUseVulgarFractionCodePoints - [in]
+    If true and if Unicode code point exists for the fraction (halves, thirds, fourths, fifths, sixths, eights, ...),
+    that code point will be used;    
+  Returns:
+    A Unicode encoding of the fraction numerator/denominator.
+  */
+  static const ON_wString FormatToVulgarFraction(
+    const ON_wString numerator, 
+    const ON_wString denominator
+  );
+
+  /*
+  numerator - [in]
+    A string (digits, signs, parenthesis).
+  Returns:
+    A Unicode encoding of the fraction's numerator.
+  */
+  static const ON_wString FormatToVulgarFractionNumerator(const ON_wString numerator);
+
+  /*
+  denominator - [in]
+    A string (digits, signs, parenthesis).
+  Returns:
+    A Unicode encoding of the fraction's denominator.
+  */
+  static const ON_wString FormatToVulgarFractionDenominator(const ON_wString denominator);
+
+  /*
+    Returns a string with the code point U+2044.
+  */
+  static const ON_wString VulgarFractionSlash();
+
+  /*
   Parameters:
     format - [in]
       null terminated string to scan
@@ -3543,6 +4399,9 @@ public:
     );
 
   /*
+  Description:
+    Parses buffer to extract a number.
+    Sperscript and supscript numbers are supported.
   Returns:
     not zero:
       pointer to the first character that was not scanned
@@ -3595,6 +4454,18 @@ public:
     double* value
     );
 
+  /*
+  Parameters:
+    sz - [in]
+      number of bytes.
+  Returns:
+    If sz < 0, "0 bytes" is returned.
+    If 0 <= sz <= 9999, "x bytes" is returned where x is an exact decimal value.
+    If s > 9999, then a description with 3 significant digits and a suffix indicating
+    the order of magnitude is returned. The order of magnitude is described by appending
+    KB (1024 bytes), MB (1024 KB), GB (1024 MB), TB (1024 GB), or PB (1024 TB).
+  */
+  static const ON_wString ToMemorySize(size_t sz);
 
   /*
   Description:
@@ -3612,6 +4483,13 @@ public:
   wchar_t* SetLength(size_t); // set length (<=capacity)
   wchar_t* Array();
   const wchar_t* Array() const;
+
+  /*
+  Returns:
+    A duplicate of this that does not share memory with any other string.
+    (A new array is allocated for the returned string.)
+  */
+  const ON_wString Duplicate() const;
 
   /*
   Returns:

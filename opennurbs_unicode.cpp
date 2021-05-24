@@ -2634,6 +2634,14 @@ int ON_ConvertUTF32ToWideChar(
   return rc;
 }
 
+const ON_wString ON_wString::FromUnicodeCodePoint(
+  ON__UINT32 code_point
+)
+{
+  return ON_wString::FromUnicodeCodePoints(&code_point, 1, ON_UnicodeCodePoint::ON_ReplacementCharacter);
+}
+
+
 const ON_wString ON_wString::FromUnicodeCodePoints(
   const ON__UINT32* code_points,
   int code_point_count,
@@ -3079,3 +3087,202 @@ int ON_ConvertMSMBCPToWideChar(
 #endif
 
 }
+
+
+
+unsigned ON_UnicodeSuperscriptFromCodePoint(
+  unsigned cp,
+  unsigned no_superscript_cp
+)
+{
+  if (cp >= '0' && cp <= '9')
+  {
+    static const unsigned digit_cp[10]
+    {
+      0x2070,
+      0x00B9,
+      0x00B2,
+      0x00B3,
+      0x2074,
+      0x2075,
+      0x2076,
+      0x2077,
+      0x2078,
+      0x2079
+    };
+    return digit_cp[cp - '0'];
+  }
+  else if (cp >= 'a' && cp <= 'z')
+  {
+    // a-z
+    static const unsigned atoz_cp[26]
+    {
+      0x1D43, // a
+      0x1d47, // b
+      0x1d9c, // c
+      0x1d48, // d
+      0x1d49, // e
+      0x1da0, // f
+      0x1d4d, // g
+      0x20b0, // h
+      0x2071, // i
+      0x02b2, // j
+      0x1d4f, // k
+      0x02e1, // l
+      0x1d40, // m
+      0x207f, // n
+      0x1d52, // o
+      0x1d56, // p
+      0, // q NONE AVAILABLE
+      0x02b3, // r
+      0x02e2, // s
+      0x1d57, // t
+      0x1d58, // u
+      0x1d5b, // v
+      0x02b7, // w
+      0x02e3, // x
+      0x02b8, // y
+      0x1dbb  // z
+    };
+    const unsigned sup_cp = atoz_cp[cp - 'a'];
+    if (0 != sup_cp)
+      return sup_cp;
+  }
+  else if (cp >= 'A' && cp <= 'Z')
+  {
+    // a-z
+    static const unsigned atoz_cp[26]
+    {
+      0x1DC2, // A
+      0x1D2D, // B
+      0, // C NOT AVAILABLE
+      0x1D30, // D
+      0x1D31, // E
+      0, // F NOT AVAILABLE
+      0x1D33, // G
+      0x1D34, // H
+      0x1D35, // I
+      0x1D36, // J
+      0x1D37, // K
+      0x1D38, // L
+      0x1D39, // M
+      0x1D3A, // N
+      0x1D3C, // O
+      0x1D3E, // P
+      0, // Q NOT AVIALABLE
+      0x1D3F, // R
+      0, // S NOT AVAILABLE
+      0x1D40, // T
+      0x2C7D, // V
+      0x1D42, // W
+      0, // X NOT AVAILABLE
+      0, // Y NOT AVAILABLE
+      0  // Z NOT AVAILABLE
+    };
+    const unsigned sup_cp = atoz_cp[cp - 'a'];
+    if (0 != sup_cp)
+      return sup_cp;
+  }
+  else
+  {
+    switch (cp)
+    {
+    case '+':
+      return 0x207A; // +
+      break;
+    case '-':
+      return 0x207B; // -
+      break;
+    case '=':
+      return 0x207C; // =
+      break;
+    case '(':
+      return 0x207C; // =
+      break;
+    case ')':
+      return 0x207E; // )
+      break;
+    }
+  }
+
+  // either cp is already a superscript or none is avilable.
+  return no_superscript_cp;
+}
+
+
+unsigned ON_UnicodeSubscriptFromDigit(unsigned decimal_digit)
+{
+  if (decimal_digit >= 0 && decimal_digit <= 9)
+    return 0x2080U + decimal_digit;
+  return 0;
+}
+
+unsigned ON_UnicodeSuperscriptFromDigit(unsigned decimal_digit)
+{
+  switch (decimal_digit)
+  {
+  case 1:
+    return 0x00B9U;
+    break;
+  case 2:
+    return 0x00B2U;
+    break;
+  case 3:
+    return 0x00B3U;
+    break;
+  default:
+    if (decimal_digit >= 4 && decimal_digit <= 9)
+      return (0x2070U + decimal_digit);
+    break;
+  }
+  return 0;
+}
+
+unsigned ON_UnicodeSubcriptFromCodePoint(
+  unsigned cp,
+  unsigned no_subscript_cp
+)
+{
+  if (cp >= '0' && cp <= '9')
+  {
+    static const unsigned digit_cp[10]
+    {
+      0x2080,
+      0x2081,
+      0x2082,
+      0x2083,
+      0x2084,
+      0x2085,
+      0x2086,
+      0x2087,
+      0x2088,
+      0x2089
+    };
+    return digit_cp[cp - '0'];
+  }
+  else
+  {
+    switch (cp)
+    {
+    case '+':
+      return 0x208A; // +
+      break;
+    case '-':
+      return 0x208B; // -
+      break;
+    case '=':
+      return 0x208C; // =
+      break;
+    case '(':
+      return 0x208C; // =
+      break;
+    case ')':
+      return 0x208E; // )
+      break;
+    }
+  }
+
+  // either cp is already a subscript or none is avilable.
+  return cp;
+}
+

@@ -43,15 +43,33 @@ ON_SubDimple::~ON_SubDimple()
   Destroy();
 }
 
+ON_SubDHeap& ON_SubDimple::Heap()
+{
+  return m_heap;
+}
+
 void ON_SubDimple::Clear()
 {
   m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   m_texture_mapping_tag = ON_MappingTag::Unset;
+  m_fragment_colors_mapping_tag = ON_MappingTag::Unset;
+  m_fragment_texture_settings_hash = ON_SHA1_Hash::EmptyContentHash;
+  m_fragment_colors_settings_hash = ON_SHA1_Hash::EmptyContentHash;
   for (unsigned i = 0; i < m_levels.UnsignedCount(); ++i)
-    delete m_levels[i];
+  {
+    ON_SubDLevel* level = m_levels[i];
+    if (nullptr != level)
+    {
+      m_levels[i] = nullptr;
+      delete level;
+    }
+  }
+  m_levels.SetCount(0);
   m_active_level = nullptr;
   m_heap.Clear();
+  m_face_packing_id = ON_nil_uuid;
+  m_face_packing_topology_hash = ON_SubDHash::Empty;
   m_symmetry = ON_Symmetry::Unset;
 }
 
@@ -227,7 +245,8 @@ void ON_SubDimple::Destroy()
   m_subd_render_content_serial_number = 0;
 }
 
-ON_SubDLevel* ON_SubDimple::ActiveLevel(bool bCreateIfNeeded)
+ON_SubDLevel* ON_SubDimple::ActiveLevel(
+  bool bCreateIfNeeded)
 {
   if (nullptr == m_active_level)
   {
@@ -816,7 +835,16 @@ bool ON_SubDimple::Transform(
   const ON_Xform& xform
   )
 {
-  const ON__UINT64 geometry_content_serial_number0 = GeometryContentSerialNumber();
+  const bool bSymmetricInput = m_symmetry.SameSymmetricObjectGeometry(this);
+  const ON_Symmetry symmetry0 = m_symmetry;
+  const ON__UINT64 gsn0 = this->GeometryContentSerialNumber();
+
+  const bool bUpdateFacePackingHash
+    = m_face_packing_topology_hash.m_subd_geometry_content_serial_number == gsn0
+    && m_face_packing_topology_hash.IsNotEmpty()
+    && m_face_packing_topology_hash.SubDHash() == this->SubDHash(ON_SubDHashType::TopologyAndEdgeCreases, false).SubDHash()
+    ;
+
 
   if (false == xform.IsValid())
     return false;
@@ -857,34 +885,59 @@ bool ON_SubDimple::Transform(
       rc = false;
       break;
     }
-
   }
 
+  // SubD has been moved - geometry changed and we need to bump the geometry content serial number.
+  this->ChangeGeometryContentSerialNumber(false);
+
+  // GeometryContentSerial number trackers need to be updated
+  // so the SubD knows its status with respect to the 
+  // newly transformed geometry.
+
+  if (bUpdateFacePackingHash)
+    m_face_packing_topology_hash = this->SubDHash(ON_SubDHashType::TopologyAndEdgeCreases, false);
 
   if (m_symmetry.IsSet())
   {
-    const ON_Symmetry symmetry0 = m_symmetry;
     m_symmetry = m_symmetry.TransformConditionally(xform);
-    bool bSetContentSerialNumber = false;
-    if (geometry_content_serial_number0 == symmetry0.SymmetricObjectContentSerialNumber())
+    bool bSymmetricOutput = false;
+    if (bSymmetricInput)
     {
       // see if the transformed object will still be symmetric.
       if (ON_Symmetry::Coordinates::Object == m_symmetry.SymmetryCoordinates())
       {
         // object is still symmetric.
-        bSetContentSerialNumber = true;
+        bSymmetricOutput = true;
       }
       else if (ON_Symmetry::Coordinates::World == m_symmetry.SymmetryCoordinates())
       {
-        // if transform didn't move the symmetric
+        // if transform didn't move the symmetry
         if ( 0 == ON_Symmetry::CompareSymmetryTransformation(&symmetry0, &m_symmetry, ON_UNSET_VALUE) )
-          bSetContentSerialNumber = true;
+          bSymmetricOutput = true;
       }
     }
-    if (bSetContentSerialNumber)
-      m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
+    if (bSymmetricOutput)
+    {
+      if (ON_Symmetry::Coordinates::Object == m_symmetry.SymmetryCoordinates())
+      {
+        // symmetry constraints transformed with object
+        m_symmetry.SetSymmetricObject(this);
+      }
+      else
+      {
+        // object moved with respect to symmetry contstraints
+        // DO NOTHING HERE - the serial number and hashes on m_symmetry will inform downstream processes
+        // that the object no longer has the symmetry property specified by m_symmetry.
+        // It will get updated when appropriate - typically in replace object.
+        // EXAMPLE: Make a SubD plane - reflect it across the world Y axis. 
+        // Then rotate the plane a bit. The rotated plane gets fixed in replace object.
+      }
+    }
     else
-      m_symmetry.ClearSymmetricObjectContentSerialNumber();
+    {
+      // input was already dirty - remove all object settings from m_symmetry.
+      m_symmetry.ClearSymmetricObject();
+    }
   }
   else
   {
@@ -892,7 +945,6 @@ bool ON_SubDimple::Transform(
   }
 
   return rc;
-
 }
 
 bool ON_SubDMeshFragment::Transform(
@@ -1021,3 +1073,40 @@ const ON_BoundingBox ON_SubDFace::ControlNetBoundingBox() const
   return bbox;
 }
 
+bool ON_Symmetry::SameSymmetricObjectGeometry(const class ON_SubD* subd) const
+{
+  const ON_SubDimple* subdimple = (nullptr != subd) ? subd->SubDimple() : nullptr;
+  return SameSymmetricObjectGeometry(subdimple);
+}
+
+bool ON_Symmetry::SameSymmetricObjectTopology(const class ON_SubD* subd) const
+{
+  const ON_SubDimple* subdimple = (nullptr != subd) ? subd->SubDimple() : nullptr;
+  return SameSymmetricObjectTopology(subdimple);
+}
+
+bool ON_Symmetry::SameSymmetricObjectGeometry(const class ON_SubDimple* subdimple) const
+{
+  if (this->IsSet() && m_symmetric_object_content_serial_number != 0 && nullptr != subdimple)
+  {
+    const ON__UINT64 subd_gsn = subdimple->GeometryContentSerialNumber();
+    if (m_symmetric_object_content_serial_number == subd_gsn)
+      return true; // speedy check worked
+    if (m_symmetric_object_geometry_hash.IsSet() && m_symmetric_object_geometry_hash == subdimple->SubDHash(ON_SubDHashType::Geometry, false).SubDHash())
+      return true;
+  }
+  return false;
+}
+
+bool ON_Symmetry::SameSymmetricObjectTopology(const class ON_SubDimple* subdimple) const
+{
+  if (this->IsSet() && m_symmetric_object_content_serial_number != 0 && nullptr != subdimple)
+  {
+    const ON__UINT64 subd_gsn = subdimple->GeometryContentSerialNumber();
+    if (m_symmetric_object_content_serial_number == subd_gsn)
+      return true; // speedy check worked (same geometry in fact!)
+    if (m_symmetric_object_topology_hash.IsSet() && m_symmetric_object_topology_hash == subdimple->SubDHash(ON_SubDHashType::Topology, false).SubDHash())
+      return true;
+  }
+  return false;
+}

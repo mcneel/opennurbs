@@ -853,6 +853,15 @@ const char* ON_String::Array() const
   return ( Header()->string_capacity > 0 ) ? m_s : 0;
 }
 
+const ON_String ON_String::Duplicate() const
+{
+  if (Length() <= 0)
+    return ON_String::EmptyString;
+  ON_String s = *this;
+  s.CopyArray();
+  return s;
+}
+
 /*
 Returns:
   Total number of bytes of memory used by this class.

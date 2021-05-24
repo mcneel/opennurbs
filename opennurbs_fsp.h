@@ -40,15 +40,41 @@ public:
   ON_FixedSizePool(ON_FixedSizePool&&);
   ON_FixedSizePool& operator=(ON_FixedSizePool&&);
 #endif
-  
+
+
   /*
   Description:
     Create a fixed size memory pool.
   Parameters:
-    sizeof_element - [in] 
+    sizeof_element - [in]
       number of bytes in each element. This parameter must be greater than zero.
-      In general, use sizeof(element type).  If you pass a "raw" number as 
-      sizeof_element, then be certain that it is the right size to insure the 
+      In general, use sizeof(element type).  If you pass a "raw" number as
+      sizeof_element, then be certain that it is the right size to insure the
+      fields in your elements will be properly aligned.
+  Remarks:
+    You must call Create() on an unused ON_FixedSizePool or call Destroy()
+    before calling create.
+  Returns:
+    True if successful and the pool can be used.
+  See Also
+    CreateForExperts().
+  */
+  bool Create(
+    size_t sizeof_element
+  );
+
+  /*
+  Description:
+    Create a fixed size memory pool.
+    If you have a decent estimate of how many elements you need, 
+    CreateForExperts() is a typically a better choice. 
+    Otherwise, Create(sizeof_element) is typically the best option.
+
+  Parameters:
+    sizeof_element - [in]
+      number of bytes in each element. This parameter must be greater than zero.
+      In general, use sizeof(element type).  If you pass a "raw" number as
+      sizeof_element, then be certain that it is the right size to insure the
       fields in your elements will be properly aligned.
     element_count_estimate - [in] (0 = good default)
       If you know how many elements you will need, pass that number here.
@@ -58,21 +84,102 @@ public:
       If block_element_capacity is zero, Create() will calculate a block
       size that is efficent for most applications.  If you are an expert
       user and want to specify the number of elements per block,
-      then pass the number of elements per block here.  When 
-      block_element_capacity > 0 and element_count_estimate > 0, the first 
+      then pass the number of elements per block here.  When
+      block_element_capacity > 0 and element_count_estimate > 0, the first
       block will have a capacity of at least element_count_estimate; in this
       case do not ask for extraordinarly large amounts of contiguous heap.
+
   Remarks:
     You must call Create() on an unused ON_FixedSizePool or call Destroy()
     before calling create.
   Returns:
     True if successful and the pool can be used.
   */
-  bool Create( 
+  bool Create(
     size_t sizeof_element,
     size_t element_count_estimate,
     size_t block_element_capacity
-    );
+  );
+
+
+  /*
+  Description:
+    Create a fixed size memory pool.
+  Parameters:
+    sizeof_element - [in]
+      number of bytes in each element. This parameter must be greater than zero.
+      In general, use sizeof(element type).  If you pass a "raw" number as
+      sizeof_element, then be certain that it is the right size to insure the
+      fields in your elements will be properly aligned.
+
+    maximum_element_count_estimate - [in] (0 = good default)
+      If you have a tight upper bound on the number of elements you need
+      from this fixed size pool, call Create(sizeof_element) instead.
+
+      If the description of this parameter is confusing to you,
+      call Create(sizeof_element) instead.
+
+      If you have a tight upper bound on how many elements you will need,
+      pass that number here.  When maximum_element_count_estimate > 0, the 
+      initial memory blocks in the fixed size pool will be sized to efficiently 
+      deliver maximum_element_count_estimate elements.
+      The fixed block pool can become inefficient when maximum_element_count_estimate
+      is a gross overestimate or a slight underestimate of the actual number of 
+      elements that get allocated.
+
+    minimum_block2_element_capacity - [in] (0 = good default)
+      If the description below is confusing, pass 0.
+      If maximum_element_count_estimate = 0, this parameter is ignored.
+      If maximum_element_count_estimate > 0 and you have an excellent choice 
+      for a lower bound on the number of elements per block for unexpected allocations
+      of more than maximum_element_count_estimate elements, then pass that value for 
+      minimum_block2_element_capacity.
+
+  Remarks:
+    You must call Create() or CreateEx() on an unused ON_FixedSizePool or call Destroy()
+    before calling create.
+  Returns:
+    True if successful and the pool can be used.
+  */
+  bool CreateForExperts(
+    size_t sizeof_element,
+    size_t maximum_element_count_estimate,
+    size_t minimum_block2_element_capacity
+  );
+
+  static size_t DefaultElementCapacityFromSizeOfElement(size_t sizeof_element);
+
+  /*
+  Description:
+    Tool for debugging pool use when tuning block size and block capacity.
+  Returns:
+    Total operating system heap memory (in bytes) used by this ON_FixedSizePool.
+  Remarks:
+    SizeOfPool() = SizeOfAllocatedElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfPool() const;
+
+  /*
+  Description:
+    Tool for debugging pool use when tuning block size and block capacity.
+  Returns:
+    Operating system heap memory (in bytes) that are used by active pool elements.
+  Remarks:
+    SizeOfPool() = SizeOfActiveElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfActiveElements() const;
+
+  /*
+  Description:
+    Tool for debugging pool use when tuning block size and block capacity.
+  Returns:
+    Operating system heap memory (in bytes) that has been reserved but is not 
+    currently used by active elements.
+  Remarks:
+    SizeOfPool() = SizeOfActiveElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfUnusedElements() const;
+
 
   /*
   Returns:
@@ -236,6 +343,17 @@ public:
   size_t ElementIndex(
     const void* element_pointer
     ) const;
+
+  /*
+  Parameters:
+    p - [in]
+      pointer to test
+  Returns:
+    True if p points to memory in this pool.
+  */
+  bool InPool(
+    const void* pointer
+  ) const;
 
   /*
   Description:

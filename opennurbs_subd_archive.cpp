@@ -139,6 +139,59 @@ static bool Internal_FinishWritingComponentAdditions(ON_BinaryArchive& archive)
   return archive.WriteChar(sz);
 }
 
+
+static bool Internal_WriteArchiveIdAndFlags(
+  unsigned int archive_id,
+  ON__UINT_PTR ptr_flags,
+  ON_BinaryArchive& archive
+)
+{
+  if (!archive.WriteInt(archive_id))
+    return ON_SUBD_RETURN_ERROR(false);
+  unsigned char flags = (unsigned char)ON_SUBD_COMPONENT_FLAGS(ptr_flags);
+  if (!archive.WriteChar(flags))
+    return ON_SUBD_RETURN_ERROR(false);
+  return true;
+}
+
+static bool Internal_ReadArchiveIdAndFlagsIntoComponentPtr(
+  ON_BinaryArchive& archive,
+  ON__UINT_PTR& element_ptr
+)
+{
+  element_ptr = 0;
+  unsigned int archive_id = 0;
+  if (!archive.ReadInt(&archive_id))
+    return ON_SUBD_RETURN_ERROR(false);
+  unsigned char flags = 0;
+  if (!archive.ReadChar(&flags))
+    return ON_SUBD_RETURN_ERROR(false);
+  element_ptr = archive_id;
+  element_ptr *= (ON_SUBD_COMPONENT_FLAGS_MASK + 1);
+  element_ptr += (flags & ON_SUBD_COMPONENT_FLAGS_MASK);
+  return true;
+}
+
+static bool Internal_WritesSymmetrySetNext(
+  const ON_SubDComponentBase& c,
+  ON_BinaryArchive& archive
+)
+{
+  const ON_SubDComponentPtr symmetry_set_next = ON_SubDArchiveIdMap::SymmetrySetNextForExperts(c);
+  const ON_SubDComponentBase* next_c = symmetry_set_next.ComponentBase();
+  const unsigned archive_id = (nullptr != next_c) ? next_c->ArchiveId() : 0;
+  return Internal_WriteArchiveIdAndFlags(archive_id, symmetry_set_next.m_ptr, archive);
+}
+
+
+static bool Internal_ReadSymmetrySetNext(
+  ON_BinaryArchive& archive,
+  const ON_SubDComponentBase& c
+)
+{
+  return Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive, ON_SubDArchiveIdMap::SymmetrySetNextForExperts(c).m_ptr);
+}
+
 static bool WriteBase(
   const ON_SubDComponentBase* base,
   ON_BinaryArchive& archive
@@ -203,6 +256,17 @@ static bool WriteBase(
     if (bWriteGroupId)
     {
       if (!archive.WriteInt(base->m_group_id))
+        break;
+    }
+
+    // 5 byte symmetry set next addition Dec 2020 Rhino 7.2 and later
+    // 5 bytes = unsigned archive id + char flags
+    const bool bWriteSymmetrySetNext = base->InSymmetrySet();
+    if (false == Internal_WriteComponentAdditionSize(bWriteSymmetrySetNext, archive, 5))
+      break;
+    if (bWriteSymmetrySetNext)
+    {
+      if (!Internal_WritesSymmetrySetNext(*base,archive))
         break;
     }
 
@@ -298,6 +362,20 @@ static bool ReadBase(
       if (!archive.ReadInt(&base.m_group_id))
         break;
     }
+
+    // 5 bytes symmetry set next addition Dec 2020 Rhino 7.2 and later
+    // 5 bytes = unsigned archive id + char flags
+    sz = 0;
+    if (false == Internal_ReadComponentAdditionSize(archive, 5, &sz))
+      break;
+    if (ON_SubDComponentArchiveAdditionEndMark == sz)
+      return true; // end of additions
+    if (0 != sz)
+    {
+      if (!Internal_ReadSymmetrySetNext(archive,base))
+        break;
+    }
+
     
     return Internal_FinishReadingComponentAdditions(archive);
   }
@@ -305,42 +383,7 @@ static bool ReadBase(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-
-static bool WriteArchiveIdAndFlags(
-  unsigned int archive_id,
-  ON__UINT_PTR ptr_flags,
-  ON_BinaryArchive& archive
-  )
-{
-  if (!archive.WriteInt(archive_id))
-    return ON_SUBD_RETURN_ERROR(false);
-  unsigned char flags = (unsigned char)ON_SUBD_COMPONENT_FLAGS(ptr_flags);
-  if (!archive.WriteChar(flags))
-    return ON_SUBD_RETURN_ERROR(false);
-  return true;
-}
-
-
-
-static bool ReadArchiveIdAndFlagsIntoComponentPtr(
-  ON_BinaryArchive& archive,
-  ON__UINT_PTR& element_ptr
-  )
-{
-  element_ptr = 0;
-  unsigned int archive_id = 0;
-  if (!archive.ReadInt(&archive_id))
-    return ON_SUBD_RETURN_ERROR(false);
-  unsigned char flags = 0;
-  if (!archive.ReadChar(&flags))
-    return ON_SUBD_RETURN_ERROR(false);
-  element_ptr = archive_id;
-  element_ptr *= (ON_SUBD_COMPONENT_FLAGS_MASK+1);
-  element_ptr += (flags & ON_SUBD_COMPONENT_FLAGS_MASK);
-  return true;
-}
-
-static bool WriteSavedLimitPointList(
+static bool Internal_WriteSavedLimitPointList(
   unsigned int vertex_face_count,
   bool bHaveLimitPoint,
   const ON_SubDSectorSurfacePoint& limit_point,
@@ -392,7 +435,7 @@ static bool WriteSavedLimitPointList(
         break;
       if (!Internal_WriteDouble3(limit_point.m_limitN, archive))
         break;
-      if (!WriteArchiveIdAndFlags(limit_point.m_sector_face ? limit_point.m_sector_face->ArchiveId() : 0, 0, archive))
+      if (!Internal_WriteArchiveIdAndFlags(limit_point.m_sector_face ? limit_point.m_sector_face->ArchiveId() : 0, 0, archive))
         break;
     }
     return true;
@@ -400,7 +443,7 @@ static bool WriteSavedLimitPointList(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-static bool ReadSavedLimitPointList(
+static bool Internal_ReadSavedLimitPointList(
   ON_BinaryArchive& archive,
   unsigned int vertex_face_count,
   ON_SimpleArray< ON_SubDSectorSurfacePoint > limit_points
@@ -441,7 +484,7 @@ static bool ReadSavedLimitPointList(
       if (!Internal_ReadDouble3(archive,limit_point.m_limitN))
         break;
       ON_SubDFacePtr fptr = ON_SubDFacePtr::Null;
-      if (!ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr.m_ptr))
+      if (!Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr.m_ptr))
         break;
       limit_points.Append(limit_point);
     }
@@ -457,7 +500,7 @@ static bool ReadSavedLimitPointList(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-static bool WriteVertexList(
+static bool Internal_WriteVertexList(
   unsigned short vertex_count,
   const ON_SubDVertex*const* vertex,
   ON_BinaryArchive& archive
@@ -478,7 +521,7 @@ static bool WriteVertexList(
     for (i = 0; i < vertex_count; i++)
     {
       const ON_SubDVertex* v = vertex[i];
-      if (!WriteArchiveIdAndFlags((nullptr != v) ? v->ArchiveId() : 0, ptr_flags, archive))
+      if (!Internal_WriteArchiveIdAndFlags((nullptr != v) ? v->ArchiveId() : 0, ptr_flags, archive))
         break;
     }
     if ( i < vertex_count )
@@ -490,7 +533,7 @@ static bool WriteVertexList(
 }
 
 
-static bool ReadVertexList(
+static bool Internal_ReadVertexList(
   ON_BinaryArchive& archive,
   unsigned short& vertex_count,
   unsigned short vertex_capacity,
@@ -516,7 +559,7 @@ static bool ReadVertexList(
     for (i = 0; i < vertex_count; i++)
     {
       ON__UINT_PTR vptr = 0;
-      if (!ReadArchiveIdAndFlagsIntoComponentPtr(archive,vptr))
+      if (!Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive,vptr))
         break;
       vertex[i] = (ON_SubDVertex*)vptr;
     }
@@ -529,7 +572,7 @@ static bool ReadVertexList(
 }
 
 
-static bool WriteEdgePtrList(
+static bool Internal_WriteEdgePtrList(
   unsigned short edge_count,
   unsigned short edgeN_capacity,
   const ON_SubDEdgePtr* edgeN,
@@ -555,7 +598,7 @@ static bool WriteEdgePtrList(
       if ( i == edgeN_capacity)
         eptr = edgeX;
       const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
-      if (!WriteArchiveIdAndFlags((nullptr != edge) ? edge->ArchiveId() : 0,eptr->m_ptr,archive))
+      if (!Internal_WriteArchiveIdAndFlags((nullptr != edge) ? edge->ArchiveId() : 0,eptr->m_ptr,archive))
         break;
     }
     if ( i < edge_count )
@@ -567,7 +610,7 @@ static bool WriteEdgePtrList(
 }
 
 
-static bool ReadEdgePtrList(
+static bool Internal_ReadEdgePtrList(
   ON_BinaryArchive& archive,
   unsigned short& edge_count,
   unsigned short edgeN_capacity,
@@ -598,7 +641,7 @@ static bool ReadEdgePtrList(
     {
       if ( i == edgeN_capacity)
         eptr = edgeX;
-      if (!ReadArchiveIdAndFlagsIntoComponentPtr(archive,eptr->m_ptr))
+      if (!Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive,eptr->m_ptr))
         break;
     }
     if ( i < edge_count )
@@ -610,7 +653,7 @@ static bool ReadEdgePtrList(
 }
 
 
-static bool WriteFacePtrList(
+static bool Internal_WriteFacePtrList(
   unsigned short face_count,
   size_t faceN_capacity,
   const ON_SubDFacePtr* faceN,
@@ -636,7 +679,7 @@ static bool WriteFacePtrList(
       if ( i == faceN_capacity)
         fptr = faceX;
       const ON_SubDFace* face = ON_SUBD_FACE_POINTER(fptr->m_ptr);
-      if (!WriteArchiveIdAndFlags((nullptr != face) ? face->ArchiveId() : 0,fptr->m_ptr,archive))
+      if (!Internal_WriteArchiveIdAndFlags((nullptr != face) ? face->ArchiveId() : 0,fptr->m_ptr,archive))
         break;
     }
     if ( i < face_count )
@@ -648,7 +691,7 @@ static bool WriteFacePtrList(
 }
 
 
-static bool ReadFacePtrList(
+static bool Internal_ReadFacePtrList(
   ON_BinaryArchive& archive,
   unsigned short& face_count,
   unsigned short faceN_capacity,
@@ -678,7 +721,7 @@ static bool ReadFacePtrList(
     {
       if ( i == faceN_capacity)
         fptr = faceX;
-      if (!ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr->m_ptr))
+      if (!Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr->m_ptr))
         break;
     }
     if ( i < face_count )
@@ -689,6 +732,10 @@ static bool ReadFacePtrList(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
+ON_SubDComponentPtr& ON_SubDArchiveIdMap::SymmetrySetNextForExperts(const ON_SubDComponentBase& c)
+{
+  return const_cast<ON_SubDComponentPtr&>(c.m_symmetry_set_next);
+}
 
 bool ON_SubDVertex::Write(
   ON_BinaryArchive& archive
@@ -700,21 +747,17 @@ bool ON_SubDVertex::Write(
       break;
     if (!archive.WriteChar((unsigned char)m_vertex_tag))
       break;
-    //if (!archive.WriteChar((unsigned char)m_vertex_edge_order))
-    //  break;
-    //if (!archive.WriteChar((unsigned char)m_vertex_facet_type))
-    //  break;
     if (!Internal_WriteDouble3(m_P,archive))
       break;
     if (!archive.WriteShort(m_edge_count))
       break;
     if (!archive.WriteShort(m_face_count))
       break;
-    if (!WriteSavedLimitPointList(m_face_count, this->SurfacePointIsSet(), m_limit_point, archive))
+    if (!Internal_WriteSavedLimitPointList(m_face_count, this->SurfacePointIsSet(), m_limit_point, archive))
       break;
-    if (!WriteEdgePtrList(m_edge_count,m_edge_capacity,m_edges,0,nullptr, archive))
+    if (!Internal_WriteEdgePtrList(m_edge_count,m_edge_capacity,m_edges,0,nullptr, archive))
       break;
-    if (!WriteFacePtrList(m_face_count,m_face_capacity,(const ON_SubDFacePtr*)m_faces,0,nullptr, archive))
+    if (!Internal_WriteFacePtrList(m_face_count,m_face_capacity,(const ON_SubDFacePtr*)m_faces,0,nullptr, archive))
       break;
 
     if (archive.Archive3dmVersion() < 70)
@@ -759,10 +802,6 @@ bool ON_SubDVertex::Read(
       break;
     if (!archive.ReadChar(&vertex_tag))
       break;
-    //if (!archive.ReadChar(&vertex_edge_order))
-    //  break;
-    //if (!archive.ReadChar(&vertex_facet_type))
-    //  break;
     if (!Internal_ReadDouble3(archive,P))
       break;
     if (!archive.ReadShort(&edge_count))
@@ -770,7 +809,7 @@ bool ON_SubDVertex::Read(
     if (!archive.ReadShort(&face_count))
       break;
 
-    if (!ReadSavedLimitPointList(archive, face_count, limit_points))
+    if (!Internal_ReadSavedLimitPointList(archive, face_count, limit_points))
       break;
 
     ON_SubDVertex* v = subdimple->AllocateVertex(
@@ -787,14 +826,11 @@ bool ON_SubDVertex::Read(
 
     v->ON_SubDComponentBase::operator=(base);
 
-    //v->m_vertex_edge_order = ON_SubD::VertexEdgeOrderFromUnsigned(vertex_edge_order);
-    //v->m_vertex_facet_type = ON_SubD::VertexFacetTypeFromUnsigned(vertex_facet_type);
-
-    if (!ReadEdgePtrList(archive,edge_count,v->m_edge_capacity,v->m_edges,0,nullptr))
+    if (!Internal_ReadEdgePtrList(archive,edge_count,v->m_edge_capacity,v->m_edges,0,nullptr))
       break;
     v->m_edge_count = edge_count;
 
-    if (!ReadFacePtrList(archive,face_count,v->m_face_capacity,(ON_SubDFacePtr*)v->m_faces,0,nullptr))
+    if (!Internal_ReadFacePtrList(archive,face_count,v->m_face_capacity,(ON_SubDFacePtr*)v->m_faces,0,nullptr))
       break;
     v->m_face_count = face_count;
 
@@ -842,9 +878,9 @@ bool ON_SubDEdge::Write(
       break;
     if (!archive.WriteDouble(m_sharpness))
       break;
-    if (!WriteVertexList(2, m_vertex, archive))
+    if (!Internal_WriteVertexList(2, m_vertex, archive))
       break;
-    if (!WriteFacePtrList(m_face_count,sizeof(m_face2)/sizeof(m_face2[0]),m_face2,m_facex_capacity,m_facex, archive))
+    if (!Internal_WriteFacePtrList(m_face_count,sizeof(m_face2)/sizeof(m_face2[0]),m_face2,m_facex_capacity,m_facex, archive))
       break;
 
     if (archive.Archive3dmVersion() < 70)
@@ -893,7 +929,7 @@ bool ON_SubDEdge::Read(
 
     ON_SubDVertex* v[2] = { 0 };
     unsigned short vertex_count = 2;
-    if (!ReadVertexList(archive, vertex_count, 2, v))
+    if (!Internal_ReadVertexList(archive, vertex_count, 2, v))
       break;
 
     ON_SubDEdge* e = subdimple->AllocateEdge(
@@ -915,7 +951,7 @@ bool ON_SubDEdge::Read(
     e->m_sector_coefficient[1] = sector_weight[1];
     e->m_sharpness = sharpness;
 
-    if (!ReadFacePtrList(archive,face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex))
+    if (!Internal_ReadFacePtrList(archive,face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex))
       break;
     e->m_face_count = face_count;
    
@@ -952,7 +988,7 @@ bool ON_SubDFace::Write(
 
     if (!archive.WriteShort(m_edge_count))
       break;
-    if (!WriteEdgePtrList(m_edge_count,sizeof(m_edge4)/sizeof(m_edge4[0]),m_edge4,m_edgex_capacity,m_edgex, archive))
+    if (!Internal_WriteEdgePtrList(m_edge_count,sizeof(m_edge4)/sizeof(m_edge4[0]),m_edge4,m_edgex_capacity,m_edgex, archive))
       break;
 
     if (archive.Archive3dmVersion() < 70)
@@ -1101,7 +1137,7 @@ bool ON_SubDFace::Read(
 
     f->m_level_zero_face_id = level_zero_face_id;
 
-    if (!ReadEdgePtrList(archive, edge_count, sizeof(f->m_edge4) / sizeof(f->m_edge4[0]), f->m_edge4, f->m_edgex_capacity, f->m_edgex))
+    if (!Internal_ReadEdgePtrList(archive, edge_count, sizeof(f->m_edge4) / sizeof(f->m_edge4[0]), f->m_edge4, f->m_edgex_capacity, f->m_edgex))
       break;
     f->m_edge_count = edge_count;
 
@@ -1685,12 +1721,10 @@ bool ON_SubDimple::Write(
       break;
 
     // minor version = 4 additions
-    // bSyncSymmetricContentSerialNumber = true when any SubD symmetry constraints are up to date.
-    const bool bSyncSymmetricContentSerialNumber
-      = m_symmetry.IsSet()
-      && gsn > 0 && gsn == m_symmetry.SymmetricObjectContentSerialNumber();
+    // bSubDIsSymmetric = true if this subd currently has the symmetry specified by m_symmetry.
+    const bool bSubDIsSymmetric = m_symmetry.SameSymmetricObjectGeometry(this);
 
-    if (false == archive.WriteBool(bSyncSymmetricContentSerialNumber))
+    if (false == archive.WriteBool(bSubDIsSymmetric))
       break;
 
     if (false == archive.WriteUuid(m_face_packing_id))
@@ -1735,7 +1769,7 @@ bool ON_SubDimple::Read(
   unsigned int obsolete_archive_max_edge_id = 0;
   unsigned int obsolete_archive_max_face_id = 0;
 
-  bool bSyncSymmetricContentSerialNumber = false;
+  bool bSubDIsSymmetric = false;
   bool bSyncFacePackingHashSerialNumbers = false;
 
   for (;;)
@@ -1793,23 +1827,16 @@ bool ON_SubDimple::Read(
 
         if (minor_version >= 3)
         {
-          ON__UINT64 gsn_at_save_time = 0;
-          if (false == archive.ReadBigInt(&gsn_at_save_time))
+          // 
+          ON__UINT64 legacy_gsn_at_save_time = 0;
+          if (false == archive.ReadBigInt(&legacy_gsn_at_save_time))
             break;
-          if (3 == minor_version)
-          {
-            bSyncSymmetricContentSerialNumber
-              = gsn_at_save_time > 0
-              && m_symmetry.IsSet()
-              && gsn_at_save_time == m_symmetry.SymmetricObjectContentSerialNumber();
-          }
 
           if (minor_version >= 4)
           {
             // minor version = 4 additions
-            if (false == archive.ReadBool(&bSyncSymmetricContentSerialNumber))
+            if (false == archive.ReadBool(&bSubDIsSymmetric))
               break;
-
             if (false == archive.ReadUuid(m_face_packing_id))
               break;
             if (false == archive.ReadBool(&bSyncFacePackingHashSerialNumbers))
@@ -1881,10 +1908,23 @@ bool ON_SubDimple::Read(
 
   ChangeGeometryContentSerialNumber(false);
 
-  if (bSyncSymmetricContentSerialNumber)
-    m_symmetry.SetSymmetricObjectContentSerialNumber(GeometryContentSerialNumber());
+
+  ///////////////////////////////////////////
+  //
+  // No changes to "this SubD" below here.
+  // 
+  // The rest is updating infomation that is used to determine if this SubD
+  // is the same SubD that existed when symmetry and texture information
+  // was saved. It's ok if this is not the same subd. If and when appropriate
+  // something downstream will update either the SubD or the symmetry/texture 
+  // information.
+  // It most certainly is NOT appropriate to update any of that here.
+  //
+
+  if (bSubDIsSymmetric)
+    m_symmetry.SetSymmetricObject(this);
   else
-    m_symmetry.ClearSymmetricObjectContentSerialNumber();
+    m_symmetry.ClearSymmetricObject();
 
   if (bSyncFacePackingHashSerialNumbers)
   {

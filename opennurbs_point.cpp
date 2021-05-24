@@ -1096,6 +1096,14 @@ bool ON_3fVector::PerpendicularTo( const ON_3fVector& v )
   return V.IsPerpendicularTo(ON_3dVector(v));
 }
 
+const ON_3dVector ON_3dVector::Perpendicular(
+  ON_3dVector failure_result
+) const
+{
+  ON_3dVector perpendicular;
+  return perpendicular.PerpendicularTo(*this) ? perpendicular : failure_result;
+}
+
 bool ON_3dVector::PerpendicularTo( const ON_3dVector& v )
 {
   //bool rc = false;
@@ -6576,6 +6584,23 @@ ON_3dVector ON_CrossProduct( const ON_3dVector& a , const ON_3dVector& b )
   return ON_3dVector(a.y*b.z - b.y*a.z, a.z*b.x - b.z*a.x, a.x*b.y - b.x*a.y );
 }
 
+double ON_3dVector::DotProduct(
+  ON_3dVector A,
+  ON_3dVector B
+)
+{
+  return (A.x * B.x + A.y * B.y + A.z * B.z);
+}
+
+const ON_3dVector ON_3dVector::CrossProduct(
+  ON_3dVector A,
+  ON_3dVector B
+)
+{
+  return ON_3dVector(A.y * B.z - B.y * A.z, A.z * B.x - B.z * A.x, A.x * B.y - B.x * A.y);
+}
+
+
 ON_3dVector ON_CrossProduct( const double* a, const double* b )
 {
   return ON_3dVector(a[1]*b[2] - b[1]*a[2], a[2]*b[0] - b[2]*a[0], a[0]*b[1] - b[0]*a[1] );
@@ -6711,6 +6736,44 @@ bool ON_PlaneEquation::Create( ON_3dPoint P, ON_3dVector N )
     d = -(x*P.x + y*P.y + z*P.z);
   }
   return rc;
+}
+
+const ON_PlaneEquation ON_PlaneEquation::CreateFromThreePoints(
+  ON_3dPoint pointA,
+  ON_3dPoint pointB,
+  ON_3dPoint pointC
+)
+{
+  if (pointA.IsValid() && pointB.IsValid() && pointC.IsValid())
+  {
+    const ON_3dVector X = pointB - pointA;
+    const ON_3dVector Y = pointC - pointA;
+    return ON_PlaneEquation::CreateFromPointAndNormal(pointA, ON_3dVector::CrossProduct(X, Y));
+  }
+  return ON_PlaneEquation::NanPlaneEquation;
+}
+
+const ON_PlaneEquation ON_PlaneEquation::CreateFromPointAndNormal(
+  ON_3dPoint point,
+  ON_3dVector normal
+)
+{
+  if (point.IsValid() && normal.IsValid())
+  {
+    const ON_3dVector N = normal.UnitVector();
+    if (false == normal.IsUnitVector() || fabs(1.0 - N.Length()) < fabs(1.0 - normal.Length()) * (1.0 - ON_ZERO_TOLERANCE))
+      normal = N; // N is a better unit vector
+    if (normal.IsUnitVector())
+    {
+      ON_PlaneEquation e;
+      e.x = normal.x;
+      e.y = normal.y;
+      e.z = normal.z;
+      e.d = -(e.x * point.x + e.y * point.y + e.z * point.z);
+      return e;
+    }
+  }
+  return ON_PlaneEquation::NanPlaneEquation;
 }
 
 ON_PlaneEquation::ON_PlaneEquation()
@@ -6910,6 +6973,11 @@ bool ON_PlaneEquation::IsSet() const
   return ( ON_IS_VALID(x) && ON_IS_VALID(y) && ON_IS_VALID(z) && ON_IS_VALID(d) 
            && (0.0 != x || 0.0 != y || 0.0 != z) 
          );
+}
+
+bool ON_PlaneEquation::IsUnitized() const
+{
+  return (IsSet() && ON_3dVector(x, y, z).IsUnitVector()) ? true : false;
 }
 
 ON_3dVector ON_PlaneEquation::Direction() const
@@ -7675,6 +7743,13 @@ bool ON_PlaneEquation::operator==( const ON_PlaneEquation& eq ) const
 bool ON_PlaneEquation::operator!=( const ON_PlaneEquation& eq ) const
 {
   return (x!=eq.x || y!=eq.y || z!=eq.z || d!=eq.d)?true:false;
+}
+
+const ON_PlaneEquation operator*(const ON_Xform& xform, const ON_PlaneEquation& e)
+{
+  ON_PlaneEquation xe(e);
+  xe.Transform(xform);
+  return xe;
 }
 
 // Find the maximum absolute value of a array of (possibly homogeneous) points 

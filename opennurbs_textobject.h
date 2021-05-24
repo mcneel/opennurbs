@@ -144,6 +144,19 @@ private:
     const class ON_3dmAnnotationContext* annotation_context,
     const class ON_OBSOLETE_V5_TextObject& V5_text_object
   );
+  public:
+    bool GetTextXform(
+      const ON_Xform* model_xform,
+      const ON_3dVector view_x,
+      const ON_3dVector view_y,
+      const ON_3dVector view_z,
+      ON::view_projection projection,
+      bool bDrawForward,
+      const ON_DimStyle* dimstyle,
+      double dimscale,
+      ON_Xform& text_xform_out
+    ) const;
+
 };
 
 #endif

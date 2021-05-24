@@ -1436,8 +1436,8 @@ bool ON_EvPrincipalCurvatures(
         const ON_3dVector&, // N,   // unit normal to surface (use ON_EvNormal())
         double*, // gauss,  // = Gaussian curvature = kappa1*kappa2
         double*, // mean,   // = mean curvature = (kappa1+kappa2)/2
-        double*, // kappa1, // = largest principal curvature value (may be negative)
-        double*, // kappa2, // = smallest principal curvature value (may be negative)
+        double*, // kappa1, // = largest (in absolute value) principal curvature value (may be negative)
+        double*, // kappa2, // = smallest (in absolute value) principal curvature value (may be negative)
         ON_3dVector&, // K1,     // kappa1 unit principal curvature direction
         ON_3dVector&  // K2      // kappa2 unit principal curvature direction
                         // output K1,K2,N is right handed frame
@@ -1453,8 +1453,8 @@ bool ON_EvPrincipalCurvatures(
         const ON_3dVector&, // N,   // unit normal to surface (use ON_EvNormal())
         double*, // gauss,  // = Gaussian curvature = kappa1*kappa2
         double*, // mean,   // = mean curvature = (kappa1+kappa2)/2
-        double*, // kappa1, // = largest principal curvature value (may be negative)
-        double*, // kappa2, // = smallest principal curvature value (may be negative)
+        double*, // kappa1, // = largest (in absolute value) principal curvature value (may be negative)
+        double*, // kappa2, // = smallest (in absolute value) principal curvature value (may be negative)
         ON_3dVector&, // K1,     // kappa1 unit principal curvature direction
         ON_3dVector&  // K2      // kappa2 unit principal curvature direction
                         // output K1,K2,N is right handed frame
@@ -2371,5 +2371,36 @@ ON_DECL bool ON_IsConvexPolyline(
   const ON_SimpleArray<ON_3dPoint>& points,
   bool bStrictlyConvex
 );
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="a"></param>
+/// <param name="b"></param>
+/// <returns>
+/// If a &gt; 0 or b &gt; 0, then the greatest common divisor of a and b is returned (nonzero).
+/// Note that if n &gt; 0, then gcd(0,n) = gcd(n,0) = n and gcd(1,n) = gcd(n,1) = 1.
+/// If a = 0 and b = 0, then the greatest common divisor is not defined and 0 is returned.
+/// </returns>
+ON_DECL unsigned ON_GreatestCommonDivisor(
+  unsigned a,
+  unsigned b
+);
+
+/// <summary>
+/// The least common multiple of a and b is (a/gcd)*(b/gcd)*(gcd), where gcd = greatest common divisor of and b.
+/// </summary>
+/// <param name="a"></param>
+/// <param name="b"></param>
+/// <returns>
+/// If a $gt; 0 and b &gt; and the least common multiple of a and b &lt;= ON_UINT_MAX, then the
+/// least common multiple of a and b is returned.
+/// Otherwise 0 is returned.
+/// </returns>
+ON_DECL unsigned ON_LeastCommonMultiple(
+  unsigned a,
+  unsigned b
+);
+
 
 #endif

@@ -301,7 +301,7 @@ enum class ON_SubDEdgeTag : unsigned char
 
 #pragma region RH_C_SHARED_ENUM [ON_SubDHashType] [Rhino.Geometry.SubDHashType] [byte]
 /// <summary>
-/// ON_SubDHashType used used to specify what set of information is hashed (topology or geometry).
+/// ON_SubDHashType used used to specify what type of SubD information is hashed (topology or geometry).
 /// </summary>
 enum class ON_SubDHashType : unsigned char
 {
@@ -312,17 +312,23 @@ enum class ON_SubDHashType : unsigned char
   Unset = 0,
 
   /// <summary>
-  /// A topology hash includes component ids, edge tags, and all topological relationships 
-  /// between vertices, edges, and faces. Note that edge tags are not a mathematically topological
-  /// attribute, however creased edges divide the SubD into strong visual regions and change 
-  /// what many contexts consider to be the connected components. 
-  /// A topology hash ignores vertex control net points.
+  /// The Topology hash includes component ids, and all topological relationships 
+  /// between vertices, edges, and faces. If two SubDs have the same topology hash,
+  /// then the the have identical labeled control net topology.
   /// </summary>
-  Topology = 1,
+  Topology = 3,
 
   /// <summary>
-  /// A geometry hash includes all information in a toplogy hash.
-  /// In addition, a geometry hash includes vertex tags, vertex control net points, 
+  /// The TopologyAndEdgeCreases includes all information in a Topology hash.
+  /// The TopologyAndEdgeCreases adds edge crease/smooth attributes.
+  /// Many contexts, including face packing and exploding, take edge creases
+  /// into account when partitioning a SubD into regions.
+  /// </summary>
+  TopologyAndEdgeCreases = 1,
+
+  /// <summary>
+  /// A geometry hash includes all information in a TopologyAndEdgeCreases hash.
+  /// The Geometry hash adds vertex tags, vertex control net points, 
   /// and nonzero subdivision displacements on vertices, edges, and faces.
   /// If two SubDs have the same geometry hash, then they have identical surface geometry.
   /// </summary>
@@ -373,6 +379,8 @@ public:
   /// <returns></returns>
   static const ON_SubDHash Create(ON_SubDHashType hash_type, const class ON_SubD& subd );
 
+  static const ON_SubDHash Create(ON_SubDHashType hash_type, const class ON_SubDimple* subdimple);
+
   /// <summary>
   /// Dictionary compare of VertexCount(), EdgeCount(), FaceCount(), VertexHash(), EdgeHash(), and FaceHash() in that order.
   /// 
@@ -404,38 +412,51 @@ public:
   ON_SubDHashType HashType() const;
 
   /// <summary>
-  /// Returns:
-  ///   If this hash was created from an ON_SubD, then the value of subd.RuntimeSerialNumber() is returned.
-  ///   Otherwise, 0 is returned.
+  /// The runtime serial number can be used to identify the SubD that was hashed to created this ON_SubDHash.
   /// </summary>
-  /// <returns></returns>
+  /// <returns>
+  /// If this hash was created from an ON_SubD, then the value of subd.RuntimeSerialNumber() is returned.
+  /// Otherwise, 0 is returned.
+  /// </returns>
   ON__UINT64 SubDRuntimeSerialNumber() const;
 
   /// <summary>
+  /// The geometry content serial number can be used to quickly determine if a SubD is exactly the instance used
+  /// to create this ON_SubDHash. If the geometry content serial numbers are equal, then the SubD is identical
+  /// to the one use to create the hash. If the geometry content serial numbers differ, the current SubD hashes 
+  /// need to be checked against this to see what, if anything, changed. For example, moving a vertex will not 
+  /// change a topology hash.
+  /// </summary>
+  /// <returns>
   /// Returns:
   ///   If this hash was created from an ON_SubD, then the value of subd.GeometryContentSerialNumber() at the
   ///   at the instant this hash was created is returned.
   ///   Otherwise, 0 is returned.
-  /// </summary>
-  /// <returns></returns>
+  /// </returns>
   ON__UINT64 SubDGeometryContentSerialNumber() const;
 
   /// <summary>
-  /// Saved value of subd.VertexCount(HashType()).
+  /// Copied from the SubD when the hash is created.
   /// </summary>
-  /// <returns></returns>
+  /// <returns>
+  /// Number of hashed vertices.
+  /// </returns>
   unsigned int VertexCount() const;
 
   /// <summary>
-  /// Saved value of subd.EdgeCount(HashType()).
+  /// Copied from the SubD when the hash is created.
   /// </summary>
-  /// <returns></returns>
+  /// <returns>
+  /// Number of hashed edges.
+  /// </returns>
   unsigned int EdgeCount() const;
 
   /// <summary>
-  /// Saved value of subd.FaceCount(HashType()).
+  /// Copied from the SubD when the hash is created.
   /// </summary>
-  /// <returns></returns>
+  /// <returns>
+  /// Number of hashed faces.
+  /// </returns>
   unsigned int FaceCount() const;
 
   /// <summary>
@@ -642,6 +663,13 @@ public:
 
   bool IsNull() const;
   bool IsNotNull() const;
+
+  /*
+  Returns:
+    If Vertex() is not nullptr, Vertex()->m_id is returned.
+    Otherwise, 0 is returned.
+  */
+  unsigned int VertexId() const;
 
   /*
   Returns:
@@ -866,6 +894,16 @@ public:
   */
   const ON_3dPoint RelativeControlNetPoint(
     int relative_vertex_index
+  ) const;
+
+  bool RelativeVertexMark(
+    int relative_vertex_index,
+    bool missing_vertex_return_value
+  ) const;
+
+  ON__UINT8 RelativeVertexMarkBits(
+    int relative_vertex_index,
+    ON__UINT8 missing_vertex_return_value
   ) const;
 
   const ON_Line RelativeControlNetLine() const;
@@ -1255,9 +1293,33 @@ public:
   */
   bool IsActive() const;
 
+  /*
+  Returns:
+    True if this component is marked as a primary motif component.
+  Remarks:
+    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+  */
+  bool IsSymmetrySetPrimaryMotif() const;
+
+  /*
+  Returns:
+    True if this component is marked being in a symmetry set.
+  Remarks:
+    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+  */
+  bool InSymmetrySet() const;
+
   ON_SubDComponentPtr::Type ComponentType() const;
 
   class ON_SubDComponentBase* ComponentBase() const;
+  
+  /*
+  type_filter - [in]
+    If is ON_SubDComponentPtr::Type::Unset, then any type of component will be returned.
+    Otherwise only a component of the specified type will be returned.
+  */
+  class ON_SubDComponentBase* ComponentBase(ON_SubDComponentPtr::Type type_filter) const;
+
   class ON_SubDVertex* Vertex() const;
   class ON_SubDEdge* Edge() const;
   class ON_SubDFace* Face() const;
@@ -1513,6 +1575,161 @@ public:
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentPtr>;
 #endif
 
+/*
+Description:
+  ON_SubDComponentTest is used in contexts where custom testing or filtering of
+  SubD components is required.
+*/
+class ON_CLASS ON_SubDComponentTest
+{
+public:
+  ON_SubDComponentTest() = default;
+  virtual ~ON_SubDComponentTest();
+  ON_SubDComponentTest(const ON_SubDComponentTest&) = default;
+  ON_SubDComponentTest& operator=(const ON_SubDComponentTest&) = default;
+
+  /*
+    Sets m_ptr=ptr
+  */
+  ON_SubDComponentTest(ON__UINT_PTR ptr);
+
+  /*
+  Description:
+    Typically, a derived class overrides this function, uses it to inspect vertex properties,
+    and returns true or false.
+  Parameters:
+    v - [in] vertex being tested.
+  Returns:
+    true if the vertex "passes" the test.
+    false if the vertex "fails" the text.
+  Remarks:
+    The default implementation returns (cptr.IsNotNull() && 0 != m_ptr);
+  */
+  virtual bool Passes(const ON_SubDComponentPtr cptr) const;
+
+  /*
+  Returns:
+    this->Passes(nullptr != v ? v->ComponentPtr() : ON_SubDComponentPtr::Null);
+  */
+  bool Passes(const class ON_SubDVertex* v) const;
+
+  /*
+  Returns:
+    this->Passes(nullptr != e ? e->ComponentPtr() : ON_SubDComponentPtr::Null);
+  */
+  bool Passes(const class ON_SubDEdge* e) const;
+
+  /*
+  Returns:
+    this->Passes(nullptr != f ? f->ComponentPtr() : ON_SubDComponentPtr::Null);
+  */
+  bool Passes(const class ON_SubDFace* f) const;
+
+  // Passes() returns true for every non nullptr component.
+  static const ON_SubDComponentTest AllPass;
+
+  // Passes() returns false for every component.
+  static const ON_SubDComponentTest AllFail;
+
+protected:
+  // classes derived from ON_SubDVertexFilter may use m_ptr as they see fit including to completely ignore it.
+  ON__UINT_PTR m_ptr = 0;
+};
+
+class ON_CLASS ON_SubDComponentId
+{
+public:
+
+  // type = unset and id = 0;
+  static const ON_SubDComponentId Unset;
+
+  ON_SubDComponentId() = default;
+  ~ON_SubDComponentId() = default;
+  ON_SubDComponentId(const ON_SubDComponentId&) = default;
+  ON_SubDComponentId& operator=(const ON_SubDComponentId&) = default;
+
+  ON_SubDComponentId(ON_SubDComponentPtr::Type component_type, unsigned int component_id);
+  ON_SubDComponentId(ON_SubDComponentPtr cptr);
+  ON_SubDComponentId(const class ON_SubDVertex* v);
+  ON_SubDComponentId(const class ON_SubDEdge* e);
+  ON_SubDComponentId(const class ON_SubDFace* f);
+
+  static int CompareTypeAndId(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs);
+  static int CompareTypeAndIdFromPointer(const ON_SubDComponentId* lhs, const ON_SubDComponentId* rhs);
+
+  unsigned int ComponentId() const;
+  ON_SubDComponentPtr::Type ComponentType() const;
+
+  /*
+  Returns:
+    true if type is not unset and id > 0
+  */
+  bool IsSet() const;
+
+private:
+  unsigned int m_id = 0;
+  ON_SubDComponentPtr::Type m_type = ON_SubDComponentPtr::Type::Unset;
+  unsigned char m_reserved1 = 0;
+  unsigned short m_reserved2 = 0;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentId>;
+#endif
+
+class ON_CLASS ON_SubDComponentIdList : public ON_SubDComponentTest
+{
+public:
+  ON_SubDComponentIdList() = default;
+  ~ON_SubDComponentIdList() = default;
+  ON_SubDComponentIdList(const ON_SubDComponentIdList&) = default;
+  ON_SubDComponentIdList& operator=(const ON_SubDComponentIdList&) = default;
+
+  /*
+  Returns:
+    returns InListPassesResult() when cptr id is in the list.
+    returns !InListPassesResult() when cptr id is not the list.
+  Remarks:
+    AddId is safe to use in multithreaded contexts.
+  */
+  bool Passes(const ON_SubDComponentPtr cptr) const override;
+
+  void SetInListPassesResult(bool bInListPassesResult);
+
+  // Value Passes(cptr) returns when cptr is in the list
+  bool InListPassesResult() const;
+
+  void AddId(ON_SubDComponentId cid);
+
+  void AddId(ON_SubDComponentPtr cptr);
+
+  /*
+  Parameters:
+    cid - in
+  Returns:
+    true if cid is in this list.
+  */
+  bool InList(ON_SubDComponentId cid) const;
+
+  /*
+  Parameters:
+    cptr - in
+  Returns:
+    true if cptr's id is in this list.
+  */
+  bool InList(ON_SubDComponentPtr cptr) const;
+
+private:
+  unsigned int m_reserved1 = 0;
+private:
+  unsigned short m_reserved2 = 0;
+private:
+  bool m_bInListPassesResult = true;
+private:
+  mutable bool m_bSorted = false;
+  mutable ON_SimpleArray<ON_SubDComponentId> m_id_list;
+};
+
 class ON_CLASS ON_SubDComponentPtrPair
 {
 public:
@@ -1665,6 +1882,209 @@ private:
   ON_SubDComponentPtrPairHashTable(const ON_SubDComponentPtrPairHashTable&) = delete;
   ON_SubDComponentPtrPairHashTable& operator=(const ON_SubDComponentPtrPairHashTable&) = delete;
 };
+
+/// <summary>
+/// Simple arrays of ON_SubD_ComponentIdTypeAndTag elements are used to save 
+/// original tag values so the can be retrieved after complex editing operations.
+/// </summary>
+class ON_CLASS ON_SubD_ComponentIdTypeAndTag
+{
+public:
+  static const ON_SubD_ComponentIdTypeAndTag Unset;
+
+  /*
+  Returns:
+    If v is no nullptr and v->m_id > 0, a ON_SubD_ComponentIdTypeAndTag with VertexTag() = v->m_vertex_tag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromVertex(const class ON_SubDVertex* v);
+
+  /*
+  Returns:
+    If vertex_id > 0, a ON_SubD_ComponentIdTypeAndTag with VertexTag() = vtag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromVertexId(unsigned vertex_id, ON_SubDVertexTag vtag);
+
+  /*
+  Parameters:
+    e - [in]
+      If e->m_edge_tag is ON_SubDEdgeTag::SmoothX, the ON_SubD_ComponentIdTypeAndTag EdgeTag() will be ON_SubDEdgeTag::Smoooth.
+  Returns:
+    If e is not nullptr and e->m_id > 0, a ON_SubD_ComponentIdTypeAndTag with EdgeTag() = e->m_edge_tag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromEdge(const class ON_SubDEdge* e);
+
+
+  /*
+  Parameters:
+    edge_id - [in]
+    etag - [in]
+      If etag is ON_SubDEdgeTag::SmoothX, the ON_SubD_ComponentIdTypeAndTag EdgeTag() will be ON_SubDEdgeTag::Smoooth.
+  Returns:
+    If edge_id > 0, a ON_SubD_ComponentIdTypeAndTag with EdgeTag() = etag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromEdgeId(unsigned edge_id, ON_SubDEdgeTag etag);
+
+
+  /*
+  Parameters:
+    f - [in]
+    ftag - [in]
+      Any value and the interpretation is up to the context using the ON_SubD_ComponentIdTypeAndTag.
+  Returns:
+    If f is no nullptr and f->m_id > 0, a ON_SubD_ComponentIdTypeAndTag with FaceTag() = ftag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  Remarks:
+    SubD faces do not have a tag in the sense that vertices and edges do, but in complex editing tasks
+    it is sometimes useful to include faces in an array of ON_SubD_ComponentIdTypeAndTag elements.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromFace(const class ON_SubDFace* f, unsigned char ftag);
+
+  /*
+  Parameters:
+    face_id - [in]
+    ftag - [in]
+      Any value and the interpretation is up to the context using the ON_SubD_ComponentIdTypeAndTag.
+  Returns:
+    If face_id > 0, a ON_SubD_ComponentIdTypeAndTag with FaceTag() = vtag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  Remarks:
+    SubD faces do not have a tag in the sense that vertices and edges do, but in complex editing tasks
+    it is sometimes useful to include faces in an array of ON_SubD_ComponentIdTypeAndTag elements.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromFaceId(unsigned face_id, unsigned char ftag);
+
+  /*
+  Description:
+    Dictionary compare on ComponentType() and ComponentId() in that order.
+  */
+  static int CompareTypeAndId(const ON_SubD_ComponentIdTypeAndTag* lhs, const ON_SubD_ComponentIdTypeAndTag* rhs);
+
+  /*
+  Description:
+    Dictionary compare on ComponentType(), ComponentId(), and tag in that order.
+  */
+  static int CompareTypeAndIdAndTag(const ON_SubD_ComponentIdTypeAndTag* lhs, const ON_SubD_ComponentIdTypeAndTag* rhs);
+
+  /*
+  Parameters:
+    v - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If v is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    Otherwise v->m_vertex_tag is returned.
+  */
+  static ON_SubDVertexTag OriginalVertexTag(
+    const class ON_SubDVertex* v,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  /*
+  Parameters:
+    vertex_id - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If vertex_id is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    Otherwise ON_SubDVertexTag::Unset is returned.
+  */
+  static ON_SubDVertexTag OriginalVertexTag(
+    unsigned vertex_id,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  /*
+  Parameters:
+    e - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If e is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    Otherwise e->m_edge_tag is returned.
+  */
+  static ON_SubDEdgeTag OriginalEdgeTag(
+    const class ON_SubDEdge* e,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  /*
+  Parameters:
+    edge_id - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If edge_id is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    Otherwise ON_SubDEdgeTag::Unset is returned.
+  */
+  static ON_SubDEdgeTag OriginalEdgeTag(
+    unsigned edge_id,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  /*
+  Parameters:
+    f - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If f is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    Otherwise 0 is returned.
+  */
+  static unsigned char OriginalFaceTag(
+    const class ON_SubDFace* f,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  /*
+  Parameters:
+    face_id - [in]
+    sorted_tags[] - [in]
+      Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
+  Returns:
+    If face_id is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    Otherwise ON_SubDFaceTag::Unset is returned.
+  */
+  static unsigned char OriginalFaceTag(
+    unsigned face_id,
+    const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags
+  );
+
+  ON_SubDComponentPtr::Type ComponentType() const;
+
+  ON_SubDVertexTag VertexTag() const;
+
+  unsigned VertexId() const;
+
+  /*
+  Returns:
+    ON_SubDEdgeTag::Unset, ON_SubDEdgeTag::Smooth, or ON_SubDEdgeTag::Crease.
+  */
+  ON_SubDEdgeTag EdgeTag() const;
+
+  unsigned EdgeId() const;
+
+  unsigned char FaceTag() const;
+
+  unsigned FaceId() const;
+
+  const ON_wString ToString() const;
+
+private:
+  ON_SubDComponentPtr m_cptr = ON_SubDComponentPtr::Null;
+  unsigned m_id = 0;
+  ON_SubDComponentPtr::Type m_type = ON_SubDComponentPtr::Type::Unset;
+  unsigned char m_tag = 0;
+  unsigned char m_bits = 0;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubD_ComponentIdTypeAndTag>;
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -2451,6 +2871,63 @@ private:
 };
 
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDEndCapStyle] [Rhino.Geometry.SubDEndCapStyle] [byte]
+/// <summary>
+/// ON_SubDEndCapStyle enumerates the type of end caps functions like ON_SubD::CreateCylinder will create.
+/// Use ON_SubDEndCapStyleFromUnsigned(integer value) to convert integer values to an ON_SubDEndCapStyle.
+/// Use ON_SubDEndCapStyleToString(end_cap_style) to convert ON_SubDEndCapStyle values to string descriptions.
+/// </summary>
+enum class ON_SubDEndCapStyle : unsigned char
+{
+  /// <summary>
+  /// Used to indicate the end cap style is not set.
+  /// </summary>
+  Unset = 0,
+
+  /// <summary>
+  /// Ends are not capped.
+  /// </summary>
+  None = 1,
+
+  /// <summary>
+  /// Ends are capped with triangles.
+  /// </summary>
+  Triangles = 2,
+
+  /// <summary>
+  /// When the end has an even number of edges, is will be capped with quads. Otherwise it will be capped with triangles.
+  /// </summary>
+  Quads = 3,
+
+  /// <summary>
+  /// Ends are capped with a n-gon. This is a poor choice when there are a large number of edges in the end boundary.
+  /// </summary>
+  Ngon = 4
+};
+#pragma endregion
+
+
+/// <summary>
+/// Convert an integer value to an ON_SubDEndCapStyle enum value.
+/// </summary>
+/// <param name="subd_cap_style_as_unsigned"></param>
+/// If subd_cap_style_as_unsigned is not valid, then ON_SubDEndCapStyle::Unset is returned.
+/// <returns></returns>
+ON_DECL
+ON_SubDEndCapStyle ON_SubDEndCapStyleFromUnsigned(
+  unsigned int subd_cap_style_as_unsigned
+);
+
+/// <summary>
+/// Convert subd_cap_style to a string description.
+/// </summary>
+/// <param name="subd_cap_style"></param>
+/// <returns></returns>
+ON_DECL
+const ON_wString ON_SubDEndCapStyleToString(
+  ON_SubDEndCapStyle subd_cap_style
+);
+
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubD
@@ -2538,7 +3015,7 @@ public:
     per face materials, texture coordinates, and texture mappings.
   Remarks:
     Changing the geometry content serial number automatically changes
-    the render content serial number. If you call ChangeGeometryContentSerialNumber(),
+    the render content serial number. If you call ChangeGeometryContentSerialNumberForExperts(),
     there is no need to also call ChangeRenderContentSerialNumber().
   */
   ON__UINT64 ChangeRenderContentSerialNumber() const;
@@ -2562,6 +3039,29 @@ public:
     ON_SubDHashType hash_type,
     bool bForceUpdate
   ) const;
+
+  /*
+  Description:
+    If two SubDs have identical values of GeometryHash(), then they have
+    identical surface geometry.
+  Returns:
+    this->SubDHash(ON_SubDHashType::Geometry,false).SubDHash().
+  Remarks:
+    If the geometry hashes are equal, the topology hashes are equal.
+  */
+  const ON_SHA1_Hash GeometryHash() const;
+
+  /*
+  Description:
+    If two SubDs have identical values of TopologyHash(), then they have
+    identical labeled control net topology. The labels are the vertex, edge,
+    and face ids.
+  Returns:
+    this->SubDHash(ON_SubDHashType::Topology,false).SubDHash().
+  Remarks:
+    Two SubDs can have the same topology hash but different geometry hashes.
+  */
+  const ON_SHA1_Hash TopologyHash() const;
 
   /*
   Description:
@@ -2593,6 +3093,18 @@ public:
   static ON_SubDComponentLocation ToggleSubDAppearanceValue(ON_SubDComponentLocation subd_appearance);
   static const ON_SubDComponentLocation DefaultSubDAppearance; // = ON_SubDComponentLocation::Surface
   static const ON_SubDTextureCoordinateType DefaultTextureCoordinateType; // = ON_SubDTextureCoordinateType::Packed
+
+
+public:
+  static ON_SubD* CreateCylinder(
+    const class ON_Cylinder& cylinder,
+    unsigned circumference_face_count,
+    unsigned height_face_count,
+    ON_SubDEndCapStyle end_cap_style,
+    ON_SubDEdgeTag end_cap_edge_tag,
+    ON_SubDComponentLocation radius_location,
+    ON_SubD* destination_subd
+  );
 
 public:
   static ON_SubDVertexTag VertexTagFromUnsigned( 
@@ -3052,6 +3564,38 @@ public:
     ON_SimpleArray<double>* triple_knots
   );
 
+  /*
+  Parameters:
+    point_count - [in] >= 3
+      Number of control points in a regular planar SubD ngon with creased edges.
+    control_point_radius - [in]
+      Distance from an ngon control point to the ngon center.
+  Returns:
+    Distance from an ngon surface point to the ngon center.
+  See Also:
+    ON_SubD::SurfacePointRadiusFromControlPointRadius()
+  */
+  static double SurfacePointRadiusFromControlPointRadius(
+    unsigned int point_count,
+    double control_point_radius
+  );
+
+  /*
+  Parameters:
+    point_count - [in] >= 3
+      Number of control points in a regular planar SubD ngon with creased edges.
+    surface_radius - [in]
+    Distance from an ngon surface point to the ngon center.
+  Returns:
+    Distance from an ngon control point to the ngon center.
+  See Also:
+    ON_SubD::ControlPointRadiusFromSurfacePointRadius()
+  */
+  static double ControlPointRadiusFromSurfacePointRadius(
+    unsigned int point_count,
+    double surface_point_radius
+  );
+
 
 
 
@@ -3113,6 +3657,70 @@ public:
 
   //virtual
   unsigned int SizeOf() const override;
+
+  /*
+  Description:
+    This is a debugging too used to study how efficiently SubDs are using memory.
+  Returns:
+    Total operating system heap (in bytes) used by this SubD's ON_FixedSizePools, inlcude the mesh fragments pool.
+  Remarks:
+    SizeOfAllElements() = SizeOfActiveElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfAllElements() const;
+
+  /*
+  Description:
+    This is a debugging too used to study how efficiently SubDs are using memory.
+  Returns:
+    Total operating system heap (in bytes) of memory in this SubD's ON_FixedSizePools
+    that is currently used by active elements, including active mesh fragments.
+  Remarks:
+    SizeOfAllElements() = SizeOfActiveElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfActiveElements() const;
+
+  /*
+  Description:
+    This is a debugging too used to study how efficiently SubDs are using memory.
+  Returns:
+    Total operating system heap (in bytes) of memory in this SubD's ON_FixedSizePools
+    that is reserved but not currently used, including unused mesh fragments.
+  Remarks:
+    SizeOfAllElements() = SizeOfActiveElements() + SizeOfUnusedElements().
+  */
+  size_t SizeOfUnusedElements() const;
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Total operating system heap memory (in bytes) used by the mesh fragments pool.
+  Remarks:
+    SizeOfAllMeshFragments() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfAllMeshFragments() const;
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Operating system heap memory (in bytes) that are used by active mesh fragments.
+  Remarks:
+    SizeOfAllMeshFragments() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfActiveMeshFragments() const;
+
+
+  /*
+  Description:
+    Tool for debugging mesh fragments memory use.
+  Returns:
+    Operating system heap memory (in bytes) that has been reserved for mesh fragments
+    but is not currently used by active mesh fragments.
+  Remarks:
+    SizeOfAllMeshFragments() = SizeOfActiveMeshFragments() + SizeOfUnusedMeshFragments().
+  */
+  size_t SizeOfUnusedMeshFragments() const;
 
   //virtual
   ON__UINT32 DataCRC(
@@ -3575,6 +4183,33 @@ public:
 
   /////////////////////////////////////////////////////////
   //
+  // Membership query
+  //
+  bool InSubD(const class ON_SubDVertex* vertex) const;
+  bool InSubD(const class ON_SubDEdge* edge) const;
+  bool InSubD(const class ON_SubDFace* face) const;
+
+
+  /*
+  Returns:
+    ON_SubDComponentPtr::Type::Unset if b is not in this SubD.
+    Otherwise the type of the component is returned.
+  */
+  bool InSubD(ON_SubDComponentPtr cptr) const;
+  
+  /*
+  Returns:
+    If b is in this SubD, a ON_SubDComponentPtr to b is returned.
+    Otherwise ON_SubDComponentPtr::Null is returned.
+  Remarks:
+    This function is the slowest of the InSubD() overrides.
+    When b is an unknown component type, this function can be used to
+    safely determine what type of component (vertex/edge/face).
+  */
+  const ON_SubDComponentPtr InSubD(const class ON_SubDComponentBase* b) const;
+
+  /////////////////////////////////////////////////////////
+  //
   // Vertex access
   //
 
@@ -3587,6 +4222,8 @@ public:
   /*
   Parameters:
     hash_type - [in]
+      All hashes include vertex id.
+      Geometry hashes include vertex tag, vertex control point, and vertex displacement.
   Returns:
     A SHA1 hash of the SubD's vertices.
   */
@@ -3642,6 +4279,8 @@ public:
   /*
   Parameters:
     hash_type - [in]
+      All hashes include edge id, edge vertex ids in order, the edge crease/smooth attribute.
+      Geometry hashes include edge displacements.
   Returns:
     A SHA1 hash of the SubD's edges.
   */
@@ -3943,6 +4582,21 @@ public:
     True if per face colors were set by SetPerFaceColorsFromPackId().
   */
   bool HasPerFaceColorsFromPackId() const;
+
+
+  /*
+  Description:
+    If a SubD is symmetric and a face belongs to a symmetry set, then per face color is
+    set according to the motif the face belongs to.
+    Otherwise, its per face color is cleared.
+  */
+  void SetPerFaceColorsFromSymmetryMotif() const;
+
+  /*
+  Returns:
+    True if per face colors were set by SetPerFaceColorsFromSymmetryMotif().
+  */
+  bool HasPerFaceColorsFromSymmetryMotif() const;
 
 
   ///*
@@ -4551,7 +5205,7 @@ public:
     const ON_COMPONENT_INDEX* ci_list,
     size_t ci_count,
     ON_SubDComponentLocation component_location
-    );
+  );
 
   unsigned int TransformComponents(
     const ON_Xform& xform,
@@ -4572,7 +5226,7 @@ public:
     const ON_Xform& xform,
     const ON_COMPONENT_INDEX* ci_list,
     size_t ci_count
-    );
+  );
 
   unsigned int ExtrudeComponents(
     const ON_Xform& xform,
@@ -4586,7 +5240,7 @@ public:
     size_t ci_count,
     bool bExtrudeBoundaries,
     bool bPermitNonManifoldEdgeCreation
-    );
+  );
 
   unsigned int ExtrudeComponents(
     const ON_Xform& xform,
@@ -4763,6 +5417,15 @@ public:
     unsigned int initial_edge_capacity,
     unsigned int initial_face_capacity
     );
+
+  /*
+  Parameters:
+    v - [in]
+      A vertex with zero edge and zero faces.
+  */
+  bool ReturnVertexForExperts(
+    ON_SubDVertex* v
+  );
 
   /*
   Description:
@@ -4978,6 +5641,15 @@ public:
 
   /*
   Parameters:
+    e - [in]
+      An edge in this subd with no vertices or faces.
+  */
+  bool ReturnEdgeForExperts(
+    ON_SubDEdge* e
+  );
+
+  /*
+  Parameters:
     edge0 - [in]
     edge1 - [in]
     edge2 - [in]
@@ -5135,6 +5807,29 @@ public:
     );
 
   /*
+  Description:
+    Finds an existing face or adds a new face with corners at face_vertices[].
+  Parameters:
+    new_edge_tag - [in]
+      If an edge needs to be added, this tag is assigned to the new edge.
+      When in doubt, pass ON_SubDEdgeTag::Unset and call this->UpdateAllTagsAndSectorCoefficients(true)
+      after you are finished modifying the SubD.
+    face_vertices - [in]
+      Array of vertices at the face corners in counter-clockwise order.
+    face_vertex_count - [in]
+      Number of vertices in face_vertices[]
+  Returns:
+    If the input is not valid, nullptr is returned.
+    If there is a face with the specified corners exists, then it is returned.
+    Otherwise a new face is added and returned.
+  */
+  class ON_SubDFace* FindOrAddFace(
+    ON_SubDEdgeTag new_edge_tag,
+    const class ON_SubDVertex* face_vertices[],
+    size_t face_vertex_count
+  );
+
+  /*
   Parameters:
     candidate_face_id - [in]
       If candidate_face_id is > 0 and is available,
@@ -5151,6 +5846,15 @@ public:
     const class ON_SubDEdgePtr* edge,
     unsigned int edge_count
     );
+
+  /*
+  Parameters:
+    f - [in]
+      A face with zero edges
+  */
+  bool ReturnFaceForExperts(
+    ON_SubDFace* f
+  );
 
   /*
   Description:
@@ -5286,6 +5990,67 @@ public:
     ON_SubDEdgePtr eptr
     );
 
+
+  /*
+  Description:
+    Expert user tool to insert an edge in the face's edge array.
+  Parameters:
+    face - [in]
+    i - [in]
+      index where the edge should be inserted.
+    eptr - [in]
+      direction must be set correctly
+    bAddFaceToRelativeVertex0 - [in]
+      If true, face is appended to the eptr.RelativeVertex(0)'s face array.
+    bAddFaceToRelativeVertex1 - [in]
+      If true, face is appended to the eptr.RelativeVertex(0)'s face array.
+  Returns:
+    true if successful.
+  Remarks:
+    This tool is used during construction or editing of a SubD and the
+    connection is added even if the result is an invalid face or edge.
+    It is up to the expert user to make enough changes to create a valid SubD.
+  */
+  bool AddFaceEdgeConnection(
+    ON_SubDFace* face,
+    unsigned int i,
+    ON_SubDEdgePtr eptr,
+    bool bAddbAddFaceToRelativeVertex0,
+    bool bAddbAddFaceToRelativeVertex1
+    );
+
+  /*
+  Description:
+    Expert user tool to set a face's boundary.
+  Parameters:
+    face - [in]
+      Face that is in the subd with no edges.
+    edges - [in]
+      Array of edge_count pointers that form a loop.
+      Caller is responsible for insuring edges and vertices appear only
+      one time in the loop.
+    edge_count - [in]
+      Number of edges in the boundary.      
+  Returns:
+    True if successful (all edge-face and vertex-face connections are set).
+    False otherwise.
+  Remarks:
+    This tool is used during construction or editing of a SubD and the
+    connection is added even if the result is an invalid face or edge.
+    It is up to the expert user to make enough changes to create a valid SubD.
+  */
+  bool SetFaceBoundary(
+    ON_SubDFace* face,
+    const ON_SubDEdgePtr* edges,
+    size_t edge_count
+  );
+
+  bool SetFaceBoundary(
+    ON_SubDFace* face,
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+  );
+
+
   /*
   Description:
     Expert user tool to insert an edge in the face's edge array.
@@ -5307,11 +6072,12 @@ public:
 
   /*
   Description:
-    Expert user tool to insert an edge in the face's edge array.
+    Expert user tool to remove the connection between and edge and face.
   Parameters:
     face - [in]
     i - [in]
       index where the edge should be removed.
+      0 <= i < face->EdgeCount()
     removed_edge - [out]
       removed edge
   Remarks:
@@ -5326,7 +6092,7 @@ public:
 
   /*
   Description:
-    Expert user tool to insert an edge in the face's edge array.
+    Expert user tool to remove the connection between and edge and face.
   Parameters:
     face - [in]
     i - [in]
@@ -5344,6 +6110,39 @@ public:
     ON_SubDEdgePtr& removed_edge
     );
 
+  /*
+  Description:
+    Expert user tool to remove a connection beteen an edge and vertex
+  Parameters:
+    e - [in]
+      An edge with zero attached faces.
+    v - [in]
+      A vertex attached to the e.
+  Returns:
+    If successful, true is returned.
+    Otherwise false is returned.
+  */
+  bool RemoveEdgeVertexConnection(
+    ON_SubDEdge* e,
+    ON_SubDVertex* v
+  );
+
+  /*
+  Description:
+    Expert user tool to remove a connection beteen an edge and edge->vertex[evi]
+  Parameters:
+    e - [in]
+      An edge with zero attached faces.
+    evi - [in]
+      0 or 1 specifying which vertex to remove.
+  Returns:
+    If successful, a pointer to the removed vertex is returned.
+    Otherwise nullptr is returned.
+  */
+  ON_SubDVertex* RemoveEdgeVertexConnection(
+    ON_SubDEdge* e,
+    unsigned evi
+  );
 
   /*
   Description:
@@ -5813,7 +6612,10 @@ private:
 
   void CopyHelper(const ON_SubD&);
 
-  public:
+private:
+  class ON_SubDHeap* Internal_Heap() const;
+
+public:
 
     /*
     Returns:
@@ -5911,7 +6713,7 @@ public:
 
     /*
     Returns:
-      The value of ON_SubDHash::Create(ON_SubDHashType::Topology, *this) when the faces were packed.
+      The value of ON_SubDHash::Create(ON_SubDHashType::TopologyAndEdgeCrease, *this) when the faces were packed.
     */
     const ON_SubDHash FacePackingTopologyHash() const;
 
@@ -9713,11 +10515,38 @@ public:
 
 protected:
   void CopyBaseFrom(
-    const ON_SubDComponentBase* src
+    const ON_SubDComponentBase* src,
+    bool bCopySymmetrySetNext
     );
 
+public:
+  /*
+  Returns:
+    True if this component is marked as a primary motif component.
+  Remarks:
+    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+  */
+  bool IsSymmetrySetPrimaryMotif() const;
+
+  /*
+  Returns:
+    True if this component is marked being in a symmetry set.
+  Remarks:
+    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+  */
+  bool InSymmetrySet() const;
+
 private:
-  ON_SubDComponentPtr m_reserved; // reserved for the symmetric component when symmetry is implemnted.
+  // Symmetry sets are a linked loops of components order so that symmetry(component) = next component.
+  // There is exactly one motif in each symmetry set.
+  // The motif component is marked with 1 == m_symmetry_set_next.ComponentDirection(). 
+  // The next component in the symmetry set loop is m_symmetry_set_next.Vertex()/Edge()/Face().
+  // When a symmetry set is a singleton (fixed component in the symmetry), this = m_symmetry_set_next
+  // and m_symmetry_set_next.ComponentDirection()= 1.
+  // The only safe way query, set, and clear symmetry set information is to use
+  // ON_SubD.*SymmetrySet*() functions. Any other technique is not supported and will cause crashes.
+  friend class ON_SubDArchiveIdMap;
+  ON_SubDComponentPtr m_symmetry_set_next;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -9858,6 +10687,18 @@ public:
     Attached edges and faces are not modifed.
   */
   void ClearSavedSubdivisionPoints() const;  
+
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this vertex.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all edges and faces attached to this vertex are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
 
 public:
   static const ON_SubDVertex Empty;  
@@ -10298,8 +11139,19 @@ public:
   ) const;
 
   /*
+  Description:
+    Count creases with specified topology.
+  Parameters:
+    bCountInteriorCreases - [in]
+      Count includes crease edges with 2 faces.
+    bCountBoundaryCreases - [in]
+      Count includes crease edges with 1 face.
+    bCountNonmanifoldCreases - [in]
+      Count includes crease edges with 3 or more faces.
+    bCountWireCreases - [in]
+      Count includes crease edges with 0 faces.
   Returns:
-    Number of creased edges
+    Number of creased edges with the specified topology.
   */
   const unsigned int CreasedEdgeCount(
     bool bCountInteriorCreases,
@@ -10308,6 +11160,11 @@ public:
     bool bCountWireCreases
     ) const;
 
+  /*
+  Returns:
+    Number of creased edges.
+  */
+  const unsigned int CreasedEdgeCount() const;
 
   /*
   Parameters:
@@ -10571,7 +11428,8 @@ private:
     const ON_SubDVertex* src,
     bool bCopyEdgeArray,
     bool bCopyFaceArray,
-    bool bCopySurfacePointList
+    bool bCopySurfacePointList,
+    bool bCopySymmetrySetNext
     );
 };
 
@@ -10604,6 +11462,17 @@ public:
     Attached vertices and faces are not modifed.
   */
   void ClearSavedSubdivisionPoints() const;  
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this edge.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all vertices and faces attached to this edge are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
 
 public:
   static const ON_SubDEdge Empty;
@@ -11244,7 +12113,8 @@ private:
     const ON_SubDEdge* src,
     bool bReverseEdge,
     bool bCopyVertexArray,
-    bool bCopyFaceArray
+    bool bCopyFaceArray,
+    bool bCopySymmetrySetNext
     );
 };
 
@@ -11277,6 +12147,17 @@ public:
     Attached edges and vertices are not modifed.
   */
   void ClearSavedSubdivisionPoints() const;
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this face.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all vertices, edges and face attached to this face are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
 
 public:
   static const ON_SubDFace Empty;
@@ -11333,6 +12214,25 @@ public:
   );
 
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /*
+  Parameters:
+    vertex_list - [in]
+      vertices in face boundary.
+      vertex_list[0] can be any vertex in the face boundary and vertex_list[] can traverse the
+      boundary in order or reversed.
+  Return:
+    If there is a face whose boundary vertex list is face_vertices[], then that face is returned and 
+    ON_SubDFacePtr.FaceDirection() indicates the orientation of face_vertices[].
+    Otherwise ON_SubDFacePtr::Null is returned.
+  */
+  static const ON_SubDFacePtr FromVertices(
+    const ON_SimpleArray< const ON_SubDVertex* >& vertex_list
+  );
+  static const ON_SubDFacePtr FromVertices(
+    const ON_SubDVertex*const* vertex_list,
+    size_t face_vertices_count
+  );
 
 
   const ON_COMPONENT_INDEX ComponentIndex() const;
@@ -11895,7 +12795,32 @@ private:
 private:
 
 public:
+  /*
+  Description:
+    Returns the number of edges and (number of vertices) in the face's boundary.
+  Remarks:
+    Boundaries that vist the same vertex or same edge multiple times are not permitted.
+    So the number of vertices and number of edges is always the same.
+  */
   unsigned int EdgeCount() const;
+
+  /*
+  Description:
+    Rapidly verifies that:
+    1. EdgeCount() >= 3
+    2. Every edge is not null and has 2 non-null vertices.
+    3. The end vertex of and edge is identical to the start vertex of the next edge.
+    4. Every edge has FaceCount() >= 1.
+    5. Every vertex has EdgeCount() >= 2 and FaceCount() >= 1.
+    6. The first 4 edges are unique.
+    6. The first 4 vertices are unique.
+  Returns:
+    True if the 5 conditions above are true.
+  Remarks:
+    The face can still be invalid, but if HasValidEdges() returns true,
+    it is save to deference pointers returned by the face's Edge() and Vertex() functions.
+  */
+  bool HasEdges() const;
 
   const ON_SubDEdgePtr EdgePtr(
     unsigned int i
@@ -11904,6 +12829,17 @@ public:
   const ON_SubDEdgePtr EdgePtrFromEdge(
     const class ON_SubDEdge* e
     ) const;
+
+  bool EdgeMark(
+    unsigned int i,
+    bool bMissingEgeReturnValue
+  ) const;
+
+  ON__UINT8 EdgeMarkBits(
+    unsigned int i,
+    ON__UINT8 missing_edge_return_value
+  ) const;
+
 
   const class ON_SubDVertex* Vertex(
     unsigned int i
@@ -11916,6 +12852,16 @@ public:
   unsigned int VertexIndex(
     const ON_SubDVertex* vertex
     ) const;
+
+  bool VertexMark(
+    unsigned int i,
+    bool bMissingVertexReturnValue
+  ) const;
+
+  ON__UINT8 VertexMarkBits(
+    unsigned int i,
+    ON__UINT8 missing_vertex_return_value
+  ) const;
 
   /*
   Returns;
@@ -12171,6 +13117,15 @@ public:
     bool bMark
     ) const;
 
+  /*
+  Description:
+    Get the face's boundary.
+  Parameters:
+    face_edge_array - [out]
+      The boundary of the face is returned in canonical counter-clockwise order.
+  Returns:
+    Number of edges in the face's boundary.
+  */
   unsigned int GetEdgeArray(
     ON_SimpleArray< ON_SubDEdgePtr >& face_edge_array
   ) const;
@@ -12178,7 +13133,8 @@ public:
 private:
   void CopyFrom(
     const ON_SubDFace* src,
-    bool bCopyEdgeArray
+    bool bCopyEdgeArray,
+    bool bCopySymmetrySetNext
     );
 };
 
@@ -12561,7 +13517,7 @@ private:
 // ON_SubDVertexIdIterator
 //
 
-class ON_SubDVertexIdIterator : private ON_FixedSizePoolIterator
+class ON_CLASS ON_SubDVertexIdIterator : private ON_FixedSizePoolIterator
 {
 public:
   ON_SubDVertexIdIterator() = default;
@@ -12585,6 +13541,9 @@ public:
   */
   const ON_SubDVertex* FirstVertex();
 
+  const ON_SubDVertex* FirstVertexOnLevel(unsigned int level_index);
+
+
   /*
   Description:
     In general, you want to use a ON_SubDVertexIterator to loop through SubD vertices.
@@ -12595,6 +13554,8 @@ public:
     The vertex in order of increasing id.
   */
   const ON_SubDVertex* NextVertex();
+
+  const ON_SubDVertex* NextVertexOnLevel(unsigned int level_index);
 
   /*
   Returns:
@@ -12819,7 +13780,7 @@ private:
 // ON_SubDEdgeIdIterator
 //
 
-class ON_SubDEdgeIdIterator : private ON_FixedSizePoolIterator
+class ON_CLASS ON_SubDEdgeIdIterator : private ON_FixedSizePoolIterator
 {
 public:
   ON_SubDEdgeIdIterator() = default;
@@ -12843,6 +13804,9 @@ public:
   */
   const ON_SubDEdge* FirstEdge();
 
+  const ON_SubDEdge* FirstEdgeOnLevel(unsigned int level_index);
+
+
   /*
   Description:
     In general, you want to use a ON_SubDEdgeIterator to loop through SubD edges.
@@ -12853,6 +13817,8 @@ public:
     The edge in order of increasing id.
   */
   const ON_SubDEdge* NextEdge();
+
+  const ON_SubDEdge* NextEdgeOnLevel(unsigned int level_index);
 
   /*
   Returns:
@@ -13079,7 +14045,7 @@ private:
 // ON_SubDFaceIdIterator
 //
 
-class ON_SubDFaceIdIterator : private ON_FixedSizePoolIterator
+class ON_CLASS ON_SubDFaceIdIterator : private ON_FixedSizePoolIterator
 {
 public:
   ON_SubDFaceIdIterator() = default;
@@ -13102,6 +14068,8 @@ public:
     The face with the smallest id.
   */
   const ON_SubDFace* FirstFace();
+  
+  const ON_SubDFace* FirstFaceOnLevel(unsigned int level_index);
 
   /*
   Description:
@@ -13113,6 +14081,8 @@ public:
     The face in order of increasing id.
   */
   const ON_SubDFace* NextFace();
+
+  const ON_SubDFace* NextFaceOnLevel(unsigned int level_index);
 
   /*
   Returns:
@@ -14397,7 +15367,11 @@ public:
   ON_SubDComponentLocation ComponentLocation() const;
 
   /*
-  The interpretation of this value depends on the context.
+  Description:
+    The interpretation of this value depends on the context.
+    When the context is an ON_SubDComponentRef created by
+    CRhinoGetObject, ReferenceId() is the parent CRhinoSubDObject's
+    runtime serial number.
   */
   ON__UINT_PTR ReferenceId() const;
 
@@ -15957,6 +16931,93 @@ private:
 
 
 
+
+
+class ON_SubDRTree : public ON_RTree
+{
+private:
+  ON_SubDRTree(const ON_SubDRTree&) = delete;
+  ON_SubDRTree& operator=(const ON_SubDRTree&) = delete;
+
+public:
+  ON_SubDRTree() = default;
+  ~ON_SubDRTree() = default;
+
+public:
+
+  bool CreateSubDVertexRTree(
+    const ON_SubD& subd,
+    ON_SubDComponentLocation vertex_location
+  );
+
+  const ON_SubDVertex* FindVertexAtPoint(
+    const ON_3dPoint P,
+    const double distance_tolerance
+  ) const;
+
+  const ON_SubDVertex* FindMarkedVertexAtPoint(
+    const ON_3dPoint P,
+    const double distance_tolerance
+  ) const;
+
+  const ON_SubDVertex* FindUnmarkedVertexAtPoint(
+    const ON_3dPoint P,
+    const double distance_tolerance
+  ) const;
+
+  const ON_SubD& SubD() const;
+
+  /*
+  Description:
+    CLears the refernce to the SubD and removes all RTree nodes.
+  */
+  void Clear();
+
+private:
+  // Shares contents with the referenced subd.
+  // Used to increment the reference count on the ON_SubDimple (not a real copy). 
+  // This is used to insure the vertex pointers in the rtree nodes are valid.
+  ON_SubD m_subd;
+};
+
+class ON_SubDRTreeVertexFinder
+{
+public:
+  ON_SubDRTreeVertexFinder() = default;
+  ~ON_SubDRTreeVertexFinder() = default;
+  ON_SubDRTreeVertexFinder(const ON_SubDRTreeVertexFinder&) = default;
+  ON_SubDRTreeVertexFinder& operator=(const ON_SubDRTreeVertexFinder&) = default;
+
+public:
+  static const ON_SubDRTreeVertexFinder Create(const ON_3dPoint P);
+
+  /*
+  Parameters:
+    bMarkFilter - [in]
+      Vertices with Mark = bMarkFilter are eligable to be found.
+      Vertices with Mark != bMarkFilter are ignored.
+  */
+  static const ON_SubDRTreeVertexFinder Create(const ON_3dPoint P, bool bMarkFilter);
+
+public:
+  ON_3dPoint m_P = ON_3dPoint::NanPoint;
+  double m_distance = ON_DBL_QNAN;
+  const ON_SubDVertex* m_v = nullptr;
+
+  // When m_bMarkFilterEnabled is true, then vertices with Mark() == m_bMarkFilter are eligable
+  // to be found and vertices with Mark() != m_bMarkFilter are ignored.
+  bool m_bMarkFilterEnabled = false;
+  bool m_bMarkFilter = false;
+private:
+  unsigned short m_reserved1 = 0;
+  unsigned int m_reserved2 = 0;
+
+public:
+
+  static bool Callback(void* a_context, ON__INT_PTR a_id);
+
+ 
+};
 
 #if defined(ON_COMPILING_OPENNURBS)
 /*

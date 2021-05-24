@@ -238,7 +238,27 @@ bool ON_Text::Transform(const ON_Xform& xform, const ON_DimStyle* parent_dimstyl
 
 bool ON_Text::Transform(const ON_Xform& xform)
 {
-  return (ON_Geometry::Transform(xform) && m_plane.Transform(xform));
+  bool rc = ON_Geometry::Transform(xform);
+  if (rc)
+    rc = m_plane.Transform(xform);
+  if (rc)
+  {
+    ON_TextContent* text = this->Text();
+    if (nullptr != text && text->TextIsWrapped())
+    {
+      double w = text->FormattingRectangleWidth();
+      ON_3dVector x = m_plane.xaxis;
+      if (x.Unitize())
+      {
+        double r = text->TextRotationRadians();
+        x.Rotate(r, m_plane.zaxis);
+        x.Transform(xform);
+        w *= x.Length();
+        text->SetFormattingRectangleWidth(w);
+      }
+    }
+  }
+  return rc;
 }
 
 // returns the base point and width grip using the current alignments
@@ -274,12 +294,33 @@ bool ON_Text::GetTextXform(
   ON_Xform& text_xform_out
 )const 
 {
+
   return GetTextXform(nullptr, vp, dimstyle, dimscale, text_xform_out);
 }
 
 bool ON_Text::GetTextXform(
   const ON_Xform* model_xform,
   const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_Xform& text_xform_out
+) const
+{
+  ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
+  ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
+  ON_3dVector view_z = nullptr == vp ? ON_3dVector::ZAxis : vp->CameraZ();
+  ON::view_projection projection = vp ? vp->Projection() : ON::view_projection::parallel_view;
+  bool bDrawForward = dimstyle == nullptr ? false : dimstyle->DrawForward();
+  return GetTextXform(model_xform, view_x, view_y, view_z, projection, bDrawForward, dimstyle, dimscale, text_xform_out);
+}
+
+bool ON_Text::GetTextXform(
+  const ON_Xform* model_xform,
+  const ON_3dVector view_x,
+  const ON_3dVector view_y,
+  const ON_3dVector view_z,
+  ON::view_projection projection,
+  bool bDrawForward,
   const ON_DimStyle* dimstyle,
   double dimscale,
   ON_Xform& text_xform_out
@@ -307,9 +348,6 @@ bool ON_Text::GetTextXform(
   const ON_Plane& textobjectplane = Plane();
   wcs2obj_xf.Rotation(ON_Plane::World_xy, textobjectplane);    // Rotate text from starting text plane (wcs) to object plane
   ON_Xform rotation_xf(ON_Xform::IdentityTransformation);
-  ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
-  ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
-  ON_3dVector view_z = nullptr == vp ? ON_3dVector::ZAxis : vp->CameraZ();
 
   if ( ON::TextOrientation::InView == dimstyle->TextOrientation() )  // Draw text horizontal and flat to the screen
   {
@@ -336,7 +374,7 @@ bool ON_Text::GetTextXform(
       rotation_xf.Rotation(textrotation, ON_3dVector::ZAxis, ON_3dPoint::Origin);  // Text rotation
   
     //ON_Xform textcenter_xf(ON_Xform::IdentityTransformation);
-    if (dimstyle->DrawForward())
+    if (bDrawForward)
     {
       // Check if the text is right-reading by comparing
       // text plane x and y, rotated by text rotation angle,
@@ -365,7 +403,7 @@ bool ON_Text::GetTextXform(
         bool flip_x = false;
         bool flip_y = false;
 
-        const double fliptol = (nullptr != vp && vp->Projection() == ON::view_projection::perspective_view) ? 0.0 : cos(80.001 * ON_DEGREES_TO_RADIANS);
+        const double fliptol = (projection == ON::view_projection::perspective_view) ? 0.0 : cos(80.001 * ON_DEGREES_TO_RADIANS);
         CalcTextFlip(
           text_xdir, text_ydir, text_zdir,
           view_x, view_y, view_z,

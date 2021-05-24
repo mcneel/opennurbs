@@ -31,7 +31,7 @@ unsigned int ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(ON__UINT_PTR ptr)
   return (unsigned int)(ptr/(ON_SUBD_COMPONENT_FLAGS_MASK+1));
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   const ON_SubDVertex* vertex
   )
 {
@@ -39,7 +39,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   return ON_SubDComponentPtr::Create((const ON_SubDVertex*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
   const ON_SubDEdge* edge
   )
 {
@@ -47,7 +47,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
   return ON_SubDComponentPtr::Create((const ON_SubDEdge*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
   const ON_SubDFace* face
   )
 {
@@ -55,7 +55,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
   return ON_SubDComponentPtr::Create((const ON_SubDFace*)(archive_id*(ON_SUBD_COMPONENT_FLAGS_MASK+1)));
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   ON_SubDVertexPtr vertex_ptr
   )
 {
@@ -64,7 +64,7 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromVertex(
   return ptr;
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
   ON_SubDEdgePtr edge_ptr
   )
 {
@@ -73,13 +73,41 @@ ON_SubDComponentPtr ON_SubDArchiveIdMap::FromEdge(
   return ptr;
 }
 
-ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromFace(
   ON_SubDFacePtr face_ptr
   )
 {
   ON_SubDComponentPtr ptr = FromFace(face_ptr.Face());
   ptr.m_ptr |= face_ptr.FaceDirection();
   return ptr;
+}
+
+const ON_SubDComponentPtr ON_SubDArchiveIdMap::FromSymmetrySetNext(
+  ON_SubDComponentPtr::Type component_type,
+  const ON_SubDComponentBase* component
+)
+{
+  if (nullptr == component)
+    return ON_SubDComponentPtr::Null;
+
+  ON_SubDComponentPtr cptr;
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+    cptr = ON_SubDArchiveIdMap::FromVertex(component->m_symmetry_set_next.Vertex());
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    cptr = ON_SubDArchiveIdMap::FromEdge(component->m_symmetry_set_next.Edge());
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    cptr = ON_SubDArchiveIdMap::FromFace(component->m_symmetry_set_next.Face());
+    break;
+  case ON_SubDComponentPtr::Type::Unset:
+  default:
+    return ON_SubDComponentPtr::Null;
+    break;
+  }
+  return (1 == component->m_symmetry_set_next.ComponentDirection() && component->m_symmetry_set_next.IsNotNull()) ? cptr.SetComponentDirection() : cptr;
 }
 
 ON_SubDVertex* ON_SubDArchiveIdMap::CopyVertex(
@@ -103,7 +131,8 @@ ON_SubDVertex* ON_SubDArchiveIdMap::CopyVertex(
   const bool bCopyEdgeArray = true;
   const bool bCopyFaceArray = true;
   const bool bCopyLimitPointList = true;
-  vertex->CopyFrom(source_vertex,bCopyEdgeArray,bCopyFaceArray,bCopyLimitPointList);
+  const bool bCopySymmetrySetNext = true;
+  vertex->CopyFrom(source_vertex,bCopyEdgeArray,bCopyFaceArray,bCopyLimitPointList, bCopySymmetrySetNext);
 
   // convert vertex->m_edges[] pointers to archive_id values
   ON_SubDComponentPtr ptr;
@@ -126,6 +155,9 @@ ON_SubDVertex* ON_SubDArchiveIdMap::CopyVertex(
     ptr = ON_SubDArchiveIdMap::FromFace(p->m_sector_face);
     const_cast<ON_SubDSectorSurfacePoint*>(p)->m_sector_face = (const ON_SubDFace*)ptr.m_ptr;
   }
+
+  // convert symmetry set next pointers to archive_id values
+  vertex->m_symmetry_set_next = ON_SubDArchiveIdMap::FromSymmetrySetNext(ON_SubDComponentPtr::Type::Vertex, vertex);
   
   return vertex;
 }
@@ -148,7 +180,8 @@ ON_SubDEdge* ON_SubDArchiveIdMap::CopyEdge(
   const bool bReverseEdge = false;
   const bool bCopyVertexArray = true;
   const bool bCopyEdgeArray = true;
-  edge->CopyFrom(source_edge,bReverseEdge,bCopyVertexArray,bCopyEdgeArray);
+  const bool bCopySymmetryLoop = true;
+  edge->CopyFrom(source_edge,bReverseEdge,bCopyVertexArray,bCopyEdgeArray, bCopySymmetryLoop);
 
   // convert edge->m_vertex[] pointers to archive_id values
   ON_SubDComponentPtr ptr;
@@ -167,6 +200,9 @@ ON_SubDEdge* ON_SubDArchiveIdMap::CopyEdge(
     fptr->m_ptr = ON_SubDArchiveIdMap::FromFace(*fptr).m_ptr;
   }
 
+  // convert symmetry set next pointers to archive_id values
+  edge->m_symmetry_set_next = ON_SubDArchiveIdMap::FromSymmetrySetNext(ON_SubDComponentPtr::Type::Edge, edge);
+
   return edge;
 }
 
@@ -182,7 +218,8 @@ ON_SubDFace* ON_SubDArchiveIdMap::CopyFace(
     return ON_SUBD_RETURN_ERROR(nullptr);
   
   const bool bCopyEdgeArray = true;
-  face->CopyFrom(source_face,bCopyEdgeArray);
+  const bool bCopySymmetryLoop = true;
+  face->CopyFrom(source_face,bCopyEdgeArray, bCopySymmetryLoop);
 
   // convert face->m_edges[] pointers to archive_id values
   ON_SubDEdgePtr* eptr = face->m_edge4;
@@ -192,6 +229,9 @@ ON_SubDFace* ON_SubDArchiveIdMap::CopyFace(
       eptr = face->m_edgex;
     eptr->m_ptr = ON_SubDArchiveIdMap::FromEdge(*eptr).m_ptr;
   }
+
+  // convert symmetry set next pointers to archive_id values
+  face->m_symmetry_set_next = ON_SubDArchiveIdMap::FromSymmetrySetNext(ON_SubDComponentPtr::Type::Face, face);
 
   return face;
 }
@@ -343,6 +383,51 @@ bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeFacePtr(
   }
   return true;
 }
+
+bool ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeSymmetrySetNextPtr(
+  ON_SubDComponentPtr::Type component_type,
+  ON_SubDComponentBase* component
+)
+{
+  if (nullptr == component)
+    return false;
+  const ON_SubDComponentPtr symmetry_set_next = component->m_symmetry_set_next; // symmetry_set_next stores archive id
+  component->m_symmetry_set_next = ON_SubDComponentPtr::Null;
+  if (symmetry_set_next.IsNull())
+    return true;
+  if (component_type != symmetry_set_next.ComponentType())
+    return ON_SUBD_RETURN_ERROR(false);
+  const unsigned archive_id = ON_SubDArchiveIdMap::ArchiveIdFromComponentPtr(symmetry_set_next.m_ptr);
+  if (archive_id < 1)
+    return ON_SUBD_RETURN_ERROR(false);
+  unsigned parition0 = 0;
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Unset:
+    return ON_SUBD_RETURN_ERROR(false);
+    break;
+  case ON_SubDComponentPtr::Type::Vertex:
+    parition0 = 0;
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    parition0 = 1;
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    parition0 = 2;
+    break;
+  default:
+    return ON_SUBD_RETURN_ERROR(false);
+    break;
+  }
+  if(archive_id < m_archive_id_partition[parition0] || archive_id >= m_archive_id_partition[parition0+1])
+    return ON_SUBD_RETURN_ERROR(false);
+  const ON_SubDComponentPtr* eleptr = ComponentPtrFromArchiveId(archive_id);
+  if ( nullptr == eleptr || eleptr->ComponentType() != component_type)
+    return ON_SUBD_RETURN_ERROR(false);
+  component->m_symmetry_set_next = (1 == symmetry_set_next.ComponentDirection()) ? eleptr->SetComponentDirection() : eleptr->ClearComponentDirection();
+  return true;
+}
+
 void ON_SubDArchiveIdMap::ValidateArrayCounts(
   unsigned short& array_count,
   size_t arrayN_capacity,
@@ -546,6 +631,9 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
       if ( 0 != p->m_sector_face )
         ConvertArchiveIdToRuntimeFacePtr(1,1,(ON_SubDFacePtr*)&p->m_sector_face,0,nullptr);
     }
+
+    // convert v->m_symmetry_set_next to runtime pointer.
+    ConvertArchiveIdToRuntimeSymmetrySetNextPtr(ON_SubDComponentPtr::Type::Vertex, v);
   }
   if ( archive_id != m_archive_id_partition[1] )
     return ON_SUBD_RETURN_ERROR(0);
@@ -561,6 +649,9 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
     ConvertArchiveIdToRuntimeVertexPtr(2,2,(ON_SubDVertex**)(e->m_vertex));
     // convert ON_SubDEdge.m_face2[] and ON_SubDEdge.m_facex[]
     ConvertArchiveIdToRuntimeFacePtr(e->m_face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex);
+
+    // convert e->m_symmetry_set_next to runtime pointer.
+    ConvertArchiveIdToRuntimeSymmetrySetNextPtr(ON_SubDComponentPtr::Type::Edge, e);
   }
   if ( archive_id != m_archive_id_partition[2] )
     return ON_SUBD_RETURN_ERROR(0);
@@ -574,6 +665,9 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
       break;
     // convert ON_SubDFace.m_edge4[] and ON_SubDFace.m_edgex[]
     ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeEdgePtr(f->m_edge_count,sizeof(f->m_edge4)/sizeof(f->m_edge4[0]),f->m_edge4,f->m_edgex_capacity,f->m_edgex);
+
+    // convert f->m_symmetry_set_next to runtime pointer.
+    ConvertArchiveIdToRuntimeSymmetrySetNextPtr(ON_SubDComponentPtr::Type::Face, f);
   }
   if ( archive_id != m_archive_id_partition[3] )
     return ON_SUBD_RETURN_ERROR(0);
@@ -664,19 +758,19 @@ ON__UINT64 ON_SubDimple::ChangeGeometryContentSerialNumber(
   bool bChangePreservesSymmetry
 ) const
 {
-  const bool bUpdateSymmetricObjectContentSerialNumber
-    = bChangePreservesSymmetry
-    && m_subd_geometry_content_serial_number > 0
-    && m_symmetry.IsSet()
-    && m_subd_geometry_content_serial_number == m_symmetry.SymmetricObjectContentSerialNumber()
-    ;
-  
+  // For efficiency, must calculate bUpdateSymmetricObjectGeometry before changing m_subd_geometry_content_serial_number
+  const bool bUpdateSymmetricObjectGeometry = bChangePreservesSymmetry && m_symmetry.SameSymmetricObjectGeometry(this);
+
   m_subd_geometry_content_serial_number = ON_NextContentSerialNumber();
   m_subd_render_content_serial_number = m_subd_geometry_content_serial_number; // changing content automatically changes render content.
-  if (bUpdateSymmetricObjectContentSerialNumber)
-    m_symmetry.SetSymmetricObjectContentSerialNumber(m_subd_geometry_content_serial_number);
-  else
-    m_symmetry.ClearSymmetricObjectContentSerialNumber();
+
+  if (m_symmetry.IsSet())
+  {
+    if (bUpdateSymmetricObjectGeometry)
+      m_symmetry.SetSymmetricObject(this);
+    else if (false == m_symmetry.SameSymmetricObjectTopology(this))
+      m_symmetry.ClearSymmetricObject();
+  }
 
   return m_subd_geometry_content_serial_number;
 }
@@ -787,10 +881,24 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
 
   m_symmetry = src.m_symmetry;
 
-  if (m_subd_geometry_content_serial_number != src.m_symmetry.SymmetricObjectContentSerialNumber())
+  if (
+    src.RuntimeSerialNumber == src.m_subd_toplology_hash.SubDRuntimeSerialNumber()
+    && m_subd_geometry_content_serial_number == src.m_subd_toplology_hash.SubDGeometryContentSerialNumber()
+    )
   {
-    // symmetric content was out of date on src
-    m_symmetry.ClearSymmetricObjectContentSerialNumber();
+    // src.m_subd_toplology_hash is valid - copy it to this
+    m_subd_toplology_hash = src.m_subd_toplology_hash;
+    m_subd_toplology_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
+  }
+
+  if (
+    src.RuntimeSerialNumber == src.m_subd_toplology_and_edge_creases_hash.SubDRuntimeSerialNumber()
+    && m_subd_geometry_content_serial_number == src.m_subd_toplology_and_edge_creases_hash.SubDGeometryContentSerialNumber()
+    )
+  {
+    // src.m_subd_toplology_and_edge_crease_hash is valid - copy it to this
+    m_subd_toplology_and_edge_creases_hash = src.m_subd_toplology_and_edge_creases_hash;
+    m_subd_toplology_and_edge_creases_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
   }
 
   if (
@@ -801,16 +909,6 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
     // src.m_subd_geometry_hash is valid - copy it to this.
     m_subd_geometry_hash = src.m_subd_geometry_hash;
     m_subd_geometry_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
-  }
-
-  if (
-    src.RuntimeSerialNumber == src.m_subd_toplology_hash.SubDRuntimeSerialNumber()
-    && m_subd_geometry_content_serial_number == src.m_subd_toplology_hash.SubDGeometryContentSerialNumber()
-    )
-  {
-    // src.m_subd_toplology_hash is valid - copy it to this
-    m_subd_toplology_hash = src.m_subd_toplology_hash;
-    m_subd_toplology_hash.m_subd_runtime_serial_number = this->RuntimeSerialNumber;
   }
 }
 
@@ -981,14 +1079,14 @@ const ON_SubDComponentBase* ON_SubDLevelComponentIdIterator::InternalNext()
 bool ON_SubDLevel::CopyHelper(
   const class ON_SubDimple& src_subdimple,
   const ON_SubDLevel& src_level,
-  class ON_SubDArchiveIdMap& eptrlist,
+  class ON_SubDArchiveIdMap& archive_id_map,
   class ON_SubDimple& dest_subdimple,
   bool bCopyComponentStatus
   )
 {
   bool rc = false;
 
-  eptrlist.Reset();
+  archive_id_map.Reset();
 
   m_surface_mesh.Clear();
   m_control_net_mesh.Clear();
@@ -996,11 +1094,11 @@ bool ON_SubDLevel::CopyHelper(
   for (;;)
   {
     bool bLevelLinkedListIncreasingId[3] = {};
-    if ( 0 == src_level.SetArchiveId(src_subdimple, eptrlist.m_archive_id_partition, bLevelLinkedListIncreasingId) )
+    if ( 0 == src_level.SetArchiveId(src_subdimple, archive_id_map.m_archive_id_partition, bLevelLinkedListIncreasingId) )
       break;
 
     unsigned int archive_id = 1;
-    if ( archive_id != eptrlist.m_archive_id_partition[0])
+    if ( archive_id != archive_id_map.m_archive_id_partition[0])
       break;
 
     // Have to use idit because subd editing (deleting and then adding) can leave the level's linked lists
@@ -1014,7 +1112,7 @@ bool ON_SubDLevel::CopyHelper(
     {
       if (archive_id != source_vertex->ArchiveId())
         break;
-      ON_SubDVertex* vertex = eptrlist.AddCopy(source_vertex,dest_subdimple);
+      ON_SubDVertex* vertex = archive_id_map.AddCopy(source_vertex,dest_subdimple);
       if (nullptr == vertex )
         break;
       if (archive_id != vertex->ArchiveId())
@@ -1023,7 +1121,7 @@ bool ON_SubDLevel::CopyHelper(
       if ( bCopyComponentStatus )
         vertex->m_status = source_vertex->m_status;
     }
-    if ( archive_id != eptrlist.m_archive_id_partition[1])
+    if ( archive_id != archive_id_map.m_archive_id_partition[1])
       break;
 
     // must iterate source edges in order of increasing id
@@ -1032,7 +1130,7 @@ bool ON_SubDLevel::CopyHelper(
     {
       if (archive_id != source_edge->ArchiveId())
         break;
-      ON_SubDEdge* edge = eptrlist.AddCopy(source_edge,dest_subdimple);
+      ON_SubDEdge* edge = archive_id_map.AddCopy(source_edge,dest_subdimple);
       if (nullptr == edge )
         break;
       if (archive_id != edge->ArchiveId())
@@ -1041,7 +1139,7 @@ bool ON_SubDLevel::CopyHelper(
       if ( bCopyComponentStatus )
         edge->m_status = source_edge->m_status;
     }
-    if ( archive_id != eptrlist.m_archive_id_partition[2])
+    if ( archive_id != archive_id_map.m_archive_id_partition[2])
       break;
 
     // must iterate source faces in order of increasing id
@@ -1050,7 +1148,7 @@ bool ON_SubDLevel::CopyHelper(
     {
       if (archive_id != source_face->ArchiveId())
         break;
-      ON_SubDFace* face = eptrlist.AddCopy(source_face,dest_subdimple);
+      ON_SubDFace* face = archive_id_map.AddCopy(source_face,dest_subdimple);
       if (nullptr == face )
         break;
       if (archive_id != face->ArchiveId())
@@ -1059,10 +1157,10 @@ bool ON_SubDLevel::CopyHelper(
       if ( bCopyComponentStatus )
         face->m_status = source_face->m_status;
     }
-    if ( archive_id != eptrlist.m_archive_id_partition[3])
+    if ( archive_id != archive_id_map.m_archive_id_partition[3])
       break;
 
-    if (0 == eptrlist.ConvertArchiveIdsToRuntimePointers())
+    if (0 == archive_id_map.ConvertArchiveIdsToRuntimePointers())
       break;
 
     for (int meshdex = 0; meshdex < 2; meshdex++)
@@ -1083,7 +1181,7 @@ bool ON_SubDLevel::CopyHelper(
             const_cast<ON_SubDMeshFragment*>(fragment)->m_face = nullptr;
             if (0 != archive_id)
             {
-              if (eptrlist.ConvertArchiveIdToRuntimeFacePtr(1, 1, &fptr, 0, nullptr))
+              if (archive_id_map.ConvertArchiveIdToRuntimeFacePtr(1, 1, &fptr, 0, nullptr))
               {
                 const_cast<ON_SubDMeshFragment*>(fragment)->m_face = fptr.Face();
                 if (nullptr != fragment->m_face)
@@ -1109,11 +1207,11 @@ bool ON_SubDLevel::CopyHelper(
     break;
   }
 
-  eptrlist.Reset();
+  archive_id_map.Reset();
   src_level.ClearArchiveId();
 
   if ( false == rc )
     return ON_SUBD_RETURN_ERROR(false);
 
   return rc;
-}
+} // archive_id_map

@@ -1046,6 +1046,23 @@ bool ON_SubD::HasPerFaceColorsFromPackId() const
 }
 
 
+
+void ON_SubD::SetPerFaceColorsFromSymmetryMotif() const
+{
+  if (FaceCount() < 1)
+    return;
+
+  this->ClearPerFaceColors();
+  ChangeRenderContentSerialNumber(); // face color changes.
+}
+
+bool ON_SubD::HasPerFaceColorsFromSymmetryMotif() const
+{
+  return false;
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDMeshFragment - texture coordinates

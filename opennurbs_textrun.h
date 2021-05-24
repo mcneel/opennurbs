@@ -35,7 +35,7 @@ public:
   class ON_TextRun*  m_top_run = nullptr;
   class ON_TextRun*  m_bottom_run = nullptr;
   const ON_TextRun*  m_parent_run = nullptr;
-  wchar_t            m_separator = ON_wString::Slash;
+  wchar_t            m_separator = (wchar_t)ON_UnicodeCodePoint::ON_Slash;
 
   enum class StackStyle : unsigned char
   {

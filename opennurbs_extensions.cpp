@@ -4614,7 +4614,7 @@ bool ONX_ModelTest::DumpModel(const ONX_Model* model, ON_TextLog& text_log)
   dump_hash.Dump(text_log);
   text_log.PrintNewLine();
 
-  return (false == dump_hash.IsZeroDigentOrEmptyContentHash());
+  return (false == dump_hash.IsZeroDigestOrEmptyContentHash());
 }
 
 std::shared_ptr<ONX_Model> ONX_ModelTest::SourceModel() const

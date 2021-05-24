@@ -211,7 +211,7 @@ public:
           0 0 0 *
   */
   bool IsZero() const;
-  
+
   /*
   Returns:
     true if matrix is ON_Xform::Zero4x4
@@ -222,7 +222,18 @@ public:
           0 0 0 0
   */
   bool IsZero4x4() const;
-  
+
+  /*
+  Returns:
+    true if matrix is ON_Xform::Zero4x4
+    The value xform[3][3] must be zero.
+          0 0 0 0
+          0 0 0 0
+          0 0 0 0
+          0 0 0 0
+  */
+  bool IsZero4x4(double zero_tolerance) const;
+
   /*
   Returns:
     true if matrix is ON_Xform::ZeroTransformation

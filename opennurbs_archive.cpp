@@ -7593,14 +7593,33 @@ bool ON_BinaryArchive::WriteModelComponentName(const ON_ModelComponent & model_c
   return WriteString(valid_name);
 }
 
-bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformation )
+void ON_BinaryArchive::IntentionallyWriteCorrupt3dmStartSectionForExpertTesting()
+{
+  if (ON::archive_mode::write3dm == m_mode)
+  {
+    if (0 == m_IntentionallyWriteCorrupt3dmStartSection)
+      m_IntentionallyWriteCorrupt3dmStartSection = 1; // 1 meas a corrupt start section will be written.
+    else if (1 == m_IntentionallyWriteCorrupt3dmStartSection)
+    {
+      ON_ERROR("Please read the instructions in the header file.");
+      m_IntentionallyWriteCorrupt3dmStartSection = 2; // 2 indicates the "expert" tester goofed.
+    }
+  }
+  else
+  {
+    ON_ERROR("Please read the instructions in the header file.");
+    m_IntentionallyWriteCorrupt3dmStartSection = 2; // 2 indicates the "expert" tester goofed.
+  }
+}
+
+bool ON_BinaryArchive::Write3dmStartSection(int version, const char* sStartSectionComment)
 {
   if (!Begin3dmTable(ON::archive_mode::write3dm,ON_3dmArchiveTableType::start_section))
     return false;
 
   m_archive_runtime_environment = ON::CurrentRuntimeEnvironment();
 
-  m_archive_3dm_start_section_comment = sInformation;
+  m_archive_3dm_start_section_comment = sStartSectionComment;
 
   if ( 0 == version )
     version = ON_BinaryArchive::CurrentArchiveVersion();
@@ -7624,7 +7643,10 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
        || (version >= 50 && 0 != (version % 10)) 
        )
   {
-    ON_ERROR("3dm archive version must be 2, 3, 4, 50 or 60");
+    // 1, 2, 3, 4 use 32-bit chunk lengths.
+    // >=50 and a multiple of 10 use 64-bit chunk lengths.
+    // 64 bit chunk lengths were required in v5 to handle large mesh objects.
+    ON_ERROR("3dm archive version must be 2, 3, 4, 50, 60, 70, ...");
     return End3dmTable(ON_3dmArchiveTableType::start_section,false);
   }
 
@@ -7638,6 +7660,25 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
   char sVersion[64];
   memset( sVersion, 0, sizeof(sVersion) ); 
   GetFirst32BytesOf3dmFile(version,sVersion);
+
+  if (1 == m_IntentionallyWriteCorrupt3dmStartSection)
+  {
+    if (version == ON_BinaryArchive::CurrentArchiveVersion())
+    {
+      m_IntentionallyWriteCorrupt3dmStartSection = 3; // 3 indicates the corrupt header was written.
+      // Change "3D Geometry File Format         "
+      // to "3DXGeometryXFileXFormat         "
+      sVersion[2] = 'X';
+      sVersion[11] = 'X';
+      sVersion[16] = 'X';
+    }
+    else
+    {
+      // intentional corruption is requires working with the current version
+      m_IntentionallyWriteCorrupt3dmStartSection = 2;
+    }
+  }
+
   if (!WriteByte( 32, sVersion ))
     return false;
   if (!BeginWrite3dmBigChunk( TCODE_COMMENTBLOCK, 0 ))
@@ -7646,9 +7687,9 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
   bool rc = false;
   for (;;)
   {
-    if ( sInformation && sInformation[0] )
+    if (sStartSectionComment && sStartSectionComment[0] )
     {
-      if (!WriteByte( strlen(sInformation), sInformation ) )
+      if (!WriteByte( strlen(sStartSectionComment), sStartSectionComment) )
         break;
     }
     // write information that helps determine what code wrote the 3dm file
@@ -15696,6 +15737,13 @@ int ON_BinaryArchive::Read3dmObject(
                 ud->m_mp.SetCustomSettingsEnabled(ud->m_bInUse);
                 pAttributes->SetCustomRenderMeshParameters(ud->m_mp);
                 delete ud;
+              }
+
+              //Strip out the $temp_object$ key left over from Block edit
+              auto* sl = ON_UserStringList::Cast(pAttributes->GetUserData(ON_CLASS_ID(ON_UserStringList)));
+              if (sl)
+              {
+                sl->SetUserString(L"$temp_object$", nullptr);
               }
 #endif
             }

@@ -69,6 +69,70 @@ size_t ON_FixedSizePool::SizeofElement() const
   return m_sizeof_element;
 }
 
+size_t ON_FixedSizePool::SizeOfPool() const
+{
+  size_t element_count = 0;
+  void* next = m_first_block;
+  for (void* blk = next; nullptr != blk; blk = next)
+  {
+    next = *((void**)blk);
+    element_count += BlockElementCapacity(blk);
+  }
+  return element_count * m_sizeof_element;
+}
+
+size_t ON_FixedSizePool::SizeOfUnusedElements() const
+{
+  return SizeOfPool() - SizeOfActiveElements();
+}
+
+size_t ON_FixedSizePool::SizeOfActiveElements() const
+{
+  return m_sizeof_element * ((size_t)m_active_element_count);
+}
+
+
+size_t ON_FixedSizePool::DefaultElementCapacityFromSizeOfElement(size_t sizeof_element)
+{
+  size_t block_element_capacity = 0;
+  if (sizeof_element <= 0)
+  {
+    ON_ERROR("sizeof_element must be > 0");
+    return 0;
+  }
+
+  size_t page_size = ON_MemoryPageSize();
+  if (page_size < 512)
+    page_size = 512;
+
+  // The "overhead" is for the 2*sizeof(void*) ON_FixedSizePool uses at
+  // the start of each block + 32 bytes extra for the heap manager
+  // to keep the total allocation not exceeding multiple of page_size.
+  const size_t overhead = 2 * sizeof(void*) + 32;
+
+  size_t page_count = 1;
+  block_element_capacity = (page_count * page_size - overhead) / sizeof_element;
+  while (block_element_capacity < 1000)
+  {
+    page_count *= 2;
+    block_element_capacity = (page_count * page_size - overhead) / sizeof_element;
+    if (page_count > 8 && block_element_capacity > 64)
+    {
+      // for pools with large elements
+      break;
+    }
+  }
+
+  return block_element_capacity;
+}
+
+bool ON_FixedSizePool::Create(
+  size_t sizeof_element
+)
+{
+  return ON_FixedSizePool::CreateForExperts(sizeof_element, 0, 0);
+}
+
 bool ON_FixedSizePool::Create(
         size_t sizeof_element,
         size_t element_count_estimate,
@@ -92,49 +156,129 @@ bool ON_FixedSizePool::Create(
   m_sizeof_element = sizeof_element;
 
   if ( block_element_capacity <= 0 )
-  {
-    size_t page_size = ON_MemoryPageSize();
-    if ( page_size < 512 )
-      page_size = 512;
-
-    // The "overhead" is for the 2*sizeof(void*) ON_FixedSizePool uses at
-    // the start of each block + 32 bytes extra for the heap manager
-    // to keep the total allocation not exceeding multiple of page_size.
-    const size_t overhead = 2*sizeof(void*) + 32;
-
-    size_t page_count = 1;
-    block_element_capacity = (page_count*page_size - overhead)/m_sizeof_element;
-    while ( block_element_capacity < 1000 )
-    {
-      page_count *= 2;
-      block_element_capacity = (page_count*page_size - overhead)/m_sizeof_element;
-      if (page_count > 8 && block_element_capacity > 64)
-      {
-        // for pools with large elements
-        break;
-      }
-    }
-  }
+    block_element_capacity = ON_FixedSizePool::DefaultElementCapacityFromSizeOfElement(m_sizeof_element);
 
   // capacity for the the 2nd and subsequent blocks
   m_block_element_count = block_element_capacity;
 
   // Set m_al_count = capacity of the first block.
 
-  // If the estimated number of elements is not too big,
-  // then make the first block that size.
+  // If the estimated number of elements is not too big, then make the 1st block that size.
   if ( element_count_estimate > 0 )
   {
-    // this is the first block and it has a custom size
-    if ( 8*m_block_element_count >= element_count_estimate )
-      m_al_count = element_count_estimate;
+    if (element_count_estimate <= 8*m_block_element_count )
+      m_al_count = element_count_estimate; // 1st block will have room for element_count_estimate elements
     else
-      m_al_count = 8*m_block_element_count; // first block will be large
+      m_al_count = 8*m_block_element_count; // 1st block will be 8xlarger than subsequent blocks, but not as huge as requested
   }
   else
   {
+    // 1st block is the same size as subsequent blocks
     m_al_count = m_block_element_count;
   }
+
+  return true;
+}
+
+bool ON_FixedSizePool::CreateForExperts(
+  size_t sizeof_element,
+  size_t maximum_element_count_estimate,
+  size_t minimum_block2_element_capacity
+)
+{
+  if (m_sizeof_element != 0 || 0 != m_first_block)
+  {
+    ON_ERROR("ON_FixedSizePool::Create - called on a pool that is in use.");
+    return false;
+  }
+
+  memset(this, 0, sizeof(*this));
+
+  if (sizeof_element <= 0)
+  {
+    ON_ERROR("Invalid parameter: sizeof_element <= 0.");
+    return false;
+  }
+
+  const size_t default_block_capacity = ON_FixedSizePool::DefaultElementCapacityFromSizeOfElement(sizeof_element);
+  if (default_block_capacity <= 0 || default_block_capacity* sizeof_element <= 0)
+  {
+    ON_ERROR("Invalid parameter: sizeof_element is too large for a fixed size pool.");
+    return false;
+  }
+
+  if (maximum_element_count_estimate < 0)
+  {
+    ON_ERROR("Invalid parameter: block1_element_count < 0.");
+    return false;
+  }
+
+  if (0 == maximum_element_count_estimate)
+    minimum_block2_element_capacity = 0;
+  else if (minimum_block2_element_capacity < 0)
+  {
+    ON_ERROR("Invalid parameter: minimum_block2_element_capacity < 0.");
+    return false;
+  }
+
+
+  size_t block1_capacity = 0; // 1st block will have room for m_al_count elements.
+  size_t block2_capacity = 0; // 2nd and subsequent blocks will have room m_block_element_count elements.
+
+  if (maximum_element_count_estimate > 0)
+  {
+    if (maximum_element_count_estimate <= 4 * default_block_capacity)
+    {
+      // We should be able to reliably allocate a contiguous memory space
+      // that will hold maximum_element_count_estimate elements.
+      block1_capacity = maximum_element_count_estimate;
+
+      // The caller claims that maximum_element_count_estimate is a tight upper bound
+      // on the number of elements to be allocated.
+      // If they underestimated, keep subsequent blocks small assuming that they
+      // underestimated by only a little bit.
+      block2_capacity = (block1_capacity + 9) / 10;
+      if (block2_capacity <= 0)
+        block2_capacity = 1;
+      if (block2_capacity < minimum_block2_element_capacity)
+        block2_capacity = minimum_block2_element_capacity;
+    }
+    else
+    {
+      // The value maximum_element_count_estimate is too big for 
+      // a reasonably sized chuck of contiguous memory space.
+      //
+      // Find a way to allocate maximum_element_count_estimate elements from
+      // multiple blocks and not waste a bunch of memory when 
+      // maximum_element_count_estimate is tight upper bound on the 
+      // number of element that will actually be allocated.
+      //
+      // minimum_block2_element_capacity is intentionally being ignored
+      // in this case.
+      size_t n = maximum_element_count_estimate / default_block_capacity;
+      if (n > 0)
+      {
+        // We will use n blocks of block1_capacity elements to deliver
+        // maximum_element_count_estimate elements. These
+        // blocks will be reasonably sized and easy to allocate.
+        block1_capacity = maximum_element_count_estimate / n;
+        if (n * block1_capacity < maximum_element_count_estimate)
+          ++block1_capacity;
+        block2_capacity = block1_capacity;
+      }
+    }
+  }
+
+  //////////////////////////////
+  // Initialize this pool
+
+  m_sizeof_element = sizeof_element;
+
+  // 1st block will have room for m_al_count elements.
+  m_al_count = block1_capacity > 0 ? block1_capacity : default_block_capacity; 
+
+  // 2nd and subsequent blocks will have room m_block_element_count elements.
+  m_block_element_count = block2_capacity > 0 ? block2_capacity : default_block_capacity; 
 
   return true;
 }
@@ -719,6 +863,41 @@ size_t ON_FixedSizePool::ElementIndex(const void* element_pointer) const
   }
 
   return ON_MAX_SIZE_T;
+}
+
+bool ON_FixedSizePool::InPool(
+  const void* p
+) const
+{
+  if (nullptr != p)
+  {
+    const char* block;
+    const char* block_end;
+    const char* next_block;
+    const char* ptr = (const char*)p;
+    for (block = (const char*)m_first_block; 0 != block; block = next_block)
+    {
+      if (block == m_al_block)
+      {
+        // After a ReturnAll(), a multi-block fsp has unused blocks after m_al_block.
+        // Searching must terminate at m_al_block.
+        next_block = nullptr;
+        block_end = (const char*)m_al_element_array;
+        block += (2 * sizeof(void*));
+      }
+      else
+      {
+        next_block = *((const char**)block);
+        block += sizeof(void*);
+        block_end = *((const char**)(block));
+        block += sizeof(void*);
+      }
+      if (ptr >= block && ptr < block_end)
+        return true;
+    }
+  }
+
+  return false;
 }
 
 void* ON_FixedSizePool::ElementFromId(
