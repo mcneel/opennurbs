@@ -6623,11 +6623,11 @@ static const ON_wString Internal_DescribeWaste(size_t waste, size_t total)
   double e = fabs(i - p);
 
   ON_wString description = ON_wString::EmptyString;
-  const double negligable = 0.1;
-  if (e < negligable)
+  const double negligible = 0.1;
+  if (e < negligible)
   {
     if (0.0 == i)
-      description = L" negligable";
+      description = L" negligible";
     p = i;
   }
   if (description.IsEmpty())
