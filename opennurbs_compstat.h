@@ -123,13 +123,13 @@ public:
   Description:
     A tool for adding a status check filter. This tool pays attention to RuntimeMark().
 
-  Paramters:
+  Parameters:
     candidate - [in]
     pass_bits - [in]
     fail_bits - [in]
 
   Returns:
-    Checking is perfomed in the folloing order and every bit, include the RuntimeMark() bit, are tested.
+    Checking is performed in the following order and every bit, include the RuntimeMark() bit, are tested.
 
     First:
     If ON_ComponentStatus::LogicalAnd(candidate,status_pass) has any set bits,
@@ -441,7 +441,7 @@ public:
 
   //////////////////////////////////////////////////////////////////////////
   //
-  // Checking multiple state values efficently
+  // Checking multiple state values efficiently
   //
 
   bool operator==(const ON_ComponentStatus&) const;
@@ -527,7 +527,7 @@ private:
 
 
 /*
-ON_AggregateComponentStatus is obsolte.
+ON_AggregateComponentStatus is obsolete.
 It exists because the virtual interface on ON_Object and the member on ON_Brep
 cannot be changed without breakky the pubic C++ SDK.
 Whenever possible, use ON_AggregateComponentStatusEx.
@@ -550,7 +550,7 @@ public:
   Description:
     Sets all states to clear.  
     Marks status as current.
-    Does not change compoent count
+    Does not change component count
   Returns
     true if successful.
     false if information is not current and ClearAllStates() failed.
@@ -561,7 +561,7 @@ public:
   Description:
     Sets all states specified by states_to_clear to clear.  
     Does not change current mark.
-    Does not change compoent count.
+    Does not change component count.
   Returns
     true if successful.
     false if information is not current and ClearAggregateStatus() failed.
@@ -625,13 +625,13 @@ public:
 
   /*
   Returns:
-    Number of compoents that are selected or persistently selected.
+    Number of components that are selected or persistently selected.
   */
   unsigned int SelectedCount() const;
 
   /*
   Returns:
-    Number of compoents that are persistently selected.
+    Number of components that are persistently selected.
   */
   unsigned int SelectedPersistentCount() const;
 
@@ -702,7 +702,7 @@ public:
   Description:
     Sets all states to clear.
     Marks status as current.
-    Does not change compoent count
+    Does not change component count
   Returns
     true if successful.
     false if information is not current and ClearAllStates() failed.
@@ -713,7 +713,7 @@ public:
   Description:
     Sets all states specified by states_to_clear to clear.
     Does not change current mark.
-    Does not change compoent count.
+    Does not change component count.
   Returns
     true if successful.
     false if information is not current and ClearAggregateStatus() failed.
@@ -777,13 +777,13 @@ public:
 
   /*
   Returns:
-    Number of compoents that are selected or persistently selected.
+    Number of components that are selected or persistently selected.
   */
   unsigned int SelectedCount() const;
 
   /*
   Returns:
-    Number of compoents that are persistently selected.
+    Number of components that are persistently selected.
   */
   unsigned int SelectedPersistentCount() const;
 
@@ -841,7 +841,7 @@ public:
   Description:
     Add x to the list. The expert caller is certain that x is not already in the list.
     For large lists, using this function when appropriate, can result in substantial
-    speed improvments.
+    speed improvements.
   Parameters:
     x - [in]
       A value that is known to not be in the list.

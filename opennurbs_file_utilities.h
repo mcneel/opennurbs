@@ -320,7 +320,7 @@ public:
     path - [in]
       path to split
   Returns:
-    The file name extension portion of the path, inlcuding the leading period or "dot".
+    The file name extension portion of the path, including the leading period or "dot".
   */
   static const ON_wString FileNameExtensionFromPath(
     const wchar_t* path
@@ -727,7 +727,7 @@ public:
       FILE pointer returned by ON_FileStream::Open().
   Returns:
     >= 0: current file position
-      -1: an error occured
+      -1: an error occurred
   */
   static ON__INT64 CurrentPosition( FILE* fp );
 
@@ -812,7 +812,7 @@ public:
     fp - [in]
       FILE pointer returned by ON_FileStream::Open().
   Returns:
-    true if flush was successful.  False if an error occured.
+    true if flush was successful.  False if an error occurred.
   */
   static bool Flush( FILE* fp );
 
@@ -834,7 +834,7 @@ public:
       file's contents were last modified is returned here as the number of
       seconds since midnight January 1, 1970.
   Returns:
-    true if the query was successful.  False if an error occured.
+    true if the query was successful.  False if an error occurred.
   */
   static bool GetFileInformation( 
     FILE* fp,
@@ -868,7 +868,7 @@ public:
   ON_ContentHash& operator=(const ON_ContentHash&)  = default;
 
   /*
-  Descripton:
+  Description:
     Create an ON_ContentHash class with the specified size, hash and times.
   Parameters:
     sha1_name_hash - [in]
@@ -886,7 +886,7 @@ public:
       If 0 is passed in, the current time is used.
     content_last_modified_time - [in]
       Pass 0 if not known.
-      The time the hashed information that was last modifed in seconds since January 1, 1970 UCT.
+      The time the hashed information that was last modified in seconds since January 1, 1970 UCT.
       If content_last_modified_time > hash_time, then 0 is used.
   Returns:
     An ON_ContentHash with size and SHA-1 hash and times set from the parameters,
@@ -900,7 +900,7 @@ public:
     );
 
   /*
-  Descripton:
+  Description:
     Create an ON_ContentHash from a memory buffer.
   Parameters:
     sha1_name_hash - [in]
@@ -921,7 +921,7 @@ public:
    );
 
   /*
-  Descripton:
+  Description:
     Create an ON_ContentHash from a file stream.
   Parameters:
     sha1_file_name_hash - [in]
@@ -931,7 +931,7 @@ public:
     fp - [in] pointer to a file opened with ON:FileOpen(...,"rb")
   Returns:
     An ON_ContentHash with size and SHA-1 hash and times set from the file,
-    hash time = now, and content last modifed time set from the file system
+    hash time = now, and content last modified time set from the file system
     information returned by ON_FileStream::GetFileInformation().
   */
   static ON_ContentHash CreateFromFile( 
@@ -940,13 +940,13 @@ public:
     );
 
   /*
-  Descripton:
+  Description:
     Create an ON_ContentHash from a file stream.
   Parameters:
     filename - [in] name of file.
   Returns:
     An ON_ContentHash with size and SHA-1 hash and times set from the file,
-    hash time = now, and content last modifed time set from the file system
+    hash time = now, and content last modified time set from the file system
     information returned by ON_FileStream::GetFileInformation().
   */
   static ON_ContentHash CreateFromFile( 
@@ -977,13 +977,13 @@ public:
 
   /*
   Returns:
-    Time the hash SHA-1 hash was cacluated in seconds since January 1, 1970 UCT.
+    Time the hash SHA-1 hash was calculated in seconds since January 1, 1970 UCT.
   */
   ON__UINT64 HashCalculationTime() const;
 
   /*
   Returns:
-    Time the hashed content was last modifed in seconds since January 1, 1970 UCT.
+    Time the hashed content was last modified in seconds since January 1, 1970 UCT.
     0 is returned if this time is not known.
 
     This time should be used for important decisions as a last resort.
@@ -1028,7 +1028,7 @@ public:
   /*
   Description:
     Test a file to see if it has a matching size and SHA-1 hash.
-  Paramters:
+  Parameters:
     fp - [in] pointer to file opened with ON::OpenFile(...,"rb")
     bSkipTimeCheck - [in] if true, the time of last
        modification is not checked.
@@ -1043,7 +1043,7 @@ public:
   /*
   Description:
     Test a file to see if it has a matching size and SHA-1 content hash.
-  Paramters:
+  Parameters:
     filename - [in]
   Returns:
     True if the file exists, can be read, and has a matching byte_count
@@ -1159,7 +1159,7 @@ public:
 
   /*
   Returns:
-    true if a and b have differnt ByteCount() or SHA-1 content hash values.
+    true if a and b have different ByteCount() or SHA-1 content hash values.
   */
   static bool DifferentContent(
     const ON_ContentHash& a,
@@ -1221,7 +1221,7 @@ private:
   // Time this hash was set (always > 0 if this ON_ContentHash is set).
   ON__UINT64 m_hash_time = 0; // number of seconds since Jan 1, 1970, UCT
 
-  // Time the content was last modifed.
+  // Time the content was last modified.
   // This time is often unknown, or set incorrectly.
   ON__UINT64 m_content_time = 0; // number of seconds since Jan 1, 1970, UCT
 
@@ -1301,10 +1301,10 @@ public:
     ///<summary>File name exists in base path directory.</summary>
     BasePath = 3,
 
-    ///<summary>File with mathing content exists.</summary>
+    ///<summary>File with matching content exists.</summary>
     ContentMatch = 4,
 
-    ///<summary>Most recently modifed file.</summary>
+    ///<summary>Most recently modified file.</summary>
     MostRecent = 5
   };
 #pragma endregion
@@ -1552,7 +1552,7 @@ public:
   Remarks:
     The value of the hash is saved in a runtime cache so
     using this function when comparing paths is efficient
-    when multple compares are required.
+    when multiple compares are required.
   See Also:
     ON_NameHash::CreateFilePathHash( ON_FileReference& file_reference );
   */
@@ -1583,7 +1583,7 @@ private:
 
   mutable ON_ContentHash m_recent_content_hash;
 
-  // m_full_path_hash is chached runtime information. The value is not saved
+  // m_full_path_hash is cached runtime information. The value is not saved
   // in .3dm archives. It is calculated on demand.
   mutable ON_SHA1_Hash m_full_path_hash = ON_SHA1_Hash::EmptyContentHash; // File path hash.
 
@@ -1627,7 +1627,7 @@ public:
     directory_name - [in]
       The directory to look in.
     item_name_filter - [in]
-      If this paramter is null, then the iteration
+      If this parameter is null, then the iteration
       includes all names in the directory.
       The item name to search for. This parameter can 
       include wildcard characters, such as an
@@ -1642,7 +1642,7 @@ public:
       There are no matching items.
 
   Remarks:
-    Calling FirstItem() is eqivalent to calling Initialize() and then calling NextItem().
+    Calling FirstItem() is equivalent to calling Initialize() and then calling NextItem().
   */
   bool Initialize( 
     const wchar_t* directory_name

@@ -567,7 +567,7 @@ public:
   Remarks:
     This gets the literal value of the text, there is no
     substitution for any "<>" substrings.  When a dimension
-    is drawn, any occurance of "<>" will be replaced
+    is drawn, any occurrence of "<>" will be replaced
     with the measured value for the dimension and formatted
     according to the DimStyle settings.
 
@@ -955,7 +955,7 @@ private:
   // At this point, the ON_OBSOLETE_V5_Annotation and derived classes
   // exists for a single purpose - to support reading and writing
   // V5 (4,3,2) 3dm archives. 
-  // In V5 archives all dimension styles, including per opbject overrrides
+  // In V5 archives all dimension styles, including per object overrides
   // were in the archive dimstyle table. In V6 and later, override dimstyles
   // are managed by the object that uses them.
   //
@@ -1045,7 +1045,7 @@ public:
   Parameters:
     V6_dim_linear -[in]
     annotation_context - [in]
-      Dimstyle and other informtion referenced by V6_dim_linear or nullptr if not available.
+      Dimstyle and other information referenced by V6_dim_linear or nullptr if not available.
     destination - [in]
       If destination is not nullptr, then the V5 linear dimension is constructed
       in destination. If destination is nullptr, then the new V5 linear dimension
@@ -1103,13 +1103,13 @@ public:
        int point_index
        ) const;
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
-  // overrides virual ON_Object::Write
+  // overrides virtual ON_Object::Write
   bool Write(ON_BinaryArchive&) const override;
 
-  // overrides virual ON_Object::Read
+  // overrides virtual ON_Object::Read
   bool Read(ON_BinaryArchive&) override;
 
   // virtual ON_Geometry GetBBox override		
@@ -1284,13 +1284,13 @@ public:
        ) const;
 
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
-  // overrides virual ON_Object::Write
+  // overrides virtual ON_Object::Write
   bool Write(ON_BinaryArchive&) const override;
 
-  // overrides virual ON_Object::Read
+  // overrides virtual ON_Object::Read
   bool Read(ON_BinaryArchive&) override;
 
   // virtual ON_Geometry GetBBox override		
@@ -1326,7 +1326,7 @@ public:
     Overrides virtual ON_OBSOLETE_V5_Annotation::NumericValue();
   Returns:
     If m_type is ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter, then the diameter
-    is returned, othewise the radius is returned.
+    is returned, otherwise the radius is returned.
   */
   double NumericValue() const override;
 
@@ -1475,7 +1475,7 @@ public:
        ) const;
 
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
   // virtual ON_Geometry GetBBox override		
@@ -1756,7 +1756,7 @@ public:
        double default_offset = 1.0
        ) const;
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
   // virtual ON_Geometry GetBBox override		
@@ -1917,15 +1917,15 @@ public:
     ON_OBSOLETE_V5_TextObject* destination
   );
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   // Text entities with strings that contain no "printable" characters
   // are considered to be NOT valid.
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
-  // overrides virual ON_Object::Write
+  // overrides virtual ON_Object::Write
   bool Write(ON_BinaryArchive&) const override;
 
-  // overrides virual ON_Object::Read
+  // overrides virtual ON_Object::Read
   bool Read(ON_BinaryArchive&) override;
 
   // overrides virtual ON_Geometry::Transform()
@@ -2077,13 +2077,13 @@ public:
        int point_index
        ) const;
 
-  // overrides virual ON_Object::IsValid
+  // overrides virtual ON_Object::IsValid
   bool IsValid( ON_TextLog* text_log = nullptr ) const override;
 
-  // overrides virual ON_Object::Write
+  // overrides virtual ON_Object::Write
   bool Write(ON_BinaryArchive&) const override;
 
-  // overrides virual ON_Object::Read
+  // overrides virtual ON_Object::Read
   bool Read(ON_BinaryArchive&) override;
 
   // virtual ON_Geometry GetBBox override		

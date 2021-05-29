@@ -549,7 +549,7 @@ bool ON_LineCurve::Trim( const ON_Interval& domain )
     DestroyCurveTree();
     ON_3dPoint p = PointAt( domain[0] );
     ON_3dPoint q = PointAt( domain[1] );
-		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim 
+		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successful trim 
 																					// should return an IsValid ON_LineCurve .
 			m_line.from = p;
 			m_line.to = q;

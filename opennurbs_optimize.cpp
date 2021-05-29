@@ -291,7 +291,7 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
       i0++;
     if ( i0 <= i1 ) {
       // we have s0 < m_k[i0] <= ... <= m_k[i1] < s1
-      Evaluate( m_k[i0], &fm, nullptr,-1 ); // gaurd against C0 discontinuities
+      Evaluate( m_k[i0], &fm, nullptr,-1 ); // guard against C0 discontinuities
       Evaluate( m_k[i0], &fp, nullptr, 1 );
       if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
         m_s1 = m_k[i0];
@@ -580,7 +580,7 @@ bool ON_LocalZero1::NewtonRaphson( double s0, double f0,
 
     if ( fabs(s1-s0) <= m_t_tolerance ) {
       // a root has been bracketed to an interval that is small enough
-      // to satisify user.
+      // to satisfy user.
       *t = (fabs(f0) <= fabs(f1)) ? s0 : s1;
       return true;
     }

@@ -359,7 +359,7 @@ private:
   ON__UINT64 m_sn_count = 0;   // total number of elements                       
   ON__UINT64 m_sn_purged = 0;  // total number of purged elements
 
-  // The blocks in m_sn_list[] are alwasy sorted, disjoint,
+  // The blocks in m_sn_list[] are always sorted, disjoint,
   // and in increasing order.  m_sn_list is used when
   // m_sn_block0.m_sn[] is not large enough.
   // The sn list is partitioned into blocks to avoid

@@ -71,7 +71,7 @@
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS) || defined(_WINDOWS_) || defined(__WINDOWS__)
 #if !defined(VS_FF_PRERELEASE)
 // At this time, verrsrc.h does not have protection against multiple includes.
-// Testing for VS_FF_PRERELEASE seems to prevent double incudes and the
+// Testing for VS_FF_PRERELEASE seems to prevent double includes and the
 // redef errors it generates.
 #include "verrsrc.h"
 #endif

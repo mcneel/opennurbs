@@ -130,7 +130,7 @@ const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
 { 0xc3d8dd54, 0xf8c8, 0x4455, { 0xbb, 0xe, 0x2a, 0x2f, 0x49, 0x88, 0xec, 0x81 } };
 
 // ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
-// algoritm. If a new built-in algorithm is developed that produces generally 
+// algorithm. If a new built-in algorithm is developed that produces generally 
 // better packings and is as fast and reliable as the current default, then
 // ON_SubD::DefaultFacePackingId can be changed. Under no circumstances, should
 // the default be changed to anything that is more than 1.5 times slower than 
@@ -285,7 +285,7 @@ Exceptions:
 If all exponent bits are all 0 (e = 0) and the fraction bits
 are all zero, then the value of the number is zero.
 If all exponent bits are all 0 (e = 0) and at least one fraction
-bits is not zero, then the representaion is "denormalized".
+bits is not zero, then the representation is "denormalized".
 In this case, the float absolute value is 0.f*2^-126 and the
 double absolute value is 0.f*2^-1022.
 If all exponent bits are 1 (float e = 11111111binary = 255decimal
@@ -336,7 +336,7 @@ static double ON__dblinithelper(int i)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in double 2.0.");
     i7 = 0;
@@ -410,7 +410,7 @@ static float ON__fltinithelper(int i)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in float 2.0f.");
     i3 = 0;
@@ -929,7 +929,7 @@ static ON_MeshParameters Internal_ON_MeshParameters_Constants(
   // You must also update the mesh parameters file reading code so that settings with old defaults
   // are replaced with setting that have the new defaults AND old defaults get saved in earlier version
   // 3dm files. This requires somebody with a solid understanding of how ON_MeshParameters::Read()/Write()
-  // works, how saving earlier versions of 3dm fiels works, and how reading old version files works.
+  // works, how saving earlier versions of 3dm files works, and how reading old version files works.
 
   switch (selector)
   {
@@ -2631,7 +2631,7 @@ void ON_SubD::SetAutomaticMeshToSubD(
   bool bAutomaticallyCreateSubD
 )
 {
-  // remove possiblity of hacks to use this as a char value
+  // remove possibility of hacks to use this as a char value
   bAutomaticallyCreateSubD = bAutomaticallyCreateSubD ? true : false;
 
   switch (context)
@@ -2798,7 +2798,7 @@ static ON_SubDComponentBase UnsetComponentBaseInit()
 {
   // For efficiency, ON_SubDComponentBase() does not waste time
   // m_cache_subd_P[], m_displacementV[]
-  // but the offical "Unset" ON_SubDComponentBase should have every byte initialized.
+  // but the official "Unset" ON_SubDComponentBase should have every byte initialized.
   ON_SubDComponentBase unset;
   memset(&unset, 0, sizeof(unset));
   return unset;
@@ -2808,7 +2808,7 @@ static ON_SubDVertex EmptyVertexInit()
 {
   // For efficiency, ON_SubDVertex() does not waste time
   // initializing m_limitP[], ..., m_cache_subd_P[], m_displacementV[]
-  // but the offical "Empty" vertex should have every byte initialized.
+  // but the official "Empty" vertex should have every byte initialized.
   ON_SubDVertex empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
@@ -2818,7 +2818,7 @@ static ON_SubDEdge EmptyEdgeInit()
 {
   // For efficiency, ON_SubDEdge() does not waste time
   // initializing m_cache_subd_P[], m_displacementV[]
-  // but the offical "Empty" edge should have every byte initialized.
+  // but the official "Empty" edge should have every byte initialized.
   ON_SubDEdge empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
@@ -2828,7 +2828,7 @@ static ON_SubDFace EmptyFaceInit()
 {
   // For efficiency, ON_SubDFace() does not waste time
   // initializing m_cache_subd_P[], m_displacementV[]
-  // but the offical "Empty" face should have every byte initialized.
+  // but the official "Empty" face should have every byte initialized.
   ON_SubDFace empty;
   memset(&empty, 0, sizeof(empty));
   return empty;

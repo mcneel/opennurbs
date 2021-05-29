@@ -565,7 +565,7 @@ const ON_SubDVertex* ON_SubD::SubdivideSector(
   if ( nullptr == vertex1)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  // at_crease weight is used when the cooresponding vertex is a crease.
+  // at_crease weight is used when the corresponding vertex is a crease.
   // Otherwise, fsh.AllocateEdge() ignores at_crease_weight.
   ON_SubDEdgeTag edge1_tag = (ON_SubDEdgeTag::SmoothX == edge0_tag) ? ON_SubDEdgeTag::Smooth : edge0_tag;
   const double at_crease_weight 

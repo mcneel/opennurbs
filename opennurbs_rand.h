@@ -176,7 +176,7 @@ public:
 
   /*
   Description:
-    Perform a random permuation on an array.
+    Perform a random permutation on an array.
   Parameters:
     base - [in/out]
       Array of element to permute

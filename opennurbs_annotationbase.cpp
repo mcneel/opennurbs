@@ -174,7 +174,7 @@ static bool Internal_UpdateOverrideCandidateParentId(
     if (ON_nil_uuid == archive_parent_id)
       break;
 
-    // We are reading a worksession reference model or reference style linked instance defintion.
+    // We are reading a worksession reference model or reference style linked instance definition.
     // The ids in the reference file may have had a collision with ids in the active model
     // and been changed.
     const ON_ManifestMapItem parent_id_map_item = archive.ManifestMap().MapItemFromSourceId(archive_parent_id);
@@ -194,7 +194,7 @@ static bool Internal_UpdateOverrideCandidateParentId(
     if (model_parent_id == archive_parent_id)
       return false; // common situation - no change reqired
 
-    // We are reading a worksession reference model or reference style linked instance defintion.
+    // We are reading a worksession reference model or reference style linked instance definition.
     // The ids in the reference file may have had a collision with ids in the active model
     // and been changed.
     override_candidate->SetParentId(model_parent_id);
@@ -3028,13 +3028,13 @@ const class ON_Font& ON_Annotation::Font(const ON_DimStyle* parent_style) const
 
 const class ON_Font& ON_Annotation::FontCharacteristics(const ON_DimStyle* parent_style) const
 {
-  // FontCharacteristics() queries inforation that is set by calling ON_DimStyle.SetFont()
+  // FontCharacteristics() queries information that is set by calling ON_DimStyle.SetFont()
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::Font).FontCharacteristics();
 }
 
 const bool ON_Annotation::FontSubstituted(const ON_DimStyle* parent_style) const
 {
-  // FontSubstituted() queries inforation that is set by calling ON_DimStyle.SetFont()
+  // FontSubstituted() queries information that is set by calling ON_DimStyle.SetFont()
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::Font).FontSubstituted();
 }
 

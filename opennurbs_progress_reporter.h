@@ -38,7 +38,7 @@ public:
       * The callback function should do something that is fast and simple,
         like post a message to a user interface control and return
         immediately.      
-      Paramters passed to the callback function:
+      Parameters passed to the callback function:
         context - [in] 
           the value of callback_context.
         fraction_complete - [in]
@@ -88,7 +88,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.
@@ -118,7 +118,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.
@@ -149,7 +149,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.

@@ -160,7 +160,7 @@ bool ON_VersionNumberIsYearMonthDateFormat(
 {
   // Note: 
   //   When new versions of opennurbs save V2,V3,V4 or V5 files,
-  //   they have to write old yyyymmddn verison numbers so the
+  //   they have to write old yyyymmddn version numbers so the
   //   old code will read the file.  In this case, n = 6,7,8,9.
   //   (n=9 meant debug prior to 2014);
   //

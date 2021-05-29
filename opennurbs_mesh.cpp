@@ -110,7 +110,7 @@ public:
   //
   // Whenever there is a question about which values are valid,
   // it is assumed the m_V array is valid and the double precision
-  // informtion should be destroyed.
+  // information should be destroyed.
   int m_fcount = 0;  // single precision vertex count
   int m_dcount = 0;  // double precision vertex count
   ON__UINT32 m_fCRC = 0; // crc of float vertex array
@@ -1223,11 +1223,11 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
     const ON_3fPoint* fV = m_V.Array();
     for ( fi = 0; fi < facet_count; fi++ ) 
     {
-      // This test is considered relatively harsh for float precision meshes with nearly degnerate faces
+      // This test is considered relatively harsh for float precision meshes with nearly degenerate faces
       // after they are transformed by a transform with a reasonable sized translation 
       // component, as in https://mcneel.myjetbrains.com/youtrack/issue/RH-10177.
       // However, removing this creates unreasonable pressure on double precision meshes, because, after being 
-      // trasformed to double precision, a wrongly valid single-precision-collapsed-edge mesh makes an
+      // transformed to double precision, a wrongly valid single-precision-collapsed-edge mesh makes an
       // invalid double-precision mesh altogether. This cannot be tolerated.
       // The goal should be to have invalid single-precision-only meshes be treated by MeshRepair when created.
       // See https://mcneel.myjetbrains.com/youtrack/issue/RH-54563 and
@@ -3027,7 +3027,7 @@ bool ON_Mesh::SwapCoordinates(
 
 void ON_Mesh::SetClosed(int b)
 {
-  // 6 Novermber 2003 Dale Lear - let expert user set m_mesh_is_closed
+  // 6 November 2003 Dale Lear - let expert user set m_mesh_is_closed
   char mesh_is_closed = 0;
   switch(b)
   {
@@ -5351,7 +5351,7 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
         {
           if (this_mesh_mp_hash != mp_hash)
           {
-            // variable mesh paramters - means output gets none.
+            // variable mesh parameters - means output gets none.
             bSetMeshParameters = false;
           }
         }
@@ -6587,7 +6587,7 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash(bool bIgnoreSubDParameters)
 
     // Do not include m_min_tolerance as a geometry setting.
     // It is a runtime lower bound clamp.
-    // If it is included here, Rhino will remesh everytime model tolerance changes.
+    // If it is included here, Rhino will remesh every time model tolerance changes.
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_min_edge_length,0.0));
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_max_edge_length,0.0));
     sha1.AccumulateDouble(ON_MeshParameters_SHA1Double(m_grid_aspect_ratio,0.0));
@@ -6608,7 +6608,7 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash(bool bIgnoreSubDParameters)
     {
       // The Pangolin parameters and any other, parameters we add in the future,
       // contribute to the SHA1 only when they differ from default values.
-      // This keeps old SHA-1 values correct and prevents remeshing when openning
+      // This keeps old SHA-1 values correct and prevents remeshing when opening
       // old files.
       sha1.AccumulateId(m_mesher_id);
 
@@ -6820,7 +6820,7 @@ static bool Internal_MeshParametersRead_UpdateSubDParameters(
   const size_t mp_count = sizeof(mp) / sizeof(mp[0]);
   for (size_t mp_dex = 0; mp_dex < mp_count; ++mp_dex)
   {
-    // If the only geometry setting differnce bewteen a built-in type and archive_mp
+    // If the only geometry setting difference between a built-in type and archive_mp
     // is the subd meshing parameters, update archive_mp to use the built-in's subd 
     // meshing parameters.
     const ON_SubDDisplayParameters mp_subdp = mp[mp_dex].SubDDisplayParameters();
@@ -7237,7 +7237,7 @@ struct EDGEINFO
             // 6 = edge would be a boundary if mesh were exploded
             // 7 = quad would not be convex
             // 8 = if the edge were removed, the quad would not pass the min_diagonal_length_ratio test (not "square" enough)
-            // 16 = tha diagnoal is too short to remove in the first pass that makes the "obvious" quads.
+            // 16 = the diagnoal is too short to remove in the first pass that makes the "obvious" quads.
   double length;
 };
 
@@ -7438,7 +7438,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
     {
       // It is CRITICAL that the length compare use >=.
       // Otherwise tesselations of equailateral triangles
-      // will not work right in this fuction.
+      // will not work right in this function.
       fei = top.m_topf[ei.fi[0]].m_topei;
       if ((i != fei[0] && EI[fei[0]].length >= ei.length)
         || (i != fei[1] && EI[fei[1]].length >= ei.length)
@@ -7457,7 +7457,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
 
       // It is CRITICAL that the length compare use >=.
       // Otherwise tesselations of equailateral triangles
-      // will not work right in this fuction.
+      // will not work right in this function.
       fei = top.m_topf[ei.fi[1]].m_topei;
       if ((i != fei[0] && EI[fei[0]].length >= ei.length)
         || (i != fei[1] && EI[fei[1]].length >= ei.length)
@@ -9625,7 +9625,7 @@ bool ON_MeshTopology::Create()
 
   while ( 0 == b32IsValid || -1 == b32IsValid ) 
   {
-    // while() is for flow control - this is a while() {... break;} statment.
+    // while() is for flow control - this is a while() {... break;} statement.
     Destroy();
     b32IsValid = 0;
 
@@ -12269,7 +12269,7 @@ void ON_Mesh::UpdateDoublePrecisionVertices()
     // a subset of the float precision vertices
     // have been modified.  So, attempt to
     // keep the precision on double vertices
-    // that alread agree with the float vertices
+    // that already agree with the float vertices
     // in float precision.
     ON_3fPoint P;
     while (dV < dVend)
@@ -15939,7 +15939,7 @@ unsigned int ON_Mesh::MergeFaceSets(
       ngon_fi.Append(fi);
     }
 
-    // grow ngon by jumping accross edges in ci_list[]
+    // grow ngon by jumping across edges in ci_list[]
     Internal_GrowNgon(
       top, emarks, fmarks,
       e_list_mark | fmark, // etest_mask,

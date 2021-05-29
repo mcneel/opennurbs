@@ -196,7 +196,7 @@ const char* ON_DecodeBase64::Decode(const char* base64str)
       {
         // base64 encoded strings are parsed in groups of 4 characters.
         // When we enter this part of the Decode function, m_status is
-        // either 1 (error occured earlier) or 2.  
+        // either 1 (error occurred earlier) or 2.  
         // A 2 means the previous character we parsed was the 3rd
         // of the group and it was an equal sign.  In this case, the
         // the 4th character in the group must be an equal sign and

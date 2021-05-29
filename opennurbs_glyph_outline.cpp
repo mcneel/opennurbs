@@ -226,7 +226,7 @@ void ON_Outline::SortFigures(
   // all of which attempted to take into account the orientations from the font file. 
   // It is so common for the orientations in the font files to be wrong, 
   // that ignoring them is the most efficient and reliable approach to date.
-  // It is extremly common for outer figures to overlap.
+  // It is extremely common for outer figures to overlap.
   ON_SimpleArray<ON_OutlineFigure*> outer_figures(sorted_figure_count);
   ON_SimpleArray<ON_OutlineFigure*> inner_figures(sorted_figure_count);
   ON_SimpleArray<ON_OutlineFigure*> inner_figures_parent(sorted_figure_count);
@@ -905,9 +905,9 @@ static bool Internal_ExtraInsideOfPolylineText(
         alpha[0] * B[1].x + alpha[1] * B[1].y + alpha[2]
       };
       if (h[0] < 0.0 && h[1] < 0.0)
-        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+        continue; // B[0] and B[1] on same side of infinite line through A[0],A[1]
       if (h[0] > 0.0 && h[1] > 0.0)
-        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+        continue; // B[0] and B[1] on same side of infinite line through A[0],A[1]
 
       const double beta[3] =
       {
@@ -919,9 +919,9 @@ static bool Internal_ExtraInsideOfPolylineText(
       h[0] = beta[0] * B[0].x + beta[1] * B[0].y + beta[2];
       h[1] = beta[0] * B[1].x + beta[1] * B[1].y + beta[2];
       if (h[0] < 0.0 && h[1] < 0.0)
-        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+        continue; // A[0] and A[1] on same side of infinite line through B[0],B[1]
       if (h[0] > 0.0 && h[1] > 0.0)
-        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+        continue; // A[0] and A[1] on same side of infinite line through B[0],B[1]
 
       // The line segment A[0],A[1] and line segment B[0],B[1] intersect someplace.
       // The location of the intersection doesn't matter, even if it's one of the end points.
@@ -992,7 +992,7 @@ bool ON_OutlineFigure::IsInsideOf(
     // The context that calls this function is sorting nested loops.
     // The orientation of outer_figure has been decided and set at this point.
     // When this orientation of this is not different, we need more checking
-    // to verify that the orientaion from the font definition file was really "wrong".
+    // to verify that the orientation from the font definition file was really "wrong".
     // The "A crossbar" in Bahnschrift U+00C5 is one of many cases that
     // require this additional checking. More generally, glyphs with
     // orientations set correctly and which use overlapping outer 
@@ -1207,7 +1207,7 @@ bool ON_OutlineFigure::ReverseFigure()
   {
     if ( false == a[i].IsInteriorFigurePoint() )
     {
-      // a[] containts errors, unsets, or embedded figures
+      // a[] contains errors, unsets, or embedded figures
       return error_rc;
     }
   }

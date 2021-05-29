@@ -35,7 +35,7 @@
 #endif
 
 #if !defined(MY_ZCALLOC)
-/* have zlib use oncalloc() and onfree() for memory managment*/
+/* have zlib use oncalloc() and onfree() for memory management*/
 #define MY_ZCALLOC
 #endif
 

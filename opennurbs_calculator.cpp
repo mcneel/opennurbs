@@ -41,8 +41,8 @@ public:
 
   enum
   {
-    // op_stack_capacity is large to accomodate expressions
-    // with nested parenthises. A stack of four elements 
+    // op_stack_capacity is large to accommodate expressions
+    // with nested parentheses. A stack of four elements 
     // suffices to parse expressions that do not not contain
     // nested parentheses.
     op_stack_capacity = 62
@@ -770,7 +770,7 @@ bool ON_ArithmeticCalculatorImplementation::AppendArithmeticOperator(
     }
 
     // specifying an explicit aritimetic operator clears the
-    // potential for implied multiplication that occures after
+    // potential for implied multiplication that occurs after
     // a "symbol" value or right parenthesis.
     m_bPendingImpliedMultiplication = false;
 

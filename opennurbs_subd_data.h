@@ -291,7 +291,7 @@ public:
 
   /*
   Description:
-    Get the limit sub surface exact patch for the specifed corner.
+    Get the limit sub surface exact patch for the specified corner.
   Returns:
     true when srf_cv are set to a the CVs for a bicubic uniform cubic NURBS bispan patch
   */
@@ -420,7 +420,7 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 // that store a pointer to an ON_SubDVertex, ON_SubDEdge, or ON_SubDFace
 // along with a direction bit that is 0 or 1. The direction bit is used
 // to indicate if the component is being referenced with its 
-// natrual orientation (0) or the reverse of its natural orientaion (1).
+// natural orientation (0) or the reverse of its natural orientation (1).
 //
 // ON_SubDComponentPtr is an unsigned int that stores a pointer to an 
 // ON_SubDVertex, ON_SubDEdge, or ON_SubDFace, the direction bit
@@ -646,7 +646,7 @@ public:
 public:
   /*
   Returns:
-    Number of changes to vertex tag, edge tag and edge sector coefficent values.
+    Number of changes to vertex tag, edge tag and edge sector coefficient values.
   */
   unsigned int UpdateEdgeTags(
     bool bUnsetEdgeTagsOnly
@@ -1651,7 +1651,7 @@ public:
       + m_fsp_oddball_fragments.SizeOfUnusedElements()
       + m_fsp_limit_curves.SizeOfUnusedElements();
 
-    // It has alwasy been the case that count0 = count1 = ON_SubDDisplayParameters::MaximumDensity + 1.
+    // It has always been the case that count0 = count1 = ON_SubDDisplayParameters::MaximumDensity + 1.
     // But a wrong answer is better than crashing if somebody incorrectly modifies ON_SubDHeap 
     // in the far future.
     const size_t count0 = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
@@ -1734,12 +1734,12 @@ private:
   // m_full_fragment_display_density = display density for a full fragment
   unsigned int m_full_fragment_display_density = 0;
 
-  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
-  // needed. It's ok if we need additionaly fragments later.
+  // m_full_fragment_count_estimate = an estimate of the total number of full fragments
+  // needed. It's ok if we need additionally fragments later.
   unsigned int m_full_fragment_count_estimate = 0;
 
-  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
-  // needed. It's ok if we need additionaly fragments later.
+  // m_full_fragment_count_estimate = an estimate of the total number of full fragments
+  // needed. It's ok if we need additionally fragments later.
   unsigned int m_part_fragment_count_estimate = 0;
 
   unsigned int m_reserved0 = 0;
@@ -1879,7 +1879,7 @@ public:
   /*
   Returns:
     A runtime serial number that is incremented every time a the active level,
-    vertex location, vertex or edge flag, or subd topology is chaned.
+    vertex location, vertex or edge flag, or subd topology is changed.
   */
   ON__UINT64 GeometryContentSerialNumber() const;
 
@@ -1905,7 +1905,7 @@ public:
 
   /*
   Description:
-    Change the geoemtry content serial number to indicate something affecting
+    Change the geometry content serial number to indicate something affecting
     the geometric shape of the subd has changed. This includes topologial changes,
     vertex and edge tag changes, and changes to vertex control net locations.
   Parameters:
@@ -2066,7 +2066,7 @@ public:
   /*
   Description:
     Split and edge.
-    The input edge is modifed to terminate at the input vertex.
+    The input edge is modified to terminate at the input vertex.
     The new edge begins at the input vertex and ends at the final vertex
     of the original input edge.
   edge - [in]
@@ -2974,7 +2974,7 @@ private:
 class /*DO NOT EXPORT*/ ON_SubDEdgeSurfaceCurve
 {
 public:
-  // Use CopyFrom() when proper managment of m_cvx is required.
+  // Use CopyFrom() when proper management of m_cvx is required.
   // This class is used internally and never seen int developer SDK.
   static const ON_SubDEdgeSurfaceCurve Unset; // all doubles are ON_UNSET_VALUE, everything else is zero.
   static const ON_SubDEdgeSurfaceCurve Nan;   // all doubles are ON_DBL_QNAN, everything else is zero
@@ -3003,7 +3003,7 @@ public:
       (-2,-1,0,1,2,3,...,cv_count-1).
   Remarks:
     The knot vector is unclamped to permit efficient joining of adjacent edge
-    curves into longer NURBS with simple interior knots. This occures frequently.
+    curves into longer NURBS with simple interior knots. This occurs frequently.
   */
   bool SetCVs(
     int cv_count,
@@ -3026,7 +3026,7 @@ public:
     with unclamped knot vector (-2,-1,0,1,2,3,...,cv_count-1).
   Remarks:
     The knot vector is unclamped to permit efficient joining of adjacent edge
-    curves into longer NURBS with simple interior knots. This occures frequently.
+    curves into longer NURBS with simple interior knots. This occurs frequently.
   */
   unsigned int GetCVs(
     size_t cv_capacity,

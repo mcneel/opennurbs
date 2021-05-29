@@ -445,7 +445,7 @@ bool ON_Surface::GetNextDiscontinuity(
     {
       // 20 March 2003 Dale Lear:
       //   Have to look for locus discontinuities at ends.
-      //   Must test both ends becuase t0 > t1 is valid input.
+      //   Must test both ends because t0 > t1 is valid input.
       //   In particular, for ON_CurveProxy::GetNextDiscontinuity() 
       //   to work correctly on reversed "real" curves, the 
       //   t0 > t1 must work right.

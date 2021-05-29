@@ -311,7 +311,7 @@ int ON_FontGlyph::GetGlyphList
     textlength,
     code_points.Array(),
     textlength,
-    nullptr,    // error status - ingnored
+    nullptr,    // error status - ignored
     0xFFFFFFFF, // mask as many errors as possible
     ON_UnicodeCodePoint::ON_ReplacementCharacter,  // unicode error mark when string is incorrectly encoded
     nullptr     // pointer to end of parsed text is ignored
@@ -959,7 +959,7 @@ const ON_FontGlyph* ON_GlyphMap::FindGlyph(const ON__UINT32 unicode_codepoint) c
 
 const ON_FontGlyph* ON_GlyphMap::InsertGlyph(const ON_FontGlyph& glyph )
 {
-  // managed glyphs are app resources - 1 per glpyh as needed and never freed.
+  // managed glyphs are app resources - 1 per glyph as needed and never freed.
   ON_MemoryAllocationTracking disable_tracking(false);
 
   if ( glyph.IsManaged() )

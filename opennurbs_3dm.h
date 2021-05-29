@@ -219,7 +219,7 @@
 #define TCODE_LIGHT_RECORD_END        (TCODE_INTERFACE | TCODE_SHORT | 0x006F)
 
 /* records in user table 
-     Each user table entery has two top level chunks, a TCODE_USER_TABLE_UUID chunk
+     Each user table entry has two top level chunks, a TCODE_USER_TABLE_UUID chunk
      and a TCODE_USER_RECORD chunk.
 */
 

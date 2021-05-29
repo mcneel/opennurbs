@@ -38,7 +38,7 @@ ON_3dSimplex::ON_3dSimplex(const ON_3dPoint& a, const ON_3dPoint& b, const ON_3d
 
 int ON_3dSimplex::Count() const { return m_n; };
 
-bool ON_3dSimplex::IsValid(double eps) const		// true if the Verticies are affinely independent
+bool ON_3dSimplex::IsValid(double eps) const		// true if the Vertices are affinely independent
 {
   bool rc = true;
   if (m_n >= 2)
@@ -251,7 +251,7 @@ ON_3dVector ON_3dSimplex::Edge(int e0, int e1) const
 
 
 /*
-    This is a carefull implementation of cross product that tries to get an accurate result
+    This is a careful implementation of cross product that tries to get an accurate result
 */
 ON_3dVector ON_CrossProductwCare(const ON_3dVector& A, ON_3dVector& B)
 {
@@ -417,7 +417,7 @@ bool ON_3dSimplex::Closest2plex(ON_4dPoint& Bary) const
     for (int i = 0; i < 3; i++)
       Planar[i] = Vertex(i) - P3;
 
-    // Finding the barycentric coordintes of the origin will guild the rest of the algorithm
+    // Finding the barycentric coordinates of the origin will guild the rest of the algorithm
     // We simplify this by projecting to Not J plane
 
     double DetM = 0.0;
@@ -695,7 +695,7 @@ double ON_ConvexHullRef::MaximumCoordinate() const
   return ON_MaximumCoordinate(m_v, 3, m_is_rat, m_n);
 }
 
-int ON_ConvexHullPoint2::AppendVertex(const ON_3dPoint& P) // return index of new vertex.  must set Adjacent Indicies.
+int ON_ConvexHullPoint2::AppendVertex(const ON_3dPoint& P) // return index of new vertex.  must set Adjacent Indices.
 {
   m_Vert.Append(P);
   Ref.Initialize(m_Vert, m_Vert.Count());
@@ -729,8 +729,8 @@ bool ON_ConvexPoly::GetClosestPointSeeded(ON_3dPoint P0,
   return rc;
 }
 
-// MatchingSupport(A, B) retuns a positive number if
-//  A[i]<0 iff B[i]<0 and at least one coordinate pair has valid indicies A[i]>=0 and B[i]>=0.
+// MatchingSupport(A, B) returns a positive number if
+//  A[i]<0 iff B[i]<0 and at least one coordinate pair has valid indices A[i]>=0 and B[i]>=0.
 static int MatchingSupport(const ON_4dex& A, const ON_4dex& B)
 {
   int nsup  = 0;
@@ -827,7 +827,7 @@ bool GJK_Simplex::Includes(int aind, int bind) // true if (aind, bind) is a vert
   return false;
 }
 
-// To supply an inital seed simplex Adex and Bdex must be valid and 
+// To supply an initial seed simplex Adex and Bdex must be valid and 
 // have matching support specifically
 //     Adex[i]<A.Count() and Bdex[i]<B.Count()   for all i
 //     Adex[i]<0 iff Bdex[i]<0  for all i
@@ -848,7 +848,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
   ON_3dVector v(0,0,0);
 
 
-  // If Adex and Bdex are valid on entry we use them as an inital 
+  // If Adex and Bdex are valid on entry we use them as an initial 
   // seed for the trial simplex.  This case is indicated by setting
   // bFirstPass 
   bool bFirstPass = false;       
@@ -927,7 +927,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
 				if (!bFirstPass)
 					GJK.AddVertex(W, wA, wB);
 
-        // The key to the implemetation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
+        // The key to the implementation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
 				if (GJK.Simp.GetClosestPointToOrigin(GJK.Bary))
 				{
 					bFirstPass = false;
@@ -944,7 +944,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
           }
           else
           {
-            /* this is error recovery code. it is currenly DISABLED
+            /* this is error recovery code. it is currently DISABLED
             // The last step resulted in crap lets undo it and set done
             int n = GJK.Simp.Count() - 1;
             GJK.RemoveVertex(n);
@@ -957,7 +957,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
 				}
 				else
 				{
-					// In this case I am going to terminte the iteration.  If this was a FirstPass with user supplied initial guess
+					// In this case I am going to terminate the iteration.  If this was a FirstPass with user supplied initial guess
 					// then we restart the algorithm without the initial guess.
 					break;
 				}

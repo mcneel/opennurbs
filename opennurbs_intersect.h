@@ -79,7 +79,7 @@ bool ON_IntersectLineLine(
 
 /*
 Description:
-  Find the closest point between two infinte lines.
+  Find the closest point between two infinite lines.
 Parameters:
   lineA - [in]
   lineB - [in]
@@ -131,7 +131,7 @@ Parameters:
     line segment between line.from and line.to
     does not intersect the plane.
 Returns:
-  true if the interesection is a singe point.
+  true if the intersection is a single point.
   and false otherwise.
   If returned parameter is < 0 or > 1, then the line
   segment between line.m_point[0] and line.m_point[1]

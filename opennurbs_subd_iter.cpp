@@ -1773,7 +1773,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
       if (edge != ON_SUBD_EDGE_POINTER(face1_edges->m_ptr))
         continue;
 
-      // At this point, face1->Edges(fei) is the edge I just hopped accross
+      // At this point, face1->Edges(fei) is the edge I just hopped across
       // to get from the old current face to face 1. Update current face
       // information and return.
       m_current_face = face1; 

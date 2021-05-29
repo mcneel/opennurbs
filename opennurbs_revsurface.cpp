@@ -1100,11 +1100,11 @@ bool ON_RevSurface::Split(
     // update bounding boxes
     // if input box was valid, intesect calculated boxes with
     // input box
-    srf_ws->BoundingBox(); // calcluates srf_ws->m_bbox
+    srf_ws->BoundingBox(); // calculates srf_ws->m_bbox
     if ( srf_ws->m_bbox.IsValid() && input_bbox.IsValid() )
       srf_ws->m_bbox.Intersection(input_bbox);
 
-    srf_en->BoundingBox(); // calcluates srf_en->m_bbox
+    srf_en->BoundingBox(); // calculates srf_en->m_bbox
     if ( srf_en->m_bbox.IsValid() && input_bbox.IsValid() )
       srf_en->m_bbox.Intersection(input_bbox);
   }

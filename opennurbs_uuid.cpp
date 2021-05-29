@@ -80,7 +80,7 @@ static const ON_UUID ON_Internal_CreateNotUniqueSequentialId(
   //
   // It is based on the MAC address of a network card that
   // was destroyed circa 2000. The Time portion of the UUID is generated
-  // from index_64_bit and will generall be well before the current time.
+  // from index_64_bit and will generally be well before the current time.
   // The reason for using this complicated approach is to insure
   // data structures usisg these i values will pass validty checking
   // that tests to see if the UUID has a valid format.

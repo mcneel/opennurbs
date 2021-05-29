@@ -233,7 +233,7 @@ bool ON_IsValidKnotVector(
 
 ON_DECL
 bool ON_ClampKnotVector(
-          // Sets inital/final order-2 knots to values in
+          // Sets initial/final order-2 knots to values in
           // knot[order-2]/knot[cv_count-1].
           int,           // order (>=2)
           int,           // cv count
@@ -243,7 +243,7 @@ bool ON_ClampKnotVector(
 
 ON_DECL
 bool ON_MakeKnotVectorPeriodic(
-          // Sets inital and final order-2 knots to values
+          // Sets initial and final order-2 knots to values
           // that make the knot vector periodic
           int,           // order (>=2)
           int,           // cv count

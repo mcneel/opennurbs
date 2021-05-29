@@ -37,7 +37,7 @@ static bool ON_Internal_ReadObsoleteUserDataAnonymouseChunk(ON_BinaryArchive& ar
 {
   // If the obsolete user data's Write()/Read() function wrapped all the contents in
   // an anonymous chunk (which is the suggested best practice), then
-  // this skip over everthing in the chunk and not generate any file read warnings or errors.
+  // this skip over everything in the chunk and not generate any file read warnings or errors.
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);

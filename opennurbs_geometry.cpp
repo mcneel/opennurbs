@@ -256,13 +256,13 @@ bool ON_Geometry::Transform( const ON_Xform& xform )
 
 bool ON_Geometry::HasBrepForm() const
 {
-  // override if specific geoemtry has brep form
+  // override if specific geometry has brep form
   return false;
 }
 
 ON_Brep* ON_Geometry::BrepForm(ON_Brep* brep) const
 {
-  // override if specific geoemtry has brep formw
+  // override if specific geometry has brep formw
   return nullptr;
 }
 

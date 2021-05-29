@@ -446,7 +446,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
-      text_log->Print("m_C3[%d].Domain() = (%g,%g) does not inlclude m_E[%d].ProxyCurveDomain() = (%g,%g) is not increasing\n",
+      text_log->Print("m_C3[%d].Domain() = (%g,%g) does not include m_E[%d].ProxyCurveDomain() = (%g,%g) is not increasing\n",
                       c3i,c3_dom[0],c3_dom[1],edge_index,proxy_sub_dom[0],proxy_sub_dom[1]);
       text_log->PopIndent();
     }

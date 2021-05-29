@@ -21,7 +21,7 @@ class ON_NurbsCurve;
 
 /*
 Description:
-	ON_Circle is a circle in 3d.  The cirle is represented by a radius and an 
+	ON_Circle is a circle in 3d.  The circle is represented by a radius and an 
 	orthonormal frame	of the plane containing the circle, with origin at the center.
 
 	An Is_Valid() circle has positive radius and an Is_ Valid() plane defining the frame.

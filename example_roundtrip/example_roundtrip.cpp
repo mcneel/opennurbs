@@ -14,7 +14,7 @@ int main( int argc, const char *argv[] )
     return 0;
   }
 
-  // Call once in your application to initialze opennurbs library
+  // Call once in your application to initialize opennurbs library
   ON::Begin();
 
   // default dump is to stdout
@@ -60,7 +60,7 @@ int main( int argc, const char *argv[] )
 
     dump->PushIndent();
 
-    // create achive object from file pointer
+    // create archive object from file pointer
     ON_BinaryFile archive( ON::archive_mode::read3dm, archive_fp );
 
     // read the contents of the file into "model"

@@ -121,7 +121,7 @@ public:
   /*
   Returns:
     True if this text position information used to create this text
-    is identical to the text position paramters on dimstyle.
+    is identical to the text position parameters on dimstyle.
   */
   bool EqualTextPositionProperties(
     ON::AnnotationType annotation_type,
@@ -198,7 +198,7 @@ public:
   /*
   Returns:
     Rich text suitable for initializing SDK controls on the current platform (Windows or Apple OS X).
-    The returned string is alwasy rich text (never plain text).
+    The returned string is always rich text (never plain text).
     The returned rich text is always generated directly from the runs.
     This text is typically different from the Rhino clean rich text returned by the RichText() command.
   */
@@ -210,7 +210,7 @@ public:
     rich_text_style - [in]
       Type of rich text to return.
   Returns:
-    The returned string is alwasy rich text (never plain text).
+    The returned string is always rich text (never plain text).
     The returned rich text is always generated directly from the runs.
     This text is typically different from the Rhino clean rich text returned by the RichText() command.
   */
@@ -368,7 +368,7 @@ public:
   //Parameters:
   //  dimsytle - [in]
   //Returns:
-  //  true if style was passed as dimstyle paramter to Create(), ReplaceTextString(),
+  //  true if style was passed as dimstyle parameter to Create(), ReplaceTextString(),
   //  or RebuildRuns() and used to create the current text runs.
   //*/
   //bool IsCurrentDimStyle(

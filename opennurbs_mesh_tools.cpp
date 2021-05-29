@@ -265,7 +265,7 @@ static void RemoveFaceOrVertexFromNgon(ON_Mesh& mesh, const unsigned int faceidx
         while (NewNgon.m_Vcount > ct)
         {
           idx = *vertidx;
-          // find the vertex index in the ngon's list of vertexes
+          // find the vertex index in the ngon's list of vertices
           if (idx == NewNgon.m_vi[ct])
             break;
           ct++;
@@ -541,7 +541,7 @@ bool ON_Mesh::CollapseEdge( int topei )
   for ( mei = 0; mei < me_list_count; mei++ )
   {
     // We need to set the vertex location of all mesh vertices associated with the toplogical
-    // edge or we risk "tearing apart" vertexes at corners where there are more than 2 mesh vertexes
+    // edge or we risk "tearing apart" vertices at corners where there are more than 2 mesh vertices
     // associated with the topological vertex.  Don't to this for anything but the location.
     int i;
     for (i = 0; top.m_topv[me_list[mei].topvi0].m_v_count > i; i++)

@@ -7006,7 +7006,7 @@ shift-JIS<SEP>JIS X 0208<SEP>UNICODE<SEP3>// name
 /*
 Description:
   Convert a Windows code page 932 encoded value to a UNICODE code point.
-  This code page is often used for Korean glpyhs.
+  This code page is often used for Korean glyphs.
 
 Parameters:
   code_page_932_character_value - [in]

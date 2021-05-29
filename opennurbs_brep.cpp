@@ -1585,7 +1585,7 @@ bool ON_Brep::Transform( const ON_Xform& xform )
     //   bailed down to a unit system change from a 
     //   "long" unit to mm made a valid brep invalid
     //   because the edge tolerances were too small.
-    //   This fix does ot handle non-uniform scaling.
+    //   This fix does not handle non-uniform scaling.
     //   In the case of a non-uniform scale, the edge
     //   tolerance should be recalculated.
     if (edge.m_tolerance > 0.0 && uniform_scale > 0.0 && uniform_scale != 1.0)
@@ -5564,7 +5564,7 @@ bool ON_Brep::IsValid( ON_TextLog* text_log ) const
       // This is permitted. The are set when extensive
       // trim-edge parameter correspondence is needed.
       // Meshing is an example of a calculation that sets
-      // the "e" paramters.
+      // the "e" parameters.
       continue;
     }
 
@@ -5944,11 +5944,11 @@ int ON_Brep::NextEdge(int ei, int endi, int* next_endi ) const
   for ( vei = 0; vertex.m_ei[vei] != ei && vei < edge_count; vei++)
     ;/* empty for*/
   if ( edge.m_vi[0] == edge.m_vi[1]  && endi ) {
-    // get next occurance of edge index
+    // get next occurrence of edge index
     //
     // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index 
-    // appears TWICE in vertex.m_ei[].  The first occurance of edge.edge_index
-    // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurance
+    // appears TWICE in vertex.m_ei[].  The first occurrence of edge.edge_index
+    // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurrence
     // of edge.edge_index in vertex.m_ei[] corresponds to edge.m_vi[1].
     vei++;
     while ( vei < edge_count && vertex.m_ei[vei] != ei )
@@ -5988,11 +5988,11 @@ int ON_Brep::PrevEdge(int ei, int endi, int* prev_endi ) const
   for ( vei = 0; vertex.m_ei[vei] != ei && vei < edge_count; vei++)
     ;/* empty for*/
   if ( edge.m_vi[0] == edge.m_vi[1] && endi ) {
-    // get next occurance of edge index
+    // get next occurrence of edge index
     //
     // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index 
-    // appears TWICE in vertex.m_ei[].  The first occurance of edge.edge_index
-    // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurance
+    // appears TWICE in vertex.m_ei[].  The first occurrence of edge.edge_index
+    // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurrence
     // of edge.edge_index in vertex.m_ei[] corresponds to edge.m_vi[1].
     vei++;
     while ( vei < edge_count && vertex.m_ei[vei] != ei )
@@ -6319,7 +6319,7 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
 
   ON_BoundingBox local_bbox;
 
-  // Test vertexes first, this will quickly give us a base bbox to work with. 
+  // Test vertices first, this will quickly give us a base bbox to work with. 
   int vct = m_V.Count();
   for (int i = 0; vct > i; i++)
   {
@@ -7949,7 +7949,7 @@ ON_Brep::SetEdgeTolerance( ON_BrepEdge& edge, bool bLazySet ) const
     {
       edge.m_tolerance = ON_UNSET_VALUE;
       // TL_Brep::SetEdgeTolerance overrides ON_Brep::SetEdgeTolerance
-      // and sets teh tolerance correctly.
+      // and sets the tolerance correctly.
     }
   }
   return (edge.m_tolerance >= 0.0) ? true : false;
@@ -9808,7 +9808,7 @@ bool ON_Brep::CullUnusedTrims()
         }
       }
 
-      // remap loop.m_ti[] indicies
+      // remap loop.m_ti[] indices
       for ( li = 0; li < lcount; li++ ) {
         ON_BrepLoop& loop = m_L[li];
         ltcnt = loop.m_ti.Count();
@@ -9830,7 +9830,7 @@ bool ON_Brep::CullUnusedTrims()
         }
       }
 
-      // remap edge.m_ti[] indicies
+      // remap edge.m_ti[] indices
       for ( ei = 0; ei < ecount; ei++ ) {
         ON_BrepEdge& edge = m_E[ei];
         etcnt = edge.m_ti.Count();
@@ -10744,7 +10744,7 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     loop.m_ti.Remove( loop_lti1[eti] );
 
 		//GBA 1/29/03 Fixes TRR#9233.  Removing an item from loop.m_ti
-		//will cause loop indicies stored in loop_lti0[] and loop_lti1[]
+		//will cause loop indices stored in loop_lti0[] and loop_lti1[]
 		//to be wrong. So they must be reindexed
 		int ri = loop_lti1[eti];			// removed index
     int li = loop.m_loop_index;
@@ -11445,7 +11445,7 @@ ON_BrepTrim& ON_Brep::NewCurveOnFace( ON_BrepFace& face, ON_BrepEdge& edge, bool
 //of the closest point to Points[i], and let di be the distance to the chord.
 //Transform Points so that Points[0] = P0, Points[last] = P1, 
 //and the new ti and di remain the same.  Don't do anything if the chord is short 
-//relative to the cummulative dist between consecutive points on input.
+//relative to the cumulative dist between consecutive points on input.
 
 static bool AdjustPointListAlongChord(ON_3dPointArray& Points, 
                                       const ON_3dPoint& P0, 

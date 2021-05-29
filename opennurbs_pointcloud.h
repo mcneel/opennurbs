@@ -184,7 +184,7 @@ public:
     If the point cloud has some hidden points, then an array
     of length PointCount() is returned and the i-th
     element is true if the i-th vertex is hidden.
-    If no ponts are hidden, nullptr is returned.
+    If no points are hidden, nullptr is returned.
   */
   const bool* HiddenPointArray() const;
 

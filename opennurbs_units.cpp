@@ -107,10 +107,10 @@ public:
     Parses m_name and sets the m_utf32_name[] and m_utf32_name_count
     fields.
   Returns:
-    Number of elments of m_name that were parsed; 0 indicates failure.
+    Number of elements of m_name that were parsed; 0 indicates failure.
   Remarks:
     m_name must contain a character that terminates unit system name parsing.
-    This can be a null, digit, punctuation, aritmetic operator, or a 
+    This can be a null, digit, punctuation, arithmetic operator, or a 
     unicode code point <= 0x0020 (0x0020 = space = 32 decimal).
   */
   int SetSimplifiedName();
@@ -382,8 +382,8 @@ static ON_UnitName en_US_customary_length_units[] =
 static ON_UnitName angle_no_units[] =
 {
   // These entries prevent parsing the strings unless an
-  // entry for a locale explicitly inludes the string and
-  // the parsing prefered local id matches exactly.
+  // entry for a locale explicitly includes the string and
+  // the parsing preferred local id matches exactly.
   // The purpose is to prevent incorrectly parsing strings
   // the define different unit systems in different 
   // locales.
@@ -1012,7 +1012,7 @@ static ON__UINT32 ON_ToLatinAtoZ( ON__UINT32 c )
   // It also converts sharp s (eszett) to latin letter S and 
   // greek tau to to latin letter T.
   //
-  // This code is designed to be used efficently parse common unit 
+  // This code is designed to be used efficiently parse common unit 
   // names in English, Spanish, French, German, Protuguese and Czech.
   // If other languages need to be supported, this function will need
   // to be enhanced, redone, or removed.  The unit names being parsed
@@ -1180,7 +1180,7 @@ Returns:
 
 Remarks:
   This code is used to quickly parse optional embedded unit
-  names, abreviations in input streams that specify angles,
+  names, abbreviations in input streams that specify angles,
   lengths, points in cartesian coordinates, and points in
   polar coordinates.  
   
@@ -1462,7 +1462,7 @@ static bool GetUnitSystemNameCache(
   // length_unit_list[].m_utf32_name_count increases.  
   // Use that fact to build an index based on the value of 
   // length_unit_list[].m_utf32_name_count so searches can
-  // easily be restriced to the region of length_unit_list[]
+  // easily be restricted to the region of length_unit_list[]
   // where a possible match exists.
   for ( i = 0; i < count; i++ )
   {
@@ -1690,7 +1690,7 @@ unsigned int GetLengthUnitList(
         }
         else
         {
-          ON_ERROR("Length unit list conatins invalid element.");
+          ON_ERROR("Length unit list contains invalid element.");
         }
       }
     }
@@ -1971,7 +1971,7 @@ static unsigned int GetAngleUnitList(
         }
         else
         {
-          ON_ERROR("Angle unit list conatins invalid element.");
+          ON_ERROR("Angle unit list contains invalid element.");
         }
       }
     }
@@ -2461,7 +2461,7 @@ int ON_LengthUnitName::Internal_Compare(
   i =  ON_wString::CompareOrdinal(a.m_name,b.m_name,false);
   if (i != 0)
   {
-    // ignore case order is prefered
+    // ignore case order is preferred
     j = ON_wString::CompareOrdinal(a.m_name, b.m_name, true);
     return (0 != j) ? j : i;
   }
@@ -2694,7 +2694,7 @@ int ON_AngleUnitName::Internal_Compare(
   i =  ON_wString::CompareOrdinal(a.m_name,b.m_name,false);
   if (i != 0)
   {
-    // ignore case order is prefered
+    // ignore case order is preferred
     j = ON_wString::CompareOrdinal(a.m_name, b.m_name, true);
     return (0 != j) ? j : i;
   }

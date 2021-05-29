@@ -395,7 +395,7 @@ public:
 
   /*
   Returns:
-    A value identifing the model that manages this component.
+    A value identifying the model that manages this component.
   Remarks:
     If the component is being managed by a model, this value identifies the model.
     In Rhino, this value is the document runtime serial number.
@@ -408,7 +408,7 @@ public:
 
   /*
   Returns:
-    When a compoent is in a model for reference, this value identifies the
+    When a component is in a model for reference, this value identifies the
     reference model.
   Remarks:
     Reference components are not saved in .3dm archives.
@@ -442,7 +442,7 @@ public:
     and  these values are used..
             0: Active model component.
        1-1000: reserved for future use
-        >1000: linked instance defintion serial number
+        >1000: linked instance definition serial number
   */
   unsigned int InstanceDefinitionModelSerialNumber() const;
 
@@ -849,7 +849,7 @@ public:
       and linked block "Z" referencing D.3dm.
       File D.3dm contains a layer "delta", dimstyle "d1", and an embedded block "D_blk".
       
-      Reading file A.3dm will craete the following components:
+      Reading file A.3dm will create the following components:
       Layers:
         alpha
         X>B.3dm
@@ -894,7 +894,7 @@ public:
       and linked block "Z" referencing D.3dm.
       File D.3dm contains a layer "delta", dimstyle "d1", and an embedded block "D_blk".
       
-      Reading file A.3dm will craete the following components:
+      Reading file A.3dm will create the following components:
       Layers:
         alpha
         X>B.3dm
@@ -1083,7 +1083,7 @@ public:
 
   /*
   Description:
-    Remove all occurances of ON::NameReferenceDelimiter() from name.
+    Remove all occurrences of ON::NameReferenceDelimiter() from name.
   */
   static const ON_wString RemoveAllReferencePrefixDelimiters(
     const wchar_t* name
@@ -1091,7 +1091,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NameReferenceDelimiter from name.
+    Remove any trailing occurrence of ON_ModelComponent::NameReferenceDelimiter from name.
   Example:
     "A.3dm" = ON_ModelComponent::RemoveTrailingRemoveReferencePrefixDelimiter("A.3dm : ");
   */
@@ -1101,7 +1101,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NameReferenceSeparator from name.
+    Remove any trailing occurrence of ON_ModelComponent::NameReferenceSeparator from name.
   */
   static const ON_wString RemoveTrailingReferencePrefixSeparator(
     const wchar_t* name
@@ -1109,7 +1109,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NamePathSeparator from name.
+    Remove any trailing occurrence of ON_ModelComponent::NamePathSeparator from name.
   */
   static const ON_wString RemoveTrailingNamePathSeparator(
     const wchar_t* name
@@ -1163,7 +1163,7 @@ public:
       or
       component_name is not empty and ON_ModelComponent::IsValidComponentName(component_name) is false.
   Remarks:
-    If component_name is nullptr or the emtpy string, the NameIsSet() state will still be true.
+    If component_name is nullptr or the empty string, the NameIsSet() state will still be true.
   */
   bool SetName(
     const wchar_t* component_name
@@ -1663,7 +1663,7 @@ public:
   ON_ModelComponentTypeIterator& operator=(const ON_ModelComponentTypeIterator&) = default;
 
   /*
-  Paramters:
+  Parameters:
     type_count - [in] number of types
     types - [in]
       list of types to iterate over
@@ -1830,7 +1830,7 @@ public:
     ONX_Model::ComponentFromRuntimeSerialNumber()
   Remarks:
     If .NET or other wrappers using "lazy garbage collection" memory management are in use,
-    there may be stale references awaiting gargage collection and this function will return
+    there may be stale references awaiting garbage collection and this function will return
     nullptr when you think it should not. 
     For this function to work reliably, the ONX_Model and its components 
     and references should be in well constructed C++ code with carefully 

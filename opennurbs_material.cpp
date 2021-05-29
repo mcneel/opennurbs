@@ -925,7 +925,7 @@ double ON_Material::FresnelReflectionCoefficient(
     return x; // x is
   }
 
-  return 1.0; // error occured
+  return 1.0; // error occurred
 }
 
 double  ON_Material::FresnelReflectionCoefficient(
@@ -3087,7 +3087,7 @@ int ON_TextureMapping::EvaluatePlaneMapping(
   // Apply texture coordinate transformation
   *T = m_uvw*rst;
 
-  //See docs - if m_bCapped is false, then planar is truely flat.
+  //See docs - if m_bCapped is false, then planar is truly flat.
   if (!m_bCapped)
 	  T->z = 0.0;
 
@@ -3284,7 +3284,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
     else if ( r <= 1.001 )
     {
       // The point is inside the capped cylinder.
-      // Use normal to dermine which surface to use
+      // Use normal to determine which surface to use
       // for closest point test.
 		  ON_3dVector n(m_Nxyz*N);
       if (  ( fabs(n.z) > fabs(n.x) && fabs(n.z) > fabs(n.y) ) )
@@ -3761,7 +3761,7 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
     // values are independent of the 3d location
     // of the mesh.  The ON_TextureMapping::TYPE::srfp_mapping != m_type
     // check is used because these mappings are
-    // alwasy independent of 3d location but
+    // always independent of 3d location but
     // the transformations are often set.
     if ( ON_TextureMapping::TYPE::srfp_mapping != m_type
          && mesh_xform
@@ -5940,7 +5940,7 @@ const ON_MappingRef* ON_ObjectRenderingAttributes::MappingRef(
 
   //ALB 2013.12.03
   //Fixes http://mcneel.myjetbrains.com/youtrack/issue/RH-5730
-  //I'm sick of this bug being considered irrelavent, and since I've decided to go out of my way to
+  //I'm sick of this bug being considered irrelevant, and since I've decided to go out of my way to
   //Sort out as many mapping problems as I can, I'm fixing this one like this.
   if (m_mappings.Count() > 0)
   {
@@ -6299,7 +6299,7 @@ bool ON_ObjectRenderingAttributes::Read( ON_BinaryArchive& archive )
 
 bool ON_TextureMapping::SetSurfaceParameterMapping(void)
 {
-  // The nullptr check is wierd.
+  // The nullptr check is weird.
   // Speculation: A reference was null and somebody added this
   // as a hack to prevent a crash.
   if ( false == ON_IsNullPtr(this) )

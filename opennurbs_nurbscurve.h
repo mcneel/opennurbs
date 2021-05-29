@@ -102,7 +102,7 @@ public:
   Parameters:
     other - [in] other NURBS curve
     bIgnoreParameterization - [in] if true, parameterization
-             and orientaion are ignored.
+             and orientation are ignored.
     tolerance - [in] tolerance to use when comparing
                      control points.
   Returns:
@@ -723,7 +723,7 @@ public:
   Returns:
     ON_DBL_QNAN: no bezier surface is returned.
     If a bezier surface is returned, then the maximum deviation between 
-    the bezier suface this NURBS surface sampled at the Greville abcissa.
+    the bezier surface this NURBS surface sampled at the Greville abcissa.
   */
   double GetCubicBezierApproximation(
     double max_deviation,
@@ -983,7 +983,7 @@ public:
 
   // Description:
   //   Clamp end knots.  Does not modify the curve location, but can modify
-  //   knots and control verticies near the ends.
+  //   knots and control vertices near the ends.
   // Parameters:
   //   end - [in] 0 = clamp start, 1 = clamp end, 2 = clamp start and end
   // Returns:
@@ -1029,7 +1029,7 @@ public:
   /*
   Returns:
     If this class is managing m_cv, then CVCapacity() is the number of doubles
-    m_cv[] can accomodate. Otherwise, CVCapacity() is 0.
+    m_cv[] can accommodate. Otherwise, CVCapacity() is 0.
   */
   int CVCapacity() const;
 
@@ -1040,13 +1040,13 @@ public:
   /*
   Returns:
     If this class is managing m_knot, then KnotCapacity() is the number of doubles
-    m_knot[] can accomodate. Otherwise, KnotCapacity() is 0.
+    m_knot[] can accommodate. Otherwise, KnotCapacity() is 0.
   */
   int KnotCapacity() const;
 
   /*
   Description:
-    Unconditionally transfer knot managment to caller and zero m_knot and KnotCapacity().
+    Unconditionally transfer knot management to caller and zero m_knot and KnotCapacity().
   Parameters:
     knot_capacity - [out]
       knot_capacity is set to input value of KnotCapacity() and then KnotCapacity() is set to 0.
@@ -1092,7 +1092,7 @@ public:
       ) const;
 
   /*
-  Paramaters:
+  Parameters:
     span_index - [in]
       The index of a non-empty span to test.
         span_index >= 0
@@ -1118,7 +1118,7 @@ public:
   bool IsSingular() const;
 
   /*
-  Paramaters:
+  Parameters:
     span_index - [in]
       The index of a non-empty span to remove.
         span_index >= 0
@@ -1156,7 +1156,7 @@ public:
   Description:
     Clamps ends and adds knots so the NURBS curve has bezier spans 
    (all distinct knots have multiplitity = degree).
-  Paremeters:
+  Parameters:
     bSetEndWeightsToOne - [in] If true and the first or last weight is
        not one, then the first and last spans are reparameterized so 
        that the end weights are one.
@@ -1264,7 +1264,7 @@ public:
                             //   Rational control vertices use homogeneous form
                             //   and explicit weight values are in m_cv[] array.
                             // 0 for non-rational B-splines.
-                            //   Control verticies have an implicit weight value
+                            //   Control vertices have an implicit weight value
                             //   of 1.0.  An explicit weight value is not
                             //   set in the m_cv[] array.
 

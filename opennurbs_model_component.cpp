@@ -169,7 +169,7 @@ void ON_ModelComponent::Dump(
   if (false == text_log.IsTextHash())
   {
     // m_runtime_serial_number depends on how many components have
-    // been contructed before this one. It must be suppressed when
+    // been constructed before this one. It must be suppressed when
     // calculating content hash values from text logs.
     text_log.Print("Model component %llu\n", m_runtime_serial_number);
   }
@@ -188,7 +188,7 @@ void ON_ModelComponent::Dump(
     {
       text_log.Print("Reference model = %u\n", reference_model_sn);
     }
-    // linked instance defintion model
+    // linked instance definition model
     const unsigned int idef_model_sn = InstanceDefinitionModelSerialNumber();
     if (idef_model_sn > 0)
     {
@@ -1273,7 +1273,7 @@ const ON_NameHash& ON_ModelComponent::Internal_NameHash() const
 {
   if (m_component_name_hash.IsEmptyNameHash() && m_component_name.IsNotEmpty())
   {
-    // lazy evaulation because SHA-1 calculation takes appreciable time
+    // lazy evaluation because SHA-1 calculation takes appreciable time
 
     // For components whose names are in a tree structure, like layers,
     // the parent id must be included.

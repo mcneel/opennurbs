@@ -29,7 +29,7 @@ class ON_CLASS ON_PlugInRef
 public:
   ON_PlugInRef();
 
-  // executable informtion
+  // executable information
   ON_UUID m_plugin_id;
   int m_plugin_type; // CRhinoPlugIn::plugin_type enum value
   int m_plugin_platform; // 0 = unknown, 1 = C++, 2 = .NET

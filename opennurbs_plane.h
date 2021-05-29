@@ -24,7 +24,7 @@ public:
   /*
   Description:
     The default constructor creates a plane
-    with orgin=(0,0,0), xaxis=(1,0,0), yaxis=(0,1,0)
+    with origin=(0,0,0), xaxis=(1,0,0), yaxis=(0,1,0)
     zaxis=(0,0,1), and equation=(0,0,1,0).
   */
   ON_Plane();
@@ -286,7 +286,7 @@ public:
     Evaluate a point on the plane
   Parameters:
     u - [in]
-    v - [in] evaulation parameters
+    v - [in] evaluation parameters
   Returns:
     plane.origin + u*plane.xaxis + v*plane.yaxis
   */

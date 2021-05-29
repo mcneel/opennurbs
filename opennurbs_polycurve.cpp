@@ -1309,7 +1309,7 @@ bool ON_PolyCurve::HasGapAt(int segment_index) const
   //
   // June 2019 - sometime in the past decade ON_PolyCurve::HasGap()
   // changed and the test here is different from ON_Curve::IsClosed().
-  // The initial "Note" no longer applies becaue it's no longer
+  // The initial "Note" no longer applies because it's no longer
   // clear why the current ON_PolyCurve::HasGap() elimiated the "b c"
   // test that remained in ON_Curve::IsClosed().
 
@@ -2494,8 +2494,8 @@ bool ON_PolyCurve::Evaluate( // returns false if unable to evaluate
       // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
       //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
       //   and the original side parameter was -1 or +1, it is changed to -2 or +2
-      //   to indicate that if t is numerically closed to an end paramter, then
-      //   it should be tuned up to be at the end paramter.
+      //   to indicate that if t is numerically closed to an end parameter, then
+      //   it should be tuned up to be at the end parameter.
       double a = t;
       if ( ON_TuneupEvaluationParameter( side, m_t[segment_index], m_t[segment_index+1], &a) )
       {
@@ -3462,7 +3462,7 @@ bool ON_PolyCurve::Split(
 
 		/* 4 April 2003 Greg Arden		Made the following changes:
 																		1.	Use ParameterSearch() to decide if we should snap domain
-																				boundries to m_t array values.  
+																				boundaries to m_t array values.  
 																		2.  Make sure resulting polycurves have Domain() specified as 
 																				split parameter.   
 																		3.  When true is returned the result passes IsValid().

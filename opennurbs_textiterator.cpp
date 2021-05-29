@@ -486,7 +486,7 @@ void ON_TextBuilder::CharSet(const wchar_t* value)  // \fcharsetN
     if(ReadingFontDefinition())
     {
       // This is a charset specification in a font definition in the font table
-      // the value is convertable to a codepage to use for interpreting the text chars
+      // the value is convertible to a codepage to use for interpreting the text chars
       // using this font into unicode points
       m_current_props.SetCharSet(charset, true);
     }
@@ -2843,7 +2843,7 @@ bool ON_RtfParser::Parse()
             break;
 
           case '\'':
-            // This case sould never occur - it is handled by 
+            // This case should never occur - it is handled by 
             // Internal_ParseMBCSString at the beginning of this while statement.
             ON_ERROR("Bug in RTF parsing code.");
             break;
@@ -3053,7 +3053,7 @@ static bool GetRunText(ON_TextRun* run, ON_wString& text_out, bool& foundunicode
         // The RTF we get from Windows controls, like the "Text" command dialog box,
         // typically specifies it is using Windows-1252 and encodes the Euro sign as \`80.
         // So, if we have one of these "euro like" values, we will explicitly write it as a UNICODE value
-        // to avoid the possiblity of something defaulting to using Windows-1252.
+        // to avoid the possibility of something defaulting to using Windows-1252.
         // https://mcneel.myjetbrains.com/youtrack/issue/RH-38205
         //
         // See ON_DecodeWindowsCodePage1252Value() for more details.

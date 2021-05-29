@@ -269,7 +269,7 @@ unsigned int ON_ComponentStatus::ClearStates(
   {
     // If input was selected and highlighted,
     // and output is not selected,
-    // and hightlight and not explictily cleared,
+    // and highlight and not explicitly cleared,
     // then preserve highlight sync by auto-clearing highlight.
     if ( 0 == (SELECTED_MASK & s1)
       && 0 != (SELECTED_MASK & m_status_flags)
@@ -277,7 +277,7 @@ unsigned int ON_ComponentStatus::ClearStates(
       && 0 != (HIGHLIGHTED_BIT & s1)
       )
     { 
-      // Input was selected and hightlighted,
+      // Input was selected and highlighted,
       // output is not selected.
       // Clear highlight automatically.
       s1 &= ~HIGHLIGHTED_BIT;

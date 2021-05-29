@@ -18,7 +18,7 @@
 #define OPENNURBS_RTREE_INC_
 
 /*
-The opennurbs rtree code is a modifed version of the
+The opennurbs rtree code is a modified version of the
 free and unrestricted R-tree implementation obtianed from 
 http://www.superliminal.com/sources/sources.htm
 

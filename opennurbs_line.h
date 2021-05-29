@@ -117,7 +117,7 @@ public:
   Description:
     Get a plane that contains the line.
   Parameters:
-    plane - [out] a plane that contains the line.  The orgin
+    plane - [out] a plane that contains the line.  The origin
        of the plane is at the start of the line.  The distance
        from the end of the line to the plane is <= tolerance.
        If possible a plane parallel to the world xy, yz or zx
@@ -402,12 +402,12 @@ public:
 
   // Returns:
   //   Index of edge opposite to m_V[i] that is longest.
-  //   When lenghts are equal, lowest index has priority.
+  //   When lengths are equal, lowest index has priority.
   unsigned char LongestEdge() const;
 
   // Returns:
   //   Index of edge opposite to m_V[i] that is shortest.
-  //   When lenghts are equal, lowest index has priority.
+  //   When lengths are equal, lowest index has priority.
   unsigned char ShortestEdge() const;
 
 	// Returns:
@@ -432,7 +432,7 @@ public:
 
 	// Returns:
 	//   N = ( b-a) X ( c-a)
-	// where a,b,c are the verticies 
+	// where a,b,c are the vertices 
 	// See Also:
 	//   ON_Triangle UnitNormal()
 	ON_3dVector Normal() const;
@@ -440,7 +440,7 @@ public:
 	// Returns:
 	//   Normal().Unitize()
 	// Notes:
-	//		Ensure !IsDegenerate() to gaurentee that UnitNormal().Length()==1
+	//		Ensure !IsDegenerate() to guarantee that UnitNormal().Length()==1
 	//		and the result is not just a bunch of noise.  Can return zero vector 
 	//    in some degenerate cases.
 	ON_3dVector UnitNormal() const;
@@ -448,7 +448,7 @@ public:
 	// Returns:
 	//	Plane containing Triangle with normal given by UnitNormal().
 	// Notes:
-	//	Ensure !IsDegenerate() to gaurentee meaningful result
+	//	Ensure !IsDegenerate() to guarantee meaningful result
 	ON_PlaneEquation PlaneEquation() const;
 
 	/*
@@ -583,7 +583,7 @@ public:
   void Spin(unsigned char move);
 
 public:
-	ON_3dPoint m_V[3]; // verticies
+	ON_3dPoint m_V[3]; // vertices
 };
 
 /*

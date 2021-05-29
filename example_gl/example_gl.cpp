@@ -3,7 +3,7 @@
 //
 // Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -28,10 +28,10 @@
 // NOTE:
 //   Visual Studio 2005 / 8.0 was the last version of Visual
 //   studio to install the libraries and header files for
-//   Open GL auxillary functions.
+//   Open GL auxiliary functions.
 #endif
 
-#include <GL/GLaux.h>   // Open GL auxillary functions
+#include <GL/GLaux.h>   // Open GL auxiliary functions
 
 #define ON_EXAMPLE_GL_USE_GLAUX
 
@@ -40,7 +40,7 @@
 // Tested compilers:
 //   Apple Xcode 2.4.1
 //   Support for other Apple compilers is not available.
-#include <GLUT/glut.h>   // Open GL auxillary functions
+#include <GLUT/glut.h>   // Open GL auxiliary functions
 #define ON_EXAMPLE_GL_USE_GLUT
 
 #else
@@ -49,10 +49,10 @@
 //   Support for other compilers is not available
 #error Choose between OpenGL AUX or OpenGL GLUT.
 
-//#include <GLaux.h>   // Open GL auxillary functions
+//#include <GLaux.h>   // Open GL auxiliary functions
 //#define ON_EXAMPLE_GL_USE_GLAUX
 
-//#include <glut.h>   // Open GL auxillary functions
+//#include <glut.h>   // Open GL auxiliary functions
 //#define ON_EXAMPLE_GL_USE_GLUT
 
 #endif
@@ -224,10 +224,10 @@ void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y );    // for au
 // If you are using Apple's Xcode and you get a compile error
 // on the typedef below, then try using the commented out typedef.
 //
-// Apple's Xcode 2.4 likes this typedef witht the (...)
+// Apple's Xcode 2.4 likes this typedef with the (...)
 typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
 //
-// Apple's Xcode 3.2 likes this typedef witht the (...)
+// Apple's Xcode 3.2 likes this typedef with the (...)
 //typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
 #endif
 

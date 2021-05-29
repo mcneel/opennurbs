@@ -735,7 +735,7 @@ bool ON_SubDMatrix::EvaluateCosAndSin(
   if ( e > 1e-12 )
   {
     ON_SubDIncrementErrorCount();
-    ON_ERROR("Bug in SinCosEv precision improvment code.");
+    ON_ERROR("Bug in SinCosEv precision improvement code.");
   }
 #endif
 
@@ -3329,7 +3329,7 @@ double ON_SubDMatrix::TestEvaluation(
 //#define ON_SUBD_JORDON_DECOMP_CODE
 #if defined (ON_SUBD_JORDON_DECOMP_CODE)
 
-// This code is not required for ON_SubD evaulation.
+// This code is not required for ON_SubD evaluation.
 // It was of theoretical interest early in the project.
 
 class ON_NumberPolisher

@@ -336,7 +336,7 @@ ON_PointGrid::Transpose()
   int i, j;
   bool rc = false;
   if ( IsValid() ) {
-    // slow stupid way - can be imporved if necessary
+    // slow stupid way - can be improved if necessary
     ON_PointGrid t(m_point_count[1],m_point_count[0]);
     for ( i = 0; i < m_point_count[0]; i++ ) for ( j = 0; j < m_point_count[1]; j++ ) {
       t[j][i] = Point(i,j);

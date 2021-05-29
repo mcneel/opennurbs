@@ -541,13 +541,13 @@ void ON_Font::DumpWindowsDWriteFont(
     Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_VERSION_STRINGS,L"DWrite field 5 version"),
     Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_TRADEMARK,L"DWrite field 7 trademark"),
     Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_MANUFACTURER,L"DWrite field 8 manufacturer"),
-    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESIGNER,L"DWrite field 9 designer/foundary"),
+    Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESIGNER,L"DWrite field 9 designer/foundry"),
 
     // DWRITE_INFORMATIONAL_STRING_DESCRIPTION gets field 10 from the ttf file.
     // Opennurbs searches the description saved in field 10 of the name table
     // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
     // to identify fonts that are desgned for engraving (and which tend to render poorly when
-    // used to dispaly text devices like screens, monitors, and printers).
+    // used to display text devices like screens, monitors, and printers).
     // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
     Internal_DWriteFontInformation(DWRITE_INFORMATIONAL_STRING_DESCRIPTION,L"DWrite field 10 description"),
 
@@ -575,7 +575,7 @@ void ON_Font::DumpWindowsDWriteFont(
   // Opennurbs searches the description saved in field 10 of the name table
   // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
   // to identify fonts that are desgned for engraving (and which tend to render poorly when
-  // used to dispaly text devices like screens, monitors, and printers).
+  // used to display text devices like screens, monitors, and printers).
   // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
   const ON_wString field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
   text_log.Print(L"ON_Font field 10 description = \"%ls\"\n", static_cast<const wchar_t*>(field_10_description));
@@ -810,11 +810,11 @@ const ON_wString ON_Font::Field_9_DesignerFromWindowsDWriteFont(
   return Internal_InfoStringFromWindowsDWriteFont(dwrite_font, DWRITE_INFORMATIONAL_STRING_DESIGNER, preferedLocale);
 }
 
-// Returns the desription saved in field 10. 
+// Returns the description saved in field 10. 
 // Opennurbs searches the description saved in field 10 of the name table
 // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
 // to identify fonts that are desgned for engraving (and which tend to render poorly when
-// used to dispaly text devices like screens, monitors, and printers).
+// used to display text devices like screens, monitors, and printers).
 // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
 const ON_wString ON_Font::Field_10_DescriptionFromWindowsDWriteFont(
   struct IDWriteFont* dwrite_font,
@@ -877,7 +877,7 @@ void ON_WindowsDWriteFontInformation::Dump(ON_TextLog& text_log) const
   if ( bVerbose )
   {
     if (m_prefered_locale.IsNotEmpty())
-      text_log.Print("Prefered locale = \"%ls\"\n", static_cast<const wchar_t*>(m_prefered_locale));
+      text_log.Print("Preferred locale = \"%ls\"\n", static_cast<const wchar_t*>(m_prefered_locale));
     if (FamilyName().IsNotEmpty())
     {
       if (FaceName().IsNotEmpty())
@@ -1358,7 +1358,7 @@ unsigned int ON_Font::GetInstalledWindowsDWriteFonts(
         // Opennurbs searches the description saved in field 10 of the name table
         // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
         // to identify fonts that are desgned for engraving (and which tend to render poorly when
-        // used to dispaly text devices like screens, monitors, and printers).
+        // used to display text devices like screens, monitors, and printers).
         // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
         fi.m_loc_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwriteFont.Get(), preferedLocale);
         fi.m_en_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwriteFont.Get(), englishLocale);
@@ -1404,7 +1404,7 @@ unsigned int ON_Font::GetInstalledWindowsDWriteFonts(
 
         if (0 == fi.m_gdi_interop_logfont.lfFaceName[0])
         {
-          // During testing on Windows 10, this never occured.
+          // During testing on Windows 10, this never occurred.
           // ...
           // Dale Lear 7 Jan 2019.
           // It appears Turbo Tax 2018 installs 4 faces of Avenir LT with
@@ -2192,7 +2192,7 @@ bool ON_Font::SetFromWindowsDWriteFont(
     // Opennurbs searches the description saved in field 10 of the name table
     // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
     // to identify fonts that are desgned for engraving (and which tend to render poorly when
-    // used to dispaly text devices like screens, monitors, and printers).
+    // used to display text devices like screens, monitors, and printers).
     // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
     ON_wString loc_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, preferedLocale);
     ON_wString en_field_10_description = ON_Font::Field_10_DescriptionFromWindowsDWriteFont(dwrite_font, L"en-us");
@@ -2219,7 +2219,7 @@ bool ON_Font::SetFromWindowsDWriteFont(
       m_outline_figure_type = ON_OutlineFigure::FigureTypeFromFontName(m_en_family_name);
 
     // If it's still unset, we won't do any better in the future,
-    // so set m_outline_figure_type to unknow.
+    // so set m_outline_figure_type to unknown.
     if (ON_OutlineFigure::Type::Unset == m_outline_figure_type)
       m_outline_figure_type = ON_OutlineFigure::Type::Unknown;
 

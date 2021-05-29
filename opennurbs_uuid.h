@@ -464,7 +464,7 @@ Parameters:
   s - [in]
 Returns:
   uuid.  
-  If the string is not a uuid, then ON_nil_uuid is returnd.
+  If the string is not a uuid, then ON_nil_uuid is returned.
 */
 ON_DECL 
 ON_UUID ON_UuidFromString( const char* s );
@@ -481,7 +481,7 @@ Parameters:
   s - [in]
 Returns:
   uuid.  
-  If the string is not a uuid, then ON_nil_uuid is returnd.
+  If the string is not a uuid, then ON_nil_uuid is returned.
 */
 ON_DECL 
 ON_UUID ON_UuidFromString( const wchar_t* s );
@@ -522,7 +522,7 @@ Description:
   Parses a string like "85a08515-f383-11d3-bfe7-0010830122f0" 
   and returns the value as a uuid. Hyphens can appear anywhere
   and are ignored. Parsing stops at any character that is not
-  a hexidecimal digit or hyphen.  Parsing stops after 32 hexidecimal
+  a hexadecimal digit or hyphen.  Parsing stops after 32 hexadecimal
   digits are read;
 Parameters:
   sUuid - [in]

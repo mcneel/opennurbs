@@ -387,7 +387,7 @@ class ON_NgonBoundaryChecker
 {
 public:
   /*
-  Parametes:
+  Parameters:
     ngon  - [in]
       ngon to test
     mesh [in]
@@ -631,7 +631,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       if (ngon_orientation < 0)
       {
         // ngon and mesh have opposite orientations - mesh orientation wins
-        // reverese edges
+        // reverse edges
         unsigned int i0 = mesh_edge_count;
         unsigned int i1 = mesh_edge_count + ngon_edge_count - 1;
         while (i0 < i1)
@@ -790,7 +790,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   //
 
   // mesh_edge_map[] is used to sort the sort mesh_edges[] into groups that correspond to the same SubD edge.
-  // The order of mesh_edges[] cannot be changed because the current order is neede to efficiently create the SubD faces.
+  // The order of mesh_edges[] cannot be changed because the current order is needed to efficiently create the SubD faces.
   unsigned int* mesh_edge_map = (unsigned int*)ws.GetMemory(mesh_edges.UnsignedCount() * sizeof(mesh_edge_map[0]));
   ON_Sort(
     ON::sort_algorithm::quick_sort,
@@ -1259,7 +1259,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
     }
   }
 
-  // Make interior vertexes and store 3d indexes
+  // Make interior vertices and store 3d indexes
   for (unsigned int ix = 0; ix <= facecount_x; ix++)
   {
     for (unsigned int iy = 0; iy <= facecount_y; iy++)
@@ -1977,7 +1977,7 @@ bool ON_NgonBoundaryChecker::IsSimpleNgon(
   for (ON_NgonBoundaryComponent* e = (ON_NgonBoundaryComponent * )fspit.FirstElement(); nullptr != e; e = (ON_NgonBoundaryComponent * )fspit.NextElement())
   {
     if (1 != e->m_face_count)
-      continue; // vertex components alwasy have m_face_count = 0;
+      continue; // vertex components always have m_face_count = 0;
 
     // e is a boundary edge
     if (bBoundaryIsMarked)

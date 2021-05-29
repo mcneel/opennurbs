@@ -30,7 +30,7 @@
 static
 const ON_BrepEdge* FindLinearEdge( const ON_Brep& brep, int vi0, int vi1 )
 {
-  // searchs for a linear edge connecting the vertices
+  // searches for a linear edge connecting the vertices
   // brep.m_V[vi0] and brep.m_V[vi1].
   if ( vi0 < 0 || vi0 >= brep.m_V.Count() )
     return nullptr;
@@ -540,21 +540,21 @@ ON_BrepLoop* ON_Brep::NewOuterLoop(
       int vi1 = edge_vi[1-bRev3d[i]];
       if ( vi0 < 0 || vi1 < 0 )
       {
-        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Bad edge vertex informtion.");
+        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Bad edge vertex information.");
         return 0;
       }
       if ( vid[i] == -1 )
         vid[i] = vi0;
       else if ( vid[i] != vi0 )
       {
-        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Edge and vertex informtion do not match.");
+        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Edge and vertex information do not match.");
         return 0;
       }
       if ( vid[(i+1)%4] == -1 )
         vid[(i+1)%4] = vi1;
       else if ( vid[(i+1)%4] != vi1 )
       {
-        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Edge and vertex informtion do not match.");
+        ON_ERROR("ON_Brep::NewFace(ON_Surface*,...) error: Edge and vertex information do not match.");
         return 0;
       }
     }
@@ -1900,7 +1900,7 @@ ON_Brep* ON_BrepFromMesh(
     ON_Surface::ISO tri_iso[3] = {ON_Surface::S_iso,ON_Surface::E_iso,ON_Surface::not_iso};
 
     // May 1, 2012 Tim Fix for RR 104209
-    // Use double precision vertexes from the mesh if they exist
+    // Use double precision vertices from the mesh if they exist
     const ON_3dPointArray* pDPV = 0;
     if (mesh_topology.m_mesh->HasDoublePrecisionVertices())
       pDPV = &mesh_topology.m_mesh->DoublePrecisionVertices();
@@ -1911,7 +1911,7 @@ ON_Brep* ON_BrepFromMesh(
       ON_3dPoint pt;
 
       // May 1, 2012 Tim Fix for RR 104209
-      // Use double precision vertexes from the mesh if they exist
+      // Use double precision vertices from the mesh if they exist
       const ON_MeshTopologyVertex& topvert = mesh_topology.m_topv[vi];
       if (0 != pDPV)
         pt = *pDPV->At(topvert.m_vi[0]);
@@ -2557,7 +2557,7 @@ bool ON_Brep::RemoveSlits(ON_BrepLoop& L)
   while (rval && FoundSlitPair(*Loop(li), &lti0, &lti1)){ 
     ON_BrepLoop* newloop = nullptr;
 		// Warning- This can add a loop and or face causing
-		//  reallocation of arrays so refernces (like L) are
+		//  reallocation of arrays so references (like L) are
 		//  no longer valid.
     rval = RemoveSlitPair(*this, li, lti0, lti1, newloop);
     rc = rc || rval;

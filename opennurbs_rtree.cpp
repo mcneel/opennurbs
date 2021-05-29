@@ -386,7 +386,7 @@ bool ON_RTreeIterator::PushChildren(StackElement* sp, bool bFirstChild )
   StackElement* spmax = &m_stack[0] + MAX_STACK;
   const ON_RTreeNode* node = sp->m_node;
   m_sp = 0;
-  // push first leaf coverted by this node onto the stack
+  // push first leaf converted by this node onto the stack
   while( 0 != node && node->m_level >= 0 && node->m_count > 0 )
   {
     if ( 0 == node->m_level )
@@ -2836,7 +2836,7 @@ static void DisconnectBranch(ON_RTreeNode* a_node, int a_index)
 
 
 // Pick a branch.  Pick the one that will need the smallest increase
-// in area to accomodate the new rectangle.  This will result in the
+// in area to accommodate the new rectangle.  This will result in the
 // least total area for the covering rectangles in the current node.
 // In case of a tie, pick the one which was smaller before, to get
 // the best resolution when searching.
@@ -3801,7 +3801,7 @@ bool ON_RTree::Search(
   return SearchBoundedPlaneXYZHelper(m_root, bounded_plane, result);
 }
 
-// Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
+// Search in an index tree or subtree for all data rectangles that overlap the argument rectangle.
 
 static
 bool SearchHelper(const ON_RTreeNode* a_node, ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result ) 
@@ -4122,7 +4122,7 @@ bool SearchHelper(const ON_RTreeNode* a_node, const ON_Line* a_line, ON_RTreeSea
 
 
 
-// Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
+// Search in an index tree or subtree for all data rectangles that overlap the argument rectangle.
 
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_SimpleArray<ON_RTreeLeaf> &a_result)
 {

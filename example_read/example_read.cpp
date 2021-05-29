@@ -3,7 +3,7 @@
 //
 // Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -99,7 +99,7 @@ static bool ReadFileHelper(
 
   dump.PushIndent();
 
-  // create achive object from file pointer
+  // create archive object from file pointer
   ON_BinaryFile archive( ON::archive_mode::read3dm, archive_fp );
 
   // read the contents of the file into "model"
@@ -234,7 +234,7 @@ static void print_help(const char* example_read_exe_name)
   printf("    -chunkdump\n");
   printf("      Does a chunk dump instead of reading the file's contents.\n");
   printf("    -recursive\n");
-  printf("      Recursivly reads files in subdirectories.\n");
+  printf("      Recursively reads files in subdirectories.\n");
   printf("\n");
   printf("EXAMPLE:\n");
   printf("  %s -out:list.txt -resursive .../example_files\n",example_read_exe_name);
@@ -300,7 +300,7 @@ int main( int argc, const char *argv[] )
     return 0;
   }
 
-  // Call once in your application to initialze opennurbs library
+  // Call once in your application to initialize opennurbs library
   ON::Begin();
 
   // default dump is to stdout

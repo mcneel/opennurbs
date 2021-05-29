@@ -966,7 +966,7 @@ void ON_SimpleArray<T>::MemSet( unsigned char value )
   }
 }
 
-// memory managment ////////////////////////////////////////////////////
+// memory management ////////////////////////////////////////////////////
 
 template <class T>
 T* ON_SimpleArray<T>::Reserve( size_t newcap ) 
@@ -988,7 +988,7 @@ void ON_SimpleArray<T>::Destroy()
   SetCapacity( 0 );
 }
 
-// low level memory managment //////////////////////////////////////////
+// low level memory management //////////////////////////////////////////
 
 template <class T>
 void ON_SimpleArray<T>::SetCount( int count ) 
@@ -2057,7 +2057,7 @@ void ON_ClassArray<T>::Zero()
   }
 }
 
-// memory managment ////////////////////////////////////////////////////
+// memory management ////////////////////////////////////////////////////
 
 template <class T>
 T* ON_ClassArray<T>::Reserve( size_t newcap ) 
@@ -2079,7 +2079,7 @@ void ON_ClassArray<T>::Destroy()
   SetCapacity( 0 );
 }
 
-// low level memory managment //////////////////////////////////////////
+// low level memory management //////////////////////////////////////////
 
 template <class T>
 void ON_ClassArray<T>::SetCount( int count ) 

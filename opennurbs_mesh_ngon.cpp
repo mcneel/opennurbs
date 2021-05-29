@@ -516,7 +516,7 @@ static char* ToStringHelper( const char* src_str, char* dst_str, const char* dst
 
 static char* ToStringHelper( unsigned int u, char* dst_str, const char* dst_str_end )
 {
-  char ubuffer[32]; // unsinged int to string storage buffer
+  char ubuffer[32]; // unsigned int to string storage buffer
   unsigned int i, j;
 
   if ( ON_UNSET_UINT_INDEX == u )
@@ -2266,7 +2266,7 @@ class ON_V4V5_MeshNgon* ON_V4V5_MeshNgonList::V4V5_AddNgon(int N)
     return 0;
   ngon.vi = (int*)(blk + 1);
   ngon.fi = ngon.vi + N;
-  memset(ngon.vi,0xFF,(2*N)*sizeof(int)); // set all indicies to -1
+  memset(ngon.vi,0xFF,(2*N)*sizeof(int)); // set all indices to -1
   blk->next = m_memblk_list;
   m_memblk_list = blk;
   return &ngon;
@@ -2308,13 +2308,13 @@ public:
   ON_V4V5_MeshNgonUserData(const ON_V4V5_MeshNgonUserData&);
   ON_V4V5_MeshNgonUserData& operator=(const ON_V4V5_MeshNgonUserData&);
 
-  // vitual ON_UserData override
+  // virtual ON_UserData override
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
   unsigned int SizeOf() const override;
   bool Write(ON_BinaryArchive&) const override;
   bool Read(ON_BinaryArchive&) override;
 
-  // vitual ON_UserData override
+  // virtual ON_UserData override
   bool GetDescription( ON_wString& ) override;
   bool Archive() const override;
 
@@ -2522,7 +2522,7 @@ bool ON_V4V5_MeshNgonUserData::Read(ON_BinaryArchive& archive)
   return rc;
 }
 
-// vitual ON_UserData override
+// virtual ON_UserData override
 bool ON_V4V5_MeshNgonUserData::GetDescription( ON_wString& description )
 {
   description = L"Mesh N-gon list";
@@ -3572,7 +3572,7 @@ static unsigned int SetFaceNeighborMap(
           break;
         }
         if ( 5 == nbr_face_side )
-          break; // we found a neighbor and are finished seaching
+          break; // we found a neighbor and are finished searching
       }
     }
   }
@@ -3708,7 +3708,7 @@ static int GetCoplanarConnectedFaces(
             break;
           }
           if ( 5 == nbr_face_side )
-            break; // we found a neighbor and are finished seaching
+            break; // we found a neighbor and are finished searching
         }
       }
     }
@@ -4350,7 +4350,7 @@ unsigned int ON_MeshNgon::FindPlanarNgons(
     {
       NgonMap.Reserve(face_count);
       NgonMap.SetCount(face_count);
-      ngonMap = NgonMap.Array(); // in case a reallocation occured.
+      ngonMap = NgonMap.Array(); // in case a reallocation occurred.
       for ( face_index = 0; face_index < face_count; face_index++ )
         ngonMap[face_index] = ON_UNSET_UINT_INDEX;
     }
@@ -4362,7 +4362,7 @@ unsigned int ON_MeshNgon::FindPlanarNgons(
     for ( face_index = 0; face_index < face_count; face_index++ )
     {
       if ( ON_UNSET_UINT_INDEX != ngonMap[face_index] )
-        continue; // this face is not eligable for being in an n-gon
+        continue; // this face is not eligible for being in an n-gon
 
       face_list.QuadFvi(face_index,Fvi);
       if ( !GetFacePlaneEquation(vertex_list,bQuadFaces,Fvi,planar_tolerance,e) )

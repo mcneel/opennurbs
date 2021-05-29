@@ -2474,7 +2474,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     fedges[2] = fsh.AllocateEdge(
       bUseFindOrAllocate,
       vertex_grid1[0][3],
-      at_crease_weight, // ingored unless vertex_grid1[0][3] is tagged as a crease
+      at_crease_weight, // ignored unless vertex_grid1[0][3] is tagged as a crease
       vertex_grid1[0][2],
       ON_SubDSectorType::IgnoredSectorCoefficient
       );
@@ -2819,10 +2819,10 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     if (vertex0->m_edge_count < 2)
       return ON_SUBD_RETURN_ERROR(false);
    
-    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calcualte the 
+    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calculate the 
     // limit mesh and limit cubic surfaces when the original face is not a quad.  
     // For these calculations, we need to calculate and save the limit point for extraordinary
-    // verticies while enough information is available to calculate it.  Doing the calculation
+    // vertices while enough information is available to calculate it.  Doing the calculation
     // before calling m_fsh.AllocateVertex(), insures the information will be copied to vertex1.
     if ( false == vertex0->GetSurfacePoint(face,limit_point) )
       return ON_SUBD_RETURN_ERROR(false);
@@ -2851,7 +2851,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       center_vertex1,
       ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex1,
-      at_crease2_weight // ingored unless vertex1 is tagged as a crease
+      at_crease2_weight // ignored unless vertex1 is tagged as a crease
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
@@ -3012,7 +3012,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       return ON_SUBD_RETURN_ERROR(false);
     edge1 = m_fsh.AllocateEdge(
       ring_vertex1[2],
-      at_crease2_weight, // ingored unless ring_vertex1[0] is tagged as a crease
+      at_crease2_weight, // ignored unless ring_vertex1[0] is tagged as a crease
       vertex1,
       ON_SubDSectorType::IgnoredSectorCoefficient
       );

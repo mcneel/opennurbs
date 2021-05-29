@@ -1246,11 +1246,11 @@ int ON_Xform::IsSimilarity() const
 
 int ON_Xform::IsSimilarity(double tol) const
 {
-	// This function does not construt a similarity transformation,  
-	// ( see ON_Xform::DecomposeSimilarity() for this ).  It mearly 
+	// This function does not construct a similarity transformation,  
+	// ( see ON_Xform::DecomposeSimilarity() for this ).  It merely 
 	// indicates that this transformation is sufficiently close to a similatiry.
 	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
-	// Indicates that this is very close to being a similar tranformation.
+	// Indicates that this is very close to being a similar transformation.
 	// This calculations is based on approximations and is only  
 	// reliable if tolerance << 1.0. 
 	int rval = 0;
@@ -1287,7 +1287,7 @@ int ON_Xform::DecomposeSimilarity(ON_3dVector& T, double& dilation, ON_Xform& R,
 		/* Three cases:
 		I. L is within OrthogonalTol of being orthogonal then just return R = Linear
 		(this is an optimization to avoid doing an eigen solve)
-		II. Linear<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+		II. Linear<10*tolerance or tol>1.0 then find the closest orthogonal matrix R.
 		test the final solution to see if |*this-R|<tolerance .
 		III. Otherwise return 0
 		*/
@@ -1385,7 +1385,7 @@ int ON_Xform::DecomposeRigid(ON_3dVector& T,  ON_Xform& R, double tolerance) con
 		/* Three cases:
 			I. Linear is within OrthogonalTol of being orthogonal then just return R = Linear
 				  (this is an optimization to avoid doing an eigen solve)
-			II. Linear~~<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+			II. Linear~~<10*tolerance or tol>1.0 then find the closest orthogonal matrix R.
 					test the final solution to see if |*this-R|<tolerance .
 			III. Otherwise return 0
 
@@ -1435,11 +1435,11 @@ int ON_Xform::DecomposeRigid(ON_3dVector& T,  ON_Xform& R, double tolerance) con
 
 int ON_Xform::IsRigid(double tolerance) const
 { 
-	// This function does not construt a rigid transformation,  
-	// ( see ON_Xform::DecomposeRigid() for this ).  It mearly 
-	// indicates that this trasformation is sufficiently close to a rigid one.
+	// This function does not construct a rigid transformation,  
+	// ( see ON_Xform::DecomposeRigid() for this ).  It merely 
+	// indicates that this transformation is sufficiently close to a rigid one.
 	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
-	// Indicates that this is very close to being a rigid tranformation.
+	// Indicates that this is very close to being a rigid transformation.
 	// This calculations is based on approximations and is only  
 	// reliable if tolerance << 1.0. 
 	int rval = 0;
@@ -1614,7 +1614,7 @@ bool ON_Xform::DecomposeAffine(ON_Xform& L, ON_3dVector& T) const
 			L[0][3] = L[1][3] = L[2][3] = 0.0;
 		}
 		/*
-			TODO: A more thourough solution would be to take a tolerance and
+			TODO: A more thorough solution would be to take a tolerance and
 			compute the best approximate T using psuodoinvese and comparing it
 			using the tolerance.
 		*/

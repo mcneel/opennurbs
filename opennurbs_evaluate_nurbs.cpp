@@ -499,7 +499,7 @@ OUTPUT:
         (n)
      bez  (t) = answer[n]
 COMMENTS:
-  Use de Casteljau's algorithm.  Rational fuctions with removable singularities
+  Use de Casteljau's algorithm.  Rational functions with removable singularities
   (like x^2/x) are efficiently and correctly handled.
 EXAMPLE:
   // ...
@@ -1322,7 +1322,7 @@ bool ON_EvaluateNurbsDeBoor(
  *                    knots[0] = ... = knots[order-2] = t (side > 0)
  *                 or
  *                    knots[order-1] = ... = knots[2*order-2] = t (side < 0).
- *                 See the comments concering +/- 2 values of the "side"
+ *                 See the comments concerning +/- 2 values of the "side"
  *                 argument.  In most cases, you can avoid resetting knots
  *                 by carefully choosing the value of "side" and "mult_k".
  *  TL_EvDeBoor()

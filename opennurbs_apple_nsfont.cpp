@@ -476,7 +476,7 @@ const ON_wString ON_Font::AppleCTFontFaceName(
       return style_name;
     }
     
-    // Fallback - In Sep 12, 2018 tests of 603 faces, the no longer needed with the swtich to CTFont
+    // Fallback - In Sep 12, 2018 tests of 603 faces, the no longer needed with the switch to CTFont
     // Leaving this here to handle unknown buggy fonts.
     const ON_wString family_and_face_name = ON_Font::AppleCTFontDisplayName(apple_font);
     const ON_wString family_name = ON_Font::AppleCTFontFamilyName(apple_font);
@@ -983,7 +983,7 @@ unsigned int ON_AppleFontGlyphIndex(
     if (utf16_count < 1 || utf16_count > 2)
       break;
 
-    // UniChar is used for Apple UTF-16 endcodings
+    // UniChar is used for Apple UTF-16 encodings
     const UniChar apple_utf16[3] = { (UniChar)utf16[0], (UniChar)utf16[1], (UniChar)0 };
 
     // glyphs[] includes an element for the NULL terminator and an extra element
@@ -1075,7 +1075,7 @@ bool ON_AppleFontGetGlyphOutline(
   {
     // Apple's Mac OS CTFontCreatePathForGlyph() ignores subfigures that
     // are lines. These are common in single stroke fonts. Typical results
-    // with singel stroke files are things like the R is missing it's right leg, 
+    // with single stroke files are things like the R is missing it's right leg, 
     // h is missing is left side line, and so on. 
     // Freetype has many bugs, but it can parse some common single stroke files. 
     // Freetype is basically a file reading utility that can parse outline 

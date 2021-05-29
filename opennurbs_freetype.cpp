@@ -356,7 +356,7 @@ ON_FreeTypeFace::~ON_FreeTypeFace()
 {
   //  FT_New_Memory_Face documentation states:
   //    You must not deallocate the memory before calling @FT_Done_Face.
-  //    The memory refered to is m_tt_file_buffer.
+  //    The memory referred to is m_tt_file_buffer.
   if (nullptr != m_face)
   {
     FT_Done_Face(m_face);
@@ -379,7 +379,7 @@ public:
     Finds the glyph id for the specified Unicode code point. When a non-zero
     glyph is is returned, the face->charmap is set to the charmap that was used
     to find the glyph. In some cases this is not a Unicode charmap and unicode_code_point
-    was internally coverted to a character code appropriate for the returned charmap.
+    was internally converted to a character code appropriate for the returned charmap.
     In principle, the glyph id for a Unicode code point is independent of the charmap.
   Returns:
      0: failure
@@ -558,7 +558,7 @@ bool ON_FreeType::UseUnicodeAsAppleRomanCharCode(FT_Face face)
   // glyph id.
   //
   // I have verified that the way opennurbs handles FT_ENCODING_APPLE_ROMAN charmaps
-  // and the funciton ON_MapUnicodeToAppleRoman() works correctly with all the
+  // and the function ON_MapUnicodeToAppleRoman() works correctly with all the
   // TTF fonts shipped with Windows 10 pro.
   //
   if (
@@ -883,7 +883,7 @@ bool ON_FontGlyph::TestFreeTypeFaceCharMaps(
       else if (0 == gid)
       {
         s += ON_wString::FormatToString(
-          L" no glpyh",
+          L" no glyph",
           char_code
         );
       }
@@ -960,13 +960,13 @@ unsigned int ON_FreeType::GlyphId(
   //  2-* ISO (encoding id = ISO encoding)
   //
   //  3-0 Windows Symbol
-  //  3-1 Wnidows UCS-2 (subset of Unicode)
+  //  3-1 Windows UCS-2 (subset of Unicode)
   //  3-2 Windows ShiftJIS
   //  3-3 Windows Big5
   //  3-4 WIndows PRC
   //  3-5 Windows Wansung
   //  3-6 Windows Johab
-  //  3-10 Wnidows UCS-4 (subset of Unicode)
+  //  3-10 Windows UCS-4 (subset of Unicode)
   //
   //  4-* Custom
   //
@@ -1060,7 +1060,7 @@ unsigned int ON_FreeType::GlyphId(
     }
   }
 
-  // No glpyh for this unicode code point is available.
+  // No glyph for this unicode code point is available.
   FT_Set_Charmap(face, charmap0);
 
   return 0;

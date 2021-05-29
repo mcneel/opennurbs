@@ -2147,7 +2147,7 @@ bool ON_MorphControl::IsValid( ON_TextLog* text_log ) const
 
 void ON_MorphControl::Dump( ON_TextLog& text_log ) const
 {
-  text_log.Print("Varient: %d\n",m_varient);
+  text_log.Print("Variant: %d\n",m_varient);
   text_log.Print("Control object:\n");
   text_log.PushIndent();
   switch(m_varient)

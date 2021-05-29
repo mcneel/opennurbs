@@ -2809,7 +2809,7 @@ bool ON_HistoryRecord::Write(ON_BinaryArchive& archive) const
 bool ON_HistoryRecord::Internal_WriteV5( ON_BinaryArchive& archive ) const
 {
   // 2015-06-01 Dale Lear
-  //   Save m_bCopyOnReplaceObject in the file in chunck version 1.2
+  //   Save m_bCopyOnReplaceObject in the file in chunk version 1.2
 
   const int minor_version 
     = (archive.Archive3dmVersion() >= 60)

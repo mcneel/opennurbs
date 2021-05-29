@@ -374,7 +374,7 @@ public:
   // and copy constructor work fine.
 
   /*
-  Descripton:
+  Description:
     Set check sum values for a buffer
   Parameters:
     size - [in] 
@@ -392,7 +392,7 @@ public:
    );
 
   /*
-  Descripton:
+  Description:
     Set check sum values for a file.
   Parameters:
     fp - [in] pointer to a file opened with ON:FileOpen(...,"rb")
@@ -404,7 +404,7 @@ public:
    );
 
   /*
-  Descripton:
+  Description:
     Set check sum values for a file.
   Parameters:
     filename - [in] name of file.
@@ -418,7 +418,7 @@ public:
   /*
   Description:
     Test buffer to see if it has a matching checksum.
-  Paramters:
+  Parameters:
     size - [in]   size in bytes
     buffer - [in]
   Returns:
@@ -432,7 +432,7 @@ public:
   /*
   Description:
     Test buffer to see if it has a matching checksum.
-  Paramters:
+  Parameters:
     fp - [in] pointer to file opened with ON::OpenFile(...,"rb")
     bSkipTimeCheck - [in] if true, the time of last
        modification is not checked.
@@ -447,7 +447,7 @@ public:
   /*
   Description:
     Test buffer to see if it has a matching checksum.
-  Paramters:
+  Parameters:
     filename - [in]
     bSkipTimeCheck - [in] if true, the time of last
        modification is not checked.
@@ -1312,7 +1312,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in an ordinal compare.
+    impossible to ignore case for any other values in an ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -1340,7 +1340,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in a UTF-8 ordinal compare.
+    impossible to ignore case for any other values in a UTF-8 ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -1373,7 +1373,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in a UTF-8 ordinal compare.
+    impossible to ignore case for any other values in a UTF-8 ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -1508,26 +1508,26 @@ public:
   // Description:
   //   Simple case sensitive wildcard matching. A question mark (?) in the
   //   pattern matches a single character.  An asterisk (*) in the pattern
-  //   mathes zero or more occurances of any character.
+  //   matches zero or more occurrences of any character.
   //
   // Parameters:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   true if the string mathes the wild card pattern.
+  //   true if the string matches the wild card pattern.
 	bool WildCardMatch( const char* ) const;
 	bool WildCardMatch( const unsigned char* ) const;
 
   // Description:
   //   Simple case insensitive wildcard matching. A question mark (?) in the
   //   pattern matches a single character.  An asterisk (*) in the pattern
-  //   mathes zero or more occurances of any character.
+  //   matches zero or more occurrences of any character.
   //
   // Parameters:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   true if the string mathes the wild card pattern.
+  //   true if the string matches the wild card pattern.
 	bool WildCardMatchNoCase( const char* ) const;
 	bool WildCardMatchNoCase( const unsigned char* ) const;
 
@@ -1809,11 +1809,11 @@ public:
   Parameters:
     format - [in]
       Format control.  
-      Positional paramters of the form %N$x where N >= 1 and x
+      Positional parameters of the form %N$x where N >= 1 and x
       is the standard format specification are supported.
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
-      arguments for replacable items in the format string.
+      arguments for replaceable items in the format string.
   Returns:
     True if successful.
     False if the string is too long or the format string is not valid.
@@ -1823,7 +1823,7 @@ public:
     ON_Locale::InvariantCulture::LocalePtr().
 
     The way Windows handles the %S (capital S) format parameter depends on locale
-    and code page settings.  It is strongly reccommended that you never use %S to
+    and code page settings.  It is strongly recommended that you never use %S to
     include any string that may possibly contain elements with values > 127.
     The following examples illustrate a way to predictably use UTF-8 and wchar_t
     parameters in buffers of the other element type.
@@ -1871,7 +1871,7 @@ public:
   Description:
     A platform independent, secure, culture invariant way to format a char string. 
     This function is provide to be used when it is critical that 
-    the formatting be platform independent, secure and culture invarient.
+    the formatting be platform independent, secure and culture invariant.
   Parameters:
     buffer - [out] 
       not null
@@ -1890,7 +1890,7 @@ public:
       If buffer is not null and buffer_capacity > 0, then buffer[0] = 0 and buffer[buffer_capacity-1] = 0;
   Remarks:
     The way Windows handles the %S (capital S) format parameter depends on locale
-    and code page settings.  It is strongly reccommended that you never use %S to
+    and code page settings.  It is strongly recommended that you never use %S to
     include any string that may possibly contain elements with values > 127.  
     The following examples illustrate a way to predictably use UTF-8 and wchar_t 
     parameters in buffers of the other element type.
@@ -3040,7 +3040,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in an ordinal compare.
+    impossible to ignore case for any other values in an ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -3069,7 +3069,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in an ordinal compare.
+    impossible to ignore case for any other values in an ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -3098,7 +3098,7 @@ public:
   Remarks:
     1) If the string is UTF-8 encoded and bOrdinalIgnoreCase is true, only
     small latin a - z and capital latin A - Z are considered equal.  It is
-    imposible to ignore case for any other values in an ordinal compare.
+    impossible to ignore case for any other values in an ordinal compare.
 
     2) If you are comparing file system paths, you should use ComparePath().
 
@@ -3232,25 +3232,25 @@ public:
   // Description:
   //   Simple case sensitive wildcard matching. A question mark (?) in the
   //   pattern matches a single character.  An asterisk (*) in the pattern
-  //   mathes zero or more occurances of any character.
+  //   matches zero or more occurrences of any character.
   //
   // Parameters:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   true if the string mathes the wild card pattern.
+  //   true if the string matches the wild card pattern.
 	bool WildCardMatch( const wchar_t* ) const;
 
   // Description:
   //   Simple case insensitive wildcard matching. A question mark (?) in the
   //   pattern matches a single character.  An asterisk (*) in the pattern
-  //   mathes zero or more occurances of any character.
+  //   matches zero or more occurrences of any character.
   //
   // Parameters:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   true if the string mathes the wild card pattern.
+  //   true if the string matches the wild card pattern.
 	bool WildCardMatchNoCase( const wchar_t* ) const;
 
   /*
@@ -3276,7 +3276,7 @@ public:
   /*
   Description:
     Replaces all %xx where xx a two digit hexadecimal number,
-    with a single character. Returns false if the orginal
+    with a single character. Returns false if the original
     string contained 
   */
   bool UrlDecode();
@@ -3484,7 +3484,7 @@ public:
 
   /*
   Returns:
-    A platform independed SHA-1 of the string content. Independent of platform endian or platform wide string UTF encoding.
+    A platform independent SHA-1 of the string content. Independent of platform endian or platform wide string UTF encoding.
   */
   const ON_SHA1_Hash ContentHash(
     ON_StringMapOrdinalType mapping
@@ -3585,7 +3585,7 @@ public:
 
   /*
   Description:
-    Parse an xml encoded unicde code point.
+    Parse an xml encoded unicode code point.
     &#nnnn; (nnnn = any number of decimal digits)
     &#xhhhh; (hhhh = any muber of hexadecimal digits)
   Parameters:
@@ -3678,7 +3678,7 @@ public:
     numerator - [out]
     denominator - [out]
   Returns:
-    If a vulgar fraction was succesfully parsed, the a pointer to the first character
+    If a vulgar fraction was successfully parsed, the a pointer to the first character
     after the vulgar fraction is returned. Otherwise nullptr is returned.
   */
   static const wchar_t* ParseVulgarFraction(
@@ -4134,11 +4134,11 @@ public:
   Parameters:
     format - [in]
       Format control.
-      Positional paramters of the form %N$x where N >= 1 and x
+      Positional parameters of the form %N$x where N >= 1 and x
       is the standard format specification are supported.
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
-      arguments for replacable items in the format string.
+      arguments for replaceable items in the format string.
   Returns:
     True if successful.
     False if the string is too long or the format string is not valid.
@@ -4148,7 +4148,7 @@ public:
     ON_Locale::InvariantCulture::LocalePtr().
 
     The way Windows handles the %S (capital S) format parameter depends on locale
-    and code page settings.  It is strongly reccommended that you never use %S to
+    and code page settings.  It is strongly recommended that you never use %S to
     include any string that may possibly contain elements with values > 127.
     The following examples illustrate a way to predictably use UTF-8 and wchar_t
     parameters in buffers of the other element type.
@@ -4187,7 +4187,7 @@ public:
     A platform independent, secure, culture invariant way to format a wchar_t string
     with support for positional format parameters.
     This function is provide to be used when it is critical that 
-    the formatting be platform independent, secure and culture invarient.
+    the formatting be platform independent, secure and culture invariant.
   Parameters:
     buffer - [out] 
       not null
@@ -4206,7 +4206,7 @@ public:
       If buffer is not null and buffer_capacity > 0, then buffer[0] = 0 and buffer[buffer_capacity-1] = 0;
   Remarks:
     The way Windows handles the %S (capital S) format parameter depends on locale
-    and code page settings.  It is strongly reccommended that you never use %S to
+    and code page settings.  It is strongly recommended that you never use %S to
     include any string that may possibly contain elements with values > 127.  
     The following examples illustrate a way to predictably use UTF-8 and wchar_t 
     parameters in buffers of the other element type.
@@ -4469,7 +4469,7 @@ public:
 
   /*
   Description:
-    Expert user funtion to reserve and gain access to string memory.
+    Expert user function to reserve and gain access to string memory.
   Parameters:
     capacity - [in]
       If capacity > ON_String::MaximumStringLength, then nullptr is returned.

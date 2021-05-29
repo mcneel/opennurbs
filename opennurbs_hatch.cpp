@@ -353,7 +353,7 @@ static bool Internal_UseHatchReadV5(
     )
   {
     // new hatch IO code pushed to master branch on Feb 26, 2016.
-    // THis clunky test has to be used on files writting with the Feb 26, 2016 version of opennurbs source code.
+    // THis clunky test has to be used on files writing with the Feb 26, 2016 version of opennurbs source code.
     ON__UINT32 tcode = 0;
     ON__INT64 big_value = 0;
     archive.PeekAt3dmBigChunkType(&tcode, &big_value);

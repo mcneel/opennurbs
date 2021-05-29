@@ -389,7 +389,7 @@ void ON_RandomNumberGenerator::RandomPermutation(void* base, size_t nel, size_t 
   //   number int the range 0 to N-1 when N is not a factor of 2^32.
   //   As usual, this bias is not worth worrying about
   //   unlsess 2^32 / N is smallish.  If you need a random
-  //   permuation of a very large array, look elsewhere.
+  //   permutation of a very large array, look elsewhere.
 
   if ( 0 == sizeof_element % sizeof(ON__UINT64) )
   {

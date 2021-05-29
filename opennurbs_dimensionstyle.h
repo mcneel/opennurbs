@@ -229,7 +229,7 @@ private:
   double                 m_mask_border = 0.0;
 
   // At some point, the reserved fields may have the name changed and be
-  // used to store additional informtion of how to draw the mask,
+  // used to store additional information of how to draw the mask,
   // (feathered edges, rounded corners, etc.).
   unsigned int m_reserved3 = 0;
   mutable ON_SHA1_Hash m_content_hash = ON_SHA1_Hash::ZeroDigest;
@@ -408,7 +408,7 @@ public:
   Returns:
     True:
       "this" and src have identical names, dimension style appearance attributes,
-      and identical atttributes inherited from the same parent dimension style.
+      and identical attributes inherited from the same parent dimension style.
     ON_ModelComponent settings other than Name() and ParentId() are
     not compared.
   Remaraks:
@@ -687,7 +687,7 @@ public:
 
     /// <summary>
     /// AlternateLengthFactor is a rarely used. See Length factor for
-    /// a discription of this property.
+    /// a description of this property.
     ///</summary>
     AlternateLengthFactor          = 18,
 
@@ -1418,7 +1418,7 @@ public:
     using the current settings for TextHeight() and Font().
   Remarks:
     Typically close to the average with of a decimal digit (0123456789) and used
-    to line up colmns of numeric values.
+    to line up columns of numeric values.
   */
   double TextWidthOfFigureSpace() const;
 
@@ -1482,13 +1482,13 @@ public:
   // Distance scale factor for alternate display
   /// <summary>
   /// AlternateLengthFactor is a rarely used. See Length factor for
-  /// a discription of this property.
+  /// a description of this property.
   ///</summary>
   double AlternateLengthFactor() const;
 
   /// <summary>
   /// AlternateLengthFactor is a rarely used. See Length factor for
-  /// a discription of this property.
+  /// a description of this property.
   ///</summary>
   void SetAlternateLengthFactor(double);
 
@@ -1649,7 +1649,7 @@ public:
   Parameters:
     parent_dim_style - [in]
       If you are getting ready to modify and existing annotation object,
-      a good options for this paramter is the dimstyle returned by ON_Annotation.DimStyle();
+      a good options for this parameter is the dimstyle returned by ON_Annotation.DimStyle();
       If you are getting ready to create a new annotation object, then get
       an ON_DimStyleContext class and pass ON_DimStyleContext.CurrentDimStyle().
       In Rhino, use CRhinoDoc.DimStyleContext() to get an ON_DimStyleContext.
@@ -1774,7 +1774,7 @@ public:
   Description:
     For every dimension style property identified by a field_id ON_DimStyle::field enum,
     except Name and Index, if source and parent have different values, then
-    set the field overide for that property to true.
+    set the field override for that property to true.
   Parameters:
     src - [in]
       It is permitted for src to be this.
@@ -1787,7 +1787,7 @@ public:
     );
 
   /*
-  Descripton:
+  Description:
     Set the parent dimension style id to parent.Id() and copies
     all inherited appearance properties from parent.
   Parameters:
@@ -2049,9 +2049,9 @@ public:
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   ///</summary>
   ON::LengthUnitSystem UnitSystem() const;
 
@@ -2071,9 +2071,9 @@ public:
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   ///</summary>
   void SetUnitSystem(ON::LengthUnitSystem us);
 
@@ -2086,9 +2086,9 @@ public:
     Less ideally, both source_unit_system and destination_unit_system are model space units.
   Parameters:
     bUseName - [in]
-      Consider the name when assinging a unit system.
+      Consider the name when assigning a unit system.
       For example, a dimension style name "Millimters Small" would 
-      be assinged a unit system of millimeters.
+      be assigned a unit system of millimeters.
     source_unit_system - [in]
       unit system in the context where the dimension style originated.
     destination_unit_system - [in]
@@ -2116,9 +2116,9 @@ public:
   /// text created in page space will be 3.5 millimeters high.
   ///
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   Returns:
     true if the unit system is set to an explicit valid length unit.
   */
@@ -2220,13 +2220,13 @@ private:
   /// <summary>
   /// The LengthResolution property controls the precision of dimension length display.
   ///
-  /// DECIMAL LENGHT DISPLAY: 
+  /// DECIMAL LENGTH DISPLAY: 
   ///   If m_dimension_length_display is any of the ON_DimStyle::LengthDisplay decimal formats,
   ///   then m_lengthresolution is the number of digits after the decimal point.
   ///   For example, if m_lengthresolution is 2, then dimension length display will be n.ff
   ///   If m_lengthresolution=7,  then dimension length display will be n.fffffff.
   ///
-  /// FRACTONAL LENGHT DISPLAY: 
+  /// FRACTONAL LENGTH DISPLAY: 
   ///   If m_dimension_length_display is ON_DimStyle::LengthDisplay::InchesFractional or
   ///   ON_DimStyle::LengthDisplay::FeetAndInches, then fractional length display is used.
   ///   In this case any fractional part will be rouded to the closest multiple 
@@ -2234,7 +2234,7 @@ private:
   ///   Examples: If fractional length display is used and m_lengthresolution=2, 
   //    then the possible fractions are 1/4, 1/2(=2/4), 3/4. 
   ///   If fractional length display is used and m_lengthresolution=7, 
-  //    then any fractional part is rounded to the closest multipl of 1/128 (128=2^7).
+  //    then any fractional part is rounded to the closest multiple of 1/128 (128=2^7).
   /// </summary>
   int m_lengthresolution = 2;
 
@@ -2467,9 +2467,9 @@ private:
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   ON::LengthUnitSystem m_dimstyle_unitsystem                    = ON::LengthUnitSystem::None;
 
   ON::TextOrientation m_text_orientation                        = ON::TextOrientation::InPlane;

@@ -175,7 +175,7 @@ struct ON_WindowsBITMAPINFOHEADER
                                   //           biColors[0] = red mask (0x00FF0000), 
                                   //           biColors[1] = green mask (0x0000FF00), and
                                   //           biColors[2] = blue mask (0x000000FF),
-                                  //           then tese masks are used with each 4-byte
+                                  //           then these masks are used with each 4-byte
                                   //           DWORD in the bitmap array to determine
                                   //           the pixel's relative intensities.                                 //           
                                   //           For other possibilities, see

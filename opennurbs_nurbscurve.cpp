@@ -1050,7 +1050,7 @@ bool ON_NurbsCurve::ChangeClosedCurveSeam( double t )
     if ( old_dom.Includes(k,true) )
     {
       ON_NurbsCurve left, right;
-      // if periodic - dont' put fully multiple knot in middle.  
+      // if periodic - don't put fully multiple knot in middle.  
       bool bGotIt = false;
       if ( IsPeriodic() ){//This only works if the curve has only simple knots
         ON_NurbsCurve* pMovedNC = MoveSeamPeriodic(*this, t);
@@ -1579,8 +1579,8 @@ ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
     // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
     //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
     //   and the original side parameter was -1 or +1, it is changed to -2 or +2
-    //   to indicate that if t is numerically closed to an end paramter, then
-    //   it should be tuned up to be at the end paramter.
+    //   to indicate that if t is numerically closed to an end parameter, then
+    //   it should be tuned up to be at the end parameter.
     double a = t;
     if ( ON_TuneupEvaluationParameter( side, m_knot[span_index+m_order-2], m_knot[span_index+m_order-1], &a) )
     {
@@ -2958,7 +2958,7 @@ bool TweakSplitTrimParameter(double k0, double k1, double& t )
     //
     // 2014-July-7 Dale Lear
     //  Fix RH-21610 (k0 = 5e6, k1 = k0 + 1, t = k1 - 0.2)
-    //  I changed the test Lowell referes to above.  Lowell's 4.0*ON_SQRT_EPSILON 
+    //  I changed the test Lowell refers to above.  Lowell's 4.0*ON_SQRT_EPSILON 
     //  is now 8.0*ON_EPSILON in the ktol2 initialization value.
     //  I added ktol1 base on the span length.  
     //  If you modify this code in the future, please reference a bug with sample 

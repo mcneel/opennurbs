@@ -37,7 +37,7 @@
 #error _M_X64 should be defined for x64 builds
 #endif
 
-// All opennurbs code uses the "offical" _M_X64. Unfortunately, 
+// All opennurbs code uses the "official" _M_X64. Unfortunately, 
 // some Microsoft VC 2005 header files, like float.h do not.
 // The Microsoft compiler should automatically defined both
 // _M_X64 and _M_AMD64 for the WIN64 platform.  If it doesn't,
@@ -80,7 +80,7 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-// CHECK SETTINGS AFTER EVERTHING IS INCLUDED
+// CHECK SETTINGS AFTER EVERYTHING IS INCLUDED
 
 #if defined(_MSC_VER)
 
@@ -89,7 +89,7 @@
 #endif
 
 #if !defined(ON_RUNTIME_WIN)
-// if Microsfot C is used on another platfrom, then lots
+// if Microsfot C is used on another platform, then lots
 // of careful cleaning and checking will be required.
 #error _MSC_VER is defined and ON_RUNTIME_WIN is NOT defined.
 #endif
@@ -113,7 +113,7 @@
 #error _M_X64 should be defined for x64 builds
 #endif
 
-// All opennurbs code uses the "offical" _M_X64. Unfortunately, 
+// All opennurbs code uses the "official" _M_X64. Unfortunately, 
 // some Microsoft VC 2005 header files, like float.h do not.
 // The Microsoft compiler should automatically defined both
 // _M_X64 and _M_AMD64 for the WIN64 platform.  If it doesn't,

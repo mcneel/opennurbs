@@ -234,7 +234,7 @@ const ON_String ON_String::ApproximateFromNumber(
     // thate are 300 digits long when a 1e300 comes by.
     if (ON_String::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), "%f", d) > 0)
       return ON_String(buffer);
-    // It may be that 64 elements were not enought for %f format if the "reasonable range"
+    // It may be that 64 elements were not enough for %f format if the "reasonable range"
     // test is not good enough.  We try again with "%g".
   }
   if (ON_String::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), "%g", d) > 0)
@@ -337,7 +337,7 @@ const ON_wString ON_wString::ApproximateFromNumber(
     // thate are 300 digits long when a 1e300 comes by.
     if (ON_wString::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%f", d) > 0)
       return ON_String(buffer);
-    // It may be that 64 elements were not enought for %f format if the "reasonable range"
+    // It may be that 64 elements were not enough for %f format if the "reasonable range"
     // test is not good enough.  We try again with "%g".
   }
   if (ON_wString::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%g", d) > 0)

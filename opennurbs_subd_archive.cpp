@@ -1054,7 +1054,7 @@ bool ON_SubDFace::Write(
         break;
     }
 
-    // Custom texture coordintes
+    // Custom texture coordinates
     const bool bTexturePoints = this->TexturePointsAreSet();
     if (false == Internal_WriteComponentAdditionSize(bTexturePoints, archive, 4))
       break;
@@ -1225,7 +1225,7 @@ bool ON_SubDFace::Read(
     }
 
 
-    // Custom texture coordintes
+    // Custom texture coordinates
     sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
       break;
@@ -1247,7 +1247,7 @@ bool ON_SubDFace::Read(
       ON_3dPoint a[10];
       bool bContinue = true;
 
-      // Even if allocaion fails, we need to read the points so we can get get
+      // Even if allocation fails, we need to read the points so we can get get
       // future information that is after the points out of the archive.
       subdimple->AllocateFaceTexturePoints(f);
       ON_3dPoint* tp = f->m_texture_points;
@@ -1358,7 +1358,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
         if (prev_id >= c->m_id)
         {
           // This is a serious error!
-          // Contine because this allows us to save something do the disk in these bad cases.
+          // Continue because this allows us to save something do the disk in these bad cases.
           ON_SUBD_ERROR("The m_id values of the active components in the fixed size pool are corrupt.");
         }
         else
@@ -1373,7 +1373,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
       if (cidit_level_count != linked_list_count)
       {
         // This is a serious error!
-        // Contine because this allows us to save something do the disk in these bad cases.
+        // Continue because this allows us to save something do the disk in these bad cases.
         ON_SUBD_ERROR("The m_level values of the active components in the fixed size pool are corrupt.");
       }
       break;
@@ -1913,7 +1913,7 @@ bool ON_SubDimple::Read(
   //
   // No changes to "this SubD" below here.
   // 
-  // The rest is updating infomation that is used to determine if this SubD
+  // The rest is updating information that is used to determine if this SubD
   // is the same SubD that existed when symmetry and texture information
   // was saved. It's ok if this is not the same subd. If and when appropriate
   // something downstream will update either the SubD or the symmetry/texture 

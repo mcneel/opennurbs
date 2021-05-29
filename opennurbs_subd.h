@@ -139,7 +139,7 @@ enum class ON_SubDGetControlNetMeshPriority : unsigned char
   /// includes SubD texture coordinate information.
   /// Use this option when the mesh will be used to create an image of the
   /// SubD control net that relies on texture coordinates. SubD interior edge
-  /// crease inforation cannot be recovered from the mesh. Most applications will 
+  /// crease information cannot be recovered from the mesh. Most applications will 
   /// not be able to use the mesh to recreate a Catmull-Clark subdivision surface.
   ///</summary>
   TextureCoordinates = 1
@@ -162,7 +162,7 @@ enum class ON_SubDTextureCoordinateType : unsigned char
   Unpacked = 1,
 
   ///<summary>
-  /// The face's pack rect is used to set fragment texture coordintes.
+  /// The face's pack rect is used to set fragment texture coordinates.
   /// When possible, adjacent quads with the same ON_SubDFace::PackId() value are assigned adjacent 
   /// rectangles in texture space.
   ///</summary>
@@ -185,7 +185,7 @@ enum class ON_SubDTextureCoordinateType : unsigned char
   FromFaceTexturePoints = 6,
 
   ///<summary>
-  /// Texture coordinates are set from an ON_TextureMapping and transformation specificed
+  /// Texture coordinates are set from an ON_TextureMapping and transformation specified
   /// by ON_SubD::TextureMappingTag(). In all other cases, ON_SubD::TextureMappingTag()
   /// can be set, but is ignored.
   ///</summary>
@@ -368,11 +368,11 @@ public:
   /// </summary>
   static const ON_SubDHash Empty;
 
-  // Saves the counts and hashs of the specified type
+  // Saves the counts and hashes of the specified type
 
 
   /// <summary>
-  /// Saves the counts and hashs of the specified type.
+  /// Saves the counts and hashes of the specified type.
   /// </summary>
   /// <param name="hash_type"></param>
   /// <param name="subd"></param>
@@ -674,7 +674,7 @@ public:
   /*
   Returns:
     True if this vertex is active in its parent subd or other
-    relevent context.
+    relevant context.
   Remarks:
     When a component is in use, IsActive() = true. 
     If was used and then deleted, IsActive() is false.
@@ -713,7 +713,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   */
   bool Mark() const;
 
@@ -724,7 +724,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -737,7 +737,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -752,7 +752,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -807,7 +807,7 @@ public:
   /*
   Returns:
     True if this edge is active in its parent subd or other
-    relevent context.
+    relevant context.
   Remarks:
     When a component is in use, IsActive() = true. 
     If was used and then deleted, IsActive() is false.
@@ -1009,7 +1009,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   */
   bool Mark() const;
 
@@ -1020,7 +1020,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1033,7 +1033,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1048,7 +1048,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1086,7 +1086,7 @@ public:
   /*
   Returns:
     True if this face is active in its parent subd or other
-    relevent context.
+    relevant context.
   Remarks:
     When a component is in use, IsActive() = true. 
     If was used and then deleted, IsActive() is false.
@@ -1146,7 +1146,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   */
   bool Mark() const;
 
@@ -1157,7 +1157,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1170,7 +1170,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1185,7 +1185,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1286,7 +1286,7 @@ public:
   /*
   Returns:
     True if this component is active in its parent subd or other
-    relevent context.
+    relevant context.
   Remarks:
     When a component is in use, IsActive() = true. 
     If was used and then deleted, IsActive() is false.
@@ -1297,7 +1297,7 @@ public:
   Returns:
     True if this component is marked as a primary motif component.
   Remarks:
-    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+    You must use ON_SubD SymmetrySet member functions to get symmetry set contents.
   */
   bool IsSymmetrySetPrimaryMotif() const;
 
@@ -1305,7 +1305,7 @@ public:
   Returns:
     True if this component is marked being in a symmetry set.
   Remarks:
-    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+    You must use ON_SubD SymmetrySet member functions to get symmetry set contents.
   */
   bool InSymmetrySet() const;
 
@@ -1355,7 +1355,7 @@ public:
     The use of this value varies depending on the context.
     Frequently, 0 means the referenced component is being used with its
     natural orientation and 1 means the referenced component is being used
-    with the reverse of its natrual oreientation.
+    with the reverse of its natural oreientation.
   */
   ON__UINT_PTR ComponentDirection() const;
 
@@ -1427,7 +1427,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   */
   bool Mark() const;
 
@@ -1438,7 +1438,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1451,7 +1451,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -1466,7 +1466,7 @@ public:
     SubD components have a mutable runtime  mark that can be used 
     in any context where a single thread cares about the marks.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -2224,7 +2224,7 @@ public:
      s_capacity
        wchar_t element capacity of the string buffer
   Returns:
-    nullptr if ther is not enough room in the buffer.
+    nullptr if there is not enough room in the buffer.
     Otherwise a pointer to the null terminator of the returned string.
   Remarks
     The returned string will be "0" for a zero sector id, "X" for an invalid sector id, 
@@ -2429,7 +2429,7 @@ public:
     This is useful when quick compare and sorting of regions is required,
     m_subdivision_count < 256, m_index[0] < 256, m_index[1] < 4, ..., m_index[m_subdivision_count] < 4
     Regions of N-gons with N < 256 and regions of edges
-    satisify these condition when m_subdivision_count < 256 
+    satisfy these condition when m_subdivision_count < 256 
     (which is always in real world situations).
   */
   ON__UINT32 ToCompressedRegionIndex() const;
@@ -2977,7 +2977,7 @@ public:
 
   /*
   Description:
-    Change the geoemtry content serial number to indicate something affecting
+    Change the geometry content serial number to indicate something affecting
     the geometric shape of the subd has changed. This includes topologial changes,
     vertex and edge tag changes, and changes to vertex control net locations.
   Parameters:
@@ -3030,7 +3030,7 @@ public:
    bForceUpdate - [in]
      When in doubt pass false.
      The SubD hashes are mutable and cached. When code properly manages GeometryContentSerialNumber(),
-     then SubDHash(hash_type,false) will alwasys return the correct answer. This is the expected behavior.
+     then SubDHash(hash_type,false) will alwayss return the correct answer. This is the expected behavior.
      If code directly modifies SubD components and fails to call ChangeGeometryContentSerialNumberForExperts(),
      then it is possible a stale hash will be returned. Setting bForceUpdate = true forces the SHA1
      values to be recalculated from scratch. For extremely large SubDs, this recalculation can be time consuming.
@@ -3113,7 +3113,7 @@ public:
 
 
   /*
-  Paramters:
+  Parameters:
     vertex_tag - [in]
     bVerbose - [in]
       If verbose, the tag name is preceded with "ON_SubDVertexTag::".
@@ -3160,7 +3160,7 @@ public:
 
 
   /*
-  Paramters:
+  Parameters:
     edge_tag - [in]
     bVerbose - [in]
       If verbose, the tag name is preceded with "ON_SubDEdgeTag::".
@@ -3310,8 +3310,8 @@ public:
       component_ring[component_count-1] = last face
 
   Example:
-    unsinged int component_ring_count = GetVertexComponentRing(vit,component_ring);
-    unsinged int N = component_ring_count/2; // number of edges in ring
+    unsigned int component_ring_count = GetVertexComponentRing(vit,component_ring);
+    unsigned int N = component_ring_count/2; // number of edges in ring
     const bool bSectorHasCreaseBoundary = (0 == (component_ring_count % 2));
   */
   static unsigned int GetSectorComponentRing(
@@ -3350,8 +3350,8 @@ public:
       component_ring[component_count-1] = last face
 
   Example:
-    unsinged int component_ring_count = GetVertexComponentRing(vit,component_ring);
-    unsinged int N = component_ring_count/2; // number of edges in ring
+    unsigned int component_ring_count = GetVertexComponentRing(vit,component_ring);
+    unsigned int N = component_ring_count/2; // number of edges in ring
     const bool bSectorHasCreaseBoundary = (0 == (component_ring_count % 2));
   */
   static unsigned int GetSectorComponentRing(
@@ -3662,7 +3662,7 @@ public:
   Description:
     This is a debugging too used to study how efficiently SubDs are using memory.
   Returns:
-    Total operating system heap (in bytes) used by this SubD's ON_FixedSizePools, inlcude the mesh fragments pool.
+    Total operating system heap (in bytes) used by this SubD's ON_FixedSizePools, include the mesh fragments pool.
   Remarks:
     SizeOfAllElements() = SizeOfActiveElements() + SizeOfUnusedElements().
   */
@@ -3871,7 +3871,7 @@ public:
 public:
 #pragma region RH_C_SHARED_ENUM [ON_SubD::AutomaticMeshToSubDContext] [Rhino.Geometry.SubDAutomaticMeshToSubDContext] [byte]
   /// <summary>
-  /// ON_SubD::AutomaticMeshToSubDContext indentifies a context where meshes can automatically
+  /// ON_SubD::AutomaticMeshToSubDContext identifies a context where meshes can automatically
   /// be converted to subds.
   /// </summary>
   enum class AutomaticMeshToSubDContext : unsigned char
@@ -4116,7 +4116,7 @@ public:
   /*
   Description:
     Remove subdivision levels
-  Paramters:
+  Parameters:
     max_level_index - [in] 
       Remove all levels after max_level_index
   Returns:
@@ -4129,7 +4129,7 @@ public:
   /*
   Description:
     Remove subdivision levels
-  Paramters:
+  Parameters:
     min_level_index - [in] 
       Remove all levels before min_level_index
   Returns:
@@ -4616,7 +4616,7 @@ public:
   ///*
   //Description:
   //  The ON__INT_PTRs in the tree are const ON_SubDComponentPtrs.
-  //  The bounding boxs are based on the subd
+  //  The bounding box are based on the subd
   //*/
   //ON_RTreeRef ControlNetComponentTree(
   //  bool bIncludeVertices,
@@ -4761,7 +4761,7 @@ public:
   /*
   Description:
     Split and edge.
-    The input edge is modifed to terminate at the input vertex.
+    The input edge is modified to terminate at the input vertex.
     The new edge begins at the input vertex and ends at the final vertex
     of the original input edge.
   edge - [in]
@@ -4843,7 +4843,7 @@ public:
       If true, face and new triangles are marked.
       Existing marks are not modified.
   Returns:
-    If successfull, the new vertex at the center of the triangle fan.
+    If successful, the new vertex at the center of the triangle fan.
     Otherwise, nullptr is returned.
   */
   const class ON_SubDVertex* ReplaceFaceWithTriangleFan(
@@ -5195,7 +5195,7 @@ public:
     ci_list - [in]
     ci_count - [in]
     component_location - [in]
-      Select between applying the tranform to the control net (faster)
+      Select between applying the transform to the control net (faster)
       or the surface points (slower).
   Returns:
     Number of vertex locations that changed.
@@ -5429,7 +5429,7 @@ public:
 
   /*
   Description:
-    Search for a vertex with a specificed control net point.
+    Search for a vertex with a specified control net point.
   Parameters:
     control_net_point - [in]
       Look for a vertex with this value for ControlNetPoint().
@@ -5448,7 +5448,7 @@ public:
 
   /*
   Description:
-    Search for a vertex with a specificed control net point. If one does not
+    Search for a vertex with a specified control net point. If one does not
     exist, add a new one.
   Parameters:
     control_net_point - [in]
@@ -5927,7 +5927,7 @@ public:
     TriangleFan = 3,
 
     ///<summary>
-    /// If the hole boundary has an even mumber of edges, a quad fan is used.
+    /// If the hole boundary has an even number of edges, a quad fan is used.
     /// Otherwise a triangle fan is used. The center of the fan
     /// is the average of the hole boundary vertex control net points.
     ///</summary>
@@ -6112,7 +6112,7 @@ public:
 
   /*
   Description:
-    Expert user tool to remove a connection beteen an edge and vertex
+    Expert user tool to remove a connection between an edge and vertex
   Parameters:
     e - [in]
       An edge with zero attached faces.
@@ -6129,7 +6129,7 @@ public:
 
   /*
   Description:
-    Expert user tool to remove a connection beteen an edge and edge->vertex[evi]
+    Expert user tool to remove a connection between an edge and edge->vertex[evi]
   Parameters:
     e - [in]
       An edge with zero attached faces.
@@ -6146,7 +6146,7 @@ public:
 
   /*
   Description:
-    Expert user tool to remove all edge and vertex connnections from a face
+    Expert user tool to remove all edge and vertex connections from a face
   Parameters:
     face - [in]
   Remarks:
@@ -6187,7 +6187,7 @@ public:
   Description:
     This function copies cached evaluations of component subdivision points and limit
     surface information from src to this. Typically this is done for performance critical
-    sitations like control point editing.
+    situations like control point editing.
   */
   bool CopyEvaluationCacheForExperts(const ON_SubD& src);
 
@@ -6254,7 +6254,7 @@ public:
     ///<summary>
     /// NURBS surfaces will be as large as possible without the addition of extra knots. 
     /// Near extraordinary vertices, the surfaces may have lots of knots.
-    /// This option is prefered when a user wants larger NURBS surfaces but not at the cost of addtional NURBS control points.
+    /// This option is preferred when a user wants larger NURBS surfaces but not at the cost of additional NURBS control points.
     ///</summary>
     Medium = 2,
 
@@ -6289,7 +6289,7 @@ public:
     image_height = [in]
       If a texture image size is known, pass it here. Otherwise pass 0.0 for both parameters.
   Returns:
-    Suggested way to partition a texture coodinate domain into rectangles.
+    Suggested way to partition a texture coordinate domain into rectangles.
     ON_2udex.i = "x" count
     ON_2udex.j = "y" count
     For example (3,2) would mean divide the 2d texture domain into 3 segments across and 2 segments vertically.
@@ -6345,7 +6345,7 @@ public:
     this->SetTextureCoordinateMapping() to set the mapping.
 
     Calling this->SetTextureCoordinateType() does not change existing cached
-    texture coordinates. At an approprite time, call SetFragmentTextureCoordinates()
+    texture coordinates. At an appropriate time, call SetFragmentTextureCoordinates()
     to update texture coordinates on any cached fragments.
 
     SubD texture coordinate type and fragment texture coordinates are a mutable property.
@@ -6396,7 +6396,7 @@ public:
     is ON_SubDTextureCoordinateType::FromMapping.
 
     Calling this->SetTextureMappingTag() does not change existing cached
-    texture coordinates. At an approprite time, call this->SetFragmentTextureCoordinates()
+    texture coordinates. At an appropriate time, call this->SetFragmentTextureCoordinates()
     to update texture coordinates on any cached fragments.
 
     SubD texture domains and coordinates are a mutable property.
@@ -6408,7 +6408,7 @@ public:
   Returns:
     True if setting texture coordinates requires a set ON_TextureMapping mapping.
   Remarks:
-    An explict texture mapping is required when TextureCoordinateType() is
+    An explicit texture mapping is required when TextureCoordinateType() is
     ON_SubDTextureCoordinateType::FromMapping and TextureMappingTag()
     is set and not ON_MappingTag::SurfaceParameterMapping or an equivalent
     surface parameter mapping.
@@ -6513,7 +6513,7 @@ public:
       hash depend on this->RenderContentSerialNumber().
     fragment_colors_mapping_tag - [in]
       If not applicable, pass ON_MappingTag::Unset.
-      A mapping tag indentifying what is setting the fragment colors.
+      A mapping tag identifying what is setting the fragment colors.
       This is the only property that persists in SubD copies and saves in 3dm archives.
       Typically:
         m_mapping_id is an id you make up that identifies what is setting the colors (thickness, curvature, ...).
@@ -6546,7 +6546,7 @@ public:
     ) const;
 
   /*
-  Descrption:
+  Description:
     Clear all fragment vertex colors
   Parameters:
     bClearFragmentColorsMappingTag - [in]
@@ -6574,7 +6574,7 @@ public:
     Set the fragment colors mapping tag.
   Remarks:
     Calling this->SetFragmentColorsMappingTag() does not change existing cached
-    fragment vertex colors. At an approprite time, call this->SetFragmentColorsFromCallback()
+    fragment vertex colors. At an appropriate time, call this->SetFragmentColorsFromCallback()
     to update fragment vertex colors on any cached fragments.
 
     SubD fragment vertex tag and colors are a mutable property.
@@ -6653,7 +6653,7 @@ public:
         does not match this->SubDTopologyHash(), then this->FacePackingSubDTopologyHash() is updated
         to the current value of this->SubDTopologyHash().
 
-        If this paramter is false and and this->FacePackingSubDTopologyHash()
+        If this parameter is false and and this->FacePackingSubDTopologyHash()
         does not match this->SubDTopologyHash(), then the function returns false.
     Returns:
       True if FacesArePacked() is true, the quad grids meet all the conditions described above,
@@ -6760,7 +6760,7 @@ private:
 #pragma ON_PRAGMA_WARNING_POP
 
 public:
-  // The ON_SubD code increments ON_SubD::ErrorCount everytime something
+  // The ON_SubD code increments ON_SubD::ErrorCount every time something
   // unexpected happens. This is useful for debugging.
   static unsigned int ErrorCount;
 }; 
@@ -7204,7 +7204,7 @@ public:
   //
   //     Q = 3/8 * (A + B) = 3/4 * (1/2*A + 1/2*B)
   //
-  //   A crease edge's subdivision point is alwasy the edge's midpoint.
+  //   A crease edge's subdivision point is always the edge's midpoint.
   /*
   Description:
     Calculates sector weight value for the sector type
@@ -7650,16 +7650,16 @@ public:
     Get the subdivision matrix for the default subdivison algorithms 
     used by ON_SubD.
 
-    The matrix coefficents are ordered so that the matrix acts on
+    The matrix coefficients are ordered so that the matrix acts on
     the left of the points returned by ON_SubDSectorIterator::GetVertexRing().
 
-    For an interior vertex (smooth or dart), the coefficents are ordered
+    For an interior vertex (smooth or dart), the coefficients are ordered
     so that one iteration of subdivision is given by:
     S*Transpose(V, E[0], F[0], E[1], F[1], ..., E[N-1], F[N-1]).
     For a dart vertex, E[0] is the point at the end of the creased edge.
 
 
-    For a boundary vertex (crease or corner), the coefficents are ordered
+    For a boundary vertex (crease or corner), the coefficients are ordered
     so that one iteration of subdivision is given by:
     S*Transpose(V, E[0], F[0], E[1], F[1], ..., F[N-2], E[N-1]).
 
@@ -7672,7 +7672,7 @@ public:
   Parameters:
     S - [out]
       subdivision matrix
-      Matrix coefficent (i,j) = S[i][j]
+      Matrix coefficient (i,j) = S[i][j]
       0 <= i < R, 0 <= j < R, R = ON_SubDSectorType.PointRingCount()
     matrix_capacity - [in]
       S[] can store any RxR matrix with R <= matrix_capacity.
@@ -7691,7 +7691,7 @@ public:
   Parameters:
     S - [out]
       subdivision matrix. 
-      Matrix coefficent (i,j) = S[i*R + j],
+      Matrix coefficient (i,j) = S[i*R + j],
       0 <= i < R, 0 <= j < R, R = ON_SubDSectorType.PointRingCount()
     S_capacity - [in]
       Number of elements in S[] array
@@ -7731,12 +7731,12 @@ public:
       The sector type is not set.
 
     2: 
-      The subdominant eigenvalue has algebraic and geometric multiplicty = 2.
+      The subdominant eigenvalue has algebraic and geometric multiplicity = 2.
       This is the most common case.
 
     1: 
-      The subdominant eigenvalue has algebraic and geometric multiplicty = 1.
-      This occures in Catmull-Clark subdivision at a crease vertex with 
+      The subdominant eigenvalue has algebraic and geometric multiplicity = 1.
+      This occurs in Catmull-Clark subdivision at a crease vertex with 
       two crease edges and a single face.  The subdivision matrix for this
       case is
         S is a 4 x 4 matrix with rows =
@@ -7744,7 +7744,7 @@ public:
            (1/2, 1/2, 0, 0),
            (1/4, 1/4, 1/4, 1/4), 
            (1/2, 0, 0, 1/2).
-        S has 4 real eigenvalues = (1, 1/2, 1/4, 1/4), all wtih
+        S has 4 real eigenvalues = (1, 1/2, 1/4, 1/4), all with
         geometric multiplicity = 1.
         The three eigenvectors are
            (1, 1, 1, 1), (0, -1, 0, 1), (0, 0, 1, 0).
@@ -7786,7 +7786,7 @@ public:
     E2_capacity - [in]
       Capacity of the E2[] array.
     E2 - [out]
-      When E1_capacity > 0 and E2_capacity > 0, two orthoganal eigenvectors
+      When E1_capacity > 0 and E2_capacity > 0, two orthogonal eigenvectors
       spanning the subdivision matrix subdominant eigenspace are returned
       in E1[] and E2[].
       If one of E1_capacity or E2_capacity is > 0, then both must be > 0.
@@ -7854,7 +7854,7 @@ public:
       The eigenvalues are (1, lambda, lambda, e3, ..., eR), where
       1 > lambda > e3 >= ... >= eR > 0.
     0: 
-      Invalid input or the eigenvalues for this sector typoe are not available.
+      Invalid input or the eigenvalues for this sector type are not available.
   */
   unsigned int GetAllEigenvalues(
     double* eigenvalues,
@@ -8257,7 +8257,7 @@ public:
   
   // m_F_count = number of quads
   //           = m_side_segment_count*m_side_segment_count
-  // (0,1,4,16,256,1024,4096) Afer 0, each permitted value is 4x previous value
+  // (0,1,4,16,256,1024,4096) After 0, each permitted value is 4x previous value
   unsigned short m_F_count;
 
   // m_F_level_of_detail is poorly named. It should be named m_F_mesh_density_reduction.
@@ -8303,7 +8303,7 @@ public:
       point capacity to store the specified density.
 
     this - [out]
-      This must have a point capacity large enough to accomodate the
+      This must have a point capacity large enough to accommodate the
       requested display density.
 
   */
@@ -8347,7 +8347,7 @@ public:
   Remarks:
     The number of points is the same for quad or tri subdivision limit
     mesh fragments, even though one is a rectanglular collection of 
-    quads and the other is a trianglular collection of triangles.
+    quads and the other is a triangular collection of triangles.
   */
   static unsigned int PointCountFromDisplayDensity(
     unsigned int display_density
@@ -8375,7 +8375,7 @@ public:
 
   /*
   Returns:
-    If side_segment_count is valide, then (side_segment_count+1) is returned.
+    If side_segment_count is valid, then (side_segment_count+1) is returned.
     Otherwise 0 is returned.
   */
   static unsigned int SidePointCountFromSideCount(
@@ -8384,7 +8384,7 @@ public:
 
   /*
   Returns:
-    If side_segment_count is valide, then (side_segment_count+1)^2 is returned.
+    If side_segment_count is valid, then (side_segment_count+1)^2 is returned.
     Otherwise 0 is returned.
   */
   static unsigned int QuadGridPointCountFromSideCount(
@@ -8393,7 +8393,7 @@ public:
 
   /*
   Returns:
-    If side_segment_count is valide, then side_segment_count^2 is returned.
+    If side_segment_count is valid, then side_segment_count^2 is returned.
     Otherwise 0 is returned.
   */
   static unsigned int QuadGridQuadCountFromSideCount(
@@ -8455,7 +8455,7 @@ public:
     dst - [in/out]
       The 3d point (src[0],src[1],src2[2]) is copied to (dst[0],dst[1],dst[2]).
   Returns:
-    True if a copy occured.
+    True if a copy occurred.
   */
   static bool SealPoints(
     bool bTestNearEqual,
@@ -8473,7 +8473,7 @@ public:
     dst - [in/out]
       The 3d point (src[0],src[1],src2[2]) is copied to (dst[0],dst[1],dst[2]).
   Returns:
-    True if a copy occured.
+    True if a copy occurred.
   */
   static bool SealNormals(
     bool bTestNearEqual,
@@ -8830,7 +8830,7 @@ public:
     grid_corner_index - [in]
       0, 1, 2, or 3
   Returns:
-    vertex color at the grid corner or ON_Color::UnsetColor if thre are not vertex colors.
+    vertex color at the grid corner or ON_Color::UnsetColor if there are not vertex colors.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex.
@@ -8953,7 +8953,7 @@ public:
   unsigned short m_face_fragment_index; // First fragment has index = 0. Last fragment has index = m_face_fragment_count-1.
 
   // The mesh fragment is a grid of quads.
-  // There are m_side_count quad edges along each side of the tesselation,
+  // There are m_side_count quad edges along each side of the tessellation,
   // There are a total of m_side_count X m_side_count quads, and
   // m_P_count = (m_side_count+1)*(m_side_count+1).
 
@@ -9181,7 +9181,7 @@ private:
   // in ON_SubDMeshFragment gid order.
   // The m_pack_rect[] points are in grid order. If the parent ON_SubDFace pack rect is rotated,
   // then "lower/upper" and "left/right" are with the rotation applied and hence a lower/left coordinate
-  // may be greater than an upper/right coorinate value.
+  // may be greater than an upper/right coordinate value.
   //  m_pack_rect[0] "lower left"
   //  m_pack_rect[1] "lower right"
   //  m_pack_rect[2] "upper left"
@@ -9219,7 +9219,7 @@ public:
     When an ON_SubDFace is a quad, it is rendered with one ON_SubDMeshFragment.
     When an ON_SubDFace is a 3-gon, it is rendered with three ON_SubDMeshFragments.
   Remarks:
-    It is critcial that m_face_fragment_count and m_face_fragment_index be set
+    It is critical that m_face_fragment_count and m_face_fragment_index be set
     correctly before calling this function.
     A ON_SubDMeshFragment used to render a quad ON_SubDFace has
     m_face_fragment_count = 1 and m_face_fragment_index = 0.
@@ -9249,10 +9249,10 @@ public:
       These three parameters are values from ON_SubDFace::GetNgonSubPackRectSizeAndDelta().
       ngon_grid_size, ngon_sub_pack_rect_size, and ngon_sub_pack_rect_delta are identical
       for all the ON_SubDMeshFragments used to render the n-gon face. The value of
-      m_face_fragment_index detemines which sub pack rect is assigned to each of
+      m_face_fragment_index determines which sub pack rect is assigned to each of
       the n ON_SubDMeshFragments use to render the n-gon face.
   Remarks:
-    It is critcial that m_face_fragment_count and m_face_fragment_index be set
+    It is critical that m_face_fragment_count and m_face_fragment_index be set
     correctly before calling this function.
     A ON_SubDMeshFragment used to render an n-gon ON_SubDFace has
     m_face_fragment_count = n and m_face_fragment_index = 0, ..., n-1.
@@ -9309,7 +9309,7 @@ public:
       These three parameters are values from ON_SubDFace::GetNgonSubPackRectSizeAndDelta().
       ngon_grid_size, ngon_sub_pack_rect_size, and ngon_sub_pack_rect_delta are identical
       for all the ON_SubDMeshFragments used to render the n-gon face. The value of
-      m_face_fragment_index detemines which sub pack rect is assigned to each of
+      m_face_fragment_index determines which sub pack rect is assigned to each of
       the n ON_SubDMeshFragments use to render the n-gon face.
     fragment_pack_rect_corners - [out]
   */
@@ -9417,8 +9417,8 @@ public:
   // The m_N[] and m_P[] arrays are parallel. 
   // Depending on the strides, m_P[], m_N[], and m_T[] can be separate or interlaced.
   //
-  // If m_N is not nullptr and m_N_stride>0, then m_N[] can accomodate up to m_P_capacity normals.
-  // If m_N is not nullptr and m_N_stride=0, then m_N[] can accomodate a single normal (flat shaded polygon face).
+  // If m_N is not nullptr and m_N_stride>0, then m_N[] can accommodate up to m_P_capacity normals.
+  // If m_N is not nullptr and m_N_stride=0, then m_N[] can accommodate a single normal (flat shaded polygon face).
   // The stride m_N_stride and memory m_N references is managed by some other class or function.
   // Never modify m_N_stride, m_N, or the values in m_N.
   // Use m_grid functions to get normal indices and quad face indices.
@@ -9444,7 +9444,7 @@ public:
   //
   // Depending on the strides, m_P[], m_N[], and m_T[] can be separate or interlaced.
   //
-  // If m_T is not nullptr and m_T_stride>0, then m_T[] can accomodate up to m_P_capacity textures coordinates.
+  // If m_T is not nullptr and m_T_stride>0, then m_T[] can accommodate up to m_P_capacity textures coordinates.
   // Otherwise there are no texture coordinates.
   // Never modify m_T_stride, m_T.
   // Use m_grid functions to get texture indices and quad face indices.
@@ -9486,7 +9486,7 @@ public:
     A quad ON_SubDFace is rendered with one ON_SubDMeshFragment.
     A 3-gon ON_SubDFace is rendered with three ON_SubDMeshFragments.
   Remarks:
-    It is critcial that m_face_fragment_count and m_face_fragment_index be set
+    It is critical that m_face_fragment_count and m_face_fragment_index be set
     correctly before calling this function.
     A ON_SubDMeshFragment used to render a quad ON_SubDFace has
     m_face_fragment_count = 1 and m_face_fragment_index = 0.
@@ -9516,10 +9516,10 @@ public:
       These three parameters are values from ON_SubDFace::GetNgonSubPackRectSizeAndDelta().
       ngon_grid_size, ngon_sub_pack_rect_size, and ngon_sub_pack_rect_delta are identical
       for all the ON_SubDMeshFragments used to render the n-gon face. The value of
-      m_face_fragment_index detemines which sub pack rect is assigned to each of
+      m_face_fragment_index determines which sub pack rect is assigned to each of
       the n ON_SubDMeshFragments use to render the n-gon face.
   Remarks:
-    It is critcial that m_face_fragment_count and m_face_fragment_index be set
+    It is critical that m_face_fragment_count and m_face_fragment_index be set
     correctly before calling this function.
     A ON_SubDMeshFragment used to render an n-gon ON_SubDFace has
     m_face_fragment_count = n and m_face_fragment_index = 0, ..., n-1.
@@ -9583,7 +9583,7 @@ private:
   //
   // Depending on the strides, m_P[], m_N[], m_T[] and m_C[] can be separate or interlaced.
   //
-  // If m_C is not nullptr and m_C_stride>0, then m_C[] can accomodate up to m_P_capacity 
+  // If m_C is not nullptr and m_C_stride>0, then m_C[] can accommodate up to m_P_capacity 
   // elements.
   // Otherwise there is no per vertex false color.
   // Never modify m_C_stride, m_C.
@@ -9661,7 +9661,7 @@ private:
   //
   // Principal curvatures
   //
-  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accomodate up to m_P_capacity 
+  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accommodate up to m_P_capacity 
   // principal curvatures and sectional curvatures (four doubles, k1,k2,sx,sy).
   // Otherwise there are no principal curvatures or sectional curvatures.
   // (sx = sectional curvature in grid "x" direction, sy = sectional curvature in grid "y" direction.)
@@ -9719,7 +9719,7 @@ public:
 
 public:
 
-  // Normalized grid parameters useful for appling a texture to the grid are available
+  // Normalized grid parameters useful for applying a texture to the grid are available
   // from m_grid functions.
   
   // Information to resolve m_P[], m_N[], and m_T[] into a grid of NxN quads.
@@ -9823,7 +9823,7 @@ public:
       allocated with a call to new ON_Mesh().
   Returns:
     If this limit mesh is not empty, an ON_Mesh representation of this limit mesh.
-    Othewise, nullptr.
+    Otherwise, nullptr.
   */
   ON_Mesh* ToMesh(
     ON_Mesh* destination_mesh
@@ -9841,7 +9841,7 @@ public:
       allocated with a call to new ON_Mesh().
   Returns:
     If this limit mesh is not empty, an ON_Mesh representation of this limit mesh.
-    Othewise, nullptr.
+    Otherwise, nullptr.
   */
   ON_Mesh* ToMesh(
     unsigned int mesh_density,
@@ -9862,7 +9862,7 @@ public:
       allocated with a call to new ON_Mesh().
   Returns:
     If this limit mesh is not empty, an ON_Mesh representation of this limit mesh.
-    Othewise, nullptr.
+    Otherwise, nullptr.
   */
   static ON_Mesh* ToMesh(
     class ON_SubDMeshFragmentIterator& frit,
@@ -10112,7 +10112,7 @@ public:
   /*
   Returns:
     True if this component is active in its parent subd or other
-    relevent context.
+    relevant context.
   Remarks:
     When a component is in use, IsActive() = true. 
     If was used and then deleted, IsActive() is false.
@@ -10198,7 +10198,7 @@ public:
     Any code can use Mark() at any time. You cannot assume that
     other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   */
   bool Mark() const;
 
@@ -10211,7 +10211,7 @@ public:
     Any code can use Mark() at any time. You cannot assume that
     other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -10226,7 +10226,7 @@ public:
     Any code can use Mark() at any time. You cannot assume that
     other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -10243,7 +10243,7 @@ public:
     Any code can use Mark() at any time. You cannot assume that
     other functions including const will not change its value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
   Returns:
     Input value of Mark().
   */
@@ -10262,7 +10262,7 @@ public:
     Any code can use MarkBits() at any time. You cannot assume that
     other functions including const will not change their value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state. 
+    components that are in a certain context specific state. 
 
     MarkBits() is used in more complex calculations where the single true/false
     provided by Mark() is not sufficient. Typically MarkBits() is used when
@@ -10282,7 +10282,7 @@ public:
     Any code can use MarkBits() at any time. You cannot assume that
     other functions including const will not change their value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
 
     MarkBits() is used in more complex calculations where the single true/false
     provided by Mark() is not sufficient. Typically MarkBits() is used when
@@ -10306,7 +10306,7 @@ public:
     Any code can use MarkBits() at any time. You cannot assume that
     other functions including const will not change their value.
     It is widely used in many calculations to keep track of sets of
-    components that are in a certain context specfic state.
+    components that are in a certain context specific state.
 
     MarkBits() is used in more complex calculations where the single true/false
     provided by Mark() is not sufficient. Typically MarkBits() is used when
@@ -10344,7 +10344,7 @@ public:
   /*
   Description:
     Clears saved subdivision and limit surface information for this component.
-    Attached components are not modifed.
+    Attached components are not modified.
   */
   void ClearSavedSubdivisionPoint() const;
 
@@ -10382,7 +10382,7 @@ public:
 
   /*
   Returns:
-    True if the subdivision displacment vector is valid and not zero.
+    True if the subdivision displacement vector is valid and not zero.
   */
   bool SubdivisionDisplacementIsNonzero() const;
 
@@ -10524,7 +10524,7 @@ public:
   Returns:
     True if this component is marked as a primary motif component.
   Remarks:
-    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+    You must use ON_SubD SymmetrySet member functions to get symmetry set contents.
   */
   bool IsSymmetrySetPrimaryMotif() const;
 
@@ -10532,7 +10532,7 @@ public:
   Returns:
     True if this component is marked being in a symmetry set.
   Remarks:
-    You must use ON_SubD SymmetrySet memeber functions to get symmetry set contents.
+    You must use ON_SubD SymmetrySet member functions to get symmetry set contents.
   */
   bool InSymmetrySet() const;
 
@@ -10684,7 +10684,7 @@ public:
   /*
   Description:
     Clears saved subdivision and limit surface information for this vertex.
-    Attached edges and faces are not modifed.
+    Attached edges and faces are not modified.
   */
   void ClearSavedSubdivisionPoints() const;  
 
@@ -10891,7 +10891,7 @@ public:
   ///*
   //Description:
   //  Sort the m_edges[] and m_faces[] arrays so radial groups are together.
-  //  After the sorting is completed, m_vertex_edge_order is set to recored
+  //  After the sorting is completed, m_vertex_edge_order is set to recorded
   //  the current sorting state and its value is returned.  
   //  The sorting is done unconditionally.
   //*/
@@ -10938,7 +10938,7 @@ public:
     new_face = [in]
       If new_face is nullptr, old_face is simply removed.
   Returns:
-    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occured is returned.
+    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occurred is returned.
     Otherwise ON_UNSET_UINT_INDEX is returned.
   Remarks:
     No modifications are made to old_face or new_face.
@@ -11027,7 +11027,7 @@ public:
     vei1 - [out]
       If a vertex has exactly two attached edges, each of which has a single attached face,
       then the indices of those edges in the vertex's edge list are returned. 
-      Othewise ON_UNSET_UINT_INDEX is returned.
+      Otherwise ON_UNSET_UINT_INDEX is returned.
   Returns:
     True if the vertex has exactly two attached edges, each of which has a single attached face.
     False otherwise.
@@ -11041,12 +11041,12 @@ public:
   Description:
     A "standard" vertex is one where the standard subdivsion matrix for that vertex
     can be used to calculate the subdivision point. 
-    This function is desinged to be useful for testing and debugging code when
+    This function is designed to be useful for testing and debugging code when
     a certain situation is expected to exist.  It is not used for evaluation
     because it is too slow.
 
   Returns:
-    True if the subdivison point of the vertex can be calulated using the standard
+    True if the subdivison point of the vertex can be calculated using the standard
     subdivion matrix for the vertex type and face count.
 
   Remarks:
@@ -11459,7 +11459,7 @@ public:
   /*
   Description:
     Clears saved subdivision and limit surface information for this edge.
-    Attached vertices and faces are not modifed.
+    Attached vertices and faces are not modified.
   */
   void ClearSavedSubdivisionPoints() const;  
 
@@ -11822,7 +11822,7 @@ public:
     new_face = [in]
       If new_face is nullptr, old_face is simply removed.
   Returns:
-    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occured is returned.
+    If the replacement was successful, then the m_faces[] array index where old_face/new_face replacement occurred is returned.
     Otherwise ON_UNSET_UINT_INDEX is returned.
   Remarks:
     No modifications are made to old_face or new_face.
@@ -12144,7 +12144,7 @@ public:
   /*
   Description:
     Clears saved subdivision and limit surface information for this face.
-    Attached edges and vertices are not modifed.
+    Attached edges and vertices are not modified.
   */
   void ClearSavedSubdivisionPoints() const;
 
@@ -12261,7 +12261,7 @@ private:
   // Packing information is saved in 3dm files.
   unsigned int m_pack_id = 0;
 
-  // Location of this face's pack rectin normaized coordinates
+  // Location of this face's pack rectin normalized coordinates
   // Each face is assigned a unique rectangle in the unit square (0,1)x(0,1). 
   // Groups of quad faces packed together.
   // If faces are added to an existing subd, the pack rects for the entire subd must be recalculated.
@@ -12472,7 +12472,7 @@ public:
       vector from lower left corner to upper right corner.
       Valid deltas have (0 < delta.x, 0 < delta.y, (origin.x+delta.x) <= 1) and (origin.y+delta.y) <= 1.
     packing_rotation_degrees - [in]
-      Valid packing_rotation_degrees are a mulitple of 90.
+      Valid packing_rotation_degrees are a multiple of 90.
   Returns:
     True if the input parameters define a valid pack rectangle.
   */
@@ -12511,7 +12511,7 @@ public:
       vector from lower left corner to upper right corner.
       Valid deltas have (0 < delta.x, 0 < delta.y, (origin.x+delta.x) <= 1) and (origin.y+delta.y) <= 1.
     packing_rotation_degrees - [in]
-      Valid packing_rotation_degrees are a mulitple of 90.
+      Valid packing_rotation_degrees are a multiple of 90.
   Return:
     True if input is valid and the pack rectangle was set.
     False if the input was not vaie and the pack rectangle coordinates were set to nan.
@@ -12525,7 +12525,7 @@ public:
   /*
   Description:
     Calculate how a packing rectangle assigned to an ON_SubDFace will
-    be subdivided into n sub packing rectanges for an ngon when n >= 5.
+    be subdivided into n sub packing rectangles for an ngon when n >= 5.
   Parameters:
     ngon_edge_count - [in]
       >= 5.
@@ -12572,7 +12572,7 @@ private:
   // The application specifies a base ON_Material used to render the subd this face belongs to.
   // If m_material_channel_index > 0 AND face_material_id = base.MaterialChannelIdFromIndex(m_material_channel_index)
   // is not nil, then face_material_id identifies an override rendering material for this face.
-  // Othewise base will be used to render this face.
+  // Otherwise base will be used to render this face.
   mutable unsigned short m_material_channel_index = 0;
 
 public:
@@ -12616,7 +12616,7 @@ private:
   // The application specifies a base ON_Material used to render the subd this face belongs to.
   // If m_material_channel_index > 0 AND face_material_id = base.MaterialChannelIdFromIndex(m_material_channel_index)
   // is not nil, then face_material_id identifies an override rendering material for this face.
-  // Othewise base will be used to render this face.
+  // Otherwise base will be used to render this face.
   mutable ON_Color m_per_face_color = ON_Color::UnsetColor;
 
 public:
@@ -12773,7 +12773,7 @@ public:
 private:
   // If m_texture_points is not nullptr, it has capacity 4 + m_edgex_capacity.
   // Custom texture coordinates are stored in m_texture_points.
-  // When texture coodinates are packed or come from a mapping,
+  // When texture coordinates are packed or come from a mapping,
   // m_texture_points is not used. Typically m_texture_points
   // is used when an ON_SubD is created from an ON_Mesh and the mesh
   // has custom texture coordinates. Here "custom" means
@@ -13325,37 +13325,37 @@ public:
     const class ON_SubDRef& subd_ref
     );
 
-  // Construct and interator that iterates over a single vertex.
+  // Construnt an iterator that iterates over a single vertex.
   ON_SubDVertexIterator(
     const class ON_SubD& subd,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over a single vertex.
+  // Construnt an iterator that iterates over a single vertex.
   ON_SubDVertexIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over the vertices of an edge.
+  // Construnt an iterator that iterates over the vertices of an edge.
   ON_SubDVertexIterator(
     const class ON_SubD& subd,
     const class ON_SubDEdge& edge
     );
 
-  // Construct and interator that iterates over the vertices of an edge.
+  // Construnt an iterator that iterates over the vertices of an edge.
   ON_SubDVertexIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDEdge& edge
     );
 
-  // Construct and interator that iterates over the vertices of a face.
+  // Construnt an iterator that iterates over the vertices of a face.
   ON_SubDVertexIterator(
     const class ON_SubD& subd,
     const class ON_SubDFace& face
     );
 
-  // Construct and interator that iterates over the vertices of a face.
+  // Construnt an iterator that iterates over the vertices of a face.
   ON_SubDVertexIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDFace& face
@@ -13412,7 +13412,7 @@ public:
 
   /*
   Return:
-    Interator index of the current vertex.
+    Iterator index of the current vertex.
   */
   unsigned int CurrentVertexIndex() const
   {
@@ -13588,37 +13588,37 @@ public:
     const class ON_SubDRef& subd_ref
     );
 
-  // Construct and interator that iterates over a single edge.
+  // Construnt an iterator that iterates over a single edge.
   ON_SubDEdgeIterator(
     const class ON_SubD& subd,
     const class ON_SubDEdge& edge
     );
 
-  // Construct and interator that iterates over a single edge.
+  // Construnt an iterator that iterates over a single edge.
   ON_SubDEdgeIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDEdge& edge
     );
 
-  // Construct and interator that iterates over the edges of a vertex.
+  // Construnt an iterator that iterates over the edges of a vertex.
   ON_SubDEdgeIterator(
     const class ON_SubD& subd,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over the edges of a vertex.
+  // Construnt an iterator that iterates over the edges of a vertex.
   ON_SubDEdgeIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over the edges of a face.
+  // Construnt an iterator that iterates over the edges of a face.
   ON_SubDEdgeIterator(
     const class ON_SubD& subd,
     const class ON_SubDFace& face
     );
 
-  // Construct and interator that iterates over the edges of a face.
+  // Construnt an iterator that iterates over the edges of a face.
   ON_SubDEdgeIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDFace& face
@@ -13675,7 +13675,7 @@ public:
 
   /*
   Return:
-    Interator index of the current edge.
+    Iterator index of the current edge.
   */
   unsigned int CurrentEdgeIndex() const
   {
@@ -13851,37 +13851,37 @@ public:
     const class ON_SubDRef& subd_ref
     );
 
-  // Construct and interator that iterates over the single face.
+  // Construnt an iterator that iterates over the single face.
   ON_SubDFaceIterator(
     const class ON_SubD& subd,
     const class ON_SubDFace& face
     );
 
-  // Construct and interator that iterates over the single face.
+  // Construnt an iterator that iterates over the single face.
   ON_SubDFaceIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDFace& face
     );
 
-  // Construct and interator that iterates over the faces of a vertex.
+  // Construnt an iterator that iterates over the faces of a vertex.
   ON_SubDFaceIterator(
     const class ON_SubD& subd,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over the faces of a vertex.
+  // Construnt an iterator that iterates over the faces of a vertex.
   ON_SubDFaceIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDVertex& vertex
     );
 
-  // Construct and interator that iterates over the faces of an edge.
+  // Construnt an iterator that iterates over the faces of an edge.
   ON_SubDFaceIterator(
     const class ON_SubD& subd,
     const class ON_SubDEdge& edge
     );
 
-  // Construct and interator that iterates over the faces of an edge.
+  // Construnt an iterator that iterates over the faces of an edge.
   ON_SubDFaceIterator(
     const class ON_SubDRef& subd_ref,
     const class ON_SubDEdge& edge
@@ -13938,7 +13938,7 @@ public:
 
   /*
   Return:
-    Interator index of the current face.
+    Iterator index of the current face.
   */
   unsigned int CurrentFaceIndex() const
   {
@@ -13960,7 +13960,7 @@ public:
 
   /*
   Description:
-    Returns the next face and incrments the iterator.
+    Returns the next face and increments the iterator.
   Returns:
     Next face.
   Remarks:
@@ -14174,7 +14174,7 @@ public:
 
   /*
   Description:
-    Returns the next component and incrments the iterator.
+    Returns the next component and increments the iterator.
   Returns:
     Next component.
   Remarks:
@@ -14924,7 +14924,7 @@ public:
     ///<summary>The option is not set.</summary>
     Unset = 0,
 
-    ///<summary>No convex coners.</summary>
+    ///<summary>No convex corners.</summary>
     None = 1,
 
     ///<summary>A convex subd corner will appear at input mesh boundary vertices 
@@ -15028,7 +15028,7 @@ public:
     ///<summary>The option is not set.</summary>
     Unset = 0,
 
-    ///<summary>No concave coners. In general, this is the best choice.</summary>
+    ///<summary>No concave corners. In general, this is the best choice.</summary>
     None = 1,
 
     ///<summary>A concave subd corner will appear at input mesh boundary vertices 
@@ -15151,14 +15151,14 @@ public:
   //
 #pragma region RH_C_SHARED_ENUM [ON_SubDFromMeshParameters::TextureCoordinatesOption] [Rhino.Geometry.SubDCreationOptions.TextureCoordinateOption] [nested:byte]
   /// <summary>
-  /// Specifies how texture coordinate information is transfered from the mesh to the SubD.
+  /// Specifies how texture coordinate information is transferred from the mesh to the SubD.
   /// </summary>
   enum class TextureCoordinatesOption : unsigned char
   {
     ///<summary>The option is not set.</summary>
     Unset = 0,
 
-    ///<summary>No texture coordianate information is transfered from the mesh.</summary>
+    ///<summary>No texture coordianate information is transferred from the mesh.</summary>
     None = 1,
 
     ///<summary>
@@ -15169,7 +15169,7 @@ public:
     Automatic = 2,
 
     ///<summary>
-    /// No texture coordianate information is transfered from the mesh.
+    /// No texture coordianate information is transferred from the mesh.
     /// The SubD faces are packed.
     ///</summary>
     Packed = 3,
@@ -15182,7 +15182,7 @@ public:
 
     ///<summary>
     /// If a mesh has custom texture coordinates, the custom texture coordinates 
-    /// are transfered to the SubD. This requires more memory resources, 
+    /// are transferred to the SubD. This requires more memory resources, 
     /// slows subdivision evaluation, often produces unattractive
     /// results on n-gons, and distorts the texture when comes from a common mapping
     /// technique, like planar. This option may be useful when the mesh contains only 
@@ -15448,7 +15448,7 @@ public:
 
   /*
   Description:
-    Expert user function to transfer managment of an ON_SubDComponentRef on the heap
+    Expert user function to transfer management of an ON_SubDComponentRef on the heap
     to this class.
   */
   const ON_SubDComponentRef& AppendForExperts(ON_SubDComponentRef*& ref);
@@ -15456,7 +15456,7 @@ public:
   /*
   Description:
     Expert user function to append a ON_SubDComponentRef to the identified component.
-    The expert user is responsible for insuring subd exists fot the lifetime of this
+    The expert user is responsible for insuring subd exists for the lifetime of this
     class.
   */
   const ON_SubDComponentRef& AppendForExperts(
@@ -15500,7 +15500,7 @@ public:
 
   /*
   Returns:
-    If the list is clean, the number of subd objects in the list. Mutiple components can belong to the same SubD.
+    If the list is clean, the number of subd objects in the list. Multiple components can belong to the same SubD.
     If the list is not clean, 0.
   Remarks:
     Use Clean() to get a clean list.
@@ -15629,7 +15629,7 @@ public:
     B - [in]
   Returns:
     A pick point for the component the user was most likely aiming at
-    with distance and depth settings that will lead to conistent improvment
+    with distance and depth settings that will lead to conistent improvement
     if more than two points are being compared.
   */
   static const ON_SubDComponentPoint BestPickPoint(
@@ -15756,7 +15756,7 @@ public:
   // algorithm.
   //
   // If If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
-  // listed above are satisified except 
+  // listed above are satisfied except 
   // E[0] and E[N-1] are tagged as crease edges, 
   // P[0] and P[N-1] are tagged as crease vertices (NOT corners), 
   // and there are N-2 faces,
@@ -15796,9 +15796,9 @@ public:
   // V1 = m_L1[0]*vertexR[0] + ... + m_L1[R-1]*vertexR[R-1].
   // V2 = m_L2[0]*vertexR[0] + ... + m_L2[R-1]*vertexR[R-1].
   // span the tangent plane and 
-  // N = V1 x V2 is perpindicular to the limit tangent plane.
+  // N = V1 x V2 is perpendicular to the limit tangent plane.
   // In general and almost always in practice, V1 and V2 are not unit vectors
-  // and it is best to noramalize V1 and V2 before taking the cross product.
+  // and it is best to normalize V1 and V2 before taking the cross product.
   // m_L1 and m_L2 are subdominant eigenvectors of Transpose(m_S).
   // When the subdominant eigenvalue has geometric multiplicity 2, 
   // m_L1 and m_L2 span the same space as m_E1 and m_E2. 
@@ -16337,7 +16337,7 @@ public:
       ON_ChainDirection::Previous or ON_ChainDirection::Next.
       The search direction is relative to this->EdgeDirection().
     chain_type - [in]
-      Determines what edge/vertex tag conditions must be satisified by the neighbor.
+      Determines what edge/vertex tag conditions must be satisfied by the neighbor.
   Returns:
     The next or previous edge in the chain if it exists.
     Otherwise, nullptr is returned.
@@ -16361,7 +16361,7 @@ public:
       ON_ChainDirection::Previous or ON_ChainDirection::Next.
       The search direction is relative to this->EdgeDirection().
     chain_type - [in]
-      Determines what edge/vertex tag conditions must be satisified by the neighbor.
+      Determines what edge/vertex tag conditions must be satisfied by the neighbor.
     bEnableStatusCheck - [in]
     status_pass - [in]
     status_fail - [in]
@@ -16969,7 +16969,7 @@ public:
 
   /*
   Description:
-    CLears the refernce to the SubD and removes all RTree nodes.
+    CLears the reference to the SubD and removes all RTree nodes.
   */
   void Clear();
 
@@ -16994,7 +16994,7 @@ public:
   /*
   Parameters:
     bMarkFilter - [in]
-      Vertices with Mark = bMarkFilter are eligable to be found.
+      Vertices with Mark = bMarkFilter are eligible to be found.
       Vertices with Mark != bMarkFilter are ignored.
   */
   static const ON_SubDRTreeVertexFinder Create(const ON_3dPoint P, bool bMarkFilter);
@@ -17004,7 +17004,7 @@ public:
   double m_distance = ON_DBL_QNAN;
   const ON_SubDVertex* m_v = nullptr;
 
-  // When m_bMarkFilterEnabled is true, then vertices with Mark() == m_bMarkFilter are eligable
+  // When m_bMarkFilterEnabled is true, then vertices with Mark() == m_bMarkFilter are eligible
   // to be found and vertices with Mark() != m_bMarkFilter are ignored.
   bool m_bMarkFilterEnabled = false;
   bool m_bMarkFilter = false;

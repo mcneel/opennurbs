@@ -431,8 +431,8 @@ bool ON_PolyEdgeCurve::IsClosed(void) const
   if ( !rc && SegmentCount() > 1 )
   {
     // Since the segments that make up a ON_PolyEdgeCurve
-    // cannot have their ends matched (becuase the curves
-    // belong to objects alread in the rhino model), 
+    // cannot have their ends matched (because the curves
+    // belong to objects already in the rhino model), 
     // the IsClosed() test has to tolerate larger gaps
     // in brep topology.
     //

@@ -100,10 +100,10 @@ static int ON__isnand(const double* x)
     }
     else
     {
-      // This sitation is not handled by this algorithm
+      // This situation is not handled by this algorithm
       // and that is a bug in the algorithm.
       ON_ERROR("Unexpected bit pattern in double 2.0.");
-      // assum little endian doubles
+      // assume little endian doubles
       b7 = 7;
       b6 = 6;
     }
@@ -175,7 +175,7 @@ static int ON__isnanf(const float* x)
     }
     else
     {
-      // This sitation is not handled by this algorithm
+      // This situation is not handled by this algorithm
       // and that is a bug in the algorithm.
       ON_ERROR("Unexpected bit pattern in float 2.0f.");
       // assume little endian floats
@@ -258,7 +258,7 @@ void ON_DBL_SNAN( double* x)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in double 2.0.");
     i7 = 0;
@@ -286,7 +286,7 @@ void ON_DBL_SNAN( double* x)
 
 
   // must use memcpy().  On Intel FPU, assignment using x = u.x 
-  // will set x to qnan and invalid op exception occures.
+  // will set x to qnan and invalid op exception occurs.
   memcpy(x,&u.x,sizeof(*x));
 }
 
@@ -321,7 +321,7 @@ void ON_FLT_SNAN( float* x)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in float 2.0f.");
     memset(&x,0xFF,sizeof(*x));
@@ -342,7 +342,7 @@ void ON_FLT_SNAN( float* x)
 #endif
 
   // must use memcpy().  On Intel FPU, assignment using x = u.x 
-  // will set x to qnan and invalid op exception occures.
+  // will set x to qnan and invalid op exception occurs.
   memcpy(x,&u.x,sizeof(*x));
 }
 
@@ -840,7 +840,7 @@ ON_UUID ON_GetMostRecentClassIdCreateUuid()
 ON_Object* ON_ClassId::Create() const
 {
   // Save the uuid so that Rhino's .NET SDK
-  // can create approprate class.  The C++
+  // can create appropriate class.  The C++
   // opennurbs toolkit never uses this value.
   s_most_recent_class_id_create_uuid = m_uuid;
   return m_create ? m_create() : 0;
@@ -1783,7 +1783,7 @@ bool ON_Object::ThisIsNullptr(
   bool bSilentError
 ) const
 {
-  // CLang warns that these tests may be ommitted because in "well-defined C++ code"
+  // CLang warns that these tests may be omitted because in "well-defined C++ code"
   // they are always false. 
   //
   // Earth to CLang: 

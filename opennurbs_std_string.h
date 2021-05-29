@@ -19,7 +19,7 @@
 
 /*
 When the predecessor of opennurbs was released in 1995, there was
-no robust corss platform support for dynamic string classes.
+no robust cross platform support for dynamic string classes.
 In order to provide robust dynamic string support, openNURBS
 had to implement ON_String and ON_wString.  
 
@@ -110,7 +110,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -126,7 +126,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -149,9 +149,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -241,7 +241,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -257,7 +257,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -280,9 +280,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -358,7 +358,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -374,7 +374,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -397,9 +397,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -480,7 +480,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -496,7 +496,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -519,10 +519,10 @@ Parameters:
     If end_element_index is not null, then *end_element_index is the
     index of the first element in sInputUTF that was not converted. 
 
-    If an error occured and was not masked, then *end_element_index
+    If an error occurred and was not masked, then *end_element_index
     is the index of the element of sInputUTF[] where the conversion
     failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *end_element_index is the number of elements in sInputUTF[] that
     were converted.
 
@@ -615,7 +615,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -631,7 +631,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -654,10 +654,10 @@ Parameters:
     If end_element_index is not null, then *end_element_index is the
     index of the first element in sInputUTF that was not converted. 
 
-    If an error occured and was not masked, then *end_element_index
+    If an error occurred and was not masked, then *end_element_index
     is the index of the element of sInputUTF[] where the conversion
     failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *end_element_index is the number of elements in sInputUTF[] that
     were converted.
 
@@ -738,7 +738,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -754,7 +754,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -777,9 +777,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -874,7 +874,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -890,7 +890,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -913,9 +913,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -996,7 +996,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1012,7 +1012,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1035,9 +1035,9 @@ Parameters:
     If sEndElement is not null, then *sEndElement points to the
     element of sInputUTF[] were conversion stopped.
 
-    If an error occured and was not masked, then *sEndElement points
+    If an error occurred and was not masked, then *sEndElement points
     to the element of sInputUTF[] where the conversion failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *sEndElement = sInputUTF + sInputUTF_count or points to
     the zero terminator in sInputUTF[], depending on the input
     value of sInputUTF_count.
@@ -1118,7 +1118,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1134,7 +1134,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1157,10 +1157,10 @@ Parameters:
     If end_element_index is not null, then *end_element_index is the
     index of the first element in sInputUTF that was not converted. 
 
-    If an error occured and was not masked, then *end_element_index
+    If an error occurred and was not masked, then *end_element_index
     is the index of the element of sInputUTF[] where the conversion
     failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *end_element_index is the number of elements in sInputUTF[] that
     were converted.
 
@@ -1254,7 +1254,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1270,7 +1270,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1293,10 +1293,10 @@ Parameters:
     If end_element_index is not null, then *end_element_index is the
     index of the first element in sInputUTF that was not converted. 
 
-    If an error occured and was not masked, then *end_element_index
+    If an error occurred and was not masked, then *end_element_index
     is the index of the element of sInputUTF[] where the conversion
     failed.  
-    If no errors occured or all errors were masked, then 
+    If no errors occurred or all errors were masked, then 
     *end_element_index is the number of elements in sInputUTF[] that
     were converted.
 

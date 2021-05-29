@@ -109,7 +109,7 @@ public:
   Parameters:
     plane - [in]
       The plane x, y and z axis are used to defines the circle
-      plane's x, y and z axis.  The plane origin is ignorned.
+      plane's x, y and z axis.  The plane origin is ignored.
     center - [in]
       circle's center point
     radius - [in]
@@ -221,7 +221,7 @@ public:
   Parameters:
     plane - [in]
       The plane x, y and z axis are used to defines the circle
-      plane's x, y and z axis.  The plane origin is ignorned.
+      plane's x, y and z axis.  The plane origin is ignored.
     center - [in]
       circle's center point
     radius - [in]

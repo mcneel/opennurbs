@@ -235,7 +235,7 @@ bool ON_wString::IsValid(
     return true;
   for (;;)
   {
-    // These checks attempt to detect cases when the memory used for the header informtion
+    // These checks attempt to detect cases when the memory used for the header information
     // no longer contains valid settings.
     const wchar_t* s = m_s;
     if (nullptr == s)
@@ -296,8 +296,8 @@ bool ON_wString::IsValid(
     {
       // Because the ON_wString m_s[] array can have internal null elements,
       // the length test has to be enabled in situations where it is certain
-      // that we are in the common situation where m_s[] is a single null teminated 
-      // sting and hdr->string_length is the m_s[] index of the null terminator.
+      // that we are in the common situation where m_s[] is a single null terminated 
+      // string and hdr->string_length is the m_s[] index of the null terminator.
       while (s < s1 && 0 != *s)
         s++;
       if (s != s1)
@@ -310,7 +310,7 @@ bool ON_wString::IsValid(
   // prevent imminent and unpredictable crash
   //
   // The empty string is used (as opposed to something like "YIKES - CALL TECH SUPPORT")
-  // becuase anything besides the empty string introduces using heap in a class that
+  // because anything besides the empty string introduces using heap in a class that
   // has been corrupted by some earlier operation.
   const_cast<ON_wString*>(this)->m_s = (wchar_t*)pEmptywString;
   // Devs
@@ -521,7 +521,7 @@ void ON_wString::CopyToArray( int size, const char* s )
       break;
     // s = UTF-8 string.
     // m_s = UTF-8, UTF-16, or UTF-32 encoded string.
-    // Even with errors, the number of wchar_t elments <= UTF-8 length
+    // Even with errors, the number of wchar_t elements <= UTF-8 length
     Header()->string_length = c2w( size, s, Header()->string_capacity, m_s );
     m_s[Header()->string_length] = 0;
     return;

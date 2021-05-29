@@ -3,7 +3,7 @@
 //
 // Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -50,7 +50,7 @@ sorting functions.
 #if defined(ON_SORT_TEMPLATE_USE_SWAP)
 #define Swap(a,b) m_swapfunc(a,b,m_width)
 #else
-// use intrinsic assigment
+// use intrinsic assignment
 #define Swap(a,b) ON_SORT_TEMPLATE_TYPE tmp = *a; *a = *b; *b = tmp
 #endif
 

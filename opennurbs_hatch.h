@@ -255,7 +255,7 @@ public:
     Get the number of gaps + dashes in the line
   Parameters:
   Return:
-    nummber of dashes in the line
+    number of dashes in the line
   */
   int DashCount() const;
 

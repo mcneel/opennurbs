@@ -28,7 +28,7 @@
 #include "opennurbs_internal_V2_annotation.h"
 #include "opennurbs_internal_V5_annotation.h"
 
-// This define is up here so anybody who want's to defeat the
+// This define is up here so anybody who wants to defeat the
 // bozo vaccine has to be doing it on purpose.
 #define BOZO_VACCINE_699FCC4262D4488c9109F1B7A37CE926
 
@@ -884,7 +884,7 @@ bool ON_OBSOLETE_V5_Annotation::Write( ON_BinaryArchive& file ) const
 
     // June 17, 2010 - Lowell - Added adjustment to position text
     // a little better in pre-v5 files.
-    // There's no adjustment for right/left justify becasue we don't 
+    // There's no adjustment for right/left justify because we don't 
     // know the width of the text here
     // This doesn't change the size or position of any fields being
     // written, but just adjusts the plane to tune up the alignment
@@ -945,7 +945,7 @@ bool ON_OBSOLETE_V5_Annotation::Write( ON_BinaryArchive& file ) const
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimRadius:
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter:
       // 9 August 2005 Dale Lear - radial dimensions do
-      // not support user postioned text.  The never have
+      // not support user positioned text.  The never have
       // in Rhino, but the old files had 5 points in them.
       if ( 4 == points.Count() )
       {
@@ -1146,7 +1146,7 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimRadius:
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter:
       // 9 August 2005 Dale Lear - radial dimensions do
-      // not support user postioned text.  The never have
+      // not support user positioned text.  The never have
       // in Rhino, but the old files had 5 points in them.
       if ( 5 == m_points.Count() )
       {
@@ -2110,7 +2110,7 @@ bool ON_OBSOLETE_V5_DimLinear::GetTightBoundingBox(
 int ON_OBSOLETE_V5_DimLinear::Repair()
 {
   // returns 0 = unable to repair
-  //         1 = in perfect condtion
+  //         1 = in perfect condition
   //         2 == repaired.
 
   const int ext0_pt_index   = ON_OBSOLETE_V5_DimLinear::ext0_pt_index;
@@ -3180,7 +3180,7 @@ public:
 
   // offsets from apex of dimension to point from which extension lines start
   // if these are < 0.0, they are ignored
-  // Extension lines are drawn from theses points to the Arrow tip points
+  // Extension lines are drawn from these points to the Arrow tip points
   // subject to dimexe & dimexo & dimse1 & dimse2
   double m_dimpoint_offset[2];
 };

@@ -374,7 +374,7 @@ public:
 
   /////////////////////////////////////////////////////////////////
 
-  ON_Arc m_arc = ON_Arc::UnitCircle; // defualt = radius 1 circle in x-y plane
+  ON_Arc m_arc = ON_Arc::UnitCircle; // default = radius 1 circle in x-y plane
   
   ON_Interval m_t = ON_Interval::ZeroToTwoPi;
 

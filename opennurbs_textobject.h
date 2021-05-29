@@ -106,7 +106,7 @@ public:
   /*
   Description:
   Transform the object by a 4x4 xform matrix and change text height
-  override to accomodate scaling in the transform if necessary
+  override to accommodate scaling in the transform if necessary
   Parameters:
   [in] xform  - An ON_Xform with the transformation information
   Returns:

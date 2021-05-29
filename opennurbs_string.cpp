@@ -107,7 +107,7 @@ bool ON_String::IsValid(
     return true;
   for (;;)
   {
-    // These checks attempt to detect cases when the memory used for the header informtion
+    // These checks attempt to detect cases when the memory used for the header information
     // no longer contains valid settings.
     const char* s = m_s;
     if (nullptr == s)
@@ -168,8 +168,8 @@ bool ON_String::IsValid(
     {
       // Because the ON_wString m_s[] array can have internal null elements,
       // the length test has to be enabled in situations where it is certain
-      // that we are in the common situation where m_s[] is a single null teminated 
-      // sting and hdr->string_length is the m_s[] index of the null terminator.
+      // that we are in the common situation where m_s[] is a single null terminated 
+      // string and hdr->string_length is the m_s[] index of the null terminator.
       while (s < s1 && 0 != *s)
         s++;
       if (s != s1)
@@ -182,7 +182,7 @@ bool ON_String::IsValid(
   // prevent imminent and unpredictable crash
   //
   // The empty string is used (as opposed to something like "YIKES - CALL TECH SUPPORT")
-  // becuase anything besides the empty string introduces using heap in a class that
+  // because anything besides the empty string introduces using heap in a class that
   // has been corrupted by some earlier operation.
   const_cast<ON_String*>(this)->m_s = (char*)pEmptyaString;
   // Devs
@@ -1889,7 +1889,7 @@ bool ON::IsDirectory( const char* utf8pathname )
       rc = true;
     }
 #else
-    // this works on Apple and gcc implentations.
+    // this works on Apple and gcc implementations.
     struct stat buf;
     memset(&buf,0,sizeof(buf));
     int stat_errno = stat( utf8pathname, &buf );

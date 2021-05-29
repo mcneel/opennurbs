@@ -254,7 +254,7 @@ ON_SurfaceProxy::IsIsoparametric( // returns isoparametric status of 2d curve
         const ON_Interval* subdomain
         ) const
 {
-  // this is a virtual overide of an ON_Surface::IsIsoparametric
+  // this is a virtual override of an ON_Surface::IsIsoparametric
 
   const ON_Curve* pC = &crv;
 	ON_Curve* pTranC = nullptr;
@@ -304,7 +304,7 @@ ON_SurfaceProxy::IsIsoparametric( // returns isoparametric status based on bound
         const ON_BoundingBox& box
         ) const
 {	
-  // this is a virtual overide of an ON_Surface::IsIsoparametric
+  // this is a virtual override of an ON_Surface::IsIsoparametric
 	const ON_BoundingBox* pbox = &box;
 	ON_BoundingBox Tbox(	ON_3dPoint( box.m_min[1],box.m_min[0],0.0),
 												ON_3dPoint( box.m_max[1],box.m_max[0],0.0) );

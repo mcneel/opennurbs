@@ -63,7 +63,7 @@ public:
 public:
   /*
   For those times when a location was incorrectly represented by a vector.
-  It is intentional that ther is not an ON_2iPoint constructor from an ON_2iVector.
+  It is intentional that there is not an ON_2iPoint constructor from an ON_2iVector.
   */
   static const ON_2iPoint FromVector(const class ON_2iVector& v);
 
@@ -122,7 +122,7 @@ public:
   
   /*
   For those times when a direction was incorrectly represented by a point.
-  It is intentional that ther is not an ON_2iVector constructor from an ON_2iPoint.
+  It is intentional that there is not an ON_2iVector constructor from an ON_2iPoint.
   */
   static const ON_2iVector FromPoint(const class ON_2iPoint& p);
 

@@ -724,7 +724,7 @@ int ON_DecodeUTF8(
     i0 = 1;
     if ( ON_IsValidUnicodeCodePoint(e->m_error_code_point) )
     {
-      // skip to next UTF-8 start elemement
+      // skip to next UTF-8 start element
       for ( /*empty for initializer*/; i0 < sUTF8_count; i0++ )
       {
         // Search for the next element of sUTF8[] that is the
@@ -793,7 +793,7 @@ int ON_DecodeUTF8(
 
 int ON_EncodeUTF16( ON__UINT32 unicode_code_point, ON__UINT16 sUTF16[2] )
 {
-  // put the most comman case first
+  // put the most common case first
   if ( unicode_code_point < 0xD800 )
   {
     // code point values U+0000 ... U+D7FF
@@ -3169,7 +3169,7 @@ unsigned ON_UnicodeSuperscriptFromCodePoint(
       0x1D3A, // N
       0x1D3C, // O
       0x1D3E, // P
-      0, // Q NOT AVIALABLE
+      0, // Q NOT AVAILABLE
       0x1D3F, // R
       0, // S NOT AVAILABLE
       0x1D40, // T
@@ -3205,7 +3205,7 @@ unsigned ON_UnicodeSuperscriptFromCodePoint(
     }
   }
 
-  // either cp is already a superscript or none is avilable.
+  // either cp is already a superscript or none is available.
   return no_superscript_cp;
 }
 
@@ -3282,7 +3282,7 @@ unsigned ON_UnicodeSubcriptFromCodePoint(
     }
   }
 
-  // either cp is already a subscript or none is avilable.
+  // either cp is already a subscript or none is available.
   return cp;
 }
 

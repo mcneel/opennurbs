@@ -230,13 +230,13 @@ public:
   // Layer definitions in an OpenNURBS model are stored in a layer table.
   // The layer table is conceptually an array of ON_Layer classes.  Every
   // OpenNURBS object in a model is on some layer.  The object's layer
-  // is specified by zero based indicies into the ON_Layer array.
+  // is specified by zero based indices into the ON_Layer array.
   int m_layer_index;
 
   // Linetype definitions in an OpenNURBS model are stored in a linetype table.
   // The linetype table is conceptually an array of ON_Linetype classes.  Every
   // OpenNURBS object in a model references some linetype.  The object's linetype
-  // is specified by zero based indicies into the ON_Linetype array.
+  // is specified by zero based indices into the ON_Linetype array.
   // index 0 is reserved for continuous linetype (no pattern)
   int m_linetype_index;
 
@@ -346,7 +346,7 @@ public:
   // Display order used to force objects to be drawn on top or behind each other
   // 0  = draw object in standard depth buffered order
   // <0 = draw object behind "normal" draw order objects
-  // >0 = draw object on top of "noraml" draw order objects
+  // >0 = draw object on top of "normal" draw order objects
   // Larger number draws on top of smaller number.
   int m_display_order;
 
@@ -467,7 +467,7 @@ public:
     For a given display material id, there can be multiple
     viewports.  If there is a display reference in the
     list with a nil viewport id, then the display material
-    will be used in all viewports that are not explictly
+    will be used in all viewports that are not explicitly
     referenced in other ON_DisplayMaterialRefs.
 
   Parameters:
@@ -574,7 +574,7 @@ public:
 
   /*
   Returns:
-    Number of diplay material refences.
+    Number of display material references.
   */
   int DisplayMaterialRefCount() const;
 

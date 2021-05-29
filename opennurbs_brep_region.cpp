@@ -164,7 +164,7 @@ bool ON_BrepRegionTopology::Transform( const ON_Xform& xform)
 
 bool ON_V5_BrepRegionTopologyUserData::Write(ON_BinaryArchive& binary_archive) const
 {
-  // m_write_region_topology_ptr is never nullptr when this fuction is called
+  // m_write_region_topology_ptr is never nullptr when this function is called
   return 
     (nullptr == m_write_region_topology_ptr)
     ?
@@ -865,7 +865,7 @@ bool ON_BrepRegionTopology::IsValid( ON_TextLog* text_log) const
 
   if ( infinite_region_index < 0 )
   {
-    PRINT_MSG("ON_BrepRegionTopology::m_R[] has no infinte region\n");
+    PRINT_MSG("ON_BrepRegionTopology::m_R[] has no infinite region\n");
     return false;
   }
 
@@ -1053,7 +1053,7 @@ ON_Brep* ON_Brep::SubBrep(
 {
   class LeakStopper : public ON_Workspace
   {
-    // If an error occures during construction,
+    // If an error occurs during construction,
     // this class cleans up sub_brep in an
     // appropriate fashion.
   public:

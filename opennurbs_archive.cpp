@@ -556,7 +556,7 @@ ON_BinaryArchive::eStorageDeviceError ON_BinaryArchive::StorageDeviceErrorFromUn
   ON_ENUM_FROM_UNSIGNED_CASE(ON_BinaryArchive::eStorageDeviceError::UnknownDeviceError);
   }
 
-  ON_ERROR("Invalid storage_device_error_as_unsigned parmeter.");
+  ON_ERROR("Invalid storage_device_error_as_unsigned parameter.");
   return ON_BinaryArchive::eStorageDeviceError::UnknownDeviceError;
 }
 
@@ -741,7 +741,7 @@ bool ON_BinaryArchive::SeekFromStart( ON__UINT64 bytes_from_start )
 
   if (0 != CurrentPosition() )
   {
-    // Internal_SeekToStart() is a pure virutal function that must overridden.
+    // Internal_SeekToStart() is a pure virtual function that must overridden.
     if (!Internal_SeekToStartOverride())
     {
       ON_ERROR("Internal_SeekToStartOverride() failed.");
@@ -769,7 +769,7 @@ bool ON_BinaryArchive::SeekBackward( ON__UINT64 bytes_backward )
 
 bool ON_BinaryArchive::Internal_SeekCur( bool bForward, ON__UINT64 offset )
 {
-  // Internal_SeekFromCurrentPosition() is a pure virutal function that must overridden. 
+  // Internal_SeekFromCurrentPosition() is a pure virtual function that must overridden. 
   // Some implementations may use signed 4 byte int in critical places.
   // SeekForward() will work correctly in this worst case situation.
   if (UnsetMode())
@@ -2616,7 +2616,7 @@ bool ON_BinaryArchive::ReadLinetypeSegment(ON_LinetypeSegment& seg)
   bool rc = ReadDouble(&seg.m_length);
   if (rc)
   {
-    // ON_LinetypeSegment::eSegType::Unset was not added initialy, so juggling values is required for
+    // ON_LinetypeSegment::eSegType::Unset was not added initially, so juggling values is required for
     // Unset, stLine and stSpace.  Any future values with work without
     // juggling.
     unsigned int i = 0;
@@ -2645,7 +2645,7 @@ bool ON_BinaryArchive::WriteLinetypeSegment( const ON_LinetypeSegment& seg)
   bool rc = WriteDouble(seg.m_length);
   if (rc)
   {
-    // ON_LinetypeSegment::eSegType::Unset was not added initialy, so juggling values is required for
+    // ON_LinetypeSegment::eSegType::Unset was not added initially, so juggling values is required for
     // Unset, stLine and stSpace.  Any future values with work without
     // juggling.
     unsigned int i;
@@ -2724,7 +2724,7 @@ bool ON_BinaryArchive::WriteBool( bool b )
 
 bool ON_BinaryArchive::WriteBoolTrue()
 {
-  // true is saved a a singel byte with value = 1.
+  // true is saved a a single byte with value = 1.
   const unsigned char c = 1;
   return WriteChar(c);
 }
@@ -3631,7 +3631,7 @@ bool ON_BinaryArchive::ReadWideString(
       }
       else if (chunk_byte_count > 0)
       {
-        // This should never happend and is probably a bug.
+        // This should never happened and is probably a bug.
         // If it occurs due to invalid input, describe the situation
         // in this comment.
         ON_ERROR("char buffer reading stalled.");
@@ -3665,7 +3665,7 @@ bool ON_BinaryArchive::ReadWideString(
           }
           if (c < 0 || c > 127)
           {
-            // 512 bytes of with the hight bit set is not what was written and it cannot be an "overly long" UTF-8 encoding.
+            // 512 bytes of with the height bit set is not what was written and it cannot be an "overly long" UTF-8 encoding.
             // The arcive contents have been damaged.
             ON_ERROR("archive contents damaged.");
             break;
@@ -4889,7 +4889,7 @@ bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
           {
             // 22 January 2004 Dale Lear
             //   Disable crc checking when writing the
-            //   unknow user data block.
+            //   unknown user data block.
             //   This has to be done so we don't get an extra
             //   32 bit CRC calculated on the block that
             //   ON_UnknownUserData::Write() writes.  The
@@ -5076,7 +5076,7 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
         }
         if ( nullptr != pID && uuid != pID->Uuid() )
         {
-          ON_ERROR("ON_BinaryArchive::ReadObject() - uuid does not match intput pObject's class id.");
+          ON_ERROR("ON_BinaryArchive::ReadObject() - uuid does not match input pObject's class id.");
           pID = 0;
           rc = 2;
           break;
@@ -5091,7 +5091,7 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
       {
         // If you get here and you are not calling ON::Begin() at some point in your
         // executable, then call ON::Begin() to force all class definition to be linked.
-        // If you are callig ON::Begin(), then either the uuid is garbage or you are 
+        // If you are calling ON::Begin(), then either the uuid is garbage or you are 
         // attempting to read an object with old code.
         // Visit http://www.opennurbs.org to get the latest OpenNURBS code.
         ON_WARNING("ON_BinaryArchive::ReadObject() ON_ClassId::ClassId(uuid) returned nullptr.");
@@ -5439,7 +5439,7 @@ bool ON_BinaryArchive::ReadObjectUserData( ON_Object& object )
   {
     // Note:
     //  The destructor ~ON_ReadChunkHelper() may set bChunkReadSuccess
-    //  An example of this case occures when reading the corrupt file
+    //  An example of this case occurs when reading the corrupt file
     //  attached to bug report RH-22547.
     ON_ReadChunkHelper ch(*this,bChunkReadSuccess);
     if ( !bChunkReadSuccess )
@@ -5461,7 +5461,7 @@ bool ON_BinaryArchive::ReadObjectUserData( ON_Object& object )
         // A short TCODE_OPENNURBS_CLASS_END chunk marks the end of the opennurbs class
         // Checking for zero here fixes RH-22547 which was a report of Rescue3dm taking
         // hours to read a damaged file that was filled with large blocks of zeros 
-        // caused by some form of storage media or tranmission corruption.
+        // caused by some form of storage media or transmission corruption.
         rc = false; // there should never be a typecode of zero.
         break;
       }
@@ -5725,7 +5725,7 @@ bool ON_BinaryArchive::BeginWrite3dmChunk( unsigned int typecode, int value )
     }
     else
     {
-      // treat value paramter is a signed int
+      // treat value parameter is a signed int
       value64 = value;
     }
   }
@@ -9526,7 +9526,7 @@ bool ON_BinaryArchive::FindMisplacedTable(
         continue;
 
       length_of_user_uuid_and_header = buffer - buffer0;
-      // At this point we should be postioned at the table_record_tcode = TCODE_USER_RECORD chunk
+      // At this point we should be positioned at the table_record_tcode = TCODE_USER_RECORD chunk
     }
 
     // see if the start of the buffer contains the 4 byte typecode value = table_record_tcode.
@@ -12122,7 +12122,7 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
                          ON__3dmV1_XDATA* xdata
                          )
 {
-  // Check ReadV1Material() if you fix any bugs in the mateial related items
+  // Check ReadV1Material() if you fix any bugs in the material related items
 
   if ( 0 != xdata )
   {
@@ -12528,7 +12528,7 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
           break;
         if ( !EndRead3dmChunk() )
           break;
-        // attributes and material informtion follow the TCODE_COMPRESSED_MESH_GEOMETRY chunk
+        // attributes and material information follow the TCODE_COMPRESSED_MESH_GEOMETRY chunk
         if ( !Read3dmV1AttributesOrMaterial( nullptr, &material, bHaveMat, TCODE_ENDOFTABLE ) )
           rc = -1;
         // if appropriate, rc will get set to +1 below
@@ -16449,7 +16449,7 @@ bool ON_BinaryArchive::MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 size
     return true;
   }
 
-  return false; // parial read not permitted at this time.
+  return false; // partial read not permitted at this time.
 }
 
 ON__UINT64 ON_BinaryArchive::ReadBuffer( ON__UINT64 sizeof_buffer, void* buffer )
@@ -16605,7 +16605,7 @@ size_t ON_BinaryArchive::Read( size_t count, void* p )
         }
         else if ( false == MaskReadError(count,readcount) )
         {
-          // error occured
+          // error occurred
           SetStorageDeviceError(ON_BinaryArchive::eStorageDeviceError::ReadFailed);
           ON_ERROR("Internal_ReadOverride(count, p) failed.");
         }
@@ -16918,7 +16918,7 @@ bool ON_BinaryFile::Internal_SeekFromCurrentPositionOverride( int offset )
   // I could not reproduce these 100x slow saves in testing on McNeel's
   // network but we have a good quality network and a server that's
   // properly tuned.  My guess is that the slow saves are happening
-  // on servers that do a poor job of cacheing because they are starved
+  // on servers that do a poor job of caching because they are starved
   // for memory and/or heavily used at the time of the save.
   //
   // To speed up network saves, ON_BinaryFile can optionally use

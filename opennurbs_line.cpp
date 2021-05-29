@@ -583,7 +583,7 @@ ON_Triangle::ON_Triangle(const ON_3dPoint & a, const ON_3dPoint & b, const ON_3d
 
 ON_Triangle::ON_Triangle(double x)
 {
-	// Note this constructor overload is usefull so that ON_Triangle(0) doesn't
+	// Note this constructor overload is useful so that ON_Triangle(0) doesn't
 	// get interpreted as ON_Triangle(nullptr)
 	ON_3dPoint p(x, x, x);
 	m_V[0] = m_V[1] = m_V[2] = p;
@@ -703,7 +703,7 @@ ON_Line ON_Triangle::Edge(int i) const
 
 ON_3dVector ON_Triangle::Normal() const
 {
-	int i0 = 0; // base vetex for computation s/b opposite longest side
+	int i0 = 0; // base vertex for computation s/b opposite longest side
 									 // too minimize roundoff 
 									 // ( see Kahan https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf).
 	double max_len = -1;

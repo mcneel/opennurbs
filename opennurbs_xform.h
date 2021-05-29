@@ -315,7 +315,7 @@ public:
 		DecomposeAffine(L, T), on the otherhand, may fail for affine transformations if L is not invertible
 		and is more computationally expensive.
 	Returns:
-		True - if sucessfull decomposition
+		True - if successful decomposition
 	*/
 	bool IsAffine() const;
 	bool IsLinear() const;
@@ -420,7 +420,7 @@ public:
     When transforming 3d point and surface or mesh normals
     two different transforms must be used.
     If P_xform transforms the point, then the inverse
-    transpose of P_xform must be used to tranform normal
+    transpose of P_xform must be used to transform normal
     vectors.
   Parameters:
     N_xform - [out]
@@ -656,7 +656,7 @@ public:
   // Parameters:
   //   plane - [in] plane to project to
   // Remarks:
-  //   This transformaton maps a 3d point P to the
+  //   This transformation maps a 3d point P to the
   //   point plane.ClosestPointTo(Q).
   void PlanarProjection(
     const ON_Plane& plane
@@ -858,7 +858,7 @@ Notes:
   //   ways to compute a change of basis transformation.
   //
   // Parameters:
-  //   plane0 - inital plane
+  //   plane0 - initial plane
   //   plane1 - final plane
   //
   // Returns:
@@ -1278,7 +1278,7 @@ public:
   Description:
     The "visible area" is the intersection of the view frustum,
     defined by m_xform, and the clipping region, defined by the
-    m_clip_plane[] array.  These functions determing if some
+    m_clip_plane[] array.  These functions determine if some
     portion of the convex hull of the test points is visible.
   Parameters:
     P - [in] point
@@ -1311,7 +1311,7 @@ public:
 
   /*
   Description:
-    Transform a list of 4d homogenous points while testing
+    Transform a list of 4d homogeneous points while testing
     for visibility.
   Parameters:
     count - [in] number of points
@@ -1322,7 +1322,7 @@ public:
     pflags - [out]
           0 when the point is in the visible region.  
           Otherwise the bits are set to indicate which planes clip the
-          intput point.
+          input point.
           0x01 left of the view frusturm
           0x02 right of the view frustum
           0x04 below the view frustum
@@ -1352,14 +1352,14 @@ public:
 
   /*
   Description:
-    Transform a pont and return the clipping information.
+    Transform a point and return the clipping information.
   Parameters:
     P - [in] point ot transform
     Q - [out] transformed point
   Returns:
     0 when the point is in the visible region.  
     Otherwise the bits are set to indicate which planes clip the
-    intput point.
+    input point.
     0x01 left of the view frusturm
     0x02 right of the view frustum
     0x04 below the view frustum
@@ -1441,7 +1441,7 @@ public:
 
   /*
   Description:
-    Sets point count and aggragate flags falues to zero but does not 
+    Sets point count and aggregate flags falues to zero but does not 
     deallocate the memory buffer.  When an ON_ClippingRegionPoints will be used
     multiple times, it is more efficient to call Clear() between
     uses than calling Destroy().
@@ -1557,7 +1557,7 @@ private:
 
 #pragma region
 /// <summary>
-/// ON_PickType specifies what type of pick is occuring.
+/// ON_PickType specifies what type of pick is occurring.
 /// </summary>
 enum class ON_PickType : unsigned char
 {
@@ -1649,7 +1649,7 @@ public:
   bool Write(ON_BinaryArchive&) const;
 
   /*
-  Descrption:
+  Description:
     Creates a cylindrical localizer.
     If d = distance from the point to the line, 
     then the localizer has the following behavior:
@@ -1667,7 +1667,7 @@ public:
     r0 - [in]
     r1 - [in]
       r0 and r1 are radii that control where the localizer is nonzero.  
-      Both r0 and r1 must be postive and the cannot be equal.  
+      Both r0 and r1 must be positive and the cannot be equal.  
       If 0 < r0 < r1, then the localizer is zero for points 
       inside the cylinder of radius r0 and one for points outside
       the cylinder of radius r1.
@@ -1681,7 +1681,7 @@ public:
   bool CreateCylinderLocalizer( ON_3dPoint P, ON_3dVector D, double r0, double r1 );
 
   /*
-  Descrption:
+  Description:
     Creates a planar localizer.
     If d = signed distance from the point to the plane,
     then the localizer has the following behavior:
@@ -1707,7 +1707,7 @@ public:
   bool CreatePlaneLocalizer( ON_3dPoint P, ON_3dVector N, double h0, double h1 );
 
   /*
-  Descrption:
+  Description:
     Creates a spherical localizer.
     If d = distance from the point to the center of the sphere, 
     then the localizer has the following behavior:
@@ -1724,7 +1724,7 @@ public:
     r0 - [in]
     r1 - [in]
       r0 and r1 are radii that control where the localizer is nonzero.  
-      Both r0 and r1 must be postive and the cannot be equal.  
+      Both r0 and r1 must be positive and the cannot be equal.  
       If 0 < r0 < r1, then the localizer is zero for points 
       inside the cylinder of radius r0 and one for points outside
       the cylinder of radius r1.

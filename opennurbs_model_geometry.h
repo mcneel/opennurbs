@@ -113,13 +113,13 @@ public:
   Parameters:
     bManageGeometry - [in]
       If true, geometry_object was created on the heap using operator new and 
-      the ON_ModelGeometryComponent destructor will delete geometry_object. Othewise
+      the ON_ModelGeometryComponent destructor will delete geometry_object. Otherwise
       the expert caller is carefully managing the geometry_object instance and memory.
     geometry_object - [in]
       ON_Curve, ON_Surface, ON_Brep, ON_Mesh, ON_Light, annotation, detail, ...
     bManageAttributes - [in]
       If true, attributes is nullptr or was created on the heap using operator new
-      and the ON_ModelGeometryComponent destructor will delete attributes. Othewise
+      and the ON_ModelGeometryComponent destructor will delete attributes. Otherwise
       the expert caller is carefully managing the attributes instance and memory.
     attributes - [in]
       nullptr if not available

@@ -61,7 +61,7 @@ static ON__UINT32 MapCodePointOrdinal(
   )
 {
   // Converts ordinal "char" and "wchar_t" element values in the
-  // range 0x00 to maximum_singleton_value to "ingore case" ordinal equivalents.
+  // range 0x00 to maximum_singleton_value to "ignore case" ordinal equivalents.
   // The returned value is always <= input value.
   //
   // This is NOT linguistic and NOT culture invariant.
@@ -493,7 +493,7 @@ static unsigned int OrdinalUnsignedToIgnoreCase(
 {
   // RH-41224
   // map A -> a, ..., Z -> z so underbar is before any "letter".
-  // The preserves the behavoir of Rhino component name sorting
+  // The preserves the behavior of Rhino component name sorting
   // that used "ancient" C runtime ASCII sorts.
   const ON_StringMapOrdinalType map_type
     = ( c <= 0x7A && c >= 0x41 && maximum_singleton_value >= 0x7A )

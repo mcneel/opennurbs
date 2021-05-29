@@ -213,7 +213,7 @@ int main()
   ud->m_my_line.to.Set(1.0,1.0,1.0);
   ud->m_my_string = "my user data";
 
-  // This attaches the user data to point.  When the point is destroied,
+  // This attaches the user data to point.  When the point is destroyed,
   // the user data will be destroyed.  
   //
   point.AttachUserData(ud);

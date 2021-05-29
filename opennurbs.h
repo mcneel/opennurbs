@@ -34,7 +34,7 @@
 
 #include "opennurbs_defines.h"      /* openNURBS defines and enums */
 #include "opennurbs_error.h"        /* error handling */
-#include "opennurbs_memory.h"       /* memory managment (onmalloc(), onrealloc(), onfree(), ...) */
+#include "opennurbs_memory.h"       /* memory management (onmalloc(), onrealloc(), onfree(), ...) */
 #include "opennurbs_rand.h"         /* random number generator */
 #include "opennurbs_crc.h"          /* cyclic redundancy check tool */
 #include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */

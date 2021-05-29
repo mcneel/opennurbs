@@ -465,7 +465,7 @@ public:
 
 #pragma region RH_C_SHARED_ENUM [ON_ScaleValue::ScaleStringFormat] [Rhino.ScaleValue.ScaleStringFormat] [nested:byte]
   /// <summary>
-  /// Specifies prefered formats for automatically
+  /// Specifies preferred formats for automatically
   /// created string descriptions of a scale value.
   /// </summary>
   enum class ScaleStringFormat : unsigned char
@@ -617,7 +617,7 @@ public:
   /*
   Returns:
     A dimensionless scale factor.
-    The word "dimensionless" is critical. Differneces in left and right
+    The word "dimensionless" is critical. Differences in left and right
     side unit systems are accounted for in the returned value.
   Remarks:
     LeftToRightScale() = 1.0/RightToLeftScale()
@@ -648,7 +648,7 @@ public:
   /*
   Returns:
     A dimensionless scale factor.
-    The word "dimensionless" is critical. Differneces in left and right
+    The word "dimensionless" is critical. Differences in left and right
     side unit systems are accounted for in the returned value.
   Remarks:
     RightToLeftScale() = 1.0/LeftToRightScale()

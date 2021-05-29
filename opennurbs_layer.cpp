@@ -1276,7 +1276,7 @@ void ON__LayerExtensions::DeleteViewportSettings(
     {
       delete ud;
       // Set bit 0x01 of ON_Layer::m_extension_bits to prevent
-      // ON_Layer visibilty and color queries from wasting
+      // ON_Layer visibility and color queries from wasting
       // time looking for userdata.
       SetExtensionBit( const_cast<unsigned char*>(layer_m_extension_bits), 0x01 );
     }
@@ -1296,7 +1296,7 @@ void ON__LayerExtensions::DeleteViewportSettings(
       {
         delete ud;
         // Set bit 0x01 of ON_Layer::m_extension_bits to prevent
-        // ON_Layer visibilty and color queries from wasting
+        // ON_Layer visibility and color queries from wasting
         // time looking for userdata.
         SetExtensionBit( const_cast<unsigned char*>(layer_m_extension_bits), 0x01 );
       }
@@ -1530,7 +1530,7 @@ void ON_Layer::SetPerViewportPersistentVisibility( ON_UUID viewport_id, bool bVi
   if ( ON_UuidIsNotNil(viewport_id) )
   {
     bool bCreate = false; // This "false" is correct because the per viewport visibility
-                          // setting needs to be in existance for this call to make any
+                          // setting needs to be in existence for this call to make any
                           // sense in the first place.
     ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, bCreate );
     if (vp_settings )
@@ -1555,7 +1555,7 @@ void ON_Layer::UnsetPerViewportPersistentVisibility( ON_UUID viewport_id )
   else
   {
     bool bCreate = false; // This "false" is correct because the per viewport visibility
-                          // setting needs to be in existance for this call to make any
+                          // setting needs to be in existence for this call to make any
                           // sense in the first place.
     ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, bCreate );
     if (vp_settings )

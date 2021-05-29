@@ -43,7 +43,7 @@ public:
   /*
   Description:
     Update runtime layer color visibility, locked, ... settings in the
-    layer table read from a refence file to the values to use in the
+    layer table read from a reference file to the values to use in the
     runtime model.
     This is typically done right after the reference file layer table is
     read and before the layers are added to the runtime model.
@@ -151,7 +151,7 @@ public:
 
   // IDEF_UPDATE_TYPE lists the possible relationships between
   // the instance definition geometry and the archive 
-  // (m_source_archive) containing the original defition.
+  // (m_source_archive) containing the original definition.
   enum class IDEF_UPDATE_TYPE : unsigned int
   {
     Unset = 0,
@@ -164,13 +164,13 @@ public:
     //embedded_def = 1,
     //  // As of 7 February, "static_def" and "embedded_def" 
     //  // and shall be treated the same. Using "static_def"
-    //  // is prefered and "embedded_def" is obsolete.
+    //  // is preferred and "embedded_def" is obsolete.
     //  // The geometry for the instance definition
     //  // is saved in archives, is fixed and has no
     //  // connection to a source archive.
     //  // All source archive information should be
     //  // empty strings and m_source_archive_checksum
-    //  // shoule be "zero".
+    //  // should be "zero".
     //linked_and_embedded_def = 2,
     //  // The geometry for the instance definition
     //  // is saved in archives.  Complete source
@@ -198,7 +198,7 @@ public:
     unsigned int idef_type_as_unsigned
     );
 
-  // Bits that identify subsets of the instance defintion
+  // Bits that identify subsets of the instance definition
   // fields. These bits are used to determine which fields to
   // set when an ON_InstanceDefinition class is used to
   // modify an existing instance definition.
@@ -466,7 +466,7 @@ public:
 
   /*
   Description:
-    This property applies when an instance definiton is linked.
+    This property applies when an instance definition is linked.
   Returns:
     true:
       When reading the file that defines the content of the linked instance definition,
@@ -501,7 +501,7 @@ private:
   //  To avoid having to deal with this obsolete type in
   //  your code, using ON_InstanceDefintion::IdefUpdateType()
   //  to get this value.  The IdefUpdateType() function
-  //  with convert the obsolte value to the correct
+  //  with convert the obsolete value to the correct
   //  value.
   ON_InstanceDefinition::IDEF_UPDATE_TYPE m_idef_update_type = ON_InstanceDefinition::IDEF_UPDATE_TYPE::Static; 
 
@@ -535,7 +535,7 @@ public:
   
   /// <summary>
   /// ON_InstanceDefinition::LinkedComponentStates specifies how model components
-  /// (layers, materials, dimension styles, ...) from linked instance defintion files
+  /// (layers, materials, dimension styles, ...) from linked instance definition files
   /// are appear in the active model.
   /// </summary>  
   enum class eLinkedComponentAppearance : unsigned char
@@ -585,7 +585,7 @@ public:
 
   /*
   Returns:
-    A SHA-1 hash of these instance defintions properties:   
+    A SHA-1 hash of these instance definitions properties:   
 
     InstanceGeometryIdList()
     BoundingBox()
@@ -598,7 +598,7 @@ public:
 
   /*
   Returns:
-    A SHA-1 hash of these instance defintions properties
+    A SHA-1 hash of these instance definitions properties
     Description()
     URL()
     URL_Tag()
@@ -755,7 +755,7 @@ private:
   // linked instance definition.
   //
   // For example, if 
-  // idefA = linked instance defintion referencing file A.
+  // idefA = linked instance definition referencing file A.
   // idefX = any type of instance definition found in idefA.
   // 
   // iref = model geometry reference to idefX.

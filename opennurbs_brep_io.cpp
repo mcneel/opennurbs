@@ -796,7 +796,7 @@ bool ON_Brep::Write( ON_BinaryArchive& file ) const
     }
     else if (minor_version >= 3)
     {
-      // begin chunk verson 3.3
+      // begin chunk version 3.3
 
       // region topology chunk added
       if (!file.BeginWrite3dmAnonymousChunk(1))
@@ -1056,7 +1056,7 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
         m_is_solid = 0;
       if (rc && minor_version >= 3)
       {
-        // begin chunk verson 3.3
+        // begin chunk version 3.3
 
         // region topology chunk added
         int region_topology_chunk_version = 0;
@@ -1103,8 +1103,8 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
 
   // GBA 3-Sept-20 RH-60112
   // In V6 and earlier bounding boxes of faces were bounding box of underlying surface.
-  // This can result in enourmous boxes which mess up make2d
-  // In V7 bounding boxes use the trim pbox resulting in resonable boxes.
+  // This can result in enormous boxes which mess up make2d
+  // In V7 bounding boxes use the trim pbox resulting in reasonable boxes.
   if (file.Archive3dmVersion() < 70 || file.ArchiveOpenNURBSVersion() < 2382395020)
   {
     if (!m_bbox.IsEmpty())
@@ -1396,7 +1396,7 @@ bool ON_Brep::ReadOld200( ON_BinaryArchive& file, int minor_version )
 
 bool ON_Brep::ReadOld100( ON_BinaryArchive& file )
 {
-  // b-rep was written by old Rhino I/O tookit
+  // b-rep was written by old Rhino I/O toolkit
   int sz, i;
 
   // 2d curve geometry
@@ -1409,7 +1409,7 @@ bool ON_Brep::ReadOld100( ON_BinaryArchive& file )
     m_C2.Append( Read100_BrepCurve( file ) );
   }
 
-  // 3d curve geomery
+  // 3d curve geometry
   file.ReadInt( &sz );
   if ( sz < 1 ) {
     return false;
@@ -1612,13 +1612,13 @@ bool ON_Brep::ReadOld101( ON_BinaryArchive& file )
 
 ON_Curve* ON_Brep::Read100_BrepCurve( ON_BinaryArchive& ) const
 {
-  // TODO - look at old Rhino I/O tookit code and read b-rep curves
+  // TODO - look at old Rhino I/O toolkit code and read b-rep curves
   return nullptr;
 }
 
 ON_Surface* ON_Brep::Read100_BrepSurface( ON_BinaryArchive& ) const
 {
-  // TODO - look at old Rhino I/O tookit code and read b-rep surfaces
+  // TODO - look at old Rhino I/O toolkit code and read b-rep surfaces
   return nullptr;
 }
 

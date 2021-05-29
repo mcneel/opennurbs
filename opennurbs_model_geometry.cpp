@@ -130,7 +130,7 @@ ON_ModelGeometryComponent::ON_ModelGeometryComponent( ON_ModelComponent::Type ty
 
 ON_ModelGeometryComponent::~ON_ModelGeometryComponent()
 {
-  // This destructor is explictily implemented to insure m_geometry_sp 
+  // This destructor is explicitly implemented to insure m_geometry_sp 
   // and m_attributes_sp are destroyed by the same c-runtime
   // that creates them.
 }

@@ -2279,8 +2279,8 @@ bool ON_DimStyle::Write(
     else
     {
       // ON_ModelComponent::Type::TextStyle, Index() are not  mistakes.
-      // The code in Write3dmReferencedComponentIndex() will convert the dim style index to an approprate
-      // value tht depends on the version ofr 3dm archive (<= V5 or >= V6) being saved.
+      // The code in Write3dmReferencedComponentIndex() will convert the dim style index to an appropriate
+      // value that depends on the version ofr 3dm archive (<= V5 or >= V6) being saved.
       if (!file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::TextStyle, Index())) break;
     }
 
@@ -3804,7 +3804,7 @@ double ON_DimStyle::TextAdvanceOfCodePoint(unsigned unicode_code_point) const
 
 double ON_DimStyle::TextWidthOfEmSpace() const
 {
-  // This is the fundemental WidthOfXSpace() function. 
+  // This is the fundamental WidthOfXSpace() function. 
   // Other WidthOfXSpace() functions call TextWidthOfEmSpace() when TextAdvanceOfCodePoint(obvious code point) fails.
   // This function may only call TextAdvanceOfCodePoint() and TextHeight().
   double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_EmSpace);
@@ -4550,7 +4550,7 @@ void ON_DimStyle::SetLeaderContentAngleRadians(double angle_radians)
     return;
   }
   
-  // positive value so commpare function will work as expected.
+  // positive value so compare function will work as expected.
   while (angle_radians < 0.0)
     angle_radians += 2.0*ON_PI;
   while (angle_radians >= 2.0*ON_PI)
@@ -4686,9 +4686,9 @@ ON::LengthUnitSystem ON_DimStyle::UnitSystem() const
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
 
   // It is critical that this function never return Unset or CustomUnits.
   // returning None insures unknown scal values are 1 instead of ON_DBL_QNAN
@@ -4715,9 +4715,9 @@ void ON_DimStyle::SetUnitSystem(ON::LengthUnitSystem us)
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   if (ON::LengthUnitSystem::CustomUnits == us || ON::LengthUnitSystem::Unset == us)
   {
     ON_ERROR("Annotation styles cannot have unset or custom length units.");
@@ -4754,9 +4754,9 @@ void ON_DimStyle::SetUnitSystemFromContext(
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
 
 
   ON::LengthUnitSystem dim_style_units = ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(UnitSystem()));
@@ -5730,7 +5730,7 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
       break;
     case ON_DimStyle::field::TextMask:
       // SPECIAL CASE
-      // The TextMask values are all modifed individually by the cases for
+      // The TextMask values are all modified individually by the cases for
       // ON_DimStyle::field::DrawMask:
       // ON_DimStyle::field::MaskColorSource:
       // ON_DimStyle::field::MaskColor:

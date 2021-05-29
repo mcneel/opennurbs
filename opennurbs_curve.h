@@ -376,7 +376,7 @@ public:
       at the start of the G2 curve segment that was
       tested.
   Returns:
-    True if the paramter t is on a arc segment of the curve.
+    True if the parameter t is on a arc segment of the curve.
   */
   bool IsArcAt( 
     double t, 
@@ -470,7 +470,7 @@ public:
               possible to repeatedly call GetNextDiscontinuity
               and step through the discontinuities.
     t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is 
-              will be ingored unless c is a locus discontinuity
+              will be ignored unless c is a locus discontinuity
               type and t1 is at the start or end of the curve.
     t - [out] if a discontinuity is found, then *t reports the
           parameter at the discontinuity.
@@ -481,7 +481,7 @@ public:
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 
         of 2 means the second derivative or curvature was 
-        discontinuous.  A value of 0 means teh curve is not
+        discontinuous.  A value of 0 means the curve is not
         closed, a locus discontinuity test was applied, and
         t1 is at the start of end of the curve.
         If 'c', the type of continuity to test for 
@@ -576,7 +576,7 @@ public:
   // Returns:
   //   true if curve was reversed.
   // Remarks:
-  //   If reveresed, the domain changes from [a,b] to [-b,-a]
+  //   If reversed, the domain changes from [a,b] to [-b,-a]
   virtual 
   bool Reverse()=0;
 
@@ -860,8 +860,8 @@ public:
     v_stride - [in] (>=Dimension()) stride to use for the v[] array
     v - [out] array of length (der_count+1)*v_stride
         curve(t) is returned in (v[0],...,v[m_dim-1]),
-        curve'(t) is retuned in (v[v_stride],...,v[v_stride+m_dim-1]),
-        curve"(t) is retuned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
+        curve'(t) is returned in (v[v_stride],...,v[v_stride+m_dim-1]),
+        curve"(t) is returned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
         etc.
     side - [in] optional - determines which side to evaluate from
                 =0   default
@@ -1116,7 +1116,7 @@ public:
 
   // Description:
   //   Destroys the runtime curve tree used to speed closest
-  //   point and intersection calcuations.
+  //   point and intersection calculations.
   // Remarks:
   //   If the geometry of the curve is modified in any way,
   //   then call DestroyCurveTree();  The curve tree is 
@@ -1424,9 +1424,9 @@ bool ON_SortCurves(
 
 /*
 Description:
-  Determine the orientaion (counterclockwise or clockwise) of a closed
+  Determine the orientation (counterclockwise or clockwise) of a closed
   planar curve.
-Paramters:
+Parameters:
   curve - [in] simple (no self intersections) closed planar curve
   xform - [in] Transformation to map the curve to the xy plane. If the
                curve is parallel to the xy plane, you may pass nullptr.
@@ -1445,11 +1445,11 @@ int ON_ClosedCurveOrientation(const ON_Curve& curve, const ON_Plane& plane);
 
 /*
 Description:
-  Get a crude aproximation of the signed area of the region in the 
+  Get a crude approximation of the signed area of the region in the 
   x-y plane traced out by the curve.  This is useful for calculating
   the orientation of projections of loops to planes when you have
   more than one curve.
-Paramters:
+Parameters:
   curve - [in] 
   domain - [in]
     optional sub-domain. (null if entire curve should be used).

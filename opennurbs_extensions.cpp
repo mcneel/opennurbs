@@ -2572,19 +2572,19 @@ bool ONX_Model::IncrementalReadModelGeometry(
     if (static_cast<unsigned int>(previous_table) >= static_cast<unsigned int>(ON_3dmArchiveTableType::object_table))
     {
       // Yokel either read or skipped reading the geometry table.
-      ON_ERROR("Too late to read the geoemtry table.");
+      ON_ERROR("Too late to read the geometry table.");
       return false;
     }
 
     if (false == archive.BeginRead3dmObjectTable())
     {
-      ON_ERROR("Geoemtry table cannot be read from archive.");
+      ON_ERROR("Geometry table cannot be read from archive.");
       return false;
     }
     active_table = archive.Active3dmTable();
     if (active_table != ON_3dmArchiveTableType::object_table)
     {
-      ON_ERROR("Catestrophic geoemtry table reading error.");
+      ON_ERROR("Catestrophic geometry table reading error.");
       return false;
     }
   }  
@@ -2598,7 +2598,7 @@ bool ONX_Model::IncrementalReadModelGeometry(
   ON_3dmArchiveTableStatus object_table_status = archive.Archive3dmTableStatus(ON_3dmArchiveTableType::object_table);
   if (ON_3dmArchiveTableType::object_table != object_table_status.m_table_type)
   {
-    ON_ERROR("Catestrophic geoemtry table reading error.");
+    ON_ERROR("Catestrophic geometry table reading error.");
     return false;
   }
 
@@ -2609,12 +2609,12 @@ bool ONX_Model::IncrementalReadModelGeometry(
     break;
   case ON_3dmArchiveTableStatus::TableState::Finished:
     {
-      ON_ERROR("Geoemtry table has already been read from archive.");
+      ON_ERROR("Geometry table has already been read from archive.");
       return false;
     }
   default:
     {
-      ON_ERROR("Geoemtry table reading error.");
+      ON_ERROR("Geometry table reading error.");
       return false;
     }
   }
@@ -4940,7 +4940,7 @@ void ONX_ModelTest::Internal_ReadTest(
 
     //const unsigned int original_model_3dm_file_version = (unsigned int)(model0->m_3dm_file_version);
 
-    // Write original_model to a termporary archive using "buffer" for storage. 
+    // Write original_model to a temporary archive using "buffer" for storage. 
     ON_Buffer temporary_buffer[2];
     const unsigned int temporary_buffer_3dm_version[2] = { current_3dm_file_version - 10, current_3dm_file_version };
 

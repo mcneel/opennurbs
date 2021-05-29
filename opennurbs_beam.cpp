@@ -2130,7 +2130,7 @@ bool ON_Extrusion::Transform( const ON_Xform& xform )
     // xform maps plane1 to 
 
     // xform 3 maps the transformed 3d profile to the world 3d plane
-    // that is orthoganal to the transformed axis vector.
+    // that is orthogonal to the transformed axis vector.
     xform3.PlanarProjection(plane1);
 
     // xform4 maps the transformed world 3d profile back to the xy plane
@@ -2170,7 +2170,7 @@ bool ON_Extrusion::Transform( const ON_Xform& xform )
     }
   }
 
-  // start transforming informtion here
+  // start transforming information here
   TransformUserData(xform);
 
   // transform path, up, and miter directions
@@ -2969,7 +2969,7 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
       }
       fi.m_face_index = face->m_face_index; 
 
-      // Save vid[] and eid[] informtion so subsequent faces
+      // Save vid[] and eid[] information so subsequent faces
       // are properly joined.
       if ( finfo_index == fi0 )
       {
@@ -3430,7 +3430,7 @@ bool ON_Extrusion::GetSurfaceSize(
     if ( m_profile )
     {
       // A crude over estimate is good enough for file IO 
-      // needs in the public souce code version. When there
+      // needs in the public source code version. When there
       // are multiple profile components, the nurbs_profile_curve
       // will have a whacky control polygon, but it's length will
       // be ok as an estimate.

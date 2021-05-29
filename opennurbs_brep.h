@@ -1195,7 +1195,7 @@ public:
     grid packs, star packs and singleton packs.
     A brep "grid pack" comes from a rectangular grid of subd quads. A grid pack of brep faces can
     be converted into a single larger trivially trimmed brep face.
-    A brep "star pack" of brep faces comes from a singel subd n-gon (n = 3, 5 or more). The star pack
+    A brep "star pack" of brep faces comes from a single subd n-gon (n = 3, 5 or more). The star pack
     will have n faces with a star center vertex and shared edges radiating from  the star center.
     A brep "singleton" pack comes from a single subd quad that could not be grouped into a larger
     subd quad grid pack.
@@ -1226,7 +1226,7 @@ public:
     grid packs, star packs and singleton packs.
     A brep "grid pack" comes from a rectangular grid of subd quads. A grid pack of brep faces can
     be converted into a single larger trivially trimmed brep face.
-    A brep "star pack" of brep faces comes from a singel subd n-gon (n = 3, 5 or more). The star pack
+    A brep "star pack" of brep faces comes from a single subd n-gon (n = 3, 5 or more). The star pack
     will have n faces with a star center vertex and shared edges radiating from  the star center.
     A brep "singleton" pack comes from a single subd quad that could not be grouped into a larger
     subd quad grid pack.
@@ -4125,7 +4125,7 @@ protected:
   
 
 public:
-  // The ON_Brep code increments ON_Brep::ErrorCount everytime something
+  // The ON_Brep code increments ON_Brep::ErrorCount every time something
   // unexpected happens. This is useful for debugging.
   static unsigned int ErrorCount;
 };
@@ -4421,7 +4421,7 @@ Parameters:
   pBrep - [in] if not nullptr, this brep will be used and
                returned.
 Returns:
-  An ON_Brep representation of the trimmed plane with a singe face.
+  An ON_Brep representation of the trimmed plane with a single face.
 See Also:
   ON_Brep::NewPlanarFaceLoop()
 */

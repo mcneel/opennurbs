@@ -25,7 +25,7 @@
 #endif
 
 // Memory utilities used by OpenNURBS.  If you are using
-// custom memory managment, NOTHING in this file needs to
+// custom memory management, NOTHING in this file needs to
 // be changed.
 
 

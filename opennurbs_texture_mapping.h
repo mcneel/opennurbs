@@ -78,7 +78,7 @@ public:
     no_mapping       = 0,
     srfp_mapping     = 1, // u,v = linear transform of surface params,w = 0
     plane_mapping    = 2, // u,v,w = 3d coordinates wrt frame
-    cylinder_mapping = 3, // u,v,w = logitude, height, radius
+    cylinder_mapping = 3, // u,v,w = longitude, height, radius
     sphere_mapping   = 4, // (u,v,w) = longitude,latitude,radius
     box_mapping      = 5,
     mesh_mapping_primitive = 6, // m_mapping_primitive is an ON_Mesh 
@@ -291,7 +291,7 @@ public:
     sphere - [in]  
         sphere in world space used to define a spherical
         coordinate system. The longitude parameter maps
-        (0,2pi) to texture "u" (0,1).  The latitude paramter
+        (0,2pi) to texture "u" (0,1).  The latitude parameter
         maps (-pi/2,+pi/2) to texture "v" (0,1).
         The radial parameter maps (0,r) to texture "w" (0,1).
   Returns:
@@ -313,17 +313,17 @@ public:
        Determines the location of the front and back planes.
        The vector plane.xaxis is perpendicular to these planes
        and they pass through plane.PointAt(dx[0],0,0) and
-       plane.PointAt(dx[1],0,0), respectivly.
+       plane.PointAt(dx[1],0,0), respectively.
     dy - [in]
        Determines the location of the left and right planes.
        The vector plane.yaxis is perpendicular to these planes
        and they pass through plane.PointAt(0,dy[0],0) and
-       plane.PointAt(0,dy[1],0), respectivly.
+       plane.PointAt(0,dy[1],0), respectively.
     dz - [in] 
        Determines the location of the top and bottom planes.
        The vector plane.zaxis is perpendicular to these planes
        and they pass through plane.PointAt(0,0,dz[0]) and
-       plane.PointAt(0,0,dz[1]), respectivly.
+       plane.PointAt(0,0,dz[1]), respectively.
     bIsCapped - [in]
         If true, the box is treated as a finite
         capped box.          
@@ -463,7 +463,7 @@ public:
   Parameters:
     dir - [in] 0 = reverse "u", 1 = reverse "v", 2 = reverse "w".
   Remarks:
-    Modies m_uvw so that the spedified direction transforms
+    Modies m_uvw so that the specified direction transforms
     the texture coordinate t to 1-t.
   Returns:
     True if input is valid.

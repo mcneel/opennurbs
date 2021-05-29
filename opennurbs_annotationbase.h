@@ -408,7 +408,7 @@ public:
   /*
   Returns:
     True if this text position information used to create this text
-    is identical to the text position paramters on dimstyle.
+    is identical to the text position parameters on dimstyle.
   */
   bool EqualTextPositionProperties(
     const class ON_DimStyle* dimstyle
@@ -505,7 +505,7 @@ private:
     Gets the appropriate ON_DimStyle to query for a property value.
   Parameters:
     parent_style - [in]
-      parent style pased to the ON_Annotation query function
+      parent style passed to the ON_Annotation query function
     field_id - [in]
       field being queried - this is used to select between using the override style or the parent style.
   */
@@ -930,7 +930,7 @@ public:
 
 
 /*
-  A simple dot with text that doesn't rotate witn the world axes
+  A simple dot with text that doesn't rotate with the world axes
 */
 class ON_CLASS ON_TextDot : public ON_Geometry
 {

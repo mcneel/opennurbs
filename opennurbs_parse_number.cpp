@@ -988,7 +988,7 @@ static int ON_ParseFunctionHelper(
     if ( f_parameter_capacity < f->m_function_parameter_count )
       break;
 
-    // The angle parameters passed to trig functions alwasy have
+    // The angle parameters passed to trig functions always have
     // an "implicit" angle system of radians. It is intentional that
     // this cannot be changed by parse settings.  The reason is
     // to insure that the same script will create the same values
@@ -1059,7 +1059,7 @@ int ON_ParseNumberExpression(
   )
 {
   // Please discuss changes with Dale Lear.
-  // Do not make this funtion recursive.
+  // Do not make this function recursive.
   // This function support parsing limited arithmetic expressions.
   ON_ParseSettings input_parse_settings(parse_settings);
   
@@ -1790,7 +1790,7 @@ int ON_ParseAngleExpression(
     if ( ON::AngleUnitSystem::None == angle_us )
     {
       // Surveyor's notation implies degrees when no angle unit
-      // is explictly supplied.  This is done because it is
+      // is explicitly supplied.  This is done because it is
       // difficult for many users to enter a degree symbol
       // when typing input and Surveyor's notation is almost
       // always in degrees. [TODO cite reference].

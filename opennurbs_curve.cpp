@@ -587,7 +587,7 @@ bool ON_Curve::IsClosed() const
       //        as the one used in ON_PolyCurve::HasGap().
       // June 2019 - sometime in the past decade ON_PolyCurve::HasGap()
       // changed and the test there is different from this test.
-      // The initial "Note" no longer applies becaue it's no longer
+      // The initial "Note" no longer applies because it's no longer
       // clear why the current ON_PolyCurve::HasGap() was changed.
       if ( ON_PointsAreCoincident( dim, false, a, p ) ) 
       {
@@ -678,7 +678,7 @@ bool ON_Curve::GetNextDiscontinuity(
     {
       // 20 March 2003 Dale Lear:
       //   Have to look for locus discontinuities at ends.
-      //   Must test both ends becuase t0 > t1 is valid input.
+      //   Must test both ends because t0 > t1 is valid input.
       //   In particular, for ON_CurveProxy::GetNextDiscontinuity() 
       //   to work correctly on reversed "real" curves, the 
       //   t0 > t1 must work right.
@@ -1009,7 +1009,7 @@ bool ON_Curve::EvTangent(
   {
     if ( Ev2Der( t, point, D1, D2, side, hint ) )
     {
-      // Use l'Hopital's rule to show that if the unit tanget
+      // Use l'Hopital's rule to show that if the unit tangent
       // exists, the 1rst derivative is zero, and the 2nd
       // derivative is nonzero, then the unit tangent is equal
       // to +/-the unitized 2nd derivative.  The sign is equal
@@ -1880,7 +1880,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
           {
             // 15-June-2020 
             // Remove degenerate and small spans at the end, with out changing the domain 
-            // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invarient).
+            // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invariant).
             DestroyRuntimeCache();
   
             if (knot_tolerance > 0)
@@ -1915,7 +1915,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
           {
             // 15-June-2020 
              // Remove degenerate and small spans at the end, with out changing the domain 
-             // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invarient). 
+             // and trying to maintain parametric curve ( i.e, C: Domain->R^d is invariant). 
             DestroyRuntimeCache();
             if (knot_tolerance > 0)
             {
@@ -2947,7 +2947,7 @@ static void SortCurveEndData(int count, ON_SimpleArray<CurveJoinEndData>& EData,
                              ON_SimpleArray<int>& Singles)
 
 {
-  //sort possiblities by distance
+  //sort possibilities by distance
   JoinEndCompareContext context;
   context.bUseTan = bUseTanAngle;
   context.dot_tol = dot_tol;

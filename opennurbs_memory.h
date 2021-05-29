@@ -64,7 +64,7 @@ class ON_CLASS ON_MemoryAllocationTracking
 {
 public:
   /*
-  Descrption:
+  Description:
     Windows Debug Builds:
       The constructor saves the current state of memory allocation tracking
       and then enables/disables memory allocation tracking.
@@ -76,9 +76,9 @@ public:
   );
 
   /*
-  Descrption:
+  Description:
     Windows Debug Builds:
-      The desctructor restores the saved state of memory allocation tracking.
+      The destructor restores the saved state of memory allocation tracking.
     Otherwise:
       Does nothting.
   */

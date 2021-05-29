@@ -123,7 +123,7 @@ bool ON_CompressStream::In( ON__UINT64 size, const void* uncompressed_buffer )
   bool rc = false;
   ON__UINT32 deflate_output_count;
 
-  // counter prevents infinte loops if there is a bug in zlib return codes.
+  // counter prevents infinite loops if there is a bug in zlib return codes.
   for( int counter = 512; counter > 0; counter-- )
   {
     // Call zlib's deflate function.  It can either process
@@ -138,7 +138,7 @@ bool ON_CompressStream::In( ON__UINT64 size, const void* uncompressed_buffer )
     {
       if ( size <= 0 )
       {
-        // finshed with uncompressed input
+        // finished with uncompressed input
         break;
       }
       // submit a portion of uncompressed_buffer to zlib
@@ -232,7 +232,7 @@ bool ON_CompressStream::End()
   bool rc = false;
   ON__UINT32 deflate_output_count;
 
-  // counter prevents infinte loops if there is a bug in zlib return codes.
+  // counter prevents infinite loops if there is a bug in zlib return codes.
   for( int counter = 512; counter > 0; counter-- )
   {
     // provide storage for compressed stream output
@@ -441,7 +441,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
   bool rc = false;
   ON__UINT32 inflate_output_count;
 
-  // counter prevents infinte loops if there is a bug in zlib return codes.
+  // counter prevents infinite loops if there is a bug in zlib return codes.
   for( int counter = 512; counter > 0; counter-- )
   {
     // Call zlib's inflate function.  It can process
@@ -456,7 +456,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
     {
       if ( size <= 0 )
       {
-        // finshed with compressed input
+        // finished with compressed input
         break;
       }
       // submit a portion of compressed_buffer to zlib
@@ -550,7 +550,7 @@ bool ON_UncompressStream::End()
   bool rc = false;
   ON__UINT32 inflate_output_count;
 
-  // counter prevents infinte loops if there is a bug in zlib return codes.
+  // counter prevents infinite loops if there is a bug in zlib return codes.
   for( int counter = 512; counter > 0; counter-- )
   {
     // provide storage for compressed stream output

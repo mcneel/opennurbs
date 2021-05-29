@@ -1261,7 +1261,7 @@ void ON_TextHash::AppendText(const char* s)
       m_remap_id_list.AddPair(original_id, sequential_id);
     }
 
-    // accumlate string version of sequential_id
+    // accumulate string version of sequential_id
     char sequential_id_str[40];
     ON_UuidToString(sequential_id, sequential_id_str);
     sequential_id_str[36] = 0;

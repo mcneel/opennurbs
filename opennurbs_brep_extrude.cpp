@@ -255,7 +255,7 @@ bool ON_BrepExtrudeHelper_MakeTopLoop(
   // vertex brep.m_V[brep.m_T[bottom_loop.m_ti[lti]].m_vi[0]].
   // Set top_vertex_index[lti] = index of edge above 
   // edge of brep.m_T[bottom_loop.m_ti[lti]].
-  // This informtion is needed for singular and seam trims.
+  // This information is needed for singular and seam trims.
   ON_SimpleArray<int> top_vertex_index(loop_trim_count);
   ON_SimpleArray<int> top_edge_index(loop_trim_count);
   ON_SimpleArray<bool> top_trim_bRev3d(loop_trim_count);

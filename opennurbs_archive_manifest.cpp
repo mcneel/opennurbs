@@ -1771,7 +1771,7 @@ ON_ManifestMapImpl* ON_ManifestMap::Impl()
 
 ON_ManifestMap::ON_ManifestMap() ON_NOEXCEPT
 {
-  // explicity implementation to work around a bug in Apple's CLANG
+  // explicitly implementation to work around a bug in Apple's CLANG
 }
 
 ON_ManifestMap::~ON_ManifestMap()
@@ -2836,7 +2836,7 @@ void ON_ComponentManifestItem::Internal_SetDeletedState(
 ////  // Sort the unsorted portion of item_list[] and shuffle it into the sorted portion.
 ////  // The assumption is that this will be faster that simply sorting the entire list
 ////  // again. For some value of sorted_count and count, this will be true. 
-////  // The threshhold ( m_sorted_count <= 32 || unsorted_count > count/2 )
+////  // The threshold ( m_sorted_count <= 32 || unsorted_count > count/2 )
 ////  // is a guess and needs testing and tuning to be optimal.
 ////  else
 ////  {
@@ -2854,7 +2854,7 @@ void ON_ComponentManifestItem::Internal_SetDeletedState(
 ////
 ////    // shuffle sorted portion of a[] and sorted buffer[] together in order.
 ////    ON_ModelComponentIndexChange* e = a + m_sorted_count - 1;      // e = last element in original sorted array.
-////    ON_ModelComponentIndexChange* f = buffer + m_sorted_count - 1; // f = last element in new sorted bufffer[]
+////    ON_ModelComponentIndexChange* f = buffer + m_sorted_count - 1; // f = last element in new sorted buffer[]
 ////    ON_ModelComponentIndexChange* dst = a + count;
 ////    while(dst-- > a)
 ////    {
@@ -3190,7 +3190,7 @@ const ON_ComponentManifestItem_PRIVATE* ON_ComponentManifestTableIndex::SystemIt
 {
   if (m_bIndexedComponent && sytem_item_index < 0 && sytem_item_index > ON_UNSET_INT_INDEX )
   {
-    // The linked list of system items is alwasy short - hash tables and sorting are a waste of time
+    // The linked list of system items is always short - hash tables and sorting are a waste of time
     for (const ON_ComponentManifestItem_PRIVATE* system_item = m_first_system_item; nullptr != system_item; system_item = system_item->m_next)
     {
       if ( system_item->Index() == sytem_item_index )
@@ -4502,7 +4502,7 @@ const class ON_ComponentManifestItem_PRIVATE* ON_ComponentManifestImpl::Previous
 
 ON_ComponentManifest::ON_ComponentManifest() ON_NOEXCEPT
 {
-  // explicity implementation to work around a bug in Apple's CLANG
+  // explicitly implementation to work around a bug in Apple's CLANG
 }
 
 ON_ComponentManifest::~ON_ComponentManifest()

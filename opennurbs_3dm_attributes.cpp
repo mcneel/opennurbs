@@ -1037,7 +1037,7 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
     // When mat_source is not (ON::object_material_source::material_from_object. This causes the
     // 3dm content to vary in a way that content hashing must ignore. The sample file
     // C:\dev\github\mcneel\rhino\src4\opennurbs\example_files\V5\v5_teacup.3dm is an example.
-    // It's old enough that it contians material index values >= 0 that are not saved
+    // It's old enough that it contains material index values >= 0 that are not saved
     // by SaveAs V5 writing code since circa 2010 or earlier.
     dump.Print("object material index = %d\n", m_material_index);
   }

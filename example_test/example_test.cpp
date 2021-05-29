@@ -2,7 +2,7 @@
 //
 // Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -133,7 +133,7 @@ static const ONX_ErrorCounter Internal_TestModelRead(
   
   /////
   //
-  // Read the orginal file
+  // Read the original file
   //
   text_log.PushIndent();
   ONX_ModelTest test;
@@ -293,7 +293,7 @@ static const ONX_ErrorCounter Internal_TestModelRead(
           : model_component->NameHash();
         if (false == name_hash.IsValidAndNotEmpty())
         {
-          ON_ERROR("model compoent name is not valid.");
+          ON_ERROR("model component name is not valid.");
           continue; 
         }
         if (name_hash != item.NameHash())
@@ -634,13 +634,13 @@ static void Internal_PrintHelp(
   text_log.Print("      Displays this message.\n");
   text_log.Print("    -out\n");
   text_log.Print("      If -out is not present, output is written to stdout.\n");
-  text_log.Print("      If :outfilename.txt is appended to -out, output is written to the specifed file.\n");
+  text_log.Print("      If :outfilename.txt is appended to -out, output is written to the specified file.\n");
   text_log.Print("      If :stdout is appended to -out, output is sent to stdout.\n");
   text_log.Print("      If :null is appended to -out, no output is written.\n");
-  text_log.Print("      Otherise output is written to %s.\n",static_cast<const char*>(default_out_filename));
+  text_log.Print("      Otherwise output is written to %s.\n",static_cast<const char*>(default_out_filename));
   text_log.Print("    -recursive\n");
   text_log.Print("    -r\n");
-  text_log.Print("      Recursivly reads files in subfolders.\n");
+  text_log.Print("      Recursively reads files in subfolders.\n");
   text_log.Print("      If a :N is appended to the option, N limits the recursion depth.\n");
   text_log.Print("      -recursive:1 reads all 3dm files in the folder and does not recurse.\n");
   text_log.Print("    -verbose\n");
@@ -902,7 +902,7 @@ int main( int argc, const char *argv[] )
     return 0;
   }
 
-  // Call once in your application to initialze opennurbs library
+  // Call once in your application to initialize opennurbs library
   ON::Begin();
 
   // default text_log is to stdout

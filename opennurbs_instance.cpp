@@ -219,9 +219,9 @@ private:
 
 private:
   // When a component (layer, material, ...) from a linked file is inserted in the 
-  // active model and a component id collision occures, the active model id of the 
+  // active model and a component id collision occurs, the active model id of the 
   // component has to be changed. This list keeps track of the changes so we can 
-  // determine which runtime component correspondes to a component in the linked file. 
+  // determine which runtime component corresponds to a component in the linked file. 
   // The first id in the pair is component id in the linked reference file.
   // The second id in the pair is the component id in the runtime model.
   //
@@ -603,7 +603,7 @@ void ON_ReferencedComponentSettingsImpl::BeforeLinkedDefinitionWriteImpl(
 
     ON_Layer* ref_model_layer_copy = new ON_Layer(*model_layer);
     // The runtime index and id commonly change every time the file is read,
-    // so saving this varaible runtime identification information
+    // so saving this variable runtime identification information
     // leads to confusion.
     ref_model_layer_copy->ClearName();
     ref_model_layer_copy->ClearIndex();
@@ -1504,7 +1504,7 @@ bool ON_InstanceDefinition::SetInstanceDefinitionType(
     }
     else
     {
-      ON_ERROR("Invalid instance_definition_type parameter. Use SetLinkedFilePath() to create linked instance defintions.");
+      ON_ERROR("Invalid instance_definition_type parameter. Use SetLinkedFilePath() to create linked instance definitions.");
       rc = false;
     }
     break;
@@ -1520,7 +1520,7 @@ bool ON_InstanceDefinition::SetInstanceDefinitionType(
     }
     else
     {
-      ON_ERROR("Invalid instance_definition_type parameter. Use SetLinkedFilePath() to create linked instance defintions.");
+      ON_ERROR("Invalid instance_definition_type parameter. Use SetLinkedFilePath() to create linked instance definitions.");
       rc = false;
     }
     break;
@@ -1944,7 +1944,7 @@ bool ON_ReferencedComponentSettingsImpl::ReadImpl(
 
   m_bHasReferenceLayerTableParentLayer = (nullptr != m_layer_table_parent_layer);
 
-  // Prior to August 2017, a bug was saving per view sttings that applied to the 
+  // Prior to August 2017, a bug was saving per view settings that applied to the 
   // reference model. This for loop will delete those settings
   for (int i = 0; i < m_layer_referenced_file_copy.Count(); i++)
   {
@@ -2079,8 +2079,8 @@ ON_ReferencedComponentSettings* ON_InstanceDefinition::LinkedIdefReferenceCompon
 ///////////////////////////////////////////////////////////////////
 class /*NEVER EXPORT THIS CLASS DEFINITION*/ ON_OBSOLETE_IDefAlternativePathUserData : public ON_UserData
 {
-  // USED IN V4 and V5 files to save relative paths tol linked files.
-  // In V6 and later this information is in the m_linked_file_relative_path memember.
+  // USED IN V4 and V5 files to save relative paths to linked files.
+  // In V6 and later this information is in the m_linked_file_relative_path member.
   ON_OBJECT_DECLARE(ON_OBSOLETE_IDefAlternativePathUserData);
 
 public:
@@ -2157,7 +2157,7 @@ bool ON_OBSOLETE_IDefAlternativePathUserData::DeleteAfterRead(
   ) const
 {
   // This user data is read from V4 and V5 files and is then deleted after
-  // the information is transfered to idef->m_linked_file_reference.
+  // the information is transferred to idef->m_linked_file_reference.
   for (;;)
   {
     ON_InstanceDefinition* idef = ON_InstanceDefinition::Cast(parent_object);

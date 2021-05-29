@@ -141,7 +141,7 @@ public:
   /*
   Description:
     Sets the offset distance at a point.  Call this function
-    once for each point wher the user specifies an offset.
+    once for each point where the user specifies an offset.
   Parameters:
     s - [in]
     t - [in] (s,t) is a base surface evaluation parameter

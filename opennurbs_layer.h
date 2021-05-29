@@ -365,7 +365,7 @@ public:
   /*
   Description:
     The persistent visbility setting is used for layers whose
-    visibilty can be changed by a "parent" object. A common case
+    visibility can be changed by a "parent" object. A common case
     is when a layer is a child layer (ON_Layer.m_parent_id is
     not nil). In this case, when a parent layer is turned off,
     then child layers are also turned off. The persistent
@@ -407,7 +407,7 @@ public:
   /*
   Description:
     Remove any explicit persistent visibility setting from this
-    layer. When persistent visibility is not explictly set,
+    layer. When persistent visibility is not explicitly set,
     the value of ON_Layer::IsVisible() is used.
   Remarks:
     See ON_Layer::PersistentVisibility for a detailed description
@@ -577,7 +577,7 @@ public:
 
   /*
   Description:
-    Remove any explicity persistent locking settings from this
+    Remove any explicitly persistent locking settings from this
     layer.
   Remarks:
     See ON_Layer::PersistentLocking for a detailed description of
@@ -737,7 +737,7 @@ private:
   //
   // m_extension_bits & 0x01: 
   //   The value of ( m_extension_bits & 0x01) is used to speed
-  //   common per viewport visiblity and color queries.
+  //   common per viewport visibility and color queries.
   //     0x00 = there may be per viewport settings on this layer.
   //     0x01 = there are no per viewport settings on this layer.
   //

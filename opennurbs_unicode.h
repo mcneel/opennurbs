@@ -322,7 +322,7 @@ enum ON_UnicodeCodePoint
   /// byte order being used. It is valid for UTF-8 encoded text to begin
   /// with the UTF-8 encoding of U+FEFF (0xEF,0xBB,0xBF). 
   /// This sometimes used to mark a char string as UTF-8 encoded.
-  /// and also occures when UTF-16 and UTF-32 encoded text with a byte 
+  /// and also occurs when UTF-16 and UTF-32 encoded text with a byte 
   /// order mark is converted to UTF-8 encoded text.
   /// </summary>
   ON_ByteOrderMark = 0xFEFF,
@@ -386,12 +386,12 @@ Returns:
   ON_UTF_unset (0)
     buffer is not a UTF BOM
   ON_UTF_8
-    sizeof_buffer >= 3 and the values fo the first three bytes
+    sizeof_buffer >= 3 and the values of the first three bytes
     are 0xEF, 0xBB, 0xBF.
   ON_UTF_16BE
     sizeof_buffer >= 2 and the values of the first two bytes
     are 0xFE, 0xFF and, if sizeof_buffer >= 4, the value of
-    one of the thrid or forth byte is not zero.
+    one of the third or forth byte is not zero.
   ON_UTF_16LE
     sizeof_buffer >= 2 and the values of the first two bytes
     are 0xFE, 0xFF
@@ -618,13 +618,13 @@ struct ON_CLASS ON_UnicodeErrorParameters
 
   /*
   If an error occurs, then bits of error_status are
-  set to indicate what type of error occured.
+  set to indicate what type of error occurred.
 
   Error types:
     1: The input parameters were invalid. 
        This error cannot be masked.
 
-    2: The ouput buffer was not large enough to hold the converted
+    2: The output buffer was not large enough to hold the converted
        string. As much conversion as possible is performed in this
        case and the error cannot be masked.
 
@@ -645,7 +645,7 @@ struct ON_CLASS ON_UnicodeErrorParameters
        If the error is masked, then the unicode code point
        is used and parsing continues.
 
-   16: An illegal UTF-8, UTF-16 or UTF-32 sequence occured, 
+   16: An illegal UTF-8, UTF-16 or UTF-32 sequence occurred, 
       or an unsupported or invalid Windows code page value,      
       or an invalid unicode code point value resulted from 
       decoding a UTF-8 sequence. 
@@ -706,12 +706,12 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF32[0] was decoded was a valid 
+     If no error occurred, then sUTF32[0] was decoded was a valid 
      UTF-32 value. See e for masked errors.
   2:
       sUTF32[0],sUTF32[1] had values of a valid UTF-16 surrogate pair
       and e indicated to mask this error.  The UTF-16 code point
-      value was returned and e was set to indicate the error occured.
+      value was returned and e was set to indicate the error occurred.
 */
 ON_DECL
 int ON_DecodeUTF32LE(
@@ -753,12 +753,12 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF32[0] was decoded was a valid 
+     If no error occurred, then sUTF32[0] was decoded was a valid 
      UTF-32 value. See e for masked errors.
   2:
       sUTF32[0],sUTF32[1] had values of a valid UTF-16 surrogate pair
       and e indicated to mask this error.  The UTF-16 code point
-      value was returned and e was set to indicate the error occured.
+      value was returned and e was set to indicate the error occurred.
 */
 ON_DECL
 int ON_DecodeUTF32BE(
@@ -801,12 +801,12 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF32[0] was decoded was a valid 
+     If no error occurred, then sUTF32[0] was decoded was a valid 
      UTF-32 value. See e for masked errors.
   2:
       sUTF32[0],sUTF32[1] had values of a valid UTF-16 surrogate pair
       and e indicated to mask this error.  The UTF-16 code point
-      value was returned and e was set to indicate the error occured.
+      value was returned and e was set to indicate the error occurred.
 */
 ON_DECL
 int ON_DecodeUTF32(
@@ -850,12 +850,12 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF32[0] was decoded was a valid 
+     If no error occurred, then sUTF32[0] was decoded was a valid 
      UTF-32 value. See e for masked errors.
   2:
       sUTF32[0],sUTF32[1] had values of a valid UTF-16 surrogate pair
       and e indicated to mask this error.  The UTF-16 code point
-      value was returned and e was set to indicate the error occured.
+      value was returned and e was set to indicate the error occurred.
 */
 ON_DECL
 int ON_DecodeSwapByteUTF32(
@@ -873,7 +873,7 @@ Description:
   insuring the value of u is a valid uncode codepoint.
 Parameters:
   u - [in]
-    Interger in the CPU's native byte order in the interval [0,2147483647].
+    Integer in the CPU's native byte order in the interval [0,2147483647].
   sUTF8 - [out]
     sUTF8 is a buffer of 6 char elements and the UTF-8 form
     is returned in sUTF8[]. The returned value specifies how 
@@ -999,10 +999,10 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF16[0] was decoded as a valid 
+     If no error occurred, then sUTF16[0] was decoded as a valid 
      UTF-16 singleton. See e for masked errors.
   2: 
-     If no error occured, then sUTF16[0],sUTF16[1] was decoded 
+     If no error occurred, then sUTF16[0],sUTF16[1] was decoded 
      as a valid UTF-16 surrogate pair.
      See e for masked errors.
   n >= 3:
@@ -1050,10 +1050,10 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF16[0] was decoded as a valid 
+     If no error occurred, then sUTF16[0] was decoded as a valid 
      UTF-16 singleton. See e for masked errors.
   2: 
-     If no error occured, then sUTF16[0],sUTF16[1] was decoded 
+     If no error occurred, then sUTF16[0],sUTF16[1] was decoded 
      as a valid UTF-16 surrogate pair.
      See e for masked errors.
   n >= 3:
@@ -1101,10 +1101,10 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF16[0] was decoded as a valid 
+     If no error occurred, then sUTF16[0] was decoded as a valid 
      UTF-16 singleton. See e for masked errors.
   2: 
-     If no error occured, then sUTF16[0],sUTF16[1] was decoded 
+     If no error occurred, then sUTF16[0],sUTF16[1] was decoded 
      as a valid UTF-16 surrogate pair.
      See e for masked errors.
   n >= 3:
@@ -1154,10 +1154,10 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sUTF16[0] was decoded as a valid 
+     If no error occurred, then sUTF16[0] was decoded as a valid 
      UTF-16 singleton. See e for masked errors.
   2: 
-     If no error occured, then sUTF16[0],sUTF16[1] was decoded 
+     If no error occurred, then sUTF16[0],sUTF16[1] was decoded 
      as a valid UTF-16 surrogate pair.
      See e for masked errors.
   n >= 3:
@@ -1206,10 +1206,10 @@ Returns:
      Nothing was decoded. The input value of *unicode_code_point
      is not changed.  See e->m_error_status.
   1: 
-     If no error occured, then sWideChar[0] was decoded as a valid 
+     If no error occurred, then sWideChar[0] was decoded as a valid 
      wchar_t singleton. See e for masked errors.
   n>=2: 
-     If no error occured, then sWideChar[0],..,sWideChar[n-1] was decoded 
+     If no error occurred, then sWideChar[0],..,sWideChar[n-1] was decoded 
      as a valid wchar_t multi-element encoding.
      Typically, UTF-16 surrogate pair or UTF-8 multi-byte sequence.
      See e for masked errors.
@@ -1230,7 +1230,7 @@ Description:
 
 Parameters:
   rtf_charset - [in]
-    The RTF charset specifed by /fcharsetN in the RTF font table.
+    The RTF charset specified by /fcharsetN in the RTF font table.
   default_code_page - [out]
     Value to return if none is associated with the input rtf_charset value.
 
@@ -1311,7 +1311,7 @@ Parameters:
   code_page - [in]
     A Microsoft single byte code page value. (1252, 10000, etc)
   code_page_single_byte_encoding - [in]
-    A single byte encoding of the desired glpyh.
+    A single byte encoding of the desired glyph.
 
 Returns:
   If cod page and code_page_single_byte_encoding are valid, then
@@ -1330,7 +1330,7 @@ Description:
   Windows code page 1252 is a single byte encoding.
   Values 0x20 to 0x7E are the same as the ASCII encoding.
 
-  This function is used to find fonts where glpyhs are identified by code page 1252 values.
+  This function is used to find fonts where glyphs are identified by code page 1252 values.
 
 Parameters:
   code_page - [in]
@@ -1452,7 +1452,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1468,7 +1468,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1590,7 +1590,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1606,7 +1606,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1727,7 +1727,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1743,7 +1743,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -1877,7 +1877,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -1893,7 +1893,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2017,7 +2017,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2033,7 +2033,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2168,7 +2168,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2184,7 +2184,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2318,7 +2318,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2334,7 +2334,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2468,7 +2468,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2484,7 +2484,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2624,7 +2624,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2640,7 +2640,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2688,7 +2688,7 @@ int ON_ConvertUTF32ToUTF32(
     int bTestByteOrder,
     const ON__UINT32* sInputUTF32,
     int sInputUTF32_count,
-    ON__UINT32* sOuputUTF32,
+    ON__UINT32* soutputUTF32,
     int sOutputUTF32_count,
     unsigned int* error_status,
     unsigned int error_mask,
@@ -2775,7 +2775,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2791,7 +2791,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -2922,7 +2922,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -2938,7 +2938,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -3070,7 +3070,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -3086,7 +3086,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -3218,7 +3218,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -3234,7 +3234,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -3366,7 +3366,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -3382,7 +3382,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -3514,7 +3514,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
        4: When parsing a UTF-8 or UTF-32 string, the values of two
@@ -3530,7 +3530,7 @@ Parameters:
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
           is used and parsing continues.
-      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occured
+      16: An illegal UTF-8, UTF-16 or UTF-32 encoding sequence occurred
           or an invalid unicode code point value resulted from decoding
           a UTF-8 sequence. 
           This error is masked if 0 != (16 & m_error_mask).
@@ -3606,7 +3606,7 @@ Description:
 
 Parameters:
   windows_code_page - [in]
-    THe windows code page specifices the encoding of the sMBCS string.
+    THe windows code page specifies the encoding of the sMBCS string.
 
   sMBCS - [in]
     Windows multibyte string with encoding identified by windows_code_page.
@@ -3641,7 +3641,7 @@ Parameters:
        0: Successful conversion with no errors.
        1: The input parameters were invalid. 
           This error cannot be masked.
-       2: The ouput buffer was not large enough to hold the converted
+       2: The output buffer was not large enough to hold the converted
           string. As much conversion as possible is performed in this
           case and the error cannot be masked.
       16: An illegal encoding sequence occurred.

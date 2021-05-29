@@ -826,7 +826,7 @@ const ON_wString ON_FileSystemPath::CleanPath(
   wchar_t* clean_start = clean_head;
   if (bIsUNCHostName)
   {
-    clean_start += 3; // skip \\ and first charater of host name
+    clean_start += 3; // skip \\ and first character of host name
     
     // skip rest of host name
     while ( IsPermittedInHostName(*clean_start) )
@@ -1393,7 +1393,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
   if (false == IsDirSep(*full_tail) || false == IsDirSep(*base_tail))
   {
     // A double directory separator after the initial CleanAndRemoveFileName()
-    // calls indicates invalid file path informtion.
+    // calls indicates invalid file path information.
     return best_answer;
   }
 
@@ -1407,7 +1407,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
   if (IsDirSep(*full_tail) || IsDirSep(*base_tail))
   {
     // A double directory separator after the initial ON_FileSystemPath::CleanPath()
-    // calls indicates invalid file path informtion.
+    // calls indicates invalid file path information.
     return best_answer;
   }
 
@@ -1486,7 +1486,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
     base_tail++;
   }
 
-  // buid relative path
+  // build relative path
   ON_wString relative_path;
   if (0 == dotdot_count)
   {
@@ -2541,7 +2541,7 @@ bool ON_FileIterator::NextItem()
       0, // null output error status
       (4|8|16), // mask common conversion errors
       0, // error_code_point = null terminator inserted at point of conversion error
-      0  // null ouput end-of-string pointer
+      0  // null output end-of-string pointer
       );
     // TODO
     //   Test m_dirent.d_name to make sure it passes m_ws/utf8_file_name_filter
@@ -2845,7 +2845,7 @@ static ON__UINT64 SecondsSinceJanOne1970( FILETIME ft )
   // and "the internet" sometimes cites that as the reason that date is 
   // the "beginning of time" for Windows' FILETIME values.  This convention
   // would slightly simplify the formulae used to account for leap years, 
-  // so it is plausable this might might even be true.
+  // so it is plausible this might might even be true.
 
   ON__UINT64 ft_since_jan_1_1601 = ft.dwHighDateTime;
   ft_since_jan_1_1601 *= 0xFFFFFFFF;

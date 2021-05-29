@@ -82,7 +82,7 @@ public:
       If you do not have a good estimate, then use zero.
     block_element_capacity - [in] (0 = good default)
       If block_element_capacity is zero, Create() will calculate a block
-      size that is efficent for most applications.  If you are an expert
+      size that is efficient for most applications.  If you are an expert
       user and want to specify the number of elements per block,
       then pass the number of elements per block here.  When
       block_element_capacity > 0 and element_count_estimate > 0, the first
@@ -292,7 +292,7 @@ public:
 
   /*
   Description:
-    Get the i-th elment in the fixed size pool.
+    Get the i-th element in the fixed size pool.
   Parameters:
     element_index - [in]
   Returns:
@@ -429,7 +429,7 @@ private:
 private:
   // Used by The ThreadSafe...() functions and for expert users 
   // to use when managing memory controlled by this pool. Best
-  // to ingnore this unless you have a very clear idea of what
+  // to ignore this unless you have a very clear idea of what
   // you are doing, why you are doing it, and when you are doing it.
   // Otherwise, you'll find yourself waiting forever on a nested
   // access request. 
@@ -554,7 +554,7 @@ public:
       If not null, the number of elements allocated from the
       first block is returned in block_element_count.
       Note that if you have used ReturnElement(), some
-      of these elemements may have been returned.
+      of these elements may have been returned.
   Example:
     The loop will iteratate through all the blocks.
 
@@ -594,7 +594,7 @@ public:
     block_element_count - [out] (can be null)
       If not null, the number of elements allocated from the
       block is returned in block_element_count.  Note that if
-      you have used ReturnElement(), some of these elemements
+      you have used ReturnElement(), some of these elements
       may have been returned.
   Example:
     See the FirstBlock() documentation.
@@ -631,7 +631,7 @@ public:
       If you do not have a good estimate, then use zero.
     block_element_count - [in] (0 = good default)
       If block_element_count is zero, Create() will calculate a block
-      size that is efficent for most applications.  If you are an expert
+      size that is efficient for most applications.  If you are an expert
       user and want to specify the number of blocks, then pass the number
       of elements per block here.  When block_element_count > 0 and
       element_count_estimate > 0, the first block will be large enough
@@ -725,7 +725,7 @@ public:
 
   /*
   Description:
-    Get the i-th elment in the pool.
+    Get the i-th element in the pool.
   Parameters:
     element_index - [in]
   Returns:
@@ -836,7 +836,7 @@ public:
 
   /*
   Description:
-    Sets the state of the iterator to the initail state that
+    Sets the state of the iterator to the initial state that
     exists after construction.  This is useful if the iterator
     has been used the get one or more elements and then
     the referenced fixed size pool is modified or code wants
@@ -854,7 +854,7 @@ public:
       If not null, the number of elements allocated from the
       first block is returned in block_element_count.
       Note that if you have used ReturnElement(), some
-      of these elemements may have been returned.
+      of these elements may have been returned.
   Example:
     The loop will iteratate through all the blocks.
 
@@ -894,7 +894,7 @@ public:
     block_element_count - [out] (can be null)
       If not null, the number of elements allocated from the
       block is returned in block_element_count.  Note that if
-      you have used ReturnElement(), some of these elemements
+      you have used ReturnElement(), some of these elements
       may have been returned.
   Example:
     See the FirstBlock() documentation.
@@ -907,7 +907,7 @@ public:
   T* NextBlock( size_t* block_element_count );
 
 private:
-  // no implementation (you can use a copy construtor)
+  // no implementation (you can use a copy constructor)
   class ON_SimpleFixedSizePoolIterator<T>& operator=(const class ON_SimpleFixedSizePoolIterator<T>&);
 };
 

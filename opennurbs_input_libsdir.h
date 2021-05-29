@@ -20,7 +20,7 @@
 
 // This header file insures OPENNURBS_INPUT_LIBS_DIR is defined to be
 // the path to were the libraries opennurbs.dll links with are located.
-// Examples of these libaries are zlib and freetype.
+// Examples of these libraries are zlib and freetype.
 
 #if defined(OPENNURBS_OUTPUT_DIR)
 // Typically, OPENNURBS_OUTPUT_DIR is defined in the 

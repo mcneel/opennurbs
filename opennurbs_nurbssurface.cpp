@@ -1210,13 +1210,13 @@ bool ON_NurbsSurface::Split(
   return true;  
 }
 
-// virutal ON_Surface::HasNurbForm() override
+// virtual ON_Surface::HasNurbForm() override
 int ON_NurbsSurface::HasNurbForm() const
 {
   return 1;
 }
 
-// virutal ON_Surface::GetNurbForm() override
+// virtual ON_Surface::GetNurbForm() override
 int ON_NurbsSurface::GetNurbForm(
       ON_NurbsSurface& srf,
       double // tolerance

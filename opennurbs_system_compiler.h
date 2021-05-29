@@ -163,10 +163,10 @@
 
 #if !defined(OPENNURBS_WALL) && !defined(ON_COMPILING_OPENNURBS)
 /* 
-// TEMPORARY C4456 SUPRESSION Feb 17 2016 - WILL BE REMOVED ASAP
+// TEMPORARY C4456 SUPPRESSION Feb 17 2016 - WILL BE REMOVED ASAP
 // Rhino code is still too dirty to leave 4456 on.
 */
-// Supress Warning C4456 declaration of '...' hides previous local declaration ...	
+// Suppress Warning C4456 declaration of '...' hides previous local declaration ...	
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC(4456)
 #endif
 
@@ -188,7 +188,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 //
 // Dale Lear April 2017.
-// The Visual Stuido 2017 default is to disable warnings 4263, 4264, 4265, 4266
+// The Visual Studio 2017 default is to disable warnings 4263, 4264, 4265, 4266
 //
 // These are the warnings that help detect abuse of virtual functions and failed attempts
 // to override virtual functions.

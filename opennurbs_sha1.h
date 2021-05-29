@@ -70,7 +70,7 @@ public:
   Description:
     Return a hash of the file system path that is independent 
     of the size of wchar_t, constant across platforms, and 
-    constant across varations in the way the path is formatted.
+    constant across variations in the way the path is formatted.
 
   Parameters:
     path - [in]
@@ -222,9 +222,9 @@ public:
       If true, interior hyphen characters are  parsed.
       Otherwise interior hyphen characters cause parsing to fail.
     bIgnoreInternalSpaces - [in]
-      If true, isolated hyphens are ingored until 40 hex digits are read.
+      If true, isolated hyphens are ignored until 40 hex digits are read.
     bIgnoreInternalHyphens - [in]
-      If true, leading spaces and isolated interior spacess are ingored until 40 hex digits are read.
+      If true, leading spaces and isolated interior spacess are ignored until 40 hex digits are read.
     failure_return_value - [in]
       Value to return if string_to_parse cannot be parsed as 40 hex digits.
   Returns:
@@ -300,7 +300,7 @@ Remarks:
   The SHA-1 hash algorithm is not suitable for cryptographic or security applications.
   The ON_SHA1 class does not "wipe" intermediate results.
 
-  If you have two different seqences of N bytes storing information (lower entropy
+  If you have two different sequences of N bytes storing information (lower entropy
   than a random sequence) are you are not intentionally calculating the information
   to create a SHA-1 hash collision, then the probability that the sequences have
   the same SHA-1 hash is approximately 2^-80 ~ 10^-24.
@@ -545,7 +545,7 @@ public:
     Put another way, you may call Update() zero or more times passing in N1 bytes, 
     call Digest() to get the SHA-1 hash of those N1 bytes, make zero or more additional
     calls to Update() passing in N2 additional bytes, call digest to get the SHA-1 hash
-    of the seqence of (N1 + N2) bytes, and so on.
+    of the sequence of (N1 + N2) bytes, and so on.
   */
   ON_SHA1_Hash Hash() const;
 
@@ -586,7 +586,7 @@ private:
 	ON__UINT32 m_bit_count[2];   // number of bits (lo, hi)
 	ON__UINT32 m_state[5];       // current state
 
-  // chached SHA1 hash - valid if 2 = (2 & m_status_bits)
+  // cached SHA1 hash - valid if 2 = (2 & m_status_bits)
 	mutable ON_SHA1_Hash m_sha1_hash;
 };
 

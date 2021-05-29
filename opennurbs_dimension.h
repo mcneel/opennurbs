@@ -585,12 +585,12 @@ public:
       Pass nullptr if a dim_style is not available.
     line1 - [in]
     point_on_line1 - [in]
-      If point_on_line1 is specified, it inidicates which semi-infinite portion of line1 to dimension.
+      If point_on_line1 is specified, it indicates which semi-infinite portion of line1 to dimension.
       Otherwise the midpoint of lne1 as a segment is used.
       When in doubt, pass ON_3dPoint::UnsetPoint.
     line2 - [in]
     point_on_line2 - [in]
-      If point_on_line2 is specified, it inidicates which semi-infinite portion of line2 to dimension.
+      If point_on_line2 is specified, it indicates which semi-infinite portion of line2 to dimension.
       Otherwise the midpoint of line2 as a segment is used.
       When in doubt, pass ON_3dPoint::UnsetPoint.
     point_on_angular_dimension_arc - [in]

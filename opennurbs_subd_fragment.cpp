@@ -1863,7 +1863,7 @@ unsigned int ON_SubDMeshFragmentGrid::SidePointCount() const
 
 unsigned int ON_SubDMeshFragmentGrid::GridFaceCount() const
 {
-  // TODO: Suport tri fragments
+  // TODO: Support tri fragments
   unsigned int side_segment_count = SideSegmentCount();
   return side_segment_count * side_segment_count;
 }
@@ -1871,7 +1871,7 @@ unsigned int ON_SubDMeshFragmentGrid::GridFaceCount() const
 
 unsigned int ON_SubDMeshFragmentGrid::GridPointCount() const
 {
-  // TODO: Suport tri fragments
+  // TODO: Support tri fragments
   unsigned int side_segment_count = SideSegmentCount();
   return (side_segment_count > 0U) ? ((side_segment_count + 1U)*(side_segment_count + 1U)) : 0U;
 }
@@ -2116,7 +2116,7 @@ ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
     }
 
     // Do not initialize grid_cache[i] until entire linked list is ready to be used.
-    // This way if the lock is stolen for some unforseen reason, we risk leaking memory
+    // This way if the lock is stolen for some unforeseen reason, we risk leaking memory
     // but we will not crash.
     grid_cache[i] = first_lod;
   }
@@ -2658,7 +2658,7 @@ public:
         else
         {
           // this is an inteior edge of a partial fragment and it
-          // is alwasy sealed with its neighbor when it is created.
+          // is always sealed with its neighbor when it is created.
           break;
         }
       }

@@ -455,7 +455,7 @@ bool ON_Symmetry::IsMotifBoundarySubDVertex(const class ON_SubDVertex* v, bool b
     d = fabs(this->ReflectionPlane().ValueAt(P));
     break;
   case ON_Symmetry::Type::Rotate:
-    // All boundary vertices must be eligable for joining.
+    // All boundary vertices must be eligible for joining.
     // The pinwheel motifs in RH-63376 show why.
     d = P.IsValid() ? 0.0 : ON_DBL_QNAN;
     break;
@@ -1960,7 +1960,7 @@ double ON_Symmetry::CleanupTolerance() const
 {
   // The default constructor sets m_cleanup_tolerance = 0.0.
   // Handling m_cleanup_tolerance this way insures that ON_Symmetry::CleanupTolerance()
-  // will always return ON_Symmetry::ZeroTolerance (which may chnage), even with class definitions 
+  // will always return ON_Symmetry::ZeroTolerance (which may change), even with class definitions 
   // read from old archives.
   return (m_cleanup_tolerance >= ON_Symmetry::ZeroTolerance) ? m_cleanup_tolerance : ON_Symmetry::ZeroTolerance;
 }

@@ -50,7 +50,7 @@ public:
   // OBSOLETE
   void Destroy(); // set this = ON_BoundingBox::EmptyBoundingBox
 
-  // operator[] returns min if index <= 0 and max if indes >= 1
+  // operator[] returns min if index <= 0 and max if index >= 1
   ON_3dPoint& operator[](int);
   const ON_3dPoint& operator[](int) const;
 
@@ -107,7 +107,7 @@ public:
   Parameters:
     tolerance - [in] Distances <= tolerance will be considered
         to be zero.  If tolerance is negative (default), then
-        a scale invarient tolerance is used.
+        a scale invariant tolerance is used.
   Returns:
     @untitled table
     0     box is not degenerate
@@ -699,7 +699,7 @@ public:
     false - hash was not in the cache.
   Remarks:
     If the hash values you are using are correctly computed and include
-    all information that the bouding box depends on, then
+    all information that the bounding box depends on, then
     you never need to remove bounding boxes. Unused ones will get
     removed as new ones are added.
   */
@@ -712,7 +712,7 @@ public:
     Removes all bounding boxes.
   Remarks:
     If the hash values you are using are correctly computed and include
-    all information that the bouding box depends on, then
+    all information that the bounding box depends on, then
     you never need to remove bounding boxes. Unused ones will get
     removed as new ones are added.
     If the hash does not include all information required to compute

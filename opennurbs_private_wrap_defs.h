@@ -22,7 +22,7 @@ template <class T>
 ON_PrivateWrap<T>::ON_PrivateWrap()
   : r(*(new(((void*)_buffer))T()))
 {
-  // Use placement new to constuct a T class in the memory located in the _buffer[] member;
+  // Use placement new to construct a T class in the memory located in the _buffer[] member;
 }
 
 template <class T >
@@ -38,7 +38,7 @@ template <class T >
 ON_PrivateWrap< T >::ON_PrivateWrap(const ON_PrivateWrap< T >& src)
   : r(*(new(((void*)_buffer))T(src.r)))
 {
-  // Use in placement new to copy constuct a T class in the memory located in the _buffer[] member;
+  // Use in placement new to copy construct a T class in the memory located in the _buffer[] member;
 }
 
 template <class T >
@@ -53,7 +53,7 @@ template <class T >
 ON_PrivateWrap< T >::ON_PrivateWrap(const ON_PrivateWrap< T >&& src)
   : r(*(new(((void*)_buffer))T(std::move(src.r))))
 {
-  // Use in placement new to rvalue copy constuct a T class in the memory located in the _buffer[] member;
+  // Use in placement new to rvalue copy construct a T class in the memory located in the _buffer[] member;
 }
 
 template <class T >

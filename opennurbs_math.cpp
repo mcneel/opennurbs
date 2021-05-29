@@ -168,7 +168,7 @@ bool ON_PassesNanTest()
     const double zero = 0.0;
     const double one = 1.0;
 
-    // nan != * and * != nan should alwasy be true
+    // nan != * and * != nan should always be true
     const bool b_NE_test
       = nan1 != nan1
       && nan1 != nan2
@@ -809,7 +809,7 @@ bool ON_EvTangent(
 
   if (d1 == 0.0) 
   {
-    // Use L'hopital's rule to show that if the unit tanget
+    // Use L'hopital's rule to show that if the unit tangent
     // exists and the 1rst derivative is zero and the 2nd derivative is
     // nonzero, then the unit tangent is equal to +/-the unitized 
     // 2nd derivative.  The sign is equal to the sign of D1(s) o D2(s)
@@ -852,7 +852,7 @@ ON_EvCurvature(
 
   if (d1 == 0.0) 
   {
-    // Use L'hopital's rule to show that if the unit tanget
+    // Use L'hopital's rule to show that if the unit tangent
     // exists and the 1rst derivative is zero and the 2nd derivative is
     // nonzero, then the unit tangent is equal to +/-the unitized 
     // 2nd derivative.  The sign is equal to the sign of D1(s) o D2(s)
@@ -1995,7 +1995,7 @@ ON_SolveQuadraticEquation(
  *   is numerical noise and is assumed to be zero.
  *
  *   If it is really important to have the best possible answer,
- *   you sould probably tune up the returned roots using
+ *   you should probably tune up the returned roots using
  *   Brent's algorithm.
  *
  * REFERENCE:
@@ -2229,7 +2229,7 @@ COMMENTS:
   The computation is performed in such a way that the output
   "X" pointer can be equal to the input "d" pointer; i.e., if the
   d array will not be used after the call to ON_SolveTriDiagonal(), then
-  it is not necessary to allocate seperate space for X and d.
+  it is not necessary to allocate separate space for X and d.
 EXAMPLE:
 REFERENCE:
   NRC, section 2.6
@@ -2566,7 +2566,7 @@ double ON_SolveNxN(bool bFullPivot, bool bNormalize, int n, double* M[], double 
     // The Xdex_buffer[] hoo haa is here to avoid an potentially time
     // consuming call to heap services when the matrix is small.
     // When n > 64 the numerical portion of the computation is 
-    // long enough that the time to call onmalloc() is negligable.
+    // long enough that the time to call onmalloc() is negligible.
     // (When n > 10-ish, this calculation is likely to return junk
     // unless you have a special case matrix, in which case this
     // function will be much slower than one that is designed to
@@ -4928,7 +4928,7 @@ bool ON_Sym3x3EigenSolver(double A, double B, double C,
 		&ee2, EE2,
 		&ee3, EE3);
 
-	/* Step 3. Apply rotation to express results in orignal coordinate system  */
+	/* Step 3. Apply rotation to express results in original coordinate system  */
 	E1.Set(cos_phi*EE1.x + sin_phi * EE1.z, EE1.y, -sin_phi * EE1.x + cos_phi * EE1.z);
 	E2.Set(cos_phi*EE2.x + sin_phi * EE2.z, EE2.y, -sin_phi * EE2.x + cos_phi * EE2.z);
 	E3.Set(cos_phi*EE3.x + sin_phi * EE3.z, EE3.y, -sin_phi * EE3.x + cos_phi * EE3.z);
@@ -5012,7 +5012,7 @@ bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
 
 /*
 Description:
-	QL Algorithm with implict shifts, to determine the eigenvalues and eigenvectors of a
+	QL Algorithm with implicit shifts, to determine the eigenvalues and eigenvectors of a
 	symmetric, tridiagonal matrix.
 
 Parametrers:
@@ -5022,7 +5022,7 @@ Parametrers:
 								with e[n-1] not used, but must be allocated.
 								on output e is unpredictable.
 n - [in]      matrix is n by n
-pV - [out]		If not nullptr the it should be an n by n matix.
+pV - [out]		If not nullptr the it should be an n by n matrix.
 							The kth column will be a normalized eigenvector of d[k]
 */
 bool ON_TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)

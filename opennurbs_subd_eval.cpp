@@ -1115,7 +1115,7 @@ const ON_SubDMeshFragment * ON_SubDFace::MeshFragments() const
 {
   // NOTE:
   // Clearing the ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit bit
-  // on m_saved_points_flags is used to mark mesh fragmants as dirty. 
+  // on m_saved_points_flags is used to mark mesh fragments as dirty. 
   // They need to be regerated before being used.
   return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_points_flags)) ? m_mesh_fragments : nullptr;
 }

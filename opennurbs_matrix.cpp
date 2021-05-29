@@ -1596,7 +1596,7 @@ unsigned int ON_RowReduce(
       }
     }
 
-    // swap columns M[jj] and M[rank] to maximum coefficeint is in M[rank][rank]
+    // swap columns M[jj] and M[rank] to maximum coefficient is in M[rank][rank]
     xx = -a[jj];
     a[jj] = a[rank];
     //a[rank] = -xx; // DEBUG
@@ -1837,7 +1837,7 @@ unsigned int ON_GetEigenvectors(
 
     if (bLastTry)
     {
-      // For an explaination, see the code below where bLastTry is set to true.
+      // For an explanation, see the code below where bLastTry is set to true.
       break;
     }
 

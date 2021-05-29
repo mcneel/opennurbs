@@ -1610,7 +1610,7 @@ class ON_SubDComponentBase* ON_SubDComponentPtr::ComponentBase() const
     // This is in a controlled setting inside functions like ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeSymmetrySetNextPtr().
     // All public level SDK code can safely assume the returned value is a true pointer.
     // It does mean that you cannot "validate" the value returned here
-    // using some contraint on what you feel is a reasonable true pointer value.
+    // using some constraint on what you feel is a reasonable true pointer value.
     return ((class ON_SubDComponentBase*)ON_SUBD_COMPONENT_POINTER(m_ptr));
     break;
   }
@@ -1949,7 +1949,7 @@ const ON_SubDComponentPoint ON_SubDComponentPoint::BestPickPoint(
     && ((type_bias >= 0) ? Internal_FirstIsPartOfSecond(A, B) : Internal_FirstIsPartOfSecond(B, A))
     )
   {
-    // A point pick is occuring and best is a vertex on an edge/face or best is an edge on a face.
+    // A point pick is occurring and best is a vertex on an edge/face or best is an edge on a face.
     // Bias towards the vertex/edge.
     // Users can pick the middle of an edge/face if they want the "bigger" component.
     ON_SubDComponentPoint best = (type_bias >= 0) ? A : B;
@@ -5015,7 +5015,7 @@ ON_SubDVertexTag ON_SubDVertex::SuggestedVertexTag(
       return ON_SubDVertexTag::Smooth;
     if (bReturnBestGuessWhenInvalid)
     {
-      // can occure when there is a nullptr edge
+      // can occur when there is a nullptr edge
       best_guess_tag = ON_SubDVertexTag::Smooth;
     }
     break;
@@ -5510,7 +5510,7 @@ const ON_SubDHash ON_SubDimple::SubDHash(
     && face_count == h->FaceCount()
     )
   {
-    // The chache hash values are up to date (or should be).
+    // The cache hash values are up to date (or should be).
     // If h is out of date, something somewhere modified the SubD components and 
     // failed to change the GeometryContentSerialNumber(). 
     // All C++ SDK opennurbs code changes gsn after modifying SubD geometry (or it's a bug that should be fixed).
@@ -6793,7 +6793,7 @@ unsigned int ON_SubD::DumpTopology(
 
     if (false == text_log.IsTextHash())
     {
-      // runtime settings most recentltly used to set fragmant texture coordinates.
+      // runtime settings most recentltly used to set fragment texture coordinates.
       const ON_SHA1_Hash frament_texture_settings_hash = this->FragmentTextureCoordinatesTextureSettingsHash();
       text_log.Print(L"FragmentTextureCoordinatesTextureSettingsHash() = ");
       if (subd_texture_settings_hash == frament_texture_settings_hash)
@@ -6824,7 +6824,7 @@ unsigned int ON_SubD::DumpTopology(
     const size_t sizeof_frags = this->SizeOfAllMeshFragments();
     text_log.PrintString(ON_wString(L"Mesh fragments = ") + ON_wString::ToMemorySize(sizeof_frags) + ON_wString(L".\n"));
     const size_t sizeof_frags_waste = this->SizeOfUnusedMeshFragments();
-    text_log.PrintString(ON_wString(L"Reserved but ununsed = ")
+    text_log.PrintString(ON_wString(L"Reserved but unused = ")
       + Internal_DescribeWaste(sizeof_frags_waste,sizeof_subd)
       + ON_wString(L".\n"));
   }
@@ -10168,7 +10168,7 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
   // Use faster code for the case when the face is a quad.
   // Since this is a Catmull-Clark subdivision scheme, this
   // case is the most common by far and code that gives quads
-  // special treatment will run noticably faster.
+  // special treatment will run noticeably faster.
   e_ptr = edge_ptr[0].m_ptr;
   e = ON_SUBD_EDGE_POINTER(e_ptr);
   if ( nullptr == e || nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1] )
@@ -12345,7 +12345,7 @@ bool ON_SubDimple::LocalSubdivide(
   ON_SimpleArray<ON_SubDFace*> faces(face_count);
   ON_SimpleArray<ON_3dPoint> face_points(face_count);
 
-  // this subd is being modifed.
+  // this subd is being modified.
   ChangeGeometryContentSerialNumber( false);
 
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
@@ -13043,14 +13043,14 @@ static bool Internal_EdgesAreConsecutive(
     const double miniscule_distance_tolerance = ON_ZERO_TOLERANCE;
     if (h <= miniscule_distance_tolerance && !(distance_tolerance >= 0.0 && distance_tolerance < miniscule_distance_tolerance))
     {
-      // skip parameter tests for miniscule h.
+      // skip parameter tests for minuscule h.
       return true;
     }
 
     const double miniscule_maximum_aspect = 1e-4;
     if (h <= miniscule_maximum_aspect * d && !(maximum_aspect >= 0.0 && maximum_aspect < miniscule_maximum_aspect))
     {
-      // skip parameter tests for miniscule h/d.
+      // skip parameter tests for minuscule h/d.
       return true;
     }
 
@@ -14011,7 +14011,7 @@ const ON_SubDEdge* ON_SubDimple::SplitFace(
     new_edge_count[0] = fvi0 - fvi1 + 1;
     new_edge_count[1] = (edge_count + 2) - new_edge_count[0];
   }
-  // make sure each side is at least a triangle and no overflows occured
+  // make sure each side is at least a triangle and no overflows occurred
   if (new_edge_count[0] < 3 || new_edge_count[0] >= edge_count)
     return ON_SUBD_RETURN_ERROR(nullptr);
   if (new_edge_count[1] < 3 || new_edge_count[1] >= edge_count)
@@ -15009,7 +15009,7 @@ bool ON_SubD::DeleteComponentsForExperts(
       cptr.ClearStates(ON_ComponentStatus::Damaged);
   }
 
-  // Set the status of every compoent in cptr_list[] to ON_ComponentStatus::AllSet.
+  // Set the status of every component in cptr_list[] to ON_ComponentStatus::AllSet.
   // If that component is a vertex, set the status of every edge and face that
   // touch the vertex to ON_ComponentStatus::AllSet.
   // If that component is an edge, set the status of every face that
@@ -17640,7 +17640,7 @@ static bool Internal_SetSideGroupIds(ON_SimpleArray<ON_Internal_ExtrudedEdge>& n
     if (false == new_sides[i].SetSideGroupId(side_group_id))
       continue;
 
-    // propogate side_group_id through all touching components
+    // propagate side_group_id through all touching components
     unsigned j0 = i + 1;
     for (bool bContinue = true; bContinue; /*empty iterator*/)
     {      
@@ -17886,7 +17886,7 @@ unsigned int ON_SubD::Internal_ExtrudeComponents(
       }
 
       // Partially setting the topology connections here reduces the number of binary searches by about half.
-      // The scecond paramter is false because the sorting of extruded_vertices[] will change the memory
+      // The scecond parameter is false because the sorting of extruded_vertices[] will change the memory
       // location where extruded_vertex is stored.
       if (false == extruded_vertex.AddExtrudedEdgeReference(&extruded_edge, false))
         return 0;
@@ -18255,7 +18255,7 @@ unsigned int ON_SubD::SetVertexTags(
         }
         else
         {
-          // dont' attempt change - further refinement may be needed here
+          // don't attempt change - further refinement may be needed here
           continue;
         }
       }
@@ -18304,7 +18304,7 @@ unsigned int ON_SubD::SetVertexTags(
   // This for loop is used when new vertex_tag is ON_SubDVertexTag::Crease.
   for (int pass = 0; pass < 2 && false == bUpdateTags; pass++)
   {
-    // More careful analysis is neeeded to accurately mark smooth edges that will become creases
+    // More careful analysis is needed to accurately mark smooth edges that will become creases
     ON_SubDEdgeIterator eit(*this);
     for (const ON_SubDEdge* edge = eit.FirstEdge(); nullptr != edge; edge = eit.NextEdge())
     {
@@ -21366,7 +21366,7 @@ ON_SubDFace* ON_SubD::FindOrAddFace(
     return ON_SUBD_RETURN_ERROR(nullptr);
 
 
-  // Mkae sure v[] has vertex_count unique non-null vertices.
+  // Make sure v[] has vertex_count unique non-null vertices.
   for (unsigned i = 0; i < vertex_count; ++i)
   {
     if (nullptr == face_vertices[i])

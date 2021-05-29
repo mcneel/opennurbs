@@ -276,12 +276,12 @@ double ON_UnitSystem::MetersPerUnit() const
   //   For standard units, this function returns the WRONG value (inverse of the correct value).
   //   The reason is the Rhino 6 VRay plug-in assumes the incorrect value is returned
   //   and V6 VRay does not work correctly in Rhino 7 if the correct value is returned.
-  //   After some discussion (see the bug above), we will leave the invers bug in
+  //   After some discussion (see the bug above), we will leave the inverse bug in
   //   ON_UnitSystem::MetersPerUnit(), deprecate ON_UnitSystem::MetersPerUnit(),
   //   and add a new function that returns the correct answer.
   if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
   {
-    // correct answer for custome units - V6 behavior.
+    // correct answer for custom units - V6 behavior.
     return m_meters_per_custom_unit; //
   }
 
@@ -2690,7 +2690,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
         rc = file.WriteInt( m_view_type );
         if (!rc) break;
         
-        // obsolete values - superceded by m_page_settings
+        // obsolete values - superseded by m_page_settings
         rc = file.WriteDouble( m_page_settings.m_width_mm );
         if (!rc) break;
 
@@ -5410,7 +5410,7 @@ void ON_3dmSettings::Dump( ON_TextLog& dump ) const
     if ( ON_UNSET_INT_INDEX != m_V5_current_dimension_style_index)
       dump.Print("Current V5 dimstyle index = %d\n",m_V5_current_dimension_style_index);
     dump.Print("Current wire density = %d\n",m_current_wire_density);
-    dump.Print("Linetype diaplay scale = %g\n",m_linetype_display_scale);
+    dump.Print("Linetype display scale = %g\n",m_linetype_display_scale);
   }
   dump.PopIndent();
 

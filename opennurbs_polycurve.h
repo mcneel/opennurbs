@@ -87,7 +87,7 @@ public:
       If false, gaps are not allowed between polycurve segments.
     text_log - [in] if the object is not valid and text_log
         is not nullptr, then a brief englis description of the
-        reason the object is not valid is appened to the log.
+        reason the object is not valid is appended to the log.
         The information appended to text_log is suitable for 
         low-level debugging purposes by programmers and is 
         not intended to be useful as a high level user 
@@ -644,7 +644,7 @@ public:
   Returns:
     True if a modification was performed and HasGap(gap_index-1)
     returns 0 after the modification.
-    False if no modification was preformed because there
+    False if no modification was performed because there
     was no gap or because one could not be performed.
   Remarks:
     Note that passing the return value from FindNextGap() will 

@@ -57,7 +57,7 @@ struct ON_BUFFER_SEGMENT
 {
   struct ON_BUFFER_SEGMENT* m_prev_segment;
   struct ON_BUFFER_SEGMENT* m_next_segment;
-  ON__UINT64 m_segment_position0; // postion of first byte in this segment
+  ON__UINT64 m_segment_position0; // position of first byte in this segment
   ON__UINT64 m_segment_position1; // position of the first byte in the next segment
                                   // When a segment is the last one in an ON_Buffer,
                                   // is is common for m_segment_position1 > m_buffer_size.
@@ -542,14 +542,14 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
   for ( seg = m_first_segment; 0 != seg; seg = seg->m_next_segment )
   {
     // prev_seg is set this way so that the error handling
-    // code can use continue statments for non-fatal errors.
+    // code can use continue statements for non-fatal errors.
     prev_seg = seg0;
     seg0 = seg;
 
     if ( seg->m_segment_position0 > seg->m_segment_position1 )
     {
       // This is really bad!  If you can determine how the corruption occurs,
-      // plase make a bug report and tell Dale Lear as soon as possible.
+      // please make a bug report and tell Dale Lear as soon as possible.
       ON_ERROR("corrupt buffer - segment's position values are invalid.");
       continue;
     }
@@ -561,7 +561,7 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
         // The first segment should have seg->m_segment_position0 = 0.
         // We'll keep going after the call to ON_ERROR.
         //
-        // If you can determine how the corruption occured, please
+        // If you can determine how the corruption occurred, please
         // make a bug report and assign it to Dale Lear.
         ON_ERROR("corrupt buffer - first segment has non-zero value for position0.");
       }
@@ -572,7 +572,7 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
       // seg->m_segment_position0 = previous_segment->m_segment_position1.
       // We'll keep going after the call to ON_ERROR.
       //
-      // If you can determine how the corruption occured, please
+      // If you can determine how the corruption occurred, please
       // make a bug report and assign it to Dale Lear.
       ON_ERROR("corrupt buffer - previous segment's position1 !- segment's position0.");
     }
@@ -581,7 +581,7 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
 
     if ( 0 == seg_size )
     {
-      // If you can determine how the corruption occured, please
+      // If you can determine how the corruption occurred, please
       // make a bug report and assign it to Dale Lear.
       ON_ERROR("corrupt buffer - empty segment buffer.");
       continue;
@@ -591,7 +591,7 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
     {
       if ( seg != m_last_segment || seg->m_next_segment )
       {
-        // If you can determine how the corruption occured, please
+        // If you can determine how the corruption occurred, please
         // make a bug report and assign it to Dale Lear.
         ON_ERROR("corrupt buffer - segments contain more bytes than m_buffer_size.");
       }
@@ -604,7 +604,7 @@ ON__UINT32 ON_Buffer::CRC32( ON__UINT32 current_remainder ) const
     {
       if ( seg != m_last_segment || 0 != seg->m_next_segment || size > m_buffer_size )
       {
-        // If you can determine how the corruption occured, please
+        // If you can determine how the corruption occurred, please
         // make a bug report and assign it to Dale Lear.
         ON_ERROR("corrupt buffer - list of segments is too long.");
       }
@@ -632,7 +632,7 @@ bool ON_Buffer::SetCurrentSegment( bool bWritePending )
   //   In this case, true is returned when m_current_position < m_buffer_size
   //   and false is returned in all other cases.
   //
-  // If seeks have occured since the last read or write, m_current_segment
+  // If seeks have occurred since the last read or write, m_current_segment
   // and m_current_segment_offset may need to be updated.
   //
 
@@ -862,7 +862,7 @@ ON__UINT64 ON_Buffer::Read( ON__UINT64 size, void* buffer )
     {
       if ( m_current_position == m_buffer_size && m_current_segment == m_last_segment )
       {
-        // This is a common situation that occures when the read request is for a 
+        // This is a common situation that occurs when the read request is for a 
         // size larger than the remaining number of bytes in the buffer. For example,
         // when repeatedly reading into a fixed size buffer until reasing the end
         // of the file. This is not an error condition.

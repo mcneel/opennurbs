@@ -951,7 +951,7 @@ class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
   {
     // Requests for a candidate_id value above 3 billion are ignored to insure
     // there is plenty of room for ids. 
-    // It's almost certainly a bug if candidate_id > several millon or so.
+    // It's almost certainly a bug if candidate_id > several million or so.
     candidate_id = 0; 
   }
 

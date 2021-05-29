@@ -3,7 +3,7 @@
 //
 // Copyright (c) 1993-2011 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -90,7 +90,7 @@ ON_3dmObjectAttributes* Internal_CreateManagedAttributes(
 
 static bool write_points_example( const wchar_t* filename, ON_TextLog& error_log  )
 {
-  // example demonstrates how to write a singe points and point clouds
+  // example demonstrates how to write a single points and point clouds
   ONX_Model model;
   INTERNAL_INITIALIZE_MODEL(model);
 

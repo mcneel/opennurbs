@@ -48,7 +48,7 @@ can have their own copy of a dimension style to override some settings
 
   When a value is changed in a parent dimstyle, it should look through the other 
   dimstyles in the dimstyle table (or your application's equivalent) and change any 
-  of its children appropriately.  Name and Index fields aren't propogated this way.
+  of its children appropriately.  Name and Index fields aren't propagated this way.
   If the parent's field being changed is not set in the child's m_valid_fields array,
   the child's copy of that field should be changed to match the parent's new value.
   Changing values in child dimstyles doesn't change values in their parents.
@@ -945,7 +945,7 @@ bool ON_V5x_DimStyle::Read(
   // ON_V5x_DimStyle::Default cannot be a static member
   // because we cannot control order of static initialization on Mac / Clang
   // and all public statics in opennurbs_statics.cpp need to be initialized
-  // before the obsolete ON_V5x_DimStyle can be initialzed.
+  // before the obsolete ON_V5x_DimStyle can be initialized.
   // The ON_V5x_DimStyle::Default() function is called only when files are 
   // read and by that time ON_DimStyle::Default exists.
   const ON_V5x_DimStyle unset_dimstyle(ON::LengthUnitSystem::None, ON_DimStyle::Unset);
@@ -1015,7 +1015,7 @@ bool ON_V5x_DimStyle::Internal_Read_v6(
     if (minor_version >= 2)
     {
       if (rc) rc = file.ReadDouble(&m_lengthfactor);
-      // assume length factor value was junk from buggy .NET user inteface 
+      // assume length factor value was junk from buggy .NET user interface 
       m_lengthfactor = 1.0;
 
       if (rc) rc = file.ReadString(m_prefix);
@@ -1234,7 +1234,7 @@ void ON_Internal_FixBogusDimStyleLengthFactor(
     if (version_day_of_month >= 6)
       return; // July 6, 2017 through July 31, 2017
   }
-  dimstyle_length_factor = 1.0; // fix junky value written from Jan 1, 2017 throught July 5, 2017
+  dimstyle_length_factor = 1.0; // fix junky value written from Jan 1, 2017 through July 5, 2017
 }
 
 bool ON_V5x_DimStyle::Internal_Read_v5(

@@ -155,10 +155,10 @@ public:
       archive that will be written to.  
       If needed, you can inspect the version of 3dm archive this
       is being saved and other information that you may need to 
-      determine the approprite return value.
+      determine the appropriate return value.
     parent_object - [in]
       If needed, you can inspect the parent object to determine 
-      the approprite return value.
+      the appropriate return value.
 
   Returns:
     True if the user data should be written the next
@@ -198,10 +198,10 @@ public:
       archive that was read from.
       If needed, you can inspect the version of 3dm archive this
       is being saved and other information that you may need to
-      determine the approprite return value.
+      determine the appropriate return value.
     parent_object - [in]
       If needed, you can inspect the parent object to determine
-      the approprite return value.
+      the appropriate return value.
 
   Returns:
     True if the user data should be deleted because the 
@@ -349,7 +349,7 @@ public:
 };
 
 // Do not export this class
-// It is used internally to read and write 3dm achives with versions < 60.
+// It is used internally to read and write 3dm archives with versions < 60.
 class ON_RdkMaterialInstanceIdObsoleteUserData : public ON_ObsoleteUserData
 {
   // NO ON_OBJECT_DECLARE() for classes derived from ON_ObsoleteUserData

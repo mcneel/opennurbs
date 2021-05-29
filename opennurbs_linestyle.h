@@ -62,7 +62,7 @@ public:
   ON_UUID m_viewport_id;          // identifies the ON_Viewport
                                   //   If nil, then the display material
                                   //   will be used in all viewports
-                                  //   that are not explictly referenced
+                                  //   that are not explicitly referenced
                                   //   in other ON_DisplayMaterialRefs.
 
   ON_UUID m_display_material_id;  // id used to find display attributes

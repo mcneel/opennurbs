@@ -41,7 +41,7 @@ bool ON_BezierCurve::GetTightBoundingBox(
 {
 
   // The result from ON_GetPointListBoundingBox() is good enough
-  // for file IO needs in the public souce code version.
+  // for file IO needs in the public source code version.
   return ON_GetPointListBoundingBox(
     m_dim,
     m_is_rat, 
@@ -1174,7 +1174,7 @@ bool ON_Mesh::GetTightBoundingBox(
     }
 	}
 
-	// Now just add verticies of the clipped mesh
+	// Now just add vertices of the clipped mesh
 	int vcnt = VertexCount();
 	
 	// n = number of clipping planes.  At most 32 clipping planes are allowed so that this function can use unsigned int
@@ -1272,7 +1272,7 @@ bool ON_Mesh::GetTightBoundingBox(
 						Next = (*xform)*Next;
 					}
 
-					ON_Interval Dom(0.0, 1.0);  // Dom parameterizes the line segment from Last to Next
+					ON_Interval Dom(0.0, 1.0);  // Dom parametrizes the line segment from Last to Next
 					for (int j = 0; j < n && Dom != ON_Interval::EmptyInterval; j++)
 					{
 						unsigned int mask = 1 << (n - 1 - j);
@@ -1960,7 +1960,7 @@ bool ON_BezierCurve::Split(
     
     // deCasteljau
     if (t == 0.5) {
-      // use faster aritmetic for this common case
+      // use faster arithmetic for this common case
       for (i = 1, k = 2*m_order-2; i < k; i++, k--) {
         for (j = i; j < k; j++,j++)  {
           p = b[j-1];
@@ -3005,7 +3005,7 @@ bool ON_BezierSurface::Trim(
    
   if( m_cv_stride[dir] > m_cv_stride[1-dir])
   {
-    // cv's are layed out in the right direction so we can interpret the 
+    // cv's are laid out in the right direction so we can interpret the 
     // them as the cv's of a high dim'l curve.
     crv.m_cv = m_cv;
     crv.m_dim = crv.m_cv_stride = m_cv_stride[dir]; 
@@ -3020,7 +3020,7 @@ bool ON_BezierSurface::Trim(
 
   else
   {
-    // cv's are layed out in the wrong direction so make a curve
+    // cv's are laid out in the wrong direction so make a curve
     // and copy the cv's into the curve.
 
     crv.Create(k*m_order[1-dir],false,m_order[dir]);
@@ -3480,7 +3480,7 @@ bool ON_BezierCurve::EvTangent(
   {
     if ( Ev2Der( t, point, D1, D2 ) )
     {
-      // Use l'Hopital's rule to show that if the unit tanget
+      // Use l'Hopital's rule to show that if the unit tangent
       // exists, the 1rst derivative is zero, and the 2nd
       // derivative is nonzero, then the unit tangent is equal
       // to +/-the unitized 2nd derivative.  The sign is equal

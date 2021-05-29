@@ -62,7 +62,7 @@ int ON_Box::IsDegenerate( double tolerance ) const
     const ON_3dVector diag(dx.Length(),dy.Length(),dz.Length());
     if ( !ON_IsValid(tolerance) || tolerance < 0.0 )
     {
-      // compute scale invarient tolerance
+      // compute scale invariant tolerance
       tolerance = diag.MaximumCoordinate()*ON_SQRT_EPSILON;
     }
     if ( diag.x <= tolerance )

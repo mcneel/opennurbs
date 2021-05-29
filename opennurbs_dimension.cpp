@@ -835,7 +835,7 @@ bool ON_DimLinear::GetTextXform(
   if (total_arrow_width + total_text_width > dist)     // arrows + text dont fit
   {
     // Try to leave text inside and move arrows outside
-    if (total_text_width > dist)   // text doesnt fit
+    if (total_text_width > dist)   // text doesn't fit
     {
       // move text outside
       text_outside = true;
@@ -2979,7 +2979,7 @@ bool ON_DimAngular::GetTextXform(
 
   if (total_arrow_width + total_text_width > dist)     // arrows + text dont fit
   {
-    if (total_text_width > dist)   // text doesnt fit
+    if (total_text_width > dist)   // text doesn't fit
     {
       // move text outside
       text_outside = true;
