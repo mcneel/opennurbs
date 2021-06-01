@@ -2395,8 +2395,8 @@ bool ON_InstanceDefinition::Internal_WriteV5(
     if (!binary_archive.WriteDouble(m_us.MetersPerUnit(ON_DBL_QNAN)))
       break;
 
-    const bool bLegacyBoolThatIsAlwasyFalse = false;
-    if (!binary_archive.WriteBool(bLegacyBoolThatIsAlwasyFalse))
+    const bool bLegacyBoolThatIsAlwaysFalse = false;
+    if (!binary_archive.WriteBool(bLegacyBoolThatIsAlwaysFalse))
       break;
 
     // version 1.4 fields
