@@ -519,7 +519,7 @@ const ON_String ON_String::EmptyString;
 static const ON_String ON_Internal_ByteOrderMark()
 {
   // UTF-8 encoded byte order mark.
-  const unsigned char bom[3] = {0xEFU,0xBBU,0xBFU};
+  const unsigned char bom[4] = {0xEFU,0xBBU,0xBFU,0};
   return ON_String((const char*)bom);
 }
 const ON_String ON_String::ByteOrderMark(ON_Internal_ByteOrderMark());
