@@ -516,7 +516,7 @@ static char* ToStringHelper( const char* src_str, char* dst_str, const char* dst
 
 static char* ToStringHelper( unsigned int u, char* dst_str, const char* dst_str_end )
 {
-  char ubuffer[32]; // unsinged int to string storage buffer
+  char ubuffer[32]; // unsigned int to string storage buffer
   unsigned int i, j;
 
   if ( ON_UNSET_UINT_INDEX == u )

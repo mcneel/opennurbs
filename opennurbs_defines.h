@@ -273,7 +273,7 @@ double ON_RadiansFromDegrees(
 #define ON_UNSET_POSITIVE_FLOAT 1.234321e+38f
 #define ON_UNSET_FLOAT -ON_UNSET_POSITIVE_FLOAT
 
-// When unsinged int values are used in a context where 
+// When unsigned int values are used in a context where 
 // 0 is a valid index and there needs to be a value that 
 // indicates the index is not set, use ON_UNSET_UINT_INDEX.
 #define ON_UNSET_UINT_INDEX 0xFFFFFFFFU
@@ -2706,6 +2706,65 @@ public:
 
   int m_index;
 };
+
+class ON_CLASS ON_ComponentIndexAndNumber
+{
+public:
+  ON_ComponentIndexAndNumber() = default;
+  ~ON_ComponentIndexAndNumber() = default;
+  ON_ComponentIndexAndNumber(const ON_ComponentIndexAndNumber&) = default;
+  ON_ComponentIndexAndNumber& operator=(const ON_ComponentIndexAndNumber&) = default;
+
+public:
+  static const ON_ComponentIndexAndNumber UnsetAndNan;
+  static const ON_ComponentIndexAndNumber UnsetAndZero;
+  static const ON_ComponentIndexAndNumber Create(
+    ON_COMPONENT_INDEX ci,
+    double x
+  );
+
+public:
+
+  /*
+  Description:
+    Compare Component() using ON_COMPONENT_INDEX::Compare().
+  */
+  static int CompareComponent(
+    const ON_ComponentIndexAndNumber* a,
+    const ON_ComponentIndexAndNumber* b
+  );
+
+
+  /*
+  Description:
+    Compare Number() nans are treated as equal and sort last.
+  */
+  static int CompareNumber(
+    const ON_ComponentIndexAndNumber* a,
+    const ON_ComponentIndexAndNumber* b
+  );
+
+  /*
+  Description:
+    Dictionary compare Component() 1st and Number() 2nd.
+  */
+  static int CompareComponentAndNumber(
+    const ON_ComponentIndexAndNumber* a,
+    const ON_ComponentIndexAndNumber* b
+  );
+
+
+public:
+  const ON_COMPONENT_INDEX Component() const;
+  void SetComponent(ON_COMPONENT_INDEX ci);
+
+  double Number() const;
+  void SetNumber(double x);
+
+public:
+  ON_COMPONENT_INDEX m_ci = ON_COMPONENT_INDEX::UnsetComponentIndex;
+  double m_x = ON_DBL_QNAN;
+}; 
 
 #endif
 

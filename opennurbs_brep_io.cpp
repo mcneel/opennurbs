@@ -861,6 +861,28 @@ void ReadFillInMissingBoxes( ON_Brep& brep )
   }
 }
 
+static const ON_BoundingBox Internal_BestBoundingBox(
+  const ON_BoundingBox archive_bbox,
+  const ON_BoundingBox new_bbox
+)
+{
+  if (false == new_bbox.IsNotEmpty())
+    return archive_bbox; // don't have a new bbox
+
+  if (false == archive_bbox.IsValid())
+    return new_bbox;
+
+  if (archive_bbox.Includes(new_bbox, false))
+    return new_bbox;
+
+  // The best code currently available calculated new_box.
+  // I should be good enough. If it is different
+  // from archive then you need to understand WHY it is different
+  // and fix the problem at the source - not mask it at read time.
+  return new_bbox; // <- Good place to debug bbox reading bugs
+
+}
+
 bool ON_Brep::Read( ON_BinaryArchive& file )
 {
   int i;
@@ -1105,16 +1127,41 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
   // In V6 and earlier bounding boxes of faces were bounding box of underlying surface.
   // This can result in enourmous boxes which mess up make2d
   // In V7 bounding boxes use the trim pbox resulting in resonable boxes.
-  if (file.Archive3dmVersion() < 70 || file.ArchiveOpenNURBSVersion() < 2382395020)
+  ////if (file.Archive3dmVersion() < 70 || file.ArchiveOpenNURBSVersion() < 2382395020)
+  ////{
+  ////  if (!m_bbox.IsEmpty())
+  ////  {
+  ////    ON_BoundingBox orig_box = m_bbox;
+  ////    ClearBoundingBox();
+  ////    BoundingBox();                    // compute bounding box
+  ////    m_bbox.Intersection(orig_box);
+  ////  }
+  ////}
+
+  // Dale Lear https://mcneel.myjetbrains.com/youtrack/issue/RH-64277
+  // The test used to fix RH-60112 was not adequate and now the set of
+  // active v7 3dm files has lots of cases with breps that have
+  // oversized bounding boxes by the new standard avter Greg's RH-60112 changes.
+  // We have already started writing V8 files and those versions of V8
+  // have been used by some of our Discourse early adopters.
+  // At this point, I'm going to assume a bounding box read from a V7 or V8 file
+  // can be too big. By the time V9 rolls around, the boxes should be cleaned up.
+  if (file.Archive3dmVersion() < 90 && m_bbox.IsNotEmpty() )
   {
-    if (!m_bbox.IsEmpty())
+    const ON_BoundingBox archive_brep_bbox = m_bbox;
+    ON_BoundingBox new_brep_bbox = ON_BoundingBox::EmptyBoundingBox;
+    const unsigned int face_count = m_F.UnsignedCount();
+    for (unsigned fi = 0; fi < face_count; ++fi)
     {
-      ON_BoundingBox orig_box = m_bbox;
-      ClearBoundingBox();
-      BoundingBox();                    // compute bounding box
-      m_bbox.Intersection(orig_box);    
+      ON_BrepFace& f = this->m_F[fi];
+      const ON_BoundingBox archive_face_bbox = f.m_bbox;
+      ON_BoundingBox new_face_bbox = f.InternalFaceBoundingBox(false, false);
+      f.m_bbox = Internal_BestBoundingBox(archive_face_bbox, new_face_bbox);
+      new_brep_bbox.Union(f.m_bbox);
     }
+    m_bbox = Internal_BestBoundingBox(archive_brep_bbox, new_brep_bbox);
   }
+
   return rc;
 }
 

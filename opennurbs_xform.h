@@ -24,6 +24,7 @@
 #define ON_XFORM_INC_
 
 class ON_Matrix;
+class ON_Quaternion;
 
 class ON_CLASS ON_Xform
 {
@@ -139,6 +140,9 @@ public:
   ON_Xform operator*( const ON_Xform& /*rhs*/ ) const;
   ON_Xform operator+( const ON_Xform& ) const;
   ON_Xform operator-( const ON_Xform& /*rhs*/ ) const;
+
+  const ON_SHA1_Hash Hash() const;
+  ON__UINT32 CRC32(ON__UINT32 current_remainder) const;
 
   /*
   Description:
@@ -324,6 +328,16 @@ public:
 
 	// true if this is a proper rotation. 
 	bool IsRotation() const;
+
+  /*
+  Description:
+   If *this is a proper rotation then find the eqivalent quaternion.  
+  Parameters:
+    Q - [out]  Quaternion that represents this rotation tranformation
+  Returns:
+    True - if *this is a proper rotation
+  */
+  bool GetQuaternion(ON_Quaternion& Q) const;
 
 	/*
 	Description:
@@ -802,17 +816,169 @@ public:
 	*/
 	bool GetYawPitchRoll(double& yaw, double& pitch, double& roll)const;
 
-/*
-Description:
-	Create rotation transformation From Euler angles.
-Parameters:
-	alpha - angle (in radians) to rotate about the Z axis
-	beta -  angle (in radians) to rotate about the Y axis
-	gamma - angle (in radians) to rotate about the Z axis
-Details:
-	RotationZYZ(alpha, beta, gamma)  = R_z( alpha) * R_y(beta) * R_z(gamma)
-	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
-*/
+  /*
+  Description:
+    Find the Keyhole Markup Language (KML) orientation angles (in radians) of a rotation
+    transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
+    KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_radians - [out]
+      angle (in radians) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    tilt_radians - [out]
+      angle (in radians) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    roll_radians - [out]
+      angle (in radians) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+  Returns:
+    True if this transformation is a rotation and the KML angles are returned.
+    False if this transformation is not a rotation, in which case all returned
+    angle values are ON_DLB_QNAN.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  bool GetKMLOrientationAnglesRadians(
+    double& heading_radians, 
+    double& tilt_radians, 
+    double& roll_radians
+  ) const;
+
+  /*
+  Description:
+    Find the Keyhole Markup Language (KML) orientation angles (in degrees) of a rotation
+    transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
+    KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_degrees - [out]
+      angle (in degrees) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    tilt_degrees - [out]
+      angle (in degrees) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    roll_degrees - [out]
+      angle (in degrees) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+  Returns:
+    True if this transformation is a rotation and the KML angles are returned.
+    False if this transformation is not a rotation, in which case all returned
+    angle values are ON_DLB_QNAN.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  bool GetKMLOrientationAnglesDegrees(
+    double& heading_degrees, 
+    double& tilt_degrees, 
+    double& roll_degrees
+  ) const;
+
+  /*
+  Description:
+    Get a rotation transformation from the Keyhole Markup Language (KML) orientation angles in radians.
+    (KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north).
+    KML rotations are applied in the following order: first roll, second tilt, third heading.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction 
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_radians - [in]
+      angle (in radians) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesRadians(pi/2,0,0),
+      then R*(1,0,0) = (0,-1,0), R*(0,1,0) = (1,0,0), R*(0,0,1) = (0,0,1)
+    tilt_radians - [in]
+      angle (in radians) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesRadians(0,pi/2,0),
+      then R*(1,0,0) = (1,0,0), R*(0,1,0) = (0,0,-1), R*(0,0,1) = (0,1,0)
+    roll_radians - [in]
+      angle (in radians) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down 
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesRadians(0,0,pi/2),
+      then R*(1,0,0) = (0,0,1), R*(0,1,0) = (0,1,0), R*(0,0,1) = (-1,0,0)
+  Returns:
+    If the input is valid, the rotation transformation is returned.
+    Otherwise the ON_Xform::Nan is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  static const ON_Xform RotationTransformationFromKMLAnglesRadians(
+    double heading_radians,
+    double tilt_radians, 
+    double roll_radians
+  );
+
+  /*
+  Description:
+    Get a rotation transformation from the Keyhole Markup Language (KML) orientation angles in degrees.
+    (KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north).
+    KML rotations are applied in the following order: first roll, second tilt, third heading.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_degrees - [in]
+      angle (in degrees) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesDegrees(90,0,0),
+      then R*(1,0,0) = (0,-1,0), R*(0,1,0) = (1,0,0), R*(0,0,1) = (0,0,1)
+    tilt_degrees - [in]
+      angle (in degrees) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesDegrees(0,90,0),
+      then R*(1,0,0) = (1,0,0), R*(0,1,0) = (0,0,-1), R*(0,0,1) = (0,1,0)
+    roll_degrees - [in]
+      angle (in degrees) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin.
+      If R = RotationTransformationFromKMLAnglesDegrees(0,0,90),
+      then R*(1,0,0) = (0,0,1), R*(0,1,0) = (0,1,0), R*(0,0,1) = (-1,0,0)
+  Returns:
+    If the input is valid, the rotation transformation is returned.
+    Otherwise the ON_Xform::Nan is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  static const ON_Xform RotationTransformationFromKMLAnglesDegrees(
+    double heading_degrees, 
+    double tilt_degrees,
+    double roll_degrees
+    );
+
+  /*
+  Description:
+	  Create rotation transformation From Euler angles.
+  Parameters:
+	  alpha - angle (in radians) to rotate about the Z axis
+	  beta -  angle (in radians) to rotate about the Y axis
+	  gamma - angle (in radians) to rotate about the Z axis
+  Details:
+	  RotationZYZ(alpha, beta, gamma)  = R_z( alpha) * R_y(beta) * R_z(gamma)
+	  where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
+  */
 	void RotationZYZ(double alpha, double beta, double gamma);
 
 /*

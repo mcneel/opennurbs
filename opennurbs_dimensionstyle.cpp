@@ -4342,10 +4342,10 @@ void ON_DimStyle::SetZeroSuppress(ON_DimStyle::suppress_zero s)
       m_zero_suppress = s;
       Internal_ContentChange();
     }
-    else
-    {
-      ON_ERROR("Attempting to set zero suppression to a value that doesn't match length display.");
-    }
+    //else
+    //{
+    //  ON_ERROR("Attempting to set zero suppression to a value that doesn't match length display.");
+    //}
   }
   Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ZeroSuppress);
 }

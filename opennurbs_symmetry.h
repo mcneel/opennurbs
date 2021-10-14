@@ -37,6 +37,11 @@ public:
     MaximumOrder = 4096
   };
 
+
+  // NOTE never use the value 113 for a new ON_Symmetry::Type.
+  // This value was used breifly in June 2021 for a prototype symmetry type
+  // and reusing it will break SHA1 hashes and 3dm archive IO.
+
   enum class Type : unsigned char
   {
     Unset = 0,
@@ -50,8 +55,8 @@ public:
 
     /// <summary>
     /// Rotation around an axis.
-    /// The symmetric object has reflection copies of the motif.
-    /// Points on the axis are fixed.
+    /// The symmetric object has rotated copies of the motif.
+    /// Points on the rotation axis are fixed.
     /// </summary>
     Rotate = 2,
 
@@ -78,7 +83,7 @@ public:
     /// When N is even and greater than 2, Det(cyclic transformation) = 1 or -1.
     /// The symmetric object has N copies of the motif.
     /// </summary>
-    Cyclic = 5,
+    Cyclic = 5
   };
 
   static ON_Symmetry::Type SymmetryTypeFromUnsigned(unsigned int symmetry_type_as_unsigned);
@@ -118,80 +123,68 @@ public:
     Unset = 0,
 
     /// <summary>
-    /// Inside the primary motif region.
+    /// Above the reflection plane and inside the primary reflect motif region.
+    /// Applies to Reflect symmetries.
     /// </summary>
-    In = 1,
+    AboveReflectionPlane = 1,
 
     /// <summary>
-    /// On the rotation axis. Applies to Reflect and ReflectAndRotate symmetries.
+    /// On the reflection plane. Applies to Reflect symmetries.
     /// </summary>
-    OnRotationAxis = 2,
+    OnReflectionPlane = 2,
 
     /// <summary>
-    /// On the reflection plane. Applies to Reflect and ReflectAndRotate symmetries.
+    /// Below the reflection plane and outside the primary reflect motif region.
+    /// Applies to Reflect symmetries.
     /// </summary>
-    OnReflectionPlane = 3,
+    BelowReflectionPlane = 3,
 
     /// <summary>
-    /// On the zero angle plane. Applies to Reflect and ReflectAndRotate symmetries.
+    /// Something like a line segment that has points above and below the reflection plane.
     /// </summary>
-    OnRotationZeroPlane = 4,
+    CrossesReflectionPlane = 4,
 
     /// <summary>
-    /// On the the rotation of the zero angle plane. Applies to Rotate symmetries.
+    /// On the rotation axis. Applies to Rotate and ReflectAndRotate symmetries.
     /// </summary>
-    OnRotationOnePlane = 5,
+    OnRotationAxis = 5,
 
     /// <summary>
-    /// Something like a line segment that has points both inside and outside the primary motif region.
+    /// Off of (not on) the rotation axis. Applies to Rotate symmetries.
     /// </summary>
-    InAndOut = 6,
+    OffRotationAxis = 6,
 
     /// <summary>
-    /// Outside the primary motif region.
+    /// On the reflection half plane. Applies to ReflectAndRotate symmetries.
     /// </summary>
-    Out = 7
+    OnReflectionHalfPlane = 7,
+
+    /// <summary>
+    /// On the supplemental half plane. Applies to ReflectAndRotate symmetries.
+    /// </summary>
+    OnSupplementalHalfPlane = 8,
+
+    /// <summary>
+    /// The half planes outside the primary motif region that are rotations
+    /// of either the reflection half plane or the supplemental half plane.
+    /// Applies to ReflectAndRotate symmetries.
+    /// </summary>
+    OnRotateAndReflectHalfPlane = 10,
+
+    /// <summary>
+    /// Above both the reflection plane and the supplemental plane.
+    /// Applies to ReflectAndRotate symmetries.
+    /// </summary>
+    InsideRotateAndReflect = 11,
+
+    /// <summary>
+    /// Outside the primary motif region and and on one of the fixed point planes
+    /// Applies to ReflectAndRotate symmetries.
+    /// </summary>
+    OutsideRotateAndReflect = 12
   };
 
   static ON_Symmetry::Region SymmetryRegionFromUnsigned(unsigned int region_as_unsigned);
-
-  static const ON_wString SymmetryRegionToString(ON_Symmetry::Region r);
-
-  /*
-  Returns:
-    (r == ON_Symmetry::Region::OnRotationZeroPlane || r == ON_Symmetry::Region::OnRotationOnePlane).
-  */
-  static bool SymmetryRegionIsRotationPlane(ON_Symmetry::Region r);
-
-  /*
-  Paramaters:
-    r - [in]
-    bInAndOutResult - [in]
-     Value to return when ON_Symmetry::Region::InandOut == r.
-  Returns:
-    True if r is OnRotationAxis, OnReflectionPlane, OnZeroAnglePlane, or OnOneAnglePlane.
-  */
-  static bool IsOn(ON_Symmetry::Region r, bool bInAndOutResult);
-
-  /*
-  Paramaters:
-    r - [in]
-    bInAndOutResult - [in]
-     Value to return when ON_Symmetry::Region::InandOut == r.
-  Returns:
-    ON_Symmetry::Region::In == r || IsOn(r).
-  */
-  static bool IsInOrOn(ON_Symmetry::Region r, bool bInAndOutResult);
-
-  /*
-  Paramaters:
-    r - [in]
-    bInAndOutResult - [in]
-     Value to return when ON_Symmetry::Region::InandOut == r.
-  Returns:
-    !ON_Symmetry::IsInOrOn(r)
-  */
-  static bool IsNotInOrOn(ON_Symmetry::Region r, bool bInAndOutResult);
 
   /*
   Parameters:
@@ -205,6 +198,22 @@ public:
     The location of the point releative to the primary motif regions.
   */
   ON_Symmetry::Region PointRegion(ON_3dPoint point, bool bUseCleanupTolerance) const;
+
+  /*
+  Description:
+    A symmetry region has fixed points if one or more motif transforms of the
+    applicable symmetry type fixes points in the region.
+    Points in these regions typically need special processing when the symmetric
+    object is edited.
+  Returns:
+    True if symmetry_region is one of 
+    ON_Symmetry::Region::OnRotationAxis,
+    ON_Symmetry::Region::OnReflectionPlane, 
+    ON_Symmetry::Region::OnReflectionHalfPlane, 
+    ON_Symmetry::Region::OnSupplementalHalfPlane,
+    or ON_Symmetry::Region::OnRotateAndReflectFixedPlane.
+  */
+  static bool SymmetryRegionHasFixedPoints(ON_Symmetry::Region symmetry_region);
 
   static ON_Symmetry::Coordinates SymmetryCoordinatesFromUnsigned(unsigned int coordinates_as_unsigned);
 
@@ -225,8 +234,23 @@ public:
     True if v is a vertex that might possibly be merged when
     transformed motifs are joined to create a symmetric SubD.
   */
-  bool IsMotifBoundarySubDVertex(const class ON_SubDVertex* v, bool bUseCleanupTolerance) const;
+  bool IsMotifBoundarySubDVertex(
+    const class ON_SubDVertex* v, 
+    bool bUseCleanupTolerance
+  ) const;
 
+  /*
+  Description:
+    Examples of fixed SubD components include vertices on a reflection plane or
+    rotation axis, faces and edges straddling a reflection plane, 
+    and faces centered about a rotation axis.
+  Returns:
+    True if the component is transformed to itself by every motif transformation.
+  */
+  bool IsFixedSubDComponent(
+    const class ON_SubDComponentPtr& subd_component,
+    bool bUseCleanupTolerance
+  ) const;
 
   static const ON_UUID ReflectId;
   static const ON_UUID RotateId;
@@ -292,10 +316,11 @@ public:
     rotation_count - [in]
     fixed_plane - [in]
   Returns:
-    True if these 3 conditions are satisified.
+    True if these 4 conditions are satisified.
     1. rotation_axis is a valid line.
-    2. rotation_count > 0
-    3. fixed_plane contains the rotation axis.
+    2. rotation_count >= 2 
+    3. rotation_count <= ON_Symmetry::MaximumOrder
+    4. fixed_plane contains the rotation axis.
   Remarks:
     The value ON_Symmetry::ZeroTolerance is used for all "zero tolerances."
   */
@@ -303,6 +328,24 @@ public:
     ON_Line rotation_axis,
     unsigned int rotation_count,
     ON_PlaneEquation fixed_plane
+  );
+
+  /*
+  Parameters:
+    rotation_axis - [in]
+    rotation_count - [in]
+    fixed_plane - [in]
+  Returns:
+    True if these 3 conditions are satisified.
+    1. rotation_axis is a valid line.
+    2. rotation_count >= 2
+    3. rotation_count <= ON_Symmetry::MaximumOrder
+  Remarks:
+    The value ON_Symmetry::ZeroTolerance is used for all "zero tolerances."
+  */
+  static bool IsValidRotationAxis(
+    ON_Line rotation_axis,
+    unsigned int rotation_count
   );
 
   /*
@@ -327,41 +370,29 @@ public:
     ON_Symmetry::Coordinates symmetry_coordinates
   );
 
-  ON_DEPRECATED_MSG("Does nothing. Use ON_Symmetry::CreateRotateSymmetry(axis,count,plane,coordinates.")
-  static const ON_Symmetry CreateRotateSymmetry(
-    ON_Line rotation_axis,
-    unsigned int rotation_count,
-    ON_Symmetry::Coordinates symmetry_coordinates
-  );
-
   /*
   Description:
     Rotation around an axis.
     The symmetric object has reflection_count copies of the motif.
-    Points on the axis are fixed.    
+    Points on the axis are fixed.
   Parameters:
     rotation_axis - [in]
     rotation_count - [in]
       rotation_count must be >= 2 and the rotation angle is (360/rotation_count) degrees.
-    zero_rotation_plane - [in]
-      zero_rotation_plane plane is used to define the primary motif region.
-      A point P is in the primary motif when zero_rotation_plane.ValueAt(P) >= 0 && (MotifTransformation(1)*zero_rotation_plane).ValueAt(P) <= 0.
-      The rotation axis must be in zero_rotation_plane (zero_rotation_plane.ValueAt(rotation_axis) <= ON_ZERO_TOLERANCE and zero_rotation_plane.ValueAt(rotation_axis) <= ON_ZERO_TOLERANCE).
     symmetry_coordinates - [in]
       object or world.
   Example:
-    If the rotation axis is the z-axis and the order is N, then the generator is 
+    If the rotation axis is the z-axis and the order is N, then the generator is
     then (x,y,z) -> (r*cos(a), r*sin(a), z) -> (r*cos(2*a), r*sin(2*a), z) -> ... -> (x,y,z),
     where r = sqrt(x*x + y*y) and a = (360 degrees)/N.
-    Any plane containing the z-axis can be used as the zero_rotation_plane.
   Remarks:
     CyclicTransformation() = rotation.
     InversionTransformation() = identity.
   */
+  ////ON_WIP_SDK
   static const ON_Symmetry CreateRotateSymmetry(
     ON_Line rotation_axis,
     unsigned int rotation_count,
-    ON_PlaneEquation zero_rotation_plane,
     ON_Symmetry::Coordinates symmetry_coordinates
   );
 
@@ -386,25 +417,11 @@ public:
     InversionTransformation() = reflection.
     CyclicTransformation() = rotation by (360/rotation_count) degrees.
   */
+  ////ON_WIP_SDK
   static const ON_Symmetry CreateReflectAndRotateSymmetry(
     ON_PlaneEquation reflection_plane, 
     ON_Line rotation_axis, 
     unsigned int rotation_count,
-    ON_Symmetry::Coordinates symmetry_coordinates
-  );
-
-  ON_DEPRECATED_MSG("Use CreateRotationSymmetry(axis,2,...) or CreateReflectionSymmetry()")
-    static const ON_Symmetry CreateInversionSymmetry(
-    ON_UUID symmetry_id, 
-    ON_Xform inversion_transform,
-    ON_Symmetry::Coordinates symmetry_coordinates
-  );
-
-  ON_DEPRECATED_MSG("Use CreateRotationSymmetry() or CreateReflectionSymmetry()")
-  static const ON_Symmetry CreateCyclicSymmetry(
-    ON_UUID symmetry_id,
-    ON_Xform cyclic_transform,
-    unsigned int cyclic_order,
     ON_Symmetry::Coordinates symmetry_coordinates
   );
 
@@ -466,6 +483,41 @@ private:
     ON_PlaneEquation zero_plane,
     ON_Symmetry::Coordinates symmetry_coordinates
   );
+
+
+  /*
+  Description:
+    Create a cyclic symmetry from a transformation.
+    The symmetric object has order copies of the modif.
+  Parameters:
+    symmetry_id - [in]
+      An id you can assign to the symmetry
+    cyclic_transform - [in]
+      cyclic_transform^order = identity
+      cyclic_transform^i != identity when 0 < i < order
+      If order is even and at least 4, then Det(cyclic_transform) = 1 or -1.
+      Otherwise Det(cyclic_transform) = 1.
+    cyclic_order - [in]
+      cyclic_order >= 2
+    fixed_line - [in]
+      fixed_line must contain all fixed points of cyclic_transform.
+      For any point P,  F = P + cyclic_transform*P + ... + cyclic_transform^(cyclic_order-1)*P
+      is a fixed point of cyclic_transform.
+    symmetry_coordinates - [in]
+      object or world.
+  Remarks:
+    If cyclic_transform is a rotation, use CreateRotationSymmetry().
+    If cyclic_transform is a reflection, use CreateReflectionSymmetry().
+    If 2 = cyclic_order and Det(cyclic_transform) = -1, use CreateInversionSymmetry().
+  */
+  static const ON_Symmetry Internal_CreateCyclicSymmetry(
+    ON_UUID symmetry_id,
+    ON_Xform cyclic_transform,
+    unsigned int cyclic_order,
+    ON_Line fixed_line,
+    ON_Symmetry::Coordinates symmetry_coordinates
+  );
+
 public:
 
   /*
@@ -489,6 +541,24 @@ public:
     Symmetry type.
   */
   ON_Symmetry::Type SymmetryType() const;
+
+  /*
+  Returns:
+    True if SymmetryType() is ON_Symmetry::Type::Rotate
+  */
+  bool IsRotate() const;
+
+  /*
+  Returns:
+    True if SymmetryType() is ON_Symmetry::Type::Reflect
+  */
+  bool IsReflect() const;
+
+  /*
+  Returns:
+    True if SymmetryType() is ON_Symmetry::Type::ReflectAndRotage
+  */
+  bool IsReflectAndRotate() const;
 
   /*
   Returns:
@@ -594,9 +664,6 @@ public:
   */
   const ON_Xform InversionTransformation() const;
 
-  ON_DEPRECATED_MSG("Returns nans. Call InversionTransformation()")
-  const ON_Xform InversionTransform() const;
-
   /*
   Returns:
     The cyclic transformation is returned.
@@ -611,9 +678,6 @@ public:
     and inversion transforms otherwise.
   */
   const ON_Xform CyclicTransformation() const;
-
-  ON_DEPRECATED_MSG("Return nans. Call CyclicTransformation()")
-  const ON_Xform CyclicTransform() const;
 
   /*
   Returns:
@@ -645,6 +709,29 @@ public:
   */
   const ON_Xform ReflectionTransformation() const;
 
+
+private:
+  /*
+  Returns:
+    True if the symmetry type requires a valid rotation axis.
+    False otherwide
+  */
+  bool Internal_RequiresRotationAxis() const;
+
+  /*
+  Returns:
+    True if the symmetry type requires a valid fixed plane.
+    False otherwide
+  */
+  bool Internal_RequiresFixedPlane() const;
+
+  /*
+  Returns:
+    True if the symmetry type is Reflect, Rotate, ReflectAndRotate.
+  */
+  bool Internal_IsStandardType() const;
+
+public:
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the rotation axis is returned.
@@ -707,29 +794,39 @@ public:
   */
   double RotationAngleRadians() const;
 
-  /*
-  Returns:
-    If the symmetry is type is Rotate or ReflectAndRotate, then the plane defining the zero angle or rotation is returned.
-    Othewise ON_PlaneEquation::NanPlaneEquation is returned.
-  Remarks:
-    For a Rotate symmetry, the region on or above RotationZeroPlane() and above RotationOnePlane()
-    is the default primary motif region.
-    For a RotateAndReflect symmetry, the region on or above RotationZeroPlane() and on or above ReflectionPlane()
-    is the default primary motif region.
-  */
-  const ON_PlaneEquation RotationZeroPlane() const;
 
   /*
+  Description:
+    A reflect and rotate symmetry has three important planes.
+    * The reflection plane. 
+    This plane is returned by ReflectAndRotatePlane(0).
+    * The supplemental plane. This plane is the reflection plane rotated
+    around the rotation axis by angle = -0.5*RotationAngle() and then reversed. 
+    This plane is returned by ReflectAndRotatePlane(1).
+    * The reflection plane rotated around the rotation axis by pi/2. 
+    This plane is returned by ReflectAndRotatePlane(2).
+
+    The primary motif region for a reflect and rotate symmetry is region above both 
+    the reflection plane and the supplemental plane.
+        
+    The normals of all planes point into the primary motif region.
+
+  Parameters:
+    plane_index - [in]
+      Selects the plane.
+      0: returns the reflection plane.
+      1: returns the supplemental plane.
+      2: returns the half space bounding plane.
+  
   Returns:
-    If the symmetry is type is Rotate or ReflectAndRotate, then (RotationTransformation() * RotationOnePlane()).NegatedPlaneEquation() is returned.
-    Othewise ON_PlaneEquation::NanPlaneEquation is returned.
-  Remarks:
-    For a Rotate symmetry, the region on or above RotationZeroPlane() and above RotationOnePlane()
-    is the default primary motif region.
-    For a RotateAndReflect symmetry, the region on or above RotationZeroPlane() and on or above ReflectionPlane()
-    is the default primary motif region.
+    If the symmetry type is ReflectAndRotate and plane_index is valid, the requested plane is returned. 
+    Otherwise ON_PlaneEquation::Nan is returned.
   */
-  const ON_PlaneEquation RotationOnePlane() const;
+  const ON_PlaneEquation ReflectAndRotatePlane(
+    unsigned int plane_index
+  ) const;
+
+  bool OnReflectAndRotateFixedPlane( ON_3dPoint P, bool bUseCleanupTolerance) const;
 
 public:
   bool Write(class ON_BinaryArchive&) const;
@@ -762,9 +859,6 @@ public:
     are not incuded in the symmetry hash.
   */
   const ON_SHA1_Hash SymmetryHash() const;
-
-  ON_DEPRECATED_MSG("Use SymmetryHash()")
-  ON_SHA1_Hash Sha1Hash() const;
 
   /*
   Description:
@@ -828,15 +922,6 @@ public:
 
   bool SameSymmetricObjectTopology(const class ON_SubDimple* subdimple) const;
 
-  ON_DEPRECATED_MSG("OBSOLETE AND DESTROYS SYMMETRIC OBJECT INFORMATION. Use SetSymmetricObject()")
-  void SetSymmetricObjectContentSerialNumber(ON__UINT64 symmetric_object_content_serial_number) const;
-
-  ON_DEPRECATED_MSG("Use ClearSymmetricObject()")
-  void ClearSymmetricObjectContentSerialNumber() const;
-
-  ON_DEPRECATED_MSG("ALWAYS RETURNS ZERO. Use SameSymmetricObjectGeometry(...)")
-  ON__UINT64 SymmetricObjectContentSerialNumber() const;
-
 public:
   // ON_Symmetry::ZeroTolerance is a 3d tolerance use to validate
   // transformations, rotation axis locations, and plane equations.
@@ -878,6 +963,12 @@ public:
   */
   double CleanupTolerance() const;
 
+  /*
+  Returns:
+    bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance;
+  */
+  double Tolerance(bool bUseCleanupTolerance) const;
+
 private:
   ON_Symmetry::Type m_type = ON_Symmetry::Type::Unset;
 
@@ -910,7 +1001,7 @@ private:
   // m_rotation_axis always lies in m_plane.
   ON_Line m_rotation_axis = ON_Line::NanLine;
 
-  // Using 0.0 insures the default returned by CleanupTolerance() is alwasy ON_Symmetry::ZeroTolerance.
+  // Using 0.0 insures the default returned by CleanupTolerance() is always ON_Symmetry::ZeroTolerance.
   double m_cleanup_tolerance = 0.0;
 
 private:

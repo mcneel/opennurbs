@@ -1977,7 +1977,7 @@ bool ON_NgonBoundaryChecker::IsSimpleNgon(
   for (ON_NgonBoundaryComponent* e = (ON_NgonBoundaryComponent * )fspit.FirstElement(); nullptr != e; e = (ON_NgonBoundaryComponent * )fspit.NextElement())
   {
     if (1 != e->m_face_count)
-      continue; // vertex components alwasy have m_face_count = 0;
+      continue; // vertex components always have m_face_count = 0;
 
     // e is a boundary edge
     if (bBoundaryIsMarked)

@@ -852,6 +852,9 @@ void ON_InstanceDefinition::Internal_Copy(const ON_InstanceDefinition& src)
   m_linked_component_appearance = src.m_linked_component_appearance;
   if (nullptr != src.m_linked_idef_component_settings)
     m_linked_idef_component_settings = new ON_ReferencedComponentSettings(*src.m_linked_idef_component_settings);
+
+  //This omission was causing part of https://mcneel.myjetbrains.com/youtrack/issue/RH-47128
+  m_object_uuid = src.m_object_uuid;
 }
 
 

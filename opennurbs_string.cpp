@@ -1658,6 +1658,437 @@ ON_String ON_String::Right(int count) const
 }
 
 
+static bool ON_IsBig5Encoded(const char* buffer, int buffer_length)
+{
+  if (nullptr == buffer)
+    return false;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return false;
+
+  int db_count = 0;
+
+  int delta_i = 0;
+  for (int i = 0; i < buffer_length; i += (delta_i > 0) ? delta_i : 1)
+  {
+    delta_i = 1;
+    const char c = buffer[i];
+    if (c >= 0 && c <= 0x7F)
+      continue; // ASCII single byte
+    if (i + 2 <= buffer_length)
+    {
+      ON_Big5CodePoint big5_cp = ON_Big5CodePoint::Error;
+      const char* b2 = ON_Big5CodePoint::Decode(
+        buffer + i,
+        2,
+        false, false,
+        &big5_cp
+      );
+      if (b2 == buffer + i + 2 && big5_cp.IsValid(false, false))
+      {
+        delta_i = 2;
+        ++db_count;
+        continue;
+      }
+    }
+    return false;
+  }
+
+  return (db_count > 0);
+}
+
+
+
+static unsigned Internal_Big5ToUTF32(
+  const char* buffer, 
+  int buffer_length,
+  ON_SimpleArray<ON__UINT32>& utf32
+)
+{
+  unsigned replacement_count = 0;
+
+  utf32.SetCount(0);
+
+  if (nullptr == buffer)
+    return false;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return false;
+
+  utf32.Reserve(buffer_length);
+
+  int db_count = 0;
+
+  int delta_i = 0;
+  for (int i = 0; i < buffer_length; i += (delta_i > 0) ? delta_i : 1)
+  {
+    delta_i = 1;
+    const char c = buffer[i];
+    if (c >= 0 && c <= 0x7F)
+    {
+      // ASCII single byte
+      utf32.Append((unsigned char)c);
+      continue; 
+    }
+    if (i + 2 <= buffer_length)
+    {
+      ON_Big5CodePoint big5_cp = ON_Big5CodePoint::Error;
+      const char* b2 = ON_Big5CodePoint::Decode(
+        buffer + i,
+        2,
+        false, false,
+        &big5_cp
+      );
+      if (b2 == buffer + i + 2 && big5_cp.IsValid(false, false))
+      {
+        const ON_UnicodeShortCodePoint u = ON_UnicodeShortCodePoint::CreateFromBig5(big5_cp, ON_UnicodeShortCodePoint::ReplacementCharacter);
+        if (u.IsReplacementCharacter())
+          ++replacement_count;
+        utf32.Append(u.UnicodeCodePoint());
+        delta_i = 2;
+        ++db_count;
+        continue;
+      }
+    }
+    utf32.Append(ON_UnicodeCodePoint::ON_ReplacementCharacter);
+    ++replacement_count;
+  }
+
+  return replacement_count;
+}
+
+static bool ON_IsUTF8Encoded(bool bSloppy, const char* buffer, int buffer_length)
+{
+  if (nullptr == buffer)
+    return false;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return false;
+
+  struct ON_UnicodeErrorParameters e0
+    = bSloppy
+    ? ON_UnicodeErrorParameters::FailOnErrors
+    : ON_UnicodeErrorParameters::MaskErrors;
+  e0.m_error_code_point = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+  ON__UINT32 unicode_code_point;
+  int delta_i = 0;
+  for (int i = 0; i < buffer_length; i += (delta_i > 0) ? delta_i : 1)
+  {
+    struct ON_UnicodeErrorParameters e = e0;
+    unicode_code_point = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+    delta_i = ON_DecodeUTF8(buffer + i, buffer_length - i, &e, &unicode_code_point);
+    if (delta_i > 0 && ON_IsValidUnicodeCodePoint(unicode_code_point) && i + delta_i <= buffer_length)
+      continue;
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool ON_IsASCIIEncoded(const char* buffer, int buffer_length)
+{
+  if (nullptr == buffer)
+    return false;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return false;
+
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return false;
+
+  for (int i = 0; i < buffer_length; ++i)
+  {
+    char c = buffer[i];
+    if (c >= 0 && c <= 127)
+      continue;
+    return false;
+  }
+
+  return true;
+}
+
+
+bool ON_String::IsPossibleEncoding(
+  ON_String::Encoding encoding,
+  const char* buffer,
+  int buffer_length
+)
+{
+  // In practice, this is used to choose between BIG5 and UTF when parsing strings that
+  // are names of components.
+  // 
+  // If you need something more clever like NOTPOAD++ encoding detection, then you need
+  // to find a library that uses some sampling and linguistic analysis.
+  if (ON_String::Encoding::Unset == encoding)
+    return false;
+  if (ON_String::Encoding::Unknown == encoding)
+    return false;
+  if (nullptr == buffer)
+    return false;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (0 == buffer_length)
+    return true;
+  if (buffer_length < 0)
+    return false;
+
+  switch (encoding)
+  {
+  case ON_String::Encoding::ASCII:
+    return ON_IsASCIIEncoded(buffer, buffer_length);
+  case ON_String::Encoding::UTF8:
+    return ON_IsUTF8Encoded(false, buffer, buffer_length);
+  case ON_String::Encoding::BIG5andASCII:
+    return ON_IsBig5Encoded(buffer, buffer_length);
+  case ON_String::Encoding::SloppyUTF8:
+    return ON_IsUTF8Encoded(false, buffer, buffer_length);
+  default:
+    break;
+  }
+
+  return false;
+}
+
+bool ON_String::IsPossibleEncoding(
+  ON_String::Encoding encoding
+) const
+{
+  return ON_String::IsPossibleEncoding(encoding, this->Array(), this->Length());
+}
+
+ON_String::Encoding ON_String::ProbableEncoding() const
+{
+  return ON_String::ProbableEncoding(this->Array(), this->Length());
+}
+
+ON_String::Encoding ON_String::ProbableEncoding(
+  const char* buffer,
+  int buffer_length
+)
+{
+  if (nullptr == buffer)
+    return ON_String::Encoding::Unknown;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+
+  if (buffer_length <= 0)
+    return ON_String::Encoding::Unknown;
+
+  if (ON_String::IsPossibleEncoding(ON_String::Encoding::ASCII, buffer, buffer_length))
+    return ON_String::Encoding::ASCII;
+  if (ON_String::IsPossibleEncoding(ON_String::Encoding::UTF8, buffer, buffer_length))
+    return ON_String::Encoding::UTF8;
+  if (ON_String::IsPossibleEncoding(ON_String::Encoding::BIG5andASCII, buffer, buffer_length))
+    return ON_String::Encoding::BIG5andASCII;
+  if (ON_String::IsPossibleEncoding(ON_String::Encoding::SloppyUTF8, buffer, buffer_length))
+    return ON_String::Encoding::SloppyUTF8;
+
+  return ON_String::Encoding::Unknown;
+}
+
+const ON_String ON_String::ToUTF8(
+  const char* buffer,
+  int buffer_length
+)
+{
+  if (nullptr == buffer)
+    return ON_String::EmptyString;
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0)
+    return ON_String::EmptyString;
+
+  unsigned bad_utf32_count = 0;
+  ON_SimpleArray<ON__UINT32> utf32;
+
+  const ON_String::Encoding e = ON_String::ProbableEncoding(buffer, buffer_length);
+  switch (e)
+  {
+  case ON_String::Encoding::ASCII:
+  case ON_String::Encoding::UTF8:
+    return ON_String(buffer, buffer_length);
+    break;
+
+  case ON_String::Encoding::SloppyUTF8:
+    // ON_String -> ON_wString cleans up the slop.
+    // ON_wString -> ON_String converts the wchar_t UTF-X encoding to UTF-8.
+    return ON_String(ON_wString(ON_String(buffer, buffer_length)));
+    break;
+
+  case ON_String::Encoding::BIG5andASCII:
+    bad_utf32_count = Internal_Big5ToUTF32(buffer, buffer_length, utf32);
+    break;
+  }
+
+  const unsigned utf32_count = utf32.UnsignedCount();
+  if (utf32_count > 0 && utf32_count >= 2* bad_utf32_count)
+  {
+    unsigned int error_status = 0;
+    const unsigned int error_mask = 0xFFFFFFFFu;
+    const int utf8_count = ON_ConvertUTF32ToUTF8(
+      false, // bTestByteOrder,
+      utf32.Array(),
+      utf32.Count(),
+      nullptr, // char* sUTF8,
+      0, // int sUTF8_count,
+      &error_status,
+      error_mask,
+      ON_UnicodeCodePoint::ON_ReplacementCharacter,
+      nullptr //const ON__UINT32 * *sNextUTF32
+    );
+    if (utf8_count > 0)
+    {
+      error_status = 0;
+      ON_String utf8;
+      utf8.ReserveArray(utf8_count);
+      utf8.SetLength(utf8_count);
+      ON_ConvertUTF32ToUTF8(
+        false, // bTestByteOrder,
+        utf32.Array(),
+        utf32.Count(),
+        utf8.Array(),
+        utf8_count,
+        &error_status,
+        error_mask,
+        ON_UnicodeCodePoint::ON_ReplacementCharacter,
+        nullptr //const ON__UINT32 * *sNextUTF32
+      );
+      return utf8;
+    }
+  }
+
+  return ON_String::EmptyString;
+}
+
+const ON_String ON_String::ToUTF8() const
+{
+  if (IsPossibleEncoding(ON_String::Encoding::UTF8))
+    return *this;
+  return ON_String::ToUTF8( this->Array(), this->Length() );
+}
+
+
+const ON_String ON_String::ToBIG5(
+  const char* buffer,
+  int buffer_length,
+  int* error_count
+)
+{
+  if (nullptr != error_count)
+    *error_count = 0;
+
+  if (nullptr == buffer)
+    return ON_String::EmptyString;
+
+  if (-1 == buffer_length)
+    buffer_length = ON_String::Length(buffer);
+  if (buffer_length <= 0 || buffer_length > ON_String::MaximumStringLength)
+    return ON_String::EmptyString;
+
+  switch (ON_String::ProbableEncoding(buffer,buffer_length))
+  {
+  case ON_String::Encoding::ASCII:
+  case ON_String::Encoding::BIG5andASCII:
+    return ON_String(buffer,buffer_length);
+    break;
+
+  case ON_String::Encoding::UTF8:
+  case ON_String::Encoding::SloppyUTF8:
+  {
+    const ON_SimpleArray< ON_Big5UnicodePair>& unicode_to_big5 = ON_Big5UnicodePair::UnicodeToBig5();
+
+    const int big5_capacity = 2 * buffer_length;
+    int big5_len = 0;
+    ON_String big5;
+    char* big5_buffer = big5.ReserveArray(big5_capacity + 1);
+
+    int code_point_count = 0;
+    int big5_code_point_count = 0;
+    int fail_count = 0;
+    int delta_i = 0;
+    for (int i = 0; i < buffer_length; i += (delta_i > 0 ? delta_i : 1))
+    {
+      ON_UnicodeErrorParameters e = ON_UnicodeErrorParameters::MaskErrors;
+      e.m_error_code_point = ON_UnicodeCodePoint::ON_InvalidCodePoint;
+      ON__UINT32 unicode_code_point = e.m_error_code_point;
+      delta_i = ON_DecodeUTF8(
+        buffer + i,
+        buffer_length - i,
+        &e,
+        &unicode_code_point
+      );
+      ++code_point_count;
+
+      ON_Big5UnicodePair pair = ON_Big5UnicodePair::Error;
+      for (;;)
+      {
+        if (delta_i <= 0)
+          break;
+        if (false == ON_IsStandardUnicodeCodePoint(unicode_code_point))
+          break;
+
+        if (unicode_code_point >= 0 && unicode_code_point <= 0x7F)
+        {
+          // ASCII code point.
+          pair = ON_Big5UnicodePair::Create(unicode_code_point, unicode_code_point);
+          break;
+        }
+
+        const ON_Big5UnicodePair key = ON_Big5UnicodePair::Create(0, unicode_code_point);
+        if (unicode_code_point != key.UnicodeCodePoint())
+          break;
+        const int k = unicode_to_big5.BinarySearch(&key, ON_Big5UnicodePair::CompareUnicodeCodePoint);
+        if (k < 0)
+          break;
+
+        // BIG5 code point
+        pair = unicode_to_big5[k];
+        break;
+      }
+
+      const int big5_delta = pair.IsValid(true, true) ? pair.Big5().Encode(big5_buffer + big5_len, big5_capacity - big5_len) : 0;
+      if (1 == big5_delta || 2 == big5_delta)
+      {
+        if (2 == big5_delta)
+          ++big5_code_point_count;
+        big5_len += big5_delta;
+      }
+      else
+      {
+        big5_buffer[big5_len++] = '?';
+        ++fail_count;
+      }
+    }
+    if (big5_code_point_count > 0 && 2 * fail_count < code_point_count)
+    {
+      big5.SetLength(big5_len);
+      return big5;
+    }
+  }
+  break;
+
+  default:
+    break;
+  }
+  return ON_String::EmptyString;
+}
+
+const ON_String ON_String::ToBIG5(
+  int* error_count
+) const
+{
+  const ON_String::Encoding e = this->ProbableEncoding();
+  if (ON_String::Encoding::ASCII == e || ON_String::Encoding::BIG5andASCII == e)
+    return *this;
+
+  return ON_String::ToBIG5(this->Array(), this->Length(), error_count);
+}
+
 ON_CheckSum::ON_CheckSum()
 {
   Zero();

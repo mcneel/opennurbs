@@ -3190,7 +3190,7 @@ const ON_ComponentManifestItem_PRIVATE* ON_ComponentManifestTableIndex::SystemIt
 {
   if (m_bIndexedComponent && sytem_item_index < 0 && sytem_item_index > ON_UNSET_INT_INDEX )
   {
-    // The linked list of system items is alwasy short - hash tables and sorting are a waste of time
+    // The linked list of system items is always short - hash tables and sorting are a waste of time
     for (const ON_ComponentManifestItem_PRIVATE* system_item = m_first_system_item; nullptr != system_item; system_item = system_item->m_next)
     {
       if ( system_item->Index() == sytem_item_index )

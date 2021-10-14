@@ -2004,7 +2004,7 @@ public:
   Returns:
      Endian-ness of the cpu reading this file.
   Remarks:
-    3dm files are alwasy saved with little endian byte order.
+    3dm files are always saved with little endian byte order.
   */
   ON::endian Endian() const; // endian-ness of cpu
 
@@ -4801,7 +4801,7 @@ private:
 
 private:
   // endian-ness of the cpu reading this file.
-  // 3dm files are alwasy saved with little endian byte order.
+  // 3dm files are always saved with little endian byte order.
   const ON::endian m_endian = ON::Endian();
 
   const ON::archive_mode m_mode = ON::archive_mode::unset_archive_mode;

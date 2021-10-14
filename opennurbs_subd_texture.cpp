@@ -743,6 +743,11 @@ void ON_SubD::ClearFragmentTextureCoordinatesTextureSettingsHash() const
   Internal_SetFragmentTextureCoordinatesTextureSettingsHash(ON_SHA1_Hash::EmptyContentHash);
 }
 
+static bool SetGridMeshMappingTCs(const unsigned int pointCount, const double* P, const size_t P_stride, const double* N, const size_t N_stride, double* T, const size_t T_stride, const ON_TextureMapping& mapping, const ON_Xform* P_xform, const ON_Xform* N_xform)
+{
+  return false;
+}
+
 bool ON_SubD::SetFragmentTextureCoordinates(
   const class ON_TextureMapping& mapping,
   bool bLazy
@@ -771,8 +776,6 @@ bool ON_SubD::SetFragmentTextureCoordinates(
   if (bApplySubDXform)
     subd_xform.GetMappingXforms(P_xform, N_xform);
 
-  const bool bApplyUVW = ON_MappingTag::TransformTreatedIsIdentity(&mapping.m_uvw) ? false : true;
-
   ON_3dPoint tc;
   ON_SubDMeshFragmentIterator frit(*this);
   for (const ON_SubDMeshFragment* fragment = frit.FirstFragment(); nullptr != fragment; fragment = frit.NextFragment())
@@ -797,18 +800,19 @@ bool ON_SubD::SetFragmentTextureCoordinates(
     const unsigned N_count = fragment->NormalCount();
     const double* N = (N_count == P_count) ? fragment->m_N : &ON_3dVector::ZeroVector.x;
     const size_t N_stride = (N_count == P_count) ? fragment->m_N_stride : 0;
-    for (double* T1 = T + T_stride * T_count; T < T1; T += T_stride, P += P_stride, N += N_stride)
+    if (T_count != P_count || N_count != P_count || !SetGridMeshMappingTCs(P_count, P, P_stride, N, N_stride, T, T_stride, mapping, bApplySubDXform ? &P_xform : nullptr, bApplySubDXform ? &N_xform : nullptr))
     {
-      const bool ok = bApplySubDXform ?
-        mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc, P_xform, N_xform) :
-        mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc);
-      if(!ok)
-        tc = ON_3dPoint::NanPoint;
-      else if (bApplyUVW)
-        tc = mapping.m_uvw * tc;
-      T[0] = tc.x;
-      T[1] = tc.y;
-      T[2] = tc.z;
+      for (double* T1 = T + T_stride * T_count; T < T1; T += T_stride, P += P_stride, N += N_stride)
+      {
+        const bool ok = bApplySubDXform ?
+          mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc, P_xform, N_xform) :
+          mapping.Evaluate(ON_3dPoint(P), ON_3dVector(N), &tc);
+        if (!ok)
+          tc = ON_3dPoint::NanPoint;
+        T[0] = tc.x;
+        T[1] = tc.y;
+        T[2] = tc.z;
+      }
     }
   }
 
@@ -1046,6 +1050,12 @@ bool ON_SubD::HasPerFaceColorsFromPackId() const
 }
 
 
+
+
+void ON_SubD::SetComponentMarkBitsFromSymmetryMotif() const
+{
+  this->ClearComponentMarkBits(true, true, true);
+}
 
 void ON_SubD::SetPerFaceColorsFromSymmetryMotif() const
 {

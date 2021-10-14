@@ -596,8 +596,10 @@ ON_OBSOLETE_V5_TextObject* ON_OBSOLETE_V5_TextObject::CreateFromV6TextObject(
 
   if (textgeom->HasWrappedRuns())
   {
-    const ON_wString plaintextFields = textgeom->WrappedPlainTextWithFields();
-    V5_text_object->SetTextFormula(plaintextFields);
+    // RH-64471 - WrappedPlainTextWithFields() adds multiple copies of the entire
+    // text string for each wrapped run.
+    //const ON_wString plaintextFields = textgeom->WrappedPlainTextWithFields();
+    //V5_text_object->SetTextFormula(plaintextFields);
     const ON_wString plaintext = textgeom->WrappedPlainText();
     V5_text_object->SetTextValue(plaintext);
   }

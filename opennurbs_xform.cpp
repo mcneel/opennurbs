@@ -944,6 +944,19 @@ ON_3dVector ON_Xform::operator*( const ON_3dVector& v ) const
   return ON_3dVector( xh[0],xh[1],xh[2] );
 }
 
+const ON_SHA1_Hash ON_Xform::Hash() const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateDoubleArray(16, &this->m_xform[0][0]);
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_Xform::CRC32(ON__UINT32 current_remainder) const
+{
+  const ON_SHA1_Hash hash = this->Hash();
+  return ON_CRC32(current_remainder, sizeof(hash), &hash);
+}
+
 bool ON_Xform::IsValid() const
 {
   const double* x = &m_xform[0][0];
@@ -1501,6 +1514,45 @@ bool ON_Xform::IsRotation() const
 		rc = RTR.IsIdentity(ON_ZERO_TOLERANCE) && Determinant()>0;
 	}
 	return rc;
+}
+
+bool ON_Xform::GetQuaternion(ON_Quaternion& Q) const
+{
+  bool rc = IsRotation();
+  if (rc)
+  {
+    double theta = 0;
+    ON_3dVector Axis(m_xform[2][1] - m_xform[1][2], m_xform[0][2] - m_xform[2][0], m_xform[1][0] - m_xform[0][1]);
+    double Alen = Axis.Length();
+    double trace = m_xform[0][0] + m_xform[1][1] + m_xform[2][2];
+
+    theta = atan2(Alen, trace - 1);   // 0<= theta <= Pi/2
+
+    if(Alen>0.0 && trace> -.999)
+      Axis = 1.0 / Alen * Axis;
+    else
+    {
+      if (theta == 0.0)
+        Axis = ON_3dVector::ZAxis;      // case where axis is unspecified   
+      else
+      {
+        // Form off diagonal elements of the symmetric matrix  (R+R^t)/2
+        double S12 = (m_xform[1][2] + m_xform[2][1]) / 2;
+        double S13 = (m_xform[1][2] + m_xform[3][1]) / 2;
+        // double S23 = (m_xform[2][3] + m_xform[3][2]) / 2;
+
+        double c = (1 - trace) / 2.0;   // cos(theta) should be ~-1.0
+        // magnitude of axis coefficients are compted as such: 
+        for (int i = 0; i < 3; i++)
+          Axis[i] = sqrt((m_xform[i][i] - c) / (1 - c));
+        // need to set the signs
+        if (S12 < 0) Axis[1] *= -1;
+        if (S13 < 0) Axis[2] *= -1;
+      }
+    }
+    Q.SetRotation(theta, Axis);
+  }
+  return rc;
 }
 
 bool ON_Xform::Orthogonalize(double tol)
@@ -2065,6 +2117,227 @@ bool ON_Xform::GetEulerZYZ(double& alpha, double& beta, double& gamma)const
 	return rc;
 }
 
+bool ON_Xform::GetKMLOrientationAnglesRadians(double& heading_radians, double& tilt_radians, double& roll_radians ) const
+{
+  // NOTE: In KML, postive rotations are CLOCKWISE about the specified axis.
+  // This is opposite the conventional "right hand rule."
+  // https://developers.google.com/kml/documentation/kmlreference#orientation
+  heading_radians = ON_DBL_QNAN;
+  tilt_radians = ON_DBL_QNAN;
+  roll_radians = ON_DBL_QNAN;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (false == IsRotation())
+      break;
+
+    // sin(1 degree)^3 = 5e-6.
+    const double zero_tol = ON_ZERO_TOLERANCE;
+    ON_Xform clean(*this);
+    for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j)
+    {
+      double x = (i < 3 && j < 3) ? m_xform[i][j] : ((3==i&&3==j) ? 1.0 : 0.0);
+      if (fabs(x) <= zero_tol)
+        x = 0.0;
+      else if (fabs(x-1.0) <= zero_tol)
+        x = 1.0;
+      else if (fabs(x+1.0) <= zero_tol)
+        x = -1.0;
+      else 
+        continue;
+      clean.m_xform[i][j] = x;
+    }
+    if (false == clean.IsRotation())
+      clean = *this;
+
+
+    // Set: h = -heading angle, t = -tilt angle, r = -roll angle. 
+    // (negatives because KML angles are opposite the right hand rule direction, and trig works the other way.)    // 
+    // The KML specification says 0 <= heading <= 2pi, 0 <= tilt <= pi, 0 <= roll <= pi.
+    // So, if this transformation is really a KML rotation, then we are looking for h,t,r 
+    // in the ranges -2pi <= h <= 0, -pi <= t <= 0, and -pi <= r <= 0.
+    // 
+    // If you calculate the 3x3 KML orientation matrix M by hand,
+    // then you get
+    // M[1][0] = -sin(h)*cos(t)
+    // M[1][1] = +cos(h)*cos(t)
+    // M[2][0] = -cos(t)*sin(r)
+    // M[2][1] = +sin(t)
+    // M[2][2] = +cos(t)*cos(r)
+    // So, a bit of trigonometry and you have h, t, and r.
+
+    // NOTE WELL: When cos(t) is very near zero, but not equal to zero,
+    // this calculation is unstable. In practice t is typically
+    // a integer number of degrees between 0 and 180, and this
+    // unstability rarely matters.
+
+    // tol = one half an arc second.
+    // Should be way more precise than KML requires.
+    const double zero_angle_tol = (0.5 / (60.0 * 60.0)) * ON_DEGREES_TO_RADIANS;
+    double h = ON_DBL_QNAN;
+    double r = ON_DBL_QNAN;
+    double t = ON_DBL_QNAN;
+    if (
+      (0.0 == clean.m_xform[0][1] && 0.0 == clean.m_xform[1][1])
+      ||
+      (0.0 == clean.m_xform[2][0] && 0.0 == clean.m_xform[2][2]) 
+      ||
+      (1.0 == fabs(clean.m_xform[2][1]))
+      )
+    {
+      // In this case, cos(tilt angle) = 0, clean.m_xform[2][1] = sin(tilt angle) = +1 or -1.
+      // In this case it is impossible to distinguish between the initial rotation around
+      // the y axis and the final rototation around the z axis
+      // (tilt is the middle rotation afound the x axis).
+      // I'm choosing to set roll = 0 in this case.
+      h = atan2(clean.m_xform[1][0], clean.m_xform[0][0]); // = atan2(clean.m_xform[0][1], -clean.m_xform[1][2])
+      if (fabs(h) <= zero_angle_tol)
+        h = 0.0;
+      r = 0.0;
+      t = clean.m_xform[2][1] < 0.0 ? -ON_HALFPI : ON_HALFPI; // t = asin(clean.m_xform[2][1]);
+    }
+    else
+    {
+      // KML wants -pi <= r <= 0, so sin(r) <= 0
+      // clean.m_xform[2][0] = -cos(t)*sin(r)
+      const double sign_cos_t = (clean.m_xform[2][0] < 0.0) ? -1.0 : 1.0;
+
+      h = atan2(-sign_cos_t * clean.m_xform[0][1], sign_cos_t * clean.m_xform[1][1]);
+      if (fabs(h) <= zero_angle_tol)
+        h = 0.0;
+      r = atan2(-sign_cos_t * clean.m_xform[2][0], sign_cos_t * clean.m_xform[2][2]);
+
+      const double cos_h = cos(h);
+      const double sin_h = sin(h);
+      double cos_t
+        = (fabs(sin_h) >= fabs(cos_h))
+        ? (-clean.m_xform[0][1] / sin_h)
+        : (clean.m_xform[1][1] / cos_h)
+        ; 
+      t = asin(clean.m_xform[2][1]);
+      if (cos_t < 0.0)
+      {
+        // adjust the branch of t accordingly
+        // cos_t could have a fair bit of noise in it
+        // but the sign should generally be correct.
+        if (0.0 == t)
+        {
+          // KML specification has -pi <= t <= 0
+          if (cos_t < -0.99)
+            t = -ON_PI;
+        }
+        else if (t > -ON_HALFPI && t < 0.0)
+          t = -ON_PI - t;
+      }
+    }
+
+    if (h == h && r == r && t == t)
+    {
+      // NOTE: In KML, postive rotations are CLOCKWISE about the specified axis.
+      // This is opposite the conventional "right hand rule."
+      // https://developers.google.com/kml/documentation/kmlreference#orientation
+      heading_radians = -h;
+      if (heading_radians < 0.0)
+        heading_radians += ON_2PI; // KML wants headings >= 0.
+      tilt_radians = -t;
+      roll_radians = -r;
+
+      // Specifying a 3D rotation as a sequence of rotations about fixed axes
+      // requires restricting rotations to intervals in order to get a one-to-one
+      // correspondence between the 3 angles and the rotation. KML specifies
+      // 0 <= heading < 360
+      // 0 <= tilt <= 180
+      // 0 <= roll <= 180
+      //  TODO - If the angles we have are not in the specified intervals, 
+      //  adjust them to produce the same rotation and be in the specified intervals.
+      rc = true;
+    }
+
+    break;
+  }
+  return rc;
+}
+
+static double Internal_RadiansToPrettyKMLDegrees(double r, double min_degrees)
+{
+  double d = r * ON_RADIANS_TO_DEGREES;
+  double f = floor(d);
+  if ( d-f > 0.5)
+    f += 1.0;
+  const double one_half_second_in_decimal_degrees = 0.5 / (60.0 * 60.0);
+  if ( fabs(d - f) < one_half_second_in_decimal_degrees) // fabs(d-f)
+    d = f;
+  if (d < min_degrees)
+    d += 360.0;
+  if (fabs(d) < one_half_second_in_decimal_degrees)
+    d = 0.0; // clean up -0.0
+  return d;
+}
+
+bool ON_Xform::GetKMLOrientationAnglesDegrees(double& heading_degrees, double& tilt_degrees, double& roll_degrees) const
+{
+  double heading_radians = ON_DBL_QNAN;
+  double tilt_radians = ON_DBL_QNAN;
+  double roll_radians = ON_DBL_QNAN;
+  const bool rc = ON_Xform::GetKMLOrientationAnglesRadians(heading_radians, tilt_radians, roll_radians);
+  heading_degrees = Internal_RadiansToPrettyKMLDegrees(heading_radians, 0.0);
+  tilt_degrees = Internal_RadiansToPrettyKMLDegrees(tilt_radians, -180.0);
+  roll_degrees = Internal_RadiansToPrettyKMLDegrees(roll_radians, -180.0);
+  return rc;
+}
+
+const ON_Xform ON_Xform::RotationTransformationFromKMLAnglesRadians(
+  double heading_radians,
+  double tilt_radians,
+  double roll_radians
+)
+{
+  // NOTE: In KML, postive rotations are CLOCKWISE looking down the specified axis towards the orgin.
+  // This is opposite the conventional "right hand rule."
+  // https://developers.google.com/kml/documentation/kmlreference#orientation
+  ON_Xform H, R, T;
+  // Standard trigonometry functons (cosine, sine, ...) follow the right hand rule
+  // convention, so the input angles must be negated.
+  H.Rotation(-heading_radians, ON_3dVector::ZAxis, ON_3dPoint::Origin); // KML Earth z-axis = up
+  T.Rotation(-tilt_radians, ON_3dVector::XAxis, ON_3dPoint::Origin); // KML Earth x-axis = east
+  R.Rotation(-roll_radians, ON_3dVector::YAxis, ON_3dPoint::Origin); // KML Earth y-axis = north
+  // KML specifes the rotation order as first R, second T, third H.
+  // Since openurbs ON_Xform acts on the left of points and vectors,
+  // H*T*R is the correct order.
+  // Example transformed_point = H*T*R*point (R is first, T is second, H is third).
+  ON_Xform kml_orientation = H * T * R;
+
+  // clean up -0, .99999999999999999, and other similar results that 
+  // commonly occur and commonly disturb novices.
+  for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j)
+  {
+    double x = kml_orientation.m_xform[i][j];
+    if (fabs(x) <= ON_ZERO_TOLERANCE)
+      x = 0.0;
+    else if (fabs(x - 1.0) <= ON_ZERO_TOLERANCE)
+      x = 1.0;
+    else if (fabs(x + 1.0) <= ON_ZERO_TOLERANCE)
+      x = -1.0;
+    else
+      continue;
+    kml_orientation.m_xform[i][j] = x;
+  }
+  return kml_orientation;
+}
+
+const ON_Xform ON_Xform::RotationTransformationFromKMLAnglesDegrees(
+  double heading_degrees,
+  double tilt_degrees,
+  double roll_degrees
+  )
+{
+  return ON_Xform::RotationTransformationFromKMLAnglesRadians(
+    heading_degrees * ON_DEGREES_TO_RADIANS,
+    tilt_degrees * ON_DEGREES_TO_RADIANS,
+    roll_degrees * ON_DEGREES_TO_RADIANS
+    );
+}
 
 void ON_Xform::Mirror(
   ON_3dPoint point_on_mirror_plane,

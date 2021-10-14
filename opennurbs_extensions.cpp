@@ -1204,6 +1204,8 @@ int ONX_Model::AddDefaultDimensionStyle(
     {
       system_dimstyle = &ON_DimStyle::Default;
     }
+
+    source_dimstyle = system_dimstyle;
   }
 
   ON_DimStyle* default_dimstyle = new ON_DimStyle(*source_dimstyle);

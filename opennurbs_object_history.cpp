@@ -2921,6 +2921,22 @@ void ON_HistoryRecord::RemapObjectIds( const ON_SimpleArray<ON_UuidPair>& id_rem
           objrev_v->m_value[j].RemapObjectId(id_remap);
         }
       }
+      // 24 May 2021, Mikko, RH-56171:
+      // Some commands like Offset use an UUID list to map inputs and outputs.
+      // Similar to remapping the objref ids, the uuid lists also need to be
+      // updated to use new ids.
+      // Other commands that currently use UUID lists are Divide, Slab, Ribbon, 
+      // FilletSrf, ChamferSrf, ArrayCrv, Hatch.
+      else if (v && ON_Value::uuid_value == v->m_value_type)
+      {
+        ON_UuidValue* uuid_v = static_cast<ON_UuidValue*>(v);
+        for (j = 0; j < uuid_v->m_value.Count(); j++)
+        {
+          int index = id_remap.BinarySearch((const ON_UuidPair*)&uuid_v->m_value[j], ON_UuidPair::CompareFirstUuid);
+          if (index >= 0)
+            uuid_v->m_value[j] = id_remap[index].m_uuid[1];
+        }
+      }
     }
   }
 }

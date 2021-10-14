@@ -634,15 +634,15 @@ ON_PointCloud* ON_PointCloud::RandomSubsample(
     // For (min <= r < max): min + RandomNumber() % (max-min)
     const int point_index = gen.RandomNumber() % last_point_count;
 
-    destination_point_cloud->m_P.Swap(point_index, last_point_count);
+    destination_point_cloud->m_P.Swap(point_index, last_point_count - 1);
     if (bHaveNormals)
-      destination_point_cloud->m_N.Swap(point_index, last_point_count);
+      destination_point_cloud->m_N.Swap(point_index, last_point_count - 1);
     if (bHaveColors)
-      destination_point_cloud->m_C.Swap(point_index, last_point_count);
+      destination_point_cloud->m_C.Swap(point_index, last_point_count - 1);
     if (bHaveValues)
-      destination_point_cloud->m_V.Swap(point_index, last_point_count);
+      destination_point_cloud->m_V.Swap(point_index, last_point_count - 1);
     if (bHaveHidden)
-      destination_point_cloud->m_H.Swap(point_index, last_point_count);
+      destination_point_cloud->m_H.Swap(point_index, last_point_count - 1);
 
     last_point_count--;
     if (last_point_count <= 0)

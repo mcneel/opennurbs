@@ -375,6 +375,16 @@ bool ON_Layer::Read(
     if ( rc ) rc = file.ReadInt( &obsolete_value1 );
     if ( rc ) rc = file.ReadColor( m_color );
 
+    // 25 Aug 2021 S. Baer (RH-65410)
+    // Pre-V7 files ignored alpha on layer colors and in some cases
+    // alpha was being set to completely transparent. In this case,
+    // make the color opaque. Even V7 files with completely transparent
+    // color is strange, but it can be intentionally set for some reason
+    if (rc && m_color.Alpha() == 255 && m_color != ON_Color::UnsetColor && file.Archive3dmVersion() < 70)
+    {
+      m_color.SetAlpha(0);
+    }
+
     {
       // OBSOLETE line style was never used - read and discard the next 20 bytes
       short s;

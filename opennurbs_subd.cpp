@@ -574,6 +574,22 @@ ON__UINT_PTR ON_SubDVertexPtr::VertexDirection() const
   return ON_SUBD_VERTEX_DIRECTION(m_ptr);
 }
 
+void ON_SubDVertexPtr::ClearSavedSubdivisionPoints() const
+{
+  const ON_SubDVertex* v = ON_SUBD_VERTEX_POINTER(m_ptr);
+  if (nullptr != v)
+    v->ClearSavedSubdivisionPoints();
+}
+
+void ON_SubDVertexPtr::ClearSavedSubdivisionPoints(
+  bool bClearNeighborhood
+) const
+{
+  const ON_SubDVertex* v = ON_SUBD_VERTEX_POINTER(m_ptr);
+  if (nullptr != v)
+    v->ClearSavedSubdivisionPoints(bClearNeighborhood);
+}
+
 const ON_ComponentStatus ON_SubDVertexPtr::Status() const
 {
   const ON_SubDVertex* vertex = ON_SUBD_VERTEX_POINTER(m_ptr);
@@ -667,9 +683,34 @@ bool ON_SubDEdgePtr::EdgeIsDartCrease() const
   return (nullptr != e) ? e->IsDartCrease() : false;
 }
 
+bool ON_SubDEdgePtr::HasInteriorEdgeTopology(
+  bool bRequireOppositeFaceDirections
+) const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  return (nullptr != e) ? e->HasInteriorEdgeTopology(bRequireOppositeFaceDirections) : false;
+}
+
+
 ON__UINT_PTR ON_SubDEdgePtr::EdgeDirection() const
 {
   return ON_SUBD_EDGE_DIRECTION(m_ptr);
+}
+
+void ON_SubDEdgePtr::ClearSavedSubdivisionPoints() const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  if (nullptr != e)
+    e->ClearSavedSubdivisionPoints();
+}
+
+void ON_SubDEdgePtr::ClearSavedSubdivisionPoints(
+  bool bClearNeighborhood
+) const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  if (nullptr != e)
+    e->ClearSavedSubdivisionPoints(bClearNeighborhood);
 }
 
 const class ON_SubDVertex* ON_SubDEdgePtr::RelativeVertex(
@@ -688,6 +729,13 @@ const class ON_SubDVertex* ON_SubDEdgePtr::RelativeVertex(
     return edge->m_vertex[relative_vertex_index];
   }
   return nullptr;
+}
+
+
+unsigned ON_SubDEdgePtr::RelativeVertexId(int relative_vertex_index) const
+{
+  const ON_SubDVertex* v = this->RelativeVertex(relative_vertex_index);
+  return (nullptr != v) ? v->m_id : 0U;
 }
 
 bool ON_SubDEdgePtr::RelativeVertexMark(
@@ -760,6 +808,64 @@ const ON_3dVector ON_SubDEdgePtr::RelativeDirection() const
     return (P1 - P0);
   }
   return ON_3dVector::NanVector;
+}
+
+const class ON_SubDFace* ON_SubDEdgePtr::RelativeFace(
+  int relative_face_index
+) const
+{
+  if (relative_face_index < 0 || relative_face_index > 1)
+    return nullptr; // invalid input
+  
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  if (nullptr == e )
+    return nullptr; // null input
+
+  if (nullptr == e || e->m_face_count > 2)
+    return nullptr; // nonmanifold edge
+
+  const ON_SubDFace* LR[2] = {};
+  for (unsigned short efi = 0; efi < e->m_face_count; ++efi)
+  {
+    const ON__UINT_PTR ptr = e->m_face2[efi].m_ptr;
+    const ON_SubDFace* f = ON_SUBD_FACE_POINTER(ptr);
+    if (nullptr == f)
+      continue;
+    if (0 == ON_SUBD_FACE_DIRECTION(ptr))
+    {
+      if (nullptr != LR[0])
+        return nullptr; // not an oriented manifold interior edge
+      LR[0] = f;
+    }
+    else
+    {
+      if (nullptr != LR[1])
+        return nullptr; // not an oriented manifold interior edge
+      LR[1] = f;
+    }
+  }
+
+  if (0 != ON_SUBD_EDGE_DIRECTION(m_ptr))
+    relative_face_index = 1 - relative_face_index;
+  return LR[relative_face_index];
+}
+
+bool ON_SubDEdgePtr::RelativeFaceMark(
+  int relative_face_index,
+  bool missing_face_return_value
+) const
+{
+  const ON_SubDFace* f = this->RelativeFace(relative_face_index);
+  return (nullptr != f) ? f->Mark() : missing_face_return_value;
+}
+
+ON__UINT8 ON_SubDEdgePtr::RelativeFaceMarkBits(
+  int relative_face_index,
+  ON__UINT8 missing_face_return_value
+) const
+{
+  const ON_SubDFace* f = this->RelativeFace(relative_face_index);
+  return (nullptr != f) ? f->MarkBits() : missing_face_return_value;
 }
 
 const ON_ComponentStatus ON_SubDEdgePtr::Status() const
@@ -848,6 +954,23 @@ ON_SubDFace* ON_SubDFacePtr::Face() const
 {
   return ON_SUBD_FACE_POINTER(m_ptr);
 }
+
+void ON_SubDFacePtr::ClearSavedSubdivisionPoints() const
+{
+  const ON_SubDFace* f = ON_SUBD_FACE_POINTER(m_ptr);
+  if (nullptr != f)
+    f->ClearSavedSubdivisionPoints();
+}
+
+void ON_SubDFacePtr::ClearSavedSubdivisionPoints(
+  bool bClearNeighborhood
+) const
+{
+  const ON_SubDFace* f = ON_SUBD_FACE_POINTER(m_ptr);
+  if (nullptr != f)
+    f->ClearSavedSubdivisionPoints(bClearNeighborhood);
+}
+
 
 unsigned int ON_SubDFacePtr::FaceId() const
 {
@@ -952,6 +1075,64 @@ unsigned int ON_SubDComponentPtr::ComponentId() const
 {
   const ON_SubDComponentBase* c = this->ComponentBase();
   return (nullptr != c) ? c->m_id : 0U;
+}
+
+void ON_SubDComponentPtr::ClearSavedSubdivisionPoints() const
+{
+  switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
+  {
+  case ON_SUBD_COMPONENT_TYPE_VERTEX:
+  {
+    const ON_SubDVertex* v = Vertex();
+    if (nullptr != v)
+      v->ClearSavedSubdivisionPoints();
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_EDGE:
+  {
+    const ON_SubDEdge* e = Edge();
+    if (nullptr != e)
+      e->ClearSavedSubdivisionPoints();
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_FACE:
+  {
+    const ON_SubDFace* f = Face();
+    if (nullptr != f)
+      f->ClearSavedSubdivisionPoints();
+  }
+  break;
+  }
+}
+
+void ON_SubDComponentPtr::ClearSavedSubdivisionPoints(
+  bool bClearNeighborhood
+) const
+{
+  switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
+  {
+  case ON_SUBD_COMPONENT_TYPE_VERTEX:
+  {
+    const ON_SubDVertex* v = Vertex();
+    if (nullptr != v)
+      v->ClearSavedSubdivisionPoints(bClearNeighborhood);
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_EDGE:
+  {
+    const ON_SubDEdge* e = Edge();
+    if (nullptr != e)
+      e->ClearSavedSubdivisionPoints(bClearNeighborhood);
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_FACE:
+  {
+    const ON_SubDFace* f = Face();
+    if (nullptr != f)
+      f->ClearSavedSubdivisionPoints(bClearNeighborhood);
+  }
+  break;
+  }
 }
 
 const ON_3dPoint ON_SubDComponentPtr::ControlNetCenterPoint() const
@@ -1657,11 +1838,7 @@ const ON_SubDVertexPtr ON_SubDComponentPtr::VertexPtr() const
   ON__UINT_PTR element_type = ON_SUBD_COMPONENT_TYPE(m_ptr);
   if ( ON_SUBD_COMPONENT_TYPE_VERTEX == element_type)
     return ON_SubDVertexPtr::Create(Vertex(), ComponentDirection());
-
-  if ( 0 == element_type )
-    return ON_SubDVertexPtr::Null;
-
-  return ON_SUBD_RETURN_ERROR(ON_SubDVertexPtr::Null);
+  return ON_SubDVertexPtr::Null;
 }
 
 const ON_SubDEdgePtr ON_SubDComponentPtr::EdgePtr() const
@@ -1669,11 +1846,7 @@ const ON_SubDEdgePtr ON_SubDComponentPtr::EdgePtr() const
   ON__UINT_PTR element_type = ON_SUBD_COMPONENT_TYPE(m_ptr);
   if ( ON_SUBD_COMPONENT_TYPE_EDGE == element_type)
     return ON_SubDEdgePtr::Create(Edge(), ComponentDirection());
-
-  if ( 0 == element_type )
-    return ON_SubDEdgePtr::Null;
-
-  return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  return ON_SubDEdgePtr::Null;
 }
 
 const ON_SubDFacePtr ON_SubDComponentPtr::FacePtr() const
@@ -1681,11 +1854,22 @@ const ON_SubDFacePtr ON_SubDComponentPtr::FacePtr() const
   ON__UINT_PTR element_type = ON_SUBD_COMPONENT_TYPE(m_ptr);
   if ( ON_SUBD_COMPONENT_TYPE_FACE == element_type)
     return ON_SubDFacePtr::Create(Face(), ComponentDirection());
+  return ON_SubDFacePtr::Null;
+}
 
-  if ( 0 == element_type )
-    return ON_SubDFacePtr::Null;
+const bool ON_SubDComponentPtr::IsVertex() const
+{
+  return (ON_SUBD_COMPONENT_TYPE_VERTEX == (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr));
+}
 
-  return ON_SUBD_RETURN_ERROR(ON_SubDFacePtr::Null);
+const bool ON_SubDComponentPtr::IsEdge() const
+{
+  return (ON_SUBD_COMPONENT_TYPE_EDGE == (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr));
+}
+
+const bool ON_SubDComponentPtr::IsFace() const
+{
+  return (ON_SUBD_COMPONENT_TYPE_FACE == (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr));
 }
 
 const ON_SubDComponentPtr ON_SubDComponentPtr::Create(
@@ -1863,6 +2047,291 @@ int ON_SubDComponentPtr::CompareComponentAndDirection(
   }
   return rc;
 }
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  ON_SubDComponentPtr cptr,
+  double x
+)
+{
+  ON_SubDComponentAndNumber cx;
+  cx.m_cptr = cptr;
+  cx.m_x = x;
+  return cx;
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDVertex* v,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(v), x);
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDEdge* e,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(e), x);
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDFace* f,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(f), x);
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDVertexPtr vptr,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(vptr), x);
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDEdgePtr eptr,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(eptr), x);
+}
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::Create(
+  const ON_SubDFacePtr fptr,
+  double x
+)
+{
+  return ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Create(fptr), x);
+}
+
+
+const ON_SubDComponentPtr ON_SubDComponentAndNumber::Component() const
+{
+  return m_cptr;
+}
+
+void ON_SubDComponentAndNumber::SetComponent(ON_SubDComponentPtr cptr)
+{
+  m_cptr = cptr;
+}
+
+double ON_SubDComponentAndNumber::Number() const
+{
+  return m_x;
+}
+
+void ON_SubDComponentAndNumber::SetNumber(double x)
+{
+  m_x = x;
+}
+
+int ON_SubDComponentAndNumber::CompareComponent(
+  const ON_SubDComponentAndNumber* a,
+  const ON_SubDComponentAndNumber* b
+)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1;
+  if (nullptr == b)
+    return 1;
+  return ON_SubDComponentPtr::CompareComponent(&a->m_cptr, &b->m_cptr);
+}
+
+// 
+int ON_SubDComponentAndNumber::CompareComponentAndDirection(
+  const ON_SubDComponentAndNumber* a,
+  const ON_SubDComponentAndNumber* b
+)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1;
+  if (nullptr == b)
+    return 1;
+  return ON_SubDComponentPtr::CompareComponentAndDirection(&a->m_cptr, &b->m_cptr);
+}
+
+int ON_SubDComponentAndNumber::CompareNumber(
+  const ON_SubDComponentAndNumber* a,
+  const ON_SubDComponentAndNumber* b
+)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1;
+  if (nullptr == b)
+    return 1;
+  return ON_CompareDouble(a->m_x, b->m_x);
+}
+
+int ON_SubDComponentAndNumber::CompareComponentAndNumber(
+  const ON_SubDComponentAndNumber* a,
+  const ON_SubDComponentAndNumber* b
+)
+{
+  const int rc = ON_SubDComponentAndNumber::CompareComponent(a, b);
+  return (0 != rc) ? rc : ON_SubDComponentAndNumber::CompareNumber(a, b);
+}
+
+int ON_SubDComponentAndNumber::CompareComponentAndDirectionAndNumber(
+  const ON_SubDComponentAndNumber* a,
+  const ON_SubDComponentAndNumber* b
+)
+{
+  const int rc = ON_SubDComponentAndNumber::CompareComponentAndDirection(a, b);
+  return (0 != rc) ? rc : ON_SubDComponentAndNumber::CompareNumber(a, b);
+}
+
+
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  ON_SubDComponentPtr cptr,
+  ON_3dPoint P
+)
+{
+  ON_SubDComponentAndPoint cx;
+  cx.m_cptr = cptr;
+  cx.m_P = P;
+  return cx;
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDVertex* v,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(v), P);
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDEdge* e,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(e), P);
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDFace* f,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(f), P);
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDVertexPtr vptr,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(vptr), P);
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDEdgePtr eptr,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(eptr), P);
+}
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::Create(
+  const ON_SubDFacePtr fptr,
+  ON_3dPoint P
+)
+{
+  return ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Create(fptr), P);
+}
+
+
+const ON_SubDComponentPtr ON_SubDComponentAndPoint::Component() const
+{
+  return m_cptr;
+}
+
+void ON_SubDComponentAndPoint::SetComponent(ON_SubDComponentPtr cptr)
+{
+  m_cptr = cptr;
+}
+
+const ON_3dPoint ON_SubDComponentAndPoint::Point() const
+{
+  return m_P;
+}
+
+void ON_SubDComponentAndPoint::SetPoint(ON_3dPoint P)
+{
+  m_P = P;
+}
+
+int ON_SubDComponentAndPoint::CompareComponent(
+  const ON_SubDComponentAndPoint* lhs,
+  const ON_SubDComponentAndPoint* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return -1;
+  if (nullptr == rhs)
+    return 1;
+  return ON_SubDComponentPtr::CompareComponent(&lhs->m_cptr, &rhs->m_cptr);
+}
+
+// 
+int ON_SubDComponentAndPoint::CompareComponentAndDirection(
+  const ON_SubDComponentAndPoint* lhs,
+  const ON_SubDComponentAndPoint* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return -1;
+  if (nullptr == rhs)
+    return 1;
+  return ON_SubDComponentPtr::CompareComponentAndDirection(&lhs->m_cptr, &rhs->m_cptr);
+}
+
+int ON_SubDComponentAndPoint::ComparePoint(
+  const ON_SubDComponentAndPoint* lhs,
+  const ON_SubDComponentAndPoint* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+  if (nullptr == lhs)
+    return -1;
+  if (nullptr == rhs)
+    return 1;
+  return ON_3dPoint::Compare(lhs->m_P, rhs->m_P);
+}
+
+int ON_SubDComponentAndPoint::CompareComponentAndPoint(
+  const ON_SubDComponentAndPoint* lhs,
+  const ON_SubDComponentAndPoint* rhs
+)
+{
+  const int rc = ON_SubDComponentAndPoint::CompareComponent(lhs, rhs);
+  return (0 != rc) ? rc : ON_SubDComponentAndPoint::ComparePoint(lhs, rhs);
+}
+
+int ON_SubDComponentAndPoint::CompareComponentAndDirectionAndPoint(
+  const ON_SubDComponentAndPoint* lhs,
+  const ON_SubDComponentAndPoint* rhs
+)
+{
+  const int rc = ON_SubDComponentAndPoint::CompareComponentAndDirection(lhs, rhs);
+  return (0 != rc) ? rc : ON_SubDComponentAndPoint::ComparePoint(lhs, rhs);
+}
+
 
 static const bool Internal_FirstIsPartOfSecond(
   const ON_SubDComponentPoint& first,
@@ -6975,8 +7444,6 @@ static void Internal_AccumulateVertexHash(
   {
     sha1.AccumulateBytes(&v->m_vertex_tag, sizeof(v->m_vertex_tag));
     sha1.AccumulateDoubleArray(3, v->m_P);
-    if (v->SubdivisionDisplacementIsNonzero())
-      sha1.Accumulate3dVector(v->SubdivisionDisplacement());
   }
 }
 
@@ -7033,12 +7500,6 @@ static void Internal_AccumulateEdgeHash(
   {
     // Changing edge crease/smooth attributes often changes the regions used in face packing and exploding.
     sha1.AccumulateBool(e->IsCrease());
-  }
-
-  if (ON_SubDHashType::Geometry == hash_type)
-  {
-    if (e->SubdivisionDisplacementIsNonzero())
-      sha1.Accumulate3dVector(e->SubdivisionDisplacement());
   }
 }
 
@@ -7103,11 +7564,6 @@ static void Internal_AccumulateFaceHash(
     sha1.AccumulateInteger32(eptr->EdgeId());
     if (0 != ON_SUBD_EDGE_DIRECTION(eptr->m_ptr))
       sha1.AccumulateBool(true);
-    if (ON_SubDHashType::Geometry == hash_type)
-    {
-      if (f->SubdivisionDisplacementIsNonzero())
-        sha1.Accumulate3dVector(f->SubdivisionDisplacement());
-    }
   }
 }
 
@@ -7942,10 +8398,6 @@ unsigned int ON_SubDLevel::DumpTopology(
 
     text_log.PushIndent();
 
-    ON_3dVector D(ON_3dVector::NanVector);
-    if (v->GetSubdivisionDisplacement(&D.x) && D.IsValid())
-      text_log.Print( "v.SubdivisionDisplacement: (%g, %g, %g)\n", D.x, D.y, D.z );
-
     ON_3dPoint P1(ON_3dPoint::NanPoint);
     if (v->GetSavedSubdivisionPoint(&P1.x) && P1.IsValid())
       text_log.Print( "v.SubdivisionPoint: (%g, %g, %g)\n", P1.x, P1.y, P1.z );
@@ -8171,10 +8623,6 @@ unsigned int ON_SubDLevel::DumpTopology(
 
     text_log.PushIndent();
 
-    ON_3dVector D(ON_3dVector::NanVector);
-    if (e->GetSubdivisionDisplacement(&D.x) && D.IsValid())
-      text_log.Print( "e.SubdivisionDisplacement: (%g, %g, %g)\n", D.x, D.y, D.z );
-
     ON_3dPoint P1(ON_3dPoint::NanPoint);
     if (e->GetSavedSubdivisionPoint(&P1.x) && P1.IsValid())
       text_log.Print( "e.SubdivisionPoint: (%g, %g, %g)\n", P1.x, P1.y, P1.z );
@@ -8323,10 +8771,6 @@ unsigned int ON_SubDLevel::DumpTopology(
     }
 
     text_log.PushIndent();
-
-    ON_3dVector D(ON_3dVector::NanVector);
-    if (f->GetSubdivisionDisplacement(&D.x) && D.IsValid())
-      text_log.Print( "f.SubdivisionDisplacement: (%g, %g, %g)\n", D.x, D.y, D.z );
 
     ON_3dPoint P1(ON_3dPoint::NanPoint);
     if (f->GetSavedSubdivisionPoint(&P1.x) && P1.IsValid())
@@ -10155,9 +10599,6 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
   if (count < 3)
     return ON_SubDFace_GetSubdivisionPointError(this, subdivision_point, true);
 
-  double displacementV[3] = { 0 };
-  const bool bApplyDisplacement = GetSubdivisionDisplacement(displacementV);
-
   const class ON_SubDEdgePtr* edge_ptr = m_edge4;
 
   ON__UINT_PTR e_ptr;
@@ -10191,14 +10632,6 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     subdivision_point[0] = (vertexP[0][0] + vertexP[1][0] + vertexP[2][0] + vertexP[3][0])*0.25;
     subdivision_point[1] = (vertexP[0][1] + vertexP[1][1] + vertexP[2][1] + vertexP[3][1])*0.25;
     subdivision_point[2] = (vertexP[0][2] + vertexP[1][2] + vertexP[2][2] + vertexP[3][2])*0.25;
-
-    if (bApplyDisplacement)
-    {
-      subdivision_point[0] += displacementV[0];
-      subdivision_point[1] += displacementV[1];
-      subdivision_point[2] += displacementV[2];
-    }
-
     return true;
   }
 
@@ -10208,14 +10641,6 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     subdivision_point[0] = (vertexP[0][0] + vertexP[1][0] + vertexP[2][0]) / 3.0;
     subdivision_point[1] = (vertexP[0][1] + vertexP[1][1] + vertexP[2][1]) / 3.0;
     subdivision_point[2] = (vertexP[0][2] + vertexP[1][2] + vertexP[2][2]) / 3.0;
-
-    if (bApplyDisplacement)
-    {
-      subdivision_point[0] += displacementV[0];
-      subdivision_point[1] += displacementV[1];
-      subdivision_point[2] += displacementV[2];
-    }
-
     return true;
   }
 
@@ -10272,13 +10697,6 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
   subdivision_point[0] = faceP[0] / n;
   subdivision_point[1] = faceP[1] / n;
   subdivision_point[2] = faceP[2] / n;
-
-  if (bApplyDisplacement)
-  {
-    subdivision_point[0] += displacementV[0];
-    subdivision_point[1] += displacementV[1];
-    subdivision_point[2] += displacementV[2];
-  }
   return true;
 }
 
@@ -10960,77 +11378,31 @@ bool ON_SubDEdge::EdgeSurfaceCurveIsSet() const
 
 bool ON_SubDComponentBase::SubdivisionDisplacementIsNonzero() const
 {
-  return (0 != ON_SUBD_CACHE_DISPLACEMENT_FLAG(m_saved_points_flags))
-    ? (
-    (0.0 != m_displacement_V[0] || 0.0 != m_displacement_V[1] || 0.0 != m_displacement_V[2])
-      && ON_IS_VALID(m_displacement_V[0]) && ON_IS_VALID(m_displacement_V[1]) && ON_IS_VALID(m_displacement_V[2])
-      )
-    : false;
+  // deprecated - never used.
+  return false;
 }
 
-bool ON_SubDComponentBase::SetSubdivisionDisplacement(
-    const double displacement[3]
-    )
+bool ON_SubDComponentBase::SetSubdivisionDisplacement(const double*)
 {
-  if (
-    nullptr == displacement
-    || (0.0 == displacement[0] && 0.0 == displacement[1] && 0.0 == displacement[2])
-    )
-  {
-    ClearSubdivisionDisplacement();
-    return true;
-  }
-
-  if ( ON_IsValid(displacement[0]) && ON_IsValid(displacement[1]) && ON_IsValid(displacement[2]) )
-  {
-    m_saved_points_flags |= ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT;
-    m_displacement_V[0] = displacement[0];
-    m_displacement_V[1] = displacement[1];
-    m_displacement_V[2] = displacement[2];
-    return true;
-  }
-
-  ClearSubdivisionDisplacement();
-  
-  return ON_SUBD_RETURN_ERROR(false);
+  // deprecated - never used.
+  return false;
 }
 
 void ON_SubDComponentBase::ClearSubdivisionDisplacement() const
 {
-  if (0 != (m_saved_points_flags & ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT))
-  {
-    ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_points_flags);
-    ON_SUBD_CACHE_CLEAR_DISPLACEMENT_FLAG(m_saved_points_flags);
-  }
+  // deprecated - never used.
 }
 
-bool ON_SubDComponentBase::GetSubdivisionDisplacement(
-    double displacement[3]
-    ) const
+bool ON_SubDComponentBase::GetSubdivisionDisplacement(double*) const
 {
-  const bool rc = (0 != (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT & m_saved_points_flags));
-  if (nullptr != displacement)
-  {
-    if (rc)
-    {
-      displacement[0] = m_displacement_V[0];
-      displacement[1] = m_displacement_V[1];
-      displacement[2] = m_displacement_V[2];
-    }
-    else
-    {
-      displacement[0] = 0.0;
-      displacement[1] = 0.0;
-      displacement[2] = 0.0;
-    }
-  }
-  return rc;
+  // deprecated - never used.
+  return false;
 }
 
 const ON_3dVector ON_SubDComponentBase::SubdivisionDisplacement() const
 {
-  ON_3dVector v(ON_3dVector::ZeroVector);
-  return GetSubdivisionDisplacement(&v.x) ? v : ON_3dVector::ZeroVector;
+  // deprecated - never used.
+  return ON_3dVector::ZeroVector;
 }
 
 void ON_SubDComponentBase::Internal_SetSavedSurfacePointFlag(bool bSavedSurfacePointFlag) const
@@ -11316,9 +11688,6 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
   if (nullptr == edge_vertex[0] || nullptr == edge_vertex[1])
     return ON_SubDEdge_GetSubdivisionPointError(this, subdivision_point, nullptr, true);
 
-  double displacementV[3] = { 0 };
-  const bool bApplyDisplacement = GetSubdivisionDisplacement(displacementV);
-
   const double* edgeP[2] = { edge_vertex[0]->m_P, edge_vertex[1]->m_P };
   const double edgePsum[3] = { edgeP[0][0] + edgeP[1][0], edgeP[0][1] + edgeP[1][1], edgeP[0][2] + edgeP[1][2] };
 
@@ -11386,14 +11755,6 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       subdivision_point[0] = EP[0] + 0.0625*(facePsum[0][0] + facePsum[1][0]);
       subdivision_point[1] = EP[1] + 0.0625*(facePsum[0][1] + facePsum[1][1]);
       subdivision_point[2] = EP[2] + 0.0625*(facePsum[0][2] + facePsum[1][2]);
-
-      if (bApplyDisplacement)
-      {
-        subdivision_point[0] += displacementV[0];
-        subdivision_point[1] += displacementV[1];
-        subdivision_point[2] += displacementV[2];
-      }
-
       return true;
     }
     
@@ -11408,14 +11769,6 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       subdivision_point[0] = EP[0] + (0.5*edgePsum[0] + facePsum[0][0] + facePsum[1][0]) / 12.0;
       subdivision_point[1] = EP[1] + (0.5*edgePsum[1] + facePsum[0][1] + facePsum[1][1]) / 12.0;
       subdivision_point[2] = EP[2] + (0.5*edgePsum[2] + facePsum[0][2] + facePsum[1][2]) / 12.0;
-
-      if (bApplyDisplacement)
-      {
-        subdivision_point[0] += displacementV[0];
-        subdivision_point[1] += displacementV[1];
-        subdivision_point[2] += displacementV[2];
-      }
-
       return true;
     }
 
@@ -11433,14 +11786,6 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     subdivision_point[0] = EP[0] + x * edgePsum[0] + facePsum[0][0] / f0 + facePsum[1][0] / f1;
     subdivision_point[1] = EP[1] + x * edgePsum[1] + facePsum[0][1] / f0 + facePsum[1][1] / f1;
     subdivision_point[2] = EP[2] + x * edgePsum[2] + facePsum[0][2] / f0 + facePsum[1][2] / f1;
-
-    if (bApplyDisplacement)
-    {
-      subdivision_point[0] += displacementV[0];
-      subdivision_point[1] += displacementV[1];
-      subdivision_point[2] += displacementV[2];
-    }
-
     return true;
   }
 
@@ -11449,14 +11794,6 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     subdivision_point[0] = 0.5*edgePsum[0];
     subdivision_point[1] = 0.5*edgePsum[1];
     subdivision_point[2] = 0.5*edgePsum[2];
-
-    if (bApplyDisplacement)
-    {
-      subdivision_point[0] += displacementV[0];
-      subdivision_point[1] += displacementV[1];
-      subdivision_point[2] += displacementV[2];
-    }
-
     return true;
   }
 
@@ -12062,9 +12399,6 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
   if (nullptr == subdivision_point )
     return ON_SubDVertex_GetSubdivisionPointError(this, subdivision_point, nullptr, false);
 
-  double displacementV[3] = { 0 };
-  const bool bApplyDisplacement = GetSubdivisionDisplacement(displacementV);
-
   const double* vertexP = m_P;
 
   const unsigned int n = (nullptr != m_edges ? m_edge_count : 0);
@@ -12120,14 +12454,6 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
       subdivision_point[0] = (vertexP[0] * 6.0 + (edgeP[0][0] + edgeP[1][0]))*0.125;
       subdivision_point[1] = (vertexP[1] * 6.0 + (edgeP[0][1] + edgeP[1][1]))*0.125;
       subdivision_point[2] = (vertexP[2] * 6.0 + (edgeP[0][2] + edgeP[1][2]))*0.125;
-
-      if (bApplyDisplacement)
-      {
-        subdivision_point[0] += displacementV[0];
-        subdivision_point[1] += displacementV[1];
-        subdivision_point[2] += displacementV[2];
-      }
-
       return true;
     }
 
@@ -12140,14 +12466,6 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
     subdivision_point[0] = vertexP[0];
     subdivision_point[1] = vertexP[1];
     subdivision_point[2] = vertexP[2];
-
-    if (bApplyDisplacement)
-    {
-      subdivision_point[0] += displacementV[0];
-      subdivision_point[1] += displacementV[1];
-      subdivision_point[2] += displacementV[2];
-    }
-
     return true;
   }
 
@@ -14190,6 +14508,104 @@ const ON_SubDEdge* ON_SubD::SplitEdge(
   return subdimple->SplitEdge(edge,vertex_location);
 }
 
+const ON_SubDEdgePtr ON_SubD::SplitEdge(
+  ON_SubDEdgePtr eptr,
+  ON_3dPoint vertex_location,
+  unsigned new_edge_end
+)
+{
+  if ( 0 != new_edge_end && 1 != new_edge_end)
+    return ON_SubDEdgePtr::Null;
+  ON_SubDEdge* e = eptr.Edge();
+  if (nullptr == e)
+    return ON_SubDEdgePtr::Null;
+  const ON_SubDVertex* v[3] = { e->m_vertex[0],nullptr,e->m_vertex[1] };
+  ON_SubDEdge* e1 = const_cast<ON_SubDEdge*>(this->SplitEdge(e, vertex_location));
+  if ( nullptr == e1)
+    return ON_SubDEdgePtr::Null;
+
+  const ON__UINT_PTR eptr_dir = eptr.EdgeDirection();
+  const ON_SubDEdgePtr e1ptr = ON_SubDEdgePtr::Create(e1, eptr_dir);
+
+  if (v[0] != e->m_vertex[0] || v[2] != e1->m_vertex[1])
+  {
+    ON_SUBD_ERROR("Error in SplitEdge(ON_SubDEdge*,...).");
+    return e1ptr;
+  }
+
+  v[1] = e->m_vertex[1];
+  if ( nullptr == v[1] || v[1] != e1->m_vertex[0] || 2 != v[1]->m_edge_count)
+  {
+    ON_SUBD_ERROR("Error in SplitEdge(ON_SubDEdge*,...).");
+    return e1ptr;
+  }
+
+  if (e->m_face_count != e1->m_face_count)
+  {
+    ON_SUBD_ERROR("Error in SplitEdge(ON_SubDEdge*,...).");
+    return e1ptr;
+  }
+
+  const unsigned v0edex = v[0]->EdgeArrayIndex(e);
+  const unsigned v2edex = v[2]->EdgeArrayIndex(e1);
+  if (v0edex >= v[0]->EdgeCount() || v2edex >= v[2]->EdgeCount())
+  {
+    ON_SUBD_ERROR("Error in SplitEdge(ON_SubDEdge*,...).");
+    return e1ptr;
+  }
+
+  if (0 == eptr_dir && 1 == new_edge_end)
+  {
+    return e1ptr;
+  }
+
+  if (1 == eptr_dir && 0 == new_edge_end)
+  {
+    return e1ptr;
+  }
+
+  // swap e and e1 topology connections to put the "new edge" where the caller wants it.
+
+  for (unsigned short efi = 0; efi < e->m_face_count; ++efi)
+  {
+    ON_SubDFace* f = const_cast<ON_SubDFace*>(e->Face(efi));
+    if (nullptr == f)
+      continue;
+    const unsigned edge_count = f->EdgeCount();
+    const unsigned fei = f->EdgeArrayIndex(e);
+    const unsigned fe1i = f->EdgeArrayIndex(e1);
+    if (fei >= edge_count || fe1i >= edge_count)
+      continue;
+
+    const ON_SubDEdgePtr feptr = ON_SubDEdgePtr::Create(e1, f->EdgePtr(fei).EdgeDirection()); // e1 is correct - we are swapping
+    if (fei < 4)
+      f->m_edge4[fei] = feptr;
+    else
+      f->m_edgex[fei - 4] = feptr;
+
+    const ON_SubDEdgePtr fe1ptr = ON_SubDEdgePtr::Create(e, f->EdgePtr(fe1i).EdgeDirection()); // e is correct - we are swapping
+    if (fe1i < 4)
+      f->m_edge4[fe1i] = fe1ptr;
+    else
+      f->m_edgex[fe1i - 4] = fe1ptr;
+  }
+
+  const ON_SubDEdgePtr new_v0eptr = ON_SubDEdgePtr::Create(e1, v[0]->EdgePtr(v0edex).EdgeDirection());
+  const ON_SubDEdgePtr new_v2eptr = ON_SubDEdgePtr::Create(e, v[2]->EdgePtr(v2edex).EdgeDirection());
+  v[0]->m_edges[v0edex] = new_v0eptr;
+  v[1]->m_edges[0] = new_v0eptr.Reversed();
+  v[1]->m_edges[1] = new_v2eptr.Reversed();
+  v[2]->m_edges[v2edex] = new_v2eptr;
+  e1->m_vertex[0] = v[0];
+  e1->m_vertex[1] = v[1];
+  e->m_vertex[0] = v[1];
+  e->m_vertex[1] = v[2];
+
+
+  return e1ptr;
+}
+
+
 const ON_SubDEdge * ON_SubD::SplitFace(
   ON_SubDFace * face, 
   const ON_SubDVertex * v0,
@@ -14238,6 +14654,351 @@ const ON_SubDEdge* ON_SubD::SplitFace(
   if ( 0 == subdimple )
     return ON_SUBD_RETURN_ERROR(nullptr);
   return subdimple->SplitFace(face,fvi0,fvi1);
+}
+
+static void Internal_SplitFaceSwapFacePtr(
+  ON_SubDFace* f,
+  ON__UINT_PTR pairA[2],
+  ON__UINT_PTR pairB[2]
+  )
+{
+  if (nullptr == f)
+    return;
+
+  if (pairA[0] == pairB[0] || pairA[1] == pairB[0] || pairA[0] == pairB[1] || pairA[1] == pairB[1])
+  {
+    ON_SUBD_ERROR("pairA[] and pairB[] must be disjoint sets of values.");
+    return;
+  }
+
+  ON_SubDEdgePtr* feptr = f->m_edge4;
+  for (unsigned short fei = 0; fei < f->m_edge_count; ++fei, ++feptr)
+  {
+    if (4 == fei)
+    {
+      feptr = f->m_edgex;
+      if (nullptr == feptr)
+        break;
+    }
+
+    ON_SubDEdge* fe = ON_SUBD_EDGE_POINTER(feptr->m_ptr);
+    if (nullptr == fe)
+      continue;
+
+    ON_SubDFacePtr* efptr = fe->m_face2;
+    for (unsigned short efi = 0; efi < fe->m_face_count; ++efi, ++efptr)
+    {
+      if (2 == efi)
+      {
+        efptr = fe->m_facex;
+        if (nullptr == efptr)
+          break;
+      }
+      const ON__UINT_PTR x = (efptr->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
+      const ON__UINT_PTR d = (efptr->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
+      if (x == pairA[0])
+        efptr->m_ptr = (pairA[1] | d);
+      else if (x == pairB[0])
+        efptr->m_ptr = (pairB[1] | d);
+    }
+
+
+    ON_SubDVertex* v = const_cast<ON_SubDVertex*>(feptr->RelativeVertex(0));
+    if (nullptr != v && nullptr != v->m_faces)
+    {
+      for (unsigned short vfi = 0; vfi < v->m_face_count; ++vfi)
+      {
+        const ON__UINT_PTR x = (ON__UINT_PTR)v->m_faces[vfi];
+        if (x == pairA[0])
+          v->m_faces[vfi] = (ON_SubDFace*)pairA[1];
+        else if (x == pairB[0])
+          v->m_faces[vfi] = (ON_SubDFace*)pairB[1];
+      }
+    }
+  }
+}
+
+static bool Internal_ValidateFaceTopology(
+  const ON_SubDFace* f
+)
+{
+  if (nullptr == f)
+    return false;
+
+  if (f->m_edge_count < 3 || 0 == f->m_id)
+    return ON_SUBD_RETURN_ERROR(false);
+
+  const ON_SubDVertex* firstv = nullptr;
+  const ON_SubDVertex* ev[2] = {};
+  bool rc = true;
+  unsigned short fdex;
+  const ON_SubDEdgePtr* feptr = f->m_edge4;
+  for (unsigned short fei = 0; fei < f->m_edge_count; ++fei, ++feptr)
+  {
+    if (4 == fei)
+    {
+      feptr = f->m_edgex;
+      if (nullptr == feptr)
+      {
+        ON_SUBD_ERROR("face m_edge_count > 4 and m_edgex is nullptr.");
+        rc = false;
+        break;
+      }
+    }
+
+    ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(feptr->m_ptr);
+    if (nullptr == e || 0 == e->m_id)
+    {
+      ON_SUBD_ERROR("null edge in face.");
+      rc = false;
+      continue;
+    }
+
+    if (e != f->Edge(fei))
+    {
+      ON_SUBD_ERROR("face->Edge(fei) != e");
+      rc = false;
+    }
+
+    for (unsigned short k = fei + 1; k < f->m_edge_count; ++k)
+    {
+      if (e == f->Edge(k))
+      {
+        ON_SUBD_ERROR("face references e 2 or more times.");
+        rc = false;
+      }
+    }
+
+    const ON__UINT_PTR fedir = ON_SUBD_FACE_DIRECTION(feptr->m_ptr);
+
+    if (0 == fei)
+    {
+      firstv = e->m_vertex[fedir];
+      ev[1] = firstv;
+    }
+
+    if (ev[1] != e->m_vertex[fedir])
+    {
+      ON_SUBD_ERROR("consecutive edge pointers do not have the same vertex at the end/start.");
+      rc = false;
+    }
+
+    ev[0] = e->m_vertex[fedir];
+    ev[1] = e->m_vertex[1-fedir];
+    if (nullptr == ev[0] || nullptr == ev[1])
+    {
+      ON_SUBD_ERROR("edge has null vertex pointers.");
+      rc = false;
+    }
+    else if (ev[0] == ev[1])
+    {
+      ON_SUBD_ERROR("edge begins and ends at the same vertex.");
+      rc = false;
+    }
+
+    fdex = e->m_face_count;
+    const ON_SubDFacePtr* efptr = e->m_face2;
+    for (unsigned short efi = 0; efi < e->m_face_count; ++efi, ++efptr)
+    {
+      if (2 == efi)
+      {
+        efptr = e->m_facex;
+        if (nullptr == efptr)
+        {
+          ON_SUBD_ERROR("null edge in face.");
+          rc = false;
+          break;
+        }
+      }
+
+      const ON_SubDFace* ef = ON_SUBD_FACE_POINTER(efptr->m_ptr);
+      if (f == ef)
+      {
+        if (fdex < e->m_face_count)
+        {
+          ON_SUBD_ERROR("ef references face 2 or more times.");
+          rc = false;
+          break;
+        }
+        fdex = efi;
+        ON__UINT_PTR efdir = ON_SUBD_FACE_DIRECTION(efptr->m_ptr);
+        if (efdir != fedir)
+        {
+          ON_SUBD_ERROR("face and edge have inconsistent direction settings.");
+          rc = false;
+          break;
+        }
+      }
+    }
+    if (fdex >= e->m_face_count)
+    {
+      ON_SUBD_ERROR("The face references and edge that does not reference the face.");
+      rc = false;
+    }
+
+    const ON_SubDVertex* v = ev[0];
+    if (nullptr != v )
+    {
+      if (v != f->Vertex(fei))
+      {
+        ON_SUBD_ERROR("face->Vertex(fei) != v");
+        rc = false;
+      }
+
+      fdex = v->m_face_count;
+      for (unsigned short vfi = 0; vfi < v->m_face_count; ++vfi)
+      {
+        const ON_SubDFace* vf = v->m_faces[vfi];
+        if (f == vf)
+        {
+          if (fdex < v->m_face_count)
+          {
+            ON_SUBD_ERROR("ef references face 2 or more times.");
+            rc = false;
+            break;
+          }
+          fdex = vfi;
+        }
+      }
+      if (fdex >= v->m_face_count)
+      {
+        ON_SUBD_ERROR("The face references a vertex that does not reference the face.");
+        rc = false;
+      }
+
+      for (unsigned short k = fei + 1; k < f->m_edge_count; ++k)
+      {
+        if (v == f->Vertex(k))
+        {
+          ON_SUBD_ERROR("face references v 2 or more times.");
+          rc = false;
+        }
+      }
+    }
+  }
+
+  if (firstv != ev[1])
+  {
+    ON_SUBD_ERROR("The vertices at the end ofthe final edge and start of the initial edges are different.");
+    rc = false;
+  }
+
+  return rc;
+}
+
+const ON_SubDEdgePtr ON_SubD::SplitFace(
+  class ON_SubDFace* face,
+  unsigned int fvi0,
+  unsigned int fvi1,
+  unsigned new_face_side
+)
+{
+  if (new_face_side != 0 && new_face_side != 1)
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  face->ClearSavedSubdivisionPoints(true);
+  ON_SubDEdge* e = const_cast<ON_SubDEdge*>(this->SplitFace(face, fvi0, fvi1));
+  if (nullptr == e)
+    return ON_SubDEdgePtr::Null;
+
+  const ON_SubDEdgePtr eptr = ON_SubDEdgePtr::Create(e, 0);
+
+  ON_SubDFace* f2[2] = { const_cast<ON_SubDFace*>(eptr.RelativeFace(0)), const_cast<ON_SubDFace*>(eptr.RelativeFace(1)) };
+  if (nullptr == f2[0] || nullptr == f2[1] || f2[0] == f2[1])
+    return ON_SUBD_RETURN_ERROR(eptr);
+  if (face != f2[0] && face != f2[1])
+    return ON_SUBD_RETURN_ERROR(eptr);
+
+  if ( face == f2[new_face_side])
+  {
+
+    // swap faces
+
+    // markA and markB need to be different, must be values no valid heap pointer will
+    // ever have, and need to be chosen so that debug runtime pointer checking code will not
+    // throw exceptions. Values like 1 and 2 would work just fine except debug runtime
+    // pointer checking code is mindlessly diligent. the addresses of marking_faces[0]
+    // and marking_faces[1] "tricks" the debug runtime pointer checking code and
+    // are values no valid app heap will ever have (they point to stack
+    // used by this call).
+    const ON_SubDFace marking_faces[2] = {};
+    const ON__UINT_PTR markA = (ON__UINT_PTR)(&marking_faces[0]);
+    const ON__UINT_PTR markB = (ON__UINT_PTR)(&marking_faces[1]);
+
+    // The mark first, then change approach must be used because f2[0] and f2[1]
+    // have multiple vertex and edge references and we must avoid swapping twice.
+
+    // First change face references f2[0] to markA and f2[1] to markB.
+    ON__UINT_PTR pairA[2] = { (ON__UINT_PTR)f2[0], markA };
+    ON__UINT_PTR pairB[2] = { (ON__UINT_PTR)f2[1], markB };
+    for (unsigned fdex = 0; fdex < 2; ++fdex)
+      Internal_SplitFaceSwapFacePtr(f2[fdex], pairA, pairB);
+
+    // ... then change markA to f2[1] and markB to f2[0].
+    pairA[0] = markA;  pairA[1] = (ON__UINT_PTR)f2[1];
+    pairB[0] = markB;  pairB[1] = (ON__UINT_PTR)f2[0];
+    for (unsigned fdex = 0; fdex < 2; ++fdex)
+      Internal_SplitFaceSwapFacePtr(f2[fdex], pairA, pairB);
+
+    // At this point, all the vertex and edge references to f2[0] and f2[1] have been swapped.    
+
+    // All that is left is to wwap edge references on f2[0] and f2[1].
+    const unsigned short edge_count[2] = { f2[1]->m_edge_count, f2[0]->m_edge_count };
+    const unsigned short edgex_capacity[2] = { f2[1]->m_edgex_capacity, f2[0]->m_edgex_capacity };
+    ON_SubDEdgePtr edge4[2][4] = {
+      {f2[1]->m_edge4[0],f2[1]->m_edge4[1],f2[1]->m_edge4[2],f2[1]->m_edge4[3]},
+      {f2[0]->m_edge4[0],f2[0]->m_edge4[1],f2[0]->m_edge4[2],f2[0]->m_edge4[3]}
+    };
+    ON_SubDEdgePtr* edgex[2] = { f2[1]->m_edgex, f2[0]->m_edgex };
+    for (unsigned i = 0; i < 2; ++i)
+    {
+      f2[i]->m_edge_count = edge_count[i];
+      f2[i]->m_edgex_capacity = edgex_capacity[i];
+      f2[i]->m_edge4[0] = edge4[i][0];
+      f2[i]->m_edge4[1] = edge4[i][1];
+      f2[i]->m_edge4[2] = edge4[i][2];
+      f2[i]->m_edge4[3] = edge4[i][3];
+      f2[i]->m_edgex = edgex[i];
+    }
+
+    //// The Internal_SplitFaceSwapFacePtr() calls above have switched the
+    //// ON_SubDFace pointer values in e->m_face2[]. Because the faces
+    //// are switching sides, we need to swap the directions in e->m_face2[].
+    //// 
+    //e->m_face2[0] = e->m_face2[0].Reversed();
+    //e->m_face2[1] = e->m_face2[1].Reversed();
+  }
+
+
+  if (2 == e->m_face_count && face == e->m_face2[new_face_side].Face())
+  {
+    // Adjust the e->m_face2[] so it jibes with the relative face values exactly.
+    ON_SubDFacePtr tmp = e->m_face2[0];
+    e->m_face2[0] = e->m_face2[1];
+    e->m_face2[1] = tmp;
+  }
+
+  if (false == Internal_ValidateFaceTopology(f2[0])
+    || false == Internal_ValidateFaceTopology(f2[1])
+    || f2[0] == f2[1]
+    )
+  {
+    ON_SUBD_ERROR("Invalid faces.");
+  }
+
+
+  return eptr; // new face is on the requested side
+}
+
+const ON_SubDEdgePtr ON_SubD::SplitFace(
+  class ON_SubDFace* face,
+  const class ON_SubDVertex* v0,
+  const class ON_SubDVertex* v1,
+  unsigned new_face_side
+)
+{
+  if (nullptr == face)
+    return ON_SubDEdgePtr::Null;
+  return this->SplitFace(face, face->VertexIndex(v0), face->VertexIndex(v1), new_face_side);
 }
 
 void ON_SubD::MarkAggregateComponentStatusAsNotCurrent() const
@@ -19046,6 +19807,260 @@ unsigned int ON_UniqueTester::Count() const
   return (unsigned int)count;
 }
 
+bool ON_SubDEdgeChain::GetSideComponents(
+  unsigned relative_side,
+  ON_SimpleArray<ON_SubDComponentPtr>& side_components
+) const
+{
+  return ON_SubDEdgeChain::GetSideComponents(EdgeChain(), relative_side, side_components);
+}
+
+bool ON_SubDEdgeChain::GetSideComponents(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edge_chain,
+  unsigned relative_side,
+  ON_SimpleArray<ON_SubDComponentPtr>& side_components
+)
+{
+  side_components.SetCount(0);
+  if (relative_side > 1U)
+    return false;
+
+  const unsigned edge_count = edge_chain.UnsignedCount();
+  if (edge_count < 1)
+    return false;
+
+  if (false == ON_SubDEdgeChain::IsValidEdgeChain(edge_chain, true))
+    return false; // bozo vaccine
+
+  const bool bClosedLoop = edge_count >= 3 && edge_chain[0].RelativeVertex(0) == edge_chain[edge_count - 1].RelativeVertex(1);
+
+  ON_SubDSectorIterator sit;
+  const ON__INT_PTR sitdir = ((unsigned)1 - relative_side);
+
+  ON_SubDEdgePtr chain_eptr1 = ON_SubDEdgePtr::Null;
+  const ON_SubDFace* f1 = nullptr;
+  const ON_SubDVertex* v = nullptr;
+  if (false == bClosedLoop)
+  {
+    // first edge/face pair at the chain's initial vertex
+    chain_eptr1 = edge_chain[0];
+    f1 = chain_eptr1.RelativeFace(relative_side);
+    if (nullptr != f1)
+    {
+      v = chain_eptr1.RelativeVertex(0);
+      if (nullptr != v && v == sit.Initialize(f1, sitdir, v))
+      {
+        ON_SubDEdgePtr e = sit.CurrentEdgePtr(0);
+        if (e.IsNotNull())
+        {
+          side_components.Append(ON_SubDComponentPtr::Create(e));
+          side_components.Append(ON_SubDComponentPtr::Create(f1));
+        }
+      }
+    }
+  }
+  else
+  {
+    chain_eptr1 = edge_chain[edge_count-1];
+    f1 = chain_eptr1.RelativeFace(relative_side);
+  }
+
+  // first_side_components_edge is needed for closed loops.
+  ON_SubDComponentPtr first_side_components_edge = ON_SubDComponentPtr::Null;
+  for (unsigned j = bClosedLoop ? 0 : 1; j < edge_count; ++j)
+  {
+    const ON_SubDEdgePtr chain_eptr0 = chain_eptr1;
+    chain_eptr1 = edge_chain[j];
+    v = chain_eptr1.RelativeVertex(0);
+    const ON_SubDFace* f0 = f1;
+    f1 = chain_eptr1.RelativeFace(relative_side);
+    if (nullptr != f0 && f0 == f1)
+    {
+      // side_components[] = ...f0,v,f1.
+      unsigned n = side_components.UnsignedCount();
+      if (0 == n || f0 != side_components[n-1].Face())
+        side_components.Append(ON_SubDComponentPtr::Create(f0));
+      side_components.Append(ON_SubDComponentPtr::Create(v));
+      side_components.Append(ON_SubDComponentPtr::Create(f1));
+      continue;
+    }
+
+    // sit_dex < sit_max prevents possiblity of an infinite loop if the chain or subd is corrupt
+    const unsigned sit_max = v->FaceCount();
+    unsigned sit_dex = 1;
+
+    const ON_SubDFace* f = nullptr;
+    for (;;)
+    {
+      if (nullptr == f0)
+        break;
+
+      if (nullptr == v || v != sit.Initialize(f0, sitdir, v))
+        break;
+
+      ON_SubDEdgePtr eptr = sit.CurrentEdgePtr(1);
+      if (eptr.IsNull())
+        break;
+
+      unsigned n = side_components.UnsignedCount();
+      if (0 == n || f0 != side_components[n - 1].Face())
+        side_components.Append(ON_SubDComponentPtr::Create(f0));
+      side_components.Append(ON_SubDComponentPtr::Create(eptr));
+      if (first_side_components_edge.IsNull())
+        first_side_components_edge = ON_SubDComponentPtr::Create(eptr); // needed for closed loops
+
+      // The HasInteriorEdgeTopology() checks prevent getting garbage from
+      // non-oriented SubDs. If people complain, they need to orient
+      // their SubDs before asking "side" questions.
+      // Some math nerd yokel is sure to stuff the boundary of
+      // a mobius strip boundary into this function and then complain.
+      // Too bad for them. [Dale Lear 2021]
+      if (eptr.HasInteriorEdgeTopology(true))
+      {
+        for (f = sit.NextFace(ON_SubDSectorIterator::StopAt::Boundary), sit_dex = 1; nullptr != f && sit_dex < sit_max; f = sit.NextFace(ON_SubDSectorIterator::StopAt::Boundary), ++sit_dex)
+        {
+          if (f == f0)
+            break;
+          eptr = sit.CurrentEdgePtr(1);
+          side_components.Append(ON_SubDComponentPtr::Create(f));
+          if (f == f1)
+            break;
+          side_components.Append(ON_SubDComponentPtr::Create(eptr));
+          if (false == eptr.HasInteriorEdgeTopology(true))
+            break;
+        }
+      }
+      break;
+    }
+
+    if (f == f1)
+      continue;
+
+    for (;;)
+    {
+      if (nullptr == f1)
+        break;
+      if (nullptr == v || v != sit.Initialize(f1, 1-sitdir, v))
+        break;
+      const ON_SubDEdgePtr eptr1 = sit.CurrentEdgePtr(1);
+      const unsigned count0 = side_components.UnsignedCount();
+      if (eptr1.HasInteriorEdgeTopology(true))
+      {
+        const ON_SubDFace* f2 = nullptr;
+        for (f = sit.NextFace(ON_SubDSectorIterator::StopAt::Boundary), sit_dex = 1; nullptr != f && sit_dex < sit_max; f = sit.NextFace(ON_SubDSectorIterator::StopAt::Boundary), ++sit_dex)
+        {
+          if (f == f0 || f == f1)
+          {
+            f = nullptr;
+            break;
+          }
+          f2 = f;
+          if (false == sit.CurrentEdgePtr(1).HasInteriorEdgeTopology(true))
+            break;
+        }
+        if (nullptr == f2)
+          break;
+        if (v != sit.Initialize(f2, sitdir, v))
+          break;
+        for (f = sit.CurrentFace(), sit_dex = 1; nullptr != f && sit_dex < sit_max; f = sit.NextFace(ON_SubDSectorIterator::StopAt::Boundary), ++sit_dex)
+        {
+          ON_SubDEdgePtr eptr = sit.CurrentEdgePtr(0);
+          if (f == f0 || eptr.IsNull())
+          {
+            f = nullptr;
+            break;
+          }
+          side_components.Append(ON_SubDComponentPtr::Create(eptr));
+          side_components.Append(ON_SubDComponentPtr::Create(f));
+          if (f == f1)
+            break;
+          eptr = sit.CurrentEdgePtr(1);
+          if (false == eptr.HasInteriorEdgeTopology(true))
+          {
+            f = nullptr;
+            break;
+          }
+        }
+        if (f != f1)
+        {
+          side_components.SetCount(count0);
+        }
+      }
+      if ( count0 == side_components.UnsignedCount() && eptr1.IsNotNull() )
+      {
+        side_components.Append(ON_SubDComponentPtr::Create(eptr1));
+        side_components.Append(ON_SubDComponentPtr::Create(f1));
+      }
+      break;
+    }
+  }
+
+  if (bClosedLoop)
+  {
+    const unsigned side_components_count = side_components.UnsignedCount();
+    if (side_components_count >= 6
+      && first_side_components_edge.IsEdge()
+      && side_components[0].IsFace()
+      && side_components[0].Face() == side_components[side_components_count-1].Face()
+      )
+    {
+      // rearrange side_components[] so it begins with first_side_components_eptr.
+      // This elimnates the complexity of having to begin/end a SubD fillet
+      // at a ... f,v,f ... location.
+      const ON_SubDFace* f = side_components[0].Face();
+      if (nullptr == f)
+      {
+        ON_SUBD_ERROR("f should be non-null.");
+      }
+      else
+      {
+        // set j0 = current side_components[] index of the first edge
+        unsigned j0 = side_components_count;
+        for (unsigned j = 0; j < side_components_count; ++j)
+        {
+          if (first_side_components_edge.m_ptr == side_components[j].m_ptr)
+          {
+            j0 = j;
+            break;
+          }
+        }
+        if (j0 > 0 && j0 < side_components_count)
+        {
+          ON_SimpleArray<ON_SubDComponentPtr> tail;
+          tail.Append((int)(j0-1), side_components.Array() + 1);
+          for (unsigned k = 0; k + j0 < side_components_count; ++k)
+            side_components[k] = side_components[j0 + k];
+          side_components.SetCount(side_components_count - j0);
+          side_components.Append(tail.Count(), tail.Array());
+          side_components.Append(first_side_components_edge);
+        }
+      }
+    }
+  }
+  else
+  {
+    // last edge at the chain's final vertex
+    chain_eptr1 = edge_chain[edge_count - 1];
+    f1 = chain_eptr1.RelativeFace(relative_side);
+    if (nullptr != f1)
+    {
+      v = chain_eptr1.RelativeVertex(1);
+      if (nullptr != v && v == sit.Initialize(f1, sitdir, v))
+      {
+        ON_SubDEdgePtr eptr = sit.CurrentEdgePtr(1);
+        if (eptr.IsNotNull())
+        {
+          unsigned n = side_components.UnsignedCount();
+          if (0 == n || f1 != side_components[n - 1].Face())
+            side_components.Append(ON_SubDComponentPtr::Create(f1));
+          side_components.Append(ON_SubDComponentPtr::Create(eptr));
+        }
+      }
+    }
+  }
+
+  return side_components.UnsignedCount() > 0;
+}
 
 const ON_SimpleArray<ON_SubDEdgePtr>& ON_SubDEdgeChain::EdgeChain() const
 {
@@ -19588,6 +20603,25 @@ const ON_SubDVertex* ON_SubDEdgeChain::Vertex(int vertex_index) const
   return nullptr;
 }
 
+const ON_3dPoint ON_SubDEdgeChain::FirstControlNetPoint() const
+{
+  const ON_SubDVertex* v = FirstVertex();
+  return (nullptr != v) ? v->ControlNetPoint() : ON_3dPoint::NanPoint;
+}
+
+const ON_3dPoint ON_SubDEdgeChain::LastControlNetPoint() const
+{
+  const ON_SubDVertex* v = LastVertex();
+  return (nullptr != v) ? v->ControlNetPoint() : ON_3dPoint::NanPoint;
+}
+
+const ON_3dPoint ON_SubDEdgeChain::ControlNetPoint(int vertex_index) const
+{
+  const ON_SubDVertex* v = Vertex(vertex_index);
+  return (nullptr != v) ? v->ControlNetPoint() : ON_3dPoint::NanPoint;
+}
+
+
 
 unsigned int ON_SubDEdgeChain::AddOneNeighbor(
   ON_ChainDirection direction,
@@ -19895,6 +20929,527 @@ bool ON_SubD::IsManifold() const
   bool bHasBoundary = false;
   return IsManifold(bIsOriented, bHasBoundary);
 }
+
+#ifdef ON_DEBUG
+static bool Internal_UnrollChain(const ON_SimpleArray<ON_SubDEdgePtr>& chain) {
+  const unsigned imax{chain.UnsignedCount()};
+  ON_SimpleArray<bool> reversed_dirs{(size_t)imax};
+  ON_SimpleArray<const ON_SubDEdge*> edges{(size_t)imax};
+  ON_SimpleArray<const ON_SubDVertex*> vertices{(size_t)2 * (size_t)imax};
+  ON_SimpleArray<unsigned> edge_ids{(size_t)imax};
+  ON_SimpleArray<unsigned> vertice_ids{(size_t)2 * (size_t)imax};
+  const unsigned int max_id = 0xFFFFFFFFU;
+  for (unsigned i = 0; i < imax; ++i) {
+    ON_SubDEdgePtr eptr = chain[i];
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+    if (nullptr == e) {
+      reversed_dirs.Append(false);
+      edges.Append(nullptr);
+      vertices.Append(nullptr);
+      vertices.Append(nullptr);
+      edge_ids.Append(max_id);
+      vertice_ids.Append(max_id);
+      vertice_ids.Append(max_id);
+      continue;
+    }
+    edges.Append(e);
+    edge_ids.Append(e->m_id);
+    ON__UINT_PTR edir = ON_SUBD_EDGE_DIRECTION(eptr.m_ptr);
+    reversed_dirs.Append(edir == 0 ? false : true);
+    const ON_SubDVertex* v[2] = {e->m_vertex[edir], e->m_vertex[1 - edir]};
+    vertices.Append(v[0]);
+    vertices.Append(v[1]);
+    vertice_ids.Append(v[0] == nullptr ? max_id : v[0]->m_id);
+    vertice_ids.Append(v[1] == nullptr ? max_id : v[1]->m_id);
+  }
+  return true;
+}
+
+static bool Internal_VerifyEdgeChain(
+    const ON_SimpleArray<ON_SubDEdgePtr>& chain, ON_2udex& chaindex,
+    unsigned* edge_count = nullptr) {
+  bool valid_chain{true};
+  unsigned valid_edge_count{0};
+  const unsigned jmax{chain.UnsignedCount()};
+  ON_SubDEdgePtr eptr = chain[chaindex.i];
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+  if (nullptr == e) {
+    if (edge_count != nullptr) *edge_count = 0;
+    return false;
+  }
+  ON__UINT_PTR edir = ON_SUBD_EDGE_DIRECTION(eptr.m_ptr);
+  const ON_SubDVertex* v[2] = {e->m_vertex[edir], e->m_vertex[1 - edir]};
+  if (nullptr == v[0] || nullptr == v[1] || v[0] == v[1]) {
+    if (edge_count != nullptr) *edge_count = 0;
+    return false;
+  }
+  ++valid_edge_count;
+  for (chaindex.j = chaindex.i + 1; chaindex.j < jmax; ++chaindex.j) {
+    valid_chain = false;
+    eptr = chain[chaindex.j];
+    e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+    if (nullptr == e) { 
+      // End of chain marker
+      valid_chain = true;
+      if (chaindex.j < jmax) ++chaindex.j;
+      break;
+    }
+    if (nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1] ||
+        e->m_vertex[0] == e->m_vertex[1]) {
+      break;
+    }
+    edir = ON_SUBD_EDGE_DIRECTION(eptr.m_ptr);
+    if (v[1] != e->m_vertex[edir]) {
+      if (edge_count == nullptr) valid_chain = true;
+      break;
+    }
+    v[1] = e->m_vertex[1 - edir];
+    ++valid_edge_count;
+    valid_chain = true;
+  }
+  if (edge_count != nullptr && *edge_count != valid_edge_count) {
+    *edge_count = valid_edge_count;
+    return false;
+  }
+  return valid_edge_count > 0 && valid_chain;
+}
+
+static bool Internal_CountAndVerifyEdgeChains(
+    const ON_SimpleArray<ON_SubDEdgePtr>& sorted_edges,
+    unsigned* chain_count = nullptr) {
+  if (chain_count != nullptr && chain_count == 0) return false;
+  unsigned valid_chain_count{0};
+  bool valid_chains{false};
+  const unsigned edge_count{sorted_edges.UnsignedCount()};
+  ON_2udex chaindex{0, edge_count};
+  for (chaindex = {0, edge_count}; chaindex.i < edge_count;
+       chaindex.i = (chaindex.j > chaindex.i) ? chaindex.j : (chaindex.i + 1)) {
+    valid_chains = false;
+    if (!Internal_VerifyEdgeChain(sorted_edges, chaindex)) break;
+    ++valid_chain_count;
+    valid_chains = true;
+  }
+  if (chain_count != nullptr &&
+      (*chain_count != valid_chain_count || chaindex.j != edge_count)) {
+    *chain_count = valid_chain_count;
+    return false;
+  }
+  return valid_chain_count > 0 && valid_chains;
+}
+#endif
+
+//////////////////////////
+//
+// Better edge sorter
+//
+
+
+static unsigned Internal_MuchImprovedSortEdgesIntoChains(
+  const ON__UINT_PTR* unsorted_edges,
+  size_t unsorted_edges_count,
+  ON_SimpleArray<ON_SubDEdgePtr>& sorted_edges
+)
+{
+  // NOTE: sorted_edges and unsorted_edges should not point to the same array by this point
+  sorted_edges.SetCount(0);
+  sorted_edges.Reserve(unsorted_edges_count + 128U);
+
+  if (unsorted_edges_count < 1 || nullptr == unsorted_edges)
+    return 0;
+
+  const unsigned unsorted_count = (unsigned)unsorted_edges_count;
+  unsigned chain_count = 0;
+
+  // Set MarkBits = 0 for every vertex and for every edge attached to a vertex in the edge chain.
+  for (unsigned i = 0; i < unsorted_count; ++i)
+  {
+    const ON_SubDEdge* e = (const ON_SubDEdge*)(ON_SUBD_COMPONENT_POINTER_MASK & unsorted_edges[i]);
+    if (nullptr == e)
+      continue;
+    e->ClearMarkBits();
+    if (nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1])
+      continue;
+    if (e->m_vertex[0] == e->m_vertex[1])
+      continue;
+    for (unsigned evi = 0; evi < 2; ++evi)
+    {
+      const ON_SubDVertex* v = e->m_vertex[evi];
+      v->ClearMarkBits();
+      for (unsigned short vei = 0; vei < v->m_edge_count; ++vei)
+      {
+        const ON_SubDEdge* ve = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+        if (nullptr != ve)
+          ve->ClearMarkBits();
+      }
+    }
+  }
+
+  // Set e->MarkBits = 1 for every valid edge in the edge chain.
+  for (unsigned i = 0; i < unsorted_count; ++i)
+  {
+    const ON_SubDEdge* e = (const ON_SubDEdge*)(ON_SUBD_COMPONENT_POINTER_MASK & unsorted_edges[i]);
+    if (nullptr == e)
+      continue;
+    if (nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1])
+      continue;
+    if (e->m_vertex[0] == e->m_vertex[1])
+      continue;
+    e->SetMarkBits(1);
+  }
+
+  // Set v->MarkBits() = number of unsorted_edges[] that have v as a vertex with 3 meaning 3 or more.
+  for (unsigned i = 0; i < unsorted_count; ++i)
+  {
+    const ON_SubDEdge* e = (const ON_SubDEdge*)(ON_SUBD_COMPONENT_POINTER_MASK & unsorted_edges[i]);
+    if (nullptr == e)
+      continue;
+    if (0 == e->MarkBits())
+      continue;
+    for (unsigned evi = 0; evi < 2; ++evi)
+    {
+      const ON_SubDVertex* v = e->m_vertex[evi];
+      const ON__UINT8 ecount = v->MarkBits();
+      if (ecount < 3)
+        v->SetMarkBits(ecount + 1);
+    }
+  }
+
+  // Go through the unsorted edges and use the MarkBits values to quickly build the edge chains.
+  ON_SimpleArray<ON_SubDEdgePtr> chain((int)unsorted_edges_count);
+
+  for (unsigned i = 0; i < unsorted_edges_count; ++i)
+  {
+    const ON_SubDEdge* seed_edge = (const ON_SubDEdge*)(ON_SUBD_COMPONENT_POINTER_MASK & unsorted_edges[i]);
+    if (nullptr == seed_edge || 1 != seed_edge->MarkBits())
+      continue; // seed_edge is invalid or already assigned to an edge chain
+
+    // this edge pointer direcion will be reversed when the for loop evi = 1.
+    chain.SetCount(0);
+    chain.Append(ON_SubDEdgePtr::Create(seed_edge, 1)); // dir=1 is correct. The direcion will be reversed in the for loop below when evi = 1.
+    seed_edge->ClearMarkBits(); // seed_edge is now in a chain
+
+    for (unsigned evi = 0; evi < 2; ++evi)
+    {
+      if (1 == evi)
+      {
+        ON_SubDEdgeChain::ReverseEdgeChain(chain);
+        if (chain[0].RelativeVertex(0) == chain[chain.UnsignedCount() - 1].RelativeVertex(1))
+          break; // we found a closed loop
+      }
+
+      const ON_SubDVertex* v = chain[chain.UnsignedCount() - 1].RelativeVertex(1);
+      if (nullptr == v || 2 != v->MarkBits())
+        continue; // edge chain cannot continue through v
+
+      for (const ON_SubDVertex* v1 = nullptr; nullptr != v && 2 == v->MarkBits(); v = v1)
+      {
+        v->ClearMarkBits(); // clearing v->MarkBits indicates this v has been used.
+        v1 = nullptr;
+        for (unsigned short vei = 0; vei < v->m_edge_count; ++vei)
+        {
+          const ON_SubDEdge* ve = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+          if (nullptr == ve)
+            continue;
+          if (1 != ve->MarkBits())
+            continue; // this ve was not in unsorted_edges[] or has already been assigned to a chain.
+          if (v == ve->m_vertex[0])
+          {
+            ve->SetMarkBits(0); // MarkBits() = 0 indicates ve is now in a chain
+            chain.Append(ON_SubDEdgePtr::Create(ve, 0));
+            v1 = ve->m_vertex[1];
+          }
+          else if (v == ve->m_vertex[1])
+          {
+            ve->SetMarkBits(0); // MarkBits() = 0 indicates ve is now in a chain
+            chain.Append(ON_SubDEdgePtr::Create(ve, 1));
+            v1 = ve->m_vertex[0];
+          }
+          else
+          {
+            ON_SUBD_ERROR("Corrupt edge/vertex topology.");
+          }
+        }
+        v = v1;
+      }
+    }
+
+#ifdef ON_DEBUG
+    unsigned temp_chain_edge_count{chain.UnsignedCount()};
+    ON_2udex temp_udex{0U, (unsigned)(chain.UnsignedCount() - 1)};
+    if (!Internal_VerifyEdgeChain(chain, temp_udex, &temp_chain_edge_count)) {
+      temp_chain_edge_count = 0;
+    }
+    Internal_UnrollChain(chain);
+#endif
+    sorted_edges.Append(chain.Count(), chain.Array());
+    sorted_edges.Append(ON_SubDEdgePtr::Null); // end of chain marker
+    ++chain_count;
+  }
+
+  // clear all the mark bits that may still be set when the input is corrupt.
+  for (size_t i = 0; i < unsorted_edges_count; ++i)
+  {
+    const ON_SubDEdge* e = (const ON_SubDEdge*)(ON_SUBD_COMPONENT_POINTER_MASK & unsorted_edges[i]);
+    if (nullptr == e)
+      continue;
+    e->ClearMarkBits();
+    if (nullptr != e->m_vertex[0])
+      e->m_vertex[0]->ClearMarkBits();
+    if (nullptr != e->m_vertex[1])
+      e->m_vertex[1]->ClearMarkBits();    
+  }
+
+#ifdef ON_DEBUG
+  Internal_UnrollChain(sorted_edges);
+  if (!Internal_CountAndVerifyEdgeChains(sorted_edges, &chain_count)) {
+    return chain_count;
+  }
+#endif
+  return chain_count;
+}
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  unsigned int chain_count = 0;
+  if (unsorted_edges.Array() == sorted_edges.Array())
+  {
+    const ON_SimpleArray< ON_SubDEdgePtr > local_unsorted_edges(unsorted_edges);
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR * )local_unsorted_edges.Array(),
+      local_unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  else
+  {
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)unsorted_edges.Array(),
+      unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  return chain_count;
+}
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  unsigned int chain_count = 0;
+  if ((const void*)unsorted_edges.Array() == (const void*)sorted_edges.Array())
+  {
+    const ON_SimpleArray< const ON_SubDEdge* > local_unsorted_edges(unsorted_edges);
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)local_unsorted_edges.Array(),
+      local_unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  else
+  {
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)unsorted_edges.Array(),
+      unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  return chain_count;
+}
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SimpleArray< ON_SubDComponentPtr >& unsorted_edges,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  unsigned int chain_count = 0;
+  if ((const void*)unsorted_edges.Array() == (const void*)sorted_edges.Array())
+  {
+    const ON_SimpleArray< ON_SubDComponentPtr > local_unsorted_edges(unsorted_edges);
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)local_unsorted_edges.Array(),
+      local_unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  else
+  {
+    chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)unsorted_edges.Array(),
+      unsorted_edges.UnsignedCount(),
+      sorted_edges
+    );
+  }
+  return chain_count;
+}
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SubD& subd,
+  const ON_SimpleArray< ON_COMPONENT_INDEX >& unsorted_edges,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  const unsigned unsorted_count = unsorted_edges.UnsignedCount();
+  ON_SimpleArray< const ON_SubDEdge* > local_unsorted_edges(unsorted_count);
+  for (unsigned i = 0; i < unsorted_count; ++i)
+  {
+    const ON_COMPONENT_INDEX ci = unsorted_edges[i];
+    if (ON_COMPONENT_INDEX::TYPE::subd_edge != ci.m_type)
+      continue;
+    if (0 == ci.m_index || -1 == ci.m_index)
+      continue;
+    const ON_SubDEdge* e = subd.EdgeFromId((unsigned)ci.m_index);
+    if (nullptr == e)
+      continue;
+    local_unsorted_edges.Append(e);
+  }
+
+  return Internal_MuchImprovedSortEdgesIntoChains(
+    (const ON__UINT_PTR*)local_unsorted_edges.Array(),
+    unsorted_edges.UnsignedCount(),
+    sorted_edges
+  );
+}
+
+bool ON_SubDEdgeChain::IsSingleEdgeChain(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edges,
+  bool& bIsClosed,
+  bool& bIsSorted
+)
+{
+  bIsSorted = false;
+  bIsClosed = false;
+
+  const unsigned count = edges.UnsignedCount();
+  if (count <= 1U)
+  {
+    const ON_SubDEdge* e = (1U == count) ? edges[0].Edge() : nullptr;
+    if (
+      nullptr != e 
+      && nullptr != e->m_vertex[0] 
+      && nullptr != e->m_vertex[1] 
+      && e->m_vertex[0] != e->m_vertex[1]
+      )
+    {
+      // 1 valid edge
+      bIsSorted = true;
+      return true;
+    }
+    return false;
+  }
+
+  // save MarkBits() values on edges[] components so they can be restored after testing.
+  // Internal_MuchImprovedSortEdgesIntoChains() uses MarkBits().
+  union
+  {
+    ON__UINT32 u32;
+    ON__UINT8 u8[4];
+  } u;
+  ON_SimpleArray<ON__UINT32> saved_markbits(count);
+  for (unsigned i = 0; i < count; ++i)
+  {
+    u.u32 = 0;
+    const ON_SubDEdge* e = edges[i].Edge();
+    if (nullptr != e)
+    {
+      u.u8[0] = e->MarkBits();
+      if (e->m_vertex[0])
+        u.u8[1] = e->m_vertex[0]->MarkBits();
+      if (e->m_vertex[1])
+        u.u8[2] = e->m_vertex[1]->MarkBits();
+    }
+    saved_markbits.Append(u.u32);
+  }
+
+  bool bIsSingleEdgeChain = false;
+  for (;;)
+  {
+    ON_SimpleArray<ON_SubDEdgePtr> sorted_edges;
+    const unsigned chain_count = Internal_MuchImprovedSortEdgesIntoChains(
+      (const ON__UINT_PTR*)edges.Array(),
+      count,
+      sorted_edges
+    );
+
+    if (1U != chain_count)
+      break; // edges[] is not a contiguouse set of edges or it self intersects.
+    if (count + 1U != sorted_edges.UnsignedCount())
+      break; // edges[] contained null edges
+
+    // determine edges[] sorts into a closed edge chain.
+    if (count >= 3 && sorted_edges[0].RelativeVertex(0) == sorted_edges[count - 1].RelativeVertex(1))
+      bIsClosed = true;
+
+    // Determine edges[] is was already sorted.
+    // Note that this test does not detect self interections and that's
+    // why ON_SubDEdgeChain::SortEdgesIntoEdgeChains() is called above.
+    const ON_SubDVertex* v0 = edges[0].RelativeVertex(0);
+    if (nullptr != v0)
+    {
+      const ON_SubDVertex* edges_ends[2] = { edges[0].RelativeVertex(0), edges[count - 1].RelativeVertex(1) };
+      const ON_SubDVertex* sorted_ends[2] = { sorted_edges[0].RelativeVertex(0), sorted_edges[count - 1].RelativeVertex(1) };
+      if (bIsClosed)
+      {
+        if (edges_ends[0] == edges_ends[1] && sorted_ends[0] == sorted_ends[1])
+          bIsSorted = true;
+      }
+      else
+      {
+        // sorted_eges[] may be reversed.
+        if (edges_ends[0] == sorted_ends[0] && edges_ends[1] == sorted_ends[1])
+          bIsSorted = true;
+        else if (edges_ends[0] == sorted_ends[1] && edges_ends[1] == sorted_ends[0])
+          bIsSorted = true;
+      }
+
+      for (unsigned i = 0; bIsSorted && i < count; ++i)
+      {
+        const ON_SubDVertex* ev[2] = { edges[i].RelativeVertex(0), edges[i].RelativeVertex(1) };
+        if (v0 != ev[0] || nullptr == ev[1] || ev[0] == ev[1])
+        {
+          bIsSorted = false;
+          break;
+        }
+        v0 = ev[1];
+      }
+    }
+
+
+    bIsSingleEdgeChain = true;
+    break;
+  }
+
+
+  // restore MarkBits() values on edges[] components.
+  for (unsigned i = 0; i < count; ++i)
+  {
+    u.u32 = saved_markbits[i];
+    const ON_SubDEdge* e = edges[i].Edge();
+    if (nullptr != e)
+    {
+      e->SetMarkBits(u.u8[0]);
+      if (e->m_vertex[0])
+        e->m_vertex[0]->SetMarkBits(u.u8[1]);
+      if (e->m_vertex[1])
+        e->m_vertex[1]->SetMarkBits(u.u8[2]);
+    }
+  }
+
+  return bIsSingleEdgeChain;
+}
+
+bool ON_SubDEdgeChain::IsSingleEdgeChain(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edges
+)
+{
+  bool bIsClosed = false;
+  bool bIsSorted = false;
+  return ON_SubDEdgeChain::IsSingleEdgeChain(edges, bIsClosed, bIsSorted);
+}
+
 
 class ON_SubDEdgePtrLink
 {
@@ -20319,11 +21874,12 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
       chain.Append(epl.m_ep);
     }
 
-    const bool bClosedChain = (epl.m_index == epl1.m_index);
-    const bool bReverseFinalChain
-      = false == bClosedChain
-      && unset_nbr1_index == epl.m_nbr_index
-      && (0 == (epl.m_index % 2));
+    const bool bClosedChain =
+        chain.UnsignedCount() > 0 && (epl.m_index == epl1.m_index);
+    const bool bFirstEdgeIsReversed = !bClosedChain &&
+                                      unset_nbr1_index <= epl.m_nbr_index &&
+                                      (0 == (epl.m_index % 2));
+    bool bLastEdgeIsReversed{false};
     if (false == bClosedChain)
     {
       chain.Reverse();
@@ -20365,8 +21921,15 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
         chain.Append(epl.m_ep.Reversed());
       }
 
-      if (bReverseFinalChain)
-        chain.Reverse();
+      // No need to update bClosedChain here: if it was closed, then the circle
+      // was found with the edges "before" edges[i/2]
+
+      // First and last edge are reversed: reverse chain direction to keep first
+      // edge direction the same as in unsorted_edges
+      bLastEdgeIsReversed = epl.m_index % 2 == 0;
+      if (bFirstEdgeIsReversed && bLastEdgeIsReversed) {
+        ReverseEdgeChain(chain);
+      }
     }
 
     const unsigned int chain_edge_count = chain.UnsignedCount();
@@ -20421,18 +21984,95 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
         }
         break;
       }
-      if (chain.UnsignedCount() >= minimum_chain_length)
-      {
-        ++chain_count;
-        sorted_edges.Append(chain.Count(), chain.Array());
+#ifdef ON_DEBUG
+      unsigned temp_chain_edge_count{chain_edge_count};
+      ON_2udex temp_udex{0U, (unsigned)(chain_edge_count - 1)};
+      if (!Internal_VerifyEdgeChain(chain, temp_udex, &temp_chain_edge_count)) {
+        temp_chain_edge_count = 0;
+      }
+      Internal_UnrollChain(chain);
+#endif
+      if (chain.UnsignedCount() >= minimum_chain_length) {
+        const ON_SubDVertex* c0{chain[0].RelativeVertex(0)};
+        const ON_SubDVertex* s1{sorted_edges.Last() == nullptr
+                                    ? nullptr
+                                    : sorted_edges.Last()->RelativeVertex(1)};
+        if (c0 != nullptr && c0 == s1) {
+          // If the first vertex of the chain is a corner, or a vertex with more
+          // than 2 edges referencing it, we might have artificially split the
+          // chain at that vertex and the last vertex of the previous chain is
+          // the same as ours. Try a few tricks to put a gap between these two
+          // vertices.
+          const ON_SubDVertex* c1{
+              chain[chain_edge_count - 1].RelativeVertex(1)};
+          const ON_SubDVertex* s0{
+              sorted_edges.First() == nullptr
+                  ? nullptr
+                  : sorted_edges.First()->RelativeVertex(0)};
+          // By order of importance, try to:
+          //   - Keep the orientation of the first edge the same as in unsorted_edges
+          //   - Not use ReverseEdgeChain()
+          //   - Append rather than Prepend to sorted_edges
+          if (c1 != s0) {
+            ++chain_count;
+            sorted_edges.Prepend(chain.Count(), chain.Array());
+          } else if (c1 != s1 && !bClosedChain &&
+                     ((bFirstEdgeIsReversed && !bLastEdgeIsReversed) ||
+                      (!bFirstEdgeIsReversed && bLastEdgeIsReversed))) {
+            ReverseEdgeChain(chain);
+            ++chain_count;
+            sorted_edges.Append(chain.Count(), chain.Array());
+          } else if (c0 != s0 && !bClosedChain &&
+                     ((bFirstEdgeIsReversed && !bLastEdgeIsReversed) ||
+                      (!bFirstEdgeIsReversed && bLastEdgeIsReversed))) {
+            ReverseEdgeChain(chain);
+            ++chain_count;
+            sorted_edges.Prepend(chain.Count(), chain.Array());
+          } else if (c1 != s1 && !bClosedChain) {
+            ReverseEdgeChain(chain);
+            ++chain_count;
+            sorted_edges.Append(chain.Count(), chain.Array());
+          } else if (c0 != s0 && !bClosedChain) {
+            ReverseEdgeChain(chain);
+            ++chain_count;
+            sorted_edges.Prepend(chain.Count(), chain.Array());
+          } else {
+            // We tried, but nothing works easily enough: append the chain as
+            // usual, this means the two chains are merged and chain_count does
+            // not increase.
+            sorted_edges.Append(chain.Count(), chain.Array());
+          }
+        } else {
+          ++chain_count;
+          sorted_edges.Append(chain.Count(), chain.Array());
+        }
       }
     }
 
     if ( link_count == 2*sorted_edges.UnsignedCount() )
       break; // we've used all the links - no need to "skip over the rest".
   }
-
+#ifdef ON_DEBUG
+  Internal_UnrollChain(sorted_edges);
+  if (!Internal_CountAndVerifyEdgeChains(sorted_edges, &chain_count)) {
+    return chain_count;
+  }
+#endif
   return chain_count;
+}
+
+const ON_SHA1_Hash ON_SubDEdgeChain::Hash() const
+{
+  ON_SHA1 sha1;
+  const unsigned edge_count = this->EdgeCount();
+  for (unsigned i = 0; i < edge_count; ++i)
+  {
+    const ON_SubDEdgePtr eptr = EdgePtr(i);
+    sha1.AccumulateInteger32(eptr.EdgeId());
+    sha1.AccumulateInteger32(eptr.RelativeVertexId(0));
+    sha1.AccumulateInteger32(eptr.RelativeVertexId(1));
+  }
+  return sha1.Hash();
 }
 
 unsigned int ON_SubDEdgeChain::OrientEdgesIntoEdgeChains(
@@ -21743,6 +23383,207 @@ bool ON_Symmetry::SetSymmetricObject(const ON_SubDimple* subdimple) const
 
   return rc;
 }
+
+double ON_SubDExpandEdgesParameters::ConstantOffset() const
+{
+  return this->m_constant_offset;
+}
+
+void ON_SubDExpandEdgesParameters::SetConstantOffset(double offset)
+{
+  offset = ON_SubDExpandEdgesParameters::CleanupOffset(offset);
+  if (ON_SubDExpandEdgesParameters::IsValidConstantOffset(offset))
+    this->m_constant_offset = offset;
+}
+
+
+bool ON_SubDExpandEdgesParameters::IsValidForHalfOffset(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edge_chain
+)
+{
+  const unsigned count = edge_chain.UnsignedCount();
+  for (unsigned i = 0; i < count; ++i)
+  {
+    if (false == edge_chain[i].HasInteriorEdgeTopology(true))
+      return false;
+  }
+  return ON_SubDEdgeChain::IsSingleEdgeChain(edge_chain);
+}
+
+
+bool ON_SubDExpandEdgesParameters::IsValidForVariableOffset(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edge_chain
+)
+{
+  bool bIsClosed = false;
+  bool bIsSorted = false;
+  const bool IsSingleEdgeChain = ON_SubDEdgeChain::IsSingleEdgeChain(edge_chain, bIsClosed, bIsSorted);
+  return IsSingleEdgeChain && false == bIsClosed;
+}
+
+const ON_Interval ON_SubDExpandEdgesParameters::VariableOffset() const
+{
+  return this->m_variable_offsets;
+}
+
+void ON_SubDExpandEdgesParameters::SetVariableOffset(ON_Interval variable_offsets)
+{
+  variable_offsets[0] = ON_SubDExpandEdgesParameters::CleanupOffset(variable_offsets[0]);
+  variable_offsets[1] = ON_SubDExpandEdgesParameters::CleanupOffset(variable_offsets[1]);
+  if (ON_SubDExpandEdgesParameters::IsValidVariableOffset(variable_offsets))
+  {
+    this->m_variable_offsets = variable_offsets;
+  }
+  else
+  {
+    // invalid input
+    ClearVariableOffset();
+    if (ON_SubDExpandEdgesParameters::IsValidConstantOffset(variable_offsets[0])
+      && fabs(variable_offsets[0] - variable_offsets[1]) <= ON_SubDExpandEdgesParameters::OffsetTolerance
+      )
+    {
+      SetConstantOffset(variable_offsets[0]);
+    }
+  }
+}
+
+void ON_SubDExpandEdgesParameters::ClearVariableOffset()
+{
+  this->m_variable_offsets = ON_Interval::Nan;
+}
+
+bool ON_SubDExpandEdgesParameters::IsVariableOffset() const
+{
+  return ON_SubDExpandEdgesParameters::IsValidVariableOffset(this->m_variable_offsets);
+}
+
+bool ON_SubDExpandEdgesParameters::IsValidConstantOffset(
+  double constant_offset_candidate
+)
+{
+  return constant_offset_candidate >= ON_SubDExpandEdgesParameters::MinimumOffset && constant_offset_candidate <= ON_SubDExpandEdgesParameters::MaximumOffset;
+}
+
+bool ON_SubDExpandEdgesParameters::IsValidVariableOffset(
+  ON_Interval variable_offset_candidate
+)
+{
+  for (int i = 0; i < 2; i++)
+  {
+    const double x[2] = { variable_offset_candidate[i], variable_offset_candidate[1 - i] };
+    if (false == ON_SubDExpandEdgesParameters::IsValidConstantOffset(x[0]))
+    {
+      if (0.0 == x[0])
+        return (x[1] >= ON_SubDExpandEdgesParameters::MinimumOffset && x[1] <= 1.0);
+      if (1.0 == x[0])
+        return (x[1] >= 0.0 && x[1] <= ON_SubDExpandEdgesParameters::MaximumOffset);
+      return false;
+    }
+  }
+  return fabs(variable_offset_candidate[0] - variable_offset_candidate[1]) > ON_SubDExpandEdgesParameters::OffsetTolerance;
+}
+
+
+ON_SubDExpandEdgesParameters::Style ON_SubDExpandEdgesParameters::FaceStyle() const
+{
+  return this->m_face_style;
+}
+
+void ON_SubDExpandEdgesParameters::SetFaceStyle(ON_SubDExpandEdgesParameters::Style face_style)
+{
+  this->m_face_style = face_style;
+}
+
+bool ON_SubDExpandEdgesParameters::IsHalfFaceStyle() const
+{
+  return
+    ON_SubDExpandEdgesParameters::Style::HalfLeft == this->m_face_style
+    || ON_SubDExpandEdgesParameters::Style::HalfRight == this->m_face_style
+    ;
+}
+
+const ON_Color ON_SubDExpandEdgesParameters::FaceColor() const
+{
+  return this->m_face_color;
+}
+
+void ON_SubDExpandEdgesParameters::SetFaceColor(ON_Color face_color)
+{
+  this->m_face_color = face_color;
+}
+
+const ON_ComponentStatus ON_SubDExpandEdgesParameters::FaceStatus() const
+{
+  return this->m_face_status;
+}
+
+void ON_SubDExpandEdgesParameters::SetFaceStatus(ON_ComponentStatus face_status)
+{
+  this->m_face_status = ON_ComponentStatus::NoneSet;
+  this->m_face_status.SetRuntimeMark(face_status.SetRuntimeMark());
+  this->m_face_status.SetMarkBits(face_status.MarkBits());
+  if (face_status.IsSelectedPersistent())
+    this->m_face_status.SetSelectedState(ON_ComponentState::SelectedPersistent, face_status.IsHighlighted());
+  else if (face_status.IsSelected())
+    this->m_face_status.SetSelectedState(ON_ComponentState::Selected, face_status.IsHighlighted());
+  else if (face_status.IsHighlighted())
+    this->m_face_status.SetHighlightedState(true);
+}
+
+const ON_SHA1_Hash ON_SubDExpandEdgesParameters::Hash() const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateDouble(ConstantOffset());
+  sha1.AccumulateDouble(VariableOffset().m_t[0]);
+  sha1.AccumulateDouble(VariableOffset().m_t[1]);
+  sha1.AccumulateInteger32((unsigned int)FaceColor());
+  sha1.AccumulateBytes(&m_face_status, sizeof(m_face_status));
+  sha1.AccumulateInteger32((unsigned int)FaceStyle());
+  return sha1.Hash();
+}
+
+bool operator==(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs)
+{
+  return lhs.Hash() == rhs.Hash();
+}
+
+bool operator!=(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs)
+{
+  return lhs.Hash() != rhs.Hash();
+}
+
+
+double ON_SubDExpandEdgesParameters::CleanupOffset(double x)
+{
+
+  const double r[] = {
+    0.0,
+    1.0,
+    ON_SubDExpandEdgesParameters::SmallOffset,
+    ON_SubDExpandEdgesParameters::MediumOffset,
+    ON_SubDExpandEdgesParameters::LargeOffset,
+    ON_SubDExpandEdgesParameters::MinimumOffset,
+    ON_SubDExpandEdgesParameters::MaximumOffset
+  };
+
+  const size_t c = sizeof(r) / sizeof(r[0]);
+  for (size_t i = 0; i < c; ++i)
+  {
+    if (fabs(x - r[i]) <= ON_SubDExpandEdgesParameters::OffsetTolerance)
+      return r[i];
+  }
+
+  if (x > 0.0 && x < ON_SubDExpandEdgesParameters::MinimumOffset)
+    x = ON_SubDExpandEdgesParameters::MinimumOffset;
+  else if (x < 1.0 && x > ON_SubDExpandEdgesParameters::MaximumOffset)
+    x = ON_SubDExpandEdgesParameters::MaximumOffset;
+
+  if (x >= 0.0 && x <= 1.0)
+    return x;
+
+  return ON_DBL_QNAN;
+}
+
 
 
 #if defined(ON_SUBD_CENSUS)

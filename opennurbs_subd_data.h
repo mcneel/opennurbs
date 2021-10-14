@@ -462,18 +462,15 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 // m_saved_points_flags
 //
 #define ON_SUBD_CACHE_POINT_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SubdivisionPointBit
-#define ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SubdivisionDisplacementBit
 #define ON_SUBD_CACHE_LIMITLOC_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit
 #define ON_SUBD_CACHE_FLAGS_MASK ON_SubDComponentBase::SavedPointsFlags::CachedPointMask
 
 #define ON_SUBD_CACHE_FLAGS(cache_subd_flags) (ON_SUBD_CACHE_FLAGS_MASK&(cache_subd_flags))
 #define ON_SUBD_CACHE_POINT_FLAG(cache_subd_flags) (ON_SUBD_CACHE_POINT_FLAG_BIT&(cache_subd_flags))
-#define ON_SUBD_CACHE_DISPLACEMENT_FLAG(cache_subd_flags) (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT&(cache_subd_flags))
 #define ON_SUBD_CACHE_LIMITLOC_FLAG(cache_subd_flags) (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT&(cache_subd_flags))
 
-#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
-#define ON_SUBD_CACHE_CLEAR_DISPLACEMENT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
-#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SUBD_CACHE_DISPLACEMENT_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -1651,7 +1648,7 @@ public:
       + m_fsp_oddball_fragments.SizeOfUnusedElements()
       + m_fsp_limit_curves.SizeOfUnusedElements();
 
-    // It has alwasy been the case that count0 = count1 = ON_SubDDisplayParameters::MaximumDensity + 1.
+    // It has always been the case that count0 = count1 = ON_SubDDisplayParameters::MaximumDensity + 1.
     // But a wrong answer is better than crashing if somebody incorrectly modifies ON_SubDHeap 
     // in the far future.
     const size_t count0 = sizeof(m_unused_fragments) / sizeof(m_unused_fragments[0]);
