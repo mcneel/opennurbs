@@ -51,7 +51,7 @@ const ON_wString ON_Symmetry::SymmetryTypeToString(ON_Symmetry::Type symmetry_ty
   case ON_Symmetry::Type::Reflect:
     s = L"Reflect";
     break;
-  case ON_Symmetry::Type::Rotate:
+  break;  case ON_Symmetry::Type::Rotate:
     s = L"Rotate";
     break;
   case ON_Symmetry::Type::ReflectAndRotate:
@@ -75,13 +75,17 @@ ON_Symmetry::Region ON_Symmetry::SymmetryRegionFromUnsigned(unsigned int region_
   switch (region_as_unsigned)
   {
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::Unset);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::In);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::AboveReflectionPlane);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnRotationAxis);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnReflectionPlane);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnRotationZeroPlane);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnRotationOnePlane);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::InAndOut);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::Out);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::CrossesReflectionPlane);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::BelowReflectionPlane);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OffRotationAxis);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnReflectionHalfPlane);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnSupplementalHalfPlane);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OnRotateAndReflectHalfPlane);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::InsideRotateAndReflect);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Symmetry::Region::OutsideRotateAndReflect);
   }
 
   ON_ERROR("Invalid region_as_unsigned parameter");
@@ -96,53 +100,53 @@ const ON_wString SymmetryRegionToString(ON_Symmetry::Region r)
   case ON_Symmetry::Region::Unset:
     return ON_wString(L"Unset");
     break;
-  case ON_Symmetry::Region::In:
-    return ON_wString(L"In");
+  case ON_Symmetry::Region::AboveReflectionPlane:
+    return ON_wString(L"AboveReflectionPlane");
     break;
   case ON_Symmetry::Region::OnRotationAxis:
     return ON_wString(L"OnRotationAxis");
     break;
+  case ON_Symmetry::Region::OffRotationAxis:
+    return ON_wString(L"OffRotationAxis");
+    break;
   case ON_Symmetry::Region::OnReflectionPlane:
     return ON_wString(L"OnReflectionPlane");
     break;
-  case ON_Symmetry::Region::OnRotationZeroPlane:
-    return ON_wString(L"OnRotationZeroPlane");
+  case ON_Symmetry::Region::CrossesReflectionPlane:
+    return ON_wString(L"CrossesReflectionPlane");
     break;
-  case ON_Symmetry::Region::OnRotationOnePlane:
-    return ON_wString(L"OnRotationOnePlane");
+  case ON_Symmetry::Region::BelowReflectionPlane:
+    return ON_wString(L"BelowReflectionPlane");
     break;
-  case ON_Symmetry::Region::InAndOut:
-    return ON_wString(L"InAndOut");
+  case ON_Symmetry::Region::OnReflectionHalfPlane:
+    return ON_wString(L"OnReflectionHalfPlane");
     break;
-  case ON_Symmetry::Region::Out:
-    return ON_wString(L"Out");
+  case ON_Symmetry::Region::OnSupplementalHalfPlane:
+    return ON_wString(L"OnSupplementalHalfPlane");
+    break;
+  case ON_Symmetry::Region::OnRotateAndReflectHalfPlane:
+    return ON_wString(L"OnRotateAndReflectHalfPlane");
+    break;
+  case ON_Symmetry::Region::InsideRotateAndReflect:
+    return ON_wString(L"InsideRotateAndReflect");
+    break;
+  case ON_Symmetry::Region::OutsideRotateAndReflect:
+    return ON_wString(L"OutsideRotateAndReflect");
     break;
   }
   return ON_wString::EmptyString;
 }
 
-bool ON_Symmetry::IsOn(ON_Symmetry::Region r, bool bInAndOutResult)
-{
-  const unsigned char max = bInAndOutResult ? static_cast<unsigned char>(ON_Symmetry::Region::Out) : static_cast<unsigned char>(ON_Symmetry::Region::InAndOut);
-  return static_cast<unsigned char>(r) > static_cast<unsigned char>(ON_Symmetry::Region::In) && static_cast<unsigned char>(r) < max;
-}
-
-bool ON_Symmetry::IsInOrOn(ON_Symmetry::Region r, bool bInAndOutResult)
-{
-  const unsigned char max = bInAndOutResult ? static_cast<unsigned char>(ON_Symmetry::Region::Out) : static_cast<unsigned char>(ON_Symmetry::Region::InAndOut);
-  return static_cast<unsigned char>(r) >= static_cast<unsigned char>(ON_Symmetry::Region::In) && static_cast<unsigned char>(r) < max;
-}
-
-bool ON_Symmetry::IsNotInOrOn(ON_Symmetry::Region r, bool bInAndOutResult)
-{
-  return ON_Symmetry::IsInOrOn(r,!bInAndOutResult) ? false : true;
-}
-
 ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupTolerance) const
 {
-  if (point.IsValid())
+  for(;;)
   {
+    if (false == point.IsValid())
+      break;
+
     const double tol = bUseCleanupTolerance ? CleanupTolerance() : ON_Symmetry::ZeroTolerance;
+    if (false == ON_IsValid(tol))
+      break;
 
     double h[2];
     switch (m_type)
@@ -150,44 +154,73 @@ ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupT
     case ON_Symmetry::Type::Reflect:
       h[0] = ReflectionPlane().ValueAt(point);
       if (h[0] < -tol)
-        return ON_Symmetry::Region::Out;
+        return ON_Symmetry::Region::BelowReflectionPlane;
       if (h[0] <= tol)
         return ON_Symmetry::Region::OnReflectionPlane;
       if (h[0] > tol)
-        return ON_Symmetry::Region::In;
+        return ON_Symmetry::Region::AboveReflectionPlane;
+
+      // ... else nans
       break;
 
     case ON_Symmetry::Type::Rotate:
-      h[0] = RotationZeroPlane().ValueAt(point);
-      if (h[0] < -tol)
-        return ON_Symmetry::Region::Out;
-      h[1] = RotationOnePlane().ValueAt(point);
-      if (h[1] < -tol)
-        return ON_Symmetry::Region::Out;
-      if (h[0] >= -tol && h[1] >= -tol)
-      {
-        // h[0] and h[1] are not nans ...
-        if (h[0] <= tol)
-          return (h[1] <= tol) ? ON_Symmetry::Region::OnRotationAxis : ON_Symmetry::Region::OnRotationZeroPlane;
-        return (h[1] <= tol) ? ON_Symmetry::Region::OnRotationOnePlane : ON_Symmetry::Region::In;
-      }
-      break;
+    {
+      const ON_Line axis = RotationAxis();
+      const ON_3dPoint A = axis.ClosestPointTo(point);
+      const double d = fabs((point - A).MaximumCoordinate());
+      if (d <= tol)
+        return ON_Symmetry::Region::OnRotationAxis;
+      if (d > tol)
+        return ON_Symmetry::Region::OffRotationAxis;
+
+      // ... else nans
+    }
+    break;
 
     case ON_Symmetry::Type::ReflectAndRotate:
-      h[0] = ReflectionPlane().ValueAt(point);
-      if (h[0] < -tol)
-        return ON_Symmetry::Region::Out;
-      h[1] = RotationZeroPlane().ValueAt(point);
-      if (h[1] < -tol)
-        return ON_Symmetry::Region::Out;
-      if (h[0] >= -tol && h[1] >= -tol)
+    {
+      const ON_Line axis = RotationAxis();
+      const ON_3dPoint A = axis.ClosestPointTo(point);
+      const double d = fabs((point - A).MaximumCoordinate());
+      if (d <= tol)
+        return ON_Symmetry::Region::OnRotationAxis;
+
+      const ON_PlaneEquation M = ReflectAndRotatePlane(0); // reflection plane
+      const ON_PlaneEquation S = ReflectAndRotatePlane(1); // supplental plane
+      h[0] = M.ValueAt(point);
+      h[1] = S.ValueAt(point);
+      if (h[0] > tol && h[1] > tol)
+        return ON_Symmetry::Region::InsideRotateAndReflect;
+      if (fabs(h[0]) <= tol && fabs(h[0]) <= fabs(h[1]))
       {
-        // h[0] and h[1] are not nans ...
-        if (h[0] <= tol)
-          return (h[1] <= tol) ? ON_Symmetry::Region::OnRotationAxis : ON_Symmetry::Region::OnReflectionPlane;
-        return (h[1] <= tol) ? ON_Symmetry::Region::OnRotationZeroPlane : ON_Symmetry::Region::In;
+        return (h[1] >= 0.0) ? ON_Symmetry::Region::OnReflectionHalfPlane : ON_Symmetry::Region::OnRotateAndReflectHalfPlane;
       }
-      break;
+      if (fabs(h[1]) <= tol)
+      {
+        return (h[0] >= 0.0) ? ON_Symmetry::Region::OnSupplementalHalfPlane : ON_Symmetry::Region::OnRotateAndReflectHalfPlane;
+      }
+
+      if (h[0] == h[0] && h[1] == h[1])
+      {
+        const ON_Xform R = this->RotationTransformation();
+        const unsigned Rcount = this->RotationCount();
+        for (unsigned i = 0; i < Rcount; ++i)
+        {
+          point = R * point;
+          h[0] = S.ValueAt(point);
+          if (fabs(h[0]) <= tol)
+            return ON_Symmetry::Region::OnRotateAndReflectHalfPlane;
+          h[0] = M.ValueAt(point);
+          if (fabs(h[0]) <= tol)
+            return ON_Symmetry::Region::OnRotateAndReflectHalfPlane;
+        }
+        return ON_Symmetry::Region::OutsideRotateAndReflect;
+      }
+      
+
+      // ... else nans
+    }
+    break;
     }
   }
 
@@ -195,6 +228,16 @@ ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupT
   return ON_Symmetry::Region::Unset; 
 }
 
+bool ON_Symmetry::SymmetryRegionHasFixedPoints(ON_Symmetry::Region symmetry_region)
+{
+  return
+    ON_Symmetry::Region::OnRotationAxis == symmetry_region
+    || ON_Symmetry::Region::OnReflectionPlane == symmetry_region
+    || ON_Symmetry::Region::OnReflectionHalfPlane == symmetry_region
+    || ON_Symmetry::Region::OnSupplementalHalfPlane == symmetry_region
+    || ON_Symmetry::Region::OnRotateAndReflectHalfPlane == symmetry_region
+    ;
+}
 
 ON_Symmetry::Coordinates ON_Symmetry::SymmetryCoordinatesFromUnsigned(unsigned int symmetry_coordinates_as_unsigned)
 {
@@ -254,7 +297,7 @@ bool ON_Symmetry::Write(ON_BinaryArchive& archive) const
     if (false == archive.WriteUuid(m_id))
       break;
 
-    if (archive.BeginWrite3dmAnonymousChunk(2))
+    if (archive.BeginWrite3dmAnonymousChunk(3))
     {
       switch (m_type)
       {
@@ -264,8 +307,9 @@ bool ON_Symmetry::Write(ON_BinaryArchive& archive) const
         rc = archive.WritePlaneEquation(m_fixed_plane);
         break;
       case ON_Symmetry::Type::Rotate:
-        // fixed plane added for chunk version >= 2
-        rc = archive.WriteLine(m_rotation_axis) && archive.WritePlaneEquation(m_fixed_plane);
+        // The plane is written but not read so the files saved afeter June 15, 2021 
+        // can be read by code compiled before June 15, 2021.
+        rc = archive.WriteLine(m_rotation_axis) && archive.WritePlaneEquation(ON_PlaneEquation::NanPlaneEquation);
         break;
       case ON_Symmetry::Type::ReflectAndRotate:
         rc = archive.WritePlaneEquation(m_fixed_plane) && archive.WriteLine(m_rotation_axis);
@@ -424,51 +468,202 @@ bool ON_Symmetry::IsMotifBoundarySubDVertex(const class ON_SubDVertex* v, bool b
     return false;
   if (false == v->IsCreaseOrCorner())
     return false;
+
+  const ON_Symmetry::Type symmetry_type = this->SymmetryType();
   if (false == v->HasBoundaryVertexTopology())
   {
-    const ON_Symmetry::Type symmetry_type = this->SymmetryType();
-    if (ON_Symmetry::Type::Reflect == symmetry_type)
-      return false; // easy case.
-    else if (ON_Symmetry::Type::Rotate == symmetry_type)
+    switch (symmetry_type)
     {
+    case ON_Symmetry::Type::Reflect:
+      return false; // easy case.
+      break;
+
+    case ON_Symmetry::Type::Rotate:
       if (v->HasInteriorVertexTopology())
         return false;
       if (ON_SubDVertexTag::Corner != v->m_vertex_tag)
         return false;
-      // We have to keep "funky" corners - RH-63789
-    }
-    else if (ON_Symmetry::Type::ReflectAndRotate == symmetry_type)
-    {
-      // Probably much harder than this - future work
-      return false; // easy case.
-    }
-    else
+      // We have to keep nonmanifold corners - RH-63789
+      break;
+
+    case ON_Symmetry::Type::ReflectAndRotate:
+      return false; 
+
+    default:
       return false;
+      break;
+    }
   }
 
   const ON_3dPoint P = v->ControlNetPoint();
   const double tol = bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance;
-  double d;
-  switch (this->SymmetryType())
+  
+  switch (symmetry_type)
   {
   case ON_Symmetry::Type::Reflect:
-    d = fabs(this->ReflectionPlane().ValueAt(P));
-    break;
+  {
+    const double d = fabs(this->ReflectionPlane().ValueAt(P));
+    return (d <= tol);
+  }
+  break;
+
   case ON_Symmetry::Type::Rotate:
     // All boundary vertices must be eligable for joining.
-    // The pinwheel motifs in RH-63376 show why.
-    d = P.IsValid() ? 0.0 : ON_DBL_QNAN;
+    // The pinwheel motifs in RH-63376 shows why.
+    return true;
     break;
+
   case ON_Symmetry::Type::ReflectAndRotate:
-    // to be determined when ReflectAndRotate support is added
-    d = ON_DBL_QNAN;
+    // The ReflectAndRotatePlane(2) test makes sure we are in the correct half space
+    // where the ReflectAndRotate reflection plane is active.
+    if ( this->ReflectAndRotatePlane(2).ValueAt(P) >= -tol )
+    {
+      // The d0 test is correct for certain
+      const double d0 = fabs(this->ReflectAndRotatePlane(0).ValueAt(P));
+      if (d0 <= tol)
+        return true;
+
+      // The d1 test is probably correct
+      const double d1 = fabs(this->ReflectAndRotatePlane(1).ValueAt(P));
+      if (d1 <= tol)
+        return true;
+    }
     break;
+
   default:
-    d = ON_DBL_QNAN;
     break;
   }
 
-  return (d <= tol);
+  return false;
+}
+
+bool ON_Symmetry::IsFixedSubDComponent(
+  const class ON_SubDComponentPtr& subd_component,
+  bool bUseCleanupTolerance
+) const
+{
+  const unsigned motif_count = this->MotifCount();
+  if (motif_count < 2 || motif_count > ON_Symmetry::MaximumOrder)
+    return false;
+
+  const ON_SubDVertex* v = nullptr;
+  const ON_SubDEdge* e = nullptr;
+  const ON_SubDFace* f = nullptr;
+  ON_3dPoint C = ON_3dPoint::NanPoint;
+
+  switch (subd_component.ComponentType())
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+    v = subd_component.Vertex();
+    if (nullptr != v)
+      C = v->ControlNetPoint();
+    break;
+
+  case ON_SubDComponentPtr::Type::Edge:
+    e = subd_component.Edge();
+    if (nullptr != e)
+      C = e->ControlNetCenterPoint();
+    break;
+
+  case ON_SubDComponentPtr::Type::Face:
+    f = subd_component.Face();
+    if (nullptr != f)
+      C = f->ControlNetCenterPoint();
+    break;
+
+  default:
+    break;
+  }
+
+  if (false == C.IsValid())
+    return false;
+
+  const double dtol = bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance;
+  // quick test of center point
+  double d = C.DistanceTo(this->MotifTransformation(1) * C);
+  if (false == (d <= dtol))
+    return false;
+
+  ON_SimpleArray<ON_3dPoint> P(nullptr != f ? f->EdgeCount() : 2U);
+  if (nullptr != f)
+  {
+    for (unsigned short fvi = 0; fvi < f->m_edge_count; ++fvi)
+      P.Append(f->ControlNetPoint(fvi));
+  }
+  else if (nullptr != e)
+  {
+    P.Append(e->ControlNetPoint(0));
+    P.Append(e->ControlNetPoint(1));
+  }
+  else if (nullptr != v)
+  {
+    P.Append(C);
+  }
+
+  const unsigned Pcount = P.UnsignedCount();
+  ON_SimpleArray<bool> hit_array(Pcount);
+  hit_array.SetCount(Pcount);
+  bool* bHit = hit_array.Array();
+
+  for (unsigned j = 1; j < motif_count; ++j)
+  {
+    const ON_Xform& motif_xform = this->MotifTransformation(j);
+    hit_array.Zero();
+    unsigned hit_count = 0;
+    for (unsigned i = 0; i < Pcount; ++i)
+    {
+      const ON_3dPoint Q = motif_xform * P[i];
+      for (unsigned k = 0; k < Pcount; ++k)
+      {
+        if (false == bHit[k])
+        {
+          d = Q.DistanceTo(P[k]);
+          if (d <= dtol)
+          {
+            bHit[k] = true;
+            ++hit_count;
+          }
+        }
+      }
+    }
+    if (hit_count != Pcount)
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_Symmetry::IsValidRotationAxis(
+  ON_Line rotation_axis,
+  unsigned int rotation_count
+)
+{
+  for (;;)
+  {
+    if (rotation_count < 2)
+      break;
+    if (rotation_count > ON_Symmetry::MaximumOrder)
+      break;
+    if (false == rotation_axis.IsValid())
+      break;
+    if (false == (rotation_axis.Length() > ON_Symmetry::ZeroTolerance))
+      break;
+
+    // Make sure a unitized axis can be reliably used for evaluations.
+    const ON_Line unit_axis(rotation_axis.from, rotation_axis.from + rotation_axis.Tangent());
+    if (false == unit_axis.IsValid())
+      break;
+    const double d0 = unit_axis.DistanceTo(rotation_axis.to);
+    if (false == (d0 <= ON_Symmetry::ZeroTolerance))
+      break;
+    const double d1 = rotation_axis.DistanceTo(unit_axis.to);
+    if (false == (d1 <= ON_Symmetry::ZeroTolerance))
+      break;
+
+    return true;
+  }
+
+  return false;
 }
 
 bool ON_Symmetry::IsValidRotationAxisAndFixedPlane(
@@ -680,17 +875,16 @@ static bool Internal_InventSymmetryFixedPlane(const double zero_tolerance, ON_Xf
   return false;
 }
 
-static bool Internal_InventRotationFixedPlane(const double zero_tolerance, const ON_Line rotation_axis, unsigned cyclic_order, ON_PlaneEquation& fixed_plane)
-{
-  const ON_3dPoint F[2] = { rotation_axis.from, rotation_axis.to };
-  const ON_3dVector N = rotation_axis.Tangent().Perpendicular(ON_3dVector::NanVector);
-  return Internal_CreateAndValidateFixedPlane(F[0], N, fixed_plane, zero_tolerance, 2, F);
-}
+////static bool Internal_InventRotationFixedPlane(const double zero_tolerance, const ON_Line rotation_axis, unsigned cyclic_order, ON_PlaneEquation& fixed_plane)
+////{
+////  const ON_3dPoint F[2] = { rotation_axis.from, rotation_axis.to };
+////  const ON_3dVector N = rotation_axis.Tangent().Perpendicular(ON_3dVector::NanVector);
+////  return Internal_CreateAndValidateFixedPlane(F[0], N, fixed_plane, zero_tolerance, 2, F);
+////}
 
 bool ON_Symmetry::Read(ON_BinaryArchive& archive)
 {
   *this = ON_Symmetry::Unset;
-
   int chunk_version = 0;
   if (false == archive.BeginRead3dmAnonymousChunk(&chunk_version))
     return false;
@@ -709,16 +903,27 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
   {
     if (chunk_version <= 0)
       break;
+
     unsigned char utype = 0;
     if (false == archive.ReadChar(&utype))
       break;
+
+    bool bNewRotatePrototype = false;
+    if (113 == utype)
+    {
+      // There was a period of time in June 2021 when ON_Symmetry::Type::NewRotate = 113
+      // was used to prototype a replacement for an earlier version of rotate
+      // that did not work well.  The protyped replacement worked much better
+      // and became the standard rotate on June 15, 2021.
+      bNewRotatePrototype = true;
+      utype = static_cast<unsigned char>(ON_Symmetry::Type::Rotate);
+    }
     symmetry_type = ON_Symmetry::SymmetryTypeFromUnsigned(utype);
     if (ON_Symmetry::Type::Unset == symmetry_type)
     {
       rc = true;
       break;
     }
-
 
     if (false == archive.ReadInt(&inversion_order))
       break;
@@ -727,6 +932,9 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
     if (false == archive.ReadUuid(symmetry_id))
       break;
 
+    // Before June 1, 2021: Chunk verson 2 for rotations that had a rotation plane.
+    // June 1, 2021: Chunk version 3 for symmetry_type=113 prototyping rotations with no rotation plane
+    // Future: Chunk version 4 for final rotations not using a rotation plane.
     int inner_chunk_version = 0;
     if (false == archive.BeginRead3dmAnonymousChunk(&inner_chunk_version))
       break;
@@ -748,12 +956,13 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
 
     case ON_Symmetry::Type::Rotate:
       rc = archive.ReadLine(rotation_axis);
-      if (inner_chunk_version >= 2)
+      if (inner_chunk_version >= 2 && false == bNewRotatePrototype)
         rc = archive.ReadPlaneEquation(fixed_plane);
-      else
-        rc = Internal_InventRotationFixedPlane(ON_Symmetry::ZeroTolerance, rotation_axis, cyclic_order, fixed_plane);
       if (rc)
-        symmetry = ON_Symmetry::CreateRotateSymmetry(rotation_axis, cyclic_order, fixed_plane, symmetry_coordinates);
+      {
+        // the fixed plane is intentionally ignored.
+        symmetry = ON_Symmetry::CreateRotateSymmetry(rotation_axis, cyclic_order, symmetry_coordinates);
+      }
       break;
 
     case ON_Symmetry::Type::ReflectAndRotate:
@@ -982,6 +1191,7 @@ const ON_Symmetry ON_Symmetry::TransformUnconditionally(const ON_Xform& xform) c
   }
   break;
 
+
   case ON_Symmetry::Type::Rotate:
   {
     if (false == m_rotation_axis.IsValid())
@@ -990,13 +1200,7 @@ const ON_Symmetry ON_Symmetry::TransformUnconditionally(const ON_Xform& xform) c
     a.Transform(xform);
     if (false == a.IsValid())
       break;
-    if (false == m_fixed_plane.IsValid())
-      break;
-    ON_PlaneEquation e = m_fixed_plane;
-    e.Transform(xform);
-    if (false == e.IsValid())
-      break;
-    return ON_Symmetry::CreateRotateSymmetry(a, RotationCount(), e, m_coordinates);
+    return ON_Symmetry::CreateRotateSymmetry(a, RotationCount(), m_coordinates);
   }
   break;
 
@@ -1157,15 +1361,6 @@ int ON_Symmetry::CompareSymmetryTransformation(const ON_Symmetry* lhs, const ON_
   return ON_Symmetry::Compare(lhs, rhs);
 }
 
-const ON_Symmetry ON_Symmetry::CreateInversionSymmetry(
-  ON_UUID symmetry_id,
-  ON_Xform inversion_transform,
-  ON_Symmetry::Coordinates symmetry_coordinates
-)
-{
-  ON_ERROR("Use CreateRotationSymmetry(axis,2,...) or CreateReflectionSymmetry()");
-  return ON_Symmetry::Unset;
-}
 
 const ON_PlaneEquation ON_Symmetry::Internal_UnitizePlaneEquationParameter(ON_PlaneEquation e)
 {
@@ -1224,16 +1419,78 @@ const ON_Symmetry ON_Symmetry::Internal_CreateInversionSymmetry(
   return ON_Symmetry::Unset;
 }
 
-
-
-const ON_Symmetry ON_Symmetry::CreateCyclicSymmetry(
+const ON_Symmetry ON_Symmetry::Internal_CreateCyclicSymmetry(
   ON_UUID symmetry_id,
   ON_Xform cyclic_transform,
   unsigned int cyclic_order,
+  ON_Line fixed_line,
   ON_Symmetry::Coordinates symmetry_coordinates
 )
 {
-  ON_ERROR("Use CreateRotationSymmetry() or CreateReflectionSymmetry()");
+  for (;;)
+  {
+    if (false == fixed_line.IsValid())
+      break;
+
+    const ON_Line unit_axis(fixed_line.from, fixed_line.from + fixed_line.Tangent());
+    if (false == unit_axis.IsValid())
+      break;
+
+    if (false == ON_Symmetry::IsValidCyclicTranformation(cyclic_transform, cyclic_order))
+      break;
+
+    const double det = cyclic_transform.Determinant();
+    if (2 == cyclic_order || 1 == (cyclic_order % 2))
+    {
+      if (false == (det > 0.0))
+        break;
+    }
+    else
+    {
+      if (false == (det != 0.0))
+        break;
+    }
+
+    if (false == (ON_nil_uuid == symmetry_id))
+    {
+      // prohibit using built-in ids
+      if (ON_Symmetry::ReflectId == symmetry_id)
+        break;
+      if (ON_Symmetry::RotateId == symmetry_id)
+        break;
+      if (ON_Symmetry::ReflectAndRotateId == symmetry_id)
+        break;
+    }
+
+
+    // Make sure cyclic_transform fixes the axis.
+    const ON_3dPoint P[3] = { fixed_line.from, fixed_line.to, unit_axis.to };
+    const unsigned Pcount = (unsigned)(sizeof(P) / sizeof(P[0]));
+    ON_Xform T = cyclic_transform;
+    for (unsigned int i = 0; i < cyclic_order; ++i)
+    {
+      for (unsigned j = 0; j < Pcount; ++j)
+      {
+        const ON_3dPoint Q = T * P[j];
+        const double d = P[j].DistanceTo(Q);
+        if (false == (d <= ON_Symmetry::ZeroTolerance))
+          return ON_Symmetry::Unset;
+      }
+      T = T * cyclic_transform;
+    }
+
+    ON_Symmetry symmetry;
+    symmetry.m_type = ON_Symmetry::Type::Cyclic;
+    symmetry.m_coordinates = symmetry_coordinates;
+    symmetry.m_inversion_order = 1;
+    symmetry.m_cyclic_order = cyclic_order;
+    symmetry.m_id = symmetry_id;
+    symmetry.m_inversion_transform = ON_Xform::IdentityTransformation;
+    symmetry.m_cyclic_transform = cyclic_transform;
+    symmetry.m_fixed_plane = ON_PlaneEquation::NanPlaneEquation;
+    return symmetry;
+  }
+
   return ON_Symmetry::Unset;
 }
 
@@ -1324,25 +1581,12 @@ const ON_Symmetry ON_Symmetry::CreateRotateSymmetry(
   ON_Symmetry::Coordinates symmetry_coordinates
 )
 {
-  // You must use the version that has a rotation_plane parameter.
-  ON_ERROR("Obsolete function.");
-  return ON_Symmetry::Unset;
-}
-
-const ON_Symmetry ON_Symmetry::CreateRotateSymmetry(
-  ON_Line rotation_axis,
-  unsigned int rotation_count,
-  ON_PlaneEquation zero_rotation_plane,
-  ON_Symmetry::Coordinates symmetry_coordinates
-)
-{
   for (;;)
   {
-    zero_rotation_plane = ON_Symmetry::Internal_UnitizePlaneEquationParameter(zero_rotation_plane);
-    if (false == ON_Symmetry::IsValidRotationAxisAndFixedPlane(rotation_axis, rotation_count, zero_rotation_plane))
+    if (false == ON_Symmetry::IsValidRotationAxis(rotation_axis, rotation_count))
       break;
     const ON_Xform R = Internal_RotationXform(rotation_axis, 1, rotation_count);
-    ON_Symmetry symmetry = ON_Symmetry::Internal_CreateCyclicSymmetry(ON_nil_uuid, R, rotation_count, zero_rotation_plane, symmetry_coordinates);
+    ON_Symmetry symmetry = ON_Symmetry::Internal_CreateCyclicSymmetry(ON_nil_uuid, R, rotation_count, rotation_axis, symmetry_coordinates);
     if (ON_Symmetry::Type::Cyclic != symmetry.m_type)
       break;
     symmetry.m_type = ON_Symmetry::Type::Rotate;
@@ -1352,7 +1596,6 @@ const ON_Symmetry ON_Symmetry::CreateRotateSymmetry(
   }
   return ON_Symmetry::Unset;
 }
-
 
 const ON_Symmetry ON_Symmetry::CreateReflectAndRotateSymmetry(
   ON_PlaneEquation reflection_plane,
@@ -1369,7 +1612,7 @@ const ON_Symmetry ON_Symmetry::CreateReflectAndRotateSymmetry(
     if (ON_Symmetry::Type::Reflect != reflection.SymmetryType())
       break;
 
-    const ON_Symmetry rotation = CreateRotateSymmetry(rotation_axis,rotation_count, reflection_plane, symmetry_coordinates);
+    const ON_Symmetry rotation = CreateRotateSymmetry(rotation_axis,rotation_count, symmetry_coordinates);
     if (ON_Symmetry::Type::Rotate != rotation.SymmetryType())
       break;
 
@@ -1453,25 +1696,21 @@ int ON_Symmetry::Compare(const ON_Symmetry* lhs, const ON_Symmetry* rhs)
   if (0U == lhs->m_inversion_order || 0U == lhs->m_cyclic_order)
     return 0;
    
-  if (ON_Symmetry::Type::Unset != lhs->m_type)
+  if (lhs->Internal_RequiresFixedPlane() || rhs->Internal_RequiresFixedPlane())
   {
     const int rc = ON_Symmetry::Internal_CompareDouble(&lhs->m_fixed_plane.x, &rhs->m_fixed_plane.x, 4);
     if (0 != rc)
       return rc;
   }
 
-  if (ON_Symmetry::Type::Rotate == lhs->m_type || ON_Symmetry::Type::ReflectAndRotate == lhs->m_type)
+  if (lhs->Internal_RequiresRotationAxis() || rhs->Internal_RequiresRotationAxis())
   {
     const int rc = ON_Symmetry::Internal_CompareDouble(&lhs->m_rotation_axis.from.x, &rhs->m_rotation_axis.from.x, 6);
     if (0 != rc)
       return rc;
   }
 
-  if (
-    ON_Symmetry::Type::Reflect == lhs->m_type
-    || ON_Symmetry::Type::Rotate == lhs->m_type
-    || ON_Symmetry::Type::ReflectAndRotate == lhs->m_type
-    )
+  if (lhs->Internal_IsStandardType() && rhs->Internal_IsStandardType())
     return 0;
 
   if (lhs->m_inversion_order > 1)
@@ -1496,6 +1735,21 @@ int ON_Symmetry::Compare(const ON_Symmetry* lhs, const ON_Symmetry* rhs)
 ON_Symmetry::Type ON_Symmetry::SymmetryType() const
 {
   return m_type;
+}
+
+bool ON_Symmetry::IsRotate() const
+{
+  return ON_Symmetry::Type::Rotate == m_type;
+}
+
+bool ON_Symmetry::IsReflect() const
+{
+  return ON_Symmetry::Type::Reflect == m_type;
+}
+
+bool ON_Symmetry::IsReflectAndRotate() const
+{
+  return ON_Symmetry::Type::ReflectAndRotate == m_type;
 }
 
 ON_Symmetry::Coordinates ON_Symmetry::SymmetryCoordinates() const
@@ -1550,21 +1804,9 @@ const ON_Xform ON_Symmetry::InversionTransformation() const
   return IsSet() ? m_inversion_transform : ON_Xform::Nan;
 }
 
-const ON_Xform ON_Symmetry::InversionTransform() const
-{
-  // OBSOLETE use ON_Symmetry::InversionTransformation() 
-  return ON_Xform::Nan;
-}
-
 const ON_Xform ON_Symmetry::CyclicTransformation() const
 {
   return IsSet() ? m_cyclic_transform : ON_Xform::Nan;
-}
-
-const ON_Xform ON_Symmetry::CyclicTransform() const
-{
-  // OBSOLETE use ON_Symmetry::CyclicTransformation() 
-  return ON_Xform::Nan;
 }
 
 const ON_SHA1_Hash ON_Symmetry::Hash() const
@@ -1585,13 +1827,13 @@ const ON_SHA1_Hash ON_Symmetry::Hash() const
     sha1.AccumulateInteger32(InversionOrder());
     sha1.AccumulateInteger32(CyclicOrder());
 
-    if (ON_Symmetry::Type::Unset != m_type)
+    if ( this->Internal_RequiresFixedPlane())
       sha1.AccumulateDoubleArray(4, &m_fixed_plane.x);
 
-    if (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+    if ( this->Internal_RequiresRotationAxis() )
       sha1.AccumulateDoubleArray(6, &m_rotation_axis.from.x);
 
-    if (ON_Symmetry::Type::Reflect != m_type && ON_Symmetry::Type::Rotate != m_type && ON_Symmetry::Type::ReflectAndRotate != m_type)
+    if ( false == this->Internal_IsStandardType() )
     {
       if (InversionOrder() > 1)
         sha1.AccumulateDoubleArray(16, &m_inversion_transform.m_xform[0][0]);
@@ -1611,6 +1853,65 @@ const ON_PlaneEquation ON_Symmetry::ReflectionPlane() const
     : ON_PlaneEquation::NanPlaneEquation;
 }
 
+const ON_PlaneEquation ON_Symmetry::ReflectAndRotatePlane(
+  unsigned int plane_index
+) const
+{
+  if ( IsSet() && ON_Symmetry::Type::ReflectAndRotate == m_type || plane_index >= 0 && plane_index <= 2)
+  {
+    const ON_PlaneEquation fixed_plane = FixedPlane();
+    if (0 == plane_index)
+      return fixed_plane;
+
+    // 2nd plane
+    ON_Xform R;
+    const double a = (1 == plane_index) ? -0.5 * RotationAngleRadians() : 0.5 * ON_PI;
+    R.Rotation(a, RotationAxisTangent(), RotationAxisPoint());
+    ON_PlaneEquation e = fixed_plane;
+    e.Transform(R);
+    return (1 == plane_index) ? e.NegatedPlaneEquation() : e;
+  }
+
+  return ON_PlaneEquation::NanPlaneEquation;
+}
+
+bool ON_Symmetry::OnReflectAndRotateFixedPlane( ON_3dPoint P, bool bUseCleanupTolerance) const
+{
+  if (ON_Symmetry::Type::ReflectAndRotate != m_type)
+    return false;
+  if (false == P.IsValid())
+    return false;
+  const double tol = this->Tolerance(bUseCleanupTolerance);
+  
+  const ON_PlaneEquation M = this->ReflectAndRotatePlane(0);
+  double h = M.ValueAt(P);
+  if (fabs(h) <= tol)
+    return true;
+  
+  const ON_PlaneEquation S = this->ReflectAndRotatePlane(1);
+  h = S.ValueAt(P);
+  if (fabs(h) <= tol)
+    return true;
+
+  const unsigned Rcount = this->RotationCount();
+  if (Rcount > 2)
+  {
+    const ON_Xform R = this->RotationTransformation();
+    for (unsigned i = 1; i < Rcount; ++i)
+    {
+      P = R * P;
+      h = S.ValueAt(P);
+      if (fabs(h) <= tol)
+        return true;
+      h = M.ValueAt(P);
+      if (fabs(h) <= tol)
+        return true;
+    }
+  }
+
+  return false;
+}
+
 const ON_Xform ON_Symmetry::ReflectionTransformation() const
 {
   return (ON_Symmetry::Type::Reflect == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
@@ -1625,97 +1926,74 @@ const ON_PlaneEquation ON_Symmetry::FixedPlane() const
     : ON_PlaneEquation::NanPlaneEquation;
 }
 
+bool ON_Symmetry::Internal_RequiresRotationAxis() const
+{
+  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type);
+}
+
+bool ON_Symmetry::Internal_RequiresFixedPlane() const
+{
+  return (ON_Symmetry::Type::Reflect == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type);
+}
+
+bool ON_Symmetry::Internal_IsStandardType() const
+{
+  return (ON_Symmetry::Type::Reflect == m_type || ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type);
+}
+
 const ON_Line ON_Symmetry::RotationAxis() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? m_rotation_axis
     : ON_Line::NanLine;
 }
 
 const ON_3dPoint ON_Symmetry::RotationAxisPoint() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? m_rotation_axis.from
     : ON_3dPoint::NanPoint;
 }
 
 const ON_3dVector ON_Symmetry::RotationAxisDirection() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? m_rotation_axis.Direction()
     : ON_3dVector::NanVector;
 }
 
 const ON_3dVector ON_Symmetry::RotationAxisTangent() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? m_rotation_axis.Tangent()
     : ON_3dVector::NanVector;
 }
 
 unsigned int ON_Symmetry::RotationCount() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? m_cyclic_order
     : 0U;
 }
 
 double ON_Symmetry::RotationAngleDegrees() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? (360.0 / ((double)RotationCount()))
     : ON_DBL_QNAN;
 }
 
 double ON_Symmetry::RotationAngleRadians() const
 {
-  return (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
+  return (Internal_RequiresRotationAxis())
     ? ((2.0*ON_PI) / ((double)RotationCount()))
     : ON_DBL_QNAN;
-}
-
-const ON_PlaneEquation ON_Symmetry::RotationZeroPlane() const
-{
-  if (ON_Symmetry::Type::Rotate == m_type)
-  {
-    return this->m_fixed_plane;
-  }
-  if (ON_Symmetry::Type::ReflectAndRotate == m_type)
-  {
-    const double a = RotationAngleRadians();
-    if (a > 0.0 && a <= ON_PI)
-    {
-      ON_Xform rot;
-      rot.Rotation(-0.5*a, this->RotationAxisDirection(), this->RotationAxisPoint());
-      ON_PlaneEquation e(this->m_fixed_plane);
-      e.Transform(rot);
-      return e.NegatedPlaneEquation();
-    }
-  }
-  return ON_PlaneEquation::NanPlaneEquation;
-}
-
-
-const ON_PlaneEquation ON_Symmetry::RotationOnePlane() const
-{
-  if (ON_Symmetry::Type::Rotate == m_type || ON_Symmetry::Type::ReflectAndRotate == m_type)
-  {
-    const ON_PlaneEquation r0 = RotationZeroPlane();
-    if (r0.IsSet())
-    {
-      const ON_PlaneEquation r1 = (RotationTransformation() * r0).NegatedPlaneEquation();
-      if (r1.IsSet())
-        return r1;
-    }
-  }
-
-  return ON_PlaneEquation::NanPlaneEquation;
 }
 
 
 const ON_Xform ON_Symmetry::RotationTransformation() const
 {
-  if (ON_Symmetry::Type::Rotate == m_type)
+  if ( ON_Symmetry::Type::Rotate == m_type )
   {
     return MotifTransformation(1);
   }
@@ -1768,6 +2046,12 @@ const ON_Xform ON_Symmetry::Internal_RotationXform(
     // angle = pi
     sin_angle = 0.0;
     cos_angle = -1.0;
+  }
+  else if (3 * rotation_index == rotation_count)
+  {
+    // angle = 2pi/3
+    sin_angle = 0.5*sqrt(3.0);
+    cos_angle = -0.5;
   }
   else if (4 * rotation_index == rotation_count)
   {
@@ -1897,11 +2181,6 @@ const ON_Xform ON_Symmetry::Internal_ReflectAndRotateTransformation(unsigned ind
   return r;
 }
 
-ON_SHA1_Hash ON_Symmetry::Sha1Hash() const
-{
-  return SymmetryHash();
-}
-
 const ON_SHA1_Hash ON_Symmetry::SymmetryHash() const
 {
   ON_SHA1 sha1;
@@ -1918,31 +2197,11 @@ const ON_SHA1_Hash ON_Symmetry::SymmetryHash() const
   return sha1.Hash();
 }
 
-void ON_Symmetry::SetSymmetricObjectContentSerialNumber(ON__UINT64 symmetric_object_content_serial_number) const
-{
-  // OBSOLETE - You must use SetSymmetricObject().
-  ON_ERROR("Obsolete function.");
-
-  ClearSymmetricObject(); // strongly discourage use by erasing all SymmetricContent settings.
-}
-
 void ON_Symmetry::ClearSymmetricObject() const
 {
   m_symmetric_object_content_serial_number = 0U;
   m_symmetric_object_geometry_hash = ON_SHA1_Hash::ZeroDigest;
   m_symmetric_object_topology_hash = ON_SHA1_Hash::ZeroDigest;
-}
-
-void ON_Symmetry::ClearSymmetricObjectContentSerialNumber() const
-{
-  ClearSymmetricObject();
-}
-
-ON__UINT64 ON_Symmetry::SymmetricObjectContentSerialNumber() const
-{
-  // OBSOLETE - You must use SameSymmetricObjectGeometry().
-  ON_ERROR("Obsolete function.");
-  return 0;
 }
 
 void ON_Symmetry::SetCleanupTolerance(
@@ -1963,4 +2222,9 @@ double ON_Symmetry::CleanupTolerance() const
   // will always return ON_Symmetry::ZeroTolerance (which may chnage), even with class definitions 
   // read from old archives.
   return (m_cleanup_tolerance >= ON_Symmetry::ZeroTolerance) ? m_cleanup_tolerance : ON_Symmetry::ZeroTolerance;
+}
+
+double ON_Symmetry::Tolerance(bool bUseCleanupTolerance) const
+{
+  return bUseCleanupTolerance ? CleanupTolerance() : ON_Symmetry::ZeroTolerance;
 }

@@ -3291,8 +3291,9 @@ bool RtfComposer::Compose(
             run_strings += L" ";
         }
 
-        if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
+        if (ON_TextRun::RunType::kField != run->Type() && run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
         {
+          // RH-64720 - Only do this if the stack isn't from a field  
           run_strings += L"[[";
           run_strings += run->m_stacked_text->m_separator;
           GetRunText(run->m_stacked_text->m_top_run, run_strings, make_rtf);
@@ -3302,9 +3303,9 @@ bool RtfComposer::Compose(
         }
         else if (ON_TextRun::RunType::kField == run->Type())
         {
-          run_strings += L"%<";
-          GetRunText(run, run_strings, make_rtf);
-          run_strings += L">%";
+          //run_strings += L"%<";
+          //GetRunText(run, run_strings, make_rtf);
+          //run_strings += L">%";
         }
         else
         {

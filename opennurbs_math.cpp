@@ -168,7 +168,7 @@ bool ON_PassesNanTest()
     const double zero = 0.0;
     const double one = 1.0;
 
-    // nan != * and * != nan should alwasy be true
+    // nan != * and * != nan should always be true
     const bool b_NE_test
       = nan1 != nan1
       && nan1 != nan2
@@ -2566,7 +2566,7 @@ double ON_SolveNxN(bool bFullPivot, bool bNormalize, int n, double* M[], double 
     // The Xdex_buffer[] hoo haa is here to avoid an potentially time
     // consuming call to heap services when the matrix is small.
     // When n > 64 the numerical portion of the computation is 
-    // long enough that the time to call onmalloc() is negligable.
+    // long enough that the time to call onmalloc() is negligible.
     // (When n > 10-ish, this calculation is likely to return junk
     // unless you have a special case matrix, in which case this
     // function will be much slower than one that is designed to

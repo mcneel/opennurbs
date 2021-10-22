@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="ON_SubDVertex">
+    <DisplayString>{{vertex id={m_id}}}</DisplayString>
+  </Type>
+
+  <Type Name="ON_SubDEdge">
+    <DisplayString>{{edge id={m_id}}}</DisplayString>
+    <Expand>
+      <Item Name="vertex[0] id">nullptr!=m_vertex[0] ? m_vertex[0]->m_id : 0</Item>
+      <Item Name="vertex[1] id">nullptr!=m_vertex[1] ? m_vertex[1]->m_id : 0</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="ON_SubDFace">
+    <DisplayString>{{face id={m_id}}}</DisplayString>
+  </Type>
+
+  <Type Name="ON_SubDComponentPtr">
+    <!--
+    ON_SubDComponentPtr.m_ptr encodes three pieces of information:
+    [dir]: m_ptr&1 = dir (1 means reversed)
+    [type]: m_ptr&6 = type (2=vertex,4=edge,6=face)
+    [ON_SubDVertex/ON_SubDEdge/ON_SubDFace pointer] m_ptr&0xFFFFFFFFFFFFFFF8ULL = pointer value
+    -->
+    <!--
+    Looks like bit ops like
+        <DisplayString Condition="6==m_ptr&amp;7">face</DisplayString>
+    don't work in a "Condition", so the convoluted mess below is used
+    to print null,vertex,edge,face
+    -->
+    <DisplayString Condition="m_ptr&lt;8">null</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==2">vertex(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==3">vertex(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==4">edge(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==5">edge(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==6">face(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%8==7">face(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <Expand>
+      <Item Name="Vertex()">((m_ptr&gt;8) &amp;&amp; (2==(m_ptr&amp;7)))?(((ON_SubDVertex*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):((ON_SubDVertex*)nullptr)</Item>
+      <Item Name="EdgePtr()">((m_ptr&gt;8) &amp;&amp; (4==(m_ptr&amp;7)))?(*((ON_SubDEdgePtr*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):ON_SubDEdgePtr::Null</Item>
+      <Item Name="Face()">((m_ptr&gt;8) &amp;&amp; (6==(m_ptr&amp;7)))?(((ON_SubDFace*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):((ON_SubDFace*)nullptr)</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="ON_SubDVertexPtr">
+    <!--
+    ON_SubDEdgePtr.m_ptr encodes two pieces of information:
+    [dir]: m_ptr&1 = dir (1 means reversed)
+    [ON_SubDEdge pointer] m_ptr&0xFFFFFFFFFFFFFFF8ULL = pointer value
+    -->
+    <DisplayString Condition="m_ptr&lt;8">null</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==0">vertex(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==1">vertex(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <Expand>
+      <Item Name="[vertex]">m_ptr&gt;=8?(((ON_SubDVertex*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):nullptr</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="ON_SubDEdgePtr">
+    <!--
+    ON_SubDEdgePtr.m_ptr encodes two pieces of information:
+    [dir]: m_ptr&1 = dir (1 means reversed)
+    [ON_SubDEdge pointer] m_ptr&0xFFFFFFFFFFFFFFF8ULL = pointer value
+    -->
+    <DisplayString Condition="m_ptr&lt;8">null</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==0">edge(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==1">edge(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <Expand>
+      <Item Name="[RelativeVertex(0) id]">(m_ptr&gt;8)?(((ON_SubDEdge*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_vertex[m_ptr%2]->m_id):0</Item>
+      <Item Name="[RelativeVertex(1) id]">(m_ptr&gt;8)?(((ON_SubDEdge*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_vertex[1-(m_ptr%2)]->m_id):0</Item>
+      <Item Name="[edge]">m_ptr&gt;=8?(((ON_SubDEdge*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):nullptr</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="ON_SubDFacePtr">
+    <!--
+    ON_SubDFacePtr.m_ptr encodes two pieces of information:
+    [dir]: m_ptr&1 = dir (1 means reversed)
+    [ON_SubDFacePtr pointer] m_ptr&0xFFFFFFFFFFFFFFF8ULL = pointer value
+    -->
+    <DisplayString Condition="m_ptr&lt;8">null</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==0">face(+) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <DisplayString Condition="m_ptr&gt;8&amp;&amp;m_ptr%2==1">face(-) id={((ON_SubDComponentBase*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))->m_id}</DisplayString>
+    <Expand>
+      <Item Name="[face]">m_ptr&gt;=8?(((ON_SubDFace*)(m_ptr&amp;0xFFFFFFFFFFFFFFF8))):nullptr</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

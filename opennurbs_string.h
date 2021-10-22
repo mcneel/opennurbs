@@ -1016,7 +1016,21 @@ public:
     True if c is '0', '1', ..., or '9'.
   */
   static bool IsDecimalDigit(char c);
-    
+   
+  /*
+  Description:
+    Decode this char string using the encoding specified by windows_code_page
+    to a UTF encoded wide character string.
+  Parameters:
+    windows_code_page - [in]
+      WIndows code page. For example, big5 = 950.
+  Returns:
+    A UTF encoded wide charater string.
+  See Also:
+    ON_wString::MultiByteEncode()
+  */
+  const ON_wString MultiByteDecode(int windows_code_page) const;
+
 private:
   // Use IsEmpty() or IsNotEmpty() when you want a bool 
   // to test for the empty string.
@@ -1090,13 +1104,13 @@ public:
 
   /*
   Returns:
-    number of nonzero elements in string.
+    number of char elements in string not including the null terminator.
   */
   int Length() const;
 
   /*
   Returns:
-    number of nonzero elements in the string.
+    number of char elements in string not including the null terminator.
   */
   unsigned int UnsignedLength() const;
 
@@ -2083,6 +2097,122 @@ public:
     );
 
 public:
+
+  enum class Encoding : unsigned int
+  {
+    /// <summary>
+    /// Encoding not set.
+    /// </summary>
+    Unset = 0,
+
+    /// <summary>
+    /// Encoding not known or cannot be determined.
+    /// </summary>
+    Unknown = 1,
+
+    /// <summary>
+    /// All byte values are in the range 0 to 0x7F (127)
+    /// </summary>
+    ASCII = 2,
+
+    /// <summary>
+    /// The sequence of byte values could be a UTF-8 encode string.
+    /// UTF-8 extends ASCII encoding.
+    /// </summary>
+    UTF8 = 3,
+
+    /// <summary>
+    /// The sequence of byte values could be a UTF-8 encoding with oversized 
+    /// encodings or surrogate pair code points.
+    /// </summary>
+    SloppyUTF8 = 4,
+
+    /// <summary>
+    /// The sequence of byte values could be a BIG5 encode string
+    /// that may also contain single byte ASCII code points. 
+    /// BIG5  is a double byte encoding and the first byte
+    /// always has the high bit set. 
+    /// </summary>
+    BIG5andASCII = 5,
+  };
+
+  /*
+  Description:
+    Determine if the string's buffer can be parsed using the specified encoding.
+  */
+  bool IsPossibleEncoding(
+    ON_String::Encoding encoding
+  ) const;
+
+  /*
+  Description:
+    Determine if the buffer can be parsed using the specified encoding.
+  */
+  static bool IsPossibleEncoding(
+    ON_String::Encoding encoding,
+    const char* buffer,
+    int buffer_length
+  );
+
+  ON_String::Encoding ProbableEncoding() const;
+
+  static ON_String::Encoding ProbableEncoding(
+    const char* buffer,
+    int buffer_length
+  );
+
+  /*
+  Description:
+    Make an educated guess at the encoding and convert the string to UTF-8 encoding.
+  Returns:
+    If the string encoding could be determined and parsed, a UTF-8 encoded string is returned.
+    Otherwise EmptyString is returned.
+  */
+  static const ON_String ToUTF8(
+    const char* buffer,
+    int buffer_length
+  );
+
+  /*
+  Description:
+    Make an educated guess at the encoding and convert the string to UTF-8 encoding.
+  Returns:
+    If the string encoding could be determined and parsed, a UTF-8 encoded string is returned.
+    Otherwise EmptyString is returned.
+  */
+  const ON_String ToUTF8() const;
+
+  /*
+  Description:
+    Make an educated guess at the encoding and convert the string to BIG5 encoding.
+  Parameters:
+    error_count - [out]
+      number of errors in encoding (question mark is used as a replacement character).
+  Returns:
+    If the string encoding could be determined and parsed, a BIG5 encoded string is returned.
+    Otherwise EmptyString is returned.
+  */
+  static const ON_String ToBIG5(
+    const char* buffer,
+    int buffer_length,
+    int* error_count
+  );
+
+  /*
+  Description:
+    Make an educated guess at the encoding and convert the string to BIG5 encoding.
+  Parameters:
+    error_count - [out]
+      number of errors in encoding (question mark is used as a replacement character).
+  Returns:
+    If the string encoding could be determined and parsed, a BIG5 encoded string is returned.
+    Otherwise EmptyString is returned.
+  */
+  const ON_String ToBIG5(
+    int* error_count
+  ) const;
+
+public:
 	~ON_String();
 
 protected:
@@ -2249,6 +2379,25 @@ public:
   /// UTF-16/UTF-32 encoding of the Unicode byte order mark (BOM) U+FEFF.
   /// </summary>
   static const ON_wString ByteOrderMark;
+
+  /*
+  Parameters:
+    bom_candidate - [in]
+  Returns;
+     1: bom_candidate = ON_UnicodeCodePoint::ON_ByteOrderMark
+    -1: After swapping bytes, bom_candidate = ON_UnicodeCodePoint::ON_ByteOrderMark
+     0: otherwise
+  */
+  static int ByteOrder(wchar_t bom_candidate);
+
+  /*
+  Parameters:
+    w - [in]
+      wchar_t value to swap bytes
+  Returns:
+    w with swapped byte order
+  */
+  static wchar_t SwapByteOrder(wchar_t w);
 
   /// <summary>
   /// Identifies a built in string that can be used for testing.
@@ -2699,6 +2848,21 @@ public:
   */
   static bool IsHorizontalSpace(wchar_t c);
 
+  /*
+  Description:
+    Encode this UTF encoded wide charater string to a char string 
+    using the multibyte character set (MBCS) specified by windows_code_page.
+  Parameters:
+    windows_code_page - [in]
+      WIndows code page. For example, big5 = 950.
+  Returns:
+    A char string with the specified MBCS encoding.
+    Carefully control the scope and use of the returned string. Lacking context,
+    opennurbs assumes ON_Strings use the UTF-8 encoded.
+  See Also:
+    ON_String::MultiByteDecode()
+  */
+  const ON_String MultiByteEncode(int windows_code_page) const;
 
 private:
   // Use IsEmpty() or IsNotEmpty() when you want a bool 

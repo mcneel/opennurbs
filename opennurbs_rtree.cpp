@@ -672,17 +672,25 @@ bool ON_RTree::CreateMeshFaceTree( const ON_Mesh* mesh )
   return (0 != m_root);
 }
 
-bool ON_SubDRTree::CreateSubDVertexRTree(
-  const ON_SubD& subd,
-  ON_SubDComponentLocation vertex_location
+
+bool ON_SubDRTree::CreateSubDEmptyRTree(
+  const ON_SubD& subd
 )
 {
   // ShareContentsFrom() increments the reference count on m_subdimple_sp
   // so vertex pointers one this RTree's nodes will be valid for the duration
   // of the rtree's existence.
   m_subd.ShareContentsFrom(const_cast<ON_SubD&>(subd));
-
   this->RemoveAll();
+  return true;
+}
+
+bool ON_SubDRTree::CreateSubDVertexRTree(
+  const ON_SubD& subd,
+  ON_SubDComponentLocation vertex_location
+)
+{
+  CreateSubDEmptyRTree(subd);
 
   ON_SubDVertexIterator vit(m_subd);
 
@@ -697,6 +705,17 @@ bool ON_SubDRTree::CreateSubDVertexRTree(
   }
   return (nullptr != this->Root());
 }
+
+bool ON_SubDRTree::AddVertex(
+  const ON_SubDVertex* v,
+  ON_SubDComponentLocation vertex_location
+)
+{
+  const ON_3dPoint P = (nullptr != v) ? v->Point(vertex_location) : ON_3dPoint::NanPoint;
+  return P.IsValid() ? this->Insert(&P.x, &P.x, (void*)v) : false;
+}
+
+
 
 const ON_SubDVertex* ON_SubDRTree::FindVertexAtPoint(
   const ON_3dPoint P,
@@ -760,6 +779,30 @@ const ON_SubDVertex* ON_SubDRTree::FindUnmarkedVertexAtPoint(
   return vf.m_v;
 }
 
+const ON_SubDVertex* ON_SubDRTree::FindVertex(
+  const class ON_SubDRTreeVertexFinder& vertex_finder,
+  const double distance_tolerance
+) const
+{
+  ON_SubDRTreeVertexFinder vf(vertex_finder);
+  if (false == vf.m_P.IsValid())
+    return nullptr;
+
+  vf.m_distance = ON_SubDRTreeVertexFinder::Unset.m_distance;
+  vf.m_v = ON_SubDRTreeVertexFinder::Unset.m_v;
+
+  ON_BoundingBox rbox;
+  const ON_3dVector rtol(distance_tolerance, distance_tolerance, distance_tolerance);
+
+  rbox.m_min = vf.m_P - rtol;
+  rbox.m_max = vf.m_P + rtol;
+  // vtree.Search() can return true (found nearby) and false (found exact) because 
+  // ON_SubDRTreeVertexFinder::Callback() cancels the search when a vertex at the exact location
+  // is found.
+  this->Search(&rbox.m_min.x, &rbox.m_max.x, ON_SubDRTreeVertexFinder::Callback, &vf);
+  return vf.m_v;
+}
+
 void ON_SubDRTree::Clear()
 {
   RemoveAll(); // clear the rtree
@@ -786,14 +829,63 @@ const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Create(const ON_3dPoint
   return vf;
 }
 
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Create(
+  const ON_3dPoint P,
+  ON_SubDRTreeVertexFinder::MarkBitsFilter mark_bits_filter,
+  ON__UINT8 mark_bits
+)
+{
+  ON_SubDRTreeVertexFinder vf = ON_SubDRTreeVertexFinder::Create(P);
+  vf.m_mark_bits_filter = mark_bits_filter;
+  vf.m_mark_bits = mark_bits;
+  return vf;
+}
+
+
 bool ON_SubDRTreeVertexFinder::Callback(void* a_context, ON__INT_PTR a_id)
 {
   for (;;)
   {
     ON_SubDRTreeVertexFinder* vf = (ON_SubDRTreeVertexFinder*)a_context;
     const ON_SubDVertex* v = (const ON_SubDVertex*)a_id;
-    if (nullptr == v || (vf->m_bMarkFilterEnabled && vf->m_bMarkFilter != v->Mark()))
-      break; // when m_bMarkFilterEnabled is true, only vertices with v->Mark() == m_bMarkFilter can be found.
+    if (nullptr == v )
+      break;
+
+    if (vf->m_bMarkFilterEnabled && vf->m_bMarkFilter != v->Mark())
+    {
+      // v is not eligable.
+      // Returning true means continue searching for other vertices
+      return true;
+    }
+
+    if (ON_SubDRTreeVertexFinder::MarkBitsFilter::None != vf->m_mark_bits_filter)
+    {
+      const ON__UINT8 v_mark_bits = v->MarkBits();
+      switch(vf->m_mark_bits_filter)
+      {
+      case ON_SubDRTreeVertexFinder::MarkBitsFilter::Equal:
+        if (vf->m_mark_bits != v_mark_bits)
+        {
+          // v is not eligable. 
+          // Returning true means continue searching for other vertices
+          return true;
+        }
+        break;
+
+      case ON_SubDRTreeVertexFinder::MarkBitsFilter::NotEqual:
+        if (vf->m_mark_bits == v_mark_bits)
+        {
+          // v is not eligable.
+          // Returning true means continue searching for other vertices
+          return true;
+        }
+        break;
+
+      default:
+        break;
+      }
+    }
+
     const double d = (vf->m_P - v->ControlNetPoint()).MaximumCoordinate();
     if (d >= 0.0)
     {

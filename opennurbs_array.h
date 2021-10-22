@@ -1633,5 +1633,162 @@ void ON_SHA1_Accumulate3dVectorArray(
 // will work on the template functions.
 #include "opennurbs_array_defs.h"
 
+class ON_CLASS ON_Big5UnicodePair
+{
+public:
+  ON_Big5UnicodePair() = default;
+  ~ON_Big5UnicodePair() = default;
+  ON_Big5UnicodePair(const ON_Big5UnicodePair&) = default;
+  ON_Big5UnicodePair& operator=(const ON_Big5UnicodePair&) = default;
+
+public:
+  /// <summary>
+  /// An array sorted by BIG5 code points and useful for converting BIG5 code points to Unicode code points.
+  /// </summary>
+  /// <returns>Returns an array sorted by ON_Big5UnicodePair::CompareBig5AndUnicodeCodePoints()</returns>
+  static const ON_SimpleArray< ON_Big5UnicodePair >& Big5ToUnicode();
+
+  /// <summary>
+  /// An array sorted by Unicode code points and useful for converting Unicode code points to BIG5 code points.
+  /// </summary>
+  /// <returns>Returns an array sorted by ON_Big5UnicodePair::CompareUnicodeAndBig5CodePoints()</returns>
+  static const ON_SimpleArray< ON_Big5UnicodePair >& UnicodeToBig5();
+
+public:
+  static const ON_Big5UnicodePair Null;
+
+  /// <summary>
+  /// ON_Big5UnicodePair::Error.Big5() = ON_Big5CodePoint::Error and ON_Big5UnicodePair::Error.Unicode() = ON_UnicodeShortCodePoint::Error.
+  /// </summary>
+  static const ON_Big5UnicodePair Error;
+
+  /// <summary>
+  /// Create a BIG5 - Unicode code point pair. 
+  /// </summary>
+  /// <param name="big5_code_point">
+  /// BIG5 code point.
+  /// </param>
+  /// <param name="unicode_code_point">
+  /// Unicode code point.
+  /// </param>
+  /// <returns></returns>
+  static const ON_Big5UnicodePair Create(
+    ON_Big5CodePoint big5_code_point,
+    ON_UnicodeShortCodePoint unicode_code_point
+  );
+
+  static const ON_Big5UnicodePair Create(
+    unsigned int big5_code_point,
+    unsigned int unicode_code_point
+  );
+
+  /// <summary>
+  /// Determine if both code points in this pair are 0.
+  /// </summary>
+  /// <returns>True if both code points are 0.</returns>
+  bool IsNull() const;
+
+  /// <summary>
+  /// Determing if the values stored as the BIG5 and Unicode code points are equal nonzero ASCII code points.
+  /// ASCII code point are in the range 0-0x7F (127 decimal).
+  /// Unicode extends ASCII. Strictly speaking, BIG5 does not extend ASCII, but it is common to mix 
+  /// single bytes ASCII and double byte BIG5 encodings in the same char string.
+  /// BIG5 is a double byte string encoding with the first byte in the range 0x81 to 0xFE, the
+  /// minimum BIG5 code point is 0x8140 and the maximum BIG5 code point is 0xFEFE.
+  /// Thus it is possible to mix ASCII and BIG5 encodings in the same char string.
+  /// </summary>
+  /// <param name="bNullIsASCII">
+  /// Value to return if both code points are 0.
+  /// </param>
+  /// <returns>True if both code points are equal and ASCII code points (0 to 0x7F).</returns>
+  bool IsASCII(bool bNullIsASCII) const;
+
+  /// <summary>
+  /// Determine if the pair of code points is valid. 
+  /// If the values for BIG5 and Unicode code point values are &lt 0xFF and equal, the pair is considered valid. 
+  /// Use IsASCII() if you need to treat nonzero ASCII code points differently.
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if this pair is null.
+  /// </param>
+  /// <param name="bASCIICodePointIsValid">
+  /// Value to return if this pair is an ASCII code point.
+  /// </param>
+  /// <returns>True if the BIG5 and Unicode code points are both valid or IsASCII() is true.</returns>
+  bool IsValid(bool bNullIsValid, bool bASCIICodePointIsValid) const;
+
+  const ON_Big5CodePoint Big5() const;
+  const ON_UnicodeShortCodePoint Unicode() const;
+
+  unsigned int Big5CodePoint() const;
+  unsigned int UnicodeCodePoint() const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if this pair is null.
+  /// </param>
+  /// <param name="bASCIICodePointIsValid">
+  /// Value to return if this pair is an ASCII code point.
+  /// </param>
+  /// <returns></returns>
+  bool IsStandard(bool bNullIsValid, bool bASCIICodePointIsStandard) const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>Returns true if this pair is valid and at least one of the code points is a private use code point.
+  /// </returns>
+  bool IsPrivateUse() const;
+
+  /// <summary>
+  /// Compares the BIG5 code point.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareBig5CodePoint(const ON_Big5UnicodePair* lhs, const ON_Big5UnicodePair* rhs);
+
+  /// <summary>
+  /// Compares the Unicode code point.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareUnicodeCodePoint(const ON_Big5UnicodePair* lhs, const ON_Big5UnicodePair* rhs);
+
+  /// <summary>
+  /// Dictionary compare (BIG5 code point first, Unicode code point second).
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareBig5AndUnicodeCodePoints(const ON_Big5UnicodePair* lhs, const ON_Big5UnicodePair* rhs);
+
+  /// <summary>
+  /// Dictionary compare (Unicode code point first, BIG5 code point second).
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareUnicodeAndBig5CodePoints(const ON_Big5UnicodePair* lhs, const ON_Big5UnicodePair* rhs);
+
+private:
+  ON_Big5CodePoint m_big5;
+  ON_UnicodeShortCodePoint m_unicode;
+};
+
+ON_DECL bool operator==(ON_Big5UnicodePair lhs, ON_Big5UnicodePair rhs);
+ON_DECL bool operator!=(ON_Big5UnicodePair lhs, ON_Big5UnicodePair rhs);
+
+#if defined(ON_DLL_TEMPLATE)
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Big5UnicodePair>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Big5CodePoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UnicodeShortCodePoint>;
+
+#endif
 
 #endif

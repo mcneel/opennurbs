@@ -1665,7 +1665,9 @@ bool ON_Brep::Transform( const ON_Xform& xform )
         if ( 1 != tmp.IsSimilarity() )
           bEvAnalysisMesh = true;
       }
-      if ( bEvAnalysisMesh && face.m_analysis_mesh->EvaluateMeshGeometry(*srf) )
+      // 1 Sept 2021, Mikko, RH-65468:
+      // Added null check to prevent a crash.
+      if ( bEvAnalysisMesh && nullptr != srf && face.m_analysis_mesh->EvaluateMeshGeometry(*srf) )
       {
         // 28 Sept 2012, Mikko:
         // Apply the "29 September 2003 Dale Lear" fix above also to analysis meshes.
@@ -1688,10 +1690,12 @@ bool ON_Brep::Transform( const ON_Xform& xform )
       {
         if ( face.m_bRev )
         {
-          int ni, ncnt = face.m_analysis_mesh->m_N.Count();
+          // 10 June 2021, Mikko, RH-64582:
+          // Fixed typo that caused a crash, changed "m_analysis_mesh" to "m_preview_mesh".
+          int ni, ncnt = face.m_preview_mesh->m_N.Count();
           for ( ni = 0; ni < ncnt; ni++ )
           {
-            face.m_analysis_mesh->m_N[ni] = -face.m_analysis_mesh->m_N[ni];
+            face.m_preview_mesh->m_N[ni] = -face.m_preview_mesh->m_N[ni];
           }
         }
       }
@@ -5468,46 +5472,74 @@ bool ON_Brep::IsValid( ON_TextLog* text_log ) const
 
   }
 
-  // GBA 28-Aug-20 RH-60112 and RH-58462
-  // Adding bounding box (m_bbox) validation tests.  
-  // Brep bounding box is cached and persists across sessions (since at least Rhino 6).
-  // In Rhino6 and earlier, the bounding box included entire underlying surface.
-  // Rhino7 bounding box calculation now uses "shrinked" surfaces.
-  // A bounding box is now reported as invalid if it could be significantly 
-  // reduced by being recalculated.
-  if (!m_bbox.IsEmpty())
+  // Dale Lear Fix https://mcneel.myjetbrains.com/youtrack/issue/RH-64277
+  // The commented out tests might have helped in debugging make2d, but they are making a mess of things now.
+  // In my view, destroying/remaking a box is beyond the scope of an appropriate IsValid() test.
+  // In addintion to replacing the test below with a warning Greg can use while debugging
+  // make2d, I've fixed the IO code in ON_Brep::Read() so old boxes are now reliably updated
+  // to their smaller versions.
+
+  //////// GBA 28-Aug-20 RH-60112 and RH-58462
+  //////// Adding bounding box (m_bbox) validation tests.  
+  //////// Brep bounding box is cached and persists across sessions (since at least Rhino 6).
+  //////// In Rhino6 and earlier, the bounding box included entire underlying surface.
+  //////// Rhino7 bounding box calculation now uses "shrinked" surfaces.
+  //////// A bounding box is now reported as invalid if it could be significantly 
+  //////// reduced by being recalculated.
+  //////if (!m_bbox.IsEmpty())
+  //////{
+  //////  if (!m_bbox.IsValid())
+  //////  {
+  //////    if (text_log)
+  //////      text_log->Print("Bounding Box is not valid.\n");
+  //////    return ON_BrepIsNotValid();
+  //////  }
+  //////  else
+  //////  {
+  //////    ON_BoundingBox orig_box = m_bbox;
+  //////    ON_BoundingBox computed_box;
+  //////    {
+  //////      ON_Brep* this_nonconst = const_cast<ON_Brep*>(this);
+  //////      this_nonconst->ClearBoundingBox();
+  //////      computed_box = BoundingBox();
+  //////      this_nonconst->m_bbox = orig_box;    // restore box as it as it was.
+  //////    }
+  //////    // expand the computed_box before we do the incusion test
+  //////    // I'm trying to avoid making a lot of objects created in Rhino 6 and earlier
+  //////    // reporting as Invalid objects in Rhino 7.
+  //////    computed_box.Expand(computed_box.Diagonal() + ON_3dVector(1.0, 1.0, 1.0));
+
+  //////    if (!computed_box.Includes(orig_box))
+  //////    {
+  //////      if (text_log)
+  //////        text_log->Print("Stored Bounding Box extends far outside of computed bounding box.\n");
+  //////      return ON_BrepIsNotValid();
+
+  //////    }
+
+  //////  }
+  //////}
+
+  if (m_bbox.IsNotEmpty())
   {
-    if (!m_bbox.IsValid())
+
+    // new_brep_bbox is calculated from scratch WITHOUT changing existing values on ON_BrepFace.m_bbox and ON_Brep.m_bbox.
+    const ON_BoundingBox new_brep_bbox = this->InternalBrepBoundingBox(false, false);
+    if (new_brep_bbox.IsNotEmpty())
     {
-      if (text_log)
-        text_log->Print("Bounding Box is not valid.\n");
-      return ON_BrepIsNotValid();
-    }
-    else
-    {
-      ON_BoundingBox orig_box = m_bbox;
-      ON_BoundingBox computed_box;
+      ON_BoundingBox triple_size_new_brep_bbox = new_brep_bbox;
+      triple_size_new_brep_bbox.Expand(new_brep_bbox.Diagonal() + ON_3dVector(1.0, 1.0, 1.0));
+      const ON_BoundingBox cached_brep_bbox = m_bbox;
+      if (false == triple_size_new_brep_bbox.Includes(cached_brep_bbox, false))
       {
-        ON_Brep* this_nonconst = const_cast<ON_Brep*>(this);
-        this_nonconst->ClearBoundingBox();
-        computed_box = BoundingBox();
-        this_nonconst->m_bbox = orig_box;    // restore box as it as it was.
+        if (nullptr != text_log)
+          text_log->Print("WARNING: The cached ON_Brep.m_bbox is much larger than one cacluated from current ON_BrepFace extents.\n");
+        ON_WARNING("The cached ON_Brep.m_bbox is much larger than one cacluated from current ON_BrepFace extents. This might effect make2d performance.");
+        // DO NOT RETURN FALSE HERE!
       }
-      // expand the computed_box before we do the incusion test
-      // I'm trying to avoid making a lot of objects created in Rhino 6 and earlier
-      // reporting as Invalid objects in Rhino 7.
-      computed_box.Expand(computed_box.Diagonal() + ON_3dVector(1.0, 1.0, 1.0));
-
-      if (!computed_box.Includes(orig_box))
-      {
-        if (text_log)
-          text_log->Print("Stored Bounding Box extends far outside of computed bounding box.\n");
-        return ON_BrepIsNotValid();
-
-      }
-
     }
   }
+
 
 #if 0
   // validate ON_BrepTrim.m_pline
@@ -6428,7 +6460,133 @@ void ON_BrepFace::ClearBoundingBox()
 }
 
 
-// ON_BrepFace::GetBBox performs lazy evaluation.  Namely, if m_bbox is invalid then the bounding box is
+const ON_BoundingBox ON_BrepFace::InternalFaceBoundingBox(bool bLazy, bool bUpdateCachedBBox) const
+{
+  if (bLazy && m_bbox.IsNotEmpty())
+    return m_bbox;
+
+  for (;;)
+  {
+    // Make sure this face is valid enough to query the trims and proxy surface
+    if (nullptr == m_brep)
+      break;
+    if (m_face_index < 0)
+      break;
+    if (m_face_index >= m_brep->m_F.Count())
+      break;
+    if (&m_brep->m_F[m_face_index] != this)
+      break;
+
+    const ON_Surface* proxy_srf = ProxySurface();
+    if (nullptr == proxy_srf)
+      break;
+    if (proxy_srf == this)
+      break;
+
+    ON_BoundingBox pbox = ON_BoundingBox::NanBoundingBox;
+    for (int li = 0; li < LoopCount(); li++)
+    {
+      ON_BrepLoop* loop = Loop(li);
+      if (loop && loop->m_type == ON_BrepLoop::outer)
+      {
+        m_brep->SetTrimBoundingBoxes(*loop, true);       // sets loop->m_pbox 
+        if (false == loop->GetBoundingBox(pbox, pbox.IsValid()))
+          pbox = ON_BoundingBox::UnsetBoundingBox;
+        break;
+      }
+    }
+
+
+    ON_BoundingBox face_bbox = ON_BoundingBox::NanBoundingBox;
+    if (pbox.IsNotEmpty())
+    {
+      ON_Interval pudom(pbox[0].x, pbox[1].x);
+      ON_Interval pvdom(pbox[0].y, pbox[1].y);
+      // fatten up invervals to get slightly larger boxes...
+      pudom.Expand(0.1 * pudom.Length());
+      pvdom.Expand(0.1 * pvdom.Length());
+      ON_Interval Sdom[] = { Domain(0), Domain(1) };
+      // but don't let the fattened intervals extend beyond Sdom
+      pudom.Intersection(Sdom[0]);
+      pvdom.Intersection(Sdom[1]);
+      if (pbox.IsValid() &&
+        (Sdom[0].Includes(pudom, true) || Sdom[1].Includes(pvdom, true))
+        )
+      {
+        ON_Surface* temp_srf = DuplicateSurface();
+        if (nullptr != temp_srf)
+        {
+          if (Sdom[0].Includes(pudom, true))
+            temp_srf->Trim(0, pudom);
+          if (Sdom[1].Includes(pvdom, true))
+            temp_srf->Trim(1, pvdom);
+          if (false == temp_srf->GetBoundingBox(face_bbox, false))
+            face_bbox = ON_BoundingBox::NanBoundingBox;
+          delete temp_srf;
+          temp_srf = nullptr;
+        }
+      }
+    }
+
+    if (false == face_bbox.IsNotEmpty())
+    {
+      if (false == proxy_srf->GetBoundingBox(face_bbox, false))
+        break;
+      if (false == face_bbox.IsNotEmpty())
+        break;
+    }
+
+    if (bUpdateCachedBBox)
+      const_cast<ON_BrepFace*>(this)->m_bbox = face_bbox;
+    return face_bbox;
+  }
+
+  // ON_Brep code has always used ON_BoundingBox::EmptyBoundingBox 
+  // to indicate a bounding box is not set. If it were to be written
+  // in modern times, it would have used Nans.
+  return ON_BoundingBox::EmptyBoundingBox;
+}
+
+const ON_BoundingBox ON_Brep::InternalBrepBoundingBox(bool bLazy, bool bUpdateCachedBBox) const
+{
+  if (bLazy && m_bbox.IsNotEmpty())
+    return m_bbox;
+
+  ON_BoundingBox brep_bbox;
+  const int face_count = m_F.Count();
+  int fi;
+  for (fi = 0; fi < face_count; fi++)
+  {
+    if (m_F[fi].m_face_index == -1)
+      continue;
+
+    //GBA 20 May 2020. RH-58462. Brep box now computed from face boxes, instead of surface boxes.
+    const ON_BrepFace* f = Face(fi);
+    if (nullptr == f)
+      continue;
+
+    const ON_BoundingBox face_bbox = f->InternalFaceBoundingBox(bLazy, bUpdateCachedBBox);
+    if (false == face_bbox.IsNotEmpty())
+      continue;
+
+    brep_bbox.Union(face_bbox);
+  }
+
+  if (false == brep_bbox.IsNotEmpty())
+  {
+    // ON_Brep code has always used ON_BoundingBox::EmptyBoundingBox 
+    // to indicate a bounding box is not set. If it were to be written
+    // in modern times, it would have used Nans.
+    return ON_BoundingBox::EmptyBoundingBox;
+  }
+
+  if (bUpdateCachedBBox)
+    const_cast<ON_Brep*>(this)->m_bbox = brep_bbox;
+  return brep_bbox;
+}
+
+// ON_BrepFace::GetBBox performs lazy evaluation.  
+// Namely, if m_bbox is invalid then the bounding box is
 // computed and the value is stored in m_bbox to speed future calls.
 bool ON_BrepFace::GetBBox(
           double* box_min, // [3],
@@ -6436,65 +6594,11 @@ bool ON_BrepFace::GetBBox(
           bool bGrowBox     // = false
           ) const
 {
-  if ( !m_bbox.IsValid() 
-       && 0 != m_brep 
-       && m_face_index >= 0 
-       && m_face_index < m_brep->m_F.Count()
-       && &m_brep->m_F[m_face_index] == this 
-       )
-  {
-    ON_BoundingBox pbox;
-
-    for (int li = 0; li < LoopCount(); li++)
-    {
-      ON_BrepLoop* loop = Loop(li);
-      if (loop && loop->m_type==ON_BrepLoop::outer)
-      {
-        m_brep->SetTrimBoundingBoxes( *loop, true);       // sets loop->m_pbox 
-        loop->GetBoundingBox(pbox, pbox.IsValid());  
-        break;
-      }                                               
-    }
-
-    ON_Interval pudom(pbox[0].x, pbox[1].x);
-    ON_Interval pvdom(pbox[0].y, pbox[1].y);
-    // fatten up invervals to get slightly larger boxes...
-    pudom.Expand(.1 * pudom.Length());    
-    pvdom.Expand(.1 * pvdom.Length());
-    ON_Interval Sdom[]= { Domain(0), Domain(1) };
-    // but don't let the fattened intervals extend beyond Sdom
-    pudom.Intersection(Sdom[0]);
-    pvdom.Intersection(Sdom[1]);
-    bool Used_pbox = false;
-    if (pbox.IsValid() &&
-      (Sdom[0].Includes(pudom, true) || Sdom[1].Includes(pvdom, true)))
-    {
-      ON_Surface* temp_srf = DuplicateSurface();  
-        if (temp_srf)
-        {
-          if (Sdom[0].Includes(pudom, true))
-            temp_srf->Trim(0, pudom);
-          if (Sdom[1].Includes(pvdom, true))
-              temp_srf->Trim(1, pvdom);
-          temp_srf->GetBoundingBox(const_cast<ON_BrepFace*>(this)->m_bbox, false);
-          delete temp_srf;
-          temp_srf = nullptr;
-          Used_pbox = true;
-        }
-    }
-    if (!Used_pbox)
-    {
-      const ON_Surface* srf = ProxySurface();
-      if(srf)
-        srf->GetBoundingBox(const_cast<ON_BrepFace*>(this)->m_bbox, false);
-    }
-    
-  }
-
-  bool rc = m_bbox.IsValid();
+  ON_BoundingBox bbox = this->InternalFaceBoundingBox(true, true);
+  
+  bool rc = bbox.IsValid();
   if (rc)
   {
-    ON_BoundingBox bbox = m_bbox;
     if ( bGrowBox && box_min && box_max && box_min[0] <= box_max[0] )
     {
       bbox.Union( ON_BoundingBox( ON_3dPoint(box_min), ON_3dPoint(box_max) ) );
@@ -6522,26 +6626,9 @@ bool ON_Brep::GetBBox(
           bool bGrowBox     // = false
           ) const
 {
-  ON_BoundingBox bbox;
-  if ( !m_bbox.IsValid() )
-  {
-    const int face_count = m_F.Count();
-    int fi;
-    for ( fi = 0; fi < face_count; fi++ ) 
-    {
-      if ( m_F[fi].m_face_index == -1 )
-        continue;
+  ON_BoundingBox bbox = this->InternalBrepBoundingBox(true, true);
 
-      //GBA 20 May 2020. RH-58462. Brep box now computed from face boxes, instead of surface boxes.
-      const ON_BrepFace* f = Face(fi);
-      if(f)
-       f->GetBoundingBox( bbox, bbox.IsValid() );
-    }
-    ON_Brep* ptr = const_cast<ON_Brep*>(this);
-    ptr->m_bbox = bbox;
-  }
-
-  bool rc = m_bbox.IsValid();
+  bool rc = bbox.IsValid();
   if (rc)
   {
     bbox = m_bbox;

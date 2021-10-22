@@ -3526,6 +3526,7 @@ bool ON_DimAngular::GetDisplayLines(
   isline[0] = isline[1] = isarc[0] = isarc[1] = false;
   double eo = style->ExtOffset() * dimscale;
   double ee = style->ExtExtension() * dimscale;
+  double el = style->FixedExtensionLen() * dimscale;
   double radius = Radius();
   if (1.0e-8 > radius)
     return false;
@@ -3542,14 +3543,24 @@ bool ON_DimAngular::GetDisplayLines(
   {
     double eo0 = eo;
     double ee0 = ee;
+    double el0 = el;
     if (m_ext_offset_1 > radius)
     {
       eo0 = -eo0;
       ee0 = -ee0;
+      el0 = -el0;
     }
-    ON_2dPoint lpt0 = m_vec_1  * (m_ext_offset_1 + eo0);
-    ON_2dPoint lpt1 = m_vec_1  * (radius + ee0);
-
+    ON_2dPoint lpt0, lpt1;
+    if (style->FixedExtensionLenOn())
+    {
+      lpt1 = m_vec_1 * (radius + ee0);
+      lpt0 = lpt1 + (-m_vec_1 * (el0 + ee0));
+    }
+    else
+    {
+      lpt0 = m_vec_1 * (m_ext_offset_1 + eo0);
+      lpt1 = m_vec_1 * (radius + ee0);
+    }
     lines[0].from = m_plane.PointAt(lpt0.x, lpt0.y);
     lines[0].to   = m_plane.PointAt(lpt1.x, lpt1.y);
     isline[0] = true;
@@ -3559,13 +3570,24 @@ bool ON_DimAngular::GetDisplayLines(
   {
     double eo1 = eo;
     double ee1 = ee;
+    double el1 = el;
     if (m_ext_offset_2 > radius)
     {
       eo1 = -eo1;
       ee1 = -ee1;
+      el1 = -el1;
     }
-    ON_2dPoint lpt0 = m_vec_2  * (m_ext_offset_2 + eo1);
-    ON_2dPoint lpt1 = m_vec_2  * (radius + ee1);
+    ON_2dPoint lpt0, lpt1;
+    if (style->FixedExtensionLenOn())
+    {
+      lpt1 = m_vec_2 * (radius + ee1);
+      lpt0 = lpt1 + (-m_vec_2 * (el1 + ee1));
+    }
+    else
+    {
+      lpt0 = m_vec_2 * (m_ext_offset_2 + eo1);
+      lpt1 = m_vec_2 * (radius + ee1);
+    }
     lines[1].from = m_plane.PointAt(lpt0.x, lpt0.y);
     lines[1].to   = m_plane.PointAt(lpt1.x, lpt1.y);
     isline[1] = true;

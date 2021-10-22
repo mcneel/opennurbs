@@ -3409,8 +3409,11 @@ bool ON_EarthAnchorPoint::ModelLocationIsSet() const
 {
   return (
     m_model_point.IsValid()
-    && m_model_north.IsValid()
-    && m_model_east.IsValid()
+    && m_model_north.IsNotZero()
+    && m_model_east.IsNotZero()
+    && m_model_north.Length() > ON_ZERO_TOLERANCE
+    && m_model_east.Length() > ON_ZERO_TOLERANCE
+    && fabs(m_model_north.UnitVector()* m_model_east.UnitVector()) <= 1e-8
   );
 }
 
@@ -3800,6 +3803,134 @@ void ON_EarthAnchorPoint::SetModelLocation(
   SetModelEast(model_east);
 }
 
+const ON_Xform ON_EarthAnchorPoint::Internal_KMLOrientationXform() const
+{
+  if (false == this->ModelLocationIsSet())
+  {
+    ON_ERROR("Corrupt model location.");
+    return ON_Xform::Nan;
+  }
+
+  ON_Plane model_directions;
+  if (false == model_directions.CreateFromFrame(ON_3dPoint::Origin, ModelEast(), ModelNorth()))
+    return ON_Xform::Nan;
+  if (false == model_directions.IsValid())
+    return ON_Xform::Nan;
+
+  // The KML orientation moves the model so that
+  // east = x-axis
+  // north = Y-axis
+  // up = Z-axis
+  // https://developers.google.com/kml/documentation/kmlreference#orientation
+  // "Describes rotation of a 3D model's coordinate system to position the object in Google Earth."
+
+  ON_Xform KMLorientation;
+  KMLorientation.Rotation(model_directions, ON_Plane::World_xy);
+
+  const ON_3dPoint M[4] = {
+    ON_3dPoint::Origin,
+    ON_3dPoint::Origin + ModelEast().UnitVector(),
+    ON_3dPoint::Origin + ModelNorth().UnitVector(),
+    ON_3dPoint::Origin + ON_CrossProduct(ModelEast().UnitVector(), ModelNorth().UnitVector())
+  };
+  const ON_3dPoint E[sizeof(M)/sizeof(M[0])] = {
+    ON_3dPoint::Origin,
+    ON_3dPoint::Origin + ON_3dVector::XAxis,
+    ON_3dPoint::Origin + ON_3dVector::YAxis,
+    ON_3dPoint::Origin + ON_3dVector::ZAxis
+  };
+  ON_3dPoint rM[sizeof(M) / sizeof(M[0])] = {};
+  double err[sizeof(M) / sizeof(M[0])] = {};
+  double maxerr = 0.0;
+  for (size_t i = 0; i < sizeof(M) / sizeof(M[0]); ++i)
+  {
+    rM[i] = KMLorientation * M[i];
+    double d = E[i].DistanceTo(rM[i]);
+    if (d != d || d > err[i])
+      err[i] = d;
+    if (err[i] != err[i] || err[i] > maxerr)
+      maxerr = err[i];
+  }
+
+  if (false == maxerr <= ON_ZERO_TOLERANCE)
+  {
+    ON_ERROR("Sloppy rotation matrix.");
+  }
+
+  return KMLorientation;
+}
+
+bool ON_EarthAnchorPoint::GetKMLOrientationAnglesRadians(double& heading_radians, double& tilt_radians, double& roll_radians) const
+{
+  heading_radians = ON_DBL_QNAN;
+  tilt_radians = ON_DBL_QNAN;
+  roll_radians = ON_DBL_QNAN;
+  const ON_Xform rot = Internal_KMLOrientationXform();
+  return rot.GetKMLOrientationAnglesRadians(heading_radians, tilt_radians, roll_radians);
+}
+
+bool ON_EarthAnchorPoint::GetKMLOrientationAnglesDegrees(double& heading_degrees, double& tilt_degrees, double& roll_degrees) const
+{
+  heading_degrees = ON_DBL_QNAN;
+  tilt_degrees = ON_DBL_QNAN;
+  roll_degrees = ON_DBL_QNAN;
+  const ON_Xform rot = Internal_KMLOrientationXform();
+  return rot.GetKMLOrientationAnglesDegrees(heading_degrees, tilt_degrees, roll_degrees);
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationHeadingAngleRadians() const
+{
+  double heading_radians = ON_DBL_QNAN;
+  double tilt_radians = ON_DBL_QNAN;
+  double roll_radians = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesRadians(heading_radians, tilt_radians, roll_radians);
+  return rc ? heading_radians : ON_DBL_QNAN;
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationTiltAngleRadians() const
+{
+  double heading_radians = ON_DBL_QNAN;
+  double tilt_radians = ON_DBL_QNAN;
+  double roll_radians = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesRadians(heading_radians, tilt_radians, roll_radians);
+  return rc ? tilt_radians : ON_DBL_QNAN;
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationRollAngleRadians() const
+{
+  double heading_radians = ON_DBL_QNAN;
+  double tilt_radians = ON_DBL_QNAN;
+  double roll_radians = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesRadians(heading_radians, tilt_radians, roll_radians);
+  return rc ? roll_radians : ON_DBL_QNAN;
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationHeadingAngleDegrees() const
+{
+  double heading_degrees = ON_DBL_QNAN;
+  double tilt_degrees = ON_DBL_QNAN;
+  double roll_degrees = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesDegrees(heading_degrees, tilt_degrees, roll_degrees);
+  return rc ? heading_degrees : ON_DBL_QNAN;
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationTiltAngleDegrees() const
+{
+  double heading_degrees = ON_DBL_QNAN;
+  double tilt_degrees = ON_DBL_QNAN;
+  double roll_degrees = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesDegrees(heading_degrees, tilt_degrees, roll_degrees);
+  return rc ? tilt_degrees : ON_DBL_QNAN;
+}
+
+const double ON_EarthAnchorPoint::KMLOrientationRollAngleDegrees() const
+{
+  double heading_degrees = ON_DBL_QNAN;
+  double tilt_degrees = ON_DBL_QNAN;
+  double roll_degrees = ON_DBL_QNAN;
+  const bool rc = GetKMLOrientationAnglesDegrees(heading_degrees, tilt_degrees, roll_degrees);
+  return rc ? roll_degrees : ON_DBL_QNAN;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //

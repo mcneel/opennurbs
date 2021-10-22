@@ -362,7 +362,7 @@ int ON_4dPoint::ProjectiveCompare(
   if (0.0 != lhs.w && 0.0 != rhs.w)
   {
     // neither lhs.w nor rhs.w is a nan
-    return ON_3dPoint::Compare(ON_3dPoint(lhs), ON_3dPoint(lhs));
+    return ON_3dPoint::Compare(ON_3dPoint(lhs), ON_3dPoint(rhs));
   }
 
   if (0.0 != lhs.w && 0.0 == rhs.w)

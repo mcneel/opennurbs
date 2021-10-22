@@ -693,6 +693,19 @@ public:
   */
   bool IsNested() const;
 
+  /*
+  Description:
+    If this has a single segment, return that single segment with user_data copied, 
+    reversed if necessary so the sense of the result is the same as this,
+    and domain adjusted to match this->Domain. If the single segment is a polycurve,
+    RemoveNesting should be called before calling ExplodeSingleSegmentCurve.
+  Returns:
+    NULL if not a single span polycurve
+    The single span, adjusted as described above;
+  */
+
+  ON_Curve* ExplodeSingleSegmentCurve() const;
+
   /* 
   Description:
     Removes the nested of polycurves. The result will have not

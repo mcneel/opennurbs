@@ -1319,7 +1319,7 @@ private:
   mutable ON_Color m_per_face_color = ON_Color::UnsetColor;
 
 private:
-  ON_BoundingBox m_bbox;      // 3d bounding box
+  ON_BoundingBox m_bbox;      // 3d bounding box (should be declared mutable and const_cast<> is used to make it fake mutable)
   ON_Interval    m_domain[2]; // rectangular bounds of 2d curves
   ON_Mesh* m_render_mesh = nullptr;
   ON_Mesh* m_analysis_mesh = nullptr;
@@ -1330,6 +1330,18 @@ private:
   friend class ON_Brep;
   ON_Brep* m_brep = nullptr;
   ON_BrepFace( const ON_BrepFace& ) = delete;
+
+private:
+  /*
+  Parameters:
+    bLazy - [in]
+      If true and if ON_BrepFace.m_bbox is not empty, then ON_BrepFace.m_bbox is returned.
+      In all other cases the bbox is calculated from scratch.
+    bUpdateCachedBBox - [in]
+      If true and the bounding box is calculated, then the value is saved in ON_BrepFace.m_bbox
+      so future lazy evaluations can use the value.
+  */
+  const ON_BoundingBox InternalFaceBoundingBox(bool bLazy, bool bUpdateCachedBBox) const;
 };
 
 class ON_CLASS ON_BrepFaceSide : public ON_Object
@@ -4128,6 +4140,18 @@ public:
   // The ON_Brep code increments ON_Brep::ErrorCount everytime something
   // unexpected happens. This is useful for debugging.
   static unsigned int ErrorCount;
+
+private:
+  /*
+  Parameters:
+    bLazy - [in]
+      If true and if ON_BrepFace.m_bbox is not empty, then ON_BrepFace.m_bbox is returned.
+      In all other cases the bbox is calculated from scratch.
+    bUpdateCachedBBox - [in]
+      If true and the bounding box is calculated, then the value is saved in ON_BrepFace.m_bbox
+      so future lazy evaluations can use the value.
+  */
+  const ON_BoundingBox InternalBrepBoundingBox(bool bLazy, bool bUpdateCachedBBox) const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

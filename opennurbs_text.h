@@ -198,7 +198,7 @@ public:
   /*
   Returns:
     Rich text suitable for initializing SDK controls on the current platform (Windows or Apple OS X).
-    The returned string is alwasy rich text (never plain text).
+    The returned string is always rich text (never plain text).
     The returned rich text is always generated directly from the runs.
     This text is typically different from the Rhino clean rich text returned by the RichText() command.
   */
@@ -210,7 +210,7 @@ public:
     rich_text_style - [in]
       Type of rich text to return.
   Returns:
-    The returned string is alwasy rich text (never plain text).
+    The returned string is always rich text (never plain text).
     The returned rich text is always generated directly from the runs.
     This text is typically different from the Rhino clean rich text returned by the RichText() command.
   */

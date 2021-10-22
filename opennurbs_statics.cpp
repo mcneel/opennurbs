@@ -29,7 +29,6 @@ static unsigned int ON_LibraryStatusInit()
 
 unsigned int ON::m_opennurbs_library_status = ON_LibraryStatusInit();
 
-
 unsigned int ON_MemoryAllocationTracking::m_g_stack_depth = 0;
 int ON_MemoryAllocationTracking::m_g_crt_dbg_flag0 = 0;
 
@@ -110,6 +109,20 @@ std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
 
 std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
 
+const double ON_SubDExpandEdgesParameters::OffsetTolerance = 0.001;
+
+const double ON_SubDExpandEdgesParameters::MinimumOffset = 0.05;
+
+const double ON_SubDExpandEdgesParameters::MaximumOffset = 0.95;
+
+const double ON_SubDExpandEdgesParameters::SmallOffset = 0.125;
+
+const double ON_SubDExpandEdgesParameters::MediumOffset = 0.25;
+
+const double ON_SubDExpandEdgesParameters::LargeOffset = 0.5;
+
+const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDExpandEdgesParameters);
+
 const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
 
 // The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
@@ -150,6 +163,9 @@ const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
 const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDToBrepParameters);
 const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultUnpacked = Internal_SubDToBrepParameters(false);
 const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultPacked = Internal_SubDToBrepParameters(true);
+
+
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDRTreeVertexFinder);
 
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
@@ -265,6 +281,8 @@ const ON_UUID ON_opennurbs_id = ON_opennurbs7_id;
 const ON_UuidPairList ON_UuidPairList::EmptyList;
 
 const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::UnsetComponentIndex;
+const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndNan = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, ON_DBL_QNAN);
+const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndZero = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, 0.0);
 
 // All opennurbs static members are initialized here so that initialization happens in a predictable order.
 /*
@@ -515,11 +533,24 @@ static struct ON_UnicodeErrorParameters ON_Internal_UnicodeErrorParameters_Defau
 const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::MaskErrors = ON_Internal_UnicodeErrorParameters_Default(0xFFFFFFFF);
 const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::FailOnErrors = ON_Internal_UnicodeErrorParameters_Default(0);
 
+
+const ON_UnicodeShortCodePoint ON_UnicodeShortCodePoint::Null = ON_UnicodeShortCodePoint::Create(0);
+const ON_UnicodeShortCodePoint ON_UnicodeShortCodePoint::ReplacementCharacter = ON_UnicodeShortCodePoint::Create(0xFFFD);
+const ON_UnicodeShortCodePoint ON_UnicodeShortCodePoint::ByteOrderMark = ON_UnicodeShortCodePoint::Create(0xFFFE);
+const ON_UnicodeShortCodePoint ON_UnicodeShortCodePoint::Error = ON_UnicodeShortCodePoint::Create(0xFFFF);
+
+const ON_Big5CodePoint ON_Big5CodePoint::Null = ON_Big5CodePoint::Create(0);
+const ON_Big5CodePoint ON_Big5CodePoint::WindowsEuro = ON_Big5CodePoint::Create(0xA3E1);
+const ON_Big5CodePoint ON_Big5CodePoint::Error = ON_Big5CodePoint::Create(0xFFFF);
+
+const ON_Big5UnicodePair ON_Big5UnicodePair::Null = ON_Big5UnicodePair::Create(ON_Big5CodePoint::Null, ON_UnicodeShortCodePoint::Null);
+const ON_Big5UnicodePair ON_Big5UnicodePair::Error = ON_Big5UnicodePair::Create(ON_Big5CodePoint::Error, ON_UnicodeShortCodePoint::Error);
+
 const ON_String ON_String::EmptyString;
 static const ON_String ON_Internal_ByteOrderMark()
 {
   // UTF-8 encoded byte order mark.
-  const unsigned char bom[3] = {0xEFU,0xBBU,0xBFU};
+  const unsigned char bom[4] = {0xEFU,0xBBU,0xBFU,0x00U};
   return ON_String((const char*)bom);
 }
 const ON_String ON_String::ByteOrderMark(ON_Internal_ByteOrderMark());
@@ -843,6 +874,7 @@ const ON_Color ON_Color::SaturatedBlue(0, 0, 255);
 const ON_Color ON_Color::SaturatedYellow(255, 255, 0);
 const ON_Color ON_Color::SaturatedCyan(0, 255, 255);
 const ON_Color ON_Color::SaturatedMagenta(255, 0, 255);
+const ON_Color ON_Color::SaturatedGold(255, 191, 0);
 const ON_Color ON_Color::Gray105(105, 105, 105);
 const ON_Color ON_Color::Gray126(126, 126, 126);
 const ON_Color ON_Color::Gray160(160, 160, 160);
@@ -2657,6 +2689,13 @@ const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
 const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
 const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
+
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::NullAndNan = ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Null, ON_DBL_QNAN);
+const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::NullAndZero = ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Null, 0.0);
+
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::NullAndNan = ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Null, ON_3dPoint::NanPoint);
+const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::NullAndOrigin = ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Null, ON_3dPoint::Origin);
+
 const ON_SubDComponentList ON_SubDComponentList::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentList);
 const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubD_ComponentIdTypeAndTag);
 

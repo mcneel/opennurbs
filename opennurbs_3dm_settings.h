@@ -1122,6 +1122,138 @@ public:
     ON_3dVector model_east
     );
 
+  /*
+  Description:
+    Find the Keyhole Markup Language (KML) orientation angles (in radians) of a rotation
+    transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
+    KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_radians - [out]
+      angle (in radians) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    tilt_radians - [out]
+      angle (in radians) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    roll_radians - [out]
+      angle (in radians) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+  Returns:
+    True if the model location is set (this->ModelLocationIsSet() is true)
+    and the KML orientation angles are returned.
+    Otherwise false is returned and all of the angle values are ON_DLB_QNAN.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  bool GetKMLOrientationAnglesRadians(
+    double& heading_radians, 
+    double& tilt_radians, 
+    double& roll_radians
+  ) const;
+
+  /*
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation heading angle in radians is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationHeadingAngleRadians() const;
+
+  /*
+  Returns:
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation tilt angle in radians is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationTiltAngleRadians() const;
+
+  /*
+  Returns:
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation roll angle in radians is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationRollAngleRadians() const;
+
+  /*
+  Description:
+    Find the Keyhole Markup Language (KML) orientation angles (in degrees) of a rotation
+    transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
+    KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
+    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+    specied axis vector towards the origin. This is rotation direction
+    is opposite the conventional "right hand rule."
+  Parameters:
+    heading_degrees - [out]
+      angle (in degrees) of rotation around KML Earth Z axis (Earth up).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    tilt_degrees - [out]
+      angle (in degrees) of rotation around KML Earth X axis (Earth east).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+    roll_degrees - [out]
+      angle (in degrees) of rotation around KML Earth Y axis (Earth north).
+      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
+      specied axis vector towards the origin. This is rotation direction
+      is opposite the conventional "right hand rule."
+  Returns:
+    True if the model location is set (this->ModelLocationIsSet() is true)
+    and the KML orientation angles are returned.
+    Otherwise false is returned and all of the angle values are ON_DLB_QNAN.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  bool GetKMLOrientationAnglesDegrees(
+    double& heading_degrees, 
+    double& tilt_degrees, 
+    double& roll_degrees
+  ) const;
+
+  /*
+  Returns:
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation heading angle in degrees is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationHeadingAngleDegrees() const;
+
+  /*
+  Returns:
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation tilt angle in degrees is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationTiltAngleDegrees() const;
+
+  /*
+    If the model location is set (this->ModelLocationIsSet() is true), then the
+    Keyhole Markup Language orientation roll angle in degrees is returned.
+    Otherwise ON_DBL_QNAN is returned.
+  See Also:
+    https://developers.google.com/kml/documentation/kmlreference#orientation
+  */
+  const double KMLOrientationRollAngleDegrees() const;
+
 private:
   // Point on the Earth
   //   Latitude (degrees):  +90 = north pole, 0 = equator, -90 = south pole
@@ -1203,6 +1335,9 @@ public:
           const ON_UnitSystem& model_unit_system,
           ON_Xform& model_to_earth
           ) const;
+
+private:
+  const ON_Xform Internal_KMLOrientationXform() const;
 };
 
 

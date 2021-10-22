@@ -212,9 +212,8 @@ static bool WriteBase(
     if (archive.Archive3dmVersion() < 70)
     {
       // version 6 3dm files
-      double P[3], V[3];
+      double P[3];
       const bool bHaveP = base->GetSavedSubdivisionPoint(P);
-      const bool bHaveV = base->GetSubdivisionDisplacement(V);
 
       unsigned char cP = bHaveP ? 4U : 0U;
       if (!archive.WriteChar(cP))
@@ -225,29 +224,17 @@ static bool WriteBase(
           break;
       }
 
-      unsigned char cV = bHaveV ? 4U : 0U;
-      if (!archive.WriteChar(cV))
+      unsigned char deprecated_and_never_used_zero = 0U;
+      if (!archive.WriteChar(deprecated_and_never_used_zero))
         break;
-      if (0 != cV)
-      {
-        if (!Internal_WriteDouble3(V, archive))
-          break;
-      }
       return true;
     }
     
     // version 7 3dm files and later
 
-    // 24 byte displacement addition
-    double V[3];
-    const bool bWriteDisplacement = base->GetSubdivisionDisplacement(V);
-    if ( false == Internal_WriteComponentAdditionSize(bWriteDisplacement,archive,24) )
+    // never used displacement
+    if ( false == Internal_WriteComponentAdditionSize(false,archive,24) )
       break;
-    if (bWriteDisplacement)
-    {
-      if (!archive.WriteDouble(3,V))
-        break;
-    }
 
     // 4 byte group id addition
     const bool bWriteGroupId = base->m_group_id > 0;
@@ -300,8 +287,8 @@ static bool ReadBase(
     if (archive.Archive3dmVersion() < 70)
     {
       unsigned char cP = 0U;
-      unsigned char cV = 0U;
-      double P[3], V[3];
+      unsigned char deprecated_and_never_used_char = 0U;
+      double P[3];
 
       if (!archive.ReadChar(&cP))
         break;
@@ -311,26 +298,16 @@ static bool ReadBase(
           break;
       }
 
-      if (!archive.ReadChar(&cV))
+      if (!archive.ReadChar(&deprecated_and_never_used_char))
         break;
-      if (0 != cV)
+      if (0 != deprecated_and_never_used_char)
       {
-        if (!Internal_ReadDouble3(archive, V))
+        double deprecated_and_never_used_V[3];
+        if (!Internal_ReadDouble3(archive, deprecated_and_never_used_V))
           break;
-        const unsigned int no_displacement_version = ON_VersionNumberConstruct(7, 0, 2019, 6, 12, 0);
-        const unsigned int archive_opennurbs_version = archive.ArchiveOpenNURBSVersion();
-        if (archive_opennurbs_version <= no_displacement_version)
-        {
-          cV = 0;
-          V[0] = 0.0;
-          V[1] = 0.0;
-          V[2] = 0.0;
-        }
       }
       if (4 == cP)
         base.SetSavedSubdivisionPoint(P);
-      if (4 == cV)
-        base.SetSubdivisionDisplacement(V);
       return true;
     }
 
@@ -338,6 +315,7 @@ static bool ReadBase(
     unsigned char sz;
 
     // 24 byte displacement addition
+    // This addition was a deprecated prototype that was never used in commercial Rhino.
     sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 24, &sz))
       break;
@@ -345,10 +323,9 @@ static bool ReadBase(
       return true; // end of additions
     if (0 != sz)
     {
-      double V[3] = {};
-      if (!archive.ReadDouble(V))
+      double deprecated_and_never_used_V[3] = {};
+      if (!archive.ReadDouble(3, deprecated_and_never_used_V))
         break;
-      base.SetSubdivisionDisplacement(V);
     }
 
     // 4 byte group id addition

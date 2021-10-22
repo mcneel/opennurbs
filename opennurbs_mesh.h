@@ -4029,7 +4029,7 @@ Returns:
       array of vertex indices
     bNoDuplicates - [in]
       If true, then only one edges[] is added for each edge,
-      the first vertex index will alwasy be less than the
+      the first vertex index will always be less than the
       second, and the returned elements are sorted in dictionary
       order.
       If false and an edge is shared by multiple faces, then
@@ -5492,7 +5492,7 @@ public:
   Returns:
     True if no ON_Mesh is being managed by this ON_MeshRef.
   Remarks:
-    It is alwasy the case that exactly one of IsEmpty() and IsNotEmpty() is true.
+    It is always the case that exactly one of IsEmpty() and IsNotEmpty() is true.
     Both are provided so code using ON_MeshRef can be clean and easily read.
   */
   bool IsEmpty() const;
@@ -5501,7 +5501,7 @@ public:
   Returns:
     True if an ON_Mesh is being managed by this ON_MeshRef.
   Remarks:
-    It is alwasy the case that exactly one of IsEmpty() and IsNotEmpty() is true.
+    It is always the case that exactly one of IsEmpty() and IsNotEmpty() is true.
     Both are provided so code using ON_MeshRef can be clean and easily read.
   */
   bool IsNotEmpty() const;

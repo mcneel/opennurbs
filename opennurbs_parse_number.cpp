@@ -988,7 +988,7 @@ static int ON_ParseFunctionHelper(
     if ( f_parameter_capacity < f->m_function_parameter_count )
       break;
 
-    // The angle parameters passed to trig functions alwasy have
+    // The angle parameters passed to trig functions always have
     // an "implicit" angle system of radians. It is intentional that
     // this cannot be changed by parse settings.  The reason is
     // to insure that the same script will create the same values

@@ -2256,6 +2256,7 @@ ON_Texture::MAPPING_CHANNEL ON_Texture::BuiltInMappingChannelFromUnsigned(
 const ON_SHA1_Hash ON_Texture::ContentHash() const
 {
   ON_SHA1 sha1;
+  sha1.AccumulateUnsigned32(m_mapping_channel_id);
   sha1.AccumulateSubHash(m_image_file_reference.FullPathHash());
   sha1.AccumulateBool(m_bOn);
   sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_type));
@@ -3761,7 +3762,7 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
     // values are independent of the 3d location
     // of the mesh.  The ON_TextureMapping::TYPE::srfp_mapping != m_type
     // check is used because these mappings are
-    // alwasy independent of 3d location but
+    // always independent of 3d location but
     // the transformations are often set.
     if ( ON_TextureMapping::TYPE::srfp_mapping != m_type
          && mesh_xform

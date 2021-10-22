@@ -768,6 +768,20 @@ public:
   ) const;
 
   ON__UINT8 ClearMarkBits() const;
+
+  void ClearSavedSubdivisionPoints() const;
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this component.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all components attached to this component are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
+
 };
 
 
@@ -865,6 +879,15 @@ public:
 
   /*
   Returns:
+    If Edge() is not nullptr, Edge()->HasInteriorEdgeTopology(bRequireOppositeFaceDirections) is returned.
+    Otherwise, false is returned.
+  */
+  bool HasInteriorEdgeTopology(
+    bool bRequireOppositeFaceDirections
+  ) const;
+
+  /*
+  Returns:
     0: this ON_SubDEdgePtr is oriented from Edge()->Vertex(0) to Edge()->Vertex(1).
     1: this ON_SubDEdgePtr is oriented from Edge()->Vertex(1) to Edge()->Vertex(0).
   */
@@ -880,6 +903,19 @@ public:
     nullptr if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const class ON_SubDVertex* RelativeVertex(
+    int relative_vertex_index
+  ) const;
+
+  /*
+  Parameters:
+    relative_vertex_index - [in]
+      0: return Edge()->Vertex(EdgeDirection())
+      1: return Edge()->Vertex(1-EdgeDirection())
+  Returns:
+    The requested id of the vertex with EdgeDirection() taken into account.
+    0 if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
+  */
+  unsigned RelativeVertexId(
     int relative_vertex_index
   ) const;
 
@@ -928,6 +964,46 @@ public:
     ) const;
 
   /*
+  Description:
+    Get the face on the left or right side of an oriented manifold or boundary edge.
+    A face is on the "left side" if this ON_SubDEdgePtr is oriented so it
+    points in the same direction as the face's oriented boundary.
+    A face is on the "right side" if this ON_SubDEdgePtr is oriented so it
+    points in the opposite direction as the face's oriented boundary.
+    If an edge is nonmanifold (3 or more faces), then nullptr is always returned.
+    If an edge has two faces that do not attach to this edge with opposite orientations
+    (nonoriented manifold edge), then nullptr is returned.    
+  Parameters:
+    relative_face_index - [in]
+      0: return face on the left side of the edge with respect to EdgeOrientation().
+      1: return face on the right side of the edge with respect to EdgeOrientation().
+  Returns:
+    The requested face.
+  */
+  const class ON_SubDFace* RelativeFace(
+    int relative_face_index
+  ) const;
+
+  /*
+  Returns:
+    this->RelativeFace(relative_face_index)->Mark();
+  */
+  bool RelativeFaceMark(
+    int relative_face_index,
+    bool missing_face_return_value
+  ) const;
+
+
+  /*
+  Returns:
+    this->RelativeFace(relative_face_index)->MarkBits();
+  */
+  ON__UINT8 RelativeFaceMarkBits(
+    int relative_face_index,
+    ON__UINT8 missing_face_return_value
+  ) const;
+
+  /*
   Returns:
     The vector from RelativeVertex(0)->ControlNetPoint() to RelativeVertex(1)->ControlNetPoint(),
     or ON_3dVector::NanVector if the relative vertex pointers are nullptr.
@@ -945,6 +1021,20 @@ public:
     A ON_SubDEdgePtr pointing at the same edge with the direction reversed from this.
   */
   const ON_SubDEdgePtr Reversed() const;
+
+  void ClearSavedSubdivisionPoints() const;
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this component.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all components attached to this component are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
+
 
 
   /*
@@ -1200,6 +1290,20 @@ public:
   ) const;
 
   ON__UINT8 ClearMarkBits() const;
+
+  void ClearSavedSubdivisionPoints() const;
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this component.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all components attached to this component are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
+
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -1327,6 +1431,23 @@ public:
   const ON_SubDVertexPtr VertexPtr() const;
   const ON_SubDEdgePtr EdgePtr() const;
   const ON_SubDFacePtr FacePtr() const;
+
+  const bool IsVertex() const;
+  const bool IsEdge() const;
+  const bool IsFace() const;
+
+  void ClearSavedSubdivisionPoints() const;
+
+  /*
+  Description:
+    Clears saved subdivision and limit surface information for this component.
+  Parameters:
+    bClearNeighborhood - [in]
+      If true, all components attached to this component are also cleared.
+  */
+  void ClearSavedSubdivisionPoints(
+    bool bClearNeighborhood
+  ) const;
 
   unsigned int ComponentId() const;
 
@@ -1574,6 +1695,239 @@ public:
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentPtr>;
 #endif
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentPtrAndNumber
+//
+
+class ON_CLASS ON_SubDComponentAndNumber
+{
+public:
+  ON_SubDComponentAndNumber() = default;
+  ~ON_SubDComponentAndNumber() = default;
+  ON_SubDComponentAndNumber(const ON_SubDComponentAndNumber&) = default;
+  ON_SubDComponentAndNumber& operator=(const ON_SubDComponentAndNumber&) = default;
+
+public:
+  static const ON_SubDComponentAndNumber NullAndNan;
+  static const ON_SubDComponentAndNumber NullAndZero;
+  static const ON_SubDComponentAndNumber Create(
+    ON_SubDComponentPtr cptr,
+    double x
+  );
+
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDVertex* v,
+    double x
+  );
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDEdge* e,
+    double x
+  );
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDFace* f,
+    double x
+  );
+
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDVertexPtr vptr,
+    double x
+  );
+
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDEdgePtr eptr,
+    double x
+  );
+
+  static const ON_SubDComponentAndNumber Create(
+    const ON_SubDFacePtr fptr,
+    double x
+  );
+
+public:
+
+  /*
+  Description:
+    Compare Component() using ON_SubDComponentPtr::CompareComponent().
+  */
+  static int CompareComponent(
+    const ON_SubDComponentAndNumber* a,
+    const ON_SubDComponentAndNumber* b
+  );
+
+  /*
+  Description:
+    Compare Component() using ON_SubDComponentPtr::CompareComponentAndDirection().
+  */
+  static int CompareComponentAndDirection(
+    const ON_SubDComponentAndNumber* a,
+    const ON_SubDComponentAndNumber* b
+  );
+
+
+  /*
+  Description:
+    Compare Number() nans are treated as equal and sort last.
+  */
+  static int CompareNumber(
+    const ON_SubDComponentAndNumber* a,
+    const ON_SubDComponentAndNumber* b
+  );
+
+  /*
+  Description:
+    Dictionary compare Component() and Number() in that order.
+  */
+  static int CompareComponentAndNumber(
+    const ON_SubDComponentAndNumber* a,
+    const ON_SubDComponentAndNumber* b
+  );
+
+  /*
+  Description:
+    Dictionary compare using ON_SubDComponentAndNumber::CompareComponentAndDirection() and ON_SubDComponentAndNumber::Number() in that order.
+  */
+  static int CompareComponentAndDirectionAndNumber(
+    const ON_SubDComponentAndNumber* a,
+    const ON_SubDComponentAndNumber* b
+  );
+
+
+public:
+  const ON_SubDComponentPtr Component() const;
+  void SetComponent(ON_SubDComponentPtr cptr);
+
+  double Number() const;
+  void SetNumber(double x);
+
+public:
+  ON_SubDComponentPtr m_cptr = ON_SubDComponentPtr::Null;
+  double m_x = ON_DBL_QNAN;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentAndNumber>;
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentAndPoint
+//
+
+class ON_CLASS ON_SubDComponentAndPoint
+{
+public:
+  ON_SubDComponentAndPoint() = default;
+  ~ON_SubDComponentAndPoint() = default;
+  ON_SubDComponentAndPoint(const ON_SubDComponentAndPoint&) = default;
+  ON_SubDComponentAndPoint& operator=(const ON_SubDComponentAndPoint&) = default;
+
+public:
+  static const ON_SubDComponentAndPoint NullAndNan;
+  static const ON_SubDComponentAndPoint NullAndOrigin;
+  static const ON_SubDComponentAndPoint Create(
+    ON_SubDComponentPtr cptr,
+    ON_3dPoint P
+  );
+
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDVertex* v,
+    ON_3dPoint P
+  );
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDEdge* e,
+    ON_3dPoint P
+  );
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDFace* f,
+    ON_3dPoint P
+  );
+
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDVertexPtr vptr,
+    ON_3dPoint P
+  );
+
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDEdgePtr eptr,
+    ON_3dPoint P
+  );
+
+  static const ON_SubDComponentAndPoint Create(
+    const ON_SubDFacePtr fptr,
+    ON_3dPoint P
+  );
+
+public:
+
+  /*
+  Description:
+    Compare Component() using ON_SubDComponentPtr::CompareComponent().
+  */
+  static int CompareComponent(
+    const ON_SubDComponentAndPoint* lhs,
+    const ON_SubDComponentAndPoint* rhs
+  );
+
+  /*
+  Description:
+    Compare Component() using ON_SubDComponentPtr::CompareComponentAndDirection().
+  */
+  static int CompareComponentAndDirection(
+    const ON_SubDComponentAndPoint* lhs,
+    const ON_SubDComponentAndPoint* rhs
+  );
+
+
+  /*
+  Description:
+    Compare Point() uses ON_3dPoint::Compare() to compare lhs and rhs Point() values.
+  */
+  static int ComparePoint(
+    const ON_SubDComponentAndPoint* lhs,
+    const ON_SubDComponentAndPoint* rhs
+  );
+
+  /*
+  Description:
+    Dictionary compare Component() and Point() in that order.
+  */
+  static int CompareComponentAndPoint(
+    const ON_SubDComponentAndPoint* lhs,
+    const ON_SubDComponentAndPoint* rhs
+  );
+
+  /*
+  Description:
+    Dictionary compare using ON_SubDComponentAndPoint::CompareComponentAndDirection() and ON_SubDComponentAndPoint::Point() in that order.
+  */
+  static int CompareComponentAndDirectionAndPoint(
+    const ON_SubDComponentAndPoint* lhs,
+    const ON_SubDComponentAndPoint* rhs
+  );
+
+
+public:
+  const ON_SubDComponentPtr Component() const;
+  void SetComponent(ON_SubDComponentPtr cptr);
+
+  const ON_3dPoint Point() const;
+  void SetPoint(ON_3dPoint P);
+
+public:
+  ON_SubDComponentPtr m_cptr = ON_SubDComponentPtr::Null;
+  ON_3dPoint m_P = ON_3dPoint::NanPoint;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentAndPoint>;
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentTest
+//
 
 /*
 Description:
@@ -2932,6 +3286,221 @@ const ON_wString ON_SubDEndCapStyleToString(
 //
 // ON_SubD
 //
+//// ON_WIP_SDK 
+//// This class is in the WIP SDK but the [[deprecated]] tag is 
+//// failing to compile in tl_precompiledheader.cpp
+class ON_CLASS ON_SubDExpandEdgesParameters
+{
+public:
+  ON_SubDExpandEdgesParameters() = default;
+  ~ON_SubDExpandEdgesParameters() = default;
+  ON_SubDExpandEdgesParameters(const ON_SubDExpandEdgesParameters&) = default;
+  ON_SubDExpandEdgesParameters& operator=(const ON_SubDExpandEdgesParameters&) = default;
+
+  static const ON_SubDExpandEdgesParameters Default;
+
+  /// <summary>
+  /// ON_SubDExpandEdgesParameters::Style specifies options for how faces are inserted along input edges.
+  /// </summary>
+  enum class Style : unsigned char
+  {
+    /// <summary>
+    /// Indicates the variable has not be initialized.
+    /// </summary>
+    Unset = 0,
+
+    /// <summary>
+    /// One quad replaces each input manifold edge. Corner cases where three or more edges meet
+    /// receive special handling.
+    /// </summary>
+    Single = 1,
+
+    /// <summary>
+    /// Two quads are added for each input manifold edge. Corner cases where three or more edges meet
+    /// receive special handling.
+    /// </summary>
+    Double = 2,
+
+    /// <summary>
+    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// that form a single oriented edge chain of manifold interior edges.
+    /// A single quad is added to the left of the input edges.
+    /// (The left side of of an oriented interior manifold edge is the face
+    /// whose natural boundary orientation is the same as with the ON_SubDEdgePtr direction.)
+    /// </summary>
+    HalfLeft = 3,
+
+    /// <summary>
+    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// that form a single oriented edge chain of manifold interior edges.
+    /// A single quad is added to the right of the input edges.
+    /// (The right side of of an oriented interior manifold edge is the face
+    /// whose natural boundary orientation is opposite the ON_SubDEdgePtr direction.)
+    /// </summary>
+    HalfRight = 4,
+  };
+
+public:
+  /// OffsetTolerance = 0.001
+  static const double OffsetTolerance; 
+
+  /// Minimum permitted offset value (0.05)
+  static const double MinimumOffset;
+
+  /// Maximum permitted offset value (0.95)
+  static const double MaximumOffset;
+
+  /// Small offset value (0.125)
+  static const double SmallOffset;
+
+  /// Medium offset value (0.25)
+  static const double MediumOffset;
+
+  /// Large offset value (0.5)
+  static const double LargeOffset;
+
+public:
+  /// <summary>
+  /// This SHA1 hash can be used to determine if sets of parameters are the same.
+  /// </summary>
+  /// <returns>A SHA1 hash of all parameter values.</returns>
+  const ON_SHA1_Hash Hash() const;
+
+public:
+  static double CleanupOffset(double x);
+
+
+  /// <summary>
+  /// Normalized constant offset parameter for inserting edges parallel to an input edge.
+  /// Smaller values create narrower offsets.
+  /// </summary>
+  /// <returns>Offset value in the range ON_SubDExpandEdgesParameters::MinimumOffset to ON_SubDExpandEdgesParameters::MaximumOffset.</returns>
+  double ConstantOffset() const;
+
+  /// <summary>
+  /// Set the constant offset value. Values within OffsetTolerance of a 
+  /// predefined offset value are set to the predefined offset value.
+  /// </summary>
+  /// <param name="offset">
+  /// ON_SubDExpandEdgesParameters::MinimumOffset &lt;= offset &lt;= ON_SubDExpandEdgesParameters::MaximumOffset;
+  /// </param>
+  /// <returns></returns>
+  void SetConstantOffset(double offset);
+
+
+  /// <summary>
+  /// Determine if the set of ON_SubDEdgePtrs can be sorted into a 
+  /// single edge chain that supports half side offsets.
+  /// </summary>
+  /// <param name="edge_chain"></param>
+  /// <returns>True if variable offsets can be applied to edge_chain.</returns>
+  static bool IsValidForHalfOffset(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+  );
+
+  /// <summary>
+  /// Determine if the set of ON_SubDEdgePtrs can be sorted into a 
+  /// single open edge chain supports variable offsets.
+  /// </summary>
+  /// <param name="edge_chain"></param>
+  /// <returns>True if variable offsets can be applied to edge_chain.</returns>
+  static bool IsValidForVariableOffset(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+  );
+
+  /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+  /// that form a single oriented edge chain. You may use
+  /// ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
+  /// array of ON_SubDEdgePtrs meets the variable offset requirements.
+  /// In all other cases, the constant Offset() is used.
+  /// To apply variable offsets to several edge chains, expand them one at a time.
+  const ON_Interval VariableOffset() const;
+
+  /*
+  Description:
+    This option applies only when the the input is an array of ON_SubDEdgePtrs
+    that form a single oriented edge chain. You may use
+    ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
+    array of ON_SubDEdgePtrs meets the variable offset requirements.
+    In all other cases, the constant Offset() is used.
+    To apply variable offsets to several edge chains, expand them one at a time.
+
+  Parameters:
+    variable_offsets - [in]
+      The two values must be between 0 and 1 and differ by more than ON_SubDExpandEdgesParameters::OffsetTolerance.
+  */
+  void SetVariableOffset(ON_Interval variable_offsets);
+
+  void ClearVariableOffset();
+
+  static bool IsValidConstantOffset(
+    double constant_offset_candidate
+  );
+
+  static bool IsValidVariableOffset(
+    ON_Interval variable_offset_candidate
+  );
+
+  /*
+  Returns:
+    True if variable offsets are set.
+  */
+  bool IsVariableOffset() const;
+
+
+  ON_SubDExpandEdgesParameters::Style FaceStyle() const;
+
+  /// <summary>
+  /// Set the style for new faces.
+  /// </summary>
+  /// <param name="face_style"></param>
+  /// <returns>Style for new faces.</returns>
+  void SetFaceStyle(ON_SubDExpandEdgesParameters::Style face_style);
+
+  /// <returns>True if the FaceStyle() is HalfLeft of HalfRight.</returns>
+  bool IsHalfFaceStyle() const;
+
+  /// <returns>Per face color for new faces.</returns>
+  const ON_Color FaceColor() const;
+
+  /// <summary>
+  /// Set the perf face color for new faces.
+  /// </summary>
+  /// <param name="face_color">Color for new face. Pass ON_Color::Unset for no per face color.</param>
+  void SetFaceColor(ON_Color face_color);
+
+  /// <returns>Status for new faces.</returns>
+  const ON_ComponentStatus FaceStatus() const;
+
+  /// <summary>
+  /// Set the Mark(), MarkBits(), Selected(), and Highlighted() status for new faces.
+  /// </summary>
+  /// <param name="face_status">Status for new faces.</param>
+  void SetFaceStatus(ON_ComponentStatus face_status);
+
+private:
+  double m_constant_offset = ON_SubDExpandEdgesParameters::MediumOffset;
+  ON_Interval m_variable_offsets = ON_Interval::Nan;
+  ON_Color m_face_color = ON_Color::UnsetColor;
+  ON_ComponentStatus m_face_status;
+  ON_SubDExpandEdgesParameters::Style m_face_style = ON_SubDExpandEdgesParameters::Style::Double;
+
+private:
+  unsigned char m_reserved1 = 0;
+
+private:
+  ON__UINT64 m_reserved2 = 0;
+  ON__UINT64 m_reserved3 = 0;
+};
+
+bool operator==(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
+bool operator!=(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubD
+//
 class ON_CLASS ON_SubD : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_SubD);
@@ -3030,7 +3599,7 @@ public:
    bForceUpdate - [in]
      When in doubt pass false.
      The SubD hashes are mutable and cached. When code properly manages GeometryContentSerialNumber(),
-     then SubDHash(hash_type,false) will alwasys return the correct answer. This is the expected behavior.
+     then SubDHash(hash_type,false) will always return the correct answer. This is the expected behavior.
      If code directly modifies SubD components and fails to call ChangeGeometryContentSerialNumberForExperts(),
      then it is possible a stale hash will be returned. Setting bForceUpdate = true forces the SHA1
      values to be recalculated from scratch. For extremely large SubDs, this recalculation can be time consuming.
@@ -3310,8 +3879,8 @@ public:
       component_ring[component_count-1] = last face
 
   Example:
-    unsinged int component_ring_count = GetVertexComponentRing(vit,component_ring);
-    unsinged int N = component_ring_count/2; // number of edges in ring
+    unsigned int component_ring_count = GetVertexComponentRing(vit,component_ring);
+    unsigned int N = component_ring_count/2; // number of edges in ring
     const bool bSectorHasCreaseBoundary = (0 == (component_ring_count % 2));
   */
   static unsigned int GetSectorComponentRing(
@@ -3350,8 +3919,8 @@ public:
       component_ring[component_count-1] = last face
 
   Example:
-    unsinged int component_ring_count = GetVertexComponentRing(vit,component_ring);
-    unsinged int N = component_ring_count/2; // number of edges in ring
+    unsigned int component_ring_count = GetVertexComponentRing(vit,component_ring);
+    unsigned int N = component_ring_count/2; // number of edges in ring
     const bool bSectorHasCreaseBoundary = (0 == (component_ring_count % 2));
   */
   static unsigned int GetSectorComponentRing(
@@ -4598,6 +5167,16 @@ public:
   */
   bool HasPerFaceColorsFromSymmetryMotif() const;
 
+  /*
+  Description:
+    Sets ON_SubDComponent MarkBits() to
+    0: component is not in a symmetry set motif
+    n>=1: 
+      The component is the the n-th element in the symmetry set
+      with n=1 indicating the component in the primary motif.
+  */
+  void SetComponentMarkBitsFromSymmetryMotif() const;
+
 
   ///*
   //Description:
@@ -4760,37 +5339,62 @@ public:
 
   /*
   Description:
-    Split and edge.
-    The input edge is modifed to terminate at the input vertex.
-    The new edge begins at the input vertex and ends at the final vertex
-    of the original input edge.
+    Divide an edge into two contiguous edges.
+    The input edge is modifed to terminate at the new vertex.
+    The new edge begins at the new vertex and ends at the orginal edge's m_vertex[1].
   edge - [in]
     edge to split.
   vertex_location - [in]
-    location of inserted vertex.
+    location of the new vertex vertex.
     If vertex_location == ON_ON_3dPoint::UnsetPoint,
     then the edge's midpoint is used.
   Returns:
     A pointer to the new edge or nullptr if the input is not valid.
-  Remarks:    
+  Remarks:
     After all editing operations are completed, you must call this->UpdateEdgeSectorCoefficients(true) before
     evaluation.
   */
   const class ON_SubDEdge* SplitEdge(
     class ON_SubDEdge* edge,
     ON_3dPoint vertex_location
-    );
+  );
 
   /*
   Description:
-    Split a face into two faces by inserting and edge connecting the
-    specified vertices.
+    Divide an edge into two contiguous edges.
+  edge - [in]
+    edge to split.
+  vertex_location - [in]
+    location of the new vertex vertex.
+    If vertex_location == ON_ON_3dPoint::UnsetPoint,
+    then the edge's midpoint is used.
+  new_edge_end - [in]
+    This paratmer is 0 or 1 and dtermines where the new edge is inserted.
+    Below v0 = input eptr.RelativeVertex(0), v1 = new vertex, v2 = input eptr.RelativeVertex(1),
+    and new_eptr = returned edge pointer.
+    If edge_end is 0, new_eptr is first: v0 = new_eptr.RelativeVertex(0), v1 = new_eptr.RelativeVertex(1)=eptr.RelativeVertex(0), v2 = eptr.RelativeVertex(1).
+    If edge_end is 1, new_eptr is last: v0 = eptr.RelativeVertex(0), v1 = eptr.RelativeVertex(1)=new_eptr.RelativeVertex(0), v2 = new_eptr.RelativeVertex(1).
+  Returns:
+    A pointer to the new edge or ON_SubDEdgePtr::Null if the input is not valid.
+  Remarks:
+    After all editing operations are completed, you must clear the evaluation cache
+    and call this->UpdateEdgeSectorCoefficients(true).
+  */
+  const ON_SubDEdgePtr SplitEdge(
+    ON_SubDEdgePtr eptr,
+    ON_3dPoint vertex_location,
+    unsigned new_edge_end
+  );
+
+  /*
+  Description:
+    Divide a face into two faces by inserting an edge connecting the specified vertices.
   Parameters:
     face - [in]
       A face with at least four edges.
     fvi0 - [in]
     fvi1 - [in]
-      Indices of the inserted edge ends.
+      Face vertex indices of the inserted edge's ends.
   Returns:
     A pointer to the inserted edge.
     The inserted edge runs from face->Vertex(fvi0) to face->Vertex(fvi1).
@@ -4806,14 +5410,13 @@ public:
 
   /*
   Description:
-    Split a face into two faces by inserting and edge connecting the
-    specified vertices.
+    Divide a face into two faces by inserting an edge connecting the specified vertices.
   Parameters:
     face - [in]
       A face with at least four edges.
     v0 - [in]
     v1 - [in]
-      Vertices on the face boundary.
+      Face vertices of the inserted edge's ends.
   Returns:
     A pointer to the inserted edge.
     The inserted edge runs from v0 to v1.
@@ -4827,6 +5430,55 @@ public:
     const class ON_SubDVertex* v0,
     const class ON_SubDVertex* v1
     );
+
+
+  /*
+  Description:
+    Divide a face into two faces by inserting an edge connecting the specified vertices.
+  Parameters:
+    face - [in]
+      A face with at least four edges.
+    fvi0 - [in]
+    fvi1 - [in]
+      Face vertex indices of the inserted edge's ends.
+    new_face_side - [in]
+      0: The new face will be on the left side of the inserted edge.
+      0: The new face will be on the right side of the inserted edge.
+  Returns:
+    The edge and edgeptr are both being af both oriented 
+    The inserted edge and returned edge ptr runs from face->Vertex(fvi0) to face->Vertex(fvi1).
+    the new face is SplitFace(...).RelativeFace(new_face_side) and the original face is SplitFace(...).RelativeFace(new_face_side).
+  */
+  const ON_SubDEdgePtr SplitFace(
+    class ON_SubDFace* face,
+    unsigned int fvi0,
+    unsigned int fvi1,
+    unsigned new_face_side
+  );
+
+  /*
+  Description:
+    Divide a face into two faces by inserting an edge connecting the specified vertices.
+  Parameters:
+    face - [in]
+      A face with at least four edges.
+    v0 - [in]
+    v1 - [in]
+      Face vertices of the inserted edge's ends.
+    new_face_side - [in]
+      0: The new face will be on the left side of the inserted edge.
+      0: The new face will be on the right side of the inserted edge.
+  Returns:
+    The edge and edgeptr are both being af both oriented
+    The inserted edge and returned edge ptr runs from face->Vertex(fvi0) to face->Vertex(fvi1).
+    the new face is SplitFace(...).RelativeFace(new_face_side) and the original face is SplitFace(...).RelativeFace(new_face_side).
+  */
+  const ON_SubDEdgePtr SplitFace(
+    class ON_SubDFace* face,
+    const class ON_SubDVertex* v0,
+    const class ON_SubDVertex* v1,
+    unsigned new_face_side
+  );
 
   /*
   Description:
@@ -6912,6 +7564,12 @@ private:
 #pragma ON_PRAGMA_WARNING_POP
 };
 
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentAndNumber>;
+#endif
+
+
 //////////////////////////////////////////////////////////////////////////
 //
 // ON_SubDComponentList
@@ -7204,7 +7862,7 @@ public:
   //
   //     Q = 3/8 * (A + B) = 3/4 * (1/2*A + 1/2*B)
   //
-  //   A crease edge's subdivision point is alwasy the edge's midpoint.
+  //   A crease edge's subdivision point is always the edge's midpoint.
   /*
   Description:
     Calculates sector weight value for the sector type
@@ -10361,32 +11019,19 @@ public:
   */
   bool SavedSubdivisionPointIsSet() const;
 
-  //////////////////////////////////////////////////////////////
-  //
-  // displacement applied to subdivision point
-  //
-  bool SetSubdivisionDisplacement(
-    const double displacement[3]
-    );
+  ON_DEPRECATED_MSG("Does nothing. Returns false.")
+  bool SetSubdivisionDisplacement(const double*);
 
-  bool GetSubdivisionDisplacement(
-    double displacement[3]
-    ) const;
+  ON_DEPRECATED_MSG("Does nothing. Returns false.")
+  bool GetSubdivisionDisplacement(double*) const;
   
-  /*
-  Returns:
-    subdivision displacement. If a displacement has not been set,
-    ON_3dPoint::ZeroVector is returned.
-  */
+  ON_DEPRECATED_MSG("Does nothing. Returns nans.")
   const ON_3dVector SubdivisionDisplacement() const;
 
-  /*
-  Returns:
-    True if the subdivision displacment vector is valid and not zero.
-  */
+  ON_DEPRECATED_MSG("Does nothing. Returns false.")
   bool SubdivisionDisplacementIsNonzero() const;
 
-
+  ON_DEPRECATED_MSG("Does nothing.")
   void ClearSubdivisionDisplacement() const;
 
 protected:
@@ -10394,9 +11039,6 @@ protected:
   friend class ON_SubDHeap;
   enum SavedPointsFlags : unsigned char
   {
-    // if ( 0 != (m_saved_points_flags & SubDDisplacementVIsSet), then m_displacementV is set.
-    SubdivisionDisplacementBit = 0x20,
-
     // if ( 0 != (m_saved_points_flags & SubdivisionPointBit), then m_cache_subd_P is set.
     SubdivisionPointBit = 0x40,
 
@@ -10407,8 +11049,8 @@ protected:
     // Unset means any information in the fields identified above is invalid and must be recalculated.
     SurfacePointBit = 0x80,
 
-    // ControlNetFragmentBit | SubdivisionPointBit | SubdivisionDisplacementBit | SurfacePointBit
-    CachedPointMask = 0xF0
+    // SubdivisionPointBit | SurfacePointBit
+    CachedPointMask = 0xC0
   };
 
   enum ModifiedFlags : unsigned char
@@ -10484,9 +11126,11 @@ protected:
   // GetSubdivisionPoint( bUseSavedSubdivisionPoint=true ) can change the value of m_cache_subd_P
   mutable double m_saved_subd_point1[3]; // saved subdivision point
 
-protected:
-  // optional displacement applied to standard subdivision point.
-  double m_displacement_V[3];
+private:
+  // Reserved for future use for attributes that apply to allSubD components (ON_SubDVertex, ON_SubDEdge, and ON_SubDFace).
+  ON__UINT64 m_reserved8bytes1;
+  ON__UINT64 m_reserved8bytes2;
+  ON__UINT64 m_reserved8bytes3;
 
 public:
   /*
@@ -14505,12 +15149,30 @@ public:
 
 
   /*
+  Description:
+
+                CurrentEdge(1)
+                    |
+                    |
+         NextFace() | CurrentFace()
+                    |
+                    |
+                    *------------- CurrentEdge(0)
+                        PrevFace()
+
+    The asterisk (*) marks the center vertex.
+    The diagram is With respect to the initial iterator orientation.
+
   Parameters:
     face_side_index - [in]
-      0: Return the edge entering the center vertex.
-      1: Return the edge leaving the center vertex.
-  Returns:
-    The requested edge.
+      CurrentEdge(0) = edge on the clockwise (PrevFace) side of the current face
+      CurrentEdge(1) = edge on the counterclockwise (NextFace) side of the current face
+      The directions "counterclockwise" and "clockwise" are with respect to the
+      initial iterator orientation.
+
+   Returns:
+    The requested edge. The edge pointer is oriented such that 
+    RelativeVertex(0) is the center vertex.
   */
   ON_SubDEdgePtr CurrentEdgePtr(
     unsigned int face_side_index
@@ -16234,6 +16896,225 @@ public:
   //
   // Edge chain tools
   //
+
+  /*
+  Description:
+    Unconditionally sort edges into chains.
+
+  Parameters:
+    unsorted_edges - [in]
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      no edge chain will pass through that vertex.
+      To sort an array in place, pass the same array as both parameters.
+
+    sorted_edges - [out]
+      The sorted_edges[] has the edges grouped into edge chains.
+      A value of ON_SubDEdgePtr::Null is at the end of every chain
+      including the last chain.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+  Returns:
+    Number of chains in edge_chains[].
+  Remarks:
+    This version of SortEdgesIntoEdgeChains() uses MarkBits() on the edges
+    and vertices in unsorted_edges[]. The output values of MarkBits()
+    on these components are zero.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  /*
+  Description:
+    Unconditionally sort edges into chains.
+
+  Parameters:
+    unsorted_edges - [in]
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      no edge chain will pass through that vertex.
+
+    sorted_edges - [out]
+      The sorted_edges[] has the edges grouped into edge chains.
+      A value of ON_SubDEdgePtr::Null is at the end of every chain
+      including the last chain.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+  Returns:
+    Number of chains in edge_chains[].
+  Remarks:
+    This version of SortEdgesIntoEdgeChains() uses MarkBits() on the edges
+    and vertices in unsorted_edges[]. The output values of MarkBits()
+    on these components are zero.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  /*
+  Description:
+    Unconditionally sort edges into chains.
+
+  Parameters:
+    unsorted_edges - [in]
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      no edge chain will pass through that vertex.
+
+    sorted_edges - [out]
+      The sorted_edges[] has the edges grouped into edge chains.
+      A value of ON_SubDEdgePtr::Null is at the end of every chain
+      including the last chain.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+  Returns:
+    Number of chains in edge_chains[].
+  Remarks:
+    This version of SortEdgesIntoEdgeChains() uses MarkBits() on the edges
+    and vertices in unsorted_edges[]. The output value of MarkBits()
+    on these components is zero.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDComponentPtr >& unsorted_edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  /*
+  Description:
+    Unconditionally sort edges into chains.
+
+  Parameters:
+    unsorted_edges - [in]
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      no edge chain will pass through that vertex.
+
+    sorted_edges - [out]
+      The sorted_edges[] has the edges grouped into edge chains.
+      A value of ON_SubDEdgePtr::Null is at the end of every chain
+      including the last chain.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      sorted_edges[i].RelativeVertex(1) == sorted_edges[i+1].RelativeVertex(0).
+  Returns:
+    Number of chains in edge_chains[].
+  Remarks:
+    This version of SortEdgesIntoEdgeChains() uses MarkBits() on the edges
+    and vertices in unsorted_edges[]. The output value of MarkBits()
+    on these components is zero.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SubD& subd,
+    const ON_SimpleArray< ON_COMPONENT_INDEX >& unsorted_edges,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  /*
+  Description:
+    Determin if the array of ON_SubDEdgePtrs in edges[] can be sorted
+    into a single edge chain.
+  Parameters:
+    edges - [in]
+      Set of edges to test.
+    bIsClosed - [out]
+      If true is returned and edges[] sorts into a closed edge chain,
+      then bIsClosed is true. Otherwise bIsClosed is false.
+    bIsSorted - [out]
+      If true is returned and edges[] is currently sorted into an edge chain,
+      then bIsSorted is true. Otherwise bIsSorted is false.
+  Returns:
+    If the array of edges[] can be sorted into a single edge chain
+    with no self intersections, then true is returned. Otherwise false
+    is returned.
+  Remarks:
+    This test usesthe MarkBits() values on the edges and vertices and
+    restores the values to the input state.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static bool IsSingleEdgeChain(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges,
+    bool& bIsClosed,
+    bool& bIsSorted
+  );
+
+  /*
+  Description:
+    Determin if the array of ON_SubDEdgePtrs in edges[] can be sorted
+    into a single edge chain.
+  Parameters:
+    edges - [in]
+      Set of edges to test.
+  Returns:
+    If the array of edges[] can be sorted into a single edge chain
+    with no self intersections, then true is returned. Otherwise false
+    is returned.
+  Remarks:
+    This test usesthe MarkBits() values on the edges and vertices and
+    restores the values to the input state.
+    Multiple threads may not simultaneously use any SubD tools on that rely
+    on markbits on the same ON_SubD.
+  */
+  static bool IsSingleEdgeChain(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+  );
+
+  /*
+  Description:
+    Sort edges into a chains
+
+  Parameters:
+    unsorted_edges - [in]
+      To sort an array in place, pass the same array as both parameters.
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      then all of the edges that share that vertex are ignored.
+      The edges can be from one or more SubDs.
+
+    unsigned int minimum_chain_length - [in]
+      minimum number of edges to consider for a chain.
+
+    edge_chains - [out]
+      The edge_chains[] has the edges grouped into edge chains.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      edge_chains[i].RelativeVertex(1) == edge_chains[i+1].RelativeVertex(0).
+
+      When edge_chains[i].RelativeVertex(1) != edge_chains[i+1].RelativeVertex(0),
+      a chain ends at edge_chains[i] and another begins at edge_chains[i+1].
+
+      Reasonnable effort is made to keep the first edge in every chain with the
+      same orientation as the input edge from edge_chains[]. However, this is not
+      possible in every case, for example if the input is two edges sharing the
+      same starting vertex.
+
+      NB: Reasonnable effort is made to keep the corner vertices on the exterior
+      of the chains, however some chains will have corners in their interior,
+      especially closed chains.
+
+  Returns:
+    Number of chains in edge_chains[].
+
+  Remarks:
+    When the orientation of the input edges is not intentionally set,
+    the versions of SortEdgesIntoEdgeChains() above without a minimum_chain_length
+    variable are a better choice.
+  */
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+  );
+
   /*
   Description:
     Sort edges into a chains
@@ -16262,25 +17143,92 @@ public:
 
   Returns:
     Number of chains in edge_chains[].
-  */
-  static unsigned int SortEdgesIntoEdgeChains(
-    const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
-    unsigned int minimum_chain_length,
-    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
-  );
 
+  Remarks:
+    When the orientation of the input edges is not intentionally set,
+    the versions of SortEdgesIntoEdgeChains() above without a minimum_chain_length
+    variable are a better choice.
+  */
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
     unsigned int minimum_chain_length,
     ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
 
+  /*
+  Description:
+    Sort edges into a chains
+
+  Parameters:
+    unsorted_edges - [in]
+      To sort an array in place, pass the same array as both parameters.
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      then all of the edges that share that vertex are ignored.
+      The edges can be from one or more SubDs.
+
+    unsigned int minimum_chain_length - [in]
+      minimum number of edges to consider for a chain.
+
+    edge_chains - [out]
+      The edge_chains[] has the edges grouped into edge chains.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      edge_chains[i].RelativeVertex(1) == edge_chains[i+1].RelativeVertex(0).
+
+      When edge_chains[i].RelativeVertex(1) != edge_chains[i+1].RelativeVertex(0),
+      a chain ends at edge_chains[i] and another begins at edge_chains[i+1].
+
+      The first edge in every chain has the same orientation as the input edge
+      from edge_chains[].
+
+  Returns:
+    Number of chains in edge_chains[].
+
+  Remarks:
+    When the orientation of the input edges is not intentionally set,
+    the versions of SortEdgesIntoEdgeChains() above without a minimum_chain_length
+    variable are a better choice.
+  */
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< ON_SubDComponentPtr >& unsorted_edges,
     unsigned int minimum_chain_length,
     ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
   );
 
+  /*
+  Description:
+    Sort edges into a chains
+
+  Parameters:
+    unsorted_edges - [in]
+      To sort an array in place, pass the same array as both parameters.
+      If unsorted_edges[] contains three or more edges that share a common vertex,
+      then all of the edges that share that vertex are ignored.
+      The edges can be from one or more SubDs.
+
+    unsigned int minimum_chain_length - [in]
+      minimum number of edges to consider for a chain.
+
+    edge_chains - [out]
+      The edge_chains[] has the edges grouped into edge chains.
+
+      In an edge chain subsequent edges share a common vertex; i.e.
+      edge_chains[i].RelativeVertex(1) == edge_chains[i+1].RelativeVertex(0).
+
+      When edge_chains[i].RelativeVertex(1) != edge_chains[i+1].RelativeVertex(0),
+      a chain ends at edge_chains[i] and another begins at edge_chains[i+1].
+
+      The first edge in every chain has the same orientation as the input edge
+      from edge_chains[].
+
+  Returns:
+    Number of chains in edge_chains[].
+
+  Remarks:
+    When the orientation of the input edges is not intentionally set,
+    the versions of SortEdgesIntoEdgeChains() above without a minimum_chain_length
+    variable are a better choice.
+  */
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SubD& subd,
     const ON_SimpleArray< ON_COMPONENT_INDEX >& unsorted_edges,
@@ -16321,6 +17269,15 @@ public:
     const ON_SimpleArray< ON_SubDComponentPtr >& edges,
     ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
+
+  /*
+  Returns:
+    A SHA1 hash of the edge and vertex ids. 
+    Useful for determining when two edge chains from different
+    subds (one generally a modified copy) involve the same
+    edges and vertices.
+  */
+  const ON_SHA1_Hash Hash() const;
 
 
   /////////////////////////////////////////////////////////
@@ -16447,6 +17404,75 @@ public:
     const ON_SubDEdgePtr* edge_chain,
     size_t edge_count,
     bool bCheckForDuplicateEdges
+  );
+
+
+  /*
+  Description:
+    Get the edges and faces on a specified side of the edge chain.
+  Parameters:
+    relative_side - [in]
+      0: Get edges and faces on the ON_SubDEdgePtr::RelativeFace(0) side (left).
+      1: Get edges and faces on the ON_SubDEdgePtr::RelativeFace(1) side (right).
+    
+    side_components - [out]
+      side_components[] is a sequence of made of vertices, edges, and faces that
+      record the edges and faces that are on the specified side of the edge chain.
+      
+      When a vertex is in side_components[], ON_SubDComponentPtr.Vertex() is not nullptr
+      and the vertex is between two conscutive edges in the edge chain.
+      
+      When an edge is in side_components[], ON_SubDComponentPtr.EdgePtr() is not nullptr,
+      the edge is on the specified side of the edge chain (not in the edge chain),
+      and ON_SubDComponentPtr.EdgePtr().RelativeVertex(0) is a vertex on the edge chain.
+      
+      When a face is in side_components[], ON_SubDComponentPtr.Face() is not nullptr,
+      then at least one vertex of f is part of the edge chain and f is on the specified
+      side of the edge chain.
+
+      If a vertex v is side_components[], then it is preceded and followed by the same
+      face (...f,v,f,...), there are consecutive edges in the edge chain (...e0,e1,...),
+      and e0 and e1 are consecutive edges in f's boundary.
+
+      If ...eptr0,f,eptr1,... is in side_components[], 
+      v0 = eptr0.RelativeVertex(0),
+      v1 = eptr0.RelativeVertex(0), 
+      and v0 == v1,
+      then eptr0 and eptr1 are conecutive edges in the boundary of f 
+      and v0==v1 is a vertex in the edge chain.
+
+      If ...eptr0,f,eptr1,... is in side_components[], 
+      v0 = eptr0.RelativeVertex(0),
+      v1 = eptr0.RelativeVertex(0), 
+      and v0 != v1,
+      then there is an edge c from v0 to v1 that is in the edge chain and
+      eptr0,c,eptr1 are conecutive edges in the boundary of f.
+
+      If ...eptr0,f,v,... is in side_components[] and v0 = eptr0.RelativeVertex(0),
+      and then v0 != v, then there is an edge c from v0 to v that is in the edge chain,
+      and eptr0,c are conecutive edges in the boundary of f.
+
+      If ...v,f,eptr1,... is in side_components[] and v1 = eptr1.RelativeVertex(0),
+      and then v != v1, then there is an edge c from v to v1 that is in the edge chain,
+      and c,eptr1 conecutive edges in the boundary of f.
+
+  Remarks:
+    If the SubD is not an oriented manifold along the entire side of the chain,
+    then there may be gaps in chain_side[]. When there are face fans at a chain
+    vertex, there will be faces that do not have an edge on the chain.
+  */
+  bool GetSideComponents(
+    unsigned relative_side,
+    ON_SimpleArray<ON_SubDComponentPtr>& side_components
+  ) const;
+
+  /*
+  See above.
+  */
+  static bool GetSideComponents(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edge_chain,
+    unsigned relative_side,
+    ON_SimpleArray<ON_SubDComponentPtr>& side_components
   );
 
 public:
@@ -16617,6 +17643,10 @@ public:
   const ON_SubDEdgePtr FirstEdgePtr() const;
   const ON_SubDEdgePtr LastEdgePtr() const;
   const ON_SubDEdgePtr EdgePtr(int edge_index) const;
+
+  const ON_3dPoint FirstControlNetPoint() const;
+  const ON_3dPoint LastControlNetPoint() const;
+  const ON_3dPoint ControlNetPoint(int vertex_index) const;
 
   const ON_SubDEdge* FirstEdge() const;
   const ON_SubDEdge* LastEdge() const;
@@ -16950,6 +17980,15 @@ public:
     ON_SubDComponentLocation vertex_location
   );
 
+  bool CreateSubDEmptyRTree(
+    const ON_SubD& subd
+  );
+
+  bool AddVertex(
+    const ON_SubDVertex* v,
+    ON_SubDComponentLocation vertex_location
+  );
+
   const ON_SubDVertex* FindVertexAtPoint(
     const ON_3dPoint P,
     const double distance_tolerance
@@ -16962,6 +18001,11 @@ public:
 
   const ON_SubDVertex* FindUnmarkedVertexAtPoint(
     const ON_3dPoint P,
+    const double distance_tolerance
+  ) const;
+
+  const ON_SubDVertex* FindVertex(
+    const class ON_SubDRTreeVertexFinder& vertex_finder,
     const double distance_tolerance
   ) const;
 
@@ -16988,6 +18032,8 @@ public:
   ON_SubDRTreeVertexFinder(const ON_SubDRTreeVertexFinder&) = default;
   ON_SubDRTreeVertexFinder& operator=(const ON_SubDRTreeVertexFinder&) = default;
 
+  static const ON_SubDRTreeVertexFinder Unset;
+
 public:
   static const ON_SubDRTreeVertexFinder Create(const ON_3dPoint P);
 
@@ -16999,6 +18045,20 @@ public:
   */
   static const ON_SubDRTreeVertexFinder Create(const ON_3dPoint P, bool bMarkFilter);
 
+  enum class MarkBitsFilter : unsigned char
+  {
+    None = 0,
+    Equal = 1,
+    NotEqual = 2
+  };
+
+  static const ON_SubDRTreeVertexFinder Create(
+    const ON_3dPoint P, 
+    ON_SubDRTreeVertexFinder::MarkBitsFilter mark_bits_filter,
+    ON__UINT8 mark_bits
+  );
+
+
 public:
   ON_3dPoint m_P = ON_3dPoint::NanPoint;
   double m_distance = ON_DBL_QNAN;
@@ -17008,14 +18068,17 @@ public:
   // to be found and vertices with Mark() != m_bMarkFilter are ignored.
   bool m_bMarkFilterEnabled = false;
   bool m_bMarkFilter = false;
+
+public:
+  ON_SubDRTreeVertexFinder::MarkBitsFilter m_mark_bits_filter = ON_SubDRTreeVertexFinder::MarkBitsFilter::None;
+  ON__UINT8 m_mark_bits = 0;
+
 private:
-  unsigned short m_reserved1 = 0;
   unsigned int m_reserved2 = 0;
 
 public:
 
   static bool Callback(void* a_context, ON__INT_PTR a_id);
-
  
 };
 

@@ -733,9 +733,6 @@ void ON_SubDComponentBase::Internal_TransformComponentBase(
   const class ON_Xform& xform
   )
 {
-  if (0 != ON_SUBD_CACHE_DISPLACEMENT_FLAG(m_saved_points_flags))
-    TransformVector(&xform.m_xform[0][0],m_displacement_V);
-
   if ( SavedSubdivisionPointIsSet() )
   {
     if (bTransformationSavedSubdivisionPoint)

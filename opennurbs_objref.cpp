@@ -558,6 +558,75 @@ bool ON_COMPONENT_INDEX::operator>=(const ON_COMPONENT_INDEX& other) const
   return (ON_COMPONENT_INDEX::Compare(this,&other) >= 0);
 }
 
+const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::Create(
+  ON_COMPONENT_INDEX ci,
+  double x
+)
+{
+  ON_ComponentIndexAndNumber cx;
+  cx.m_ci = ci;
+  cx.m_x = x;
+  return cx;
+}
+
+int ON_ComponentIndexAndNumber::CompareComponent(
+  const ON_ComponentIndexAndNumber* a,
+  const ON_ComponentIndexAndNumber* b
+)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1; // nulls sort last
+  if (nullptr == b)
+    return -1; // nulls sort last
+  return ON_COMPONENT_INDEX::Compare(&a->m_ci, &b->m_ci);
+}
+
+int ON_ComponentIndexAndNumber::CompareNumber(
+  const ON_ComponentIndexAndNumber* a,
+  const ON_ComponentIndexAndNumber* b
+)
+{
+  if (a == b)
+    return 0;
+  if (nullptr == a)
+    return -1; // nulls sort last
+  if (nullptr == b)
+    return -1; // nulls sort last
+  return ON_CompareDouble(a->m_x, b->m_x);
+}
+
+int ON_ComponentIndexAndNumber::CompareComponentAndNumber(
+  const ON_ComponentIndexAndNumber* a,
+  const ON_ComponentIndexAndNumber* b
+)
+{
+  const int rc = ON_ComponentIndexAndNumber::CompareComponent(a, b);
+  return (0 == rc) ? ON_ComponentIndexAndNumber::CompareNumber(a,b) : rc;
+}
+
+
+const ON_COMPONENT_INDEX ON_ComponentIndexAndNumber::Component() const
+{
+  return m_ci;
+}
+
+void ON_ComponentIndexAndNumber::SetComponent(ON_COMPONENT_INDEX ci)
+{
+  m_ci = ci;
+}
+
+double ON_ComponentIndexAndNumber::Number() const
+{
+  return m_x;
+}
+
+void ON_ComponentIndexAndNumber::SetNumber(double x)
+{
+  m_x = x;
+}
+
 ON_ObjRefEvaluationParameter::ON_ObjRefEvaluationParameter()
 : m_t_type(0)
 , m_reserved(0)

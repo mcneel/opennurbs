@@ -2658,7 +2658,7 @@ public:
         else
         {
           // this is an inteior edge of a partial fragment and it
-          // is alwasy sealed with its neighbor when it is created.
+          // is always sealed with its neighbor when it is created.
           break;
         }
       }

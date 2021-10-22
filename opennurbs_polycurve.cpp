@@ -3719,7 +3719,23 @@ bool ON_PolyCurve::SynchronizeSegmentDomains()
   return rc;
 }
 
+ON_Curve* ON_PolyCurve::ExplodeSingleSegmentCurve() const
 
+{
+  if (Count() != 1)
+    return 0;
+  ON_Curve* pSeg = SegmentCurve(0)->DuplicateCurve();
+  if (!pSeg)
+    return 0;
+  ON_PolyCurve* pSegPly = ON_PolyCurve::Cast(pSeg);
+  if (pSegPly){
+    delete pSeg;
+    return 0;
+  }
+  pSeg->SetDomain(Domain());
+  pSeg->CopyUserData(*this,ON_nil_uuid,ON_Object::UserDataConflictResolution::source_object);
+  return pSeg;
+}
 
 bool ON_PolyCurve::RemoveNesting( )
 {

@@ -317,22 +317,23 @@ enum ON_UnicodeCodePoint
   ON_BlackRecyclingSymbol = 0x267B,
 
   /// <summary>
-  /// BYTE ORDER MARK (BOM) U+FEFF
-  /// U+FEFF is used at the beginning of UTF encoded text to indicate the 
-  /// byte order being used. It is valid for UTF-8 encoded text to begin
-  /// with the UTF-8 encoding of U+FEFF (0xEF,0xBB,0xBF). 
-  /// This sometimes used to mark a char string as UTF-8 encoded.
-  /// and also occures when UTF-16 and UTF-32 encoded text with a byte 
-  /// order mark is converted to UTF-8 encoded text.
-  /// </summary>
-  ON_ByteOrderMark = 0xFEFF,
-
-  /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
   /// By convention, U+FFFD is used to mark string elements where 
   /// an invalid UTF code point encoding was encountered.
   /// </summary>
   ON_ReplacementCharacter = 0xFFFD,
+
+  /// <summary>
+  /// BYTE ORDER MARK (BOM) U+FEFF 
+  /// 0xFEFF is used at the beginning of UTF encoded text to indicate the 
+  /// byte order being used. It is valid for UTF-8 encoded text to begin
+  /// with the UTF-8 encoding of U+FEFF (0xEF,0xBB,0xBF). 
+  /// This sometimes used to mark a char string as UTF-8 encoded.
+  /// and also occures when UTF-16 and UTF-32 encoded text with a byte 
+  /// order mark is converted to UTF-8 encoded text.
+  /// The Unicode specification states that the 0xFFFE is &ltnot a character&gt.
+  /// </summary>
+  ON_ByteOrderMark = 0xFEFF,
 
   /// <summary>
   /// WASTEBASKET U+1F5D1 (&#x1f5d1;)
@@ -344,6 +345,7 @@ enum ON_UnicodeCodePoint
 
   /// <summary>
   /// The maximum valid unicode code point value is 0x10FFFF.
+  /// The Unicode specification states that 0x10FFFF is &ltnot a character&gt.
   /// </summary>
   ON_MaximumCodePoint = 0x10FFFF,
 
@@ -421,20 +423,18 @@ unsigned int ON_UTFSizeofByteOrderMark(
 
 /*
 Description:
-  Test a value to determine if it is a valid unicode code point value.
+  Test a value to determine if it is a valid Unicode code point value.
 Parameters:
   u - [in] value to test
 Returns:
-  true: u is a valid unicode code point
-  false: u is not a valid unicode code point
+  If u is valid Unicode code point, then true is returned. Otherwise false is returned.
 Remarks:
-  Valid unicode code point values u satisfy
-  (0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0x10FFFF)
+  This function returns true for the Unicode byte order mark U+FFFE.
 */
 ON_DECL
 int ON_IsValidUnicodeCodePoint(
-  ON__UINT32 u
-  );
+  ON__UINT32 unicode_code_point
+);
 
 /*
 Returns:
@@ -3588,9 +3588,12 @@ int ON_ConvertUTF32ToWideChar(
 /*
 Description:
   Convert a string from a Microsoft multibyte code page encoding 
-  to a wide string using the native platform's wchar_t encoding. 
+  to a wide string using UTF-8 / UTF-16 / UTF-32 encoding 
+  (depending on the size of wchar_t).
   This function is designed to be used to parse portions of 
-  rich text RTF in ON_TextContent and user interface code. 
+  rich text RTF in ON_TextContent, strings from outside sources
+  with known MBCS encodings, and some user interface code. 
+
   Opennnurbs assumes all other char strings are UTF-8 encoded.  
 
   If 1 = sizeof(wchar_t), then UTF-8 encoding is used for the
@@ -3606,14 +3609,14 @@ Description:
 
 Parameters:
   windows_code_page - [in]
-    THe windows code page specifices the encoding of the sMBCS string.
+    The windows code page specifices the encoding of the sMBCS string.
 
   sMBCS - [in]
     Windows multibyte string with encoding identified by windows_code_page.
 
   sMBCS_count - [in]
     If sMBCS_count >= 0, then it specifies the number of
-    char elements in sMBCS[] to convert.
+    char elements (bytes) in sMBCS[] to convert.
 
     If sMBCS_count == -1, then sMBCS must be a null terminated
     string and all the elements up to the first null element are
@@ -3671,6 +3674,91 @@ int ON_ConvertMSMBCPToWideChar(
     );
 
 
+/*
+Description:
+  Convert a string from UTF-8/UTF=16/UTF-32 encoding (depending on size of wchar_t)
+  to a Microsoft multibyte code page encoding.
+
+  This function is designed to be used to create strings that will
+  be used write files that require non-UTF encoded char strings.
+  
+  Opennnurbs assumes all other char strings are UTF-8 encoded.
+
+  If 1 = sizeof(wchar_t), then sWideChar must be UTF-8 encoded.
+
+  If 2 = sizeof(wchar_t), then sWideChar must be UTF-16 encoded.
+
+  If 4 = sizeof(wchar_t), then sWideChar must be UTF-16 or UTF-32 encoded.
+
+Parameters:
+  windows_code_page - [in]
+    THe windows code page specifices the encoding of the sMBCS string.
+
+  sWideChar - [out]
+    The input UTF encoded string. If sWideChar_count is -1, this string
+    must be null terminated. If sWideChar_count > 0, the string
+    must has sWideChar_count wchar_t elements that are a UTF encoding.
+
+  sWideChar_count - [in]
+    If sWideChar_capacity > 0, then it specifies the number of wchar_t
+    elements in the sWideChar[] to convert.
+
+    If sWideChar_count == -1, then sWideChar must be a null terminated
+    string and all the elements up to the first null element are
+    converted.
+
+  sMBCS - [out]
+    If sMBCS is not null and sMBCS_count > 0, then the
+    output MBCS encoded string is returned in this buffer. 
+    If there is room for the null terminator, the converted string 
+    will be null terminated. The null terminator is never included
+    in the count  of returned by this function. 
+
+  sMBCS_capacity - [in]
+    If sWideChar_capacity > 0, then it specifies the number of available
+    char elements (bytes) in the sMBCS[] buffer.
+
+    If sMBCS_capacity == 0, then the sMBCS parameter is ignored.
+
+  error_status - [out]
+    If error_status is not null, then bits of *error_status are
+    set to indicate the success or failure of the conversion.
+    When the error_mask parameter is used to used to mask some
+    conversion errors, multiple bits may be set.
+       0: Successful conversion with no errors.
+       1: The input parameters were invalid.
+          This error cannot be masked.
+       2: The ouput buffer was not large enough to hold the converted
+          string. As much conversion as possible is performed in this
+          case and the error cannot be masked.
+      16: An illegal encoding sequence occurred or a UNICODE codepoint
+          was encountered that cannot be encoded in the code page
+          specified by windows_code_page. In either case, a
+          a single question mark (?) in the output string
+          and parsing continues.
+
+Returns:
+  If sMBCS_capacity > 0, the return value is the number
+  MBCS encoded char elements written to sWideChar[]. 
+  When the return value < sMBCSChar_capacity,
+  a null terminator is written to sWideChar[return value].
+
+  If sMBCS_count == 0, the return value is the minimum number of
+  char elements that are needed to hold the MBCS encode string.
+  The return value does not include room for a null terminator.
+  Increment the return value by one if you want to have an element
+  to use for a null terminator.
+*/
+ON_DECL
+int ON_ConvertWideCharToMSMBCP(
+  const wchar_t* sWideChar,
+  int sWideChar_count,
+  ON__UINT32 windows_code_page,
+  char* sMBCS,
+  int sMBCS_capacity,
+  unsigned int* error_status
+);
+
 ON_END_EXTERNC
 
 #if defined(ON_CPLUSPLUS)
@@ -3702,6 +3790,36 @@ bool ON_Test_PrintPlatformMSSBCPToUnicodeTable(
   ON__UINT32 char_encoding1,
   ON_TextLog& text_log
 );
+
+/*
+Description:
+  Test a value to determine if it is a Unicode code point reserved for
+  private use (can be user defined).
+Parameters:
+  unicode_code_point - [in] value to test
+Returns:
+  If unicode_code_point is a private use Unicode code point, then true is returned. Otherwise false is returned.
+*/
+ON_DECL
+bool ON_IsPrivateUseUnicodeCodePoint(
+  ON__UINT32 unicode_code_point
+);
+
+/*
+Description:
+  Test a value to determine if it is a standard Unicode code point.
+Parameters:
+  unicode_code_point - [in] value to test
+Returns:
+  If unicode_code_point is a valid Unicode code point that is not reserved for private use
+  and not the Unicode byte order mark (U+FFFE), then true is returned.
+  Otherwise false is returned.
+*/
+ON_DECL
+bool ON_IsStandardUnicodeCodePoint(
+  ON__UINT32 unicode_code_point
+);
+
 
 /*
 Parameters:
@@ -3793,6 +3911,335 @@ unsigned ON_UnicodeSubscriptFromDigit(
   unsigned decimal_digit
 );
 
+/// <summary>
+/// ON_UnicodeShortCodePoint is a tool to use when working with Unicode code points 
+/// with values &lt=0xFFFF.
+/// Note that valid Unicode code point values can be as large as 0x10FFFD. 
+/// (0x10FFFE and 0x10FFFF are specified as &ltnot a character&gt by the Unicode Standard code chart
+/// https://www.unicode.org/charts/PDF/U10FF80.pdf)
+/// This class is used when converting between Unicode and BIG5 encodings and in other settings
+/// where Unicode code points &gt 0xFFFF are not encountered
+/// and the 2 byte size of ON_UnicodeShortCodePoint
+/// appreciably more  efficient that a 4 byte size of an unsigned int.
+/// </summary>
+class ON_CLASS ON_UnicodeShortCodePoint
+{
+public:
+  ON_UnicodeShortCodePoint() = default;
+  ~ON_UnicodeShortCodePoint() = default;
+  ON_UnicodeShortCodePoint(const ON_UnicodeShortCodePoint&) = default;
+  ON_UnicodeShortCodePoint& operator=(const ON_UnicodeShortCodePoint&) = default;
+
+public:
+  /// <summary>
+  /// ON_UnicodeShortCodePoint::NUll has a code point value = 0.
+  /// </summary>
+  static const ON_UnicodeShortCodePoint Null;
+
+  /// <summary>
+  /// ON_UnicodeShortCodePoint::ReplacementCharacter has a code point = U+FFFD.
+  /// </summary>
+  static const ON_UnicodeShortCodePoint ReplacementCharacter;
+
+  /// <summary>
+  /// ON_UnicodeShortCodePoint::ByteOrderMark has a code point value = 0xFFFE.
+  /// (0xFFFE is not a Unicode character code point.)
+  /// </summary>
+  static const ON_UnicodeShortCodePoint ByteOrderMark;
+
+  /// <summary>
+  /// ON_UnicodeShortCodePoint::Error has a code point value = 0xFFFF.
+  /// (0xFFFF is not a Unicode character code point.)
+  /// </summary>
+  static const ON_UnicodeShortCodePoint Error;
+    
+  /// <summary>
+  /// Creates a Unicode code point with the specified code point value. 
+  /// </summary>
+  /// <param name="unicode_code_point">
+  /// A valid Unicode code point.
+  /// </param>
+  /// <returns>
+  /// If unicode_code_point is &lt= 0xFFFE and a valid Unicode code point or
+  /// is the Unicode byte order mark (0xFFFE), then an instance with that
+  /// value as code point is returned.
+  /// Otherwise ON_UnicodeShortCodePoint::Error is returned.
+  /// Notes:
+  /// 1. Valid Unicode code points can be as large as 0x10FFFD and
+  /// ON_UnicodeShortCodePoint cannot accomodate code points &gt= U+10000.
+  /// 2. Values &gt= 0xD800 and &lt 0xE000 are not valid Unicode code points.
+  /// These values are used in UTF-16 surrogate pair encodings of code points &gt= U+10000.
+  /// </returns>
+  static const ON_UnicodeShortCodePoint Create(unsigned int unicode_code_point);
+
+  /// <summary>
+  /// Find a Unicode code point with the same character as big5_code_point.
+  /// </summary>
+  /// <param name="big5_code_point"></param>
+  /// <param name="not_available">Value to return when big5_code_point is valid but does not map to a Unicode code point.</param>
+  /// <returns>
+  /// If there is a corresponding BIG5 or ASCII code point, that code point is returned.
+  /// Otherwise, if big5_code_point is valid, not_available is returned. 
+  /// Otherwise ON_UnicodeShortCodePoint::Error is returned.
+  /// </returns>
+  static const ON_UnicodeShortCodePoint CreateFromBig5(
+    unsigned int big5_code_point,
+    ON_UnicodeShortCodePoint not_available
+  );
+
+  /// <summary>
+  /// Find a Unicode code point with the same character as big5_code_point.
+  /// </summary>
+  /// <param name="big5_code_point"></param>
+  /// <param name="not_available">Value to return when big5_code_point is valid but does not map to a Unicode code point.</param>
+  /// <returns>
+  /// If there is a corresponding BIG5 or ASCII code point, that code point is returned.
+  /// Otherwise, if big5_code_point is valid, not_available is returned. 
+  /// Otherwise ON_UnicodeShortCodePoint::Error is returned.
+  /// </returns>
+  static const ON_UnicodeShortCodePoint CreateFromBig5(
+    const class ON_Big5CodePoint& big5_code_point,
+    ON_UnicodeShortCodePoint not_available
+  );
+
+  /// <summary>
+  /// Determine if this Unicode code point is 0.
+  /// </summary>
+  /// <returns>True if the code point value is 0.</returns>
+  bool IsNull() const;
+
+  /// <summary>
+  /// The Unicode is a extension of ASCII encoding and code points &lt= 0x7F are valid Unicode code points.
+  /// </summary>
+  /// <param name="bNullIsASCII">
+  /// Value to return if this Unicode code point equal to ON_UnicodeShortCodePoint::Null. </param>
+  /// <returns>
+  /// True if the code point value &le= 0x7F.
+  /// </returns>
+  bool IsASCII(bool bNullIsASCII) const;
+
+  /// <summary>
+  /// Determine if the Unicode code point is valid. 
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if the code point value is 0.
+  /// </param>
+  /// <param name="bByteOrderMarkIsValid">
+  /// Value to return if the code point value is 0xFFFE.
+  /// </param>
+  /// <returns>True if the code point value is a valud Unicode code point.</returns>
+  bool IsValid(bool bNullIsValid, bool bByteOrderMarkIsValid) const;
+
+  /// <summary>
+  /// Unicode code points are separated into standard and private use (user defined) code points.
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if the code point value is 0.
+  /// </param>
+  /// <returns>Returns true this Unicode code point is a standard code point.</returns>
+  bool IsStandard(bool bNullIsValid) const;
+
+  /// <summary>
+  /// Unicode code points are separated into standard and private use (user defined) code points.
+  /// </summary>
+  /// <returns>True if this Unicode code point is a private use (user defined) code point.</returns>
+  bool IsPrivateUse() const;
+
+  /// <summary>
+  /// The Unicode code point U+FFFD is called the replacement character.
+  /// It is typically a light question mark with a dark diamond background.
+  /// It is often used to indicate a character is unknown, unavailable, does
+  /// not exist, or an error occured when creating that code point.
+  /// </summary>
+  /// <returns>True if this Unicode code point is U+FFFD.</returns>
+  bool IsReplacementCharacter() const;
+
+  /// <summary>
+  /// The Unicode code point value 0xFFFE os not a character and is used as a byte order mark.
+  /// </summary>
+  /// <returns>True if this Unicode code point value is 0xFFFE.</returns>
+  bool IsByteOrderMark() const;
+
+  unsigned int UnicodeCodePoint() const;
+
+  static int Compare(const ON_UnicodeShortCodePoint* lhs, const ON_UnicodeShortCodePoint* rhs);
+private:
+  ON__UINT16 m_unicode_code_point = 0;
+};
+
+ON_DECL bool operator==(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+ON_DECL bool operator!=(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+ON_DECL bool operator<=(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+ON_DECL bool operator>=(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+ON_DECL bool operator<(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+ON_DECL bool operator>(ON_UnicodeShortCodePoint lhs, ON_UnicodeShortCodePoint rhs);
+
+
+/// <summary>
+/// ON_Big5CodePoint is a tool to use when working with BIG5 encoded strings.
+/// </summary>
+class ON_CLASS ON_Big5CodePoint
+{
+public:
+  /// <summary>
+  /// ON_Big5CodePoint::NUll has a code point value = 0.
+  /// </summary>
+  static const ON_Big5CodePoint Null;
+
+  /// <summary>
+  /// ON_Big5CodePoint::Error has a code point value = 0xA3E1.
+  /// 0xA3E1 is in the BIG5 reserved section but old versions of Windows 
+  /// mapped it to the Euro currency symbol. The main use of this code is to translate
+  /// from legacy BIG5 to Unicode, so this anomaly is supported.
+  /// </summary>
+  static const ON_Big5CodePoint WindowsEuro;
+
+  /// <summary>
+  /// ON_Big5CodePoint::Error has a code point value = 0xFFFF.
+  /// (0xFFFF is not a valid BIG5 code point value.)
+  /// </summary>
+  static const ON_Big5CodePoint Error;
+
+  static const char* Decode(
+    const char* buffer,
+    size_t buffer_count,
+    bool bParseNull,
+    bool bParseASCII,
+    ON_Big5CodePoint* big5_code_point
+  );
+
+  enum : unsigned int
+  {
+    MinimumCodePoint = 0x8140,
+    MinimumPrivateUseCodePoint = 0x8140,
+    MinimumStandardCodePoint = 0x8140,
+    MaximumStandardCodePoint = 0xF9D5,
+    MaximumPrivateUseCodePoint = 0xFEFE,
+    MaximumCodePoint = 0xFEFE
+  };
+
+  int Encode(
+    char* buffer,
+    size_t buffer_capacity
+  ) const;
+
+  ON_Big5CodePoint() = default;
+  ~ON_Big5CodePoint() = default;
+  ON_Big5CodePoint(const ON_Big5CodePoint&) = default;
+  ON_Big5CodePoint& operator=(const ON_Big5CodePoint&) = default;
+
+  /// <summary>
+  /// Creates a BIG5 code point with the specified code point value. 
+  /// </summary>
+  /// <param name="big5_code_point">
+  /// A valid BIG5 code point, ASCII code point (0x00-0x7E), or the
+  /// old Windows Euro currency symbol code point 0xA3E1 in the reserved area.
+  /// </param>
+  /// <returns>
+  /// If big5_code_point is valid BIG5 code point or an ASCII code point,
+  /// then a ON_Big5CodePoint instance with that value as code point is returned.
+  /// Otherwise ON_Big5CodePoint::Error is returned.
+  /// </returns>
+  static const ON_Big5CodePoint Create(unsigned int big5_code_point);
+
+  /// <summary>
+  /// Find a BIG5 code point with the same character as unicode_code_point.
+  /// </summary>
+  /// <param name="unicode_code_point"></param>
+  /// <param name="not_available">Value to return when unicode_code_point is valid but does not mapt to a BIG5 code point.</param>
+  /// <returns>
+  /// If there is a corresponding BIG5 or ASCII code point, that code point is returned.
+  /// Otherwise, if unicode_code_point is valid, not_available is returned. 
+  /// Otherwise ON_Big5CodePoint::Error is returned.
+  /// </returns>
+  static const ON_Big5CodePoint CreateFromUnicode(
+    unsigned int unicode_code_point,
+    ON_Big5CodePoint not_available
+  );
+
+  /// <summary>
+  /// Find a BIG5 code point with the same character as unicode_code_point.
+  /// </summary>
+  /// <param name="unicode_code_point"></param>
+  /// <param name="not_available">Value to return when unicode_code_point is valid but does not mapt to a BIG5 code point.</param>
+  /// <returns>
+  /// If there is a corresponding BIG5 or ASCII code point, that code point is returned.
+  /// Otherwise, if unicode_code_point is valid, not_available is returned. 
+  /// Otherwise ON_Big5CodePoint::Error is returned.
+  /// </returns>
+  static const ON_Big5CodePoint CreateFromUnicode(
+    const class ON_UnicodeShortCodePoint& unicode_code_point,
+    ON_Big5CodePoint not_available
+  );
+
+  /// <summary>
+  /// Determine if this BIG5 code point is 0.
+  /// </summary>
+  /// <returns>True if the code point value is 0.</returns>
+  bool IsNull() const;
+
+  /// <summary>
+  /// Strictly speaking, BIG5 does not extend ASCII, but it is common to mix 
+  /// single bytes ASCII and double byte BIG5 encodings in the same char string.
+  /// BIG5 is a double byte string encoding with the first byte in the range 0x81 to 0xFE, the
+  /// minimum BIG5 code point is 0x8140 and the maximum BIG5 code point is 0xFEFE.
+  /// Thus it is possible to mix ASCII and BIG5 encodings in the same char string.
+  /// </summary>
+  /// <param name="bNullIsASCII">
+  /// Value to return if this BIG5 code point equal to ON_Big5CodePoint::Null. </param>
+  /// <returns>
+  /// True if the code point value &le= 0x7F.
+  /// </returns>
+  bool IsASCII(bool bNullIsASCII) const;
+
+  /// <summary>
+  /// Determine if the pair of code points is valid. 
+  /// If the values for BIG5 and Unicode code point values are &lt 0xFF and equal, the pair is considered valid. 
+  /// Use IsASCII() if you need to treat nonzero ASCII code points differently.
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if the code point value is 0.
+  /// </param>
+  /// <param name="bASCIICodePointIsValid">
+  /// Value to return if the code point value is an ASCII code point (&lt= 0x7F).
+  /// </param>
+  /// <returns>True if the code point value is a valud BIG5 code point.</returns>
+  bool IsValid(bool bNullIsValid, bool bASCIICodePointIsValid) const;
+
+  /// <summary>
+  /// BIG5 code points in the ranges0xA140-0xA3Bf, 0xA440-0xC67E, and 0xC940-0xF9D5 
+  /// are standard code points.
+  /// </summary>
+  /// <param name="bNullIsValid">
+  /// Value to return if the code point value is 0.
+  /// </param>
+  /// <param name="bASCIICodePointIsValid">
+  /// Value to return if the code point value is an ASCII code point (&lt= 0x7F).
+  /// </param>
+  /// <returns>Returns true this BIG5 code point is a standard code point.</returns>
+  bool IsStandard(bool bNullIsValid, bool bASCIICodePointIsValid) const;
+
+  /// <summary>
+  /// BIG5 code points in the ranges 0xC6A1-0xC8FE, 0xC6A1-0xC8FE, and 0xF9D6-0xFEFE 
+  /// are for private use (user defined characters).
+  /// </summary>
+  /// <returns>True if this BIG5 code point is a private use (user defined) code point.</returns>
+  bool IsPrivateUse() const;
+
+  unsigned int Big5CodePoint() const;
+
+  static int Compare(const ON_Big5CodePoint* lhs, const ON_Big5CodePoint* rhs);
+
+private:
+  ON__UINT16 m_big5_code_point = 0;
+};
+
+ON_DECL bool operator==(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
+ON_DECL bool operator!=(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
+ON_DECL bool operator<=(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
+ON_DECL bool operator>=(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
+ON_DECL bool operator<(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
+ON_DECL bool operator>(ON_Big5CodePoint lhs, ON_Big5CodePoint rhs);
 
 #endif
 #endif
