@@ -6,6 +6,13 @@ project(OpenNURBS CXX C)
 file(GLOB OpenNURBS_SOURCE "${CMAKE_SOURCE_DIR}/*.h"
      "${CMAKE_SOURCE_DIR}/*.cpp")
 
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  list(REMOVE_ITEM OpenNURBS_SOURCE
+       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp932.cpp")
+  list(REMOVE_ITEM OpenNURBS_SOURCE
+       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
+endif()
+
 # OpenGL dependency
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   list(REMOVE_ITEM OpenNURBS_SOURCE
