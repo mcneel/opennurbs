@@ -61,8 +61,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Linux specific
 
   # Linux compiler definitions
-  target_compile_definitions(opennurbs PRIVATE ON_RUNTIME_LINUX
-                                               ON_CLANG_CONSTRUCTOR_BUG)
+  target_compile_definitions(opennurbs PRIVATE ON_RUNTIME_LINUX)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+  target_compile_definitions(opennurbs PRIVATE ON_COMPILER_CLANG)
 endif()
 
 # Dependencies
