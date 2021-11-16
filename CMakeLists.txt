@@ -94,6 +94,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   target_link_libraries(opennurbs PRIVATE shlwapi)
 endif()
 
+# cross_dirent
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  target_include_directories(
+    opennurbs PRIVATE "${CMAKE_SOURCE_DIR}/cross_dirent/include/")
+endif()
+
 # Set the outputs of OpenNURBS CMake
 set(OpenNURBS_LIBRARY ${opennurbs})
 set(OpenNURBS_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/opennurbs")
