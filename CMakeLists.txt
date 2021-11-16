@@ -6,6 +6,21 @@ project(OpenNURBS CXX C)
 file(GLOB OpenNURBS_SOURCE "${CMAKE_SOURCE_DIR}/*.h"
      "${CMAKE_SOURCE_DIR}/*.cpp")
 
+# OpenGL dependency
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  list(REMOVE_ITEM OpenNURBS_SOURCE
+       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp932.cpp")
+  list(REMOVE_ITEM OpenNURBS_SOURCE
+       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
+endif()
+
+# remove opennurbs_gl if no opengl
+find_package(OpenGL)
+if(NOT OPENGL_FOUND)
+  message(WARNING "OpenGL not found. Excluding opennurbs_gl")
+  list(REMOVE_ITEM OpenNURBS_SOURCE "${CMAKE_SOURCE_DIR}/opennurbs_gl.cpp")
+endif()
+
 # Build the opennurbs library
 option(opennurbs_SHARED "Build shared libraries" OFF)
 if(${opennurbs_SHARED})
@@ -100,10 +115,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 # uuid on non-linux/android - clang
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES
+                                              ".*Clang")
   # uuid/uuid.h is required by opennurbs
   find_package(uuid REQUIRED)
   target_include_directories(opennurbs PRIVATE ${uuid_INCLUDE_DIRS})
+endif()
+
+# OpenGL
+if(OPENGL_FOUND)
+  target_link_libraries(opennurbs PRIVATE ${OpenGL_LIBRARIES})
 endif()
 
 # Set the outputs of OpenNURBS CMake
