@@ -32,9 +32,25 @@ There's also a collection of [example 3dm files](example_files/) available for t
 
 1. Clone the repository 
 2. `cd` to the root directory of the repository.
-3. Run `cmake -S ./ -B ./build` to configure the CMake files.
-Note: if [ninja-build](https://ninja-build.org/) is installed, use `cmake -S ./ -B ./build -G Ninja` to speed up the build speed.
-4. Run `cmake --build ./build --config Release` to build the library.
+3. Run the following to configure the CMake files.
+```
+cmake -S ./ -B ./build
+```
+   
+   Note: if [ninja-build](https://ninja-build.org/) is installed, you can specify `Ninja` to speed up the build:
+   ```
+    cmake -S ./ -B ./build -G Ninja 
+   ```
+   
+   Note: To use Ninja with the Visual Studio Compiler, open the MSVC command prompt (or run `vcvarsall.bat`), and run:
+   ```
+    cmake -S ./ -B ./build -G "Ninja Multi-Config" -D CMAKE_CXX_COMPILER=cl -D CMAKE_C_COMPILER=cl
+   ```
+
+4. Finally, run the following to build the library.
+```
+cmake --build ./build --config Release
+```
 
 
 ## Questions?
