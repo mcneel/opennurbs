@@ -33,16 +33,8 @@ option(opennurbs_SHARED "Build shared libraries" OFF)
 if(${opennurbs_SHARED})
   # if dynamic
 
-  # Cannot build as shared library on Linux
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(
-      FATAL_ERROR
-        "Building OpenNURBS as a shared library is not supported on Linux")
-  endif()
-
-  # Generate a shared library
+  # opennurbs shared library
   add_library(opennurbs SHARED ${OpenNURBS_SOURCE})
-  set_target_properties(opennurbs PROPERTIES DEBUG_POSTFIX "d")
 
   # define opennurbs_EXPORTS
   target_compile_definitions(opennurbs PRIVATE opennurbs_EXPORTS)
@@ -92,23 +84,29 @@ endif()
 # Dependencies
 
 # zlib
-if(NOT ${opennurbs_ZLIB_LIB_DIR})
-  # build zlib as static library (bundled with OpenNURBS)
+option(opennurbs_EXTERNAL_ZLIB, "use external zlib package" OFF)
+if(${opennurbs_EXTERNAL_ZLIB} OR ${opennurbs_ZLIB_LIB_DIR})
+  message(STATUS "Using external ZLIB")
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(opennurbs PRIVATE ZLIB::ZLIB)
+  target_compile_definitions(ZLIB::ZLIB PRIVATE MY_ZCALLOC Z_PREFIX)
+  get_target_property(opennurbs_ZLIB_LIB_DIR ZLIB::ZLIB
+                      LIBRARY_OUTPUT_DIRECTORY)
+  target_compile_definitions(
+    opennurbs PRIVATE opennurbs_ZLIB_LIB_DIR="${opennurbs_ZLIB_LIB_DIR}")
+else()
+  # build zlib (bundled with OpenNURBS)
   file(GLOB ZLIB_SOURCE "${CMAKE_SOURCE_DIR}/zlib/*.h"
        "${CMAKE_SOURCE_DIR}/zlib/*.c")
-  add_library(zlib STATIC ${ZLIB_SOURCE})
+  add_library(zlib ${ZLIB_SOURCE})
   target_compile_definitions(zlib PRIVATE MY_ZCALLOC Z_PREFIX)
-  target_compile_definitions(
-    opennurbs
-    PRIVATE
-      opennurbs_ZLIB_LIB_DIR="${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
-else()
+  set(opennurbs_ZLIB_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
   target_compile_definitions(
     opennurbs PRIVATE opennurbs_ZLIB_LIB_DIR=${opennurbs_ZLIB_LIB_DIR})
+  target_link_libraries(opennurbs PRIVATE zlib)
 endif()
 # zlib-specific flags for opennurbs
 target_compile_definitions(opennurbs PRIVATE MY_ZCALLOC Z_PREFIX)
-target_link_libraries(opennurbs PRIVATE zlib)
 
 # shlwapi on windows
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -132,6 +130,13 @@ endif()
 # OpenGL
 if(OPENGL_FOUND)
   target_link_libraries(opennurbs PRIVATE ${OpenGL_LIBRARIES})
+endif()
+
+# Suppress -Wdefaulted-function-deleted on Clang
+if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+  # TODO fix this
+  message(WARNING "Suppressing -Wdefaulted-function-deleted for opennurbs")
+  target_compile_options(opennurbs PRIVATE -Wno-defaulted-function-deleted)
 endif()
 
 # Set the outputs of OpenNURBS CMake
