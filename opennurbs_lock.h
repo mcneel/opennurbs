@@ -112,8 +112,8 @@ private:
   //         needs to have dll-interface to be used by clients of class 'ON_Lock'
   // m_lock_value is private and all code that manages m_lock_value is explicitly implemented in the DLL.
 private:
-#if defined(ON_COMPILER_CLANG)
-    std::atomic<int> m_lock_value;
+#if defined(ON_CLANG_CONSTRUCTOR_BUG_INIT)
+  std::atomic<int> m_lock_value;
 #else
   std::atomic<int> m_lock_value = ON_Lock::UnlockedValue;
 #endif
