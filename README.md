@@ -28,6 +28,15 @@ Please see ["Getting started"](https://developer.rhino3d.com/guides/opennurbs/ge
 
 There's also a collection of [example 3dm files](example_files/) available for testing.
 
+# Building Using CMake:
+
+1. Clone the repository 
+2. `cd` to the root directory of the repository.
+3. Run `cmake -S ./ -B ./build` to configure the CMake files.
+Note: if [ninja-build](https://ninja-build.org/) is installed, use `cmake -S ./ -B ./build -G Ninja` to speed up the build speed.
+4. Run `cmake --build ./build --config Release` to build the library.
+
+
 ## Questions?
 
 For technical support, please head over to [Discourse](https://discourse.mcneel.com/category/opennurbs).
