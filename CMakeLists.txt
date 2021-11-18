@@ -100,6 +100,9 @@ else()
        "${CMAKE_SOURCE_DIR}/zlib/*.c")
   add_library(zlib ${ZLIB_SOURCE})
   target_compile_definitions(zlib PRIVATE MY_ZCALLOC Z_PREFIX)
+  set_target_properties(
+    zlib PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
+                    "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
   set(opennurbs_ZLIB_LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
   target_compile_definitions(
     opennurbs PRIVATE opennurbs_ZLIB_LIB_DIR=${opennurbs_ZLIB_LIB_DIR})
@@ -119,7 +122,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     opennurbs PRIVATE "${CMAKE_SOURCE_DIR}/cross_dirent/include/")
 endif()
 
-# uuid with clang on non-linux, android, windows 
+# uuid with clang on non-linux, android, windows
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
    AND NOT CMAKE_SYSTEM_NAME STREQUAL "Windows"
    AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")

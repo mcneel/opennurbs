@@ -39,7 +39,7 @@ cmake -S ./ -B ./build
    
    Note: if [ninja-build](https://ninja-build.org/) is installed, you can specify `Ninja` to speed up the build:
    ```
-    cmake -S ./ -B ./build -G Ninja 
+    cmake -S ./ -B ./build -G "Ninja Multi-Config" 
    ```
    
    Note: To use Ninja with the Visual Studio Compiler, open the MSVC command prompt (or run `vcvarsall.bat`), and run:
