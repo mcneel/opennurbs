@@ -13,31 +13,30 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
        "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
 endif()
 
-# OpenGL dependency
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  list(REMOVE_ITEM opennurbs_SOURCE
-       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp932.cpp")
-  list(REMOVE_ITEM opennurbs_SOURCE
-       "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
-endif()
-
 # remove opennurbs_gl if no opengl
 find_package(OpenGL)
-if(NOT OPENGL_FOUND)
+if(NOT ${OPENGL_FOUND})
   message(WARNING "OpenGL not found. Excluding opennurbs_gl")
   list(REMOVE_ITEM opennurbs_SOURCE "${CMAKE_SOURCE_DIR}/opennurbs_gl.cpp")
 endif()
 
 # Build the opennurbs library
-option({OPENNURBS_SHARED "Build shared libraries" OFF)
+option(OPENNURBS_SHARED "Build shared libraries" OFF)
 if(${OPENNURBS_SHARED})
   # if dynamic
 
   # opennurbs shared library
   add_library(opennurbs SHARED ${opennurbs_SOURCE})
 
-  # define opennurbs_EXPORTS
-  target_compile_definitions(opennurbs PRIVATE opennurbs_EXPORTS)
+  # define opennurbs_EXPORTS to compile as a shared library
+  target_compile_definitions(opennurbs PRIVATE OPENNURBS_EXPORTS
+                                               ON_COMPILING_OPENNURBS)
+
+  # define OPENNURBS_IMORTS for the usage of the library
+  message(
+    WARNING
+      "Define `OPENNURBS_IMORTS` when using the opennurbs.dll before including opennurbs_public.h\n  target_compile_definitions(main PUBLIC OPENNURBS_IMPORTS)"
+  )
 else()
   # if static
 
@@ -52,13 +51,15 @@ else()
     # Need to combine all source files for static linking on non-windows
     add_library(opennurbs STATIC ${UUID_SRC} ${opennurbs_SOURCE})
   endif()
+
+  # define ON_COMPILING_OPENNURBS to compile as a static library
+  target_compile_definitions(opennurbs PRIVATE ON_COMPILING_OPENNURBS)
 endif()
 
 # compile definitions
 target_compile_definitions(
   opennurbs
   PRIVATE
-    ON_COMPILING_OPENNURBS
     OPENNURBS_INPUT_LIBS_DIR="${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>"
     UNICODE)
 
@@ -132,8 +133,8 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
 endif()
 
 # OpenGL
-if(OPENGL_FOUND)
-  target_link_libraries(opennurbs PRIVATE ${OpenGL_LIBRARIES})
+if(${OPENGL_FOUND})
+  target_link_libraries(opennurbs PRIVATE OpenGL::GL OpenGL::GLU)
 endif()
 
 # Suppress -Wdefaulted-function-deleted on Clang

@@ -28,7 +28,7 @@ Please see ["Getting started"](https://developer.rhino3d.com/guides/opennurbs/ge
 
 There's also a collection of [example 3dm files](example_files/) available for testing.
 
-# Building Using CMake:
+## Building Using CMake:
 
 1. Clone the repository 
 2. `cd` to the root directory of the repository.
@@ -50,6 +50,25 @@ cmake -S ./ -B ./build
 4. Finally, run the following to build the library.
 ```
 cmake --build ./build --config Release
+```
+
+### Build as a shared library with CMake 
+
+To build as a DLL with Visual Studio, you should add `-DOPENNURBS_SHARED=ON` to the command of step `3`:
+```
+cmake -S ./ -B ./build -DOPENNURBS_SHARED=ON
+```
+
+or with Ninja
+```
+cmake -S ./ -B ./build -G "Ninja Multi-Config" -D CMAKE_CXX_COMPILER=cl -D CMAKE_C_COMPILER=cl -DOPENNURBS_SHARED=ON
+```
+
+Build as usual as we described in step 4.
+
+When using the dll, define `OPENNURBS_IMPORTS` before including `opennurbs_public.h`
+```cmake
+target_compile_definitions(main PUBLIC OPENNURBS_IMPORTS)
 ```
 
 
