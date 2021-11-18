@@ -145,4 +145,4 @@ endif()
 
 # Set the outputs of opennurbs CMake
 set(opennurbs_LIBRARY ${opennurbs})
-set(opennurbs_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/opennurbs")
+set(opennurbs_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}")
