@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(OpenNURBS CXX C)
+project(opennurbs CXX C)
 
-# OpenNURBS source
-file(GLOB OpenNURBS_SOURCE "${CMAKE_SOURCE_DIR}/*.h"
+# opennurbs source
+file(GLOB opennurbs_SOURCE "${CMAKE_SOURCE_DIR}/*.h"
      "${CMAKE_SOURCE_DIR}/*.cpp")
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  list(REMOVE_ITEM OpenNURBS_SOURCE
+  list(REMOVE_ITEM opennurbs_SOURCE
        "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp932.cpp")
-  list(REMOVE_ITEM OpenNURBS_SOURCE
+  list(REMOVE_ITEM opennurbs_SOURCE
        "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
 endif()
 
 # OpenGL dependency
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  list(REMOVE_ITEM OpenNURBS_SOURCE
+  list(REMOVE_ITEM opennurbs_SOURCE
        "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp932.cpp")
-  list(REMOVE_ITEM OpenNURBS_SOURCE
+  list(REMOVE_ITEM opennurbs_SOURCE
        "${CMAKE_SOURCE_DIR}/opennurbs_unicode_cp949.cpp")
 endif()
 
@@ -25,16 +25,16 @@ endif()
 find_package(OpenGL)
 if(NOT OPENGL_FOUND)
   message(WARNING "OpenGL not found. Excluding opennurbs_gl")
-  list(REMOVE_ITEM OpenNURBS_SOURCE "${CMAKE_SOURCE_DIR}/opennurbs_gl.cpp")
+  list(REMOVE_ITEM opennurbs_SOURCE "${CMAKE_SOURCE_DIR}/opennurbs_gl.cpp")
 endif()
 
 # Build the opennurbs library
-option(opennurbs_SHARED "Build shared libraries" OFF)
-if(${opennurbs_SHARED})
+option({OPENNURBS_SHARED "Build shared libraries" OFF)
+if(${OPENNURBS_SHARED})
   # if dynamic
 
   # opennurbs shared library
-  add_library(opennurbs SHARED ${OpenNURBS_SOURCE})
+  add_library(opennurbs SHARED ${opennurbs_SOURCE})
 
   # define opennurbs_EXPORTS
   target_compile_definitions(opennurbs PRIVATE opennurbs_EXPORTS)
@@ -42,7 +42,7 @@ else()
   # if static
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_library(opennurbs STATIC ${OpenNURBS_SOURCE})
+    add_library(opennurbs STATIC ${opennurbs_SOURCE})
   else()
     # Include UUID source (bundled with opennurbs)
     file(GLOB UUID_SRC "${CMAKE_SOURCE_DIR}/android_uuid/*.h"
@@ -50,7 +50,7 @@ else()
     list(REMOVE_ITEM UUID_SRC "${CMAKE_SOURCE_DIR}/android_uuid/gen_uuid_nt.c")
 
     # Need to combine all source files for static linking on non-windows
-    add_library(opennurbs STATIC ${UUID_SRC} ${OpenNURBS_SOURCE})
+    add_library(opennurbs STATIC ${UUID_SRC} ${opennurbs_SOURCE})
   endif()
 endif()
 
@@ -84,18 +84,18 @@ endif()
 # Dependencies
 
 # zlib
-option(opennurbs_EXTERNAL_ZLIB, "use external zlib package" OFF)
-if(${opennurbs_EXTERNAL_ZLIB} OR ${opennurbs_ZLIB_LIB_DIR})
+option({OPENNURBS_EXTERNAL_ZLIB, "use external zlib package" OFF)
+if(${OPENNURBS_EXTERNAL_ZLIB} OR ${OPENNURBS_ZLIB_LIB_DIR})
   message(STATUS "Using external ZLIB")
   find_package(ZLIB REQUIRED)
   target_link_libraries(opennurbs PRIVATE ZLIB::ZLIB)
   target_compile_definitions(ZLIB::ZLIB PRIVATE MY_ZCALLOC Z_PREFIX)
-  get_target_property(opennurbs_ZLIB_LIB_DIR ZLIB::ZLIB
+  get_target_property(OPENNURBS_ZLIB_LIB_DIR ZLIB::ZLIB
                       LIBRARY_OUTPUT_DIRECTORY)
   target_compile_definitions(
-    opennurbs PRIVATE opennurbs_ZLIB_LIB_DIR="${opennurbs_ZLIB_LIB_DIR}")
+    opennurbs PRIVATE OPENNURBS_ZLIB_LIB_DIR="${OPENNURBS_ZLIB_LIB_DIR}")
 else()
-  # build zlib (bundled with OpenNURBS)
+  # build zlib (bundled with opennurbs)
   file(GLOB ZLIB_SOURCE "${CMAKE_SOURCE_DIR}/zlib/*.h"
        "${CMAKE_SOURCE_DIR}/zlib/*.c")
   add_library(zlib ${ZLIB_SOURCE})
@@ -143,6 +143,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
   target_compile_options(opennurbs PRIVATE -Wno-defaulted-function-deleted)
 endif()
 
-# Set the outputs of OpenNURBS CMake
-set(OpenNURBS_LIBRARY ${opennurbs})
-set(OpenNURBS_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/opennurbs")
+# Set the outputs of opennurbs CMake
+set(opennurbs_LIBRARY ${opennurbs})
+set(opennurbs_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/opennurbs")
