@@ -803,7 +803,7 @@ int ON_String::FormatVargsIntoBuffer(
   if (0 == buffer || buffer_capacity <= 0)
     return -1;
   buffer[0] = 0;
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);
@@ -854,7 +854,7 @@ int ON_String::FormatVargsOutputCount(
   if ( nullptr == format || 0 == format[0] )
     return 0;
 
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
   // CLang modifies args so a copy is required
   va_list args_copy;
   va_copy (args_copy, args);

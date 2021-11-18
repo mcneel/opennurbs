@@ -1343,7 +1343,7 @@ public:
 
   static bool Validate_sprintf_l()
   {
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1368,7 +1368,7 @@ public:
 
   static bool Validate_sprintf_s_l()
   {
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted printing
     char buffer[64] = { 0 };
@@ -1422,7 +1422,7 @@ public:
 
   static bool Validate_sscanf_l()
   {
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
@@ -1447,7 +1447,7 @@ public:
 
   static bool Validate_sscanf_s_l()
   {
-#if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
