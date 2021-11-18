@@ -119,9 +119,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     opennurbs PRIVATE "${CMAKE_SOURCE_DIR}/cross_dirent/include/")
 endif()
 
-# uuid on non-linux/android - clang
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES
-                                              ".*Clang")
+# uuid with clang on non-linux, android, windows 
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
+   AND NOT CMAKE_SYSTEM_NAME STREQUAL "Windows"
+   AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
   # uuid/uuid.h is required by opennurbs
   find_package(uuid REQUIRED)
   target_include_directories(opennurbs PRIVATE ${uuid_INCLUDE_DIRS})

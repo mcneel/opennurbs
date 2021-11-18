@@ -85,7 +85,7 @@ int ON_String::ScanBufferVargs(
   va_list args
   )
 {
-#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (nullptr == buffer || nullptr == format)
     return -1;
@@ -398,7 +398,7 @@ const char* ON_String::ToNumber(
   local_buffer[local_buffer_count++] = 0;
 
   double x = value_on_failure;
-#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (1 == sscanf(local_buffer, "%lg", &x))
   {
@@ -660,7 +660,7 @@ const wchar_t* ON_wString::ToNumber(
   local_buffer[local_buffer_count++] = 0;
 
   double x = value_on_failure;
-#if defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)
+#if (defined(ON_COMPILER_CLANG) || defined(ON_RUNTIME_LINUX)) && !defined(ON_RUNTIME_WIN)
 #if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
   if (1 == sscanf(local_buffer, "%lg", &x))
   {
