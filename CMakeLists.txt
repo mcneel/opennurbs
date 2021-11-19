@@ -137,8 +137,15 @@ endif()
 
 # cross_dirent
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  target_include_directories(
-    opennurbs PRIVATE "${CMAKE_SOURCE_DIR}/cross_dirent/include/")
+  find_path(DIRENT_INCLUDE_DIR dirent.h)
+  if(${DIRENT_INCLUDE_DIR_FOUND})
+    target_include_directories(opennurbs PRIVATE ${DIRENT_INCLUDE_DIR_FOUND})
+  else()
+    file(DOWNLOAD https://github.com/tronkko/dirent/raw/1.23.2/include/dirent.h
+         ${CMAKE_CURRENT_BINARY_DIR}/_deps/dirent/include/dirent.h)
+    target_include_directories(
+      opennurbs PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/_deps/dirent/include/")
+  endif()
 endif()
 
 # uuid with clang on non-linux, android, windows
