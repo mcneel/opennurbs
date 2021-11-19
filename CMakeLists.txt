@@ -128,8 +128,43 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
    AND NOT CMAKE_SYSTEM_NAME STREQUAL "Windows"
    AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
   # uuid/uuid.h is required by opennurbs
-  find_package(uuid REQUIRED)
-  target_include_directories(opennurbs PRIVATE ${uuid_INCLUDE_DIRS})
+  message(STATUS "Finding uuid library")
+  find_package(UUID QUIET)
+  if(${UUID_FOUND})
+    target_include_directories(opennurbs PRIVATE ${UUID_INCLUDE_DIRS})
+  else()
+    # find uuid manually
+    if(NOT UUID_INCLUDE_DIR)
+      find_path(UUID_INCLUDE_DIR uuid/uuid.h)
+    endif()
+    if(EXISTS "${UUID_INCLUDE_DIR}")
+      include(CheckCXXSymbolExists)
+
+      set(UUID_INCLUDE_DIRS ${UUID_INCLUDE_DIR})
+      set(CMAKE_REQUIRED_INCLUDES ${UUID_INCLUDE_DIRS})
+      check_cxx_symbol_exists("uuid_generate_random" "uuid/uuid.h"
+                              _uuid_header_only)
+      if(NOT _uuid_header_only AND NOT UUID_LIBRARY)
+        include(CheckLibraryExists)
+        check_library_exists("uuid" "uuid_generate_random" "" _have_libuuid)
+        if(_have_libuuid)
+          set(UUID_LIBRARY "uuid")
+        endif()
+      endif()
+    endif()
+
+    if(UUID_LIBRARY)
+      set(UUID_LIBRARIES ${UUID_LIBRARY})
+    endif()
+
+    unset(CMAKE_REQUIRED_INCLUDES)
+
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(uuid DEFAULT_MSG UUID_INCLUDE_DIR)
+
+    # finally include it
+    target_include_directories(opennurbs PRIVATE ${UUID_INCLUDE_DIRS})
+  endif()
 endif()
 
 # OpenGL
