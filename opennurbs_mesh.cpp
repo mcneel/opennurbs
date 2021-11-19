@@ -14831,7 +14831,9 @@ bool ON_MeshCache::Transform(
     ON_Mesh* mesh = item->m_mesh_sp.get();
     if (nullptr == mesh || mesh->IsEmpty())
       continue;
-    if (false == item->m_mesh_sp.unique())
+    // NOTE: use_count() == 1 is an approximation in multi-threaded environments
+    // https:// en.cppreference.com/w/cpp/memory/shared_ptr/unique
+    if (false == item->m_mesh_sp.use_count() == 1)
     {
       // make a copy and transform the copy
       std::shared_ptr<ON_Mesh>(new ON_Mesh(*mesh)).swap(item->m_mesh_sp);
