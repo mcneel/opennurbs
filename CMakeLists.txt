@@ -23,6 +23,8 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CXX_LATEST_STANDARD}")
 # opennurbs source
 file(GLOB opennurbs_SOURCE "${CMAKE_SOURCE_DIR}/*.h"
      "${CMAKE_SOURCE_DIR}/*.cpp")
+# exclude the examples
+list(FILTER opennurbs_SOURCE EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/example*")
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   list(REMOVE_ITEM opennurbs_SOURCE
@@ -61,10 +63,14 @@ else()
   if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_library(opennurbs STATIC ${opennurbs_SOURCE})
   else()
-    # Include UUID source (bundled with opennurbs)
-    file(GLOB UUID_SRC "${CMAKE_SOURCE_DIR}/android_uuid/*.h"
-         "${CMAKE_SOURCE_DIR}/android_uuid/*.c")
-    list(REMOVE_ITEM UUID_SRC "${CMAKE_SOURCE_DIR}/android_uuid/gen_uuid_nt.c")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL
+                                             "Android")
+      # Include UUID source (bundled with opennurbs)
+      file(GLOB UUID_SRC "${CMAKE_SOURCE_DIR}/android_uuid/*.h"
+           "${CMAKE_SOURCE_DIR}/android_uuid/*.c")
+      list(REMOVE_ITEM UUID_SRC
+           "${CMAKE_SOURCE_DIR}/android_uuid/gen_uuid_nt.c")
+    endif()
 
     # Need to combine all source files for static linking on non-windows
     add_library(opennurbs STATIC ${UUID_SRC} ${opennurbs_SOURCE})
