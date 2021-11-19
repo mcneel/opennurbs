@@ -34,18 +34,20 @@ There's also a collection of [example 3dm files](example_files/) available for t
 2. `cd` to the root directory of the repository.
 3. Run the following to configure the CMake files.
 ```
-cmake -S ./ -B ./build
+cmake -S ./ -B ./build -DCMAKE_FIND_FRAMEWORK=LAST
 ```
    
    Note: if [ninja-build](https://ninja-build.org/) is installed, you can specify `Ninja` to speed up the build:
    ```
-    cmake -S ./ -B ./build -G "Ninja Multi-Config" 
+    cmake -S ./ -B ./build -G "Ninja Multi-Config" -DCMAKE_FIND_FRAMEWORK=LAST
    ```
    
    Note: To use Ninja with the Visual Studio Compiler, open the MSVC command prompt (or run `vcvarsall.bat`), and run:
    ```
     cmake -S ./ -B ./build -G "Ninja Multi-Config" -D CMAKE_CXX_COMPILER=cl -D CMAKE_C_COMPILER=cl
    ```
+
+   Note: `-DCMAKE_FIND_FRAMEWORK=LAST` fixes the issue of the MacOS compilers that choose an incorrect framework to build system headers.
 
 4. Finally, run the following to build the library.
 ```
