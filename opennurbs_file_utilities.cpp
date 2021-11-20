@@ -37,7 +37,7 @@
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
 #include <Shlobj.h>
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
-#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+#if (defined(_M_X64) || defined(_M_ARM64)) && defined(WIN32) && defined(WIN64)
 // Shlwapi.h, Shlobj.h and perhaps others, unconditionally define WIN32
 #undef WIN32
 #endif
@@ -3302,13 +3302,13 @@ void ON_ContentHash::Dump(
 
     const ON_wString content_time
       = ( m_content_time <= 0 )
-      ? L"unknown"
+      ? static_cast<ON_wString>(L"unknown")
       : SecondsSinceJanOne1970UTCToString(m_content_time);
     text_log.Print(L"Content last modified time = %ls\n",static_cast<const wchar_t*>(content_time));
 
     const ON_wString hash_time
       = ( m_hash_time <= 0 )
-      ? L"unknown"
+      ? static_cast<ON_wString>(L"unknown")
       : SecondsSinceJanOne1970UTCToString(m_hash_time);
     text_log.Print(L"Content hash calculated time = %ls\n",static_cast<const wchar_t*>(content_time));
 

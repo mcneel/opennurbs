@@ -49,6 +49,8 @@ cmake -S ./ -B ./build -DCMAKE_FIND_FRAMEWORK=LAST
 
    Note: `-DCMAKE_FIND_FRAMEWORK=LAST` fixes the issue of the MacOS compilers that choose an incorrect framework to build system headers.
 
+   Note: Additionally, pass `-A ARM64` to build for ARM64. 
+
 4. Finally, run the following to build the library.
 ```
 cmake --build ./build --config Release
