@@ -2065,18 +2065,18 @@ public:
   std::shared_ptr<ONX_Model> ReadWriteReadModel() const;
 
 
- private:
-   ONX_ModelTest::Type m_test_type = ONX_ModelTest::Type::Unset;
+private:
+  ONX_ModelTest::Type m_test_type = ONX_ModelTest::Type::Unset;
 
-   ON_wString m_source_3dm_file_path;
+  ON_wString m_source_3dm_file_path;
 
-   // if set, used when printing the name of m_source_3dm_file_path in the text
-   // log so results from different computers can be compared.
-   ON_wString m_text_log_3dm_file_path;
+  // if set, used when printing the name of m_source_3dm_file_path in the text
+  // log so results from different computers can be compared.
+  ON_wString m_text_log_3dm_file_path;
 
-   unsigned int m_model_3dm_file_version[3];
+  unsigned int m_model_3dm_file_version[3] = {0};
 
-   unsigned int m_current_test_index = 0;
+  unsigned int m_current_test_index = 0;
 
   ONX_ModelTest::Result m_test_result = ONX_ModelTest::Result::Unset;
   ONX_ModelTest::Result m_test_results[7] = {};
