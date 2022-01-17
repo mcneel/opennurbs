@@ -1176,6 +1176,12 @@ bool ON_Mesh::GetTightBoundingBox(
 
 	// Now just add verticies of the clipped mesh
 	int vcnt = VertexCount();
+
+  // 16 Sept 2021, Mikko, RH-49510:
+  // Bail out if the mesh is bogus. In the associated youtrack item
+  // this fixes the bounding box of a block being way too big.
+  if (vcnt < 3)
+    return false;
 	
 	// n = number of clipping planes.  At most 32 clipping planes are allowed so that this function can use unsigned int
 	// to represent the 32 clip predicates.

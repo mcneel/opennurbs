@@ -237,6 +237,9 @@ public:
 
   bool Reverse();
 
+  // // absolute value of maximum coordinate
+  double MaximumCoordinate() const;
+
   // Description:
   //   Get a four span rational degree 2 NURBS circle representation
   //   of the circle.

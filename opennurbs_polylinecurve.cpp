@@ -172,7 +172,8 @@ ON_PolylineCurve::SwapCoordinates( int i, int j )
 bool ON_PolylineCurve::IsValid( ON_TextLog* text_log ) const
 {
   const int count = PointCount();
-  if ( count >= 2 && count == m_t.Count() ) 
+  bool rc = (count >= 2 && count == m_t.Count());
+  if (rc)
   {
     if ( !m_pline.IsValid() )
     {
@@ -213,7 +214,7 @@ bool ON_PolylineCurve::IsValid( ON_TextLog* text_log ) const
     return ON_IsNotValid();
   }
 
-  return true;
+  return rc;
 }
 
 void ON_PolylineCurve::Dump( ON_TextLog& dump ) const

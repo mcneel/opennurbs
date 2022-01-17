@@ -2284,6 +2284,11 @@ double ON_2fPoint::DistanceTo( const ON_2fPoint& p ) const
   return ON_Length2d(p.x-x,p.y-y);
 }
 
+double ON_2fPoint::DistanceToSquared(const ON_2fPoint& p) const
+{
+  return ON_Length2dSquared(p.x - x, p.y - y);
+}
+
 int ON_2fPoint::MaximumCoordinateIndex() const
 {
   return (fabs(y)>fabs(x)) ? 1 : 0;
@@ -2721,6 +2726,11 @@ float& ON_3fPoint::operator[](unsigned int i)
 double ON_3fPoint::DistanceTo( const ON_3fPoint& p ) const
 {
   return ON_Length3d(p.x-x,p.y-y,p.z-z);
+}
+
+double ON_3fPoint::DistanceToSquared(const ON_3fPoint& p) const
+{
+  return ON_Length3dSquared(p.x - x, p.y - y, p.z - z);
 }
 
 int ON_3fPoint::MaximumCoordinateIndex() const
@@ -4496,6 +4506,11 @@ double ON_2dPoint::DistanceTo( const ON_2dPoint& p ) const
   return ON_Length2d(p.x-x,p.y-y);
 }
 
+double ON_2dPoint::DistanceToSquared(const ON_2dPoint& p) const
+{
+  return ON_Length2dSquared(p.x - x, p.y - y);
+}
+
 int ON_2dPoint::MaximumCoordinateIndex() const
 {
   return (fabs(y)>fabs(x)) ? 1 : 0;
@@ -4951,6 +4966,11 @@ double& ON_3dPoint::operator[](unsigned int i)
 double ON_3dPoint::DistanceTo( const ON_3dPoint& p ) const
 {
   return ON_Length3d(p.x-x,p.y-y,p.z-z);
+}
+
+double ON_3dPoint::DistanceToSquared(const ON_3dPoint& p) const
+{
+  return ON_Length3dSquared(p.x - x, p.y - y, p.z - z);
 }
 
 int ON_3dPoint::MaximumCoordinateIndex() const
@@ -5803,6 +5823,11 @@ double ON_Length2d( double x, double y )
   return len;
 }
 
+double ON_Length2dSquared(double x, double y)
+{
+  return (x * x + y * y);
+}
+
 double ON_2dVector::Length() const
 {
   return ON_Length2d(x,y);
@@ -6407,6 +6432,11 @@ double ON_Length3d(double x, double y, double z)
     len = 0.0;
 
   return len;
+}
+
+double ON_Length3dSquared(double x, double y, double z)
+{
+  return (x * x + y * y + z * z);
 }
 
 double ON_3dVector::Length() const

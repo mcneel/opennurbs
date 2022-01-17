@@ -281,10 +281,17 @@ bool ON_TextContent::GetRichTextFontTable(
     int font_pos = rich_text.Find(L"\\f", i);
     if (font_pos > i)
     {
+      bool pos_passed_fnumber = false;
+      int fnumber_len = 2; // the \f
       for (int j = font_pos + 2; j < table_len; j++)
       {
-        if (rtf[j] == L' ')
+        if (rtf[j] != L' ' && !pos_passed_fnumber)
         {
+          fnumber_len++;
+        }
+        else
+        {
+          pos_passed_fnumber = true;
           for (int si = 0; si + j < table_len; si++)
           {
             if (rich_text[si + j] != L' ')
@@ -297,7 +304,11 @@ bool ON_TextContent::GetRichTextFontTable(
           {
             if (rtf[ni + j] == L';' || rtf[ni + j] == L'}')
             {
-              font_table.AppendNew() = rich_text.SubString(j, ni);
+              ON_wString fn = ON_wString(rich_text.SubString(font_pos, fnumber_len));
+              // only add the font if it's actually used in the rtf string
+              if (rich_text.Find(fn, table_len) != -1) {
+                font_table.AppendNew() = rich_text.SubString(j, ni);
+              }
               i = ni + j;
               j = len;
               break;
