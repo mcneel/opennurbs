@@ -1881,6 +1881,49 @@ int ON_Intersect(
                   );
 
 
+// Description:
+//   Intersect a pair of circles
+// Parameters:
+//   circle0 - [in]
+//   circle11 - [in]
+//   point0 - [out] first intersection point 
+//   point1 - [out] second intersection point
+// Returns:
+//   0     No intersection
+//   1     One intersection at point0
+//   2     Two intersections at point0
+//         and point1.
+//	 3		 Circles are identical
+ON_DECL
+int ON_Intersect(
+  const ON_Circle& c0,
+  const ON_Circle& c1,
+  ON_3dPoint& point0,
+  ON_3dPoint& point1
+);
+ 
+
+// Description:
+//   Intersect a pair of arcs, note either arc could be a full circle
+// Parameters:
+//   arc0 - [in]
+//   arc1 - [in]
+//   point0 - [out] first intersection point 
+//   point1 - [out] second intersection point
+// Returns:
+//   0     No intersection
+//   1     One intersection at point0
+//   2     Two intersections at point0
+//         and point1.
+//	 3		 arcs are cocircular and overlap
+ON_DECL
+int ON_Intersect(
+  const ON_Arc& arc0,
+  const ON_Arc& arc1,
+  ON_3dPoint& point0,
+  ON_3dPoint& point1
+);
+
 // returns 0 = no, 1 = yes, 2 = points are coincident and on line
 ON_DECL
 int ON_ArePointsOnLine(
@@ -2262,12 +2305,27 @@ ON_DECL double ON_Length2d( double x, double y );
 
 /*
 Descripton:
+  Return the squared length of a 2d vector (x,y)
+Returns:
+ (x^2 + y^2)
+*/
+ON_DECL double ON_Length2dSquared(double x, double y);
+
+/*
+Descripton:
   Return the length of a 3d vector (x,y,z)
 Returns:
  sqrt(x^2 + y^2 + z^2) calculated in as precisely and safely as possible.
 */
 ON_DECL double ON_Length3d( double x, double y, double z );
 
+/*
+Descripton:
+  Return the squared length of a 3d vector (x,y,z)
+Returns:
+ (x^2 + y^2 + z^2)
+*/
+ON_DECL double ON_Length3dSquared(double x, double y, double z);
 
 /*
 Description:

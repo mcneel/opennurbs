@@ -469,6 +469,7 @@ public:
   void Set(double x,double y);
 
   double DistanceTo( const ON_2dPoint& ) const;
+  double DistanceToSquared(const ON_2dPoint&) const;
 
   int MaximumCoordinateIndex() const;
   double MaximumCoordinate() const; // absolute value of maximum coordinate
@@ -675,6 +676,7 @@ public:
   void Set(double x,double y,double z);
 
   double DistanceTo( const ON_3dPoint& ) const;
+  double DistanceToSquared(const ON_3dPoint&) const;
 
   int MaximumCoordinateIndex() const;
   double MaximumCoordinate() const; // absolute value of maximum coordinate

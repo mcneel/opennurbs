@@ -8987,6 +8987,7 @@ void ON_Brep::DeleteFace(ON_BrepFace& face, bool bDeleteFaceEdges )
         DeleteLoop(loop,bDeleteFaceEdges);
       }
     }
+    DestroyRegionTopology();
   }
 
   face.m_si = -1;
@@ -9564,6 +9565,8 @@ bool ON_Brep::CullUnusedFaces()
     }
   }
   m_F.Shrink();
+  if (m_F.Count() < fcount)
+    DestroyRegionTopology();
   return rc;
 }
 

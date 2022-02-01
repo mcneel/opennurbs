@@ -550,6 +550,11 @@ bool ON_Circle::Reverse()
   return true;
 }
 
+double ON_Circle::MaximumCoordinate() const
+{
+  return  plane.origin.MaximumCoordinate() + radius;
+}
+
 int ON_Circle::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 {
   int rc = 0;

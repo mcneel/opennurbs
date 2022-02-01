@@ -523,8 +523,9 @@ bool ON_Dimension::Internal_ReadDimension(
       break;
     if (!archive.ReadDouble(&m_distance_scale))
       break;
-    if (ON_nil_uuid == m_detail_measured)
-      m_distance_scale = 1.0;
+    // 24-Sep-2021 Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-65605
+    //if (ON_nil_uuid == m_detail_measured)
+    //  m_distance_scale = 1.0;
 
     if (content_version <= 0)
     {

@@ -2937,6 +2937,22 @@ void ON_HistoryRecord::RemapObjectIds( const ON_SimpleArray<ON_UuidPair>& id_rem
             uuid_v->m_value[j] = id_remap[index].m_uuid[1];
         }
       }
+      // 27 Oct 2021, Mikko, RH-66102:
+      // Polyedge values contain objrefs and also need remapping.
+      // This fixes history replay not working properly on BlendSrf and others
+      // when importing/pasting.
+      else if (v && ON_Value::polyedge_value == v->m_value_type)
+      {
+        ON_PolyEdgeHistoryValue* objrev_v = static_cast<ON_PolyEdgeHistoryValue*>(v);
+        for (j = 0; j < objrev_v->m_value.Count(); j++)
+        {
+          int k;
+          for (k = 0; k < objrev_v->m_value[j].m_segment.Count(); k++)
+          {
+            objrev_v->m_value[j].m_segment[k].m_curve_ref.RemapObjectId(id_remap);
+          }
+        }
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+
 //
 // Copyright (c) 1993-2015 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -4337,6 +4338,42 @@ const ON_Font* ON_FontList::FromNames(
   );
 }
 
+const ON_Font* ON_FontList::FromNames2(
+  const wchar_t* postscript_name,
+  const wchar_t* windows_logfont_name,
+  const wchar_t* en_windows_logfont_name,
+  const wchar_t* family_name,
+  const wchar_t* en_family_name,
+  const wchar_t* prefered_face_name,
+  const wchar_t* en_prefered_face_name,
+  ON_Font::Weight prefered_weight,
+  ON_Font::Stretch prefered_stretch,
+  ON_Font::Style prefered_style,
+  bool bRequireFaceMatch,
+  bool bRequireStyleMatch
+) const
+{
+  const bool bMatchUnderlineStrikethroughAndPointSize = false;
+  return Internal_FromNames2(
+    postscript_name,
+    windows_logfont_name,
+    en_windows_logfont_name,
+    family_name,
+    en_family_name,
+    prefered_face_name,
+    en_prefered_face_name,
+    prefered_weight,
+    prefered_stretch,
+    prefered_style,
+    bRequireFaceMatch,
+    bRequireStyleMatch,
+    bMatchUnderlineStrikethroughAndPointSize,
+    false,
+    false,
+    0.0
+  );
+}
+
 const ON_Font* ON_FontList::FromNames(
   const wchar_t* postscript_name,
   const wchar_t* windows_logfont_name,
@@ -4387,6 +4424,45 @@ const ON_Font* ON_FontList::Internal_FromNames(
   double point_size
 ) const
 {
+  return Internal_FromNames2(
+    postscript_name,
+    windows_logfont_name,
+    windows_logfont_name,
+    family_name,
+    family_name,
+    prefered_face_name,
+    prefered_face_name,
+    prefered_weight,
+    prefered_stretch,
+    prefered_style,
+    bRequireFaceMatch,
+    bRequireStyleMatch,
+    bMatchUnderlineStrikethroughAndPointSize,
+    bUnderlined,
+    bStrikethrough,
+    point_size
+  );
+}
+
+const ON_Font* ON_FontList::Internal_FromNames2(
+  const wchar_t* postscript_name,
+  const wchar_t* windows_logfont_name,
+  const wchar_t* en_windows_logfont_name,
+  const wchar_t* family_name,
+  const wchar_t* en_family_name,
+  const wchar_t* prefered_face_name,
+  const wchar_t* en_prefered_face_name,
+  ON_Font::Weight prefered_weight,
+  ON_Font::Stretch prefered_stretch,
+  ON_Font::Style prefered_style,
+  bool bRequireFaceMatch,
+  bool bRequireStyleMatch,
+  bool bMatchUnderlineStrikethroughAndPointSize,
+  bool bUnderlined,
+  bool bStrikethrough,
+  double point_size
+) const
+{
   if (ON_Font::Stretch::Unset == prefered_stretch)
     bRequireStyleMatch = false;
 
@@ -4414,15 +4490,18 @@ const ON_Font* ON_FontList::Internal_FromNames(
 
   key.m_loc_windows_logfont_name = windows_logfont_name;
   key.m_loc_windows_logfont_name.TrimLeftAndRight();
-  key.m_en_windows_logfont_name = key.m_loc_windows_logfont_name;
+  key.m_en_windows_logfont_name = en_windows_logfont_name;
+  key.m_en_windows_logfont_name.TrimLeftAndRight();
 
   key.m_loc_family_name = family_name;
   key.m_loc_family_name.TrimLeftAndRight();
-  key.m_en_family_name = key.m_loc_family_name;
+  key.m_en_family_name = en_family_name;
+  key.m_en_family_name.TrimLeftAndRight();
 
   key.m_loc_face_name = prefered_face_name;
   key.m_loc_face_name.TrimLeftAndRight();
-  key.m_en_face_name = key.m_loc_face_name;
+  key.m_en_face_name = en_prefered_face_name;
+  key.m_en_face_name.TrimLeftAndRight();
 
   key.m_font_weight = prefered_weight;
   key.m_font_stretch = prefered_stretch;
@@ -4748,11 +4827,17 @@ const ON_Font* ON_FontList::FromFontProperties(
   bool bRequireStyleMatch
 ) const
 {
-  return FromNames(
+  ON_wString en_fam_name = font_properties->FamilyName(ON_Font::NameLocale::English);
+  ON_wString en_face_name = font_properties->FaceName(ON_Font::NameLocale::English);
+  ON_wString en_win_log_font_name = font_properties->WindowsLogfontName(ON_Font::NameLocale::English);
+  return FromNames2(
     font_properties->PostScriptName(m_name_locale),
     font_properties->WindowsLogfontName(m_name_locale),
+    en_win_log_font_name,
     font_properties->FamilyName(m_name_locale),
+    en_fam_name,
     font_properties->FaceName(m_name_locale),
+    en_face_name,
     font_properties->FontWeight(),
     font_properties->FontStretch(),
     font_properties->FontStyle(),
@@ -5714,7 +5799,9 @@ bool ON_Font::IsInstalledFont() const
 bool ON_Font::IsManagedInstalledFont() const
 {
   const ON__UINT_PTR bits = 3;
-  return IsManagedFont() && (1 == (m_managed_installed_font_and_bits & bits));
+  bool ism = IsManagedFont();
+  //return IsManagedFont() && (1 == (m_managed_installed_font_and_bits & bits));
+  return ism && (1 == (m_managed_installed_font_and_bits & bits));
 }
 
 bool ON_Font::IsManagedSubstitutedFont() const
@@ -6340,6 +6427,9 @@ void ON_Font::Internal_CopyFrom(
     m_logfont_charset = src.m_logfont_charset;
 
     m_locale_name = src.m_locale_name;
+  if (!m_locale_name.EqualOrdinal(L"en-US", true) && !m_locale_name.EqualOrdinal(L"", true)) {
+    m_locale_name = "ja-JP";
+  }
 
     m_loc_postscript_name = src.m_loc_postscript_name;
     m_en_postscript_name = src.m_en_postscript_name;
@@ -10341,6 +10431,9 @@ ON_Font::ON_Font(
   m_font_origin = ON_Font::Origin::WindowsFont;
 
   m_locale_name = dwrite_font_information.m_prefered_locale;
+  if (!m_locale_name.EqualOrdinal(L"en-US", true) && !m_locale_name.EqualOrdinal(L"", true)) {
+    m_locale_name = "ja-JP";
+  }
 
   m_loc_postscript_name = dwrite_font_information.m_loc_postscript_name;
   m_en_postscript_name = dwrite_font_information.m_en_postscript_name;

@@ -16,6 +16,7 @@
 
 #include "opennurbs.h"
 
+
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -847,15 +848,15 @@ int ON_Intersect(
   double d1, d0 = line_point0.DistanceTo(circle_point0);
   if ( xcnt == 2 ) 
   {
-    line_point1 = line.PointAt(*line_t1);
-    circle_point1 = circle.ClosestPointTo(line_point1);
-    d1 = line_point1.DistanceTo(circle_point1);
+  line_point1 = line.PointAt(*line_t1);
+  circle_point1 = circle.ClosestPointTo(line_point1);
+  d1 = line_point1.DistanceTo(circle_point1);
   }
   else
   {
-    line_point1 = line_point0;
-    circle_point1 = circle_point0;
-    d1 = d0;
+  line_point1 = line_point0;
+  circle_point1 = circle_point0;
+  d1 = d0;
   }
   if ( xcnt==2 && (d0 > tol && d1 > tol) )
   {
@@ -882,56 +883,283 @@ int ON_Intersect(
   return xcnt;
 }
 
-int ON_Intersect( 
-                  const ON_Plane& plane, 
-                  const ON_Circle& circle,
-                  ON_3dPoint& point0,
-                  ON_3dPoint& point1
+int ON_Intersect(
+  const ON_Plane& plane,
+  const ON_Circle& circle,
+  ON_3dPoint& point0,
+  ON_3dPoint& point1
                   )
 {
-	int rval = -1;
-	ON_Line xline;
+  int rval = -1;
+  ON_Line xline;
 	double a,b;
-	bool rc = ON_Intersect(plane, circle.Plane(), xline);
+  bool rc = ON_Intersect(plane, circle.Plane(), xline);
 	if(rc)
-	{
-		rval = ON_Intersect(xline, circle, &a, point0, &b, point1); 
-	}
-	else
-	{
+  {
+    rval = ON_Intersect(xline, circle, &a, point0, &b, point1);
+  }
+  else
+  {
 		double d = plane.plane_equation.ValueAt( circle.Center() );
 		if(d<ON_ZERO_TOLERANCE)
 			rval =3;
-		else 
-			rval = 0;
-	}
-	return rval;
+    else
+      rval = 0;
+  }
+  return rval;
 }
 
-int ON_Intersect( 
-                  const ON_Plane& plane, 
-                  const ON_Arc& arc,
-                  ON_3dPoint& point0,
-                  ON_3dPoint& point1
+int ON_Intersect(
+  const ON_Plane& plane,
+  const ON_Arc& arc,
+  ON_3dPoint& point0,
+  ON_3dPoint& point1
                   )
 {
-	int rval = -1;
-	ON_Line xline;
+  int rval = -1;
+  ON_Line xline;
 	double a,b;
-	bool rc = ON_Intersect(plane, arc.Plane(), xline);
+  bool rc = ON_Intersect(plane, arc.Plane(), xline);
 	if(rc)
-	{
-		rval = ON_Intersect(xline, arc, &a, point0, &b, point1); 
-	}
-	else
-	{
+  {
+    rval = ON_Intersect(xline, arc, &a, point0, &b, point1);
+  }
+  else
+  {
 		double d = plane.plane_equation.ValueAt( arc.StartPoint() );
 		if(d<ON_ZERO_TOLERANCE)
 			rval =3;
-		else 
-			rval = 0;
-	}
-	return rval;
+    else
+      rval = 0;
+  }
+  return rval;
+}
+
+
+int ON_Intersect(
+  const ON_Circle& C0,
+  const ON_Circle& C1,
+  ON_3dPoint& P0,
+  ON_3dPoint& P1)
+{
+  P0 = P1 = ON_3dPoint::UnsetPoint;
+  int xcnt = -1;
+
+  const double costol = ON_ZERO_TOLERANCE;
+  double scale0 = C0.MaximumCoordinate();
+  double abstol = C1.MaximumCoordinate();
+  if (abstol < scale0)
+    abstol = scale0;
+  abstol *= ON_RELATIVE_TOLERANCE;
+  if (abstol < ON_ZERO_TOLERANCE)
+    abstol = ON_ZERO_TOLERANCE;
+  
+
+  bool parallel = (fabs(C0.plane.Normal() * C1.plane.Normal()) > 1 - costol);   // todo pretty loose and insensitive
+  bool coplanar = parallel && (C0.plane.DistanceTo(C1.plane.origin) < abstol);
+  if (coplanar)
+  {
+    const ON_Circle* C[2] = { &C0, &C1 };
+    if (C1.Radius() >= C0.Radius())
+    {
+      C[0] = &C1;
+      C[1] = &C0;
+    }
+    double R0 = C[0]->Radius();       // largest radius
+    double R1 = C[1]->Radius();
+
+    ON_3dVector D = C[1]->Center() - C[0]->Center();
+    double d = D.Length();
+
+    if (d > abstol)
+    {
+      D.Unitize();
+      ON_3dVector Dperp = ON_CrossProduct(D, C[0]->Normal());
+
+      if (d > R0 + R1 + abstol)
+        xcnt = 0;                 // disks are disjoint
+      else if (d + R1 + abstol < R0)
+        xcnt = 0;                 // small disk is in interior of large disk
+      else
+      {
+        double d1 = (R0 * R0 - R1 * R1 + d * d) / (2 * d);
+        double a1 = R0 * R0 - d1 * d1;
+        if (a1 < 0)
+          a1 = 0;
+       
+        a1 = sqrt(a1);
+
+        if (a1 < .5 * abstol)
+        {
+          xcnt = 1;
+          P0 = C[0]->Center() + d1 * D;
+        }
+        else
+        {
+          xcnt = 2;
+          P0 = C[0]->Center() + d1 * D + a1 * Dperp;
+          P1 = C[0]->Center() + d1 * D - a1 * Dperp;
+        }
+      }
+    }
+    else if (R0 - R1 < abstol)
+      xcnt = 3;
+    else
+      xcnt = 0;
+  }
+  else if (!parallel)
+  {
+    ON_Line  PxP;
+    if (ON_Intersect(C0.plane, C1.plane, PxP))
+    {
+      ON_3dPoint CxL[2][2]; 
+
+      double t0, t1;
+      int x0 = ON_Intersect( PxP, C0,  &t0, CxL[0][0], &t1, CxL[0][1] );
+      int x1 = ON_Intersect( PxP, C1,  &t0, CxL[1][0], &t1, CxL[1][1] );
+      xcnt = 0;
+      for (int i = 0; i < x0; i++)
+      {
+        int j;
+        for (j = 0; j < x1; j++)
+        {
+          if(ON_PointsAreCoincident(3,false,CxL[0][i], CxL[1][j]))
+            break;
+        }
+        if (j < x1)
+        {
+          (xcnt?P0:P1) = CxL[0][i];
+          xcnt++;
+        }
+      }
+
+    }
+  }
+  return xcnt;
+}
+
+
+
+int ON_Intersect(
+  const ON_Arc& A0,
+  const ON_Arc& A1,
+  ON_3dPoint& P0,
+  ON_3dPoint& P1)
+{
+  P0 = P1 = ON_3dPoint::UnsetPoint;
+  ON_3dPoint* P[] = { &P0, &P1 };
+  int xcnt = 0;
+
+  const double costol = ON_ZERO_TOLERANCE;
+  double scale0 = A0.MaximumCoordinate();
+  double abstol = A1.MaximumCoordinate();
+  if (abstol < scale0)
+    abstol = scale0;
+  abstol *= ON_RELATIVE_TOLERANCE;
+  if (abstol < ON_ZERO_TOLERANCE)
+    abstol = ON_ZERO_TOLERANCE;
+
+
+  ON_3dPoint CCX[2];
+  int cxcnt = ON_Intersect(static_cast<const ON_Circle&>(A0), static_cast<const ON_Circle&>(A1), CCX[0], CCX[1]);
+  if ( cxcnt < 3)
+  {
+    for (int i = 0; i < cxcnt; i++)
+    {
+      double t;
+      if (A0.ClosestPointTo(CCX[i], &t))
+      {
+        if (CCX[i].DistanceTo(A0.PointAt(t)) < abstol)
+        {
+          if (A1.ClosestPointTo(CCX[i], &t))
+          {
+            if (CCX[i].DistanceTo(A1.PointAt(t)) < abstol)
+              *P[xcnt++] = CCX[i];
+          }
+        }
+      }
+    }
+  }
+  else if (cxcnt == 3)
+  {
+    // circle doesn't degenerate to a point
+    // order arcs by size
+    const  ON_Arc* Size[] = { &A0, &A1 };     //Size[0]<=Size[1]
+    if (A0.Domain().Length() > A1.Domain().Length())
+    {
+      Size[0] = &A1;
+      Size[1] = &A0;
+    }
+
+    // Match ends of smaller to larger arc
+    double LittleEndMatch[2];  // relative to Big ArcBig,  0-start, 1-end , .5 (interior),  -1 ( exterior)
+
+    ON_Interval BigInterior = Size[1]->Domain();    // interior domain of big arc
+    if (!BigInterior.Expand(-abstol / Size[1]->Radius()))         // circles are not degenerate
+      BigInterior = ON_Interval::Singleton(Size[1]->Domain().Mid());
+    
+    for (int ei = 0; ei < 2; ei++)
+    {
+      double t;
+      ON_3dPoint LittleEnd = ei ? Size[0]->EndPoint() : Size[0]->StartPoint();
+      if (Size[1]->ClosestPointTo(LittleEnd, &t))
+      {
+        switch (BigInterior.Clamp(t))
+        {
+        case(-1):
+          if (Size[1]->StartPoint().DistanceTo(LittleEnd) < abstol)
+            LittleEndMatch[ei] = 0;   // start
+          else
+            LittleEndMatch[ei] = -1;  // exterior
+          break;
+        case(0):
+          LittleEndMatch[ei] = .5;    // interior
+          break;
+        case(1):
+          if (Size[1]->EndPoint().DistanceTo(LittleEnd) < abstol)
+            LittleEndMatch[ei] = 1;       // end
+          else
+            LittleEndMatch[ei] = -1;     // exterior
+          break;
+        }
+      }
+    }
+
+    if (LittleEndMatch[0] == .5 || LittleEndMatch[1] == .5)
+      xcnt = 3;     // an interior match means an overlap
+    else if (LittleEndMatch[0] == -1 && LittleEndMatch[1] == -1)
+      xcnt = 0;     // both points exterior means  intersection is empty
+    else if (LittleEndMatch[0] == -1)
+      *P[xcnt++] = Size[0]->EndPoint();    // if start is exterior end must be an intersection point
+    else if (LittleEndMatch[1] == -1)
+      *P[xcnt++] = Size[0]->StartPoint();
+    else
+    {
+      // Both endpoints match endpoints of Big
+      // LittleEndMatch[ei] \in { 0, 1 }
+      bool Orientation_agree = (A0.Normal() * A1.Normal() > 0);     // true if  the orientations agree
+      if (LittleEndMatch[0] != LittleEndMatch[1])
+      {
+        if (Orientation_agree == (LittleEndMatch[0] == 1.0))
+        {
+          *P[xcnt++] = Size[0]->StartPoint();
+          *P[xcnt++] = Size[0]->EndPoint();
+        }
+        else
+          xcnt = 3;
+      }
+      else
+      {
+        // Degenerate cases
+        if (Size[0]->StartPoint().DistanceTo(Size[0]->EndPoint()) < abstol)
+          *P[xcnt++] = Size[0]->StartPoint();
+        else
+          xcnt = 3;
+      }
+    }
+  }
+  
+  return xcnt;
 }
 
 int ON_Intersect(
