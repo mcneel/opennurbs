@@ -21,6 +21,5 @@
 // until V6 ships.
 //#define OPENNURBS_ANNOTATION_TABLE_WIP
 
-#define OPENNURBS_GRADIENT_WIP
 
 #endif

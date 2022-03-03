@@ -2057,10 +2057,6 @@ ON_CurveRegionBoundaryElement& ON_CurveRegionBoundaryElement::operator=(const ON
   return *this;
 }
 
-
-#if defined(OPENNURBS_GRADIENT_WIP)
-
-
 class ON_CLASS ON_GradientColorData : public ON_UserData
 {
   ON_OBJECT_DECLARE(ON_GradientColorData);
@@ -2406,5 +2402,3 @@ bool ON_Hatch::SetGradientEndPoints(ON_3dPoint startpoint, ON_3dPoint endpoint)
   data->m_end = endpoint;
   return true;
 }
-
-#endif

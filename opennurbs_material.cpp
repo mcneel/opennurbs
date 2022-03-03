@@ -3525,6 +3525,48 @@ int ON_TextureMapping::EvaluateBoxMapping(
 }
 
 
+static bool ProjectToFaceSpace(const ON_3dPoint & ptV0, const ON_3dPoint & ptV1, const ON_3dPoint & ptV2, const ON_3dPoint & ptP, double & xOut, double & yOut)
+{
+	const double m00 = (ptV1 - ptV0).LengthSquared();
+	const double m01 = ON_DotProduct(ptV1 - ptV0, ptV2 - ptV0);
+	const double d0 = ON_DotProduct(ptP - ptV0, ptV1 - ptV0);
+	const double m10 = m01;
+	const double m11 = (ptV2 - ptV0).LengthSquared();
+	const double d1 = ON_DotProduct(ptP - ptV0, ptV2 - ptV0);
+	double pivot_ratio = 0.0;
+
+	if (2 == ON_Solve2x2(m00, m01, m10, m11, d0, d1, &xOut, &yOut, &pivot_ratio))
+	{
+		if (pivot_ratio < 0.01)
+		{
+			const ON_3dPoint ptProjection = ptV0 + xOut * (ptV1 - ptV0) + yOut * (ptV2 - ptV0);
+
+			ON_3dVector vtOffsetDir = ptP - ptProjection;
+
+			const double offsetLength = vtOffsetDir.LengthAndUnitize();
+			if (offsetLength < 1e-12)
+				return true;
+
+			ON_3dVector vtPlaneNormal = ON_CrossProduct(ptV2 - ptV0, ptV2 - ptV1);
+
+			if (false == vtPlaneNormal.Unitize())
+				return false;
+
+			const double dOffsetDirDotPlaneNormal = ON_DotProduct(vtPlaneNormal, vtOffsetDir);
+
+			if (-0.99 < dOffsetDirDotPlaneNormal &&
+				dOffsetDirDotPlaneNormal < 0.99)
+				return false;
+		}
+
+		return true;
+
+	}
+
+	return false;
+}
+
+
 int ON_TextureMapping::Evaluate(
         const ON_3dPoint& P,
         const ON_3dVector& N,
@@ -3923,6 +3965,111 @@ bool GetSPTCHelper(
   return true;
 }
 
+#if !defined(OPENNURBS_PLUS)
+class ON__MTCBDATA
+{
+  // DO NOT PUT THIS CLASS IN A HEADER FILE
+  // IT IS A PRIVATE HELPER CLASS.
+public:
+  const ON_Mesh* m_pMesh;
+  ON_3dPoint m_pt;
+  ON_RTreeSphere m_sphere;
+  int m_face_index;
+  double m_t[4];
+  double m_dist;
+  bool m_bRestart;
+};
+
+bool ON_CALLBACK_CDECL MTCB(void* a_context, ON__INT_PTR a_id)
+{
+  ON__MTCBDATA* pData = (ON__MTCBDATA*)a_context;
+  if (nullptr == pData)
+    return true;
+  pData->m_bRestart = false;
+  const int fi = (int)a_id;
+  if (fi < 0 || fi >= pData->m_pMesh->m_F.Count())
+    return true;
+  const ON_MeshFace& face = pData->m_pMesh->m_F[fi];
+  const int fcc = face.IsTriangle() ? 3 : 4;
+  for (int fci = 0; fci < fcc; fci++)
+  {
+    // Distance to vertex at corner fci
+    const ON_3dPoint ptV = pData->m_pMesh->Vertex(face.vi[fci]);
+    const double distV = ptV.DistanceTo(pData->m_pt);
+    if (distV < pData->m_dist)
+    {
+      pData->m_dist = distV;
+      pData->m_face_index = fi;
+      pData->m_t[0] = pData->m_t[1] = pData->m_t[2] = pData->m_t[3] = 0.0;
+      pData->m_t[fci] = 1.0;
+    }
+
+    // Distance to edge between corners fci-1 and fci
+    const int fcip = (fci + fcc - 1) % fcc;
+    const ON_3dPoint ptPV = pData->m_pMesh->Vertex(face.vi[fcip]);
+    ON_Line edge(ptPV, ptV);
+    double t = 0.0;
+    if (edge.ClosestPointTo(pData->m_pt, &t))
+    {
+      if (t >= 0.0 && t <= 1.0)
+      {
+        const ON_3dPoint ptE = edge.PointAt(t);
+        const double distE = ptE.DistanceTo(pData->m_pt);
+        if (distE < pData->m_dist)
+        {
+          pData->m_dist = distE;
+          pData->m_face_index = fi;
+          pData->m_t[0] = pData->m_t[1] = pData->m_t[2] = pData->m_t[3] = 0.0;
+          pData->m_t[fci] = t;
+          pData->m_t[fcip] = 1.0 - t;
+        }
+      }
+    }
+  }
+
+  int tris = 1;
+  ON_3dex fcis[2] = { {0, 1, 2}, ON_3dex::Unset };
+  //int fcis[2][3] = {{0, 1, 2}, {ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX}};
+  if (face.IsQuad())
+  {
+    fcis[1] = { 0, 3, 2 };
+    tris = 2;
+  }
+
+  for (int ti = 0; ti < tris; ti++)
+  {
+    const int vis[3] = { face.vi[fcis[ti].i] , face.vi[fcis[ti].j], face.vi[fcis[ti].k] };
+    const ON_3dPoint pts[3] = { pData->m_pMesh->Vertex(vis[0]), pData->m_pMesh->Vertex(vis[1]), pData->m_pMesh->Vertex(vis[2]) };
+    double t0 = 0.0, t1 = 0.0;
+    if (ProjectToFaceSpace(pts[0], pts[1], pts[2], pData->m_pt, t0, t1))
+    {
+      if (0 <= t0 && 0 <= t1 && t0 + t1 <= 1.0)
+      {
+        const ON_3dPoint ptF = pts[0] + t0 * (pts[1] - pts[0]) + t1 * (pts[2] - pts[0]);
+        const double distF = ptF.DistanceTo(pData->m_pt);
+        if (distF < pData->m_dist)
+        {
+          pData->m_dist = distF;
+          pData->m_face_index = fi;
+          pData->m_t[0] = pData->m_t[1] = pData->m_t[2] = pData->m_t[3] = 0.0;
+          pData->m_t[fcis[ti].i] = 1.0 - t0 - t1;
+          pData->m_t[fcis[ti].j] = t0;
+          pData->m_t[fcis[ti].k] = t1;
+        }
+      }
+    }
+  }
+
+  if (pData->m_dist < pData->m_sphere.m_radius)
+  {
+    pData->m_sphere.m_radius = pData->m_dist;
+    pData->m_bRestart = true;
+    return false;
+  }
+
+  return true;
+}
+#endif
 
 bool ON_TextureMapping::GetTextureCoordinates(
           const ON_Mesh& mesh,
@@ -4033,6 +4180,52 @@ bool ON_TextureMapping::GetTextureCoordinates(
       && nullptr != m_mapping_primitive)
 		{
       rc = false;
+      if (ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type)
+      {
+        const ON_Xform matP = nullptr != PT ? m_Pxyz * ON_Xform(PT) : m_Pxyz;
+        const ON_Xform matN = nullptr != NT ? m_Nxyz * ON_Xform(NT) : m_Nxyz;
+
+        const ON_Mesh* pMesh = CustomMappingMeshPrimitive();
+        if (nullptr != pMesh)
+        {
+          ON_RTree faceTree;
+          if (faceTree.CreateMeshFaceTree(pMesh))
+          {
+            for (int vi = 0; vi < mesh.VertexCount(); vi++)
+            {
+              T[vi] = ON_3fPoint::Origin;
+
+              const ON_3dPoint vtx(mesh.m_V[vi]);
+              const ON_3dPoint ptV = matP * vtx;
+              const ON_3fVector vtVN = mesh.HasVertexNormals() ? ON_3fVector(matN * ON_3dVector(mesh.m_N[vi])) : ON_3fVector::ZeroVector;
+
+              ON__MTCBDATA data;
+              data.m_sphere.m_point[0] = ptV.x;
+              data.m_sphere.m_point[1] = ptV.y;
+              data.m_sphere.m_point[2] = ptV.z;
+              data.m_sphere.m_radius = pMesh->BoundingBox().FarPoint(ptV).DistanceTo(ptV);
+              data.m_pMesh = pMesh;
+              data.m_pt = ptV;
+              data.m_dist = DBL_MAX;
+              do
+              {
+                faceTree.Search(&data.m_sphere, MTCB, (void*)&data);
+              } while (data.m_bRestart);
+              if (0 <= data.m_face_index && data.m_face_index < pMesh->m_F.Count())
+              {
+                const ON_MeshFace& face = pMesh->m_F[data.m_face_index];
+                const ON_3dPoint ptUV =
+                  data.m_t[0] * ON_3dPoint(pMesh->m_T[face.vi[0]]) +
+                  data.m_t[1] * ON_3dPoint(pMesh->m_T[face.vi[1]]) +
+                  data.m_t[2] * ON_3dPoint(pMesh->m_T[face.vi[2]]) +
+                  data.m_t[3] * ON_3dPoint(pMesh->m_T[face.vi[3]]);
+                const ON_3dPoint vtc = m_uvw * ptUV;
+                T[vi].Set((float)vtc.x, (float)vtc.y, 0.0f);
+              }
+            }
+          }
+        }
+      }
 		}
 		else if ( mesh_N &&
           (   ON_TextureMapping::PROJECTION::ray_projection == m_projection

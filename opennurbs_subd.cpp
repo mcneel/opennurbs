@@ -17705,7 +17705,7 @@ public:
 
 };
 
-const ON_Internal_ExtrudedVertex ON_Internal_ExtrudedVertex::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Internal_ExtrudedVertex);
+const ON_Internal_ExtrudedVertex ON_Internal_ExtrudedVertex::Unset;
 
 /*
 ON_Internal_ExtrudedVertex manages an edge that is extruded into a "side" face extrusion process.
@@ -18152,7 +18152,7 @@ int ON_Internal_ExtrudedEdge::CompareSideGroupId(const ON_Internal_ExtrudedEdge*
   return 0;
 }
 
-const ON_Internal_ExtrudedEdge ON_Internal_ExtrudedEdge::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Internal_ExtrudedEdge);
+const ON_Internal_ExtrudedEdge ON_Internal_ExtrudedEdge::Unset;
 
 int ON_Internal_ExtrudedVertex::CompareInitialVertexId(
   const ON_Internal_ExtrudedVertex* lhs,

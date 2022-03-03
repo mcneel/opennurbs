@@ -883,7 +883,6 @@ public:
   */
   bool ReplaceLoops(ON_SimpleArray<const ON_Curve*>& loops);
 
-#if defined(OPENNURBS_GRADIENT_WIP)
   /*
   Description:
     Returns gradient fill type for this hatch
@@ -939,7 +938,6 @@ public:
     Set the start and end points for gradient drawing
   */
   bool SetGradientEndPoints(ON_3dPoint startpoint, ON_3dPoint endPoint);
-#endif
 
 private:
   ON_Plane m_plane;

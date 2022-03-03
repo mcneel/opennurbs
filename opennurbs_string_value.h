@@ -432,7 +432,7 @@ public:
 private:
   // parsing context
   unsigned int m_context_locale_id = 0;
-  ON::LengthUnitSystem m_context_length_unit_system;
+  ON::LengthUnitSystem m_context_length_unit_system = ON::LengthUnitSystem::None;
   ON_AngleValue::StringFormat m_string_format = ON_AngleValue::StringFormat::ExactDecimal;
   
   ON::AngleUnitSystem m_angle_unit_system = ON::AngleUnitSystem::Unset;
