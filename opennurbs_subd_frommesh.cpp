@@ -1773,7 +1773,7 @@ unsigned int ON_NgonBoundaryComponent::IsBoundaryEdge() const
     ;
 }
 
-const ON_NgonBoundaryComponent ON_NgonBoundaryComponent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_NgonBoundaryComponent);
+const ON_NgonBoundaryComponent ON_NgonBoundaryComponent::Unset;
 
 void ON_NgonBoundaryChecker::Internal_ReturnIsNotSimple()
 {

@@ -5241,7 +5241,7 @@ ON_Plane ON_Plane::FromPointList(
 
 
 
-const ON_MeshNgonIterator ON_MeshNgonIterator::EmptyMeshNgonIterator ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshNgonIterator);
+const ON_MeshNgonIterator ON_MeshNgonIterator::EmptyMeshNgonIterator;
 
 ON_MeshNgonIterator::ON_MeshNgonIterator(
   const class ON_Mesh* mesh

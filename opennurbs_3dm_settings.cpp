@@ -5564,7 +5564,7 @@ void ON_3dmSettings::Dump( ON_TextLog& dump ) const
 // ON_3dmAnimationProperties
 //
 
-const ON_3dmAnimationProperties ON_3dmAnimationProperties::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmAnimationProperties);
+const ON_3dmAnimationProperties ON_3dmAnimationProperties::Default;
 
 bool ON_3dmAnimationProperties::Read(ON_BinaryArchive& archive)
 {

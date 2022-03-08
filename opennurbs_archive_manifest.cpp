@@ -2540,7 +2540,7 @@ void ON_ComponentManifestItem::Internal_SetDeletedState(
 ////  unsigned int m_manifest_index = ON_ComponentManifest::UnsetManifestItemIndex;
 ////};
 ////
-////const ON_ModelComponentIndexChange ON_ModelComponentIndexChange::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentIndexChange);
+////const ON_ModelComponentIndexChange ON_ModelComponentIndexChange::Unset;
 ////
 ////ON_ModelComponentIndexChange::ON_ModelComponentIndexChange(
 ////  int original_index,

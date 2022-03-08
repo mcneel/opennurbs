@@ -20,7 +20,7 @@
 #pragma ON_PRAGMA_WARNING_POP
 #endif
 
-const ON_ErrorEvent ON_ErrorEvent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ErrorEvent);
+const ON_ErrorEvent ON_ErrorEvent::Unset;
 
 static unsigned int ON_LibraryStatusInit()
 {
@@ -121,7 +121,7 @@ const double ON_SubDExpandEdgesParameters::MediumOffset = 0.25;
 
 const double ON_SubDExpandEdgesParameters::LargeOffset = 0.5;
 
-const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDExpandEdgesParameters);
+const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default;
 
 const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
 
@@ -132,10 +132,10 @@ const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_Su
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
 
-const ON_SubDSectorId ON_SubDSectorId::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDSectorId);
+const ON_SubDSectorId ON_SubDSectorId::Zero;
 const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
 
-const ON_SubDHash ON_SubDHash::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDHash);
+const ON_SubDHash ON_SubDHash::Empty;
 
 
 // {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
@@ -160,12 +160,12 @@ const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
   return p;
 }
 
-const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDToBrepParameters);
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default;
 const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultUnpacked = Internal_SubDToBrepParameters(false);
 const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultPacked = Internal_SubDToBrepParameters(true);
 
 
-const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDRTreeVertexFinder);
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Unset;
 
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
@@ -493,11 +493,11 @@ const ON_Interval ON_Interval::ZeroToOne(0.0,1.0);
 const ON_Interval ON_Interval::ZeroToTwoPi(0.0,2.0*ON_PI);
 const ON_Interval ON_Interval::Nan(ON_DBL_QNAN,ON_DBL_QNAN);
 
-const ON_TextBox ON_TextBox::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextBox);
+const ON_TextBox ON_TextBox::Unset;
 
 const ON_CheckSum ON_CheckSum::UnsetCheckSum;
 
-const ONX_ErrorCounter ONX_ErrorCounter::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ONX_ErrorCounter);
+const ONX_ErrorCounter ONX_ErrorCounter::Zero;
 
 static ON_MD5_Hash ON_MD5_Hash_EmptyContentHash()
 {
@@ -505,7 +505,7 @@ static ON_MD5_Hash ON_MD5_Hash_EmptyContentHash()
   return md5.Hash();
 }
 const ON_MD5_Hash ON_MD5_Hash::EmptyContentHash = ON_MD5_Hash_EmptyContentHash();
-const ON_MD5_Hash ON_MD5_Hash::ZeroDigest ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MD5_Hash);
+const ON_MD5_Hash ON_MD5_Hash::ZeroDigest;
 
 static ON_SHA1_Hash ON_SHA1_Hash_EmptyContentHash()
 {
@@ -513,9 +513,9 @@ static ON_SHA1_Hash ON_SHA1_Hash_EmptyContentHash()
   return sha1.Hash();
 }
 const ON_SHA1_Hash ON_SHA1_Hash::EmptyContentHash = ON_SHA1_Hash_EmptyContentHash();
-const ON_SHA1_Hash ON_SHA1_Hash::ZeroDigest ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SHA1_Hash);
+const ON_SHA1_Hash ON_SHA1_Hash::ZeroDigest;
 
-const ONX_ModelTest ONX_ModelTest::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ONX_ModelTest);
+const ONX_ModelTest ONX_ModelTest::Unset;
 
 // Works with Microsoft's CL, fails for Apple's CLang
 ////   const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::MaskErrors   = { 0, 0xFFFFFFFF, ON_UnicodeCodePoint::ON_ReplacementCharacter };
@@ -558,7 +558,7 @@ const ON_String ON_String::ByteOrderMark(ON_Internal_ByteOrderMark());
 const ON_wString ON_wString::EmptyString;
 const ON_wString ON_wString::ByteOrderMark((wchar_t)ON_UnicodeCodePoint::ON_ByteOrderMark);
 
-const ON_NameHash ON_NameHash::UnsetNameHash ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_NameHash);
+const ON_NameHash ON_NameHash::UnsetNameHash;
 const ON_NameHash ON_NameHash::EmptyNameHash = ON_NameHash::CreateIdAndEmptyName(ON_nil_uuid);
 const ON_wString ON_ModelComponent::ReferencePrefixDelimiter(L" : ");
 const ON_wString ON_ModelComponent::ReferencePrefixSeparator(L">");
@@ -588,11 +588,11 @@ const wchar_t ON_FileSystemPath::AlternateDirectorySeparator = (wchar_t)ON_FileS
 
 
 
-const ON_ContentHash ON_ContentHash::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ContentHash);
-const ON_FileReference ON_FileReference::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FileReference);
+const ON_ContentHash ON_ContentHash::Unset;
+const ON_FileReference ON_FileReference::Unset;
 
-const ON_3dmRevisionHistory ON_3dmRevisionHistory::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmRevisionHistory);
-const ON_3dmProperties ON_3dmProperties::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmProperties);
+const ON_3dmRevisionHistory ON_3dmRevisionHistory::Empty;
+const ON_3dmProperties ON_3dmProperties::Empty;
 
 
 
@@ -675,14 +675,14 @@ const ON_3fVector ON_3fVector::XAxis(1.0f, 0.0f, 0.0f);
 const ON_3fVector ON_3fVector::YAxis(0.0f, 1.0f, 0.0f);
 const ON_3fVector ON_3fVector::ZAxis(0.0f, 0.0f, 1.0f);
 
-const ON_WindingNumber ON_WindingNumber::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindingNumber);
+const ON_WindingNumber ON_WindingNumber::Unset;
 
 // Do not increase this tolerance to fix a specific bug.
 // This tolerance is used after input has been cleaned up
 // to detect flaws.
 const double ON_Symmetry::ZeroTolerance = 1.0e-8; 
 
-const ON_Symmetry ON_Symmetry::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Symmetry);
+const ON_Symmetry ON_Symmetry::Unset;
 
 // {3C6C7ABD-F3D5-41C2-96C9-DB9AEAF06E90}
 const ON_UUID ON_Symmetry::ReflectId =
@@ -738,16 +738,16 @@ const ON_UnitSystem ON_UnitSystem::LightYears(ON::LengthUnitSystem::LightYears);
 const ON_UnitSystem ON_UnitSystem::Parsecs(ON::LengthUnitSystem::Parsecs);
 const ON_UnitSystem ON_UnitSystem::Unset(ON::LengthUnitSystem::Unset);
 
-const ON_LengthUnitName ON_LengthUnitName::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LengthUnitName);
-const ON_AngleUnitName ON_AngleUnitName::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_AngleUnitName);
+const ON_LengthUnitName ON_LengthUnitName::None;
+const ON_AngleUnitName ON_AngleUnitName::None;
 
-const ON_LengthValue ON_LengthValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LengthValue);
+const ON_LengthValue ON_LengthValue::Unset;
 const ON_LengthValue ON_LengthValue::Zero = ON_LengthValue::Create(0.0, ON::LengthUnitSystem::None, 0, ON_LengthValue::StringFormat::CleanDecimal);
 
-const ON_AngleValue ON_AngleValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_AngleValue);
+const ON_AngleValue ON_AngleValue::Unset;
 const ON_AngleValue ON_AngleValue::Zero = ON_AngleValue::Create(0.0, ON::AngleUnitSystem::None, 0, ON_AngleValue::StringFormat::CleanDecimal );
 
-const ON_ScaleValue ON_ScaleValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ScaleValue);
+const ON_ScaleValue ON_ScaleValue::Unset;
 const ON_ScaleValue ON_ScaleValue::OneToOne = ON_ScaleValue::Create(
   ON_LengthValue::Create(1.0, ON::LengthUnitSystem::None, 0, ON_LengthValue::StringFormat::CleanDecimal),
   ON_LengthValue::Create(1.0, ON::LengthUnitSystem::None, 0, ON_LengthValue::StringFormat::CleanDecimal),
@@ -782,7 +782,7 @@ const double ON_Viewport::DefaultMinNearOverFar = 0.0001;
 
 const ON_3dVector ON_Viewport::Default3dCameraDirection(-0.43301270189221932338186158537647,0.75,-0.5);
 const ON_3dPoint ON_Viewport::DefaultCameraLocation(0.0, 0.0, 100.0);
-const ON_Viewport ON_Viewport::DefaultTopViewYUp ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Viewport);
+const ON_Viewport ON_Viewport::DefaultTopViewYUp;
 static ON_Viewport Internal_ON_Viewport_DefaultPerspectiveView_Init()
 {
   ON_Viewport vp;
@@ -795,8 +795,8 @@ static ON_Viewport Internal_ON_Viewport_DefaultPerspectiveView_Init()
 const ON_Viewport ON_Viewport::DefaultPerspectiveViewZUp = Internal_ON_Viewport_DefaultPerspectiveView_Init();
 
 
-const ON_3dmIOSettings ON_3dmIOSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmIOSettings);
-const ON_3dmConstructionPlaneGridDefaults ON_3dmConstructionPlaneGridDefaults::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmConstructionPlaneGridDefaults);
+const ON_3dmIOSettings ON_3dmIOSettings::Default;
+const ON_3dmConstructionPlaneGridDefaults ON_3dmConstructionPlaneGridDefaults::Default;
 
 ON_EarthAnchorPoint Internal_EarthAnchorPointConstant(int which)
 {
@@ -824,16 +824,16 @@ ON_EarthAnchorPoint Internal_EarthAnchorPointConstant(int which)
 const ON_EarthAnchorPoint ON_EarthAnchorPoint::Unset = Internal_EarthAnchorPointConstant(0);
 const ON_EarthAnchorPoint ON_EarthAnchorPoint::SeattleSpaceNeedle = Internal_EarthAnchorPointConstant(1);
 
-const ON_3dmAnnotationSettings ON_3dmAnnotationSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmAnnotationSettings);
+const ON_3dmAnnotationSettings ON_3dmAnnotationSettings::Default;
 
-const ON_3dmAnnotationContext ON_3dmAnnotationContext::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmAnnotationContext);
+const ON_3dmAnnotationContext ON_3dmAnnotationContext::Default;
 
-const ON_3dmArchiveTableStatus ON_3dmArchiveTableStatus::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmArchiveTableStatus);
+const ON_3dmArchiveTableStatus ON_3dmArchiveTableStatus::Unset;
 
 const wchar_t* ON_TextDot::DefaultFontFace = L"Arial";
 const int ON_TextDot::DefaultHeightInPoints = 14;
 const int ON_TextDot::MinimumHeightInPoints = 3;
-const ON_TextDot ON_TextDot::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextDot);
+const ON_TextDot ON_TextDot::Unset;
 
 const ON_Locale ON_Locale::Ordinal = ON_Locale::FromWindowsLCID(ON_Locale::OrdinalLCID);
 const ON_Locale ON_Locale::InvariantCulture = ON_Locale::FromWindowsLCID(ON_Locale::InvariantCultureLCID);
@@ -933,7 +933,7 @@ static ON_Plane ON_Plane_NanPlane()
 const ON_Plane ON_Plane::NanPlane(ON_Plane_NanPlane());
 
 // ON_SubDDisplayParameters statics before ON_MeshParamters statics
-const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDDisplayParameters);
+const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty;
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::ExtraCoarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::ExtraCoarseDensity);
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Coarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::CoarseDensity);
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Medium = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::MediumDensity);
@@ -1147,21 +1147,21 @@ bool ON_MeshParameters_AreValid()
 
 const static bool ON_MeshParameters_AreValid_ = ON_MeshParameters_AreValid();
 
-const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmUnitsAndTolerances);
+const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters;
 
-const ON_Circle ON_Circle::UnitCircle ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Circle);
-const ON_Arc ON_Arc::UnitCircle ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Arc);
+const ON_Circle ON_Circle::UnitCircle;
+const ON_Arc ON_Arc::UnitCircle;
 
-const ON_3dmRenderSettings ON_3dmRenderSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmRenderSettings);
+const ON_3dmRenderSettings ON_3dmRenderSettings::Default;
 
-const ON_3dmSettings ON_3dmSettings::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmSettings);
+const ON_3dmSettings ON_3dmSettings::Default;
 
-const ON_ProgressStepCounter ON_ProgressStepCounter::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ProgressStepCounter);
+const ON_ProgressStepCounter ON_ProgressStepCounter::Empty;
 
-const ON_HistoryRecord ON_HistoryRecord::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_HistoryRecord);
+const ON_HistoryRecord ON_HistoryRecord::Empty;
 
-const ON_RTreeMemPool ON_RTreeMemPool::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_RTreeMemPool);
-const ON_RTree ON_RTree::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_RTree);
+const ON_RTreeMemPool ON_RTreeMemPool::Empty;
+const ON_RTree ON_RTree::Empty;
 
 // {F5E3BAA9-A7A2-49FD-B8A1-66EB274A5F91}
 const ON_UUID ON_MeshCache::RenderMeshId =
@@ -1187,7 +1187,7 @@ const ON_UUID ON_MeshCache::FineMeshId =
 const ON_UUID ON_MeshCache::AnyMeshId =
 { 0xa82c0f1b, 0x13e8, 0x4dec,{ 0xad, 0x35, 0xd3, 0xdd, 0xd2, 0x77, 0x20, 0x3c } };
 
-const ON_MeshCache ON_MeshCache::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshCache);
+const ON_MeshCache ON_MeshCache::Empty;
 
 #if defined(OPENNURBS_ANNOTATION_TABLE_WIP)
 const double ON_Table::MinColWidth    = 1.0;
@@ -1221,7 +1221,7 @@ const ON_4dRect ON_4dRect::Unset(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE,
 
 const ON_OutlineFigure::Orientation ON_Outline::DefaultOuterOrientation = ON_OutlineFigure::Orientation::Clockwise;
 
-const ON_OutlineFigurePoint ON_OutlineFigurePoint::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_OutlineFigurePoint);
+const ON_OutlineFigurePoint ON_OutlineFigurePoint::Unset;
 static ON_OutlineFigurePoint Internal_FontGlyphOutlinePoint()
 {
   ON_OutlineFigurePoint p;
@@ -1230,17 +1230,17 @@ static ON_OutlineFigurePoint Internal_FontGlyphOutlinePoint()
 }
 const ON_OutlineFigurePoint ON_OutlineFigurePoint::Error(Internal_FontGlyphOutlinePoint());
 
-const ON_OutlineFigure ON_OutlineFigure::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_OutlineFigure);
+const ON_OutlineFigure ON_OutlineFigure::Unset;
 
-const ON_Outline ON_Outline::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Outline);
+const ON_Outline ON_Outline::Unset;
 
-const ON_FontGlyph ON_FontGlyph::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontGlyph);
+const ON_FontGlyph ON_FontGlyph::Unset;
 
-const ON_PANOSE1 ON_PANOSE1::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_PANOSE1);
+const ON_PANOSE1 ON_PANOSE1::Zero;
 
 const double ON_FontMetrics::DefaultLineFeedRatio = 1.6;
 const ON__UINT32 ON_FontMetrics::HeightOfCapitalCodePoint = 'I';
-const ON_FontMetrics ON_FontMetrics::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontMetrics);
+const ON_FontMetrics ON_FontMetrics::Unset;
 
 static ON_FontMetrics Internal_LastResortNormalizedFontMetrics()
 {
@@ -1424,11 +1424,11 @@ const ON_Font ON_Font::Unset(*((const ON_Font*)ON_PTR_SEMAPHORE1));
 // for implementation details.
 const ON_Font ON_Font::Default(*((const ON_Font*)ON_PTR_SEMAPHORE2));
 
-const ON_Geometry ON_Geometry::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Geometry);
+const ON_Geometry ON_Geometry::Unset;
 
-const ON_3dmObjectAttributes ON_3dmObjectAttributes::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmObjectAttributes);
+const ON_3dmObjectAttributes ON_3dmObjectAttributes::Unset;
 
-const ON_3dmObjectAttributes ON_3dmObjectAttributes::DefaultAttributes  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_3dmObjectAttributes);
+const ON_3dmObjectAttributes ON_3dmObjectAttributes::DefaultAttributes;
 
 
 static const ON_ModelComponentTypeIterator ON_ModelComponentIterator_Init(
@@ -1508,43 +1508,43 @@ static const ON_ModelComponentTypeIterator ON_ModelComponentIterator_Init(
 const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::ExplicitComponentTypes(ON_ModelComponentIterator_Init(1));
 const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::TableComponentTypes(ON_ModelComponentIterator_Init(2));
 
-const ON_ModelComponent ON_ModelComponent::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponent);
+const ON_ModelComponent ON_ModelComponent::Unset;
 
-const ON_ModelComponentReference ON_ModelComponentReference::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentReference);
-const ON_ModelComponentWeakReference ON_ModelComponentWeakReference::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentWeakReference);
+const ON_ModelComponentReference ON_ModelComponentReference::Empty;
+const ON_ModelComponentWeakReference ON_ModelComponentWeakReference::Empty;
 
-const ON_ModelComponentContentMark ON_ModelComponentContentMark::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ModelComponentContentMark);
+const ON_ModelComponentContentMark ON_ModelComponentContentMark::Unset;
 
 
 // explicit constructor added to work around Apple CLANG bug.
 const ON_ComponentManifest ON_ComponentManifest::Empty;
 
-const ON_ManifestMapItem ON_ManifestMapItem::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ManifestMapItem);
+const ON_ManifestMapItem ON_ManifestMapItem::Unset;
 
 // explicit constructor added to work around Apple CLANG bug.
 const ON_ManifestMap ON_ManifestMap::Empty;
 
-const ON_ComponentManifestItem ON_ComponentManifestItem::UnsetItem ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ComponentManifestItem);
+const ON_ComponentManifestItem ON_ComponentManifestItem::UnsetItem;
 
-const ON_Bitmap ON_Bitmap::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Bitmap);
+const ON_Bitmap ON_Bitmap::Unset;
 
-const ON_EmbeddedBitmap ON_EmbeddedBitmap::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_EmbeddedBitmap);
+const ON_EmbeddedBitmap ON_EmbeddedBitmap::Unset;
 
-const ON_WindowsBitmap ON_WindowsBitmap::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindowsBitmap);
+const ON_WindowsBitmap ON_WindowsBitmap::Unset;
 
-const ON_WindowsBitmapEx ON_WindowsBitmapEx::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_WindowsBitmapEx);
+const ON_WindowsBitmapEx ON_WindowsBitmapEx::Unset;
 
-const ON_Light ON_Light::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Light);
+const ON_Light ON_Light::Unset;
 
-const ON_InstanceDefinition ON_InstanceDefinition::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_InstanceDefinition);
+const ON_InstanceDefinition ON_InstanceDefinition::Unset;
 
 const ON_ModelGeometryComponent ON_ModelGeometryComponent::Unset = ON_ModelGeometryComponent(ON_ModelComponent::Type::Unset);
 
-const ON_Texture ON_Texture::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Texture);
+const ON_Texture ON_Texture::Default;
 
 const double ON_Material::MaxShine = 255.0;
 
-const ON_Material ON_Material::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Material);
+const ON_Material ON_Material::Unset;
 
 static ON_Material Internal_SystemMaterialInit(int index)
 {
@@ -1580,7 +1580,7 @@ static ON_Material Internal_SystemMaterialInit(int index)
 const ON_Material ON_Material::Default(Internal_SystemMaterialInit(-1));
 const ON_Material ON_Material::DefaultLockedObject(Internal_SystemMaterialInit(-2));
 
-const ON_TextureMapping ON_TextureMapping::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextureMapping);
+const ON_TextureMapping ON_TextureMapping::Unset;
 
 static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
 {
@@ -1598,16 +1598,16 @@ static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
 }
 const ON_TextureMapping ON_TextureMapping::SurfaceParameterTextureMapping(SurfaceParameterTextureMappingInitializer());
 
-const ON_MappingTag ON_MappingTag::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MappingTag);
+const ON_MappingTag ON_MappingTag::Unset;
 const ON_MappingTag ON_MappingTag::SurfaceParameterMapping(ON_TextureMapping::SurfaceParameterTextureMapping,nullptr);
 
-const ON_LinetypeSegment ON_LinetypeSegment::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LinetypeSegment);
+const ON_LinetypeSegment ON_LinetypeSegment::Unset;
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);
 
 
-const ON_Group ON_Group::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Group);
+const ON_Group ON_Group::Unset;
 
-const ON_Linetype ON_Linetype::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Linetype);
+const ON_Linetype ON_Linetype::Unset;
 
 static ON_Linetype Internal_BuiltInLinePattern( int index )
 {
@@ -1822,7 +1822,7 @@ static void TextStyleInit(
     text_style.LockName();
 }
 
-const ON_Layer ON_Layer::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Layer);
+const ON_Layer ON_Layer::Unset;
 
 static ON_Layer ON_Layer_Default()
 {
@@ -1880,7 +1880,7 @@ const ON_TextStyle ON_TextStyle::Default(DefaultTextStyle());
 const ON_TextStyle ON_TextStyle::ByLayer(ByLayerTextStyle());
 const ON_TextStyle ON_TextStyle::ByParent(ByParentTextStyle());
 
-const ON_TextMask ON_TextMask::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextMask);
+const ON_TextMask ON_TextMask::None;
 
 //static bool ValidateCpyStuff(const ON_DimStyle& src)
 //{
@@ -1896,7 +1896,7 @@ const ON_TextMask ON_TextMask::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextMask);
 //  return rc;
 //}
 
-const ON_FontFaceQuartet ON_FontFaceQuartet::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_FontFaceQuartet);
+const ON_FontFaceQuartet ON_FontFaceQuartet::Empty;
 
 static void DimStyleInit(
   const wchar_t* name,
@@ -2377,7 +2377,7 @@ static ON_DimStyle DimStyleModelUnitsEngrave()
   return dimstyle;
 }
 
-const ON_DimStyle ON_DimStyle::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimStyle);
+const ON_DimStyle ON_DimStyle::Unset;
 
 const ON_DimStyle ON_DimStyle::Default(DimStyleDefault());
 
@@ -2396,18 +2396,18 @@ const ON_DimStyle ON_DimStyle::DefaultFeetEngrave(DimStyleFeetEngrave());
 const ON_DimStyle ON_DimStyle::DefaultMillimeterEngrave(DimStyleMillimeterEngrave());
 const ON_DimStyle ON_DimStyle::DefaultModelUnitsEngrave(DimStyleModelUnitsEngrave());
 
-const ON_StackedText ON_StackedText::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_StackedText);
-const ON_TextRun ON_TextRun::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextRun);
-const ON_TextRunArray ON_TextRunArray::EmptyArray ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextRunArray);
-const ON_TextContent ON_TextContent::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_TextContent);
+const ON_StackedText ON_StackedText::Empty;
+const ON_TextRun ON_TextRun::Empty;
+const ON_TextRunArray ON_TextRunArray::EmptyArray;
+const ON_TextContent ON_TextContent::Empty;
 
-const ON_Text ON_Text::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Text);
-const ON_Leader ON_Leader::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Leader);
-const ON_DimLinear ON_DimLinear::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimLinear);
-const ON_DimAngular ON_DimAngular::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimAngular);
-const ON_DimRadial ON_DimRadial::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimRadial);
-const ON_DimOrdinate ON_DimOrdinate::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_DimOrdinate);
-const ON_Centermark ON_Centermark::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Centermark);
+const ON_Text ON_Text::Empty;
+const ON_Leader ON_Leader::Empty;
+const ON_DimLinear ON_DimLinear::Empty;
+const ON_DimAngular ON_DimAngular::Empty;
+const ON_DimRadial ON_DimRadial::Empty;
+const ON_DimOrdinate ON_DimOrdinate::Empty;
+const ON_Centermark ON_Centermark::Empty;
 
 const ON_HatchLine ON_HatchLine::Unset(ON_UNSET_VALUE);           // angle = unset
 const ON_HatchLine ON_HatchLine::SolidHorizontal(0.0); // angle = 0
@@ -2590,7 +2590,7 @@ static ON_HatchPattern Internal_LineHatchPatternInit(
   return hatch_pattern;
 }
 
-const ON_HatchPattern ON_HatchPattern::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_HatchPattern);
+const ON_HatchPattern ON_HatchPattern::Unset;
 const ON_HatchPattern ON_HatchPattern::Solid(Internal_SolidHatchPatternInit()); // index = -1, id set, unique and persistent
 const ON_HatchPattern ON_HatchPattern::Hatch1(Internal_LineHatchPatternInit(-2));    // index = -2, id set, unique and persistent
 const ON_HatchPattern ON_HatchPattern::Hatch2(Internal_LineHatchPatternInit(-3));    // index = -3, id set, unique and persistent
@@ -2602,8 +2602,8 @@ const ON_HatchPattern ON_HatchPattern::Plus(Internal_LineHatchPatternInit(-8)); 
 const ON_HatchPattern ON_HatchPattern::Squares(Internal_LineHatchPatternInit(-9));   // index = -9, id set, unique and persistent
 
 
-const ON_Mesh ON_Mesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_Mesh);
-const ON_MeshRef ON_MeshRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_MeshRef);
+const ON_Mesh ON_Mesh::Empty;
+const ON_MeshRef ON_MeshRef::Empty;
 
 unsigned int ON_SubD::ErrorCount = 0;
 unsigned int ON_Brep::ErrorCount = 0;
@@ -2682,7 +2682,7 @@ void ON_SubD::SetAutomaticMeshToSubD(
 }
 
 
-const ON_SubDVertexEdgeProperties ON_SubDVertexEdgeProperties::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDVertexEdgeProperties); 
+const ON_SubDVertexEdgeProperties ON_SubDVertexEdgeProperties::Zero;
 
 const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
 const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
@@ -2696,8 +2696,8 @@ const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::NullAndZero = ON_SubD
 const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::NullAndNan = ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Null, ON_3dPoint::NanPoint);
 const ON_SubDComponentAndPoint ON_SubDComponentAndPoint::NullAndOrigin = ON_SubDComponentAndPoint::Create(ON_SubDComponentPtr::Null, ON_3dPoint::Origin);
 
-const ON_SubDComponentList ON_SubDComponentList::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentList);
-const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::Unset  ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubD_ComponentIdTypeAndTag);
+const ON_SubDComponentList ON_SubDComponentList::Empty;
+const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::Unset;
 
 const ON_SubDComponentId ON_SubDComponentIdUnset(ON_SubDComponentPtr::Type::Unset, 0U);
 
@@ -2706,7 +2706,7 @@ const ON_SubDComponentTest ON_SubDComponentTest::AllPass((ON__UINT_PTR)1);
 const ON_SubDComponentTest ON_SubDComponentTest::AllFail((ON__UINT_PTR)0);
 
 
-const ON_SubDEdgeChain ON_SubDEdgeChain::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDEdgeChain);
+const ON_SubDEdgeChain ON_SubDEdgeChain::Empty;
 
 static ON_SubDSectorSurfacePoint ON_SubDSectorLimitPoint_Init(double x)
 {
@@ -2753,7 +2753,7 @@ const double ON_SubDSectorType::UnsetSectorCoefficient = -8883.0;
 const double ON_SubDSectorType::ErrorSectorCoefficient = -9993.0;
 
 
-const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Zero ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegionIndex);
+const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Zero;
 
 static ON_SubDComponentRegionIndex InternalON_SubDComponentRegionIndex_Unset()
 {
@@ -2763,8 +2763,8 @@ static ON_SubDComponentRegionIndex InternalON_SubDComponentRegionIndex_Unset()
 }
 const ON_SubDComponentRegionIndex ON_SubDComponentRegionIndex::Unset = InternalON_SubDComponentRegionIndex_Unset();
 
-const ON_SubDComponentRegion ON_SubDComponentRegion::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRegion);
-const ON_SubDFaceRegion ON_SubDFaceRegion::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFaceRegion);
+const ON_SubDComponentRegion ON_SubDComponentRegion::Empty;
+const ON_SubDFaceRegion ON_SubDFaceRegion::Empty;
 
 const ON_ComponentStatus ON_ComponentStatus::NoneSet = ON_ComponentStatus(ON_ComponentState::Clear);
 const ON_ComponentStatus ON_ComponentStatus::Selected = ON_ComponentStatus(ON_ComponentState::Selected);
@@ -2878,12 +2878,12 @@ const ON_SubDVertex ON_SubDVertex::Empty = EmptyVertexInit();
 const ON_SubDEdge ON_SubDEdge::Empty = EmptyEdgeInit();
 const ON_SubDFace ON_SubDFace::Empty = EmptyFaceInit();
 
-const ON_SubD ON_SubD::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubD);
-const ON_SubDRef ON_SubDRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDRef);
-const ON_SubDMesh ON_SubDMesh::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMesh);
-const ON_SubDSectorType ON_SubDSectorType::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDSectorType);
-const ON_SubDMatrix ON_SubDMatrix::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDMatrix);
-const ON_SubDComponentRef ON_SubDComponentRef::Empty ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDComponentRef);
+const ON_SubD ON_SubD::Empty;
+const ON_SubDRef ON_SubDRef::Empty;
+const ON_SubDMesh ON_SubDMesh::Empty;
+const ON_SubDSectorType ON_SubDSectorType::Empty;
+const ON_SubDMatrix ON_SubDMatrix::Empty;
+const ON_SubDComponentRef ON_SubDComponentRef::Empty;
 
 static ON_SubDFromMeshParameters Internal_InteriorCreases()
 {
@@ -2900,11 +2900,11 @@ static ON_SubDFromMeshParameters Internal_ConvexCornersAndInteriorCreases()
   return cp;
 }
 
-const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::Smooth ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromMeshParameters);
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::Smooth;
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreases = Internal_InteriorCreases();
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexCornersAndInteriorCreases = Internal_ConvexCornersAndInteriorCreases();
 
-const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::Default ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDFromSurfaceParameters);
+const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::Default;
 
 static const ON_SubDFromSurfaceParameters Internal_InitSubDFromSurfaceParameters(
   ON_SubDFromSurfaceParameters::Methods method,

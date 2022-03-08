@@ -235,8 +235,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-#define ON_CLANG_CONSTRUCTOR_BUG
-
 
 #endif
 #endif
@@ -275,33 +273,6 @@
 #define ON_PRAGMA_WARNING_POP clang diagnostic pop // Apple CLang warning state pop
 #define ON_PRAGMA_WARNING_DISABLE_CLANG(ON_PRAGMA_WARNING_DISABLE_param) clang diagnostic ignored ON_PRAGMA_WARNING_DISABLE_param  // Apple CLang warning disable
 
-// clang has a bug that is fails to correctly construct statc const objects
-// in the following case
-//
-//    // header file
-//    class Blah
-//    {
-//    public:
-//      Blah() = default;
-//      ~Blah() = default;
-//      Blah(const Blah&) = default;
-//      Blah& operator=(const Blah&) = default;
-//
-//      static const Blah Zero;
-//
-//      int m_i = 0;
-//    };
-//
-//    ...
-//
-//    // cpp file
-//    const Blah Blah::Zero; // correct C++ 11, Apple's clang fails as of February, 2015
-//    const Blah Blah::Zero( Blah() ); // clang fails to use copy constructor
-//    const Blah Blah::Zero = Blah(); // clang can handle this
-//
-// When this bug is fixed, delete this define and the places
-// in the code that use it. 
-#define ON_CLANG_CONSTRUCTOR_BUG
 
 #if defined(__has_feature) && __has_feature(cxx_noexcept)
 #undef ON_NOEXCEPT
@@ -402,37 +373,6 @@
 
 #endif
 
-
-#if defined(ON_CLANG_CONSTRUCTOR_BUG)
-// Clang as implemented by Apple has a bug and is unable to use
-// a default constructor to initialize const statics.
-// The Clang error message is
-//
-//  ...: error: default initialization of an object of const type 'const ...' without a user-provided default constructor
-//
-// The ON_CLANG_CONSTRUCTOR_BUG_INIT function is used to replace the call to a default constructor with call
-// to the copy constructor (which can be default).
-//
-// Example"
-//
-//    class MyClass
-//    {
-//    public:
-//      MyClass() = default;
-//      ~MyClass() = default;
-//      MyClass(const MyClass&) = default;
-//      MyClass& operator=(const MyClass&) = default;
-//    
-//      int m_i = 0;
-//    };
-//    ...
-//    const MyClass c1; // fails with clang, works with gcc, Microsoft CL, ...
-//    const MyClass c2 ON_CLANG_CONSTRUCTOR_BUG_INIT(MyClass); // works with clang, gcc, Microsoft CL, ...
-//
-#define ON_CLANG_CONSTRUCTOR_BUG_INIT(ctor) = ctor()
-#else
-#define ON_CLANG_CONSTRUCTOR_BUG_INIT(ctor)
-#endif
 
 /*
 These defines will be set to something more appropriate when 

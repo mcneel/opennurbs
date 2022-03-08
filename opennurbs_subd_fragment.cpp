@@ -2735,7 +2735,7 @@ public:
   ON_SubDMeshFragment* m_fragment = nullptr;
 };
 
-const ON_SubDLimitMeshSealEdgeInfo ON_SubDLimitMeshSealEdgeInfo::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SubDLimitMeshSealEdgeInfo);
+const ON_SubDLimitMeshSealEdgeInfo ON_SubDLimitMeshSealEdgeInfo::Unset;
 
 bool ON_SubDLimitMeshSealEdgeInfo::Seal(
   const ON_SubDLimitMeshSealEdgeInfo& src,
