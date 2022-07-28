@@ -994,6 +994,15 @@ ON_3dVector ON_Curve::CurvatureAt( double t ) const
   return kappa;
 }
 
+double ON_Curve::SignedCurvatureAt(double t, const ON_3dVector* plane_normal) const
+{
+  ON_3dPoint point;
+  ON_3dVector tangent;
+  double kappa;
+  EvSignedCurvature(t, point, tangent, kappa, plane_normal);
+  return kappa;
+}
+
 bool ON_Curve::EvTangent(
        double t,
        ON_3dPoint& point,
@@ -1091,7 +1100,28 @@ bool ON_Curve::EvCurvature(
   return rc;
 }
 
-
+bool ON_Curve::EvSignedCurvature(
+  double t,
+  ON_3dPoint& point,
+  ON_3dVector& tangent,
+  double& kappa,
+  const ON_3dVector* plane_normal,
+  int side,
+  int* hint
+) const
+{
+  ON_3dVector K;
+  ON_3dVector zdir(0, 0, 1);
+  const ON_3dVector* N = plane_normal;
+  if (!N)
+    N = &zdir;
+  bool rc = EvCurvature(t, point, tangent, K, side, hint);
+  if (rc)
+  {
+    kappa = ON_TripleProduct(tangent, K, *N);
+  }
+  return rc;
+}
 
 bool ON_Curve::FrameAt( double t, ON_Plane& plane) const
 {
@@ -1842,8 +1872,6 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
        && m_knot[m_cv_count-1] - m_knot[m_order-2] > knot_tolerance
        )
   {
-    // save domain so it does not change
-    ON_Interval domain = Domain();
     //const int cv_count0 = m_cv_count;
 
     const int sizeof_cv = CVSize()*sizeof(*m_cv);
@@ -3392,14 +3420,15 @@ static bool PolylineIsClosable(const ON_Polyline& pline, double tol)
   return false;
 }
 
-int ON_JoinPolylines(const ON_SimpleArray<const ON_Polyline*>& InPlines,
-                      ON_SimpleArray<ON_Polyline*>& OutPlines,
-                      double join_tol,
-                      double kink_tol,
-                      bool bUseTanAngle,
-                      bool bPreserveDirection, // = false
-                      ON_SimpleArray<int>* key //=0
-                      )
+int ON_JoinPolylines(
+  const ON_SimpleArray<const ON_Polyline*>& InPlines,
+  ON_SimpleArray<ON_Polyline*>& OutPlines,
+  double join_tol,
+  double kink_tol,
+  bool bUseTanAngle,
+  bool bPreserveDirection, // = false
+  ON_SimpleArray<int>* key //=0
+)
 {
   bool bGetTans = (bUseTanAngle || kink_tol > 0.0) ? true : false;
   double dot_tol = (kink_tol > 0.0) ? cos(kink_tol) : 0.0;
@@ -3528,6 +3557,111 @@ int ON_JoinPolylines(const ON_SimpleArray<const ON_Polyline*>& InPlines,
   return OutPlines.Count() - count;
 }
 
+int ON_JoinLines(
+  const ON_SimpleArray<ON_Line>& InLines,
+  ON_ClassArray<ON_Polyline>& OutPolylines,
+  double tolerance,
+  bool bPreserveDirection,
+  ON_SimpleArray<int>* pKey
+)
+{
+  const int inlines_count = InLines.Count();
+  if (0 == inlines_count)
+    return 0;
+
+  if (pKey)
+  {
+    pKey->Reserve(inlines_count);
+    pKey->SetCount(inlines_count);
+    memset((void*)pKey->Array(), -1, (size_t)pKey->SizeOfArray());
+  }
+
+  const int outpolylines_count = OutPolylines.Count();
+  OutPolylines.Reserve(InLines.Count());
+
+  ON_SimpleArray<int> index_map(inlines_count);
+  index_map.SetCount(inlines_count);
+  for (int i = 0; i < inlines_count; i++)
+    index_map[i] = i;
+
+  ON_3dPointArray Start(inlines_count);
+  Start.SetCount(inlines_count);
+  ON_3dPointArray End(inlines_count);
+  End.SetCount(inlines_count);
+  for (int i = 0; i < inlines_count; i++)
+  {
+    Start[i] = InLines[i].from;
+    End[i] = InLines[i].to;
+  }
+
+  ON_ClassArray<ON_SimpleArray<CurveJoinSeg>> SegsArray;
+  ON_SimpleArray<int> Singles;
+  SortEnds(
+    inlines_count, 
+    Start.Array(), 
+    End.Array(), 
+    nullptr, 
+    nullptr, 
+    tolerance, 
+    ON_UNSET_VALUE, 
+    false, 
+    bPreserveDirection, 
+    SegsArray, 
+    Singles
+  );
+
+  for (int i = 0; i < SegsArray.Count(); i++) 
+  {
+    ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[i];
+    if (SArray.Count() < 2) 
+      continue;
+
+    if (!bPreserveDirection)
+    {
+      // If number of reversed segs is more than half, reverse.
+      int count_local = 0;
+      for (int j = 0; j < SArray.Count(); j++) 
+      {
+        if (SArray[j].bRev)
+          count_local++;
+      }
+      if (2 * count_local > SArray.Count())
+        ReverseSegs(SArray);
+    }
+
+    ON_Polyline& polyline = OutPolylines.AppendNew();
+    int min_seg = 0;
+    int min_id = -1;
+    for (int j = 0; j < SArray.Count(); j++) 
+    {
+      if (pKey)
+        (*pKey)[index_map[SArray[j].id]] = OutPolylines.Count();
+
+      ON_Line line = InLines[SArray[j].id];
+      if (min_id < 0 || SArray[j].id < min_id) 
+      {
+        min_id = SArray[j].id;
+        min_seg = j;
+      }
+
+      if (SArray[j].bRev)
+        line.Reverse();
+
+      if (0 == polyline.Count())
+        polyline.Append(line.from);
+      polyline.Append(line.to);
+    }
+  }
+
+  for (int i = 0; i < OutPolylines.Count(); i++) 
+  {
+    ON_Polyline& polyline = OutPolylines[i];
+    if (!polyline.IsClosed() && PolylineIsClosable(polyline, tolerance))
+      polyline.Append(polyline[0]);
+  }
+
+  return OutPolylines.Count() - outpolylines_count;
+}
 
 // returns true if t is sufficiently close to m_t[index]
 // -1 <= index <= m_t.Count()

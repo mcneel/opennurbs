@@ -976,6 +976,7 @@ ON_TextMask::MaskFrame ON_TextMask::MaskFrameFromUnsigned(
   {
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::NoFrame);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RectFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::CapsuleFrame);
   }
   ON_ERROR("mask_type_as_unsigned parameter is not valid");
   return ON_TextMask::MaskFrame::NoFrame;

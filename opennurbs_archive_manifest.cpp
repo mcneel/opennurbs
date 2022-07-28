@@ -3462,10 +3462,9 @@ public:
   }
 
 private:
-
   mutable ON__UINT64 m_manifest_content_version_number = 0;
 
-  // One for each ON_ModelComponentType
+  // One for each ON_ModelComponent type.
   ON_ComponentManifestTableIndex* TableIndexFromType(
     ON_ModelComponent::Type component_type
     );
@@ -3474,10 +3473,10 @@ private:
     ON_ModelComponent::Type component_type
     ) const;
 
-  enum : unsigned int
-  {
-    TableCount = 14
-  };
+public:
+  enum : unsigned int { TableCount = 17 }; // Count of items in ON_ModelComponent::Type
+
+private:
   ON_ComponentManifestTableIndex m_table_index[ON_ComponentManifestImpl::TableCount];
 
 public:
@@ -3528,6 +3527,10 @@ private:
   ON_ComponentNameHash32Table m_system_name_hash_table;
 };
 
+int ON_ComponentManifestImpl_TableCount(void)
+{
+  return ON_ComponentManifestImpl::TableCount;
+}
 
 static unsigned int ON_ComponentManifestImpl_SerialNumberGenerator()
 {

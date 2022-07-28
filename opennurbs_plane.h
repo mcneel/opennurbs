@@ -46,6 +46,8 @@ public:
     const ON_3dVector& normal
     );
 
+
+
   /*
   Description:
     Construct a plane from a point, and two vectors in
@@ -113,11 +115,37 @@ public:
     xaxis set with xaxis.PerpindicularTo(zaxis).
   Returns:
     true if valid plane is created.
+  See Also:
+    ON_Plane::CreateFromNormalYup
   */
   bool CreateFromNormal(
     const ON_3dPoint& origin,
     const ON_3dVector& normal
     );
+
+  /*
+Description:
+  Construct a plane from a point and normal vector and a vector that
+  projects to the positive y-axis.
+Parameters:
+  origin - [in] point on the plane
+  normal - [in] non-zero normal to the plane
+  y-up - [in] vector linearly independent from normal that projects
+              to the postive y-axis of the plane
+Remarks:
+  origin = point,
+  zaxis = unitized normal,
+  xaxis = unitized ( y-up X normal )
+  yaxis = zaxis X xaxis
+See Also:
+  ON_Plane::CreateFromNormal
+*/
+ bool CreateFromNormalYup(
+    const ON_3dPoint& origin,
+    const ON_3dVector& normal,
+    const ON_3dVector& y_up
+  );
+
 
   /*
   Description:

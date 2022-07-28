@@ -626,13 +626,21 @@ bool ON_TextRun::IsValid() const
     }
     case Stacked::kTop:
     {
-      if (nullptr != m_stacked_text)
+      if (nullptr == m_stacked_text)
+        return RunIsInvalid();
+      if (nullptr == m_stacked_text->m_top_run)
+        return RunIsInvalid();
+      if (!m_stacked_text->m_top_run->IsValid())
         return RunIsInvalid();
       break;
     }
     case Stacked::kBottom:
     {
-      if (nullptr != m_stacked_text)
+      if (nullptr == m_stacked_text)
+        return RunIsInvalid();
+      if (nullptr == m_stacked_text->m_bottom_run)
+        return RunIsInvalid();
+      if (!m_stacked_text->m_bottom_run->IsValid())
         return RunIsInvalid();
       break;
     }

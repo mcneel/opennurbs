@@ -58,12 +58,14 @@ public:
     Image = 1,
     ///<summary>Texture mapping.</summary>
     TextureMapping = 2,
-    ///<summary>Render material.</summary>
-    RenderMaterial = 3,
+    ///<summary>Material.</summary>
+    Material = 3,
+    ///<summary>Render material. Deprecated in favor of Material.</summary>
+    RenderMaterial = Material,
     ///<summary>Line pattern (linetype).</summary>
     LinePattern = 4,
     ///<summary>Layer.</summary>
-    Layer = 5,       
+    Layer = 5,
     ///<summary>Group.</summary>
     Group = 6,
     ///<summary>Text style.</summary>
@@ -80,9 +82,19 @@ public:
     ModelGeometry = 12,
     ///<summary>History record.</summary>
     HistoryRecord = 13,
-    ///<summary>Multiple component types.
-    /// Used when a component type filter must include all explicit component types.
-    ///</summary>
+    ///<summary>Render content.</summary>
+    RenderContent = 14,
+    ///<summary>Embedded file for render texture.</summary>
+    EmbeddedFile = 15,
+    ///<summary>Post Effect.</summary>
+    PostEffect = 16,
+
+    // If you add any more, add them here, above NumOf.
+
+    ///<summary>Number of items above.</summary>
+    NumOf,
+
+    ///<summary>Multiple component types. Used when a component type filter must include all explicit component types.</summary>
     Mixed = 0xFE
   };
 #pragma endregion
@@ -1497,8 +1509,8 @@ private:
 #pragma ON_PRAGMA_WARNING_PUSH
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 )
   // C4251: ... needs to have dll-interface to be used by clients of class ...
-  // This warning is not correct. 
-  // Internal_RuntimeSerialNumberGenerator is private and all code that manages m_mcr_lists is explicitly implemented in the DLL.
+  // This warning is not correct.
+  // Internal_RuntimeSerialNumberGenerator is private and all code that manages it is explicitly implemented in the DLL.
   static std::atomic<ON__UINT64> Internal_RuntimeSerialNumberGenerator;
 #pragma ON_PRAGMA_WARNING_POP
 };

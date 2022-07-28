@@ -1,5 +1,5 @@
 /*
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,10 +12,189 @@
 ////////////////////////////////////////////////////////////////
 */
 
+// Internal header; not in the public SDK.
+
 #if !defined(OPENNURBS_INTERNAL_DEFINES_INC_)
 #define OPENNURBS_INTERNAL_DEFINES_INC_
 
 #if defined(ON_COMPILING_OPENNURBS)
+
+#include <unordered_map>
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
+#define ON_KIND_MATERIAL     L"material"
+#define ON_KIND_ENVIRONMENT  L"environment"
+#define ON_KIND_TEXTURE      L"texture"
+
+#define ON_RDK_SLASH                L"/"
+#define ON_RDK_POSTFIX_SECTION      L"-section"
+#define ON_RDK_DOCUMENT             L"render-content-manager-document"
+#define ON_RDK_UD_ROOT              L"render-content-manager-data"
+#define   ON_RDK_CURRENT_CONTENT    L"content"
+#define   ON_RDK_SETTINGS           L"settings"
+#define     ON_RDK_POST_EFFECTS     L"post-effects-new"
+#define     ON_RDK_PEP_TYPE_EARLY   L"early"
+#define     ON_RDK_PEP_TYPE_TONE    L"tone-mapping"
+#define     ON_RDK_PEP_TYPE_LATE    L"late"
+#define     ON_RDK_RENDERING        L"rendering"
+#define     ON_RDK_SUN              L"sun"
+
+inline bool IsFloatEqual (float  f1, float  f2) { return (fabsf(f1 - f2) < 1e-6); }
+inline bool IsDoubleEqual(double d1, double d2) { return (fabs (d1 - d2) < 1e-10); }
+
+ON_UUID RdkPlugInId(void);
+ON_UUID UniversalRenderEngineId(void);
+
+ON__INT64 Integerize(float dirty);
+ON__INT64 Integerize(double dirty);
+
+void SetModel(const class ON_RenderContent&, ONX_Model&);
+void SetModel(const class ON_PostEffect&, ONX_Model&);
+const ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& component);
+ON_RenderContent* NewRenderContentFromNode(const class ON_XMLNode& node);
+ON_PostEffect* NewPostEffectFromNode(ON_XMLNode& node);
+void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node);
+bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf);
+ON_XMLNode* FindPostEffectNodeForId(const ON_XMLNode& sectionNode, const ON_UUID& id);
+bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml);
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm);
+
+template <class T> inline T Lerp(float  t, const T& l, const T& h) { return l + T(t) * (h - l); }
+template <class T> inline T Lerp(double t, const T& l, const T& h) { return l + T(t) * (h - l); }
+
+class ON_InternalXMLImpl
+{
+public:
+  ON_InternalXMLImpl(ON_XMLNode* n=nullptr) : m_model_node(n) { }
+  virtual ~ON_InternalXMLImpl() { }
+
+  ON_XMLVariant GetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& def) const;
+  bool SetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
+
+  ON_XMLVariant GetParameter(const wchar_t* param_name, const ON_XMLVariant& def) const { return GetParameter(L"", param_name, def); }
+  bool SetParameter(const wchar_t* param_name, const ON_XMLVariant& value) { return SetParameter(L"", param_name, value); }
+
+  ON_XMLVariant GetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const;
+  bool SetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
+
+  ON_XMLNode& Node(void) const;
+  ON_XMLNode& NodeAt(const wchar_t* path_to_node) const;
+
+private:
+  ON_XMLVariant InternalGetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const;
+  bool InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value);
+
+public:
+  mutable ON_XMLRootNode m_local_node; // Used when m_model_node is null.
+  ON_XMLNode* m_model_node;
+};
+
+class ON_DecalCollection final
+{
+public:
+  ~ON_DecalCollection();
+
+  class Item final
+  {
+  public:
+    Item(const ON_UUID& component_id);
+    Item(const Item&) = delete;
+    ~Item();
+
+    const Item& operator = (const Item&) = delete;
+
+    ON_wString DecalsXML(void) const; // Returns <decals> node.
+    bool SetXML(const wchar_t* xml); // Sets from <xml> node.
+    bool SetDecalsXML(const ON_XMLNode& decals_node); // Sets from <decals> node.
+
+    ON_UUID ComponentId(void) const { return m_component_id; }
+
+    ON_Decal* GetDecal(int index) const;
+
+    ON_Decal* GetDecal(const ON_UUID& id) const;
+
+    void DeleteAllDecals(void);
+
+  private:
+    ON_UUID m_component_id;
+    ON_XMLNode m_decals_node;
+    ON_SimpleArray<ON_Decal*> m_decals;
+  };
+
+  // Create the decals from all model components that have decal user data.
+  void CreateDecalsFromXML(const ONX_Model& model);
+
+  // Convert the decals back to XML for all model components that have decal user data.
+  void CreateXMLFromDecals(const ONX_Model& model);
+
+  // Find the item index for a certain component.
+  int FindItemIndex(const ON_UUID& component_id) const;
+
+  // Find the item for a certain component.
+  Item* FindItem(const ON_UUID& component_id) const;
+
+  // Add a new decal to a certain component.
+  ON_Decal* AddDecal(const ON_ModelComponent& component);
+
+  // Get a decal by its id.
+  ON_Decal* GetDecal(const ON_UUID& id);
+
+private:
+  ON_SimpleArray<Item*> m_items;
+};
+
+ON_DecalCollection& GetDecalCollection(ONX_Model& model);
+
+template<class T> inline void hash_combine(size_t& seed, const T& v)
+{
+	std::hash<T> hasher;
+	seed ^= hasher(v) + 0x9E3779B9 + (seed << 6) + (seed >> 2);
+}
+
+class UuidHasher // Hasher for using ON_UUID as key with std::map
+{
+public:
+	inline size_t operator()(const ON_UUID& uuid) const
+	{
+		size_t seed = 0;
+		::hash_combine(seed, uuid.Data1);
+		::hash_combine(seed, uuid.Data2);
+		::hash_combine(seed, uuid.Data3);
+
+		for (int i = 0; i < 8; i++)
+		{
+			::hash_combine(seed, uuid.Data4[i]);
+		}
+
+		return seed;
+	}
+};
+
+class ON_MeshModifierCollection final
+{
+public:
+  ~ON_MeshModifierCollection();
+
+  // Find the mesh modifiers for a particular model component.
+  ON_MeshModifiers* Find(const ON_ModelComponent& component);
+
+  // Create the mesh modifiers from all model components that have mesh modifier user data.
+  bool CreateMeshModifiersFromXML(const ONX_Model& model);
+
+  // Convert the mesh modifiers back to XML for all model components that have mesh modifier user data.
+  bool CreateXMLFromMeshModifiers(const ONX_Model& model);
+
+private:
+  std::unordered_map<ON_UUID, ON_MeshModifiers*, UuidHasher> m_map;
+};
+
+//--------------------------------------------------------------------------------------------------
 
 class ON_INTERNAL_OBSOLETE
 {

@@ -41,53 +41,44 @@ const ON_wString ON_ModelComponent::ComponentTypeToString(
   {
   case ON_ModelComponent::Type::Unset:
     return ON_wString("Unset");
-    break;
   case ON_ModelComponent::Type::ModelGeometry:
     return ON_wString("ModelGeometry");
-    break;
   case ON_ModelComponent::Type::Image:
     return ON_wString("EmbeddedFile");
-    break;
   case ON_ModelComponent::Type::LinePattern:
     return ON_wString("LinePattern");
-    break;
   case ON_ModelComponent::Type::Layer:
     return ON_wString("Layer");
-    break;
   case ON_ModelComponent::Type::Group:
     return ON_wString("Group");
-    break;
   case ON_ModelComponent::Type::TextStyle:
     return ON_wString("TextStyle");
-    break;
   case ON_ModelComponent::Type::DimStyle:
     return ON_wString("AnnotationStyle");
-    break;
   case ON_ModelComponent::Type::HatchPattern:
     return ON_wString("HatchPattern");
-    break;
   case ON_ModelComponent::Type::InstanceDefinition:
     return ON_wString("InstanceDefinition");
-    break;
   case ON_ModelComponent::Type::HistoryRecord:
     return ON_wString("HistoryRecord");
-    break;
   case ON_ModelComponent::Type::TextureMapping:
     return ON_wString("TextureMapping");
-    break;
-  case ON_ModelComponent::Type::RenderMaterial:
+  case ON_ModelComponent::Type::Material:
     return ON_wString("RenderMaterial");
-    break;
   case ON_ModelComponent::Type::RenderLight:
     return ON_wString("RenderLight");
-    break;
+  case ON_ModelComponent::Type::RenderContent:
+    return ON_wString("RenderContent");
+  case ON_ModelComponent::Type::EmbeddedFile:
+    return ON_wString("EmbeddedFile");
+  case ON_ModelComponent::Type::PostEffect:
+    return ON_wString("PostEffect");
   case ON_ModelComponent::Type::Mixed:
     return ON_wString("Mixed");
-    break;
   default:
     ON_ERROR("invalid m_component_type value");
-    break;
   }
+
   return ON_wString::EmptyString;
 }
 
@@ -320,18 +311,21 @@ ON_ModelComponent::Type ON_ModelComponent::ComponentTypeFromUnsigned(
   {
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Unset);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Image);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::TextureMapping);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Material);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::LinePattern);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Layer);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Group);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::TextStyle);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::DimStyle);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::RenderLight);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::HatchPattern);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::InstanceDefinition);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::ModelGeometry);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::HistoryRecord);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::TextureMapping);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::RenderMaterial);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::RenderLight);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::RenderContent);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::EmbeddedFile);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::PostEffect);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Mixed);
   }
 
@@ -1956,176 +1950,104 @@ bool ON_ModelComponent::IsValidComponentName(
   return (rc && !bLastCharWasSpace) ? true : false;
 }
 
-bool ON_ModelComponent::IndexRequired(
-  ON_ModelComponent::Type component_type
-  )
+bool ON_ModelComponent::IndexRequired(ON_ModelComponent::Type component_type)
 {
-  bool bIndexRequired = false;
   switch (component_type)
   {
-  case ON_ModelComponent::Type::Unset:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
   case ON_ModelComponent::Type::Image:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::TextureMapping:
-    bIndexRequired = true;
-    break;
-  case ON_ModelComponent::Type::RenderMaterial:
-    // ON_Layer references render material by index
-    bIndexRequired = true;
-    break;
-  case ON_ModelComponent::Type::LinePattern:
-    // ON_Layer references line pattern by index
-    bIndexRequired = true;
-    break;
+  case ON_ModelComponent::Type::RenderContent: // JohnC: I have no idea how to decide what to return.
+  case ON_ModelComponent::Type::EmbeddedFile:  // JohnC: I have no idea how to decide what to return.
+  case ON_ModelComponent::Type::PostEffect:    // JohnC: I have no idea how to decide what to return.
+  case ON_ModelComponent::Type::Material:      // ON_Layer references render material by index
+  case ON_ModelComponent::Type::LinePattern:   // ON_Layer references line pattern by index
   case ON_ModelComponent::Type::Layer:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::Group:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::TextStyle:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::DimStyle:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::RenderLight:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::HatchPattern:
-    bIndexRequired = true;
-    break;
   case ON_ModelComponent::Type::InstanceDefinition:
-    bIndexRequired = true;
-    break;
+    return true;
+
   case ON_ModelComponent::Type::ModelGeometry:
-    break;
   case ON_ModelComponent::Type::HistoryRecord:
-    break;
-  case ON_ModelComponent::Type::Mixed:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
+
   default:
     ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
   }
-  return bIndexRequired;
 }
 
-bool ON_ModelComponent::UniqueNameIncludesParent(
-  ON_ModelComponent::Type component_type
-  )
+bool ON_ModelComponent::UniqueNameIncludesParent(ON_ModelComponent::Type component_type)
 {
-  bool bUniqueNameIncludesParent = false;
-  // [Giulio] If this table is changed, then also 
-  // RhinoCommon documentation in
-  // Rhino.DocObjects.ModelComponent.FindName() / FindNameHash
-  // will require appropriate tweaks.
+  // [Giulio] If this table is changed, then also RhinoCommon documentation in
+  // Rhino.DocObjects.ModelComponent.FindName() / FindNameHash() will require appropriate tweaks.
+
   switch (component_type)
   {
-  case ON_ModelComponent::Type::Unset:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
-  case ON_ModelComponent::Type::Image:
-    break;
-  case ON_ModelComponent::Type::TextureMapping:
-    break;
-  case ON_ModelComponent::Type::RenderMaterial:
-    break;
-  case ON_ModelComponent::Type::LinePattern:
-    break;
   case ON_ModelComponent::Type::Layer:
-    bUniqueNameIncludesParent = true;
-    break;
+    return true;
+
+  case ON_ModelComponent::Type::Image:
+  case ON_ModelComponent::Type::TextureMapping:
+  case ON_ModelComponent::Type::Material:
+  case ON_ModelComponent::Type::RenderContent: // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
+  case ON_ModelComponent::Type::EmbeddedFile:  // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
+  case ON_ModelComponent::Type::PostEffect:    // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
+  case ON_ModelComponent::Type::LinePattern:
   case ON_ModelComponent::Type::Group:
-    break;
   case ON_ModelComponent::Type::TextStyle:
-    break;
   case ON_ModelComponent::Type::DimStyle:
-    break;
   case ON_ModelComponent::Type::RenderLight:
-    break;
   case ON_ModelComponent::Type::HatchPattern:
-    break;
   case ON_ModelComponent::Type::InstanceDefinition:
-    break;
   case ON_ModelComponent::Type::ModelGeometry:
-    break;
   case ON_ModelComponent::Type::HistoryRecord:
-    break;
-  case ON_ModelComponent::Type::Mixed:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
+
   default:
     ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
   }
-  return bUniqueNameIncludesParent;
 }
 
-bool ON_ModelComponent::UniqueNameRequired(
-  ON_ModelComponent::Type component_type
-  )
+bool ON_ModelComponent::UniqueNameRequired(ON_ModelComponent::Type component_type)
 {
   // [Giulio] If this table is changed, then also 
   // Rhino.DocObjects.ModelComponent.ModelComponentTypeRequiresUniqueName()
   // will need the same tweak.
 
-  bool bUniqueNameRequired = false;
   switch (component_type)
   {
-  case ON_ModelComponent::Type::Unset:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
-  case ON_ModelComponent::Type::Image:
-    break;
-  case ON_ModelComponent::Type::TextureMapping:
-    break;
-  case ON_ModelComponent::Type::RenderMaterial:
-    break;
   case ON_ModelComponent::Type::LinePattern:
-    bUniqueNameRequired = true;
-    break;
   case ON_ModelComponent::Type::Layer:
-    bUniqueNameRequired = true;
-    break;
   case ON_ModelComponent::Type::Group:
-    bUniqueNameRequired = true;
-    break;
   case ON_ModelComponent::Type::TextStyle:
-    bUniqueNameRequired = true;
-    break;
   case ON_ModelComponent::Type::DimStyle:
-    bUniqueNameRequired = true;
-    break;
-  case ON_ModelComponent::Type::RenderLight:
-    break;
   case ON_ModelComponent::Type::HatchPattern:
-    bUniqueNameRequired = true;
-    break;
   case ON_ModelComponent::Type::InstanceDefinition:
-    bUniqueNameRequired = true;
-    break;
+  case ON_ModelComponent::Type::EmbeddedFile: ///////////////// Giulio
+    return true;
+
+  case ON_ModelComponent::Type::Image:
+  case ON_ModelComponent::Type::TextureMapping:
+  case ON_ModelComponent::Type::Material:
+  case ON_ModelComponent::Type::RenderContent: // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
+  case ON_ModelComponent::Type::PostEffect:    // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
+  case ON_ModelComponent::Type::RenderLight:
   case ON_ModelComponent::Type::ModelGeometry:
-    break;
   case ON_ModelComponent::Type::HistoryRecord:
-    break;
-  case ON_ModelComponent::Type::Mixed:
-    ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
+
   default:
     ON_ERROR("Invalid component_type parameter.");
-    break;
+    return false;
   }
-  return bUniqueNameRequired;
 }
 
-bool ON_ModelComponent::UniqueNameIgnoresCase(
-  ON_ModelComponent::Type component_type
-)
+bool ON_ModelComponent::UniqueNameIgnoresCase(ON_ModelComponent::Type component_type)
 {
   // This function must return true for components like ON_Material that do not require a unique name.
   return (
@@ -2172,7 +2094,6 @@ bool ON_ModelComponent::SetIdentification(
     }
   }
 
-
   if (bSetName && NameHash() != manifest_item.NameHash())
   {
     if ( manifest_item.NameHash() != ON_NameHash::Create(manifest_item.NameHash().ParentId(),manifest_name) )
@@ -2186,7 +2107,6 @@ bool ON_ModelComponent::SetIdentification(
       rc = false;
     }
   }
-
 
   if (bSetIndex && Index() != manifest_item.Index() )
   {
@@ -3055,6 +2975,7 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
 {
   if (nullptr != component_index)
     *component_index = ON_UNSET_INT_INDEX;
+
   int archive_component_index = ON_UNSET_INT_INDEX;
   if (!ReadInt(&archive_component_index))
     return false;
@@ -3062,7 +2983,8 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
   if (archive_component_index < 0 || false == ReferencedComponentIndexMapping() )
   {
     // system component with a persistent negative index
-    *component_index = archive_component_index;
+    if (nullptr != component_index)
+      *component_index = archive_component_index;
     return true;
   }
 
@@ -3089,7 +3011,9 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
   {
     if (this->Archive3dmVersion() <= 50)
     {
-      *component_index = archive_component_index;
+      if (nullptr != component_index)
+        *component_index = archive_component_index;
+
       return true;
     }
     const int archive_dim_style_index = archive_component_index;
@@ -3103,7 +3027,9 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
         if (archive_dim_style->ParentIdIsNotNil())
         {
           // override dimstyle - not in manifests or dimstyle table.
-          *component_index = archive_component_index;
+          if (nullptr != component_index)
+            *component_index = archive_component_index;
+
           return true;
         }
 
@@ -3132,7 +3058,7 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
       break;
     case ON_ModelComponent::Type::TextureMapping:
       break;
-    case ON_ModelComponent::Type::RenderMaterial:
+    case ON_ModelComponent::Type::Material:
       updated_component_index = ON_Material::Default.Index();
       break;
     case ON_ModelComponent::Type::LinePattern:
@@ -3172,6 +3098,7 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
 
   if (nullptr != component_index)
     *component_index = updated_component_index;
+
   return true; // true indicates the read worked, even if the component index cannot be updated.
 }
 
@@ -3332,7 +3259,11 @@ bool ON_BinaryArchive::Read3dmReferencedComponentId(
     break;
   case ON_ModelComponent::Type::TextureMapping:
     break;
-  case ON_ModelComponent::Type::RenderMaterial:
+  case ON_ModelComponent::Type::Material:
+    break;
+  case ON_ModelComponent::Type::RenderContent: // JohnC: I have no idea what to do here.
+    break;
+  case ON_ModelComponent::Type::EmbeddedFile:  // JohnC: I have no idea what to do here.
     break;
   case ON_ModelComponent::Type::LinePattern:
     break;
@@ -3400,7 +3331,7 @@ bool ON_BinaryArchive::Read3dmReferencedComponentId(
         break;
       case ON_ModelComponent::Type::TextureMapping:
         break;
-      case ON_ModelComponent::Type::RenderMaterial:
+      case ON_ModelComponent::Type::Material:
         break;
       case ON_ModelComponent::Type::LinePattern:
         break;

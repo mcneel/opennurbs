@@ -328,6 +328,55 @@ bool ON_Light::GetBBox( // returns true if successful
   return rc;
 }
 
+bool ON_Light::GetTightBoundingBox(
+  ON_BoundingBox& tight_bbox,
+  bool bGrowBox,
+  const ON_Xform* xform
+) const
+{
+  // only spotlights have a tight bbox that differs from regular bbox
+  if (ON::world_spot_light != m_style && ON::camera_spot_light != m_style)
+    return ON_Geometry::GetTightBoundingBox(tight_bbox, bGrowBox, xform);
+
+  if (bGrowBox && !tight_bbox.IsValid())
+  {
+    bGrowBox = false;
+  }
+  if (!bGrowBox)
+  {
+    tight_bbox.Destroy();
+  }
+
+  bool rc = true;
+  ON_3dPointArray points(16);
+  if (m_spot_angle > 0.0 && m_spot_angle < 90.0)
+  {
+    double r = m_direction.Length() * tan(ON_PI * m_spot_angle / 180.0);
+    ON_Circle c(ON_Plane(m_location + m_direction, m_direction), r);
+    ON_BoundingBox cbox;
+    c.GetTightBoundingBox(cbox);
+    cbox.GetCorners(points);
+  }
+  else
+  {
+    points.Append(m_location + m_direction);
+  }
+  points.Append(m_location);
+
+  if (points.Count() > 0)
+  {
+    rc = ON_GetPointListBoundingBox(3, 0, points.Count(), 3,
+      (double*)points.Array(),
+      tight_bbox.m_min, tight_bbox.m_max,
+      bGrowBox ? true : false)
+      ? true
+      : false;
+  }
+
+  return rc;
+}
+
+
 bool ON_Light::Transform( 
        const ON_Xform& xform
        )

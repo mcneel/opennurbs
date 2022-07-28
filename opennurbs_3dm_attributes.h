@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,17 +10,9 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
-
-////////////////////////////////////////////////////////////////
-//
-//   defines ON_3dmObjectAttributes
-//
-////////////////////////////////////////////////////////////////
 
 #if !defined(OPENNURBS_3DM_ATTRIBUTES_INC_)
 #define OPENNURBS_3DM_ATTRIBUTES_INC_
-
 
 /*
 Description: 
@@ -31,11 +21,6 @@ Description:
   the attributes are stored in an ON_3dmObjectAttributes class.
   Examples of attributes are object name, object id, display 
   attributes, group membership, layer membership, and so on.
-
-Remarks:
-  7 January 2003 Dale Lear
-    Derived from ON_Object so ON_UserData can be attached
-    to ON_3dmObjectAttributes.
 */
 
 class ON_CLASS ON_3dmObjectAttributes : public ON_Object
@@ -47,17 +32,11 @@ public:
   static const ON_3dmObjectAttributes DefaultAttributes;
 
 public:
-  // ON_Object virtual interface.  See ON_Object
-  // for details.
-
+  // ON_Object virtual interface.  See ON_Object for details.
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
-  // virtual
   void Dump( ON_TextLog& ) const override;
-  // virtual
   unsigned int SizeOf() const override;
-  // virtual
   bool Write(ON_BinaryArchive&) const override;
-  // virtual
   bool Read(ON_BinaryArchive&) override;
 
   /*
@@ -65,17 +44,15 @@ public:
     True if successful.
     (xform is invertable or didn't need to be).
   */
-  bool Transform( const ON_Xform& xform );
+  ON_DEPRECATED_MSG("Prefer the version that takes a const ON_Geometry* - for object frame support.") bool Transform( const ON_Xform& xform );
+  bool Transform(const ON_Geometry* pOriginalGeometry, const ON_Xform& xform);
 
   // attributes of geometry and dimension table objects
 public:
   ON_3dmObjectAttributes();
   ~ON_3dmObjectAttributes();
-
-  // Default C++ copy constructor and operator= work fine
-  // Do not provide custom versions
-  // NO // ON_3dmObjectAttributes(const ON_3dmObjectAttributes&);
-  // NO // ON_3dmObjectAttributes& operator=(const ON_3dmObjectAttributes&);
+  ON_3dmObjectAttributes(const ON_3dmObjectAttributes&);
+  ON_3dmObjectAttributes& operator=(const ON_3dmObjectAttributes&);
 
   bool operator==(const ON_3dmObjectAttributes&) const;
   bool operator!=(const ON_3dmObjectAttributes&) const;
@@ -187,25 +164,20 @@ public:
             0x20: linetype
             0x40: display order
   */
-  //ON_DEPRECATED unsigned int ApplyParentalControl(
-  //       const ON_3dmObjectAttributes& parent_attributes,
-  //       unsigned int control_limits = 0xFFFFFFFF
-  //       );
-
   unsigned int ApplyParentalControl(
          const ON_3dmObjectAttributes& parent_attributes,
          const ON_Layer& parent_layer,
          unsigned int control_limits = 0xFFFFFFFF
          );
 
-  // Every OpenNURBS object has a UUID (universally unique identifier).  The
-  // default value is nullptr.  When an OpenNURBS object is added to a model, the
-  // value is checked.  If the value is nullptr, a new UUID is created.  If the
-  // value is not nullptr but it is already used by another object in the model,
-  // a new UUID is created.  If the value is not nullptr and it is not used by 
+  // Every OpenNURBS object has a UUID (universally unique identifier). When
+  // an OpenNURBS object is added to a model, the value is checked.  If the
+  // value is ON_nil_uuid, a new UUID is created.  If the value is not
+  // ON_nil_uuid but it is already used by another object in the model, a new
+  // UUID is created.  If the value is not ON_nil_uuid and it is not used by 
   // another object in the model, then that value persists. When an object
   // is updated, by a move for example, the value of m_uuid persists.
-  ON_UUID m_uuid;
+  ON_UUID m_uuid = ON_nil_uuid;
 
   // The m_name member is public to avoid breaking the SDK.
   // Use SetName() and Name() for proper validation.
@@ -231,14 +203,14 @@ public:
   // The layer table is conceptually an array of ON_Layer classes.  Every
   // OpenNURBS object in a model is on some layer.  The object's layer
   // is specified by zero based indicies into the ON_Layer array.
-  int m_layer_index;
+  int m_layer_index = 0;
 
   // Linetype definitions in an OpenNURBS model are stored in a linetype table.
   // The linetype table is conceptually an array of ON_Linetype classes.  Every
   // OpenNURBS object in a model references some linetype.  The object's linetype
   // is specified by zero based indicies into the ON_Linetype array.
   // index 0 is reserved for continuous linetype (no pattern)
-  int m_linetype_index;
+  int m_linetype_index = -1;
 
   // Rendering material:
   //   If you want something simple and fast, set 
@@ -255,7 +227,7 @@ public:
   //   rendering material queries slow down.  Do not populate
   //   m_rendering_attributes.m_materials[] when setting 
   //   m_material_index will take care of your needs.
-  int m_material_index;
+  int m_material_index = -1;
   ON_ObjectRenderingAttributes m_rendering_attributes;
 
   //////////////////////////////////////////////////////////////////
@@ -348,15 +320,15 @@ public:
   // <0 = draw object behind "normal" draw order objects
   // >0 = draw object on top of "noraml" draw order objects
   // Larger number draws on top of smaller number.
-  int m_display_order;
+  int m_display_order = 0;
 
   // Plot weight in millimeters.
   //   =0.0 means use the default width
   //   <0.0 means don't plot (visible for screen display, but does not show on plot)
-  double m_plot_weight_mm;
+  double m_plot_weight_mm = 0;
 
   // Used to indicate an object has a decoration (like an arrowhead on a curve)
-  ON::object_decoration  m_object_decoration;
+  ON::object_decoration  m_object_decoration = ON::no_object_decoration;
 
   // When a surface object is displayed in wireframe, m_wire_density controls
   // how many isoparametric wires are used.
@@ -368,41 +340,115 @@ public:
   //    1       boundary and knot wires and, if there are no
   //            interior knots, a single interior wire.
   //   N>=2     boundary and knot wires and (N-1) interior wires
-  int m_wire_density;
+  int m_wire_density = 1;
 
 
-  // If m_viewport_id is nil, the object is active in
-  // all viewports. If m_viewport_id is not nil, then 
-  // this object is only active in a specific view.  
-  // This field is primarily used to assign page space
-  // objects to a specific page, but it can also be used 
-  // to restrict model space to a specific view.
-  ON_UUID m_viewport_id;
+  // If m_viewport_id is ON_nil_uuid, the object is active in all viewports.
+  // If m_viewport_id is not ON_nil_uuid, then this object is only active in a
+  // specific view. This field is primarily used to assign page space objects
+  // to a specific page, but it can also be used to restrict model space to a
+  // specific view.
+  ON_UUID m_viewport_id = ON_nil_uuid;
 
   // Starting with V4, objects can be in either model space
   // or page space.  If an object is in page space, then
   // m_viewport_id is not nil and identifies the page it 
   // is on.
-  ON::active_space m_space;
+  ON::active_space m_space = ON::model_space;
+
+  // Set the object to participate in clipping for all clipping plane objects.
+  // This is the default behavior.
+  void SetClipParticipationForAll();
+
+  // Set the object to be immune from the clipping for all clipping planes.
+  void SetClipParticipationForNone();
+
+  // Set the object to only be clipped by a specific set of clipping planes.
+  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count);
+
+  // Get details on how the object will interact with clipping planes
+  // Parameters:
+  //   forAllClippingPlanes [out] - if true, this object interacts with all
+  //     clipping planes
+  //   forNoClippingPlanes [out] - if true, this object is immune from all
+  //     clipping planes
+  //   specificClipplaneList [out] - if the object interacts with only a
+  //     specific set of clipping planes, this list will have the uuids of
+  //     those clipping plane objects
+  void GetClipParticipation(
+    bool& forAllClippingPlanes,
+    bool& forNoClippingPlanes,
+    ON_UuidList& specificClipplaneList) const;
+
+  // Source for clip participation details
+  ON::ClipParticipationSource ClipParticipationSource() const;
+  void SetClipParticipationSource(ON::ClipParticipationSource source);
+
+#pragma region Section Attributes
+  // Sections are the product of intersecting a plane with an object.
+  // For surface type geometry (ON_Brep, ON_Extrusion, ON_SubD, ON_Mesh)
+  // this intersection can result in curves as well as hatches for the
+  // closed curves generated
+
+  // When to fill/hatch the sections for an object can depend on the type of
+  // object being sectioned. See ON_SectionFillRule for the choices of
+  // when to generate hatches.
+  ON::SectionFillRule SectionFillRule() const;
+  void SetSectionFillRule(ON::SectionFillRule rule);
+
+  // Hatch pattern index for hatch to use when drawing a closed section
+  // Default is ON_UNSET_INT_INDEX which means don't draw a hatch
+  int SectionHatchIndex() const;
+  void SetSectionHatchIndex(int index);
+
+  // Scale applied to the hatch pattern for a section
+  double SectionHatchScale() const;
+  void SetSectionHatchScale(double scale);
+
+  // Rotation angle in radians applied to hatch pattern for a section.
+  double SectionHatchRotation() const;
+  void SetSectionHatchRotation(double rotation);
+
+  // Source for all section related attributes
+  ON::SectionAttributesSource SectionAttributesSource() const;
+  void SetSectionAttributesSource(ON::SectionAttributesSource source);
+#pragma endregion
+
+  // Per object linetype scale
+  double LinetypeScale() const;
+  void SetLinetypeScale(double scale);
+
+#pragma region Hatch Specific Attributes
+  ON_Color HatchBackgroundFillColor() const;
+  void SetHatchBackgrounFillColor(const ON_Color& color);
+  bool HatchBoundaryVisible() const;
+  void SetHatchBoundaryVisible(bool on);
+#pragma endregion
+
+  ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci, bool bRaw = false) const;
+  void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);
+  void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Plane& plane);
 
 private:
-  bool m_bVisible;
-  unsigned char m_mode;               // (m_mode % 16) = ON::object_mode values
-                                      // (m_mode / 16) = ON::display_mode values
-  unsigned char m_color_source;       // ON::object_color_source values
-  unsigned char m_plot_color_source;  // ON::plot_color_source values
-  unsigned char m_plot_weight_source; // ON::plot_weight_source values
-  unsigned char m_material_source;    // ON::object_material_source values
-  unsigned char m_linetype_source;    // ON::object_linetype_source values
+  bool m_bVisible = true;
+  // (m_mode % 16) = ON::object_mode values
+  // (m_mode / 16) = ON::display_mode values
+  unsigned char m_mode = ON::normal_object;
+  unsigned char m_color_source = ON::color_from_layer;
+  unsigned char m_plot_color_source = ON::plot_color_from_layer;
+  unsigned char m_plot_weight_source = ON::plot_weight_from_layer;
+  unsigned char m_material_source = ON::material_from_layer;
+  unsigned char m_linetype_source = ON::linetype_from_layer;
   
-  unsigned char m_reserved_0;
+  unsigned char m_reserved_0 = 0;
 
-  ON_Xform m_reserved_future_frame = ON_Xform::Nan;
+  ON_Plane m_object_frame = ON_Plane::UnsetPlane;
   
   ON_SimpleArray<int> m_group; // array of zero based group indices
 
 private:
-  ON__UINT_PTR m_reserved_ptr = 0;
+  void CopyHelper(const ON_3dmObjectAttributes& src);
+  mutable class ON_3dmObjectAttributesPrivate* m_private = nullptr;
 
 public:
   // group interface
@@ -586,5 +632,3 @@ private:
 };
 
 #endif
-
-// Brian G adding another comment on Tim's machine.

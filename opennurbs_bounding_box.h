@@ -70,6 +70,18 @@ public:
     ON_3dPoint box_corners[8] // returns list of 8 corner points
     ) const;
 
+
+  /*
+  Parameters:
+    index - in
+      the index of the edge
+  Returns:
+    Line segments, some possibly a single point.
+  */
+  ON_Line Edge(
+    unsigned int index  // the index of the requested edge.
+  ) const;
+
   /*
   Parameters:
     edges[] - out

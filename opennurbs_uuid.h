@@ -64,6 +64,7 @@ extern ON_EXTERN_DECL const ON_UUID ON_rhino4_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino5_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino6_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino7_id;
+extern ON_EXTERN_DECL const ON_UUID ON_rhino8_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino_id;
 
 // Application ids for usedata written by versions

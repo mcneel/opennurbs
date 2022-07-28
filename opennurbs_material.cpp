@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -1675,36 +1672,33 @@ bool ON_Material::RdkMaterialInstanceIdIsNil() const
 // NO ON_OBJECT_IMPLEMENT(ON_RdkMaterialInstanceIdObsoleteUserData, ON_ObsoleteUserData, ...)
 // because ON_RdkMaterialInstanceIdObsoleteUserData is derived from ON_ObsoleteUserData.
 
-// CRhRdkUserData class id valud
+// ON_RdkUserData class id value
 //  = ON_RdkMaterialInstanceIdObsoleteUserData::ClassId()->Uuid()
 //  = AFA82772-1525-43dd-A63C-C84AC5806911
-// From CRhRdkUserData ON_OBJECT_IMPLEMENT macro
-//   file: http://subversion.mcneel.com/rhino/6/trunk/src4/rhino4/Plug-ins/RDK/RDK/RhRcmUserData.cpp
-//   revision: 102101
+// From ON_RdkUserData ON_OBJECT_IMPLEMENT macro
+//   file: src4\opennurbs\opennurbs_xml.cpp
 //
 // {AFA82772-1525-43dd-A63C-C84AC5806911}
 const ON_UUID ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_class_id_ctor =
 { 0xAFA82772, 0x1525, 0x43dd, { 0xA6, 0x3C, 0xC8, 0x4A, 0xC5, 0x80, 0x69, 0x11 } };
 
-// CRhRdkUserData::m_userdata_uuid value
-//  = CRhRdkUserData::Uuid()
-//  = CRhRdkUserData::m_Uuid
+// ON_RdkUserData::m_userdata_uuid value
+//  = ON_RdkUserData::Uuid()
+//  = ON_RdkUserData::m_Uuid
 //  = B63ED079-CF67-416c-800D-22023AE1BE21
 // From
-//   file: http://subversion.mcneel.com/rhino/6/trunk/src4/rhino4/Plug-ins/RDK/RDK/RhRcmUserData.cpp
-//   revision: 102101
+//   file: src4\opennurbs\opennurbs_xml.cpp
 //
 // {B63ED079-CF67-416c-800D-22023AE1BE21}
 const ON_UUID ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_userdata_uuid_ctor =
 { 0xb63ed079, 0xcf67, 0x416c, { 0x80, 0xd, 0x22, 0x2, 0x3a, 0xe1, 0xbe, 0x21 } };
 
-// CRhRdkUserData::m_application_uuid value
+// ON_RdkUserData::m_application_uuid value
 //  = CRhRdkRhinoPlugIn::RhinoPlugInUuid()
 //  = CRhRdkRhinoPlugIn::m_uuidRhinoPlugIn
 //  = 16592D58-4A2F-401D-BF5E-3B87741C1B1B
 // From
-//  file: http://subversion.mcneel.com/rhino/6/trunk/src4/rhino4/Plug-ins/RDK/RDK/RhRcmRhinoPlugIn.cpp
-//  revision: 102101
+//  file: src4/rhino4/Plug-ins/RDK/RDK/RhRcmRhinoPlugIn.cpp
 //
 // {16592D58-4A2F-401D-BF5E-3B87741C1B1B}
 const ON_UUID ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_application_uuid_ctor =
@@ -1720,7 +1714,7 @@ ON_RdkMaterialInstanceIdObsoleteUserData::ON_RdkMaterialInstanceIdObsoleteUserDa
   ///////////////////////////////////////////////////////////
   // ON_UserData field initialization:
 
-  // The values of m_userdata_uuid and m_application_uuid match those used by CRhRdkUserData.
+  // The values of m_userdata_uuid and m_application_uuid match those used by ON_RdkUserData.
   m_userdata_uuid = ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_userdata_uuid_ctor;
   m_application_uuid = ON_RdkMaterialInstanceIdObsoleteUserData::m_archive_application_uuid_ctor;
 
@@ -3640,6 +3634,11 @@ const ON_Object* ON_TextureMapping::CustomMappingPrimitive(void) const
 	return m_mapping_primitive.get();
 }
 
+const std::shared_ptr<const ON_Object>& ON_TextureMapping::SharedCustomMappingPrimitive(void) const
+{
+  return m_mapping_primitive;
+}
+
 //Returns a valid mesh if the custom mapping primitive is a mesh.  Otherwise nullptr.
 //Implementation is return ON_Mesh::Cast(CustomMappingPrimitive());
 const ON_Mesh* ON_TextureMapping::CustomMappingMeshPrimitive(void) const
@@ -3660,9 +3659,154 @@ const ON_Surface* ON_TextureMapping::CustomMappingSurfacePrimitive(void) const
 	return ON_Surface::Cast(CustomMappingPrimitive());
 }
 
-void ON_TextureMapping::SetCustomMappingPrimitive(ON_Object* p)
+class MappingCRCCache : public ON_UserData
 {
-	m_mapping_primitive.reset(p);
+  ON_OBJECT_DECLARE(MappingCRCCache);
+public:
+  MappingCRCCache(int mapping_crc)
+  {
+    m_application_uuid = ON_opennurbs_id;
+    m_userdata_uuid = ON_CLASS_ID(MappingCRCCache);
+    m_userdata_copycount = 1;
+    m_mapping_crc = mapping_crc;
+  }
+
+  MappingCRCCache()
+  {
+    m_application_uuid = ON_opennurbs_id;
+    m_userdata_uuid = ON_CLASS_ID(MappingCRCCache);
+    m_userdata_copycount = 1;
+    m_mapping_crc = -1;
+  }
+
+  MappingCRCCache(const MappingCRCCache& src) : ON_UserData(src)
+  {
+    m_userdata_copycount = src.m_userdata_copycount;
+    m_mapping_crc = src.m_mapping_crc;
+  }
+
+  static const int current_version;
+
+  auto& operator=(const MappingCRCCache& src)
+  {
+    ON_UserData::operator = (src);
+    return *this;
+  }
+
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+  virtual bool GetDescription(ON_wString& description)
+  {
+    description = L"MappingCRCCache";
+    return true;
+  }
+
+  virtual bool Archive() const { return true; }
+
+  virtual bool Write(ON_BinaryArchive& binary_archive) const
+  {
+    if (binary_archive.WriteInt(current_version))
+    {
+      if (binary_archive.WriteInt(m_mapping_crc))
+      {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  virtual bool Read(ON_BinaryArchive& binary_archive)
+  {
+    int nVersion = 1;
+    if (binary_archive.ReadInt(&nVersion) && current_version == nVersion)
+    {
+      if (binary_archive.ReadInt(&m_mapping_crc))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic pop
+#endif
+
+public:
+  int m_mapping_crc = -1;
+};
+
+ON_OBJECT_IMPLEMENT(MappingCRCCache, ON_UserData, "5A4971F3-AA73-493C-A385-2F7EB4288989");
+const int MappingCRCCache::current_version = 1;
+
+
+
+static ON__UINT32 MappingCRC(const ON_Object* pMappingPrimitive)
+{
+  const ON__UINT32 crc32_in = 0x12341234;
+
+  if (const auto* p = ON_Mesh::Cast(pMappingPrimitive))
+  {
+    ON__UINT32 crc32 =  p->DataCRC(crc32_in);
+
+    if (p->HasTextureCoordinates())
+    {
+      // 25 August 2010 Dale Lear
+      //   Including m_T[] in crc32 per Jussi and Andy email discussion.
+      //   This is probably correct because users will expect the
+      //   "picture" on the mesh to be applied to the target in
+      //   a visual way.
+      const ON_2fPoint* tex = p->m_T.Array();
+      crc32 = ON_CRC32(crc32, p->m_T.Count() * sizeof(tex[0]), tex);
+    }
+    // January 7th 2021 Jussi
+    //   Added crc of origin to change the mapping crc to tricker re-mapping
+    //   of custom mesh mapped objects. This is to make the improvements to
+    //   CMeshClosestPointMapper::MatchFaceTC effective on existing models.
+    crc32 = ON_CRC32(crc32, sizeof(ON_3dPoint), &ON_3dPoint::UnsetPoint);
+
+    return crc32;
+  }
+
+  if (const auto* p = ON_Brep::Cast(pMappingPrimitive))
+  {
+    return p->DataCRC(crc32_in);
+    // 25 August 2010 Dale Lear
+    //   Should brep's render meshes be included in the crc?
+    //   The texture that is being mapped is actually
+    //   being applied to the brep by the render mesh's
+    //   m_T[] values and some users will want to see
+    //   the "picture" on the brep mapped to the
+    //   "picture" on the
+    //   target.
+  }
+
+  if (const auto* p = ON_Surface::Cast(pMappingPrimitive))
+  {
+    return p->DataCRC(crc32_in);
+  }
+
+  return crc32_in;
+}
+
+void ON_TextureMapping::SetCustomMappingPrimitive(ON_Object* pMappingObject)
+{
+  if (nullptr != pMappingObject)
+  {
+    const auto mapping_crc = ::MappingCRC(pMappingObject);
+
+    if (auto* pUD = static_cast<MappingCRCCache*>(pMappingObject->GetUserData(ON_CLASS_ID(MappingCRCCache))))
+    {
+      pUD->m_mapping_crc = mapping_crc;
+    }
+
+    pMappingObject->AttachUserData(new MappingCRCCache(mapping_crc));
+  }
+
+  m_mapping_primitive.reset(pMappingObject);
 }
 
 ON__UINT32 ON_TextureMapping::MappingCRC() const
@@ -3680,72 +3824,21 @@ ON__UINT32 ON_TextureMapping::MappingCRC() const
     crc32 = ON_CRC32(crc32,sizeof(m_Pxyz),          &m_Pxyz);
     // do not include m_Nxyz here - it won't help and may hurt
 
-	  if ( m_mapping_primitive )
-	  {
-      switch( m_type )
+    if (m_mapping_primitive)
+    {
+      const auto* pUD = static_cast<MappingCRCCache*>(m_mapping_primitive->GetUserData(ON_CLASS_ID(MappingCRCCache)));
+      if (pUD)
       {
-      case ON_TextureMapping::TYPE::mesh_mapping_primitive:
-        {
-          const ON_Mesh* mesh = CustomMappingMeshPrimitive();
-          if ( 0 == mesh )
-            break;
-          crc32 = mesh->DataCRC(crc32);
-          if ( mesh->HasTextureCoordinates() )
-          {
-            // 25 August 2010 Dale Lear
-            //   Including m_T[] in crc32 per Jussi and Andy email discussion.
-            //   This is probably correct because users will expect the
-            //   "picture" on the mesh to be applied to the target in
-            //   a visual way.
-            const ON_2fPoint* tex = mesh->m_T.Array();
-            crc32 = ON_CRC32(crc32,mesh->m_T.Count()*sizeof(tex[0]),tex);
-          }
-          // January 7th 2021 Jussi
-          //   Added crc of origin to change the mapping crc to tricker re-mapping
-          //   of custom mesh mapped objects. This is to make the improvements to
-          //   CMeshClosestPointMapper::MatchFaceTC effective on existing models.
-          crc32 = ON_CRC32(crc32, sizeof(ON_3dPoint), &ON_3dPoint::UnsetPoint);
+        crc32 = ON_CRC32(crc32, sizeof(MappingCRCCache::m_mapping_crc), &pUD->m_mapping_crc);
       }
-        break;
-
-      case ON_TextureMapping::TYPE::brep_mapping_primitive:
-        {
-          const ON_Brep* brep = CustomMappingBrepPrimitive();
-          if ( 0 == brep )
-            break;
-          crc32 = brep->DataCRC(crc32);
-          // 25 August 2010 Dale Lear
-          //   Should brep's render meshes be included in the crc?
-          //   The texture that is being mapped is actually
-          //   being applied to the brep by the render mesh's
-          //   m_T[] values and some users will want to see
-          //   the "picture" on the brep mapped to the
-          //   "picture" on the
-          //   target.
-        }
-        break;
-
-      case ON_TextureMapping::TYPE::srf_mapping_primitive:
-        {
-          const ON_Surface* surface = CustomMappingSurfacePrimitive();
-          if ( 0 == surface )
-            break;
-          crc32 = surface->DataCRC(crc32);
-        }
-        break;
-
-      case ON_TextureMapping::TYPE::no_mapping:
-      case ON_TextureMapping::TYPE::srfp_mapping:
-      case ON_TextureMapping::TYPE::plane_mapping:
-      case ON_TextureMapping::TYPE::cylinder_mapping:
-      case ON_TextureMapping::TYPE::sphere_mapping:
-      case ON_TextureMapping::TYPE::box_mapping:
-      case ON_TextureMapping::TYPE::ocs_mapping:
-      default:
-        break;
+      else
+      {
+        //Existing files.
+        const auto mapping_crc = ::MappingCRC(m_mapping_primitive.get());
+        const_cast<ON_Object*>(m_mapping_primitive.get())->AttachUserData(new MappingCRCCache(mapping_crc));
+        crc32 = ON_CRC32(crc32, sizeof(mapping_crc), &mapping_crc);
       }
     }
-
   }
 
   crc32 = ON_CRC32(crc32,sizeof(m_uvw), &m_uvw);
@@ -3781,6 +3874,25 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
   bool rc = (mesh.HasTextureCoordinates())
           ? HasMatchingTextureCoordinates(mesh.m_Ttag,mesh_xform)
           : false;
+
+  return rc;
+}
+
+bool ON_TextureMapping::HasMatchingCachedTextureCoordinates(
+  const ON_Mesh& mesh,
+  const ON_Xform* mesh_xform
+) const
+{
+  bool rc = false;
+
+  for (int i = 0; i < mesh.m_TC.Count(); i++)
+  {
+    if (mesh.VertexCount() == mesh.m_TC[i].m_T.Count() && HasMatchingTextureCoordinates(mesh.m_TC[i].m_tag, mesh_xform))
+    {
+      rc = true;
+      break;
+    }
+  }
 
   return rc;
 }
@@ -6632,6 +6744,16 @@ bool ON_TextureMapping::SetPlaneMapping(
 	return true;
 }
 
+bool ON_TextureMapping::SetOcsMapping(
+  const ON_Plane& plane
+)
+{
+  const ON_Interval interval(0.0, 1.0);
+  const auto rc = SetPlaneMapping(plane, interval, interval, interval);
+  m_type = ON_TextureMapping::TYPE::plane_mapping;
+  return rc;
+}
+
 bool ON_TextureMapping::SetBoxMapping(const ON_Plane& plane,
                                       ON_Interval dx,
                                       ON_Interval dy,
@@ -6807,13 +6929,19 @@ class ON_PhysicallyBasedMaterialUserData : public ON_UserData
 private:
   ON_OBJECT_DECLARE(ON_PhysicallyBasedMaterialUserData);
 
-
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
   bool GetDescription(ON_wString & description)
   {
     description = L"ON_PhysicallyBasedMaterialUserData";
     return true;
   }
-
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic pop
+#endif
+  
 public:
   ON_PhysicallyBasedMaterialUserData()
   {
@@ -7349,7 +7477,15 @@ ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedM
 
 bool ON_Material::IsPhysicallyBased(void) const
 {
-  return nullptr != PhysicallyBased();
+  //Optimized version
+  const auto pUD = static_cast<ON_PhysicallyBasedMaterialUserData*>(GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData)));
+  if (nullptr == pUD)
+    return false;
+
+  //https://mcneel.myjetbrains.com/youtrack/issue/RH-68577
+  return pUD->m_parameters.base_color.IsValid();
+  
+  //return nullptr != PhysicallyBased();
 }
 
 std::shared_ptr<ON_PhysicallyBasedMaterial> ON_Material::PhysicallyBased(void)

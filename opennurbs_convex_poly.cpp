@@ -542,7 +542,7 @@ bool ON_3dSimplex::Closest3plex(ON_4dPoint& Bary) const
               ON_3dVector cp = S.Evaluate(bary);
               double d2 = cp.LengthSquared();
 
-              if (d2 < D2 || d2 == D2 && n < N)
+              if (d2 < D2 || (d2 == D2 && n < N))
               {
                 D2 = d2;
                 N = n;

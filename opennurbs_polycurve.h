@@ -137,6 +137,9 @@ public:
         int, int        // indices of coords to swap
         ) override;
 
+  // remove "fuzz" in m_t[] domain array that is in some older files.
+  // Called in Read() and in brep edge merging.  
+  void SanitizeDomain();
 
 
   // virtual ON_Geometry override

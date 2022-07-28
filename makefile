@@ -98,16 +98,19 @@ ON_INC = opennurbs.h \
 	opennurbs_compstat.h \
 	opennurbs_cone.h \
 	opennurbs_crc.h \
+	opennurbs_current_environment.h \
 	opennurbs_curve.h \
 	opennurbs_curveonsurface.h \
 	opennurbs_curveproxy.h \
 	opennurbs_cylinder.h \
 	opennurbs_date.h \
+	opennurbs_decals.h \
 	opennurbs_defines.h \
 	opennurbs_detail.h \
 	opennurbs_dimension.h \
 	opennurbs_dimensionformat.h \
 	opennurbs_dimensionstyle.h \
+	opennurbs_dithering.h \
 	opennurbs_dll_resource.h \
 	opennurbs_ellipse.h \
 	opennurbs_error.h \
@@ -123,6 +126,7 @@ ON_INC = opennurbs.h \
 	opennurbs_function_list.h \
 	opennurbs_geometry.h \
 	opennurbs_gl.h \
+	opennurbs_ground_plane.h \
 	opennurbs_group.h \
 	opennurbs_hash_table.h \
 	opennurbs_hatch.h \
@@ -141,6 +145,7 @@ ON_INC = opennurbs.h \
 	opennurbs_leader.h \
 	opennurbs_light.h \
 	opennurbs_line.h \
+	opennurbs_linear_workflow.h \
 	opennurbs_linecurve.h \
 	opennurbs_linestyle.h \
 	opennurbs_linetype.h \
@@ -153,6 +158,7 @@ ON_INC = opennurbs.h \
 	opennurbs_matrix.h \
 	opennurbs_md5.h \
 	opennurbs_memory.h \
+	opennurbs_mesh_modifiers.h \
 	opennurbs_mesh.h \
 	opennurbs_model_component.h \
 	opennurbs_model_geometry.h \
@@ -176,15 +182,20 @@ ON_INC = opennurbs.h \
 	opennurbs_polyedgecurve.h \
 	opennurbs_polyline.h \
 	opennurbs_polylinecurve.h \
+	opennurbs_post_effects.h \
 	opennurbs_private_wrap_defs.h \
 	opennurbs_progress_reporter.h \
 	opennurbs_qsort_template.h \
 	opennurbs_quaternion.h \
 	opennurbs_rand.h \
+	opennurbs_render_channels.h \
+	opennurbs_render_content.h \
 	opennurbs_rendering.h \
 	opennurbs_revsurface.h \
 	opennurbs_rtree.h \
+	opennurbs_safe_frame.h \
 	opennurbs_sha1.h \
+	opennurbs_skylight.h \
 	opennurbs_sleeplock.h \
 	opennurbs_sphere.h \
 	opennurbs_std_string.h \
@@ -193,6 +204,7 @@ ON_INC = opennurbs.h \
 	opennurbs_subd.h \
 	opennurbs_subd_data.h \
 	opennurbs_sumsurface.h \
+	opennurbs_sun.h \
 	opennurbs_surface.h \
 	opennurbs_surfaceproxy.h \
 	opennurbs_symmetry.h \
@@ -222,6 +234,7 @@ ON_INC = opennurbs.h \
 	opennurbs_wip.h \
 	opennurbs_workspace.h \
 	opennurbs_xform.h \
+	opennurbs_xml.h \
 	opennurbs_zlib.h
 
 ON_SRC = opennurbs_3dm_attributes.cpp \
@@ -255,16 +268,19 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_compstat.cpp \
 	opennurbs_cone.cpp \
 	opennurbs_crc.cpp \
+	opennurbs_current_environment.cpp \
 	opennurbs_curve.cpp \
 	opennurbs_curveonsurface.cpp \
 	opennurbs_curveproxy.cpp \
 	opennurbs_cylinder.cpp \
 	opennurbs_date.cpp \
+	opennurbs_decals.cpp \
 	opennurbs_defines.cpp \
 	opennurbs_detail.cpp \
 	opennurbs_dimension.cpp \
 	opennurbs_dimensionformat.cpp \
 	opennurbs_dimensionstyle.cpp \
+	opennurbs_dithering.cpp \
 	opennurbs_ellipse.cpp \
 	opennurbs_embedded_file.cpp \
 	opennurbs_error.cpp \
@@ -278,6 +294,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_function_list.cpp \
 	opennurbs_geometry.cpp \
 	opennurbs_glyph_outline.cpp \
+	opennurbs_ground_plane.cpp \
 	opennurbs_group.cpp \
 	opennurbs_hash_table.cpp \
 	opennurbs_hatch.cpp \
@@ -293,6 +310,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_leader.cpp \
 	opennurbs_light.cpp \
 	opennurbs_line.cpp \
+	opennurbs_linear_workflow.cpp \
 	opennurbs_linecurve.cpp \
 	opennurbs_linetype.cpp \
 	opennurbs_locale.cpp \
@@ -303,6 +321,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_matrix.cpp \
 	opennurbs_md5.cpp \
 	opennurbs_memory_util.cpp \
+	opennurbs_mesh_modifiers.cpp \
 	opennurbs_mesh.cpp \
 	opennurbs_mesh_ngon.cpp \
 	opennurbs_mesh_tools.cpp \
@@ -335,14 +354,19 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_polyedgecurve.cpp \
 	opennurbs_polyline.cpp \
 	opennurbs_polylinecurve.cpp \
+	opennurbs_post_effects.cpp \
 	opennurbs_precompiledheader.cpp \
 	opennurbs_progress_reporter.cpp \
 	opennurbs_public_memory.cpp \
 	opennurbs_quaternion.cpp \
 	opennurbs_rand.cpp \
+	opennurbs_render_channels.cpp \
+	opennurbs_render_content.cpp \
 	opennurbs_revsurface.cpp \
 	opennurbs_rtree.cpp \
+	opennurbs_safe_frame.cpp \
 	opennurbs_sha1.cpp \
+	opennurbs_skylight.cpp \
 	opennurbs_sleeplock.cpp \
 	opennurbs_sort.cpp \
 	opennurbs_sphere.cpp \
@@ -372,6 +396,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_subd_texture.cpp \
 	opennurbs_sum.cpp \
 	opennurbs_sumsurface.cpp \
+	opennurbs_sun.cpp \
 	opennurbs_surface.cpp \
 	opennurbs_surfaceproxy.cpp \
 	opennurbs_symmetry.cpp \
@@ -398,6 +423,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_workspace.cpp \
 	opennurbs_wstring.cpp \
 	opennurbs_xform.cpp \
+	opennurbs_xml.cpp \
 	opennurbs_zlib.cpp \
 	opennurbs_zlib_memory.cpp
 
@@ -432,16 +458,19 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_compstat.o \
 	opennurbs_cone.o \
 	opennurbs_crc.o \
+	opennurbs_current_environment.o \
 	opennurbs_curve.o \
 	opennurbs_curveonsurface.o \
 	opennurbs_curveproxy.o \
 	opennurbs_cylinder.o \
 	opennurbs_date.o \
+	opennurbs_decals.o \
 	opennurbs_defines.o \
 	opennurbs_detail.o \
 	opennurbs_dimension.o \
 	opennurbs_dimensionformat.o \
 	opennurbs_dimensionstyle.o \
+	opennurbs_dithering.o \
 	opennurbs_ellipse.o \
 	opennurbs_embedded_file.o \
 	opennurbs_error.o \
@@ -455,6 +484,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_function_list.o \
 	opennurbs_geometry.o \
 	opennurbs_glyph_outline.o \
+	opennurbs_ground_plane.o \
 	opennurbs_group.o \
 	opennurbs_hash_table.o \
 	opennurbs_hatch.o \
@@ -470,6 +500,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_leader.o \
 	opennurbs_light.o \
 	opennurbs_line.o \
+	opennurbs_linear_workflow.o \
 	opennurbs_linecurve.o \
 	opennurbs_linetype.o \
 	opennurbs_locale.o \
@@ -480,6 +511,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_matrix.o \
 	opennurbs_md5.o \
 	opennurbs_memory_util.o \
+	opennurbs_mesh_modifiers.o \
 	opennurbs_mesh.o \
 	opennurbs_mesh_ngon.o \
 	opennurbs_mesh_tools.o \
@@ -512,14 +544,19 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_polyedgecurve.o \
 	opennurbs_polyline.o \
 	opennurbs_polylinecurve.o \
+	opennurbs_post_effects.o \
 	opennurbs_precompiledheader.o \
 	opennurbs_progress_reporter.o \
 	opennurbs_public_memory.o \
 	opennurbs_quaternion.o \
 	opennurbs_rand.o \
+	opennurbs_render_channels.o \
+	opennurbs_render_content.o \
 	opennurbs_revsurface.o \
 	opennurbs_rtree.o \
+	opennurbs_safe_frame.o \
 	opennurbs_sha1.o \
+	opennurbs_skylight.o \
 	opennurbs_sleeplock.o \
 	opennurbs_sort.o \
 	opennurbs_sphere.o \
@@ -549,6 +586,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_subd_texture.o \
 	opennurbs_sum.o \
 	opennurbs_sumsurface.o \
+	opennurbs_sun.o \
 	opennurbs_surface.o \
 	opennurbs_surfaceproxy.o \
 	opennurbs_symmetry.o \
@@ -575,6 +613,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_workspace.o \
 	opennurbs_wstring.o \
 	opennurbs_xform.o \
+	opennurbs_xml.o \
 	opennurbs_zlib.o \
 	opennurbs_zlib_memory.o
 

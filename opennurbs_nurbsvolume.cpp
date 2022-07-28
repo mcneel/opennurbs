@@ -540,7 +540,7 @@ ON__UINT32 ON_NurbsCage::DataCRC(ON__UINT32 current_remainder) const
       for ( j = 0; j < m_cv_count[1]; j++ )
       {
         cv = CV(i,j,0);
-        for (k = 0; i < m_cv_count[2]; k++ )
+        for (k = 0; k < m_cv_count[2]; k++ )
         {
           current_remainder = ON_CRC32(current_remainder,sizeof_cv,cv);
           cv += m_cv_stride[2];
@@ -1019,6 +1019,10 @@ bool ON_NurbsCage::GetBBox( // returns true if successful
 
 bool ON_NurbsCage::Transform( const ON_Xform& xform )
 {
+  // Call the base class so any user data is transformed.
+  if (!this->ON_Geometry::Transform(xform))
+    return false;
+
   int i,j;
   bool rc = (m_cv_count[0] > 0 && m_cv_count[1] > 0 && m_cv_count[2]) ? true : false;
   if ( rc || !xform.IsIdentity() )
@@ -2267,8 +2271,11 @@ bool ON_MorphControl::Transform(
         const ON_Xform& xform
         )
 {
-  bool rc = false;
+  // Call the base class so any user data is transformed.
+  if (!this->ON_Geometry::Transform(xform))
+    return false;
 
+  bool rc = false;
   switch(m_varient)
   {
   case 1:
@@ -2283,7 +2290,6 @@ bool ON_MorphControl::Transform(
     rc = m_nurbs_cage.Transform(xform);
     break;
   }
-
   return rc;
 }
 

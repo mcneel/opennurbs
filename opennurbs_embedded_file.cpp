@@ -24,6 +24,286 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_EmbeddedFile::CImpl final
+{
+public:
+  class Data final
+  {
+  public:
+    Data() { }
+    Data(const Data& d) { *this = d; }
+
+    const Data& operator = (const Data& d);
+
+    void SetLength(size_t len);
+
+  public:
+    std::unique_ptr<ON__UINT8[]> m_buffer;
+    size_t m_length = 0;
+    size_t m_compressed_length = 0;
+  };
+
+  bool LoadFile(const wchar_t* filename);
+  bool SaveFile(const wchar_t* filename) const;
+
+public:
+  ON_wString m_orig_file;
+  Data m_data;
+};
+
+const ON_EmbeddedFile::CImpl::Data& ON_EmbeddedFile::CImpl::Data::operator = (const Data& d)
+{
+  if (this == &d)
+    return *this;
+
+  SetLength(d.m_length);
+
+  m_compressed_length = d.m_compressed_length;
+
+  if (m_buffer)
+  {
+    memcpy(m_buffer.get(), d.m_buffer.get(), m_length);
+  }
+  else
+  {
+    m_length = m_compressed_length = 0;
+  }
+
+  return *this;
+}
+
+void ON_EmbeddedFile::CImpl::Data::SetLength(size_t len)
+{
+  if (0 != len)
+  {
+    m_buffer = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[len]);
+  }
+  else
+  {
+    m_buffer = nullptr;
+  }
+
+  m_length = len;
+}
+
+bool ON_EmbeddedFile::CImpl::LoadFile(const wchar_t* filename)
+{
+  auto& d = m_data;
+
+  // Open the file.
+  auto* pFile = ON_FileStream::Open(filename, L"rb");
+  if (nullptr == pFile)
+    return false;
+
+  // Get the length of the file data.
+  ON_FileStream::SeekFromEnd(pFile, 0);
+  const auto data_length = size_t(ON_FileStream::CurrentPosition(pFile));
+  ON_FileStream::SeekFromStart(pFile, 0);
+
+  // Allocate a buffer for the file data.
+  d.SetLength(data_length);
+
+  // Read the file data into the buffer.
+  const bool bOK = (ON_FileStream::Read(pFile, d.m_length, d.m_buffer.get()) == d.m_length);
+
+  // Close the file.
+  ON_FileStream::Close(pFile);
+
+  return bOK;
+}
+
+bool ON_EmbeddedFile::CImpl::SaveFile(const wchar_t* filename) const
+{
+  // Open the file for writing.
+  auto* pFile = ON_FileStream::Open(filename, L"wb");
+  if (nullptr == pFile)
+    return false;
+
+  // Write the buffer to the file.
+  if (ON_FileStream::Write(pFile, m_data.m_length, m_data.m_buffer.get()) != m_data.m_length)
+    return false;
+
+  // Close the file.
+  ON_FileStream::Close(pFile);
+
+  return true;
+}
+
+ON_OBJECT_IMPLEMENT(ON_EmbeddedFile, ON_ModelComponent, "E3BBE02E-F3D5-490D-9719-E21D8BF982EF");
+
+ON_EmbeddedFile::ON_EmbeddedFile()
+  :
+  ON_ModelComponent(ON_ModelComponent::Type::EmbeddedFile)
+{
+  m_impl = new CImpl;
+}
+
+ON_EmbeddedFile::ON_EmbeddedFile(const ON_EmbeddedFile& ef)
+  :
+  ON_ModelComponent(ON_ModelComponent::Type::EmbeddedFile, ef)
+{
+  m_impl = new CImpl;
+
+  *this = ef;
+}
+
+ON_EmbeddedFile::~ON_EmbeddedFile()
+{
+  Clear();
+
+  delete m_impl;
+  m_impl = nullptr;
+}
+
+const ON_EmbeddedFile& ON_EmbeddedFile::operator = (const ON_EmbeddedFile& ef)
+{
+  if (&ef != this)
+  {
+    m_impl->m_orig_file = ef.m_impl->m_orig_file;
+    m_impl->m_data = ef.m_impl->m_data;
+  }
+
+  return *this;
+}
+
+ON_wString ON_EmbeddedFile::Filename(void) const
+{
+  return m_impl->m_orig_file;
+}
+
+void ON_EmbeddedFile::SetFilename(const wchar_t* filename)
+{
+  m_impl->m_orig_file = filename;
+}
+
+bool ON_EmbeddedFile::LoadFromFile(const wchar_t* filename)
+{
+  Clear();
+
+  m_impl->m_orig_file = ON_FileSystemPath::CleanPath(filename);
+
+  if (m_impl->m_orig_file.IsEmpty())
+    return false;
+
+  if (!m_impl->LoadFile(m_impl->m_orig_file))
+    return false;
+
+  return true;
+}
+
+bool ON_EmbeddedFile::SaveToFile(const wchar_t* filename) const
+{
+  const auto file = ON_FileSystemPath::CleanPath(filename);
+  if (!m_impl->SaveFile(file))
+    return false;
+
+  return true;
+}
+
+bool ON_EmbeddedFile::LoadFromBuffer(ON_Buffer& buf)
+{
+  Clear();
+
+  // Allocate a buffer for the data.
+  auto& d = m_impl->m_data;
+  d.SetLength(buf.Size());
+
+  // Load the buffer from 'buf'.
+  if (buf.Read(d.m_length, d.m_buffer.get()) != d.m_length)
+    return false;
+
+  return true;
+}
+
+bool ON_EmbeddedFile::SaveToBuffer(ON_Buffer& buf) const
+{
+  // Write the data to 'buf'.
+  buf.Write(m_impl->m_data.m_length, m_impl->m_data.m_buffer.get());
+
+  return true;
+}
+
+bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
+{
+  Clear();
+
+  // Read the full file path of the original file.
+  ON_wString filename;
+  if (!archive.ReadString(filename))
+    return false;
+
+  m_impl->m_orig_file = ON_FileSystemPath::CleanPath(filename);
+
+  // Read the original (uncompressed) size of the compressed buffer.
+  size_t uncompressed_size = 0;
+  if (!archive.ReadCompressedBufferSize(&uncompressed_size))
+    return false;
+
+  // Allocate a buffer for the uncompressed data.
+  auto& d = m_impl->m_data;
+  d.SetLength(uncompressed_size);
+
+  // Read the compressed buffer and uncompress it into uncompressed_buffer.
+  bool bFailedCRC = false;
+
+  const auto pos_before = archive.CurrentPosition();
+
+  if (!archive.ReadCompressedBuffer(uncompressed_size, d.m_buffer.get(), &bFailedCRC) && !bFailedCRC)
+      return false;
+
+  d.m_compressed_length = archive.CurrentPosition() - pos_before;
+
+  return true;
+}
+
+bool ON_EmbeddedFile::Write(ON_BinaryArchive& archive) const
+{
+  auto& d = m_impl->m_data;
+
+  // Write the original filename to the archive.
+  if (!archive.WriteString(m_impl->m_orig_file))
+    return false;
+
+  // Write the temp file data to the archive.
+  if (!archive.WriteCompressedBuffer(d.m_length, d.m_buffer.get()))
+    return false;
+
+  return true;
+}
+
+size_t ON_EmbeddedFile::Length(void) const
+{
+  return m_impl->m_data.m_length;
+}
+
+size_t ON_EmbeddedFile::CompressedLength(void) const
+{
+  return m_impl->m_data.m_compressed_length;
+}
+
+bool ON_EmbeddedFile::Clear(void)
+{
+  m_impl->m_orig_file.Empty();
+
+  m_impl->m_data.SetLength(0);
+  m_impl->m_data.m_compressed_length = 0;
+
+  return true;
+}
+
+const ON_EmbeddedFile* ON_EmbeddedFile::FromModelComponentRef(const ON_ModelComponentReference& ref,
+                                                              const ON_EmbeddedFile* none_return_value) // Static.
+{
+  const auto* ef = ON_EmbeddedFile::Cast(ref.ModelComponent());
+  if (nullptr != ef)
+    return ef;
+
+  return none_return_value;
+}
+
+// This ON_Buffer stuff was already in file opennurbs_embedded_file.cpp even though it has nothing to do with files.
+// I need this file for actual EMBEDDED FILE code so I'm hijacking it. This ON_Buffer stuff should be moved.
+
 ON_Buffer::ON_Buffer()
 : m_buffer_size(0)
 , m_current_position(0)
@@ -1253,6 +1533,3 @@ bool ON_Buffer::Uncompress( ON_Buffer& uncompressed_buffer ) const
 
   return rc;
 }
-
-
-

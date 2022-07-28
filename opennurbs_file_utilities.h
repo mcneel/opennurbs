@@ -94,7 +94,7 @@ public:
     file_path - [in]
       name of file to delete
   Returns:
-    True if the fuke existed and was removed.
+    True if the file existed and was removed.
   */
   static bool RemoveFile(
     const char* file_path
@@ -107,7 +107,7 @@ public:
     file_path - [in]
       name of file to delete
   Returns:
-    True if the fuke existed and was removed.
+    True if the file existed and was removed.
   */
   static bool RemoveFile(
     const wchar_t* file_path

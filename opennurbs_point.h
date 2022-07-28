@@ -705,6 +705,16 @@ public:
   */
   bool IsNotZero() const;
 
+  /*
+  In  opennurbs points within ON_ZERO_TOLERANCE are generally considered
+  to be the same.
+  Returns:
+    True if for each coordinate pair,
+    |a-b| <= ON_ZERO_TOLERANCE 
+    or |a-b| <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE.
+  */
+  bool IsCoincident(const ON_3dPoint& P) const;
+
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
   void Transform( 
@@ -726,6 +736,8 @@ public:
 
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 };
+ON_DECL
+bool ON_PointsAreCoincident(const ON_3dPoint&, const ON_3dPoint&);
 
 ON_DECL
 ON_3dPoint operator*(int, const ON_3dPoint&);
@@ -1194,6 +1206,13 @@ public:
         const ON_2dPoint&, 
         const ON_2dPoint& 
         );
+  /*
+   Signed Angle (in radians) to A from B. A and B must be non-zero vectors.
+  Returns
+    -ON_PI <= angle <= ON_PI
+   Note: The function is anti-symmetric, i.e Angle(A,B) = -  Angle(A,B)
+ */
+  static double SignedAngle(const ON_2dVector& A, const ON_2dVector& B);
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
@@ -1559,6 +1578,16 @@ public:
   const ON_3dVector Perpendicular(
     ON_3dVector failure_result
   ) const;
+
+  /*
+    Angle (in radians) between two vectors. A and B must be non-zero vectors
+   Returns 
+     0<= angle <= ON_PI
+    Note: The function is symmetric, i.e Angle(A,B) = Angle(B,A)
+          This function is always accurate, in particular for nearly parallel,
+          anti-parallel or  perpendicular vectors
+  */
+  static double Angle(const ON_3dVector& A, const ON_3dVector& B);
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
@@ -2464,6 +2493,7 @@ public:
           double maximum_distance = 0.0
           ) const;
 
+
 };
 
 
@@ -3098,12 +3128,6 @@ private:
   const double* m_dP;
   const float* m_fP;
 };
-
-
-
-
-
-
 
 
 /*

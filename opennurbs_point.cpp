@@ -1216,6 +1216,21 @@ ON_3dVector::PerpendicularTo(
   return true;
 }
 
+/*
+  This formula does not suffer loss of accuracy in parallel, anti-parallel or perpendicular cases
+  see https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
+  To verify the formula consider a rhombus with sides A.Unitize() and B.unitize().
+*/
+double ON_3dVector::Angle(const ON_3dVector& A, const ON_3dVector& B)
+{
+  double lenA = A.Length();
+  double lenB = B.Length();
+  ON_3dVector sum =  lenB * A + lenA * B;
+  ON_3dVector diff = lenB * A - lenA * B;
+  return 2.0 * atan(diff.Length() / sum.Length());
+}
+
+
 void ON_2dPoint::Transform( const ON_Xform& xform )
 {
   double xx,yy,ww;
@@ -5014,6 +5029,16 @@ bool ON_3dPoint::IsNotZero() const
     && (x != ON_UNSET_POSITIVE_VALUE && y != ON_UNSET_POSITIVE_VALUE && z != ON_UNSET_POSITIVE_VALUE);
 }
 
+bool ON_3dPoint::IsCoincident(const ON_3dPoint& p) const
+{
+  return ON_PointsAreCoincident(3, false, *this, p);
+}
+
+bool ON_PointsAreCoincident(const ON_3dPoint& P, const ON_3dPoint& Q)
+{
+  return ON_PointsAreCoincident(3, false, P, Q);
+}
+
 ON_3dPoint operator*(int i, const ON_3dPoint& p)
 {
   double d = i;
@@ -5941,6 +5966,11 @@ bool ON_2dVector::PerpendicularTo(
       )
 {
   return PerpendicularTo(q-p);
+}
+
+double ON_2dVector::SignedAngle(const ON_2dVector& A, const ON_2dVector& B)
+{
+  return atan2(A.x * B.x + A.y * B.y, -A.x * B.y + A.y * B.x) ;
 }
 
 ON_2dVector operator*(int i, const ON_2dVector& v)

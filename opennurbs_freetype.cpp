@@ -421,7 +421,7 @@ private:
     const LOGFONT* logfont
   );
 #endif
-#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+#if defined (ON_RUNTIME_COCOA_AVAILABLE)
   static ON_FreeTypeFace* Internal_CreateFaceFromAppleFont(CTFontRef);
 #endif
 };
@@ -1365,7 +1365,7 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromWindowsFont(
 #endif
 
 
-#if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+#if defined (ON_RUNTIME_COCOA_AVAILABLE)
 
 ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRef)
 {
@@ -1447,7 +1447,7 @@ ON_FreeTypeFace* ON_FreeType::CreateFace(
   LOGFONT logfont = font.WindowsLogFont(0,nullptr);
   f = ON_FreeType::Internal_CreateFaceFromWindowsFont(&logfont);
 
-#elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#elif defined (ON_RUNTIME_COCOA_AVAILABLE)
   bool bIsSubstituteFont = false;
   f = ON_FreeType::Internal_CreateFaceFromAppleFont(font.AppleCTFont(bIsSubstituteFont));
 #endif

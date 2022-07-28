@@ -337,7 +337,7 @@ const ON_wString ON_wString::ApproximateFromNumber(
     // thate are 300 digits long when a 1e300 comes by.
     if (ON_wString::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%f", d) > 0)
       return ON_String(buffer);
-    // It may be that 64 elements were not enought for %f format if the "reasonable range"
+    // It may be that 64 elements were not enough for %f format if the "reasonable range"
     // test is not good enough.  We try again with "%g".
   }
   if (ON_wString::FormatIntoBuffer(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%g", d) > 0)
@@ -604,8 +604,6 @@ const ON_wString ON_wString::FromYearMonthDayHourMinuteSecond(
   return result;
 }
 
-
-
 static bool ON_BytesToHexadecimalString(
   const ON__UINT8* bytes,
   size_t byte_count,
@@ -750,7 +748,7 @@ bool ON_String::FormatVargs(const char* format, va_list args)
     //   str.Format(L"C:\\%s",str);
     ON_String temp;
     temp.SetLength(len_count);
-    const int len_string = ON_String::FormatVargsIntoBuffer(temp.Array(), len_count + 1, format, args);
+    const int len_string = ON_String::FormatVargsIntoBuffer(temp.Array(), size_t(len_count) + 1, format, args);
     if (len_string == len_count)
     {
       *this = temp;
@@ -834,9 +832,10 @@ int ON_String::FormatVargsIntoBuffer(
   int rc = ON_String::FormatVargsOutputCount(format, args_copy);
   va_end(args_copy);
 
-  size_t buffer_capacity = (rc <= 0) ? 1 : (rc + 1);
+  size_t buffer_capacity = (rc <= 0) ? 1 : (size_t(rc) + 1);
   if (false == buffer.GrowBuffer(buffer_capacity) || nullptr == buffer.m_buffer || buffer.m_buffer_capacity <= 0)
     return (rc < 0 ? rc : -1);
+
   buffer.m_buffer[0] = 0;
   buffer.m_buffer[buffer.m_buffer_capacity - 1] = 0;
   if (rc > 0)
@@ -896,7 +895,7 @@ bool ON_wString::FormatVargs(const wchar_t* format, va_list args)
     //   str.Format(L"C:\\%s",str);
     ON_wString temp;
     temp.SetLength(len_count);
-    const int len_string = ON_wString::FormatVargsIntoBuffer(temp.Array(), len_count + 1, format, args);
+    const int len_string = ON_wString::FormatVargsIntoBuffer(temp.Array(), size_t(len_count) + 1, format, args);
     if (len_string == len_count)
     {
       *this = temp;
@@ -1106,9 +1105,10 @@ int ON_wString::FormatVargsIntoBuffer(
   int rc = ON_wString::FormatVargsOutputCount(format, args_copy);
   va_end(args_copy);
 
-  size_t buffer_capacity = (rc <= 0) ? 1 : (rc + 1);
+  size_t buffer_capacity = (rc <= 0) ? 1 : (size_t(rc) + 1);
   if (false == buffer.GrowBuffer(buffer_capacity) || nullptr == buffer.m_buffer || buffer.m_buffer_capacity <= 0)
     return (rc < 0 ? rc : -1);
+
   buffer.m_buffer[0] = 0;
   buffer.m_buffer[buffer.m_buffer_capacity - 1] = 0;
   if (rc > 0)

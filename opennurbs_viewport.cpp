@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -371,6 +368,18 @@ bool ON_Viewport::Read( ON_BinaryArchive& file )
           if (rc && minor_version >= 4)
           {
             rc = file.ReadBool(&m_bValidCameraFrame);
+
+            if (rc && minor_version >= 5)
+            {
+              double scaleX = 1, scaleY = 1, scaleZ = 1;
+              rc = file.ReadDouble(&scaleX);
+              if (rc) rc = file.ReadDouble(&scaleY);
+              if (rc) rc = file.ReadDouble(&scaleZ);
+              if (rc)
+              {
+                SetViewScale(scaleX, scaleY, scaleZ);
+              }
+            }
           }
         }
       }
@@ -402,11 +411,12 @@ bool ON_Viewport::Read( ON_BinaryArchive& file )
 
 bool ON_Viewport::Write( ON_BinaryArchive& file ) const
 {
-  int i;
-  bool rc = file.Write3dmChunkVersion(1,4);
+  // 10 Jan 2022 S. Baer
+  // version 1.5: write view scale
+  bool rc = file.Write3dmChunkVersion(1,5);
   if (rc) 
   {
-    i = m_bValidCamera?1:0;
+    int i = m_bValidCamera?1:0;
     if (rc) rc = file.WriteInt( i );
     i = m_bValidFrustum?1:0;
     if (rc) rc = file.WriteInt( i );
@@ -464,6 +474,16 @@ bool ON_Viewport::Write( ON_BinaryArchive& file ) const
 
     // 1.4 fields - added Oct 13 2016 to V6
     if (rc) rc = file.WriteBool(m_bValidCameraFrame);
+
+    // 1.5 fields - added Jan 10 2022 to V8
+    if (rc)
+    {
+      double scaleX = 1.0, scaleY = 1.0, scaleZ = 1.0;
+      GetViewScale(&scaleX, &scaleY, &scaleZ);
+      rc = file.WriteDouble(scaleX);
+      if (rc) rc = file.WriteDouble(scaleY);
+      if (rc) rc = file.WriteDouble(scaleZ);
+    }
   }
   return rc;
 }
@@ -4386,10 +4406,17 @@ bool ON_Viewport::GetFrustumTopPlaneEquation(
   return rc;
 }
 
-void ON_Viewport::GetViewScale( double* x, double* y ) const
+
+void ON_Viewport::GetViewScale(double* x, double* y) const
 {
-  if ( x ) *x = 1.0;
-  if ( y ) *y = 1.0;
+  GetViewScale(x, y, nullptr);
+}
+
+void ON_Viewport::GetViewScale( double* x, double* y, double* z) const
+{
+  if (x) *x = 1.0;
+  if (y) *y = 1.0;
+  if (z) *z = 1.0;
   if ( !m_clip_mods.IsIdentity()
        && 0.0 == m_clip_mods.m_xform[3][0]
        && 0.0 == m_clip_mods.m_xform[3][1]
@@ -4401,27 +4428,29 @@ void ON_Viewport::GetViewScale( double* x, double* y ) const
     // Allow for negative scale values. See comments in SetViewScale
     double sx = m_clip_mods.m_xform[0][0];
     double sy = m_clip_mods.m_xform[1][1];
+    double sz = m_clip_mods.m_xform[2][2];
     if (    fabs(sx) > ON_ZERO_TOLERANCE
          && fabs(sy) > ON_ZERO_TOLERANCE
+         && fabs(sz) > ON_ZERO_TOLERANCE
          && 0.0 == m_clip_mods.m_xform[0][1]
          && 0.0 == m_clip_mods.m_xform[0][2]
          && 0.0 == m_clip_mods.m_xform[1][0]
          && 0.0 == m_clip_mods.m_xform[1][2]
-        )
+      )
     {
-      if ( x ) *x = sx;
-      if ( y ) *y = sy;
+      if (x) *x = sx;
+      if (y) *y = sy;
+      if (z) *z = sz;
     }
   }
 }
 
-//bool ON_Viewport::ScaleView( double x, double y, double z )
-//{
-//  // z ignored on purpose - it was a mistake to include z
-//  return (!IsPerspectiveProjection()) ? SetViewScale(x,y) : false;
-//}
-
 bool ON_Viewport::SetViewScale( double x, double y )
+{
+  return SetViewScale(x, y, 1);
+}
+
+bool ON_Viewport::SetViewScale( double x, double y, double z)
 {
   // 22 May Dale Lear
   //   View scaling should have been done by adjusting the 
@@ -4448,13 +4477,14 @@ bool ON_Viewport::SetViewScale( double x, double y )
   bool rc = false;
   if ( IsParallelProjection()
        && fabs(x) > ON_ZERO_TOLERANCE && ON_IsValid(x) 
-       && fabs(y) > ON_ZERO_TOLERANCE && ON_IsValid(y) 
-       // && (1.0 == x || 1.0 == y)
+       && fabs(y) > ON_ZERO_TOLERANCE && ON_IsValid(y)
+       && fabs(z) > ON_ZERO_TOLERANCE && ON_IsValid(z)
        )
   {
     ON_Xform xform(ON_Xform::IdentityTransformation);
     xform.m_xform[0][0] = x;
     xform.m_xform[1][1] = y;
+    xform.m_xform[2][2] = z;
     rc = SetClipModXform(xform);
   }
   return rc;

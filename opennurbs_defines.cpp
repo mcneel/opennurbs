@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -2297,6 +2294,130 @@ ON_2dex::ON_2dex(
   , j(jValue)
 {}
 
+ON_2dex ON_2dex::AsIncreasing() const
+{
+  ON_2dex rc;
+  if (j < i)
+  {
+    rc.i = j;
+    rc.j = i;
+  }
+  else
+  {
+    rc.i = i;
+    rc.j = j;
+  }
+  return rc;
+}
+
+ON_2dex ON_2dex::AsDecreasing() const
+{
+  ON_2dex rc;
+  if (i < j)
+  {
+    rc.i = j;
+    rc.j = i;
+  }
+  else
+  {
+    rc.i = i;
+    rc.j = j;
+  }
+  return rc;
+}
+
+ON_2udex ON_2udex::AsIncreasing() const
+{
+  ON_2udex rc;
+  if (j < i)
+  {
+    rc.i = j;
+    rc.j = i;
+  }
+  else
+  {
+    rc.i = i;
+    rc.j = j;
+  }
+  return rc;
+}
+
+ON_2udex ON_2udex::AsDecreasing() const
+{
+  ON_2udex rc;
+  if (i < j)
+  {
+    rc.i = j;
+    rc.j = i;
+  }
+  else
+  {
+    rc.i = i;
+    rc.j = j;
+  }
+  return rc;
+}
+
+bool ON_2dex::operator==(const ON_2dex& src) const
+{
+  return i == src.i && j == src.j;
+}
+
+bool ON_2dex::operator!=(const ON_2dex& src) const
+{
+  return i != src.i || j != src.j;
+}
+
+bool ON_2udex::operator==(const ON_2udex& src) const
+{
+  return i == src.i && j == src.j;
+}
+
+bool ON_2udex::operator!=(const ON_2udex& src) const
+{
+  return i != src.i || j != src.j;
+}
+
+bool ON_2udex::operator<(const ON_2udex& src) const
+{
+  return i < src.i || ((j == src.j) && j < src.j);
+}
+
+bool ON_2udex::operator<=(const ON_2udex& src) const
+{
+  return i < src.i || ((j == src.j) && j <= src.j);
+}
+
+bool ON_2udex::operator>=(const ON_2udex& src) const
+{
+  return i > src.i || ((j == src.j) && j >= src.j);
+}
+
+bool ON_2udex::operator>(const ON_2udex& src) const
+{
+  return i > src.i || ((j == src.j) && j > src.j);
+}
+
+bool ON_4dex::operator==(const ON_4dex& src) const
+{
+  return i == src.i && j == src.j && k == src.k && l == src.l;
+}
+
+bool ON_4dex::operator!=(const ON_4dex& src) const
+{
+  return i != src.i || j != src.j || k != src.k || l != src.l;
+}
+
+bool ON_4udex::operator==(const ON_4udex& src) const
+{
+  return i == src.i && j == src.j && k == src.k && l == src.l;
+}
+
+bool ON_4udex::operator!=(const ON_4udex& src) const
+{
+  return i != src.i || j != src.j || k != src.k || l != src.l;
+}
+
 ON_3dex::ON_3dex(
   int iValue,
   int jValue,
@@ -2316,6 +2437,60 @@ ON_4dex::ON_4dex(
   , k(kValue)
   , l(lValue)
 {}
+
+ON_4dex ON_4dex::AsIncreasing() const
+{
+  auto rc = ON_4dex(i, j, k, l);
+  if (j < i) std::swap(rc.i, rc.j);
+  if (k < i) std::swap(rc.i, rc.k);
+  if (j < i) std::swap(rc.i, rc.l);
+  if (k < j) std::swap(rc.j, rc.k);
+  if (l < j) std::swap(rc.j, rc.l);
+  if (l < k) std::swap(rc.k, rc.l);
+  return rc;
+}
+
+ON_4dex ON_4dex::AsPairwiseIncreasing() const
+{
+  auto rc = ON_4dex(i, j, k, l);
+  if (k < i)
+  {
+    std::swap(rc.i, rc.k);
+    std::swap(rc.j, rc.l);
+  }
+  else if (i == k && l < j)
+  {
+    std::swap(rc.j, rc.l);
+  }
+  return rc;
+}
+
+ON_4udex ON_4udex::AsIncreasing() const
+{
+  auto rc = ON_4udex(i, j, k, l);
+  if (j < i) std::swap(rc.i, rc.j);
+  if (k < i) std::swap(rc.i, rc.k);
+  if (j < i) std::swap(rc.i, rc.l);
+  if (k < j) std::swap(rc.j, rc.k);
+  if (l < j) std::swap(rc.j, rc.l);
+  if (l < k) std::swap(rc.k, rc.l);
+  return rc;
+}
+
+ON_4udex ON_4udex::AsPairwiseIncreasing() const
+{
+  auto rc = ON_4udex(i, j, k, l);
+  if (k < i)
+  {
+    std::swap(rc.i, rc.k);
+    std::swap(rc.j, rc.l);
+  }
+  else if (i == k && l < j)
+  {
+    std::swap(rc.j, rc.l);
+  }
+  return rc;
+}
 
 int ON_4dex::operator[](int ind) const
 { 
@@ -2407,6 +2582,7 @@ int ON_2udex::CompareSecondIndex(
     return 1;
   return 0;
 }
+
 
 
 ON_3udex::ON_3udex(
@@ -2583,4 +2759,88 @@ double ON_StopWatch::ElapsedTime() const
     d = 0.0;
   }
   return d;
+}
+
+ON::LineCapStyle ON::LineCapStyleFromUnsigned(
+  unsigned int cap_as_unsigned
+)
+{
+  switch (cap_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineCapStyle::Round);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineCapStyle::Flat);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineCapStyle::Square);
+  }
+  ON_ERROR("invalid cap_as_unsigned parameter.");
+  return ON::LineCapStyle::Round;
+}
+
+ON::LineJoinStyle ON::LineJoinStyleFromUnsigned(
+  unsigned int join_as_unsigned
+)
+{
+  switch (join_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineJoinStyle::Round);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineJoinStyle::Miter);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::LineJoinStyle::Bevel);
+  }
+  ON_ERROR("invalid join_as_unsigned parameter.");
+  return ON::LineJoinStyle::Round;
+}
+
+
+ON::ClipParticipationSource ON::ClipParticipationSourceFromUnsigned(
+  unsigned int clip_participation_source_as_unsigned
+)
+{
+  switch (clip_participation_source_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromLayer);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromObject);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromParent);
+  }
+  ON_ERROR("invalid clip_participation_source_as_unsigned parameter.");
+  return ON::ClipParticipationSource::FromLayer;
+}
+
+ON::SectionFillRule ON::SectionFillRuleFromUnsigned(
+  unsigned int section_fill_rule_as_unsigned
+)
+{
+  switch (section_fill_rule_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionFillRule::ClosedCurves);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionFillRule::SolidObjects);
+  }
+  ON_ERROR("invalid section_fill_rule_as_unsigned parameter.");
+  return ON::SectionFillRule::ClosedCurves;
+}
+
+ON::SectionAttributesSource ON::SectionAttributesSourceFromUnsigned(
+  unsigned int section_attributes_source_as_unsigned
+)
+{
+  switch (section_attributes_source_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionAttributesSource::FromLayer);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionAttributesSource::FromObject);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionAttributesSource::FromParent);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionAttributesSource::FromSectioner);
+  }
+  ON_ERROR("invalid section_attributes_source_as_unsigned parameter.");
+  return ON::SectionAttributesSource::FromLayer;
+}
+
+ON::ViewSectionBehavior ON::ViewSectionBehaviorFromUnsigned(
+  unsigned int view_section_behavior_as_unsigned
+)
+{
+  switch (view_section_behavior_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::ViewSectionBehavior::ClipAndSection);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::ViewSectionBehavior::SectionOnly);
+  }
+  ON_ERROR("invalid view_section_behavior_as_unsigned parameter.");
+  return ON::ViewSectionBehavior::ClipAndSection;
 }

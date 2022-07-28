@@ -207,6 +207,28 @@ bool ON_ArcCurve::IsValid( ON_TextLog* text_log ) const
       text_log->Print("ON_ArcCurve m_arc is not valid\n");
     return false;
   }
+  // 7-May-21.  GBA. Added conditions to define a degenerate ON_ArcCurve
+  // Note: these conditions should be enforced by Trim and Split
+  if (m_arc.radius < ON_ZERO_TOLERANCE )
+  {
+    if (0 != text_log)
+      text_log->Print("ON_ArcCurve m_arc.radius < ON_ZERO_TOLERANCE\n");
+    return false;
+  }
+  ON_3dPoint S = PointAtStart();
+  ON_3dPoint E = PointAtEnd();
+  if( S.IsCoincident(E) != IsCircle())
+  {
+    if (0 != text_log)
+    {
+      if (IsCircle() )
+        text_log->Print("ON_ArcCurve !Start.IsCoincident(End) an a circle\n");
+      else
+        text_log->Print("ON_ArcCurve Start.IsCoincident(End) on open arc curve\n");
+    }
+    return false;
+  }
+
 
   return true;
 }
@@ -583,26 +605,30 @@ bool ON_ArcCurve::Evaluate( // returns false if unable to evaluate
   return rc;
 }
 
-bool ON_ArcCurve::Trim( const ON_Interval& in )
+bool ON_ArcCurve::Trim( const ON_Interval& trimt )
 {
-  bool rc = in.IsIncreasing();
-  if (rc) 
+  bool rc = false;
+  if (trimt.IsIncreasing())
   {
-    double t0 = m_t.NormalizedParameterAt(in.m_t[0]);
-    double t1 = m_t.NormalizedParameterAt(in.m_t[1]);
-    const ON_Interval arc_angle0 = m_arc.DomainRadians();
-    double a0 = arc_angle0.ParameterAt(t0);
-    double a1 = arc_angle0.ParameterAt(t1);
-		// Resulting ON_Arc must pass IsValid()
-    if ( a1 - a0 > ON_ZERO_TOLERANCE && m_arc.SetAngleIntervalRadians(ON_Interval(a0,a1)) ) 
+    if (m_t.Includes(trimt, true))
     {
-      m_t = in;
+      ON_Interval normt = m_t.NormalizedParameterAt(trimt);
+      ON_3dPoint S = PointAt(trimt[0]);
+      ON_3dPoint E = PointAt(trimt[1]);
+      ON_Interval angle = m_arc.DomainRadians().ParameterAt(normt);
+      // 7-May-21.  GBA.   New definition of IsValid() enforced.
+      // Resulting ON_Arc and ON_ArcCurve must pass IsValid()
+      if (angle.Length() > ON_ZERO_TOLERANCE && !S.IsCoincident(E)
+        && m_arc.SetAngleIntervalRadians(angle))
+      {
+        m_t = trimt;
+        DestroyCurveTree();
+        rc = true;
+      }
     }
-    else
-    {
-      rc = false;
-    }
-    DestroyCurveTree();
+    /* Allow trim where nothing is removed RH-64768 */
+    else if (m_t == trimt)
+      rc = true;
   }
   return rc;
 }

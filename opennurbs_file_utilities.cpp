@@ -1766,7 +1766,7 @@ const ON_wString ON_FileSystemPath::PlatformPath(ON_FileSystemPath::PathId path_
 #if defined(ON_RUNTIME_WIN)
   KNOWNFOLDERID platform_path_id;
 #define ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(win_fid,apple_fid) platform_path_id = win_fid
-#elif defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#elif defined(ON_RUNTIME_COCOA_AVAILABLE)
   NSSearchPathDirectory platform_path_id;
 #define ON_INTERNAL_SET_LOCAL_DIRECTORY_ID(win_fid,apple_fid) platform_path_id = apple_fid
 #endif
@@ -1818,7 +1818,7 @@ const ON_wString ON_FileSystemPath::PlatformPath(ON_FileSystemPath::PathId path_
     CoTaskMemFree(windows_path);
   }
 
-#elif defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#elif defined(ON_RUNTIME_COCOA_AVAILABLE)
 
   NSArray *apple_paths = NSSearchPathForDirectoriesInDomains(platform_path_id, NSUserDomainMask, YES);
   if ([apple_paths count] > 0)

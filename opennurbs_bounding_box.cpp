@@ -135,6 +135,39 @@ ON_BoundingBox::GetCorners(
   return (8==n);
 }
 
+ON_Line ON_BoundingBox::Edge(unsigned int index) const
+{
+  switch (index)
+  {
+  case 0u:
+    return ON_Line(ON_3dPoint(m_min.x, m_min.y, m_min.z), ON_3dPoint(m_max.x, m_min.y, m_min.z));
+  case 1u:
+    return ON_Line(ON_3dPoint(m_min.x, m_min.y, m_min.z), ON_3dPoint(m_min.x, m_max.y, m_min.z));
+  case 2u:
+    return ON_Line(ON_3dPoint(m_min.x, m_min.y, m_min.z), ON_3dPoint(m_min.x, m_min.y, m_max.z));
+  case 3u:
+    return ON_Line(ON_3dPoint(m_min.x, m_min.y, m_max.z), ON_3dPoint(m_max.x, m_min.y, m_max.z));
+  case 4u:
+    return ON_Line(ON_3dPoint(m_min.x, m_min.y, m_max.z), ON_3dPoint(m_min.x, m_max.y, m_max.z));
+  case 5u:
+    return ON_Line(ON_3dPoint(m_min.x, m_max.y, m_min.z), ON_3dPoint(m_max.x, m_max.y, m_min.z));
+  case 6u:
+    return ON_Line(ON_3dPoint(m_min.x, m_max.y, m_min.z), ON_3dPoint(m_min.x, m_max.y, m_max.z));
+  case 7u:
+    return ON_Line(ON_3dPoint(m_max.x, m_min.y, m_min.z), ON_3dPoint(m_max.x, m_min.y, m_max.z));
+  case 8u:
+    return ON_Line(ON_3dPoint(m_max.x, m_min.y, m_min.z), ON_3dPoint(m_max.x, m_max.y, m_min.z));
+  case 9u:
+    return ON_Line(ON_3dPoint(m_min.x, m_max.y, m_max.z), ON_3dPoint(m_max.x, m_max.y, m_max.z));
+  case 10u:
+    return ON_Line(ON_3dPoint(m_max.x, m_min.y, m_max.z), ON_3dPoint(m_max.x, m_max.y, m_max.z));
+  case 11u:
+    return ON_Line(ON_3dPoint(m_max.x, m_max.y, m_min.z), ON_3dPoint(m_max.x, m_max.y, m_max.z));
+  default:
+    index %= 12; return Edge(index);
+  }
+}
+
 bool ON_BoundingBox::GetEdges( 
   ON_Line edges[12] 
   ) const
@@ -146,49 +179,8 @@ bool ON_BoundingBox::GetEdges(
   {
     for ( i = 0; i < 3; i++ )
     {
-      line.to = m_min;
-      if  ( 1 == i )
-        line.to.z = m_max.z;
+      
 
-      line.from = line.to;
-      if ( i < 2 )
-        line.to.x = m_max.x;
-      else
-      {
-        line.from.z = m_min.z;
-        line.to.z = m_max.z;
-      }
-      edges[edge_count++] = line;
-
-      line.from = line.to;
-      if ( i < 2 )
-        line.to.y = m_max.y;
-      else
-      {
-        line.from.z = m_min.z;
-        line.to.z = m_max.z;
-      }
-      edges[edge_count++] = line;
-
-      line.from = line.to;
-      if ( i < 2 )
-        line.to.x = m_min.x;
-      else
-      {
-        line.from.z = m_min.z;
-        line.to.z = m_max.z;
-      }
-      edges[edge_count++] = line;
-
-      line.from = line.to;
-      if ( i < 2 )
-        line.to.y = m_min.y;
-      else
-      {
-        line.from.z = m_min.z;
-        line.to.z = m_max.z;
-      }
-      edges[edge_count++] = line;
     }
   }
 

@@ -579,6 +579,12 @@ public:
   // It is ok to adjust clipping planes.
   bool m_bLockedProjection;
 
+  ON::ViewSectionBehavior SectionBehavior() const;
+  void SetSectionBehavior(ON::ViewSectionBehavior behavior);
+private:
+  ON::ViewSectionBehavior m_section_behavior = ON::ViewSectionBehavior::ClipAndSection;
+  unsigned char m_reserved[6];
+public:
   ///////////////////////////////////////////////////////////////////////
   //
   // target point

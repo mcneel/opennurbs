@@ -256,6 +256,20 @@ public:
             const ON_Interval& dz
             );
 
+
+  /*
+Description:
+  Create a Ocs texture mapping.  Note that OCS mappings must be placed on mapping channel ON_ObjectRenderingAttributes::OCSMappingChannelId()
+  otherwise they will not work.
+Parameters:
+  plane - [in]
+Returns:
+  True if input is valid.
+*/
+  bool SetOcsMapping(
+    const ON_Plane& plane
+  );
+
   /*
   Description:
     Create a cylindrical projection texture mapping.
@@ -605,6 +619,27 @@ public:
 
   /*
   Description:
+    Quickly check to see if a mesh has cached texture coordinates
+    set by this mapping.
+  Parameters:
+    mesh - [in]
+    object_xform - [in] (optional)
+      If this transform is not nullptr, then true will be
+      returned only if the mapping function is the same and
+      the tag's m_mesh_xform field is the same as mesh_xform.
+      This parameter is typically nullptr or the value of
+      ON_MappingRef::m_object_xform.
+  Returns:
+    True if the mesh contains cached texture coordinates set
+    by this mapping.
+  */
+  bool HasMatchingCachedTextureCoordinates(
+         const ON_Mesh& mesh,
+         const ON_Xform* object_xform = nullptr
+         ) const;
+
+  /*
+  Description:
     Get texture coordinates.  This calculation is
     expensive.  When possible, use a MappingMatch()
     query to avoid unnecessary calculations.
@@ -701,6 +736,8 @@ public:
   // Returns nullptr if no custom mapping primitive is stored in this texture mapping definition.
   const ON_Object* CustomMappingPrimitive(void) const;
 
+  const std::shared_ptr<const ON_Object>& SharedCustomMappingPrimitive(void) const;
+
   //Returns a valid mesh if the custom mapping primitive is a mesh.  Otherwise nullptr.
   //Implementation is return ON_Mesh::Cast(CustomMappingPrimitive());
   const ON_Mesh* CustomMappingMeshPrimitive(void) const;
@@ -721,7 +758,7 @@ private:
   // C4251: ... needs to have dll-interface to be used by clients of class ...
   // m_mapping_primitive is private and all code that manages m_mapping_primitive is explicitly implemented in the DLL.
 private:
-  std::shared_ptr<ON_Object> m_mapping_primitive = nullptr;
+  std::shared_ptr<const ON_Object> m_mapping_primitive = nullptr;
 #pragma ON_PRAGMA_WARNING_POP
 };
 
@@ -730,6 +767,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_TextureMapping*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_TextureMapping*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_TextureMapping>;
 #endif
+
 
 #endif
 

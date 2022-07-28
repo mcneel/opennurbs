@@ -28,8 +28,8 @@ Remarks:
 	  constant speed parameterization. The parameterization is
 	  an affine linear reparameterzation of the underlying arc
 	  m_arc onto the domain m_t.
-	- A valid ON_ArcCurve has Radius()>0 and  0<AngleRadians()<=2*PI
-	  and a strictly increasing Domain(). 
+	- A valid ON_ArcCurve has  a strictly increasing Domain() and
+		ON_ArePointsCoincident(Start,End) == IsCircle()
 */
 class ON_CLASS ON_ArcCurve : public ON_Curve
 {

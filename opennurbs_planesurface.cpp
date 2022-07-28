@@ -634,6 +634,7 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlane(
         double padding
         )
 {
+
   ON_Plane plane(&plane_equation.x);
   return CreatePseudoInfinitePlane(plane,bbox,padding);
 }
@@ -649,6 +650,53 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlane(
     return false;
   return CreatePseudoInfinitePlane(plane,8,bbox_corners,padding);
 }
+
+
+bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
+  const ON_Plane& plane,
+  const ON_BoundingBox& bbox,
+  double padding
+)
+{
+  if (!plane.IsValid() || !bbox.IsValid())
+    return false;
+
+  ON_Interval uext(ON_DBL_PINF, ON_DBL_NINF);
+  ON_Interval vext(ON_DBL_PINF, ON_DBL_NINF);
+  double t, u, v;
+  for (int i = 0; i < 12; i++)
+  {
+    ON_Line edge = bbox.Edge(i);
+    if (!ON_Intersect(edge, plane.plane_equation, &t)) continue;
+    if (t < 0.0 || t > 1.0) continue;
+    ON_3dPoint pt = edge.PointAt(t);
+    plane.ClosestPointTo(pt, &u, &v);
+    if (u < uext[0]) uext[0] = u;
+    else if (u > uext[1]) uext[1] = u;
+    if (v < vext[0]) vext[0] = v;
+    else if (v > vext[1]) vext[1] = v;
+  }
+  *this = plane;
+  uext.Expand(padding * uext.Length() + padding);
+  vext.Expand(padding * vext.Length() + padding);
+  SetExtents(0, uext, true);
+  SetExtents(1, vext, true);
+  return true;
+}
+
+
+bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
+  const ON_PlaneEquation& plane_equation,
+  const ON_BoundingBox& bbox,
+  double padding
+)
+{
+  ON_Plane plane(plane_equation);
+  ON_3dPoint center = plane.ClosestPointTo(bbox.Center());
+  plane.origin = center;
+  return CreatePseudoInfinitePlaneTight(plane, bbox, padding);
+}
+
 
 bool ON_PlaneSurface::CreatePseudoInfinitePlane( 
         const ON_Plane& plane,
@@ -706,8 +754,6 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlane(
   return IsValid()?true:false;
 }
 
-
-
 bool ON_PlaneSurface::SetDomain( 
   int dir, 
   double t0, 
@@ -720,6 +766,66 @@ bool ON_PlaneSurface::SetDomain(
     rc = true;
     m_domain[dir].Set(t0,t1);
     DestroySurfaceTree();
+  }
+  return rc;
+}
+
+ON_Mesh* ON_PlaneSurface::CreateMesh(
+  ON_Mesh* mesh
+) const
+{
+  ON_Mesh* rc = nullptr;
+
+  if (m_plane.IsValid() && m_domain[0].IsValid() && m_domain[1].IsValid())
+  {
+    bool vn = false, fn = false, sp = true;
+
+    if (mesh == nullptr) mesh = new ON_Mesh();
+    else
+    {
+      if (!mesh->HasDoublePrecisionVertices()) mesh->UpdateDoublePrecisionVertices();
+      if (mesh->HasVertexNormals()) vn = true;
+      if (mesh->HasFaceNormals()) fn = true;
+      if (mesh->HasMeshTopology()) mesh->DestroyTopology();
+    }
+
+    mesh->m_dV.Append(PointAt(m_domain[0][0], m_domain[1][0]));
+    mesh->m_dV.Append(PointAt(m_domain[0][1], m_domain[1][0]));
+    mesh->m_dV.Append(PointAt(m_domain[0][1], m_domain[1][1]));
+    mesh->m_dV.Append(PointAt(m_domain[0][0], m_domain[1][1]));
+    mesh->UpdateSinglePrecisionVertices();
+
+    {
+      ON_MeshFace mf;
+      mf.vi[0] = mesh->VertexCount() - 4;
+      mf.vi[1] = mesh->VertexCount() - 3;
+      mf.vi[2] = mesh->VertexCount() - 2;
+      mf.vi[3] = mesh->VertexCount() - 1;
+      mesh->m_F.Append(mf);
+    }
+
+    if (vn)
+    {
+      mesh->m_N.Append((ON_3fVector)m_plane.Normal());
+      mesh->m_N.Append((ON_3fVector)m_plane.Normal());
+      mesh->m_N.Append((ON_3fVector)m_plane.Normal());
+      mesh->m_N.Append((ON_3fVector)m_plane.Normal());
+    }
+
+    if (fn)
+    {
+      mesh->m_FN.Append((ON_3fVector)m_plane.Normal());
+    }
+
+    if (sp)
+    {
+      mesh->m_S.Append(ON_2dPoint(m_domain[0][0], m_domain[1][0]));
+      mesh->m_S.Append(ON_2dPoint(m_domain[0][1], m_domain[1][0]));
+      mesh->m_S.Append(ON_2dPoint(m_domain[0][1], m_domain[1][1]));
+      mesh->m_S.Append(ON_2dPoint(m_domain[0][0], m_domain[1][1]));
+    }
+
+    rc = mesh;
   }
   return rc;
 }

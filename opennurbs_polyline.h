@@ -259,15 +259,39 @@ Remarks:
   Closed polylines are copied to OutPlines. 
   Plines that cannot be joined to others are copied to OutPlines.  
   */
-ON_DECL
-int ON_JoinPolylines(const ON_SimpleArray<const ON_Polyline*>& InPlines,
-                  ON_SimpleArray<ON_Polyline*>& OutPlines,
-                  double join_tol,
-                  double kink_tol,
-                  bool bUseTanAngle,
-                  bool bPreserveDirection = false,
-                  ON_SimpleArray<int>* key = 0
-                 );
+ON_DECL int ON_JoinPolylines(
+  const ON_SimpleArray<const ON_Polyline*>& InPlines,
+  ON_SimpleArray<ON_Polyline*>& OutPlines,
+  double join_tol,
+  double kink_tol,
+  bool bUseTanAngle,
+  bool bPreserveDirection = false,
+  ON_SimpleArray<int>* key = 0
+);
 
+
+/*
+Description:
+  Join an array of lines into one or more polylines.
+Parameters:
+  InLines - [in] Array of lines to be joined (not modified)
+  OutPolylines - [out] Array of resulting joined polylines.
+  tolerance - [in] Distance tolerance used to decide if end points are close enough. 
+                  Lines with length less than join_tol are NOT collapsed and can
+                  cause problems when end points do not match exactly.
+  bPreserveDirection - [in] If true, line end points will be compared to line start points.
+                            If false, all start and end points will be compared, and copies
+                            of input curves may be reversed in output.
+  key     -  [out] if key is not nullptr, InLines[i] was joined into OutPolylines[key[i]].
+Returns:
+  Number of polylines added to OutPolylines
+*/
+ON_DECL int ON_JoinLines(
+  const ON_SimpleArray<ON_Line>& InLines,
+  ON_ClassArray<ON_Polyline>& OutPolylines,
+  double tolerance,
+  bool bPreserveDirection,
+  ON_SimpleArray<int>* pKey
+);
 
 #endif

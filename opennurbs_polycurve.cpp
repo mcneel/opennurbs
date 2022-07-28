@@ -238,6 +238,40 @@ ON_PolyCurve::SwapCoordinates( int i, int j )
   return rc;
 }
 
+void ON_PolyCurve::SanitizeDomain()
+
+{
+  // remove "fuzz" in m_t[] domain array that is in some older files.
+  int segment_count = Count();
+  if (m_t.Count() != segment_count + 1)
+    return;
+  double s, t, d0, d1, fuzz;
+  ON_Interval in0, in1;
+  in1 = SegmentCurve(0)->Domain();
+  d1 = in1.Length();
+  for (int segment_index = 1; segment_index < segment_count; segment_index++ )
+  {
+    t = m_t[segment_index];
+    in0 = in1;
+    d0 = d1;
+    in1 = SegmentCurve(segment_index)->Domain();
+    d1 = in1.Length();
+    s = in0[1];
+    if ( s != t && s == in1[0] && t > in0[0] && t < in1[1] )
+    {
+      fuzz = ((d0<=d1)?d0:d1)*ON_SQRT_EPSILON;
+      if ( fabs(t-s) <= fuzz )
+        m_t[segment_index] = s;
+    }
+  }
+  fuzz = d1*ON_SQRT_EPSILON;
+  t = m_t[segment_count];
+  s = in1[1];
+  if ( s != t && t > in1[0] && fabs(s-t) <= fuzz )
+    m_t[segment_count] = s;
+}
+
+
 bool ON_PolyCurve::IsValid( ON_TextLog* text_log ) const
 {
   return IsValid(false,text_log);
@@ -458,6 +492,8 @@ bool ON_PolyCurve::Read(
 								m_segment.Count()==segment_count && m_t.Count()==segment_count+1)
     {
       // remove "fuzz" in m_t[] domain array that is in some older files.
+      SanitizeDomain();
+      /*
       double s, t, d0, d1, fuzz;
       ON_Interval in0, in1;
       in1 = SegmentCurve(0)->Domain();
@@ -482,6 +518,7 @@ bool ON_PolyCurve::Read(
       s = in1[1];
       if ( s != t && t > in1[0] && fabs(s-t) <= fuzz )
         m_t[segment_count] = s;
+        */
     }
   }
 

@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -197,6 +196,29 @@ public:
 
   const ON_SimpleArray<ON_LinetypeSegment>& Segments() const;
 
+  /*
+    Description:
+      Set style used for end caps on open curves
+  */
+  void SetLineCapStyle(ON::LineCapStyle style);
+
+  /*
+    Description:
+      End cap style used on open curves
+  */
+  ON::LineCapStyle LineCapStyle() const;
+
+  /*
+    Description:
+      Set style used for corners on curves
+  */
+  void SetLineJoinStyle(ON::LineJoinStyle style);
+
+  /*
+    Description:
+      Corner join style for curves
+  */
+  ON::LineJoinStyle LineJoinStyle() const;
 private:
   enum : unsigned char
   {
@@ -204,8 +226,9 @@ private:
   };
   unsigned char m_is_set_bits = 0;
   unsigned char m_is_locked_bits = 0;
-  unsigned short m_reserved1 = 0;
-  unsigned int m_reserved2 = 0;
+  ON::LineCapStyle m_cap_style = ON::LineCapStyle::Round;
+  ON::LineJoinStyle m_join_style = ON::LineJoinStyle::Round;
+  unsigned int m_reserved = 0;
   ON_SimpleArray<ON_LinetypeSegment> m_segments;
 };
 

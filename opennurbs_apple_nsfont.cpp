@@ -1194,25 +1194,4 @@ void ON_Font::DumpCTFont(
 }
 
 
-#if defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-
-NSFont* ON_Font::AppleTollFreeNSFont(CTFontRef appleCTFont)
-{
-  if (nullptr == appleCTFont)
-    return nullptr;
-  NSFont* appleNSFont = (__bridge NSFont*)(appleCTFont);
-  return appleNSFont;
-}
-
-
-CTFontRef AppleTollFreeCTFont(NSFont* appleNSFont)
-{
-  if (nullptr == appleNSFont)
-    return nullptr;
-  CTFontRef appleCTFont = (__bridge CTFontRef)(appleNSFont);
-  return appleCTFont;
-}
-
-#endif
-
 #endif

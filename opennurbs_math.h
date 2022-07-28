@@ -1693,12 +1693,37 @@ const ON_2dex* ON_BinarySearch2dexArray(
           size_t nel
           );
 
+ON_DECL
+const ON_2udex* ON_BinarySearch2udexArray(
+  unsigned int key_i,
+  const ON_2udex* base,
+  size_t nel
+);
+
 // These simple intersectors are fast and detect transverse intersections.
 // If the intersection is not a simple transverse case, then they
 // return false and you will have to use one of the slower but fancier
 // models.
 
-// returns closest points between the two infinite lines
+// Description:
+//   Find the unique closest-points pair between two infinite lines, if it exists.
+// Parameters:
+//   lineA - [in]
+//   lineB - [in]
+//   double* a - [out]
+//   double* b - [out] The shortest distance between the lines is the
+//                    chord from lineA.PointAt(*a) to lineB.PointAt(*b).
+// Returns:
+//   True if points are found and false if the lines are numerically parallel.
+//   Numerically parallel means the 2x2 matrix
+// 
+//             AoA  -AoB
+//            -AoB   BoB
+// 
+//  is numerically singluar, where A = lineA.to-lineA.from
+//  and B = lineB.to-lineB.from.
+// See Also:
+//   ON_IntersectLineLine
 ON_DECL
 bool ON_Intersect( 
           const ON_Line&, 
@@ -1707,10 +1732,18 @@ bool ON_Intersect(
           double*  // parameter on second line
           );
 
-// Returns false unless intersection is a single point
-// If returned parameter is < 0 or > 1, then the line
-// segment between line.m_point[0] and line.m_point[1]
-// does not intersect the plane
+// Description:
+//   Finds the intersection point of a line and plane, if it exists.
+// Parameters:
+//   line - [in]
+//   plane - [in]
+//   line_parameter - [out]
+//     If the returned parameter is < 0 or > 1, then the
+//     line segment between line.from and line.to
+//     does not intersect the plane.
+// Returns:
+//   true if the intersection is a single point,
+//   and false otherwise.
 ON_DECL
 bool ON_Intersect( 
           const ON_Line&, 
@@ -1718,6 +1751,35 @@ bool ON_Intersect(
           double* // parameter on line
           );
 
+// Description:
+//   Finds the intersection point of a line and plane, if it exists.
+// Parameters:
+//   line - [in]
+//   plane_equation - [in]
+//   line_parameter - [out]
+//     If the returned parameter is < 0 or > 1, then the
+//     line segment between line.from and line.to
+//     does not intersect the plane.
+// Returns:
+//   true if the intersection is a single point,
+//   and false otherwise.
+ON_DECL
+bool ON_Intersect(
+          const ON_Line& line, 
+          const ON_PlaneEquation& plane_equation, 
+          double* line_parameter
+          );
+
+// Description:
+//   Finds the intersection line between two planes, if it exists.
+// Parameters:
+//   planeA - [in]
+//   planeB - [in]
+//   line_out - [out]
+//     Intersection line is returned here.
+// Returns:
+//   true if the intersection is a single line,
+//   and false otherwise.
 ON_DECL
 bool ON_Intersect( 
         const ON_Plane&, 
@@ -1725,6 +1787,17 @@ bool ON_Intersect(
         ON_Line& // intersection line is returned here
         );
 
+// Description:
+//   Finds the intersection point of three planes, if it exists.
+// Parameters:
+//   planeA - [in]
+//   planeB - [in]
+//   planeC - [in]
+//   point_out - [out]
+//     Intersection point is returned here.
+// Returns:
+//   true if the intersection is a single point,
+//   and false otherwise.
 ON_DECL
 bool ON_Intersect( 
         const ON_Plane&, 
@@ -1733,59 +1806,79 @@ bool ON_Intersect(
         ON_3dPoint& // intersection point is returned here
         );
 
-// returns 0 = no intersections, 
-// 1 = intersection = single point, 
-// 2 = intersection = circle
-// If 0 is returned, returned circle has radius=0
-// and center = point on sphere closest to plane.
-// If 1 is returned, intersection is a single
-// point and returned circle has radius=0
-// and center = intersection point on sphere.
+// Description:
+//   Intersect a plane and a sphere.
+// Parameters:
+//   plane - [in]
+//   sphere - [in]
+//   circle - [out]
+//     Intersection circle is returned here.
+// Returns:
+//   0: no intersection
+//     circle radius = 0,
+//     and circle origin = point on the plane closest to the sphere.
+//   1: intersection is a single point
+//     circle radius = 0,
+//     and circle origin = tangent point on the plane.
+//   2: intersection is a circle
+//     circle radius > 0.
 ON_DECL
-int ON_Intersect( 
-                 const ON_Plane&, const ON_Sphere&, ON_Circle&
-                  );
+int ON_Intersect(
+        const ON_Plane&,
+        const ON_Sphere&,
+        ON_Circle&  // intersection circle is returned here
+        );
 
-// Intersects an infinte line and sphere and returns 
-// 0 = no intersections, 
-// 1 = one intersection, 
-// 2 = 2 intersections
-// If 0 is returned, first point is point 
-// on line closest to sphere and 2nd point is the point
-// on the sphere closest to the line.
-// If 1 is returned, first point is obtained by evaluating
-// the line and the second point is obtained by evaluating
-// the sphere.
+// Description:
+//   Intersect an infinite line and a sphere.
+// Parameters:
+//   line - [in]
+//   sphere - [in]
+//   pointA - [out]
+//     First intersection point is returned here.
+//   pointB - [out]
+//     Second intersection point is returned here.
+// Returns:
+//   0: no intersection
+//     pointA is the point on line closest to sphere,
+//     pointB is the point on sphere closest to line.
+//   1: intersection is a single point
+//     pointA is obtained by evaluating the line
+//     pointB is obtained by evaluating the sphere
+//   2: 2 distinct intersection points
 ON_DECL
 int ON_Intersect(                  
         const ON_Line&, 
         const ON_Sphere&,
-        ON_3dPoint&, 
-        ON_3dPoint& // intersection point(s) returned here
+        ON_3dPoint&, // [out] first intersection point
+        ON_3dPoint&  // [out] second intersection point
         );
 
-
-// Intersects an infinte line and cylinder and returns 
-// 0 = no intersections, 
-// 1 = one intersection, 
-// 2 = 2 intersections
-// 3 = line lies on cylinder
-//
-// If 0 is returned, first point is point 
-// on line closest to cylinder and 2nd point is the point
-// on the cylinder closest to the line.
-// If 1 is returned, first point is obtained by evaluating
-// the line and the second point is obtained by evaluating
-// the cylinder.
-//
-// The value of cylinder.IsFinite() determines if the
-// intersection is performed on the finite or infinite cylinder.
+// Description:
+//   Intersect an infinite line and a cylinder.
+// Parameters:
+//   line - [in]
+//   cylinder - [in]
+//   pointA - [out]
+//   pointB - [out]
+// Returns:
+//   0: no intersection
+//     pointA is the point on line closest to cylinder,
+//     pointB is the point on cylinder closest to line.
+//   1: intersection is a single point
+//     pointA is obtained by evaluating the line
+//     pointB is obtained by evaluating the cylinder
+//   2: 2 distincts intersection points
+//   3: line lies on cylinder
+// Remarks:
+//   The value of cylinder.IsFinite() determines if the
+//   intersection is performed on the finite or infinite cylinder.
 ON_DECL
 int ON_Intersect( 
-      const ON_Line&, // [in]
-      const ON_Cylinder&, // [in]
+      const ON_Line&,
+      const ON_Cylinder&,
       ON_3dPoint&, // [out] first intersection point
-      ON_3dPoint& // [out] second intersection point
+      ON_3dPoint&  // [out] second intersection point
       );
 
 // Description:
@@ -1850,7 +1943,7 @@ int ON_Intersect(
 //   1     One intersection at point0
 //   2     Two intersections at point0
 //         and point1.
-//	 3		 Circle lies on plane
+//	   3		  Circle lies on plane
 ON_DECL
 int ON_Intersect( 
                   const ON_Plane& plane, 
@@ -1871,7 +1964,7 @@ int ON_Intersect(
 //   1     One intersection at point0
 //   2     Two intersections at point0
 //         and point1.
-//	 3		 Arc lies on plane
+//   3	    Arc lies on plane
 ON_DECL
 int ON_Intersect( 
                   const ON_Plane& plane, 

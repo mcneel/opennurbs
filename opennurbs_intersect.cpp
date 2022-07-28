@@ -278,8 +278,24 @@ bool ON_Intersect( const ON_Line& lineA, const ON_Line& lineB,
   else {
     i = 0;
   }
-  pr_tolerance = fabs(M[1][1])*ON_SQRT_EPSILON;
-  M_zero_tol = fabs(M[1][1])*ON_EPSILON;
+  // 2021-07-21, Pierre, RH-65014
+  // It does not make much sense to use a tolerance lower than ON_EPSILON on the
+  // result of arithmetic on doubles. If M[1][1] is smaller than 1, we need to
+  // bound M_zero_tol to ON_EPSILON or ON_Intersect will wrongly return true on
+  // many near-parallel cases. pr_tolerance also needs to be bounded as it
+  // cannot be smaller than M_zero_tolerance.
+  //
+  // Before that change, lines
+  // Line A = (5.4301839655138417, -9.5, 0, -0.6, -9.5, 0)
+  // Line B = (5.2373595635311068, 10.5, 0, 5.6603292194932395, 10.5, 0)
+  // would be found as intersecting, with pivot ~= 2 * M_zero_tolerance
+  if (fabs(M[1][1]) > 1.) {
+    pr_tolerance = fabs(M[1][1]) * ON_SQRT_EPSILON;
+    M_zero_tol = fabs(M[1][1]) * ON_EPSILON;
+  } else {
+    pr_tolerance = ON_SQRT_EPSILON;
+    M_zero_tol = ON_EPSILON;
+  }
 
   Y[0] =  ON_DotProduct( A, C );
   Y[1] = -ON_DotProduct( B, C );
@@ -508,18 +524,12 @@ int ON_Intersect(
 
 
 
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = one intersection, 
-                  // 2 = 2 intersections
-                  // If 0 is returned, first point is point 
-                  // on line closest to sphere and 2nd point is the point
-                  // on the sphere closest to the line.
-                  // If 1 is returned, first point is obtained by evaluating
-                  // the line and the second point is obtained by evaluating
-                  // the sphere.
-                 const ON_Line& line, const ON_Sphere& sphere,
-                  ON_3dPoint& A, ON_3dPoint& B // intersection point(s) returned here
-                  )
+int ON_Intersect(
+        const ON_Line& line,
+        const ON_Sphere& sphere,
+        ON_3dPoint& A,
+        ON_3dPoint& B // intersection point(s) returned here
+        )
 {
   int rc = 0;
   const ON_3dPoint sphere_center = sphere.plane.origin;
@@ -554,13 +564,14 @@ int ON_Intersect( // returns 0 = no intersections,
 }
 
 static
-int Intersect2dLineCircle(ON_2dPoint line_from, // 2d line from point
-                 ON_2dPoint line_to,
-                 double r,
-                 double tol,
-                 double* t0,
-                 double* t1
-                 )
+int Intersect2dLineCircle(
+        ON_2dPoint line_from, // 2d line from point
+        ON_2dPoint line_to,
+        double r,
+        double tol,
+        double* t0,
+        double* t1
+        )
 {
   // returns 0 = line is degenerate
   // 1 = one intersection returned, 
@@ -677,22 +688,13 @@ int Intersect2dLineCircle(ON_2dPoint line_from, // 2d line from point
 
 
 
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = one intersection, 
-                  // 2 = 2 intersections
-                  // 3 = line lies on cylinder
-                  // If 0 is returned, first point is point 
-                  // on line closest to cylinder and 2nd point is the point
-                  // on the sphere closest to the line.
-                  // If 1 is returned, first point is obtained by evaluating
-                  // the line and the second point is obtained by evaluating
-                  // the cylinder.
-                  const ON_Line& line, 
-                  const ON_Cylinder& cylinder, // if cylinder.height[0]==cylinder.height[1],
-                                               // then infinite cyl is used.  Otherwise
-                                               // finite cyl is used.
-                  ON_3dPoint& A, ON_3dPoint& B // intersection point(s) returned here
-                  )
+int ON_Intersect(
+        const ON_Line& line, 
+        const ON_Cylinder& cylinder, // if cylinder.height[0]==cylinder.height[1],
+                                     // then infinite cyl is used.  Otherwise
+                                     // finite cyl is used.
+        ON_3dPoint& A, ON_3dPoint& B // intersection point(s) returned here
+        )
 {
   bool bFiniteCyl = true;
   int rc = 0;
@@ -1050,7 +1052,6 @@ int ON_Intersect(
   ON_3dPoint* P[] = { &P0, &P1 };
   int xcnt = 0;
 
-  const double costol = ON_ZERO_TOLERANCE;
   double scale0 = A0.MaximumCoordinate();
   double abstol = A1.MaximumCoordinate();
   if (abstol < scale0)

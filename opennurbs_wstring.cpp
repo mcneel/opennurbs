@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -296,7 +296,7 @@ bool ON_wString::IsValid(
     {
       // Because the ON_wString m_s[] array can have internal null elements,
       // the length test has to be enabled in situations where it is certain
-      // that we are in the common situation where m_s[] is a single null teminated 
+      // that we are in the common situation where m_s[] is a single null terminated
       // sting and hdr->string_length is the m_s[] index of the null terminator.
       while (s < s1 && 0 != *s)
         s++;
@@ -515,14 +515,14 @@ void ON_wString::CopyToArray( const ON_wString& s )
 
 void ON_wString::CopyToArray( int size, const char* s )
 {
-  while ( size > 0 && s && s[0] ) 
+  while (size > 0 && s && s[0])
   {
     if (nullptr == ReserveArray(size))
       break;
     // s = UTF-8 string.
     // m_s = UTF-8, UTF-16, or UTF-32 encoded string.
-    // Even with errors, the number of wchar_t elments <= UTF-8 length
-    Header()->string_length = c2w( size, s, Header()->string_capacity, m_s );
+    // Even with errors, the number of wchar_t elements <= UTF-8 length
+    Header()->string_length = c2w(size, s, Header()->string_capacity, m_s);
     m_s[Header()->string_length] = 0;
     return;
   }
@@ -646,14 +646,14 @@ ON_wString::~ON_wString()
 ON_wString::ON_wString(const ON_wString& src)
 {
   const ON_wStringHeader* p = src.IncrementedHeader();
-	if ( nullptr != p )	
+  if (nullptr != p)
   {
-		m_s = src.m_s;
-	}
-	else 
+    m_s = src.m_s;
+  }
+  else
   {
-		Create();
-	}
+    Create();
+  }
 }
 
 #if defined(ON_HAS_RVALUEREF)
@@ -865,7 +865,7 @@ ON_wString::ON_wString(CFStringRef appleString)
       for (CFIndex i = 0;i < utf16_count;i++)
         m_s[i] = (wchar_t)(utf16_str[i]);
       m_s[utf16_count] = 0;
-      Header()->string_length = utf16_count;      
+      Header()->string_length = utf16_count;
     }
     else
     {
@@ -889,7 +889,7 @@ ON_wString::ON_wString(CFStringRef appleString)
         m_s[utf32_count++] = (wchar_t)code_point;
       }
       m_s[utf32_count] = 0;
-      Header()->string_length = utf32_count;      
+      Header()->string_length = utf32_count;
     }
     break;
   }
@@ -1108,7 +1108,7 @@ bool ON_wString::IsNotEmpty() const
 
 const ON_wString& ON_wString::operator=(const ON_wString& src)
 {
-	if (m_s != src.m_s)	
+  if (m_s != src.m_s)
   {
     if ( nullptr != src.IncrementedHeader() )
     {
@@ -1121,7 +1121,7 @@ const ON_wString& ON_wString::operator=(const ON_wString& src)
       Create();
     }
   }
-	return *this;
+  return *this;
 }
 
 const ON_wString& ON_wString::operator=(const ON_String& src)
@@ -2723,7 +2723,7 @@ const ON_wString ON_wString::EncodeXMLValue(
       length1 += 3;
       break;
     default:
-      if (bEncodeCodePointsAboveBasicLatin && (c  < 0 || c > 127))
+      if (bEncodeCodePointsAboveBasicLatin && (c < 0 || c > 127))
       {
         e = ON_UnicodeErrorParameters::MaskErrors;
         ON__UINT32 u = ON_UnicodeCodePoint::ON_ReplacementCharacter;
@@ -2797,7 +2797,7 @@ const ON_wString ON_wString::EncodeXMLValue(
       break;
 
     default:
-      if (bEncodeCodePointsAboveBasicLatin && (*encoded < 0  || *encoded > 127))
+      if (bEncodeCodePointsAboveBasicLatin && (*encoded < 0 || *encoded > 127))
       {
         e = ON_UnicodeErrorParameters::MaskErrors;
         ON__UINT32 u = ON_UnicodeCodePoint::ON_ReplacementCharacter;
@@ -2901,6 +2901,14 @@ const ON_wString ON_wString::DecodeXMLValue() const
   return *this;
 }
 
+bool ON_wString::NeedsXMLEncode(void) const
+{
+  if (FindOneOf(L"&\"\'<>\n\r") >= 0)
+    return true;
+
+  return false;
+}
+
 bool ON_wString::IsXMLSpecialCharacter(wchar_t c)
 {
   switch (c)
@@ -2913,6 +2921,18 @@ bool ON_wString::IsXMLSpecialCharacter(wchar_t c)
     return true;
     break;
   }
+
+  return false;
+}
+
+bool ON_wString::IsXMLSpecialCharacterEncoding(void) const
+{
+  if (0 == CompareNoCase(L"&quot;")) return true;
+  if (0 == CompareNoCase(L"&apos;")) return true;
+  if (0 == CompareNoCase(L"&lt;"))   return true;
+  if (0 == CompareNoCase(L"&gt;"))   return true;
+  if (0 == CompareNoCase(L"&amp;"))  return true;
+  if (0 == CompareNoCase(L"&#10;"))  return true;
 
   return false;
 }
@@ -3568,10 +3588,10 @@ const wchar_t* ON_wString::ParseHorizontalSpace(const wchar_t* s, int len)
   return ON_wString::ParseHorizontalSpace(s, len, true, true, true);
 }
 
-const wchar_t* ON_wString::ParseVulgarFraction(const wchar_t* s, int len, int& numerator, int& denomintor)
+const wchar_t* ON_wString::ParseVulgarFraction(const wchar_t* s, int len, int& numerator, int& denominator)
 {
   numerator = 0;
-  denomintor = 0;
+  denominator = 0;
 
   if (nullptr == s)
     return nullptr;
@@ -3610,7 +3630,327 @@ const wchar_t* ON_wString::ParseVulgarFraction(const wchar_t* s, int len, int& n
     return nullptr;
 
   numerator = x;
-  denomintor = y;
+  denominator = y;
 
   return s;
+}
+
+const ON_wString& ON_wString::Set(const wchar_t* wsz, int numChars)
+{
+  CopyArray();
+
+  auto* pBuffer = ReserveArray(numChars);
+  if (nullptr != pBuffer)
+  {
+    memmove(pBuffer, wsz, numChars * sizeof(wchar_t));
+    m_s[numChars] = 0;
+    Header()->string_length = numChars;
+  }
+
+  return *this;
+}
+
+int ON_wString::Count(wchar_t ch) const
+{
+  int count = 0;
+
+  const wchar_t* p = m_s;
+  while (*p != 0)
+  {
+    if (*p++ == ch)
+      count++;
+  }
+
+  return count;
+}
+
+bool ON_wString::Contains(const wchar_t* wszSub) const
+{
+  if (nullptr != wcsstr(m_s, wszSub))
+    return true;
+
+  return false;
+}
+
+bool ON_wString::ContainsNoCase(const wchar_t* wszSub) const
+{
+  ON_wString s1 = *this;
+  s1.MakeLowerOrdinal();
+  ON_wString s2 = wszSub;
+  s2.MakeLowerOrdinal();
+  if (nullptr != wcsstr(s1, s2))
+    return true;
+
+  return false;
+}
+
+bool ON_wString::TruncateMid(int pos)
+{
+  if (pos <= 0)
+    return false;
+
+  const auto length = Header()->string_length;
+  if (pos > length)
+    return false;
+
+  if (Header() == pEmptyStringHeader)
+    return false; // Should never happen.
+
+  CopyArray();
+  const auto newLength = size_t(length - pos);
+  memmove(m_s, m_s + pos, (newLength + 1) * sizeof(wchar_t));
+  Header()->string_length = int(newLength);
+
+  return true;
+}
+
+bool ON_wString::Insert(int index, wchar_t ch, int insert_count)
+{
+  if ((index < 0) || (insert_count < 0) || (ch == 0))
+    return false;
+
+  const auto length = size_t(Header()->string_length);
+  if (index > length)
+    return false;
+
+  const auto new_length = length + insert_count;
+  ReserveArray(new_length);
+
+  auto* p = m_s + index;
+  const auto move_bytes = (length - index + 1) * sizeof(wchar_t);
+  memmove(p + insert_count, p, move_bytes);
+
+  for (int i = 0; i < insert_count; i++)
+  {
+    p[i] = ch;
+  }
+
+  Header()->string_length = int(new_length);
+
+  return true;
+}
+
+bool ON_wString::Insert(int index, const wchar_t* wsz)
+{
+  if ((index < 0) || (wsz == nullptr))
+    return false;
+
+  const auto length = size_t(Header()->string_length);
+  if (index > length)
+    return false;
+
+  const auto insert_count = wcslen(wsz);
+
+  const auto new_length = length + insert_count;
+  ReserveArray(new_length);
+
+  auto* p = m_s + index;
+  const auto move_bytes = (length - index + 1) * sizeof(wchar_t);
+  memmove(p + insert_count, p, move_bytes);
+  memmove(p, wsz, insert_count * sizeof(wchar_t));
+
+  Header()->string_length = int(new_length);
+
+  return true;
+}
+
+static bool IsValidIntegerNumber(const wchar_t* wsz, int length)
+{
+  if (length == 0)
+    return false;
+
+  bool bAtStart = true;
+  bool bAtEnd = false;
+
+  for (int i = 0; i < length; i++)
+  {
+    const auto w = wsz[i];
+
+    // Skip past whitespace at the start of the string.
+    if (iswspace(w))
+    {
+      if (bAtStart)
+      {
+        // Skip past white space at the beginning of a string.
+        continue;
+      }
+      else
+      {
+        // Otherwise, whitespace can only appear at the end of the string.
+        bAtEnd = true;
+        continue;
+      }
+    }
+
+    if (!iswdigit(w) && (w != L'-') && (w != L'+'))
+      return false;
+
+    // Nothing can come after spaces at the end.
+    if (bAtEnd)
+      return false;
+
+    bAtStart = false;
+  }
+
+  return true;
+}
+
+static bool IsValidRealNumber(const wchar_t* wsz, int length)
+{
+  if (length == 0)
+    return false;
+
+  int puncCount = 0;
+  int eCount = 0;
+
+  bool bAtStart = true;
+  bool bAtEnd = false;
+
+  for (int i = 0; i < length; i++)
+  {
+    const auto w = wsz[i];
+
+    // Skip past whitespace at the start of the string.
+    if (iswspace(w))
+    {
+      if (bAtStart)
+      {
+        // Skip past white space at the beginning of string.
+        continue;
+      }
+      else
+      {
+        // Otherwise, whitespace can only appear at the end of the string.
+        bAtEnd = true;
+        continue;
+      }
+    }
+
+    if (w == L'.' || w == L',') puncCount++;
+    else
+    if (w == L'e' || w == L'E') eCount++;
+    else
+    if (!iswdigit(w) && (w != L'-') && (w != L'+'))
+      return false;
+
+    // Nothing can come after spaces at the end.
+    if (bAtEnd)
+      return false;
+
+    bAtStart = false;
+  }
+
+  if ((puncCount > 1) || (eCount > 1))
+    return false;
+
+  return true;
+}
+
+bool ON_wString::IsValidIntegerNumber(void) const
+{
+  const auto length = Header()->string_length;
+  return ::IsValidIntegerNumber(m_s, length);
+}
+
+bool ON_wString::IsValidRealNumber(void) const
+{
+  const auto length = Header()->string_length;
+  return ::IsValidRealNumber(m_s, length);
+}
+
+static bool IsCommaDelimitedDoubleArray(const wchar_t* wsz, int length, int numDoubles)
+{
+  if (length == 0)
+   return false;
+
+  if ((numDoubles < 1) || (numDoubles > 16))
+    return false;
+
+  if (1 == numDoubles)
+    return ::IsValidRealNumber(wsz, length);
+
+  ON_wString s(wsz);
+  s += L",";
+
+  constexpr size_t maxChars = 400;
+  wchar_t buf[maxChars+1] = { 0 };
+  const auto* p = s.Array();
+
+  for (int i = 0; i < numDoubles; i++)
+  {
+    auto* q = buf;
+    while ((*p != L',') && ((q - buf) < maxChars))
+      *q++ = *p++;
+    *q = 0;
+    p++;
+
+    const auto len = q - buf;
+    if (len >= maxChars)
+      return false;
+
+    if (!::IsValidRealNumber(buf, int(len)))
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_wString::IsValid2dPoint() const
+{
+  const auto length = Header()->string_length;
+  return IsCommaDelimitedDoubleArray(m_s, length, 2);
+}
+
+bool ON_wString::IsValid3dPoint() const
+{
+  const auto length = Header()->string_length;
+  return IsCommaDelimitedDoubleArray(m_s, length, 3);
+}
+
+bool ON_wString::IsValid4dPoint() const
+{
+  const auto length = Header()->string_length;
+  return IsCommaDelimitedDoubleArray(m_s, length, 4);
+}
+
+bool ON_wString::IsValidMatrix() const
+{
+  const auto length = Header()->string_length;
+  return IsCommaDelimitedDoubleArray(m_s, length, 16);
+}
+
+bool ON_wString::StartsWith(const wchar_t* wszSub) const
+{
+  const auto lenSub = wcslen(wszSub);
+  if (0 == lenSub)
+    return false;
+
+  if (lenSub > Header()->string_length)
+    return false;
+
+  for (int i = 0; i < lenSub; i++)
+  {
+    if (m_s[i] != wszSub[i])
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_wString::StartsWithNoCase(const wchar_t* wszSub) const
+{
+  const auto lenSub = wcslen(wszSub);
+  if (0 == lenSub)
+    return false;
+
+  if (lenSub > Header()->string_length)
+    return false;
+
+  for (int i = 0; i < lenSub; i++)
+  {
+    if (tolower(m_s[i]) != tolower(wszSub[i]))
+      return false;
+  }
+
+  return true;
 }

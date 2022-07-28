@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -10,13 +8,6 @@
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
 //				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
-//
-////////////////////////////////////////////////////////////////
-*/
-
-////////////////////////////////////////////////////////////////
-//
-//   defines ON_Viewport
 //
 ////////////////////////////////////////////////////////////////
 
@@ -206,8 +197,6 @@ public:
   // Interface /////////////////////////////////////////////////////////////////
   //
 
-  /*
-  */
   ON_DEPRECATED_MSG("Use = ON_Viewport::DefaultTopViewYUp")
   void Initialize();
 
@@ -1272,6 +1261,9 @@ public:
   */
   bool SetViewScale( double x, double y );
   void GetViewScale( double* x, double* y ) const;
+
+  bool SetViewScale(double x, double y, double z);
+  void GetViewScale(double* x, double* y, double* z) const;
 
   /*
   Description:
