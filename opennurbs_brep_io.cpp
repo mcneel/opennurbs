@@ -740,7 +740,7 @@ bool ON_Brep::Write( ON_BinaryArchive& file ) const
     if ( rc )
     {
       for ( fi = 0; rc && fi < face_count; fi++ ) {
-        const ON_Mesh* mesh = file.Save3dmRenderMesh(ON::object_type::brep_object) ? brep->m_F[fi].m_render_mesh : 0;
+        const auto mesh = file.Save3dmRenderMesh(ON::object_type::brep_object) ? brep->m_F[fi].SharedMesh(ON::render_mesh) : nullptr;
         b = mesh ? 1 : 0;
         rc = file.WriteChar(b);
         if (rc && mesh) {
@@ -758,7 +758,7 @@ bool ON_Brep::Write( ON_BinaryArchive& file ) const
     if ( rc )
     {
       for ( fi = 0; rc && fi < face_count; fi++ ) {
-        const ON_Mesh* mesh = file.Save3dmAnalysisMesh(ON::object_type::brep_object) ? brep->m_F[fi].m_analysis_mesh : 0;
+        const auto mesh = file.Save3dmAnalysisMesh(ON::object_type::brep_object) ? brep->m_F[fi].SharedMesh(ON::analysis_mesh) : nullptr;
         b = mesh ? 1 : 0;
         rc = file.WriteChar(b);
         if (rc && mesh) {
@@ -1030,9 +1030,15 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
               rc = file.ReadObject(&obj);
               if ( 0 != obj )
               {
-                m_F[fi].m_render_mesh = ON_Mesh::Cast(obj);
-                if ( !m_F[fi].m_render_mesh )
+                auto pMesh = ON_Mesh::Cast(obj);
+                if (nullptr == pMesh)
+                {
                   delete obj;
+                }
+                else
+                {
+                  m_F[fi].SetMesh(ON::render_mesh, pMesh);
+                }
               }
             }
           }
@@ -1059,9 +1065,19 @@ bool ON_Brep::Read( ON_BinaryArchive& file )
               if (rc && b) 
               {
                 rc = file.ReadObject(&obj);
-                m_F[fi].m_analysis_mesh = ON_Mesh::Cast(obj);
-                if ( !m_F[fi].m_analysis_mesh )
-                  delete obj;
+                
+                if (nullptr != obj)
+                {
+                  auto pMesh = ON_Mesh::Cast(obj);
+                  if (nullptr == pMesh)
+                  {
+                    delete obj;
+                  }
+                  else
+                  {
+                    m_F[fi].SetMesh(ON::analysis_mesh, pMesh);
+                  }
+                }
               }
             }
           }
@@ -1382,19 +1398,28 @@ bool ON_Brep::ReadOld200( ON_BinaryArchive& file, int minor_version )
       if (b) {
         obj = 0;
         rc = (file.ReadObject(&obj)==1)?true:false;
-        f.m_render_mesh = ON_Mesh::Cast(obj);
-        if ( !f.m_render_mesh )
-          delete obj;
+
+        if (nullptr != obj)
+        {
+          auto pMesh = ON_Mesh::Cast(obj);
+          if (pMesh)
+          {
+            f.SetMesh(ON::render_mesh, pMesh);
+          }
+          else
+          {
+            delete pMesh;
+          }
+        }
       }
     }
+
     if ( !rc ) {
       // delete render mesh geometry
-      for ( i = 0; i < face_count; i++ ) {
+      for ( i = 0; i < face_count; i++ ) 
+      {
         ON_BrepFace& f = m_F[i];
-        if ( f.m_render_mesh ) {
-          delete f.m_render_mesh;
-          f.m_render_mesh = 0;
-        }
+        f.DestroyMesh(ON::render_mesh);
       }
     }
 
@@ -1403,22 +1428,30 @@ bool ON_Brep::ReadOld200( ON_BinaryArchive& file, int minor_version )
       for ( i = 0; rc && i < face_count; i++ ) {
         ON_BrepFace& f = m_F[i];
         file.ReadChar(&b);
-        if (b) {
+        if (b) 
+        {
           obj = 0;
           rc = file.ReadObject(&obj)?true:false;
-          f.m_analysis_mesh = ON_Mesh::Cast(obj);
-          if ( !f.m_analysis_mesh )
-            delete obj;
+
+          if (nullptr != obj)
+          {
+            auto pMesh = ON_Mesh::Cast(obj);
+            if (pMesh)
+            {
+              f.SetMesh(ON::analysis_mesh, pMesh);
+            }
+            else
+            {
+              delete pMesh;
+            }
+          }
         }
       }
       if ( !rc ) {
         // delete analysis mesh geometry
         for ( i = 0; i < face_count; i++ ) {
           ON_BrepFace& f = m_F[i];
-          if ( f.m_analysis_mesh ) {
-            delete f.m_analysis_mesh;
-            f.m_analysis_mesh = 0;
-          }
+          f.DestroyMesh(ON::analysis_mesh);
         }
       }
     }

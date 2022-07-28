@@ -1,19 +1,15 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
-
 
 #if !defined(OPENNURBS_EXTENSIONS_INC_)
 #define OPENNURBS_EXTENSIONS_INC_
@@ -703,7 +699,7 @@ public:
 
   /*
   Description:
-    Add an copy of a model_compoent to this model.
+    Add a copy of a model_component to this model.
   model_component - [in]
     A copy of model_component is added to this model.
     The index, id, and name of the copied component are
@@ -781,7 +777,36 @@ public:
     double model_tolerance
   );
 
+  /*
+  Description:
+    Easy way to add a render material to the model. Creates a PBR material.
+  Returns:
+    If mat_name is valid, the material's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+  */
+  int AddRenderMaterial(
+    const wchar_t* mat_name
+  );
 
+  /*
+  Description:
+    Easy way to add a render environment to the model. Creates a basic environment.
+  Returns:
+    If env_name is valid, the environment's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+  */
+  int AddRenderEnvironment(
+    const wchar_t* env_name
+  );
+
+  /*
+  Description:
+    Easy way to add a render texture to the model. Creates a bitmap texture. The texture's name is derived from
+    the supplied file name. The file must exist locally or the function will fail.
+  Returns:
+    If the function succeeds, the texture's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+  */
+  int AddRenderTexture(
+    const wchar_t* filename
+  );
 
   /*
   Description:
@@ -1116,29 +1141,53 @@ public:
     int layer_index
     ) const;
 
+  // These methods are deprecated due to the use of the phrase 'RenderMaterial' which now refers to
+  // materials provided by the RDK. The materials used by _these_ methods are plain ON_Materials.
+  ON_DEPRECATED ON_ModelComponentReference RenderMaterialFromLayerIndex(int) const;
+  ON_DEPRECATED ON_ModelComponentReference RenderMaterialFromAttributes(const ON_3dmObjectAttributes&) const;
+  ON_DEPRECATED ON_ModelComponentReference RenderMaterialFromIndex(int) const;
+  ON_DEPRECATED ON_ModelComponentReference RenderMaterialFromId(ON_UUID) const;
+
   /*
   Description:
-    Get render material from object attributes.
+    Get material from layer index.
   Parameters:
-    attributes - [in] object attributes.
-    material - [out] render material
+    layer_index - [in] layer index.
   */
-  ON_ModelComponentReference RenderMaterialFromLayerIndex( 
+  ON_ModelComponentReference MaterialFromLayerIndex(
     int layer_index
     ) const;
 
-  ON_ModelComponentReference RenderMaterialFromAttributes( 
+  /*
+  Description:
+    Get material from object attributes.
+  Parameters:
+    attributes - [in] object attributes.
+  */
+  ON_ModelComponentReference MaterialFromAttributes(
     const ON_3dmObjectAttributes& attributes
     ) const;
 
-  ON_ModelComponentReference RenderMaterialFromIndex( 
-    int render_material_index
+  /*
+  Description:
+    Get material from index.
+  Parameters:
+    material_index - [in] index.
+  */
+  ON_ModelComponentReference MaterialFromIndex(
+    int material_index
     ) const;
 
-  ON_ModelComponentReference RenderMaterialFromId( 
-    ON_UUID render_material_id
+  /*
+  Description:
+    Get material from id.
+  Parameters:
+    material_id - [in] id.
+  */
+  ON_ModelComponentReference MaterialFromId(
+    ON_UUID material_id
     ) const;
-    
+
   /*
   Description:
     Get a layer from its model index.
@@ -1217,7 +1266,6 @@ public:
     = DimensionStyleFromId(CurrentDimensionStyleId())
   */
   ON_ModelComponentReference CurrentDimensionStyle() const;
-
 
   /*
   Returns:
@@ -1315,15 +1363,13 @@ private:
     bool bManagedComponent,
     bool bUpdateComponentIdentification
     );
-  
-private:
-  // Content version is incremented every time the 
-  // contents of the ONX_Model are modified.
-  ON__UINT64 m_model_content_version_number = 0;
+
+public:
+  class Extension;
+  Extension* m_extension;
 
 private:
   void Internal_IncrementModelContentVersionNumber();
-
 
 private:
   // A manifest of everything in the model. Use the manifest to find
@@ -1346,11 +1392,11 @@ private:
   // A map used to lookup by serial number.
   ON_SerialNumberMap m_mcr_sn_map;
   ON_FixedSizePool m_mcr_link_fsp;
+
 #pragma ON_PRAGMA_WARNING_PUSH
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 ) 
-  // C4251: ... needs to have dll-interface to be used by clients of class ...
-  // This warning is not correct. 
-  // m_mcr_lists is private and all code that manages m_mcr_lists is explicitly implemented in the DLL.
+  // C4251: "...needs to have dll-interface to be used by clients of class". This warning is not correct.
+  // m_mcr_lists is private and all code that manages it is explicitly implemented in the DLL.
   class ONX_ModelComponentList
   {
   public:
@@ -1359,11 +1405,16 @@ private:
     class ONX_ModelComponentReferenceLink* m_first_mcr_link = nullptr;
     class ONX_ModelComponentReferenceLink* m_last_mcr_link = nullptr;
   };
-  enum : unsigned int
-  {
-    ONX_MCR_LIST_COUNT = 16
-  };
-  ONX_ModelComponentList m_mcr_lists[ONX_MCR_LIST_COUNT];
+
+  //-------------------------------------------------------------------------------------------
+  // The following two lines are deprecated due to limiting the number of types to 16.
+  // They are no longer used. Instead, a new list inside the extension is used. This is private
+  // and is only used internally to ONX_Model but it can't be removed without breaking the SDK.
+  //-------------------------------------------------------------------------------------------
+  enum : unsigned int { ONX_MCR_LIST_COUNT = 16 };        // DEPRECATED -- not used.
+  ONX_ModelComponentList m_mcr_lists[ONX_MCR_LIST_COUNT]; // DEPRECATED -- not used.
+  //-------------------------------------------------------------------------------------------
+
   const ONX_ModelComponentList& Internal_ComponentListConst(ON_ModelComponent::Type component_type) const;
   ONX_ModelComponentList& Internal_ComponentList(ON_ModelComponent::Type component_type);
 #pragma ON_PRAGMA_WARNING_POP
@@ -1405,8 +1456,6 @@ private:
     ) const;
 
 public:
-
-
   /*
   Description:
     Get wireframe drawing color from object attributes.
@@ -1524,32 +1573,70 @@ public:
   */
   ON_SHA1_Hash ContentHash() const;
 
-public:
-
-
 private:
   void Internal_DumpSummary(
     ON_TextLog& dump, 
     bool bInvariantContentOnly
   ) const;
 
-public:
-
   //
   // END model text dump tools
   //
   /////////////////////////////////////////////////////////////////////
 
-
+public:
   /////////////////////////////////////////////////////////////////////
   //
   // BEGIN Render Development Toolkit (RDK) information
   //
+  //
+
+  // RDK Safe Frame.
+  ON_SafeFrame& SafeFrame(void) const;
+
+  // RDK Ground Plane.
+  ON_GroundPlane& GroundPlane(void) const;
+
+  // RDK Linear Workflow.
+  ON_LinearWorkflow& LinearWorkflow(void) const;
+
+  // RDK Current Environment.
+  ON_CurrentEnvironment& CurrentEnvironment(void) const;
+
+  // RDK Skylight.
+  ON_Skylight& Skylight(void) const;
+
+  // RDK Sun.
+  ON_Sun& Sun(void) const;
+
+  // RDK Dithering.
+  ON_Dithering& Dithering(void) const;
+
+  // RDK Render Channels.
+  ON_RenderChannels& RenderChannels(void) const;
+
+  // Get RDK Decals stored on a particular component. Generally, only model components of type ModelGeometry
+  // have decals on them. Returns a decal iterator which allows access to the decals. If there are no
+  // decals on the component, the iterator will be empty and return null if Next() is called.
+  ON_DecalIterator GetDecalIterator(const ON_ModelComponent& component);
+
+  // Adds a new decal to a particular component.
+  // Returns a pointer to the decal if successful, or null on failure.
+  ON_Decal* AddDecal(const ON_ModelComponent& component);
+
+  // Gets a decal by its id.
+  // Returns a pointer to the decal if successful, or null on failure.
+  ON_Decal* GetDecal(const ON_UUID& id);
+
+  // Get mesh modifiers stored on a particular component. Generally, only model components of type ModelGeometry
+  // have mesh modifiers on them. Returns an object which provides access to the various mesh modifiers.
+  ON_MeshModifiers* GetMeshModifiers(const ON_ModelComponent& component);
+
   // The following functions allow the developer access to the information saved per document or per-object in the 3dm file by the 
   // RDK plug-in, built into Rhino.  There are two parts to this information - the XML data that constitutes the information
   // about materials, textures and environments in addition to some of the document settings such as sun data, skylighting
-  // ground plane and so on - and the embedded support files which are saved as byte-per-byte copies of the actual file data
-  // for the original files.  Typically, these embedded files will be textured used by materials, environments or decals.
+  // ground plane and so on - and the embedded support files which are saved as byte-for-byte copies of the actual file data
+  // for the original files.  Typically, these embedded files will be textures used by materials, environments or decals.
 
   // Call this function to determine if RDK document information has been saved in this model and can be read using the GetRDKDocumentInfomation function.
   // Returns true if RDK document information is available.
@@ -1558,38 +1645,38 @@ public:
   // This function returns the entire XML associated with the RDK document data for this file.  The XML will include details about
   // materials, textures and environments as well as sun, skylighting, ground plane and so on.
   // Returns true if RDK document information is available.
-  static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data);
+  static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud, ON_wString& rdk_xml_document_data);
 
-  // This function returns the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
-  // Typically, these files will be used by materials and environments.  Rhino unpacks these files into a folder with the suffix "embedded_files" next to the
-  // 3dm file on disk.
-  // This is only supported for Version 6 files onwards.
-  // Returns true if embedded files were found.
+  // This function is deprecated in favor of the one below.
   ON_DEPRECATED_MSG("This function is deprecated as it did not return the buffer sizes, making it useless")
   static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers);
 
   // This function returns the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
   // Typically, these files will be used by materials and environments.  Rhino unpacks these files into a folder with the suffix "embedded_files" next to the
-  // 3dm file on disk.
-  // This is only supported for Version 6 files onwards.
+  // 3dm file on disk. This is only supported for Version 6 files onwards.
   // Returns true if embedded files were found.
   static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes);
 
-  // This function returns the paths of the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
-  // This function is similar to GetRDKEmbeddedFiles, but is faster and uses less memory to return only the paths.  Use the paths (exactly the strings returned from this function) to 
-  // extract the embedded files using GetRDKEmbeddedFile
+  // This function returns the full paths of the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
+  // This function is similar to GetRDKEmbeddedFiles, but is faster and uses less memory to return only the paths.  Use the paths (exactly the strings returned from
+  // this function) to extract the embedded files using GetRDKEmbeddedFile().
   static bool GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths);
 
-  // This function extracts one embedded file from the support files written with this document.  Use the exact path as returned from GetRDKEmbeddedFilePaths
+  // This function extracts one embedded file from the support files written with this document.  Use the exact path as returned from GetRDKEmbeddedFilePaths().
   static bool GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes);
 
   // Call this function to determine if RDK object information has saved in this model and can be read using the GetRDKObjectInformation function.
   // Returns true if RDK object information is available.
   static bool IsRDKObjectInformation(const ON_UserData& objectud);
 
-  // This function returns the entire XML associated with the RDK object.  The XML includes details about decals.
+  // This function returns the entire RDK XML associated with the object. The XML includes details about decals.
   // Returns true if RDK object information is available.
-  static bool GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data);
+  static bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml);
+
+  // This function returns the entire mesh modifier XML associated with the object.
+  // Returns true if mesh modifier information is available on the object.
+  static bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml);
+
   //
   // END Render Development Toolkit (RDK) information
   //

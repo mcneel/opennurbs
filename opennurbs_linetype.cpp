@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -107,6 +106,8 @@ ON_Linetype::ON_Linetype() ON_NOEXCEPT
 ON_Linetype::ON_Linetype( const ON_Linetype& src )
   : ON_ModelComponent(ON_ModelComponent::Type::LinePattern,src)
   , m_segments(src.m_segments)
+  , m_cap_style(src.m_cap_style)
+  , m_join_style(src.m_join_style)
 {
 }
 
@@ -182,6 +183,10 @@ bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
+// 12 Aug 2021 S. Baer
+// When adding new fields written to 3dm files, always add information to this
+// Dump function. Dump is used by the opennurbs file testing framework to
+// perform comparisons and is useful for manual comparison in when tests fail.
 void ON_Linetype::Dump( ON_TextLog& dump ) const
 {
   ON_ModelComponent::Dump(dump);
@@ -207,6 +212,34 @@ void ON_Linetype::Dump( ON_TextLog& dump ) const
     }
   }
   dump.Print(")\n");
+
+  switch (m_cap_style)
+  {
+  case ON::LineCapStyle::Flat:
+    dump.Print("Cap = Flat\n");
+    break;
+  case ON::LineCapStyle::Square:
+    dump.Print("Cap = Square\n");
+    break;
+  case ON::LineCapStyle::Round:
+  default:
+    dump.Print("Cap = Round\n");
+    break;
+  }
+
+  switch (m_join_style)
+  {
+  case ON::LineJoinStyle::Bevel:
+    dump.Print("Join = Bevel\n");
+    break;
+  case ON::LineJoinStyle::Miter:
+    dump.Print("Join = Miter\n");
+    break;
+  case ON::LineJoinStyle::Round:
+  default:
+    dump.Print("Join = Round\n");
+    break;
+  }
 }
 
 bool ON_Linetype::Write( ON_BinaryArchive& file) const
@@ -240,7 +273,10 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
   }
   else
   {
-    if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 2, 0))
+    // 12 Aug 2021 S. Baer (RH-2285)
+    // minor_version = 1: add cap and join styles to linetype
+    const int minor_version = 1;
+    if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 2, minor_version))
       return false;
     for (;;)
     {
@@ -249,6 +285,30 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
         break;
 
       if (!file.WriteArray(m_segments))
+        break;
+
+      // Only write non-default values in a similar fashion as ON_3dmObjectAttributes
+      if (m_cap_style != ON::LineCapStyle::Round)
+      {
+        const unsigned char itemType = 1;
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteChar((unsigned char)m_cap_style))
+          break;
+      }
+
+      if (m_join_style != ON::LineJoinStyle::Round)
+      {
+        const unsigned char itemType = 2;
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteChar((unsigned char)m_join_style))
+          break;
+      }
+
+      // 0 indicates end of new linetype attributes
+      const unsigned char attributes_end = 0;
+      if (!file.WriteChar(attributes_end))
         break;
 
       rc = true;
@@ -315,6 +375,47 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
 
       if (!file.ReadArray(m_segments))
         break;
+
+      // 12 Aug 2021 S. Baer (RH-2285)
+      // Add cap and join style to linetype
+      if (minor_version >= 1)
+      {
+        unsigned char item_id = 0;
+        if (!file.ReadChar(&item_id))
+          break;
+
+        if (1 == item_id)
+        {
+          unsigned char cap = 0;
+          if (!file.ReadChar(&cap))
+            break;
+          m_cap_style = ON::LineCapStyleFromUnsigned(cap);
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (2 == item_id)
+        {
+          unsigned char join = 0;
+          if (!file.ReadChar(&join))
+            break;
+          m_join_style = ON::LineJoinStyleFromUnsigned(join);
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (1 == minor_version && item_id != 0)
+        {
+          ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.1");
+        }
+
+        if (item_id > 2)
+        {
+          // we are reading file written with code newer
+          // than this code (minor_version > 1)
+          item_id = 0;
+        }
+      }
 
       rc = true;
       break;
@@ -447,6 +548,25 @@ ON_LinetypeSegment ON_Linetype::Segment( int index) const
     return ON_LinetypeSegment::OneMillimeterLine;
 }
 
+void ON_Linetype::SetLineCapStyle(ON::LineCapStyle style)
+{
+  m_cap_style = style;
+}
+
+ON::LineCapStyle ON_Linetype::LineCapStyle() const
+{
+  return m_cap_style;
+}
+
+void ON_Linetype::SetLineJoinStyle(ON::LineJoinStyle style)
+{
+  m_join_style = style;
+}
+
+ON::LineJoinStyle ON_Linetype::LineJoinStyle() const
+{
+  return m_join_style;
+}
 
 
 

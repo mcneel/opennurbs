@@ -298,8 +298,10 @@ static int ON_IsUTF8ByteOrderMark(
 {
   if ( 0 == sUTF8 )
     return 0;
-  if ( -1 != sUTF8_count || sUTF8_count < 3 )
+  
+  if (sUTF8_count < 3 )
     return 0;
+  
   return (0xEF == (unsigned char)(sUTF8[0]) && 0xBB == (unsigned char)(sUTF8[1]) && 0xBF == (unsigned char)(sUTF8[2]));
 }
 
@@ -3074,7 +3076,7 @@ int ON_ConvertMSMBCPToWideChar(
     sWideChar[sWideChar_count] = 0;
   return sWideChar_count;
 
-#elif defined (ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
+#elif defined (ON_RUNTIME_COCOA_AVAILABLE)
   CFStringEncoding cfEncoding = CFStringConvertWindowsCodepageToEncoding(windows_code_page);
   if (cfEncoding == kCFStringEncodingInvalidId)
   {

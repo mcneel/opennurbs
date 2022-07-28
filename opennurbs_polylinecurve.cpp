@@ -161,7 +161,6 @@ ON_PolylineCurve::Transform( const ON_Xform& xform )
 }
 
 
-
 bool
 ON_PolylineCurve::SwapCoordinates( int i, int j )
 {
@@ -192,6 +191,16 @@ bool ON_PolylineCurve::IsValid( ON_TextLog* text_log ) const
         {
           text_log->Print("PolylineCurve m_t[%d]=%g should be less than m_t[%d]=(%g).\n",
                            i-1,m_t[i-1],i,m_t[i]);
+        }
+        return ON_IsNotValid();
+      }
+      // 7-May-21.   GBA Added this condition for IsValid 
+      if (m_pline[i].IsCoincident(m_pline[i - 1]))
+      {
+        if (0 != text_log)
+        {
+          text_log->Print("PolylineCurve m_pline[%d].IsCoincident( m_pline[%d]).\n",
+            i - 1, i );
         }
         return ON_IsNotValid();
       }

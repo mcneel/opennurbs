@@ -83,6 +83,19 @@ public:
 
   /*
   Description:
+    Computes a polygon mesh of the surface made of one quad.   
+  Parameters:
+    mesh - [in] if not nullptr, the surface mesh will be put
+                into this mesh. Otherwise, operator new will be used.
+  Returns:
+    A polygon mesh of the surface.
+  */
+  ON_Mesh* CreateMesh(
+    ON_Mesh* mesh = nullptr
+  ) const;
+
+  /*
+  Description:
     Sets the evaluation domains.  Does not change the geometry.
   Parameters:
     dir - [in] 0 sets first parameter's domain
@@ -493,6 +506,44 @@ public:
           const ON_BoundingBox& bbox,
           double padding = 0.0625
           );
+
+  /*
+  Description:
+    Create a plane that contains the projection of a bounding box.
+    This method is slower, yet stricter because it uses box edges intersection rather than box 
+  Parameters:
+    plane - [in]
+    bbox - [in]
+    padding - [in]
+      amount of extra padding to add around the edges of the
+      plane.  Default is 0.0625
+  Returns:
+    true if successful
+  */
+  bool CreatePseudoInfinitePlaneTight(
+    const ON_Plane& plane,
+    const ON_BoundingBox& bbox,
+    double padding = 0.0625
+  );
+
+    /*
+  Description:
+    Create a plane that contains the projection of a bounding box.
+    This method is slower, yet stricter because it uses box edges intersection rather than box 
+  Parameters:
+    plane - [in]
+    bbox - [in]
+    padding - [in]
+      amount of extra padding to add around the edges of the
+      plane.  Default is 0.0625
+  Returns:
+    true if successful
+  */
+  bool CreatePseudoInfinitePlaneTight(
+    const ON_PlaneEquation& plane,
+    const ON_BoundingBox& bbox,
+    double padding = 0.0625
+  );
 
   /*
   Description:

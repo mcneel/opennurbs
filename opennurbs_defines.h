@@ -1,5 +1,4 @@
-/*
-// Copyright (c) 1993-2016 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -10,7 +9,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 ////////////////////////////////////////////////////////////////
 //
@@ -69,6 +67,13 @@
 #if defined(OPENNURBS_EXPORTS)
 /* compiling opennurbs as some type of dynamic linking library */
 
+#if defined(ON_RUNTIME_LINUX)
+/* Linux defaults to exporting all functions*/
+#define ON_CLASS
+#define ON_DECL
+#define ON_EXTERN_DECL
+
+#else
 #if defined(ON_COMPILER_MSC)
 /* compiling OpenNurbs as a Windows DLL - export classes, functions, templates, and globals */
 #define ON_CLASS __declspec(dllexport)
@@ -84,6 +89,7 @@
 
 #else
 #error fill in your compiler dynamic linking decorations
+#endif
 #endif
 
 #elif defined(OPENNURBS_IMPORTS)
@@ -486,6 +492,15 @@ public:
 
   static const ON_2dex Unset;  // (ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX);
   static const ON_2dex Zero;  // (0, 0)
+
+  // return a copy of this item, where i is smaller or equal to j
+  ON_2dex AsIncreasing() const;
+
+  // return a copy of this item, where i is larger or equal to j
+  ON_2dex AsDecreasing() const;
+
+  bool operator==(const ON_2dex& src) const;
+  bool operator!=(const ON_2dex& src) const;
 };
 
 class ON_CLASS ON_2udex
@@ -502,6 +517,12 @@ public:
   unsigned int j;
 
   ON_2udex(unsigned int i, unsigned int j);
+
+  // return a copy of this item, where i is smaller or equal to j
+  ON_2udex AsIncreasing() const;
+
+  // return a copy of this item, where i is larger or equal to j
+  ON_2udex AsDecreasing() const;
 
   static int DictionaryCompare(
     const ON_2udex* lhs,
@@ -520,6 +541,14 @@ public:
 
   static const ON_2udex Unset;  // (ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX);
   static const ON_2udex Zero;  // (0, 0)
+
+  bool operator==(const ON_2udex& src) const;
+  bool operator!=(const ON_2udex& src) const;
+
+  bool operator<(const ON_2udex& src) const;
+  bool operator<=(const ON_2udex& src) const;
+  bool operator>=(const ON_2udex& src) const;
+  bool operator>(const ON_2udex& src) const;
 };
 
 class ON_CLASS ON_3dex
@@ -609,8 +638,17 @@ public:
 
   ON_4dex(int i, int j, int k, int l);
 
+  // return a copy, where i is smaller or equal to j, j is smaller or equal to k, and k is smaller or equal to l
+  ON_4dex AsIncreasing() const;
+
+  // return a copy, where i is smaller or equal to k; if they are equal, j is smaller or equal to l
+  ON_4dex AsPairwiseIncreasing() const;
+
   static const ON_4dex Unset;  // (ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX);
   static const ON_4dex Zero;  // (0, 0, 0, 0)
+
+  bool operator==(const ON_4dex& src) const;
+  bool operator!=(const ON_4dex& src) const;
 };
 
 class ON_CLASS ON_4udex
@@ -630,8 +668,17 @@ public:
 
   ON_4udex(unsigned int i, unsigned int j, unsigned int k, unsigned int l);
 
+  // return a copy, where i is smaller or equal to j, j is smaller or equal to k, and k is smaller or equal to l
+  ON_4udex AsIncreasing() const;
+
+  // return a copy, where i is smaller or equal to k; if they are equal, j is smaller or equal to l
+  ON_4udex AsPairwiseIncreasing() const;
+
   static const ON_4udex Unset;  // (ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX, ON_UNSET_UINT_INDEX);
   static const ON_4udex Zero;  // (0, 0, 0, 0)
+
+  bool operator==(const ON_4udex& src) const;
+  bool operator!=(const ON_4udex& src) const;
 };
 
 
@@ -1110,7 +1157,6 @@ public:
   static active_space ActiveSpace(int); // convert integer to active_space enum
   
 #pragma region RH_C_SHARED_ENUM [ON::LengthUnitSystem] [Rhino.UnitSystem] [byte]
-  //   unit_system ///////////////////////////////////////////////////////////////
   /// <summary>
   /// ON::LengthUnitSystem identifies a length unit system
   /// United States customary length units references:
@@ -2380,7 +2426,122 @@ public:
     unsigned int orientation_as_unsigned
   );
 
+#pragma region RH_C_SHARED_ENUM [ON::LineCapStyle] [Rhino.DocObjects.LineCapStyle] [byte]
+  /// <summary>
+  /// Shape to be used at the ends of open curves
+  /// </summary>
+  enum class LineCapStyle : unsigned char
+  {
+    /// <summary> Ends are extended by a half circle with diameter equal to the curve width </summary>
+    Round = 0,
+    /// <summary> Also known as butt. Ends are flat and do not extend </summary>
+    Flat = 1,
+    /// <summary> Ends are flat and extended by half of the curve width </summary>
+    Square = 2
+  };
+#pragma endregion
 
+  static LineCapStyle LineCapStyleFromUnsigned(
+    unsigned int cap_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON::LineJoinStyle] [Rhino.DocObjects.LineJoinStyle] [byte]
+  /// <summary>
+  /// Shape to be used at the corners of curves
+  /// </summary>
+  enum class LineJoinStyle : unsigned char
+  {
+    /// <summary> Rounds corners </summary>
+    Round = 0,
+    /// <summary> Sharp corners where outer edges are extended to a point where they meet </summary>
+    Miter = 1,
+    /// <summary> Beveled corner where outer edges are connected without extending </summary>
+    Bevel = 2
+  };
+#pragma endregion
+
+  static LineJoinStyle LineJoinStyleFromUnsigned(
+    unsigned int join_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON::ClipParticipationSource] [Rhino.DocObjects.ObjectClipParticipationSource]
+  /// <summary>
+  /// The source of clipping plane effects on an object.
+  /// </summary>
+  /// <since>8.0</since>
+  enum class ClipParticipationSource : unsigned char
+  {
+    /// <summary>Clip participation is defined by object's layer</summary>
+    FromLayer = 0,
+    /// <summary>Clip participation is specific to the object</summary>
+    FromObject = 1,
+    /// <summary>Clip participation is defined by object's parent</summary>
+    FromParent = 3
+  };
+#pragma endregion
+
+  static ClipParticipationSource ClipParticipationSourceFromUnsigned(
+    unsigned int clip_participation_source_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON::SectionFillRule] [Rhino.DocObjects.ObjectSectionFillRule]
+  /// <summary>
+  /// For sectioning an object; the decision of when to generate hatches and fills.
+  /// </summary>
+  /// <since>8.0</since>
+  enum class SectionFillRule : unsigned char
+  {
+    /// <summary>If a the section results in a closed curve, then generate a fill</summary>
+    ClosedCurves = 0,
+    /// <summary>Only generate a fill for objects that are considered Solid</summary>
+    SolidObjects = 1,
+  };
+#pragma endregion
+
+  static SectionFillRule SectionFillRuleFromUnsigned(
+    unsigned int section_fill_rule_as_unsigned
+  );
+
+#pragma region RH_C_SHARED_ENUM [ON::SectionAttributesSource] [Rhino.DocObjects.ObjectSectionAttributesSource]
+  /// <summary>
+  /// The source of sectioning attributes on an object.
+  /// </summary>
+  /// <since>8.0</since>
+  enum class SectionAttributesSource : unsigned char
+  {
+    /// <summary>Section attributes defined by object's layer</summary>
+    FromLayer = 0,
+    /// <summary>Section attributes are specific to the object</summary>
+    FromObject = 1,
+    /// <summary>Section attributes defined by object's parent</summary>
+    FromParent = 2,
+    /// <summary>Section attributes defined by the cutting object</summary>
+    FromSectioner = 3
+  };
+#pragma endregion
+
+  static SectionAttributesSource SectionAttributesSourceFromUnsigned(
+    unsigned int section_attributes_source_as_unsigned
+  );
+
+
+#pragma region RH_C_SHARED_ENUM [ON::ViewSectionBehavior] [Rhino.DocObjects.ViewSectionBehavior]
+  /// <summary>
+  /// Defines how views work with clipping planes.
+  /// </summary>
+  /// <since>8.0</since>
+  enum class ViewSectionBehavior : unsigned char
+  {
+    /// <summary>Default - show geometry on unclipped side of clipping plane and show section</summary>
+    ClipAndSection = 0,
+    /// <summary>Only show the section at the intersection of a clipping plane</summary>
+    SectionOnly = 1,
+  };
+#pragma endregion
+
+  static ViewSectionBehavior ViewSectionBehaviorFromUnsigned(
+    unsigned int view_section_behavior_as_unsigned
+  );
 
 private:
   // ON::Begin() sets m_opennurbs_library_status
@@ -2514,6 +2675,7 @@ public:
                                 = ON_UNSET_UINT_INDEX as unsigned int
   */
   static const ON_COMPONENT_INDEX UnsetComponentIndex;
+  static const ON_COMPONENT_INDEX WholeObject;
 
   /*
   Description:
@@ -2766,6 +2928,22 @@ public:
   double m_x = ON_DBL_QNAN;
 }; 
 
+enum class RhRdkChangeContext : int // Context of a change to document or content parameters.
+{
+  Unset      = -1, // Value when BeginChange() has not been called.
+  UI         = 0,  // Change occurred as a result of user activity in the UI.
+  Drop       = 1,  // Change occurred as a result of drag and drop.
+  Program    = 2,  // Change occurred as a result of internal program activity.
+  Ignore     = 3,  // Change can be disregarded.
+  Tree       = 4,  // Change occurred within the content tree (e.g., nodes reordered).
+  Undo       = 5,  // Change occurred as a result of an undo or redo operation.
+  Reserved   = 6,  // Reserved for RDK internal use only [SDK_UNFREEZE]
+  Serialize  = 7,  // Change occurred during serialization (loading).
+  RealTimeUI = 8,  // Change occurred as a result of 'real-time' user activity in the (content) UI.
+                   // The content's preview, UI, group members and registerable properties are not updated.
+  Script     = 9,  // Change occurred as a result of executing a script.
+};
+
 #endif
 
 ON_BEGIN_EXTERNC
@@ -2944,6 +3122,5 @@ ON_DECL void on_wsplitpath(
   );
 
 ON_END_EXTERNC
-
 
 #endif

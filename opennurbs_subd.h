@@ -586,6 +586,13 @@ public:
     /// Typically the deviation bewtween the brep and SubD surface is larger than LocalG1 and smaller than LocalG2.
     ///</summary>
     LocalG1x = 3,
+
+    ///<summary>
+    /// At extraordinary vertices, the NURBS patches are modified so they are G1 at the extraordinary vertex
+    /// and G1 along edges near the extraordinary vertex.
+    /// The patches will have one double knot near the extraordinary vertex.
+    ///</summary>
+    LocalG1xx = 4,
   };
 #pragma endregion
 
@@ -957,7 +964,7 @@ public:
   Remarks:
     The name "sector coefficient" is used because is is a property of the
     vertex's sector (every edge in vertex sector has the same value at the tagged vertex).
-    The sector coefficient does not change which a subdivision is applied.
+    The sector coefficient does not change when a subdivision is applied.
   */
   double RelativeSectorCoefficient(
     int relative_vertex_index
@@ -2056,6 +2063,18 @@ public:
   void AddId(ON_SubDComponentId cid);
 
   void AddId(ON_SubDComponentPtr cptr);
+
+  /*
+  Add all Ids in list to m_id_list. Do not sort or remove duplicates.
+  Assumes list elements all pass el.IsSet().
+  Parameters:
+    list - in
+  */
+  void AddIdList(const ON_SubDComponentIdList& list);
+
+  unsigned int UnsignedCount() const;
+
+  ON_SubDComponentId operator[](unsigned int i) const;
 
   /*
   Parameters:
@@ -5575,9 +5594,9 @@ public:
   Parameters:
     bUnsetValuesOnly - [in]
       If bUnsetValuesOnly is true, then only unset tags and
-      sector weights will be updated.
+      sector coefficients will be updated.
       If bUnsetValuesOnly is false, then all tags and
-      sector weights will be checked and updated as needed.
+      sector coefficients will be checked and updated as needed.
   Returns:
     Number of edges that had a tag value changed or sector
     coefficient set to ON_SubDSectorType::UnsetSectorCoefficient.
@@ -5599,9 +5618,9 @@ public:
   Parameters:
     bUnsetValuesOnly - [in]
       If bUnsetValuesOnly is true, then only unset tags and
-      sector weights will be updated.
+      sector coefficients will be updated.
       If bUnsetValuesOnly is false, then all tags and
-      sector weights will be checked and updated as needed.
+      sector coefficients will be checked and updated as needed.
   Returns:
     Number of edges that had a tag value changed or sector
     coefficient set to ON_SubDSectorType::UnsetSectorCoefficient.
@@ -7809,7 +7828,7 @@ public:
   //     2) F >= 2
   //     3) E = F
   //     4) One edge is a crease.
-  //     5)  The crease edge is an edge of two geometrically adjacent sector faces.
+  //     5) The crease edge is an edge of two geometrically adjacent sector faces.
   //
   //   DART* (The same as "DART", but the crease edge has been duplicated.)
   //     1) The center vertex is a dart.
@@ -7836,25 +7855,25 @@ public:
   //
   /////////////////////////////////////////////////////////////////////////////////////
   //
-  //   The sector weight is used when subdividing smooth edges in sectors
+  //   The sector coefficient is used when subdividing smooth edges in sectors
   //   with a DART, DART* or BOUNDED configuration. In these cases the 
-  //   sector weight is a value strictly between 0.0 and 1.0 that depends on
+  //   sector coefficient is a value strictly between 0.0 and 1.0 that depends on
   //     1) the center vertex tag (crease, corner or dart), 
   //     2) the value of F,
   //     3) and when the center vertex is a corner, the angle between 
   //        the boundary edges.  
   //
-  //   The sector weight is ignored when dividing smooth edges in SMOOTH sectors.
-  //   The sector weight is ignored when subdividing crease edges.
+  //   The sector coefficient is ignored when dividing smooth edges in SMOOTH sectors.
+  //   The sector coefficient is ignored when subdividing crease edges.
   //
   //   For a smooth edge in a sector with a DART, DART* or BOUNDED configuration,
-  //   with w = sector weight, C = location of the center vertex
+  //   with w = sector coefficient, C = location of the center vertex
   //   and P = location of the smooth vertex at the other end
   //   of the smooth edge, the point
   //   
   //     Q = 3/4 * (w*C + (1-w)*P) 
   //
-  //   is the contribution of C and P  to the edge's subdivision point.
+  //   is the contribution of C and P to the edge's subdivision point.
   //   
   //   When a smooth edge has smooth vertices at both ends located
   //   at A and B, the contribution of A and B to the edge's subdivision
@@ -7865,11 +7884,13 @@ public:
   //   A crease edge's subdivision point is always the edge's midpoint.
   /*
   Description:
-    Calculates sector weight value for the sector type
+    Calculates sector coefficient value for the sector type
     identified by this ON_SubDSectorType.
   Returns:
-    w: 0.0 <= w < 1.0
-      w = sector theta value.
+    w: 0.0 < w < 1.0
+      w = sector coefficient value.
+    ON_SubDSectorType::IgnoredCornerSectorAngle  (= 0.0)
+      This value is used to set sector angles when the actual value is not needed.
     ON_SubDSectorType::ErrorSectorCoefficient
       This ON_SubDSectorType is not valid and the calculation failed.
   */
@@ -8010,6 +8031,7 @@ public:
     1) ends at a vertex tagged on ON_SubDVertexTag::Corner
     2) has two adjacent faces.
     3) lies in a sector bounded by 2 distinct crease edges.
+    The angle is convex and positive: 0 < angle <= Pi
   */
   static double CornerSectorAngleRadiansFromEdges(
     ON_SubDEdgePtr sector_boundary_edge0_ptr,
@@ -8077,14 +8099,13 @@ public:
     number of faces in the smooth sector.
   Returns:
     0: 
-      failed to caclulate weight
+      failed to caclulate coefficient
     ON_SubDSectorType::UnsetSectorCoefficient:
       This typically happens when a SubD control net is being 
       created and a facet type is not specified.  
-      The weights will be calculated at the first subdivision.
+      The coefficients will be calculated at the first subdivision.
     0 < w < 1:
-      1/2 + 1/3*cos(tagged end angle) for quadrangle facets
-      1/3 + 1/3*cos(tagged end angle) for triangle facets
+      1/2 + 1/3*cos(tagged end sector angle / number of faces) for quadrangle facets
   Remarks:
     This is a useful tool when calling AddEdge while a subdivision
     level is being constructed.
@@ -8108,10 +8129,10 @@ public:
   // is a smooth vertex.
   static const double IgnoredCornerSectorAngle; // = 0.0;
 
-  // This value is used to set sector weights that could not be
+  // This value is used to set sector coefficients that could not be
   // correctly set because something in the calculation failed.  
   // It is typically used when an invalid component in SubD object
-  // was needed to calculate the weight.
+  // was needed to calculate the coefficient.
   static const double UnsetCornerSectorAngle; // = -8881.0;
 
   // This value is indicate a corner sector angle calculation failed.
@@ -8146,7 +8167,7 @@ public:
   static const double ErrorSectorCoefficient; // = -9993.0;
 
   static bool IsValidSectorCoefficientValue(
-    double weight_value,
+    double coefficient_value,
     bool bAllowUnsetTaggedEndCoefficient
     );
 
@@ -8602,6 +8623,7 @@ private:
   Returns:
     theta: 0.0 < theta <= ON_PI
       sector theta value for a crease sector with sector_face_count faces.
+      theta = Pi / sector_face_count
     ON_SubDSectorType::ErrorSectorTheta
       sector_face_count is not valid and the calculation failed.
   */
@@ -8616,6 +8638,7 @@ private:
   Returns:
     theta: 0.0 < theta <= ON_PI
       sector theta value for a dart sector with sector_face_count faces.
+      theta = 2 Pi / sector_face_count
     ON_SubDSectorType::ErrorSectorTheta
       sector_face_count is not valid and the calculation failed.
   */
@@ -8626,12 +8649,16 @@ private:
   /*
   Parameters:
     sector_face_count - [in] >= 2
-      Number of faces in the dart sector.
-    corner_sector_angle_radians - [in] (0.0 <= corner_sector_angle_radians <= 2*ON_PI
-      The angle between the bounding crease edges
+      Number of faces in the corner sector.
+      Note the function will accept sector_face_count = 1 for consistency with the
+      limit surface evaluation code but there is no valid SubD that can connect
+      a smooth edge to a corner vertex with sector face count == 1.
+    corner_sector_angle_radians - [in] (0.0 <= corner_sector_angle_radians <= ON_PI)
+      The convex angle between the bounding crease edges
   Returns:
     theta: 0.0 < theta <= ON_PI/2
       sector theta value for the corner sector.
+      theta = index_snapped[Pi/36](clamped[0,Pi](corner_sector_angle_radians)) / sector_face_count
     ON_SubDSectorType::ErrorSectorTheta
       sector_face_count or corner_sector_angle_radians were not valid
       and the calculation failed.
@@ -8643,7 +8670,7 @@ private:
 
   /*
   Parameters:
-    sector_theta - [in] 0 < sector_theta <= 2*ON_PI
+    sector_theta - [in] 0 < sector_theta <= ON_PI
       value from one of the sector theta functions.
       ON_SubDEdge::SectorTheta()
       ON_SubDEdge::SmoothSectorTheta()
@@ -8652,12 +8679,12 @@ private:
       ON_SubDEdge::DartSectorTheta()
   Returns:
     0: 
-      failed to caclulate weight
+      failed to caclulate coefficient
     ON_SubDSectorType::ErrorSectorCoefficient: 
       sector_theta is not valid.
     0 < w < 1:
       The returned value is 
-      1/2 + 1/3*cos(sector_angle_radians). (1/6 <= w <= 5/6)
+      1/2 + 1/3*cos(sector_theta). (1/6 <= w <= 5/6)
   Remarks:
     This is a useful tool when calling AddEdge while a subdivision
     level is being constructed.
@@ -12270,7 +12297,7 @@ public:
   // If the value of m_edge_tag is ON_SubDEdgeTag::Smooth and
   // exactly one end vertex is tagged, then the m_sector_coefficient[]
   // value for the tagged end is calculated by ON_SubDSectorType::SectorCoefficient().
-  // tagged_weight*tagged_vertex + (1.0 - tagged_weight)*untagged_vertex
+  // tagged_coefficient*tagged_vertex + (1.0 - tagged_coefficient)*untagged_vertex
   // is used when combining the edge ends.
   // The edge's subdivision vertex will be tagged as ON_SubDVertexTag::Smooth
   // and both subdivision edges will be tagged as ON_SubDEdgeTag::Smooth.
@@ -12292,13 +12319,40 @@ public:
   // and both end vertices are not tagged, that is a severe error
   // condition and the edge is subdivided at its midpoint.
   //
-  // m_sector_coefficient[tagged_end] = 1/2 + 1/3*cos(theta)
-  // where "theta" = tagged end "theta" (which depends on vertex tag (dart/crease/corner), 
-  // the number of faces in the sector, and the control net crease angle when the tagged end is a corner.  
+  // m_sector_coefficient[tagged_end] = 1/2 + 1/3*cos(theta_k)
+  // where "theta_k" is the tagged end's "theta_k", which depends on the vertex tag (dart/crease/corner), 
+  // the number of faces k in the sector, and the control net crease angle alpha when the tagged end is a corner.
+  // Dart:   theta_k = 2 * Pi / k
+  // Crease: theta_k = Pi / k
+  // Corner: theta_k = alpha / k
   //
   // The name "sector coefficient" is used because the value is a property of the
   // vertex's sector (every smooth edge inside a vertex sector has the same value at the tagged vertex).
   // The sector coefficient does not change which a subdivision is applied.
+  // 
+  // ------------------------------
+  // 2022-02-09, Pierre C, RH-67377
+  // ------------------------------
+  // Wrong values in 3dm files created by OpenNURBS 7.16 and before, fixed in 7.17.
+  // 
+  // Since 2015-02-20,
+  // ON_SubDSectorType::CornerSectorThetaFromCornerAngle(unsigned int sector_face_count, double corner_sector_angle_radians)
+  // had been incorrectly computing theta as:
+  // corner_sector_theta = corner_sector_angle_radians / (2 * sector_face_count)
+  // instead of:
+  // corner_sector_theta = corner_sector_angle_radians / sector_face_count.
+  // 
+  // This is fixed as of Rhino 7.17, but 3dm files created before this version saved the incorrect value.
+  // 
+  // This changes the coefficients saved in the SubD edge, and in the 3dm files.
+  // Rhino recomputes all m_sector_coefficients cached in the SubD edges when
+  // adding a SubD to a document, so all values are now correct. This changes 
+  // SubD subdivision, meshing, limit surface, and limit point editing results, 
+  // for SubDs that have a smooth edge connected to a corner vertex.
+  // 
+  // If you are using this value from a SubD in a 3dm file created by Rhino 7.16 or earlier,
+  // without adding the SubD to a Rhino document using CRhinoSubDObject::SetSubD(ON_SubDRef subd_ref),
+  // you need to recompute all sector coefficients using subd->UpdateAllTagsAndSectorCoefficients(true);
   mutable double m_sector_coefficient[2] = {};
 
   // If m_edge_tag is not ON_SubDEdgeTag::Sharp, then m_sharpness is ignored.
@@ -16732,21 +16786,21 @@ public:
   /*
   Parameters:
     v0 - [in]
-    v0_sector_weight - [in]
+    v0_sector_coefficient - [in]
       If v0 null or ON_SubDVertexTag::Smooth == v0->m_vertex_tag, and v1 is null or tagged,
-      then m_sector_weight[0] is set to v0_sector_weight.
-      In all other cases the value of v0_sector_weight is ignored and m_sector_weight[0]
+      then m_sector_coefficient[0] is set to v0_sector_coefficient.
+      In all other cases the value of v0_sector_coefficient is ignored and m_sector_coefficient[0]
       is set to ON_SubDSectorType::IgnoredSectorCoefficient.
     v1 - [in]
-    v1_sector_weight - [in]
+    v1_sector_coefficient - [in]
       If v1 null or ON_SubDVertexTag::Smooth == v1->m_vertex_tag, and v0 is null or tagged,
-      then m_sector_weight[1] is set to v1_sector_weight.
-      In all other cases the value of v1_sector_weight is ignored and m_sector_weight[1]
+      then m_sector_coefficient[1] is set to v1_sector_coefficient.
+      In all other cases the value of v1_sector_coefficient is ignored and m_sector_coefficient[1]
       is set to ON_SubDSectorType::IgnoredSectorCoefficient.
   Returns:
     An edge.
     The vertex parameter information is used to set the ON_SubDEdge.m_vertex[] 
-    and ON_SubDEdge.m_sector_weight[] values.
+    and ON_SubDEdge.m_sector_coefficient[] values.
     If v0 and v1 are not null and both are tagged, then ON_SubDEdge.m_edge_tag is 
     set to ON_SubDEdgeTag::Crease.  
     In all other cases, ON_SubDEdge.m_edge_tag is set to ON_SubDEdgeTag::Smooth.
@@ -16755,9 +16809,9 @@ public:
   */
   const ON_SubDEdgePtr AllocateEdge(
     ON_SubDVertex* v0,
-    double v0_sector_weight,
+    double v0_sector_coefficient,
     ON_SubDVertex* v1,
-    double v1_sector_weight
+    double v1_sector_coefficient
     );
 
   /*
@@ -16768,17 +16822,17 @@ public:
   */
   const ON_SubDEdgePtr FindOrAllocateEdge(
     ON_SubDVertex* v0,
-    double v0_sector_weight,
+    double v0_sector_coefficient,
     ON_SubDVertex* v1,
-    double v1_sector_weight
+    double v1_sector_coefficient
     );
 
   const ON_SubDEdgePtr AllocateEdge(
     bool bUseFindOrAllocatEdge,
     ON_SubDVertex* v0,
-    double v0_sector_weight,
+    double v0_sector_coefficient,
     ON_SubDVertex* v1,
-    double v1_sector_weight
+    double v1_sector_coefficient
   );
 
 
@@ -17101,6 +17155,9 @@ public:
       of the chains, however some chains will have corners in their interior,
       especially closed chains.
 
+    bIgnoreCorners - [in]
+      If true the chains are not split at corner vertices
+
   Returns:
     Number of chains in edge_chains[].
 
@@ -17112,7 +17169,8 @@ public:
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
     unsigned int minimum_chain_length,
-    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains,
+    const bool bIgnoreCorners = false
   );
 
   /*
@@ -17141,6 +17199,9 @@ public:
       The first edge in every chain has the same orientation as the input edge
       from edge_chains[].
 
+    bIgnoreCorners - [in]
+      If true the chains are not split at corner vertices
+
   Returns:
     Number of chains in edge_chains[].
 
@@ -17152,7 +17213,8 @@ public:
   static unsigned int SortEdgesIntoEdgeChains(
     const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
     unsigned int minimum_chain_length,
-    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains,
+    const bool bIgnoreCorners = false
   );
 
   /*

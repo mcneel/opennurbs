@@ -912,9 +912,16 @@ bool ON_TextRunBuilder::AppendCodePoint(ON__UINT32 codept)
 {
   if (m_current_codepoints.Count() == 0 && m_current_run.IsStacked() != ON_TextRun::Stacked::kStacked)
   {
+    const ON_TextRun::Stacked stacked = m_current_run.IsStacked();
+
     // First codepoint in a run after format changes
     m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+
+    if (ON_TextRun::Stacked::kTop == stacked || ON_TextRun::Stacked::kBottom == stacked)
+    {
+      m_current_run.SetStacked(stacked);
+    }
   }
   m_current_codepoints.Append(codept);
   return true;
@@ -1611,10 +1618,12 @@ void ON_TextRunBuilder::Strikethrough(const wchar_t* value)
 
 void ON_TextRunBuilder::Superscript()
 {
+  m_current_run.SetStacked(ON_TextRun::Stacked::kTop);
 }
 
 void ON_TextRunBuilder::Subscript()
 {
+  m_current_run.SetStacked(ON_TextRun::Stacked::kBottom);
 }
 
 void ON_TextRunBuilder::NoSuperSub()
@@ -3287,6 +3296,18 @@ bool RtfComposer::Compose(
             run_strings += L"\\ul0";
             addspace = true;
           }
+
+          if (run->IsStacked() == ON_TextRun::Stacked::kBottom)
+          {
+            run_strings += L"\\sub";
+            addspace = true;
+          }
+          if (run->IsStacked() == ON_TextRun::Stacked::kTop)
+          {
+            run_strings += L"\\super";
+            addspace = true;
+          }
+
           if (addspace)
             run_strings += L" ";
         }

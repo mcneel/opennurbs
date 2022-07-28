@@ -236,12 +236,14 @@ const ON_UUID ON_rhino6_id = { 0x6bb1079, 0x5a56, 0x47a1,{ 0xad, 0x6d, 0xb, 0x45
 // {78464C2C-9AEB-456E-8C27-865A524F5CA0}
 const ON_UUID ON_rhino7_id = { 0x78464c2c, 0x9aeb, 0x456e,{ 0x8c, 0x27, 0x86, 0x5a, 0x52, 0x4f, 0x5c, 0xa0 } };
 
+// {868c63f5-3760-4a45-8600-5399cc57b47c}
+const ON_UUID ON_rhino8_id = { 0x868c63f5, 0x3760, 0x4a45,{ 0x86, 0x00, 0x53, 0x99, 0xcc, 0x57, 0xb4, 0x7c } };
 
 // ON_rhino_id is always set to the value for the current version
 // of Rhino.  ON_rhino_id is the id that should be used as the
 // userdata application id for userdata class definitions that are
 // in the core Rhino executable.
-const ON_UUID ON_rhino_id = ON_rhino7_id;
+const ON_UUID ON_rhino_id = ON_rhino8_id;
 
 // Used to identifiy userdata read from V2 files
 // which were written before userdata had application ids.
@@ -281,6 +283,7 @@ const ON_UUID ON_opennurbs_id = ON_opennurbs7_id;
 const ON_UuidPairList ON_UuidPairList::EmptyList;
 
 const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::UnsetComponentIndex;
+const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::WholeObject;
 const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndNan = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, ON_DBL_QNAN);
 const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndZero = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, 0.0);
 

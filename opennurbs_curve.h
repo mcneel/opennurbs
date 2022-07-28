@@ -708,6 +708,23 @@ public:
                 ) const;
 
   // Description:
+ //   Evaluate the signed curvature of a planar curve at a parameter.
+ // Parameters:
+ //   t - [in] evaluation parameter
+ //   plane_normal - [in] oriented plane unit normal, 
+ //                   defaults to ON_3dVector(0,0,1) for curve in xy-plane
+ // Returns:
+ //   signed curvature of a planar curve at the parameter t.
+ // Remarks:
+ //   No error handling.
+ // See Also:
+ //   ON_Curve::EvSignedCurvature
+  double SignedCurvatureAt(
+    double t,
+    const ON_3dVector* plane_normal = nullptr
+  ) const;
+
+  // Description:
   //   Return a 3d frame at a parameter.
   // Parameters:
   //   t - [in] evaluation parameter
@@ -849,6 +866,45 @@ public:
          int side = 0,
          int* hint = 0
          ) const;
+
+  /*
+    Description:
+      Evaluate unit tangent and signed curvature (also called oriented curvature)  of a planar 
+      curve at a parameter with error checking.
+    Parameters:
+      t - [in] evaluation parameter
+      point - [out] value of curve at t
+      tangent - [out] value of unit tangent
+      kappa - [out] value of signed curvature 
+      normal - [in] oriented unit normal of the plane containing the curve.
+                    default of nullptr is interpreted as ON_3dVector(0,0,1)
+      side - [in] optional - determines which side to evaluate from
+                  =0   default
+                  <0   to evaluate from below,
+                  >0   to evaluate from above
+      hint - [in/out] optional evaluation hint used to speed repeated evaluations
+    Returns:
+      false if unable to evaluate.
+    Notes:
+      Computes the Triple product T o ( K X N)
+      where T is the unit tangent, K is the curvature vector
+      and N is the plane unit normal.  If the curve is planar this is the signed curvature for the given 
+      plane orientation.  The normal defaults to (0,0,1)  for curves in the x-y plane.
+    See Also:
+      ON_Curve::CurvatureAt
+      ON_Curve::Ev2Der
+      ON_EvCurvature
+    */
+  bool EvSignedCurvature(
+    double t,
+    ON_3dPoint& point,
+    ON_3dVector& tangent,
+    double& kappa,
+    const ON_3dVector* normal = nullptr,
+    int side = 0,
+    int* hint = 0
+  ) const;
+
 
   /*
   Description:

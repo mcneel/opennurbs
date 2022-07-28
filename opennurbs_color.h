@@ -404,37 +404,54 @@ class ON_CLASS ON_4fColor
 public:
   ON_4fColor();
   ~ON_4fColor() = default;
+  ON_4fColor(int r, int g, int b, int a);
+  ON_4fColor(float r, float g, float b, float a);
   ON_4fColor(const ON_4fColor&) = default;
-  ON_4fColor& operator=(const ON_4fColor&) = default;
+  ON_4fColor& operator = (const ON_4fColor&) = default;
 
   static const ON_4fColor Unset;
 
-  //Note that these function will set the alpha correctly from ON_Colors "inverted" alpha.
+  // Note that this function will set the alpha correctly from ON_Color's 'inverted' alpha.
   ON_4fColor(const ON_Color&);
-  ON_4fColor& operator=(const ON_Color&);
+  ON_4fColor& operator = (const ON_Color&);
 
-  //Will invert the opacity alpha to transparency.
+  bool operator == (const ON_4fColor&);
+  bool operator != (const ON_4fColor&);
+
+  // Will invert the opacity alpha to transparency.
   operator ON_Color(void) const;
 
   float Red(void) const;
-  void SetRed(float);
+  void SetRed(float r);
 
   float Green(void) const;
-  void SetGreen(float);
+  void SetGreen(float g);
 
   float Blue(void) const;
-  void SetBlue(float);
+  void SetBlue(float b);
 
-  //Alpha in ON_4fColor is OPACITY - not transparency as in ON_Color.
+  // Alpha in ON_4fColor is OPACITY, not transparency as in ON_Color.
   float Alpha(void) const;
-  void SetAlpha(float);
+  void SetAlpha(float a);
 
   void SetRGBA(float r, float g, float b, float a);
 
   bool IsValid(class ON_TextLog* text_log = nullptr) const;
 
-  // < 0 if this < arg, 0 ir this==arg, > 0 if this > arg
-  int Compare(const ON_4fColor&) const;
+  // Returns: < 0 if (this < other), 0 if (this == other), > 0 if (this > other).
+  int Compare(const ON_4fColor& other) const;
+
+	// Blend this color to 'col' using 't' from 0.0 to 1.0.
+	// Note: Does not clamp 't' or RGB result unless clampAlpha is true, in which case alpha is clamped.
+	void BlendTo(float t, const ON_4fColor& col, bool clampAlpha=false);
+
+  // Direct read/write access to array of four floats.
+  // NOTE: If you access the array beyond the 4th element, the function may crash Rhino.
+  float* FloatArray(void);
+
+  // Direct read access to array of four floats.
+  // NOTE: If you access the array beyond the 4th element, the function may crash Rhino.
+  const float* FloatArray(void) const;
 
 private:
   float m_color[4];

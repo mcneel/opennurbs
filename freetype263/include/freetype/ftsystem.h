@@ -202,9 +202,6 @@ FT_BEGIN_HEADER
 
   /*************************************************************************
    *
-   * @struct:
-   *   FT_StreamDesc
-   *
    * @description:
    *   A union type used to store either a long or a pointer.  This is used
    *   to store a file descriptor or a `FILE*' in an input stream.

@@ -442,14 +442,14 @@ public:
                         // inner or slit loop, no other trim from the same 
                         // loop is connected to the edge, and at least one 
                         // trim from a different loop is connected to the edge.
-    seam     = 3,       // trim is connected to an edge, is part of an outer, 
-                        // inner or slit loop, and one other trim from the 
-                        // same loop is connected to the edge.
+    seam     = 3,       // trim is connected to an edge, is part of an outer loop,
+                        // and exactly one other trim from the same loop is 
+                        // also connected to the edge.  The trims are domain side
+                        // iso's on opposite sides of the surface (e.g E_iso and W_iso) 
                         // (There can be other mated trims that are also
                         // connected to the edge.  For example, the non-manifold
-                        // edge that results when a surface edge lies in the
-                        // middle of another surface.)  Non-manifold "cuts"
-                        // have seam trims too.
+                        // edge that results when a surface edge lies along
+                        // the seam of another surface.) 
     singular = 4,       // trim is part of an outer loop, the trim's 2d curve
                         // runs along the singular side of a surface, and the
                         // trim is NOT connected to an edge. (There is no 3d
@@ -1123,7 +1123,17 @@ public:
   // If true is returned, then ~ON_BrepFace will delete mesh.
   bool SetMesh( ON::mesh_type, ON_Mesh* mesh );
 
+  //Internal storage is now a std::shared_ptr to const ON_Mesh, so allow it to be set and accessed as such
+  bool SetMesh(ON::mesh_type, const std::shared_ptr<const ON_Mesh>& mesh);
+
   const ON_Mesh* Mesh( ON::mesh_type mesh_type ) const;
+
+  //Internal storage is now a std::shared_ptr to const ON_Mesh, so allow it to be set and accessed as such
+  const std::shared_ptr<const ON_Mesh>& SharedMesh(ON::mesh_type mesh_type) const;
+
+  //Note that while this function returns a std::shared_ptr<const ON_Mesh>, the ON_Mesh is guaranteed unique and
+  //can be modified.
+  const std::shared_ptr<const ON_Mesh>& UniqueMesh(ON::mesh_type mesh_type);
 
   /*
   Description:
@@ -1137,7 +1147,19 @@ public:
     CRhinoObject::MeshCount
     CRhinoObject::IsMeshable
   */
-  void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh = true );
+  ON_DEPRECATED_MSG("Support for bDeleteMesh no longer supported") void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
+
+  /*
+  Description:
+    Destroy meshes used to render and analyze surface and polysurface objects.
+  Parameters:
+    mesh_type - [in] type of mesh to destroy
+  See Also:
+    CRhinoObject::GetMeshes
+    CRhinoObject::MeshCount
+    CRhinoObject::IsMeshable
+  */
+  void DestroyMesh(ON::mesh_type mesh_type);
 
   /////////////////////////////////////////////////////////////////
   // "Expert" Interface
@@ -1321,9 +1343,19 @@ private:
 private:
   ON_BoundingBox m_bbox;      // 3d bounding box (should be declared mutable and const_cast<> is used to make it fake mutable)
   ON_Interval    m_domain[2]; // rectangular bounds of 2d curves
-  ON_Mesh* m_render_mesh = nullptr;
-  ON_Mesh* m_analysis_mesh = nullptr;
-  ON_Mesh* m_preview_mesh = nullptr;
+  //ON_Mesh* m_render_mesh = nullptr;
+  //ON_Mesh* m_analysis_mesh = nullptr;
+  //ON_Mesh* m_preview_mesh = nullptr;
+
+  //New impl declaration to replace the old mesh pointers.
+  class Impl;
+  Impl* m_pImpl;
+  friend Impl;
+
+  //Pad out the size to match the old.
+  void* m_reserved0 = nullptr;
+  void* m_reserved1 = nullptr;
+
   //int m_material_index; // if 0 (default), ON_Brep's object attributes
   //                      // determine material.
 private:
@@ -1798,7 +1830,20 @@ public:
     ON_BrepFace::Mesh
     ON_BrepFace::SetMesh
   */
-  void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh = true );
+  ON_DEPRECATED_MSG("bDeleteMesh=false is no longer supported") void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
+
+  /*
+  Description:
+    Destroy meshes used to render and analyze brep.
+  Parameters:
+    mesh_type - [in] type of mesh to destroy
+  See Also:
+    ON_Brep::GetMesh
+    ON_BrepFace::DestroyMesh
+    ON_BrepFace::Mesh
+    ON_BrepFace::SetMesh
+  */
+  void DestroyMesh(ON::mesh_type mesh_type);
 
   /*
   Description:
@@ -4186,6 +4231,39 @@ ON_Brep* ON_BrepFromMesh(
           bool bTrimmedTriangles = true,
           ON_Brep* pBrep = nullptr 
           );
+
+/*
+Description:
+  Create a brep representation of a mesh.
+Parameters:
+  mesh_topology - [in]
+  bTrimmedTriangles - [in] if true, triangles in the mesh
+     will be represented by trimmed planes in the brep.
+     If false, triangles in the mesh will be represented by
+     untrimmed singular bilinear NURBS surfaces in the brep.
+  bUseNgonsIfTheyExist - [in] if the mesh has ngons and bUseNgonsIfTheyExist is true
+     then trimmed planes will be created for the ngons regardless of bTrimmedTriangles.
+  tolerance - [in] used to determine if an ngon is planar.
+  pBrep - [in] If not nullptr, this the mesh representation will
+     be put into this brep.
+Example:
+
+          ON_Mesh mesh = ...;
+          ON_Brep* pBrep = ON_BrepFromMesh( mesh.Topology() );
+          ...
+          delete pBrep;
+
+See Also
+  ON_BrepFromMesh( const ON_Mesh& mesh, ... );
+*/
+ON_DECL
+ON_Brep* ON_BrepFromMeshWithNgons(
+  const ON_MeshTopology& mesh_topology,
+  bool bTrimmedTriangles,
+  bool bUseNgonsIfTheyExist,
+  double tolerance,
+  ON_Brep * pBrep = nullptr
+  );
 
 /*
 Description:

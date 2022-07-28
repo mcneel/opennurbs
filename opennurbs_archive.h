@@ -1945,7 +1945,7 @@ public:
   
   /*
   Description:
-    Increase the archive's current position to bytes_forward from the current position.
+    Increase the archive's current position by bytes_forward from the current position.
   Parameters:
     bytes_forward - [in]
   Returns:
@@ -1958,7 +1958,7 @@ public:
 
   /*
   Description:
-    Reduce the archive's current position by bytes_backward from the current position.
+    Decrease the archive's current position by bytes_backward from the current position.
   Parameters:
     bytes_backward - [in]
   Returns:

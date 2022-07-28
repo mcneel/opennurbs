@@ -116,10 +116,12 @@ ON_3dPoint ON_Line::PointAt( double t ) const
   //     to the following so that axis aligned lines will
   //     return exact answers for large values of t.  
   //     See RR 9683.
-  const double s = 1.0-t;
-  return  ON_3dPoint( (from.x == to.x) ? from.x : s*from.x + t*to.x,
-                      (from.y == to.y) ? from.y : s*from.y + t*to.y,
-                      (from.z == to.z) ? from.z : s*from.z + t*to.z );
+ 
+
+  //08 May 2022 - Greg. Mikko, Chuck.  This is more accurate than the parameterwise 
+  //(1-t)*from + t*to with fudging.  Note that if any coordinate of from is the same as that of to,
+  //the answer will be exact in that coord.
+  return  (t < 0.5) ? from + t*(to-from) : to + (1.0-t)*(from-to);
 }
 
 void ON_Line::Reverse()

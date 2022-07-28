@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -644,6 +641,26 @@ ON_UuidList& ON_UuidList::operator=(const ON_UuidList& src)
     m_removed_count = src.m_removed_count;
   }
   return *this;
+}
+
+bool ON_UuidList::operator==(const ON_UuidList& other) const
+{
+  int thisCount = Count();
+  int otherCount = other.Count();
+  if (0 == thisCount && 0 == otherCount)
+    return true;
+  if (thisCount != otherCount)
+    return false;
+
+  const ON_UUID* thisArray = Array();
+  const ON_UUID* otherArray = other.Array();
+  int compare = memcmp(thisArray, otherArray, sizeof(ON_UUID) * thisCount);
+  return 0 == compare;
+}
+
+bool ON_UuidList::operator!=(const ON_UuidList& other) const
+{
+  return !ON_UuidList::operator==(other);
 }
 
 
@@ -1635,7 +1652,6 @@ void ON_2dexMap::Create(int count, int i0, int j)
   m_bSorted = true;
 }
 
-
 const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t nel )
 {
   if (nel > 0 && base )
@@ -1684,6 +1700,48 @@ const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t 
       else
       {
         return base+i;
+      }
+    }
+  }
+  return 0;
+}
+
+const ON_2udex* ON_BinarySearch2udexArray(unsigned int key_i, const ON_2udex* base, size_t nel)
+{
+  if (nel > 0 && base)
+  {
+    size_t i;
+    unsigned int base_i;
+
+    base_i = base[0].i;
+    if (key_i < base_i)
+      return 0;
+    if (key_i == base_i)
+      return base;
+
+    base_i = base[nel - 1].i;
+    if (key_i > base_i)
+      return 0;
+    if (key_i == base_i)
+      return (base + (nel - 1));
+
+    while (nel > 0)
+    {
+      i = nel / 2;
+      base_i = base[i].i;
+      if (key_i < base_i)
+      {
+        nel = i;
+      }
+      else if (key_i > base_i)
+      {
+        i++;
+        base += i;
+        nel -= i;
+      }
+      else
+      {
+        return base + i;
       }
     }
   }

@@ -185,6 +185,9 @@ bool ON_Leader::GetTextXform(
   if (nullptr == text)
     return true;
 
+  const ON_TextMask::MaskFrame maskframe = dimstyle->MaskFrameType();
+  const ON_DimStyle::ContentAngleStyle textangle_style = dimstyle->LeaderContentAngleStyle();
+
   ON_2dVector tail_dir = TailDirection(dimstyle);
   ON_3dVector view_x = nullptr == vp ? ON_3dVector::XAxis : vp->CameraX();
   ON_3dVector view_y = nullptr == vp ? ON_3dVector::YAxis : vp->CameraY();
@@ -238,31 +241,34 @@ bool ON_Leader::GetTextXform(
     text_shift.x = 0.0;
     text_shift.y = 0.0;
 
-    // LeaderAttachStyle - Vertical alignment of text with leader text point
-    ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
-    switch (attach)
+    if (ON_TextMask::MaskFrame::CapsuleFrame != maskframe)
     {
-    case ON::TextVerticalAlignment::Top:
-      text_shift.y = -textblock_height / 2.0;
-      break;
-    case ON::TextVerticalAlignment::MiddleOfTop:
-      text_shift.y = -(textblock_height / 2.0) + (line_height / 2.0);
-      break;
-    case ON::TextVerticalAlignment::BottomOfTop:
-      text_shift.y = -(textblock_height / 2.0) + line_height;
-      break;
-    case ON::TextVerticalAlignment::Middle:
-      text_shift.y = 0.0;
-      break;
-    case ON::TextVerticalAlignment::MiddleOfBottom:
-      text_shift.y = (textblock_height / 2.0) - (line_height / 2.0);
-      break;
-    case ON::TextVerticalAlignment::Bottom:
-      text_shift.y = textblock_height / 2.0;
-      break;
-    case ON::TextVerticalAlignment::BottomOfBoundingBox:
-      text_shift.y = (textblock_height / 2.0) + (dimstyle->TextGap());   /*(line_height / 10.0);*/
-      break;
+      // LeaderAttachStyle - Vertical alignment of text with leader text point
+      ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
+      switch (attach)
+      {
+      case ON::TextVerticalAlignment::Top:
+        text_shift.y = -textblock_height / 2.0;
+        break;
+      case ON::TextVerticalAlignment::MiddleOfTop:
+        text_shift.y = -(textblock_height / 2.0) + (line_height / 2.0);
+        break;
+      case ON::TextVerticalAlignment::BottomOfTop:
+        text_shift.y = -(textblock_height / 2.0) + line_height;
+        break;
+      case ON::TextVerticalAlignment::Middle:
+        text_shift.y = 0.0;
+        break;
+      case ON::TextVerticalAlignment::MiddleOfBottom:
+        text_shift.y = (textblock_height / 2.0) - (line_height / 2.0);
+        break;
+      case ON::TextVerticalAlignment::Bottom:
+        text_shift.y = textblock_height / 2.0;
+        break;
+      case ON::TextVerticalAlignment::BottomOfBoundingBox:
+        text_shift.y = (textblock_height / 2.0) + (dimstyle->TextGap());   /*(line_height / 10.0);*/
+        break;
+      }
     }
 
     // 2d Point at center of text but without vertical alignment shift
@@ -275,19 +281,49 @@ bool ON_Leader::GetTextXform(
       landing_length = dimstyle->LeaderLandingLength();
     double text_gap = dimstyle->TextGap();
 
-    if (ON_TextMask::MaskFrame::RectFrame == dimstyle->MaskFrameType())
+    if (maskframe != ON_TextMask::MaskFrame::NoFrame)
+    {
       text_gap = dimstyle->TextMask().MaskBorder();
-    double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
+    }
 
-    text_pt2 = text_pt2 + (tail_dir * x_offset);
+    if (maskframe == ON_TextMask::MaskFrame::CapsuleFrame)
+    {
+      double half_height = dimscale * (textblock_height * 0.5 + text_gap);
+      double radius = ON_2dVector(half_height, half_height).Length();
+      if (landing_length > 0.0)
+      {
+        tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+        text_pt2 = text_pt2 + (tail_dir * landing_length);
+      }
 
+      if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
+      {
+        text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
+      }
+      else if (fabs(tail_dir.x) > 0.1 && textblock_width > textblock_height)
+      {
+        if (tail_dir.x > 0)
+        {
+          text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
+        }
+        else
+        {
+          text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
+        }
+      }
+      text_pt2 = text_pt2 + (tail_dir * radius);
+    }
+    else
+    {
+      double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
+
+      text_pt2 = text_pt2 + (tail_dir * x_offset);
+    }
 
     // Move from Origin to leader plane
     const ON_Plane& leaderplane = Plane();
 
     ON_2dVector text_dir(1.0, 0.0);     // Horizontal to cplane - ON_DimStyle::ContentAngleStyle::Horizontal
-    ON_DimStyle::ContentAngleStyle textangle_style = dimstyle->LeaderContentAngleStyle();
-
     if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style)
     {
       text_dir = tail_dir;
@@ -805,9 +841,11 @@ ON_2dVector ON_Leader::TailDirection(const ON_DimStyle* dimstyle) const
     dir = m_points[pointcount - 1] - m_points[pointcount - 2];    // This works for Aligned
     if (nullptr != dimstyle)
     {
-      if (ON_DimStyle::ContentAngleStyle::Horizontal == dimstyle->LeaderContentAngleStyle())
+      if (ON_DimStyle::ContentAngleStyle::Horizontal == dimstyle->LeaderContentAngleStyle() &&
+          MaskFrameType(dimstyle) != ON_TextMask::MaskFrame::CapsuleFrame
+        )
       {
-        if (0.0 > dir.x)  // going to the left
+        if (dir.x < 0.0)  // going to the left
           dir.Set(-1.0, 0.0);
         else
           dir.Set(1.0, 0.0);

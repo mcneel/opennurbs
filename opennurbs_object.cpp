@@ -48,6 +48,8 @@ unsigned int ON_IsRhinoApplicationId(
     return 6;
   if (ON_rhino7_id == id)
     return 7;
+  if (ON_rhino8_id == id)
+    return 8;
   return 0;
 }
 

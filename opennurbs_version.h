@@ -217,11 +217,12 @@
 // Jan 2017
 //  November 2016 Rhino 7 WIP writes version 6 files.
 //  October 23 1019, Rhino 7 WIP writes version 7 files.
+//  May 17 2021, Rhino 8 WIP writes version 8 files.
 //
 // More generally, in a stable release product, OPENNURBS_CURRENT_ARCHIVE_VERSION = OPENNURBS_VERSION_MAJOR*10.
 // But for some period of time at the beginning of the Rhino (N+1) WIP developement cycle,
 // Rhino (N+1) WIP writes Rhino N files. That's why OPENNURBS_CURRENT_ARCHIVE_VERSION
 // is sometimes (OPENNURBS_VERSION_MAJOR*10) and is sometimes ((OPENNURBS_VERSION_MAJOR-1)*10)
-#define OPENNURBS_CURRENT_ARCHIVE_VERSION 70
+#define OPENNURBS_CURRENT_ARCHIVE_VERSION 80
 
 #endif

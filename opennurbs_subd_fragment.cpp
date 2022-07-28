@@ -867,10 +867,10 @@ bool ON_SubDManagedMeshFragment::ReserveCapacity(
   if ( F_capacity >= short_capacity_sanity_check)
     return ON_SUBD_RETURN_ERROR(false);
 
-  const size_t P_stride = 3;
-  const size_t N_stride = 3;
-  const size_t T_stride = 3;
-  const size_t C_stride = 1;
+  //const size_t P_stride = 3;
+  //const size_t N_stride = 3;
+  //const size_t T_stride = 3;
+  //const size_t C_stride = 1;
 
   // storage_capacity holds = 3 point coords + 3 normal coords + 3 texture point coords + an ON_Color + unused 4 bytes.
   size_t storage_capacity = ON_SubDMeshFragment::ManagedDoublesPerVertex * V_capacity;
@@ -3331,11 +3331,23 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(
   // ON_SubDEdge::GetEdgeSurfaceCurveControlPoints().
   // When there is a better way to get NURBS approsimations of edges that end
   // at extraordinary vertices, we can reduce min_display_density to 1.
-  const unsigned min_display_density = 1; // adaptive cutoff
+  // 
+  // 2022-06-08. Pierre, RH-62025. I have no idea why this is set to 1 when
+  // ON_SubDEdge::GetEdgeSurfaceCurveControlPoints() has not changed.
+  // Most of the SubD to NURBS code expects the display density to be >= 2.
+  // However, setting it to 2 would force SubDs with >32k faces to be meshed
+  // with a display density >= 2. Meshing and NURBSing parameters should not
+  // be set in the same code!
+  // I'm changing this to ON_SubDDisplayParameters::MinimumAdaptiveDensity (== 1) to 
+  // have some explanation for the value, and setting an absolute display density
+  // of 2 in SubD to NURBS code.
+  const unsigned min_display_density = ON_SubDDisplayParameters::MinimumAdaptiveDensity; // adaptive cutoff
 
 #if 1
   if (adaptive_subd_display_density <= min_display_density)
-    return adaptive_subd_display_density;
+    // 2022-06-08. Pierre, RH-62025. This used to return adaptive_subd_display_density,
+    // completely obviating the point of min_display_density.
+    return min_display_density;
   if (adaptive_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
     adaptive_subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
 

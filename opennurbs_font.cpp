@@ -1,4 +1,3 @@
-
 //
 // Copyright (c) 1993-2015 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -3448,8 +3447,6 @@ const ON_Font* ON_Font::FontFromRichTextProperties(
 
   const ON_FontFaceQuartet::Member rich_text_quartet_face = ON_FontFaceQuartet::MemberFromBoldAndItalic(bBoldQuartetMember, bItalicQuartetMember);
 
-  const bool bDecorated = bUnderlined || bStrikethrough;
-
   ON_FontFaceQuartet installed_quartet = ON_ManagedFonts::InstalledFonts().QuartetFromQuartetName(rich_text_font_name);
   if ( installed_quartet.IsNotEmpty() )
   {
@@ -3644,10 +3641,6 @@ const ON_Font* ON_Font::FontFromRichTextProperties(
   // a fake quartet based on only the rtf_font_name.
   // (Sure wish we had not dumped the V5 font table, sigh.)
   const ON_Font* existing_managed_font = ON_Font::GetManagedFont(fake_font, false);
-  const ON_FontFaceQuartet::Member existing_managed_font_quartet_face = 
-    (nullptr != existing_managed_font)
-    ? existing_managed_font->m_quartet_member 
-    : ON_FontFaceQuartet::Member::Unset;
 
   if (nullptr != existing_managed_font)
   {
@@ -4338,42 +4331,6 @@ const ON_Font* ON_FontList::FromNames(
   );
 }
 
-const ON_Font* ON_FontList::FromNames2(
-  const wchar_t* postscript_name,
-  const wchar_t* windows_logfont_name,
-  const wchar_t* en_windows_logfont_name,
-  const wchar_t* family_name,
-  const wchar_t* en_family_name,
-  const wchar_t* prefered_face_name,
-  const wchar_t* en_prefered_face_name,
-  ON_Font::Weight prefered_weight,
-  ON_Font::Stretch prefered_stretch,
-  ON_Font::Style prefered_style,
-  bool bRequireFaceMatch,
-  bool bRequireStyleMatch
-) const
-{
-  const bool bMatchUnderlineStrikethroughAndPointSize = false;
-  return Internal_FromNames2(
-    postscript_name,
-    windows_logfont_name,
-    en_windows_logfont_name,
-    family_name,
-    en_family_name,
-    prefered_face_name,
-    en_prefered_face_name,
-    prefered_weight,
-    prefered_stretch,
-    prefered_style,
-    bRequireFaceMatch,
-    bRequireStyleMatch,
-    bMatchUnderlineStrikethroughAndPointSize,
-    false,
-    false,
-    0.0
-  );
-}
-
 const ON_Font* ON_FontList::FromNames(
   const wchar_t* postscript_name,
   const wchar_t* windows_logfont_name,
@@ -4424,45 +4381,6 @@ const ON_Font* ON_FontList::Internal_FromNames(
   double point_size
 ) const
 {
-  return Internal_FromNames2(
-    postscript_name,
-    windows_logfont_name,
-    windows_logfont_name,
-    family_name,
-    family_name,
-    prefered_face_name,
-    prefered_face_name,
-    prefered_weight,
-    prefered_stretch,
-    prefered_style,
-    bRequireFaceMatch,
-    bRequireStyleMatch,
-    bMatchUnderlineStrikethroughAndPointSize,
-    bUnderlined,
-    bStrikethrough,
-    point_size
-  );
-}
-
-const ON_Font* ON_FontList::Internal_FromNames2(
-  const wchar_t* postscript_name,
-  const wchar_t* windows_logfont_name,
-  const wchar_t* en_windows_logfont_name,
-  const wchar_t* family_name,
-  const wchar_t* en_family_name,
-  const wchar_t* prefered_face_name,
-  const wchar_t* en_prefered_face_name,
-  ON_Font::Weight prefered_weight,
-  ON_Font::Stretch prefered_stretch,
-  ON_Font::Style prefered_style,
-  bool bRequireFaceMatch,
-  bool bRequireStyleMatch,
-  bool bMatchUnderlineStrikethroughAndPointSize,
-  bool bUnderlined,
-  bool bStrikethrough,
-  double point_size
-) const
-{
   if (ON_Font::Stretch::Unset == prefered_stretch)
     bRequireStyleMatch = false;
 
@@ -4490,18 +4408,15 @@ const ON_Font* ON_FontList::Internal_FromNames2(
 
   key.m_loc_windows_logfont_name = windows_logfont_name;
   key.m_loc_windows_logfont_name.TrimLeftAndRight();
-  key.m_en_windows_logfont_name = en_windows_logfont_name;
-  key.m_en_windows_logfont_name.TrimLeftAndRight();
+  key.m_en_windows_logfont_name = key.m_loc_windows_logfont_name;
 
   key.m_loc_family_name = family_name;
   key.m_loc_family_name.TrimLeftAndRight();
-  key.m_en_family_name = en_family_name;
-  key.m_en_family_name.TrimLeftAndRight();
+  key.m_en_family_name = key.m_loc_family_name;
 
   key.m_loc_face_name = prefered_face_name;
   key.m_loc_face_name.TrimLeftAndRight();
-  key.m_en_face_name = en_prefered_face_name;
-  key.m_en_face_name.TrimLeftAndRight();
+  key.m_en_face_name = key.m_loc_face_name;
 
   key.m_font_weight = prefered_weight;
   key.m_font_stretch = prefered_stretch;
@@ -4827,17 +4742,11 @@ const ON_Font* ON_FontList::FromFontProperties(
   bool bRequireStyleMatch
 ) const
 {
-  ON_wString en_fam_name = font_properties->FamilyName(ON_Font::NameLocale::English);
-  ON_wString en_face_name = font_properties->FaceName(ON_Font::NameLocale::English);
-  ON_wString en_win_log_font_name = font_properties->WindowsLogfontName(ON_Font::NameLocale::English);
-  return FromNames2(
+  return FromNames(
     font_properties->PostScriptName(m_name_locale),
     font_properties->WindowsLogfontName(m_name_locale),
-    en_win_log_font_name,
     font_properties->FamilyName(m_name_locale),
-    en_fam_name,
     font_properties->FaceName(m_name_locale),
-    en_face_name,
     font_properties->FontWeight(),
     font_properties->FontStretch(),
     font_properties->FontStyle(),
@@ -5799,9 +5708,7 @@ bool ON_Font::IsInstalledFont() const
 bool ON_Font::IsManagedInstalledFont() const
 {
   const ON__UINT_PTR bits = 3;
-  bool ism = IsManagedFont();
-  //return IsManagedFont() && (1 == (m_managed_installed_font_and_bits & bits));
-  return ism && (1 == (m_managed_installed_font_and_bits & bits));
+  return IsManagedFont() && (1 == (m_managed_installed_font_and_bits & bits));
 }
 
 bool ON_Font::IsManagedSubstitutedFont() const
@@ -6427,9 +6334,6 @@ void ON_Font::Internal_CopyFrom(
     m_logfont_charset = src.m_logfont_charset;
 
     m_locale_name = src.m_locale_name;
-  if (!m_locale_name.EqualOrdinal(L"en-US", true) && !m_locale_name.EqualOrdinal(L"", true)) {
-    m_locale_name = "ja-JP";
-  }
 
     m_loc_postscript_name = src.m_loc_postscript_name;
     m_en_postscript_name = src.m_en_postscript_name;
@@ -6615,7 +6519,6 @@ bool ON_Font::SetFontCharacteristicsForExperts(
 
   this->m_en_windows_logfont_name = quartet_name.Duplicate();
   this->m_en_windows_logfont_name.TrimLeftAndRight();
-  this->m_en_windows_logfont_name = this->m_en_windows_logfont_name;
 
   this->m_quartet_member = quartet_member;
 
@@ -7859,6 +7762,50 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     Internal_FakeWindowsLogfontName(L"Sukhumvit Set", L"SukhumvitSet-Thin", L"Sukhumvit Set Thin", ON_FontFaceQuartet::Member::Regular),
 
     Internal_FakeWindowsLogfontName(L"Thonburi", L"Thonburi-Light", L"Thonburi Light", ON_FontFaceQuartet::Member::Regular),
+
+    // RH-68433
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Black",            L"Graphik Black",      ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-BlackItalic",      L"Graphik Black",      ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Bold",             L"Graphik Bold",       ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-BoldItalic",       L"Graphik Bold",       ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Extralight",       L"Graphik Extralight", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-ExtralightItalic", L"Graphik Extralight", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Light",            L"Graphik Light",      ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-LightItalic",      L"Graphik Light",      ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Medium",           L"Graphik Medium",     ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-MediumItalic",     L"Graphik Medium",     ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Regular",          L"Graphik Regular",    ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-RegularItalic",    L"Graphik Regular",    ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Semibold",         L"Graphik Semibold",   ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-SemiboldItalic",   L"Graphik Semibold",   ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Super",            L"Graphik Super",      ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-SuperItalic",      L"Graphik Super",      ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-Thin",             L"Graphik Thin",       ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Graphik", L"Graphik-ThinItalic",       L"Graphik Thin",       ON_FontFaceQuartet::Member::Italic),
+
+    // RH-68539
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-15UltTh",   L"NeueHaasGroteskDisp UltTh", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-16UltThIt", L"NeueHaasGroteskDisp UltTh", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-25Th",      L"NeueHaasGroteskDisp Pro Thin", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-26ThIt",    L"NeueHaasGroteskDisp Pro Thin", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-35XLt",     L"NeueHaasGroteskDisp Pro XLt", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-36XLtIt",   L"NeueHaasGroteskDisp Pro XLt", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-45Lt",      L"NeueHaasGroteskDisp Pro Lt", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-46LtIt",    L"NeueHaasGroteskDisp Pro Lt", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-55Rg",      L"NeueHaasGroteskDisp Pro", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-56It",      L"NeueHaasGroteskDisp Pro", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-75Bd",      L"NeueHaasGroteskDisp Pro", ON_FontFaceQuartet::Member::Bold),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-76BdIt",    L"NeueHaasGroteskDisp Pro", ON_FontFaceQuartet::Member::BoldItalic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-65Md",      L"NeueHaasGroteskDisp Pro Md", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-66MdIt",    L"NeueHaasGroteskDisp Pro Md", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-95Blk",     L"NeueHaasGroteskDisp Pro Blk", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-96BlkIt",   L"NeueHaasGroteskDisp Pro Blk", ON_FontFaceQuartet::Member::Italic),
   };
 
   static bool bFakeNamesAreSorted = false;
@@ -8457,6 +8404,10 @@ static ON_OutlineFigure::Type Internal_FigureTypeFromHashedFontName(
 
     InternalHashToName(L"SLF-RHN White Linen"), // Family
     InternalHashToName(L"SLF-RHN-WhiteLiinen"), // PostScript
+
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-67652
+    InternalHashToName(L"AVGauge Engraving"), // Family
+    InternalHashToName(L"AVGauge_Engraving"), // PostScript
   };
 
   static InternalHashToName double_stroke_name_map[] = 
@@ -10431,9 +10382,6 @@ ON_Font::ON_Font(
   m_font_origin = ON_Font::Origin::WindowsFont;
 
   m_locale_name = dwrite_font_information.m_prefered_locale;
-  if (!m_locale_name.EqualOrdinal(L"en-US", true) && !m_locale_name.EqualOrdinal(L"", true)) {
-    m_locale_name = "ja-JP";
-  }
 
   m_loc_postscript_name = dwrite_font_information.m_loc_postscript_name;
   m_en_postscript_name = dwrite_font_information.m_en_postscript_name;

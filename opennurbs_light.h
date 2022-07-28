@@ -66,6 +66,10 @@ public:
   // virtual ON_Geometry GetBBox override		
   bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
 
+  // virtual ON_Geometry GetTightBoundingBox override		
+  bool GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBoxAsInt, const ON_Xform* xform) const override;
+
+
   bool Transform( 
          const ON_Xform&
          ) override;

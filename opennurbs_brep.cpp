@@ -16,6 +16,9 @@
 
 #include "opennurbs.h"
 
+#include <memory>
+#include <array>
+
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -782,15 +785,25 @@ int ON_BrepLoop::IndexOfTrim( const ON_BrepTrim& trim ) const
 
 ON_OBJECT_IMPLEMENT_NO_COPYCTOR(ON_BrepFace,ON_SurfaceProxy,"60B5DBC4-E660-11d3-BFE4-0010830122F0");
 
+class ON_BrepFace::Impl
+{
+public:
+  std::shared_ptr<const ON_Mesh> m_render_mesh;
+  std::shared_ptr<const ON_Mesh> m_analysis_mesh;
+  std::shared_ptr<const ON_Mesh> m_preview_mesh;
+};
+
 ON_BrepFace::ON_BrepFace()
-  : ON_SurfaceProxy(0)
+  : ON_SurfaceProxy(0),
+    m_pImpl(new Impl)
 {
   memset(&m_face_user,0,sizeof(m_face_user));
 }
 
 ON_BrepFace::ON_BrepFace(int face_index) 
   : ON_SurfaceProxy(0),
-  m_face_index(face_index)
+  m_face_index(face_index),
+  m_pImpl(new Impl)
 {
   memset(&m_face_user,0,sizeof(m_face_user));
 }
@@ -801,12 +814,12 @@ unsigned int ON_BrepFace::SizeOf() const
   unsigned int sz = ON_SurfaceProxy::SizeOf();
   sz += (sizeof(*this) - sizeof(ON_SurfaceProxy));
   sz += m_li.SizeOfArray();
-  if ( m_render_mesh )
-    sz += m_render_mesh->SizeOf();
-  if ( m_analysis_mesh )
-    sz += m_analysis_mesh->SizeOf();
-  if ( m_preview_mesh )
-    sz += m_preview_mesh->SizeOf();
+  if ( m_pImpl->m_render_mesh )
+    sz += m_pImpl->m_render_mesh->SizeOf();
+  if (m_pImpl->m_analysis_mesh )
+    sz += m_pImpl->m_analysis_mesh->SizeOf();
+  if (m_pImpl->m_preview_mesh )
+    sz += m_pImpl->m_preview_mesh->SizeOf();
   return sz;
 }
 
@@ -826,27 +839,9 @@ ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
     m_face_material_channel = src.m_face_material_channel;
     m_face_uuid = src.m_face_uuid;
     m_per_face_color = src.m_per_face_color;
-    if ( m_render_mesh ) {
-      delete m_render_mesh;
-      m_render_mesh = 0;
-    }
-    if ( src.m_render_mesh ) {
-      m_render_mesh = new ON_Mesh(*src.m_render_mesh);
-    }    
-    if ( m_analysis_mesh ) {
-      delete m_analysis_mesh;
-      m_analysis_mesh = 0;
-    }
-    if ( src.m_analysis_mesh ) {
-      m_analysis_mesh = new ON_Mesh(*src.m_analysis_mesh);
-    }    
-    if ( m_preview_mesh ) {
-      delete m_preview_mesh;
-      m_preview_mesh = 0;
-    }
-    if ( src.m_preview_mesh ) {
-      m_preview_mesh = new ON_Mesh(*src.m_preview_mesh);
-    }    
+    m_pImpl->m_render_mesh   = src.m_pImpl->m_render_mesh   ? src.m_pImpl->m_render_mesh   : nullptr;
+    m_pImpl->m_analysis_mesh = src.m_pImpl->m_analysis_mesh ? src.m_pImpl->m_analysis_mesh : nullptr;
+    m_pImpl->m_preview_mesh  = src.m_pImpl->m_preview_mesh  ? src.m_pImpl->m_preview_mesh  : nullptr;
   }
   return *this;
 }
@@ -855,6 +850,7 @@ ON_BrepFace::~ON_BrepFace()
 {
   DestroyMesh(ON::any_mesh);
   m_li.Destroy();
+  delete m_pImpl;
 }
 
 ON_Brep* ON_BrepFace::Brep() const
@@ -1081,64 +1077,122 @@ bool ON_Brep::HasPerFaceColors() const
   return false;
 }
 
+const std::shared_ptr<const ON_Mesh>& ON_BrepFace::UniqueMesh(ON::mesh_type mesh_type)
+{
+  const auto& sp = SharedMesh(mesh_type);
+
+  if (sp && sp.use_count() > 1)
+  {
+    SetMesh(mesh_type, std::make_shared<const ON_Mesh>(*sp));
+    return SharedMesh(mesh_type);
+  }
+
+  return sp;
+}
+
+
+const std::shared_ptr<const ON_Mesh>& ON_BrepFace::SharedMesh(ON::mesh_type mesh_type) const
+{
+  std::shared_ptr<const ON_Mesh>* pMesh = nullptr;
+
+  switch (mesh_type)
+  {
+  case ON::render_mesh:
+    pMesh = &m_pImpl->m_render_mesh;
+    break;
+  case ON::analysis_mesh:
+    pMesh = &m_pImpl->m_analysis_mesh;
+    break;
+  case ON::preview_mesh:
+    pMesh = &m_pImpl->m_preview_mesh;
+    break;
+  default:
+    pMesh = m_pImpl->m_render_mesh ? &m_pImpl->m_render_mesh : &m_pImpl->m_analysis_mesh;
+    if (pMesh->get() == nullptr)
+    {
+      pMesh = &m_pImpl->m_preview_mesh;
+    }
+    break;
+  }
+
+  if (pMesh && pMesh->get())
+  {
+    const_cast<ON_Mesh*>(pMesh->get())->m_parent = this;
+  }
+
+  return *pMesh;
+}
 
 const ON_Mesh* ON_BrepFace::Mesh( ON::mesh_type mt ) const
 {
-  ON_Mesh* m = 0;
-  switch(mt) {
+  const auto& sp = SharedMesh(mt);
+
+  return sp ? sp.get() : nullptr;
+}
+
+bool ON_BrepFace::SetMesh(ON::mesh_type mt, const std::shared_ptr<const ON_Mesh>& mesh)
+{
+  bool rc = true;
+  switch (mt)
+  {
   case ON::render_mesh:
-    m = m_render_mesh;
+    m_pImpl->m_render_mesh = mesh;
     break;
   case ON::analysis_mesh:
-    m = m_analysis_mesh;
+    m_pImpl->m_analysis_mesh = mesh;
     break;
   case ON::preview_mesh:
-    m = m_preview_mesh;
+    m_pImpl->m_preview_mesh = mesh;
     break;
   default:
-    m = m_render_mesh ? m_render_mesh : m_analysis_mesh;
-    if ( !m )
-      m = m_preview_mesh;
+    rc = false;
+  }
+
+  return rc;
+}
+
+bool ON_BrepFace::SetMesh(ON::mesh_type mt, ON_Mesh* mesh)
+{
+  bool rc = true;
+  switch (mt)
+  {
+  case ON::render_mesh:
+    m_pImpl->m_render_mesh.reset(mesh);
     break;
+  case ON::analysis_mesh:
+    m_pImpl->m_analysis_mesh.reset(mesh);
+    break;
+  case ON::preview_mesh:
+    m_pImpl->m_preview_mesh.reset(mesh);
+    break;
+  default:
+    rc = false;
   }
-  if ( m ) {
-    m->m_parent = this;
-    //m->m_material_index = m_material_index;
-  }
-  return m;
+
+  return rc;
 }
 
 void ON_BrepFace::DestroyMesh( ON::mesh_type mt, bool bDeleteMesh )
 {
+  return DestroyMesh(mt);
+}
+
+void ON_BrepFace::DestroyMesh(ON::mesh_type mt)
+{
   switch(mt) {
   case ON::render_mesh:
-    if ( m_render_mesh ) 
-    {
-      if ( bDeleteMesh )
-        delete m_render_mesh;
-      m_render_mesh = 0;
-    }
+    m_pImpl->m_render_mesh.reset();
     break;
   case ON::analysis_mesh:
-    if (m_analysis_mesh) 
-    {
-      if ( bDeleteMesh )
-        delete m_analysis_mesh;
-      m_analysis_mesh = 0;
-    }
+    m_pImpl->m_analysis_mesh.reset();
     break;
   case ON::preview_mesh:
-    if (m_preview_mesh) 
-    {
-      if ( bDeleteMesh )
-        delete m_preview_mesh;
-      m_preview_mesh = 0;
-    }
+    m_pImpl->m_preview_mesh.reset();
     break;
   default:
-    DestroyMesh( ON::render_mesh );
-    DestroyMesh( ON::analysis_mesh );
-    DestroyMesh( ON::preview_mesh );
+    m_pImpl->m_render_mesh.reset();
+    m_pImpl->m_analysis_mesh.reset();
+    m_pImpl->m_preview_mesh.reset();
     break;
   }
 }
@@ -1314,7 +1368,7 @@ ON_Brep::ON_Brep(const ON_Brep& src) : ON_Geometry(src)
 
 ON_Brep::~ON_Brep()
 { 
-  DestroyMesh(ON::any_mesh,true);
+  DestroyMesh(ON::any_mesh);
   // everything is in array classes that destroy themselves.
   delete m_region_topology;
   m_region_topology = 0;
@@ -1403,10 +1457,15 @@ ON__UINT32 ON_Brep::DataCRC(ON__UINT32 current_remainder) const
 
 void ON_Brep::DestroyMesh( ON::mesh_type mt, bool bDeleteMesh )
 {
+  DestroyMesh(mt);
+}
+
+void ON_Brep::DestroyMesh(ON::mesh_type mt)
+{
   const int fcnt = m_F.Count();
   int fi;
-  for ( fi = 0; fi < fcnt; fi++ ) {
-    m_F[fi].DestroyMesh(mt,bDeleteMesh);
+  for (fi = 0; fi < fcnt; fi++) {
+    m_F[fi].DestroyMesh(mt);
   }
 }
 
@@ -1627,81 +1686,103 @@ bool ON_Brep::Transform( const ON_Xform& xform )
     if ( 0 == srf )
       bEvMesh = false;
 
-    if ( 0 != face.m_render_mesh )
+    //Render meshes
     {
-      if ( bEvMesh && face.m_render_mesh->EvaluateMeshGeometry(*srf) )
+      auto spMesh = face.UniqueMesh(ON::render_mesh);
+      if (spMesh)
       {
-        if ( face.m_bRev )
+        auto pMesh = const_cast<ON_Mesh*>(spMesh.get());
+
+        if ( bEvMesh && pMesh->EvaluateMeshGeometry(*srf) )
         {
-          // 29 September 2003 Dale Lear
-          //     Normals on render meshes (and face orientations)
-          //     take face.m_bRev into account so that two sided
-          //     materials work as expected.  EvaluateMeshGeometry()
-          //     does not take face.m_bRev into account, so we need
-          //     to reverse the face normals here.
-          int ni, ncnt = face.m_render_mesh->m_N.Count();
-          for ( ni = 0; ni < ncnt; ni++ )
+          if ( face.m_bRev )
           {
-            face.m_render_mesh->m_N[ni] = -face.m_render_mesh->m_N[ni];
+            // 29 September 2003 Dale Lear
+            //     Normals on render meshes (and face orientations)
+            //     take face.m_bRev into account so that two sided
+            //     materials work as expected.  EvaluateMeshGeometry()
+            //     does not take face.m_bRev into account, so we need
+            //     to reverse the face normals here.
+            int ni, ncnt = pMesh->m_N.Count();
+            for ( ni = 0; ni < ncnt; ni++ )
+            {
+              pMesh->m_N[ni] = -(pMesh->m_N[ni]);
+            }
           }
         }
+        else
+        {
+          pMesh->Transform(xform);
+        }
       }
-      else
-        face.m_render_mesh->Transform(xform);
     }
 
-    if ( 0 != face.m_analysis_mesh )
+    //Analysis meshes
     {
-      // Dale Lear 30 March 2009 - bug 46766
-      //   Evaluate analysis meshes when the transform involves scaling
-      //   so curvature values are properly updated.
-      bool bEvAnalysisMesh = bEvMesh;
-      if ( !bEvAnalysisMesh )
+      auto spMesh = face.UniqueMesh(ON::analysis_mesh);
+      if (spMesh)
       {
-        ON_Xform tmp(xform);
-        tmp.m_xform[0][3] = 0.0;
-        tmp.m_xform[1][3] = 0.0;
-        tmp.m_xform[2][3] = 0.0;
-        if ( 1 != tmp.IsSimilarity() )
-          bEvAnalysisMesh = true;
-      }
-      // 1 Sept 2021, Mikko, RH-65468:
-      // Added null check to prevent a crash.
-      if ( bEvAnalysisMesh && nullptr != srf && face.m_analysis_mesh->EvaluateMeshGeometry(*srf) )
-      {
-        // 28 Sept 2012, Mikko:
-        // Apply the "29 September 2003 Dale Lear" fix above also to analysis meshes.
-        if ( face.m_bRev )
+        auto pMesh = const_cast<ON_Mesh*>(spMesh.get());
+
+        // Dale Lear 30 March 2009 - bug 46766
+        //   Evaluate analysis meshes when the transform involves scaling
+        //   so curvature values are properly updated.
+        bool bEvAnalysisMesh = bEvMesh;
+        if ( !bEvAnalysisMesh )
         {
-          int ni, ncnt = face.m_analysis_mesh->m_N.Count();
-          for ( ni = 0; ni < ncnt; ni++ )
+          ON_Xform tmp(xform);
+          tmp.m_xform[0][3] = 0.0;
+          tmp.m_xform[1][3] = 0.0;
+          tmp.m_xform[2][3] = 0.0;
+          if ( 1 != tmp.IsSimilarity() )
+            bEvAnalysisMesh = true;
+        }
+        // 1 Sept 2021, Mikko, RH-65468:
+        // Added null check to prevent a crash.
+        if ( bEvAnalysisMesh && nullptr != srf && pMesh->EvaluateMeshGeometry(*srf) )
+        {
+          // 28 Sept 2012, Mikko:
+          // Apply the "29 September 2003 Dale Lear" fix above also to analysis meshes.
+          if ( face.m_bRev )
           {
-            face.m_analysis_mesh->m_N[ni] = -face.m_analysis_mesh->m_N[ni];
+            int ni, ncnt = pMesh->m_N.Count();
+            for ( ni = 0; ni < ncnt; ni++ )
+            {
+              pMesh->m_N[ni] = -(pMesh->m_N[ni]);
+            }
           }
         }
+        else
+        {
+          pMesh->Transform(xform);
+        }
       }
-      else
-        face.m_analysis_mesh->Transform(xform);
     }
 
-    if ( 0 != face.m_preview_mesh )
+    //Preview meshes
     {
-      if ( bEvMesh && face.m_preview_mesh->EvaluateMeshGeometry(*srf) )
+      auto spMesh = face.UniqueMesh(ON::preview_mesh);
+      if (spMesh)
       {
-        if ( face.m_bRev )
+        auto pMesh = const_cast<ON_Mesh*>(spMesh.get());
+        if ( bEvMesh && pMesh->EvaluateMeshGeometry(*srf) )
         {
-          // 10 June 2021, Mikko, RH-64582:
-          // Fixed typo that caused a crash, changed "m_analysis_mesh" to "m_preview_mesh".
-          int ni, ncnt = face.m_preview_mesh->m_N.Count();
-          for ( ni = 0; ni < ncnt; ni++ )
+          if ( face.m_bRev )
           {
-            face.m_preview_mesh->m_N[ni] = -face.m_preview_mesh->m_N[ni];
+            // 10 June 2021, Mikko, RH-64582:
+            // Fixed typo that caused a crash, changed "m_analysis_mesh" to "m_preview_mesh".
+            int ni, ncnt = pMesh->m_N.Count();
+            for ( ni = 0; ni < ncnt; ni++ )
+            {
+              pMesh->m_N[ni] = -(pMesh->m_N[ni]);
+            }
           }
         }
+        else
+        {
+          pMesh->Transform(xform);
+        }
       }
-      else
-        face.m_preview_mesh->Transform(xform);
-
     }
   }
 
@@ -1992,8 +2073,31 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, bool bRev3d, ON_BrepLoop& loop, int c2i )
     // there are now two trims using this edge
     ON_BrepTrim::TYPE trim_type = ON_BrepTrim::mated;
     ON_BrepTrim& other_trim = m_T[edge.m_ti[0]];
-    if ( other_trim.m_li == loop.m_loop_index )
-      trim_type = ON_BrepTrim::seam;
+    /*
+       GBA RH-60512 April-21
+       New seam requirements.
+         Mate is on on the same face 
+            Loop is an outer loop
+            This and Mate are paired side isos ( e.g. W and East)
+            matching non iso dir parameters in opposite directions
+            Underlying surface is closed in the correct direction
+
+      Remarks
+         If constructing a brep with mated trims on the same face that 
+         don't meet these requirements.   Then split the face so all
+         trims are validly mated
+    */
+
+    if ( trim.Face() && trim.Face() == other_trim.Face() )
+    {
+      if( other_trim.Loop()==trim.Loop())
+        trim_type = ON_BrepTrim::seam;
+      else
+      {
+        // trim_type is left as unknown  this will cause IsValid to fail  
+        trim_type = ON_BrepTrim::unknown;
+      }
+    }
     else 
       trim_type = ON_BrepTrim::mated;
     trim.m_type = trim_type;
@@ -2001,16 +2105,29 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, bool bRev3d, ON_BrepLoop& loop, int c2i )
   }
   else
   {
+    //  edge_trim_count0 >1
     // non-manifold edge - need to check for mated or seam
+    bool matchedseam = false;
     ON_BrepTrim::TYPE trim_type = ON_BrepTrim::mated;
     for ( int eti = 0; eti < edge_trim_count0; eti++ )
     {
       ON_BrepTrim& other_trim = m_T[edge.m_ti[eti]];
-      if ( other_trim.m_li == loop.m_loop_index )
+      if (trim.Face() && trim.Face() == other_trim.Face())
       {
-        other_trim.m_type = ON_BrepTrim::seam;
-        trim_type = ON_BrepTrim::seam;
-        break;
+        if (other_trim.Loop() == trim.Loop() && !matchedseam && 
+            ( other_trim.m_type == ON_BrepTrim::mated || other_trim.m_type == ON_BrepTrim::seam))
+        {
+          trim_type = ON_BrepTrim::seam;
+          other_trim.m_type = ON_BrepTrim::seam;
+          matchedseam = true;
+        }
+        else
+        {
+          // Trims from from same edge on same face but different loops is invalid
+          trim_type = ON_BrepTrim::unknown;
+          other_trim.m_type = ON_BrepTrim::unknown;
+          break;
+        }
       }
     }
     trim.m_type = trim_type;
@@ -5470,6 +5587,7 @@ bool ON_Brep::IsValid( ON_TextLog* text_log ) const
       break; // keep gcc quiet
     }
 
+
   }
 
   // Dale Lear Fix https://mcneel.myjetbrains.com/youtrack/issue/RH-64277
@@ -7246,15 +7364,24 @@ bool ON_BrepFace::Reverse(int dir)
 
 	// Greg Arden 10 April 2003.  Fix TRR#9624.  
 	// Update analysis and render meshes.
-	if(m_render_mesh)
   {
-    m_render_mesh->ReverseSurfaceParameters(dir);
-    m_render_mesh->ReverseTextureCoordinates(dir);
+    auto rm = UniqueMesh(ON::render_mesh);
+	  if(rm)
+    {
+      auto p = const_cast<ON_Mesh*>(rm.get());
+      p->ReverseSurfaceParameters(dir);
+      p->ReverseTextureCoordinates(dir);
+    }
   }
-	if(m_analysis_mesh)
+
   {
-    m_analysis_mesh->ReverseSurfaceParameters(dir);
-		m_analysis_mesh->ReverseTextureCoordinates(dir);
+    auto rm = UniqueMesh(ON::analysis_mesh);
+    if (rm)
+    {
+      auto p = const_cast<ON_Mesh*>(rm.get());
+      p->ReverseSurfaceParameters(dir);
+      p->ReverseTextureCoordinates(dir);
+    }
   }
 
   return true;
@@ -7320,15 +7447,24 @@ bool ON_BrepFace::Transpose()
 
 	// Update analysis mesh and render mesh.
   // (Greg Arden 10 April 2003.  Fix TRR#9624.)
-	if(m_render_mesh)
   {
-		m_render_mesh->TransposeSurfaceParameters();
-		m_render_mesh->TransposeTextureCoordinates();
+    auto rm = UniqueMesh(ON::render_mesh);
+    if (rm)
+    {
+      auto p = const_cast<ON_Mesh*>(rm.get());
+      p->TransposeSurfaceParameters();
+      p->TransposeTextureCoordinates();
+    }
   }
-	if(m_analysis_mesh)
+
   {
-		m_analysis_mesh->TransposeSurfaceParameters();
-		m_analysis_mesh->TransposeTextureCoordinates();
+    auto rm = UniqueMesh(ON::analysis_mesh);
+    if (rm)
+    {
+      auto p = const_cast<ON_Mesh*>(rm.get());
+      p->TransposeSurfaceParameters();
+      p->TransposeTextureCoordinates();
+    }
   }
 
   return true;
@@ -7418,26 +7554,33 @@ bool ON_BrepFace::SetDomain(
   if ( !TransformTrim(xform) )
     return false;
 
-  ON_Mesh* mesh[3] = {m_analysis_mesh,m_render_mesh,m_preview_mesh};
-  for ( int i = 0; i < 3; i++ )
+  std::array<std::shared_ptr<const ON_Mesh>, 3> meshes { UniqueMesh(ON::analysis_mesh),  UniqueMesh(ON::render_mesh),  UniqueMesh(ON::preview_mesh) };
+
+  for (auto& m : meshes)
   {
-    if ( 0 == mesh[i] )
-      continue;
-    for ( int dir = 0; dir < 2; dir++ )
+    if (m)
     {
-      ON_Interval& mdom = mesh[i]->m_srf_domain[dir];
-      ON_Interval dom0 = dir ? v0_dom : u0_dom;
-      ON_Interval dom1 = dir ? v_dom : u_dom;
-      if ( mdom.IsIncreasing() && dom0 != dom1 )
+      auto pMesh = const_cast<ON_Mesh*>(m.get());
+      for ( int dir = 0; dir < 2; dir++ )
       {
-        if ( mdom == dom0 )
-          mdom = dom1;
-        else
+        ON_Interval& mdom = pMesh->m_srf_domain[dir];
+
+        const ON_Interval dom0 = dir ? v0_dom : u0_dom;
+        const ON_Interval dom1 = dir ? v_dom : u_dom;
+
+        if ( mdom.IsIncreasing() && dom0 != dom1 )
         {
-          double t0 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[0]));
-          double t1 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[1]));
-          mdom.Set(t0,t1);
-        }        
+          if ( mdom == dom0 )
+          {
+            mdom = dom1;
+          }
+          else
+          {
+            double t0 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[0]));
+            double t1 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[1]));
+            mdom.Set(t0,t1);
+          }
+        }
       }
     }
   }
@@ -7578,12 +7721,18 @@ void
 ON_Brep::FlipFace( ON_BrepFace& face )
 {
   face.m_bRev = (face.m_bRev) ? false : true;
-  if ( face.m_analysis_mesh )
-    face.m_analysis_mesh->Flip();
-  if ( face.m_render_mesh )
-    face.m_render_mesh->Flip();
-  if ( face.m_preview_mesh )
-    face.m_preview_mesh->Flip();
+
+  std::array<std::shared_ptr<const ON_Mesh>, 3> meshes{ face.UniqueMesh(ON::analysis_mesh),  face.UniqueMesh(ON::render_mesh),  face.UniqueMesh(ON::preview_mesh) };
+  
+  for (auto& m : meshes)
+  {
+    auto pMesh = const_cast<ON_Mesh*>(m.get());
+    if (pMesh)
+    {
+      pMesh->Flip();
+    }
+  }
+
   //Jun 16 2011 - Chuck - m_is_solid==3 for a brep with inconsistent normals. 
   //Flipping a face could make the normals consistent.
   //if (m_is_solid == 1 || m_is_solid == 2)
@@ -8246,29 +8395,33 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
     dump.Print(")\n");
     dump.PushIndent();
 
-    if (nullptr != face.m_render_mesh)
+    if (auto sp = face.SharedMesh(ON::render_mesh))
     {
-      const ON_MeshParameters* mp = face.m_render_mesh->MeshParameters();
+      const ON_MeshParameters* mp = sp->MeshParameters();
       ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
-      dump.Print(L"Render mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_render_mesh->FaceCount());
+      dump.Print(L"Render mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), sp->FaceCount());
     }
     else
+    {
       dump.Print("Render mesh = nullptr\n");
+    }
 
-    if (nullptr != face.m_analysis_mesh) 
+    if (auto sp = face.SharedMesh(ON::analysis_mesh))
     {
-      const ON_MeshParameters* mp = face.m_analysis_mesh->MeshParameters();
+      const ON_MeshParameters* mp = sp->MeshParameters();
       ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
-      dump.Print(L"Analysis mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_analysis_mesh->FaceCount());
+      dump.Print(L"Analysis mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), sp->FaceCount());
     }
     else
-      dump.Print("Analysis mesh = nullptr\n");
-
-    if (nullptr != face.m_preview_mesh)
     {
-      const ON_MeshParameters* mp = face.m_preview_mesh->MeshParameters();
+      dump.Print("Analysis mesh = nullptr\n");
+    }
+
+    if (auto sp = face.SharedMesh(ON::preview_mesh))
+    {
+      const ON_MeshParameters* mp = sp->MeshParameters();
       ON_wString mp_description = (nullptr != mp) ? mp->Description() : ON_wString(L"Unknown");
-      dump.Print(L"Preview mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), face.m_preview_mesh->FaceCount());
+      dump.Print(L"Preview mesh = %ls. %d polygons\n", static_cast<const wchar_t*>(mp_description), sp->FaceCount());
     }
     else
       dump.Print("Preview mesh = nullptr\n");
@@ -8926,7 +9079,7 @@ void ON_Brep::DeleteLoop(ON_BrepLoop& loop,  bool bDeleteLoopEdges  )
   loop.m_loop_index = -1;
 
   if ( loop.m_fi >= 0 )
-    DestroyMesh(ON::any_mesh,true);
+    DestroyMesh(ON::any_mesh);
 
   if ( li >= 0 && li < m_L.Count() ) 
   {
@@ -9441,12 +9594,30 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, bool bD
 
     if ( bDuplicateMeshes ) 
     {
-      if ( face.m_render_mesh )
-        face_copy.m_render_mesh = face.m_render_mesh->Duplicate();
-      if ( face.m_analysis_mesh )
-        face_copy.m_analysis_mesh = face.m_analysis_mesh->Duplicate();
-      if ( face.m_preview_mesh )
-        face_copy.m_preview_mesh = face.m_preview_mesh->Duplicate();
+    
+      {
+        auto sp = face.SharedMesh(ON::render_mesh);
+        if (sp)
+        {
+          face_copy.SetMesh(ON::render_mesh, new ON_Mesh(*sp.get()));
+        }
+      }
+
+      {
+        auto sp = face.SharedMesh(ON::analysis_mesh);
+        if (sp)
+        {
+          face_copy.SetMesh(ON::analysis_mesh, new ON_Mesh(*sp.get()));
+        }
+      }
+
+      {
+        auto sp = face.SharedMesh(ON::preview_mesh);
+        if (sp)
+        {
+          face_copy.SetMesh(ON::preview_mesh, new ON_Mesh(*sp.get()));
+        }
+      }
     }
 
     rc = true;
@@ -9478,9 +9649,9 @@ ON_Brep* ON_Brep::ExtractFace( int face_index )
   if ( brep_copy ) {
     ON_BrepFace& face = m_F[face_index];
     ON_BrepFace& face_copy = brep_copy->m_F[0];
-    face_copy.m_render_mesh = face.m_render_mesh; face.m_render_mesh = 0;
-    face_copy.m_analysis_mesh = face.m_analysis_mesh; face.m_analysis_mesh = 0;
-    face_copy.m_preview_mesh = face.m_preview_mesh; face.m_preview_mesh = 0;
+    face_copy.SetMesh(ON::render_mesh, face.SharedMesh(ON::render_mesh));
+    face_copy.SetMesh(ON::analysis_mesh, face.SharedMesh(ON::analysis_mesh));
+    face_copy.SetMesh(ON::preview_mesh, face.SharedMesh(ON::preview_mesh));
     DeleteFace( face, true );
   }
   return brep_copy;
@@ -10735,6 +10906,11 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
       ec->AppendAndMatch(ec0);
     }
     ec->RemoveNesting();
+
+    //23 March 2022 - Chuck - Added here to match ON_PolyCurve::Read().  Otherwise 
+    //after saving and reopening, the edge will be invalid if the start or end parameter
+    //is changed in the SanitzeDomain() call in Read().  See RH-67919.
+    ec->SanitizeDomain();
   }
 
   // create new 2d trim curve geometry
@@ -10796,6 +10972,7 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
   // so the edge0 and edge1 pointers are reset.
   edge0 = 0;
   edge1 = 0;
+
   const int c3i = AddEdgeCurve(ec);
   ON_BrepEdge& edge = NewEdge( m_V[vi0], m_V[vi1], c3i );
   edge0 = Edge(ei0);

@@ -1628,7 +1628,8 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
 
   if (ON_TextRun::RunType::kText != run->Type() && ON_TextRun::RunType::kField != run->Type())
     return false;
-  if (ON_TextRun::Stacked::kStacked != run->IsStacked())
+  const ON_TextRun::Stacked stacked = run->IsStacked();
+  if (ON_TextRun::Stacked::kNone == stacked)
     return false;
 
   const ON_Font* font = run->Font();
@@ -1656,8 +1657,8 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
 
   *top_run = *run;
   *bottom_run = *run;
-  top_run->SetStacked(ON_TextRun::Stacked::kTop);
-  bottom_run->SetStacked(ON_TextRun::Stacked::kBottom);
+  top_run->SetStacked(ON_TextRun::Stacked::kNone);
+  bottom_run->SetStacked(ON_TextRun::Stacked::kNone);
 
   if (nullptr != top_run->m_stacked_text)
     delete top_run->m_stacked_text;
@@ -1674,18 +1675,33 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
 
   //int cpcount = (int)run->CodepointCount(run->UnicodeString());
   //const ON__UINT32* cp = run->UnicodeString();
-
-  for (int i = 0; i < cpcount; i++)
+  if (ON_TextRun::Stacked::kTop == stacked)
   {
-    if (stack_delimiter == cp[i])
+    top_len = cpcount;
+  }
+  else if (ON_TextRun::Stacked::kBottom == stacked)
+  {
+    top_len = 0;
+  }
+  else
+  {
+    for (int i = 0; i < cpcount; i++)
     {
-      top_len = i;
-      foundseparator = true;
-      break;
+      if (stack_delimiter == cp[i])
+      {
+        top_len = i;
+        foundseparator = true;
+        break;
+      }
     }
   }
-  top_run->SetUnicodeString(top_len, cp);
-  bottom_run->SetUnicodeString(cpcount - top_len - 1, cp + top_len + 1);
+
+  if (ON_TextRun::Stacked::kTop == stacked || ON_TextRun::Stacked::kStacked == stacked)
+    top_run->SetUnicodeString(top_len, cp);
+  if (ON_TextRun::Stacked::kBottom == stacked)
+    bottom_run->SetUnicodeString(cpcount, cp);
+  if (ON_TextRun::Stacked::kStacked == stacked)
+    bottom_run->SetUnicodeString(cpcount - top_len - 1, cp + top_len + 1);
   top_run->TextString();
   bottom_run->TextString();
 
@@ -1711,8 +1727,10 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
   double stack_width = top_width;
   if (bottom_width > top_width)
     stack_width = bottom_width;
+
   // add separator_size to the right and left edges of total run
-  stack_width += 2.0 * separator_size;
+  if (ON_TextRun::Stacked::kStacked == stacked)
+    stack_width += 2.0 * separator_size;
 
   double top_dy = separator_height + 1.5 * separator_size;
   double bottom_dy = separator_height - 1.5 * separator_size - (bottom_run->BoundingBox().m_max.y - bottom_run->BoundingBox().m_min.y);
@@ -1835,6 +1853,9 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
   ON_TextBox text_box;
   const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, text_box);
   bool rc = (line_count > 0 && text_box.IsSet());
+  if (line_count == 0 && ON_TextRun::RunType::kText == run->Type())
+    run->SetBoundingBox(ON_2dPoint(0,0), ON_2dPoint(0,0));
+
   if (rc)
   {
     // Uses text height in WCS and character (I) height in font units to 
@@ -2037,7 +2058,7 @@ bool ON_TextContent::MeasureTextRunArray(
       }
       else if (ON_TextRun::RunType::kText == run->Type())
       {
-        if (run->IsStacked() == ON_TextRun::Stacked::kStacked)
+        if (run->IsStacked() != ON_TextRun::Stacked::kNone)
         {
           ON_TextContent::CreateStackedText(run);
         }
@@ -2116,7 +2137,7 @@ bool ON_TextContent::MeasureTextRunArray(
       o.x += osx;
       o.y += osy;
       run->SetOffset(o);
-      if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text)
+      if (run->IsStacked() != ON_TextRun::Stacked::kNone && run->m_stacked_text)
       {
         ON_TextRun* srun = run->m_stacked_text->m_top_run;
         if (srun)
@@ -2458,7 +2479,7 @@ bool ON_TextContent::FormatAngleMeasurement(
           if (ON_DimStyle::angle_format::DecimalDegrees == dimstyle->AngleFormat())
             angle = ON_RADIANS_TO_DEGREES * angle_radians;
           else if (ON_DimStyle::angle_format::Grads == dimstyle->AngleFormat())
-            angle = angle_radians * ON_PI / 200.0;
+            angle = angle_radians * 200.0 / ON_PI;
 
           double roundoff = dimstyle->AngleRoundOff();
           int resolution = dimstyle->AngleResolution();
@@ -2573,11 +2594,6 @@ bool ON_TextContent::FormatAreaOrVolume(
 
   if (nullptr == dimstyle)
     dimstyle = &ON_DimStyle::Default;
-
-  const ON_DimStyle::LengthDisplay dim_length_display =
-    alt
-    ? dimstyle->AlternateDimensionLengthDisplay()
-    : dimstyle->DimensionLengthDisplay();
 
   const ON::LengthUnitSystem dim_us
     = alt

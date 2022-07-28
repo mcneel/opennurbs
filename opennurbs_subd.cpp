@@ -36,6 +36,7 @@ ON_SubDToBrepParameters::VertexProcess ON_SubDToBrepParameters::VertexProcessFro
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG1);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG2);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG1x);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_SubDToBrepParameters::VertexProcess::LocalG1xx);
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDToBrepParameters::VertexProcess::None);
 }
@@ -58,6 +59,9 @@ const ON_wString ON_SubDToBrepParameters::VertexProcessToString(
     break;
   case ON_SubDToBrepParameters::VertexProcess::LocalG1x:
     s = L"G1x";
+    break;
+  case ON_SubDToBrepParameters::VertexProcess::LocalG1xx:
+    s = L"G1xx";
     break;
   default:
     s = L"INVALID";
@@ -1488,6 +1492,26 @@ void ON_SubDComponentIdList::AddId(ON_SubDComponentId cid)
 void ON_SubDComponentIdList::AddId(ON_SubDComponentPtr cptr)
 {
   AddId(ON_SubDComponentId(cptr));
+}
+
+void ON_SubDComponentIdList::AddIdList(const ON_SubDComponentIdList& list)
+{
+  const unsigned cnt{ list.UnsignedCount() };
+  m_bSorted = false;
+  for (unsigned i = 0; i < cnt; ++i)
+  {
+    m_id_list.Append(list[i]);
+  }
+}
+
+unsigned int ON_SubDComponentIdList::UnsignedCount() const
+{
+  return m_id_list.UnsignedCount();
+}
+
+ON_SubDComponentId ON_SubDComponentIdList::operator[](unsigned int i) const
+{
+  return m_id_list[i];
 }
 
 void ON_SubDComponentIdList::SetInListPassesResult(bool bInListPassesResult)
@@ -4023,7 +4047,7 @@ bool ON_SubDVertex::IsStandard() const
   }
 
   unsigned int creased_edge_count = 0;
-  double sector_weight = 0.0;
+  double sector_coefficient = 0.0;
   for (unsigned int vei = 0; vei < edge_count; vei++)
   {
     const ON_SubDEdge* e = m_edges[vei].Edge();
@@ -4050,12 +4074,12 @@ bool ON_SubDVertex::IsStandard() const
 
       if (bTaggedVertex && 0 == vei)
       {
-        sector_weight = e->m_sector_coefficient[evi];
-        if (!(0.0 <= sector_weight && sector_weight <= 1.0))
+        sector_coefficient = e->m_sector_coefficient[evi];
+        if (!(0.0 <= sector_coefficient && sector_coefficient <= 1.0))
           return false;
       }
       
-      if (!(sector_weight == e->m_sector_coefficient[evi]))
+      if (!(sector_coefficient == e->m_sector_coefficient[evi]))
         return false;
 
       if (ON_SubDVertexTag::Smooth == other_vertex->m_vertex_tag)
@@ -6107,15 +6131,15 @@ static bool EdgeSectorCoefficientIsSet(
   return (0.0 < edge_sector_coefficient && edge_sector_coefficient < 1.0);
 }
 
-static bool EdgeSectorWeightIsValid(
-  double edge_vertex_weight,
+static bool EdgeSectorCoefficientIsValid(
+  double edge_vertex_coefficient,
   const ON_SubDEdge* edge
-  )
+)
 {
-  if (0.0 <= edge_vertex_weight && edge_vertex_weight < 1.0)
+  if (0.0 <= edge_vertex_coefficient && edge_vertex_coefficient < 1.0)
     return true;
 
-  if (ON_SubDSectorType::UnsetSectorCoefficient == edge_vertex_weight && nullptr != edge && 0 == edge->SubdivisionLevel())
+  if (ON_SubDSectorType::UnsetSectorCoefficient == edge_vertex_coefficient && nullptr != edge && 0 == edge->SubdivisionLevel())
     return true;
 
   return false;
@@ -6126,7 +6150,7 @@ static bool IsValidVertexEdgeLink(
   const ON_SubDEdge* edge,
   ON__UINT_PTR end_index,
   bool bSilentError
-  )
+)
 {
   if (nullptr == vertex || nullptr == edge)
     return ON_SubDIsNotValid(bSilentError);
@@ -6140,7 +6164,7 @@ static bool IsValidVertexEdgeLink(
   if (vertex->SubdivisionLevel() != edge->SubdivisionLevel())
     return ON_SubDIsNotValid(bSilentError);
 
-  if (false == EdgeSectorWeightIsValid(edge->m_sector_coefficient[end_index],edge))
+  if (false == EdgeSectorCoefficientIsValid(edge->m_sector_coefficient[end_index],edge))
     return ON_SubDIsNotValid(bSilentError);
 
   if ( edge->IsSmooth() )
@@ -7187,10 +7211,9 @@ unsigned int ON_SubD::DumpTopology(
         ;
 
       const bool bUnsetMappingTag
-        = false == bSurfaceParameterMappingTag
-        && (0 == ON_MappingTag::CompareAll(ON_MappingTag::Unset, mapping_tag))
-        || (bIsTextHash && (ON_TextureMapping::TYPE::no_mapping == mapping_tag.m_mapping_type || ON_nil_uuid == mapping_tag.m_mapping_id))
-        ;
+        = ((false == bSurfaceParameterMappingTag) &&
+          (0 == ON_MappingTag::CompareAll(ON_MappingTag::Unset, mapping_tag))) ||
+          ((bIsTextHash && (ON_TextureMapping::TYPE::no_mapping == mapping_tag.m_mapping_type || ON_nil_uuid == mapping_tag.m_mapping_id)));
 
       // NOTE: the mapping tag is only applied when subd_texture_coordinate_type = FromMapping
       if (ON_SubDTextureCoordinateType::FromMapping == subd_texture_coordinate_type && false == bUnsetMappingTag)
@@ -9545,18 +9568,18 @@ bool ON_SubD::ReturnVertexForExperts(
 class ON_SubDEdge* ON_SubDimple::AddEdge(
   ON_SubDEdgeTag edge_tag,
   ON_SubDVertex* v0,
-  double v0_sector_weight,
+  double v0_sector_coefficient,
   ON_SubDVertex* v1,
-  double v1_sector_weight
+  double v1_sector_coefficient
 )
 {
   return AddEdge(
     0U,
     edge_tag,
     v0,
-    v0_sector_weight,
+    v0_sector_coefficient,
     v1,
-    v1_sector_weight,
+    v1_sector_coefficient,
     0U
   );
 }
@@ -9565,62 +9588,62 @@ class ON_SubDEdge* ON_SubDimple::AddEdge(
   unsigned int candidate_edge_id,
   ON_SubDEdgeTag edge_tag,
   ON_SubDVertex* v0,
-  double v0_sector_weight,
+  double v0_sector_coefficient,
   ON_SubDVertex* v1,
-  double v1_sector_weight,
+  double v1_sector_coefficient,
   unsigned initial_face_capacity
 )
 {
-  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_sector_weight,true) )
+  if (false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_sector_coefficient, true))
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v1_sector_weight,true) )
-    return ON_SUBD_RETURN_ERROR(nullptr);    
+  if (false == ON_SubDSectorType::IsValidSectorCoefficientValue(v1_sector_coefficient, true))
+    return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if ( nullptr != v0 && nullptr != v1 && v0->SubdivisionLevel() != v1->SubdivisionLevel() )
-    return ON_SUBD_RETURN_ERROR(nullptr);    
+  if (nullptr != v0 && nullptr != v1 && v0->SubdivisionLevel() != v1->SubdivisionLevel())
+    return ON_SUBD_RETURN_ERROR(nullptr);
 
   const bool bEdgeTagSet = ON_SubD::EdgeTagIsSet(edge_tag);
 
-  if ( bEdgeTagSet
-    && ON_SubDSectorType::IgnoredSectorCoefficient != v0_sector_weight 
-    && ON_SubDSectorType::UnsetSectorCoefficient != v0_sector_weight
+  if (bEdgeTagSet
+    && ON_SubDSectorType::IgnoredSectorCoefficient != v0_sector_coefficient
+    && ON_SubDSectorType::UnsetSectorCoefficient != v0_sector_coefficient
     && nullptr != v0
     && ON_SubDVertexTag::Smooth == v0->m_vertex_tag
     )
   {
-    // minimizes checking when building subds because constant crease weights can be passed in
-    v0_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+    // minimizes checking when building subds because constant crease coefficients can be passed in
+    v0_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
   }
 
-  if ( bEdgeTagSet
-    && ON_SubDSectorType::IgnoredSectorCoefficient != v1_sector_weight
-    && ON_SubDSectorType::UnsetSectorCoefficient != v1_sector_weight
+  if (bEdgeTagSet
+    && ON_SubDSectorType::IgnoredSectorCoefficient != v1_sector_coefficient
+    && ON_SubDSectorType::UnsetSectorCoefficient != v1_sector_coefficient
     && nullptr != v1
     && ON_SubDVertexTag::Smooth == v1->m_vertex_tag
     )
   {
-    // minimizes checking when building subds because constant crease weights can be passed in
-    v1_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+    // minimizes checking when building subds because constant crease coefficients can be passed in
+    v1_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
   }
 
-  class ON_SubDEdge* e = AllocateEdge(candidate_edge_id,edge_tag, 0, 0);
-  if ( nullptr == e)
+  class ON_SubDEdge* e = AllocateEdge(candidate_edge_id, edge_tag, 0, 0);
+  if (nullptr == e)
     return ON_SUBD_RETURN_ERROR(nullptr);
 
-  if ( nullptr != v0 )
+  if (nullptr != v0)
     e->SetSubdivisionLevel(v0->SubdivisionLevel());
-  else if ( nullptr != v1 )
+  else if (nullptr != v1)
     e->SetSubdivisionLevel(v1->SubdivisionLevel());
-  else if ( ActiveLevelIndex() < ON_UNSET_UINT_INDEX )
+  else if (ActiveLevelIndex() < ON_UNSET_UINT_INDEX)
     e->SetSubdivisionLevel(ActiveLevelIndex());
-  
+
   for (unsigned int i = 0; i < 2; i++)
   {
     ON_SubDVertex* v = (i ? v1 : v0);
-    double vertex_weight = (i ? v1_sector_weight : v0_sector_weight);
+    double vertex_coefficient = (i ? v1_sector_coefficient : v0_sector_coefficient);
     e->m_vertex[i] = v;
-    e->m_sector_coefficient[i] = vertex_weight;
+    e->m_sector_coefficient[i] = vertex_coefficient;
     if (nullptr != v)
     {
       if (false == m_heap.GrowVertexEdgeArrayByOne(v))
@@ -11723,10 +11746,10 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       || (ON_SubDEdgeTag::SmoothX == m_edge_tag)
       )
     {
-      // ignore edge weights
-      EP[0] = 0.375*edgePsum[0];
-      EP[1] = 0.375*edgePsum[1];
-      EP[2] = 0.375*edgePsum[2];
+      // ignore edge coefficients
+      EP[0] = 0.375 * edgePsum[0];
+      EP[1] = 0.375 * edgePsum[1];
+      EP[2] = 0.375 * edgePsum[2];
     }
     else if (ON_SubDVertexTag::Smooth == edge_vertex[1 - tagged_end]->m_vertex_tag
       && m_sector_coefficient[tagged_end] > 0.0
@@ -11736,15 +11759,15 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       double w[2];
       w[tagged_end] = m_sector_coefficient[tagged_end];
       w[1 - tagged_end] = 1.0 - w[tagged_end];
-      EP[0] = 0.75*(w[0] * edgeP[0][0] + w[1] * edgeP[1][0]);
-      EP[1] = 0.75*(w[0] * edgeP[0][1] + w[1] * edgeP[1][1]);
-      EP[2] = 0.75*(w[0] * edgeP[0][2] + w[1] * edgeP[1][2]);
+      EP[0] = 0.75 * (w[0] * edgeP[0][0] + w[1] * edgeP[1][0]);
+      EP[1] = 0.75 * (w[0] * edgeP[0][1] + w[1] * edgeP[1][1]);
+      EP[2] = 0.75 * (w[0] * edgeP[0][2] + w[1] * edgeP[1][2]);
     }
     else
     {
       // error:
       //   Both ends of a smooth vertex are tagged
-      //   or weights are incorrectly set
+      //   or coefficients are incorrectly set
       //   or ...
       return ON_SubDEdge_GetSubdivisionPointError(this, subdivision_point, edgeP, true);
     }
@@ -12844,8 +12867,10 @@ unsigned int ON_SubDimple::GlobalSubdivide()
   this->ChangeGeometryContentSerialNumber(bChangePreservesSymmetry);
 
   // Add face points
+  unsigned int max_pack_id{ 0 };
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
   {
+    if (f0->PackId() > max_pack_id) max_pack_id = f0->PackId();
     if (false == f0->GetSubdivisionPoint(P))
       continue;
     if (nullptr == f0->m_subd_point1)
@@ -12927,14 +12952,15 @@ unsigned int ON_SubDimple::GlobalSubdivide()
 
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
   {
-    Internal_GlobalQuadSubdivideFace(f0);
+    Internal_GlobalQuadSubdivideFace(f0, max_pack_id);
   }
 
   return level1_index;
 }
 
 unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
-  const ON_SubDFace* f0
+  const ON_SubDFace* f0,
+  unsigned max_pack_id
   )
 {
   // This is a private member function.  
@@ -12947,6 +12973,53 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
   const int material_channel_index = f0->MaterialChannelIndex();
   const ON_Color per_face_color = f0->PerFaceColor();
   const unsigned int level_zero_face_id = (0 == f0->SubdivisionLevel()) ? f0->m_id : f0->m_level_zero_face_id;
+
+  // 2022-06-30, Pierre, RH-69170. Try to keep face packs when globally subdividing
+  unsigned int pack_id = f0->PackId();
+  const bool pack_rect{ f0->PackRectIsSet() };
+
+  // We should never have to make a new pack: if the previous packing was valid, all pack_ids were set.
+  // If max_pack_id > 0 and one of the faces has pack_id == 0, the packing was invalid
+  const bool make_new_pack = max_pack_id > 0 && pack_id == 0 && !pack_rect && f0_edge_count == 4;
+  const bool set_pack_id = max_pack_id > 0 && ((pack_id > 0 && pack_rect) || make_new_pack);
+  const bool make_ngons_pack = max_pack_id > 0 && pack_id > 0 && pack_rect && f0_edge_count != 4;
+  unsigned int ngons_quadrant_size[4]{};
+
+  ON_2dPoint pack_rect_origin{ 0., 0. };
+  ON_2dVector pack_rect_size{ .5, .5 };
+  unsigned int packing_rotation_degrees{ 0U };
+  unsigned int rot_dex{ 0U };
+  ON_2dVector pack_rect_offsets[4]{
+    ON_2dVector{0., 0.}, ON_2dVector{.5, 0.}, ON_2dVector{.5, .5}, ON_2dVector{0., .5}
+  };
+  if (set_pack_id)
+  {
+    if (make_new_pack)
+    {
+      pack_id = max_pack_id + 1U; 
+    }
+    else
+    {
+      packing_rotation_degrees = f0->PackRectRotationDegrees();
+      rot_dex = (((packing_rotation_degrees / 90) % 4) + 4) % 4;
+      pack_rect_size = f0->PackRectSize() / 2;
+      pack_rect_origin = f0->PackRectCorner(false, rot_dex);
+      pack_rect_offsets[1].x = pack_rect_size.x;
+      pack_rect_offsets[2].x = pack_rect_size.x;
+      pack_rect_offsets[2].y = pack_rect_size.y;
+      pack_rect_offsets[3].y = pack_rect_size.y;
+    }
+    if (make_ngons_pack)
+    {
+      pack_id = max_pack_id;  // Will be incremented later
+      const unsigned int k = f0_edge_count / 4;
+      const unsigned int r = f0_edge_count % 4;
+      ngons_quadrant_size[0] = k + (r > 0 ? 1 : 0);
+      ngons_quadrant_size[1] = k + (r == 3 ? 1 : 0);
+      ngons_quadrant_size[2] = k + (r > 1 ? 1 : 0);
+      ngons_quadrant_size[3] = k;
+    }
+  }
 
   if (nullptr == f0->m_subd_point1)
   {
@@ -13006,10 +13079,10 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     {
       //  The value of E0[0]->m_subd_point1->m_vertex_tag should be either 
       //  ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Crease. In the
-      //  case when it's value is "crease", the resulting edge end weight
+      //  case when it's value is "crease", the resulting edge end coefficient
       //  will be 0.5 because the edge has two adjacent faces and "theta"
       //  will be pi/2.  
-      //  The resulting quad edge weight is 0.5 = 1/2 + 1/3*cos(pi/2).
+      //  The resulting quad edge coefficient is 0.5 = 1/2 + 1/3*cos(pi/2).
       w = (ON_SubDVertexTag::Crease == E0[0]->m_subd_point1->m_vertex_tag) ? w_2facesector : 0.0;
       E1[3] = AddEdge(ON_SubDEdgeTag::Smooth, const_cast<ON_SubDVertex*>(f0->m_subd_point1), 0.0, const_cast<ON_SubDVertex*>(E0[0]->m_subd_point1), w);
       if (nullptr == FirstE1)
@@ -13021,9 +13094,9 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     {
       //  The value of E0[0]->m_subd_point1->m_vertex_tag should be either 
       //  ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Crease. In the
-      //  case when it's value is "crease", the resulting edge end weight
+      //  case when it's value is "crease", the resulting edge end coefficient
       //  will be zero because the edge has two adjacent faces and "theta"
-      //  will be pi/2.  The resulting edge weight is 0.5.
+      //  will be pi/2.  The resulting edge coefficient is 0.5.
       w = (ON_SubDVertexTag::Crease == E0[1]->m_subd_point1->m_vertex_tag) ? w_2facesector : 0.0;
       E1[2] = AddEdge(ON_SubDEdgeTag::Smooth, const_cast<ON_SubDVertex*>(f0->m_subd_point1), 0.0, const_cast<ON_SubDVertex*>(E0[1]->m_subd_point1), w);
     }
@@ -13045,6 +13118,37 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
       f1->SetPerFaceColor(per_face_color);
       f1->m_level_zero_face_id = level_zero_face_id;
       f1_count++;
+
+      if (set_pack_id)
+      {
+        if (make_ngons_pack)
+        {
+          ++pack_id;
+          const unsigned int quadrant = (i * 4) / f0_edge_count;
+          const unsigned int prevsizes = (
+            quadrant > 0 ? ngons_quadrant_size[0] : 0
+            + quadrant > 1 ? ngons_quadrant_size[1] : 0
+            + quadrant > 2 ? ngons_quadrant_size[2] : 0);
+          const unsigned int subidx = i - prevsizes;
+          const ON_2dVector size{
+            quadrant % 2 == 0 ? (pack_rect_size.x / ngons_quadrant_size[quadrant]) : pack_rect_size.x,
+            quadrant % 2 == 1 ? (pack_rect_size.y / ngons_quadrant_size[quadrant]) : pack_rect_size.y };
+          const ON_2dVector offset{
+            pack_rect_offsets[(quadrant + 4 - rot_dex) % 4]
+            + (quadrant % 2 == 0 ? ON_2dVector{ size.x * subidx, 0. } : ON_2dVector{ size.y * subidx, 0. }) };
+          f1->SetPackRectForExperts(
+            pack_rect_origin + offset,
+            size, packing_rotation_degrees - quadrant * 90U + 90U);
+        }
+        else
+        {
+          f1->SetPackRectForExperts(
+            pack_rect_origin + pack_rect_offsets[(i + 4 - rot_dex) % 4],
+            pack_rect_size, packing_rotation_degrees - i * 90U + 90U);
+        }
+        f1->SetPackIdForExperts(pack_id);
+        if (pack_id > max_pack_id) max_pack_id = pack_id;
+      }
     }
   }
 
@@ -14258,9 +14362,9 @@ const ON_SubDEdge* ON_SubDimple::SplitEdge(
     // original ending vertex
     new_edge->m_sector_coefficient[1] = edge->m_sector_coefficient[1];
 
-    // Either edge was a crease, new_edge is a crease, and sector weights do not applie
+    // Either edge was a crease, new_edge is a crease, and sector coefficients do not apply
     // or edge was X or Smooth, edge is smooth, new_edge is smooth, new_vertex is smooth,
-    // and the sector weights at this vertex do not apply.
+    // and the sector coefficients at this vertex do not apply.
     edge->m_sector_coefficient[1] = ON_SubDSectorType::IgnoredSectorCoefficient;
     new_edge->m_sector_coefficient[0] = ON_SubDSectorType::IgnoredSectorCoefficient;
 
@@ -14437,7 +14541,7 @@ const ON_SubDEdge* ON_SubDimple::SplitFace(
     }
     new_f->m_edge_count = (unsigned short)new_edge_count[1];
     
-    // update sector weights because they depend on the number of edges
+    // update sector coefficients because they depend on the number of edges
     for (unsigned int vi = 0; vi < 2; vi++)
     {
       for (unsigned short evi = 0; evi < v[vi]->m_edge_count; ++evi)
@@ -15357,8 +15461,6 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
     )
     return ON_SUBD_RETURN_ERROR(false);
 
-  src.m_level_index;
-
   // The built in fragment cache always has adaptive ON_SubDDisplayParameters::DefaultDensity
   const unsigned subd_display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(ON_SubDDisplayParameters::DefaultDensity,m_face_count);
 
@@ -15930,7 +16032,7 @@ unsigned int ON_SubDLevel::UpdateEdgeTags(
   bool bUnsetEdgeTagsOnly
   )
 {
-  // Update edge flags and sector weights.
+  // Update edge flags and sector coefficients.
   unsigned int edge_change_count = 0;
   ON_SubDEdge* next_edge = m_edge[0];
   for (ON_SubDEdge* edge = next_edge; nullptr != edge; edge = next_edge)
@@ -16038,7 +16140,7 @@ unsigned int ON_SubDLevel::UpdateVertexTags(
   bool bUnsetVertexTagsOnly
   )
 {
-  // Update edge flags and sector weights.
+  // Update edge flags and sector coefficients.
   unsigned int vertex_change_count = 0;
  
 
@@ -16462,7 +16564,7 @@ unsigned int ON_SubDimple::DeleteComponents(
 
     if (bUpdateTagsAndCoefficients)
     {
-      // Update vertex tags, edge tags, and sector weights.
+      // Update vertex tags, edge tags, and sector coefficients.
       level->UpdateAllTagsAndSectorCoefficients(false);
     }
   }
@@ -18896,7 +18998,7 @@ unsigned int ON_SubD::Internal_ExtrudeComponents(
     }
   }
 
-  // Calculate unset vertex tags, unset edge tags, edge sector weights.
+  // Calculate unset vertex tags, unset edge tags, edge sector coefficients.
   if (false == bIsInset)
     this->UpdateAllTagsAndSectorCoefficients(true);
 
@@ -18979,7 +19081,7 @@ unsigned int ON_SubD::SetVertexTags(
     if (vertex->m_vertex_tag == vertex_tag)
       continue;
 
-    const bool bRemoveCorner = ON_SubDVertexTag::Corner == vertex->m_vertex_tag;
+    //const bool bRemoveCorner = ON_SubDVertexTag::Corner == vertex->m_vertex_tag;
 
     if (ON_SubDVertexTag::Corner != vertex_tag)
     {
@@ -19869,7 +19971,6 @@ bool ON_SubDEdgeChain::GetSideComponents(
   ON_SubDComponentPtr first_side_components_edge = ON_SubDComponentPtr::Null;
   for (unsigned j = bClosedLoop ? 0 : 1; j < edge_count; ++j)
   {
-    const ON_SubDEdgePtr chain_eptr0 = chain_eptr1;
     chain_eptr1 = edge_chain[j];
     v = chain_eptr1.RelativeVertex(0);
     const ON_SubDFace* f0 = f1;
@@ -21700,7 +21801,8 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
 unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
   const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
   unsigned int minimum_chain_length,
-  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges,
+  const bool bIgnoreCorners
 )
 {
   const unsigned int unsorted_edge_count = unsorted_edges.Count();
@@ -21715,13 +21817,14 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
       eptr = eptr.Reversed();
     unsorted_eptrs.Append(eptr);
   }
-  return ON_SubDEdgeChain::SortEdgesIntoEdgeChains(unsorted_eptrs, minimum_chain_length, sorted_edges);
+  return ON_SubDEdgeChain::SortEdgesIntoEdgeChains(unsorted_eptrs, minimum_chain_length, sorted_edges, bIgnoreCorners);
 }
 
 unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
   const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
   unsigned int minimum_chain_length,
-  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges,
+  const bool bIgnoreCorners
 )
 {
   // NOTE:
@@ -21795,12 +21898,15 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
       ON_SUBD_ERROR("Bug in code that creates the links[] array.");
       continue;
     }
-    if (v->IsCorner())
+    if (!bIgnoreCorners)
     {
-      // These edges will be at the ends of chains.
-      while (i0 < i1)
-        links[i0++].m_nbr_index = unset_nbr1_index;
-      continue;
+      if (v->IsCorner())
+      {
+        // These edges will be at the ends of chains.
+        while (i0 < i1)
+          links[i0++].m_nbr_index = unset_nbr1_index;
+        continue;
+      }
     }
 
     if (i0 + 1 == i1)

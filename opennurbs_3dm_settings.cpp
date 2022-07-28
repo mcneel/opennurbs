@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -2397,6 +2394,16 @@ void ON_3dmView::Default()
   m_sizeRendering.cy = 480;
 }
 
+ON::ViewSectionBehavior ON_3dmView::SectionBehavior() const
+{
+  return m_section_behavior;
+}
+void ON_3dmView::SetSectionBehavior(ON::ViewSectionBehavior behavior)
+{
+  m_section_behavior = behavior;
+}
+
+
 ON_3dPoint ON_3dmView::TargetPoint() const
 {
   // This function must return the valud saved on m_vp.m_target_point.
@@ -2682,7 +2689,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_ATTRIBUTES, 0 );
     if (rc)
     {
-      rc = file.Write3dmChunkVersion( 1, 8 ); // (there are no 1.0 fields)
+      rc = file.Write3dmChunkVersion( 1, 9 ); // (there are no 1.0 fields)
 
       while(rc)
       {
@@ -2750,6 +2757,10 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
         if (!rc) break;
 
         rc = file.WriteInt(m_sizeRendering.cy);
+        if (!rc) break;
+
+        // 10 July 2022 - S. Baer version 1.9 fields
+        rc = file.WriteChar((unsigned char)SectionBehavior());
         if (!rc) break;
 
         break;
@@ -2940,6 +2951,14 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
                         if (!rc) break;
                         rc = file.ReadInt(&m_sizeRendering.cy);
                         if (!rc) break;
+                      }
+                      if (minor_version >= 9)
+                      {
+                        // 9 July 2022 S. Baer add section behaviour
+                        unsigned char c = 0;
+                        rc = file.ReadChar(&c);
+                        if (!rc) break;
+                        SetSectionBehavior(ON::ViewSectionBehaviorFromUnsigned(c));
                       }
                     }
                   }

@@ -189,7 +189,7 @@ ON_LineCurve::SwapCoordinates( int i, int j )
 
 bool ON_LineCurve::IsValid( ON_TextLog* text_log ) const
 {
-  return ( m_t[0] < m_t[1] && m_line.Length() > 0.0 ) ? true : false;
+  return ( m_t[0] < m_t[1] && !m_line.from.IsCoincident(m_line.to)  ) ? true : false;
 }
 
 void ON_LineCurve::Dump( ON_TextLog& dump ) const
@@ -544,20 +544,19 @@ int ON_LineCurve::HasNurbForm() const
 bool ON_LineCurve::Trim( const ON_Interval& domain )
 {
   bool rc = false;
-  if ( domain.IsIncreasing() )
+  if ( domain.IsIncreasing() && m_t.Includes(domain) )
   {
-    DestroyCurveTree();
     ON_3dPoint p = PointAt( domain[0] );
     ON_3dPoint q = PointAt( domain[1] );
-		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim 
-																					// should return an IsValid ON_LineCurve .
+		if( !p.IsCoincident(q)){			
+      // 7-May-21 GBA, A successfull trim should return an IsValid ON_LineCurve .
 			m_line.from = p;
 			m_line.to = q;
 			m_t = domain;
+      DestroyCurveTree();
 			rc = true;
 		}
   }
-	DestroyCurveTree();
   return rc;
 }
 
@@ -613,7 +612,9 @@ bool ON_LineCurve::Split(
     right.to = m_line.to;
 
 		// 27 March 2003, Greg Arden.  Result must pass IsValid()
-		if( left.Length()==0 || right.Length()==0)
+    // Fixes RH-64018
+    // 6 May 21, GBA, changed ON_LineCurve::IsValid and so this was updated
+		if( left.from.IsCoincident(left.to) || right.from.IsCoincident(right.to) )
 			return false;
 
     ON_LineCurve* left_line = ON_LineCurve::Cast(left_side);

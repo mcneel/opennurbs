@@ -80,21 +80,15 @@
 //
 */
 #if defined(ON_RUNTIME_APPLE)
+#include <TargetConditionals.h>
 
-#if defined(__IOS__)
-#define ON_RUNTIME_APPLE_IOS
-#endif
-
-#if (!defined(ON_RUNTIME_APPLE_IOS) && defined(TARGET_OS_IPHONE))
 #if (TARGET_OS_IPHONE == 1)
 #define ON_RUNTIME_APPLE_IOS
 #endif
-#endif
 
-#if (!defined(ON_RUNTIME_APPLE_IOS) && defined(TARGET_IPHONE_SIMULATOR))
-#if (TARGET_IPHONE_SIMULATOR == 1)
+#if (TARGET_OS_SIMULATOR == 1)
 #define ON_RUNTIME_APPLE_IOS
-#endif
+#define ON_RUNTIME_APPLE_IOS_SIMULATOR
 #endif
 
 #if !defined(ON_RUNTIME_APPLE_IOS)
@@ -201,6 +195,10 @@
 
 #if !defined(ON_BIG_ENDIAN) && !defined(ON_LITTLE_ENDIAN)
 #error Exactly one of ON_LITTLE_ENDIAN or ON_BIG_ENDIAN should be defined.
+#endif
+
+#if (!defined(ON_ARM_64) && defined(__aarch64__))
+#define ON_ARM_64
 #endif
 
 /*

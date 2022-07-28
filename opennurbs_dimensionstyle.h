@@ -123,14 +123,12 @@ public:
   /// </summary>
   enum class MaskFrame : unsigned char
   {
-    /// <summary>
-    /// Text mask frame not drawn
-    /// </summary>
+    /// <summary> Text mask frame not drawn </summary>
     NoFrame = 0,
-    /// <summary>
-    /// Text mask frame outline rectangle drawn
-    /// </summary>
+    /// <summary> Text mask frame outline rectangle drawn </summary>
     RectFrame = 1,
+    /// <summary> Text mask frame outline capsule drawn </summary>
+    CapsuleFrame = 2
   };
 #pragma endregion
 

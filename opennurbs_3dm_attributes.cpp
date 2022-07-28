@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -24,17 +21,94 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_3dmObjectAttributesPrivate
+{
+public:
+  ON_3dmObjectAttributesPrivate();
+  bool operator==(const ON_3dmObjectAttributesPrivate&) const;
+  bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
+
+  ON::ClipParticipationSource m_clip_participation_source = ON::ClipParticipationSource::FromLayer;
+  ON_UuidList m_clipplane_list;
+  bool m_clipping_proof = false;
+
+  ON::SectionAttributesSource m_section_attributes_source = ON::SectionAttributesSource::FromLayer;
+  ON::SectionFillRule m_section_fill_rule = ON::SectionFillRule::ClosedCurves;
+  int m_section_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
+  double m_section_hatch_scale = 1.0;
+  double m_section_hatch_rotation = 0.0;
+  double m_linetype_scale = 1.0;
+  ON_Color m_hatch_background_fill;
+  bool m_hatch_boundary_visible = false;
+};
+
+ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate()
+{
+  m_hatch_background_fill = ON_Color::UnsetColor;
+}
+
+bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPrivate& other) const
+{
+  if (m_clip_participation_source != other.m_clip_participation_source)
+    return false;
+
+  if (m_clipplane_list != other.m_clipplane_list)
+    return false;
+
+  if (m_clipping_proof != other.m_clipping_proof)
+    return false;
+
+  if (m_section_attributes_source != other.m_section_attributes_source)
+    return false;
+
+  if (m_section_fill_rule != other.m_section_fill_rule)
+    return false;
+
+  if (m_section_hatch_index != other.m_section_hatch_index)
+    return false;
+
+  if (m_section_hatch_scale != other.m_section_hatch_scale)
+    return false;
+
+  if (m_section_hatch_rotation != other.m_section_hatch_rotation)
+    return false;
+
+  if (m_linetype_scale != other.m_linetype_scale)
+    return false;
+
+  if (m_hatch_background_fill != other.m_hatch_background_fill)
+    return false;
+
+  if (m_hatch_boundary_visible != other.m_hatch_boundary_visible)
+    return false;
+
+  return true;
+}
+
+bool ON_3dmObjectAttributesPrivate::operator!=(const ON_3dmObjectAttributesPrivate& other) const
+{
+  return !ON_3dmObjectAttributesPrivate::operator==(other);
+}
+
+static const ON_3dmObjectAttributesPrivate DefaultAttributesPrivate;
+
+
 ON_OBJECT_IMPLEMENT( ON_3dmObjectAttributes, ON_Object, "A828C015-09F5-477c-8665-F0482F5D6996" );
 
 ON_3dmObjectAttributes::ON_3dmObjectAttributes()
+  : m_color(0,0,0)
+  , m_plot_color(0,0,0)
 {
-  Default();
+  // No longer need to call Default. All members are initialized in class declaration
+  // Default();
 }
 
 ON_3dmObjectAttributes::~ON_3dmObjectAttributes()
-{}
+{
+  if (m_private)
+    delete m_private;
+}
 
-/*
 void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
 {
   // private helper for the copy constructor and operator=.
@@ -42,28 +116,45 @@ void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
   m_name = src.m_name;
   m_url  = src.m_url;
   m_layer_index = src.m_layer_index;
+  m_linetype_index = src.m_linetype_index;
   m_material_index = src.m_material_index;
+  m_rendering_attributes = src.m_rendering_attributes;
   m_color = src.m_color;
+  m_plot_color = src.m_plot_color;
+  m_display_order = src.m_display_order;
+  m_plot_weight_mm = src.m_plot_weight_mm;
   m_object_decoration = src.m_object_decoration;
   m_wire_density = src.m_wire_density;
+  m_viewport_id = src.m_viewport_id;
+  m_space = src.m_space;
+  m_bVisible = src.m_bVisible;
   m_mode = src.m_mode;
   m_color_source = src.m_color_source;
+  m_plot_color_source = src.m_plot_color_source;
+  m_plot_weight_source = src.m_plot_weight_source;
   m_material_source = src.m_material_source;
-  m_group = src.m_group;
-  m_bVisible = src.m_bVisible;
-  m_linetype_index = src.m_linetype_index;
   m_linetype_source = src.m_linetype_source;
+  m_reserved_0 = src.m_reserved_0;
+  m_object_frame = src.m_object_frame;
+  m_group = src.m_group;
+  if (m_private)
+    delete m_private;
+  m_private = nullptr;
+  if (src.m_private)
+  {
+    m_private = new ON_3dmObjectAttributesPrivate();
+    *m_private = *src.m_private;
+  }
+  m_dmref = src.m_dmref;
 }
-*/
 
-/*
 ON_3dmObjectAttributes::ON_3dmObjectAttributes(const ON_3dmObjectAttributes& src) 
-                       : ON_Object(src)
+  : ON_Object(src)
+  , m_color(0, 0, 0)
+  , m_plot_color(0, 0, 0)
 {
-  Default();
   CopyHelper(src);
 }
-*/
 
 bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) const
 {
@@ -130,6 +221,22 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
   if ( m_dmref != other.m_dmref )
     return false;
 
+  if (m_object_frame != other.m_object_frame)
+    return false;
+
+  if (m_private && other.m_private)
+  {
+    if (*m_private != *other.m_private)
+      return false;
+  }
+  else
+  {
+    if (m_private && *m_private != DefaultAttributesPrivate)
+      return false;
+    if (other.m_private && *other.m_private != DefaultAttributesPrivate)
+      return false;
+  }
+
   return true;
 }
 
@@ -139,7 +246,6 @@ bool ON_3dmObjectAttributes::operator!=(const ON_3dmObjectAttributes& other) con
 }
 
 
-/*
 ON_3dmObjectAttributes& ON_3dmObjectAttributes::operator=(const ON_3dmObjectAttributes& src )
 {
   if ( this != &src ) 
@@ -149,7 +255,6 @@ ON_3dmObjectAttributes& ON_3dmObjectAttributes::operator=(const ON_3dmObjectAttr
   }
   return *this;
 }
-*/
 
 bool ON_3dmObjectAttributes::UpdateReferencedComponents(
   const class ON_ComponentManifest& source_manifest,
@@ -235,6 +340,11 @@ bool ON_3dmObjectAttributes::UpdateReferencedComponents(
 
 void ON_3dmObjectAttributes::Default()
 {
+  ON_3dmObjectAttributes default_attrs;
+  *this = default_attrs;
+  // the following is no longer necessary now that initial values are defined in
+  // class declaration
+  /*
   PurgeUserData();
   m_uuid = ON_nil_uuid;
   m_name.Destroy();
@@ -260,6 +370,11 @@ void ON_3dmObjectAttributes::Default()
   m_space = ON::model_space;
   m_viewport_id = ON_nil_uuid;
   m_dmref.Destroy();
+
+  if (m_private)
+    delete m_private;
+  m_private = nullptr;
+  */
 }
 
 
@@ -267,17 +382,47 @@ void ON_3dmObjectAttributes::Default()
 const ON_UUID ON_ObsoletePageSpaceObjectId =
 { 0x9bbb37e9, 0x2131, 0x4fb8, { 0xb9, 0xc6, 0x55, 0x24, 0x85, 0x9b, 0x98, 0xb8 } };
 
+enum ON_3dmObjectAttributesTypeCodes : unsigned char
+{
+  // TODO: add older itemids to this enum in order to make the read/write
+  //       code easier for a developer to parse
+  ObsoleteLineCapStyleSource = 23,
+  ObsoleteLineCapStyle = 24,
+  ObsoleteLineJoinStyleSource = 25,
+  ObsoleteLineJoinStyle = 26,
+  ClipParticipationSource = 27,
+  SelectiveClippingData = 28,
+  // 18 Oct 2021 S. Baer
+  // file version 2.4: add section hatch attributes
+  SectionAttributesSource = 29,
+  SectionHatchIndex = 30,
+  SectionHatchScale = 31,
+  SectionHatchRotation = 32,
+  // 5 Nov 2021 S. Baer
+  // file version 2.5: add linetype scale
+  LinetypeScale = 33,
+  // 10 Jan 2022 S. Baer
+  // file version 2.6: add hatch background fill, hatch boundary visible
+  HatchBackgroundFill = 34,
+  HatchBoundaryVisible = 35,
+  // file version 2.7 was skipped
+  // 26 Jan 2022 Andy Le Bihan
+  // file version 2.8: object frame
+  ObjectFrame = 36,
+  // 15 Jun 2022 S. Baer (file version 2.9) - SectionFillRule
+  SectionFillRule = 37,
+  // add items here
+  LastAttributeTypeCode = 37
+};
 
 bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
 {
-  unsigned char itemid, c;
+  unsigned char itemid = 0xFF;
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( rc && 2 != major_version )
     rc = false;
-
-  itemid = 0xFF;
 
   while(rc)
   {
@@ -357,6 +502,7 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     }
     if ( 9 == itemid )
     {
+      unsigned char c = 0;
       rc = file.ReadChar(&c);
       if (!rc) break;
       m_object_decoration = ON::ObjectDecoration(c);
@@ -428,6 +574,7 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     }
     if ( 19 == itemid )
     {
+      unsigned char c = 0;
       rc = file.ReadChar(&c);
       if (!rc) break;
       m_space = ON::ActiveSpace(c);
@@ -466,16 +613,206 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     if ( minor_version <= 1 )
       break;
 
-    // Add new item reading above this code, and increment the "22"
-    // in the following if statement to an appropriate value, and
-    // update the comment.  Be sure to test reading of old and
-    // new files by old and new code, before checking in your
-    // changes.
+    // 12 Aug 2021 S. Baer
+    // Items 23, 24, 25, 26 were in a version of Rhino 8 WIP for about 24 hours.
+    // They were most likely never used by anyone, but just in case let's test,
+    // read, and throw away.
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteLineCapStyleSource == itemid) //23
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      //SetLineCapStyleSource(ON::ObjectLineCapStyleSourceFromUnsigned(source));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteLineCapStyle == itemid) //24
+    {
+      unsigned char style = 0;
+      rc = file.ReadChar(&style);
+      if (!rc) break;
+      //SetLineCapStyle(ON::LineCapStyleFromUnsigned(style));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteLineJoinStyleSource == itemid) //25
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      //SetLineJoinStyleSource(ON::ObjectLineJoinStyleSourceFromUnsigned(source));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteLineJoinStyle == itemid) //26
+    {
+      unsigned char style = 0;
+      rc = file.ReadChar(&style);
+      if (!rc) break;
+      //SetLineJoinStyle(ON::LineJoinStyleFromUnsigned(style));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 2)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::ClipParticipationSource == itemid) //27
+    {
+      unsigned char clip_participation_source = 0;
+      rc = file.ReadChar(&clip_participation_source);
+      if (!rc) break;
+      SetClipParticipationSource(ON::ClipParticipationSourceFromUnsigned(clip_participation_source));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::SelectiveClippingData == itemid) //28
+    {
+      bool clipping_proof = false;
+      rc = file.ReadBool(&clipping_proof);
+      if (!rc) break;
+      ON_UuidList selectiveClipping;
+      rc = selectiveClipping.Read(file);
+      if (!rc) break;
+      if (clipping_proof)
+        SetClipParticipationForNone();
+      else
+      {
+        if (selectiveClipping.Count() > 0)
+        {
+          SetClipParticipationList(selectiveClipping.Array(), selectiveClipping.Count());
+        }
+      }
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 3)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::SectionAttributesSource == itemid) //29
+    {
+      unsigned char section_attr_source = 0;
+      rc = file.ReadChar(&section_attr_source);
+      if (!rc) break;
+      SetSectionAttributesSource(ON::SectionAttributesSourceFromUnsigned(section_attr_source));
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::SectionHatchIndex == itemid) //30
+    {
+      int hatch_index = 0;
+      rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, &hatch_index);
+      if (!rc) break;
+      SetSectionHatchIndex(hatch_index);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::SectionHatchScale == itemid) //31
+    {
+      double hatch_scale = 1;
+      rc = file.ReadDouble(&hatch_scale);
+      if (!rc) break;
+      SetSectionHatchScale(hatch_scale);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::SectionHatchRotation == itemid) //32
+    {
+      double hatch_rotation = 0;
+      rc = file.ReadDouble(&hatch_rotation);
+      if (!rc) break;
+      SetSectionHatchRotation(hatch_rotation);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 4)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::LinetypeScale == itemid) //33
+    {
+      double scale = 1.0;
+      rc = file.ReadDouble(&scale);
+      if (!rc) break;
+      SetLinetypeScale(scale);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 5)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::HatchBackgroundFill == itemid) // 34
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      SetHatchBackgrounFillColor(color);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryVisible == itemid) // 35
+    {
+      bool visible = false;
+      rc = file.ReadBool(&visible);
+      if (!rc) break;
+      SetHatchBoundaryVisible(visible);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 6)
+      break;
+
+    // nothing added in 2.7
+    if (minor_version <= 7)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::ObjectFrame == itemid) // 36
+    {
+      ON_Xform object_frame = ON_Xform::Nan;
+      rc = file.ReadXform(object_frame);
+      if (!rc) break;
+
+      m_object_frame = ON_Plane::World_xy;
+      m_object_frame.Transform(object_frame);
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 8)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::SectionFillRule == itemid) // 37
+    {
+      unsigned char c = 0;
+      rc = file.ReadChar(&c);
+      if (!rc) break;
+
+      SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 9)
+      break;
+
+    // Add new item reading above and increment the LastAttributeTypeCode value
+    // in the enum. Be sure to test reading of old and new files by old and new
+    // code, before checking in your changes.
     //
-    if ( itemid > 22 )
+    if ( itemid > ON_3dmObjectAttributesTypeCodes::LastAttributeTypeCode )
     {
       // we are reading file written with code newer
-      // than this code (minor_version > 1)
+      // than this code (minor_version > 2)
       itemid = 0;
     }
 
@@ -645,7 +982,24 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
   unsigned char c;
   // 29 Nov. 2009 S. Baer
   // Chunk version updated to 2.1 in order to support m_display_order
-  bool rc = file.Write3dmChunkVersion(2,1);
+  // 12 Aug 2021 S. Baer
+  // The next minor chunk version should be 3. There was a 24 hour period
+  // where files could contain some extra information in a 2.2 chunk
+  // 29 Sept 2021 S. Baer
+  // Chunk version updated to 2.3 to support ClipParticipationSource and
+  // clip participation list
+  // 18 Oct 2021 S. Baer
+  // Chunk version = 2.4 to support section hatch attributes
+  // 5 Nov 2021 S. Baer
+  // Chunk version = 2.5 to support linetype scale
+  // 10 Jan 2022 S. Baer
+  // Chunk version = 2.6 to support hatch background fill and hatch boundary visibility
+  // 26 Jan 2022 Andy Le Bihan
+  // Chunk version 2.7 was skipped
+  // Chunk version = 2.8 to support object frame.
+  // 15 Jun 2022 S. Baer
+  // Chunk version = 2.9 to support SectionFillRule
+  bool rc = file.Write3dmChunkVersion(2,9);
   while(rc)
   {
     if (!rc) break;
@@ -846,7 +1200,134 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
-    // 0 indicates end of attributes;
+    // 12 Aug 2021 S. Baer
+    // Items 23, 24, 25, 26 were in a version of Rhino 8 WIP for about 24 hours.
+    // They were most likely never used by anyone
+
+    // New attribute non-default values are all held in the m_private variable.
+    // If this variable is nullptr, then all of the following properties will
+    // be default which means there is no need to check their state
+    if (m_private)
+    {
+      if (ClipParticipationSource() != ON::ClipParticipationSource::FromLayer)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::ClipParticipationSource; // 27
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteChar((unsigned char)ClipParticipationSource());
+        if (!rc) break;
+      }
+
+      {
+        bool forAllClippingPlanes = true;
+        bool forNoClippingPlanes = false;
+        ON_UuidList selectiveClipping;
+        GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveClipping);
+        if (!forAllClippingPlanes)
+        {
+          c = ON_3dmObjectAttributesTypeCodes::SelectiveClippingData; // 28
+          rc = file.WriteChar(c);
+          if (!rc) break;
+          rc = file.WriteBool(forNoClippingPlanes);
+          if (!rc) break;
+          rc = selectiveClipping.Write(file);
+          if (!rc) break;
+        }
+      }
+
+      if (SectionAttributesSource() != ON::SectionAttributesSource::FromLayer)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::SectionAttributesSource; // 29
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteChar((unsigned char)SectionAttributesSource());
+        if (!rc) break;
+      }
+
+      if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::SectionHatchIndex; // 30
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
+        if (!rc) break;
+      }
+
+      if (SectionHatchScale() != 1.0)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::SectionHatchScale; // 31
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteDouble(SectionHatchScale());
+        if (!rc) break;
+      }
+
+      if (SectionHatchRotation() != 0.0)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::SectionHatchRotation; // 32
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteDouble(SectionHatchRotation());
+        if (!rc) break;
+      }
+
+      if (fabs(1.0 - LinetypeScale()) > ON_EPSILON)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::LinetypeScale; // 33
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteDouble(LinetypeScale());
+        if (!rc) break;
+      }
+
+      if (HatchBackgroundFillColor() != ON_Color::UnsetColor)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::HatchBackgroundFill; // 34
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteColor(HatchBackgroundFillColor());
+        if (!rc) break;
+      }
+
+      if (HatchBoundaryVisible() != false)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryVisible; // 35
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteBool(HatchBoundaryVisible());
+        if (!rc) break;
+      }
+    }
+
+    // 15 Jun 2022 S. Baer
+    // Do not write items if they are their default value.
+    if (m_object_frame != ON_Plane::UnsetPlane)
+    {
+      // 26 Jan 2022 Andy Le Bihan
+      // Always write the object frame - it will always be initialized.
+      c = ON_3dmObjectAttributesTypeCodes::ObjectFrame;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+
+      ON_Xform xform;
+      xform.ChangeBasis(m_object_frame, ON_Plane::World_xy);
+      rc = file.WriteXform(xform);
+      if (!rc) break;
+    }
+
+    // 15 Jun 2022 S. Baer
+    // Write section fill rule
+    if (SectionFillRule() != ON::SectionFillRule::ClosedCurves)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::SectionFillRule; // 37
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteChar((unsigned char)SectionFillRule());
+      if (!rc) break;
+    }
+
+
+    // 0 indicates end of attributes - this should be the last item written
     c = 0;
     rc = file.WriteChar(c);
     break;
@@ -862,7 +1343,7 @@ bool ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
     return Internal_WriteV5(file);
   }
 
-  bool rc = file.Write3dmChunkVersion(1,7);
+  bool rc = file.Write3dmChunkVersion(1,8);
   // version 1.0 fields
   if (rc) rc = file.WriteUuid(m_uuid);
   if (rc) rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::Layer, m_layer_index);
@@ -961,6 +1442,35 @@ bool ON_3dmObjectAttributes::Transform( const ON_Xform& xform )
 {
   // Please discuss any changes with Dale Lear.
   ON_Object::TransformUserData(xform);
+
+  //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
+  //m_object_frame.Transform(xform);
+
+  return m_rendering_attributes.Transform(xform);
+}
+
+bool ON_3dmObjectAttributes::Transform(const ON_Geometry* pOriginalGeometry, const ON_Xform& xform)
+{
+  // Please discuss any changes with Dale Lear.
+  ON_Object::TransformUserData(xform);
+
+  //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
+
+  //This assumes that the incoming geometry has already been transformed, so if this is initializing
+  //the object frame, it doesn't need to be transformed.
+  if (m_object_frame.IsValid())
+  {
+    m_object_frame.Transform(xform);
+  }
+  else if (pOriginalGeometry)
+  {
+    ON_Plane plane = ON_Plane::World_xy;
+    plane.SetOrigin(pOriginalGeometry->BoundingBox().Center());
+    SetObjectFrame(ON_COMPONENT_INDEX::WholeObject, plane);
+
+    m_object_frame.Transform(xform);
+  }
+
   return m_rendering_attributes.Transform(xform);
 }
 
@@ -997,6 +1507,10 @@ unsigned int ON_3dmObjectAttributes::SizeOf() const
   return sz;
 }
 
+// 12 Aug 2021 S. Baer
+// When adding new fields written to 3dm files, always add information to this
+// Dump function. Dump is used by the opennurbs file testing framework to
+// perform comparisons and is useful for manual comparison in when tests fail.
 void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
 {
   const wchar_t* wsName = static_cast< const wchar_t* >(m_name);
@@ -1617,6 +2131,229 @@ int ON_3dmObjectAttributes::DisplayMaterialRefCount() const
   return m_dmref.Count();
 }
 
+
+ON::ClipParticipationSource ON_3dmObjectAttributes::ClipParticipationSource() const
+{
+  return m_private ? m_private->m_clip_participation_source : DefaultAttributesPrivate.m_clip_participation_source;
+}
+void ON_3dmObjectAttributes::SetClipParticipationSource(ON::ClipParticipationSource source)
+{
+  if (ClipParticipationSource() == source)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_clip_participation_source = source;
+}
+
+void ON_3dmObjectAttributes::SetClipParticipationForAll()
+{
+  // default is true for all clipping planes. If our private pointer hasn't
+  // been created, there is no need to do anything
+  if (nullptr == m_private)
+    return;
+
+  m_private->m_clipplane_list.Empty();
+  m_private->m_clipping_proof = false;
+}
+void ON_3dmObjectAttributes::SetClipParticipationForNone()
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_clipplane_list.Empty();
+  m_private->m_clipping_proof = true;
+}
+void ON_3dmObjectAttributes::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count)
+{
+  if (nullptr == clippingPlaneIds || count < 1)
+    SetClipParticipationForAll();
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_clipplane_list.Empty();
+  for (int i = 0; i < count; i++)
+    m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
+
+  m_private->m_clipping_proof = false;
+}
+void ON_3dmObjectAttributes::GetClipParticipation(
+  bool& forAllClippingPlanes,
+  bool& forNoClippingPlanes,
+  ON_UuidList& specificClipplaneList) const
+{
+  if (nullptr == m_private)
+  {
+    forAllClippingPlanes = true;
+    forNoClippingPlanes = false;
+    specificClipplaneList.Empty();
+    return;
+  }
+
+  specificClipplaneList = m_private->m_clipplane_list;
+  if (specificClipplaneList.Count() > 0)
+  {
+    forAllClippingPlanes = false;
+    forNoClippingPlanes = false;
+  }
+  else
+  {
+    forNoClippingPlanes = m_private->m_clipping_proof;
+    forAllClippingPlanes = !forNoClippingPlanes;
+  }
+}
+
+ON::SectionFillRule ON_3dmObjectAttributes::SectionFillRule() const
+{
+  return m_private ? m_private->m_section_fill_rule : DefaultAttributesPrivate.m_section_fill_rule;
+}
+void ON_3dmObjectAttributes::SetSectionFillRule(ON::SectionFillRule rule)
+{
+  if (SectionFillRule() == rule)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_section_fill_rule = rule;
+}
+
+int ON_3dmObjectAttributes::SectionHatchIndex() const
+{
+  return m_private ? m_private->m_section_hatch_index : DefaultAttributesPrivate.m_section_hatch_index;
+}
+
+void ON_3dmObjectAttributes::SetSectionHatchIndex(int index)
+{
+  if (SectionHatchIndex() == index)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_section_hatch_index = index;
+}
+
+double ON_3dmObjectAttributes::SectionHatchScale() const
+{
+  return m_private ? m_private->m_section_hatch_scale : DefaultAttributesPrivate.m_section_hatch_scale;
+}
+void ON_3dmObjectAttributes::SetSectionHatchScale(double scale)
+{
+  if (SectionHatchScale() == scale)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_section_hatch_scale = scale;
+}
+
+double ON_3dmObjectAttributes::SectionHatchRotation() const
+{
+  return m_private ? m_private->m_section_hatch_rotation : DefaultAttributesPrivate.m_section_hatch_rotation;
+}
+void ON_3dmObjectAttributes::SetSectionHatchRotation(double rotation)
+{
+  if (SectionHatchRotation() == rotation)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_section_hatch_rotation = rotation;
+}
+
+ON::SectionAttributesSource ON_3dmObjectAttributes::SectionAttributesSource() const
+{
+  return m_private ? m_private->m_section_attributes_source : DefaultAttributesPrivate.m_section_attributes_source;
+}
+void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSource source)
+{
+  if (SectionAttributesSource() == source)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_section_attributes_source = source;
+}
+
+double ON_3dmObjectAttributes::LinetypeScale() const
+{
+  return m_private ? m_private->m_linetype_scale : 1.0;
+}
+void ON_3dmObjectAttributes::SetLinetypeScale(double scale)
+{
+  if (scale < ON_EPSILON)
+    return;
+
+  if (fabs(LinetypeScale() - scale) < ON_EPSILON)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_linetype_scale = scale;
+}
+
+ON_Color ON_3dmObjectAttributes::HatchBackgroundFillColor() const
+{
+  return m_private ? m_private->m_hatch_background_fill : ON_Color::UnsetColor;
+}
+void ON_3dmObjectAttributes::SetHatchBackgrounFillColor(const ON_Color& color)
+{
+  ON_Color c = color;
+  if (c.Alpha() == 255)
+    c = ON_Color::UnsetColor;
+  if (HatchBackgroundFillColor() == c)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_hatch_background_fill = c;
+}
+bool ON_3dmObjectAttributes::HatchBoundaryVisible() const
+{
+  return m_private ? m_private->m_hatch_boundary_visible : DefaultAttributesPrivate.m_hatch_boundary_visible;
+}
+void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
+{
+  if (HatchBoundaryVisible() == on)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_hatch_boundary_visible = on;
+}
+
+
+//https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
+ON_Plane ON_3dmObjectAttributes::ObjectFrame(const ON_COMPONENT_INDEX&, bool bRaw) const
+{
+  if (!m_object_frame.IsValid())
+  {
+    return ON_Plane::UnsetPlane;
+  }
+
+  if (bRaw)
+  {
+    return m_object_frame;
+  }
+
+  ON_Plane plane = m_object_frame;
+  plane.xaxis.Unitize();
+  plane.zaxis.Unitize();
+  plane.yaxis.Unitize();
+
+  return plane;
+}
+
+//https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
+void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX&, const ON_Xform& wcs_to_ocs)
+{
+  m_object_frame = ON_Plane::World_xy;
+  m_object_frame.Transform(wcs_to_ocs);
+}
+
+void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Plane& plane)
+{
+  m_object_frame = plane;
+}
+
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}
 const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id = 
 { 0x1403a7e4, 0xe7ad, 0x4a01, { 0xa2, 0xaa, 0x41, 0xda, 0xe6, 0xbe, 0x7e, 0xcb } };
@@ -1665,4 +2402,6 @@ bool ON_DisplayMaterialRef::operator>=(const ON_DisplayMaterialRef& other) const
 {
   return (Compare(other)>=0); 
 }
+
+
 

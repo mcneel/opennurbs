@@ -5262,19 +5262,15 @@ bool ON_Mesh::CombineIdenticalVertices(
   return rc;
 }
 
-void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
+void ON_Mesh::Append( std::vector<std::shared_ptr<const ON_Mesh>> meshes )
 {
-  if ( mesh_count <= 0 || 0 == meshes )
+  if ( meshes.size() == 0 )
     return;
 
-  int mi;
   int vcount0 = VertexCount();
   if ( vcount0 <= 0 )
     m_F.SetCount(0);
   int fcount0 = FaceCount();
-  int* vi;
-  int j;
-  const ON_Mesh* m;
 
   // The calls to Has*() must happen before the m_V[] and m_F[] arrays get enlarged
   // Allow the appendage of VertexNormals, TextureCoordinates, PrincipalCurvatures to empty meshes
@@ -5322,10 +5318,11 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   int fcount = fcount0;
   int vcount = vcount0;
   unsigned int merged_count = vcount0 > 0 ? 1 : 0;
-  for ( mi = 0; mi < mesh_count; mi++ )
+
+  int mesh_index = 0;
+  for ( auto m : meshes )
   {
-    m = meshes[mi];
-    if ( 0 == m )
+    if (!m )
       continue;
     int vcount1 = m->m_V.Count();
     if ( vcount1 <= 0 )
@@ -5415,7 +5412,7 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
         && m->m_packed_tex_domain[1].IsIncreasing();
       if (packed_tex_rotate != (m->m_packed_tex_rotate?true:false))
       {
-        if (0 == vcount0 && 0 == mi)
+        if (0 == vcount0 && 0 == mesh_index)
         {
           packed_tex_rotate = (m->m_packed_tex_rotate ? true : false);
         }
@@ -5438,6 +5435,8 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
         packed_tex_domain[1].Union(m->m_packed_tex_domain[1]);
       }     
     }
+
+    mesh_index++;
   }
 
 
@@ -5477,25 +5476,26 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
 
   m_V.Reserve(vcount);
   m_F.Reserve(fcount);
-  for (mi = 0; mi < mesh_count; mi++ )
+  for (auto m : meshes)
   {
     const unsigned int vcount0_local = m_V.UnsignedCount();
     const unsigned int fcount0_local = m_F.UnsignedCount();
-    m = meshes[mi];
-    if ( 0 == m )
+
+    if (!m)
       continue;
+
     int vcount1 = m->m_V.Count();
     if ( vcount1 <= 0 )
       continue;
     int fcount1 = m->m_F.Count();
     if ( fcount1 > 0 )
     {
-      j = m_F.Count();
+      auto j = m_F.Count();
       m_F.Append(fcount1,m->m_F.Array());
       fcount1 += j;
       while (j < fcount1)
       {
-        vi = m_F[j].vi;
+        const auto vi = m_F[j].vi;
         vi[0] += (int)vcount0_local;
         vi[1] += (int)vcount0_local;
         vi[2] += (int)vcount0_local;
@@ -5537,11 +5537,11 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   {
     // Now update the double precision vertex locations.
     m_dV.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m || m->m_dV.Count() <= 0 )
+      if ( !m || m->m_dV.Count() <= 0 )
         continue;
+
       m_dV.Append(m->m_dV.Count(),m->m_dV.Array());
     }
     if (m_dV.Count() != vcount)
@@ -5557,10 +5557,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasVertexNormals ) 
   {
     m_N.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if (!m)
         continue;
       m_N.Append(m->m_N.Count(), m->m_N.Array());
     }
@@ -5574,10 +5573,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasFaceNormals ) 
   {
     m_FN.Reserve(fcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m || m->m_V.Count() <= 0 )
+      if ( !m || m->m_V.Count() <= 0 )
         continue;
       m_FN.Append(m->m_FN.Count(), m->m_FN.Array());
     }
@@ -5590,10 +5588,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasTextureCoordinates ) 
   {
     m_T.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if (!m )
         continue;
       m_T.Append(m->m_T.Count(), m->m_T.Array());
     }
@@ -5607,10 +5604,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasSurfaceParameters )
   {
     m_S.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if ( !m )
         continue;
       m_S.Append(m->m_S.Count(), m->m_S.Array());
     }
@@ -5623,10 +5619,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasPrincipalCurvatures )
   {
     m_K.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if ( !m )
         continue;
       m_K.Append(m->m_K.Count(), m->m_K.Array());
     }
@@ -5639,10 +5634,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   if ( bHasVertexColors ) 
   {
     m_C.Reserve(vcount);
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if (!m)
         continue;
       m_C.Append(m->m_C.Count(), m->m_C.Array());
     }
@@ -5654,10 +5648,9 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
 
   if ( 0 !=  m_mesh_parameters )
   {
-    for (mi = 0; mi < mesh_count; mi++ )
+    for (auto m : meshes)
     {
-      m = meshes[mi];
-      if ( 0 == m )
+      if (!m)
         continue;
       if ( 0 == m->m_mesh_parameters || *m_mesh_parameters != *m->m_mesh_parameters )
       {
@@ -5668,7 +5661,7 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
     }
   }
 
-  for ( j = 0; j < 4; j++ ) 
+  for ( int j = 0; j < 4; j++ ) 
   {
     if ( m_kstat[j] ) 
     {
@@ -5692,11 +5685,442 @@ void ON_Mesh::Append( int mesh_count, const ON_Mesh* const* meshes )
   }
 }
 
-void ON_Mesh::Append( const ON_Mesh& m )
-{ 
+
+void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
+{
+  if (mesh_count <= 0 || 0 == meshes)
+    return;
+
+  int mi;
+  int vcount0 = VertexCount();
+  if (vcount0 <= 0)
+    m_F.SetCount(0);
+  int fcount0 = FaceCount();
+  int* vi;
+  int j;
+  const ON_Mesh* m;
+
+  // The calls to Has*() must happen before the m_V[] and m_F[] arrays get enlarged
+  // Allow the appendage of VertexNormals, TextureCoordinates, PrincipalCurvatures to empty meshes
+  // by checking for 0 == vcount0 && 0 == fcount0
+  bool bHasVertexNormals = (0 == vcount0 || HasVertexNormals());
+  bool bHasFaceNormals = (0 == vcount0 || 0 == fcount0 || HasFaceNormals());
+  bool bHasTextureCoordinates = (0 == vcount0 || HasTextureCoordinates());
+  bool bHasPrincipalCurvatures = (0 == vcount0 || HasPrincipalCurvatures());
+  bool bHasVertexColors = (0 == vcount0 || HasVertexColors());
+  bool bHasSurfaceParameters = (0 == vcount0 || HasSurfaceParameters());
+  bool bHasDoubles = (0 == vcount0 || HasSynchronizedDoubleAndSinglePrecisionVertices());
+  bool bHasNgonMap = (NgonCount() > 0 && 0 != NgonMap());
+
+  bool bSetMeshParameters = true;
+  const ON_MeshParameters* mp = nullptr;
+  ON_SHA1_Hash mp_hash = ON_SHA1_Hash::EmptyContentHash;
+  if (0 != vcount0)
+  {
+    mp = this->MeshParameters();
+    if (nullptr == mp)
+      bSetMeshParameters = false;
+    else
+      mp_hash = mp->GeometrySettingsHash();
+  }
+
+  bool bHasSurfaceDomain
+    = bHasSurfaceParameters
+    && (0 == vcount0 || (m_srf_domain[0].IsIncreasing() && m_srf_domain[1].IsIncreasing()));
+
+  ON_Interval srf_domain[2];
+  srf_domain[0] = (bHasSurfaceDomain && vcount0 > 0) ? m_srf_domain[0] : ON_Interval::EmptyInterval;
+  srf_domain[1] = (bHasSurfaceDomain && vcount0 > 0) ? m_srf_domain[1] : ON_Interval::EmptyInterval;
+
+  bool bHasTexturePackingDomain
+    = bHasTextureCoordinates
+    && (0 == vcount0 || (m_packed_tex_domain[0].IsIncreasing() && m_packed_tex_domain[1].IsIncreasing()));
+
+  ON_Interval packed_tex_domain[2];
+  packed_tex_domain[0] = (bHasTexturePackingDomain && vcount0 > 0) ? m_packed_tex_domain[0] : ON_Interval::EmptyInterval;
+  packed_tex_domain[1] = (bHasTexturePackingDomain && vcount0 > 0) ? m_packed_tex_domain[1] : ON_Interval::EmptyInterval;
+  bool packed_tex_rotate = (bHasTexturePackingDomain && m_packed_tex_rotate) ? true : false;
+
+  double srf_scale[2] = { m_srf_scale[0], m_srf_scale[1] };
+
+  int fcount = fcount0;
+  int vcount = vcount0;
+  unsigned int merged_count = vcount0 > 0 ? 1 : 0;
+  for (mi = 0; mi < mesh_count; mi++)
+  {
+    m = meshes[mi];
+    if (0 == m)
+      continue;
+    int vcount1 = m->m_V.Count();
+    if (vcount1 <= 0)
+      continue;
+
+    merged_count++;
+
+    if (bSetMeshParameters)
+    {
+      const ON_MeshParameters* this_mesh_mp = m->MeshParameters();
+      if (nullptr == this_mesh_mp)
+        bSetMeshParameters = false;
+      else
+      {
+        const ON_SHA1_Hash this_mesh_mp_hash = this_mesh_mp->GeometrySettingsHash();
+        if (nullptr == mp)
+        {
+          // first mesh parameters.
+          mp = this_mesh_mp;
+          mp_hash = this_mesh_mp_hash;
+        }
+        else
+        {
+          if (this_mesh_mp_hash != mp_hash)
+          {
+            // variable mesh paramters - means output gets none.
+            bSetMeshParameters = false;
+          }
+        }
+      }
+    }
+
+    int fcount1 = m->m_F.Count();
+    if (fcount1 > 0)
+      fcount += fcount1;
+    vcount += vcount1;
+    if (bHasVertexNormals && !m->HasVertexNormals())
+      bHasVertexNormals = false;
+    if (bHasTextureCoordinates && !m->HasTextureCoordinates())
+      bHasTextureCoordinates = false;
+    if (bHasPrincipalCurvatures && !m->HasPrincipalCurvatures())
+      bHasPrincipalCurvatures = false;
+    if (bHasVertexColors && !m->HasVertexColors())
+      bHasVertexColors = false;
+    if (bHasSurfaceParameters && !m->HasSurfaceParameters())
+      bHasSurfaceParameters = false;
+    if (bHasDoubles && !m->HasSynchronizedDoubleAndSinglePrecisionVertices())
+      bHasDoubles = false;
+    if (bHasFaceNormals && fcount1 > 0 && !m->HasFaceNormals())
+      bHasFaceNormals = false;
+
+    if (bHasSurfaceDomain)
+    {
+      bHasSurfaceDomain
+        = bHasSurfaceParameters
+        && m->m_srf_domain[0].IsIncreasing()
+        && m->m_srf_domain[1].IsIncreasing();
+      if (bHasSurfaceDomain)
+      {
+        srf_domain[0].Union(m->m_srf_domain[0]);
+        srf_domain[1].Union(m->m_srf_domain[1]);
+      }
+    }
+
+    if (1 == merged_count && bHasSurfaceParameters && bHasSurfaceDomain)
+    {
+      srf_scale[0] = m->m_srf_scale[0];
+      srf_scale[1] = m->m_srf_scale[1];
+    }
+    else
+    {
+      srf_scale[0] = 0.0;
+      srf_scale[1] = 0.0;
+    }
+
+    if (bHasTexturePackingDomain)
+    {
+      // 2014-04-01 Dale Lear
+      //   Trying to merger packed_tex_domain[] intervals
+      //   is questionable at best.
+      //   A strong argument can be made for simply deleting
+      //   packed texture domain information when there are
+      //   two non-empty meshes that are merged.
+      bHasTexturePackingDomain
+        = bHasTextureCoordinates
+        && m->m_packed_tex_domain[0].IsIncreasing()
+        && m->m_packed_tex_domain[1].IsIncreasing();
+      if (packed_tex_rotate != (m->m_packed_tex_rotate ? true : false))
+      {
+        if (0 == vcount0 && 0 == mi)
+        {
+          packed_tex_rotate = (m->m_packed_tex_rotate ? true : false);
+        }
+        else
+        {
+          bHasTexturePackingDomain = false;
+        }
+      }
+      if (bHasTexturePackingDomain)
+      {
+        if (1 == merged_count)
+        {
+          packed_tex_rotate = (m->m_packed_tex_rotate ? true : false);
+        }
+        else if (packed_tex_rotate != (m->m_packed_tex_rotate ? true : false))
+        {
+          bHasTexturePackingDomain = false;
+        }
+        packed_tex_domain[0].Union(m->m_packed_tex_domain[0]);
+        packed_tex_domain[1].Union(m->m_packed_tex_domain[1]);
+      }
+    }
+  }
+
+
+  if (vcount <= vcount0 && fcount <= fcount0)
+    return;
+
+  if (!bHasSurfaceParameters || !bHasSurfaceDomain)
+  {
+    srf_domain[0] = ON_Interval::EmptyInterval;
+    srf_domain[1] = ON_Interval::EmptyInterval;
+    srf_scale[0] = 0.0;
+    srf_scale[1] = 0.0;
+  }
+
+  if (!bHasTextureCoordinates || !bHasTexturePackingDomain)
+  {
+    packed_tex_domain[0] = ON_Interval::EmptyInterval;
+    packed_tex_domain[1] = ON_Interval::EmptyInterval;
+    packed_tex_rotate = false;
+  }
+
+  m_srf_domain[0] = srf_domain[0];
+  m_srf_domain[1] = srf_domain[1];
+  m_srf_scale[0] = srf_scale[0];
+  m_srf_scale[1] = srf_scale[1];
+
+  m_packed_tex_domain[0] = packed_tex_domain[0];
+  m_packed_tex_domain[1] = packed_tex_domain[1];
+  m_packed_tex_rotate = packed_tex_rotate;
+
+  m_top.Destroy();
+
+  // It is critical to call DoublePrecisionVertices() before 
+  // we modify m_V[] because DoublePrecisionVertices() will
+  // attempt to update the double precision information
+  // when it notices that m_V has new vertices added.
+
+  m_V.Reserve(vcount);
+  m_F.Reserve(fcount);
+  for (mi = 0; mi < mesh_count; mi++)
+  {
+    const unsigned int vcount0_local = m_V.UnsignedCount();
+    const unsigned int fcount0_local = m_F.UnsignedCount();
+    m = meshes[mi];
+    if (0 == m)
+      continue;
+    int vcount1 = m->m_V.Count();
+    if (vcount1 <= 0)
+      continue;
+    int fcount1 = m->m_F.Count();
+    if (fcount1 > 0)
+    {
+      j = m_F.Count();
+      m_F.Append(fcount1, m->m_F.Array());
+      fcount1 += j;
+      while (j < fcount1)
+      {
+        vi = m_F[j].vi;
+        vi[0] += (int)vcount0_local;
+        vi[1] += (int)vcount0_local;
+        vi[2] += (int)vcount0_local;
+        vi[3] += (int)vcount0_local;
+        j++;
+      }
+    }
+    m_V.Append(vcount1, m->m_V.Array());
+    if (m->HasNgons())
+    {
+      if (0 != m->NgonMap())
+        bHasNgonMap = true;
+      m_NgonMap.Destroy();
+      unsigned int ngon_count = m->NgonUnsignedCount();
+      for (unsigned int ni = 0; ni < ngon_count; ni++)
+      {
+        const ON_MeshNgon* ngon0 = m->Ngon(ni);
+        if (0 == ngon0)
+          continue;
+        if (0 == ngon0->m_Vcount && 0 == ngon0->m_Fcount)
+          continue;
+        ON_MeshNgon* ngon1 = this->m_NgonAllocator.CopyNgon(ngon0);
+        if (0 == ngon1)
+          continue;
+        for (unsigned int nvi = 0; nvi < ngon1->m_Vcount; nvi++)
+        {
+          ngon1->m_vi[nvi] += vcount0_local;
+        }
+        for (unsigned int nfi = 0; nfi < ngon1->m_Fcount; nfi++)
+        {
+          ngon1->m_fi[nfi] += fcount0_local;
+        }
+        this->AddNgon(ngon1);
+      }
+    }
+  }
+
+  if (bHasDoubles)
+  {
+    // Now update the double precision vertex locations.
+    m_dV.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m || m->m_dV.Count() <= 0)
+        continue;
+      m_dV.Append(m->m_dV.Count(), m->m_dV.Array());
+    }
+    if (m_dV.Count() != vcount)
+      bHasDoubles = false;
+  }
+
+  if (false == bHasDoubles)
+  {
+    bHasDoubles = false;
+    DestroyDoublePrecisionVertices();
+  }
+
+  if (bHasVertexNormals)
+  {
+    m_N.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      m_N.Append(m->m_N.Count(), m->m_N.Array());
+    }
+  }
+  else
+  {
+    m_N.Destroy();
+  }
+
+
+  if (bHasFaceNormals)
+  {
+    m_FN.Reserve(fcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m || m->m_V.Count() <= 0)
+        continue;
+      m_FN.Append(m->m_FN.Count(), m->m_FN.Array());
+    }
+  }
+  else
+  {
+    m_FN.Destroy();
+  }
+
+  if (bHasTextureCoordinates)
+  {
+    m_T.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      m_T.Append(m->m_T.Count(), m->m_T.Array());
+    }
+  }
+  else
+  {
+    m_T.Destroy();
+  }
+
+
+  if (bHasSurfaceParameters)
+  {
+    m_S.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      m_S.Append(m->m_S.Count(), m->m_S.Array());
+    }
+  }
+  else
+  {
+    m_S.Destroy();
+  }
+
+  if (bHasPrincipalCurvatures)
+  {
+    m_K.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      m_K.Append(m->m_K.Count(), m->m_K.Array());
+    }
+  }
+  else
+  {
+    m_K.Destroy();
+  }
+
+  if (bHasVertexColors)
+  {
+    m_C.Reserve(vcount);
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      m_C.Append(m->m_C.Count(), m->m_C.Array());
+    }
+  }
+  else
+  {
+    m_C.Destroy();
+  }
+
+  if (0 != m_mesh_parameters)
+  {
+    for (mi = 0; mi < mesh_count; mi++)
+    {
+      m = meshes[mi];
+      if (0 == m)
+        continue;
+      if (0 == m->m_mesh_parameters || *m_mesh_parameters != *m->m_mesh_parameters)
+      {
+        delete m_mesh_parameters;
+        m_mesh_parameters = 0;
+        break;
+      }
+    }
+  }
+
+  for (j = 0; j < 4; j++)
+  {
+    if (m_kstat[j])
+    {
+      // will be recomputed if required
+      delete m_kstat[j];
+      m_kstat[j] = 0;
+    }
+  }
+
+  SetClosed(-99);
+  SetSolidOrientation(-99);
+  InvalidateBoundingBoxes();
+
+  if (NgonCount() > 0 && bHasNgonMap)
+    CreateNgonMap();
+
+  if (bSetMeshParameters && nullptr != mp && mp != this->MeshParameters())
+  {
+    // Appending to an empty this and all appendees have matching mesh parameters.
+    this->SetMeshParameters(*mp);
+  }
+}
+
+void ON_Mesh::Append(const ON_Mesh& m)
+{
   const ON_Mesh* meshes[1];
   meshes[0] = &m;
-  Append(1,meshes);
+  Append(1, meshes);
 }
 
 
@@ -6439,7 +6863,7 @@ void ON_MeshParameters::Dump( ON_TextLog& text_log ) const
     this->SubDDisplayParameters().Dump(text_log);
   }
 
-  text_log.Print(L"Misceleanous:\n");
+  text_log.Print(L"Miscellaneous:\n");
   {
     const ON_TextLogIndent indent1(text_log);
     text_log.Print(L"Face type = %d\n", m_face_type);
@@ -6807,14 +7231,6 @@ static bool Internal_MeshParametersRead_UpdateSubDParameters(
     ON_MeshParameters::QualityRenderMesh,
     ON_MeshParameters::DefaultAnalysisMesh,
     ON_MeshParameters::CreateFromMeshDensity(archive_mp.RelativeTolerance())
-  };
-  const ON_MeshParameters::Type mp_type[] =
-  {
-    ON_MeshParameters::Type::Default,
-    ON_MeshParameters::Type::FastRender,
-    ON_MeshParameters::Type::QualityRender,
-    ON_MeshParameters::Type::DefaultAnalysis,
-    ON_MeshParameters::Type::FromMeshDensity
   };
 
   const size_t mp_count = sizeof(mp) / sizeof(mp[0]);
@@ -8636,6 +9052,12 @@ bool ON_Mesh::Compact()
   if (m_T.UnsignedCount() != meshVcount)
     m_T.Destroy();
 
+  for (int i = m_TC.Count() - 1; i >= 0; i--)
+  {
+    if (m_TC[i].m_T.UnsignedCount() != meshVcount)
+      m_TC.Remove(i);
+  }
+
   if (m_S.UnsignedCount() != meshVcount)
     m_S.Destroy();
 
@@ -8658,6 +9080,9 @@ bool ON_Mesh::Compact()
   m_C.Shrink();
   m_S.Shrink();
   m_T.Shrink();
+
+  for (int i = 0; i < m_TC.Count(); i++)
+    m_TC[i].m_T.Shrink();
 
   return true;
 }
@@ -9244,7 +9669,7 @@ bool ON_MeshTopology::IsWeldedEdge(int top_ei) const
   const int meshv_count = m_mesh->VertexCount();
   if (meshv_count < topv_count || meshv_count != m_topv_map.Count())
     return false;
-  if (1 == m_topv[e.m_topvi[0]].m_v_count && 1 == m_topv[e.m_topvi[0]].m_v_count)
+  if (1 == m_topv[e.m_topvi[0]].m_v_count && 1 == m_topv[e.m_topvi[1]].m_v_count)
     return true;
 
   // need to examine faces
@@ -13700,6 +14125,14 @@ bool ON_Mesh::DeleteComponents(
           K[vertex_count1] = K[vi];
         if ( C )
           C[vertex_count1] = C[vi];
+
+        for (int i = 0; i < m_TC.Count(); i++)
+        {
+          ON_TextureCoordinates& tcs = m_TC[i];
+          if (tcs.m_T.Count() == VertexCount())
+            tcs.m_T[vertex_count1] = tcs.m_T[vi];
+        }
+
         vertex_count1++;
       }
 
@@ -13737,6 +14170,13 @@ bool ON_Mesh::DeleteComponents(
       {
         m_C.SetCount(vertex_count1);
         m_C.Shrink();
+      }
+
+      for (int i = 0; i < m_TC.Count(); i++)
+      {
+        ON_TextureCoordinates& tcs = m_TC[i];
+        tcs.m_T.SetCount(vertex_count1);
+        tcs.m_T.Shrink();
       }
 
       InvalidateBoundingBoxes();
@@ -14944,6 +15384,11 @@ class ON_Mesh& ON_MeshRef::UniqueMesh()
   return const_cast< ON_Mesh& >(mesh);
 }
 
+const std::shared_ptr<class ON_Mesh>& ON_MeshRef::SharedMesh() const
+{
+  return m_mesh_sp;
+}
+
 class ON_Mesh* ON_MeshRef::SetMeshForExperts(
   class ON_Mesh*& mesh
   )
@@ -15204,7 +15649,7 @@ static void Internal_WeldNgonCandiate(
             const int f1i = ve.m_topfi[efi];
             if (fi == f1i)
               continue;
-            if (0 == (fmarks[f1i] |= xmark))
+            if (0 == fmarks[f1i])
               continue; // this face is not in the ngon
             const ON_MeshTopologyFace& f1 = top.m_topf[f1i];
             int* f1vi = const_cast<int*>( mesh.m_F[f1i].vi );

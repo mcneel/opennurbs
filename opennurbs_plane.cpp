@@ -244,6 +244,30 @@ bool ON_Plane::CreateFromNormal(
   return b;
 }
 
+bool ON_Plane::CreateFromNormalYup(
+  const ON_3dPoint& P,
+  const ON_3dVector& N,
+  const ON_3dVector& Y
+)
+{
+  origin = P;
+  zaxis = N;
+  bool b = zaxis.Unitize();
+  xaxis = ON_CrossProduct(Y, zaxis);
+  b = xaxis.Unitize() && b;
+  if (!xaxis.Unitize())
+  {
+    xaxis.PerpendicularTo(zaxis);
+    xaxis.Unitize();
+  }
+
+  yaxis = ON_CrossProduct(zaxis, xaxis);
+  yaxis.Unitize();
+  UpdateEquation();
+
+  return b;
+}
+
 bool ON_Plane::CreateFromFrame(
     const ON_3dPoint&  P, // point on the plane
     const ON_3dVector& X, // non-zero vector in plane

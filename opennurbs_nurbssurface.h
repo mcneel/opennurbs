@@ -585,6 +585,10 @@ public:
 
 
 
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
   /*
   Description:
     Offset surface.
@@ -605,6 +609,10 @@ public:
         double tolerance, 
         double* max_deviation = nullptr
         ) const;
+  // NOTE: some compilers believe the above is an override and msvc/others do not
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic pop
+#endif
 
   // virtual ON_Surface::GetNurbForm() override.
   // The ON_NurbsSurface version returns 1 and a copy of the ON_NurbsSurface.

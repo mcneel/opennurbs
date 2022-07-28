@@ -471,7 +471,7 @@ const ON_2udex ON_SubDFace::GetNgonSubPackRectSizeAndDelta(
   // this code assumes ON_SubD::TextureImageSuggestedMinimumSize is a power of 2 and
   // ON_SubD::TextureImageSuggestedMinimumSize >= 512.
   // As a result the following code assumes min_distance_in_pixels >= 8.0 and an integer value;
-  const double min_distance_in_pixels = ((double)(ON_SubD::TextureImageSuggestedMinimumSize)) / 64.0;
+  //const double min_distance_in_pixels = ((double)(ON_SubD::TextureImageSuggestedMinimumSize)) / 64.0;
 
   bool bApplyGap[2] = { false,false };
   for (int i = 0; i < 2; ++i)

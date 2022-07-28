@@ -3568,6 +3568,97 @@ const void* ON_BinarySearchArrayForUnsingedInt(
   return nullptr;
 }
 
+
+const void* ON_BinarySearchArrayFirstUnsignedInt(
+  unsigned int key,
+  const void* base,
+  size_t count,
+  size_t sizeof_element,
+  size_t key_offset
+)
+{
+  void* rc = nullptr;
+
+  if (count > 0 && nullptr != base && key_offset + sizeof(key) <= sizeof_element)
+  {
+    const unsigned char* a = (const unsigned char*)base;
+    a += key_offset;
+
+    size_t i;
+    unsigned int d = *((const unsigned int*)(a + (count - 1) * sizeof_element));
+    if (key <= d)
+    {
+      while (count > 0)
+      {
+        i = count / 2;
+        d = *((const unsigned int*)(a + i * sizeof_element));
+        if (key < d)
+        {
+          count = i;
+        }
+        else if (key > d)
+        {
+          i++;
+          a += (i * sizeof_element);
+          count -= i;
+        }
+        else
+        {
+          rc = (void*)(a + ((i * sizeof_element) - key_offset));
+          if (i == 0) break;
+          count -= i;
+        }
+      }
+    }
+  }
+  return rc;
+}
+
+const void* ON_BinarySearchArrayFirst2udex(
+  ON_2udex key,
+  const void* base,
+  size_t count,
+  size_t sizeof_element,
+  size_t key_offset
+)
+{
+  void* rc = nullptr;
+
+  if (count > 0 && nullptr != base && key_offset + sizeof(key) <= sizeof_element)
+  {
+    const unsigned char* a = (const unsigned char*)base;
+    a += key_offset;
+
+    size_t i;
+    ON_2udex d = *((const ON_2udex*)(a + (count - 1) * sizeof_element));
+    if (key <= d)
+    {
+      while (count > 0)
+      {
+        i = count / 2;
+        d = *((const ON_2udex*)(a + i * sizeof_element));
+        if (key < d)
+        {
+          count = i;
+        }
+        else if (key > d)
+        {
+          i++;
+          a += (i * sizeof_element);
+          count -= i;
+        }
+        else
+        {
+          rc = (void*)(a + ((i * sizeof_element) - key_offset));
+          count--;
+        }
+      }
+    }
+  }
+  return rc;
+}
+
+
 const double* ON_BinarySearchDoubleArray( double key, const double* base, size_t nel )
 {
   if (nel > 0 && base )
@@ -4266,9 +4357,9 @@ bool ON_EvPrincipalCurvatures(
 #if defined(ON_TEST_EV_KAPPAS)
         //det   = (l*n - m*m)*x_local;           // = Gaussian curvature
         //trace = (g*l - 2.0*f*m + e*n)*x_local; // = 2*(mean curvature)
-        double ggg = a*d - b*c;
+        double ggg1 = a*d - b*c;
         double ttt = a+d;
-        if ( fabs(ggg - det) > 1.0e-4*fabs(det) )
+        if ( fabs(ggg1 - det) > 1.0e-4*fabs(det) )
         {
           ON_EPC_WARNING("ON_EvPrincipalCurvatures() Det(shape op) != gaussian");
         }
@@ -4404,7 +4495,7 @@ bool ON_EvPrincipalCurvatures(
                 bSecondTry = true;
                 double ggg, mmm, kkk1, kkk2;
                 ON_3dVector KKK1, KKK2;
-                ON_EvPrincipalCurvatures(Ds,Dt,Dss,Dst,Dtt,N,
+                ON_EvPrincipalCurvatures(Ds,Dt,l,m,n,N,
                                         &ggg,&mmm,&kkk1,&kkk2,KKK1,KKK2);
                 bSecondTry = false;
               }

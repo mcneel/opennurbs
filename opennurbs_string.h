@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -341,6 +341,25 @@ const void* ON_BinarySearchArrayForUnsingedInt(
   size_t sizeof_element,
   size_t key_offset
   );
+
+ON_DECL
+const void* ON_BinarySearchArrayFirstUnsignedInt(
+  unsigned int key,
+  const void* base,
+  size_t count,
+  size_t sizeof_element,
+  size_t key_offset
+);
+
+ON_DECL
+const void* ON_BinarySearchArrayFirst2udex(
+  ON_2udex key,
+  const void* base,
+  size_t count,
+  size_t sizeof_element,
+  size_t key_offset
+);
+
 
 ON_DECL
 const double* ON_BinarySearchDoubleArray( 
@@ -1135,7 +1154,7 @@ public:
   static int Length(
     const char* string,
     size_t string_capacity
-    );
+  );
 
   /*
   Returns:
@@ -1144,28 +1163,28 @@ public:
   */
   static unsigned int UnsignedLength(
     const char* string
-    );
+  );
 
   bool IsEmpty() const; // returns true if length == 0 
   bool IsNotEmpty() const; // returns true if length > 0
   void Empty();   // sets length to zero - if possible, memory is retained
 
-	char& operator[](int);
-	char operator[](int) const;
+  char& operator[](int);
+  char operator[](int) const;
   char GetAt(int) const;
-	void SetAt(int, char);
-	void SetAt(int, unsigned char);
-	
-  operator const char*() const;
+  void SetAt(int, char);
+  void SetAt(int, unsigned char);
 
-	// overloaded assignment
-	ON_String& operator=(const ON_String&);
-	ON_String& operator=(char);
-	ON_String& operator=(const char*);
-	ON_String& operator=(unsigned char);
-	ON_String& operator=(const unsigned char*);
-	ON_String& operator=(const wchar_t* src); // src = Wide char string, result is a UTF-8 string
-	ON_String& operator=(const ON_wString& src);  // src = Wide char string, result is a UTF-8 string
+  operator const char* () const;
+
+  // overloaded assignment
+  ON_String& operator=(const ON_String&);
+  ON_String& operator=(char);
+  ON_String& operator=(const char*);
+  ON_String& operator=(unsigned char);
+  ON_String& operator=(const unsigned char*);
+  ON_String& operator=(const wchar_t* src); // src = Wide char string, result is a UTF-8 string
+  ON_String& operator=(const ON_wString& src);  // src = Wide char string, result is a UTF-8 string
 
   // operator+()
   ON_String operator+(const ON_String&) const;
@@ -1175,31 +1194,31 @@ public:
   ON_String operator+(const unsigned char*) const;
 
   // string concatenation
-  void Append( const char*, int ); // append specified number of characters
-  void Append( const unsigned char*, int ); // append specified number of characters
-	const ON_String& operator+=(const ON_String&);
-	const ON_String& operator+=(char);
-	const ON_String& operator+=(unsigned char);
-	const ON_String& operator+=(const char*);
-	const ON_String& operator+=(const unsigned char*);
+  void Append(const char*, int); // append specified number of characters
+  void Append(const unsigned char*, int); // append specified number of characters
+  const ON_String& operator+=(const ON_String&);
+  const ON_String& operator+=(char);
+  const ON_String& operator+=(unsigned char);
+  const ON_String& operator+=(const char*);
+  const ON_String& operator+=(const unsigned char*);
 
   ON_DEPRECATED_MSG("Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate")
-	int Compare( const char* ) const;
+    int Compare(const char*) const;
 
   ON_DEPRECATED_MSG("Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate")
-  int Compare( const unsigned char* ) const;
+    int Compare(const unsigned char*) const;
 
   ON_DEPRECATED_MSG("Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate")
-  int CompareNoCase( const char* ) const;
+    int CompareNoCase(const char*) const;
 
   ON_DEPRECATED_MSG("Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate")
-  int CompareNoCase( const unsigned char* ) const;
+    int CompareNoCase(const unsigned char*) const;
 
   bool Equal(
     const ON_String& other_string,
     const class ON_Locale& locale,
     bool bIgnoreCase
-    ) const;
+  ) const;
 
   bool Equal(
     const char* other_string,
@@ -2704,20 +2723,19 @@ public:
 
   /// <summary>
   /// UNIVERSAL RECYCLING SYMBOL U+2672 (&#x2672;)
-  /// This is a good cold point for testing glyph substitution.
+  /// This is a good code point for testing glyph substitution.
   /// </summary>
   static const wchar_t  RecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_RecyclingSymbol;
 
-
   /// <summary>
   /// BLACK UNIVERSAL RECYCLING SYMBOL U+267B (&#x267b;)
-  /// This is a good cold point for testing glyph substitution.
+  /// This is a good code point for testing glyph substitution.
   /// </summary>
   static const wchar_t  BlackRecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_BlackRecyclingSymbol;
 
   /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
-  /// By convention, U+FFFD is used to mark string elements where 
+  /// By convention, U+FFFD is used to mark string elements where
   /// an invalid UTF code point encoding was encountered.
   /// </summary>
   static const wchar_t  ReplacementCharacter = (wchar_t)ON_UnicodeCodePoint::ON_ReplacementCharacter;
@@ -2750,7 +2768,7 @@ public:
   /// Result to return when c is an ordinary decimal digit (0123456789)
   /// </param>
   /// <param name="bSuperscriptDigitResult">
-  /// Result to return when c is a sperscript decimal digit (0123456789)
+  /// Result to return when c is a superscript decimal digit (0123456789)
   /// </param>
   /// <param name="bSubscriptDigitResult">
   /// Result to return when c is a subscript decimal digit (0123456789)
@@ -2778,11 +2796,11 @@ public:
     c - [in]
       character to test.
     bAcceptOrdinarySign - [in]
-      ordinary + and - signes are acceptable.
+      ordinary + and - signs are acceptable.
     bAcceptSuperscriptSign - [in]
-      superscript + and - signes are acceptable.
+      superscript + and - signs are acceptable.
     bAcceptSubscriptSign - [in]
-      subscript + and - signes are acceptable.
+      subscript + and - signs are acceptable.
   Returns:
     +1 if c is an acceptable plus sign.
     -1 if c is an acceptable minus sign.
@@ -2796,7 +2814,7 @@ public:
     );
 
   /// <summary>
-  /// Determine if c is some type opf Unicode slash (solidus).
+  /// Determine if c is some type of Unicode slash (solidus).
   /// </summary>
   /// <param name="c">
   /// character to test
@@ -2850,11 +2868,11 @@ public:
 
   /*
   Description:
-    Encode this UTF encoded wide charater string to a char string 
+    Encode this UTF encoded wide character string to a char string
     using the multibyte character set (MBCS) specified by windows_code_page.
   Parameters:
     windows_code_page - [in]
-      WIndows code page. For example, big5 = 950.
+      Windows code page. For example, big5 = 950.
   Returns:
     A char string with the specified MBCS encoding.
     Carefully control the scope and use of the returned string. Lacking context,
@@ -2865,21 +2883,21 @@ public:
   const ON_String MultiByteEncode(int windows_code_page) const;
 
 private:
-  // Use IsEmpty() or IsNotEmpty() when you want a bool 
+  // Use IsEmpty() or IsNotEmpty() when you want a bool
   // to test for the empty string.
   explicit operator bool() const { return IsNotEmpty(); }
 public:
 
-// Constructors
-	ON_wString() ON_NOEXCEPT;
-	ON_wString( const ON_wString& );
+  // Constructors
+  ON_wString() ON_NOEXCEPT;
+  ON_wString( const ON_wString& );
 
   enum : int
   {
     // This ON_String::MaximumStringLength value of 100,000,000
     // is used for string length sanity checking in both ON_String and
     // ON_wString.
-    // The design of the ON_String and ON_wString classes could support 
+    // The design of the ON_String and ON_wString classes could support
     // string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
     // a cap of 100 million seems generous enough for current usage
     // and is small enough to detect many corrupt memory
@@ -2896,30 +2914,28 @@ public:
   ON_wString& operator=( ON_wString&& ) ON_NOEXCEPT;
 #endif
 
-	ON_wString( const ON_String& src ); // src = UTF-8 string
+  ON_wString(const ON_String& src); // src = UTF-8 string
 
-	ON_wString( const char* src ); // src = nul; terminated UTF-8 string
-	ON_wString( const char* src, int /*length*/ );  // from UTF-8 substring
-	ON_wString( char, int = 1 /* repeat count */ );   
+  ON_wString(const char* src); // src = nul; terminated UTF-8 string
+  ON_wString(const char* src, int /*length*/);  // from UTF-8 substring
+  ON_wString(char, int = 1 /* repeat count */);
 
-	ON_wString( const unsigned char* src); // src = nul; terminated UTF-8 string
-	ON_wString( const unsigned char*src, int /*length*/ );        // from UTF-8 substring
-	ON_wString( unsigned char, int = 1 /* repeat count */ ); 
-  
-	ON_wString( const wchar_t* );
-	ON_wString( const wchar_t*, int /*length*/ );        // from substring
-	ON_wString( wchar_t, int = 1 /* repeat count */ );   
+  ON_wString(const unsigned char* src); // src = nul; terminated UTF-8 string
+  ON_wString(const unsigned char* src, int /*length*/);        // from UTF-8 substring
+  ON_wString(unsigned char, int = 1 /* repeat count */);
+
+  ON_wString(const wchar_t*);
+  ON_wString(const wchar_t*, int /*length*/);        // from substring
+  ON_wString(wchar_t, int = 1 /* repeat count */);
 
 #if defined(ON_RUNTIME_WIN)
   // Windows support
-	bool LoadResourceString(HINSTANCE, UINT); // load from string resource
-										                        // 2047 characters max
+  bool LoadResourceString(HINSTANCE, UINT); // load from string resource
+                                            // 2047 characters max
 #endif
-
 
 #if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   ON_wString(CFStringRef);
-  
   CFStringRef ToAppleCFString() const;
 #endif
   /*
@@ -3102,7 +3118,7 @@ public:
 
   /*
   Description:
-    Compare this string and other_string by normalizing (NFC) 
+    Compare this string and other_string by normalizing (NFC)
     and using invariant culture ordering.
   Parameters:
     other_string - [in]
@@ -3287,11 +3303,8 @@ public:
       null terminated string
   Remarks:
     1) Windows and UNIX directory separators (/ and \) are considered equal.
-
-    2) Case is ignored when the file system is not case sensitive, like Windows.
-
-    3) String normalization appropriate for the current operating system
-    is performed.
+    2) Case is ignored when the file system is not case sensitive, like on Windows.
+    3) String normalization appropriate for the current operating system is performed.
   */
   int ComparePath(
     const wchar_t* other_path
@@ -3311,11 +3324,8 @@ public:
       null terminated string
   Remarks:
     1) Windows and UNIX directory separators (/ and \) are considered equal.
-
-    2) Case is ignored when the file system is not case sensitive, like Windows.
-
-    3) String normalization appropriate for the current operating system
-    is performed.
+    2) Case is ignored when the file system is not case sensitive, like on Windows.
+    3) String normalization appropriate for the current operating system is performed.
   */
   static int ComparePath(
     const wchar_t* path1,
@@ -3337,11 +3347,8 @@ public:
     maximum_element_count2 - [in]
   Remarks:
     1) Windows and UNIX directory separators (/ and \) are considered equal.
-
-    2) Case is ignored when the file system is not case sensitive, like Windows.
-
-    3) String normalization appropriate for the current operating system
-    is performed.
+    2) Case is ignored when the file system is not case sensitive, like on Windows.
+    3) String normalization appropriate for the current operating system is performed.
   */
   static int ComparePath(
     const wchar_t* path1,
@@ -3403,7 +3410,7 @@ public:
   //
   // Returns:
   //   true if the string mathes the wild card pattern.
-	bool WildCardMatch( const wchar_t* ) const;
+  bool WildCardMatch( const wchar_t* ) const;
 
   // Description:
   //   Simple case insensitive wildcard matching. A question mark (?) in the
@@ -3447,14 +3454,14 @@ public:
 
   /*
   Description:
-    Replace all white-space characters with the token.
+    Replace all whitespace characters with the token.
     If token is zero, the string will end up with
     internal 0's
   Parameters:
     token - [in]
     whitespace - [in] if not null, this is a 0 terminated
       string that lists the characters considered to be 
-      white space.  If null, then (1,2,...,32,127) is used.
+      white space. If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters replaced.
   See Also:
@@ -3464,11 +3471,11 @@ public:
 
   /*
   Description:
-    Removes all white-space characters with the token.
+    Removes all whitespace characters from the string.
   Parameters:
-    whitespace - [in] if not null, this is a 0 terminated
+    whitespace - [in] if not null, this is a zero-terminated
       string that lists the characters considered to be 
-      white space.  If null, then (1,2,...,32,127) is used.
+      white space. If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters removed.
   See Also:
@@ -3676,7 +3683,7 @@ public:
   Parameters:
     bUseUnicodeCodePointsForSpecialCharacters - [in]
       If true, the &#60;, &#62;, &#38;, &#39;, and &#34; encodings are used.
-      If false, the &lt; &gt; &amp;, &apos;, and &quot; encodings are used.
+      If false, the &lt; &gt; &amp; &apos; and &quot; encodings are used.
       When in doubt, pass false.
     bEncodeCodePointsAboveBasicLatin
       If true, any code point >= 0x80 is encoded using the XML &xhhhh; format.
@@ -3703,17 +3710,17 @@ public:
     &amp; is replaced with & (ampersand).
     &apos; is replaced with ' (apostrophe or single quote).
     &quot; is replaced with " (double-quote).
-    &#nnnn; where nnnn is a valid decimal unicode code point is replaced with the wide character encode code point.
-    &#xhhhh; where hhhh is a valid hexadecimal unicode code point is replaced with the wide character encode code point.
+    &#nnnn; where nnnn is a valid decimal unicode code point is replaced with the wide character encoded code point.
+    &#xhhhh; where hhhh is a valid hexadecimal unicode code point is replaced with the wide character encoded code point.
   Returns:
-    This string with every instance of an xml encodecharacter encodeding replaced 
-    with the corresponding wide character encodeing of the literal unicode code point.
+    This string with every instance of an xml character encoding replaced
+    with the corresponding wide character encoding of the literal unicode code point.
   */
   const ON_wString DecodeXMLValue() const;
 
   /*
   Description:
-    Parse one of the following XML chacater encodings.
+    Parse one of the following XML character encodings.
     &#nnnn; (nnnn = one of more decimal digits) is parsed to the unicode code point with decimal value nnnn
     &#xhhhh; (nnnn = one of more hexadecimal digits) is parsed to the unicode code point with hexadecimal value hhhh
     &lt; is parsed to < (less-than).
@@ -3745,7 +3752,6 @@ public:
     unsigned value_on_failure,
     unsigned* unicode_code_point
   );
-
 
   /*
   Description:
@@ -3846,21 +3852,45 @@ public:
     after the vulgar fraction is returned. Otherwise nullptr is returned.
   */
   static const wchar_t* ParseVulgarFraction(
-    const wchar_t* s, 
+    const wchar_t* s,
     int len,
-    int& numerator, 
-    int& denomintor
+    int& numerator,
+    int& denominator
   );
 
-  /// <summary>
-  /// Returns true if c is one of the 5 XML special characters 
-  /// &amp; (ampersand),
-  /// &lt; (less than), 
-  /// &gt; (greater than), 
-  /// &quot; (quotation mark), or 
-  /// &apos; (apostrophe).
-  /// </summary>
+  /*
+  Description:
+    Checks if a string would need to be encoded before being used in XML.
+  Returns:
+    True if the string contains any character that is not allowed in an XML string.
+    Such characters must be encoded before they can appear in the XML string.
+    e.g., a 'less than' angle bracket (<) would be encoded as "&lt;".
+  */
+  bool NeedsXMLEncode(void) const;
+
+  /*
+    Description:
+      Returns true if c is one of the five XML special characters:
+      & (ampersand),
+      < (less than),
+      > (greater than),
+      " (quotation mark),
+      ' (apostrophe).
+  */
   static bool IsXMLSpecialCharacter(wchar_t c);
+
+  /*
+    Description:
+      Returns true if this string is one of the five XML special character encodings:
+      &amp; (ampersand),
+      &lt; (less than),
+      &gt; (greater than),
+      &quot; (quotation mark),
+      &apos; (apostrophe).
+
+      In addition checks for &#10; and returns true if so.
+  */
+  bool IsXMLSpecialCharacterEncoding(void) const;
 
   static wchar_t* Reverse(
     wchar_t* string,
@@ -4235,7 +4265,6 @@ public:
     wchar_t time_separator
   );
 
-
   /*
   Description:
     Convert a list of Unicode code points into a wide string.
@@ -4350,7 +4379,7 @@ public:
   Description:
     A platform independent, secure, culture invariant way to format a wchar_t string
     with support for positional format parameters.
-    This function is provide to be used when it is critical that 
+    This function is designed to be used when it is critical that 
     the formatting be platform independent, secure and culture invarient.
   Parameters:
     buffer - [out] 
@@ -4371,8 +4400,8 @@ public:
   Remarks:
     The way Windows handles the %S (capital S) format parameter depends on locale
     and code page settings.  It is strongly reccommended that you never use %S to
-    include any string that may possibly contain elements with values > 127.  
-    The following examples illustrate a way to predictably use UTF-8 and wchar_t 
+    include any string that may possibly contain elements with values > 127.
+    The following examples illustrate a way to predictably use UTF-8 and wchar_t
     parameters in buffers of the other element type.
 
          const char* utf8_string = ...;
@@ -4633,18 +4662,34 @@ public:
 
   /*
   Description:
-    Expert user funtion to reserve and gain access to string memory.
+    Expert user function to reserve and gain access to string memory.
   Parameters:
     capacity - [in]
       If capacity > ON_String::MaximumStringLength, then nullptr is returned.
       If capacity <= 0, then nullptr is returned.
+  Returns:
+    A pointer to the string buffer or nullptr on failure.
   */
-	wchar_t* ReserveArray(
-    size_t capacity
-  );
+  wchar_t* ReserveArray(size_t capacity);
 
-	void ShrinkArray();     // shrink internal storage to minimum size
-  wchar_t* SetLength(size_t); // set length (<=capacity)
+  /*
+  Description:
+    Shrinks the internal storage to the minimum required size.
+  */
+  void ShrinkArray();
+
+  /*
+  Description:
+    Set the length of the string in characters.
+  Parameters:
+    length - [in]
+    If length > ON_String::MaximumStringLength, then nullptr is returned.
+    If length <= 0, then nullptr is returned.
+  Returns:
+    A pointer to the string buffer or nullptr on failure.
+  */
+  wchar_t* SetLength(size_t);
+
   wchar_t* Array();
   const wchar_t* Array() const;
 
@@ -4658,63 +4703,137 @@ public:
   /*
   Returns:
     Total number of bytes of memory used by this class.
-    (For use in ON_Object::SizeOf() overrides.
+    For use in ON_Object::SizeOf() overrides.
   */
   unsigned int SizeOf() const;
 
   /*
   Returns:
-    CRC of the string.
+    A CRC of the string.
   */
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
   /*
   Returns:
-    CRC of the lower case version of the string. Useful
-    for case insensitive CRCs and hash codes.
+    A CRC of the lower case version of the string.
+    Useful for case insensitive CRCs and hash codes.
   */
   ON__UINT32 DataCRCLower(ON__UINT32 current_remainder) const;
 
   /*
   OBSOLETE - Use ON_FileSystemPath::SplitPath
   */
-  static void SplitPath( 
-    const char* path,
-    ON_wString* drive,
-    ON_wString* dir,
-    ON_wString* fname,
-    ON_wString* ext
-    );
+  static void SplitPath(const  char  * path, ON_wString* drive, ON_wString* dir, ON_wString* fname, ON_wString* ext);
+  static void SplitPath(const wchar_t* path, ON_wString* drive, ON_wString* dir, ON_wString* fname, ON_wString* ext);
 
-  static void SplitPath( 
-    const wchar_t* path,
-    ON_wString* drive,
-    ON_wString* dir,
-    ON_wString* fname,
-    ON_wString* ext
-    );
+  /*
+  Description:
+    Sets the string to a copy of a character array.
+  Returns:
+    This string after being set.
+  */
+  const ON_wString& Set(const wchar_t* wsz, int numChars);
+
+  /*
+  Description:
+    Checks if the string starts with a sub-string (case-sensitive check).
+  Returns:
+    True if the string starts with wszSub.
+  */
+  bool StartsWith(const wchar_t* wszSub) const;
+
+  /*
+  Description:
+    Checks if the string starts with a sub-string (case-insensitive check).
+  Returns:
+    True if the string starts with wszSub.
+  */
+  bool StartsWithNoCase(const wchar_t* wszSub) const;
+
+  /*
+  Description:
+    Counts the number of characters in the string that match a character.
+  Returns:
+    The number of characters in the string that match ch.
+  */
+  int Count(wchar_t ch) const;
+
+  /*
+  Description:
+    Checks if the string contains a substring (case-sensitive check).
+  Params:
+    wszSub [in] - The substring to check.
+  Returns:
+    True if the string contains the substring, else false.
+  */
+  bool Contains(const wchar_t* wszSub) const;
+
+  /*
+  Description:
+    Checks if the string contains a substring (case-insensitive check).
+  Params:
+    wszSub [in] - The substring to check.
+  Returns:
+    True if the string contains the substring, else false.
+  */
+  bool ContainsNoCase(const wchar_t* wszSub) const;
+
+  /*
+  Description:
+    Truncates the string to contain only the characters starting at pos.
+    e.g., "Hello" with pos=2 results in "llo".
+    This is similar to Mid(int) except that the string itself is truncated.
+  Params:
+    pos [in] - The character position to truncate at. Must be inside the string.
+  Returns:
+    True if successful, false on failure.
+  */
+  bool TruncateMid(int pos);
+
+  /*
+  Description:
+    Insert character 'ch' at 'index', 'count' times.
+  Returns:
+    True if successful, false if index or count are invalid.
+  */
+  bool Insert(int index, wchar_t ch, int count);
+
+  /*
+  Description:
+    Insert string 'wsz' at 'index'.
+  Returns:
+    True if successful, false if index or wsz is invalid.
+  */
+  bool Insert(int index, const wchar_t* wsz);
+
+  bool IsValidIntegerNumber(void) const;
+  bool IsValidRealNumber(void) const;
+  bool IsValid4dPoint(void) const;
+  bool IsValid3dPoint(void) const;
+  bool IsValid2dPoint(void) const;
+  bool IsValidMatrix (void) const;
 
 public:
-	~ON_wString();
+  ~ON_wString();
 
 protected:
   // Implementation
-	wchar_t* m_s; // pointer to ref counted string array
+  wchar_t* m_s; // pointer to ref counted string array
                 // m_s - 12 bytes points at the string's ON_wStringHeader
 
-	// implementation helpers
-	class ON_wStringHeader* Header() const;
-	class ON_wStringHeader* IncrementedHeader() const;
-	wchar_t* CreateArray(int);
+  // implementation helpers
+  class ON_wStringHeader* Header() const;
+  class ON_wStringHeader* IncrementedHeader() const;
+  wchar_t* CreateArray(int);
   void CopyArray();
-  void CopyToArray( const ON_wString& );
-  void CopyToArray( int, const char* );
-  void CopyToArray( int, const unsigned char* );
-  void CopyToArray( int, const wchar_t* );
-  void AppendToArray( const ON_wString& );
-  void AppendToArray( int, const char* );
-  void AppendToArray( int, const unsigned char* );
-  void AppendToArray( int, const wchar_t* );
+  void CopyToArray(const ON_wString&);
+  void CopyToArray(int, const char*);
+  void CopyToArray(int, const unsigned char*);
+  void CopyToArray(int, const wchar_t*);
+  void AppendToArray(const ON_wString&);
+  void AppendToArray(int, const char*);
+  void AppendToArray(int, const unsigned char*);
+  void AppendToArray(int, const wchar_t*);
 };
 
 /*

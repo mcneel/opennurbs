@@ -776,7 +776,7 @@ bool ON_DimLinear::GetTextXform(
   text_height = (cp[3].y - cp[0].y) * dimscale;
 
   text_gap = dimstyle->TextGap();
-  if (ON_TextMask::MaskFrame::RectFrame == dimstyle->MaskFrameType())
+  if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
     text_gap = dimstyle->TextMask().MaskBorder();
   text_gap *= dimscale;
 
@@ -2938,7 +2938,7 @@ bool ON_DimAngular::GetTextXform(
   t2dxf.Rotation(textplane, dimplane);     // Rotate text from starting text plane (world xy) to dimension plane
 
   text_gap = dimstyle->TextGap();
-  if (ON_TextMask::MaskFrame::RectFrame == dimstyle->MaskFrameType())
+  if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
     text_gap = dimstyle->TextMask().MaskBorder();
   text_gap *= dimscale;
 
@@ -4131,7 +4131,7 @@ bool ON_DimRadial::GetTextXform(
   text_height = (cp[3].y - cp[0].y) * dimscale;
   line_height = dimstyle->TextHeight() * dimscale;
   text_gap = dimstyle->TextGap();
-  if (ON_TextMask::MaskFrame::RectFrame == dimstyle->MaskFrameType())
+  if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
     text_gap = dimstyle->TextMask().MaskBorder();
   text_gap *= dimscale;
 

@@ -127,7 +127,8 @@
 // places before opennurbs.h or opennurbs_system.h is included.
 // Therefore, this define cannot be in opennurbs_system_runtime.h
 //
-// When ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is defined,
+// When ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is defined and
+// ON_RUNTIME_APPLE_IOS is NOT defined
 // <Cocoa/Cocoa.h> is included by opennurbs_system.h and
 // your project must link with the Apple Cocoa Framework.
 #define ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE
@@ -148,6 +149,7 @@
 // When ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE is defined,
 // Apple Core Text and Core Graphics SDK can be used.
 #define ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE
+#include <CoreText/CoreText.h>
 
 #endif
 
@@ -630,11 +632,12 @@ typedef ON__UINT32 wchar_t;
 
 #endif
 
-#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE)
-// Opennurbs uses NSFont and NSString to load Apple fonts
+#if defined(ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE) && !defined(ON_RUNTIME_APPLE_IOS)
+// Opennurbs uses CTFont and NSString to load Apple fonts
 // int the ON_Font and freetype internals.
 // When ON_RUNTIME_APPLE_OBJECTIVE_C_AVAILABLE is defined, you
-// must link with the Apple Cocoa Framework.
+// must link with the Apple Foundation and CoreText frameworks.
+#define ON_RUNTIME_COCOA_AVAILABLE
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
 #include <Cocoa/Cocoa.h>
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE

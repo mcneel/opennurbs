@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -23,6 +20,54 @@
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
+
+class ON_LayerPrivate
+{
+public:
+  ON_LayerPrivate() = default;
+  bool operator==(const ON_LayerPrivate&) const;
+  bool operator!=(const ON_LayerPrivate&) const;
+
+  ON_UuidList m_clipplane_list;
+  bool m_clipping_proof = false;
+
+  ON::SectionFillRule m_section_fill_rule = ON::SectionFillRule::ClosedCurves;
+  int m_section_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
+  double m_section_hatch_scale = 1.0;
+  double m_section_hatch_rotation = 0.0;
+};
+
+static const ON_LayerPrivate DefaultLayerPrivate;
+
+
+bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
+{
+  if (m_clipplane_list != other.m_clipplane_list)
+    return false;
+
+  if (m_clipping_proof != other.m_clipping_proof)
+    return false;
+
+  if (m_section_fill_rule != other.m_section_fill_rule)
+    return false;
+
+  if (m_section_hatch_index != other.m_section_hatch_index)
+    return false;
+
+  if (m_section_hatch_scale != other.m_section_hatch_scale)
+    return false;
+
+  if (m_section_hatch_rotation != other.m_section_hatch_rotation)
+    return false;
+
+  return true;
+}
+
+bool ON_LayerPrivate::operator!=(const ON_LayerPrivate& other) const
+{
+  return !ON_LayerPrivate::operator==(other);
+}
+
 
 ON_OBJECT_IMPLEMENT(ON_Layer,ON_ModelComponent,"95809813-E985-11d3-BFE5-0010830122F0");
 
@@ -118,6 +163,12 @@ ON_Layer::ON_Layer() ON_NOEXCEPT
   : ON_ModelComponent(ON_ModelComponent::Type::Layer)
 {}
 
+ON_Layer::~ON_Layer()
+{
+  if (m_private)
+    delete m_private;
+}
+
 ON_Layer::ON_Layer( const ON_Layer& src)
   : ON_ModelComponent(ON_ModelComponent::Type::Layer,src)
   , m_iges_level(src.m_iges_level)
@@ -130,7 +181,42 @@ ON_Layer::ON_Layer( const ON_Layer& src)
   , m_plot_weight_mm(src.m_plot_weight_mm)
   , m_bExpanded(src.m_bExpanded)
   , m_extension_bits(src.m_extension_bits)
-{}
+{
+  if (src.m_private)
+  {
+    m_private = new ON_LayerPrivate();
+    *m_private = *src.m_private;
+  }
+}
+
+ON_Layer& ON_Layer::operator=(const ON_Layer& src)
+{
+  if (this != &src)
+  {
+    ON_ModelComponent::operator=(src);
+    m_iges_level = src.m_iges_level;
+    m_material_index = src.m_material_index;
+    m_rendering_attributes = src.m_rendering_attributes;
+    m_linetype_index = src.m_linetype_index;
+    m_color = src.m_color;
+    m_display_material_id = src.m_display_material_id;
+    m_plot_color = src.m_plot_color;
+    m_plot_weight_mm = src.m_plot_weight_mm;
+    m_bExpanded = src.m_bExpanded;
+    m_extension_bits = src.m_extension_bits;
+
+    if (m_private)
+      delete m_private;
+    m_private = nullptr;
+    if (src.m_private)
+    {
+      m_private = new ON_LayerPrivate();
+      *m_private = *src.m_private;
+    }
+  }
+  return *this;
+}
+
 
 static void SetExtensionBit( unsigned char* layer_m_extension_bits, unsigned char mask )
 {
@@ -161,6 +247,10 @@ bool ON_Layer::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
+// 12 Aug 2021 S. Baer
+// When adding new fields written to 3dm files, always add information to this
+// Dump function. Dump is used by the opennurbs file testing framework to
+// perform comparisons and is useful for manual comparison in when tests fail.
 void ON_Layer::Dump( ON_TextLog& dump ) const
 {
   ON_ModelComponent::Dump(dump);
@@ -169,14 +259,64 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   dump.Print("display color rgb = "); dump.PrintRGB(m_color); dump.Print("\n");
   dump.Print("plot color rgb = "); dump.PrintRGB(m_plot_color); dump.Print("\n");
   dump.Print("default material index = %d\n",m_material_index);
+
+  {
+    bool clipAll = true;
+    bool clipNone = false;
+    ON_UuidList cliplist;
+    GetClipParticipation(clipAll, clipNone, cliplist);
+    if (clipAll)
+    {
+      dump.Print("participates with all clipping planes\n");
+    }
+    else if (clipNone)
+    {
+      dump.Print("participates with no clipping planes\n");
+    }
+    else
+    {
+      dump.Print("participates with specific clipping planes\n");
+    }
+  }
+
+  int index = SectionHatchIndex();
+  if (ON_UNSET_INT_INDEX == index)
+  {
+    dump.Print("no section hatch\n");
+  }
+  else
+  {
+    dump.Print("section hatch index = %d\n", index);
+  }
 }
+
+// 28 Sept. 2021
+// This enum is patterned off of ON_3dmObjectAttributeTypeCode
+// Layers will grow with properties at the same rate as ON_3dmObjectAttributes
+// Attribute I/O changed years ago to only write non-default values into
+// 3dm files so we don't end up stuffing repeated data into a 3dm that can be
+// inferred when the data matches default values.
+enum ON_LayerTypeCodes : unsigned char
+{
+  SelectiveClippingData = 28,
+  // 18 Oct 2021 S. Baer
+  // chunk version 1.11: add section hatch attributes
+  SectionHatchIndex = 29,
+  SectionHatchScale = 30,
+  SectionHatchRotation = 31,
+  // 14 June 2022 S. Baer
+  // chunk version 1.12: add section fill rule
+  SectionFillRule = 32,
+  LastLayerTypeCode = 32
+};
 
 bool ON_Layer::Write(
        ON_BinaryArchive& file // serialize definition to binary archive
      ) const
 {
   int i;
-  bool rc = file.Write3dmChunkVersion(1,8);
+
+  bool rc = file.Write3dmChunkVersion(1,12);
   while(rc)
   {
     // Save the visibility state this layer has when its parent
@@ -315,6 +455,69 @@ bool ON_Layer::Write(
 
     // 1.8 field - added 19 Sep 2006
     rc = file.WriteUuid(m_display_material_id);
+    if (!rc) break;
+
+    // 1.10 field - added 29 Sep 2021
+    // using ON_3dmObjectAttributes inspired technique for writing only
+    // non-default values to 3dm files
+    unsigned char c = 0;
+
+    // selective clipping (1.10)
+    {
+      bool forAllClippingPlanes = true;
+      bool forNoClippingPlanes = false;
+      ON_UuidList selectiveList;
+      GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveList);
+      // only write selective clipping data if it is not default
+      if (false == forAllClippingPlanes || true == forNoClippingPlanes || selectiveList.Count() > 0)
+      {
+        c = ON_LayerTypeCodes::SelectiveClippingData;
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteBool(forNoClippingPlanes);
+        if (!rc) break;
+        rc = selectiveList.Write(file);
+        if (!rc) break;
+      }
+    }
+
+    // section hatch (1.11)
+    if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
+    {
+      c = ON_LayerTypeCodes::SectionHatchIndex;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
+      if (!rc) break;
+    }
+    if (SectionHatchScale() != 1.0)
+    {
+      c = ON_LayerTypeCodes::SectionHatchScale;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteDouble(SectionHatchScale());
+      if (!rc) break;
+    }
+    if (SectionHatchRotation() != 0.0)
+    {
+      c = ON_LayerTypeCodes::SectionHatchRotation;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteDouble(SectionHatchRotation());
+      if (!rc) break;
+    }
+    if (SectionFillRule() != ON::SectionFillRule::ClosedCurves)
+    {
+      c = ON_LayerTypeCodes::SectionFillRule;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteChar((unsigned char)SectionFillRule());
+      if (!rc) break;
+    }
+
+    // 0 indicates end of new non-default attributes
+    c = 0;
+    rc = file.WriteChar(c);
 
     break;
   }
@@ -471,6 +674,121 @@ bool ON_Layer::Read(
                 {
                   // 1.8 field - added 19 Sep 2006
                   rc = file.ReadUuid(m_display_material_id);
+
+                  if (rc && minor_version == 9)
+                  {
+                    // 1.9 field - added 11 Aug 2021 and removed on 12 Aug 2021
+                    // Note above that we are looking specifically at minor_version of 9
+                    // read two chars and throw them away.
+                    // minor_version >= 10 should skip this entirely
+                    unsigned char style = 0;
+                    rc = file.ReadChar(&style);
+                    if (rc)
+                    {
+                      style = 0;
+                      rc = file.ReadChar(&style);
+                    }
+                  }
+
+                  if (rc && minor_version >= 10)
+                  {
+                    unsigned char itemid = 0xFF;
+                    while (rc)
+                    {
+                      rc = file.ReadChar(&itemid);
+                      if (!rc) break;
+                      if (0 == itemid)
+                        break;
+
+                      if (ON_LayerTypeCodes::SelectiveClippingData == itemid) //28
+                      {
+                        bool noClippingPlanes = false;
+                        ON_UuidList selectiveList;
+                        rc = file.ReadBool(&noClippingPlanes);
+                        if (!rc) break;
+                        rc = selectiveList.Read(file);
+                        if (!rc) break;
+                        if (noClippingPlanes)
+                          SetClipParticipationForNone();
+                        else if (selectiveList.Count() > 0)
+                          SetClipParticipationList(selectiveList.Array(), selectiveList.Count());
+                        else
+                          SetClipParticipationForAll();
+
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      if (minor_version <= 10)
+                        break;
+
+                      if (ON_LayerTypeCodes::SectionHatchIndex == itemid) // 30
+                      {
+                        int pattern = 0;
+                        rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, &pattern);
+                        if (!rc) break;
+                        SetSectionHatchIndex(pattern);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      if (ON_LayerTypeCodes::SectionHatchScale == itemid) // 31
+                      {
+                        double scale = 1;
+                        rc = file.ReadDouble(&scale);
+                        if (!rc) break;
+                        SetSectionHatchScale(scale);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      if (ON_LayerTypeCodes::SectionHatchRotation == itemid) // 32
+                      {
+                        double rotation = 0;
+                        rc = file.ReadDouble(&rotation);
+                        if (!rc) break;
+                        SetSectionHatchRotation(rotation);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      if (minor_version <= 11)
+                        break;
+
+                      if (ON_LayerTypeCodes::SectionFillRule == itemid)
+                      {
+                        unsigned char c = 0;
+                        rc = file.ReadChar(&c);
+                        if (!rc) break;
+                        SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // break if minor_version<=12. If itemid is non-zero and
+                      // minor_version is not > 12, then we know we have an I/O
+                      // reading bug that needs to be tracked down
+                      if (minor_version <= 12)
+                        break;
+
+                      // Add new item reading above and increment the LastLayerTypeCode value
+                      // in the enum. Be sure to test reading of old and new files by old and new
+                      // code, before checking in your changes.
+                      if (itemid > ON_LayerTypeCodes::LastLayerTypeCode)
+                      {
+                        // we are reading file written with code newer than this code
+                        itemid = 0;
+                      }
+
+                      break;
+                    }
+
+                    if (rc && 0 != itemid)
+                    {
+                      ON_ERROR("Bug in ON_Layer::Read or Write");
+                    }
+
+                  }
                 }
               }
             }
@@ -2002,3 +2320,110 @@ void ON_Layer::UnsetPersistentLocking()
   m_extension_bits &= and_mask;
 }
 
+void ON_Layer::SetClipParticipationForAll()
+{
+  // default is true for all clipping planes. If our private pointer hasn't
+  // been created, there is no need to do anything
+  if (nullptr == m_private)
+    return;
+
+  m_private->m_clipplane_list.Empty();
+  m_private->m_clipping_proof = false;
+}
+void ON_Layer::SetClipParticipationForNone()
+{
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_clipplane_list.Empty();
+  m_private->m_clipping_proof = true;
+}
+void ON_Layer::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count)
+{
+  if (nullptr == clippingPlaneIds || count < 1)
+    SetClipParticipationForAll();
+
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_clipplane_list.Empty();
+  for (int i = 0; i < count; i++)
+    m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
+
+  m_private->m_clipping_proof = false;
+}
+void ON_Layer::GetClipParticipation(
+  bool& forAllClippingPlanes,
+  bool& forNoClippingPlanes,
+  ON_UuidList& specificClipplaneList) const
+{
+  if (nullptr == m_private)
+  {
+    forAllClippingPlanes = true;
+    forNoClippingPlanes = false;
+    specificClipplaneList.Empty();
+    return;
+  }
+
+  specificClipplaneList = m_private->m_clipplane_list;
+  if (specificClipplaneList.Count() > 0)
+  {
+    forAllClippingPlanes = false;
+    forNoClippingPlanes = false;
+  }
+  else
+  {
+    forNoClippingPlanes = m_private->m_clipping_proof;
+    forAllClippingPlanes = !forNoClippingPlanes;
+  }
+}
+
+ON::SectionFillRule ON_Layer::SectionFillRule() const
+{
+  return m_private ? m_private->m_section_fill_rule : DefaultLayerPrivate.m_section_fill_rule;
+}
+void ON_Layer::SetSectionFillRule(ON::SectionFillRule rule)
+{
+  if (SectionFillRule() == rule)
+    return;
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_section_fill_rule = rule;
+}
+
+int ON_Layer::SectionHatchIndex() const
+{
+  return m_private ? m_private->m_section_hatch_index : DefaultLayerPrivate.m_section_hatch_index;
+}
+void ON_Layer::SetSectionHatchIndex(int index)
+{
+  if (SectionHatchIndex() == index)
+    return;
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_section_hatch_index = index;
+}
+
+double ON_Layer::SectionHatchScale() const
+{
+  return m_private ? m_private->m_section_hatch_scale : DefaultLayerPrivate.m_section_hatch_scale;
+}
+void ON_Layer::SetSectionHatchScale(double scale)
+{
+  if (SectionHatchScale() == scale)
+    return;
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_section_hatch_scale = scale;
+}
+
+double ON_Layer::SectionHatchRotation() const
+{
+  return m_private ? m_private->m_section_hatch_rotation : DefaultLayerPrivate.m_section_hatch_rotation;
+}
+void ON_Layer::SetSectionHatchRotation(double rotation)
+{
+  if (SectionHatchRotation() == rotation)
+    return;
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_section_hatch_rotation = rotation;
+}

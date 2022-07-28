@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2013 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_LOCK_INC_)
 #define OPENNURBS_LOCK_INC_
@@ -31,8 +28,11 @@ public:
   ON_Lock() = default;
 #endif
   ~ON_Lock() = default;
-  ON_Lock(const ON_Lock&) = default;
-  ON_Lock& operator=(const ON_Lock&) = default;
+
+  // Copy constructor and operator= are implicitly deleted because
+  // __atomic_base<int, false> has a deleted copy constructor
+  // ON_Lock(const ON_Lock&) = default;
+  // ON_Lock& operator=(const ON_Lock&) = default;
 
   // ON_Lock::InvalidLockValue (= -1) may never be used as a lock value.
   enum : int

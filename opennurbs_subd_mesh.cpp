@@ -1864,7 +1864,7 @@ bool ON_SubD::Internal_GetGeometryControlNetMesh(
         if (face->m_edge_count < 3)
           continue;
 
-        const bool bQuad = 4 == face->m_edge_count;
+        //const bool bQuad = 4 == face->m_edge_count;
 
         for (unsigned short fvi = 0; fvi < face->m_edge_count; fvi++)
         {
@@ -2086,8 +2086,6 @@ bool ON_SubD::Internal_GetTextureCoordinatesGeometryControlNetMesh(
   ON_3dPoint quadP[4];
   if (bSubdivide)
   {
-    ON_3dPoint centerT = ON_3dPoint::NanPoint;
-
     ON_2dVector ngon_sub_pack_rect_size = ON_2dVector::NanVector;
     ON_2dVector ngon_sub_pack_rect_delta = ON_2dVector::NanVector;
     ON_2dPoint quadS[4] = { ON_2dPoint::NanPoint, ON_2dPoint::NanPoint, ON_2dPoint::NanPoint, ON_2dPoint::NanPoint };

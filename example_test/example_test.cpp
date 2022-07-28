@@ -2,7 +2,7 @@
 //
 // Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Assoicates.
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -884,6 +884,9 @@ int main( int argc, const char *argv[] )
   // as a Windows DLL, then you may use either ON::OpenFile() or fopen()
   // to open the file.
 
+  ON_ErrorLog verbose_log;
+  verbose_log.EnableLogging();
+
   ON_String arg(nullptr != argv ? argv[0] : ((const char*)nullptr));
   arg.TrimLeftAndRight();
   const ON_String example_test_exe_path(arg);
@@ -1038,8 +1041,14 @@ int main( int argc, const char *argv[] )
 
   if (err.FailureCount() > 0)
     text_log->Print(" Failures. ");
-  else if (err.ErrorCount() > 0)
-    text_log->Print(" Errors. ");
+  else if (err.ErrorCount() > 0) {
+    text_log->Print(" Errors:\n");
+    for (int vbli = 0; vbli < verbose_log.Count(); vbli++) {
+      text_log->Print("    !! ");
+      text_log->Print(verbose_log.Event(vbli).Description());
+      text_log->Print("\n");
+    }
+  }
   else if (err.FailureCount() > 0)
     text_log->Print(" Warnings. ");
   else

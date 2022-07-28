@@ -15,6 +15,7 @@
 */
 
 #include "opennurbs.h"
+#include "opennurbs_internal_defines.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -412,7 +413,6 @@ const ON_wString ON_Color::ToString(
   return s;
 }
 
-
 void ON_Color::ToText(
   ON_Color::TextFormat format,
   wchar_t separator,
@@ -425,11 +425,7 @@ void ON_Color::ToText(
     text_log.Print(L"%ls", static_cast<const wchar_t*>(s));
 }
 
-ON_ColorStop::ON_ColorStop(const ON_Color& color, double position)
-  : m_color(color)
-  , m_position(position)
-{
-}
+enum { R, G, B, A };
 
 ON_4fColor::ON_4fColor()
 {
@@ -439,50 +435,100 @@ ON_4fColor::ON_4fColor()
   }
 }
 
-//Note that these function will set the alpha correctly from ON_Colors "inverted" alpha.
+ON_4fColor::ON_4fColor(int r, int g, int b, int a)
+{
+  SetRGBA(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+}
+
+ON_4fColor::ON_4fColor(float r, float g, float b, float a)
+{
+  SetRGBA(r, g, b, a);
+}
+
+// Note that this function will set the alpha correctly from ON_Color's 'inverted' alpha.
 ON_4fColor::ON_4fColor(const ON_Color& in)
 {
   *this = in;
 }
 
-ON_4fColor& ON_4fColor::operator=(const ON_Color& in)
+ON_4fColor& ON_4fColor::operator = (const ON_Color& in)
 {
-  SetRed((float)in.FractionRed());
-  SetGreen((float)in.FractionGreen());
-  SetBlue((float)in.FractionBlue());
-  SetAlpha(1.0f - (float)in.FractionAlpha());
+  SetRed  (       float(in.FractionRed()));
+  SetGreen(       float(in.FractionGreen()));
+  SetBlue (       float(in.FractionBlue()));
+  SetAlpha(1.0f - float(in.FractionAlpha()));
+
   return *this;
 }
 
-//Will invert the opacity alpha to transparency.
+bool ON_4fColor::operator == (const ON_4fColor& other)
+{
+  return Compare(other) == 0;
+}
+
+bool ON_4fColor::operator != (const ON_4fColor& other)
+{
+  return Compare(other) != 0;
+}
+
+// Will invert the opacity alpha to transparency.
 ON_4fColor::operator ON_Color(void) const
 {
   ON_Color out;
   out.SetFractionalRGBA(Red(), Green(), Blue(), 1.0 - Alpha());
+
   return out;
 }
 
-float ON_4fColor::Red(void) const   { return m_color[0];}
-void ON_4fColor::SetRed(float f)    { m_color[0] = f;}
+float ON_4fColor::Red(void) const
+{
+  return m_color[R];
+}
 
-float ON_4fColor::Green(void) const { return m_color[1];}
-void ON_4fColor::SetGreen(float f)  { m_color[1] = f;}
+void ON_4fColor::SetRed(float f)
+{
+  m_color[R] = f;
+}
 
-float ON_4fColor::Blue(void) const  { return m_color[2]; }
-void ON_4fColor::SetBlue(float f)   { m_color[2] = f; }
+float ON_4fColor::Green(void) const
+{
+  return m_color[G];
+}
 
-float ON_4fColor::Alpha(void) const { return m_color[3]; }
-void ON_4fColor::SetAlpha(float f)  { m_color[3] = f; }
+void ON_4fColor::SetGreen(float f)
+{
+  m_color[G] = f;
+}
+
+float ON_4fColor::Blue(void) const
+{
+  return m_color[B];
+}
+
+void ON_4fColor::SetBlue(float f)
+{
+  m_color[B] = f;
+}
+
+float ON_4fColor::Alpha(void) const
+{
+  return m_color[A];
+}
+
+void ON_4fColor::SetAlpha(float f)
+{
+  m_color[A] = f;
+}
 
 void ON_4fColor::SetRGBA(float r, float g, float b, float a)
 {
-  m_color[0] = r;
-  m_color[1] = g;
-  m_color[2] = b;
-  m_color[3] = a;
+  m_color[R] = r;
+  m_color[G] = g;
+  m_color[B] = b;
+  m_color[A] = a;
 }
 
-bool ON_4fColor::IsValid(class ON_TextLog* text_log) const
+bool ON_4fColor::IsValid(class ON_TextLog*) const
 {
   for (int i = 0; i < 4; i++)
   {
@@ -493,6 +539,11 @@ bool ON_4fColor::IsValid(class ON_TextLog* text_log) const
 }
 
 
+ON_ColorStop::ON_ColorStop(const ON_Color& color, double position)
+  : m_color(color)
+  , m_position(position)
+{
+}
 
 bool ON_ColorStop::Write(ON_BinaryArchive& archive) const
 {
@@ -540,7 +591,6 @@ bool ON_ColorStop::Read(ON_BinaryArchive& file)
   return rc;
 }
 
-
 static int CompareNans(double a, double b)
 {
   if (a == a)
@@ -565,7 +615,6 @@ static int CompareDouble(double a, double b)
   return ((a < b) ? -1 : ((a > b) ? 1 : (a == b ? 0 : CompareNans(a, b))));
 }
 
-// < 0 if this < arg, 0 ir this==arg, > 0 if this > arg
 int ON_4fColor::Compare(const ON_4fColor& b) const
 {
   int rc = CompareDouble(Red(), b.Red());
@@ -583,4 +632,29 @@ int ON_4fColor::Compare(const ON_4fColor& b) const
   rc = CompareDouble(Alpha(), b.Alpha());
 
   return rc;
+}
+
+void ON_4fColor::BlendTo(float t, const ON_4fColor& col, bool bClampAlpha)
+{
+  const auto t01 = std::max(0.0f, std::min(1.0f, t));
+
+  for (int i = 0; i < 4; i++)
+  {
+    m_color[i] = Lerp(t01, m_color[i], col.m_color[i]);
+  }
+
+  if (bClampAlpha)
+  {
+    m_color[A] = std::max(0.0f, std::min(1.0f, m_color[A]));
+  }
+}
+
+float* ON_4fColor::FloatArray(void)
+{
+  return m_color;
+}
+
+const float* ON_4fColor::FloatArray(void) const
+{
+  return m_color;
 }

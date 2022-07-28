@@ -17,6 +17,8 @@
 #if !defined(OPENNURBS_MESH_INC_)
 #define OPENNURBS_MESH_INC_
 
+#include <vector>
+
 #pragma region RH_C_SHARED_ENUM [ON_SubDComponentLocation] [Rhino.Geometry.SubDComponentLocation] [byte]
   /// <summary>
   /// The ON_SubDComponentLocation enum is used when an ON_SubD component
@@ -896,7 +898,7 @@ public:
   Returns:
     A hash of values that control mesh geometry.
   Remarks:
-    Teh has intentionally ignores 
+    This has intentionally ignored
     m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature, 
     m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
     If you need to include those values, call ContentHash().
@@ -910,7 +912,7 @@ public:
   Returns:
     A hash of values that control mesh geometry.
   Remarks:
-    Teh has intentionally ignores
+    This has intentionally ignored
     m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature,
     m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
     If you need to include those values, call ContentHash().
@@ -1403,11 +1405,10 @@ struct ON_MeshTopologyVertex
 
 struct ON_MeshTopologyEdge
 {
-  // m_topvi[] = indices of the topological verteices where the 
-  // edge begins and ends.
+  // m_topvi[] = indices of the topological vertices where the edge begins and ends.
   int m_topvi[2];
 
-  // m_topf_count = number of topological faces tat share this topological edge
+  // m_topf_count = number of topological faces that share this topological edge.
   int m_topf_count;
 
   // m_topfi[] is an array of length m_topf_count with the indices of the
@@ -2223,7 +2224,40 @@ public:
     ON_SimpleArray<unsigned int>& ngon_vi
     );
 
-  /*
+/*
+Description:
+  Get a list of vertices that form any boundary of a set of faces.
+  This includes inner boundaries.
+Parameters:
+  mesh_vertex_list - [in]
+  mesh_face_list - [in]
+  vertex_face_map - [in]
+    null or a vertex map made from the information in
+    mesh_vertex_list and mesh_face_list.
+  ngon_fi_count - [in]
+    length of ngon_fi[] array
+  ngon_fi - [in]
+    An array of length ngon_fi_count that contains the indices
+    of the faces that form the ngon.
+  ngon_vi - [out]
+    An array of vertex indices that make the ngon boundary.
+  ngon_boundary_markers - [out] indexes into ngon_boundary_points to differiate (inner) boundaries,
+    if empty there is only an outer boundary.
+Returns:
+  Number of vertices in the ngon outer boundary or 0 if the input is
+  not valid.
+*/
+  static unsigned int FindNgonBoundaries(
+    const class ON_3dPointListRef& mesh_vertex_list,
+    const class ON_MeshFaceList& mesh_face_list,
+    ON_MeshVertexFaceMap* vertex_face_map,
+    size_t ngon_fi_count,
+    const unsigned int* ngon_fi,
+    ON_SimpleArray<unsigned int>& ngon_vi, 
+    ON_SimpleArray<unsigned int>& ngon_vi_markers
+  );
+
+/*
 Description:
   Get a list of vertices that form any boundary of a set of faces.
   This includes inner boundaries.
@@ -3882,6 +3916,17 @@ Returns:
       array of meshes to append.
   */
   void Append( int count, const ON_Mesh* const* meshes );
+
+  /*
+  Description:
+    Append a vector of meshes. This function is much more efficient
+    than making repeated calls to ON_Mesh::Append(const ON_Mesh&)
+    when lots of meshes are being joined into a single large mesh.
+  Parameters:
+    meshes - [in]
+      vector of meshes to append.
+  */
+  void Append(std::vector<std::shared_ptr<const ON_Mesh>>);
   
   /*
   Description:
@@ -5465,6 +5510,7 @@ private:
   bool WriteFaceArray( int, int, ON_BinaryArchive& ) const;
   bool ReadFaceArray( int, int, ON_BinaryArchive& );
   bool SwapEdge_Helper( int, bool );
+
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -5560,6 +5606,13 @@ public:
     A reference to the ON_Mesh uniquely managed by this ON_MeshRef.
   */
   class ON_Mesh& UniqueMesh();
+
+  /*
+  Returns:
+    The mesh being managed by this ON_MeshRef.
+    If this ON_MeshRef is not managing an ON_Mesh, then ON_Mesh::Empty is returned.
+  */
+  const std::shared_ptr<class ON_Mesh>& SharedMesh() const;
   
   /*
   Description:

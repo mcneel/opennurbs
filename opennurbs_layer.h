@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_LAYER_INC_)
 #define OPENNURBS_LAYER_INC_
@@ -24,9 +21,9 @@ class ON_CLASS ON_Layer : public ON_ModelComponent
 public:
 
   ON_Layer()  ON_NOEXCEPT;
-  ~ON_Layer() = default;
+  ~ON_Layer();
   ON_Layer(const ON_Layer&);
-  ON_Layer& operator=(const ON_Layer&) = default;
+  ON_Layer& operator=(const ON_Layer&);
 
   static const ON_Layer Unset;   // index = ON_UNSET_INT_INDEX, id = nil
   static const ON_Layer Default; // index = -1, id set, unique and persistent
@@ -255,9 +252,6 @@ public:
   */
   ON_Color PerViewportColor( ON_UUID viewport_id ) const;
 
-  // /* use ON_Layer::PerViewportColor */
-	//ON_DEPRECATED ON_Color Color( const ON_UUID& ) const;
-
   /*
   Description:
     Remove any per viewport layer color setting so the
@@ -285,9 +279,6 @@ public:
 
   void SetPerViewportPlotColor( ON_UUID viewport_id, ON_Color plot_color );
 
-  // /* use ON_Layer::SetPerViewportPlotColor */
-  //ON_DEPRECATED	void SetPlotColor( ON_Color, const ON_UUID& );
-
   /*
   Returns:
     The plotting color used by objects on this layer that do
@@ -305,9 +296,6 @@ public:
     not have a per object color set.
   */
 	ON_Color PerViewportPlotColor( ON_UUID viewport_id ) const;
-
-  // /* use ON_Layer::PerViewportPlotColor */
-  //ON_DEPRECATED	ON_Color PlotColor( const ON_UUID& ) const;
 
   /*
   Description:
@@ -647,9 +635,6 @@ public:
   */
   void SetPerViewportPlotWeight(ON_UUID viewport_id, double plot_weight_mm);
 
-  // /* use ON_Layer::SetPerViewportPlotWeight */
-  // ON_DEPRECATED void SetPlotWeight(double, const ON_UUID& );
-
   /*
   Description:
     Remove any per viewport plot weight setting so the
@@ -670,9 +655,7 @@ public:
   Returns:
     Number of viewport ids that were updated.
   */
-  int UpdateViewportIds( 
-    const ON_UuidPairList& viewport_id_map 
-    );
+  int UpdateViewportIds( const ON_UuidPairList& viewport_id_map );
 
 public:
 
@@ -731,6 +714,55 @@ public:
                     // a tree control then the list of child layers is
                     // shown in the control.
 
+  // Set objects on layer to participate in clipping for all clipping plane objects.
+  // This is the default behavior.
+  void SetClipParticipationForAll();
+
+  // Set objects on layer to be immune from the clipping for all clipping planes.
+  void SetClipParticipationForNone();
+
+  // Set objects on layer to only be clipped by a specific set of clipping planes.
+  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count);
+
+  // Get details on how the objects on layer will interact with clipping planes
+  // Parameters:
+  //   forAllClippingPlanes [out] - if true, the objects interact with all
+  //     clipping planes
+  //   forNoClippingPlanes [out] - if true, the objects are immune from all
+  //     clipping planes
+  //   specificClipplaneList [out] - if the objects interact with only a
+  //     specific set of clipping planes, this list will have the uuids of
+  //     those clipping plane objects
+  void GetClipParticipation(
+    bool& forAllClippingPlanes,
+    bool& forNoClippingPlanes,
+    ON_UuidList& specificClipplaneList) const;
+
+#pragma region Section Attributes
+  // Sections are the product of intersecting a plane with an object.
+  // For surface type geometry (ON_Brep, ON_Extrusion, ON_SubD, ON_Mesh)
+  // this intersection can result in curves as well as hatches for the
+  // closed curves generated
+
+  // When to fill/hatch the sections for an object can depend on the type of
+  // object being sectioned. See ON_SectionFillDecision for the choices of
+  // when to generate hatches.
+  ON::SectionFillRule SectionFillRule() const;
+  void SetSectionFillRule(ON::SectionFillRule rule);
+
+  // Hatch pattern index for hatch to use when drawing a closed section
+  // Default is ON_UNSET_INT_INDEX which means don't draw a hatch
+  int SectionHatchIndex() const;
+  void SetSectionHatchIndex(int index);
+
+  // Scale applied to the hatch pattern for a section
+  double SectionHatchScale() const;
+  void SetSectionHatchScale(double scale);
+
+  // Rotation angle in radians applied to hatch pattern for a section.
+  double SectionHatchRotation() const;
+  void SetSectionHatchRotation(double rotation);
+#pragma endregion
 private:
   // The following information may not be accurate and is subject
   // to change at any time.
@@ -760,7 +792,7 @@ private:
   ON__UINT16 m_reserved = 0;
 
 private:
-  ON__UINT_PTR m_reserved_ptr = 0;
+  mutable class ON_LayerPrivate* m_private = nullptr;
 };
 
 #if defined(ON_DLL_TEMPLATE)

@@ -613,6 +613,19 @@ void ON_SimpleArray<T>::Remove( int i )
 } 
 
 template <class T>
+void ON_SimpleArray<T>::RemoveValue(const T& key)
+{
+  const T* p = &key;
+  int t = 0;
+  for (int i = 0; i < m_count; i++)
+  {
+    if (memcmp(p, m_a + i, sizeof(T)))
+      *(m_a + t++) = *(m_a + i);
+  }
+  m_count = t;
+}
+
+template <class T>
 void ON_SimpleArray<T>::Empty()
 {
   if ( m_a )
@@ -963,6 +976,16 @@ void ON_SimpleArray<T>::MemSet( unsigned char value )
 {
   if ( m_a && m_capacity > 0 ) {
     memset( (void*)(m_a), value, m_capacity*sizeof(T) );
+  }
+}
+
+template <class T>
+void ON_SimpleArray<T>::SetRange(int from, int count, T value)
+{
+  if (m_a && ((from + count) <= m_capacity))
+  {
+    for (int i = 0; i < count; i++)
+      m_a[from + i] = value;
   }
 }
 

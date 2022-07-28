@@ -399,7 +399,6 @@ bool ON_Symmetry::IsValidCyclicTranformation(
   if (false == ZA.IsZero4x4(ON_Symmetry::ZeroTolerance))
     return false;
 
-  const ON_Xform TB = transformation * B;
   const ON_Xform ZB = B - transformation * B;
   if (false == ZB.IsZero4x4(ON_Symmetry::ZeroTolerance))
     return false;
@@ -1097,7 +1096,6 @@ void ON_Symmetry::ToText(
 
   case ON_Symmetry::Type::Reflect:
   {
-    const ON_PlaneEquation e = ReflectionPlane();
     text_log.Print(L"plane: ");
     ReflectionPlane().Dump(text_log);
     text_log.PrintNewLine();
@@ -1118,7 +1116,6 @@ void ON_Symmetry::ToText(
 
   case ON_Symmetry::Type::ReflectAndRotate:
   {
-    const ON_PlaneEquation e = ReflectionPlane();
     text_log.Print(L"plane: ");
     ReflectionPlane().Dump(text_log);
     text_log.PrintNewLine();
@@ -1857,7 +1854,7 @@ const ON_PlaneEquation ON_Symmetry::ReflectAndRotatePlane(
   unsigned int plane_index
 ) const
 {
-  if ( IsSet() && ON_Symmetry::Type::ReflectAndRotate == m_type || plane_index >= 0 && plane_index <= 2)
+  if ( (IsSet() && ON_Symmetry::Type::ReflectAndRotate == m_type) || (plane_index >= 0 && plane_index <= 2))
   {
     const ON_PlaneEquation fixed_plane = FixedPlane();
     if (0 == plane_index)

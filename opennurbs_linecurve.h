@@ -58,6 +58,10 @@ public:
   // virtual ON_Object::DataCRC override
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
+  /*
+      Returns true if !ON_ArePointsCoincident(Start,End) and
+      m_t.IsIncreasing().
+  */
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   void Dump( ON_TextLog& ) const override; // for debugging

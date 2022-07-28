@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,11 +10,9 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_ARRAY_INC_)
 #define ON_ARRAY_INC_
-
 
 
 ////////////////////////////////////////////////////////////////
@@ -152,6 +148,10 @@ public:
                                      // Decrements count by 1.  Does not change
                                      // capacity
 
+  void RemoveValue(const T&);        // Removes elements. Uses memcmp() to compare
+                                     // Decrements count by removed items.  Does 
+                                     // not change capacity
+
   void Empty();           // Sets count to 0, leaves capacity untouched.
 
   void Reverse();         // reverse order
@@ -286,6 +286,11 @@ public:
   // Sets all bytes in array memory to value. 
   // Count and capacity are not changed.
   void MemSet(unsigned char); 
+
+  //////////
+  // Sets all specified items in an array range to a value. 
+  // Count and capacity are not changed.
+  void SetRange(int from, int count, T);
   
   // memory managment ////////////////////////////////////////////////////
 
@@ -831,6 +836,9 @@ public:
   ~ON_UuidList();
   ON_UuidList(const ON_UuidList& src);
   ON_UuidList& operator=(const ON_UuidList& src);
+
+  bool operator==(const ON_UuidList& other) const;
+  bool operator!=(const ON_UuidList& other) const;
 
   /*
   Description:

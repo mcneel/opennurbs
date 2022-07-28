@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,9 +10,9 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
+#include "opennurbs_internal_defines.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -22,19 +20,6 @@
 // When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
-#endif
-
-
-#if defined(ON_COMPILER_MSC)
-// Disable the MSC /W4 warning C4127: conditional expression is constant
-//
-// This file has a lot of for( i = 0; true; i < 123 )...
-// loops where the "true" generates a 4127 warning.
-// This source code has to work on many different
-// compilers I do not trust all of them to correctly
-// compile for( i = 0; /* empty condition*/; i < 123) ...
-#pragma ON_PRAGMA_WARNING_PUSH
-#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4127 )
 #endif
 
 const ONX_ErrorCounter ONX_ErrorCounter::operator+ (
@@ -276,8 +261,6 @@ void ONX_Model::operator delete(void*, void*)
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
 class ONX_ModelComponentReferenceLink
 {
 public:
@@ -294,29 +277,141 @@ public:
   // m_sn = ON_ModelComponent.RuntimeSerialNumber() so sn lookup can be safely used to find runtime pointer.
   // When m_mcr.ModelComponent() is not nullptr, then m_sn = m_mcr.ModelComponent()->RuntimeSerialNumber().
   ON_ModelComponentReference m_mcr;
-  ON__UINT64 m_sn = 0; 
+  ON__UINT64 m_sn = 0;
   ONX_ModelComponentReferenceLink* m_next = nullptr;
   ONX_ModelComponentReferenceLink* m_prev = nullptr;
 };
 
-ONX_Model::ONX_Model()
+enum class RenderContentKinds { Material, Environment, Texture };
+
+const ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& component)
 {
-  for (unsigned int i = 0; i < ONX_MCR_LIST_COUNT; i++)
-  {
-    if (i == static_cast<unsigned int>(ON_ModelComponent::Type::Unset) )
-      continue;
-    if (i == static_cast<unsigned int>(ON_ModelComponent::Type::Mixed) )
-      continue;
-    if (i > static_cast<unsigned int>(ON_ModelComponent::Type::HistoryRecord))
-      break;
-    m_mcr_lists[i].m_component_type = ON_ModelComponent::ComponentTypeFromUnsigned(i);
-  }
+  // To have attributes, the component must be an ON_ModelGeometryComponent.
+  const auto* mgc = ON_ModelGeometryComponent::Cast(&component);
+  if (nullptr == mgc)
+    return nullptr; // Wrong type of component.
+
+  return mgc->Attributes(nullptr);
 }
 
+class ONX_Model::Extension final
+{
+public:
+  Extension(ONX_Model& m);
+  ~Extension();
+
+  using EmbeddedFileMap = std::unordered_map<std::wstring, std::wstring>;
+
+  bool GetRDKDocumentXML(ON_wString& xml, bool embedded_files) const;
+  ONX_Model_UserData* GetRDKDocumentUserData(void) const;
+  void PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const;
+  bool PopulateRDKComponents(void);
+  bool UpdateRDKUserData(void);
+  bool CreateRenderContentFromXML(class ON_XMLNode& model_node, RenderContentKinds kind);
+  bool CreatePostEffectsFromXML(ON_XMLNode& model_node, ON_PostEffect::Types type);
+  bool CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const;
+  bool CreateXMLFromPostEffects(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
+  bool SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud) const;
+  ON_XMLNode* GetRenderContentSectionNode(ON_XMLNode& model_node, RenderContentKinds kind) const;
+  ON_XMLNode* GetPostEffectSectionNode(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
+  static void RemoveAllEmbeddedFiles(ONX_Model& model);
+  static bool GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_wString& xml, ONX_Model* model);
+
+public:
+  ONX_Model& m_model;
+  ON_ClassArray<ONX_ModelComponentList> m_mcr_lists;
+  ON_XMLRootNode m_doc_node;
+  ON_SafeFrame m_safe_frame;
+  ON_GroundPlane m_ground_plane;
+  ON_LinearWorkflow m_linear_workflow;
+  ON_Skylight m_skylight;
+  ON_CurrentEnvironment m_current_environment;
+  ON_Sun m_sun;
+  ON_Dithering m_dithering;
+  ON_RenderChannels m_render_channels;
+  ON_DecalCollection m_decal_collection;
+  ON_MeshModifierCollection m_mesh_modifier_collection;
+  ON__UINT64 m_model_content_version_number = 0;
+};
+
+ON_XMLNode& ON_InternalXMLImpl::Node(void) const
+{
+  if (nullptr != m_model_node)
+    return *m_model_node;
+
+  return m_local_node;
+}
+
+ON_XMLNode& ON_InternalXMLImpl::NodeAt(const wchar_t* path_to_node) const
+{
+  return *Node().CreateNodeAtPath(path_to_node);
+}
+
+ON_XMLVariant ON_InternalXMLImpl::GetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& def) const
+{
+  return InternalGetParameter(path_to_node, param_name, L"", def);
+}
+
+ON_XMLVariant ON_InternalXMLImpl::GetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const
+{
+  return InternalGetParameter(path_to_node, param_name, default_type, def);
+}
+
+ON_XMLVariant ON_InternalXMLImpl::InternalGetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const
+{
+  const auto& node = NodeAt(path_to_node);
+
+  ON_XMLVariant value;
+  ON_XMLParameters p(node);
+  p.SetDefaultReadType(default_type);
+  if (!p.GetParam(param_name, value))
+    return def;
+
+  return value;
+}
+
+bool ON_InternalXMLImpl::SetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value)
+{
+  return InternalSetParameter(path_to_node, param_name, true, value);
+}
+
+bool ON_InternalXMLImpl::SetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value)
+{
+  return InternalSetParameter(path_to_node, param_name, false, value);
+}
+
+bool ON_InternalXMLImpl::InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value)
+{
+  auto& node = NodeAt(path_to_node);
+
+  ON_XMLParameters p(node);
+  p.SetWriteTypeProperty(write_type);
+  if (nullptr == p.SetParam(param_name, value))
+    return false;
+
+#ifdef DEBUG_XML
+  auto s = m_local_node.String();
+  if (s.IsNotEmpty())
+  {
+    OutputDebugString(s);
+    OutputDebugString(L"\n");
+  }
+#endif
+
+  return true;
+}
+
+ONX_Model::ONX_Model()
+{
+  m_extension = new Extension(*this);
+}
 
 ONX_Model::~ONX_Model()
 {
   Reset();
+
+  delete m_extension;
+  m_extension = nullptr;
 }
 
 void ONX_Model::Reset()
@@ -329,20 +424,21 @@ void ONX_Model::Reset()
 
   for (unsigned int i = 0; i < m_userdata_table.UnsignedCount(); i++)
   {
-    ONX_Model_UserData* p = m_userdata_table[i];
-    if ( nullptr == p)
-      continue;
-    delete p;
+    delete m_userdata_table[i];
   }
   m_userdata_table.Destroy();
 
-  for (unsigned int i = 0; i < ONX_MCR_LIST_COUNT; i++)
+  for (int i = 0; i < m_extension->m_mcr_lists.Count(); i++)
   {
-    ONX_ModelComponentList& list = m_mcr_lists[i];
-    for (ONX_ModelComponentReferenceLink* mcr_link = list.m_first_mcr_link; nullptr != mcr_link; mcr_link = mcr_link->m_next)
+    ONX_ModelComponentList& list = m_extension->m_mcr_lists[i];
+
+    ONX_ModelComponentReferenceLink* mcr_link = list.m_first_mcr_link;
+    while (nullptr != mcr_link)
     {
       mcr_link->m_mcr = ON_ModelComponentReference::Empty;
+      mcr_link = mcr_link->m_next;
     }
+
     list.m_first_mcr_link = nullptr;
     list.m_last_mcr_link = nullptr;
   }
@@ -1264,10 +1360,8 @@ ON_ModelComponentReference ONX_Model::AddModelComponent(
   }
   
   ON_ModelComponent* candidate_model_component = nullptr;
-  if (
-    ON_ModelComponent::Type::RenderLight == component_type
-    || ON_ModelComponent::Type::ModelGeometry == component_type
-    )
+  if (ON_ModelComponent::Type::RenderLight   == component_type ||
+      ON_ModelComponent::Type::ModelGeometry == component_type)
   {
     const ON_ModelGeometryComponent* model_geometry = ON_ModelGeometryComponent::Cast(&model_component);   
     if (nullptr != model_geometry)
@@ -1278,7 +1372,7 @@ ON_ModelComponentReference ONX_Model::AddModelComponent(
   }
   else
   {
-    // Something simple like ON_Layer, ON_DimStyle, ... etc
+    // Something simple like ON_Layer, ON_DimStyle, ON_RenderContent, etc
     candidate_model_component = model_component.Duplicate();
   }
 
@@ -1601,22 +1695,22 @@ ONX_Model::ONX_ModelComponentList& ONX_Model::Internal_ComponentList(
   ON_ModelComponent::Type component_type
   )
 {
-  const unsigned int i = static_cast<unsigned int>(component_type);
+  const int i = static_cast<unsigned int>(component_type);
   return
-    (i < ONX_Model::ONX_MCR_LIST_COUNT) 
-    ? m_mcr_lists[i]
-    : m_mcr_lists[0];
+    (i < ONX_Model::m_extension->m_mcr_lists.Count())
+    ? m_extension->m_mcr_lists[i]
+    : m_extension->m_mcr_lists[0];
 }
 
 const ONX_Model::ONX_ModelComponentList& ONX_Model::Internal_ComponentListConst(
   ON_ModelComponent::Type component_type
   ) const
 {
-  const unsigned int i = static_cast<unsigned int>(component_type);
+  const int i = static_cast<unsigned int>(component_type);
   return
-    (i < ONX_Model::ONX_MCR_LIST_COUNT) 
-    ? m_mcr_lists[i]
-    : m_mcr_lists[0];
+    (i < ONX_Model::m_extension->m_mcr_lists.Count())
+    ? m_extension->m_mcr_lists[i]
+    : m_extension->m_mcr_lists[0];
 }
 
 ON_ModelComponentReference ONX_Model::Internal_AddModelComponent(
@@ -1826,54 +1920,73 @@ ON_ModelComponentReference ONX_Model::Internal_AddModelComponent(
   return ON_ModelComponentReference::Empty;
 }
 
-ON_ModelComponentReference ONX_Model::RenderMaterialFromAttributes(
+/* ON_DEPRECATED */ ON_ModelComponentReference ONX_Model::RenderMaterialFromAttributes(const ON_3dmObjectAttributes& attr) const
+{
+  return MaterialFromAttributes(attr);
+}
+
+/* ON_DEPRECATED */ ON_ModelComponentReference ONX_Model::RenderMaterialFromLayerIndex(int index) const
+{
+  return MaterialFromLayerIndex(index);
+}
+
+/* ON_DEPRECATED */ ON_ModelComponentReference ONX_Model::RenderMaterialFromIndex(int index) const
+{
+  return MaterialFromIndex(index);
+}
+
+/* ON_DEPRECATED */ ON_ModelComponentReference ONX_Model::RenderMaterialFromId(ON_UUID id) const
+{
+  return MaterialFromId(id);
+}
+
+ON_ModelComponentReference ONX_Model::MaterialFromAttributes(
   const ON_3dmObjectAttributes& attributes
   ) const
 {
   switch ( attributes.MaterialSource() )
   {
   case ON::material_from_layer:
-    return RenderMaterialFromLayerIndex( attributes.m_layer_index );
+    return MaterialFromLayerIndex( attributes.m_layer_index );
     break;
 
   case ON::material_from_object:
-    return RenderMaterialFromIndex( attributes.m_material_index );
+    return MaterialFromIndex( attributes.m_material_index );
     break;
 
   case ON::material_from_parent:
     // TODO: If object is an idef, get material from iref attributes.
-    return RenderMaterialFromIndex( attributes.m_material_index );
+    return MaterialFromIndex( attributes.m_material_index );
     break;
   }
 
   return m_default_render_material;
 }
 
-ON_ModelComponentReference ONX_Model::RenderMaterialFromLayerIndex(
+ON_ModelComponentReference ONX_Model::MaterialFromLayerIndex(
   int layer_index
   ) const
 {
-  int render_material_index = ON_Layer::FromModelComponentRef(
+  int material_index = ON_Layer::FromModelComponentRef(
     LayerFromIndex(layer_index),
     &ON_Layer::Default
     )->RenderMaterialIndex();
-  return RenderMaterialFromIndex(render_material_index);
+  return MaterialFromIndex(material_index);
 }
 
-
-ON_ModelComponentReference ONX_Model::RenderMaterialFromIndex(
-  int render_material_index
+ON_ModelComponentReference ONX_Model::MaterialFromIndex(
+  int material_index
   ) const
 {
-  ON_ModelComponentReference cr = ComponentFromIndex(ON_ModelComponent::Type::RenderMaterial, render_material_index);
+  ON_ModelComponentReference cr = ComponentFromIndex(ON_ModelComponent::Type::RenderMaterial, material_index);
   return cr.IsEmpty() ? m_default_render_material : cr;
 }
 
-ON_ModelComponentReference ONX_Model::RenderMaterialFromId( 
-  ON_UUID render_material_id
+ON_ModelComponentReference ONX_Model::MaterialFromId(
+  ON_UUID material_id
   ) const
 {
-  ON_ModelComponentReference cr = ComponentFromId(ON_ModelComponent::Type::RenderMaterial, render_material_id);
+  ON_ModelComponentReference cr = ComponentFromId(ON_ModelComponent::Type::RenderMaterial, material_id);
   return cr.IsEmpty() ? m_default_render_material : cr;
 }
 
@@ -1894,7 +2007,7 @@ ON_Color ONX_Model::WireframeColorFromAttributes(
     break;
 
   case ON::color_from_material:
-    color = ON_Material::FromModelComponentRef( RenderMaterialFromAttributes(attributes), &ON_Material::Default)->Diffuse();
+    color = ON_Material::FromModelComponentRef( MaterialFromAttributes(attributes), &ON_Material::Default)->Diffuse();
     break;
 
   case ON::color_from_parent:
@@ -2027,12 +2140,11 @@ void ONX_Model::Dump(ON_TextLog& dump) const
 
 void ONX_Model::DumpComponentLists( ON_TextLog& dump ) const
 {
-  const ON_ModelComponent::Type table_types[]
-    = 
+  const ON_ModelComponent::Type table_types[] =
   {
     ON_ModelComponent::Type::Image,
     ON_ModelComponent::Type::TextureMapping,
-    ON_ModelComponent::Type::RenderMaterial,
+    ON_ModelComponent::Type::Material,
     ON_ModelComponent::Type::LinePattern,
     ON_ModelComponent::Type::Layer,
     ON_ModelComponent::Type::Group,
@@ -2042,6 +2154,9 @@ void ONX_Model::DumpComponentLists( ON_TextLog& dump ) const
     ON_ModelComponent::Type::HatchPattern,
     ON_ModelComponent::Type::ModelGeometry,
     ON_ModelComponent::Type::HistoryRecord,
+    ON_ModelComponent::Type::RenderContent,
+    ON_ModelComponent::Type::EmbeddedFile,
+    ON_ModelComponent::Type::PostEffect,
     ON_ModelComponent::Type::Unset // list terminator
   };
 
@@ -2088,41 +2203,39 @@ int ON__CIndexPair::CompareOldAndNewIndex( const ON__CIndexPair* a, const ON__CI
   return i;
 }
 
-bool ONX_Model::Read( 
-       const char* filename,
-       ON_TextLog* error_log
-       )
+bool ONX_Model::Read(const char* filename, ON_TextLog* error_log)
 {
   bool rc = false;
-  if ( nullptr != filename )
+
+  if (nullptr != filename)
   {
-    FILE* fp = ON::OpenFile(filename,"rb");
+    FILE* fp = ON::OpenFile(filename, "rb");
     if ( 0 != fp )
     {
       ON_BinaryFile file(ON::archive_mode::read3dm,fp);
-      rc = Read(file,error_log);
+      rc = Read(file, error_log);
       ON::CloseFile(fp);
     }
   }
+
   return rc;
 }
 
-bool ONX_Model::Read( 
-       const wchar_t* filename,
-       ON_TextLog* error_log
-       )
+bool ONX_Model::Read(const wchar_t* filename, ON_TextLog* error_log)
 {
   bool rc = false;
-  if ( nullptr != filename )
+
+  if (nullptr != filename)
   {
-    FILE* fp = ON::OpenFile(filename,L"rb");
+    FILE* fp = ON::OpenFile(filename, L"rb");
     if ( 0 != fp )
     {
       ON_BinaryFile file(ON::archive_mode::read3dm,fp);
-      rc = Read(file,error_log);
+      rc = Read(file, error_log);
       ON::CloseFile(fp);
     }
   }
+
   return rc;
 }
 
@@ -2611,12 +2724,12 @@ bool ONX_Model::IncrementalReadModelGeometry(
     break;
   case ON_3dmArchiveTableStatus::TableState::Finished:
     {
-      ON_ERROR("Geoemtry table has already been read from archive.");
+      ON_ERROR("Geometry table has already been read from archive.");
       return false;
     }
   default:
     {
-      ON_ERROR("Geoemtry table reading error.");
+      ON_ERROR("Geometry table reading error.");
       return false;
     }
   }
@@ -2835,115 +2948,103 @@ bool ONX_Model::Read(
   return rc;
 }
 
-bool ONX_Model::Read( 
-       ON_BinaryArchive& archive,
-       unsigned int table_filter,
-       unsigned int model_object_type_filter,
-       ON_TextLog* error_log
-       )
+bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
+                     unsigned int model_object_type_filter, ON_TextLog* error_log)
 {
+  // STEPS 1 to 14: REQUIRED.
   const bool bManageComponents = true;
-  const bool bManageGeometry = true;
-  const bool bManageAttributes = true;
-  for(;;)
+  IncrementalReadBegin(archive, bManageComponents, table_filter, error_log);
+  if (0 != archive.CriticalErrorCount())
+    return false;
+
+  // STEP 15: REQUIRED - Read object (geometry and annotation) table.
+  if (0 == (static_cast<unsigned int>(ON_3dmArchiveTableType::object_table) & table_filter))
   {
-    IncrementalReadBegin( archive, bManageComponents, table_filter, error_log);
-
-    if ( 0 != archive.CriticalErrorCount() )
-      break;
-
-    // STEP 15: REQUIRED - Read object (geometry and annotation) table
-    if ( 0 == (static_cast<unsigned int>(ON_3dmArchiveTableType::object_table) & table_filter) )
+    const bool bManageGeometry = true;
+    const bool bManageAttributes = true;
+    for (;;)
     {
-      for(;;) 
-      {
-        ON_ModelComponentReference model_geometry_reference;
-        if ( false == IncrementalReadModelGeometry(archive, bManageComponents, bManageGeometry, bManageAttributes, model_object_type_filter, model_geometry_reference) )
-          break; // catestrophic error
-        if (model_geometry_reference.IsEmpty())
-          break; // no more geometry;
-      }
-      if ( 0 != archive.CriticalErrorCount() )
-        break;
+      ON_ModelComponentReference model_geometry_reference;
+
+      if (!IncrementalReadModelGeometry(archive, bManageComponents, bManageGeometry, bManageAttributes,
+                                        model_object_type_filter, model_geometry_reference))
+        break; // Catastrophic error.
+
+      if (model_geometry_reference.IsEmpty())
+        break; // No more geometry.
     }
 
-    IncrementalReadFinish(archive, bManageComponents, table_filter, error_log);
-    if ( 0 != archive.CriticalErrorCount() )
-      break;
-
-    break;
+    if (0 != archive.CriticalErrorCount())
+      return false;
   }
 
-  return ( 0 == archive.CriticalErrorCount() && 0 == archive.BadCRCCount() );
+  IncrementalReadFinish(archive, bManageComponents, table_filter, error_log);
+  if (0 != archive.CriticalErrorCount())
+    return false;
+
+  if (0 != archive.BadCRCCount())
+    return false;
+
+  // Having read the model data, populate the RDK components.
+  m_extension->PopulateRDKComponents();
+
+  return true;
 }
 
-bool ONX_Model::Read( 
-       ON_BinaryArchive& archive,
-       ON_TextLog* error_log
-       )
+bool ONX_Model::Read(ON_BinaryArchive& archive, ON_TextLog* error_log)
 {
   unsigned int table_filter = 0; // read every table
   unsigned int model_object_type_filter = 0; // read every type of object
-  return Read(archive,table_filter,model_object_type_filter,error_log);
+  return Read(archive, table_filter, model_object_type_filter, error_log);
 }
 
-bool ONX_Model::Write( 
-  const char* filename,
-  int version,
-  ON_TextLog* error_log
-  ) const
+bool ONX_Model::Write(const char* filename, int version, ON_TextLog* error_log) const
 {
   bool rc = false;
-  if ( nullptr != filename && 0 != filename[0] )
-  {
 
-    FILE* fp = ON::OpenFile( filename, "wb" );
-    if ( 0 != fp )
+  if (nullptr != filename && 0 != filename[0])
+  {
+    FILE* fp = ON::OpenFile(filename, "wb");
+    if (nullptr != fp)
     {
-      ON_BinaryFile file( ON::archive_mode::write3dm, fp );
+      ON_BinaryFile file(ON::archive_mode::write3dm, fp);
       const ON_wString wFileName(filename);
       file.SetArchiveFullPath(static_cast<const wchar_t*>(wFileName));
-      rc = Write( file, version, error_log );
+      rc = Write(file, version, error_log);
       ON::CloseFile(fp);
     }
   }
+
   return rc;
 }
 
-bool ONX_Model::Write( 
-  const wchar_t* filename,
-  int version,
-  ON_TextLog* error_log
-  ) const
+bool ONX_Model::Write(const wchar_t* filename, int version, ON_TextLog* error_log) const
 {
   bool rc = false;
-  if ( nullptr != filename && 0 != filename[0] )
-  {
 
-    FILE* fp = ON::OpenFile( filename, L"wb" );
-    if ( 0 != fp )
+  if (nullptr != filename && 0 != filename[0])
+  {
+    FILE* fp = ON::OpenFile(filename, L"wb");
+    if (nullptr != fp)
     {
-      ON_BinaryFile file( ON::archive_mode::write3dm, fp );
+      ON_BinaryFile file(ON::archive_mode::write3dm, fp);
       file.SetArchiveFullPath(filename);
-      rc = Write( file, version, error_log );
+      rc = Write(file, version, error_log);
       ON::CloseFile(fp);
     }
   }
+
   return rc;
 }
 
-
-bool ONX_Model::Write( 
-  ON_BinaryArchive& archive,
-  int version,
-  ON_TextLog* error_log
-  ) const
+bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_log) const
 {
+  m_extension->UpdateRDKUserData();
+
   if ( 0 != version )
   {
-    if ( 
-      version < 2
-      || version > ON_BinaryArchive::CurrentArchiveVersion()
+    if (  version < 2
+      ||  version > ON_BinaryArchive::CurrentArchiveVersion()
       || (version < 50 && version > ON_BinaryArchive::CurrentArchiveVersion()/10)
       || (version >= 50 && 0 != (version % 10))
       )
@@ -2956,8 +3057,7 @@ bool ONX_Model::Write(
 
   if ( !archive.WriteMode() )
   {
-    // You passed in a bogus archive.  You must pass ON::archive_mode::write3dm to the
-    // archive constructor.
+    // You passed in a bogus archive. You must pass ON::archive_mode::write3dm to the archive constructor.
     if ( error_log) error_log->Print("ONX_Model::Write archive.Mode() is not ON::archive_mode::write3dm.\n"
                     "See ONX_Model::Write example in the header file.\n");
     return false;
@@ -3022,7 +3122,6 @@ bool ONX_Model::Write(
     }
   } 
 
-
   if ( !archive.EndWrite3dmBitmapTable() )
   {
     if ( error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmBitmapTable() failed.\n");
@@ -3031,7 +3130,8 @@ bool ONX_Model::Write(
   if (!ok)
     return false;
 
-  // RENDER TEXTURE MAPPING TABLE
+
+  // TEXTURE MAPPING TABLE
   if ( archive.Archive3dmVersion() >= 4 )
   {
     ok = archive.BeginWrite3dmTextureMappingTable();
@@ -3063,7 +3163,7 @@ bool ONX_Model::Write(
       return false;
   }
 
-  // RENDER MATERIAL TABLE
+  // MATERIAL TABLE
   ok = archive.BeginWrite3dmMaterialTable();
   if ( !ok )
   {
@@ -3083,7 +3183,7 @@ bool ONX_Model::Write(
       if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmMaterialComponent() failed.\n");
     }
   } 
-    
+
   if ( !archive.EndWrite3dmMaterialTable() )
   {
     if ( error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmMaterialTable() failed.\n");
@@ -3091,7 +3191,6 @@ bool ONX_Model::Write(
   }
   if (!ok)
     return false;
-
 
   // LINETYPE TABLE
   if ( archive.Archive3dmVersion() >= 4 )
@@ -3252,7 +3351,6 @@ bool ONX_Model::Write(
   if (!ok)
     return false;
 
-
   // HATCH PATTERN TABLE
   if ( archive.Archive3dmVersion() >= 4 )
   {
@@ -3285,7 +3383,6 @@ bool ONX_Model::Write(
       return false;
   }
 
-
   // INSTANCE DEFINITION TABLE
   if ( archive.Archive3dmVersion() >= 3 )
   {
@@ -3317,7 +3414,6 @@ bool ONX_Model::Write(
       return false;
   }
 
-
   // OBJECT TABLE
   ok = archive.BeginWrite3dmObjectTable();
   if ( !ok )
@@ -3346,7 +3442,6 @@ bool ONX_Model::Write(
   }
   if (!ok)
     return false;
-
 
   // HISTORY RECORD TABLE
   if ( archive.Archive3dmVersion() >= 4 )
@@ -3514,12 +3609,12 @@ int ONX_Model::UsesIDef(
 
 ON__UINT64 ONX_Model::ModelContentVersionNumber() const
 {
-  return m_model_content_version_number;
+  return m_extension->m_model_content_version_number;
 }
 
 void ONX_Model::Internal_IncrementModelContentVersionNumber()
 {
-  m_model_content_version_number++;
+  m_extension->m_model_content_version_number++;
 }
 
 bool ONX_Model::SetDocumentUserString( const wchar_t* key, const wchar_t* string_value )
@@ -3770,385 +3865,6 @@ unsigned int ONX_ModelComponentIterator::ActiveComponentCount() const
 {
   return (nullptr != m_list) ? m_list->m_count : 0;
 }
-
-
-static const ON_UnknownUserData* RDKObjectUserDataHelper(const ON_UserData* objectud)
-{
-  // CRhRdkUserData object id: AFA82772-1525-43dd-A63C-C84AC5806911
-  // CRhRdkUserData::m_userdata_uuid = B63ED079-CF67-416c-800D-22023AE1BE21
-
-  // CRhRdkUserData object id
-  // {AFA82772-1525-43dd-A63C-C84AC5806911}
-  static const ON_UUID CRhRdkUserData_object_id = 
-  { 0xAFA82772, 0x1525, 0x43dd, { 0xA6, 0x3C, 0xC8, 0x4A, 0xC5, 0x80, 0x69, 0x11 } };
-
-  // CRhRdkUserData::m_userdata_uuid
-  // {B63ED079-CF67-416c-800D-22023AE1BE21}
-  static const ON_UUID CRhRdkUserData_userdata_uuid = 
-  { 0xB63ED079, 0xCF67, 0x416c, { 0x80, 0x0D, 0x22, 0x02, 0x3A, 0xE1, 0xBE, 0x21 } };
-  
-  const ON_UnknownUserData* unknown_ud = ON_UnknownUserData::Cast(objectud);
-  
-  bool rc = ( 0 != unknown_ud 
-              && unknown_ud->m_sizeof_buffer > 0
-              && 0 != unknown_ud->m_buffer
-              && 0 == ON_UuidCompare(CRhRdkUserData_object_id,unknown_ud->m_unknownclass_uuid)
-              && 0 == ON_UuidCompare(CRhRdkUserData_userdata_uuid,unknown_ud->m_userdata_uuid)
-            );
-  return rc ? unknown_ud : 0;
-}
-
-bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud)
-{
-  return 0 != RDKObjectUserDataHelper(&objectud);
-}
-
-bool ONX_Model::GetRDKObjectInformation(const ON_Object& object,ON_wString& rdk_xml_object_data)
-{
-  rdk_xml_object_data.SetLength(0);
-  const ON_UnknownUserData* unknown_ud = 0;
-  const ON_UserData* ud = ON_UserData::Cast(&object);
-  if ( 0 != ud )
-  {
-    unknown_ud = RDKObjectUserDataHelper(ud);
-  }
-  else
-  {
-    for ( ud = object.FirstUserData(); 0 != ud && 0 == unknown_ud; ud = ud->Next() )
-    {
-      unknown_ud = RDKObjectUserDataHelper(ud);
-    }
-  }
-
-  if ( 0 == unknown_ud )
-    return false;
-
-  ON_Read3dmBufferArchive a(unknown_ud->m_sizeof_buffer, unknown_ud->m_buffer, false, unknown_ud->m_3dm_version, unknown_ud->m_3dm_opennurbs_version_number);
-  int version = 0;
-  if (!a.ReadInt(&version) )
-    return false;
-  
-  if ( 1 == version )
-  {
-    if ( !a.ReadString(rdk_xml_object_data) )
-      return false;
-  }
-  else if ( 2 == version )
-  {
-    // UTF8 string
-    ON_SimpleArray< char > s;
-    int slen = 0;
-    if ( !a.ReadInt(&slen) )
-      return false;
-    if ( slen <= 0 )
-      return false;
-    if ( slen + 4 > unknown_ud->m_sizeof_buffer )
-      return false;
-    s.Reserve(slen+1);
-    s.SetCount(slen+1);
-    s[slen] = 0;
-    if ( !a.ReadChar(slen,s.Array() ) ) 
-      return false;
-    const char* sArray = s.Array();
-    if ( 0 != sArray && 0 != sArray[0] )
-    {
-      unsigned int error_status = 0;
-      int wLen = ON_ConvertUTF8ToWideChar(false,sArray,-1,0,0,&error_status,0,0,0);
-      if ( wLen > 0 && 0 == error_status )
-      {
-        rdk_xml_object_data.SetLength(wLen+2);
-        wLen = ON_ConvertUTF8ToWideChar(false,sArray,-1,rdk_xml_object_data.Array(),wLen+1,&error_status,0,0,0);
-        if ( wLen > 0 && 0 == error_status )
-          rdk_xml_object_data.SetLength(wLen);
-        else
-          rdk_xml_object_data.SetLength(0);
-      }
-      if ( 0 != error_status )
-      {
-        ON_ERROR("RDK xml object information is not a valid UTF-8 string.");
-      }
-    }
-  }
-
-  return rdk_xml_object_data.Length() > 0;
-}
-
-bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
-{
-  // {16592D58-4A2F-401D-BF5E-3B87741C1B1B}
-  static const ON_UUID rdk_plugin_id = 
-  { 0x16592D58, 0x4A2F, 0x401D, { 0xBF, 0x5E, 0x3B, 0x87, 0x74, 0x1C, 0x1B, 0x1B } };
-
-  return ( 0 == ON_UuidCompare(rdk_plugin_id,docud.m_uuid) && docud.m_goo.m_value >= 4 && 0 != docud.m_goo.m_goo );
-}
-
-bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers)
-{
-  ON_SimpleArray<size_t> dummy;
-  return GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, dummy);
-}
-
-
-//Returns the number of embedded files
-static unsigned int SkipArchiveToFiles(ON_Read3dmBufferArchive& archive, int iGooLen)
-{
-  if (!archive.ReadMode())
-    return 0;
-
-  int version = 0;
-  if (!archive.ReadInt(&version))
-    return 0;
-
-  if (4 != version)
-    return 0;
-
-  //Read out the document data, and throw it away.
-  {
-    int slen = 0;
-    if (!archive.ReadInt(&slen))
-      return 0;
-    if (slen <= 0)
-      return 0;
-    if (slen + 4 > iGooLen)
-      return 0;
-    ON_String s;
-    s.SetLength(slen);
-    if (!archive.ReadChar(slen, s.Array()))
-      return 0;
-  }
-
-  unsigned int iCount = 0;
-  if (!archive.ReadInt(&iCount))
-    return 0;
-
-  return iCount;
-}
-
-static bool SeekPastCompressedBuffer(ON_BinaryArchive& archive)
-{
-  if (!archive.ReadMode())
-    return false;
-
-  bool rc = false;
-  unsigned int buffer_crc0 = 0;
-  char method = 0;
-
-  size_t sizeof__outbuffer;
-  if (!archive.ReadCompressedBufferSize(&sizeof__outbuffer))
-    return false;
-
-  if (0 == sizeof__outbuffer)
-    return true;
-
-  if (!archive.ReadInt(&buffer_crc0)) // 32 bit crc of uncompressed buffer
-    return false;
-
-  if (!archive.ReadChar(&method))
-    return false;
-
-  if (method != 0 && method != 1)
-    return false;
-
-  switch (method)
-  {
-  case 0: // uncompressed
-    rc = archive.SeekForward(sizeof__outbuffer);
-    break;
-  case 1: // compressed
-  {
-    ON__UINT32 tcode = 0;
-    ON__INT64  big_value = 0;
-    rc = archive.BeginRead3dmBigChunk(&tcode, &big_value);
-    if (rc)
-      rc = archive.EndRead3dmChunk();
-  }
-  break;
-  }
-
-  return rc;
-}
-
-bool ONX_Model::GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths)
-{
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
-    return false;
-
-  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
-
-  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
-
-  if (0 == iCount)
-    return false;
-
-  for (unsigned int i = 0; i < iCount; i++)
-  {
-    ON_wString sPath;
-    if (!a.ReadString(sPath))
-      return false;
-
-    paths.Append(sPath);
-
-    SeekPastCompressedBuffer(a);
-  }
-
-  return paths.Count() > 0;
-}
-
-bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes)
-{
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
-    return false;
-
-  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
-
-  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
-  
-  if (0 == iCount)
-    return false;
-
-  int unpacked = 0;
-
-  for (unsigned int i = 0; i < iCount; i++)
-  {
-    ON_wString sPath;
-    if (!a.ReadString(sPath))
-      return false;
-
-    size_t size;
-    if (!a.ReadCompressedBufferSize(&size))
-      return false;
-
-    auto* buffer = new unsigned char[size];
-    bool bFailedCRC = false;
-    if (a.ReadCompressedBuffer(size, buffer, &bFailedCRC))
-    {
-      if (!bFailedCRC)
-      {
-        embedded_files_as_buffers.Append(buffer);
-        paths.Append(sPath);
-        buffer_sizes.Append(size);
-        unpacked++;
-      }
-      else
-      {
-        delete[] buffer;
-      }
-    }
-  }
-
-  return unpacked > 0;
-}
-
-bool ONX_Model::GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes)
-{
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
-    return false;
-
-  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
-
-  const unsigned int iCount = SkipArchiveToFiles(a, docud.m_goo.m_value);
-
-  if (0 == iCount)
-    return false;
-
-  for (unsigned int i = 0; i < iCount; i++)
-  {
-    ON_wString sPath;
-    if (!a.ReadString(sPath))
-      return false;
-
-    if (0 == sPath.ComparePath(path))
-    {
-      size_t size;
-      if (!a.ReadCompressedBufferSize(&size))
-        return false;
-
-      bytes.Destroy();
-      bytes.Reserve(size);
-
-      bool bFailedCRC = false;
-      bool bRet = a.ReadCompressedBuffer(size, bytes.Array(), &bFailedCRC);
-
-      if (!bRet || bFailedCRC)
-      {
-        return false;
-      }
-
-      bytes.SetCount((int)size);
-      return true;
-    }
-    else
-    {
-      SeekPastCompressedBuffer(a);
-    }
-  }
-
-  return false;
-}
-
-
-bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud,ON_wString& rdk_xml_document_data)
-{
-  if ( !ONX_Model::IsRDKDocumentInformation(docud) )
-    return false;
-
-  ON_Read3dmBufferArchive a(docud.m_goo.m_value,docud.m_goo.m_goo,false,docud.m_usertable_3dm_version,docud.m_usertable_opennurbs_version);
-
-  int version = 0;
-  if (!a.ReadInt(&version) )
-    return false;
-  
-  if ( 1 == version )
-  {
-    // UTF-16 string
-    if ( !a.ReadString(rdk_xml_document_data) )
-      return false;
-  }
-  else if ( 3 == version || 4 == version) //Version 4 files are exactly the same as version 3, but with an size_t (for the number of buffers) 
-                                          //and the actual compressed buffers containing the embedded files
-  {
-    // UTF-8 string
-    int slen = 0;
-    if ( !a.ReadInt(&slen) )
-      return 0;
-    if ( slen <= 0 )
-      return 0;
-    if ( slen + 4 > docud.m_goo.m_value )
-      return 0;
-    ON_String s;
-    s.SetLength(slen);
-    if ( !a.ReadChar(slen,s.Array()) )
-      return 0;
-    const char* sArray = s.Array();
-    if ( 0 != sArray && 0 != sArray[0] )
-    {
-      unsigned int error_status = 0;
-      int wLen = ON_ConvertUTF8ToWideChar(false,sArray,-1,0,0,&error_status,0,0,0);
-      if ( wLen > 0 && 0 == error_status )
-      {
-        rdk_xml_document_data.SetLength(wLen+2);
-        wLen = ON_ConvertUTF8ToWideChar(false,sArray,-1,rdk_xml_document_data.Array(),wLen+1,&error_status,0,0,0);
-        if ( wLen > 0 && 0 == error_status )
-          rdk_xml_document_data.SetLength(wLen);
-        else
-        {
-          rdk_xml_document_data.SetLength(0);
-        }
-      }
-      if ( 0 != error_status )
-      {
-        ON_ERROR("RDK xml document settings is not a valid UTF-8 string.");
-      }
-    }
-  }
-
-  return rdk_xml_document_data.Length() > 0;
-}
-
-#if defined(ON_COMPILER_MSC)
-#pragma ON_PRAGMA_WARNING_POP
-#endif
-
 
 class ON_TextLogNull : public ON_TextLog
 {
@@ -4626,7 +4342,7 @@ std::shared_ptr<ONX_Model> ONX_ModelTest::SourceModel() const
 
 std::shared_ptr<ONX_Model> ONX_ModelTest::ReadWriteReadModel() const
 {
-  const ONX_Model* source_model = SourceModel().get();
+  const auto source_model = SourceModel();
   if (nullptr != source_model)
   {
     for (int i = 1; i < 3; i++)
@@ -4693,7 +4409,6 @@ bool ONX_ModelTest::DumpSourceModel() const
   return DumpSourceModel(text_file_path);
 }
 
-
 bool ONX_ModelTest::DumpSourceModel(const wchar_t* text_file_full_path) const
 {
   bool rc = false;
@@ -4705,7 +4420,7 @@ bool ONX_ModelTest::DumpSourceModel(const wchar_t* text_file_full_path) const
     fp = ON_FileStream::Open(text_file_full_path, L"w");
     if (nullptr == fp)
       break;
-    const ONX_Model* model = SourceModel().get();
+    const auto model = SourceModel();
     if (nullptr == model)
       break;
     if (model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
@@ -4730,7 +4445,6 @@ bool ONX_ModelTest::DumpReadWriteReadModel() const
   return DumpReadWriteReadModel(text_file_path);
 }
 
-
 bool ONX_ModelTest::DumpReadWriteReadModel(const wchar_t* text_file_full_path) const
 {
   bool rc = false;
@@ -4742,7 +4456,7 @@ bool ONX_ModelTest::DumpReadWriteReadModel(const wchar_t* text_file_full_path) c
     fp = ON_FileStream::Open(text_file_full_path, L"w");
     if (nullptr == fp)
       break;
-    const ONX_Model* model = ReadWriteReadModel().get();
+    const auto model = ReadWriteReadModel();
     if (nullptr == model)
       break;
     if (model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
@@ -4751,11 +4465,12 @@ bool ONX_ModelTest::DumpReadWriteReadModel(const wchar_t* text_file_full_path) c
     rc = DumpReadWriteReadModel(text_log);
     break;
   }
+
   if (nullptr != fp)
     ON_FileStream::Close(fp);
+
   return rc;
 }
-
 
 bool ONX_ModelTest::DumpReadWriteReadModel(ON_TextLog& text_log) const
 {
@@ -4775,7 +4490,6 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 
   text_log.Print("Result: ");
   InternalDumpResultAndErrorCount(m_test_result, m_error_count, text_log);
-
 
   //const int i_rwrcompare = static_cast<const unsigned char>(ONX_ModelTest::Type::ReadWriteReadCompare);
   const bool bSkipCompare
@@ -5076,6 +4790,1176 @@ void ONX_ModelTest::Internal_ReadTest(
             
     break;
   }
-  Internal_EndCurrentTest();
 
+  Internal_EndCurrentTest();
+}
+
+/*  +----------------------------------------------------------------------------+
+    |                                                                            |
+    |                   RDK version 4 document archive format                    |
+    |                                                                            |
+    +================+==========================+================================+
+    | Type           | Usage                    | ON_BinaryArchive function      |
+    +================+==========================+================================+
+    | ON__INT32      | RDK document version     | ReadInt()  / WriteInt()        |
+    +----------------+--------------------------+--------------------------------+
+    | ON__INT32      | Length of UTF8 XML block | ReadInt()  / WriteInt()        |
+    +----------------+--------------------------+--------------------------------+
+    | UTF8 chars     | Entire RDK document XML  | ReadChar() / WriteChar()       |
+    +----------------+--------------------------+--------------------------------+
+    | ON__INT32      | Number of embedded files | ReadInt()  / WriteInt()        |
+    +----------------+--------------------------+--------------------------------+
+
+     If the number of embedded files is not zero, then for each embedded file:
+
+    +----------------+--------------------------+--------------------------------+
+    | String         | Full path to file        | ReadString() / WriteString()   |
+    +----------------+--------------------------+--------------------------------+
+    | Bytes          | Compressed embedded file | Read / WriteCompressedBuffer() |
+    +----------------+--------------------------+--------------------------------+
+*/
+
+static const wchar_t* RenderContentKindString(RenderContentKinds kind)
+{
+  switch (kind)
+  {
+  case RenderContentKinds::Material:    return ON_KIND_MATERIAL;
+  case RenderContentKinds::Environment: return ON_KIND_ENVIRONMENT;
+  case RenderContentKinds::Texture:     return ON_KIND_TEXTURE;
+  }
+
+  ON_ASSERT(false);
+  return L"";
+}
+
+static const wchar_t* PostEffectTypeString(ON_PostEffect::Types type)
+{
+  switch (type)
+  {
+  case ON_PostEffect::Types::Early:       return ON_RDK_PEP_TYPE_EARLY;
+  case ON_PostEffect::Types::ToneMapping: return ON_RDK_PEP_TYPE_TONE;
+  case ON_PostEffect::Types::Late:        return ON_RDK_PEP_TYPE_LATE;
+  }
+
+  ON_ASSERT(false);
+  return L"";
+}
+
+extern int ON_ComponentManifestImpl_TableCount(void);
+
+ONX_Model::Extension::Extension(ONX_Model& m)
+  :
+  m_model(m),
+  m_safe_frame(m_doc_node),
+  m_ground_plane(m_doc_node),
+  m_linear_workflow(m_doc_node),
+  m_skylight(m_doc_node),
+  m_current_environment(m_doc_node, m.m_settings.m_RenderSettings),
+  m_sun(m_doc_node),
+  m_dithering(m_doc_node),
+  m_render_channels(m_doc_node)
+{
+  // If this assert fires, you must change the TableCount enum in opennurbs_archive_manifest.cpp
+  // to be the same number as ON_ModelComponent::Type::NumOf.
+  ON_ASSERT(int(ON_ModelComponent::Type::NumOf) == ON_ComponentManifestImpl_TableCount());
+
+  for (unsigned int i = 0; i < int(ON_ModelComponent::Type::NumOf); i++)
+  {
+    ONX_ModelComponentList& list = m_mcr_lists.AppendNew();
+    list.m_component_type = ON_ModelComponent::ComponentTypeFromUnsigned(i);
+  }
+}
+
+ONX_Model::Extension::~Extension()
+{
+}
+
+ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(void) const
+{
+  // Try to find existing RDK document user data.
+  for (int i = 0; i < m_model.m_userdata_table.Count(); i++)
+  {
+    auto* pUserData = m_model.m_userdata_table[i];
+    if (nullptr != pUserData)
+    {
+      if (ONX_Model::IsRDKDocumentInformation(*pUserData))
+        return pUserData; // Found it.
+    }
+  }
+
+  // Not found, so create it.
+  auto* ud = new ONX_Model_UserData;
+  ud->m_goo.m_typecode = TCODE_USER_RECORD;
+  ud->m_uuid = RdkPlugInId();
+  ud->m_usertable_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  ud->m_usertable_opennurbs_version = ON::Version();
+
+  ON_XMLRootNode root;
+  PopulateDefaultRDKDocumentXML(root);
+  SetRDKDocumentInformation(root.String(), *ud);
+
+  m_model.m_userdata_table.Append(ud);
+
+  return ud;
+}
+
+void ONX_Model::Extension::PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const
+{
+  // Populate default render content kinds.
+  GetRenderContentSectionNode(root, RenderContentKinds::Material);
+  GetRenderContentSectionNode(root, RenderContentKinds::Environment);
+  GetRenderContentSectionNode(root, RenderContentKinds::Texture);
+}
+
+bool ONX_Model::Extension::GetRDKDocumentXML(ON_wString& xml, bool embedded_files) const
+{
+  // Gets the entire RDK document XML as a string in 'xml'. If 'embedded_files' is true,
+  // ON_EmbeddedFile objects are created for each embedded file.
+
+  const auto* pUserData = GetRDKDocumentUserData();
+  if (nullptr != pUserData)
+  {
+    auto* model = embedded_files ? &m_model : nullptr;
+    if (GetEntireRDKDocument(*pUserData, xml, model))
+      return true;
+  }
+
+  return false;
+}
+
+static bool ContentIsKind(const ON_RenderContent* pContent, RenderContentKinds kind)
+{
+  switch (kind)
+  {
+  case RenderContentKinds::Material:    return nullptr != ON_RenderMaterial   ::Cast(pContent);
+  case RenderContentKinds::Environment: return nullptr != ON_RenderEnvironment::Cast(pContent);
+  case RenderContentKinds::Texture:     return nullptr != ON_RenderTexture    ::Cast(pContent);
+  }
+
+  return false;
+}
+
+ON_XMLNode* ONX_Model::Extension::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_PostEffect::Types type) const
+{
+  ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_POST_EFFECTS  ON_RDK_SLASH;
+  s += PostEffectTypeString(type);
+
+  return docNode.CreateNodeAtPath(s);
+}
+
+ON_XMLNode* ONX_Model::Extension::GetRenderContentSectionNode(ON_XMLNode& docNode, RenderContentKinds kind) const
+{
+  ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH;
+  s += RenderContentKindString(kind);
+  s += ON_RDK_POSTFIX_SECTION;
+
+  return docNode.CreateNodeAtPath(s);
+}
+
+bool ONX_Model::Extension::CreateRenderContentFromXML(ON_XMLNode& model_node, RenderContentKinds kind)
+{
+  const auto* rc_section_node = GetRenderContentSectionNode(model_node, kind);
+  if (nullptr == rc_section_node)
+    return false;
+
+  auto it = rc_section_node->GetChildIterator();
+
+  const auto* rc_node = it.GetNextChild();
+  while (nullptr != rc_node)
+  {
+    auto* rc = NewRenderContentFromNode(*rc_node);
+    if (nullptr != rc)
+    {
+      const auto ref = m_model.AddModelComponent(*rc);
+      auto* model_rc = ON_RenderContent::Cast(ref.ModelComponent());
+      if (nullptr != model_rc)
+      {
+        SetModel(*model_rc, m_model);
+      }
+
+      delete rc;
+    }
+
+    rc_node = it.GetNextChild();
+  }
+
+  return true;
+}
+
+bool ONX_Model::Extension::CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const
+{
+  auto* rc_section_node = GetRenderContentSectionNode(model_node, kind);
+  if (nullptr == rc_section_node)
+    return false;
+
+  rc_section_node->RemoveAllChildren();
+
+  ONX_ModelComponentIterator it(m_model, ON_ModelComponent::Type::RenderContent);
+  auto* component = it.FirstComponent();
+  while (nullptr != component)
+  {
+    const auto* rc = ON_RenderContent::Cast(component);
+    if (nullptr != rc)
+    {
+      if (ContentIsKind(rc, kind))
+      {
+        SetRenderContentNodeRecursive(*rc, *rc_section_node);
+      }
+    }
+
+    component = it.NextComponent();
+  }
+
+  return true;
+}
+
+bool ONX_Model::Extension::CreatePostEffectsFromXML(ON_XMLNode& doc_root_node, ON_PostEffect::Types type)
+{
+  auto* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
+  if (nullptr == pep_section_node)
+    return false;
+
+  auto it = pep_section_node->GetChildIterator();
+
+  auto* pPostEffectNode = it.GetNextChild();
+  while (nullptr != pPostEffectNode)
+  {
+    ON_PostEffect pep(*pPostEffectNode, type);
+    const auto ref = m_model.AddModelComponent(pep);
+    auto* pep_in_model = ON_PostEffect::Cast(ref.ModelComponent());
+    if (nullptr != pep_in_model)
+    {
+      SetModel(*pep_in_model, m_model);
+    }
+
+    pPostEffectNode = it.GetNextChild();
+  }
+
+  return true;
+}
+
+bool ONX_Model::Extension::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, ON_PostEffect::Types type) const
+{
+  auto* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
+  if (nullptr == pep_section_node)
+    return false;
+
+  ONX_ModelComponentIterator it(m_model, ON_ModelComponent::Type::PostEffect);
+  auto* pComponent = it.FirstComponent();
+  while (nullptr != pComponent)
+  {
+    const auto* pep = ON_PostEffect::Cast(pComponent);
+    if ((nullptr != pep) && (pep->Type() == type))
+    {
+      auto* pep_node = FindPostEffectNodeForId(*pep_section_node, pep->Id());
+      if (nullptr != pep_node)
+      {
+        *pep_node = pep->XML();
+      }
+    }
+
+    pComponent = it.NextComponent();
+  }
+
+  return true;
+}
+
+bool ONX_Model::Extension::PopulateRDKComponents(void)
+{
+  // Get the entire RDK document XML. This includes not only render contents
+  // but also Sun, GroundPlane and other RDK document data. Ignore embedded files.
+  ON_wString xml;
+  if (!GetRDKDocumentXML(xml, true))
+    return false;
+
+  // Read the entire XML into m_doc_node.
+  const auto read = m_doc_node.ReadFromStream(xml, false, true);
+  if (ON_XMLNode::ReadError == read)
+    return false;
+
+  // Create the render contents from the relevant nodes.
+  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Material);
+  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Environment);
+  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Texture);
+
+  // Create the post effects from the relevant nodes.
+  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::Early);
+  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::ToneMapping);
+  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::Late);
+
+  // Create the decal collection.
+  m_decal_collection.CreateDecalsFromXML(m_model);
+
+  // Create the mesh modifiers.
+  m_mesh_modifier_collection.CreateMeshModifiersFromXML(m_model);
+
+  return true;
+}
+
+bool ONX_Model::Extension::UpdateRDKUserData(void)
+{
+  // For each kind, convert the render content hierarchy to fresh XML.
+  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Material);
+  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Environment);
+  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Texture);
+
+  // For each type, convert the post effects to fresh XML.
+  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::Early);
+  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::ToneMapping);
+  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::Late);
+
+  // Convert the decal collection to fresh XML.
+  m_decal_collection.CreateXMLFromDecals(m_model);
+
+  // Convert the mesh modifier collection to fresh XML.
+  m_mesh_modifier_collection.CreateXMLFromMeshModifiers(m_model);
+
+  // Get the RDK document user data.
+  auto* pUserData = GetRDKDocumentUserData();
+  if (nullptr == pUserData)
+    return false; // Shouldn't happen because we were able to get the XML earlier.
+
+  // Get the entire document XML as a string and set it to the user data.
+  ON_wString xml = m_doc_node.String();
+  SetRDKDocumentInformation(xml, *pUserData);
+
+  return true;
+}
+
+ON_SafeFrame& ONX_Model::SafeFrame(void) const
+{
+  return m_extension->m_safe_frame;
+}
+
+ON_GroundPlane& ONX_Model::GroundPlane(void) const
+{
+  return m_extension->m_ground_plane;
+}
+
+ON_LinearWorkflow& ONX_Model::LinearWorkflow(void) const
+{
+  return m_extension->m_linear_workflow;
+}
+
+ON_CurrentEnvironment& ONX_Model::CurrentEnvironment(void) const
+{
+  return m_extension->m_current_environment;
+}
+
+ON_Skylight& ONX_Model::Skylight(void) const
+{
+  return m_extension->m_skylight;
+}
+
+ON_Sun& ONX_Model::Sun(void) const
+{
+  return m_extension->m_sun;
+}
+
+ON_Dithering& ONX_Model::Dithering(void) const
+{
+  return m_extension->m_dithering;
+}
+
+ON_RenderChannels& ONX_Model::RenderChannels(void) const
+{
+  return m_extension->m_render_channels;
+}
+
+ON_DecalCollection& GetDecalCollection(ONX_Model& model)
+{
+  return model.m_extension->m_decal_collection;
+}
+
+ON_DecalIterator ONX_Model::GetDecalIterator(const ON_ModelComponent& component)
+{
+  return ON_DecalIterator(*this, component);
+}
+
+ON_Decal* ONX_Model::AddDecal(const ON_ModelComponent& component)
+{
+  return m_extension->m_decal_collection.AddDecal(component);
+}
+
+ON_Decal* ONX_Model::GetDecal(const ON_UUID& id)
+{
+  return m_extension->m_decal_collection.GetDecal(id);
+}
+
+ON_MeshModifiers* ONX_Model::GetMeshModifiers(const ON_ModelComponent& component)
+{
+  return m_extension->m_mesh_modifier_collection.Find(component);
+}
+
+bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
+{
+  return (0 == ON_UuidCompare(RdkPlugInId(), docud.m_uuid)) && (docud.m_goo.m_value >= 4) && (nullptr != docud.m_goo.m_goo);
+}
+
+static size_t ArchiveLengthUpToEmbeddedFiles(size_t utf8_length)
+{
+  //                  version             utf8_length         utf8_buf
+  const auto length = sizeof(ON__INT32) + sizeof(ON__INT32) + utf8_length;
+  ON_ASSERT(length <= INT_MAX);
+
+  return length;
+}
+
+bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers)
+{
+  ON_SimpleArray<size_t> dummy;
+  return GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, dummy);
+}
+
+bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud, ON_wString& xml) // Static.
+{
+  return Extension::GetEntireRDKDocument(docud, xml, nullptr);
+}
+
+static int SeekArchiveToEmbeddedFiles(ON_Read3dmBufferArchive& archive, int goo_length)
+{
+  // Skips over the bulk of the archive to arrive at the embedded files.
+  // Then reads the number of embedded files and returns it. The archive
+  // is then ready to read the first embedded file.
+
+  if (!archive.ReadMode())
+    return 0;
+
+  // Read the version number. Must be 4.
+  int version = 0;
+  if (!archive.ReadInt(&version) || (4 != version))
+    return 0;
+
+  // Read the UTF8 data length.
+  int utf8_length = 0;
+  if (!archive.ReadInt(&utf8_length))
+    return 0;
+
+  // Validate the length.
+  if (utf8_length <= 0)
+    return 0;
+
+  const auto length_so_far = ArchiveLengthUpToEmbeddedFiles(utf8_length);
+  if (length_so_far > size_t(goo_length))
+    return 0; // Sanity check.
+
+  // Seek past the UTF8 data.
+  if (!archive.SeekForward(utf8_length))
+    return 0;
+
+  // Read the number of embedded files.
+  int num_embedded_files = 0;
+  if (!archive.ReadInt(&num_embedded_files))
+    return 0;
+
+  return num_embedded_files;
+}
+
+static bool SeekArchivePastCompressedBuffer(ON_BinaryArchive& archive)
+{
+  // WARNING: This function has intimate knowledge of how ON_BinaryArchive::WriteCompressedBuffer() works.
+  // It is my opinion that this function should really be a method on ON_BinaryArchive since only that
+  // class should know how its own implementation works. JohnC, 2022AD.
+
+  if (!archive.ReadMode())
+    return false;
+
+  bool rc = false;
+  unsigned int buffer_crc0 = 0;
+  char method = 0;
+
+  size_t sizeof__outbuffer;
+  if (!archive.ReadCompressedBufferSize(&sizeof__outbuffer))
+    return false;
+
+  if (0 == sizeof__outbuffer)
+    return true;
+
+  if (!archive.ReadInt(&buffer_crc0)) // 32 bit crc of uncompressed buffer
+    return false;
+
+  if (!archive.ReadChar(&method))
+    return false;
+
+  if (method != 0 && method != 1)
+    return false;
+
+  switch (method)
+  {
+  case 0: // uncompressed
+    rc = archive.SeekForward(sizeof__outbuffer);
+    break;
+
+  case 1: // compressed
+  {
+    ON__UINT32 tcode = 0;
+    ON__INT64  big_value = 0;
+    rc = archive.BeginRead3dmBigChunk(&tcode, &big_value);
+    if (rc)
+      rc = archive.EndRead3dmChunk();
+  }
+  break;
+  }
+
+  return rc;
+}
+
+static bool ReadEmbeddedFilePathsFromArchive(ON_Read3dmBufferArchive& archive, int count, ON_ClassArray<ON_wString>& paths)
+{
+  // Reads the embedded file paths and skips over the data for 'count' embedded files. Must be called with
+  // the archive position at the start of the first embedded file, right after the count of embedded files.
+  if (0 == count)
+    return false;
+
+  for (int i = 0; i < count; i++)
+  {
+    ON_wString sPath;
+    if (!archive.ReadString(sPath))
+      return false;
+
+    paths.Append(sPath);
+
+    SeekArchivePastCompressedBuffer(archive);
+  }
+
+  return paths.Count() > 0;
+}
+
+bool ONX_Model::GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  const auto count = SeekArchiveToEmbeddedFiles(archive, docud.m_goo.m_value);
+  if (!ReadEmbeddedFilePathsFromArchive(archive, count, paths))
+    return false;
+
+  return true;
+}
+
+bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  const auto count = SeekArchiveToEmbeddedFiles(a, docud.m_goo.m_value);
+  if (0 == count)
+    return false;
+
+  int unpacked = 0;
+
+  for (int i = 0; i < count; i++)
+  {
+    ON_wString sPath;
+    if (!a.ReadString(sPath))
+      return false;
+
+    size_t size;
+    if (!a.ReadCompressedBufferSize(&size))
+      return false;
+
+    auto* buffer = new unsigned char[size];
+    bool bFailedCRC = false;
+    if (a.ReadCompressedBuffer(size, buffer, &bFailedCRC))
+    {
+      if (!bFailedCRC)
+      {
+        embedded_files_as_buffers.Append(buffer);
+        paths.Append(sPath);
+        buffer_sizes.Append(size);
+        unpacked++;
+      }
+      else
+      {
+        delete[] buffer;
+      }
+    }
+  }
+
+  return unpacked > 0;
+}
+
+bool ONX_Model::GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes)
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  const auto count = SeekArchiveToEmbeddedFiles(archive, docud.m_goo.m_value);
+  if (0 == count)
+    return false;
+
+  bool found = false;
+  for (int i = 0; i < count; i++)
+  {
+    ON_wString sPath;
+    if (!archive.ReadString(sPath))
+      break;
+
+    if (0 == sPath.ComparePath(path))
+    {
+      size_t size;
+      if (!archive.ReadCompressedBufferSize(&size))
+        break;
+
+      bytes.Destroy();
+      bytes.Reserve(size);
+
+      bool bFailedCRC = false;
+      bool bRet = archive.ReadCompressedBuffer(size, bytes.Array(), &bFailedCRC);
+
+      if (!bRet || bFailedCRC)
+        break;
+
+      bytes.SetCount((int)size);
+
+      found = true;
+      break;
+    }
+    else
+    {
+      SeekArchivePastCompressedBuffer(archive);
+    }
+  }
+
+  return found;
+}
+
+void ONX_Model::Extension::RemoveAllEmbeddedFiles(ONX_Model& model)
+{
+  ON_SimpleArray<ON_UUID> a;
+  const auto type = ON_ModelComponent::Type::EmbeddedFile;
+
+  ONX_ModelComponentIterator it(model, type);
+  const auto* pComponent = it.FirstComponent();
+  while (nullptr != pComponent)
+  {
+    a.Append(pComponent->Id());
+    pComponent = it.NextComponent();
+  }
+
+  for (int i = 0; i < a.Count(); i++)
+  {
+    model.RemoveModelComponent(type, a[i]);
+  }
+}
+
+bool ONX_Model::Extension::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_wString& xml, ONX_Model* model) // Static.
+{
+  if (!ONX_Model::IsRDKDocumentInformation(docud))
+    return false;
+
+  ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  int version = 0;
+  if (!archive.ReadInt(&version))
+    return false;
+
+  if (1 == version)
+  {
+    // Version 1 was a UTF-16 string.
+    if (!archive.ReadString(xml))
+      return false;
+  }
+  else
+  if ((3 == version) || (4 == version))
+  {
+    // Version 4 files are exactly the same as version 3, but with the addition of embedded files.
+
+    // Version 3 and 4 is a UTF-8 string.
+    int utf8_length = 0;
+    if (!archive.ReadInt(&utf8_length))
+      return false;
+
+    if (utf8_length <= 0)
+      return false;
+
+    const auto length_so_far = ArchiveLengthUpToEmbeddedFiles(utf8_length);
+    if (length_so_far > size_t(docud.m_goo.m_value))
+      return false; // Sanity check.
+
+    ON_String s;
+    s.SetLength(utf8_length);
+    if (!archive.ReadChar(utf8_length, s.Array()))
+      return false;
+
+    if (s.IsNotEmpty())
+    {
+      const char* sArray = s.Array();
+      unsigned int error_status = 0;
+      auto wideLength = ON_ConvertUTF8ToWideChar(false, sArray, -1, 0, 0, &error_status, 0, 0, 0);
+      if ((wideLength > 0) && (0 == error_status))
+      {
+        xml.SetLength(wideLength);
+        ON_ConvertUTF8ToWideChar(false, sArray, -1, xml.Array(), wideLength+1, &error_status, 0, 0, 0);
+      }
+
+      if (0 != error_status)
+      {
+        ON_ERROR("RDK xml document settings is not a valid UTF-8 string.");
+      }
+    }
+
+    if (nullptr != model)
+    {
+      RemoveAllEmbeddedFiles(*model);
+
+      if (4 == version)
+      {
+        // Read the number of embedded files.
+        int num_embedded_files = 0;
+        if (!archive.ReadInt(&num_embedded_files))
+          return false;
+
+        // Create an ON_EmbeddedFile object for each embedded file.
+        for (int i = 0; i < num_embedded_files; i++)
+        {
+          ON_EmbeddedFile ef;
+
+          if (!ef.Read(archive))
+            return false;
+
+          model->AddModelComponent(ef);
+        }
+      }
+    }
+  }
+
+  return xml.Length() > 0;
+}
+
+bool ONX_Model::Extension::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud) const
+{
+  ON_Write3dmBufferArchive archive(0, 0, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
+
+  // Write the version.
+  int version = 4; // Where do I get this from?
+  if (!archive.WriteInt(version))
+    return false;
+
+  // Convert the XML to UTF8 and write it to the archive.
+  unsigned int error_status = 0;
+  const int utf8_length = ON_ConvertWideCharToUTF8(false, xml, -1, 0, 0, &error_status, 0, 0, 0);
+
+  { // BEGIN UTF8
+    auto utf8 = std::unique_ptr<char[]>(new char[utf8_length]);
+    auto* utf8_buf = utf8.get();
+
+    ON_ConvertWideCharToUTF8(false, xml, -1, utf8_buf, utf8_length, &error_status, 0, 0, 0);
+
+    // Write the length of the UTF8 data.
+    if (!archive.WriteInt(utf8_length))
+      return false;
+
+    // Write the UTF8 data.
+    if (!archive.WriteChar(size_t(utf8_length), utf8_buf))
+      return false;
+  } // END UTF8
+
+  const auto length_so_far = ArchiveLengthUpToEmbeddedFiles(utf8_length);
+  ON_ASSERT(archive.SizeOfArchive() == length_so_far); // Sanity check.
+
+  // Write the number of embedded files.
+  const auto num_embedded_files = int(m_model.ActiveComponentCount(ON_ModelComponent::Type::EmbeddedFile));
+  if (!archive.WriteInt(num_embedded_files))
+    return false;
+
+  // Write the embedded files to the archive.
+  ONX_ModelComponentIterator it(m_model, ON_ModelComponent::Type::EmbeddedFile);
+  auto* pComponent = it.FirstComponent();
+  while (nullptr != pComponent)
+  {
+    const auto* embedded_file = ON_EmbeddedFile::Cast(pComponent);
+    if (nullptr != embedded_file)
+    {
+      embedded_file->Write(archive);
+    }
+
+    pComponent = it.NextComponent();
+  }
+
+  // Delete the old goo.
+  if (nullptr != docud.m_goo.m_goo)
+    onfree(docud.m_goo.m_goo);
+
+  // Allocate the new goo and copy the archive to it.
+  const auto length_goo = archive.SizeOfArchive();
+  docud.m_goo.m_goo = (unsigned char*)onmalloc(length_goo);
+  docud.m_goo.m_value = int(length_goo);
+  memcpy(docud.m_goo.m_goo, archive.Buffer(), length_goo);
+
+  return true;
+}
+
+// Object user data
+
+static const ON_UUID uuid_displacement_plug_in // The displacement plug-in implements all 5 mesh modifiers.
+{
+  0xF293DE5C, 0xD1FF, 0x467A, { 0x9B, 0xD1, 0xCA, 0xC8, 0xEC, 0x4B, 0x2E, 0x6B }
+};
+
+static ON_UserData* RDKObjectUserDataHelper(const ON_UserData* objectud)
+{
+  if (nullptr == objectud)
+      return nullptr;
+
+  if (0 == ON_UuidCompare(objectud->m_application_uuid, RdkPlugInId()))
+  {
+    if (0 != ON_UuidCompare(objectud->m_userdata_uuid, ON_RdkUserData::Uuid()))
+        return nullptr; // Not RDK user data.
+
+    return const_cast<ON_UserData*>(objectud); // RDK user data -- used for decals.
+  }
+
+  return nullptr;
+}
+
+static bool IsMeshModifierObjectUserData(ON_UserData& objectud)
+{
+  if (0 == ON_UuidCompare(objectud.m_application_uuid, uuid_displacement_plug_in))
+    return true; // User data from Displacement plug-in.
+
+  return false;
+}
+
+bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud)
+{
+  return nullptr != RDKObjectUserDataHelper(&objectud);
+}
+
+bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf)
+{
+  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  const auto archive_opennurbs_version_number = ON::Version(); // I don't know if this is correct.
+
+  ON_Write3dmBufferArchive archive(0, 0, archive_3dm_version, archive_opennurbs_version_number);
+
+  int version = 2; // Not sure if this is correct.
+  if (!archive.WriteInt(version))
+    return false;
+
+  const auto* wsz = static_cast<const wchar_t*>(xml);
+
+  unsigned int error_status = 0;
+  const auto num_chars = ON_ConvertWideCharToUTF8(false, wsz, -1, nullptr, 0, &error_status, 0, 0, nullptr);
+
+  auto p = std::unique_ptr<char[]>(new char[size_t(num_chars) + 1]);
+  auto* pBuffer = p.get();
+  ON_ConvertWideCharToUTF8(false, wsz, -1, pBuffer, num_chars + 1, &error_status, 0, 0, nullptr);
+
+  if (0 != error_status)
+  {
+    ON_ERROR("XML is not a valid UTF-8 string.");
+    return false;
+  }
+
+  int len = num_chars * sizeof(char);
+  if (!archive.WriteInt(len))
+    return false;
+
+  if (!archive.WriteChar(len, pBuffer))
+    return false;
+
+  buf.Write(archive.SizeOfArchive(), archive.Buffer());
+  buf.SeekFromStart(0);
+
+  return true;
+}
+
+bool SetXMLToUserData(const ON_wString& xml, ON_UserData& ud)
+{
+  ON_Buffer buf;
+  if (!CreateArchiveBufferFromXML(xml, buf))
+    return false;
+
+  ON_BinaryArchiveBuffer arc(ON::archive_mode::read, &buf);
+  ud.Read(arc);
+
+  return true;
+}
+
+bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml)
+{
+  // Create a buffer from the XML.
+  ON_Buffer buf;
+  if (!CreateArchiveBufferFromXML(xml, buf))
+    return false;
+
+  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  const auto archive_opennurbs_version = ON::Version();
+
+  // Create an archive from the buffer.
+  ON_BinaryArchiveBuffer archive(ON::archive_mode::read, &buf);
+  archive.SetArchive3dmVersion(archive_3dm_version);
+  ON_SetBinaryArchiveOpenNURBSVersion(archive, archive_opennurbs_version);
+
+  // Try to find existing user data.
+  ON_UserData* rdk_ud = nullptr;
+
+  for (auto* ud = object.FirstUserData(); (nullptr != ud) && (nullptr == rdk_ud); ud = ud->Next())
+  {
+    rdk_ud = RDKObjectUserDataHelper(ud);
+  }
+
+  if (nullptr != rdk_ud)
+  {
+    // Found it, so read the archive into it.
+    rdk_ud->Read(archive);
+  }
+  else
+  {
+    // No user data found; create a new one and read the archive into it.
+    auto* ud = new ON_RdkUserData;
+    ud->Read(archive);
+
+    if (!object.AttachUserData(ud))
+    {
+      delete ud;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ONX_Model::GetRDKObjectInformation(const ON_Object& object, ON_wString& xml) // Static.
+{
+  xml.SetLength(0);
+
+  const ON_UserData* rdk_ud = nullptr;
+  const auto* ud = ON_UserData::Cast(&object);
+  if (nullptr != ud)
+  {
+    rdk_ud = RDKObjectUserDataHelper(ud);
+  }
+  else
+  {
+    for (ud = object.FirstUserData(); (nullptr != ud) && (nullptr == rdk_ud); ud = ud->Next())
+    {
+      rdk_ud = RDKObjectUserDataHelper(ud);
+    }
+  }
+
+  if (nullptr == rdk_ud)
+    return false;
+
+  ON_Buffer buf;
+  ON_BinaryArchiveBuffer arc(ON::archive_mode::write, &buf);
+  rdk_ud->Write(arc);
+
+  const auto sizeof_buffer = buf.Size();
+
+  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[sizeof_buffer]);
+  auto* buffer = p.get();
+  buf.SeekFromStart(0);
+  buf.Read(sizeof_buffer, buffer);
+
+  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  const auto archive_opennurbs_version_number = ON::Version();
+  ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
+
+  int version = 0;
+  if (!archive.ReadInt(&version))
+    return false;
+
+  if (1 == version)
+  {
+    // Version 1 was a UTF-16 string.
+    if (!archive.ReadString(xml))
+      return false;
+  }
+  else
+  if (2 == version)
+  {
+    // Version 2 is a UTF-8 string.
+    int len = 0;
+    if (!archive.ReadInt(&len))
+      return false;
+
+    if (len <= 0)
+      return false;
+
+    if (size_t(len + 4) > sizeof_buffer) // JohnC asks: What does the 4 signify?
+      return false;
+
+    ON_SimpleArray<char> s;
+    s.Reserve(size_t(len) + 1);
+    s.SetCount(len + 1);
+    s[len] = 0;
+
+    char* sArray = s.Array();
+    if (nullptr == sArray)
+      return false;
+
+    if (!archive.ReadChar(len, sArray))
+      return false;
+
+    if (0 == sArray[0])
+      return false;
+
+    unsigned int error_status = 0;
+    const int num_chars = ON_ConvertUTF8ToWideChar(false, sArray, -1, 0, 0, &error_status, 0, 0, 0);
+    if ((num_chars > 0) && (0 == error_status))
+    {
+      xml.SetLength(size_t(num_chars) + 2);
+      ON_ConvertUTF8ToWideChar(false, sArray, -1, xml.Array(), num_chars + 1, &error_status, 0, 0, 0);
+      xml.SetLength(num_chars);
+    }
+    else
+    {
+      xml.SetLength(0);
+      ON_ERROR("RDK xml object information is not a valid UTF-8 string.");
+    }
+  }
+
+  return xml.Length() > 0;
+}
+
+static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml)
+{
+  ON_Buffer buf;
+  ON_BinaryArchiveBuffer arc(ON::archive_mode::write, &buf);
+  ud.Write(arc);
+
+  const auto sizeof_buffer = buf.Size();
+
+  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[sizeof_buffer]);
+  auto* buffer = p.get();
+  buf.SeekFromStart(0);
+  buf.Read(sizeof_buffer, buffer);
+
+  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  const auto archive_opennurbs_version_number = ON::Version();
+  ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
+
+  int version = 0;
+  if (!archive.ReadInt(&version))
+    return false;
+
+  if (1 == version)
+  {
+    // Version 1 was a UTF-16 string.
+    if (!archive.ReadString(xml))
+      return false;
+  }
+  else
+  if (2 == version)
+  {
+    // Version 2 is a UTF-8 string.
+    int len = 0;
+    if (!archive.ReadInt(&len))
+      return false;
+
+    if (len <= 0)
+      return false;
+
+    if (size_t(len + 4) > sizeof_buffer) // JohnC asks: What does the 4 signify?
+      return false;
+
+    ON_SimpleArray<char> s;
+    s.Reserve(size_t(len) + 1);
+    s.SetCount(len + 1);
+    s[len] = 0;
+
+    char* sArray = s.Array();
+    if (nullptr == sArray)
+      return false;
+
+    if (!archive.ReadChar(len, sArray))
+      return false;
+
+    if (0 == sArray[0])
+      return false;
+
+    unsigned int error_status = 0;
+    const int num_chars = ON_ConvertUTF8ToWideChar(false, sArray, -1, 0, 0, &error_status, 0, 0, 0);
+    if ((num_chars > 0) && (0 == error_status))
+    {
+      xml.SetLength(size_t(num_chars) + 2);
+      ON_ConvertUTF8ToWideChar(false, sArray, -1, xml.Array(), num_chars + 1, &error_status, 0, 0, 0);
+      xml.SetLength(num_chars);
+    }
+    else
+    {
+      xml.SetLength(0);
+      ON_ERROR("Mesh modifier xml object information is not a valid UTF-8 string.");
+    }
+  }
+
+  return true;
+}
+
+bool ONX_Model::GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml) // Static.
+{
+  xml = L"";
+
+  // The mesh modifiers are stored in separate user data items. We must get each one's XML
+  // and combine it into a single XML node containing the entire information for all
+  // mesh modifiers on this object.
+
+  ON_XMLRootNode entire;
+
+  auto* ud = object.FirstUserData();
+  while (nullptr != ud)
+  {
+    if (IsMeshModifierObjectUserData(*ud))
+    {
+      ON_wString ud_xml;
+      GetMeshModifierUserDataXML(*ud, ud_xml);
+
+      ON_XMLRootNode root;
+      root.ReadFromStream(ud_xml);
+      auto* mm_node = root.FirstChild();
+      if (nullptr != mm_node)
+      {
+        root.DetachChild(*mm_node);
+        entire.AttachChildNode(mm_node);
+      }
+    }
+
+    ud = ud->Next();
+  }
+
+  if (entire.FirstChild() == nullptr)
+    return false;
+
+  // Return the entire XML for all mesh modifiers on this object.
+  xml = entire.String();
+
+  return true;
+}
+
+static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uuid_mm)
+{
+  auto* ud = object.FirstUserData();
+  while (nullptr != ud)
+  {
+    if (ud->m_userdata_uuid == uuid_mm)
+      return ud;
+
+    ud = ud->Next();
+  }
+
+  // Not found so create it.
+  return nullptr; // TODO: //////////////////////////////////////////////////////////
+}
+
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm)
+{
+  ON_XMLRootNode r1;
+  r1.ReadFromStream(mm.XML()); // Does not include <xml> node.
+
+  ON_XMLRootNode r2;
+  r2.AttachChildNode(new ON_XMLNode(r1)); // Includes <xml> node.
+
+  auto* ud = GetMeshModifierUserData(object, uuid_mm);
+  if (nullptr != ud)
+  {
+    SetXMLToUserData(r2.String(), *ud);
+  }
 }

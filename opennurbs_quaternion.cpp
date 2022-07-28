@@ -93,7 +93,6 @@ ON_Quaternion ON_Quaternion::Pow(ON_Quaternion q,double t)
 
 ON_Quaternion ON_Quaternion::Slerp(ON_Quaternion q0, ON_Quaternion q1, double t)
 {
-  // Added 8 Jan 2010 - not tested yet
   ON_Quaternion q;
   if ( t <= 0.5 )
   {
@@ -106,6 +105,16 @@ ON_Quaternion ON_Quaternion::Slerp(ON_Quaternion q0, ON_Quaternion q1, double t)
     q = q1*ON_Quaternion::Pow(q,1.0-t);
   }
   return q;
+}
+
+ON_Quaternion ON_Quaternion::RotateTowards(ON_Quaternion q0, ON_Quaternion q1, double MaxRadians)
+{
+  ON_Quaternion Q = q0.Inverse() * q1;
+  ON_Quaternion logQ = Log(Q);
+
+  double t = MaxRadians / (2.0*logQ.Length());
+
+  return (t < 1.0) ? Slerp(q0, q1, t) : q1;
 }
 
 
@@ -589,5 +598,43 @@ ON_Quaternion operator*(float x, const ON_Quaternion& q)
 ON_Quaternion operator*(double x, const ON_Quaternion& q)
 {
   return ON_Quaternion(x*q.a,x*q.b,x*q.c,x*q.d);
+}
+
+ON_Quaternion ON_Quaternion::RotationZYX(double yaw, double pitch, double roll)
+{
+  ON_Xform X;
+  X.RotationZYX(yaw, pitch, roll);
+  ON_Quaternion q;
+  X.GetQuaternion(q);
+  return q;
+}
+
+ON_Quaternion ON_Quaternion::RotationZYZ(double alpha, double beta, double gamma)
+{
+  ON_Xform X;
+  X.RotationZYZ(alpha, beta, gamma );
+  ON_Quaternion q;
+  X.GetQuaternion(q);
+  return q;
+}
+
+
+bool ON_Quaternion::GetYawPitchRoll(double& yaw, double& pitch, double& roll) const
+{
+  ON_Xform X;
+  bool rc = GetRotation(X);
+  if (rc)
+    rc = GetYawPitchRoll(yaw, pitch, roll);
+  return rc;
+}
+
+bool  ON_Quaternion::GetEulerZYZ(double& alpha, double& beta, double& gamma) const
+{
+  ON_Xform X;
+  bool rc = GetRotation(X);
+  if (rc)
+    rc = GetEulerZYZ(alpha, beta, gamma);
+  return rc;
+
 }
 

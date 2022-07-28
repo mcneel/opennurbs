@@ -4101,6 +4101,115 @@ static unsigned int FindNgonBoundary_Helper(
   return 0;
 }
 
+static
+double Internal_NgonBoundaryArea(
+  const ON_Plane& ngon_plane,
+  const ON_3dPointListRef& vertex_list,
+  const ON_SimpleArray< unsigned int >& ngon_vi
+)
+{
+  ON_2dPoint p0, p1;
+  const unsigned int count = ngon_vi.UnsignedCount();
+  if (count < 3)
+    return 0.0;
+  if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[count - 1]], &p1.x, &p1.y))
+    return 0.0;
+  double twice_area = 0.0;
+  for (unsigned int i = 0; i < count; i++)
+  {
+    p0 = p1;
+    if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[i]], &p1.x, &p1.y))
+      return 0.0;
+    twice_area += (p0.x - p1.x) * (p0.y + p1.y);
+  }
+  return fabs(0.5 * twice_area);
+}
+
+static unsigned int FindNgonBoundaries_Helper(
+  const ON_3dPointListRef& mesh_vertex_list,
+  const ON_MeshFaceList& mesh_face_list,
+  const unsigned int* const* vertex_face_map,
+  ON_MeshVertexFaceMap* vertex_face_map_obj,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi,
+  ON_SimpleArray<unsigned int>& ngon_vi_markers,
+  bool permitOnlyOneBoundary
+)
+{
+  const unsigned int mesh_vertex_count = mesh_vertex_list.PointCount();
+  unsigned int boundary_edge_count;
+  unsigned int ngon_boundary_index = 0;
+
+  for (;;)
+  {
+    if (mesh_vertex_count <= 0 || ON_UNSET_UINT_INDEX == mesh_vertex_count)
+      break;
+
+    if (ngon_fi_count <= 0 || 0 == ngon_fi)
+      break;
+
+    ON_SimpleArray<struct NgonNeighbors> ngon_nbr_map;
+    ngon_nbr_map.Reserve((unsigned int)ngon_fi_count);
+    ngon_nbr_map.SetCount((unsigned int)ngon_fi_count);
+    boundary_edge_count = SetFaceNeighborMap(mesh_vertex_count, mesh_face_list, vertex_face_map, vertex_face_map_obj, (unsigned int)ngon_fi_count, ngon_fi, ngon_nbr_map.Array());
+
+    ngon_boundary_index++;
+    ngon_vi.SetCount(0);
+    if (0 == GetNgonBoundarySegments(mesh_face_list, (unsigned int)ngon_fi_count, ngon_fi, ngon_boundary_index, ngon_nbr_map.Array(), &ngon_vi, 0))
+      break;
+
+    ngon_vi_markers.Append(ngon_vi.Count());
+
+    if (ngon_vi.UnsignedCount() < boundary_edge_count)
+    {
+      ON_SimpleArray<unsigned int> tmp;
+      // ngon has holes.
+      // The boundary with the largest area is the outer boundary.
+      ON_3dVector A(mesh_vertex_list[ngon_vi[1]] - mesh_vertex_list[ngon_vi[0]]);
+      ON_3dVector B(mesh_vertex_list[ngon_vi[ngon_vi.Count()-1]] - mesh_vertex_list[ngon_vi[0]]);
+      A.Unitize(); B.Unitize();
+      const ON_Plane ngon_plane(mesh_vertex_list[ngon_vi[0]], ON_CrossProduct(A, B));
+
+      double ngon_vi_area = Internal_NgonBoundaryArea(ngon_plane, mesh_vertex_list, ngon_vi);
+
+      for (;;)
+      {
+        ON_SimpleArray<unsigned int> ngon_vi1;
+        ngon_boundary_index++;
+        if (0 == GetNgonBoundarySegments(mesh_face_list, (unsigned int)ngon_fi_count, ngon_fi, ngon_boundary_index, ngon_nbr_map.Array(), &ngon_vi1, 0))
+          break;
+        if (ngon_vi1.UnsignedCount() < 3)
+          break;
+        double ngon_vi1_area = Internal_NgonBoundaryArea(ngon_plane, mesh_vertex_list, ngon_vi1);
+        if (ngon_vi1_area > ngon_vi_area)
+        {
+          ngon_vi_area = ngon_vi1_area;
+          tmp.Empty();
+          tmp.Append(ngon_vi1.Count(), ngon_vi1.Array());
+          tmp.Append(ngon_vi.Count(), ngon_vi.Array());
+          ngon_vi = tmp;
+          ngon_vi_markers.Insert(0, ngon_vi1.Count());
+        }
+        else
+        {
+          ngon_vi_markers.Append(ngon_vi1.Count());
+          ngon_vi.Append(ngon_vi1.Count(), ngon_vi1.Array());
+        }
+      }
+    }
+
+    //if (permitOnlyOneBoundary && boundary_edge_count != ngon_vi.UnsignedCount())
+    //  break; // inner boundaries exist - ngon has holes
+
+    return ngon_vi.UnsignedCount();
+  }
+
+  // failure
+  ngon_vi.SetCount(0);
+  return 0;
+}
+
 
 unsigned int ON_MeshNgon::FindNgonOuterBoundary(
   const ON_3dPointListRef& mesh_vertex_list,
@@ -4133,6 +4242,28 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
 )
 {
   return FindNgonBoundary_Helper(
+  mesh_vertex_list,
+  mesh_face_list,
+  nullptr,
+  vertex_face_map,
+  ngon_fi_count,
+  ngon_fi,
+  ngon_vi,
+  true
+  );
+}
+
+unsigned int ON_MeshNgon::FindNgonBoundaries(
+  const class ON_3dPointListRef& mesh_vertex_list,
+  const class ON_MeshFaceList& mesh_face_list,
+  ON_MeshVertexFaceMap* vertex_face_map,
+  size_t ngon_fi_count,
+  const unsigned int* ngon_fi,
+  ON_SimpleArray<unsigned int>& ngon_vi,
+  ON_SimpleArray<unsigned int>& ngon_vi_markers
+)
+{
+  return FindNgonBoundaries_Helper(
     mesh_vertex_list,
     mesh_face_list,
     nullptr,
@@ -4140,7 +4271,8 @@ unsigned int ON_MeshNgon::FindNgonOuterBoundary(
     ngon_fi_count,
     ngon_fi,
     ngon_vi,
-    true
+    ngon_vi_markers,
+    false
   );
 }
 
@@ -4164,6 +4296,8 @@ unsigned int ON_MeshNgon::FindNgonBoundary(
     false
   );
 }
+
+
 
 unsigned int ON_MeshNgon::FindNgonBoundary(
   const ON_3dPointListRef& mesh_vertex_list,
@@ -4267,30 +4401,6 @@ unsigned int ON_Mesh::GetNgonOuterBoundary(
   mesh_vertex_list.SetFromMesh(this);
   mesh_face_list.SetFromMesh(this);
   return ON_MeshNgon::FindNgonOuterBoundary(mesh_vertex_list,mesh_face_list,(ON_MeshVertexFaceMap*)nullptr,ngon_fi_count,ngon_fi,ngon_vi);
-}
-
-static 
-double Internal_NgonBoundaryArea(
-  const ON_Plane& ngon_plane,
-  const ON_3dPointListRef& vertex_list,
-  const ON_SimpleArray< unsigned int >& ngon_vi
-)
-{
-  ON_2dPoint p0, p1;
-  const unsigned int count = ngon_vi.UnsignedCount();
-  if (count < 3)
-    return 0.0;
-  if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[count-1]], &p1.x, &p1.y))
-    return 0.0;
-  double twice_area = 0.0;
-  for (unsigned int i = 0; i < count; i++)
-  {
-    p0 = p1;
-    if (false == ngon_plane.ClosestPointTo(vertex_list[ngon_vi[i]], &p1.x, &p1.y))
-      return 0.0;
-    twice_area += (p0.x - p1.x)*(p0.y + p1.y);
-  }
-  return fabs(0.5*twice_area);
 }
 
 unsigned int ON_MeshNgon::FindPlanarNgons(
