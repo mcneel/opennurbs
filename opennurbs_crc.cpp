@@ -436,7 +436,6 @@ void ON_TestHashSpeed(
   {
     if (bTested[i])
     {
-      const int test_dex = 0;
       text_log.Print("%s: %g seconds.", static_cast<const char*>(hashname[i]), elapsed_time_in_seconds[i]);
       if (elapsed_time_in_seconds[i] > 0.0 && i0 >= 0 && i0 != i)
         text_log.Print(" (%g x %s)", elapsed_time_in_seconds[i] / elapsed_time_in_seconds[i0], static_cast<const char*>(hashname[i0]));

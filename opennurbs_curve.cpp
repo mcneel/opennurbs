@@ -1842,8 +1842,6 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
        && m_knot[m_cv_count-1] - m_knot[m_order-2] > knot_tolerance
        )
   {
-    // save domain so it does not change
-    ON_Interval domain = Domain();
     //const int cv_count0 = m_cv_count;
 
     const int sizeof_cv = CVSize()*sizeof(*m_cv);

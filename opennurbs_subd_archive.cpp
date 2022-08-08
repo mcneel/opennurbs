@@ -890,7 +890,7 @@ bool ON_SubDEdge::Read(
     ON_SubDComponentBase base = ON_SubDComponentBase::Unset;
     unsigned char edge_tag = 0;
     unsigned short face_count = 0;
-    double sector_weight[2] = { 0 };
+    double sector_coefficient[2] = { 0 };
     double sharpness = 0.0;
 
     if (!ReadBase(archive,base))
@@ -899,7 +899,7 @@ bool ON_SubDEdge::Read(
       break;
     if (!archive.ReadShort(&face_count))
       break;
-    if (!archive.ReadDouble(2,sector_weight))
+    if (!archive.ReadDouble(2,sector_coefficient))
       break;
     if (!archive.ReadDouble(&sharpness))
       break;
@@ -924,8 +924,8 @@ bool ON_SubDEdge::Read(
     for ( unsigned short evi = 0; evi < 2 && evi < vertex_count; evi++ )
       e->m_vertex[evi] = v[evi];
 
-    e->m_sector_coefficient[0] = sector_weight[0];
-    e->m_sector_coefficient[1] = sector_weight[1];
+    e->m_sector_coefficient[0] = sector_coefficient[0];
+    e->m_sector_coefficient[1] = sector_coefficient[1];
     e->m_sharpness = sharpness;
 
     if (!Internal_ReadFacePtrList(archive,face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex))
@@ -1566,6 +1566,36 @@ bool ON_SubDLevel::Read(
       if ( !element_list.Add(e) )
         break;
       AddEdge(e);
+
+#if !defined(OPENNURBS_IN_RHINO) && !defined(OPENNURBS_7_17_SUBD_SKIP_CHECK_CORNER_SECTOR_COEFFICIENTS)
+      // Versions <= 7.16 saved incorrect sector coefficient values, for smooth edges to corner vertices.
+      // Rhino updates all sector coefficient values when adding the SubD to the document so has no need for this check.
+      if (
+        archive.ArchiveOpenNURBSVersion() <= ON_VersionNumberConstruct(7, 16, 2099, 12, 31, 6)
+        && (e->m_edge_tag == ON_SubDEdgeTag::Smooth || e->m_edge_tag == ON_SubDEdgeTag::SmoothX)
+        )
+      {
+        static const ON_String format{
+          L"The value of m_sector_coefficient[% i] for edge with m_id %u in SubD %u "
+          "is incorrect. Recompute it before using it.\n"
+          "Recompile OpenNURBS with the OPENNURBS_7_17_SUBD_SKIP_CHECK_CORNER_SECTOR_COEFFICIENTS "
+          "flag to skip this check and silence this warning, or update and save your file in "
+          "OpenNURBS >= 7.17.\n"
+        };
+        for (unsigned short evi = 0; evi < 2; evi++)
+        {
+          ON_SubDVertex* vp{ const_cast<ON_SubDVertex*>(e->m_vertex[evi]) };
+          if (!element_list.ConvertArchiveIdToRuntimeVertexPtr(1, 1, &vp)) continue;
+          if (vp->m_vertex_tag == ON_SubDVertexTag::Corner)
+          {
+            ON_String msg{};
+            msg.Format(format, evi, e->m_id, subd.ModelObjectId());
+            ON_WARNING(msg);
+          }
+        }
+      }
+#endif
+
     }
     if ( archive_id != element_list.m_archive_id_partition[2] )
       break;

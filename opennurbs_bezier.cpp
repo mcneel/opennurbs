@@ -2284,14 +2284,18 @@ bool ON_BezierSurface::Loft(
     {
       ON_BezierCurve bez;
       ON_SimpleArray<double>t(curve_count);
-      double dt = 1.0/((double)curve_count);
-      for ( i = 0; i < curve_count; i++ )
+      //22 March 2022 - Chuck - t values should be multiples of 
+      //1/ccm rather than 1/curve_count.
+      int ccm = curve_count-1;
+      double dt = 1.0/((double)ccm);
+      for ( i = 0; i < ccm; i++ )
       {
         t.Append( i*dt );
       }
       t[curve_count-1] = 1.0;
       // use high dimensional curve loft trick
-      rc = bez.Loft( shape_cv_stride*shape_dim, curve_count, shape_cv_stride*shape_dim, meta_point.Array(), 1, t.Array() )
+      //21 March 2022 - Chuck - Shape_dim changed to shape_order in two places.
+      rc = bez.Loft( shape_cv_stride*shape_order, curve_count, shape_cv_stride*shape_order, meta_point.Array(), 1, t.Array() )
          ? true : false;
       if (rc)
       {

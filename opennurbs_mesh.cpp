@@ -9244,7 +9244,7 @@ bool ON_MeshTopology::IsWeldedEdge(int top_ei) const
   const int meshv_count = m_mesh->VertexCount();
   if (meshv_count < topv_count || meshv_count != m_topv_map.Count())
     return false;
-  if (1 == m_topv[e.m_topvi[0]].m_v_count && 1 == m_topv[e.m_topvi[0]].m_v_count)
+  if (1 == m_topv[e.m_topvi[0]].m_v_count && 1 == m_topv[e.m_topvi[1]].m_v_count)
     return true;
 
   // need to examine faces

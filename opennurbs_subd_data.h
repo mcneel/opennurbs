@@ -2045,18 +2045,18 @@ public:
   class ON_SubDEdge* AddEdge(
     ON_SubDEdgeTag edge_tag,
     ON_SubDVertex* v0,
-    double v0_sector_weight,
+    double v0_sector_coefficient,
     ON_SubDVertex* v1,
-    double v1_sector_weight
+    double v1_sector_coefficient
     );
 
   class ON_SubDEdge* AddEdge(
     unsigned int candidate_edge_id,
     ON_SubDEdgeTag edge_tag,
     ON_SubDVertex* v0,
-    double v0_sector_weight,
+    double v0_sector_coefficient,
     ON_SubDVertex* v1,
-    double v1_sector_weight,
+    double v1_sector_coefficient,
     unsigned initial_face_capacity
   );
 

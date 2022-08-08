@@ -896,7 +896,7 @@ public:
   Returns:
     A hash of values that control mesh geometry.
   Remarks:
-    Teh has intentionally ignores 
+    This has intentionally ignored
     m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature, 
     m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
     If you need to include those values, call ContentHash().
@@ -910,7 +910,7 @@ public:
   Returns:
     A hash of values that control mesh geometry.
   Remarks:
-    Teh has intentionally ignores
+    This has intentionally ignored
     m_bCustomSettings, m_bCustomSettingsEnabled, m_bComputeCurvature,
     m_bDoublePrecision, m_bClosedObjectPostProcess, m_texture_range.
     If you need to include those values, call ContentHash().
@@ -1403,11 +1403,10 @@ struct ON_MeshTopologyVertex
 
 struct ON_MeshTopologyEdge
 {
-  // m_topvi[] = indices of the topological verteices where the 
-  // edge begins and ends.
+  // m_topvi[] = indices of the topological vertices where the edge begins and ends.
   int m_topvi[2];
 
-  // m_topf_count = number of topological faces tat share this topological edge
+  // m_topf_count = number of topological faces that share this topological edge.
   int m_topf_count;
 
   // m_topfi[] is an array of length m_topf_count with the indices of the

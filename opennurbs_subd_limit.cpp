@@ -10,6 +10,22 @@
 
 #include "opennurbs_subd_data.h"
 
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2014 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 bool ON_SubDQuadNeighborhood::IsValid() const
 {
   unsigned int count = 0;

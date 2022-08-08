@@ -26,71 +26,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-/*
-class ON_CLASS ON_SubDSectorType
-{
-public:
-  ON_SubDSectorType() = default;
-  ON_SubDSectorType(const ON_SubDSectorType&) = default;
-  ON_SubDSectorType& operator=(const ON_SubDSectorType&) = default;
-
-  static const ON_SubDSectorType Unset;
-
-  bool IsValid() const;
-
-  static ON_SubDSectorType Create(
-    ON_SubD::SubDType subd_type,
-    ON_SubDVertexTag vertex_tag,
-    unsigned int sector_edge_count,
-    double sector_angle_radians
-    );
-
-  static ON_SubDSectorType CreateSmooth(
-    ON_SubD::SubDType subd_type,
-    unsigned int sector_edge_count
-    );
-
-  static ON_SubDSectorType CreateCrease(
-    ON_SubD::SubDType subd_type,
-    unsigned int sector_edge_count
-    );
-
-  static ON_SubDSectorType CreateDart(
-    ON_SubD::SubDType subd_type,
-    unsigned int sector_edge_count
-    );
-
-  static ON_SubDSectorType CreateCorner(
-    ON_SubD::SubDType subd_type,
-    unsigned int sector_edge_count,
-    double sector_corner_angle_radians
-    );
-
-  static int Compare(
-    const ON_SubDSectorType& a,
-    const ON_SubDSectorType& b
-    );
-
-  ON_SubD::SubDType m_subd_type = ON_SubD::SubDType::Unset;
-  ON_SubDVertexTag m_vertex_tag = ON_SubDVertexTag::Unset;
-
-private:
-  unsigned char m_reserved1 = 0;
-  unsigned char m_reserved2 = 0;
-  unsigned int m_reserved3 = 0;
-
-public:
-  unsigned int m_sector_edge_count = 0;
-  unsigned int m_sector_face_count = 0;
-  double m_sector_angle_radians = 0.0;
-  double m_sector_weight = 0.0;
-};
-*/
-
-
-
-
-
 double ON_SubDSectorType::SectorCoefficientCalculationError()
 {
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
@@ -124,7 +59,7 @@ bool ON_SubDSectorType::IsValid() const
     break;
 
   case ON_SubDVertexTag::Corner:
-    if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians < ON_2PI))
+    if (!(m_corner_sector_angle_radians > 0.0 && m_corner_sector_angle_radians <= ON_PI))
       return ON_SUBD_RETURN_ERROR(false);
     if (!(m_sector_coefficient == ON_SubDSectorType::CornerSectorCoefficient(m_sector_face_count,m_corner_sector_angle_radians)))
       return ON_SUBD_RETURN_ERROR(false);
@@ -274,7 +209,6 @@ unsigned int ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(
   double corner_sector_angle_radians
   )
 {
-  corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
   if (ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians))
   {
     if (corner_sector_angle_radians <= ON_SubDSectorType::MinimumCornerAngleRadians)
@@ -308,7 +242,6 @@ double ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(
 {
   if (corner_sector_angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex)
   {
-    //const double max_index = ON_SubDSectorType::MaximumCornerAngleIndex;
     double corner_angle_radians;
     switch (corner_sector_angle_index)
     {
@@ -361,12 +294,13 @@ double ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(
   return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
 }
 
-
 double ON_SubDSectorType::CornerSectorThetaFromCornerAngle(
     unsigned int sector_face_count,
     double corner_sector_angle_radians
     )
 {
+  // Concave corners are not allowed, all users of this functions should ensure that 0 <= angle <= Pi
+  corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
   if (sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubDVertexTag::Corner)
     && sector_face_count <= ON_SubDVertex::MaximumFaceCount
     )
@@ -374,13 +308,7 @@ double ON_SubDSectorType::CornerSectorThetaFromCornerAngle(
     unsigned int corner_index = ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(corner_sector_angle_radians);
     if (corner_index <= ON_SubDSectorType::MaximumCornerAngleIndex)
     {
-      if (2*corner_index > ON_SubDSectorType::MaximumCornerAngleIndex)
-      {
-        // concave corner - theta = (2 pi - corner_sector_angle_radians)/sector_face_count
-        corner_index = ON_SubDSectorType::MaximumCornerAngleIndex - corner_index;
-      }
-      double a = ((corner_index/((double)ON_SubDSectorType::MaximumCornerAngleIndex))*ON_PI)/((double)sector_face_count);
-      return a;
+      return AngleRadiansFromCornerAngleIndex(corner_index)/((double)sector_face_count);
     }
   }
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorTheta);
@@ -437,7 +365,9 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
   // In reality, we will be lucky if we get 3 digits of precision in the trig functions
   // using the dot and cross of unitized differences.
   double cos_alpha = A*B;
-  double sin_alpha = ON_CrossProduct(A, B).Length(); // NOTE WELL:: sin_alpha >= 0.0 or is invalid
+  double sin_alpha = ON_CrossProduct(A, B).Length(); // NOTE WELL: sin_alpha >= 0.0 or is invalid
+  if (sin_alpha < 0.0)
+    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
   
   const double trig_zero_tol = 0.002;
   if (fabs(cos_alpha) <= trig_zero_tol)
@@ -452,24 +382,20 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
     double alpha = ON_DBL_QNAN;
 
     if ( 0.0 == cos_alpha || fabs(sin_alpha) >= trig_one_tol)
-      alpha = (sin_alpha < 0.0) ? 1.5*ON_PI : 0.5*ON_PI;
+      alpha = 0.5*ON_PI;
     else if ( 0.0 == sin_alpha || fabs(cos_alpha) >= trig_one_tol)
       alpha = (cos_alpha < 0.0) ? ON_PI : 0.0;
     else
     {
       alpha = atan2(sin_alpha, cos_alpha);
+
+      // sin_alpha >= 0 and no NaNs means this should never happen
       if (!ON_IsValid(alpha))
         return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
-
-      if (alpha < 0.0)
-      {
-        alpha += 2.0*ON_PI;
-        if (alpha >= 2.0*ON_PI)
-          alpha = 0.0;
-      }
     }
 
-    if (alpha >= 0.0 && alpha <= (1.0 + ON_EPSILON)*2.0*ON_PI)
+    // sin_alpha >= 0 and no NaNs means this should always be true
+    if (alpha >= 0.0 && alpha <= (1.0 + ON_EPSILON) * ON_PI)
     {
       if (alpha <= ON_SubDSectorType::MinimumCornerAngleRadians)
         alpha = ON_SubDSectorType::MinimumCornerAngleRadians;
@@ -488,10 +414,6 @@ double ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorCornerSectorAngle);
 }
 
-
-
-
-
 double ON_SubDSectorType::SectorCoefficientFromTheta(
   double sector_theta
   )
@@ -506,7 +428,7 @@ double ON_SubDSectorType::SectorCoefficientFromTheta(
   // most common cases.
   const double cos_tol = 1e-6;
   const double abs_cos_theta = fabs(cos_theta);
-  if (fabs(abs_cos_theta) <= cos_tol)
+  if (abs_cos_theta <= cos_tol)
     cos_theta = 0.0;
   else if (fabs(abs_cos_theta - 0.5) <= cos_tol)
     cos_theta = (cos_theta < 0.0) ? -0.5 : 0.5;
@@ -515,23 +437,13 @@ double ON_SubDSectorType::SectorCoefficientFromTheta(
 
   // Quadrangle case: w = 1/2 + 1/3*cos(theta);
   const double  wrange[2] = { 1.0 / 6.0, 5.0 / 6.0 };
-
-  if (cos_theta > -1.0 && cos_theta < 1.0)
-  {
-    const double w = 0.5 + cos_theta / 3.0;
-    if (w > wrange[0] && w < wrange[1])
-      return w;
-    if (w <= wrange[0])
-      return wrange[0];
-    if (w >= wrange[1])
-      return wrange[1];
-  }
-
-  if (cos_theta >= 1.0)
-    return wrange[1];
-
-  if (cos_theta <= -1.0)
+  const double w = 0.5 + cos_theta / 3.0;
+  if (w > wrange[0] && w < wrange[1])
+    return w;
+  if (w <= wrange[0])
     return wrange[0];
+  if (w >= wrange[1])
+    return wrange[1];
 
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
@@ -542,35 +454,37 @@ double ON_SubDSectorType::SectorCoefficient() const
 }
 
 bool ON_SubDSectorType::IsValidSectorCoefficientValue(
-  double weight_value,
+  double coefficient_value,
   bool bAllowUnsetTaggedEndCoefficient
   )
 {
-  return ((weight_value >= 0.0 && weight_value < 1.0) || (bAllowUnsetTaggedEndCoefficient && ON_SubDSectorType::UnsetSectorCoefficient == weight_value));
+  return (
+    (coefficient_value >= 0.0 && coefficient_value < 1.0)
+    || 
+    (bAllowUnsetTaggedEndCoefficient 
+      && ON_SubDSectorType::UnsetSectorCoefficient == coefficient_value)
+    );
 }
 
 bool ON_SubDSectorType::IsValidCornerSectorAngleRadians(
   double corner_sector_angle_radians
   )
 {
-  return (corner_sector_angle_radians >= 0.0 && corner_sector_angle_radians <= ON_2PI);
+  return (corner_sector_angle_radians > 0.0 && corner_sector_angle_radians <= ON_PI);
 }
 
 double ON_SubDSectorType::ClampCornerSectorAngleRadians(
   double corner_sector_angle_radians
   )
 {
-  if ( corner_sector_angle_radians < -ON_PI )
-    corner_sector_angle_radians += ON_2PI;
-  else if ( corner_sector_angle_radians > 3.0*ON_PI )
-    corner_sector_angle_radians -= 2.0*ON_PI;
+  corner_sector_angle_radians = fabs(corner_sector_angle_radians);
+  if ( corner_sector_angle_radians > ON_PI )
+    corner_sector_angle_radians = ON_2PI - corner_sector_angle_radians;
   const double angle_tol = 0.25*(ON_PI/180.0); // 1/4 degree.
-  if (fabs(corner_sector_angle_radians - ON_PI) <= angle_tol)
+  if (corner_sector_angle_radians <= angle_tol)
+    return 0;
+  if (corner_sector_angle_radians >= ON_PI - angle_tol)
     return ON_PI;
-  if (fabs(corner_sector_angle_radians + ON_PI) <= angle_tol)
-    return -ON_PI;
-  if (fabs(corner_sector_angle_radians - ON_2PI) <= angle_tol)
-    return ON_2PI;
   return corner_sector_angle_radians;
 }
 
@@ -605,20 +519,13 @@ double ON_SubDSectorType::CornerSectorCoefficient(
   double corner_sector_angle_radians
   )
 {
-  corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
-  if (ON_SubDSectorType::IsValidCornerSectorAngleRadians(corner_sector_angle_radians) 
-    && sector_face_count >= ON_SubDSectorType::MinimumSectorFaceCount(ON_SubDVertexTag::Corner)
-    && sector_face_count <= ON_SubDVertex::MaximumFaceCount
-    )
-  {
-    const double sector_theta = ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count,corner_sector_angle_radians);
-    if (sector_theta >= 0.0)
-      return ON_SubDSectorType::SectorCoefficientFromTheta(sector_theta);
-  }
+  const double sector_theta = ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count, corner_sector_angle_radians);
+  if (sector_theta > 0.0 && sector_theta <= ON_PI)
+    return ON_SubDSectorType::SectorCoefficientFromTheta(sector_theta);
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
 
-static int CompareUnsinged(unsigned int a, unsigned int b)
+static int CompareUnsigned(unsigned int a, unsigned int b)
 {
   if (a < b)
     return -1;
@@ -639,7 +546,7 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
   int rc = 0;
   for (;;)
   {
-    rc = CompareUnsinged((unsigned int)a->m_vertex_tag,(unsigned int)b->m_vertex_tag);
+    rc = CompareUnsigned((unsigned int)a->m_vertex_tag,(unsigned int)b->m_vertex_tag);
     if (0 != rc)
     {
       // bias towards valid tags
@@ -649,7 +556,7 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
         rc = 1;
       break;
     }
-    rc = CompareUnsinged(a->m_sector_face_count,b->m_sector_face_count);
+    rc = CompareUnsigned(a->m_sector_face_count,b->m_sector_face_count);
     if (0 != rc)
     {
       // bias towards valid m_sector_face_count bug small
@@ -661,7 +568,7 @@ int ON_SubDSectorType::Compare(const ON_SubDSectorType* a, const ON_SubDSectorTy
     }
     if (ON_SubDVertexTag::Corner == a->m_vertex_tag)
     {
-      rc = CompareUnsinged(a->m_corner_sector_angle_index, b->m_corner_sector_angle_index);
+      rc = CompareUnsigned(a->m_corner_sector_angle_index, b->m_corner_sector_angle_index);
       if (0 != rc)
         break;
     }
@@ -795,16 +702,15 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
   double corner_sector_angle_radians
   )
 {
+  if (ON_SubDSectorType::ErrorCornerSectorAngle == corner_sector_angle_radians)
+    return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);
+
   if (ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
   {
     if (ON_UNSET_VALUE == corner_sector_angle_radians)
-    {
       corner_sector_angle_radians = ON_SubDSectorType::UnsetCornerSectorAngle;
-    }
     else
-    {
       corner_sector_angle_radians = ON_SubDSectorType::ClampCornerSectorAngleRadians(corner_sector_angle_radians);
-    }
   }
 
   if (ON_SubDSectorType::UnsetCornerSectorAngle == corner_sector_angle_radians
@@ -826,16 +732,16 @@ ON_SubDSectorType ON_SubDSectorType::CreateCornerSectorType(
           = ON_SubDSectorType_IsValidFaceCount(vertex_tag,sector_face_count)
           ? sector_face_count
           : 0;
-        st.m_sector_coefficient
-          = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
-          ? ON_SubDSectorType::CornerSectorCoefficient( sector_face_count, corner_sector_angle_radians)
-          : ON_SubDSectorType::UnsetSectorCoefficient;
+        st.m_corner_sector_angle_index = (unsigned char)corner_sector_angle_index;
+        st.m_corner_sector_angle_radians = corner_sector_angle_radians;
         st.m_sector_theta 
           = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
           ? ON_SubDSectorType::CornerSectorThetaFromCornerAngle(sector_face_count, corner_sector_angle_radians)
           : ON_SubDSectorType::UnsetSectorTheta;
-        st.m_corner_sector_angle_index = (unsigned char)corner_sector_angle_index;
-        st.m_corner_sector_angle_radians = corner_sector_angle_radians;
+        st.m_sector_coefficient
+          = (st.m_sector_face_count > 0 && ON_SubDSectorType::UnsetCornerSectorAngle != corner_sector_angle_radians)
+          ? ON_SubDSectorType::CornerSectorCoefficient( sector_face_count, corner_sector_angle_radians)
+          : ON_SubDSectorType::UnsetSectorCoefficient;
         st.SetHash();
         return st;
       }
