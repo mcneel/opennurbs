@@ -6632,6 +6632,16 @@ bool ON_TextureMapping::SetPlaneMapping(
 	return true;
 }
 
+bool ON_TextureMapping::SetOcsMapping(
+  const ON_Plane& plane
+)
+{
+  const ON_Interval interval(0.0, 1.0);
+  const auto rc = SetPlaneMapping(plane, interval, interval, interval);
+  m_type = ON_TextureMapping::TYPE::plane_mapping;
+  return rc;
+}
+
 bool ON_TextureMapping::SetBoxMapping(const ON_Plane& plane,
                                       ON_Interval dx,
                                       ON_Interval dy,
@@ -7349,7 +7359,15 @@ ON_PhysicallyBasedMaterial::ON_PhysicallyBasedMaterial(const ON_PhysicallyBasedM
 
 bool ON_Material::IsPhysicallyBased(void) const
 {
-  return nullptr != PhysicallyBased();
+  //Optimized version
+  const auto pUD = static_cast<ON_PhysicallyBasedMaterialUserData*>(GetUserData(ON_CLASS_ID(ON_PhysicallyBasedMaterialUserData)));
+  if (nullptr == pUD)
+    return false;
+
+  //https://mcneel.myjetbrains.com/youtrack/issue/RH-68577
+  return pUD->m_parameters.base_color.IsValid();
+  
+  //return nullptr != PhysicallyBased();
 }
 
 std::shared_ptr<ON_PhysicallyBasedMaterial> ON_Material::PhysicallyBased(void)

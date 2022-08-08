@@ -1050,7 +1050,6 @@ int ON_Intersect(
   ON_3dPoint* P[] = { &P0, &P1 };
   int xcnt = 0;
 
-  const double costol = ON_ZERO_TOLERANCE;
   double scale0 = A0.MaximumCoordinate();
   double abstol = A1.MaximumCoordinate();
   if (abstol < scale0)

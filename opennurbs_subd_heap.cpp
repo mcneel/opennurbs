@@ -615,12 +615,25 @@ ON_SubDVertex * ON_SubD_FixedSizeHeap::AllocateSectorFaceVertex(const ON_SubDFac
   return v1;
 }
 
-const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(bool bUseFindOrAllocatEdge, ON_SubDVertex* v0, double v0_sector_weight, ON_SubDVertex* v1, double v1_sector_weight)
+const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
+  bool bUseFindOrAllocatEdge,
+  ON_SubDVertex* v0,
+  double v0_sector_coefficient,
+  ON_SubDVertex* v1,
+  double v1_sector_coefficient
+)
 {
-  return bUseFindOrAllocatEdge ? FindOrAllocateEdge( v0, v0_sector_weight, v1, v1_sector_weight) : AllocateEdge(v0, v0_sector_weight, v1, v1_sector_weight);
+  return bUseFindOrAllocatEdge 
+    ? FindOrAllocateEdge(v0, v0_sector_coefficient, v1, v1_sector_coefficient) 
+    : AllocateEdge(v0, v0_sector_coefficient, v1, v1_sector_coefficient);
 }
 
-const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::FindOrAllocateEdge(ON_SubDVertex * v0, double v0_sector_weight, ON_SubDVertex * v1, double v1_sector_weight)
+const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::FindOrAllocateEdge(
+  ON_SubDVertex * v0,
+  double v0_sector_coefficient,
+  ON_SubDVertex * v1,
+  double v1_sector_coefficient
+)
 {
   if ( nullptr == v0 || nullptr == v0->m_edges)
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
@@ -645,14 +658,14 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::FindOrAllocateEdge(ON_SubDVertex * v
     }
   }
 
-  return AllocateEdge(v0, v0_sector_weight, v1, v1_sector_weight);
+  return AllocateEdge(v0, v0_sector_coefficient, v1, v1_sector_coefficient);
 }
 
 const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
   ON_SubDVertex* v0,
-  double v0_sector_weight,
+  double v0_sector_coefficient,
   ON_SubDVertex* v1,
-  double v1_sector_weight
+  double v1_sector_coefficient
   )
 {
   if ( nullptr != v0 && nullptr == v0->m_edges)
@@ -670,7 +683,7 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
     if (ON_SubDVertexTag::Smooth == v0->m_vertex_tag)
     {
       bTaggedVertex[0] = false;
-      v0_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+      v0_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
     }
     else
     {
@@ -687,7 +700,7 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
     if (ON_SubDVertexTag::Smooth == v1->m_vertex_tag)
     {
       bTaggedVertex[1] = false;
-      v1_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+      v1_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
     }
     else
     {
@@ -695,18 +708,18 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
       if (bTaggedVertex[0] && bTaggedVertex[1])
       {
         // crease edge - no weights
-        v0_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
-        v1_sector_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
+        v0_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
+        v1_sector_coefficient = ON_SubDSectorType::IgnoredSectorCoefficient;
       }
     }
   }
   else
     bTaggedVertex[1] = false;
 
-  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_sector_weight, true))
+  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_sector_coefficient, true))
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
-  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v1_sector_weight, true))
+  if ( false == ON_SubDSectorType::IsValidSectorCoefficientValue(v1_sector_coefficient, true))
     return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
 
   ON_SubDEdge* e = m_e + m_e_index;
@@ -737,8 +750,8 @@ const ON_SubDEdgePtr ON_SubD_FixedSizeHeap::AllocateEdge(
       e->SetSubdivisionLevel(v1->SubdivisionLevel());
   }
 
-  e->m_sector_coefficient[0] = v0_sector_weight;
-  e->m_sector_coefficient[1] = v1_sector_weight;
+  e->m_sector_coefficient[0] = v0_sector_coefficient;
+  e->m_sector_coefficient[1] = v1_sector_coefficient;
   e->m_edge_tag = (bTaggedVertex[0] && bTaggedVertex[1]) ? ON_SubDEdgeTag::Crease : ON_SubDEdgeTag::Smooth;
 
   return ON_SubDEdgePtr::Create(e,0);

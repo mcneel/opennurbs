@@ -6607,42 +6607,6 @@ private:
   ) const;
 
 private:
-  const ON_Font* FromNames2(
-    const wchar_t* postscript_name,
-    const wchar_t* windows_logfont_name,
-    const wchar_t* en_windows_logfont_name,
-    const wchar_t* family_name,
-    const wchar_t* en_family_name,
-    const wchar_t* prefered_face_name,
-    const wchar_t* en_prefered_face_name,
-    ON_Font::Weight prefered_weight,
-    ON_Font::Stretch prefered_stretch,
-    ON_Font::Style prefered_style,
-    bool bRequireFaceMatch,
-    bool bRequireStyleMatch
-  ) const;
-
-private:
-  const ON_Font* Internal_FromNames2(
-    const wchar_t* postscript_name,
-    const wchar_t* windows_logfont_name,
-    const wchar_t* en_windows_logfont_name,
-    const wchar_t* family_name,
-    const wchar_t* en_family_name,
-    const wchar_t* prefered_face_name,
-    const wchar_t* en_prefered_face_name,
-    ON_Font::Weight prefered_weight,
-    ON_Font::Stretch prefered_stretch,
-    ON_Font::Style prefered_style,
-    bool bRequireFaceMatch,
-    bool bRequireStyleMatch,
-    bool bMatchUnderlineStrikethroughAndPointSize,
-    bool bUnderlined,
-    bool bStrikethrough,
-    double point_size
-  ) const;
-
-private:
   const ON_Font::NameLocale m_name_locale = ON_Font::NameLocale::LocalizedFirst;
   bool m_bMatchUnderlineStrikethroughAndPointSize = false;
 

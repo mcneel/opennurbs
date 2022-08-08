@@ -256,6 +256,20 @@ public:
             const ON_Interval& dz
             );
 
+
+  /*
+Description:
+  Create a Ocs texture mapping.  Note that OCS mappings must be placed on mapping channel ON_ObjectRenderingAttributes::OCSMappingChannelId()
+  otherwise they will not work.
+Parameters:
+  plane - [in]
+Returns:
+  True if input is valid.
+*/
+  bool SetOcsMapping(
+    const ON_Plane& plane
+  );
+
   /*
   Description:
     Create a cylindrical projection texture mapping.

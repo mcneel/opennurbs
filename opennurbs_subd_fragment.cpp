@@ -867,10 +867,10 @@ bool ON_SubDManagedMeshFragment::ReserveCapacity(
   if ( F_capacity >= short_capacity_sanity_check)
     return ON_SUBD_RETURN_ERROR(false);
 
-  const size_t P_stride = 3;
-  const size_t N_stride = 3;
-  const size_t T_stride = 3;
-  const size_t C_stride = 1;
+  //const size_t P_stride = 3;
+  //const size_t N_stride = 3;
+  //const size_t T_stride = 3;
+  //const size_t C_stride = 1;
 
   // storage_capacity holds = 3 point coords + 3 normal coords + 3 texture point coords + an ON_Color + unused 4 bytes.
   size_t storage_capacity = ON_SubDMeshFragment::ManagedDoublesPerVertex * V_capacity;
