@@ -774,6 +774,8 @@ ON_SubDSectorType ON_SubDSectorType::Create(
   case ON_SubDVertexTag::Dart:
     return ON_SubDSectorType::CreateDartSectorType(sector_face_count);
     break;
+  default:
+    break;
   }
 
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::Empty);

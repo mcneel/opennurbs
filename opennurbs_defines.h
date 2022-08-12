@@ -2926,22 +2926,6 @@ public:
 public:
   ON_COMPONENT_INDEX m_ci = ON_COMPONENT_INDEX::UnsetComponentIndex;
   double m_x = ON_DBL_QNAN;
-}; 
-
-enum class RhRdkChangeContext : int // Context of a change to document or content parameters.
-{
-  Unset      = -1, // Value when BeginChange() has not been called.
-  UI         = 0,  // Change occurred as a result of user activity in the UI.
-  Drop       = 1,  // Change occurred as a result of drag and drop.
-  Program    = 2,  // Change occurred as a result of internal program activity.
-  Ignore     = 3,  // Change can be disregarded.
-  Tree       = 4,  // Change occurred within the content tree (e.g., nodes reordered).
-  Undo       = 5,  // Change occurred as a result of an undo or redo operation.
-  Reserved   = 6,  // Reserved for RDK internal use only [SDK_UNFREEZE]
-  Serialize  = 7,  // Change occurred during serialization (loading).
-  RealTimeUI = 8,  // Change occurred as a result of 'real-time' user activity in the (content) UI.
-                   // The content's preview, UI, group members and registerable properties are not updated.
-  Script     = 9,  // Change occurred as a result of executing a script.
 };
 
 #endif

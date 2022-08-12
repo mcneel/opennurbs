@@ -128,6 +128,8 @@ const wchar_t* ON_StringFromUnits(ON::LengthUnitSystem units)
 	case ON::LengthUnitSystem::NauticalMiles:     return L"nautical-miles";
 	case ON::LengthUnitSystem::Parsecs:           return L"parsecs";
 	case ON::LengthUnitSystem::Yards:             return L"yards";
+    default:
+        break;
 	}
 
 	return L"none";
@@ -371,9 +373,11 @@ bool ON_UnicodeTextFile::CImpl::ReadString(ON_wString& s)
 
   case Types::UTF16:
     return ReadStringFromUTF16(s);
+          
+  case Types::Unknown:
+  default:
+    return false;
   }
-
-  return false;
 }
 
 bool ON_UnicodeTextFile::CImpl::WriteString(const wchar_t* wsz)
@@ -385,9 +389,11 @@ bool ON_UnicodeTextFile::CImpl::WriteString(const wchar_t* wsz)
 
   case Types::UTF16:
     return WriteStringToUTF16(wsz);
+          
+  case Types::Unknown:
+  default:
+    return false;
   }
-
-  return false;
 }
 
 bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF8(ON_wString& s)
@@ -1267,9 +1273,10 @@ bool ON_XMLVariant::AsBool(void) const
     if (m_impl->m_sVal.CompareNoCase(L"true") == 0) return true;
     if (m_impl->m_sVal.CompareNoCase(L"t")    == 0) return true;
     return ON_wtoi(m_impl->m_sVal) != 0;
+          
+  default:
+    return false;
   }
-
-  return false;
 }
 
 int ON_XMLVariant::AsInteger(void) const
@@ -1288,7 +1295,8 @@ int ON_XMLVariant::AsInteger(void) const
     if (m_impl->m_sVal.CompareNoCase(L"t") == 0) return true;
     return ON_wtoi(m_impl->m_sVal);
 
-  default: return 0;
+  default:
+    return 0;
   }
 }
 
@@ -1303,9 +1311,10 @@ double ON_XMLVariant::AsDouble(void) const
   case Types::Double:  return         m_impl->m_dVal;
   case Types::Integer: return double (m_impl->m_iVal);
   case Types::String:  return ON_wtof(m_impl->m_sVal);
+  
+  default:
+    return 0.0;
   }
-
-  return 0.0;
 }
 
 float ON_XMLVariant::AsFloat(void) const
@@ -1319,9 +1328,10 @@ float ON_XMLVariant::AsFloat(void) const
   case Types::Double:  return float(m_impl->m_dVal);
   case Types::Integer: return float(m_impl->m_iVal);
   case Types::String:  return float(ON_wtof(m_impl->m_sVal));
+          
+  default:
+    return 0.0f;
   }
-
-  return 0.0f;
 }
 
 ON_2dPoint ON_XMLVariant::As2dPoint(void) const
@@ -1430,6 +1440,9 @@ ON_4fColor ON_XMLVariant::AsColor(void) const
   case Types::DoubleArray4:
   case Types::DoubleColor4:
     col.SetRGBA(float(m_impl->m_aVal[0]), float(m_impl->m_aVal[1]), float(m_impl->m_aVal[2]), float(m_impl->m_aVal[3]));
+  
+  default:
+    break;
   }
 
   return col;
@@ -1463,9 +1476,9 @@ time_t ON_XMLVariant::AsTime(void) const
 
   case Types::Time:
     return m_impl->m_timeVal;
+          
+  default: return 0;
   }
-
-  return 0;
 }
 
 ON_Buffer ON_XMLVariant::AsBuffer(void) const
@@ -1473,7 +1486,10 @@ ON_Buffer ON_XMLVariant::AsBuffer(void) const
   DoAutoTyping(Types::Buffer);
 
   ON_Buffer buf;
-
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
+#endif
   switch (m_impl->m_type)
   {
   case Types::Buffer:
@@ -1494,7 +1510,9 @@ ON_Buffer ON_XMLVariant::AsBuffer(void) const
     }
     break;
   }
-
+#if defined(ON_RUNTIME_APPLE)
+#pragma clang diagnostic pop
+#endif
   return buf;
 }
 
@@ -1566,6 +1584,10 @@ ON_wString ON_XMLVariant::AsString(void) const
       delete[] buf;
       return m_impl->m_sVal;
     }
+  
+  case Types::Null:
+  default:
+    break;
   }
 
   return L"";
@@ -1709,9 +1731,10 @@ ON_wString ON_XMLVariant::TypeAsString(void) const
   case Types::String:       return L"string";
   case Types::Time:         return L"time";
   case Types::Buffer:       return L"buffer";
+  case Types::Null:
+  default:
+    return L"null";
   }
-
-  return L"null";
 }
 
 template <typename T>
@@ -2302,9 +2325,10 @@ static const wchar_t* StringFromPropType(ON_XMLVariant::Types vt)
   case ON_XMLVariant::Types::DoubleArray2: return L"2da";
   case ON_XMLVariant::Types::DoubleArray3: return L"3da";
   case ON_XMLVariant::Types::DoubleArray4: return L"4da";
+  case ON_XMLVariant::Types::Null:
+  default:
+    return L"null";
   }
-
-  return L"null";
 }
 
 static ON_XMLVariant::Types PropTypeFromString(const ON_wString& s)
@@ -2812,7 +2836,7 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
   {
     if (0 == *start)
     {
-      OUTPUT_DEBUG_STRING_EOL(L"Tag not found");
+      OUTPUT_DEBUG_STRING_EOL(L"Start of tag '<' not found");
       return false;
     }
 
@@ -2826,7 +2850,7 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
     {
       if (0 == *start)
       {
-        OUTPUT_DEBUG_STRING_EOL(L"End tag not found");
+        OUTPUT_DEBUG_STRING_EOL(L"End of document description tag '>' not found");
         return false;
       }
 
@@ -2846,7 +2870,7 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
     {
       if (0 == *start)
       {
-        OUTPUT_DEBUG_STRING_EOL(L"End tag not found");
+        OUTPUT_DEBUG_STRING_EOL(L"End of comment tag '>' not found");
         return false;
       }
 
@@ -2864,7 +2888,7 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
   {
     if (0 == *pEnd)
     {
-      OUTPUT_DEBUG_STRING_EOL(L"End tag not found");
+      OUTPUT_DEBUG_STRING_EOL(L"End of tag '>' not found");
       return false;
     }
 
@@ -2875,6 +2899,9 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
 
   // Copy the tag into the ready-made string.
   const auto numChars = int(pEnd - start + 1);
+  if (numChars < 2)
+    return false;
+
   tag.Set(start, numChars);
 
   if (bValidateTag)
@@ -3431,6 +3458,12 @@ bool ON_XMLNode::CImpl::GetPropertiesFromTag(const ON_wString& sTag)
 
 bool ON_XMLNode::CImpl::IsClosingTag(const ON_wString& sTag) const
 {
+  if (sTag.Length() < 3)
+    return false;
+
+  if (sTag[0] != L'<')
+    return false;
+
   if (sTag[1] != L'/')
     return false;
 
@@ -3784,17 +3817,17 @@ bool ON_XMLNode::WriteToSegmentedStream(ON_XMLSegmentedStream& segs, bool includ
 
 ON_wString ON_XMLNode::GetNameFromTag(const wchar_t* wszTag) // Static.
 {
-  ON_wString tag = wszTag;
-  tag.TrimLeft(L"</ ");
-  tag.TrimRight(L">/ ");
+  ON_wString name = wszTag;
+  name.TrimLeft(L"</ ");
+  name.TrimRight(L">/ ");
 
-  const int pos = tag.Find(L' ');
+  const int pos = name.Find(L' ');
   if (pos >= 0)
   {
-    tag.SetLength(pos);
+    name.SetLength(pos);
   }
 
-  return tag;
+  return name;
 }
 
 ON_XMLNode* ON_XMLNode::FirstChild(void) const
@@ -3867,16 +3900,22 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
   wchar_t* pBuffer = const_cast<wchar_t*>(stream);
 
   ON_wString tag;
-  m_impl->GetNextTag(tag, pBuffer, bValidateTags);
+
+  // 1st August 2022 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-66795
+  // The original code was not checking GetNextTag() for failure and blindly continuing with an empty tag.
+  // Then in some places it assumed that the tag was not empty. This is confusing because I thought
+  // this was causing RH-66795, but it couldn't be because this bug was not in 7.x, and RH-66795 is 7.13.
+  if (!m_impl->GetNextTag(tag, pBuffer, bValidateTags))
+    return ReadError;
+
+  if (tag.IsEmpty())
+    return ReadError;
 
   m_impl->m_last_read_buf_ptr = (void*)stream;
 
-  if (!tag.IsEmpty())
-  {
-    m_impl->GetPropertiesFromTag(tag);
-  }
+  m_impl->GetPropertiesFromTag(tag);
 
-  const auto pos1 = tag.Length() - 2;
+  const auto pos1 = tag.Length() - 2; // Assumes the tag is not empty.
   if (tag[pos1] != L'/')
   {
     // This tag either has children, or a default property.
@@ -3909,7 +3948,14 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
       }
 
       pBuffer = start;
-      m_impl->GetNextTag(tag, pBuffer, bValidateTags);
+
+      // 1st August 2022 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-66795
+      // The original code was not checking GetNextTag() for failure and blindly continuing with
+      // an empty tag. This caused continuous child recursion because the buffer pointer was
+      // still pointing at the same (bad) XML. This is confusing because I thought this was causing
+      // RH-66795, but it couldn't be because this bug was not in 7.x, and RH-66795 is 7.13.
+      if (!m_impl->GetNextTag(tag, pBuffer, bValidateTags))
+        return ReadError;
 
       bClosingTag = m_impl->IsClosingTag(tag);
 

@@ -1255,6 +1255,8 @@ const ON_ComponentStatus ON_SubDComponentPtr::Status() const
         return face->m_status;
     }
     break;
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
   }
   return ON_ComponentStatus::NoneSet;
 }
@@ -1285,6 +1287,8 @@ unsigned int ON_SubDComponentPtr::SetStatus(
       if (nullptr != face)
         return face->m_status.SetStatus(status);
     }
+    break;
+  case ON_SubDComponentPtr::Type::Unset:
     break;
   }
   return ON_SUBD_RETURN_ERROR(0);
@@ -1318,6 +1322,8 @@ unsigned int ON_SubDComponentPtr::SetStates(
         return face->m_status.SetStates(states_to_set);
     }
     break;
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
   }
   return ON_SUBD_RETURN_ERROR(0);
 }
@@ -1349,6 +1355,8 @@ unsigned int ON_SubDComponentPtr::ClearStates(
       if (nullptr != face)
         return face->m_status.ClearStates(states_to_clear);
     }
+    break;
+  case ON_SubDComponentPtr::Type::Unset:
     break;
   }
   return ON_SUBD_RETURN_ERROR(0);
@@ -1832,6 +1840,8 @@ class ON_SubDComponentBase* ON_SubDComponentPtr::ComponentBase(ON_SubDComponentP
   case ON_SubDComponentPtr::Type::Edge:
   case ON_SubDComponentPtr::Type::Face:
     return (ptr_type == type_filter || ON_SubDComponentPtr::Type::Unset == type_filter) ? ((class ON_SubDComponentBase*)ON_SUBD_COMPONENT_POINTER(m_ptr)) : nullptr;
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
   }
   return nullptr;
 }
@@ -6510,6 +6520,8 @@ static bool IsValidSubDEdgeTag(
     case ON_SubDVertexTag::Dart:
       ++dart_vertex_count;
       break;
+    case ON_SubDVertexTag::Unset:
+      break;
     }
   };
 
@@ -7261,6 +7273,9 @@ unsigned int ON_SubD::DumpTopology(
           break;
         case  ON_TextureMapping::TYPE::ocs_mapping:
           text_log.Print("ocs");
+          break;
+        case  ON_TextureMapping::TYPE::false_colors:
+          text_log.Print("false colors");
           break;
         }
         text_log.PrintNewLine();
@@ -9368,6 +9383,8 @@ const ON_SubDComponentPtr ON_SubDHeap::InHeap(const class ON_SubDComponentBase* 
           break;
         case ON_SubDComponentPtr::Type::Face:
           return ON_SubDComponentPtr::Create((const ON_SubDFace*)b);
+          break;
+        case ON_SubDComponentPtr::Type::Unset:
           break;
         }
       }
@@ -13011,6 +13028,7 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     }
     if (make_ngons_pack)
     {
+      // TODO: Use ON_SubDFace::GetNgonSubPackRectSizeAndDelta() instead?
       pack_id = max_pack_id;  // Will be incremented later
       const unsigned int k = f0_edge_count / 4;
       const unsigned int r = f0_edge_count % 4;
@@ -13123,6 +13141,7 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
       {
         if (make_ngons_pack)
         {
+          // TODO: Use ON_SubDFace::GetNgonSubPackRectSizeAndDelta() instead?
           ++pack_id;
           const unsigned int quadrant = (i * 4) / f0_edge_count;
           const unsigned int prevsizes = (
@@ -15934,6 +15953,9 @@ bool ON_SubD::DeleteComponentsForExperts(
         face->m_status = ON_ComponentStatus::AllSet;
       }
       break;
+            
+    case ON_SubDComponentPtr::Type::Unset:
+      break;
     }
   }
 
@@ -15957,6 +15979,8 @@ bool ON_SubD::DeleteComponentsForExperts(
 
       case ON_SubDComponentPtr::Type::Face:
         deleted_face_count++;
+        break;
+      case ON_SubDComponentPtr::Type::Unset:
         break;
       }
       continue;
@@ -17323,6 +17347,9 @@ static unsigned int Internal_MarkStuffAndMaybeMoveVertices(
             }
           }
         }
+        break;
+              
+      case ON_SubDComponentPtr::Type::Unset:
         break;
       }
     }
@@ -22711,6 +22738,8 @@ bool ON_SubDComponentFilter::AcceptComponent(ON_COMPONENT_INDEX component_index,
     if (ON_SubDComponentPtr::Type::Face != cptr.ComponentType())
       return false;
     break;
+  default: // 30 unhandled enum values
+    break;
   }
   return AcceptComponent(cptr);
 }
@@ -22738,6 +22767,8 @@ bool ON_SubDComponentFilter::AcceptComponent(ON_SubDComponentPtr cptr) const
     break;
   case ON_SubDComponentPtr::Type::Face:
     return AcceptFace(cptr.Face());
+    break;
+  case ON_SubDComponentPtr::Type::Unset:
     break;
   }
   return false;

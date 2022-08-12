@@ -209,6 +209,7 @@ void ON_Decal::SetMapping(Mappings m)
   case ON_Decal::Mappings::Planar:      s = ON_RDK_UD_DECAL_MAPPING_PLANAR;      break;
   case ON_Decal::Mappings::Spherical:   s = ON_RDK_UD_DECAL_MAPPING_SPHERICAL;   break;
   case ON_Decal::Mappings::Cylindrical: s = ON_RDK_UD_DECAL_MAPPING_CYLINDRICAL; break;
+  case ON_Decal::Mappings::None: break;
   }
 
   m_impl->SetParameter(XMLPath(), ON_RDK_UD_DECAL_MAPPING, s);
@@ -238,6 +239,7 @@ void ON_Decal::SetProjection(Projections p)
   case ON_Decal::Projections::Forward:  s = ON_RDK_UD_DECAL_PROJECTION_FORWARD;  break;
   case ON_Decal::Projections::Backward: s = ON_RDK_UD_DECAL_PROJECTION_BACKWARD; break;
   case ON_Decal::Projections::Both:     s = ON_RDK_UD_DECAL_PROJECTION_BOTH;     break;
+  case ON_Decal::Projections::None: break;
   }
 
   m_impl->SetParameter(XMLPath(), ON_RDK_UD_DECAL_PROJECTION, s);
@@ -373,7 +375,7 @@ ON_DecalCollection::~ON_DecalCollection()
   }
 }
 
-void ON_DecalCollection::CreateDecalsFromXML(const ONX_Model& model)
+void ON_DecalCollection::CreateDecalsFromXML(const ONX_Model& model, int archive_3dm_version)
 {
   ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
   const auto* component = cit.FirstComponent();
@@ -385,7 +387,7 @@ void ON_DecalCollection::CreateDecalsFromXML(const ONX_Model& model)
 
     // Get the entire XML off of the attributes user data.
     ON_wString xml;
-    ONX_Model::GetRDKObjectInformation(*attr, xml);
+    GetRDKObjectInformation(*attr, xml, archive_3dm_version);
     if (xml.IsEmpty())
       continue; // No XML found on the component's attributes.
 
@@ -401,7 +403,7 @@ void ON_DecalCollection::CreateDecalsFromXML(const ONX_Model& model)
   }
 }
 
-void ON_DecalCollection::CreateXMLFromDecals(const ONX_Model& model)
+void ON_DecalCollection::CreateXMLFromDecals(const ONX_Model& model, int archive_3dm_version)
 {
   for (int i = 0; i < m_items.Count(); i++)
   {
@@ -422,7 +424,7 @@ void ON_DecalCollection::CreateXMLFromDecals(const ONX_Model& model)
     ON_XMLRootNode root;
 
     ON_wString xml;
-    ONX_Model::GetRDKObjectInformation(*attr, xml);
+    GetRDKObjectInformation(*attr, xml, archive_3dm_version);
     if (xml.IsNotEmpty())
     {
       if (ON_XMLNode::ReadError == root.ReadFromStream(xml))
@@ -447,7 +449,7 @@ void ON_DecalCollection::CreateXMLFromDecals(const ONX_Model& model)
       new_decals_node->ReadFromStream(decals_xml);
 
       // Set the item's XML to the attributes user data.
-      SetRDKObjectInformation(*attr, root.String());
+      SetRDKObjectInformation(*attr, root.String(), archive_3dm_version);
     }
   }
 }
@@ -470,6 +472,19 @@ ON_DecalCollection::Item* ON_DecalCollection::FindItem(const ON_UUID& component_
     return m_items[index];
 
   return nullptr;
+}
+
+ON_DecalCollection::Item* ON_DecalCollection::ItemAt(int index) const
+{
+  if ((index < 0) || (index >= m_items.Count()))
+    return nullptr;
+
+  return m_items[index];
+}
+
+int ON_DecalCollection::ItemCount(void) const
+{
+  return m_items.Count();
 }
 
 ON_Decal* ON_DecalCollection::AddDecal(const ON_ModelComponent& component)
@@ -614,14 +629,27 @@ ON_Decal* ON_DecalCollection::Item::GetDecal(const ON_UUID& id) const
 class ON_DecalIterator::CImpl
 {
 public:
-  CImpl(ONX_Model& model, const ON_ModelComponent& component)
+  CImpl(ONX_Model& model) : m_model(model) { }
+  virtual ~CImpl() { }
+
+  virtual ON_Decal* Next(void) = 0;
+
+protected:
+  ONX_Model& m_model;
+  int m_decal_index = -1;
+};
+
+class CImpl_PerComponent : public ON_DecalIterator::CImpl
+{
+public:
+  CImpl_PerComponent(ONX_Model& model, const ON_ModelComponent& component)
     :
-    m_model(model)
+    CImpl(model)
   {
     m_component_id = component.Id();
   }
 
-  ON_Decal* Next(void)
+  virtual ON_Decal* Next(void) override
   {
     if (nullptr == m_item)
     {
@@ -638,15 +666,58 @@ public:
   }
 
 public:
-  ONX_Model& m_model;
   ON_UUID m_component_id;
-  int m_decal_index = -1;
   ON_DecalCollection::Item* m_item = nullptr;
 };
 
-ON_DecalIterator::ON_DecalIterator(ONX_Model& model, const ON_ModelComponent& component)
+class CImpl_All : public ON_DecalIterator::CImpl
 {
-  m_impl = new CImpl(model, component);
+public:
+  CImpl_All(ONX_Model& model) : CImpl(model) { }
+
+  virtual ON_Decal* Next(void) override
+  {
+    if (!m_populated)
+    {
+      const auto& collection = GetDecalCollection(m_model);
+
+      for (int i = 0; i < collection.ItemCount(); i++)
+      {
+        const auto* item = collection.ItemAt(i);
+
+        int d = 0;
+        ON_Decal* decal = nullptr;
+        while (nullptr != (decal = item->GetDecal(d++)))
+        {
+          m_decals.Append(decal);
+        }
+      }
+
+      m_decal_index = 0;
+      m_populated = true;
+    }
+
+    if (m_decal_index >= m_decals.Count())
+      return nullptr;
+
+    return m_decals[m_decal_index++];
+  }
+
+private:
+  ON_SimpleArray<ON_Decal*> m_decals;
+  bool m_populated = false;
+};
+
+ON_DecalIterator::ON_DecalIterator(ONX_Model& model, const ON_ModelComponent* component)
+{
+  if (nullptr != component)
+  {
+    m_impl = new CImpl_PerComponent(model, *component);
+  }
+  else
+  {
+    m_impl = new CImpl_All(model);
+  }
 }
 
 ON_DecalIterator::~ON_DecalIterator()

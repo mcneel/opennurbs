@@ -294,7 +294,7 @@ public:
   static ON_UUID PhysicallyBasedUserdataId(void);
 
 private:
-  // The value of m_rdk_material_id idetifies an RDK (rendering development kit)
+  // The value of m_rdk_material_id identifies an RDK (rendering development kit)
   // material. Multiple materials in a Rhino model can refer to the same
   // RDK material id.  In V5 this value is stored in user data.  In V6 it is
   // saved in the m_rdk_material_id field.

@@ -1587,38 +1587,41 @@ private:
 public:
   /////////////////////////////////////////////////////////////////////
   //
-  // BEGIN Render Development Toolkit (RDK) information
-  //
+  // BEGIN Rendering information
   //
 
-  // RDK Safe Frame.
+  // Safe Frame.
   ON_SafeFrame& SafeFrame(void) const;
 
-  // RDK Ground Plane.
+  // Ground Plane.
   ON_GroundPlane& GroundPlane(void) const;
 
-  // RDK Linear Workflow.
+  // Linear Workflow.
   ON_LinearWorkflow& LinearWorkflow(void) const;
 
-  // RDK Current Environment.
+  // Current Environment.
   ON_CurrentEnvironment& CurrentEnvironment(void) const;
 
-  // RDK Skylight.
+  // Skylight.
   ON_Skylight& Skylight(void) const;
 
-  // RDK Sun.
+  // Sun.
   ON_Sun& Sun(void) const;
 
-  // RDK Dithering.
+  // Dithering.
   ON_Dithering& Dithering(void) const;
 
-  // RDK Render Channels.
+  // Render Channels.
   ON_RenderChannels& RenderChannels(void) const;
 
-  // Get RDK Decals stored on a particular component. Generally, only model components of type ModelGeometry
-  // have decals on them. Returns a decal iterator which allows access to the decals. If there are no
-  // decals on the component, the iterator will be empty and return null if Next() is called.
-  ON_DecalIterator GetDecalIterator(const ON_ModelComponent& component);
+  // - If 'component' is not null, this gets decals stored on that component. Generally, only model
+  //   components of type ModelGeometry have decals on them.
+  //   If there are no decals on the component, the iterator will be empty and return null if Next() is called.
+  //
+  // - If 'component' is null, then this gets all decals from all model components.
+  //
+  // Returns a decal iterator which allows access to the decals.
+  ON_DecalIterator GetDecalIterator(const ON_ModelComponent* component);
 
   // Adds a new decal to a particular component.
   // Returns a pointer to the decal if successful, or null on failure.
@@ -1632,53 +1635,32 @@ public:
   // have mesh modifiers on them. Returns an object which provides access to the various mesh modifiers.
   ON_MeshModifiers* GetMeshModifiers(const ON_ModelComponent& component);
 
-  // The following functions allow the developer access to the information saved per document or per-object in the 3dm file by the 
-  // RDK plug-in, built into Rhino.  There are two parts to this information - the XML data that constitutes the information
-  // about materials, textures and environments in addition to some of the document settings such as sun data, skylighting
-  // ground plane and so on - and the embedded support files which are saved as byte-for-byte copies of the actual file data
-  // for the original files.  Typically, these embedded files will be textures used by materials, environments or decals.
-
-  // Call this function to determine if RDK document information has been saved in this model and can be read using the GetRDKDocumentInfomation function.
-  // Returns true if RDK document information is available.
+  ON_DEPRECATED_MSG("This function is deprecated.")
   static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
 
-  // This function returns the entire XML associated with the RDK document data for this file.  The XML will include details about
-  // materials, textures and environments as well as sun, skylighting, ground plane and so on.
-  // Returns true if RDK document information is available.
+  ON_DEPRECATED_MSG("This function is deprecated.")
   static bool GetRDKDocumentInformation(const ONX_Model_UserData& docud, ON_wString& rdk_xml_document_data);
 
-  // This function is deprecated in favor of the one below.
   ON_DEPRECATED_MSG("This function is deprecated as it did not return the buffer sizes, making it useless")
   static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers);
 
-  // This function returns the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
-  // Typically, these files will be used by materials and environments.  Rhino unpacks these files into a folder with the suffix "embedded_files" next to the
-  // 3dm file on disk. This is only supported for Version 6 files onwards.
-  // Returns true if embedded files were found.
+  ON_DEPRECATED_MSG("This function is deprecated in favor of ON_EmbeddedFile.")
   static bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes);
 
-  // This function returns the full paths of the embedded support files written with this document.  The returned arrays will be empty if no support filers were saved.
-  // This function is similar to GetRDKEmbeddedFiles, but is faster and uses less memory to return only the paths.  Use the paths (exactly the strings returned from
-  // this function) to extract the embedded files using GetRDKEmbeddedFile().
+  ON_DEPRECATED_MSG("This function is deprecated in favor of ON_EmbeddedFile.")
   static bool GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths);
 
-  // This function extracts one embedded file from the support files written with this document.  Use the exact path as returned from GetRDKEmbeddedFilePaths().
+  ON_DEPRECATED_MSG("This function is deprecated in favor of ON_EmbeddedFile.")
   static bool GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes);
 
-  // Call this function to determine if RDK object information has saved in this model and can be read using the GetRDKObjectInformation function.
-  // Returns true if RDK object information is available.
+  ON_DEPRECATED_MSG("This function is deprecated.")
   static bool IsRDKObjectInformation(const ON_UserData& objectud);
 
-  // This function returns the entire RDK XML associated with the object. The XML includes details about decals.
-  // Returns true if RDK object information is available.
+  ON_DEPRECATED_MSG("This function is deprecated. Please use GetDecalIterator(), AddDecal() and GetDecal() instead.")
   static bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml);
 
-  // This function returns the entire mesh modifier XML associated with the object.
-  // Returns true if mesh modifier information is available on the object.
-  static bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml);
-
   //
-  // END Render Development Toolkit (RDK) information
+  // END Rendering information
   //
   /////////////////////////////////////////////////////////////////////
 

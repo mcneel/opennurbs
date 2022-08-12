@@ -302,16 +302,16 @@ public:
 
   using EmbeddedFileMap = std::unordered_map<std::wstring, std::wstring>;
 
-  bool GetRDKDocumentXML(ON_wString& xml, bool embedded_files) const;
-  ONX_Model_UserData* GetRDKDocumentUserData(void) const;
+  bool GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const;
+  ONX_Model_UserData* GetRDKDocumentUserData(int archive_3dm_version) const;
   void PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const;
-  bool PopulateRDKComponents(void);
-  bool UpdateRDKUserData(void);
+  bool PopulateRDKComponents(int archive_3dm_version);
+  bool UpdateRDKUserData(int archive_3dm_version);
   bool CreateRenderContentFromXML(class ON_XMLNode& model_node, RenderContentKinds kind);
   bool CreatePostEffectsFromXML(ON_XMLNode& model_node, ON_PostEffect::Types type);
   bool CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const;
   bool CreateXMLFromPostEffects(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
-  bool SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud) const;
+  bool SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud, int archive_3dm_version) const;
   ON_XMLNode* GetRenderContentSectionNode(ON_XMLNode& model_node, RenderContentKinds kind) const;
   ON_XMLNode* GetPostEffectSectionNode(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
   static void RemoveAllEmbeddedFiles(ONX_Model& model);
@@ -2986,7 +2986,8 @@ bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
     return false;
 
   // Having read the model data, populate the RDK components.
-  m_extension->PopulateRDKComponents();
+  const auto archive_3dm_version = archive.Archive3dmVersion();
+  m_extension->PopulateRDKComponents(archive_3dm_version);
 
   return true;
 }
@@ -3039,7 +3040,7 @@ bool ONX_Model::Write(const wchar_t* filename, int version, ON_TextLog* error_lo
 
 bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_log) const
 {
-  m_extension->UpdateRDKUserData();
+  m_extension->UpdateRDKUserData(version);
 
   if ( 0 != version )
   {
@@ -4874,7 +4875,7 @@ ONX_Model::Extension::~Extension()
 {
 }
 
-ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(void) const
+ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(int archive_3dm_version) const
 {
   // Try to find existing RDK document user data.
   for (int i = 0; i < m_model.m_userdata_table.Count(); i++)
@@ -4882,7 +4883,7 @@ ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(void) const
     auto* pUserData = m_model.m_userdata_table[i];
     if (nullptr != pUserData)
     {
-      if (ONX_Model::IsRDKDocumentInformation(*pUserData))
+      if (::IsRDKDocumentInformation(*pUserData))
         return pUserData; // Found it.
     }
   }
@@ -4891,12 +4892,12 @@ ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(void) const
   auto* ud = new ONX_Model_UserData;
   ud->m_goo.m_typecode = TCODE_USER_RECORD;
   ud->m_uuid = RdkPlugInId();
-  ud->m_usertable_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+  ud->m_usertable_3dm_version = archive_3dm_version;
   ud->m_usertable_opennurbs_version = ON::Version();
 
   ON_XMLRootNode root;
   PopulateDefaultRDKDocumentXML(root);
-  SetRDKDocumentInformation(root.String(), *ud);
+  SetRDKDocumentInformation(root.String(), *ud, archive_3dm_version);
 
   m_model.m_userdata_table.Append(ud);
 
@@ -4911,12 +4912,12 @@ void ONX_Model::Extension::PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) c
   GetRenderContentSectionNode(root, RenderContentKinds::Texture);
 }
 
-bool ONX_Model::Extension::GetRDKDocumentXML(ON_wString& xml, bool embedded_files) const
+bool ONX_Model::Extension::GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const
 {
   // Gets the entire RDK document XML as a string in 'xml'. If 'embedded_files' is true,
   // ON_EmbeddedFile objects are created for each embedded file.
 
-  const auto* pUserData = GetRDKDocumentUserData();
+  const auto* pUserData = GetRDKDocumentUserData(archive_3dm_version);
   if (nullptr != pUserData)
   {
     auto* model = embedded_files ? &m_model : nullptr;
@@ -5064,12 +5065,12 @@ bool ONX_Model::Extension::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, O
   return true;
 }
 
-bool ONX_Model::Extension::PopulateRDKComponents(void)
+bool ONX_Model::Extension::PopulateRDKComponents(int archive_3dm_version)
 {
   // Get the entire RDK document XML. This includes not only render contents
   // but also Sun, GroundPlane and other RDK document data. Ignore embedded files.
   ON_wString xml;
-  if (!GetRDKDocumentXML(xml, true))
+  if (!GetRDKDocumentXML(xml, true, archive_3dm_version))
     return false;
 
   // Read the entire XML into m_doc_node.
@@ -5088,16 +5089,19 @@ bool ONX_Model::Extension::PopulateRDKComponents(void)
   CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::Late);
 
   // Create the decal collection.
-  m_decal_collection.CreateDecalsFromXML(m_model);
+  m_decal_collection.CreateDecalsFromXML(m_model, archive_3dm_version);
 
   // Create the mesh modifiers.
-  m_mesh_modifier_collection.CreateMeshModifiersFromXML(m_model);
+  m_mesh_modifier_collection.CreateMeshModifiersFromXML(m_model, archive_3dm_version);
 
   return true;
 }
 
-bool ONX_Model::Extension::UpdateRDKUserData(void)
+bool ONX_Model::Extension::UpdateRDKUserData(int archive_3dm_version)
 {
+  if (0 == archive_3dm_version)
+    archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+
   // For each kind, convert the render content hierarchy to fresh XML.
   CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Material);
   CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Environment);
@@ -5109,19 +5113,20 @@ bool ONX_Model::Extension::UpdateRDKUserData(void)
   CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::Late);
 
   // Convert the decal collection to fresh XML.
-  m_decal_collection.CreateXMLFromDecals(m_model);
+  m_decal_collection.CreateXMLFromDecals(m_model, archive_3dm_version);
 
   // Convert the mesh modifier collection to fresh XML.
-  m_mesh_modifier_collection.CreateXMLFromMeshModifiers(m_model);
+  m_mesh_modifier_collection.CreateXMLFromMeshModifiers(m_model, archive_3dm_version);
 
   // Get the RDK document user data.
-  auto* pUserData = GetRDKDocumentUserData();
+  auto* pUserData = GetRDKDocumentUserData(archive_3dm_version);
   if (nullptr == pUserData)
     return false; // Shouldn't happen because we were able to get the XML earlier.
 
   // Get the entire document XML as a string and set it to the user data.
   ON_wString xml = m_doc_node.String();
-  SetRDKDocumentInformation(xml, *pUserData);
+  pUserData->m_usertable_3dm_version = archive_3dm_version;
+  SetRDKDocumentInformation(xml, *pUserData, archive_3dm_version);
 
   return true;
 }
@@ -5171,7 +5176,7 @@ ON_DecalCollection& GetDecalCollection(ONX_Model& model)
   return model.m_extension->m_decal_collection;
 }
 
-ON_DecalIterator ONX_Model::GetDecalIterator(const ON_ModelComponent& component)
+ON_DecalIterator ONX_Model::GetDecalIterator(const ON_ModelComponent* component)
 {
   return ON_DecalIterator(*this, component);
 }
@@ -5191,9 +5196,14 @@ ON_MeshModifiers* ONX_Model::GetMeshModifiers(const ON_ModelComponent& component
   return m_extension->m_mesh_modifier_collection.Find(component);
 }
 
-bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
+bool IsRDKDocumentInformation(const ONX_Model_UserData& docud)
 {
   return (0 == ON_UuidCompare(RdkPlugInId(), docud.m_uuid)) && (docud.m_goo.m_value >= 4) && (nullptr != docud.m_goo.m_goo);
+}
+
+bool ONX_Model::IsRDKDocumentInformation(const ONX_Model_UserData& docud)
+{
+  return ::IsRDKDocumentInformation(docud);
 }
 
 static size_t ArchiveLengthUpToEmbeddedFiles(size_t utf8_length)
@@ -5208,7 +5218,12 @@ static size_t ArchiveLengthUpToEmbeddedFiles(size_t utf8_length)
 bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers)
 {
   ON_SimpleArray<size_t> dummy;
-  return GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, dummy);
+  return ::GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, dummy);
+}
+
+bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes) // Static.
+{
+  return ::GetRDKEmbeddedFiles(docud, paths, embedded_files_as_buffers, buffer_sizes);
 }
 
 bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud, ON_wString& xml) // Static.
@@ -5327,7 +5342,7 @@ static bool ReadEmbeddedFilePathsFromArchive(ON_Read3dmBufferArchive& archive, i
 
 bool ONX_Model::GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths)
 {
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
+  if (!::IsRDKDocumentInformation(docud))
     return false;
 
   ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
@@ -5339,9 +5354,9 @@ bool ONX_Model::GetRDKEmbeddedFilePaths(const ONX_Model_UserData& docud, ON_Clas
   return true;
 }
 
-bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes)
+bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes)
 {
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
+  if (!::IsRDKDocumentInformation(docud))
     return false;
 
   ON_Read3dmBufferArchive a(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
@@ -5385,7 +5400,7 @@ bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArr
 
 bool ONX_Model::GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_t* path, ON_SimpleArray<unsigned char>& bytes)
 {
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
+  if (!::IsRDKDocumentInformation(docud))
     return false;
 
   ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
@@ -5451,7 +5466,7 @@ void ONX_Model::Extension::RemoveAllEmbeddedFiles(ONX_Model& model)
 
 bool ONX_Model::Extension::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_wString& xml, ONX_Model* model) // Static.
 {
-  if (!ONX_Model::IsRDKDocumentInformation(docud))
+  if (!::IsRDKDocumentInformation(docud))
     return false;
 
   ON_Read3dmBufferArchive archive(docud.m_goo.m_value, docud.m_goo.m_goo, false, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
@@ -5533,7 +5548,7 @@ bool ONX_Model::Extension::GetEntireRDKDocument(const ONX_Model_UserData& docud,
   return xml.Length() > 0;
 }
 
-bool ONX_Model::Extension::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud) const
+bool ONX_Model::Extension::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud, int archive_3dm_version) const
 {
   ON_Write3dmBufferArchive archive(0, 0, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
 
@@ -5627,14 +5642,13 @@ static bool IsMeshModifierObjectUserData(ON_UserData& objectud)
   return false;
 }
 
-bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud)
+bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud) // Static.
 {
   return nullptr != RDKObjectUserDataHelper(&objectud);
 }
 
-bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf)
+bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf, int archive_3dm_version)
 {
-  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
   const auto archive_opennurbs_version_number = ON::Version(); // I don't know if this is correct.
 
   ON_Write3dmBufferArchive archive(0, 0, archive_3dm_version, archive_opennurbs_version_number);
@@ -5671,10 +5685,10 @@ bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf)
   return true;
 }
 
-bool SetXMLToUserData(const ON_wString& xml, ON_UserData& ud)
+bool SetXMLToUserData(const ON_wString& xml, ON_UserData& ud, int archive_3dm_version)
 {
   ON_Buffer buf;
-  if (!CreateArchiveBufferFromXML(xml, buf))
+  if (!CreateArchiveBufferFromXML(xml, buf, archive_3dm_version))
     return false;
 
   ON_BinaryArchiveBuffer arc(ON::archive_mode::read, &buf);
@@ -5683,15 +5697,14 @@ bool SetXMLToUserData(const ON_wString& xml, ON_UserData& ud)
   return true;
 }
 
-bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml)
+bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml, int archive_3dm_version)
 {
   // Create a buffer from the XML.
   ON_Buffer buf;
-  if (!CreateArchiveBufferFromXML(xml, buf))
+  if (!CreateArchiveBufferFromXML(xml, buf, archive_3dm_version))
     return false;
 
-  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
-  const auto archive_opennurbs_version = ON::Version();
+  const auto archive_opennurbs_version = ON::Version(); // I don't know if this is correct.
 
   // Create an archive from the buffer.
   ON_BinaryArchiveBuffer archive(ON::archive_mode::read, &buf);
@@ -5727,7 +5740,7 @@ bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml)
   return true;
 }
 
-bool ONX_Model::GetRDKObjectInformation(const ON_Object& object, ON_wString& xml) // Static.
+bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version) // Static.
 {
   xml.SetLength(0);
 
@@ -5759,7 +5772,6 @@ bool ONX_Model::GetRDKObjectInformation(const ON_Object& object, ON_wString& xml
   buf.SeekFromStart(0);
   buf.Read(sizeof_buffer, buffer);
 
-  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
   const auto archive_opennurbs_version_number = ON::Version();
   ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
 
@@ -5820,7 +5832,7 @@ bool ONX_Model::GetRDKObjectInformation(const ON_Object& object, ON_wString& xml
   return xml.Length() > 0;
 }
 
-static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml)
+static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml, int archive_3dm_version)
 {
   ON_Buffer buf;
   ON_BinaryArchiveBuffer arc(ON::archive_mode::write, &buf);
@@ -5833,7 +5845,6 @@ static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml)
   buf.SeekFromStart(0);
   buf.Read(sizeof_buffer, buffer);
 
-  const auto archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
   const auto archive_opennurbs_version_number = ON::Version();
   ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
 
@@ -5894,7 +5905,13 @@ static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml)
   return true;
 }
 
-bool ONX_Model::GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml) // Static.
+bool ONX_Model::GetRDKObjectInformation(const ON_Object& object, ON_wString& xml) // Static.
+{
+  // Deprecated; only for backward compatibility.
+  return ::GetRDKObjectInformation(object, xml, ON_BinaryArchive::CurrentArchiveVersion());
+}
+
+bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version)
 {
   xml = L"";
 
@@ -5910,7 +5927,7 @@ bool ONX_Model::GetMeshModifierObjectInformation(const ON_Object& object, ON_wSt
     if (IsMeshModifierObjectUserData(*ud))
     {
       ON_wString ud_xml;
-      GetMeshModifierUserDataXML(*ud, ud_xml);
+      GetMeshModifierUserDataXML(*ud, ud_xml, archive_3dm_version);
 
       ON_XMLRootNode root;
       root.ReadFromStream(ud_xml);
@@ -5949,7 +5966,7 @@ static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uu
   return nullptr; // TODO: //////////////////////////////////////////////////////////
 }
 
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm)
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm, int archive_3dm_version)
 {
   ON_XMLRootNode r1;
   r1.ReadFromStream(mm.XML()); // Does not include <xml> node.
@@ -5960,6 +5977,6 @@ void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm,
   auto* ud = GetMeshModifierUserData(object, uuid_mm);
   if (nullptr != ud)
   {
-    SetXMLToUserData(r2.String(), *ud);
+    SetXMLToUserData(r2.String(), *ud, archive_3dm_version);
   }
 }

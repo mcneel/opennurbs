@@ -446,7 +446,10 @@ bool ON_SubDComponentRef::GetBBox(
 
   switch (m_component_ptr.ComponentType())
   {
-  case ON_SubDComponentPtr::Type::Vertex:
+      case ON_SubDComponentPtr::Type::Unset:
+        break;
+      
+      case ON_SubDComponentPtr::Type::Vertex:
     {
       const ON_SubDVertex* vertex = m_component_ptr.Vertex();
       if ( nullptr == vertex )
@@ -457,6 +460,9 @@ bool ON_SubDComponentRef::GetBBox(
         // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = vertex->ControlNetBoundingBox();
+        break;
+              
+      case ON_SubDComponentLocation::Unset:
         break;
       }
     }
@@ -473,6 +479,8 @@ bool ON_SubDComponentRef::GetBBox(
       case ON_SubDComponentLocation::ControlNet:
         bbox = edge->ControlNetBoundingBox();
         break;
+      case ON_SubDComponentLocation::Unset:
+        break;
       }
     }
     break;
@@ -487,6 +495,8 @@ bool ON_SubDComponentRef::GetBBox(
         // public opennubs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = face->ControlNetBoundingBox();
+        break;
+      case ON_SubDComponentLocation::Unset:
         break;
       }
     }
@@ -582,7 +592,10 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
   ON_SubDComponentPtr cptr = r.ComponentPtr();
   switch (cptr.ComponentType())
   {
-  case ON_SubDComponentPtr::Type::Vertex:
+      case ON_SubDComponentPtr::Type::Unset:
+        break;
+          
+      case ON_SubDComponentPtr::Type::Vertex:
     {
       const ON_SubDVertex* v = cptr.Vertex();
       if (nullptr == v)
@@ -605,6 +618,8 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
         m_subd_vertex_dart_count += i;
         rc = true;
         break;
+      case ON_SubDVertexTag::Unset:
+        break;
       }
     }
     break;
@@ -624,6 +639,8 @@ bool ON_SubDComponentRefList::Internal_UpdateCount(const ON_SubDComponentRef& r,
       case ON_SubDEdgeTag::Crease:
         m_subd_edge_crease_count += i;
         rc = true;
+        break;
+      case ON_SubDEdgeTag::Unset:
         break;
       }
     }
@@ -856,6 +873,8 @@ int ON_SubDComponentRefList::VertexCount(ON_SubDVertexTag vertex_tag) const
   case ON_SubDVertexTag::Dart:
     c = m_subd_vertex_dart_count;
     break;
+  case ON_SubDVertexTag::Unset:
+    break;
   }
 
   return c;
@@ -878,6 +897,8 @@ int ON_SubDComponentRefList::EdgeCount(ON_SubDEdgeTag edge_tag) const
     break;
   case ON_SubDEdgeTag::Crease:
     c = m_subd_edge_crease_count;
+    break;
+  case ON_SubDEdgeTag::SmoothX:
     break;
   }
   return c;

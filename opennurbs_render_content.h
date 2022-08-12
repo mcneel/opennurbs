@@ -14,22 +14,6 @@
 #if !defined(ON_RENDER_CONTENT_INC_)
 #define ON_RENDER_CONTENT_INC_
 
-#define ON_RDK_TYPE_NAME                    L"type-name"
-#define ON_RDK_TYPE_ID                      L"type-id"
-#define ON_RDK_INSTANCE_ID                  L"instance-id"
-#define ON_RDK_RENDER_ENGINE_ID             L"render-engine-id"
-#define ON_RDK_PLUG_IN_ID                   L"plug-in-id"
-#define ON_RDK_GROUP_ID                     L"group-id"
-#define ON_RDK_INSTANCE_NAME                L"instance-name"
-#define ON_RDK_CHILD_SLOT_NAME              L"child-slot-name"
-#define ON_RDK_NOTES                        L"notes"
-#define ON_RDK_TAGS                         L"tags"
-#define ON_RDK_HIDDEN                       L"hidden"
-#define ON_RDK_REFERENCE                    L"reference"
-#define ON_RDK_AUTO_DELETE                  L"auto-delete"
-
-#define ON_RDK_ENV_BACKGROUND_COLOR         L"background-color"
-
 // ON_Environment
 
 class ON_CLASS ON_Environment : public ON_Object

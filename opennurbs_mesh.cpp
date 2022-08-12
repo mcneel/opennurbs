@@ -11291,6 +11291,9 @@ unsigned int ON_MeshComponentRef::VertexIndex() const
       if ( ((unsigned int)m_mesh_ci.m_index) < m_mesh->m_V.UnsignedCount() )
         vi = (unsigned int)m_mesh_ci.m_index;
       break;
+    
+    default:
+      break;
     }
   }
   return vi;
@@ -11389,6 +11392,9 @@ unsigned int ON_MeshComponentRef::GetMeshTopologyVertexAndPoint(
               point = ON_3dPoint::UnsetPoint;
             return (unsigned int)m_mesh_ci.m_index;
           }
+          break;
+        
+        default:
           break;
         }
       }
@@ -11516,6 +11522,9 @@ unsigned int ON_MeshComponentRef::GetMeshFace(
         }
       }
       break;
+    
+    default:
+      break;
     }
   }
 
@@ -11541,6 +11550,9 @@ unsigned int ON_MeshComponentRef::MeshNgonIndex() const
     case ON_COMPONENT_INDEX::mesh_ngon:
       if ( 0 != m_mesh->Ngon(m_mesh_ci.m_index) )
         ngon_index = (unsigned int)m_mesh_ci.m_index;
+      break;
+    
+    default:
       break;
     }
   }
@@ -11606,6 +11618,9 @@ const ON_COMPONENT_INDEX ON_MeshTopology::TopVertexComponentIndex(
     {
       return ci;
     }
+    break;
+          
+  default:
     break;
   }
 
@@ -12023,6 +12038,9 @@ void ON_MappingTag::Dump( ON_TextLog& text_log ) const
       break;
     case  ON_TextureMapping::TYPE::ocs_mapping:
       text_log.Print("ocs");
+      break;
+    case  ON_TextureMapping::TYPE::false_colors:
+      text_log.Print("false colors");
       break;
     }
     text_log.Print("\n");
@@ -13733,6 +13751,9 @@ bool ON_Mesh::DeleteComponents(
         if (cdex >= ngon_count0)
           return false;
         break;
+      
+      default:
+        break;
       }
     }
   }
@@ -13846,6 +13867,9 @@ bool ON_Mesh::DeleteComponents(
           RemoveNgon(ngon_index);
         }
       }
+      break;
+    
+    default:
       break;
     }
   }
@@ -15502,6 +15526,9 @@ unsigned int ON_Mesh::DissolveOrDelete(
             faces.Append(fci);
         }
       }
+      break;
+            
+    default:
       break;
     };
   }

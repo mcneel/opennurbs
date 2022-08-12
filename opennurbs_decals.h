@@ -147,15 +147,16 @@ private:
 class ON_CLASS ON_DecalIterator final
 {
 public:
-  ON_DecalIterator(class ONX_Model& model, const ON_ModelComponent& component);
+  ON_DecalIterator(class ONX_Model& model, const ON_ModelComponent* component);
   ~ON_DecalIterator();
 
   // Returns a pointer to the next decal or null if there are no more. The returned pointer
   // points to an object inside the ONX_Model. You should not store this pointer.
   ON_Decal* Next(void) const;
 
-private:
   class CImpl;
+
+private:
   CImpl* m_impl;
 };
 

@@ -833,6 +833,9 @@ const ON_3dPoint ON_SubDVertex::Point(ON_SubDComponentLocation point_location) c
   case ON_SubDComponentLocation::Surface:
     return this->SurfacePoint();
     break;
+  case ON_SubDComponentLocation::Unset:
+    return ON_3dPoint::NanPoint;
+    break;
   }
   return ON_3dPoint::NanPoint;
 }

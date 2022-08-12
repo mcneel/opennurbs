@@ -1868,7 +1868,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
   if ( m_order >= 2 && m_cv_count > m_order
        && 0 != m_cv && 0 != m_knot 
        && m_dim > 0
-       && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
+       && (m_cv_stride >= m_is_rat ? m_dim + 1 : m_dim)
        && m_knot[m_cv_count-1] - m_knot[m_order-2] > knot_tolerance
        )
   {

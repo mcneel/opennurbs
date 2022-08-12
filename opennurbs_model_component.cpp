@@ -944,7 +944,7 @@ const ON_wString ON_ModelComponent::DeletedName() const
 
 const wchar_t* ON_ModelComponent::NameAsPointer() const
 {
-  return static_cast<const wchar_t*>(Name());
+  return NameIsSet() ? m_component_name : ON_wString::EmptyString;
 }
 
 const ON_wString ON_ModelComponent::RemoveAllReferencePrefixDelimiters(

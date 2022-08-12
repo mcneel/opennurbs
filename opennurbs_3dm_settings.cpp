@@ -699,23 +699,93 @@ double ON_3dmUnitsAndTolerances::Scale( ON::LengthUnitSystem us ) const
   return ON::UnitScale( us, m_unit_system );
 }
 
-
-bool ON_3dmUnitsAndTolerances::TolerancesAreValid() const
+bool ON_3dmUnitsAndTolerances::IsValid() const
 {
-  for(;;)
+  for (;;)
   {
-    if ( !(m_absolute_tolerance > 0.0) )
+    if (!(m_distance_display_precision >= 0 && m_distance_display_precision <= 7))
       break;
 
-    if ( !(m_angle_tolerance > 0.0 && m_angle_tolerance <= ON_PI) )
+    if (!((int)m_distance_display_mode >= 0 && (int)m_distance_display_mode <= 3))
       break;
 
-    if ( !( m_relative_tolerance > 0.0 && m_relative_tolerance < 1.0) )
+    if (!TolerancesAreValid())
       break;
 
     return true;
   }
+  return false;
+}
 
+double ON_3dmUnitsAndTolerances::AbsoluteTolerance() const
+{
+  return m_absolute_tolerance;
+}
+
+void ON_3dmUnitsAndTolerances::SetAbsoluteTolerance(double absolute_tolerance)
+{
+  if (absolute_tolerance > 0.0)
+    m_absolute_tolerance = absolute_tolerance;
+}
+
+double ON_3dmUnitsAndTolerances::AngleTolerance() const
+{
+  return m_angle_tolerance;
+}
+
+void ON_3dmUnitsAndTolerances::SetAngleTolerance(double angle_tolerance)
+{
+  if (angle_tolerance > 0.0 && angle_tolerance <= ON_PI)
+    m_angle_tolerance = angle_tolerance;
+}
+
+double ON_3dmUnitsAndTolerances::RelativeTolerance() const
+{
+  return m_relative_tolerance;
+}
+
+void ON_3dmUnitsAndTolerances::SetRelativeTolerance(double relative_tolerance)
+{
+  if (relative_tolerance > 0.0 && relative_tolerance < 1.0)
+    m_relative_tolerance = relative_tolerance;
+}
+
+ON::OBSOLETE_DistanceDisplayMode ON_3dmUnitsAndTolerances::DistanceDisplayMode() const
+{
+  return m_distance_display_mode;
+}
+
+void ON_3dmUnitsAndTolerances::SetDistanceDisplayMode(ON::OBSOLETE_DistanceDisplayMode distance_display_mode)
+{
+  m_distance_display_mode = distance_display_mode;
+}
+
+int ON_3dmUnitsAndTolerances::DistanceDisplayPrecision() const
+{
+  return m_distance_display_precision;
+}
+
+void ON_3dmUnitsAndTolerances::SetDistanceDisplayPrecision(int distance_display_precision)
+{
+  if (distance_display_precision >= 0 && distance_display_precision <= 7)
+    m_distance_display_precision = distance_display_precision;
+}
+
+bool ON_3dmUnitsAndTolerances::TolerancesAreValid() const
+{
+  for (;;)
+  {
+    if (!(m_absolute_tolerance > 0.0))
+      break;
+
+    if (!(m_angle_tolerance > 0.0 && m_angle_tolerance <= ON_PI))
+      break;
+
+    if (!(m_relative_tolerance > 0.0 && m_relative_tolerance < 1.0))
+      break;
+
+    return true;
+  }
   return false;
 }
 

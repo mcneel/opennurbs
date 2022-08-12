@@ -172,27 +172,24 @@ bool ON_BoundingBox::GetEdges(
   ON_Line edges[12] 
   ) const
 {
-  int i;
   ON_Line line;
-  int edge_count = 0;
-  if ( IsValid() )
+  bool rc = IsValid();
+  if (rc)
   {
-    for ( i = 0; i < 3; i++ )
+    for (unsigned i = 0U; i < 12; i++ )
     {
-      
-
+      edges[i] = Edge(i);
     }
   }
-
-  if ( 12 != edge_count )
+  else
   {
     edges[0].from = ON_3dPoint::UnsetPoint;
     edges[0].to   = ON_3dPoint::UnsetPoint;
-    for ( i = 1; i < 12; i++ )
+    for (unsigned i = 1U; i < 12; i++ )
       edges[i] = edges[0];
   }
 
-  return (12 == edge_count);
+  return rc;
 }
 
 
