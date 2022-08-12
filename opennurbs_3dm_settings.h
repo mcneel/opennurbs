@@ -38,11 +38,29 @@ public:
 
   void Dump( ON_TextLog& ) const;
 
-  /*
-  Returns:
-    True if tolerances (m_absolute_tolerance, m_angle_tolerance, m_relative_tolerance)
-    are set to valid values.
-  */
+  bool IsValid() const;
+
+  // Gets and sets the absolute tolerance in units, > 0.0
+  double AbsoluteTolerance() const;
+  void SetAbsoluteTolerance(double absolute_tolerance);
+
+  // Gets and sets the angle tolerance in radians, > 0.0 and <= ON_PI
+  double AngleTolerance() const;
+  void SetAngleTolerance(double angle_tolerance);
+
+  // Gets and sets the relative tolerance, fraction > 0.0 and < 1.0
+  double RelativeTolerance() const;
+  void SetRelativeTolerance(double relative_tolerance);
+
+  // Gets and sets the distance display mode
+  ON::OBSOLETE_DistanceDisplayMode DistanceDisplayMode() const;
+  void SetDistanceDisplayMode(ON::OBSOLETE_DistanceDisplayMode distance_display_mode);
+
+  // Gets and sets the distance display precision, >= 0 and <= 7
+  int DistanceDisplayPrecision() const;
+  void SetDistanceDisplayPrecision(int distance_display_precision);
+
+  // Returns true if absolute, angle, and relative tolerances values are valid.
   bool TolerancesAreValid() const;
 
   /*
@@ -55,16 +73,15 @@ public:
     to ON_3dmUnitsAndTolerances::DefaultValue.m_relative_tolerance.
   Returns:
     0: all tolerances were valid
-    0 != (rc & 1): 
+    0 != (rc & 1):
       m_absolute_tolerance was invalid and set to the default value
-    0 != (rc & 2): 
+    0 != (rc & 2):
       m_angle_tolerance was invalid and set to the default value
-    0 != (rc & 4): 
+    0 != (rc & 4):
       m_relative_tolerance was invalid and set to the default value
   */
   unsigned int SetInvalidTolerancesToDefaultValues();
 
-  //////////
   // Returns scale factor that needs to be applied to change from
   // the argument's unit system to m_unit_system.  
   // When m_unit_system is not ON::LengthUnitSystem::CustomUnits,
@@ -73,16 +90,14 @@ public:
   // Scale(us) = ON::UnitScale(us,ON::LengthUnitSystem::Meters)*m_custom_unit_scale.
   double Scale( ON::LengthUnitSystem ) const;
 
+  // Expert access to member variables
   ON_UnitSystem m_unit_system = ON_UnitSystem::Millimeters;
-
-  double m_absolute_tolerance = 0.001;  // in units   > 0.0
-  double m_angle_tolerance = ON_PI/180.0;     // in radians > 0.0 and <= ON_PI
-  double m_relative_tolerance = 0.01;  // fraction   > 0.0 and < 1.0
-
+  double m_absolute_tolerance = 0.001;    // in units > 0.0
+  double m_angle_tolerance = ON_PI/180.0; // in radians > 0.0 and <= ON_PI
+  double m_relative_tolerance = 0.01;     // fraction > 0.0 and < 1.0
   ON::OBSOLETE_DistanceDisplayMode m_distance_display_mode = ON::OBSOLETE_DistanceDisplayMode::Decimal; // decimal or fractional
-  int m_distance_display_precision = 3; // decimal mode: number of decimal places
-                                    // fractional modes:
-                                    //    denominator = (1/2)^m_distance_display_precision
+  int m_distance_display_precision = 3;   // decimal mode: number of decimal places
+                                          // fractional modes: denominator = (1/2)^m_distance_display_precision
 
 public:
   /*

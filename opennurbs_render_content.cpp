@@ -22,15 +22,29 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_POSTFIX_SECTION       L"-section"
-#define ON_PARAMETERS            L"parameters"
-#define ON_PARAMETERS_V8         L"parameters-v8"
-#define ON_SIMULATION            L"simulation"
+#define ON_TYPE_NAME               L"type-name"
+#define ON_TYPE_ID                 L"type-id"
+#define ON_INSTANCE_ID             L"instance-id"
+#define ON_RENDER_ENGINE_ID        L"render-engine-id"
+#define ON_PLUG_IN_ID              L"plug-in-id"
+#define ON_GROUP_ID                L"group-id"
+#define ON_INSTANCE_NAME           L"instance-name"
+#define ON_CHILD_SLOT_NAME         L"child-slot-name"
+#define ON_NOTES                   L"notes"
+#define ON_TAGS                    L"tags"
+#define ON_HIDDEN                  L"hidden"
+#define ON_REFERENCE               L"reference"
+#define ON_AUTO_DELETE             L"auto-delete"
+#define ON_ENV_BACKGROUND_COLOR    L"background-color"
+#define ON_POSTFIX_SECTION         L"-section"
+#define ON_PARAMETERS              L"parameters"
+#define ON_PARAMETERS_V8           L"parameters-v8"
+#define ON_SIMULATION              L"simulation"
 
-#define ON_RDK_POSTFIX_SECTION         L"-section"
-#define ON_RDK_PARAMETERS              L"parameters"
-#define ON_RDK_PARAMETERS_V8           L"parameters-v8"
-#define ON_RDK_SIMULATION              L"simulation"
+#define ON_POSTFIX_SECTION         L"-section"
+#define ON_PARAMETERS              L"parameters"
+#define ON_PARAMETERS_V8           L"parameters-v8"
+#define ON_SIMULATION              L"simulation"
 
 #define ON_ENV_PROJ_BOX            L"box"
 #define ON_ENV_PROJ_CUBE_MAP       L"cubemap"
@@ -496,7 +510,7 @@ ON_RenderContent::CImpl::~CImpl()
 
 const ON_XMLNode* ON_RenderContent::CImpl::XMLNode_Simulation(void) const
 {
-  return m_node.GetNamedChild(ON_RDK_SIMULATION);
+  return m_node.GetNamedChild(ON_SIMULATION);
 }
 
 ON_XMLVariant ON_RenderContent::CImpl::GetPropertyValue(const wchar_t* name) const
@@ -581,10 +595,10 @@ void ON_RenderContent::CImpl::SetXMLNode(const ON_XMLNode& node)
   m_node = node_copy;
 
   // Copy the XML instance name to the component name.
-  m_render_content.SetName(GetPropertyValue(ON_RDK_INSTANCE_NAME).AsString());
+  m_render_content.SetName(GetPropertyValue(ON_INSTANCE_NAME).AsString());
 
   // Copy the XML instance id to the component id.
-  m_render_content.SetId(GetPropertyValue(ON_RDK_INSTANCE_ID).AsUuid());
+  m_render_content.SetId(GetPropertyValue(ON_INSTANCE_ID).AsUuid());
 }
 
 bool ON_RenderContent::CImpl::AddChild(ON_RenderContent& child)
@@ -744,7 +758,7 @@ bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* c
     if ((nullptr == child_slot_name) || (0 == child_slot_name[0]))
       return false;
 
-    child->m_impl->SetPropertyValue(ON_RDK_CHILD_SLOT_NAME, child_slot_name);
+    child->m_impl->SetPropertyValue(ON_CHILD_SLOT_NAME, child_slot_name);
   }
 
   // Get any existing child with the same child slot name (may be null).
@@ -777,10 +791,10 @@ bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* c
 void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node)
 {
   // Copy the component name to the XML instance name.
-  rc.m_impl->SetPropertyValue(ON_RDK_INSTANCE_NAME, rc.Name());
+  rc.m_impl->SetPropertyValue(ON_INSTANCE_NAME, rc.Name());
 
   // Copy the component id to the XML instance id.
-  rc.m_impl->SetPropertyValue(ON_RDK_INSTANCE_ID, rc.Id());
+  rc.m_impl->SetPropertyValue(ON_INSTANCE_ID, rc.Id());
 
   auto* child_node = new ON_XMLNode(rc.XMLNode());
   node.AttachChildNode(child_node);
@@ -824,10 +838,10 @@ ON_RenderContent::ON_RenderContent(const wchar_t* kind)
   SetId(uuid);
 
   // Set the plug-in id to the RDK plug-in id.
-  m_impl->InternalSetPropertyValue(ON_RDK_PLUG_IN_ID, RdkPlugInId());
+  m_impl->InternalSetPropertyValue(ON_PLUG_IN_ID, RdkPlugInId());
 
   // Set the render engine id to 'universal'.
-  m_impl->InternalSetPropertyValue(ON_RDK_RENDER_ENGINE_ID, UniversalRenderEngineId());
+  m_impl->InternalSetPropertyValue(ON_RENDER_ENGINE_ID, UniversalRenderEngineId());
 }
 
 ON_RenderContent::ON_RenderContent(const ON_RenderContent& rc)
@@ -858,102 +872,102 @@ const ON_RenderContent& ON_RenderContent::operator = (const ON_RenderContent& rc
 
 ON_wString ON_RenderContent::TypeName(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_TYPE_NAME).AsString();
+  return m_impl->GetPropertyValue(ON_TYPE_NAME).AsString();
 }
 
 void ON_RenderContent::SetTypeName(const wchar_t* name)
 {
-  m_impl->SetPropertyValue(ON_RDK_TYPE_NAME, name);
+  m_impl->SetPropertyValue(ON_TYPE_NAME, name);
 }
 
 ON_wString ON_RenderContent::Notes(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_NOTES).AsString();
+  return m_impl->GetPropertyValue(ON_NOTES).AsString();
 }
 
 void ON_RenderContent::SetNotes(const wchar_t* notes)
 {
-  m_impl->SetPropertyValue(ON_RDK_NOTES, notes);
+  m_impl->SetPropertyValue(ON_NOTES, notes);
 }
 
 ON_wString ON_RenderContent::Tags(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_TAGS).AsString();
+  return m_impl->GetPropertyValue(ON_TAGS).AsString();
 }
 
 void ON_RenderContent::SetTags(const wchar_t* tags)
 {
-  m_impl->SetPropertyValue(ON_RDK_TAGS, tags);
+  m_impl->SetPropertyValue(ON_TAGS, tags);
 }
 
 ON_UUID ON_RenderContent::TypeId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_TYPE_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_TYPE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetTypeId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RDK_TYPE_ID, uuid);
+  m_impl->SetPropertyValue(ON_TYPE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::RenderEngineId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_RENDER_ENGINE_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_RENDER_ENGINE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetRenderEngineId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RDK_RENDER_ENGINE_ID, uuid);
+  m_impl->SetPropertyValue(ON_RENDER_ENGINE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::PlugInId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_PLUG_IN_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_PLUG_IN_ID).AsUuid();
 }
 
 void ON_RenderContent::SetPlugInId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RDK_PLUG_IN_ID, uuid);
+  m_impl->SetPropertyValue(ON_PLUG_IN_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::GroupId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_GROUP_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_GROUP_ID).AsUuid();
 }
 
 void ON_RenderContent::SetGroupId(const ON_UUID& group)
 {
-  m_impl->SetPropertyValue(ON_RDK_GROUP_ID, group);
+  m_impl->SetPropertyValue(ON_GROUP_ID, group);
 }
 
 bool ON_RenderContent::Hidden(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_HIDDEN).AsBool();
+  return m_impl->GetPropertyValue(ON_HIDDEN).AsBool();
 }
 
 void ON_RenderContent::SetHidden(bool hidden)
 {
-  m_impl->SetPropertyValue(ON_RDK_HIDDEN, hidden);
+  m_impl->SetPropertyValue(ON_HIDDEN, hidden);
 }
 
 bool ON_RenderContent::Reference(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_REFERENCE).AsBool();
+  return m_impl->GetPropertyValue(ON_REFERENCE).AsBool();
 }
 
 void ON_RenderContent::SetReference(bool ref)
 {
-  m_impl->SetPropertyValue(ON_RDK_REFERENCE, ref);
+  m_impl->SetPropertyValue(ON_REFERENCE, ref);
 }
 
 bool ON_RenderContent::AutoDelete(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_AUTO_DELETE).AsBool();
+  return m_impl->GetPropertyValue(ON_AUTO_DELETE).AsBool();
 }
 
 void ON_RenderContent::SetAutoDelete(bool autodel)
 {
-  m_impl->SetPropertyValue(ON_RDK_AUTO_DELETE, autodel);
+  m_impl->SetPropertyValue(ON_AUTO_DELETE, autodel);
 }
 
 ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
@@ -964,7 +978,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   value.SetNull();
 
   // Try to get the new V8 parameter section.
-  const auto* node = m_impl->m_node.GetNamedChild(ON_RDK_PARAMETERS_V8);
+  const auto* node = m_impl->m_node.GetNamedChild(ON_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Got it, so use the new ON_XMLParametersV8 to get the parameter's value.
@@ -975,7 +989,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   {
     // Either no V8 section was found or the parameter isn't there yet.
     // Try to get the legacy parameter section. This should not fail.
-    node = m_impl->m_node.GetNamedChild(ON_RDK_PARAMETERS);
+    node = m_impl->m_node.GetNamedChild(ON_PARAMETERS);
     if (nullptr != node)
     {
       // Got it, so use the legacy ON_XMLParameters to get the parameter's value.
@@ -994,7 +1008,7 @@ bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& va
   bool success = false;
 
   // Create / get the new V8 parameter section.
-  auto* node = m_impl->m_node.CreateNodeAtPath(ON_RDK_PARAMETERS_V8);
+  auto* node = m_impl->m_node.CreateNodeAtPath(ON_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Use the new ON_XMLParametersV8 to write the parameter's value.
@@ -1004,7 +1018,7 @@ bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& va
   }
 
   // Create / get the legacy parameter section.
-  node = m_impl->m_node.CreateNodeAtPath(ON_RDK_PARAMETERS);
+  node = m_impl->m_node.CreateNodeAtPath(ON_PARAMETERS);
   if (nullptr != node)
   {
     // Use the legacy ON_XMLParameters to write the parameter's value.
@@ -1063,12 +1077,12 @@ bool ON_RenderContent::DeleteChild(const wchar_t* child_slot_name)
 
 ON_wString ON_RenderContent::ChildSlotName(void) const
 {
-  return m_impl->GetPropertyValue(ON_RDK_CHILD_SLOT_NAME).AsString();
+  return m_impl->GetPropertyValue(ON_CHILD_SLOT_NAME).AsString();
 }
 
 void ON_RenderContent::SetChildSlotName(const wchar_t* csn)
 {
-  m_impl->SetPropertyValue(ON_RDK_CHILD_SLOT_NAME, csn);
+  m_impl->SetPropertyValue(ON_CHILD_SLOT_NAME, csn);
 }
 
 bool ON_RenderContent::ChildSlotOn(const wchar_t* child_slot_name) const

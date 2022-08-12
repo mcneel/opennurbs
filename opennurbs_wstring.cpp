@@ -1252,8 +1252,20 @@ void ON_wString::Append( const wchar_t* s, int count )
 
 const ON_wString& ON_wString::operator+=(const ON_wString& s)
 {
-  AppendToArray(s);
-	return *this;
+  // 28th July 2022 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-69587
+  // When the strings are the same object AppendToArray() doesn't work properly. The safest
+  // thing to do is copy the incoming string so they are not the same object anymore.
+  if (this == &s)
+  {
+    ON_wString copy = s;
+    AppendToArray(copy);
+  }
+  else
+  {
+    AppendToArray(s);
+  }
+
+  return *this;
 }
 
 const ON_wString& ON_wString::operator+=(const ON_String& s)

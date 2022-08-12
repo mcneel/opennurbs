@@ -60,10 +60,14 @@ const ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& co
 ON_RenderContent* NewRenderContentFromNode(const class ON_XMLNode& node);
 ON_PostEffect* NewPostEffectFromNode(ON_XMLNode& node);
 void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node);
-bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf);
+bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf, int archive_3dm_version);
 ON_XMLNode* FindPostEffectNodeForId(const ON_XMLNode& sectionNode, const ON_UUID& id);
-bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml);
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm);
+bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
+bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml, int archive_3dm_version);
+bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes);
+bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_UUID& uuid_mm, const ON_MeshModifier& mm, int archive_3dm_version);
+bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
 
 template <class T> inline T Lerp(float  t, const T& l, const T& h) { return l + T(t) * (h - l); }
 template <class T> inline T Lerp(double t, const T& l, const T& h) { return l + T(t) * (h - l); }
@@ -128,16 +132,22 @@ public:
   };
 
   // Create the decals from all model components that have decal user data.
-  void CreateDecalsFromXML(const ONX_Model& model);
+  void CreateDecalsFromXML(const ONX_Model& model, int archive_3dm_version);
 
   // Convert the decals back to XML for all model components that have decal user data.
-  void CreateXMLFromDecals(const ONX_Model& model);
+  void CreateXMLFromDecals(const ONX_Model& model, int archive_3dm_version);
 
   // Find the item index for a certain component.
   int FindItemIndex(const ON_UUID& component_id) const;
 
   // Find the item for a certain component.
   Item* FindItem(const ON_UUID& component_id) const;
+
+  // Get the item at an index.
+  Item* ItemAt(int index) const;
+
+  // Get the number of items.
+  int ItemCount(void) const;
 
   // Add a new decal to a certain component.
   ON_Decal* AddDecal(const ON_ModelComponent& component);
@@ -185,10 +195,10 @@ public:
   ON_MeshModifiers* Find(const ON_ModelComponent& component);
 
   // Create the mesh modifiers from all model components that have mesh modifier user data.
-  bool CreateMeshModifiersFromXML(const ONX_Model& model);
+  bool CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version);
 
   // Convert the mesh modifiers back to XML for all model components that have mesh modifier user data.
-  bool CreateXMLFromMeshModifiers(const ONX_Model& model);
+  bool CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version);
 
 private:
   std::unordered_map<ON_UUID, ON_MeshModifiers*, UuidHasher> m_map;

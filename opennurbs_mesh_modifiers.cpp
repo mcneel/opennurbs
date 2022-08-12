@@ -1356,7 +1356,7 @@ ON_MeshModifiers* ON_MeshModifierCollection::Find(const ON_ModelComponent& compo
   return nullptr;
 }
 
-bool ON_MeshModifierCollection::CreateMeshModifiersFromXML(const ONX_Model& model)
+bool ON_MeshModifierCollection::CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version)
 {
   ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
   const auto* component = cit.FirstComponent();
@@ -1368,7 +1368,7 @@ bool ON_MeshModifierCollection::CreateMeshModifiersFromXML(const ONX_Model& mode
 
     // Get the entire XML off of the attributes user data.
     ON_wString xml;
-    ONX_Model::GetMeshModifierObjectInformation(*attr, xml);
+    ::GetMeshModifierObjectInformation(*attr, xml, archive_3dm_version);
     if (xml.IsEmpty())
       continue; // No XML found on the component's attributes.
 
@@ -1405,7 +1405,7 @@ static const ON_UUID uuid_thickening_user_data =
   0x6aa7ccc3, 0x2721, 0x410f, { 0xaa, 0x56, 0xe8, 0xab, 0x4f, 0x3e, 0xce, 0x67 }
 };
 
-bool ON_MeshModifierCollection::CreateXMLFromMeshModifiers(const ONX_Model& model)
+bool ON_MeshModifierCollection::CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version)
 {
   for (const auto& elem : m_map)
   {
@@ -1421,11 +1421,11 @@ bool ON_MeshModifierCollection::CreateXMLFromMeshModifiers(const ONX_Model& mode
     if (nullptr == attr)
       continue; // Should never happen because we have an item for the object.
 
-    SetMeshModifierObjectInformation(*attr, uuid_displacement_user_data,   mesh_modifiers->Displacement());
-    SetMeshModifierObjectInformation(*attr, uuid_edge_softening_user_data, mesh_modifiers->EdgeSoftening());
-    SetMeshModifierObjectInformation(*attr, uuid_thickening_user_data,     mesh_modifiers->Thickening());
-    SetMeshModifierObjectInformation(*attr, uuid_curve_piping_user_data,   mesh_modifiers->CurvePiping());
-    SetMeshModifierObjectInformation(*attr, uuid_shutlining_user_data,     mesh_modifiers->Shutlining());
+    SetMeshModifierObjectInformation(*attr, uuid_displacement_user_data,   mesh_modifiers->Displacement(),  archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, uuid_edge_softening_user_data, mesh_modifiers->EdgeSoftening(), archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, uuid_thickening_user_data,     mesh_modifiers->Thickening(),    archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, uuid_curve_piping_user_data,   mesh_modifiers->CurvePiping(),   archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, uuid_shutlining_user_data,     mesh_modifiers->Shutlining(),    archive_3dm_version);
   }
 
   return true;

@@ -5507,6 +5507,8 @@ double ON_DimOrdinate::Measurement() const
   case MeasuredDirection::Yaxis:
       m = m_def_pt.y;
     break;
+  case MeasuredDirection::Unset:
+    break;
   }
   if (DistanceScale() != 1.0)
     m *= DistanceScale();

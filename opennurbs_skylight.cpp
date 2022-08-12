@@ -39,6 +39,11 @@ static const wchar_t* XMLPath(void)
   return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
 }
 
+ON_Skylight::ON_Skylight()
+{
+  m_impl = new CImpl;
+}
+
 ON_Skylight::ON_Skylight(ON_XMLNode& model_node)
 {
   m_impl = new CImpl(model_node);

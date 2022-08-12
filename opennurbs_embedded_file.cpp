@@ -114,6 +114,9 @@ bool ON_EmbeddedFile::CImpl::LoadFile(const wchar_t* filename)
 
 bool ON_EmbeddedFile::CImpl::SaveFile(const wchar_t* filename) const
 {
+  if (0 == m_data.m_length)
+    return false; // Not loaded.
+
   // Open the file for writing.
   auto* pFile = ON_FileStream::Open(filename, L"wb");
   if (nullptr == pFile)
