@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="ON_SimpleArray&lt;*&gt;">
+    <DisplayString>{{ size={m_count} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_count</Item>
+      <Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+      <ArrayItems>
+        <Size>m_count</Size>
+        <ValuePointer>m_a</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="ON_ObjectArray&lt;*&gt;">
+    <DisplayString>{{ size={m_count} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_count</Item>
+      <Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+      <ArrayItems>
+        <Size>m_count</Size>
+        <ValuePointer>m_a</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="ON_ClassArray&lt;*&gt;">
+    <DisplayString>{{ size={m_count} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">m_count</Item>
+      <Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+      <ArrayItems>
+        <Size>m_count</Size>
+        <ValuePointer>m_a</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>
