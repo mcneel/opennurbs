@@ -901,9 +901,9 @@ protected:
 //            |
 //            |
 //            + kinkpt2
-//             \
-//              \  kinkoffset2
-//               \
+//             -
+//              -  kinkoffset2
+//               -
 //                + kinkpt1
 //                |
 //                |  kinkoffset1

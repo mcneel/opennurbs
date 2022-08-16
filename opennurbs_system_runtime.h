@@ -33,6 +33,7 @@
 //   At most one the ON_RUNTIME_* should be defined
 //
 //   ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID
+//   ON_RUNTIME_LINUX
 //
 */
 #if (defined(__APPLE__) || defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR) || defined(__IOS__))
@@ -59,6 +60,7 @@
 #if !defined(ON_RUNTIME_LINUX)
 #define ON_RUNTIME_LINUX
 #endif
+
 
 #endif
 /*
@@ -159,7 +161,14 @@
 
 #elif defined(ON_RUNTIME_LINUX)
 
-#if defined(__x86_64__)
+#if defined(__arm__)
+#if !defined(ON_RUNTIME_LINUX_ARM)
+#define ON_RUNTIME_LINUX_ARM
+#endif
+// assume 64bit ARM (like Raspberry Pi 4)
+#define ON_64BIT_RUNTIME
+#define ON_LITTLE_ENDIAN
+#elif defined(__x86_64__)
 #define ON_64BIT_RUNTIME
 #else
 #define ON_32BIT_RUNTIME

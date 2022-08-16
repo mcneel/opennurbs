@@ -328,7 +328,6 @@
 // ON_COMPILER_GNU
 //
 */
-
 #define ON_COMPILER_GNU
 #if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
@@ -358,6 +357,13 @@
 #undef ON_HAS_RVALUEREF
 #undef ON_NOEXCEPT
 
+#endif
+
+#if defined(__arm__)
+// GCC 8.3.0 on Raspbian (Raspberry Pi 4) needs this too
+#if !defined(ON_CLANG_CONSTRUCTOR_BUG)
+#define ON_CLANG_CONSTRUCTOR_BUG
+#endif
 #endif
 
 

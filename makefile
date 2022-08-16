@@ -36,6 +36,8 @@ ON_GNU_WARNING_FLAGS = -Wall \
 	-Wno-switch \
 	-Wno-unknown-pragmas \
 	-Wno-unused-private-field
+# Note that -Wno-unused-private-field may throw unrecognized option
+# error. This happened at least on GCC 8.3.0 in Rasbian Buster.
 	
 #	-Wno-inconsistent-missing-override \
 
@@ -62,6 +64,8 @@ LINK = $(CCC)
 LINKFLAGS =
 # below necessary LINKFLAGS on Linux for the UUID library
 #LINKFLAGS = -luuid
+# below necessary LINKFLAGS on Linux / Raspberry Pi 4 for UUID and atomic libraries
+#LINKFLAGS = -luuid -latomic
 
 ###############################################################
 
