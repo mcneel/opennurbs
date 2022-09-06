@@ -17,25 +17,84 @@
 class ON_CLASS ON_MeshModifier
 {
 public:
+  // Returns the plug-in id of the 'Displacement' plug-in which implements all the mesh modifiers.
+  static ON_UUID PlugInId(void);
+
+public:
   ON_MeshModifier();
-  ON_MeshModifier(ON_XMLNode& model_node);
+  ON_MeshModifier(const ON_XMLNode& node);
   ON_MeshModifier(const ON_MeshModifier& mm) = delete;
   virtual ~ON_MeshModifier();
 
   const ON_MeshModifier& operator = (const ON_MeshModifier&) = delete;
 
-  ON_wString XML(void) const;
+  // Return the unique identifier of this mesh modifier.
+  virtual ON_UUID Uuid(void) const = 0;
+
+public: // For internal use only.
+  virtual ON_XMLNode* AddChildXML(ON_XMLRootNode& root) const;
 
 protected:
   class CImpl;
   CImpl* m_impl;
 };
 
+////////////////////////////////////////////////////////////////
+//
+// Displacement
+//
+////////////////////////////////////////////////////////////////
+
+#define ON_DISPLACEMENT_ROOT                       L"new-displacement-object-data"
+  #define ON_DISPLACEMENT_ON                         L"on"
+  #define ON_DISPLACEMENT_CHANNEL                    L"channel"
+  #define ON_DISPLACEMENT_BLACK_POINT                L"black-point"
+  #define ON_DISPLACEMENT_WHITE_POINT                L"white-point"
+  #define ON_DISPLACEMENT_SWEEP_PITCH                L"sweep-pitch"
+  #define ON_DISPLACEMENT_REFINE_STEPS               L"refine-steps"
+  #define ON_DISPLACEMENT_REFINE_SENSITIVITY         L"refine-sensitivity"
+  #define ON_DISPLACEMENT_TEXTURE                    L"texture"
+  #define ON_DISPLACEMENT_FACE_COUNT_LIMIT_ENABLED   L"face-count-limit-enabled"
+  #define ON_DISPLACEMENT_FACE_COUNT_LIMIT           L"face-count-limit"
+  #define ON_DISPLACEMENT_POST_WELD_ANGLE            L"post-weld-angle"
+  #define ON_DISPLACEMENT_MESH_MEMORY_LIMIT          L"mesh-memory-limit"
+  #define ON_DISPLACEMENT_FAIRING_ENABLED            L"fairing-enabled"
+  #define ON_DISPLACEMENT_FAIRING_AMOUNT             L"fairing-amount"
+  #define ON_DISPLACEMENT_SWEEP_RES_FORMULA          L"sweep-res-formula"
+  #define ON_DISPLACEMENT_SUB_OBJECT_COUNT           L"sub-object-count"
+  #define ON_DISPLACEMENT_SUB                        L"sub"
+    #define ON_DISPLACEMENT_SUB_INDEX                  L"sub-index"
+    #define ON_DISPLACEMENT_SUB_ON                     L"sub-on"
+    #define ON_DISPLACEMENT_SUB_TEXTURE                L"sub-texture"
+    #define ON_DISPLACEMENT_SUB_CHANNEL                L"sub-channel"
+    #define ON_DISPLACEMENT_SUB_BLACK_POINT            L"sub-black-point"
+    #define ON_DISPLACEMENT_SUB_WHITE_POINT            L"sub-white-point"
+
+class ON_CLASS ON_DisplacementUserData : public ON_XMLUserData
+{
+private:
+  ON_OBJECT_DECLARE(ON_DisplacementUserData);
+
+public:
+  ON_DisplacementUserData();
+  ON_DisplacementUserData(const ON_DisplacementUserData& ud);
+
+  static ON_UUID Uuid(void);
+
+  const ON_DisplacementUserData& operator = (const ON_DisplacementUserData& ud);
+
+  virtual bool GetDescription(ON_wString& s) override;
+  virtual void SetToDefaults(void) const override;
+  virtual void ReportVersionError(void) const override;
+  virtual bool Transform(const ON_Xform& xform) override;
+  virtual bool Read(ON_BinaryArchive&) override;
+};
+
 class ON_CLASS ON_Displacement : public ON_MeshModifier
 {
 public:
   ON_Displacement();
-  ON_Displacement(ON_XMLNode& model_node);
+  ON_Displacement(const ON_XMLNode& node);
   ON_Displacement(const ON_Displacement& dsp);
   ~ON_Displacement();
 
@@ -95,7 +154,7 @@ public:
   class ON_CLASS SubItem final
   {
   public:
-    SubItem(ON_XMLNode& sub_node);
+    SubItem(const ON_XMLNode& sub_node);
     SubItem(const SubItem&) = delete;
     ~SubItem();
 
@@ -129,6 +188,9 @@ public:
     double WhitePoint(void) const;
     void SetWhitePoint(double w);
 
+    // For internal use only.
+    void ToXML(ON_XMLNode& node) const;
+
   private:
     class CImpl;
     CImpl* m_impl;
@@ -152,16 +214,70 @@ public:
   SubItem* FindSubItem(const int index) const;
   SubItemIterator GetSubItemIterator(void) const;
 
+  virtual ON_UUID Uuid(void) const override;
+
+  class ON_CLASS Defaults final
+  {
+  public:
+    static int RefineStepCount(void);
+    static int FairingAmount(void);
+    static int FaceLimit(void);
+    static int ChannelNumber(void);
+    static int MeshMemoryLimit(void);
+    static double BlackPoint(void);
+    static double WhitePoint(void);
+    static double SweepPitch(void);
+    static double RefineSensitivity(void);
+    static double PostWeldAngle(void);
+    static double AbsoluteTolerance(void);
+    static SweepResolutionFormulas SweepResolutionFormula(void);
+  };
+
+public: // For internal use only.
+  virtual ON_XMLNode* AddChildXML(ON_XMLRootNode& root) const override;
+
 private:
   class CImplDSP;
   CImplDSP* m_impl_dsp;
+};
+
+////////////////////////////////////////////////////////////////
+//
+// Edge Softening
+//
+////////////////////////////////////////////////////////////////
+
+#define ON_EDGE_SOFTENING_ROOT              L"edge-softening-object-data"
+  #define ON_EDGE_SOFTENING_ON                L"on"
+  #define ON_EDGE_SOFTENING_SOFTENING         L"softening"
+  #define ON_EDGE_SOFTENING_CHAMFER           L"chamfer"
+  #define ON_EDGE_SOFTENING_UNWELD            L"unweld"
+  #define ON_EDGE_SOFTENING_FORCE_SOFTENING   L"force-softening"
+  #define ON_EDGE_SOFTENING_EDGE_THRESHOLD    L"edge-threshold"
+
+class ON_CLASS ON_EdgeSofteningUserData : public ON_XMLUserData
+{
+private:
+  ON_OBJECT_DECLARE(ON_EdgeSofteningUserData);
+
+public:
+  ON_EdgeSofteningUserData();
+  ON_EdgeSofteningUserData(const ON_EdgeSofteningUserData& ud);
+
+  static ON_UUID Uuid(void);
+
+  const ON_EdgeSofteningUserData& operator = (const ON_EdgeSofteningUserData& ud);
+
+  virtual bool GetDescription(ON_wString& s) override;
+  virtual void SetToDefaults(void) const override;
+  virtual void ReportVersionError(void) const override;
 };
 
 class ON_CLASS ON_EdgeSoftening : public ON_MeshModifier
 {
 public:
   ON_EdgeSoftening();
-  ON_EdgeSoftening(ON_XMLNode& model_node);
+  ON_EdgeSoftening(const ON_XMLNode& node);
   ON_EdgeSoftening(const ON_EdgeSoftening& es);
 
   const ON_EdgeSoftening& operator = (const ON_EdgeSoftening& es);
@@ -193,13 +309,57 @@ public:
   // Specifies whether to soften edges despite too large a radius.
   bool ForceSoftening(void) const;
   void SetForceSoftening(bool b);
+
+  virtual ON_UUID Uuid(void) const override;
+
+  class ON_CLASS Defaults final
+  {
+  public:
+    static bool Chamfer(void);
+    static bool Faceted(void);
+    static bool ForceSoftening(void);
+    static double Softening(void);
+    static double EdgeAngleThreshold(void);
+  };
+};
+
+////////////////////////////////////////////////////////////////
+//
+// Thickening
+//
+////////////////////////////////////////////////////////////////
+
+#define ON_THICKENING_ROOT          L"thickening-object-data"
+  #define ON_THICKENING_ON            L"on"
+  #define ON_THICKENING_DISTANCE      L"distance"
+  #define ON_THICKENING_SOLID         L"solid"
+  #define ON_THICKENING_BOTH_SIDES    L"both-sides"
+  #define ON_THICKENING_OFFSET_ONLY   L"offset-only"
+
+class ON_CLASS ON_ThickeningUserData : public ON_XMLUserData
+{
+private:
+  ON_OBJECT_DECLARE(ON_ThickeningUserData);
+
+public:
+  ON_ThickeningUserData();
+  ON_ThickeningUserData(const ON_ThickeningUserData& ud);
+
+  static ON_UUID Uuid(void);
+
+  const ON_ThickeningUserData& operator = (const ON_ThickeningUserData& ud);
+
+  virtual void SetToDefaults(void) const;
+  virtual bool GetDescription(ON_wString& s);
+  virtual void ReportVersionError(void) const;
+  virtual bool Transform(const ON_Xform& xform);
 };
 
 class ON_CLASS ON_Thickening : public ON_MeshModifier
 {
 public:
   ON_Thickening();
-  ON_Thickening(ON_XMLNode& model_node);
+  ON_Thickening(const ON_XMLNode& node);
   ON_Thickening(const ON_Thickening& t);
 
   const ON_Thickening& operator = (const ON_Thickening& t);
@@ -222,13 +382,55 @@ public:
 
   bool BothSides(void) const;
   void SetBothSides(bool b);
+
+  virtual ON_UUID Uuid(void) const override;
+
+  class ON_CLASS Defaults final
+  {
+  public:
+    static bool Solid(void);
+    static bool BothSides(void);
+    static bool OffsetOnly(void);
+    static double Distance(void);
+  };
+};
+
+#define ON_CURVE_PIPING_ROOT        L"curve-piping-object-data"
+  #define ON_CURVE_PIPING_ON          L"on"
+  #define ON_CURVE_PIPING_SEGMENTS    L"segments"
+  #define ON_CURVE_PIPING_RADIUS      L"radius"
+  #define ON_CURVE_PIPING_ACCURACY    L"accuracy"
+  #define ON_CURVE_PIPING_WELD        L"weld"     // 'Weld' is a legacy name. The real name is 'Faceted' but this is the INVERSE of weld.
+  #define ON_CURVE_PIPING_CAP_TYPE    L"cap-type"
+    #define ON_CURVE_PIPING_NONE        L"none"
+    #define ON_CURVE_PIPING_FLAT        L"flat"
+    #define ON_CURVE_PIPING_BOX         L"box"
+    #define ON_CURVE_PIPING_DOME        L"dome"
+
+class ON_CLASS ON_CurvePipingUserData : public ON_XMLUserData
+{
+private:
+	ON_OBJECT_DECLARE(ON_CurvePipingUserData);
+
+public:
+	ON_CurvePipingUserData();
+	ON_CurvePipingUserData(const ON_CurvePipingUserData& ud);
+
+	static ON_UUID Uuid(void);
+
+	const ON_CurvePipingUserData& operator = (const ON_CurvePipingUserData& ud);
+
+	virtual void SetToDefaults(void) const;
+	virtual bool GetDescription(ON_wString& s);
+	virtual void ReportVersionError(void) const;
+	virtual bool Transform(const ON_Xform& xform);
 };
 
 class ON_CLASS ON_CurvePiping : public ON_MeshModifier
 {
 public:
   ON_CurvePiping();
-  ON_CurvePiping(ON_XMLNode& model_node);
+  ON_CurvePiping(const ON_XMLNode& node);
   ON_CurvePiping(const ON_CurvePiping& cp);
 
   const ON_CurvePiping& operator = (const ON_CurvePiping& cp);
@@ -267,20 +469,64 @@ public:
   // The type of cap to be created at the ends of the pipe.
   CapTypes CapType(void) const;
   void SetCapType(CapTypes ct);
+
+  virtual ON_UUID Uuid(void) const override;
+
+  class ON_CLASS Defaults final
+  {
+  public:
+    static bool Faceted(void);
+    static int Segments(void);
+    static int Accuracy(void);
+    static double Radius(void);
+    static CapTypes CapType(void);
+  };
 };
 
-class ON_CLASS ON_Shutlining : public ON_MeshModifier
+#define ON_SHUTLINING_ROOT               L"shut-lining-object-data"
+  #define ON_SHUTLINING_ON                 L"on"
+  #define ON_SHUTLINING_FACETED            L"faceted"
+  #define ON_SHUTLINING_AUTO_UPDATE        L"auto-update"
+  #define ON_SHUTLINING_FORCE_UPDATE       L"force-update"
+  #define ON_SHUTLINING_CURVE              L"curve"
+    #define ON_SHUTLINING_CURVE_UUID         L"uuid"
+    #define ON_SHUTLINING_CURVE_ENABLED      L"enabled"
+    #define ON_SHUTLINING_CURVE_RADIUS       L"radius"
+    #define ON_SHUTLINING_CURVE_PROFILE      L"profile"
+    #define ON_SHUTLINING_CURVE_PULL         L"pull"
+    #define ON_SHUTLINING_CURVE_IS_BUMP      L"is-bump"
+
+class ON_CLASS ON_ShutLiningUserData : public ON_XMLUserData
+{
+private:
+	ON_OBJECT_DECLARE(ON_ShutLiningUserData);
+
+public:
+	ON_ShutLiningUserData();
+	ON_ShutLiningUserData(const ON_ShutLiningUserData& ud);
+
+	static ON_UUID Uuid(void);
+
+	const ON_ShutLiningUserData& operator = (const ON_ShutLiningUserData& ud);
+
+	virtual void SetToDefaults(void) const override;
+	virtual bool GetDescription(ON_wString& s) override;
+	virtual void ReportVersionError(void) const override;
+	virtual bool Transform(const ON_Xform& xform) override;
+};
+
+class ON_CLASS ON_ShutLining : public ON_MeshModifier
 {
 public:
-  ON_Shutlining();
-  ON_Shutlining(ON_XMLNode& model_node);
-  ON_Shutlining(const ON_Shutlining& sl);
-  virtual ~ON_Shutlining();
+  ON_ShutLining();
+  ON_ShutLining(const ON_XMLNode& node);
+  ON_ShutLining(const ON_ShutLining& sl);
+  virtual ~ON_ShutLining();
 
-  const ON_Shutlining& operator = (const ON_Shutlining& sl);
+  const ON_ShutLining& operator = (const ON_ShutLining& sl);
 
-  bool operator == (const ON_Shutlining& sl) const;
-  bool operator != (const ON_Shutlining& sl) const;
+  bool operator == (const ON_ShutLining& sl) const;
+  bool operator != (const ON_ShutLining& sl) const;
 
   // Specifies whether the feature is enabled or not.
   bool On(void) const;
@@ -301,7 +547,7 @@ public:
   class ON_CLASS Curve final
   {
   public:
-    Curve(ON_XMLNode& curve_node);
+    Curve(const ON_XMLNode& curve_node);
     Curve(const Curve&) = delete;
     ~Curve();
 
@@ -328,6 +574,19 @@ public:
     bool IsBump(void) const;
     void SetIsBump(bool b);
 
+    class ON_CLASS Defaults final
+    {
+    public:
+      static bool   Enabled(void);
+      static bool   Pull(void);
+      static bool   IsBump(void);
+      static int    Profile(void);
+      static double Radius(void);
+    };
+
+    // For internal use only.
+    void ToXML(ON_XMLNode& node) const;
+
   private:
     class CImpl;
     CImpl* m_impl;
@@ -336,7 +595,7 @@ public:
   class ON_CLASS CurveIterator final
   {
   public:
-    CurveIterator(const ON_Shutlining& sl);
+    CurveIterator(const ON_ShutLining& sl);
     ~CurveIterator();
 
     Curve* Next(void);
@@ -360,6 +619,20 @@ public:
   // Gets an iterator for iterating over all the curves on the shutlining.
   CurveIterator GetCurveIterator(void) const;
 
+  virtual ON_UUID Uuid(void) const override;
+
+  class ON_CLASS Defaults final
+  {
+  public:
+    static bool Faceted(void);
+    static bool AutoUpdate(void);
+    static bool ForceUpdate(void);
+    static double Tolerance(void);
+  };
+
+public: // For internal use only.
+  virtual ON_XMLNode* AddChildXML(ON_XMLRootNode& root) const override;
+
 private:
   class CImplSL;
   CImplSL* m_impl_sl;
@@ -368,29 +641,43 @@ private:
 class ON_CLASS ON_MeshModifiers final
 {
 public:
-  ON_MeshModifiers(const ON_ModelComponent& component, const wchar_t* xml);
+  ON_MeshModifiers();
   ON_MeshModifiers(const ON_MeshModifiers&) = delete;
   ~ON_MeshModifiers();
-
-  const ON_MeshModifiers& operator = (const ON_MeshModifiers&) = delete;
 
   bool operator == (const ON_MeshModifiers&) const = delete;
   bool operator != (const ON_MeshModifiers&) const = delete;
 
+  const ON_MeshModifiers& operator = (const ON_MeshModifiers& mm);
+
   // Get an object that provides access to displacement information.
-  ON_Displacement& Displacement(void);
+  // If there is no displacement information and 'allow_creation' is false, the method returns null.
+  // If there is no displacement information and 'allow_creation' is true, a default displacement object is created.
+  ON_Displacement* Displacement(bool allow_creation=false);
 
   // Get an object that provides access to edge softening information.
-  ON_EdgeSoftening& EdgeSoftening(void);
+  // If there is no edge softening information and 'allow_creation' is false, the method returns null.
+  // If there is no edge softening information and 'allow_creation' is true, a default edge softening object is created.
+  ON_EdgeSoftening* EdgeSoftening(bool allow_creation=false);
 
   // Get an object that provides access to thickening information.
-  ON_Thickening& Thickening(void);
+  // If there is no thickening information and 'allow_creation' is false, the method returns null.
+  // If there is no thickening information and 'allow_creation' is true, a default thickening object is created.
+  ON_Thickening* Thickening(bool allow_creation=false);
 
   // Get an object that provides access to curve piping information.
-  ON_CurvePiping& CurvePiping(void);
+  // If there is no curve piping information and 'allow_creation' is false, the method returns null.
+  // If there is no curve piping information and 'allow_creation' is true, a default curve piping object is created.
+  ON_CurvePiping* CurvePiping(bool allow_creation=false);
 
-  // Get an object that provides access to shutlining information.
-  ON_Shutlining& Shutlining(void);
+  // Get an object that provides access to shut-lining information.
+  // If there is no shut-lining information and 'allow_creation' is false, the method returns null.
+  // If there is no shut-lining information and 'allow_creation' is true, a default shut-lining object is created.
+  ON_ShutLining* ShutLining(bool allow_creation=false);
+
+public: // For internal use only.
+  void LoadFromXML(const ON_XMLRootNode&);
+  void SaveToXML(ON_XMLRootNode&) const;
 
 private:
   class CImpl;

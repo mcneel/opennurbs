@@ -99,12 +99,17 @@ bool ON_BinaryArchive::WriteCompressedBuffer(
     return false;
   if ( sizeof__inbuffer > 0 && 0 == inbuffer )
     return false;
-
+  if (sizeof__inbuffer > UINT32_MAX)
+    return false;
 
   // number of bytes of uncompressed data
-
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   if (!WriteSize(sizeof__inbuffer))
     return false;
+#pragma ON_PRAGMA_WARNING_POP
+
   if ( 0 == sizeof__inbuffer )
     return true;
 
@@ -150,7 +155,11 @@ bool ON_BinaryArchive::WriteCompressedBuffer(
 
 bool ON_BinaryArchive::ReadCompressedBufferSize( size_t* sizeof__outbuffer )
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return ReadSize(sizeof__outbuffer);
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool ON_BinaryArchive::ReadCompressedBuffer( // read and uncompress
@@ -740,12 +749,16 @@ bool ON_CompressedBuffer::Write( ON_BinaryArchive& binary_archive ) const
 
   for(;;)
   {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
     rc = binary_archive.WriteSize(m_sizeof_uncompressed);
     if (!rc)
       break;
     rc = binary_archive.WriteSize((m_buffer_compressed && m_sizeof_compressed>0) ? m_sizeof_compressed : 0);
     if (!rc)
       break;
+#pragma ON_PRAGMA_WARNING_POP
     rc = binary_archive.WriteInt(m_crc_uncompressed);
     if (!rc)
       break;
@@ -786,12 +799,16 @@ bool ON_CompressedBuffer::Read( ON_BinaryArchive& binary_archive )
     rc = ( 1 == major_version );
     if ( !rc ) 
       break;
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
     rc = binary_archive.ReadSize(&m_sizeof_uncompressed);
     if (!rc)
       break;
     rc = binary_archive.ReadSize(&m_sizeof_compressed);
     if (!rc)
       break;
+#pragma ON_PRAGMA_WARNING_PUSH
     rc = binary_archive.ReadInt(&m_crc_uncompressed);
     if (!rc)
       break;
@@ -860,6 +877,9 @@ bool ON_CompressedBuffer::Compress(
 
   if ( 0 == sizeof__inbuffer )
     return true;
+
+  if (sizeof__inbuffer > UINT32_MAX)
+    return false;
 
   // number of bytes of uncompressed data
   m_sizeof_uncompressed = sizeof__inbuffer;

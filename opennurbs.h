@@ -135,6 +135,10 @@
 #include "opennurbs_brep.h"           // boundary rep
 #include "opennurbs_beam.h"           // lightweight extrusion object
 #include "opennurbs_subd.h"           // subdivison surface object
+
+#include "opennurbs_xml.h"            // XML classes.
+#include "opennurbs_decals.h"         // Decal support.
+
 #include "opennurbs_bitmap.h"         // Windows and OpenGL bitmaps
 #include "opennurbs_instance.h"       // instance definitions and references
 #include "opennurbs_3dm_properties.h"
@@ -161,9 +165,8 @@
 #include "opennurbs_dimension.h"
 #include "opennurbs_dimensionformat.h" // Formatting dimension measurements to strings
 #include "opennurbs_photogrammetry.h"
+#include "opennurbs_archivable_dictionary.h"
 
-#include "opennurbs_xml.h"                 // XML classes.
-#include "opennurbs_current_environment.h" // Current Environment support.
 #include "opennurbs_dithering.h"           // Dithering support.
 #include "opennurbs_embedded_file.h"       // Embedded file support.
 #include "opennurbs_ground_plane.h"        // Ground Plane support.
@@ -174,7 +177,6 @@
 #include "opennurbs_skylight.h"            // Skylight support.
 #include "opennurbs_sun.h"                 // Sun support.
 #include "opennurbs_post_effects.h"        // Post Effect support.
-#include "opennurbs_decals.h"              // Decal support.
 #include "opennurbs_mesh_modifiers.h"      // Mesh Modifiers support.
 #include "opennurbs_extensions.h"
 #include "opennurbs_freetype.h"

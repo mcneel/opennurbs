@@ -144,6 +144,7 @@
     <ClInclude Include="opennurbs_annotationbase.h" />
     <ClInclude Include="opennurbs_arc.h" />
     <ClInclude Include="opennurbs_arccurve.h" />
+    <ClInclude Include="opennurbs_archivable_dictionary.h" />
     <ClInclude Include="opennurbs_archive.h" />
     <ClInclude Include="opennurbs_array.h" />
     <ClInclude Include="opennurbs_array_defs.h" />
@@ -163,7 +164,6 @@
     <ClInclude Include="opennurbs_convex_poly.h" />
     <ClInclude Include="opennurbs_cpp_base.h" />
     <ClInclude Include="opennurbs_crc.h" />
-    <ClInclude Include="opennurbs_current_environment.h" />
     <ClInclude Include="opennurbs_curve.h" />
     <ClInclude Include="opennurbs_curveonsurface.h" />
     <ClInclude Include="opennurbs_curveproxy.h" />
@@ -310,6 +310,7 @@
     <ClCompile Include="opennurbs_annotationbase.cpp" />
     <ClCompile Include="opennurbs_arc.cpp" />
     <ClCompile Include="opennurbs_arccurve.cpp" />
+    <ClCompile Include="opennurbs_archivable_dictionary.cpp" />
     <ClCompile Include="opennurbs_archive.cpp" />
     <ClCompile Include="opennurbs_archive_manifest.cpp" />
     <ClCompile Include="opennurbs_array.cpp" />
@@ -336,7 +337,6 @@
     <ClCompile Include="opennurbs_cone.cpp" />
     <ClCompile Include="opennurbs_convex_poly.cpp" />
     <ClCompile Include="opennurbs_crc.cpp" />
-    <ClCompile Include="opennurbs_current_environment.cpp" />
     <ClCompile Include="opennurbs_curve.cpp" />
     <ClCompile Include="opennurbs_curveonsurface.cpp" />
     <ClCompile Include="opennurbs_curveproxy.cpp" />

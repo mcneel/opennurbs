@@ -1365,3 +1365,19 @@ bool ON_PolylineCurve::GetNurbFormParameterFromCurveParameter(
   *nurbs_t = curve_t;
   return true;
 }
+
+void ON_PolylineCurve::SetArcLengthParameterization(double tolerance)
+{
+  double d, mind = tolerance;
+  m_t[0] = 0;
+  const int count = m_pline.Count();
+  for (int i = 1; i < count; i++)
+  {
+    d = (m_pline[i] - m_pline[i - 1]).Length();
+    if (d < mind)
+      d = mind;
+    if (d < fabs(m_t[i - 1]) * 1e-5)
+      d = fabs(m_t[i - 1]) * 1e-5;
+    m_t[i] = m_t[i - 1] + d;
+  }
+}

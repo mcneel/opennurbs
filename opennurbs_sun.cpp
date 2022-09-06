@@ -85,17 +85,17 @@ static double Planck(double lambda, double temp)
 static ON_4fColor ColorTemperature(double temperature)
 {
   // Use a variant of Planck's equation to get values for the three CIE wavelengths.
-  auto temp = monitor_white;
+  double temp = monitor_white;
 
-  auto er = Planck(0.60, temp);
-  auto eg = Planck(0.56, temp);
-  auto eb = Planck(0.44, temp);
+  double er = Planck(0.60, temp);
+  double eg = Planck(0.56, temp);
+  double eb = Planck(0.44, temp);
 
-  auto es = 1.0 / std::max(er, std::max(eg, eb));
+  double es = 1.0 / std::max(er, std::max(eg, eb));
 
-  const auto r_white = er * es;
-  const auto g_white = eg * es;
-  const auto b_white = eb * es;
+  const double r_white = er * es;
+  const double g_white = eg * es;
+  const double b_white = eb * es;
 
   temp = temperature;
 
@@ -105,15 +105,15 @@ static ON_4fColor ColorTemperature(double temperature)
 
   es = 1.0 / std::max(er,std::max(eg, eb));
 
-  const auto r = er * es / r_white;
-  const auto g = eg * es / g_white;
-  const auto b = eb * es / b_white;
+  const double r = er * es / r_white;
+  const double g = eg * es / g_white;
+  const double b = eb * es / b_white;
 
   es = 1.0 / std::max(r, std::max(g, b));
 
-  const auto rr = float(pow(r * es, 0.15));
-  const auto gr = float(pow(g * es, 0.15));
-  const auto br = float(pow(b * es, 0.15));
+  const float rr = float(pow(r * es, 0.15));
+  const float gr = float(pow(g * es, 0.15));
+  const float br = float(pow(b * es, 0.15));
 
   return ON_4fColor(rr, gr, br, 1.0f);
 }
@@ -319,7 +319,7 @@ int ON_Sun::DaylightSavingMinutes(void) const
 
 void ON_Sun::LocalDateTime(int& year, int& month, int& day, double& hours) const
 {
-  const auto* s = XMLPath_Sun();
+  const wchar_t* s = XMLPath_Sun();
   year  = m_impl->GetParameter(s, ON_RDK_SUN_DATE_YEAR,  2000);
   month = m_impl->GetParameter(s, ON_RDK_SUN_DATE_MONTH, 1);
   day   = m_impl->GetParameter(s, ON_RDK_SUN_DATE_DAY,   1);
@@ -417,7 +417,7 @@ bool ON_Sun::SetLocalDateTime(int year, int month, int day, double hours)
   if ((year < MinYear()) || (year > MaxYear()))
     return false;
 
-  const auto* s = XMLPath_Sun();
+  const wchar_t* s = XMLPath_Sun();
   m_impl->SetParameter(s, ON_RDK_SUN_DATE_YEAR,  year);
   m_impl->SetParameter(s, ON_RDK_SUN_DATE_MONTH, month);
   m_impl->SetParameter(s, ON_RDK_SUN_DATE_DAY,   day);
@@ -516,10 +516,10 @@ ON_4fColor ON_Sun::SunColorFromAltitude(double altitude) // Static.
   if (altitude < -TwilightZone())
     return colDark;
 
-  const auto value = (30.0 * pow(std::max(0.0, altitude), 1.5)) + 500.0;
+  const double value = (30.0 * pow(std::max(0.0, altitude), 1.5)) + 500.0;
   auto temperature = std::min(5300.0, value);
 
-  auto col = ColorTemperature(temperature);
+  ON_4fColor col = ColorTemperature(temperature);
 
   if (altitude < 0.0)
   {

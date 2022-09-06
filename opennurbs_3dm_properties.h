@@ -143,7 +143,7 @@ class ON_CLASS ON_3dmProperties
 {
 public:
   ON_3dmProperties() = default;
-  ~ON_3dmProperties() = default;;
+  ~ON_3dmProperties() = default;
   ON_3dmProperties(const ON_3dmProperties&) = default;
   ON_3dmProperties& operator=(const ON_3dmProperties&) = default;
 

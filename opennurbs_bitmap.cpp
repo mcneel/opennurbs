@@ -1238,8 +1238,12 @@ bool ON_EmbeddedBitmap::Internal_ReadV5( ON_BinaryArchive& file )
     if (0 == i)
     {
       // uncompressed
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
       if (!file.ReadSize(&m_sizeof_buffer))
         break;
+#pragma ON_PRAGMA_WARNING_POP
       void* buffer = nullptr;
       if (m_sizeof_buffer > 0)
       {

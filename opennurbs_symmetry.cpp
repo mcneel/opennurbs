@@ -2183,7 +2183,7 @@ const ON_SHA1_Hash ON_Symmetry::SymmetryHash() const
   ON_SHA1 sha1;
   sha1.AccumulateBytes(&m_type, sizeof(m_type));
   sha1.AccumulateBytes(&m_coordinates, sizeof(m_coordinates));
-  sha1.AccumulateInteger8(m_inversion_order);
+  sha1.AccumulateUnsigned8(m_inversion_order);
   sha1.AccumulateInteger32(m_cyclic_order);
   sha1.AccumulateId(m_id);
   sha1.AccumulateDoubleArray(16, &m_inversion_transform.m_xform[0][0]);

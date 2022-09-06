@@ -22,11 +22,22 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+ON_UUID ON_MeshModifier::PlugInId(void) // Static.
+{
+  static const ON_UUID uuid =
+  {
+    // {f293de5c-d1ff-467a-9bd1-cac8ec4b2e6b}
+    0xf293de5c, 0xd1ff, 0x467a, {0x9b, 0xd1, 0xca, 0xc8, 0xec, 0x4b, 0x2e, 0x6b}
+  };
+
+  return uuid;
+}
+
 class ON_MeshModifier::CImpl : public ON_InternalXMLImpl
 {
 public:
   CImpl() { }
-  CImpl(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
+  CImpl(const ON_XMLNode& n) { Node() = n; }
 };
 
 ON_MeshModifier::ON_MeshModifier()
@@ -34,9 +45,9 @@ ON_MeshModifier::ON_MeshModifier()
   m_impl = new CImpl;
 }
 
-ON_MeshModifier::ON_MeshModifier(ON_XMLNode& model_node)
+ON_MeshModifier::ON_MeshModifier(const ON_XMLNode& node)
 {
-  m_impl = new CImpl(model_node);
+  m_impl = new CImpl(node);
 }
 
 ON_MeshModifier::~ON_MeshModifier()
@@ -45,10 +56,15 @@ ON_MeshModifier::~ON_MeshModifier()
   m_impl = nullptr;
 }
 
-ON_wString ON_MeshModifier::XML(void) const
+ON_XMLNode* ON_MeshModifier::AddChildXML(ON_XMLRootNode& root) const
 {
-  // The XML does not include the <xml> node. It's the actual mesh modifier node.
-  return m_impl->Node().String();
+  ON_XMLNode* mm_node = root.AttachChildNode(new ON_XMLNode(L""));
+  if (nullptr != mm_node)
+  {
+    *mm_node = m_impl->Node();
+  }
+
+  return mm_node;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -57,30 +73,126 @@ ON_wString ON_MeshModifier::XML(void) const
 //
 ////////////////////////////////////////////////////////////////
 
-#define ON_DISPLACEMENT_ROOT                       L"new-displacement-object-data"
-  #define ON_DISPLACEMENT_ON                       L"on"
-  #define ON_DISPLACEMENT_CHANNEL                  L"channel"
-  #define ON_DISPLACEMENT_BLACK_POINT              L"black-point"
-  #define ON_DISPLACEMENT_WHITE_POINT              L"white-point"
-  #define ON_DISPLACEMENT_SWEEP_PITCH              L"sweep-pitch"
-  #define ON_DISPLACEMENT_REFINE_STEPS             L"refine-steps"
-  #define ON_DISPLACEMENT_REFINE_SENSITIVITY       L"refine-sensitivity"
-  #define ON_DISPLACEMENT_TEXTURE                  L"texture"
-  #define ON_DISPLACEMENT_FACE_COUNT_LIMIT_ENABLED L"face-count-limit-enabled"
-  #define ON_DISPLACEMENT_FACE_COUNT_LIMIT         L"face-count-limit"
-  #define ON_DISPLACEMENT_POST_WELD_ANGLE          L"post-weld-angle"
-  #define ON_DISPLACEMENT_MESH_MEMORY_LIMIT        L"mesh-memory-limit"
-  #define ON_DISPLACEMENT_FAIRING_ENABLED          L"fairing-enabled"
-  #define ON_DISPLACEMENT_FAIRING_AMOUNT           L"fairing-amount"
-  #define ON_DISPLACEMENT_SWEEP_RES_FORMULA        L"sweep-res-formula"
-  #define ON_DISPLACEMENT_SUB_OBJECT_COUNT         L"sub-object-count"
-  #define ON_DISPLACEMENT_SUB                      L"sub"
-    #define ON_DISPLACEMENT_SUB_INDEX              L"sub-index"
-    #define ON_DISPLACEMENT_SUB_ON                 L"sub-on"
-    #define ON_DISPLACEMENT_SUB_TEXTURE            L"sub-texture"
-    #define ON_DISPLACEMENT_SUB_CHANNEL            L"sub-channel"
-    #define ON_DISPLACEMENT_SUB_BLACK_POINT        L"sub-black-point"
-    #define ON_DISPLACEMENT_SUB_WHITE_POINT        L"sub-white-point"
+ON_OBJECT_IMPLEMENT(ON_DisplacementUserData, ON_UserData, "B8C04604-B4EF-43b7-8C26-1AFB8F1C54EB");
+
+ON_UUID ON_DisplacementUserData::Uuid(void)
+{
+  static const ON_UUID uuid = { 0x8224a7c4, 0x5590, 0x4ac4, { 0xa3, 0x2c, 0xde, 0x85, 0xdc, 0x2f, 0xfd, 0xae } };
+  return uuid;
+}
+
+ON_DisplacementUserData::ON_DisplacementUserData()
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  SetToDefaults();
+}
+
+ON_DisplacementUserData::ON_DisplacementUserData(const ON_DisplacementUserData& ud)
+  :
+  ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  // DO NOT SET OTHER ON_UserData fields
+  // In particular, do not set m_userdata_copycount
+  *this = ud;
+}
+
+const ON_DisplacementUserData& ON_DisplacementUserData::operator = (const ON_DisplacementUserData& ud)
+{
+  if (this != &ud)
+    ON_XMLUserData::operator = (ud);
+
+  return *this;
+}
+
+bool ON_DisplacementUserData::GetDescription(ON_wString& s)
+{
+  s = L"Displacement object data";
+  return true;
+}
+
+void ON_DisplacementUserData::SetToDefaults(void) const
+{
+  auto& ud = const_cast<ON_DisplacementUserData&>(*this);
+  ud.Clear();
+
+  ON_Displacement::Defaults d;
+
+  ON_XMLNode* root = ud.XMLRootForWrite().AttachChildNode(new ON_XMLNode(ON_DISPLACEMENT_ROOT));
+
+  ON_XMLParameters p(*root);
+  p.SetParam(ON_DISPLACEMENT_ON, false);
+  p.SetParam(ON_DISPLACEMENT_CHANNEL, d.ChannelNumber());
+  p.SetParam(ON_DISPLACEMENT_BLACK_POINT, d.BlackPoint());
+  p.SetParam(ON_DISPLACEMENT_WHITE_POINT, d.WhitePoint());
+  p.SetParam(ON_DISPLACEMENT_SWEEP_PITCH, d.SweepPitch());
+  p.SetParam(ON_DISPLACEMENT_REFINE_STEPS, d.RefineStepCount());
+  p.SetParam(ON_DISPLACEMENT_REFINE_SENSITIVITY, d.RefineSensitivity());
+  p.SetParam(ON_DISPLACEMENT_TEXTURE, ON_nil_uuid);
+  p.SetParam(ON_DISPLACEMENT_FACE_COUNT_LIMIT_ENABLED, false);
+  p.SetParam(ON_DISPLACEMENT_FACE_COUNT_LIMIT, d.FaceLimit());
+  p.SetParam(ON_DISPLACEMENT_POST_WELD_ANGLE, d.PostWeldAngle());
+  p.SetParam(ON_DISPLACEMENT_MESH_MEMORY_LIMIT, d.MeshMemoryLimit());
+  p.SetParam(ON_DISPLACEMENT_FAIRING_ENABLED, false);
+  p.SetParam(ON_DISPLACEMENT_FAIRING_AMOUNT, d.FairingAmount());
+  p.SetParam(ON_DISPLACEMENT_SUB_OBJECT_COUNT, 0);
+  p.SetParam(ON_DISPLACEMENT_SWEEP_RES_FORMULA, int(d.SweepResolutionFormula()));
+
+  ON_XMLNode* sub_node = new ON_XMLNode(ON_DISPLACEMENT_SUB);
+  root->AttachChildNode(sub_node);
+
+  ON_XMLParameters psub(*sub_node);
+  psub.SetParam(ON_DISPLACEMENT_SUB_INDEX, -1);
+  psub.SetParam(ON_DISPLACEMENT_SUB_ON, false);
+  psub.SetParam(ON_DISPLACEMENT_SUB_TEXTURE, ON_nil_uuid);
+  psub.SetParam(ON_DISPLACEMENT_SUB_CHANNEL, d.ChannelNumber());
+  psub.SetParam(ON_DISPLACEMENT_SUB_BLACK_POINT, d.BlackPoint());
+  psub.SetParam(ON_DISPLACEMENT_SUB_WHITE_POINT, d.WhitePoint());
+}
+
+void ON_DisplacementUserData::ReportVersionError(void) const
+{
+  //RhinoMessageBox(L"Version error", L"Displacement", MB_OK | MB_ICONERROR);
+}
+
+bool ON_DisplacementUserData::Transform(const ON_Xform& xform)
+{
+//  if (nullptr != g_DisplacementUserDataTransformCallback)
+//  {
+//    (*g_DisplacementUserDataTransformCallback)(*this, xform);
+//  }
+
+  return ON_XMLUserData::Transform(xform);
+}
+
+bool ON_DisplacementUserData::Read(ON_BinaryArchive& archive)
+{
+  if (!ON_XMLUserData::Read(archive))
+    return false;
+
+  const int archive3dmVersion = archive.Archive3dmVersion();
+  if (archive3dmVersion < 60)
+  {
+    ON_XMLNode* root = XMLRootForWrite().GetNamedChild(ON_DISPLACEMENT_ROOT);
+    if (root != nullptr)
+    {
+      ON_XMLParameters p(*root);
+      ON_XMLVariant v;
+      if (!p.GetParam(ON_DISPLACEMENT_SWEEP_RES_FORMULA, v))
+      {
+        p.SetParam(ON_DISPLACEMENT_SWEEP_RES_FORMULA, 1);
+      }
+    }
+  }
+
+  return true;
+}
 
 class ON_Displacement::CImplDSP
 {
@@ -88,20 +200,37 @@ public:
   ON_SimpleArray<SubItem*> m_subs;
 };
 
-ON_Displacement::ON_Displacement(ON_XMLNode& model_node)
+ON_Displacement::ON_Displacement()
   :
-  ON_MeshModifier(model_node)
+  ON_MeshModifier(ON_XMLNode(ON_DISPLACEMENT_ROOT))
+{
+  m_impl_dsp = new CImplDSP;
+}
+
+ON_Displacement::ON_Displacement(const ON_XMLNode& dsp_node)
 {
   m_impl_dsp = new CImplDSP;
 
-  auto it = model_node.GetChildIterator();
-  while (auto* child_node = it.GetNextChild())
+  // Iterate over the displacement node looking at each child node's name. If the child
+  // node is a sub-item node, create a sub-item object to hold the sub-item XML. Otherwise add
+  // a copy of the child node to a new displacement node.
+  ON_XMLNode new_dsp_node(dsp_node.TagName());
+
+  auto it = dsp_node.GetChildIterator();
+  while (ON_XMLNode* child_node = it.GetNextChild())
   {
     if (ON_DISPLACEMENT_SUB == child_node->TagName())
     {
       m_impl_dsp->m_subs.Append(new SubItem(*child_node));
     }
+    else
+    {
+      new_dsp_node.AttachChildNode(new ON_XMLNode(*child_node));
+    }
   }
+
+  // Copy the new displacement node to our node. It only contains displacement XML with no sub-item nodes.
+  m_impl->Node() = new_dsp_node;
 }
 
 ON_Displacement::ON_Displacement(const ON_Displacement& dsp)
@@ -166,6 +295,23 @@ bool ON_Displacement::operator == (const ON_Displacement& dsp) const
 bool ON_Displacement::operator != (const ON_Displacement& dsp) const
 {
   return !(operator == (dsp));
+}
+
+ON_XMLNode* ON_Displacement::AddChildXML(ON_XMLRootNode& root) const
+{
+  ON_XMLNode* dsp_node = ON_MeshModifier::AddChildXML(root);
+  if (nullptr != dsp_node)
+  {
+    auto it = GetSubItemIterator();
+    SubItem* sub_item = nullptr;
+    while (nullptr != (sub_item = it.Next()))
+    {
+      ON_XMLNode* sub_node = dsp_node->AttachChildNode(new ON_XMLNode(L""));
+      sub_item->ToXML(*sub_node);
+    }
+  }
+
+  return dsp_node;
 }
 
 bool ON_Displacement::On(void) const
@@ -311,7 +457,7 @@ void ON_Displacement::SetRefineSensitivity(double s)
 ON_Displacement::SweepResolutionFormulas ON_Displacement::SweepResolutionFormula(void) const
 {
   const auto def = SweepResolutionFormulas::Default;
-  const auto v = m_impl->GetParameter(ON_DISPLACEMENT_SWEEP_RES_FORMULA, int(def)).AsInteger();
+  const int v = m_impl->GetParameter(ON_DISPLACEMENT_SWEEP_RES_FORMULA, int(def)).AsInteger();
   return SweepResolutionFormulas(v);
 }
 
@@ -327,8 +473,8 @@ ON_Displacement::SubItemIterator ON_Displacement::GetSubItemIterator(void) const
 
 ON_Displacement::SubItem& ON_Displacement::AddSubItem(void)
 {
-  auto* sub_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_DISPLACEMENT_SUB));
-  auto* sub = new SubItem(*sub_node);
+  ON_XMLNode node(ON_DISPLACEMENT_SUB);
+  auto* sub = new SubItem(node);
   m_impl_dsp->m_subs.Append(sub);
 
   return *sub;
@@ -347,7 +493,7 @@ void ON_Displacement::DeleteAllSubItems(void)
 ON_Displacement::SubItem* ON_Displacement::FindSubItem(const int index) const
 {
   auto it = GetSubItemIterator();
-  while (auto* sub = it.Next())
+  while (SubItem* sub = it.Next())
   {
     if (sub->Index() == index)
       return sub;
@@ -359,10 +505,10 @@ ON_Displacement::SubItem* ON_Displacement::FindSubItem(const int index) const
 class ON_Displacement::SubItem::CImpl : public ON_InternalXMLImpl
 {
 public:
-  CImpl(ON_XMLNode& sub_node) : ON_InternalXMLImpl(&sub_node) { }
+  CImpl(const ON_XMLNode& sub_node) { Node() = sub_node; }
 };
 
-ON_Displacement::SubItem::SubItem(ON_XMLNode& sub_node)
+ON_Displacement::SubItem::SubItem(const ON_XMLNode& sub_node)
 {
   m_impl = new CImpl(sub_node);
 }
@@ -465,6 +611,11 @@ void ON_Displacement::SubItem::SetWhitePoint(double w)
   m_impl->SetParameter(ON_DISPLACEMENT_SUB_WHITE_POINT, w);
 }
 
+void ON_Displacement::SubItem::ToXML(ON_XMLNode& node) const
+{
+  node = m_impl->Node();
+}
+
 class ON_Displacement::SubItemIterator::CImpl
 {
 public:
@@ -498,27 +649,112 @@ ON_Displacement::SubItem* ON_Displacement::SubItemIterator::Next(void)
   return m_impl->Next();
 }
 
+ON_UUID ON_Displacement::Uuid(void) const
+{
+  // The unique id of the mesh modifier is the same as the id of its user data.
+  return ON_DisplacementUserData::Uuid();
+}
+
+int    ON_Displacement::Defaults::RefineStepCount(void)   { return 1; }
+int    ON_Displacement::Defaults::FairingAmount(void)     { return 4; }
+int    ON_Displacement::Defaults::FaceLimit(void)         { return 10000; }
+int    ON_Displacement::Defaults::ChannelNumber(void)     { return 1; }
+int    ON_Displacement::Defaults::MeshMemoryLimit(void)   { return 512; }
+double ON_Displacement::Defaults::BlackPoint(void)        { return 0.0; }
+double ON_Displacement::Defaults::WhitePoint(void)        { return 1.0; }
+double ON_Displacement::Defaults::SweepPitch(void)        { return 1000.0; }
+double ON_Displacement::Defaults::RefineSensitivity(void) { return 0.5; }
+double ON_Displacement::Defaults::PostWeldAngle(void)     { return 40.0; }
+double ON_Displacement::Defaults::AbsoluteTolerance(void) { return 0.001; }
+
+ON_Displacement::SweepResolutionFormulas ON_Displacement::Defaults::SweepResolutionFormula(void)
+{
+  return SweepResolutionFormulas::Default;
+}
+
 ////////////////////////////////////////////////////////////////
 //
 // Edge Softening
 //
 ////////////////////////////////////////////////////////////////
 
-#define ON_EDGE_SOFTENING_ROOT              L"edge-softening-object-data"
-  #define ON_EDGE_SOFTENING_ON              L"on"
-  #define ON_EDGE_SOFTENING_SOFTENING       L"softening"
-  #define ON_EDGE_SOFTENING_CHAMFER         L"chamfer"
-  #define ON_EDGE_SOFTENING_UNWELD          L"unweld"
-  #define ON_EDGE_SOFTENING_FORCE_SOFTENING L"force-softening"
-  #define ON_EDGE_SOFTENING_EDGE_THRESHOLD  L"edge-threshold"
+ON_OBJECT_IMPLEMENT(ON_EdgeSofteningUserData, ON_UserData, "CB5EB395-BF1B-4112-8F2F-F728FCE8169C");
+
+ON_UUID ON_EdgeSofteningUserData::Uuid(void)
+{
+  static const ON_UUID uuid = { 0x8cbe6160, 0x5cbd, 0x4b4d, { 0x8c, 0xd2, 0x7c, 0xe0, 0xa7, 0xc8, 0xc2, 0xd8 } };
+  return uuid;
+}
+
+ON_EdgeSofteningUserData::ON_EdgeSofteningUserData()
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  SetToDefaults();
+}
+
+ON_EdgeSofteningUserData::ON_EdgeSofteningUserData(const ON_EdgeSofteningUserData& ud)
+  :
+  ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  // DO NOT SET OTHER ON_UserData fields
+  // In particular, do not set m_userdata_copycount
+  *this = ud;
+}
+
+bool ON_EdgeSofteningUserData::GetDescription(ON_wString& s)
+{
+  s = L"EdgeSoftening object data";
+  return true;
+}
+
+const ON_EdgeSofteningUserData& ON_EdgeSofteningUserData::operator = (const ON_EdgeSofteningUserData& ud)
+{
+  if (this != &ud)
+    ON_XMLUserData::operator = (ud);
+
+  return *this;
+}
+
+void ON_EdgeSofteningUserData::SetToDefaults(void) const
+{
+  auto& ud = const_cast<ON_EdgeSofteningUserData&>(*this);
+  ud.Clear();
+
+  ON_XMLProperty prop;
+  ON_XMLNode* root = ud.XMLRootForWrite().AttachChildNode(new ON_XMLNode(ON_EDGE_SOFTENING_ROOT));
+
+  ON_EdgeSoftening::Defaults d;
+
+  ON_XMLParameters p(*root);
+  p.SetParam(ON_EDGE_SOFTENING_ON, false);
+  p.SetParam(ON_EDGE_SOFTENING_SOFTENING, d.Softening());
+  p.SetParam(ON_EDGE_SOFTENING_CHAMFER, d.Chamfer());
+  p.SetParam(ON_EDGE_SOFTENING_UNWELD, d.Faceted());
+  p.SetParam(ON_EDGE_SOFTENING_FORCE_SOFTENING, d.ForceSoftening());
+  p.SetParam(ON_EDGE_SOFTENING_EDGE_THRESHOLD, d.EdgeAngleThreshold());
+}
+
+void ON_EdgeSofteningUserData::ReportVersionError(void) const
+{
+  //RhinoMessageBox(L"Version error", L"EdgeSoftening", MB_OK | MB_ICONERROR);
+}
 
 ON_EdgeSoftening::ON_EdgeSoftening()
+  :
+  ON_MeshModifier(ON_XMLNode(ON_EDGE_SOFTENING_ROOT))
 {
 }
 
-ON_EdgeSoftening::ON_EdgeSoftening(ON_XMLNode& model_node)
+ON_EdgeSoftening::ON_EdgeSoftening(const ON_XMLNode& node)
   :
-  ON_MeshModifier(model_node)
+  ON_MeshModifier(node)
 {
 }
 
@@ -619,26 +855,105 @@ void ON_EdgeSoftening::SetForceSoftening(bool b)
   m_impl->SetParameter(ON_EDGE_SOFTENING_FORCE_SOFTENING, b);
 }
 
+ON_UUID ON_EdgeSoftening::Uuid(void) const
+{
+  // The unique id of the mesh modifier is the same as the id of its user data.
+  return ON_EdgeSofteningUserData::Uuid();
+}
+
+bool   ON_EdgeSoftening::Defaults::Chamfer(void)            { return false; }
+bool   ON_EdgeSoftening::Defaults::Faceted(void)            { return false; }
+bool   ON_EdgeSoftening::Defaults::ForceSoftening(void)     { return false; }
+double ON_EdgeSoftening::Defaults::Softening(void)          { return 0.1; }
+double ON_EdgeSoftening::Defaults::EdgeAngleThreshold(void) { return 5.0; }
+
 ////////////////////////////////////////////////////////////////
 //
 // Thickening
 //
 ////////////////////////////////////////////////////////////////
 
-#define ON_THICKNESS_ROOT           L"thickening-object-data"
-  #define ON_THICKNESS_ON           L"on"
-  #define ON_THICKNESS_DISTANCE     L"distance"
-  #define ON_THICKNESS_SOLID        L"solid"
-  #define ON_THICKNESS_BOTH_SIDES   L"both-sides"
-  #define ON_THICKNESS_OFFSET_ONLY  L"offset-only"
+ON_OBJECT_IMPLEMENT(ON_ThickeningUserData, ON_UserData, "AA03D9C3-4CCF-4431-A06E-25F38CF3913F");
+
+ON_UUID ON_ThickeningUserData::Uuid(void)
+{
+  static const ON_UUID uuid = { 0x6aa7ccc3, 0x2721, 0x410f, { 0xaa, 0x56, 0xe8, 0xab, 0x4f, 0x3e, 0xce, 0x67 } };
+  return uuid;
+}
+
+ON_ThickeningUserData::ON_ThickeningUserData()
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  SetToDefaults();
+}
+
+ON_ThickeningUserData::ON_ThickeningUserData(const ON_ThickeningUserData& ud)
+  :
+  ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  // DO NOT SET OTHER ON_UserData fields
+  // In particular, do not set m_userdata_copycount
+  *this = ud;
+}
+
+const ON_ThickeningUserData& ON_ThickeningUserData::operator = (const ON_ThickeningUserData& ud)
+{
+  if (this != &ud)
+    ON_XMLUserData::operator = (ud);
+
+  return *this;
+}
+
+void ON_ThickeningUserData::SetToDefaults(void) const
+{
+  auto& ud = const_cast<ON_ThickeningUserData&>(*this);
+  ud.Clear();
+
+  ON_XMLProperty prop;
+  ON_XMLNode* root = ud.XMLRootForWrite().AttachChildNode(new ON_XMLNode(ON_THICKENING_ROOT));
+
+  ON_Thickening::Defaults d;
+
+  ON_XMLParameters p(*root);
+  p.SetParam(ON_THICKENING_ON, false);
+  p.SetParam(ON_THICKENING_SOLID, d.Solid());
+  p.SetParam(ON_THICKENING_BOTH_SIDES, d.BothSides());
+  p.SetParam(ON_THICKENING_OFFSET_ONLY, d.OffsetOnly());
+  p.SetParam(ON_THICKENING_DISTANCE, d.Distance());
+}
+
+bool ON_ThickeningUserData::GetDescription(ON_wString& s)
+{
+  s = L"Thickness object data";
+  return true;
+}
+
+void ON_ThickeningUserData::ReportVersionError(void) const
+{
+  //RhinoMessageBox(L"Version error", L"Thickness", MB_OK | MB_ICONERROR);
+}
+
+bool ON_ThickeningUserData::Transform(const ON_Xform& xform)
+{
+  return ON_XMLUserData::Transform(xform);
+}
 
 ON_Thickening::ON_Thickening()
+  :
+  ON_MeshModifier(ON_XMLNode(ON_THICKENING_ROOT))
 {
 }
 
-ON_Thickening::ON_Thickening(ON_XMLNode& model_node)
+ON_Thickening::ON_Thickening(const ON_XMLNode& node)
   :
-  ON_MeshModifier(model_node)
+  ON_MeshModifier(node)
 {
 }
 
@@ -679,53 +994,64 @@ bool ON_Thickening::operator != (const ON_Thickening& t) const
 
 bool ON_Thickening::On(void) const
 {
-  return m_impl->GetParameter(ON_THICKNESS_ON, false).AsBool();
+  return m_impl->GetParameter(ON_THICKENING_ON, false).AsBool();
 }
 
 void ON_Thickening::SetOn(bool b)
 {
-  m_impl->SetParameter(ON_THICKNESS_ON, b);
+  m_impl->SetParameter(ON_THICKENING_ON, b);
 }
 
 double ON_Thickening::Distance(void) const
 {
-  return m_impl->GetParameter(ON_THICKNESS_DISTANCE, 0.1).AsDouble();
+  return m_impl->GetParameter(ON_THICKENING_DISTANCE, 0.1).AsDouble();
 }
 
 void ON_Thickening::SetDistance(double d)
 {
-  m_impl->SetParameter(ON_THICKNESS_DISTANCE, d);
+  m_impl->SetParameter(ON_THICKENING_DISTANCE, d);
 }
 
 bool ON_Thickening::Solid(void) const
 {
-  return m_impl->GetParameter(ON_THICKNESS_SOLID, true).AsBool();
+  return m_impl->GetParameter(ON_THICKENING_SOLID, true).AsBool();
 }
 
 void ON_Thickening::SetSolid(bool b)
 {
-  m_impl->SetParameter(ON_THICKNESS_SOLID, b);
+  m_impl->SetParameter(ON_THICKENING_SOLID, b);
 }
 
 bool ON_Thickening::OffsetOnly(void) const
 {
-  return m_impl->GetParameter(ON_THICKNESS_OFFSET_ONLY, false).AsBool();
+  return m_impl->GetParameter(ON_THICKENING_OFFSET_ONLY, false).AsBool();
 }
 
 void ON_Thickening::SetOffsetOnly(bool b)
 {
-  m_impl->SetParameter(ON_THICKNESS_OFFSET_ONLY, b);
+  m_impl->SetParameter(ON_THICKENING_OFFSET_ONLY, b);
 }
 
 bool ON_Thickening::BothSides(void) const
 {
-  return m_impl->GetParameter(ON_THICKNESS_BOTH_SIDES, false).AsBool();
+  return m_impl->GetParameter(ON_THICKENING_BOTH_SIDES, false).AsBool();
 }
 
 void ON_Thickening::SetBothSides(bool b)
 {
-  m_impl->SetParameter(ON_THICKNESS_BOTH_SIDES, b);
+  m_impl->SetParameter(ON_THICKENING_BOTH_SIDES, b);
 }
+
+ON_UUID ON_Thickening::Uuid(void) const
+{
+  // The unique id of the mesh modifier is the same as the id of its user data.
+  return ON_ThickeningUserData::Uuid();
+}
+
+bool   ON_Thickening::Defaults::Solid(void)      { return true; }
+bool   ON_Thickening::Defaults::BothSides(void)  { return false; }
+bool   ON_Thickening::Defaults::OffsetOnly(void) { return false; }
+double ON_Thickening::Defaults::Distance(void)   { return 0.1; }
 
 ////////////////////////////////////////////////////////////////
 //
@@ -733,25 +1059,88 @@ void ON_Thickening::SetBothSides(bool b)
 //
 ////////////////////////////////////////////////////////////////
 
-#define ON_CURVE_PIPING_ROOT        L"curve-piping-object-data"
-  #define ON_CURVE_PIPING_ON        L"on"
-  #define ON_CURVE_PIPING_SEGMENTS  L"segments"
-  #define ON_CURVE_PIPING_RADIUS    L"radius"
-  #define ON_CURVE_PIPING_ACCURACY  L"accuracy"
-  #define ON_CURVE_PIPING_WELD      L"weld"
-  #define ON_CURVE_PIPING_CAP_TYPE  L"cap-type"
-    #define ON_CURVE_PIPING_NONE    L"none"
-    #define ON_CURVE_PIPING_FLAT    L"flat"
-    #define ON_CURVE_PIPING_BOX     L"box"
-    #define ON_CURVE_PIPING_DOME    L"dome"
+ON_OBJECT_IMPLEMENT(ON_CurvePipingUserData, ON_UserData, "2D5AFEA9-F458-4079-992F-C2D405D9383B");
+
+ON_UUID ON_CurvePipingUserData::Uuid(void)
+{
+  static const ON_UUID uuid = { 0x2b1a758e, 0x7cb1, 0x45ab, { 0xa5, 0xbf, 0xdf, 0xcd, 0x6d, 0x3d, 0x13, 0x6d } };
+  return uuid;
+}
+
+ON_CurvePipingUserData::ON_CurvePipingUserData()
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  SetToDefaults();
+}
+
+ON_CurvePipingUserData::ON_CurvePipingUserData(const ON_CurvePipingUserData& ud)
+  :
+  ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  // DO NOT SET OTHER ON_UserData fields
+  // In particular, do not set m_userdata_copycount
+  *this = ud;
+}
+
+const ON_CurvePipingUserData& ON_CurvePipingUserData::operator = (const ON_CurvePipingUserData& ud)
+{
+  if (this != &ud)
+    ON_XMLUserData::operator = (ud);
+
+  return *this;
+}
+
+void ON_CurvePipingUserData::SetToDefaults(void) const
+{
+  auto& ud = const_cast<ON_CurvePipingUserData&>(*this);
+  ud.Clear();
+
+  ON_XMLProperty prop;
+  ON_XMLNode* root = ud.XMLRootForWrite().AttachChildNode(new ON_XMLNode(ON_CURVE_PIPING_ROOT));
+
+  ON_CurvePiping::Defaults d;
+
+  ON_XMLParameters p(*root);
+  p.SetParam(ON_CURVE_PIPING_ON, false);
+  p.SetParam(ON_CURVE_PIPING_RADIUS, d.Radius());
+  p.SetParam(ON_CURVE_PIPING_SEGMENTS, d.Segments());
+  p.SetParam(ON_CURVE_PIPING_ACCURACY, d.Accuracy());
+  p.SetParam(ON_CURVE_PIPING_WELD, !d.Faceted()); // 'Weld' is the inverse of 'Faceted'.
+  p.SetParam(ON_CURVE_PIPING_CAP_TYPE, L"dome");
+}
+
+bool ON_CurvePipingUserData::GetDescription(ON_wString& s)
+{
+  s = L"CurvePiping object data";
+  return true;
+}
+
+void ON_CurvePipingUserData::ReportVersionError(void) const
+{
+  //RhinoMessageBox(L"Version error", L"CurvePiping", MB_OK | MB_ICONERROR);
+}
+
+bool ON_CurvePipingUserData::Transform(const ON_Xform& xform)
+{
+  return ON_XMLUserData::Transform(xform);
+}
 
 ON_CurvePiping::ON_CurvePiping()
+  :
+  ON_MeshModifier(ON_XMLNode(ON_CURVE_PIPING_ROOT))
 {
 }
 
-ON_CurvePiping::ON_CurvePiping(ON_XMLNode& model_node)
+ON_CurvePiping::ON_CurvePiping(const ON_XMLNode& node)
   :
-  ON_MeshModifier(model_node)
+  ON_MeshModifier(node)
 {
 }
 
@@ -822,12 +1211,14 @@ void ON_CurvePiping::SetSegments(int s)
 
 bool ON_CurvePiping::Faceted(void) const
 {
-  return m_impl->GetParameter(ON_CURVE_PIPING_WELD, false).AsBool();
+  // 'Weld' is the inverse of 'Faceted'.
+  return !m_impl->GetParameter(ON_CURVE_PIPING_WELD, true).AsBool();
 }
 
 void ON_CurvePiping::SetFaceted(bool b)
 {
-  m_impl->SetParameter(ON_CURVE_PIPING_WELD, b);
+  // 'Weld' is the inverse of 'Faceted'.
+  m_impl->SetParameter(ON_CURVE_PIPING_WELD, !b);
 }
 
 int ON_CurvePiping::Accuracy(void) const
@@ -854,7 +1245,7 @@ static const wchar_t* CapTypeToString(ON_CurvePiping::CapTypes ct)
 
 ON_CurvePiping::CapTypes ON_CurvePiping::CapType(void) const
 {
-  const auto s = m_impl->GetParameter(ON_CURVE_PIPING_CAP_TYPE, L"").AsString();
+  const ON_wString s = m_impl->GetParameter(ON_CURVE_PIPING_CAP_TYPE, L"").AsString();
 
   if (s == ON_CURVE_PIPING_FLAT) return ON_CurvePiping::CapTypes::Flat;
   if (s == ON_CURVE_PIPING_BOX)  return ON_CurvePiping::CapTypes::Box;
@@ -865,8 +1256,24 @@ ON_CurvePiping::CapTypes ON_CurvePiping::CapType(void) const
 
 void ON_CurvePiping::SetCapType(CapTypes ct)
 {
-  const auto* s = CapTypeToString(ct);
+  const wchar_t* s = CapTypeToString(ct);
   m_impl->SetParameter(ON_CURVE_PIPING_CAP_TYPE, s);
+}
+
+ON_UUID ON_CurvePiping::Uuid(void) const
+{
+  // The unique id of the mesh modifier is the same as the id of its user data.
+  return ON_CurvePipingUserData::Uuid();
+}
+
+bool   ON_CurvePiping::Defaults::Faceted(void)  { return false; }
+int    ON_CurvePiping::Defaults::Segments(void) { return 16; }
+int    ON_CurvePiping::Defaults::Accuracy(void) { return 50; }
+double ON_CurvePiping::Defaults::Radius(void)   { return 1.0; }
+
+ON_CurvePiping::CapTypes ON_CurvePiping::Defaults::CapType(void)
+{
+  return CapTypes::Dome;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -875,53 +1282,121 @@ void ON_CurvePiping::SetCapType(CapTypes ct)
 //
 ////////////////////////////////////////////////////////////////
 
-#define ON_SHUTLINING_ROOT               L"shut-lining-object-data"
-  #define ON_SHUTLINING_ON               L"on"
-  #define ON_SHUTLINING_CURVE            L"curve"
-    #define ON_SHUTLINING_CURVE_UUID     L"uuid"
-    #define ON_SHUTLINING_CURVE_ENABLED  L"enabled"
-    #define ON_SHUTLINING_CURVE_RADIUS   L"radius"
-    #define ON_SHUTLINING_CURVE_PROFILE  L"profile"
-    #define ON_SHUTLINING_CURVE_PULL     L"pull"
-    #define ON_SHUTLINING_CURVE_IS_BUMP  L"is-bump"
-  #define ON_SHUTLINING_FACETED          L"faceted"
-  #define ON_SHUTLINING_AUTO_UPDATE      L"auto-update"
-  #define ON_SHUTLINING_FORCE_UPDATE     L"force-update"
+ON_OBJECT_IMPLEMENT(ON_ShutLiningUserData, ON_UserData, "429DCD06-5643-4254-BDE8-C0557F8FD083");
 
-class ON_Shutlining::CImplSL
+ON_UUID ON_ShutLiningUserData::Uuid(void)
+{
+  static const ON_UUID uuid = { 0x7506ebe, 0x1d69, 0x4345, { 0x9f, 0xd, 0x2b, 0x9a, 0xa1, 0x90, 0x6e, 0xef } };
+  return uuid;
+}
+
+ON_ShutLiningUserData::ON_ShutLiningUserData()
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  SetToDefaults();
+}
+
+ON_ShutLiningUserData::ON_ShutLiningUserData(const ON_ShutLiningUserData& ud)
+  :
+  ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
+{
+  m_userdata_uuid = Uuid();
+
+  m_application_uuid = ON_MeshModifier::PlugInId();
+
+  // DO NOT SET OTHER ON_UserData fields
+  // In particular, do not set m_userdata_copycount
+  *this = ud;
+}
+
+const ON_ShutLiningUserData& ON_ShutLiningUserData::operator = (const ON_ShutLiningUserData& ud)
+{
+  if (this != &ud)
+    ON_XMLUserData::operator = (ud);
+
+  return *this;
+}
+
+void ON_ShutLiningUserData::SetToDefaults(void) const
+{
+  auto& ud = const_cast<ON_ShutLiningUserData&>(*this);
+  ud.Clear();
+
+  ON_XMLProperty prop;
+  ON_XMLNode* root = ud.XMLRootForWrite().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_ROOT));
+
+  ON_XMLParameters p(*root);
+  p.SetParam(ON_SHUTLINING_ON, false);
+  p.SetParam(ON_SHUTLINING_FACETED, ON_ShutLining::Defaults::Faceted());
+  p.SetParam(ON_SHUTLINING_AUTO_UPDATE, ON_ShutLining::Defaults::AutoUpdate());
+  p.SetParam(ON_SHUTLINING_FORCE_UPDATE, ON_ShutLining::Defaults::ForceUpdate());
+}
+
+bool ON_ShutLiningUserData::GetDescription(ON_wString& s)
+{
+  s = L"ShutLining object data";
+  return true;
+}
+
+void ON_ShutLiningUserData::ReportVersionError(void) const
+{
+  //RhinoMessageBox(L"Version error", L"ShutLining", MB_OK | MB_ICONERROR);
+}
+
+bool ON_ShutLiningUserData::Transform(const ON_Xform& xform)
+{
+  return ON_XMLUserData::Transform(xform);
+}
+
+class ON_ShutLining::CImplSL
 {
 public:
   ON_SimpleArray<Curve*> m_curves;
 };
 
-ON_Shutlining::ON_Shutlining()
+ON_ShutLining::ON_ShutLining()
+  :
+  ON_MeshModifier(ON_XMLNode(ON_SHUTLINING_ROOT))
 {
   m_impl_sl = new CImplSL;
 }
 
-ON_Shutlining::ON_Shutlining(ON_XMLNode& model_node)
-  :
-  ON_MeshModifier(model_node)
+ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
 {
   m_impl_sl = new CImplSL;
 
-  auto it = model_node.GetChildIterator();
-  while (auto* child_node = it.GetNextChild())
+  // Iterate over the shutlining node looking at each child node's name. If the child
+  // node is a curve node, create a curve object to hold the curve XML. Otherwise add
+  // a copy of the child node to a new shutlining node.
+  ON_XMLNode new_sl_node(sl_node.TagName());
+
+  auto it = sl_node.GetChildIterator();
+  while (ON_XMLNode* child_node = it.GetNextChild())
   {
     if (ON_SHUTLINING_CURVE == child_node->TagName())
     {
       m_impl_sl->m_curves.Append(new Curve(*child_node));
     }
+    else
+    {
+      new_sl_node.AttachChildNode(new ON_XMLNode(*child_node));
+    }
   }
+
+  // Copy the new shutlining node to our node. It only contains shutlining XML with no curve nodes.
+  m_impl->Node() = new_sl_node;
 }
 
-ON_Shutlining::ON_Shutlining(const ON_Shutlining& sl)
+ON_ShutLining::ON_ShutLining(const ON_ShutLining& sl)
 {
   m_impl_sl = new CImplSL;
   operator = (sl);
 }
 
-ON_Shutlining::~ON_Shutlining()
+ON_ShutLining::~ON_ShutLining()
 {
   DeleteAllCurves();
 
@@ -929,7 +1404,7 @@ ON_Shutlining::~ON_Shutlining()
   m_impl_sl = nullptr;
 }
 
-const ON_Shutlining& ON_Shutlining::operator = (const ON_Shutlining& sl)
+const ON_ShutLining& ON_ShutLining::operator = (const ON_ShutLining& sl)
 {
   if (this != &sl)
   {
@@ -942,9 +1417,9 @@ const ON_Shutlining& ON_Shutlining::operator = (const ON_Shutlining& sl)
     // Copy curves.
     DeleteAllCurves();
     auto it = sl.GetCurveIterator();
-    while (auto* sl_curve = it.Next())
+    while (Curve* sl_curve = it.Next())
     {
-      auto& new_curve = AddCurve();
+      Curve& new_curve = AddCurve();
       new_curve = *sl_curve;
     }
   }
@@ -952,10 +1427,10 @@ const ON_Shutlining& ON_Shutlining::operator = (const ON_Shutlining& sl)
   return *this;
 }
 
-ON_Shutlining::Curve* ON_Shutlining::FindCurve(const ON_UUID& id) const
+ON_ShutLining::Curve* ON_ShutLining::FindCurve(const ON_UUID& id) const
 {
   auto it = GetCurveIterator();
-  while (auto* curve = it.Next())
+  while (Curve* curve = it.Next())
   {
     if (curve->Id() == id)
       return curve;
@@ -964,7 +1439,7 @@ ON_Shutlining::Curve* ON_Shutlining::FindCurve(const ON_UUID& id) const
   return nullptr;
 }
 
-bool ON_Shutlining::operator == (const ON_Shutlining& sl) const
+bool ON_ShutLining::operator == (const ON_ShutLining& sl) const
 {
   if (On()          != sl.On())          return false;
   if (Faceted()     != sl.Faceted())     return false;
@@ -972,17 +1447,17 @@ bool ON_Shutlining::operator == (const ON_Shutlining& sl) const
   if (ForceUpdate() != sl.ForceUpdate()) return false;
 
   auto it1 = GetCurveIterator();
-  while (auto* curve = it1.Next())
+  while (Curve* curve = it1.Next())
   {
-    const auto* sl_curve = sl.FindCurve(curve->Id());
+    const Curve* sl_curve = sl.FindCurve(curve->Id());
     if (nullptr == sl_curve)
       return false;
   }
 
   auto it2 = sl.GetCurveIterator();
-  while (auto* sl_curve = it2.Next())
+  while (Curve* sl_curve = it2.Next())
   {
-    const auto* curve = FindCurve(sl_curve->Id());
+    const Curve* curve = FindCurve(sl_curve->Id());
     if ((nullptr == curve) || (*curve != *sl_curve))
       return false;
   }
@@ -990,66 +1465,66 @@ bool ON_Shutlining::operator == (const ON_Shutlining& sl) const
   return true;
 }
 
-bool ON_Shutlining::operator != (const ON_Shutlining& sl) const
+bool ON_ShutLining::operator != (const ON_ShutLining& sl) const
 {
   return !(operator == (sl));
 }
 
-bool ON_Shutlining::On(void) const
+bool ON_ShutLining::On(void) const
 {
   return m_impl->GetParameter(ON_SHUTLINING_ON, false).AsBool();
 }
 
-void ON_Shutlining::SetOn(bool b)
+void ON_ShutLining::SetOn(bool b)
 {
   m_impl->SetParameter(ON_SHUTLINING_ON, b);
 }
 
-bool ON_Shutlining::Faceted(void) const
+bool ON_ShutLining::Faceted(void) const
 {
   return m_impl->GetParameter(ON_SHUTLINING_FACETED, false).AsBool();
 }
 
-void ON_Shutlining::SetFaceted(bool b)
+void ON_ShutLining::SetFaceted(bool b)
 {
   m_impl->SetParameter(ON_SHUTLINING_FACETED, b);
 }
 
-bool ON_Shutlining::AutoUpdate(void) const
+bool ON_ShutLining::AutoUpdate(void) const
 {
   return m_impl->GetParameter(ON_SHUTLINING_AUTO_UPDATE, false).AsBool();
 }
 
-void ON_Shutlining::SetAutoUpdate(bool b)
+void ON_ShutLining::SetAutoUpdate(bool b)
 {
   m_impl->SetParameter(ON_SHUTLINING_AUTO_UPDATE, b);
 }
 
-bool ON_Shutlining::ForceUpdate(void) const
+bool ON_ShutLining::ForceUpdate(void) const
 {
   return m_impl->GetParameter(ON_SHUTLINING_FORCE_UPDATE, false).AsBool();
 }
 
-void ON_Shutlining::SetForceUpdate(bool b)
+void ON_ShutLining::SetForceUpdate(bool b)
 {
   m_impl->SetParameter(ON_SHUTLINING_FORCE_UPDATE, b);
 }
 
-ON_Shutlining::CurveIterator ON_Shutlining::GetCurveIterator(void) const
+ON_ShutLining::CurveIterator ON_ShutLining::GetCurveIterator(void) const
 {
   return CurveIterator(*this);
 }
 
-ON_Shutlining::Curve& ON_Shutlining::AddCurve(void)
+ON_ShutLining::Curve& ON_ShutLining::AddCurve(void)
 {
-  auto* curve_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_CURVE));
-  auto* curve = new Curve(*curve_node);
+  ON_XMLNode* curve_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_CURVE));
+  Curve* curve = new Curve(*curve_node);
   m_impl_sl->m_curves.Append(curve);
 
   return *curve;
 }
 
-void ON_Shutlining::DeleteAllCurves(void)
+void ON_ShutLining::DeleteAllCurves(void)
 {
   for (int i = 0; i < m_impl_sl->m_curves.Count(); i++)
   {
@@ -1059,14 +1534,38 @@ void ON_Shutlining::DeleteAllCurves(void)
   m_impl_sl->m_curves.Destroy();
 }
 
-class ON_Shutlining::Curve::CImpl final
+ON_XMLNode* ON_ShutLining::AddChildXML(ON_XMLRootNode& root) const
+{
+  ON_XMLNode* sl_node = ON_MeshModifier::AddChildXML(root);
+
+  for (int i = 0; i < m_impl_sl->m_curves.Count(); i++)
+  {
+    ON_XMLNode* curve_node = sl_node->AttachChildNode(new ON_XMLNode(L""));
+    m_impl_sl->m_curves[i]->ToXML(*curve_node);
+  }
+
+  return sl_node;
+}
+
+ON_UUID ON_ShutLining::Uuid(void) const
+{
+  // The unique id of the mesh modifier is the same as the id of its user data.
+  return ON_ShutLiningUserData::Uuid();
+}
+
+bool   ON_ShutLining::Defaults::Faceted(void)     { return false; }
+bool   ON_ShutLining::Defaults::AutoUpdate(void)  { return false; }
+bool   ON_ShutLining::Defaults::ForceUpdate(void) { return false; }
+double ON_ShutLining::Defaults::Tolerance(void)   { return 0.001; }
+
+class ON_ShutLining::Curve::CImpl final
 {
 public:
-  CImpl(ON_XMLNode& n) : m_node(n) { }
+  CImpl(const ON_XMLNode& n) : m_node(n) { }
 
   ON_XMLVariant GetParam(const wchar_t* param_name, const ON_XMLVariant& def) const
   {
-    const auto* child_node = m_node.GetNamedChild(param_name);
+    const ON_XMLNode* child_node = m_node.GetNamedChild(param_name);
     if (nullptr != child_node)
       return child_node->GetDefaultProperty().GetValue();
 
@@ -1075,25 +1574,26 @@ public:
 
   void SetParam(const wchar_t* param_name, const ON_XMLVariant& v)
   {
-    const auto* child_node = m_node.CreateNodeAtPath(param_name);
+    const ON_XMLNode* child_node = m_node.CreateNodeAtPath(param_name);
     child_node->GetDefaultProperty().SetValue(v);
   }
 
-  ON_XMLNode& m_node;
+public:
+  ON_XMLNode m_node;
 };
 
-ON_Shutlining::Curve::Curve(ON_XMLNode& curve_node)
+ON_ShutLining::Curve::Curve(const ON_XMLNode& curve_node)
 {
   m_impl = new CImpl(curve_node);
 }
 
-ON_Shutlining::Curve::~Curve()
+ON_ShutLining::Curve::~Curve()
 {
   delete m_impl;
   m_impl = nullptr;
 }
 
-const ON_Shutlining::Curve& ON_Shutlining::Curve::operator = (const ON_Shutlining::Curve& c)
+const ON_ShutLining::Curve& ON_ShutLining::Curve::operator = (const ON_ShutLining::Curve& c)
 {
   if (this != &c)
   {
@@ -1108,7 +1608,7 @@ const ON_Shutlining::Curve& ON_Shutlining::Curve::operator = (const ON_Shutlinin
   return *this;
 }
 
-bool ON_Shutlining::Curve::operator == (const Curve& c) const
+bool ON_ShutLining::Curve::operator == (const Curve& c) const
 {
   if (Id()      != c.Id())      return false;
   if (Enabled() != c.Enabled()) return false;
@@ -1120,75 +1620,86 @@ bool ON_Shutlining::Curve::operator == (const Curve& c) const
   return true;
 }
 
-bool ON_Shutlining::Curve::operator != (const Curve& c) const
+bool ON_ShutLining::Curve::operator != (const Curve& c) const
 {
   return !(operator == (c));
 }
 
-ON_UUID ON_Shutlining::Curve::Id(void) const
+ON_UUID ON_ShutLining::Curve::Id(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_UUID, ON_nil_uuid);
 }
 
-void ON_Shutlining::Curve::SetId(const ON_UUID& id)
+void ON_ShutLining::Curve::SetId(const ON_UUID& id)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_UUID, id);
 }
 
-double ON_Shutlining::Curve::Radius(void) const
+double ON_ShutLining::Curve::Radius(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_RADIUS, 1.0);
 }
 
-void ON_Shutlining::Curve::SetRadius(double d)
+void ON_ShutLining::Curve::SetRadius(double d)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_RADIUS, d);
 }
 
-int ON_Shutlining::Curve::Profile(void) const
+int ON_ShutLining::Curve::Profile(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_PROFILE, 0);
 }
 
-void ON_Shutlining::Curve::SetProfile(int p)
+void ON_ShutLining::Curve::SetProfile(int p)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_PROFILE, p);
 }
 
-bool ON_Shutlining::Curve::Enabled(void) const
+bool ON_ShutLining::Curve::Enabled(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_ENABLED, false);
 }
 
-void ON_Shutlining::Curve::SetEnabled(bool b)
+void ON_ShutLining::Curve::SetEnabled(bool b)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_ENABLED, b);
 }
 
-bool ON_Shutlining::Curve::Pull(void) const
+bool ON_ShutLining::Curve::Pull(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_PULL, false);
 }
 
-void ON_Shutlining::Curve::SetPull(bool b)
+void ON_ShutLining::Curve::SetPull(bool b)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_PULL, b);
 }
 
-bool ON_Shutlining::Curve::IsBump(void) const
+bool ON_ShutLining::Curve::IsBump(void) const
 {
   return m_impl->GetParam(ON_SHUTLINING_CURVE_IS_BUMP, false);
 }
 
-void ON_Shutlining::Curve::SetIsBump(bool b)
+void ON_ShutLining::Curve::SetIsBump(bool b)
 {
   m_impl->SetParam(ON_SHUTLINING_CURVE_IS_BUMP, b);
 }
 
-class ON_Shutlining::CurveIterator::CImpl
+void ON_ShutLining::Curve::ToXML(ON_XMLNode& node) const
+{
+  node = m_impl->m_node;
+}
+
+bool   ON_ShutLining::Curve::Defaults::Enabled(void) { return true; }
+bool   ON_ShutLining::Curve::Defaults::Pull(void)    { return true; }
+bool   ON_ShutLining::Curve::Defaults::IsBump(void)  { return false; }
+int    ON_ShutLining::Curve::Defaults::Profile(void) { return 1; }
+double ON_ShutLining::Curve::Defaults::Radius(void)  { return 0.1; }
+
+class ON_ShutLining::CurveIterator::CImpl
 {
 public:
-  CImpl(const ON_Shutlining& sl) : m_sl(sl) { }
+  CImpl(const ON_ShutLining& sl) : m_sl(sl) { }
 
   Curve* Next(void)
   {
@@ -1198,22 +1709,22 @@ public:
     return m_sl.m_impl_sl->m_curves[m_index++];
   }
 
-  const ON_Shutlining& m_sl;
+  const ON_ShutLining& m_sl;
   int m_index = 0;
 };
 
-ON_Shutlining::CurveIterator::CurveIterator(const ON_Shutlining& sl)
+ON_ShutLining::CurveIterator::CurveIterator(const ON_ShutLining& sl)
 {
   m_impl = new CImpl(sl);
 }
 
-ON_Shutlining::CurveIterator::~CurveIterator()
+ON_ShutLining::CurveIterator::~CurveIterator()
 {
   delete m_impl;
   m_impl = nullptr;
 }
 
-ON_Shutlining::Curve* ON_Shutlining::CurveIterator::Next(void)
+ON_ShutLining::Curve* ON_ShutLining::CurveIterator::Next(void)
 {
   return m_impl->Next();
 }
@@ -1223,85 +1734,113 @@ ON_Shutlining::Curve* ON_Shutlining::CurveIterator::Next(void)
 class ON_MeshModifiers::CImpl
 {
 public:
-  CImpl(ON_XMLNode& node);
   ~CImpl();
 
-  ON_XMLNode m_displacement_node;
-  ON_XMLNode m_edge_softening_node;
-  ON_XMLNode m_thickening_node;
-  ON_XMLNode m_curve_piping_node;
-  ON_XMLNode m_shutlining_node;
+  void LoadFromXML(const ON_XMLRootNode& root);
+  void SaveToXML(ON_XMLRootNode& root) const;
+
+  void DeleteAll(void);
 
   ON_Displacement * m_displacement   = nullptr;
   ON_EdgeSoftening* m_edge_softening = nullptr;
   ON_Thickening   * m_thickening     = nullptr;
   ON_CurvePiping  * m_curve_piping   = nullptr;
-  ON_Shutlining   * m_shutlining     = nullptr;
+  ON_ShutLining   * m_shut_lining    = nullptr;
 };
 
-ON_MeshModifiers::CImpl::CImpl(ON_XMLNode& model_node)
-  :
-  m_displacement_node  (ON_DISPLACEMENT_ROOT),
-  m_edge_softening_node(ON_EDGE_SOFTENING_ROOT),
-  m_thickening_node    (ON_THICKNESS_ROOT),
-  m_curve_piping_node  (ON_CURVE_PIPING_ROOT),
-  m_shutlining_node    (ON_SHUTLINING_ROOT)
+void ON_MeshModifiers::CImpl::LoadFromXML(const ON_XMLRootNode& root)
 {
-  // Iterate over the child nodes of the incoming model node and copy them to the relevent mesh modifier nodes.
-  auto it = model_node.GetChildIterator();
-  while (auto* child_node = it.GetNextChild())
+  auto it = root.GetChildIterator();
+  while (ON_XMLNode* child_node = it.GetNextChild())
   {
-    const auto& s = child_node->TagName();
+    const ON_wString& s = child_node->TagName();
 
     if (ON_DISPLACEMENT_ROOT == s)
     {
-      m_displacement_node = *child_node;
+      m_displacement = new ON_Displacement(*child_node);
     }
     else
     if (ON_EDGE_SOFTENING_ROOT == s)
     {
-      m_edge_softening_node = *child_node;
+      m_edge_softening = new ON_EdgeSoftening(*child_node);
     }
     else
-    if (ON_THICKNESS_ROOT == s)
+    if (ON_THICKENING_ROOT == s)
     {
-      m_thickening_node = *child_node;
+      m_thickening = new ON_Thickening(*child_node);
     }
     else
     if (ON_CURVE_PIPING_ROOT == s)
     {
-      m_curve_piping_node = *child_node;
+      m_curve_piping = new ON_CurvePiping(*child_node);
     }
     else
     if (ON_SHUTLINING_ROOT == s)
     {
-      m_shutlining_node = *child_node;
+      m_shut_lining = new ON_ShutLining(*child_node);
     }
   }
+}
 
-  // Create the necessary mesh modifiers using the above-initialized nodes. The mesh modifiers store pointers
-  // to these nodes. This is safe because the nodes have the same lifetime as the mesh modifiers.
-  m_displacement   = new ON_Displacement (m_displacement_node);
-  m_edge_softening = new ON_EdgeSoftening(m_edge_softening_node);
-  m_thickening     = new ON_Thickening   (m_thickening_node);
-  m_curve_piping   = new ON_CurvePiping  (m_curve_piping_node);
-  m_shutlining     = new ON_Shutlining   (m_shutlining_node);
+void ON_MeshModifiers::CImpl::SaveToXML(ON_XMLRootNode& root) const
+{
+  if (nullptr != m_displacement)
+    m_displacement->AddChildXML(root);
+
+  if (nullptr != m_edge_softening)
+    m_edge_softening->AddChildXML(root);
+
+  if (nullptr != m_thickening)
+    m_thickening->AddChildXML(root);
+
+  if (nullptr != m_curve_piping)
+    m_curve_piping->AddChildXML(root);
+
+  if (nullptr != m_shut_lining)
+    m_shut_lining->AddChildXML(root);
 }
 
 ON_MeshModifiers::CImpl::~CImpl()
 {
-  delete m_displacement;
-  delete m_edge_softening;
-  delete m_thickening;
-  delete m_curve_piping;
-  delete m_shutlining;
+  DeleteAll();
 }
 
-ON_MeshModifiers::ON_MeshModifiers(const ON_ModelComponent& component, const wchar_t* xml)
+void ON_MeshModifiers::CImpl::DeleteAll(void)
 {
-  ON_XMLRootNode node;
-  node.ReadFromStream(xml);
-  m_impl = new CImpl(node);
+  if (nullptr != m_displacement)
+  {
+    delete m_displacement;
+    m_displacement = nullptr;
+  }
+
+  if (nullptr != m_edge_softening)
+  {
+    delete m_edge_softening;
+    m_edge_softening = nullptr;
+  }
+
+  if (nullptr != m_thickening)
+  {
+    delete m_thickening;
+    m_thickening = nullptr;
+  }
+
+  if (nullptr != m_curve_piping)
+  {
+    delete m_curve_piping;
+    m_curve_piping = nullptr;
+  }
+
+  if (nullptr != m_shut_lining)
+  {
+    delete m_shut_lining;
+    m_shut_lining = nullptr;
+  }
+}
+
+ON_MeshModifiers::ON_MeshModifiers()
+{
+  m_impl = new CImpl;
 }
 
 ON_MeshModifiers::~ON_MeshModifiers()
@@ -1310,59 +1849,85 @@ ON_MeshModifiers::~ON_MeshModifiers()
   m_impl = nullptr;
 }
 
-ON_Displacement& ON_MeshModifiers::Displacement(void)
+void ON_MeshModifiers::LoadFromXML(const ON_XMLRootNode& node)
 {
-  return *m_impl->m_displacement;
+  m_impl->LoadFromXML(node);
 }
 
-ON_EdgeSoftening& ON_MeshModifiers::EdgeSoftening(void)
+void ON_MeshModifiers::SaveToXML(ON_XMLRootNode& node) const
 {
-  return *m_impl->m_edge_softening;
+  m_impl->SaveToXML(node);
 }
 
-ON_Thickening& ON_MeshModifiers::Thickening(void)
+const ON_MeshModifiers& ON_MeshModifiers::operator = (const ON_MeshModifiers& mm)
 {
-  return *m_impl->m_thickening;
+  m_impl->DeleteAll();
+
+  if (nullptr != mm.m_impl->m_displacement)
+    m_impl->m_displacement = new ON_Displacement(*mm.m_impl->m_displacement);
+
+  if (nullptr != mm.m_impl->m_edge_softening)
+    m_impl->m_edge_softening = new ON_EdgeSoftening(*mm.m_impl->m_edge_softening);
+
+  if (nullptr != mm.m_impl->m_thickening)
+    m_impl->m_thickening = new ON_Thickening(*mm.m_impl->m_thickening);
+
+  if (nullptr != mm.m_impl->m_curve_piping)
+    m_impl->m_curve_piping = new ON_CurvePiping(*mm.m_impl->m_curve_piping);
+
+  if (nullptr != mm.m_impl->m_shut_lining)
+    m_impl->m_shut_lining = new ON_ShutLining(*mm.m_impl->m_shut_lining);
+
+  return *this;
 }
 
-ON_CurvePiping& ON_MeshModifiers::CurvePiping(void)
+ON_Displacement* ON_MeshModifiers::Displacement(bool allow_creation)
 {
-  return *m_impl->m_curve_piping;
+  if ((nullptr == m_impl->m_displacement) && allow_creation)
+    m_impl->m_displacement = new ON_Displacement;
+
+  return m_impl->m_displacement;
 }
 
-ON_Shutlining& ON_MeshModifiers::Shutlining(void)
+ON_EdgeSoftening* ON_MeshModifiers::EdgeSoftening(bool allow_creation)
 {
-  return *m_impl->m_shutlining;
+  if ((nullptr == m_impl->m_edge_softening) && allow_creation)
+    m_impl->m_edge_softening = new ON_EdgeSoftening;
+
+  return m_impl->m_edge_softening;
 }
 
-// ON_MeshModifierCollection
-
-ON_MeshModifierCollection::~ON_MeshModifierCollection()
+ON_Thickening* ON_MeshModifiers::Thickening(bool allow_creation)
 {
-  for (const auto& elem : m_map)
-  {
-    delete elem.second;
-  }
+  if ((nullptr == m_impl->m_thickening) && allow_creation)
+    m_impl->m_thickening = new ON_Thickening;
 
-  m_map.clear();
+  return m_impl->m_thickening;
 }
 
-ON_MeshModifiers* ON_MeshModifierCollection::Find(const ON_ModelComponent& component)
+ON_CurvePiping* ON_MeshModifiers::CurvePiping(bool allow_creation)
 {
-  const auto& elem = m_map.find(component.Id());
-  if (elem != m_map.end())
-    return elem->second;
+  if ((nullptr == m_impl->m_curve_piping) && allow_creation)
+    m_impl->m_curve_piping = new ON_CurvePiping;
 
-  return nullptr;
+  return m_impl->m_curve_piping;
 }
 
-bool ON_MeshModifierCollection::CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version)
+ON_ShutLining* ON_MeshModifiers::ShutLining(bool allow_creation)
+{
+  if ((nullptr == m_impl->m_shut_lining) && allow_creation)
+    m_impl->m_shut_lining = new ON_ShutLining;
+
+  return m_impl->m_shut_lining;
+}
+
+void CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version)
 {
   ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
-  const auto* component = cit.FirstComponent();
-  for (; nullptr != component; component = cit.NextComponent())
+
+  for (const ON_ModelComponent* component = cit.FirstComponent(); nullptr != component; component = cit.NextComponent())
   {
-    auto* attr = GetComponentAttributes(*component);
+    ON_3dmObjectAttributes* attr = GetComponentAttributes(*component);
     if (nullptr == attr)
       continue; // No attributes on component.
 
@@ -1372,61 +1937,37 @@ bool ON_MeshModifierCollection::CreateMeshModifiersFromXML(const ONX_Model& mode
     if (xml.IsEmpty())
       continue; // No XML found on the component's attributes.
 
-    // Create a new mesh modifiers object for this component and add it to the map.
-    std::pair<ON_UUID, ON_MeshModifiers*> pair(component->Id(), new ON_MeshModifiers(*component, xml));
-    m_map.insert(pair);
+    ON_XMLRootNode root;
+    if (ON_XMLRootNode::ReadError != root.ReadFromStream(xml))
+    {
+      attr->MeshModifiers().LoadFromXML(root);
+    }
   }
-
-  return true;
 }
 
-static const ON_UUID uuid_displacement_user_data
+void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version)
 {
-  0x8224a7c4, 0x5590, 0x4ac4, { 0xa3, 0x2c, 0xde, 0x85, 0xdc, 0x2f, 0xfd, 0xae }
-};
+  ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
 
-static const ON_UUID uuid_edge_softening_user_data =
-{
-  0x8cbe6160, 0x5cbd, 0x4b4d, { 0x8c, 0xd2, 0x7c, 0xe0, 0xa7, 0xc8, 0xc2, 0xd8 }
-};
-
-static const ON_UUID uuid_shutlining_user_data =
-{
-  0x07506ebe, 0x1d69, 0x4345, { 0x9f, 0x0d, 0x2b, 0x9a, 0xa1, 0x90, 0x6e, 0xef }
-};
-
-static const ON_UUID uuid_curve_piping_user_data =
-{
-  0x2b1a758e, 0x7cb1, 0x45ab, { 0xa5, 0xbf, 0xdf, 0xcd, 0x6d, 0x3d, 0x13, 0x6d }
-};
-
-static const ON_UUID uuid_thickening_user_data =
-{
-  0x6aa7ccc3, 0x2721, 0x410f, { 0xaa, 0x56, 0xe8, 0xab, 0x4f, 0x3e, 0xce, 0x67 }
-};
-
-bool ON_MeshModifierCollection::CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version)
-{
-  for (const auto& elem : m_map)
+  for (const ON_ModelComponent* component = cit.FirstComponent(); nullptr != component; component = cit.NextComponent())
   {
-    auto* mesh_modifiers = elem.second;
-    if (nullptr == mesh_modifiers)
-      continue;
-
-    const auto& mgc = model.ModelGeometryComponentFromId(elem.first);
-    ON_ASSERT(mgc.ComponentType() == ON_ModelComponent::Type::ModelGeometry);
-
-    // Mesh modifiers are stored on the user data of object attributes.
-    auto* attr = const_cast<ON_3dmObjectAttributes*>(mgc.Attributes(nullptr));
+    ON_3dmObjectAttributes* attr = GetComponentAttributes(*component);
     if (nullptr == attr)
-      continue; // Should never happen because we have an item for the object.
+      continue; // No attributes on component.
 
-    SetMeshModifierObjectInformation(*attr, uuid_displacement_user_data,   mesh_modifiers->Displacement(),  archive_3dm_version);
-    SetMeshModifierObjectInformation(*attr, uuid_edge_softening_user_data, mesh_modifiers->EdgeSoftening(), archive_3dm_version);
-    SetMeshModifierObjectInformation(*attr, uuid_thickening_user_data,     mesh_modifiers->Thickening(),    archive_3dm_version);
-    SetMeshModifierObjectInformation(*attr, uuid_curve_piping_user_data,   mesh_modifiers->CurvePiping(),   archive_3dm_version);
-    SetMeshModifierObjectInformation(*attr, uuid_shutlining_user_data,     mesh_modifiers->Shutlining(),    archive_3dm_version);
+    // Get all the XML for all the mesh modifiers under one root node. This is just for convenience
+    // and it's not how the XML will appear in the 3dm file because it's going to be distributed to
+    // separate user data objects by SetMeshModifierObjectInformation().
+    ON_MeshModifiers& mm = attr->MeshModifiers();
+    ON_XMLRootNode root;
+    mm.SaveToXML(root);
+
+    // 'root' will only contain XML for the mesh modifiers that exist (which may be none).
+    // If there are none, no user data will be added to the attributes by the following.
+    SetMeshModifierObjectInformation(*attr, mm.Displacement(),  root, archive_3dm_version, ON_DISPLACEMENT_ROOT);
+    SetMeshModifierObjectInformation(*attr, mm.EdgeSoftening(), root, archive_3dm_version, ON_EDGE_SOFTENING_ROOT);
+    SetMeshModifierObjectInformation(*attr, mm.Thickening(),    root, archive_3dm_version, ON_THICKENING_ROOT);
+    SetMeshModifierObjectInformation(*attr, mm.CurvePiping(),   root, archive_3dm_version, ON_CURVE_PIPING_ROOT);
+    SetMeshModifierObjectInformation(*attr, mm.ShutLining(),    root, archive_3dm_version, ON_SHUTLINING_ROOT);
   }
-
-  return true;
 }

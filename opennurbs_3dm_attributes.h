@@ -148,10 +148,10 @@ public:
                 2: color
                 4: render material
                 8: plot color
-            0x10: plot weight
-            0x20: linetype
-            0x40: display order
-
+             0x10: plot weight
+             0x20: linetype
+             0x40: display order
+             0x80: clip participation
   Returns:
      The bits in the returned integer indicate which attributes were
      actually modified.
@@ -160,15 +160,24 @@ public:
                 2: color
                 4: render material
                 8: plot color
-            0x10: plot weight
-            0x20: linetype
-            0x40: display order
+             0x10: plot weight
+             0x20: linetype
+             0x40: display order
+             0x80: clip participation
+            0x100: section style
   */
   unsigned int ApplyParentalControl(
          const ON_3dmObjectAttributes& parent_attributes,
          const ON_Layer& parent_layer,
          unsigned int control_limits = 0xFFFFFFFF
          );
+
+  unsigned int ApplyParentalControl(
+    const ON_3dmObjectAttributes& parent_attributes,
+    const ON_Layer& parent_layer,
+    const ON_UUID& viewport_id,
+    unsigned int control_limits = 0xFFFFFFFF
+  );
 
   // Every OpenNURBS object has a UUID (universally unique identifier). When
   // an OpenNURBS object is added to a model, the value is checked.  If the
@@ -497,14 +506,35 @@ public:
     int // zero based group index
     );
 
-  // removes the object from the last group in the group list
+  // Removes the object from the last group in the group list.
   void RemoveFromTopGroup();
 
   // Removes object from all groups.
   void RemoveFromAllGroups();
 
+  // Decals.
 
-  // display material references
+  /*
+  Description:
+    Get an array of decals that are stored on this attributes object.
+  */
+  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+
+  /*
+  Description:
+    Add a new decal to this attributes object.
+  */
+  ON_Decal* AddDecal(void);
+
+  // Mesh Modifiers.
+
+  /*
+  Description:
+    Get the mesh modifiers that are stored on this attributes object.
+  */
+  class ON_MeshModifiers& MeshModifiers(void) const;
+
+  // Display material references.
 
   /*
   Description:
@@ -614,13 +644,13 @@ public:
 
   /*
   Description:
-    Remove a the entire display material reference list.
+    Remove the entire display material reference list.
   */
   void RemoveAllDisplayMaterialRefs();
 
   /*
   Returns:
-    Number of diplay material refences.
+    Number of display material references.
   */
   int DisplayMaterialRefCount() const;
 
@@ -629,6 +659,9 @@ public:
 private:
   bool Internal_WriteV5( ON_BinaryArchive& archive ) const;
   bool Internal_ReadV5( ON_BinaryArchive& archive );
+
+public:
+  void Internal_PopulateDecals(const ON_XMLRootNode&) const;
 };
 
 #endif

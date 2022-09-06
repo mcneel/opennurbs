@@ -99,6 +99,9 @@ public:
 
   const ON_XMLVariant& operator = (const ON_XMLVariant& src);
 
+  bool operator == (const ON_XMLVariant& v) const;
+  bool operator != (const ON_XMLVariant& v) const;
+
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
 public:
@@ -392,14 +395,25 @@ public: // Utilities.
 
   ON_XMLProperty& GetDefaultProperty(void) const;
 
-  // Gets at nodes deep into the tree using a slash delimited path - ie "child/grandchild/great-grandchild"
-  // There's no checking for multiple nodes with the same name at each level of the tree, so if you use this
-  // stuff, you have to make sure you have unique node names at each level.
-  // relative to the current node, use "/" as a separator.
-
-  ON_XMLNode* GetNodeAtPath(const wchar_t* path) const;
-  ON_XMLNode* CreateNodeAtPath(const wchar_t* path);
+  // Returns the full path to this node.
   ON_wString GetPathFromRoot(void) const;
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Gets at nodes deep into the tree using a slash-delimited path, i.e., "child/grandchild/great-grandchild".
+  // There's no checking for multiple nodes with the same name at each level of the tree, so if you use these
+  // methods, you have to make sure you have unique node names at each level.
+
+  // Gets a child node given the relative path from the current node. If the node does not exist, the method
+  // returns null. The returned pointer should not be deleted by the caller. The child node is owned by its
+  // immediate parent at that position in the node hierarchy.
+  ON_XMLNode* GetNodeAtPath(const wchar_t* path) const;
+
+  // Gets a child node given the relative path from the current node. If the node does not exist, it is
+  // created. This method should therefore never return null. The returned pointer should not be deleted
+  // by the caller. The child node is owned by its immediate parent at that position in the node hierarchy.
+  ON_XMLNode* CreateNodeAtPath(const wchar_t* path);
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
@@ -409,7 +423,10 @@ public: // Iteration.
   {
   public:
     ChildIterator(const ON_XMLNode* parent);
+    ChildIterator(const ChildIterator& other);
     virtual ~ChildIterator();
+
+    const ChildIterator& operator = (const ChildIterator& other);
 
     virtual ON_XMLNode* GetNextChild(void);
 
@@ -426,9 +443,12 @@ public: // Iteration.
   {
   public:
     PropertyIterator(const ON_XMLNode* parent, bool sorted = false);
+    PropertyIterator(const PropertyIterator& other);
     ~PropertyIterator();
 
     ON_XMLProperty* GetNextProperty(void);
+
+    const PropertyIterator& operator = (const PropertyIterator& other);
 
   private:
     class CImpl;

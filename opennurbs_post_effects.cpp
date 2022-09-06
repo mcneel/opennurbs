@@ -183,6 +183,10 @@ bool ON_PostEffect::SetParameter(const wchar_t* param_name, const ON_XMLVariant&
 
   ON_XMLParameters p(*node);
 
+  ON_XMLVariant current_value;
+  if (!p.GetParam(param_name, current_value))
+    return false; // If you can't get it, you can't set it.
+
   if (!p.SetParam(param_name, param_value))
     return false;
 

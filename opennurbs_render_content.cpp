@@ -147,7 +147,7 @@ static void ON_ConstructXform(double scale_x, double scale_y, double scale_z,
 {
   // All angles in degrees.
 
-  const auto S = ON_Xform::DiagonalTransformation(scale_x, scale_y, scale_z);
+  const ON_Xform S = ON_Xform::DiagonalTransformation(scale_x, scale_y, scale_z);
 
   ON_Xform R;
   R.Rotation(ON_RadiansFromDegrees(angle_x), ON_3dVector::XAxis, ON_3dPoint::Origin);
@@ -304,7 +304,7 @@ ON__UINT32 ON_Texture_CRC(const ON_Texture& tex)
 #ifdef ON_RUNTIME_WIN
   file.MakeLower();
 #endif
-  auto crc = file.DataCRC(0);
+  ON__UINT32 crc = file.DataCRC(0);
 
   crc = ON_CRC32(crc, sizeof(tex.m_mapping_channel_id), &tex.m_mapping_channel_id);
 
@@ -322,7 +322,7 @@ ON__UINT32 ON_Texture_CRC(const ON_Texture& tex)
 
   crc = ON_CRC32(crc, sizeof(tex.m_blend_order), &tex.m_blend_order);
 
-  const auto amount = int(tex.m_blend_constant_A * 100.0) / 100.0;
+  const double amount = int(tex.m_blend_constant_A * 100.0) / 100.0;
   crc = ON_CRC32(crc, sizeof(amount), &amount);
 
   crc = ON_CRC32(crc, sizeof(tex.m_bump_scale), &tex.m_bump_scale);
@@ -525,7 +525,7 @@ ON_XMLVariant ON_RenderContent::CImpl::GetPropertyValue(const wchar_t* name) con
 
   ON_XMLVariant v;
 
-  const auto* pProp = m_node.GetNamedProperty(name);
+  const ON_XMLProperty* pProp = m_node.GetNamedProperty(name);
   if (nullptr != pProp)
   {
     v = pProp->GetValue();
@@ -549,7 +549,7 @@ void ON_RenderContent::CImpl::InternalSetPropertyValue(const wchar_t* name, cons
   // - the environment node <environment... >
   // - the texture node <texture... >
 
-  auto* pProp = m_node.GetNamedProperty(name);
+  ON_XMLProperty* pProp = m_node.GetNamedProperty(name);
   if (nullptr != pProp)
   {
     pProp->SetValue(value);
@@ -575,12 +575,12 @@ void ON_RenderContent::CImpl::SetXMLNode(const ON_XMLNode& node)
   while (nullptr != (child_node = it.GetNextChild()))
   {
     // See if the child node is a content node.
-    const auto& name = child_node->TagName();
+    const ON_wString& name = child_node->TagName();
     if ((ON_KIND_MATERIAL == name) || (ON_KIND_ENVIRONMENT == name) || (ON_KIND_TEXTURE == name))
     {
       // Yes, so we are going to add a new render content to this hierarchy (recursively)
       // and remove this child node from the copy of the XML node.
-      auto* child_rc = NewRenderContentFromNode(*child_node);
+      ON_RenderContent* child_rc = NewRenderContentFromNode(*child_node);
       if (nullptr != child_rc)
       {
         // Add the new content as a child of this content.
@@ -612,7 +612,7 @@ bool ON_RenderContent::CImpl::AddChild(ON_RenderContent& child)
   }
   else
   {
-    auto* last_child = FindLastChild();
+    ON_RenderContent* last_child = FindLastChild();
     if (nullptr == last_child)
       return false;
 
@@ -632,7 +632,7 @@ void ON_RenderContent::CImpl::DeleteAllChildren(void)
   if (nullptr == m_first_child)
     return;
 
-  auto* child_rc = m_first_child;
+  ON_RenderContent* child_rc = m_first_child;
   while (nullptr != child_rc)
   {
     auto* delete_rc = child_rc;
@@ -647,7 +647,7 @@ ON_RenderContent* ON_RenderContent::CImpl::FindLastChild(void) const
 {
   ON_RenderContent* result = nullptr;
 
-  auto* candidate = m_first_child;
+  ON_RenderContent* candidate = m_first_child;
   while (nullptr != candidate)
   {
     result = candidate;
@@ -661,7 +661,7 @@ ON_RenderContent* ON_RenderContent::CImpl::FindPrevSibling(ON_RenderContent* chi
 {
   if (child != m_first_child)
   {
-    auto* candidate = m_first_child;
+    ON_RenderContent* candidate = m_first_child;
     while (nullptr != candidate)
     {
       if (child == candidate->m_impl->m_next_sibling)
@@ -702,7 +702,7 @@ bool ON_RenderContent::CImpl::ChangeChild(ON_RenderContent* old_child, ON_Render
   }
   else
   {
-    const auto* prev_sibling = FindPrevSibling(old_child);
+    const ON_RenderContent* prev_sibling = FindPrevSibling(old_child);
     if (nullptr == prev_sibling)
       return false;
 
@@ -731,7 +731,7 @@ ON_RenderContent* ON_RenderContent::CImpl::FindChild(const wchar_t* child_slot_n
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* child_rc = m_first_child;
+  ON_RenderContent* child_rc = m_first_child;
   while (nullptr != child_rc)
   {
     if (child_rc->ChildSlotName() == child_slot_name)
@@ -978,7 +978,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   value.SetNull();
 
   // Try to get the new V8 parameter section.
-  const auto* node = m_impl->m_node.GetNamedChild(ON_PARAMETERS_V8);
+  const ON_XMLNode* node = m_impl->m_node.GetNamedChild(ON_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Got it, so use the new ON_XMLParametersV8 to get the parameter's value.
@@ -1104,12 +1104,12 @@ const ON_RenderContent* ON_RenderContent::FindChild(const wchar_t* child_slot_na
 
 static ON_XMLNode* NewXMLNodeRecursive(const ON_RenderContent& rc)
 {
-  auto* node = new ON_XMLNode(rc.m_impl->m_node);
+  ON_XMLNode* node = new ON_XMLNode(rc.m_impl->m_node);
 
-  auto* child_rc = rc.m_impl->m_first_child;
+  ON_RenderContent* child_rc = rc.m_impl->m_first_child;
   while (nullptr != child_rc)
   {
-    auto* child_node = NewXMLNodeRecursive(*child_rc);
+    ON_XMLNode* child_node = NewXMLNodeRecursive(*child_rc);
     if (nullptr != child_node)
     {
       node->AttachChildNode(child_node);
@@ -1123,14 +1123,14 @@ static ON_XMLNode* NewXMLNodeRecursive(const ON_RenderContent& rc)
 
 ON_wString ON_RenderContent::XML(bool recursive) const
 {
-  auto* node = &m_impl->m_node;
+  ON_XMLNode* node = &m_impl->m_node;
 
   if (recursive)
   {
     node = NewXMLNodeRecursive(*this);
   }
 
-  const auto logical_count = node->WriteToStream(nullptr, 0);
+  const ON__UINT32 logical_count = node->WriteToStream(nullptr, 0);
   auto* stream = new wchar_t[size_t(logical_count) + 1];
   node->WriteToStream(stream, logical_count);
   stream[logical_count] = 0;
@@ -1205,7 +1205,7 @@ ON_RenderContent::ChildIterator::~ChildIterator()
 
 ON_RenderContent* ON_RenderContent::ChildIterator::GetNextChild(void)
 {
-  auto* rc = m_impl->m_current;
+  ON_RenderContent* rc = m_impl->m_current;
   if (nullptr != rc)
   {
     m_impl->m_current = rc->m_impl->m_next_sibling;
@@ -1235,7 +1235,7 @@ ON_RenderContent* NewRenderContentFromNode(const ON_XMLNode& node)
 {
   ON_RenderContent* rc = nullptr;
 
-  const auto& kind = node.TagName();
+  const ON_wString& kind = node.TagName();
 
   if (ON_KIND_MATERIAL == kind)
     rc = new ON_RenderMaterial;
@@ -1294,7 +1294,7 @@ ON_Material ON_RenderMaterial::SimulatedMaterial(void) const
 
   ON_Material mat;
 
-  const auto* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLParameters p(*sim_node);
@@ -1323,7 +1323,7 @@ ON_Material ON_RenderMaterial::SimulatedMaterial(void) const
       auto pbm = mat.PhysicallyBased();
 
       auto brdf = ON_PhysicallyBasedMaterial::BRDFs::GGX;
-      const auto s = ParamHelper(p, ON_MAT_PBR_BRDF).AsString();
+      const ON_wString s = ParamHelper(p, ON_MAT_PBR_BRDF).AsString();
       if (s == ON_MAT_PBR_BRDF_WARD)
         brdf = ON_PhysicallyBasedMaterial::BRDFs::Ward;
       pbm->SetBRDF(brdf);
@@ -1431,7 +1431,7 @@ ON_Environment ON_RenderEnvironment::SimulatedEnvironment(void) const
 
   ON_Environment env;
 
-  const auto* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLVariant v;
@@ -1488,7 +1488,7 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
 
   ON_Texture tex;
 
-  const auto* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLVariant v;
@@ -1551,10 +1551,10 @@ int ONX_Model::AddRenderMaterial(const wchar_t* mat_name)
   ON_RenderMaterial mat;
   mat.SetTypeId(uuidPB);
 
-  const auto unused_name = m_manifest.UnusedName(mat.ComponentType(), ON_nil_uuid, mat_name, nullptr, nullptr, 0, nullptr);
+  const ON_wString unused_name = m_manifest.UnusedName(mat.ComponentType(), ON_nil_uuid, mat_name, nullptr, nullptr, 0, nullptr);
   mat.SetName(unused_name);
 
-  const auto mcr = AddModelComponent(mat, true);
+  const ON_ModelComponentReference mcr = AddModelComponent(mat, true);
   const auto* model_mat = ON_RenderMaterial::Cast(mcr.ModelComponent());
   if (nullptr == model_mat)
   {
@@ -1572,10 +1572,10 @@ int ONX_Model::AddRenderEnvironment(const wchar_t* env_name)
   ON_RenderEnvironment env;
   env.SetTypeId(uuidBE);
 
-  const auto unused_name = m_manifest.UnusedName(env.ComponentType(), ON_nil_uuid, env_name, nullptr, nullptr, 0, nullptr);
+  const ON_wString unused_name = m_manifest.UnusedName(env.ComponentType(), ON_nil_uuid, env_name, nullptr, nullptr, 0, nullptr);
   env.SetName(unused_name);
 
-  const auto mcr = AddModelComponent(env, true);
+  const ON_ModelComponentReference mcr = AddModelComponent(env, true);
   const auto* model_env = ON_RenderEnvironment::Cast(mcr.ModelComponent());
   if (nullptr == model_env)
   {
@@ -1602,13 +1602,13 @@ int ONX_Model::AddRenderTexture(const wchar_t* fn)
   tex.SetTypeId(uuidBM);
   tex.SetParameter(ON_TEX_FILENAME, filename);
 
-  const auto tex_name = ON_FileSystemPath::FileNameFromPath(filename, false);
+  const ON_wString tex_name = ON_FileSystemPath::FileNameFromPath(filename, false);
   tex.SetName(tex_name);
 
-  const auto unused_name = m_manifest.UnusedName(tex.ComponentType(), ON_nil_uuid, tex_name, nullptr, nullptr, 0, nullptr);
+  const ON_wString unused_name = m_manifest.UnusedName(tex.ComponentType(), ON_nil_uuid, tex_name, nullptr, nullptr, 0, nullptr);
   tex.SetName(unused_name);
 
-  const auto mcr = AddModelComponent(tex, true);
+  const ON_ModelComponentReference mcr = AddModelComponent(tex, true);
   const auto* model_tex = ON_RenderTexture::Cast(mcr.ModelComponent());
   if (nullptr == model_tex)
   {

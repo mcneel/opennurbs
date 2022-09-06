@@ -68,10 +68,10 @@
 class ON_Decal::CImpl : public ON_InternalXMLImpl
 {
 public:
-  CImpl() { ON_CreateUuid(m_uuid); }
-  CImpl(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { ON_CreateUuid(m_uuid); }
+  CImpl() { ON_CreateUuid(m_decal_id); }
+  CImpl(ON_XMLNode& n) { ON_CreateUuid(m_decal_id); Node() = n; }
 
-  ON_UUID m_uuid;
+  ON_UUID m_decal_id;
 };
 
 static const wchar_t* XMLPath(void)
@@ -183,7 +183,7 @@ void ON_Decal::SetTextureInstanceId(const ON_UUID& id)
 
 ON_Decal::Mappings ON_Decal::Mapping(void) const
 {
-  const auto s = m_impl->GetParameter(XMLPath(), ON_RDK_UD_DECAL_MAPPING, ON_RDK_UD_DECAL_MAPPING_UV).AsString();
+  const ON_wString s = m_impl->GetParameter(XMLPath(), ON_RDK_UD_DECAL_MAPPING, ON_RDK_UD_DECAL_MAPPING_UV).AsString();
 
   if (ON_RDK_UD_DECAL_MAPPING_UV == s)
     return ON_Decal::Mappings::UV;
@@ -217,7 +217,7 @@ void ON_Decal::SetMapping(Mappings m)
 
 ON_Decal::Projections ON_Decal::Projection(void) const
 {
-  const auto s = m_impl->GetParameter(XMLPath(), ON_RDK_UD_DECAL_PROJECTION, ON_RDK_UD_DECAL_PROJECTION_FORWARD).AsString();
+  const ON_wString s = m_impl->GetParameter(XMLPath(), ON_RDK_UD_DECAL_PROJECTION, ON_RDK_UD_DECAL_PROJECTION_FORWARD).AsString();
 
   if (ON_RDK_UD_DECAL_PROJECTION_FORWARD == s)
     return ON_Decal::Projections::Forward;
@@ -362,201 +362,22 @@ ON__UINT32 ON_Decal::DataCRC(ON__UINT32 crc) const
 
 ON_UUID ON_Decal::Id(void) const
 {
-  return m_impl->m_uuid;
+  return m_impl->m_decal_id;
+}
+
+const ON_XMLNode& ON_Decal::XML(void) const
+{
+  return m_impl->Node();
 }
 
 // ON_DecalCollection
 
 ON_DecalCollection::~ON_DecalCollection()
 {
-  for (int i = 0; i < m_items.Count(); i++)
-  {
-    delete m_items[i];
-  }
-}
-
-void ON_DecalCollection::CreateDecalsFromXML(const ONX_Model& model, int archive_3dm_version)
-{
-  ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
-  const auto* component = cit.FirstComponent();
-  for (; nullptr != component; component = cit.NextComponent())
-  {
-    auto* attr = GetComponentAttributes(*component);
-    if (nullptr == attr)
-      continue; // No attributes on component.
-
-    // Get the entire XML off of the attributes user data.
-    ON_wString xml;
-    GetRDKObjectInformation(*attr, xml, archive_3dm_version);
-    if (xml.IsEmpty())
-      continue; // No XML found on the component's attributes.
-
-    // Create a new item for this component.
-    auto* item = new Item(component->Id());
-
-    // Set the XML to the item. The XML is the <xml> node including (among other possible things)
-    // all the decals on this component.
-    item->SetXML(xml.Array());
-
-    // Append the item to the collection.
-    m_items.Append(item);
-  }
-}
-
-void ON_DecalCollection::CreateXMLFromDecals(const ONX_Model& model, int archive_3dm_version)
-{
-  for (int i = 0; i < m_items.Count(); i++)
-  {
-    auto* item = m_items[i];
-
-    const auto& mgc = model.ModelGeometryComponentFromId(item->ComponentId());
-    ON_ASSERT(mgc.ComponentType() == ON_ModelComponent::Type::ModelGeometry);
-
-    // Decals are stored on the user data of object attributes.
-    auto* attr = const_cast<ON_3dmObjectAttributes*>(mgc.Attributes(nullptr));
-    if (nullptr == attr)
-      continue; // Should never happen because we have an item for the object.
-
-    // Get the new decals XML as a string.
-    const auto decals_xml = item->DecalsXML();
-
-    // Get the entire XML off of the attributes user data.
-    ON_XMLRootNode root;
-
-    ON_wString xml;
-    GetRDKObjectInformation(*attr, xml, archive_3dm_version);
-    if (xml.IsNotEmpty())
-    {
-      if (ON_XMLNode::ReadError == root.ReadFromStream(xml))
-        continue; // Invalid XML. Should never happen.
-    }
-
-    // Find any existing decals node, creating it if not found.
-    // This also ensures that the necessary parent nodes exist.
-    const auto* path = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_DECALS;
-    auto* old_decals_node = root.CreateNodeAtPath(path); // Never null.
-
-    // Get the parent node of the decals node.
-    auto* parent_node = old_decals_node->GetParent();
-
-    // Delete the existing decals node.
-    delete parent_node->DetachChild(*old_decals_node);
-
-    if (decals_xml.IsNotEmpty())
-    {
-      // Attach a new decals node to the parent node and read it from the decals XML.
-      auto* new_decals_node = parent_node->AttachChildNode(new ON_XMLNode(L""));
-      new_decals_node->ReadFromStream(decals_xml);
-
-      // Set the item's XML to the attributes user data.
-      SetRDKObjectInformation(*attr, root.String(), archive_3dm_version);
-    }
-  }
-}
-
-int ON_DecalCollection::FindItemIndex(const ON_UUID& component_id) const
-{
-  for (int i = 0; i < m_items.Count(); i++)
-  {
-    if (m_items[i]->ComponentId() == component_id)
-      return i;
-  }
-
-  return -1;
-}
-
-ON_DecalCollection::Item* ON_DecalCollection::FindItem(const ON_UUID& component_id) const
-{
-  const auto index = FindItemIndex(component_id);
-  if (index >= 0)
-    return m_items[index];
-
-  return nullptr;
-}
-
-ON_DecalCollection::Item* ON_DecalCollection::ItemAt(int index) const
-{
-  if ((index < 0) || (index >= m_items.Count()))
-    return nullptr;
-
-  return m_items[index];
-}
-
-int ON_DecalCollection::ItemCount(void) const
-{
-  return m_items.Count();
-}
-
-ON_Decal* ON_DecalCollection::AddDecal(const ON_ModelComponent& component)
-{
-  ON_XMLNode decals_node(ON_RDK_UD_DECALS);
-
-  // See if there's already an item for this component.
-  auto* item = FindItem(component.Id());
-  if (nullptr != item)
-  {
-    // Yes, so load the item's current XML into 'decals_node'.
-    decals_node.ReadFromStream(item->DecalsXML());
-  }
-  else
-  {
-    // Decals are stored on the user data of object attributes.
-    if (nullptr == GetComponentAttributes(component))
-      return nullptr; // No attributes on component.
-
-    // Create a new item for this component.
-    item = new Item(component.Id());
-
-    // Append the item to the collection.
-    m_items.Append(item);
-  }
-
-  // Count the number of existing decal nodes. This will be the index of the new decal.
-  int index = 0;
-  auto it = decals_node.GetChildIterator();
-  ON_XMLNode* child_node = nullptr;
-  while (nullptr != (child_node = it.GetNextChild()))
-  {
-    index++;
-  }
-
-  // Attach a child node for the new decal.
-  decals_node.AttachChildNode(new ON_XMLNode(ON_RDK_UD_DECAL));
-
-  // Set the XML to the item.
-  item->SetDecalsXML(decals_node);
-
-  // Return the decal just added.
-  return item->GetDecal(index);
-}
-
-ON_Decal* ON_DecalCollection::GetDecal(const ON_UUID& id)
-{
-  for (int i = 0; i < m_items.Count(); i++)
-  {
-    auto* decal = m_items[i]->GetDecal(id);
-    if (nullptr != decal)
-      return decal;
-  }
-
-  return nullptr;
-}
-
-// ON_DecalCollection::Item
-
-ON_DecalCollection::Item::Item(const ON_UUID& cid)
-  :
-  m_decals_node(L""),
-  m_component_id(cid)
-{
-}
-
-ON_DecalCollection::Item::~Item()
-{
   DeleteAllDecals();
 }
 
-void ON_DecalCollection::Item::DeleteAllDecals(void)
+void ON_DecalCollection::DeleteAllDecals(void)
 {
   for (int i = 0; i < m_decals.Count(); i++)
   {
@@ -566,167 +387,121 @@ void ON_DecalCollection::Item::DeleteAllDecals(void)
   m_decals.Destroy();
 }
 
-ON_wString ON_DecalCollection::Item::DecalsXML(void) const
-{
-  return m_decals_node.String();
-}
-
-bool ON_DecalCollection::Item::SetXML(const wchar_t* xml)
-{
-  ON_XMLRootNode root;
-  if (!root.ReadFromStream(xml))
-    return false;
-
-  const auto* path = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_DECALS;
-  auto* decals_node = root.GetNodeAtPath(path);
-  if (nullptr == decals_node)
-    return false; // No decals in the item.
-
-  return SetDecalsXML(*decals_node);
-}
-
-bool ON_DecalCollection::Item::SetDecalsXML(const ON_XMLNode& decals_node)
+const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollection& dc)
 {
   DeleteAllDecals();
 
-  m_decals_node = decals_node;
+  for (int i = 0; i < dc.m_decals.Count(); i++)
+  {
+    ON_Decal* decal = dc.m_decals[i];
+    if (nullptr != decal)
+    {
+      m_decals.Append(new ON_Decal(*decal));
+    }
+  }
+
+  return *this;
+}
+
+bool ON_DecalCollection::NodeContainsDecals(const ON_XMLRootNode& node) // Static.
+{
+  const wchar_t* path = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_DECALS;
+  const ON_XMLNode* decals_node = node.GetNodeAtPath(path);
+  if (nullptr == decals_node)
+    return false;
+
+  if (nullptr == decals_node->GetNamedChild(ON_RDK_UD_DECAL))
+    return false;
+
+  return true;
+}
+
+void ON_DecalCollection::Populate(const ON_XMLRootNode& node)
+{
+  DeleteAllDecals();
+
+  const wchar_t* path = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_DECALS;
+  ON_XMLNode* decals_node = node.GetNodeAtPath(path);
+  if (nullptr == decals_node)
+    return; // No decals.
 
   // Iterate over the decals under the decals node adding a new decal for each one.
-  // The decals store the pointer to their node inside the decals node in the collection.
-  // This is safe because the decals have the same lifetime as the collection.
-  auto it = m_decals_node.GetChildIterator();
+  // The decals copy the node into a local node which holds the XML for each decal
+  // in that decal. This XML will be modified by the decal setters and then repacked
+  // into the attribute user data later during the save process.
+  auto it = decals_node->GetChildIterator();
   ON_XMLNode* child_node = nullptr;
   while (nullptr != (child_node = it.GetNextChild()))
   {
     m_decals.Append(new ON_Decal(*child_node));
   }
-
-  return true;
 }
 
-ON_Decal* ON_DecalCollection::Item::GetDecal(int index) const
+ON_Decal* ON_DecalCollection::AddDecal(void)
 {
-  if (index >= m_decals.Count())
-    return nullptr;
+  ON_XMLNode node(ON_RDK_UD_DECAL);
+  auto* decal = new ON_Decal(node);
+  m_decals.Append(decal);
 
-  return m_decals[index];
+  return decal;
 }
 
-ON_Decal* ON_DecalCollection::Item::GetDecal(const ON_UUID& id) const
+void CreateDecalsFromXML(const ONX_Model& model, int archive_3dm_version)
 {
-  for (int i = 0; i < m_decals.Count(); i++)
+  ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
+  
+  for (const ON_ModelComponent* component = cit.FirstComponent(); nullptr != component; component = cit.NextComponent())
   {
-    auto* decal = m_decals[i];
-    if (decal->Id() == id)
-      return decal;
-  }
+    const ON_3dmObjectAttributes* attr = GetComponentAttributes(*component);
+    if (nullptr == attr)
+      continue; // No attributes on component.
 
-  return nullptr;
-}
+    // Get the entire XML off of the attributes user data.
+    ON_wString xml;
+    GetRDKObjectInformation(*attr, xml, archive_3dm_version);
+    if (xml.IsEmpty())
+      continue; // No XML found on the component's attributes.
 
-// ON_DecalIterator
-
-class ON_DecalIterator::CImpl
-{
-public:
-  CImpl(ONX_Model& model) : m_model(model) { }
-  virtual ~CImpl() { }
-
-  virtual ON_Decal* Next(void) = 0;
-
-protected:
-  ONX_Model& m_model;
-  int m_decal_index = -1;
-};
-
-class CImpl_PerComponent : public ON_DecalIterator::CImpl
-{
-public:
-  CImpl_PerComponent(ONX_Model& model, const ON_ModelComponent& component)
-    :
-    CImpl(model)
-  {
-    m_component_id = component.Id();
-  }
-
-  virtual ON_Decal* Next(void) override
-  {
-    if (nullptr == m_item)
+    ON_XMLRootNode node;
+    if (ON_XMLNode::ReadError != node.ReadFromStream(xml))
     {
-      const auto& collection = GetDecalCollection(m_model);
-
-      m_item = collection.FindItem(m_component_id);
-      if (nullptr == m_item)
-        return nullptr;
-
-      m_decal_index = 0;
+      attr->Internal_PopulateDecals(node);
     }
-
-    return m_item->GetDecal(m_decal_index++);
-  }
-
-public:
-  ON_UUID m_component_id;
-  ON_DecalCollection::Item* m_item = nullptr;
-};
-
-class CImpl_All : public ON_DecalIterator::CImpl
-{
-public:
-  CImpl_All(ONX_Model& model) : CImpl(model) { }
-
-  virtual ON_Decal* Next(void) override
-  {
-    if (!m_populated)
+    else
     {
-      const auto& collection = GetDecalCollection(m_model);
+      ON_ERROR("Failed to read decal XML");
+    }
+  }
+}
 
-      for (int i = 0; i < collection.ItemCount(); i++)
+void CreateXMLFromDecals(const ONX_Model& model, int archive_3dm_version)
+{
+  ONX_ModelComponentIterator cit(model, ON_ModelComponent::Type::ModelGeometry);
+
+  for (const ON_ModelComponent* component = cit.FirstComponent(); nullptr != component; component = cit.NextComponent())
+  {
+    ON_3dmObjectAttributes* attr = GetComponentAttributes(*component);
+    if (nullptr == attr)
+      continue; // No attributes on component.
+
+    const ON_SimpleArray<ON_Decal*>& decals = attr->GetDecalArray();
+    if (decals.Count() == 0)
+      continue; // No decals on attributes.
+
+    ON_XMLRootNode root;
+    ON_XMLNode* decals_node = root.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_DECALS);
+    if (nullptr == decals_node)
+      continue; // Failed to create node -- not likely to happen.
+
+    for (int i = 0; i < decals.Count(); i++)
+    {
+      const ON_Decal* decal = decals[i];
+      if (nullptr != decal)
       {
-        const auto* item = collection.ItemAt(i);
-
-        int d = 0;
-        ON_Decal* decal = nullptr;
-        while (nullptr != (decal = item->GetDecal(d++)))
-        {
-          m_decals.Append(decal);
-        }
+        decals_node->AttachChildNode(new ON_XMLNode(decal->XML()));
       }
-
-      m_decal_index = 0;
-      m_populated = true;
     }
 
-    if (m_decal_index >= m_decals.Count())
-      return nullptr;
-
-    return m_decals[m_decal_index++];
+    SetRDKObjectInformation(*attr, root.String(), archive_3dm_version);
   }
-
-private:
-  ON_SimpleArray<ON_Decal*> m_decals;
-  bool m_populated = false;
-};
-
-ON_DecalIterator::ON_DecalIterator(ONX_Model& model, const ON_ModelComponent* component)
-{
-  if (nullptr != component)
-  {
-    m_impl = new CImpl_PerComponent(model, *component);
-  }
-  else
-  {
-    m_impl = new CImpl_All(model);
-  }
-}
-
-ON_DecalIterator::~ON_DecalIterator()
-{
-  delete m_impl;
-  m_impl = nullptr;
-}
-
-ON_Decal* ON_DecalIterator::Next(void) const
-{
-  return m_impl->Next();
 }

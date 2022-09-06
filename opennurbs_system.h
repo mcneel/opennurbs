@@ -153,98 +153,55 @@
 
 #endif
 
+#pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
+#include <stdint.h>
+#pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 
+typedef int8_t       ON__INT8;
+typedef uint8_t      ON__UINT8;
+typedef int16_t      ON__INT16;
+typedef uint16_t     ON__UINT16;
+typedef int32_t      ON__INT32;
+typedef uint32_t     ON__UINT32;
+typedef int64_t      ON__INT64;
+typedef uint64_t     ON__UINT64;
+
+#define ON_MAX_SIZE_T SIZE_MAX
 
 #if defined(ON_64BIT_RUNTIME)
+
 /* 64 bit (8 byte) pointers */
 #define ON_SIZEOF_POINTER 8
-/* ON_MAX_SIZET = maximum value of a size_t type */
-#define ON_MAX_SIZE_T 0xFFFFFFFFFFFFFFFFULL
+#define ON__UINT_PTR_MAX  UINT64_MAX
 
-#if defined(ON_COMPILER_MSC)
-
-typedef __int64 ON__INT_PTR;
-typedef unsigned __int64 ON__UINT_PTR;
-#elif defined(_GNU_SOURCE) || defined(ON_COMPILER_CLANG)
-typedef long long ON__INT_PTR;
-typedef unsigned long long ON__UINT_PTR;
-#endif
-#define ON__UINT_PTR_MAX 0xFFFFFFFFFFFFFFFFULL
+typedef ON__INT64   ON__INT_PTR;
+typedef ON__UINT64  ON__UINT_PTR;
 
 #elif defined(ON_32BIT_RUNTIME)
+
 /* 32 bit (4 byte) pointers */
 #define ON_SIZEOF_POINTER 4
-/* ON_MAX_SIZET = maximum value of a size_t type */
-#define ON_MAX_SIZE_T 0xFFFFFFFFULL
+#define ON__UINT_PTR_MAX  UINT32_MAX
 
-typedef int ON__INT_PTR;
-typedef unsigned int ON__UINT_PTR;
-#define ON__UINT_PTR_MAX 0xFFFFFFFFULL
-
-#endif
-
-// 8 bit integer
-typedef char ON__INT8;
-
-// 8 bit unsigned integer
-typedef unsigned char ON__UINT8;
-
-// 16 bit integer
-typedef short ON__INT16;
-
-// 16 bit unsigned integer
-typedef unsigned short ON__UINT16;
-
-// 32 bit integer
-typedef int ON__INT32;
-
-// 32 bit unsigned integer
-typedef unsigned int ON__UINT32;
-
-#if defined(ON_COMPILER_MSC)
-// 64 bit integer
-typedef __int64 ON__INT64;
-// 64 bit unsigned integer
-typedef unsigned __int64 ON__UINT64;
-
-#elif defined(_GNU_SOURCE) || defined(ON_COMPILER_CLANG)
-// 64 bit integer
-typedef long long ON__INT64;
-// 64 bit unsigned integer
-typedef unsigned long long ON__UINT64;
-
-#else
-
-#error Verify that long long is a 64 bit integer with your compiler!
-
-// 64 bit integer
-typedef long long ON__INT64;
-
-// 64 bit unsigned integer
-typedef unsigned long long ON__UINT64;
-
-#endif
-
-
-// ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*).
-#if 8 == ON_SIZEOF_POINTER
-
-#if defined(ON_COMPILER_GNU) || defined(ON_COMPILER_CLANG)
-typedef long long ON__INT_PTR;
-typedef unsigned long long ON__UINT_PTR;
-#else
-typedef __int64 ON__INT_PTR;
-typedef unsigned __int64 ON__UINT_PTR;
-#endif
-
-#elif 4 == ON_SIZEOF_POINTER
-
-typedef int ON__INT_PTR;
-typedef unsigned int ON__UINT_PTR;
+typedef ON__INT32   ON__INT_PTR;
+typedef ON__UINT32  ON__UINT_PTR;
 
 #else
 #error Update OpenNURBS to work with new pointer size.
 #endif
+
+ON_STATIC_ASSERT(sizeof(ON__INT8)     == 1);
+ON_STATIC_ASSERT(sizeof(ON__UINT8)    == 1);
+ON_STATIC_ASSERT(sizeof(ON__INT16)    == 2);
+ON_STATIC_ASSERT(sizeof(ON__UINT16)   == 2);
+ON_STATIC_ASSERT(sizeof(ON__INT32)    == 4);
+ON_STATIC_ASSERT(sizeof(ON__UINT32)   == 4);
+ON_STATIC_ASSERT(sizeof(ON__INT64)    == 8);
+ON_STATIC_ASSERT(sizeof(ON__UINT64)   == 8);
+
+ON_STATIC_ASSERT_MSG(sizeof(ON__INT_PTR)  == sizeof(void*), "ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*)");
+ON_STATIC_ASSERT_MSG(sizeof(ON__UINT_PTR) == sizeof(void*), "ON_UINT_PTR must be an integer type with sizeof(ON_UINT_PTR) = sizeof(void*)");
+ON_STATIC_ASSERT_MSG(ON_SIZEOF_POINTER    == sizeof(void*), "ON_SIZEOF_POINTER must be equal to sizeof(void*)");
 
 /*
 ////////////////////////////////////////////////////////////

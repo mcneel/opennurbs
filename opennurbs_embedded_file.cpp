@@ -91,13 +91,13 @@ bool ON_EmbeddedFile::CImpl::LoadFile(const wchar_t* filename)
   auto& d = m_data;
 
   // Open the file.
-  auto* pFile = ON_FileStream::Open(filename, L"rb");
+  FILE* pFile = ON_FileStream::Open(filename, L"rb");
   if (nullptr == pFile)
     return false;
 
   // Get the length of the file data.
   ON_FileStream::SeekFromEnd(pFile, 0);
-  const auto data_length = size_t(ON_FileStream::CurrentPosition(pFile));
+  const size_t data_length = size_t(ON_FileStream::CurrentPosition(pFile));
   ON_FileStream::SeekFromStart(pFile, 0);
 
   // Allocate a buffer for the file data.
@@ -118,7 +118,7 @@ bool ON_EmbeddedFile::CImpl::SaveFile(const wchar_t* filename) const
     return false; // Not loaded.
 
   // Open the file for writing.
-  auto* pFile = ON_FileStream::Open(filename, L"wb");
+  FILE* pFile = ON_FileStream::Open(filename, L"wb");
   if (nullptr == pFile)
     return false;
 
@@ -196,7 +196,7 @@ bool ON_EmbeddedFile::LoadFromFile(const wchar_t* filename)
 
 bool ON_EmbeddedFile::SaveToFile(const wchar_t* filename) const
 {
-  const auto file = ON_FileSystemPath::CleanPath(filename);
+  const ON_wString file = ON_FileSystemPath::CleanPath(filename);
   if (!m_impl->SaveFile(file))
     return false;
 
@@ -249,7 +249,7 @@ bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
   // Read the compressed buffer and uncompress it into uncompressed_buffer.
   bool bFailedCRC = false;
 
-  const auto pos_before = archive.CurrentPosition();
+  const ON__UINT64 pos_before = archive.CurrentPosition();
 
   if (!archive.ReadCompressedBuffer(uncompressed_size, d.m_buffer.get(), &bFailedCRC) && !bFailedCRC)
       return false;
