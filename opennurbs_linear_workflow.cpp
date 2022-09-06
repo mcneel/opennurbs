@@ -157,10 +157,10 @@ void ON_LinearWorkflow::ApplyPreProcessGamma(ON_4fColor& col, bool for_texture) 
   if (!check)
     return;
 
-   const auto gamma = PreProcessGamma();
+   const float gamma = PreProcessGamma();
    if (!IsFloatEqual(gamma, 1.0f))
    {
-     auto* f = col.FloatArray();
+     float* f = col.FloatArray();
 
      ON_ASSERT((f[0] >= 0.0) && (f[1] >= 0.0) && (f[2] >= 0.0));
 

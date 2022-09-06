@@ -2118,45 +2118,53 @@ public:
 			size_t,       // number of chars to read
 			char*    
 			);  
-	bool ReadChar(    // Read an array of 8 bit unsigned chars
-			size_t,       // number of unsigned chars to read
-			unsigned char*    
-			);  
 	bool ReadChar(    // Read a single 8 bit char
 			char*    
 			);  
+
+  bool ReadChar(    // Read an array of 8 bit signed chars
+			size_t,       // number of chars to read
+			ON__INT8*    
+			);  
+	bool ReadChar(    // Read an array of 8 bit unsigned chars
+			size_t,       // number of unsigned chars to read
+			ON__UINT8*    
+			);  
+	bool ReadChar(    // Read a single 8 bit signed char
+			ON__INT8*    
+			);  
 	bool ReadChar(    // Read a single 8 bit unsigned char
-			unsigned char*    
+			ON__UINT8*    
 			);  
 
 	bool ReadShort(   // Read an array of 16 bit shorts
 			size_t,       // number of shorts to read
-			short*    
+			ON__INT16*    
 			);  
 	bool ReadShort(   // Read an array of 16 bit unsigned shorts
 			size_t,       // number of shorts to read
-			unsigned short*    
+			ON__UINT16*    
 			);  
 	bool ReadShort(   // Read a single 16 bit short
-			short*    
+			ON__INT16*    
 			);  
 	bool ReadShort(   // Read a single 16 bit unsigned short
-			unsigned short*    
+			ON__UINT16*    
 			);  
 
 	bool ReadInt( // Read an array of 32 bit integers
 			size_t,	      // number of ints to read
-			int*      
+			ON__INT32*      
 			); 
 	bool ReadInt( // Read an array of 32 bit integers
 			size_t,	      // number of ints to read
-			unsigned int*      
+			ON__UINT32*      
 			); 
 	bool ReadInt( // Read a single 32 bit integer
-			int*      
+			ON__INT32*      
 			); 
 	bool ReadInt( // Read a single 32 bit unsigned integer
-			unsigned int*      
+			ON__UINT32*      
 			); 
 
 	bool ReadBigInt( // Read an array of 64 bit integers
@@ -2174,21 +2182,33 @@ public:
 			ON__UINT64*      
 			); 
 
+
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::ReadInt")
 	bool ReadLong( // Read an array of 32 bit integers
 			size_t,	      // number of ints to read
 			long*      
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::ReadInt")
 	bool ReadLong( // Read an array of 32 bit integers
 			size_t,	      // number of ints to read
 			unsigned long*      
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::ReadInt")
 	bool ReadLong( // Read a single 32 bit integer
 			long*      
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::ReadInt")
 	bool ReadLong( // Read a single 32 bit unsigned integer
 			unsigned long*      
 			); 
-	bool ReadSize( // Read a single size_t
+
+  ON_DEPRECATED_MSG
+  (
+    "ON_BinaryArchive::ReadSize is deprecated because it truncates to 32-bits.\n"
+    " - If you are updating existing code use 'ReadInt' instead.\n"
+    " - Else if you need to write a 64-bit size_t please call 'ReadBigSize'"
+  )
+  bool ReadSize( // Read a single 32 bit size_t
 			size_t*
 			); 
 
@@ -2367,14 +2387,17 @@ public:
   bool ReadComponentIndex( ON_COMPONENT_INDEX& );
 
   bool ReadArray( ON_SimpleArray<bool>& );
-  bool ReadArray(ON_SimpleArray<char>&);
-  bool ReadArray(ON_SimpleArray<short>&);
-  bool ReadArray(ON_SimpleArray<int>&);
-  bool ReadArray(ON_SimpleArray<unsigned char>&);
-  bool ReadArray(ON_SimpleArray<unsigned short>&);
-  bool ReadArray(ON_SimpleArray<unsigned int>&);
+  bool ReadArray( ON_SimpleArray<char>&);
+
+  bool ReadArray( ON_SimpleArray<ON__INT8>&);
+  bool ReadArray( ON_SimpleArray<ON__INT16>&);
+  bool ReadArray( ON_SimpleArray<ON__INT32>&);
+  bool ReadArray( ON_SimpleArray<ON__UINT8>&);
+  bool ReadArray( ON_SimpleArray<ON__UINT16>&);
+  bool ReadArray( ON_SimpleArray<ON__UINT32>&);
   bool ReadArray( ON_SimpleArray<float>& );
   bool ReadArray( ON_SimpleArray<double>& );
+
   bool ReadArray( ON_SimpleArray<ON_Color>& );
   bool ReadArray( ON_SimpleArray<ON_2dPoint>& );
   bool ReadArray( ON_SimpleArray<ON_3dPoint>& );
@@ -2422,45 +2445,53 @@ public:
 			size_t,       // number of chars to write
 			const char*    
 			);  
-	bool WriteChar(    // Write an array of 8 bit unsigned chars
-			size_t,       // number of unsigned chars to write
-			const unsigned char*    
-			);  
 	bool WriteChar(    // Write a single 8 bit char
 			char
 			);  
+
+  bool WriteChar(    // Write an array of 8 bit signed chars
+			size_t,       // number of chars to write
+			const ON__INT8*
+			);  
+	bool WriteChar(    // Write an array of 8 bit unsigned chars
+			size_t,       // number of unsigned chars to write
+			const ON__UINT8*
+			);  
+	bool WriteChar(    // Write a single 8 bit signed char
+			ON__INT8
+			);  
 	bool WriteChar(    // Write a single 8 bit unsigned char
-			unsigned char
+			ON__UINT8
 			);  
 
 	bool WriteShort(   // Write an array of 16 bit shorts
 			size_t,       // number of shorts to write
-			const short*    
+			const ON__INT16*
 			);  
 	bool WriteShort(   // Write an array of 16 bit unsigned shorts
 			size_t,       // number of shorts to write
-			const unsigned short*    
+			const ON__UINT16*
 			);  
 	bool WriteShort(   // Write a single 16 bit short
-			short
+			ON__INT16
 			);  
 	bool WriteShort(   // Write a single 16 bit unsigned short
-			unsigned short
+			ON__UINT16
 			);  
 
 	bool WriteInt( // Write an array of 32 bit integers
 			size_t,	      // number of ints to write
-			const int*      
+			const ON__INT32*
 			); 
 	bool WriteInt( // Write an array of 32 bit integers
 			size_t,	      // number of ints to write
-			const unsigned int*      
+			const ON__UINT32*
 			); 
 	bool WriteInt( // Write a single 32 bit integer
-			int    
+			ON__INT32    
 			); 
 	bool WriteInt( // Write a single 32 bit unsigned integer
-			unsigned int
+			ON__UINT32
 			); 
 
 	bool WriteBigInt( // Write an array of 64 bit integers
@@ -2478,21 +2509,32 @@ public:
 			ON__UINT64
 			); 
 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::WriteInt")
 	bool WriteLong( // Write an array of 32 bit integers
 			size_t,	      // number of ints to write
 			const long*      
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::WriteInt")
 	bool WriteLong( // Write an array of 32 bit integers
 			size_t,	      // number of ints to write
 			const unsigned long*      
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::WriteInt")
 	bool WriteLong( // Write a single 32 bit integer
 			long    
 			); 
+  ON_DEPRECATED_MSG("Please use ON_BinaryArchive::WriteInt")
 	bool WriteLong( // Write a single 32 bit unsigned integer
 			unsigned long
 			); 
-	bool WriteSize( // Write a single size_t
+
+  ON_DEPRECATED_MSG
+  (
+    "ON_BinaryArchive::WriteSize is deprecated because it truncates to 32-bits.\n"
+    " - If you are updating existing code use 'WriteInt' instead.\n"
+    " - Else if you need to write a 64-bit size_t please call 'WriteBigSize'"
+  )
+	bool WriteSize( // Write a single 32 bit size_t
 			size_t
 			); 
 
@@ -2664,12 +2706,13 @@ public:
 
   bool WriteArray( const ON_SimpleArray<bool>& );
   bool WriteArray( const ON_SimpleArray<char>& );
-  bool WriteArray( const ON_SimpleArray<short>& );
-  bool WriteArray( const ON_SimpleArray<int>& );
-
-  bool WriteArray(const ON_SimpleArray<unsigned char>&);
-  bool WriteArray(const ON_SimpleArray<unsigned short>&);
-  bool WriteArray(const ON_SimpleArray<unsigned int>&);
+  
+  bool WriteArray( const ON_SimpleArray<ON__INT8>& );
+  bool WriteArray( const ON_SimpleArray<ON__INT16>& );
+  bool WriteArray( const ON_SimpleArray<ON__INT32>& );
+  bool WriteArray(const ON_SimpleArray<ON__UINT8>&);
+  bool WriteArray(const ON_SimpleArray<ON__UINT16>&);
+  bool WriteArray(const ON_SimpleArray<ON__UINT32>&);
 
   bool WriteArray( const ON_SimpleArray<float>& );
   bool WriteArray( const ON_SimpleArray<double>& );

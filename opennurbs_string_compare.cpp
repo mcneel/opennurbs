@@ -50,6 +50,8 @@ ON_StringMapOrdinalType ON_StringMapOrdinalTypeFromStringMapType(
     return ON_StringMapOrdinalType::UpperOrdinal;
   case ON_StringMapType::LowerCase:
     return ON_StringMapOrdinalType::LowerOrdinal;
+  case ON_StringMapType::Identity:
+    return ON_StringMapOrdinalType::Identity;
   }
   return ON_StringMapOrdinalType::Identity;
 }

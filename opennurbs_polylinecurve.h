@@ -527,6 +527,15 @@ public:
 
   bool Append( const ON_PolylineCurve& );
 
+  /*
+  Description:
+    Sets the polyline curve to use arc length parameterization
+    for higher quality geometry.
+  Parameters:
+    tolerance - [in] Minimum distance tolerance.
+  */
+  void SetArcLengthParameterization(double tolerance);
+
   /////////////////////////////////////////////////////////////////
   // Interface
 	public:

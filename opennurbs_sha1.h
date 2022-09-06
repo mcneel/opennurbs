@@ -440,6 +440,10 @@ public:
   );
   
   void AccumulateInteger8(
+    char i
+  );
+
+  void AccumulateInteger8(
     ON__INT8 i
     );
   

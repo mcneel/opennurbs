@@ -12,6 +12,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include "opennurbs.h"
+#include "opennurbs_internal_defines.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -25,6 +26,7 @@ class ON_3dmObjectAttributesPrivate
 {
 public:
   ON_3dmObjectAttributesPrivate();
+
   bool operator==(const ON_3dmObjectAttributesPrivate&) const;
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
 
@@ -40,6 +42,9 @@ public:
   double m_linetype_scale = 1.0;
   ON_Color m_hatch_background_fill;
   bool m_hatch_boundary_visible = false;
+
+  ON_DecalCollection m_decals;
+  ON_MeshModifiers m_mesh_modifiers;
 };
 
 ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate()
@@ -1649,66 +1654,66 @@ const ON_wString ON_3dmObjectAttributes::Name() const
 }
 
 
-//unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
-//        const ON_3dmObjectAttributes& parents_attributes,
-//        unsigned int control_limits
-//        )
-//{
-//  ON_ERROR("Do not use deprecated version of ON_3dmObjectAttributes::ApplyParentalControl()");
-//  ON_Layer bogus_layer;
-//  bogus_layer.m_layer_index = -1;
-//  return ApplyParentalControl(parents_attributes,bogus_layer,control_limits);
-//}
-
 unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
         const ON_3dmObjectAttributes& parents_attributes,
         const ON_Layer& parent_layer,
         unsigned int control_limits
         )
 {
+  unsigned int rc = ApplyParentalControl(parents_attributes, parent_layer, ON_nil_uuid, control_limits);
+  return rc;
+}
+
+unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
+  const ON_3dmObjectAttributes& parents_attributes,
+  const ON_Layer& parent_layer,
+  const ON_UUID& viewport_id,
+  unsigned int control_limits
+)
+{
   unsigned int rc = 0;
 
-  if ( m_bVisible && !parents_attributes.m_bVisible )
+  if (m_bVisible && !parents_attributes.m_bVisible)
   {
-    if ( 0 != (0x01 & control_limits) )
+    if (0 != (0x01 & control_limits))
     {
       rc |= 0x01;
       m_bVisible = false;
     }
   }
 
-  if ( ON::color_from_parent == m_color_source )
+  if (ON::color_from_parent == m_color_source)
   {
-    if ( 0 != (0x02 & control_limits) )
+    if (0 != (0x02 & control_limits))
     {
       rc |= 0x02;
       m_color_source = parents_attributes.m_color_source;
-      m_color        = parents_attributes.m_color;
+      m_color = parents_attributes.m_color;
       // 2010 March 10 Dale Lear
       //   Changing the layer index is wrong!
       //   Color by parent means COLOR and not LAYER
       // WRONG! // m_layer_index = parents_attributes.m_layer_index;
-      if ( ON::color_from_layer == m_color_source && parent_layer.Index() >= 0 )
+      if (ON::color_from_layer == m_color_source && parent_layer.Index() >= 0)
       {
         // this object will use the parent layer's color
         m_color_source = ON::color_from_object;
-        m_color = parent_layer.m_color;
+        m_color = parent_layer.PerViewportColor(viewport_id);
       }
     }
   }
 
-  if ( ON::material_from_parent == m_material_source )
+  if (ON::material_from_parent == m_material_source)
   {
-    if ( 0 != (0x04 & control_limits) )
+    if (0 != (0x04 & control_limits))
     {
       rc |= 0x04;
       m_material_source = parents_attributes.m_material_source;
-      m_material_index  = parents_attributes.m_material_index;
+      m_material_index = parents_attributes.m_material_index;
       // 2010 March 10 Dale Lear
       //   Changing the layer index is wrong!
       //   Material by parent means MATERIAL and not LAYER
       // WRONG! // m_layer_index = parents_attributes.m_layer_index;
-      if ( ON::material_from_layer == m_material_source && parent_layer.Index() >= 0 )
+      if (ON::material_from_layer == m_material_source && parent_layer.Index() >= 0)
       {
         // this object will use the parent layer's material
         m_material_source = ON::material_from_object;
@@ -1717,62 +1722,123 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     }
   }
 
-  if ( ON::plot_color_from_parent == m_plot_color_source )
+  if (ON::plot_color_from_parent == m_plot_color_source)
   {
-    if ( 0 != (0x08 & control_limits) )
+    if (0 != (0x08 & control_limits))
     {
       rc |= 0x08;
       m_plot_color_source = parents_attributes.m_plot_color_source;
-      m_plot_color        = parents_attributes.m_plot_color;
-      if ( ON::plot_color_from_layer == m_plot_color_source && parent_layer.Index() >= 0 )
+      m_plot_color = parents_attributes.m_plot_color;
+      if (ON::plot_color_from_layer == m_plot_color_source && parent_layer.Index() >= 0)
       {
         // this object will use the parent layer's plot color
         m_plot_color_source = ON::plot_color_from_object;
-        m_plot_color        = parent_layer.m_plot_color;
+        m_plot_color = parent_layer.PerViewportPlotColor(viewport_id);
       }
     }
   }
 
-  if ( ON::plot_weight_from_parent == m_plot_weight_source )
+  if (ON::plot_weight_from_parent == m_plot_weight_source)
   {
-    if ( 0 != (0x10 & control_limits) )
+    if (0 != (0x10 & control_limits))
     {
       rc |= 0x10;
       m_plot_weight_source = parents_attributes.m_plot_weight_source;
-      m_plot_weight_mm     = parents_attributes.m_plot_weight_mm;
-      if ( ON::plot_weight_from_layer == m_plot_weight_source && parent_layer.Index() >= 0 )
+      m_plot_weight_mm = parents_attributes.m_plot_weight_mm;
+      if (ON::plot_weight_from_layer == m_plot_weight_source && parent_layer.Index() >= 0)
       {
         // this object will use the parent layer's plot weight
         m_plot_weight_source = ON::plot_weight_from_object;
-        m_plot_weight_mm     = parent_layer.m_plot_weight_mm;
+        m_plot_weight_mm = parent_layer.PerViewportPlotWeight(viewport_id);
       }
     }
   }
 
-  if ( ON::linetype_from_parent == m_linetype_source )
+  if (ON::linetype_from_parent == m_linetype_source)
   {
-    if ( 0 != (0x20 & control_limits) )
+    if (0 != (0x20 & control_limits))
     {
       rc |= 0x20;
       m_linetype_source = parents_attributes.m_linetype_source;
-      m_linetype_index  = parents_attributes.m_linetype_index;
-      if ( ON::linetype_from_layer == m_linetype_source && parent_layer.Index() >= 0 )
+      m_linetype_index = parents_attributes.m_linetype_index;
+      if (ON::linetype_from_layer == m_linetype_source && parent_layer.Index() >= 0)
       {
         // this object will use the parent layer's line type
         m_linetype_source = ON::linetype_from_object;
-        m_linetype_index  = parent_layer.m_linetype_index;
+        m_linetype_index = parent_layer.m_linetype_index;
       }
     }
   }
-  
-  if ( 0 != (0x40 & control_limits) )
+
+  if (0 != (0x40 & control_limits))
   {
     rc |= 0x40;
     m_display_order = parents_attributes.m_display_order;
   }
 
+  if (ON::ClipParticipationSource::FromParent == ClipParticipationSource())
+  {
+    if (0 != (0x80 & control_limits))
+    {
+      rc |= 0x80;
+      SetClipParticipationSource(parents_attributes.ClipParticipationSource());
+      if (ON::ClipParticipationSource::FromLayer == ClipParticipationSource() && parent_layer.Index() >= 0)
+      {
+        SetClipParticipationSource(ON::ClipParticipationSource::FromObject);
+        bool forAll = false;
+        bool forNone = false;
+        ON_UuidList list;
+        parent_layer.GetClipParticipation(forAll, forNone, list);
+        if (forAll)
+          SetClipParticipationForAll();
+        else if (forNone)
+          SetClipParticipationForNone();
+        else if (list.Count() > 0)
+          SetClipParticipationList(list.Array(), list.Count());
+      }
+      if (ON::ClipParticipationSource::FromObject == ClipParticipationSource())
+      {
+        bool forAll = false;
+        bool forNone = false;
+        ON_UuidList list;
+        parents_attributes.GetClipParticipation(forAll, forNone, list);
+        if (forAll)
+          SetClipParticipationForAll();
+        else if (forNone)
+          SetClipParticipationForNone();
+        else if (list.Count() > 0)
+          SetClipParticipationList(list.Array(), list.Count());
+      }
+    }
+  }
+
+  if (ON::SectionAttributesSource::FromParent == SectionAttributesSource())
+  {
+    if (0 != (0x100 & control_limits))
+    {
+      rc |= 0x100;
+      SetSectionAttributesSource(parents_attributes.SectionAttributesSource());
+      if (ON::SectionAttributesSource::FromLayer == SectionAttributesSource() && parent_layer.Index() >= 0)
+      {
+        SetSectionAttributesSource(ON::SectionAttributesSource::FromLayer);
+        SetSectionFillRule(parent_layer.SectionFillRule());
+        SetSectionHatchIndex(parent_layer.SectionHatchIndex());
+        SetSectionHatchRotation(parent_layer.SectionHatchRotation());
+        SetSectionHatchScale(parent_layer.SectionHatchScale());
+      }
+      else
+      {
+        SetSectionFillRule(parents_attributes.SectionFillRule());
+        SetSectionHatchIndex(parents_attributes.SectionHatchIndex());
+        SetSectionHatchRotation(parents_attributes.SectionHatchRotation());
+        SetSectionHatchScale(parents_attributes.SectionHatchScale());
+      }
+    }
+  }
+
   return rc;
 }
+
 
 ON::object_color_source ON_3dmObjectAttributes::ColorSource() const
 {
@@ -2320,7 +2386,6 @@ void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
   m_private->m_hatch_boundary_visible = on;
 }
 
-
 //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
 ON_Plane ON_3dmObjectAttributes::ObjectFrame(const ON_COMPONENT_INDEX&, bool bRaw) const
 {
@@ -2354,10 +2419,44 @@ void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX& ci, const 
   m_object_frame = plane;
 }
 
+ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate;
+
+  return m_private->m_decals.AddDecal();
+}
+
+ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate;
+
+  return m_private->m_mesh_modifiers;
+}
+
+void ON_3dmObjectAttributes::Internal_PopulateDecals(const ON_XMLRootNode& node) const
+{
+  if (!ON_DecalCollection::NodeContainsDecals(node))
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate;
+
+  m_private->m_decals.Populate(node);
+}
+
+const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate;
+
+  return m_private->m_decals.GetDecalArray();
+}
+
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}
 const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id = 
 { 0x1403a7e4, 0xe7ad, 0x4a01, { 0xa2, 0xaa, 0x41, 0xda, 0xe6, 0xbe, 0x7e, 0xcb } };
-
 
 ON_DisplayMaterialRef::ON_DisplayMaterialRef()
 {
@@ -2402,6 +2501,3 @@ bool ON_DisplayMaterialRef::operator>=(const ON_DisplayMaterialRef& other) const
 {
   return (Compare(other)>=0); 
 }
-
-
-

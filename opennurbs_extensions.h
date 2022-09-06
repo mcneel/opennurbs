@@ -1599,8 +1599,21 @@ public:
   // Linear Workflow.
   ON_LinearWorkflow& LinearWorkflow(void) const;
 
-  // Current Environment.
-  ON_CurrentEnvironment& CurrentEnvironment(void) const;
+  // Background rendering environment.
+  ON_UUID BackgroundRenderEnvironment(void) const;
+  void SetBackgroundRenderEnvironment(const ON_UUID& id);
+
+  // Skylighting rendering environment.
+  bool SkylightingRenderEnvironmentOverride(void) const;
+  void SetSkylightingRenderEnvironmentOverride(bool on);
+  ON_UUID SkylightingRenderEnvironment(void) const;
+  void SetSkylightingRenderEnvironment(const ON_UUID& id);
+
+  // Reflection / refraction rendering environment.
+  bool ReflectionRenderEnvironmentOverride(void) const;
+  void SetReflectionRenderEnvironmentOverride(bool on);
+  ON_UUID ReflectionRenderEnvironment(void) const;
+  void SetReflectionRenderEnvironment(const ON_UUID& id);
 
   // Skylight.
   ON_Skylight& Skylight(void) const;
@@ -1613,27 +1626,6 @@ public:
 
   // Render Channels.
   ON_RenderChannels& RenderChannels(void) const;
-
-  // - If 'component' is not null, this gets decals stored on that component. Generally, only model
-  //   components of type ModelGeometry have decals on them.
-  //   If there are no decals on the component, the iterator will be empty and return null if Next() is called.
-  //
-  // - If 'component' is null, then this gets all decals from all model components.
-  //
-  // Returns a decal iterator which allows access to the decals.
-  ON_DecalIterator GetDecalIterator(const ON_ModelComponent* component);
-
-  // Adds a new decal to a particular component.
-  // Returns a pointer to the decal if successful, or null on failure.
-  ON_Decal* AddDecal(const ON_ModelComponent& component);
-
-  // Gets a decal by its id.
-  // Returns a pointer to the decal if successful, or null on failure.
-  ON_Decal* GetDecal(const ON_UUID& id);
-
-  // Get mesh modifiers stored on a particular component. Generally, only model components of type ModelGeometry
-  // have mesh modifiers on them. Returns an object which provides access to the various mesh modifiers.
-  ON_MeshModifiers* GetMeshModifiers(const ON_ModelComponent& component);
 
   ON_DEPRECATED_MSG("This function is deprecated.")
   static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);

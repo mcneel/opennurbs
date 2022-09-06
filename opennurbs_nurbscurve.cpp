@@ -3243,8 +3243,9 @@ bool ON_NurbsCurve::Split(
       i = left->m_cv_count - left->m_order;
 
       //23 April 2015 - Chuck - maintain stride
+      // 31 Aug 2022 GBA RH69916 split at split_t not t.  Splitting at t produces a gap that can't be right.
       //ON_EvaluateNurbsDeBoor( cvdim, m_order, cvdim, left->CV(i), left->m_knot + i, -1, 0.0, t );
-      ON_EvaluateNurbsDeBoor( cvdim, m_order, cv_stride, left->CV(i), left->m_knot + i, -1, 0.0, t );
+      ON_EvaluateNurbsDeBoor( cvdim, m_order, cv_stride, left->CV(i), left->m_knot + i, -1, 0.0, split_t);
       for ( i = left->m_cv_count-1; i < ON_KnotCount(left->m_order,left->m_cv_count); i++ )
         left->m_knot[i] = t;
       left->ClampEnd(2); // 26 June 2003 Dale Lear
@@ -3252,8 +3253,9 @@ bool ON_NurbsCurve::Split(
       // trim left end of right NURBS
 
       //23 April 2015 - Chuck - maintain stride
+     // 31 Aug 2022 GBA RH69916 split at split_t not t. Splitting at t produces a gap that can't be right.
       //ON_EvaluateNurbsDeBoor( cvdim, m_order, cvdim, right->m_cv, right->m_knot, +1, 0.0, t );
-      ON_EvaluateNurbsDeBoor( cvdim, m_order, cv_stride, right->m_cv, right->m_knot, +1, 0.0, t );
+      ON_EvaluateNurbsDeBoor( cvdim, m_order, cv_stride, right->m_cv, right->m_knot, +1, 0.0, split_t);
       for ( i = 0; i <= right->m_order-2; i++ )
         right->m_knot[i] = t;
       right->ClampEnd(2); // 26 June 2003 Dale Lear

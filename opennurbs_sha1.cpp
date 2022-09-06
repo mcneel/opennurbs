@@ -608,6 +608,13 @@ void ON_SHA1::AccumulateBool(
 }
 
 void ON_SHA1::AccumulateInteger8(
+  char i
+)
+{
+  AccumulateBytes(&i, 1);
+}
+
+void ON_SHA1::AccumulateInteger8(
   ON__INT8 i
 )
 {

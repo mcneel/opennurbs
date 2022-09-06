@@ -838,12 +838,27 @@ bool ON_BinaryArchive::Internal_SeekCur( bool bForward, ON__UINT64 offset )
   return true;
 }
 
-
-
 bool
 ON_BinaryArchive::ReadChar(    // Read an array of 8 bit chars
+  size_t count,       // number of chars to read
+  char* p
+)
+{
+  return ReadByte(count, p);
+}
+
+bool
+ON_BinaryArchive::ReadChar(    // Read a single 8 bit char
+  char* p
+)
+{
+  return ReadByte(1, p);
+}
+
+bool
+ON_BinaryArchive::ReadChar(    // Read an array of 8 bit signed chars
 		size_t count,       // number of chars to read
-		char*  p  
+  ON__INT8*  p
 		)
 {
   return ReadByte( count, p );
@@ -852,15 +867,15 @@ ON_BinaryArchive::ReadChar(    // Read an array of 8 bit chars
 bool
 ON_BinaryArchive::ReadChar(    // Read an array of 8 bit unsigned chars
 		size_t count,       // number of unsigned chars to read
-		unsigned char* p   
+		ON__UINT8* p   
 		)
 {
   return ReadByte( count, p );
 }
 
 bool
-ON_BinaryArchive::ReadChar(    // Read a single 8 bit char
-		char* p
+ON_BinaryArchive::ReadChar(    // Read a single 8 bit signed char
+		ON__INT8* p
 		)
 {
   return ReadByte( 1, p );
@@ -868,7 +883,7 @@ ON_BinaryArchive::ReadChar(    // Read a single 8 bit char
 
 bool
 ON_BinaryArchive::ReadChar(    // Read a single 8 bit unsigned char
-		unsigned char* p
+		ON__UINT8* p
 		)
 {
   return ReadByte( 1, p );
@@ -896,8 +911,8 @@ ON_BinaryArchive::ReadInt16( // Read an array of 16 bit integers
 
 bool
 ON_BinaryArchive::ReadShort(   // Read an array of 16 bit shorts
-		size_t count,       // number of unsigned chars to read
-		short* p
+		size_t count,       // number of signed chars to read
+		ON__INT16* p
 		)
 {
 #pragma ON_PRAGMA_WARNING_PUSH
@@ -930,15 +945,15 @@ ON_BinaryArchive::ReadShort(   // Read an array of 16 bit shorts
 bool
 ON_BinaryArchive::ReadShort(   // Read an array of 16 bit unsigned shorts
 		size_t count,       // number of unsigned chars to read
-		unsigned short* p
+		ON__UINT16* p
 		)
 {
   return ReadShort( count, (short*)p );
 }
 
 bool
-ON_BinaryArchive::ReadShort(   // Read a single 16 bit short
-		short* p
+ON_BinaryArchive::ReadShort(   // Read a single 16 bit signed short
+		ON__INT16* p
 		)
 {
   return ReadShort( 1, p );
@@ -946,15 +961,15 @@ ON_BinaryArchive::ReadShort(   // Read a single 16 bit short
 
 bool
 ON_BinaryArchive::ReadShort(   // Read a single 16 bit unsigned short
-		unsigned short* p
+		ON__UINT16* p
 		)
 {
   return ReadShort( 1, p );
 }
 
 bool
-ON_BinaryArchive::ReadInt32( // Read an array of 32 bit integers
-		size_t count,            // number of 32 bit integers to read
+ON_BinaryArchive::ReadInt32( // Read an array of 32 bit signed integers
+		size_t count,            // number of 32 bit signed integers to read
 		ON__INT32* p
 		)
 {
@@ -973,9 +988,9 @@ ON_BinaryArchive::ReadInt32( // Read an array of 32 bit integers
 }
 
 bool
-ON_BinaryArchive::ReadInt( // Read an array of integers
-		size_t count,          // number of unsigned chars to read
-		int* p
+ON_BinaryArchive::ReadInt( // Read an array of signed integers
+		size_t count,          // number of signed chars to read
+		ON__INT32* p
 		)
 {
 #if defined(ON_COMPILER_MSC)
@@ -1011,17 +1026,17 @@ ON_BinaryArchive::ReadInt( // Read an array of integers
 }
 
 bool
-ON_BinaryArchive::ReadInt( // Read an array of 32 bit integers
+ON_BinaryArchive::ReadInt( // Read an array of 32 bit unsigned integers
 		size_t count,       // number of unsigned chars to read
-		unsigned int* p
+		ON__UINT32* p
 		)
 {
   return ReadInt( count, (int*)p );
 }
 
 bool
-ON_BinaryArchive::ReadInt( // Read a single 32 bit integer
-		int* p
+ON_BinaryArchive::ReadInt( // Read a single 32 bit signed integer
+		ON__INT32* p
 		)
 {
   return ReadInt( 1, p );
@@ -1029,13 +1044,13 @@ ON_BinaryArchive::ReadInt( // Read a single 32 bit integer
 
 bool
 ON_BinaryArchive::ReadInt( // Read a single 32 bit unsigned integer
-		unsigned int* p
+		ON__UINT32* p
 		)
 {
   return ReadInt( 1, p );
 }
 
-bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit integers
+bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit signed integers
 		size_t count,
 		ON__INT64* p 
 		)
@@ -1043,7 +1058,7 @@ bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit integers
   return ReadInt64(1,p);
 }
 
-bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit integers
+bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit unsigned integers
 		size_t count,
 		ON__UINT64* p
 		)
@@ -1051,7 +1066,7 @@ bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit integers
   return ReadInt64(1,(ON__INT64*)p);
 }
 
-bool ON_BinaryArchive::ReadBigInt( // Read a single 64 bit integer
+bool ON_BinaryArchive::ReadBigInt( // Read a single 64 bit signed integer
 		ON__INT64* p
 		)
 {
@@ -1068,8 +1083,8 @@ bool ON_BinaryArchive::ReadBigInt( // Read a single 64 bit unsigned integer
 
 
 bool
-ON_BinaryArchive::ReadLong( // Read an array of 32 bit integers
-		size_t count,       // number of unsigned chars to read
+ON_BinaryArchive::ReadLong( // Read an array of 32 bit signed integers
+		size_t count,       // number of signed integers to read
 		long* p
 		)
 {
@@ -1111,15 +1126,23 @@ ON_BinaryArchive::ReadLong( // Read an array of 32 bit integers
 		unsigned long* p
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return ReadLong( count, (long*)p );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool
-ON_BinaryArchive::ReadLong( // Read a single 32 bit integer
+ON_BinaryArchive::ReadLong( // Read a single 32 bit signed integer
 		long* p
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return ReadLong( 1, (long*)p );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool
@@ -1127,7 +1150,11 @@ ON_BinaryArchive::ReadLong( // Read a single 32 bit unsigned integer
 		unsigned long* p
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return ReadLong( 1, (long*)p );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool
@@ -2159,37 +2186,7 @@ ON_BinaryArchive::ReadArray( ON_SimpleArray<char>& a )
 }
 
 bool
-ON_BinaryArchive::ReadArray( ON_SimpleArray<short>& a )
-{
-  a.Empty();
-  int count = 0;
-  bool rc = ReadInt( &count );
-  if ( rc && count > 0 ) {
-    a.SetCapacity( count );
-    rc = ReadShort( count, a.Array() );
-    if ( rc )
-      a.SetCount(count);
-  }
-  return rc;
-}
-
-bool
-ON_BinaryArchive::ReadArray( ON_SimpleArray<int>& a )
-{
-  a.Empty();
-  int count = 0;
-  bool rc = ReadInt( &count );
-  if ( rc && count > 0 ) {
-    a.SetCapacity( count );
-    rc = ReadInt( count, a.Array() );
-    if ( rc )
-      a.SetCount(count);
-  }
-  return rc;
-}
-
-bool
-ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned char>& a)
+ON_BinaryArchive::ReadArray( ON_SimpleArray<ON__INT8>& a )
 {
   a.Empty();
   int count = 0;
@@ -2204,7 +2201,52 @@ ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned char>& a)
 }
 
 bool
-ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned short>& a)
+ON_BinaryArchive::ReadArray( ON_SimpleArray<ON__INT16>& a )
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt( &count );
+  if ( rc && count > 0 ) {
+    a.SetCapacity( count );
+    rc = ReadShort( count, a.Array() );
+    if ( rc )
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::ReadArray( ON_SimpleArray<ON__INT32>& a )
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt( &count );
+  if ( rc && count > 0 ) {
+    a.SetCapacity( count );
+    rc = ReadInt( count, a.Array() );
+    if ( rc )
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::ReadArray(ON_SimpleArray<ON__UINT8>& a)
+{
+  a.Empty();
+  int count = 0;
+  bool rc = ReadInt(&count);
+  if (rc && count > 0) {
+    a.SetCapacity(count);
+    rc = ReadChar(count, a.Array());
+    if (rc)
+      a.SetCount(count);
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::ReadArray(ON_SimpleArray<ON__UINT16>& a)
 {
   a.Empty();
   int count = 0;
@@ -2219,7 +2261,7 @@ ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned short>& a)
 }
 
 bool
-ON_BinaryArchive::ReadArray(ON_SimpleArray<unsigned int>& a)
+ON_BinaryArchive::ReadArray(ON_SimpleArray<ON__UINT32>& a)
 {
   a.Empty();
   int count = 0;
@@ -2776,17 +2818,34 @@ ON_BinaryArchive::WriteChar(    // Write an array of 8 bit chars
 }
 
 bool
+ON_BinaryArchive::WriteChar(    // Write a single 8 bit char
+  char c
+)
+{
+  return WriteByte(1, &c);
+}
+
+bool
+ON_BinaryArchive::WriteChar(    // Write an array of 8 bit signed chars
+  size_t count,       // number of chars to write
+  const ON__INT8* p
+)
+{
+  return WriteByte(count, p);
+}
+
+bool
 ON_BinaryArchive::WriteChar(    // Write an array of 8 bit unsigned chars
 		size_t count,       // number of unsigned chars to write
-		const unsigned char* p
+		const ON__UINT8* p
 		)
 {
   return WriteByte( count, p );
 }
 
 bool
-ON_BinaryArchive::WriteChar(    // Write a single 8 bit char
-		char c
+ON_BinaryArchive::WriteChar(    // Write a single 8 bit signed char
+		ON__INT8 c
 		)
 {
   return WriteByte( 1, &c );
@@ -2794,7 +2853,7 @@ ON_BinaryArchive::WriteChar(    // Write a single 8 bit char
 
 bool
 ON_BinaryArchive::WriteChar(    // Write a single 8 bit unsigned char
-		unsigned char c
+		ON__UINT8 c
 		)
 {
   return WriteByte( 1, &c );
@@ -2832,7 +2891,7 @@ ON_BinaryArchive::WriteInt16(   // Write an array of 16 bit shorts
 bool
 ON_BinaryArchive::WriteShort(   // Write an array of 16 bit shorts
 		size_t count,       // number of shorts to write
-		const short* p
+		const ON__INT16* p
 		)
 {
 #if defined(ON_COMPILER_MSC)
@@ -2869,7 +2928,7 @@ ON_BinaryArchive::WriteShort(   // Write an array of 16 bit shorts
 bool
 ON_BinaryArchive::WriteShort(   // Write an array of 16 bit unsigned shorts
 		size_t count,       // number of shorts to write
-		const unsigned short* p
+		const ON__UINT16* p
 		)
 {
   return WriteShort( count, (const short*)p );
@@ -2877,7 +2936,7 @@ ON_BinaryArchive::WriteShort(   // Write an array of 16 bit unsigned shorts
 
 bool
 ON_BinaryArchive::WriteShort(   // Write a single 16 bit short
-		short s
+		ON__INT16 s
 		)
 {
   return WriteShort( 1, &s );
@@ -2885,7 +2944,7 @@ ON_BinaryArchive::WriteShort(   // Write a single 16 bit short
 
 bool
 ON_BinaryArchive::WriteShort(   // Write a single 16 bit unsigned short
-		unsigned short s
+		ON__UINT16 s
 		)
 {
   return WriteShort( 1, &s );
@@ -2978,7 +3037,7 @@ ON_BinaryArchive::WriteInt64( // Write an array of 64 bit integers
 bool
 ON_BinaryArchive::WriteInt( // Write an array of integers
 		size_t count,	          // number of ints to write
-		const int* p    
+		const ON__INT32* p
 		)
 {
 #if defined(ON_COMPILER_MSC)
@@ -3032,7 +3091,7 @@ ON_BinaryArchive::ReadSize(size_t* sz)
 bool ON_BinaryArchive::WriteBigSize(size_t sz)
 {
   ON__UINT64 u = (ON__UINT64)sz;
-  return WriteInt64(1,(ON__INT64*)&u);;
+  return WriteInt64(1,(ON__INT64*)&u);
 }
 
 bool ON_BinaryArchive::ReadBigSize( size_t* sz )
@@ -3063,23 +3122,23 @@ bool ON_BinaryArchive::ReadBigTime( time_t* t )
 bool
 ON_BinaryArchive::WriteInt( // Write an array of 32 bit integers
 		size_t count,	      // number of ints to write
-		const unsigned int* p
+		const ON__UINT32* p
 		)
 {
   return WriteInt( count, (const int*)p );
 }
 
 bool
-ON_BinaryArchive::WriteInt( // Write a single 32 bit integer
-		int i
+ON_BinaryArchive::WriteInt( // Write a single 32 bit signed integer
+		ON__INT32 i
 		)
 {
   return WriteInt( 1, &i );
 }
 
 bool
-ON_BinaryArchive::WriteInt( // Write a single 32 bit integer
-		unsigned int i
+ON_BinaryArchive::WriteInt( // Write a single 32 bit unsigned integer
+		ON__UINT32 i
 		)
 {
   return WriteInt( 1, &i );
@@ -3160,7 +3219,11 @@ ON_BinaryArchive::WriteLong( // Write an array of longs
 		const unsigned long* p
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return WriteLong( count, (const long*)p );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool
@@ -3168,7 +3231,11 @@ ON_BinaryArchive::WriteLong( // Write a single long
 		long i
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return WriteLong( 1, &i );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 bool
@@ -3176,7 +3243,11 @@ ON_BinaryArchive::WriteLong( // Write a single unsigned long
 		unsigned long i
 		)
 {
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4996)
+#pragma ON_PRAGMA_WARNING_DISABLE_CLANG("-Wdeprecated-declarations")
   return WriteLong( 1, &i );
+#pragma ON_PRAGMA_WARNING_POP
 }
 
 
@@ -3862,7 +3933,20 @@ ON_BinaryArchive::WriteArray( const ON_SimpleArray<char>& a )
 }
 
 bool
-ON_BinaryArchive::WriteArray( const ON_SimpleArray<short>& a )
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<ON__INT8>& a)
+{
+  int count = a.Count();
+  if (count < 0)
+    count = 0;
+  bool rc = WriteInt(count);
+  if (rc && count > 0) {
+    rc = WriteChar(count, a.Array());
+  }
+  return rc;
+}
+
+bool
+ON_BinaryArchive::WriteArray( const ON_SimpleArray<ON__INT16>& a )
 {
   int count = a.Count();
   if ( count < 0 )
@@ -3875,7 +3959,7 @@ ON_BinaryArchive::WriteArray( const ON_SimpleArray<short>& a )
 }
 
 bool
-ON_BinaryArchive::WriteArray( const ON_SimpleArray<int>& a )
+ON_BinaryArchive::WriteArray( const ON_SimpleArray<ON__INT32>& a )
 {
   int count = a.Count();
   if ( count < 0 )
@@ -3889,7 +3973,7 @@ ON_BinaryArchive::WriteArray( const ON_SimpleArray<int>& a )
 
 
 bool
-ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned char>& a)
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<ON__UINT8>& a)
 {
   int count = a.Count();
   if (count < 0)
@@ -3902,7 +3986,7 @@ ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned char>& a)
 }
 
 bool
-ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned short>& a)
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<ON__UINT16>& a)
 {
   int count = a.Count();
   if (count < 0)
@@ -3915,7 +3999,7 @@ ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned short>& a)
 }
 
 bool
-ON_BinaryArchive::WriteArray(const ON_SimpleArray<unsigned int>& a)
+ON_BinaryArchive::WriteArray(const ON_SimpleArray<ON__UINT32>& a)
 {
   int count = a.Count();
   if (count < 0)

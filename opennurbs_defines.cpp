@@ -836,7 +836,7 @@ double ON::AngleUnitScale(
     ON::AngleUnitSystem us_to
     )
 {
-  if (ON::AngleUnitSystem::Unset == us_from || ON::AngleUnitSystem::Unset == us_from)
+  if (ON::AngleUnitSystem::Unset == us_from || ON::AngleUnitSystem::Unset == us_to)
     return ON_DBL_QNAN;
 
   // the default cases are here to keep lint quiet
@@ -869,6 +869,10 @@ double ON::AngleUnitScale(
     case ON::AngleUnitSystem::Gradians:
       scale = 400.0;
       break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
+      break;
     }
     break;
 
@@ -893,6 +897,10 @@ double ON::AngleUnitScale(
       break;
     case ON::AngleUnitSystem::Gradians:
       scale = 400.0/ON_PI;
+      break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
       break;
     }
     break;
@@ -919,6 +927,10 @@ double ON::AngleUnitScale(
     case ON::AngleUnitSystem::Gradians:
       scale = 10.0/9.0;
       break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
+      break;
     }
     break;
 
@@ -943,6 +955,10 @@ double ON::AngleUnitScale(
       break;
     case ON::AngleUnitSystem::Gradians:
       scale = 1.0/54.0;
+      break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
       break;
     }
     break;
@@ -969,6 +985,10 @@ double ON::AngleUnitScale(
     case ON::AngleUnitSystem::Gradians:
       scale = 1.0/(54.0*60.0);
       break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
+      break;
     }
     break;
 
@@ -994,7 +1014,16 @@ double ON::AngleUnitScale(
     case ON::AngleUnitSystem::Gradians:
       scale = 1.0;
       break;
+    case ON::AngleUnitSystem::Unset:
+    case ON::AngleUnitSystem::None:
+      ON_ERROR("unit system conversion undefined");
+      break;
     }
+    break;
+
+  case ON::AngleUnitSystem::Unset:
+  case ON::AngleUnitSystem::None:
+    ON_ERROR("unit system conversion undefined");
     break;
   }
 
@@ -2257,7 +2286,10 @@ ON_INTERNAL_OBSOLETE::V5_horizontal_alignment ON_INTERNAL_OBSOLETE::V5Horizontal
   case ON::TextHorizontalAlignment::Right:
     halign = ON_INTERNAL_OBSOLETE::V5_horizontal_alignment::Right;
     break;
-  }  
+  case ON::TextHorizontalAlignment::Auto:
+    halign = ON_INTERNAL_OBSOLETE::V5_horizontal_alignment::Left;
+    break;
+  }
 
   return halign;
 }

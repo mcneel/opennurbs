@@ -116,8 +116,8 @@ bool ON_RenderChannels::operator == (const ON_RenderChannels& rch)
     return false;
 
   ON_ClassArray<ON_wString> a, b;
-  const auto s1 = GetSortedCustomListAsString(*this);
-  const auto s2 = GetSortedCustomListAsString(rch);
+  const ON_wString s1 = GetSortedCustomListAsString(*this);
+  const ON_wString s2 = GetSortedCustomListAsString(rch);
   if (s1 != s2)
     return false;
 
@@ -133,7 +133,7 @@ ON_RenderChannels::Modes ON_RenderChannels::Mode(void) const
 {
   auto mode = Modes::Automatic;
 
-  const auto s = m_impl->GetParameter(XMLPath(), ON_RDK_RCH_MODE, ON_RDK_RCH_MODE_AUTOMATIC).AsString();
+  const ON_wString s = m_impl->GetParameter(XMLPath(), ON_RDK_RCH_MODE, ON_RDK_RCH_MODE_AUTOMATIC).AsString();
   if (ON_RDK_RCH_MODE_CUSTOM == s)
     mode = Modes::Custom;
 
@@ -151,8 +151,8 @@ void ON_RenderChannels::SetMode(Modes m)
 
 void ON_RenderChannels::GetCustomList(ON_SimpleArray<ON_UUID>& chan) const
 {
-  auto s = m_impl->GetParameter(XMLPath(), ON_RDK_RCH_LIST, false).AsString();
-  const auto len = s.Length();
+  ON_wString s = m_impl->GetParameter(XMLPath(), ON_RDK_RCH_LIST, false).AsString();
+  const int len = s.Length();
   if (len == 0)
     return;
 
@@ -162,7 +162,7 @@ void ON_RenderChannels::GetCustomList(ON_SimpleArray<ON_UUID>& chan) const
   int pos = -1;
   while ((pos = s.Find(L";")) >= 0)
   {
-    const auto uuid = ON_UuidFromString(s.Left(pos));
+    const ON_UUID uuid = ON_UuidFromString(s.Left(pos));
     chan.Append(uuid);
     s = s.Mid(pos+1);
   }

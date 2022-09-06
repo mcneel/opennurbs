@@ -865,7 +865,7 @@ public:
   ON__UINT8* m_raw_buffer = nullptr;
   bool m_bTypePending = false;
   bool m_bReserved[3] = { false };
-  Types m_type = Types::String;
+  Types m_type = Types::Null;
 };
 
 ON_XMLVariant::ON_XMLVariant()
@@ -976,6 +976,12 @@ ON_XMLVariant::ON_XMLVariant(const ON_XMLVariant& src)
   *this = src;
 }
 
+ON_XMLVariant::~ON_XMLVariant()
+{
+  m_impl->~CImpl();
+  m_impl = nullptr;
+}
+
 ON_Buffer& ON_XMLVariant::GetBuffer(void) const
 {
   return m_impl->GetBuffer();
@@ -1025,10 +1031,71 @@ const ON_XMLVariant& ON_XMLVariant::operator = (const ON_XMLVariant& src)
   return *this;
 }
 
-ON_XMLVariant::~ON_XMLVariant()
+bool ON_XMLVariant::operator == (const ON_XMLVariant& v) const
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  if (m_impl->m_type != v.m_impl->m_type)
+    return false;
+
+  if (m_impl->m_units != m_impl->m_units)
+    return false;
+
+  switch (m_impl->m_type)
+  {
+  case Types::Bool:
+    return m_impl->m_bVal == v.m_impl->m_bVal;
+
+  case Types::Integer:
+    return m_impl->m_iVal == v.m_impl->m_iVal;
+
+  case Types::Float:
+    return IsFloatEqual(m_impl->m_fVal, v.m_impl->m_fVal) ? true : false;
+
+  case Types::Double:
+    return IsDoubleEqual(m_impl->m_dVal, v.m_impl->m_dVal) ? true : false;
+
+  case Types::DoubleArray2:
+    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
+            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1]))) ? true : false;
+
+  case Types::DoubleArray3:
+    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
+            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1])) &&
+            (IsDoubleEqual(m_impl->m_aVal[2], v.m_impl->m_aVal[2]))) ? true : false;
+
+  case Types::DoubleColor4:
+  case Types::DoubleArray4:
+    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
+            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1])) &&
+            (IsDoubleEqual(m_impl->m_aVal[2], v.m_impl->m_aVal[2])) &&
+            (IsDoubleEqual(m_impl->m_aVal[3], v.m_impl->m_aVal[3]))) ? true : false;
+
+  case Types::String:
+    return m_impl->m_sVal.CompareNoCase(v.m_impl->m_sVal) == 0;
+
+  case Types::Uuid:
+    return (m_impl->m_uuidVal == v.m_impl->m_uuidVal) ? true : false;
+
+  case Types::Time:
+    return m_impl->m_timeVal == v.m_impl->m_timeVal;
+
+  case Types::Matrix:
+      for (int i = 0; i < 16; i++)
+      {
+        if (m_impl->m_aVal[i] != v.m_impl->m_aVal[i])
+          return false;
+      }
+      return true;
+
+  default:
+    ON_ASSERT(false);
+  }
+
+  return false;
+}
+
+bool ON_XMLVariant::operator != (const ON_XMLVariant& v) const
+{
+  return !(operator == (v));
 }
 
 bool ON_XMLVariant::NeedsXMLEncode(void) const
@@ -4029,10 +4096,23 @@ ON_XMLNode::ChildIterator::ChildIterator(const ON_XMLNode* pParent)
   }
 }
 
+ON_XMLNode::ChildIterator::ChildIterator(const ChildIterator& other)
+{
+  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  operator = (other);
+}
+
 ON_XMLNode::ChildIterator::~ChildIterator()
 {
   m_impl->~CImpl();
   m_impl = nullptr;
+}
+
+const ON_XMLNode::ChildIterator& ON_XMLNode::ChildIterator::operator = (const ChildIterator& other)
+{
+  m_impl->m_pCurrent = other.m_impl->m_pCurrent;
+
+  return *this;
 }
 
 ON_XMLNode* ON_XMLNode::ChildIterator::GetNextChild(void)
@@ -4130,10 +4210,27 @@ ON_XMLNode::PropertyIterator::PropertyIterator(const ON_XMLNode* pNode, bool bSo
   }
 }
 
+ON_XMLNode::PropertyIterator::PropertyIterator(const PropertyIterator& other)
+{
+  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  operator = (other);
+}
+
 ON_XMLNode::PropertyIterator::~PropertyIterator()
 {
   m_impl->~CImpl();
   m_impl = nullptr;
+}
+
+const ON_XMLNode::PropertyIterator& ON_XMLNode::PropertyIterator::operator = (const PropertyIterator& other)
+{
+  m_impl->m_pCurrent           = other.m_impl->m_pCurrent;
+  m_impl->m_pNode              = other.m_impl->m_pNode;
+  m_impl->m_iIndex             = other.m_impl->m_iIndex;
+  m_impl->m_bSorted            = other.m_impl->m_bSorted;
+  m_impl->m_paSortedProperties = other.m_impl->m_paSortedProperties;
+
+  return *this;
 }
 
 ON_XMLProperty* ON_XMLNode::PropertyIterator::GetNextProperty(void)

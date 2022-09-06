@@ -101,7 +101,7 @@ void ON_Dithering::SetOn(bool b)
 
 ON_Dithering::Methods ON_Dithering::Method(void) const
 {
-  const auto s = m_impl->GetParameter(XMLPathDit(), ON_DITHERING_METHOD, L"").AsString();
+  const ON_wString s = m_impl->GetParameter(XMLPathDit(), ON_DITHERING_METHOD, L"").AsString();
   if (ON_DITHERING_FLOYD_STEINBERG == s)
     return Methods::FloydSteinberg;
 
@@ -110,7 +110,7 @@ ON_Dithering::Methods ON_Dithering::Method(void) const
 
 void ON_Dithering::SetMethod(Methods m)
 {
-  const auto* wsz = ON_DITHERING_SIMPLE_NOISE;
+  const wchar_t* wsz = ON_DITHERING_SIMPLE_NOISE;
   if (Methods::FloydSteinberg == m)
     wsz = ON_DITHERING_FLOYD_STEINBERG;
 

@@ -138,25 +138,11 @@ public:
   // only used for looking decals up in the model.
   ON_UUID Id(void) const;
 
-private:
-  class CImpl;
-  CImpl* m_impl;
-  friend class ON_DecalIterator;
-};
-
-class ON_CLASS ON_DecalIterator final
-{
-public:
-  ON_DecalIterator(class ONX_Model& model, const ON_ModelComponent* component);
-  ~ON_DecalIterator();
-
-  // Returns a pointer to the next decal or null if there are no more. The returned pointer
-  // points to an object inside the ONX_Model. You should not store this pointer.
-  ON_Decal* Next(void) const;
-
-  class CImpl;
+  // Get the decal XML. Intended for internal use only.
+  const ON_XMLNode& XML(void) const;
 
 private:
+  class CImpl;
   CImpl* m_impl;
 };
 

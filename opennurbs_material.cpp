@@ -3840,6 +3840,12 @@ ON__UINT32 ON_TextureMapping::MappingCRC() const
       }
     }
   }
+  else
+  {
+    // Jussi, Aug 18 2022, RH-69752: Surface mapping uvw transform has changed.
+    // Changing crc makes sure existing models will show the correct mapping.
+    crc32++;
+  }
 
   crc32 = ON_CRC32(crc32,sizeof(m_uvw), &m_uvw);
   return crc32;
@@ -4000,21 +4006,8 @@ bool GetSPTCHelper(
     const ON_Interval tex_vdom = mesh.m_packed_tex_domain[1];
     for ( i = 0; i < vcnt; i++)
     {
-		//ALB 2011.01.14
-		//Added support for m_uvw in packed textures.  Even though this conceptually makes
-		//very little sense, it's one of the most requested features for the texture mapping
-		//system, so I grudgingly add it.
-		if (bHaveUVWXform)
-		{
-			const ON_2dPoint si = mapping.m_uvw*S[i];
-			u = si.x;
-			v = si.y;
-		}
-		else
-		{
-			u = S[i].x;
-			v = S[i].y;
-		}
+	    u = S[i].x;
+	    v = S[i].y;
 
 	    // (u, v) = known surface parameter
 	    if ( mesh.m_packed_tex_rotate )
@@ -4033,6 +4026,14 @@ bool GetSPTCHelper(
       // are subintervals of (0,1).
 	    u = tex_udom.ParameterAt(a);
 	    v = tex_vdom.ParameterAt(b);
+
+	    // Jussi, Aug 18 2022, RH-69752: Apply uvw transform in texture space
+	    if (bHaveUVWXform)
+	    {
+	      const ON_2dPoint si = mapping.m_uvw * ON_2dPoint(u, v);
+	      u = si.x;
+	      v = si.y;
+	    }
 
 	    tc[0] = (float)u;
 	    tc[1] = (float)v;
@@ -5464,7 +5465,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
         // map and clamp the tcs that hang over.  If the mesh
         // has edges near the texture seam, the picture will
         // still look ok.
-        float f0=0.0f, f1=0.0f, twopitc = (float)two_pi_tc;;
+        float f0=0.0f, f1=0.0f, twopitc = (float)two_pi_tc;
         //int f0cnt=0, f1cnt=0;
         if ( 1 == ftc.quad[0] ) f0 += ftc.Tx[0]; else if ( 4 == ftc.quad[0] ) f1 += twopitc-ftc.Tx[0];
         if ( 1 == ftc.quad[1] ) f0 += ftc.Tx[1]; else if ( 4 == ftc.quad[1] ) f1 += twopitc-ftc.Tx[1];

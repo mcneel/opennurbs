@@ -81,6 +81,7 @@ ON_INC = opennurbs.h \
 	opennurbs_annotationbase.h \
 	opennurbs_arc.h \
 	opennurbs_arccurve.h \
+	opennurbs_archivable_dictionary.h \
 	opennurbs_archive.h \
 	opennurbs_array.h \
 	opennurbs_array_defs.h \
@@ -98,7 +99,6 @@ ON_INC = opennurbs.h \
 	opennurbs_compstat.h \
 	opennurbs_cone.h \
 	opennurbs_crc.h \
-	opennurbs_current_environment.h \
 	opennurbs_curve.h \
 	opennurbs_curveonsurface.h \
 	opennurbs_curveproxy.h \
@@ -243,6 +243,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_annotationbase.cpp \
 	opennurbs_arc.cpp \
 	opennurbs_arccurve.cpp \
+	opennurbs_archivable_dictionary.cpp \
 	opennurbs_archive.cpp \
 	opennurbs_archive_manifest.cpp \
 	opennurbs_array.cpp \
@@ -268,7 +269,6 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_compstat.cpp \
 	opennurbs_cone.cpp \
 	opennurbs_crc.cpp \
-	opennurbs_current_environment.cpp \
 	opennurbs_curve.cpp \
 	opennurbs_curveonsurface.cpp \
 	opennurbs_curveproxy.cpp \
@@ -433,6 +433,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_annotationbase.o \
 	opennurbs_arc.o \
 	opennurbs_arccurve.o \
+	opennurbs_archivable_dictionary.o \
 	opennurbs_archive.o \
 	opennurbs_archive_manifest.o \
 	opennurbs_array.o \
@@ -458,7 +459,6 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_compstat.o \
 	opennurbs_cone.o \
 	opennurbs_crc.o \
-	opennurbs_current_environment.o \
 	opennurbs_curve.o \
 	opennurbs_curveonsurface.o \
 	opennurbs_curveproxy.o \

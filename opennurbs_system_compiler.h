@@ -42,6 +42,20 @@
 //
 */
 
+/*
+// Compilers with a better static_assert declaration
+// may change ON_STATIC_ASSERT accordingly.
+*/
+#if __cpp_static_assert >= 201411L // C++17
+#  define ON_STATIC_ASSERT(expr) static_assert((expr))
+#  define ON_STATIC_ASSERT_MSG(expr, msg) static_assert((expr), msg)
+#elif __cpp_static_assert >= 200410L // C++11
+#  define ON_STATIC_ASSERT(expr) static_assert((expr), #expr)
+#  define ON_STATIC_ASSERT_MSG(expr, msg) static_assert((expr), msg)
+#else
+#  define ON_STATIC_ASSERT(expr) typedef char on_static_assert_t[(expr) != 0]
+#  define ON_STATIC_ASSERT_MSG(expr, msg) typedef char on_static_assert_t[(expr) != 0]
+#endif
 
 /*
 // Compilers that require special declaration of callback functions

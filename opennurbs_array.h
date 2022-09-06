@@ -386,21 +386,23 @@ protected:
 
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned char>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<short>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned short>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<int>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned int>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double>;
 
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned char*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<short*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned short*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<int*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<unsigned int*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double*>;
 
