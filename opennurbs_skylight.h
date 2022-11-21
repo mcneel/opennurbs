@@ -51,7 +51,7 @@ public:
   // Set the skylight shadow intensity. This is unused at present.
   void SetShadowIntensity(double d);
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

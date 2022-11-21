@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -997,7 +994,24 @@ ON_WindowsBitmap& ON_WindowsBitmap::operator=( const BITMAPINFO& src )
   return *this;
 }
 
+
+
+ON_WindowsBitmap::ON_WindowsBitmap( const BITMAPINFO* src )
+{
+  if ( 0 != src )
+  {
+    int color_count = ON_WindowsBitmapHelper_PaletteColorCount(src->bmiHeader.biClrUsed, src->bmiHeader.biBitCount );
+    Create(src,(const unsigned char*)(&src->bmiColors[color_count]),false);
+  }
+}
+
+#endif
+
+#if defined ON_OS_WINDOWS_GDI
 bool ON_WindowsBitmap::Create( const BITMAPINFO* bmi, const unsigned char* bits, bool bCopy )
+#else
+bool ON_WindowsBitmap::Create( const ON_WindowsBITMAPINFO* bmi, const unsigned char* bits, bool bCopy )
+#endif
 {
   Internal_Destroy();
 
@@ -1009,13 +1023,13 @@ bool ON_WindowsBitmap::Create( const BITMAPINFO* bmi, const unsigned char* bits,
 
   if ( 0 != bmi )
   {
-    if ( bCopy ) 
+    if ( bCopy )
     {
       // allocate a contiguous Windows device independent bitmap
       const size_t sizeof_palette = ON_WindowsBitmapHelper_SizeofPalette(bmi->bmiHeader.biClrUsed, bmi->bmiHeader.biBitCount );
       const int sizeof_image   = bmi->bmiHeader.biSizeImage;
       m_bmi = ON_WindowsBitmapHelper_AllocBMI( sizeof_palette, (bCopy?sizeof_image:0) );
-      if ( 0 != m_bmi ) 
+      if ( 0 != m_bmi )
       {
         rc = true;
         m_bFreeBMI = 1; // ~ON_WindowsBitmap will free the m_bmi pointer
@@ -1040,24 +1054,17 @@ bool ON_WindowsBitmap::Create( const BITMAPINFO* bmi, const unsigned char* bits,
     {
       // share BITMAPINFO memory
       rc = true;
+#if defined ON_OS_WINDOWS_GDI
       m_bmi = const_cast<BITMAPINFO*>(bmi);
+#else
+      m_bmi = const_cast<ON_WindowsBITMAPINFO*>(bmi);
+#endif
       m_bits = const_cast<unsigned char*>(bits);
     }
   }
 
   return rc;
 }
-
-ON_WindowsBitmap::ON_WindowsBitmap( const BITMAPINFO* src )
-{
-  if ( 0 != src )
-  {
-    int color_count = ON_WindowsBitmapHelper_PaletteColorCount(src->bmiHeader.biClrUsed, src->bmiHeader.biBitCount );
-    Create(src,(const unsigned char*)(&src->bmiColors[color_count]),false);
-  }
-}
-
-#endif
 
 #if !defined(ON_OS_WINDOWS_GDI)
 bool ON_WindowsBitmap::Create(const struct ON_WindowsBITMAPINFO* src)

@@ -56,6 +56,7 @@ public:
   static BackgroundProjections ProjectionFromString(const wchar_t* proj);
   static const wchar_t* StringFromProjection(BackgroundProjections proj);
 
+protected:
   /** Emergency virtual function for future expansion. */
   virtual void* EVF(const wchar_t* wszFunc, void* pvData);
 
@@ -151,6 +152,7 @@ public:
 
     virtual ON_RenderContent* GetNextChild(void);
 
+  protected:
     /** Emergency virtual function for future expansion. */
     virtual void* EVF(const wchar_t* func, void* data);
 
@@ -228,7 +230,7 @@ public:
   static const ON_RenderContent* FromModelComponentRef(const ON_ModelComponentReference& ref,
                                                        const ON_RenderContent* none_return_value);
 
-public:
+protected:
   /** Emergency virtual function for future expansion. */
   virtual void* EVF(const wchar_t* func, void* data);
 

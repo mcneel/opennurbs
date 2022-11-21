@@ -93,7 +93,7 @@ public:
   // Set the texture rotation of the ground plane in degrees.
   void SetTextureRotation(double d);
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

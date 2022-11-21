@@ -294,14 +294,14 @@ ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& componen
   return mgc->ExclusiveAttributes();
 }
 
-class ONX_Model::Extension final
+class ONX_ModelPrivate final
 {
 public:
-  Extension(ONX_Model& m);
-  ~Extension();
+  ONX_ModelPrivate(ONX_Model& m);
+  ~ONX_ModelPrivate();
 
   using EmbeddedFileMap = std::unordered_map<std::wstring, std::wstring>;
-  
+
   bool GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const;
   ONX_Model_UserData* GetRDKDocumentUserData(int archive_3dm_version) const;
   void PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const;
@@ -319,30 +319,41 @@ public:
 
 public:
   ONX_Model& m_model;
-  ON_ClassArray<ONX_ModelComponentList> m_mcr_lists;
-  ON_XMLRootNode m_doc_node;
-  ON_SafeFrame m_safe_frame;
-  ON_GroundPlane m_ground_plane;
-  ON_LinearWorkflow m_linear_workflow;
-  ON_InternalXMLImpl m_environment_impl;
-  ON_Skylight m_skylight;
-  ON_Sun m_sun;
-  ON_Dithering m_dithering;
-  ON_RenderChannels m_render_channels;
   ON__UINT64 m_model_content_version_number = 0;
+  ON_ClassArray<ONX_Model::ONX_ModelComponentList> m_mcr_lists;
 };
+
+ON_InternalXMLImpl::~ON_InternalXMLImpl()
+{
+  if (nullptr != m_local_node)
+  {
+    delete m_local_node;
+    m_local_node = nullptr;
+  }
+}
 
 ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 {
+  // If the model node pointer is set, return that. This is a pointer to a node owned by the ONX_Model which
+  // contains the entire RDK document XML. This is used by model objects (Ground Plane, etc.) that are owned
+  // by the ONX_Model. In the case of Ground Plane etc, it's a pointer into the ONX_Model's XML.
+  // In the case of decals, it's a pointer into the decal collection's XML.
   if (nullptr != m_model_node)
     return *m_model_node;
 
-  return m_local_node;
+  // Since the model node is not set, we need a local node to hold the XML. If one has not been created yet,
+  // create it. The local node is owned by this object. This case occurs for free-floating copies of model
+  // objects and also for free-floating copies of decals and mesh modifiers. This node only contains the XML
+  // data that's relevant to the object it's for, not the entire XML.
+  if (nullptr == m_local_node)
+    m_local_node = new ON_XMLNode(NameOfRootNode());
+
+  return *m_local_node;
 }
 
-ON_XMLNode& ON_InternalXMLImpl::NodeAt(const wchar_t* path_to_node) const
+ON_wString ON_InternalXMLImpl::NameOfRootNode(void) const
 {
-  return *Node().CreateNodeAtPath(path_to_node);
+  return ON_XMLRootNode().TagName();
 }
 
 ON_XMLVariant ON_InternalXMLImpl::GetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& def) const
@@ -357,10 +368,14 @@ ON_XMLVariant ON_InternalXMLImpl::GetParameter_NoType(const wchar_t* path_to_nod
 
 ON_XMLVariant ON_InternalXMLImpl::InternalGetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const
 {
-  const ON_XMLNode& node = NodeAt(path_to_node);
+  std::lock_guard<std::recursive_mutex> lg(m_mutex);
+
+  const ON_XMLNode* node_read = Node().GetNodeAtPath(path_to_node);
+  if (nullptr == node_read)
+    return def;
 
   ON_XMLVariant value;
-  ON_XMLParameters p(node);
+  ON_XMLParameters p(*node_read);
   p.SetDefaultReadType(default_type);
   if (!p.GetParam(param_name, value))
     return def;
@@ -380,36 +395,33 @@ bool ON_InternalXMLImpl::SetParameter_NoType(const wchar_t* path_to_node, const 
 
 bool ON_InternalXMLImpl::InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value)
 {
-  ON_XMLNode& node = NodeAt(path_to_node);
+  std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  ON_XMLParameters p(node);
-  p.SetWriteTypeProperty(write_type);
-  if (nullptr == p.SetParam(param_name, value))
-    return false;
+  bool success = false;
 
-#ifdef DEBUG_XML
-  auto s = m_local_node.String();
-  if (s.IsNotEmpty())
+  ON_XMLNode* node_write = Node().CreateNodeAtPath(path_to_node);
+  if (nullptr != node_write)
   {
-    OutputDebugString(s);
-    OutputDebugString(L"\n");
+    ON_XMLParameters p(*node_write);
+    p.SetWriteTypeProperty(write_type);
+    if (nullptr != p.SetParam(param_name, value))
+      success = true;
   }
-#endif
 
-  return true;
+  return success;
 }
 
 ONX_Model::ONX_Model()
 {
-  m_extension = new Extension(*this);
+  m_private = new ONX_ModelPrivate(*this);
 }
 
 ONX_Model::~ONX_Model()
 {
   Reset();
 
-  delete m_extension;
-  m_extension = nullptr;
+  delete m_private;
+  m_private = nullptr;
 }
 
 void ONX_Model::Reset()
@@ -426,9 +438,9 @@ void ONX_Model::Reset()
   }
   m_userdata_table.Destroy();
 
-  for (int i = 0; i < m_extension->m_mcr_lists.Count(); i++)
+  for (int i = 0; i < m_private->m_mcr_lists.Count(); i++)
   {
-    ONX_ModelComponentList& list = m_extension->m_mcr_lists[i];
+    ONX_ModelComponentList& list = m_private->m_mcr_lists[i];
 
     ONX_ModelComponentReferenceLink* mcr_link = list.m_first_mcr_link;
     while (nullptr != mcr_link)
@@ -1695,9 +1707,9 @@ ONX_Model::ONX_ModelComponentList& ONX_Model::Internal_ComponentList(
 {
   const int i = static_cast<unsigned int>(component_type);
   return
-    (i < ONX_Model::m_extension->m_mcr_lists.Count())
-    ? m_extension->m_mcr_lists[i]
-    : m_extension->m_mcr_lists[0];
+    (i < ONX_Model::m_private->m_mcr_lists.Count())
+    ? m_private->m_mcr_lists[i]
+    : m_private->m_mcr_lists[0];
 }
 
 const ONX_Model::ONX_ModelComponentList& ONX_Model::Internal_ComponentListConst(
@@ -1706,9 +1718,9 @@ const ONX_Model::ONX_ModelComponentList& ONX_Model::Internal_ComponentListConst(
 {
   const int i = static_cast<unsigned int>(component_type);
   return
-    (i < ONX_Model::m_extension->m_mcr_lists.Count())
-    ? m_extension->m_mcr_lists[i]
-    : m_extension->m_mcr_lists[0];
+    (i < ONX_Model::m_private->m_mcr_lists.Count())
+    ? m_private->m_mcr_lists[i]
+    : m_private->m_mcr_lists[0];
 }
 
 ON_ModelComponentReference ONX_Model::Internal_AddModelComponent(
@@ -1976,7 +1988,7 @@ ON_ModelComponentReference ONX_Model::MaterialFromIndex(
   int material_index
   ) const
 {
-  ON_ModelComponentReference cr = ComponentFromIndex(ON_ModelComponent::Type::RenderMaterial, material_index);
+  ON_ModelComponentReference cr = ComponentFromIndex(ON_ModelComponent::Type::Material, material_index);
   return cr.IsEmpty() ? m_default_render_material : cr;
 }
 
@@ -1984,7 +1996,7 @@ ON_ModelComponentReference ONX_Model::MaterialFromId(
   ON_UUID material_id
   ) const
 {
-  ON_ModelComponentReference cr = ComponentFromId(ON_ModelComponent::Type::RenderMaterial, material_id);
+  ON_ModelComponentReference cr = ComponentFromId(ON_ModelComponent::Type::Material, material_id);
   return cr.IsEmpty() ? m_default_render_material : cr;
 }
 
@@ -2985,7 +2997,7 @@ bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
 
   // Having read the model data, populate the RDK components.
   const int archive_3dm_version = archive.Archive3dmVersion();
-  m_extension->PopulateRDKComponents(archive_3dm_version);
+  m_private->PopulateRDKComponents(archive_3dm_version);
 
   return true;
 }
@@ -3038,7 +3050,7 @@ bool ONX_Model::Write(const wchar_t* filename, int version, ON_TextLog* error_lo
 
 bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_log) const
 {
-  m_extension->UpdateRDKUserData(version);
+  m_private->UpdateRDKUserData(version);
 
   if ( 0 != version )
   {
@@ -3608,12 +3620,12 @@ int ONX_Model::UsesIDef(
 
 ON__UINT64 ONX_Model::ModelContentVersionNumber() const
 {
-  return m_extension->m_model_content_version_number;
+  return m_private->m_model_content_version_number;
 }
 
 void ONX_Model::Internal_IncrementModelContentVersionNumber()
 {
-  m_extension->m_model_content_version_number++;
+  m_private->m_model_content_version_number++;
 }
 
 bool ONX_Model::SetDocumentUserString( const wchar_t* key, const wchar_t* string_value )
@@ -4846,17 +4858,9 @@ static const wchar_t* PostEffectTypeString(ON_PostEffect::Types type)
 
 extern int ON_ComponentManifestImpl_TableCount(void);
 
-ONX_Model::Extension::Extension(ONX_Model& m)
+ONX_ModelPrivate::ONX_ModelPrivate(ONX_Model& m)
   :
-  m_model(m),
-  m_safe_frame(m_doc_node),
-  m_ground_plane(m_doc_node),
-  m_linear_workflow(m_doc_node),
-  m_environment_impl(&m_doc_node),
-  m_skylight(m_doc_node),
-  m_sun(m_doc_node),
-  m_dithering(m_doc_node),
-  m_render_channels(m_doc_node)
+  m_model(m)
 {
   // If this assert fires, you must change the TableCount enum in opennurbs_archive_manifest.cpp
   // to be the same number as ON_ModelComponent::Type::NumOf.
@@ -4864,16 +4868,16 @@ ONX_Model::Extension::Extension(ONX_Model& m)
 
   for (unsigned int i = 0; i < int(ON_ModelComponent::Type::NumOf); i++)
   {
-    ONX_ModelComponentList& list = m_mcr_lists.AppendNew();
+    ONX_Model::ONX_ModelComponentList& list = m_mcr_lists.AppendNew();
     list.m_component_type = ON_ModelComponent::ComponentTypeFromUnsigned(i);
   }
 }
 
-ONX_Model::Extension::~Extension()
+ONX_ModelPrivate::~ONX_ModelPrivate()
 {
 }
 
-ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(int archive_3dm_version) const
+ONX_Model_UserData* ONX_ModelPrivate::GetRDKDocumentUserData(int archive_3dm_version) const
 {
   // Try to find existing RDK document user data.
   for (int i = 0; i < m_model.m_userdata_table.Count(); i++)
@@ -4902,7 +4906,7 @@ ONX_Model_UserData* ONX_Model::Extension::GetRDKDocumentUserData(int archive_3dm
   return ud;
 }
 
-void ONX_Model::Extension::PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const
+void ONX_ModelPrivate::PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const
 {
   // Populate default render content kinds.
   GetRenderContentSectionNode(root, RenderContentKinds::Material);
@@ -4910,7 +4914,7 @@ void ONX_Model::Extension::PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) c
   GetRenderContentSectionNode(root, RenderContentKinds::Texture);
 }
 
-bool ONX_Model::Extension::GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const
+bool ONX_ModelPrivate::GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const
 {
   // Gets the entire RDK document XML as a string in 'xml'. If 'embedded_files' is true,
   // ON_EmbeddedFile objects are created for each embedded file.
@@ -4938,7 +4942,7 @@ static bool ContentIsKind(const ON_RenderContent* pContent, RenderContentKinds k
   return false;
 }
 
-ON_XMLNode* ONX_Model::Extension::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_PostEffect::Types type) const
+ON_XMLNode* ONX_ModelPrivate::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_PostEffect::Types type) const
 {
   ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_POST_EFFECTS  ON_RDK_SLASH;
   s += PostEffectTypeString(type);
@@ -4946,7 +4950,7 @@ ON_XMLNode* ONX_Model::Extension::GetPostEffectSectionNode(ON_XMLNode& docNode, 
   return docNode.CreateNodeAtPath(s);
 }
 
-ON_XMLNode* ONX_Model::Extension::GetRenderContentSectionNode(ON_XMLNode& docNode, RenderContentKinds kind) const
+ON_XMLNode* ONX_ModelPrivate::GetRenderContentSectionNode(ON_XMLNode& docNode, RenderContentKinds kind) const
 {
   ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH;
   s += RenderContentKindString(kind);
@@ -4955,7 +4959,7 @@ ON_XMLNode* ONX_Model::Extension::GetRenderContentSectionNode(ON_XMLNode& docNod
   return docNode.CreateNodeAtPath(s);
 }
 
-bool ONX_Model::Extension::CreateRenderContentFromXML(ON_XMLNode& model_node, RenderContentKinds kind)
+bool ONX_ModelPrivate::CreateRenderContentFromXML(ON_XMLNode& model_node, RenderContentKinds kind)
 {
   const ON_XMLNode* rc_section_node = GetRenderContentSectionNode(model_node, kind);
   if (nullptr == rc_section_node)
@@ -4985,7 +4989,7 @@ bool ONX_Model::Extension::CreateRenderContentFromXML(ON_XMLNode& model_node, Re
   return true;
 }
 
-bool ONX_Model::Extension::CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const
+bool ONX_ModelPrivate::CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const
 {
   ON_XMLNode* rc_section_node = GetRenderContentSectionNode(model_node, kind);
   if (nullptr == rc_section_node)
@@ -5012,7 +5016,7 @@ bool ONX_Model::Extension::CreateXMLFromRenderContent(ON_XMLNode& model_node, Re
   return true;
 }
 
-bool ONX_Model::Extension::CreatePostEffectsFromXML(ON_XMLNode& doc_root_node, ON_PostEffect::Types type)
+bool ONX_ModelPrivate::CreatePostEffectsFromXML(ON_XMLNode& doc_root_node, ON_PostEffect::Types type)
 {
   ON_XMLNode* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
   if (nullptr == pep_section_node)
@@ -5037,7 +5041,7 @@ bool ONX_Model::Extension::CreatePostEffectsFromXML(ON_XMLNode& doc_root_node, O
   return true;
 }
 
-bool ONX_Model::Extension::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, ON_PostEffect::Types type) const
+bool ONX_ModelPrivate::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, ON_PostEffect::Types type) const
 {
   ON_XMLNode* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
   if (nullptr == pep_section_node)
@@ -5063,7 +5067,7 @@ bool ONX_Model::Extension::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, O
   return true;
 }
 
-bool ONX_Model::Extension::PopulateRDKComponents(int archive_3dm_version)
+bool ONX_ModelPrivate::PopulateRDKComponents(int archive_3dm_version)
 {
   // Get the entire RDK document XML. This includes not only render contents
   // but also Sun, GroundPlane and other RDK document data. Ignore embedded files.
@@ -5071,23 +5075,21 @@ bool ONX_Model::Extension::PopulateRDKComponents(int archive_3dm_version)
   if (!GetRDKDocumentXML(xml, true, archive_3dm_version))
     return false;
 
-  // Read the entire XML into m_doc_node.
-  const auto read = m_doc_node.ReadFromStream(xml, false, true);
+  // Read the entire XML into the document node.
+  ON_XMLNode& doc_node = m_model.m_settings.m_RenderSettings.RdkDocNode();
+  const auto read = doc_node.ReadFromStream(xml, false, true);
   if (ON_XMLNode::ReadError == read)
     return false;
 
   // Create the render contents from the relevant nodes.
-  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Material);
-  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Environment);
-  CreateRenderContentFromXML(m_doc_node, RenderContentKinds::Texture);
+  CreateRenderContentFromXML(doc_node, RenderContentKinds::Material);
+  CreateRenderContentFromXML(doc_node, RenderContentKinds::Environment);
+  CreateRenderContentFromXML(doc_node, RenderContentKinds::Texture);
 
   // Create the post effects from the relevant nodes.
-  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::Early);
-  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::ToneMapping);
-  CreatePostEffectsFromXML(m_doc_node, ON_PostEffect::Types::Late);
-
-  // Create the decal collection.
-  CreateDecalsFromXML(m_model, archive_3dm_version);
+  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::Early);
+  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::ToneMapping);
+  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::Late);
 
   // Create the mesh modifiers.
   CreateMeshModifiersFromXML(m_model, archive_3dm_version);
@@ -5095,23 +5097,22 @@ bool ONX_Model::Extension::PopulateRDKComponents(int archive_3dm_version)
   return true;
 }
 
-bool ONX_Model::Extension::UpdateRDKUserData(int archive_3dm_version)
+bool ONX_ModelPrivate::UpdateRDKUserData(int archive_3dm_version)
 {
   if (0 == archive_3dm_version)
     archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
 
+  ON_XMLNode& doc_node = m_model.m_settings.m_RenderSettings.RdkDocNode();
+
   // For each kind, convert the render content hierarchy to fresh XML.
-  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Material);
-  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Environment);
-  CreateXMLFromRenderContent(m_doc_node, RenderContentKinds::Texture);
+  CreateXMLFromRenderContent(doc_node, RenderContentKinds::Material);
+  CreateXMLFromRenderContent(doc_node, RenderContentKinds::Environment);
+  CreateXMLFromRenderContent(doc_node, RenderContentKinds::Texture);
 
   // For each type, convert the post effects to fresh XML.
-  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::Early);
-  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::ToneMapping);
-  CreateXMLFromPostEffects(m_doc_node, ON_PostEffect::Types::Late);
-
-  // Convert the decal collection to fresh XML.
-  CreateXMLFromDecals(m_model, archive_3dm_version);
+  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::Early);
+  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::ToneMapping);
+  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::Late);
 
   // Convert the mesh modifier collection to fresh XML.
   CreateXMLFromMeshModifiers(m_model, archive_3dm_version);
@@ -5122,132 +5123,11 @@ bool ONX_Model::Extension::UpdateRDKUserData(int archive_3dm_version)
     return false; // Shouldn't happen because we were able to get the XML earlier.
 
   // Get the entire document XML as a string and set it to the user data.
-  ON_wString xml = m_doc_node.String();
+  ON_wString xml = doc_node.String();
   pUserData->m_usertable_3dm_version = archive_3dm_version;
   SetRDKDocumentInformation(xml, *pUserData, archive_3dm_version);
 
   return true;
-}
-
-ON_SafeFrame& ONX_Model::SafeFrame(void) const
-{
-  return m_extension->m_safe_frame;
-}
-
-ON_GroundPlane& ONX_Model::GroundPlane(void) const
-{
-  return m_extension->m_ground_plane;
-}
-
-ON_LinearWorkflow& ONX_Model::LinearWorkflow(void) const
-{
-  return m_extension->m_linear_workflow;
-}
-
-// This is inside the 'current content' section.
-#define ON_RENDER_BACKGROUND_ENVIRONMENT              L"environment"
-
-// These are inside the 'rendering' section.
-#define ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON    L"custom-env-for-refl-and-refr-on"
-#define ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT       L"custom-env-for-refl-and-refr"
-
-// These are inside the 'sun' section.
-#define ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON  L"skylight-custom-environment-on"
-#define ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT     L"skylight-custom-environment"
-
-static const wchar_t* XMLPathBack360(void) // Not used for 'override'.
-{
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_CURRENT_CONTENT;
-}
-
-static const wchar_t* XMLPathReflRefr(void)
-{
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
-}
-
-static const wchar_t* XMLPathSkylight(void)
-{
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
-}
-
-ON_UUID ONX_Model::BackgroundRenderEnvironment(void) const
-{
-  const wchar_t* s = ON_RENDER_BACKGROUND_ENVIRONMENT;
-  return m_extension->m_environment_impl.GetParameter_NoType(XMLPathBack360(), s, L"uuid", ON_nil_uuid).AsUuid();
-}
-
-void ONX_Model::SetBackgroundRenderEnvironment(const ON_UUID& id)
-{
-  const wchar_t* s = ON_RENDER_BACKGROUND_ENVIRONMENT;
-  m_extension->m_environment_impl.SetParameter_NoType(XMLPathBack360(), s, id);
-}
-
-bool ONX_Model::SkylightingRenderEnvironmentOverride(void) const
-{
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON;
-  return m_extension->m_environment_impl.GetParameter(XMLPathSkylight(), s, false);
-}
-
-void ONX_Model::SetSkylightingRenderEnvironmentOverride(bool on)
-{
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON;
-  m_extension->m_environment_impl.SetParameter(XMLPathSkylight(), s, on);
-}
-
-ON_UUID ONX_Model::SkylightingRenderEnvironment(void) const
-{
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT;
-  return m_extension->m_environment_impl.GetParameter_NoType(XMLPathSkylight(), s, L"uuid", ON_nil_uuid).AsUuid();
-}
-
-void ONX_Model::SetSkylightingRenderEnvironment(const ON_UUID& id)
-{
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT;
-  m_extension->m_environment_impl.SetParameter_NoType(XMLPathSkylight(), s, id);
-}
-
-bool ONX_Model::ReflectionRenderEnvironmentOverride(void) const
-{
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON;
-  return m_extension->m_environment_impl.GetParameter(XMLPathReflRefr(), s, false);
-}
-
-void ONX_Model::SetReflectionRenderEnvironmentOverride(bool on)
-{
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON;
-  m_extension->m_environment_impl.SetParameter(XMLPathReflRefr(), s, on);
-}
-
-ON_UUID ONX_Model::ReflectionRenderEnvironment(void) const
-{
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT;
-  return m_extension->m_environment_impl.GetParameter_NoType(XMLPathReflRefr(), s, L"uuid", ON_nil_uuid).AsUuid();
-}
-
-void ONX_Model::SetReflectionRenderEnvironment(const ON_UUID& id)
-{
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT;
-  m_extension->m_environment_impl.SetParameter_NoType(XMLPathReflRefr(), s, id);
-}
-
-ON_Skylight& ONX_Model::Skylight(void) const
-{
-  return m_extension->m_skylight;
-}
-
-ON_Sun& ONX_Model::Sun(void) const
-{
-  return m_extension->m_sun;
-}
-
-ON_Dithering& ONX_Model::Dithering(void) const
-{
-  return m_extension->m_dithering;
-}
-
-ON_RenderChannels& ONX_Model::RenderChannels(void) const
-{
-  return m_extension->m_render_channels;
 }
 
 bool IsRDKDocumentInformation(const ONX_Model_UserData& docud)
@@ -5282,7 +5162,7 @@ bool ONX_Model::GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArr
 
 bool ONX_Model::GetRDKDocumentInformation(const ONX_Model_UserData& docud, ON_wString& xml) // Static.
 {
-  return Extension::GetEntireRDKDocument(docud, xml, nullptr);
+  return ONX_ModelPrivate::GetEntireRDKDocument(docud, xml, nullptr);
 }
 
 static int SeekArchiveToEmbeddedFiles(ON_Read3dmBufferArchive& archive, int goo_length)
@@ -5499,7 +5379,7 @@ bool ONX_Model::GetRDKEmbeddedFile(const ONX_Model_UserData& docud, const wchar_
   return found;
 }
 
-void ONX_Model::Extension::RemoveAllEmbeddedFiles(ONX_Model& model)
+void ONX_ModelPrivate::RemoveAllEmbeddedFiles(ONX_Model& model)
 {
   ON_SimpleArray<ON_UUID> a;
   const auto type = ON_ModelComponent::Type::EmbeddedFile;
@@ -5519,7 +5399,7 @@ void ONX_Model::Extension::RemoveAllEmbeddedFiles(ONX_Model& model)
   }
 }
 
-bool ONX_Model::Extension::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_wString& xml, ONX_Model* model) // Static.
+bool ONX_ModelPrivate::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_wString& xml, ONX_Model* model) // Static.
 {
   if (!::IsRDKDocumentInformation(docud))
     return false;
@@ -5603,7 +5483,7 @@ bool ONX_Model::Extension::GetEntireRDKDocument(const ONX_Model_UserData& docud,
   return xml.Length() > 0;
 }
 
-bool ONX_Model::Extension::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud, int archive_3dm_version) const
+bool ONX_ModelPrivate::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud, int archive_3dm_version) const
 {
   ON_Write3dmBufferArchive archive(0, 0, docud.m_usertable_3dm_version, docud.m_usertable_opennurbs_version);
 
@@ -5697,7 +5577,7 @@ bool ONX_Model::IsRDKObjectInformation(const ON_UserData& objectud) // Static.
   return nullptr != RDKObjectUserDataHelper(&objectud);
 }
 
-bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf, int archive_3dm_version)
+static bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf, int archive_3dm_version)
 {
   const auto archive_opennurbs_version_number = ON::Version(); // I don't know if this is correct.
 
@@ -5790,8 +5670,11 @@ bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml, int archi
   return true;
 }
 
-bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version) // Static.
+static bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version)
 {
+  if (0 == archive_3dm_version)
+    archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
+
   xml.SetLength(0);
 
   const ON_UserData* rdk_ud = nullptr;
@@ -5880,6 +5763,20 @@ bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archi
   }
 
   return xml.Length() > 0;
+}
+
+bool GetEntireDecalXML(const ON_3dmObjectAttributes& attr, ON_XMLRootNode& xmlOut)
+{
+  // Get the entire XML off of the attributes user data. At the moment (V8) this can only contain decals.
+  ON_wString xml;
+  if (!GetRDKObjectInformation(attr, xml, 0))
+    return false;  // No XML on attributes.
+
+  // Read the XML into a root node.
+  if (ON_XMLNode::ReadError == xmlOut.ReadFromStream(xml))
+    return false; // Failed to read XML.
+
+  return true;
 }
 
 static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml, int archive_3dm_version)
@@ -6026,9 +5923,10 @@ static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uu
   {
     new_ud->SetToDefaults(); // This doesn't work because the XML gets overwritten by the cached XML.
     // In fact, having cached XML in this and decals is the reason why the systems are wrong.
-    // I'm about to fix the decals to not have cached XML and directly use the user data. After
-    // that I'll do the same for mesh modifiers. Then, this should work because there is no longer
-    // an XML cache to overwrite the new defaults in the user data's XML.
+    // NO! LIGHT BULB MOMENT says that's not why it's wrong. Something else is wrong here.
+    // I'm about to fix the decals to not have cached XML and directly use the user data. NO! After
+    // that I'll do the same for mesh modifiers. NO! Then, this should work because there is no longer
+    // an XML cache to overwrite the new defaults in the user data's XML. NO!
 
     if (!object.AttachUserData(new_ud))
     {
@@ -6040,17 +5938,13 @@ static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uu
   return new_ud;
 }
 
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, const ON_XMLNode& node, int archive_3dm_version, const wchar_t* mm_node_name)
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version)
 {
   if (nullptr == mm)
-    return; // Don't create user data for non-existent mesh modifiers.
-
-  const ON_XMLNode* mm_node = node.GetNamedChild(mm_node_name);
-  if (nullptr == mm_node)
-    return; // Don't create user data for non-existent mesh modifier.
+    return; // Can't create user data for non-existent mesh modifiers.
 
   ON_XMLRootNode root;
-  root.AttachChildNode(new ON_XMLNode(*mm_node));
+  mm->AddChildXML(root);
 
   ON_UserData* ud = GetMeshModifierUserData(object, mm->Uuid());
   if (nullptr != ud)

@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,7 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
+
 #include "opennurbs.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
@@ -65,6 +63,8 @@ unsigned int ON_IsOpennurbsApplicationId(
     return 6;
   if (ON_opennurbs7_id == id)
     return 7;
+  if (ON_opennurbs8_id == id)
+    return 8;
   return 0;
 }
 

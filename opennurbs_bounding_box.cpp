@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -1924,6 +1921,17 @@ bool ON_BoundingBox::Expand(ON_3dVector delta)
 {
   m_min -= delta;
   m_max += delta;
+  return IsValid();
+}
+
+bool ON_BoundingBox::Shrink(ON_3dVector delta)
+{
+  m_min += delta;
+  m_max -= delta;
+  if (m_max.x < m_min.x) m_max.x = m_min.x = (m_max.x + m_min.x) * 0.5;
+  if (m_max.y < m_min.y) m_max.y = m_min.y = (m_max.y + m_min.y) * 0.5;
+  if (m_max.z < m_min.z) m_max.z = m_min.z = (m_max.z + m_min.z) * 0.5;
+
   return IsValid();
 }
 

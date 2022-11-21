@@ -1,4 +1,3 @@
-/*
 //
 // Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -11,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_DITHERING_INC_)
 #define ON_DITHERING_INC_
@@ -21,13 +19,13 @@ class ON_CLASS ON_Dithering final
 public:
   ON_Dithering();
   ON_Dithering(ON_XMLNode& model_node);
-  ON_Dithering(const ON_Dithering& lw);
+  ON_Dithering(const ON_Dithering& dit);
   ~ON_Dithering();
 
-  const ON_Dithering& operator = (const ON_Dithering& lw);
+  const ON_Dithering& operator = (const ON_Dithering& dit);
 
-  bool operator == (const ON_Dithering& lw);
-  bool operator != (const ON_Dithering& lw);
+  bool operator == (const ON_Dithering& dit);
+  bool operator != (const ON_Dithering& dit);
 
   // Get dithering on / off state.
   bool On(void) const;
@@ -46,7 +44,7 @@ public:
   // Returns the CRC of the dithering state.
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

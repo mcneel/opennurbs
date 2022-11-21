@@ -1364,9 +1364,9 @@ private:
     bool bUpdateComponentIdentification
     );
 
-public:
-  class Extension;
-  Extension* m_extension;
+private: // Private extension.
+  friend class ONX_ModelPrivate;
+  class ONX_ModelPrivate* m_private;
 
 private:
   void Internal_IncrementModelContentVersionNumber();
@@ -1589,43 +1589,6 @@ public:
   //
   // BEGIN Rendering information
   //
-
-  // Safe Frame.
-  ON_SafeFrame& SafeFrame(void) const;
-
-  // Ground Plane.
-  ON_GroundPlane& GroundPlane(void) const;
-
-  // Linear Workflow.
-  ON_LinearWorkflow& LinearWorkflow(void) const;
-
-  // Background rendering environment.
-  ON_UUID BackgroundRenderEnvironment(void) const;
-  void SetBackgroundRenderEnvironment(const ON_UUID& id);
-
-  // Skylighting rendering environment.
-  bool SkylightingRenderEnvironmentOverride(void) const;
-  void SetSkylightingRenderEnvironmentOverride(bool on);
-  ON_UUID SkylightingRenderEnvironment(void) const;
-  void SetSkylightingRenderEnvironment(const ON_UUID& id);
-
-  // Reflection / refraction rendering environment.
-  bool ReflectionRenderEnvironmentOverride(void) const;
-  void SetReflectionRenderEnvironmentOverride(bool on);
-  ON_UUID ReflectionRenderEnvironment(void) const;
-  void SetReflectionRenderEnvironment(const ON_UUID& id);
-
-  // Skylight.
-  ON_Skylight& Skylight(void) const;
-
-  // Sun.
-  ON_Sun& Sun(void) const;
-
-  // Dithering.
-  ON_Dithering& Dithering(void) const;
-
-  // Render Channels.
-  ON_RenderChannels& RenderChannels(void) const;
 
   ON_DEPRECATED_MSG("This function is deprecated.")
   static bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);

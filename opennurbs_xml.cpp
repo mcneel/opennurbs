@@ -77,20 +77,15 @@ std::atomic<long> g_lPropertyCount(-1); // defaultProp below increments this to 
 
 static const wchar_t* wszBase64Prefix = L"base64:";
 
-void SleepMS(int ms)
-{
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
 #ifdef ON_COMPILER_MSC
 static _locale_t __Locale(void)
 {
-	static _locale_t loc = nullptr;
+  static _locale_t loc = nullptr;
 
-	if (nullptr == loc)
-		loc = _create_locale(LC_ALL, "C");
+  if (nullptr == loc)
+    loc = _create_locale(LC_ALL, "C");
 
-	return loc;
+  return loc;
 }
 
 inline double ON_wtof(const wchar_t* s) { return _wtof_l(s, __Locale()); }
@@ -100,67 +95,67 @@ inline double ON_wtof(const wchar_t* s) { return wcstod(s, nullptr); }
 inline int    ON_wtoi(const wchar_t* s) { return (int)wcstol(s, nullptr, 10); }
 #endif
 
-const wchar_t* ON_StringFromUnits(ON::LengthUnitSystem units)
+static const wchar_t* StringFromUnits(ON::LengthUnitSystem units)
 {
-	// These strings appear in the XML -- do not change them.
+  // These strings appear in the XML -- do not change them.
 
-	switch (units)
-	{
-	case ON::LengthUnitSystem::Angstroms:         return L"angstroms";
-	case ON::LengthUnitSystem::AstronomicalUnits: return L"astronomical";
-	case ON::LengthUnitSystem::Centimeters:       return L"centimeters";
-	case ON::LengthUnitSystem::Decimeters:        return L"decimeters";
-	case ON::LengthUnitSystem::Dekameters:        return L"dekameters";
-	case ON::LengthUnitSystem::Feet:              return L"feet";
-	case ON::LengthUnitSystem::Gigameters:        return L"gigameters";
-	case ON::LengthUnitSystem::Hectometers:       return L"hectometers";
-	case ON::LengthUnitSystem::Inches:            return L"inches";
-	case ON::LengthUnitSystem::Kilometers:        return L"kilometers";
-	case ON::LengthUnitSystem::LightYears:        return L"lightyears";
-	case ON::LengthUnitSystem::Megameters:        return L"megameters";
-	case ON::LengthUnitSystem::Meters:            return L"meters";
-	case ON::LengthUnitSystem::Microinches:       return L"microinches";
-	case ON::LengthUnitSystem::Microns:           return L"microns";
-	case ON::LengthUnitSystem::Miles:             return L"miles";
-	case ON::LengthUnitSystem::Millimeters:       return L"millimeters";
-	case ON::LengthUnitSystem::Mils:              return L"mils";
-	case ON::LengthUnitSystem::Nanometers:        return L"nanometers";
-	case ON::LengthUnitSystem::NauticalMiles:     return L"nautical-miles";
-	case ON::LengthUnitSystem::Parsecs:           return L"parsecs";
-	case ON::LengthUnitSystem::Yards:             return L"yards";
+  switch (units)
+  {
+  case ON::LengthUnitSystem::Angstroms:         return L"angstroms";
+  case ON::LengthUnitSystem::AstronomicalUnits: return L"astronomical";
+  case ON::LengthUnitSystem::Centimeters:       return L"centimeters";
+  case ON::LengthUnitSystem::Decimeters:        return L"decimeters";
+  case ON::LengthUnitSystem::Dekameters:        return L"dekameters";
+  case ON::LengthUnitSystem::Feet:              return L"feet";
+  case ON::LengthUnitSystem::Gigameters:        return L"gigameters";
+  case ON::LengthUnitSystem::Hectometers:       return L"hectometers";
+  case ON::LengthUnitSystem::Inches:            return L"inches";
+  case ON::LengthUnitSystem::Kilometers:        return L"kilometers";
+  case ON::LengthUnitSystem::LightYears:        return L"lightyears";
+  case ON::LengthUnitSystem::Megameters:        return L"megameters";
+  case ON::LengthUnitSystem::Meters:            return L"meters";
+  case ON::LengthUnitSystem::Microinches:       return L"microinches";
+  case ON::LengthUnitSystem::Microns:           return L"microns";
+  case ON::LengthUnitSystem::Miles:             return L"miles";
+  case ON::LengthUnitSystem::Millimeters:       return L"millimeters";
+  case ON::LengthUnitSystem::Mils:              return L"mils";
+  case ON::LengthUnitSystem::Nanometers:        return L"nanometers";
+  case ON::LengthUnitSystem::NauticalMiles:     return L"nautical-miles";
+  case ON::LengthUnitSystem::Parsecs:           return L"parsecs";
+  case ON::LengthUnitSystem::Yards:             return L"yards";
     default:
         break;
-	}
+  }
 
-	return L"none";
+  return L"none";
 }
 
-ON::LengthUnitSystem ON_UnitsFromString(const ON_wString& s)
+static ON::LengthUnitSystem UnitsFromString(const ON_wString& s)
 {
-	if (L"angstroms" == s)       return ON::LengthUnitSystem::Angstroms;
-	if (L"astronomical" == s)    return ON::LengthUnitSystem::AstronomicalUnits;
-	if (L"centimeters" == s)     return ON::LengthUnitSystem::Centimeters;
-	if (L"decimeters" == s)      return ON::LengthUnitSystem::Decimeters;
-	if (L"dekameters" == s)      return ON::LengthUnitSystem::Dekameters;
-	if (L"feet" == s)            return ON::LengthUnitSystem::Feet;
-	if (L"gigameters" == s)      return ON::LengthUnitSystem::Gigameters;
-	if (L"hectometers" == s)     return ON::LengthUnitSystem::Hectometers;
-	if (L"inches" == s)          return ON::LengthUnitSystem::Inches;
-	if (L"kilometers" == s)      return ON::LengthUnitSystem::Kilometers;
-	if (L"lightyears" == s)      return ON::LengthUnitSystem::LightYears;
-	if (L"megameters" == s)      return ON::LengthUnitSystem::Megameters;
-	if (L"meters" == s)          return ON::LengthUnitSystem::Meters;
-	if (L"microinches" == s)     return ON::LengthUnitSystem::Microinches;
-	if (L"microns" == s)         return ON::LengthUnitSystem::Microns;
-	if (L"miles" == s)           return ON::LengthUnitSystem::Miles;
-	if (L"millimeters" == s)     return ON::LengthUnitSystem::Millimeters;
-	if (L"mils" == s)            return ON::LengthUnitSystem::Mils;
-	if (L"nanometers" == s)      return ON::LengthUnitSystem::Nanometers;
-	if (L"nautical-miles" == s)  return ON::LengthUnitSystem::NauticalMiles;
-	if (L"parsecs" == s)         return ON::LengthUnitSystem::Parsecs;
-	if (L"yards" == s)           return ON::LengthUnitSystem::Yards;
+  if (L"angstroms" == s)       return ON::LengthUnitSystem::Angstroms;
+  if (L"astronomical" == s)    return ON::LengthUnitSystem::AstronomicalUnits;
+  if (L"centimeters" == s)     return ON::LengthUnitSystem::Centimeters;
+  if (L"decimeters" == s)      return ON::LengthUnitSystem::Decimeters;
+  if (L"dekameters" == s)      return ON::LengthUnitSystem::Dekameters;
+  if (L"feet" == s)            return ON::LengthUnitSystem::Feet;
+  if (L"gigameters" == s)      return ON::LengthUnitSystem::Gigameters;
+  if (L"hectometers" == s)     return ON::LengthUnitSystem::Hectometers;
+  if (L"inches" == s)          return ON::LengthUnitSystem::Inches;
+  if (L"kilometers" == s)      return ON::LengthUnitSystem::Kilometers;
+  if (L"lightyears" == s)      return ON::LengthUnitSystem::LightYears;
+  if (L"megameters" == s)      return ON::LengthUnitSystem::Megameters;
+  if (L"meters" == s)          return ON::LengthUnitSystem::Meters;
+  if (L"microinches" == s)     return ON::LengthUnitSystem::Microinches;
+  if (L"microns" == s)         return ON::LengthUnitSystem::Microns;
+  if (L"miles" == s)           return ON::LengthUnitSystem::Miles;
+  if (L"millimeters" == s)     return ON::LengthUnitSystem::Millimeters;
+  if (L"mils" == s)            return ON::LengthUnitSystem::Mils;
+  if (L"nanometers" == s)      return ON::LengthUnitSystem::Nanometers;
+  if (L"nautical-miles" == s)  return ON::LengthUnitSystem::NauticalMiles;
+  if (L"parsecs" == s)         return ON::LengthUnitSystem::Parsecs;
+  if (L"yards" == s)           return ON::LengthUnitSystem::Yards;
 
-	return ON::LengthUnitSystem::None;
+  return ON::LengthUnitSystem::None;
 }
 
 static void EncodeXML(ON_wString& s)
@@ -180,510 +175,6 @@ static void DecodeXML(ON_wString& s)
   {
     s = s.DecodeXMLValue();
   }
-}
-
-// ON_UnicodeTextFile
-
-class ON_File
-{
-public:
-  virtual ~ON_File() { }
-
-  bool Open(const wchar_t* filename, const wchar_t* mode) { m_pFile = ON_FileStream::Open(filename, mode); return nullptr != m_pFile; }
-  bool Close(void)                                       const { return ON_FileStream::Close(m_pFile) == 0; }
-  bool SeekFromCurrentPosition(ON__INT64 offset)         const { return ON_FileStream::SeekFromCurrentPosition(m_pFile, offset); }
-  bool SeekFromStart(ON__INT64 offset)                   const { return ON_FileStream::SeekFromStart(m_pFile, offset); }
-  bool SeekFromEnd(ON__INT64 offset)                     const { return ON_FileStream::SeekFromEnd(m_pFile, offset); }
-  bool Seek(ON__INT64 offset, int origin)                const { return ON_FileStream::Seek(m_pFile, offset, origin); }
-  ON__INT64  CurrentPosition(void)                       const { return ON_FileStream::CurrentPosition(m_pFile); }
-  ON__UINT64 Read(ON__UINT64 count, void* buffer)        const { return ON_FileStream::Read(m_pFile, count, buffer); }
-  ON__UINT64 Write(ON__UINT64 count, const void* buffer) const { return ON_FileStream::Write(m_pFile, count, buffer); }
-
-  ON__UINT64 GetLength(void) const
-  {
-    const auto cur = CurrentPosition();
-    SeekFromEnd(0);
-    const auto end = CurrentPosition();
-    SeekFromStart(cur);
-
-    return end;
-  }
-
-private:
-  FILE* m_pFile = nullptr;
-};
-
-class ON_UnicodeTextFile::CImpl final
-{
-public:
-  ~CImpl() { Close(); }
-
-  bool Open(const wchar_t* wszFullPath, Modes mode);
-  bool Close(void);
-  bool ReadString(ON_wString& s);
-  bool WriteString(const wchar_t* wsz);
-  bool ReadHeader(Types& t);
-  bool WriteHeader(void);
-  bool ReadStringFromUTF8(ON_wString& s);
-  bool ReadStringFromUTF16(ON_wString& s);
-  bool WriteStringToUTF8(const wchar_t* wsz);
-  bool WriteStringToUTF16(const wchar_t* wsz);
-  size_t ReadData(void* buf, size_t bytes_to_read);
-  size_t WriteData(const void* buf, size_t bytes_to_write);
-
-public:
-  ON_File m_File;
-  Types m_Type = Types::Unknown;
-};
-
-size_t ON_UnicodeTextFile::CImpl::ReadData(void* buf, size_t bytes_to_read)
-{
-  return m_File.Read(bytes_to_read, buf);
-}
-
-size_t ON_UnicodeTextFile::CImpl::WriteData(const void* buf, size_t bytes_to_write)
-{
-  return m_File.Write(bytes_to_write, buf);
-}
-
-static const wchar_t* FileStreamMode(ON_UnicodeTextFile::Modes m)
-{
-  if (m == ON_UnicodeTextFile::Modes::Load)
-    return L"rb";
-
-  if (m == ON_UnicodeTextFile::Modes::Save)
-    return L"wb";
-
-  ON_ASSERT(false);
-  return L"";
-}
-
-bool ON_UnicodeTextFile::CImpl::Open(const wchar_t* wszFullPath, Modes mode)
-{
-  bool ok = false;
-  int attemptsCounter = 0;
-
-  while (!ok && (attemptsCounter < 100))
-  {
-    if (m_File.Open(wszFullPath, FileStreamMode(mode)))
-    {
-      ok = true;
-    }
-    else
-    {
-      SleepMS(100);
-
-      attemptsCounter++;
-    }
-  }
-
-  if (ok)
-  {
-    if (Modes::Save == mode)
-    {
-      ok = WriteHeader();
-    }
-    else
-    {
-      ok = ReadHeader(m_Type);
-    }
-  }
-
-  return ok;
-}
-
-bool ON_UnicodeTextFile::CImpl::Close(void)
-{
-  return m_File.Close();
-}
-
-bool ON_UnicodeTextFile::CImpl::ReadHeader(Types& t)
-{
-  if (0 != m_File.CurrentPosition())
-    return false;
-
-  ON__UINT8 pBuf[3] = { 0 };
-
-  if (2 != ReadData(pBuf, 2))
-    return false;
-
-  if (pBuf[0] == ON__UINT8(0xFF))
-  {
-    if (pBuf[1] == ON__UINT8(0xFE))
-    {
-      t = Types::UTF16;
-      return true;
-    }
-  }
-
-  if (pBuf[0] == ON__UINT8(0xEF))
-  {
-    if (pBuf[1] == ON__UINT8(0xBB))
-    {
-      if (1 == ReadData(pBuf + 2, 1))
-      {
-        if (pBuf[2] == ON__UINT8(0xBF))
-        {
-          t = Types::UTF8;
-          return true;
-        }
-      }
-    }
-  }
-
-  // No BOM was found so rewind and assume UTF8. This allows testing with ASCII files.
-  m_File.SeekFromStart(0);
-  t = Types::UTF8;
-
-  return true;
-}
-
-bool ON_UnicodeTextFile::CImpl::WriteHeader(void)
-{
-  ON__UINT8 pBuf[3] = { 0 };
-
-  size_t sizeBOM = 2;
-  if (Types::UTF8 == m_Type)
-  {
-    sizeBOM = 3;
-    pBuf[0] = ON__UINT8(0xEF);
-    pBuf[1] = ON__UINT8(0xBB);
-    pBuf[2] = ON__UINT8(0xBF);
-  }
-  else
-  if (Types::UTF16 == m_Type)
-  {
-    pBuf[0] = ON__UINT8(0xFF);
-    pBuf[1] = ON__UINT8(0xFE);
-  }
-  else ON_ASSERT(false); // Did you forget to set the type in the constructor?
-
-  if (!WriteData(pBuf, sizeBOM))
-    return false;
-
-  return true;
-}
-
-bool ON_UnicodeTextFile::CImpl::ReadString(ON_wString& s)
-{
-  switch (m_Type)
-  {
-  case Types::UTF8:
-    return ReadStringFromUTF8(s);
-
-  case Types::UTF16:
-    return ReadStringFromUTF16(s);
-          
-  case Types::Unknown:
-  default:
-    return false;
-  }
-}
-
-bool ON_UnicodeTextFile::CImpl::WriteString(const wchar_t* wsz)
-{
-  switch (m_Type)
-  {
-  case Types::UTF8:
-    return WriteStringToUTF8(wsz);
-
-  case Types::UTF16:
-    return WriteStringToUTF16(wsz);
-          
-  case Types::Unknown:
-  default:
-    return false;
-  }
-}
-
-bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF8(ON_wString& s)
-{
-  const auto size_in_bytes = m_File.GetLength() - m_File.CurrentPosition();
-  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[size_in_bytes + 1]);
-  auto* pBuffer = p.get();
-
-  ReadData(pBuffer, size_in_bytes);
-  pBuffer[size_in_bytes] = 0;
-
-  const char* pUTF8 = reinterpret_cast<const char*>(pBuffer);
-
-  const auto num_chars = ON_ConvertUTF8ToWideChar(false, pUTF8, -1, nullptr, 0, nullptr, 0, 0, nullptr);
-
-  auto* string_buf = s.SetLength(num_chars);
-  if (nullptr == string_buf)
-    return false;
-
-  ON_ConvertUTF8ToWideChar(false, pUTF8, -1, string_buf, num_chars+1, nullptr, 0, 0, nullptr);
-
-  return !s.IsEmpty();
-}
-
-bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF16(ON_wString& s)
-{
-  const auto char_size = sizeof(ON__UINT16);
-  const auto size_in_bytes = m_File.GetLength() - m_File.CurrentPosition();
-  const auto size_in_chars = size_in_bytes / char_size;
-
-#ifdef ON_RUNTIME_WIN
-  // On Windows, wchar_t is UTF16 so we can load the file directly into the ON_wString.
-  ON_ASSERT(sizeof(wchar_t) == sizeof(ON__UINT16));
-
-  auto* buf = s.SetLength(size_in_chars);
-  if (nullptr == buf)
-    return false;
-
-  if (ReadData(buf, size_in_bytes) != size_in_bytes)
-    return false;
-
-  buf[size_in_chars] = 0;
-#else
-  // On Mac wchar_t is UTF32 so we have to load the file into a buffer and then convert it to the ON_wString.
-  auto p = std::unique_ptr<ON__UINT16[]>(new ON__UINT16[size_in_chars + 1]);
-  auto* pUTF16 = p.get();
-  ReadData(pUTF16, size_in_bytes);
-  pUTF16[size_in_chars] = 0;
-
-  const auto num_chars = ON_ConvertUTF16ToUTF32(false, pUTF16, -1, nullptr, 0, nullptr, 0, 0, nullptr);
-  auto* string_buf = s.SetLength(num_chars);
-  if (nullptr == string_buf)
-    return false;
-
-  ON_ASSERT(sizeof(wchar_t) == sizeof(ON__UINT32));
-  auto* pWide = reinterpret_cast<ON__UINT32*>(string_buf);
-  ON_ConvertUTF16ToUTF32(false, pUTF16, -1, pWide, num_chars+1, nullptr, 0, 0, nullptr);
-#endif
-
-  return true;
-}
-
-bool ON_UnicodeTextFile::CImpl::WriteStringToUTF8(const wchar_t* wsz)
-{
-  const auto num_chars = ON_ConvertWideCharToUTF8(false, wsz, -1, nullptr, 0, nullptr, 0, 0, nullptr);
-
-  auto p = std::unique_ptr<char[]>(new char[size_t(num_chars) + 1]);
-  auto* pBuffer = p.get();
-
-  ON_ConvertWideCharToUTF8(false, wsz, -1, pBuffer, num_chars + 1, nullptr, 0, 0, nullptr);
-
-  if (WriteData(pBuffer, num_chars) != num_chars)
-    return false;
-
-  return true;
-}
-
-bool ON_UnicodeTextFile::CImpl::WriteStringToUTF16(const wchar_t* wsz)
-{
-#ifdef ON_RUNTIME_WIN
-  // On Windows, wchar_t is UTF16 so we can save the file directly from 'wsz'.
-  ON_ASSERT(sizeof(wchar_t) == sizeof(ON__UINT16));
-
-  const auto size_in_bytes = wcslen(wsz) * sizeof(wchar_t);
-  if (WriteData(wsz, size_in_bytes) != size_in_bytes)
-    return false;
-#else
-  // On Mac wchar_t is UTF32 so we have to convert 'wsz' to UTF16 in a buffer and write the buffer to the file.
-  ON_ASSERT(sizeof(wchar_t) == sizeof(ON__UINT32));
-  auto* pWide = reinterpret_cast<const ON__UINT32*>(wsz);
-
-  const auto num_chars = ON_ConvertUTF32ToUTF16(false, pWide, -1, nullptr, 0, nullptr, 0, 0, nullptr);
-
-  const auto num_chars_inc_term = num_chars + 1;
-  auto p = std::unique_ptr<ON__UINT16[]>(new ON__UINT16[num_chars_inc_term]);
-  auto* pUTF16 = p.get();
-
-  ON_ConvertUTF32ToUTF16(false, pWide, -1, pUTF16, num_chars_inc_term, nullptr, 0, 0, nullptr);
-
-  const auto size_in_bytes = num_chars * sizeof(ON__UINT16);
-  if (WriteData(pUTF16, size_in_bytes) != size_in_bytes)
-    return false;
-#endif
-
-  return true;
-}
-
-ON_UnicodeTextFile::ON_UnicodeTextFile(Types t)
-{
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
-  m_impl->m_Type = t;
-}
-
-ON_UnicodeTextFile::~ON_UnicodeTextFile()
-{
-  m_impl->~CImpl();
-  m_impl = nullptr;
-}
-
-bool ON_UnicodeTextFile::Open(const wchar_t* wszFullPath, Modes mode)
-{
-  return m_impl->Open(wszFullPath, mode);
-}
-
-bool ON_UnicodeTextFile::Close(void)
-{
-  return m_impl->Close();
-}
-
-bool ON_UnicodeTextFile::ReadString(ON_wString& s)
-{
-  return m_impl->ReadString(s);
-}
-
-bool ON_UnicodeTextFile::WriteString(const wchar_t* wsz)
-{
-  return m_impl->WriteString(wsz);
-}
-
-void* ON_UnicodeTextFile::EVF(const wchar_t*, void*)
-{
-  return nullptr;
-}
-
-// ON_Base64
-
-static const int DecodeTab[128] =
-{
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
-  52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1,  0, -1, -1,
-  -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
-  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-  -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-  41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
-};
-
-static bool ReadEncodedByte(int& pos, const wchar_t* wsz, ON__UINT8& byteOut)
-{
-  wchar_t w = wsz[pos];
-  if (w >= 128)
-    w = 128; // Will fail validation.
-
-  byteOut = ON__UINT8(w);
-
-  while (byteOut != 0)
-  {
-    pos++;
-
-    // Check that the byte is a valid Base64 character.
-    // The Base64 specification requires garbled data to be ignored.
-    if ((byteOut < 128) && (DecodeTab[byteOut] >= 0))
-      return true;
-
-    // Move on to the next byte and keep trying.
-    w = wsz[pos];
-    if (w >= 128)
-      w = 128; // Will fail validation.
-
-    byteOut = ON__UINT8(w);
-  }
-
-  return false; // End of data.
-}
-
-size_t ON_Base64::Decode(const wchar_t* wszBase64in, void* pvBufferOut, size_t maxLength) // Static.
-{
-  auto* pBufferOut = static_cast<char*>(pvBufferOut);
-
-  ON__UINT32 uBytesWritten = 0;
-
-  int iResultSize = 3;
-  ON__UINT8 a = 0, b = 0, c = 0, d = 0, aResult[3] = { 0 };
-
-  int pos = 0;
-  while (ReadEncodedByte(pos, wszBase64in, a))
-  {
-    ReadEncodedByte(pos, wszBase64in, b);
-    ReadEncodedByte(pos, wszBase64in, c);
-    ReadEncodedByte(pos, wszBase64in, d);
-
-    if ('=' == d) // Handle padding character(s).
-    {
-      iResultSize = ('=' == c) ? 1 : 2;
-    }
-
-    if (pBufferOut != nullptr)
-    {
-      const auto val = (ON__UINT32)((DecodeTab[a] << 18) | (DecodeTab[b] << 12) | (DecodeTab[c] << 6) | DecodeTab[d]);
-
-      aResult[0] = (ON__UINT8)((val & 0xFF0000) >> 16);
-      aResult[1] = (ON__UINT8)((val & 0x00FF00) >> 8);
-      aResult[2] = (ON__UINT8)((val));
-
-      memcpy(pBufferOut, aResult, iResultSize);
-      pBufferOut += iResultSize;
-      uBytesWritten += iResultSize;
-
-      if (size_t(uBytesWritten) >= maxLength)
-        break;
-    }
-    else
-    {
-      uBytesWritten += iResultSize;
-    }
-  }
-
-  return size_t(uBytesWritten);
-}
-
-static const wchar_t* EncodeTab = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-bool ON_Base64::Encode(const void* pvBufferIn, size_t bufNumBytes, ON_wString& sBase64Out, bool bAppend) // Static.
-{
-  // Base64 is about 133% of the data size. Use 150% plus 4 for padding.
-  const auto bigBufNumBytes = (bufNumBytes * 150) / 100 + 4;
-
-  const int iExistingLen = bAppend ? sBase64Out.Length() : 0;
-  const auto outNumBytes = size_t(iExistingLen) + bigBufNumBytes;
-  auto* start = sBase64Out.SetLength(outNumBytes);
-  if (nullptr == start)
-    return false;
-
-  auto* out = start + iExistingLen;
-
-  const auto* p = static_cast<const char*>(pvBufferIn);
-  const char* pEnd = p + bufNumBytes;
-
-  ON__UINT8 a = 0, b = 0, c = 0;
-  while (p < pEnd)
-  {
-    out[2] = out[3] = L'=';
-
-    a = *p++;
-
-    out[0] = EncodeTab[a >> 2];
-
-    a = ON__UINT8((a & 0x03) << 4);
-    if (p < pEnd)
-    {
-      b = *p++;
-      out[1] = EncodeTab[a | (b >> 4)];
-
-      b = ON__UINT8((b & 0x0F) << 2);
-      if (p < pEnd)
-      {
-        c = *p++;
-        out[2] = EncodeTab[b | (c >> 6)];
-        out[3] = EncodeTab[c & 0x3F];
-      }
-      else
-      {
-        out[2] = EncodeTab[b];
-      }
-    }
-    else
-    {
-      out[1] = EncodeTab[a];
-    }
-
-    out += 4;
-  }
-
-  *out = 0;
-
-  const auto realLength = out - start;
-  sBase64Out.SetLength(realLength);
-
-  return true;
 }
 
 static bool GetTimeComponents(const ON_wString& sTime, int& y, int& m, int& d, int& h, int& n, int& s)
@@ -1036,7 +527,7 @@ bool ON_XMLVariant::operator == (const ON_XMLVariant& v) const
   if (m_impl->m_type != v.m_impl->m_type)
     return false;
 
-  if (m_impl->m_units != m_impl->m_units)
+  if (m_impl->m_units != v.m_impl->m_units)
     return false;
 
   switch (m_impl->m_type)
@@ -1763,12 +1254,12 @@ bool ON_XMLVariant::IsEmpty(void) const
 
 ON::LengthUnitSystem ON_XMLVariant::Units(void) const
 {
-	return m_impl->m_units;
+  return m_impl->m_units;
 }
 
 void ON_XMLVariant::SetUnits(ON::LengthUnitSystem units)
 {
-	m_impl->m_units = units;
+  m_impl->m_units = units;
 }
 
 bool ON_XMLVariant::TypePending(void) const
@@ -1954,7 +1445,7 @@ void ON_XMLVariant::Format(ON_wString& sOut) const
   }
 
   sOut.Format(L"Type=%s, Value=%s, Units=%s, CRC=%08X",
-              sType.Array(), AsString().Array(), ON_StringFromUnits(Units()), DataCRC(0));
+              sType.Array(), AsString().Array(), StringFromUnits(Units()), DataCRC(0));
 }
 
 #if 1
@@ -2001,7 +1492,7 @@ void AutoTypeVariant(ON_XMLVariant& v)
 {
   // Used by the XML reader to try to invent sensible types for variants read in from the stream.
   if (v.Type() != ON_XMLVariant::Types::String)
-    return;	// The variant already has a type.
+    return;  // The variant already has a type.
 
   ON_wString s = v.AsString();
   v.SetTypePendingFlag(true);
@@ -4301,7 +3792,7 @@ bool ON_XMLRootNode::ReadFromFile(const wchar_t* wszPath, bool bWarningsAsErrors
   CWarningHelper wh(bWarningsAsErrors);
 
   ON_UnicodeTextFile file;
-  if (!file.Open(wszPath, ON_UnicodeTextFile::Modes::Load))
+  if (!file.Open(wszPath, ON_UnicodeTextFile::Modes::Read))
   {
     ON_wString s;
     s.Format(L"Failed to open file %s", wszPath);
@@ -4343,7 +3834,7 @@ bool ON_XMLRootNode::WriteToFile(const wchar_t* wszPath, bool includeFormatting,
 {
   const auto type = bUTF8 ? ON_UnicodeTextFile::Types::UTF8 : ON_UnicodeTextFile::Types::UTF16;
   ON_UnicodeTextFile file(type);
-  if (!file.Open(wszPath, ON_UnicodeTextFile::Modes::Save))
+  if (!file.Open(wszPath, ON_UnicodeTextFile::Modes::Write))
     return false;
 
   ON_XMLSegmentedStream segs;
@@ -4715,7 +4206,7 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
   if (ON::LengthUnitSystem::None != vValue.Units())
   {
     prop.SetName(L"units");
-    const auto* wsz = ON_StringFromUnits(vValue.Units());
+    const auto* wsz = StringFromUnits(vValue.Units());
     prop.SetValue(wsz);
     pChildNode->AddProperty(prop);
   }
@@ -4847,7 +4338,7 @@ bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValu
   }
   else
   if ((sType.CompareNoCase(L"vector3d") == 0) ||
-      (sType.CompareNoCase(L"vector") == 0))	// For backward compatibilty with old XML.
+      (sType.CompareNoCase(L"vector") == 0))  // For backward compatibilty with old XML.
   {
     vValueOut = ON_XMLVariant(v.As3dPoint(), ON_XMLVariant::ArrayTypes::Array3);
   }
@@ -4886,7 +4377,7 @@ bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValu
   if (nullptr != pProp)
   {
     const auto sUnits = pProp->GetValue().AsString();
-    vValueOut.SetUnits(ON_UnitsFromString(sUnits));
+    vValueOut.SetUnits(UnitsFromString(sUnits));
   }
 
   return true;
@@ -5520,13 +5011,13 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
     const auto sFile = sFolder + L"UTF8.txt";
     ON_UnicodeTextFile file(ON_UnicodeTextFile::Types::UTF8);
 
-    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Save))
+    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Write))
     {
       Validate(file.WriteString(wszQuick));
       Validate(file.Close());
     }
 
-    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Load))
+    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Read))
     {
       ON_wString s;
       Validate(file.ReadString(s));
@@ -5538,13 +5029,13 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
     const auto sFile = sFolder + L"UTF16.txt";
     ON_UnicodeTextFile file(ON_UnicodeTextFile::Types::UTF16);
 
-    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Save))
+    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Write))
     {
       Validate(file.WriteString(wszQuick));
       Validate(file.Close());
     }
 
-    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Load))
+    if (file.Open(sFile, ON_UnicodeTextFile::Modes::Read))
     {
       ON_wString s;
       Validate(file.ReadString(s));
@@ -5632,10 +5123,6 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
   sBase64 = CallbackBuffer;
 #endif
 
-//  DWORD_PTR p, s;
-//  if (::GetProcessAffinityMask(::GetCurrentProcess(), &p, &s))
-//    ::SetThreadAffinityMask(::GetCurrentThread(), p);
-
   // Test critical section.
   OUTPUT_DEBUG_STRING_EOL(L"Characters should not be mixed");
   std::thread th1(ThreadFunc, L'*');
@@ -5651,3 +5138,254 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
 }
 
 #pragma warning (pop)
+
+//-------------------------------------------------------------------------------------------------------------------
+#define INITIALIZE  ON_XMLNode* pSetting = _root.CreateNodeAtPath(ON_RDK_DOCUMENT); \
+                    ON_XMLNode* pCurrent = pSetting;
+//-------------------------------------------------------------------------------------------------------------------
+#define BEGIN(child) ON_XMLNode* p##child##Temp = pCurrent->CreateNodeAtPath(ON_RDK_##child); \
+                     { \
+                       ON_XMLNode* pCurrent = p##child##Temp; \
+                       ON_XMLNode* p##child = pCurrent; \
+                       p##child; p##child##Temp; // Fixes warnings.
+
+#define BEGIN_SECTION(child) BEGIN(child) ON_XMLParameters section(*pCurrent);
+#define PROPERTY(name, value) section.SetParam(ON_RDK_##name, ON_XMLVariant(value));
+#define CREATE(child) BEGIN(child) END
+#define END          }
+//-------------------------------------------------------------------------------------------------------------------
+#define ON_RDK_MATERIAL_SECTION     L"material"    ON_RDK_POSTFIX_SECTION
+#define ON_RDK_ENVIRONMENT_SECTION  L"environment" ON_RDK_POSTFIX_SECTION
+#define ON_RDK_TEXTURE_SECTION      L"texture"     ON_RDK_POSTFIX_SECTION
+#define ON_RDK_ENVIRONMENT          L"environment"
+
+ON_UUID uuidPostEffect_ToneMapper_Clamp = { 0xacb8d258, 0xc1d6, 0x499d, { 0xaa, 0x23, 0x02, 0xdc, 0xde, 0xa2, 0xb0, 0xa2 } };
+ON_UUID uuidPostEffect_Gamma            = { 0x84c0798d, 0xc43a, 0x4402, { 0x88, 0x91, 0xe0, 0xc8, 0x08, 0x8e, 0x67, 0xca } };
+ON_UUID chanRGBA                        = { 0x453a9a1c, 0x9307, 0x4976, { 0xb2, 0x82, 0x4e, 0xad, 0x4d, 0x53, 0x98, 0x79 } };
+ON_UUID chanDistanceFromCamera          = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 0x34, 0x26, 0x42, 0x5e, 0x1c, 0x43, 0x31 } };
+//-------------------------------------------------------------------------------------------------------------------
+
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4456)
+
+ON_RdkDocumentDefaults::ON_RdkDocumentDefaults(int major_version, ValueSets vs, void*)
+  :
+  _vs(vs),
+  _reserved(nullptr)
+{
+  const bool bForOldFile = major_version < 6;
+
+  INITIALIZE
+
+  if (ValueSets::All == vs)
+  {
+  BEGIN (CURRENT_CONTENT)
+    BEGIN (ENVIRONMENT)
+    END
+  END
+
+  CREATE (DEFAULT_CONTENT_SECTION)
+  CREATE (MATERIAL_SECTION)
+  CREATE (ENVIRONMENT_SECTION)
+  CREATE (TEXTURE_SECTION)
+  }
+
+  BEGIN (SETTINGS)
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION (NAMED_VIEWS)
+      PROPERTY (SORT_MODE, L"");
+    END
+    BEGIN_SECTION (NAMED_CPLANES)
+      PROPERTY (SORT_MODE, L"");
+    END
+    BEGIN_SECTION (NAMED_POSITIONS)
+      PROPERTY (SORT_MODE, L"");
+    END
+    BEGIN_SECTION (NAMED_SNAPSHOTS)
+      PROPERTY (SORT_MODE, L"");
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION (MISCELLANEOUS)
+
+      PROPERTY (CUSTOM_IMAGE_SIZE_IS_PRESET, false);
+
+      BEGIN_SECTION(NAME_COLLISION_SUPPRESS)
+        PROPERTY (IMPORT, false);
+        PROPERTY (PASTE, false);
+      END
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(EXCLUDED_RENDER_ENGINES)
+      PROPERTY (UUIDS, L"");
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(FILTERS)
+      PROPERTY (NAME_FILTER, L"");
+      PROPERTY (NAME_FILTER_INVERT, false);
+      PROPERTY (SHOW_UNASSIGNED, true);
+      PROPERTY (SHOW_V4, true);
+      PROPERTY (SHOW_HIDDEN, false);
+      PROPERTY (SHOW_REFERENCE, false);
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(POST_EFFECTS)
+      PROPERTY (PEP_EARLY_SELECTION, ON_nil_uuid);
+      PROPERTY (PEP_TONE_SELECTION, uuidPostEffect_ToneMapper_Clamp);
+      PROPERTY (PEP_LATE_SELECTION, uuidPostEffect_Gamma);
+
+      BEGIN_SECTION(PEP_TYPE_EARLY)
+      END
+      BEGIN_SECTION(PEP_TYPE_TONE)
+      END
+      BEGIN_SECTION(PEP_TYPE_LATE)
+      END
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(RENDERING)
+      BEGIN_SECTION(RENDER_CHANNELS)
+        ON_wString sA, sB;
+        ON_UuidToString(chanRGBA, sA);
+        ON_UuidToString(chanDistanceFromCamera, sB);
+        sA.MakeUpper(); sB.MakeUpper();
+        PROPERTY (RCH_LIST, sA + L";" + sB);
+        PROPERTY (RCH_MODE, ON_RDK_RCH_MODE_AUTOMATIC);
+      END
+
+      PROPERTY (EMBED_SUPPORT_FILES_ON, true /* TODO:!!!!!!!! */); // rso.EmbedFilesDocumentDefault());
+      PROPERTY (DITHERING, ON_RDK_DITHERING_FLOYD_STEINBERG);
+      PROPERTY (USE_DITHERING, false);
+      PROPERTY (GAMMA, bForOldFile ? 1.0f : 2.2f);
+      PROPERTY (USE_POST_PROCESS_GAMMA, true);
+      PROPERTY (USE_LINEAR_WORKFLOW, bForOldFile ? false : true);
+      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT_ON, bForOldFile ? false : true);
+      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
+    END
+    }
+    else
+    if (bForOldFile)
+    {
+    BEGIN_SECTION(RENDERING)
+      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(SUN)
+      PROPERTY (SUN_ENABLE_ON, false);
+      PROPERTY (SUN_MANUAL_CONTROL_ON, false);
+      PROPERTY (SUN_MANUAL_CONTROL_ALLOWED, true);
+      PROPERTY (SUN_AZIMUTH, 0.0);
+      PROPERTY (SUN_ALTITUDE, 0.0);
+      PROPERTY (SUN_DATE_YEAR, 2000);
+      PROPERTY (SUN_DATE_MONTH, 1);
+      PROPERTY (SUN_DATE_DAY, 1);
+      PROPERTY (SUN_TIME_HOURS, 12.0);
+      PROPERTY (SUN_DAYLIGHT_SAVING_ON,    false);
+      PROPERTY (SUN_DAYLIGHT_SAVING_MINUTES, 60);
+      PROPERTY (SUN_SHADOW_INTENSITY, 1.0);
+      PROPERTY (SUN_INTENSITY, 1.0);
+      PROPERTY (SUN_OBSERVER_LATITUDE, 0.0);
+      PROPERTY (SUN_OBSERVER_LONGITUDE, 0.0);
+      PROPERTY (SUN_OBSERVER_TIMEZONE, 0.0);
+      PROPERTY (SUN_SKYLIGHT_ON, bForOldFile ? false : true);
+      PROPERTY (SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
+      PROPERTY (SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, bForOldFile ? false : true);
+      PROPERTY (SUN_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid);
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(SAFE_FRAME)
+
+      PROPERTY (SF_ON, false);
+      PROPERTY (SF_PERSPECTIVE_ONLY, true);
+      PROPERTY (SF_FIELD_DISPLAY_ON, false);
+
+      BEGIN_SECTION(SF_LIVE_FRAME)
+        PROPERTY (SFF_ON, true);
+      END
+
+      BEGIN_SECTION(SF_ACTION_FRAME)
+        PROPERTY (SFF_ON, true);
+        PROPERTY (SFF_XSCALE, 0.9);
+        PROPERTY (SFF_YSCALE, 0.9);
+        PROPERTY (SFF_LINK, true);
+      END
+
+      BEGIN_SECTION(SF_TITLE_FRAME)
+        PROPERTY (SFF_ON, true);
+        PROPERTY (SFF_XSCALE, 0.8);
+        PROPERTY (SFF_YSCALE, 0.8);
+        PROPERTY (SFF_LINK, true);
+      END
+    END
+    }
+
+    if (ValueSets::All == vs)
+    {
+    BEGIN_SECTION(GROUND_PLANE)
+      PROPERTY (GP_ON, bForOldFile ? false : true);
+      PROPERTY (GP_SHOW_UNDERSIDE, false);
+      PROPERTY (GP_ALTITUDE, 0.0);
+      PROPERTY (GP_AUTO_ALTITUDE, true);
+      PROPERTY (GP_SHADOW_ONLY, bForOldFile ? false : true);
+      PROPERTY (GP_MATERIAL, L"");
+      PROPERTY (GP_TEXTURE_SIZE, ON_2dPoint(1.0, 1.0));
+      PROPERTY (GP_TEXTURE_OFFSET, ON_2dPoint(0.0, 0.0));
+      PROPERTY (GP_TEXTURE_ROTATION, 0.0);
+      PROPERTY (GP_OFFSET_LOCK, false);
+      PROPERTY (GP_REPEAT_LOCK, true);
+    END
+    }
+    else
+    if (bForOldFile)
+    {
+    BEGIN_SECTION(GROUND_PLANE)
+      PROPERTY (GP_SHADOW_ONLY, false);
+    END
+    }
+
+  END
+}
+
+const ON_XMLNode ON_RdkDocumentDefaults::Node(void) const
+{
+  return _root;
+}
+
+void ON_RdkDocumentDefaults::CopyDefaultsTo(ON_XMLNode& dest) const
+{
+  if (_vs == ValueSets::All)
+  {
+    dest = _root;
+  }
+  else
+  {
+    dest.MergeFrom(_root);
+  }
+}
+
+ON_RdkDocumentDefaults::~ON_RdkDocumentDefaults()
+{
+}
+
+#pragma ON_PRAGMA_WARNING_POP

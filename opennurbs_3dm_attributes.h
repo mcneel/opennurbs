@@ -434,7 +434,7 @@ public:
   void SetHatchBoundaryVisible(bool on);
 #pragma endregion
 
-  ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci, bool bRaw = false) const;
+  ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci) const;
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Plane& plane);
 
@@ -517,14 +517,28 @@ public:
   /*
   Description:
     Get an array of decals that are stored on this attributes object.
+    Do not store or delete pointers from the array.
   */
   const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
 
   /*
   Description:
-    Add a new decal to this attributes object.
+    Add a new decal to this attributes object. The returned pointer points to an object
+    that is owned by the attributes. Do not store or delete it.
   */
   ON_Decal* AddDecal(void);
+
+  /*
+  Description:
+    Delete a decal from this attributes object. Returns true if successful, else false.
+  */
+  bool DeleteDecal(ON_Decal& decal);
+
+  /*
+  Description:
+    Delete all decals from this attributes object.
+  */
+  void DeleteAllDecals(void);
 
   // Mesh Modifiers.
 
@@ -659,9 +673,6 @@ public:
 private:
   bool Internal_WriteV5( ON_BinaryArchive& archive ) const;
   bool Internal_ReadV5( ON_BinaryArchive& archive );
-
-public:
-  void Internal_PopulateDecals(const ON_XMLRootNode&) const;
 };
 
 #endif

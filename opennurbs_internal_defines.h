@@ -1,4 +1,4 @@
-/*
+//
 // Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
@@ -6,11 +6,10 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 // Internal header; not in the public SDK.
 
@@ -31,19 +30,7 @@
 #define ON_KIND_MATERIAL     L"material"
 #define ON_KIND_ENVIRONMENT  L"environment"
 #define ON_KIND_TEXTURE      L"texture"
-
-#define ON_RDK_SLASH                L"/"
-#define ON_RDK_POSTFIX_SECTION      L"-section"
-#define ON_RDK_DOCUMENT             L"render-content-manager-document"
-#define ON_RDK_UD_ROOT              L"render-content-manager-data"
-#define   ON_RDK_CURRENT_CONTENT    L"content"
-#define   ON_RDK_SETTINGS           L"settings"
-#define     ON_RDK_POST_EFFECTS     L"post-effects-new"
-#define     ON_RDK_PEP_TYPE_EARLY   L"early"
-#define     ON_RDK_PEP_TYPE_TONE    L"tone-mapping"
-#define     ON_RDK_PEP_TYPE_LATE    L"late"
-#define     ON_RDK_RENDERING        L"rendering"
-#define     ON_RDK_SUN              L"sun"
+#define ON_RDK_UD_ROOT       L"render-content-manager-data"
 
 inline bool IsFloatEqual (float  f1, float  f2) { return (fabsf(f1 - f2) < 1e-6); }
 inline bool IsDoubleEqual(double d1, double d2) { return (fabs (d1 - d2) < 1e-10); }
@@ -60,17 +47,14 @@ ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& componen
 ON_RenderContent* NewRenderContentFromNode(const class ON_XMLNode& node);
 ON_PostEffect* NewPostEffectFromNode(ON_XMLNode& node);
 void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node);
-bool CreateArchiveBufferFromXML(const ON_wString& xml, ON_Buffer& buf, int archive_3dm_version);
 ON_XMLNode* FindPostEffectNodeForId(const ON_XMLNode& sectionNode, const ON_UUID& id);
-bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
 bool SetRDKObjectInformation(ON_Object& object, const ON_wString& xml, int archive_3dm_version);
 bool GetRDKEmbeddedFiles(const ONX_Model_UserData& docud, ON_ClassArray<ON_wString>& paths, ON_SimpleArray<unsigned char*>& embedded_files_as_buffers, ON_SimpleArray<size_t>& buffer_sizes);
-void CreateDecalsFromXML(const ONX_Model& model, int archive_3dm_version);
-void CreateXMLFromDecals(const ONX_Model& model, int archive_3dm_version);
+bool GetEntireDecalXML(const ON_3dmObjectAttributes& attr, ON_XMLRootNode& xmlOut);
 void CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version);
 void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version);
 bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, const ON_XMLNode& node, int archive_3dm_version, const wchar_t* mm_node_name);
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version);
 bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
 
 template <class T> inline T Lerp(float  t, const T& l, const T& h) { return l + T(t) * (h - l); }
@@ -80,7 +64,7 @@ class ON_InternalXMLImpl
 {
 public:
   ON_InternalXMLImpl(ON_XMLNode* n=nullptr) : m_model_node(n) { }
-  virtual ~ON_InternalXMLImpl() { }
+  virtual ~ON_InternalXMLImpl();
 
   ON_XMLVariant GetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& def) const;
   bool SetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
@@ -92,34 +76,48 @@ public:
   bool SetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
 
   ON_XMLNode& Node(void) const;
-  ON_XMLNode& NodeAt(const wchar_t* path_to_node) const;
+
+protected:
+  virtual ON_wString NameOfRootNode(void) const;
 
 private:
   ON_XMLVariant InternalGetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const;
   bool InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value);
 
 public:
-  mutable ON_XMLRootNode m_local_node; // Used when m_model_node is null.
+  mutable std::recursive_mutex m_mutex;
+  mutable ON_XMLNode* m_local_node = nullptr; // Used when m_model_node is null.
   ON_XMLNode* m_model_node;
 };
 
 class ON_DecalCollection final
 {
 public:
-  ON_DecalCollection() { }
+  ON_DecalCollection(ON_3dmObjectAttributes* a) : m_attr(a) { }
   ON_DecalCollection(const ON_DecalCollection& dc) = delete;
   ~ON_DecalCollection();
 
   const ON_DecalCollection& operator = (const ON_DecalCollection& dc);
 
-  void DeleteAllDecals(void);
-  void Populate(const ON_XMLRootNode& node);
   ON_Decal* AddDecal(void);
-  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const { return m_decals; }
-  static bool NodeContainsDecals(const ON_XMLRootNode& node);
+  bool DeleteDecal(ON_Decal& decal);
+  void DeleteAllDecals(void);
+  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+
+  void SetChanged(void);
+
+  void UpdateUserData(unsigned int archive_3dm_version) const;
 
 private:
-  ON_SimpleArray<ON_Decal*> m_decals;
+  void Populate(void) const;
+  int  FindDecalIndex(const ON_Decal&) const;
+
+private:
+  ON_3dmObjectAttributes* m_attr;
+  mutable ON_XMLRootNode m_root_node;
+  mutable ON_SimpleArray<ON_Decal*> m_decals;
+  mutable bool m_populated = false;
+  mutable bool m_changed = false;
 };
 
 template<class T> inline void hash_combine(size_t& seed, const T& v)
@@ -134,17 +132,58 @@ public:
 	inline size_t operator()(const ON_UUID& uuid) const
 	{
 		size_t seed = 0;
-		::hash_combine(seed, uuid.Data1);
-		::hash_combine(seed, uuid.Data2);
-		::hash_combine(seed, uuid.Data3);
 
-		for (int i = 0; i < 8; i++)
-		{
-			::hash_combine(seed, uuid.Data4[i]);
-		}
+		const auto* d = reinterpret_cast<const ON__UINT32*>(&uuid);
+		::hash_combine(seed, d[0]);
+		::hash_combine(seed, d[1]);
+		::hash_combine(seed, d[2]);
+		::hash_combine(seed, d[3]);
 
 		return seed;
 	}
+};
+
+class ON_EnvironmentsPrivate final : public ON_InternalXMLImpl
+{
+public:
+  ON_EnvironmentsPrivate() { }
+  ON_EnvironmentsPrivate(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
+  ON_EnvironmentsPrivate(const ON_EnvironmentsPrivate&);
+
+  ON_EnvironmentsPrivate& operator = (const ON_EnvironmentsPrivate&);
+
+  bool operator == (const ON_EnvironmentsPrivate&);
+
+  ON_UUID BackgroundRenderEnvironment(void) const;
+  void    SetBackgroundRenderEnvironment(const ON_UUID& id);
+  bool    SkylightingRenderEnvironmentOverride(void) const;
+  void    SetSkylightingRenderEnvironmentOverride(bool on);
+  ON_UUID SkylightingRenderEnvironment(void) const;
+  void    SetSkylightingRenderEnvironment(const ON_UUID& id);
+  bool    ReflectionRenderEnvironmentOverride(void) const;
+  void    SetReflectionRenderEnvironmentOverride(bool on);
+  ON_UUID ReflectionRenderEnvironment(void) const;
+  void    SetReflectionRenderEnvironment(const ON_UUID& id);
+};
+
+class ON_3dmRenderSettingsPrivate final
+{
+public:
+  ON_3dmRenderSettingsPrivate();
+  ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate&) = default;
+
+  const ON_3dmRenderSettingsPrivate& operator = (const ON_3dmRenderSettingsPrivate&);
+
+public:
+  ON_XMLRootNode _rdk_document_data;
+  ON_Dithering _dithering;
+  ON_GroundPlane _ground_plane;
+  ON_LinearWorkflow _linear_workflow;
+  ON_RenderChannels _render_channels;
+  ON_SafeFrame _safe_frame;
+  ON_Skylight _skylight;
+  ON_Sun _sun;
+  ON_EnvironmentsPrivate _environments;
 };
 
 //--------------------------------------------------------------------------------------------------

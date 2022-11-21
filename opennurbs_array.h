@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -151,6 +151,12 @@ public:
   void RemoveValue(const T&);        // Removes elements. Uses memcmp() to compare
                                      // Decrements count by removed items.  Does 
                                      // not change capacity
+
+  void RemoveIf(bool predicate(const T& key));
+                                     // Removes elements for which predicate 
+                                     // returns true. Decrements count 
+                                     // by removed items.
+                                     // Does not change capacity
 
   void Empty();           // Sets count to 0, leaves capacity untouched.
 

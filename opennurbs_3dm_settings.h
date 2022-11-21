@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_3DM_SETTINGS_INC_)
 #define OPENNURBS_3DM_SETTINGS_INC_
@@ -742,9 +739,10 @@ class ON_CLASS ON_3dmRenderSettings : public ON_Object
 
 public:
   ON_3dmRenderSettings() = default;
-  ~ON_3dmRenderSettings() = default;
-  ON_3dmRenderSettings(const ON_3dmRenderSettings&) = default;
-  ON_3dmRenderSettings& operator=(const ON_3dmRenderSettings&) = default;
+  virtual ~ON_3dmRenderSettings();
+
+  ON_3dmRenderSettings(const ON_3dmRenderSettings&);
+  ON_3dmRenderSettings& operator=(const ON_3dmRenderSettings&);
 
   static const ON_3dmRenderSettings Default;
 
@@ -790,6 +788,44 @@ public:
   bool ScaleBackgroundToFit() const;
   void SetScaleBackgroundToFit( bool bScaleBackgroundToFit );
 
+public:
+  // Access to Dithering information.
+  class ON_Dithering& Dithering(void) const;
+
+  // Access to Ground Plane information.
+  class ON_GroundPlane& GroundPlane(void) const;
+
+  // Access to Linear Workflow information.
+  class ON_LinearWorkflow& LinearWorkflow(void) const;
+
+  // Access to Render Channels information.
+  class ON_RenderChannels& RenderChannels(void) const;
+
+  // Access to Safe Frame information.
+  class ON_SafeFrame& SafeFrame(void) const;
+
+  // Access to Skylight information.
+  class ON_Skylight& Skylight(void) const;
+
+  // Access to Sun information.
+  class ON_Sun& Sun(void) const;
+
+  // Access to background rendering environment information.
+  ON_UUID BackgroundRenderEnvironment(void) const;
+  void SetBackgroundRenderEnvironment(const ON_UUID& id);
+
+  // Access to skylighting rendering environment information.
+  bool SkylightingRenderEnvironmentOverride(void) const;
+  void SetSkylightingRenderEnvironmentOverride(bool on);
+  ON_UUID SkylightingRenderEnvironment(void) const;
+  void SetSkylightingRenderEnvironment(const ON_UUID& id);
+
+  // Access to reflection / refraction rendering environment information.
+  bool ReflectionRenderEnvironmentOverride(void) const;
+  void SetReflectionRenderEnvironmentOverride(bool on);
+  ON_UUID ReflectionRenderEnvironment(void) const;
+  void SetReflectionRenderEnvironment(const ON_UUID& id);
+
 private:
   unsigned short m_reserved1 = 0;
 
@@ -801,8 +837,9 @@ public:
   //   then the image height should be calculated by multiplying the m_image_width
   //   by the viewport aspect ratio.  Note that this might be affected by m_rendering_source
   //   In this case, m_image_height should not be used.
-  // 
+  //
   bool m_bForceViewportAspectRatio = false;
+
   //////////////////////////////////////////////////////////////
   //
   // Custom image size:
@@ -810,15 +847,15 @@ public:
   //   is m_image_width X m_image_height pixels.
   //   If m_bCustomImageSize is false, then the image pixel size
   //   is the size of the viewport being rendered.
-  // 
+  //
   bool m_bCustomImageSize = false;
-  int  m_image_width = 800;   // image width in pixels
+  int  m_image_width  = 800;  // image width in pixels
   int  m_image_height = 600;  // image height in pixels
 
 private:
   unsigned int m_reserved3 = 0;
-public:
 
+public:
   ////////
   // Number of dots/inch (dots=pixels) to use when printing and 
   // saving bitmaps. The default is 72.0 dots/inch.
@@ -830,14 +867,13 @@ public:
   ON::LengthUnitSystem m_image_us = ON::LengthUnitSystem::Inches;
 
   ON_Color m_ambient_light = ON_Color::Black;
-  
+
   int m_background_style = 0; // 0 = solid color, 1 = "wallpaper" image, 2 = Gradient, 3 = Environment
 
   // m_background_color was changed from ON_Color::Gray160 to ON_Color::White for "white studio" look.
   // m_background_color = Top color of gradient...
   ON_Color m_background_color = ON_Color::White;
   ON_Color m_background_bottom_color = ON_Color::Gray160;
-
 
   ON_wString m_background_bitmap_filename;
   // If m_background_bitmap_filename is not empty, the file cannot be found,
@@ -861,40 +897,43 @@ public:
 
 private:
   unsigned char m_reserved4 = 0;
-  unsigned int m_reserved5 = 0;
+  unsigned int  m_reserved5 = 0;
 public:
   
   int m_antialias_style = 1; // 0 = none, 1 = normal, 2 = medium, 3 = best
 
-  int m_shadowmap_style = 1;    // 0 = none, 1 = normal, 2 = best
+  int m_shadowmap_style = 1; // 0 = none, 1 = normal, 2 = best
   int m_shadowmap_width= 1000;
   int m_shadowmap_height = 1000;
   double m_shadowmap_offset = 0.75;
-  
-  
+
   // Flags that are used to determine which render settings a render
   // plugin uses, and which ones the display pipeline should use.
   // Note: Render plugins set these, and they don't need to persist
   //       in the document...Also, when set, they turn OFF their
   //       corresponding setting in the Display Attributes Manager's
   //       UI pages for "Rendered" mode.
-  bool    m_bUsesAmbientAttr = true;
-  bool    m_bUsesBackgroundAttr = true;
-  bool    m_bUsesBackfaceAttr = false;
-  bool    m_bUsesPointsAttr = false;
-  bool    m_bUsesCurvesAttr = true;
-  bool    m_bUsesIsoparmsAttr = true;
-  bool    m_bUsesMeshEdgesAttr = false;
-  bool    m_bUsesAnnotationAttr = true;
-  bool    m_bUsesHiddenLightsAttr = true;
+  bool m_bUsesAmbientAttr = true;
+  bool m_bUsesBackgroundAttr = true;
+  bool m_bUsesBackfaceAttr = false;
+  bool m_bUsesPointsAttr = false;
+  bool m_bUsesCurvesAttr = true;
+  bool m_bUsesIsoparmsAttr = true;
+  bool m_bUsesMeshEdgesAttr = false;
+  bool m_bUsesAnnotationAttr = true;
+  bool m_bUsesHiddenLightsAttr = true;
 
 private:
-  unsigned char m_reserved6 = 0;
+  unsigned char  m_reserved6 = 0;
   unsigned short m_reserved7 = 0;
   unsigned short m_reserved8 = 0;
 
+public: // For internal use only.
+  ON_XMLNode& RdkDocNode(void) const;
+
 private:
-  ON__INT_PTR m_reserved9 = 0;
+  friend class ON_3dmRenderSettingsPrivate;
+  mutable class ON_3dmRenderSettingsPrivate* m_private = nullptr;
 };
 
 

@@ -1,3 +1,16 @@
+//
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+
 #include "opennurbs.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
@@ -9,22 +22,6 @@
 #endif
 
 #include "opennurbs_subd_data.h"
-
-/* $NoKeywords: $ */
-/*
-//
-// Copyright (c) 1993-2014 Robert McNeel & Associates. All rights reserved.
-// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Associates.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
-// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
-// MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
-// For complete openNURBS copyright information see <http://www.opennurbs.org>.
-//
-////////////////////////////////////////////////////////////////
-*/
 
 const ON_SubDLevel ON_SubDLevel::Empty;
 

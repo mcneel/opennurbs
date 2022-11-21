@@ -158,16 +158,11 @@ void ON_DisplacementUserData::SetToDefaults(void) const
 
 void ON_DisplacementUserData::ReportVersionError(void) const
 {
-  //RhinoMessageBox(L"Version error", L"Displacement", MB_OK | MB_ICONERROR);
+  ON_ERROR("ON_DisplacementUserData: version error");
 }
 
 bool ON_DisplacementUserData::Transform(const ON_Xform& xform)
 {
-//  if (nullptr != g_DisplacementUserDataTransformCallback)
-//  {
-//    (*g_DisplacementUserDataTransformCallback)(*this, xform);
-//  }
-
   return ON_XMLUserData::Transform(xform);
 }
 
@@ -480,6 +475,16 @@ ON_Displacement::SubItem& ON_Displacement::AddSubItem(void)
   return *sub;
 }
 
+void ON_Displacement::DeleteSubItem(int face_index)
+{
+  const int index = FindSubItemArrayIndex(face_index);
+  if (index >= 0)
+  {
+    delete m_impl_dsp->m_subs[index];
+    m_impl_dsp->m_subs.Remove(index);
+  }
+}
+
 void ON_Displacement::DeleteAllSubItems(void)
 {
   for (int i = 0; i < m_impl_dsp->m_subs.Count(); i++)
@@ -490,16 +495,25 @@ void ON_Displacement::DeleteAllSubItems(void)
   m_impl_dsp->m_subs.Destroy();
 }
 
-ON_Displacement::SubItem* ON_Displacement::FindSubItem(const int index) const
+int ON_Displacement::FindSubItemArrayIndex(int face_index) const
 {
-  auto it = GetSubItemIterator();
-  while (SubItem* sub = it.Next())
+  for (int i = 0; i < m_impl_dsp->m_subs.Count(); i++)
   {
-    if (sub->Index() == index)
-      return sub;
+    const auto* sub = m_impl_dsp->m_subs[i];
+    if (sub->FaceIndex() == face_index)
+      return i;
   }
 
-  return nullptr;
+  return -1;
+}
+
+ON_Displacement::SubItem* ON_Displacement::FindSubItem(int face_index) const
+{
+  const int index = FindSubItemArrayIndex(face_index);
+  if (index < 0)
+    return nullptr;
+
+  return m_impl_dsp->m_subs[index];
 }
 
 class ON_Displacement::SubItem::CImpl : public ON_InternalXMLImpl
@@ -523,8 +537,8 @@ const ON_Displacement::SubItem& ON_Displacement::SubItem::operator = (const SubI
 {
   if (this != &sub)
   {
-    SetIndex          (sub.Index());
     SetOn             (sub.On());
+    SetFaceIndex      (sub.FaceIndex());
     SetTexture        (sub.Texture());
     SetMappingChannel (sub.MappingChannel());
     SetBlackPoint     (sub.BlackPoint());
@@ -536,8 +550,8 @@ const ON_Displacement::SubItem& ON_Displacement::SubItem::operator = (const SubI
 
 bool ON_Displacement::SubItem::operator == (const SubItem& sub) const
 {
-  if (Index()          != sub.Index())          return false;
   if (On()             != sub.On())             return false;
+  if (FaceIndex()      != sub.FaceIndex())      return false;
   if (Texture()        != sub.Texture())        return false;
   if (MappingChannel() != sub.MappingChannel()) return false;
   if (BlackPoint()     != sub.BlackPoint())     return false;
@@ -551,12 +565,12 @@ bool ON_Displacement::SubItem::operator != (const SubItem& c) const
   return !(operator == (c));
 }
 
-int ON_Displacement::SubItem::Index(void) const
+int ON_Displacement::SubItem::FaceIndex(void) const
 {
   return m_impl->GetParameter(ON_DISPLACEMENT_SUB_INDEX, -1).AsInteger();
 }
 
-void ON_Displacement::SubItem::SetIndex(int i)
+void ON_Displacement::SubItem::SetFaceIndex(int i)
 {
   m_impl->SetParameter(ON_DISPLACEMENT_SUB_INDEX, i);
 }
@@ -743,7 +757,7 @@ void ON_EdgeSofteningUserData::SetToDefaults(void) const
 
 void ON_EdgeSofteningUserData::ReportVersionError(void) const
 {
-  //RhinoMessageBox(L"Version error", L"EdgeSoftening", MB_OK | MB_ICONERROR);
+  ON_ERROR("ON_EdgeSofteningUserData: version error");
 }
 
 ON_EdgeSoftening::ON_EdgeSoftening()
@@ -937,7 +951,7 @@ bool ON_ThickeningUserData::GetDescription(ON_wString& s)
 
 void ON_ThickeningUserData::ReportVersionError(void) const
 {
-  //RhinoMessageBox(L"Version error", L"Thickness", MB_OK | MB_ICONERROR);
+  ON_ERROR("ON_ThickeningUserData: version error");
 }
 
 bool ON_ThickeningUserData::Transform(const ON_Xform& xform)
@@ -1124,7 +1138,7 @@ bool ON_CurvePipingUserData::GetDescription(ON_wString& s)
 
 void ON_CurvePipingUserData::ReportVersionError(void) const
 {
-  //RhinoMessageBox(L"Version error", L"CurvePiping", MB_OK | MB_ICONERROR);
+  ON_ERROR("ON_CurvePipingUserData: version error");
 }
 
 bool ON_CurvePipingUserData::Transform(const ON_Xform& xform)
@@ -1278,7 +1292,7 @@ ON_CurvePiping::CapTypes ON_CurvePiping::Defaults::CapType(void)
 
 ////////////////////////////////////////////////////////////////
 //
-// Shutlining
+// Shut-lining
 //
 ////////////////////////////////////////////////////////////////
 
@@ -1343,7 +1357,7 @@ bool ON_ShutLiningUserData::GetDescription(ON_wString& s)
 
 void ON_ShutLiningUserData::ReportVersionError(void) const
 {
-  //RhinoMessageBox(L"Version error", L"ShutLining", MB_OK | MB_ICONERROR);
+  ON_ERROR("ON_ShutLiningUserData: version error");
 }
 
 bool ON_ShutLiningUserData::Transform(const ON_Xform& xform)
@@ -1368,9 +1382,9 @@ ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
 {
   m_impl_sl = new CImplSL;
 
-  // Iterate over the shutlining node looking at each child node's name. If the child
+  // Iterate over the shut-lining node looking at each child node's name. If the child
   // node is a curve node, create a curve object to hold the curve XML. Otherwise add
-  // a copy of the child node to a new shutlining node.
+  // a copy of the child node to a new shut-lining node.
   ON_XMLNode new_sl_node(sl_node.TagName());
 
   auto it = sl_node.GetChildIterator();
@@ -1386,7 +1400,7 @@ ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
     }
   }
 
-  // Copy the new shutlining node to our node. It only contains shutlining XML with no curve nodes.
+  // Copy the new shut-lining node to our node. It only contains shut-lining XML with no curve nodes.
   m_impl->Node() = new_sl_node;
 }
 
@@ -1782,24 +1796,6 @@ void ON_MeshModifiers::CImpl::LoadFromXML(const ON_XMLRootNode& root)
   }
 }
 
-void ON_MeshModifiers::CImpl::SaveToXML(ON_XMLRootNode& root) const
-{
-  if (nullptr != m_displacement)
-    m_displacement->AddChildXML(root);
-
-  if (nullptr != m_edge_softening)
-    m_edge_softening->AddChildXML(root);
-
-  if (nullptr != m_thickening)
-    m_thickening->AddChildXML(root);
-
-  if (nullptr != m_curve_piping)
-    m_curve_piping->AddChildXML(root);
-
-  if (nullptr != m_shut_lining)
-    m_shut_lining->AddChildXML(root);
-}
-
 ON_MeshModifiers::CImpl::~CImpl()
 {
   DeleteAll();
@@ -1852,11 +1848,6 @@ ON_MeshModifiers::~ON_MeshModifiers()
 void ON_MeshModifiers::LoadFromXML(const ON_XMLRootNode& node)
 {
   m_impl->LoadFromXML(node);
-}
-
-void ON_MeshModifiers::SaveToXML(ON_XMLRootNode& node) const
-{
-  m_impl->SaveToXML(node);
 }
 
 const ON_MeshModifiers& ON_MeshModifiers::operator = (const ON_MeshModifiers& mm)
@@ -1955,19 +1946,11 @@ void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version)
     if (nullptr == attr)
       continue; // No attributes on component.
 
-    // Get all the XML for all the mesh modifiers under one root node. This is just for convenience
-    // and it's not how the XML will appear in the 3dm file because it's going to be distributed to
-    // separate user data objects by SetMeshModifierObjectInformation().
     ON_MeshModifiers& mm = attr->MeshModifiers();
-    ON_XMLRootNode root;
-    mm.SaveToXML(root);
-
-    // 'root' will only contain XML for the mesh modifiers that exist (which may be none).
-    // If there are none, no user data will be added to the attributes by the following.
-    SetMeshModifierObjectInformation(*attr, mm.Displacement(),  root, archive_3dm_version, ON_DISPLACEMENT_ROOT);
-    SetMeshModifierObjectInformation(*attr, mm.EdgeSoftening(), root, archive_3dm_version, ON_EDGE_SOFTENING_ROOT);
-    SetMeshModifierObjectInformation(*attr, mm.Thickening(),    root, archive_3dm_version, ON_THICKENING_ROOT);
-    SetMeshModifierObjectInformation(*attr, mm.CurvePiping(),   root, archive_3dm_version, ON_CURVE_PIPING_ROOT);
-    SetMeshModifierObjectInformation(*attr, mm.ShutLining(),    root, archive_3dm_version, ON_SHUTLINING_ROOT);
+    SetMeshModifierObjectInformation(*attr, mm.Displacement(),  archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, mm.EdgeSoftening(), archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, mm.Thickening(),    archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, mm.CurvePiping(),   archive_3dm_version);
+    SetMeshModifierObjectInformation(*attr, mm.ShutLining(),    archive_3dm_version);
   }
 }

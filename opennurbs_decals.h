@@ -14,13 +14,13 @@
 #if !defined(ON_DECALS_INC_)
 #define ON_DECALS_INC_
 
-class ON_CLASS ON_Decal final
+class ON_CLASS ON_Decal
 {
 public:
   ON_Decal();
-  ON_Decal(ON_XMLNode& model_node);
+  ON_Decal(class ON_DecalCollection& coll, ON_XMLNode& node);
   ON_Decal(const ON_Decal& d);
-  ~ON_Decal();
+  virtual ~ON_Decal();
 
   const ON_Decal& operator = (const ON_Decal& d);
 
@@ -31,9 +31,9 @@ public:
   {
     None        = -1,
     Planar      =  0, // Planar mapping. Uses projection, origin, up and across vectors (not unitized).
-    Cylindrical =  1, // Cylindrical mapping. Uses origin, up, across, height, radius, latitude start and stop.
-    Spherical   =  2, // Spherical mapping. Uses origin, up, across, radius, latitude/longitude start and stop.
-    UV          =  3, // UV mapping.
+    Cylindrical =  1, // Cylindrical mapping. Uses origin, up, across, height, radius, horz-sweep.
+    Spherical   =  2, // Spherical mapping. Uses origin, up, across, radius, horz-sweep, vert-sweep.
+    UV          =  3, // UV mapping. Uses UV bounds.
   };
 
   enum class Projections : ON__INT32
@@ -126,24 +126,52 @@ public:
   void SetVertSweep(double sta, double end);
 
   // Returns the UV bounds of the decal. Only used when mapping is UV.
-  void UVBounds(double& min_u, double& min_v, double& max_u, double& max_v) const;
+  void GetUVBounds(double& min_u, double& min_v, double& max_u, double& max_v) const;
 
   // Sets the UV bounds of the decal. Only used when mapping is UV.
   void SetUVBounds(double min_u, double min_v, double max_u, double max_v);
 
-  // Returns the CRC of the decal.
+  // Gets a texture mapping based on the properties of this decal. Only works and returns true if
+  // the decal mapping is Planar, Spherical or Cylindrical. Otherwise returns false.
+  bool GetTextureMapping(ON_TextureMapping& tm) const;
+
+  // Returns the Decal CRC of the decal.
+  ON__UINT32 DecalCRC(void) const;
+
+  // Returns the Data CRC of the decal. This is not necessarily the same as the decal CRC
+  // because it allows a starting current remainder.
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
+  // Returns true if the decal is visible in the rendering.
+  bool IsVisible(void) const;
+
+  // Sets whether or not the decal is visible in the rendering.
+  void SetIsVisible(bool visible);
 
   // Returns the unique id of the decal. This is a run-time id that is not persistent and is
   // only used for looking decals up in the model.
   ON_UUID Id(void) const;
 
-  // Get the decal XML. Intended for internal use only.
-  const ON_XMLNode& XML(void) const;
+  // Get the custom XML for the specified render engine. The format of the XML is described below.
+  void GetCustomXML(const ON_UUID& renderEngineId, ON_XMLNode& custom_param_node) const;
+
+  // Set the custom XML for the specified render engine. This XML should have the following format:
+  //
+  //  <parameters>
+  //    <param-name type="type"></param-name>
+  //    ...
+  //  </parameters>
+  //
+  // Therefore 'custom_param_node' must have a tag name of "<parameters>". The easiest way to produce
+  // such XML is by using ON_XMLParameters.
+  bool SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& custom_param_node);
+
+public: // For internal use only.
+  static ON__UINT32 ComputeDecalCRC(ON__UINT32, const ON_XMLNode&);
 
 private:
   class CImpl;
-  CImpl* m_impl;
+  CImpl* _impl;
 };
 
 #endif

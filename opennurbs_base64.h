@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_BASE64_INC_)
 #define OPENNURBS_BASE64_INC_
@@ -341,5 +338,22 @@ private:
   void EncodeHelper57(const unsigned char*);
 };
 */
+
+class ON_CLASS ON_Base64 final
+{
+public:
+  // Decode a base64 string.
+  // buffer_out must be large enough to accomodate the decoded data. It is safe to use the
+  // length of base64_in because this Base64 string will always be about 33% bigger than the
+  // data it was created from. Returns the number of bytes written to buffer_out.
+  // The function stops when max_length bytes have been decoded.
+  // If buffer_out is null, the function simply calculates the exact required buffer size.
+  static size_t Decode(const wchar_t* base64_in, void* buffer_out, size_t max_length = UINT_MAX);
+
+  // Encode data to a base64 string. If append is true, the encoded string is appended to base64_out.
+  // Otherwise base64_out is replaced with the encoded string.
+  // Returns true if ok, false if unable to allocate the output buffer.
+  static bool Encode(const void* buffer_in, size_t num_bytes, ON_wString& base64_out, bool append);
+};
 
 #endif

@@ -1,6 +1,5 @@
-/*
 //
-// Copyright (c) 1993-2015 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -11,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_FILE_UTILITIES_INC_)
 #define OPENNURBS_FILE_UTILITIES_INC_
@@ -1789,6 +1787,29 @@ private:
 
   ON__UINT64 m_count = 0; // number of items iterated through so far
   class ON_DirectoryIteratorImpl* m_impl = nullptr;
+};
+
+class ON_CLASS ON_UnicodeTextFile final
+{
+public:
+  enum class Modes { Read, Write };
+  enum class Types { Unknown, UTF8, UTF16 };
+
+  ON_UnicodeTextFile(Types type = Types::Unknown);
+  ~ON_UnicodeTextFile();
+
+  bool Open(const wchar_t* filename, Modes mode);
+  bool Close(void);
+
+  bool ReadString(ON_wString& s);
+  bool WriteString(const wchar_t* s);
+
+  ON_UnicodeTextFile(const ON_UnicodeTextFile&) = delete;
+  const ON_UnicodeTextFile& operator = (const ON_UnicodeTextFile&) = delete;
+
+private:
+  class CImpl;
+  CImpl* m_impl;
 };
 
 #endif

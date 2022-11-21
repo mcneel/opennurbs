@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2015 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -5015,21 +5015,60 @@ const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByIndex() const
   return m_by_index;
 }
 
+// 24 Oct 2022 A. Cormier (RH-64285)
+// This functions attempts to find the local name of a font when having the english name.
+// A binary search would be better than a for loop but a binary search doesn't work when searching
+// for an english  name
+static ON_wString ON_FontList__EnNameToLocName(const ON_wString& english_name)
+{
+  const ON_SimpleArray<const ON_Font*>& fonts = ON_Font::InstalledFontList().ByIndex();
+  for (int i = 0; i < fonts.Count(); i++)
+  {
+    const ON_Font* font = fonts[i];
+    if (nullptr == font)
+      continue;
+    ON_wString en_qname = font->QuartetName(ON_Font::NameLocale::English);
+    if (ON_wString::CompareOrdinal(english_name, en_qname, true) == 0)
+    {
+      return font->QuartetName();
+    }
+  }
+  return ON_wString::EmptyString;
+}
+
 const ON_FontFaceQuartet ON_FontList::QuartetFromQuartetName(
   const wchar_t* quartet_name
 ) const
 {
   for (;;)
   {
-    const ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
+    ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
     if (qname.QuartetName().IsEmpty())
       break;
 
-    const ON_ClassArray< ON_FontFaceQuartet >& quartet_list = ON_FontList::QuartetList();
+    const ON_ClassArray<ON_FontFaceQuartet>& quartet_list = ON_FontList::QuartetList();
     const int quartet_list_count = quartet_list.Count();
     int i = quartet_list.BinarySearch(&qname, ON_FontFaceQuartet::CompareQuartetName);
-    if (i < 0 || i >= quartet_list_count)
-      break;
+
+    bool failedOnFirstTry = i < 0 || i >= quartet_list_count;
+    if (failedOnFirstTry)
+    {
+      //  ... then find the localized name and try again.
+      // The QuartetNames in the QuartetList above are localized but sometimes the quartet_name passed to
+      // this function is in english. In many cases the localized name and the english name are the same
+      // so there is no problem. It is a problem for Japanese and Chinese languages for example. RH-64285
+      ON_wString locName = ON_FontList__EnNameToLocName(quartet_name);
+      if (locName.IsEmpty())
+      {
+        break;
+      }
+      qname = ON_FontFaceQuartet(locName, nullptr, nullptr, nullptr, nullptr);
+      i = quartet_list.BinarySearch(&qname, ON_FontFaceQuartet::CompareQuartetName);
+      if (i < 0 || i >= quartet_list_count)
+      {
+        break;
+      }
+    }
 
     while (i > 0 && 0 == ON_FontFaceQuartet::CompareQuartetName(&qname, &quartet_list[i - 1]))
       i--;
