@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(OPENNURBS_UUID_INC_)
 #define OPENNURBS_UUID_INC_
@@ -88,6 +85,7 @@ extern const ON_UUID ON_opennurbs4_id;
 extern const ON_UUID ON_opennurbs5_id;
 extern const ON_UUID ON_opennurbs6_id;
 extern const ON_UUID ON_opennurbs7_id;
+extern const ON_UUID ON_opennurbs8_id;
 #endif
 extern ON_EXTERN_DECL const ON_UUID ON_opennurbs_id;
 

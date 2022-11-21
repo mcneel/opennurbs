@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_ARRAY_DEFS_INC_)
 #define ON_ARRAY_DEFS_INC_
@@ -620,6 +617,18 @@ void ON_SimpleArray<T>::RemoveValue(const T& key)
   for (int i = 0; i < m_count; i++)
   {
     if (memcmp(p, m_a + i, sizeof(T)))
+      *(m_a + t++) = *(m_a + i);
+  }
+  m_count = t;
+}
+
+template <class T>
+void ON_SimpleArray<T>::RemoveIf(bool predicate(const T& key))
+{
+  int t = 0;
+  for (int i = 0; i < m_count; i++)
+  {
+    if (!predicate(*(m_a + i)))
       *(m_a + t++) = *(m_a + i);
   }
   m_count = t;

@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_BOUNDING_BOX_INC_)
 #define ON_BOUNDING_BOX_INC_
@@ -593,6 +590,15 @@ public:
    true if the result is Valid.  
  */
   bool Expand(ON_3dVector delta);
+
+  /*
+Description:
+  Shrinks the box by subtracting delta to m_max and adding
+  it from m_min.  This is not allowed to create an inverse bounding box.
+Returns:
+  true if the result is Valid.
+*/
+  bool Shrink(ON_3dVector delta);
 
   ON_3dPoint m_min;
   ON_3dPoint m_max;

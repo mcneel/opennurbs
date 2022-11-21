@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -13067,7 +13064,7 @@ int ON_BrepLoop::SurfaceIndexOf() const
 
 int ON_BrepFace::SurfaceIndexOf() const
 {
-  return (m_brep && m_si >= 0 && m_si < m_brep->m_S.Count()) ? m_si : 0;
+  return (m_brep && m_si >= 0 && m_si < m_brep->m_S.Count()) ? m_si : -1;
 }
 
 void ON_BrepTrim::UnsetPlineEdgeParameters()

@@ -25,7 +25,7 @@
 class ON_3dmObjectAttributesPrivate
 {
 public:
-  ON_3dmObjectAttributesPrivate();
+  ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes* attr);
 
   bool operator==(const ON_3dmObjectAttributesPrivate&) const;
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
@@ -47,7 +47,9 @@ public:
   ON_MeshModifiers m_mesh_modifiers;
 };
 
-ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate()
+ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes* attr)
+  :
+  m_decals(const_cast<ON_3dmObjectAttributes*>(attr))
 {
   m_hatch_background_fill = ON_Color::UnsetColor;
 }
@@ -95,8 +97,7 @@ bool ON_3dmObjectAttributesPrivate::operator!=(const ON_3dmObjectAttributesPriva
   return !ON_3dmObjectAttributesPrivate::operator==(other);
 }
 
-static const ON_3dmObjectAttributesPrivate DefaultAttributesPrivate;
-
+static const ON_3dmObjectAttributesPrivate DefaultAttributesPrivate(nullptr);
 
 ON_OBJECT_IMPLEMENT( ON_3dmObjectAttributes, ON_Object, "A828C015-09F5-477c-8665-F0482F5D6996" );
 
@@ -147,7 +148,7 @@ void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
   m_private = nullptr;
   if (src.m_private)
   {
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
     *m_private = *src.m_private;
   }
   m_dmref = src.m_dmref;
@@ -1302,6 +1303,10 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
         rc = file.WriteBool(HatchBoundaryVisible());
         if (!rc) break;
       }
+
+      // Have the decal collection update the user data if anything has changed.
+      const unsigned int archive_3dm_version = file.Archive3dmVersion();
+      m_private->m_decals.UpdateUserData(archive_3dm_version);
     }
 
     // 15 Jun 2022 S. Baer
@@ -2208,7 +2213,7 @@ void ON_3dmObjectAttributes::SetClipParticipationSource(ON::ClipParticipationSou
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_clip_participation_source = source;
 }
 
@@ -2225,7 +2230,7 @@ void ON_3dmObjectAttributes::SetClipParticipationForAll()
 void ON_3dmObjectAttributes::SetClipParticipationForNone()
 {
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_clipplane_list.Empty();
   m_private->m_clipping_proof = true;
 }
@@ -2235,7 +2240,7 @@ void ON_3dmObjectAttributes::SetClipParticipationList(const ON_UUID* clippingPla
     SetClipParticipationForAll();
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_clipplane_list.Empty();
   for (int i = 0; i < count; i++)
     m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
@@ -2278,7 +2283,7 @@ void ON_3dmObjectAttributes::SetSectionFillRule(ON::SectionFillRule rule)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_fill_rule = rule;
 }
 
@@ -2293,7 +2298,7 @@ void ON_3dmObjectAttributes::SetSectionHatchIndex(int index)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_hatch_index = index;
 }
 
@@ -2307,7 +2312,7 @@ void ON_3dmObjectAttributes::SetSectionHatchScale(double scale)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_hatch_scale = scale;
 }
 
@@ -2321,7 +2326,7 @@ void ON_3dmObjectAttributes::SetSectionHatchRotation(double rotation)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_hatch_rotation = rotation;
 }
 
@@ -2335,7 +2340,7 @@ void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSou
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_attributes_source = source;
 }
 
@@ -2352,7 +2357,7 @@ void ON_3dmObjectAttributes::SetLinetypeScale(double scale)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_linetype_scale = scale;
 }
 
@@ -2369,7 +2374,7 @@ void ON_3dmObjectAttributes::SetHatchBackgrounFillColor(const ON_Color& color)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_hatch_background_fill = c;
 }
 bool ON_3dmObjectAttributes::HatchBoundaryVisible() const
@@ -2382,29 +2387,16 @@ void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
     return;
 
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate();
+    m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_hatch_boundary_visible = on;
 }
 
+
+
 //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
-ON_Plane ON_3dmObjectAttributes::ObjectFrame(const ON_COMPONENT_INDEX&, bool bRaw) const
+ON_Plane ON_3dmObjectAttributes::ObjectFrame(const ON_COMPONENT_INDEX& ci) const
 {
-  if (!m_object_frame.IsValid())
-  {
-    return ON_Plane::UnsetPlane;
-  }
-
-  if (bRaw)
-  {
-    return m_object_frame;
-  }
-
-  ON_Plane plane = m_object_frame;
-  plane.xaxis.Unitize();
-  plane.zaxis.Unitize();
-  plane.yaxis.Unitize();
-
-  return plane;
+  return m_object_frame;
 }
 
 //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531
@@ -2419,39 +2411,46 @@ void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX& ci, const 
   m_object_frame = plane;
 }
 
-ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
-{
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate;
-
-  return m_private->m_decals.AddDecal();
-}
-
 ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
 {
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate;
+    m_private = new ON_3dmObjectAttributesPrivate(this);
 
   return m_private->m_mesh_modifiers;
-}
-
-void ON_3dmObjectAttributes::Internal_PopulateDecals(const ON_XMLRootNode& node) const
-{
-  if (!ON_DecalCollection::NodeContainsDecals(node))
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate;
-
-  m_private->m_decals.Populate(node);
 }
 
 const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const
 {
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate;
+    m_private = new ON_3dmObjectAttributesPrivate(this);
 
   return m_private->m_decals.GetDecalArray();
+}
+
+ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  return m_private->m_decals.AddDecal();
+}
+
+bool ON_3dmObjectAttributes::DeleteDecal(ON_Decal& decal)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  return m_private->m_decals.DeleteDecal(decal);
+}
+
+void ON_3dmObjectAttributes::DeleteAllDecals(void)
+{
+  //if (nullptr == m_private)
+  //  m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  // Delete all the user data? [JOHN-DECAL-FIX]
+  // TODO:
+//  return m_private->m_decals.DeleteAllDecals();
 }
 
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}

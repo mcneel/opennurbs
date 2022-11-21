@@ -145,6 +145,16 @@ public:
   ON_ClassArray<ON_wString> GetStringArray(const wchar_t* key) const;
 
 #pragma endregion
+
+#pragma region Getters-Setters Geometry
+
+  bool TrySetMeshParameters(const wchar_t* key, const ON_MeshParameters& value);
+  bool TryGetMeshParameters(const wchar_t* key, ON_MeshParameters& value) const;
+  void SetMeshParameters(const wchar_t* key, const ON_MeshParameters& value);
+  ON_MeshParameters GetMeshParameters(const wchar_t* key) const;
+
+#pragma endregion
+
 private:
   class ON_ArchivableDictionaryPrivate* m_private = nullptr;
   ON__UINT_PTR m_reserved = 0;

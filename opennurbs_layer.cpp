@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -878,6 +878,17 @@ bool ON_Layer::IsVisible() const
   return IsHidden() ? false : true;
 }
 
+bool ON_Layer::IsVisible(const ON_3dmView* view) const
+{
+  if (nullptr == view)
+    return IsVisible();
+
+  if (view->m_view_type == ON::view_type::model_view_type)
+    return ModelIsVisible();
+
+  return PerViewportIsVisible(view->m_vp.ViewportId());
+}
+
 void ON_Layer::SetVisible( bool bVisible )
 {
   SetHiddenModelComponentState( bVisible ? false : true );
@@ -1737,11 +1748,6 @@ ON_Color ON_Layer::PerViewportPlotColor( ON_UUID viewport_id ) const
   return PlotColor();
 }
 
-/*ON_Color ON_Layer::PlotColor( const ON_UUID& viewport_id ) const
-{
-  return PerViewportPlotColor(viewport_id);
-}*/
-
 void ON_Layer::SetPerViewportPlotWeight( ON_UUID viewport_id, double plot_weight_mm )
 {
   if ( ON_UuidIsNil(viewport_id) )
@@ -1762,11 +1768,6 @@ void ON_Layer::SetPerViewportPlotWeight( ON_UUID viewport_id, double plot_weight
   }
 }
 
-//void ON_Layer::SetPlotWeight( double plot_weight_mm, const ON_UUID& viewport_id )
-//{
-//  SetPerViewportPlotWeight( viewport_id, plot_weight_mm );
-//}
-
 double ON_Layer::PerViewportPlotWeight( ON_UUID viewport_id ) const
 {
   if ( !ExtensionBit(m_extension_bits,0x01) )
@@ -1778,11 +1779,38 @@ double ON_Layer::PerViewportPlotWeight( ON_UUID viewport_id ) const
   return PlotWeight();
 }
 
-//double ON_Layer::PlotWeight( const ON_UUID& viewport_id ) const
-//{
-//  return PerViewportPlotWeight(viewport_id);
-//}
+// {5CCA6037-AFC7-4204-9548-EC32CD7177D6}
+static const ON_UUID ON_model_viewport_id = { 0x5cca6037, 0xafc7, 0x4204, { 0x95, 0x48, 0xec, 0x32, 0xcd, 0x71, 0x77, 0xd6 } };
 
+bool ON_Layer::ModelIsVisible() const
+{
+  return PerViewportIsVisible(ON_model_viewport_id);
+}
+
+void ON_Layer::SetModelVisible(bool bVisible)
+{
+  SetPerViewportVisible(ON_model_viewport_id, bVisible);
+}
+
+bool ON_Layer::ModelPersistentVisibility() const
+{
+  return PerViewportPersistentVisibility(ON_model_viewport_id);
+}
+
+void ON_Layer::SetModelPersistentVisibility(bool bPersistentVisibility)
+{
+  SetPerViewportPersistentVisibility(ON_model_viewport_id, bPersistentVisibility);
+}
+
+void ON_Layer::UnsetModelPersistentVisibility()
+{
+  UnsetPerViewportPersistentVisibility(ON_model_viewport_id);
+}
+
+void ON_Layer::DeleteModelVisible()
+{
+  DeletePerViewportVisible(ON_model_viewport_id);
+}
 
 bool ON_Layer::PerViewportIsVisible( ON_UUID viewport_id ) const
 {

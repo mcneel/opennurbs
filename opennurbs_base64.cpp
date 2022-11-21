@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -1093,4 +1090,150 @@ ON__UINT32 ON_Base64EncodeStream::OutCRC() const
   return m_out_crc;
 }
 
+// ON_Base64
 
+static const int DecodeTab[128] =
+{
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+  52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1,  0, -1, -1,
+  -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+  -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+  41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+};
+
+static bool ReadEncodedByte(int& pos, const wchar_t* wsz, ON__UINT8& byteOut)
+{
+  wchar_t w = wsz[pos];
+  if (w >= 128)
+    w = 128; // Will fail validation.
+
+  byteOut = ON__UINT8(w);
+
+  while (byteOut != 0)
+  {
+    pos++;
+
+    // Check that the byte is a valid Base64 character.
+    // The Base64 specification requires garbled data to be ignored.
+    if ((byteOut < 128) && (DecodeTab[byteOut] >= 0))
+      return true;
+
+    // Move on to the next byte and keep trying.
+    w = wsz[pos];
+    if (w >= 128)
+      w = 128; // Will fail validation.
+
+    byteOut = ON__UINT8(w);
+  }
+
+  return false; // End of data.
+}
+
+size_t ON_Base64::Decode(const wchar_t* wszBase64in, void* pvBufferOut, size_t maxLength) // Static.
+{
+  auto* pBufferOut = static_cast<char*>(pvBufferOut);
+
+  ON__UINT32 uBytesWritten = 0;
+
+  int iResultSize = 3;
+  ON__UINT8 a = 0, b = 0, c = 0, d = 0, aResult[3] = { 0 };
+
+  int pos = 0;
+  while (ReadEncodedByte(pos, wszBase64in, a))
+  {
+    ReadEncodedByte(pos, wszBase64in, b);
+    ReadEncodedByte(pos, wszBase64in, c);
+    ReadEncodedByte(pos, wszBase64in, d);
+
+    if ('=' == d) // Handle padding character(s).
+    {
+      iResultSize = ('=' == c) ? 1 : 2;
+    }
+
+    if (pBufferOut != nullptr)
+    {
+      const auto val = (ON__UINT32)((DecodeTab[a] << 18) | (DecodeTab[b] << 12) | (DecodeTab[c] << 6) | DecodeTab[d]);
+
+      aResult[0] = (ON__UINT8)((val & 0xFF0000) >> 16);
+      aResult[1] = (ON__UINT8)((val & 0x00FF00) >> 8);
+      aResult[2] = (ON__UINT8)((val));
+
+      memcpy(pBufferOut, aResult, iResultSize);
+      pBufferOut += iResultSize;
+      uBytesWritten += iResultSize;
+
+      if (size_t(uBytesWritten) >= maxLength)
+        break;
+    }
+    else
+    {
+      uBytesWritten += iResultSize;
+    }
+  }
+
+  return size_t(uBytesWritten);
+}
+
+static const wchar_t* EncodeTab = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+bool ON_Base64::Encode(const void* pvBufferIn, size_t bufNumBytes, ON_wString& sBase64Out, bool bAppend) // Static.
+{
+  // Base64 is about 133% of the data size. Use 150% plus 4 for padding.
+  const auto bigBufNumBytes = (bufNumBytes * 150) / 100 + 4;
+
+  const int iExistingLen = bAppend ? sBase64Out.Length() : 0;
+  const auto outNumBytes = size_t(iExistingLen) + bigBufNumBytes;
+  auto* start = sBase64Out.SetLength(outNumBytes);
+  if (nullptr == start)
+    return false;
+
+  auto* out = start + iExistingLen;
+
+  const auto* p = static_cast<const char*>(pvBufferIn);
+  const char* pEnd = p + bufNumBytes;
+
+  ON__UINT8 a = 0, b = 0, c = 0;
+  while (p < pEnd)
+  {
+    out[2] = out[3] = L'=';
+
+    a = *p++;
+
+    out[0] = EncodeTab[a >> 2];
+
+    a = ON__UINT8((a & 0x03) << 4);
+    if (p < pEnd)
+    {
+      b = *p++;
+      out[1] = EncodeTab[a | (b >> 4)];
+
+      b = ON__UINT8((b & 0x0F) << 2);
+      if (p < pEnd)
+      {
+        c = *p++;
+        out[2] = EncodeTab[b | (c >> 6)];
+        out[3] = EncodeTab[c & 0x3F];
+      }
+      else
+      {
+        out[2] = EncodeTab[b];
+      }
+    }
+    else
+    {
+      out[1] = EncodeTab[a];
+    }
+
+    out += 4;
+  }
+
+  *out = 0;
+
+  const auto realLength = out - start;
+  sBase64Out.SetLength(realLength);
+
+  return true;
+}

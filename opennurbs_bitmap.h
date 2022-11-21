@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 ////////////////////////////////////////////////////////////////
 //
@@ -317,7 +314,11 @@ public:
   See Also:
     ON_WindowsBitmap::Create    
   */
-  ON_WindowsBitmap( const BITMAPINFO& src );
+#if defined (ON_RUNTIME_WIN)
+  ON_WindowsBitmap(const BITMAPINFO& src);
+#else
+  ON_WindowsBitmap(const ON_WindowsBITMAPINFO& src);
+#endif
 
   /*
   Description:
@@ -330,7 +331,11 @@ public:
   Remarks:
     ~ON_WindowsBitmap will not delete src.
   */
-  ON_WindowsBitmap( const BITMAPINFO* src );
+#if defined (ON_RUNTIME_WIN)
+  ON_WindowsBitmap(const BITMAPINFO* src);
+#else
+  ON_WindowsBitmap(const ON_WindowsBITMAPINFO* src);
+#endif
 
   /*
   Description:
@@ -341,7 +346,11 @@ public:
   See Also:
     ON_WindowsBitmap::Create    
   */
-  ON_WindowsBitmap& operator=( const BITMAPINFO& src );
+#if defined (ON_RUNTIME_WIN)
+  ON_WindowsBitmap& operator=(const BITMAPINFO& src);
+#else
+  ON_WindowsBitmap& operator=(const ON_WindowsBITMAPINFO& src);
+#endif
 
   /*
   Description:
@@ -400,13 +409,24 @@ public:
           }
 
   */
+#endif
+
+
+#if defined (ON_OS_WINDOWS_GDI)
   bool Create(
     const BITMAPINFO* bmi, 
     const unsigned char* bits,
     bool bCopy
     );
-
+#else
+  bool Create(
+    const ON_WindowsBITMAPINFO* bmi,
+    const unsigned char* bits,
+    bool bCopy
+  );
 #endif
+
+
 
   /*
   Returns:

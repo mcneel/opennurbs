@@ -107,45 +107,66 @@ public:
   bool On(void) const;
   void SetOn(bool b);
 
+  // Specifies which texture is used for computing displacement amount
   ON_UUID Texture(void) const;
   void SetTexture(const ON_UUID& id);
 
+  // Specifies which texture mapping channel is used for displacement texture
   int MappingChannel(void) const;
   void SetMappingChannel(int c);
 
+  // Specifies the amount of displacement for the black color in the texture
   double BlackPoint(void) const;
   void SetBlackPoint(double b);
 
+  // Specifies the amount of displacement for the white color in the texture
   double WhitePoint(void) const;
   void SetWhitePoint(double w);
 
+  // Specifies how densely the object is initially subdivided.
+  // The lower the value, the higher the resolution of the displaced mesh.
   int InitialQuality(void) const;
   void SetInitialQuality(int q);
 
+  // Specifies whether to perform a mesh reduction as a post process to simplify the result of displacement
   bool FinalMaxFacesOn(void) const;
   void SetFinalMaxFacesOn(bool b);
 
+  // Specifies how many faces the reduction post process should target to
   int FinalMaxFaces(void) const;
   void SetFinalMaxFaces(int f);
 
+  // Specifies whether to perform a fairing step
   bool FairingOn(void) const;
   void SetFairingOn(bool b);
 
+  // Specifies number of steps for fairing process. This straightens rough feature edges.
   int Fairing(void) const;
   void SetFairing(int f);
 
+  // Specifies the maximum angle between face normals of adjacent faces
+  // that will get welded together.
   double PostWeldAngle(void) const;
   void SetPostWeldAngle(double a);
 
+  // Specifies in megabytes how much memory can be allocated for use by the displacement mesh.
   int MeshMemoryLimit(void) const;
   void SetMeshMemoryLimit(int l);
 
+  // Specifies the number of refinement passes
   int RefineSteps(void) const;
   void SetRefineSteps(int s);
 
+  // Specifies how sensitive the divider for contrasts is on the displacement texture.
+  // Specify 1 to split all mesh edges on each refine step.
+  // Specify 0.99 to make even slight contrasts on the displacement texture cause edges to be split.
+  // Specifying 0.01 only splits edges where heavy contrast exists.
   double RefineSensitivity(void) const;
   void SetRefineSensitivity(double s);
 
+  // Specifies which formula is used to calculate sweep resolution from initial quality.
+  // Default = Default formula.
+  // AbsoluteToleranceDependent = Formula used in Rhino 5. Dependent on absolute tolerance.
   enum class SweepResolutionFormulas : int { Default = 0, AbsoluteToleranceDependent = 1 };
   SweepResolutionFormulas SweepResolutionFormula(void) const;
   void SetSweepResolutionFormula(SweepResolutionFormulas f);
@@ -164,9 +185,9 @@ public:
     bool operator != (const SubItem& sub) const;
 
     // Returns the index of this sub-item.
-    // When this is >= 0 it is the component index of the face.
-    int Index(void) const;
-    void SetIndex(int i);
+    // When this is >= 0 it is the component index of the polysurface or SubD face.
+    int FaceIndex(void) const;
+    void SetFaceIndex(int i);
 
     // Overrides displacement 'on'.
     bool On(void) const;
@@ -210,11 +231,11 @@ public:
   };
 
   SubItem& AddSubItem(void);
+  void DeleteSubItem(int face_index);
   void DeleteAllSubItems(void);
-  SubItem* FindSubItem(const int index) const;
+  int  FindSubItemArrayIndex(int face_index) const;
+  SubItem* FindSubItem(int face_index) const;
   SubItemIterator GetSubItemIterator(void) const;
-
-  virtual ON_UUID Uuid(void) const override;
 
   class ON_CLASS Defaults final
   {
@@ -232,6 +253,8 @@ public:
     static double AbsoluteTolerance(void);
     static SweepResolutionFormulas SweepResolutionFormula(void);
   };
+
+  virtual ON_UUID Uuid(void) const override;
 
 public: // For internal use only.
   virtual ON_XMLNode* AddChildXML(ON_XMLRootNode& root) const override;
@@ -349,10 +372,10 @@ public:
 
   const ON_ThickeningUserData& operator = (const ON_ThickeningUserData& ud);
 
-  virtual void SetToDefaults(void) const;
-  virtual bool GetDescription(ON_wString& s);
-  virtual void ReportVersionError(void) const;
-  virtual bool Transform(const ON_Xform& xform);
+  virtual void SetToDefaults(void) const override;
+  virtual bool GetDescription(ON_wString& s) override;
+  virtual void ReportVersionError(void) const override;
+  virtual bool Transform(const ON_Xform& xform) override;
 };
 
 class ON_CLASS ON_Thickening : public ON_MeshModifier
@@ -371,15 +394,19 @@ public:
   bool On(void) const;
   void SetOn(bool b);
 
+  // Specifies how thick meshes will be made
   double Distance(void) const;
   void SetDistance(double d);
 
+  // Specifies whether to make open meshes solid by adding walls when thickening
   bool Solid(void) const;
   void SetSolid(bool b);
 
+  // Specifies whether to only offset the original surface
   bool OffsetOnly(void) const;
   void SetOffsetOnly(bool b);
 
+  // Specifies whether to thicken to both sides of the surface
   bool BothSides(void) const;
   void SetBothSides(bool b);
 
@@ -420,10 +447,10 @@ public:
 
 	const ON_CurvePipingUserData& operator = (const ON_CurvePipingUserData& ud);
 
-	virtual void SetToDefaults(void) const;
-	virtual bool GetDescription(ON_wString& s);
-	virtual void ReportVersionError(void) const;
-	virtual bool Transform(const ON_Xform& xform);
+	virtual void SetToDefaults(void) const override;
+	virtual bool GetDescription(ON_wString& s) override;
+	virtual void ReportVersionError(void) const override;
+	virtual bool Transform(const ON_Xform& xform) override;
 };
 
 class ON_CLASS ON_CurvePiping : public ON_MeshModifier
@@ -532,11 +559,11 @@ public:
   bool On(void) const;
   void SetOn(bool b);
 
-  // Specifies whether the shutlining is faceted or not.
+  // Specifies whether the shut-lining is faceted or not.
   bool Faceted(void) const;
   void SetFaceted(bool b);
 
-  // Specifies whether the shutlining automatically updates or not.
+  // Specifies whether the shut-lining automatically updates or not.
   bool AutoUpdate(void) const;
   void SetAutoUpdate(bool b);
 
@@ -556,21 +583,27 @@ public:
     bool operator == (const Curve& c) const;
     bool operator != (const Curve& c) const;
 
+    // Specifies the id of the curve object to use for a shut-line.
     ON_UUID Id(void) const;
     void SetId(const ON_UUID& id);
 
+    // Specifies the radius of the pipe used to create the shut-line for this curve.
     double Radius(void) const;
     void SetRadius(double d);
 
+    // Specifies the profile of the shut-line for this curve.
     int Profile(void) const;
     void SetProfile(int p);
 
+    // Specifies whether shut-line is created for the this curve.
     bool Enabled(void) const;
     void SetEnabled(bool b);
 
+    // Specifies whether this curve is pulled to the surface before creating the shut-line.
     bool Pull(void) const;
     void SetPull(bool b);
 
+    // Specifies whether to create a bump instead of a dent for this curve.
     bool IsBump(void) const;
     void SetIsBump(bool b);
 
@@ -605,18 +638,18 @@ public:
     CImpl* m_impl;
   };
 
-  // Adds a new curve to the shutlining. The curve will have an id of ON_nil_uuid.
+  // Adds a new curve to the shut-lining. The curve will have an id of ON_nil_uuid.
   // After adding a curve, you should set the id to that of a curve in the model
-  // that will be used to calculate the shutlining.
+  // that will be used to calculate the shut-lining.
   Curve& AddCurve(void);
 
-  // Deletes all the curves from the shutlining.
+  // Deletes all the curves from the shut-lining.
   void DeleteAllCurves(void);
 
-  // Finds a curve on the shutlining by its id. Returns null if not found.
+  // Finds a curve on the shut-lining by its id. Returns null if not found.
   Curve* FindCurve(const ON_UUID& id) const;
 
-  // Gets an iterator for iterating over all the curves on the shutlining.
+  // Gets an iterator for iterating over all the curves on the shut-lining.
   CurveIterator GetCurveIterator(void) const;
 
   virtual ON_UUID Uuid(void) const override;
@@ -677,7 +710,6 @@ public:
 
 public: // For internal use only.
   void LoadFromXML(const ON_XMLRootNode&);
-  void SaveToXML(ON_XMLRootNode&) const;
 
 private:
   class CImpl;

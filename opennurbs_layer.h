@@ -330,11 +330,20 @@ public:
   Returns:
     Returns true if objects on layer are visible.
   Remarks:
-    Does not inspect per viewport settings.
+    Does not inspect per viewport settings. It is better to use the
+    overload that take an ON_3dmView for visibility testing
   See Also:
     ON_Layer::SetVisible
   */
   bool IsVisible() const;
+
+  /*
+  Returns:
+    Returns true if objects on layer are visible for a given view.
+  See Also:
+    ON_Layer::SetVisible
+  */
+  bool IsVisible(const class ON_3dmView* view) const;
 
   /*
   Description:
@@ -405,7 +414,72 @@ public:
     ON_Layer::SetPersistentVisibility
   */
   void UnsetPersistentVisibility();
-    
+  
+
+  /*
+  Returns:
+    Returns true if objects on layer are visible in model viewports.
+  See Also:
+    ON_Layer::IsVisible()
+    ON_Layer::PerViewportIsVisible()
+*/
+  bool ModelIsVisible() const;
+
+  /*
+  Description:
+    Controls layer visibility in  in model viewports.
+  Parameters:
+    bVisible - [in] true to make layer visible,
+                    false to make layer invisible
+  See Also:
+    ON_Layer::SetVisible()
+    ON_Layer::SetPerViewportVisible()
+  */
+  void SetModelVisible(bool bVisible);
+
+  /*
+  Returns:
+    true:
+      If this layer's visibility in model viewports is
+      controlled by a parent object and the parent is turned on
+      (after being off), then this layer will also be turned on
+      in the specified viewport.
+    false:
+      If this layer's visibility in model viewports is
+      controlled by a parent object and the parent layer is
+      turned on (after being off), then this layer will continue
+      to be off in the specified viewport.
+  Remarks:
+    See ON_Layer::SetPersistentVisibility
+    for a description of persistent visibility.
+  See Also:
+    ON_Layer::SetModelPersistentVisibility
+  */
+  bool ModelPersistentVisibility() const;
+
+  /*
+  Description:
+    This function allows model viewports setting the
+    child visibility property.
+  Parameters
+    bPersistentVisibility - [in]
+  Remarks:
+    See ON_Layer::SetPersistentVisibility
+    for a description of the child visibility property.
+  See Also:
+    ON_Layer::SetPersistentVisibility
+  */
+  void SetModelPersistentVisibility(bool bPersistentVisibility);
+
+  void UnsetModelPersistentVisibility();
+
+  /*
+  Description:
+    Remove any model viewport visibility setting so the
+    layer's overall setting will be used for all viewports.
+  */
+  void DeleteModelVisible();
+
   /*
   Parameters:
     viewport_id - [in]
@@ -430,7 +504,7 @@ public:
     bVisible - [in] true to make layer visible, 
                     false to make layer invisible
   See Also:
-    ON_Layer::IsVisibleInViewport()
+    ON_Layer::PerViewportIsVisible()
   */
   void SetPerViewportVisible( 
     ON_UUID viewport_id, 

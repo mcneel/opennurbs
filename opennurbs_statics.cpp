@@ -273,12 +273,15 @@ const ON_UUID ON_opennurbs6_id = { 0x7b0b585d, 0x7a31, 0x45d0,{ 0x92, 0x5e, 0xbd
 // {523bfe6e-ef49-4b75-a8d6-253faf5044d3}
 const ON_UUID ON_opennurbs7_id = { 0x523bfe6e, 0xef49, 0x4b75,{ 0xa8, 0xd6, 0x25, 0x3f, 0xaf, 0x50, 0x44, 0xd3 } };
 
+// {50EDE5C9-1487-4B4C-B3AA-6840B460E3CF}
+const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c, { 0xb3, 0xaa, 0x68, 0x40, 0xb4, 0x60, 0xe3, 0xcf } };
+
 
 // ON_opennurbs_id is always set to the value for the current version
 // of opennurbs.  ON_opennurbs_id is the id that should be used as
 // the userdata application id for userdata classes definitions that
 // are in the opennurbs library.
-const ON_UUID ON_opennurbs_id = ON_opennurbs7_id;
+const ON_UUID ON_opennurbs_id = ON_opennurbs8_id;
 
 const ON_UuidPairList ON_UuidPairList::EmptyList;
 

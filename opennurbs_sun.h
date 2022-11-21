@@ -166,7 +166,7 @@ public:
   // Get a color for rendering a sun light when the sun is at a particular altitude in the sky.
   static ON_4fColor SunColorFromAltitude(double altitude);
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

@@ -1,5 +1,3 @@
-/* $NoKeywords: $ */
-/*
 //
 // Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -8570,10 +8567,12 @@ bool ON_BinaryArchive::Write3dmSettings(
     m_V3_plugin_id_list.Append( ON_opennurbs4_id );
     m_V3_plugin_id_list.Append( ON_opennurbs5_id );
     m_V3_plugin_id_list.Append( ON_opennurbs6_id );
+    m_V3_plugin_id_list.Append( ON_opennurbs7_id );
     m_V3_plugin_id_list.Append( ON_rhino3_id );
     m_V3_plugin_id_list.Append( ON_rhino4_id );
     m_V3_plugin_id_list.Append( ON_rhino5_id );
     m_V3_plugin_id_list.Append( ON_rhino6_id );
+    m_V3_plugin_id_list.Append( ON_rhino7_id );
     m_V3_plugin_id_list.QuickSort( ON_UuidCompare );
   }
 
@@ -16813,6 +16812,13 @@ ON_BinaryArchive::SetArchive3dmVersion(int v)
     ON_ERROR("ON_BinaryArchive::SetArchive3dmVersion - invalid version");
   }
   return rc;
+}
+
+bool
+ON_BinaryArchive::SetOpenNURBS3dmVersion(unsigned int v)
+{
+  m_3dm_opennurbs_version = v;
+  return true;
 }
 
 void 

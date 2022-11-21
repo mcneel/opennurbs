@@ -1,6 +1,5 @@
-/*
 //
-// Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -11,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -3316,7 +3314,6 @@ bool RtfComposer::Compose(
         {
           // RH-64720 - Only do this if the stack isn't from a field  
           run_strings += L"[[";
-          run_strings += run->m_stacked_text->m_separator;
           GetRunText(run->m_stacked_text->m_top_run, run_strings, make_rtf);
           run_strings += run->m_stacked_text->m_separator;
           GetRunText(run->m_stacked_text->m_bottom_run, run_strings, make_rtf);
@@ -3597,7 +3594,6 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
       {
         run_strings += L"[[";
-        run_strings += run->m_stacked_text->m_separator;
         GetRunText(run->m_stacked_text->m_top_run, run_strings, true_bool);
         run_strings += run->m_stacked_text->m_separator;
         GetRunText(run->m_stacked_text->m_bottom_run, run_strings, true_bool);

@@ -1,7 +1,5 @@
-/* $NoKeywords: $ */
-/*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #include "opennurbs.h"
 
@@ -1195,10 +1192,12 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
   if ( rc ) {
     const double len_ds = ds.Length();
     const double len_dt = dt.Length();
-
     // do not reduce the tolerance used here - there is a retry in the code
     // below.
-    if ( len_ds >  ON_SQRT_EPSILON*len_dt && len_dt >  ON_SQRT_EPSILON*len_ds ) 
+    //17 Oct 2022 - Chuck - Added test for parallel partials.
+    if ( len_ds >  ON_SQRT_EPSILON*len_dt && len_dt >  ON_SQRT_EPSILON*len_ds && 
+      ds.IsParallelTo(dt, 0.01*ON_DEFAULT_ANGLE_TOLERANCE) == 0)
+      
     {
       ON_3dVector a = ds/len_ds;
       ON_3dVector b = dt/len_dt;

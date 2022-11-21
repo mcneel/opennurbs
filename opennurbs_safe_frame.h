@@ -1,4 +1,3 @@
-/*
 //
 // Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -11,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_SAFE_FRAME_INC_)
 #define ON_SAFE_FRAME_INC_
@@ -101,7 +99,7 @@ public:
   // Sets the title frame Y scale.
   void SetTitleFrameYScale(double d);
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

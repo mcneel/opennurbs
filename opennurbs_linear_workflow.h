@@ -1,4 +1,3 @@
-/*
 //
 // Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -11,7 +10,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 #if !defined(ON_LINEAR_WORKFLOW_INC_)
 #define ON_LINEAR_WORKFLOW_INC_
@@ -73,7 +71,7 @@ public:
   // Returns the CRC of gamma and linear workflow active state.
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
-public:
+private:
   class CImpl;
   CImpl* m_impl;
 };

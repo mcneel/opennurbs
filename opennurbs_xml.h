@@ -16,49 +16,122 @@
 
 typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
-class ON_CLASS ON_UnicodeTextFile
-{
-public:
-  enum class Modes { Load, Save };
-  enum class Types { Unknown, UTF8, UTF16 };
+// This is the structure of the RDK document XML.
 
-  ON_UnicodeTextFile(Types type = Types::Unknown);
-  virtual ~ON_UnicodeTextFile();
+#define ON_RDK_DOCUMENT                         L"render-content-manager-document"
 
-  bool Open(const wchar_t* filename, Modes mode);
-  bool Close(void);
+  #define ON_RDK_CURRENT_CONTENT                  L"content"
+  #define ON_RDK_DEFAULT_CONTENT_SECTION          L"default-content-section"
 
-  bool ReadString(ON_wString& s);
-  bool WriteString(const wchar_t* s);
+  #define ON_RDK_SETTINGS                             L"settings"
+    #define ON_RDK_NAMED_VIEWS                         L"named-views"
+    #define ON_RDK_NAMED_CPLANES                       L"named-cplanes"
+    #define ON_RDK_NAMED_POSITIONS                     L"named-positions"
+    #define ON_RDK_NAMED_SNAPSHOTS                     L"named-snapshots"
+      #define ON_RDK_SORT_MODE                           L"sort-mode"
+        #define ON_RDK_SORT_MODE_ASCENDING                 L"ascending"
+        #define ON_RDK_SORT_MODE_DESCENDING                L"descending"
+        #define ON_RDK_SORT_MODE_CUSTOM                    L"custom"
 
-  // Emergency virtual function for future expansion.
-  virtual void* EVF(const wchar_t* func, void* data);
+    #define ON_RDK_MISCELLANEOUS                       L"miscellaneous"
+      #define ON_RDK_CUSTOM_IMAGE_SIZE_IS_PRESET        L"custom-image-size-is-preset"
+      #define ON_RDK_NAME_COLLISION_SUPPRESS            L"smart-merge-name-collision-suppress"
+        #define ON_RDK_IMPORT                           L"import"
+        #define ON_RDK_PASTE                            L"paste"
 
-  ON_UnicodeTextFile(const ON_UnicodeTextFile&) = delete;
-  const ON_UnicodeTextFile& operator = (const ON_UnicodeTextFile&) = delete;
+    #define ON_RDK_EXCLUDED_RENDER_ENGINES            L"excluded-render-engines"
+      #define ON_RDK_UUIDS                            L"uuids"
 
-private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[32];
-};
+    #define ON_RDK_FILTERS                            L"filters"
+      #define ON_RDK_NAME_FILTER                      L"name-filter"
+      #define ON_RDK_NAME_FILTER_INVERT               L"name-filter-invert"
+      #define ON_RDK_SHOW_UNASSIGNED                  L"show-unassigned-materials"
+      #define ON_RDK_SHOW_V4                          L"show-v4-materials"
+      #define ON_RDK_SHOW_HIDDEN                      L"show-hidden-materials"
+      #define ON_RDK_SHOW_REFERENCE                   L"show-reference-materials"
 
-class ON_CLASS ON_Base64 final
-{
-public:
-  // Decode a base64 string.
-  // buffer_out must be large enough to accomodate the decoded data. It is safe to use the
-  // length of base64_in because this Base64 string will always be about 33% bigger than the
-  // data it was created from. Returns the number of bytes written to buffer_out.
-  // The function stops when max_length bytes have been decoded.
-  // If buffer_out is null, the function simply calculates the exact required buffer size.
-  static size_t Decode(const wchar_t* base64_in, void* buffer_out, size_t max_length = UINT_MAX);
+    #define ON_RDK_RENDERING                          L"rendering"
+      #define ON_RDK_RENDER_CHANNELS                L"render-channels"
+        #define ON_RDK_RCH_MODE                     L"mode"
+        #define ON_RDK_RCH_MODE_AUTOMATIC             L"automatic"
+        #define ON_RDK_RCH_MODE_CUSTOM                L"custom"
 
-  // Encode data to a base64 string. If append is true, the encoded string is appended to base64_out.
-  // Otherwise base64_out is replaced with the encoded string.
-  // Returns true if ok, false if unable to allocate the output buffer.
-  static bool Encode(const void* buffer_in, size_t num_bytes, ON_wString& base64_out, bool append);
-};
+        #define ON_RDK_RCH_LIST                     L"list"
+
+      #define ON_RDK_EMBED_SUPPORT_FILES_ON           L"embed-support-files-on"
+      #define ON_RDK_GAMMA                            L"gamma"
+      #define ON_RDK_USE_DITHERING                    L"use-dithering"
+      #define ON_RDK_USE_POST_PROCESS_GAMMA           L"use-post-process-gamma"
+      #define ON_RDK_USE_LINEAR_WORKFLOW              L"use-linear-workflow"
+
+    #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON  L"custom-env-for-refl-and-refr-on"
+      #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT    L"custom-env-for-refl-and-refr"
+
+      #define ON_RDK_DITHERING                          L"dithering"
+      #define ON_RDK_DITHERING_FLOYD_STEINBERG            L"floyd-steinberg"
+      #define ON_RDK_DITHERING_SIMPLE_NOISE               L"simple-noise"
+
+    #define ON_RDK_SUN                                    L"sun"
+      #define ON_RDK_SUN_ENABLE_ALLOWED                   L"enable-allowed"
+      #define ON_RDK_SUN_ENABLE_ON                        L"enable-on"
+      #define ON_RDK_SUN_MANUAL_CONTROL_ALLOWED           L"manual-control-allowed"
+      #define ON_RDK_SUN_MANUAL_CONTROL_ON                L"manual-control-on"
+      #define ON_RDK_SUN_NORTH                            L"north"
+      #define ON_RDK_SUN_AZIMUTH                          L"sun-azimuth"
+      #define ON_RDK_SUN_ALTITUDE                         L"sun-altitude"
+      #define ON_RDK_SUN_DATE_YEAR                        L"year"
+      #define ON_RDK_SUN_DATE_MONTH                       L"month"
+      #define ON_RDK_SUN_DATE_DAY                         L"day"
+      #define ON_RDK_SUN_TIME_HOURS                       L"time"
+      #define ON_RDK_SUN_DAYLIGHT_SAVING_ON               L"daylight-saving-on"
+      #define ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES          L"daylight-saving-minutes"
+      #define ON_RDK_SUN_OBSERVER_LATITUDE                L"observer-latitude"
+      #define ON_RDK_SUN_OBSERVER_LONGITUDE               L"observer-longitude"
+      #define ON_RDK_SUN_OBSERVER_TIMEZONE                L"observer-timezone"
+      #define ON_RDK_SUN_SKYLIGHT_ON                      L"skylight-on"
+      #define ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY        L"skylight-shadow-intensity"
+      #define ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON   L"skylight-custom-environment-on"
+      #define ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT      L"skylight-custom-environment"
+      #define ON_RDK_SUN_SHADOW_INTENSITY                 L"shadow-intensity"
+      #define ON_RDK_SUN_INTENSITY                        L"intensity"
+
+    #define ON_RDK_SAFE_FRAME                       L"safe-frame"
+      #define ON_RDK_SF_ON                            L"on"
+      #define ON_RDK_SF_PERSPECTIVE_ONLY              L"perspective-only"
+      #define ON_RDK_SF_FIELD_DISPLAY_ON              L"field-display-on"
+      #define ON_RDK_SF_LIVE_FRAME                    L"live-frame"
+      #define ON_RDK_SF_ACTION_FRAME                  L"action-frame"
+      #define ON_RDK_SF_TITLE_FRAME                   L"title-frame"
+        #define ON_RDK_SFF_ON                           L"on"
+        #define ON_RDK_SFF_XSCALE                       L"x-scale"
+        #define ON_RDK_SFF_YSCALE                       L"y-scale"
+        #define ON_RDK_SFF_LINK                         L"link"
+
+    #define ON_RDK_GROUND_PLANE                     L"ground-plane"
+      #define ON_RDK_GP_ON                            L"on"
+      #define ON_RDK_GP_ALTITUDE                      L"altitude"
+      #define ON_RDK_GP_MATERIAL                      L"material"
+      #define ON_RDK_GP_TEXTURE_OFFSET                L"texture-offset"
+      #define ON_RDK_GP_TEXTURE_SIZE                  L"texture-size"
+      #define ON_RDK_GP_TEXTURE_ROTATION              L"texture-rotation"
+      #define ON_RDK_GP_OFFSET_LOCK                   L"offset-lock"
+      #define ON_RDK_GP_REPEAT_LOCK                   L"repeat-lock"
+      #define ON_RDK_GP_SHOW_UNDERSIDE                L"show-underside"
+      #define ON_RDK_GP_AUTO_ALTITUDE                 L"auto-altitude"
+      #define ON_RDK_GP_SHADOW_ONLY                   L"shadow-only"
+
+    #define ON_RDK_POST_EFFECTS                 L"post-effects-new"
+      #define ON_RDK_PEP_TYPE_EARLY               L"early"
+      #define ON_RDK_PEP_TYPE_TONE                L"tone-mapping"
+      #define ON_RDK_PEP_TYPE_LATE                L"late"
+      #define ON_RDK_PEP_SELECTION                L"selection"
+      #define ON_RDK_PEP_SELECTION_POSTFIX        L"-" ON_RDK_PEP_SELECTION
+      #define ON_RDK_PEP_EARLY_SELECTION          ON_RDK_PEP_TYPE_EARLY ON_RDK_PEP_SELECTION_POSTFIX
+      #define ON_RDK_PEP_TONE_SELECTION           ON_RDK_PEP_TYPE_TONE  ON_RDK_PEP_SELECTION_POSTFIX
+      #define ON_RDK_PEP_LATE_SELECTION           ON_RDK_PEP_TYPE_LATE  ON_RDK_PEP_SELECTION_POSTFIX
+
+#define ON_RDK_POSTFIX_SECTION  L"-section"
+#define ON_RDK_SLASH            L"/"
 
 class ON_CLASS ON_XMLVariant final
 {
@@ -234,6 +307,7 @@ public:
   void Append(wchar_t* s);
   wchar_t* Segment(int index) const;
 
+protected:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
@@ -315,7 +389,7 @@ public: // Change data.
 
   // Removes the child node and passes ownership to the caller.
   // Returns the detached node or null on failure.
-  ON_XMLNode* DetachChild(ON_XMLNode& child); // WAS UnhookChild
+  ON_XMLNode* DetachChild(ON_XMLNode& child);
 
   // Removes and deletes all child nodes.
   void RemoveAllChildren(void);
@@ -415,6 +489,7 @@ public: // Utilities.
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+protected:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
@@ -430,6 +505,7 @@ public: // Iteration.
 
     virtual ON_XMLNode* GetNextChild(void);
 
+  protected:
     // Emergency virtual function for future expansion.
     virtual void* EVF(const wchar_t* func, void* data);
 
@@ -525,6 +601,7 @@ public:
   virtual bool Write(ON_BinaryArchive&) const override;
   virtual bool Read(ON_BinaryArchive&) override;
 
+protected:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* wszFunc, void* pvData);
 
@@ -541,15 +618,15 @@ private:
   CImpl& Impl(void) const;
 };
 
-ON_DECL const wchar_t* ON_StringFromUnits(ON::LengthUnitSystem units);
-ON_DECL ON::LengthUnitSystem ON_UnitsFromString(const ON_wString& s);
-
 class ON_CLASS ON_XMLParameters
 {
 public:
   ON_XMLParameters(ON_XMLNode& node);
   ON_XMLParameters(const ON_XMLNode& node);
+  ON_XMLParameters(const ON_XMLParameters&) = delete;
   virtual ~ON_XMLParameters();
+
+  const ON_XMLParameters& operator = (const ON_XMLParameters&) = delete;
 
   void SetWriteTypeProperty(bool b);
   void SetDefaultReadType(const wchar_t* type);
@@ -567,6 +644,8 @@ public:
     virtual ~CIterator();
 
     bool Next(ON_wString& param_name_out, ON_XMLVariant& param_value_out) const;
+
+  protected:
     virtual void* EVF(const wchar_t*, void*);
 
   private:
@@ -575,14 +654,10 @@ public:
   };
   CIterator* NewIterator(void) const;
 
-  virtual void* EVF(const wchar_t*, void*);
-
-  ON_XMLParameters(const ON_XMLParameters&) = delete;
-  const ON_XMLParameters& operator = (const ON_XMLParameters&) = delete;
-
 protected:
   const ON_XMLNode& Node(void) const;
   virtual bool GetParamNode(const ON_XMLNode& node, ON_XMLVariant& param_value) const;
+  virtual void* EVF(const wchar_t*, void*);
   virtual ON_XMLNode* SetParamNode(ON_XMLNode& node, const wchar_t* param_name, const ON_XMLVariant& param_value);
   virtual ON_XMLNode* ObtainChildNodeForWrite(ON_XMLNode& node, const wchar_t* param_name) const;
 
@@ -644,5 +719,29 @@ public:
 
   static void SetCallbacks(ReadCallback rc, WriteCallback wc, TransformCallback tc);
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// This class is for internal RDK use only.
+class ON_CLASS ON_RdkDocumentDefaults
+{
+public:
+  enum class ValueSets { All, New };
+
+  ON_RdkDocumentDefaults(int major_version, ValueSets vs, void* reserved=nullptr);
+  ON_RdkDocumentDefaults(const ON_RdkDocumentDefaults&) = delete;
+  virtual ~ON_RdkDocumentDefaults();
+
+  const ON_RdkDocumentDefaults& operator = (const ON_RdkDocumentDefaults&) = delete;
+
+  const ON_XMLNode Node(void) const;
+
+  void CopyDefaultsTo(ON_XMLNode& dest) const;
+
+private:
+  ON_XMLRootNode _root;
+  const ValueSets _vs;
+  void* _reserved;
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif

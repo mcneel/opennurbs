@@ -1268,6 +1268,27 @@ public:
   bool ReadDictionaryEntry(ON_BinaryArchive& binary_archive) { return m_value.Read(binary_archive); }
 };
 
+bool ON_ArchivableDictionary::TrySetMeshParameters(const wchar_t* key, const ON_MeshParameters& value)
+{
+  return m_private->TrySetValue(key, value);
+}
+
+bool ON_ArchivableDictionary::TryGetMeshParameters(const wchar_t* key, ON_MeshParameters& value) const
+{
+  return m_private->TryGetValue(key, value);
+}
+
+void ON_ArchivableDictionary::SetMeshParameters(const wchar_t* key, const ON_MeshParameters& value)
+{
+  m_private->SetValue(key, value);
+}
+
+ON_MeshParameters ON_ArchivableDictionary::GetMeshParameters(const wchar_t* key) const
+{
+  return m_private->GetValue<ON_MeshParameters>(key);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 template <> class Entry<ON_Geometry> : public DictionaryEntryT<ON_Geometry, DictionaryEntryType::Geometry>
 {
