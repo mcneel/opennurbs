@@ -227,7 +227,9 @@ bool ON_NumberFormatter::FormatNumber(
         if (0 != wholenumber)
         {
           if (0 != numerator)
-            sFormat.Format(L"%d ", (int)wholenumber);
+            // RH-71619, removed space
+            //sFormat.Format(L"%d ", (int)wholenumber);
+            sFormat.Format(L"%d", (int)wholenumber);
           else
             sFormat.Format(L"%d", (int)wholenumber);
         }
@@ -313,7 +315,9 @@ bool ON_NumberFormatter::FormatNumber(
         if (wholeinches > 0 || include_feet)
         {
           if (bracket_fractions)
-            sInches.Format(L"%d [[%d/%d]]\"", wholeinches, numerator, denominator);
+            // RH-71619, removed space
+            //sInches.Format(L"%d [[%d/%d]]\"", wholeinches, numerator, denominator);
+            sInches.Format(L"%d[[%d/%d]]\"", wholeinches, numerator, denominator);
           else
             sInches.Format(L"%d %d/%d\"", wholeinches, numerator, denominator);
         }

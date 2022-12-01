@@ -111,7 +111,7 @@
 #include "opennurbs_texture.h"        // texture definition
 #include "opennurbs_material.h"       // simple rendering material
 #include "opennurbs_layer.h"          // layer definition
-#include "opennurbs_linetype.h"          // linetype definition
+#include "opennurbs_linetype.h"       // linetype definition
 #include "opennurbs_group.h"          // group name and index
 #include "opennurbs_light.h"          // light
 #include "opennurbs_pointgeometry.h"  // single point

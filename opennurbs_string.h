@@ -2718,6 +2718,9 @@ public:
   /// <summary>RUBLE SIGN U+20BD (&#x20bd;)</summary>
   static const wchar_t  RubleSign = (wchar_t)ON_UnicodeCodePoint::ON_RubleSign;
 
+  /// <summary>INFINITY SYMBOL U+221E (&#x221e;)</summary>
+  static const wchar_t  InfinitySymbol = (wchar_t)ON_UnicodeCodePoint::ON_InfinitySymbol;
+
   /// <summary>
   /// UNIVERSAL RECYCLING SYMBOL U+2672 (&#x2672;)
   /// This is a good code point for testing glyph substitution.

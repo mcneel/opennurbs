@@ -850,7 +850,7 @@ bool ON_SubDEdge::Write(
       break;
     if (!archive.WriteDouble(2,m_sector_coefficient))
       break;
-    if (!archive.WriteDouble(m_sharpness))
+    if (!archive.WriteDouble(Sharpness(0.0,0.0,0.0)))
       break;
     if (!Internal_WriteVertexList(2, m_vertex, archive))
       break;
@@ -923,7 +923,7 @@ bool ON_SubDEdge::Read(
 
     e->m_sector_coefficient[0] = sector_coefficient[0];
     e->m_sector_coefficient[1] = sector_coefficient[1];
-    e->m_sharpness = sharpness;
+    e->SetSharpness(sharpness);
 
     if (!Internal_ReadFacePtrList(archive,face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex))
       break;

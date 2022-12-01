@@ -21,6 +21,13 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_LinetypePrivate
+{
+public:
+  ON_SimpleArray<ON_LinetypeSegment> m_segments;
+  ON_SimpleArray<ON_2dPoint> m_taper_points;
+};
+
 bool ON_IsHairlinePrintWidth(double width_mm)
 {
   if(width_mm > 0.0 && width_mm < 0.001)
@@ -99,25 +106,51 @@ const ON_Linetype* ON_Linetype::FromModelComponentRef(
 
 ON_Linetype::ON_Linetype() ON_NOEXCEPT
   : ON_ModelComponent(ON_ModelComponent::Type::LinePattern)
-{}
+{
+  m_private = new ON_LinetypePrivate();
+}
 
 ON_Linetype::ON_Linetype( const ON_Linetype& src )
   : ON_ModelComponent(ON_ModelComponent::Type::LinePattern,src)
-  , m_segments(src.m_segments)
+  , m_is_set_bits(src.m_is_set_bits)
+  , m_is_locked_bits(src.m_is_locked_bits)
   , m_cap_style(src.m_cap_style)
   , m_join_style(src.m_join_style)
+  , m_width(src.m_width)
+  , m_width_units(src.m_width_units)
 {
+  m_private = new ON_LinetypePrivate(*src.m_private);
 }
 
+ON_Linetype::~ON_Linetype()
+{
+  delete m_private;
+}
+
+ON_Linetype& ON_Linetype::operator=(const ON_Linetype& other)
+{
+  if (this != &other)
+  {
+    ON_ModelComponent::operator=(other);
+    m_is_set_bits = other.m_is_set_bits;
+    m_is_locked_bits = other.m_is_locked_bits;
+    m_cap_style = other.m_cap_style;
+    m_join_style = other.m_join_style;
+    m_width = other.m_width;
+    m_width_units = other.m_width_units;
+    *m_private = *other.m_private;
+  }
+  return *this;
+}
 bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
 {
-  int i, count = m_segments.Count();
-
   if (false == ON_ModelComponent::IsValid(text_log))
     return false;
 
   // An ON_Linetype with an empty name is valid.
 
+  const ON_SimpleArray<ON_LinetypeSegment>& segments = m_private->m_segments;
+  int count = segments.Count();
   if ( count < 1 )
   {
     if ( text_log )
@@ -127,14 +160,14 @@ bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
 
   if ( 1 == count )
   {
-    if ( m_segments[0].m_length <= 0.0  )
+    if ( segments[0].m_length <= 0.0  )
     {
       if ( text_log )
         text_log->Print("ON_Linetype bogus single segment linetype - length <= 0.0 (it must be > 0)\n");
       return false;
     }
 
-    if ( ON_LinetypeSegment::eSegType::stLine != m_segments[0].m_seg_type )
+    if ( ON_LinetypeSegment::eSegType::stLine != segments[0].m_seg_type )
     {
       if ( text_log )
         text_log->Print("ON_Linetype bogus single segment linetype - type != stLine\n");
@@ -143,16 +176,16 @@ bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
   }
   else
   {
-    for (i = 0; i < count; i++ )
+    for (int i = 0; i < count; i++ )
     {
-      if ( m_segments[i].m_length < 0.0 )
+      if ( segments[i].m_length < 0.0 )
       {
         if ( text_log )
           text_log->Print("ON_Linetype segment has negative length.\n");
         return false;
       }
 
-      if ( ON_LinetypeSegment::eSegType::stLine != m_segments[i].m_seg_type && ON_LinetypeSegment::eSegType::stSpace != m_segments[i].m_seg_type )
+      if ( ON_LinetypeSegment::eSegType::stLine != segments[i].m_seg_type && ON_LinetypeSegment::eSegType::stSpace != segments[i].m_seg_type )
       {
         if ( text_log )
           text_log->Print("ON_Linetype segment has invalid m_seg_type.\n");
@@ -161,14 +194,14 @@ bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
 
       if ( i )
       {
-        if ( m_segments[i].m_seg_type == m_segments[i-1].m_seg_type )
+        if ( segments[i].m_seg_type == segments[i-1].m_seg_type )
         {
           if ( text_log )
             text_log->Print("ON_Linetype consecutive segments have same type.\n");
           return false;
         }
 
-        if ( 0.0 == m_segments[i].m_length && 0.0 == m_segments[i-1].m_length )
+        if ( 0.0 == segments[i].m_length && 0.0 == segments[i-1].m_length )
         {
           if ( text_log )
             text_log->Print("ON_Linetype consecutive segments have length zero.\n");
@@ -188,12 +221,13 @@ bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
 void ON_Linetype::Dump( ON_TextLog& dump ) const
 {
   ON_ModelComponent::Dump(dump);
-  dump.Print( "Segment count = %d\n", m_segments.Count());
+  const int segmentCount = SegmentCount();
+  dump.Print( "Segment count = %d\n", segmentCount);
   dump.Print( "Pattern length = %g\n", PatternLength());
   dump.Print( "Pattern = (" );
-  for( int i = 0; i < m_segments.Count(); i++)
+  for( int i = 0; i < segmentCount; i++)
   {
-    const ON_LinetypeSegment& seg = m_segments[i];
+    const ON_LinetypeSegment& seg = m_private->m_segments[i];
     if ( i )
       dump.Print(",");
     switch( seg.m_seg_type)
@@ -238,7 +272,34 @@ void ON_Linetype::Dump( ON_TextLog& dump ) const
     dump.Print("Join = Round\n");
     break;
   }
+
+  dump.Print("Width = %d\n", Width());
+  ON_UnitSystem us(WidthUnits());
+  ON_wString usn = us.UnitSystemName();
+  const wchar_t* s = usn.Array();
+  dump.Print("Width Units = %ls\n", s);
+  
+  const ON_SimpleArray<ON_2dPoint>* taper = TaperPoints();
+  if (taper && taper->Count()>0)
+  {
+    dump.Print("Taper count = %d\n", taper->Count());
+  }
 }
+
+// 29 Nov. 2022 S. Baer
+// This enum is patterned off of ON_3dmObjectAttributeTypeCode
+enum ON_LinetypeTypeCodes : unsigned char
+{
+  LineCap = 1,
+  LineJoin = 2,
+  // minor version = 2
+  // add width, width units, taper
+  Width = 3,
+  WidthUnits = 4,
+  Taper = 5,
+
+  LastLinetypeTypeCode = 5
+};
 
 bool ON_Linetype::Write( ON_BinaryArchive& file) const
 {
@@ -258,7 +319,7 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
       if (!file.WriteString(linetype_name))
         break;
 
-      if (!file.WriteArray(m_segments))
+      if (!file.WriteArray(m_private->m_segments))
         break;
 
       // chunk version 1.1 fields
@@ -273,7 +334,9 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
   {
     // 12 Aug 2021 S. Baer (RH-2285)
     // minor_version = 1: add cap and join styles to linetype
-    const int minor_version = 1;
+    // 29 Nov 2022 S. Baer (RH-7262)
+    // minor_version = 2: add width, width units, and taper
+    const int minor_version = 2;
     if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 2, minor_version))
       return false;
     for (;;)
@@ -282,13 +345,13 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
       if (!file.WriteModelComponentAttributes(*this,ON_ModelComponent::Attributes::BinaryArchiveAttributes))
         break;
 
-      if (!file.WriteArray(m_segments))
+      if (!file.WriteArray(m_private->m_segments))
         break;
 
       // Only write non-default values in a similar fashion as ON_3dmObjectAttributes
       if (m_cap_style != ON::LineCapStyle::Round)
       {
-        const unsigned char itemType = 1;
+        const unsigned char itemType = ON_LinetypeTypeCodes::LineCap; // 1
         if (!file.WriteChar(itemType))
           break;
         if (!file.WriteChar((unsigned char)m_cap_style))
@@ -297,10 +360,41 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
 
       if (m_join_style != ON::LineJoinStyle::Round)
       {
-        const unsigned char itemType = 2;
+        const unsigned char itemType = ON_LinetypeTypeCodes::LineJoin; // 2
         if (!file.WriteChar(itemType))
           break;
         if (!file.WriteChar((unsigned char)m_join_style))
+          break;
+      }
+
+      if (fabs(Width() - 1.0) > ON_EPSILON)
+      {
+        const unsigned char itemType = ON_LinetypeTypeCodes::Width; // 3
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteDouble(Width()))
+          break;
+      }
+
+      if (WidthUnits() != ON::LengthUnitSystem::None)
+      {
+        const unsigned char itemType = ON_LinetypeTypeCodes::WidthUnits; // 4
+        if (!file.WriteChar(itemType))
+          break;
+
+        unsigned char units = (unsigned char)WidthUnits();
+        if (!file.WriteChar(units))
+          break;
+      }
+
+      const ON_SimpleArray<ON_2dPoint>* taper = TaperPoints();
+      if (taper && taper->Count() > 0)
+      {
+        const unsigned char itemType = ON_LinetypeTypeCodes::Taper; // 5
+        if (!file.WriteChar(itemType))
+          break;
+
+        if (!file.WriteArray(*taper))
           break;
       }
 
@@ -347,7 +441,7 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
         break;
       SetName(linetype_name);
 
-      if (!file.ReadArray(m_segments))
+      if (!file.ReadArray(m_private->m_segments))
         break;
 
       if (minor_version >= 1)
@@ -371,33 +465,35 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
       if (!file.ReadModelComponentAttributes(*this,&model_component_attributes_filter))
         break;
 
-      if (!file.ReadArray(m_segments))
+      if (!file.ReadArray(m_private->m_segments))
         break;
 
+      unsigned char item_id = 0;
       // 12 Aug 2021 S. Baer (RH-2285)
       // Add cap and join style to linetype
       if (minor_version >= 1)
       {
-        unsigned char item_id = 0;
         if (!file.ReadChar(&item_id))
           break;
 
-        if (1 == item_id)
+        if (ON_LinetypeTypeCodes::LineCap == item_id)
         {
           unsigned char cap = 0;
           if (!file.ReadChar(&cap))
             break;
           m_cap_style = ON::LineCapStyleFromUnsigned(cap);
+
           if (!file.ReadChar(&item_id))
             break;
         }
 
-        if (2 == item_id)
+        if (ON_LinetypeTypeCodes::LineJoin == item_id)
         {
           unsigned char join = 0;
           if (!file.ReadChar(&join))
             break;
           m_join_style = ON::LineJoinStyleFromUnsigned(join);
+
           if (!file.ReadChar(&item_id))
             break;
         }
@@ -406,13 +502,58 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
         {
           ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.1");
         }
+      }
 
-        if (item_id > 2)
+      // 12 Aug 2021 S. Baer (RH-2285)
+      // Add cap and join style to linetype
+      if (minor_version >= 2)
+      {
+        if (ON_LinetypeTypeCodes::Width == item_id)
         {
-          // we are reading file written with code newer
-          // than this code (minor_version > 1)
-          item_id = 0;
+          double width = 1;
+          if (!file.ReadDouble(&width))
+            break;
+          SetWidth(width);
+
+          if (!file.ReadChar(&item_id))
+            break;
         }
+
+        if (ON_LinetypeTypeCodes::WidthUnits == item_id)
+        {
+          unsigned char width_units = 0;
+          if (!file.ReadChar(&width_units))
+            break;
+          SetWidthUnits(ON::LengthUnitSystemFromUnsigned(width_units));
+
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (ON_LinetypeTypeCodes::Taper == item_id)
+        {
+          ON_SimpleArray<ON_2dPoint> taper;
+          if (!file.ReadArray(taper))
+            break;
+          if (nullptr == m_private)
+            m_private = new ON_LinetypePrivate();
+          m_private->m_taper_points = taper;
+
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (2 == minor_version && item_id != 0)
+        {
+          ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.2");
+        }
+      }
+
+      if (item_id > ON_LinetypeTypeCodes::LastLinetypeTypeCode)
+      {
+        // we are reading file written with code newer
+        // than this code (minor_version > 2)
+        item_id = 0;
       }
 
       rc = true;
@@ -437,7 +578,7 @@ bool ON_Linetype::ClearPattern()
   if (false == PatternIsLocked())
   {
     m_is_set_bits &= ~ON_Linetype::pattern_bit;
-    m_segments.Destroy();
+    m_private->m_segments.Destroy();
   }
   return (false == PatternIsSet());
 }
@@ -455,10 +596,10 @@ void ON_Linetype::LockPattern()
 double ON_Linetype::PatternLength() const
 {
   double length = 0.0;
-  int seg_count = m_segments.Count();
+  int seg_count = m_private->m_segments.Count();
   for( int i = 0; i < seg_count; i++)
   {
-    length += m_segments[i].m_length;
+    length += m_private->m_segments[i].m_length;
   }
   return length;
 }
@@ -467,17 +608,17 @@ ON_SimpleArray<ON_LinetypeSegment>* ON_Linetype::ExpertSegments()
 {
   if (PatternIsLocked())
     return nullptr;
-  return &m_segments;
+  return &m_private->m_segments;
 }
 
 const ON_SimpleArray<ON_LinetypeSegment>& ON_Linetype::Segments() const
 {
-  return m_segments;
+  return m_private->m_segments;
 }
 
 int ON_Linetype::SegmentCount() const
 {
-  return m_segments.Count();
+  return m_private->m_segments.Count();
 }
 
 int ON_Linetype::AppendSegment( const ON_LinetypeSegment& segment)
@@ -485,17 +626,17 @@ int ON_Linetype::AppendSegment( const ON_LinetypeSegment& segment)
   if (PatternIsLocked())
     return -1;
 
-  m_segments.Append( segment);
-  return( m_segments.Count()-1);
+  m_private->m_segments.Append( segment);
+  return(m_private->m_segments.Count()-1);
 }
 
 bool ON_Linetype::RemoveSegment( int index )
 {
   if (PatternIsLocked())
     return false;
-  bool rc = ( index >= 0 && index < m_segments.Count());
+  bool rc = ( index >= 0 && index < m_private->m_segments.Count());
   if (rc)
-    m_segments.Remove(index);
+    m_private->m_segments.Remove(index);
   return rc;
 }
 
@@ -504,9 +645,9 @@ bool ON_Linetype::SetSegment( int index, const ON_LinetypeSegment& segment)
   if (PatternIsLocked())
     return false;
 
-  if( index >= 0 && index < m_segments.Count())
+  if( index >= 0 && index < m_private->m_segments.Count())
   {
-    m_segments[index] = segment;
+    m_private->m_segments[index] = segment;
     return true;
   }
   else
@@ -518,10 +659,10 @@ bool ON_Linetype::SetSegment( int index, double length, ON_LinetypeSegment::eSeg
   if (PatternIsLocked())
     return false;
 
-  if( index >= 0 && index < m_segments.Count())
+  if( index >= 0 && index < m_private->m_segments.Count())
   {
-    m_segments[index].m_length = length;
-    m_segments[index].m_seg_type = type;
+    m_private->m_segments[index].m_length = length;
+    m_private->m_segments[index].m_seg_type = type;
     return true;
   }
   else
@@ -533,15 +674,15 @@ bool ON_Linetype::SetSegments(const ON_SimpleArray<ON_LinetypeSegment>& segments
   if (PatternIsLocked())
     return false;
 
-  m_segments = segments;
+  m_private->m_segments = segments;
   return true;
 }
 
 
 ON_LinetypeSegment ON_Linetype::Segment( int index) const
 {
-  if( index >= 0 && index < m_segments.Count())
-    return m_segments[index];
+  if( index >= 0 && index < m_private->m_segments.Count())
+    return m_private->m_segments[index];
   else
     return ON_LinetypeSegment::OneMillimeterLine;
 }
@@ -566,6 +707,59 @@ ON::LineJoinStyle ON_Linetype::LineJoinStyle() const
   return m_join_style;
 }
 
+double ON_Linetype::Width() const
+{
+  return m_width;
+}
+void ON_Linetype::SetWidth(double width)
+{
+  m_width = width;
+}
+ON::LengthUnitSystem ON_Linetype::WidthUnits() const
+{
+  return m_width_units;
+}
+void ON_Linetype::SetWidthUnits(ON::LengthUnitSystem units)
+{
+  m_width_units = units;
+}
+const ON_SimpleArray<ON_2dPoint>* ON_Linetype::TaperPoints() const
+{
+  if (m_private->m_taper_points.Count() < 1)
+    return nullptr;
+  return &(m_private->m_taper_points);
+}
 
+bool ON_Linetype::SetTaper(double startWidth, double endWidth)
+{
+  if (startWidth < 0 || endWidth < 0)
+    return false;
 
+  m_private->m_taper_points.Empty();
+  m_private->m_taper_points.Append(ON_2dPoint(0, startWidth));
+  m_private->m_taper_points.Append(ON_2dPoint(1.0, endWidth));
+  return true;
+}
+bool ON_Linetype::SetTaper(double startWidth, ON_2dPoint taperPoint, double endWidth)
+{
+  if (startWidth < 0 || endWidth < 0)
+    return false;
 
+  if (!taperPoint.IsValid())
+    return false;
+  if (taperPoint.x < 0.0 || taperPoint.x > 1.0)
+    return false;
+  if (taperPoint.y < 0.0)
+    return false;
+
+  m_private->m_taper_points.Empty();
+  m_private->m_taper_points.Append(ON_2dPoint(0, startWidth));
+  m_private->m_taper_points.Append(taperPoint);
+  m_private->m_taper_points.Append(ON_2dPoint(1.0, endWidth));
+  return true;
+}
+
+void ON_Linetype::RemoveTaper()
+{
+  m_private->m_taper_points.Empty();
+}

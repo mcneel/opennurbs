@@ -87,9 +87,9 @@ public:
 public:
 
   ON_Linetype() ON_NOEXCEPT;
-  ~ON_Linetype() = default;
+  ~ON_Linetype();
   ON_Linetype(const ON_Linetype&);
-  ON_Linetype& operator=(const ON_Linetype&) = default;
+  ON_Linetype& operator=(const ON_Linetype&);
 
   /*
     Description:
@@ -217,17 +217,77 @@ public:
       Corner join style for curves
   */
   ON::LineJoinStyle LineJoinStyle() const;
+
+
+  /*
+    Description:
+      Width of the linetype
+  */
+  double Width() const;
+
+  /*
+    Description:
+      Set the width of the linetype
+  */
+  void SetWidth(double width);
+
+  /*
+    Description:
+      Units used to define the linetype width
+      None = width is defined in pixels (default)
+      Unset = width is the same as the document's unitsystem
+  */
+  ON::LengthUnitSystem WidthUnits() const;
+
+  /*
+    Description:
+      Set the units used to define the linetype width
+      None = width is defined in pixels (default)
+      Unset = width is the same as the document's unitsystem
+  */
+  void SetWidthUnits(ON::LengthUnitSystem units);
+
+  /*
+    Description:
+      List of points defining a taper. For each point in the taper
+      the point's x value is between 0.00 and 1.00 and represents the % along the length of the curve
+      the point's y value is the width used at x
+      Returns nullptr if no taper points exist for this linetype
+  */
+  const ON_SimpleArray<ON_2dPoint>* TaperPoints() const;
+
+  /*
+    Description:
+      Set the taper for this linetype to a simple start and end width
+  */
+  bool SetTaper(double startWidth, double endWidth);
+
+  /*
+    Description:
+      Set the taper for this linetype with a single taper point
+  */
+  bool SetTaper(double startWidth, ON_2dPoint taperPoint, double endWidth);
+
+  /*
+    Description:
+      Remove taper points from this linetype
+  */
+  void RemoveTaper();
+
 private:
-  enum : unsigned char
-  {
-    pattern_bit = 1
-  };
+  mutable class ON_LinetypePrivate* m_private = nullptr;
   unsigned char m_is_set_bits = 0;
   unsigned char m_is_locked_bits = 0;
   ON::LineCapStyle m_cap_style = ON::LineCapStyle::Round;
   ON::LineJoinStyle m_join_style = ON::LineJoinStyle::Round;
-  unsigned int m_reserved = 0;
-  ON_SimpleArray<ON_LinetypeSegment> m_segments;
+  double m_width = 1.0;
+  ON::LengthUnitSystem m_width_units = ON::LengthUnitSystem::None;
+  unsigned char m_reserved[7] = { 0 };
+
+  enum : unsigned char
+  {
+    pattern_bit = 1
+  };
 };
 
 #if defined(ON_DLL_TEMPLATE)

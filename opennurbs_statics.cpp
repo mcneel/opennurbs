@@ -128,6 +128,8 @@ const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponent
 // The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
 const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
 
+const double ON_SubDEdge::InfinteSharpness = 5.0;
+const double ON_SubDEdge::SharpnessTolerance = 0.01;
 
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;

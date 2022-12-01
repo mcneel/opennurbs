@@ -1038,9 +1038,8 @@ bool ON_DecalCollection::DeleteDecal(ON_Decal& decal)
 
 void ON_DecalCollection::DeleteAllDecals(void)
 {
-  // Ensure the array is populated before deleting all the decals. This is not as silly as
-  // it seems because otherwise it will be populated later and they will all come back.
-  GetDecalArray();
+  m_root_node.Clear();
+  m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT);
 
   for (int i = 0; i < m_decals.Count(); i++)
   {
@@ -1049,8 +1048,7 @@ void ON_DecalCollection::DeleteAllDecals(void)
 
   m_decals.Destroy();
 
-  m_root_node.Clear();
-  m_root_node.SetTagName(L"xml"); // (sigh).
+  m_populated = true;
 
   SetChanged();
 }

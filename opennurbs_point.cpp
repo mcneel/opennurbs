@@ -580,6 +580,8 @@ void ON_Interval::Set(double t0,double t1)
 
 double ON_Interval::ParameterAt(double x) const
 {
+  if (m_t[0] == m_t[1])
+    x = 0.0;
   return (ON_IS_VALID(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
 }
 

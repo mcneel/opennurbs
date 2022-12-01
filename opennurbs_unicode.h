@@ -300,6 +300,9 @@ enum ON_UnicodeCodePoint
   /// <summary>RUBLE SIGN U+20BD (&#x20bd;)</summary>
   ON_RubleSign = 0x20BD,
 
+  /// <summary>INFINITY SYMBOL U+221E (&#x221e;)</summary>
+  ON_InfinitySymbol = 0x221E,
+
   /// <summary>
   /// UNIVERSAL RECYCLING SYMBOL U+2672 (&#x2672;)
   /// This is a good cold point for testing glyph substitution.

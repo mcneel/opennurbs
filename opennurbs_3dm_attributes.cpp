@@ -25,7 +25,10 @@
 class ON_3dmObjectAttributesPrivate
 {
 public:
+  ON_3dmObjectAttributesPrivate() = delete;
   ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes* attr);
+  ~ON_3dmObjectAttributesPrivate() = default;
+  ON_3dmObjectAttributesPrivate& operator=(const ON_3dmObjectAttributesPrivate&) = default;
 
   bool operator==(const ON_3dmObjectAttributesPrivate&) const;
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
@@ -42,6 +45,8 @@ public:
   double m_linetype_scale = 1.0;
   ON_Color m_hatch_background_fill;
   bool m_hatch_boundary_visible = false;
+
+  std::shared_ptr<ON_Linetype> m_custom_linetype;
 
   ON_DecalCollection m_decals;
   ON_MeshModifiers m_mesh_modifiers;
@@ -87,6 +92,11 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
     return false;
 
   if (m_hatch_boundary_visible != other.m_hatch_boundary_visible)
+    return false;
+
+  const ON_Linetype* customThis = m_custom_linetype.get();
+  const ON_Linetype* customOther = other.m_custom_linetype.get();
+  if (customThis != customOther)
     return false;
 
   return true;
@@ -415,10 +425,15 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   // 26 Jan 2022 Andy Le Bihan
   // file version 2.8: object frame
   ObjectFrame = 36,
-  // 15 Jun 2022 S. Baer (file version 2.9) - SectionFillRule
+  // 15 Jun 2022 S. Baer
+  // file version 2.9: SectionFillRule
   SectionFillRule = 37,
+  // 30 Nov 2022 S. Baer
+  // file version 2.10: custom linetype
+  CustomLinetype = 38,
+
   // add items here
-  LastAttributeTypeCode = 37
+  LastAttributeTypeCode = 38
 };
 
 bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
@@ -745,7 +760,7 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       double scale = 1.0;
       rc = file.ReadDouble(&scale);
       if (!rc) break;
-      SetLinetypeScale(scale);
+      SetLinetypePatternScale(scale);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -809,6 +824,21 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     }
 
     if (minor_version <= 9)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::CustomLinetype == itemid) // 38
+    {
+      ON_Linetype lt;
+      rc = lt.Read(file);
+      if (!rc) break;
+
+      SetCustomLinetype(lt);
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 10)
       break;
 
     // Add new item reading above and increment the LastAttributeTypeCode value
@@ -1005,7 +1035,9 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
   // Chunk version = 2.8 to support object frame.
   // 15 Jun 2022 S. Baer
   // Chunk version = 2.9 to support SectionFillRule
-  bool rc = file.Write3dmChunkVersion(2,9);
+  // 30 Nov 2022 S. Baer
+  // Chunk version = 2.10 to support 
+  bool rc = file.Write3dmChunkVersion(2,10);
   while(rc)
   {
     if (!rc) break;
@@ -1277,12 +1309,12 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
         if (!rc) break;
       }
 
-      if (fabs(1.0 - LinetypeScale()) > ON_EPSILON)
+      if (fabs(1.0 - LinetypePatternScale()) > ON_EPSILON)
       {
         c = ON_3dmObjectAttributesTypeCodes::LinetypeScale; // 33
         rc = file.WriteChar(c);
         if (!rc) break;
-        rc = file.WriteDouble(LinetypeScale());
+        rc = file.WriteDouble(LinetypePatternScale());
         if (!rc) break;
       }
 
@@ -1336,6 +1368,19 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
+    // 30 Nov 2022 S. Baer
+    // Write custom linetype
+    {
+      const ON_Linetype* linetype = CustomLinetype();
+      if (linetype)
+      {
+        c = ON_3dmObjectAttributesTypeCodes::CustomLinetype; // 38
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = linetype->Write(file);
+        if (!rc) break;
+      }
+    }
 
     // 0 indicates end of attributes - this should be the last item written
     c = 0;
@@ -1585,6 +1630,16 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
         dump.Print("%d",group[i]);
     }
     dump.Print("\n");
+  }
+
+  const ON_Linetype* linetype = CustomLinetype();
+  if (nullptr == linetype)
+  {
+    dump.Print("no custom linetype\n");
+  }
+  else
+  {
+    dump.Print("contains custom linetype\n");
   }
 }
 
@@ -2344,22 +2399,43 @@ void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSou
   m_private->m_section_attributes_source = source;
 }
 
-double ON_3dmObjectAttributes::LinetypeScale() const
+double ON_3dmObjectAttributes::LinetypePatternScale() const
 {
   return m_private ? m_private->m_linetype_scale : 1.0;
 }
-void ON_3dmObjectAttributes::SetLinetypeScale(double scale)
+void ON_3dmObjectAttributes::SetLinetypePatternScale(double scale)
 {
   if (scale < ON_EPSILON)
     return;
 
-  if (fabs(LinetypeScale() - scale) < ON_EPSILON)
+  if (fabs(LinetypePatternScale() - scale) < ON_EPSILON)
     return;
 
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_linetype_scale = scale;
 }
+
+void ON_3dmObjectAttributes::SetCustomLinetype(const ON_Linetype& linetype)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
+}
+const ON_Linetype* ON_3dmObjectAttributes::CustomLinetype() const
+{
+  const ON_Linetype* rc = nullptr;
+  if (m_private)
+    rc = m_private->m_custom_linetype.get();
+  return rc;
+}
+void ON_3dmObjectAttributes::RemoveCustomLinetype()
+{
+  if (m_private)
+    m_private->m_custom_linetype.reset();
+}
+
 
 ON_Color ON_3dmObjectAttributes::HatchBackgroundFillColor() const
 {
@@ -2390,7 +2466,6 @@ void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
     m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_hatch_boundary_visible = on;
 }
-
 
 
 //https://mcneel.myjetbrains.com/youtrack/issue/RH-20531

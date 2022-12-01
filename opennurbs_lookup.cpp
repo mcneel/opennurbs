@@ -23,43 +23,33 @@
 
 static bool IdIsNotNil(const ON_UUID* id)
 {
-  // This is a fast static function to check for
-  // zero ids.  The caller always checks that
-  // id is not null.
+  // This is a fast static function to check for zero ids.
+  // The caller always checks that id is not null.
   const ON__UINT64* p = (const ON__UINT64*)id;
   return (p[0] != 0 || p[1] != 0);
 }
 
 static bool IdIsNil(const ON_UUID* id)
 {
-  // This is a fast static function to check for
-  // zero ids.  The caller always checks that
-  // id is not null.
+  // This is a fast static function to check for zero ids.
+  // The caller always checks that id is not null.
   const ON__UINT64* p = (const ON__UINT64*)id;
   return (p[0] == 0 && p[1] == 0);
 }
 
-static bool IdIsEqual(
-  const ON_UUID* a,
-  const ON_UUID* b
-  )
+static bool IdIsEqual(const ON_UUID* a, const ON_UUID* b)
 {
-  // This is a fast static function to check for
-  // zero ids.  The caller always checks that
-  // id is not null.
+  // This is a fast static function to check for zero ids.
+  // The caller always checks that id is not null.
   const ON__UINT64* p = (const ON__UINT64*)a;
   const ON__UINT64* q = (const ON__UINT64*)b;
   return (p[0] == q[0] && p[1] == q[1]);
 }
 
-static bool IdIsNotEqual(
-  const ON_UUID* a,
-  const ON_UUID* b
-  )
+static bool IdIsNotEqual(const ON_UUID* a, const ON_UUID* b)
 {
-  // This is a fast static function to check for
-  // zero ids.  The caller always checks that
-  // id is not null.
+  // This is a fast static function to check for zero ids.
+  // The caller always checks that id is not null.
   const ON__UINT64* p = (const ON__UINT64*)a;
   const ON__UINT64* q = (const ON__UINT64*)b;
   return (p[0] != q[0] || p[1] != q[1]);
@@ -706,18 +696,19 @@ ON__UINT64 ON_SerialNumberMap::ActiveIdCount() const
   return m_active_id_count;
 }
 
-struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
+ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
 {
-  struct SN_ELEMENT* e=0;
-  size_t i,j;
+  SN_ELEMENT* e=nullptr;
 
   // The first element is likely to be m_snblk_list[0]->m_sn[0]
   // so start looking there.
-  for(i = 0; i < m_snblk_list_count; i++)
+  // The nullptr==e test isn't necessary. It is there to keep
+  // the VisualC++ 2022 compiler from crashing.
+  for(size_t i = 0; i < m_snblk_list_count && nullptr==e; i++)
   {
     if ( m_snblk_list[i]->m_count > m_snblk_list[i]->m_purged )
     {
-      for ( j = 0; j < m_snblk_list[i]->m_count; j++ )
+      for (size_t j = 0; j < m_snblk_list[i]->m_count; j++ )
       {
         if ( m_snblk_list[i]->m_sn[j].m_sn_active )
         {
