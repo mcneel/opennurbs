@@ -25,6 +25,8 @@ class ON_LayerPrivate
 {
 public:
   ON_LayerPrivate() = default;
+  ~ON_LayerPrivate() = default;
+
   bool operator==(const ON_LayerPrivate&) const;
   bool operator!=(const ON_LayerPrivate&) const;
 
@@ -35,6 +37,8 @@ public:
   int m_section_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
   double m_section_hatch_scale = 1.0;
   double m_section_hatch_rotation = 0.0;
+
+  std::shared_ptr<ON_Linetype> m_custom_linetype;
 };
 
 static const ON_LayerPrivate DefaultLayerPrivate;
@@ -42,6 +46,9 @@ static const ON_LayerPrivate DefaultLayerPrivate;
 
 bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
 {
+  if (this == &other)
+    return true;
+
   if (m_clipplane_list != other.m_clipplane_list)
     return false;
 
@@ -58,6 +65,11 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
     return false;
 
   if (m_section_hatch_rotation != other.m_section_hatch_rotation)
+    return false;
+
+  const ON_Linetype* customThis = m_custom_linetype.get();
+  const ON_Linetype* customOther = other.m_custom_linetype.get();
+  if (customThis != customOther)
     return false;
 
   return true;
@@ -288,6 +300,16 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   {
     dump.Print("section hatch index = %d\n", index);
   }
+
+  const ON_Linetype* lt = CustomLinetype();
+  if (nullptr == lt)
+  {
+    dump.Print("no custom linetype\n");
+  }
+  else
+  {
+    dump.Print("contains custom linetype\n");
+  }
 }
 
 // 28 Sept. 2021
@@ -307,7 +329,11 @@ enum ON_LayerTypeCodes : unsigned char
   // 14 June 2022 S. Baer
   // chunk version 1.12: add section fill rule
   SectionFillRule = 32,
-  LastLayerTypeCode = 32
+  // 30 Nov 2022 S. Baer
+  // chunk version 1.13: add custom linetype
+  CustomLinetype = 33,
+
+  LastLayerTypeCode = 33
 };
 
 bool ON_Layer::Write(
@@ -316,7 +342,7 @@ bool ON_Layer::Write(
 {
   int i;
 
-  bool rc = file.Write3dmChunkVersion(1,12);
+  bool rc = file.Write3dmChunkVersion(1,13);
   while(rc)
   {
     // Save the visibility state this layer has when its parent
@@ -482,37 +508,54 @@ bool ON_Layer::Write(
     }
 
     // section hatch (1.11)
-    if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
     {
-      c = ON_LayerTypeCodes::SectionHatchIndex;
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
-      if (!rc) break;
+      if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
+      {
+        c = ON_LayerTypeCodes::SectionHatchIndex;
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
+        if (!rc) break;
+      }
+      if (SectionHatchScale() != 1.0)
+      {
+        c = ON_LayerTypeCodes::SectionHatchScale;
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteDouble(SectionHatchScale());
+        if (!rc) break;
+      }
+      if (SectionHatchRotation() != 0.0)
+      {
+        c = ON_LayerTypeCodes::SectionHatchRotation;
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = file.WriteDouble(SectionHatchRotation());
+        if (!rc) break;
+      }
     }
-    if (SectionHatchScale() != 1.0)
-    {
-      c = ON_LayerTypeCodes::SectionHatchScale;
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteDouble(SectionHatchScale());
-      if (!rc) break;
-    }
-    if (SectionHatchRotation() != 0.0)
-    {
-      c = ON_LayerTypeCodes::SectionHatchRotation;
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteDouble(SectionHatchRotation());
-      if (!rc) break;
-    }
+
+    // section fill (1.12)
     if (SectionFillRule() != ON::SectionFillRule::ClosedCurves)
     {
-      c = ON_LayerTypeCodes::SectionFillRule;
+      c = ON_LayerTypeCodes::SectionFillRule; //32
       rc = file.WriteChar(c);
       if (!rc) break;
       rc = file.WriteChar((unsigned char)SectionFillRule());
       if (!rc) break;
+    }
+
+    // custom linetype (1.13)
+    {
+      const ON_Linetype* linetype = CustomLinetype();
+      if (linetype)
+      {
+        c = ON_LayerTypeCodes::CustomLinetype; // 33
+        rc = file.WriteChar(c);
+        if (!rc) break;
+        rc = linetype->Write(file);
+        if (!rc) break;
+      }
     }
 
     // 0 indicates end of new non-default attributes
@@ -765,10 +808,23 @@ bool ON_Layer::Read(
                         if (!rc || 0 == itemid) break;
                       }
 
-                      // break if minor_version<=12. If itemid is non-zero and
-                      // minor_version is not > 12, then we know we have an I/O
-                      // reading bug that needs to be tracked down
                       if (minor_version <= 12)
+                        break;
+
+                      if (ON_LayerTypeCodes::CustomLinetype == itemid)
+                      {
+                        ON_Linetype lt;
+                        rc = lt.Read(file);
+                        if (!rc) break;
+                        SetCustomLinetype(lt);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // break if minor_version<=13. If itemid is non-zero and
+                      // minor_version is not > 13, then we know we have an I/O
+                      // reading bug that needs to be tracked down
+                      if (minor_version <= 13)
                         break;
 
                       // Add new item reading above and increment the LastLayerTypeCode value
@@ -2455,3 +2511,24 @@ void ON_Layer::SetSectionHatchRotation(double rotation)
     m_private = new ON_LayerPrivate();
   m_private->m_section_hatch_rotation = rotation;
 }
+
+void ON_Layer::SetCustomLinetype(const ON_Linetype& linetype)
+{
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
+}
+
+const ON_Linetype* ON_Layer::CustomLinetype() const
+{
+  const ON_Linetype* rc = nullptr;
+  if (m_private)
+    rc = m_private->m_custom_linetype.get();
+  return rc;
+}
+void ON_Layer::RemoveCustomLinetype()
+{
+  if (m_private)
+    m_private->m_custom_linetype.reset();
+}
+

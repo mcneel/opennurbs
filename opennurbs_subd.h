@@ -11,103 +11,6 @@
 //
 ////////////////////////////////////////////////////////////////
 
-
-#if 0
-#define ON_SUBD_CENSUS
-//////////////////////////////////////////////////////////////////////////
-//
-// ON_CensusCounter
-//
-//  This tool is used to study memory leaks and other shared ptr issues.
-//  The classes have no size but effect performance.  Use only in
-//  debugging situations. Never ship a release with ON_SUBD_CENSUS defined.
-//
-class ON_CLASS ON_CensusCounter
-{
-public:
-  enum class Class : unsigned int
-  {
-    unset = 0,
-    subd = 1,
-    subd_impl = 2,
-    subd_limit_mesh = 3,
-    subd_limit_mesh_impl = 4,
-    subd_ref = 5,
-
-    count
-  };
-
-  static void RegisterBirth(ON_CensusCounter::Class,ON__UINT_PTR);
-
-  static void RegisterDeath(ON_CensusCounter::Class,ON__UINT_PTR);
-
-  static void CensusReport(
-    class ON_TextLog&
-    );
-
-  static void Clear();
-};
-
-class ON_CLASS ON_SubDCensusCounter
-{
-public:
-  ON_SubDCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDCensusCounter() ON_NOEXCEPT;
-  ON_SubDCensusCounter(const ON_SubDCensusCounter&) ON_NOEXCEPT;
-  ON_SubDCensusCounter& operator=(const ON_SubDCensusCounter&) = default;
-  //ON_SubDCensusCounter( ON_SubDCensusCounter&& ) ON_NOEXCEPT;
-  //ON_SubDCensusCounter& operator=( ON_SubDCensusCounter&& ) ON_NOEXCEPT;
-};
-
-class ON_CLASS ON_SubDRefCensusCounter
-{
-public:
-  ON_SubDRefCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDRefCensusCounter() ON_NOEXCEPT;
-  ON_SubDRefCensusCounter(const ON_SubDRefCensusCounter&) ON_NOEXCEPT;
-  ON_SubDRefCensusCounter& operator=(const ON_SubDRefCensusCounter&) = default;
-  //ON_SubDRefCensusCounter( ON_SubDRefCensusCounter&& ) ON_NOEXCEPT;
-  //ON_SubDRefCensusCounter& operator=( ON_SubDRefCensusCounter&& ) ON_NOEXCEPT;
-};
-
-
-class ON_CLASS ON_SubDImpleCensusCounter
-{
-public:
-  ON_SubDImpleCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDImpleCensusCounter() ON_NOEXCEPT;
-  ON_SubDImpleCensusCounter(const ON_SubDImpleCensusCounter&) ON_NOEXCEPT;
-  ON_SubDImpleCensusCounter& operator=(const ON_SubDImpleCensusCounter&) = default;
-  //ON_SubDImplCensusCounter( ON_SubDImplCensusCounter&& ) ON_NOEXCEPT;
-  //ON_SubDImplCensusCounter& operator=( ON_SubDImplCensusCounter&& ) ON_NOEXCEPT;
-};
-
-class ON_CLASS ON_SubDMeshCensusCounter
-{
-public:
-  ON_SubDMeshCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDMeshCensusCounter() ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter& operator=(const ON_SubDMeshCensusCounter&) = default;
-  //ON_SubDMeshCensusCounter( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
-  //ON_SubDMeshCensusCounter& operator=( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
-};
-
-
-class ON_CLASS ON_SubDMeshCensusCounter
-{
-public:
-  ON_SubDMeshCensusCounter() ON_NOEXCEPT;
-  ~ON_SubDMeshCensusCounter() ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter& operator=(const ON_SubDMeshCensusCounter&) ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
-  ON_SubDMeshCensusCounter& operator=( ON_SubDMeshCensusCounter&& ) ON_NOEXCEPT;
-};
-
-#endif
-
-
 ////////////////////////////////////////////////////////////////
 //
 //   Definition of subdivision surface
@@ -116,6 +19,8 @@ public:
 
 #if !defined(OPENNURBS_SUBD_INC_)
 #define OPENNURBS_SUBD_INC_
+
+
 
 /// <summary>
 /// ON_SubDGetControlNetMeshPriority specifies what type of ON_SubD information
@@ -3521,11 +3426,6 @@ class ON_CLASS ON_SubD : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_SubD);
 
-#if defined(ON_SUBD_CENSUS)
-private:
-  ON_SubDCensusCounter m_census_counter;
-#endif
-
 public:
   static const ON_SubD Empty;
 
@@ -3721,24 +3621,6 @@ public:
     ON_SubDVertexTag vertex_tag
   );
 
-
-  #if 0
-  // .NET code that generates enums in hash pragma region R-H_C_S-H-ARED_ENUM cannot handle if 0.
-    ///<summary>
-    /// Reserved for version 2 of the ON_SubD project.
-    /// Currently this tag is not used and is invalid.
-    ///
-    /// FUTURE: The edge is a "soft crease" or "semi-sharp".
-    /// At lease one end vertex must be tagged as ON_SubDVertexTag::Smooth
-    /// The edge must have exactly two faces.
-    /// The value of ON_SubDEdge::m_sharpness controls how
-    /// soft/hard the edge appears.
-    /// ON_SubDEdge::m_sharpness = 0 is identical to ON_SubDEdgeTag::Smooth.
-    /// ON_SubDEdge::m_sharpness = 1 is identical to ON_SubDEdgeTag::Crease.
-    ///</summary>
-    Sharp = 3,
-#endif
-
   static ON_SubDEdgeTag EdgeTagFromUnsigned( 
     unsigned int edge_tag_as_unsigned
     );
@@ -3762,7 +3644,7 @@ public:
   Parameters:
     edge_tag - [in]
   Returns:
-    True if edge_tag is Smooth, Crease, Sharp, or X.
+    True if edge_tag is Smooth, Crease, or SmoothX.
     False otherwise.
   */
   static bool EdgeTagIsSet(
@@ -4734,6 +4616,34 @@ public:
   bool IsEmpty() const;
   bool IsNotEmpty() const;
 
+#if defined(ON_SUBD_SHARP_EDGES)
+  /// <summary>
+  /// Determine if any edges in this SubD have sem-sharp edges.
+  /// </summary>
+  /// <returns>True if the SubD has at lease one semisharp edge.</returns>
+  bool HasSemisharpness() const;
+
+  /// <summary>
+  /// Get the range of sharpness values assigned to semisharp edges 
+  /// and return the number of semisharp edges.
+  /// </summary>
+  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
+  /// <returns>Number of semisharp edges.</returns>
+  unsigned int SemisharpEdgeCount(ON_Interval& sharpness_range) const;
+
+  /// <summary>
+  /// Number of semisharp edges.
+  /// </summary>
+  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
+  /// <returns>Number of semisharp edges.</returns>
+  unsigned int SemisharpEdgeCount() const;
+
+  /// <summary>
+  /// Converts all semisharp edges to smooth edges.
+  /// </summary>
+  /// <returns>Number of semisharp edges converted to smooth edges.</returns>
+  unsigned int ClearSemisharpness();
+#endif
 
   /*
   Description:
@@ -6018,6 +5928,16 @@ public:
     );
 
   bool GlobalSubdivide();
+
+  /// <returns>
+  /// The number of quads a call to GlobalSubdivide() will create.
+  ///< / returns>  
+  unsigned int GlobalSubdivideQuadCount() const;
+
+  /// <returns>
+  /// The number of quads a call to GlobalSubdivide(subdivision_count) will create.
+  ///< / returns>  
+  unsigned int GlobalSubdivideQuadCount(unsigned int subdivision_count) const;
 
   /*
   Description:
@@ -7439,11 +7359,6 @@ public:
 //
 class ON_CLASS ON_SubDRef
 {
-#if defined(ON_SUBD_CENSUS)
-private:
-  ON_SubDRefCensusCounter m_census_counter;
-#endif
-
 public:
   static const ON_SubDRef Empty;
 
@@ -10476,11 +10391,6 @@ private:
 /// </summary>
 class ON_CLASS ON_SubDMesh
 {
-#if defined(ON_SUBD_CENSUS)
-private:
-  ON_SubDMeshCensusCounter m_census_counter;
-#endif
-
 public:
   static const ON_SubDMesh Empty;
 
@@ -11448,7 +11358,6 @@ public:
 
   
 private:
-  //ON_SubD::VertexEdgeOrder m_vertex_edge_order = ON_SubD::VertexEdgeOrder::unset;
   unsigned char  m_reserved1 = 0;
   unsigned short  m_reserved2 = 0;
   unsigned int m_reserved3 = 0;
@@ -11621,6 +11530,70 @@ public:
     True if m_vertex_tag is ON_SubDVertexTag::Smooth.
   */
   bool IsSmooth() const;
+
+#if defined(ON_SUBD_SHARP_EDGES)
+
+  /// <summary>
+  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
+  /// </summary>
+  /// <returns>
+  /// True if this vertex is smooth and is attached to one or more semisharp edges.
+  ///< / returns>
+  bool IsSemisharp() const;
+
+  /// <summary>
+  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
+  /// </summary>
+  /// <returns>
+  /// If the vertex is attached to zero or one semisharp edges, 0 is returned.
+  /// If the vertex is attached to three or more semisharp edges, 
+  /// ON_SubDEdge::InfinteSharpness is returned.
+  /// If the vertex is attached to two semisharp edges, 
+  /// the average value of the edges' sharpness is returned.
+  ///< / returns>
+  double Sharpness() const;
+
+  /// <summary>
+  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
+  /// </summary>
+  /// <param name="sharp_subdivision_point">If the returned sharpness is &gt 0,
+  /// then the sharp subdivision point is returned. 
+  /// When the returned sharpness is &gt 0 and &lt 1, 
+  /// the final subdivision point is a weighted average of 
+  /// sharp_subdivision_point and the ordinary smooth subdivision point.
+  /// </param>
+  /// <returns>
+  /// If the vertex is attached to zero or one semisharp edges, 0 is returned.
+  /// If the vertex is attached to three or more semisharp edges, 
+  /// ON_SubDEdge::InfinteSharpness is returned.
+  /// If the vertex is attached to two semisharp edges, 
+  /// the average value of the edges' sharpness is returned.
+  ///< / returns>
+  double GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const;
+
+  /// <summary>
+  /// WARNING: 
+  /// This function is temporary and for internal use only. 
+  /// It will be removed in the near future.
+  /// Any code referencing this function will unpredictably fail in the near future.
+  /// This is primative and is not thread safe.
+  /// </summary>
+  /// <returns>(ON_SubDEdge::SemisharpEvaluationIsEnabled() ? Sharpness() : 0.0)</returns>
+  double EvaluationSharpness(
+    ON_3dPoint& sharp_subdivision_point
+  ) const;
+
+  unsigned int SemisharpEdgeCount() const;
+
+  /// <summary>
+  /// Get the range of sharpness values assigned to semisharp edges 
+  /// and return the number of semisharp edges.
+  /// </summary>
+  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
+  /// <returns>Number of semisharp edges.</returns>
+  unsigned int SemisharpEdgeCount(ON_Interval& sharpness_range) const;
+
+#endif
 
   /*
   Returns:
@@ -12352,13 +12325,56 @@ public:
   // you need to recompute all sector coefficients using subd->UpdateAllTagsAndSectorCoefficients(true);
   mutable double m_sector_coefficient[2] = {};
 
-  // If m_edge_tag is not ON_SubDEdgeTag::Sharp, then m_sharpness is ignored.
-  // If m_edge_tag is ON_SubDEdgeTag::Sharp, then m_sharpness controls how hard/soft
-  // the edge appears.  
-  // The behavior of a "sharp" edge with m_sharpness = 1 is identical to a crease edge.
-  // A "sharp" edge with m_sharpness = 0 is identical to a smooth edge.
-  // For this reason, m_sharpness must be > 0 and < 1.
+private:
+  // Semi-sharp crease sharpness.
+  // See ON_SubDEdge::Sharpness() comments for details.
   double m_sharpness = 0.0; 
+
+#if defined(ON_SUBD_SHARP_EDGES)
+public:
+  /// <summary>
+  /// WARNING: 
+  /// This function is temporary and for internal use only. 
+  /// It will be removed in the near future.
+  /// Any code referencing this function will unpredictably fail in the near future.
+  /// This is primative and is not thread safe.
+  /// </summary>
+  /// <returns>(ON_SubDEdge::SemisharpEvaluationIsEnabled() ? Sharpness() : 0.0)</returns>
+  double EvaluationSharpness(
+    ON_3dPoint& sharp_subdivision_point
+  ) const;
+
+  double GetSharpSubdivisionPoint(
+    ON_3dPoint& sharp_subdivision_point
+  ) const;
+
+
+  /// <summary>
+  /// WARNING: 
+  /// This function is temporary and for internal use only. 
+  /// It will be removed in the near future.
+  /// Any code referencing this function will unpredictably fail in the near future.
+  /// This is primative and is not thread safe.
+  /// </summary>
+  /// <returns>ON_SubDEdge::m_bEnableSemiharpEvaluation</returns>
+  static bool SemisharpEvaluationIsEnabled();
+
+  /// <summary>
+  /// WARNING: 
+  /// This function is temporary and for internal use only. 
+  /// It will be removed in the near future.
+  /// Any code referencing this function will unpredictably fail in the near future.
+  /// This is primative and is not thread safe.
+  /// </summary>
+  /// <param name="bEnableSemiharpEvaluation"></param>
+  static void SetEnableSemisharpEvaluation(bool bEnableSemiharpEvaluation);
+private:
+  // This global bool is temporary and is used to determine if subdivision and evaluation code
+  // pays attention to sharpness. This global bool will be removed in the near future.
+  // Any code referencing this variable will unpredictably fail in the near future.
+  // This is primative and is not thread safe.
+  static bool m_bEnableSemisharpEvaluation;
+#endif
 
 private:
   // Cached limit curve
@@ -12671,6 +12687,100 @@ public:
     This tag cannot appear at level N with N >= 1.
   */
   bool IsSmoothX() const;
+
+#if defined(ON_SUBD_SHARP_EDGES)
+
+  /// <summary>
+  /// Semi-sharp edges are tagged as smooth edges with a sharpness &gt 0 and are
+  /// a blend between a smooth and a creased edge.
+  /// </summary>
+  /// <returns>True if the edge is tagged as smooth and has Sharpness &gt 0.</returns>
+  bool IsSemisharp() const;
+
+  /// <summary>
+  /// Determine the sharpness to assign to the subdivided edge.
+  /// </summary>
+  /// <param name="end_index">0 or 1 indicating the left or right subdivided edge.</param>
+  /// <returns>Sharpness to assigned to the subdivided edge.</returns>
+  double SubdivideSharpness(
+    unsigned end_index
+  ) const;
+
+  static double AverageSharpness(
+    double sharpness0,
+    double sharpness1
+  );
+#endif
+
+  /// <summary>
+  /// Semisharp edges are tagged as smooth edges with a 
+  /// sharpness &gt 0 and &lt ON_SubDEdge::InfinteSharpness.
+  /// </summary>
+  /// <returns>
+  /// If the edge is smooth and not semisharp, 0 is returned.
+  /// If the edge is a crease, ON_SubDEdge::InfinteSharpness is returned.
+  /// If the edge is semisharp, a sharpness value strictly between 0 and ON_SubDEdge::InfinteSharpness is returned.
+  /// Otherwise, ON_DBL_QNAN is returned.
+  /// </returns>
+  /// <returns>0.0 if the edges is smooth and ON_SubDEdge::InfinteSharpness if the edge is a crease.
+  /// A value strictly between 0 and ON_SubDEdge::InfinteSharpness if the edge is a semisharp.
+  double Sharpness() const;
+
+  /// <summary>
+  /// A version of sharpness that allows the return value to be specified for edges that 
+  /// are not explicitly semisharp. This is useful to simplify code branch decisions
+  /// when smooth, semisharp, and crease edges need to be handled differently.
+  /// </summary>
+  /// <param name="unset_edge_value">
+  /// Value to return when the edge tag is unset. ON_UNSET_VALUE and ON_DBL_QNAN are good choices.
+  /// </param>
+  /// <param name="smooth_edge_value">
+  /// Value to return when the edge is smooth but not semisharp. 0.0 is often a good choice.
+  /// </param>
+  /// <param name="crease_edge_value">
+  /// Value to return when the edge is smooth but not semisharp. 
+  /// ON_SubDEdge::InfinteSharpness is often a good choice.</param>
+  /// <returns>Value of sharpness for the specified situation.</returns>
+  double Sharpness(
+    double unset_edge_value,
+    double smooth_edge_value,
+    double crease_edge_value
+  ) const;
+
+  /// <summary>
+  /// Semi-sharp edges are tagged as smooth edges with a sharpness &gt 0 and are
+  /// a blend between a smooth and a creased edge. Set N = floor(sharpness).
+  /// For subdivision levels < N, the semisharp edge and attached vertices
+  /// are subdivided using crease subdivision rules.
+  /// For subdivision levels >= ceil(sharpness), the semisharp edge and attached vertices
+  /// are subdivided using smooth subdivision rules.
+  /// When N < sharpness < ceil(sharpness), at level N the semisharp edge and attached vertices
+  /// are subdivided using a linear blend of crease and smooth subdivision rules. 
+  /// (1-s)*(smooth rules) * s(crease rules), where s = (sharpness-N).
+  /// </summary>
+  /// <param name="sharpness">0 &le sharpness &lt ON_SubDEdge::InfiniteSharpness.</param>
+  void SetSharpness(double sharpness);
+
+
+  /// <summary>
+  /// ON_SubDEdge::InfinteSharpness = 5.0
+  /// Semi-sharp edges have a Sharpness() &gt 0.0 and &lt ON_SubDEdge::InfinteSharpness.
+  /// </summary>
+  static const double InfinteSharpness;
+
+
+  /// <summary>
+  /// ON_SubDEdge::SharpnessTolerance = 0.01
+  /// If an edge has sharpness within ON_SubDEdge::SharpnessTolerance of an integer value,
+  /// the sharpness is set to that integer value.
+  /// </summary>
+  static const double SharpnessTolerance;
+
+  static double SanitizeSharpness(
+    double sharpness,
+    bool bPermitInfinteSharpness
+  );
+
 
   /*
   Returns:

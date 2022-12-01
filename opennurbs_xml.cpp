@@ -3750,14 +3750,16 @@ class ON_XMLRootNode::CImpl final
 public:
 };
 
-ON_XMLRootNode::ON_XMLRootNode() : ON_XMLNode(sXMLRootNodeName)
+ON_XMLRootNode::ON_XMLRootNode()
+  :
+  ON_XMLNode(sXMLRootNodeName)
 {
   m_impl = new (m_Impl) CImpl; IMPL_CHECK;
 }
 
 ON_XMLRootNode::ON_XMLRootNode(const ON_XMLRootNode& src)
   :
-  ON_XMLNode(L"xml")
+  ON_XMLNode(sXMLRootNodeName)
 {
   m_impl = new (m_Impl) CImpl; IMPL_CHECK;
 
@@ -3848,6 +3850,13 @@ bool ON_XMLRootNode::WriteToFile(const wchar_t* wszPath, bool includeFormatting,
   file.Close();
 
   return true;
+}
+
+void ON_XMLRootNode::Clear(void)
+{
+  ON_XMLNode::Clear();
+
+  SetTagName(sXMLRootNodeName);
 }
 
 ON_XMLRootNode::CImpl& ON_XMLRootNode::Impl(void) const
@@ -3960,7 +3969,6 @@ void ON_XMLUserData::SetValue(const wchar_t* wszXMLPath, const ON_XMLVariant& va
 void ON_XMLUserData::Clear(void) const
 {
   m_impl->m_XMLRoot.Clear();
-  m_impl->m_XMLRoot.SetTagName(L"xml");
 }
 
 int ON_XMLUserData::Version(void) const
@@ -4494,7 +4502,6 @@ bool ON_XMLParametersV8::GetParam(const wchar_t* wszParamName, ON_XMLVariant& vV
   return true;
 }
 
-#define ON_RDK_UD_ROOT         L"render-content-manager-data"
 #define ON_RDK_UD_MATERIAL     L"material"
 #define ON_RDK_UD_INSTANCE_ID  L"instance-id"
 
@@ -5140,20 +5147,6 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
 #pragma warning (pop)
 
 //-------------------------------------------------------------------------------------------------------------------
-#define INITIALIZE  ON_XMLNode* pSetting = _root.CreateNodeAtPath(ON_RDK_DOCUMENT); \
-                    ON_XMLNode* pCurrent = pSetting;
-//-------------------------------------------------------------------------------------------------------------------
-#define BEGIN(child) ON_XMLNode* p##child##Temp = pCurrent->CreateNodeAtPath(ON_RDK_##child); \
-                     { \
-                       ON_XMLNode* pCurrent = p##child##Temp; \
-                       ON_XMLNode* p##child = pCurrent; \
-                       p##child; p##child##Temp; // Fixes warnings.
-
-#define BEGIN_SECTION(child) BEGIN(child) ON_XMLParameters section(*pCurrent);
-#define PROPERTY(name, value) section.SetParam(ON_RDK_##name, ON_XMLVariant(value));
-#define CREATE(child) BEGIN(child) END
-#define END          }
-//-------------------------------------------------------------------------------------------------------------------
 #define ON_RDK_MATERIAL_SECTION     L"material"    ON_RDK_POSTFIX_SECTION
 #define ON_RDK_ENVIRONMENT_SECTION  L"environment" ON_RDK_POSTFIX_SECTION
 #define ON_RDK_TEXTURE_SECTION      L"texture"     ON_RDK_POSTFIX_SECTION
@@ -5166,215 +5159,244 @@ ON_UUID chanDistanceFromCamera          = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 
 //-------------------------------------------------------------------------------------------------------------------
 
 #pragma ON_PRAGMA_WARNING_PUSH
-#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4456)
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4456) // Declaration hides previous local declaration
 
-ON_RdkDocumentDefaults::ON_RdkDocumentDefaults(int major_version, ValueSets vs, void*)
-  :
-  _vs(vs),
-  _reserved(nullptr)
+class CreateXMLException
 {
-  const bool bForOldFile = major_version < 6;
+};
 
-  INITIALIZE
+static ON_XMLNode& Create(ON_XMLNode& node, const wchar_t* s)
+{
+  auto* child_node = node.CreateNodeAtPath(s);
+  if (nullptr == child_node)
+    throw CreateXMLException(); // This should never, ever happen.
 
-  if (ValueSets::All == vs)
-  {
-  BEGIN (CURRENT_CONTENT)
-    BEGIN (ENVIRONMENT)
-    END
-  END
-
-  CREATE (DEFAULT_CONTENT_SECTION)
-  CREATE (MATERIAL_SECTION)
-  CREATE (ENVIRONMENT_SECTION)
-  CREATE (TEXTURE_SECTION)
-  }
-
-  BEGIN (SETTINGS)
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION (NAMED_VIEWS)
-      PROPERTY (SORT_MODE, L"");
-    END
-    BEGIN_SECTION (NAMED_CPLANES)
-      PROPERTY (SORT_MODE, L"");
-    END
-    BEGIN_SECTION (NAMED_POSITIONS)
-      PROPERTY (SORT_MODE, L"");
-    END
-    BEGIN_SECTION (NAMED_SNAPSHOTS)
-      PROPERTY (SORT_MODE, L"");
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION (MISCELLANEOUS)
-
-      PROPERTY (CUSTOM_IMAGE_SIZE_IS_PRESET, false);
-
-      BEGIN_SECTION(NAME_COLLISION_SUPPRESS)
-        PROPERTY (IMPORT, false);
-        PROPERTY (PASTE, false);
-      END
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(EXCLUDED_RENDER_ENGINES)
-      PROPERTY (UUIDS, L"");
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(FILTERS)
-      PROPERTY (NAME_FILTER, L"");
-      PROPERTY (NAME_FILTER_INVERT, false);
-      PROPERTY (SHOW_UNASSIGNED, true);
-      PROPERTY (SHOW_V4, true);
-      PROPERTY (SHOW_HIDDEN, false);
-      PROPERTY (SHOW_REFERENCE, false);
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(POST_EFFECTS)
-      PROPERTY (PEP_EARLY_SELECTION, ON_nil_uuid);
-      PROPERTY (PEP_TONE_SELECTION, uuidPostEffect_ToneMapper_Clamp);
-      PROPERTY (PEP_LATE_SELECTION, uuidPostEffect_Gamma);
-
-      BEGIN_SECTION(PEP_TYPE_EARLY)
-      END
-      BEGIN_SECTION(PEP_TYPE_TONE)
-      END
-      BEGIN_SECTION(PEP_TYPE_LATE)
-      END
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(RENDERING)
-      BEGIN_SECTION(RENDER_CHANNELS)
-        ON_wString sA, sB;
-        ON_UuidToString(chanRGBA, sA);
-        ON_UuidToString(chanDistanceFromCamera, sB);
-        sA.MakeUpper(); sB.MakeUpper();
-        PROPERTY (RCH_LIST, sA + L";" + sB);
-        PROPERTY (RCH_MODE, ON_RDK_RCH_MODE_AUTOMATIC);
-      END
-
-      PROPERTY (EMBED_SUPPORT_FILES_ON, true /* TODO:!!!!!!!! */); // rso.EmbedFilesDocumentDefault());
-      PROPERTY (DITHERING, ON_RDK_DITHERING_FLOYD_STEINBERG);
-      PROPERTY (USE_DITHERING, false);
-      PROPERTY (GAMMA, bForOldFile ? 1.0f : 2.2f);
-      PROPERTY (USE_POST_PROCESS_GAMMA, true);
-      PROPERTY (USE_LINEAR_WORKFLOW, bForOldFile ? false : true);
-      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT_ON, bForOldFile ? false : true);
-      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
-    END
-    }
-    else
-    if (bForOldFile)
-    {
-    BEGIN_SECTION(RENDERING)
-      PROPERTY (CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(SUN)
-      PROPERTY (SUN_ENABLE_ON, false);
-      PROPERTY (SUN_MANUAL_CONTROL_ON, false);
-      PROPERTY (SUN_MANUAL_CONTROL_ALLOWED, true);
-      PROPERTY (SUN_AZIMUTH, 0.0);
-      PROPERTY (SUN_ALTITUDE, 0.0);
-      PROPERTY (SUN_DATE_YEAR, 2000);
-      PROPERTY (SUN_DATE_MONTH, 1);
-      PROPERTY (SUN_DATE_DAY, 1);
-      PROPERTY (SUN_TIME_HOURS, 12.0);
-      PROPERTY (SUN_DAYLIGHT_SAVING_ON,    false);
-      PROPERTY (SUN_DAYLIGHT_SAVING_MINUTES, 60);
-      PROPERTY (SUN_SHADOW_INTENSITY, 1.0);
-      PROPERTY (SUN_INTENSITY, 1.0);
-      PROPERTY (SUN_OBSERVER_LATITUDE, 0.0);
-      PROPERTY (SUN_OBSERVER_LONGITUDE, 0.0);
-      PROPERTY (SUN_OBSERVER_TIMEZONE, 0.0);
-      PROPERTY (SUN_SKYLIGHT_ON, bForOldFile ? false : true);
-      PROPERTY (SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
-      PROPERTY (SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, bForOldFile ? false : true);
-      PROPERTY (SUN_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid);
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(SAFE_FRAME)
-
-      PROPERTY (SF_ON, false);
-      PROPERTY (SF_PERSPECTIVE_ONLY, true);
-      PROPERTY (SF_FIELD_DISPLAY_ON, false);
-
-      BEGIN_SECTION(SF_LIVE_FRAME)
-        PROPERTY (SFF_ON, true);
-      END
-
-      BEGIN_SECTION(SF_ACTION_FRAME)
-        PROPERTY (SFF_ON, true);
-        PROPERTY (SFF_XSCALE, 0.9);
-        PROPERTY (SFF_YSCALE, 0.9);
-        PROPERTY (SFF_LINK, true);
-      END
-
-      BEGIN_SECTION(SF_TITLE_FRAME)
-        PROPERTY (SFF_ON, true);
-        PROPERTY (SFF_XSCALE, 0.8);
-        PROPERTY (SFF_YSCALE, 0.8);
-        PROPERTY (SFF_LINK, true);
-      END
-    END
-    }
-
-    if (ValueSets::All == vs)
-    {
-    BEGIN_SECTION(GROUND_PLANE)
-      PROPERTY (GP_ON, bForOldFile ? false : true);
-      PROPERTY (GP_SHOW_UNDERSIDE, false);
-      PROPERTY (GP_ALTITUDE, 0.0);
-      PROPERTY (GP_AUTO_ALTITUDE, true);
-      PROPERTY (GP_SHADOW_ONLY, bForOldFile ? false : true);
-      PROPERTY (GP_MATERIAL, L"");
-      PROPERTY (GP_TEXTURE_SIZE, ON_2dPoint(1.0, 1.0));
-      PROPERTY (GP_TEXTURE_OFFSET, ON_2dPoint(0.0, 0.0));
-      PROPERTY (GP_TEXTURE_ROTATION, 0.0);
-      PROPERTY (GP_OFFSET_LOCK, false);
-      PROPERTY (GP_REPEAT_LOCK, true);
-    END
-    }
-    else
-    if (bForOldFile)
-    {
-    BEGIN_SECTION(GROUND_PLANE)
-      PROPERTY (GP_SHADOW_ONLY, false);
-    END
-    }
-
-  END
+  return *child_node;
 }
 
-const ON_XMLNode ON_RdkDocumentDefaults::Node(void) const
+ON_RdkDocumentDefaults::ON_RdkDocumentDefaults(int version, ValueSets vs, void*)
+  :
+  _vs(vs),
+  _major_version(version),
+  _reserved(nullptr)
+{
+  try
+  {
+    CreateXML();
+  }
+  catch (CreateXMLException)
+  {
+    ON_ERROR("CRITICAL - Failed to create default XML");
+  }
+}
+
+void ON_RdkDocumentDefaults::CreateXML(void)
+{
+  const bool for_old_file = (_major_version < 6);
+
+  auto& doc = Create(_root, ON_RDK_DOCUMENT);
+  {
+    if (ValueSets::All == _vs)
+    {
+      Create(doc, ON_RDK_CURRENT_CONTENT).CreateNodeAtPath(ON_RDK_ENVIRONMENT);
+      Create(doc, ON_RDK_DEFAULT_CONTENT_SECTION);
+      Create(doc, ON_RDK_MATERIAL_SECTION);
+      Create(doc, ON_RDK_ENVIRONMENT_SECTION);
+      Create(doc, ON_RDK_TEXTURE_SECTION);
+    }
+
+    auto& settings = Create(doc, ON_RDK_SETTINGS);
+    {
+      if (ValueSets::All == _vs)
+      {
+        // Named items.
+        ON_XMLParameters(Create(settings, ON_RDK_NAMED_VIEWS    )).SetParam(ON_RDK_SORT_MODE, L"");
+        ON_XMLParameters(Create(settings, ON_RDK_NAMED_CPLANES  )).SetParam(ON_RDK_SORT_MODE, L"");
+        ON_XMLParameters(Create(settings, ON_RDK_NAMED_POSITIONS)).SetParam(ON_RDK_SORT_MODE, L"");
+        ON_XMLParameters(Create(settings, ON_RDK_NAMED_SNAPSHOTS)).SetParam(ON_RDK_SORT_MODE, L"");
+
+        // Miscellaneous.
+        auto& misc = Create(settings, ON_RDK_MISCELLANEOUS);
+        ON_XMLParameters(misc).SetParam(ON_RDK_CUSTOM_IMAGE_SIZE_IS_PRESET, false);
+        {
+          // Name collision suppression.
+          ON_XMLParameters p(Create(misc, ON_RDK_NAME_COLLISION_SUPPRESS));
+          p.SetParam(ON_RDK_IMPORT, false);
+          p.SetParam(ON_RDK_PASTE , false);
+        }
+
+        // Excluded render engines.
+        ON_XMLParameters p(Create(settings, ON_RDK_EXCLUDED_RENDER_ENGINES));
+        p.SetParam(ON_RDK_UUIDS, L"");
+
+        // Filters.
+        ON_XMLParameters f(Create(settings, ON_RDK_FILTERS));
+        f.SetParam(ON_RDK_NAME_FILTER, L"");
+        f.SetParam(ON_RDK_NAME_FILTER_INVERT, false);
+        f.SetParam(ON_RDK_SHOW_UNASSIGNED, true);
+        f.SetParam(ON_RDK_SHOW_V4, true);
+        f.SetParam(ON_RDK_SHOW_HIDDEN, false);
+        f.SetParam(ON_RDK_SHOW_REFERENCE, false);
+
+        // Post effects.
+        auto& peps = Create(settings, ON_RDK_POST_EFFECTS);
+        {
+          ON_XMLParameters p(peps);
+          p.SetParam(ON_RDK_PEP_EARLY_SELECTION, ON_nil_uuid);
+          p.SetParam(ON_RDK_PEP_TONE_SELECTION, uuidPostEffect_ToneMapper_Clamp);
+          p.SetParam(ON_RDK_PEP_LATE_SELECTION, uuidPostEffect_Gamma);
+
+          Create(peps, ON_RDK_PEP_TYPE_EARLY);
+          Create(peps, ON_RDK_PEP_TYPE_TONE);
+          Create(peps, ON_RDK_PEP_TYPE_LATE);
+        }
+      }
+
+      // Rendering section.
+      if (ValueSets::All == _vs)
+      {
+        auto& rendering = Create(settings, ON_RDK_RENDERING);
+        {
+          // Render channels.
+          auto& render_channels = Create(rendering, ON_RDK_RENDER_CHANNELS);
+          {
+            ON_wString a, b;
+            ON_UuidToString(chanRGBA, a);
+            ON_UuidToString(chanDistanceFromCamera, b);
+            a.MakeUpper(); b.MakeUpper();
+            ON_XMLParameters p(render_channels);
+            p.SetParam(ON_RDK_RCH_LIST, a + L";" + b);
+            p.SetParam(ON_RDK_RCH_MODE, ON_RDK_RCH_MODE_AUTOMATIC);
+          }
+
+          // Misc rendering settings.
+          ON_XMLParameters p(rendering);
+          p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
+          p.SetParam(ON_RDK_DITHERING, ON_RDK_DITHERING_FLOYD_STEINBERG);
+          p.SetParam(ON_RDK_USE_DITHERING, false);
+          p.SetParam(ON_RDK_GAMMA, for_old_file ? 1.0f : 2.2f);
+          p.SetParam(ON_RDK_USE_POST_PROCESS_GAMMA, true);
+          p.SetParam(ON_RDK_USE_LINEAR_WORKFLOW, for_old_file ? false : true);
+          p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
+        }
+      }
+      else
+      {
+        if (for_old_file)
+        {
+          auto& rendering = Create(settings, ON_RDK_RENDERING);
+          {
+            ON_XMLParameters p(rendering);
+            p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
+          }
+        }
+      }
+
+      if (ValueSets::All == _vs)
+      {
+        // Sun.
+        auto& sun = Create(settings, ON_RDK_SUN);
+        {
+          ON_XMLParameters p(sun);
+          p.SetParam(ON_RDK_SUN_ENABLE_ON, false);
+          p.SetParam(ON_RDK_SUN_MANUAL_CONTROL_ON, false);
+          p.SetParam(ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, true);
+          p.SetParam(ON_RDK_SUN_AZIMUTH, 0.0);
+          p.SetParam(ON_RDK_SUN_ALTITUDE, 0.0);
+          p.SetParam(ON_RDK_SUN_DATE_YEAR, 2000);
+          p.SetParam(ON_RDK_SUN_DATE_MONTH, 1);
+          p.SetParam(ON_RDK_SUN_DATE_DAY, 1);
+          p.SetParam(ON_RDK_SUN_TIME_HOURS, 12.0);
+          p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
+          p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 60);
+          p.SetParam(ON_RDK_SUN_SHADOW_INTENSITY, 1.0);
+          p.SetParam(ON_RDK_SUN_INTENSITY, 1.0);
+          p.SetParam(ON_RDK_SUN_OBSERVER_LATITUDE, 0.0);
+          p.SetParam(ON_RDK_SUN_OBSERVER_LONGITUDE, 0.0);
+          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid);
+        }
+
+        // Safe frame.
+        auto& safe_frame = Create(settings, ON_RDK_SAFE_FRAME);
+        {
+          ON_XMLParameters p(safe_frame);
+          p.SetParam(ON_RDK_SF_ON, false);
+          p.SetParam(ON_RDK_SF_PERSPECTIVE_ONLY, true);
+          p.SetParam(ON_RDK_SF_4x3_FIELD_DISPLAY_ON, false);
+
+          auto& live_frame = Create(safe_frame, ON_RDK_SF_LIVE_FRAME);
+          {
+            ON_XMLParameters p(live_frame);
+            p.SetParam(ON_RDK_SFF_ON, true);
+          }
+
+          auto& action_frame = Create(safe_frame, ON_RDK_SF_ACTION_FRAME);
+          {
+            ON_XMLParameters p(action_frame);
+            p.SetParam(ON_RDK_SFF_ON, true);
+            p.SetParam(ON_RDK_SFF_XSCALE, 0.9);
+            p.SetParam(ON_RDK_SFF_YSCALE, 0.9);
+            p.SetParam(ON_RDK_SFF_LINK, true);
+          }
+
+          auto& title_frame = Create(safe_frame, ON_RDK_SF_TITLE_FRAME);
+          {
+            ON_XMLParameters p(title_frame);
+            p.SetParam(ON_RDK_SFF_ON, true);
+            p.SetParam(ON_RDK_SFF_XSCALE, 0.8);
+            p.SetParam(ON_RDK_SFF_YSCALE, 0.8);
+            p.SetParam(ON_RDK_SFF_LINK, true);
+          }
+        }
+      }
+
+      // Ground plane.
+      if (ValueSets::All == _vs)
+      {
+        auto& ground_plane = Create(settings, ON_RDK_GROUND_PLANE);
+        {
+          ON_XMLParameters p(ground_plane);
+          p.SetParam(ON_RDK_GP_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_GP_SHOW_UNDERSIDE, false);
+          p.SetParam(ON_RDK_GP_ALTITUDE, 0.0);
+          p.SetParam(ON_RDK_GP_AUTO_ALTITUDE, true);
+          p.SetParam(ON_RDK_GP_SHADOW_ONLY, for_old_file ? false : true);
+          p.SetParam(ON_RDK_GP_MATERIAL, L"");
+          p.SetParam(ON_RDK_GP_TEXTURE_SIZE, ON_2dPoint(1.0, 1.0));
+          p.SetParam(ON_RDK_GP_TEXTURE_OFFSET, ON_2dPoint(0.0, 0.0));
+          p.SetParam(ON_RDK_GP_TEXTURE_ROTATION, 0.0);
+          p.SetParam(ON_RDK_GP_OFFSET_LOCK, false);
+          p.SetParam(ON_RDK_GP_REPEAT_LOCK, true);
+        }
+      }
+      else
+      {
+        if (for_old_file)
+        {
+          auto& ground_plane = Create(settings, ON_RDK_GROUND_PLANE);
+          {
+            ON_XMLParameters p(ground_plane);
+            p.SetParam(ON_RDK_GP_SHADOW_ONLY, false);
+          }
+        }
+      }
+    }
+  }
+}
+
+const ON_XMLNode& ON_RdkDocumentDefaults::Node(void) const
 {
   return _root;
 }
 
 void ON_RdkDocumentDefaults::CopyDefaultsTo(ON_XMLNode& dest) const
 {
-  if (_vs == ValueSets::All)
+  if (ValueSets::All == _vs)
   {
     dest = _root;
   }

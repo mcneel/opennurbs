@@ -424,8 +424,31 @@ public:
 #pragma endregion
 
   // Per object linetype scale
-  double LinetypeScale() const;
-  void SetLinetypeScale(double scale);
+  double LinetypePatternScale() const;
+  void SetLinetypePatternScale(double scale);
+
+  /*
+  Description:
+    Attributes can have optional custom linetypes associated with them. When a
+    custom linetype is attached to an attribute, this linetype is used for an
+    attribute instead of the linetype referenced by the linetype index. This
+    function adds a custom linetype for this attribute.
+  */
+  void SetCustomLinetype(const ON_Linetype& linetype);
+
+  /*
+  Description:
+    Attributes can have optional custom linetypes associated with them. This
+    function returns the custom linetype if one exists. If a custom linetype is
+    not attached to this attribute, then an empty shared pointer is returned
+  */
+  const ON_Linetype* CustomLinetype() const;
+
+  /*
+  Description:
+    Remove any custom linetype associated with this attribute
+  */
+  void RemoveCustomLinetype();
 
 #pragma region Hatch Specific Attributes
   ON_Color HatchBackgroundFillColor() const;
@@ -433,6 +456,7 @@ public:
   bool HatchBoundaryVisible() const;
   void SetHatchBoundaryVisible(bool on);
 #pragma endregion
+
 
   ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci) const;
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);

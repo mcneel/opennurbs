@@ -1951,12 +1951,6 @@ private:
   mutable ON_SubDHash m_subd_geometry_hash = ON_SubDHash::Empty;
 
 public:
-
-
-#if defined(ON_SUBD_CENSUS)
-  ON_SubDImpleCensusCounter m_census_counter;
-#endif
-public:
   ON_SubDimple();
   ~ON_SubDimple();
   ON_SubDimple(const ON_SubDimple&);
@@ -2059,7 +2053,7 @@ public:
 
   /*
   Description:
-    Split and edge.
+    Split an edge.
     The input edge is modifed to terminate at the input vertex.
     The new edge begins at the input vertex and ends at the final vertex
     of the original input edge.
@@ -2858,10 +2852,6 @@ private:
 
 class /*DO NOT EXPORT*/ON_SubDMeshImpl
 {
-#if defined(ON_SUBD_CENSUS)
-  ON_SubDMeshCensusCounter m_census_counter;
-#endif
-
 public:
   ON_SubDMeshImpl();
   ~ON_SubDMeshImpl() = default;
