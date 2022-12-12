@@ -917,8 +917,8 @@ void ON_Triangle::Split(unsigned char edge, ON_3dPoint pt, ON_Triangle& out_a, O
     out_a.m_V[1] = m_V[1];
     out_a.m_V[2] = pt;
     out_b.m_V[0] = pt;
-    out_b.m_V[1] = out_b.m_V[1];
-    out_b.m_V[2] = out_b.m_V[2];
+    out_b.m_V[1] = m_V[1];
+    out_b.m_V[2] = m_V[2];
     break;
   default: //2
     out_a.m_V[0] = m_V[0];

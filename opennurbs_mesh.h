@@ -5309,17 +5309,18 @@ The map is an array of length m_F.Count(), ngon_map[]
   //
   // OPTIONAL texture coordinates for each vertex
 
-  // It would be nice if this were an ON_TextureCoordinates,
-  // but that breaks lots of checked out code that assumes
-  // m_T is an array of ON_2fPoints.
-  ON_MappingTag m_Ttag; // OPTIONAL tag for values in m_T[]
-  ON_2fPointArray m_T;  // OPTIONAL texture coordinates for each vertex
+  // The m_Ttag member has been DEPRECATED. Please don't use it.
+  ON_MappingTag m_Ttag; // DEPRECATED
+
+  // The m_T array has been DEPRECATED. Please don't use it.
+  // Instead, use the m_S array to store per-vertex texture coordinates.
+  ON_2fPointArray m_T;  // DEPRECATED
 
   // RUNTIME ONLY
   //   This array is used to cache texture coordinates used by
-  //   rendering applications that require 1d texture coordinates,
-  //   3d texture coordinates, or multiple sets of texture 
-  //   coordinates (e.g. blended textures with different mappings).
+  //   rendering applications that require 1d, 2d or 3d texture
+  //   coordinates, or multiple sets of texture coordinates
+  //   (e.g. blended textures with different mappings).
   //   Users are responsible for verifying 
   //   m_TC[i].m_T.Count() = m_V.Count()
   ON_ClassArray<ON_TextureCoordinates> m_TC;  

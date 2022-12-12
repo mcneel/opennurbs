@@ -21,6 +21,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_RDK_DOCUMENT                             L"render-content-manager-document"
 
   #define ON_RDK_CURRENT_CONTENT                      L"content"
+  #define ON_RDK_ENVIRONMENT                          L"environment"
   #define ON_RDK_DEFAULT_CONTENT_SECTION              L"default-content-section"
 
   #define ON_RDK_SETTINGS                             L"settings"
@@ -61,12 +62,14 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_PEP_LATE_SELECTION                 ON_RDK_PEP_TYPE_LATE  ON_RDK_PEP_SELECTION_POSTFIX
 
     #define ON_RDK_RENDERING                          L"rendering"
+
       #define ON_RDK_RENDER_CHANNELS                    L"render-channels"
         #define ON_RDK_RCH_LIST                           L"list"
         #define ON_RDK_RCH_MODE                           L"mode"
           #define ON_RDK_RCH_MODE_AUTOMATIC                 L"automatic"
           #define ON_RDK_RCH_MODE_CUSTOM                    L"custom"
 
+      #define ON_RDK_CURRENT_PRESET                     L"current-preset"
       #define ON_RDK_EMBED_SUPPORT_FILES_ON             L"embed-support-files-on"
       #define ON_RDK_GAMMA                              L"gamma"
       #define ON_RDK_USE_DITHERING                      L"use-dithering"
