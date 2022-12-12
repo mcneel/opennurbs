@@ -1557,19 +1557,28 @@ void AutoTypeVariant(ON_XMLVariant& v)
 class CPropertyData final
 {
 public:
-  CPropertyData() { CommonCtor(); }
-  CPropertyData(const CPropertyData& src) { CommonCtor(); m_sName = src.m_sName; m_value = src.m_value; }
-  CPropertyData(const ON_XMLVariant& v)   { CommonCtor(); m_value = v; }
-  CPropertyData(const ON_wString& sName, const ON_XMLVariant& v) { CommonCtor(); SetName(sName); SetValue(v); }
+  CPropertyData() { g_lPropertyCount++; }
+  CPropertyData(const CPropertyData& src) { g_lPropertyCount++; m_sName = src.m_sName; m_value = src.m_value; }
+  CPropertyData(const ON_XMLVariant& v)   { g_lPropertyCount++; m_value = v; }
+  CPropertyData(const ON_wString& sName, const ON_XMLVariant& v) { g_lPropertyCount++; SetName(sName); SetValue(v); }
   ~CPropertyData() { ON_ASSERT(m_iRefCount == 0); g_lPropertyCount--; }
 
 public:
-  void AddRef(void) { m_iRefCount++; }
+  void AddRef(void)
+  {
+    std::lock_guard<std::recursive_mutex> lg(m_mutex);
+    m_iRefCount++;
+  }
 
   void Release(void)
   {
-    const auto ref = long(--m_iRefCount);
-    if (0 == ref)
+    bool del = false;
+    {
+      std::lock_guard<std::recursive_mutex> lg(m_mutex);
+      del = (0 == --m_iRefCount);
+    }
+
+    if (del)
       delete this;
   }
 
@@ -1590,10 +1599,10 @@ public:
 public:
   ON_wString m_sName;
   ON_XMLVariant m_value;
-  std::atomic<long> m_iRefCount;
+  int m_iRefCount = 1;
+  std::recursive_mutex m_mutex;
 
 protected:
-  void CommonCtor(void) { g_lPropertyCount++; std::atomic_init(&m_iRefCount, 1); }
   const CPropertyData& operator = (const CPropertyData& d) { m_sName = d.m_sName; m_value = d.m_value; return *this; }
 };
 
@@ -2001,8 +2010,7 @@ ON_XMLNode* ON_XMLNode::CImpl::AttachChildNode(ON_XMLNode* pNode)
 
 void ON_XMLNode::CImpl::AddEmptyDefaultProperty(void)
 {
-  static ON_XMLProperty defaultProp(L"");
-  AddProperty(defaultProp);
+  AddProperty(ON_XMLProperty(L""));
 }
 
 void ON_XMLNode::CImpl::RemoveAllChildren(void)
@@ -5147,15 +5155,12 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
 #pragma warning (pop)
 
 //-------------------------------------------------------------------------------------------------------------------
-#define ON_RDK_MATERIAL_SECTION     L"material"    ON_RDK_POSTFIX_SECTION
-#define ON_RDK_ENVIRONMENT_SECTION  L"environment" ON_RDK_POSTFIX_SECTION
-#define ON_RDK_TEXTURE_SECTION      L"texture"     ON_RDK_POSTFIX_SECTION
-#define ON_RDK_ENVIRONMENT          L"environment"
-
 ON_UUID uuidPostEffect_ToneMapper_Clamp = { 0xacb8d258, 0xc1d6, 0x499d, { 0xaa, 0x23, 0x02, 0xdc, 0xde, 0xa2, 0xb0, 0xa2 } };
 ON_UUID uuidPostEffect_Gamma            = { 0x84c0798d, 0xc43a, 0x4402, { 0x88, 0x91, 0xe0, 0xc8, 0x08, 0x8e, 0x67, 0xca } };
 ON_UUID chanRGBA                        = { 0x453a9a1c, 0x9307, 0x4976, { 0xb2, 0x82, 0x4e, 0xad, 0x4d, 0x53, 0x98, 0x79 } };
 ON_UUID chanDistanceFromCamera          = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 0x34, 0x26, 0x42, 0x5e, 0x1c, 0x43, 0x31 } };
+ON_UUID uuidRenderSettingsPreset_Studio = { 0x5898cc05, 0x4202, 0x4dfb, { 0x83, 0xfe, 0x8f, 0xa8, 0x8f, 0x91, 0xc7, 0xd6 } };
+ON_UUID uuidRenderSettingsPreset_Custom = { 0xc89a74fb, 0x1451, 0x4a9b, { 0xb8, 0x7d, 0xe3, 0x0f, 0xf3, 0x51, 0x0f, 0x96 } };
 //-------------------------------------------------------------------------------------------------------------------
 
 #pragma ON_PRAGMA_WARNING_PUSH
@@ -5192,17 +5197,12 @@ ON_RdkDocumentDefaults::ON_RdkDocumentDefaults(int version, ValueSets vs, void*)
 
 void ON_RdkDocumentDefaults::CreateXML(void)
 {
-  const bool for_old_file = (_major_version < 6);
-
   auto& doc = Create(_root, ON_RDK_DOCUMENT);
   {
     if (ValueSets::All == _vs)
     {
       Create(doc, ON_RDK_CURRENT_CONTENT).CreateNodeAtPath(ON_RDK_ENVIRONMENT);
       Create(doc, ON_RDK_DEFAULT_CONTENT_SECTION);
-      Create(doc, ON_RDK_MATERIAL_SECTION);
-      Create(doc, ON_RDK_ENVIRONMENT_SECTION);
-      Create(doc, ON_RDK_TEXTURE_SECTION);
     }
 
     auto& settings = Create(doc, ON_RDK_SETTINGS);
@@ -5253,9 +5253,9 @@ void ON_RdkDocumentDefaults::CreateXML(void)
       }
 
       // Rendering section.
-      if (ValueSets::All == _vs)
+      auto& rendering = Create(settings, ON_RDK_RENDERING);
       {
-        auto& rendering = Create(settings, ON_RDK_RENDERING);
+        if (ValueSets::All == _vs)
         {
           // Render channels.
           auto& render_channels = Create(rendering, ON_RDK_RENDER_CHANNELS);
@@ -5274,21 +5274,26 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
           p.SetParam(ON_RDK_DITHERING, ON_RDK_DITHERING_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_USE_DITHERING, false);
-          p.SetParam(ON_RDK_GAMMA, for_old_file ? 1.0f : 2.2f);
+          p.SetParam(ON_RDK_GAMMA, (_major_version < 6) ? 1.0f : 2.2f);
           p.SetParam(ON_RDK_USE_POST_PROCESS_GAMMA, true);
-          p.SetParam(ON_RDK_USE_LINEAR_WORKFLOW, for_old_file ? false : true);
-          p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_USE_LINEAR_WORKFLOW, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
+          p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
+          p.SetParam(ON_RDK_CURRENT_PRESET, (_major_version < 8) ? uuidRenderSettingsPreset_Custom
+                                                                 : uuidRenderSettingsPreset_Studio);
         }
-      }
-      else
-      {
-        if (for_old_file)
+        else
         {
-          auto& rendering = Create(settings, ON_RDK_RENDERING);
+          ON_XMLParameters p(rendering);
+
+          if (_major_version < 6)
           {
-            ON_XMLParameters p(rendering);
             p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
+          }
+
+          if (_major_version < 8)
+          {
+            p.SetParam(ON_RDK_CURRENT_PRESET, uuidRenderSettingsPreset_Custom);
           }
         }
       }
@@ -5315,9 +5320,9 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_SUN_OBSERVER_LATITUDE, 0.0);
           p.SetParam(ON_RDK_SUN_OBSERVER_LONGITUDE, 0.0);
           p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0);
-          p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
-          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid);
         }
 
@@ -5361,11 +5366,11 @@ void ON_RdkDocumentDefaults::CreateXML(void)
         auto& ground_plane = Create(settings, ON_RDK_GROUND_PLANE);
         {
           ON_XMLParameters p(ground_plane);
-          p.SetParam(ON_RDK_GP_ON, for_old_file ? false : true);
+          p.SetParam(ON_RDK_GP_ON, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_GP_SHOW_UNDERSIDE, false);
           p.SetParam(ON_RDK_GP_ALTITUDE, 0.0);
           p.SetParam(ON_RDK_GP_AUTO_ALTITUDE, true);
-          p.SetParam(ON_RDK_GP_SHADOW_ONLY, for_old_file ? false : true);
+          p.SetParam(ON_RDK_GP_SHADOW_ONLY, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_GP_MATERIAL, L"");
           p.SetParam(ON_RDK_GP_TEXTURE_SIZE, ON_2dPoint(1.0, 1.0));
           p.SetParam(ON_RDK_GP_TEXTURE_OFFSET, ON_2dPoint(0.0, 0.0));
@@ -5376,7 +5381,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
       }
       else
       {
-        if (for_old_file)
+        if (_major_version < 6)
         {
           auto& ground_plane = Create(settings, ON_RDK_GROUND_PLANE);
           {

@@ -86,6 +86,8 @@ void ON_LinetypeSegment::Dump( ON_TextLog& dump) const
   case ON_LinetypeSegment::eSegType::stSpace:
     dump.Print( "Segment type = Space: %g\n", m_length);
     break;
+  case ON_LinetypeSegment::eSegType::Unset:
+    break;
   }
 }
 
