@@ -149,21 +149,22 @@
 
 #elif defined(ON_RUNTIME_LINUX)
 
-#if defined(__x86_64__)
-#define ON_64BIT_RUNTIME
-#else
-#define ON_32BIT_RUNTIME
-#endif
-
-
 #if !defined(ON_SIZEOF_WCHAR_T)
 #define ON_SIZEOF_WCHAR_T 4
 #endif
 
-#if !defined(ON_LITTLE_ENDIAN)
-#if defined( __x86_64__ )
-#define ON_LITTLE_ENDIAN
+#include <cstdint>
+#if INTPTR_MAX == INT64_MAX
+#define ON_64BIT_RUNTIME
+#elif INTPTR_MAX == INT32_MAX
+#define ON_32BIT_RUNTIME
 #endif
+
+#include <endian.h>
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define ON_LITTLE_ENDIAN
+#else
+#define ON_BIG_ENDIAN
 #endif
 
 #endif
