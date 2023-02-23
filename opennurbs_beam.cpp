@@ -2775,7 +2775,9 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
   newbrep->m_T.Reserve((4 + cap_count)*side_count);
   newbrep->m_C3.Reserve(4*side_count);
   newbrep->m_E.Reserve(4*side_count);
-
+  // 3 Feb 2023, Mikko, RH-72784:
+  // Initialize vertex array size to avoid slow reallocs
+  newbrep->m_V.Reserve(2 * side_count);
 
   int vidmap[4] = {0,1,2,3};
   int eidmap[4] = {0,1,2,3};
@@ -3223,6 +3225,7 @@ static bool GetBrepFormFaceIndex(
                  && extrusion_profile_parameter < t 
                )
             {
+              t1 = t;
               break;
             }
             t0 = t;
@@ -3270,6 +3273,25 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
   ON_COMPONENT_INDEX& brep_ci
 ) const
 {
+  return GetBrepFormComponentIndex(
+    extrusion_ci,
+    extrusion_profile_parameter,
+    brep,
+    false,
+    brep_ci,
+    nullptr
+  );
+}
+
+bool ON_Extrusion::GetBrepFormComponentIndex(
+  ON_COMPONENT_INDEX extrusion_ci,
+  double extrusion_profile_parameter,
+  const ON_Brep* brep,
+  bool bSmoothFaces,
+  ON_COMPONENT_INDEX& brep_ci,
+  ON_Interval* profile_subdomain
+) const
+{
   brep_ci.UnSet();
   int face_index = -1;
   ON_Interval face_profile_domain(ON_UNSET_VALUE,ON_UNSET_VALUE);
@@ -3286,7 +3308,7 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
   const bool bClosedProfile = profile0->IsClosed() ? true : false;
   if ( profile_count > 1 && !bClosedProfile )
     return false;
-  const int edges_per_wall_face = bClosedProfile ? 3 : 4;
+  const int edges_per_wall_face = 4;
   const int cap_count = (0 == is_capped || !bClosedProfile) ? 0 : ((3==is_capped)?2:1);
   int brep_face_count = ( nullptr != brep ) ? brep->m_F.Count() : 0;
   if ( nullptr != brep && brep_face_count < profile_count + cap_count )
@@ -3294,7 +3316,8 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
     ON_ERROR("brep_form parameter cannot be extrusion's BrepForm()");
     return false;
   }
-  bool bCountProfileDiscontinuities = ( brep_face_count > profile_count + cap_count );
+  bool bCountProfileDiscontinuities = bSmoothFaces || ( brep_face_count > profile_count + cap_count );
+  int side_count = (bCountProfileDiscontinuities) ? GetSmoothSideCount(*this) : profile_count;
 
   switch(extrusion_ci.m_type)
   {
@@ -3304,10 +3327,23 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
       return false;
     if ( !GetBrepFormFaceIndex( *this, extrusion_ci.m_index, extrusion_profile_parameter, bCountProfileDiscontinuities, &face_index, &face_profile_domain ) )
       return false;
-    brep_ci.m_index = edges_per_wall_face*face_index;
-    if ( ON_COMPONENT_INDEX::extrusion_top_profile == extrusion_ci.m_type )
-      brep_ci.m_index += 2;
+
+    // first face has edges_per_wall_face edges, the subsequent ones have one less
+    if (face_index > 0)
+      brep_ci.m_index = edges_per_wall_face + ((edges_per_wall_face-1) * (face_index-1));
+    else
+      brep_ci.m_index = 0;
+
+    if (ON_COMPONENT_INDEX::extrusion_top_profile == extrusion_ci.m_type)
+    {
+      if ( bClosedProfile && face_index == side_count - 1)
+        brep_ci.m_index += 1; // in closed case the last face has an already existing edge between bottom and top edge
+      else
+        brep_ci.m_index += 2;
+    }
     brep_ci.m_type = ON_COMPONENT_INDEX::brep_edge;
+    if (nullptr != profile_subdomain)
+      *profile_subdomain = face_profile_domain;
     break;
 
   case ON_COMPONENT_INDEX::extrusion_wall_edge:
@@ -3322,12 +3358,14 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
     break;
 
   case ON_COMPONENT_INDEX::extrusion_wall_surface:
-    if ( extrusion_ci.m_index < 0 || extrusion_ci.m_index >= profile_count )
+    if ( extrusion_ci.m_index < 0 || extrusion_ci.m_index >= side_count )
       return false;
     if ( !GetBrepFormFaceIndex( *this, extrusion_ci.m_index, extrusion_profile_parameter, bCountProfileDiscontinuities, &face_index, &face_profile_domain ) )
       return false;
     brep_ci.m_index = face_index;
     brep_ci.m_type = ON_COMPONENT_INDEX::brep_face;
+    if (nullptr != profile_subdomain)
+      *profile_subdomain = face_profile_domain;
     break;
 
   case ON_COMPONENT_INDEX::extrusion_cap_surface:

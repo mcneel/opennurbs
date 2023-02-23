@@ -828,14 +828,24 @@ ON_Mesh* ON_PlaneSurface::CreateMesh(
   return rc;
 }
 
+double ON_ClippingPlaneInfo::Distance() const
+{
+  return m_distance;
+}
+void ON_ClippingPlaneInfo::SetDistance(double distance)
+{
+  m_distance = (float)distance;
+}
+
 void ON_ClippingPlaneInfo::Default()
 {
   memset(this,0,sizeof(*this));
+  m_distance = -1;
 }
 
 bool ON_ClippingPlaneInfo::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
   if (!rc)
     return false;
   
@@ -848,6 +858,10 @@ bool ON_ClippingPlaneInfo::Write( ON_BinaryArchive& file ) const
     if (!rc) break;
 
     rc = file.WriteBool(m_bEnabled);
+    if (!rc) break;
+
+    // version 1.1 - write distance as a double
+    rc = file.WriteDouble(m_distance);
     if (!rc) break;
 
     break;
@@ -883,6 +897,15 @@ bool ON_ClippingPlaneInfo::Read( ON_BinaryArchive& file )
     rc = file.ReadBool(&m_bEnabled);
     if (!rc) break;
 
+    if (minor_version > 0)
+    {
+      double d = -1;
+      rc = file.ReadDouble(&d);
+      if (!rc) break;
+
+      m_distance = (float)d;
+    }
+
     break;
   }
 
@@ -899,6 +922,7 @@ void ON_ClippingPlane::Default()
   m_viewport_ids.Empty();
   m_plane_id = ON_nil_uuid;
   m_bEnabled = true;
+  m_distance = -1;
 }
 
 ON_ClippingPlane::ON_ClippingPlane()
@@ -916,7 +940,17 @@ ON_ClippingPlaneInfo ON_ClippingPlane::ClippingPlaneInfo() const
   info.m_plane_equation = m_plane.plane_equation;
   info.m_plane_id = m_plane_id;
   info.m_bEnabled = m_bEnabled;
+  info.SetDistance(m_distance);
   return info;
+}
+
+double ON_ClippingPlane::Distance() const
+{
+  return m_distance;
+}
+void ON_ClippingPlane::SetDistance(double distance)
+{
+  m_distance = (float)distance;
 }
 
 bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
@@ -957,6 +991,15 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
       if (!rc) break;
     }
 
+    if (minor_version > 1)
+    {
+      double d = -1;
+      rc = file.ReadDouble(&d);
+      if (!rc) break;
+
+      m_distance = (float)d;
+    }
+
     break;
   }
 
@@ -968,7 +1011,7 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
 
 bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
   if (!rc)
     return false;
 
@@ -992,6 +1035,10 @@ bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
 
     //version 1.1 - write list of viewport uuids instead of single uuid
     rc = m_viewport_ids.Write(file);
+    if (!rc) break;
+
+    //version 1.2 - write distance as double
+    rc = file.WriteDouble(m_distance);
     if (!rc) break;
 
     break;

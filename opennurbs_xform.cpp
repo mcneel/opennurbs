@@ -1463,6 +1463,12 @@ int ON_Xform::IsRigid(double tolerance) const
 		double dist = ApproxDist2Ortho(L);
 
 		rval = (dist < tolerance);
+    if (rval)
+    {
+      double det = L.Determinant();
+      if (det < 0)
+        rval = -1;
+    }
 	}
 	return rval;
 }

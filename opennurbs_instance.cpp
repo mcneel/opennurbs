@@ -1091,9 +1091,12 @@ bool ON_InstanceDefinition::IsLinkedType() const
 {
   switch (InstanceDefinitionType())
   {
-  case ON_InstanceDefinition::IDEF_UPDATE_TYPE::LinkedAndEmbedded:
-  case ON_InstanceDefinition::IDEF_UPDATE_TYPE::Linked:
-    return true;
+    case ON_InstanceDefinition::IDEF_UPDATE_TYPE::LinkedAndEmbedded:
+    case ON_InstanceDefinition::IDEF_UPDATE_TYPE::Linked:
+      return true;
+    case ON_InstanceDefinition::IDEF_UPDATE_TYPE::Static:
+    case ON_InstanceDefinition::IDEF_UPDATE_TYPE::Unset:
+      return false;
   }
   return false;
 }

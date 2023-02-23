@@ -659,6 +659,12 @@ unsigned int ON_SubDEdgePtr::EdgeFaceCount() const
   return (nullptr != e) ? ((unsigned int)e->m_face_count) : 0U;
 }
 
+ON_SubDEdgeTag ON_SubDEdgePtr::EdgeTag() const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  return (nullptr != e) ? e->m_edge_tag : ON_SubDEdgeTag::Unset;
+}
+
 bool ON_SubDEdgePtr::EdgeIsSmooth() const
 {
   const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
@@ -697,6 +703,13 @@ ON__UINT_PTR ON_SubDEdgePtr::EdgeDirection() const
   return ON_SUBD_EDGE_DIRECTION(m_ptr);
 }
 
+
+const ON_3dPoint ON_SubDEdgePtr::SubdivisionPoint() const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  return (nullptr != e) ? e->SubdivisionPoint() : ON_3dPoint::NanPoint;
+}
+
 void ON_SubDEdgePtr::ClearSavedSubdivisionPoints() const
 {
   const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
@@ -731,6 +744,23 @@ const class ON_SubDVertex* ON_SubDEdgePtr::RelativeVertex(
   return nullptr;
 }
 
+const ON_3dPoint ON_SubDEdgePtr::RelativeVertexPoint(
+  int relative_vertex_index,
+  ON_SubDComponentLocation point_location
+) const
+{
+  const ON_SubDVertex* v = this->RelativeVertex(relative_vertex_index);
+  return (nullptr != v) ? v->Point(point_location) : ON_3dPoint::NanPoint;
+}
+
+
+const ON_3dPoint ON_SubDEdgePtr::RelativeVertexSurfacePoint(
+  int relative_vertex_index
+) const
+{
+  const ON_SubDVertex* v = this->RelativeVertex(relative_vertex_index);
+  return (nullptr != v) ? v->SurfacePoint() : ON_3dPoint::NanPoint;
+}
 
 unsigned ON_SubDEdgePtr::RelativeVertexId(int relative_vertex_index) const
 {
@@ -791,6 +821,48 @@ double ON_SubDEdgePtr::RelativeSectorCoefficient(
     return edge->m_sector_coefficient[relative_vertex_index];
   }
   return ON_SubDSectorType::ErrorSectorCoefficient;
+}
+
+void  ON_SubDEdgePtr::SetRelativeSectorCoefficientForExperts(
+  int relative_vertex_index,
+  double relative_sector_coefficient
+) const
+{
+  for (;;)
+  {
+    if (relative_vertex_index < 0 || relative_vertex_index>1)
+      break;
+    const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_ptr);
+    if (nullptr == edge)
+      break;
+    if (0 != ON_SUBD_EDGE_DIRECTION(m_ptr))
+      relative_vertex_index = 1 - relative_vertex_index;
+    edge->m_sector_coefficient[relative_vertex_index] = relative_sector_coefficient;
+    break;
+  }
+}
+
+
+const ON_SubDEdgeSharpness ON_SubDEdgePtr::RelativeSharpness() const
+{
+  const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_ptr);
+  if (nullptr != edge)
+  {
+    const ON_SubDEdgeSharpness s = edge->Sharpness();
+    return (0 == ON_SUBD_EDGE_DIRECTION(m_ptr)) ? s : s.Reversed();
+  }
+  return ON_SubDEdgeSharpness::Zero;
+}
+
+void ON_SubDEdgePtr::SetRelativeSharpness(ON_SubDEdgeSharpness relative_sharpness) const
+{
+  ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_ptr);
+  if (nullptr != edge)
+    edge->SetSharpnessForExperts(
+      (0 == ON_SUBD_EDGE_DIRECTION(m_ptr))
+      ? relative_sharpness 
+      : relative_sharpness.Reversed()
+    );
 }
 
 const ON_3dVector ON_SubDEdgePtr::RelativeDirection() const
@@ -894,6 +966,14 @@ const ON_SubDEdgePtr ON_SubDEdgePtr::Create(
 {
   ON_SubDEdgePtr eptr = { (ON__UINT_PTR)edge | (direction & ON_SUBD_COMPONENT_DIRECTION_MASK) };
   return eptr;
+}
+
+const ON_SubDEdgePtr ON_SubDEdgePtr::Create(
+  const class ON_SubDVertex* v0,
+  const class ON_SubDVertex* v1
+)
+{
+  return ON_SubDEdge::FromVertices(v0,v1);
 }
 
 const ON_SubDEdgePtr ON_SubDEdgePtr::Create(
@@ -3304,6 +3384,29 @@ unsigned int ON_SubDVertex::EdgeArrayIndex(
   return ON_UNSET_UINT_INDEX;
 }
 
+unsigned int ON_SubDVertex::ReplaceEdgeInArray(
+  const ON_SubDEdge* old_edge,
+  const ON_SubDEdgePtr new_edge
+  )
+{
+  if (m_edges == nullptr || m_edge_count == 0)
+    return ON_SUBD_RETURN_ERROR(ON_UNSET_UINT_INDEX);
+  unsigned vei = old_edge != nullptr ? EdgeArrayIndex(old_edge) : ON_UNSET_UINT_INDEX;
+  if (ON_UNSET_UINT_INDEX == vei || m_edges[vei].m_ptr == new_edge.m_ptr)
+    return ON_UNSET_UINT_INDEX;
+  if (new_edge.IsNotNull())
+  {
+    m_edges[vei] = new_edge;
+  }
+  else
+  {
+    const unsigned c = (unsigned)(m_edge_count--);
+    while (++vei < c)
+      m_edges[vei - 1] = m_edges[vei];
+  }
+  return vei;
+}
+
 unsigned int ON_SubDVertex::MarkedEdgeCount() const
 {
   unsigned int mark_count = 0;
@@ -3538,11 +3641,23 @@ bool ON_SubDVertex::IsDartOrCrease() const
     );
 }
 
+bool ON_SubDVertex::IsDartOrCorner() const
+{
+  return (
+    ON_SubDVertexTag::Dart == m_vertex_tag
+    || ON_SubDVertexTag::Corner == m_vertex_tag
+    );
+}
 
 
 bool ON_SubDVertex::IsSmoothOrDart() const
 {
   return (ON_SubDVertexTag::Smooth == m_vertex_tag || ON_SubDVertexTag::Dart == m_vertex_tag);
+}
+
+bool ON_SubDVertex::IsSmoothOrDartOrCrease() const
+{
+  return (ON_SubDVertexTag::Smooth == m_vertex_tag || ON_SubDVertexTag::Dart == m_vertex_tag || ON_SubDVertexTag::Crease == m_vertex_tag);
 }
 
 bool ON_SubDVertex::IsSmoothOrCrease() const
@@ -3707,137 +3822,430 @@ bool ON_SubDEdge::IsSmoothX() const
   return (ON_SubDEdgeTag::SmoothX == m_edge_tag) ? true : false;
 }
 
-
-// These semisharp edge tools need to be out of the protected ON_SUBD_SHARP_EDGES
-// in order for public opennurbs to work. They simply provide access to
-// ON_SubDEdge::m_sharpness which has been in public opennurbs since 7.0.
-double ON_SubDEdge::Sharpness() const
+const ON_SubDEdgeSharpness ON_SubDEdge::Sharpness() const
 {
-  return Sharpness(ON_DBL_QNAN, 0.0, ON_SubDEdge::InfinteSharpness);
+  return IsSmooth() ? m_sharpness : ON_SubDEdgeSharpness::Zero;
 }
 
-double ON_SubDEdge::Sharpness(
-  double unset_edge_value,
-  double smooth_edge_value,
-  double crease_edge_value
+double ON_SubDEdge::EndSharpness(
+  unsigned evi
 ) const
 {
-  if (IsCrease())
-    return crease_edge_value;
-  if (IsSmooth())
-    return ((m_sharpness >= 0.0 && m_sharpness < ON_SubDEdge::InfinteSharpness) ? m_sharpness : 0.0);
-  return unset_edge_value;
+  return (IsSmooth() && evi >= 0 && evi <= 1) ? m_sharpness[evi] : 0.0;
 }
 
-void ON_SubDEdge::SetSharpness(double sharpness)
+double ON_SubDEdge::EndSharpness(
+  const ON_SubDVertex* v
+) const
 {
-  m_sharpness = IsSmooth() ? ON_SubDEdge::SanitizeSharpness(sharpness, false) : 0.0;
-}
-
-double ON_SubDEdge::SanitizeSharpness(double sharpness, bool bPermitInfinteSharpness)
-{
-  // When sharpness is withing ON_SubDEdge::SharpnessTolerance of an integer value,
-  // snap to that integer value.
-  const double f = floor(sharpness);
-  if (sharpness - f <= ON_SubDEdge::SharpnessTolerance)
-    sharpness = f;
-  else if (f + 1.0 - sharpness <= ON_SubDEdge::SharpnessTolerance)
-    sharpness = f + 1.0;
-
-  if (sharpness >= 0.0 && sharpness < ON_SubDEdge::InfinteSharpness)
-    return sharpness;
-
-  if (ON_SubDEdge::InfinteSharpness == sharpness && bPermitInfinteSharpness)
-    return ON_SubDEdge::InfinteSharpness;
-
+  if (nullptr != v)
+  {
+    if (v == m_vertex[0])
+      return EndSharpness(0U);
+    if (v == m_vertex[1])
+      return EndSharpness(1U);
+  }
   return 0.0;
 }
 
-#if defined(ON_SUBD_SHARP_EDGES)
-
-bool ON_SubD::HasSemisharpness() const
+const ON_SubDEdgeSharpness ON_SubDEdge::SubdivideSharpness(
+  unsigned evi,
+  bool bReverse
+) const
 {
-  ON_SubDEdgeIterator eit = this->EdgeIterator();
-  for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
-  {
-    if (e->IsSemisharp())
-      return true;
-  }
-  return false;
+  const ON_SubDEdgeSharpness s = Sharpness().Subdivided(evi);
+  return bReverse ? s.Reversed() : s;
 }
 
-unsigned int ON_SubD::SemisharpEdgeCount(ON_Interval& sharpness_range) const
+const ON_SubDEdgeSharpness ON_SubDEdge::SubdivideSharpness(
+  const class ON_SubDVertex* end_vertex,
+  bool bReverse
+) const
 {
+  if (nullptr != end_vertex)
+  {
+    if (end_vertex == this->m_vertex[0])
+      return this->SubdivideSharpness(0U, bReverse);
+    if (end_vertex == this->m_vertex[1])
+      return this->SubdivideSharpness(1U, bReverse);
+  }
+  return ON_SubDEdgeSharpness::Zero;
+}
+
+bool ON_SubDEdge::ClearSharpnessForExperts()
+{
+  const bool bChanged = IsSmooth() && (m_sharpness != ON_SubDEdgeSharpness::Zero);
+  m_sharpness = ON_SubDEdgeSharpness::Zero;
+  return bChanged;
+}
+
+void ON_SubDEdge::SetSharpnessForExperts(ON_SubDEdgeSharpness sharpness)
+{
+  m_sharpness = IsSmooth() ? sharpness : ON_SubDEdgeSharpness::Zero;
+}
+
+
+bool ON_SubDEdgeSharpness::IsConstant() const
+{
+  return m_edge_sharpness[0] == m_edge_sharpness[1] && 0.0f <= m_edge_sharpness[0] && m_edge_sharpness[0] <= ((float)ON_SubDEdgeSharpness::Maximum);
+}
+
+bool ON_SubDEdgeSharpness::IsVariable() const
+{
+  return m_edge_sharpness[0] != m_edge_sharpness[1] && IsValid();
+}
+
+bool ON_SubDEdgeSharpness::IsZero() const
+{
+  return (0.0f == m_edge_sharpness[0] && 0.0f == m_edge_sharpness[1]);
+}
+
+bool ON_SubDEdgeSharpness::IsNotZero() const
+{
+  return (m_edge_sharpness[0] != 0.0f || m_edge_sharpness[1] != 0.0f) && IsValid();
+}
+
+bool ON_SubDEdgeSharpness::IsValid() const
+{
+  return
+    m_edge_sharpness[0] >= 0.0f
+    && m_edge_sharpness[0] <= ((float)ON_SubDEdgeSharpness::Maximum)
+    && m_edge_sharpness[1] >= 0.0f
+    && m_edge_sharpness[1] <= ((float)ON_SubDEdgeSharpness::Maximum)
+    ;
+}
+
+bool ON_SubDEdgeSharpness::IsNotValid() const
+{
+  return (false == IsValid());
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::FromConstant(
+  double sharpness
+)
+{
+  ON_SubDEdgeSharpness s;
+  s.m_edge_sharpness[0] = (sharpness >= 0.0 && sharpness  <= ON_SubDEdgeSharpness::Maximum) ? ((float)ON_SubDEdgeSharpness::Sanitize(sharpness, 0.0)) : ON_FLT_QNAN;
+  s.m_edge_sharpness[1] = s.m_edge_sharpness[0];
+  return s;
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::FromInterval(
+  double sharpness0,
+  double sharpness1
+)
+{
+  if (sharpness0 >= 0.0 && sharpness0 <= ON_SubDEdgeSharpness::Maximum && sharpness1 >= 0.0 && sharpness1 <= ON_SubDEdgeSharpness::Maximum)
+  {
+    ON_SubDEdgeSharpness s;
+    s.m_edge_sharpness[0] = (float)ON_SubDEdgeSharpness::Sanitize(sharpness0, 0.0);
+    s.m_edge_sharpness[1] = (float)ON_SubDEdgeSharpness::Sanitize(sharpness1, 0.0);
+    return s;
+  }
+  return ON_SubDEdgeSharpness::Nan;
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::FromInterval(const class ON_Interval& sharpness_interval)
+{
+  return ON_SubDEdgeSharpness::FromInterval(sharpness_interval[0], sharpness_interval[1]);
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Union(
+  const ON_SubDEdgeSharpness& a,
+  const ON_SubDEdgeSharpness& b
+)
+{
+  float s[4] = {};
+  int count = 0;
+  if (a.m_edge_sharpness[0] > 0.0f || a.m_edge_sharpness[1] > 0.0f)
+  {
+    s[0] = a.m_edge_sharpness[0];
+    s[1] = a.m_edge_sharpness[1];
+    count = 2;
+  }
+  if (b.m_edge_sharpness[0] > 0.0f || b.m_edge_sharpness[1] > 0.0f)
+  {
+    s[count] = b.m_edge_sharpness[0];
+    s[count+1] = b.m_edge_sharpness[1];
+    count += 2;
+  }
+  ON_SubDEdgeSharpness u = ON_SubDEdgeSharpness::FromConstant(s[0]);
+  for ( int i = 1; i < count; ++i)
+  { 
+    float x = s[i];
+    if (x < u.m_edge_sharpness[0])
+      u.m_edge_sharpness[0] = x;
+    else if (x > u.m_edge_sharpness[1])
+      u.m_edge_sharpness[1] = x;
+  }
+  return u;
+}
+
+double ON_SubDEdgeSharpness::Sanitize(
+  double sharpness, 
+  double invalid_input_result
+)
+{
+  // When sharpness is withing ON_SubDEdgeSharpness::Tolerance of an integer value,
+  // snap to that integer value.
+
+  if (false == (sharpness >= 0.0 && sharpness <= ON_SubDEdgeSharpness::Maximum))
+    return invalid_input_result; // when sharpness is nan, invalid_input_result is returned here. 
+
+  // When sharpness is close to an integer value, snap to the integer value.
+  // This results in cleaner looking limit surfaces and faster evaluation.
+  const double f = floor(sharpness);
+  if (f >= 0.0 && f <= ON_SubDEdgeSharpness::Maximum)
+  {
+    if (sharpness - f <= ON_SubDEdgeSharpness::Tolerance)
+      sharpness = f;
+    else if (f + 1.0 - sharpness <= ON_SubDEdgeSharpness::Tolerance && f + 1.0 <= ON_SubDEdgeSharpness::Maximum)
+      sharpness = f + 1.0;
+  }
+
+  return sharpness;
+}
+
+double ON_SubDEdgeSharpness::Sanitize(
+  double sharpness
+)
+{
+  // When edges are subdivided, the call ON_SubDEdgeSharpness::Sanitize(current_sharpness-1.0).
+  // These critical calls assume this function returns 0.0 when the input is not valid, for example
+  // negative when 0 <= current_sharpness < 1.
+  return ON_SubDEdgeSharpness::Sanitize(sharpness, 0.0);
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Subdivided(int end_index) const
+{
+  if (end_index >= 0 && end_index <= 1)
+  {
+    const double s[2] = { 
+      ON_SubDEdgeSharpness::Sanitize(((double)(this->m_edge_sharpness[0])) - 1.0),
+      ON_SubDEdgeSharpness::Sanitize(((double)(this->m_edge_sharpness[1])) - 1.0)
+    };
+    const double mids = (s[0] == s[1]) ? s[0] : ON_SubDEdgeSharpness::Sanitize(0.5 * (s[0] + s[1]));
+    return (0 == end_index) ? ON_SubDEdgeSharpness::FromInterval(s[0], mids) : ON_SubDEdgeSharpness::FromInterval(mids, s[1]);
+  }
+  return ON_SubDEdgeSharpness::Zero;
+}
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Reversed() const
+{
+  ON_SubDEdgeSharpness r;
+  r.m_edge_sharpness[0] = this->m_edge_sharpness[1];
+  r.m_edge_sharpness[1] = this->m_edge_sharpness[0];
+  return r;
+}
+
+double ON_SubDEdgeSharpness::operator[](int end_index) const
+{
+  return this->EndSharpness(end_index);
+}
+
+bool operator!=(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs)
+{
+  const float* l = (const float*)(&lhs);
+  const float* r = (const float*)(&rhs);
+  return l[0] != r[0] || l[1] != r[1];
+}
+
+bool operator==(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs)
+{
+  const float* l = (const float*)(&lhs);
+  const float* r = (const float*)(&rhs);
+  return l[0] == l[1] && r[0] == r[1];
+}
+
+double ON_SubDEdgeSharpness::Average() const
+{
+  return
+    (m_edge_sharpness[0] == m_edge_sharpness[1]) 
+    ? ((double)m_edge_sharpness[0]) 
+    : ON_SubDEdgeSharpness::Sanitize(0.5 * ( ((double)m_edge_sharpness[0]) + ((double)m_edge_sharpness[1]) ));
+}
+
+double ON_SubDEdgeSharpness::MinimumEndSharpness() const
+{
+  return (double)((m_edge_sharpness[0] <= m_edge_sharpness[1]) ? m_edge_sharpness[0] : m_edge_sharpness[1]);
+}
+
+double ON_SubDEdgeSharpness::MaximumEndSharpness() const
+{
+  return (double)((m_edge_sharpness[0] >= m_edge_sharpness[1]) ? m_edge_sharpness[0] : m_edge_sharpness[1]);
+}
+
+
+double ON_SubDEdgeSharpness::EndSharpness(int end_index) const
+{
+  return (end_index >= 0 && end_index <= 1) ? ((double)m_edge_sharpness[end_index]) : ON_DBL_QNAN;
+}
+
+double ON_SubDEdgeSharpness::VertexSharpness(
+  ON_SubDVertexTag vertex_tag,
+  unsigned sharp_edge_end_count,
+  double maximum_edge_end_sharpness
+)
+{
+  // NOTE WELL:
+  // For edge chains with a contant sharpness, this agrees with DKT SIGGRAPH 1998.
+  // For edge chains with variable sharpness, having a sharpness interval on the
+  // edge with end values matching at shared vertices gives nicer looking results
+  // than assigning a constant sharpness to edges and Chaikin's subdivision rule
+  // (averaging) at vertices.
+
+  if (sharp_edge_end_count <= 0)
+  {
+    // no edges have nonzero end sharpness at this vertex
+    return 0.0;
+  }
+
+  if (false == (maximum_edge_end_sharpness > 0.0))
+  {
+    // This happens when the sharp edges attached to the vertex
+    // have variable sharpness with 0 at the vertex
+    // and nonzero sharpness at the other ends.
+    return 0.0;
+  }
+
+  if (ON_SubDVertexTag::Corner == vertex_tag)
+  {
+    // No sharpness bias for corner vertex subdivision.
+    // At a corner vertex, all subdivision points and the limit point are equal to the level 0 control net point.
+    // Thus, applying a sharp bias doesn't modify the subdivision point or limit point.
+    return 0.0;
+  }
+
+  unsigned crease_edge_count;
+  if (ON_SubDVertexTag::Smooth == vertex_tag)
+    crease_edge_count = 0;
+  else if (ON_SubDVertexTag::Crease == vertex_tag)
+    crease_edge_count = 2;
+  else if (ON_SubDVertexTag::Dart == vertex_tag)
+    crease_edge_count = 1;
+  else
+  {
+    ON_SUBD_ERROR("vertex_tag parameter is invalid or unset.");
+    return 0.0;
+  }
+
+  if (sharp_edge_end_count + crease_edge_count < 2U)
+  {
+    // 1 sharp edge and no creases
+    // No sharp bias for the vertex subdivision point.
+    return 0.0;
+  }
+
+  return maximum_edge_end_sharpness;
+}
+
+double ON_SubDEdgeSharpness::SharpnessFromNormalizedValue(
+  double normalized_slider_value
+)
+{
+  return SharpnessFromSliderValue(
+    ON_Interval::ZeroToOne,
+    normalized_slider_value,
+    ON_DBL_QNAN
+  );
+}
+
+double ON_SubDEdgeSharpness::SharpnessFromSliderValue(
+  ON_Interval slider_domain,
+  double slider_value,
+  double invalid_input_result
+)
+{
+  if (slider_domain.IsInterval() && slider_value >= slider_domain.Min() && slider_value <= slider_domain.Max())
+  {
+    const double s = (0.0 == slider_domain[0] && 1.0 == slider_domain[1]) ? slider_value : slider_domain.NormalizedParameterAt(slider_value);
+    if (s >= 0.0 && s <= 1.0)
+    {
+      const ON_Interval ZeroToMaximumSharpness(0.0, ON_SubDEdgeSharpness::Maximum);
+      double sharpness = ON_SubDEdgeSharpness::Sanitize(ZeroToMaximumSharpness.ParameterAt(s), invalid_input_result);
+      if (sharpness >= 0.0 && sharpness <= ON_SubDEdgeSharpness::Maximum)
+        return sharpness;
+    }
+  }
+  return invalid_input_result;
+}
+
+
+
+bool ON_SubD::HasSharpEdges() const
+{
+  bool bHasSharpEdges = 0 != (ON_ComponentAttributes::EdgeAttributes::InteriorSharp & this->AggregateEdgeAttributes());
+  return bHasSharpEdges;
+
+  //ON_SubDEdgeIterator eit = this->EdgeIterator();
+  //for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
+  //{
+  //  if (e->IsSharp())
+  //    return true;
+  //}
+  //return false;
+}
+
+unsigned int ON_SubD::SharpEdgeCount(ON_SubDEdgeSharpness& sharpness_range) const
+{
+  sharpness_range = ON_SubDEdgeSharpness::Zero;
   unsigned int sharp_edge_count = 0;
-  double mins = 0.0;
-  double maxs = 0.0;
   ON_SubDEdgeIterator eit = this->EdgeIterator();
   for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
   {
-    const double s = e->Sharpness();
-    if (s > 0.0 && s < ON_SubDEdge::InfinteSharpness)
+    if (e->IsSharp())
     {
-      if (0 == sharp_edge_count)
-      {
-        mins = s;
-        maxs = s;
-      }
-      else if (s < mins)
-        mins = s;
-      else if (s > maxs)
-        maxs = s;
+      sharpness_range = ON_SubDEdgeSharpness::Union(sharpness_range, e->Sharpness());
       ++sharp_edge_count;      
     }
   }
-  sharpness_range.Set(mins, maxs);
   return sharp_edge_count;
 }
 
-unsigned int ON_SubD::SemisharpEdgeCount() const
+unsigned int ON_SubD::SharpEdgeCount() const
 {
-  ON_Interval sharpness_range(0.0, 0.0);
-  return SemisharpEdgeCount(sharpness_range);
+  ON_SubDEdgeSharpness sharpness_range = ON_SubDEdgeSharpness::Zero;
+  return SharpEdgeCount(sharpness_range);
 }
 
-bool ON_SubDVertex::IsSemisharp() const
+bool ON_SubDVertex::IsSharp( bool bEndCheck ) const
 {
   // This definition of vertex sharpness is from DeRose, Kass, Truong 1998
   // If there are exactly two sharp edges adjacent to the vertex, then
   // the vertex sharpness is the average of the edge sharpnesses.
-  if (IsSmooth() && nullptr != m_edges)
+  if (IsSmoothOrDartOrCrease() && nullptr != m_edges)
   {
     for (unsigned short vei = 0; vei < m_edge_count; ++vei)
     {
       const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
-      if (nullptr != e && e->IsSemisharp())
+      if (nullptr != e && e->IsSharp() )
         return true;
     }
   }
   return false;
 }
 
-
-unsigned int ON_SubD::ClearSemisharpness()
+unsigned int ON_SubD::ClearEdgeSharpness()
 {
-  unsigned int semisharp_edge_count = 0;
+  unsigned int sharp_edge_count = 0;
   ON_SubDEdgeIterator eit = this->EdgeIterator();
   for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
   {
-    const double s = e->Sharpness();
-    if (false == (s== 0.0))
+    if (const_cast<ON_SubDEdge*>(e)->ClearSharpnessForExperts())
     {
-      const_cast<ON_SubDEdge*>(e)->SetSharpness(0.0);
-      ++semisharp_edge_count;
+      e->ClearSavedSubdivisionPoints(true);
+      ++sharp_edge_count;
     }
   }
   
-  if (semisharp_edge_count != 0)
+  if (sharp_edge_count != 0)
     this->ChangeGeometryContentSerialNumberForExperts(true);
 
-  return semisharp_edge_count;
+  return sharp_edge_count;
 }
 
-double ON_SubDVertex::Sharpness() const
+
+double ON_SubDVertex::VertexSharpness() const
 {
   ON_3dPoint sharp_subdivision_point;
   return GetSharpSubdivisionPoint(sharp_subdivision_point);
@@ -3846,264 +4254,158 @@ double ON_SubDVertex::Sharpness() const
 
 double ON_SubDVertex::GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const
 {
-  // This definition of vertex sharpness is from DeRose, Kass, Truong 1998
-  // If the vertex is adjacent to zero or one semisharp edges, 
-  // then the ordindary vertex subdivision rule is used and 0.0 is returned.
-  // If the vertex is adjacent to 3 or more semisharp edges, 
-  // then the corner vertex subdivision rule is used and 10.0 is returned.
-  // If there are exactly two semisharp edges adjacent to the vertex,
-  // then the vertex sharpness is the average of the edge sharpnesses.
-  // If this vertex sharpness is >= 1, then the corner vertex subdivision rule is used.
-  // Otherwise, 0 < vertex sharpness < 1 and the semisharp vertex subdivision point is
-  // (1-vertex sharpness)*(ordinary subdivision point) + (vertex sharpness)*(corner subdivision point).
-  sharp_subdivision_point = ON_3dPoint::NanPoint;
+  // Below "sharp edge" means an edge attached to this vertex that has a smooth tag
+  // and a nonzero sharpness at the end attached to this vertex.
+  // This definition of vertex sharpness is from DeRose, Kass, Truong 1998.
+  // - If the vertex is smooth and adjacent to zero or one sharp edges, 
+  //   then the ordindary vertex subdivision rule is used, 
+  //   sharp_subdivision_point is set to NanPoint,
+  //   and 0.0 is returned.
+  // - If the vertex is adjacent to 3 or more sharp edges and crease edges, 
+  //   then the corner vertex subdivision rule is used,
+  //   sharp_subdivision_point = vertex control net point,
+  //   and the maximum edge sharpness at the vertex is returned.
+  // - If the vertex is adjacent to 2 sharp edges and crease edges, 
+  //   then sharp_subdivision_point = crease vertex subdivision point, 
+  //   and the average of the edge sharpnesses is returned.
+  // 
+  // The returned vertex sharpenss is awasy >= 0.
+  // When the returned vertex sharpness is > 0, the vertex subdivision point
+  // (1-s)*(ordinary subdivision point) + s*sharp_subdivision_point,
+  // where s = min(returned vertex sharpness, 1).
 
-  if (((this->IsSmoothOrDart() && m_face_count==m_edge_count) || (this->IsCrease() && m_edge_count >= 3 && m_face_count+((unsigned short)1) == m_edge_count))
-    && nullptr != m_edges)
+  if (this->IsSmoothOrDartOrCrease() && nullptr != m_edges)
   {
-    // This is a single sector vertex that might have a semisharp edge attached.
-
-    unsigned int crease_edge_count = 0;
     unsigned int sharp_edge_count = 0;
-    double sharpness[2] = { 0.0, 0.0 };
-    const ON_SubDVertex* other_v[2] = { nullptr,nullptr };
+    unsigned other_v_count = 0;
+    double max_end_sharpeness = 0.0;
+    const ON_SubDVertex* other_v[2] = {};
+
     for (unsigned short vei = 0; vei < m_edge_count; ++vei)
     {
       const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
-      if (nullptr != e)
+      if (nullptr == e)
+        continue;
+      if (e->IsCrease())
       {
-        const double edge_sharpness = e->Sharpness(ON_DBL_QNAN,0.0,ON_SubDEdge::InfinteSharpness);
-        if (edge_sharpness > 0.0)
+        if (other_v_count < 2)
+          other_v[other_v_count] = e->OtherEndVertex(this);
+        ++other_v_count;
+      }
+      else if ( e->IsSharp() )
+      {
+        // The edge is has a smooth tag and at leas one end has sharpness > 0.
+        // For variable edge sharpness, s can be zero at an end.
+        const double s = e->EndSharpness(this);
+        if (s > 0.0)
         {
-          const unsigned n = crease_edge_count + sharp_edge_count;
-          if (n < 2)
-          {
-            other_v[n] = e->OtherEndVertex(this);
-            sharpness[n] = edge_sharpness;
-          }
-          if (ON_SubDEdge::InfinteSharpness == edge_sharpness)
-            ++crease_edge_count; // dart's crease edge or one of the corner's crease edges
-          else if (edge_sharpness < ON_SubDEdge::InfinteSharpness)
-            ++sharp_edge_count; // semisharp edge
-          else
-            continue;
-          if (n >= 2 && sharp_edge_count > 0)
-          {
-            sharp_subdivision_point = this->ControlNetPoint();
-            return ON_SubDEdge::InfinteSharpness;
-          }
+          if (other_v_count < 2)
+            other_v[other_v_count] = e->OtherEndVertex(this);
+          ++other_v_count;
+          if (s > max_end_sharpeness)
+            max_end_sharpeness = s;
+          ++sharp_edge_count;
         }
       }
     }
 
-    if (2 == crease_edge_count+sharp_edge_count && sharp_edge_count > 0)
+    const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, sharp_edge_count, max_end_sharpeness);
+    if (vertex_sharpness > 0.0)
     {
-      if (nullptr != other_v[0] && nullptr != other_v[1])
-        sharp_subdivision_point = 0.125 * (6.0 * ControlNetPoint() + other_v[0]->ControlNetPoint() + other_v[1]->ControlNetPoint());
-      return ON_SubDEdge::AverageSharpness(sharpness[0], sharpness[1]);
+      if (2 == other_v_count && nullptr != other_v[0] && nullptr != other_v[1])
+      {
+        // 2 creases and sharps - "crease" subdivision point
+        sharp_subdivision_point = 0.125 * (6.0 * this->ControlNetPoint() + other_v[0]->ControlNetPoint() + other_v[1]->ControlNetPoint());
+      }
+      else
+      {
+        // 3 or more creases and sharps - "corner" subdivision point
+        sharp_subdivision_point = this->ControlNetPoint();
+      }
+      return vertex_sharpness;
     }
-
-    sharp_subdivision_point = ON_3dPoint::NanPoint;
-    return 0.0;
   }
 
   sharp_subdivision_point = ON_3dPoint::NanPoint;
   return 0.0;
 }
 
-
-double ON_SubDVertex::EvaluationSharpness(ON_3dPoint& sharp_subdivision_point) const
-{
-  // WARNING: 
-  // This function is temporary and for internal use only. 
-  // It will be removed in the near future.
-  // Any code referencing this function will unpredictably fail in the near future.
-  // This is primative and is not thread safe.
-  double vertex_sharpness;
-  if (ON_SubDEdge::SemisharpEvaluationIsEnabled())
-  {
-    vertex_sharpness = GetSharpSubdivisionPoint(sharp_subdivision_point);
-  }
-  else
-  {
-    sharp_subdivision_point = ON_3dPoint::NanPoint;
-    vertex_sharpness = 0.0;
-  }
-  return vertex_sharpness;
-}
-
-unsigned int ON_SubDVertex::SemisharpEdgeCount() const
+unsigned int ON_SubDVertex::SharpEdgeCount( bool bEndCheck ) const
 {
   ON_Interval sharpness_range;
-  return SemisharpEdgeCount(sharpness_range);
+  return SharpEdgeCount(bEndCheck, sharpness_range);
 }
 
-unsigned int ON_SubDVertex::SemisharpEdgeCount(ON_Interval& sharpness_range) const
+unsigned int ON_SubDVertex::SharpEdgeCount(
+  bool bEndCheck,
+  ON_Interval& sharpness_range
+) const
 {
-  unsigned int semisharp_edge_count = 0;
+  unsigned int sharp_edge_count = 0;
   double mins = 0.0;
   double maxs = 0.0;
-  if (IsSmooth() && nullptr != m_edges)
+  if (IsSmoothOrDartOrCrease() && nullptr != m_edges)
   {
     for (unsigned short vei = 0; vei < m_edge_count; ++vei)
     {
       const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
-      const double s = (nullptr != e) ? e->Sharpness(ON_DBL_QNAN, 0.0, ON_SubDEdge::InfinteSharpness) : 0.0;
-      if (s > 0.0 && s < ON_SubDEdge::InfinteSharpness)
+      if (nullptr != e ? e->IsSharp() : false)
       {
-        if (0 == semisharp_edge_count)
+        const double s 
+          = bEndCheck 
+          ? e->EndSharpness(this) 
+          : e->Sharpness().MaximumEndSharpness();
+        if (s > 0.0)
         {
-          mins = s;
-          maxs = s;
+          if (0 == sharp_edge_count)
+          {
+            mins = s;
+            maxs = s;
+          }
+          else if (s < mins)
+            mins = s;
+          else if (s > maxs)
+            maxs = s;
+          ++sharp_edge_count;
         }
-        else if (s < mins)
-          mins = s;
-        else if (s > maxs)
-          maxs = s;
-        ++semisharp_edge_count;
       }
     }
   }
   sharpness_range.Set(mins, maxs);
-  return semisharp_edge_count;
+  return sharp_edge_count;
 }
 
-double ON_SubDEdge::AverageSharpness(
-  double sharpness0,
-  double sharpness1
-)
+bool ON_SubDEdge::IsSharp() const
 {
-  if (sharpness0 >= 0.0 && sharpness0 <= ON_SubDEdge::InfinteSharpness && sharpness1 >= 0.0 && sharpness1 <= ON_SubDEdge::InfinteSharpness)
-  {
-    if (sharpness0 == sharpness1)
-      return sharpness0;
-    if (sharpness0 == ON_SubDEdge::InfinteSharpness || sharpness1 == ON_SubDEdge::InfinteSharpness)
-      return ON_SubDEdge::InfinteSharpness;
-    if (0.0 == sharpness0)
-      return sharpness1;
-    if (0.0 == sharpness1)
-      return sharpness0;
-    return ON_SubDEdge::SanitizeSharpness(0.5 * (sharpness0 + sharpness1), false);
-  }
-  return 0.0;
+  return 
+    (ON_SubDEdgeTag::Smooth == m_edge_tag || ON_SubDEdgeTag::SmoothX == m_edge_tag)
+    && m_sharpness.IsNotZero();
 }
 
-bool ON_SubDEdge::IsSemisharp() const
+bool ON_SubDEdge::IsSmoothNotSharp() const
 {
-  return IsSmooth() && Sharpness() > 0.0;
+  return
+    (ON_SubDEdgeTag::Smooth == m_edge_tag || ON_SubDEdgeTag::SmoothX == m_edge_tag)
+    && (false == m_sharpness.IsNotZero());
+}
+
+bool ON_SubDEdge::IsSmoothNotXNotSharp() const
+{
+  return ON_SubDEdgeTag::Smooth == m_edge_tag && (false == m_sharpness.IsNotZero());
 }
 
 double ON_SubDEdge::GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const
 {
-  const double edge_sharpness = Sharpness();
-  if (edge_sharpness > 0.0)
+  if (IsSharp())
   {
+    const double s = Sharpness().Average();
     sharp_subdivision_point = this->ControlNetCenterPoint();
-    return edge_sharpness;
+    return s;
   }
 
   sharp_subdivision_point = ON_3dPoint::NanPoint;
   return 0.0;
 }
-
-double ON_SubDEdge::SubdivideSharpness(
-  unsigned end_index
-) const
-{
-  double sharpness1 = 0.0;
-  if (end_index >= 0 && end_index <= 1 && nullptr != m_vertex[end_index] && nullptr != m_vertex[end_index]->m_edges  )
-  {
-    const double sharpness0 = Sharpness();
-    if (0.0 < sharpness0 && sharpness0 < ON_SubDEdge::InfinteSharpness)
-    {
-      if (m_vertex[end_index]->IsSmooth())
-      {
-        double other_sharpness0 = 0.0;
-        const ON_SubDVertex* v = m_vertex[end_index];
-        for (unsigned short vei = 0; vei < v->m_edge_count; ++vei)
-        {
-          const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
-          if (nullptr == e || this == e)
-            continue;
-          const double s = e->Sharpness();
-          if (0.0 < s && s < ON_SubDEdge::InfinteSharpness)
-          {
-            if (0.0 == other_sharpness0)
-            {
-              other_sharpness0 = s;
-            }
-            else
-            {
-              // There are 3 or more semisharp edges at v;
-              return ON_SubDEdge::SanitizeSharpness(sharpness0 - 1.0, false);
-            }
-          }
-        }
-        if (0.0 < other_sharpness0 && other_sharpness0 < ON_SubDEdge::InfinteSharpness)
-        {
-          // Chaikin's curve subdivision rule [DTK1998] Appendix B
-          sharpness1 = ON_SubDEdge::SanitizeSharpness(((sharpness0 == other_sharpness0) ? sharpness0 : (0.25 * (other_sharpness0 + 3.0 * sharpness0))) - 1.0, false);
-          //sharpness1 = ON_SubDEdge::SanitizeSharpness(sharpness0 - 1.0, false);
-        }
-        else
-          sharpness1 = ON_SubDEdge::SanitizeSharpness(sharpness0 - 1.0, false);
-      }
-      else
-      {
-        // non-smooth vertex
-        sharpness1 = ON_SubDEdge::SanitizeSharpness(sharpness0 - 1.0, false);
-      }
-    }
-  }
-
-  return sharpness1;
-}
-
-bool ON_SubDEdge::SemisharpEvaluationIsEnabled()
-{
-  // WARNING: 
-  // This function is temporary and for internal use only. 
-  // It will be removed in the near future.
-  // Any code referencing this function will unpredictably fail in the near future.
-  // This is primative and is not thread safe.
-  return ON_SubDEdge::m_bEnableSemisharpEvaluation;
-}
-
-void ON_SubDEdge::SetEnableSemisharpEvaluation(bool bEnableSemisharpEvaluation)
-{
-  // WARNING: 
-  // This function is temporary and for internal use only. 
-  // It will be removed in the near future.
-  // Any code referencing this function will unpredictably fail in the near future.
-  // This is primative and is not thread safe.
-  ON_SubDEdge::m_bEnableSemisharpEvaluation = bEnableSemisharpEvaluation ? true : false;
-}
-
-double ON_SubDEdge::EvaluationSharpness(ON_3dPoint& sharp_subdivision_point) const
-{
-  // WARNING: 
-  // This function is temporary and for internal use only. 
-  // It will be removed in the near future.
-  // Any code referencing this function will unpredictably fail in the near future.
-  // This is primative and is not thread safe.
-  double edge_sharpness;
-  if (ON_SubDEdge::SemisharpEvaluationIsEnabled())
-  {
-    edge_sharpness = GetSharpSubdivisionPoint(sharp_subdivision_point);
-  }
-  else
-  {
-    sharp_subdivision_point = ON_3dPoint::NanPoint;
-    edge_sharpness = 0.0;
-  }
-  return edge_sharpness;
-}
-
-// This global bool is temporary and is used to determine if subdivision and evaluation code
-// pays attention to sharpness. This global bool will be removed in the near future.
-// Any code referencing this variable will unpredictably fail in the near future.
-bool ON_SubDEdge::m_bEnableSemisharpEvaluation = false;
-#endif
 
 bool ON_SubDVertex::IsSingleSectorVertex() const
 {
@@ -4587,7 +4889,11 @@ unsigned int ON_SubDEdge::EdgeAttributes() const
     edge_topology_attributes |= ON_ComponentAttributes::EdgeAttributes::Interior;
 
     if (IsSmooth())
+    {
       edge_topology_attributes |= ON_ComponentAttributes::EdgeAttributes::InteriorSmooth;
+      if ( IsSharp() )
+        edge_topology_attributes |= ON_ComponentAttributes::EdgeAttributes::InteriorSharp;
+    }
     else if (IsCrease())
       edge_topology_attributes |= ON_ComponentAttributes::EdgeAttributes::InteriorCrease;
 
@@ -4772,9 +5078,7 @@ void ON_SubDEdge::CopyFrom(
   
   m_edge_tag = src->m_edge_tag;
 
-#if defined(ON_SUBD_SHARP_EDGES)
   m_sharpness = src->m_sharpness;
-#endif
 
   unsigned int end0 = bReverseEdge ? 1 : 0;
 
@@ -5036,6 +5340,14 @@ unsigned int ON_SubDEdge::VertexArrayIndex(const ON_SubDVertex * v) const
   return ON_UNSET_UINT_INDEX;
 }
 
+const ON_SubDFace* ON_SubDEdgePtr::NeighborFace(
+  const ON_SubDFace* face,
+  bool bStopAtCrease
+) const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  return (nullptr != e) ? e->NeighborFace(face, bStopAtCrease) : nullptr;
+}
 
 const ON_SubDFace* ON_SubDEdge::NeighborFace(
   const ON_SubDFace* face,
@@ -6084,6 +6396,31 @@ bool ON_SubDFace::ReplaceEdgeInArray(
   return false;
 }
 
+bool ON_SubDFace::ReplaceEdgeInArray(
+  unsigned int fei0,
+  ON_SubDEdge* edge_to_remove,
+  ON_SubDEdgePtr edgeptr_to_insert
+)
+{
+  const unsigned int face_edge_count = m_edge_count;
+  ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned int fei = 0; fei < face_edge_count; fei++, eptr++)
+  {
+    if (4 == fei)
+    {
+      eptr = m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    if (fei >= fei0 && edge_to_remove == eptr->Edge() )
+    {
+      *eptr = edgeptr_to_insert;
+      return true;
+    }
+  }
+  return false;
+}
+
 
 bool ON_SubDFace::RemoveEdgeFromArray(
   unsigned int i,
@@ -7075,7 +7412,7 @@ static bool IsValidSubDEdge(
 
   ON_Internal_DamagedMarker dm(edge);
 
-  const ON_SubDVertex* edge_vertex[2] = { 0 };
+  const ON_SubDVertex* edge_vertex[2] = {};
   for (unsigned int i = 0; i < 2; i++)
   {
     const ON_SubDVertex* vertex = edge->Vertex(i);
@@ -7590,39 +7927,37 @@ unsigned int ON_SubD::DumpTopology(
     );
   }
 
-#if defined(ON_SUBD_SHARP_EDGES)
-  ON_Interval subd_semisharp_range(0.0, 0.0);
-  const unsigned int subd_semisharp_edge_count = SemisharpEdgeCount(subd_semisharp_range);
-  if (subd_semisharp_edge_count > 0)
+  ON_SubDEdgeSharpness subd_sharpness_range = ON_SubDEdgeSharpness::Zero;
+  const unsigned int subd_sharp_edge_count = SharpEdgeCount(subd_sharpness_range);
+  if (subd_sharp_edge_count > 0)
   {
     text_log.PushIndent();
-    if (subd_semisharp_range[0] == subd_semisharp_range[1])
+    if ( subd_sharpness_range.IsConstant() )
     {
-      if (1 == subd_semisharp_edge_count)
+      if (1 == subd_sharp_edge_count)
         text_log.Print(
-          L"1 semisharp edge with sharpness = %g.\n",
-          subd_semisharp_range[0]
+          L"1 sharp edge with end sharpness = %g.\n",
+          subd_sharpness_range[0]
         );
       else
         text_log.Print(
-          L"%u semisharp edges with sharpness = %g.\n",
-          subd_semisharp_edge_count,
-          subd_semisharp_range[0]
+          L"%u sharp edges with end sharpness = %g.\n",
+          subd_sharp_edge_count,
+          subd_sharpness_range[0]
         );
     }
     else
     {
       text_log.Print(
-        L"%u semisharp edges with sharpnesses from %g to %g.\n",
-        subd_semisharp_edge_count,
-        subd_semisharp_range[0],
-        subd_semisharp_range[1]
+        L"%u sharp edges with end sharpnesses from %g to %g.\n",
+        subd_sharp_edge_count,
+        subd_sharpness_range[0],
+        subd_sharpness_range[1]
         );
 
     }
     text_log.PopIndent();
   }
-#endif
 
   const ON_SubDHashType htype[] = {
     ON_SubDHashType::Topology,
@@ -7972,7 +8307,14 @@ static void Internal_AccumulateEdgeHash(
   if (ON_SubDHashType::TopologyAndEdgeCreases == hash_type || ON_SubDHashType::Geometry == hash_type)
   {
     // Changing edge crease/smooth attributes often changes the regions used in face packing and exploding.
-    sha1.AccumulateBool(e->IsCrease());
+    const bool bIsCrease = e->IsCrease();
+    sha1.AccumulateBool(bIsCrease);
+    if (false == bIsCrease && ON_SubDHashType::Geometry == hash_type && e->IsSharp())
+    {
+      const ON_SubDEdgeSharpness s = e->Sharpness();
+      const double a[2] = { s[0] ,s[1] };
+      sha1.AccumulateDoubleArray(2, a);
+    }
   }
 }
 
@@ -10264,16 +10606,41 @@ class ON_SubDEdge* ON_SubD::AddEdge(
     );
 }
 
+
+class ON_SubDEdge* ON_SubD::AddEdge(
+  ON_SubDEdgeTag edge_tag,
+  ON_SubDVertex* v0,
+  ON_SubDVertex* v1,
+  ON_SubDEdgeSharpness sharpness
+)
+{
+  // NO automatic edge tag setting - causes more problems than it helps.
+  // Users can call ON_SubD::EdgeTagFromContext() if they want to
+  // preset the edge tag based on context.
+
+  class ON_SubDEdge* e = AddEdgeWithSectorCoefficients(
+    edge_tag,
+    v0,
+    ON_SubDSectorType::UnsetSectorCoefficient,
+    v1,
+    ON_SubDSectorType::UnsetSectorCoefficient
+  );
+  if (nullptr != e && e->IsSmooth())
+    e->SetSharpnessForExperts(sharpness);
+  return e;
+}
+
+
 ON_SubDEdge* ON_SubD::AddEdgeWithSectorCoefficients(
-    ON_SubDEdgeTag edge_tag,
-    class ON_SubDVertex* v0,
-    double v0_sector_coefficient,
-    class ON_SubDVertex* v1,
-    double v1_sector_coefficient
-    )
+  ON_SubDEdgeTag edge_tag,
+  class ON_SubDVertex* v0,
+  double v0_sector_coefficient,
+  class ON_SubDVertex* v1,
+  double v1_sector_coefficient
+)
 {
   ON_SubDimple* subdimple = SubDimple(true);
-  if (nullptr != subdimple) 
+  if (nullptr != subdimple)
     return subdimple->AddEdge(edge_tag, v0, v0_sector_coefficient, v1, v1_sector_coefficient);
   return ON_SUBD_RETURN_ERROR(nullptr);
 }
@@ -12180,23 +12547,16 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     if (nullptr == faces[0] || nullptr == faces[1])
       return ON_SubDEdge_GetSubdivisionPointError(this, subdivision_point, edgeP, true);
 
-#if defined(ON_SUBD_SHARP_EDGES)
-    // When the semisharp code is working, change EvaluationSharpness() to Sharpness().
-    // Calling EvaluationSharpness() is a temporary hack to make 
-    // the TestSubDSharpSubdivide command work but not break all 
-    // the ordinary evaluation code that relies heavily on
-    // ordinary subdivision points.
     ON_3dPoint sharp_subdivision_point;
-    const double edge_sharpness = this->EvaluationSharpness(sharp_subdivision_point);
+    const double edge_sharpness = this->GetSharpSubdivisionPoint(sharp_subdivision_point);
     if (edge_sharpness >= 1.0)
     {
-      // Semi-sharp crease with sharpness >= 1 at current level
+      // sharp crease vertex with sharpness >= 1 at current level
       subdivision_point[0] = sharp_subdivision_point.x;
       subdivision_point[1] = sharp_subdivision_point.y;
       subdivision_point[2] = sharp_subdivision_point.z;
       return true;
     }
-#endif
 
     // for each neighbor face, sum the vertex locations that are not on this edge
     double facePsum[2][3];
@@ -12250,17 +12610,14 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       subdivision_point[0] = EP[0] + 0.0625*(facePsum[0][0] + facePsum[1][0]);
       subdivision_point[1] = EP[1] + 0.0625*(facePsum[0][1] + facePsum[1][1]);
       subdivision_point[2] = EP[2] + 0.0625*(facePsum[0][2] + facePsum[1][2]);
-
-#if defined(ON_SUBD_SHARP_EDGES)
       if (edge_sharpness > 0.0)
       {
-        // Semi-sharp crease with 0 < sharpness < 1 at the current level
+        // sharp crease vertex with 0 < sharpness < 1 at the current level
         const double a = 1.0 - edge_sharpness;
         subdivision_point[0] = a * subdivision_point[0] + edge_sharpness * sharp_subdivision_point.x;
         subdivision_point[1] = a * subdivision_point[1] + edge_sharpness * sharp_subdivision_point.y;
         subdivision_point[2] = a * subdivision_point[2] + edge_sharpness * sharp_subdivision_point.z;
       }
-#endif
       return true;
     }
     
@@ -12275,16 +12632,14 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       subdivision_point[0] = EP[0] + (0.5*edgePsum[0] + facePsum[0][0] + facePsum[1][0]) / 12.0;
       subdivision_point[1] = EP[1] + (0.5*edgePsum[1] + facePsum[0][1] + facePsum[1][1]) / 12.0;
       subdivision_point[2] = EP[2] + (0.5*edgePsum[2] + facePsum[0][2] + facePsum[1][2]) / 12.0;
-#if defined(ON_SUBD_SHARP_EDGES)
       if (edge_sharpness > 0.0)
       {
-        // Semi-sharp crease with 0 < sharpness < 1 at the current level
+        // sharp crease vertex with 0 < sharpness < 1 at the current level
         const double a = 1.0 - edge_sharpness;
         subdivision_point[0] = a * subdivision_point[0] + edge_sharpness * sharp_subdivision_point.x;
         subdivision_point[1] = a * subdivision_point[1] + edge_sharpness * sharp_subdivision_point.y;
         subdivision_point[2] = a * subdivision_point[2] + edge_sharpness * sharp_subdivision_point.z;
       }
-#endif
       return true;
     }
 
@@ -12302,16 +12657,14 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     subdivision_point[0] = EP[0] + x * edgePsum[0] + facePsum[0][0] / f0 + facePsum[1][0] / f1;
     subdivision_point[1] = EP[1] + x * edgePsum[1] + facePsum[0][1] / f0 + facePsum[1][1] / f1;
     subdivision_point[2] = EP[2] + x * edgePsum[2] + facePsum[0][2] / f0 + facePsum[1][2] / f1;
-#if defined(ON_SUBD_SHARP_EDGES)
     if (edge_sharpness > 0.0)
     {
-      // Semi-sharp crease with 0 < sharpness < 1 at the current level
+      // sharp crease vertex with 0 < sharpness < 1 at the current level
       const double a = 1.0 - edge_sharpness;
       subdivision_point[0] = a * subdivision_point[0] + edge_sharpness * sharp_subdivision_point.x;
       subdivision_point[1] = a * subdivision_point[1] + edge_sharpness * sharp_subdivision_point.x;
       subdivision_point[2] = a * subdivision_point[2] + edge_sharpness * sharp_subdivision_point.x;
     }
-#endif
     return true;
   }
 
@@ -12502,6 +12855,26 @@ int FACE_AND_FACE_POINT::CompareFacePointer(const void* a, const void* b)
   return 0;
 }
 
+const ON_3dPoint ON_SubDSectorSurfacePoint::Point() const
+{
+  return ON_3dPoint(m_limitP);
+}
+
+const ON_3dVector ON_SubDSectorSurfacePoint::Normal() const
+{
+  return ON_3dPoint(m_limitN);
+}
+
+const ON_3dVector ON_SubDSectorSurfacePoint::Tangent(int tangent_index) const
+{
+  if (0 == tangent_index)
+    return ON_3dPoint(m_limitT1);
+  if (1 == tangent_index)
+    return ON_3dPoint(m_limitT2);
+  return ON_3dVector::ZeroVector;
+}
+
+
 bool ON_SubDSectorSurfacePoint::IsUnset() const
 {
   return (m_limitP[0] == ON_UNSET_VALUE);
@@ -12597,7 +12970,6 @@ void ON_SubDVertex::CopyFrom(
   m_P[0] = src->m_P[0];
   m_P[1] = src->m_P[1];
   m_P[2] = src->m_P[2];
-
 
   if (bCopyLimitPointList)
   {
@@ -12699,14 +13071,8 @@ bool ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(
 
   const double* vertexP = vertex->m_P;
 
-#if defined(ON_SUBD_SHARP_EDGES)
-  // When the semisharp code is working, change EvaluationSharpness() to Sharpness().
-  // Calling EvaluationSharpness() is a temporary hack to make 
-  // the TestSubDSharpSubdivide command work but not break all 
-  // the ordinary evaluation code that relies heavily on
-  // ordinary subdivision points.
   ON_3dPoint sharp_subdivision_point;
-  const double vertex_sharpness = vertex->EvaluationSharpness(sharp_subdivision_point);
+  const double vertex_sharpness = vertex->GetSharpSubdivisionPoint(sharp_subdivision_point);
   if (vertex_sharpness >= 1.0)
   {
     vertex_point[0] = sharp_subdivision_point.x;
@@ -12714,13 +13080,11 @@ bool ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(
     vertex_point[2] = sharp_subdivision_point.z;
     return true;
   }
-#endif
-
 
   // It is critical to use the centroids of the neighboring faces
   // in this step because the number of edges in each face's
   // boundary may not be constant.
-  double facePsum[3] = { 0 };
+  double facePsum[3] = {};
   const ON_SubDFace*const* vertex_faces = vertex->m_faces;
   for (unsigned int i = 0; i < n; i++)
   {
@@ -12742,7 +13106,7 @@ bool ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(
     facePsum[2] += vertexP[2];
   }
 
-  double edgePsum[3] = { 0 };
+  double edgePsum[3] = {};
   class ON_SubDEdgePtr* edges = vertex->m_edges;
   for (unsigned int i = 0; i < n; i++)
   {
@@ -12771,8 +13135,6 @@ bool ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(
   vertex_point[1] = v_weight*vertexP[1] + ef_weight*(edgePsum[1] + facePsum[1]);
   vertex_point[2] = v_weight*vertexP[2] + ef_weight*(edgePsum[2] + facePsum[2]);
 
-
-#if defined(ON_SUBD_SHARP_EDGES)
   if (vertex_sharpness > 0.0)
   {
     // 0 < vertex_sharpness < 1
@@ -12782,7 +13144,6 @@ bool ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(
     vertex_point[2] = a * vertex_point[2] + vertex_sharpness * sharp_subdivision_point.z;
     return true;
   }
-#endif
 
   return true;
 }
@@ -12807,7 +13168,7 @@ bool ON_SubDVertex::Internal_GetCatmullClarkSubdivisionPoint(
     if (n < minimum_n || n != vertex->m_face_count || nullptr == vertex->m_faces)
       return ON_SubDVertex_GetSubdivisionPointError(vertex, vertex_point, vertexP, true);
 
-    double facePsum[3] = { 0 };
+    double facePsum[3] = {};
     const ON_SubDFace*const* vertex_faces = vertex->m_faces;
 
     const ON_SubDFace* face = vertex_faces[0];
@@ -12872,14 +13233,8 @@ bool ON_SubDVertex::Internal_GetCatmullClarkSubdivisionPoint(
       return ON_SubDVertex::Internal_GetGeneralQuadSubdivisionPoint(vertex, vertex_point);
     }
 
-#if defined(ON_SUBD_SHARP_EDGES)
-    // When the semisharp code is working, change EvaluationSharpness() to Sharpness().
-    // Calling EvaluationSharpness() is a temporary hack to make 
-    // the TestSubDSharpSubdivide command work but not break all 
-    // the ordinary evaluation code that relies heavily on
-    // ordinary subdivision points.
     ON_3dPoint sharp_subdivision_point = ON_3dPoint::NanPoint;
-    const double vertex_sharpness = vertex->EvaluationSharpness(sharp_subdivision_point);
+    const double vertex_sharpness = vertex->GetSharpSubdivisionPoint(sharp_subdivision_point);
     if (vertex_sharpness >= 1.0)
     {
       // use corner subdivision point
@@ -12888,9 +13243,8 @@ bool ON_SubDVertex::Internal_GetCatmullClarkSubdivisionPoint(
       vertex_point[2] = sharp_subdivision_point.z;
       return true;
     }
-#endif
 
-    double edgePsum[3] = { 0 };
+    double edgePsum[3] = {};
     class ON_SubDEdgePtr* edges = vertex->m_edges;
     for (unsigned int i = 0; i < n; i++)
     {
@@ -12933,7 +13287,6 @@ bool ON_SubDVertex::Internal_GetCatmullClarkSubdivisionPoint(
       vertex_point[2] = v_weight*vertexP[2] + e_weight*edgePsum[2];
     }
 
-#if defined(ON_SUBD_SHARP_EDGES)
     if (vertex_sharpness > 0.0)
     {
       // 0 < vertex_sharpness < 1
@@ -12943,7 +13296,6 @@ bool ON_SubDVertex::Internal_GetCatmullClarkSubdivisionPoint(
       vertex_point[2] = a * vertex_point[2] + vertex_sharpness * sharp_subdivision_point.z;
       return true;
     }
-#endif
 
     return true;
   }
@@ -13002,9 +13354,7 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
     class ON_SubDEdgePtr* edges = m_edges;
     const ON_SubDVertex* edge0_vertex = nullptr;
     const ON_SubDVertex* edge1_vertex = nullptr;
-#if defined(ON_SUBD_SHARP_EDGES)
-    double max_sharpness = 0.0;
-#endif
+    bool bSharpEdges = false;
 
     for (unsigned int i = 0; i < n; i++)
     {
@@ -13017,11 +13367,8 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
 
       if (ON_SubDEdgeTag::Crease != edge->m_edge_tag)
       {
-#if defined(ON_SUBD_SHARP_EDGES)
-        const double s = edge->Sharpness(0.0, 0.0, 0.0);
-        if (s > max_sharpness)
-          max_sharpness = s;
-#endif
+        if (false == bSharpEdges)
+          bSharpEdges = edge->IsSharp();
         continue;
       }
 
@@ -13068,50 +13415,49 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
     if (nullptr != edge0_vertex && nullptr != edge1_vertex)
     {
       // We found the two crease edges that share this crease vertex.
-      // (The parenthesis around the edgeP sum is to insure this result 
-      // is independent of the order of the edges.)
-      vertexP = m_P;
-
-#if defined(ON_SUBD_SHARP_EDGES)
-      if (ON_SubDEdge::SemisharpEvaluationIsEnabled() && max_sharpness >= 1.0)
+      ON_3dPoint sharp_subdivision_point = ON_3dPoint::NanPoint;
+      const double vertex_sharpness 
+        = bSharpEdges
+        ? this->GetSharpSubdivisionPoint(sharp_subdivision_point)
+        : 0.0;
+      if (vertex_sharpness >= 1.0)
       {
-        // 2 creases and a semisharp edge with sharpness >= 1
+        // 2 creases and a sharp edge with sharpness >= 1
         // This modification is not part of the DKT1998 Pixar algorithm.
-        // It is required to get semisharp creases to evenly end at
+        // It is required to get sharp edges to evenly end at
         // ordinary boundaries. It does break crease edge evaluation relying
         // only on boundary settings, but at this time (Dale Lear Nov 2022),
         // I'm guessing it is the best option out of 2 nonideal choices.
-        subdivision_point[0] = vertexP[0];
-        subdivision_point[1] = vertexP[1];
-        subdivision_point[2] = vertexP[2];
+        subdivision_point[0] = sharp_subdivision_point.x;
+        subdivision_point[1] = sharp_subdivision_point.y;
+        subdivision_point[2] = sharp_subdivision_point.z;
         return true;
       }
-#endif
+
+      // (The parenthesis around the edgeP sum is to insure this result 
+      // is independent of the order of the edges.)
+      vertexP = m_P;
 
       const double* edgeP[2] = { edge0_vertex->m_P, edge1_vertex->m_P };
       subdivision_point[0] = (vertexP[0] * 6.0 + (edgeP[0][0] + edgeP[1][0])) * 0.125;
       subdivision_point[1] = (vertexP[1] * 6.0 + (edgeP[0][1] + edgeP[1][1])) * 0.125;
       subdivision_point[2] = (vertexP[2] * 6.0 + (edgeP[0][2] + edgeP[1][2])) * 0.125;
-
-#if defined(ON_SUBD_SHARP_EDGES)
-      if (ON_SubDEdge::SemisharpEvaluationIsEnabled() && max_sharpness > 0.0)
+      if (vertex_sharpness > 0.0)
       {
-        // 2 creases and a semisharp edge with 0 < sharpness < 1
+        // 2 creases and a sharp edge with 0 < sharpness < 1
         // 
         // This modification is not part of the DKT1998 Pixar algorithm.
-        // It is required to get semisharp creases to evenly end at
-        // ordinary boundaries. It does break crease edge evaluation relying
+        // It is required to get sharp edges to evenly end at ordinary boundaries. 
+        // It does break crease edge evaluation relying
         // only on boundary settings, but at this time (Dale Lear Nov 2022),
         // I'm guessing it is the best option out of 2 nonideal choices.
         //
-        const double a = 1.0 - max_sharpness;
-        subdivision_point[0] = a * subdivision_point[0] + max_sharpness * vertexP[0];
-        subdivision_point[1] = a * subdivision_point[1] + max_sharpness * vertexP[1];
-        subdivision_point[2] = a * subdivision_point[2] + max_sharpness * vertexP[2];
+        const double a = 1.0 - vertex_sharpness;
+        subdivision_point[0] = a * subdivision_point[0] + vertex_sharpness * sharp_subdivision_point.x;
+        subdivision_point[1] = a * subdivision_point[1] + vertex_sharpness * sharp_subdivision_point.y;
+        subdivision_point[2] = a * subdivision_point[2] + vertex_sharpness * sharp_subdivision_point.z;
         return true;
       }
-#endif
-
       return true;
     }
 
@@ -13366,11 +13712,9 @@ bool ON_SubDimple::LocalSubdivide(
   // split edges
   for (unsigned edex = 0; edex < edge_count; ++edex)
   {
-    ON_SubDEdge* e = edges[edex]; 
+    ON_SubDEdge* e = edges[edex];
 
-#if defined(ON_SUBD_SHARP_EDGES)
-    const double sharpness = e->Sharpness();
-#endif
+    const ON_SubDEdgeSharpness e_sharpness = e->Sharpness();
 
     e->EdgeModifiedNofification();
     const ON_SubDEdge* new_edge = SplitEdge(e, edge_points[edex]);
@@ -13379,19 +13723,16 @@ bool ON_SubDimple::LocalSubdivide(
     new_edge->m_status.ClearRuntimeMark();
     e->m_status.SetRuntimeMark();
 
-#if defined(ON_SUBD_SHARP_EDGES)
     // LOCAL subdivide is more of an add control points to an existing level
     // as opposed to a global subdivision level operation. It will be common
-    // for an input semisharp edge chain crease to have some of its edges
-    // subdivided and others remain unchanged. 
+    // for the input to include some but not all sharp edges.
     // Dale Lear's best guess on Nov 9, 2022 is that
-    // resusing the orginal sharpness is the best way to maximize overall
+    // reusing the orginal sharpness is the best way to maximize overall
     // user happiness. This makes some sense because the level of the edges
     // is not changing in a LOCAL subdivide. 
     // It is a near certainty that some users will not like this in some cases. 
-    const_cast<ON_SubDEdge*>(e)->SetSharpness(sharpness);
-    const_cast<ON_SubDEdge*>(new_edge)->SetSharpness(sharpness);
-#endif
+    const_cast<ON_SubDEdge*>(e)->SetSharpnessForExperts(ON_SubDEdgeSharpness::FromInterval(e_sharpness[0], e_sharpness.Average()));
+    const_cast<ON_SubDEdge*>(new_edge)->SetSharpnessForExperts(ON_SubDEdgeSharpness::FromInterval(e_sharpness.Average(), e_sharpness[1]));
   }
 
   ON_SimpleArray<ON_SubDEdgePtr> fbdry(32);
@@ -13521,7 +13862,7 @@ unsigned int ON_SubDimple::GlobalSubdivide()
   this->ChangeGeometryContentSerialNumber(bChangePreservesSymmetry);
 
   // Add face points
-  unsigned int max_pack_id{ 0 };
+  unsigned int max_pack_id = 0U;
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
   {
     if (f0->PackId() > max_pack_id) max_pack_id = f0->PackId();
@@ -13601,30 +13942,19 @@ unsigned int ON_SubDimple::GlobalSubdivide()
         edge_tag = ON_SubDEdgeTag::Smooth;
     }
 
-#if defined(ON_SUBD_SHARP_EDGES)
-    class ON_SubDEdge* e10 =
-#endif
-      AddEdge(edge_tag, end_vertex[0], w[0], mid_vertex, 0.0);
-
-#if defined(ON_SUBD_SHARP_EDGES)
-    class ON_SubDEdge* e11 =
-#endif
-      AddEdge(edge_tag, mid_vertex, 0.0, end_vertex[1], w[1]);
-
-#if defined(ON_SUBD_SHARP_EDGES)
-    const double e0_sharpness
-      = (ON_SubDEdgeTag::Smooth == edge_tag)
-      ? e0->Sharpness()
-      : 0.0;
-    if (e0_sharpness > 0.0 && e0_sharpness < ON_SubDEdge::InfinteSharpness)
+    class ON_SubDEdge* e10 = AddEdge(edge_tag, end_vertex[0], w[0], mid_vertex, 0.0);
+    class ON_SubDEdge* e11 = AddEdge(edge_tag, mid_vertex, 0.0, end_vertex[1], w[1]);
+    if ( e0->IsSharp() )
     {
-      if (nullptr != e10)
-        e10->SetSharpness(e0->SubdivideSharpness(0));
-      if (nullptr != e11)
-        e11->SetSharpness(e0->SubdivideSharpness(1));
+      const ON_SubDEdgeSharpness e0_sharpness = e0->Sharpness();
+      if (e0_sharpness.IsNotZero())
+      {
+        if (nullptr != e10)
+          e10->SetSharpnessForExperts(e0_sharpness.Subdivided(0));
+        if (nullptr != e11)
+          e11->SetSharpnessForExperts(e0_sharpness.Subdivided(1));
+      }
     }
-#endif
-
   }
 
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
@@ -15410,6 +15740,123 @@ const ON_SubDEdgePtr ON_SubD::SplitEdge(
   return e1ptr;
 }
 
+const ON_SubDEdge* ON_SubDimple::SpinEdge(ON_SubDEdge* edge,
+                                          bool spin_clockwise) {
+  if (edge == nullptr || !edge->HasInteriorEdgeTopology(true) ||
+      edge->SubdivisionLevel() >= m_levels.UnsignedCount() ||
+      m_levels.UnsignedCount() < 1) {
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  unsigned int level0_index{edge->SubdivisionLevel()};
+
+  if (m_levels[level0_index] == nullptr) return ON_SUBD_RETURN_ERROR(nullptr);
+
+  ClearHigherSubdivisionLevels(level0_index + 1);
+  if (level0_index + 1 != m_levels.UnsignedCount()) {
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  m_active_level = m_levels[level0_index];
+  if (m_active_level == nullptr || m_active_level->m_face_count == 0) {
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  ON_SubDVertex* vertices[2]{const_cast<ON_SubDVertex*>(edge->Vertex(0)),
+                             const_cast<ON_SubDVertex*>(edge->Vertex(1))};
+
+  const bool swap_faces{(edge->FaceDirection(0) == 1) != spin_clockwise};
+  ON_SubDFace* faces[2]{
+      const_cast<ON_SubDFace*>(swap_faces ? edge->Face(1) : edge->Face(0)),
+      const_cast<ON_SubDFace*>(swap_faces ? edge->Face(0) : edge->Face(1))};
+
+  const unsigned face_edge_indices[2]{faces[0]->EdgeArrayIndex(edge),
+                                      faces[1]->EdgeArrayIndex(edge)};
+  if (face_edge_indices[0] == ON_UNSET_UINT_INDEX ||
+      face_edge_indices[1] == ON_UNSET_UINT_INDEX) {
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+  ON__UINT_PTR new_directions[2]{faces[0]->EdgeDirection(face_edge_indices[0]),
+                                 faces[1]->EdgeDirection(face_edge_indices[1])};
+
+  const ON_SubDEdgePtr adjacent_edges[2]{
+      spin_clockwise
+          ? faces[1]->VertexEdgePair(vertices[0]).First().EdgePtr()
+          : faces[1]->VertexEdgePair(vertices[0]).Second().EdgePtr(),
+      spin_clockwise
+          ? faces[0]->VertexEdgePair(vertices[1]).First().EdgePtr()
+          : faces[0]->VertexEdgePair(vertices[1]).Second().EdgePtr()};
+
+  ON_SubDVertex* new_vertices[2]{
+      const_cast<ON_SubDVertex*>(
+          adjacent_edges[0].RelativeVertex(spin_clockwise ? 0 : 1)),
+      const_cast<ON_SubDVertex*>(
+          adjacent_edges[1].RelativeVertex(spin_clockwise ? 0 : 1))};
+  if (new_vertices[0] == nullptr || new_vertices[1] == nullptr) {
+    return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+
+  ON_SubDEdge* new_edge{edge};
+  // Also calls vertices[i].VertexNotifiedModification()
+  new_edge->EdgeModifiedNofification();
+
+  for (unsigned int i = 0; i < 2; i++) {
+    ON_SubDVertex* v = new_vertices[i];
+    edge->m_vertex[i] = v;
+
+    bool rc{true};
+    rc = rc && vertices[i]->RemoveEdgeFromArray(edge);
+    if (!m_heap.GrowVertexEdgeArrayByOne(v)) {
+      v->m_status.SetDamagedState(true);
+      return ON_SUBD_RETURN_ERROR(nullptr);
+    }
+    v->m_edges[v->m_edge_count++] =
+        ON_SubDEdgePtr::Create(new_edge, (ON__UINT_PTR)i);
+
+    rc = rc && vertices[i]->RemoveFaceFromArray(faces[1 - i]);
+    if (!m_heap.GrowVertexFaceArrayByOne(v)) {
+      v->m_status.SetDamagedState(true);
+      return ON_SUBD_RETURN_ERROR(nullptr);
+    }
+    v->m_faces[v->m_face_count++] = faces[i];
+    v->VertexModifiedNofification();
+
+    rc = rc &&
+         (adjacent_edges[i].Edge()->ReplaceFaceInArray(faces[1 - i], faces[i]) <
+          adjacent_edges[i].EdgeFaceCount());
+
+    rc = rc && faces[i]->ReplaceEdgeInArray(0, edge, adjacent_edges[i]);
+    rc = rc && faces[i]->ReplaceEdgeInArray(
+                   0, adjacent_edges[1 - i].Edge(),
+                   ON_SubDEdgePtr::Create(new_edge, new_directions[i]));
+    faces[i]->FaceModifiedNofification();
+    if (!rc) return ON_SUBD_RETURN_ERROR(nullptr);
+  }
+  if (new_edge == nullptr) return ON_SUBD_RETURN_ERROR(nullptr);
+
+  if (nullptr != m_active_level) {
+    m_active_level->UpdateAllTagsAndSectorCoefficients(true);
+  }
+
+  ChangeGeometryContentSerialNumber(false);
+
+  return new_edge;
+}
+
+const ON_SubDEdge* ON_SubD::SpinEdge(ON_SubDEdge* edge, bool spin_clockwise) {
+  ON_SubDimple* subdimple = SubDimple(false);
+  if (nullptr == subdimple) return ON_SUBD_RETURN_ERROR(nullptr);
+  return subdimple->SpinEdge(edge, spin_clockwise);
+}
+
+const ON_SubDEdgePtr ON_SubD::SpinEdge(ON_SubDEdgePtr eptr,
+                                       bool spin_clockwise) {
+  ON_SubDEdge* edge = eptr.Edge();
+  if (nullptr == edge) return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  const ON_SubDEdge* new_edge{SpinEdge(edge, spin_clockwise)};
+  if (nullptr == new_edge) return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
+  return ON_SubDEdgePtr::Create(new_edge, eptr.EdgeDirection());
+}
 
 const ON_SubDEdge * ON_SubD::SplitFace(
   ON_SubDFace * face, 
@@ -16163,8 +16610,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
     return ON_SUBD_RETURN_ERROR(false);
 
   // The built in fragment cache always has adaptive ON_SubDDisplayParameters::DefaultDensity
-  const unsigned subd_display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(ON_SubDDisplayParameters::DefaultDensity,m_face_count);
-
+  unsigned subd_display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(ON_SubDDisplayParameters::DefaultDensity,m_face_count);
   const unsigned this_level_index = this->m_level_index;
   const unsigned src_level_index = src.m_level_index;
 
@@ -20134,6 +20580,14 @@ unsigned int ON_SubD::SetEdgeTags(
 }
 
 unsigned int ON_SubD::SetEdgeTags(
+  const ON_SimpleArray<ON_SubDComponentPtr>& cptr_list,
+  ON_SubDEdgeTag edge_tag
+)
+{
+  return this->SetEdgeTags(cptr_list.Array(), cptr_list.Count(), edge_tag);
+}
+
+unsigned int ON_SubD::SetEdgeTags(
   const ON_SubDComponentPtr* cptr_list,
   size_t cptr_count,
   ON_SubDEdgeTag edge_tag
@@ -20158,24 +20612,24 @@ unsigned int ON_SubD::SetEdgeTags(
     ON_SubDEdge* edge = cptr_list[i].Edge();
     if (nullptr == edge)
       continue;
-    const bool bIsSemisharp =
-#if defined(ON_SUBD_SHARP_EDGES)
-      edge->IsSemisharp()
-#else
-      false
-#endif
-      ;
-    if (bChangeToSmooth == edge->IsSmooth() && false == bIsSemisharp)
-      continue;
-    if (bChangeToSmooth && 2 != edge->FaceCount())
-      continue;
+    if (bChangeToSmooth)
+    {
+      if ( edge->IsSmoothNotSharp())
+        continue; // already smooth
+      if (2 != edge->FaceCount())
+        continue; // can't be smooth
+    }
+    else
+    {
+      if (edge->IsCrease())
+        continue; // already a crease
+    }
 
     edge->EdgeModifiedNofification();
 
     changed_edge_count++;
     edge->m_edge_tag = edge_tag;
-    if (bChangeToSmooth && bIsSemisharp)
-      edge->SetSharpness(0.0);
+    edge->ClearSharpnessForExperts();
     edge->UnsetSectorCoefficientsForExperts();
     for (int evi = 0; evi < 2; evi++)
     {
@@ -20262,18 +20716,9 @@ unsigned int ON_SubD::RemoveAllCreases()
   ON_SubDEdgeIterator eit(*this);
   for (const ON_SubDEdge* e = eit.FirstEdge(); nullptr != e; e = eit.NextEdge())
   {
-    const bool bIsSemisharp =
-#if defined(ON_SUBD_SHARP_EDGES)
-      e->IsSemisharp()
-#else
-      false
-#endif
-      ;
-    if ( (false == e->IsCrease() && false == bIsSemisharp) || 2 != e->m_face_count)
+    if ( (false == e->IsCrease() && false == e->IsSharp()) || 2 != e->m_face_count)
       continue;
-#if defined(ON_SUBD_SHARP_EDGES)
-    const_cast<ON_SubDEdge*>(e)->SetSharpness(0.0);
-#endif
+    const_cast<ON_SubDEdge*>(e)->ClearSharpnessForExperts();
     const_cast<ON_SubDEdge*>(e)->m_edge_tag = ON_SubDEdgeTag::Smooth;
     e->UnsetSectorCoefficientsForExperts();
     for (int evi = 0; evi < 2; evi++)
@@ -21794,7 +22239,7 @@ static bool Internal_VerifyEdgeChain(
     const ON_SimpleArray<ON_SubDEdgePtr>& chain, ON_2udex& chaindex,
     unsigned* edge_count = nullptr) {
   bool valid_chain{true};
-  unsigned valid_edge_count{0};
+  unsigned valid_edge_count = 0U;
   const unsigned jmax{chain.UnsignedCount()};
   ON_SubDEdgePtr eptr = chain[chaindex.i];
   const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
@@ -21843,7 +22288,7 @@ static bool Internal_CountAndVerifyEdgeChains(
     const ON_SimpleArray<ON_SubDEdgePtr>& sorted_edges,
     unsigned* chain_count = nullptr) {
   if (chain_count != nullptr && chain_count == 0) return false;
-  unsigned valid_chain_count{0};
+  unsigned valid_chain_count = 0U;
   bool valid_chains{false};
   const unsigned edge_count{sorted_edges.UnsignedCount()};
   ON_2udex chaindex{0, edge_count};

@@ -522,6 +522,37 @@ double ON_SubDSectorType::CornerSectorCoefficient(
   return ON_SUBD_RETURN_ERROR(ON_SubDSectorType::ErrorSectorCoefficient);
 }
 
+double ON_SubDSectorType::CopyEdgeSectorCoefficient(
+  const class ON_SubDEdge* edge,
+  const class ON_SubDVertex* vertex,
+  double error_return_value
+)
+{
+  if ( nullptr != edge  && nullptr != vertex )
+  {
+    const int evi = (vertex == edge->m_vertex[0]) ? 0 : (vertex == edge->m_vertex[1] ? 1 : 2);
+    if (evi < 2)
+    {
+      if (edge->IsSmooth())
+      {
+        if ( vertex->IsDartOrCreaseOrCorner() )
+          return edge->m_sector_coefficient[evi];
+        if ( vertex->IsSmooth() )
+          return edge->m_sector_coefficient[evi];
+      }
+      else if ( edge->IsCrease() )
+      {
+        return ON_SubDSectorType::IgnoredSectorCoefficient;
+      }
+    }
+  }
+
+  // null pointers, unset tags, vertex and edge are not attached, 
+  // or other conditions where returning a m_sector_coefficient[] 
+  // is impossible or makes no sense.
+  return error_return_value;
+}
+
 static int CompareUnsigned(unsigned int a, unsigned int b)
 {
   if (a < b)

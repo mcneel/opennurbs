@@ -583,9 +583,24 @@ public:
   ON_UUID m_plane_id;
   bool m_bEnabled;
 
+  // A distance where the clipping plane does not clip geometry.
+  // By default, distance is a negative value which indicates that there is no
+  // distance being applied
+  // A positive value is equivalent to placing another clipping plane at a
+  // distance from this clipping plane along it's normal and then flipping it
+  double Distance() const;
+  void SetDistance(double ditance);
+
   void Default();
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
+
+private:
+  char m_reserved[3];
+
+  // This should be a double, but is a float in order to not change
+  // the class size. When the Rhino SDK can break, this data type should change.
+  float m_distance = -1;
 };
 
 class ON_CLASS ON_ClippingPlane
@@ -603,8 +618,23 @@ public:
 
   ON_ClippingPlaneInfo ClippingPlaneInfo() const;
 
+  // A distance where the clipping plane does not clip geometry.
+  // By default, distance is a negative value which indicates that there is no
+  // distance being applied
+  // A positive value is equivalent to placing another clipping plane at a
+  // distance from this clipping plane along it's normal and then flipping it
+  double Distance() const;
+  void SetDistance(double distance);
+
   bool Read( class ON_BinaryArchive& );
   bool Write( class ON_BinaryArchive& ) const;
+
+private:
+  char m_reserved[3];
+
+  // This should be a double, but is a float in order to not change
+  // the class size. When the Rhino SDK can break, this data type should change.
+  float m_distance = -1;
 };
 
 

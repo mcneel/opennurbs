@@ -20,8 +20,6 @@
 #if !defined(OPENNURBS_SUBD_INC_)
 #define OPENNURBS_SUBD_INC_
 
-
-
 /// <summary>
 /// ON_SubDGetControlNetMeshPriority specifies what type of ON_SubD information
 /// is most important to transfer to the ON_Mesh.
@@ -238,16 +236,237 @@ enum class ON_SubDHashType : unsigned char
 };
 #pragma endregion
 
-ON_DECL
-ON_SubDHashType ON_SubDHashTypeFromUnsigned(
-  unsigned int subd_hash_type_as_unsigned
-);
+/// <summary>
+/// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
+/// Typically it is used when a calculation needs to know if the current SubD has is geometrically
+/// identical to a previous SubD. When speed is not important, comparing the current value of
+/// ON_SubD::GeometryHash() to a previously save value of ON_SubD::GeometryHash() is functionally
+/// identical but typically much slower when the SubDs are different.
+/// </summary>
+class ON_CLASS ON_SubDEdgeSharpness
+{
+public:
+  ON_SubDEdgeSharpness() = default;
+  ~ON_SubDEdgeSharpness() = default;
+  ON_SubDEdgeSharpness(const ON_SubDEdgeSharpness&) = default;
+  ON_SubDEdgeSharpness& operator=(const ON_SubDEdgeSharpness&) = default;
+
+public:
+  /// <summary>
+  /// An edge sharpness with contant value 0.0.
+  /// </summary>
+  static const ON_SubDEdgeSharpness Zero;
+
+  /// <summary>
+  /// An edge sharpness with both end values = ON_DBL_QNAN.
+  /// </summary>
+  static const ON_SubDEdgeSharpness Nan;
+
+  /// <returns>True if the sharpness value is valid and contant.</returns>
+  bool IsConstant() const;
+
+  /// <returns>True if the sharpness value is valid and variable.</returns>
+  bool IsVariable() const;
+
+  /// <returns>True if the sharpness valid is zero.</returns>
+  bool IsZero() const;
+
+  /// <returns>True if the sharpness value is valid either end sharpness value is not zero.</returns>
+  bool IsNotZero() const;
+
+  /// <returns>True if both end sharpness values are &gt;= 0 and &lt;= ON_SubDEdgeSharpness::Maximum.</returns>
+  bool IsValid() const;
+
+  /// <returns>True if IsValid() is false.</returns>
+  bool IsNotValid() const;
+
+  /// <summary>
+  /// Create a constant ON_SubDEdgeSharpness;
+  /// </summary>
+  /// <param name="sharpness">0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <returns>
+  /// If the input values is valid, an ON_SubDEdgeSharpness 
+  /// with constant value sharpness is returned. 
+  /// If the input vaue is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromConstant(double sharpness);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness;
+  /// </summary>
+  /// <param name="sharpness0">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <param name="sharpness1">0 &lt;= sharpness1 &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <returns>
+  /// If both input values are valid, an edge sharpness 
+  /// with start value sharpness0 and end value sharpness1 is returned. 
+  /// If either end value is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromInterval(double sharpness0, double sharpness1);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness;
+  /// </summary>
+  /// <param name="sharpness_interval">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <returns>
+  /// If the interval's values are valid, an edge sharpness 
+  /// with start value sharpness_interval[0] and end value sharpness_interval[1] is returned. 
+  /// If either end value is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromInterval(const class ON_Interval& sharpness_interval);
+
+  /// <summary>
+  /// Return a sharpness interval that is the union of the nonzero input sharpness intervals.
+  /// </summary>
+  /// <param name="a"></param>
+  /// <param name="b"></param>
+  /// <returns>
+  /// If a or b is not zero, then the returned interval is the union of the nonzero
+  /// input intervals. Otherwise ON_SubDEdgeSharpness::Zero is returned. 
+  /// The returned sharpenss always has sharpness[0] &lt;= sharpness[1].
+  /// </returns>
+  static const ON_SubDEdgeSharpness Union(
+    const ON_SubDEdgeSharpness& a, 
+    const ON_SubDEdgeSharpness& b 
+  );
+
+  /// <summary>
+  /// Sharpness value for a subdivided edge.
+  /// </summary>
+  /// <param name="end_index"0 or 1.</param>
+  /// <returns>Subdivided sharpness or ON_SubDEdgeSharpness::Zero if index is out of range.</returns>
+  const ON_SubDEdgeSharpness Subdivided(int end_index) const;
+
+  const ON_SubDEdgeSharpness Reversed() const;
+
+  /// <summary>
+  /// Convert a user facing slider value to a SubD edge end sharpness value.
+  /// </summary>
+  /// <param name="slider_domain">Non empty slider domain. (Often ON_Interval::ZeroToOne.)</param>
+  /// <param name="slider_value">A value in the slider_domain. slider_domain[0] returns 0.0. slider_domain[1] returns ON_SubDEdgeSharpness::Maximum.</param>
+  /// <param name="invalid_input_result">Value to return if the input is not valid.</param>
+  /// <returns>The slider value converted to an ON_SubDEdge sharpness value.</returns>
+  static double SharpnessFromSliderValue(
+    ON_Interval slider_domain,
+    double slider_value,
+    double invalid_input_result
+  );
+
+  /// <summary>
+  /// Convert a user facing slider value to a SubD edge end sharpness value.
+  /// </summary>
+  /// <param name="slider_domain">Non empty slider domain. (Often ON_Interval::ZeroToOne.)</param>
+  /// <param name="normalized_slider_value">0 &lt;= normalized_slider_value &lt;= 1.</param>
+  /// <param name="invalid_input_result">Value to return if the input is not valid.</param>
+  /// <returns>
+  /// If 0 &lt;= normalized_slider_value &lt;= 1, the normalized slider value converted to an ON_SubDEdge sharpness value
+  /// from 0 to ON_SubDEdgeSharpness::Maximum. Otherwise, ON_DBL_QNAN is returned.
+  /// </returns>
+  static double SharpnessFromNormalizedValue(
+    double normalized_slider_value
+  );
+
+  /// <summary>
+  /// Get the edge sharpness at the start or end.
+  /// </summary>
+  /// <param name="end_index"0 or 1.</param>
+  /// <returns>EndSharpness(end_index).</returns>
+  double operator[](int end_index) const;
+
+  /// <summary>
+  /// Return the average of the sharpness interval.
+  /// </summary>
+  /// <returns>0.5*(sharpness[0]+sharpness[1])</returns>
+  double Average() const;
+
+  /// <summary>
+  /// Return the minimum of the sharpness interval.
+  /// </summary>
+  /// <returns>The minimum of the sharpness interval</returns>
+  double MinimumEndSharpness() const;
+
+  /// <summary>
+  /// Return the maximum of the sharpness interval.
+  /// </summary>
+  /// <returns>The maximum of the sharpness interval</returns>
+  double MaximumEndSharpness() const;
+
+
+  /// <summary>
+  /// Get the sharpness at the start or end.
+  /// </summary>
+  /// <param name="end_index"0 or 1.</param>
+  /// <returns>Sharpness or ON_DBL_QNAN if end_index is out of range.</returns>
+  double EndSharpness(int end_index) const;
+
+  /// <summary>
+  /// Calculate the vertex sharpness from the attached sharp edge information.
+  /// Note that vertices with a corner tag always have zero sharpness.
+  /// </summary>
+  /// <param name="vertex_tag">
+  /// The vertex tag (smooth, crease, dart, corner). 
+  /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
+  /// COrner vertices always have sharpness = 0.
+  /// </param>
+  /// <param name="sharp_edge_end_count">
+  /// Number of sharp edges attached to the vertex that have 
+  /// nonzero end sharpness at the vertex.</param>
+  /// <param name="maximum_edge_end_sharpness">
+  /// The largest sharp edge end sharpness at the vertex.
+  /// </param>
+  /// <returns></returns>
+  static double VertexSharpness(
+    ON_SubDVertexTag vertex_tag,
+    unsigned sharp_edge_end_count,
+    double maximum_edge_end_sharpness
+  );
+
+  /// <summary>
+  /// ON_SubDEdgeSharpness::Maximum = 4.
+  /// SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::Maximum.
+  /// </summary>
+  static const double Maximum;
+
+  /// <summary>
+  /// ON_SubDEdgeSharpness::Tolerance = 0.01
+  /// If an edge has sharpness within ON_SubDEdgeSharpness::Tolerance of an integer value,
+  /// the sharpness is set to that integer value.
+  /// </summary>
+  static const double Tolerance;
+
+  /// <summary>
+  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum and return an integer value when
+  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// </summary>
+  /// <param name="sharpness"></param>
+  /// <param name="invalid_input_result">Value returned when the sharpness paramter is invalid.</param>
+  /// <returns>SubD edge sharpness value that makes sense.</returns>
+  static double Sanitize(
+    double sharpness,
+    double invalid_input_result
+  );
+
+  /// <summary>
+  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum and return an integer value when
+  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// </summary>
+  /// <param name="sharpness"></param>
+  /// <returns>SubD edge sharpness value that makes sense or 0.0 if the input sharpness is invalid.</returns>
+  static double Sanitize(
+    double sharpness
+  );
+
+private:
+  float m_edge_sharpness[2] = {};
+};
 
 ON_DECL
-const ON_wString ON_SubDHashTypeToString(
-  ON_SubDHashType subd_hash_type,
-  bool bVerbose
-);
+bool operator==(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs);
+
+ON_DECL
+bool operator!=(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs);
 
 /// <summary>
 /// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
@@ -757,6 +976,13 @@ public:
     Otherwise, 0 is returned.
   */
   unsigned int EdgeFaceCount() const;
+
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->m_edge_tag is returned.
+    Otherwise, ON_SubDEdgeTag::Unset is returned.
+  */
+  ON_SubDEdgeTag EdgeTag() const;
     
   /*
   Returns:
@@ -834,11 +1060,41 @@ public:
       0: return Edge()->Vertex(EdgeDirection())
       1: return Edge()->Vertex(1-EdgeDirection())
   Returns:
-    The requested vertex control net point EdgeDirection() taken into account.
+    The requested vertex control net point with EdgeDirection() taken into account.
     ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const ON_3dPoint RelativeControlNetPoint(
     int relative_vertex_index
+  ) const;
+
+
+  /*
+  Parameters:
+    relative_vertex_index - [in]
+      0: return Edge()->Vertex(EdgeDirection())->SurfacePoint()
+      1: return Edge()->Vertex(1-EdgeDirection())->SurfacePoint()
+  Returns:
+    The requested vertex surface point with EdgeDirection() taken into account.
+    ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
+  */
+  const ON_3dPoint RelativeVertexSurfacePoint(
+    int relative_vertex_index
+  ) const;
+
+  /*
+  Parameters:
+    relative_vertex_index - [in]
+      0: return Edge()->Vertex(EdgeDirection())->Point(point_location)
+      1: return Edge()->Vertex(1-EdgeDirection())->Point(point_location)
+    point_location - [in]
+      Used to select control net or limit surface point.
+  Returns:
+    The requested vertex piont with with EdgeDirection() taken into account.
+    ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
+  */
+  const ON_3dPoint RelativeVertexPoint(
+    int relative_vertex_index,
+    ON_SubDComponentLocation point_location
   ) const;
 
   bool RelativeVertexMark(
@@ -856,6 +1112,12 @@ public:
   const ON_3dVector RelativeControlNetDirection() const;
 
   /*
+  Description:
+    The sector coefficient is a property of a smooth edge end
+    that is attached to a dart, crease, or corner vertex.
+    In all other cases the sector coefficient is ignored.
+    The value of the sector coefficient is constant throughout subdivision.    
+    Every smooth edge in a sector has the same sector coefficient at the central vertex.
   Parameters:
     relative_vertex_index - [in]
   Returns:
@@ -871,6 +1133,16 @@ public:
   double RelativeSectorCoefficient(
     int relative_vertex_index
     ) const;
+
+  void  SetRelativeSectorCoefficientForExperts(
+    int relative_vertex_index,
+    double relative_sector_coefficient
+  ) const;
+
+
+  const ON_SubDEdgeSharpness RelativeSharpness() const;
+
+  void SetRelativeSharpness(ON_SubDEdgeSharpness relative_sharpness) const;
 
   /*
   Description:
@@ -894,6 +1166,27 @@ public:
   ) const;
 
   /*
+  Description:
+    Return the neighboring face.
+  Parameters:
+    face - [in]
+      A face attached to this edge.
+    bStopAtCrease - [in]
+      If true and if m_edge_tag = ON_SubDEdgeTag::Crease,
+      then nullptr is returned.
+  Returns:
+    If the m_face_count = 2,
+    m_edge_tag is smooth or x or passes the crease tag test,
+    one of m_face2[0,1] points a face, then
+    the neighboring face is returned.
+    In any other case, nullptr is returned.
+  */
+  const ON_SubDFace* NeighborFace(
+    const ON_SubDFace* face,
+    bool bStopAtCrease
+  ) const;
+
+  /*
   Returns:
     this->RelativeFace(relative_face_index)->Mark();
   */
@@ -901,7 +1194,6 @@ public:
     int relative_face_index,
     bool missing_face_return_value
   ) const;
-
 
   /*
   Returns:
@@ -930,6 +1222,12 @@ public:
     A ON_SubDEdgePtr pointing at the same edge with the direction reversed from this.
   */
   const ON_SubDEdgePtr Reversed() const;
+
+  /// <summary>
+  /// Get the SubD edge Catmull-Clark subdivision point.
+  /// </summary>
+  /// <returns>Catmull-Clark edge subdivision point.</returns>
+  const ON_3dPoint SubdivisionPoint() const;
 
   void ClearSavedSubdivisionPoints() const;
 
@@ -969,6 +1267,20 @@ public:
     const class ON_SubDEdge* edge,
     ON__UINT_PTR direction
     );
+
+  /*
+  Parameters:
+    v0 - [in]
+    v1 - [in]
+  Returns:
+    If there is an edge connecting v0 and v1, then an ON_SubDEdgePtr pointing to that edge 
+    and oriented from v0 to v1 is returned. Otherwise ON_SubDEdgePtr::Null is returned.
+  */
+  static const ON_SubDEdgePtr Create(
+    const class ON_SubDVertex* v0,
+    const class ON_SubDVertex* v1
+  );
+
 
   static const ON_SubDEdgePtr Create(
     const class ON_SubDComponentPtr& edge_component
@@ -1062,7 +1374,7 @@ public:
   ) const;
 
   ON__UINT8 ClearMarkBits() const;
-};
+}; // ON_SubDFace
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDEdgePtr>;
@@ -4616,34 +4928,36 @@ public:
   bool IsEmpty() const;
   bool IsNotEmpty() const;
 
-#if defined(ON_SUBD_SHARP_EDGES)
   /// <summary>
-  /// Determine if any edges in this SubD have sem-sharp edges.
+  /// Determine if this SubD has sharp edges. 
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <returns>True if the SubD has at lease one semisharp edge.</returns>
-  bool HasSemisharpness() const;
+  /// <returns>True if the SubD has at lease one sharp edge.</returns>
+  bool HasSharpEdges() const;
 
   /// <summary>
-  /// Get the range of sharpness values assigned to semisharp edges 
-  /// and return the number of semisharp edges.
+  /// Get the range of sharpness values assigned to sharp edges
+  /// and return the number of sharp edges.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
-  /// <returns>Number of semisharp edges.</returns>
-  unsigned int SemisharpEdgeCount(ON_Interval& sharpness_range) const;
+  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no sharp edges.</param>
+  /// <returns>Number of sharp edges.</returns>
+  unsigned int SharpEdgeCount(ON_SubDEdgeSharpness& sharpness_range) const;
 
   /// <summary>
-  /// Number of semisharp edges.
+  /// Number of sharp edges.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
-  /// <returns>Number of semisharp edges.</returns>
-  unsigned int SemisharpEdgeCount() const;
+  /// <returns>Number of sharp edges.</returns>
+  unsigned int SharpEdgeCount() const;
 
   /// <summary>
-  /// Converts all semisharp edges to smooth edges.
+  /// Converts all sharp edges to smooth edges.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <returns>Number of semisharp edges converted to smooth edges.</returns>
-  unsigned int ClearSemisharpness();
-#endif
+  /// <returns>Number of sharp edges that were converted to smooth edges.</returns>
+  unsigned int ClearEdgeSharpness();
+
 
   /*
   Description:
@@ -5311,6 +5625,52 @@ public:
     ON_3dPoint vertex_location,
     unsigned new_edge_end
   );
+  
+  /*
+  Description:
+    Spin an edge's endpoints around the boundary of its neighboring faces.
+    In a counter-clockwise spin (looking at faces from their shared up orientation):
+      The edge's start vertex is moved to the next vertex in the boundary
+      of the face on the right-hand side of the edge.
+      The edge's end vertex is moved to the next vertex in the boundary
+      of the face on the left-hand side of the edge.
+    Note that reversing the input edge does not change the result.
+  Parameters:
+    edge - [in]
+      edge to spin.
+    spin_clockwise - [in]
+      false spins the edge counter-clockwise, true spins the edge clockwise
+      in the adjacent faces.
+  Returns:
+    A pointer to the spun edge or nullptr if the input is not valid.
+  */
+  const class ON_SubDEdge* SpinEdge(
+    class ON_SubDEdge* edge,
+    bool spin_clockwise = false
+  );
+  
+  /*
+  Description:
+    Spin an edge's endpoints around the boundary of its neighboring faces.
+    In a counter-clockwise spin (looking at faces from their shared up orientation):
+      The edge's start vertex is moved to the next vertex in the boundary
+      of the face on the right-hand side of the edge.
+      The edge's end vertex is moved to the next vertex in the boundary
+      of the face on the left-hand side of the edge.
+    Note that reversing the input edge does not change the result.
+  Parameters:
+    edge - [in]
+      edge to spin.
+    spin_clockwise - [in]
+      false spins the edge counter-clockwise, true spins the edge clockwise
+      in the adjacent faces.
+  Returns:
+    A pointer to the spun edge or nullptr if the input is not valid.
+  */
+  const ON_SubDEdgePtr SpinEdge(
+    ON_SubDEdgePtr eptr,
+    bool spin_clockwise = false
+  );
 
   /*
   Description:
@@ -5901,6 +6261,15 @@ public:
     ON_SubDEdgeTag edge_tag
   );
 
+  /*
+  Returns:
+    number of tags that were changed.
+  */
+  unsigned int SetEdgeTags(
+    const ON_SimpleArray<ON_SubDComponentPtr>& cptr_list,
+    ON_SubDEdgeTag edge_tag
+  );
+
 
   /*
   Description:
@@ -6174,6 +6543,41 @@ public:
 
   /*
   Description:
+    Add an edge to the subd.
+  Parameters:
+    edge_tag - [in]
+      ON_SubDEdgeTag::Unset
+        Edge tag is not known at this time.
+      ON_SubDEdgeTag::Smooth
+        Smooth edge. If both vertices are tagged as not smooth, the
+        tag on the returned edge will be ON_SubDEdgeTag::SmoothX.  This
+        tag is changed to ON_SubDEdgeTag::Smooth on the first
+        subdivision step.
+      ON_SubDEdgeTag::Crease.
+        Crease edge.  Both vertices must be tagged as not smooth.
+    v0 - [in]
+    v1 - [in]
+      The edge begins at v0 and ends at v1.
+      The edge will be on the same level as the vertices.
+    sharpness - [in]
+      If edge_tag is ON_SubDEdge::Smooth or ON_SubDEdge::SmoothX, then
+      the the edge's sharpness is set to sharpness.
+      Otherwise, the sharpness parameter is ignored.
+  Returns:
+    Pointer to the allocated edge.
+  Remarks:
+    ON_SubD::EdgeTagFromContext() can be used to determine edge
+    tag values in simple situations.
+  */
+  class ON_SubDEdge* AddEdge(
+    ON_SubDEdgeTag edge_tag,
+    class ON_SubDVertex* v0,
+    class ON_SubDVertex* v1,
+    ON_SubDEdgeSharpness sharpness
+  );
+
+  /*
+  Description:
     Expert use tool to add an edge with precomputed sector coefficients.
   Parameters:
     edge_tag - [in]
@@ -6193,7 +6597,7 @@ public:
     double v0_sector_coefficient,
     class ON_SubDVertex* v1,
     double v1_sector_coefficient
-    );
+  );
 
   /*
   Description:
@@ -7798,6 +8202,11 @@ public:
   Description:
     Calculates sector coefficient value for the sector type
     identified by this ON_SubDSectorType.
+    The sector coefficient is a property of a smooth edge end
+    that is attached to a dart, crease, or corner vertex.
+    In all other cases the sector coefficient is ignored.
+    The value of the sector coefficient is constant throughout subdivision.
+    Every smooth edge in a sector has the same sector coefficient at the central vertex.
   Returns:
     w: 0.0 < w < 1.0
       w = sector coefficient value.
@@ -7999,6 +8408,12 @@ public:
 
 public:
   /*
+  Description:
+    The sector coefficient is a property of a smooth edge end
+    that is attached to a dart, crease, or corner vertex.
+    In all other cases the sector coefficient is ignored.
+    The value of the sector coefficient is constant throughout subdivision.
+    Every smooth edge in a sector has the same sector coefficient at the central vertex.
   Returns:
     ON_SubDSectorType::IgnoredSectorCoefficient
   */
@@ -8034,6 +8449,35 @@ public:
     unsigned int sector_face_count,
     double corner_sector_angle_radians
     );
+
+  /// <summary>
+  /// Copy the sector coefficent that is currently set on the edge.
+  /// The sector coefficient is a property of a smooth edge end
+  /// that is attached to a dart, crease, or corner vertex.
+  /// In all other cases the sector coefficient is ignored.
+  /// The value of the sector coefficient is constant throughout subdivision
+  /// and this function is used to copy edge sector coefficients during subdivision. 
+  /// Every smooth edge in a sector has the same sector coefficient at the central vertex.
+  /// </summary>
+  /// <param name="edge"></param>
+  /// <param name="vertex">
+  /// The vertex identifies which end of the edge to query.
+  /// </param>
+  /// <returns>
+  /// If the edge and vertex are not nullptr and attached to each other, 
+  /// edge->IsSmooth() is true,
+  /// and vertex->IsDartCreaseOrCorner() is true, 
+  /// then the current value of edge->m_sector_coefficient[vertex index] is returned.
+  /// If the edge and vertex are not nullptr and attached to each other
+  /// and edge->IsCrease() is true or vertex->IsSmooth() is true, 
+  /// then ON_SubDSectorType::IgnoredSectorCoefficient is returned.
+  /// In all other cases error_return_value is returned.
+  /// </returns>
+  static double CopyEdgeSectorCoefficient(
+    const class ON_SubDEdge* edge,
+    const class ON_SubDVertex* vertex,
+    double error_return_value
+  );
 
   // This value is is used to set sector angles when the
   // actual value is not needed. This occurs at both ends
@@ -10676,6 +11120,25 @@ public:
     const ON_Xform& xform
     );
 
+  /// <summary>
+  /// Get a limit surface point.
+  /// </summary>
+  /// <returns>Limit surface point.</returns>
+  const ON_3dPoint Point() const;
+
+  /// <summary>
+  /// Get a limit surface normal.
+  /// </summary>
+  /// <returns>Limit surface normal vector.</returns>
+  const ON_3dVector Normal() const;
+
+  /// <summary>
+  /// Get a limit surface tangent vector.
+  /// </summary>
+  /// <param name="tangent_index">0 or 1</param>
+  /// <returns>Limit surface tangent vector.</returns>
+  const ON_3dVector Tangent(int tangent_index) const;
+
   // limit surface point, tangents and normal
   double m_limitP[3];  // point
   double m_limitT1[3]; // first unit tangent
@@ -11359,7 +11822,9 @@ public:
   
 private:
   unsigned char  m_reserved1 = 0;
+private:
   unsigned short  m_reserved2 = 0;
+private:
   unsigned int m_reserved3 = 0;
 
 public:
@@ -11496,6 +11961,25 @@ public:
     const ON_SubDEdge* edge
     ) const;
 
+  /*
+  Description:
+    Expert user tool to replace reference to old_edge with a reference to new_edge.
+  Parameters:
+    old_edge = [in]      
+      Cannot be nullptr.
+    new_edge = [in]
+      If new_edge is Null, old_edge is simply removed.
+  Returns:
+    If the replacement was successful, then the m_edges[] array index where old_edge/new_edge replacement occured is returned.
+    Otherwise ON_UNSET_UINT_INDEX is returned.
+  Remarks:
+    No modifications are made to old_edge or new_edge.
+  */
+  unsigned int ReplaceEdgeInArray(
+    const ON_SubDEdge* old_edge,
+    const ON_SubDEdgePtr new_edge
+    );
+
   unsigned int FaceCount() const;
 
   const class ON_SubDFace* Face(
@@ -11531,69 +12015,101 @@ public:
   */
   bool IsSmooth() const;
 
-#if defined(ON_SUBD_SHARP_EDGES)
-
   /// <summary>
-  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
+  /// Sharp vertices are smooth, crease or dart vertices attached to 
+  /// at least one sharp edge. Note that when an edge has variable
+  /// sharpness it can have zero sharpness at one end
+  /// and nonzero shaprness at the other end.
+  /// The bEndCheck parameter controls what type of sharpness query
+  /// is performed.
+  /// Note that the vertex subdivision point is affected by attached
+  /// sharp edges when IsSharp(true) is is true (ON_Vertex::VertexSharpness() &gt; 0). 
+  /// The vertex limit surface point is affected by edge sharpenss 
+  /// when IsSharp(false) is true.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <returns>
-  /// True if this vertex is smooth and is attached to one or more semisharp edges.
-  ///< / returns>
-  bool IsSemisharp() const;
-
-  /// <summary>
-  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
-  /// </summary>
-  /// <returns>
-  /// If the vertex is attached to zero or one semisharp edges, 0 is returned.
-  /// If the vertex is attached to three or more semisharp edges, 
-  /// ON_SubDEdge::InfinteSharpness is returned.
-  /// If the vertex is attached to two semisharp edges, 
-  /// the average value of the edges' sharpness is returned.
-  ///< / returns>
-  double Sharpness() const;
-
-  /// <summary>
-  /// Semi-sharp vertices are smooth vertices attached to one or more semisharp edges.
-  /// </summary>
-  /// <param name="sharp_subdivision_point">If the returned sharpness is &gt 0,
-  /// then the sharp subdivision point is returned. 
-  /// When the returned sharpness is &gt 0 and &lt 1, 
-  /// the final subdivision point is a weighted average of 
-  /// sharp_subdivision_point and the ordinary smooth subdivision point.
+  /// <param name="bEndCheck">
+  /// When bEndCheck is false, the check looks for edges with any nonzero sharpness.
+  /// When bEndCheck is true, the check looks for edges with nonzero sharpness at this vertex.
   /// </param>
   /// <returns>
-  /// If the vertex is attached to zero or one semisharp edges, 0 is returned.
-  /// If the vertex is attached to three or more semisharp edges, 
-  /// ON_SubDEdge::InfinteSharpness is returned.
-  /// If the vertex is attached to two semisharp edges, 
-  /// the average value of the edges' sharpness is returned.
+  /// True if this vertex is smooth, dart, or crease and is attached 
+  /// to at least one sharp edge.
+  ///</returns>
+  bool IsSharp( bool bEndCheck ) const;
+
+  /// <summary>
+  /// Sharp vertices are smooth, crease or dart vertices attached 
+  /// to at least one sharp edge with nonzero end sharpness at the vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <returns>
+  /// If the vertex is smooth and and two or more attached edges have postive end sharpness
+  /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
+  /// If the vertex is a dart or crease and and one or more attached edges have postive end sharpness
+  /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
+  /// Otherwise 0.0 is returned.
+  ///< / returns>
+  double VertexSharpness() const;
+
+  /// <summary>
+  /// Sharp vertices are smooth, crease or dart vertices attached to 
+  /// at least one sharp edge. Note that the end sharpness at a vertex
+  /// can be zero.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="bEndCheck">
+  /// When bEndCheck is false, the check looks for edges with any nonzero sharpness.
+  /// When bEndCheck is true, the check looks for edges with nonzero sharpness at this vertex.
+  /// </param>
+  /// <returns>Number of sharp edges attached to this vertex.</returns>
+  unsigned int SharpEdgeCount( bool bEndCheck ) const;
+
+  /// <summary>
+  /// Get the range of sharpness values assigned to sharp edges 
+  /// and return the number of sharp edges.
+  /// Sharp vertices are smooth, crease or dart vertices attached to at least one sharp edge
+  /// with nonzero sharpness at the vertex. Note that the end sharpness at a vertex
+  /// can be zero.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="bEndCheck">
+  /// When bEndCheck is false, the check looks for edges with any nonzero sharpness.
+  /// When bEndCheck is true, the check looks for edges with nonzero sharpness at this vertex.
+  /// </param>
+  /// <param name="sharpness_range">
+  /// The range of sharpness values is returned here.
+  /// If bEndCheck is true, the minimum and maximum of nonzero attached_edge->EndSharpness() at this vertex is returned in sharpness_range.
+  /// If bEndCheck is false, the minimum and maximum of nonzero attached_edge->MaximumEndSharpness() is returned in sharpness_range.
+  /// If no sharp edges are attached, then (0,0) is returned.
+  /// </param>
+  /// <returns>
+  /// If bEndCheck is true, the number of edges with nonzero sharpness at this vertex is returned.
+  /// If bEndCheck is false, the number of edges attached to this vertex with nonzero sharpness is returned.
+  /// </returns>
+  unsigned int SharpEdgeCount(bool bEndCheck, ON_Interval& sharpness_range) const;
+
+  /// <summary>
+  /// Sharp vertices are smooth, crease or dart vertices attached to at least one sharp edge
+  /// with nonzero sharpness at the vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="sharp_subdivision_point">If the returned sharpness is &gt; 0,
+  /// then the sharp subdivision point is returned. 
+  /// When the returned sharpness is &gt; 0 and &lt; 1, 
+  /// the final subdivision point is a weighted average of 
+  /// sharp_subdivision_point and the ordinary subdivision point.
+  /// When the returned sharpness is &gt;= 1, the sharp subdivision point is used
+  /// in place of the ordinary subdivision point.
+  /// </param>
+  /// <returns>
+  /// If the vertex is smooth and and two or more attached edges have postive end sharpness
+  /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
+  /// If the vertex is a dart or crease and and one or more attached edges have postive end sharpness
+  /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
+  /// Otherwise 0.0 is returned.
   ///< / returns>
   double GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const;
-
-  /// <summary>
-  /// WARNING: 
-  /// This function is temporary and for internal use only. 
-  /// It will be removed in the near future.
-  /// Any code referencing this function will unpredictably fail in the near future.
-  /// This is primative and is not thread safe.
-  /// </summary>
-  /// <returns>(ON_SubDEdge::SemisharpEvaluationIsEnabled() ? Sharpness() : 0.0)</returns>
-  double EvaluationSharpness(
-    ON_3dPoint& sharp_subdivision_point
-  ) const;
-
-  unsigned int SemisharpEdgeCount() const;
-
-  /// <summary>
-  /// Get the range of sharpness values assigned to semisharp edges 
-  /// and return the number of semisharp edges.
-  /// </summary>
-  /// <param name="sharpness_range">The range of sharpness values is returned here. (0,0) is returned if there are no semisharp edges.</param>
-  /// <returns>Number of semisharp edges.</returns>
-  unsigned int SemisharpEdgeCount(ON_Interval& sharpness_range) const;
-
-#endif
 
   /*
   Returns:
@@ -11640,9 +12156,20 @@ public:
 
   /*
   Returns:
+    True if m_vertex_tag is ON_SubDVertexTag::Dart or ON_SubDVertexTag::Corner
+  */
+  bool IsDartOrCorner() const;
+
+  /*
+  Returns:
     True if m_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart.
   */
   bool IsSmoothOrDart() const;
+  /*
+  Returns:
+    True if m_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart or ON_SubDVertexTag::Crease.
+  */
+  bool IsSmoothOrDartOrCrease() const;
 
   const ON_SubDVertexEdgeProperties EdgeProperties() const;
 
@@ -12247,6 +12774,20 @@ public:
   // m_vertex[1] = vertex at the end of the edge.
   const class ON_SubDVertex* m_vertex[2] = {};
 
+  // NOTE:
+  // The sector coefficient is a property of a smooth edge end 
+  // that is constant throughout subdivision. It exists at ends of
+  // smooth edges that are attached to dart, crease, or corner vertices.
+  // In all other cases the sector coefficient is ignored.
+  // In particular crease edges and the ends of smooth edges 
+  // attached to smooth vertices do not have a sector coefficient.
+  // 
+  // The ON_SubDSectorType class provides three static functions that
+  // calculate sector coefficients:
+  // ON_SubDSectorType::DartSectorCoefficient()
+  // ON_SubDSectorType::CreaseSectorCoefficient()
+  // ON_SubDSectorType::CornerSectorCoefficient()
+  // 
   // If the value of vertex->m_vertex_tag is not ON_SubDVertexTag::Smooth,
   // then that vertex is "tagged". 
   //
@@ -12326,55 +12867,34 @@ public:
   mutable double m_sector_coefficient[2] = {};
 
 private:
-  // Semi-sharp crease sharpness.
-  // See ON_SubDEdge::Sharpness() comments for details.
-  double m_sharpness = 0.0; 
+  // For a smooth edge, m_sharpness is the edge's sharpness.
+  // Edge sharpenss has no meaning for edges with a crease tag.
+  // ON_SubDEdge::Sharpness() comments for details. 
+  ON_SubDEdgeSharpness m_sharpness = ON_SubDEdgeSharpness::Zero;
 
-#if defined(ON_SUBD_SHARP_EDGES)
 public:
-  /// <summary>
-  /// WARNING: 
-  /// This function is temporary and for internal use only. 
-  /// It will be removed in the near future.
-  /// Any code referencing this function will unpredictably fail in the near future.
-  /// This is primative and is not thread safe.
-  /// </summary>
-  /// <returns>(ON_SubDEdge::SemisharpEvaluationIsEnabled() ? Sharpness() : 0.0)</returns>
-  double EvaluationSharpness(
-    ON_3dPoint& sharp_subdivision_point
-  ) const;
 
+  /// <summary>
+  /// Gets the edge's sharp subdivision point and returns the average of the edge's sharpnesses.
+  /// The final subdivision point is (sharpness &gt;= 1.0) ? sharp_subdivision_point : (1.0-sharpness)(smooth subdivsion point)+sharpness*sharp_subdivision_point.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="sharp_subdivision_point">If the returned sharpness is &gt; 0,
+  /// then the sharp subdivision point is returned. 
+  /// When the returned sharpness is &gt; 0 and &lt; 1, 
+  /// the final subdivision point is a weighted average of 
+  /// sharp_subdivision_point and the ordinary smooth subdivision point.
+  /// When the returned sharpness is &gt;= 1, the sharp subdivision point is used
+  /// in place of the smooth subdivision point.
+  /// </param>
+  /// <returns>
+  /// If the edge is sharp, a value &gt; 0 and &lt; ON_SubDEdgeSharpness::Maximum is returned.
+  /// If the edge is smooth with zero sharpness, 0 is returned.
+  /// If the edge is a crease, 0 is returned.
+  /// </returns>
   double GetSharpSubdivisionPoint(
     ON_3dPoint& sharp_subdivision_point
   ) const;
-
-
-  /// <summary>
-  /// WARNING: 
-  /// This function is temporary and for internal use only. 
-  /// It will be removed in the near future.
-  /// Any code referencing this function will unpredictably fail in the near future.
-  /// This is primative and is not thread safe.
-  /// </summary>
-  /// <returns>ON_SubDEdge::m_bEnableSemiharpEvaluation</returns>
-  static bool SemisharpEvaluationIsEnabled();
-
-  /// <summary>
-  /// WARNING: 
-  /// This function is temporary and for internal use only. 
-  /// It will be removed in the near future.
-  /// Any code referencing this function will unpredictably fail in the near future.
-  /// This is primative and is not thread safe.
-  /// </summary>
-  /// <param name="bEnableSemiharpEvaluation"></param>
-  static void SetEnableSemisharpEvaluation(bool bEnableSemiharpEvaluation);
-private:
-  // This global bool is temporary and is used to determine if subdivision and evaluation code
-  // pays attention to sharpness. This global bool will be removed in the near future.
-  // Any code referencing this variable will unpredictably fail in the near future.
-  // This is primative and is not thread safe.
-  static bool m_bEnableSemisharpEvaluation;
-#endif
 
 private:
   // Cached limit curve
@@ -12688,99 +13208,116 @@ public:
   */
   bool IsSmoothX() const;
 
-#if defined(ON_SUBD_SHARP_EDGES)
-
   /// <summary>
-  /// Semi-sharp edges are tagged as smooth edges with a sharpness &gt 0 and are
-  /// a blend between a smooth and a creased edge.
+  /// Sharp edges are a blend between smooth edges and crease edges. 
+  /// The limit surface has a continuous normal along a sharp edge.
+  /// A sharp edge has a smooth tag, 
+  /// has sharpness &gt; 0 at at least one end, 
+  /// and has sharpness &lt; ON_SubDEdgeSharpness::Maximum at at least one end.
+  /// Sharpness has no meaning for edges with crease tags.
+  /// Both sharpness values are zero for an ordinary smooth edge.
+  /// Edge sharpness steadily decreases during subdivision and becomes zero after at most ON_SubDEdgeSharpness::Maximum subdivisions.
   /// </summary>
-  /// <returns>True if the edge is tagged as smooth and has Sharpness &gt 0.</returns>
-  bool IsSemisharp() const;
+  /// <returns>True if the edge is tagged as smooth, h and at least one end with sharpness &gt; 0 and &lt; ON_SubDEdgeSharpness::Maximum.</returns>
+  bool IsSharp() const;
 
   /// <summary>
-  /// Determine the sharpness to assign to the subdivided edge.
+  /// Determine if an edge is smooth and is not sharp.
   /// </summary>
-  /// <param name="end_index">0 or 1 indicating the left or right subdivided edge.</param>
-  /// <returns>Sharpness to assigned to the subdivided edge.</returns>
-  double SubdivideSharpness(
-    unsigned end_index
-  ) const;
-
-  static double AverageSharpness(
-    double sharpness0,
-    double sharpness1
-  );
-#endif
+  /// <returns>(true == IsSmooth() and false == IsSharp())</returns>
+  bool IsSmoothNotSharp() const;
 
   /// <summary>
-  /// Semisharp edges are tagged as smooth edges with a 
-  /// sharpness &gt 0 and &lt ON_SubDEdge::InfinteSharpness.
+  /// An expert user function to determine if an edge tag in ON_SubDEdgeTag::Smooth and is not sharp.
+  /// </summary>
+  /// <returns>(true == IsSmoothNotX() and false == IsSharp())</returns>
+  bool IsSmoothNotXNotSharp() const;
+
+  /// <summary>
+  /// Get the edge's sharpness.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <returns>
-  /// If the edge is smooth and not semisharp, 0 is returned.
-  /// If the edge is a crease, ON_SubDEdge::InfinteSharpness is returned.
-  /// If the edge is semisharp, a sharpness value strictly between 0 and ON_SubDEdge::InfinteSharpness is returned.
-  /// Otherwise, ON_DBL_QNAN is returned.
+  /// If the edge is sharp, the interval[0] value is the sharpness at the start of the edge and 
+  /// the interval[1] value is the sharpness at the end of the edge.
+  /// If the edge is smooth or a crease, (0,0) is returned.
+  /// Otherwise, (0,0) is returned.
   /// </returns>
-  /// <returns>0.0 if the edges is smooth and ON_SubDEdge::InfinteSharpness if the edge is a crease.
-  /// A value strictly between 0 and ON_SubDEdge::InfinteSharpness if the edge is a semisharp.
-  double Sharpness() const;
+  const ON_SubDEdgeSharpness Sharpness() const;
 
   /// <summary>
-  /// A version of sharpness that allows the return value to be specified for edges that 
-  /// are not explicitly semisharp. This is useful to simplify code branch decisions
-  /// when smooth, semisharp, and crease edges need to be handled differently.
+  /// Get the edge's sharpness at the end with the specified vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <param name="unset_edge_value">
-  /// Value to return when the edge tag is unset. ON_UNSET_VALUE and ON_DBL_QNAN are good choices.
-  /// </param>
-  /// <param name="smooth_edge_value">
-  /// Value to return when the edge is smooth but not semisharp. 0.0 is often a good choice.
-  /// </param>
-  /// <param name="crease_edge_value">
-  /// Value to return when the edge is smooth but not semisharp. 
-  /// ON_SubDEdge::InfinteSharpness is often a good choice.</param>
-  /// <returns>Value of sharpness for the specified situation.</returns>
-  double Sharpness(
-    double unset_edge_value,
-    double smooth_edge_value,
-    double crease_edge_value
+  /// <param name="v">Vertex at an end of the edge</param>
+  /// <returns>
+  /// If the edge is sharp, the sharpness at the end with the specified vertex is returned.
+  /// If the edge is smooth or a crease, 0 is returned.
+  /// Otherwise, 0.0 is returned.
+  /// </returns>
+  /// <returns>The sharpness at the end of the edge with the specified vertex.</returns>
+  double EndSharpness(
+    const class ON_SubDVertex* v
   ) const;
 
   /// <summary>
-  /// Semi-sharp edges are tagged as smooth edges with a sharpness &gt 0 and are
-  /// a blend between a smooth and a creased edge. Set N = floor(sharpness).
-  /// For subdivision levels < N, the semisharp edge and attached vertices
-  /// are subdivided using crease subdivision rules.
-  /// For subdivision levels >= ceil(sharpness), the semisharp edge and attached vertices
-  /// are subdivided using smooth subdivision rules.
-  /// When N < sharpness < ceil(sharpness), at level N the semisharp edge and attached vertices
-  /// are subdivided using a linear blend of crease and smooth subdivision rules. 
-  /// (1-s)*(smooth rules) * s(crease rules), where s = (sharpness-N).
+  /// Get the edge's sharpness at the end with the specified vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <param name="sharpness">0 &le sharpness &lt ON_SubDEdge::InfiniteSharpness.</param>
-  void SetSharpness(double sharpness);
+  /// <param name="evi">End index (0=start or 1=end).</param>
+  /// <returns>
+  /// If the edge is sharp, the sharpness at the end with the specified by evi is returned.
+  /// If the edge is smooth or a crease, 0 is returned.
+  /// Otherwise, 0.0 is returned.
+  /// </returns>
+  /// <returns>The sharpness at the end of the edge specified by evi.</returns>
+  double EndSharpness(
+    unsigned evi
+  ) const;
 
 
   /// <summary>
-  /// ON_SubDEdge::InfinteSharpness = 5.0
-  /// Semi-sharp edges have a Sharpness() &gt 0.0 and &lt ON_SubDEdge::InfinteSharpness.
+  /// Get the edge sharpenss values for the subdivided edge at the specified end of this edge.
   /// </summary>
-  static const double InfinteSharpness;
-
+  /// <param name="evi">Selects the subdivided edge (0 for the left subdivided edge, 1 for the right subdivided edge) </param>
+  /// <param name="bReverseSharpness">Pass true if this edge and the subdividied edge will have opposite orientations. </param>
+  /// <returns>Edge sharpness for the subdivided edge.</returns>
+  const ON_SubDEdgeSharpness SubdivideSharpness(
+    unsigned evi,
+    bool bReverseSharpness
+  ) const;
 
   /// <summary>
-  /// ON_SubDEdge::SharpnessTolerance = 0.01
-  /// If an edge has sharpness within ON_SubDEdge::SharpnessTolerance of an integer value,
-  /// the sharpness is set to that integer value.
+  /// Get the edge sharpenss values for the subdivided edge at the specified end of this edge.
   /// </summary>
-  static const double SharpnessTolerance;
+  /// <param name="end_vertex">One of this edge's vertices used to select the subdivided edge.</param>
+  /// <param name="bReverseSharpness">Pass true if this edge and the subdividied edge will have opposite orientations. </param>
+  /// <returns>Edge sharpness for the subdivided edge.</returns>
+  const ON_SubDEdgeSharpness SubdivideSharpness(
+    const class ON_SubDVertex* end_vertex,
+    bool bReverseSharpness
+  ) const;
 
-  static double SanitizeSharpness(
-    double sharpness,
-    bool bPermitInfinteSharpness
+  /// <summary>
+  /// This tool is for expert users and internal use. 
+  /// A collection of ON_SubD::SetEdgeSharpness() functions provide the easiest way to
+  /// set and change edge sharpness.
+  /// Set the edge sharpness values to (sharpness[0],sharpness[1]).
+  /// The interval values must be &gt;= 0 and &lt;= ON_SubDEdgeSharpness::Maximum.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="sharpness">End sharpenss values.</param>
+  void SetSharpnessForExperts(
+    ON_SubDEdgeSharpness sharpness
   );
 
+  /// <summary>
+  /// This tool is for expert users and internal use. 
+  /// Use ON_SubD::ClearEdgeSharpness() to remove all sharp edges from a SubD.
+  /// Sets the edge sharpness to ON_EdgeSharpness::Zero.
+  /// </summary>
+  /// <returns>True if there were changes to the edge.</returns>
+  bool ClearSharpnessForExperts();
 
   /*
   Returns:
@@ -12827,9 +13364,6 @@ public:
 
   /*
   Parameters:
-    bUseSavedSubdivisionPoint - [in]
-      If there is a saved subdivision point and bUseSavedSubdivisionPoint
-      is true, then the saved value is returned.
     subdivision_point - [out]
   Returns:
     true if successful
@@ -12838,9 +13372,10 @@ public:
     double subdivision_point[3]
     ) const;
 
-  ///<summary>
-  /// The SubD edge Catmull-Clark subdivision point.
-  ///</summary>
+  /// <summary>
+  /// Get the SubD edge Catmull-Clark subdivision point.
+  /// </summary>
+  /// <returns>Catmull-Clark edge subdivision point.</returns>
   const ON_3dPoint SubdivisionPoint() const;
 
   /*
@@ -13748,23 +14283,23 @@ public:
     ON_SubDEdge* edge_to_insert
   );
 
-  /////*
-  ////Description:
-  ////  Expert user tool to replace one edge with another in the face's edge array.
-  ////Parameters:
-  ////  edge_to_remove - [in]
-  ////  edge_to_insert - [in]
-  ////   The inserted edge is assigned the same boundary orientation specified
-  ////   in edgeptr_to_insert.
-  ////Remarks:
-  ////  Does not modify the edge. The corresponding reference to this face must
-  ////  be removed from the first edge and added to the second edge.
-  ////*/
-  ////bool ReplaceEdgeInArray(
-  ////  unsigned int fei0,
-  ////  ON_SubDEdge* edge_to_remove,
-  ////  ON_SubDEdgePtr edgeptr_to_insert
-  ////);
+  /*
+  Description:
+    Expert user tool to replace one edge with another in the face's edge array.
+  Parameters:
+    edge_to_remove - [in]
+    edgeptr_to_insert - [in]
+     The inserted edge is assigned the same boundary orientation specified
+     in edgeptr_to_insert.
+  Remarks:
+    Does not modify the edge. The corresponding reference to this face must
+    be removed from the first edge and added to the second edge.
+  */
+  bool ReplaceEdgeInArray(
+    unsigned int fei0,
+    ON_SubDEdge* edge_to_remove,
+    ON_SubDEdgePtr edgeptr_to_insert
+  );
 
   /*
   Description:
@@ -15232,7 +15767,7 @@ public:
   /*
   Parameters:
     center_vertex - [in]
-      The vertex on initial_face that will be iterated around.
+      The vertex to iterated around.
       center_vertex->Face(0) is used to select the sector.
   Returns:
     If input is valid, a pointer to the center vertex is returned.
@@ -16568,32 +17103,32 @@ public:
 
   // The term "standard vertex ring points" is used below. 
   //
-  // If "C" is an interior vertex (m_vertex_tag is smooth or dart), 
+  // Let "C" be an interior vertex (m_vertex_tag is smooth or dart), 
   // (E[0], ...., E[N-1]) is a radially sorted list of its edges, 
-  // (F[0], ..., F[N-1]) is a radially sorted list of its faces,
-  // and (P[0], ..., P[N-1]) is a list of the edge vertices opposite C,
-  // E0type = smooth for a smooth vertex and crease for a dart vertex,
-  // then C is "standard" if E[0] has type E0type, every other
-  // edge E[i] is smooth, every outer vertex/ P[i] is smooth, and every 
-  // face F[i] has the stadard facet type (tri or quad) for the subdivision
-  // algorithm.
+  // (F[0], ..., F[N-1]) is a radially sorted list of its faces (F[i] is between E[i] and E[(i+1)%N]),
+  // (P[0], ..., P[N-1]) are the vertices on the edges opposide Cn (P[i] is on E[i].
+  // 
+  // C is a "standard" smooth vertex if 
+  // all edges E[i] are smooth with sharpness = 0,
+  // and all faces f[i] are quads.
+  // 
+  // C is a "standard" dart vertex if
+  // edge E[0] is a crease,
+  // edges E[1], ..., E[N-1] are smooth with sharpness = 0,  
+  // and all faces F[i] are quads.
   //
   // If If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
   // listed above are satisified except 
-  // E[0] and E[N-1] are tagged as crease edges, 
-  // P[0] and P[N-1] are tagged as crease vertices (NOT corners), 
-  // and there are N-2 faces,
-  // then "C" is a standard boundary vertex.
+  // E[0] and E[N-1] are crease edges, 
+  // E[1], ..., E[N-2] are smooth edges with sharpness = 0, 
+  // and faces f[0], ..., F[N-2] are quads.
   // 
-  // If the facet type is triangle and C is a standard interior or boundary vertex,
-  // then the "standard vertex ring" is the list of N+1 points 
-  // (C, P[0], ...., P[N-1]).
-  //
-  // If the facet type is quad, and C is a standard interior vertex,
+  // If C is a standard interior smooth or dart vertex,
   // then the "standard vertex ring" is the list of 2*N+1 points 
-  // (C, P[0], Q[0], ...., P[N-1], Q[N-1]), where Q[I] is the vertex of quad F[i] diagonally across from C.
+  // (C, P[0], Q[0], ...., P[N-1], Q[N-1]), 
+  // where Q[I] is the vertex of quad F[i] diagonally across from C.
   //
-  // If the facet type is quad, and C is a standard boundary vertex,
+  // If C is a standard boundary vertex,
   // then the "standard vertex ring" is the list of 2*N points 
   // (C, P[0], Q[0], ...., P[N-1]).
 

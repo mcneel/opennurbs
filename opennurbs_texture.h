@@ -233,21 +233,20 @@ public:
   // list of pre-defined channel ids
   enum class MAPPING_CHANNEL : unsigned int
   {
-    tc_channel      = 0U,     // Use the texture coordinate values
-                             // currently on the geometric object.
-    default_channel = 1U,	 // Use either default mappingU, or the "Custom" mapping applied to the object
+    tc_channel      = 0U, // Deprecated. Use 'default_channel' instead.
+    default_channel = 1U, // Use either default mapping, or the "Custom" mapping applied to the object
 
-	  screen_based_channel					= 0xFFFFFFF1U,
-	  wcs_channel								= 0xFFFFFFF2U,
-	  wcs_box_channel							= 0xFFFFFFF3U,
-	  environment_map_box_channel				= 0xFFFFFFF4U,
-	  environment_map_light_probe_channel		= 0xFFFFFFF5U,
-	  environment_map_spherical_channel		= 0xFFFFFFF6U,
-	  environment_map_cube_map_channel		= 0xFFFFFFF7U,
+	  screen_based_channel                    = 0xFFFFFFF1U,
+	  wcs_channel                             = 0xFFFFFFF2U,
+	  wcs_box_channel                         = 0xFFFFFFF3U,
+	  environment_map_box_channel             = 0xFFFFFFF4U,
+	  environment_map_light_probe_channel     = 0xFFFFFFF5U,
+	  environment_map_spherical_channel       = 0xFFFFFFF6U,
+	  environment_map_cube_map_channel        = 0xFFFFFFF7U,
 	  environment_map_vcross_cube_map_channel = 0xFFFFFFF8U,
 	  environment_map_hcross_cube_map_channel = 0xFFFFFFF9U,
-	  environment_map_hemispherical_channel	= 0xFFFFFFFAU,
-	  environment_map_emap_channel			= 0xFFFFFFFFU,
+	  environment_map_hemispherical_channel   = 0xFFFFFFFAU,
+	  environment_map_emap_channel            = 0xFFFFFFFFU,
 
     srfp_channel = 0xFFFFFFFEU, // Use surface parameterization.
     emap_channel = 0xFFFFFFFFU  // Environment map the geometric object - deprecated.  Use environment_map_emap_channel instead
@@ -262,22 +261,24 @@ public:
 
   const ON_SHA1_Hash ContentHash() const;
 
-  // If the m_mapping_channel_id value is one of the built-in 
-  // mappings listed in the MAPPING_CHANNEL enum, then that 
-  // mapping is used.  Otherwise, if an object has rendering
-  // attributes with an ON_MappingChannel entry that has a 
-  // matching m_mapping_channel_id value, then the mapping 
-  // identified by ON_MappingChannel::m_mapping_id is used.
-  // A value of zero means no mapping is supplied
-  // and the texture coordinates on the mesh are
-  // used.
   void SetBuiltInMappingChannel(
     ON_Texture::MAPPING_CHANNEL built_in_mapping_channel_as_unsigned
     );
   void SetMappingChannel(
     unsigned int mapping_channel_id
     );
-  unsigned int m_mapping_channel_id = 0;
+
+  // If the m_mapping_channel_id value is one of the built-in 
+  // mappings listed in the MAPPING_CHANNEL enum, then that 
+  // mapping is used.  Otherwise, if an object has rendering
+  // attributes with an ON_MappingChannel entry that has a 
+  // matching m_mapping_channel_id value, then the mapping 
+  // identified by ON_MappingChannel::m_mapping_id is used.
+  // If a matching ON_MappingChannel::m_mapping_id is not
+  // found, then an attempt will be made to find a mapping
+  // with a ON_MappingChannel::m_mapping_id of 1. If that also
+  // fails, then surface parameter mapping will be used.
+  unsigned int m_mapping_channel_id = 1;
 
   // Image file
   //   If m_image_file_reference is set and m_image_file_reference.FullPath()

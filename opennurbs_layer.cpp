@@ -300,16 +300,6 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   {
     dump.Print("section hatch index = %d\n", index);
   }
-
-  const ON_Linetype* lt = CustomLinetype();
-  if (nullptr == lt)
-  {
-    dump.Print("no custom linetype\n");
-  }
-  else
-  {
-    dump.Print("contains custom linetype\n");
-  }
 }
 
 // 28 Sept. 2021
@@ -546,17 +536,20 @@ bool ON_Layer::Write(
     }
 
     // custom linetype (1.13)
-    {
-      const ON_Linetype* linetype = CustomLinetype();
-      if (linetype)
-      {
-        c = ON_LayerTypeCodes::CustomLinetype; // 33
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = linetype->Write(file);
-        if (!rc) break;
-      }
-    }
+    // 17 Feb 2023 S. Baer
+    // Custom linetypes were an experiment that ended up making the UI more complicated
+    // than necessary. Do not write any custom linetype data into the 3dm file.
+    //{
+    //  const ON_Linetype* linetype = CustomLinetype();
+    //  if (linetype)
+    //  {
+    //    c = ON_LayerTypeCodes::CustomLinetype; // 33
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = linetype->Write(file);
+    //    if (!rc) break;
+    //  }
+    //}
 
     // 0 indicates end of new non-default attributes
     c = 0;
@@ -816,7 +809,11 @@ bool ON_Layer::Read(
                         ON_Linetype lt;
                         rc = lt.Read(file);
                         if (!rc) break;
-                        SetCustomLinetype(lt);
+                        // 17 Feb 2023 S. Baer
+                        // Custom linetype per layer was a short lived experiment
+                        // We still need to read a linetype out of the few 3dm files
+                        // that have them, but we no longer set any sort of custom linetype
+                        //SetCustomLinetype(lt);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -2510,25 +2507,5 @@ void ON_Layer::SetSectionHatchRotation(double rotation)
   if (nullptr == m_private)
     m_private = new ON_LayerPrivate();
   m_private->m_section_hatch_rotation = rotation;
-}
-
-void ON_Layer::SetCustomLinetype(const ON_Linetype& linetype)
-{
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
-}
-
-const ON_Linetype* ON_Layer::CustomLinetype() const
-{
-  const ON_Linetype* rc = nullptr;
-  if (m_private)
-    rc = m_private->m_custom_linetype.get();
-  return rc;
-}
-void ON_Layer::RemoveCustomLinetype()
-{
-  if (m_private)
-    m_private->m_custom_linetype.reset();
 }
 

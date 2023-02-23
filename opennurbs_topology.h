@@ -137,6 +137,11 @@ public:
     ///</summary>
     InteriorSlit = 16384,
 
+    ///<summary> 
+    /// The InteriorSharp edge has two faces with a guaranteed surface tangent continuity.
+    /// An InteriorSharp edge is an InteriorSmooth edge with added SubD sharpness.
+    ///</summary>
+    InteriorSharp = 32768,
 
     ///<summary> 
     /// ON_ComponentAttributes::EdgeAttributes::Mask can be used to isolate EdgeAttributes bits

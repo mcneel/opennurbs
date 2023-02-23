@@ -2005,6 +2005,8 @@ const ON_Font* ON_FontFaceQuartet::Face(
     return m_italic;
   case ON_FontFaceQuartet::Member::BoldItalic:
     return m_bold_italic;
+  case ON_FontFaceQuartet::Member::Unset:
+    break;
   }
   return nullptr;
 }
@@ -5292,6 +5294,8 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
         break;
       case ON_FontFaceQuartet::Member::BoldItalic:
         bolditalic_faces.Append(f);
+        break;
+      case ON_FontFaceQuartet::Member::Unset:
         break;
       };
     }

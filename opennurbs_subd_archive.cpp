@@ -850,7 +850,7 @@ bool ON_SubDEdge::Write(
       break;
     if (!archive.WriteDouble(2,m_sector_coefficient))
       break;
-    if (!archive.WriteDouble(Sharpness(0.0,0.0,0.0)))
+    if (!archive.WriteDouble(this->m_sharpness[0]))
       break;
     if (!Internal_WriteVertexList(2, m_vertex, archive))
       break;
@@ -863,6 +863,15 @@ bool ON_SubDEdge::Write(
       if (!archive.WriteChar((unsigned char)0U))
         break;
       return true;
+    }
+
+    if (archive.Archive3dmVersion() >= 80)
+    {
+      // 2nd sharpness added Jan 2023 to v8 files.
+      if (!archive.WriteChar((unsigned char)8U))
+        break;
+      if (!archive.WriteDouble(this->m_sharpness[1]))
+        break;
     }
 
     return Internal_FinishWritingComponentAdditions(archive);
@@ -888,7 +897,7 @@ bool ON_SubDEdge::Read(
     unsigned char edge_tag = 0;
     unsigned short face_count = 0;
     double sector_coefficient[2] = { 0 };
-    double sharpness = 0.0;
+    double sharpness0 = 0.0;
 
     if (!ReadBase(archive,base))
       break;
@@ -898,7 +907,7 @@ bool ON_SubDEdge::Read(
       break;
     if (!archive.ReadDouble(2,sector_coefficient))
       break;
-    if (!archive.ReadDouble(&sharpness))
+    if (!archive.ReadDouble(&sharpness0))
       break;
 
     ON_SubDVertex* v[2] = { 0 };
@@ -923,7 +932,6 @@ bool ON_SubDEdge::Read(
 
     e->m_sector_coefficient[0] = sector_coefficient[0];
     e->m_sector_coefficient[1] = sector_coefficient[1];
-    e->SetSharpness(sharpness);
 
     if (!Internal_ReadFacePtrList(archive,face_count,sizeof(e->m_face2)/sizeof(e->m_face2[0]),e->m_face2,e->m_facex_capacity,e->m_facex))
       break;
@@ -937,6 +945,24 @@ bool ON_SubDEdge::Read(
       if (false == archive.ReadChar(&sz) || 0 != sz)
         break;
       return true;
+    }
+
+    if (archive.Archive3dmVersion() >= 80)
+    {
+      unsigned char sz;
+      if (false == archive.ReadChar(&sz))
+        break;
+      if (ON_SubDComponentArchiveAdditionEndMark == sz)
+        return true;
+      if (8 != sz)
+        break; // error
+
+      // 2nd sharpness added Jan 2023 to v8 files.
+      double sharpness1 = 0.0;
+      if (false == archive.ReadDouble(&sharpness1))
+        break;
+      if (e->IsSmooth())
+        e->SetSharpnessForExperts(ON_SubDEdgeSharpness::FromInterval(sharpness0,sharpness1));
     }
 
     return Internal_FinishReadingComponentAdditions(archive);
