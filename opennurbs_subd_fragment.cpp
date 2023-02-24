@@ -3381,7 +3381,8 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(
   // If this function changes, then a parallel change must be made in
   // ON_SubDLevel::CopyEvaluationCacheForExperts(const ON_SubDLevel& src, ON_SubDHeap& this_heap)
   // so it uses the same automatic density value.
-  return ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(adaptive_subd_display_density,subd.FaceCount());
+  unsigned int display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(adaptive_subd_display_density, subd.FaceCount());
+  return display_density;
 }
 
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(

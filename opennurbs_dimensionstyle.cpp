@@ -630,6 +630,8 @@ ON_DimStyle::LengthDisplay ON_DimStyle::LengthDisplayFromUnitsAndFormat(
     case ON::LengthUnitSystem::Feet:
       display = ON_DimStyle::LengthDisplay::FeetDecimal;
       break;
+    default:
+      break;
     }
   }
   return display;
@@ -4761,11 +4763,13 @@ void ON_DimStyle::SetUnitSystemFromContext(
 
   switch (dim_style_units)
   {
-  case ON::LengthUnitSystem::None:
-  case ON::LengthUnitSystem::CustomUnits:
-  case ON::LengthUnitSystem::Unset:
-    dim_style_units = ON::LengthUnitSystem::None;
-    break;
+    case ON::LengthUnitSystem::None:
+    case ON::LengthUnitSystem::CustomUnits:
+    case ON::LengthUnitSystem::Unset:
+      dim_style_units = ON::LengthUnitSystem::None;
+      break;
+    default:
+      break;
   }
   
   for (int pass = 0; pass < 3; pass++)

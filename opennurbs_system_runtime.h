@@ -43,7 +43,7 @@
 #define ON_RUNTIME_WIN
 #endif
 
-#elif defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+#elif defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(ANDROID)
 // __EMSCRIPTEN__ is for a web assembly compile which currently compiles with the
 // same settings as an android build. We will need to add an ON_RUNTIME_WASM once
 // the __EMSCRIPTEN__ compile stabilizes
@@ -142,28 +142,43 @@
 #endif
 
 #elif defined(ON_RUNTIME_ANDROID)
+// Android is Linux
+#define ON_RUNTIME_LINUX
 
-#if !defined(ON_SIZEOF_WCHAR_T)
-#define ON_SIZEOF_WCHAR_T 4
-#endif
-
-#elif defined(ON_RUNTIME_LINUX)
-
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__LP64__) || defined(__ppc64__)
 #define ON_64BIT_RUNTIME
 #else
 #define ON_32BIT_RUNTIME
 #endif
 
+#if !defined(ON_SIZEOF_WCHAR_T)
+#define ON_SIZEOF_WCHAR_T 4
+#endif
+
+// It looks like all android compiles are little endian.
+// If there is a better test, please add it here
+#if !defined(ON_LITTLE_ENDIAN)
+#define ON_LITTLE_ENDIAN
+#endif
+
+#elif defined(ON_RUNTIME_LINUX)
 
 #if !defined(ON_SIZEOF_WCHAR_T)
 #define ON_SIZEOF_WCHAR_T 4
 #endif
 
-#if !defined(ON_LITTLE_ENDIAN)
-#if defined( __x86_64__ )
-#define ON_LITTLE_ENDIAN
+#include <cstdint>
+#if INTPTR_MAX == INT64_MAX
+#define ON_64BIT_RUNTIME
+#elif INTPTR_MAX == INT32_MAX
+#define ON_32BIT_RUNTIME
 #endif
+
+#include <endian.h>
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define ON_LITTLE_ENDIAN
+#else
+#define ON_BIG_ENDIAN
 #endif
 
 #endif

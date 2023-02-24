@@ -265,6 +265,10 @@ unsigned int ON_ComponentStatus::ClearStates(
   s1 &= mask;
   if (s1 != (m_status_flags & ALL_MASK))
   {
+    // 29 Dec 2022, Mikko, RH-71974:
+    // This is wrong, selected and highlighted are separate states. A thing can be not selected but
+    // still highlighted.
+    /*
     // If input was selected and highlighted,
     // and output is not selected,
     // and hightlight and not explictily cleared,
@@ -280,6 +284,7 @@ unsigned int ON_ComponentStatus::ClearStates(
       // Clear highlight automatically.
       s1 &= ~HIGHLIGHTED_BIT;
     }
+    */
 
     // preserve value of runtime mark bit on m_status_flags
     const unsigned char mark = (m_status_flags&RUNTIME_MARK_BIT);

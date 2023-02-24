@@ -648,7 +648,7 @@ public:
   // (relative display device coordinates)
   ON_3dmViewPosition m_position;
 
-  ON::view_type m_view_type; // model, page, or nested
+  ON::view_type m_view_type; // model, page, nested or uveditor
 
   // If m_view_type == ON::page_view_type, then the m_page_settings
   // records the page size.  Otherwise, m_page_settings should
@@ -825,6 +825,11 @@ public:
   void SetReflectionRenderEnvironmentOverride(bool on);
   ON_UUID ReflectionRenderEnvironment(void) const;
   void SetReflectionRenderEnvironment(const ON_UUID& id);
+
+  // Access to rendering presets.
+  ON_UUID CurrentRenderingPreset(void) const;
+  void SetCurrentRenderingPreset(const ON_UUID& uuid);
+  void GetRenderingPresets(ON_SimpleArray<ON_UUID>& presets) const;
 
 private:
   unsigned short m_reserved1 = 0;

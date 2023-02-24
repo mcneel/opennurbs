@@ -22,12 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-// These settings are inside the ON_RDK_RENDERING section.
-
-#define ON_RDK_GAMMA                   L"gamma"
-#define ON_RDK_USE_POST_PROCESS_GAMMA  L"use-post-process-gamma"
-#define ON_RDK_USE_LINEAR_WORKFLOW     L"use-linear-workflow"
-
 class ON_LinearWorkflow::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -132,6 +126,16 @@ bool ON_LinearWorkflow::PostProcessGammaOn(void) const
 void ON_LinearWorkflow::SetPostProcessGammaOn(bool on)
 {
 	m_impl->SetParameter(XMLPath(), ON_RDK_USE_POST_PROCESS_GAMMA, on);
+}
+
+bool ON_LinearWorkflow::PostProcessFrameBuffer(void) const
+{
+  return true; // Always on. For possible future use.
+}
+
+void ON_LinearWorkflow::SetPostProcessFrameBuffer(bool)
+{
+	// Always on. Ignore the call.
 }
 
 float ON_LinearWorkflow::PostProcessGamma(void) const

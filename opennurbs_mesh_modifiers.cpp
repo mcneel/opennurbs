@@ -1249,9 +1249,14 @@ static const wchar_t* CapTypeToString(ON_CurvePiping::CapTypes ct)
 {
   switch (ct)
   {
-  case ON_CurvePiping::CapTypes::Flat: return ON_CURVE_PIPING_FLAT;
-  case ON_CurvePiping::CapTypes::Box:  return ON_CURVE_PIPING_BOX;
-  case ON_CurvePiping::CapTypes::Dome: return ON_CURVE_PIPING_DOME;
+    case ON_CurvePiping::CapTypes::Flat:
+      return ON_CURVE_PIPING_FLAT;
+    case ON_CurvePiping::CapTypes::Box:
+      return ON_CURVE_PIPING_BOX;
+    case ON_CurvePiping::CapTypes::Dome:
+      return ON_CURVE_PIPING_DOME;
+    case ON_CurvePiping::CapTypes::None:
+      return ON_CURVE_PIPING_NONE;
   }
 
   return ON_CURVE_PIPING_NONE;

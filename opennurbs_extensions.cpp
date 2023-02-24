@@ -4847,9 +4847,14 @@ static const wchar_t* PostEffectTypeString(ON_PostEffect::Types type)
 {
   switch (type)
   {
-  case ON_PostEffect::Types::Early:       return ON_RDK_PEP_TYPE_EARLY;
-  case ON_PostEffect::Types::ToneMapping: return ON_RDK_PEP_TYPE_TONE;
-  case ON_PostEffect::Types::Late:        return ON_RDK_PEP_TYPE_LATE;
+    case ON_PostEffect::Types::Early:
+      return ON_RDK_PEP_TYPE_EARLY;
+    case ON_PostEffect::Types::ToneMapping:
+      return ON_RDK_PEP_TYPE_TONE;
+    case ON_PostEffect::Types::Late:
+      return ON_RDK_PEP_TYPE_LATE;
+    case ON_PostEffect::Types::Unset:
+      break;
   }
 
   ON_ASSERT(false);

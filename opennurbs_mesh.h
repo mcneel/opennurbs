@@ -3866,6 +3866,19 @@ Returns:
           bool bSeamCheck = true
           );
 
+  /*
+  Description:
+    Invalidates all cached texture coordinates. Call this
+    function when you have made changes that will affect
+    the texture coordinates on the mesh.
+  Parameters:
+    bOnlyInvalidateCachedSurfaceParameterMapping - [in]
+      If true then only cached surface parameter mapping
+      texture coordinates will be invalidated. Use this
+      after making changes to the m_S array.
+  */
+  void InvalidateCachedTextureCoordinates(bool bOnlyInvalidateCachedSurfaceParameterMapping = false);
+
   bool EvaluateMeshGeometry( const ON_Surface& ); // evaluate surface at tcoords
                                                   // to set mesh geometry
 
@@ -5345,21 +5358,26 @@ The map is an array of length m_F.Count(), ngon_map[]
 
 
   /////////////////////////////////////////////////////////////////
-  // Implementation - surface parameters and packed texture 
-  // information
+  // Texture coordinates / surface parameters
   //
-  // If m_S.Count() == m_V.Count(), then the mesh is a tesselation
-  // of a parameteric surface and m_S[j] is the surface parameter at
-  // m_V[j].  Storing values in m_S[] is OPTIONAL.
-  //
-  // If m_srf_scale[] has positive values, then they report
+  // If m_S.Count() == m_V.Count(), then the mesh has texture
+  // coordinates, or it is a tesselation of a parameteric surface
+  // and m_S[j] is the texture coordinate / surface parameter at
+  // m_V[j].
+  // If the values in m_S are changed, then you need to call
+  // InvalidateCachedTextureCoordinates().
+  // Storing values in m_S[] is OPTIONAL.
+  ON_2dPointArray m_S;
+
+  // Packed texture information
+  ON_Interval m_srf_domain[2]; // surface evaluation domain.
+
+  // If m_srf_scale[] has positive values, then they represent
   // the world coordinate size of a rectangle that would 
   // minimize texture distortion if it were mapped to the
   // mesh using normalized surface evaluation parameters.
   // This information is used to calculate high quality 
   // packed texture coordinates.  
-  ON_2dPointArray m_S;
-  ON_Interval m_srf_domain[2]; // surface evaluation domain.
   double m_srf_scale[2];
 
 
@@ -5368,7 +5386,6 @@ The map is an array of length m_F.Count(), ngon_map[]
   // If either of the m_packed_tex_domain[] intervals is a 
   // proper subinterval of (0,1), then a texture packing 
   // calculation assigned this subrectangle to this mesh.
-
   ON_Interval m_packed_tex_domain[2];
 
   // The m_packed_tex_rotate setting is valid only when

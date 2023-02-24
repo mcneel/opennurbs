@@ -3693,7 +3693,7 @@ public:
     return *this;
   }
 
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
@@ -3731,7 +3731,7 @@ public:
 
     return false;
   }
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
 
@@ -5812,6 +5812,24 @@ bool ON_Mesh::SetTextureCoordinatesEx(
   return rc;
 }
 
+void ON_Mesh::InvalidateCachedTextureCoordinates(bool bOnlyInvalidateCachedSurfaceParameterMapping)
+{
+  if (bOnlyInvalidateCachedSurfaceParameterMapping)
+  {
+    for (int i = m_TC.Count() - 1; i >= 0; i--)
+    {
+      if (m_TC[i].m_tag.m_mapping_type == ON_TextureMapping::TYPE::srfp_mapping)
+      {
+        m_TC.Remove(i);
+      }
+    }
+  }
+  else
+  {
+    m_TC.Destroy();
+  }
+}
+
 ON_MappingChannel::ON_MappingChannel()
 {
   Default();
@@ -6930,7 +6948,7 @@ class ON_PhysicallyBasedMaterialUserData : public ON_UserData
 private:
   ON_OBJECT_DECLARE(ON_PhysicallyBasedMaterialUserData);
 
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
@@ -6939,7 +6957,7 @@ private:
     description = L"ON_PhysicallyBasedMaterialUserData";
     return true;
   }
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
   

@@ -2733,6 +2733,9 @@ public:
   /// </summary>
   static const wchar_t  BlackRecyclingSymbol = (wchar_t)ON_UnicodeCodePoint::ON_BlackRecyclingSymbol;
 
+  /// <summary>WARNING SIGN U+26A0 (&#x26a0;)</summary>
+  static const wchar_t  WarningSign = (wchar_t)ON_UnicodeCodePoint::ON_WarningSign;
+
   /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
   /// By convention, U+FFFD is used to mark string elements where

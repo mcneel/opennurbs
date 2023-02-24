@@ -327,29 +327,6 @@ public:
 	int LinetypeIndex() const;
 
   /*
-  Description:
-    Layers can have optional custom linetypes associated with them. When a custom
-    linetype is attached to a layer, this linetype is used for a layer instead of
-    the linetype referenced by the linetype index. This function adds a custom
-    linetype for this layer.
-  */
-  void SetCustomLinetype(const ON_Linetype& linetype);
-
-  /*
-  Description:
-    Layers can have optional custom linetypes associated with them. This function
-    returns the custom linetype if one exists. If a custom linetype is not
-    attached to this layer, then an empty shared pointer is returned
-  */
-  const ON_Linetype* CustomLinetype() const;
-
-  /*
-  Description:
-    Remove any custom linetype associated with this layer
-  */
-  void RemoveCustomLinetype();
-
-  /*
   Returns:
     Returns true if objects on layer are visible.
   Remarks:

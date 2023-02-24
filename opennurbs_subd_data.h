@@ -155,6 +155,12 @@ public:
   unsigned char m_boundary_crease_count = 0;
   bool m_bBoundaryCrease[4] = {};
 
+  // m_sharp_edge_count = number of sharp edges in the quad boundary and m_edge_grid[4][2]  
+  unsigned char m_sharp_edge_count = 0;
+
+private:
+  unsigned char m_reserved[5];
+
 public:
   const ON_SubDVertex* m_vertex_grid[4][4] = {}; // vertex net m_quad_face corners = ([1][1], [2][1], [2][2], [1][2])
 
@@ -2079,6 +2085,29 @@ public:
     unsigned int edge_count,
     const ON_SubDEdgePtr* edge
   );
+  
+  /*
+  Description:
+    Spin an edge's endpoints around the boundary of its neighboring faces.
+    In a counter-clockwise spin (looking at faces from their shared up orientation):
+      The edge's start vertex is moved to the next vertex in the boundary
+      of the face on the right-hand side of the edge.
+      The edge's end vertex is moved to the next vertex in the boundary
+      of the face on the left-hand side of the edge.
+    Note that reversing the input edge does not change the result.
+  Parameters:
+    edge - [in]
+      edge to spin.
+    spin_clockwise - [in]
+      false spins the edge counter-clockwise, true spins the edge clockwise
+      in the adjacent faces.
+  Returns:
+    A pointer to the spun edge or nullptr if the input is not valid.
+  */
+  const ON_SubDEdge* SpinEdge(
+    ON_SubDEdge* edge,
+    bool spin_clockwise = false
+  );
 
   /*
   Returns:
@@ -3019,10 +3048,15 @@ public:
   ) const;
   
 public:
+
+  // NOTE WELL: 
+  // It is required that:
+  // 1) MaximumControlPointCapacity = 2*MinimumControlPointCapacity+1;
+  // 2) MaximumControlPointCapacity >= 3 + 2^ON_SubDEdgeSharpness::Maximum
   enum : unsigned char
   {
-    MinimumControlPointCapacity = 5,
-    MaximumControlPointCapacity = 11
+    MinimumControlPointCapacity = 9,
+    MaximumControlPointCapacity = 19
   };
 
 private:
