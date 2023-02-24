@@ -105,7 +105,8 @@ ON__UINT64 ON_NextContentSerialNumber()
 // It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
 // be constructed before any instance of a class derived from ON_ModelComponent.
 // That is why it is above the ClassId stuff in this .cpp file.
-std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(0);
+// Serial numbers below UINT32_MAX + 1 are reserved for Rhino use.
+std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(UINT32_MAX + 1ULL);
 
 std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
 
@@ -128,8 +129,14 @@ const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponent
 // The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
 const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
 
-const double ON_SubDEdge::InfinteSharpness = 5.0;
-const double ON_SubDEdge::SharpnessTolerance = 0.01;
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Zero;
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Nan = ON_SubDEdgeSharpness::FromConstant(ON_DBL_QNAN);
+
+// NOTE WELL: 
+// It is required that (3 + 2^ON_SubDEdgeSharpness::Maximum) <= ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity
+const double ON_SubDEdgeSharpness::Maximum = 4.0;
+const double ON_SubDEdgeSharpness::Tolerance = 0.01;
 
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
@@ -1516,7 +1523,7 @@ static const ON_ModelComponentTypeIterator ON_ModelComponentIterator_Init(
 const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::ExplicitComponentTypes(ON_ModelComponentIterator_Init(1));
 const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::TableComponentTypes(ON_ModelComponentIterator_Init(2));
 
-const ON_ModelComponent ON_ModelComponent::Unset;
+const ON_ModelComponent ON_ModelComponent::Unset(ON_ModelComponent::Type::Unset, (ON__UINT64) 0);
 
 const ON_ModelComponentReference ON_ModelComponentReference::Empty;
 const ON_ModelComponentWeakReference ON_ModelComponentWeakReference::Empty;

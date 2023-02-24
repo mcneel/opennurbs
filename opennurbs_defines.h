@@ -1149,9 +1149,11 @@ public:
   // Defines the current working space.
   enum active_space : unsigned char
   {
-    no_space    = 0,
-    model_space = 1, // 3d modeling or "world" space
-    page_space  = 2  // page/layout/paper/printing space
+    no_space          = 0,
+    model_space       = 1, // 3d modeling or "world" space
+    page_space        = 2, // page/layout/paper/printing space
+    uveditor_space    = 3, // UV Editor space
+    blockeditor_space = 4  // Block Editor space
   };
 
   static active_space ActiveSpace(int); // convert integer to active_space enum
@@ -2037,6 +2039,10 @@ public:
     nested_view_type = 2,       // This view is a "model" view that is nested
                                 // in another view.  The nesting and parent
                                 // information is saved in ON_3dmView.
+    uveditor_view_type = 3,     // This view is a UV Editor view that shows
+                                // UV meshes in a special view port.
+    blockeditor_view_type = 4,  // This view is a Block Editor view that shows
+                                // block definition in a special view port.
   };
   static view_type ViewType(int); // convert integer to display_mode enum
 

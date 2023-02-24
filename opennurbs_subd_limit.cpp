@@ -456,7 +456,7 @@ static bool IsOrdinarySmoothQuadCornerVertex(
     if ( nullptr == e )
       return ON_SUBD_RETURN_ERROR(false);    
     // Test for exact tag here - do not call e->IsSmooth() because this is a rare case where X tags need to be rejected.
-    if ( false == e->IsSmoothNotX() )
+    if ( false == e->IsSmoothNotXNotSharp() )
       return false;
     if ( 2 != e->m_face_count)
       return ON_SUBD_RETURN_ERROR(false);
@@ -470,6 +470,9 @@ static bool IsOrdinarySmoothQuadCornerVertex(
     const double sector_coefficient = e->m_sector_coefficient[outer_vertex_index];
     if ( !(0.5 == sector_coefficient) )
       return false;
+
+    // If we get this far, then this edge has 
+    // the standared smooth edge Catmull Clark subdivision point.
   }
   return true;
 }
@@ -487,6 +490,8 @@ bool ON_SubDQuadNeighborhood::VertexGridIsExactCubicPatch(
   if (m_exact_quadrant_patch_count < 4)
     return false;
   if (m_boundary_crease_count > 2)
+    return false;
+  if (m_sharp_edge_count > 0)
     return false;
 
   int fcount_check;
@@ -685,6 +690,34 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
     break;
   }
 
+  m_sharp_edge_count = 0;
+  bool bSharpQuadrant[4] = {};
+  for(unsigned int i = 0; i < 4; ++i)
+  {
+    if (nullptr != m_center_edges[i] && m_center_edges[i]->IsSharp())
+    {
+      ++m_sharp_edge_count;
+      bSharpQuadrant[0] = true;
+      bSharpQuadrant[1] = true;
+      bSharpQuadrant[2] = true;
+      bSharpQuadrant[3] = true;
+    }
+    if (nullptr != this->m_edge_grid[i][0] && this->m_edge_grid[i][0]->IsSharp())
+    {
+      ++m_sharp_edge_count;
+      bSharpQuadrant[i] = true;
+      bSharpQuadrant[(i + 1U) % 4U] = true;
+      bSharpQuadrant[(i + 3U) % 4U] = true;
+    }
+    if (nullptr != this->m_edge_grid[i][1] && this->m_edge_grid[i][1]->IsSharp())
+    {
+      ++m_sharp_edge_count;
+      bSharpQuadrant[i % 4U] = true;
+      bSharpQuadrant[(i + 1U) % 4U] = true;
+      bSharpQuadrant[(i + 2U) % 4U] = true;
+    }
+  }
+
   ////////////////////////////////////////////////////////////////////////////
   //
   // Set 
@@ -822,6 +855,8 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
           continue;
       }
     }
+    if (bSharpQuadrant[corner_index])
+      continue;
     if (bExtraordinaryCornerVertex[corner_index])
       continue;
     if (bExtraordinaryCornerVertex[(corner_index + 1) % 4])
@@ -1831,26 +1866,34 @@ bool ON_SubDQuadNeighborhood::Internal_GetApproximateCV(
   return bHaveApproximateCV;
 }
 
-
-
-static double ON_SubDQuadFaceTopology_CopySectorWeight(
+static bool ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(
   const ON_SubDEdge* e0,
-  const ON_SubDVertex* e0v
-  )
+  const ON_SubDVertex* e0v,
+  ON_SubDEdge* e1,
+  const ON_SubDVertex* e1v
+)
 {
-  if (nullptr == e0 || nullptr == e0v)
+  if (nullptr == e0 || nullptr == e0v || nullptr == e1 || nullptr == e1v)
     return ON_SUBD_RETURN_ERROR(false);
 
-  if (ON_SubDEdgeTag::Smooth != e0->m_edge_tag && ON_SubDEdgeTag::SmoothX != e0->m_edge_tag )
-    return ON_SubDSectorType::IgnoredSectorCoefficient;
+  if (e0->IsSharp())
+  {
+    const bool bReversed = ((e0->m_vertex[0] == e0v) ? 0 : 1) != ((e1->m_vertex[0] == e1v) ? 0 : 1);
+    e1->SetSharpnessForExperts(e0->SubdivideSharpness(e0v, bReversed));
+  }
+  else
+    e1->ClearSharpnessForExperts();
+  return true;
+}
 
-  if (e0v == e0->m_vertex[0])
-    return e0->m_sector_coefficient[0];
-  
-  if (e0v == e0->m_vertex[1])
-    return e0->m_sector_coefficient[1];
-
-  return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
+static bool ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(
+  const ON_SubDEdge* e0,
+  const ON_SubDVertex* e0v,
+  ON_SubDEdgePtr e1,
+  const ON_SubDVertex* e1v
+)
+{
+  return ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(e0, e0v, e1.Edge(), e1v);
 }
 
 static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
@@ -1878,7 +1921,7 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
       v0_weight = ON_SubDSectorType::IgnoredSectorCoefficient;
     else
     {
-      v0_weight = ON_SubDQuadFaceTopology_CopySectorWeight(e0, qv0);
+      v0_weight = ON_SubDSectorType::CopyEdgeSectorCoefficient(e0, qv0, ON_UNSET_VALUE);
       if (false == ON_SubDSectorType::IsValidSectorCoefficientValue(v0_weight,false))
         return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
     }
@@ -1900,6 +1943,7 @@ static const ON_SubDEdgePtr ON_SubDQuadFaceTopology_SubdivideEdge(
     if ( ON_SubDEdgeTag::Smooth != e1->m_edge_tag || ON_SubDEdgeTag::SmoothX != e0->m_edge_tag)
       return ON_SUBD_RETURN_ERROR(ON_SubDEdgePtr::Null);
   }
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(e0, qv0, e1, qv1);
 
   return ep1;
 }
@@ -1941,10 +1985,12 @@ static ON_SubDFace* ON_SubDQuadFaceTopology_SubdivideFace(
   ON_SubDEdgePtr e12 = fsh.AllocateEdge(v[1],v1_weight,v[2],v2_weight);
   if ( nullptr == e12.Edge())
     return ON_SUBD_RETURN_ERROR(nullptr);
+  // e12 is interior to f0 and has no sharpness
 
   ON_SubDEdgePtr e23 = fsh.AllocateEdge(v[2],v2_weight,v[3],v3_weight);
   if ( nullptr == e23.Edge())
     return ON_SUBD_RETURN_ERROR(nullptr);
+  // e23 is interior to f0 and has no sharpness
 
   ON_SubDEdgePtr f1_epts[4] = { e1[0], e12, e23, e1[1].Reversed() };
 
@@ -2287,10 +2333,11 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[2][1], 
     ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[3][1], 
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[0], qf0_vertices[1])
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[0], qf0_vertices[1], ON_UNSET_VALUE)
     );
   if ( edge_grid1[1][0].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[0], qf0_vertices[1], edge_grid1[1][0], vertex_grid1[3][1]);
 
   edge_grid1[1][1] = fsh.AllocateEdge(
     bUseFindOrAllocate,
@@ -2301,6 +2348,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     );
   if (edge_grid1[1][1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  // NOTE: edge_grid1[1][1] is interior to input face f0 and has zero sharpness
 
   edge_grid1[2][0] = fsh.AllocateEdge(
     bUseFindOrAllocate,
@@ -2311,16 +2359,18 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     );
   if (edge_grid1[2][0].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  // NOTE: edge_grid1[2][0] is interior to input face f0 and has zero sharpness
 
   edge_grid1[2][1] = fsh.AllocateEdge(
     bUseFindOrAllocate,
     vertex_grid1[1][2],
     ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[1][3],
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[3], qf0_vertices[3])
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[3], qf0_vertices[3], ON_UNSET_VALUE)
     );
   if (edge_grid1[2][1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[3], qf0_vertices[3], edge_grid1[2][1], vertex_grid1[1][3]);
 
   // Add the 5 remaining elements to face_grid1[][]
   ON_SubDEdgePtr fedges[4];
@@ -2343,16 +2393,19 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       );
     if (fedges[0].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
+    // NOTE: fedges[0] is interior to an input face and cannot be sharp.
+
     // m_edge_grid[q0fvi][1]
     fedges[1] = fsh.AllocateEdge(
       bUseFindOrAllocate,
       vertex_grid1[3][0],
       ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex_grid1[3][1],
-      ON_SubDQuadFaceTopology_CopySectorWeight(m_edge_grid[q0fvi][1], qf0_vertices[1])
+      ON_SubDSectorType::CopyEdgeSectorCoefficient(m_edge_grid[q0fvi][1], qf0_vertices[1], ON_UNSET_VALUE)
       );
     if (fedges[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
+    ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(m_edge_grid[q0fvi][1], qf0_vertices[1], fedges[1], vertex_grid1[3][1]);
 
     face_grid1[2][0] = fsh.AllocateQuad(zero_face_id, parent_face_id,
       fedges[0],
@@ -2376,13 +2429,13 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   fedges[1] = fsh.AllocateEdge(
     bUseFindOrAllocate,
     vertex_grid1[3][1],
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[1], qf0_vertices[1]),
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[1], qf0_vertices[1], ON_UNSET_VALUE),
     vertex_grid1[3][2],
     ON_SubDSectorType::IgnoredSectorCoefficient
     );
   if (fedges[1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
-
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[1], qf0_vertices[1], fedges[1], vertex_grid1[3][1]);
 
   face_grid1[2][1] = fsh.AllocateQuad(
     zero_face_id,
@@ -2409,20 +2462,22 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[3][2],
     ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[3][3],
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[1], qf0_vertices[2])
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[1], qf0_vertices[2], ON_UNSET_VALUE)
     );
   if (fedges[1].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[1], qf0_vertices[2], fedges[1], vertex_grid1[3][3]);
 
   fedges[2] = fsh.AllocateEdge(
     bUseFindOrAllocate,
     vertex_grid1[3][3],
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[2], qf0_vertices[2]),
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[2], qf0_vertices[2], ON_UNSET_VALUE),
     vertex_grid1[2][3],
     ON_SubDSectorType::IgnoredSectorCoefficient
     );
   if (fedges[2].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[2], qf0_vertices[2], fedges[2], vertex_grid1[3][3]);
 
   face_grid1[2][2] = fsh.AllocateQuad(
     zero_face_id, 
@@ -2449,10 +2504,11 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     vertex_grid1[2][3],
     ON_SubDSectorType::IgnoredSectorCoefficient,
     vertex_grid1[1][3],
-    ON_SubDQuadFaceTopology_CopySectorWeight(qf0_edges[2], qf0_vertices[3])
+    ON_SubDSectorType::CopyEdgeSectorCoefficient(qf0_edges[2], qf0_vertices[3], ON_UNSET_VALUE)
     );
   if (fedges[2].IsNull())
     return ON_SUBD_RETURN_ERROR(false);
+  ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(qf0_edges[2], qf0_vertices[3], fedges[2], vertex_grid1[1][3]);
 
   face_grid1[1][2] = fsh.AllocateQuad(
     zero_face_id, parent_face_id,
@@ -2477,12 +2533,13 @@ bool ON_SubDQuadNeighborhood::Subdivide(
     fedges[1] = fsh.AllocateEdge(
       bUseFindOrAllocate,
       vertex_grid1[1][3],
-      ON_SubDQuadFaceTopology_CopySectorWeight(m_edge_grid[(q0fvi+3)%4][0], qf0_vertices[3]),
+      ON_SubDSectorType::CopyEdgeSectorCoefficient(m_edge_grid[(q0fvi+3)%4][0], qf0_vertices[3], ON_UNSET_VALUE),
       vertex_grid1[0][3],
       ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( fedges[1].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
+    ON_SubDQuadFaceTopology_SetSubdividedEdgeSharpness(m_edge_grid[(q0fvi + 3) % 4][0], qf0_vertices[3], fedges[1], vertex_grid1[1][3]);
 
     fedges[2] = fsh.AllocateEdge(
       bUseFindOrAllocate,
@@ -2493,6 +2550,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
       );
     if ( fedges[2].IsNull())
       return ON_SUBD_RETURN_ERROR(false);
+    // NOTE: fedges[2] is interior to an input face and cannot be sharp.
 
     face_grid1[0][2] = fsh.AllocateQuad(
       zero_face_id, parent_face_id,
@@ -2804,8 +2862,8 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   if ( nullptr == vertex0 )
     return ON_SUBD_RETURN_ERROR(false);
 
+  ON_SubDEdgePtr edge0_ptr = ON_SubDEdgePtr::Null;
   const ON_SubDEdge* edge0 = nullptr;
-  ON__UINT_PTR edge0_dir = 0;
   ON_SubDVertex* vertex1 = nullptr;
   ON_SubDEdgePtr edge1 = ON_SubDEdgePtr::Null;
 
@@ -2822,13 +2880,12 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
         return ON_SUBD_RETURN_ERROR(false);
       face_m_edges = face->m_edgex;
     }
-    const ON__UINT_PTR edge0_ptr = face_m_edges->m_ptr;
+    edge0_ptr = *face_m_edges;
 
-    edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr);
+    edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr.m_ptr);
     if (nullptr == edge0 || nullptr == edge0->m_vertex[0] || nullptr == edge0->m_vertex[1])
       return ON_SUBD_RETURN_ERROR(false);
-    edge0_dir = ON_SUBD_EDGE_DIRECTION(edge0_ptr);    
-    vertex0 = edge0->m_vertex[edge0_dir];
+    vertex0 = edge0_ptr.RelativeVertex(0);
     if (vertex0->m_edge_count < 2)
       return ON_SUBD_RETURN_ERROR(false);
    
@@ -2868,6 +2925,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
+    // edge1 is interior to face and has no sharpness
     if ( 0 != edge1.EdgeDirection() )
       return ON_SUBD_RETURN_ERROR(false);
     if ( i+1 != edge1.EdgeId() )
@@ -2892,17 +2950,10 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   {
     if (4 == i)
       face_m_edges = face->m_edgex;
-    const ON__UINT_PTR edge0_ptr = face_m_edges->m_ptr;
+    ON_SubDEdgePtr prev_edge0_ptr = edge0_ptr;
+    edge0_ptr = *face_m_edges;
+    vertex0 = edge0_ptr.RelativeVertex(0);
 
-    const ON_SubDEdge* prev_edge0 = edge0;
-    //const ON__UINT_PTR prev_edge0_dir = edge0_dir;
-    edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr);
-    edge0_dir = ON_SUBD_EDGE_DIRECTION(edge0_ptr);
-    vertex0 = edge0->m_vertex[edge0_dir];
-
-    // ring_vertex1[0] = subdivision vertex on input face->Edge(i-1) = prev_edge0
-    // ring_vertex1[1] = subdivision vertex on input face->Vertex(i) = vertex0
-    // ring_vertex1[2] = subdivision vertex on input face->Edge(i) = edge0
     if (0 == i)
     {
       ring_vertex1[0] = ring_vertex1[3];
@@ -2923,21 +2974,23 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       ring_vertex1[0],
       ON_SubDSectorType::IgnoredSectorCoefficient,
       ring_vertex1[1],
-      ON_SubDQuadFaceTopology_CopySectorWeight(prev_edge0, vertex0)
+      ON_SubDSectorType::CopyEdgeSectorCoefficient(prev_edge0_ptr.Edge(), vertex0, ON_UNSET_VALUE)
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
+    edge1.SetRelativeSharpness(prev_edge0_ptr.RelativeSharpness().Subdivided(1));
     face1_eptrs[1] = edge1;
 
 
     edge1 = m_fsh.AllocateEdge(
       ring_vertex1[1],
-      ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0),
+      ON_SubDSectorType::CopyEdgeSectorCoefficient(edge0_ptr.Edge(), vertex0, ON_UNSET_VALUE),
       ring_vertex1[2],
       ON_SubDSectorType::IgnoredSectorCoefficient
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
+    edge1.SetRelativeSharpness(edge0_ptr.RelativeSharpness().Subdivided(0));
     face1_eptrs[2] = edge1;
 
     face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);
@@ -2958,10 +3011,9 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   {
     if (4 == i)
       face_m_edges = face->m_edgex;
-    const ON__UINT_PTR edge0_ptr = face_m_edges->m_ptr;
-    edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr);
-    edge0_dir = ON_SUBD_EDGE_DIRECTION(edge0_ptr);
-    vertex0 = edge0->m_vertex[edge0_dir];
+    edge0_ptr = *face_m_edges;
+    edge0 = ON_SUBD_EDGE_POINTER(edge0_ptr.m_ptr);
+    vertex0 = edge0_ptr.RelativeVertex(0);
 
     // ring_vertex1[0] = subdivision vertex on input face->Edge(i-1)
     // ring_vertex1[1] = subdivision vertex on input face->Vertex(i) = vertex0
@@ -2980,7 +3032,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     }
 
 
-    // debugggin checks.
+    // validity checks.
     // ring_vertex1[0] counts vary
     if ( 2 != ring_vertex1[1]->m_edge_count || 1 != ring_vertex1[1]->m_face_count)
       return ON_SUBD_RETURN_ERROR(false);
@@ -3031,7 +3083,8 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       );
     if ( edge1.IsNull())
       return ON_SUBD_RETURN_ERROR(false);
-  } 
+    // edge1 is interior to neighbor_face0 and has no sharpness
+  }
 
   /////////////////////////////////////////////////////////////////////////////////
   //
@@ -3211,7 +3264,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       face1_corners[2] = const_cast<ON_SubDVertex*>(edge1_quartet[3]->m_vertex[1]);
       face1_corners[3] = ring_vertex1[2];
 
-      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[1], at_crease2_weight);
+      edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDSectorType::CopyEdgeSectorCoefficient(edge0, vertex0, ON_UNSET_VALUE), face1_corners[1], at_crease2_weight);
       if ( edge1.IsNull() )
         return ON_SUBD_RETURN_ERROR(false);
       face1_eptrs[0] = edge1;
@@ -3257,7 +3310,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       }
       else
       {
-        edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0), face1_corners[3], at_crease2_weight );
+        edge1 = m_fsh.FindOrAllocateEdge(face1_corners[0], ON_SubDSectorType::CopyEdgeSectorCoefficient(edge0, vertex0, ON_UNSET_VALUE), face1_corners[3], at_crease2_weight );
         if ( edge1.IsNull() )
           return ON_SUBD_RETURN_ERROR(false);
         face1_eptrs[3] = edge1.Reversed();
@@ -3458,19 +3511,19 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
         switch (j)
         {
         case 0:
-          {
-            edge0 = sit.CurrentEdge(0);
-            if (nullptr == edge0)
-              return ON_SUBD_RETURN_ERROR(false);
-            edge1 = m_fsh.FindOrAllocateEdge(
-              face1_corners[0],
-              ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0),
-              face1_corners[1],
-              at_crease2_weight
-            );
-            if ( 0 == sit_limit && edge0 == sit_first_edge0 )
-              sit_first_eptr1 = edge1;
-          }
+          edge0 = sit.CurrentEdge(0);
+          if (nullptr == edge0)
+            return ON_SUBD_RETURN_ERROR(false);
+          edge1 = m_fsh.FindOrAllocateEdge(
+            face1_corners[0],
+            ON_SubDSectorType::CopyEdgeSectorCoefficient(edge0, vertex0, ON_UNSET_VALUE),
+            face1_corners[1],
+            at_crease2_weight
+          );
+          if ( 0 == sit_limit && edge0 == sit_first_edge0 )
+            sit_first_eptr1 = edge1;
+          if (edge0->IsSharp())
+            edge1.SetRelativeSharpness(edge0->SubdivideSharpness(vertex0, vertex0 == edge0->m_vertex[1]));
           break;
         case 1:
           edge1 = m_fsh.FindOrAllocateEdge(
@@ -3497,8 +3550,10 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
               face1_corners[3],
               at_crease2_weight,                
               face1_corners[0],
-              ON_SubDQuadFaceTopology_CopySectorWeight(edge0, vertex0)
+              ON_SubDSectorType::CopyEdgeSectorCoefficient(edge0, vertex0, ON_UNSET_VALUE)
             );
+            if (edge0->IsSharp())
+              edge1.SetRelativeSharpness(edge0->SubdivideSharpness(vertex0, vertex0 == edge0->m_vertex[0]));
           }
           break;
         }

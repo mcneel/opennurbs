@@ -280,6 +280,11 @@ public:
     ON_wString& valid_name
   );
 
+private:
+  friend class CRhinoObject;
+
+  ON_ModelComponent(ON__UINT64 runtime_serial_number) ON_NOEXCEPT;
+
 public:
   static const ON_ModelComponent Unset;
 

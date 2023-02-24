@@ -582,7 +582,7 @@ public:
 
 
 
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
@@ -607,7 +607,7 @@ public:
         double* max_deviation = nullptr
         ) const;
   // NOTE: some compilers believe the above is an override and msvc/others do not
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
 

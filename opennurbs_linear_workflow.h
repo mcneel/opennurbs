@@ -52,6 +52,12 @@ public:
   // Set post-process gamma enabled state.
   void SetPostProcessGammaOn(bool on);
 
+  // Get post-process frame buffer enabled state.
+  bool PostProcessFrameBuffer(void) const;
+
+  // Set post-process frame buffer enabled state.
+  void SetPostProcessFrameBuffer(bool on);
+
   // Returns the post-process gamma for frame buffer. This is not the value applied; it's the value that
   // appears in the UI. See PostProcessGammaReciprocal().
   float PostProcessGamma(void) const;

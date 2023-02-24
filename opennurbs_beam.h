@@ -155,7 +155,12 @@ public:
     extrusion_profile_parameter - [in]
     brep_form - [in]
       brep created by ON_Extrusion::BrepForm()
+    bSmoothFaces - [in]
+      If true and the profiles have kinks, then the faces corresponding
+      to those profiles are split so they will be G1.
     brep_ci - [out]
+    profile_subdomain - [out]
+      The subdomain of the profile that contributes to the brep form component index
   Returns:
     True if successful.  False if input is not valid, in which case brep_ci
     is set by calling ON_COMPONENT_INDEX::UnSet().
@@ -181,6 +186,15 @@ public:
     const ON_Brep* brep_form,
     ON_COMPONENT_INDEX& brep_ci
     ) const;
+
+  bool GetBrepFormComponentIndex(
+    ON_COMPONENT_INDEX extrusion_ci,
+    double extrusion_profile_parameter,
+    const ON_Brep* brep_form,
+    bool bSmoothFaces,
+    ON_COMPONENT_INDEX& brep_ci,
+    ON_Interval* profile_subdomain
+  ) const;
 
   ////////////////////////////////////////////////////////////
   //

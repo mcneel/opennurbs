@@ -294,6 +294,14 @@ static ON__UINT64 ON_ModelComponentContentVersionNumberOne(
   return (runtime_serial_number*0x100000000ULL | s);
 }
 
+ON_ModelComponent::ON_ModelComponent
+(
+  ON__UINT64 runtime_serial_number
+) ON_NOEXCEPT
+  : m_runtime_serial_number(runtime_serial_number)
+  , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))
+{}
+
 ON_ModelComponent::ON_ModelComponent() ON_NOEXCEPT
   : m_runtime_serial_number(++ON_ModelComponent::Internal_RuntimeSerialNumberGenerator)
   , m_content_version_number(ON_ModelComponentContentVersionNumberOne(m_runtime_serial_number))

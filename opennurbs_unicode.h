@@ -309,12 +309,14 @@ enum ON_UnicodeCodePoint
   /// </summary>
   ON_RecyclingSymbol = 0x2672,
 
-
   /// <summary>
   /// BLACK UNIVERSAL RECYCLING SYMBOL U+267B (&#x267b;)
   /// This is a good cold point for testing glyph substitution.
   /// </summary>
   ON_BlackRecyclingSymbol = 0x267B,
+
+  /// <summary>WARNING SIGN U+26A0 (&#x26a0;)</summary>
+  ON_WarningSign = 0x26A0,
 
   /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)

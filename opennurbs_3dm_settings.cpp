@@ -950,6 +950,25 @@ ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate()
   _sun            (_rdk_document_data),
   _environments   (_rdk_document_data)
 {
+  // 26th January 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-71396
+  // Populate the RDK document data with defaults. The previous fix for this did it in RdkDocNode()
+  // which was the wrong place. We have to do it even if the RDK isn't being used.
+  ON_RdkDocumentDefaults dd(ON::VersionMajor(), ON_RdkDocumentDefaults::ValueSets::All);
+  dd.CopyDefaultsTo(_rdk_document_data);
+}
+
+ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate& p)
+  :
+  _dithering      (_rdk_document_data),
+  _ground_plane   (_rdk_document_data),
+  _linear_workflow(_rdk_document_data),
+  _render_channels(_rdk_document_data),
+  _safe_frame     (_rdk_document_data),
+  _skylight       (_rdk_document_data),
+  _sun            (_rdk_document_data),
+  _environments   (_rdk_document_data)
+{
+  operator = (p);
 }
 
 const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (const ON_3dmRenderSettingsPrivate& p)
@@ -996,16 +1015,22 @@ ON_3dmRenderSettings& ON_3dmRenderSettings::operator = (const ON_3dmRenderSettin
     if (nullptr != rs.m_private)
     {
       if (nullptr == m_private)
-        m_private = new ON_3dmRenderSettingsPrivate;
-
-      *m_private = *rs.m_private;
+      {
+        m_private = new ON_3dmRenderSettingsPrivate(*rs.m_private);
+      }
+      else
+      {
+        *m_private = *rs.m_private;
+      }
     }
     else
     {
       if (nullptr != m_private)
       {
-        delete m_private;
-        m_private = nullptr;
+        // We can't delete the private because it might have specialized document objects (gp etc).
+        // So don't delete it, but set it to defaults because the incoming one doesn't exist which
+        // is essentially the same as the incoming one being an implied default one.
+        m_private->SetToDefaults();
       }
     }
 
@@ -1060,6 +1085,12 @@ ON_3dmRenderSettings& ON_3dmRenderSettings::operator = (const ON_3dmRenderSettin
   }
 
   return *this;
+}
+
+void ON_3dmRenderSettingsPrivate::SetToDefaults(void)
+{
+  ON_RdkDocumentDefaults dd(ON::VersionMajor(), ON_RdkDocumentDefaults::ValueSets::All);
+  dd.CopyDefaultsTo(_rdk_document_data);
 }
 
 void ON_3dmRenderSettings::Dump( ON_TextLog& text_log ) const
@@ -1548,18 +1579,6 @@ ON_XMLNode& ON_3dmRenderSettings::RdkDocNode(void) const
   if (nullptr == m_private)
     m_private = new ON_3dmRenderSettingsPrivate;
 
-  if (m_private->_rdk_document_data.FirstChild() == nullptr)
-  {
-    // 16th November 2022 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-71396
-    // The RDK document data is completely empty. This used to be filled by the RDK itself using
-    // the CRhRdkPropertyServer class. This worked until someone inside Rhino decided to copy a
-    // completely default ON_3dmRenderSettings over this one, whereupon the RDK document data got
-    // deleted instead of simply reverting to defaults. This code is here to fix that. The core
-    // property server code has been moved to ON_RdkDocumentDefaults.
-    ON_RdkDocumentDefaults dd(ON::VersionMajor(), ON_RdkDocumentDefaults::ValueSets::All);
-    dd.CopyDefaultsTo(m_private->_rdk_document_data);
-  }
-
   return m_private->_rdk_document_data;
 }
 
@@ -1641,6 +1660,47 @@ void ON_3dmRenderSettings::SetReflectionRenderEnvironment(const ON_UUID& id)
     m_private = new ON_3dmRenderSettingsPrivate;
 
   m_private->_environments.SetReflectionRenderEnvironment(id);
+}
+
+extern ON_UUID uuidRenderSettingsPreset_Studio;
+extern ON_UUID uuidRenderSettingsPreset_Custom;
+extern ON_UUID uuidRenderSettingsPreset_Exterior;
+extern ON_UUID uuidRenderSettingsPreset_Interior;
+
+static const wchar_t* rendering = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
+
+ON_UUID ON_3dmRenderSettings::CurrentRenderingPreset(void) const
+{
+  const auto* node = RdkDocNode().GetNodeAtPath(rendering);
+  if (nullptr != node)
+  {
+    ON_XMLParameters p(*node);
+    ON_XMLVariant value;
+    if (p.GetParam(ON_RDK_CURRENT_PRESET, value))
+      return value.AsUuid();
+  }
+
+  return ON_nil_uuid;
+}
+
+void ON_3dmRenderSettings::SetCurrentRenderingPreset(const ON_UUID& uuid)
+{
+  ON_ASSERT((uuidRenderSettingsPreset_Studio == uuid) || (uuidRenderSettingsPreset_Custom == uuid) || (uuidRenderSettingsPreset_Exterior == uuid) || (uuidRenderSettingsPreset_Interior == uuid));
+
+  auto* node = RdkDocNode().GetNodeAtPath(rendering);
+  if (nullptr != node)
+  {
+    ON_XMLParameters p(*node);
+    p.SetParam(ON_RDK_CURRENT_PRESET, uuid);
+  }
+}
+
+void ON_3dmRenderSettings::GetRenderingPresets(ON_SimpleArray<ON_UUID>& presets) const
+{
+  presets.Append(uuidRenderSettingsPreset_Studio);
+  presets.Append(uuidRenderSettingsPreset_Exterior);
+  presets.Append(uuidRenderSettingsPreset_Interior);
+  presets.Append(uuidRenderSettingsPreset_Custom);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2978,6 +3038,12 @@ bool ON_3dmView::IsValid(ON_TextLog* text_log) const
       //  }
       //  rc = false;
       //}
+      break;
+
+    case ON::uveditor_view_type:
+      break;
+
+    case ON::blockeditor_view_type:
       break;
 
     default:

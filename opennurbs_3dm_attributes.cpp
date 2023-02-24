@@ -1456,6 +1456,13 @@ bool ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
     case ON::no_space:    uc = 0; break;
     case ON::model_space: uc = 0; break;
     case ON::page_space:  uc = 1; break;
+    case ON::uveditor_space:
+    case ON::blockeditor_space:
+        {
+            uc = 2;
+            ON_ASSERT(false);
+            break;
+        }
     }
     rc = file.WriteChar(uc);
   }
@@ -1517,14 +1524,13 @@ bool ON_3dmObjectAttributes::Transform(const ON_Geometry* pOriginalGeometry, con
   {
     m_object_frame.Transform(xform);
   }
-  else if (pOriginalGeometry)
+  /*else if (pOriginalGeometry)
   {
     ON_Plane plane = ON_Plane::World_xy;
     plane.SetOrigin(pOriginalGeometry->BoundingBox().Center());
-    SetObjectFrame(ON_COMPONENT_INDEX::WholeObject, plane);
 
     m_object_frame.Transform(xform);
-  }
+  }*/
 
   return m_rendering_attributes.Transform(xform);
 }

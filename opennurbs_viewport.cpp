@@ -4474,12 +4474,23 @@ bool ON_Viewport::SetViewScale( double x, double y, double z)
   //   solution for supporting RCP viewports. What this does do is let us have users
   //   experiment with a -1.0 horizontal scale in a custom display mode and tell
   //   us if this is the desired display that they are after.
+  // 5 Jan 2023 S. Baer (RH-71044)
+  //   Always allow case where the (x,y,z) = (1,1,1) in order to reset the scale
+  //   to 1 across the board
+  bool validInput = fabs(x) > ON_ZERO_TOLERANCE && ON_IsValid(x)
+    && fabs(y) > ON_ZERO_TOLERANCE && ON_IsValid(y)
+    && fabs(z) > ON_ZERO_TOLERANCE && ON_IsValid(z);
+  if (!validInput)
+    return false;
+
+  bool allOnes = fabs(x - 1.0) < ON_EPSILON 
+              && fabs(y - 1.0) < ON_EPSILON
+              && fabs(z - 1.0) < ON_EPSILON;
+  if (allOnes)
+    return SetClipModXform(ON_Xform::IdentityTransformation);
+
   bool rc = false;
-  if ( IsParallelProjection()
-       && fabs(x) > ON_ZERO_TOLERANCE && ON_IsValid(x) 
-       && fabs(y) > ON_ZERO_TOLERANCE && ON_IsValid(y)
-       && fabs(z) > ON_ZERO_TOLERANCE && ON_IsValid(z)
-       )
+  if ( IsParallelProjection() )
   {
     ON_Xform xform(ON_Xform::IdentityTransformation);
     xform.m_xform[0][0] = x;

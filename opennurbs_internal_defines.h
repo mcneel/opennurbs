@@ -170,9 +170,11 @@ class ON_3dmRenderSettingsPrivate final
 {
 public:
   ON_3dmRenderSettingsPrivate();
-  ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate&) = default;
+  ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate&);
 
   const ON_3dmRenderSettingsPrivate& operator = (const ON_3dmRenderSettingsPrivate&);
+
+  void SetToDefaults(void);
 
 public:
   ON_XMLRootNode _rdk_document_data;

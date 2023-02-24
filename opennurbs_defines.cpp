@@ -495,16 +495,11 @@ int ON::CloseAllFiles()
   // returns number of files closed or EOF for error
 #if defined(ON_COMPILER_MSC)
   return _fcloseall(); // ANSI C name
-#elif defined(ON_COMPILER_CLANG)
-  //#error TODO - call clang fcloseall()
-  //fcloseall is not supported on OS X
+#elif defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_ANDROID)
+  //fcloseall is not supported on mac/ios or android
   return EOF;
-#elif defined(ON_COMPILER_GNU)
-  fcloseall();
 #else
-  // I can't find an fcloseall() or _fcloseall() in
-  // gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
-  return EOF;
+  return fcloseall();
 #endif
 }
 
@@ -516,10 +511,12 @@ ON::active_space ON::ActiveSpace(int i)
 
   switch(i)
   {
-  case no_space:    as = no_space;    break;
-  case model_space: as = model_space; break;
-  case page_space:  as = page_space;  break;
-  default:          as = no_space;    break;
+  case no_space:          as = no_space;          break;
+  case model_space:       as = model_space;       break;
+  case page_space:        as = page_space;        break;
+  case uveditor_space:    as = uveditor_space;    break;
+  case blockeditor_space: as = blockeditor_space; break;
+  default:                as = no_space;          break;
   }
 
   return as;
@@ -1912,9 +1909,11 @@ ON::view_type ON::ViewType(int vt)
 {
   switch(vt)
   {
-  case model_view_type:  return (model_view_type);  break;
-  case page_view_type:   return (page_view_type);   break;
-  case nested_view_type: return (nested_view_type); break;
+  case model_view_type:       return (model_view_type);       break;
+  case page_view_type:        return (page_view_type);        break;
+  case nested_view_type:      return (nested_view_type);      break;
+  case uveditor_view_type:    return (uveditor_view_type);    break;
+  case blockeditor_view_type: return (blockeditor_view_type); break;
   }
 
   return (model_view_type);

@@ -366,6 +366,8 @@ const ON_wString ON_Color::ToString(
       case ON_Color::TextFormat::HSVa:
         format = ON_Color::TextFormat::HSVA;
         break;
+      default:
+        break;
       }
     }
 
