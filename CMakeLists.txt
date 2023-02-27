@@ -454,6 +454,10 @@ set( OPENNURBS_PLUS_SOURCES
     opennurbs_plus_xmeshfast.cpp
     opennurbs_plus_xray.cpp
     )
+else()
+set( OPENNURBS_PUBLIC_MEMORY
+    opennurbs_public_memory.cpp
+   )
 endif() #OpenNURBS plus source files
 
 if (ANDROID OR LINUX)
@@ -467,6 +471,7 @@ add_subdirectory(zlib)
 add_library( opennurbsStatic STATIC
     ${OPENNURBS_PUBLIC_HEADERS}
     ${OPENNURBS_PUBLIC_SOURCES}
+    ${OPENNURBS_PUBLIC_MEMORY}
     ${OPENNURBS_PLUS_HEADERS}
     ${OPENNURBS_PLUS_SOURCES}
     )
@@ -475,6 +480,7 @@ add_library( opennurbsStatic STATIC
 add_library( OpenNURBS SHARED
     ${OPENNURBS_PUBLIC_HEADERS}
     ${OPENNURBS_PUBLIC_SOURCES}
+    ${OPENNURBS_PUBLIC_MEMORY}
     ${OPENNURBS_PLUS_HEADERS}
     ${OPENNURBS_PLUS_SOURCES}
     )
