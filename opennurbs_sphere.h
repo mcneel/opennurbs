@@ -20,7 +20,7 @@ class ON_CLASS ON_Sphere
 {
 public:
   
-  ON_Plane plane; // equitorial plane
+  ON_Plane plane; // equatorial plane
   double radius;  // > 0
 
   ON_Sphere();

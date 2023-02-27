@@ -43,7 +43,7 @@ public:
       base64 encoding calculation.
     callback_context - [in]
       This value is passed as the first argument when calling 
-      callback_function or the virutal Out() function.
+      callback_function or the virtual Out() function.
   Returns:
     True if successful.
   Remarks:
@@ -80,7 +80,7 @@ public:
     calculation. When you reach the end of the unencoded
     stream, call End().
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool Begin();
 
@@ -96,7 +96,7 @@ public:
       number of bytes in in_buffer
     in_buffer - [in]
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool In(
     ON__UINT64 in_buffer_size,
@@ -143,7 +143,7 @@ public:
     generate one call to the output stream handler with the value
     of out_buffer_size = 4 to 76.
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool End();
   
@@ -224,7 +224,7 @@ public:
   // Decode() for every line in the file.  Decode() returns 0 if
   // there is nothing in base64str to decode or if it detects an
   // error that prevents any further decoding.  The function Error()
-  // can be used to determine if an error occured.  Otherwise,
+  // can be used to determine if an error occurred.  Otherwise,
   // Decode() returns a pointer to the location in the string where
   // it stopped decoding because it detected a character, like a null
   // terminator, an end of line character, or any other character
@@ -261,7 +261,7 @@ public:
   // wants to stop further decoding.
   void SetError();
 
-  // Returns true if an error occured during decoding because
+  // Returns true if an error occurred during decoding because
   // invalid input was passed to Decode().
   const bool Error() const;
 
@@ -343,7 +343,7 @@ class ON_CLASS ON_Base64 final
 {
 public:
   // Decode a base64 string.
-  // buffer_out must be large enough to accomodate the decoded data. It is safe to use the
+  // buffer_out must be large enough to accommodate the decoded data. It is safe to use the
   // length of base64_in because this Base64 string will always be about 33% bigger than the
   // data it was created from. Returns the number of bytes written to buffer_out.
   // The function stops when max_length bytes have been decoded.

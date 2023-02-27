@@ -421,7 +421,7 @@ public: // Serialization.
   operator ON_wString() const;
 
   // Writes the node to a wide buffer (AKA 'stream') as XML text.
-  // max_chars is the maximum number of wide characters that the buffer can accomodate.
+  // max_chars is the maximum number of wide characters that the buffer can accommodate.
   // To find out how much space is needed without actually writing anything, pass zero.
   // When writing to the buffer, a terminator is written if there is room for it, but the
   // terminator is not included in the returned number of characters.

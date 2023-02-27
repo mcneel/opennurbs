@@ -460,7 +460,7 @@ void ON_SimpleArray<T>::Move( int dest_i, int src_i, int ele_cnt )
     SetCapacity( capacity );
   }
 
-  memmove( &m_a[dest_i], &m_a[src_i], ele_cnt*sizeof(T) );
+  memmove( (void*)&m_a[dest_i], (void*)&m_a[src_i], ele_cnt*sizeof(T) );
 }
 
 template <class T>
@@ -487,7 +487,7 @@ void ON_SimpleArray<T>::Append( const T& x )
       // 26 Sep 2005 Dale Lear
       // x is in the block of memory about to be reallocated.
       void* temp = onmalloc(sizeof(T));
-      memcpy(temp, p, sizeof(T));
+      memcpy(temp, (void*)p, sizeof(T));
       p = (T*)temp;
     }
     Reserve(newcapacity);
@@ -998,7 +998,7 @@ void ON_SimpleArray<T>::SetRange(int from, int count, T value)
   }
 }
 
-// memory managment ////////////////////////////////////////////////////
+// memory management ////////////////////////////////////////////////////
 
 template <class T>
 T* ON_SimpleArray<T>::Reserve( size_t newcap ) 
@@ -1020,7 +1020,7 @@ void ON_SimpleArray<T>::Destroy()
   SetCapacity( 0 );
 }
 
-// low level memory managment //////////////////////////////////////////
+// low level memory management //////////////////////////////////////////
 
 template <class T>
 void ON_SimpleArray<T>::SetCount( int count ) 
@@ -2089,7 +2089,7 @@ void ON_ClassArray<T>::Zero()
   }
 }
 
-// memory managment ////////////////////////////////////////////////////
+// memory management ////////////////////////////////////////////////////
 
 template <class T>
 T* ON_ClassArray<T>::Reserve( size_t newcap ) 
@@ -2111,7 +2111,7 @@ void ON_ClassArray<T>::Destroy()
   SetCapacity( 0 );
 }
 
-// low level memory managment //////////////////////////////////////////
+// low level memory management //////////////////////////////////////////
 
 template <class T>
 void ON_ClassArray<T>::SetCount( int count ) 

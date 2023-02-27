@@ -128,7 +128,7 @@ Parameters:
   origin - [in] point on the plane
   normal - [in] non-zero normal to the plane
   y-up - [in] vector linearly independent from normal that projects
-              to the postive y-axis of the plane
+              to the positive y-axis of the plane
 Remarks:
   origin = point,
   zaxis = unitized normal,
@@ -311,7 +311,7 @@ See Also:
     Evaluate a point on the plane
   Parameters:
     u - [in]
-    v - [in] evaulation parameters
+    v - [in] evaluation parameters
   Returns:
     plane.origin + u*plane.xaxis + v*plane.yaxis
   */
@@ -634,7 +634,7 @@ private:
 
   // This should be a double, but is a float in order to not change
   // the class size. When the Rhino SDK can break, this data type should change.
-  float m_distance = -1;
+  float m_distance = ON_UNSET_POSITIVE_FLOAT;
 };
 
 

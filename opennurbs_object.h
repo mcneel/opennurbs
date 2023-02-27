@@ -152,7 +152,7 @@ public:
     const ON_ClassId* potential_parent
     ) const;
 
-  // Descrption:
+  // Description:
   //   Use the default constructor to create an instance of the
   //   class on the heap.
   // Returns:
@@ -184,14 +184,14 @@ private:
   const ON_ClassId* m_pBaseClassId;  // base class id
   char m_sClassName[80];              
   char m_sBaseClassName[80];
-  // m_create points to a function that calls the default constuctor.
+  // m_create points to a function that calls the default constructor.
   // m_create() is used to create classes from uuids when reading files.
   ON_Object* (*m_create)(); 
   ON_UUID m_uuid;
   int m_mark; // bit 0x80000000 is used to indicate new extensions
 
 private:
-  // There are no implementaions of the default constructor, copy constructor
+  // There are no implementations of the default constructor, copy constructor
   // or operator=() to prohibit use.
   ON_ClassId();
   ON_ClassId( const ON_ClassId&);
@@ -206,7 +206,7 @@ private:
 
   // The m_f[] pointers provide a way add a "virtual" function to
   // a class derived from ON_Object without breaking the SDK.
-  // At each SDK breaking relase, any functions that use this
+  // At each SDK breaking release, any functions that use this
   // mechanism are made into C++ virtual functions on the appropriate
   // classes. Currently, none of these are in use.
   unsigned int m_class_id_version; 
@@ -280,10 +280,10 @@ a .cpp file.
     /* OpenNURBS class run-time type information */       \
     static const ON_ClassId m_##cls##_class_rtti;         \
                                                           \
-    /*OpenNURBS platfrom independent dynamic cast*/       \
+    /*OpenNURBS platform independent dynamic cast*/       \
     static cls * Cast( ON_Object* );                      \
                                                           \
-    /*OpenNURBS platfrom independent dynamic cast*/       \
+    /*OpenNURBS platform independent dynamic cast*/       \
     static const cls * Cast( const ON_Object* );          \
                                                           \
     /*Returns: OpenNURBS run-time type information.*/     \
@@ -507,7 +507,7 @@ public:
     static Cast() members declared in the ON_OBJECT_DECLARE
     macro.  If we determine that dynamic_cast is properly 
     supported and implemented by all supported compilers, 
-    then IsKindOf() may dissappear.  If an application needs
+    then IsKindOf() may disappear.  If an application needs
     to determine if a pointer points to a class derived from
     ON_SomeClassName, then call 
     ON_SomeClassName::Cast(mystery pointer) and check for 
@@ -865,7 +865,7 @@ public:
   Description:
     When a userdata item is copied or moved from a source object to
     a destination object, the ON_Object::UserDataConflictResolution
-    enum values specify how conficts are resolved.
+    enum values specify how conflicts are resolved.
   Remark:
     A userdata item "conflict" occurs when both the destination
     and source object have a user data item with the same
@@ -893,7 +893,7 @@ public:
       If source_userdata_item_id  is not nil, then only the user data item
       with a matching ON_UserData.m_userdata_uuid value will be copied.
     userdata_conflict_resolution - [in]
-      method to resolve userdata item conficts.
+      method to resolve userdata item conflicts.
   Remarks:
     Generally speaking you don't need to use CopyUserData().
     Simply rely on ON_Object::operator=() or the copy constructor
@@ -917,7 +917,7 @@ public:
       If source_userdata_item_id  is not nil, then only the user data item
       with a matching ON_UserData.m_userdata_uuid value will be moved.
     userdata_conflict_resolution - [in]
-      method to resolve userdata item conficts.
+      method to resolve userdata item conflicts.
     bDeleteAllSourceItems - [in]
       If bDeleteAllSourceItems is true, then any userdata items
       that are not copied from source_object are deleted.
@@ -1002,7 +1002,7 @@ public:
   Description:
     Set all active level component states to ON_ComponentStatus::NoneSet.
   Returns:
-    Number of components where a state setting chanaged.
+    Number of components where a state setting changed.
   */
   unsigned int ClearAllComponentStates() const;
 
@@ -1013,7 +1013,7 @@ public:
     states_to_clear - [in]
       States to clear.
   Returns:
-    Number of components where a state setting chanaged.
+    Number of components where a state setting changed.
   */
   virtual
   unsigned int ClearComponentStates(
@@ -1103,7 +1103,7 @@ public:
 
   /*
   Description:
-    Call whenever a component status setting is modifed 
+    Call whenever a component status setting is modified 
     by directly changing it on a component in a way that
     will result in any saved information about the parent
     object's aggretate component status becoming invalid.
@@ -1120,7 +1120,7 @@ public:
 
   /*
   Description:
-    Call whenever a component status setting is modifed 
+    Call whenever a component status setting is modified 
     by directly changing it on a component in a way that
     will result in any saved information about the parent
     object's aggretate component status becoming invalid.
@@ -1144,7 +1144,7 @@ public:
     ci_list_count - [in]
       Number of elements in the ci_list[] array.
   Returns:
-    True: succesful
+    True: successful
     False: failure - no changes.
   */
   virtual

@@ -110,7 +110,7 @@ Parameters:
 
 COMMENTS:
   If a degree d NURBS has n control points, then the OpenNURBS knot vector 
-  for the entire NURBS curve has length d+n-1. The knot[] paramter to this
+  for the entire NURBS curve has length d+n-1. The knot[] parameter to this
   function points to the 2*d knots active for the span being evaluated.
   
   Most literature, including DeBoor and The NURBS Book,
@@ -296,7 +296,7 @@ Parameters:
               n = v_stride*( (i+j)*(i+j+1)/2 + j).
 
 Returns:
-  True if succcessful.
+  True if successful.
 See Also:
   ON_NurbsSurface::Evaluate
   ON_EvaluateNurbsSpan
@@ -374,7 +374,7 @@ Parameters:
                n = v_stride*( d*(d+1)*(d+2)/6 + (j+k)*(j+k+1)/2 + k) 
 
 Returns:
-  True if succcessful.
+  True if successful.
 See Also:
   ON_NurbsCage::Evaluate
   ON_EvaluateNurbsSpan

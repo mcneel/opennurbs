@@ -27,11 +27,11 @@ class ON_CLASS ON_Cylinder
 public:
   ON_Cylinder(); // zeros all fields - cylinder is invalid
 
-  ON_Cylinder( // infinte cylinder
+  ON_Cylinder( // infinite cylinder
     const ON_Circle&  // point on the bottom plane
     );
 
-  ON_Cylinder( // infinte cylinder
+  ON_Cylinder( // infinite cylinder
     const ON_Circle&,  // point on the bottom plane
     double             // height
     );

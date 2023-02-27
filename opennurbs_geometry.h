@@ -268,7 +268,7 @@ public:
 
   /*
   Returns:
-    True if object can be accuratly modified with 
+    True if object can be accurately modified with 
     "squishy" transformations like projections, 
     shears, an non-uniform scaling.
   See Also:
@@ -280,7 +280,7 @@ public:
   /*
   Description:
     If possible, converts the object into a form that can
-    be accuratly modified with "squishy" transformations
+    be accurately modified with "squishy" transformations
     like projections, shears, an non-uniform scaling.
   Returns:
     False if object cannot be converted to a deformable

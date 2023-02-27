@@ -43,7 +43,7 @@ public:
       compression calculation.
     callback_context - [in]
       This value is passed as the first argument when calling 
-      callback_function or the virutal Out() function.
+      callback_function or the virtual Out() function.
   Returns:
     True if successful.
   Remarks:
@@ -80,7 +80,7 @@ public:
     When you reach the end of the uncompressed stream, call 
     End().
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool Begin();
 
@@ -94,7 +94,7 @@ public:
       number of bytes in in_buffer
     in_buffer - [in]
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool In( 
     ON__UINT64 in_buffer_size, 
@@ -115,7 +115,7 @@ public:
     In general, it is probably going to be easier to test and debug
     your code if you ignore the callback_context parameter and add 
     a member variable to your derived class to make additional
-    information accessable to your Out function.
+    information accessible to your Out function.
   */
   virtual bool Out( 
     void* callback_context, 
@@ -129,7 +129,7 @@ public:
     Calling End() may generate zero or more 
     calls to the output stream handler.
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool End();
 
@@ -220,7 +220,7 @@ public:
       uncompression calculation.
     callback_context - [in]
       This value is passed as the first argument when calling 
-      callback_function or the virutal Out() function.
+      callback_function or the virtual Out() function.
   Returns:
     True if successful.
   Remarks:
@@ -257,7 +257,7 @@ public:
     When you reach the end of the compressed stream, call 
     End().
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool Begin();
 
@@ -271,7 +271,7 @@ public:
       number of bytes in in_buffer
     in_buffer - [in]
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool In(
     ON__UINT64 in_buffer_size,
@@ -292,7 +292,7 @@ public:
     In general, it is probably going to be easier to test and debug
     your code if you ignore the callback_context parameter and add 
     a member variable to your derived class to make additional
-    information accessable to your Out function.
+    information accessible to your Out function.
   */
   virtual bool Out( 
     void* callback_context, 
@@ -306,7 +306,7 @@ public:
     Calling End() may generate zero or more 
     calls to the output stream handler.
   Returns:
-    true if successful, false if an error occured.
+    true if successful, false if an error occurred.
   */
   bool End();
 
@@ -448,7 +448,7 @@ public:
 
   /*
   Description:
-  Destroy the current informtion in the ON_CompressedBuffer
+  Destroy the current information in the ON_CompressedBuffer
   so the class can be reused.
   */
   void Destroy();

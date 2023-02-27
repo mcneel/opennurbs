@@ -171,7 +171,7 @@ public:
     periodic - [in] if not nullptr, then this is an array of 
                 parameter_count bools where b[i] is true if
                 the i-th parameter is periodic.  Valid 
-                increasing finite domains must be specificed
+                increasing finite domains must be specified
                 when this parameter is not nullptr.
   */
   ON_Evaluator( 
@@ -234,7 +234,7 @@ public:
   Description:
     OPTIONAL ability to evaluate the hessian in the case when 
     m_value_count is one.  If your function has more that
-    one value or it is not feasable to evaluate the hessian,
+    one value or it is not feasible to evaluate the hessian,
     then do not override this function.  The default implementation
     returns -1.
   Parameters:
@@ -823,7 +823,7 @@ bool ON_PointsAreCoincident(
 /*
 Description
   See ON_PointsAreCoincident() for a description of when opennurbs
-  considers two points to be conincident.
+  considers two points to be coincident.
 Parameters:
   dim - [in]
     >= 1
@@ -858,7 +858,7 @@ int ON_ComparePoint( // returns
           int dim,            // dim (>=0)
           bool israt,    // true for rational CVs
           const double* cv0,  // first CV
-          const double* cv1   // secont CV
+          const double* cv1   // second CV
           );
 
 ON_DECL
@@ -929,9 +929,9 @@ Returns:
   allocated on the heap by calling onmalloc().  If input is not valid,
   nullptr is returned.
 Remarks:
-  The ids are invarient under invertable transformations.  
+  The ids are invariant under invertable transformations.  
   Specifically, if one point point set is a rotation of another, then
-  the assiged ids will be the same.
+  the assigned ids will be the same.
 */
 ON_DECL
 unsigned int* ON_GetPointLocationIds(
@@ -1008,7 +1008,7 @@ int ON_SolveQuadraticEquation( // solve a*X^2 + b*X + c = 0
 Description:
   Solve the cubic equation a*X^3 + b*X^2 + c*X + d = 0.
 Inputs:
-  a,b,c,d, polynomial coeficients ( if a==b==c== 0) then failure is returned
+  a,b,c,d, polynomial coefficients ( if a==b==c== 0) then failure is returned
 Returns: 
   number of real roots stored with multiplicity.
   specifically
@@ -1065,8 +1065,8 @@ int ON_Solve2x2(
 //          x*col0[2] + y*col1[2] = d0
 //
 // Parameters:
-//   col0 - [in] coefficents for "x" unknown
-//   col1 - [in] coefficents for "y" unknown
+//   col0 - [in] coefficients for "x" unknown
+//   col1 - [in] coefficients for "y" unknown
 //   d0 - [in] constants
 //   d1 - [in]
 //   d2 - [in]
@@ -1225,13 +1225,13 @@ Description:
   solution to M*X = B where M is a n x n matrix,
   B is a known n-dimensional vector and X is
   an unknown.
-Paramters:
+Parameters:
   bFullPivot - [in] if true, full pivoting is used,
     otherwise partial pivoting is used.  In rare
     cases full pivoting can produce a more accurate
     answer and never produces a less accurate answer.
     However full pivoting is slower.  If speed is an
-    issue, then experiement with bFullPivot=false
+    issue, then experiment with bFullPivot=false
     and see if it makes a difference.  Otherwise,
     set it to true.
   bNormalize - [in]
@@ -1262,7 +1262,7 @@ Returns:
   the discussion below. If pr <= 1e-15, then
   M was nearly degenerate and the solution should be
   used with caution.  If an accurate solution is
-  critcial, then check the solution anytime pr <= 1e-10
+  critical, then check the solution anytime pr <= 1e-10
   In general, the difference between M*X and B will be
   reasonably small.  However, when the pr is small
   there tend to be vector E, substantually different
@@ -1414,7 +1414,7 @@ bool ON_EvTangent(
         ON_3dVector&        // Unit tangent returned here
         );
 
-// returns false if first derivtive is zero
+// returns false if first derivative is zero
 ON_DECL
 bool ON_EvCurvature(
         const ON_3dVector&, // first derivative
@@ -1502,7 +1502,7 @@ ON_3dVector ON_NormalCurvature(
 
 /*
 Description:
-  Determing if two curvatrues are different enough
+  Determing if two curvatures are different enough
   to qualify as a curvature discontinuity.
 Parameters:
   Km - [in]
@@ -1513,7 +1513,7 @@ Parameters:
     points and tangents and consider to curve to be G1 at the
     point in question.
   cos_angle_tolerance - [in]
-    If the inut value of cos_angle_tolerance >= -1.0
+    If the input value of cos_angle_tolerance >= -1.0
     and cos_angle_tolerance <= 1.0 and
     Km o Kp < cos_angle_tolerance*|Km|*|Kp|, then
     true is returned.  Otherwise it is assumed Km and Kp
@@ -1623,11 +1623,11 @@ Parameters:
   c - [in] type of continuity to test for. Read ON::continuity
            comments for details.
   Pa - [in] point on curve A.
-  D1a - [in] first derviative of curve A.
-  D2a - [in] second derviative of curve A.
+  D1a - [in] first derivative of curve A.
+  D2a - [in] second derivative of curve A.
   Pb - [in] point on curve B.
-  D1b - [in] first derviative of curve B.
-  D3b - [in] second derviative of curve B.
+  D1b - [in] first derivative of curve B.
+  D3b - [in] second derivative of curve B.
   point_tolerance - [in] if the distance between two points is
       greater than point_tolerance, then the curve is not C0.
   d1_tolerance - [in] if the difference between two first derivatives is
@@ -1717,7 +1717,7 @@ const ON_2udex* ON_BinarySearch2udexArray(
 //             AoA  -AoB
 //            -AoB   BoB
 // 
-//  is numerically singluar, where A = lineA.to-lineA.from
+//  is numerically singular, where A = lineA.to-lineA.from
 //  and B = lineB.to-lineB.from.
 // See Also:
 //   ON_IntersectLineLine
@@ -1879,7 +1879,7 @@ int ON_Intersect(
       );
 
 // Description:
-//   Intersect an infinte line and circle.
+//   Intersect an infinite line and circle.
 // Parameters:
 //   line - [in]
 //   circle - [in]
@@ -1905,7 +1905,7 @@ int ON_Intersect(
 
 
 // Description:
-//   Intersect a infinte line and arc.
+//   Intersect a infinite line and arc.
 // Parameters:
 //   line - [in]
 //   arc - [in]
@@ -2287,8 +2287,8 @@ Parameters:
     estimate of the validity of the solution, then inspect
     the returned values.  max_pivot should around 1, 
     min_pivot should be > 1e-4 or so, and zero_pivot should
-    be < 1e-10 or so.  If the returned pivots don't satisify
-    these condtions, then exercise caution when using the
+    be < 1e-10 or so.  If the returned pivots don't satisfy
+    these conditions, then exercise caution when using the
     returned solution.
 Returns:
   True if a there is an ellipse, parabola or hyperbola through the  
@@ -2366,7 +2366,7 @@ Remarks:
   Here is the way to evaluate a point on the ellipse:
 
           
-          double t = ellipse paramter in radians;
+          double t = ellipse parameter in radians;
           double x = a*cos(t);
           double y = b*sin(t);
           ON_2dPoint ellipse_point;
@@ -2386,7 +2386,7 @@ ON_DECL bool ON_GetEllipseConicEquation(
       );
 
 /*
-Descripton:
+Description:
   Return the length of a 2d vector (x,y)
 Returns:
  sqrt(x^2 + y^2) calculated in as precisely and safely as possible.
@@ -2394,7 +2394,7 @@ Returns:
 ON_DECL double ON_Length2d( double x, double y );
 
 /*
-Descripton:
+Description:
   Return the squared length of a 2d vector (x,y)
 Returns:
  (x^2 + y^2)
@@ -2402,7 +2402,7 @@ Returns:
 ON_DECL double ON_Length2dSquared(double x, double y);
 
 /*
-Descripton:
+Description:
   Return the length of a 3d vector (x,y,z)
 Returns:
  sqrt(x^2 + y^2 + z^2) calculated in as precisely and safely as possible.
@@ -2410,7 +2410,7 @@ Returns:
 ON_DECL double ON_Length3d( double x, double y, double z );
 
 /*
-Descripton:
+Description:
   Return the squared length of a 3d vector (x,y,z)
 Returns:
  (x^2 + y^2 + z^2)

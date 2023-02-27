@@ -44,7 +44,7 @@ public:
     If this item has been added to an ON_Hash32Table.AddItem(hash32,item pointer) then the 
     value of hash3d passed as the first argument to ON_Hash32Table.AddItem(hash32,item pointer)
     is returned. This is the value the ON_Hash32Table uses for this item.
-    Othewise 0 is returned.
+    Otherwise 0 is returned.
   Remarks:
     This function is useful when copying hash tables.
 

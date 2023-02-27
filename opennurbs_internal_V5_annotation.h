@@ -564,7 +564,7 @@ public:
   Remarks:
     This gets the literal value of the text, there is no
     substitution for any "<>" substrings.  When a dimension
-    is drawn, any occurance of "<>" will be replaced
+    is drawn, any occurrence of "<>" will be replaced
     with the measured value for the dimension and formatted
     according to the DimStyle settings.
 
@@ -952,7 +952,7 @@ private:
   // At this point, the ON_OBSOLETE_V5_Annotation and derived classes
   // exists for a single purpose - to support reading and writing
   // V5 (4,3,2) 3dm archives. 
-  // In V5 archives all dimension styles, including per opbject overrrides
+  // In V5 archives all dimension styles, including per object overrides
   // were in the archive dimstyle table. In V6 and later, override dimstyles
   // are managed by the object that uses them.
   //
@@ -1042,7 +1042,7 @@ public:
   Parameters:
     V6_dim_linear -[in]
     annotation_context - [in]
-      Dimstyle and other informtion referenced by V6_dim_linear or nullptr if not available.
+      Dimstyle and other information referenced by V6_dim_linear or nullptr if not available.
     destination - [in]
       If destination is not nullptr, then the V5 linear dimension is constructed
       in destination. If destination is nullptr, then the new V5 linear dimension
@@ -1323,7 +1323,7 @@ public:
     Overrides virtual ON_OBSOLETE_V5_Annotation::NumericValue();
   Returns:
     If m_type is ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter, then the diameter
-    is returned, othewise the radius is returned.
+    is returned, otherwise the radius is returned.
   */
   double NumericValue() const override;
 

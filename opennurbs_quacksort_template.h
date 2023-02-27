@@ -47,7 +47,7 @@ sorting functions.
 #if defined(ON_SORT_TEMPLATE_USE_SWAP)
 #define Swap(a,b) m_swapfunc(a,b,m_width)
 #else
-// use intrinsic assigment
+// use intrinsic assignment
 #define Swap(a,b) ON_SORT_TEMPLATE_TYPE tmp = *a; *a = *b; *b = tmp
 #endif
 

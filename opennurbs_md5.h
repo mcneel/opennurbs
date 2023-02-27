@@ -199,7 +199,7 @@ Remarks:
   The MD5 hash algorithm is not suitable for cryptographic or security applications.
   The ON_MD5 class does not "wipe" intermediate results.
   
-  The probability of two different randomly selected seqences of N bytes to have the
+  The probability of two different randomly selected sequences of N bytes to have the
   same value MD5 hash depends on N, but it is roughly 2^-64 ~ 10^-19.
 
   MD5 hash values are 16 bytes. SHA-1 hash values are 20 bytes. If you need a hash
@@ -270,7 +270,7 @@ public:
     Put another way, you may call Update() zero or more times passing in N1 bytes, 
     call Digest() to get the MD5 hash of those N1 bytes, make zero or more additional
     calls to Update() passing in N2 additional bytes, call digest to get the MD5 hash
-    of the seqence of (N1 + N2) bytes, and so on.
+    of the sequence of (N1 + N2) bytes, and so on.
   */
   ON_MD5_Hash Hash() const;
 
@@ -311,7 +311,7 @@ private:
   ON__UINT32 m_bit_count[2];   // number of bits (lo, hi)
   ON__UINT32 m_state[4];       // current state
   
-  // chached MD5 hash - valid if 2 = (2 & m_status_bits)
+  // cached MD5 hash - valid if 2 = (2 & m_status_bits)
   mutable ON_MD5_Hash m_md5_hash;
 };
 

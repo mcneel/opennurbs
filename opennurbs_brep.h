@@ -4179,7 +4179,7 @@ protected:
   
 
 public:
-  // The ON_Brep code increments ON_Brep::ErrorCount everytime something
+  // The ON_Brep code increments ON_Brep::ErrorCount every time something
   // unexpected happens. This is useful for debugging.
   static unsigned int ErrorCount;
 
@@ -4520,7 +4520,7 @@ Parameters:
   pBrep - [in] if not nullptr, this brep will be used and
                returned.
 Returns:
-  An ON_Brep representation of the trimmed plane with a singe face.
+  An ON_Brep representation of the trimmed plane with a single face.
 See Also:
   ON_Brep::NewPlanarFaceLoop()
 */

@@ -405,7 +405,7 @@ public:
   /*
   Returns:
     True if this text position information used to create this text
-    is identical to the text position paramters on dimstyle.
+    is identical to the text position parameters on dimstyle.
   */
   bool EqualTextPositionProperties(
     const class ON_DimStyle* dimstyle
@@ -927,7 +927,7 @@ public:
 
 
 /*
-  A simple dot with text that doesn't rotate witn the world axes
+  A simple dot with text that doesn't rotate with the world axes
 */
 class ON_CLASS ON_TextDot : public ON_Geometry
 {

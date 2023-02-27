@@ -208,7 +208,7 @@ public:
   /*
   Returns:
     ISO 639 language code.
-    When avilable, two letter codes from ISO 639-1 are prefered.
+    When available, two letter codes from ISO 639-1 are preferred.
   Remarks:
     The InvariantCulture.LanguageCode() is "".
   See Also:
@@ -306,7 +306,7 @@ public:
 
     <language>
     ISO 639 language code.
-    When avilable, two letter codes from ISO 639-1 are prefered.
+    When available, two letter codes from ISO 639-1 are preferred.
     http://www.iso.org/iso/language_codes
 
     <Script> is optional.
@@ -340,7 +340,7 @@ public:
 
     <language>
     ISO 639 language code.
-    When avilable, two letter codes from ISO 639-1 are prefered.
+    When available, two letter codes from ISO 639-1 are preferred.
     http://www.iso.org/iso/language_codes
 
     <Script> is optional.
@@ -405,12 +405,12 @@ public:
   Returns:
     0: failed
     1: success
-       Currently The decimal piont is a period in the C-runtime 
+       Currently The decimal point is a period in the C-runtime 
        formatted printing and scanning functions.
     2: success
-       When called, the decimal piont was not a period, but
+       When called, the decimal point was not a period, but
        a call to ON_Locale::SetPeriodAsCRuntimeDecimalPoint()
-       restored the defaut behavior.
+       restored the default behavior.
   */
   static unsigned int EnforcePeriodAsCRuntimeDecimalPoint();
 
@@ -559,12 +559,12 @@ public:
 
   /*
   Description:
-    Create a locale from BCP 47 lanugage code, script code and region code.
+    Create a locale from BCP 47 language code, script code and region code.
 
   Parameters:
     language_code - [in]
       ISO 639 language code.
-      When avilable, two letter codes from ISO 639-1 are prefered.
+      When available, two letter codes from ISO 639-1 are preferred.
       http://www.iso.org/iso/language_codes
 
     script - [in]

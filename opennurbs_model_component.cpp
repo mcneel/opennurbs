@@ -3099,6 +3099,8 @@ bool ON_BinaryArchive::Read3dmReferencedComponentIndex(
       break;
     case ON_ModelComponent::Type::HistoryRecord:
       break;
+    default:
+      break;
     }
   }
 
@@ -3736,6 +3738,9 @@ bool ON_BinaryArchive::AddManifestMapItem(
         }
       }
     }
+    break;
+
+  default:
     break;
   }
 

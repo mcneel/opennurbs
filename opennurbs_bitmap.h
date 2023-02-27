@@ -405,7 +405,7 @@ public:
             // archive.  Does not modify bmi or bits.
             ON_WindowsBitmap onbm;
             onbm.Create(bmi,bit,false);
-            onbm.Write( arcive );
+            onbm.Write( archive );
           }
 
   */

@@ -362,6 +362,8 @@ unsigned int ON_ComponentStatus::SetSelectedState(
     if ( bSynchronizeHighlight && 0 != SetStates(ON_ComponentStatus::Highlighted) )
       bChanged = true;
     break;
+  default:
+    break;
   }
 
   return bChanged ? 1U : 0U;

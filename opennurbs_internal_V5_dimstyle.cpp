@@ -2299,7 +2299,8 @@ bool ON_V5x_DimStyle::OverrideFields(const ON_V5x_DimStyle& src, const ON_V5x_Di
     case Field::fn_dim_arrow_blockname2:
       SetArrowBlockId2(copyfrom->ArrowBlockId2());
       break;
-
+    default:
+      break;
     }
   }
 

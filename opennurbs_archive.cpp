@@ -455,6 +455,8 @@ void ON_BinaryArchive::SetArchiveFullPath(
   case ON::archive_mode::write:
     m_archive_saved_as_full_path = m_archive_full_path;
     break;
+  default:
+    break;
   }
 }
 
@@ -535,6 +537,8 @@ void ON_BinaryArchive::SetArchiveFullPath(
   case ON::archive_mode::write3dm:
   case ON::archive_mode::write:
     m_archive_saved_as_full_path = m_archive_full_path;
+    break;
+  default:
     break;
   }
 }
@@ -4622,6 +4626,8 @@ ON_BinaryArchive::WriteObject( const ON_Object& model_object )
         V2_text_dot.m_text = text_dot->PrimaryText();
         return Internal_WriteObject(V2_text_dot);
       }
+      break;
+    default:
       break;
     }
   }

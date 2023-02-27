@@ -34,7 +34,7 @@ public:
   /*
   Description:
     Compare contents of buffers.
-  Paramters:
+  Parameters:
     a - [in]
     b - [in]
   Returns:
@@ -214,7 +214,7 @@ public:
   Remarks:
     Call this function after creating an ON_Buffer that will persist for
     and extended amount of time. There are never more than 16 pages of
-    unsued memory (16*4096 bytes on most computers) in an ON_Buffer.
+    unused memory (16*4096 bytes on most computers) in an ON_Buffer.
     Compact() can be called at any time, but calling Compact() the then
     writing at the end of the buffer is not an efficient use of time
     or memory.
@@ -364,7 +364,7 @@ public:
 public:
   ON__UINT64 m_start_offset=0; // When reading or writing 3dm archives, this is the
                              // archive offset (file position) of first byte of 
-                             // chunk information conent.
+                             // chunk information content.
   
   ON__UINT64 m_end_offset=0; // When writing 3dm archives, this is the archive 
                            // offset (file position) of the byte immediately after
@@ -519,7 +519,7 @@ public:
   Parameters:
     component_type - [in]
       If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
-      then the every explict component type is counted.
+      then the every explicit component type is counted.
   Returns:
     Total number of model components of the specified type in this manifest. 
   Remarks:
@@ -533,7 +533,7 @@ public:
   Parameters:
     component_type - [in]
       If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
-      then the every explict component type is counted.
+      then the every explicit component type is counted.
   Returns:
     Number of model components of the specified type in this manifest. 
   Remarks:
@@ -548,7 +548,7 @@ public:
   Parameters:
     component_type - [in]
       If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
-      then the every explict component type is counted.
+      then the every explicit component type is counted.
   Returns:
     Number of active model components of the specified type in this manifest. 
   Remarks:
@@ -563,7 +563,7 @@ public:
   Parameters:
     component_type - [in]
       If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
-      then the every explict component type is counted.
+      then the every explicit component type is counted.
   Returns:
     Number of model components of the specified type in this manifest that have IsDeleted() = true.
   Remarks:
@@ -850,7 +850,7 @@ public:
       then ON_ModelComponent::ComponentTypeToString(component_type) is used as base_name
     suffix_separator - [in]
       empty or the string to place between base_name and the suffix when searching for an
-      unsued name.
+      unused name.
     suffix0 - [in]
       If a suffix needs to be appended, the search for a 
       unused name begins with the suffix values suffix0+1.
@@ -1555,7 +1555,7 @@ public:
   /*
   Parameters:
     map_item - [in]
-      The source settings must exacty match source settings of an existing map.
+      The source settings must exactly match source settings of an existing map.
       The destination settings are the new values to assign.
   Return:
     True if a mapping was successfully updated (even when the destation settings did not change).
@@ -1567,7 +1567,7 @@ public:
   /*
   Parameters:
     map_item - [in]
-      The source settings must exacty match source settings of an existing map.
+      The source settings must exactly match source settings of an existing map.
       The destination settings are the new values to assign.
     bIgnoreSourceIndex - [in]
       If true, the value of map_item.SourceIndex() is ignored.
@@ -1865,18 +1865,18 @@ public:
   // Number of crc errors found during archive reading.
   // If > 0, then the archive is corrupt. See the table 
   // status information below to determine where the 
-  // errors occured.
+  // errors occurred.
   unsigned int m_crc_error_count = 0;
 
   // Number of other types of serious errors found during archive reading
   // or writing.
   // If > 0, then the archive is corrupt. See the table status information
-  // below to determine where the errors occured.
+  // below to determine where the errors occurred.
   unsigned int m_critical_error_count = 0;
 
   // Number of other types of serious errors found during archive reading.
   // If > 0, then the archive is corrupt. See the table status information
-  // below to determine where the errors occured.
+  // below to determine where the errors occurred.
   unsigned int m_recoverable_error_count = 0;
   
   enum class TableState : unsigned int 
@@ -2013,7 +2013,7 @@ public:
   /*
   Description:
     Expert user function that uses Read() to load a buffer.
-  Paramters:
+  Parameters:
     sizeof_buffer - [in] number of bytes to attempt to read.
     buffer - [out] read bytes are stored in this buffer
   Returns:
@@ -2345,7 +2345,7 @@ public:
   /*
   Parameters:
     str_array_count - [in]
-      Number of unsignd char elements in str_array[], including
+      Number of unsigned char elements in str_array[], including
       the null terminator. The value of str_array_count is returned
       by ReadCharStringElementCount().
     str_array - [in/out]
@@ -3026,7 +3026,7 @@ public:
   /*
   Description:
     Specify the serialization option for object user data and user tables 
-    that are not explicity set by SetShouldSerializeUserDataItem().
+    that are not explicitly set by SetShouldSerializeUserDataItem().
   Parameters:
     bSerialize - [in]
   Remarks:
@@ -3135,9 +3135,9 @@ public:
     In rare cases, experts testing handling of corrupt 3dm files need to
     write a 3dm archive that is corrupt. In this rare testing situation,
     those experts should call IntentionallyWriteCorrupt3dmStartSectionForExpertTesting()
-    exactly one time before they begin writing the file. The 32 byte idendifier will
+    exactly one time before they begin writing the file. The 32 byte identifier will
     replace the 1st 3 spaces with a capital X to mimic a file that became corrupt
-    whle residing on storage media.
+    while residing on storage media.
   */
   void IntentionallyWriteCorrupt3dmStartSectionForExpertTesting();
 
@@ -3598,20 +3598,20 @@ public:
 
   /*
    Description:
-     Reads instance definitions from instance defintion table.
+     Reads instance definitions from instance definition table.
   
    Parameters:
-     ppInstanceDefinition - If an instance defintion is
-     read, an instance defintion is created by calling new 
+     ppInstanceDefinition - If an instance definition is
+     read, an instance definition is created by calling new 
      ON_InstanceDefinition(), initialized with values stored
-     in the archive, and a pointer to the new instance defintion
+     in the archive, and a pointer to the new instance definition
      is returned in *ppInstanceDefinition.
   
    Returns:
   
      @untitled table
-     0     at the end of the instance defintion table
-     1     instance defintion was successfully read
+     0     at the end of the instance definition table
+     1     instance definition was successfully read
      -1    archive is corrupt at this point
   
    Example:
@@ -3797,7 +3797,7 @@ public:
       user table.
   Returns:
     True if the the user information can be written.
-    False if user informtion should not be written.
+    False if user information should not be written.
   */
   bool BeginWrite3dmUserTable(
     ON_UUID plugin_id,
@@ -3902,7 +3902,7 @@ public:
   //   If it finds one, it reads it and returns the number
   //   of bytes in the archive.  Comparing this number with
   //   the current file position can help detect files that
-  //   have been damaged by loosing sections.
+  //   have been damaged by losing sections.
   //
   // Parameters:
   //   sizeof_archive - [out] number of bytes written to archive
@@ -3928,7 +3928,7 @@ public:
   // Parameters:
   //   typecode - [in] a TCODE_* number from opennurbs_3dm.h
   //   value    - [in] if (typecode&TCODE_SHORT) is nonzero, then
-  //              this is the value to be saved.  Othewise, pass
+  //              this is the value to be saved.  Otherwise, pass
   //              a zero and the EndWrite3dmChunk() call will
   //              store the length of the chunk.
   //
@@ -4056,7 +4056,7 @@ public:
       BeginWriteDictionaryEntry(); 
       write entry definition...
       EndWriteDictionaryEntry();
-    or you may finish writing the dictionay by calling
+    or you may finish writing the dictionary by calling
       EndWriteDictionary();
   */
   bool BeginWriteDictionary(
@@ -4250,7 +4250,7 @@ public:
     and 
     ON::CurrentRuntimeEnvironment() 
     to determine if adjustments need to be made to resources provided
-    by runtime enviroments, like fonts.
+    by runtime environments, like fonts.
   */
   ON::RuntimeEnvironment ArchiveRuntimeEnvironment() const;
 
@@ -4337,7 +4337,7 @@ public:
     If an error is found, a line that begins with the word
     "ERROR" is printed.
   Parameters:
-    text_log - [in] place to print informtion
+    text_log - [in] place to print information
     recursion_depth - [in] simply a counter
         to aid in debugging.
   Returns:
@@ -4411,7 +4411,7 @@ public:
   Description:
     Force Write() to flush any buffered data to physical archive.
   Returns:
-    True if succesful or if there is nothing to flush.  False if
+    True if successful or if there is nothing to flush.  False if
     information could not be flushed.
   */
   virtual bool Flush() = 0;
@@ -4540,7 +4540,7 @@ private:
 protected:
   unsigned int ErrorMessageMask() const;
   /*
-  Paramters:
+  Parameters:
     sizeof_request - [in] 
       value of count parameter passed to virtual Read() function.
     sizeof_read - [in]
@@ -4867,7 +4867,7 @@ private:
 private:
   // 3dm write options
 
-  // bits corresponed to ON::object_type flags.
+  // bits corresponded to ON::object_type flags.
   // If the bit is set, then the mesh will be saved in the 3dm file.
   // (RhinoCommon: if default is changed, sync with File3dmWriteOptions.RenderMeshesFlags)
   ON__UINT32 m_save_3dm_render_mesh_flags = 0xFFFFFFFFU;
@@ -4947,7 +4947,7 @@ public:
     component_filter - [out]
       A bitfield that reports which attributes were read.
       If the corresponding component on model_component is locked,
-      the read value is discared.
+      the read value is discarded.
   Returns:
     false: critical failure.
     true: reading can continue.  
@@ -5034,10 +5034,10 @@ public:
   Returns:
     True: (default state)
       Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will automatically
-      adjust compoents index references so they are valid.
+      adjust components index references so they are valid.
     False: (uncommon)
       Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will not
-      adjust compoents index references so they are valid.
+      adjust components index references so they are valid.
   */
   bool ReferencedComponentIndexMapping() const;
 
@@ -5048,10 +5048,10 @@ public:
     bEnableReferenceComponentIndexMapping - [in]
     True: (default state)
       Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will automatically
-      adjust compoents index references so they are valid.
+      adjust components index references so they are valid.
     False: (uncommon)
       Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will not
-      adjust compoents index references so they are valid. This is only used with the
+      adjust components index references so they are valid. This is only used with the
       component being read or written is not the model but is a copy of one
       in a different model (linked instance definitions being the common situation).
   */
@@ -5090,7 +5090,7 @@ public:
     For components that are identified by name, like layers and dimension styles,
     this is not a problem. For components like instance definitions that have
     a more complicated set of merging rules, it is critical that
-    references to instance definition ids be updated from values in the arcive
+    references to instance definition ids be updated from values in the archive
     to values in the model.
     uses to adjust and write a model component Id.
   Parameters:
@@ -5110,10 +5110,10 @@ public:
   Returns:
     True: (default state)
       Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will automatically
-      adjust compoents Id references so they are valid.
+      adjust components Id references so they are valid.
     False: (uncommon)
       Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will not
-      adjust compoents Id references so they are valid.
+      adjust components Id references so they are valid.
   */
   bool ReferencedComponentIdMapping() const;
 
@@ -5124,10 +5124,10 @@ public:
     bEnableReferenceComponentIdMapping - [in]
     True: (default state)
       Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will automatically
-      adjust compoents Id references so they are valid.
+      adjust components Id references so they are valid.
     False: (uncommon)
       Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will not
-      adjust compoents Id references so they are valid. This is only used with the
+      adjust components Id references so they are valid. This is only used with the
       component being read or written is not the model but is a copy of one
       in a different model (linked instance definitions being the common situation).
   */
@@ -5512,7 +5512,7 @@ public:
     mode - [in]
     buffer - [in]
   Remarks:
-    If a non-null buffer is specifed, then do not call SetBuffer()
+    If a non-null buffer is specified, then do not call SetBuffer()
   */
   ON_BinaryArchiveBuffer( ON::archive_mode, ON_Buffer* buffer );
 

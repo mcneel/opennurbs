@@ -644,7 +644,7 @@ public:
   Returns:
     True if a modification was performed and HasGap(gap_index-1)
     returns 0 after the modification.
-    False if no modification was preformed because there
+    False if no modification was performed because there
     was no gap or because one could not be performed.
   Remarks:
     Note that passing the return value from FindNextGap() will 

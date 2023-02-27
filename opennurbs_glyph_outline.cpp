@@ -1300,6 +1300,8 @@ unsigned int ON_OutlineFigure::Internal_SegmentDegree(
       }
     }
     break;
+  default:
+    break;
   }
 
   return 0;

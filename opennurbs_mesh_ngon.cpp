@@ -4032,6 +4032,9 @@ const ON_MeshNgon* ON_Mesh::NgonFromComponentIndex(
   case ON_COMPONENT_INDEX::mesh_ngon:
     ngon = Ngon(ci.m_index);
     break;
+      
+  default:
+    break;
   }
 
   return ngon;

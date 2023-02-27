@@ -250,7 +250,7 @@ public:
   int GetPolyEdgeValues( int value_id, ON_SimpleArray<const ON_PolyEdgeHistory*>& ) const;
 
   /*
-  Desccription:
+  Description:
     Determine if object is an antecedent (input) in this
     history record.
   Parameters:

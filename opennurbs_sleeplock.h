@@ -85,7 +85,7 @@ public:
   Description:
     Attempts to get the lock a single time.
   Returns:
-    True if the lock was aquired. False if the lock was not aquired because it was already locked.
+    True if the lock was acquired. False if the lock was not acquired because it was already locked.
   Remarks:
     If GetLockOrReturnFalse() returns true, then you must call ReturnLock() when finished using the protected resource.
     If GetLockOrReturnFalse() returns false, then you must not call ReturnLock().
@@ -104,7 +104,7 @@ public:
       then one attempt is made to get the lock.
     max_wait_msecs - [in]
       maximum number of milliseconds to wait for lock.
-      If max_wait_msecs is 0, then no maximum wating time is used.
+      If max_wait_msecs is 0, then no maximum waiting time is used.
   Returns:
     True if the lock is obtained.
     False if the maximum waiting time expired without getting
@@ -167,7 +167,7 @@ public:
 
   // Used by The ThreadSafe...() functions and for expert users 
   // to use when managing memory controlled by this pool. Best
-  // to ingnore this unless you have a very clear idea of what
+  // to ignore this unless you have a very clear idea of what
   // you are doing, why you are doing it, and when you are doing it.
   // Otherwise, you'll find yourself waiting forever on a nested
   // access request. 

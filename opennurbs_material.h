@@ -398,7 +398,7 @@ public:
 
   /*
   Description:
-    Searches for a texure with matching texture_id.
+    Searches for a texture with matching texture_id.
     If more than one texture matches, the first match
     is returned.
   Parameters:
@@ -413,7 +413,7 @@ public:
 
   /*
   Description:
-    Searches for a texure with matching filename and type.
+    Searches for a texture with matching filename and type.
     If more than one texture matches, the first match
     is returned.
   Parameters:
@@ -422,7 +422,7 @@ public:
                 any texture type matches.
     i0 - [in] If i0 is < 0, the search begins at
               m_textures[0], if i0 >= m_textures.Count(),
-              -1 is returnd, otherwise, the search begins
+              -1 is returned, otherwise, the search begins
               at m_textures[i0+1].
   Example:
     Iterate through all the the bitmap textures on
@@ -500,7 +500,7 @@ public:
 
   /*
   Description:
-    Deletes all texures with matching filenames and types.
+    Deletes all textures with matching filenames and types.
   Parameters:
     filename - [in]  If nullptr, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
@@ -520,7 +520,7 @@ public:
     The m_material_channel[] array is used to provide per face rendering material support for ON_SubD and ON_Brep objects.
     ON_Mesh objects to not support per face render materials.
     The application specifies a base ON_Material for rendering the subd or brep and a way to find materials from ON_UUID values.
-    ON_Material.Id() retuns the id for any given material.
+    ON_Material.Id() returns the id for any given material.
 
     ON_BrepFace::MaterialChannelIndex() and ON_SubDFace::MaterialChannelIndex()
     specify a material channel index. If this value is 0, then the base

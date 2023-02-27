@@ -96,7 +96,7 @@ public:
   Parameters:
     tolerance - [in] Distances <= tolerance will be considered
         to be zero.  If tolerance is negative (default), then
-        a scale invarient tolerance is used.
+        a scale invariant tolerance is used.
   Returns:
     @untitled table
     0     box is not degenerate

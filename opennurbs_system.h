@@ -293,7 +293,7 @@ typedef ON__UINT32 wchar_t;
 //
 // BEGIN - OBSOLETE  defines
 //
-// These legacy defines will be remvoed from V6
+// These legacy defines will be removed from V6
 //
 */
 
@@ -325,7 +325,7 @@ typedef ON__UINT32 wchar_t;
 ////////////////////////////////////////////////////////////
 */
 
-// To debug linking pragma path issues, uncomment the followint line
+// To debug linking pragma path issues, uncomment the following line
 //#pragma message( "OPENNURBS_OUTPUT_DIR = " OPENNURBS_PP2STR(OPENNURBS_OUTPUT_DIR) )
 
 #if defined(ON_RUNTIME_WIN) && !defined(ON_NO_WINDOWS)
@@ -369,7 +369,7 @@ typedef ON__UINT32 wchar_t;
 
 #if defined(ON_RUNTIME_WIN) && !defined(NOGDI)
 /*
-// ok to use Windows GDI RECT, LOGFONT, ... stucts.
+// ok to use Windows GDI RECT, LOGFONT, ... structs.
 */
 #define ON_OS_WINDOWS_GDI
 #endif
@@ -608,11 +608,11 @@ typedef ON__UINT32 wchar_t;
 //   Its support for multiple locale names is limited.
 //   Its support for PANOSE1 is limited.
 //   It does not support font substitution.
-// Windows uses the Direct Write SDK for font and glyph calcuations.
-// MacOS and iOS use the Apple Core Text SDK for font and glyph calcuations.
+// Windows uses the Direct Write SDK for font and glyph calculations.
+// MacOS and iOS use the Apple Core Text SDK for font and glyph calculations.
 
 #if defined(ON_RUNTIME_ANDROID)
-// May work reasonably for Andoid versions < 8-ish as of Sep 2018.
+// May work reasonably for Android versions < 8-ish as of Sep 2018.
 // Test carefully if working right is important.
 
 // We are currently not using Freetype in OpenNURBS at all.

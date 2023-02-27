@@ -29,8 +29,8 @@ public:
   ON_3dSimplex& operator=(const ON_3dSimplex& rhs) = default;
   ~ON_3dSimplex() = default;
 
-  int Count() const;				// Number of Verticies <=4
-  bool IsValid(double eps) const;			// true if the Verticies are affinely independent
+  int Count() const;				// Number of Vertices <=4
+  bool IsValid(double eps) const;			// true if the Vertices are affinely independent
 
   /* 
   Description:
@@ -48,7 +48,7 @@ public:
   /*
   Description:
     Find Closest Point to this simplex from a base point P0 or the Origin.
-    If true is retuned then Evaluate(Bary) is the closest point on the Simplex.
+    If true is returned then Evaluate(Bary) is the closest point on the Simplex.
   maximum_distance - optional upperbound on closest point.  If maximum_distance>=0 is specified and
             Dist(P0, Simplex)>maximum_distance then false is returned.
   */
@@ -183,7 +183,7 @@ private:
 
 /*
 This is a base class for a convex polytope in 3d space, i.e. the convex hull of a
-finite set of points called verticies.
+finite set of points called vertices.
 
 This is the base type in the implementation of the GJK algorithm
 ClosestPoint(ON_ConvexPoly& A, ON_ConvexPoly& B, ...)
@@ -193,7 +193,7 @@ class ON_CLASS ON_ConvexPoly
 {
 public:
   /*
-  Returns: Number of verticies >=0
+  Returns: Number of vertices >=0
   */
   virtual int Count() const = 0;
    /* 
@@ -217,7 +217,7 @@ public:
 
   /*
   Description:
-  For any vector W there is a vetex that is Support(W)
+  For any vector W there is a vertex that is Support(W)
   SupportIndex( W, i0) returns a vertex index for a vertex that is the support.
   Veretx( K.SupportIndex( W ))  = K.Support(W );
   */
@@ -226,9 +226,9 @@ public:
  /*
  Description:
    Points in a Convex Polytope are parameterized , not necessaily uniquely,
-   by an ON_4dex of vertex indicies and a 4d barycentric point B
+   by an ON_4dex of vertex indices and a 4d barycentric point B
     Evaluate(Ind, B ) = Sum_{i=0,..,3} Vertex(Ind[i])*B[i], where the sum is taken over i such that Ind[i]>=0
-   If B is a barycentric coordinte
+   If B is a barycentric coordinate
   		 B[i]>=0 and B[0] + B[1] + B[2] + B[3] = 1.0
    then Evaluate( Ind, B) is a point in the convex polytope
   */
@@ -301,7 +301,7 @@ Details:
 
   /*
   Description:
-    This is a bound on the collection of verticies.
+    This is a bound on the collection of vertices.
     Vertex(i).MaximumCoordinate()<= MaximumCoordinate() for all i
   */
   virtual double MaximumCoordinate() const = 0;
@@ -310,8 +310,8 @@ Details:
   Description:
     A point represented by a ON_4dex D and a barycentric coordinate B
     can be put in a standard form so that non-negative elements of D are unique and
-    corresponding coordinates are positive.  Furthemore, the non-negative
-    indicies are all listed before the unset ( neagative ) values
+    corresponding coordinates are positive.  Furthermore, the non-negative
+    indices are all listed before the unset ( neagative ) values
   */
   static bool  Standardize(ON_4dex& D, ON_4dPoint& B);
 
@@ -331,8 +331,8 @@ Details:
   virtual ~ON_ConvexPoly() {};
 };
 
-// 3d convex hull defined by an explicit collection of points called verticies.
-// Note: verticies need not be extreme points
+// 3d convex hull defined by an explicit collection of points called vertices.
+// Note: vertices need not be extreme points
 
 // WARNING:  Points are referenced not stored for optimal performance in'
 //           some applications.
@@ -368,8 +368,8 @@ private:
   int m_stride=3;
 };
 
-// 3d convex hull defined by an explicit collection of points called verticies.
-// Note: verticies need not be extreme points     
+// 3d convex hull defined by an explicit collection of points called vertices.
+// Note: vertices need not be extreme points     
 class ON_CLASS ON_ConvexHullPoint2 : public ON_ConvexPoly
 {
 public:
@@ -388,7 +388,7 @@ public:
 
   virtual ~ON_ConvexHullPoint2() override {};
 
-  int AppendVertex(const ON_3dPoint& P); // return index of new vertex.  must set Adjacent Indicies.
+  int AppendVertex(const ON_3dPoint& P); // return index of new vertex.  must set Adjacent Indices.
 	void Empty();
 
   bool SetCapacity(int vcnt) {
@@ -407,7 +407,7 @@ private:
 	Compute Convex hull of 2d points
 	Parameters:
 	 Pnt - array of points,  this is array of working data.  The points are sorted in place as part of the algorithm
-	 HUll - the sequence Hull[0], HUll[1]...  ,*Hull.Last() == Hull[0] defines the convex hull with a positive orientation retuns 2.
+	 HUll - the sequence Hull[0], HUll[1]...  ,*Hull.Last() == Hull[0] defines the convex hull with a positive orientation returns 2.
 	 PntInd - otional array to be filled in so that Hull[i] = Pnt[ PntInd[i]] where Pnt is the original input point
 	Returns
 	 dimension of the convex hull

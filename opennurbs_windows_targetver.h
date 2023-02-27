@@ -22,7 +22,7 @@
 // If you wish to build your application for a previous Windows platform, include WinSDKVer.h and
 // set the _WIN32_WINNT macro to the platform you wish to support before including SDKDDKVer.h.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(ON_CMAKE_BUILD)
 
 #if _MSC_VER >= 1700
 // Using Microsoft Visual Studio 2012 or later

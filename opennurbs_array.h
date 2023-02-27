@@ -83,7 +83,7 @@ public:
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
   // The operator[] does to not check for valid indices.
-  // The caller is responsibile for insuring that 0 <= i < Capacity()
+  // The caller is responsible for insuring that 0 <= i < Capacity()
   T& operator[]( int );
   T& operator[]( unsigned int );
   T& operator[]( ON__INT64 );
@@ -171,7 +171,7 @@ public:
   // successful, then Search() returns -1.  For Search(T) to work 
   // correctly, T must be a simple type.  Use Search(p,compare())
   // for Ts that are structs/classes that contain pointers.  Search()
-  // is only suitable for performing infrequent searchs of small 
+  // is only suitable for performing infrequent searches of small 
   // arrays.  Sort the array and use BinarySearch() for performing
   // efficient searches.
   int Search( const T& ) const;
@@ -188,12 +188,12 @@ public:
 
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
-  // and returns the smallest index "i" of the element that satisifies
+  // and returns the smallest index "i" of the element that satisfies
   // 0==compare(p,&array[i]).  
   //
   // BinarySearch( p, compare, count ) does a fast search of the first
   // count element sorted array and returns the smallest index "i" of 
-  // the element that satisifies 0==compare(p,&array[i]).  The version
+  // the element that satisfies 0==compare(p,&array[i]).  The version
   // that takes a "count" is useful when elements are being appended
   // during a calculation and the appended elements are not sorted.
   //
@@ -298,7 +298,7 @@ public:
   // Count and capacity are not changed.
   void SetRange(int from, int count, T);
   
-  // memory managment ////////////////////////////////////////////////////
+  // memory management ////////////////////////////////////////////////////
 
   T* Reserve( size_t );    // increase capacity to at least the requested value
 
@@ -306,7 +306,7 @@ public:
 
   void Destroy();         // onfree any memory and set count and capacity to zero
     
-  // low level memory managment //////////////////////////////////////////
+  // low level memory management //////////////////////////////////////////
 
   // By default, ON_SimpleArray<> uses onrealloc() to manage
   // the dynamic array memory. If you want to use something 
@@ -348,7 +348,7 @@ public:
   /*
   Description:
     Expert user tool to take charge of the memory used by 
-    the dyanmic array.
+    the dynamic array.
   Returns:
      A pointer to the array and zeros out this class.
      The returned pointer is on the heap and must be
@@ -365,7 +365,7 @@ public:
 
   /*
   Description:
-    Expert user tool to set the memory used by the dyanmic array.
+    Expert user tool to set the memory used by the dynamic array.
   Parameters:
     T* pointer - [in]
     int count [in]
@@ -377,7 +377,7 @@ public:
   void SetArray(T*, int, int);
 
 protected:
-  // implimentation //////////////////////////////////////////////////////
+  // implementation //////////////////////////////////////////////////////
   void Move( int /* dest index*/, int /* src index */, int /* element count*/ );
 	T*   m_a;        // pointer to array memory
 	int  m_count;    // 0 <= m_count <= m_capacity
@@ -428,7 +428,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double*>;
 // besides onrealloc() to manage the array memory, then override
 // ON_ClassArray::Realloc().  In practice this means that if your
 // class has members with back-pointers, then you cannot use
-// it in the defaule ON_ClassArray.  See ON_ObjectArray
+// it in the default ON_ClassArray.  See ON_ObjectArray
 // for an example.
 //
 template <class T> class ON_ClassArray
@@ -474,7 +474,7 @@ public:
   unsigned int SizeOfElement() const; // amount of memory in an m_a[] array element
 
   // The operator[] does to not check for valid indices.
-  // The caller is responsibile for insuring that 0 <= i < Capacity()
+  // The caller is responsible for insuring that 0 <= i < Capacity()
   T& operator[]( int );
   T& operator[]( unsigned int );
   T& operator[]( ON__INT64 );
@@ -551,12 +551,12 @@ public:
 
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
-  // and returns the smallest index "i" of the element that satisifies
+  // and returns the smallest index "i" of the element that satisfies
   // 0==compare(p,&array[i]).
   //
   // BinarySearch( p, compare, count ) does a fast search of the first
   // count element sorted array and returns the smallest index "i" of 
-  // the element that satisifies 0==compare(p,&array[i]).  The version
+  // the element that satisfies 0==compare(p,&array[i]).  The version
   // that takes a "count" is useful when elements are being appended
   // during a calculation and the appended elements are not sorted.
   //
@@ -646,11 +646,11 @@ public:
 
   //////////
   // Destroys all elements and fills them with values
-  // set by the defualt constructor.
+  // set by the default constructor.
   // Count and capacity are not changed.
   void Zero();
 
-  // memory managment /////////////////////////////////////////////////
+  // memory management /////////////////////////////////////////////////
 
   T* Reserve( size_t ); // increase capacity to at least the requested value
 
@@ -658,7 +658,7 @@ public:
 
   void Destroy();      // onfree any memory and set count and capacity to zero
     
-  // low level memory managment ///////////////////////////////////////
+  // low level memory management ///////////////////////////////////////
 
   // By default, ON_ClassArray<> uses onrealloc() to manage
   // the dynamic array memory. If you want to use something 
@@ -716,7 +716,7 @@ public:
 
   /*
   Description:
-    Expert user tool to set the memory used by the dyanmic array.
+    Expert user tool to set the memory used by the dynamic array.
   Parameters:
     T* pointer - [in]
     int count - [in]  0 <= count <= capacity
@@ -730,7 +730,7 @@ public:
   void SetArray(T*, int, int);
 
 protected:
-  // implimentation //////////////////////////////////////////////////////
+  // implementation //////////////////////////////////////////////////////
   void Move( int /* dest index*/, int /* src index */, int /* element count*/ );
   void ConstructDefaultElement(T*);
   void DestroyElement(T&);
@@ -890,9 +890,9 @@ public:
 
   /*
   Description:
-    Makes the uuid list as efficent as possible in both search
+    Makes the uuid list as efficient as possible in both search
     speed and memory usage.  Use Compact() when a uuid list
-    will be in use but is not likely to be modifed.  A list 
+    will be in use but is not likely to be modified.  A list 
     that has been compacted can still be modified.
   */
   void Compact();
@@ -1539,7 +1539,7 @@ Description:
 Returns:
    -1 if *a < *b is true
     1 if *b < *a is true
-    0 if niether *a <*b nor *b<*a is true 
+    0 if neither *a <*b nor *b<*a is true 
 Details:
 	Use this template functions to sort ON_SimpleArray and
   ON_ClassArray objects into increasing order.  The elements
@@ -1566,7 +1566,7 @@ Description:
 Returns:
    -1 if *b < *a is true
     1 if *a < *b is true
-    0 if niether *a < *b nor *b < *a is true 
+    0 if neither *a < *b nor *b < *a is true 
 Details:
 	Use this template functions to sort ON_SimpleArray and
   ON_ClassArray objects into decreasing order.  The elements

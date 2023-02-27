@@ -369,7 +369,7 @@ public:
   //       in under determined systems of equations.
   //   pt_dim - [in] dimension of points
   //   Bsize - [in] (>=m_row_count) number of points in B[].  The points
-  //       correspoinding to indices m_row_count, ..., (Bsize-1)
+  //       corresponding to indices m_row_count, ..., (Bsize-1)
   //       are tested to make sure they are "zero".
   //   Bpt_stride - [in] stride between B points (>=pt_dim)
   //   Bpt - [in/out] array of m_row_count*Bpt_stride values.
@@ -552,7 +552,7 @@ Parameters:
   eigenvectors - [out]
     eigenvectors[0,...,eigendim-1][0,...,N-1]
     a basis for the lambda eigenspace.  The eigenvectors are generally
-    neither normalized nor orthoganal. 
+    neither normalized nor orthogonal. 
 
   eigenprecision - [out]
     eigenprecision[i] = maximum value of fabs(lambda*E[j] = E[j])/length(E) 0 <= j < N,

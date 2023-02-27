@@ -218,6 +218,9 @@ ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupT
       // ... else nans
     }
     break;
+
+    default:
+      break;
     }
   }
 

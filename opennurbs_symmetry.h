@@ -36,7 +36,7 @@ public:
 
 
   // NOTE never use the value 113 for a new ON_Symmetry::Type.
-  // This value was used breifly in June 2021 for a prototype symmetry type
+  // This value was used briefly in June 2021 for a prototype symmetry type
   // and reusing it will break SHA1 hashes and 3dm archive IO.
 
   enum class Type : unsigned char
@@ -102,7 +102,7 @@ public:
     Object = 1,
 
     /// <summary>
-    /// The symmetry is indepenent of any objects is it applied to.
+    /// The symmetry is independent of any objects is it applied to.
     /// The symmetry's planes and rotation axes are not changed when
     /// any of those objects are transformed.
     /// </summary>
@@ -188,11 +188,11 @@ public:
     point - [in]
       point to test.
     bUseCleanupTolerance - [in]
-      The tolerance used to dermine if a point is On an axis or plane is
+      The tolerance used to determine if a point is On an axis or plane is
       bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance.
       When in doubt, pass false.
   Returns:
-    The location of the point releative to the primary motif regions.
+    The location of the point relative to the primary motif regions.
   */
   ON_Symmetry::Region PointRegion(ON_3dPoint point, bool bUseCleanupTolerance) const;
 
@@ -224,7 +224,7 @@ public:
     v - [in]
       vertex to test
     bUseCleanupTolerance - [in]
-      The tolerance used to dermine if a point is On an axis or plane is
+      The tolerance used to determine if a point is On an axis or plane is
       bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance.
       When in doubt, pass false.
   Returns:
@@ -260,7 +260,7 @@ public:
     transformation - [in]
     transformation_order - [in]
   Returns:
-    True if these 2 conditions are satisified.
+    True if these 2 conditions are satisfied.
     1. identity = transformation^transformation_order.
     2. identity != transformation^i for 1 <= i < transformation_order.
   Remarks:
@@ -297,7 +297,7 @@ public:
     reflection - [in]
     reflection_plane - [in]
   Returns:
-    True if these 3 conditions are satisified.
+    True if these 3 conditions are satisfied.
     1. identity = reflection^2
     2. identity != reflection
     3. Points on the reflection_plane are fixed.
@@ -313,7 +313,7 @@ public:
     rotation_count - [in]
     fixed_plane - [in]
   Returns:
-    True if these 4 conditions are satisified.
+    True if these 4 conditions are satisfied.
     1. rotation_axis is a valid line.
     2. rotation_count >= 2 
     3. rotation_count <= ON_Symmetry::MaximumOrder
@@ -333,7 +333,7 @@ public:
     rotation_count - [in]
     fixed_plane - [in]
   Returns:
-    True if these 3 conditions are satisified.
+    True if these 3 conditions are satisfied.
     1. rotation_axis is a valid line.
     2. rotation_count >= 2
     3. rotation_count <= ON_Symmetry::MaximumOrder
@@ -570,7 +570,7 @@ public:
   const ON_UUID SymmetryId() const;
 
   /*
-  Descripton:
+  Description:
     Set this instance to ON_Symmetry::Unset.
   */
   void Clear();
@@ -695,14 +695,14 @@ public:
   /*
   Returns:
     If the symmetry is type is Reflect or ReflectAndRotate, then the reflection plane is returned.
-    Othewise ON_Plane::Nan is returned.
+    Otherwise ON_Plane::Nan is returned.
   */
   const ON_PlaneEquation ReflectionPlane() const;
 
   /*
   Returns:
     If the symmetry is type is Reflect or ReflectAndRotate, then the reflection plane is returned.
-    Othewise ON_Plane::Nan is returned.
+    Otherwise ON_Plane::Nan is returned.
   */
   const ON_Xform ReflectionTransformation() const;
 
@@ -711,14 +711,14 @@ private:
   /*
   Returns:
     True if the symmetry type requires a valid rotation axis.
-    False otherwide
+    False otherwise
   */
   bool Internal_RequiresRotationAxis() const;
 
   /*
   Returns:
     True if the symmetry type requires a valid fixed plane.
-    False otherwide
+    False otherwise
   */
   bool Internal_RequiresFixedPlane() const;
 
@@ -732,21 +732,21 @@ public:
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the rotation axis is returned.
-    Othewise ON_Line::Nan is returned.
+    Otherwise ON_Line::Nan is returned.
   */
   const ON_Line RotationAxis() const;
 
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then a point on the rotation axis is returned.
-    Othewise ON_3dPoint::Nan is returned.
+    Otherwise ON_3dPoint::Nan is returned.
   */
   const ON_3dPoint RotationAxisPoint() const;
 
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the direction of the rotation axis is returned.
-    Othewise ON_3dVector::Nan is returned.
+    Otherwise ON_3dVector::Nan is returned.
   Remarks:
     This vector may have length != 1
   */
@@ -755,21 +755,21 @@ public:
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then a unit vector in the direction of the rotation axis is returned.
-    Othewise ON_3dVector::Nan is returned.
+    Otherwise ON_3dVector::Nan is returned.
   */
   const ON_3dVector RotationAxisTangent() const;
 
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the rotation count is returned.
-    Othewise 0 is returned.
+    Otherwise 0 is returned.
   */
   unsigned int RotationCount() const;
 
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the rotation angle in degrees is returned.
-    Othewise ON_DBL_QNAN is returned.
+    Otherwise ON_DBL_QNAN is returned.
   Remarks:
     RotationAngleDegrees() = 360.0/RotationCount()
   */
@@ -785,7 +785,7 @@ public:
   /*
   Returns:
     If the symmetry is type is Rotate or ReflectAndRotate, then the rotation angle in radians is returned.
-    Othewise ON_DBL_QNAN is returned.
+    Otherwise ON_DBL_QNAN is returned.
   Remarks:
     RotationAngleRadians() = (2.0*ON_PI)/RotationCount()
   */
@@ -836,14 +836,14 @@ public:
 
   /*
   Description:
-    If SymmetryCoordinates() = ON_Symmetry::Coordinates::Object, then the symmetry defition
+    If SymmetryCoordinates() = ON_Symmetry::Coordinates::Object, then the symmetry definition
     is transformed.
   */
   const ON_Symmetry TransformConditionally(const ON_Xform& xform) const;
 
   /*
   Description:
-    The the symmetry defition is transformed.
+    The the symmetry definition is transformed.
   */
   const ON_Symmetry TransformUnconditionally(const ON_Xform& xform) const;
 
@@ -853,7 +853,7 @@ public:
     A SHA1 hash value that uniquely identifies the symmetry settings.
   Remarks:
     The symmetric object content serial number and symmetric object hashes 
-    are not incuded in the symmetry hash.
+    are not included in the symmetry hash.
   */
   const ON_SHA1_Hash SymmetryHash() const;
 

@@ -58,7 +58,7 @@ public:
   ON_2iPoint& operator-=(const class ON_2iVector&);
 
   // It is intentional that points are not added to points to encourage
-  // code that is clear about what is a location and what is diplacement.
+  // code that is clear about what is a location and what is displacement.
 
 public:
   /*

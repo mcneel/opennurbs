@@ -351,7 +351,7 @@ public:
 
   explicit ON_2dPoint(double x,double y);
 #if defined(OPENNURBS_WALL)
-  // Goal is to eventually have all constructors that discard informtion be explicit.
+  // Goal is to eventually have all constructors that discard information be explicit.
   explicit 
 #endif
   ON_2dPoint(const ON_3dPoint& );       // from 3d point
@@ -440,7 +440,7 @@ public:
 
   /*
   Returns:
-    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
+    False if any coordinate is infinite, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
 
@@ -561,7 +561,7 @@ public:
 public:
   explicit ON_3dPoint(double x,double y,double z);
 #if defined(OPENNURBS_WALL)
-  // Goal is to eventually have all constructors that discard informtion be explicit.
+  // Goal is to eventually have all constructors that discard information be explicit.
   explicit 
 #endif
   ON_3dPoint(const ON_2dPoint& );       // from 2d point
@@ -647,7 +647,7 @@ public:
 
   /*
   Returns:
-    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
+    False if any coordinate is infinite, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
 
@@ -797,7 +797,7 @@ public:
 
   explicit ON_4dPoint(double x,double y,double z,double w);
 
-  // These constructors are not explicit because no informtion is lost.
+  // These constructors are not explicit because no information is lost.
   ON_4dPoint(const ON_2dPoint& );     // from 2d point (z,y,0,1)
   ON_4dPoint(const ON_3dPoint& );     // from 3d point (x,y,z,1)
   ON_4dPoint(const ON_2dVector& );    // from 2d vector (x,y,0,0)
@@ -805,7 +805,7 @@ public:
 
   explicit ON_4dPoint(const double*);          // from double[4] array
 
-  // These constructors are not explicit because no informtion is lost.
+  // These constructors are not explicit because no information is lost.
   ON_4dPoint(const ON_2fPoint& );     // from 2f point (z,y,0,1)
   ON_4dPoint(const ON_3fPoint& );     // from 3f point (x,y,z,1)
   ON_4dPoint(const ON_4fPoint& );     // from 4f point
@@ -817,7 +817,7 @@ public:
   /*
   Description:
     This function is provided because in rare cases it makes sense.
-    If you are not certian why you want this value, think carefully
+    If you are not certain why you want this value, think carefully
     or work with vectors and points in Euclidean coordinates.
   Returns:
     lhs.x*rhs.x + lhs.y*rhs.y + lhs.z*rhs.z + lhs.w*rhs.w;
@@ -907,7 +907,7 @@ public:
 
   /*
   Returns:
-    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
+    False if any coordinate is infinite, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
 
@@ -1080,7 +1080,7 @@ public:
 
   /*
   Returns:
-    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
+    False if any coordinate is infinite, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
 
@@ -1428,7 +1428,7 @@ public:
 
   /*
   Returns:
-    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
+    False if any coordinate is infinite, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
 
@@ -1568,7 +1568,7 @@ public:
       vector to return if this is zero or unset.
       When in doubt, pass ON_3dVector::NanVector.
   Returns:
-    If this is nonzero, a vector perpindicular to this.
+    If this is nonzero, a vector perpendicular to this.
     The returned vector is not unitized.
     Otherwise failure_result is returned.
   */
@@ -1621,7 +1621,7 @@ Description:
 class ON_CLASS ON_PlaneEquation
 {
 public:
-  // C++ defaults for construction, destruction, copys, and operator=
+  // C++ defaults for construction, destruction, copies, and operator=
   // work fine.
 
   static const ON_PlaneEquation UnsetPlaneEquation; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
@@ -1669,9 +1669,9 @@ public:
   /*
   Returns:
     The plane equation whose coefficient values are 
-    the negative of the coefficent values in this,
-    provided the coeffient value is valid. Any invalid
-    coefficent values are copied.
+    the negative of the coefficient values in this,
+    provided the coefficient value is valid. Any invalid
+    coefficient values are copied.
   */
   ON_PlaneEquation NegatedPlaneEquation() const;
 
@@ -1859,9 +1859,9 @@ public:
 
   /*
   Description:
-    This function calculates and evalutes points that 
+    This function calculates and evaluates points that 
     would be exactly on the plane if double precision
-    aritmetic were mathematically perfect and returns
+    arithmetic were mathematically perfect and returns
     the largest value of the evaluations.
   */
   double ZeroTolerance() const;
@@ -1926,7 +1926,7 @@ public:
   Parameters:
     bRational - [in]
       False if the points are euclidean (x,y,z)
-      True if the points are homogenous rational (x,y,z,w)
+      True if the points are homogeneous rational (x,y,z,w)
       (x/w,y/w,z/w) is used to evaluate the value.
     point_count - [in]
     point_stride - [in]
@@ -1935,7 +1935,7 @@ public:
       coordinates of points
     stop_value - [in]
       If stop_value is valid and not ON_UNSET_VALUE, then the 
-      evaulation stops if a value > stop_value is found. 
+      evaluation stops if a value > stop_value is found. 
       If stop_value = ON_UNSET_VALUE, then stop_value is ignored.
   Returns:
     Maximum value of the plane equation on the point list.
@@ -1955,7 +1955,7 @@ public:
   Parameters:
     bRational - [in]
       False if the points are euclidean (x,y,z)
-      True if the points are homogenous rational (x,y,z,w)
+      True if the points are homogeneous rational (x,y,z,w)
       (x/w,y/w,z/w) is used to evaluate the value.
     point_count - [in]
     point_stride - [in]
@@ -1964,7 +1964,7 @@ public:
       coordinates of points
     stop_value - [in]
       If stop_value is valid and not ON_UNSET_VALUE, then the 
-      evaulation stops if a value < stop_value is found. 
+      evaluation stops if a value < stop_value is found. 
       If stop_value = ON_UNSET_VALUE, then stop_value is ignored.
   Returns:
     Maximum value of the plane equation on the point list.
@@ -1985,7 +1985,7 @@ public:
   Parameters:
     bRational - [in]
       False if the points are euclidean (x,y,z)
-      True if the points are homogenous rational (x,y,z,w)
+      True if the points are homogeneous rational (x,y,z,w)
       (x/w,y/w,z/w) is used to evaluate the value.
     point_count - [in]
     point_stride - [in]
@@ -1993,7 +1993,7 @@ public:
     points - [in]
       coordinates of points
     stop_value - [in]
-      If stop_value >= 0.0, then the evaulation stops if an
+      If stop_value >= 0.0, then the evaluation stops if an
       absolute value > stop_value is found. If stop_value < 0.0 
       or stop_value is invalid, then stop_value is ignored.
   Returns:
@@ -2297,7 +2297,7 @@ public:
   //   Create 3d point list
   // Parameters:
   //   point_dimension - [in] dimension of input points (2 or 3)
-  //   bRational - [in] true if points are in homogenous rational form
+  //   bRational - [in] true if points are in homogeneous rational form
   //   point_count - [in] number of points
   //   point_stride - [in] number of doubles to skip between points
   //   points - [in] array of point coordinates
@@ -2313,7 +2313,7 @@ public:
   //   Create 3d point list
   // Parameters:
   //   point_dimension - [in] dimension of input points (2 or 3)
-  //   bRational - [in] true if points are in homogenous rational form
+  //   bRational - [in] true if points are in homogeneous rational form
   //   point_count - [in] number of points
   //   point_stride - [in] number of doubles to skip between points
   //   points - [in] array of point coordinates
@@ -2778,8 +2778,8 @@ public:
   /*
   Returns:
     0: no points
-    1: single precison points (float coordinates)
-    2: double precison points (double coordinates)
+    1: single precision points (float coordinates)
+    2: double precision points (double coordinates)
   */
   unsigned int Precision() const;
 
@@ -2802,7 +2802,7 @@ public:
     point_index - [in]
     buffer - [out]
       If point_index is a valid index, the point coordinates
-      are copied to buffer[]; oherwise the buffer coordinates
+      are copied to buffer[]; otherwise the buffer coordinates
       are set to ON_UNSET_VALUE.
       You must insure buffer is not null, has proper alignment
       for storing doubles, and is large enough to store three
@@ -3612,10 +3612,10 @@ private:
   // A left to right crossing is -1.
   ON__INT32 m_above_crossing_number = 0;
 
-  // 0 != (m_status_bits & 1): left crossing occured
-  // 0 != (m_status_bits & 2): right crossing occured
-  // 0 != (m_status_bits & 4): below crossing occured
-  // 0 != (m_status_bits & 8): above crossing occured
+  // 0 != (m_status_bits & 1): left crossing occurred
+  // 0 != (m_status_bits & 2): right crossing occurred
+  // 0 != (m_status_bits & 4): below crossing occurred
+  // 0 != (m_status_bits & 8): above crossing occurred
   // 0 != (m_status_bits & 16): winding point on horizontal segment
   // 0 != (m_status_bits & 32): winding point on vertical segment
   ON__INT32 m_status_bits = 0;
@@ -3659,7 +3659,7 @@ public:
 	Construction or Initialization
 	Parameters:
 		dom -[in] surface domain
-		closed -[in] closed[0] is true if the surface is closed in u direction (similary for 1 and v)
+		closed -[in] closed[0] is true if the surface is closed in u direction (similarly for 1 and v)
 						Use  ON_IsG1Closed(...) to test for G1-closed surfaces.
 		normband - [in] 0<normband<.5 is a normalized coordinate defining a band on each side of the seam.
 						The bands are {(u,v): dom[0].NormalizedParameterAt(u)< normband } and
@@ -3697,7 +3697,7 @@ we can pull back the curve to the covering space (-inf,inf) x dom[1].
 Parameters
 in - [in] surface parameter points in dom[0] x dom[1]
 dom -[in] surface domain
-closed -[in] closed[0] is true if the surface is closed in u direction (similary for 1 and v)
+closed -[in] closed[0] is true if the surface is closed in u direction (similarly for 1 and v)
 normband - [in] 0<normband<.5 is a normalized coordinate defining a band on each side of the seam.
 The point sequence crosses the seam if consecutive points are in opposite bands
 along the seam.

@@ -613,6 +613,8 @@ bool ON_TextContent::Create(
     h_align = dimstyle->LeaderTextHorizontalAlignment();
     v_align = ON::TextVerticalAlignment::MiddleOfTop; //dimstyle->LeaderTextVerticalAlignment();
     break;
+  default:
+    break;
   }
 
   // Parse string, create runs, find font, set plane & height
@@ -1782,6 +1784,8 @@ ON::AnnotationType ON_TextContent::Internal_AlignmentAnnotationType(
   case ON::AnnotationType::Diameter:
   case ON::AnnotationType::Radius:
     return annotation_type;
+  default:
+    break;
   }
   return ON::AnnotationType::Unset;
 }

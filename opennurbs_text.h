@@ -117,7 +117,7 @@ public:
   /*
   Returns:
     True if this text position information used to create this text
-    is identical to the text position paramters on dimstyle.
+    is identical to the text position parameters on dimstyle.
   */
   bool EqualTextPositionProperties(
     ON::AnnotationType annotation_type,
@@ -364,7 +364,7 @@ public:
   //Parameters:
   //  dimsytle - [in]
   //Returns:
-  //  true if style was passed as dimstyle paramter to Create(), ReplaceTextString(),
+  //  true if style was passed as dimstyle parameter to Create(), ReplaceTextString(),
   //  or RebuildRuns() and used to create the current text runs.
   //*/
   //bool IsCurrentDimStyle(

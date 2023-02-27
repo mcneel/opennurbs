@@ -562,6 +562,8 @@ bool ON_ArithmeticCalculatorImplementation::AppendNumber(
     if ( !EvaluatePendingArithmeticOperation() )
       return false;
     break;
+  default:
+    break;
   }
 
   if ( bSupportImpliedMultiplication )
@@ -782,7 +784,11 @@ bool ON_ArithmeticCalculatorImplementation::AppendArithmeticOperator(
           if ( !EvaluatePendingArithmeticOperation() )
             return false;
         break;
+        default:
+          break;
       }
+      break;
+    default:
       break;
     }
 
@@ -821,6 +827,8 @@ ON_ArithmeticCalculatorImplementation::ARITHMETIC_OP ON_ArithmeticCalculatorImpl
   case ON_ArithmeticCalculatorImplementation::op_add:
   case ON_ArithmeticCalculatorImplementation::op_sub:
     rc = m_op_stack[m_op_stack_pointer-1].m_op;
+    break;
+  default:
     break;
   }
 
