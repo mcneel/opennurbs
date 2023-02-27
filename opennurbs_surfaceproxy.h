@@ -193,7 +193,7 @@ public:
               possible to repeatedly call GetNextDiscontinuity
               and step through the discontinuities.
     t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is 
-              will be ingored unless c is a locus discontinuity
+              will be ignored unless c is a locus discontinuity
               type and t1 is at the start or end of the curve.
     t - [out] if a discontinuity is found, then *t reports the
           parameter at the discontinuity.
@@ -204,7 +204,7 @@ public:
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 
         of 2 means the second derivative or curvature was 
-        discontinuous.  A value of 0 means teh curve is not
+        discontinuous.  A value of 0 means the curve is not
         closed, a locus discontinuity test was applied, and
         t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only

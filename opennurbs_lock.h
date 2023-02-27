@@ -17,7 +17,7 @@
 /*
 Description:
   ON_Lock is a thread safe lock semephore. It is implemented using
-  platform specfic compare and set functions.
+  platform specific compare and set functions.
 */
 class ON_CLASS ON_Lock
 {

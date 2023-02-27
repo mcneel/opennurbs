@@ -218,7 +218,7 @@
 //   FreeType 2.6.3 has deeply nested includes and uses angle brackets
 //   in its include files (instead of double quotes and relative paths like opennurbs),
 //   the directory ./freetype263/include must be in the "system" includes path.
-//   It is not feasable or reasonable for all projects that include opennurbs.h to have the
+//   It is not feasible or reasonable for all projects that include opennurbs.h to have the
 //   freetype includes directory in the system includes path.
 
 #if defined(OPENNURBS_FREETYPE_SUPPORT)

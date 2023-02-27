@@ -2237,6 +2237,8 @@ static ON_ComponentStatus* BrepComponentStatus(
       if ( component_index.m_index < brep.m_F.Count() )
         return &brep.m_F[component_index.m_index].m_status;
       break;
+    default:
+      break;
     }
   }
   return nullptr;

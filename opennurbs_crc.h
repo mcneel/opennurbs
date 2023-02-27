@@ -18,7 +18,7 @@ ON_BEGIN_EXTERNC
 
 /*
 Description:
-  Continues 16 bit CRC calulation to include the buffer.
+  Continues 16 bit CRC calculation to include the buffer.
 
 Parameters:
   current_remainder - [in]
@@ -67,7 +67,7 @@ ON__UINT16 ON_CRC16(
 
 /*
 Description:
-  Continues 32 bit CRC calulation to include the buffer
+  Continues 32 bit CRC calculation to include the buffer
 
   ON_CRC32() is a slightly altered version of zlib 1.3.3's crc32()
   and the zlib "legal stuff" is reproduced below.

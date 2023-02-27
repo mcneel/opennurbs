@@ -500,7 +500,7 @@ public:
   // Require explicit construction when dev must insure array has length >= 4.
   explicit ON_4fPoint(const float*);           // from float[4] array
 
-  // Require explicit construction when loosing precision
+  // Require explicit construction when losing precision
   explicit ON_4fPoint(const ON_2dPoint& );     // from 2d point
   explicit ON_4fPoint(const ON_3dPoint& );     // from 3d point
   explicit ON_4fPoint(const ON_4dPoint& );     // from 4d point

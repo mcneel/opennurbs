@@ -156,7 +156,7 @@ public:
     Currently, layers are the only object type where this property is true.
     This function should be called "NameIncludesParent" because it 
     also applies to components like materials and geometry objects
-    that are not reqired to have a unique name.
+    that are not required to have a unique name.
   */
   static bool UniqueNameIncludesParent(
     ON_ModelComponent::Type component_type
@@ -172,7 +172,7 @@ public:
     case when testing for equality.
     This function should be called "NameIgnoresCase" because it 
     also applies to components like materials and geometry objects
-    that are not reqired to have a unique name.
+    that are not required to have a unique name.
   */
   static bool UniqueNameIgnoresCase(
     ON_ModelComponent::Type component_type
@@ -410,7 +410,7 @@ public:
 
   /*
   Returns:
-    A value identifing the model that manages this component.
+    A value identifying the model that manages this component.
   Remarks:
     If the component is being managed by a model, this value identifies the model.
     In Rhino, this value is the document runtime serial number.
@@ -423,7 +423,7 @@ public:
 
   /*
   Returns:
-    When a compoent is in a model for reference, this value identifies the
+    When a component is in a model for reference, this value identifies the
     reference model.
   Remarks:
     Reference components are not saved in .3dm archives.
@@ -457,7 +457,7 @@ public:
     and  these values are used..
             0: Active model component.
        1-1000: reserved for future use
-        >1000: linked instance defintion serial number
+        >1000: linked instance definition serial number
   */
   unsigned int InstanceDefinitionModelSerialNumber() const;
 
@@ -1098,7 +1098,7 @@ public:
 
   /*
   Description:
-    Remove all occurances of ON::NameReferenceDelimiter() from name.
+    Remove all occurrences of ON::NameReferenceDelimiter() from name.
   */
   static const ON_wString RemoveAllReferencePrefixDelimiters(
     const wchar_t* name
@@ -1106,7 +1106,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NameReferenceDelimiter from name.
+    Remove any trailing occurrence of ON_ModelComponent::NameReferenceDelimiter from name.
   Example:
     "A.3dm" = ON_ModelComponent::RemoveTrailingRemoveReferencePrefixDelimiter("A.3dm : ");
   */
@@ -1116,7 +1116,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NameReferenceSeparator from name.
+    Remove any trailing occurrence of ON_ModelComponent::NameReferenceSeparator from name.
   */
   static const ON_wString RemoveTrailingReferencePrefixSeparator(
     const wchar_t* name
@@ -1124,7 +1124,7 @@ public:
 
   /*
   Description:
-    Remove any trailing occurance of ON_ModelComponent::NamePathSeparator from name.
+    Remove any trailing occurrence of ON_ModelComponent::NamePathSeparator from name.
   */
   static const ON_wString RemoveTrailingNamePathSeparator(
     const wchar_t* name
@@ -1178,7 +1178,7 @@ public:
       or
       component_name is not empty and ON_ModelComponent::IsValidComponentName(component_name) is false.
   Remarks:
-    If component_name is nullptr or the emtpy string, the NameIsSet() state will still be true.
+    If component_name is nullptr or the empty string, the NameIsSet() state will still be true.
   */
   bool SetName(
     const wchar_t* component_name
@@ -1678,7 +1678,7 @@ public:
   ON_ModelComponentTypeIterator& operator=(const ON_ModelComponentTypeIterator&) = default;
 
   /*
-  Paramters:
+  Parameters:
     type_count - [in] number of types
     types - [in]
       list of types to iterate over
@@ -1833,7 +1833,7 @@ public:
 
   /*
   Return:
-    If this is the only referance to a component, the a pointer to
+    If this is the only reference to a component, the a pointer to
     that component is returned.
     Otherwise, nullptr is returned
   See Also:

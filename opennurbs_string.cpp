@@ -1931,6 +1931,9 @@ const ON_String ON_String::ToUTF8(
   case ON_String::Encoding::BIG5andASCII:
     bad_utf32_count = Internal_Big5ToUTF32(buffer, buffer_length, utf32);
     break;
+
+  default:
+    break;
   }
 
   const unsigned utf32_count = utf32.UnsignedCount();

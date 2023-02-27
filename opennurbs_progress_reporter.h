@@ -35,7 +35,7 @@ public:
       * The callback function should do something that is fast and simple,
         like post a message to a user interface control and return
         immediately.      
-      Paramters passed to the callback function:
+      Parameters passed to the callback function:
         context - [in] 
           the value of callback_context.
         fraction_complete - [in]
@@ -75,7 +75,7 @@ public:
               ON_ProgressReporter pr;
               pr.SetSynchronousProgressCallbackFunction(MyProgressCallback,&my_msg);
               ...
-              Pass &pr to a calculation function.  The calcuation will generally be running
+              Pass &pr to a calculation function.  The calculation will generally be running
               in a different thread or allowing Windows messages to be pumped.
   */
   void SetSynchronousProgressCallbackFunction(
@@ -85,7 +85,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.
@@ -93,7 +93,7 @@ public:
     progress_reporter - [in]
       A pointer to an ON_ProgressReporter or null pointer.
     fraction_complete - [in]
-      a value between 0.0 and 1.0 where 0.0 indicates the calcuation
+      a value between 0.0 and 1.0 where 0.0 indicates the calculation
       is beginning and 1.0 indicates the calculation is complete.
   Example:    
             void MyLongCalculation( ..., ON_ProgressReporter* pr, ...)
@@ -115,7 +115,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.
@@ -123,7 +123,7 @@ public:
     progress_reporter - [in]
       A pointer to an ON_ProgressReporter or null pointer.
     fraction_complete - [in]
-      a value between 0.0 and 1.0 where 0.0 indicates the calcuation
+      a value between 0.0 and 1.0 where 0.0 indicates the calculation
       is beginning and 1.0 indicates the calculation is complete.
   Example:    
             void MyLongCalculation( ..., ON_ProgressReporter* pr, ...)
@@ -146,7 +146,7 @@ public:
 
   /*
   Description:
-    The caclulation calls ON_ProgressReporter::ReportProgress to report
+    The calculation calls ON_ProgressReporter::ReportProgress to report
     its current progress.  If it is the first call to ReportProgress, 
     or the faction_complete is 1.0, or the fraction_complete has 
     increased a reasonable amount, then the callback function is called.
@@ -154,7 +154,7 @@ public:
     progress_reporter - [in]
       A pointer to an ON_ProgressReporter or null pointer.
     fraction_complete - [in]
-      a value between 0.0 and 1.0 where 0.0 indicates the calcuation
+      a value between 0.0 and 1.0 where 0.0 indicates the calculation
       is beginning and 1.0 indicates the calculation is complete.
   Example:    
             void MyLongCalculation( ..., ON_ProgressReporter* pr, ...)
@@ -185,7 +185,7 @@ public:
   Returns:
     ON_UNSET_VALUE is returned when progress_reporter is nullptr.
     Otherwise, a value between 0.0 and 1.0 is returned where 0.0 indicates
-    the calcuation is beginning and 1.0 indicates the calculation is complete.
+    the calculation is beginning and 1.0 indicates the calculation is complete.
   */
   static double FractionComplete( 
     ON_ProgressReporter* progress_reporter

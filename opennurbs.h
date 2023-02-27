@@ -31,7 +31,7 @@
 
 #include "opennurbs_defines.h"      /* openNURBS defines and enums */
 #include "opennurbs_error.h"        /* error handling */
-#include "opennurbs_memory.h"       /* memory managment (onmalloc(), onrealloc(), onfree(), ...) */
+#include "opennurbs_memory.h"       /* memory management (onmalloc(), onrealloc(), onfree(), ...) */
 #include "opennurbs_rand.h"         /* random number generator */
 #include "opennurbs_crc.h"          /* cyclic redundancy check tool */
 #include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */
@@ -99,7 +99,7 @@
 #include "opennurbs_rendering.h"
 #include "opennurbs_object.h"         // virtual base class for all openNURBS objects
 #include "opennurbs_model_component.h"
-#include "opennurbs_archive.h"        // binary arcive objects for serialization to file, memory blocks, etc.
+#include "opennurbs_archive.h"        // binary archive objects for serialization to file, memory blocks, etc.
 #include "opennurbs_model_geometry.h"
 #include "opennurbs_arc.h"            // simple 3d circular arc
 #include "opennurbs_userdata.h"       // class for attaching persistent user information to openNURBS objects

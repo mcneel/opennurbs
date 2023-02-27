@@ -1533,6 +1533,8 @@ static void Internal_V6LengthDisplayFromV5LengthFormatAndFactor(
       v6_length_factor = 1.0;
       v6_dimension_length_display = ON_DimStyle::LengthDisplay::Miles;
       break;
+    default:
+      break;
   }
 
   return;

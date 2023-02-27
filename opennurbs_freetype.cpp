@@ -505,6 +505,8 @@ bool ON_FreeType::IsDamagedCharMap(
   case FT_ENCODING_APPLE_ROMAN:
     rc = ON_FreeType::UseUnicodeAsAppleRomanCharCode(cmap->face);
     break;
+  default:
+    break;
   }
 
   return rc;

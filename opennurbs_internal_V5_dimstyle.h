@@ -391,7 +391,7 @@ public:
 
   // Change the fields in this dimstyle to match the fields of the 
   // source dimstyle for all of the fields that are marked overridden in the source
-  // and to match the parent for all of the fields not marked overriden.
+  // and to match the parent for all of the fields not marked overridden.
   // Returns true if any overrides were set.
   bool OverrideFields( const ON_V5x_DimStyle& source, const ON_V5x_DimStyle& parent);
 

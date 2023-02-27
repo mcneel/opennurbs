@@ -130,7 +130,7 @@ public:
     ) const override;
 
   // Description:
-  //   Writes ON_Viewport defintion from a binary archive.
+  //   Writes ON_Viewport definition from a binary archive.
   //
   // Parameters:
   //   binary_archive - [in] open binary archive
@@ -146,7 +146,7 @@ public:
 
 
   // Description:
-  //   Reads ON_Viewport defintion from a binary archive.
+  //   Reads ON_Viewport definition from a binary archive.
   //
   // Parameters:
   //   binary_archive - [in] open binary archive
@@ -241,7 +241,7 @@ public:
     target_distance - [in]
       If ON_UNSET_VALUE this parameter is ignored.  Otherwise
       it must be > 0 and indicates which plane in the current 
-      view frustum should be perserved.
+      view frustum should be preserved.
     bSymmetricFrustum - [in]
       True if you want the resulting frustum to be symmetric.
     lens_length - [in] (pass 50.0 when in doubt)
@@ -270,7 +270,7 @@ public:
     target_distance - [in]
       If ON_UNSET_VALUE this parameter is ignored.  Otherwise
       it must be > 0 and indicates which plane in the current 
-      view frustum should be perserved.
+      view frustum should be preserved.
     up - [in]
       This direction will be the locked up direction.  Pass 
       ON_3dVector::ZeroVector if you want to use the world axis
@@ -448,7 +448,7 @@ public:
   );
 
 
-  // SetFrustumAspect() changes the larger of the frustum's widht/height
+  // SetFrustumAspect() changes the larger of the frustum's width/height
   // so that the resulting value of width/height matches the requested
   // aspect.  The camera angle is not changed.  If you change the shape
   // of the view port with a call SetScreenPort(), then you generally 
@@ -615,7 +615,7 @@ public:
     projection, the it intersects the semi infinite frustum
     volume with the bounding box and returns the near and far
     distances of the intersection.  If the viewport is a parallel
-    projection, it instersects the infinte view region with the
+    projection, it instersects the infinite view region with the
     bounding box and returns the near and far distances of the
     projection.
   */
@@ -660,7 +660,7 @@ public:
     projection, the it intersects the semi infinite frustum
     volume with the bounding box and returns the near and far
     distances of the intersection.  If the viewport is a parallel
-    projection, it instersects the infinte view region with the
+    projection, it instersects the infinite view region with the
     bounding box and returns the near and far distances of the
     projection.
   */
@@ -1760,10 +1760,10 @@ ON_ViewportFromRhinoView( // create ON_Viewport from legacy Rhino projection inf
 /*
 Description:
   Calculate the corners of the polygon that is the
-  intersection of a view frustum with and infinte plane.
+  intersection of a view frustum with and infinite plane.
 Parameters:
   vp - [in] defines view frustum
-  plane_equation - [in] defined infinte plane
+  plane_equation - [in] defined infinite plane
   points  - [out] corners of the polygon.
     If true is returned and points.Count() is zero, then
     the plane missed the frustum.  Note that the start/end

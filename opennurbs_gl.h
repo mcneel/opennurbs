@@ -40,7 +40,7 @@
 // Tested compilers:
 //   Apple Xcode 2.4.1
 //   Support for other Apple compilers is not available.
-#include <GLUT/glut.h>   // Open GL auxillary functions
+#include <GLUT/glut.h>   // Open GL auxiliary functions
 
 #else
 
@@ -149,10 +149,10 @@ void ON_GL(
       int = 1,           // bPermitKnotScaling - If true, surface knots may
                          // be rescaled to avoid knot vectors GL cannot handle.
       double* = nullptr,    // knot_scale0[2] - If not nullptr and bPermitKnotScaling,
-                         // the scaleing applied to the first parameter is
+                         // the scaling applied to the first parameter is
                          // returned here.
       double* = nullptr     // knot_scale0[2] - If not nullptr and bPermitKnotScaling,
-                         // the scaleing applied to the second parameter is
+                         // the scaling applied to the second parameter is
                          // returned here.
       );
 

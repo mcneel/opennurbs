@@ -262,7 +262,7 @@ public:
     Signed distance from the baseline to highest point on a glyph outline.
 
   Remarks:
-    If every glyph outline in the font has (0,0) on the basline, then Ascent() 
+    If every glyph outline in the font has (0,0) on the baseline, then Ascent() 
     is the maximum glyph bounding box Y.
 
     Ascent typically includes internal leading, the space used for 
@@ -281,7 +281,7 @@ public:
     This value is typically negative because glyphs for letters like 'g' and 'j'
     typically have a portion of their outline below the baseline.  However,
     some fonts have positive descent.
-    If every glyph outline in the font has (0,0) on the basline, then Descent() 
+    If every glyph outline in the font has (0,0) on the baseline, then Descent() 
     is the minimum glyph bounding box Y.
 
     Windows: = -DWRITE_FONT_METRICS.descent
@@ -290,7 +290,7 @@ public:
 
   /*
   Returns:
-    The postive distance to move the base line when moving to a new line of text.
+    The positive distance to move the base line when moving to a new line of text.
 
   Remarks:
     For almost every font used to render English text, LineSpace() > (Ascent() - Descent()).
@@ -299,7 +299,7 @@ public:
     with (Ascent() - Descent()). 
 
     For fonts designed to render horizontal lines of text, LineSpace() is a 
-    vertical distance. For fonts desingned to render vertical lines of text,
+    vertical distance. For fonts designed to render vertical lines of text,
     LineSpace() is a horizontal distance.  Depending on the context, the 
     direction to move can be up, down, left or right.
 
@@ -354,7 +354,7 @@ public:
 
     If the capial height property of a font is not
     available, the ascent of I or H can be used instead. (There are
-    commonly used fonts where using other glpyhs gives undesirable results.)OfI.
+    commonly used fonts where using other glyphs gives undesirable results.)OfI.
 
     Windows: = DWRITE_FONT_METRICS.capHeight
     Apple: = CTFontGetAscent(...)
@@ -367,7 +367,7 @@ public:
     The font's typographic x-height.
 
   Remarks:
-    The x-height is used to help select a substitute font to use for missing glpyhs.
+    The x-height is used to help select a substitute font to use for missing glyphs.
   */
   int AscentOfx() const;
 
@@ -624,7 +624,7 @@ public:
   ON_2dex m_bbmax = ON_2dex::Unset;
 
   // m_max_basepoint.i = maximum horizontal delta in any line. Increases to the right, decreases to the left.
-  // m_max_basepoint.i = vertical delta to basline of bottom line. Increases upward, decreases downward.
+  // m_max_basepoint.i = vertical delta to baseline of bottom line. Increases upward, decreases downward.
   ON_2dex m_max_basepoint = ON_2dex::Zero;
 
   // m_advance is a vector that specifies where the basepoint should be moved
@@ -871,7 +871,7 @@ public:
 
     NotOriented = 3,
 
-    // An error occured in orientation calculations
+    // An error occurred in orientation calculations
     Error = 15
   };
 
@@ -886,7 +886,7 @@ public:
   {
     ///<summary>
     /// This value should be used for parameters where the type is has not
-    /// been explicity to determined.
+    /// been explicitly to determined.
     ///</summary>
     Unset = 0,
 
@@ -944,7 +944,7 @@ public:
     Opennurbs searches the description saved in field 10 of the name table
     for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
     to identify fonts that are desgned for engraving (and which tend to render poorly when
-    used to dispaly text devices like screens, monitors, and printers).
+    used to display text devices like screens, monitors, and printers).
     The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
   Parameters:
     field_10_description - [in]
@@ -993,7 +993,7 @@ public:
       be set to what you plan on using when rendering the glyph.
       The orientation of outer_figur can be either clockwise or counterclockwise
       and, in the context of the entire glyph, outer_figure can be an inner or outer boundary.
-      For example, the registered trademark glpyh (UNICODE U+00AE) is an example where 
+      For example, the registered trademark glyph (UNICODE U+00AE) is an example where 
       four nested figures with alternating orientations are common.
     bPerformExtraChecking - [in]
       In general, when sorting glyph outlines as they come froma font file, set
@@ -1318,7 +1318,7 @@ public:
      figure outline bounding box.
      For example, the glyph metrics box for 1 (numeral one) often contains space beyond the
      glyph outline because 1 visually occupies the same space as a 2. The choice is up to the
-     font designer and takes into account the desired font asthetics of columns of numbers.
+     font designer and takes into account the desired font aesthetics of columns of numbers.
      */
   const ON_BoundingBox OutlineBoundingBox() const;
 
@@ -1330,7 +1330,7 @@ public:
      figure outline bounding box.
      For example, the glyph metrics box for 1 (numeral one) often contains space beyond the
      glyph outline because 1 visually occupies the same space as a 2. The choice is up to the
-     font designer and takes into account the desired font asthetics of columns of numbers.
+     font designer and takes into account the desired font aesthetics of columns of numbers.
   */
   const ON_TextBox GlyphMetrics() const;
 
@@ -1409,7 +1409,7 @@ private:
   // Unset = unsorted
   // CounterClockwise: outer figures are CCW
   // Clockwise: outer fitures are CW
-  // Error: error occured during sorting
+  // Error: error occurred during sorting
   mutable ON_OutlineFigure::Orientation m_sorted_figure_outer_orientation = ON_OutlineFigure::Orientation::Unset;
 
   ON__UINT8 m_reserved1 = 0;
@@ -1611,7 +1611,7 @@ public:
 
   /*
   Returns:
-    Number of input errors that have occured.
+    Number of input errors that have occurred.
   Remarks:
     When an error occurs, the current figure is terminated.
   */
@@ -1673,7 +1673,7 @@ public:
   const ON_OutlineFigurePoint ActiveFigureStartPoint() const;
 
   /*
-    Expert user tool for getting the curent point of 
+    Expert user tool for getting the current point of 
     the figure being accumulated.
   */
   const ON_OutlineFigurePoint ActiveFigureCurrentPoint() const;
@@ -1925,7 +1925,7 @@ public:
   Returns:
     If this is a managed glyph or a copy of a managed glyph, 
     and a substitute font or code point is used to render the glyph, 
-    then the substitue is returned.
+    then the substitute is returned.
     In all other cases, nullptr is returned.
   See Also:
     ON_FontGlyph.RenderGlyph().
@@ -1995,7 +1995,7 @@ public:
   Remarks:
     Many fonts do not have a glyph for a every UNICODE codepoint and font
     substitution is required. If you want to get the freetype face
-    used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
+    used for a specific UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
   */
   const ON__UINT_PTR FreeTypeFace() const;
 #endif
@@ -2029,7 +2029,7 @@ public:
     bSingleStrokeFont - [in]
       If true, open contours will not be closed by adding a line segment.
     height_of_capital - [in]
-      If > 0, ouptut curves, bounding box, and advance vector are scaled 
+      If > 0, output curves, bounding box, and advance vector are scaled 
       by height_of_capital/(font design capital height). For fonts like
       Arial, Helvetica, Times Roman, and Courier this means the height
       of H and I will be height_of_capital. 
@@ -2090,7 +2090,7 @@ private:
   //  FreeType made from the same LOGFONT on the same has height of Arial I = 184, height of LF = ...
 
   // When font does not contain a glyph to render  a specified unicode codepoint,
-  // then one or more glyphs from one or more subsitution fonts are used to
+  // then one or more glyphs from one or more substitution fonts are used to
   // render the codepoint. In this case, m_substitutes points to a linked
   // list of substitute used to render the glyph.
   //
@@ -2110,7 +2110,7 @@ private:
   void Internal_CopyFrom(const ON_FontGlyph& src);
   static ON_FontGlyph* Internal_AllocateManagedGlyph(const ON_FontGlyph& src);
   bool Internal_GetPlatformSubstitute(
-    ON_FontGlyph& substitue
+    ON_FontGlyph& substitute
   ) const;
 };
 
@@ -2141,9 +2141,9 @@ public:
 
   struct IDWriteFont* m_dwrite_font = nullptr;
 
-  // prefered locale used to get the localized name values. 
-  // If the a parrticular string was not available in the prefered locale, 
-  // then other locales are used with "en-us" being the prefered alternate locale.
+  // preferred locale used to get the localized name values. 
+  // If the a parrticular string was not available in the preferred locale, 
+  // then other locales are used with "en-us" being the preferred alternate locale.
   ON_wString m_prefered_locale;
 
   // from IDWriteFontFamily.GetFamilyNames()
@@ -2221,7 +2221,7 @@ public:
   // Opennurbs searches the description saved in field 10 of the name table
   // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
   // to identify fonts that are desgned for engraving (and which tend to render poorly when
-  // used to dispaly text devices like screens, monitors, and printers).
+  // used to display text devices like screens, monitors, and printers).
   // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
   ON_wString m_loc_field_10_description;
   ON_wString m_en_field_10_description;
@@ -2257,7 +2257,7 @@ public:
 
   // Sample glyph metrics from IDWriteFontFace.GetDesignGlyphMetrics
 
-  // "standard" metric glpyhs
+  // "standard" metric glyphs
   ON_FontGlyph m_Spacebox;
   ON_FontGlyph m_Hbox;
   ON_FontGlyph m_Ibox;
@@ -2432,14 +2432,14 @@ public:
  #pragma region RH_C_SHARED_ENUM [ON_Font::Origin] [Rhino.DocObjects.Font.FontOrigin] [nested:byte]
   /// <summary>
   /// Platform where font originated. This information is useful when 
-  /// searching for appropriate substitues.
+  /// searching for appropriate substitutes.
   /// </summary>
   enum class Origin : unsigned char
   {
     /// <summary> Not set. </summary>
     Unset = 0,
 
-    /// <summary> Origin unknown. Changing an ON_Font characteristic like weight or sytle sets the origin to unknown. </summary>
+    /// <summary> Origin unknown. Changing an ON_Font characteristic like weight or style sets the origin to unknown. </summary>
     Unknown = 1,
 
     /// <summary> 
@@ -2460,7 +2460,7 @@ public:
 
 #pragma region RH_C_SHARED_ENUM [ON_Font::FontType] [Rhino.DocObjects.Font.FontType] [nested:byte]
   /// <summary>
-  /// An enum that reports if the font face is avaialable on the current device.
+  /// An enum that reports if the font face is available on the current device.
   /// </summary>
   enum class FontType : unsigned char
   {
@@ -2793,7 +2793,7 @@ public:
     Otherwise ON_FontFaceQuartet::Empty is returned.
     Note that managed font quartets can be enlarged to include missing faces by calling
     ON_Font::FontFromRichTextProperties(). Installed font quartets exactly match
-    what is installed on the current defice.
+    what is installed on the current device.
     if this font is not a member of an installed face quartet.
   */
   const ON_FontFaceQuartet FontQuartet() const;
@@ -3167,7 +3167,7 @@ public:
   Parameters:
     bAllowBestMatch - [in]
       If no exact match is available and bAllowBestMach is true and
-      there are installed fonts with a matching familiy name,
+      there are installed fonts with a matching family name,
       then the best match in the family is returned.
   Returns:
     If there is a matching installed font, it is returned.
@@ -3296,7 +3296,7 @@ public:
       (Strikethrough is created as a rendering effect and not a separate face.)
 
   Returns:
-    If there is an installed font, it is returned. Othewise a managed font
+    If there is an installed font, it is returned. Otherwise a managed font
     is returned. When the managed font is not installed, the corresponding
     member of ON_Font::Default::InstalledQuartet() is used to render the font.
   */
@@ -3346,7 +3346,7 @@ public:
 
   /*
   Description:
-    Returns the glpyh informationh for used to render a specific code point
+    Returns the glyph informationh for used to render a specific code point
   Parameters:
     unicode_code_point 
       UNICODE code point value
@@ -3354,7 +3354,7 @@ public:
     Glyph rendering information.
 
   Remarks:
-    Typically the returned glpyh uses is a single glpyh in this->ManagedFont().
+    Typically the returned glyph uses is a single glyph in this->ManagedFont().
     In this case, glyph->SubstitueCount() is 0.
 
     In some cases one or more glyphs from one or more substitute fonts are required
@@ -3599,7 +3599,7 @@ public:
   /*
   Returns:
     If this font is a managed font that references a font that is not installed on this computer,
-    then a pointer to the installed font that is the substitue for the missing font is returned.
+    then a pointer to the installed font that is the substitute for the missing font is returned.
     Otherwise nullptr is returned.
   */
   const ON_Font* SubstituteFont() const;
@@ -3757,7 +3757,7 @@ public:
 private:
   /*
   Description:
-    All font characterisics defined by the input parameters are encoded 
+    All font characteristics defined by the input parameters are encoded 
     in the returned value.
   Remarks:
     Used in 3dm archive reading/writing.
@@ -3772,14 +3772,14 @@ private:
     
   /*
   Description:
-    All font characterisics except facename (weight, style, stretch, 
+    All font characteristics except facename (weight, style, stretch, 
     underlined, strikethrough, charset) are encoded in the returned
     value.
   Parameters:
     font_characteristics_as_unsigned - [in]
     Value returned from ON_Font.FontCharacteristicsAsUnsigned()
   Returns:
-    True if the characterstics were set.
+    True if the characteristics were set.
   Remarks:
     Used in 3dm archive reading/writing.
   */
@@ -3939,8 +3939,8 @@ public:
     For fonts that have at most 4 faces with the same stretch and variations
     in weight and slant, the  family_name is a good choice. 
     For fonts that have many faces, like Helvetica Neue on Mac OS,
-    this funciton will generate names that act like a Windows LOGFONT name
-    for use in archaic name + regular/bold/italic/bold-italic font selction
+    this function will generate names that act like a Windows LOGFONT name
+    for use in archaic name + regular/bold/italic/bold-italic font selection
     user interfaces.
   Returns:
     A fake windows logfont name.
@@ -4002,7 +4002,7 @@ public:
 
   /*
   Description:
-    Get a text descripton with family weight, width (stretch), slope (style).
+    Get a text description with family weight, width (stretch), slope (style).
   Parameters:
     family_separator - [in]
       character to place after family name in the description.
@@ -4036,7 +4036,7 @@ public:
 
   /*
   Description:
-    Get a text descripton with family weight, width (stretch), slope (style).
+    Get a text description with family weight, width (stretch), slope (style).
   Parameters:
     family_separator - [in]
       character to place after family name in the description.
@@ -4084,7 +4084,7 @@ private:
 public:
   /*
   Description:
-    Get the scale factors for converting heights beween 
+    Get the scale factors for converting heights between 
     Windows device coordinates and Windows logical coordinates.
 
   Parameters:
@@ -4118,7 +4118,7 @@ public:
     
     
     The Windows convention is to use negative lfHeight values to specify
-    font character heights and postive height values to specify font cell heights.
+    font character heights and positive height values to specify font cell heights.
 
     font cell height = font acsent + font descent.
 
@@ -4153,11 +4153,11 @@ public:
     = ascent + descent - internal leading
     For many common fonts, the "character height" is close to the distance
     from the bottom of a lower case g to the top of an upper case M. 
-    The internal leading is space reseved for diacritical marks like the
+    The internal leading is space reserved for diacritical marks like the
     ring above the A in the UNICODE "LATIN LETTER A WITH RING" U+00C5 glyph.
     Character height is also known as the "em height". 
     Note that the "em height" is typically larger than the height of the
-    letter M because "em height" inlcude descent.
+    letter M because "em height" include descent.
   */
   static int WindowsLogfontCharacterHeightFromPointSize(
     int map_mode,
@@ -4183,7 +4183,7 @@ public:
 
     logfont_character_height - [in]
       This value must be a Windows LOGFONT character height in units
-      determine from map_mode and hdc.  If you have a LOGFONT with postive
+      determine from map_mode and hdc.  If you have a LOGFONT with positive
       lfHeight value, you must get the fonts TEXTMETRICS and subbr
     
   Returns:
@@ -4339,7 +4339,7 @@ public:
         if ( nullptr != font_hdc )
         {
           ...
-          Calls to Windows SDK font managment functions needing an HDC
+          Calls to Windows SDK font management functions needing an HDC
           ...
           ON_Font::DeleteWindowsLogfontDeviceContext(font_hdc);
         }
@@ -4408,7 +4408,7 @@ public:
     Use the Windows GDI EnumFontFamiliesEx tool to get a list of LOGFONTS.
   Parameters:
     preferedLocale - [in]
-      If not empty, names from this locale will be prefered.
+      If not empty, names from this locale will be preferred.
       If preferedLocale = L"GetUserDefaultLocaleName", then
       ::GetUserDefaultLocaleName will be used to set the preferedLocale.
     bIncludeSimulatedFontFaces - [in]
@@ -4441,7 +4441,7 @@ public:
       GetDeviceCaps(hdc, LOGPIXELSY) and conversion between device and logical pixel heights
       DPtoLP(hdc,...) and LPtoDP(hdc,...) are used.
   Returns:
-    A Windows LOGFONT with propeties copied from this ON_Font.
+    A Windows LOGFONT with properties copied from this ON_Font.
     If WindowsLogFontIsComplete() is true, then all LOGFONT properties
     are copied from the ON_Font. 
     If WindowsLogFontIsComplete() is false, then the LOGFONT lfHeight,
@@ -4580,7 +4580,7 @@ public:
   Remarks:
     Many fonts do not have a glyph for a every UNICODE codepoint and font
     substitution is required. If you want to get the freetype face
-    used for a specfic UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
+    used for a specific UNICODE codepoint, call ON_Font::CodepointFreeTypeFace().
   */
   static ON__UINT_PTR FreeTypeFace(
     const ON_Font* font
@@ -4664,7 +4664,7 @@ public:
     postscript_name - [in]
     bAcceptPartialMatch - [in]
       If bAcceptPartialMatch is true, there is not a font on the device with a
-      matching name, but there are fonts with names that have siginificant overlap,
+      matching name, but there are fonts with names that have significant overlap,
       then the font with the best overlap is returned. 
       For example if "Arial-Black" is not present and "Arial-BoldMT" is present,
       then ON_Font.SetFromPostScriptName(L"Arial-Black",true) will return the
@@ -4677,7 +4677,7 @@ public:
   );
 
   /*
-  Paramaters:
+  Parameters:
     font_name - [in]
       A UTF-16 or UTF-32 encoded null terminated string.
     bStopAtHyphen - [in]
@@ -4708,7 +4708,7 @@ public:
   /*
   Description:
     Compare the font names ignoring hyphens, underbars, and spaces.
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4728,7 +4728,7 @@ public:
   /*
   Description:
     Compare the font names ignoring hyphens, underbars, and spaces.
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4748,7 +4748,7 @@ public:
   /*
   Description:
     Compare the font names ignoring hyphens, underbars, and spaces.
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4770,7 +4770,7 @@ public:
     Compare the font names ignoring hyphens, underbars, and spaces.
     Ignore portions of PostScript names after the hyphen that separates the 
     font family and font face. 
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4792,7 +4792,7 @@ public:
     Compare the font names ignoring hyphens, underbars, and spaces.
     Ignore portions of PostScript names after the hyphen that separates the
     font family and font face.
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4814,7 +4814,7 @@ public:
     Compare the font names ignoring hyphens, underbars, and spaces.
     Ignore portions of PostScript names after the hyphen that separates the
     font family and font face.
-  Paramaters:
+  Parameters:
     lhs - [in]
       font name to compare
     rhs - [in]
@@ -4832,7 +4832,7 @@ public:
   );
 
   /*
-  Paramaters:
+  Parameters:
     dirty_font_name - [in]
       A UTF-16 or UTF-32 encoded null terminated string.
     map - [in]
@@ -4849,7 +4849,7 @@ public:
   Parameters:
     font - [in]
     bDefaultIfEmpty - [in]
-      If true and font is nullptr or has emtpy names, then
+      If true and font is nullptr or has empty names, then
       the rich text font name for ON_Font::Default is returned,
   Returns:
     Font name to use in rich text file fonttbl sections.
@@ -5005,11 +5005,11 @@ public:
     const wchar_t* preferedLocale
   );
 
-  // Returns the desription saved in field 10. 
+  // Returns the description saved in field 10. 
   // Opennurbs searches the description saved in field 10 of the name table
   // for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
   // to identify fonts that are desgned for engraving (and which tend to render poorly when
-  // used to dispaly text devices like screens, monitors, and printers).
+  // used to display text devices like screens, monitors, and printers).
   // The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
   static const ON_wString Field_10_DescriptionFromWindowsDWriteFont(
     struct IDWriteFont* dwrite_font,
@@ -5045,11 +5045,11 @@ public:
   Parameters:
     dwrite_font - [in]
     preferedLocale - [in]
-      prefered local for strings (family name, font name, face name, postscript name, ...)
+      preferred local for strings (family name, font name, face name, postscript name, ...)
       A locale name often has the form "es-es", "en-us", ...
-      Pass nullptr or empty string list all locales and use "en-us" as the prefered locale name.
+      Pass nullptr or empty string list all locales and use "en-us" as the preferred locale name.
       (Most modern fonts distributed with Windows 10 in all locales have en-us names).
-      Pass "*..." if you want to list all locale names and specify a prefered locale.
+      Pass "*..." if you want to list all locale names and specify a preferred locale.
       For example, "*es-es" will list all local names but use "es-es" as the preferedLocale.
     text_log - [in]
       destintion for the text description of the font.
@@ -5217,7 +5217,7 @@ public:
     AnnotationFontApplePointSize = 256,
 
     // ON_Font::Constants::metric_char is the unicode code point value
-    // for the glpyh used to calculate critical glyph metrics.
+    // for the glyph used to calculate critical glyph metrics.
     // It must be an 'I' or 'H', but we have not tested 'H'.
     // There are problems with any other upper case latin letter in common fonts.
     // In particular, the standard 'M' does not work.
@@ -5258,7 +5258,7 @@ public:
 
     Fonts can be designed and defined at different resolutions and
     relative scaling is necessary when text contains glyphs from 
-    fonts desinged at different grid resolutions.  For example, 
+    fonts designed at different grid resolutions.  For example, 
     TrueType font grid with and height is often 1024x1024 or 
     2048x2014, OpenType grids are often 1000x1000, and PostScript 
     grids are often 1000x1000. Opennurbs "font units" are the units
@@ -5287,7 +5287,7 @@ public:
     scaling.
   Remarks:
     See ON_Font.FontMetrics() documentation for important information
-    about the differnce bewteen normalized and font unit metrics.
+    about the difference between normalized and font unit metrics.
   */
   const ON_FontMetrics& FontUnitFontMetrics() const;
 
@@ -5309,7 +5309,7 @@ public:
   Returns:
     Font character height in points (1 point = 1/72 inch).
 
-    See the remarks for a defintion of "character height".
+    See the remarks for a definition of "character height".
 
   Remarks:
     A "point" is a length unit system.
@@ -5325,10 +5325,10 @@ public:
     For fonts designed for languages that use latin letters, it is common for 
     the character height to be equal to or a little larger than the distance 
     from the bottom of a lower case g to the top of an upper case M. 
-    The character height is also called the "em hieght".
+    The character height is also called the "em height".
 
     Font internal leading is the space above typical capital latin letters
-    that is reseved for diacritical marks like the ring above the A in 
+    that is reserved for diacritical marks like the ring above the A in 
     the UNICODE "LATIN LETTER A WITH RING" U+00C5 glyph (Angstrom symbol).
   */
   double PointSize() const;
@@ -5471,7 +5471,7 @@ public:
   );
 
   /*
-  Paramaters:
+  Parameters:
     bCheckFamilyName - [in]
     bCheckPostScriptName - [in]
   Returns:
@@ -5753,7 +5753,7 @@ public:
   /*
   Description:
     The outlines for an engraving font have single-stroke, double-stroke, 
-    or perimeters desinged for path engraving. 
+    or perimeters designed for path engraving. 
     These fonts behave poorly when used for filled font rendering 
     or creating solid extrusions. 
     The OrachTech 2 line fonts are examples of engraving fonts that
@@ -5946,16 +5946,16 @@ private:
 
   //////////////////////////////////////////////////////////////////////////////////
   //
-  // The "font glpyh definition" parameters completely determine the appearance
+  // The "font glyph definition" parameters completely determine the appearance
   // of font glyphs.
   //
-  // If all "font glpyh definition" parameters have identical values, 
+  // If all "font glyph definition" parameters have identical values, 
   // text rendered using those fonts will look identical.
   //
-  // If two fonts have a "font glpyh definition" parameter with different values,
+  // If two fonts have a "font glyph definition" parameter with different values,
   // text rendered using those fonts will not look identical.
   //
-  // BEGIN "font glpyh definition" parameters:
+  // BEGIN "font glyph definition" parameters:
   //
 
   // The font ON_Font::Default has m_runtime_serial_number = 1.
@@ -6337,7 +6337,7 @@ public:
     prefered_weight - [in]      
     prefered_stretch - [in]
     prefered_style - [in]
-      Prefered font properties.
+      Preferred font properties.
 
     bRequireFaceMatch - [in]
       If true and face_name is not empty, then the returned font 
@@ -6375,7 +6375,7 @@ public:
     prefered_weight - [in]      
     prefered_stretch - [in]
     prefered_style - [in]
-      Prefered font properties.
+      Preferred font properties.
 
     bRequireFaceMatch - [in]
       If true and face_name is not empty, then the returned font 
@@ -6515,7 +6515,7 @@ public:
   Remarks:
     This is pribarily for old-fashioned font selection UI that harkens back
     to the days of LOGFONT. The UI displays a name and a bold and italic button
-    that lets you select one of four releated faces. The name used to be based
+    that lets you select one of four related faces. The name used to be based
     on the LOGFONT name. Depending on the contents of the list, there may be 
     some faces in the list that do not appear in the QuartetList().
   */

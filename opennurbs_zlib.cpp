@@ -23,7 +23,7 @@
 
 #include "opennurbs_zlib.h"
 
-#if defined(ON_COMPILER_MSC)
+#if defined(ON_COMPILER_MSC) && !defined(ON_CMAKE_BUILD)
 
 #if !defined(OPENNURBS_ZLIB_LIB_DIR)
 

@@ -434,6 +434,7 @@ const wchar_t* ON_Environment::StringFromProjection(BackgroundProjections proj) 
   case BackgroundProjections::VerticalCrossCubeMap:   return ON_ENV_PROJ_CUBE_MAP_VERT;
   case BackgroundProjections::HorizontalCrossCubeMap: return ON_ENV_PROJ_CUBE_MAP_HORZ;
   case BackgroundProjections::Hemispherical:          return ON_ENV_PROJ_HEMISPHERICAL;
+  default: break;
   }
 
   ON_ASSERT(false);

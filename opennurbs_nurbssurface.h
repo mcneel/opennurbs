@@ -109,11 +109,11 @@ public:
   Parameters:
     other - [in] other NURBS surface
     bIgnoreParameterization - [in] if true, parameterization
-             and orientaion are ignored.
+             and orientation are ignored.
     tolerance - [in] tolerance to use when comparing
                      control points.
   Returns:
-    true if curves are tne same.
+    true if curves are the same.
   */
   bool IsDuplicate( 
           const ON_NurbsSurface& other, 
@@ -372,7 +372,7 @@ public:
               possible to repeatedly call GetNextDiscontinuity
               and step through the discontinuities.
     t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is 
-              will be ingored unless c is a locus discontinuity
+              will be ignored unless c is a locus discontinuity
               type and t1 is at the start or end of the curve.
     t - [out] if a discontinuity is found, then *t reports the
           parameter at the discontinuity.
@@ -383,7 +383,7 @@ public:
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 
         of 2 means the second derivative or curvature was 
-        discontinuous.  A value of 0 means teh curve is not
+        discontinuous.  A value of 0 means the curve is not
         closed, a locus discontinuity test was applied, and
         t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
@@ -635,7 +635,7 @@ public:
   Returns:
     ON_DBL_QNAN: no bezier surface is returned.
     If a bezier surface is returned, then the maximum deviation between 
-    the bezier suface this NURBS surface sampled at the Greville abcissa.
+    the bezier surface this NURBS surface sampled at the Greville abcissa.
   */
   double GetCubicBezierApproximation(
     double max_deviation,
@@ -654,7 +654,7 @@ public:
   Returns:
     ON_DBL_QNAN: no bezier surface is returned.
     If a bezier surface is returned, then the maximum deviation between 
-    the bezier suface this NURBS surface sampled at the Greville abcissa.
+    the bezier surface this NURBS surface sampled at the Greville abcissa.
   */
   double GetCubicBezierApproximation(
     double max_deviation,
@@ -1130,7 +1130,7 @@ public:
   int     m_is_rat;         // 1 for rational B-splines. (Control vertices
                             // use homogeneous form.)
                             // 0 for non-rational B-splines. (Control
-                            // verticies do not have a weight coordinate.)
+                            // vertices do not have a weight coordinate.)
 
   int     m_order[2];       // order = degree+1 (>=2)
 
@@ -1347,7 +1347,7 @@ public:
   Description:
     Overrides virtual ON_Geometry::IsDeformable function.
   Returns:
-    True because a NURBS volume can be accuratly modified 
+    True because a NURBS volume can be accurately modified 
     with "squishy" transformations like projections, 
     shears, an non-uniform scaling.
   */
@@ -1937,7 +1937,7 @@ public:
 
   /*
   Description:
-    Adds localizer with support near the controling NURBS object.
+    Adds localizer with support near the controlling NURBS object.
   Parameters:
     support_distance - [in] >= 0
       If the distance a point to the controls NURBS 

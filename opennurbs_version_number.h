@@ -16,7 +16,7 @@
 
 /*
 Description:
-  Create a 4-byte unsigned integer value that has desireable version 
+  Create a 4-byte unsigned integer value that has desirable version 
   number properties.
 
 Parameters:

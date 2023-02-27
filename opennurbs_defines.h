@@ -253,14 +253,14 @@ double ON_RadiansFromDegrees(
 // The reasons ON_UNSET_VALUE is a valid finite number are:
 //
 //   1) It needs to round trip through fprintf/sscanf.
-//   2) It needs to persist unchanged through assigment
+//   2) It needs to persist unchanged through assignment
 /       and not generate exceptions when assigned.
 //   3) ON_UNSET_VALUE == ON_UNSET_VALUE needs to be true.
 //   4) ON_UNSET_VALUE != ON_UNSET_VALUE needs to be false.
 //
 // Ideally, it would also have these SNaN attributes
 //   * When used in a calculation, a floating point exception
-//     occures.
+//     occurs.
 //   * No possibility of a valid calculation would generate
 //     ON_UNSET_VALUE.
 //   * float f = (float)ON_UNSET_VALUE would create an invalid
@@ -318,12 +318,12 @@ The values must never be a valid user heap or stack pointer value.
 
 /*
 Description:
-Paramters:
+Parameters:
   x - [out] returned value of x is an SNan
             (signalling not a number).
 Remarks:
   Any time an SNaN passes through an Intel FPU, the result
-  is a QNaN (quiet nan) and the invalid operation excpetion
+  is a QNaN (quiet nan) and the invalid operation exception
   flag is set.  If this exception is not masked, then the
   exception handler is invoked.
  
@@ -951,11 +951,11 @@ public:
 
   /*
   Returns:
-    Empty string or the git hash of the revison of the source code used to build this application.
+    Empty string or the git hash of the revision of the source code used to build this application.
     The git hash is a hexadecimal number represented in UTF-8 string.
   Remarks:
     Developer builds return "".
-    Build system builds return the git revsion hash.
+    Build system builds return the git revision hash.
   */
   static const char* SourceGitRevisionHash();
 
@@ -1172,7 +1172,7 @@ public:
     /// ON::LengthUnitSystem::None indicates no length unit system. The scale factor
     /// when converting between a specified unit system and None is always 1.0.
     /// ON::LengthUnitSystem::None is used as a unit system for models and
-    /// instance defitions that should be imported or referenced with no
+    /// instance definitions that should be imported or referenced with no
     /// scaling applied.
     ///</summary>
     None =  0, 
@@ -1328,7 +1328,7 @@ public:
 
     ///<summary>
     /// The ON::LengthUnitSystem::Unset is used to indicate no unit system is set.
-    /// This is a differnt condition from ON::LengthUnitSystem::None. 
+    /// This is a different condition from ON::LengthUnitSystem::None. 
     ///</summary>
     Unset = 255
   };
@@ -1607,7 +1607,7 @@ public:
     Unset = 0,
     
     ///<summary>
-    /// Interactivly ask the user to choose one of the following methods
+    /// Interactively ask the user to choose one of the following methods
     /// to resolve component name conflicts.
     ///</summary>
     QueryMethod = 1,
@@ -1635,7 +1635,7 @@ public:
 
     ///<summary>
     /// Keep both components.
-    /// Resolve the name conflict by interactivly asking for an unused name 
+    /// Resolve the name conflict by interactively asking for an unused name 
     /// to assign to the new component.
     ///</summary>
     KeepBothComponentsQueryRename = 5,
@@ -1834,7 +1834,7 @@ public:
 
   // The x/y/z_2pt_perspective_view projections are ordinary perspective
   // projection. Using these values insures the ON_Viewport member 
-  // fuctions properly constrain the camera up and camera direction vectors
+  // functions properly constrain the camera up and camera direction vectors
   // to preserve the specified perspective vantage.
   enum view_projection : unsigned int
   { 
@@ -2222,7 +2222,7 @@ public:
 
   //// surface_loft_end_condition //////////////////////////////////////////////
   //
-  // End condition paramter values for  ON_Curve::CreateCubicLoft() and
+  // End condition parameter values for  ON_Curve::CreateCubicLoft() and
   // ON_Surface::CreateCubicLoft().
   enum cubic_loft_end_condition
   {
@@ -2271,7 +2271,7 @@ public:
     Aligned = 1,
 
     ///<summary>
-    /// Angle bewteen two lines.
+    /// Angle between two lines.
     ///</summary>
     Angular = 2,
 
@@ -2356,7 +2356,7 @@ public:
     ///</summary>
     MiddleOfBottom = 4,
     ///<summary>
-    /// Attach to the basline of the last line. (Independent of glyphs being displayed.)
+    /// Attach to the baseline of the last line. (Independent of glyphs being displayed.)
     ///</summary>
     Bottom = 5,
     ///<summary>
@@ -2574,7 +2574,7 @@ class ON_CLASS ON_COMPONENT_INDEX
 public:
 
   // Do not change these values; they are stored in 3dm archives
-  // and provide a persistent way to indentify components of
+  // and provide a persistent way to identify components of
   // complex objects.
   enum TYPE
   {

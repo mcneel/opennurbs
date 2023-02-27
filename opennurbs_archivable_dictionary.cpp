@@ -1359,9 +1359,8 @@ DictionaryEntry* DictionaryEntry::CreateInstance(enum DictionaryEntryType item_t
   case DictionaryEntryType::MeshParameters: return new Entry<ON_MeshParameters>;
   case DictionaryEntryType::Geometry: return new Entry<ON_Geometry>;
   case DictionaryEntryType::ArchivableDictionary: return new Entry<ON_ArchivableDictionaryPtr>;
+  default: return nullptr;
   }
-
-  return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

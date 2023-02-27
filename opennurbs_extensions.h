@@ -51,7 +51,7 @@ public:
 
   /*
   Returns:
-    Number of failures, erros, and warnings.
+    Number of failures, errors, and warnings.
   */
   unsigned int TotalCount() const;
 
@@ -439,11 +439,11 @@ public:
       continuing.  
   Returns:
     True
-      Succesful.  If model_geometry_reference.IsEmpty() is true, 
+      Successful.  If model_geometry_reference.IsEmpty() is true, 
       then no more geometry objects are available and you should call
       IncrementalReadFinish().
     False
-      An error occured and reading should terminate.
+      An error occurred and reading should terminate.
   Remarks:
     You must call IncrementalReadBegin() before making any calls to
     IncrementalReadModelObject().
@@ -640,7 +640,7 @@ public:
   ON_String m_sStartSectionComments;
 
   // Properties include revision history, notes, information about
-  // the applicaton that created the file, and an optional preview image.
+  // the application that created the file, and an optional preview image.
   ON_3dmProperties m_properties;
 
   // Settings include tolerance, and unit system, and defaults used
@@ -849,7 +849,7 @@ public:
   bManagedComponent  - [in]
     If bManagedComponent is true, then ~ONX_Model will delete the component.
     If bManagedComponent is false, then you are responsible for insuring
-    the component exists past the desctruction of this ONX_Model.
+    the component exists past the destruction of this ONX_Model.
 
   bResolveIdAndNameConflicts  - [in]
     If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil 
@@ -875,7 +875,7 @@ public:
 
   /*
   Description:
-    Add an copy of the model_geometry and attrbutes to this model.
+    Add an copy of the model_geometry and attributes to this model.
 
   Parameters:
     geometry_object - [in]
@@ -910,7 +910,7 @@ public:
 
   /*
   Description:
-    Add an copy of the model_geometry and attrbutes to this model.
+    Add an copy of the model_geometry and attributes to this model.
 
   Parameters:
     managed_geometry_object - [in]
@@ -946,7 +946,7 @@ public:
 
   /*
   Description:
-    Add geometry and attibutes to this model and control how the instances are managed.
+    Add geometry and attributes to this model and control how the instances are managed.
 
   Parameters:
     bManageGeometry - [in]
@@ -968,7 +968,7 @@ public:
       are active.
 
     attributes - [in]
-      nullptr if not avaiable.
+      nullptr if not available.
   
   bResolveIdAndNameConflicts - [in]
     If bResolveIdAndNameConflicts is false, then attributes must be nullptr 
@@ -1056,7 +1056,7 @@ public:
   Remarks:
     ONX_Model::ComponentFromRuntimeSerialNumber() used to get a reference rather than a copy of the model's 
     primary ON_ModelComponentReference. This is the function that must be used if a caller is going to 
-    use exclusive access funcitons like
+    use exclusive access functions like
 
       ON_ModelComponent* ON_ModelComponentReference::ExclusiveModelComponent()
       ON_3dmObjectAttributes* ON_ModelGeometryComponent::ExclusiveAttributes()
@@ -1764,12 +1764,12 @@ public:
     Fail = 1,
 
     ///<summary>
-    /// Test was performed and completed, but at least one ON_ERROR occured.
+    /// Test was performed and completed, but at least one ON_ERROR occurred.
     ///</summary>
     Errors = 2,
 
     ///<summary>
-    /// Test was performed and completed, but at least one ON_WARNING occured.
+    /// Test was performed and completed, but at least one ON_WARNING occurred.
     ///</summary>
     Warnings = 3,
  
@@ -1780,13 +1780,13 @@ public:
     Pass = 4,
 
     ///<summary>
-    /// Test was not perfomed because the input did not satisfy prerequisites or an
+    /// Test was not performed because the input did not satisfy prerequisites or an
     /// earlier test failed.
     /// For example, if a ONX_ModelReadTest::TestType::ReadWriteReadCompare 
     /// test is requested and the source file is a Rhino 1 file, the compare
     /// test is skipped.
     /// For example, if a ONX_ModelReadTest::TestType::ReadWriteRead 
-    /// test is requested and the Write test failes, the second Read test is skipped.
+    /// test is requested and the Write test fails, the second Read test is skipped.
     ///</summary>
     Skip = 5,
   };
@@ -1829,7 +1829,7 @@ public:
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
     True if every test passed with no warnings or errors.
-    False if a test failed or warnings or errors occured.
+    False if a test failed or warnings or errors occurred.
   */
   bool ReadTest(
     const char* file_path,
@@ -1857,7 +1857,7 @@ public:
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
     True if every test passed with no warnings or errors.
-    False if a test failed or warnings or errors occured.
+    False if a test failed or warnings or errors occurred.
   */
   bool ReadTest(
     const wchar_t* file_path,
@@ -1885,7 +1885,7 @@ public:
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
     True if every test passed with no warnings or errors.
-    False if a test failed or warnings or errors occured.
+    False if a test failed or warnings or errors occurred.
   */
   bool ReadTest(
     FILE* fp,
@@ -1913,7 +1913,7 @@ public:
       If text_log is not nullptr, then a summary of the test is sent to text_log.
   Returns:
     True if every test passed with no warnings or errors.
-    False if a test failed or warnings or errors occured.
+    False if a test failed or warnings or errors occurred.
   */
   bool ReadTest(
     ON_BinaryArchive& archive,

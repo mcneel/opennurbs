@@ -74,8 +74,8 @@ public:
   //   v_stride - [in] (>=Dimension()) stride to use for the v[] array
   //   v - [out] array of length (der_count+1)*v_stride
   //       curve(t) is returned in (v[0],...,v[m_dim-1]),
-  //       curve'(t) is retuned in (v[v_stride],...,v[v_stride+m_dim-1]),
-  //       curve"(t) is retuned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
+  //       curve'(t) is returned in (v[v_stride],...,v[v_stride+m_dim-1]),
+  //       curve"(t) is returned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
   //       etc.
   // Returns:
   //   false if unable to evaluate.
@@ -523,8 +523,8 @@ public:
   //   v_stride - [in] (>=m_dim) stride to use for the v[] array
   //   v - [out] array of length (der_count+1)*v_stride
   //       bez(t) is returned in (v[0],...,v[m_dim-1]),
-  //       bez'(t) is retuned in (v[v_stride],...,v[v_stride+m_dim-1]),
-  //       bez"(t) is retuned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
+  //       bez'(t) is returned in (v[v_stride],...,v[v_stride+m_dim-1]),
+  //       bez"(t) is returned in (v[2*v_stride],...,v[2*v_stride+m_dim-1]),
   //       etc.
   // Returns:
   //   true if successful
@@ -650,7 +650,7 @@ public:
   //   Set control vertex
   // Parameters:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
-  //   pointstyle - [in] specifes what kind of values are passed
+  //   pointstyle - [in] specifies what kind of values are passed
   //      in the cv array.
   //        ON::not_rational 
   //          cv[] is an array of length m_dim that defines
@@ -712,7 +712,7 @@ public:
   //   Get location of a control vertex.
   // Parameters:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
-  //   pointstyle - [in] specifes what kind of values to get
+  //   pointstyle - [in] specifies what kind of values to get
   //        ON::not_rational 
   //          cv[] is an array of length m_dim that defines
   //          a euclidean (world coordinate) point
@@ -753,7 +753,7 @@ public:
   //   Get value of a control vertex.
   // Parameters:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
-  //   point - [out] Homogenous value of control vertex.
+  //   point - [out] Homogeneous value of control vertex.
   //      If the bezier is not rational, the weight is 1.
   // Returns:
   //   true if successful.
@@ -855,7 +855,7 @@ public:
 
   /*
   Description:
-    Use a linear fractional tranformation for [0,1] to reparameterize
+    Use a linear fractional transformation for [0,1] to reparameterize
     the bezier.  The locus of the curve is not changed, but the
     parameterization is changed.
   Parameters:
@@ -1454,7 +1454,7 @@ public:
     order1 - [in]
     order2 - [in]
   Returns:
-    True if input was valid and creation succeded.
+    True if input was valid and creation succeeded.
   */
   bool Create(
     int dim,
@@ -1900,7 +1900,7 @@ public:
     Set the world to unit cube map.
   Parameters:
     world2unitcube - [in]
-      Tranformation matrix that maps world coordinates
+      Transformation matrix that maps world coordinates
       to the unit cube (0,1)x(0,1)x(0,1).
   Returns
     True if current bezier volum and input transformation

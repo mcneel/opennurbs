@@ -403,13 +403,13 @@ class ON_CLASS ON_TextLogIndent
 {
 public:
     // The constructor calls text_log.PushIndent()
-    // and the destuctor calls text_log.PopIndent()
+    // and the destructor calls text_log.PopIndent()
   ON_TextLogIndent(
     class ON_TextLog& text_log
     );
 
     // If bEnabled is true, the constructor calls text_log.PushIndent()
-    // and the destuctor calls text_log.PopIndent()
+    // and the destructor calls text_log.PopIndent()
     ON_TextLogIndent(
       class ON_TextLog& text_log,
       bool bEnabled
@@ -497,7 +497,7 @@ public:
     will be replaced with an id created by 
     ON_NextNotUniqueId(). 
     This is used for comparing code that generates streams
-    containg new uuids.
+    containing new uuids.
   */
   void SetIdRemap(
     bool bEnableIdRemap
@@ -513,7 +513,7 @@ public:
   Description:
     In some testing situations, the output text log can be set 
     when it is necessary to see the text used to compute the 
-    SHA-1 hash. The has can be caluculate which no output text
+    SHA-1 hash. The has can be calculate which no output text
     log.
 
   Parameters:

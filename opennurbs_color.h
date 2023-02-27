@@ -317,7 +317,7 @@ public:
   Parameters:
     format - [in]
     separator - [in]
-    character to sepearate numbers (unicode code point - UTF-16 surrogate pairs not supported)
+    character to separate numbers (unicode code point - UTF-16 surrogate pairs not supported)
       pass 0 for default.
     bFormatUnsetColor - [in]
       If true, ON_Color::UnsetColor will return "UnsetColor". Otherwise ON_Color::UnsetColor will return the empty string.
@@ -336,7 +336,7 @@ public:
     format - [in]
       If format is ON_Color::TextFormat::Unset, then text_log.ColorFormat is used.
     separator - [in]
-    character to sepearate numbers (unicode code point - UTF-16 surrogate pairs not supported)
+    character to separate numbers (unicode code point - UTF-16 surrogate pairs not supported)
       pass 0 for default.
     bFormatUnsetColor - [in]
       If true, ON_Color::UnsetColor will return "UnsetColor". Otherwise ON_Color::UnsetColor will return the empty string.

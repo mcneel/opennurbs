@@ -448,13 +448,13 @@ public:
 
     ///<summary>
     /// These parameters are being used to generate a quad mesh approximations of an ON_SubD.
-    /// Low level meshing code copies input paramters and specifies this context when appropriate.
+    /// Low level meshing code copies input parameters and specifies this context when appropriate.
     ///</summary>
     SubDToMesh = 1,
 
     ///<summary>
     /// These parameters are being used to generate NURBS surface approximations of an ON_SubD.
-    /// Low level conversion to NURB code copies input paramters and specifies this context when appropriate.
+    /// Low level conversion to NURB code copies input parameters and specifies this context when appropriate.
     ///</summary>
     SubDToNURBS = 2
   };
@@ -466,7 +466,7 @@ public:
     occasional looks at the context. Typically it is set in a local
     copy and no user of the top level ON_SubD SDK needs to be concerned
     about the context setting. 
-    This setting is not saved in 3dm archives and is ingnored by all compare functions.
+    This setting is not saved in 3dm archives and is ignored by all compare functions.
   */
   ON_SubDDisplayParameters::Context ContextForExperts() const;
 
@@ -693,7 +693,7 @@ public:
   /*
   Description:
     Mesh creationg parameters to create the a render mesh
-    when meshing speed is prefered over mesh quality.
+    when meshing speed is preferred over mesh quality.
   */
   static 
   const ON_MeshParameters FastRenderMesh;
@@ -701,7 +701,7 @@ public:
   /*
   Description:
     Mesh creationg parameters to create the a render mesh
-    when mesh quality is prefered over meshing speed.
+    when mesh quality is preferred over meshing speed.
   */
   static 
   const ON_MeshParameters QualityRenderMesh;
@@ -749,7 +749,7 @@ public:
     Otherwise, ON_DBL_QNAN is returned.
   Remarks:
     The values of m_bDoublePrecision, m_bClosedObjectPostProcess, and m_texture_range can be arbitrary
-    because they do not determine geometry of the resulting mesh and are typically ingored. 
+    because they do not determine geometry of the resulting mesh and are typically ignored. 
     You must compare these properties if they matter in your particular context.
   */
   double MeshDensity() const;
@@ -764,7 +764,7 @@ public:
     Otherwise, ON_DBL_QNAN is returned.
   Remarks:
     The values of m_bDoublePrecision, m_bClosedObjectPostProcess, and m_texture_range can be arbitrary
-    because they do not determine geometry of the resulting mesh and are typically ingored.
+    because they do not determine geometry of the resulting mesh and are typically ignored.
     You must compare these properties if they matter in your particular context.
   */
   double MeshDensity(bool bIgnoreSubDParameters ) const;
@@ -838,7 +838,7 @@ public:
 
   /*
   Description:
-    Tool for provding a simple "slider" interface.
+    Tool for providing a simple "slider" interface.
   Parameters:
     normalized_mesh_density - [in] 0.0 <= normalized_mesh_density <= 1.0
       0 quickly creates extremely coarse meshes.
@@ -967,7 +967,7 @@ public:
   // the model or application default mesh creation parameters.
   //
   // When CustomSettings() is true, it indicates these mesh 
-  // creation parameters are explictily set for the object
+  // creation parameters are explicitly set for the object
   // and context in question and should override the model
   // or application defaults.
   //
@@ -1078,7 +1078,7 @@ public:
   //   entire surface domain.  For meshes of trimmed
   //   surfaces when the active area is a small subset of
   //   the entire surface, there will be large regions of
-  //   unsued texture space in [0,1]x[0,1].  When the 3d region
+  //   unused texture space in [0,1]x[0,1].  When the 3d region
   //   being meshed is far from being sqaure-ish, there will be
   //   a substantual amount of distortion mapping [0,1]x[0,1]
   //   texture space to the 3d mesh.
@@ -1124,7 +1124,7 @@ public:
     center of an edge to the surface will
     be <= T, where T is the larger of
     (MinimumTolerance(),d*RelativeTolerance()), 
-    where d is an esimate of the size of the
+    where d is an estimate of the size of the
     object being meshed.
   */
   const double RelativeTolerance() const;
@@ -1364,7 +1364,7 @@ public:
   
   double m_infinity; // curvature values >= this are considered infinite
                      // and not used to compute the m_average or m_adev
-  int    m_count_infinite; // number of "infinte" values
+  int    m_count_infinite; // number of "infinite" values
   int    m_count;    // count of "finite" values
   double m_mode;     // mode of "finite" values
   double m_average;  // average of "finite" values
@@ -1488,7 +1488,7 @@ public:
   static const ON_MeshFace UnsetMeshFace; // all vi[] values are -1.
 
 
-  int vi[4]; // vertex index - vi[2]==vi[3] for tirangles
+  int vi[4]; // vertex index - vi[2]==vi[3] for triangles
 
   /*
   Returns:
@@ -2440,7 +2440,7 @@ Returns:
     mesh_F - [in]
       nullptr of mesh faces - required for boundary checks
     workspace_buffer - [in]
-      If you are passing in mesh_F and you are testing testing multple 
+      If you are passing in mesh_F and you are testing testing multiple 
       ngons, then consider providing a workspace_buffer that will be automatically
       reused for successive ngons.
   Returns:
@@ -2538,10 +2538,10 @@ private:
   void* m_active;   // active Vcount+Fcount >= 16
 
 private:
-  // prohibit copy construction. No implentation.
+  // prohibit copy construction. No implementation.
   ON_MeshNgonAllocator(const ON_MeshNgonAllocator&) = delete;
 
-  // prohibit operator=. No implentation.
+  // prohibit operator=. No implementation.
   ON_MeshNgonAllocator& operator=(const ON_MeshNgonAllocator&) = delete;
 };
 
@@ -2608,7 +2608,7 @@ public:
   Description:
     Sort the face_sides[] using the compare function 
     ON_MeshFaceSide::CompareVertexIndex().
-  Paramters:
+  Parameters:
     face_sides - [in/out]
       array to sort
     face_sides_count - [in]
@@ -2625,7 +2625,7 @@ public:
   Description:
     Sort the face_sides[] using the compare function 
     ON_MeshFaceSide::CompareFaceIndex().
-  Paramters:
+  Parameters:
     face_sides - [in/out]
       array to sort
     face_sides_count - [in]
@@ -2670,7 +2670,7 @@ public:
     face_side_list - [out]
       - If the input value of face_side_list is not null, then face_side_list[] 
         must be long enough to hold the returned face_side_list list.  
-        The maximum posssible length is 4*mesh_face_list.FaceCount().
+        The maximum possible length is 4*mesh_face_list.FaceCount().
       - If the input falue of face_side_list is null, memory will be allocated
         using onmalloc() and the caller is responsible for calling onfree() at
         an appropriate time.
@@ -2919,7 +2919,7 @@ public:
 
   //////////
   // m_topv_map[] has length m_mesh.VertexCount() and 
-  // m_topv[m_topv_map[vi]] is the topological mesh vertex that is assocated
+  // m_topv[m_topv_map[vi]] is the topological mesh vertex that is associated
   // the with the mesh vertex m_mesh.m_V[vi].
   ON_SimpleArray<int> m_topv_map;
 
@@ -3364,7 +3364,7 @@ public:
       Pass true unless you have a good reason for keeping
       empty ngons.
   Returns:
-    True: succesful
+    True: successful
     False: failure - no changes.
   */
   bool DeleteComponents(
@@ -3406,7 +3406,7 @@ Parameters:
     removal of vertices, faces, etc.
     This needs to be allocated to be at least m_F.Count() long.
 Returns:
-  True: succesful
+  True: successful
   False: failure - no changes.
 */
   bool DeleteComponents(
@@ -3487,7 +3487,7 @@ Returns:
 
   /*
   Description:
-    Copy the subset of the mesh idenfied in the component list.
+    Copy the subset of the mesh identified in the component list.
    Parameters:
      ci_list - [in]
      ci_count - [in]
@@ -3510,7 +3510,7 @@ Returns:
 
   /*
   Description:
-    Copy the subset of the mesh idenfied in the component list.
+    Copy the subset of the mesh identified in the component list.
    Parameters:
      ci_list - [in]
        ci_list[] is an array of ci_count components that identify the
@@ -3944,7 +3944,7 @@ Returns:
     Setting this value correctly after a mesh is constructed 
     can save time when IsClosed() is called.
     This function sets the private member variable m_is_closed.
-  Paramters:
+  Parameters:
     closed - [in]
       0: The mesh is not closed.  There is at least one face with an 
          edge that is geometrically distinct (as an unoriented line segment)
@@ -4007,7 +4007,7 @@ Returns:
     can save time when IsSolid() is called.
     This function sets the private member variable m_is_solid.
     If solid is nonzero, it will set m_is_closed to 1.
-  Paramters:
+  Parameters:
     solid - [in]
       0: The mesh is not an oriented manifold solid mesh. Either
          the mesh is not closed, not manifold, or the faces are
@@ -4047,7 +4047,7 @@ Returns:
   /*
   Description:
     Determine if a point is inside a solid brep.
-  Paramters:
+  Parameters:
     test_point - [in]
     tolerance - [in] >= 0.0
       3d distance tolerance used for ray-mesh intersection
@@ -4089,7 +4089,7 @@ Returns:
       order.
       If false and an edge is shared by multiple faces, then
       there will be an edges[] element added for each face and the
-      order of the vertex indicies will indicate the orientation
+      order of the vertex indices will indicate the orientation
       of the edge with respect to the face.  No sorting is performed
       in this case.
     edges - [out]
@@ -4114,7 +4114,7 @@ Returns:
     edges - [out]
       Each edges[] element is a pair of vertex indices.  There
       is at least one face in the mesh with an edge running between
-      the indicies.
+      the indices.
   Returns:
     Number of ON_2dex values appended to the edges[] array.
   */
@@ -4166,7 +4166,7 @@ Returns:
       ON_MeshFaceSide::vi[] values.
     sides - [out]
       If the input value of sides is not null, then sides[] must be long 
-      enough to hold the returned side list.  The maximum posssible length
+      enough to hold the returned side list.  The maximum possible length
       is 4*FaceCount() for a mesh contining FaceCount() nondegenerate quads.
       If the input value of sides is null, memory will be allocated using
       onmalloc() and the caller is responsible for calling onfree() at an
@@ -4437,7 +4437,7 @@ Returns:
         facet_component_labels[] will be an array with the same size
         as ON_Mesh.m_F.Count() and facet_component_labels[i]
         is the component id m_F[i] belongs to.  The component id
-        will be 1 to the number of compoents.
+        will be 1 to the number of components.
     Returns:
       Number of components on success, 0 on failure 
   */
@@ -4575,13 +4575,13 @@ Returns:
           {
             dv[i] = ...
           }
-          // This call updates the single precison values
+          // This call updates the single precision values
           // in m_V[] and sets all the counts and CRCs that
           // are used in validity checking.
           mesh.UpdateSinglePrecisonVertices();
     
   Remarks:
-    Avoid mulitple calls to DoublePrecisionVertices().
+    Avoid multiple calls to DoublePrecisionVertices().
     It is most efficient to make one call, save a local 
     reference, and use the local reference as needed.
   */
@@ -4656,7 +4656,7 @@ Returns:
     ngon_index - [in]
       Index of an ngon.
   Returns:
-    A pointetr to the indexed n-gon or null if the 
+    A pointer to the indexed n-gon or null if the 
     indexed ngon is null or ngon_index is out of range.
   Remarks:
     If ON_Mesh::RemoveNgon has been called, then a null
@@ -4778,7 +4778,7 @@ Returns:
       If true, also ngons that contain inner boundaries are allowed.
     faceVertexMap
       If nullptr, this will be set to a new faceVertexMap. Must be freed with onfree().
-      It is responsability of the user to call onfree() on the created object.
+      It is responsibility of the user to call onfree() on the created object.
   Returns:
     index of the new n-gon.
     -1: If input information is not valid.
@@ -5034,7 +5034,7 @@ Returns:
         need it for other reasons or you already have one.
     planar_tolerance - [in] 
       For faces to be coplanar, all the points in the
-      n-gon must be withing planar_tolerance of the plane
+      n-gon must be within planar_tolerance of the plane
       defined by the first face in the n-gon.
     minimum_ngon_vertex_count - [in]
       n-gons must have at least this many sides in order
@@ -5169,7 +5169,7 @@ Returns:
     );
 
   /*
-  Descrption:
+  Description:
     Given a group of connected coplanar faces,
     find the n-gon boundary.
   ngon_fi_count - [in]
@@ -5361,7 +5361,7 @@ The map is an array of length m_F.Count(), ngon_map[]
   // Texture coordinates / surface parameters
   //
   // If m_S.Count() == m_V.Count(), then the mesh has texture
-  // coordinates, or it is a tesselation of a parameteric surface
+  // coordinates, or it is a tessellation of a parameteric surface
   // and m_S[j] is the texture coordinate / surface parameter at
   // m_V[j].
   // If the values in m_S are changed, then you need to call
@@ -5431,7 +5431,7 @@ The map is an array of length m_F.Count(), ngon_map[]
 
   /*
   Description:
-    If the mesh does not have surface evaulation parameters,
+    If the mesh does not have surface evaluation parameters,
     has texture coordinates, and the surface parameters can
     be set in a way so the existing texture coordinates can
     be computed from the surface parameters, then this function
@@ -5689,7 +5689,7 @@ public:
 
   /*
   Returns:
-    The id that corresonds to the obsolete ON::mesh_type enum value.
+    The id that corresponds to the obsolete ON::mesh_type enum value.
   Remarks:
     Ids are used to allow custom meshes to be cached.
   */
@@ -5953,7 +5953,7 @@ public:
   /*
   Returns:
     If the current iterator ngon references an ON_MeshFace
-    that is in m_mesh->m_F[] but is not explictly referenced
+    that is in m_mesh->m_F[] but is not explicitly referenced
     by an ON_MeshNgon in ON_Mesh.m_Ngon[], then true is returned.
     In this case, the ngon's m_fi[] array
     has length 1 and contains the face's index, and the ngon's
@@ -6290,7 +6290,7 @@ Parameters:
                     sides are a common source of degenerate qauds.
   input_mesh - [in] If nullptr, then the returned mesh is created
        by a class to new ON_Mesh().  If not null, then this 
-       mesh will be used to store the conrol polygon.
+       mesh will be used to store the control polygon.
 Returns:
   If successful, a pointer to a mesh.
 */

@@ -367,6 +367,7 @@ set( OPENNURBS_PUBLIC_SOURCES
     opennurbs_version.cpp
     opennurbs_version_number.cpp
     opennurbs_viewport.cpp
+    opennurbs_win_dwrite.cpp
     opennurbs_workspace.cpp
     opennurbs_wstring.cpp
     opennurbs_xform.cpp
@@ -375,7 +376,7 @@ set( OPENNURBS_PUBLIC_SOURCES
     opennurbs_zlib_memory.cpp
     )
 
-if(EXISTS opennurbs_plus.h)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/opennurbs_plus.h)
 set( OPENNURBS_PLUS_HEADERS
     opennurbsRhino.pch
     opennurbs_plus.h
@@ -456,11 +457,11 @@ set( OPENNURBS_PLUS_SOURCES
 endif() #OpenNURBS plus source files
 
 if (ANDROID OR LINUX)
-add_subdirectory(android_uuid)
+  add_subdirectory(android_uuid)
+  add_subdirectory(freetype263)
 endif()
 
 add_subdirectory(zlib)
-add_subdirectory(freetype263)
 
 ## opennurbs static library
 add_library( opennurbsStatic STATIC
@@ -478,6 +479,15 @@ add_library( OpenNURBS SHARED
     ${OPENNURBS_PLUS_SOURCES}
     )
 
+if (MSVC)
+  # opennurbs_brep.cpp requires this flag when compiling with Visual C++
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+  #add_compile_options(\bigobj)
+  add_definitions(-DUNICODE)
+  add_definitions(-D_UNICODE)
+endif()
+
+add_definitions(-DON_CMAKE_BUILD)
 
 if( APPLE)
    find_library( CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -557,11 +567,16 @@ install( FILES ${OPENNURBS_PUBLIC_HEADERS} DESTINATION "include/opennurbsStatic"
 
 
 if (ANDROID OR LINUX)
-target_link_libraries( OpenNURBS ${OPENNURBS_APPLE_DEPENDENCIES} zlib opennurbs_public_freetype android_uuid)
-target_link_libraries( opennurbsStatic ${OPENNURBS_APPLE_DEPENDENCIES} zlib opennurbs_public_freetype android_uuid)
-else()
-target_link_libraries( OpenNURBS ${OPENNURBS_APPLE_DEPENDENCIES} zlib opennurbs_public_freetype)
-target_link_libraries( opennurbsStatic ${OPENNURBS_APPLE_DEPENDENCIES} zlib opennurbs_public_freetype)
+target_link_libraries( OpenNURBS zlib opennurbs_public_freetype android_uuid)
+target_link_libraries( opennurbsStatic zlib opennurbs_public_freetype android_uuid)
+endif()
+if (APPLE)
+target_link_libraries( OpenNURBS ${OPENNURBS_APPLE_DEPENDENCIES} zlib)
+target_link_libraries( opennurbsStatic ${OPENNURBS_APPLE_DEPENDENCIES} zlib)
+endif()
+if (WIN32)
+target_link_libraries( OpenNURBS Shlwapi Usp10 zlib)
+target_link_libraries( opennurbsStatic Shlwapi Usp10 zlib)
 endif()
 
 if (APPLE)

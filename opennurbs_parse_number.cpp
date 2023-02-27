@@ -723,6 +723,8 @@ static void SetParseExpressionError(
     case ON_ArithmeticCalculator::overflow_error:
       parse_results->SetParseOverflowError(true);
       break;
+    default:
+      break;
     }
   }
 }

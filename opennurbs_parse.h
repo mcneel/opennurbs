@@ -500,7 +500,7 @@ public:
 
   /*
   Description:
-    The default constuctor uses the default settings.
+    The default constructor uses the default settings.
   */
   ON_ParseSettings();
 
@@ -595,10 +595,10 @@ public:
     ON_ParseSetting::FalseSettings has all parsing options
     set to false.
   Remarks:
-    A common use of ON_ParseSettings FalseSettings is to intialize
+    A common use of ON_ParseSettings FalseSettings is to initialize
     ON_ParseSettings classes that are used to report what happened
     during parsing. Any parsing results value set to true after 
-    parsing indicates that type of parsing occured.
+    parsing indicates that type of parsing occurred.
   */
   static const ON_ParseSettings FalseSettings;
 
@@ -828,7 +828,7 @@ public:
       for example sin(pi/4).
     - The angle parameters to trigonometry functions may have angle
       units specified.  For example, sin(30degrees).  If no angle
-      unit is specified, the nubmer is assumed to be in radians.
+      unit is specified, the number is assumed to be in radians.
   */
   bool ParseMathFunctions() const;
 
@@ -1128,7 +1128,7 @@ public:
     L"\x03C0" (unicode greek small letter pi) 
     will be parsed as if they were "3.141592653589793238462643".
     In addition, if the pi strings appear next to something that
-    is parsed as a number, the result will be mulitplied by pi. 
+    is parsed as a number, the result will be multiplied by pi. 
     For example, 
       "3pi" and pi3.0 will return 3.0*ON_PI. 
       If division parsing is enabled, then "3pi/4" and 3/4pi" will
@@ -1149,7 +1149,7 @@ public:
     - The default value is true.
     - Parsing functions with the word "Expression" in their name,
       like ON_ParseNumberExpression, ON_ParseLengthExpression,
-      and ON_ParseAngleExpression, support mulitplication parsing.
+      and ON_ParseAngleExpression, support multiplication parsing.
   */
   bool ParseMultiplication() const;
 
@@ -1311,7 +1311,7 @@ public:
     will be parsed as angles.
   Remarks:
     The first character must be N, n, S or s.
-    The angle must be a spcified as a combination of arc degrees,
+    The angle must be a specified as a combination of arc degrees,
     arc minutes and arc seconds.
     The last character must be E, e, W or w.
   */
@@ -1320,7 +1320,7 @@ public:
   /*
   Returns:
     The Microsoft locale id that identifies the locale that should
-    be used to resolve ambiguous parsing situtations. The default
+    be used to resolve ambiguous parsing situations. The default
     value is zero, which means ambiguous situations are not parsed.
   Example:
     When parsing angles, the string "Grad" is ambiguous. 
@@ -1545,7 +1545,7 @@ public:
   /*
   Parameters:
     bParseExplicitFormulaExpression - [in]
-      True if explicity formulae should be parsed.
+      True if explicitly formulae should be parsed.
   Remarks:
     See ON_ParseSettings::ParseExplicitFormulaExpression()
     for details about this property.
@@ -1856,22 +1856,22 @@ public:
 
   /*
   Description:
-    Set the prefered locale id for parsing unit names.  This local
+    Set the preferred locale id for parsing unit names.  This local
     id is used to resolve ambiguous unit names.
 
   Parameters:
     prefered_locale_id - [in]
       The Microsoft locale id that identifies the locale that should
-      be used to resolve ambiguous parsing situtations.  The default
+      be used to resolve ambiguous parsing situations.  The default
       value is zero, which means ambiguous situations are not parsed.
 
   Example:
     When parsing angles, the string "Grad" is ambiguous. 
     In German "Grad" identifies arc degree angle units and in
     English "Grad" identifies gradian angle units. If angle parsing
-    encounters "Grad" and the prefered locale id is 1031 (de-de),
+    encounters "Grad" and the preferred locale id is 1031 (de-de),
     then parsing reports the angle value as arc degree units.
-    If angle parsing encounters "Grad" and the prefered locale id 
+    If angle parsing encounters "Grad" and the preferred locale id 
     is 1033 (en-us), then parsing reports the angle values as
     gradian units.
   */
@@ -2027,7 +2027,7 @@ private:
   // If m_context_length_unit_system is 0, then it is ignored.
   // If m_context_length_unit_system is not 0 and is equal to an
   // ON::LengthUnitSystem value, that length unit system is used.
-  // Presently this value is not relavent to internal parsing code,
+  // Presently this value is not relevant to internal parsing code,
   // but may be passed along in parse settings to code that
   // use parsing.
   ON__UINT8 m_context_length_unit_system = 0;
@@ -2113,7 +2113,7 @@ Parameters:
    The value of the parsed number.
 
 Returns:
-  Number of elments of str[] that were parsed. 
+  Number of elements of str[] that were parsed. 
   A return value of 0 indicates that str[] could not be 
   parsed as a number.
 
@@ -2164,7 +2164,7 @@ Parameters:
    The value of the parsed number.
 
 Returns:
-  Number of elments of str[] that were parsed. 
+  Number of elements of str[] that were parsed. 
   A return value of 0 indicates that str[] could not be 
   parsed as a number.
 
@@ -2194,7 +2194,7 @@ Parameters:
     If str_count >= 0. it specifies the maximum number of elements in str[]
     that may be parsed.  If str_count = -1, then the string must contain a 
     character that terminates unit system name parsing.  This character can
-    be a null, digit, punctuation, aritmetic operator, or a unicode 
+    be a null, digit, punctuation, arithmetic operator, or a unicode 
     code point <= 0x0020 (0x0020 = space = 32 decimal).
 
   prefered_locale_id - [in]
@@ -2214,7 +2214,7 @@ Parameters:
 
 
 Returns:
-  Number of elments of str that were parsed. A return value of
+  Number of elements of str that were parsed. A return value of
   0 indicates that str did not match know unit system names or 
   abbreviations.
 
@@ -2223,12 +2223,12 @@ Remarks:
   meters and kilometers are supported in Czech (cs-*), English (en-*),
   French (fr-*), German (de-*), Portuguese (pt-*) and Spanish (es-*).
 
-  Common names and abreviations for the following United States customary
+  Common names and abbreviations for the following United States customary
   length units are supported in United States English (en-US). 
     If the first element of str is quotation mark (double quote), unicode 
-    code point 0x0022, the string is parsed as United Sates customary inch.
+    code point 0x0022, the string is parsed as United States customary inch.
     If the first element of str is apostrophe, unicode code point 0x0027, 
-    the string is parsed as United Sates customary foot. 
+    the string is parsed as United States customary foot. 
     All conversions to meters are exact.
       microinch =    2.54e-8 meters (1.0e-6 inches)
       mil       =    2.54e-5 meters (0.001 inches)
@@ -2361,7 +2361,7 @@ Parameters:
     If str_count >= 0. it specifies the maximum number of elements in str[]
     that may be parsed.  If str_count = -1, then the string must contain a 
     character that terminates angle unit system name parsing.  
-    This character can be a null, digit, punctuation, aritmetic operator,
+    This character can be a null, digit, punctuation, arithmetic operator,
     or a unicode code point <= 0x0020 (0x0020 = space = 32 decimal).
 
   prefered_locale_id - [in]
@@ -2383,7 +2383,7 @@ Parameters:
     ON::AngleUnitSystem::None.
 
 Returns:
-  Number of elments of str that were parsed. A return value of
+  Number of elements of str that were parsed. A return value of
   0 indicates that str did not match know unit system names or 
   abbreviations.
 

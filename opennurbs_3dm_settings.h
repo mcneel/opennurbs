@@ -255,7 +255,7 @@ private:
   //     world views. 
   //   * ON_DimStyle::DimScale() is ignored in page and 
   //     detail views. 
-  //   * ON_DetailView::m_page_per_model_ratio is ingored
+  //   * ON_DetailView::m_page_per_model_ratio is ignored
   //     for annotation objects in detail views, other
   //     geometry is scaled.
   //
@@ -1192,24 +1192,24 @@ public:
     Find the Keyhole Markup Language (KML) orientation angles (in radians) of a rotation
     transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
     KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
-    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-    specied axis vector towards the origin. This is rotation direction
+    NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+    specified axis vector towards the origin. This is rotation direction
     is opposite the conventional "right hand rule."
   Parameters:
     heading_radians - [out]
       angle (in radians) of rotation around KML Earth Z axis (Earth up).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
     tilt_radians - [out]
       angle (in radians) of rotation around KML Earth X axis (Earth east).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
     roll_radians - [out]
       angle (in radians) of rotation around KML Earth Y axis (Earth north).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
   Returns:
     True if the model location is set (this->ModelLocationIsSet() is true)
@@ -1258,24 +1258,24 @@ public:
     Find the Keyhole Markup Language (KML) orientation angles (in degrees) of a rotation
     transformation that maps model (east,north,up) to ((1,0,0),(0,1,0),(0,0,1)).
     KML Earth Z axis = up, KML Earth X axis = east, KML Earth Y axis = north.
-    NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-    specied axis vector towards the origin. This is rotation direction
+    NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+    specified axis vector towards the origin. This is rotation direction
     is opposite the conventional "right hand rule."
   Parameters:
     heading_degrees - [out]
       angle (in degrees) of rotation around KML Earth Z axis (Earth up).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
     tilt_degrees - [out]
       angle (in degrees) of rotation around KML Earth X axis (Earth east).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
     roll_degrees - [out]
       angle (in degrees) of rotation around KML Earth Y axis (Earth north).
-      NOTE WELL: In KML, postive rotations are CLOCKWISE looking down
-      specied axis vector towards the origin. This is rotation direction
+      NOTE WELL: In KML, positive rotations are CLOCKWISE looking down
+      specified axis vector towards the origin. This is rotation direction
       is opposite the conventional "right hand rule."
   Returns:
     True if the model location is set (this->ModelLocationIsSet() is true)
@@ -1425,7 +1425,7 @@ public:
 
   // As of 7 February 2012, the m_idef_link_update setting
   // controls if, when and how linked and linked_and_embedded
-  // instance defintions are updated when the source archive
+  // instance definitions are updated when the source archive
   // that was used to create the idef has changed.
   int m_idef_link_update = 1;  
       // 1 = prompt - ask the user if the idef should be updated.
@@ -1596,7 +1596,7 @@ public:
   //   @untitled table
   //   0       boundary + "knot" wires 
   //   1       boundary + "knot" wires + 1 interior wire if no interior "knots"
-  //   N>=2    boundry + "knot" wires + (N-1) interior wires
+  //   N>=2    boundary + "knot" wires + (N-1) interior wires
   int m_current_wire_density = 1;
 
   ON_3dmRenderSettings m_RenderSettings = ON_3dmRenderSettings::Default;

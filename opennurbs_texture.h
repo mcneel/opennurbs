@@ -179,7 +179,7 @@ public:
   Parameters:
     dir - [in] 0 = reverse "u", 1 = reverse "v", 2 = reverse "w".
   Remarks:
-    Modifes m_uvw so that the spedified direction transforms
+    Modifies m_uvw so that the specified direction transforms
     the texture coordinate t to 1-t.
   Returns:
     True if input is valid.
@@ -193,7 +193,7 @@ public:
     i - [in]
     j - [in]  (0 <= i, j <= 3 and i != j)
   Remarks:
-    Modifes m_uvw so that the specified texture coordinates are swapped.
+    Modifies m_uvw so that the specified texture coordinates are swapped.
   Returns:
     True if input is valid.
   */
@@ -207,7 +207,7 @@ public:
     count - [in] number of tiles (can be negative)
     offset - [in] offset of the tile (can be any number)
   Remarks:
-    Modifes m_uvw so that the specified texture coordinate is
+    Modifies m_uvw so that the specified texture coordinate is
     tiled.
   Returns:
     True if input is valid.

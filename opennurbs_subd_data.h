@@ -138,7 +138,7 @@ public:
   unsigned char m_current_subdivision_level = 0; // current subdivision level of contents
 
   // m_face_grid[1][1] is extraordinary and interpolation through the limit point
-  // will eventually be reqired to get an approximate cubic patch or an exact
+  // will eventually be required to get an approximate cubic patch or an exact
   // quad mesh vertex.
   unsigned char m_extraordinary_corner_vertex_count = 0;
   // m_bExtraordinaryCornerVertex[] = true if the corresponding corner vertex of 
@@ -294,7 +294,7 @@ public:
 
   /*
   Description:
-    Get the limit sub surface exact patch for the specifed corner.
+    Get the limit sub surface exact patch for the specified corner.
   Returns:
     true when srf_cv are set to a the CVs for a bicubic uniform cubic NURBS bispan patch
   */
@@ -423,7 +423,7 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 // that store a pointer to an ON_SubDVertex, ON_SubDEdge, or ON_SubDFace
 // along with a direction bit that is 0 or 1. The direction bit is used
 // to indicate if the component is being referenced with its 
-// natrual orientation (0) or the reverse of its natural orientaion (1).
+// natural orientation (0) or the reverse of its natural orientation (1).
 //
 // ON_SubDComponentPtr is an unsigned int that stores a pointer to an 
 // ON_SubDVertex, ON_SubDEdge, or ON_SubDFace, the direction bit
@@ -646,7 +646,7 @@ public:
 public:
   /*
   Returns:
-    Number of changes to vertex tag, edge tag and edge sector coefficent values.
+    Number of changes to vertex tag, edge tag and edge sector coefficient values.
   */
   unsigned int UpdateEdgeTags(
     bool bUnsetEdgeTagsOnly
@@ -1105,7 +1105,7 @@ public:
     If a state is set in the status parameter, it will be cleared
     from all components on the level.
   Returns:
-    Number of components where a state setting chanaged.
+    Number of components where a state setting changed.
   */
   unsigned int ClearStates(
     ON_ComponentStatus states_to_clear
@@ -1734,12 +1734,12 @@ private:
   // m_full_fragment_display_density = display density for a full fragment
   unsigned int m_full_fragment_display_density = 0;
 
-  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
-  // needed. It's ok if we need additionaly fragments later.
+  // m_full_fragment_count_estimate = an estimate of the total number of full fragments
+  // needed. It's ok if we need additionally fragments later.
   unsigned int m_full_fragment_count_estimate = 0;
 
-  // m_full_fragment_count_estimate = an esitmate of the total number of full fragments
-  // needed. It's ok if we need additionaly fragments later.
+  // m_full_fragment_count_estimate = an estimate of the total number of full fragments
+  // needed. It's ok if we need additionally fragments later.
   unsigned int m_part_fragment_count_estimate = 0;
 
   unsigned int m_reserved0 = 0;
@@ -1905,7 +1905,7 @@ public:
 
   /*
   Description:
-    Change the geoemtry content serial number to indicate something affecting
+    Change the geometry content serial number to indicate something affecting
     the geometric shape of the subd has changed. This includes topologial changes,
     vertex and edge tag changes, and changes to vertex control net locations.
   Parameters:
@@ -2060,7 +2060,7 @@ public:
   /*
   Description:
     Split an edge.
-    The input edge is modifed to terminate at the input vertex.
+    The input edge is modified to terminate at the input vertex.
     The new edge begins at the input vertex and ends at the final vertex
     of the original input edge.
   edge - [in]
@@ -2665,7 +2665,7 @@ public:
   /*
   Description:
     In general, you want to use a ON_SubDVertexIterator to loop through SubD vertices.
-    This is a special tool for unusual sitiations wheh it is necessary to
+    This is a special tool for unusual sitiations when it is necessary to
     iteratate through every vertex on every level of a SubD in order
     of increasing m_id value. 
   Returns:
@@ -2676,7 +2676,7 @@ public:
   /*
   Description:
     In general, you want to use a ON_SubDVertexIterator to loop through SubD vertices.
-    This is a special tool for unusual sitiations wheh it is necessary to
+    This is a special tool for unusual sitiations when it is necessary to
     iteratate through every vertex on every level of a SubD in order
     of increasing m_id value. 
   Returns:
@@ -2988,7 +2988,7 @@ private:
 class /*DO NOT EXPORT*/ ON_SubDEdgeSurfaceCurve
 {
 public:
-  // Use CopyFrom() when proper managment of m_cvx is required.
+  // Use CopyFrom() when proper management of m_cvx is required.
   // This class is used internally and never seen int developer SDK.
   static const ON_SubDEdgeSurfaceCurve Unset; // all doubles are ON_UNSET_VALUE, everything else is zero.
   static const ON_SubDEdgeSurfaceCurve Nan;   // all doubles are ON_DBL_QNAN, everything else is zero
@@ -3017,7 +3017,7 @@ public:
       (-2,-1,0,1,2,3,...,cv_count-1).
   Remarks:
     The knot vector is unclamped to permit efficient joining of adjacent edge
-    curves into longer NURBS with simple interior knots. This occures frequently.
+    curves into longer NURBS with simple interior knots. This occurs frequently.
   */
   bool SetCVs(
     int cv_count,
@@ -3040,7 +3040,7 @@ public:
     with unclamped knot vector (-2,-1,0,1,2,3,...,cv_count-1).
   Remarks:
     The knot vector is unclamped to permit efficient joining of adjacent edge
-    curves into longer NURBS with simple interior knots. This occures frequently.
+    curves into longer NURBS with simple interior knots. This occurs frequently.
   */
   unsigned int GetCVs(
     size_t cv_capacity,

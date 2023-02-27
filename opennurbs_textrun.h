@@ -422,10 +422,10 @@ public:
   Parameters:
     bReturnManagedRuns - [in]
       True: Managed runs will be returned.
-      False: Caller must explicityly handle managed runs.
+      False: Caller must explicitly handle managed runs.
     bDeleteUnmanagedRuns - [in]
       True: Unmanaged runs are deleted.
-      False: Caller must explicityly handle unmanaged runs.
+      False: Caller must explicitly handle unmanaged runs.
   */
   void SetTextHeight(double height);
 

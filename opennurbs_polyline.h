@@ -39,7 +39,7 @@ public:
 
   // Description:
   //   Create a regular polygon circumscribe about a circle.
-  //   The midpoints of the polygon's edges will be tanget to the
+  //   The midpoints of the polygon's edges will be tangent to the
   //   circle.
   // Parameters:
   //   circle - [in]
@@ -187,7 +187,7 @@ public:
   // Parameters:
   //   test_point - [in]
   //   t - [out] parameter for a point on the polyline that
-  //             is closest to test_point.  If mulitple solutions
+  //             is closest to test_point.  If multiple solutions
   //             exist, then the smallest solution is returned.
   // Returns:
   //   true if successful.
@@ -202,7 +202,7 @@ public:
   // Parameters:
   //   test_point - [in]
   //   t - [out] parameter for a point on the polyline that
-  //             is closest to test_point.  If mulitple solutions
+  //             is closest to test_point.  If multiple solutions
   //             exist, then the smallest solution is returned.
   //   segment_index0 - [in] index of segment where search begins
   //   segment_index1 - [in] index of segment where search ends

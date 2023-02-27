@@ -52,7 +52,7 @@
 // When possible, Rhino and opennurbs replace code page 
 // encodings with UNICODE in RTF. All runtimes strings
 // use UNICODE UTF-8, UTF-16, or UTF-32 encodings.
-// Whenever posssible, the UNICODE encoding is used
+// Whenever possible, the UNICODE encoding is used
 // to retrieve glyph information from fonts.
 #define ON_DOUBLE_BYTE_CODE_PAGE_SUPPORT
 #endif
@@ -76,7 +76,7 @@ bool ON_IsPotentialWindowsCodePage932DoubleByteEncoding(
 /*
 Description:
   Convert a Windows code page 932 encoded value to a UNICODE code point.
-  This code page is often used for Japanese glpyhs.
+  This code page is often used for Japanese glyphs.
 
 Parameters:
   code_page_932_character_value - [in]
@@ -119,7 +119,7 @@ bool ON_IsPotentialWindowsCodePage949DoubleByteEncoding(
 /*
 Description:
   Convert a Windows code page 949 encoded value to a UNICODE code point.
-  This code page is often used for Korean glpyhs.
+  This code page is often used for Korean glyphs.
 
 Parameters:
   code_page_949_character_value - [in]

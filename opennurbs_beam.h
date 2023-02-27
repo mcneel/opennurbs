@@ -20,7 +20,7 @@ Description:
   2d xy profile to 3d world space.
 Parameters:
   P - [in] start or end of path
-  T - [in] unit tanget to path
+  T - [in] unit tangent to path
   U - [in] unit up vector perpendicular to T
   Normal - [in] optional unit vector with Normal->z > 0 that
      defines the unit normal to the miter plane.
@@ -352,9 +352,9 @@ public:
       * if mesh is null, any existing mesh is deleted and
         nothing is attached.
   Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   bool SetMesh( ON::mesh_type mt, ON_Mesh* mesh );
 
   /*
@@ -373,9 +373,9 @@ public:
     If a mesh of the requested type is not available,
     then null is returned.
   Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   const ON_Mesh* Mesh( ON::mesh_type mt ) const;
 
   /*
@@ -388,9 +388,9 @@ public:
     bDeleteMesh - [in] if true, cached mesh is deleted.
       If false, pointer to cached mesh is just set to null.
   Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   void DestroyMesh( ON::mesh_type mt );
 
   ////////////////////////////////////////////////////////////
@@ -588,7 +588,7 @@ public:
   /*
   Description:
     Set the outer profile of the extrusion.
-  Paramters:
+  Parameters:
     outer_profile - [in] 
       curve in the xy plane or a 2d curve.
     bCap - [in]
@@ -612,7 +612,7 @@ public:
   /*
   Description:
     Add an inner profile.
-  Paramters:
+  Parameters:
     inner_profile - [in]
       closed curve in the xy plane or a 2d curve.
   Returns:
@@ -666,7 +666,7 @@ public:
   int ProfileParameter() const;
 
   /*
-  Paramters:
+  Parameters:
     profile_index - [in]
       0 <= profile_index < ProfileCount().
       The outer profile has index 0.
@@ -679,12 +679,12 @@ public:
   const ON_Curve* Profile(int profile_index) const;
 
   /*
-  Paramters:
+  Parameters:
     profile_index - [in]
       0 <= profile_index < ProfileCount().
       The outer profile has index 0.
     s - [in] ( 0.0 <= s <= 1.0 )
-      A relative parameter controling which priofile
+      A relative parameter controlling which priofile
       is returned. s = 0.0 returns the bottom profile
       and s = 1.0 returns the top profile.
   Returns:
@@ -696,7 +696,7 @@ public:
   ON_Curve* Profile3d(int profile_index, double s ) const;
 
   /*
-  Paramters:
+  Parameters:
     ci - [in]
       component index identifying a 3d extrusion profile curve.
   Returns:
@@ -708,7 +708,7 @@ public:
   ON_Curve* Profile3d( ON_COMPONENT_INDEX ci ) const;
 
   /*
-  Paramters:
+  Parameters:
     ci - [in]
       component index identifying a wall edge curve.
   Returns:
@@ -720,7 +720,7 @@ public:
   ON_Curve* WallEdge( ON_COMPONENT_INDEX ci ) const;
 
   /*
-  Paramters:
+  Parameters:
     ci - [in]
       component index identifying a wall surface.
   Returns:
@@ -732,7 +732,7 @@ public:
   ON_Surface* WallSurface( ON_COMPONENT_INDEX ci ) const;
 
   /*
-  Paramters:
+  Parameters:
     line_curve - [in]
       If null, a line curve will be allocated using new.
   Returns:
@@ -743,14 +743,14 @@ public:
   ON_LineCurve* PathLineCurve(ON_LineCurve* line_curve) const;
 
   /*
-  Paramters:
+  Parameters:
     profile_parameter - [in]
       parameter on profile curve
   Returns:
       -1: if the profile_parameter does not correspond 
           to a point on the profile curve.
     >= 0: index of the profile curve with domain containing
-          this paramter.  When the profile_parameter corresponds
+          this parameter.  When the profile_parameter corresponds
           to the end of one profile and the beginning of the next
           profile, the index of the next profile is returned.
   */
@@ -821,7 +821,7 @@ public:
 
   // path definition:
   //   The line m_path must have length > m_path_length_min.
-  //   The interval m_t must statisfy 0 <= m_t[0] < m_t[1] <= 1.
+  //   The interval m_t must satisfy 0 <= m_t[0] < m_t[1] <= 1.
   //   The extrusion starts at m_path.PointAt(m_t[0]) and ends
   //   at m_path.PointAt(m_t[1]).
   //   The "up" direction m_up is a unit vector that must
@@ -839,12 +839,12 @@ public:
   //   The profile's "y" axis corresponds to m_up.
   //   The point (0,0) is extruded along the m_path line.
   //   If m_profile_count = 1, then m_profile can be any
-  //   type of continous curve.  If m_profile_count > 1,
+  //   type of continuous curve.  If m_profile_count > 1,
   //   then m_profile must be an ON_PolyCurve with
   //   m_profile_count segments, the domain of each segment
   //   must exactly match the polycurve's segment domain,
   //   every segment must be continuous and closed,
-  //   the first segement curve must have counter-clockwise
+  //   the first segment curve must have counter-clockwise
   //   orientation, and the rest must have clockwise 
   //   orientations.
   int m_profile_count;
@@ -890,7 +890,7 @@ public:
     bCapTop - [in] if true, the end at cylinder.m_height[1] will be capped
     extrusion - [in] 
       If the input extrusion pointer is null, one will be allocated on the heap
-      and it is the caller's responsibility to delte it at an appropriate time.
+      and it is the caller's responsibility to delete it at an appropriate time.
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:
@@ -935,7 +935,7 @@ public:
     bCapTop - [in] if true, the end at cylinder.m_height[1] will be capped
     extrusion - [in] 
       If the input extrusion pointer is null, one will be allocated on the heap
-      and it is the caller's responsibility to delte it at an appropriate time.
+      and it is the caller's responsibility to delete it at an appropriate time.
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:
@@ -988,7 +988,7 @@ public:
       is capped.
     extrusion - [in] 
       If the input extrusion pointer is null, one will be allocated on the heap
-      and it is the caller's responsibility to delte it at an appropriate time.
+      and it is the caller's responsibility to delete it at an appropriate time.
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:

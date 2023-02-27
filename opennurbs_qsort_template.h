@@ -78,7 +78,7 @@ static void ON_QSORT_SHORT_SORT_FNAME(ON_SORT_TEMPLATE_TYPE *lo, ON_SORT_TEMPLAT
   ON_SORT_TEMPLATE_TYPE *max;
   ON_SORT_TEMPLATE_TYPE tmp;
 
-  /* Note: in assertions below, i and j are alway inside original bound of
+  /* Note: in assertions below, i and j are always inside original bound of
       array to sort. */
 
   while (hi > lo)

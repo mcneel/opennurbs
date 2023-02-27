@@ -551,6 +551,8 @@ ON_OBSOLETE_V5_TextObject* ON_OBSOLETE_V5_TextObject::CreateFromV6TextObject(
   case ON::TextHorizontalAlignment::Right:
     justification |= ON_OBSOLETE_V5_Annotation::eTextJustification::tjRight;
     break;
+  default:
+    break;
   }
   switch (valign)
   {
@@ -562,6 +564,8 @@ ON_OBSOLETE_V5_TextObject* ON_OBSOLETE_V5_TextObject::CreateFromV6TextObject(
     break;
   case ON::TextVerticalAlignment::Bottom:
     justification |= ON_OBSOLETE_V5_Annotation::eTextJustification::tjBottom;
+    break;
+  default:
     break;
   }
 
