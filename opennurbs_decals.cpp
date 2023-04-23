@@ -527,7 +527,7 @@ const ON_Decal& ON_Decal::operator = (const ON_Decal& d)
   return *this;
 }
 
-bool ON_Decal::operator == (const ON_Decal& d)
+bool ON_Decal::operator == (const ON_Decal& d) const
 {
   // This only checks if the basic parameters are equal. It ignores any custom data.
 
@@ -565,7 +565,7 @@ bool ON_Decal::operator == (const ON_Decal& d)
   return true;
 }
 
-bool ON_Decal::operator != (const ON_Decal& d)
+bool ON_Decal::operator != (const ON_Decal& d) const
 {
   return !(operator == (d));
 }
@@ -752,17 +752,17 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
   ON_XMLNode* custom_node = _impl->FindCustomNodeForRenderEngine(renderEngineId);
   if (nullptr != custom_node)
   {
-    ON_XMLNode* parent = custom_node->GetParent();
+    ON_XMLNode* parent = custom_node->Parent();
     if (nullptr != parent)
     {
       delete parent->DetachChild(*custom_node);
     }
   }
 
-  // Add the new custom node and set its 'renderer' property to be the render engine id.
+  // Attach the new custom node and set its 'renderer' property to be the render engine id.
   custom_node = _impl->Node().AttachChildNode(new ON_XMLNode(ON_DECAL_CUSTOM));
   ON_XMLProperty prop(ON_DECAL_CUSTOM_RENDERER, renderEngineId);
-  custom_node->AddProperty(prop);
+  custom_node->SetProperty(prop);
 
   // Attach a copy of the custom param node to the custom node.
   custom_node->AttachChildNode(new ON_XMLNode(custom_param_node));
@@ -841,12 +841,12 @@ bool ON_Decal::GetTextureMapping(ON_TextureMapping& mappingOut) const
   return false;
 }
 
-/** \class ON_DecalNodeReader
+/* Class ON_DecalNodeReader
 
-    This object encapsulates the reading of all decal properties from XML nodes.
-    It is used by the decal CRC calculation in ComputeDecalCRC().
+   This object encapsulates the reading of all decal properties from XML nodes.
+   It is used by the decal CRC calculation in ComputeDecalCRC().
 
-    TODO: It could also be used by the ON_Decal XML node acccess.
+   TODO: It could also be used by the ON_Decal XML node acccess.
 
 */
 class ON_DecalNodeReader

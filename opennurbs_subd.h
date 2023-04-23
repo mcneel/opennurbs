@@ -253,41 +253,306 @@ public:
 
 public:
   /// <summary>
+  /// ON_SubDEdgeSharpness::MaximumValue = 4.
+  /// SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
+  /// </summary>
+  static const double MaximumValue;
+
+  /// <summary>
+  /// ON_SubDEdgeSharpness::SmoothValue = 0.0.
+  /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
+  /// Smooth edges have a sharpeness property of ON_SubDEdgeSharpness::Smooth.
+  /// </summary>
+  static const double SmoothValue;
+
+  /// <summary>
+  /// ON_SubDEdgeSharpness::CreaseValue = ON_SubDEdgeSharpness::MaximumValue + 1.
+  /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
+  /// This value is used when it is convenient to use and ON_SubDEdgeSharpness to
+  /// indicate an edge has a crease tag. Edges with crease tags always have a 
+  /// sharpeness property of ON_SubDEdgeSharpness::Smooth.
+  /// </summary>
+  static const double CreaseValue;
+
+  /// <summary>
+  /// ON_SubDEdgeSharpness::Tolerance = 0.01
+  /// If an edge has sharpness within ON_SubDEdgeSharpness::Tolerance of an integer value,
+  /// the sharpness is set to that integer value.
+  /// </summary>
+  static const double Tolerance;
+
+  /// <summary>
   /// An edge sharpness with contant value 0.0.
   /// </summary>
-  static const ON_SubDEdgeSharpness Zero;
+  static const ON_SubDEdgeSharpness Smooth;
 
   /// <summary>
   /// An edge sharpness with both end values = ON_DBL_QNAN.
   /// </summary>
   static const ON_SubDEdgeSharpness Nan;
 
-  /// <returns>True if the sharpness value is valid and contant.</returns>
+  /// <summary>
+  /// An edge sharpness with both end values = ON_SubDEdgeSharpness::CreaseValue.
+  /// This value is not a valid sharpness value for a sharp edge 
+  /// (A sharp edge a smooth edge with nonzero sharpness).
+  /// When working with edges, it is sometimes convienient to have 
+  /// an ON_SubDEdgeSharpness value that indicated the edge is a crease. 
+  /// ON_SubDEdgeSharpness::Crease is used for this purpose.
+  /// </summary>
+  static const ON_SubDEdgeSharpness Crease;
+
+  /// <summary>
+  /// Create a text string describing the sharpness as a percentage.
+  /// This is useful in user interface code that experesses sharpness in percentages.
+  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue,
+  /// valid, a number followed by a percent sign is returned.
+  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
+  /// If the sharpness is not valid, a warning sign is returned.
+  /// </summary>
+  /// <param name="sharpness"></param>
+  /// <returns></returns>
+  static const ON_wString ToPercentageText(double sharpness);
+
+  /// <summary>
+  /// Convert sharpness to a percentage from 0 to 100.0.
+  /// This is useful in user interface code that experesses sharpness in percentages.
+  /// </summary>
+  /// <param name="sharpness"></param>
+  /// <param name="crease_percentage"></param>
+  /// <returns>
+  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpenss/ON_SubDEdgeSharpness::MaximumValue is returned.
+  /// If sharpenss = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  static double ToPercentage(double sharpness, double crease_percentage);
+
+  /// <summary>
+  /// Create a text string describing the sharpness as a percentage.
+  /// If the sharpenss is constant, and single percentage is returned.
+  /// If the sharpenss is varable, percentage range returned.
+  /// If the sharpness is not valid, a warning sign is returned.
+  /// </summary>
+  /// <param name="bVarableAsIncreasing">
+  /// If the sharpness is not contanst and bVarableMinToMax is true, then
+  /// the string has the format min%-max%. 
+  /// If the sharpness is not contanst and bVarableMinToMax is false, then
+  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
+  /// </param>
+  /// <returns>A string describing the sharpness as a percentage range.</returns>
+  const ON_wString ToPercentageText( bool bVarableMinToMax ) const;
+
+
+  /// <returns>
+  /// If the sharpness value is valid and contant, returns true.
+  /// Otherwise returns false.
+  /// Note that ON_SubDEdgeSharpness::Crease.IsConstant() and ON_SubDEdgeSharpness::Nan.IsConstant() are both false.
+  ///</returns>
   bool IsConstant() const;
 
-  /// <returns>True if the sharpness value is valid and variable.</returns>
+  /// <param name="bCreaseResult">
+  /// Value to return when this is equal to ON_SubDEdgeSharpness::Crease.
+  /// </param>
+  /// <returns>
+  /// If this is equal to ON_SubDEdgeSharpness::Crease, returns bCreaseResult.
+  /// If the sharpness value is valid and contant, returns true.
+  /// Otherwise returns false.
+  /// </returns>
+  bool IsConstant( bool bCreaseResult ) const;
+
+  /// <returns>
+  /// If EndSharpness(0) &gt; EndSharpness(1), true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool IsIncreasing() const;
+
+  /// <returns>
+  /// If EndSharpness(0) &lt; EndSharpness(1), true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool IsDecreasing() const;
+
+  /// <returns>
+  /// True if the sharpness value is valid and variable.
+  /// Note that ON_SubDEdgeSharpness::Crease.IsVariable() and ON_SubDEdgeSharpness::Nan.IsVariable() are both false.
+  /// </returns>
   bool IsVariable() const;
 
-  /// <returns>True if the sharpness valid is zero.</returns>
+  /// <returns>
+  /// If EndSharpness(0) &lt; EndSharpness(1), +1 is returned.
+  /// If EndSharpness(0) &gt; EndSharpness(1), -1 is returned.
+  /// If EndSharpness(0) = EndSharpness(1), 0 is returned.
+  /// Otherwise ON_UNSET_INT_INDEX is returned.
+  /// </returns>
+  int Trend() const;
+
+  /// <returns>
+  /// If IsValid() or IsCrease() is true, then EndSharpness(1) - EndSharpness(0) is returned.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  double Delta() const;
+
+  /// Determine if sharpnesses have equal adjacent end sharpness values.
+  /// <param name="s0"></param>
+  /// <param name="s1"></param>
+  /// <returns>
+  /// If s0.EndSharpness(1) == s1.EndSharpness(0), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualEndSharpness(
+    ON_SubDEdgeSharpness s0,
+    ON_SubDEdgeSharpness s1
+  );
+
+  /// Determine if sharpnesses have the same trend and equal adjacent end sharpness values.
+  /// <param name="s0"></param>
+  /// <param name="s1"></param>
+  /// <returns>
+  /// If s0.Trend() = s1.Trend() and s0.EndSharpness(1) == s1.EndSharpness(0), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualTrend(
+    ON_SubDEdgeSharpness s0,
+    ON_SubDEdgeSharpness s1
+  );
+
+
+  /// Determine if sharpnesses have the same delta and equal adjacent end sharpness values.
+  /// <param name="s0"></param>
+  /// <param name="s1"></param>
+  /// <returns>
+  /// If s0.Delta() = s1.Delta() and s0.EndSharpness(1) == s1.EndSharpness(0), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualDelta(
+    ON_SubDEdgeSharpness s0,
+    ON_SubDEdgeSharpness s1
+  );
+
+
+  /// <summary>
+  /// Determine if edges are adjacent and have equal adjacent sharpness values.
+  /// </summary>
+  /// <param name="eptr0"></param>
+  /// <param name="eptr1"></param>
+  /// <returns>
+  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
+  /// then ON_SubDEdgeSharpness::EqualEndSharpness(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualEndSharpness(
+    const class ON_SubDEdgePtr& eptr0,
+    const class ON_SubDEdgePtr& eptr1
+  );
+
+  /// <summary>
+  /// Determine if edges are adjacent, have the same sharpness trend, and equal adjacent sharpness values.
+  /// </summary>
+  /// <param name="eptr0"></param>
+  /// <param name="eptr1"></param>
+  /// <returns>
+  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
+  /// then ON_SubDEdgeSharpness::EqualTrend(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualTrend(
+    const class ON_SubDEdgePtr& eptr0,
+    const class ON_SubDEdgePtr& eptr1
+  );
+
+  /// <summary>
+  /// Determine if edges are adjacent, have the same sharpness trend, and equal adjacent sharpness values.
+  /// </summary>
+  /// <param name="eptr0"></param>
+  /// <param name="eptr1"></param>
+  /// <returns>
+  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
+  /// then ON_SubDEdgeSharpness::EqualDelta(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool EqualDelta(
+    const class ON_SubDEdgePtr& eptr0,
+    const class ON_SubDEdgePtr& eptr1
+  );
+
+  /// <returns>True if the sharpness is zero.</returns>
   bool IsZero() const;
 
-  /// <returns>True if the sharpness value is valid either end sharpness value is not zero.</returns>
-  bool IsNotZero() const;
+  /// <returns>
+  /// If both end sharpness values are &gt;= 0 and &lt;= ON_SubDEdgeSharpness::MaximumValue
+  /// and at least one end sharpness value is &gt; 0, returns true.
+  /// Otherwise returns false.
+  /// Note that ON_SubDEdgeSharpness::Crease.IsSharp() and ON_SubDEdgeSharpness::Nan.IsSharp() are both false;
+  /// </returns>
+  bool IsSharp() const;
 
-  /// <returns>True if both end sharpness values are &gt;= 0 and &lt;= ON_SubDEdgeSharpness::Maximum.</returns>
+  /// <returns>
+  /// If the sharpness value is (ON_SubDEdgeSharpness::CreaseValue,ON_SubDEdgeSharpness::CreaseValue), returns true.
+  /// Otherwise false is returned.
+  /// In particular, ON_SubDEdgeSharpness::Crease.IsCrease() is true and all other values return false.
+  /// </returns>
+  bool IsCrease() const;
+
+
+  /// <returns>
+  /// (IsCrease() || IsSharp())
+  /// </returns>
+  bool IsCreaseOrSharp() const;
+
+
+  /// <returns>
+  /// If both end sharpness values are &gt;= 0 and &lt;= ON_SubDEdgeSharpness::MaximumValue, returns true.
+  /// Note that ON_SubDEdgeSharpness::Crease.IsValid() and ON_SubDEdgeSharpness::Nan.IsValid() are both false.
+  /// </returns>
   bool IsValid() const;
 
-  /// <returns>True if IsValid() is false.</returns>
+
+  /// <returns>
+  /// Returns the opposite of IsValid().
+  /// Note that ON_SubDEdgeSharpness::Crease.IsNotValid() and ON_SubDEdgeSharpness::Nan.IsNotValid() are both true.
+  /// </returns>
   bool IsNotValid() const;
+
+  /// <param name="bCreaseResult">
+  /// Value to return when this is equal to ON_SubDEdgeSharpness::Crease.
+  /// </param>
+  /// <returns>
+  /// If both end sharpness values are &gt;= 0 and &lt;= ON_SubDEdgeSharpness::MaximumValue, returns true.
+  /// If this is equal to ON_SubDEdgeSharpness::Crease, returns bCreaseResult.
+  /// Otherwise returns false.
+  /// </returns>
+  bool IsValid(bool bCreaseResult) const;
+
+  /// <param name="bCreaseResult">
+  /// Value to return when this is equal to ON_SubDEdgeSharpness::Crease.
+  /// </param>
+  /// <returns>
+  /// If this is equal to ON_SubDEdgeSharpness::Crease, returns bCreaseResult.
+  /// Otherwise returns the opposite of IsValid().
+  /// </returns>
+  bool IsNotValid(bool bCreaseResult) const;
+
+  /// <summary>
+  /// Determine if candidate_value is a valid edge end sharpness value.
+  /// </summary>
+  /// <param name="candidate_value">
+  /// value to check
+  /// </param>
+  /// <param name="bCreaseResult">
+  /// Value to return when ON_SubDEdgeSharpness::CreaseValue == candidate_value</param>
+  /// <returns></returns>
+  static bool IsValidValue(
+    double candidate_value,
+    bool bCreaseResult
+  );
 
   /// <summary>
   /// Create a constant ON_SubDEdgeSharpness;
   /// </summary>
-  /// <param name="sharpness">0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <param name="sharpness">0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
   /// If the input values is valid, an ON_SubDEdgeSharpness 
   /// with constant value sharpness is returned. 
-  /// If the input value is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// If the input vaue is ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromConstant(double sharpness);
@@ -295,12 +560,12 @@ public:
   /// <summary>
   /// Create a variable ON_SubDEdgeSharpness;
   /// </summary>
-  /// <param name="sharpness0">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::Maximum</param>
-  /// <param name="sharpness1">0 &lt;= sharpness1 &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <param name="sharpness0">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
+  /// <param name="sharpness1">0 &lt;= sharpness1 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
   /// If both input values are valid, an edge sharpness 
   /// with start value sharpness0 and end value sharpness1 is returned. 
-  /// If either end value is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// If both input values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(double sharpness0, double sharpness1);
@@ -308,11 +573,11 @@ public:
   /// <summary>
   /// Create a variable ON_SubDEdgeSharpness;
   /// </summary>
-  /// <param name="sharpness_interval">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::Maximum</param>
+  /// <param name="sharpness_interval">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
   /// If the interval's values are valid, an edge sharpness 
   /// with start value sharpness_interval[0] and end value sharpness_interval[1] is returned. 
-  /// If either end value is a nan, ON_SubDEdgeSharpness Nan is returned.
+  /// If both sharpness_interval[] values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(const class ON_Interval& sharpness_interval);
@@ -323,9 +588,11 @@ public:
   /// <param name="a"></param>
   /// <param name="b"></param>
   /// <returns>
-  /// If a or b is not zero, then the returned interval is the union of the nonzero
-  /// input intervals. Otherwise ON_SubDEdgeSharpness::Zero is returned. 
-  /// The returned sharpenss always has sharpness[0] &lt;= sharpness[1].
+  /// If an input parameter is ON_SubDEdgeSharpness::Smooth, ON_SubDEdgeSharpness::Crease, or ON_SubDEdgeSharpness::Nan,
+  /// then that parameter it is ignored.
+  /// The returned interval is the union of the nonzero valid input intervals. 
+  /// If no input intervals are nonzero, then ON_SubDEdgeSharpness::Smooth is returned. 
+  /// Either the returned sharpness is ON_SubDEdgeSharpness::Smooth or has 0.0 &lt; sharpness[0] &lt;= sharpness[1] &lt;= ON_SubDEdgeSharpness::MaximumValue.
   /// </returns>
   static const ON_SubDEdgeSharpness Union(
     const ON_SubDEdgeSharpness& a, 
@@ -336,7 +603,7 @@ public:
   /// Sharpness value for a subdivided edge.
   /// </summary>
   /// <param name="end_index"0 or 1.</param>
-  /// <returns>Subdivided sharpness or ON_SubDEdgeSharpness::Zero if index is out of range.</returns>
+  /// <returns>Subdivided sharpness or ON_SubDEdgeSharpness::Smooth if index is out of range.</returns>
   const ON_SubDEdgeSharpness Subdivided(int end_index) const;
 
   const ON_SubDEdgeSharpness Reversed() const;
@@ -345,13 +612,51 @@ public:
   /// Convert a user facing slider value to a SubD edge end sharpness value.
   /// </summary>
   /// <param name="slider_domain">Non empty slider domain. (Often ON_Interval::ZeroToOne.)</param>
-  /// <param name="slider_value">A value in the slider_domain. slider_domain[0] returns 0.0. slider_domain[1] returns ON_SubDEdgeSharpness::Maximum.</param>
+  /// <param name="slider_value">A value in the slider_domain. slider_domain[0] returns 0.0. slider_domain[1] returns ON_SubDEdgeSharpness::MaximumValue.</param>
   /// <param name="invalid_input_result">Value to return if the input is not valid.</param>
   /// <returns>The slider value converted to an ON_SubDEdge sharpness value.</returns>
   static double SharpnessFromSliderValue(
     ON_Interval slider_domain,
     double slider_value,
     double invalid_input_result
+  );
+
+  /// <summary>
+  /// Set chain_edge_sharpness to a sequence of evenly changing sharpnesses
+  /// beginning with chain_sharpness_range[0] and ending with chain_sharpness_range[1].
+  /// </summary>
+  /// <param name="chain_sharpness_range">Beginning and ending sharpnesses.</param>
+  /// <param name="edge_count">Number of edges in the chain.</param>
+  /// <param name="chain_edge_sharpness">The list of sharpnesses is returned here.</param>
+  /// <returns>
+  /// If the sharpness is constant, 1 is returned.
+  /// If the sharpness varies from edge to edge, edge_count is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned SetEdgeChainSharpness(
+    ON_Interval chain_sharpness_range,
+    unsigned edge_count,
+    ON_SimpleArray<ON_SubDEdgeSharpness>& chain_edge_sharpness
+  );
+
+  /// <summary>
+  /// Set chain_edge_sharpness to a sequence of evenly changing sharpnesses
+  /// beginning with chain_sharpness_range[0] and ending with chain_sharpness_range[1].
+  /// </summary>
+  /// <param name="chain_sharpness_range">Beginning and ending sharpnesses.</param>
+  /// <param name="edge_count">Number of edges in the chain.</param>
+  /// <param name="chain_edge_sharpness">
+  /// The list of sharpnesses is returned here.
+  /// chain_edge_sharpness[] must have a capacity &gt;= edge_count.</param>
+  /// <returns>
+  /// If the sharpness is constant, 1 is returned.
+  /// If the sharpness varies from edge to edge, edge_count is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned SetEdgeChainSharpness(
+    ON_Interval chain_sharpness_range,
+    unsigned edge_count,
+    ON_SubDEdgeSharpness* chain_edge_sharpness
   );
 
   /// <summary>
@@ -362,7 +667,7 @@ public:
   /// <param name="invalid_input_result">Value to return if the input is not valid.</param>
   /// <returns>
   /// If 0 &lt;= normalized_slider_value &lt;= 1, the normalized slider value converted to an ON_SubDEdge sharpness value
-  /// from 0 to ON_SubDEdgeSharpness::Maximum. Otherwise, ON_DBL_QNAN is returned.
+  /// from 0 to ON_SubDEdgeSharpness::MaximumValue. Otherwise, ON_DBL_QNAN is returned.
   /// </returns>
   static double SharpnessFromNormalizedValue(
     double normalized_slider_value
@@ -424,20 +729,7 @@ public:
   );
 
   /// <summary>
-  /// ON_SubDEdgeSharpness::Maximum = 4.
-  /// SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::Maximum.
-  /// </summary>
-  static const double Maximum;
-
-  /// <summary>
-  /// ON_SubDEdgeSharpness::Tolerance = 0.01
-  /// If an edge has sharpness within ON_SubDEdgeSharpness::Tolerance of an integer value,
-  /// the sharpness is set to that integer value.
-  /// </summary>
-  static const double Tolerance;
-
-  /// <summary>
-  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum and return an integer value when
+  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
   /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
@@ -449,7 +741,7 @@ public:
   );
 
   /// <summary>
-  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::Maximum and return an integer value when
+  /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
   /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
@@ -912,6 +1204,12 @@ public:
 
 };
 
+ON_DECL
+bool operator==(ON_SubDVertexPtr lhs, ON_SubDVertexPtr rhs);
+
+ON_DECL
+bool operator!=(ON_SubDVertexPtr lhs, ON_SubDVertexPtr rhs);
+
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDVertexPtr>;
@@ -991,6 +1289,28 @@ public:
   */
   bool EdgeIsSmooth() const;
     
+
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsSmoothNotSharp() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsSmoothNotSharp() const;
+
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsSharp() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsSharp() const;
+
+  /*
+  Returns:
+    If Edge() is not nullptr, Edge()->IsCreaseOrSharp() is returned.
+    Otherwise, false is returned.
+  */
+  bool EdgeIsCreaseOrSharp() const;
+
   /*
   Returns:
     If Edge() is not nullptr, Edge()->IsCrease() is returned.
@@ -998,6 +1318,7 @@ public:
   */
   bool EdgeIsCrease() const;
    
+
   /*
   Returns:
     If Edge() is not nullptr, Edge()->IsHardCrease() is returned.
@@ -1038,6 +1359,20 @@ public:
     nullptr if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const class ON_SubDVertex* RelativeVertex(
+    int relative_vertex_index
+  ) const;
+
+  /*
+  Parameters:
+    relative_vertex_index - [in]
+      0: return Edge()->Vertex(EdgeDirection())->m_vertex_tag
+      1: return Edge()->Vertex(1-EdgeDirection())->m_vertex_tag
+  Returns:
+    The requested vertex with EdgeDirection() taken into account.
+    If Edge() or Edge()->Vertex(EdgeDirection()) is nullptr,
+    then ON_SubDVertexTag::Unset is returned.
+  */
+  ON_SubDVertexTag RelativeVertexTag(
     int relative_vertex_index
   ) const;
 
@@ -1097,6 +1432,7 @@ public:
     ON_SubDComponentLocation point_location
   ) const;
 
+
   bool RelativeVertexMark(
     int relative_vertex_index,
     bool missing_vertex_return_value
@@ -1139,8 +1475,15 @@ public:
     double relative_sector_coefficient
   ) const;
 
-
-  const ON_SubDEdgeSharpness RelativeSharpness() const;
+  /// <summary>
+  /// Edge sharpness oriented with respect to this ON_SubDEdgePointer's direction.
+  /// </summary>
+  /// <param name="bUseCreaseSharpness">
+  /// If the edge is a crease and bUseCreaseSharpness is false, then ON_SubDEdgeSharpness::Smooth is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// </param>
+  /// <returns></returns>
+  const ON_SubDEdgeSharpness RelativeSharpness( bool bUseCreaseSharpness ) const;
 
   void SetRelativeSharpness(ON_SubDEdgeSharpness relative_sharpness) const;
 
@@ -1164,6 +1507,21 @@ public:
   const class ON_SubDFace* RelativeFace(
     int relative_face_index
   ) const;
+
+  /// <summary>
+  /// Get the edge's face ignoring orientation.
+  /// </summary>
+  /// <param name="edge_face_index">
+  /// ON_SubDEdge face index.
+  /// </param>
+  /// <returns>
+  /// If this->Edge() is not nullptr, then this->Edge()->Face(edge_face_index) is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  const class ON_SubDFace* EdgeFace(
+    int edge_face_index
+  ) const;
+
 
   /*
   Description:
@@ -1374,7 +1732,14 @@ public:
   ) const;
 
   ON__UINT8 ClearMarkBits() const;
-}; // ON_SubDFace
+};
+
+ON_DECL
+bool operator==(ON_SubDEdgePtr lhs, ON_SubDEdgePtr rhs);
+
+ON_DECL
+bool operator!=(ON_SubDEdgePtr lhs, ON_SubDEdgePtr rhs);
+
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDEdgePtr>;
@@ -1526,6 +1891,12 @@ public:
   ) const;
 
 };
+
+ON_DECL
+bool operator==(ON_SubDFacePtr lhs, ON_SubDFacePtr rhs);
+
+ON_DECL
+bool operator!=(ON_SubDFacePtr lhs, ON_SubDFacePtr rhs);
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDFacePtr>;
@@ -1912,6 +2283,12 @@ public:
   const ON_wString ToString() const;
 
 };
+
+ON_DECL
+bool operator==(ON_SubDComponentPtr lhs, ON_SubDComponentPtr rhs);
+
+ON_DECL
+bool operator!=(ON_SubDComponentPtr lhs, ON_SubDComponentPtr rhs);
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SubDComponentPtr>;
@@ -4211,20 +4588,18 @@ public:
   Parameters:
     subd_type - [in]
       A quad based subdivision algorithm.
-    bFirstPass - [in]
-      If bFirstPass is true and the components are in standard form for the vertex
-      and subdivision type, then locations of the component vertices opposite the 
-      center vertex are returned in the point ring.
-    bSecondPass - [in]
-      If bSecondtPass is true and the first pass is disable or does not succeed,
-      then the component subdivision locations are returned in the point ring.
-    vertex0 - [in]
-      If not null, then vertex0->m_edges and vertex0->m_faces must
-      be radially sorted and span a single sector and component_ring[]
-      is ignored.
+    bPermitNoSubdivisions - [in]
+      When in doubt, pass false.
+      If bPermitNoSubdivisions is true and no extraordinary components
+      are in the ring, then locations of the input component
+      control net are returned. 
+      Otherwise at one or more subdivisions are applied to obtain the output ring points.
+    bObsoleteAndIgnoredParameter - [in]
+      Obsolete and ignored parameter. Pass false.
+    obsolete_and_ignored_parameter - [in]
+      Obsolete and ignored parameter. Pass nullptr.
     component_ring_count - [in]
-      If vertex0 is null, then component_ring_count specifies the number
-      of components in the component_ring[] array.
+      component_ring_count specifies the number of components in the component_ring[] array.
     component_ring[] - [in]
       If vertex0 is null, then component_ring[0] is the central vertex,
       component_ring[1] and subsequent components with odd indices are
@@ -4243,9 +4618,9 @@ public:
     you want a crash proof call.
   */
   static unsigned int GetQuadSectorPointRing(
-    bool bFirstPass,
-    bool bSecondPass,
-    const class ON_SubDVertex* vertex0,
+    bool bPermitNoSubdivisions,
+    bool bObsoleteAndIgnoredParameter,
+    const class ON_SubDVertex* obsolete_and_ignored_parameter,
     const class ON_SubDComponentPtr* component_ring,
     size_t component_ring_count,
     double* point_ring,
@@ -8222,16 +8597,16 @@ public:
 
   ON_SubDVertexTag VertexTag() const;
 
-
+  /// <returns>Number of edges attached to the center vertex.</returns>
   unsigned int EdgeCount() const;
 
+  /// <returns>Number of faces in the sector.</returns>
   unsigned int FaceCount() const;
 
   /*
   Returns:
    Number of points in the point ring.  
-   For quad subds, this is 1 + FaceCount() + EdgeCount().
-   For tri subds, this is 1 + EdgeCount().
+   (1 + FaceCount() + EdgeCount()).
   */
   unsigned int PointRingCount() const;
 
@@ -9290,12 +9665,18 @@ public:
   unsigned int DisplayDensityReduction() const;
 
 private:
-  unsigned char m_reserved;
+  unsigned char m_reserved1;
+
+private:
+  unsigned char m_reserved2;
 
 public:
-  unsigned char m_reserved1 = 0;
   unsigned char m_side_segment_count; // = 2^n for non-empty grids (0 <= n <= 8)
-  
+
+private:
+   unsigned char m_reserved3;
+
+public:
   // m_F_count = number of quads
   //           = m_side_segment_count*m_side_segment_count
   // (0,1,4,16,256,1024,4096) After 0, each permitted value is 4x previous value
@@ -9309,6 +9690,12 @@ public:
   unsigned short m_F_level_of_detail;
 
   unsigned short m_F_stride;
+
+private:
+  ON__UINT16 m_reserved4;
+  ON__UINT32 m_reserved5;
+
+public:
   const unsigned int* m_F;
   const unsigned int* m_S; // [4*m_side_segment_count + 1] indices that form the polyline boundary.
   const ON_SubDMeshFragmentGrid* m_prev_level_of_detail; // nullptr or the previous level with 4 times the number of quads.
@@ -11803,6 +12190,12 @@ public:
     bool bClearNeighborhoodCache
   );
 
+  /// <summary>
+  /// Sets the control net point to ON_3dPoint::NanPoint and clears
+  /// saved subdivision points.
+  /// </summary>
+  void UnsetControlNetPoint();
+
 
   ON_BoundingBox ControlNetBoundingBox() const;
 
@@ -12058,12 +12451,21 @@ public:
   /// can be zero.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
+  /// <param name="bUseCreaseSharpness">
+  /// When bCountCreasesAsSharp is true, crease edges are counted.
+  /// </param>
   /// <param name="bEndCheck">
   /// When bEndCheck is false, the check looks for edges with any nonzero sharpness.
   /// When bEndCheck is true, the check looks for edges with nonzero sharpness at this vertex.
   /// </param>
-  /// <returns>Number of sharp edges attached to this vertex.</returns>
-  unsigned int SharpEdgeCount( bool bEndCheck ) const;
+  /// <returns>
+  /// If bEndCheck is false, returns the number of sharp edges attached to this vertex.
+  /// If bEndCheck is true, returns the number of edges with nonzero end sharpness at this vertex.
+  /// </returns>
+  unsigned int SharpEdgeCount( 
+    bool bCountCreasesAsSharp,
+    bool bEndCheck 
+  ) const;
 
   /// <summary>
   /// Get the range of sharpness values assigned to sharp edges 
@@ -12073,21 +12475,29 @@ public:
   /// can be zero.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
+  /// <param name="bCountCreasesAsSharp">
+  /// When bCountCreasesAsSharp is true, creases are counted and ON_SubDEdgeSharpness::CreaseValue
+  /// is used as a crease edge sharpness.
+  /// </param>
   /// <param name="bEndCheck">
   /// When bEndCheck is false, the check looks for edges with any nonzero sharpness.
   /// When bEndCheck is true, the check looks for edges with nonzero sharpness at this vertex.
   /// </param>
   /// <param name="sharpness_range">
   /// The range of sharpness values is returned here.
-  /// If bEndCheck is true, the minimum and maximum of nonzero attached_edge->EndSharpness() at this vertex is returned in sharpness_range.
-  /// If bEndCheck is false, the minimum and maximum of nonzero attached_edge->MaximumEndSharpness() is returned in sharpness_range.
+  /// If bEndCheck is false, sharpness_range is the minimum and maximum of attached_edge->MaximumEndSharpness() for any attached sharp edge.
+  /// If bEndCheck is false, sharpness_range is the minimum and maximum of nonzero attached_edge->MaximumEndSharpness() for any attached sharp edge.
   /// If no sharp edges are attached, then (0,0) is returned.
   /// </param>
   /// <returns>
-  /// If bEndCheck is true, the number of edges with nonzero sharpness at this vertex is returned.
-  /// If bEndCheck is false, the number of edges attached to this vertex with nonzero sharpness is returned.
+  /// If bEndCheck is false, returns the number of sharp edges attached to this vertex.
+  /// If bEndCheck is true, returns the number of edges with nonzero end sharpness at this vertex.
   /// </returns>
-  unsigned int SharpEdgeCount(bool bEndCheck, ON_Interval& sharpness_range) const;
+  unsigned int SharpEdgeCount(
+    bool bCountCreasesAsSharp,
+    bool bEndCheck, 
+    ON_Interval& sharpness_range
+  ) const;
 
   /// <summary>
   /// Sharp vertices are smooth, crease or dart vertices attached to at least one sharp edge
@@ -12110,6 +12520,34 @@ public:
   /// Otherwise 0.0 is returned.
   ///< / returns>
   double GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const;
+
+  /// <summary>
+  /// Sharp vertices are smooth, crease or dart vertices attached to at least one sharp edge
+  /// with nonzero sharpness at the vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="count">
+  /// The returned value is 0 to 3 and is the number of output values vertices in v[] and c[].
+  /// If 1 &lt;= count &lt;=3, then 
+  /// sharp_subdivision_point = sum(0 &lt;= i &lt; count, c[i]*v[i]->ControlNetPoint()).
+  /// Otherwise the vertex is not sharp.
+  /// </param>
+  /// <param name="v">
+  /// Output subdivision point vertices are returned here.
+  /// </param>
+  /// <param name="c">
+  /// Output subdivision point sum coefficients are returned here.
+  /// </param>
+  /// <returns>
+  /// The vertex sharpness is returned ( &gt;= 0.0 ).
+  /// If the returned value is &gt; 0.0, then the sharp subdivision point 
+  /// = sum(0 &lt;= i &lt; count, c[i]*v[i]->ControlNetPoint())
+  ///< / returns>
+  double GetSharpSubdivisionPoint(
+    unsigned& count,
+    const ON_SubDVertex* v[3],
+    double c[3]
+  ) const;
 
   /*
   Returns:
@@ -12870,7 +13308,7 @@ private:
   // For a smooth edge, m_sharpness is the edge's sharpness.
   // Edge sharpenss has no meaning for edges with a crease tag.
   // ON_SubDEdge::Sharpness() comments for details. 
-  ON_SubDEdgeSharpness m_sharpness = ON_SubDEdgeSharpness::Zero;
+  ON_SubDEdgeSharpness m_sharpness = ON_SubDEdgeSharpness::Smooth;
 
 public:
 
@@ -12879,18 +13317,24 @@ public:
   /// The final subdivision point is (sharpness &gt;= 1.0) ? sharp_subdivision_point : (1.0-sharpness)(smooth subdivsion point)+sharpness*sharp_subdivision_point.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
-  /// <param name="sharp_subdivision_point">If the returned sharpness is &gt; 0,
-  /// then the sharp subdivision point is returned. 
-  /// When the returned sharpness is &gt; 0 and &lt; 1, 
-  /// the final subdivision point is a weighted average of 
-  /// sharp_subdivision_point and the ordinary smooth subdivision point.
-  /// When the returned sharpness is &gt;= 1, the sharp subdivision point is used
-  /// in place of the smooth subdivision point.
+  /// <param name="sharp_subdivision_point">
+  /// If the returned sharpness is &gt; 0,
+  /// then the sharp subdivision point (=edge->ControlNetCenterPoint()) is returned. 
+  /// Otherwise ON_3dPoint::NanPoint is returned.
+  /// 
+  /// The relationship between  
+  /// 3d point C = ordinary Catmull-Clark edge subdivision point,
+  /// 3d point P = sharp_subdivision_point,
+  /// s = this->GetSharpSubdivisionPoint(P), and
+  /// 3d point E = this->SubdivisionPoint() is
+  /// E = (s >= 1.0) ? P : ((s > 0.0) ? (s*P + (1-s)*C) : C);
+  /// 
+  /// NOTE WELL: when the returned value is zero, S is ON_3dPoint::NanPoint and any
+  /// calculation using S will results in nans.
   /// </param>
   /// <returns>
-  /// If the edge is sharp, a value &gt; 0 and &lt; ON_SubDEdgeSharpness::Maximum is returned.
-  /// If the edge is smooth with zero sharpness, 0 is returned.
-  /// If the edge is a crease, 0 is returned.
+  /// If the edge is sharp, a value &gt; 0 and &lt; ON_SubDEdgeSharpness::MaximumValue is returned.
+  /// Otherwise 0.0 is returned and sharp_subdivision_point = ON_3dPoint::NanPoint.
   /// </returns>
   double GetSharpSubdivisionPoint(
     ON_3dPoint& sharp_subdivision_point
@@ -13213,13 +13657,24 @@ public:
   /// The limit surface has a continuous normal along a sharp edge.
   /// A sharp edge has a smooth tag, 
   /// has sharpness &gt; 0 at at least one end, 
-  /// and has sharpness &lt; ON_SubDEdgeSharpness::Maximum at at least one end.
+  /// and has sharpness &lt; ON_SubDEdgeSharpness::MaximumValue at at least one end.
   /// Sharpness has no meaning for edges with crease tags.
   /// Both sharpness values are zero for an ordinary smooth edge.
-  /// Edge sharpness steadily decreases during subdivision and becomes zero after at most ON_SubDEdgeSharpness::Maximum subdivisions.
+  /// Edge sharpness steadily decreases during subdivision and becomes zero after at most ON_SubDEdgeSharpness::MaximumValue subdivisions.
   /// </summary>
-  /// <returns>True if the edge is tagged as smooth, h and at least one end with sharpness &gt; 0 and &lt; ON_SubDEdgeSharpness::Maximum.</returns>
+  /// <returns>
+  /// True if the edge is tagged as smooth, 
+  /// and has at least one end with sharpness &gt; 0 and &lt; ON_SubDEdgeSharpness::MaximumValue.
+  /// </returns>
   bool IsSharp() const;
+
+  /// <summary>
+  /// Crease edges have tag = ON_SubDEdgeTag::Crease. Sharp edges have
+  /// tag = ON_SubDEdgeTag::Smooth or ON_SubDEdgeTag::SmoothX and have
+  /// nonzero sharpness.
+  /// </summary>
+  /// <returns>(this->IsCrease() || this->IsSharp()).</returns>
+  bool IsCreaseOrSharp() const;
 
   /// <summary>
   /// Determine if an edge is smooth and is not sharp.
@@ -13237,13 +13692,18 @@ public:
   /// Get the edge's sharpness.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
+  /// <param name="bUseCreaseSharpness">
+  /// If the edge is a crease and bUseCreaseSharpness is false, then ON_SubDEdgeSharpness::Smooth is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// </param>
   /// <returns>
-  /// If the edge is sharp, the interval[0] value is the sharpness at the start of the edge and 
-  /// the interval[1] value is the sharpness at the end of the edge.
-  /// If the edge is smooth or a crease, (0,0) is returned.
-  /// Otherwise, (0,0) is returned.
+  /// If the edge is smooth, then the sharpness property is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// In all other cases, ON_SubDEdgeSharpness::Smooth is returned.
   /// </returns>
-  const ON_SubDEdgeSharpness Sharpness() const;
+  const ON_SubDEdgeSharpness Sharpness(
+    bool bUseCreaseSharpness
+  ) const;
 
   /// <summary>
   /// Get the edge's sharpness at the end with the specified vertex.
@@ -13303,7 +13763,7 @@ public:
   /// A collection of ON_SubD::SetEdgeSharpness() functions provide the easiest way to
   /// set and change edge sharpness.
   /// Set the edge sharpness values to (sharpness[0],sharpness[1]).
-  /// The interval values must be &gt;= 0 and &lt;= ON_SubDEdgeSharpness::Maximum.
+  /// The interval values must be &gt;= 0 and &lt;= ON_SubDEdgeSharpness::MaximumValue.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <param name="sharpness">End sharpenss values.</param>
@@ -17624,6 +18084,12 @@ public:
     ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
   );
 
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SubDEdgePtr* unsorted_edges,
+    unsigned unsorted_edge_count,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
   /*
   Description:
     Unconditionally sort edges into chains.
@@ -17653,6 +18119,13 @@ public:
     const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
     ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
   );
+
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SubDEdge* const * unsorted_edges,
+    unsigned unsorted_edge_count,
+    ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
 
   /*
   Description:
@@ -17713,6 +18186,188 @@ public:
     const ON_SubD& subd,
     const ON_SimpleArray< ON_COMPONENT_INDEX >& unsorted_edges,
     ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+  );
+
+  /// <summary>
+  /// Refine unconditional edge chains returned by the 
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() functions.
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() unconditionally sorts 
+  /// the input edges into edge chains;
+  /// ending at where vertices where there the number of
+  /// candidates for the next edge is zero or two or more.
+  /// 
+  /// In many contexts, it is often necessary to further refine
+  /// the unconditionally sorted edge chains.
+  /// RefineEdgeChains()  refines the unconditional edge chains
+  /// into chains that have homogeneous edge tags and continuous sharpness. 
+  /// When bOrdinarySmoothChains is true, 
+  /// the interior vertices of smooth chains will always
+  /// be smooth vertices with 4 edges and faces.
+  /// When bOrdinaryCreaseChains is true, 
+  /// the interior vertices of crease chains will
+  /// alwasys be crease vertices.
+  /// 
+  /// To clean edge chains in place, pass the same array as both edge chains parameters.
+  /// </summary>
+  /// <param name="unconditional_edge_chains">
+  /// ON_SubDEdgePtr::Null elements separate the edge chains.
+  /// Typically this arrary is the output from a call to
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains().
+  /// </param>
+  /// <param name="bOrdinarySmoothChains"></param>
+  /// <param name="bOrdinaryCreaseChains"></param>
+  /// <param name="refined_edge_chains">
+  /// The refined edge chains are appended to refined_edge_chains[]. 
+  /// ON_SubDEdgePtr::Null elements separate the edge chains and refined_edge_chains[]
+  /// ends with a ON_SubDEdgePtr::Null.
+  /// </param>
+  /// <returns>Number of refined edge chains appended to refined_edge_chains[].</returns>
+  static unsigned RefineEdgeChains(
+    const ON_SimpleArray<ON_SubDEdgePtr>& unconditional_edge_chains,
+    bool bOrdinarySmoothChains,
+    bool bOrdinaryCreaseChains,
+    ON_SimpleArray<ON_SubDEdgePtr>& refined_edge_chains
+  );
+
+
+  /// <summary>
+  /// Refine unconditional edge chains returned by the 
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() functions.
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() unconditionally sorts 
+  /// the input edges into edge chains
+  /// ending at where vertices where there the number of
+  /// candidates for the next edge is zero or two or more.
+  /// In particular, the unconditionally sorted chains may contain
+  /// mixed edge tags and have extraordinary vertices as interior vertices.
+  /// 
+  /// In many contexts, it is often necessary to further refine
+  /// the unconditionally sorted edge chains.
+  /// The callback function is used to determine where the unconditional chain is refined.
+  /// 
+  /// To refine edge chains in place, pass the same array as both edge chains parameters.
+  /// </summary>
+  /// <param name="unconditional_edge_chains"></param>
+  /// <param name="callback_context"></param>
+  /// <param name="continue_chain_callback_function">
+  /// The callback function 
+  /// continue_chain_callback_function(callback_context,left_etpr,right_etpr) 
+  /// is called with pairs of unconditionally chained edges.
+  /// If the callback function return false, the unconditional chain is broken between 
+  /// the edges.
+  /// If continue_chain_callback_function is nullptr, 
+  /// then ON_SubDEdgeChain::ContinueChainDefaultCallback() 
+  /// is used and callback_context is passed as the continue_condition parameter. 
+  /// <param name="refined_edge_chains">
+  /// The refined edge chains are appended to refined_edge_chains[]. 
+  /// ON_SubDEdgePtr::Null elements separate the edge chains and refined_edge_chains[]
+  /// ends with a ON_SubDEdgePtr::Null.
+  /// </param>
+  /// <returns>Number of refined edge chains appended to refined_edge_chains[].</returns>
+  static unsigned RefineEdgeChains(
+    const ON_SimpleArray<ON_SubDEdgePtr>& unconditional_edge_chains,
+    ON__UINT_PTR callback_context,
+    bool (*continue_chain_callback_function)(ON__UINT_PTR,ON_SubDEdgePtr, ON_SubDEdgePtr),
+    ON_SimpleArray<ON_SubDEdgePtr>& refined_edge_chains
+  );
+
+  /// <summary>
+  /// Merge crossing edge chains returned by the 
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() 
+  /// or ON_SubDEdgeChain::RefineEdgeChains() functions.
+  /// ON_SubDEdgeChain::SortEdgesIntoEdgeChains() unconditionally sorts 
+  /// breaks edge chains at vertices where 3 or more edges meet.
+  /// 
+  /// In some contexts, it is often desirable to have edge chains
+  /// cross each other at 4 valent vertices.
+  /// ON_SubDEdgeChain::MergeCrossingEdgeChains() search for 4 valent vertices
+  /// where 4 input chains terminate and uses the call back function
+  /// to determine if the chains opposite each other should be merged inot a 
+  /// single chain.
+  /// 
+  /// To merge edge chains in place, pass the same array as both edge chains parameters.
+  /// </summary>
+  /// <param name="edge_chains"></param>
+  /// <param name="callback_context"></param>
+  /// <param name="continue_chain_callback_function">
+  /// The callback function 
+  /// continue_chain_callback_function(callback_context,left_etpr,right_etpr) 
+  /// is called with pairs of crossing edges at the ends of input chains to see if 
+  /// they should be merged into the same chain.
+  /// If the callback function returns true, input chains are merged.
+  /// Often times, ON_SubDEdgeChain::ContinueChainDefaultCallback can be used as the callback function.
+  /// If continue_chain_callback_function is nullptr, 
+  /// then ON_SubDEdgeChain::ContinueChainDefaultCallback() 
+  /// is used and callback_context is passed as the continue_condition parameter. 
+  /// <param name="merged_edge_chains">
+  /// The merged edge chains are appended to merged_edge_chains[]. 
+  /// ON_SubDEdgePtr::Null elements separate the edge chains and merged_edge_chains[]
+  /// ends with a ON_SubDEdgePtr::Null.
+  /// </param>
+  /// <returns>Number of edge chains appended to merged_edge_chains[].</returns>
+  static unsigned MergeCrossingEdgeChains(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edge_chains,
+    ON__UINT_PTR callback_context,
+    bool (*continue_chain_callback_function)(ON__UINT_PTR, ON_SubDEdgePtr, ON_SubDEdgePtr),
+    ON_SimpleArray<ON_SubDEdgePtr>& merged_edge_chains
+  );
+
+
+  /// <summary>
+  /// ON_SubDEdgeChain::ContinueChainDefaultCallback() can be used as a callback function
+  /// for ON_SubDEdgeChain::RefineEdgeChains() and ON_SubDEdgeChain::MergeCrossingEdgeChains().
+  /// 
+  /// Edge chain topology check
+  /// This check is alsways performed.
+  /// If all edge and vertex pointers are not nullptr,
+  /// and left_eptr.RelativeVertex(1) == right_eptr.RelativeVertex(0),
+  /// and left_eptr.RelativeVertex(0), left_eptr.RelativeVertex(1, right_eptr.RelativeVertex(1) are distinct,
+  /// then the edge chain topology check passes.
+  /// If the chain topology check fails, then no further checks are performed.
+  /// 
+  /// If the valid topology check passes, the continue_condition is treated as a bitfield.
+  /// Set bits cause additional checks to be performed.
+  /// 
+  /// bit 1: Same face count check:
+  /// Passes when both edges have the same number of faces.
+  /// 
+  /// bit 2: Same EdgeIsSmooth() check:
+  /// Passes when left_ptr.EdgeIsSmooth() == right_eptr.EdgeIsSmooth().
+  /// 
+  /// bit 4: Same EdgeIsSharp() check:
+  /// Passes when left_ptr.EdgeIsSharp() == right_eptr.EdgeIsSharp().
+  /// 
+  /// bit 8: EqualEndSharpness() check:
+  /// Passes when ON_SubDEdgeSharpness::EqualEndSharpness(left_eptr,right_eptr) is true.
+  /// 
+  /// bits 16, 32, 64, 128: Vertex tag filter check.
+  /// If none of these bits are set, this check is not performed.
+  /// If any of these bits are set, they specify a filter for a vertex tag check.
+  /// If bit 16 is set and the common vertex tag is ON_SubDVertexTag::Smooth, the check passes.
+  /// If bit 32 is set and the common vertex tag is ON_SubDVertexTag::Crease, the check passes.
+  /// If bit 64 is set and the common vertex tag is ON_SubDVertexTag::Dart, the check passes.
+  /// If bit 128 is set and the common vertex tag is ON_SubDVertexTag::Corner, the check passes.
+  /// Otherwise the vertex tag filter check fails.
+  /// 
+  /// bit 256: opposite edge check
+  /// If the common vertex has 4 faces and 4 edges and left_ept and right_eptr are opposite edges,
+  /// the opposited edge check passes.
+  /// 
+  /// If the chain topology check passes and all tests specified by set bits pass, then true is returned.
+  /// 
+  /// 
+  /// Make no modifications including Mark() and MarkBits() modifications in the callback.
+  /// </summary>
+  /// <param name="continue_condition"></param>
+  /// <param name="left_eptr"></param>
+  /// <param name="right_eptr"></param>
+  /// <returns>
+  /// If the chain topology check passes and all tests specified by set bits pass, then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  static bool ContinueChainDefaultCallback(
+    ON__UINT_PTR continue_condition,
+    ON_SubDEdgePtr left_eptr,
+    ON_SubDEdgePtr right_eptr
   );
 
   /*

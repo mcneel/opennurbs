@@ -62,6 +62,12 @@ public:
     kAlphaByteIndex = 3
   };
 
+  /// <returns>True if this color is not equal to ON_Color::Unset.</returns>
+  bool IsSet() const;
+
+  /// <returns>True if this color is  equal to ON_Color::Unset.</returns>
+  bool IsUnset() const;
+
   /*
   Returns:
     A random color.

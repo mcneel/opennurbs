@@ -2890,7 +2890,12 @@ bool ON_DimAngular::GetTextXform(
   // This gets the display text that's already on the dimension
   const ON_TextContent* text = Text();
   if (nullptr == text)
-    return false;
+  {
+    UpdateDimensionText(dimstyle);
+    text = Text();
+    if (nullptr == text)
+      return false;
+  }
 
   // See if the text needs remade because of some change in some property that
   // would change its appearance

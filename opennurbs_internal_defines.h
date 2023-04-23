@@ -42,7 +42,6 @@ ON__INT64 Integerize(float dirty);
 ON__INT64 Integerize(double dirty);
 
 void SetModel(const class ON_RenderContent&, ONX_Model&);
-void SetModel(const class ON_PostEffect&, ONX_Model&);
 ON_3dmObjectAttributes* GetComponentAttributes(const ON_ModelComponent& component);
 ON_RenderContent* NewRenderContentFromNode(const class ON_XMLNode& node);
 ON_PostEffect* NewPostEffectFromNode(ON_XMLNode& node);
@@ -63,8 +62,14 @@ template <class T> inline T Lerp(double t, const T& l, const T& h) { return l + 
 class ON_InternalXMLImpl
 {
 public:
-  ON_InternalXMLImpl(ON_XMLNode* n=nullptr) : m_model_node(n) { }
+  ON_InternalXMLImpl(ON_XMLNode* n=nullptr) : _model_node(n) { }
+  ON_InternalXMLImpl(const ON_InternalXMLImpl&) = delete;
   virtual ~ON_InternalXMLImpl();
+
+  const ON_InternalXMLImpl& operator = (const ON_InternalXMLImpl&) = delete;
+
+  bool operator == (const ON_InternalXMLImpl&) const = delete;
+  bool operator != (const ON_InternalXMLImpl&) const = delete;
 
   ON_XMLVariant GetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& def) const;
   bool SetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
@@ -77,6 +82,8 @@ public:
 
   ON_XMLNode& Node(void) const;
 
+  void SetModelNode(ON_XMLNode& node);
+
 protected:
   virtual ON_wString NameOfRootNode(void) const;
 
@@ -85,9 +92,9 @@ private:
   bool InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value);
 
 public:
-  mutable std::recursive_mutex m_mutex;
-  mutable ON_XMLNode* m_local_node = nullptr; // Used when m_model_node is null.
-  ON_XMLNode* m_model_node;
+  mutable std::recursive_mutex _mutex;
+  mutable ON_XMLNode* _local_node = nullptr; // Used when m_model_node is null.
+  ON_XMLNode* _model_node;
 };
 
 class ON_DecalCollection final
@@ -143,27 +150,27 @@ public:
 	}
 };
 
-class ON_EnvironmentsPrivate final : public ON_InternalXMLImpl
+class ON_EnvironmentsImpl final : public ON_InternalXMLImpl
 {
 public:
-  ON_EnvironmentsPrivate() { }
-  ON_EnvironmentsPrivate(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
-  ON_EnvironmentsPrivate(const ON_EnvironmentsPrivate&);
+  ON_EnvironmentsImpl() { }
+  ON_EnvironmentsImpl(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
+  ON_EnvironmentsImpl(const ON_EnvironmentsImpl&);
 
-  ON_EnvironmentsPrivate& operator = (const ON_EnvironmentsPrivate&);
+  ON_EnvironmentsImpl& operator = (const ON_EnvironmentsImpl&);
 
-  bool operator == (const ON_EnvironmentsPrivate&);
+  bool operator == (const ON_EnvironmentsImpl&);
 
-  ON_UUID BackgroundRenderEnvironment(void) const;
-  void    SetBackgroundRenderEnvironment(const ON_UUID& id);
+  ON_UUID BackgroundRenderEnvironmentId(void) const;
+  void    SetBackgroundRenderEnvironmentId(const ON_UUID& id);
   bool    SkylightingRenderEnvironmentOverride(void) const;
   void    SetSkylightingRenderEnvironmentOverride(bool on);
-  ON_UUID SkylightingRenderEnvironment(void) const;
-  void    SetSkylightingRenderEnvironment(const ON_UUID& id);
+  ON_UUID SkylightingRenderEnvironmentId(void) const;
+  void    SetSkylightingRenderEnvironmentId(const ON_UUID& id);
   bool    ReflectionRenderEnvironmentOverride(void) const;
   void    SetReflectionRenderEnvironmentOverride(bool on);
-  ON_UUID ReflectionRenderEnvironment(void) const;
-  void    SetReflectionRenderEnvironment(const ON_UUID& id);
+  ON_UUID ReflectionRenderEnvironmentId(void) const;
+  void    SetReflectionRenderEnvironmentId(const ON_UUID& id);
 };
 
 class ON_3dmRenderSettingsPrivate final
@@ -171,21 +178,38 @@ class ON_3dmRenderSettingsPrivate final
 public:
   ON_3dmRenderSettingsPrivate();
   ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate&);
+  virtual ~ON_3dmRenderSettingsPrivate();
 
   const ON_3dmRenderSettingsPrivate& operator = (const ON_3dmRenderSettingsPrivate&);
 
   void SetToDefaults(void);
 
+  void SpecializeGroundPlane(ON_GroundPlane& gp);
+  void SpecializeLinearWorkflow(ON_LinearWorkflow& lw);
+  void SpecializeSun(ON_SunEx& sun);
+
+  static ON_3dmRenderSettingsPrivate& Get(const ON_3dmRenderSettings& rs);
+
+private:
+  void CreateDocumentObjects(void);
+
 public:
   ON_XMLRootNode _rdk_document_data;
-  ON_Dithering _dithering;
-  ON_GroundPlane _ground_plane;
-  ON_LinearWorkflow _linear_workflow;
-  ON_RenderChannels _render_channels;
-  ON_SafeFrame _safe_frame;
-  ON_Skylight _skylight;
-  ON_Sun _sun;
-  ON_EnvironmentsPrivate _environments;
+
+  // Document objects. The pointers to these objects are never null because
+  // they are created in every constructor. See CreateDocumentObjects().
+  ON_GroundPlane* _ground_plane = nullptr;
+  ON_Dithering* _dithering = nullptr;
+  ON_SafeFrame* _safe_frame = nullptr;
+  ON_Skylight* _skylight = nullptr;
+  ON_LinearWorkflow* _linear_workflow = nullptr;
+  ON_RenderChannels* _render_channels = nullptr;
+  ON_SunEx* _sun = nullptr;
+  ON_EnvironmentsImpl* _environments;
+  ON_PostEffects* _post_effects;
+  bool _gp_specialized = false;
+  bool _lw_specialized = false;
+  bool _sun_specialized = false;
 };
 
 //--------------------------------------------------------------------------------------------------

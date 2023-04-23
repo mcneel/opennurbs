@@ -1010,6 +1010,9 @@ public:
   /// <summary>TILDE U+007E (&#x7e;)</summary>
   static const char Tilde = (char)ON_UnicodeCodePoint::ON_Tilde;
 
+  /// <summary>DELETE U+007F</summary>
+  static const char Delete = (char)ON_UnicodeCodePoint::ON_Delete;
+
   /// <summary>Period decimal point (.)</summary>
   static const char DecimalAsPeriod = (char)ON_UnicodeCodePoint::ON_Period;
 
@@ -2601,6 +2604,9 @@ public:
 
   /// <summary>TILDE U+007E (&#x7e;)</summary>
   static const wchar_t  Tilde = (wchar_t)ON_UnicodeCodePoint::ON_Tilde;
+
+  /// <summary>DELETE U+007F</summary>
+  static const wchar_t Delete = (wchar_t)ON_UnicodeCodePoint::ON_Delete;
 
   /// <summary>Period decimal point (.)</summary>
   static const wchar_t DecimalAsPeriod = (wchar_t)ON_UnicodeCodePoint::ON_Period;

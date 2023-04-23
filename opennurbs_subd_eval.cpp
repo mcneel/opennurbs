@@ -48,6 +48,8 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
   ON_SubDEdgeTag edge_tag0;
   ON_SubDEdgeTag edge_tag1;
 
+  const bool bSmoothOrDartSector = (ON_SubDVertexTag::Smooth == vertex_tag || ON_SubDVertexTag::Dart == vertex_tag);
+
   switch (vertex_tag)
   {
   case ON_SubDVertexTag::Smooth:
@@ -88,9 +90,13 @@ ON_SubD* ON_SubDSectorType::SectorRingSubD(
     break;
   }
 
-  unsigned int sector_angle_index = ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(
-    ON_SubDSectorType::ClampCornerSectorAngleRadians(sector_angle_radians)
-  );
+  unsigned int sector_angle_index 
+    = bSmoothOrDartSector
+    ? ON_UNSET_UINT_INDEX
+    : ON_SubDSectorType::CornerAngleIndexFromCornerAngleRadians(
+      ON_SubDSectorType::ClampCornerSectorAngleRadians(sector_angle_radians)
+    );
+
   if (sector_angle_index <= ON_SubDSectorType::MaximumCornerAngleIndex
     && fabs(ON_SubDSectorType::AngleRadiansFromCornerAngleIndex(sector_angle_index) - sector_angle_radians) <= 1.0e-6
     )

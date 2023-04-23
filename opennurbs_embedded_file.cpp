@@ -291,6 +291,11 @@ bool ON_EmbeddedFile::Clear(void)
   return true;
 }
 
+void* ON_EmbeddedFile::EVF(const wchar_t* func, void* data)
+{
+  return nullptr;
+}
+
 const ON_EmbeddedFile* ON_EmbeddedFile::FromModelComponentRef(const ON_ModelComponentReference& ref,
                                                               const ON_EmbeddedFile* none_return_value) // Static.
 {

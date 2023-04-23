@@ -101,204 +101,6 @@ ON__UINT64 ON_NextContentSerialNumber()
   return (0 != ++serial_number) ? serial_number : ++serial_number;
 }
 
-
-// It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
-// be constructed before any instance of a class derived from ON_ModelComponent.
-// That is why it is above the ClassId stuff in this .cpp file.
-// Serial numbers below UINT32_MAX + 1 are reserved for Rhino use.
-std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(UINT32_MAX + 1ULL);
-
-std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
-
-const double ON_SubDExpandEdgesParameters::OffsetTolerance = 0.001;
-
-const double ON_SubDExpandEdgesParameters::MinimumOffset = 0.05;
-
-const double ON_SubDExpandEdgesParameters::MaximumOffset = 0.95;
-
-const double ON_SubDExpandEdgesParameters::SmallOffset = 0.125;
-
-const double ON_SubDExpandEdgesParameters::MediumOffset = 0.25;
-
-const double ON_SubDExpandEdgesParameters::LargeOffset = 0.5;
-
-const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default;
-
-const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
-
-// The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
-const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
-
-const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Zero;
-
-const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Nan = ON_SubDEdgeSharpness::FromConstant(ON_DBL_QNAN);
-
-// NOTE WELL: 
-// It is required that (3 + 2^ON_SubDEdgeSharpness::Maximum) <= ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity
-const double ON_SubDEdgeSharpness::Maximum = 4.0;
-const double ON_SubDEdgeSharpness::Tolerance = 0.01;
-
-const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
-const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
-
-const ON_SubDSectorId ON_SubDSectorId::Zero;
-const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
-
-const ON_SubDHash ON_SubDHash::Empty;
-
-
-// {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
-const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
-{ 0xc3d8dd54, 0xf8c8, 0x4455, { 0xbb, 0xe, 0x2a, 0x2f, 0x49, 0x88, 0xec, 0x81 } };
-
-// ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
-// algoritm. If a new built-in algorithm is developed that produces generally 
-// better packings and is as fast and reliable as the current default, then
-// ON_SubD::DefaultFacePackingId can be changed. Under no circumstances, should
-// the default be changed to anything that is more than 1.5 times slower than 
-// the either the fast and simple or the current default on large models 
-// like the Mt St Helens Subd. 
-//
-// ** If it's not really fast, then it cannot be the the default. **
-const ON_UUID ON_SubD::DefaultFacePackingId = ON_SubD::FastAndSimpleFacePackingId;
-
-const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
-{
-  ON_SubDToBrepParameters p;
-  p.SetPackFaces(bPackedFaces);
-  return p;
-}
-
-const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default;
-const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultUnpacked = Internal_SubDToBrepParameters(false);
-const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultPacked = Internal_SubDToBrepParameters(true);
-
-
-const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Unset;
-
-
-ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
-ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
-int ON_ClassId::m_mark0 = 0;
-
-// {1311ADCB-D89E-4051-A3F0-F64441FB8EC6}
-const ON_UUID ON_StandardDisplayModeId::Wireframe =
-{ 0x1311ADCB,0xD89E,0x4051,{ 0xA3,0xF0,0xF6,0x44,0x41,0xFB,0x8E,0xC6 } };
-
-// {8BC8DEBE-C83B-4c47-B13C-9DB074510CAC}
-const ON_UUID ON_StandardDisplayModeId::Shaded =
-{ 0x8BC8DEBE,0xC83B,0x4c47,{ 0xB1,0x3C,0x9D,0xB0,0x74,0x51,0x0C,0xAC } };
-
-// {CAE60BAE-2D51-4299-ABF7-A339FCA86F3B}
-const ON_UUID ON_StandardDisplayModeId::Rendered =
-{ 0xCAE60BAE,0x2D51,0x4299,{ 0xAB,0xF7,0xA3,0x39,0xFC,0xA8,0x6F,0x3B } };
-
-// {FF608B97-81D3-4186-831C-41F7DC140881}
-const ON_UUID ON_StandardDisplayModeId::Ghosted =
-{ 0xFF608B97,0x81D3,0x4186,{ 0x83,0x1C,0x41,0xF7,0xDC,0x14,0x08,0x81 } };
-
-// {B5C19D5D-0AEC-4ff7-A10E-E052E660263A}
-const ON_UUID ON_StandardDisplayModeId::XrayShade =
-{ 0xB5C19D5D,0x0AEC,0x4ff7,{ 0xA1,0x0E,0xE0,0x52,0xE6,0x60,0x26,0x3A } };
-
-// {A5545314-9D87-428d-95AE-91052EEAD0FA}
-const ON_UUID ON_StandardDisplayModeId::RenderedShadows =
-{ 0xA5545314,0x9D87,0x428d,{ 0x95,0xAE,0x91,0x05,0x2E,0xEA,0xD0,0xFA } };
-
-// {63612C72-778F-4afd-B81B-17426FDFE8A6}
-const ON_UUID ON_StandardDisplayModeId::Technical =
-{ 0x63612C72,0x778F,0x4afd,{ 0xB8,0x1B,0x17,0x42,0x6F,0xDF,0xE8,0xA6 } };
-
-// {B46AB226-05A0-4568-B454-4B1AB721C675}
-const ON_UUID ON_StandardDisplayModeId::Artistic =
-{ 0xB46AB226,0x05A0,0x4568,{ 0xB4,0x54,0x4B,0x1A,0xB7,0x21,0xC6,0x75 } };
-
-// {F4616FA5-A831-4620-A97E-9B807D5EC376}
-const ON_UUID ON_StandardDisplayModeId::Pen =
-{ 0xF4616FA5,0xA831,0x4620,{ 0xA9,0x7E,0x9B,0x80,0x7D,0x5E,0xC3,0x76 } };
-
-// {C32B72C3-41BD-4ADC-82A8-B7AEF4456A37}
-const ON_UUID ON_StandardDisplayModeId::AmbientOcclusion = 
-{ 0xc32b72c3, 0x41bd, 0x4adc, { 0x82, 0xa8, 0xb7, 0xae, 0xf4, 0x45, 0x6a, 0x37 } };
-
-// {69E0C7A5-1C6A-46C8-B98B-8779686CD181}
-const ON_UUID ON_StandardDisplayModeId::Raytraced = 
-{ 0x69e0c7a5, 0x1c6a, 0x46c8, { 0xb9, 0x8b, 0x87, 0x79, 0x68, 0x6c, 0xd1, 0x81 } };
-
-
-const ON_UUID ON_nil_uuid = { 0,0,0,{ 0,0,0,0,0,0,0,0 } };
-const ON_UUID ON_max_uuid = { 0xFFFFFFFF,0xFFFF,0xFFFF,{ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF } };
-
-const ON_UUID ON_rhino2_id = { 0x16d0eca6, 0x359, 0x4e4c,{ 0x9f, 0xe, 0xf2, 0x69, 0xfd, 0x47, 0x6c, 0xc4 } };
-
-const ON_UUID ON_rhino3_id = { 0xA7BBFF3C, 0xFF19, 0x4883,{ 0x85, 0x8D, 0xB1, 0xE7, 0xDB, 0x4F, 0x1A, 0x7E } };
-
-// {E2143A46-BB01-4b0c-AC4D-C34B5652FAE0}
-const ON_UUID ON_rhino4_id = { 0xe2143a46, 0xbb01, 0x4b0c,{ 0xac, 0x4d, 0xc3, 0x4b, 0x56, 0x52, 0xfa, 0xe0 } };
-
-// {60515F84-8F7F-41da-801D-1C87E32F88F5}
-const ON_UUID ON_rhino5_id = { 0x60515f84, 0x8f7f, 0x41da,{ 0x80, 0x1d, 0x1c, 0x87, 0xe3, 0x2f, 0x88, 0xf5 } };
-
-// {06BB1079-5A56-47A1-AD6D-0B45183D894B}
-const ON_UUID ON_rhino6_id = { 0x6bb1079, 0x5a56, 0x47a1,{ 0xad, 0x6d, 0xb, 0x45, 0x18, 0x3d, 0x89, 0x4b } };
-
-// {78464C2C-9AEB-456E-8C27-865A524F5CA0}
-const ON_UUID ON_rhino7_id = { 0x78464c2c, 0x9aeb, 0x456e,{ 0x8c, 0x27, 0x86, 0x5a, 0x52, 0x4f, 0x5c, 0xa0 } };
-
-// {868c63f5-3760-4a45-8600-5399cc57b47c}
-const ON_UUID ON_rhino8_id = { 0x868c63f5, 0x3760, 0x4a45,{ 0x86, 0x00, 0x53, 0x99, 0xcc, 0x57, 0xb4, 0x7c } };
-
-// ON_rhino_id is always set to the value for the current version
-// of Rhino.  ON_rhino_id is the id that should be used as the
-// userdata application id for userdata class definitions that are
-// in the core Rhino executable.
-const ON_UUID ON_rhino_id = ON_rhino8_id;
-
-// Used to identifiy userdata read from V2 files
-// which were written before userdata had application ids.
-// {132F2340-DB90-494e-BF02-C36F0EA3197C}
-const ON_UUID ON_v2_userdata_id = { 0x132f2340, 0xdb90, 0x494e,{ 0xbf, 0x2, 0xc3, 0x6f, 0xe, 0xa3, 0x19, 0x7c } };
-
-// Used to identifiy userdata read from V3 files
-// which were written before userdata had application ids.
-// {4307B91D-6A9D-478e-B0A2-7C577997C663}
-const ON_UUID ON_v3_userdata_id = { 0x4307b91d, 0x6a9d, 0x478e,{ 0xb0, 0xa2, 0x7c, 0x57, 0x79, 0x97, 0xc6, 0x63 } };
-
-// Used to identifiy userdata read from V4 files
-// which were written before opennurbs 200609190
-// required application ids.
-// {F73F2953-A244-44c2-B7C2-7E27390D1196}
-const ON_UUID ON_v4_userdata_id = { 0xf73f2953, 0xa244, 0x44c2,{ 0xb7, 0xc2, 0x7e, 0x27, 0x39, 0xd, 0x11, 0x96 } };
-
-// {17B3ECDA-17BA-4e45-9E67-A2B8D9BE520D}
-const ON_UUID ON_opennurbs4_id = { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } };
-
-// {C8CDA597-D957-4625-A4B3-A0B510FC30D4}
-const ON_UUID ON_opennurbs5_id = { 0xc8cda597, 0xd957, 0x4625,{ 0xa4, 0xb3, 0xa0, 0xb5, 0x10, 0xfc, 0x30, 0xd4 } };
-
-// {7B0B585D-7A31-45D0-925E-BDD7DDF3E4E3}
-const ON_UUID ON_opennurbs6_id = { 0x7b0b585d, 0x7a31, 0x45d0,{ 0x92, 0x5e, 0xbd, 0xd7, 0xdd, 0xf3, 0xe4, 0xe3 } };
-
-// {523bfe6e-ef49-4b75-a8d6-253faf5044d3}
-const ON_UUID ON_opennurbs7_id = { 0x523bfe6e, 0xef49, 0x4b75,{ 0xa8, 0xd6, 0x25, 0x3f, 0xaf, 0x50, 0x44, 0xd3 } };
-
-// {50EDE5C9-1487-4B4C-B3AA-6840B460E3CF}
-const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c, { 0xb3, 0xaa, 0x68, 0x40, 0xb4, 0x60, 0xe3, 0xcf } };
-
-
-// ON_opennurbs_id is always set to the value for the current version
-// of opennurbs.  ON_opennurbs_id is the id that should be used as
-// the userdata application id for userdata classes definitions that
-// are in the opennurbs library.
-const ON_UUID ON_opennurbs_id = ON_opennurbs8_id;
-
-const ON_UuidPairList ON_UuidPairList::EmptyList;
-
-const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::UnsetComponentIndex;
-const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::WholeObject;
-const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndNan = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, ON_DBL_QNAN);
-const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndZero = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, 0.0);
-
 // All opennurbs static members are initialized here so that initialization happens in a predictable order.
 /*
 IEEE 754
@@ -488,6 +290,209 @@ const double ON_DBL_NINF = -ON__dblinithelper(2);
 const float  ON_FLT_QNAN = ON__fltinithelper(1);
 const float  ON_FLT_PINF = ON__fltinithelper(2);
 const float  ON_FLT_NINF = -ON__fltinithelper(2);
+
+// It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
+// be constructed before any instance of a class derived from ON_ModelComponent.
+// That is why it is above the ClassId stuff in this .cpp file.
+// Serial numbers below UINT32_MAX + 1 are reserved for Rhino use.
+std::atomic<ON__UINT64> ON_ModelComponent::Internal_RuntimeSerialNumberGenerator(UINT32_MAX + 1ULL);
+
+std::atomic<ON__UINT64> ON_SubDimple::Internal_RuntimeSerialNumberGenerator;
+
+const double ON_SubDExpandEdgesParameters::OffsetTolerance = 0.001;
+
+const double ON_SubDExpandEdgesParameters::MinimumOffset = 0.05;
+
+const double ON_SubDExpandEdgesParameters::MaximumOffset = 0.95;
+
+const double ON_SubDExpandEdgesParameters::SmallOffset = 0.125;
+
+const double ON_SubDExpandEdgesParameters::MediumOffset = 0.25;
+
+const double ON_SubDExpandEdgesParameters::LargeOffset = 0.5;
+
+const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default;
+
+const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
+
+// The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
+const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
+
+
+// NOTE WELL: 
+// It is required that (3 + 2^ON_SubDEdgeSharpness::MaximumValue) <= ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity
+const double ON_SubDEdgeSharpness::MaximumValue = 4.0;
+const double ON_SubDEdgeSharpness::SmoothValue = 0.0;
+const double ON_SubDEdgeSharpness::CreaseValue = ON_SubDEdgeSharpness::MaximumValue + 1.0;
+const double ON_SubDEdgeSharpness::Tolerance = 0.01;
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Smooth;
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Nan = ON_SubDEdgeSharpness::FromConstant(ON_DBL_QNAN);
+
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Crease = ON_SubDEdgeSharpness::FromConstant(ON_SubDEdgeSharpness::CreaseValue);
+
+const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
+const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
+
+const ON_SubDSectorId ON_SubDSectorId::Zero;
+const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
+
+const ON_SubDHash ON_SubDHash::Empty;
+
+
+// {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
+const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
+{ 0xc3d8dd54, 0xf8c8, 0x4455, { 0xbb, 0xe, 0x2a, 0x2f, 0x49, 0x88, 0xec, 0x81 } };
+
+// ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
+// algoritm. If a new built-in algorithm is developed that produces generally 
+// better packings and is as fast and reliable as the current default, then
+// ON_SubD::DefaultFacePackingId can be changed. Under no circumstances, should
+// the default be changed to anything that is more than 1.5 times slower than 
+// the either the fast and simple or the current default on large models 
+// like the Mt St Helens Subd. 
+//
+// ** If it's not really fast, then it cannot be the the default. **
+const ON_UUID ON_SubD::DefaultFacePackingId = ON_SubD::FastAndSimpleFacePackingId;
+
+const ON_SubDToBrepParameters Internal_SubDToBrepParameters(bool bPackedFaces)
+{
+  ON_SubDToBrepParameters p;
+  p.SetPackFaces(bPackedFaces);
+  return p;
+}
+
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::Default;
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultUnpacked = Internal_SubDToBrepParameters(false);
+const ON_SubDToBrepParameters ON_SubDToBrepParameters::DefaultPacked = Internal_SubDToBrepParameters(true);
+
+
+const ON_SubDRTreeVertexFinder ON_SubDRTreeVertexFinder::Unset;
+
+
+ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
+ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
+int ON_ClassId::m_mark0 = 0;
+
+// {1311ADCB-D89E-4051-A3F0-F64441FB8EC6}
+const ON_UUID ON_StandardDisplayModeId::Wireframe =
+{ 0x1311ADCB,0xD89E,0x4051,{ 0xA3,0xF0,0xF6,0x44,0x41,0xFB,0x8E,0xC6 } };
+
+// {8BC8DEBE-C83B-4c47-B13C-9DB074510CAC}
+const ON_UUID ON_StandardDisplayModeId::Shaded =
+{ 0x8BC8DEBE,0xC83B,0x4c47,{ 0xB1,0x3C,0x9D,0xB0,0x74,0x51,0x0C,0xAC } };
+
+// {CAE60BAE-2D51-4299-ABF7-A339FCA86F3B}
+const ON_UUID ON_StandardDisplayModeId::Rendered =
+{ 0xCAE60BAE,0x2D51,0x4299,{ 0xAB,0xF7,0xA3,0x39,0xFC,0xA8,0x6F,0x3B } };
+
+// {FF608B97-81D3-4186-831C-41F7DC140881}
+const ON_UUID ON_StandardDisplayModeId::Ghosted =
+{ 0xFF608B97,0x81D3,0x4186,{ 0x83,0x1C,0x41,0xF7,0xDC,0x14,0x08,0x81 } };
+
+// {B5C19D5D-0AEC-4ff7-A10E-E052E660263A}
+const ON_UUID ON_StandardDisplayModeId::XrayShade =
+{ 0xB5C19D5D,0x0AEC,0x4ff7,{ 0xA1,0x0E,0xE0,0x52,0xE6,0x60,0x26,0x3A } };
+
+// {A5545314-9D87-428d-95AE-91052EEAD0FA}
+const ON_UUID ON_StandardDisplayModeId::RenderedShadows =
+{ 0xA5545314,0x9D87,0x428d,{ 0x95,0xAE,0x91,0x05,0x2E,0xEA,0xD0,0xFA } };
+
+// {63612C72-778F-4afd-B81B-17426FDFE8A6}
+const ON_UUID ON_StandardDisplayModeId::Technical =
+{ 0x63612C72,0x778F,0x4afd,{ 0xB8,0x1B,0x17,0x42,0x6F,0xDF,0xE8,0xA6 } };
+
+// {B46AB226-05A0-4568-B454-4B1AB721C675}
+const ON_UUID ON_StandardDisplayModeId::Artistic =
+{ 0xB46AB226,0x05A0,0x4568,{ 0xB4,0x54,0x4B,0x1A,0xB7,0x21,0xC6,0x75 } };
+
+// {F4616FA5-A831-4620-A97E-9B807D5EC376}
+const ON_UUID ON_StandardDisplayModeId::Pen =
+{ 0xF4616FA5,0xA831,0x4620,{ 0xA9,0x7E,0x9B,0x80,0x7D,0x5E,0xC3,0x76 } };
+
+// {C32B72C3-41BD-4ADC-82A8-B7AEF4456A37}
+const ON_UUID ON_StandardDisplayModeId::AmbientOcclusion = 
+{ 0xc32b72c3, 0x41bd, 0x4adc, { 0x82, 0xa8, 0xb7, 0xae, 0xf4, 0x45, 0x6a, 0x37 } };
+
+// {69E0C7A5-1C6A-46C8-B98B-8779686CD181}
+const ON_UUID ON_StandardDisplayModeId::Raytraced = 
+{ 0x69e0c7a5, 0x1c6a, 0x46c8, { 0xb9, 0x8b, 0x87, 0x79, 0x68, 0x6c, 0xd1, 0x81 } };
+
+
+const ON_UUID ON_nil_uuid = { 0,0,0,{ 0,0,0,0,0,0,0,0 } };
+const ON_UUID ON_max_uuid = { 0xFFFFFFFF,0xFFFF,0xFFFF,{ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF } };
+
+const ON_UUID ON_rhino2_id = { 0x16d0eca6, 0x359, 0x4e4c,{ 0x9f, 0xe, 0xf2, 0x69, 0xfd, 0x47, 0x6c, 0xc4 } };
+
+const ON_UUID ON_rhino3_id = { 0xA7BBFF3C, 0xFF19, 0x4883,{ 0x85, 0x8D, 0xB1, 0xE7, 0xDB, 0x4F, 0x1A, 0x7E } };
+
+// {E2143A46-BB01-4b0c-AC4D-C34B5652FAE0}
+const ON_UUID ON_rhino4_id = { 0xe2143a46, 0xbb01, 0x4b0c,{ 0xac, 0x4d, 0xc3, 0x4b, 0x56, 0x52, 0xfa, 0xe0 } };
+
+// {60515F84-8F7F-41da-801D-1C87E32F88F5}
+const ON_UUID ON_rhino5_id = { 0x60515f84, 0x8f7f, 0x41da,{ 0x80, 0x1d, 0x1c, 0x87, 0xe3, 0x2f, 0x88, 0xf5 } };
+
+// {06BB1079-5A56-47A1-AD6D-0B45183D894B}
+const ON_UUID ON_rhino6_id = { 0x6bb1079, 0x5a56, 0x47a1,{ 0xad, 0x6d, 0xb, 0x45, 0x18, 0x3d, 0x89, 0x4b } };
+
+// {78464C2C-9AEB-456E-8C27-865A524F5CA0}
+const ON_UUID ON_rhino7_id = { 0x78464c2c, 0x9aeb, 0x456e,{ 0x8c, 0x27, 0x86, 0x5a, 0x52, 0x4f, 0x5c, 0xa0 } };
+
+// {868c63f5-3760-4a45-8600-5399cc57b47c}
+const ON_UUID ON_rhino8_id = { 0x868c63f5, 0x3760, 0x4a45,{ 0x86, 0x00, 0x53, 0x99, 0xcc, 0x57, 0xb4, 0x7c } };
+
+// ON_rhino_id is always set to the value for the current version
+// of Rhino.  ON_rhino_id is the id that should be used as the
+// userdata application id for userdata class definitions that are
+// in the core Rhino executable.
+const ON_UUID ON_rhino_id = ON_rhino8_id;
+
+// Used to identifiy userdata read from V2 files
+// which were written before userdata had application ids.
+// {132F2340-DB90-494e-BF02-C36F0EA3197C}
+const ON_UUID ON_v2_userdata_id = { 0x132f2340, 0xdb90, 0x494e,{ 0xbf, 0x2, 0xc3, 0x6f, 0xe, 0xa3, 0x19, 0x7c } };
+
+// Used to identifiy userdata read from V3 files
+// which were written before userdata had application ids.
+// {4307B91D-6A9D-478e-B0A2-7C577997C663}
+const ON_UUID ON_v3_userdata_id = { 0x4307b91d, 0x6a9d, 0x478e,{ 0xb0, 0xa2, 0x7c, 0x57, 0x79, 0x97, 0xc6, 0x63 } };
+
+// Used to identifiy userdata read from V4 files
+// which were written before opennurbs 200609190
+// required application ids.
+// {F73F2953-A244-44c2-B7C2-7E27390D1196}
+const ON_UUID ON_v4_userdata_id = { 0xf73f2953, 0xa244, 0x44c2,{ 0xb7, 0xc2, 0x7e, 0x27, 0x39, 0xd, 0x11, 0x96 } };
+
+// {17B3ECDA-17BA-4e45-9E67-A2B8D9BE520D}
+const ON_UUID ON_opennurbs4_id = { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } };
+
+// {C8CDA597-D957-4625-A4B3-A0B510FC30D4}
+const ON_UUID ON_opennurbs5_id = { 0xc8cda597, 0xd957, 0x4625,{ 0xa4, 0xb3, 0xa0, 0xb5, 0x10, 0xfc, 0x30, 0xd4 } };
+
+// {7B0B585D-7A31-45D0-925E-BDD7DDF3E4E3}
+const ON_UUID ON_opennurbs6_id = { 0x7b0b585d, 0x7a31, 0x45d0,{ 0x92, 0x5e, 0xbd, 0xd7, 0xdd, 0xf3, 0xe4, 0xe3 } };
+
+// {523bfe6e-ef49-4b75-a8d6-253faf5044d3}
+const ON_UUID ON_opennurbs7_id = { 0x523bfe6e, 0xef49, 0x4b75,{ 0xa8, 0xd6, 0x25, 0x3f, 0xaf, 0x50, 0x44, 0xd3 } };
+
+// {50EDE5C9-1487-4B4C-B3AA-6840B460E3CF}
+const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c, { 0xb3, 0xaa, 0x68, 0x40, 0xb4, 0x60, 0xe3, 0xcf } };
+
+
+// ON_opennurbs_id is always set to the value for the current version
+// of opennurbs.  ON_opennurbs_id is the id that should be used as
+// the userdata application id for userdata classes definitions that
+// are in the opennurbs library.
+const ON_UUID ON_opennurbs_id = ON_opennurbs8_id;
+
+const ON_UuidPairList ON_UuidPairList::EmptyList;
+
+const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::UnsetComponentIndex;
+const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::WholeObject;
+const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndNan = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, ON_DBL_QNAN);
+const ON_ComponentIndexAndNumber ON_ComponentIndexAndNumber::UnsetAndZero = ON_ComponentIndexAndNumber::Create(ON_COMPONENT_INDEX::UnsetComponentIndex, 0.0);
+
 
 const ON_2dex ON_2dex::Unset(ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX);
 const ON_2dex ON_2dex::Zero(0, 0);
@@ -3032,3 +3037,4 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
   return rc;
 }
 
+const ON_SectionStyle ON_SectionStyle::Unset;

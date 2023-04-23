@@ -2196,14 +2196,17 @@ public:
 
   void ReturnVertex(class ON_SubDVertex* v)
   {
-    if (nullptr != v && v->SubdivisionLevel() < m_levels.UnsignedCount())
+    if (nullptr != v)
     {
-      ON_SubDLevel* level = m_levels[v->SubdivisionLevel()];
-      if (level)
-        level->RemoveVertex(v);
+      if (v->SubdivisionLevel() < m_levels.UnsignedCount())
+      {
+        ON_SubDLevel* level = m_levels[v->SubdivisionLevel()];
+        if (level)
+          level->RemoveVertex(v);
+      }
+      v->ClearSavedSubdivisionPoints(); // return extras to pool
+      m_heap.ReturnVertex(v);
     }
-    v->ClearSavedSubdivisionPoints(); // return extras to pool
-    m_heap.ReturnVertex(v);
   }
 
   ON_SubDEdge* AllocateEdge(
@@ -3046,13 +3049,15 @@ public:
     size_t cv_capacity,
     ON_3dPoint* cvs
   ) const;
+
+  ON_3dPoint PointAt(double normalized_parameter) const;
   
 public:
 
   // NOTE WELL: 
   // It is required that:
   // 1) MaximumControlPointCapacity = 2*MinimumControlPointCapacity+1;
-  // 2) MaximumControlPointCapacity >= 3 + 2^ON_SubDEdgeSharpness::Maximum
+  // 2) MaximumControlPointCapacity >= 3 + 2^ON_SubDEdgeSharpness::MaximumValue
   enum : unsigned char
   {
     MinimumControlPointCapacity = 9,
@@ -3069,11 +3074,377 @@ public:
   unsigned char m_cv_capacity = ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity;
   unsigned short m_reserved2 = 0;
   unsigned int m_reserved3 = 0;
-  double m_cv5[ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity][3]; // initial 4 or 5 cvs are here.
+  double m_cv9[ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity][3]; // Up to ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity cvs are here.
   // If m_cv_capacity > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity and m_cvx != nullptr,
   // m_cvx points to an array of 3*(ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity-ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)
   // doubles and m_cv_capacity = ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity; 
   double* m_cvx = nullptr;
+};
+
+class ON_SubDVertexQuadSector
+{
+public:
+  ON_SubDVertexQuadSector() = default;
+  ~ON_SubDVertexQuadSector();
+  ON_SubDVertexQuadSector(const ON_SubDVertexQuadSector& src);
+  ON_SubDVertexQuadSector& operator=(const ON_SubDVertexQuadSector& src);
+
+public:
+  static const ON_SubDVertexQuadSector Empty;
+
+  /// <summary>
+  /// The number of vertices in the quad sector is determined by the vertex tag and number of faces.
+  /// and is equal to  1 + ON_SubDVertexQuadSector::SectorEdgeCount(center_vertex_tag,sector_face_count) + sector_face_count.
+  /// </summary>
+  /// <param name="center_vertex_tag"></param>
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  /// ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <returns>If the input is valid, then the number of vertices in the quad sector 
+  /// with the specified center_vertex_tag and sector_face_count is returned. 
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned SectorVertexCount(
+    ON_SubDVertexTag center_vertex_tag,
+    unsigned sector_face_count
+  );
+
+  /// <summary>
+  /// The number of edges in the quad sector is determined by the vertex tag and number of faces.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then the number of edges in the sector is = 3*sector_face_count.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then the number of edges in the sector is = 1 + 3*sector_face_count.
+  /// </summary>
+  /// <param name="center_vertex_tag"></param>
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  /// ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <returns>If the input is valid, then the number of edges in the quad sector 
+  /// with the specified center_vertex_tag and sector_face_count is returned. 
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned SectorEdgeCount(
+    ON_SubDVertexTag center_vertex_tag,
+    unsigned sector_face_count
+  );
+
+  /// <summary>
+  /// The number of edges attached to the center vertex is determined by the vertex tag and number of faces.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then the number of edges attached to the center vertex is sector_face_count.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then the number of edges attached to the center vertex is 1 + sector_face_count.
+  /// </summary>
+  /// <param name="center_vertex_tag"></param>
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  /// ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <returns>If the input is valid, then the number of edges attached to the center vertex
+  /// is returned. 
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned CenterVertexEdgeCount(
+    ON_SubDVertexTag center_vertex_tag,
+    unsigned sector_face_count
+  );
+
+  /// <summary>
+  /// The minimum number of faces in a sector depends on the sector's center vertex tag.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then the sector must have at least 2 faces.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then the sector must have at least 1 face.
+  /// </summary>
+  /// <param name="center_vertex_tag"></param>
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  /// ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <returns>
+  /// If the input center_vertex_tag is valid, the minimum number of faces for a sector with that tag is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned MinimumSectorFaceCount(
+    ON_SubDVertexTag center_vertex_tag
+  );
+
+  /// <summary>
+  /// Initialize this ON_SubDVertexQuadSector topology and component tags
+  /// assuming the the smooth edges attached to the center vertex have
+  /// a smooth outer ring vertex.
+  /// </summary>
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 3*sector_face_count.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 1+3*sector_face_count.
+  /// The sector's vertex_count = 1 + sector_edge_count + sector_face_count.
+  /// </summary>
+  /// <param name="center_vertex_tag">
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  ///  ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <param name="sector_control_net_points">
+  /// Either sector_control_net_points is nullptr or sector_control_net_points[] is an array
+  /// of ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count) points
+  /// that are used to initialize the vertex control net points.
+  /// sector_control_net_points[0] = center vertex control net point.
+  /// sector_control_net_points[1] = first edge outer vertex control net point.
+  /// sector_control_net_points[2] = first quad face outer vertex control net point.
+  /// The subsequent sector_control_net_points[] continue alternate between outer edge and outer quad face control net points.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then the sector_control_net_points[ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count)-1]
+  /// is the final crease edge outer control net point.
+  /// </param>
+  /// <param name="center_edge_sharpnesses">
+  /// Either center_edge_sharpnesses is nullptr or center_edge_sharpnesses[] is an array 
+  /// of ON_SubDVertexQuadSector::CenterVertexEdgeCount(center_vertex_tag,sector_face_count)
+  /// edge sharpnesses oriented with center_edge_sharpnesses[ei].EndSharpness(0) being the edge sharpness at the center vertex.
+  /// </param>
+  /// <returns>True if successful. False if input is not valid.</returns>
+  bool Initialize(
+    ON_SubDVertexTag center_vertex_tag,
+    unsigned sector_face_count,
+    const ON_3dPoint* sector_control_net_points,
+    const ON_SubDEdgeSharpness* center_edge_sharpnesses
+  );
+
+  /// <summary>
+  /// Initialize this ON_SubDVertexQuadSector topology and component tags
+  /// assuming the the smooth edges attached to the center vertex have
+  /// a smooth outer ring vertex and are not sharp.
+  /// </summary>
+  /// If vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 3*sector_face_count.
+  /// If vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 1+3*sector_face_count.
+  /// The sector's vertex_count = 1 + sector_edge_count + sector_face_count.
+  /// </summary>
+  /// <param name="vertex_tag">
+  /// The vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  ///  ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <param name="sector_control_net_points">
+  /// sector_control_net_points[] is an array of ON_SubDVertexQuadSector::SectorVertexCount(vertex_tag,sector_face_count) points
+  /// that are used to initialize the vertex control net points.
+  /// sector_control_net_points[0] = center vertex control net point.
+  /// sector_control_net_points[1] = first edge outer vertex control net point.
+  /// sector_control_net_points[2] = first quad face outer vertex control net point.
+  /// The subsequent sector_control_net_points[] continue alternate between outer edge and outer quad face control net points.
+  /// If vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then the sector_control_net_points[ON_SubDVertexQuadSector::SectorVertexCount(vertex_tag,sector_face_count)-1]
+  /// is the final crease edge outer control net point.
+  /// </param>
+  /// <returns>True if successful. False if input is not valid.</returns>
+  bool Initialize(
+    ON_SubDVertexTag vertex_tag,
+    unsigned sector_face_count,
+    const ON_SimpleArray<ON_3dPoint>& sector_control_net_points
+  );
+
+  bool Initialize(
+    ON_SubDVertexTag vertex_tag,
+    unsigned sector_face_count,
+    const ON_SimpleArray<ON_3dPoint>& sector_control_net_points,
+    const ON_SimpleArray<ON_SubDEdgeSharpness>& center_edge_sharpnesses
+  );
+
+  /// <summary>
+  /// Initialize this ON_SubDVertexQuadSector by subdividing the
+  /// ring of edges and face in sit.
+  /// </summary>
+  /// <param name="sit"></param>
+  /// <returns>True if successful. False if input is not valid.</returns>
+  bool InitializeFromSubdividedSectorIterator(
+    const ON_SubDSectorIterator& sit
+  );
+
+  /// <summary>
+  /// Initialize this ON_SubDVertexQuadSector by subdividing the
+  /// ring of components in sector_components[].
+  /// </summary>
+  /// <param name="sector_components">
+  /// sector_components[0] = center vertex
+  /// sector_components[odd index] = sector edges radially sorted
+  /// sector_components[even index >= 2] = sector faces radially sorted
+  /// 
+  /// If the center vertex tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// sector_components[] must have at least two faces and have the same number of edges and faces.
+  /// The edges and faces must form a complete ring around the center vertex. 
+  /// 
+  /// If the center vertex tag is ON_SubDVertexTag::Smooth, all edges 
+  /// must be smooth (their edge tag is ON_SubDEdgeTag::Smooth or ON_SubDEdgeTag::SmoothX).
+  /// 
+  /// If the center vertex tag is ON_SubDVertexTag::Dart, one edge must be an 
+  /// interior crease and the remaining edges must be smooth.
+  /// 
+  /// If the center vertex tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// sector_components[] must have at least one face and one more edge than face.
+  /// sector_components[1] and sector_components[].Last() must be crease edges and
+  /// and any additional edges must be smooth.
+  /// </param>
+  /// <returns>True if successful. False if input is not valid.</returns>
+  bool InitializeFromSubdividedSectorComponents(
+    const ON_SimpleArray<ON_SubDComponentPtr>& sector_components
+  );
+  bool InitializeFromSubdividedSectorComponents(
+    const ON_SubDComponentPtr* sector_components,
+    size_t sector_components_count
+  );
+
+  bool GetSectorControlNetPoints(
+    ON_SimpleArray<ON_3dPoint>& sector_control_net_points
+  ) const;
+
+  bool SetCenterVertexTag(ON_SubDVertexTag center_vertex_tag);
+
+  double MaximumCenterVertexEdgeEndSharpness() const;
+
+  /// <summary>
+  /// Subdivide the vertex sector.
+  /// </summary>
+  /// <returns>
+  /// If successful, true is returned. Otherwise false is returned.
+  /// </returns>
+  bool Subdivide();
+
+  /// <summary>
+  /// Subdivide the vertex sector until all the edges attached to the center
+  /// vertex have zero sharpness.
+  /// </summary>
+  /// <returns>
+  /// If successful, true is returned. Otherwise false is returned.
+  /// </returns>
+  bool SubdivideUntilEdgeSharpnessIsZero();
+
+  const ON_SubDVertex* CenterVertex() const;
+
+  ON_SubDVertexTag CenterVertexTag() const;
+
+  /// <summary>
+  /// When the center vertex is smooth or dart, the number of edges attached to
+  /// the center vertex = number of faces in the sector.
+  /// When the center vertex is crease or corner, the number of edges attached to
+  /// the center vertex = 1 + number of faces in the sector.
+  /// </summary>
+  /// <returns>Number of sector edges attached to the center vertex.</returns>
+  unsigned CenterVertexEdgeCount() const;
+
+  /// <summary>
+  /// The center vertex tag determines how many crease edges are attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Smooth, 0 crease edges are attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Dart, 1 crease edge is attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner, 2 crease edges are attached to the center vertex.
+  /// </summary>
+  /// <returns>Number crease edges attached to the center vertex.</returns>
+  unsigned SectorCreaseEdgeCount() const;
+
+  /// <summary>
+  /// The center vertex tag determines how many crease edges are attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Smooth, 0 crease edges are attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Dart, 1 crease edge is attached to the center vertex.
+  /// When the center vertex tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner, 2 crease edges are attached to the center vertex.
+  /// </summary>
+  /// <returns>Number crease edges attached to the center vertex.</returns>
+  static unsigned SectorCreaseEdgeCount(ON_SubDVertexTag center_vertex_tag);
+
+
+  /// <summary>
+  /// All faces are quad faces.
+  /// </summary>
+  /// <returns>Number of faces in the sector.</returns>
+  unsigned SectorFaceCount() const;
+
+  /// <summary>
+  /// There are 1 + CenterVertexEdgeCount() + SectorFaceCount() vertices
+  /// in a sector.
+  /// </summary>
+  /// <returns>Total number of vertices in this sector.</returns>
+  unsigned SectorVertexCount() const;
+
+  /// <summary>
+  /// There are CenterVertexEdgeCount() + 2*SectorFaceCount() edges
+  /// in a sector.
+  /// </summary>
+  /// <returns>Total number of edges in this sector</returns>
+  unsigned SectorEdgeCount() const;
+
+  unsigned SubdivisionLevel() const;
+
+public:
+  // m_v[] is an array of SectorVertexCount() vertices.
+  // When an ON_SubDVertexSector is destroyed, it is not necessary 
+  // to call the explicit ON_SubDVertex destructor because no 
+  // managed memory vertex features are used.
+  ON_SubDVertex* m_v = nullptr;
+
+  // m_e[] is an array of SectorEdgeCount() edges.
+  // The edges {m_e[0], ..., m_e[CenterVertexEdgeCount()-1]} are
+  // the edge attached to the center vertex. 
+  // They are oriented to that m_vertex[0] = the center vertex.
+  // When an ON_SubDVertexSector is destroyed, it is not necessary 
+  // to call the explicit ON_SubDEdge destructor because no 
+  // managed memory edge features are used.
+  ON_SubDEdge* m_e = nullptr;
+
+  // m_f[] is an array of SectorFaceCount() faces.
+  // When an ON_SubDVertexSector is destroyed, it is not necessary 
+  // to call the explicit ON_SubDFace destructor because no 
+  // managed memory face features are used.
+  ON_SubDFace* m_f = nullptr;
+
+  // m_component_ring[] is an array of (1 + CenterVertexEdgeCount() + SectorFaceCount()) components.
+  // m_component_ring[0] = center vertex.
+  // m_component_ring[odd] = center edges radially sorted and oriented
+  // so that m_component_ring[odd].RelativeVertex(0) = center vertex.
+  // m_component_ring[even>=2] = sector faces radially sorted.
+  ON_SubDComponentPtr* m_r = nullptr;
+
+  double m_sector_coefficient = ON_DBL_QNAN;
+  mutable double m_maximum_edge_end_sharpness = ON_DBL_QNAN;
+
+private:
+  // number of faces in the sector
+  unsigned m_sector_face_count = 0;
+  // number of edges attached to the center vertex
+  // total number of edges = m_center_vertex_edge_count + 2*m_face_count.
+  unsigned m_center_vertex_edge_count = 0;
+  // All m_v[], m_e[], m_f[0], vertex edge list, and vertex face list
+  // memory is from a single heap allocation.
+  void* m_heap = nullptr;
+
+private:
+  void Internal_Destroy();
+  void Internal_CopyFrom(const ON_SubDVertexQuadSector& src);
 };
 
 #endif // ON_COMPILING_OPENNURBS)

@@ -2278,8 +2278,8 @@ ON_SubDEdgeSurfaceCurve* ON_SubDHeap::CopyEdgeSurfaceCurve(const ON_SubDEdge* so
       return ON_SUBD_RETURN_ERROR(nullptr);
     }
   }
-  const size_t sz5 = sizeof(desination_curve->m_cv5);
-  memcpy(desination_curve->m_cv5, source_curve->m_cv5, sz5);
+  const size_t sz9 = sizeof(desination_curve->m_cv9);
+  memcpy(desination_curve->m_cv9, source_curve->m_cv9, sz9);
   if (cv_count > ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity && nullptr != desination_curve->m_cvx && nullptr != source_curve->m_cvx)
   {
     const size_t szx = ((size_t)(cv_count - ON_SubDEdgeSurfaceCurve::MinimumControlPointCapacity)) * 24;

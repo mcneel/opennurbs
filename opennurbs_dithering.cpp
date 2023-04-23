@@ -22,13 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-// These settings are inside the ON_RDK_RENDERING section.
-
-#define ON_USE_DITHERING                L"use-dithering"
-#define ON_DITHERING_METHOD             L"dithering"
-#define    ON_DITHERING_FLOYD_STEINBERG   L"floyd-steinberg"
-#define    ON_DITHERING_SIMPLE_NOISE      L"simple-noise"
-
 class ON_Dithering::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -74,7 +67,7 @@ const ON_Dithering& ON_Dithering::operator = (const ON_Dithering& dit)
   return *this;
 }
 
-bool ON_Dithering::operator == (const ON_Dithering& dit)
+bool ON_Dithering::operator == (const ON_Dithering& dit) const
 {
   if (On()     != dit.On())     return false;
   if (Method() != dit.Method()) return false;
@@ -82,25 +75,25 @@ bool ON_Dithering::operator == (const ON_Dithering& dit)
   return true;
 }
 
-bool ON_Dithering::operator != (const ON_Dithering& dit)
+bool ON_Dithering::operator != (const ON_Dithering& dit) const
 {
   return !(operator == (dit));
 }
 
 bool ON_Dithering::On(void) const
 {
-  return m_impl->GetParameter(XMLPathDit(), ON_USE_DITHERING, false);
+  return m_impl->GetParameter(XMLPathDit(), ON_RDK_DITHERING_ON, false);
 }
 
 void ON_Dithering::SetOn(bool b)
 {
-  m_impl->SetParameter(XMLPathDit(), ON_USE_DITHERING, b);
+  m_impl->SetParameter(XMLPathDit(), ON_RDK_DITHERING_ON, b);
 }
 
 ON_Dithering::Methods ON_Dithering::Method(void) const
 {
-  const ON_wString s = m_impl->GetParameter(XMLPathDit(), ON_DITHERING_METHOD, L"").AsString();
-  if (ON_DITHERING_FLOYD_STEINBERG == s)
+  const ON_wString s = m_impl->GetParameter(XMLPathDit(), ON_RDK_DITHERING_METHOD, L"").AsString();
+  if (ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG == s)
     return Methods::FloydSteinberg;
 
   return Methods::SimpleNoise;
@@ -108,11 +101,11 @@ ON_Dithering::Methods ON_Dithering::Method(void) const
 
 void ON_Dithering::SetMethod(Methods m)
 {
-  const wchar_t* wsz = ON_DITHERING_SIMPLE_NOISE;
+  const wchar_t* wsz = ON_RDK_DITHERING_METHOD_SIMPLE_NOISE;
   if (Methods::FloydSteinberg == m)
-    wsz = ON_DITHERING_FLOYD_STEINBERG;
+    wsz = ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG;
 
-  m_impl->SetParameter(XMLPathDit(), ON_DITHERING_METHOD, wsz);
+  m_impl->SetParameter(XMLPathDit(), ON_RDK_DITHERING_METHOD, wsz);
 }
 
 ON__UINT32 ON_Dithering::DataCRC(ON__UINT32 crc) const
@@ -124,4 +117,13 @@ ON__UINT32 ON_Dithering::DataCRC(ON__UINT32 crc) const
   crc = ON_CRC32(crc, sizeof(m), &m);
 
   return crc;
+}
+
+void* ON_Dithering::EVF(const wchar_t* func, void* data)
+{
+ return nullptr;
+}
+
+void ON_Dithering::InvalidateCache(void)
+{
 }

@@ -211,6 +211,12 @@ bool ON_Line::Translate(
   return Transform( tr );
 }
 
+
+double ON_Line::MaximumCoordinate() const
+{
+  return  fmax( from.MaximumCoordinate(), to.MaximumCoordinate());
+}
+
 int ON_ArePointsOnLine( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance) a single point on the line
         int dim,     // 2 or 3
         bool is_rat,

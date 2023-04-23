@@ -277,6 +277,9 @@ public:
         const ON_3dVector& delta
         );
 
+  // Maximum absolute coordinate of from and to.
+  double MaximumCoordinate() const; 
+
 
 public:
   ON_3dPoint from; // start point

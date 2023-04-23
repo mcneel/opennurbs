@@ -194,6 +194,7 @@ ON_INC = opennurbs.h \
 	opennurbs_revsurface.h \
 	opennurbs_rtree.h \
 	opennurbs_safe_frame.h \
+	opennurbs_sectionstyle.h \
 	opennurbs_sha1.h \
 	opennurbs_skylight.h \
 	opennurbs_sleeplock.h \
@@ -365,6 +366,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_revsurface.cpp \
 	opennurbs_rtree.cpp \
 	opennurbs_safe_frame.cpp \
+	opennurbs_sectionstyle.cpp \
 	opennurbs_sha1.cpp \
 	opennurbs_skylight.cpp \
 	opennurbs_sleeplock.cpp \
@@ -555,6 +557,7 @@ ON_OBJ = opennurbs_3dm_attributes.o \
 	opennurbs_revsurface.o \
 	opennurbs_rtree.o \
 	opennurbs_safe_frame.o \
+	opennurbs_sectionstyle.o \
 	opennurbs_sha1.o \
 	opennurbs_skylight.o \
 	opennurbs_sleeplock.o \

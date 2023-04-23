@@ -876,6 +876,54 @@ ON_EvCurvature(
   return rc;  
 }
 
+
+bool
+ON_EvCurvature1Der(
+  const ON_3dVector& D1, // first derivative
+  const ON_3dVector& D2, // second derivative
+  const ON_3dVector& D3, // third derivative
+  ON_3dVector& T,       // Unit tangent returned here
+  ON_3dVector& K,       // curvature vector(k*N). curvature k = K.Length() and Normal N=K.Unitize()
+  double* kprime,       // first derivative of k
+  double* torsion)        // torsion 
+{
+  bool rc = false;
+  double dsdt = D1.Length();
+  if (dsdt > 0)
+  {
+    T = (1 / dsdt) * D1;
+    // Differentiate the formula k = | q | / |D1|^3, where q = D1 x D2
+    ON_3dVector q = ON_CrossProduct(D1, D2);
+    double qlen2 = q.LengthSquared();
+    double dsdt2 = dsdt * dsdt;
+    K = (1.0/dsdt2)  * (D2 - (D2*T) * T);
+    if (kprime)
+    {
+      ON_3dVector qprime = ON_CrossProduct(D1, D3);
+      if (qlen2 > 0)
+      {
+        *kprime = ((q * qprime) * D1.LengthSquared() - 3 * qlen2 * (D1 * D2)) /
+          (sqrt(qlen2) * pow(D1.Length(), 5.0));
+      }
+      else
+        *kprime = qprime.Length() / pow(D1.Length(), 3);
+      rc = true;
+    }
+    if (torsion)
+    {
+      if (qlen2 > 0)
+      {
+        *torsion = q * D3 / qlen2;
+        rc = true;
+      }
+      else
+        rc = false;
+    }
+    
+  }
+  return rc;
+}
+
 bool ON_EvSectionalCurvature( 
     const ON_3dVector& S10, 
     const ON_3dVector& S01,

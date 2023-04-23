@@ -580,27 +580,35 @@ public:
   // A point is visible if m_plane_equation.ValueAt(point) <= 0.
   // (This is the opposite convention from what OpenGL uses.)
   ON_PlaneEquation m_plane_equation;
-  ON_UUID m_plane_id;
-  bool m_bEnabled;
+  ON_UUID m_plane_id = ON_nil_uuid;
+  bool m_bEnabled = false;
 
   // A distance where the clipping plane does not clip geometry.
-  // By default, distance is ON_DBL_MAX which indicates that there is no
-  // distance being applied
   // A positive value is equivalent to placing another clipping plane at a
   // distance from this clipping plane along it's normal and then flipping it
-  double Distance() const;
-  void SetDistance(double distance);
+  //
+  // The depth must also be enabled to be effective
+  double Depth() const;
+
+  // Negative depth values are currently not allowed. If a negative depth value
+  // is passed to this function, it will not the the internal depth value
+  void SetDepth(double depth);
+
+  // Default is false
+  bool DepthEnabled() const;
+  void SetDepthEnabled(bool on);
 
   void Default();
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
 
 private:
-  char m_reserved[3];
+  bool m_depth_enabled = false;
+  char m_reserved[2] = {};
 
   // This should be a double, but is a float in order to not change
   // the class size. When the Rhino SDK can break, this data type should change.
-  float m_distance = ON_UNSET_POSITIVE_FLOAT;
+  float m_depth = 0;
 };
 
 class ON_CLASS ON_ClippingPlane
@@ -619,22 +627,30 @@ public:
   ON_ClippingPlaneInfo ClippingPlaneInfo() const;
 
   // A distance where the clipping plane does not clip geometry.
-  // By default, distance is a negative value which indicates that there is no
-  // distance being applied
   // A positive value is equivalent to placing another clipping plane at a
   // distance from this clipping plane along it's normal and then flipping it
-  double Distance() const;
-  void SetDistance(double distance);
+  //
+  // The depth must also be enabled to be effective
+  double Depth() const;
+
+  // Negative depth values are currently not allowed. If a negative depth value
+  // is passed to this function, it will not the the internal depth value
+  void SetDepth(double depth);
+
+  // Default is false
+  bool DepthEnabled() const;
+  void SetDepthEnabled(bool on);
 
   bool Read( class ON_BinaryArchive& );
   bool Write( class ON_BinaryArchive& ) const;
 
 private:
-  char m_reserved[3];
+  bool m_depth_enabled = false;
+  char m_reserved[2];
 
   // This should be a double, but is a float in order to not change
   // the class size. When the Rhino SDK can break, this data type should change.
-  float m_distance = ON_UNSET_POSITIVE_FLOAT;
+  float m_depth = 0;
 };
 
 

@@ -14,42 +14,44 @@
 #if !defined(ON_SKYLIGHT_INC_)
 #define ON_SKYLIGHT_INC_
 
-class ON_CLASS ON_Skylight final
+class ON_CLASS ON_Skylight
 {
 public:
   ON_Skylight();
   ON_Skylight(ON_XMLNode& model_node);
   ON_Skylight(const ON_Skylight& sl);
-  ~ON_Skylight();
+  virtual ~ON_Skylight();
 
-  const ON_Skylight& operator = (const ON_Skylight& sl);
+  virtual const ON_Skylight& operator = (const ON_Skylight& sl);
 
-  bool operator == (const ON_Skylight& sl);
-  bool operator != (const ON_Skylight& sl);
+  virtual bool operator == (const ON_Skylight& sl) const;
+  virtual bool operator != (const ON_Skylight& sl) const;
 
   // Returns true if the skylight is enabled, else false.
-  bool On(void) const;
+  virtual bool On(void) const;
 
   // Set the skylight enabled state.
-  void SetOn(bool b);
-
-  // Returns true if the skylight custom environment is on, else false.
-  bool CustomEnvironmentOn(void) const;
-
-  // Returns the skylight custom environment instance id. If none has been set, returns ON_nil_uuid.
-  ON_UUID CustomEnvironment(void) const;
-
-  // Set the skylight custom environment on or off.
-  void SetCustomEnvironmentOn(bool on);
-
-  // Set the skylight custom environment instance id.
-  void SetCustomEnvironment(const ON_UUID& uuid);
+  virtual void SetOn(bool b);
 
   // Returns the skylight shadow intensity. This is unused at present.
-  double ShadowIntensity(void) const;
+  virtual double ShadowIntensity(void) const;
 
   // Set the skylight shadow intensity. This is unused at present.
-  void SetShadowIntensity(double d);
+  virtual void SetShadowIntensity(double d);
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+public: // These methods are only here to support deprecated C# SDK methods.
+        // Please use the equivalent methods in ON_3dmRenderSettings.
+  /* DEPRECATED*/ bool EnvironmentOverride(void) const;
+  /* DEPRECATED*/ void SetEnvironmentOverride(bool on);
+  /* DEPRECATED*/ ON_UUID EnvironmentId(void) const;
+  /* DEPRECATED*/ void SetEnvironmentId(const ON_UUID& id);
+
+private: // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

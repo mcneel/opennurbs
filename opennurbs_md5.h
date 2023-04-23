@@ -307,9 +307,9 @@ private:
   ON__UINT32 m_reserved = 0;  
 
   // current "remainder"
-  ON__UINT8 m_buffer[64];      // bytes that didn't fit in last 64 byte chunk  
-  ON__UINT32 m_bit_count[2];   // number of bits (lo, hi)
-  ON__UINT32 m_state[4];       // current state
+  ON__UINT8 m_buffer[64] = {};      // bytes that didn't fit in last 64 byte chunk  
+  ON__UINT32 m_bit_count[2] = {};   // number of bits (lo, hi)
+  ON__UINT32 m_state[4] = {};       // current state
   
   // cached MD5 hash - valid if 2 = (2 & m_status_bits)
   mutable ON_MD5_Hash m_md5_hash;

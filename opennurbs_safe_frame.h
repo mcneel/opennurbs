@@ -14,90 +14,101 @@
 #if !defined(ON_SAFE_FRAME_INC_)
 #define ON_SAFE_FRAME_INC_
 
-class ON_CLASS ON_SafeFrame final
+class ON_CLASS ON_SafeFrame
 {
 public:
   ON_SafeFrame();
   ON_SafeFrame(ON_XMLNode& model_node);
   ON_SafeFrame(const ON_SafeFrame&);
-  ~ON_SafeFrame();
+  virtual ~ON_SafeFrame();
 
-  const ON_SafeFrame& operator = (const ON_SafeFrame& sf);
+  virtual const ON_SafeFrame& operator = (const ON_SafeFrame& sf);
 
-  bool operator == (const ON_SafeFrame& sf);
-  bool operator != (const ON_SafeFrame& sf);
+  virtual bool operator == (const ON_SafeFrame& sf) const;
+  virtual bool operator != (const ON_SafeFrame& sf) const;
 
   // Returns true if the safe frame is on.
-  bool On(void) const;
+  virtual bool On(void) const;
 
   // Sets the safe frame on or off.
-  void SetOn(bool b);
+  virtual void SetOn(bool b);
 
   // Returns true if the safe frame is only displayed in perspective views.
-  bool PerspectiveOnly(void) const;
+  virtual bool PerspectiveOnly(void) const;
 
   // Sets whether or not the safe frame is only displayed in perspective views.
-  void SetPerspectiveOnly(bool b);
+  virtual void SetPerspectiveOnly(bool b);
 
   // Returns true if the 4x3 field grid is on.
-  bool FieldGridOn(void) const;
+  virtual bool FieldGridOn(void) const;
 
   // Sets whether or not the 4x3 field grid is on.
-  void SetFieldGridOn(bool b);
+  virtual void SetFieldGridOn(bool b);
 
   // Returns true if the live frame is on.
-  bool LiveFrameOn(void) const;
+  virtual bool LiveFrameOn(void) const;
 
   // Sets whether or not the live frame is on.
-  void SetLiveFrameOn(bool b);
+  virtual void SetLiveFrameOn(bool b);
 
   // Returns true if the action frame is on.
-  bool ActionFrameOn(void) const;
+  virtual bool ActionFrameOn(void) const;
 
   // Sets whether or not the action frame is on.
-  void SetActionFrameOn(bool b);
+  virtual void SetActionFrameOn(bool b);
 
   // Returns true if the action frame X and Y scales are linked.
-  bool ActionFrameLinked(void) const;
+  virtual bool ActionFrameLinked(void) const;
 
   // Sets whether or not the action frame X and Y scales are linked.
-  void SetActionFrameLinked(bool b);
+  virtual void SetActionFrameLinked(bool b);
 
   // Returns the action frame X scale.
-  double ActionFrameXScale(void) const;
+  virtual double ActionFrameXScale(void) const;
 
   // Sets the action frame X scale.
-  void SetActionFrameXScale(double d);
+  // This value should be in the range 0..1 but it is not clamped.
+  virtual void SetActionFrameXScale(double d);
 
   // Returns the action frame Y scale.
-  double ActionFrameYScale(void) const;
+  virtual double ActionFrameYScale(void) const;
 
   // Sets the action frame Y scale.
-  void SetActionFrameYScale(double d);
+  // This value should be in the range 0..1 but it is not clamped.
+  virtual void SetActionFrameYScale(double d);
 
   // Returns true if the title frame is on.
-  bool TitleFrameOn(void) const;
+  virtual bool TitleFrameOn(void) const;
 
   // Sets whether or not the title frame is on.
-  void SetTitleFrameOn(bool b);
+  virtual void SetTitleFrameOn(bool b);
 
   // Returns true if the title frame X and Y scales are linked.
-  bool TitleFrameLinked(void) const;
+  virtual bool TitleFrameLinked(void) const;
 
   // Sets whether or not the title frame X and Y scales are linked.
-  void SetTitleFrameLinked(bool b);
+  virtual void SetTitleFrameLinked(bool b);
 
   // Returns the title frame X scale.
-  double TitleFrameXScale(void) const;
+  virtual double TitleFrameXScale(void) const;
 
   // Sets the title frame X scale.
-  void SetTitleFrameXScale(double d);
+  // This value should be in the range 0..1 but it is not clamped.
+  virtual void SetTitleFrameXScale(double d);
 
   // Returns the title frame Y scale.
-  double TitleFrameYScale(void) const;
+  virtual double TitleFrameYScale(void) const;
 
   // Sets the title frame Y scale.
-  void SetTitleFrameYScale(double d);
+  // This value should be in the range 0..1 but it is not clamped.
+  virtual void SetTitleFrameYScale(double d);
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+private: // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

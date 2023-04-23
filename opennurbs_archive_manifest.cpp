@@ -3471,7 +3471,10 @@ private:
     ) const;
 
 public:
-  enum : unsigned int { TableCount = 17 }; // Count of items in ON_ModelComponent::Type
+  enum : unsigned int
+  {
+    TableCount = (unsigned int)ON_ModelComponent::Type::NumOf
+  };
 
 private:
   ON_ComponentManifestTableIndex m_table_index[ON_ComponentManifestImpl::TableCount];
@@ -3500,7 +3503,6 @@ private:
   //  Currently Rhino CRhinoDoc model geometry and model lights are not derived from ON_ModelComponent.
   ON_ComponentIdHash32Table m_manifest_id_hash_table;
 
-  
   ON_ComponentNameHash32Table& ComponentNameHash32Table(
     ON_ModelComponent::Type component_type
     );

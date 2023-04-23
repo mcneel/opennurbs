@@ -14,35 +14,42 @@
 #if !defined(ON_DITHERING_INC_)
 #define ON_DITHERING_INC_
 
-class ON_CLASS ON_Dithering final
+class ON_CLASS ON_Dithering
 {
 public:
   ON_Dithering();
   ON_Dithering(ON_XMLNode& model_node);
   ON_Dithering(const ON_Dithering& dit);
-  ~ON_Dithering();
+  virtual ~ON_Dithering();
 
-  const ON_Dithering& operator = (const ON_Dithering& dit);
+  virtual const ON_Dithering& operator = (const ON_Dithering& dit);
 
-  bool operator == (const ON_Dithering& dit);
-  bool operator != (const ON_Dithering& dit);
+  virtual bool operator == (const ON_Dithering& dit) const;
+  virtual bool operator != (const ON_Dithering& dit) const;
 
   // Get dithering on / off state.
-  bool On(void) const;
+  virtual bool On(void) const;
 
   // Set dithering on or off.
-  void SetOn(bool b);
+  virtual void SetOn(bool b);
 
   enum class Methods { SimpleNoise, FloydSteinberg };
 
   // Get the dithering method.
-  Methods Method(void) const;
+  virtual Methods Method(void) const;
 
   // Set the dithering method.
-  void SetMethod(Methods m);
+  virtual void SetMethod(Methods m);
 
   // Returns the CRC of the dithering state.
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+private: // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

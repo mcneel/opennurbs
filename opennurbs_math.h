@@ -1423,6 +1423,19 @@ bool ON_EvCurvature(
         ON_3dVector&        // Curvature returned here
         );
 
+// Compute derivative of curvature as well as curvature and torsion.
+// Returns false if either kprime or torsion are not well defined.
+ON_DECL
+bool ON_EvCurvature1Der(
+  const ON_3dVector& D1, // first derivative of curve
+  const ON_3dVector& D2, // second derivative of curve
+  const ON_3dVector& D3, // third derivative of curve
+  ON_3dVector& T,       // Unit tangent returned here
+  ON_3dVector& K,       // curvature vector(k*N). curvature k = K.Length() and Normal N=K.Unitize()
+  double* kprime,       // first derivative of k
+  double* torsion);       // torsion 
+
+
 ON_DECL
 bool ON_EvPrincipalCurvatures( 
         const ON_3dVector&, // Ds,

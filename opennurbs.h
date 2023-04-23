@@ -110,6 +110,7 @@
 #include "opennurbs_texture_mapping.h" // texture coordinate evaluation
 #include "opennurbs_texture.h"        // texture definition
 #include "opennurbs_material.h"       // simple rendering material
+#include "opennurbs_sectionstyle.h"   // attributes for drawing sections
 #include "opennurbs_layer.h"          // layer definition
 #include "opennurbs_linetype.h"       // linetype definition
 #include "opennurbs_group.h"          // group name and index

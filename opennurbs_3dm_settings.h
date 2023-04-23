@@ -6,7 +6,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -14,6 +14,7 @@
 #if !defined(OPENNURBS_3DM_SETTINGS_INC_)
 #define OPENNURBS_3DM_SETTINGS_INC_
 
+#include "opennurbs_post_effects.h"
 
 ///////////////////////////////////////////////////////////////////////
 //
@@ -121,16 +122,16 @@ class ON_CLASS ON_3dmAnnotationSettings
 {
 public:
   ON_3dmAnnotationSettings() = default;
-  ~ON_3dmAnnotationSettings() = default;
-  ON_3dmAnnotationSettings(const ON_3dmAnnotationSettings&) = default;
-  ON_3dmAnnotationSettings& operator=(const ON_3dmAnnotationSettings&) = default;
+  ~ON_3dmAnnotationSettings();
+  ON_3dmAnnotationSettings(const ON_3dmAnnotationSettings&);
+  ON_3dmAnnotationSettings& operator=(const ON_3dmAnnotationSettings&);
 
   static const ON_3dmAnnotationSettings Default;
 
-  bool Read( ON_BinaryArchive& );
-  bool Write( ON_BinaryArchive& ) const;
+  bool Read(ON_BinaryArchive&);
+  bool Write(ON_BinaryArchive&) const;
 
-  void Dump( ON_TextLog& text_log ) const;
+  void Dump(ON_TextLog& text_log) const;
 
   // these are the running defaults for making dimensions
   // they are also the things written to the 3dm file as dimension settings
@@ -144,27 +145,25 @@ public:
 
   /*
   Returns:
-    Value of m_world_view_text_scale;
+    Gets the world view text scale.
   */
   double WorldViewTextScale() const;
 
   /*
-  Parameters:
-    world_view_text_scale - [in]
-      Sets value of m_world_view_text_scale.
+  Description:
+    Sets the world view text scale.
   */
   void SetWorldViewTextScale(double world_view_text_scale );
 
   /*
   Returns:
-    Value of m_world_view_hatch_scale;
+    Gets the world view hatch scale.
   */
   double WorldViewHatchScale() const;
 
   /*
-  Parameters:
-    world_view_hatch_scale - [in]
-      Sets value of m_world_view_hatch_scale.
+  Description:
+    Sets the world view hatch scale.
   */
   void SetWorldViewHatchScale(double world_view_hatch_scale );
 
@@ -219,24 +218,38 @@ public:
     bEnable - [in]
       Sets value of m_bEnableHatchScaling.
   */
-  void EnableHatchScaling( bool bEnable );
+  void EnableHatchScaling(bool bEnable);
 
-  // Present but not used in V4 or V5 - removed 5 August 2010 to make room
-  // for m_world_view_text_scale and m_bEnableAnnotationScaling
-  //// added 12/28/05 LW
-  //double m_dimdle;
-  //double m_dimgap;
+  /*
+  Returns:
+    If true, then new annotations are added to the layer with the id returned by DimensionLayerId().
+    If false, then new annotations are added to the document's current layer.
+  */
+  bool UseDimensionLayer() const;
+
+  /*
+  Description:
+    Enables or disables the use of a dimension layer.
+  */
+  void EnableUseDimensionLayer(bool bEnable);
+
+  /*
+  Description:
+    Gets the id of the dimension layer.
+    Note, if id is ON_nil_uuid or if a layer with the id does not exist,
+    the current layer will be used.
+  */
+  ON_UUID DimensionLayerId() const;
+
+  /*
+  Description:
+    Sets the dimension layer id. To, clear, use ON_nil_uuid.
+  */
+  void SetDimensionLayerId(const ON_UUID& dimension_layer_id);
+
 private:
-  // If m_bEnableAnnotationScaling is true,
-  // and ON_OBSOLETE_V5_Annotation::m_annotative_scale is true,
-  // and ON_OBSOLETE_V5_Annotation::m_type == ON::dtTextBlock,
-  // and the text object is being displayed in a world
-  // view (not a detail view and not a page view),
-  // then the text will be scaled by m_world_view_text_scale.
-  // The default is 1.0. Values <= 0.0 are not valid.
-  float m_world_view_text_scale = 1.0f;
-  float m_world_view_hatch_scale = 1.0f;
-  
+  mutable class ON_3dmAnnotationSettingsPrivate* m_private = nullptr;
+
 private:
   // If m_bEnableAnnotationScaling is false:
   //   * m_world_view_text_scale is ignored.
@@ -288,6 +301,10 @@ public:
                        // for decimal, digits past the decimal point
 
   ON_wString m_facename; // [LF_FACESIZE] // windows font name
+
+private:
+  void Internal_CopyFrom(const ON_3dmAnnotationSettings& src);
+  void Internal_Destroy();
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -789,47 +806,77 @@ public:
   void SetScaleBackgroundToFit( bool bScaleBackgroundToFit );
 
 public:
-  // Access to Dithering information.
-  class ON_Dithering& Dithering(void) const;
-
   // Access to Ground Plane information.
-  class ON_GroundPlane& GroundPlane(void) const;
+  class ON_GroundPlane& GroundPlane(void);
+  const ON_GroundPlane& GroundPlane(void) const;
 
-  // Access to Linear Workflow information.
-  class ON_LinearWorkflow& LinearWorkflow(void) const;
-
-  // Access to Render Channels information.
-  class ON_RenderChannels& RenderChannels(void) const;
+  // Access to Dithering information.
+  class ON_Dithering& Dithering(void);
+  const ON_Dithering& Dithering(void) const;
 
   // Access to Safe Frame information.
-  class ON_SafeFrame& SafeFrame(void) const;
+  class ON_SafeFrame& SafeFrame(void);
+  const ON_SafeFrame& SafeFrame(void) const;
 
   // Access to Skylight information.
-  class ON_Skylight& Skylight(void) const;
+  class ON_Skylight& Skylight(void);
+  const ON_Skylight& Skylight(void) const;
+
+  // Access to Linear Workflow information.
+  class ON_LinearWorkflow& LinearWorkflow(void);
+  const ON_LinearWorkflow& LinearWorkflow(void) const;
+
+  // Access to Render Channels information.
+  class ON_RenderChannels& RenderChannels(void);
+  const ON_RenderChannels& RenderChannels(void) const;
 
   // Access to Sun information.
-  class ON_Sun& Sun(void) const;
+  class ON_Sun& Sun(void);
+  const ON_Sun& Sun(void) const;
 
-  // Access to background rendering environment information.
-  ON_UUID BackgroundRenderEnvironment(void) const;
-  void SetBackgroundRenderEnvironment(const ON_UUID& id);
+  // Access to Post Effect information.
+  class ON_PostEffects& PostEffects(void);
+  const ON_PostEffects& PostEffects(void) const;
 
-  // Access to skylighting rendering environment information.
-  bool SkylightingRenderEnvironmentOverride(void) const;
-  void SetSkylightingRenderEnvironmentOverride(bool on);
-  ON_UUID SkylightingRenderEnvironment(void) const;
-  void SetSkylightingRenderEnvironment(const ON_UUID& id);
+  // Access to information about which environments are used for rendering.
 
-  // Access to reflection / refraction rendering environment information.
-  bool ReflectionRenderEnvironmentOverride(void) const;
-  void SetReflectionRenderEnvironmentOverride(bool on);
-  ON_UUID ReflectionRenderEnvironment(void) const;
-  void SetReflectionRenderEnvironment(const ON_UUID& id);
+  enum class EnvironmentUsage : unsigned int
+  {
+    Background,  // Specifies the 360 background environment.
+    Reflection,  // Specifies the custom reflective environment. Also used for refraction.
+    Skylighting, // Specifies the custom skylighting environment.
+  };
 
-  // Access to rendering presets.
-  ON_UUID CurrentRenderingPreset(void) const;
-  void SetCurrentRenderingPreset(const ON_UUID& uuid);
-  void GetRenderingPresets(ON_SimpleArray<ON_UUID>& presets) const;
+  enum class EnvironmentPurpose : unsigned int
+  {
+    Standard,     // Used to directly get and set the environment instance id.
+    ForRendering, // Used to get the environment instance id to be used for actual rendering.
+  };
+
+  // Returns whether or not the rendering environment for a particular usage is overriding the background
+  // environment. Only really makes sense for usage Reflection and Skylighting, but for convenience,
+  // it also works for usage Background by checking if the background style is set to Environment.
+  bool RenderEnvironmentOverride(EnvironmentUsage usage) const;
+
+  // Sets whether or not the rendering environment for a particular usage is overriding the background
+  // environment. Only works for usage Reflection and Skylighting.
+  void SetRenderEnvironmentOverride(EnvironmentUsage usage, bool on);
+
+  // Returns the id of the rendering environment for a particular usage.
+  // Param 'purpose' specifies the purpose the environment will be used for:
+  // - If purpose is Standard, this directly returns the id of the environment.
+  // - If purpose is ForRendering, this returns the id of the environment to be used during rendering.
+  //   It includes all the logic for checking if the environment is enabled and available and for
+  //   deferring to other environments if the requested usage is not available.
+  ON_UUID RenderEnvironmentId(EnvironmentUsage usage, EnvironmentPurpose purpose) const;
+
+  // Sets the id of the rendering environment for a particular usage.
+  void SetRenderEnvironmentId(EnvironmentUsage usage, const ON_UUID& id);
+
+  // Access to render presets.
+  ON_UUID CurrentRenderPreset(void) const;
+  void SetCurrentRenderPreset(const ON_UUID& uuid);
+  void GetRenderPresetList(ON_SimpleArray<ON_UUID>& presets) const;
 
 private:
   unsigned short m_reserved1 = 0;
@@ -933,14 +980,11 @@ private:
   unsigned short m_reserved7 = 0;
   unsigned short m_reserved8 = 0;
 
-public: // For internal use only.
-  ON_XMLNode& RdkDocNode(void) const;
-
-private:
+private: // For internal use only.
+  friend class ONX_ModelPrivate;
   friend class ON_3dmRenderSettingsPrivate;
   mutable class ON_3dmRenderSettingsPrivate* m_private = nullptr;
 };
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //

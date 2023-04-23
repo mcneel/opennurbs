@@ -3679,10 +3679,10 @@ public:
 	ON_2dPoint LiftInverse(ON_2dPoint p);
 
 	ON_Interval m_dom[2];
-	bool m_closed[2];
-	double m_normband;
+  bool m_closed[2] = {};
+	double m_normband = ON_DBL_QNAN;
 private:
-	int m_deck[2];
+  int m_deck[2] = {};
 	ON_2dPoint m_nprev = ON_2dPoint::UnsetPoint;
 };
 
