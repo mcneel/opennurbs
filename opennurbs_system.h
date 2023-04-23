@@ -25,8 +25,7 @@
 #if !defined(OPENNURBS_SYSTEM_INC_)
 #define OPENNURBS_SYSTEM_INC_
 
-
-
+#define ON_SIZEOF_WCHAR_T 4
 
 
 #define OPENNURBS_PP2STR_HELPER(s) #s
@@ -434,7 +433,7 @@ typedef ON__UINT32 wchar_t;
 #if defined(ON_COMPILER_CLANG) && defined(ON_RUNTIME_APPLE)
 #include <malloc/malloc.h>
 #else
-#include <malloc.h>
+#include <stdlib.h>
 #endif
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 
