@@ -177,7 +177,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
                                        // identifies the user and some
                                        // customers may object.
   return true;
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) && !defined(__FreeBSD__)
   // Header: #include <uuid/uuid.h>
   if ( ON::endian::little_endian == ON::Endian() )
   {
@@ -224,7 +224,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   return true;
 #else
 
-#if defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_LINUX) || defined(__FreeBSD__)
   uuid_generate((unsigned char*)&new_uuid);
   return true;
 #else

@@ -8898,7 +8898,7 @@ const ON_wString ON_Font::FamilyNameFromDirtyName(
     const wchar_t* prev_clean_family_name = nullptr;
     for (size_t i = 0; i < installed_count; i++)
     {
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(__FreeBSD__)
       const ON_Font* font = installed_fonts[(int)i];
 #else
       const ON_Font* font = installed_fonts[i];
@@ -8961,7 +8961,7 @@ const ON_wString ON_Font::FamilyNameFromDirtyName(
       InternalHashToName candidate;
       for (size_t i = 0; i < count0; i++)
       {
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(__FreeBSD__)
         InternalHashToName e = a[(int)i];
 #else
         InternalHashToName e = a[i];
