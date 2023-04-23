@@ -14,72 +14,80 @@
 #if !defined(ON_LINEAR_WORKFLOW_INC_)
 #define ON_LINEAR_WORKFLOW_INC_
 
-class ON_CLASS ON_LinearWorkflow final
+class ON_CLASS ON_LinearWorkflow
 {
 public:
   ON_LinearWorkflow();
   ON_LinearWorkflow(ON_XMLNode& model_node);
   ON_LinearWorkflow(const ON_LinearWorkflow& lw);
-  ~ON_LinearWorkflow();
+  virtual ~ON_LinearWorkflow();
 
-  const ON_LinearWorkflow& operator = (const ON_LinearWorkflow& lw);
+  virtual const ON_LinearWorkflow& operator = (const ON_LinearWorkflow& lw);
 
-  bool operator == (const ON_LinearWorkflow& lw);
-  bool operator != (const ON_LinearWorkflow& lw);
+  virtual bool operator == (const ON_LinearWorkflow& lw) const;
+  virtual bool operator != (const ON_LinearWorkflow& lw) const;
 
-  // Returns the linear workflow active state for textures.
-  bool PreProcessTextures(void) const;
+  // Returns the linear workflow (pre-process) active state for textures.
+  virtual bool PreProcessTexturesOn(void) const;
 
   // Sets the linear workflow (pre-process) active state for textures.
-  void SetPreProcessTextures(bool b);
+  virtual void SetPreProcessTexturesOn(bool b);
 
   // Returns the linear workflow active state for individual colors.
-  bool PreProcessColors(void) const;
+  virtual bool PreProcessColorsOn(void) const;
 
   // Sets the linear workflow (pre-process) active state for individual colors.
-  void SetPreProcessColors(bool b);
-
-  // Returns the pre-process gamma for input textures and colors.
-  float PreProcessGamma(void) const;
-
-  // Set pre-process gamma. This will generally be >= 1.0 (usually 2.2).
-  // This is the actual value applied in pre-process.
-  void SetPreProcessGamma(float gamma);
-
-  // Get post-process gamma enabled state.
-  bool PostProcessGammaOn(void) const;
-
-  // Set post-process gamma enabled state.
-  void SetPostProcessGammaOn(bool on);
+  virtual void SetPreProcessColorsOn(bool b);
 
   // Get post-process frame buffer enabled state.
-  bool PostProcessFrameBuffer(void) const;
+  virtual bool PostProcessFrameBufferOn(void) const;
 
   // Set post-process frame buffer enabled state.
-  void SetPostProcessFrameBuffer(bool on);
+  virtual void SetPostProcessFrameBufferOn(bool on);
 
-  // Returns the post-process gamma for frame buffer. This is not the value applied; it's the value that
-  // appears in the UI. See PostProcessGammaReciprocal().
-  float PostProcessGamma(void) const;
+  // Get pre-process gamma enabled state. This is the same as 'use linear workflow'.
+  virtual bool PreProcessGammaOn(void) const;
 
-  // Set post-process gamma. This will generally be >= 1.0 (usually 2.2).
-  // The actual value to be applied in post-process is the reciprocal.
-  void SetPostProcessGamma(float gamma);
+  // Set pre-process gamma enabled state. This is the same as 'use linear workflow'.
+  virtual void SetPreProcessGammaOn(bool on);
 
-  // Returns: Gamma reciprocal for frame buffer. This is the value that is applied to each color channel
-  // for post-process and is supplied here as an optimization.
-  float PostProcessGammaReciprocal(void) const;
+  // Get the pre-process gamma for input textures and colors. This is currently the same as the post-process gamma value.
+  virtual float PreProcessGamma(void) const;
+
+  // Set the pre-process gamma for input textures and colors. This is currently the same as the post-process gamma value.
+  virtual void SetPreProcessGamma(float gamma);
+
+  // Get post-process gamma enabled state.
+  virtual bool PostProcessGammaOn(void) const;
+
+  // Set post-process gamma enabled state.
+  virtual void SetPostProcessGammaOn(bool on);
+
+  // Get the post-process gamma for the frame buffer.
+  virtual float PostProcessGamma(void) const;
+
+  // Set the post-process gamma for the frame buffer.
+  virtual void SetPostProcessGamma(float gamma);
 
   // Applies pre-process gamma correction to a color if linear workflow is active.
   // for_texture is true if the color is part of a texture. */
-  void ApplyPreProcessGamma(ON_4fColor& col, bool for_texture) const;
+  virtual void ApplyPreProcessGamma(ON_4fColor& col, bool for_texture) const;
 
   // Returns the CRC of gamma and linear workflow active state.
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+private:
+  // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  void SetXMLNode(ON_XMLNode& node) const;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;
-  CImpl* m_impl;
+  CImpl* _impl;
 };
 
 #endif

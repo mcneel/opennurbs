@@ -1299,7 +1299,7 @@ double ON_SubDSectorType::GetSubdominantEigenvectors(
         sin0 = 0.0;
         ON_SubDMatrix::EvaluateCosAndSin(2, F, &cos1, &sin1);
         //y = 0.5*(3.0 * sqrt((1.0 + cos1 / 9.0) / (1.0 + cos1)) - 1.0);
-        y = 2.0*(4.0*lambda - 1.0) / (1.0 + cos1) - 1;
+        y = (0.25 == lambda) ? -1.0 : (2.0*(4.0*lambda - 1.0) / (1.0 + cos1) - 1.0);
         E1[0] = 0.0;
         E2[0] = 0.0;
         E1[1] = sin0;
@@ -2741,6 +2741,21 @@ double ON_SubDMatrix::TestMatrix() const
     }
   }
 
+  // A smooth sector with 2 faces is degenerate and does not have nice eigenvalues and eigenvectors
+  // that give a well defined surface normal. In this case we use a hueristic for the normal.
+  // When bSmoothTwoFaceCase E1 = {0,0,0,0,0}, lengthE1 = 0, lengthE1 = 0.
+  const bool bSmoothTwoFaceCase
+    = (m_sector_type.IsSmoothSector() || m_sector_type.IsDartSector())
+    && 2u == m_sector_type.FaceCount()
+    && 2u == m_sector_type.EdgeCount()
+    ;
+  const bool bDartTwoFaceCase
+    = (m_sector_type.IsSmoothSector() || m_sector_type.IsDartSector())
+    && 2u == m_sector_type.FaceCount()
+    && 2u == m_sector_type.EdgeCount()
+    ;
+  const bool bSmoothOrDartTwoFaceCase = bSmoothTwoFaceCase || bDartTwoFaceCase;
+
   double lengthE1 = 0.0;
   double lengthE2 = 0.0;
   double lengthL1 = 0.0;
@@ -2752,7 +2767,7 @@ double ON_SubDMatrix::TestMatrix() const
     lengthL1 += L1[i] * L1[i];
     lengthL2 += L2[i] * L2[i];
   }
-  if (!(lengthE1 > 0.0))
+  if (false == bSmoothOrDartTwoFaceCase && !(lengthE1 > 0.0))
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
   if (!(lengthE2 > 0.0))
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
@@ -2764,7 +2779,7 @@ double ON_SubDMatrix::TestMatrix() const
   lengthE2 = sqrt(lengthE2);
   lengthL1 = sqrt(lengthL1);
   lengthL2 = sqrt(lengthL2);
-  if (!(lengthE1 > 0.0))
+  if (false == bSmoothOrDartTwoFaceCase && !(lengthE1 > 0.0))
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
   if (!(lengthE2 > 0.0))
     return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
@@ -2792,7 +2807,7 @@ double ON_SubDMatrix::TestMatrix() const
       x1 += Si[j] * E1[j];
       x2 += Si[j] * E2[j];
     }
-    d = fabs((x1 - lambda*E1[i])/lengthE1);
+    d = bSmoothOrDartTwoFaceCase ? 0.0 : fabs((x1 - lambda*E1[i])/lengthE1);
     rc = TestMatrixReturnValue(d,rc);
     if (!(rc >= 0.0))
       break;
@@ -2823,7 +2838,7 @@ double ON_SubDMatrix::TestMatrix() const
       y2 += m_S[j][i] * L2[j];
     }
 
-    d = fabs((y1 - lambda*L1[i])/lengthL1);
+    d = (bDartTwoFaceCase && (2u == i || 4u == i)) ? 0.0 : fabs((y1 - lambda*L1[i])/lengthL1);
     rc = TestMatrixReturnValue(d,rc);
     if (!(rc >= 0.0))
       break;
@@ -2870,7 +2885,7 @@ double ON_SubDMatrix::TestMatrix() const
       //    = lambda * (Transpose(LP) * E )
       //    = lambda * LPoE
       //   If LPoE != 0, then lamba = 1, which is not the case.
-      rc = TestMatrixReturnValue(fabs(E1oLP) / lengthE1, rc);
+      rc = bSmoothOrDartTwoFaceCase ? 0.0 : TestMatrixReturnValue(fabs(E1oLP) / lengthE1, rc);
       if (!(rc >= 0.0))
         break;
       rc = TestMatrixReturnValue(fabs(E2oLP) / lengthE2, rc);

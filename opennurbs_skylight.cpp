@@ -22,11 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_RDK_SKYLIGHT_ON                      L"skylight-on"
-#define ON_RDK_SKYLIGHT_SHADOW_INTENSITY        L"skylight-shadow-intensity"
-#define ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT_ON   L"skylight-custom-environment-on"
-#define ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT      L"skylight-custom-environment"
-
 class ON_Skylight::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -65,66 +60,71 @@ const ON_Skylight& ON_Skylight::operator = (const ON_Skylight& sl)
 {
   if (this != &sl)
   {
-    SetOn                 (sl.On());
-    SetCustomEnvironmentOn(sl.CustomEnvironmentOn());
-    SetCustomEnvironment  (sl.CustomEnvironment());
-    SetShadowIntensity    (sl.ShadowIntensity());
+    SetOn(sl.On());
+    SetShadowIntensity(sl.ShadowIntensity());
   }
 
   return *this;
 }
 
-bool ON_Skylight::operator == (const ON_Skylight& sl)
+bool ON_Skylight::operator == (const ON_Skylight& sl) const
 {
-  if (On()                  != sl.On()                 ) return false;
-  if (CustomEnvironmentOn() != sl.CustomEnvironmentOn()) return false;
-  if (CustomEnvironment()   != sl.CustomEnvironment()  ) return false;
-  if (ShadowIntensity()     != sl.ShadowIntensity()    ) return false;
+  if (On()              != sl.On())              return false;
+  if (ShadowIntensity() != sl.ShadowIntensity()) return false;
 
   return true;
 }
 
-bool ON_Skylight::operator != (const ON_Skylight& gp)
+bool ON_Skylight::operator != (const ON_Skylight& sl) const
 {
-  return !(operator == (gp));
+  return !(operator == (sl));
 }
 
 bool ON_Skylight::On(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_SKYLIGHT_ON, false).AsBool();
+  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ON, false).AsBool();
 }
 
 void ON_Skylight::SetOn(bool b)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_SKYLIGHT_ON, b);
-}
-
-bool ON_Skylight::CustomEnvironmentOn(void) const
-{
-  return m_impl->GetParameter(XMLPath(), ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, false).AsBool();
-}
-
-void ON_Skylight::SetCustomEnvironmentOn(bool on)
-{
-  m_impl->SetParameter(XMLPath(), ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, on);
-}
-
-ON_UUID ON_Skylight::CustomEnvironment(void) const
-{
-  return m_impl->GetParameter(XMLPath(), ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid).AsUuid();
-}
-
-void ON_Skylight::SetCustomEnvironment(const ON_UUID& uuid)
-{
-  m_impl->SetParameter(XMLPath(), ON_RDK_SKYLIGHT_CUSTOM_ENVIRONMENT, uuid);
+  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ON, b);
 }
 
 double ON_Skylight::ShadowIntensity(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_SKYLIGHT_SHADOW_INTENSITY, 1.0).AsDouble();
+  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0).AsDouble();
 }
 
 void ON_Skylight::SetShadowIntensity(double d)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_SKYLIGHT_SHADOW_INTENSITY, d);
+  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, d);
+}
+
+void* ON_Skylight::EVF(const wchar_t*, void*)
+{
+  return nullptr;
+}
+
+bool ON_Skylight::EnvironmentOverride(void) const
+{
+  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, false).AsBool();
+}
+
+void ON_Skylight::SetEnvironmentOverride(bool on)
+{
+  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, on);
+}
+
+ON_UUID ON_Skylight::EnvironmentId(void) const
+{
+  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, ON_nil_uuid).AsUuid();
+}
+
+void ON_Skylight::SetEnvironmentId(const ON_UUID& id)
+{
+  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, id);
+}
+
+void ON_Skylight::InvalidateCache(void)
+{
 }

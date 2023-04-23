@@ -21,7 +21,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_RDK_DOCUMENT                             L"render-content-manager-document"
 
   #define ON_RDK_CURRENT_CONTENT                      L"content"
-  #define ON_RDK_ENVIRONMENT                          L"environment"
+  #define ON_RDK_BACKGROUND_ENVIRONMENT               L"environment"
   #define ON_RDK_DEFAULT_CONTENT_SECTION              L"default-content-section"
 
   #define ON_RDK_SETTINGS                             L"settings"
@@ -53,13 +53,15 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
     #define ON_RDK_POST_EFFECTS                       L"post-effects-new"
       #define ON_RDK_PEP_TYPE_EARLY                     L"early"
-      #define ON_RDK_PEP_TYPE_TONE                      L"tone-mapping"
+      #define ON_RDK_PEP_TYPE_TONE_MAPPING              L"tone-mapping"
       #define ON_RDK_PEP_TYPE_LATE                      L"late"
+      #define ON_RDK_PEP_PLUG_IN                        L"plug-in"
+      #define ON_RDK_PEP_LOCAL_NAME                     L"name"
+      #define ON_RDK_PEP_ON                             L"on"
+      #define ON_RDK_PEP_ID                             L"id"
+      #define ON_RDK_PEP_SHOWN                          L"shown"
+      #define ON_RDK_PEP_PARAMS                         L"state" // This should really be 'params'.
       #define ON_RDK_PEP_SELECTION                      L"selection"
-      #define ON_RDK_PEP_SELECTION_POSTFIX              L"-" ON_RDK_PEP_SELECTION
-      #define ON_RDK_PEP_EARLY_SELECTION                ON_RDK_PEP_TYPE_EARLY ON_RDK_PEP_SELECTION_POSTFIX
-      #define ON_RDK_PEP_TONE_SELECTION                 ON_RDK_PEP_TYPE_TONE  ON_RDK_PEP_SELECTION_POSTFIX
-      #define ON_RDK_PEP_LATE_SELECTION                 ON_RDK_PEP_TYPE_LATE  ON_RDK_PEP_SELECTION_POSTFIX
 
     #define ON_RDK_RENDERING                          L"rendering"
 
@@ -69,19 +71,20 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
           #define ON_RDK_RCH_MODE_AUTOMATIC                 L"automatic"
           #define ON_RDK_RCH_MODE_CUSTOM                    L"custom"
 
-      #define ON_RDK_CURRENT_PRESET                     L"current-preset"
+      #define ON_RDK_CURRENT_RENDER_PRESET              L"current-preset"
       #define ON_RDK_EMBED_SUPPORT_FILES_ON             L"embed-support-files-on"
-      #define ON_RDK_GAMMA                              L"gamma"
-      #define ON_RDK_USE_DITHERING                      L"use-dithering"
-      #define ON_RDK_USE_POST_PROCESS_GAMMA             L"use-post-process-gamma"
-      #define ON_RDK_USE_LINEAR_WORKFLOW                L"use-linear-workflow"
+
+      #define ON_RDK_DITHERING_ON                       L"use-dithering"
+      #define ON_RDK_DITHERING_METHOD                   L"dithering"
+        #define ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG   L"floyd-steinberg"
+        #define ON_RDK_DITHERING_METHOD_SIMPLE_NOISE      L"simple-noise"
+
+      #define ON_RDK_PRE_PROCESS_GAMMA_ON               L"use-linear-workflow"
+      #define ON_RDK_POST_PROCESS_GAMMA_ON              L"use-post-process-gamma"
+      #define ON_RDK_POST_PROCESS_GAMMA                 L"gamma" // Keep original XML tag.
 
       #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON   L"custom-env-for-refl-and-refr-on"
         #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT      L"custom-env-for-refl-and-refr"
-
-      #define ON_RDK_DITHERING                          L"dithering"
-        #define ON_RDK_DITHERING_FLOYD_STEINBERG          L"floyd-steinberg"
-        #define ON_RDK_DITHERING_SIMPLE_NOISE             L"simple-noise"
 
     #define ON_RDK_SUN                                L"sun"
       #define ON_RDK_SUN_ENABLE_ALLOWED                 L"enable-allowed"
@@ -102,15 +105,15 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_SUN_OBSERVER_TIMEZONE              L"observer-timezone"
       #define ON_RDK_SUN_SKYLIGHT_ON                    L"skylight-on"
       #define ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY      L"skylight-shadow-intensity"
-      #define ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON L"skylight-custom-environment-on"
-      #define ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT    L"skylight-custom-environment"
+      #define ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE  L"skylight-custom-environment-on"
+      #define ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID        L"skylight-custom-environment"
       #define ON_RDK_SUN_SHADOW_INTENSITY               L"shadow-intensity"
       #define ON_RDK_SUN_INTENSITY                      L"intensity"
 
     #define ON_RDK_SAFE_FRAME                         L"safe-frame"
       #define ON_RDK_SF_ON                              L"on"
       #define ON_RDK_SF_PERSPECTIVE_ONLY                L"perspective-only"
-      #define ON_RDK_SF_4x3_FIELD_DISPLAY_ON            L"field-display-on"
+      #define ON_RDK_SF_4x3_FIELD_GRID_ON               L"field-display-on"
       #define ON_RDK_SF_LIVE_FRAME                      L"live-frame"
       #define ON_RDK_SF_ACTION_FRAME                    L"action-frame"
       #define ON_RDK_SF_TITLE_FRAME                     L"title-frame"
@@ -120,22 +123,22 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
         #define ON_RDK_SFF_LINK                           L"link"
 
     #define ON_RDK_GROUND_PLANE                       L"ground-plane"
-      #define ON_RDK_GP_ON                              L"on"
-      #define ON_RDK_GP_ALTITUDE                        L"altitude"
-      #define ON_RDK_GP_MATERIAL                        L"material"
-      #define ON_RDK_GP_TEXTURE_OFFSET                  L"texture-offset"
-      #define ON_RDK_GP_TEXTURE_SIZE                    L"texture-size"
-      #define ON_RDK_GP_TEXTURE_ROTATION                L"texture-rotation"
-      #define ON_RDK_GP_OFFSET_LOCK                     L"offset-lock"
-      #define ON_RDK_GP_REPEAT_LOCK                     L"repeat-lock"
-      #define ON_RDK_GP_SHOW_UNDERSIDE                  L"show-underside"
-      #define ON_RDK_GP_AUTO_ALTITUDE                   L"auto-altitude"
-      #define ON_RDK_GP_SHADOW_ONLY                     L"shadow-only"
+     #define ON_RDK_GP_ON                               L"on"
+     #define ON_RDK_GP_ALTITUDE                         L"altitude"
+     #define ON_RDK_GP_AUTO_ALTITUDE                    L"auto-altitude"
+     #define ON_RDK_GP_SHOW_UNDERSIDE                   L"show-underside"
+     #define ON_RDK_GP_SHADOW_ONLY                      L"shadow-only"
+     #define ON_RDK_GP_MATERIAL_ID                      L"material"
+     #define ON_RDK_GP_TEXTURE_OFFSET                   L"texture-offset"
+     #define ON_RDK_GP_TEXTURE_OFFSET_LOCKED            L"offset-lock" // Keep old string.
+     #define ON_RDK_GP_TEXTURE_SIZE                     L"texture-size"
+     #define ON_RDK_GP_TEXTURE_SIZE_LOCKED              L"repeat-lock" // Keep old string.
+     #define ON_RDK_GP_TEXTURE_ROTATION                 L"texture-rotation"
 
 #define ON_RDK_POSTFIX_SECTION  L"-section"
 #define ON_RDK_SLASH            L"/"
 
-class ON_CLASS ON_XMLVariant final
+class ON_CLASS ON_XMLVariant
 {
 public:
   enum class Types : unsigned int
@@ -170,65 +173,65 @@ public:
   ON_XMLVariant(const void* buffer, size_t size);
   ON_XMLVariant(const ON_Buffer& buffer);
   ON_XMLVariant(const ON_XMLVariant& src);
-  ~ON_XMLVariant();
+  virtual ~ON_XMLVariant();
 
   const ON_XMLVariant& operator = (const ON_XMLVariant& src);
 
   bool operator == (const ON_XMLVariant& v) const;
   bool operator != (const ON_XMLVariant& v) const;
 
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
 public:
-  Types Type(void) const;
-  ON_wString TypeAsString(void) const;
-  bool IsEmpty(void) const;
-  bool IsNull(void) const;
+  virtual Types Type(void) const;
+  virtual ON_wString TypeAsString(void) const;
+  virtual bool IsEmpty(void) const;
+  virtual bool IsNull(void) const;
 
-  ON::LengthUnitSystem Units(void) const;
-  void SetUnits(ON::LengthUnitSystem units);
+  virtual ON::LengthUnitSystem Units(void) const;
+  virtual void SetUnits(ON::LengthUnitSystem units);
 
   // Optimized version of ON_wString::NeedsXMLEncode(). Always use this if possible
   // because it knows from the type of the variant whether entity ref encoded output is even possible.
-  bool NeedsXMLEncode(void) const;
+  virtual bool NeedsXMLEncode(void) const;
 
-  ON_Buffer& GetBuffer(void) const;
-  void ClearBuffers(void);
+  virtual ON_Buffer& GetBuffer(void) const;
+  virtual void ClearBuffers(void);
 
 public:
-  void SetNull(void);
-  void SetValue(int v);
-  void SetValue(double v);
-  void SetValue(float v);
-  void SetValue(const wchar_t* s);
-  void SetValue(const ON_wString& s);
-  void SetValue(const double* p, ArrayTypes at);
-  void SetValue(const float* p, ArrayTypes at);
-  void SetValue(const ON_2dPoint& p);
-  void SetValue(const ON_3dPoint& p);
-  void SetValue(const ON_4dPoint& p);
-  void SetValue(const ON_4fColor& c);
-  void SetValue(bool b);
-  void SetValue(time_t time);
-  void SetValue(const ON_UUID& uuid);
-  void SetValue(const ON_Xform& xform);
-  void SetValue(const void* buffer, size_t size);
-  void SetValue(const ON_Buffer& buffer);
+  virtual void SetNull(void);
+  virtual void SetValue(int v);
+  virtual void SetValue(double v);
+  virtual void SetValue(float v);
+  virtual void SetValue(const wchar_t* s);
+  virtual void SetValue(const ON_wString& s);
+  virtual void SetValue(const double* p, ArrayTypes at);
+  virtual void SetValue(const float* p, ArrayTypes at);
+  virtual void SetValue(const ON_2dPoint& p);
+  virtual void SetValue(const ON_3dPoint& p);
+  virtual void SetValue(const ON_4dPoint& p);
+  virtual void SetValue(const ON_4fColor& c);
+  virtual void SetValue(bool b);
+  virtual void SetValue(time_t time);
+  virtual void SetValue(const ON_UUID& uuid);
+  virtual void SetValue(const ON_Xform& xform);
+  virtual void SetValue(const void* buffer, size_t size);
+  virtual void SetValue(const ON_Buffer& buffer);
 
-  bool       AsBool(void) const;
-  int        AsInteger(void) const;
-  double     AsDouble(void) const;
-  float      AsFloat(void) const;
-  ON_2dPoint As2dPoint(void) const;
-  ON_3dPoint As3dPoint(void) const;
-  ON_4dPoint As4dPoint(void) const;
-  ON_UUID    AsUuid(void) const;
-  ON_Xform   AsXform(void) const;
-  time_t     AsTime(void) const;
-  ON_4fColor AsColor(void) const;
-  ON_Buffer  AsBuffer(void) const;
-  void*      AsBuffer(size_t& size_out) const;
-  ON_wString AsString(void) const;
+  virtual bool       AsBool(void) const;
+  virtual int        AsInteger(void) const;
+  virtual double     AsDouble(void) const;
+  virtual float      AsFloat(void) const;
+  virtual ON_2dPoint As2dPoint(void) const;
+  virtual ON_3dPoint As3dPoint(void) const;
+  virtual ON_4dPoint As4dPoint(void) const;
+  virtual ON_UUID    AsUuid(void) const;
+  virtual ON_Xform   AsXform(void) const;
+  virtual time_t     AsTime(void) const;
+  virtual ON_4fColor AsColor(void) const;
+  virtual ON_Buffer  AsBuffer(void) const;
+  virtual void*      AsBuffer(size_t& size_out) const;
+  virtual ON_wString AsString(void) const;
 
   operator bool() const;
   operator double() const;
@@ -243,17 +246,15 @@ public:
   operator ON_Buffer() const;
   operator ON_wString() const;
 
-  void DoAutoTyping(Types t) const;
-
 public:
-  bool TypePending(void) const;
-  void SetTypePendingFlag(bool bTypePending) const;
+  virtual bool TypePending(void) const;
+  virtual void SetTypePendingFlag(bool bTypePending) const;
 
   // Format string as type and value. Useful for debugging.
-  void Format(ON_wString& s) const;
+  virtual void Format(ON_wString& s) const;
 
 protected:
-  void StringToPoint(int iValues) const;
+  virtual void StringToPoint(int iValues) const;
 
 private:
   class CImpl;
@@ -261,34 +262,36 @@ private:
   ON__UINT8 m_Impl[176];
 };
 
-class ON_CLASS ON_XMLProperty final
+class ON_CLASS ON_XMLProperty
 {
 public:
   ON_XMLProperty();
   ON_XMLProperty(const ON_XMLVariant& value);
   ON_XMLProperty(const ON_wString& sName, const ON_XMLVariant& value);
   ON_XMLProperty(const ON_XMLProperty& prop);
-  ~ON_XMLProperty();
+  virtual ~ON_XMLProperty();
 
   const ON_XMLProperty& operator = (const ON_XMLProperty& prop);
 
-  const ON_wString& Name(void) const;
-  void SetName(const wchar_t* name);
+  virtual const ON_wString& Name(void) const;
+  virtual void SetName(const wchar_t* name);
 
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
-  ON_XMLProperty* Next(void) const;
+  virtual ON_XMLProperty* Next(void) const;
 
-  bool IsDefaultProperty(void) const;
+  virtual bool IsDefaultProperty(void) const;
 
-  const ON_XMLVariant& GetValue(void) const;
-  void SetValue(const ON_XMLVariant& value);
+  virtual const ON_XMLVariant& GetValue(void) const;
+  virtual void SetValue(const ON_XMLVariant& value);
 
   bool operator < (const ON_XMLProperty& prop) const;
 
-  ON_XMLVariant& GetNonConstValue(void);
+  virtual ON_XMLVariant& GetNonConstValue(void);
 
-  void SetHugeStringValue(const ON_wString& s);
+  virtual void SetHugeStringValue(const ON_wString& s);
+
+  virtual void* EVF(const wchar_t* func, void* data);
 
 private:
   class CImpl;
@@ -305,9 +308,9 @@ public:
   ON_XMLSegmentedStream();
   virtual ~ON_XMLSegmentedStream();
 
-  int  Count(void) const;
-  void Append(wchar_t* s);
-  wchar_t* Segment(int index) const;
+  virtual int Count(void) const;
+  virtual void Append(wchar_t* s);
+  virtual wchar_t* Segment(int index) const;
 
 protected:
   // Emergency virtual function for future expansion.
@@ -332,10 +335,13 @@ public:
 
   const ON_XMLNode& operator = (const ON_XMLNode&);
 
-  bool MergeFrom(const ON_XMLNode& src); // src node must have the same name
+  bool operator == (const ON_XMLNode&) const;
+  bool operator != (const ON_XMLNode&) const;
 
-  const ON_wString& TagName(void) const;
-  void SetTagName(const wchar_t* name);
+  virtual bool MergeFrom(const ON_XMLNode& src); // src node must have the same name
+
+  virtual const ON_wString& TagName(void) const;
+  virtual void SetTagName(const wchar_t* name);
 
   static bool IsValidXMLNameWithDebugging(const wchar_t* name);
   static bool IsValidXMLName(const wchar_t* name);
@@ -343,81 +349,80 @@ public:
 
 public: // Hierarchy.
   // Get the first child of this node or null if none.
-  ON_XMLNode* FirstChild(void) const;
+  virtual ON_XMLNode* FirstChild(void) const;
 
   // Get the previous sibling of this node or null if none.
-  ON_XMLNode* PrevSibling(void) const;
+  virtual ON_XMLNode* PrevSibling(void) const;
 
   // Get the next sibling of this node or null if none.
-  ON_XMLNode* NextSibling(void) const;
+  virtual ON_XMLNode* NextSibling(void) const;
 
   // Get the parent of this node or null if none.
-  ON_XMLNode* GetParent(void) const;
+  virtual ON_XMLNode* Parent(void) const;
 
-  // Get the topmost parent of this node or null if none.
-  const ON_XMLNode& TopmostParent(void) const;
+  // Get the top-level parent of this node.
+  virtual const ON_XMLNode& TopLevel(void) const;
 
   // Recursively iterate over the children of this node, calling the supplied callback function for each child.
   // If the callback function returns false, this function will fail.
   // Returns true if successful, false on failure.
-  bool RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* data) const;
+  virtual bool RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* data) const;
 
 public: // Change data.
   // Adds a node as a child of this node. Takes ownership of node.
   // Returns a pointer to node for convenience.
-  ON_XMLNode* AttachChildNode(ON_XMLNode* node);
-
-  // DEPRECATED, use AttachChildNode()
-  ON_DEPRECATED ON_XMLNode* AddChildNode(ON_XMLNode* node);
+  virtual ON_XMLNode* AttachChildNode(ON_XMLNode* node);
 
   // Attaches a property directly to the node. Takes ownership of the property.
-  // Returns a pointer to the copy of the property.
-  ON_XMLProperty* AttachProperty(ON_XMLProperty* prop);
+  // Any existing property with the same name is first deleted.
+  // For convenience, returns a pointer to the input property.
+  virtual ON_XMLProperty* AttachProperty(ON_XMLProperty* prop);
 
-  // Adds a property to the node. The property object is copied and ownership remains with the caller.
+  // Sets a property on the node. The property is copied and ownership of it remains with the caller.
+  // Any existing property with the same name is first deleted.
   // Returns a pointer to the copy of the property.
-  ON_XMLProperty* AddProperty(const ON_XMLProperty& prop);
+  virtual ON_XMLProperty* SetProperty(const ON_XMLProperty& prop);
 
   // Removes and deletes this node.
-  void Remove(void);
+  virtual void Remove(void);
 
   // Removes and deletes the child node, if possible.
   // Returns true if successful, else false.
-  bool RemoveChild(ON_XMLNode* child);
+  virtual bool RemoveChild(ON_XMLNode* child);
 
   // Removes and deletes the named property, if possible.
   // Returns true if successful, else false.
-  bool RemoveProperty(const wchar_t* prop_name);
+  virtual bool RemoveProperty(const wchar_t* prop_name);
 
   // Removes the child node and passes ownership to the caller.
   // Returns the detached node or null on failure.
-  ON_XMLNode* DetachChild(ON_XMLNode& child);
+  virtual ON_XMLNode* DetachChild(ON_XMLNode& child);
 
   // Removes and deletes all child nodes.
-  void RemoveAllChildren(void);
+  virtual void RemoveAllChildren(void);
 
   // Removes and deletes all properties and adds an empty default property.
-  void RemoveAllProperties(void);
+  virtual void RemoveAllProperties(void);
 
   // Removes and deletes all child nodes and properties, and clears the tag name.
   virtual void Clear(void);
 
   // Moves this node before another node.
-  void MoveBefore(ON_XMLNode& other);
+  virtual void MoveBefore(ON_XMLNode& other);
 
   // Moves this node after another node.
-  void MoveAfter(ON_XMLNode& other);
+  virtual void MoveAfter(ON_XMLNode& other);
 
 public: // Serialization.
   static constexpr ON__UINT32 ReadError = 0xFFFFFFFF; // Indicates ReadFromStream() failure.
-  ON__UINT32 ReadFromStream(const wchar_t* buf, bool warnings_as_errors=false, bool validate_tags=true);
+  virtual ON__UINT32 ReadFromStream(const wchar_t* buf, bool warnings_as_errors=false, bool validate_tags=true);
 
-  void* LastReadBufferPointer(void) const;
+  virtual void* LastReadBufferPointer(void) const;
 
   // This function is called on the top-most node during the reading process.
   virtual void OnNodeReadFromStream(const ON_XMLNode* node) const;
 
-  ON_wString String(bool include_formatting=true, bool force_long_format=false, bool sorted_props=false) const;
+  virtual ON_wString String(bool include_formatting=true, bool force_long_format=false, bool sorted_props=false) const;
   operator ON_wString() const;
 
   // Writes the node to a wide buffer (AKA 'stream') as XML text.
@@ -425,7 +430,7 @@ public: // Serialization.
   // To find out how much space is needed without actually writing anything, pass zero.
   // When writing to the buffer, a terminator is written if there is room for it, but the
   // terminator is not included in the returned number of characters.
-  ON__UINT32 WriteToStream(wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
+  virtual ON__UINT32 WriteToStream(wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
 
   class ON_CLASS CharacterCounts
   {
@@ -444,35 +449,35 @@ public: // Serialization.
     ON__UINT64 m_reserved = 0;
   };
 
-  CharacterCounts WriteToStreamEx      (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
-  CharacterCounts WriteHeaderToStream  (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
-  CharacterCounts WriteChildrenToStream(wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
-  CharacterCounts WriteFooterToStream  (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false) const;
+  virtual CharacterCounts WriteToStreamEx      (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
+  virtual CharacterCounts WriteHeaderToStream  (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
+  virtual CharacterCounts WriteChildrenToStream(wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
+  virtual CharacterCounts WriteFooterToStream  (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false) const;
 
-  bool WriteToSegmentedStream(ON_XMLSegmentedStream& stream, bool include_formatting=true, bool force_long_format=false, bool sorted_props=false) const;
+  virtual bool WriteToSegmentedStream(ON_XMLSegmentedStream& stream, bool include_formatting=true, bool force_long_format=false, bool sorted_props=false) const;
 
 public: // Utilities.
-  int PropertyCount(void) const;
-  int ChildCount(void) const;
+  virtual int PropertyCount(void) const;
+  virtual int ChildCount(void) const;
 
-  int GetNestedDepth(void) const;
+  virtual int GetNestedDepth(void) const;
 
   // Get the CRC of this node. This assumes the node has the following format:
   // <node prop1=value1 prop2=value2 ... >
   //   <param-name><type="float">1.23456</param-name>
   //   ...
   // </node>
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
   // Use this when you are looking for a node that is only one child below - non-recursive, but fast.
-  ON_XMLNode* GetNamedChild(const wchar_t* name) const;
+  virtual ON_XMLNode* GetNamedChild(const wchar_t* name) const;
 
-  ON_XMLProperty* GetNamedProperty(const wchar_t* name) const;
+  virtual ON_XMLProperty* GetNamedProperty(const wchar_t* name) const;
 
-  ON_XMLProperty& GetDefaultProperty(void) const;
+  virtual ON_XMLProperty& GetDefaultProperty(void) const;
 
   // Returns the full path to this node.
-  ON_wString GetPathFromRoot(void) const;
+  virtual ON_wString GetPathFromRoot(void) const;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Gets at nodes deep into the tree using a slash-delimited path, i.e., "child/grandchild/great-grandchild".
@@ -482,12 +487,12 @@ public: // Utilities.
   // Gets a child node given the relative path from the current node. If the node does not exist, the method
   // returns null. The returned pointer should not be deleted by the caller. The child node is owned by its
   // immediate parent at that position in the node hierarchy.
-  ON_XMLNode* GetNodeAtPath(const wchar_t* path) const;
+  virtual ON_XMLNode* GetNodeAtPath(const wchar_t* path) const;
 
   // Gets a child node given the relative path from the current node. If the node does not exist, it is
   // created. This method should therefore never return null. The returned pointer should not be deleted
   // by the caller. The child node is owned by its immediate parent at that position in the node hierarchy.
-  ON_XMLNode* CreateNodeAtPath(const wchar_t* path);
+  virtual ON_XMLNode* CreateNodeAtPath(const wchar_t* path);
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -506,9 +511,6 @@ public: // Iteration.
     const ChildIterator& operator = (const ChildIterator& other);
 
     virtual ON_XMLNode* GetNextChild(void);
-
-  protected:
-    // Emergency virtual function for future expansion.
     virtual void* EVF(const wchar_t* func, void* data);
 
   private:
@@ -517,16 +519,17 @@ public: // Iteration.
     ON__UINT8 m_Impl[24];
   };
 
-  class ON_CLASS PropertyIterator final
+  class ON_CLASS PropertyIterator
   {
   public:
     PropertyIterator(const ON_XMLNode* parent, bool sorted = false);
     PropertyIterator(const PropertyIterator& other);
-    ~PropertyIterator();
-
-    ON_XMLProperty* GetNextProperty(void);
+    virtual ~PropertyIterator();
 
     const PropertyIterator& operator = (const PropertyIterator& other);
+
+    virtual ON_XMLProperty* GetNextProperty(void);
+    virtual void* EVF(const wchar_t* func, void* data);
 
   private:
     class CImpl;
@@ -534,14 +537,14 @@ public: // Iteration.
     ON__UINT8 m_Impl[64];
   };
 
-  ChildIterator GetChildIterator(void) const;
-  PropertyIterator GetPropertyIterator(bool alphabetized = false) const;
+  virtual ChildIterator GetChildIterator(void) const;
+  virtual PropertyIterator GetPropertyIterator(bool alphabetized = false) const;
 
   static bool AutoTypePropValue(void);
   static void SetAutoTypePropValue(bool b=true);
 
   // For internal use only.
-  void SetInternalDebuggingFlags(ON__UINT64);
+  virtual void SetInternalDebuggingFlags(ON__UINT64);
 
 private:
   class CImpl;
@@ -554,16 +557,18 @@ class ON_CLASS ON_XMLRootNode : public ON_XMLNode
 {
 public:
   ON_XMLRootNode();
-  ON_XMLRootNode(const ON_XMLRootNode&);
+  ON_XMLRootNode(const ON_XMLNode& node);
+  ON_XMLRootNode(const ON_XMLRootNode& root);
   virtual ~ON_XMLRootNode();
 
-  const ON_XMLRootNode& operator = (const ON_XMLRootNode&);
+  const ON_XMLRootNode& operator = (const ON_XMLNode& node);
+  const ON_XMLRootNode& operator = (const ON_XMLRootNode& root);
 
-  const ON_XMLRootNode& NodeForRead(void) const;
-  ON_XMLRootNode& NodeForWrite(void);
+  virtual const ON_XMLRootNode& NodeForRead(void) const;
+  virtual ON_XMLRootNode& NodeForWrite(void);
 
-  bool ReadFromFile(const wchar_t* path, bool warnings_as_errors=false, bool validate_tags=true);
-  bool WriteToFile (const wchar_t* path, bool include_formatting=true, bool utf8=false, bool sorted_properties=false) const;
+  virtual bool ReadFromFile(const wchar_t* path, bool warnings_as_errors=false, bool validate_tags=true);
+  virtual bool WriteToFile (const wchar_t* path, bool include_formatting=true, bool utf8=false, bool sorted_properties=false) const;
 
   virtual void Clear(void) override;
 
@@ -583,19 +588,18 @@ public:
 
   const ON_XMLUserData& operator = (const ON_XMLUserData& ud);
 
-  const ON_XMLRootNode& XMLRootForRead(void) const;
-  ON_XMLRootNode& XMLRootForWrite(void) const;
+  virtual const ON_XMLRootNode& XMLRootForRead(void) const;
+  virtual ON_XMLRootNode& XMLRootForWrite(void) const;
 
-  ON_XMLProperty* Property(const wchar_t* xml_path, const wchar_t* prop_name) const;
+  virtual ON_XMLProperty* Property(const wchar_t* xml_path, const wchar_t* prop_name) const;
 
-  ON_XMLVariant Value(const wchar_t* xml_path, const wchar_t* prop_name = L"") const;
-  bool SetValue(const wchar_t* xml_path, const wchar_t* prop_name, const ON_XMLVariant& value);
-  void SetValue(const wchar_t* xml_path, const ON_XMLVariant& value);
+  virtual ON_XMLVariant Value(const wchar_t* xml_path, const wchar_t* prop_name = L"") const;
+  virtual bool SetValue(const wchar_t* xml_path, const wchar_t* prop_name, const ON_XMLVariant& value);
+  virtual void SetValue(const wchar_t* xml_path, const ON_XMLVariant& value);
 
-  void Clear(void) const;
+  virtual void Clear(void) const;
 
-  int Version(void) const;
-  void _Dump(const wchar_t* wszFileName) const;
+  virtual int Version(void) const;
 
   virtual bool Archive(void) const override;
 
@@ -605,15 +609,16 @@ public:
   virtual bool Write(ON_BinaryArchive&) const override;
   virtual bool Read(ON_BinaryArchive&) override;
 
-protected:
+  virtual void _Dump(const wchar_t* wszFileName) const;
+
   // Emergency virtual function for future expansion.
-  virtual void* EVF(const wchar_t* wszFunc, void* pvData);
+  virtual void* EVF(const wchar_t* func, void* data);
 
 protected:
   ON_XMLProperty* InternalProperty(const wchar_t* xml_path, const wchar_t* prop_name) const;
 
 public:
-  void SetToDefaultsImpl(int) const;
+  virtual void SetToDefaultsImpl(int) const;
 
 private:
   class CImpl;
@@ -632,14 +637,21 @@ public:
 
   const ON_XMLParameters& operator = (const ON_XMLParameters&) = delete;
 
-  void SetWriteTypeProperty(bool b);
-  void SetDefaultReadType(const wchar_t* type);
+  virtual void SetWriteTypeProperty(bool b);
+  virtual void SetDefaultReadType(const wchar_t* type);
 
   virtual ON_wString AsString(void) const;
   virtual void SetAsString(const wchar_t* s);
 
-  virtual ON_XMLNode* SetParam(const wchar_t* param_name, const ON_XMLVariant& param_value);
   virtual bool GetParam(const wchar_t* param_name, ON_XMLVariant& param_value_out) const;
+  virtual ON_XMLNode* SetParam(const wchar_t* param_name, const ON_XMLVariant& param_value);
+
+  // Easy-to-use helper function. Returns 'default_value' if param is not found.
+  ON_XMLVariant GetParam(const wchar_t* param_name, const ON_XMLVariant& default_value) const;
+
+  // Expert access to the underlying XML node.
+        ON_XMLNode& Node(void);
+  const ON_XMLNode& Node(void) const;
 
   class ON_CLASS CIterator
   {
@@ -659,7 +671,6 @@ public:
   CIterator* NewIterator(void) const;
 
 protected:
-  const ON_XMLNode& Node(void) const;
   virtual bool GetParamNode(const ON_XMLNode& node, ON_XMLVariant& param_value) const;
   virtual void* EVF(const wchar_t*, void*);
   virtual ON_XMLNode* SetParamNode(ON_XMLNode& node, const wchar_t* param_name, const ON_XMLVariant& param_value);
@@ -675,15 +686,15 @@ class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters
 public:
   ON_XMLParametersV8(ON_XMLNode& node);
   ON_XMLParametersV8(const ON_XMLNode& node);
+  ON_XMLParametersV8(const ON_XMLParametersV8&) = delete;
+
+  const ON_XMLParametersV8& operator = (const ON_XMLParametersV8&) = delete;
 
   virtual bool GetParam(const wchar_t* param_name, ON_XMLVariant& param_value_out) const override;
 
-  ON_XMLParametersV8(const ON_XMLParametersV8&) = delete;
-  const ON_XMLParametersV8& operator = (const ON_XMLParametersV8&) = delete;
-
 protected:
   virtual ON_XMLNode* ObtainChildNodeForWrite(ON_XMLNode& node, const wchar_t* param_name) const override;
-  ON_XMLNode* FindNodeByNameProperty(const wchar_t* param_name) const;
+  virtual ON_XMLNode* FindNodeByNameProperty(const wchar_t* param_name) const;
 };
 
 ON_DECL bool ON_RunXMLTests(const wchar_t* test_folder);
@@ -737,12 +748,15 @@ public:
 
   const ON_RdkDocumentDefaults& operator = (const ON_RdkDocumentDefaults&) = delete;
 
-  const ON_XMLNode& Node(void) const;
+  virtual const ON_XMLNode& Node(void) const;
 
-  void CopyDefaultsTo(ON_XMLNode& dest) const;
+  virtual void CopyDefaultsTo(ON_XMLNode& dest) const;
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
 
 private:
-  void CreateXML(void);
+  virtual void CreateXML(void);
 
 private:
   ON_XMLRootNode _root;
@@ -751,5 +765,8 @@ private:
   void* _reserved;
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern ON_DECL ON_UUID ON_UuidDefaultMaterialInstance;
+extern ON_DECL ON_UUID ON_UuidDefaultEnvironmentInstance;
 
 #endif

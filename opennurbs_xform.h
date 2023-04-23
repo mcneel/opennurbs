@@ -1793,7 +1793,7 @@ public:
   bool IsNotSet() const;
 
   ON_3dPoint m_point = ON_3dPoint::UnsetPoint;
-  double m_t[4]; // parameters (unused values are set to ON_UNSET_VALUE)
+  double m_t[4] = {}; // parameters (When m_point is set, unused values are set to ON_UNSET_VALUE.)
   double m_depth = ON_UNSET_VALUE;  // larger values are in front of smaller values.
   double m_distance = 1.0e300; // smaller values are closer to pick ray.
 };

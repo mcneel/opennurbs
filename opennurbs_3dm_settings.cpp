@@ -704,7 +704,11 @@ bool ON_3dmUnitsAndTolerances::IsValid() const
 {
   for (;;)
   {
-    if (!(m_distance_display_precision >= 0 && m_distance_display_precision <= 7))
+    // April 17, 2023 - Tim
+    // Changed upper limit to 8 so we can use the display precision
+    // stuff found in the annotation code for V8
+    // Fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-74242
+    if (!(m_distance_display_precision >= 0 && m_distance_display_precision <= 8))
       break;
 
     if (!((int)m_distance_display_mode >= 0 && (int)m_distance_display_mode <= 3))
@@ -768,7 +772,11 @@ int ON_3dmUnitsAndTolerances::DistanceDisplayPrecision() const
 
 void ON_3dmUnitsAndTolerances::SetDistanceDisplayPrecision(int distance_display_precision)
 {
-  if (distance_display_precision >= 0 && distance_display_precision <= 7)
+  // April 17, 2023 - Tim
+  // Changed upper limit to 8 so we can use the display precision
+  // stuff found in the annotation code for V8
+  // Fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-74242
+  if (distance_display_precision >= 0 && distance_display_precision <= 8)
     m_distance_display_precision = distance_display_precision;
 }
 
@@ -821,17 +829,6 @@ unsigned int ON_3dmUnitsAndTolerances::SetInvalidTolerancesToDefaultValues()
 // ON_3dmRenderSettings
 //
 
-// This is inside the 'current content' section.
-#define ON_RENDER_BACKGROUND_ENVIRONMENT              L"environment"
-
-// These are inside the 'rendering' section.
-#define ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON    L"custom-env-for-refl-and-refr-on"
-#define ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT       L"custom-env-for-refl-and-refr"
-
-// These are inside the 'sun' section.
-#define ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON  L"skylight-custom-environment-on"
-#define ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT     L"skylight-custom-environment"
-
 static const wchar_t* XMLPathBack360(void) // Not used for 'override'.
 {
   return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_CURRENT_CONTENT;
@@ -847,109 +844,115 @@ static const wchar_t* XMLPathSkylight(void)
   return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
 }
 
-ON_EnvironmentsPrivate::ON_EnvironmentsPrivate(const ON_EnvironmentsPrivate& ei)
+ON_EnvironmentsImpl::ON_EnvironmentsImpl(const ON_EnvironmentsImpl& ei)
 {
   operator = (ei);
 }
 
-ON_EnvironmentsPrivate& ON_EnvironmentsPrivate::operator = (const ON_EnvironmentsPrivate& ep)
+ON_EnvironmentsImpl& ON_EnvironmentsImpl::operator = (const ON_EnvironmentsImpl& ep)
 {
   if (this != &ep)
   {
-    SetBackgroundRenderEnvironment         (ep.BackgroundRenderEnvironment());
+    SetBackgroundRenderEnvironmentId       (ep.BackgroundRenderEnvironmentId());
     SetSkylightingRenderEnvironmentOverride(ep.SkylightingRenderEnvironmentOverride());
-    SetSkylightingRenderEnvironment        (ep.SkylightingRenderEnvironment());
+    SetSkylightingRenderEnvironmentId      (ep.SkylightingRenderEnvironmentId());
     SetReflectionRenderEnvironmentOverride (ep.ReflectionRenderEnvironmentOverride());
-    SetReflectionRenderEnvironment         (ep.ReflectionRenderEnvironment());
+    SetReflectionRenderEnvironmentId       (ep.ReflectionRenderEnvironmentId());
   }
 
   return *this;
 }
 
-bool ON_EnvironmentsPrivate::operator == (const ON_EnvironmentsPrivate& ep)
+bool ON_EnvironmentsImpl::operator == (const ON_EnvironmentsImpl& ep)
 {
-  if (BackgroundRenderEnvironment()          != ep.BackgroundRenderEnvironment())          return false;
+  if (BackgroundRenderEnvironmentId()        != ep.BackgroundRenderEnvironmentId())        return false;
   if (SkylightingRenderEnvironmentOverride() != ep.SkylightingRenderEnvironmentOverride()) return false;
-  if (SkylightingRenderEnvironment()         != ep.SkylightingRenderEnvironment())         return false;
+  if (SkylightingRenderEnvironmentId()       != ep.SkylightingRenderEnvironmentId())       return false;
   if (ReflectionRenderEnvironmentOverride()  != ep.ReflectionRenderEnvironmentOverride())  return false;
-  if (ReflectionRenderEnvironment()          != ep.ReflectionRenderEnvironment())          return false;
+  if (ReflectionRenderEnvironmentId()        != ep.ReflectionRenderEnvironmentId())        return false;
 
   return true;
 }
 
-ON_UUID ON_EnvironmentsPrivate::BackgroundRenderEnvironment(void) const
+ON_UUID ON_EnvironmentsImpl::BackgroundRenderEnvironmentId(void) const
 {
-  const wchar_t* s = ON_RENDER_BACKGROUND_ENVIRONMENT;
-  return GetParameter_NoType(XMLPathBack360(), s, L"uuid", ON_nil_uuid).AsUuid();
+  return GetParameter_NoType(XMLPathBack360(), ON_RDK_BACKGROUND_ENVIRONMENT, L"uuid", ON_nil_uuid).AsUuid();
 }
 
-void ON_EnvironmentsPrivate::SetBackgroundRenderEnvironment(const ON_UUID& id)
+void ON_EnvironmentsImpl::SetBackgroundRenderEnvironmentId(const ON_UUID& id)
 {
-  const wchar_t* s = ON_RENDER_BACKGROUND_ENVIRONMENT;
-  SetParameter_NoType(XMLPathBack360(), s, id);
+  SetParameter_NoType(XMLPathBack360(), ON_RDK_BACKGROUND_ENVIRONMENT, id);
 }
 
-bool ON_EnvironmentsPrivate::SkylightingRenderEnvironmentOverride(void) const
+bool ON_EnvironmentsImpl::SkylightingRenderEnvironmentOverride(void) const
 {
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON;
-  return GetParameter(XMLPathSkylight(), s, false);
+  return GetParameter(XMLPathSkylight(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, false);
 }
 
-void ON_EnvironmentsPrivate::SetSkylightingRenderEnvironmentOverride(bool on)
+void ON_EnvironmentsImpl::SetSkylightingRenderEnvironmentOverride(bool on)
 {
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON;
-  SetParameter(XMLPathSkylight(), s, on);
+  SetParameter(XMLPathSkylight(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, on);
 }
 
-ON_UUID ON_EnvironmentsPrivate::SkylightingRenderEnvironment(void) const
+ON_UUID ON_EnvironmentsImpl::SkylightingRenderEnvironmentId(void) const
 {
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT;
-  return GetParameter_NoType(XMLPathSkylight(), s, L"uuid", ON_nil_uuid).AsUuid();
+  return GetParameter_NoType(XMLPathSkylight(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, L"uuid", ON_nil_uuid).AsUuid();
 }
 
-void ON_EnvironmentsPrivate::SetSkylightingRenderEnvironment(const ON_UUID& id)
+void ON_EnvironmentsImpl::SetSkylightingRenderEnvironmentId(const ON_UUID& id)
 {
-  const wchar_t* s = ON_RENDER_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT;
-  SetParameter_NoType(XMLPathSkylight(), s, id);
+  SetParameter_NoType(XMLPathSkylight(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, id);
 }
 
-bool ON_EnvironmentsPrivate::ReflectionRenderEnvironmentOverride(void) const
+bool ON_EnvironmentsImpl::ReflectionRenderEnvironmentOverride(void) const
 {
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON;
-  return GetParameter(XMLPathReflRefr(), s, false);
+  return GetParameter(XMLPathReflRefr(), ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
 }
 
-void ON_EnvironmentsPrivate::SetReflectionRenderEnvironmentOverride(bool on)
+void ON_EnvironmentsImpl::SetReflectionRenderEnvironmentOverride(bool on)
 {
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT_ON;
-  SetParameter(XMLPathReflRefr(), s, on);
+  SetParameter(XMLPathReflRefr(), ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, on);
 }
 
-ON_UUID ON_EnvironmentsPrivate::ReflectionRenderEnvironment(void) const
+ON_UUID ON_EnvironmentsImpl::ReflectionRenderEnvironmentId(void) const
 {
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT;
-  return GetParameter_NoType(XMLPathReflRefr(), s, L"uuid", ON_nil_uuid).AsUuid();
+  return GetParameter_NoType(XMLPathReflRefr(), ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, L"uuid", ON_nil_uuid).AsUuid();
 }
 
-void ON_EnvironmentsPrivate::SetReflectionRenderEnvironment(const ON_UUID& id)
+void ON_EnvironmentsImpl::SetReflectionRenderEnvironmentId(const ON_UUID& id)
 {
-  const wchar_t* s = ON_RENDER_CUSTOM_REFLECTIVE_ENVIRONMENT;
-  SetParameter_NoType(XMLPathReflRefr(), s, id);
+  SetParameter_NoType(XMLPathReflRefr(), ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, id);
 }
 
 ON_OBJECT_IMPLEMENT(ON_3dmRenderSettings, ON_Object, "58A5953A-57C5-4FD3-84F5-7D4240478D15");
 
-ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate()
-  :
-  _dithering      (_rdk_document_data),
-  _ground_plane   (_rdk_document_data),
-  _linear_workflow(_rdk_document_data),
-  _render_channels(_rdk_document_data),
-  _safe_frame     (_rdk_document_data),
-  _skylight       (_rdk_document_data),
-  _sun            (_rdk_document_data),
-  _environments   (_rdk_document_data)
+ON_DECL ON_XMLNode& ON_GetRdkDocNode(const ON_3dmRenderSettings& rs)
 {
+  return ON_3dmRenderSettingsPrivate::Get(rs)._rdk_document_data;
+}
+
+ON_DECL ON__UINT_PTR ON_GetDocumentObjectSpecializer(const ON_3dmRenderSettings& rs)
+{
+  return ON__UINT_PTR(&ON_3dmRenderSettingsPrivate::Get(rs));
+}
+
+ON_DECL void ON_SpecializeDocumentObjects(ON__UINT_PTR specializer,
+             ON_GroundPlane& gp, ON_LinearWorkflow& lw, ON_SunEx& sun)
+{
+  auto* priv = reinterpret_cast<ON_3dmRenderSettingsPrivate*>(specializer);
+  ON_ASSERT(nullptr != priv);
+  if (nullptr != priv)
+  {
+    priv->SpecializeGroundPlane(gp);
+    priv->SpecializeLinearWorkflow(lw);
+    priv->SpecializeSun(sun);
+  }
+}
+
+ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate()
+{
+  CreateDocumentObjects();
+
   // 26th January 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-71396
   // Populate the RDK document data with defaults. The previous fix for this did it in RdkDocNode()
   // which was the wrong place. We have to do it even if the RDK isn't being used.
@@ -958,35 +961,56 @@ ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate()
 }
 
 ON_3dmRenderSettingsPrivate::ON_3dmRenderSettingsPrivate(const ON_3dmRenderSettingsPrivate& p)
-  :
-  _dithering      (_rdk_document_data),
-  _ground_plane   (_rdk_document_data),
-  _linear_workflow(_rdk_document_data),
-  _render_channels(_rdk_document_data),
-  _safe_frame     (_rdk_document_data),
-  _skylight       (_rdk_document_data),
-  _sun            (_rdk_document_data),
-  _environments   (_rdk_document_data)
 {
+  CreateDocumentObjects();
   operator = (p);
+}
+
+ON_3dmRenderSettingsPrivate::~ON_3dmRenderSettingsPrivate()
+{
+  delete _ground_plane;
+  delete _dithering;
+  delete _safe_frame;
+  delete _skylight;
+  delete _linear_workflow;
+  delete _render_channels;
+  delete _sun;
+  delete _environments;
+  delete _post_effects;
 }
 
 const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (const ON_3dmRenderSettingsPrivate& p)
 {
   if (this != &p)
   {
-    // Copy the XML.
+    // Copy the entire document XML.
     _rdk_document_data = p._rdk_document_data;
 
-    // Check that all of the document objects now have matching properties.
-    ON_ASSERT(_dithering       == p._dithering);
-    ON_ASSERT(_ground_plane    == p._ground_plane);
-    ON_ASSERT(_linear_workflow == p._linear_workflow);
-    ON_ASSERT(_render_channels == p._render_channels);
-    ON_ASSERT(_safe_frame      == p._safe_frame);
-    ON_ASSERT(_skylight        == p._skylight);
-    ON_ASSERT(_sun             == p._sun);
-    ON_ASSERT(_environments    == p._environments);
+    // Invalidate any document object caches. The pointers to these objects are never null because
+    // they are created in every constructor. See CreateDocumentObjects().
+    // It's critical that the document objects do not get deleted or recreated here because there can be
+    // clients storing temporary pointers to them around this call. What's more, this function can never
+    // change the class of the document objects. For example, if the ground plane is a specialized one,
+    // it will always be the _same_ specialized one. They never get deleted during the lifetime of this.
+    _ground_plane   ->InvalidateCache();
+    _dithering      ->InvalidateCache();
+    _safe_frame     ->InvalidateCache();
+    _skylight       ->InvalidateCache();
+    _linear_workflow->InvalidateCache();
+    _render_channels->InvalidateCache();
+    _sun            ->InvalidateCache();
+    _post_effects   ->InvalidateCache();
+
+    // Check that all the document objects now have matching properties.
+    ON_ASSERT(*_ground_plane    == *p._ground_plane);
+    ON_ASSERT(*_dithering       == *p._dithering);
+    ON_ASSERT(*_safe_frame      == *p._safe_frame);
+    ON_ASSERT(*_skylight        == *p._skylight);
+    ON_ASSERT(*_linear_workflow == *p._linear_workflow);
+    ON_ASSERT(*_render_channels == *p._render_channels);
+    ON_ASSERT(*_sun             == *p._sun);
+    ON_ASSERT(*_environments    == *p._environments);
+    ON_ASSERT(*_post_effects    == *p._post_effects);
   }
 
   return *this;
@@ -999,6 +1023,28 @@ ON_3dmRenderSettings::~ON_3dmRenderSettings()
     delete m_private;
     m_private = nullptr;
   }
+}
+
+void ON_3dmRenderSettingsPrivate::CreateDocumentObjects(void)
+{
+  // This function must be called from every constructor.
+  _ground_plane    = new ON_GroundPlane     (_rdk_document_data);
+  _dithering       = new ON_Dithering       (_rdk_document_data);
+  _safe_frame      = new ON_SafeFrame       (_rdk_document_data);
+  _skylight        = new ON_Skylight        (_rdk_document_data);
+  _linear_workflow = new ON_LinearWorkflow  (_rdk_document_data);
+  _render_channels = new ON_RenderChannels  (_rdk_document_data);
+  _sun             = new ON_SunEx           (_rdk_document_data);
+  _environments    = new ON_EnvironmentsImpl(_rdk_document_data);
+  _post_effects    = new ON_PostEffects     (_rdk_document_data);
+}
+
+ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::Get(const ON_3dmRenderSettings& rs)
+{
+  if (nullptr == rs.m_private)
+    rs.m_private = new ON_3dmRenderSettingsPrivate;
+
+  return *rs.m_private;
 }
 
 ON_3dmRenderSettings::ON_3dmRenderSettings(const ON_3dmRenderSettings& rs)
@@ -1093,6 +1139,51 @@ void ON_3dmRenderSettingsPrivate::SetToDefaults(void)
   dd.CopyDefaultsTo(_rdk_document_data);
 }
 
+void ON_3dmRenderSettingsPrivate::SpecializeGroundPlane(ON_GroundPlane& gp)
+{
+  // This is called from ON_SpecializeDocumentObjects() and is only called once during the lifetime of this.
+  ON_ASSERT(!_gp_specialized);
+
+  // Make the incoming object use the document data of this.
+  gp.SetXMLNode(_rdk_document_data);
+
+  // Replace the vanilla ground plane with the incoming object. This takes ownership of it.
+  delete _ground_plane;
+  _ground_plane = &gp;
+
+  _gp_specialized = true;
+}
+
+void ON_3dmRenderSettingsPrivate::SpecializeLinearWorkflow(ON_LinearWorkflow& lw)
+{
+  // This is called from ON_SpecializeDocumentObjects() and is only called once during the lifetime of this.
+  ON_ASSERT(!_lw_specialized);
+
+  // Make the incoming object use the document data of this.
+  lw.SetXMLNode(_rdk_document_data);
+
+  // Replace the vanilla linear workflow with the incoming object. This takes ownership of it.
+  delete _linear_workflow;
+  _linear_workflow = &lw;
+
+  _lw_specialized = true;
+}
+
+void ON_3dmRenderSettingsPrivate::SpecializeSun(ON_SunEx& sun)
+{
+  // This is called from ON_SpecializeDocumentObjects() and is only called once during the lifetime of this.
+  ON_ASSERT(!_sun_specialized);
+
+  // Make the incoming object use the document data of this.
+  sun.SetXMLNode(_rdk_document_data);
+
+  // Replace the vanilla sun with the incoming object. This takes ownership of it.
+  delete _sun;
+  _sun = &sun;
+
+  _sun_specialized = true;
+}
+
 void ON_3dmRenderSettings::Dump( ON_TextLog& text_log ) const
 {
   text_log.Print("m_bCustomImageSize = %s\n",m_bCustomImageSize?"true":"false");
@@ -1128,6 +1219,15 @@ void ON_3dmRenderSettings::Dump( ON_TextLog& text_log ) const
   text_log.Print(L"m_snapshot = %s\n", (const wchar_t*)m_snapshot);
 
   text_log.Print("m_bForceViewportAspectRatio = %s\n", m_bForceViewportAspectRatio ? "true" : "false");
+
+  // 19th April 2023 John Croudy. I thought it would be handy to add the RDK XML for debugging.
+  // I didn't know that the state of the text log is checked with a hash by the OpenNURBS tests.
+  // Since the RDK XML can change textually (e.g., different property order), the string is never
+  // guaranteed to be the same for the same actual XML state. Therefore, this broke the OpenNURBS tests.
+  //const auto& priv = ON_3dmRenderSettingsPrivate::Get(*this);
+  //const auto s = priv._rdk_document_data.NodeForRead().String();
+  //text_log.Print("RDK XML = ");
+  //text_log.PrintString(s);
 }
 
 bool ON_3dmRenderSettings::UseV5ReadWrite(const ON_BinaryArchive& file)
@@ -1518,189 +1618,322 @@ void ON_3dmRenderSettings::SetScaleBackgroundToFit( bool bScaleBackgroundToFit )
   m_bScaleBackgroundToFit = bScaleBackgroundToFit?true:false;
 }
 
-ON_SafeFrame& ON_3dmRenderSettings::SafeFrame(void) const
+ON_GroundPlane& ON_3dmRenderSettings::GroundPlane(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_safe_frame;
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_ground_plane);
+
+  return *m_private->_ground_plane;
 }
 
-ON_GroundPlane& ON_3dmRenderSettings::GroundPlane(void) const
+const ON_GroundPlane& ON_3dmRenderSettings::GroundPlane(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  return m_private->_ground_plane;
+  return const_cast<ON_3dmRenderSettings*>(this)->GroundPlane();
 }
 
-ON_LinearWorkflow& ON_3dmRenderSettings::LinearWorkflow(void) const
+ON_Dithering& ON_3dmRenderSettings::Dithering(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_linear_workflow;
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_dithering);
+
+  return *m_private->_dithering;
 }
 
-ON_Skylight& ON_3dmRenderSettings::Skylight(void) const
+const ON_Dithering& ON_3dmRenderSettings::Dithering(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  return m_private->_skylight;
+  return const_cast<ON_3dmRenderSettings*>(this)->Dithering();
 }
 
-ON_Sun& ON_3dmRenderSettings::Sun(void) const
+ON_SafeFrame& ON_3dmRenderSettings::SafeFrame(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_sun;
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_safe_frame);
+
+  return *m_private->_safe_frame;
 }
 
-ON_Dithering& ON_3dmRenderSettings::Dithering(void) const
+const ON_SafeFrame& ON_3dmRenderSettings::SafeFrame(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  return m_private->_dithering;
+  return const_cast<ON_3dmRenderSettings*>(this)->SafeFrame();
 }
 
-ON_RenderChannels& ON_3dmRenderSettings::RenderChannels(void) const
+ON_Skylight& ON_3dmRenderSettings::Skylight(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_render_channels;
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_skylight);
+
+  return *m_private->_skylight;
 }
 
-ON_XMLNode& ON_3dmRenderSettings::RdkDocNode(void) const
+const ON_Skylight& ON_3dmRenderSettings::Skylight(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  return m_private->_rdk_document_data;
+  return const_cast<ON_3dmRenderSettings*>(this)->Skylight();
 }
 
-ON_UUID ON_3dmRenderSettings::BackgroundRenderEnvironment(void) const
+ON_LinearWorkflow& ON_3dmRenderSettings::LinearWorkflow(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_environments.BackgroundRenderEnvironment();
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_linear_workflow);
+
+  return *m_private->_linear_workflow;
 }
 
-void ON_3dmRenderSettings::SetBackgroundRenderEnvironment(const ON_UUID& id)
+const ON_LinearWorkflow& ON_3dmRenderSettings::LinearWorkflow(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  m_private->_environments.SetBackgroundRenderEnvironment(id);
+  return const_cast<ON_3dmRenderSettings*>(this)->LinearWorkflow();
 }
 
-bool ON_3dmRenderSettings::SkylightingRenderEnvironmentOverride(void) const
+ON_RenderChannels& ON_3dmRenderSettings::RenderChannels(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_environments.SkylightingRenderEnvironmentOverride();
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_render_channels);
+
+  return *m_private->_render_channels;
 }
 
-void ON_3dmRenderSettings::SetSkylightingRenderEnvironmentOverride(bool on)
+const ON_RenderChannels& ON_3dmRenderSettings::RenderChannels(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  m_private->_environments.SetSkylightingRenderEnvironmentOverride(on);
+  return const_cast<ON_3dmRenderSettings*>(this)->RenderChannels();
 }
 
-ON_UUID ON_3dmRenderSettings::SkylightingRenderEnvironment(void) const
+ON_Sun& ON_3dmRenderSettings::Sun(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_environments.SkylightingRenderEnvironment();
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_sun);
+
+  return *m_private->_sun;
 }
 
-void ON_3dmRenderSettings::SetSkylightingRenderEnvironment(const ON_UUID& id)
+const ON_Sun& ON_3dmRenderSettings::Sun(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
-
-  m_private->_environments.SetSkylightingRenderEnvironment(id);
+  return const_cast<ON_3dmRenderSettings*>(this)->Sun();
 }
 
-bool ON_3dmRenderSettings::ReflectionRenderEnvironmentOverride(void) const
+bool ON_3dmRenderSettings::RenderEnvironmentOverride(EnvironmentUsage usage) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_environments.ReflectionRenderEnvironmentOverride();
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_environments);
+
+  const auto& e = *m_private->_environments;
+  switch (usage)
+  {
+  default:
+  case EnvironmentUsage::Background:  return m_background_style == 3;
+  case EnvironmentUsage::Reflection:  return e.ReflectionRenderEnvironmentOverride();
+  case EnvironmentUsage::Skylighting: return e.SkylightingRenderEnvironmentOverride();
+  }
 }
 
-void ON_3dmRenderSettings::SetReflectionRenderEnvironmentOverride(bool on)
+void ON_3dmRenderSettings::SetRenderEnvironmentOverride(EnvironmentUsage usage, bool on)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  m_private->_environments.SetReflectionRenderEnvironmentOverride(on);
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_environments);
+
+  auto& e = *m_private->_environments;
+  switch (usage)
+  {
+  default:
+  case EnvironmentUsage::Background:  ON_ASSERT(false);                              break;
+  case EnvironmentUsage::Reflection:  e.SetReflectionRenderEnvironmentOverride(on);  break;
+  case EnvironmentUsage::Skylighting: e.SetSkylightingRenderEnvironmentOverride(on); break;
+  }
 }
 
-ON_UUID ON_3dmRenderSettings::ReflectionRenderEnvironment(void) const
+ON_UUID ON_3dmRenderSettings::RenderEnvironmentId(EnvironmentUsage usage, EnvironmentPurpose purpose) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  return m_private->_environments.ReflectionRenderEnvironment();
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_environments);
+
+  const auto& e = *m_private->_environments;
+
+  if (EnvironmentPurpose::Standard == purpose)
+  {
+    switch (usage)
+    {
+    default:
+    case EnvironmentUsage::Background:  return e.BackgroundRenderEnvironmentId();
+    case EnvironmentUsage::Reflection:  return e.ReflectionRenderEnvironmentId();
+    case EnvironmentUsage::Skylighting: return e.SkylightingRenderEnvironmentId();
+    }
+  }
+  else
+  if (EnvironmentPurpose::ForRendering == purpose)
+  {
+    switch (usage)
+    {
+    default:
+    case EnvironmentUsage::Background:
+      {
+      if (m_background_style != 3)
+        return ON_nil_uuid;
+
+      const auto uuid_env = e.BackgroundRenderEnvironmentId();
+      if (ON_UuidIsNotNil(uuid_env))
+        return uuid_env;
+
+      return ON_UuidDefaultEnvironmentInstance;
+      }
+
+    case EnvironmentUsage::Reflection:
+      if (e.ReflectionRenderEnvironmentOverride())
+        return e.ReflectionRenderEnvironmentId();
+
+      return RenderEnvironmentId(EnvironmentUsage::Background, purpose);
+
+    case EnvironmentUsage::Skylighting:
+      if (!Skylight().On())
+        return ON_nil_uuid;
+
+      if (e.SkylightingRenderEnvironmentOverride())
+        return e.SkylightingRenderEnvironmentId();
+
+      return RenderEnvironmentId(EnvironmentUsage::Background, purpose);
+    }
+  }
+
+  ON_ASSERT(false);
+  return ON_nil_uuid;
 }
 
-void ON_3dmRenderSettings::SetReflectionRenderEnvironment(const ON_UUID& id)
+void ON_3dmRenderSettings::SetRenderEnvironmentId(EnvironmentUsage usage, const ON_UUID& id)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmRenderSettingsPrivate;
+  ON_3dmRenderSettingsPrivate::Get(*this);
 
-  m_private->_environments.SetReflectionRenderEnvironment(id);
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_environments);
+
+  auto& e = *m_private->_environments;
+  switch (usage)
+  {
+  default:
+  case EnvironmentUsage::Background:  e.SetBackgroundRenderEnvironmentId(id);  break;
+  case EnvironmentUsage::Reflection:  e.SetReflectionRenderEnvironmentId(id);  break;
+  case EnvironmentUsage::Skylighting: e.SetSkylightingRenderEnvironmentId(id); break;
+  }
 }
 
-extern ON_UUID uuidRenderSettingsPreset_Studio;
-extern ON_UUID uuidRenderSettingsPreset_Custom;
-extern ON_UUID uuidRenderSettingsPreset_Exterior;
-extern ON_UUID uuidRenderSettingsPreset_Interior;
+ON_PostEffects& ON_3dmRenderSettings::PostEffects(void)
+{
+  ON_3dmRenderSettingsPrivate::Get(*this);
+
+  // The pointer is never null.
+  ON_ASSERT(nullptr != m_private->_post_effects);
+
+  return *m_private->_post_effects;
+}
+
+const ON_PostEffects& ON_3dmRenderSettings::PostEffects(void) const
+{
+  return const_cast<ON_3dmRenderSettings*>(this)->PostEffects();
+}
+
+extern ON_UUID uuidRenderPreset_Studio;
+extern ON_UUID uuidRenderPreset_Custom;
+extern ON_UUID uuidRenderPreset_Exterior;
+extern ON_UUID uuidRenderPreset_Interior;
 
 static const wchar_t* rendering = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
 
-ON_UUID ON_3dmRenderSettings::CurrentRenderingPreset(void) const
+ON_UUID ON_3dmRenderSettings::CurrentRenderPreset(void) const
 {
-  const auto* node = RdkDocNode().GetNodeAtPath(rendering);
+  const auto* node = ON_GetRdkDocNode(*this).GetNodeAtPath(rendering);
   if (nullptr != node)
   {
     ON_XMLParameters p(*node);
     ON_XMLVariant value;
-    if (p.GetParam(ON_RDK_CURRENT_PRESET, value))
+    if (p.GetParam(ON_RDK_CURRENT_RENDER_PRESET, value))
       return value.AsUuid();
   }
 
   return ON_nil_uuid;
 }
 
-void ON_3dmRenderSettings::SetCurrentRenderingPreset(const ON_UUID& uuid)
+void ON_3dmRenderSettings::SetCurrentRenderPreset(const ON_UUID& uuid)
 {
-  ON_ASSERT((uuidRenderSettingsPreset_Studio == uuid) || (uuidRenderSettingsPreset_Custom == uuid) || (uuidRenderSettingsPreset_Exterior == uuid) || (uuidRenderSettingsPreset_Interior == uuid));
+  ON_ASSERT((uuidRenderPreset_Studio   == uuid) || (uuidRenderPreset_Custom   == uuid) ||
+            (uuidRenderPreset_Exterior == uuid) || (uuidRenderPreset_Interior == uuid));
 
-  auto* node = RdkDocNode().GetNodeAtPath(rendering);
+  auto* node = ON_GetRdkDocNode(*this).GetNodeAtPath(rendering);
   if (nullptr != node)
   {
     ON_XMLParameters p(*node);
-    p.SetParam(ON_RDK_CURRENT_PRESET, uuid);
+    p.SetParam(ON_RDK_CURRENT_RENDER_PRESET, uuid);
   }
 }
 
-void ON_3dmRenderSettings::GetRenderingPresets(ON_SimpleArray<ON_UUID>& presets) const
+void ON_3dmRenderSettings::GetRenderPresetList(ON_SimpleArray<ON_UUID>& presets) const
 {
-  presets.Append(uuidRenderSettingsPreset_Studio);
-  presets.Append(uuidRenderSettingsPreset_Exterior);
-  presets.Append(uuidRenderSettingsPreset_Interior);
-  presets.Append(uuidRenderSettingsPreset_Custom);
+  presets.Append(uuidRenderPreset_Studio);
+  presets.Append(uuidRenderPreset_Exterior);
+  presets.Append(uuidRenderPreset_Interior);
+  presets.Append(uuidRenderPreset_Custom);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// ON_3dmAnnotationSettingsPrivate
+//
+
+class ON_3dmAnnotationSettingsPrivate
+{
+public:
+  ON_3dmAnnotationSettingsPrivate() = default;
+  ~ON_3dmAnnotationSettingsPrivate() = default;
+  bool operator==(const ON_3dmAnnotationSettingsPrivate&) const;
+  bool operator!=(const ON_3dmAnnotationSettingsPrivate&) const;
+
+public:
+  float m_world_view_text_scale = 1.0f;
+  float m_world_view_hatch_scale = 1.0f;
+  bool m_use_dimension_layer = false;
+  ON_UUID m_dimension_layer_id = ON_nil_uuid;
+};
+
+static const ON_3dmAnnotationSettingsPrivate Default3dmAnnotationSettingsPrivate;
+
+bool ON_3dmAnnotationSettingsPrivate::operator==(const ON_3dmAnnotationSettingsPrivate& other) const
+{
+  if (this == &other)
+    return true;
+
+  if (m_world_view_text_scale != other.m_world_view_text_scale)
+    return false;
+
+  if (m_world_view_hatch_scale != other.m_world_view_hatch_scale)
+    return false;
+
+  if (m_use_dimension_layer != other.m_use_dimension_layer)
+    return false;
+
+  if (0 != ON_UuidCompare(m_dimension_layer_id, other.m_dimension_layer_id))
+    return false;
+
+  return true;
+}
+
+bool ON_3dmAnnotationSettingsPrivate::operator!=(const ON_3dmAnnotationSettingsPrivate& other) const
+{
+  return !ON_3dmAnnotationSettingsPrivate::operator==(other);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1708,31 +1941,178 @@ void ON_3dmRenderSettings::GetRenderingPresets(ON_SimpleArray<ON_UUID>& presets)
 // ON_3dmAnnotationSettings
 //
 
-void ON_3dmAnnotationSettings::Dump( ON_TextLog& text_log ) const
+void ON_3dmAnnotationSettings::Internal_CopyFrom(const ON_3dmAnnotationSettings& src)
+{
+  m_dimscale = src.m_dimscale;
+  m_textheight = src.m_textheight;
+  m_dimexe = src.m_dimexe;
+  m_dimexo = src.m_dimexo;
+  m_arrowlength = src.m_arrowlength;
+  m_arrowwidth = src.m_arrowwidth;
+  m_centermark = src.m_centermark;
+  
+  m_b_V5_EnableAnnotationScaling = src.m_b_V5_EnableAnnotationScaling;
+  m_bEnableModelSpaceAnnotationScaling = src.m_bEnableModelSpaceAnnotationScaling;
+  m_bEnableLayoutSpaceAnnotationScaling = src.m_bEnableLayoutSpaceAnnotationScaling;
+  m_bEnableHatchScaling = src.m_bEnableHatchScaling;
+  
+  m_reserved1 = src.m_reserved1;
+  m_reserved2 = src.m_reserved2;
+  m_reserved3 = src.m_reserved3;
+  m_reserved4 = src.m_reserved4;
+  
+  m_dimunits = src.m_dimunits;
+  m_arrowtype = src.m_arrowtype;
+  m_angularunits = src.m_angularunits;
+  m_lengthformat = src.m_lengthformat;
+  m_angleformat = src.m_angleformat;
+  m_resolution = src.m_resolution;
+  m_facename = src.m_facename;
+
+  if (src.m_private)
+  {
+    m_private = new ON_3dmAnnotationSettingsPrivate();
+    *m_private = *src.m_private;
+  }
+}
+
+void ON_3dmAnnotationSettings::Internal_Destroy()
+{
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
+}
+
+ON_3dmAnnotationSettings::~ON_3dmAnnotationSettings()
+{
+  // NOTE WELL:
+  //  ON_3dmAnnotationSettings::Default is a global const instance.
+  //  Compilers like VS 2019 16.5.0 set the memory for that instance to read-only.
+  //  This destructor must not write to memory used by const instances.
+  if (this != &ON_3dmAnnotationSettings::Default)
+  {
+    Internal_Destroy();
+  }
+}
+
+ON_3dmAnnotationSettings::ON_3dmAnnotationSettings(const ON_3dmAnnotationSettings& src)
+{
+  Internal_CopyFrom(src);
+}
+
+ON_3dmAnnotationSettings& ON_3dmAnnotationSettings::operator=(const ON_3dmAnnotationSettings& src)
+{
+  if (this != &src)
+  {
+    Internal_Destroy();
+    Internal_CopyFrom(src);
+  }
+  return *this;
+}
+
+void ON_3dmAnnotationSettings::Dump(ON_TextLog& text_log) const
 {
   // TODO
 }
 
 double ON_3dmAnnotationSettings::WorldViewTextScale() const
 {
-  return m_world_view_text_scale;
+  double world_view_text_scale = Default3dmAnnotationSettingsPrivate.m_world_view_text_scale;
+  if (this != &ON_3dmAnnotationSettings::Default)
+  {
+    if (m_private)
+      world_view_text_scale = m_private->m_world_view_text_scale;
+  }
+  return world_view_text_scale;
 }
 
 double ON_3dmAnnotationSettings::WorldViewHatchScale() const
 {
-  return m_world_view_hatch_scale;
+  double world_view_hatch_scale = Default3dmAnnotationSettingsPrivate.m_world_view_hatch_scale;
+  if (this != &ON_3dmAnnotationSettings::Default)
+  {
+    if (m_private)
+      world_view_hatch_scale = m_private->m_world_view_text_scale;
+  }
+  return world_view_hatch_scale;
 }
 
 void ON_3dmAnnotationSettings::SetWorldViewTextScale(double world_view_text_scale )
 {
-  if ( ON_IsValid(world_view_text_scale) && world_view_text_scale > 0.0 )
-    m_world_view_text_scale = (float)world_view_text_scale;
+  if (this == &ON_3dmAnnotationSettings::Default)
+    return;
+  if (ON_IsValid(world_view_text_scale) && world_view_text_scale > 0.0)
+  {
+    if (WorldViewTextScale() != world_view_text_scale)
+    {
+      if (nullptr == m_private)
+        m_private = new ON_3dmAnnotationSettingsPrivate();
+      m_private->m_world_view_text_scale = (float)world_view_text_scale;
+    }
+  }
 }
 
-void ON_3dmAnnotationSettings::SetWorldViewHatchScale(double world_view_hatch_scale )
+void ON_3dmAnnotationSettings::SetWorldViewHatchScale(double world_view_hatch_scale)
 {
-  if ( ON_IsValid(world_view_hatch_scale) && world_view_hatch_scale > 0.0 )
-    m_world_view_hatch_scale = (float)world_view_hatch_scale;
+  if (this == &ON_3dmAnnotationSettings::Default)
+    return;
+  if (ON_IsValid(world_view_hatch_scale) && world_view_hatch_scale > 0.0)
+  {
+    if (WorldViewHatchScale() != world_view_hatch_scale)
+    {
+      if (nullptr == m_private)
+        m_private = new ON_3dmAnnotationSettingsPrivate();
+      m_private->m_world_view_hatch_scale = (float)world_view_hatch_scale;
+    }
+  }
+}
+
+bool ON_3dmAnnotationSettings::UseDimensionLayer() const
+{
+  bool use_dimension_layer = Default3dmAnnotationSettingsPrivate.m_use_dimension_layer;
+  if (this != &ON_3dmAnnotationSettings::Default)
+  {
+    if (m_private)
+      use_dimension_layer = m_private->m_use_dimension_layer;
+  }
+  return use_dimension_layer;
+}
+
+void ON_3dmAnnotationSettings::EnableUseDimensionLayer(bool use_dimension_layer)
+{
+  if (this == &ON_3dmAnnotationSettings::Default)
+    return;
+  if (UseDimensionLayer() != use_dimension_layer)
+  {
+    if (nullptr == m_private)
+      m_private = new ON_3dmAnnotationSettingsPrivate();
+    m_private->m_use_dimension_layer = use_dimension_layer;
+  }
+}
+
+ON_UUID ON_3dmAnnotationSettings::DimensionLayerId() const
+{
+  ON_UUID layer_id = Default3dmAnnotationSettingsPrivate.m_dimension_layer_id;
+  if (this != &ON_3dmAnnotationSettings::Default)
+  {
+    if (m_private)
+      layer_id = m_private->m_dimension_layer_id;
+  }
+  return layer_id;
+}
+
+void ON_3dmAnnotationSettings::SetDimensionLayerId(const ON_UUID& dimension_layer_id)
+{
+  if (this == &ON_3dmAnnotationSettings::Default)
+    return;
+  if (DimensionLayerId() != dimension_layer_id)
+  {
+    if (nullptr == m_private)
+      m_private = new ON_3dmAnnotationSettingsPrivate();
+    m_private->m_dimension_layer_id = dimension_layer_id;
+  }
 }
 
 bool ON_3dmAnnotationSettings::Is_V5_AnnotationScalingEnabled() const
@@ -1775,7 +2155,6 @@ void ON_3dmAnnotationSettings::EnableHatchScaling( bool bEnable )
 {
   m_bEnableHatchScaling = bEnable?1:0;
 }
-
 
 bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 {
@@ -1858,9 +2237,9 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
       if ( minor_version >= 1 )
       {
         // Added 25 August 2010 chunk version 1.1
-        double d = m_world_view_text_scale;
+        double d = WorldViewTextScale();
         if (rc) rc = file.ReadDouble(&d);
-        if (rc && ON_IsValid(d) && d >= 0.0 ) m_world_view_text_scale = (float)d;
+        if (rc && ON_IsValid(d) && d >= 0.0) SetWorldViewTextScale(d);
         if (rc) rc = file.ReadChar(&m_b_V5_EnableAnnotationScaling);
         if (rc)
         {
@@ -1876,15 +2255,26 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 
         if ( minor_version >= 2 )
         {
-          d = m_world_view_hatch_scale;
+          d = WorldViewHatchScale();
           if (rc) rc = file.ReadDouble(&d);
-          if (rc && ON_IsValid(d) && d >= 0.0) m_world_view_hatch_scale = (float)d;
+          if (rc && ON_IsValid(d) && d >= 0.0) SetWorldViewHatchScale(d);
           if (rc) rc = file.ReadChar(&m_bEnableHatchScaling);
           if (minor_version >= 3)
           {
             // [Lowell 3-28-2013] New fields for V6
             if (rc) rc = file.ReadChar(&m_bEnableModelSpaceAnnotationScaling);
             if (rc) rc = file.ReadChar(&m_bEnableLayoutSpaceAnnotationScaling);
+
+            //  Added 17 April 2023 chunk version 1.4
+            if (minor_version >= 4)
+            {
+              bool b = false;
+              ON_UUID s = ON_nil_uuid;
+              if (rc) rc = file.ReadBool(&b);
+              if (rc) EnableUseDimensionLayer(b);
+              if (rc) rc = file.ReadUuid(s);
+              if (rc) SetDimensionLayerId(s);
+            }
           }
         }
       }
@@ -1900,7 +2290,7 @@ bool ON_3dmAnnotationSettings::Write( ON_BinaryArchive& file ) const
 {
   int minor_version
     = file.Archive3dmVersion() >= 60
-    ? 3
+    ? 4
     : 2;
 
   unsigned int i;
@@ -1944,20 +2334,28 @@ bool ON_3dmAnnotationSettings::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteString( m_facename );
 
   // Added 25 August 2010 chunk version 1.1
-  double d = m_world_view_text_scale;
+  double d = WorldViewTextScale();
   if (rc) rc = file.WriteDouble(d);
   if (rc) rc = file.WriteChar(m_b_V5_EnableAnnotationScaling);
 
   // Added 14 January 2011 chunk version 1.2
-  d = m_world_view_hatch_scale;
+  d = WorldViewHatchScale();
   if (rc) rc = file.WriteDouble(d);
   if (rc) rc = file.WriteChar(m_bEnableHatchScaling);
 
+  // Added 28 March 2013 chunk version 1.3
   if (minor_version >= 3)
   {
     // [Lowell 3-28-2013] New fields for V6
     if (rc) rc = file.WriteChar(m_bEnableModelSpaceAnnotationScaling);
     if (rc) rc = file.WriteChar(m_bEnableLayoutSpaceAnnotationScaling);
+  }
+
+  //  Added 17 April 2023 chunk version 1.4
+  if (minor_version >= 4)
+  {
+    if (rc) rc = file.WriteBool(UseDimensionLayer());
+    if (rc) rc = file.WriteUuid(DimensionLayerId());
   }
 
   return rc;

@@ -72,6 +72,9 @@ enum ON_UnicodeCodePoint
   /// <summary>SPACE U+0020</summary>
   ON_Space = 0x20,
 
+  /// <summary>DELETE U+007F</summary>
+  ON_Delete = 0x7F,
+
   /// <summary>NO-BREAK SPACE (NBSP) U+00A0</summary>
   ON_NoBreakSpace = 0x00A0,
 
@@ -99,9 +102,6 @@ enum ON_UnicodeCodePoint
   /// <summary>6 per EM SPACE U+2006 (1/6 EM SPACE)</summary>
   ON_SixPerEmSpace = 0x2006,
 
-  /// <summary>ZERO WIDTH SPACE (ZWSP) U+200B</summary>
-  ON_ZeroWidthSpace = 0x200B,
-
   /// <summary>FIGURE SPACE U+2007 Average digit width.</summary>
   ON_FigureSpace = 0x2007,
 
@@ -113,6 +113,9 @@ enum ON_UnicodeCodePoint
 
   /// <summary>HAIR SPACE U+200A (Narrower than THIN SPACE)</summary>
   ON_HairSpace = 0x200A,
+
+  /// <summary>ZERO WIDTH SPACE (ZWSP) U+200B</summary>
+  ON_ZeroWidthSpace = 0x200B,
 
   /// <summary>MEDIUM MATHEMATICAL SPACE U+2025 (about 2/9 EM SPACE)</summary>
   ON_MediumMathematicalSpace = 0x205F,
@@ -440,23 +443,42 @@ int ON_IsValidUnicodeCodePoint(
 
 /*
 Returns:
-  True if u is one of ON_UnicodeCodePoint::ON_Space, ON_UnicodeCodePoint::ON_NoBreakSpace,
-  ON_UnicodeCodePoint::ON_NarrowNoBreakSpace, or ON_UnicodeCodePoint::ON_ZeroWidthSpace.
+  True if u is ON_UnicodeCodePoint::ON_Space, or a space character U+2000 - u+200B.
 Remarks:
-  Additional space code points may be added in the future. The goal is to
-  detect code points that separate words.
+  Additional space code points may be added in the future. 
+  The goal is to detect code points that separate words.
 */
 ON_DECL
 int ON_IsUnicodeSpaceCodePoint(
   ON__UINT32 u
 );
 
+
 /*
 Returns:
-  True if u >= 0x80 and y <= 0x9F.
+  True if u is some type of space or control code point. Examples include 
+  C0 code points ( <= u+001F ), ON_UnicodeCodePoint::ON_Space, ON_UnicodeCodePoint::ON_Delete,
+  ON_UnicodeCodePoint::ON_NoBreakSpace, ON_UnicodeCodePoint::ON_NarrowNoBreakSpace,  
+  ON_UnicodeCodePoint::ON_ZeroWidthSpace, and C1 code points.
 Remarks:
-  Additional space code points may be added in the future. The goal is to
-  detect code points that separate words.
+  Additional space code points may be added in the future. 
+  The goal is to detect code points that should be used as
+  separators when isolating text tokens in a string.
+  
+  Ligatures (ZWNJ U+200C, ZWJ U+200D) return false because they control formatting in a token.
+*/
+ON_DECL
+int ON_IsUnicodeSpaceOrControlCodePoint(
+  ON__UINT32 u
+);
+
+
+/*
+Returns:
+  True if u >= U+0080 and u <= U+009F.
+Remarks:
+  Additional space code points may be added in the future. 
+  The goal is to  detect code points that separate words.
 */
 ON_DECL
 int ON_IsUnicodeC1ControlCodePoint(

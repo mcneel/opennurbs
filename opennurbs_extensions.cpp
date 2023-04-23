@@ -308,9 +308,7 @@ public:
   bool PopulateRDKComponents(int archive_3dm_version);
   bool UpdateRDKUserData(int archive_3dm_version);
   bool CreateRenderContentFromXML(class ON_XMLNode& model_node, RenderContentKinds kind);
-  bool CreatePostEffectsFromXML(ON_XMLNode& model_node, ON_PostEffect::Types type);
   bool CreateXMLFromRenderContent(ON_XMLNode& model_node, RenderContentKinds kind) const;
-  bool CreateXMLFromPostEffects(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
   bool SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_UserData& docud, int archive_3dm_version) const;
   ON_XMLNode* GetRenderContentSectionNode(ON_XMLNode& model_node, RenderContentKinds kind) const;
   ON_XMLNode* GetPostEffectSectionNode(ON_XMLNode& model_node, ON_PostEffect::Types type) const;
@@ -325,30 +323,44 @@ public:
 
 ON_InternalXMLImpl::~ON_InternalXMLImpl()
 {
-  if (nullptr != m_local_node)
+  if (nullptr != _local_node)
   {
-    delete m_local_node;
-    m_local_node = nullptr;
+    delete _local_node;
+    _local_node = nullptr;
   }
 }
 
 ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 {
-  // If the model node pointer is set, return that. This is a pointer to a node owned by the ONX_Model which
-  // contains the entire RDK document XML. This is used by model objects (Ground Plane, etc.) that are owned
-  // by the ONX_Model. In the case of Ground Plane etc, it's a pointer into the ONX_Model's XML.
+  // If the model node pointer is set, return that. This is a pointer to a node owned by the ON_3dmRenderSettings
+  // which contains the entire RDK document XML. This is used by objects (Ground Plane, etc.) that are owned by the
+  // ON_3dmRenderSettings. In the case of Ground Plane etc, it's a pointer into the ON_3dmRenderSettings XML.
   // In the case of decals, it's a pointer into the decal collection's XML.
-  if (nullptr != m_model_node)
-    return *m_model_node;
+  if (nullptr != _model_node)
+    return *_model_node;
 
   // Since the model node is not set, we need a local node to hold the XML. If one has not been created yet,
   // create it. The local node is owned by this object. This case occurs for free-floating copies of model
   // objects and also for free-floating copies of decals and mesh modifiers. This node only contains the XML
-  // data that's relevant to the object it's for, not the entire XML.
-  if (nullptr == m_local_node)
-    m_local_node = new ON_XMLNode(NameOfRootNode());
+  // data that's relevant to the object it's for, not the entire XML, but the object's node is still a child
+  // node under the same node hierarchy as if it were the entire XML.
+  if (nullptr == _local_node)
+    _local_node = new ON_XMLNode(NameOfRootNode());
 
-  return *m_local_node;
+  return *_local_node;
+}
+
+void ON_InternalXMLImpl::SetModelNode(ON_XMLNode& node)
+{
+  ON_ASSERT(_model_node == nullptr);
+
+  if (nullptr != _local_node)
+  {
+    delete _local_node;
+    _local_node = nullptr;
+  }
+
+  _model_node = &node;
 }
 
 ON_wString ON_InternalXMLImpl::NameOfRootNode(void) const
@@ -368,7 +380,7 @@ ON_XMLVariant ON_InternalXMLImpl::GetParameter_NoType(const wchar_t* path_to_nod
 
 ON_XMLVariant ON_InternalXMLImpl::InternalGetParameter(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
 
   const ON_XMLNode* node_read = Node().GetNodeAtPath(path_to_node);
   if (nullptr == node_read)
@@ -395,7 +407,7 @@ bool ON_InternalXMLImpl::SetParameter_NoType(const wchar_t* path_to_node, const 
 
 bool ON_InternalXMLImpl::InternalSetParameter(const wchar_t* path_to_node, const wchar_t* param_name, bool write_type, const ON_XMLVariant& value)
 {
-  std::lock_guard<std::recursive_mutex> lg(m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
 
   bool success = false;
 
@@ -2166,7 +2178,8 @@ void ONX_Model::DumpComponentLists( ON_TextLog& dump ) const
     ON_ModelComponent::Type::HistoryRecord,
     ON_ModelComponent::Type::RenderContent,
     ON_ModelComponent::Type::EmbeddedFile,
-    ON_ModelComponent::Type::PostEffect,
+    //ON_ModelComponent::Type::ObsoleteValue,
+    ON_ModelComponent::Type::SectionStyle,
     ON_ModelComponent::Type::Unset // list terminator
   };
 
@@ -4837,38 +4850,20 @@ static const wchar_t* RenderContentKindString(RenderContentKinds kind)
   case RenderContentKinds::Material:    return ON_KIND_MATERIAL;
   case RenderContentKinds::Environment: return ON_KIND_ENVIRONMENT;
   case RenderContentKinds::Texture:     return ON_KIND_TEXTURE;
+  default: ON_ASSERT(false); return L"";
   }
-
-  ON_ASSERT(false);
-  return L"";
-}
-
-static const wchar_t* PostEffectTypeString(ON_PostEffect::Types type)
-{
-  switch (type)
-  {
-    case ON_PostEffect::Types::Early:
-      return ON_RDK_PEP_TYPE_EARLY;
-    case ON_PostEffect::Types::ToneMapping:
-      return ON_RDK_PEP_TYPE_TONE;
-    case ON_PostEffect::Types::Late:
-      return ON_RDK_PEP_TYPE_LATE;
-    case ON_PostEffect::Types::Unset:
-      break;
-  }
-
-  ON_ASSERT(false);
-  return L"";
 }
 
 extern int ON_ComponentManifestImpl_TableCount(void);
+
+ON_XMLNode& ON_GetRdkDocNode(const ON_3dmRenderSettings& rs);
 
 ONX_ModelPrivate::ONX_ModelPrivate(ONX_Model& m)
   :
   m_model(m)
 {
-  // If this assert fires, you must change the TableCount enum in opennurbs_archive_manifest.cpp
-  // to be the same number as ON_ModelComponent::Type::NumOf.
+  // The TableCount enum in opennurbs_archive_manifest.cpp should always be
+  // equal to ON_ModelComponent::Type::NumOf.
   ON_ASSERT(int(ON_ModelComponent::Type::NumOf) == ON_ComponentManifestImpl_TableCount());
 
   for (unsigned int i = 0; i < int(ON_ModelComponent::Type::NumOf); i++)
@@ -4950,7 +4945,7 @@ static bool ContentIsKind(const ON_RenderContent* pContent, RenderContentKinds k
 ON_XMLNode* ONX_ModelPrivate::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_PostEffect::Types type) const
 {
   ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_POST_EFFECTS  ON_RDK_SLASH;
-  s += PostEffectTypeString(type);
+  s += ON_PostEffectTypeString(type);
 
   return docNode.CreateNodeAtPath(s);
 }
@@ -5021,57 +5016,6 @@ bool ONX_ModelPrivate::CreateXMLFromRenderContent(ON_XMLNode& model_node, Render
   return true;
 }
 
-bool ONX_ModelPrivate::CreatePostEffectsFromXML(ON_XMLNode& doc_root_node, ON_PostEffect::Types type)
-{
-  ON_XMLNode* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
-  if (nullptr == pep_section_node)
-    return false;
-
-  auto it = pep_section_node->GetChildIterator();
-
-  ON_XMLNode* pPostEffectNode = it.GetNextChild();
-  while (nullptr != pPostEffectNode)
-  {
-    ON_PostEffect pep(*pPostEffectNode, type);
-    const ON_ModelComponentReference ref = m_model.AddModelComponent(pep);
-    auto* pep_in_model = ON_PostEffect::Cast(ref.ModelComponent());
-    if (nullptr != pep_in_model)
-    {
-      SetModel(*pep_in_model, m_model);
-    }
-
-    pPostEffectNode = it.GetNextChild();
-  }
-
-  return true;
-}
-
-bool ONX_ModelPrivate::CreateXMLFromPostEffects(ON_XMLNode& doc_root_node, ON_PostEffect::Types type) const
-{
-  ON_XMLNode* pep_section_node = GetPostEffectSectionNode(doc_root_node, type);
-  if (nullptr == pep_section_node)
-    return false;
-
-  ONX_ModelComponentIterator it(m_model, ON_ModelComponent::Type::PostEffect);
-  const ON_ModelComponent* pComponent = it.FirstComponent();
-  while (nullptr != pComponent)
-  {
-    const auto* pep = ON_PostEffect::Cast(pComponent);
-    if ((nullptr != pep) && (pep->Type() == type))
-    {
-      ON_XMLNode* pep_node = FindPostEffectNodeForId(*pep_section_node, pep->Id());
-      if (nullptr != pep_node)
-      {
-        *pep_node = pep->XML();
-      }
-    }
-
-    pComponent = it.NextComponent();
-  }
-
-  return true;
-}
-
 bool ONX_ModelPrivate::PopulateRDKComponents(int archive_3dm_version)
 {
   // Get the entire RDK document XML. This includes not only render contents
@@ -5081,7 +5025,7 @@ bool ONX_ModelPrivate::PopulateRDKComponents(int archive_3dm_version)
     return false;
 
   // Read the entire XML into the document node.
-  ON_XMLNode& doc_node = m_model.m_settings.m_RenderSettings.RdkDocNode();
+  ON_XMLNode& doc_node = ON_GetRdkDocNode(m_model.m_settings.m_RenderSettings);
   const auto read = doc_node.ReadFromStream(xml, false, true);
   if (ON_XMLNode::ReadError == read)
     return false;
@@ -5090,11 +5034,6 @@ bool ONX_ModelPrivate::PopulateRDKComponents(int archive_3dm_version)
   CreateRenderContentFromXML(doc_node, RenderContentKinds::Material);
   CreateRenderContentFromXML(doc_node, RenderContentKinds::Environment);
   CreateRenderContentFromXML(doc_node, RenderContentKinds::Texture);
-
-  // Create the post effects from the relevant nodes.
-  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::Early);
-  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::ToneMapping);
-  CreatePostEffectsFromXML(doc_node, ON_PostEffect::Types::Late);
 
   // Create the mesh modifiers.
   CreateMeshModifiersFromXML(m_model, archive_3dm_version);
@@ -5107,17 +5046,12 @@ bool ONX_ModelPrivate::UpdateRDKUserData(int archive_3dm_version)
   if (0 == archive_3dm_version)
     archive_3dm_version = ON_BinaryArchive::CurrentArchiveVersion();
 
-  ON_XMLNode& doc_node = m_model.m_settings.m_RenderSettings.RdkDocNode();
+  ON_XMLNode& doc_node = ON_GetRdkDocNode(m_model.m_settings.m_RenderSettings);
 
   // For each kind, convert the render content hierarchy to fresh XML.
   CreateXMLFromRenderContent(doc_node, RenderContentKinds::Material);
   CreateXMLFromRenderContent(doc_node, RenderContentKinds::Environment);
   CreateXMLFromRenderContent(doc_node, RenderContentKinds::Texture);
-
-  // For each type, convert the post effects to fresh XML.
-  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::Early);
-  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::ToneMapping);
-  CreateXMLFromPostEffects(doc_node, ON_PostEffect::Types::Late);
 
   // Convert the mesh modifier collection to fresh XML.
   CreateXMLFromMeshModifiers(m_model, archive_3dm_version);

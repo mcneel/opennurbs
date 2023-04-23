@@ -1507,7 +1507,7 @@ void ON_String::TrimLeft(const char* s)
     {
       for (i = 0; 0 != (c = m_s[i]); i++)
       {
-        if ( c < 0 || c > ON_String::Space )
+        if ( c < 0 || (c > ON_String::Space && c != ON_String::Delete))
           break;
       }
     }
@@ -1547,7 +1547,7 @@ void ON_String::TrimRight(const char* s)
     {
       for (i--; i >= 0 && 0 != (c = m_s[i]); i--)
       {
-        if ( c < 0 || c > ON_String::Space )
+        if ( c < 0 || (c > ON_String::Space && c != ON_String::Delete))
           break;
       }
     }

@@ -274,6 +274,12 @@ public:
   */
   void RemoveTaper();
 
+  /*
+    Description:
+      For expert use only.
+  */
+  void ClearBits();
+
 private:
   mutable class ON_LinetypePrivate* m_private = nullptr;
   unsigned char m_is_set_bits = 0;

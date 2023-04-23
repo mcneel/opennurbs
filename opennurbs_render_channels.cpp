@@ -110,7 +110,7 @@ static ON_wString GetSortedCustomListAsString(const ON_RenderChannels& rch)
   return GetSortedSemicolonDelimitedString(chan);
 }
 
-bool ON_RenderChannels::operator == (const ON_RenderChannels& rch)
+bool ON_RenderChannels::operator == (const ON_RenderChannels& rch) const
 {
   if (Mode() != rch.Mode())
     return false;
@@ -124,7 +124,7 @@ bool ON_RenderChannels::operator == (const ON_RenderChannels& rch)
   return true;
 }
 
-bool ON_RenderChannels::operator != (const ON_RenderChannels& rch)
+bool ON_RenderChannels::operator != (const ON_RenderChannels& rch) const
 {
   return !(operator == (rch));
 }
@@ -172,4 +172,13 @@ void ON_RenderChannels::SetCustomList(const ON_SimpleArray<ON_UUID>& chan)
 {
   const ON_wString s = GetSortedSemicolonDelimitedString(chan);
   m_impl->SetParameter(XMLPath(), ON_RDK_RCH_LIST, s);
+}
+
+void* ON_RenderChannels::EVF(const wchar_t* func, void* data)
+{
+  return nullptr;
+}
+
+void ON_RenderChannels::InvalidateCache(void)
+{
 }

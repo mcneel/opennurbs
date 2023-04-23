@@ -135,6 +135,7 @@ set( OPENNURBS_PUBLIC_HEADERS
     opennurbs_revsurface.h
     opennurbs_rtree.h
     opennurbs_safe_frame.h
+    opennurbs_sectionstyle.h
     opennurbs_sha1.h
     opennurbs_skylight.h
     opennurbs_sleeplock.h
@@ -310,6 +311,7 @@ set( OPENNURBS_PUBLIC_SOURCES
     opennurbs_revsurface.cpp
     opennurbs_rtree.cpp
     opennurbs_safe_frame.cpp
+    opennurbs_sectionstyle.cpp
     opennurbs_sha1.cpp
     opennurbs_skylight.cpp
     opennurbs_sleeplock.cpp
@@ -429,6 +431,7 @@ set( OPENNURBS_PLUS_SOURCES
     opennurbs_plus_rectpack.cpp
     opennurbs_plus_rectpack1.cpp
     opennurbs_plus_rectpack2.cpp
+    opennurbs_plus_registry.cpp
     opennurbs_plus_sections.cpp
     opennurbs_plus_sil.cpp
     opennurbs_plus_sleeplock.cpp
@@ -483,6 +486,7 @@ add_library( OpenNURBS SHARED
     ${OPENNURBS_PUBLIC_MEMORY}
     ${OPENNURBS_PLUS_HEADERS}
     ${OPENNURBS_PLUS_SOURCES}
+    opennurbs_dll.cpp
     )
 
 if (MSVC)
@@ -566,7 +570,10 @@ target_compile_definitions(opennurbsStatic PRIVATE ON_COMPILING_OPENNURBS Z_PREF
 target_compile_definitions(OpenNURBS PRIVATE OPENNURBS_EXPORTS Z_PREFIX MY_ZCALLOC)
 
 target_include_directories(opennurbsStatic PUBLIC .)
-target_include_directories( OpenNURBS PUBLIC .)
+target_include_directories(OpenNURBS PUBLIC .)
+
+target_precompile_headers(opennurbsStatic PRIVATE opennurbs.h)
+target_precompile_headers(OpenNURBS PRIVATE opennurbs.h)
 
 install( TARGETS opennurbsStatic DESTINATION "lib")
 install( FILES ${OPENNURBS_PUBLIC_HEADERS} DESTINATION "include/opennurbsStatic")

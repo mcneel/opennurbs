@@ -258,6 +258,7 @@
     <ClInclude Include="opennurbs_revsurface.h" />
     <ClInclude Include="opennurbs_rtree.h" />
     <ClInclude Include="opennurbs_safe_frame.h" />
+    <ClInclude Include="opennurbs_sectionstyle.h" />
     <ClInclude Include="opennurbs_sha1.h" />
     <ClInclude Include="opennurbs_skylight.h" />
     <ClInclude Include="opennurbs_sleeplock.h" />
@@ -434,6 +435,7 @@
     <ClCompile Include="opennurbs_revsurface.cpp" />
     <ClCompile Include="opennurbs_rtree.cpp" />
     <ClCompile Include="opennurbs_safe_frame.cpp" />
+    <ClCompile Include="opennurbs_sectionstyle.cpp" />
     <ClCompile Include="opennurbs_sha1.cpp" />
     <ClCompile Include="opennurbs_skylight.cpp" />
     <ClCompile Include="opennurbs_sleeplock.cpp" />

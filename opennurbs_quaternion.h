@@ -18,7 +18,10 @@ class ON_CLASS ON_Quaternion
 {
 public:
   // quaternion = a + bi + cj + dk
-  double a,b,c,d;
+  double a;
+  double b;
+  double c;
+  double d;
 
   static const ON_Quaternion Zero;     // 0   = (0,0,0,0
   static const ON_Quaternion Identity; // 1   = (1,0,0,0)
@@ -26,7 +29,7 @@ public:
   static const ON_Quaternion J;        // "j" = (0,0,1,0)
   static const ON_Quaternion K;        // "k" = (0,0,0,1)
 
-  ON_Quaternion() {}
+  ON_Quaternion() { a = b = c = d = 0.0; }
 
   ON_Quaternion(double qa, double qb, double qc, double qd);
 

@@ -84,8 +84,10 @@ public:
     RenderContent = 14,
     ///<summary>Embedded file for render texture.</summary>
     EmbeddedFile = 15,
-    ///<summary>Post Effect.</summary>
-    PostEffect = 16,
+    ///<summary>This value was never used and is now obsolete.</summary>
+    ObsoleteValue = 16,
+    ///<summary>Section style attributes</summary>
+    SectionStyle = 17,
 
     // If you add any more, add them here, above NumOf.
 

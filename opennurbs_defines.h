@@ -222,6 +222,12 @@ double ON_RadiansFromDegrees(
 #define ON_DBL_MIN 2.22507385850720200e-308
 #endif
 
+#if defined(FLT_MAX)
+#define ON_FLT_MAX FLT_MAX
+#else
+#define ON_FLT_MAX 3.402823466e+38F
+#endif
+
 // ON_EPSILON = 2^-52
 #if defined(DBL_EPSILON)
 #define ON_EPSILON DBL_EPSILON

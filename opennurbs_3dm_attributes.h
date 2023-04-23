@@ -399,28 +399,32 @@ public:
   // this intersection can result in curves as well as hatches for the
   // closed curves generated
 
-  // When to fill/hatch the sections for an object can depend on the type of
-  // object being sectioned. See ON_SectionFillRule for the choices of
-  // when to generate hatches.
-  ON::SectionFillRule SectionFillRule() const;
-  void SetSectionFillRule(ON::SectionFillRule rule);
-
-  // Hatch pattern index for hatch to use when drawing a closed section
-  // Default is ON_UNSET_INT_INDEX which means don't draw a hatch
-  int SectionHatchIndex() const;
-  void SetSectionHatchIndex(int index);
-
-  // Scale applied to the hatch pattern for a section
-  double SectionHatchScale() const;
-  void SetSectionHatchScale(double scale);
-
-  // Rotation angle in radians applied to hatch pattern for a section.
-  double SectionHatchRotation() const;
-  void SetSectionHatchRotation(double rotation);
-
   // Source for all section related attributes
   ON::SectionAttributesSource SectionAttributesSource() const;
   void SetSectionAttributesSource(ON::SectionAttributesSource source);
+
+  /*
+  Description:
+    Attributes can have optional custom section style associated with them.
+    This function adds a custom section style for this attribute.
+  */
+  void SetCustomSectionStyle(const ON_SectionStyle& sectionStyle);
+
+  /*
+  Description:
+    Attributes can have optional custom section styles associated with them.
+    This function returns the custom section style if one exists.
+  Parameters:
+    sectionStyle [out] - if not nullptr and a custom section style exists,
+      the data in the custom section style is copied to sectionStyle
+  */
+  const ON_SectionStyle* CustomSectionStyle(ON_SectionStyle* sectionStyle = nullptr) const;
+
+  /*
+  Description:
+    Remove any custom section style associated with this attribute
+  */
+  void RemoveCustomSectionStyle();
 #pragma endregion
 
   // Per object linetype scale
@@ -440,7 +444,7 @@ public:
   Description:
     Attributes can have optional custom linetypes associated with them. This
     function returns the custom linetype if one exists. If a custom linetype is
-    not attached to this attribute, then an empty shared pointer is returned
+    not attached to this attribute, then nullptr is returned
   */
   const ON_Linetype* CustomLinetype() const;
 

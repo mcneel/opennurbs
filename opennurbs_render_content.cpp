@@ -1275,9 +1275,16 @@ ON_RenderMaterial::~ON_RenderMaterial()
 {
 }
 
-void ON_RenderMaterial::operator = (const ON_RenderMaterial& mat)
+const ON_RenderContent& ON_RenderMaterial::operator = (const ON_RenderContent& c)
+{
+  ON_RenderContent::operator = (c);
+  return *this;
+}
+
+const ON_RenderMaterial& ON_RenderMaterial::operator = (const ON_RenderMaterial& mat)
 {
   ON_RenderContent::operator = (mat);
+  return *this;
 }
 
 ON_XMLVariant ParamHelper(const ON_XMLParameters& p, const wchar_t* name)
@@ -1422,8 +1429,16 @@ ON_RenderEnvironment::~ON_RenderEnvironment()
 {
 }
 
-void ON_RenderEnvironment::operator = (const ON_RenderEnvironment& env)
+const ON_RenderContent& ON_RenderEnvironment::operator = (const ON_RenderContent& c)
 {
+  ON_RenderContent::operator = (c);
+  return *this;
+}
+
+const ON_RenderEnvironment& ON_RenderEnvironment::operator = (const ON_RenderEnvironment& env)
+{
+  ON_RenderContent::operator = (env);
+  return *this;
 }
 
 ON_Environment ON_RenderEnvironment::SimulatedEnvironment(void) const
@@ -1479,8 +1494,16 @@ ON_RenderTexture::~ON_RenderTexture()
 {
 }
 
-void ON_RenderTexture::operator = (const ON_RenderTexture& tex)
+const ON_RenderContent& ON_RenderTexture::operator = (const ON_RenderContent& c)
 {
+  ON_RenderContent::operator = (c);
+  return *this;
+}
+
+const ON_RenderTexture& ON_RenderTexture::operator = (const ON_RenderTexture& tex)
+{
+  ON_RenderContent::operator = (tex);
+  return *this;
 }
 
 ON_Texture ON_RenderTexture::SimulatedTexture(void) const

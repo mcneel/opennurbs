@@ -26,8 +26,8 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#pragma warning (push)
-#pragma warning (disable:4127)
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4127)
 
 ON__INT64 Integerize(float dirty)
 {
@@ -214,15 +214,6 @@ static bool GetTimeComponents(const ON_wString& sTime, int& y, int& m, int& d, i
 
   return true;
 }
-
-//static bool IsValidTime(const ON_wString& sTime)
-//{
-//  int y = 0, m = 0, d = 0, h = 0, n = 0, s = 0;
-//  if (!GetTimeComponents(sTime, y, m, d, h, n, s))
-//    return false;
-//
-//  return true;
-//}
 
 static ON_wString TimeToString(time_t time)
 {
@@ -818,8 +809,6 @@ void ON_XMLVariant::SetValue(const ON_Xform& xform)
 
 bool ON_XMLVariant::AsBool(void) const
 {
-  DoAutoTyping(Types::Bool);
-
   switch (m_impl->m_type)
   {
   case Types::Bool:    return m_impl->m_bVal;
@@ -839,8 +828,6 @@ bool ON_XMLVariant::AsBool(void) const
 
 int ON_XMLVariant::AsInteger(void) const
 {
-  DoAutoTyping(Types::Integer);
-
   switch (m_impl->m_type)
   {
   case Types::Bool:    return     m_impl->m_bVal ? 1 : 0;
@@ -860,8 +847,6 @@ int ON_XMLVariant::AsInteger(void) const
 
 double ON_XMLVariant::AsDouble(void) const
 {
-  DoAutoTyping(Types::Double);
-
   switch (m_impl->m_type)
   {
   case Types::Bool:    return         m_impl->m_bVal ? 1.0 : 0.0;
@@ -877,8 +862,6 @@ double ON_XMLVariant::AsDouble(void) const
 
 float ON_XMLVariant::AsFloat(void) const
 {
-  DoAutoTyping(Types::Float);
-
   switch (m_impl->m_type)
   {
   case Types::Bool:    return       m_impl->m_bVal ? 1.0f : 0.0f;
@@ -986,8 +969,6 @@ ON_Xform ON_XMLVariant::AsXform(void) const
 
 ON_4fColor ON_XMLVariant::AsColor(void) const
 {
-  DoAutoTyping(Types::DoubleColor4);
-
   ON_4fColor col(ON_Color(0, 0, 0, 0));
 
   switch (m_impl->m_type)
@@ -1008,8 +989,6 @@ ON_4fColor ON_XMLVariant::AsColor(void) const
 
 ON_UUID ON_XMLVariant::AsUuid(void) const
 {
-  DoAutoTyping(Types::Uuid);
-
   switch (m_impl->m_type)
   {
   case Types::String:
@@ -1025,8 +1004,6 @@ ON_UUID ON_XMLVariant::AsUuid(void) const
 
 time_t ON_XMLVariant::AsTime(void) const
 {
-  DoAutoTyping(Types::Time);
-
   switch (m_impl->m_type)
   {
   case Types::String:
@@ -1041,8 +1018,6 @@ time_t ON_XMLVariant::AsTime(void) const
 
 ON_Buffer ON_XMLVariant::AsBuffer(void) const
 {
-  DoAutoTyping(Types::Buffer);
-
   ON_Buffer buf;
 #if defined(ON_RUNTIME_APPLE)
 #pragma clang diagnostic push
@@ -1090,8 +1065,6 @@ void* ON_XMLVariant::AsBuffer(size_t& size_out) const
 
 ON_wString ON_XMLVariant::AsString(void) const
 {
-  DoAutoTyping(Types::String);
-
   switch (m_impl->m_type)
   {
   case Types::Integer:
@@ -1448,110 +1421,6 @@ void ON_XMLVariant::Format(ON_wString& sOut) const
               sType.Array(), AsString().Array(), StringFromUnits(Units()), DataCRC(0));
 }
 
-#if 1
-void AutoTypeVariant(ON_XMLVariant&) { }
-void ON_XMLVariant::DoAutoTyping(Types) const { }
-#else
-void ON_XMLVariant::DoAutoTyping(Types type) const
-{
-  // Only do automatic typing if the flag is set.
-  if (!m_impl->m_bTypePending)
-    return;
-
-  m_impl->m_bTypePending = false; // Must be first.
-
-  // This is only meant to work if the value is a string - i.e, it has just been read out of the XML stream.
-  if (m_impl->m_type != Types::String)
-    return;
-
-  // This requires a pretty big const hack - since we are changing the variant
-  // pretty dramatically, but we aren't actually changing its value.
-
-  auto* pThis = const_cast<ON_XMLVariant*>(this);
-  switch (type)
-  {
-  case Types::String:                                                          break;
-  case Types::Bool:         pThis->SetValue(AsBool());                         break;
-  case Types::Integer:      pThis->SetValue(AsInteger());                      break;
-  case Types::Float:        pThis->SetValue(AsFloat());                        break;
-  case Types::Double:       pThis->SetValue(AsDouble());                       break;
-  case Types::Uuid:         pThis->SetValue(AsUuid());                         break;
-  case Types::Time:         pThis->SetValue(AsTime());                         break;
-  case Types::Buffer:       pThis->SetValue(AsBuffer());                       break;
-  case Types::DoubleColor4: pThis->SetValue(AsColor());                        break;
-  case Types::DoubleArray2: pThis->SetValue(As2dPoint(), ArrayTypes::Array2);  break;
-  case Types::DoubleArray3: pThis->SetValue(As3dPoint(), ArrayTypes::Array3);  break;
-  case Types::DoubleArray4: pThis->SetValue(As4dPoint(), ArrayTypes::Array4);  break;
-  case Types::Matrix:       pThis->SetValue(AsXform(),  ArrayTypes::Array16); break;
-  }
-
-  // Otherwise we assume the conversion is not supported and just go on with life.
-}
-
-void AutoTypeVariant(ON_XMLVariant& v)
-{
-  // Used by the XML reader to try to invent sensible types for variants read in from the stream.
-  if (v.Type() != ON_XMLVariant::Types::String)
-    return;  // The variant already has a type.
-
-  ON_wString s = v.AsString();
-  v.SetTypePendingFlag(true);
-
-  if ((s == L"true") || (s == L"false"))
-  {
-    v.AsBool();
-  }
-  else
-  if (s.StartsWithNoCase(wszBase64Prefix))
-  {
-    v.AsBuffer();
-  }
-  else
-  if (IsValidTime(s))
-  {
-    v.AsTime();
-  }
-  else
-  if (s.IsValidIntegerNumber())
-  {
-    v.AsInteger();
-  }
-  else
-  if (s.IsValidMatrix())
-  {
-    v.AsMatrix();
-  }
-  else
-  if (s.IsValid4dPoint())
-  {
-    v.As4dPoint();
-  }
-  else
-  if (s.IsValid3dPoint())
-  {
-    v.As3dPoint();
-  }
-  else
-  if (s.IsValid2dPoint())
-  {
-    v.As2dPoint();
-  }
-  else
-  if (s.IsValidRealNumber())
-  {
-    v.AsDouble();
-  }
-  else
-  {
-    const auto uuid = ON_UuidFromString(s);
-    if (ON_UuidIsNotNil(uuid))
-    {
-      v.AsUuid();
-    }
-  }
-}
-#endif
-
 // ON_XMLProperty
 
 class CPropertyData final
@@ -1751,6 +1620,11 @@ ON_XMLProperty* ON_XMLProperty::Next(void) const
   return m_impl->m_pNext;
 }
 
+void* ON_XMLProperty::EVF(const wchar_t*, void*)
+{
+  return nullptr;
+}
+
 // ON_XMLSegmentedStream
 
 class ON_XMLSegmentedStream::CImpl
@@ -1833,7 +1707,7 @@ public:
   bool RemoveProperty(const wchar_t* name);
   ON_XMLNode* DetachChild(ON_XMLNode& child);
   void RemoveAllProperties(void);
-  const ON_XMLNode& TopmostParent(void) const;
+  const ON_XMLNode& TopLevel(void) const;
   ON_XMLNode* AttachChildNode(ON_XMLNode* pNode);
   void RemoveAllChildren(void);
   const ON_wString& TagName(void) const;
@@ -1898,26 +1772,7 @@ static const wchar_t* StringFromPropType(ON_XMLVariant::Types vt)
   }
 }
 
-static ON_XMLVariant::Types PropTypeFromString(const ON_wString& s)
-{
-  if (L"int"    == s) return ON_XMLVariant::Types::Integer;
-  if (L"float"  == s) return ON_XMLVariant::Types::Float;
-  if (L"double" == s) return ON_XMLVariant::Types::Double;
-  if (L"string" == s) return ON_XMLVariant::Types::String;
-  if (L"bool"   == s) return ON_XMLVariant::Types::Bool;
-  if (L"matrix" == s) return ON_XMLVariant::Types::Matrix;
-  if (L"uuid"   == s) return ON_XMLVariant::Types::Uuid;
-  if (L"time"   == s) return ON_XMLVariant::Types::Time;
-  if (L"buffer" == s) return ON_XMLVariant::Types::Buffer;
-  if (L"color"  == s) return ON_XMLVariant::Types::DoubleColor4;
-  if (L"2da"    == s) return ON_XMLVariant::Types::DoubleArray2;
-  if (L"3da"    == s) return ON_XMLVariant::Types::DoubleArray3;
-  if (L"4da"    == s) return ON_XMLVariant::Types::DoubleArray4;
-
-  return ON_XMLVariant::Types::Null;
-}
-
-ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, int depth) const
+ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, int depth) const // [MARKER] This is probably wrong.
 {
   crc = TagName().DataCRCLower(crc);
 
@@ -1970,7 +1825,7 @@ void ON_XMLNode::CImpl::SetTagName(const wchar_t* name)
   m_name.TrimRight();
 }
 
-const ON_XMLNode& ON_XMLNode::CImpl::TopmostParent(void) const
+const ON_XMLNode& ON_XMLNode::CImpl::TopLevel(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -2181,28 +2036,28 @@ ON_XMLProperty* ON_XMLNode::CImpl::AddProperty(const ON_XMLProperty& prop)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* pProp = new ON_XMLProperty(prop);
-  pProp->Impl().m_owner = &m_node;
-  pProp->Impl().m_pNext = m_first_property;
-  m_first_property = pProp;
+  auto* prop_copy = new ON_XMLProperty(prop);
+  prop_copy->Impl().m_owner = &m_node;
+  prop_copy->Impl().m_pNext = m_first_property;
+  m_first_property = prop_copy;
 
-  return pProp;
+  return prop_copy;
 }
 
-ON_XMLProperty* ON_XMLNode::CImpl::AttachProperty(ON_XMLProperty* pProp)
+ON_XMLProperty* ON_XMLNode::CImpl::AttachProperty(ON_XMLProperty* prop)
 {
-  if (nullptr == pProp)
+  if (nullptr == prop)
     return nullptr;
 
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  RemoveProperty(pProp->Name());
+  RemoveProperty(prop->Name());
 
-  pProp->Impl().m_pNext = m_first_property;
-  m_first_property = pProp;
+  prop->Impl().m_pNext = m_first_property;
+  m_first_property = prop;
   m_first_property->Impl().m_owner = &m_node;
 
-  return pProp;
+  return prop;
 }
 
 bool ON_XMLNode::CImpl::RemoveProperty(const wchar_t* name)
@@ -2569,7 +2424,7 @@ const ON_XMLNode& ON_XMLNode::operator = (const ON_XMLNode& src)
   auto pi = src.GetPropertyIterator();
   while (nullptr != (pProperty = pi.GetNextProperty()))
   {
-    m_impl->AddProperty(*pProperty); // This does a copy anyway - no need to call the copy constructor
+    m_impl->AddProperty(*pProperty);
   }
 
   // Copy in the children.
@@ -2581,6 +2436,40 @@ const ON_XMLNode& ON_XMLNode::operator = (const ON_XMLNode& src)
   }
 
   return *this;
+}
+
+bool ON_XMLNode::operator == (const ON_XMLNode& other) const
+{
+  ON_XMLProperty* prop_other = nullptr;
+  auto pio = other.GetPropertyIterator();
+  while (nullptr != (prop_other = pio.GetNextProperty()))
+  {
+    auto* prop_this = GetNamedProperty(prop_other->Name());
+    if (nullptr == prop_this)
+      return false;
+
+    if (!(prop_this->GetValue() == prop_other->GetValue()))
+      return false;
+  }
+
+  ON_XMLNode* child_other = nullptr;
+  auto cio = other.GetChildIterator();
+  while (nullptr != (child_other = cio.GetNextChild()))
+  {
+    auto* child_this = GetNamedChild(child_other->TagName());
+    if (nullptr == child_this)
+      return false;
+
+    if (!(*child_this == *child_other))
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_XMLNode::operator != (const ON_XMLNode& node) const
+{
+    return !(operator == (node));
 }
 
 bool ON_XMLNode::MergeFrom(const ON_XMLNode& src)
@@ -2598,7 +2487,7 @@ bool ON_XMLNode::MergeFrom(const ON_XMLNode& src)
   while (nullptr != (pProperty = pi.GetNextProperty()))
   {
     // Replaces any that are already there.
-    AddProperty(*pProperty);
+    SetProperty(*pProperty);
   }
 
   // Copy in the children.
@@ -2642,7 +2531,7 @@ void ON_XMLNode::RemoveAllProperties(void)
   m_impl->AddEmptyDefaultProperty();
 }
 
-ON_XMLProperty* ON_XMLNode::AddProperty(const ON_XMLProperty& prop)
+ON_XMLProperty* ON_XMLNode::SetProperty(const ON_XMLProperty& prop)
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 
@@ -2749,24 +2638,19 @@ bool ON_XMLNode::IsValidXMLName(const wchar_t* wszTagName) // Static.
   return true;
 }
 
-ON_XMLNode* ON_XMLNode::GetParent(void) const
+ON_XMLNode* ON_XMLNode::Parent(void) const
 {
   return m_impl->m_parent;
 }
 
-const ON_XMLNode& ON_XMLNode::TopmostParent(void) const
+const ON_XMLNode& ON_XMLNode::TopLevel(void) const
 {
-  return m_impl->TopmostParent();
+  return m_impl->TopLevel();
 }
 
 ON_XMLNode* ON_XMLNode::AttachChildNode(ON_XMLNode* pNode)
 {
   return m_impl->AttachChildNode(pNode);
-}
-
-ON_XMLNode* ON_XMLNode::AddChildNode(ON_XMLNode* pNode)
-{
-  return AttachChildNode(pNode);
 }
 
 ON_XMLProperty* ON_XMLNode::AttachProperty(ON_XMLProperty* pProp)
@@ -2783,7 +2667,7 @@ bool ON_XMLNode::RemoveProperty(const wchar_t* wszPropertyName)
 
 void ON_XMLNode::Remove(void)
 {
-  auto* pParent = GetParent();
+  auto* pParent = Parent();
   if (nullptr != pParent)
   {
     pParent->RemoveChild(this);
@@ -2875,7 +2759,7 @@ static bool PrependNodeToStringAndRecurseParents(const ON_XMLNode* pNode, ON_wSt
   if (nullptr == pNode)
     return false;
 
-  auto* pParent = pNode->GetParent();
+  auto* pParent = pNode->Parent();
   if (nullptr == pParent)
     return false;
 
@@ -2892,7 +2776,7 @@ ON_wString ON_XMLNode::GetPathFromRoot(void) const
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 
   ON_wString sPath = TagName();
-  PrependNodeToStringAndRecurseParents(GetParent(), sPath);
+  PrependNodeToStringAndRecurseParents(Parent(), sPath);
 
   return sPath;
 }
@@ -2988,11 +2872,8 @@ bool ON_XMLNode::CImpl::GetPropertiesFromTag(const ON_wString& sTag)
           const int pos2 = m_bAutoTypePropValue ? sPropertyValue.Find(L':') : -1;
           if (pos2 > 0)
           {
-            // The type is encoded in the value.
-            const auto type = PropTypeFromString(sPropertyValue.Left(pos2));
             vValue = sPropertyValue.Mid(pos2 + 1);
             vValue.SetTypePendingFlag(true);
-            vValue.DoAutoTyping(type);
           }
           else
           {
@@ -3551,12 +3432,9 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
       const int pos2 = CImpl::m_bAutoTypePropValue ? sDefaultProperty.Find(L":") : -1;
       if (pos2 > 0)
       {
-        // The type is encoded in the value.
-        const auto type = PropTypeFromString(sDefaultProperty.Left(pos2));
         auto& v = pProp->GetNonConstValue();
         v = sDefaultProperty.Mid(pos2 + 1);
         v.SetTypePendingFlag(true);
-        v.DoAutoTyping(type);
       }
       else
       {
@@ -3566,7 +3444,7 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
     }
   }
 
-  TopmostParent().OnNodeReadFromStream(this);
+  TopLevel().OnNodeReadFromStream(this);
 
   while ((*pBuffer == L'\r') || (*pBuffer == L'\n'))
     pBuffer++;
@@ -3746,6 +3624,11 @@ ON_XMLProperty* ON_XMLNode::PropertyIterator::GetNextProperty(void)
   return pProp;
 }
 
+void* ON_XMLNode::PropertyIterator::EVF(const wchar_t*, void*)
+{
+  return nullptr;
+}
+
 // ON_XMLRootNode
 
 // TODO: Somehow I managed to port the non-rc version of the root node.
@@ -3765,6 +3648,15 @@ ON_XMLRootNode::ON_XMLRootNode()
   m_impl = new (m_Impl) CImpl; IMPL_CHECK;
 }
 
+ON_XMLRootNode::ON_XMLRootNode(const ON_XMLNode& src)
+  :
+  ON_XMLNode(sXMLRootNodeName)
+{
+  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+
+  *this = src;
+}
+
 ON_XMLRootNode::ON_XMLRootNode(const ON_XMLRootNode& src)
   :
   ON_XMLNode(sXMLRootNodeName)
@@ -3778,6 +3670,13 @@ ON_XMLRootNode::~ON_XMLRootNode()
 {
   m_impl->~CImpl();
   m_impl = nullptr;
+}
+
+const ON_XMLRootNode& ON_XMLRootNode::operator = (const ON_XMLNode& src)
+{
+  *static_cast<ON_XMLNode*>(this) = src;
+
+  return *this;
 }
 
 const ON_XMLRootNode& ON_XMLRootNode::operator = (const ON_XMLRootNode& src)
@@ -3984,11 +3883,6 @@ int ON_XMLUserData::Version(void) const
   return 2;
 }
 
-void ON_XMLUserData::_Dump(const wchar_t* wszFileName) const
-{
-  m_impl->m_XMLRoot.WriteToFile(wszFileName);
-}
-
 ON_XMLProperty* ON_XMLUserData::InternalProperty(const wchar_t* wszXMLPath, const wchar_t* wszPropertyName) const
 {
   const auto* pNode = m_impl->m_XMLRoot.NodeForRead().GetNodeAtPath(wszXMLPath);
@@ -4092,6 +3986,11 @@ bool ON_XMLUserData::Write(ON_BinaryArchive& archive) const
   return true;
 }
 
+void ON_XMLUserData::_Dump(const wchar_t* wszFileName) const
+{
+  m_impl->m_XMLRoot.WriteToFile(wszFileName);
+}
+
 void* ON_XMLUserData::EVF(const wchar_t*, void*)
 {
   return nullptr;
@@ -4186,6 +4085,15 @@ ON_XMLNode* ON_XMLParameters::SetParam(const wchar_t* wszParamName, const ON_XML
   return SetParamNode(m_impl->m_node, wszParamName, value);
 }
 
+ON_XMLVariant ON_XMLParameters::GetParam(const wchar_t* param_name, const ON_XMLVariant& default_value) const
+{
+  ON_XMLVariant value;
+  if (GetParam(param_name, value))
+    return value;
+
+  return default_value;
+}
+
 ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszParamName, const ON_XMLVariant& vValue)
 {
   auto* pChildNode = ObtainChildNodeForWrite(node, wszParamName);
@@ -4216,7 +4124,7 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
   // Default property is the actual value.
   ON_XMLProperty prop;
   prop.SetValue(vValue);
-  pChildNode->AddProperty(prop);
+  pChildNode->SetProperty(prop);
 
   // Set units (if any).
   if (ON::LengthUnitSystem::None != vValue.Units())
@@ -4224,7 +4132,7 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
     prop.SetName(L"units");
     const auto* wsz = StringFromUnits(vValue.Units());
     prop.SetValue(wsz);
-    pChildNode->AddProperty(prop);
+    pChildNode->SetProperty(prop);
   }
 
   if (m_impl->m_bWriteTypeProperty)
@@ -4232,10 +4140,15 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
     // Set type.
     prop.SetName(L"type");
     prop.SetValue(wszType);
-    pChildNode->AddProperty(prop);
+    pChildNode->SetProperty(prop);
   }
 
   return pChildNode;
+}
+
+ON_XMLNode& ON_XMLParameters::Node(void)
+{
+  return m_impl->m_node;
 }
 
 const ON_XMLNode& ON_XMLParameters::Node(void) const
@@ -4474,7 +4387,7 @@ ON_XMLNode* ON_XMLParametersV8::ObtainChildNodeForWrite(ON_XMLNode& node, const 
     ON_XMLProperty prop;
     prop.SetName(ON_NAME);
     prop.SetValue(wszParamName);
-    pChildNode->AddProperty(prop);
+    pChildNode->SetProperty(prop);
   }
 
   return pChildNode;
@@ -4514,6 +4427,9 @@ bool ON_XMLParametersV8::GetParam(const wchar_t* wszParamName, ON_XMLVariant& vV
 #define ON_RDK_UD_INSTANCE_ID  L"instance-id"
 
 static const ON_UUID uuidUniversalRenderEngine = { 0x99999999, 0x9999, 0x9999, { 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99 } };
+
+ON_UUID ON_UuidDefaultMaterialInstance    = { 0xdefadefa, 0xdefa, 0xdefa, { 0xde, 0xfa, 0xde, 0xfa, 0xde, 0xfa, 0xde, 0xfa } };
+ON_UUID ON_UuidDefaultEnvironmentInstance = { 0xdefaeeee, 0xdefa, 0xeeee, { 0xde, 0xfa, 0xee, 0xee, 0xde, 0xfa, 0xee, 0xee } };
 
 ON_OBJECT_IMPLEMENT(ON_RdkUserData, ON_UserData, "AFA82772-1525-43dd-A63C-C84AC5806911");
 
@@ -4977,10 +4893,10 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
     const auto* szPropName2 = L"time";
     ON_XMLNode node(L"parent");
     ON_XMLProperty prop1(szPropName1, 25);
-    node.AddProperty(prop1);
+    node.SetProperty(prop1);
     const auto time = time_t(617283945);
     ON_XMLProperty prop2(szPropName2, time);
-    node.AddProperty(prop2);
+    node.SetProperty(prop2);
     auto s = node.String();
     s.RemoveWhiteSpace();
     Validate(s == L"<parenttime=\"1989.07.24_04:45:45\"number=\"25\"/>");
@@ -5000,7 +4916,7 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
     s = node.String();
     s.RemoveWhiteSpace();
     Validate(s == L"<parent/>");
-    node.AddProperty(prop1);
+    node.SetProperty(prop1);
 
     pProp = node.GetNamedProperty(szPropName1);
     Validate(pProp != nullptr);
@@ -5065,10 +4981,10 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
     const auto* szPropName2 = L"time";
     ON_XMLRootNode root;
     ON_XMLProperty prop1(szPropName1, 25);
-    root.AddProperty(prop1);
+    root.SetProperty(prop1);
     const auto time = time_t(617283945);
     ON_XMLProperty prop2(szPropName2, time);
-    root.AddProperty(prop2);
+    root.SetProperty(prop2);
     auto s = root.String();
     s.RemoveWhiteSpace();
     Validate(s == L"<xmltime=\"1989.07.24_04:45:45\"number=\"25\"/>");
@@ -5152,17 +5068,17 @@ bool ON_RunXMLTests(const wchar_t* test_folder)
   return g_bXMLTestsOK;
 }
 
-#pragma warning (pop)
+#pragma ON_PRAGMA_WARNING_POP
 
 //-------------------------------------------------------------------------------------------------------------------
-ON_UUID uuidPostEffect_ToneMapper_Clamp   = { 0xacb8d258, 0xc1d6, 0x499d, { 0xaa, 0x23, 0x02, 0xdc, 0xde, 0xa2, 0xb0, 0xa2 } };
-ON_UUID uuidPostEffect_Gamma              = { 0x84c0798d, 0xc43a, 0x4402, { 0x88, 0x91, 0xe0, 0xc8, 0x08, 0x8e, 0x67, 0xca } };
-ON_UUID chanRGBA                          = { 0x453a9a1c, 0x9307, 0x4976, { 0xb2, 0x82, 0x4e, 0xad, 0x4d, 0x53, 0x98, 0x79 } };
-ON_UUID chanDistanceFromCamera            = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 0x34, 0x26, 0x42, 0x5e, 0x1c, 0x43, 0x31 } };
-ON_UUID uuidRenderSettingsPreset_Studio   = { 0x5898cc05, 0x4202, 0x4dfb, { 0x83, 0xfe, 0x8f, 0xa8, 0x8f, 0x91, 0xc7, 0xd6 } };
-ON_UUID uuidRenderSettingsPreset_Custom   = { 0xc89a74fb, 0x1451, 0x4a9b, { 0xb8, 0x7d, 0xe3, 0x0f, 0xf3, 0x51, 0x0f, 0x96 } };
-ON_UUID uuidRenderSettingsPreset_Exterior = { 0x1346FE79, 0xBF49, 0x4BB6, { 0x86, 0xF4, 0xF2, 0xC2, 0x81, 0xD1, 0xD5, 0x5A } };
-ON_UUID uuidRenderSettingsPreset_Interior = { 0x14A1D7E9, 0xC75D, 0x464D, { 0xBB, 0x81, 0x38, 0x1C, 0xA2, 0xF1, 0xC9, 0x58 } };
+ON_UUID uuidPostEffect_ToneMapper_Clamp = { 0xacb8d258, 0xc1d6, 0x499d, { 0xaa, 0x23, 0x02, 0xdc, 0xde, 0xa2, 0xb0, 0xa2 } };
+ON_UUID uuidPostEffect_Gamma            = { 0x84c0798d, 0xc43a, 0x4402, { 0x88, 0x91, 0xe0, 0xc8, 0x08, 0x8e, 0x67, 0xca } };
+ON_UUID chanRGBA                        = { 0x453a9a1c, 0x9307, 0x4976, { 0xb2, 0x82, 0x4e, 0xad, 0x4d, 0x53, 0x98, 0x79 } };
+ON_UUID chanDistanceFromCamera          = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 0x34, 0x26, 0x42, 0x5e, 0x1c, 0x43, 0x31 } };
+ON_UUID uuidRenderPreset_Studio         = { 0x5898cc05, 0x4202, 0x4dfb, { 0x83, 0xfe, 0x8f, 0xa8, 0x8f, 0x91, 0xc7, 0xd6 } };
+ON_UUID uuidRenderPreset_Custom         = { 0xc89a74fb, 0x1451, 0x4a9b, { 0xb8, 0x7d, 0xe3, 0x0f, 0xf3, 0x51, 0x0f, 0x96 } };
+ON_UUID uuidRenderPreset_Exterior       = { 0x1346FE79, 0xBF49, 0x4BB6, { 0x86, 0xF4, 0xF2, 0xC2, 0x81, 0xD1, 0xD5, 0x5A } };
+ON_UUID uuidRenderPreset_Interior       = { 0x14A1D7E9, 0xC75D, 0x464D, { 0xBB, 0x81, 0x38, 0x1C, 0xA2, 0xF1, 0xC9, 0x58 } };
 
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -5204,7 +5120,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
   {
     if (ValueSets::All == _vs)
     {
-      Create(doc, ON_RDK_CURRENT_CONTENT).CreateNodeAtPath(ON_RDK_ENVIRONMENT);
+      Create(doc, ON_RDK_CURRENT_CONTENT).CreateNodeAtPath(ON_RDK_BACKGROUND_ENVIRONMENT);
       Create(doc, ON_RDK_DEFAULT_CONTENT_SECTION);
     }
 
@@ -5244,13 +5160,8 @@ void ON_RdkDocumentDefaults::CreateXML(void)
         // Post effects.
         auto& peps = Create(settings, ON_RDK_POST_EFFECTS);
         {
-          ON_XMLParameters p(peps);
-          p.SetParam(ON_RDK_PEP_EARLY_SELECTION, ON_nil_uuid);
-          p.SetParam(ON_RDK_PEP_TONE_SELECTION, uuidPostEffect_ToneMapper_Clamp);
-          p.SetParam(ON_RDK_PEP_LATE_SELECTION, uuidPostEffect_Gamma);
-
           Create(peps, ON_RDK_PEP_TYPE_EARLY);
-          Create(peps, ON_RDK_PEP_TYPE_TONE);
+          Create(peps, ON_RDK_PEP_TYPE_TONE_MAPPING);
           Create(peps, ON_RDK_PEP_TYPE_LATE);
         }
       }
@@ -5275,15 +5186,15 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           // Misc rendering settings.
           ON_XMLParameters p(rendering);
           p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
-          p.SetParam(ON_RDK_DITHERING, ON_RDK_DITHERING_FLOYD_STEINBERG);
-          p.SetParam(ON_RDK_USE_DITHERING, false);
-          p.SetParam(ON_RDK_GAMMA, (_major_version < 6) ? 1.0f : 2.2f);
-          p.SetParam(ON_RDK_USE_POST_PROCESS_GAMMA, true);
-          p.SetParam(ON_RDK_USE_LINEAR_WORKFLOW, (_major_version < 6) ? false : true);
+          p.SetParam(ON_RDK_DITHERING_ON, false);
+          p.SetParam(ON_RDK_DITHERING_METHOD, ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
-          p.SetParam(ON_RDK_CURRENT_PRESET, (_major_version < 8) ? uuidRenderSettingsPreset_Custom
-                                                                 : uuidRenderSettingsPreset_Studio);
+          p.SetParam(ON_RDK_CURRENT_RENDER_PRESET, (_major_version < 8) ? uuidRenderPreset_Custom
+                                                                        : uuidRenderPreset_Studio);
+          p.SetParam(ON_RDK_POST_PROCESS_GAMMA_ON, true);
+          p.SetParam(ON_RDK_POST_PROCESS_GAMMA,   (_major_version < 6) ? 1.0f : 2.2f);
+          p.SetParam(ON_RDK_PRE_PROCESS_GAMMA_ON, (_major_version < 6) ? false : true);
         }
         else
         {
@@ -5296,37 +5207,44 @@ void ON_RdkDocumentDefaults::CreateXML(void)
 
           if (_major_version < 8)
           {
-            p.SetParam(ON_RDK_CURRENT_PRESET, uuidRenderSettingsPreset_Custom);
+            p.SetParam(ON_RDK_CURRENT_RENDER_PRESET, uuidRenderPreset_Custom);
           }
         }
       }
 
       if (ValueSets::All == _vs)
       {
-        // Sun.
+        // Sun and Skylight.
         auto& sun = Create(settings, ON_RDK_SUN);
         {
           ON_XMLParameters p(sun);
+          p.SetParam(ON_RDK_SUN_ENABLE_ALLOWED, true);
           p.SetParam(ON_RDK_SUN_ENABLE_ON, false);
-          p.SetParam(ON_RDK_SUN_MANUAL_CONTROL_ON, false);
           p.SetParam(ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, true);
-          p.SetParam(ON_RDK_SUN_AZIMUTH, 0.0);
-          p.SetParam(ON_RDK_SUN_ALTITUDE, 0.0);
-          p.SetParam(ON_RDK_SUN_DATE_YEAR, 2000);
-          p.SetParam(ON_RDK_SUN_DATE_MONTH, 1);
-          p.SetParam(ON_RDK_SUN_DATE_DAY, 1);
-          p.SetParam(ON_RDK_SUN_TIME_HOURS, 12.0);
+          p.SetParam(ON_RDK_SUN_MANUAL_CONTROL_ON, false);
+          p.SetParam(ON_RDK_SUN_INTENSITY, 1.0);
+          p.SetParam(ON_RDK_SUN_SHADOW_INTENSITY, 1.0);
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 60);
-          p.SetParam(ON_RDK_SUN_SHADOW_INTENSITY, 1.0);
-          p.SetParam(ON_RDK_SUN_INTENSITY, 1.0);
-          p.SetParam(ON_RDK_SUN_OBSERVER_LATITUDE, 0.0);
-          p.SetParam(ON_RDK_SUN_OBSERVER_LONGITUDE, 0.0);
-          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0);
+
+          ON_SunEngine e;
+          e.SetLocalDateTime(2000, 1, 1, 12.0);
+          int y = 0, m = 0, d = 0; double h = 0.0;
+          e.LocalDateTime(y, m, d, h);
+          p.SetParam(ON_RDK_SUN_DATE_YEAR,  y);
+          p.SetParam(ON_RDK_SUN_DATE_MONTH, m);
+          p.SetParam(ON_RDK_SUN_DATE_DAY,   d);
+          p.SetParam(ON_RDK_SUN_TIME_HOURS, h);
+          p.SetParam(ON_RDK_SUN_AZIMUTH,            e.Azimuth());
+          p.SetParam(ON_RDK_SUN_ALTITUDE,           e.Altitude());
+          p.SetParam(ON_RDK_SUN_OBSERVER_LATITUDE,  e.Latitude());
+          p.SetParam(ON_RDK_SUN_OBSERVER_LONGITUDE, e.Longitude());
+          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE,  e.TimeZoneHours());
+
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
-          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
-          p.SetParam(ON_RDK_SUN_SKYLIGHT_CUSTOM_ENVIRONMENT, ON_nil_uuid);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, (_major_version < 6) ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, ON_nil_uuid);
         }
 
         // Safe frame.
@@ -5335,7 +5253,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           ON_XMLParameters p(safe_frame);
           p.SetParam(ON_RDK_SF_ON, false);
           p.SetParam(ON_RDK_SF_PERSPECTIVE_ONLY, true);
-          p.SetParam(ON_RDK_SF_4x3_FIELD_DISPLAY_ON, false);
+          p.SetParam(ON_RDK_SF_4x3_FIELD_GRID_ON, false);
 
           auto& live_frame = Create(safe_frame, ON_RDK_SF_LIVE_FRAME);
           {
@@ -5374,12 +5292,12 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_GP_ALTITUDE, 0.0);
           p.SetParam(ON_RDK_GP_AUTO_ALTITUDE, true);
           p.SetParam(ON_RDK_GP_SHADOW_ONLY, (_major_version < 6) ? false : true);
-          p.SetParam(ON_RDK_GP_MATERIAL, L"");
+          p.SetParam(ON_RDK_GP_MATERIAL_ID, L"");
           p.SetParam(ON_RDK_GP_TEXTURE_SIZE, ON_2dPoint(1.0, 1.0));
           p.SetParam(ON_RDK_GP_TEXTURE_OFFSET, ON_2dPoint(0.0, 0.0));
           p.SetParam(ON_RDK_GP_TEXTURE_ROTATION, 0.0);
-          p.SetParam(ON_RDK_GP_OFFSET_LOCK, false);
-          p.SetParam(ON_RDK_GP_REPEAT_LOCK, true);
+          p.SetParam(ON_RDK_GP_TEXTURE_OFFSET_LOCKED, false);
+          p.SetParam(ON_RDK_GP_TEXTURE_SIZE_LOCKED, true);
         }
       }
       else
@@ -5416,6 +5334,11 @@ void ON_RdkDocumentDefaults::CopyDefaultsTo(ON_XMLNode& dest) const
 
 ON_RdkDocumentDefaults::~ON_RdkDocumentDefaults()
 {
+}
+
+void* ON_RdkDocumentDefaults::EVF(const wchar_t*, void*)
+{
+  return nullptr;
 }
 
 #pragma ON_PRAGMA_WARNING_POP

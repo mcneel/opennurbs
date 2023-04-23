@@ -118,8 +118,53 @@ int ON_IsUnicodeSpaceCodePoint(
     ON_UnicodeCodePoint::ON_Space == u
     || ON_UnicodeCodePoint::ON_NoBreakSpace == u
     || ON_UnicodeCodePoint::ON_NarrowNoBreakSpace == u
-    || ON_UnicodeCodePoint::ON_ZeroWidthSpace == u
+    || (u >= ON_UnicodeCodePoint::ON_EnQuad && u <= ON_UnicodeCodePoint::ON_ZeroWidthSpace)
     ;
+}
+
+int ON_IsUnicodeSpaceOrControlCodePoint(
+  ON__UINT32 u
+)
+{
+  // Additional space code points may be added in the future.
+  // The goal is to detect code points that should be trimmed
+  // when isolating text tokens in a string.
+  
+  if (u > 0 && u <= ON_UnicodeCodePoint::ON_Space)
+    return true;
+
+  if (u < ON_UnicodeCodePoint::ON_Delete)
+    return false;
+
+  if (u == ON_UnicodeCodePoint::ON_Delete)
+    return true;
+  
+  if (ON_IsUnicodeSpaceCodePoint(u))
+    return true;
+  
+  if (ON_IsUnicodeC1ControlCodePoint(u))
+    return true;
+
+  if (u < 0x2000)
+    return false;
+
+  // Bidirectional text control
+  if (u >= 0x200E && u <= 0x200F)
+    return true;
+
+  // Separators, Format characters, and NNBSP
+  if (u >= 0x2028 && u <= 0x202F)
+    return true;
+
+  // Bidirectional text control
+  if (u >= 0x202A && u <= 0x202E)
+    return true;
+
+  // Bidirectional text control
+  if (u >= 0x2066 && u <= 0x2069)
+    return true;
+
+  return false;
 }
 
 int ON_IsUnicodeC1ControlCodePoint(

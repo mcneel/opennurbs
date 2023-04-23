@@ -2456,7 +2456,9 @@ void ON_wString::TrimLeft(const wchar_t* s)
     {
       for (i = 0; 0 != (c = m_s[i]); i++)
       {
-        if ( c < 0 || c > ON_wString::Space )
+        // All postive code points in ON_IsUnicodeSpaceOrControlCodePoint()
+        // are UTF-16 singltons so it's ok to cast c as a Unicode code point.
+        if ( c < 0 || 0 == ON_IsUnicodeSpaceOrControlCodePoint((ON__UINT32)c) )
           break;
       }
     }
@@ -2496,7 +2498,9 @@ void ON_wString::TrimRight(const wchar_t* s)
     {
       for (i--; i >= 0 && 0 != (c = m_s[i]); i--)
       {
-        if ( c < 0 || c > ON_wString::Space )
+        // All postive code points in ON_IsUnicodeSpaceOrControlCodePoint()
+        // are UTF-16 singltons so it's ok to cast c as a Unicode code point.
+        if ( c < 0 || 0 == ON_IsUnicodeSpaceOrControlCodePoint((ON__UINT32)c) )
           break;
       }
     }

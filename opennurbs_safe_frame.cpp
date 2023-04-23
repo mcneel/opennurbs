@@ -22,18 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_RDK_SAFE_FRAME              L"safe-frame"
-#define    ON_RDK_SF_ON                  L"on"
-#define    ON_RDK_SF_PERSPECTIVE_ONLY    L"perspective-only"
-#define    ON_RDK_SF_FIELD_DISPLAY_ON    L"field-display-on"
-#define    ON_RDK_SF_LIVE_FRAME          L"live-frame"
-#define    ON_RDK_SF_ACTION_FRAME        L"action-frame"
-#define    ON_RDK_SF_TITLE_FRAME         L"title-frame"
-#define       ON_RDK_SFF_ON                L"on"
-#define       ON_RDK_SFF_XSCALE            L"x-scale"
-#define       ON_RDK_SFF_YSCALE            L"y-scale"
-#define       ON_RDK_SFF_LINK              L"link"
-
 class ON_SafeFrame::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -125,7 +113,7 @@ const ON_SafeFrame& ON_SafeFrame::operator = (const ON_SafeFrame& sf)
   return *this;
 }
 
-bool ON_SafeFrame::operator == (const ON_SafeFrame& sf)
+bool ON_SafeFrame::operator == (const ON_SafeFrame& sf) const
 {
   if (On()                != sf.On())                return false;
   if (PerspectiveOnly()   != sf.PerspectiveOnly())   return false;
@@ -144,7 +132,7 @@ bool ON_SafeFrame::operator == (const ON_SafeFrame& sf)
   return true;
 }
 
-bool ON_SafeFrame::operator != (const ON_SafeFrame& sf)
+bool ON_SafeFrame::operator != (const ON_SafeFrame& sf) const
 {
   return !(operator == (sf));
 }
@@ -171,12 +159,12 @@ void ON_SafeFrame::SetPerspectiveOnly(bool b)
 
 bool ON_SafeFrame::FieldGridOn(void) const
 {
-  return m_impl->GetBaseParameter(ON_RDK_SF_FIELD_DISPLAY_ON, false).AsBool();
+  return m_impl->GetBaseParameter(ON_RDK_SF_4x3_FIELD_GRID_ON, false).AsBool();
 }
 
 void ON_SafeFrame::SetFieldGridOn(bool b)
 {
-  m_impl->SetBaseParameter(ON_RDK_SF_FIELD_DISPLAY_ON, b);
+  m_impl->SetBaseParameter(ON_RDK_SF_4x3_FIELD_GRID_ON, b);
 }
 
 bool ON_SafeFrame::LiveFrameOn(void) const
@@ -267,4 +255,13 @@ double ON_SafeFrame::TitleFrameYScale(void) const
 void ON_SafeFrame::SetTitleFrameYScale(double d)
 {
   m_impl->SetFrameParameter(ON_RDK_SF_TITLE_FRAME, ON_RDK_SFF_YSCALE, d);
+}
+
+void* ON_SafeFrame::EVF(const wchar_t* func, void* data)
+{
+  return nullptr;
+}
+
+void ON_SafeFrame::InvalidateCache(void)
+{
 }

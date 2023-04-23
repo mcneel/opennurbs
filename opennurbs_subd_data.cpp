@@ -663,6 +663,14 @@ bool ON_SubDVertex::Transform(
   return true;
 }
 
+void ON_SubDVertex::UnsetControlNetPoint()
+{
+  m_P[0] = ON_DBL_QNAN;
+  m_P[1] = ON_DBL_QNAN;
+  m_P[2] = ON_DBL_QNAN;
+  ClearSavedSubdivisionPoints();
+}
+
 bool ON_SubDVertex::SetControlNetPoint(
   ON_3dPoint control_net_point,
   bool bClearNeighborhoodCache
@@ -1019,7 +1027,7 @@ ON_BoundingBox ON_SubDVertex::ControlNetBoundingBox() const
 {
   ON_BoundingBox bbox;
   bbox.m_min = m_P;
-  bbox.m_min = bbox.m_min;
+  bbox.m_max = bbox.m_min;
   return bbox;
 }
 

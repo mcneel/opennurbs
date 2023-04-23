@@ -22,10 +22,10 @@ public:
   ON_Decal(const ON_Decal& d);
   virtual ~ON_Decal();
 
-  const ON_Decal& operator = (const ON_Decal& d);
+  virtual const ON_Decal& operator = (const ON_Decal& d);
 
-  bool operator == (const ON_Decal& d);
-  bool operator != (const ON_Decal& d);
+  virtual bool operator == (const ON_Decal& d) const;
+  virtual bool operator != (const ON_Decal& d) const;
 
   enum class Mappings : ON__INT32
   {

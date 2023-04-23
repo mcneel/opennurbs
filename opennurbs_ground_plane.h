@@ -14,88 +14,101 @@
 #if !defined(ON_GROUND_PLANE_INC_)
 #define ON_GROUND_PLANE_INC_
 
-class ON_CLASS ON_GroundPlane final
+class ON_CLASS ON_GroundPlane
 {
 public:
   ON_GroundPlane();
   ON_GroundPlane(ON_XMLNode& model_node);
   ON_GroundPlane(const ON_GroundPlane& gp);
-  ~ON_GroundPlane();
+  virtual ~ON_GroundPlane();
 
-  const ON_GroundPlane& operator = (const ON_GroundPlane& gp);
+  virtual const ON_GroundPlane& operator = (const ON_GroundPlane& gp);
 
-  bool operator == (const ON_GroundPlane& gp);
-  bool operator != (const ON_GroundPlane& gp);
+  virtual bool operator == (const ON_GroundPlane& gp) const;
+  virtual bool operator != (const ON_GroundPlane& gp) const;
 
   // Returns true if the ground plane is enabled, else false.
-  bool On(void) const;
+  virtual bool On(void) const;
 
   // Returns true if ground plane backface is enabled, else false.
-  bool ShowUnderside(void) const;
+  virtual bool ShowUnderside(void) const;
 
-  // Returns the altitude of the ground plane.
-  double Altitude(void) const;
+  // Returns the altitude of the ground plane. Note that this merely returns the stored value. It does
+  // not do any auto-altitude computation. Auto-altitude must be computed by a subclass (e.g., in Rhino).
+  virtual double Altitude(void) const;
 
   // Returns true if auto-altitude is enabled.
-  bool AutoAltitude(void) const;
+  virtual bool AutoAltitude(void) const;
 
   // Returns true if the ground plane is set to shadow-only.
-  bool ShadowOnly(void) const;
+  virtual bool ShadowOnly(void) const;
 
   // Returns the instance id of the ground plane's material.
-  ON_UUID MaterialInstanceId(void) const;
+  virtual ON_UUID MaterialInstanceId(void) const;
 
   // Returns the texture offset of the ground plane in model units.
-  ON_2dVector TextureOffset(void) const;
+  virtual ON_2dVector TextureOffset(void) const;
 
   // Returns true if the texture offset x and y are locked together.
-  bool TextureOffsetLocked(void) const;
-
-  // Returns true if the texture repeat x and y are locked together.
-  bool TextureRepeatLocked(void) const;
+  virtual bool TextureOffsetLocked(void) const;
 
   // Returns the texture size of the ground plane in model units.
-  ON_2dVector TextureSize(void) const;
+  virtual ON_2dVector TextureSize(void) const;
+
+  // Returns true if the texture size x and y are locked together.
+  virtual bool TextureSizeLocked(void) const;
 
   // Returns the texture rotation of the ground plane in degrees.
-  double TextureRotation(void) const;
+  virtual double TextureRotation(void) const;
 
   // Set the ground plane enabled state.
-  void SetOn(bool b);
+  virtual void SetOn(bool on);
 
   // Set if the ground plane backface is enabled.
-  void SetShowUnderside(bool b);
+  virtual void SetShowUnderside(bool on);
 
   // Set the ground plane's altitude.
-  void SetAltitude(double d);
+  virtual void SetAltitude(double altitude);
 
   // Set if the ground plane is set to auto-altitude.
-  void SetAutoAltitude(bool b);
+  virtual void SetAutoAltitude(bool on);
 
   // Set if the ground plane is set to shadow-only.
-  void SetShadowOnly(bool b);
+  virtual void SetShadowOnly(bool on);
 
   // Set the instance id of the ground plane's material.
-  void SetMaterialInstanceId(const ON_UUID& uuid);
+  virtual void SetMaterialInstanceId(const ON_UUID& uuid);
 
   // Set the texture offset of the ground plane in model units.
-  void SetTextureOffset(const ON_2dVector& vec);
+  virtual void SetTextureOffset(const ON_2dVector& vec);
 
   // Set if the texture offset x and y are locked together.
-  void SetTextureOffsetLocked(bool b);
-
-  // Set if the texture repeat x and y are locked together.
-  void SetTextureRepeatLocked(bool b);
+  virtual void SetTextureOffsetLocked(bool locked);
 
   // Set the texture size of the ground plane in model units.
-  void SetTextureSize(const ON_2dVector& vec);
+  virtual void SetTextureSize(const ON_2dVector& vec);
+
+  // Set if the texture size x and y are locked together.
+  virtual void SetTextureSizeLocked(bool locked);
 
   // Set the texture rotation of the ground plane in degrees.
-  void SetTextureRotation(double d);
+  virtual void SetTextureRotation(double angle);
+
+  // This method populates an ON_Material with default settings and returns true. This is designed
+  // to be overriden by a subclass that can return a more interesting material.
+  virtual bool PopulateMaterial(ON_Material& mat) const;
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+private: // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  void SetXMLNode(ON_XMLNode& node) const;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;
-  CImpl* m_impl;
+  CImpl* _impl;
 };
 
 #endif

@@ -2978,7 +2978,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
-    edge1.SetRelativeSharpness(prev_edge0_ptr.RelativeSharpness().Subdivided(1));
+    edge1.SetRelativeSharpness(prev_edge0_ptr.RelativeSharpness(false).Subdivided(1));
     face1_eptrs[1] = edge1;
 
 
@@ -2990,7 +2990,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
-    edge1.SetRelativeSharpness(edge0_ptr.RelativeSharpness().Subdivided(0));
+    edge1.SetRelativeSharpness(edge0_ptr.RelativeSharpness(false).Subdivided(0));
     face1_eptrs[2] = edge1;
 
     face1 = m_fsh.AllocateQuad(level_zero_face_id, parent_face_idX, face1_eptrs);

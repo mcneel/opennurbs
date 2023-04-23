@@ -14,18 +14,18 @@
 #if !defined(ON_RENDER_CHANNELS_INC_)
 #define ON_RENDER_CHANNELS_INC_
 
-class ON_CLASS ON_RenderChannels final
+class ON_CLASS ON_RenderChannels
 {
 public:
   ON_RenderChannels();
   ON_RenderChannels(ON_XMLNode& model_node);
   ON_RenderChannels(const ON_RenderChannels& rch);
-  ~ON_RenderChannels();
+  virtual ~ON_RenderChannels();
 
-  const ON_RenderChannels& operator = (const ON_RenderChannels& rch);
+  virtual const ON_RenderChannels& operator = (const ON_RenderChannels& rch);
 
-  bool operator == (const ON_RenderChannels& rch);
-  bool operator != (const ON_RenderChannels& rch);
+  virtual bool operator == (const ON_RenderChannels& rch) const;
+  virtual bool operator != (const ON_RenderChannels& rch) const;
 
   enum class Modes : unsigned int
   {
@@ -34,18 +34,25 @@ public:
   };
 
   // Get the mode.
-  Modes Mode(void) const;
+  virtual Modes Mode(void) const;
 
   // Set the mode.
-  void SetMode(Modes m);
+  virtual void SetMode(Modes m);
 
   // Get the list of channels to render when in 'custom' mode.
   // - 'chan' accepts the channel ids. */
-  void GetCustomList(ON_SimpleArray<ON_UUID>& chan) const;
+  virtual void GetCustomList(ON_SimpleArray<ON_UUID>& chan) const;
 
   // Set the list of channels to render when in 'custom' mode.
   // - 'chan' contains the channel ids.
-  void SetCustomList(const ON_SimpleArray<ON_UUID>& chan);
+  virtual void SetCustomList(const ON_SimpleArray<ON_UUID>& chan);
+
+  // Emergency virtual function for future expansion.
+  virtual void* EVF(const wchar_t* func, void* data);
+
+private: // For internal use only.
+  friend class ON_3dmRenderSettingsPrivate;
+  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

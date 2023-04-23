@@ -765,3 +765,9 @@ void ON_Linetype::RemoveTaper()
 {
   m_private->m_taper_points.Empty();
 }
+
+void ON_Linetype::ClearBits()
+{
+  m_is_set_bits = 0;
+  m_is_locked_bits = 0;
+}

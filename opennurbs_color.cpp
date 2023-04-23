@@ -22,6 +22,15 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+bool ON_Color::IsSet() const
+{
+  return IsUnset() ? false : true;
+}
+
+bool ON_Color::IsUnset() const
+{
+  return ON_Color::UnsetColor == *this;
+}
 
 const ON_Color ON_Color::RandomColor()
 {

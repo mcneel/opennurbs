@@ -2247,7 +2247,7 @@ public:
   ON_wString m_en_field_20_postscript_cid;
 
   // from IDWriteGdiInterop.ConvertFontToLOGFONT
-  LOGFONT m_gdi_interop_logfont;
+  LOGFONT m_gdi_interop_logfont = {};
 
   // from IDWriteGdiInterop.ConvertFontToLOGFONT
   bool m_gdi_interop_logfont_bIsSystemFont = false;

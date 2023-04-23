@@ -22,204 +22,246 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_RDK_GROUND_PLANE           L"ground-plane"
-#define    ON_RDK_GP_ON                 L"on"
-#define    ON_RDK_GP_ALTITUDE           L"altitude"
-#define    ON_RDK_GP_MATERIAL           L"material"
-#define    ON_RDK_GP_TEXTURE_OFFSET     L"texture-offset"
-#define    ON_RDK_GP_TEXTURE_SIZE       L"texture-size"
-#define    ON_RDK_GP_TEXTURE_ROTATION   L"texture-rotation"
-#define    ON_RDK_GP_OFFSET_LOCK        L"offset-lock"
-#define    ON_RDK_GP_REPEAT_LOCK        L"repeat-lock"
-#define    ON_RDK_GP_SHOW_UNDERSIDE     L"show-underside"
-#define    ON_RDK_GP_AUTO_ALTITUDE      L"auto-altitude"
-#define    ON_RDK_GP_SHADOW_ONLY        L"shadow-only"
-
-class ON_GroundPlane::CImpl : public ON_InternalXMLImpl
-{
-public:
-  CImpl() { }
-  CImpl(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
-};
-
 static const wchar_t* XMLPath(void)
 {
   return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_GROUND_PLANE;
 }
 
+class ON_GroundPlane::CImpl : public ON_InternalXMLImpl
+{
+public:
+  CImpl() { }
+  CImpl(const CImpl& i) = delete;
+  CImpl(ON_XMLNode& n)  : ON_InternalXMLImpl(&n) { }
+
+  bool On(void)                   const { return GetParameter(XMLPath(), ON_RDK_GP_ON, false).AsBool(); }
+  bool ShowUnderside(void)        const { return GetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, false).AsBool(); }
+  double Altitude(void)           const { return GetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, 0.0).AsDouble(); }
+  bool AutoAltitude(void)         const { return GetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, false).AsBool(); }
+  bool ShadowOnly(void)           const { return GetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, true).AsBool(); }
+  bool TextureOffsetLocked(void)  const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET_LOCKED, false).AsBool(); }
+  bool TextureSizeLocked(void)    const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE_LOCKED, false).AsBool(); }
+  double TextureRotation(void)    const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, false).AsDouble(); }
+  ON_2dVector TextureOffset(void) const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, ON_nil_uuid).As2dPoint()); }
+  ON_2dVector TextureSize(void)   const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, ON_nil_uuid).As2dPoint()); }
+
+  ON_UUID MaterialInstanceId(void) const
+  {
+    const auto u = GetParameter(XMLPath(), ON_RDK_GP_MATERIAL_ID, ON_nil_uuid).AsUuid();
+    if (ON_nil_uuid != u)
+      return u;
+
+    return ON_UuidDefaultMaterialInstance;
+  }
+
+  void SetOn(bool v)                           { SetParameter(XMLPath(), ON_RDK_GP_ON, v); }
+  void SetShowUnderside(bool v)                { SetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, v); }
+  void SetAltitude(double v)                   { SetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, v); }
+  void SetAutoAltitude(bool v)                 { SetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, v); }
+  void SetShadowOnly(bool v)                   { SetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, v); }
+  void SetMaterialInstanceId(const ON_UUID& v) { SetParameter(XMLPath(), ON_RDK_GP_MATERIAL_ID, v); }
+  void SetTextureOffsetLocked(bool v)          { SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET_LOCKED, v); }
+  void SetTextureSizeLocked(bool v)            { SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE_LOCKED, v); }
+  void SetTextureRotation(double v)            { SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, v); }
+  void SetTextureOffset(const ON_2dVector& v)  { const ON_2dPoint p = v; SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, p); }
+  void SetTextureSize(const ON_2dVector& v)    { const ON_2dPoint p = v; SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, p); }
+};
+
 ON_GroundPlane::ON_GroundPlane()
 {
-  m_impl = new CImpl;
+  _impl = new CImpl; // Uses local node.
 }
 
 ON_GroundPlane::ON_GroundPlane(ON_XMLNode& model_node)
 {
-  m_impl = new CImpl(model_node);
+  _impl = new CImpl(model_node);
 }
 
 ON_GroundPlane::ON_GroundPlane(const ON_GroundPlane& gp)
 {
-  m_impl = new CImpl;
+  _impl = new CImpl; // Uses local node.
   operator = (gp);
 }
 
 ON_GroundPlane::~ON_GroundPlane()
 {
-  delete m_impl;
-  m_impl = nullptr;
+  delete _impl;
+  _impl = nullptr;
 }
 
 const ON_GroundPlane& ON_GroundPlane::operator = (const ON_GroundPlane& gp)
 {
   if (this != &gp)
   {
-    SetOn                 (gp.On());
-    SetShowUnderside      (gp.ShowUnderside());
-    SetAutoAltitude       (gp.AutoAltitude());
-    SetShadowOnly         (gp.ShadowOnly());
-    SetMaterialInstanceId (gp.MaterialInstanceId());
-    SetTextureOffset      (gp.TextureOffset());
-    SetTextureOffsetLocked(gp.TextureOffsetLocked());
-    SetTextureRepeatLocked(gp.TextureRepeatLocked());
-    SetTextureSize        (gp.TextureSize());
-    SetTextureRotation    (gp.TextureRotation());
-    SetAltitude           (gp.Altitude());
+    // When copying the object, we need to directly copy the underlying XML. So we can't allow
+    // virtual overrides to execute because they might shadow the real values we want to copy.
+    _impl->SetOn                 (gp._impl->On());
+    _impl->SetShowUnderside      (gp._impl->ShowUnderside());
+    _impl->SetAltitude           (gp._impl->Altitude());
+    _impl->SetAutoAltitude       (gp._impl->AutoAltitude());
+    _impl->SetShadowOnly         (gp._impl->ShadowOnly());
+    _impl->SetMaterialInstanceId (gp._impl->MaterialInstanceId());
+    _impl->SetTextureOffset      (gp._impl->TextureOffset());
+    _impl->SetTextureOffsetLocked(gp._impl->TextureOffsetLocked());
+    _impl->SetTextureSize        (gp._impl->TextureSize());
+    _impl->SetTextureSizeLocked  (gp._impl->TextureSizeLocked());
+    _impl->SetTextureRotation    (gp._impl->TextureRotation());
   }
 
   return *this;
 }
 
-bool ON_GroundPlane::operator == (const ON_GroundPlane& gp)
+bool ON_GroundPlane::operator == (const ON_GroundPlane& gp) const
 {
-  if (On()                  != gp.On()                 ) return false;
-  if (ShowUnderside()       != gp.ShowUnderside()      ) return false;
-  if (AutoAltitude()        != gp.AutoAltitude()       ) return false;
-  if (ShadowOnly()          != gp.ShadowOnly()         ) return false;
-  if (MaterialInstanceId()  != gp.MaterialInstanceId() ) return false;
-  if (TextureOffset()       != gp.TextureOffset()      ) return false;
-  if (TextureOffsetLocked() != gp.TextureOffsetLocked()) return false;
-  if (TextureRepeatLocked() != gp.TextureRepeatLocked()) return false;
-  if (TextureSize()         != gp.TextureSize()        ) return false;
+  // When checking equality, we need to directly check the underlying XML. So we can't allow
+  // virtual overrides to execute because they might shadow the real values we want to check.
+  if (_impl->On()                  != gp._impl->On()                 ) return false;
+  if (_impl->ShowUnderside()       != gp._impl->ShowUnderside()      ) return false;
+  if (_impl->AutoAltitude()        != gp._impl->AutoAltitude()       ) return false;
+  if (_impl->ShadowOnly()          != gp._impl->ShadowOnly()         ) return false;
+  if (_impl->MaterialInstanceId()  != gp._impl->MaterialInstanceId() ) return false;
+  if (_impl->TextureOffset()       != gp._impl->TextureOffset()      ) return false;
+  if (_impl->TextureOffsetLocked() != gp._impl->TextureOffsetLocked()) return false;
+  if (_impl->TextureSize()         != gp._impl->TextureSize()        ) return false;
+  if (_impl->TextureSizeLocked()   != gp._impl->TextureSizeLocked()  ) return false;
 
-  if (!IsDoubleEqual(Altitude(),        gp.Altitude()))        return false;
-  if (!IsDoubleEqual(TextureRotation(), gp.TextureRotation())) return false;
+  if (!IsDoubleEqual(_impl->Altitude(),        gp._impl->Altitude()))        return false;
+  if (!IsDoubleEqual(_impl->TextureRotation(), gp._impl->TextureRotation())) return false;
 
   return true;
 }
 
-bool ON_GroundPlane::operator != (const ON_GroundPlane& gp)
+bool ON_GroundPlane::operator != (const ON_GroundPlane& gp) const
 {
   return !(operator == (gp));
 }
 
 bool ON_GroundPlane::On(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_ON, false).AsBool();
+  return _impl->On();
 }
 
 bool ON_GroundPlane::ShowUnderside(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, false).AsBool();
+  return _impl->ShowUnderside();
 }
 
 double ON_GroundPlane::Altitude(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, 0.0).AsDouble();
+  return _impl->Altitude();
 }
 
 bool ON_GroundPlane::AutoAltitude(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, false).AsBool();
+  return _impl->AutoAltitude();
 }
 
 bool ON_GroundPlane::ShadowOnly(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, true).AsBool();
+  return _impl->ShadowOnly();
 }
 
 ON_UUID ON_GroundPlane::MaterialInstanceId(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_MATERIAL, ON_nil_uuid).AsUuid();
+  return _impl->MaterialInstanceId();
 }
 
 ON_2dVector ON_GroundPlane::TextureOffset(void) const
 {
-  return ON_2dVector(m_impl->GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, ON_nil_uuid).As2dPoint());
+  return _impl->TextureOffset();
 }
 
 bool ON_GroundPlane::TextureOffsetLocked(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_OFFSET_LOCK, false).AsBool();
-}
-
-bool ON_GroundPlane::TextureRepeatLocked(void) const
-{
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_REPEAT_LOCK, false).AsBool();
+  return _impl->TextureOffsetLocked();
 }
 
 ON_2dVector ON_GroundPlane::TextureSize(void) const
 {
-  return ON_2dVector(m_impl->GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, ON_nil_uuid).As2dPoint());
+  return _impl->TextureSize();
+}
+
+bool ON_GroundPlane::TextureSizeLocked(void) const
+{
+  return _impl->TextureSizeLocked();
 }
 
 double ON_GroundPlane::TextureRotation(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, false).AsDouble();
+  return _impl->TextureRotation();
 }
 
-void ON_GroundPlane::SetOn(bool b)
+void ON_GroundPlane::SetOn(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_ON, b);
+  _impl->SetOn(v);
 }
 
-void ON_GroundPlane::SetShowUnderside(bool b)
+void ON_GroundPlane::SetShowUnderside(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, b);
+  _impl->SetShowUnderside(v);
 }
 
-void ON_GroundPlane::SetAltitude(double d)
+void ON_GroundPlane::SetAltitude(double v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, d);
+  _impl->SetAltitude(v);
 }
 
-void ON_GroundPlane::SetAutoAltitude(bool b)
+void ON_GroundPlane::SetAutoAltitude(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, b);
+  _impl->SetAutoAltitude(v);
 }
 
-void ON_GroundPlane::SetShadowOnly(bool b)
+void ON_GroundPlane::SetShadowOnly(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, b);
+  _impl->SetShadowOnly(v);
 }
 
-void ON_GroundPlane::SetMaterialInstanceId(const ON_UUID& u)
+void ON_GroundPlane::SetMaterialInstanceId(const ON_UUID& v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_MATERIAL, u);
+  _impl->SetMaterialInstanceId(v);
 }
 
 void ON_GroundPlane::SetTextureOffset(const ON_2dVector& v)
 {
-  const ON_2dPoint p = v;
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, p);
+  _impl->SetTextureOffset(v);
 }
 
-void ON_GroundPlane::SetTextureOffsetLocked(bool b)
+void ON_GroundPlane::SetTextureOffsetLocked(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_OFFSET_LOCK, b);
-}
-
-void ON_GroundPlane::SetTextureRepeatLocked(bool b)
-{
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_REPEAT_LOCK, b);
+  _impl->SetTextureOffsetLocked(v);
 }
 
 void ON_GroundPlane::SetTextureSize(const ON_2dVector& v)
 {
-  const ON_2dPoint p = v;
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, p);
+  _impl->SetTextureSize(v);
 }
 
-void ON_GroundPlane::SetTextureRotation(double d)
+void ON_GroundPlane::SetTextureSizeLocked(bool v)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, d);
+  _impl->SetTextureSizeLocked(v);
+}
+
+void ON_GroundPlane::SetTextureRotation(double v)
+{
+  _impl->SetTextureRotation(v);
+}
+
+bool ON_GroundPlane::PopulateMaterial(ON_Material& mat) const
+{
+  mat = ON_Material::Default;
+  return true;
+}
+
+void ON_GroundPlane::SetXMLNode(ON_XMLNode& node) const
+{
+  _impl->SetModelNode(node);
+}
+
+void* ON_GroundPlane::EVF(const wchar_t* func, void* data)
+{
+  return nullptr;
+}
+
+void ON_GroundPlane::InvalidateCache(void)
+{
 }

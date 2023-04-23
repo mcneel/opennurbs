@@ -33,12 +33,9 @@ public:
   ON_UuidList m_clipplane_list;
   bool m_clipping_proof = false;
 
-  ON::SectionFillRule m_section_fill_rule = ON::SectionFillRule::ClosedCurves;
-  int m_section_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
-  double m_section_hatch_scale = 1.0;
-  double m_section_hatch_rotation = 0.0;
+  std::shared_ptr<ON_SectionStyle> m_custom_section_style;
 
-  std::shared_ptr<ON_Linetype> m_custom_linetype;
+  bool m_visible_in_new_details = true;
 };
 
 static const ON_LayerPrivate DefaultLayerPrivate;
@@ -55,21 +52,21 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
   if (m_clipping_proof != other.m_clipping_proof)
     return false;
 
-  if (m_section_fill_rule != other.m_section_fill_rule)
-    return false;
+  {
+    const ON_SectionStyle* customThis = m_custom_section_style.get();
+    const ON_SectionStyle* customOther = other.m_custom_section_style.get();
+    if (nullptr == customThis && customOther)
+      return false;
+    if (customThis && nullptr == customOther)
+      return false;
+    if (customThis && customOther)
+    {
+      if ((*customThis) != (*customOther))
+        return false;
+    }
+  }
 
-  if (m_section_hatch_index != other.m_section_hatch_index)
-    return false;
-
-  if (m_section_hatch_scale != other.m_section_hatch_scale)
-    return false;
-
-  if (m_section_hatch_rotation != other.m_section_hatch_rotation)
-    return false;
-
-  const ON_Linetype* customThis = m_custom_linetype.get();
-  const ON_Linetype* customOther = other.m_custom_linetype.get();
-  if (customThis != customOther)
+  if (m_visible_in_new_details != other.m_visible_in_new_details)
     return false;
 
   return true;
@@ -291,14 +288,14 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
     }
   }
 
-  int index = SectionHatchIndex();
-  if (ON_UNSET_INT_INDEX == index)
+  const ON_SectionStyle* section_style = CustomSectionStyle();
+  if (nullptr == section_style)
   {
-    dump.Print("no section hatch\n");
+    dump.Print("No custom section style\n");
   }
   else
   {
-    dump.Print("section hatch index = %d\n", index);
+    dump.Print("Has custome section style\n");
   }
 }
 
@@ -322,8 +319,14 @@ enum ON_LayerTypeCodes : unsigned char
   // 30 Nov 2022 S. Baer
   // chunk version 1.13: add custom linetype
   CustomLinetype = 33,
+  // 4 Apr 2023 D. Fugier
+  // chunk version 1.14: add visible in new detail
+  PerViewportIsVisibleInNewDetails = 34,
+  // 22 Apr 2023 S. Baer
+  // chunk version 1.15: custom section style
+  CustomSectionStyle = 35,
 
-  LastLayerTypeCode = 33
+  LastLayerTypeCode = 35
 };
 
 bool ON_Layer::Write(
@@ -332,7 +335,7 @@ bool ON_Layer::Write(
 {
   int i;
 
-  bool rc = file.Write3dmChunkVersion(1,13);
+  bool rc = file.Write3dmChunkVersion(1,15);
   while(rc)
   {
     // Save the visibility state this layer has when its parent
@@ -497,43 +500,48 @@ bool ON_Layer::Write(
       }
     }
 
+    // 23 April 2023 S. Baer
+    // Stop writing individual section attributes. All section attribute IO has been
+    // moved to writing an ON_SectionStyle instance
     // section hatch (1.11)
-    {
-      if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
-      {
-        c = ON_LayerTypeCodes::SectionHatchIndex;
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
-        if (!rc) break;
-      }
-      if (SectionHatchScale() != 1.0)
-      {
-        c = ON_LayerTypeCodes::SectionHatchScale;
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteDouble(SectionHatchScale());
-        if (!rc) break;
-      }
-      if (SectionHatchRotation() != 0.0)
-      {
-        c = ON_LayerTypeCodes::SectionHatchRotation;
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteDouble(SectionHatchRotation());
-        if (!rc) break;
-      }
-    }
+    const ON_SectionStyle* section_style = CustomSectionStyle();
+    //if (section_style)
+    //{
+    //  if (section_style->HatchIndex() != ON_UNSET_INT_INDEX)
+    //  {
+    //    c = ON_LayerTypeCodes::SectionHatchIndex;
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, section_style->HatchIndex());
+    //    if (!rc) break;
+    //  }
+    //  if (section_style->HatchScale() != 1.0)
+    //  {
+    //    c = ON_LayerTypeCodes::SectionHatchScale;
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.WriteDouble(section_style->HatchScale());
+    //    if (!rc) break;
+    //  }
+    //  if (section_style->HatchRotation() != 0.0)
+    //  {
+    //    c = ON_LayerTypeCodes::SectionHatchRotation;
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.WriteDouble(section_style->HatchRotation());
+    //    if (!rc) break;
+    //  }
 
-    // section fill (1.12)
-    if (SectionFillRule() != ON::SectionFillRule::ClosedCurves)
-    {
-      c = ON_LayerTypeCodes::SectionFillRule; //32
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteChar((unsigned char)SectionFillRule());
-      if (!rc) break;
-    }
+    //  // section fill (1.12)
+    //  if (section_style->SectionFillRule() != ON::SectionFillRule::ClosedCurves)
+    //  {
+    //    c = ON_LayerTypeCodes::SectionFillRule; //32
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.WriteChar((unsigned char)section_style->SectionFillRule());
+    //    if (!rc) break;
+    //  }
+    //}
 
     // custom linetype (1.13)
     // 17 Feb 2023 S. Baer
@@ -550,6 +558,25 @@ bool ON_Layer::Write(
     //    if (!rc) break;
     //  }
     //}
+
+    // visible in new detail (1.14)
+    if (PerViewportIsVisibleInNewDetails() != DefaultLayerPrivate.m_visible_in_new_details)
+    {
+      c = ON_LayerTypeCodes::PerViewportIsVisibleInNewDetails; //34
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(PerViewportIsVisibleInNewDetails());
+      if (!rc) break;
+    }
+
+    if (section_style)
+    {
+      c = ON_LayerTypeCodes::CustomSectionStyle; //35
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = section_style->Write(file);
+      if (!rc) break;
+    }
 
     // 0 indicates end of new non-default attributes
     c = 0;
@@ -763,7 +790,10 @@ bool ON_Layer::Read(
                         int pattern = 0;
                         rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, &pattern);
                         if (!rc) break;
-                        SetSectionHatchIndex(pattern);
+                        ON_SectionStyle section_style;
+                        CustomSectionStyle(&section_style);
+                        section_style.SetHatchIndex(pattern);
+                        SetCustomSectionStyle(section_style);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -773,7 +803,10 @@ bool ON_Layer::Read(
                         double scale = 1;
                         rc = file.ReadDouble(&scale);
                         if (!rc) break;
-                        SetSectionHatchScale(scale);
+                        ON_SectionStyle section_style;
+                        CustomSectionStyle(&section_style);
+                        section_style.SetHatchScale(scale);
+                        SetCustomSectionStyle(section_style);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -783,7 +816,10 @@ bool ON_Layer::Read(
                         double rotation = 0;
                         rc = file.ReadDouble(&rotation);
                         if (!rc) break;
-                        SetSectionHatchRotation(rotation);
+                        ON_SectionStyle section_style;
+                        CustomSectionStyle(&section_style);
+                        section_style.SetHatchRotation(rotation);
+                        SetCustomSectionStyle(section_style);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -796,7 +832,10 @@ bool ON_Layer::Read(
                         unsigned char c = 0;
                         rc = file.ReadChar(&c);
                         if (!rc) break;
-                        SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
+                        ON_SectionStyle section_style;
+                        CustomSectionStyle(&section_style);
+                        section_style.SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
+                        SetCustomSectionStyle(section_style);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -818,10 +857,37 @@ bool ON_Layer::Read(
                         if (!rc || 0 == itemid) break;
                       }
 
-                      // break if minor_version<=13. If itemid is non-zero and
-                      // minor_version is not > 13, then we know we have an I/O
-                      // reading bug that needs to be tracked down
                       if (minor_version <= 13)
+                        break;
+
+                      // visible in new detail (1.14)
+                      if (ON_LayerTypeCodes::PerViewportIsVisibleInNewDetails == itemid)
+                      {
+                        bool b = true;
+                        rc = file.ReadBool(&b);
+                        if (!rc) break;
+                        SetPerViewportIsVisibleInNewDetails(b);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      if (minor_version <= 14)
+                        break;
+
+                      if (ON_LayerTypeCodes::CustomSectionStyle == itemid)
+                      {
+                        ON_SectionStyle section_style;
+                        rc = section_style.Read(file);
+                        if (!rc) break;
+                        SetCustomSectionStyle(section_style);
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // break if minor_version<=15. If itemid is non-zero and
+                      // minor_version is not > 15, then we know we have an I/O
+                      // reading bug that needs to be tracked down
+                      if (minor_version <= 15)
                         break;
 
                       // Add new item reading above and increment the LastLayerTypeCode value
@@ -2457,55 +2523,42 @@ void ON_Layer::GetClipParticipation(
   }
 }
 
-ON::SectionFillRule ON_Layer::SectionFillRule() const
+void ON_Layer::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
 {
-  return m_private ? m_private->m_section_fill_rule : DefaultLayerPrivate.m_section_fill_rule;
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+
+  m_private->m_custom_section_style.reset(new ON_SectionStyle(sectionStyle));
 }
-void ON_Layer::SetSectionFillRule(ON::SectionFillRule rule)
+const ON_SectionStyle* ON_Layer::CustomSectionStyle(ON_SectionStyle* sectionStyle) const
 {
-  if (SectionFillRule() == rule)
+  const ON_SectionStyle* rc = nullptr;
+  if (m_private)
+    rc = m_private->m_custom_section_style.get();
+
+  if (sectionStyle && rc)
+  {
+    *sectionStyle = *rc;
+  }
+
+  return rc;
+}
+void ON_Layer::RemoveCustomSectionStyle()
+{
+  if (m_private)
+    m_private->m_custom_section_style.reset();
+}
+
+bool ON_Layer::PerViewportIsVisibleInNewDetails() const
+{
+  return m_private ? m_private->m_visible_in_new_details : DefaultLayerPrivate.m_visible_in_new_details;
+}
+
+void ON_Layer::SetPerViewportIsVisibleInNewDetails(bool bVisible)
+{
+  if (PerViewportIsVisibleInNewDetails() == bVisible)
     return;
   if (nullptr == m_private)
     m_private = new ON_LayerPrivate();
-  m_private->m_section_fill_rule = rule;
+  m_private->m_visible_in_new_details = bVisible;
 }
-
-int ON_Layer::SectionHatchIndex() const
-{
-  return m_private ? m_private->m_section_hatch_index : DefaultLayerPrivate.m_section_hatch_index;
-}
-void ON_Layer::SetSectionHatchIndex(int index)
-{
-  if (SectionHatchIndex() == index)
-    return;
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_section_hatch_index = index;
-}
-
-double ON_Layer::SectionHatchScale() const
-{
-  return m_private ? m_private->m_section_hatch_scale : DefaultLayerPrivate.m_section_hatch_scale;
-}
-void ON_Layer::SetSectionHatchScale(double scale)
-{
-  if (SectionHatchScale() == scale)
-    return;
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_section_hatch_scale = scale;
-}
-
-double ON_Layer::SectionHatchRotation() const
-{
-  return m_private ? m_private->m_section_hatch_rotation : DefaultLayerPrivate.m_section_hatch_rotation;
-}
-void ON_Layer::SetSectionHatchRotation(double rotation)
-{
-  if (SectionHatchRotation() == rotation)
-    return;
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_section_hatch_rotation = rotation;
-}
-

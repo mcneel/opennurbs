@@ -670,9 +670,9 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
     ON_3dPoint pt = edge.PointAt(t);
     plane.ClosestPointTo(pt, &u, &v);
     if (u < uext[0]) uext[0] = u;
-    else if (u > uext[1]) uext[1] = u;
+    if (u > uext[1]) uext[1] = u;
     if (v < vext[0]) vext[0] = v;
-    else if (v > vext[1]) vext[1] = v;
+    if (v > vext[1]) vext[1] = v;
   }
   *this = plane;
   uext.Expand(padding * uext.Length() + padding);
@@ -828,39 +828,47 @@ ON_Mesh* ON_PlaneSurface::CreateMesh(
   return rc;
 }
 
-static double ON_ClippingPlaneDistanceHelper(float d)
+double ON_ClippingPlaneInfo::Depth() const
 {
-  if (ON_IsValidFloat(d))
-    return d;
-  return ON_DBL_MAX;
+  return m_depth;
+}
+void ON_ClippingPlaneInfo::SetDepth(double depth)
+{
+  if (depth < 0.0)
+    return;
+  m_depth = (float)depth;
 }
 
-static void ON_ClippingPlaneSetDistanceHelper(double distance, float& valueToChange)
+bool ON_ClippingPlaneInfo::DepthEnabled() const
 {
-  if (ON_IsValid(distance) && distance < ON_UNSET_POSITIVE_FLOAT)
-    valueToChange = (float)distance;
-  else
-    valueToChange = ON_UNSET_POSITIVE_FLOAT;
+  return m_depth_enabled;
 }
 
-double ON_ClippingPlaneInfo::Distance() const
+void ON_ClippingPlaneInfo::SetDepthEnabled(bool on)
 {
-  return ON_ClippingPlaneDistanceHelper(m_distance);
-}
-void ON_ClippingPlaneInfo::SetDistance(double distance)
-{
-  ON_ClippingPlaneSetDistanceHelper(distance, m_distance);
+  m_depth_enabled = on;
 }
 
 void ON_ClippingPlaneInfo::Default()
 {
   memset(this,0,sizeof(*this));
-  m_distance = ON_UNSET_POSITIVE_FLOAT;
 }
 
 bool ON_ClippingPlaneInfo::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
+  // version 1.1 and 1.2 - write distance as a double
+  // In version 1.1 we wrote -1 as the default value for m_distance.
+  // This default has changed to ON_UNSET_POSITIVE_FLOAT. Bumping the minor
+  // version so we can properly handle the default case when reading.
+  //
+  // 28 Mar 2023 S. Baer (RH-73816)
+  // We went back to using a negative value to define "unset". We don't need
+  // to adjust the minor version number for this
+  // 6 April 2023 S. Baer (RH-74002)
+  // version 1.3
+  // Added a bool toggle to state if depth is being used. This frees up the depth
+  // numeric value to be any number and not have reserved "unset" numbers
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,3);
   if (!rc)
     return false;
   
@@ -875,11 +883,11 @@ bool ON_ClippingPlaneInfo::Write( ON_BinaryArchive& file ) const
     rc = file.WriteBool(m_bEnabled);
     if (!rc) break;
 
-    // version 1.1 and 1.2 - write distance as a double
-    // In version 1.1 we wrote -1 as the default value for m_distance.
-    // This default has changed to ON_UNSET_POSITIVE_FLOAT. Bumping the minor
-    // version so we can properly handle the default case when reading.
-    rc = file.WriteDouble(m_distance);
+    rc = file.WriteDouble(m_depth);
+    if (!rc) break;
+
+    // version 1.3, add depth enabled bool
+    rc = file.WriteBool(m_depth_enabled);
     if (!rc) break;
 
     break;
@@ -917,18 +925,29 @@ bool ON_ClippingPlaneInfo::Read( ON_BinaryArchive& file )
 
     if (minor_version > 0)
     {
-      double d = -1;
+      double d = 0;
       rc = file.ReadDouble(&d);
       if (!rc) break;
 
-      if (1 == minor_version)
+      if (1 == minor_version || 2 == minor_version)
       {
-        // negative values in 1.1 chunk meant that the distance was unset
-        if (d < 0.0)
-          d = ON_UNSET_VALUE;
+        if (d >= 0.0 && d != ON_UNSET_POSITIVE_FLOAT)
+        {
+          m_depth_enabled = true;
+        }
+        else
+        {
+          m_depth_enabled = false;
+          d = 0.0;
+        }
       }
+      SetDepth(d);
+    }
 
-      SetDistance(d);
+    if (minor_version >= 3)
+    {
+      rc = file.ReadBool(&m_depth_enabled);
+      if (!rc) break;
     }
 
     break;
@@ -947,7 +966,8 @@ void ON_ClippingPlane::Default()
   m_viewport_ids.Empty();
   m_plane_id = ON_nil_uuid;
   m_bEnabled = true;
-  m_distance = ON_UNSET_POSITIVE_FLOAT;
+  m_depth = 0;
+  m_depth_enabled = false;
 }
 
 ON_ClippingPlane::ON_ClippingPlane()
@@ -965,17 +985,29 @@ ON_ClippingPlaneInfo ON_ClippingPlane::ClippingPlaneInfo() const
   info.m_plane_equation = m_plane.plane_equation;
   info.m_plane_id = m_plane_id;
   info.m_bEnabled = m_bEnabled;
-  info.SetDistance(m_distance);
+  info.SetDepth(m_depth);
+  info.SetDepthEnabled(m_depth_enabled);
   return info;
 }
 
-double ON_ClippingPlane::Distance() const
+double ON_ClippingPlane::Depth() const
 {
-  return ON_ClippingPlaneDistanceHelper(m_distance);
+  return m_depth;
 }
-void ON_ClippingPlane::SetDistance(double distance)
+void ON_ClippingPlane::SetDepth(double depth)
 {
-  ON_ClippingPlaneSetDistanceHelper(distance, m_distance);
+  if (depth < 0.0)
+    return;
+  m_depth = (float)depth;
+}
+
+bool ON_ClippingPlane::DepthEnabled() const
+{
+  return m_depth_enabled;
+}
+void ON_ClippingPlane::SetDepthEnabled(bool on)
+{
+  m_depth_enabled = on;
 }
 
 bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
@@ -1022,12 +1054,26 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
       rc = file.ReadDouble(&d);
       if (!rc) break;
 
-      if (2 == minor_version)
+      if (minor_version < 4)
       {
-        if (d < 0.0)
-          d = ON_UNSET_VALUE;
+        if (d >= 0.0 && d != ON_UNSET_POSITIVE_FLOAT)
+        {
+          m_depth_enabled = true;
+        }
+        else
+        {
+          m_depth_enabled = false;
+          d = 0.0;
+        }
       }
-      SetDistance(d);
+
+      SetDepth(d);
+    }
+
+    if (minor_version >= 4)
+    {
+      rc = file.ReadBool(&m_depth_enabled);
+      if (!rc) break;
     }
 
     break;
@@ -1041,7 +1087,7 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
 
 bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,3);
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,4);
   if (!rc)
     return false;
 
@@ -1070,7 +1116,11 @@ bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
     //version 1.2 - write distance as double
     //version 1.3 - continue to write distance, but the reader now knows to
     //              interpret the distance value in a different way
-    rc = file.WriteDouble(m_distance);
+    rc = file.WriteDouble(m_depth);
+    if (!rc) break;
+
+    //version 1.4 - write enabled flag for depth
+    rc = file.WriteBool(m_depth_enabled);
     if (!rc) break;
 
     break;

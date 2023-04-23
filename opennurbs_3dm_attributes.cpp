@@ -38,15 +38,12 @@ public:
   bool m_clipping_proof = false;
 
   ON::SectionAttributesSource m_section_attributes_source = ON::SectionAttributesSource::FromLayer;
-  ON::SectionFillRule m_section_fill_rule = ON::SectionFillRule::ClosedCurves;
-  int m_section_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
-  double m_section_hatch_scale = 1.0;
-  double m_section_hatch_rotation = 0.0;
   double m_linetype_scale = 1.0;
   ON_Color m_hatch_background_fill;
   bool m_hatch_boundary_visible = false;
 
   std::shared_ptr<ON_Linetype> m_custom_linetype;
+  std::shared_ptr<ON_SectionStyle> m_custom_section_style;
 
   ON_DecalCollection m_decals;
   ON_MeshModifiers m_mesh_modifiers;
@@ -73,18 +70,6 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
   if (m_section_attributes_source != other.m_section_attributes_source)
     return false;
 
-  if (m_section_fill_rule != other.m_section_fill_rule)
-    return false;
-
-  if (m_section_hatch_index != other.m_section_hatch_index)
-    return false;
-
-  if (m_section_hatch_scale != other.m_section_hatch_scale)
-    return false;
-
-  if (m_section_hatch_rotation != other.m_section_hatch_rotation)
-    return false;
-
   if (m_linetype_scale != other.m_linetype_scale)
     return false;
 
@@ -93,6 +78,20 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
 
   if (m_hatch_boundary_visible != other.m_hatch_boundary_visible)
     return false;
+
+  {
+    const ON_SectionStyle* customThis = m_custom_section_style.get();
+    const ON_SectionStyle* customOther = other.m_custom_section_style.get();
+    if (nullptr == customThis && customOther)
+      return false;
+    if (customThis && nullptr == customOther)
+      return false;
+    if (customThis && customOther)
+    {
+      if ((*customThis) != (*customOther))
+        return false;
+    }
+  }
 
   const ON_Linetype* customThis = m_custom_linetype.get();
   const ON_Linetype* customOther = other.m_custom_linetype.get();
@@ -431,9 +430,12 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   // 30 Nov 2022 S. Baer
   // file version 2.10: custom linetype
   CustomLinetype = 38,
+  // 18 Apr 2023 S. Baer
+  // file version 2.11: custome section style
+  CustomSectionStyle = 39,
 
   // add items here
-  LastAttributeTypeCode = 38
+  LastAttributeTypeCode = 39
 };
 
 bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
@@ -729,7 +731,10 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       int hatch_index = 0;
       rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, &hatch_index);
       if (!rc) break;
-      SetSectionHatchIndex(hatch_index);
+      ON_SectionStyle ss;
+      CustomSectionStyle(&ss);
+      ss.SetHatchIndex(hatch_index);
+      SetCustomSectionStyle(ss);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -738,7 +743,10 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       double hatch_scale = 1;
       rc = file.ReadDouble(&hatch_scale);
       if (!rc) break;
-      SetSectionHatchScale(hatch_scale);
+      ON_SectionStyle ss;
+      CustomSectionStyle(&ss);
+      ss.SetHatchScale(hatch_scale);
+      SetCustomSectionStyle(ss);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -747,7 +755,10 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       double hatch_rotation = 0;
       rc = file.ReadDouble(&hatch_rotation);
       if (!rc) break;
-      SetSectionHatchRotation(hatch_rotation);
+      ON_SectionStyle ss;
+      CustomSectionStyle(&ss);
+      ss.SetHatchRotation(hatch_rotation);
+      SetCustomSectionStyle(ss);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -816,8 +827,9 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       unsigned char c = 0;
       rc = file.ReadChar(&c);
       if (!rc) break;
-
-      SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
+      ON_SectionStyle ss;
+      CustomSectionStyle(&ss);
+      ss.SetSectionFillRule(ON::SectionFillRuleFromUnsigned(c));
 
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
@@ -839,6 +851,21 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     }
 
     if (minor_version <= 10)
+      break;
+
+    if (ON_3dmObjectAttributesTypeCodes::CustomSectionStyle == itemid) // 39
+    {
+      ON_SectionStyle sectionStyle;
+      rc = sectionStyle.Read(file);
+      if (!rc) break;
+
+      SetCustomSectionStyle(sectionStyle);
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 11)
       break;
 
     // Add new item reading above and increment the LastAttributeTypeCode value
@@ -1036,8 +1063,10 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
   // 15 Jun 2022 S. Baer
   // Chunk version = 2.9 to support SectionFillRule
   // 30 Nov 2022 S. Baer
-  // Chunk version = 2.10 to support 
-  bool rc = file.Write3dmChunkVersion(2,10);
+  // Chunk version = 2.10 to support custom linetype
+  // 18 Apr 2023 S. Baer
+  // Chunk version = 2.11 to support custom section style
+  bool rc = file.Write3dmChunkVersion(2,11);
   while(rc)
   {
     if (!rc) break;
@@ -1238,6 +1267,7 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
+    const ON_SectionStyle* customSectionStyle = CustomSectionStyle();
     // 12 Aug 2021 S. Baer
     // Items 23, 24, 25, 26 were in a version of Rhino 8 WIP for about 24 hours.
     // They were most likely never used by anyone
@@ -1282,32 +1312,38 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
         if (!rc) break;
       }
 
-      if (SectionHatchIndex() != ON_UNSET_INT_INDEX)
-      {
-        c = ON_3dmObjectAttributesTypeCodes::SectionHatchIndex; // 30
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, SectionHatchIndex());
-        if (!rc) break;
-      }
+      // 23 April 2023 S. Baer
+      // Stop writing individual section attributes. All section attribute IO has been
+      // moved to writing an ON_SectionStyle instance
+      //if (customSectionStyle)
+      //{
+      //  if (customSectionStyle->HatchIndex() != ON_UNSET_INT_INDEX)
+      //  {
+      //    c = ON_3dmObjectAttributesTypeCodes::SectionHatchIndex; // 30
+      //    rc = file.WriteChar(c);
+      //    if (!rc) break;
+      //    rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::HatchPattern, customSectionStyle->HatchIndex());
+      //    if (!rc) break;
+      //  }
 
-      if (SectionHatchScale() != 1.0)
-      {
-        c = ON_3dmObjectAttributesTypeCodes::SectionHatchScale; // 31
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteDouble(SectionHatchScale());
-        if (!rc) break;
-      }
+      //  if (customSectionStyle->HatchScale() != 1.0)
+      //  {
+      //    c = ON_3dmObjectAttributesTypeCodes::SectionHatchScale; // 31
+      //    rc = file.WriteChar(c);
+      //    if (!rc) break;
+      //    rc = file.WriteDouble(customSectionStyle->HatchScale());
+      //    if (!rc) break;
+      //  }
 
-      if (SectionHatchRotation() != 0.0)
-      {
-        c = ON_3dmObjectAttributesTypeCodes::SectionHatchRotation; // 32
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteDouble(SectionHatchRotation());
-        if (!rc) break;
-      }
+      //  if (customSectionStyle->HatchRotation() != 0.0)
+      //  {
+      //    c = ON_3dmObjectAttributesTypeCodes::SectionHatchRotation; // 32
+      //    rc = file.WriteChar(c);
+      //    if (!rc) break;
+      //    rc = file.WriteDouble(customSectionStyle->HatchRotation());
+      //    if (!rc) break;
+      //  }
+      //}
 
       if (fabs(1.0 - LinetypePatternScale()) > ON_EPSILON)
       {
@@ -1357,16 +1393,20 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
-    // 15 Jun 2022 S. Baer
-    // Write section fill rule
-    if (SectionFillRule() != ON::SectionFillRule::ClosedCurves)
-    {
-      c = ON_3dmObjectAttributesTypeCodes::SectionFillRule; // 37
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteChar((unsigned char)SectionFillRule());
-      if (!rc) break;
-    }
+    // 23 April 2023 S. Baer
+    // Stop writing individual section attributes. All section attribute IO has been
+    // moved to writing an ON_SectionStyle instance
+    //if (customSectionStyle)
+    //{
+    //  if (customSectionStyle->SectionFillRule() != ON::SectionFillRule::ClosedCurves)
+    //  {
+    //    c = ON_3dmObjectAttributesTypeCodes::SectionFillRule; // 37
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.WriteChar((unsigned char)(customSectionStyle->SectionFillRule()));
+    //    if (!rc) break;
+    //  }
+    //}
 
     // 30 Nov 2022 S. Baer
     // Write custom linetype
@@ -1380,6 +1420,17 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
         rc = linetype->Write(file);
         if (!rc) break;
       }
+    }
+
+    // 18 Apr 2023 S. Baer
+    // Write custom section style
+    if (customSectionStyle && !customSectionStyle->SectionAttributesEqual(ON_SectionStyle::Unset))
+    {
+      c = ON_3dmObjectAttributesTypeCodes::CustomSectionStyle; // 39
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = customSectionStyle->Write(file);
+      if (!rc) break;
     }
 
     // 0 indicates end of attributes - this should be the last item written
@@ -1887,17 +1938,12 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       if (ON::SectionAttributesSource::FromLayer == SectionAttributesSource() && parent_layer.Index() >= 0)
       {
         SetSectionAttributesSource(ON::SectionAttributesSource::FromLayer);
-        SetSectionFillRule(parent_layer.SectionFillRule());
-        SetSectionHatchIndex(parent_layer.SectionHatchIndex());
-        SetSectionHatchRotation(parent_layer.SectionHatchRotation());
-        SetSectionHatchScale(parent_layer.SectionHatchScale());
       }
       else
       {
-        SetSectionFillRule(parents_attributes.SectionFillRule());
-        SetSectionHatchIndex(parents_attributes.SectionHatchIndex());
-        SetSectionHatchRotation(parents_attributes.SectionHatchRotation());
-        SetSectionHatchScale(parents_attributes.SectionHatchScale());
+        ON_SectionStyle sectionStyle;
+        parents_attributes.CustomSectionStyle(&sectionStyle);
+        SetCustomSectionStyle(sectionStyle);
       }
     }
   }
@@ -2334,62 +2380,6 @@ void ON_3dmObjectAttributes::GetClipParticipation(
   }
 }
 
-ON::SectionFillRule ON_3dmObjectAttributes::SectionFillRule() const
-{
-  return m_private ? m_private->m_section_fill_rule : DefaultAttributesPrivate.m_section_fill_rule;
-}
-void ON_3dmObjectAttributes::SetSectionFillRule(ON::SectionFillRule rule)
-{
-  if (SectionFillRule() == rule)
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_fill_rule = rule;
-}
-
-int ON_3dmObjectAttributes::SectionHatchIndex() const
-{
-  return m_private ? m_private->m_section_hatch_index : DefaultAttributesPrivate.m_section_hatch_index;
-}
-
-void ON_3dmObjectAttributes::SetSectionHatchIndex(int index)
-{
-  if (SectionHatchIndex() == index)
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_hatch_index = index;
-}
-
-double ON_3dmObjectAttributes::SectionHatchScale() const
-{
-  return m_private ? m_private->m_section_hatch_scale : DefaultAttributesPrivate.m_section_hatch_scale;
-}
-void ON_3dmObjectAttributes::SetSectionHatchScale(double scale)
-{
-  if (SectionHatchScale() == scale)
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_hatch_scale = scale;
-}
-
-double ON_3dmObjectAttributes::SectionHatchRotation() const
-{
-  return m_private ? m_private->m_section_hatch_rotation : DefaultAttributesPrivate.m_section_hatch_rotation;
-}
-void ON_3dmObjectAttributes::SetSectionHatchRotation(double rotation)
-{
-  if (SectionHatchRotation() == rotation)
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_hatch_rotation = rotation;
-}
 
 ON::SectionAttributesSource ON_3dmObjectAttributes::SectionAttributesSource() const
 {
@@ -2404,6 +2394,33 @@ void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSou
     m_private = new ON_3dmObjectAttributesPrivate(this);
   m_private->m_section_attributes_source = source;
 }
+
+void ON_3dmObjectAttributes::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  m_private->m_custom_section_style.reset(new ON_SectionStyle(sectionStyle));
+}
+const ON_SectionStyle* ON_3dmObjectAttributes::CustomSectionStyle(ON_SectionStyle* sectionStyle) const
+{
+  const ON_SectionStyle* rc = nullptr;
+  if (m_private)
+    rc = m_private->m_custom_section_style.get();
+
+  if (sectionStyle && rc)
+  {
+    *sectionStyle = *rc;
+  }
+
+  return rc;
+}
+void ON_3dmObjectAttributes::RemoveCustomSectionStyle()
+{
+  if (m_private)
+    m_private->m_custom_section_style.reset();
+}
+
 
 double ON_3dmObjectAttributes::LinetypePatternScale() const
 {

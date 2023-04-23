@@ -1752,7 +1752,7 @@ public:
 
   inline const unsigned int* Fvi(unsigned int face_index) const
   {
-    return (face_index < m_face_count) ? (m_faces + (face_index*m_face_stride)) : 0;
+    return (face_index < m_face_count) ? (m_faces + (face_index*m_face_stride)) : nullptr;
   }
 
   inline unsigned int* QuadFvi(unsigned int face_index, unsigned int buffer[4]) const

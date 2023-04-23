@@ -69,8 +69,10 @@ const ON_wString ON_ModelComponent::ComponentTypeToString(
     return ON_wString("RenderContent");
   case ON_ModelComponent::Type::EmbeddedFile:
     return ON_wString("EmbeddedFile");
-  case ON_ModelComponent::Type::PostEffect:
-    return ON_wString("PostEffect");
+  case ON_ModelComponent::Type::SectionStyle:
+    return ON_wString("SectionStyle");
+  case ON_ModelComponent::Type::ObsoleteValue:
+    return ON_wString("ObsoleteValue");
   case ON_ModelComponent::Type::Mixed:
     return ON_wString("Mixed");
   default:
@@ -331,7 +333,8 @@ ON_ModelComponent::Type ON_ModelComponent::ComponentTypeFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::HistoryRecord);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::RenderContent);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::EmbeddedFile);
-  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::PostEffect);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::ObsoleteValue);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::SectionStyle);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Mixed);
   }
 
@@ -1962,9 +1965,9 @@ bool ON_ModelComponent::IndexRequired(ON_ModelComponent::Type component_type)
   {
   case ON_ModelComponent::Type::Image:
   case ON_ModelComponent::Type::TextureMapping:
-  case ON_ModelComponent::Type::RenderContent: // JohnC: I have no idea how to decide what to return.
-  case ON_ModelComponent::Type::EmbeddedFile:  // JohnC: I have no idea how to decide what to return.
-  case ON_ModelComponent::Type::PostEffect:    // JohnC: I have no idea how to decide what to return.
+  case ON_ModelComponent::Type::RenderContent: // }
+  case ON_ModelComponent::Type::EmbeddedFile:  // } JohnC: I have no idea how to decide what to return.
+  case ON_ModelComponent::Type::ObsoleteValue: // }
   case ON_ModelComponent::Type::Material:      // ON_Layer references render material by index
   case ON_ModelComponent::Type::LinePattern:   // ON_Layer references line pattern by index
   case ON_ModelComponent::Type::Layer:
@@ -1974,6 +1977,7 @@ bool ON_ModelComponent::IndexRequired(ON_ModelComponent::Type component_type)
   case ON_ModelComponent::Type::RenderLight:
   case ON_ModelComponent::Type::HatchPattern:
   case ON_ModelComponent::Type::InstanceDefinition:
+  case ON_ModelComponent::Type::SectionStyle:
     return true;
 
   case ON_ModelComponent::Type::ModelGeometry:
@@ -2001,7 +2005,6 @@ bool ON_ModelComponent::UniqueNameIncludesParent(ON_ModelComponent::Type compone
   case ON_ModelComponent::Type::Material:
   case ON_ModelComponent::Type::RenderContent: // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
   case ON_ModelComponent::Type::EmbeddedFile:  // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
-  case ON_ModelComponent::Type::PostEffect:    // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
   case ON_ModelComponent::Type::LinePattern:
   case ON_ModelComponent::Type::Group:
   case ON_ModelComponent::Type::TextStyle:
@@ -2011,6 +2014,7 @@ bool ON_ModelComponent::UniqueNameIncludesParent(ON_ModelComponent::Type compone
   case ON_ModelComponent::Type::InstanceDefinition:
   case ON_ModelComponent::Type::ModelGeometry:
   case ON_ModelComponent::Type::HistoryRecord:
+  case ON_ModelComponent::Type::SectionStyle:
     return false;
 
   default:
@@ -2034,14 +2038,14 @@ bool ON_ModelComponent::UniqueNameRequired(ON_ModelComponent::Type component_typ
   case ON_ModelComponent::Type::DimStyle:
   case ON_ModelComponent::Type::HatchPattern:
   case ON_ModelComponent::Type::InstanceDefinition:
-  case ON_ModelComponent::Type::EmbeddedFile: ///////////////// Giulio
+  case ON_ModelComponent::Type::EmbeddedFile:
+  case ON_ModelComponent::Type::SectionStyle:
     return true;
 
   case ON_ModelComponent::Type::Image:
   case ON_ModelComponent::Type::TextureMapping:
   case ON_ModelComponent::Type::Material:
   case ON_ModelComponent::Type::RenderContent: // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
-  case ON_ModelComponent::Type::PostEffect:    // JohnC: TODO: Giulio's tweak above. Left for the wrapping phase.
   case ON_ModelComponent::Type::RenderLight:
   case ON_ModelComponent::Type::ModelGeometry:
   case ON_ModelComponent::Type::HistoryRecord:
