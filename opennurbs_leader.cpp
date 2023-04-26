@@ -283,7 +283,7 @@ bool ON_Leader::GetTextXform(
 
     if (maskframe != ON_TextMask::MaskFrame::NoFrame)
     {
-      text_gap = dimstyle->TextMask().MaskBorder();
+      text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
     }
 
     if (maskframe == ON_TextMask::MaskFrame::CapsuleFrame)

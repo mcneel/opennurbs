@@ -774,7 +774,7 @@ bool ON_DimLinear::GetTextXform(
 
   text_gap = dimstyle->TextGap();
   if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
-    text_gap = dimstyle->TextMask().MaskBorder();
+    text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
   text_gap *= dimscale;
 
 
@@ -2941,7 +2941,7 @@ bool ON_DimAngular::GetTextXform(
 
   text_gap = dimstyle->TextGap();
   if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
-    text_gap = dimstyle->TextMask().MaskBorder();
+    text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
   text_gap *= dimscale;
 
   bool draw_forward = dimstyle->DrawForward();
@@ -4134,7 +4134,7 @@ bool ON_DimRadial::GetTextXform(
   line_height = dimstyle->TextHeight() * dimscale;
   text_gap = dimstyle->TextGap();
   if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
-    text_gap = dimstyle->TextMask().MaskBorder();
+    text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
   text_gap *= dimscale;
 
   landing_length = dimstyle->LeaderLandingLength() * dimscale;
