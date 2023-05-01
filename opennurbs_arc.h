@@ -382,11 +382,14 @@ public:
   //   The arc's domain in degrees.
   ON_Interval DomainDegrees() const;
 
-  // Description:
-  //   Set arc's subtended angle in radians.
-  // Parameters:
-  //   angle_in_radians - [in] 0 <= angle_in_radians <= 2.0*ON_PI
-  //
+  /*
+  Description:
+    Set arc's subtended angle in radians.
+  Parameters:
+    angle_in_radians - [in] 0 <= angle_in_radians <= 2.0*ON_PI
+  Returns:
+    true if successful.
+  */
   bool SetAngleRadians(
     double angle_in_radians
     );
