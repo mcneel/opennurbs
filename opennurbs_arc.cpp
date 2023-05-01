@@ -330,22 +330,24 @@ ON_Interval ON_Arc::DomainDegrees() const
 
 bool ON_Arc::SetAngleRadians( double a )
 {
+  ON_Interval angles;
   if ( a < 0.0 ) 
   {
     double a0 = m_angle.m_t[0];
-    m_angle.Set(a0+a,a0);
+    angles.Set(a0+a,a0);
     Reverse();
   }
   else
   {
-    m_angle.m_t[1] = m_angle.m_t[0] + a;
+    double a0 = m_angle.m_t[0];
+    angles.Set(a0, a0+a);
   }
-  return ( fabs(m_angle.Length()) <= 2.0*ON_PI ) ? true : false;
+  return SetAngleIntervalRadians(angles);
 }
 
 bool ON_Arc::SetAngleIntervalRadians( ON_Interval angle_in_radians )
 {
-  bool rc = angle_in_radians.IsIncreasing() 
+  bool rc = (angle_in_radians.IsIncreasing() || angle_in_radians.Length() < ON_EPSILON)
             && angle_in_radians.Length() < (1.0+ON_SQRT_EPSILON)*2.0*ON_PI;
   if (rc)
   {
