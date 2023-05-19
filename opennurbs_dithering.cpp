@@ -31,7 +31,7 @@ public:
 
 static const wchar_t* XMLPathDit(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_RENDERING;
 }
 
 ON_Dithering::ON_Dithering()
@@ -124,6 +124,6 @@ void* ON_Dithering::EVF(const wchar_t* func, void* data)
  return nullptr;
 }
 
-void ON_Dithering::InvalidateCache(void)
+void ON_Dithering::OnInternalXmlChanged(const ON_Dithering*)
 {
 }

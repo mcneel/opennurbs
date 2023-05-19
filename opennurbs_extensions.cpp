@@ -423,9 +423,30 @@ bool ON_InternalXMLImpl::InternalSetParameter(const wchar_t* path_to_node, const
   return success;
 }
 
+bool ON_InternalXMLImpl::RemoveParameter(const wchar_t* path_to_node, const wchar_t* param_name)
+{
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
+  bool success = false;
+
+  ON_XMLNode* node = Node().GetNodeAtPath(path_to_node);
+  if (nullptr != node)
+  {
+    ON_XMLNode* child = node->GetNamedChild(param_name);
+    success = node->RemoveChild(child);
+  }
+
+  return success;
+}
+
+// ONX_Model
+
 ONX_Model::ONX_Model()
 {
   m_private = new ONX_ModelPrivate(*this);
+
+  // Tell the sun in our render settings to use the earth anchor point in our settings.
+  m_settings.m_RenderSettings.Sun().UseEarthAnchorPoint(m_settings.m_earth_anchor_point);
 }
 
 ONX_Model::~ONX_Model()
@@ -4944,7 +4965,7 @@ static bool ContentIsKind(const ON_RenderContent* pContent, RenderContentKinds k
 
 ON_XMLNode* ONX_ModelPrivate::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_PostEffect::Types type) const
 {
-  ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_POST_EFFECTS  ON_RDK_SLASH;
+  ON_wString s = ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_POST_EFFECTS  ON_XML_SLASH;
   s += ON_PostEffectTypeString(type);
 
   return docNode.CreateNodeAtPath(s);
@@ -4952,7 +4973,7 @@ ON_XMLNode* ONX_ModelPrivate::GetPostEffectSectionNode(ON_XMLNode& docNode, ON_P
 
 ON_XMLNode* ONX_ModelPrivate::GetRenderContentSectionNode(ON_XMLNode& docNode, RenderContentKinds kind) const
 {
-  ON_wString s = ON_RDK_DOCUMENT  ON_RDK_SLASH;
+  ON_wString s = ON_RDK_DOCUMENT  ON_XML_SLASH;
   s += RenderContentKindString(kind);
   s += ON_RDK_POSTFIX_SECTION;
 

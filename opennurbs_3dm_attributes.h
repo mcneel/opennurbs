@@ -373,7 +373,13 @@ public:
   void SetClipParticipationForNone();
 
   // Set the object to only be clipped by a specific set of clipping planes.
-  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count);
+  // Paramters:
+  //   clippingPlaneIds [in] - array of ON_UUIDs for clipping planes
+  //   count [in] - number of elements in clippingPlaneIds
+  //   listIsParticipation [in] - is the list clipping planes that the object
+  //     participates with or an exclusion list of clipping planes to not
+  //     participate with
+  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool listIsParticipation);
 
   // Get details on how the object will interact with clipping planes
   // Parameters:
@@ -384,10 +390,13 @@ public:
   //   specificClipplaneList [out] - if the object interacts with only a
   //     specific set of clipping planes, this list will have the uuids of
   //     those clipping plane objects
+  //   listIsParticipation [out] - is specificClipplaneList a participation
+  //     list or an exclusion list
   void GetClipParticipation(
     bool& forAllClippingPlanes,
     bool& forNoClippingPlanes,
-    ON_UuidList& specificClipplaneList) const;
+    ON_UuidList& specificClipplaneList,
+    bool& listIsParticipation) const;
 
   // Source for clip participation details
   ON::ClipParticipationSource ClipParticipationSource() const;
@@ -461,6 +470,8 @@ public:
   void SetHatchBoundaryVisible(bool on);
 #pragma endregion
 
+  ON::SectionLabelStyle ClippingPlaneLabelStyle() const;
+  void SetClippingPlaneLabelStyle(ON::SectionLabelStyle style);
 
   ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci) const;
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);

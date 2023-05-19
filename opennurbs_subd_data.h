@@ -2888,6 +2888,7 @@ public:
   ON_SubDMeshImpl();
   ~ON_SubDMeshImpl() = default;
   ON_SubDMeshImpl(const ON_SubDMeshImpl& src);
+  ON_SubDMeshImpl(const bool has_curvatures);
 
 private:
   // no operator =
@@ -2905,6 +2906,7 @@ public:
   unsigned int m_fragment_point_count = 0;
   ON_SubDMeshFragment* m_first_fragment = nullptr;
   ON_SubDMeshFragment* m_last_fragment = nullptr;
+  const bool m_has_curvatures = false;
   
   bool ReserveCapacity(
     unsigned int subd_fragment_count,

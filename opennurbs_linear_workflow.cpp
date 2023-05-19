@@ -31,7 +31,7 @@ public:
 
 static const wchar_t* XMLPath(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_RENDERING;
 }
 
 ON_LinearWorkflow::ON_LinearWorkflow()
@@ -61,7 +61,7 @@ const ON_LinearWorkflow& ON_LinearWorkflow::operator = (const ON_LinearWorkflow&
   if (this != &lw)
   {
     // When copying the object, we need to directly copy the underlying XML. So we can't allow
-    // virtual overrides to execute because they might shadow the real values we want to copy.
+    // virtual overrides to execute because they might hide the real values we want to copy.
     using LW = ON_LinearWorkflow;
     LW::SetPreProcessTexturesOn    (lw.LW::PreProcessTexturesOn());
     LW::SetPreProcessColorsOn      (lw.LW::PreProcessColorsOn());
@@ -77,8 +77,8 @@ const ON_LinearWorkflow& ON_LinearWorkflow::operator = (const ON_LinearWorkflow&
 
 bool ON_LinearWorkflow::operator == (const ON_LinearWorkflow& lw) const
 {
-  // When checking equality, we need to directly check the underlying XML. So we can't allow
-  // virtual overrides to execute because they might shadow the real values we want to check.
+  // When checking equality, we need to directly check the underlying storage. So we can't allow
+  // virtual overrides to execute because they might hide the real values we want to check.
   using LW = ON_LinearWorkflow;
   if (LW::PreProcessTexturesOn()         != lw.LW::PreProcessTexturesOn())     return false;
   if (LW::PreProcessColorsOn()           != lw.LW::PreProcessColorsOn())       return false;
@@ -208,6 +208,6 @@ void* ON_LinearWorkflow::EVF(const wchar_t* func, void* data)
   return nullptr;
 }
 
-void ON_LinearWorkflow::InvalidateCache(void)
+void ON_LinearWorkflow::OnInternalXmlChanged(const ON_LinearWorkflow*)
 {
 }

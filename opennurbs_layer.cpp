@@ -31,6 +31,7 @@ public:
   bool operator!=(const ON_LayerPrivate&) const;
 
   ON_UuidList m_clipplane_list;
+  bool m_clipplane_list_is_participation = true;
   bool m_clipping_proof = false;
 
   std::shared_ptr<ON_SectionStyle> m_custom_section_style;
@@ -47,6 +48,9 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
     return true;
 
   if (m_clipplane_list != other.m_clipplane_list)
+    return false;
+
+  if (m_clipplane_list_is_participation != other.m_clipplane_list_is_participation)
     return false;
 
   if (m_clipping_proof != other.m_clipping_proof)
@@ -273,7 +277,8 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
     bool clipAll = true;
     bool clipNone = false;
     ON_UuidList cliplist;
-    GetClipParticipation(clipAll, clipNone, cliplist);
+    bool isSelectiveList = true;
+    GetClipParticipation(clipAll, clipNone, cliplist, isSelectiveList);
     if (clipAll)
     {
       dump.Print("participates with all clipping planes\n");
@@ -325,8 +330,11 @@ enum ON_LayerTypeCodes : unsigned char
   // 22 Apr 2023 S. Baer
   // chunk version 1.15: custom section style
   CustomSectionStyle = 35,
+  // 11 May 2023 S. Baer
+  // New selective clipping data with bool for list type
+  SelectiveClippingListType = 36,
 
-  LastLayerTypeCode = 35
+  LastLayerTypeCode = 36
 };
 
 bool ON_Layer::Write(
@@ -335,6 +343,11 @@ bool ON_Layer::Write(
 {
   int i;
 
+  // 11 May 2023 S. Baer
+  // Do not write a minor chunk version greater than 15. Chunk versions are actually
+  // two values packed into a single unsigned char. The use of type codes for I/O
+  // with layers makes it so the minor version isn't really necessary. Just stop at
+  // a minor version of 15
   bool rc = file.Write3dmChunkVersion(1,15);
   while(rc)
   {
@@ -486,7 +499,8 @@ bool ON_Layer::Write(
       bool forAllClippingPlanes = true;
       bool forNoClippingPlanes = false;
       ON_UuidList selectiveList;
-      GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveList);
+      bool isParticipationList = true;
+      GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveList, isParticipationList);
       // only write selective clipping data if it is not default
       if (false == forAllClippingPlanes || true == forNoClippingPlanes || selectiveList.Count() > 0)
       {
@@ -575,6 +589,15 @@ bool ON_Layer::Write(
       rc = file.WriteChar(c);
       if (!rc) break;
       rc = section_style->Write(file);
+      if (!rc) break;
+    }
+
+    if (m_private && false == m_private->m_clipplane_list_is_participation)
+    {
+      c = ON_LayerTypeCodes::SelectiveClippingListType; //36
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
       if (!rc) break;
     }
 
@@ -774,7 +797,7 @@ bool ON_Layer::Read(
                         if (noClippingPlanes)
                           SetClipParticipationForNone();
                         else if (selectiveList.Count() > 0)
-                          SetClipParticipationList(selectiveList.Array(), selectiveList.Count());
+                          SetClipParticipationList(selectiveList.Array(), selectiveList.Count(), true);
                         else
                           SetClipParticipationForAll();
 
@@ -884,11 +907,18 @@ bool ON_Layer::Read(
                         if (!rc || 0 == itemid) break;
                       }
 
-                      // break if minor_version<=15. If itemid is non-zero and
-                      // minor_version is not > 15, then we know we have an I/O
-                      // reading bug that needs to be tracked down
-                      if (minor_version <= 15)
-                        break;
+                      if (ON_LayerTypeCodes::SelectiveClippingListType == itemid)
+                      {
+                        bool b = true;
+                        file.ReadBool(&b);
+                        if (!rc) break;
+                        if (nullptr == m_private)
+                          m_private = new ON_LayerPrivate();
+                        m_private->m_clipplane_list_is_participation = b;
+
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
 
                       // Add new item reading above and increment the LastLayerTypeCode value
                       // in the enum. Be sure to test reading of old and new files by old and new
@@ -2475,6 +2505,7 @@ void ON_Layer::SetClipParticipationForAll()
     return;
 
   m_private->m_clipplane_list.Empty();
+  m_private->m_clipplane_list_is_participation = true;
   m_private->m_clipping_proof = false;
 }
 void ON_Layer::SetClipParticipationForNone()
@@ -2482,12 +2513,16 @@ void ON_Layer::SetClipParticipationForNone()
   if (nullptr == m_private)
     m_private = new ON_LayerPrivate();
   m_private->m_clipplane_list.Empty();
+  m_private->m_clipplane_list_is_participation = true;
   m_private->m_clipping_proof = true;
 }
-void ON_Layer::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count)
+void ON_Layer::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool listIsParticipation)
 {
   if (nullptr == clippingPlaneIds || count < 1)
+  {
     SetClipParticipationForAll();
+    return;
+  }
 
   if (nullptr == m_private)
     m_private = new ON_LayerPrivate();
@@ -2495,13 +2530,16 @@ void ON_Layer::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int cou
   for (int i = 0; i < count; i++)
     m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
 
+  m_private->m_clipplane_list_is_participation = listIsParticipation;
   m_private->m_clipping_proof = false;
 }
 void ON_Layer::GetClipParticipation(
   bool& forAllClippingPlanes,
   bool& forNoClippingPlanes,
-  ON_UuidList& specificClipplaneList) const
+  ON_UuidList& specificClipplaneList,
+  bool& listIsParticipation) const
 {
+  listIsParticipation = true;
   if (nullptr == m_private)
   {
     forAllClippingPlanes = true;
@@ -2511,6 +2549,7 @@ void ON_Layer::GetClipParticipation(
   }
 
   specificClipplaneList = m_private->m_clipplane_list;
+  listIsParticipation = m_private->m_clipplane_list_is_participation;
   if (specificClipplaneList.Count() > 0)
   {
     forAllClippingPlanes = false;

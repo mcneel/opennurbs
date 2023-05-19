@@ -95,7 +95,7 @@ const ON_XMLParameters& ON_PostEffectParams::AsXMLParameters(void) const
 
 ON__UINT32 ON_PostEffectParams::DataCRC(ON__UINT32 current_remainder) const
 {
-  return _impl->_node.DataCRC(current_remainder);
+  return _impl->_node.DataCRC(current_remainder, true);
 }
 
 void* ON_PostEffectParams::EVF(const wchar_t*, void*)
@@ -109,7 +109,7 @@ static ON_XMLRootNode g_panic_node;
 
 static const wchar_t* XMLPathPeps(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_POST_EFFECTS;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_POST_EFFECTS;
 }
 
 static const wchar_t* PostEffectTypeString(ON_PostEffect::Types type)
@@ -426,7 +426,7 @@ const ON_XMLNode& ON_PostEffect::XMLNode(void) const
 
 ON__UINT32 ON_PostEffect::DataCRC(ON__UINT32 crc) const
 {
-  return XMLNode().DataCRC(crc);
+  return XMLNode().DataCRC(crc, true);
 }
 
 // ON_PostEffects
@@ -803,7 +803,7 @@ void* ON_PostEffects::EVF(const wchar_t*, void*)
   return nullptr;
 }
 
-void ON_PostEffects::InvalidateCache(void)
+void ON_PostEffects::OnInternalXmlChanged(ON_PostEffects*)
 {
   _impl->Clear();
 }

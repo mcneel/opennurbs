@@ -6277,6 +6277,9 @@ void ON_MeshParameters::SetComputeCurvature(
 )
 {
   Internal_SetBoolHelper(bComputeCurvature, &m_bComputeCurvature);
+  ON_SubDDisplayParameters smp = this->SubDDisplayParameters();
+  smp.SetComputeCurvature(bComputeCurvature);
+  this->SetSubDDisplayParameters(smp);
 }
 
 
@@ -6905,7 +6908,16 @@ int ON_MeshParameters::CompareGeometrySettings(
   const ON_MeshParameters& b
   )
 {
-  return ON_SHA1_Hash::Compare(a.GeometrySettingsHash(), b.GeometrySettingsHash());
+  return CompareGeometrySettings(a, b, false);
+}
+
+int ON_MeshParameters::CompareGeometrySettings(
+  const ON_MeshParameters& a,
+  const ON_MeshParameters& b,
+  const bool bIgnoreSubDParameters
+  )
+{
+  return ON_SHA1_Hash::Compare(a.GeometrySettingsHash(bIgnoreSubDParameters), b.GeometrySettingsHash(bIgnoreSubDParameters));
 }
 
 ON_SHA1_Hash ON_MeshParameters::ContentHash() const
@@ -7021,8 +7033,28 @@ ON_SHA1_Hash ON_MeshParameters::GeometrySettingsHash(bool bIgnoreSubDParameters)
 
     if (false == bIgnoreSubDParameters)
     {
-      // SubD meshing parameters
-      sha1.AccumulateBytes(&m_subd_mesh_parameters_as_char, sizeof(m_subd_mesh_parameters_as_char));
+      // 2023-05-12, Pierre: Changes in RH-50501 make ON_MeshParameters::SetComputeCurvature also
+      // act on the SubD mesh parameters, and I believe this is good (keeping the compute curvature bit
+      // in sync between Brep meshing parameters and SubD mesh parameters). This means Breps with
+      // compute curvature on also have non-default SubD meshing parameters (they always have the SubD
+      // parameters, they just used to be default).
+      // These values are intentionally ignored:
+      //   m_reserved
+      //   m_context
+      //   m_bComputeCurvature
+      //   m_reserved3
+      //   m_reserved4
+      //   m_reserved5
+      //   m_reserved6
+      //   m_reserved7
+      //   m_terminator
+      //   m_progress_reporter
+      //   m_progress_reporter_interval
+      ON_SubDDisplayParameters subd_params{
+          ON_SubDDisplayParameters::DecodeFromUnsignedChar(m_subd_mesh_parameters_as_char)};
+      sha1.AccumulateBool(subd_params.DisplayDensityIsAbsolute());
+      sha1.AccumulateUnsigned8((ON__UINT8)subd_params.GetRawDisplayDensityForExperts());  // display density fits in a char
+      sha1.AccumulateBool(subd_params.MeshLocation() == ON_SubDComponentLocation::ControlNet);
     }
 
     if (ON_UuidIsNotNil(m_mesher_id))
@@ -7339,7 +7371,7 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
 
 bool ON_SubDDisplayParameters::Write(class ON_BinaryArchive& archive) const
 {
-  if (false == archive.BeginWrite3dmAnonymousChunk(2))
+  if (false == archive.BeginWrite3dmAnonymousChunk(3))
     return false;
   bool rc = false;
   for(;;)
@@ -7354,6 +7386,9 @@ bool ON_SubDDisplayParameters::Write(class ON_BinaryArchive& archive) const
       break;
 
     if (false == archive.WriteBool(this->m_bDisplayDensityIsAbsolute))
+      break;
+
+    if (false == archive.WriteBool(this->m_bComputeCurvature))
       break;
 
     rc = true;
@@ -7394,6 +7429,14 @@ bool ON_SubDDisplayParameters::Read(class ON_BinaryArchive& archive)
         break;
       if (bDisplayDensityIsAbsolute)
         this->SetAbsoluteDisplayDensity(display_density);
+
+      if (chunk_version >= 3)
+      {
+        bool bComputeCurvature = false;
+        if (false == archive.ReadBool(&bComputeCurvature))
+          break;
+        this->SetComputeCurvature(bComputeCurvature);
+      }
     }
 
     rc = true;

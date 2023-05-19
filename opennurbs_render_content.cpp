@@ -22,125 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_TYPE_NAME               L"type-name"
-#define ON_TYPE_ID                 L"type-id"
-#define ON_INSTANCE_ID             L"instance-id"
-#define ON_RENDER_ENGINE_ID        L"render-engine-id"
-#define ON_PLUG_IN_ID              L"plug-in-id"
-#define ON_GROUP_ID                L"group-id"
-#define ON_INSTANCE_NAME           L"instance-name"
-#define ON_CHILD_SLOT_NAME         L"child-slot-name"
-#define ON_NOTES                   L"notes"
-#define ON_TAGS                    L"tags"
-#define ON_HIDDEN                  L"hidden"
-#define ON_REFERENCE               L"reference"
-#define ON_AUTO_DELETE             L"auto-delete"
-#define ON_ENV_BACKGROUND_COLOR    L"background-color"
-#define ON_POSTFIX_SECTION         L"-section"
-#define ON_PARAMETERS              L"parameters"
-#define ON_PARAMETERS_V8           L"parameters-v8"
-#define ON_SIMULATION              L"simulation"
-
-#define ON_POSTFIX_SECTION         L"-section"
-#define ON_PARAMETERS              L"parameters"
-#define ON_PARAMETERS_V8           L"parameters-v8"
-#define ON_SIMULATION              L"simulation"
-
-#define ON_ENV_PROJ_BOX            L"box"
-#define ON_ENV_PROJ_CUBE_MAP       L"cubemap"
-#define ON_ENV_PROJ_CUBE_MAP_HORZ  L"horizontal-cross-cubemap"
-#define ON_ENV_PROJ_CUBE_MAP_VERT  L"vertical-cross-cubemap"
-#define ON_ENV_PROJ_EMAP           L"emap"
-#define ON_ENV_PROJ_HEMISPHERICAL  L"hemispherical"
-#define ON_ENV_PROJ_LIGHT_PROBE    L"lightprobe"
-#define ON_ENV_PROJ_PLANAR         L"planar"
-#define ON_ENV_PROJ_SPHERICAL      L"spherical"
-
-// General parameters used by materials that simulate ON_Material.
-//
-// These are copied from the FS_ strings in the RDK. Perhaps the RDK should start
-// using these instead of the FS_ ones. Or the FS_ ones can be defined as these.
-// Remember, they are in the RDK SDK. Check with Andy.
-
-#define ON_MAT_ALPHA_TRANSPARENCY                 L"alpha-transparency"
-#define ON_MAT_AMBIENT                            L"ambient"
-#define ON_MAT_DIFFUSE                            L"diffuse"
-#define ON_MAT_DISABLE_LIGHTING                   L"disable-lighting"
-#define ON_MAT_EMISSION                           L"emission"
-#define ON_MAT_FLAMINGO_LIBRARY                   L"flamingo-library"
-#define ON_MAT_FRESNEL_ENABLED                    L"fresnel-enabled"
-#define ON_MAT_CLARITY_AMOUNT                     L"clarity-amount"
-#define ON_MAT_IOR                                L"ior"
-#define ON_MAT_POLISH_AMOUNT                      L"polish-amount"
-#define ON_MAT_SHINE                              L"shine"      // Value is 0.0..1.0, NOT ON_Material::MaxShine.
-#define ON_MAT_SPECULAR                           L"specular"
-#define ON_MAT_REFLECTIVITY_AMOUNT                L"reflectivity"
-#define ON_MAT_REFLECTION                         L"reflection" // Simulation is different to Custom Material.
-#define ON_MAT_TRANSPARENCY_AMOUNT                L"transparency"
-#define ON_MAT_TRANSPARENT                        L"transparent" // Simulation is different to Custom Material.
-#define ON_MAT_IS_PHYSICALLY_BASED                L"is-physically-based"
-
-#define ON_MAT_POSTFIX_ON                         L"on"
-#define ON_MAT_POSTFIX_AMOUNT                     L"amount"
-#define ON_MAT_POSTFIX_FILTER_ON                  L"filter-on"
-
-#define ON_MAT_BITMAP_TEXTURE                     L"bitmap-texture"
-#define ON_MAT_BUMP_TEXTURE                       L"bump-texture"
-#define ON_MAT_TRANSPARENCY_TEXTURE               L"transparency-texture"
-#define ON_MAT_ENVIRONMENT_TEXTURE                L"environment-texture"
-
-#define ON_MAT_PBR_BRDF                           L"pbr-brdf"
-#define   ON_MAT_PBR_BRDF_GGX                       L"ggx"
-#define   ON_MAT_PBR_BRDF_WARD                      L"ward"
-#define ON_MAT_PBR_ALPHA                          L"pbr-alpha"
-#define ON_MAT_PBR_ANISOTROPIC                    L"pbr-anisotropic"
-#define ON_MAT_PBR_ANISOTROPIC_ROTATION           L"pbr-anisotropic-rotation"
-#define ON_MAT_PBR_BASE_COLOR                     L"pbr-base-color"
-#define ON_MAT_PBR_CLEARCOAT                      L"pbr-clearcoat"
-#define ON_MAT_PBR_CLEARCOAT_ROUGHNESS            L"pbr-clearcoat-roughness"
-#define ON_MAT_PBR_EMISSION_COLOR                 L"pbr-emission"
-#define ON_MAT_PBR_METALLIC                       L"pbr-metallic"
-#define ON_MAT_PBR_OPACITY                        L"pbr-opacity"
-#define ON_MAT_PBR_OPACITY_IOR                    L"pbr-opacity-ior"
-#define ON_MAT_PBR_OPACITY_ROUGHNESS              L"pbr-opacity-roughness"
-#define ON_MAT_PBR_ROUGHNESS                      L"pbr-roughness"
-#define ON_MAT_PBR_SHEEN                          L"pbr-sheen"
-#define ON_MAT_PBR_SHEEN_TINT                     L"pbr-sheen-tint"
-#define ON_MAT_PBR_SPECULAR                       L"pbr-specular"
-#define ON_MAT_PBR_SPECULAR_TINT                  L"pbr-specular-tint"
-#define ON_MAT_PBR_SUBSURFACE                     L"pbr-subsurface"
-#define ON_MAT_PBR_SUBSURFACE_SCATTERING_COLOR    L"pbr-subsurface-scattering-color"
-#define ON_MAT_PBR_SUBSURFACE_SCATTERING_RADIUS   L"pbr-subsurface-scattering-radius"
-#define ON_MAT_PBR_USE_BASE_COLOR_TEXTURE_ALPHA   L"pbr-use-base-color-texture-alpha"
-
-#define ON_TEX_FILENAME                    L"filename"
-
-// Material's texture simulation (check with Andy what the heck this is even for).
-#define ON_MAT_TEXSIM_FORMAT               L"Texture-%u-"
-#define ON_MAT_TEXSIM_FILENAME             L"filename"
-#define ON_MAT_TEXSIM_ON                   L"on"
-#define ON_MAT_TEXSIM_AMOUNT               L"amount"
-#define ON_MAT_TEXSIM_TYPE                 L"type"
-#define ON_MAT_TEXSIM_FILTER               L"filter"
-#define ON_MAT_TEXSIM_MODE                 L"mode"
-#define ON_MAT_TEXSIM_UVW                  L"uvw"
-#define ON_MAT_TEXSIM_WRAP_U               L"wrap-u"
-#define ON_MAT_TEXSIM_WRAP_V               L"wrap-v"
-
-// Environment simulation.
-#define ON_ENVSIM_BACKGROUND_COLOR         L"background-color"
-#define ON_ENVSIM_BACKGROUND_IMAGE         L"background-image"
-#define ON_ENVSIM_BACKGROUND_PROJECTION    L"background-projection"
-
-// Texture simulation.
-#define ON_TEXSIM_FILENAME                 L"filename"
-#define ON_TEXSIM_REPEAT                   L"repeat"
-#define ON_TEXSIM_OFFSET                   L"offset"
-#define ON_TEXSIM_ROTATION                 L"rotation"
-#define ON_TEXSIM_WRAP_TYPE                L"wrap-type"
-#define ON_TEXSIM_MAPPING_CHANNEL          L"mapping-channel"
-#define ON_TEXSIM_PROJECTION_MODE          L"projection-mode" // Still have to write this out.
-
 static void ON_ConstructXform(double scale_x, double scale_y, double scale_z,
                               double angle_x, double angle_y, double angle_z,
                               double trans_x, double trans_y, double trans_z, ON_Xform& xform)
@@ -407,15 +288,15 @@ void ON_Environment::SetBackgroundProjection(ON_Environment::BackgroundProjectio
 
 ON_Environment::BackgroundProjections ON_Environment::ProjectionFromString(const wchar_t* wsz) // Static.
 {
-  if (0 == on_wcsicmp(ON_ENV_PROJ_PLANAR, wsz))        return BackgroundProjections::Planar;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_SPHERICAL, wsz))     return BackgroundProjections::Spherical;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_EMAP, wsz))          return BackgroundProjections::Emap;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_BOX, wsz))           return BackgroundProjections::Box;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_LIGHT_PROBE, wsz))   return BackgroundProjections::LightProbe;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_CUBE_MAP, wsz))      return BackgroundProjections::CubeMap;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_CUBE_MAP_VERT, wsz)) return BackgroundProjections::VerticalCrossCubeMap;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_CUBE_MAP_HORZ, wsz)) return BackgroundProjections::HorizontalCrossCubeMap;
-  if (0 == on_wcsicmp(ON_ENV_PROJ_HEMISPHERICAL, wsz)) return BackgroundProjections::Hemispherical;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_PLANAR, wsz))        return BackgroundProjections::Planar;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_SPHERICAL, wsz))     return BackgroundProjections::Spherical;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_EMAP, wsz))          return BackgroundProjections::Emap;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_BOX, wsz))           return BackgroundProjections::Box;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_LIGHT_PROBE, wsz))   return BackgroundProjections::LightProbe;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_CUBE_MAP, wsz))      return BackgroundProjections::CubeMap;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_CUBE_MAP_VERT, wsz)) return BackgroundProjections::VerticalCrossCubeMap;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_CUBE_MAP_HORZ, wsz)) return BackgroundProjections::HorizontalCrossCubeMap;
+  if (0 == on_wcsicmp(ON_ENVIRONMENT_PROJECTION_HEMISPHERICAL, wsz)) return BackgroundProjections::Hemispherical;
 
   ON_ASSERT(false);
   return BackgroundProjections::Planar;
@@ -425,20 +306,20 @@ const wchar_t* ON_Environment::StringFromProjection(BackgroundProjections proj) 
 {
   switch (proj)
   {
-  case BackgroundProjections::Planar:                 return ON_ENV_PROJ_PLANAR;
-  case BackgroundProjections::Spherical:              return ON_ENV_PROJ_SPHERICAL;
-  case BackgroundProjections::Emap:                   return ON_ENV_PROJ_EMAP;
-  case BackgroundProjections::Box:                    return ON_ENV_PROJ_BOX;
-  case BackgroundProjections::LightProbe:             return ON_ENV_PROJ_LIGHT_PROBE;
-  case BackgroundProjections::CubeMap:                return ON_ENV_PROJ_CUBE_MAP;
-  case BackgroundProjections::VerticalCrossCubeMap:   return ON_ENV_PROJ_CUBE_MAP_VERT;
-  case BackgroundProjections::HorizontalCrossCubeMap: return ON_ENV_PROJ_CUBE_MAP_HORZ;
-  case BackgroundProjections::Hemispherical:          return ON_ENV_PROJ_HEMISPHERICAL;
+  case BackgroundProjections::Planar:                 return ON_ENVIRONMENT_PROJECTION_PLANAR;
+  case BackgroundProjections::Spherical:              return ON_ENVIRONMENT_PROJECTION_SPHERICAL;
+  case BackgroundProjections::Emap:                   return ON_ENVIRONMENT_PROJECTION_EMAP;
+  case BackgroundProjections::Box:                    return ON_ENVIRONMENT_PROJECTION_BOX;
+  case BackgroundProjections::LightProbe:             return ON_ENVIRONMENT_PROJECTION_LIGHT_PROBE;
+  case BackgroundProjections::CubeMap:                return ON_ENVIRONMENT_PROJECTION_CUBE_MAP;
+  case BackgroundProjections::VerticalCrossCubeMap:   return ON_ENVIRONMENT_PROJECTION_CUBE_MAP_VERT;
+  case BackgroundProjections::HorizontalCrossCubeMap: return ON_ENVIRONMENT_PROJECTION_CUBE_MAP_HORZ;
+  case BackgroundProjections::Hemispherical:          return ON_ENVIRONMENT_PROJECTION_HEMISPHERICAL;
   default: break;
   }
 
   ON_ASSERT(false);
-  return ON_ENV_PROJ_PLANAR;
+  return ON_ENVIRONMENT_PROJECTION_PLANAR;
 }
 
 void* ON_Environment::EVF(const wchar_t* wszFunc, void* pvData)
@@ -511,7 +392,7 @@ ON_RenderContent::CImpl::~CImpl()
 
 const ON_XMLNode* ON_RenderContent::CImpl::XMLNode_Simulation(void) const
 {
-  return m_node.GetNamedChild(ON_SIMULATION);
+  return m_node.GetNamedChild(ON_RENDER_CONTENT_SIMULATION);
 }
 
 ON_XMLVariant ON_RenderContent::CImpl::GetPropertyValue(const wchar_t* name) const
@@ -596,10 +477,10 @@ void ON_RenderContent::CImpl::SetXMLNode(const ON_XMLNode& node)
   m_node = node_copy;
 
   // Copy the XML instance name to the component name.
-  m_render_content.SetName(GetPropertyValue(ON_INSTANCE_NAME).AsString());
+  m_render_content.SetName(GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME).AsString());
 
   // Copy the XML instance id to the component id.
-  m_render_content.SetId(GetPropertyValue(ON_INSTANCE_ID).AsUuid());
+  m_render_content.SetId(GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID).AsUuid());
 }
 
 bool ON_RenderContent::CImpl::AddChild(ON_RenderContent& child)
@@ -759,7 +640,7 @@ bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* c
     if ((nullptr == child_slot_name) || (0 == child_slot_name[0]))
       return false;
 
-    child->m_impl->SetPropertyValue(ON_CHILD_SLOT_NAME, child_slot_name);
+    child->m_impl->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, child_slot_name);
   }
 
   // Get any existing child with the same child slot name (may be null).
@@ -792,10 +673,10 @@ bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* c
 void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node)
 {
   // Copy the component name to the XML instance name.
-  rc.m_impl->SetPropertyValue(ON_INSTANCE_NAME, rc.Name());
+  rc.m_impl->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME, rc.Name());
 
   // Copy the component id to the XML instance id.
-  rc.m_impl->SetPropertyValue(ON_INSTANCE_ID, rc.Id());
+  rc.m_impl->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID, rc.Id());
 
   auto* child_node = new ON_XMLNode(rc.XMLNode());
   node.AttachChildNode(child_node);
@@ -839,10 +720,10 @@ ON_RenderContent::ON_RenderContent(const wchar_t* kind)
   SetId(uuid);
 
   // Set the plug-in id to the RDK plug-in id.
-  m_impl->InternalSetPropertyValue(ON_PLUG_IN_ID, RdkPlugInId());
+  m_impl->InternalSetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, RdkPlugInId());
 
   // Set the render engine id to 'universal'.
-  m_impl->InternalSetPropertyValue(ON_RENDER_ENGINE_ID, UniversalRenderEngineId());
+  m_impl->InternalSetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, UniversalRenderEngineId());
 }
 
 ON_RenderContent::ON_RenderContent(const ON_RenderContent& rc)
@@ -873,102 +754,102 @@ const ON_RenderContent& ON_RenderContent::operator = (const ON_RenderContent& rc
 
 ON_wString ON_RenderContent::TypeName(void) const
 {
-  return m_impl->GetPropertyValue(ON_TYPE_NAME).AsString();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME).AsString();
 }
 
 void ON_RenderContent::SetTypeName(const wchar_t* name)
 {
-  m_impl->SetPropertyValue(ON_TYPE_NAME, name);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME, name);
 }
 
 ON_wString ON_RenderContent::Notes(void) const
 {
-  return m_impl->GetPropertyValue(ON_NOTES).AsString();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_NOTES).AsString();
 }
 
 void ON_RenderContent::SetNotes(const wchar_t* notes)
 {
-  m_impl->SetPropertyValue(ON_NOTES, notes);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_NOTES, notes);
 }
 
 ON_wString ON_RenderContent::Tags(void) const
 {
-  return m_impl->GetPropertyValue(ON_TAGS).AsString();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TAGS).AsString();
 }
 
 void ON_RenderContent::SetTags(const wchar_t* tags)
 {
-  m_impl->SetPropertyValue(ON_TAGS, tags);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TAGS, tags);
 }
 
 ON_UUID ON_RenderContent::TypeId(void) const
 {
-  return m_impl->GetPropertyValue(ON_TYPE_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TYPE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetTypeId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_TYPE_ID, uuid);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TYPE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::RenderEngineId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_ENGINE_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetRenderEngineId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RENDER_ENGINE_ID, uuid);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::PlugInId(void) const
 {
-  return m_impl->GetPropertyValue(ON_PLUG_IN_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID).AsUuid();
 }
 
 void ON_RenderContent::SetPlugInId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_PLUG_IN_ID, uuid);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::GroupId(void) const
 {
-  return m_impl->GetPropertyValue(ON_GROUP_ID).AsUuid();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_GROUP_ID).AsUuid();
 }
 
 void ON_RenderContent::SetGroupId(const ON_UUID& group)
 {
-  m_impl->SetPropertyValue(ON_GROUP_ID, group);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_GROUP_ID, group);
 }
 
 bool ON_RenderContent::Hidden(void) const
 {
-  return m_impl->GetPropertyValue(ON_HIDDEN).AsBool();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_HIDDEN).AsBool();
 }
 
 void ON_RenderContent::SetHidden(bool hidden)
 {
-  m_impl->SetPropertyValue(ON_HIDDEN, hidden);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_HIDDEN, hidden);
 }
 
 bool ON_RenderContent::Reference(void) const
 {
-  return m_impl->GetPropertyValue(ON_REFERENCE).AsBool();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_REFERENCE).AsBool();
 }
 
 void ON_RenderContent::SetReference(bool ref)
 {
-  m_impl->SetPropertyValue(ON_REFERENCE, ref);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_REFERENCE, ref);
 }
 
 bool ON_RenderContent::AutoDelete(void) const
 {
-  return m_impl->GetPropertyValue(ON_AUTO_DELETE).AsBool();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE).AsBool();
 }
 
 void ON_RenderContent::SetAutoDelete(bool autodel)
 {
-  m_impl->SetPropertyValue(ON_AUTO_DELETE, autodel);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE, autodel);
 }
 
 ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
@@ -979,7 +860,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   value.SetNull();
 
   // Try to get the new V8 parameter section.
-  const ON_XMLNode* node = m_impl->m_node.GetNamedChild(ON_PARAMETERS_V8);
+  const ON_XMLNode* node = m_impl->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Got it, so use the new ON_XMLParametersV8 to get the parameter's value.
@@ -990,7 +871,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   {
     // Either no V8 section was found or the parameter isn't there yet.
     // Try to get the legacy parameter section. This should not fail.
-    node = m_impl->m_node.GetNamedChild(ON_PARAMETERS);
+    node = m_impl->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS);
     if (nullptr != node)
     {
       // Got it, so use the legacy ON_XMLParameters to get the parameter's value.
@@ -1009,7 +890,7 @@ bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& va
   bool success = false;
 
   // Create / get the new V8 parameter section.
-  auto* node = m_impl->m_node.CreateNodeAtPath(ON_PARAMETERS_V8);
+  auto* node = m_impl->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Use the new ON_XMLParametersV8 to write the parameter's value.
@@ -1019,7 +900,7 @@ bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& va
   }
 
   // Create / get the legacy parameter section.
-  node = m_impl->m_node.CreateNodeAtPath(ON_PARAMETERS);
+  node = m_impl->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS);
   if (nullptr != node)
   {
     // Use the legacy ON_XMLParameters to write the parameter's value.
@@ -1078,23 +959,23 @@ bool ON_RenderContent::DeleteChild(const wchar_t* child_slot_name)
 
 ON_wString ON_RenderContent::ChildSlotName(void) const
 {
-  return m_impl->GetPropertyValue(ON_CHILD_SLOT_NAME).AsString();
+  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME).AsString();
 }
 
 void ON_RenderContent::SetChildSlotName(const wchar_t* csn)
 {
-  m_impl->SetPropertyValue(ON_CHILD_SLOT_NAME, csn);
+  m_impl->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, csn);
 }
 
 bool ON_RenderContent::ChildSlotOn(const wchar_t* child_slot_name) const
 {
-  const auto s = ON_wString(child_slot_name) + L"-" ON_MAT_POSTFIX_ON;
+  const auto s = ON_wString(child_slot_name) + L"-on";
   return GetParameter(s).AsBool();
 }
 
 bool ON_RenderContent::SetChildSlotOn(bool on, const wchar_t* child_slot_name)
 {
-  const auto s = ON_wString(child_slot_name) + L"-" ON_MAT_POSTFIX_ON;
+  const auto s = ON_wString(child_slot_name) + L"-on";
   return SetParameter(s, on);
 }
 
@@ -1307,55 +1188,55 @@ ON_Material ON_RenderMaterial::SimulatedMaterial(void) const
   {
     ON_XMLParameters p(*sim_node);
 
-    mat.m_ambient               =       ParamHelper(p, ON_MAT_AMBIENT            ).AsColor();
-    mat.m_diffuse               =       ParamHelper(p, ON_MAT_DIFFUSE            ).AsColor();
-    mat.m_emission              =       ParamHelper(p, ON_MAT_EMISSION           ).AsColor();
-    mat.m_specular              =       ParamHelper(p, ON_MAT_SPECULAR           ).AsColor();
-    mat.m_reflection            =       ParamHelper(p, ON_MAT_REFLECTION         ).AsColor();
-    mat.m_reflectivity          =       ParamHelper(p, ON_MAT_REFLECTIVITY_AMOUNT).AsDouble();
-    mat.m_shine                 =       ParamHelper(p, ON_MAT_SHINE              ).AsDouble() * ON_Material::MaxShine;
-    mat.m_transparency          =       ParamHelper(p, ON_MAT_TRANSPARENCY_AMOUNT).AsDouble();
-    mat.m_index_of_refraction   =       ParamHelper(p, ON_MAT_IOR                ).AsDouble();
-    mat.m_reflection_glossiness = 1.0 - ParamHelper(p, ON_MAT_POLISH_AMOUNT      ).AsDouble();
-    mat.m_refraction_glossiness = 1.0 - ParamHelper(p, ON_MAT_CLARITY_AMOUNT     ).AsDouble();
-    mat.m_transparent           =       ParamHelper(p, ON_MAT_TRANSPARENT        ).AsColor();
-    mat.SetFresnelReflections   (       ParamHelper(p, ON_MAT_FRESNEL_ENABLED    ).AsBool());
-    mat.SetDisableLighting      (       ParamHelper(p, ON_MAT_DISABLE_LIGHTING   ).AsBool());
+    mat.m_ambient               =       ParamHelper(p, ON_MATERIAL_AMBIENT              ).AsColor();
+    mat.m_diffuse               =       ParamHelper(p, ON_MATERIAL_DIFFUSE              ).AsColor();
+    mat.m_emission              =       ParamHelper(p, ON_MATERIAL_EMISSION             ).AsColor();
+    mat.m_specular              =       ParamHelper(p, ON_MATERIAL_SPECULAR             ).AsColor();
+    mat.m_shine                 =       ParamHelper(p, ON_MATERIAL_SHINE                ).AsDouble() * ON_Material::MaxShine;
+    mat.m_reflection            =       ParamHelper(p, ON_MATERIAL_SIM_REFLECTION_COLOR ).AsColor();
+    mat.m_reflectivity          =       ParamHelper(p, ON_MATERIAL_REFLECTIVITY_AMOUNT  ).AsDouble();
+    mat.m_transparency          =       ParamHelper(p, ON_MATERIAL_TRANSPARENCY_AMOUNT  ).AsDouble();
+    mat.m_transparent           =       ParamHelper(p, ON_MATERIAL_SIM_TRANSPARENT_COLOR).AsColor();
+    mat.m_index_of_refraction   =       ParamHelper(p, ON_MATERIAL_IOR                  ).AsDouble();
+    mat.m_reflection_glossiness = 1.0 - ParamHelper(p, ON_MATERIAL_POLISH_AMOUNT        ).AsDouble();
+    mat.m_refraction_glossiness = 1.0 - ParamHelper(p, ON_MATERIAL_CLARITY_AMOUNT       ).AsDouble();
+    mat.SetFresnelReflections   (       ParamHelper(p, ON_MATERIAL_FRESNEL_ENABLED      ).AsBool());
+    mat.SetDisableLighting      (       ParamHelper(p, ON_MATERIAL_DISABLE_LIGHTING     ).AsBool());
 
     mat.m_fresnel_index_of_refraction = 1.56;
 
-    if (ParamHelper(p, ON_MAT_IS_PHYSICALLY_BASED).AsBool())
+    if (ParamHelper(p, ON_MATERIAL_IS_PHYSICALLY_BASED).AsBool())
     {
       mat.ToPhysicallyBased();
 
       auto pbm = mat.PhysicallyBased();
 
       auto brdf = ON_PhysicallyBasedMaterial::BRDFs::GGX;
-      const ON_wString s = ParamHelper(p, ON_MAT_PBR_BRDF).AsString();
-      if (s == ON_MAT_PBR_BRDF_WARD)
+      const ON_wString s = ParamHelper(p, ON_PBR_MATERIAL_BRDF).AsString();
+      if (s == ON_PBR_MATERIAL_BRDF_WARD)
         brdf = ON_PhysicallyBasedMaterial::BRDFs::Ward;
       pbm->SetBRDF(brdf);
 
-      pbm->SetBaseColor                 (ParamHelper(p, ON_MAT_PBR_BASE_COLOR).AsColor());
-      pbm->SetSubsurface                (ParamHelper(p, ON_MAT_PBR_SUBSURFACE).AsDouble());
-      pbm->SetSubsurfaceScatteringColor (ParamHelper(p, ON_MAT_PBR_SUBSURFACE_SCATTERING_COLOR).AsColor());
-      pbm->SetSubsurfaceScatteringRadius(ParamHelper(p, ON_MAT_PBR_SUBSURFACE_SCATTERING_RADIUS).AsDouble());
-      pbm->SetSpecular                  (ParamHelper(p, ON_MAT_PBR_SPECULAR).AsDouble());
-      pbm->SetSpecularTint              (ParamHelper(p, ON_MAT_PBR_SPECULAR_TINT).AsDouble());
-      pbm->SetMetallic                  (ParamHelper(p, ON_MAT_PBR_METALLIC).AsDouble());
-      pbm->SetRoughness                 (ParamHelper(p, ON_MAT_PBR_ROUGHNESS).AsDouble());
-      pbm->SetAnisotropic               (ParamHelper(p, ON_MAT_PBR_ANISOTROPIC).AsDouble());
-      pbm->SetAnisotropicRotation       (ParamHelper(p, ON_MAT_PBR_ANISOTROPIC_ROTATION).AsDouble());
-      pbm->SetSheen                     (ParamHelper(p, ON_MAT_PBR_SHEEN).AsDouble());
-      pbm->SetSheenTint                 (ParamHelper(p, ON_MAT_PBR_SHEEN_TINT).AsDouble());
-      pbm->SetClearcoat                 (ParamHelper(p, ON_MAT_PBR_CLEARCOAT).AsDouble());
-      pbm->SetClearcoatRoughness        (ParamHelper(p, ON_MAT_PBR_CLEARCOAT_ROUGHNESS).AsDouble());
-      pbm->SetOpacity                   (ParamHelper(p, ON_MAT_PBR_OPACITY).AsDouble());
-      pbm->SetOpacityIOR                (ParamHelper(p, ON_MAT_PBR_OPACITY_IOR).AsDouble());
-      pbm->SetOpacityRoughness          (ParamHelper(p, ON_MAT_PBR_OPACITY_ROUGHNESS).AsDouble());
-      pbm->SetEmission                  (ParamHelper(p, ON_MAT_PBR_EMISSION_COLOR).AsColor());
-      pbm->SetAlpha                     (ParamHelper(p, ON_MAT_PBR_ALPHA).AsDouble());
-      pbm->SetUseBaseColorTextureAlphaForObjectAlphaTransparencyTexture(ParamHelper(p, ON_MAT_PBR_USE_BASE_COLOR_TEXTURE_ALPHA).AsBool());
+      pbm->SetBaseColor                 (ParamHelper(p, ON_PBR_MATERIAL_BASE_COLOR).AsColor());
+      pbm->SetSubsurface                (ParamHelper(p, ON_PBR_MATERIAL_SUBSURFACE).AsDouble());
+      pbm->SetSubsurfaceScatteringColor (ParamHelper(p, ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR).AsColor());
+      pbm->SetSubsurfaceScatteringRadius(ParamHelper(p, ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS).AsDouble());
+      pbm->SetSpecular                  (ParamHelper(p, ON_PBR_MATERIAL_SPECULAR).AsDouble());
+      pbm->SetSpecularTint              (ParamHelper(p, ON_PBR_MATERIAL_SPECULAR_TINT).AsDouble());
+      pbm->SetMetallic                  (ParamHelper(p, ON_PBR_MATERIAL_METALLIC).AsDouble());
+      pbm->SetRoughness                 (ParamHelper(p, ON_PBR_MATERIAL_ROUGHNESS).AsDouble());
+      pbm->SetAnisotropic               (ParamHelper(p, ON_PBR_MATERIAL_ANISOTROPIC).AsDouble());
+      pbm->SetAnisotropicRotation       (ParamHelper(p, ON_PBR_MATERIAL_ANISOTROPIC_ROTATION).AsDouble());
+      pbm->SetSheen                     (ParamHelper(p, ON_PBR_MATERIAL_SHEEN).AsDouble());
+      pbm->SetSheenTint                 (ParamHelper(p, ON_PBR_MATERIAL_SHEEN_TINT).AsDouble());
+      pbm->SetClearcoat                 (ParamHelper(p, ON_PBR_MATERIAL_CLEARCOAT).AsDouble());
+      pbm->SetClearcoatRoughness        (ParamHelper(p, ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS).AsDouble());
+      pbm->SetOpacity                   (ParamHelper(p, ON_PBR_MATERIAL_OPACITY).AsDouble());
+      pbm->SetOpacityIOR                (ParamHelper(p, ON_PBR_MATERIAL_OPACITY_IOR).AsDouble());
+      pbm->SetOpacityRoughness          (ParamHelper(p, ON_PBR_MATERIAL_OPACITY_ROUGHNESS).AsDouble());
+      pbm->SetEmission                  (ParamHelper(p, ON_PBR_MATERIAL_EMISSION_COLOR).AsColor());
+      pbm->SetAlpha                     (ParamHelper(p, ON_PBR_MATERIAL_ALPHA).AsDouble());
+      pbm->SetUseBaseColorTextureAlphaForObjectAlphaTransparencyTexture(ParamHelper(p, ON_PBR_MATERIAL_USE_BASE_COLOR_TEXTURE_ALPHA).AsBool());
     }
 
     mat.SetName(Name());
@@ -1370,35 +1251,35 @@ ON_Material ON_RenderMaterial::SimulatedMaterial(void) const
       ON_XMLVariant v;
 
       ON_wString s;
-      s.Format(ON_MAT_TEXSIM_FORMAT, count);
+      s.Format(ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FORMAT, count);
 
-      if (!p.GetParam(s + ON_MAT_TEXSIM_FILENAME, v))
+      if (!p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FILENAME, v))
         break; // Not ideal.
 
       tex.m_image_file_reference.SetFullPath(v.AsString(), false);
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_ON, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_ON, v))
         tex.m_bOn = v;
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_AMOUNT, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_AMOUNT, v))
         tex.m_blend_constant_A = v;
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_TYPE, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_TYPE, v))
         tex.m_type = ON_Texture::TYPE(v.AsInteger());
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_FILTER, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FILTER, v))
         tex.m_minfilter = tex.m_magfilter = ON_Texture::FILTER(v.AsInteger());
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_MODE, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_MODE, v))
         tex.m_mode = ON_Texture::MODE(v.AsInteger());
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_UVW, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_UVW, v))
         tex.m_uvw = v.AsXform();
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_WRAP_U, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_WRAP_U, v))
         tex.m_wrapu = ON_Texture::WRAP(v.AsInteger());
 
-      if (p.GetParam(s + ON_MAT_TEXSIM_WRAP_V, v))
+      if (p.GetParam(s + ON_RENDER_MATERIAL_TEXTURE_SIMULATION_WRAP_V, v))
         tex.m_wrapv = ON_Texture::WRAP(v.AsInteger());
 
       mat.m_textures.Append(tex);
@@ -1453,10 +1334,10 @@ ON_Environment ON_RenderEnvironment::SimulatedEnvironment(void) const
     ON_XMLVariant v;
     ON_XMLParameters p(*sim_node);
 
-    if (p.GetParam(ON_ENVSIM_BACKGROUND_COLOR, v))
+    if (p.GetParam(ON_ENVIRONMENT_SIMULATION_BACKGROUND_COLOR, v))
       env.SetBackgroundColor(v.AsColor());
 
-    if (p.GetParam(ON_ENVSIM_BACKGROUND_IMAGE, v))
+    if (p.GetParam(ON_ENVIRONMENT_SIMULATION_BACKGROUND_IMAGE, v))
     {
       ON_Texture tex;
       tex.m_image_file_reference.SetFullPath(v.AsString(), false);
@@ -1464,7 +1345,7 @@ ON_Environment ON_RenderEnvironment::SimulatedEnvironment(void) const
       env.SetBackgroundImage(tex);
     }
 
-    if (p.GetParam(ON_ENVSIM_BACKGROUND_PROJECTION, v))
+    if (p.GetParam(ON_ENVIRONMENT_SIMULATION_BACKGROUND_PROJECTION, v))
     {
       const auto proj = ON_Environment::ProjectionFromString(v.AsString());
       env.SetBackgroundProjection(proj);
@@ -1518,12 +1399,12 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
     ON_XMLVariant v;
     ON_XMLParameters p(*sim_node);
 
-    if (p.GetParam(ON_TEXSIM_FILENAME, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_FILENAME, v))
     {
       tex.m_image_file_reference.SetFullPath(v.AsString(), false);
     }
 
-    if (p.GetParam(ON_TEXSIM_OFFSET, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_OFFSET, v))
     {
       XF xf;
       ON_DeconstructXform(tex.m_uvw, xf);
@@ -1533,7 +1414,7 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
       ON_ConstructXform(xf, tex.m_uvw);
     }
 
-    if (p.GetParam(ON_TEXSIM_REPEAT, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_REPEAT, v))
     {
       XF xf;
       ON_DeconstructXform(tex.m_uvw, xf);
@@ -1543,7 +1424,7 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
       ON_ConstructXform(xf, tex.m_uvw);
     }
 
-    if (p.GetParam(ON_TEXSIM_ROTATION, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_ROTATION, v))
     {
       XF xf;
       ON_DeconstructXform(tex.m_uvw, xf);
@@ -1551,7 +1432,7 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
       ON_ConstructXform(xf, tex.m_uvw);
     }
 
-    if (p.GetParam(ON_TEXSIM_WRAP_TYPE, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_WRAP_TYPE, v))
     {
       const auto wt = ON_Texture::WRAP(v.AsInteger());
       tex.m_wrapu = wt;
@@ -1559,7 +1440,7 @@ ON_Texture ON_RenderTexture::SimulatedTexture(void) const
       tex.m_wrapw = wt;
     }
 
-    if (p.GetParam(ON_TEXSIM_MAPPING_CHANNEL, v))
+    if (p.GetParam(ON_TEXTURE_SIMULATION_MAPPING_CHANNEL, v))
     {
       tex.m_mapping_channel_id = v.AsInteger();
     }
@@ -1624,7 +1505,7 @@ int ONX_Model::AddRenderTexture(const wchar_t* fn)
 
   ON_RenderTexture tex;
   tex.SetTypeId(uuidBM);
-  tex.SetParameter(ON_TEX_FILENAME, filename);
+  tex.SetParameter(ON_RENDER_TEXTURE_FILENAME, filename);
 
   const ON_wString tex_name = ON_FileSystemPath::FileNameFromPath(filename, false);
   tex.SetName(tex_name);

@@ -4057,6 +4057,44 @@ bool ON_SubDEdgeSharpness::IsConstant(bool bCreaseResult) const
     );
 }
 
+bool ON_SubDEdgeSharpness::IsConstant(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edges,
+  bool bCreaseResult
+)
+{
+  return ON_SubDEdgeSharpness::IsConstant(
+    edges.Count(),
+    edges.Array(),
+    bCreaseResult
+  );
+}
+
+bool ON_SubDEdgeSharpness::IsConstant(
+  size_t edge_count,
+  const ON_SubDEdgePtr* edges,
+  bool bCreaseResult
+)
+{
+  if (edge_count < 1 || nullptr == edges)
+    return false;
+  
+  ON_SubDEdgeSharpness s = edges[0].RelativeSharpness(true);
+  if (false == s.IsConstant(bCreaseResult))
+    return false;
+  const double c = s[0];
+  if (nullptr == edges[0].RelativeVertex(0))
+    return false; // not an edge chain
+  for (size_t i = 0; i < edge_count; ++i)
+  {
+    s = edges[i].RelativeSharpness(true);
+    if ( false == (c == s.EndSharpness(0) && c == s.EndSharpness(1)))
+      return false;
+  }
+
+  return true;
+}
+
+
 bool ON_SubDEdgeSharpness::IsIncreasing() const
 {
   return (m_edge_sharpness[0] < m_edge_sharpness[1]);
@@ -6313,6 +6351,66 @@ unsigned int ON_SubDFace::SetEdgeMarks(bool bMark) const
     }
   }
   return changed_mark_count;
+}
+
+bool ON_SubDFace::HasSharpEdges() const
+{
+  const ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned short fei = 0; fei < m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr != e && e->IsSharp())
+      return true;
+  }
+  return false;
+}
+
+unsigned int ON_SubDFace::SharpEdgeCount(ON_SubDEdgeSharpness& sharpness_range) const
+{
+  sharpness_range = ON_SubDEdgeSharpness::Smooth;
+  unsigned int sharp_edge_count = 0;
+  const ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned short fei = 0; fei < m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr == e || false == e->IsSharp())
+      continue;
+    const ON_SubDEdgeSharpness s = e->Sharpness(false);
+    sharpness_range = ON_SubDEdgeSharpness::Union(sharpness_range, s);
+    ++sharp_edge_count;
+  }
+  return sharp_edge_count;
+}
+
+unsigned int ON_SubDFace::SharpEdgeCount() const
+{
+  unsigned int sharp_edge_count = 0;
+  const ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned short fei = 0; fei < m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr != e && e->IsSharp())
+      ++sharp_edge_count;
+  }
+  return sharp_edge_count;
 }
 
 unsigned int ON_SubDFace::GetEdgeArray(
@@ -19595,6 +19693,7 @@ bool ON_SubDVertexQuadSector::Subdivide()
   const unsigned subdivision_level = center_vertex->SubdivisionLevel() + 1U;
   for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
   {
+    m_v[vi].ClearSavedSubdivisionPoints(); // <- 2023-May-5 Dale Lear. This line fixes RH-74520.
     m_v[vi].SetControlNetPoint(R[vi],false);
     m_v[vi].SetSubdivisionLevel(subdivision_level);
     if (1 == vi)
@@ -24675,6 +24774,39 @@ bool ON_SubDEdgeChain::IsSingleEdgeChain(
   return ON_SubDEdgeChain::IsSingleEdgeChain(edges, bIsClosed, bIsSorted);
 }
 
+bool ON_SubDEdgeChain::IsClosed(
+  const ON_SimpleArray<ON_SubDEdgePtr>& edges
+)
+{
+  return ON_SubDEdgeChain::IsClosed( edges.Count(), edges.Array());
+}
+
+bool ON_SubDEdgeChain::IsClosed(
+  size_t edge_count,
+  const ON_SubDEdgePtr* edges
+)
+{
+  if (edge_count < 3 || nullptr == edges)
+    return false;
+  const ON_SubDVertex* v = edges[0].RelativeVertex(0);
+  if (nullptr == v)
+    return false;
+  if (v != edges[edge_count - 1].RelativeVertex(1))
+    return false;
+
+  v = edges[0].RelativeVertex(1);
+  for (size_t i = 1; i < edge_count; ++i)
+  {
+    if (nullptr == v)
+      return false;
+    if (v != edges[i].RelativeVertex(0))
+      return false;
+    v = edges[i].RelativeVertex(1);
+  }
+
+  return true;
+
+}
 
 class ON_SubDEdgePtrLink
 {

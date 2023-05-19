@@ -526,6 +526,7 @@ public:
   static const ON_UUID Technical;        // {63612C72-778F-4afd-B81B-17426FDFE8A6}
   static const ON_UUID Artistic;         // {B46AB226-05A0-4568-B454-4B1AB721C675}
   static const ON_UUID Pen;              // {F4616FA5-A831-4620-A97E-9B807D5EC376}
+  static const ON_UUID Monochrome;       // {E1B5C8A2-ED43-4872-9A01-814E612D5363}
   static const ON_UUID AmbientOcclusion; // {C32B72C3-41BD-4ADC-82A8-B7AEF4456A37}
   static const ON_UUID Raytraced;        // {69E0C7A5-1C6A-46C8-B98B-8779686CD181}
 

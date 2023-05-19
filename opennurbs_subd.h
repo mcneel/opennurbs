@@ -286,10 +286,12 @@ public:
   /// </summary>
   static const ON_SubDEdgeSharpness Smooth;
 
+
   /// <summary>
-  /// An edge sharpness with both end values = ON_DBL_QNAN.
+  /// An edge sharpness with contant value ON_SubDEdgeSharpness::MaximumValue.
+  /// This is the maximum sharpness that can be applied to an edge.
   /// </summary>
-  static const ON_SubDEdgeSharpness Nan;
+  static const ON_SubDEdgeSharpness Maximum;
 
   /// <summary>
   /// An edge sharpness with both end values = ON_SubDEdgeSharpness::CreaseValue.
@@ -300,6 +302,13 @@ public:
   /// ON_SubDEdgeSharpness::Crease is used for this purpose.
   /// </summary>
   static const ON_SubDEdgeSharpness Crease;
+
+  /// <summary>
+  /// An edge sharpness with both end values = ON_DBL_QNAN.
+  /// </summary>
+  static const ON_SubDEdgeSharpness Nan;
+
+
 
   /// <summary>
   /// Create a text string describing the sharpness as a percentage.
@@ -472,6 +481,35 @@ public:
   static bool EqualDelta(
     const class ON_SubDEdgePtr& eptr0,
     const class ON_SubDEdgePtr& eptr1
+  );
+
+
+  /// <summary>
+  /// Determine if all the input edges have idential constant sharpeness.
+  /// </summary>
+  /// <param name="edges"></param>
+  /// <param name="bCreaseResult">
+  /// Result to return if all the edges are creases.
+  /// </param>
+  /// <returns>True if all edges have identical constant sharpness.</returns>
+  static bool IsConstant(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges,
+    bool bCreaseResult
+  );
+
+  /// <summary>
+  /// Determine if all the input edges have idential constant sharpeness.
+  /// </summary>
+  /// <param name="edge_count"></param>
+  /// <param name="edges"></param>
+  /// <param name="bCreaseResult">
+  /// Result to return if all the edges are creases.
+  /// </param>
+  /// <returns>True if all edges have identical constant sharpness.</returns>
+  static bool IsConstant(
+    size_t edge_count,
+    const ON_SubDEdgePtr* edges,
+    bool bCreaseResult
   );
 
   /// <returns>True if the sharpness is zero.</returns>
@@ -702,7 +740,7 @@ public:
   /// <summary>
   /// Get the sharpness at the start or end.
   /// </summary>
-  /// <param name="end_index"0 or 1.</param>
+  /// <param name="end_index">0 or 1.</param>
   /// <returns>Sharpness or ON_DBL_QNAN if end_index is out of range.</returns>
   double EndSharpness(int end_index) const;
 
@@ -10422,7 +10460,7 @@ public:
   /*
   Description:
     Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], and m_T[] arrays).
-    The memory for the arrays is managed by something besides this ON_SubDManagedMeshFragment instance.
+    The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
   Parameters:
     vertex_capacity - [in]
       A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
@@ -10434,8 +10472,8 @@ public:
 
   /*
   Description:
-    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], and m_T[] arrays).
-    The memory for the arrays is managed by something besides this ON_SubDManagedMeshFragment instance.
+    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], m_T[], and m_C[] arrays).
+    The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
   Parameters:
     vertex_capacity - [in]
       A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
@@ -10444,9 +10482,22 @@ public:
   */
   bool ReserveManagedVertexCapacity(size_t vertex_capacity);
 
+
+  /*
+  Description:
+    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], m_T[], m_C[], and m_K[] arrays).
+    The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
+  Parameters:
+    vertex_capacity - [in]
+      A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
+  Returns:
+    True if successful
+  */
+  bool ReserveManagedVertexCapacity(size_t vertex_capacity, bool bWithCurvature);
+
   /*
   Returns:
-    True if the memory in the m_P[], m_N[], and m_T[] is managed by this ON_SubDManagedMeshFragment instance.
+    True if the memory in the m_P[], m_N[], and m_T[] is managed by this ON_SubDMeshFragment instance.
   */
   bool ManagedArrays() const;
 
@@ -10454,7 +10505,7 @@ public:
 
   /*
   Returns:
-    True if the memory in the m_P[], m_N[], and m_T[] is managed by something besides this ON_SubDManagedMeshFragment instance.
+    True if the memory in the m_P[], m_N[], and m_T[] is managed by something besides this ON_SubDMeshFragment instance.
   */
   bool UnmanagedArrays() const;
 
@@ -10472,25 +10523,55 @@ private:
     /// 3 double for the vertex texture coordinate
     /// 1 double (4 bytes used for vertex color and 4 bytes currently not used)
     /// </summary>
+    /// <remarks>
+    /// This does not hold space for curvature information.
+    /// Interlaced managed arrays will not work with curvature.
+    /// </remarks>
     ManagedDoublesPerVertex = 10,
+
+    /// <summary>
+    /// 3 double for the vertex point
+    /// 3 double for the vertex normal
+    /// 3 double for the vertex texture coordinate
+    /// 1 double (4 bytes used for vertex color and 4 bytes currently not used)
+    /// 2 doubles for the curvatures
+    /// </summary>
+    ManagedDoublesPerVertexWithCurvature = 12,
 
     /// <summary>
     /// Number of doubles between successive 3d points in m_P[]/m_N[]/m_T[].
     /// When managed arrays are not interlaced, this value must be 3.
-    /// When managed arraays are interlaced, this value must be ManagedDoublesPerPoint.
+    /// When managed arrays are interlaced, this value must be ManagedDoublesPerVertex(WithCurvature).
     /// </summary>
     Managed_3d_stride = 3,
 
     /// <summary>
     /// Number of ON_Color elements between successive colors in m_C[].
-    /// When managed arrays are not interlaced, this value must be 1.
-    /// When managed arraays are interlaced, this value must be ManagedDoublesPerPoint*sizeof(double)/sizeof(ON_Color).
+    /// When managed arrays are not interlaced, this value must be 1 (or 2, see remarks).
+    /// When managed arrays are interlaced, this value must be
+    /// ManagedDoublesPerVertex(WithCurvature)*sizeof(double)/sizeof(ON_Color).
     /// </summary>
+    /// <remarks>
+    /// Setting this value to 1 for non-interlaced arrays means that
+    /// there will be a block of vertexCount ON_Color-sized values that are set,
+    /// then a block of vertexCount ON_Color-sized unset values. This allows
+    /// ManagedDoublesPerVertex(WithCurvature) to only count doubles, not doubles and floats.
+    /// The PNTC(K) array should always be of size ManagedDoublesPerVertex(WithCurvature) * vertexCount.
+    /// </remarks>
     Managed_color_stride = 1,
+
+    /// <summary>
+    /// Number of ON_SurfaceCurvature elements between successive curvatures in m_K[].
+    /// When managed arrays are not interlaced, this value must be 1.
+    /// When managed arrays are interlaced, this value must be
+    /// ManagedDoublesPerVertex(WithCurvature)*sizeof(double)/sizeof(ON_SurfaceCurvature).
+    /// </summary>
+    Managed_curvature_stride = 1,
   };
 
   static bool Internal_ManagedArraysAreInterlaced();
   static size_t Internal_Managed3dArrayOffset(size_t vertex_capacity);
+  static size_t Internal_ManagedColorArrayOffset(size_t vertex_capacity);
 
   /*
   Parameters:
@@ -10500,6 +10581,38 @@ private:
   void Internal_LayoutArrays(
     bool bManagedArray,
     double* PNTC_array,
+    size_t vertex_capacity
+  );
+
+  /*
+  Parameters:
+    PNTCK_array[] - [in]
+      An array of
+        (bWithCurvature ? ManagedDoublesPerVertexWithCurvature : ManagedDoublesPerVertex)
+        * vertex_capacity
+      doubles.
+  */
+  void Internal_LayoutArrays(
+    bool bManagedArray,
+    bool bWithCurvature,
+    double* PNTCK_array,
+    size_t vertex_capacity
+  );
+
+  /*
+  Parameters:
+    PNTC_array[] - [in]
+    K_array[] - [in]
+      Two arrays with total space for
+        (K_array == nullptr ? ManagedDoublesPerVertex : ManagedDoublesPerVertexWithCurvature)
+        * vertex_capacity
+      doubles.
+      They may point to diferent positions in the same array.
+  */
+  void Internal_LayoutArrays(
+    bool bManagedArray,
+    double* PNTC_array,
+    ON_SurfaceCurvature* K_array,
     size_t vertex_capacity
   );
 
@@ -11009,7 +11122,7 @@ private:
   //
   // Per vertex colors
   //
-  // Depending on the strides, m_P[], m_N[], m_T[] and m_C[] can be separate or interlaced.
+  // Depending on the strides, m_P[], m_N[], m_T[], m_C[] and m_K[] can be separate or interlaced.
   //
   // If m_C is not nullptr and m_C_stride>0, then m_C[] can accommodate up to m_P_capacity 
   // elements.
@@ -11017,12 +11130,11 @@ private:
   // Never modify m_C_stride, m_C.
   // Use m_grid functions to get color indices and quad face indices.
   //
-  // m_C[] is rarely used and typically managed with ReserveManagedColorCapacity() / DeleteManagedColorCapacity().
   // NOTE WELL: 
   //   When m_C is interlaced with something containing doubles, m_C_stride must be 
   //   a multiple of 2 to keep the doubles 8 bytes aligned. 
   //   When m_C is not interlaced, m_C_stride is typically 1. If this is confusing,
-  //   please learn more about algnment and interlacing before working on this code.
+  //   please learn more about alignment and interlacing before working on this code.
   mutable ON_Color* m_C;
   mutable size_t m_C_stride; // stride for m_C[] as an array of 4 bytes ON_Color elements (so 0 or >= 1).
 
@@ -11089,22 +11201,20 @@ private:
   //
   // Principal curvatures
   //
-  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accommodate up to m_P_capacity 
-  // principal curvatures and sectional curvatures (four doubles, k1,k2,sx,sy).
-  // Otherwise there are no principal curvatures or sectional curvatures.
-  // (sx = sectional curvature in grid "x" direction, sy = sectional curvature in grid "y" direction.)
+  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accommodate up to m_P_capacity
+  // principal curvatures (two doubles k1, k2). Otherwise there are no principal curvatures.
   // At exceptional points, the curvature values may be nan.
   // Never modify m_K_stride, m_K.
   // Use m_grid functions to get principal curvature indices and quad face indices.
   //
   // m_K[] is rarely used and typically managed with ReserveManagedCurvatureCapacity() / DeleteManagedCurvatureCapacity().
   // NOTE WELL:
-  //   If m_K[] is interlacesd, the number of bytes between successive elements of m_K[] must be a multiple of 16
+  //   If m_K[] is interlaced, the number of bytes between successive elements of m_K[] must be a multiple of 16
   //   because sizeof(m_K) = 16 AND m_K_stride is the stride between elements of m_K[]
   //   This is different than m_P_stride, m_N_stride, and m_T_stride, which count the number of doubles between successive 
   //   points/normals/texture points in m_P[]/m_N[]/m_T[].
   mutable ON_SurfaceCurvature* m_K;
-  size_t m_K_stride; // stride for m_K[] as an array of 16 byte ON_SurfaceCurvature elements (so 0 or >= 1).
+  mutable size_t m_K_stride; // stride for m_K[] as an array of 16 byte ON_SurfaceCurvature elements (so 0 or >= 1).
 
 public:
   /*
@@ -11133,7 +11243,7 @@ public:
 
   /*
   Returns:
-    True if vertex color values are set on this fragment.
+    True if vertex curvature values are set on this fragment.
   */
   bool CurvaturesExist() const;
 
@@ -11144,6 +11254,12 @@ public:
       False vertex curvatures do not exist or are no longer valid.
   */
   void SetCurvaturesExist(bool bSetCurvaturesExist) const;
+
+  /*
+  Description:
+    Computes curvature values at grid points for this fragment.
+  */
+  void SetCurvatures() const;
 
 public:
 
@@ -11201,6 +11317,11 @@ public:
 
   bool ReserveCapacity(
     unsigned int mesh_density
+    ) ON_NOEXCEPT;
+
+  bool ReserveCapacity(
+    unsigned int mesh_density,
+    bool bWithCurvature
     ) ON_NOEXCEPT;
 
 private:
@@ -14639,6 +14760,32 @@ public:
     unsigned int i,
     ON__UINT8 missing_edge_return_value
   ) const;
+
+
+  /// <summary>
+  /// Determine if this SubD face has sharp edges. 
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <returns>True if this SubD face at lease one sharp edge.</returns>
+  bool HasSharpEdges() const;
+
+  /// <summary>
+  /// Get the range of sharpness values assigned to this face's sharp edges
+  /// and return the number of sharp edges.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="sharpness_range">The range of sharpness values is returned here. 
+  /// (0,0) is returned if there are no sharp edges.
+  /// </param>
+  /// <returns>Number of sharp edges attached to this face.</returns>
+  unsigned int SharpEdgeCount(ON_SubDEdgeSharpness& sharpness_range) const;
+
+  /// <summary>
+  /// Number of sharp edges attached to this face.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <returns>Number of sharp edges attached to this face.</returns>
+  unsigned int SharpEdgeCount() const;
 
 
   const class ON_SubDVertex* Vertex(
@@ -18419,6 +18566,30 @@ public:
   static bool IsSingleEdgeChain(
     const ON_SimpleArray<ON_SubDEdgePtr>& edges
   );
+
+
+  /// <summary>
+  /// Returns true if edges[] has 3 or more edges, the edges form a single chain,
+  /// and the chain begins and ends at the same vertex.
+  /// </summary>
+  /// <param name="edges"></param>
+  /// <returns>True if edges[] forms a closed edge chain.</returns>
+  static bool IsClosed(
+    const ON_SimpleArray<ON_SubDEdgePtr>& edges
+  );
+
+  /// <summary>
+  /// Returns true if edges[] has 3 or more edges, the edges form a single chain,
+  /// and the chain begins and ends at the same vertex.
+  /// </summary>
+  /// <param name="edge_count">Number of elements in the edges[] array.</param>
+  /// <param name="edges"></param>
+  /// <returns>True if edges[] forms a closed edge chain.</returns>
+  static bool IsClosed(
+    size_t edge_count,
+    const ON_SubDEdgePtr* edges
+  );
+
 
   /*
   Description:

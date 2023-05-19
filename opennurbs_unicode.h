@@ -259,8 +259,11 @@ enum ON_UnicodeCodePoint
   ON_GreekOmega = 0x03C9,
 
   /// <summary>CYRILLIC CAPITAL LETTER YU U+042E (&#x42e;) (Used in Cyrillic code point tests)</summary>
-  ON_CyrillicCapitalYu = 0x042E, 
-
+  ON_CyrillicCapitalYu = 0x042E,
+  
+  /// <summary>Place of interest sign/looped square. (Used to indicate the command key on Mac)</summary>
+  ON_PlaceOfInterestSign = 0x2318,
+  
   /// <summary>Simplified Chinese logogram for tree U+6881 (&#x6881;) (Used in CJK code point tests)</summary>
   ON_SimplifiedChineseTree = 0x6881,
 
@@ -353,7 +356,7 @@ enum ON_UnicodeCodePoint
   /// The Unicode specification states that 0x10FFFF is &ltnot a character&gt.
   /// </summary>
   ON_MaximumCodePoint = 0x10FFFF,
-
+  
   /// <summary>
   /// The maximum valid unicode code point value is 0x10FFFF.
   /// See ON_IsValidUnicodeCodepoint() for additional restrictions.

@@ -378,6 +378,9 @@ public:
   // The dimension of a arc curve can be 2 or 3.
   // (2 so ON_ArcCurve can be used as a trimming curve)
   int m_dim = 3;
+
+  // TODO ON_LineCurve::GetClosestPoint( ON_Curve&...) doesn't need an override.
+  #pragma warning(suppress : 4266)  
 };
 
 

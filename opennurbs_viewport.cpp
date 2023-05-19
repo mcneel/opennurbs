@@ -5042,3 +5042,115 @@ int ON_Viewport::InViewFrustum(
     return 0;
   return cr.InViewFrustum(count,p);
 }
+
+
+bool ON_DollyExtents(
+  const ON_Viewport& current_vp,
+  ON_BoundingBox camcoord_bbox,
+  ON_Viewport& zoomed_vp
+)
+{
+  if (&zoomed_vp != &current_vp)
+    zoomed_vp = current_vp;
+
+  if (!camcoord_bbox.IsValid() || !zoomed_vp.IsValid())
+    return false;
+
+  double aspect = 0.0;
+  if (!current_vp.GetFrustumAspect(aspect))
+    return false;
+
+  if (!ON_IsValid(aspect) || 0.0 == aspect)
+    return false;
+
+  // Handle non-uniform viewport scaling
+  ON_3dVector scale(1.0, 1.0, 0.0);
+  current_vp.GetViewScale(&scale.x, &scale.y);
+
+  const double xmin = camcoord_bbox.m_min.x;
+  const double xmax = camcoord_bbox.m_max.x;
+  const double ymin = camcoord_bbox.m_min.y;
+  const double ymax = camcoord_bbox.m_max.y;
+  double dx = 0.5 * (xmax - xmin) * scale.x;
+  double dy = 0.5 * (ymax - ymin) * scale.y;
+  if (dx <= ON_SQRT_EPSILON && dy <= ON_SQRT_EPSILON)
+    dx = dy = 0.5;
+
+  if (dx < dy * aspect)
+    dx = dy * aspect;
+  else
+    dy = dx / aspect;
+
+  // Pad depths a bit so clippling plane are not coplanar with displayed geometry
+  // zmax is on frustum near and zmin is on frustum far
+  double zmin = camcoord_bbox.m_min.z;
+  double zmax = camcoord_bbox.m_max.z;
+
+  double dz = (zmax - zmin) * 0.00390625; // 0.00390625 = 1/256
+  if (ON::perspective_view == current_vp.Projection())
+  {
+    // Do not increase zmax too much or you make zooming to small
+    // objects in perspective views impossible. To test any 
+    // changes, make a line from (0,0,0) to (0.001,0.001,0.001).
+    // Make a perspective view with a 50mm lens angle. If you 
+    // can't ZEA on the line, then you've adjusted dz too much.
+    if (dz <= 1.0e-6)
+      dz = 1.0e-6;
+  }
+  else if (dz <= 0.125)
+  {
+    // In parallel projection it is ok to be generous.
+    dz = 0.125;
+  }
+  zmax += dz;
+
+  // It is ok to adjust zmin by more generous amount because it
+  // does not effect the ability to zoom in on small objects a 
+  // perspective view.
+  if (dz <= 0.125)
+    dz = 0.125;
+  zmin -= dz;
+  dz = zmax - zmin;
+
+  double frus_near = 0.0;
+  if (ON::parallel_view == current_vp.Projection())
+  {
+    // parallel projection
+    //double cota = 50.0/12.0; // 50 mm lens angle
+    //frus_near = ((dx > dy) ? dx : dy)*cota;
+    frus_near = 0.125 * dz;
+  }
+  else if (ON::perspective_view == current_vp.Projection())
+  {
+    // perspective projection
+    double ax, ay;
+    if (current_vp.GetCameraAngle(NULL, &ay, &ax))
+    {
+      double zx = (ON_IsValid(ax) && ax > 0.0) ? dx / tan(ax) : 0.0;
+      double zy = (ON_IsValid(ay) && ay > 0.0) ? dy / tan(ay) : 0.0;
+      frus_near = (zx > zy) ? zx : zy;
+    }
+  }
+
+  bool rc = false;
+  if (!ON_IsValid(frus_near) || frus_near <= ON_SQRT_EPSILON)
+  {
+    frus_near = 1.0;
+  }
+
+  ON_3dPoint camloc = current_vp.CameraLocation();
+  if (camloc.IsValid())
+  {
+    ON_3dVector dolly = 0.5 * (xmax + xmin) * zoomed_vp.CameraX()
+      + 0.5 * (ymax + ymin) * zoomed_vp.CameraY()
+      + (frus_near + zmax) * zoomed_vp.CameraZ();
+    camloc += dolly;
+    if (zoomed_vp.SetCameraLocation(camloc))
+    {
+      double frus_far = frus_near + dz;
+      rc = zoomed_vp.SetFrustum(-dx, dx, -dy, dy,
+        frus_near, frus_far);
+    }
+  }
+  return rc;
+}

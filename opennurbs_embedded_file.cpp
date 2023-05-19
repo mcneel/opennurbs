@@ -306,8 +306,9 @@ const ON_EmbeddedFile* ON_EmbeddedFile::FromModelComponentRef(const ON_ModelComp
   return none_return_value;
 }
 
-// This ON_Buffer stuff was already in file opennurbs_embedded_file.cpp even though it has nothing to do with files.
-// I need this file for actual EMBEDDED FILE code so I'm hijacking it. This ON_Buffer stuff should be moved.
+// This ON_Buffer stuff was already in file opennurbs_embedded_file.cpp even though it has nothing
+// to do with embedded files. I need this file for actual embedded file code so I'm hijacking it.
+// TODO: This ON_Buffer stuff should be moved.
 
 ON_Buffer::ON_Buffer()
 : m_buffer_size(0)

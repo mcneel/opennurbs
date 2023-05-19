@@ -2536,6 +2536,25 @@ public:
     unsigned int section_attributes_source_as_unsigned
   );
 
+#pragma region RH_C_SHARED_ENUM [ON::SectionLabelStyle] [Rhino.DocObjects.SectionLabelStyle]
+  /// <summary>
+  /// The source of sectioning attributes on an object.
+  /// </summary>
+  /// <since>8.0</since>
+  enum class SectionLabelStyle : unsigned char
+  {
+    /// <summary>No label</summary>
+    None = 0,
+    /// <summary>Label shown as a text dot with content from name</summary>
+    TextDotFromName = 1,
+    /// <summary>Label shown as text with content from name</summary>
+    TextFromName = 2,
+  };
+#pragma endregion
+
+  static SectionLabelStyle SectionLabelStyleFromUnsigned(
+    unsigned int section_label_style_as_unsigned
+  );
 
 #pragma region RH_C_SHARED_ENUM [ON::ViewSectionBehavior] [Rhino.DocObjects.ViewSectionBehavior]
   /// <summary>

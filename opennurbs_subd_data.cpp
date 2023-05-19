@@ -980,7 +980,9 @@ bool ON_SubDMeshFragment::Transform(
       }
     }
   }
-  if (0 != (ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_capacity_etc))
+  // Pierre, 2023-04-13: This was wrongly looking at ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_capacity_etc)
+  // That is actually already defined for the EtcManagedArraysBit
+  if (0 != (ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_count_etc))
   {
     const ON_3dVector A(m_ctrlnetN);
     if (A.IsNotZero())

@@ -3686,6 +3686,284 @@ bool ON_BezierCurve::Ev2Der( // returns false if unable to evaluate
   return rc;
 }
 
+#define  Internal_ON_BezierSurfaceInterpolateMaxOrder 10U
+
+static bool Internal_CalculateON_BezierSurfaceGridInterploationMatrix(
+  unsigned order0, 
+  unsigned order1,
+  ON_Matrix& T
+  )
+{
+  const unsigned max_order = Internal_ON_BezierSurfaceInterpolateMaxOrder;
+  if (order0 < 2 || order0 > max_order || order1 < 2 || order1 > max_order)
+  {
+    ON_ERROR("Invalid input point grid size.");
+    return false;
+  }
+
+  // TWODEX() converts 0 <= k < order0*order1 into (0<=i<order0,0<=j<order1)
+  // and is used to map count x count matrix row and column indices into bezier cv and grid point indices.
+#define TWODEX(k) ((k) % order0), ((k) / order0)
+
+  const unsigned count = order0 * order1;
+  const double degree0 = (double)(order0 - 1);
+  const double degree1 = (double)(order1 - 1);
+
+  const double zero = 0.0;
+  const double one = 1.0;
+  const double zero_tolerance = 1e-12;
+
+  // Create a 1-dimensional bezier surface
+  ON_BezierSurface bibez(1, 0, order0, order1);
+  for (unsigned cvdex = 0; cvdex < count; ++cvdex)
+  {
+    const ON_2udex cv2dex(TWODEX(cvdex));
+    bibez.SetCV(cv2dex.i, cv2dex.j, ON::point_style::intrinsic_point_style, &zero);
+  }
+
+  // Calculate the evaluation matrix "E"
+  ON_Matrix E(count, count);
+  for (unsigned uvdex = 0; uvdex < count; ++uvdex)
+  {
+    const ON_2udex uv2dex(TWODEX(uvdex));
+    const double uv[2] = { ((double)uv2dex.i) / degree0,  ((double)uv2dex.j) / degree1 };
+
+    for (unsigned cvdex = 0; cvdex < count; ++cvdex)
+    {
+      const ON_2udex bibezCVdex(TWODEX(cvdex));
+      bibez.SetCV(bibezCVdex.i, bibezCVdex.j, ON::point_style::intrinsic_point_style, &one);
+      E[uvdex][cvdex] = ON_DBL_QNAN;
+      if (false == bibez.Evaluate(uv[0], uv[1], 0, 1, &E[uvdex][cvdex]))
+      {
+        ON_ERROR("Invalid parameters passed to bibez.Evaluate().");
+        return false;
+      }
+      bibez.SetCV(bibezCVdex.i, bibezCVdex.j, ON::point_style::intrinsic_point_style, &zero);
+      if (fabs(E[uvdex][cvdex]) <= zero_tolerance)
+        E[uvdex][cvdex] = 0.0;
+      else if (fabs(E[uvdex][cvdex] - 1.0) <= zero_tolerance)
+        E[uvdex][cvdex] = 1.0;
+    }
+  }
+
+  // Calculate the interpolation matrix "T"
+  T = E;
+  T.Invert(0.0);
+
+  for (unsigned i = 0; i < count; ++i) for (unsigned j = 0; j < count; ++j)
+  {
+    if (fabs(T[i][j]) <= zero_tolerance)
+      T[i][j] = 0.0;
+    else if (fabs(T[i][j] - 1.0) <= zero_tolerance)
+      T[i][j] = 1.0;
+  }
+
+#if 0
+  // Validate E*T = T*E = identity.
+  ON_Matrix ET;
+  ET.Multiply(E, T);
+  ON_Matrix TE;
+  TE.Multiply(T, E);
+
+  for (unsigned i = 0; i < count; ++i) for (unsigned j = 0; j < count; ++j)
+  {
+    const double te = TE[i][j];
+    const double et = ET[i][j];
+    const double id = (i == j) ? 1.0 : 0.0;
+
+    if (false == (fabs(id - te) <= zero_tolerance))
+    {
+      ON_ERROR("T*E != identity matrix.");
+      return false;
+    }
+
+    if (false == (fabs(id - et) <= zero_tolerance))
+    {
+      ON_ERROR("E*T != identity matrix.");
+      return false;
+    }
+  }
+
+  // Valitate the interpolation matrix "T"
+  double maxe = 0.0;
+  ON_Matrix grid(order0, order1);
+  grid.Zero();
+  ON_2udex grid2dex;
+  for (grid2dex.i = 0; grid2dex.i < order0; ++grid2dex.i)
+  {
+    for (grid2dex.j = 0; grid2dex.j < order1; ++grid2dex.j)
+    {
+      grid[grid2dex.i][grid2dex.j] = 1.0;
+
+      // Use bibez = T*grid to set bibez cvs
+      for (unsigned cvdex = 0; cvdex < count; cvdex++)
+      {
+        double cv = 0.0;
+        for (unsigned k = 0; k < count; ++k)
+        {
+          const ON_2udex gdex(TWODEX(k));
+          const double g = grid[gdex.i][gdex.j];
+          cv += T[cvdex][k] * g;
+          const ON_2udex bibezCVdex(TWODEX(cvdex));
+          bibez.SetCV(bibezCVdex.i, bibezCVdex.j, ON::point_style::intrinsic_point_style, &cv);
+        }
+      }
+
+      // validate bibez(i/degree0, j/degree1) = grid(i,j)
+      for (unsigned i = 0; i < order0; ++i)
+      {
+        const double s = ((double)i) / degree0;
+        for (unsigned j = 0; j < order1; ++j)
+        {
+          const double t = ((double)j) / degree1;
+          double v = ON_DBL_QNAN;
+          bibez.Evaluate(s, t, 0, 1, &v);
+          const double g = grid[i][j];
+          const double e = fabs(v - g);
+          if (false == (e <= zero_tolerance))
+          {
+            text_log.Print(
+              "Interpolation test failed. bibez(%g,%g) = %g. grid[%u][%u] = %g.\n",
+              s, t, v, i, j, g
+            );
+            ON_ERROR("Interpolation validation failed.");
+            return false;
+          }
+          if (e > maxe)
+            maxe = e;
+        }
+      }
+    }
+  }
+
+  text_log.Print("order = (%u,%u). Maximimum normalized interpolation error = %g.\n", order0, order1, maxe);
+#endif
+
+#undef TWODEX
+
+  return true;
+}
+
+static const ON_Matrix* Internal_ON_BezierSurfaceGridInterploationMatrix(
+  unsigned order0, unsigned order1
+)
+{
+  if (
+    order0 < 2 || order0 > Internal_ON_BezierSurfaceInterpolateMaxOrder
+    || 
+    order1 < 2 || order1 > Internal_ON_BezierSurfaceInterpolateMaxOrder)
+  {
+    ON_ERROR("Invalid input point grid size.");
+    return nullptr;
+  }
+
+  static ON_Matrix* Tcache[Internal_ON_BezierSurfaceInterpolateMaxOrder - 1U][Internal_ON_BezierSurfaceInterpolateMaxOrder - 1U] = {};
+  if (nullptr == Tcache[order0-2][order1-2])
+  {
+    ON_Matrix T;
+    if (Internal_CalculateON_BezierSurfaceGridInterploationMatrix(order0,order1,T))
+    {
+      // The Tcache[][] matrices are created as needed and then used for the lifetime of the instance.
+      // The memory used to store the matrices is app workspace memory and is not leaked.
+      ON_MemoryAllocationTracking disable_tracking(false);
+      Tcache[order0 - 2][order1 - 2] = new ON_Matrix(T);
+    }
+  }
+
+  return Tcache[order0 - 2][order1 - 2];
+}
+
+
+
+ON_BezierSurface* ON_BezierSurface::InterpolateGrid(
+  const double* point_grid,
+  int dim,
+  int point_count0, int point_count1,
+  size_t point_stride0, size_t point_stride1,
+  ON_BezierSurface* dest
+)
+{
+  const unsigned max_order = Internal_ON_BezierSurfaceInterpolateMaxOrder;
+
+  if (nullptr == point_grid)
+    return nullptr;
+  if (dim < 1)
+    return nullptr;
+  if (point_count0 < 2 || point_count0 > max_order)
+    return nullptr;
+  if (point_count1 < 2 || point_count1 > max_order)
+    return nullptr;
+  if (point_stride0 < dim)
+    return nullptr;
+  if (point_stride1 < dim)
+    return nullptr;
+  if (point_stride0 < point_stride1 * dim && point_stride1 < point_stride0 * dim)
+    return nullptr;
+
+  const ON_Matrix* T = Internal_ON_BezierSurfaceGridInterploationMatrix(point_count0, point_count1);
+  if (nullptr == T)
+    return nullptr;
+
+  ON_BezierSurface* bez = (nullptr != dest) ? dest : new ON_BezierSurface();
+  if (
+    dim != bez->m_dim
+    || 0 != bez->m_is_rat
+    || point_count0 != bez->m_order[0]
+    || point_count1 != bez->m_order[1]
+    || nullptr == bez->m_cv
+    || bez->m_cv_stride[0] < dim
+    || bez->m_cv_stride[1] < dim
+    || (bez->m_cv_stride[0] < bez->m_cv_stride[1]*dim && bez->m_cv_stride[1] < bez->m_cv_stride[0] * dim)
+    )
+  {
+    bez->ReserveCVCapacity(point_count0 * point_count1 * dim);
+    bez->m_dim = dim;
+    bez->m_is_rat = 0;
+    bez->m_order[0] = point_count0;
+    bez->m_order[1] = point_count1;
+    bez->m_cv_stride[0] = bez->m_dim * bez->m_order[1];
+    bez->m_cv_stride[1] = bez->m_dim;
+  }
+
+  const int Tcount = point_count0 * point_count1;
+  for (int Ti = 0; Ti < Tcount; ++Ti)
+  {
+    const ON_2dex cvdex( Ti % point_count0, Ti / point_count0 );
+    double* bezcv = bez->CV(cvdex.i, cvdex.j);
+    for (int k = 0; k < dim; ++k)
+      bezcv[k] = 0.0;
+    const double* Trow = T->m[Ti];
+    for (int Tj = 0; Tj < Tcount; ++Tj)
+    {
+      const double t = Trow[Tj];
+      if (0.0 == t)
+        continue;
+      const ON_2dex griddex(Tj % point_count0, Tj / point_count0);
+      const double* G = point_grid + (griddex.i * point_stride0 + griddex.j * point_stride1);
+      for (int k = 0; k < dim; ++k)
+        bezcv[k] += t * G[k];
+    }
+  }
+
+  return bez;
+}
+
+
+ON_BezierSurface* ON_BezierSurface::InterpolateGrid(
+  const ON_3dPoint* point_grid,
+  int point_count0, int point_count1,
+  size_t point_stride0, size_t point_stride1,
+  ON_BezierSurface* dest
+)
+{
+  return ON_BezierSurface::InterpolateGrid(
+    (const double*)point_grid,
+    3,
+    point_count0, point_count1,
+    point_stride0*3, point_stride1*3,
+    dest
+  );
+}
 
 
 
