@@ -346,7 +346,7 @@ public:
   ON::LengthUnitSystem m_units = ON::LengthUnitSystem::None;
   ON__UINT8* m_raw_buffer = nullptr;
   bool m_bTypePending = false;
-  bool m_bReserved[3] = { false };
+  bool m_bVaries = false;
   Types m_type = Types::Null;
 };
 
@@ -619,6 +619,7 @@ void ON_XMLVariant::SetValue(int v)
   ClearBuffers();
   m_impl->m_type = Types::Integer;
   m_impl->m_iVal = v;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -627,6 +628,7 @@ void ON_XMLVariant::SetValue(double v)
   ClearBuffers();
   m_impl->m_type = Types::Double;
   m_impl->m_dVal = v;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -635,6 +637,7 @@ void ON_XMLVariant::SetValue(float v)
   ClearBuffers();
   m_impl->m_type = Types::Float;
   m_impl->m_fVal = v;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -643,6 +646,7 @@ void ON_XMLVariant::SetValue(const wchar_t* s)
   ClearBuffers();
   m_impl->m_type = Types::String;
   m_impl->m_sVal = s;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -651,6 +655,7 @@ void ON_XMLVariant::SetValue(const ON_wString& s)
   ClearBuffers();
   m_impl->m_type = Types::String;
   m_impl->m_sVal = s;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -682,6 +687,7 @@ void ON_XMLVariant::SetValue(const double* p, ArrayTypes at)
   case ArrayTypes::Array16: m_impl->m_type = Types::Matrix;       Fill(m_impl->m_aVal, p, 16); break;
   }
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -697,6 +703,7 @@ void ON_XMLVariant::SetValue(const float* p, ArrayTypes at)
   case ArrayTypes::Array16: m_impl->m_type = Types::Matrix;       Fill(m_impl->m_aVal, p, 16); break;
   }
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -709,6 +716,7 @@ void ON_XMLVariant::SetValue(const ON_2dPoint& v)
   m_impl->m_aVal[0] = v.x;
   m_impl->m_aVal[1] = v.y;
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -722,6 +730,7 @@ void ON_XMLVariant::SetValue(const ON_3dPoint& v)
   m_impl->m_aVal[1] = v.y;
   m_impl->m_aVal[2] = v.z;
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -736,6 +745,7 @@ void ON_XMLVariant::SetValue(const ON_4dPoint& p)
   m_impl->m_aVal[2] = p.z;
   m_impl->m_aVal[3] = p.w;
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -750,6 +760,7 @@ void ON_XMLVariant::SetValue(const ON_4fColor& c)
   m_impl->m_aVal[2] = c.Blue();
   m_impl->m_aVal[3] = c.Alpha();
 
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -758,7 +769,9 @@ void ON_XMLVariant::SetValue(bool b)
   ClearBuffers();
 
   m_impl->m_type = Types::Bool;
+
   m_impl->m_bVal = b;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -767,7 +780,9 @@ void ON_XMLVariant::SetValue(const ON_UUID& uuid)
   ClearBuffers();
 
   m_impl->m_type = Types::Uuid;
+
   m_impl->m_uuidVal = uuid;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -776,7 +791,9 @@ void ON_XMLVariant::SetValue(time_t time)
   ClearBuffers();
 
   m_impl->m_type = Types::Time;
+
   m_impl->m_timeVal = time;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -785,6 +802,8 @@ void ON_XMLVariant::SetValue(const void* pBuffer, size_t size)
   ClearBuffers();
 
   m_impl->m_type = Types::Buffer;
+
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 
   GetBuffer().Write(size, pBuffer);
@@ -793,6 +812,8 @@ void ON_XMLVariant::SetValue(const void* pBuffer, size_t size)
 void ON_XMLVariant::SetValue(const ON_Buffer& buffer)
 {
   m_impl->m_type = Types::Buffer;
+
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 
   GetBuffer() = buffer;
@@ -803,7 +824,9 @@ void ON_XMLVariant::SetValue(const ON_Xform& xform)
   ClearBuffers();
 
   m_impl->m_type = Types::Matrix;
+
   m_impl->m_xform = xform;
+  m_impl->m_bVaries = false;
   m_impl->m_bTypePending = false;
 }
 
@@ -1223,6 +1246,23 @@ bool ON_XMLVariant::IsNull(void) const
 bool ON_XMLVariant::IsEmpty(void) const
 {
   return AsString().IsEmpty() ? true : false;
+}
+
+bool ON_XMLVariant::Varies(void) const
+{
+	return m_impl->m_bVaries;
+}
+
+void ON_XMLVariant::SetVaries(void)
+{
+  if (IsNull())
+  {
+    ON_ERROR("Can't set ON_XMLVariant as VARIES when it's NULL");
+  }
+  else
+  {
+    m_impl->m_bVaries = true;
+  }
 }
 
 ON::LengthUnitSystem ON_XMLVariant::Units(void) const
@@ -1716,7 +1756,7 @@ public:
   void MoveBefore(ON_XMLNode& other);
   void MoveAfter(ON_XMLNode& other);
   bool RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* pv) const;
-  ON__UINT32 DataCRC(ON__UINT32 crc, int depth) const;
+  ON__UINT32 DataCRC(ON__UINT32 crc, bool recursive) const;
 
   static bool AssertValidTag(const ON_wString& sTag);
   static void AttemptToFixTag(ON_wString& tag);
@@ -1772,7 +1812,7 @@ static const wchar_t* StringFromPropType(ON_XMLVariant::Types vt)
   }
 }
 
-ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, int depth) const // [MARKER] This is probably wrong.
+ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, bool recursive) const
 {
   crc = TagName().DataCRCLower(crc);
 
@@ -1780,29 +1820,16 @@ ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, int depth) const // [MARKE
   ON_XMLProperty* prop = nullptr;
   while (nullptr != (prop = pit.GetNextProperty()))
   {
-    crc = prop->Name().DataCRCLower(crc);
-    crc = prop->GetValue().DataCRC(crc);
+    crc = prop->DataCRC(crc);
   }
 
-  ON_XMLParameters p(m_node);
-  auto* pIt = p.NewIterator();
-
-  ON_wString name;
-  ON_XMLVariant value;
-  while (pIt->Next(name, value))
-  {
-    crc = value.DataCRC(crc);
-  }
-
-  delete pIt;
-
-  if (depth < 2)
+  if (recursive)
   {
     auto cit = m_node.GetChildIterator();
     ON_XMLNode* child = nullptr;
     while (nullptr != (child = cit.GetNextChild()))
     {
-      crc = child->m_impl->DataCRC(crc, depth + 1);
+      crc = child->m_impl->DataCRC(crc, recursive);
     }
   }
 
@@ -2683,15 +2710,15 @@ ON_XMLNode* ON_XMLNode::DetachChild(ON_XMLNode& child)
   return m_impl->DetachChild(child);
 }
 
-bool ON_XMLNode::RemoveChild(ON_XMLNode* pChild)
+bool ON_XMLNode::RemoveChild(ON_XMLNode* child)
 {
-  if (nullptr == pChild)
+  if (nullptr == child)
     return false;
 
-  auto* pDetach = m_impl->DetachChild(*pChild);
-  if (nullptr != pDetach)
+  ON_XMLNode* detach = m_impl->DetachChild(*child);
+  if (nullptr != detach)
   {
-    delete pDetach;
+    delete detach;
     return true;
   }
 
@@ -2810,13 +2837,13 @@ ON_XMLNode* ON_XMLNode::GetNamedChild(const wchar_t* name) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 
-  ON_XMLNode* pNode = nullptr;
+  ON_XMLNode* node = nullptr;
 
   auto it = GetChildIterator();
-  while (nullptr != (pNode = it.GetNextChild()))
+  while (nullptr != (node = it.GetNextChild()))
   {
-    if (on_wcsicmp(name, pNode->TagName()) == 0)
-      return pNode;
+    if (on_wcsicmp(name, node->TagName()) == 0)
+      return node;
   }
 
   return nullptr;
@@ -3307,7 +3334,7 @@ ON_XMLNode* ON_XMLNode::NextSibling(void) const
   return m_impl->m_next_sibling;
 }
 
-ON__UINT32 ON_XMLNode::DataCRC(ON__UINT32 crc) const
+ON__UINT32 ON_XMLNode::DataCRC(ON__UINT32 crc, bool recursive) const
 {
   return m_impl->DataCRC(crc, 0);
 }
@@ -4567,7 +4594,7 @@ bool ON_RdkUserData::DeleteAfterRead(const ON_BinaryArchive& archive, ON_Object*
   pOnMaterial->SetMaterialPlugInId(uuidUniversalRenderEngine); // Fixes RH-27240 'V4 RDK materials do not work correctly in V6'
 
   // Transfer the instance id from the user data to the new member variable.
-  const auto* wsz = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_RDK_UD_MATERIAL;
+  const auto* wsz = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_UD_MATERIAL;
   const auto uuidInstance = Value(wsz, ON_RDK_UD_INSTANCE_ID).AsUuid();
   ON_ASSERT(pOnMaterial->RdkMaterialInstanceIdIsNil() || (uuidInstance == pOnMaterial->RdkMaterialInstanceId()));
   pOnMaterial->SetRdkMaterialInstanceId(uuidInstance);
@@ -5227,24 +5254,24 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 60);
 
-          ON_SunEngine e;
-          e.SetLocalDateTime(2000, 1, 1, 12.0);
+          ON_SunEngine engine(ON_SunEngine::Accuracy::Minimum);
+          engine.SetLocalDateTime(2000, 1, 1, 12.0);
           int y = 0, m = 0, d = 0; double h = 0.0;
-          e.LocalDateTime(y, m, d, h);
+          engine.LocalDateTime(y, m, d, h);
           p.SetParam(ON_RDK_SUN_DATE_YEAR,  y);
           p.SetParam(ON_RDK_SUN_DATE_MONTH, m);
           p.SetParam(ON_RDK_SUN_DATE_DAY,   d);
           p.SetParam(ON_RDK_SUN_TIME_HOURS, h);
-          p.SetParam(ON_RDK_SUN_AZIMUTH,            e.Azimuth());
-          p.SetParam(ON_RDK_SUN_ALTITUDE,           e.Altitude());
-          p.SetParam(ON_RDK_SUN_OBSERVER_LATITUDE,  e.Latitude());
-          p.SetParam(ON_RDK_SUN_OBSERVER_LONGITUDE, e.Longitude());
-          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE,  e.TimeZoneHours());
+          p.SetParam(ON_RDK_SUN_AZIMUTH,            engine.Azimuth());
+          p.SetParam(ON_RDK_SUN_ALTITUDE,           engine.Altitude());
+          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE,  engine.TimeZoneHours());
 
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, ON_nil_uuid);
+
+          // Don't create defaults for North, Latitude or Longitude because they are stored in the earth anchor point.
         }
 
         // Safe frame.

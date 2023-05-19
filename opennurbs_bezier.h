@@ -1319,6 +1319,53 @@ public:
 	*/
 	bool GetSurfaceSize(double* width, double* height) const;
 
+  /// <summary>
+  /// Interpolate arectangular grid of points so that
+  /// bez(i/(point_count0 - 1), i/(point_count1 - 1))) = point_grid[i][j].
+  /// The returned bezier has order (point_count0,point_count1).
+  /// Be aware that interpolation of irregular grids can create surfaces with extreme oscillations.
+  /// </summary>
+  /// <param name="point_grid">Grid points</param>
+  /// <param name="dim">dimension of grid points and returned bezier surface (dim &gt;= 1)</param>
+  /// <param name="point_count0">Number of grid points in the "i" direction.</param>
+  /// <param name="point_count1">Number of grid points in the "j" direction.</param>
+  /// <param name="point_stride0">"i" direction stride in doubles.</param>
+  /// <param name="point_stride1">"j" direction stride in doubles.</param>
+  /// <param name="dest">If dest is not nullptr, then the bezier will be created in this instance. Otherwise
+  /// new ON_BezierSurface(dim,0,point_count0,point_count1) will be used to allocate a bezier.</param>
+  /// <returns>
+  /// If the input is valid, a bezier surface is returned such that 
+  /// bez(i/(point_count0 - 1), i/(point_count1 - 1))) = point_grid[i][j].
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  static ON_BezierSurface* InterpolateGrid(
+    const double* point_grid,
+    int dim,
+    int point_count0, int point_count1,
+    size_t point_stride0, size_t point_stride1,
+    ON_BezierSurface* dest
+  );
+
+
+  /// <summary>
+  /// Interpolate arectangular grid of 3d points so that
+  /// bez(i/(point_count0 - 1), i/(point_count1 - 1))) = point_grid[i][j]
+  /// </summary>
+  /// <param name="point_grid">Grid points</param>
+  /// <param name="point_count0">Number of grid points "i" direction.</param>
+  /// <param name="point_count1">Number of grid points in the "j" direction.</param>
+  /// <param name="point_stride0">"i" direction stride in ON_3dPoints.</param>
+  /// <param name="point_stride1">"j" direction stride in ON_3dPoints.</param>
+  /// <param name="dest">If dest is not nullptr, then the bezier will be created in this instance. Otherwise
+  /// new ON_BezierSurface(dim,0,point_count0,point_count1) will be used to allocate a bezier.</param>
+  /// <returns></returns>
+  static ON_BezierSurface* InterpolateGrid(
+    const ON_3dPoint* point_grid,
+    int point_count0, int point_count1,
+    size_t point_stride0, size_t point_stride1,
+    ON_BezierSurface* dest
+  );
+
   /////////////////////////////////////////////////////////////////
   // Implementation
 public:

@@ -37,8 +37,8 @@ public:
 
 static const wchar_t* XMLPath(void)
 {
-  return ON_RDK_DOCUMENT   ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH
-         ON_RDK_RENDERING  ON_RDK_SLASH  ON_RDK_RENDER_CHANNELS;
+  return ON_RDK_DOCUMENT   ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH
+         ON_RDK_RENDERING  ON_XML_SLASH  ON_RDK_RENDER_CHANNELS;
 }
 
 ON_RenderChannels::ON_RenderChannels()
@@ -179,6 +179,6 @@ void* ON_RenderChannels::EVF(const wchar_t* func, void* data)
   return nullptr;
 }
 
-void ON_RenderChannels::InvalidateCache(void)
+void ON_RenderChannels::OnInternalXmlChanged(const ON_RenderChannels*)
 {
 }

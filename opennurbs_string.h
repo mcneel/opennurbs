@@ -2642,7 +2642,10 @@ public:
 
   /// <summary>DEGREE SIGN U+00B0 (X&#xb0;) (Rhino annotation degree symbol)</summary>
   static const wchar_t  DegreeSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DegreeSymbol;
-
+  
+  /// <summary>Place of interest sign/looped square. (Used to indicate the command key on Mac)</summary>
+  static const wchar_t PlaceOfInterestSign = (wchar_t)ON_UnicodeCodePoint::ON_PlaceOfInterestSign;
+  
   /// <summary>PLUS-MINUS SIGN U+00B1 (&#xb1;) (Rhino annotation plus/minus symbol)</summary>
   static const wchar_t  PlusMinusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_PlusMinusSymbol;
 

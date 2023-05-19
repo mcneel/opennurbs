@@ -22,47 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-  #define ON_DECALS                         L"decals"
-    #define ON_DECAL                          L"decal"
-      #define ON_DECAL_CUSTOM                   L"custom"
-      #define ON_DECAL_CUSTOM_RENDERER          L"renderer"
-      #define ON_DECAL_CUSTOM_PARAMS              L"parameters"
-
-      #define ON_DECAL_MAPPING                  L"mapping"
-      //----- +++++++++++++++++++
-      #define ON_DECAL_MAPPING_PLANAR           L"planar"
-      #define ON_DECAL_MAPPING_CYLINDRICAL      L"cylindrical"
-      #define ON_DECAL_MAPPING_SPHERICAL        L"spherical"
-      #define ON_DECAL_MAPPING_UV               L"uv"
-      #define ON_DECAL_MAPPING_NONE             L"none"
-
-      #define ON_DECAL_PROJECTION               L"projection"
-      //----- ++++++++++++++++++++++
-      #define ON_DECAL_PROJECTION_FORWARD       L"forward"
-      #define ON_DECAL_PROJECTION_BACKWARD      L"backward"
-      #define ON_DECAL_PROJECTION_BOTH          L"both"
-      #define ON_DECAL_PROJECTION_NONE          L"none"
-
-      #define ON_DECAL_MAP_TO_INSIDE_ON         L"map-to-inside-on"
-      #define ON_DECAL_TRANSPARENCY             L"transparency"
-      #define ON_DECAL_TEXTURE_INSTANCE         L"texture-instance"
-      #define ON_DECAL_HEIGHT                   L"height"
-      #define ON_DECAL_ORIGIN                   L"origin"
-      #define ON_DECAL_RADIUS                   L"radius"
-      #define ON_DECAL_HORZ_SWEEP_STA           L"latitude-start"
-      #define ON_DECAL_HORZ_SWEEP_END           L"latitude-stop"
-      #define ON_DECAL_VERT_SWEEP_STA           L"longitude-start"
-      #define ON_DECAL_VERT_SWEEP_END           L"longitude-stop"
-      #define ON_DECAL_VECTOR_UP                L"vector-up"
-      #define ON_DECAL_VECTOR_ACROSS            L"vector-across"
-      #define ON_DECAL_MIN_U                    L"min-u"
-      #define ON_DECAL_MIN_V                    L"min-v"
-      #define ON_DECAL_MAX_U                    L"max-u"
-      #define ON_DECAL_MAX_V                    L"max-v"
-      #define ON_DECAL_IS_TEMPORARY             L"is-temporary"
-      #define ON_DECAL_IS_VISIBLE               L"is-visible"
-      #define ON_DECAL_INSTANCE_ID              L"instance-id"
-
 // ON_Decal
 
 static ON_4dPoint UNSET_4D_POINT = ON_4dPoint(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
@@ -106,7 +65,7 @@ public:
   ON_XMLVariant GetParameter(const wchar_t* param_name, const ON_XMLVariant& def) const;
   void SetParameter(const wchar_t* param_name, const ON_XMLVariant& value);
   ON_XMLNode* FindCustomNodeForRenderEngine(const ON_UUID& renderEngineId) const;
-  virtual ON_wString NameOfRootNode(void) const override { return ON_DECAL; }
+  virtual ON_wString NameOfRootNode(void) const override { return ON_RDK_DECAL; }
 
   static const int unset_bool = 2;
   mutable struct Cache
@@ -136,11 +95,11 @@ private:
 
 static ON_Decal::Mappings MappingFromString(const ON_wString& s)
 {
-       if (s == ON_DECAL_MAPPING_PLANAR)      return ON_Decal::Mappings::Planar;
-  else if (s == ON_DECAL_MAPPING_SPHERICAL)   return ON_Decal::Mappings::Spherical;
-  else if (s == ON_DECAL_MAPPING_CYLINDRICAL) return ON_Decal::Mappings::Cylindrical;
-  else if (s == ON_DECAL_MAPPING_UV)          return ON_Decal::Mappings::UV;
-  else if (s == ON_DECAL_MAPPING_NONE)        return ON_Decal::Mappings::None;
+       if (s == ON_RDK_DECAL_MAPPING_PLANAR)      return ON_Decal::Mappings::Planar;
+  else if (s == ON_RDK_DECAL_MAPPING_SPHERICAL)   return ON_Decal::Mappings::Spherical;
+  else if (s == ON_RDK_DECAL_MAPPING_CYLINDRICAL) return ON_Decal::Mappings::Cylindrical;
+  else if (s == ON_RDK_DECAL_MAPPING_UV)          return ON_Decal::Mappings::UV;
+  else if (s == ON_RDK_DECAL_MAPPING_NONE)        return ON_Decal::Mappings::None;
 
   ON_ASSERT(false);
   return ON_Decal::Mappings::None;
@@ -163,7 +122,7 @@ ON_UUID ON_Decal::CImpl::TextureInstanceId(void) const
 {
   if (!_cache.texture_instance_id_set)
   {
-    _cache.texture_instance_id = GetParameter(ON_DECAL_TEXTURE_INSTANCE, ON_nil_uuid).AsUuid();
+    _cache.texture_instance_id = GetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, ON_nil_uuid).AsUuid();
     _cache.texture_instance_id_set = true;
   }
 
@@ -176,7 +135,7 @@ void ON_Decal::CImpl::SetTextureInstanceId(const ON_UUID& id)
   {
     _cache.texture_instance_id = id;
     _cache.texture_instance_id_set = true;
-    SetParameter(ON_DECAL_TEXTURE_INSTANCE, id);
+    SetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, id);
   }
 }
 
@@ -184,7 +143,7 @@ ON_Decal::Mappings ON_Decal::CImpl::Mapping(void) const
 {
   if (Mappings::None == _cache.mapping)
   {
-    const ON_wString s = GetParameter(ON_DECAL_MAPPING, ON_DECAL_MAPPING_UV).AsString();
+    const ON_wString s = GetParameter(ON_RDK_DECAL_MAPPING, ON_RDK_DECAL_MAPPING_UV).AsString();
     _cache.mapping = MappingFromString(s);
   }
 
@@ -201,14 +160,14 @@ void ON_Decal::CImpl::SetMapping(Mappings m)
     switch (m)
     {
     default: ON_ASSERT(false);
-    case Mappings::None:        s = ON_DECAL_MAPPING_NONE;        break;
-    case Mappings::Planar:      s = ON_DECAL_MAPPING_PLANAR;      break;
-    case Mappings::Spherical:   s = ON_DECAL_MAPPING_SPHERICAL;   break;
-    case Mappings::Cylindrical: s = ON_DECAL_MAPPING_CYLINDRICAL; break;
-    case Mappings::UV:          s = ON_DECAL_MAPPING_UV;          break;
+    case Mappings::None:        s = ON_RDK_DECAL_MAPPING_NONE;        break;
+    case Mappings::Planar:      s = ON_RDK_DECAL_MAPPING_PLANAR;      break;
+    case Mappings::Spherical:   s = ON_RDK_DECAL_MAPPING_SPHERICAL;   break;
+    case Mappings::Cylindrical: s = ON_RDK_DECAL_MAPPING_CYLINDRICAL; break;
+    case Mappings::UV:          s = ON_RDK_DECAL_MAPPING_UV;          break;
     }
 
-    SetParameter(ON_DECAL_MAPPING, s);
+    SetParameter(ON_RDK_DECAL_MAPPING, s);
   }
 }
 
@@ -216,11 +175,11 @@ ON_Decal::Projections ON_Decal::CImpl::Projection(void) const
 {
   if (Projections::None == _cache.projection)
   {
-    const ON_wString s = GetParameter(ON_DECAL_PROJECTION, ON_DECAL_PROJECTION_NONE).AsString();
-         if (s == ON_DECAL_PROJECTION_FORWARD)  _cache.projection = ON_Decal::Projections::Forward;
-    else if (s == ON_DECAL_PROJECTION_BACKWARD) _cache.projection = ON_Decal::Projections::Backward;
-    else if (s == ON_DECAL_PROJECTION_BOTH)     _cache.projection = ON_Decal::Projections::Both;
-    else if (s == ON_DECAL_PROJECTION_NONE)     _cache.projection = ON_Decal::Projections::None;
+    const ON_wString s = GetParameter(ON_RDK_DECAL_PROJECTION, ON_RDK_DECAL_PROJECTION_NONE).AsString();
+         if (s == ON_RDK_DECAL_PROJECTION_FORWARD)  _cache.projection = ON_Decal::Projections::Forward;
+    else if (s == ON_RDK_DECAL_PROJECTION_BACKWARD) _cache.projection = ON_Decal::Projections::Backward;
+    else if (s == ON_RDK_DECAL_PROJECTION_BOTH)     _cache.projection = ON_Decal::Projections::Both;
+    else if (s == ON_RDK_DECAL_PROJECTION_NONE)     _cache.projection = ON_Decal::Projections::None;
     else ON_ASSERT(false);
   }
 
@@ -237,13 +196,13 @@ void ON_Decal::CImpl::SetProjection(Projections v)
     switch (v)
     {
     default: ON_ASSERT(false);
-    case ON_Decal::Projections::None:     s = ON_DECAL_PROJECTION_NONE;     break;
-    case ON_Decal::Projections::Forward:  s = ON_DECAL_PROJECTION_FORWARD;  break;
-    case ON_Decal::Projections::Backward: s = ON_DECAL_PROJECTION_BACKWARD; break;
-    case ON_Decal::Projections::Both:     s = ON_DECAL_PROJECTION_BOTH;     break;
+    case ON_Decal::Projections::None:     s = ON_RDK_DECAL_PROJECTION_NONE;     break;
+    case ON_Decal::Projections::Forward:  s = ON_RDK_DECAL_PROJECTION_FORWARD;  break;
+    case ON_Decal::Projections::Backward: s = ON_RDK_DECAL_PROJECTION_BACKWARD; break;
+    case ON_Decal::Projections::Both:     s = ON_RDK_DECAL_PROJECTION_BOTH;     break;
     }
 
-    SetParameter(ON_DECAL_PROJECTION, s);
+    SetParameter(ON_RDK_DECAL_PROJECTION, s);
   }
 }
 
@@ -251,7 +210,7 @@ bool ON_Decal::CImpl::MapToInside(void) const
 {
   if (unset_bool == _cache.map_to_inside)
   {
-    _cache.map_to_inside = GetParameter(ON_DECAL_MAP_TO_INSIDE_ON, false).AsBool() ? 1 : 0;
+    _cache.map_to_inside = GetParameter(ON_RDK_DECAL_MAP_TO_INSIDE_ON, false).AsBool() ? 1 : 0;
   }
 
   return 0 != _cache.map_to_inside;
@@ -263,7 +222,7 @@ void ON_Decal::CImpl::SetMapToInside(bool b)
   if (_cache.map_to_inside != i)
   {
     _cache.map_to_inside = i;
-    SetParameter(ON_DECAL_MAP_TO_INSIDE_ON, b);
+    SetParameter(ON_RDK_DECAL_MAP_TO_INSIDE_ON, b);
   }
 }
 
@@ -271,7 +230,7 @@ double ON_Decal::CImpl::Transparency(void) const
 {
   if (ON_UNSET_VALUE == _cache.transparency)
   {
-    _cache.transparency = GetParameter(ON_DECAL_TRANSPARENCY, 0.0).AsDouble();
+    _cache.transparency = GetParameter(ON_RDK_DECAL_TRANSPARENCY, 0.0).AsDouble();
   }
 
   return _cache.transparency;
@@ -282,7 +241,7 @@ void ON_Decal::CImpl::SetTransparency(double v)
   if (_cache.transparency != v)
   {
     _cache.transparency = v;
-    SetParameter(ON_DECAL_TRANSPARENCY, v);
+    SetParameter(ON_RDK_DECAL_TRANSPARENCY, v);
   }
 }
 
@@ -290,7 +249,7 @@ ON_3dPoint ON_Decal::CImpl::Origin(void) const
 {
   if (ON_3dPoint::UnsetPoint == _cache.origin)
   {
-    _cache.origin = GetParameter(ON_DECAL_ORIGIN, ON_3dPoint::Origin).As3dPoint();
+    _cache.origin = GetParameter(ON_RDK_DECAL_ORIGIN, ON_3dPoint::Origin).As3dPoint();
   }
 
   return _cache.origin;
@@ -301,7 +260,7 @@ void ON_Decal::CImpl::SetOrigin(const ON_3dPoint& pt)
   if (_cache.origin != pt)
   {
     _cache.origin = pt;
-    SetParameter(ON_DECAL_ORIGIN, pt);
+    SetParameter(ON_RDK_DECAL_ORIGIN, pt);
   }
 }
 
@@ -309,7 +268,7 @@ ON_3dVector ON_Decal::CImpl::VectorUp(void) const
 {
   if (ON_3dVector::UnsetVector == _cache.vector_up)
   {
-     _cache.vector_up = GetParameter(ON_DECAL_VECTOR_UP, ON_3dPoint::Origin).As3dPoint();
+     _cache.vector_up = GetParameter(ON_RDK_DECAL_VECTOR_UP, ON_3dPoint::Origin).As3dPoint();
   }
 
   return _cache.vector_up;
@@ -320,7 +279,7 @@ void ON_Decal::CImpl::SetVectorUp(const ON_3dVector& v)
   if (_cache.vector_up != v)
   {
     _cache.vector_up = v;
-    SetParameter(ON_DECAL_VECTOR_UP, ON_3dPoint(v));
+    SetParameter(ON_RDK_DECAL_VECTOR_UP, ON_3dPoint(v));
   }
 }
 
@@ -328,7 +287,7 @@ ON_3dVector ON_Decal::CImpl::VectorAcross(void) const
 {
   if (ON_3dVector::UnsetVector == _cache.vector_across)
   {
-     _cache.vector_across = GetParameter(ON_DECAL_VECTOR_ACROSS, ON_3dPoint::Origin).As3dPoint();
+     _cache.vector_across = GetParameter(ON_RDK_DECAL_VECTOR_ACROSS, ON_3dPoint::Origin).As3dPoint();
   }
 
   return _cache.vector_across;
@@ -339,7 +298,7 @@ void ON_Decal::CImpl::SetVectorAcross(const ON_3dVector& v)
   if (_cache.vector_across != v)
   {
     _cache.vector_across = v;
-    SetParameter(ON_DECAL_VECTOR_ACROSS, ON_3dPoint(v));
+    SetParameter(ON_RDK_DECAL_VECTOR_ACROSS, ON_3dPoint(v));
   }
 }
 
@@ -347,7 +306,7 @@ double ON_Decal::CImpl::Height(void) const
 {
   if (ON_UNSET_VALUE == _cache.height)
   {
-    _cache.height = GetParameter(ON_DECAL_HEIGHT, 1.0).AsDouble();
+    _cache.height = GetParameter(ON_RDK_DECAL_HEIGHT, 1.0).AsDouble();
   }
 
   return _cache.height;
@@ -358,7 +317,7 @@ void ON_Decal::CImpl::SetHeight(double v)
   if (_cache.height != v)
   {
     _cache.height = v;
-    SetParameter(ON_DECAL_HEIGHT, v);
+    SetParameter(ON_RDK_DECAL_HEIGHT, v);
   }
 }
 
@@ -366,7 +325,7 @@ double ON_Decal::CImpl::Radius(void) const
 {
   if (ON_UNSET_VALUE == _cache.radius)
   {
-    _cache.radius = GetParameter(ON_DECAL_RADIUS, 1.0).AsDouble();
+    _cache.radius = GetParameter(ON_RDK_DECAL_RADIUS, 1.0).AsDouble();
   }
 
   return _cache.radius;
@@ -377,7 +336,7 @@ void ON_Decal::CImpl::SetRadius(double v)
   if (_cache.radius != v)
   {
     _cache.radius = v;
-    SetParameter(ON_DECAL_RADIUS, v);
+    SetParameter(ON_RDK_DECAL_RADIUS, v);
   }
 }
 
@@ -385,7 +344,7 @@ bool ON_Decal::CImpl::IsVisible(void) const
 {
   if (unset_bool == _cache.visible)
   {
-    _cache.visible = GetParameter(ON_DECAL_IS_VISIBLE, true).AsBool();
+    _cache.visible = GetParameter(ON_RDK_DECAL_IS_VISIBLE, true).AsBool();
   }
 
   return 0 != _cache.visible;
@@ -397,7 +356,7 @@ void ON_Decal::CImpl::SetIsVisible(bool b)
   if (_cache.visible != i)
   {
     _cache.visible = i;
-    SetParameter(ON_DECAL_IS_VISIBLE, b);
+    SetParameter(ON_RDK_DECAL_IS_VISIBLE, b);
   }
 }
 
@@ -405,8 +364,8 @@ void ON_Decal::CImpl::GetHorzSweep(double& sta, double& end) const
 {
   if (ON_2dPoint::UnsetPoint == _cache.horz_sweep)
   {
-    _cache.horz_sweep.x = GetParameter(ON_DECAL_HORZ_SWEEP_STA, 0.0).AsDouble();
-    _cache.horz_sweep.y = GetParameter(ON_DECAL_HORZ_SWEEP_END, 0.0).AsDouble();
+    _cache.horz_sweep.x = GetParameter(ON_RDK_DECAL_HORZ_SWEEP_STA, 0.0).AsDouble();
+    _cache.horz_sweep.y = GetParameter(ON_RDK_DECAL_HORZ_SWEEP_END, 0.0).AsDouble();
   }
 
   sta = _cache.horz_sweep.x;
@@ -419,8 +378,8 @@ void ON_Decal::CImpl::SetHorzSweep(double sta, double end)
   if (_cache.horz_sweep != sweep)
   {
     _cache.horz_sweep = sweep;
-    SetParameter(ON_DECAL_HORZ_SWEEP_STA, sta);
-    SetParameter(ON_DECAL_HORZ_SWEEP_END, end);
+    SetParameter(ON_RDK_DECAL_HORZ_SWEEP_STA, sta);
+    SetParameter(ON_RDK_DECAL_HORZ_SWEEP_END, end);
   }
 }
 
@@ -428,8 +387,8 @@ void ON_Decal::CImpl::GetVertSweep(double& sta, double& end) const
 {
   if (ON_2dPoint::UnsetPoint == _cache.vert_sweep)
   {
-    _cache.vert_sweep.x = GetParameter(ON_DECAL_VERT_SWEEP_STA, 0.0).AsDouble();
-    _cache.vert_sweep.y = GetParameter(ON_DECAL_VERT_SWEEP_END, 0.0).AsDouble();
+    _cache.vert_sweep.x = GetParameter(ON_RDK_DECAL_VERT_SWEEP_STA, 0.0).AsDouble();
+    _cache.vert_sweep.y = GetParameter(ON_RDK_DECAL_VERT_SWEEP_END, 0.0).AsDouble();
   }
 
   sta = _cache.vert_sweep.x;
@@ -442,8 +401,8 @@ void ON_Decal::CImpl::SetVertSweep(double sta, double end)
   if (_cache.vert_sweep != sweep)
   {
     _cache.vert_sweep = sweep;
-    SetParameter(ON_DECAL_VERT_SWEEP_STA, sta);
-    SetParameter(ON_DECAL_VERT_SWEEP_END, end);
+    SetParameter(ON_RDK_DECAL_VERT_SWEEP_STA, sta);
+    SetParameter(ON_RDK_DECAL_VERT_SWEEP_END, end);
   }
 }
 
@@ -451,10 +410,10 @@ void ON_Decal::CImpl::GetUVBounds(double& min_u, double& min_v, double& max_u, d
 {
   if (UNSET_4D_POINT == _cache.uv_bounds)
   {
-    _cache.uv_bounds.x = GetParameter(ON_DECAL_MIN_U, 0.0).AsDouble();
-    _cache.uv_bounds.y = GetParameter(ON_DECAL_MIN_V, 0.0).AsDouble();
-    _cache.uv_bounds.z = GetParameter(ON_DECAL_MAX_U, 1.0).AsDouble();
-    _cache.uv_bounds.w = GetParameter(ON_DECAL_MAX_V, 1.0).AsDouble();
+    _cache.uv_bounds.x = GetParameter(ON_RDK_DECAL_MIN_U, 0.0).AsDouble();
+    _cache.uv_bounds.y = GetParameter(ON_RDK_DECAL_MIN_V, 0.0).AsDouble();
+    _cache.uv_bounds.z = GetParameter(ON_RDK_DECAL_MAX_U, 1.0).AsDouble();
+    _cache.uv_bounds.w = GetParameter(ON_RDK_DECAL_MAX_V, 1.0).AsDouble();
   }
 
   min_u = _cache.uv_bounds.x;
@@ -469,10 +428,10 @@ void ON_Decal::CImpl::SetUVBounds(double min_u, double min_v, double max_u, doub
   if (_cache.uv_bounds != bounds)
   {
     _cache.uv_bounds = bounds;
-    SetParameter(ON_DECAL_MIN_U, min_u);
-    SetParameter(ON_DECAL_MIN_V, min_v);
-    SetParameter(ON_DECAL_MAX_U, max_u);
-    SetParameter(ON_DECAL_MAX_V, max_v);
+    SetParameter(ON_RDK_DECAL_MIN_U, min_u);
+    SetParameter(ON_RDK_DECAL_MIN_V, min_v);
+    SetParameter(ON_RDK_DECAL_MAX_U, max_u);
+    SetParameter(ON_RDK_DECAL_MAX_V, max_v);
   }
 }
 
@@ -482,9 +441,9 @@ ON_XMLNode* ON_Decal::CImpl::FindCustomNodeForRenderEngine(const ON_UUID& render
   auto it = Node().GetChildIterator();
   while (nullptr != (child_node = it.GetNextChild()))
   {
-    if (child_node->TagName() == ON_DECAL_CUSTOM)
+    if (child_node->TagName() == ON_RDK_DECAL_CUSTOM)
     {
-      const ON_XMLProperty* prop = child_node->GetNamedProperty(ON_DECAL_CUSTOM_RENDERER);
+      const ON_XMLProperty* prop = child_node->GetNamedProperty(ON_RDK_DECAL_CUSTOM_RENDERER);
       if ((nullptr != prop) && (prop->GetValue().AsUuid() == renderEngineId))
         return child_node;
     }
@@ -500,7 +459,7 @@ ON_Decal::ON_Decal()
 
 ON_Decal::ON_Decal(ON_DecalCollection& dc, ON_XMLNode& node)
 {
-  ON_ASSERT(node.TagName() == ON_DECAL);
+  ON_ASSERT(node.TagName() == ON_RDK_DECAL);
 
   _impl = new CImpl(dc, node);
 }
@@ -728,14 +687,14 @@ ON__UINT32 ON_Decal::DataCRC(ON__UINT32 current_remainder) const
 void ON_Decal::GetCustomXML(const ON_UUID& renderEngineId, ON_XMLNode& custom_param_node) const
 {
   custom_param_node.Clear();
-  custom_param_node.SetTagName(ON_DECAL_CUSTOM_PARAMS);
+  custom_param_node.SetTagName(ON_RDK_DECAL_CUSTOM_PARAMS);
 
   // Find the node for 'renderEngineId'.
   const ON_XMLNode* custom_node = _impl->FindCustomNodeForRenderEngine(renderEngineId);
   if (nullptr != custom_node)
   {
     // Get the parameter node and copy it to 'custom_param_node'.
-    const ON_XMLNode* param_node = custom_node->GetNamedChild(ON_DECAL_CUSTOM_PARAMS);
+    const ON_XMLNode* param_node = custom_node->GetNamedChild(ON_RDK_DECAL_CUSTOM_PARAMS);
     if (nullptr != param_node)
     {
       custom_param_node = *param_node;
@@ -745,7 +704,7 @@ void ON_Decal::GetCustomXML(const ON_UUID& renderEngineId, ON_XMLNode& custom_pa
 
 bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& custom_param_node)
 {
-  if (custom_param_node.TagName() != ON_DECAL_CUSTOM_PARAMS)
+  if (custom_param_node.TagName() != ON_RDK_DECAL_CUSTOM_PARAMS)
     return false;
 
   // If there is already a custom node for 'renderEngineId' then delete it.
@@ -760,8 +719,8 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
   }
 
   // Attach the new custom node and set its 'renderer' property to be the render engine id.
-  custom_node = _impl->Node().AttachChildNode(new ON_XMLNode(ON_DECAL_CUSTOM));
-  ON_XMLProperty prop(ON_DECAL_CUSTOM_RENDERER, renderEngineId);
+  custom_node = _impl->Node().AttachChildNode(new ON_XMLNode(ON_RDK_DECAL_CUSTOM));
+  ON_XMLProperty prop(ON_RDK_DECAL_CUSTOM_RENDERER, renderEngineId);
   custom_node->SetProperty(prop);
 
   // Attach a copy of the custom param node to the custom node.
@@ -854,27 +813,27 @@ class ON_DecalNodeReader
 public:
   ON_DecalNodeReader(const ON_XMLNode* p) : m_pNode(p) { }
 
-  ON_XMLVariant Mapping(void) const           { return Value(ON_DECAL_MAPPING, ON_DECAL_MAPPING_NONE); }
-  ON_XMLVariant Projection(void) const        { return Value(ON_DECAL_PROJECTION, ON_DECAL_PROJECTION_NONE); }
-  ON_XMLVariant MapToInside(void) const       { return Value(ON_DECAL_MAP_TO_INSIDE_ON, m_def.MapToInside()); } 
-  ON_XMLVariant Transparency(void) const      { return Value(ON_DECAL_TRANSPARENCY    , m_def.Transparency()); }
-  ON_XMLVariant TextureInstanceId(void) const { return Value(ON_DECAL_TEXTURE_INSTANCE, m_def.TextureInstanceId()); }
-  ON_XMLVariant Height(void) const            { return Value(ON_DECAL_HEIGHT          , m_def.Height()); }
-  ON_XMLVariant Radius(void) const            { return Value(ON_DECAL_RADIUS          , m_def.Radius()); }
-  ON_XMLVariant Origin(void) const            { return Value(ON_DECAL_ORIGIN          , m_def.Origin()); }
-  ON_XMLVariant VectorUp(void) const          { return Value(ON_DECAL_VECTOR_UP       , ON_3dPoint(m_def.VectorUp())); }
-  ON_XMLVariant VectorAcross(void) const      { return Value(ON_DECAL_VECTOR_ACROSS   , ON_3dPoint(m_def.VectorAcross())); }
-  ON_XMLVariant HorzSweepSta(void) const      { return Value(ON_DECAL_HORZ_SWEEP_STA  , DefaultHorzSweepSta()); }
-  ON_XMLVariant HorzSweepEnd(void) const      { return Value(ON_DECAL_HORZ_SWEEP_END  , DefaultHorzSweepEnd()); }
-  ON_XMLVariant VertSweepSta(void) const      { return Value(ON_DECAL_VERT_SWEEP_STA  , DefaultVertSweepSta()); }
-  ON_XMLVariant VertSweepEnd(void) const      { return Value(ON_DECAL_VERT_SWEEP_END  , DefaultVertSweepEnd()); }
-  ON_XMLVariant MinU(void) const              { return Value(ON_DECAL_MIN_U           , DefaultMinU()); }
-  ON_XMLVariant MinV(void) const              { return Value(ON_DECAL_MIN_V           , DefaultMinV()); }
-  ON_XMLVariant MaxU(void) const              { return Value(ON_DECAL_MAX_U           , DefaultMaxU()); }
-  ON_XMLVariant MaxV(void) const              { return Value(ON_DECAL_MAX_V           , DefaultMaxV()); }
-  ON_XMLVariant IsTemporary(void) const       { return Value(ON_DECAL_IS_TEMPORARY    , false); }
-  ON_XMLVariant IsVisible(void) const         { return Value(ON_DECAL_IS_VISIBLE      , m_def.IsVisible()); }
-  ON_XMLVariant InstanceId(void) const        { return Value(ON_DECAL_INSTANCE_ID     , m_def.Id()); }
+  ON_XMLVariant Mapping(void) const           { return Value(ON_RDK_DECAL_MAPPING, ON_RDK_DECAL_MAPPING_NONE); }
+  ON_XMLVariant Projection(void) const        { return Value(ON_RDK_DECAL_PROJECTION, ON_RDK_DECAL_PROJECTION_NONE); }
+  ON_XMLVariant MapToInside(void) const       { return Value(ON_RDK_DECAL_MAP_TO_INSIDE_ON, m_def.MapToInside()); } 
+  ON_XMLVariant Transparency(void) const      { return Value(ON_RDK_DECAL_TRANSPARENCY    , m_def.Transparency()); }
+  ON_XMLVariant TextureInstanceId(void) const { return Value(ON_RDK_DECAL_TEXTURE_INSTANCE, m_def.TextureInstanceId()); }
+  ON_XMLVariant Height(void) const            { return Value(ON_RDK_DECAL_HEIGHT          , m_def.Height()); }
+  ON_XMLVariant Radius(void) const            { return Value(ON_RDK_DECAL_RADIUS          , m_def.Radius()); }
+  ON_XMLVariant Origin(void) const            { return Value(ON_RDK_DECAL_ORIGIN          , m_def.Origin()); }
+  ON_XMLVariant VectorUp(void) const          { return Value(ON_RDK_DECAL_VECTOR_UP       , ON_3dPoint(m_def.VectorUp())); }
+  ON_XMLVariant VectorAcross(void) const      { return Value(ON_RDK_DECAL_VECTOR_ACROSS   , ON_3dPoint(m_def.VectorAcross())); }
+  ON_XMLVariant HorzSweepSta(void) const      { return Value(ON_RDK_DECAL_HORZ_SWEEP_STA  , DefaultHorzSweepSta()); }
+  ON_XMLVariant HorzSweepEnd(void) const      { return Value(ON_RDK_DECAL_HORZ_SWEEP_END  , DefaultHorzSweepEnd()); }
+  ON_XMLVariant VertSweepSta(void) const      { return Value(ON_RDK_DECAL_VERT_SWEEP_STA  , DefaultVertSweepSta()); }
+  ON_XMLVariant VertSweepEnd(void) const      { return Value(ON_RDK_DECAL_VERT_SWEEP_END  , DefaultVertSweepEnd()); }
+  ON_XMLVariant MinU(void) const              { return Value(ON_RDK_DECAL_MIN_U           , DefaultMinU()); }
+  ON_XMLVariant MinV(void) const              { return Value(ON_RDK_DECAL_MIN_V           , DefaultMinV()); }
+  ON_XMLVariant MaxU(void) const              { return Value(ON_RDK_DECAL_MAX_U           , DefaultMaxU()); }
+  ON_XMLVariant MaxV(void) const              { return Value(ON_RDK_DECAL_MAX_V           , DefaultMaxV()); }
+  ON_XMLVariant IsTemporary(void) const       { return Value(ON_RDK_DECAL_IS_TEMPORARY    , false); }
+  ON_XMLVariant IsVisible(void) const         { return Value(ON_RDK_DECAL_IS_VISIBLE      , m_def.IsVisible()); }
+  ON_XMLVariant InstanceId(void) const        { return Value(ON_RDK_DECAL_INSTANCE_ID     , m_def.Id()); }
 
 private:
   ON_XMLVariant Value(const wchar_t* wszName, const ON_XMLVariant& vDefault) const;
@@ -966,10 +925,10 @@ ON__UINT32 ON_Decal::ComputeDecalCRC(ON__UINT32 crc, const ON_XMLNode& node) // 
   ON_XMLNode* pChildNode = nullptr;
   while (nullptr != (pChildNode = it.GetNextChild()))
   {
-    if (pChildNode->TagName() != ON_DECAL_CUSTOM)
+    if (pChildNode->TagName() != ON_RDK_DECAL_CUSTOM)
       continue; // Not a custom data node.
 
-    ON_XMLProperty* prop = pChildNode->GetNamedProperty(ON_DECAL_CUSTOM_RENDERER);
+    ON_XMLProperty* prop = pChildNode->GetNamedProperty(ON_RDK_DECAL_CUSTOM_RENDERER);
     if (nullptr != prop)
     {
       // Include the render engine id.
@@ -978,7 +937,7 @@ ON__UINT32 ON_Decal::ComputeDecalCRC(ON__UINT32 crc, const ON_XMLNode& node) // 
     }
 
     // Find the custom parameter node.
-    const ON_XMLNode* pParamNode = pChildNode->GetNamedChild(ON_DECAL_CUSTOM_PARAMS);
+    const ON_XMLNode* pParamNode = pChildNode->GetNamedChild(ON_RDK_DECAL_CUSTOM_PARAMS);
     if (nullptr != pParamNode)
     {
       // Iterate over the nodes inside the custom parameter node.
@@ -1088,7 +1047,7 @@ void ON_DecalCollection::Populate(void) const
 
   if (GetEntireDecalXML(*m_attr, m_root_node))
   {
-    const wchar_t* path = ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_DECALS;
+    const wchar_t* path = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS;
     ON_XMLNode* decals_node = m_root_node.GetNodeAtPath(path);
     if (nullptr != decals_node)
     {
@@ -1119,11 +1078,11 @@ ON_Decal* ON_DecalCollection::AddDecal(void)
 
   ON_Decal* decal = nullptr;
 
-  ON_XMLNode* decals_node = m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_RDK_SLASH  ON_DECALS);
+  ON_XMLNode* decals_node = m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS);
   if (nullptr != decals_node)
   {
     // Add an XML node for the new decal.
-    auto* decal_node = new ON_XMLNode(ON_DECAL);
+    auto* decal_node = new ON_XMLNode(ON_RDK_DECAL);
     decals_node->AttachChildNode(decal_node);
 
     // Add the new decal. It stores a pointer to the new XML node. This is safe because

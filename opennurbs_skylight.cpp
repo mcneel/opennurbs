@@ -31,7 +31,7 @@ public:
 
 static const wchar_t* XMLPath(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_SUN;
 }
 
 ON_Skylight::ON_Skylight()
@@ -125,6 +125,6 @@ void ON_Skylight::SetEnvironmentId(const ON_UUID& id)
   m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, id);
 }
 
-void ON_Skylight::InvalidateCache(void)
+void ON_Skylight::OnInternalXmlChanged(const ON_Skylight*)
 {
 }

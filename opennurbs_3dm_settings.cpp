@@ -831,17 +831,17 @@ unsigned int ON_3dmUnitsAndTolerances::SetInvalidTolerancesToDefaultValues()
 
 static const wchar_t* XMLPathBack360(void) // Not used for 'override'.
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_CURRENT_CONTENT;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_CURRENT_CONTENT;
 }
 
 static const wchar_t* XMLPathReflRefr(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_RENDERING;
 }
 
 static const wchar_t* XMLPathSkylight(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_SUN;
 }
 
 ON_EnvironmentsImpl::ON_EnvironmentsImpl(const ON_EnvironmentsImpl& ei)
@@ -937,7 +937,7 @@ ON_DECL ON__UINT_PTR ON_GetDocumentObjectSpecializer(const ON_3dmRenderSettings&
 }
 
 ON_DECL void ON_SpecializeDocumentObjects(ON__UINT_PTR specializer,
-             ON_GroundPlane& gp, ON_LinearWorkflow& lw, ON_SunEx& sun)
+             ON_GroundPlane& gp, ON_LinearWorkflow& lw, ON_Sun& sun)
 {
   auto* priv = reinterpret_cast<ON_3dmRenderSettingsPrivate*>(specializer);
   ON_ASSERT(nullptr != priv);
@@ -986,20 +986,22 @@ const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (cons
     // Copy the entire document XML.
     _rdk_document_data = p._rdk_document_data;
 
-    // Invalidate any document object caches. The pointers to these objects are never null because
-    // they are created in every constructor. See CreateDocumentObjects().
+    // Notify the document objects that the XML has changed. Some of these objects maintain caches and
+    // other data structures that must be kept in synch with the XML. This gives them a chance to update
+    // any such information. Note that the pointers to these objects are never null because they are
+    // created in every constructor. See CreateDocumentObjects().
     // It's critical that the document objects do not get deleted or recreated here because there can be
     // clients storing temporary pointers to them around this call. What's more, this function can never
     // change the class of the document objects. For example, if the ground plane is a specialized one,
     // it will always be the _same_ specialized one. They never get deleted during the lifetime of this.
-    _ground_plane   ->InvalidateCache();
-    _dithering      ->InvalidateCache();
-    _safe_frame     ->InvalidateCache();
-    _skylight       ->InvalidateCache();
-    _linear_workflow->InvalidateCache();
-    _render_channels->InvalidateCache();
-    _sun            ->InvalidateCache();
-    _post_effects   ->InvalidateCache();
+    _ground_plane   ->OnInternalXmlChanged(p._ground_plane   );
+    _dithering      ->OnInternalXmlChanged(p._dithering      );
+    _safe_frame     ->OnInternalXmlChanged(p._safe_frame     );
+    _skylight       ->OnInternalXmlChanged(p._skylight       );
+    _linear_workflow->OnInternalXmlChanged(p._linear_workflow);
+    _render_channels->OnInternalXmlChanged(p._render_channels);
+    _sun            ->OnInternalXmlChanged(p._sun            );
+    _post_effects   ->OnInternalXmlChanged(p._post_effects   );
 
     // Check that all the document objects now have matching properties.
     ON_ASSERT(*_ground_plane    == *p._ground_plane);
@@ -1034,7 +1036,7 @@ void ON_3dmRenderSettingsPrivate::CreateDocumentObjects(void)
   _skylight        = new ON_Skylight        (_rdk_document_data);
   _linear_workflow = new ON_LinearWorkflow  (_rdk_document_data);
   _render_channels = new ON_RenderChannels  (_rdk_document_data);
-  _sun             = new ON_SunEx           (_rdk_document_data);
+  _sun             = new ON_Sun             (_rdk_document_data);
   _environments    = new ON_EnvironmentsImpl(_rdk_document_data);
   _post_effects    = new ON_PostEffects     (_rdk_document_data);
 }
@@ -1169,7 +1171,7 @@ void ON_3dmRenderSettingsPrivate::SpecializeLinearWorkflow(ON_LinearWorkflow& lw
   _lw_specialized = true;
 }
 
-void ON_3dmRenderSettingsPrivate::SpecializeSun(ON_SunEx& sun)
+void ON_3dmRenderSettingsPrivate::SpecializeSun(ON_Sun& sun)
 {
   // This is called from ON_SpecializeDocumentObjects() and is only called once during the lifetime of this.
   ON_ASSERT(!_sun_specialized);
@@ -1852,7 +1854,7 @@ extern ON_UUID uuidRenderPreset_Custom;
 extern ON_UUID uuidRenderPreset_Exterior;
 extern ON_UUID uuidRenderPreset_Interior;
 
-static const wchar_t* rendering = ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_RENDERING;
+static const wchar_t* rendering = ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_RENDERING;
 
 ON_UUID ON_3dmRenderSettings::CurrentRenderPreset(void) const
 {
@@ -3109,6 +3111,8 @@ bool ON_StandardDisplayModeId::IsStandardDisplayModeId(
   if ( ON_StandardDisplayModeId::Artistic == id )
     return true;
   if ( ON_StandardDisplayModeId::Pen == id )
+    return true;
+  if (ON_StandardDisplayModeId::Monochrome == id)
     return true;
   if ( ON_StandardDisplayModeId::AmbientOcclusion == id)
     return true;

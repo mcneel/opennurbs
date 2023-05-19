@@ -37,14 +37,14 @@ public:
 
 static const wchar_t* XMLPathBase(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SAFE_FRAME;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_SAFE_FRAME;
 }
 
 static ON_wString XMLPath(const ON_wString& section_name)
 {
   ON_wString s = XMLPathBase();
   ON_ASSERT(section_name.IsNotEmpty());
-  s += ON_RDK_SLASH;
+  s += ON_XML_SLASH;
   s += section_name;
 
   return s;
@@ -262,6 +262,6 @@ void* ON_SafeFrame::EVF(const wchar_t* func, void* data)
   return nullptr;
 }
 
-void ON_SafeFrame::InvalidateCache(void)
+void ON_SafeFrame::OnInternalXmlChanged(const ON_SafeFrame*)
 {
 }

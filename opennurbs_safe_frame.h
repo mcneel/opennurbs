@@ -108,7 +108,7 @@ public:
 
 private: // For internal use only.
   friend class ON_3dmRenderSettingsPrivate;
-  virtual void InvalidateCache(void);
+  virtual void OnInternalXmlChanged(const ON_SafeFrame*);
 
 private:
   class CImpl;

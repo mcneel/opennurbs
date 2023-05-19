@@ -101,10 +101,12 @@ public:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
+  // For internal use only.
+  virtual void OnInternalXmlChanged(const ON_GroundPlane*);
+
 private: // For internal use only.
   friend class ON_3dmRenderSettingsPrivate;
   void SetXMLNode(ON_XMLNode& node) const;
-  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

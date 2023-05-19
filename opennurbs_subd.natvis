@@ -89,4 +89,28 @@
     </Expand>
   </Type>
 
+  <Type Name="ON_SubDMeshFragment">
+    <!--
+    ON_SubDMeshFragment has a few bits of information hidden in
+    m_vertex_count_etc and m_vertex_capacity_etc:
+    [Vertex count]: m_vertex_count_etc & 0x1FFF
+    [Vertex capacity]: m_vertex_capacity_etc & 0x1FFF
+    [Has control net]: m_vertex_count_etc & 0x8000
+    [Has texture coordinates]: m_vertex_count_etc & 0x4000
+    [Has colors]: m_vertex_capacity_etc & 0x2000
+    [Has curvatures]: m_vertex_capacity_etc & 0x4000
+    [Internally managed]: m_vertex_capacity_etc & 0x8000
+    -->
+    <DisplayString>{{fragment {m_face_fragment_index+1}/{m_face_fragment_count} (face id={m_face&gt;8?m_face->m_id:0})}}}</DisplayString>
+    <Expand>
+      <Item Name="[Vertex count]">(short int)(m_vertex_count_etc&amp;0x1FFF)</Item>
+      <Item Name="[Vertex capacity]">(short int)(m_vertex_capacity_etc&amp;0x1FFF)</Item>
+      <Item Name="[Has control net]">(bool)(m_vertex_count_etc&amp;0x8000)</Item>
+      <Item Name="[Has texture coordinates]">(bool)(m_vertex_count_etc&amp;0x4000)</Item>
+      <Item Name="[Has colors]">(bool)(m_vertex_capacity_etc&amp;0x2000)</Item>
+      <Item Name="[Has curvatures]">(bool)(m_vertex_capacity_etc&amp;0x4000)</Item>
+      <Item Name="[Internally managed]">(bool)(m_vertex_capacity_etc&amp;0x8000)</Item>
+    </Expand>
+  </Type>
+
 </AutoVisualizer>

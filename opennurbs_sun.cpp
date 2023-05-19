@@ -22,24 +22,10 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-#define ON_RDK_SUN_ENABLE_ALLOWED              L"enable-allowed"
-#define ON_RDK_SUN_ENABLE_ON                   L"enable-on"
-#define ON_RDK_SUN_MANUAL_CONTROL_ALLOWED      L"manual-control-allowed"
-#define ON_RDK_SUN_MANUAL_CONTROL_ON           L"manual-control-on"
-#define ON_RDK_SUN_NORTH                       L"north"
-#define ON_RDK_SUN_AZIMUTH                     L"sun-azimuth"
-#define ON_RDK_SUN_ALTITUDE                    L"sun-altitude"
-#define ON_RDK_SUN_DATE_YEAR                   L"year"
-#define ON_RDK_SUN_DATE_MONTH                  L"month"
-#define ON_RDK_SUN_DATE_DAY                    L"day"
-#define ON_RDK_SUN_TIME_HOURS                  L"time"
-#define ON_RDK_SUN_DAYLIGHT_SAVING_ON          L"daylight-saving-on"
-#define ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES     L"daylight-saving-minutes"
-#define ON_RDK_SUN_OBSERVER_LATITUDE           L"observer-latitude"
-#define ON_RDK_SUN_OBSERVER_LONGITUDE          L"observer-longitude"
-#define ON_RDK_SUN_OBSERVER_TIMEZONE           L"observer-timezone"
-#define ON_RDK_SUN_SHADOW_INTENSITY            L"shadow-intensity"
-#define ON_RDK_SUN_INTENSITY                   L"intensity"
+static const wchar_t* XMLPath_Sun(void)
+{
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_SUN;
+}
 
 static double Sin(double deg) { return sin(ON_RadiansFromDegrees(deg)); }
 static double Cos(double deg) { return cos(ON_RadiansFromDegrees(deg)); }
@@ -131,6 +117,59 @@ inline static double Unwind(double dDegrees)
     dDegrees += 360.0;
 
   return dDegrees;
+}
+
+static bool IsVectorEqual(const ON_3dVector& v1, const ON_3dVector& v2)
+{
+  return IsDoubleEqual(v1.x, v2.x) && IsDoubleEqual(v1.y, v2.y) && IsDoubleEqual(v1.z, v2.z);
+}
+
+static ON_3dVector PerpendicularVectorOnXYPlane(const ON_3dVector& vec)
+{
+  return ON_2dVector(vec.x, vec.y).IsTiny() ? ON_3dVector(vec.z, 0.0, -vec.x) : ON_3dVector(-vec.y, vec.x, 0.0);
+}
+
+static double AngleFromVectors(const ON_3dVector& v1, const ON_3dVector& v2, ON_3dVector normal)
+{
+  if (IsVectorEqual(v1, v2))
+    return 0.0;
+
+  normal.Unitize();
+
+  const double numerator = v1 * v2;
+  const double denominator = v1.Length() * v2.Length();
+
+  auto cross = ON_CrossProduct(v1, v2);
+  cross.Unitize();
+
+  if (IsVectorEqual(cross, ON_3dVector::ZeroVector))
+  {
+    if (IsDoubleEqual(numerator, +1.0))
+      return 0.0;
+
+    if (IsDoubleEqual(numerator, -1.0))
+      return ON_PI;
+  }
+
+  double division = numerator / denominator;
+
+  if (division > 1.0)
+      division = 1.0;
+  else
+  if (division < -1.0)
+      division = -1.0;
+
+  if (IsDoubleEqual(division, -1.0))
+    return ON_PI;
+
+  double angle = acos(division);
+
+  // Check if cross is parallel or anti-parallel to normal vector. If anti-parallel then angle = 360 - angle.
+  const double dot = cross * normal;
+  if (IsDoubleEqual(dot, -1.0))
+    angle = (ON_PI * 2.0) - angle;
+
+  return angle;
 }
 
 // Reference: Jean Meeus - 'Astronomical Algorithms', second edition.
@@ -516,16 +555,386 @@ class ON_Sun::CImpl : public ON_InternalXMLImpl
 public:
   CImpl() { }
   CImpl(ON_XMLNode& n) : ON_InternalXMLImpl(&n) { }
+
+  bool EnableAllowed(void) const;
+  void SetEnableAllowed(bool allowed);
+  bool EnableOn(void) const;
+  void SetEnableOn(bool on);
+  bool ManualControlAllowed(void) const;
+  void SetManualControlAllowed(bool allowed);
+  bool ManualControlOn(void) const;
+  void SetManualControlOn(bool manual);
+  double Azimuth(void) const;
+  void SetAzimuth(double azi);
+  double Altitude(void) const;
+  void SetAltitude(double alt);
+  double TimeZone(void) const;
+  void SetTimeZone(double hours);
+  double North(void) const;
+  void SetNorth(double);
+  double Latitude(void) const;
+  void SetLatitude(double);
+  double Longitude(void) const;
+  void SetLongitude(double);
+  bool DaylightSavingOn(void) const;
+  void SetDaylightSavingOn(bool on);
+  int DaylightSavingMinutes(void) const;
+  void SetDaylightSavingMinutes(int minutes);
+  void LocalDateTime(int& year, int& month, int& day, double& hours) const;
+  bool SetLocalDateTime(int year, int month, int day, double hours);
+  double Intensity(void) const;
+  void SetIntensity(double d);
+  double ShadowIntensity(void) const;
+  void SetShadowIntensity(double d);
+  bool IsUsingManualControl(void) const { return ManualControlAllowed() && ManualControlOn(); }
+
+private:
+  void UpdateAziAlt(void) const;
+  void GetEarthAnchorPlane(ON_3dVector& anchor_north, ON_Plane& plane) const;
+
+public:
+  mutable double _azimuth = 0.0;
+  mutable double _altitude = 0.0;
+  mutable bool _calc_dirty = true;
+  ON_EarthAnchorPoint* _earth_anchor_point = nullptr;
+  ON_SunEngine::Accuracy _accuracy = ON_SunEngine::Accuracy::Minimum;
 };
 
-static const wchar_t* XMLPath_Sun(void)
+void ON_Sun::CImpl::GetEarthAnchorPlane(ON_3dVector& anchor_north, ON_Plane& plane) const
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_SUN;
+  ON_3dVector anchor_east = _earth_anchor_point->ModelEast();
+
+  anchor_north = _earth_anchor_point->ModelNorth();
+
+  // Keeps original vector length if feasible.
+  double east_len =  anchor_east .LengthAndUnitize();
+  double north_len = anchor_north.LengthAndUnitize();
+
+  // Compute normal of the plane P that contains m_model_east & m_model_north.
+  plane.zaxis = ON_CrossProduct(anchor_east, anchor_north);
+
+  if (plane.zaxis.IsTiny())
+  {
+    // Recompute a valid North and East vector.
+    if (!anchor_north.IsTiny())
+    {
+      // North and east are equal or east is tiny.
+      anchor_east = -PerpendicularVectorOnXYPlane(anchor_north);
+      east_len = north_len;
+    }
+    else
+    {
+      if (!anchor_east.IsTiny())
+      {
+        // North and east are equal or north is tiny.
+        anchor_north = PerpendicularVectorOnXYPlane(anchor_east);
+        north_len = east_len;
+      }
+      else
+      {
+        // Both are identity.
+        east_len = north_len = 1.0;
+        anchor_east  = ON_3dVector::XAxis;
+        anchor_north = ON_3dVector::YAxis;
+      }
+    }
+
+    plane.zaxis = ON_CrossProduct(anchor_east, anchor_north);
+  }
+
+  plane.xaxis = PerpendicularVectorOnXYPlane(plane.zaxis);
+  plane.yaxis = ON_CrossProduct(plane.zaxis, plane.xaxis);
+
+  // Restores original vector length if were valid.
+  plane.xaxis *= east_len;
+  plane.yaxis *= north_len;
+  plane.zaxis *= east_len * north_len;
+
+  plane.origin = _earth_anchor_point->ModelPoint();
+  plane.UpdateEquation();
+}
+
+void ON_Sun::CImpl::UpdateAziAlt(void) const
+{
+  if (_calc_dirty)
+  {
+    ON_SunEngine engine(_accuracy);
+    engine.SetLatitude (Latitude());
+    engine.SetLongitude(Longitude());
+    engine.SetTimeZoneHours(TimeZone());
+
+    const int dsm = DaylightSavingOn() ? DaylightSavingMinutes() : 0;
+    engine.SetDaylightSavingMinutes(dsm);
+
+    int y = 0, m = 0, d = 0; double h = 0.0;
+    LocalDateTime(y, m, d, h);
+    engine.SetLocalDateTime(y, m, d, h);
+
+    _azimuth  = engine.Azimuth();
+    _altitude = engine.Altitude();
+
+    _calc_dirty = false;
+  }
+}
+
+bool ON_Sun::CImpl::EnableAllowed(void)
+        const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, false); }
+
+void ON_Sun::CImpl::SetEnableAllowed(bool allowed)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, allowed);
+}
+
+bool ON_Sun::CImpl::EnableOn(void)
+             const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, false); }
+
+void ON_Sun::CImpl::SetEnableOn(bool on)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, on);
+}
+
+bool ON_Sun::CImpl::ManualControlAllowed(void) const
+ { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, false); }
+
+void ON_Sun::CImpl::SetManualControlAllowed(bool allowed)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, allowed);
+}
+
+bool ON_Sun::CImpl::ManualControlOn(void)   
+   const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, false); }
+
+void ON_Sun::CImpl::SetManualControlOn(bool manual)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, manual);
+}
+
+double ON_Sun::CImpl::Azimuth(void) const
+{
+  if (IsUsingManualControl())
+    return GetParameter(XMLPath_Sun(), ON_RDK_SUN_AZIMUTH, 0.0).AsDouble();
+
+  UpdateAziAlt();
+
+  return _azimuth;
+}
+
+void ON_Sun::CImpl::SetAzimuth(double azimuth)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_AZIMUTH, azimuth);
+}
+
+double ON_Sun::CImpl::Altitude(void) const
+{
+  if (IsUsingManualControl())
+    return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ALTITUDE, 0.0).AsDouble();
+
+  UpdateAziAlt();
+
+  return _altitude;
+}
+
+void ON_Sun::CImpl::SetAltitude(double altitude)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_ALTITUDE, altitude);
+}
+
+double ON_Sun::CImpl::TimeZone(void)  
+         const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0); }
+
+void ON_Sun::CImpl::SetTimeZone(double hours)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, hours);
+  _calc_dirty = true;
+}
+
+bool ON_Sun::CImpl::DaylightSavingOn(void)  
+   const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, false); }
+
+void ON_Sun::CImpl::SetDaylightSavingOn(bool on)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, on);
+  _calc_dirty = true;
+}
+
+int ON_Sun::CImpl::DaylightSavingMinutes(void) const 
+{ return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 0); }
+
+void ON_Sun::CImpl::SetDaylightSavingMinutes(int minutes)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, minutes);
+  _calc_dirty = true;
+}
+
+void ON_Sun::CImpl::LocalDateTime(int& year, int& month, int& day, double& hours) const
+{
+  const wchar_t* s = XMLPath_Sun();
+  year  = GetParameter(s, ON_RDK_SUN_DATE_YEAR,  2000);
+  month = GetParameter(s, ON_RDK_SUN_DATE_MONTH, 1);
+  day   = GetParameter(s, ON_RDK_SUN_DATE_DAY,   1);
+  hours = GetParameter(s, ON_RDK_SUN_TIME_HOURS, 0.0);
+}
+
+bool ON_Sun::CImpl::SetLocalDateTime(int year, int month, int day, double hours)
+{
+  year  = std::max(MinYear(), std::min(MaxYear(), year));
+  month = std::max(1, std::min(12, month));
+  day   = std::max(1, std::min(ON_SunEngine::DaysInMonth(month, year), day));
+
+  const wchar_t* s = XMLPath_Sun();
+  SetParameter(s, ON_RDK_SUN_DATE_YEAR,  year);
+  SetParameter(s, ON_RDK_SUN_DATE_MONTH, month);
+  SetParameter(s, ON_RDK_SUN_DATE_DAY,   day);
+  SetParameter(s, ON_RDK_SUN_TIME_HOURS, hours);
+
+  _calc_dirty = true;
+
+  return true;
+}
+
+double ON_Sun::CImpl::Intensity(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_INTENSITY, 1.0);
+}
+
+void ON_Sun::CImpl::SetIntensity(double d)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_INTENSITY, std::max(0.0, d));
+}
+
+double ON_Sun::CImpl::ShadowIntensity(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, 1.0);
+}
+
+void ON_Sun::CImpl::SetShadowIntensity(double d)
+{
+  SetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, std::max(0.0, std::min(1.0, d)));
+}
+
+double ON_Sun::CImpl::North(void) const
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Calculate north angle from earth anchor point.
+    ON_Plane plane;
+    ON_3dVector true_north;
+    GetEarthAnchorPlane(true_north, plane);
+    return ON_DegreesFromRadians(AngleFromVectors(plane.xaxis, true_north, plane.zaxis));
+  }
+
+  // No earth anchor point is set; just return the value in the XML.
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_NORTH, 90.0).AsDouble();
+}
+
+void ON_Sun::CImpl::SetNorth(double north)
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Store the north in the earth anchor point. This is more complicated than just setting one value.
+    ON_Plane plane;
+    ON_3dVector true_north;
+    GetEarthAnchorPlane(true_north, plane);
+
+    // 29 January 2013 - Kike: Don't use ON_Plane::Rotate without origin.
+    // This function doesn't keep the vector length if the axis is the plane's z axis.
+    plane.Rotate(ON_RadiansFromDegrees(north - 90.0), plane.zaxis, plane.origin);
+
+    if (!IsVectorEqual(_earth_anchor_point->ModelEast(),  plane.xaxis) ||
+        !IsVectorEqual(_earth_anchor_point->ModelNorth(), plane.yaxis))
+    {
+      _earth_anchor_point->SetModelEast (plane.xaxis);
+      _earth_anchor_point->SetModelNorth(plane.yaxis);
+    }
+
+    // Make sure this value never appears in the XML. This will clean old documents that were
+    // incorrectly saving this value in the XML as well as the earth anchor point.
+    RemoveParameter(XMLPath_Sun(), ON_RDK_SUN_NORTH);
+  }
+  else
+  {
+    // No earth anchor point is set; store the value in the XML.
+    SetParameter(XMLPath_Sun(), ON_RDK_SUN_NORTH, north);
+  }
+
+  _calc_dirty = true;
+}
+
+double ON_Sun::CImpl::Latitude(void) const
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Retrieve the latitude from the earth anchor point.
+    const double unset_latitude = 0.0;
+    return _earth_anchor_point->Latitude(unset_latitude);
+  }
+
+  // No earth anchor point is set; just return the value in the XML.
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LATITUDE, 0.0).AsDouble();
+}
+
+void ON_Sun::CImpl::SetLatitude(double lat)
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Store the latitude in the earth anchor point.
+    _earth_anchor_point->SetLatitude(lat);
+
+    // Make sure this value never appears in the XML. This will clean old documents that were
+    // incorrectly saving this value in the XML as well as the earth anchor point.
+    RemoveParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LATITUDE);
+  }
+  else
+  {
+    // No earth anchor point is set; store the value in the XML.
+    SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LATITUDE, lat);
+  }
+
+  _calc_dirty = true;
+}
+
+double ON_Sun::CImpl::Longitude(void) const
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Retrieve the longitude from the earth anchor point.
+    const double unset_longitude = 0.0;
+    return _earth_anchor_point->Longitude(unset_longitude);
+  }
+
+  // No earth anchor point is set; just return the value in the XML.
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LONGITUDE, 0.0).AsDouble();
+}
+
+void ON_Sun::CImpl::SetLongitude(double lon)
+{
+  if (nullptr != _earth_anchor_point)
+  {
+    // Store the longitude in the earth anchor point.
+    _earth_anchor_point->SetLongitude(lon);
+
+    // Make sure this value never appears in the XML. This will clean old documents that were
+    // incorrectly saving this value in the XML as well as the earth anchor point.
+    RemoveParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LONGITUDE);
+  }
+  else
+  {
+    // No earth anchor point is set; store the value in the XML.
+    SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LONGITUDE, lon);
+  }
+
+  _calc_dirty = true;
 }
 
 ON_Sun::ON_Sun()
 {
   _impl = new CImpl;
+}
+
+ON_Sun::ON_Sun(ON_EarthAnchorPoint& eap)
+{
+  _impl = new CImpl;
+  _impl->_earth_anchor_point = &eap;
 }
 
 ON_Sun::ON_Sun(ON_XMLNode& model_node)
@@ -560,7 +969,7 @@ const ON_Sun& ON_Sun::operator = (const ON_Sun& sun)
   if (this != &sun)
   {
     // When copying the object, we need to directly copy the underlying XML. So we can't allow
-    // virtual overrides to execute because they might shadow the real values we want to copy.
+    // virtual overrides to execute because they might hide the real values we want to copy.
     ON_Sun::SetEnableOn             (sun.ON_Sun::EnableOn());
     ON_Sun::SetEnableAllowed        (sun.ON_Sun::EnableAllowed());
     ON_Sun::SetEnableOn             (sun.ON_Sun::EnableOn());
@@ -580,6 +989,10 @@ const ON_Sun& ON_Sun::operator = (const ON_Sun& sun)
     int y = 0, m = 0, d = 0; double h = 0.0;
     sun.ON_Sun::LocalDateTime(y, m, d, h);
     ON_Sun::SetLocalDateTime(y, m, d, h);
+
+    _impl->_azimuth    = sun._impl->_azimuth;
+    _impl->_altitude   = sun._impl->_altitude;
+    _impl->_calc_dirty = sun._impl->_calc_dirty;
   }
 
   return *this;
@@ -587,20 +1000,19 @@ const ON_Sun& ON_Sun::operator = (const ON_Sun& sun)
 
 bool ON_Sun::operator == (const ON_Sun& sun) const
 {
-  // When checking equality, we need to directly check the underlying XML. So we can't allow
-  // virtual overrides to execute because they might shadow the real values we want to copy.
-  if (ON_Sun::EnableAllowed()         != sun.ON_Sun::EnableAllowed())         return false;
-  if (ON_Sun::EnableOn()              != sun.ON_Sun::EnableOn())              return false;
-  if (ON_Sun::ManualControlAllowed()  != sun.ON_Sun::ManualControlAllowed())  return false;
-  if (ON_Sun::ManualControlOn()       != sun.ON_Sun::ManualControlOn())       return false;
-  if (ON_Sun::DaylightSavingOn()      != sun.ON_Sun::DaylightSavingOn())      return false;
-  if (ON_Sun::DaylightSavingMinutes() != sun.ON_Sun::DaylightSavingMinutes()) return false;
+  // When checking equality, we need to directly check the underlying storage. So we can't allow
+  // virtual overrides to execute because they might hide the real values we want to copy.
+
+  if (ON_Sun::EnableAllowed()         != sun.ON_Sun::EnableAllowed())           return false;
+  if (ON_Sun::EnableOn()              != sun.ON_Sun::EnableOn())                return false;
+  if (ON_Sun::ManualControlAllowed()  != sun.ON_Sun::ManualControlAllowed())    return false;
+  if (ON_Sun::ManualControlOn()       != sun.ON_Sun::ManualControlOn())         return false;
+  if (ON_Sun::DaylightSavingOn()      != sun.ON_Sun::DaylightSavingOn())        return false;
+  if (ON_Sun::DaylightSavingMinutes() != sun.ON_Sun::DaylightSavingMinutes())   return false;
 
   if (!IsDoubleEqual(ON_Sun::North()          , sun.ON_Sun::North()))           return false;
   if (!IsDoubleEqual(ON_Sun::Latitude()       , sun.ON_Sun::Latitude()))        return false;
   if (!IsDoubleEqual(ON_Sun::Longitude()      , sun.ON_Sun::Longitude()))       return false;
-  if (!IsDoubleEqual(ON_Sun::Azimuth()        , sun.ON_Sun::Azimuth()))         return false;
-  if (!IsDoubleEqual(ON_Sun::Altitude()       , sun.ON_Sun::Altitude()))        return false;
   if (!IsDoubleEqual(ON_Sun::TimeZone()       , sun.ON_Sun::TimeZone()))        return false;
   if (!IsDoubleEqual(ON_Sun::Intensity()      , sun.ON_Sun::Intensity()))       return false;
   if (!IsDoubleEqual(ON_Sun::ShadowIntensity(), sun.ON_Sun::ShadowIntensity())) return false;
@@ -611,9 +1023,15 @@ bool ON_Sun::operator == (const ON_Sun& sun) const
 
   if ((y1 != y2) || (m1 != m2) || (d1 != d2))
     return false;
-  
+
   if (!IsDoubleEqual(h1, h2))
     return false;
+
+  if (_impl->IsUsingManualControl())
+  {
+    if (!IsDoubleEqual(ON_Sun::Azimuth()  , sun.ON_Sun::Azimuth()))  return false;
+    if (!IsDoubleEqual(ON_Sun::Altitude() , sun.ON_Sun::Altitude())) return false;
+  }
 
   return true;
 }
@@ -625,71 +1043,67 @@ bool ON_Sun::operator != (const ON_Sun& sun) const
 
 bool ON_Sun::EnableAllowed(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, false).AsBool();
+  return _impl->EnableAllowed();
 }
 
 bool ON_Sun::EnableOn(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, false).AsBool();
+  return _impl->EnableOn();
 }
 
 bool ON_Sun::ManualControlAllowed(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, false).AsBool();
+  return _impl->ManualControlAllowed();
 }
 
 bool ON_Sun::ManualControlOn(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, false).AsBool();
-}
-
-double ON_Sun::North(void) const
-{
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_NORTH, 90.0).AsDouble();
+  return _impl->ManualControlOn();
 }
 
 double ON_Sun::Azimuth(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_AZIMUTH, 0.0).AsDouble();
+  return _impl->Azimuth();
 }
 
 double ON_Sun::Altitude(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_ALTITUDE, 0.0).AsDouble();
-}
-
-double ON_Sun::Latitude(void) const
-{
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LATITUDE, 0.0).AsDouble();
-}
-
-double ON_Sun::Longitude(void) const
-{
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LONGITUDE, 0.0).AsDouble();
+  return _impl->Altitude();
 }
 
 double ON_Sun::TimeZone(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0).AsDouble();
+  return _impl->TimeZone();
+}
+
+double ON_Sun::North(void) const
+{
+  return _impl->North();
+}
+
+double ON_Sun::Latitude(void) const
+{
+  return _impl->Latitude();
+}
+
+double ON_Sun::Longitude(void) const
+{
+  return _impl->Longitude();
 }
 
 bool ON_Sun::DaylightSavingOn(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, false).AsBool();
+  return _impl->DaylightSavingOn();
 }
 
 int ON_Sun::DaylightSavingMinutes(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 0).AsInteger();
+  return _impl->DaylightSavingMinutes();
 }
 
 void ON_Sun::LocalDateTime(int& year, int& month, int& day, double& hours) const
 {
-  const wchar_t* s = XMLPath_Sun();
-  year  = _impl->GetParameter(s, ON_RDK_SUN_DATE_YEAR,  2000);
-  month = _impl->GetParameter(s, ON_RDK_SUN_DATE_MONTH, 1);
-  day   = _impl->GetParameter(s, ON_RDK_SUN_DATE_DAY,   1);
-  hours = _impl->GetParameter(s, ON_RDK_SUN_TIME_HOURS, 0.0);
+  _impl->LocalDateTime(year, month, day, hours);
 }
 
 void ON_Sun::UTCDateTime(int& year, int& month, int& day, double& hours) const
@@ -698,7 +1112,7 @@ void ON_Sun::UTCDateTime(int& year, int& month, int& day, double& hours) const
   LocalDateTime(year, month, day, hours);
 
   // Set the local time, timezone and daylight into a helper 'sun'.
-  ON_SunEngine engine;
+  ON_SunEngine engine(_impl->_accuracy);
   engine.SetLocalDateTime(year, month, day, hours);
   engine.SetTimeZoneHours(TimeZone());
   engine.SetDaylightSavingMinutes(DaylightSavingOn() ? DaylightSavingMinutes() : 0);
@@ -710,92 +1124,83 @@ void ON_Sun::UTCDateTime(int& year, int& month, int& day, double& hours) const
 
 double ON_Sun::Intensity(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_INTENSITY, 1.0).AsDouble();
+  return _impl->Intensity();
 }
 
 double ON_Sun::ShadowIntensity(void) const
 {
-  return _impl->GetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, 1.0).AsDouble();
+  return _impl->ShadowIntensity();
 }
 
 void ON_Sun::SetEnableAllowed(bool allowed)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, allowed);
+  _impl->SetEnableAllowed(allowed);
 }
 
 void ON_Sun::SetEnableOn(bool on)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, on);
+  _impl->SetEnableOn(on);
 }
 
 void ON_Sun::SetManualControlAllowed(bool allowed)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, allowed);
+  _impl->SetManualControlAllowed(allowed);
 }
 
 void ON_Sun::SetManualControlOn(bool manual)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, manual);
+  _impl->SetManualControlOn(manual);
 }
 
-void ON_Sun::SetNorth(double north)
+void ON_Sun::SetAzimuth(double azi)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_NORTH, north);
+  _impl->SetAzimuth(azi);
 }
 
-void ON_Sun::SetAzimuth(double azimuth)
+void ON_Sun::SetAltitude(double alt)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_AZIMUTH, azimuth);
-}
-
-void ON_Sun::SetAltitude(double altitude)
-{
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_ALTITUDE, altitude);
-}
-
-void ON_Sun::SetLatitude(double latitude)
-{
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LATITUDE, latitude);
-}
-
-void ON_Sun::SetLongitude(double longitude)
-{
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_LONGITUDE, longitude);
+  _impl->SetAltitude(alt);
 }
 
 void ON_Sun::SetTimeZone(double hours)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, hours);
+  _impl->SetTimeZone(hours);
+}
+
+void ON_Sun::SetNorth(double north)
+{
+  _impl->SetNorth(north);
+}
+
+void ON_Sun::SetLatitude(double latitude)
+{
+  _impl->SetLatitude(latitude);
+}
+
+void ON_Sun::SetLongitude(double longitude)
+{
+  _impl->SetLongitude(longitude);
 }
 
 void ON_Sun::SetDaylightSavingOn(bool on)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, on);
+  return _impl->SetDaylightSavingOn(on);
 }
 
 void ON_Sun::SetDaylightSavingMinutes(int minutes)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, minutes);
+  return _impl->SetDaylightSavingMinutes(minutes);
 }
 
 bool ON_Sun::SetLocalDateTime(int year, int month, int day, double hours)
 {
-  if ((year < MinYear()) || (year > MaxYear()))
-    return false;
-
-  const wchar_t* s = XMLPath_Sun();
-  _impl->SetParameter(s, ON_RDK_SUN_DATE_YEAR,  year);
-  _impl->SetParameter(s, ON_RDK_SUN_DATE_MONTH, month);
-  _impl->SetParameter(s, ON_RDK_SUN_DATE_DAY,   day);
-  _impl->SetParameter(s, ON_RDK_SUN_TIME_HOURS, hours);
-
-  return true;
+  return _impl->SetLocalDateTime(year, month, day, hours);
 }
 
 bool ON_Sun::SetUTCDateTime(int year, int month, int day, double hours)
 {
   // Set the UTC date and time into a helper 'sun' assuming 'local' means 'Greenwich' and get the UTC JD.
-  ON_SunEngine engine;
+  ON_SunEngine engine(_impl->_accuracy);
   engine.SetLocalDateTime(year, month, day, hours);
 
   // Convert the UTC JD to local JD by adding the timezone and daylight offset,
@@ -808,20 +1213,20 @@ bool ON_Sun::SetUTCDateTime(int year, int month, int day, double hours)
   return SetLocalDateTime(year, month, day, hours);
 }
 
-void ON_Sun::SetShadowIntensity(double intensity)
+void ON_Sun::SetIntensity(double d)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, std::max(0.0, std::min(1.0, intensity)));
+  _impl->SetIntensity(d);
 }
 
-void ON_Sun::SetIntensity(double intensity)
+void ON_Sun::SetShadowIntensity(double d)
 {
-  _impl->SetParameter(XMLPath_Sun(), ON_RDK_SUN_INTENSITY, std::max(0.0, intensity));
+  _impl->SetShadowIntensity(d);
 }
 
 ON__UINT32 ON_Sun::DataCRC(ON__UINT32 crc) const
 {
-  // We need to calculate the CRC of the underlying XML. So we can't allow virtual overrides to
-  // execute because they might shadow the real values we want to use.
+  // We need to calculate the CRC of the underlying storage, so we can't allow virtual overrides to
+  // execute because they might hide the real values we want to use.
 
   crc = UpdateCRC(crc, ON_Sun::EnableAllowed());
   crc = UpdateCRC(crc, ON_Sun::EnableOn());
@@ -1037,144 +1442,30 @@ void ON_Sun::SetXMLNode(ON_XMLNode& node) const
   _impl->SetModelNode(node);
 }
 
+void ON_Sun::UseEarthAnchorPoint(ON_EarthAnchorPoint& eap)
+{
+  _impl->_earth_anchor_point = &eap;
+}
+
+void ON_Sun::SetAccuracy(ON_SunEngine::Accuracy acc)
+{
+  _impl->_accuracy = acc;
+}
+
 void* ON_Sun::EVF(const wchar_t* func, void* data)
 {
   return nullptr;
 }
 
-// ON_SunEx
-
-class ON_SunEx::CImpl
+void ON_Sun::OnInternalXmlChanged(const ON_Sun* sun)
 {
-public:
-  void UpdateAziAlt(const ON_Sun& sun);
-
-  double _azimuth = 0.0;
-  double _altitude = 0.0;
-  ON__UINT32 _azi_alt_crc = 0;
-  mutable std::recursive_mutex m_mutex;
-};
-
-ON_SunEx::ON_SunEx()
-{
-  _impl = new CImpl;
-  _impl->_azimuth  = ON_Sun::Azimuth();
-  _impl->_altitude = ON_Sun::Altitude();
-}
-
-ON_SunEx::ON_SunEx(ON_XMLNode& model_node)
-  :
-  ON_Sun(model_node)
-{
-  _impl = new CImpl;
-  _impl->_azimuth  = ON_Sun::Azimuth();
-  _impl->_altitude = ON_Sun::Altitude();
-}
-
-ON_SunEx::ON_SunEx(const ON_SunEx& sun)
-{
-  _impl = new CImpl;
-
-  operator = (sun);
-}
-
-ON_SunEx::~ON_SunEx()
-{
-  delete _impl;
-  _impl = nullptr;
-}
-
-const ON_Sun& ON_SunEx::operator = (const ON_Sun& sun)
-{
-  ON_Sun::operator = (sun);
-
-  return *this;
-}
-
-const ON_SunEx& ON_SunEx::operator = (const ON_SunEx& sun)
-{
-  ON_Sun::operator = (sun);
-
-  _impl->_azimuth     = sun._impl->_azimuth;
-  _impl->_altitude    = sun._impl->_altitude;
-  _impl->_azi_alt_crc = sun._impl->_azi_alt_crc;
-
-  return *this;
-}
-
-static ON__UINT32 AziAltCRC(const ON_Sun& sun)
-{
-  ON__UINT32 crc = 0;
-
-  const double latitude  = sun.Latitude();
-  const double longitude = sun.Longitude();
-  const double time_zone = sun.TimeZone();
-  const int dsm = sun.DaylightSavingOn() ? sun.DaylightSavingMinutes() : 0;
-
-  int y = 0, m = 0, d = 0; double h = 0.0;
-  sun.LocalDateTime(y, m, d, h);
-
-  crc = ON_CRC32(crc, sizeof(latitude) , &latitude);
-  crc = ON_CRC32(crc, sizeof(longitude), &longitude);
-  crc = ON_CRC32(crc, sizeof(time_zone), &time_zone);
-  crc = ON_CRC32(crc, sizeof(dsm)      , &dsm);
-
-  crc = ON_CRC32(crc, sizeof(y), &y);
-  crc = ON_CRC32(crc, sizeof(m), &m);
-  crc = ON_CRC32(crc, sizeof(d), &d);
-  crc = ON_CRC32(crc, sizeof(h), &h);
-
-  return crc;
-}
-
-void ON_SunEx::CImpl::UpdateAziAlt(const ON_Sun& sun)
-{
-  const auto crc = AziAltCRC(sun);
-  if (_azi_alt_crc != crc)
+  if (nullptr != sun)
   {
-    _azi_alt_crc = crc;
-
-    ON_SunEngine engine;
-    engine.SetLatitude (sun.Latitude());
-    engine.SetLongitude(sun.Longitude());
-    engine.SetTimeZoneHours(sun.TimeZone());
-
-    const int dsm = sun.DaylightSavingOn() ? sun.DaylightSavingMinutes() : 0;
-    engine.SetDaylightSavingMinutes(dsm);
-
-    int y = 0, m = 0, d = 0; double h = 0.0;
-    sun.LocalDateTime(y, m, d, h);
-    engine.SetLocalDateTime(y, m, d, h);
-
-    _azimuth  = engine.Azimuth();
-    _altitude = engine.Altitude();
+    // The XML has been bulk-overwritten from other XML by the client code. We must now copy the
+    // north, latitude and longitude values from the other sun into this one in case one or the
+    // other sun is using the earth anchor point for those values instead of the XML.
+    SetNorth(sun->North());
+    SetLatitude(sun->Latitude());
+    SetLongitude(sun->Longitude());
   }
-}
-
-double ON_SunEx::Azimuth(void) const
-{
-  std::lock_guard<std::recursive_mutex> lg(_impl->m_mutex);
-
-  if (ManualControlAllowed() && ManualControlOn())
-    return ON_Sun::Azimuth();
-
-  _impl->UpdateAziAlt(*this);
-
-  return _impl->_azimuth;
-}
-
-double ON_SunEx::Altitude(void) const
-{
-  std::lock_guard<std::recursive_mutex> lg(_impl->m_mutex);
-
-  if (ManualControlAllowed() && ManualControlOn())
-    return ON_Sun::Altitude();
-
-  _impl->UpdateAziAlt(*this);
-
-  return _impl->_altitude;
-}
-
-void ON_SunEx::InvalidateCache(void)
-{
 }

@@ -14,10 +14,7 @@
 #if !defined(ON_SUN_INC_)
 #define ON_SUN_INC_
 
-// Class ON_SunEngine is a sun calculation engine. It's responsible for doing the astronomical calculations
-// used by the sun. Note that most ON_Sun methods don't use this class. Only the utility methods use
-// this because generally, ON_Sun is a simple sun object that merely gets and sets stored values.
-// If you want to do sun calculations with OpenNURBS you should use this class or ON_SunEx instead of ON_Sun.
+// Class ON_SunEngine is a sun astronomical calculation engine.
 
 class ON_CLASS ON_SunEngine
 {
@@ -28,7 +25,7 @@ public:
     Maximum, // Suitable for generating accurate tables of sun positions (e.g., an ephemeris).
   };
 
-  ON_SunEngine(Accuracy a = Accuracy::Minimum);
+  ON_SunEngine(Accuracy a);
   ON_SunEngine(const ON_SunEngine&);
   virtual ~ON_SunEngine();
 
@@ -109,15 +106,15 @@ private:
   CImpl* _impl;
 };
 
-// Class ON_Sun represents a 'sun'. Note that generally it does not perform any astronomical calculations;
-// it merely allows the programmer to get and set the various sun properties. Only the utility methods
-// at the end of the class perform calculations (by using ON_SunEngine). If you want to do general sun
-// calculations with OpenNURBS you should use ON_SunEngine or ON_SunEx instead of this class.
+// Class ON_Sun represents a 'sun'. It can calculate the apparent position of the sun in the sky
+// at a particular instant for a particular location on the Earth's surface. It can also be used
+// to get the sun's color, a light representing the sun, or to generate an ephemeris.
 
 class ON_CLASS ON_Sun
 {
 public:
   ON_Sun();
+  ON_Sun(ON_EarthAnchorPoint& eap);
   ON_Sun(ON_XMLNode& model_node);
   ON_Sun(const ON_Sun& sun);
   virtual ~ON_Sun();
@@ -257,6 +254,18 @@ public:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
+  // For internal use only.
+  virtual void OnInternalXmlChanged(const ON_Sun*);
+
+  // Set the accuracy of the sun calculations. The default is minimum accuracy (for more speed).
+  virtual void SetAccuracy(ON_SunEngine::Accuracy acc);
+
+  // Get a color for rendering a sun light when the sun is at a particular altitude in the sky.
+  static ON_4fColor SunColorFromAltitude(double altitude);
+
+  // Returns true if the specified time is within the range supported by ON_Sun.
+  static bool IsValidDateTime(int year, int month, int day, int hour, int min, int sec);
+
 public: // These utility methods are provided for convenience and perform calculations by using ON_SunEngine.
 
   // Get an ON_Light which represents the sun. Note that this does not actually calculate the sun's
@@ -289,34 +298,29 @@ public: // These utility methods are provided for convenience and perform calcul
   // Calculates and sets the sun's azimuth and altitude taking into account the direction of north.
   virtual void SetAzimuthAndAltitudeFromVector(const ON_3dVector& v);
 
-  // Get a color for rendering a sun light when the sun is at a particular altitude in the sky.
-  static ON_4fColor SunColorFromAltitude(double altitude);
-
-  // Returns true if the specified time is within the range supported by ON_Sun.
-  static bool IsValidDateTime(int year, int month, int day, int hour, int min, int sec);
-
-private:
-  // For internal use only.
+private: // For internal use only.
   friend class ON_3dmRenderSettingsPrivate;
   void SetXMLNode(ON_XMLNode& node) const;
+  friend class ONX_Model;
+  void UseEarthAnchorPoint(ON_EarthAnchorPoint& eap);
 
 private:
   class CImpl;
   CImpl* _impl;
 };
 
-// Class ON_SunEx is the same as ON_Sun except that it overrides Azimuth() and Altitude() to calculate
+// Class ON_SunExCombine is the same as ON_Sun except that it overrides Azimuth() and Altitude() to calculate
 // the sun's azimuth / altitude.
-class ON_CLASS ON_SunEx : public ON_Sun
+class ON_CLASS ON_SunExCombine : public ON_Sun
 {
 public:
-  ON_SunEx();
-  ON_SunEx(ON_XMLNode& model_node);
-  ON_SunEx(const ON_SunEx& sun);
-  virtual ~ON_SunEx();
+  ON_SunExCombine();
+  ON_SunExCombine(ON_XMLNode& model_node);
+  ON_SunExCombine(const ON_SunExCombine& sun);
+  virtual ~ON_SunExCombine();
 
   virtual const ON_Sun& operator = (const ON_Sun& sun) override;
-  virtual const ON_SunEx& operator = (const ON_SunEx& sun);
+  virtual const ON_SunExCombine& operator = (const ON_SunExCombine& sun);
 
   // Returns the azimuth of the sun in the sky (in degrees) as viewed by an observer on Earth. The value
   // increases Eastwards with North as zero. This value is not affected by the sun's 'north' setting.
@@ -333,7 +337,6 @@ public:
 
 private: // For internal use only.
   friend class ON_3dmRenderSettingsPrivate;
-  virtual void InvalidateCache(void);
 
 private:
   class CImpl;

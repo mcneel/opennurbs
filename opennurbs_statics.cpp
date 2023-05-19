@@ -328,6 +328,8 @@ const double ON_SubDEdgeSharpness::Tolerance = 0.01;
 
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Smooth;
 
+const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Maximum = ON_SubDEdgeSharpness::FromConstant(ON_SubDEdgeSharpness::MaximumValue);
+
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Nan = ON_SubDEdgeSharpness::FromConstant(ON_DBL_QNAN);
 
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Crease = ON_SubDEdgeSharpness::FromConstant(ON_SubDEdgeSharpness::CreaseValue);
@@ -339,7 +341,6 @@ const ON_SubDSectorId ON_SubDSectorId::Zero;
 const ON_SubDSectorId ON_SubDSectorId::Invalid = ON_SubDSectorId::Create(nullptr, nullptr);
 
 const ON_SubDHash ON_SubDHash::Empty;
-
 
 // {C3D8DD54-F8C8-4455-BB0E-2A2F4988EC81}
 const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
@@ -410,6 +411,10 @@ const ON_UUID ON_StandardDisplayModeId::Artistic =
 // {F4616FA5-A831-4620-A97E-9B807D5EC376}
 const ON_UUID ON_StandardDisplayModeId::Pen =
 { 0xF4616FA5,0xA831,0x4620,{ 0xA9,0x7E,0x9B,0x80,0x7D,0x5E,0xC3,0x76 } };
+
+// {E1B5C8A2-ED43-4872-9A01-814E612D5363}
+const ON_UUID ON_StandardDisplayModeId::Monochrome =
+{ 0xE1B5C8A2, 0xED43, 0x4872, { 0x9A, 0x1, 0x81, 0x4E, 0x61, 0x2D, 0x53, 0x63 } };
 
 // {C32B72C3-41BD-4ADC-82A8-B7AEF4456A37}
 const ON_UUID ON_StandardDisplayModeId::AmbientOcclusion = 

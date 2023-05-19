@@ -16,6 +16,8 @@
 
 typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
+#define ON_XML_SLASH  L"/"
+
 // This is the structure of the RDK document XML.
 
 #define ON_RDK_DOCUMENT                             L"render-content-manager-document"
@@ -84,7 +86,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_POST_PROCESS_GAMMA                 L"gamma" // Keep original XML tag.
 
       #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON   L"custom-env-for-refl-and-refr-on"
-        #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT      L"custom-env-for-refl-and-refr"
+      #define ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT      L"custom-env-for-refl-and-refr"
 
     #define ON_RDK_SUN                                L"sun"
       #define ON_RDK_SUN_ENABLE_ALLOWED                 L"enable-allowed"
@@ -135,8 +137,158 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
      #define ON_RDK_GP_TEXTURE_SIZE_LOCKED              L"repeat-lock" // Keep old string.
      #define ON_RDK_GP_TEXTURE_ROTATION                 L"texture-rotation"
 
+// Decals (stored in object attributes user data).
+
+#define ON_RDK_DECALS                       L"decals"
+
+  #define ON_RDK_DECAL                      L"decal"
+
+    #define ON_RDK_DECAL_CUSTOM               L"custom"
+    #define ON_RDK_DECAL_CUSTOM_RENDERER      L"renderer"
+    #define ON_RDK_DECAL_CUSTOM_PARAMS        L"parameters"
+
+    #define ON_RDK_DECAL_MAPPING              L"mapping"
+    //----- +++++++++++++++++++
+    #define ON_RDK_DECAL_MAPPING_PLANAR       L"planar"
+    #define ON_RDK_DECAL_MAPPING_CYLINDRICAL  L"cylindrical"
+    #define ON_RDK_DECAL_MAPPING_SPHERICAL    L"spherical"
+    #define ON_RDK_DECAL_MAPPING_UV           L"uv"
+    #define ON_RDK_DECAL_MAPPING_NONE         L"none"
+
+    #define ON_RDK_DECAL_PROJECTION           L"projection"
+    //----- ++++++++++++++++++++++
+    #define ON_RDK_DECAL_PROJECTION_FORWARD   L"forward"
+    #define ON_RDK_DECAL_PROJECTION_BACKWARD  L"backward"
+    #define ON_RDK_DECAL_PROJECTION_BOTH      L"both"
+    #define ON_RDK_DECAL_PROJECTION_NONE      L"none"
+
+    #define ON_RDK_DECAL_MAP_TO_INSIDE_ON     L"map-to-inside-on"
+    #define ON_RDK_DECAL_TRANSPARENCY         L"transparency"
+    #define ON_RDK_DECAL_TEXTURE_INSTANCE     L"texture-instance"
+    #define ON_RDK_DECAL_HEIGHT               L"height"
+    #define ON_RDK_DECAL_ORIGIN               L"origin"
+    #define ON_RDK_DECAL_RADIUS               L"radius"
+    #define ON_RDK_DECAL_HORZ_SWEEP_STA       L"latitude-start"
+    #define ON_RDK_DECAL_HORZ_SWEEP_END       L"latitude-stop"
+    #define ON_RDK_DECAL_VERT_SWEEP_STA       L"longitude-start"
+    #define ON_RDK_DECAL_VERT_SWEEP_END       L"longitude-stop"
+    #define ON_RDK_DECAL_VECTOR_UP            L"vector-up"
+    #define ON_RDK_DECAL_VECTOR_ACROSS        L"vector-across"
+    #define ON_RDK_DECAL_MIN_U                L"min-u"
+    #define ON_RDK_DECAL_MIN_V                L"min-v"
+    #define ON_RDK_DECAL_MAX_U                L"max-u"
+    #define ON_RDK_DECAL_MAX_V                L"max-v"
+    #define ON_RDK_DECAL_IS_TEMPORARY         L"is-temporary"
+    #define ON_RDK_DECAL_IS_VISIBLE           L"is-visible"
+    #define ON_RDK_DECAL_INSTANCE_ID          L"instance-id"
+
+// Render Content.
+
+#define ON_RENDER_CONTENT_TYPE_NAME               L"type-name"
+#define ON_RENDER_CONTENT_TYPE_ID                 L"type-id"
+#define ON_RENDER_CONTENT_INSTANCE_ID             L"instance-id"
+#define ON_RENDER_CONTENT_RENDER_ENGINE_ID        L"render-engine-id"
+#define ON_RENDER_CONTENT_PLUG_IN_ID              L"plug-in-id"
+#define ON_RENDER_CONTENT_GROUP_ID                L"group-id"
+#define ON_RENDER_CONTENT_INSTANCE_NAME           L"instance-name"
+#define ON_RENDER_CONTENT_CHILD_SLOT_NAME         L"child-slot-name"
+#define ON_RENDER_CONTENT_NOTES                   L"notes"
+#define ON_RENDER_CONTENT_TAGS                    L"tags"
+#define ON_RENDER_CONTENT_HIDDEN                  L"hidden"
+#define ON_RENDER_CONTENT_REFERENCE               L"reference"
+#define ON_RENDER_CONTENT_AUTO_DELETE             L"auto-delete"
+
+#define ON_RENDER_CONTENT_PARAMETERS              L"parameters"
+#define ON_RENDER_CONTENT_PARAMETERS_V8           L"parameters-v8"
+#define ON_RENDER_CONTENT_SIMULATION              L"simulation"
+
+// General parameters used by materials that simulate ON_Material.
+
+#define ON_MATERIAL_ALPHA_TRANSPARENCY                 L"alpha-transparency"
+#define ON_MATERIAL_AMBIENT                            L"ambient"
+#define ON_MATERIAL_DIFFUSE                            L"diffuse"
+#define ON_MATERIAL_DISABLE_LIGHTING                   L"disable-lighting"
+#define ON_MATERIAL_EMISSION                           L"emission"
+#define ON_MATERIAL_FLAMINGO_LIBRARY                   L"flamingo-library"
+#define ON_MATERIAL_FRESNEL_ENABLED                    L"fresnel-enabled"
+#define ON_MATERIAL_CLARITY_AMOUNT                     L"clarity-amount"
+#define ON_MATERIAL_IOR                                L"ior"
+#define ON_MATERIAL_POLISH_AMOUNT                      L"polish-amount"
+#define ON_MATERIAL_SHINE                              L"shine"       // Value is 0.0..1.0, NOT ON_Material::MaxShine.
+#define ON_MATERIAL_SPECULAR                           L"specular"
+#define ON_MATERIAL_REFLECTIVITY_AMOUNT                L"reflectivity"
+#define ON_MATERIAL_REFLECTIVITY_COLOR                 L"reflectivity-color"
+#define ON_MATERIAL_TRANSPARENCY_AMOUNT                L"transparency"
+#define ON_MATERIAL_TRANSPARENCY_COLOR                 L"transparency-color"
+#define ON_MATERIAL_SIM_REFLECTION_COLOR               L"reflection"  // Used by simulation, not by Custom Material field.
+#define ON_MATERIAL_SIM_TRANSPARENT_COLOR              L"transparent" // Used by simulation, not by Custom Material field.
+
+#define ON_MATERIAL_IS_PHYSICALLY_BASED                L"is-physically-based"
+
+#define ON_PBR_MATERIAL_BRDF                           L"pbr-brdf"
+#define   ON_PBR_MATERIAL_BRDF_GGX                       L"ggx"
+#define   ON_PBR_MATERIAL_BRDF_WARD                      L"ward"
+#define ON_PBR_MATERIAL_ALPHA                          L"pbr-alpha"
+#define ON_PBR_MATERIAL_ANISOTROPIC                    L"pbr-anisotropic"
+#define ON_PBR_MATERIAL_ANISOTROPIC_ROTATION           L"pbr-anisotropic-rotation"
+#define ON_PBR_MATERIAL_BASE_COLOR                     L"pbr-base-color"
+#define ON_PBR_MATERIAL_CLEARCOAT                      L"pbr-clearcoat"
+#define ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS            L"pbr-clearcoat-roughness"
+#define ON_PBR_MATERIAL_EMISSION_COLOR                 L"pbr-emission"
+#define ON_PBR_MATERIAL_METALLIC                       L"pbr-metallic"
+#define ON_PBR_MATERIAL_OPACITY                        L"pbr-opacity"
+#define ON_PBR_MATERIAL_OPACITY_IOR                    L"pbr-opacity-ior"
+#define ON_PBR_MATERIAL_OPACITY_ROUGHNESS              L"pbr-opacity-roughness"
+#define ON_PBR_MATERIAL_ROUGHNESS                      L"pbr-roughness"
+#define ON_PBR_MATERIAL_SHEEN                          L"pbr-sheen"
+#define ON_PBR_MATERIAL_SHEEN_TINT                     L"pbr-sheen-tint"
+#define ON_PBR_MATERIAL_SPECULAR                       L"pbr-specular"
+#define ON_PBR_MATERIAL_SPECULAR_TINT                  L"pbr-specular-tint"
+#define ON_PBR_MATERIAL_SUBSURFACE                     L"pbr-subsurface"
+#define ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR    L"pbr-subsurface-scattering-color"
+#define ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS   L"pbr-subsurface-scattering-radius"
+#define ON_PBR_MATERIAL_USE_BASE_COLOR_TEXTURE_ALPHA   L"pbr-use-base-color-texture-alpha"
+
+#define ON_RENDER_TEXTURE_FILENAME    L"filename"
+
+// Material's texture simulation.
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FORMAT    L"Texture-%u-"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FILENAME  L"filename"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_ON        L"on"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_AMOUNT    L"amount"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_TYPE      L"type"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_FILTER    L"filter"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_MODE      L"mode"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_UVW       L"uvw"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_WRAP_U    L"wrap-u"
+#define ON_RENDER_MATERIAL_TEXTURE_SIMULATION_WRAP_V    L"wrap-v"
+
+// Environment simulation.
+#define ON_ENVIRONMENT_SIMULATION_BACKGROUND_COLOR      L"background-color"
+#define ON_ENVIRONMENT_SIMULATION_BACKGROUND_IMAGE      L"background-image"
+#define ON_ENVIRONMENT_SIMULATION_BACKGROUND_PROJECTION L"background-projection"
+
+// Environment projections.
+#define ON_ENVIRONMENT_PROJECTION_BOX                   L"box"
+#define ON_ENVIRONMENT_PROJECTION_CUBE_MAP              L"cubemap"
+#define ON_ENVIRONMENT_PROJECTION_CUBE_MAP_HORZ         L"horizontal-cross-cubemap"
+#define ON_ENVIRONMENT_PROJECTION_CUBE_MAP_VERT         L"vertical-cross-cubemap"
+#define ON_ENVIRONMENT_PROJECTION_EMAP                  L"emap"
+#define ON_ENVIRONMENT_PROJECTION_HEMISPHERICAL         L"hemispherical"
+#define ON_ENVIRONMENT_PROJECTION_LIGHT_PROBE           L"lightprobe"
+#define ON_ENVIRONMENT_PROJECTION_PLANAR                L"planar"
+#define ON_ENVIRONMENT_PROJECTION_SPHERICAL             L"spherical"
+
+// Texture simulation.
+#define ON_TEXTURE_SIMULATION_FILENAME                  L"filename"
+#define ON_TEXTURE_SIMULATION_REPEAT                    L"repeat"
+#define ON_TEXTURE_SIMULATION_OFFSET                    L"offset"
+#define ON_TEXTURE_SIMULATION_ROTATION                  L"rotation"
+#define ON_TEXTURE_SIMULATION_WRAP_TYPE                 L"wrap-type"
+#define ON_TEXTURE_SIMULATION_MAPPING_CHANNEL           L"mapping-channel"
+#define ON_TEXTURE_SIMULATION_PROJECTION_MODE           L"projection-mode"
+
 #define ON_RDK_POSTFIX_SECTION  L"-section"
-#define ON_RDK_SLASH            L"/"
 
 class ON_CLASS ON_XMLVariant
 {
@@ -187,6 +339,9 @@ public:
   virtual ON_wString TypeAsString(void) const;
   virtual bool IsEmpty(void) const;
   virtual bool IsNull(void) const;
+
+  virtual bool Varies(void) const;
+  virtual void SetVaries(void);
 
   virtual ON::LengthUnitSystem Units(void) const;
   virtual void SetUnits(ON::LengthUnitSystem units);
@@ -462,12 +617,10 @@ public: // Utilities.
 
   virtual int GetNestedDepth(void) const;
 
-  // Get the CRC of this node. This assumes the node has the following format:
-  // <node prop1=value1 prop2=value2 ... >
-  //   <param-name><type="float">1.23456</param-name>
-  //   ...
-  // </node>
-  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  // Get the CRC of this node.
+  // Param current_remainder is the current remainder value as used by ON_CRC32.
+  // Param recursive is true to process nodes recursively, false to process only this node.
+  virtual ON__UINT32 DataCRC(ON__UINT32 current_remainder, bool recursive) const;
 
   // Use this when you are looking for a node that is only one child below - non-recursive, but fast.
   virtual ON_XMLNode* GetNamedChild(const wchar_t* name) const;
@@ -479,7 +632,6 @@ public: // Utilities.
   // Returns the full path to this node.
   virtual ON_wString GetPathFromRoot(void) const;
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Gets at nodes deep into the tree using a slash-delimited path, i.e., "child/grandchild/great-grandchild".
   // There's no checking for multiple nodes with the same name at each level of the tree, so if you use these
   // methods, you have to make sure you have unique node names at each level.
@@ -493,8 +645,6 @@ public: // Utilities.
   // created. This method should therefore never return null. The returned pointer should not be deleted
   // by the caller. The child node is owned by its immediate parent at that position in the node hierarchy.
   virtual ON_XMLNode* CreateNodeAtPath(const wchar_t* path);
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 protected:
   // Emergency virtual function for future expansion.

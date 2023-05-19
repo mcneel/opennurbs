@@ -24,7 +24,7 @@
 
 static const wchar_t* XMLPath(void)
 {
-  return ON_RDK_DOCUMENT  ON_RDK_SLASH  ON_RDK_SETTINGS  ON_RDK_SLASH  ON_RDK_GROUND_PLANE;
+  return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_GROUND_PLANE;
 }
 
 class ON_GroundPlane::CImpl : public ON_InternalXMLImpl
@@ -34,25 +34,17 @@ public:
   CImpl(const CImpl& i) = delete;
   CImpl(ON_XMLNode& n)  : ON_InternalXMLImpl(&n) { }
 
-  bool On(void)                   const { return GetParameter(XMLPath(), ON_RDK_GP_ON, false).AsBool(); }
-  bool ShowUnderside(void)        const { return GetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, false).AsBool(); }
-  double Altitude(void)           const { return GetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, 0.0).AsDouble(); }
-  bool AutoAltitude(void)         const { return GetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, false).AsBool(); }
-  bool ShadowOnly(void)           const { return GetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, true).AsBool(); }
-  bool TextureOffsetLocked(void)  const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET_LOCKED, false).AsBool(); }
-  bool TextureSizeLocked(void)    const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE_LOCKED, false).AsBool(); }
-  double TextureRotation(void)    const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, false).AsDouble(); }
-  ON_2dVector TextureOffset(void) const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, ON_nil_uuid).As2dPoint()); }
-  ON_2dVector TextureSize(void)   const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, ON_nil_uuid).As2dPoint()); }
-
-  ON_UUID MaterialInstanceId(void) const
-  {
-    const auto u = GetParameter(XMLPath(), ON_RDK_GP_MATERIAL_ID, ON_nil_uuid).AsUuid();
-    if (ON_nil_uuid != u)
-      return u;
-
-    return ON_UuidDefaultMaterialInstance;
-  }
+  bool On(void)                    const { return GetParameter(XMLPath(), ON_RDK_GP_ON, false).AsBool(); }
+  bool ShowUnderside(void)         const { return GetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, false).AsBool(); }
+  double Altitude(void)            const { return GetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, 0.0).AsDouble(); }
+  bool AutoAltitude(void)          const { return GetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, false).AsBool(); }
+  bool ShadowOnly(void)            const { return GetParameter(XMLPath(), ON_RDK_GP_SHADOW_ONLY, true).AsBool(); }
+  bool TextureOffsetLocked(void)   const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET_LOCKED, false).AsBool(); }
+  bool TextureSizeLocked(void)     const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE_LOCKED, false).AsBool(); }
+  double TextureRotation(void)     const { return GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_ROTATION, false).AsDouble(); }
+  ON_UUID MaterialInstanceId(void) const { return GetParameter(XMLPath(), ON_RDK_GP_MATERIAL_ID, ON_nil_uuid).AsUuid(); }
+  ON_2dVector TextureOffset(void)  const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, ON_nil_uuid).As2dPoint()); }
+  ON_2dVector TextureSize(void)    const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, ON_nil_uuid).As2dPoint()); }
 
   void SetOn(bool v)                           { SetParameter(XMLPath(), ON_RDK_GP_ON, v); }
   void SetShowUnderside(bool v)                { SetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, v); }
@@ -94,7 +86,7 @@ const ON_GroundPlane& ON_GroundPlane::operator = (const ON_GroundPlane& gp)
   if (this != &gp)
   {
     // When copying the object, we need to directly copy the underlying XML. So we can't allow
-    // virtual overrides to execute because they might shadow the real values we want to copy.
+    // virtual overrides to execute because they might hide the real values we want to copy.
     _impl->SetOn                 (gp._impl->On());
     _impl->SetShowUnderside      (gp._impl->ShowUnderside());
     _impl->SetAltitude           (gp._impl->Altitude());
@@ -113,8 +105,8 @@ const ON_GroundPlane& ON_GroundPlane::operator = (const ON_GroundPlane& gp)
 
 bool ON_GroundPlane::operator == (const ON_GroundPlane& gp) const
 {
-  // When checking equality, we need to directly check the underlying XML. So we can't allow
-  // virtual overrides to execute because they might shadow the real values we want to check.
+  // When checking equality, we need to directly check the underlying storage. So we can't allow
+  // virtual overrides to execute because they might hide the real values we want to check.
   if (_impl->On()                  != gp._impl->On()                 ) return false;
   if (_impl->ShowUnderside()       != gp._impl->ShowUnderside()      ) return false;
   if (_impl->AutoAltitude()        != gp._impl->AutoAltitude()       ) return false;
@@ -262,6 +254,6 @@ void* ON_GroundPlane::EVF(const wchar_t* func, void* data)
   return nullptr;
 }
 
-void ON_GroundPlane::InvalidateCache(void)
+void ON_GroundPlane::OnInternalXmlChanged(const ON_GroundPlane*)
 {
 }

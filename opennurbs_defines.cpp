@@ -2863,6 +2863,21 @@ ON::SectionAttributesSource ON::SectionAttributesSourceFromUnsigned(
   return ON::SectionAttributesSource::FromLayer;
 }
 
+ON::SectionLabelStyle ON::SectionLabelStyleFromUnsigned(
+  unsigned int section_label_style_as_unsigned
+)
+{
+  switch (section_label_style_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionLabelStyle::None);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionLabelStyle::TextDotFromName);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::SectionLabelStyle::TextFromName);
+  }
+  ON_ERROR("invalid section_label_style_as_unsigned parameter.");
+  return ON::SectionLabelStyle::None;
+}
+
+
 ON::ViewSectionBehavior ON::ViewSectionBehaviorFromUnsigned(
   unsigned int view_section_behavior_as_unsigned
 )

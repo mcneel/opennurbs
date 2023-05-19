@@ -347,6 +347,19 @@ public:
     const class ON_SubD& subd
   ) const;
 
+  /*
+  Returns:
+    The raw value of m_display_density.
+  Remarks:
+    This function is only intended to get
+    public raw access to that value (for example when comparing meshing parameters)
+    and should not be used in any place where the returned value will be used
+    to compute a SubD display density.
+
+    Use DisplayDensity(subd) instead!
+  */
+  const unsigned char GetRawDisplayDensityForExperts() const;
+
   ON_DEPRECATED_MSG("Use SetAdaptiveDisplayDensity()")
   void SetDisplayDensity(
     unsigned int adaptive_display_density
@@ -398,6 +411,20 @@ public:
   */
   void SetMeshLocation(ON_SubDComponentLocation mesh_location);
 
+  /*
+  Description:
+    The ComputeCurvature() property determines if the mesh has curvature values.
+  */
+  bool ComputeCurvature() const;
+
+  /*
+  Description:
+    The ComputeCurvature() property determines if the mesh has curvature values.
+  Parameters:
+    compute_curvature - [in]
+  */
+  void SetComputeCurvature(bool compute_curvature);
+
   unsigned char EncodeAsUnsignedChar() const;
   static const ON_SubDDisplayParameters DecodeFromUnsignedChar(
     unsigned char encoded_parameters
@@ -411,6 +438,7 @@ private:
     subd_mesh_density_mask = 0x07,
     subd_mesh_location_bit = 0x08,
     subd_mesh_absolute_density_bit = 0x10,
+    subd_mesh_compute_curvature_bit = 0x20,
 
     // If this bit set, then the settings are not current defaults.
     subd_mesh_nondefault_bit = 0x80
@@ -475,7 +503,7 @@ public:
 private:
   ON_SubDDisplayParameters::Context m_context = ON_SubDDisplayParameters::Context::Unknown;
 
-  unsigned char m_reserved2 = 0;
+  bool m_bComputeCurvature = false;
   unsigned char m_reserved3 = 0;
   unsigned int m_reserved4 = 0;
   unsigned int m_reserved5 = 0;
@@ -875,12 +903,33 @@ public:
   Description:
     Compares all meshing parameters that control mesh geometry.
     Does not compare m_bCustomSettings, CustomSettingsEnabled(),
-    m_bComputeCurvature,  m_bDoublePrecision, MinimumTolerance(),
-    m_texture_range, m_srf_domain0 and m_srf_domain1.
+    m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(),
+    m_texture_range, m_srf_domain0 and m_srf_domain1; and 
+    from the SubD meshing parameters in m_subd_mesh_parameters_as_char,
+    does not compare m_context, m_bComputeCurvature, m_terminator,
+    m_progress_reporter, and m_progress_reporter_interval.
   */
   static int CompareGeometrySettings(
     const ON_MeshParameters& a,
     const ON_MeshParameters& b
+    );
+
+  /*
+  Description:
+    Compares all meshing parameters that control mesh geometry.
+    Does not compare m_bCustomSettings, CustomSettingsEnabled(),
+    m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(),
+    m_texture_range, m_srf_domain0 and m_srf_domain1; and 
+    from the SubD meshing parameters in m_subd_mesh_parameters_as_char,
+    does not compare m_context, m_bComputeCurvature, m_terminator,
+    m_progress_reporter, and m_progress_reporter_interval.
+    If bIgnoreSubDParameters is true, ignores all settings in
+    m_subd_mesh_parameters_as_char.
+  */
+  static int CompareGeometrySettings(
+    const ON_MeshParameters& a,
+    const ON_MeshParameters& b,
+    const bool bIgnoreSubDParameters
     );
 
   /*

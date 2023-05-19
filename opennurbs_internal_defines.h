@@ -80,6 +80,8 @@ public:
   ON_XMLVariant GetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const wchar_t* default_type, const ON_XMLVariant& def) const;
   bool SetParameter_NoType(const wchar_t* path_to_node, const wchar_t* param_name, const ON_XMLVariant& value);
 
+  bool RemoveParameter(const wchar_t* path_to_node, const wchar_t* param_name);
+
   ON_XMLNode& Node(void) const;
 
   void SetModelNode(ON_XMLNode& node);
@@ -186,7 +188,7 @@ public:
 
   void SpecializeGroundPlane(ON_GroundPlane& gp);
   void SpecializeLinearWorkflow(ON_LinearWorkflow& lw);
-  void SpecializeSun(ON_SunEx& sun);
+  void SpecializeSun(ON_Sun& sun);
 
   static ON_3dmRenderSettingsPrivate& Get(const ON_3dmRenderSettings& rs);
 
@@ -204,9 +206,9 @@ public:
   ON_Skylight* _skylight = nullptr;
   ON_LinearWorkflow* _linear_workflow = nullptr;
   ON_RenderChannels* _render_channels = nullptr;
-  ON_SunEx* _sun = nullptr;
-  ON_EnvironmentsImpl* _environments;
-  ON_PostEffects* _post_effects;
+  ON_Sun* _sun = nullptr;
+  ON_EnvironmentsImpl* _environments = nullptr;
+  ON_PostEffects* _post_effects = nullptr;
   bool _gp_specialized = false;
   bool _lw_specialized = false;
   bool _sun_specialized = false;

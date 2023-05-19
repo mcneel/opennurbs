@@ -796,7 +796,13 @@ public:
   void SetClipParticipationForNone();
 
   // Set objects on layer to only be clipped by a specific set of clipping planes.
-  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count);
+  // Paramters:
+  //   clippingPlaneIds [in] - array of ON_UUIDs for clipping planes
+  //   count [in] - number of elements in clippingPlaneIds
+  //   listIsParticipation [in] - is the list clipping planes that the layer
+  //     participates with or an exclusion list of clipping planes to not
+  //     participate with
+  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool listIsParticipation);
 
   // Get details on how the objects on layer will interact with clipping planes
   // Parameters:
@@ -807,10 +813,13 @@ public:
   //   specificClipplaneList [out] - if the objects interact with only a
   //     specific set of clipping planes, this list will have the uuids of
   //     those clipping plane objects
+  //   listIsParticipation [out] - is specificClipplaneList a participation
+  //     list or an exclusion list
   void GetClipParticipation(
     bool& forAllClippingPlanes,
     bool& forNoClippingPlanes,
-    ON_UuidList& specificClipplaneList) const;
+    ON_UuidList& specificClipplaneList,
+    bool& listIsParticipation) const;
 
 #pragma region Section Attributes
   // Sections are the product of intersecting a plane with an object.

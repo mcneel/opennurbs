@@ -195,7 +195,7 @@ private: // For internal use only.
   friend class ON_3dmRenderSettingsPrivate;
   friend class ON_PostEffect;
   ON_XMLNode& WritablePostEffectsNode(void);
-  virtual void InvalidateCache(void);
+  virtual void OnInternalXmlChanged(ON_PostEffects*);
 
 public:
   class CImpl;

@@ -1732,30 +1732,28 @@ private:
 };
 
 ON_DECL
-bool 
-ON_GetViewportRotationAngles( 
-    const ON_3dVector&, // X, // X,Y,Z must be a right handed orthonormal basis
-    const ON_3dVector&, // Y, 
-    const ON_3dVector&, // Z,
-    double*, // angle1, // returns rotation about world Z
-    double*, // angle2, // returns rotation about world X ( 0 <= a2 <= pi )
-    double*  // angle3  // returns rotation about world Z
-    );
+bool ON_GetViewportRotationAngles(
+  const ON_3dVector&, // X, // X,Y,Z must be a right handed orthonormal basis
+  const ON_3dVector&, // Y, 
+  const ON_3dVector&, // Z,
+  double*, // angle1, // returns rotation about world Z
+  double*, // angle2, // returns rotation about world X ( 0 <= a2 <= pi )
+  double*  // angle3  // returns rotation about world Z
+);
 
 ON_DECL
-bool
-ON_ViewportFromRhinoView( // create ON_Viewport from legacy Rhino projection info
-        ON::view_projection, // projection,
-        const ON_3dPoint&, // rhvp_target, // 3d point
-        double, // rhvp_angle1 in radians
-        double, // rhvp_angle2 in radians
-        double, // rhvp_angle3 in radians
-        double, // rhvp_viewsize,     // > 0
-        double, // rhvp_cameradist,   // > 0
-        int, // screen_width, 
-        int, // screen_height,
-        ON_Viewport&
-        );
+bool ON_ViewportFromRhinoView( // create ON_Viewport from legacy Rhino projection info
+  ON::view_projection, // projection,
+  const ON_3dPoint&, // rhvp_target, // 3d point
+  double, // rhvp_angle1 in radians
+  double, // rhvp_angle2 in radians
+  double, // rhvp_angle3 in radians
+  double, // rhvp_viewsize,     // > 0
+  double, // rhvp_cameradist,   // > 0
+  int, // screen_width, 
+  int, // screen_height,
+  ON_Viewport&
+);
 
 /*
 Description:
@@ -1774,12 +1772,29 @@ Returns:
   may be zero if the plane and frustum do not intersect.
 */
 ON_DECL
-bool
-ON_IntersectViewFrustumPlane(
-          const ON_Viewport& vp,
-          const ON_PlaneEquation& plane_equation, 
-          ON_SimpleArray<ON_3dPoint>& points 
-          );
+bool ON_IntersectViewFrustumPlane(
+  const ON_Viewport& vp,
+  const ON_PlaneEquation& plane_equation,
+  ON_SimpleArray<ON_3dPoint>& points
+);
+
+/*
+  Dolly the camera location and so that the view frustum contains
+  camcoord_bbox and the volume of camcoord_bbox fills the frustum.
+  If the projection is perspective, the camera angle is not changed.
+Parameters:
+  current_vp    - [in] Current projection, must be valid.
+  camcoord_bbox - [in] Valid bounding box in current_vp camera coordinates.
+  zoomed_vp     - [out] Can be the same as current_vp projection.
+Returns:
+  True if successful.
+*/
+ON_DECL
+bool ON_DollyExtents(
+  const ON_Viewport& current_vp,
+  ON_BoundingBox camcoord_bbox,
+  ON_Viewport& zoomed_vp
+);
 
 #endif
 
