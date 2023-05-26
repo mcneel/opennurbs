@@ -1447,6 +1447,11 @@ void ON_Sun::UseEarthAnchorPoint(ON_EarthAnchorPoint& eap)
   _impl->_earth_anchor_point = &eap;
 }
 
+ON_SunEngine::Accuracy ON_Sun::Accuracy(void) const
+{
+  return _impl->_accuracy;
+}
+
 void ON_Sun::SetAccuracy(ON_SunEngine::Accuracy acc)
 {
   _impl->_accuracy = acc;

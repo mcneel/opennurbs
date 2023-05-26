@@ -959,6 +959,172 @@ bool ON_ClippingPlaneInfo::Read( ON_BinaryArchive& file )
   return rc;
 }
 
+class ON_ClippingPlaneData
+{
+public:
+  ON_ClippingPlaneData():m_object_id_list(0){}
+  bool HasDefaultContent() const;
+
+  unsigned int m_sn=0;
+  double m_depth = 0;
+
+  ON_UuidList m_object_id_list;
+  ON_SimpleArray<int> m_layer_list;
+  bool m_layer_list_is_sorted = true;
+  bool m_is_exclusion_list = true;
+};
+
+bool ON_ClippingPlaneData::HasDefaultContent() const
+{
+  if (m_depth != 0.0)
+    return false;
+  
+  if (m_object_id_list.Count()>0)
+    return false;
+
+  if (m_layer_list.Count() > 0)
+    return false;
+  
+  if (!m_is_exclusion_list)
+    return false;
+
+  return true;
+}
+
+static ON_ClassArray<ON_ClippingPlaneData> g_data_list;
+static ON_SleepLock g_data_list_lock;
+
+static int CompareClippingPlaneData(const ON_ClippingPlaneData* a, const ON_ClippingPlaneData* b)
+{
+  if (a && b)
+  {
+    if (a->m_sn<b->m_sn)
+      return -1;
+    if (a->m_sn>b->m_sn)
+      return 1;
+    return 0;
+  }
+  if (a)
+    return -1;
+  if (b)
+    return 1;
+  return 0;
+}
+
+static int ClippingPlaneDataIndex(unsigned int serialNumber)
+{
+  if (0==serialNumber)
+    return -1;
+  ON_ClippingPlaneData data;
+  data.m_sn = serialNumber;
+  int index = g_data_list.BinarySearch(&data, CompareClippingPlaneData);
+  return index;
+}
+
+static void DeleteClippingPlaneData(ON_ClippingPlaneDataStore& dataStore)
+{
+  if (dataStore.m_sn>0)
+  {
+    bool bReturnLock = g_data_list_lock.GetLock();
+    int index = ClippingPlaneDataIndex(dataStore.m_sn);
+    dataStore.m_sn = 0;
+    g_data_list.Remove(index);
+    if(bReturnLock)
+      g_data_list_lock.ReturnLock();
+  }
+}
+
+static ON_ClippingPlaneData* GetClippingPlaneData(unsigned int sn)
+{
+  if (0==sn)
+    return nullptr;
+  
+  bool bReturnLock = g_data_list_lock.GetLock();
+  int index = ClippingPlaneDataIndex(sn);
+  ON_ClippingPlaneData* rc = g_data_list.At(index);
+  if(bReturnLock)
+    g_data_list_lock.ReturnLock();
+  return rc;
+}
+
+static ON_ClippingPlaneData* GetClippingPlaneData(ON_ClippingPlaneDataStore& dataStore, bool createIfMissing)
+{
+  bool bReturnLock = g_data_list_lock.GetLock();
+  int index = ClippingPlaneDataIndex(dataStore.m_sn);
+  ON_ClippingPlaneData* rc = g_data_list.At(index);
+  if (nullptr==rc && createIfMissing)
+  {
+    unsigned int serial_number = 1;
+    const ON_ClippingPlaneData* last = g_data_list.Last();
+    if (last)
+      serial_number = last->m_sn + 1;
+    
+    ON_ClippingPlaneData& data = g_data_list.AppendNew();
+    data.m_sn = serial_number;
+    dataStore.m_sn = data.m_sn;
+    rc = g_data_list.Last();
+  }
+  if(bReturnLock)
+    g_data_list_lock.ReturnLock();
+  return rc;
+}
+
+ON_ClippingPlaneDataStore::ON_ClippingPlaneDataStore()
+{
+}
+
+ON_ClippingPlaneDataStore::ON_ClippingPlaneDataStore(const ON_ClippingPlaneDataStore& src)
+{
+  ON_ClippingPlaneData* srcData = GetClippingPlaneData(src.m_sn);
+  if (srcData)
+  {
+    ON_ClippingPlaneData* thisData = GetClippingPlaneData(*this, true);
+    if (thisData)
+    {
+      thisData->m_depth = srcData->m_depth;
+      thisData->m_object_id_list = srcData->m_object_id_list;
+      thisData->m_is_exclusion_list = srcData->m_is_exclusion_list;
+      thisData->m_layer_list = srcData->m_layer_list;
+      thisData->m_layer_list_is_sorted = srcData->m_layer_list_is_sorted;
+    }
+  }
+  
+}
+
+ON_ClippingPlaneDataStore::~ON_ClippingPlaneDataStore()
+{
+  DeleteClippingPlaneData(*this);
+}
+
+ON_ClippingPlaneDataStore& ON_ClippingPlaneDataStore::operator=(const ON_ClippingPlaneDataStore& src)
+{
+  if (0==src.m_sn)
+  {
+    DeleteClippingPlaneData(*this);
+  }
+  else
+  {
+    ON_ClippingPlaneData* srcData = GetClippingPlaneData(src.m_sn);
+    if (nullptr==srcData)
+    {
+      DeleteClippingPlaneData(*this);
+    }
+    else
+    {
+      ON_ClippingPlaneData* thisData = GetClippingPlaneData(*this, true);
+      if (thisData)
+      {
+        thisData->m_depth = srcData->m_depth;
+        thisData->m_object_id_list = srcData->m_object_id_list;
+        thisData->m_is_exclusion_list = srcData->m_is_exclusion_list;
+        thisData->m_layer_list = srcData->m_layer_list;
+        thisData->m_layer_list_is_sorted = srcData->m_layer_list_is_sorted;
+      }
+    }
+  }
+  return *this;
+}
+
 
 void ON_ClippingPlane::Default()
 {
@@ -966,8 +1132,9 @@ void ON_ClippingPlane::Default()
   m_viewport_ids.Empty();
   m_plane_id = ON_nil_uuid;
   m_bEnabled = true;
-  m_depth = 0;
   m_depth_enabled = false;
+  m_participation_lists_enabled = true;
+  DeleteClippingPlaneData(m_data_store);
 }
 
 ON_ClippingPlane::ON_ClippingPlane()
@@ -977,6 +1144,7 @@ ON_ClippingPlane::ON_ClippingPlane()
 
 ON_ClippingPlane::~ON_ClippingPlane()
 {
+  DeleteClippingPlaneData(m_data_store);
 }
 
 ON_ClippingPlaneInfo ON_ClippingPlane::ClippingPlaneInfo() const
@@ -985,21 +1153,127 @@ ON_ClippingPlaneInfo ON_ClippingPlane::ClippingPlaneInfo() const
   info.m_plane_equation = m_plane.plane_equation;
   info.m_plane_id = m_plane_id;
   info.m_bEnabled = m_bEnabled;
-  info.SetDepth(m_depth);
+  info.SetDepth(Depth());
   info.SetDepthEnabled(m_depth_enabled);
   return info;
 }
 
 double ON_ClippingPlane::Depth() const
 {
-  return m_depth;
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+  if (data)
+    return data->m_depth;
+  return 0;
 }
 void ON_ClippingPlane::SetDepth(double depth)
 {
   if (depth < 0.0)
     return;
-  m_depth = (float)depth;
+  
+  if (0.0 == depth)
+  {
+    ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+    if (data)
+    {
+      data->m_depth = depth;
+      if (data->HasDefaultContent())
+      {
+        DeleteClippingPlaneData(m_data_store);
+      }
+    }
+    return;
+  }
+  
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store, true);
+  if (data)
+    data->m_depth = depth;
 }
+
+bool ON_ClippingPlane::ParticipationListsEnabled() const
+{
+  return m_participation_lists_enabled;
+}
+void ON_ClippingPlane::SetParticipationListsEnabled(bool on)
+{
+  m_participation_lists_enabled = on;
+}
+
+void ON_ClippingPlane::SetParticipationLists(const ON_SimpleArray<ON_UUID>* objectIds, const ON_SimpleArray<int>* layerIndices, bool isExclusionList)
+{
+  if ((nullptr == objectIds || objectIds->Count() < 1) &&
+    (nullptr==layerIndices || layerIndices->Count()<1) &&
+    isExclusionList)
+  {
+    // clear any existing list
+    ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+    if (data)
+    {
+      data->m_object_id_list.Empty();
+      data->m_layer_list.Empty();
+      data->m_layer_list_is_sorted = true;
+      data->m_is_exclusion_list = isExclusionList;
+      if (data->HasDefaultContent())
+      {
+        DeleteClippingPlaneData(m_data_store);
+      }
+    }
+    return;
+  }
+
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store, true);
+  if (data)
+  {
+    data->m_object_id_list.Empty();
+    data->m_layer_list.Empty();
+    data->m_layer_list_is_sorted = true;
+    if (objectIds)
+    {
+      for (int i = 0; i < objectIds->Count(); i++)
+      {
+        data->m_object_id_list.AddUuid((*objectIds)[i]);
+      }
+    }
+    if (layerIndices && layerIndices->Count() > 0)
+    {
+      data->m_layer_list_is_sorted = false;
+      data->m_layer_list = (*layerIndices);
+    }
+    data->m_is_exclusion_list = isExclusionList;
+  }
+}
+
+
+const ON_UuidList* ON_ClippingPlane::ObjectClipParticipationList() const
+{
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+  if (data)
+    return &(data->m_object_id_list);
+  return nullptr;
+}
+
+const ON_SimpleArray<int>* ON_ClippingPlane::LayerClipParticipationList() const
+{
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+  if (data)
+  {
+    if (!data->m_layer_list_is_sorted)
+    {
+      data->m_layer_list.QuickSort(ON_CompareIncreasing<int>);
+      data->m_layer_list_is_sorted = true;
+    }
+    return &(data->m_layer_list);
+  }
+  return nullptr;
+}
+
+bool ON_ClippingPlane::ClipParticipationListsAreExclusionLists() const
+{
+  ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+  if (data)
+    return data->m_is_exclusion_list;
+  return true;
+}
+
 
 bool ON_ClippingPlane::DepthEnabled() const
 {
@@ -1009,6 +1283,17 @@ void ON_ClippingPlane::SetDepthEnabled(bool on)
 {
   m_depth_enabled = on;
 }
+
+enum ON_ClippingPlaneTypeCodes : unsigned char
+{
+  ClipParticipationObjectList = 10,
+  ClipParticipationLayerList = 11,
+  ClipParticipationIsExclusion = 12,
+  ClipParticipationEnabled = 13,
+
+  // add items here
+  NextTypeCode
+};
 
 bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
 {
@@ -1076,6 +1361,87 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
       if (!rc) break;
     }
 
+    if (minor_version >= 5)
+    {
+      unsigned char itemid = 0xFF;
+      rc = file.ReadChar(&itemid);
+      if (!rc) break;
+      if (0 == itemid)
+        break;
+
+      if (ON_ClippingPlaneTypeCodes::ClipParticipationObjectList == itemid) // 10
+      {
+        int count = 0;
+        rc = file.ReadInt(&count);
+        if (!rc) break;
+
+        ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store, true);
+        ON_UUID object_id = ON_nil_uuid;
+        for (int i = 0; i < count; i++)
+        {
+          rc = file.Read3dmReferencedComponentId(ON_ModelComponent::Type::ModelGeometry, &object_id);
+          if (!rc) break;
+          if (data)
+            data->m_object_id_list.AddUuid(object_id);
+        }
+        if (!rc) break;
+
+        rc = file.ReadChar(&itemid);
+        if (!rc || 0 == itemid) break;
+      }
+      if (ON_ClippingPlaneTypeCodes::ClipParticipationLayerList == itemid) // 11
+      {
+        int count = 0;
+        rc = file.ReadInt(&count);
+        if (!rc) break;
+
+        ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store, true);
+        for (int i = 0; i < count; i++)
+        {
+          int layer_index = 0;
+          rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::Layer, &layer_index);
+          if (!rc) break;
+
+          if (data)
+          {
+            data->m_layer_list.Append(layer_index);
+            data->m_layer_list_is_sorted = false;
+          }
+        }
+        if (!rc) break;
+
+        rc = file.ReadChar(&itemid);
+        if (!rc || 0 == itemid) break;
+      }
+      if (ON_ClippingPlaneTypeCodes::ClipParticipationIsExclusion == itemid) // 12
+      {
+        bool exclusion = true;
+        rc = file.ReadBool(&exclusion);
+        if (!rc) break;
+        ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store, true);
+        if (data)
+          data->m_is_exclusion_list = exclusion;
+        rc = file.ReadChar(&itemid);
+        if (!rc || 0 == itemid) break;
+      }
+      if (ON_ClippingPlaneTypeCodes::ClipParticipationEnabled == itemid) // 13
+      {
+        rc = file.ReadBool(&m_participation_lists_enabled);
+        if (!rc) break;
+        rc = file.ReadChar(&itemid);
+        if (!rc || 0 == itemid) break;
+      }
+
+      if (itemid >= ON_ClippingPlaneTypeCodes::NextTypeCode)
+      {
+        // we are reading file written with code newer
+        // than this code (minor_version > 5)
+        itemid = 0;
+      }
+
+      break;
+    }
+
     break;
   }
 
@@ -1087,7 +1453,9 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
 
 bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,4);
+  // 20 May 2023 S. Baer (RH-74763)
+  // version 1.5 - write clip participation
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,5);
   if (!rc)
     return false;
 
@@ -1116,13 +1484,74 @@ bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
     //version 1.2 - write distance as double
     //version 1.3 - continue to write distance, but the reader now knows to
     //              interpret the distance value in a different way
-    rc = file.WriteDouble(m_depth);
+    double depth = Depth();
+    rc = file.WriteDouble(depth);
     if (!rc) break;
 
     //version 1.4 - write enabled flag for depth
     rc = file.WriteBool(m_depth_enabled);
     if (!rc) break;
 
+    //version 1.5
+    ON_ClippingPlaneData* data = GetClippingPlaneData(m_data_store.m_sn);
+
+    if (data && data->m_object_id_list.Count() > 0)
+    {
+      const ON_UUID* ids = data->m_object_id_list.Array();
+      if (ids)
+      {
+        unsigned char c = ON_ClippingPlaneTypeCodes::ClipParticipationObjectList; // 10
+        rc = file.WriteChar(c);
+        if (!rc) break;
+
+        int count = data->m_object_id_list.Count();
+        rc = file.WriteInt(count);
+        if (!rc) break;
+
+        for (int i = 0; i < count; i++)
+        {
+          rc = file.Write3dmReferencedComponentId(ON_ModelComponent::Type::ModelGeometry, ids[i]);
+          if (!rc) break;
+        }
+        if (!rc) break;
+      }
+    }
+    if (data && data->m_layer_list.Count() > 0)
+    {
+      unsigned char c = ON_ClippingPlaneTypeCodes::ClipParticipationLayerList; // 11
+      rc = file.WriteChar(c);
+      if (!rc) break;
+
+      int count = data->m_layer_list.Count();
+      rc = file.WriteInt(count);
+      if (!rc) break;
+      for (int i = 0; i < count; i++)
+      {
+        int layer_index = data->m_layer_list[i];
+        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::Layer, layer_index);
+        if (!rc) break;
+      }
+      if (!rc) break;
+    }
+    if (data && data->m_is_exclusion_list == false)
+    {
+      unsigned char c = ON_ClippingPlaneTypeCodes::ClipParticipationIsExclusion; // 12
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(data->m_is_exclusion_list);
+      if (!rc) break;
+    }
+    if (!m_participation_lists_enabled)
+    {
+      unsigned char c = ON_ClippingPlaneTypeCodes::ClipParticipationEnabled; // 13
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(m_participation_lists_enabled);
+      if (!rc) break;
+    }
+
+    unsigned char lastTypeCode = 0;
+    rc = file.WriteChar(lastTypeCode);
     break;
   }
 
@@ -1297,5 +1726,4 @@ bool ON_ClippingPlaneSurface::Read( ON_BinaryArchive& file )
 
   return rc;
 }
-
 

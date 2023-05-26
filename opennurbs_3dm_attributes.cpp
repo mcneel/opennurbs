@@ -33,11 +33,6 @@ public:
   bool operator==(const ON_3dmObjectAttributesPrivate&) const;
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
 
-  ON::ClipParticipationSource m_clip_participation_source = ON::ClipParticipationSource::FromLayer;
-  ON_UuidList m_clipplane_list;
-  bool m_clipping_proof = false;
-  bool m_clipplane_list_is_participation = true;
-
   ON::SectionAttributesSource m_section_attributes_source = ON::SectionAttributesSource::FromLayer;
   double m_linetype_scale = 1.0;
   ON_Color m_hatch_background_fill;
@@ -60,18 +55,6 @@ ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate(const ON_3dmObjectA
 
 bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPrivate& other) const
 {
-  if (m_clip_participation_source != other.m_clip_participation_source)
-    return false;
-
-  if (m_clipplane_list != other.m_clipplane_list)
-    return false;
-
-  if (m_clipplane_list_is_participation != other.m_clipplane_list_is_participation)
-    return false;
-
-  if (m_clipping_proof != other.m_clipping_proof)
-    return false;
-
   if (m_section_attributes_source != other.m_section_attributes_source)
     return false;
 
@@ -413,7 +396,7 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   ObsoleteLineCapStyle = 24,
   ObsoleteLineJoinStyleSource = 25,
   ObsoleteLineJoinStyle = 26,
-  ClipParticipationSource = 27,
+  ObsoleteClipParticipationSource = 27,
   SelectiveClippingData = 28,
   // 18 Oct 2021 S. Baer
   // file version 2.4: add section hatch attributes
@@ -446,7 +429,7 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   ClippingPlaneLabelStyle = 40,
   // 11 May 2023 S. Baer
   // file version 2.13: how the participation list for clipping planes is interpreted
-  SelectiveClippingListType = 41,
+  ObsoleteSelectiveClippingListType = 41,
 
   // add items here
   LastAttributeTypeCode = 41
@@ -697,12 +680,12 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     if (minor_version <= 2)
       break;
 
-    if (ON_3dmObjectAttributesTypeCodes::ClipParticipationSource == itemid) //27
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteClipParticipationSource == itemid) //27
     {
       unsigned char clip_participation_source = 0;
       rc = file.ReadChar(&clip_participation_source);
       if (!rc) break;
-      SetClipParticipationSource(ON::ClipParticipationSourceFromUnsigned(clip_participation_source));
+      //SetClipParticipationSource(ON::ClipParticipationSourceFromUnsigned(clip_participation_source));
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -715,15 +698,15 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       ON_UuidList selectiveClipping;
       rc = selectiveClipping.Read(file);
       if (!rc) break;
-      if (clipping_proof)
-        SetClipParticipationForNone();
-      else
-      {
-        if (selectiveClipping.Count() > 0)
-        {
-          SetClipParticipationList(selectiveClipping.Array(), selectiveClipping.Count(), true);
-        }
-      }
+      //if (clipping_proof)
+      //  SetClipParticipationForNone();
+      //else
+      //{
+      //  if (selectiveClipping.Count() > 0)
+      //  {
+      //    SetClipParticipationList(selectiveClipping.Array(), selectiveClipping.Count(), true);
+      //  }
+      //}
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -896,14 +879,14 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     if (minor_version <= 12)
       break;
 
-    if (ON_3dmObjectAttributesTypeCodes::SelectiveClippingListType == itemid) // 41
+    if (ON_3dmObjectAttributesTypeCodes::ObsoleteSelectiveClippingListType == itemid) // 41
     {
       bool b = true;
       rc = file.ReadBool(&b);
       if (!rc) break;
-      if (nullptr == m_private)
-        m_private = new ON_3dmObjectAttributesPrivate(this);
-      m_private->m_clipplane_list_is_participation = b;
+      //if (nullptr == m_private)
+      //  m_private = new ON_3dmObjectAttributesPrivate(this);
+      //m_private->m_clipplane_list_is_participation = b;
 
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
@@ -1325,32 +1308,32 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
     // be default which means there is no need to check their state
     if (m_private)
     {
-      if (ClipParticipationSource() != ON::ClipParticipationSource::FromLayer)
-      {
-        c = ON_3dmObjectAttributesTypeCodes::ClipParticipationSource; // 27
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteChar((unsigned char)ClipParticipationSource());
-        if (!rc) break;
-      }
+      //if (ClipParticipationSource() != ON::ClipParticipationSource::FromLayer)
+      //{
+      //  c = ON_3dmObjectAttributesTypeCodes::ClipParticipationSource; // 27
+      //  rc = file.WriteChar(c);
+      //  if (!rc) break;
+      //  rc = file.WriteChar((unsigned char)ClipParticipationSource());
+      //  if (!rc) break;
+      //}
 
-      {
-        bool forAllClippingPlanes = true;
-        bool forNoClippingPlanes = false;
-        ON_UuidList selectiveClipping;
-        bool isParticipationList = true;
-        GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveClipping, isParticipationList);
-        if (!forAllClippingPlanes)
-        {
-          c = ON_3dmObjectAttributesTypeCodes::SelectiveClippingData; // 28
-          rc = file.WriteChar(c);
-          if (!rc) break;
-          rc = file.WriteBool(forNoClippingPlanes);
-          if (!rc) break;
-          rc = selectiveClipping.Write(file);
-          if (!rc) break;
-        }
-      }
+      //{
+      //  bool forAllClippingPlanes = true;
+      //  bool forNoClippingPlanes = false;
+      //  ON_UuidList selectiveClipping;
+      //  bool isParticipationList = true;
+      //  GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveClipping, isParticipationList);
+      //  if (!forAllClippingPlanes)
+      //  {
+      //    c = ON_3dmObjectAttributesTypeCodes::SelectiveClippingData; // 28
+      //    rc = file.WriteChar(c);
+      //    if (!rc) break;
+      //    rc = file.WriteBool(forNoClippingPlanes);
+      //    if (!rc) break;
+      //    rc = selectiveClipping.Write(file);
+      //    if (!rc) break;
+      //  }
+      //}
 
       if (SectionAttributesSource() != ON::SectionAttributesSource::FromLayer)
       {
@@ -1491,14 +1474,14 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
-    if (m_private && false == m_private->m_clipplane_list_is_participation)
-    {
-      c = ON_3dmObjectAttributesTypeCodes::SelectiveClippingListType; //41
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
-      if (!rc) break;
-    }
+    //if (m_private && false == m_private->m_clipplane_list_is_participation)
+    //{
+    //  c = ON_3dmObjectAttributesTypeCodes::SelectiveClippingListType; //41
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
+    //  if (!rc) break;
+    //}
 
     // 0 indicates end of attributes - this should be the last item written
     c = 0;
@@ -1960,43 +1943,43 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     m_display_order = parents_attributes.m_display_order;
   }
 
-  if (ON::ClipParticipationSource::FromParent == ClipParticipationSource())
-  {
-    if (0 != (0x80 & control_limits))
-    {
-      rc |= 0x80;
-      SetClipParticipationSource(parents_attributes.ClipParticipationSource());
-      if (ON::ClipParticipationSource::FromLayer == ClipParticipationSource() && parent_layer.Index() >= 0)
-      {
-        SetClipParticipationSource(ON::ClipParticipationSource::FromObject);
-        bool forAll = false;
-        bool forNone = false;
-        ON_UuidList list;
-        bool isParticipationList = true;
-        parent_layer.GetClipParticipation(forAll, forNone, list, isParticipationList);
-        if (forAll)
-          SetClipParticipationForAll();
-        else if (forNone)
-          SetClipParticipationForNone();
-        else if (list.Count() > 0)
-          SetClipParticipationList(list.Array(), list.Count(), isParticipationList);
-      }
-      if (ON::ClipParticipationSource::FromObject == ClipParticipationSource())
-      {
-        bool forAll = false;
-        bool forNone = false;
-        ON_UuidList list;
-        bool isParticipationList = true;
-        parents_attributes.GetClipParticipation(forAll, forNone, list, isParticipationList);
-        if (forAll)
-          SetClipParticipationForAll();
-        else if (forNone)
-          SetClipParticipationForNone();
-        else if (list.Count() > 0)
-          SetClipParticipationList(list.Array(), list.Count(), isParticipationList);
-      }
-    }
-  }
+  //if (ON::ClipParticipationSource::FromParent == ClipParticipationSource())
+  //{
+  //  if (0 != (0x80 & control_limits))
+  //  {
+  //    rc |= 0x80;
+  //    SetClipParticipationSource(parents_attributes.ClipParticipationSource());
+  //    if (ON::ClipParticipationSource::FromLayer == ClipParticipationSource() && parent_layer.Index() >= 0)
+  //    {
+  //      SetClipParticipationSource(ON::ClipParticipationSource::FromObject);
+  //      bool forAll = false;
+  //      bool forNone = false;
+  //      ON_UuidList list;
+  //      bool isParticipationList = true;
+  //      parent_layer.GetClipParticipation(forAll, forNone, list, isParticipationList);
+  //      if (forAll)
+  //        SetClipParticipationForAll();
+  //      else if (forNone)
+  //        SetClipParticipationForNone();
+  //      else if (list.Count() > 0)
+  //        SetClipParticipationList(list.Array(), list.Count(), isParticipationList);
+  //    }
+  //    if (ON::ClipParticipationSource::FromObject == ClipParticipationSource())
+  //    {
+  //      bool forAll = false;
+  //      bool forNone = false;
+  //      ON_UuidList list;
+  //      bool isParticipationList = true;
+  //      parents_attributes.GetClipParticipation(forAll, forNone, list, isParticipationList);
+  //      if (forAll)
+  //        SetClipParticipationForAll();
+  //      else if (forNone)
+  //        SetClipParticipationForNone();
+  //      else if (list.Count() > 0)
+  //        SetClipParticipationList(list.Array(), list.Count(), isParticipationList);
+  //    }
+  //  }
+  //}
 
   if (ON::SectionAttributesSource::FromParent == SectionAttributesSource())
   {
@@ -2378,85 +2361,6 @@ int ON_3dmObjectAttributes::DisplayMaterialRefCount() const
   return m_dmref.Count();
 }
 
-
-ON::ClipParticipationSource ON_3dmObjectAttributes::ClipParticipationSource() const
-{
-  return m_private ? m_private->m_clip_participation_source : DefaultAttributesPrivate.m_clip_participation_source;
-}
-void ON_3dmObjectAttributes::SetClipParticipationSource(ON::ClipParticipationSource source)
-{
-  if (ClipParticipationSource() == source)
-    return;
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_clip_participation_source = source;
-}
-
-void ON_3dmObjectAttributes::SetClipParticipationForAll()
-{
-  // default is true for all clipping planes. If our private pointer hasn't
-  // been created, there is no need to do anything
-  if (nullptr == m_private)
-    return;
-
-  m_private->m_clipplane_list.Empty();
-  m_private->m_clipplane_list_is_participation = true;
-  m_private->m_clipping_proof = false;
-}
-void ON_3dmObjectAttributes::SetClipParticipationForNone()
-{
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_clipplane_list.Empty();
-  m_private->m_clipplane_list_is_participation = true;
-  m_private->m_clipping_proof = true;
-}
-void ON_3dmObjectAttributes::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool isParticipationList)
-{
-  if (nullptr == clippingPlaneIds || count < 1)
-  {
-    SetClipParticipationForAll();
-    return;
-  }
-
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_clipplane_list.Empty();
-  for (int i = 0; i < count; i++)
-    m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
-
-  m_private->m_clipplane_list_is_participation = isParticipationList;
-  m_private->m_clipping_proof = false;
-}
-void ON_3dmObjectAttributes::GetClipParticipation(
-  bool& forAllClippingPlanes,
-  bool& forNoClippingPlanes,
-  ON_UuidList& specificClipplaneList,
-  bool& listIsParticipation) const
-{
-  listIsParticipation = true;
-  if (nullptr == m_private)
-  {
-    forAllClippingPlanes = true;
-    forNoClippingPlanes = false;
-    specificClipplaneList.Empty();
-    return;
-  }
-
-  specificClipplaneList = m_private->m_clipplane_list;
-  listIsParticipation = m_private->m_clipplane_list_is_participation;
-  if (specificClipplaneList.Count() > 0)
-  {
-    forAllClippingPlanes = false;
-    forNoClippingPlanes = false;
-  }
-  else
-  {
-    forNoClippingPlanes = m_private->m_clipping_proof;
-    forAllClippingPlanes = !forNoClippingPlanes;
-  }
-}
 
 
 ON::SectionAttributesSource ON_3dmObjectAttributes::SectionAttributesSource() const

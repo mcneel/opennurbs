@@ -1849,6 +1849,8 @@ const ON_PostEffects& ON_3dmRenderSettings::PostEffects(void) const
   return const_cast<ON_3dmRenderSettings*>(this)->PostEffects();
 }
 
+#ifdef RDK_RENDER_PRESETS
+
 extern ON_UUID uuidRenderPreset_Studio;
 extern ON_UUID uuidRenderPreset_Custom;
 extern ON_UUID uuidRenderPreset_Exterior;
@@ -1890,6 +1892,7 @@ void ON_3dmRenderSettings::GetRenderPresetList(ON_SimpleArray<ON_UUID>& presets)
   presets.Append(uuidRenderPreset_Interior);
   presets.Append(uuidRenderPreset_Custom);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
