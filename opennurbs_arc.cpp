@@ -296,6 +296,14 @@ bool ON_Arc::IsCircle() const
          ? true : false;
 }
 
+bool ON_Arc::IsLinear(double tol) const
+{
+  static const double Theta_max = 2*ON_PI - 4.0 * atan(.5);   // about 250 degrees
+  return  AngleRadians() < Theta_max &&                        // Angle must be less than max
+    radius * (1.0 - cos(AngleRadians() / 2.0)) < tol &&     // Segment height less than tol
+    radius * 2.0 * sin(AngleRadians() / 2.0)   > tol;      // Chord length greater than tol
+}
+
 double ON_Arc::AngleRadians() const
 {
   return m_angle[1]-m_angle[0];

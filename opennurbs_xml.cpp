@@ -5102,10 +5102,12 @@ ON_UUID uuidPostEffect_ToneMapper_Clamp = { 0xacb8d258, 0xc1d6, 0x499d, { 0xaa, 
 ON_UUID uuidPostEffect_Gamma            = { 0x84c0798d, 0xc43a, 0x4402, { 0x88, 0x91, 0xe0, 0xc8, 0x08, 0x8e, 0x67, 0xca } };
 ON_UUID chanRGBA                        = { 0x453a9a1c, 0x9307, 0x4976, { 0xb2, 0x82, 0x4e, 0xad, 0x4d, 0x53, 0x98, 0x79 } };
 ON_UUID chanDistanceFromCamera          = { 0xb752ce0b, 0xc219, 0x4bdd, { 0xb1, 0x34, 0x26, 0x42, 0x5e, 0x1c, 0x43, 0x31 } };
+#ifdef RDK_RENDER_PRESETS
 ON_UUID uuidRenderPreset_Studio         = { 0x5898cc05, 0x4202, 0x4dfb, { 0x83, 0xfe, 0x8f, 0xa8, 0x8f, 0x91, 0xc7, 0xd6 } };
 ON_UUID uuidRenderPreset_Custom         = { 0xc89a74fb, 0x1451, 0x4a9b, { 0xb8, 0x7d, 0xe3, 0x0f, 0xf3, 0x51, 0x0f, 0x96 } };
 ON_UUID uuidRenderPreset_Exterior       = { 0x1346FE79, 0xBF49, 0x4BB6, { 0x86, 0xF4, 0xF2, 0xC2, 0x81, 0xD1, 0xD5, 0x5A } };
 ON_UUID uuidRenderPreset_Interior       = { 0x14A1D7E9, 0xC75D, 0x464D, { 0xBB, 0x81, 0x38, 0x1C, 0xA2, 0xF1, 0xC9, 0x58 } };
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -5217,8 +5219,10 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_DITHERING_METHOD, ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
+#ifdef RDK_RENDER_PRESETS
           p.SetParam(ON_RDK_CURRENT_RENDER_PRESET, (_major_version < 8) ? uuidRenderPreset_Custom
                                                                         : uuidRenderPreset_Studio);
+#endif
           p.SetParam(ON_RDK_POST_PROCESS_GAMMA_ON, true);
           p.SetParam(ON_RDK_POST_PROCESS_GAMMA,   (_major_version < 6) ? 1.0f : 2.2f);
           p.SetParam(ON_RDK_PRE_PROCESS_GAMMA_ON, (_major_version < 6) ? false : true);
@@ -5232,10 +5236,12 @@ void ON_RdkDocumentDefaults::CreateXML(void)
             p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, false);
           }
 
+#ifdef RDK_RENDER_PRESETS
           if (_major_version < 8)
           {
             p.SetParam(ON_RDK_CURRENT_RENDER_PRESET, uuidRenderPreset_Custom);
           }
+#endif
         }
       }
 

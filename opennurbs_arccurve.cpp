@@ -357,7 +357,10 @@ ON_ArcCurve::IsLinear(  // true if curve locus is a line segment
       double // tolerance - formal parameter intentionally ignored in this virtual function
       ) const
 {
-  return false;
+  return false;  // GBA 23 May 23.  This just seems wrong.  Maybe we should change this very early in WIP and see if anyone notices.
+                 //  I think this is the correct implementation
+ // return m_arc.IsLinear(tolerance);
+
 }
 
 bool

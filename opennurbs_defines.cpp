@@ -2821,20 +2821,6 @@ ON::LineJoinStyle ON::LineJoinStyleFromUnsigned(
 }
 
 
-ON::ClipParticipationSource ON::ClipParticipationSourceFromUnsigned(
-  unsigned int clip_participation_source_as_unsigned
-)
-{
-  switch (clip_participation_source_as_unsigned)
-  {
-    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromLayer);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromObject);
-    ON_ENUM_FROM_UNSIGNED_CASE(ON::ClipParticipationSource::FromParent);
-  }
-  ON_ERROR("invalid clip_participation_source_as_unsigned parameter.");
-  return ON::ClipParticipationSource::FromLayer;
-}
-
 ON::SectionFillRule ON::SectionFillRuleFromUnsigned(
   unsigned int section_fill_rule_as_unsigned
 )

@@ -354,6 +354,11 @@ public:
   //   angle is 360 degrees.
   bool IsCircle() const;
 
+
+  // Returns:
+  //  True if the arc is within tol of the chord and chord is longer than tol
+  bool IsLinear(double tol) const;
+
   // Returns:
   //   The arc's subtended angle in radians.
   double AngleRadians() const;

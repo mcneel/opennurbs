@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2023 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -30,10 +30,6 @@ public:
   bool operator==(const ON_LayerPrivate&) const;
   bool operator!=(const ON_LayerPrivate&) const;
 
-  ON_UuidList m_clipplane_list;
-  bool m_clipplane_list_is_participation = true;
-  bool m_clipping_proof = false;
-
   std::shared_ptr<ON_SectionStyle> m_custom_section_style;
 
   bool m_visible_in_new_details = true;
@@ -46,15 +42,6 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
 {
   if (this == &other)
     return true;
-
-  if (m_clipplane_list != other.m_clipplane_list)
-    return false;
-
-  if (m_clipplane_list_is_participation != other.m_clipplane_list_is_participation)
-    return false;
-
-  if (m_clipping_proof != other.m_clipping_proof)
-    return false;
 
   {
     const ON_SectionStyle* customThis = m_custom_section_style.get();
@@ -273,25 +260,25 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   dump.Print("plot color rgb = "); dump.PrintRGB(m_plot_color); dump.Print("\n");
   dump.Print("default material index = %d\n",m_material_index);
 
-  {
-    bool clipAll = true;
-    bool clipNone = false;
-    ON_UuidList cliplist;
-    bool isSelectiveList = true;
-    GetClipParticipation(clipAll, clipNone, cliplist, isSelectiveList);
-    if (clipAll)
-    {
-      dump.Print("participates with all clipping planes\n");
-    }
-    else if (clipNone)
-    {
-      dump.Print("participates with no clipping planes\n");
-    }
-    else
-    {
-      dump.Print("participates with specific clipping planes\n");
-    }
-  }
+  //{
+  //  bool clipAll = true;
+  //  bool clipNone = false;
+  //  ON_UuidList cliplist;
+  //  bool isSelectiveList = true;
+  //  GetClipParticipation(clipAll, clipNone, cliplist, isSelectiveList);
+  //  if (clipAll)
+  //  {
+  //    dump.Print("participates with all clipping planes\n");
+  //  }
+  //  else if (clipNone)
+  //  {
+  //    dump.Print("participates with no clipping planes\n");
+  //  }
+  //  else
+  //  {
+  //    dump.Print("participates with specific clipping planes\n");
+  //  }
+  //}
 
   const ON_SectionStyle* section_style = CustomSectionStyle();
   if (nullptr == section_style)
@@ -312,7 +299,7 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
 // inferred when the data matches default values.
 enum ON_LayerTypeCodes : unsigned char
 {
-  SelectiveClippingData = 28,
+  ObsoleteSelectiveClippingData = 28,
   // 18 Oct 2021 S. Baer
   // chunk version 1.11: add section hatch attributes
   SectionHatchIndex = 29,
@@ -332,7 +319,7 @@ enum ON_LayerTypeCodes : unsigned char
   CustomSectionStyle = 35,
   // 11 May 2023 S. Baer
   // New selective clipping data with bool for list type
-  SelectiveClippingListType = 36,
+  ObsoleteSelectiveClippingListType = 36,
 
   LastLayerTypeCode = 36
 };
@@ -495,24 +482,24 @@ bool ON_Layer::Write(
     unsigned char c = 0;
 
     // selective clipping (1.10)
-    {
-      bool forAllClippingPlanes = true;
-      bool forNoClippingPlanes = false;
-      ON_UuidList selectiveList;
-      bool isParticipationList = true;
-      GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveList, isParticipationList);
-      // only write selective clipping data if it is not default
-      if (false == forAllClippingPlanes || true == forNoClippingPlanes || selectiveList.Count() > 0)
-      {
-        c = ON_LayerTypeCodes::SelectiveClippingData;
-        rc = file.WriteChar(c);
-        if (!rc) break;
-        rc = file.WriteBool(forNoClippingPlanes);
-        if (!rc) break;
-        rc = selectiveList.Write(file);
-        if (!rc) break;
-      }
-    }
+    //{
+    //  bool forAllClippingPlanes = true;
+    //  bool forNoClippingPlanes = false;
+    //  ON_UuidList selectiveList;
+    //  bool isParticipationList = true;
+    //  GetClipParticipation(forAllClippingPlanes, forNoClippingPlanes, selectiveList, isParticipationList);
+    //  // only write selective clipping data if it is not default
+    //  if (false == forAllClippingPlanes || true == forNoClippingPlanes || selectiveList.Count() > 0)
+    //  {
+    //    c = ON_LayerTypeCodes::SelectiveClippingData;
+    //    rc = file.WriteChar(c);
+    //    if (!rc) break;
+    //    rc = file.WriteBool(forNoClippingPlanes);
+    //    if (!rc) break;
+    //    rc = selectiveList.Write(file);
+    //    if (!rc) break;
+    //  }
+    //}
 
     // 23 April 2023 S. Baer
     // Stop writing individual section attributes. All section attribute IO has been
@@ -592,14 +579,14 @@ bool ON_Layer::Write(
       if (!rc) break;
     }
 
-    if (m_private && false == m_private->m_clipplane_list_is_participation)
-    {
-      c = ON_LayerTypeCodes::SelectiveClippingListType; //36
-      rc = file.WriteChar(c);
-      if (!rc) break;
-      rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
-      if (!rc) break;
-    }
+    //if (m_private && false == m_private->m_clipplane_list_is_participation)
+    //{
+    //  c = ON_LayerTypeCodes::SelectiveClippingListType; //36
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
+    //  if (!rc) break;
+    //}
 
     // 0 indicates end of new non-default attributes
     c = 0;
@@ -786,7 +773,7 @@ bool ON_Layer::Read(
                       if (0 == itemid)
                         break;
 
-                      if (ON_LayerTypeCodes::SelectiveClippingData == itemid) //28
+                      if (ON_LayerTypeCodes::ObsoleteSelectiveClippingData == itemid) //28
                       {
                         bool noClippingPlanes = false;
                         ON_UuidList selectiveList;
@@ -794,12 +781,12 @@ bool ON_Layer::Read(
                         if (!rc) break;
                         rc = selectiveList.Read(file);
                         if (!rc) break;
-                        if (noClippingPlanes)
-                          SetClipParticipationForNone();
-                        else if (selectiveList.Count() > 0)
-                          SetClipParticipationList(selectiveList.Array(), selectiveList.Count(), true);
-                        else
-                          SetClipParticipationForAll();
+                        //if (noClippingPlanes)
+                        //  SetClipParticipationForNone();
+                        //else if (selectiveList.Count() > 0)
+                        //  SetClipParticipationList(selectiveList.Array(), selectiveList.Count(), true);
+                        //else
+                        //  SetClipParticipationForAll();
 
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
@@ -907,14 +894,14 @@ bool ON_Layer::Read(
                         if (!rc || 0 == itemid) break;
                       }
 
-                      if (ON_LayerTypeCodes::SelectiveClippingListType == itemid)
+                      if (ON_LayerTypeCodes::ObsoleteSelectiveClippingListType == itemid)
                       {
                         bool b = true;
                         file.ReadBool(&b);
                         if (!rc) break;
-                        if (nullptr == m_private)
-                          m_private = new ON_LayerPrivate();
-                        m_private->m_clipplane_list_is_participation = b;
+                        //if (nullptr == m_private)
+                        //  m_private = new ON_LayerPrivate();
+                        //m_private->m_clipplane_list_is_participation = b;
 
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
@@ -2495,71 +2482,6 @@ void ON_Layer::UnsetPersistentLocking()
   // a set bit means the child will be unlocked when the parent is unlocked
   const unsigned char and_mask = 0xE7;
   m_extension_bits &= and_mask;
-}
-
-void ON_Layer::SetClipParticipationForAll()
-{
-  // default is true for all clipping planes. If our private pointer hasn't
-  // been created, there is no need to do anything
-  if (nullptr == m_private)
-    return;
-
-  m_private->m_clipplane_list.Empty();
-  m_private->m_clipplane_list_is_participation = true;
-  m_private->m_clipping_proof = false;
-}
-void ON_Layer::SetClipParticipationForNone()
-{
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_clipplane_list.Empty();
-  m_private->m_clipplane_list_is_participation = true;
-  m_private->m_clipping_proof = true;
-}
-void ON_Layer::SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool listIsParticipation)
-{
-  if (nullptr == clippingPlaneIds || count < 1)
-  {
-    SetClipParticipationForAll();
-    return;
-  }
-
-  if (nullptr == m_private)
-    m_private = new ON_LayerPrivate();
-  m_private->m_clipplane_list.Empty();
-  for (int i = 0; i < count; i++)
-    m_private->m_clipplane_list.AddUuid(clippingPlaneIds[i], true);
-
-  m_private->m_clipplane_list_is_participation = listIsParticipation;
-  m_private->m_clipping_proof = false;
-}
-void ON_Layer::GetClipParticipation(
-  bool& forAllClippingPlanes,
-  bool& forNoClippingPlanes,
-  ON_UuidList& specificClipplaneList,
-  bool& listIsParticipation) const
-{
-  listIsParticipation = true;
-  if (nullptr == m_private)
-  {
-    forAllClippingPlanes = true;
-    forNoClippingPlanes = false;
-    specificClipplaneList.Empty();
-    return;
-  }
-
-  specificClipplaneList = m_private->m_clipplane_list;
-  listIsParticipation = m_private->m_clipplane_list_is_participation;
-  if (specificClipplaneList.Count() > 0)
-  {
-    forAllClippingPlanes = false;
-    forNoClippingPlanes = false;
-  }
-  else
-  {
-    forNoClippingPlanes = m_private->m_clipping_proof;
-    forAllClippingPlanes = !forNoClippingPlanes;
-  }
 }
 
 void ON_Layer::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)

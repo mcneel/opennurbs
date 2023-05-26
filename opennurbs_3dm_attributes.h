@@ -365,43 +365,6 @@ public:
   // is on.
   ON::active_space m_space = ON::model_space;
 
-  // Set the object to participate in clipping for all clipping plane objects.
-  // This is the default behavior.
-  void SetClipParticipationForAll();
-
-  // Set the object to be immune from the clipping for all clipping planes.
-  void SetClipParticipationForNone();
-
-  // Set the object to only be clipped by a specific set of clipping planes.
-  // Paramters:
-  //   clippingPlaneIds [in] - array of ON_UUIDs for clipping planes
-  //   count [in] - number of elements in clippingPlaneIds
-  //   listIsParticipation [in] - is the list clipping planes that the object
-  //     participates with or an exclusion list of clipping planes to not
-  //     participate with
-  void SetClipParticipationList(const ON_UUID* clippingPlaneIds, int count, bool listIsParticipation);
-
-  // Get details on how the object will interact with clipping planes
-  // Parameters:
-  //   forAllClippingPlanes [out] - if true, this object interacts with all
-  //     clipping planes
-  //   forNoClippingPlanes [out] - if true, this object is immune from all
-  //     clipping planes
-  //   specificClipplaneList [out] - if the object interacts with only a
-  //     specific set of clipping planes, this list will have the uuids of
-  //     those clipping plane objects
-  //   listIsParticipation [out] - is specificClipplaneList a participation
-  //     list or an exclusion list
-  void GetClipParticipation(
-    bool& forAllClippingPlanes,
-    bool& forNoClippingPlanes,
-    ON_UuidList& specificClipplaneList,
-    bool& listIsParticipation) const;
-
-  // Source for clip participation details
-  ON::ClipParticipationSource ClipParticipationSource() const;
-  void SetClipParticipationSource(ON::ClipParticipationSource source);
-
 #pragma region Section Attributes
   // Sections are the product of intersecting a plane with an object.
   // For surface type geometry (ON_Brep, ON_Extrusion, ON_SubD, ON_Mesh)

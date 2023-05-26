@@ -2476,26 +2476,6 @@ public:
     unsigned int join_as_unsigned
   );
 
-#pragma region RH_C_SHARED_ENUM [ON::ClipParticipationSource] [Rhino.DocObjects.ObjectClipParticipationSource]
-  /// <summary>
-  /// The source of clipping plane effects on an object.
-  /// </summary>
-  /// <since>8.0</since>
-  enum class ClipParticipationSource : unsigned char
-  {
-    /// <summary>Clip participation is defined by object's layer</summary>
-    FromLayer = 0,
-    /// <summary>Clip participation is specific to the object</summary>
-    FromObject = 1,
-    /// <summary>Clip participation is defined by object's parent</summary>
-    FromParent = 3
-  };
-#pragma endregion
-
-  static ClipParticipationSource ClipParticipationSourceFromUnsigned(
-    unsigned int clip_participation_source_as_unsigned
-  );
-
 #pragma region RH_C_SHARED_ENUM [ON::SectionFillRule] [Rhino.DocObjects.ObjectSectionFillRule]
   /// <summary>
   /// For sectioning an object; the decision of when to generate hatches and fills.

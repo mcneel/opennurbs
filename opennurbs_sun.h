@@ -257,6 +257,9 @@ public:
   // For internal use only.
   virtual void OnInternalXmlChanged(const ON_Sun*);
 
+  // Get the accuracy of the sun calculations. The default is minimum accuracy (for more speed).
+  virtual ON_SunEngine::Accuracy Accuracy(void) const;
+
   // Set the accuracy of the sun calculations. The default is minimum accuracy (for more speed).
   virtual void SetAccuracy(ON_SunEngine::Accuracy acc);
 
@@ -303,40 +306,6 @@ private: // For internal use only.
   void SetXMLNode(ON_XMLNode& node) const;
   friend class ONX_Model;
   void UseEarthAnchorPoint(ON_EarthAnchorPoint& eap);
-
-private:
-  class CImpl;
-  CImpl* _impl;
-};
-
-// Class ON_SunExCombine is the same as ON_Sun except that it overrides Azimuth() and Altitude() to calculate
-// the sun's azimuth / altitude.
-class ON_CLASS ON_SunExCombine : public ON_Sun
-{
-public:
-  ON_SunExCombine();
-  ON_SunExCombine(ON_XMLNode& model_node);
-  ON_SunExCombine(const ON_SunExCombine& sun);
-  virtual ~ON_SunExCombine();
-
-  virtual const ON_Sun& operator = (const ON_Sun& sun) override;
-  virtual const ON_SunExCombine& operator = (const ON_SunExCombine& sun);
-
-  // Returns the azimuth of the sun in the sky (in degrees) as viewed by an observer on Earth. The value
-  // increases Eastwards with North as zero. This value is not affected by the sun's 'north' setting.
-  // If manual control is in effect, the stored value is returned. Otherwise the value is computed from the
-  // values stored in the local date and time, latitude, longitude, time zone and daylight saving settings.
-  // The stored value is not modified by this method (i.e., it is truly const).
-  virtual double Azimuth(void) const override;
-
-  // Returns the altitude of the sun in the sky (in degrees) as viewed by an observer on Earth.
-  // If manual control is in effect, the stored value is returned. Otherwise the value is computed from the
-  // values stored in the local date and time, latitude, longitude, time zone and daylight saving settings.
-  // The stored value is not modified by this method (i.e., it is truly const).
-  virtual double Altitude(void) const override;
-
-private: // For internal use only.
-  friend class ON_3dmRenderSettingsPrivate;
 
 private:
   class CImpl;

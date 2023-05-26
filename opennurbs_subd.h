@@ -199,6 +199,74 @@ enum class ON_SubDEdgeTag : unsigned char
 };
 #pragma endregion
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDEdgeType] [Rhino.Geometry.SubDEdgeType] [byte]
+/// <summary>
+/// ON_SubDEdgeType describes a subdivision edge. 
+/// ON_SubDEdgeType is typically used when generating text descriptions
+/// or filtering edges during selection processes. 
+/// Do not confuse ON_SubDEdgeType and ON_SubDEdgeTag.
+/// The unique types are single bits and suitable for use in bitwise logic.
+/// </summary>  
+enum class ON_SubDEdgeType : unsigned char
+{
+  ///<summary>
+  /// Type is unset or the edge is not valid.
+  ///</summary>
+  Unset = 0,
+
+  ///<summary>
+  /// The edge has zero faces and the tag is ON_SubDEdgeTag::Crease.
+  ///</summary>
+  Wire = 1,
+
+  ///<summary>
+  /// The edge has one face and the tag is ON_SubDEdgeTag::Crease.
+  ///</summary>
+  Boundary = 2,
+
+  ///<summary>
+  /// The edge has two faces, 
+  /// the tag is ON_SubDEdgeTag::Smooth or ON_SubDEdgeTag::SmoothX,
+  /// and the edge sharpness is zero. 
+  /// Note that ON_SubEdge::IsSmoothNotSharp() returns true if and only if ON_SubEdge::EdgeType() is InteriorSmooth.
+  ///</summary>
+  InteriorSmooth = 4,
+
+  ///<summary>
+  /// The edge has two faces, 
+  /// the tag is ON_SubDEdgeTag::Smooth or ON_SubDEdgeTag::SmoothX,
+  /// and the edge sharpness is nonzero.
+  /// Note that ON_SubEdge::IsSharp() returns true if and only if ON_SubEdge::EdgeType() is InteriorSharp.
+  ///</summary>
+  InteriorSharp = 8,
+
+  ///<summary>
+  /// The edge has two faces and the tag is ON_SubDEdgeTag::Crease.
+  ///</summary>
+  InteriorCrease = 16,
+
+  ///<summary>
+  /// The edge has three or more faces and the tag is ON_SubDEdgeTag::Crease.
+  ///</summary>
+  Nonmanifold = 32,
+
+  ///<summary>
+  /// The edge has an invalid combination of face count, tag, and sharpness properties.
+  ///</summary>
+  Invalid = 64,
+
+  ///<summary>
+  /// A mask for all interior edge types. Interior edges have 2 faces.
+  ///</summary>
+  InteriorMask = 28,
+
+  ///<summary>
+  /// A mask for all valid edge types.
+  ///</summary>
+  ValidTypesMask = 63
+};
+#pragma endregion
+
 #pragma region RH_C_SHARED_ENUM [ON_SubDHashType] [Rhino.Geometry.SubDHashType] [byte]
 /// <summary>
 /// ON_SubDHashType used used to specify what type of SubD information is hashed (topology or geometry).
@@ -1319,6 +1387,17 @@ public:
     Otherwise, ON_SubDEdgeTag::Unset is returned.
   */
   ON_SubDEdgeTag EdgeTag() const;
+
+  /// <summary>
+  /// EdgeType() is typically used to generate text descriptions and
+  /// in selection filtering. 
+  /// Do not confuse EdgeType() and EdgeTag().
+  /// </summary>
+  /// <returns>
+  /// If Edge() is not nullptr, then Edge()->EdgeType() is returned.
+  /// Otherwise, ON_SubDEdgeType::Unset is returned.
+  /// </returns>
+  ON_SubDEdgeType EdgeType() const;
     
   /*
   Returns:
@@ -11261,6 +11340,44 @@ public:
   */
   void SetCurvatures() const;
 
+  /*
+  Description:
+    Computes normal curvature values for this fragment. Evaluation
+    points are uniformly spaced over the fragment to fill the N, Ku, Kv
+    arrays.
+  Parameters:
+    sample_count - [in]
+      How many samples to get in both directions.
+    comb_count_params - [in]
+      How many combs to get in both directions (+1 if get_first_comb is false).
+    get_first_comb - [in]
+      Wheter to skip combs at u = 0 and v = 0. The parameters at which to
+      get the combs are the same when:
+        - get_first_comb is true and comb_count is n
+        - get_first_comb is false and comb_count is n
+    getKu, getKv - [in]
+      Should the curvature be computed along u-isos, v-isos, or both.
+    P, Kuv - [out]
+      Arrays of size (getKu + getKv) * sample_count * comb_count_arrays where
+      Points and Curvatures along u-isos or along v-isos are stored.
+      Sample (i, j) in u direction, on u-dir comb j at sample i is stored 
+      at index i + (j - get_first_comb ? 0 : 1) * sample_count.
+      Sample (i, j) in v direction, on v-dir comb i at sample j is stored 
+      at index (getKu * sample_count * comb_count_arrays) + j + (i - get_first_comb ? 0 : 1) * sample_count.
+      Direction u (indexed with i) refers to the Fragment's grid 1st index
+      (from face->Vertex(0) to face->Vertex(1)).
+      Direction v (indexed with j) refers to the Fragment's grid 2nd index
+      (from face->Vertex(0) to face->Vertex(3)).
+      comb_count_arrays = comb_count_params - get_first_comb ? 1 : 0
+  Returns:
+    Number of points sampled
+  */
+  unsigned GetNormalCurvatures(const unsigned sample_count,
+                               const unsigned comb_count_params,
+                               const bool get_first_comb, const bool getKu,
+                               const bool getKv, ON_SimpleArray<ON_3dPoint>* P,
+                               ON_SimpleArray<ON_3dVector>* Kuv) const;
+
 public:
 
   // Normalized grid parameters useful for appling a texture to the grid are available
@@ -11289,8 +11406,8 @@ public:
     bool bCurvatureArray
   );
 
-  public:
-    void Dump(ON_TextLog& text_log) const;
+public:
+  void Dump(ON_TextLog& text_log) const;
 };
 
 class ON_CLASS ON_SubDManagedMeshFragment : public ON_SubDMeshFragment
@@ -13530,6 +13647,18 @@ public:
 
 
   unsigned int FaceCount() const;
+
+  /// <summary>
+  /// EdgeType() is typically used to generate text descriptions and
+  /// in selection filtering. 
+  /// Do not confuse EdgeType() and EdgeTag().
+  /// </summary>
+  /// <returns>
+  /// If the edge has a valid combination of face count, tag, and sharpness properties,
+  /// then the corresponding type is returned.
+  /// Otherwise, ON_SubDEdgeType::Invalid is returned.
+  /// </returns>
+  ON_SubDEdgeType EdgeType() const;
 
   /*
   Parameters:

@@ -611,6 +611,21 @@ private:
   float m_depth = 0;
 };
 
+// The only reason this class exists is to maintain extra information on ON_ClippingPlane
+// without changing the size of the ON_ClippingPlane class (to not break the SDK). This
+// class helps maintain a list of additional information associated with an ON_ClippingPlane.
+// Pretend it does not exist
+class ON_CLASS ON_ClippingPlaneDataStore
+{
+public:
+  ON_ClippingPlaneDataStore();
+  ON_ClippingPlaneDataStore(const ON_ClippingPlaneDataStore& src);
+  ~ON_ClippingPlaneDataStore();
+  ON_ClippingPlaneDataStore& operator=(const ON_ClippingPlaneDataStore& src);
+  
+  unsigned int m_sn=0;
+};
+
 class ON_CLASS ON_ClippingPlane
 {
 public:
@@ -641,16 +656,28 @@ public:
   bool DepthEnabled() const;
   void SetDepthEnabled(bool on);
 
+  // Default is true
+  bool ParticipationListsEnabled() const;
+  void SetParticipationListsEnabled(bool on);
+
+  void SetParticipationLists(
+    const ON_SimpleArray<ON_UUID>* objectIds,
+    const ON_SimpleArray<int>* layerIndices,
+    bool isExclusionList);
+
+  const ON_UuidList* ObjectClipParticipationList() const;
+  const ON_SimpleArray<int>* LayerClipParticipationList() const;
+  bool ClipParticipationListsAreExclusionLists() const;
+
   bool Read( class ON_BinaryArchive& );
   bool Write( class ON_BinaryArchive& ) const;
 
 private:
   bool m_depth_enabled = false;
-  char m_reserved[2];
-
-  // This should be a double, but is a float in order to not change
-  // the class size. When the Rhino SDK can break, this data type should change.
-  float m_depth = 0;
+  bool m_participation_lists_enabled = true;
+  char m_reserved;
+  
+  ON_ClippingPlaneDataStore m_data_store;
 };
 
 

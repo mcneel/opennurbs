@@ -874,11 +874,6 @@ public:
   // Sets the id of the rendering environment for a particular usage.
   void SetRenderEnvironmentId(EnvironmentUsage usage, const ON_UUID& id);
 
-  // Access to render presets.
-  ON_UUID CurrentRenderPreset(void) const;
-  void SetCurrentRenderPreset(const ON_UUID& uuid);
-  void GetRenderPresetList(ON_SimpleArray<ON_UUID>& presets) const;
-
 private:
   unsigned short m_reserved1 = 0;
 

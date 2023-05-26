@@ -4270,8 +4270,8 @@ bool ON_SubDEdgeSharpness::IsValidValue(
 {
   if (candidate_value >= 0.0 && candidate_value <= ON_SubDEdgeSharpness::MaximumValue)
     return true;
-  if (bCreaseResult && ON_SubDEdgeSharpness::MaximumValue == candidate_value)
-    return true;
+  if ( ON_SubDEdgeSharpness::CreaseValue == candidate_value)
+    return bCreaseResult;
   return false;
 }
 
@@ -5689,6 +5689,46 @@ const ON_SubDVertex* ON_SubDEdge::Vertex(
 unsigned int ON_SubDEdge::FaceCount() const
 {
   return m_face_count;
+}
+
+ON_SubDEdgeType ON_SubDEdge::EdgeType() const
+{
+  if (0 == m_face_count)
+  {
+    if (ON_SubDEdgeTag::Crease == m_edge_tag)
+      return ON_SubDEdgeType::Wire;
+  }
+  else if (1 == m_face_count)
+  {
+    if (ON_SubDEdgeTag::Crease == m_edge_tag)
+      return ON_SubDEdgeType::Boundary;
+  }
+  else if (2 == m_face_count)
+  {
+    if (ON_SubDEdgeTag::Crease == m_edge_tag)
+      return ON_SubDEdgeType::InteriorCrease;
+    
+    if (ON_SubDEdgeTag::Smooth == m_edge_tag || ON_SubDEdgeTag::SmoothX == m_edge_tag)
+    {
+      if (this->m_sharpness.IsZero())
+        return ON_SubDEdgeType::InteriorSmooth;
+      if (this->m_sharpness.IsSharp())
+        return ON_SubDEdgeType::InteriorSharp;
+    }
+  }
+  else if (m_face_count <= ON_SubDEdge::MaximumFaceCount)
+  {
+    if (ON_SubDEdgeTag::Crease == m_edge_tag)
+      return ON_SubDEdgeType::Nonmanifold;
+  }
+
+  return ON_SubDEdgeType::Invalid;
+};
+
+ON_SubDEdgeType ON_SubDEdgePtr::EdgeType() const
+{
+  const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+  return (nullptr != e) ? e->EdgeType() : ON_SubDEdgeType::Unset;
 }
 
 bool ON_SubDEdge::HasBoundaryEdgeTopology() const
@@ -22334,10 +22374,12 @@ const ON_SubDEdgePtr ON_SubDEdgeChain::EdgeChainNeighbor(
     // Look for a single neighbor with same crease/smooth property and same face count
     // This lets chains turn the right way when there are both creases and smooth
     // edges.
+    const double end_sharpness = edge->Sharpness(true)[bReverse ? 0 : 1];
     const ON_SubDEdge* nxt = nullptr;
     for (unsigned short vei = 0; vei < v->m_edge_count; vei++)
     {
-      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(v->m_edges[vei].m_ptr);
+      const ON_SubDEdgePtr eptr = v->m_edges[vei];
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
       if (edge == e)
         continue;
       if (bIsSmooth != e->IsSmooth())
@@ -22346,6 +22388,12 @@ const ON_SubDEdgePtr ON_SubDEdgeChain::EdgeChainNeighbor(
         continue;
       if (e->m_face_count != edge->m_face_count)
         continue;
+
+      // Dale Lear - 2023 May 23 - added continuous sharpness test
+      const double nxt_sharpness = e->Sharpness(true)[ON_SUBD_EDGE_DIRECTION(eptr.m_ptr)];
+      if (false == (end_sharpness == nxt_sharpness))
+        continue;
+
       if (e->m_vertex[0] != v && e->m_vertex[1] != v)
         continue; // bogus edge
       if (nullptr == nxt)
