@@ -847,6 +847,18 @@ protected:
   virtual ON_XMLNode* FindNodeByNameProperty(const wchar_t* param_name) const;
 };
 
+// Class ON_XMLParamBlock is ON_XMLParameters with a built-in XML node.
+class ON_CLASS ON_XMLParamBlock : public ON_XMLParameters
+{
+public:
+  ON_XMLParamBlock();
+  virtual ~ON_XMLParamBlock();
+
+private:
+  ON_XMLRootNode _node;
+  ON__UINT64 _reserved;
+};
+
 ON_DECL bool ON_RunXMLTests(const wchar_t* test_folder);
 
 ////////////////////////////////////////////////////////////////////////////////////////////

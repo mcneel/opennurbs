@@ -14,8 +14,6 @@
 #if !defined(OPENNURBS_3DM_SETTINGS_INC_)
 #define OPENNURBS_3DM_SETTINGS_INC_
 
-#include "opennurbs_post_effects.h"
-
 ///////////////////////////////////////////////////////////////////////
 //
 // units and tolerances

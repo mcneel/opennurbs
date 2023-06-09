@@ -44,7 +44,9 @@ public:
     True if successful.
     (xform is invertable or didn't need to be).
   */
-  ON_DEPRECATED_MSG("Prefer the version that takes a const ON_Geometry* - for object frame support.") bool Transform( const ON_Xform& xform );
+  ON_DEPRECATED_MSG("Prefer the version that takes a const ON_Geometry* - for object frame support.")
+  bool Transform( const ON_Xform& xform );
+  
   bool Transform(const ON_Geometry* pOriginalGeometry, const ON_Xform& xform);
 
   // attributes of geometry and dimension table objects
@@ -532,15 +534,15 @@ public:
 
   /*
   Description:
-    Delete a decal from this attributes object. Returns true if successful, else false.
+    Remove a decal from this attributes object. Returns true if successful, else false.
   */
-  bool DeleteDecal(ON_Decal& decal);
+  bool RemoveDecal(ON_Decal& decal);
 
   /*
   Description:
-    Delete all decals from this attributes object.
+    Remove all decals from this attributes object.
   */
-  void DeleteAllDecals(void);
+  void RemoveAllDecals(void);
 
   // Mesh Modifiers.
 

@@ -1133,7 +1133,7 @@ void ON_ClippingPlane::Default()
   m_plane_id = ON_nil_uuid;
   m_bEnabled = true;
   m_depth_enabled = false;
-  m_participation_lists_enabled = true;
+  m_participation_lists_enabled = false;
   DeleteClippingPlaneData(m_data_store);
 }
 
@@ -1541,7 +1541,7 @@ bool ON_ClippingPlane::Write( ON_BinaryArchive& file ) const
       rc = file.WriteBool(data->m_is_exclusion_list);
       if (!rc) break;
     }
-    if (!m_participation_lists_enabled)
+    if (m_participation_lists_enabled)
     {
       unsigned char c = ON_ClippingPlaneTypeCodes::ClipParticipationEnabled; // 13
       rc = file.WriteChar(c);

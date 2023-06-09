@@ -16946,9 +16946,17 @@ public:
   // Create an interior sub-D crease along all input mesh double edges.
   static const ON_SubDFromMeshParameters InteriorCreases;
 
+  // Create an interior sub-D crease along all input mesh double edges.
   // Look for convex corners at sub-D vertices with 2 edges
   // that have an included angle <= 90 degrees.
   static const ON_SubDFromMeshParameters ConvexCornersAndInteriorCreases;
+
+  // Create an interior sub-D crease along all input mesh double edges.
+  // Look for convex corners at sub-D vertices with 2 edges
+  // that have an included angle <= 90 degrees.
+  // Look for concave corners at sub-D vertices with 3 edges
+  // that have an included angle >= 270 degrees.
+  static const ON_SubDFromMeshParameters ConvexAndConcaveCornersAndInteriorCreases;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //

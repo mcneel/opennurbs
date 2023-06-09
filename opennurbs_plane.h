@@ -656,7 +656,7 @@ public:
   bool DepthEnabled() const;
   void SetDepthEnabled(bool on);
 
-  // Default is true
+  // Default is false
   bool ParticipationListsEnabled() const;
   void SetParticipationListsEnabled(bool on);
 
@@ -674,7 +674,7 @@ public:
 
 private:
   bool m_depth_enabled = false;
-  bool m_participation_lists_enabled = true;
+  bool m_participation_lists_enabled = false;
   char m_reserved;
   
   ON_ClippingPlaneDataStore m_data_store;

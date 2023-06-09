@@ -1177,7 +1177,7 @@ ON_XMLVariant ParamHelper(const ON_XMLParameters& p, const wchar_t* name)
   return value;
 }
 
-ON_Material ON_RenderMaterial::SimulatedMaterial(void) const
+ON_Material ON_RenderMaterial::ToOnMaterial(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 
@@ -1322,7 +1322,7 @@ const ON_RenderEnvironment& ON_RenderEnvironment::operator = (const ON_RenderEnv
   return *this;
 }
 
-ON_Environment ON_RenderEnvironment::SimulatedEnvironment(void) const
+ON_Environment ON_RenderEnvironment::ToOnEnvironment(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 
@@ -1387,7 +1387,7 @@ const ON_RenderTexture& ON_RenderTexture::operator = (const ON_RenderTexture& te
   return *this;
 }
 
-ON_Texture ON_RenderTexture::SimulatedTexture(void) const
+ON_Texture ON_RenderTexture::ToOnTexture(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
 

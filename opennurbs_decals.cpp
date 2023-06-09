@@ -26,6 +26,11 @@
 
 static ON_4dPoint UNSET_4D_POINT = ON_4dPoint(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
+ON__UINT32 ON_DecalCRCFromNode(const ON_XMLNode& node)
+{
+	return ON_Decal::ComputeDecalCRC(0, node);
+}
+
 class ON_Decal::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -966,40 +971,92 @@ ON__UINT32 ON_Decal::ComputeDecalCRC(ON__UINT32 crc, const ON_XMLNode& node) // 
 
 ON_DecalCollection::~ON_DecalCollection()
 {
-  DeleteAllDecals();
+  ClearDecalArray();
 }
 
-int ON_DecalCollection::FindDecalIndex(const ON_Decal& decal) const
+int ON_DecalCollection::FindDecalIndex(const ON_UUID& id) const
 {
   for (int i = 0; i < m_decals.Count(); i++)
   {
-    if (decal.Id() == m_decals[i]->Id())
+    if (m_decals[i]->Id() == id)
       return i;
   }
 
   return -1;
 }
 
-bool ON_DecalCollection::DeleteDecal(ON_Decal& decal)
+ON_Decal* ON_DecalCollection::AddDecal(void)
+{
+  // Ensure the array is populated before adding a new decal.
+  GetDecalArray();
+
+  ON_Decal* decal = nullptr;
+
+  ON_XMLNode* decals_node = m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS);
+  if (nullptr != decals_node)
+  {
+    // Add an XML node for the new decal.
+    auto* decal_node = new ON_XMLNode(ON_RDK_DECAL);
+    decals_node->AttachChildNode(decal_node);
+
+    // Add the new decal. It stores a pointer to the new XML node. This is safe because
+    // the decals have the same lifetime as the root node that owns the XML nodes.
+    decal = new ON_Decal(*this, *decal_node);
+    m_decals.Append(decal);
+
+    SetChanged();
+  }
+
+  return decal;
+}
+
+bool ON_DecalCollection::RemoveDecal(const ON_Decal& decal)
 {
   // Ensure the array is populated before deleting a decal.
   GetDecalArray();
 
-  const int index = FindDecalIndex(decal);
+  // Remove the decal from the XML by finding the XML node with the same decal CRC
+  // and then deleting that node.
+  const ON__UINT32 decal_crc = decal.DecalCRC();
+
+  const wchar_t* path = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS;
+  ON_XMLNode* decals_node = m_root_node.GetNodeAtPath(path);
+  if (nullptr != decals_node)
+  {
+    auto it = decals_node->GetChildIterator();
+    ON_XMLNode* child_node = nullptr;
+    while (nullptr != (child_node = it.GetNextChild()))
+    {
+      if (ON_DecalCRCFromNode(*child_node) == decal_crc)
+      {
+        child_node->Remove();
+        break;
+      }
+    }
+  }
+
+  // Find the decal in the array.
+  const int index = FindDecalIndex(decal.Id());
   if (index < 0)
     return false;
 
+  // Delete it.
   delete m_decals[index];
   m_decals.Remove(index);
 
   return true;
 }
 
-void ON_DecalCollection::DeleteAllDecals(void)
+void ON_DecalCollection::RemoveAllDecals(void)
 {
   m_root_node.Clear();
   m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT);
 
+  ClearDecalArray();
+}
+
+void ON_DecalCollection::ClearDecalArray(void)
+{
   for (int i = 0; i < m_decals.Count(); i++)
   {
     delete m_decals[i];
@@ -1007,14 +1064,14 @@ void ON_DecalCollection::DeleteAllDecals(void)
 
   m_decals.Destroy();
 
-  m_populated = true;
+  m_populated = false;
 
   SetChanged();
 }
 
 const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollection& dc)
 {
-  DeleteAllDecals();
+  ClearDecalArray();
 
   for (int i = 0; i < dc.m_decals.Count(); i++)
   {
@@ -1065,43 +1122,13 @@ void ON_DecalCollection::Populate(void) const
 
 void ON_DecalCollection::SetChanged(void)
 {
-  ON_ASSERT(m_populated);
-
-  if (m_populated)
-    m_changed = true;
-}
-
-ON_Decal* ON_DecalCollection::AddDecal(void)
-{
-  // Ensure the array is populated before adding a new decal.
-  GetDecalArray();
-
-  ON_Decal* decal = nullptr;
-
-  ON_XMLNode* decals_node = m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS);
-  if (nullptr != decals_node)
-  {
-    // Add an XML node for the new decal.
-    auto* decal_node = new ON_XMLNode(ON_RDK_DECAL);
-    decals_node->AttachChildNode(decal_node);
-
-    // Add the new decal. It stores a pointer to the new XML node. This is safe because
-    // the decals have the same lifetime as the root node that owns the XML nodes.
-    decal = new ON_Decal(*this, *decal_node);
-    m_decals.Append(decal);
-
-    SetChanged();
-  }
-
-  return decal;
+  m_changed = true;
 }
 
 void ON_DecalCollection::UpdateUserData(unsigned int archive_3dm_version) const
 {
   if (m_changed)
   {
-    ON_ASSERT(m_populated);
-
     SetRDKObjectInformation(*m_attr, m_root_node.String(), archive_3dm_version);
 
     m_changed = false;

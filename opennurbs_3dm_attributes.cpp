@@ -2529,22 +2529,20 @@ ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
   return m_private->m_decals.AddDecal();
 }
 
-bool ON_3dmObjectAttributes::DeleteDecal(ON_Decal& decal)
+bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal)
 {
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.DeleteDecal(decal);
+  return m_private->m_decals.RemoveDecal(decal);
 }
 
-void ON_3dmObjectAttributes::DeleteAllDecals(void)
+void ON_3dmObjectAttributes::RemoveAllDecals(void)
 {
-  //if (nullptr == m_private)
-  //  m_private = new ON_3dmObjectAttributesPrivate(this);
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  // Delete all the user data? [JOHN-DECAL-FIX]
-  // TODO:
-//  return m_private->m_decals.DeleteAllDecals();
+  return m_private->m_decals.RemoveAllDecals();
 }
 
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}

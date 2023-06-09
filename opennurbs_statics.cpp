@@ -2925,9 +2925,19 @@ static ON_SubDFromMeshParameters Internal_ConvexCornersAndInteriorCreases()
   return cp;
 }
 
+static ON_SubDFromMeshParameters Internal_ConvexAndConcaveCornersAndInteriorCreases()
+{
+  ON_SubDFromMeshParameters cp;
+  cp.SetInteriorCreaseOption(ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge);
+  cp.SetConvexCornerOption(ON_SubDFromMeshParameters::ConvexCornerOption::AtMeshCorner);
+  cp.SetConcaveCornerOption(ON_SubDFromMeshParameters::ConcaveCornerOption::AtMeshCorner);
+  return cp;
+}
+
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::Smooth;
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::InteriorCreases = Internal_InteriorCreases();
 const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexCornersAndInteriorCreases = Internal_ConvexCornersAndInteriorCreases();
+const ON_SubDFromMeshParameters ON_SubDFromMeshParameters::ConvexAndConcaveCornersAndInteriorCreases = Internal_ConvexAndConcaveCornersAndInteriorCreases();
 
 const ON_SubDFromSurfaceParameters ON_SubDFromSurfaceParameters::Default;
 

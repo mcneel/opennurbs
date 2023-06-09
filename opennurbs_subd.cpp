@@ -19045,8 +19045,6 @@ void ON_SubDVertexQuadSector::Internal_CopyFrom(const ON_SubDVertexQuadSector& s
   if ( ON_SubDVertexTag::Corner == center_vertex_tag)
     this->m_sector_coefficient = src.m_sector_coefficient;
 
-  const unsigned subdivision_level = src.SubdivisionLevel();
-
   const unsigned vertex_count = src.SectorVertexCount();
   for (unsigned vi = 0; vi < vertex_count; ++vi)
   {
