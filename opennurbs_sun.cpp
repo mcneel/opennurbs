@@ -586,7 +586,7 @@ public:
   void SetIntensity(double d);
   double ShadowIntensity(void) const;
   void SetShadowIntensity(double d);
-  bool IsUsingManualControl(void) const { return ManualControlAllowed() && ManualControlOn(); }
+  bool IsUsingManualControl(void) const;
 
 private:
   void UpdateAziAlt(void) const;
@@ -599,6 +599,14 @@ public:
   ON_EarthAnchorPoint* _earth_anchor_point = nullptr;
   ON_SunEngine::Accuracy _accuracy = ON_SunEngine::Accuracy::Minimum;
 };
+
+bool ON_Sun::CImpl::IsUsingManualControl(void) const
+{
+  // If manual control has been set on even if it's not 'allowed', consider it on anyway.
+  // This makes it easier for clients that set manual control on without knowing they are supposed
+  // to also allow it. I'm not even sure why it wouldn't be allowed nowadays. TODO: Ask Andy.
+  return ManualControlOn();
+}
 
 void ON_Sun::CImpl::GetEarthAnchorPlane(ON_3dVector& anchor_north, ON_Plane& plane) const
 {
@@ -677,16 +685,20 @@ void ON_Sun::CImpl::UpdateAziAlt(void) const
   }
 }
 
-bool ON_Sun::CImpl::EnableAllowed(void)
-        const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, false); }
+bool ON_Sun::CImpl::EnableAllowed(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, false);
+}
 
 void ON_Sun::CImpl::SetEnableAllowed(bool allowed)
 {
   SetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ALLOWED, allowed);
 }
 
-bool ON_Sun::CImpl::EnableOn(void)
-             const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, false); }
+bool ON_Sun::CImpl::EnableOn(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_ENABLE_ON, false);
+}
 
 void ON_Sun::CImpl::SetEnableOn(bool on)
 {
@@ -694,15 +706,19 @@ void ON_Sun::CImpl::SetEnableOn(bool on)
 }
 
 bool ON_Sun::CImpl::ManualControlAllowed(void) const
- { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, false); }
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, false);
+}
 
 void ON_Sun::CImpl::SetManualControlAllowed(bool allowed)
 {
   SetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ALLOWED, allowed);
 }
 
-bool ON_Sun::CImpl::ManualControlOn(void)   
-   const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, false); }
+bool ON_Sun::CImpl::ManualControlOn(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_MANUAL_CONTROL_ON, false);
+}
 
 void ON_Sun::CImpl::SetManualControlOn(bool manual)
 {
@@ -739,8 +755,10 @@ void ON_Sun::CImpl::SetAltitude(double altitude)
   SetParameter(XMLPath_Sun(), ON_RDK_SUN_ALTITUDE, altitude);
 }
 
-double ON_Sun::CImpl::TimeZone(void)  
-         const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0); }
+double ON_Sun::CImpl::TimeZone(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0);
+}
 
 void ON_Sun::CImpl::SetTimeZone(double hours)
 {
@@ -748,8 +766,10 @@ void ON_Sun::CImpl::SetTimeZone(double hours)
   _calc_dirty = true;
 }
 
-bool ON_Sun::CImpl::DaylightSavingOn(void)  
-   const { return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, false); }
+bool ON_Sun::CImpl::DaylightSavingOn(void) const
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
+}
 
 void ON_Sun::CImpl::SetDaylightSavingOn(bool on)
 {
@@ -758,7 +778,9 @@ void ON_Sun::CImpl::SetDaylightSavingOn(bool on)
 }
 
 int ON_Sun::CImpl::DaylightSavingMinutes(void) const 
-{ return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 0); }
+{
+  return GetParameter(XMLPath_Sun(), ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 0);
+}
 
 void ON_Sun::CImpl::SetDaylightSavingMinutes(int minutes)
 {
@@ -1001,7 +1023,7 @@ const ON_Sun& ON_Sun::operator = (const ON_Sun& sun)
 bool ON_Sun::operator == (const ON_Sun& sun) const
 {
   // When checking equality, we need to directly check the underlying storage. So we can't allow
-  // virtual overrides to execute because they might hide the real values we want to copy.
+  // virtual overrides to execute because they might hide the real values we want to check.
 
   if (ON_Sun::EnableAllowed()         != sun.ON_Sun::EnableAllowed())           return false;
   if (ON_Sun::EnableOn()              != sun.ON_Sun::EnableOn())                return false;
@@ -1021,16 +1043,13 @@ bool ON_Sun::operator == (const ON_Sun& sun) const
   ON_Sun::LocalDateTime(y1, m1, d1, h1);
   sun.ON_Sun::LocalDateTime(y2, m2, d2, h2);
 
-  if ((y1 != y2) || (m1 != m2) || (d1 != d2))
-    return false;
-
-  if (!IsDoubleEqual(h1, h2))
+  if ((y1 != y2) || (m1 != m2) || (d1 != d2) || !IsDoubleEqual(h1, h2))
     return false;
 
   if (_impl->IsUsingManualControl())
   {
-    if (!IsDoubleEqual(ON_Sun::Azimuth()  , sun.ON_Sun::Azimuth()))  return false;
-    if (!IsDoubleEqual(ON_Sun::Altitude() , sun.ON_Sun::Altitude())) return false;
+    if (!IsDoubleEqual(ON_Sun::Azimuth() , sun.ON_Sun::Azimuth()))  return false;
+    if (!IsDoubleEqual(ON_Sun::Altitude(), sun.ON_Sun::Altitude())) return false;
   }
 
   return true;
@@ -1473,4 +1492,75 @@ void ON_Sun::OnInternalXmlChanged(const ON_Sun* sun)
     SetLatitude(sun->Latitude());
     SetLongitude(sun->Longitude());
   }
+}
+
+static const int SunVersion = 1;
+
+bool ON_Sun::WriteToArchive(ON_BinaryArchive& archive) const
+{
+  if (!archive.WriteInt(SunVersion))
+    return false;
+
+  ON_XMLRootNode root;
+  SaveToXMLNode(root);
+
+  auto length_wide = root.WriteToStream(nullptr, 0);
+  if (length_wide <= 0)
+    return false;
+
+  ON_wString sXML;
+  sXML.ReserveArray(size_t(length_wide + 1));
+  length_wide = root.WriteToStream(sXML.Array(), length_wide);
+  if (length_wide <= 0)
+    return false;
+
+  const auto* wsz = static_cast<const wchar_t*>(sXML);
+
+  const auto length_utf8 = ON_ConvertWideCharToUTF8(false, wsz, -1, nullptr, 0, nullptr, 0, 0, nullptr);
+  auto utf8 = std::unique_ptr<char[]>(new char[length_utf8]);
+  auto* pUTF8 = utf8.get();
+  ON_ConvertWideCharToUTF8(false, wsz, -1, pUTF8, length_utf8, nullptr, 0, 0, nullptr);
+
+  // Write the length of the UTF8 buffer to the archive.
+  if (!archive.WriteInt(length_utf8))
+    return false;
+
+  // Write the UTF8 buffer to the archive.
+  if (!archive.WriteChar(length_utf8, pUTF8))
+    return false;
+
+  return true;
+}
+
+bool ON_Sun::ReadFromArchive(ON_BinaryArchive& archive)
+{
+  int version = 0;
+  if (!archive.ReadInt(&version))
+    return false;
+
+  if (SunVersion != version)
+    return false;
+
+  int length_utf8 = 0;
+  if (!archive.ReadInt(&length_utf8))
+    return false;
+
+  auto utf8 = std::unique_ptr<char[]>(new char[size_t(length_utf8)+1]);
+  auto* pUTF8 = utf8.get();
+
+  if (!archive.ReadChar(length_utf8, pUTF8))
+    return false;
+
+  pUTF8[length_utf8] = 0; // Terminator.
+
+  const auto length_wide = ON_ConvertUTF8ToWideChar(false, pUTF8, -1, nullptr, 0, nullptr, 0, 0, nullptr);
+  auto wide = std::unique_ptr<wchar_t[]>(new wchar_t[length_wide + 1]);
+  auto* pWide = wide.get();
+  ON_ConvertUTF8ToWideChar(false, pUTF8, -1, pWide, length_wide + 1, nullptr, 0, 0, nullptr);
+
+  ON_XMLRootNode root;
+  root.ReadFromStream(pWide);
+  LoadFromXMLNode(root);
+
+  return true;
 }

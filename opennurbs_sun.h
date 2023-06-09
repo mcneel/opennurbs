@@ -251,6 +251,12 @@ public:
   // Save the sun properties to a 'sun' XML node.
 	virtual void SaveToXMLNode(ON_XMLNode& node) const;
 
+  // Write the sun properties to an archive.
+  virtual bool WriteToArchive(ON_BinaryArchive& archive) const;
+
+  // Read the sun properties from an archive that was created by WriteToArchive().
+  virtual bool ReadFromArchive(ON_BinaryArchive& archive);
+
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 

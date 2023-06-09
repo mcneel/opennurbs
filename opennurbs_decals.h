@@ -174,4 +174,7 @@ private:
   CImpl* _impl;
 };
 
+// For internal use only.
+ON__UINT32 ON_DECL ON_DecalCRCFromNode(const ON_XMLNode& node);
+
 #endif

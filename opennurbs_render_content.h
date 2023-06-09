@@ -254,7 +254,7 @@ public:
   virtual const ON_RenderContent& operator = (const ON_RenderContent&) override;
   virtual const ON_RenderMaterial& operator = (const ON_RenderMaterial&);
 
-  virtual ON_Material SimulatedMaterial(void) const;
+  virtual ON_Material ToOnMaterial(void) const;
 };
 
 class ON_CLASS ON_RenderEnvironment : public ON_RenderContent
@@ -269,7 +269,7 @@ public:
   virtual const ON_RenderContent& operator = (const ON_RenderContent&) override;
   virtual const ON_RenderEnvironment& operator = (const ON_RenderEnvironment&);
 
-  virtual ON_Environment SimulatedEnvironment(void) const;
+  virtual ON_Environment ToOnEnvironment(void) const;
 };
 
 class ON_CLASS ON_RenderTexture : public ON_RenderContent
@@ -284,7 +284,7 @@ public:
   virtual const ON_RenderContent& operator = (const ON_RenderContent&) override;
   virtual const ON_RenderTexture& operator = (const ON_RenderTexture&);
 
-  virtual ON_Texture SimulatedTexture(void) const;
+  virtual ON_Texture ToOnTexture(void) const;
 };
 
 #endif

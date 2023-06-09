@@ -1144,7 +1144,8 @@ public:
     CRhinoObject::MeshCount
     CRhinoObject::IsMeshable
   */
-  ON_DEPRECATED_MSG("Support for bDeleteMesh no longer supported") void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
+  ON_DEPRECATED_MSG("Support for bDeleteMesh no longer supported")
+  void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
 
   /*
   Description:
@@ -1827,7 +1828,8 @@ public:
     ON_BrepFace::Mesh
     ON_BrepFace::SetMesh
   */
-  ON_DEPRECATED_MSG("bDeleteMesh=false is no longer supported") void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
+  ON_DEPRECATED_MSG("bDeleteMesh=false is no longer supported")
+  void DestroyMesh( ON::mesh_type mesh_type, bool bDeleteMesh);
 
   /*
   Description:

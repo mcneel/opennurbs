@@ -109,8 +109,9 @@ public:
   const ON_DecalCollection& operator = (const ON_DecalCollection& dc);
 
   ON_Decal* AddDecal(void);
-  bool DeleteDecal(ON_Decal& decal);
-  void DeleteAllDecals(void);
+  bool RemoveDecal(const ON_Decal&);
+  void RemoveAllDecals(void);
+  void ClearDecalArray(void);
   const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
 
   void SetChanged(void);
@@ -119,7 +120,7 @@ public:
 
 private:
   void Populate(void) const;
-  int  FindDecalIndex(const ON_Decal&) const;
+  int  FindDecalIndex(const ON_UUID& id) const;
 
 private:
   ON_3dmObjectAttributes* m_attr;

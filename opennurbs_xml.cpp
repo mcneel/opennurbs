@@ -5374,4 +5374,15 @@ void* ON_RdkDocumentDefaults::EVF(const wchar_t*, void*)
   return nullptr;
 }
 
+ON_XMLParamBlock::ON_XMLParamBlock()
+  :
+  _reserved(0),
+  ON_XMLParameters(_node)
+{
+}
+
+ON_XMLParamBlock::~ON_XMLParamBlock()
+{
+}
+
 #pragma ON_PRAGMA_WARNING_POP
