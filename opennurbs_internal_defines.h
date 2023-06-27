@@ -27,6 +27,15 @@
 #undef max
 #endif
 
+#ifdef ON_RUNTIME_WIN
+#define PRIVATE_CHECK(c) auto priv_has = sizeof(_PRIVATE), priv_needs = sizeof(c) + 64; \
+        if (priv_has < priv_needs) { ON_wString priv; \
+            priv.Format(L#c L" _PRIVATE has %u but needs %u bytes\n", priv_has, priv_needs); \
+            OutputDebugString(priv); ON_ASSERT(false); }
+#else
+#define PRIVATE_CHECK(c) { }
+#endif
+
 #define ON_KIND_MATERIAL     L"material"
 #define ON_KIND_ENVIRONMENT  L"environment"
 #define ON_KIND_TEXTURE      L"texture"

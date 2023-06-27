@@ -147,7 +147,7 @@ public:
   class ON_CLASS ChildIterator
   {
   public:
-    ChildIterator(const ON_RenderContent* pParent);
+    ChildIterator(const ON_RenderContent* parent);
     virtual ~ChildIterator();
 
     virtual ON_RenderContent* GetNextChild(void);
@@ -157,8 +157,7 @@ public:
     virtual void* EVF(const wchar_t* func, void* data);
 
   private:
-    class CImpl;
-    CImpl* m_impl;
+    class ON_RenderContentChildIteratorPrivate* _private;
   };
 
   // Returns: An iterator for iterating over the content's children.
@@ -234,12 +233,13 @@ protected:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
-public:
-  class CImpl;
-  CImpl* m_impl;
-
 protected:
-  ON__UINT8 m_Impl[328];
+  class ON_RenderContentPrivate* _private;
+  friend class ON_RenderContentPrivate;
+  friend class ON_RenderTexture;
+
+private:
+  ON__UINT8 _PRIVATE[360+64];
 };
 
 class ON_CLASS ON_RenderMaterial : public ON_RenderContent
@@ -284,7 +284,11 @@ public:
   virtual const ON_RenderContent& operator = (const ON_RenderContent&) override;
   virtual const ON_RenderTexture& operator = (const ON_RenderTexture&);
 
+  // Get an ON_Texture from this render texture.
   virtual ON_Texture ToOnTexture(void) const;
+
+  // If the texture has a file name, returns that file name. Otherwise returns an empty string.
+  virtual ON_wString Filename(void) const;
 };
 
 #endif

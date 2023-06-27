@@ -803,7 +803,7 @@ void* ON_PostEffects::EVF(const wchar_t*, void*)
   return nullptr;
 }
 
-void ON_PostEffects::OnInternalXmlChanged(ON_PostEffects*)
+void ON_PostEffects::OnInternalXmlChanged(const ON_PostEffects*)
 {
   _impl->Clear();
 }

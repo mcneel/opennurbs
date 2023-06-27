@@ -1042,6 +1042,15 @@ ON_PolyCurve::IsPlanar(
     rc = IsInPlane( test_plane, tolerance );
     if (rc && plane)
       *plane = test_plane;
+
+    // RH-75060 GBA 9-June-23 
+     // For a planar simple closed curve we should return the plane
+     // whose orientation that matches the curve orientation.
+    if (rc && plane && IsClosed())
+    {
+      if (ON_ClosedCurveOrientation(*this, *plane) < 0)
+        plane->Flip();
+    }
   }
   return rc;
 }

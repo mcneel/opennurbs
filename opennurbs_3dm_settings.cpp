@@ -1849,6 +1849,18 @@ const ON_PostEffects& ON_3dmRenderSettings::PostEffects(void) const
   return const_cast<ON_3dmRenderSettings*>(this)->PostEffects();
 }
 
+void ON_3dmRenderSettings::InvalidateCaches(void) const
+{
+  m_private->_ground_plane->OnInternalXmlChanged(nullptr);
+  m_private->_dithering->OnInternalXmlChanged(nullptr);
+  m_private->_safe_frame->OnInternalXmlChanged(nullptr);
+  m_private->_skylight->OnInternalXmlChanged(nullptr);
+  m_private->_linear_workflow->OnInternalXmlChanged(nullptr);
+  m_private->_render_channels->OnInternalXmlChanged(nullptr);
+  m_private->_sun->OnInternalXmlChanged(nullptr);
+  m_private->_post_effects->OnInternalXmlChanged(nullptr);
+}
+
 #ifdef RDK_RENDER_PRESETS
 
 extern ON_UUID uuidRenderPreset_Studio;

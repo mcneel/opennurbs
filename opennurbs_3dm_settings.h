@@ -872,6 +872,9 @@ public:
   // Sets the id of the rendering environment for a particular usage.
   void SetRenderEnvironmentId(EnvironmentUsage usage, const ON_UUID& id);
 
+  // Invalidate any caches in the render settings.
+  void InvalidateCaches(void) const;
+
 private:
   unsigned short m_reserved1 = 0;
 

@@ -326,6 +326,7 @@ ON_CurveOnSurface::IsPlanar(
       double tolerance // tolerance to use when checking linearity
       ) const
 {
+  // todo 9-June-23 GBA This just seams wrong?!
   return ( ON_PlaneSurface::Cast(m_s) ) ? true : false;
 }
 

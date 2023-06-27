@@ -706,7 +706,18 @@ ON_CurveProxy::IsPlanar(
       double tolerance // tolerance to use when checking linearity
       ) const
 {
-  return ( m_real_curve ) ? m_real_curve->IsPlanar(plane,tolerance) : false;
+  // RH-75060 GBA 9-June-23 Changed to consider only the m_real_curve_domain if need be.
+  // return (m_real_curve) ? m_real_curve->IsPlanar(plane, tolerance) : false;
+  bool rc = false;
+  if(m_real_curve)
+  { 
+    rc = m_real_curve->IsPlanar(plane, tolerance);
+    if (!rc)
+    {
+      rc = ON_Curve::IsPlanar(plane, tolerance);
+    }
+  }
+  return rc;
 }
 
 bool

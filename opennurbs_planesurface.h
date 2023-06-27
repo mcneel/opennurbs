@@ -506,8 +506,10 @@ public:
 
   /*
   Description:
-    Create a plane that contains the projection of a bounding box.
-    This method is slower, yet stricter because it uses box edges intersection rather than box 
+    Create a plane that contains the intersection of a bounding box.
+    This method uses box edges intersections rather than box vertices
+    projections on the plane, which is what CreatePseudoInfinitePlane
+    uses.
   Parameters:
     plane - [in]
     bbox - [in]
@@ -517,7 +519,7 @@ public:
   Returns:
     true if successful
   */
-  bool CreatePseudoInfinitePlaneTight(
+  bool CreatePlaneThroughBox(
     const ON_Plane& plane,
     const ON_BoundingBox& bbox,
     double padding = 0.0625
@@ -525,8 +527,10 @@ public:
 
     /*
   Description:
-    Create a plane that contains the projection of a bounding box.
-    This method is slower, yet stricter because it uses box edges intersection rather than box 
+    Create a plane that contains the intersection of a bounding box.
+    This method uses box edges intersections rather than box vertices
+    projections on the plane, which is what CreatePseudoInfinitePlane
+    uses.
   Parameters:
     plane - [in]
     bbox - [in]
@@ -536,7 +540,7 @@ public:
   Returns:
     true if successful
   */
-  bool CreatePseudoInfinitePlaneTight(
+  bool CreatePlaneThroughBox(
     const ON_PlaneEquation& plane,
     const ON_BoundingBox& bbox,
     double padding = 0.0625

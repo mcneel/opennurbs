@@ -430,7 +430,7 @@ public:
 
 #pragma region Hatch Specific Attributes
   ON_Color HatchBackgroundFillColor() const;
-  void SetHatchBackgrounFillColor(const ON_Color& color);
+  void SetHatchBackgroundFillColor(const ON_Color& color);
   bool HatchBoundaryVisible() const;
   void SetHatchBoundaryVisible(bool on);
 #pragma endregion

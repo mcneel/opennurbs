@@ -304,6 +304,17 @@ enum class ON_SubDHashType : unsigned char
 };
 #pragma endregion
 
+ON_DECL
+ON_SubDHashType ON_SubDHashTypeFromUnsigned(
+  unsigned int subd_hash_type_as_unsigned
+);
+
+ON_DECL
+const ON_wString ON_SubDHashTypeToString(
+  ON_SubDHashType subd_hash_type,
+  bool bVerbose
+);
+
 /// <summary>
 /// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
 /// Typically it is used when a calculation needs to know if the current SubD has is geometrically
@@ -9832,6 +9843,27 @@ public:
 
   bool CopyFrom( const ON_SubDMeshFragment& src_fragment );
 
+
+  /// <summary>
+  /// Clear all information except the memory management inforation.
+  /// 
+  /// The intent is to be able to clear and reuse the fragment at
+  /// its current vertex capacity.
+  /// 
+  /// Secifically:
+  /// 
+  /// Set referenced SubDFace to nullptr.
+  /// Set vertex count to zero.
+  /// Set existance of textures, curvatures, and colors to false.
+  /// Set control net quad values to nans.
+  /// Set the grid to ON_SubDMeshFragmentGrid::Empty.
+  /// Set the surface bounding box to nan.
+  /// 
+  /// Does not change vertex capacity or deallocate managed arrays.
+  /// </summary>
+  void Clear() ON_NOEXCEPT;
+
+
   /*
   Parameters:
     src_fragment - [in]
@@ -10275,8 +10307,12 @@ public:
     ON_3dPoint texture_coordinate
   ) const;
 
-  bool TextureCoordinatesExist() const;
-  void SetTextureCoordinatesExist(bool bTextureCoordinatesExist) const;
+
+  void ClearTextureCoordinates() const;
+
+  bool TextureCoordinatesExistForExperts() const;
+
+  void SetTextureCoordinatesExistForExperts(bool bTextureCoordinatesExist) const;
 
   /*
   Parameters:
@@ -10538,7 +10574,8 @@ public:
 
   /*
   Description:
-    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], and m_T[] arrays).
+    Sets number of fragment vertices available (number of elements available in the 
+    m_P[], m_N[], m_T[], m_K[], and m_C[] arrays).
     The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
   Parameters:
     vertex_capacity - [in]
@@ -10546,12 +10583,13 @@ public:
   Returns:
     True if successful
   */
-  bool SetUnmanagedVertexCapacity(size_t vertex_capacity);
+  bool SetUnmanagedVertexCapacityForExperts(size_t vertex_capacity);
 
 
   /*
   Description:
-    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], m_T[], and m_C[] arrays).
+    Sets number of fragment vertices available 
+    (number of elements available in the m_P[], m_N[], m_T[], m_K[], and m_C[]  arrays).
     The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
   Parameters:
     vertex_capacity - [in]
@@ -10563,30 +10601,32 @@ public:
 
 
   /*
-  Description:
-    Sets number of fragment vertices available (number of elements available in the m_P[], m_N[], m_T[], m_C[], and m_K[] arrays).
-    The memory for the arrays is managed by something besides this ON_SubDMeshFragment instance.
-  Parameters:
-    vertex_capacity - [in]
-      A value no larger than ON_SubDMeshFragment::MaximumVertexCount.
   Returns:
-    True if successful
-  */
-  bool ReserveManagedVertexCapacity(size_t vertex_capacity, bool bWithCurvature);
-
-  /*
-  Returns:
-    True if the memory in the m_P[], m_N[], and m_T[] is managed by this ON_SubDMeshFragment instance.
+    True if the memory in the m_P[], m_N[],  m_T[], m_K[], and m_C[] arrays
+    is managed by this ON_SubDMeshFragment instance and can be deleted by 
+    calling DeleteManagedArrays().
+    False if an external agent is managing the memory.
   */
   bool ManagedArrays() const;
 
+
+  /*
+    True if the memory in the m_P[], m_N[],  m_T[], m_K[], and m_C[] arrays
+    is managed by this ON_SubDMeshFragment instance, this function deletes
+    it and zeros the appropriate ponters and strides. 
+    Otherwise nothing is done.
+  */
   bool DeleteManagedArrays();
 
   /*
   Returns:
-    True if the memory in the m_P[], m_N[], and m_T[] is managed by something besides this ON_SubDMeshFragment instance.
+    True if the memory in the m_P[], m_N[], m_T[], m_K[], and m_C[] arrays
+    is managed by something besides this ON_SubDMeshFragment instance.
   */
   bool UnmanagedArrays() const;
+
+  // True if the memory for points, normals, textures, colors, and curvatures is interlaced.
+  bool InterlacedArrays() const;
 
 private:
   friend class ON_SubDManagedMeshFragment;
@@ -10597,102 +10637,48 @@ private:
   enum
   {
     /// <summary>
-    /// 3 double for the vertex point
-    /// 3 double for the vertex normal
-    /// 3 double for the vertex texture coordinate
+    /// 3 doubles for the vertex point
+    /// 3 doubles for the vertex normal
+    /// 3 doubles for the vertex texture coordinate
+    /// 2 doubles for the vertex principal curvatures (ON_SurfaceCurvature class)
     /// 1 double (4 bytes used for vertex color and 4 bytes currently not used)
     /// </summary>
     /// <remarks>
-    /// This does not hold space for curvature information.
-    /// Interlaced managed arrays will not work with curvature.
+    /// This number must be even to permit both contiguous and interlaced 
+    /// values for points, normals, textures, colors, and curvature.
+    /// The PNTCK array should must have a miniumum of 
+    /// (ON_SubDMeshFragment::DoublesPerVertex * vertex_capacity * sizeof(double))
+    /// bytes and begin on a double aligned address.
     /// </remarks>
-    ManagedDoublesPerVertex = 10,
-
-    /// <summary>
-    /// 3 double for the vertex point
-    /// 3 double for the vertex normal
-    /// 3 double for the vertex texture coordinate
-    /// 1 double (4 bytes used for vertex color and 4 bytes currently not used)
-    /// 2 doubles for the curvatures
-    /// </summary>
-    ManagedDoublesPerVertexWithCurvature = 12,
-
-    /// <summary>
-    /// Number of doubles between successive 3d points in m_P[]/m_N[]/m_T[].
-    /// When managed arrays are not interlaced, this value must be 3.
-    /// When managed arrays are interlaced, this value must be ManagedDoublesPerVertex(WithCurvature).
-    /// </summary>
-    Managed_3d_stride = 3,
-
-    /// <summary>
-    /// Number of ON_Color elements between successive colors in m_C[].
-    /// When managed arrays are not interlaced, this value must be 1 (or 2, see remarks).
-    /// When managed arrays are interlaced, this value must be
-    /// ManagedDoublesPerVertex(WithCurvature)*sizeof(double)/sizeof(ON_Color).
-    /// </summary>
-    /// <remarks>
-    /// Setting this value to 1 for non-interlaced arrays means that
-    /// there will be a block of vertexCount ON_Color-sized values that are set,
-    /// then a block of vertexCount ON_Color-sized unset values. This allows
-    /// ManagedDoublesPerVertex(WithCurvature) to only count doubles, not doubles and floats.
-    /// The PNTC(K) array should always be of size ManagedDoublesPerVertex(WithCurvature) * vertexCount.
-    /// </remarks>
-    Managed_color_stride = 1,
-
-    /// <summary>
-    /// Number of ON_SurfaceCurvature elements between successive curvatures in m_K[].
-    /// When managed arrays are not interlaced, this value must be 1.
-    /// When managed arrays are interlaced, this value must be
-    /// ManagedDoublesPerVertex(WithCurvature)*sizeof(double)/sizeof(ON_SurfaceCurvature).
-    /// </summary>
-    Managed_curvature_stride = 1,
+    DoublesPerVertex = 12
   };
 
-  static bool Internal_ManagedArraysAreInterlaced();
-  static size_t Internal_Managed3dArrayOffset(size_t vertex_capacity);
-  static size_t Internal_ManagedColorArrayOffset(size_t vertex_capacity);
-
   /*
   Parameters:
-    PNTC_array[] - [in]
-      An array of ManagedDoublesPerVertex*vertex_capacity doubles.
-  */
-  void Internal_LayoutArrays(
-    bool bManagedArray,
-    double* PNTC_array,
-    size_t vertex_capacity
-  );
+    bManagedArray - [in]
+      True if this instance of an ON_SubDMeshFragment will manage the PNTCK_array
+      and PNTCK_array = new(std::nothrow) double[ON_SubDMeshFragment::DoublesPerVertex * vertex capacity].
+      Otherwise an external agent is responsible for managing the PNTCK_array memory.
+    vertex_capacity[] - [in]
+      Maximum number of vertices this fragment can hold.
+      Must be 0 or >= 4 and <= ON_SubDMeshFragment::MaximumVertexCount.
+    PNTKC_array[] - [in]
+      When PNTKC_array is not nullptr (typical), it is an array of
+      (ON_SubDMeshFragment::DoublesPerVertex * vertex_capacity * sizeof(double))
+      bytes that begins on a double aligned address. When pNTKC_array is not nullptr,
+      Something besides this  particular instance of ON_SubDMeshFragment is managing the PNTKC_array.
+      The array provides storage for the fragments m_P[], n_N[], m_T[], m_K[], and m_C[]
+      arrays. This approach is taken to provide efficient and fast memory managment of
+      large sets of fragments.
 
-  /*
-  Parameters:
-    PNTCK_array[] - [in]
-      An array of
-        (bWithCurvature ? ManagedDoublesPerVertexWithCurvature : ManagedDoublesPerVertex)
-        * vertex_capacity
-      doubles.
+      If PNTCK_array is nullptr, then it is allocated inside Internal_LayoutArrays()
+      and calling this->DeleteManagedArrays() will deallocate it. 
+      This approach is used in odd situations, is uncommon, and the caller must
+      call this->DeleteManagedArrays() at an appropriate time.
   */
   void Internal_LayoutArrays(
-    bool bManagedArray,
-    bool bWithCurvature,
-    double* PNTCK_array,
-    size_t vertex_capacity
-  );
-
-  /*
-  Parameters:
-    PNTC_array[] - [in]
-    K_array[] - [in]
-      Two arrays with total space for
-        (K_array == nullptr ? ManagedDoublesPerVertex : ManagedDoublesPerVertexWithCurvature)
-        * vertex_capacity
-      doubles.
-      They may point to diferent positions in the same array.
-  */
-  void Internal_LayoutArrays(
-    bool bManagedArray,
-    double* PNTC_array,
-    ON_SurfaceCurvature* K_array,
-    size_t vertex_capacity
+    size_t vertex_capacity,
+    double* PNTKC_array
   );
 
   enum : unsigned short
@@ -10740,7 +10726,8 @@ private:
     /// This bit is on m_vertex_capacity_etc.
     /// Set means the memory for the m_P[], m_N[], m_T[], and m_C[] arrays is managed by this class as a single
     /// allocation.
-    /// m_P = new(std::nothrow) double[10*(point capacity)] and m_N, m_T, and m_C point into this allocation.
+    /// m_P = new(std::nothrow) double[ON_SubDMeshFragment::DoublesPerVertex * point capacity] and 
+    /// m_N[], m_T[], m_C[], and m_K[] point into this allocation.
     /// </summary>
     EtcManagedArraysBit = 0x8000,
   };
@@ -10831,6 +10818,15 @@ public:
     bool bGridOrder,
     const ON_2dPoint fragment_pack_rect_corners[4]
   );
+
+  /*
+  Description:
+    Clears the pack rectangle.
+  Remarks:
+    Does not change the value of ON_SubDFace::PackId() or ON_SubDFace::TextureCoordinateType()
+    Use ON_SubDFace::ClearPackId() to clear the pack id.
+  */
+  void ClearPackRect();
 
   /*
   Description:
@@ -11015,11 +11011,17 @@ public:
     ON_3dVector quad_normal
   );
 
+  ON_DEPRECATED_MSG("Use ON_SubDMeshFragment::ClearControlNetQuad()")
   void UnsetControlNetQuad();
+
+  void ClearControlNetQuad();
 
   const ON_BoundingBox SurfaceBoundingBox() const;
   const ON_BoundingBox ControlNetQuadBoundingBox() const;
   const ON_BoundingBox BoundingBox(ON_SubDComponentLocation subd_appearance) const;
+
+  void ClearSurfaceBoundingBox();
+
 
 public:
   /*
@@ -11199,6 +11201,139 @@ private:
 private:
   ///////////////////////////////////////////////////////////////////////////////////
   //
+  // Principal curvatures
+  //
+  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accommodate up to m_P_capacity
+  // principal curvatures (two doubles k1, k2). Otherwise there are no principal curvatures.
+  // At exceptional points, the curvature values may be nan.
+  // Never modify m_K_stride and the m_K pointer.
+  // Use m_grid functions to get principal curvature indices and quad face indices.
+  //
+  // NOTE WELL:
+  //  m_K_stride is the number of ON_SurfaceCurvature elements between m_K[i] and m_K[i+1].
+  //  This is different than m_P_stride, m_N_stride, and m_T_stride, which count 
+  //  the number of doubles between successive 
+  //  points/normals/texture points in m_P[]/m_N[]/m_T[].
+  //  
+  //  If m_K[] is interlaced, the number of bytes between successive elements of m_K[] must be a multiple of 
+  //  sizeof(ON_SurfaceCurvature)  because m_K_stride is a ON_SurfaceCurvature element stride.
+  mutable ON_SurfaceCurvature* m_K;
+  mutable size_t m_K_stride; // stride for m_K[] as an array of 16 byte ON_SurfaceCurvature elements (so 0 or >= 1).
+
+public:
+  /*  
+  Returns:
+    If the grid has set curvatures, then VertexCount() is returned.
+    Otherwise 0 is returned.
+  Remarks:
+    Use CurvatureCapacity() to get capacity of the m_K[] array (set or unset).
+    This function return the number of set curvatures.
+  */
+  unsigned int CurvatureCount() const;
+
+  /*
+  Returns:
+    If the grid has memory to store curvatures, then VertexCount() is returned.
+    Otherwise 0 is returned.
+  Remarks:
+    Use CurvaturesExist() or CurvatureCount() to determine if the curvature values are actually set.
+  */
+  unsigned int CurvatureCapacity() const;
+
+  const ON_SurfaceCurvature* CurvatureArray(ON_SubDComponentLocation subd_appearance)const;
+  unsigned CurvatureArrayCount(ON_SubDComponentLocation subd_appearance) const;
+
+  /*
+    Call ClearCurvatures() if the fragment points are changed and any
+    existing curvature values are now invalid.
+  */
+  void ClearCurvatures() const;
+
+  /*
+  Description:
+    Computes curvature values at grid points for this fragment.
+    Note that fragment curvature values are a mutable property
+    and can be set at any time after the fragment's points are set.
+  Parameters:
+    bLazy - [in]
+      If bLazy is true and if CurvaturesExist() is true, then no changes are made.
+      If bLazy is false, the curvature values are unconditionally calculated from the
+      fragment's surface and saved in m_K[].
+  Returns:
+    True if curvatures are set.
+    False if curvatures cannot be set.
+  */
+  bool SetCurvatures(bool bLazy) const;
+
+  /*
+  Returns:
+    True if the curvatures exist bit is set. This bit is used for
+    control net and vertex values.
+  Remarks:
+    Use CurvatureCount() to determine if vertices have set curvature values.
+  */
+  bool CurvaturesExistForExperts() const;
+
+  /*
+  Parameters:
+    bSetCurvaturesExist - [in]
+      True if curvatures exist.
+      False vertex curvatures do not exist or are no longer valid.
+      Note that SetCurvaturesExist(false) and ClearCurvatures()
+      are two ways to do the same thing.
+  Remarks:
+    When curvatures exist, CurvatureCount() = CurvatureCapacity().
+    When curvatures do not exist, CurvatureCount() = 0.
+    Typically 
+  */
+  void SetCurvaturesExistForExperts(bool bSetCurvaturesExist) const;
+
+
+  /*
+  Description:
+    Computes normal curvature values for this fragment. Evaluation
+    points are uniformly spaced over the fragment to fill the N, Ku, Kv
+    arrays.
+  Parameters:
+    sample_count - [in]
+      How many samples to get in both directions.
+    comb_count_params - [in]
+      How many combs to get in both directions (+1 if get_first_comb is false).
+    get_first_comb - [in]
+      Wheter to skip combs at u = 0 and v = 0. The parameters at which to
+      get the combs are the same when:
+        - get_first_comb is true and comb_count is n
+        - get_first_comb is false and comb_count is n
+    getKu, getKv - [in]
+      Should the curvature be computed along u-isos, v-isos, or both.
+    P, Kuv - [out]
+      Arrays of size (getKu + getKv) * sample_count * comb_count_arrays where
+      Points and Curvatures along u-isos or along v-isos are stored.
+      Sample (i, j) in u direction, on u-dir comb j at sample i is stored
+      at index i + (j - get_first_comb ? 0 : 1) * sample_count.
+      Sample (i, j) in v direction, on v-dir comb i at sample j is stored
+      at index (getKu * sample_count * comb_count_arrays) + j + (i - get_first_comb ? 0 : 1) * sample_count.
+      Direction u (indexed with i) refers to the Fragment's grid 1st index
+      (from face->Vertex(0) to face->Vertex(1)).
+      Direction v (indexed with j) refers to the Fragment's grid 2nd index
+      (from face->Vertex(0) to face->Vertex(3)).
+      comb_count_arrays = comb_count_params - get_first_comb ? 1 : 0
+  Returns:
+    Number of points sampled
+  */
+  unsigned GetNormalCurvatures(
+    const unsigned sample_count,
+    const unsigned comb_count_params,
+    const bool get_first_comb, 
+    const bool getKu,
+    const bool getKv, 
+    ON_SimpleArray<ON_3dPoint>* P,
+    ON_SimpleArray<ON_3dVector>* Kuv
+  ) const;
+
+private:
+  ///////////////////////////////////////////////////////////////////////////////////
+  //
   // Per vertex colors
   //
   // Depending on the strides, m_P[], m_N[], m_T[], m_C[] and m_K[] can be separate or interlaced.
@@ -11215,15 +11350,18 @@ private:
   //   When m_C is not interlaced, m_C_stride is typically 1. If this is confusing,
   //   please learn more about alignment and interlacing before working on this code.
   mutable ON_Color* m_C;
-  mutable size_t m_C_stride; // stride for m_C[] as an array of 4 bytes ON_Color elements (so 0 or >= 1).
+  mutable size_t m_C_stride; // stride for m_C[] as an array of 4 byte ON_Color elements (so 0 or >= 1).
 
 public:
   /*
   Returns:
     If grid vertex colors are available, then VertexCount() is returned.
     Otherwise 0 is returned.
+  Remarks:
+    Use ColorCapacity() to get the capacity of m_C[].
   */
   unsigned int ColorCount() const;
+
   unsigned int ColorCapacity() const;
 
   const ON_Color* ColorArray(ON_SubDComponentLocation subd_appearance)const;
@@ -11231,22 +11369,32 @@ public:
   unsigned ColorArrayCount(ON_SubDComponentLocation subd_appearance) const;
 
   /*
-  Returns:
-    True if vertex color values are set on this fragment.
+  Call ClearColors() if vertex colors do not exist or are no longer valid.
   */
-  bool ColorsExist() const;
+  void ClearColors() const;
+
+  /*
+  Returns:
+    True if vertex color exist bit is set. This bit is used
+    for control net and color array setting.
+  Remarks:
+    Use ColorCount() to determine if vertex colors are set.
+  */
+  bool ColorsExistForExperts() const;
 
   /*
   Parameters:
     bSetColorsExist - [in]
       True if vertex colors exist.
       False vertex colors do not exist or are no longer valid.
+      SetColorsExist(false) and ClearColors() are two ways
+      to do the same thing.
   */
-  void SetColorsExist(bool bSetColorsExist) const;
+  void SetColorsExistForExperts(bool bSetColorsExist) const;
 
   /*
   Description:
-    Set the vertex colors in m_C[] to color.
+    Set all vertex colors in m_C[] to color.
   Parameters:
     color - [in]
   */
@@ -11275,108 +11423,6 @@ public:
       )
   )const;
 
-private:
-  ///////////////////////////////////////////////////////////////////////////////////
-  //
-  // Principal curvatures
-  //
-  // If m_K is not nullptr and m_K_stride>0, then m_K[] can accommodate up to m_P_capacity
-  // principal curvatures (two doubles k1, k2). Otherwise there are no principal curvatures.
-  // At exceptional points, the curvature values may be nan.
-  // Never modify m_K_stride, m_K.
-  // Use m_grid functions to get principal curvature indices and quad face indices.
-  //
-  // m_K[] is rarely used and typically managed with ReserveManagedCurvatureCapacity() / DeleteManagedCurvatureCapacity().
-  // NOTE WELL:
-  //   If m_K[] is interlaced, the number of bytes between successive elements of m_K[] must be a multiple of 16
-  //   because sizeof(m_K) = 16 AND m_K_stride is the stride between elements of m_K[]
-  //   This is different than m_P_stride, m_N_stride, and m_T_stride, which count the number of doubles between successive 
-  //   points/normals/texture points in m_P[]/m_N[]/m_T[].
-  mutable ON_SurfaceCurvature* m_K;
-  mutable size_t m_K_stride; // stride for m_K[] as an array of 16 byte ON_SurfaceCurvature elements (so 0 or >= 1).
-
-public:
-  /*
-  Returns:
-    If grid vertex principal curvatures and sectional curvatures are available, then VertexCount() is returned.
-    Otherwise 0 is returned.
-  */
-  unsigned int CurvatureCount() const;
-  unsigned int CurvatureCapacity() const;
-
-  const ON_SurfaceCurvature* CurvatureArray(ON_SubDComponentLocation subd_appearance)const;
-  unsigned CurvatureArrayCount(ON_SubDComponentLocation subd_appearance) const;
-
-  /*
-  Description:
-    Adds managed curvature capacity to store vertex curvatures.
-  */
-  bool ReserveManagedCurvatureCapacity() const;
-
-  /*
-  Description:
-    Deletes capacity added by ReserveManagedCurvatureCapacity().
-  */
-  void DeleteManagedCurvatureCapacity() const;
-
-
-  /*
-  Returns:
-    True if vertex curvature values are set on this fragment.
-  */
-  bool CurvaturesExist() const;
-
-  /*
-  Parameters:
-    bSetCurvaturesExist - [in]
-      True if vertex curvatures exist.
-      False vertex curvatures do not exist or are no longer valid.
-  */
-  void SetCurvaturesExist(bool bSetCurvaturesExist) const;
-
-  /*
-  Description:
-    Computes curvature values at grid points for this fragment.
-  */
-  void SetCurvatures() const;
-
-  /*
-  Description:
-    Computes normal curvature values for this fragment. Evaluation
-    points are uniformly spaced over the fragment to fill the N, Ku, Kv
-    arrays.
-  Parameters:
-    sample_count - [in]
-      How many samples to get in both directions.
-    comb_count_params - [in]
-      How many combs to get in both directions (+1 if get_first_comb is false).
-    get_first_comb - [in]
-      Wheter to skip combs at u = 0 and v = 0. The parameters at which to
-      get the combs are the same when:
-        - get_first_comb is true and comb_count is n
-        - get_first_comb is false and comb_count is n
-    getKu, getKv - [in]
-      Should the curvature be computed along u-isos, v-isos, or both.
-    P, Kuv - [out]
-      Arrays of size (getKu + getKv) * sample_count * comb_count_arrays where
-      Points and Curvatures along u-isos or along v-isos are stored.
-      Sample (i, j) in u direction, on u-dir comb j at sample i is stored 
-      at index i + (j - get_first_comb ? 0 : 1) * sample_count.
-      Sample (i, j) in v direction, on v-dir comb i at sample j is stored 
-      at index (getKu * sample_count * comb_count_arrays) + j + (i - get_first_comb ? 0 : 1) * sample_count.
-      Direction u (indexed with i) refers to the Fragment's grid 1st index
-      (from face->Vertex(0) to face->Vertex(1)).
-      Direction v (indexed with j) refers to the Fragment's grid 2nd index
-      (from face->Vertex(0) to face->Vertex(3)).
-      comb_count_arrays = comb_count_params - get_first_comb ? 1 : 0
-  Returns:
-    Number of points sampled
-  */
-  unsigned GetNormalCurvatures(const unsigned sample_count,
-                               const unsigned comb_count_params,
-                               const bool get_first_comb, const bool getKu,
-                               const bool getKv, ON_SimpleArray<ON_3dPoint>* P,
-                               ON_SimpleArray<ON_3dVector>* Kuv) const;
 
 public:
 
@@ -11398,18 +11444,19 @@ public:
     bCurvatureArray - [in]
       true to include room for the m_K[] array.
   Returns:
-    Amount of memory needed for the fragment, the m_P[], m_N[], m_T[], m_C[], 
-    and optionally the m_K[] arrays.
+    Amount of memory needed for the fragment, the m_P[], m_N[], m_T[], m_C[], and m_K[] arrays.
   */
   static size_t SizeofFragment(
-    unsigned int display_density,
-    bool bCurvatureArray
+    unsigned int display_density
   );
 
 public:
   void Dump(ON_TextLog& text_log) const;
 };
 
+/// <summary>
+/// ON_SubDManagedMeshFragment is a legacy class that should not be used.
+/// </summary>
 class ON_CLASS ON_SubDManagedMeshFragment : public ON_SubDMeshFragment
 {
 public:
@@ -11436,15 +11483,11 @@ public:
     unsigned int mesh_density
     ) ON_NOEXCEPT;
 
-  bool ReserveCapacity(
-    unsigned int mesh_density,
-    bool bWithCurvature
-    ) ON_NOEXCEPT;
-
 private:
   void CopyHelper(const ON_SubDMeshFragment& src);
-  size_t m_storage_capacity = 0;
-  double* m_storage = nullptr;
+
+  size_t m_obsolete1 = 0;
+  ON__UINT_PTR m_obsolete2 = 0;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -18775,7 +18818,14 @@ public:
     const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
     unsigned int minimum_chain_length,
     ON_SimpleArray< ON_SubDEdgePtr >& edge_chains,
-    const bool bIgnoreCorners = false
+    const bool bIgnoreCorners
+  );
+
+  // 7.x SDK prservation - calls above with bIgnoreCorners = false
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
 
   /*
@@ -18819,7 +18869,14 @@ public:
     const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
     unsigned int minimum_chain_length,
     ON_SimpleArray< ON_SubDEdgePtr >& edge_chains,
-    const bool bIgnoreCorners = false
+    const bool bIgnoreCorners
+  );
+
+  // 7.x SDK prservation - calls above with bIgnoreCorners = false
+  static unsigned int SortEdgesIntoEdgeChains(
+    const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
+    unsigned int minimum_chain_length,
+    ON_SimpleArray< ON_SubDEdgePtr >& edge_chains
   );
 
   /*

@@ -15,9 +15,9 @@
 //
 #define RMA_VERSION_YEAR   2023
 #define RMA_VERSION_MONTH  6
-#define RMA_VERSION_DATE   9
+#define RMA_VERSION_DATE   27
 #define RMA_VERSION_HOUR   14
-#define RMA_VERSION_MINUTE 36
+#define RMA_VERSION_MINUTE 0
 
 ////////////////////////////////////////////////////////////////
 //
@@ -35,8 +35,8 @@
 //     3 = build system release build
 #define RMA_VERSION_BRANCH 0
 
-#define VERSION_WITH_COMMAS  8,0,23160,14360
-#define VERSION_WITH_PERIODS 8.0.23160.14360
+#define VERSION_WITH_COMMAS  8,0,23178,14000
+#define VERSION_WITH_PERIODS 8.0.23178.14000
 #define COPYRIGHT "Copyright (C) 1993-2023, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Public OpenNURBS C++ 3dm file IO library."
 
@@ -47,8 +47,8 @@
 #define RMA_VERSION_NUMBER_SR_STRING   "SR0"
 #define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "8.0.23160.14360"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"8.0.23160.14360"
+#define RMA_VERSION_WITH_PERIODS_STRING   "8.0.23178.14000"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"8.0.23178.14000"
 
 
 

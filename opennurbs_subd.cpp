@@ -9428,10 +9428,10 @@ static const ON_SHA1_Hash Internal_FragmentColorsHash(const ON_SubDFace* first_f
     bool bAccumulateId = true;
     for (const ON_SubDMeshFragment* frag = first_frag; nullptr != frag; frag = frag->NextFaceFragment(false))
     {
-      if (frag->ColorsExist())
+      const unsigned count = frag->ColorArrayCount(ON_SubDComponentLocation::Surface);
+      if (count > 0)
       {
         const ON_Color* a = frag->ColorArray(ON_SubDComponentLocation::Surface);
-        const unsigned count = frag->ColorArrayCount(ON_SubDComponentLocation::Surface);
         if (nullptr != a && count > 0)
         {
           bNotEmpty = true;
@@ -9460,10 +9460,10 @@ static const ON_SHA1_Hash Internal_FragmentCurvaturesHash(const ON_SubDFace* fir
     bool bAccumulateId = true;
     for (const ON_SubDMeshFragment* frag = first_frag; nullptr != frag; frag = frag->NextFaceFragment(false))
     {
-      if (frag->CurvaturesExist())
+      const unsigned count = frag->CurvatureArrayCount(ON_SubDComponentLocation::Surface);
+      if (count > 0)
       {
         const ON_SurfaceCurvature* a = frag->CurvatureArray(ON_SubDComponentLocation::Surface);
-        const unsigned count = frag->CurvatureArrayCount(ON_SubDComponentLocation::Surface);
         if (nullptr != a && count > 0)
         {
           bNotEmpty = true;
@@ -25103,6 +25103,26 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
 unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
   const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
   unsigned int minimum_chain_length,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  // Dale Lear - June 20 2023 https://mcneel.myjetbrains.com/youtrack/issue/RH-75228
+  // To avoid breaking the the 7.x SDK 
+  // Call Mikko's modified version. https://mcneel.myjetbrains.com/youtrack/issue/RH-66258
+  // It is extremely unlikely anybody outside of core McNeel devs ever called the original function.
+  const bool bIgnoreCorners = false;
+  return ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+    unsorted_edges,
+    minimum_chain_length,
+    sorted_edges,
+    bIgnoreCorners
+  );
+}
+
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SimpleArray< const ON_SubDEdge* >& unsorted_edges,
+  unsigned int minimum_chain_length,
   ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges,
   const bool bIgnoreCorners
 )
@@ -25120,6 +25140,25 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
     unsorted_eptrs.Append(eptr);
   }
   return ON_SubDEdgeChain::SortEdgesIntoEdgeChains(unsorted_eptrs, minimum_chain_length, sorted_edges, bIgnoreCorners);
+}
+
+unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+  const ON_SimpleArray< ON_SubDEdgePtr >& unsorted_edges,
+  unsigned int minimum_chain_length,
+  ON_SimpleArray< ON_SubDEdgePtr >& sorted_edges
+)
+{
+  // Dale Lear - June 20 2023 https://mcneel.myjetbrains.com/youtrack/issue/RH-75228
+  // To avoid breaking the the 7.x SDK 
+  // Call Mikko's modified version. https://mcneel.myjetbrains.com/youtrack/issue/RH-66258
+  // It is extremely unlikely anybody outside of core McNeel devs ever called the original function.
+  const bool bIgnoreCorners = false;
+  return ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
+    unsorted_edges,
+    minimum_chain_length,
+    sorted_edges,
+    bIgnoreCorners
+  );
 }
 
 unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(

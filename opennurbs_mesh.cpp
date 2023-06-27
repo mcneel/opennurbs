@@ -1360,11 +1360,68 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   dump.Print("m_Ttag:\n"); dump.PushIndent(); m_Ttag.Dump(dump); dump.PopIndent();
   dump.Print( ON_wString(L"Memory used: ")  + ON_wString::ToMemorySize(this->SizeOf()) + ON_wString(L"\n") );
 
-  dump.PushIndent();
+
+  const ON_MeshParameters* mp = this->MeshParameters();
+  if (nullptr != mp)
+  {
+    ON_String description;
+    switch (mp->GeometrySettingsType(true))
+    {
+    case ON_MeshParameters::Type::Unset:
+      description = ON_String::EmptyString;
+      break;
+    case ON_MeshParameters::Type::Default:
+      description = ON_String("ON_MeshParameters::DefaultMesh");
+      break;
+    case ON_MeshParameters::Type::FastRender:
+      description = ON_String("ON_MeshParameters::FastRenderMesh");
+      break;
+    case ON_MeshParameters::Type::QualityRender:
+      description = ON_String("ON_MeshParameters::QualityRenderMesh");
+      break;
+    case ON_MeshParameters::Type::DefaultAnalysis:
+      description = ON_String("ON_MeshParameters::DefaultAnalysisMesh");
+      break;
+    case ON_MeshParameters::Type::FromMeshDensity:
+      description = ON_String::FormatToString("ON_MeshParameters::CreateFromMeshDensity(%g)", mp->MeshDensity());
+      break;
+    case ON_MeshParameters::Type::Custom:
+      description = ON_String::EmptyString;
+      break;
+    default:
+      description = ON_String::EmptyString;
+      break;
+    }
+
+    dump.PrintNewLine();
+    if (description.IsNotEmpty())
+    {
+      dump.Print("NURBS, ON_Brep, ON_Extrusion meshing parameters:\n");
+      {
+        const ON_TextLogIndent indent1(dump);
+        dump.Print("%s\n", static_cast<const char*>(description));
+      }
+      dump.Print("SubD meshing parameters:\n");
+      {
+        const ON_TextLogIndent indent1(dump);
+        const ON_SubDDisplayParameters subdmp = mp->SubDDisplayParameters();
+        subdmp.Dump(dump);
+      }
+    }
+    else
+    {
+      dump.Print("Custom meshing parameters:\n");
+      const ON_TextLogIndent indent1(dump);
+      mp->Dump(dump);
+    }
+    dump.PrintNewLine();
+  }
+
+  const ON_TextLogIndent indent1(dump);
 
   dump.Print("%d mesh vertices:\n",m_V.Count());
   {
-    dump.PushIndent();
+    const ON_TextLogIndent indent2(dump);
     Internal_PrintMeshArrayHash(dump, m_V, L"m_V array hash", true);
     const ON_3dPoint* D = 0;
     if ( bDoubles )
@@ -1397,14 +1454,13 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
         }
       }
     }
-    dump.PopIndent();
   }
 
   if ( HasVertexNormals() )
   {
     dump.Print("%d mesh vertex normals:\n",m_N.Count());
     {
-      dump.PushIndent();
+      const ON_TextLogIndent indent2(dump);
       Internal_PrintMeshArrayHash(dump, m_N, L"m_N array hash", true);
       for (i = 0; i < vcount; i++)
       {
@@ -1419,7 +1475,6 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
           dump.Print("m_N[%d] = (%g,%g,%g)\n",i,p.x,p.y,p.z);
         }
       }
-      dump.PopIndent();
     }
   }
 
@@ -1427,7 +1482,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   {
     dump.Print("%d mesh vertex texture coordinates:\n",m_T.Count());
     {
-      dump.PushIndent();
+      const ON_TextLogIndent indent2(dump);
       Internal_PrintMeshArrayHash(dump, m_T, L"m_T array hash", true);
       for (i = 0; i < vcount; i++)
       {
@@ -1444,7 +1499,6 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
           dump.Print("m_T[%d] = (%g,%g)\n",i,p.x,p.y);
         }
       }
-      dump.PopIndent();
     }
   }
 
@@ -1453,7 +1507,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
   {
     dump.Print("%d mesh vertex surface parameters:\n",m_S.Count());
     {
-      dump.PushIndent();
+      const ON_TextLogIndent indent2(dump);
       Internal_PrintMeshArrayHash(dump, m_S, L"m_S array hash", true);
       for (i = 0; i < vcount; i++)
       {
@@ -1468,13 +1522,12 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
           dump.Print("m_S[%d] = (%g,%g)\n",i,srfuv.x,srfuv.y);
         }
       }
-      dump.PopIndent();
     }
   }
 
   dump.Print("%d mesh faces:\n",m_F.Count());
   {
-    dump.PushIndent();
+    const ON_TextLogIndent indent2(dump);
     Internal_PrintMeshArrayHash(dump, m_F, L"m_F array hash", true);
     for (i = 0; i < fcount; i++)
     {
@@ -1488,14 +1541,13 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
       else
         dump.Print("m_F[%d].vi = (%d,%d,%d,%d)\n",i,m_F[i].vi[0],m_F[i].vi[1],m_F[i].vi[2],m_F[i].vi[3]);
     }
-    dump.PopIndent();
   }
 
   if ( HasFaceNormals() )
   {
     dump.Print("%d mesh face normals:\n",m_FN.Count());
     {
-      dump.PushIndent();
+      const ON_TextLogIndent indent2(dump);
       for (i = 0; i < fcount; i++)
       {
         if ( i == half_max && 2*half_max < fcount )
@@ -1509,7 +1561,6 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
           dump.Print("m_FN[%d] = (%g,%g,%g)\n",i,p.x,p.y,p.z);
         }
       }
-      dump.PopIndent();
     }
   }
 
@@ -1520,7 +1571,7 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
     const int ngon_count = NgonCount();
     dump.Print("%d mesh n-gons:\n",ngon_count);
     {
-      dump.PushIndent();
+      const ON_TextLogIndent indent2(dump);
       for (i = 0; i < ngon_count; i++)
       {
         if ( i == half_max && 2*half_max < ngon_count )
@@ -1545,12 +1596,8 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
           }
         }
       }
-      dump.PopIndent();
     }
   }
-
-
-  dump.PopIndent();
 }
 
 
