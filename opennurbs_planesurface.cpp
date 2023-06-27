@@ -650,7 +650,7 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlane(
 }
 
 
-bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
+bool ON_PlaneSurface::CreatePlaneThroughBox(
   const ON_Plane& plane,
   const ON_BoundingBox& bbox,
   double padding
@@ -683,7 +683,7 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
 }
 
 
-bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
+bool ON_PlaneSurface::CreatePlaneThroughBox(
   const ON_PlaneEquation& plane_equation,
   const ON_BoundingBox& bbox,
   double padding
@@ -692,7 +692,7 @@ bool ON_PlaneSurface::CreatePseudoInfinitePlaneTight(
   ON_Plane plane(plane_equation);
   ON_3dPoint center = plane.ClosestPointTo(bbox.Center());
   plane.origin = center;
-  return CreatePseudoInfinitePlaneTight(plane, bbox, padding);
+  return CreatePlaneThroughBox(plane, bbox, padding);
 }
 
 

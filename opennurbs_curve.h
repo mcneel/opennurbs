@@ -396,7 +396,10 @@ public:
   // Parameters:
   //   plane - [out] if not nullptr and true is returned,
   //                 the plane parameters are filled in.
-  //   tolerance - [in] tolerance to use when checking
+  //   tolerance - [in] tolerance to use when checkin
+  // Note:
+  //   If the curve is a simple planar closed curve the plane 
+  //   orientation agrees with the curve orientation.
   // Returns:
   //   true if there is a plane such that the maximum distance from
   //   the curve to the plane is <= tolerance.

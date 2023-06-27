@@ -191,11 +191,12 @@ public: // Expert access to the post effect XML.
   // Sets the XML node that stores the state of all the post effects (ON_RDK_POST_EFFECTS).
   void SetPostEffectsNode(const ON_XMLNode&);
 
+  // For internal use only.
+  virtual void OnInternalXmlChanged(const ON_PostEffects*);
+
 private: // For internal use only.
-  friend class ON_3dmRenderSettingsPrivate;
   friend class ON_PostEffect;
   ON_XMLNode& WritablePostEffectsNode(void);
-  virtual void OnInternalXmlChanged(ON_PostEffects*);
 
 public:
   class CImpl;

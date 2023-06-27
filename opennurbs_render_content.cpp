@@ -339,11 +339,11 @@ ON_UUID UniversalRenderEngineId(void)
   return uuid;
 }
 
-class ON_RenderContent::CImpl
+class ON_RenderContentPrivate
 {
 public:
-  CImpl(ON_RenderContent& rc, const wchar_t* kind);
-  virtual ~CImpl();
+  ON_RenderContentPrivate(ON_RenderContent& rc, const wchar_t* kind);
+  virtual ~ON_RenderContentPrivate();
 
   void SetXMLNode(const ON_XMLNode& node);
 
@@ -364,6 +364,12 @@ public:
 public:
   void InternalSetPropertyValue(const wchar_t* name, const ON_XMLVariant& value);
 
+  static void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node);
+  static void BuildXMLHierarchy(const ON_RenderContent& rc, ON_XMLNode& node);
+  static ON_XMLNode* NewXMLNodeRecursive(const ON_RenderContent& rc);
+  static void SetModel(const ON_RenderContent& rc, ONX_Model& model);
+  static ON_RenderContent* NewRenderContentFromNode(const ON_XMLNode& node);
+
 private:
   ON_RenderContent* FindLastChild(void) const;
   ON_RenderContent* FindPrevSibling(ON_RenderContent* child) const;
@@ -378,24 +384,24 @@ public:
   mutable std::recursive_mutex m_mutex;
 };
 
-ON_RenderContent::CImpl::CImpl(ON_RenderContent& rc, const wchar_t* kind)
+ON_RenderContentPrivate::ON_RenderContentPrivate(ON_RenderContent& rc, const wchar_t* kind)
   :
   m_node(kind),
   m_render_content(rc)
 {
 }
 
-ON_RenderContent::CImpl::~CImpl()
+ON_RenderContentPrivate::~ON_RenderContentPrivate()
 {
   DeleteAllChildren();
 }
 
-const ON_XMLNode* ON_RenderContent::CImpl::XMLNode_Simulation(void) const
+const ON_XMLNode* ON_RenderContentPrivate::XMLNode_Simulation(void) const
 {
   return m_node.GetNamedChild(ON_RENDER_CONTENT_SIMULATION);
 }
 
-ON_XMLVariant ON_RenderContent::CImpl::GetPropertyValue(const wchar_t* name) const
+ON_XMLVariant ON_RenderContentPrivate::GetPropertyValue(const wchar_t* name) const
 {
   // Gets a property from the content node. This is one of:
   //
@@ -416,14 +422,14 @@ ON_XMLVariant ON_RenderContent::CImpl::GetPropertyValue(const wchar_t* name) con
   return v;
 }
 
-void ON_RenderContent::CImpl::SetPropertyValue(const wchar_t* name, const ON_XMLVariant& value)
+void ON_RenderContentPrivate::SetPropertyValue(const wchar_t* name, const ON_XMLVariant& value)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   InternalSetPropertyValue(name, value);
 }
 
-void ON_RenderContent::CImpl::InternalSetPropertyValue(const wchar_t* name, const ON_XMLVariant& value)
+void ON_RenderContentPrivate::InternalSetPropertyValue(const wchar_t* name, const ON_XMLVariant& value)
 {
   // Sets a property on the content node. This is one of:
   //
@@ -442,7 +448,7 @@ void ON_RenderContent::CImpl::InternalSetPropertyValue(const wchar_t* name, cons
   }
 }
 
-void ON_RenderContent::CImpl::SetXMLNode(const ON_XMLNode& node)
+void ON_RenderContentPrivate::SetXMLNode(const ON_XMLNode& node)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -483,9 +489,9 @@ void ON_RenderContent::CImpl::SetXMLNode(const ON_XMLNode& node)
   m_render_content.SetId(GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID).AsUuid());
 }
 
-bool ON_RenderContent::CImpl::AddChild(ON_RenderContent& child)
+bool ON_RenderContentPrivate::AddChild(ON_RenderContent& child)
 {
-  if ((nullptr != child.m_impl->m_model) || (nullptr != child.m_impl->m_parent) || (nullptr != child.m_impl->m_next_sibling))
+  if ((nullptr != child._private->m_model) || (nullptr != child._private->m_parent) || (nullptr != child._private->m_next_sibling))
     return false;
 
   if (nullptr == m_first_child)
@@ -498,16 +504,16 @@ bool ON_RenderContent::CImpl::AddChild(ON_RenderContent& child)
     if (nullptr == last_child)
       return false;
 
-    last_child->m_impl->m_next_sibling = &child;
+    last_child->_private->m_next_sibling = &child;
   }
 
-  child.m_impl->m_next_sibling = nullptr;
-  child.m_impl->m_parent = &m_render_content;
+  child._private->m_next_sibling = nullptr;
+  child._private->m_parent = &m_render_content;
 
   return true;
 }
 
-void ON_RenderContent::CImpl::DeleteAllChildren(void)
+void ON_RenderContentPrivate::DeleteAllChildren(void)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -518,14 +524,14 @@ void ON_RenderContent::CImpl::DeleteAllChildren(void)
   while (nullptr != child_rc)
   {
     auto* delete_rc = child_rc;
-    child_rc = child_rc->m_impl->m_next_sibling;
+    child_rc = child_rc->_private->m_next_sibling;
     delete delete_rc;
   }
 
   m_first_child = nullptr;
 }
 
-ON_RenderContent* ON_RenderContent::CImpl::FindLastChild(void) const
+ON_RenderContent* ON_RenderContentPrivate::FindLastChild(void) const
 {
   ON_RenderContent* result = nullptr;
 
@@ -533,40 +539,40 @@ ON_RenderContent* ON_RenderContent::CImpl::FindLastChild(void) const
   while (nullptr != candidate)
   {
     result = candidate;
-    candidate = candidate->m_impl->m_next_sibling;
+    candidate = candidate->_private->m_next_sibling;
   }
 
   return result;
 }
 
-ON_RenderContent* ON_RenderContent::CImpl::FindPrevSibling(ON_RenderContent* child) const
+ON_RenderContent* ON_RenderContentPrivate::FindPrevSibling(ON_RenderContent* child) const
 {
   if (child != m_first_child)
   {
     ON_RenderContent* candidate = m_first_child;
     while (nullptr != candidate)
     {
-      if (child == candidate->m_impl->m_next_sibling)
+      if (child == candidate->_private->m_next_sibling)
         return candidate;
 
-      candidate = candidate->m_impl->m_next_sibling;
+      candidate = candidate->_private->m_next_sibling;
     }
   }
 
   return nullptr;
 }
 
-ON_RenderContent& ON_RenderContent::CImpl::TopLevel(void)
+ON_RenderContent& ON_RenderContentPrivate::TopLevel(void)
 {
   if (nullptr != m_parent)
   {
-    return m_parent->m_impl->TopLevel();
+    return m_parent->_private->TopLevel();
   }
 
   return m_render_content;
 }
 
-bool ON_RenderContent::CImpl::ChangeChild(ON_RenderContent* old_child, ON_RenderContent* new_child)
+bool ON_RenderContentPrivate::ChangeChild(ON_RenderContent* old_child, ON_RenderContent* new_child)
 {
   if (nullptr == old_child)
     return false;
@@ -579,7 +585,7 @@ bool ON_RenderContent::CImpl::ChangeChild(ON_RenderContent* old_child, ON_Render
     }
     else
     {
-      m_first_child = old_child->m_impl->m_next_sibling;
+      m_first_child = old_child->_private->m_next_sibling;
     }
   }
   else
@@ -590,18 +596,18 @@ bool ON_RenderContent::CImpl::ChangeChild(ON_RenderContent* old_child, ON_Render
 
     if (nullptr != new_child)
     {
-      prev_sibling->m_impl->m_next_sibling = new_child;
+      prev_sibling->_private->m_next_sibling = new_child;
     }
     else
     {
-      prev_sibling->m_impl->m_next_sibling = old_child->m_impl->m_next_sibling;
+      prev_sibling->_private->m_next_sibling = old_child->_private->m_next_sibling;
     }
   }
 
   if (nullptr != new_child)
   {
-    new_child->m_impl->m_next_sibling = old_child->m_impl->m_next_sibling;
-    new_child->m_impl->m_parent = old_child->m_impl->m_parent;
+    new_child->_private->m_next_sibling = old_child->_private->m_next_sibling;
+    new_child->_private->m_parent = old_child->_private->m_parent;
   }
 
   delete old_child;
@@ -609,7 +615,7 @@ bool ON_RenderContent::CImpl::ChangeChild(ON_RenderContent* old_child, ON_Render
   return true;
 }
 
-ON_RenderContent* ON_RenderContent::CImpl::FindChild(const wchar_t* child_slot_name) const
+ON_RenderContent* ON_RenderContentPrivate::FindChild(const wchar_t* child_slot_name) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -619,28 +625,28 @@ ON_RenderContent* ON_RenderContent::CImpl::FindChild(const wchar_t* child_slot_n
     if (child_rc->ChildSlotName() == child_slot_name)
       return child_rc;
 
-    child_rc = child_rc->m_impl->m_next_sibling;
+    child_rc = child_rc->_private->m_next_sibling;
   }
 
   return nullptr;
 }
 
-bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* child_slot_name)
+bool ON_RenderContentPrivate::SetChild(ON_RenderContent* child, const wchar_t* child_slot_name)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   if (nullptr != child)
   {
-    if (nullptr != child->m_impl->m_model)
+    if (nullptr != child->_private->m_model)
       return false;
 
-    if (nullptr != child->m_impl->m_parent)
+    if (nullptr != child->_private->m_parent)
       return false;
 
     if ((nullptr == child_slot_name) || (0 == child_slot_name[0]))
       return false;
 
-    child->m_impl->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, child_slot_name);
+    child->_private->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, child_slot_name);
   }
 
   // Get any existing child with the same child slot name (may be null).
@@ -663,20 +669,20 @@ bool ON_RenderContent::CImpl::SetChild(ON_RenderContent* child, const wchar_t* c
 
   if (nullptr != child)
   {
-    auto* pModel = TopLevel().m_impl->m_model;
-    child->m_impl->m_model = pModel;
+    auto* pModel = TopLevel()._private->m_model;
+    child->_private->m_model = pModel;
   }
 
   return true;
 }
 
-void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node)
+void ON_RenderContentPrivate::SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node) // Static.
 {
   // Copy the component name to the XML instance name.
-  rc.m_impl->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME, rc.Name());
+  rc._private->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME, rc.Name());
 
   // Copy the component id to the XML instance id.
-  rc.m_impl->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID, rc.Id());
+  rc._private->SetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID, rc.Id());
 
   auto* child_node = new ON_XMLNode(rc.XMLNode());
   node.AttachChildNode(child_node);
@@ -689,21 +695,75 @@ void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node)
   }
 }
 
-static void BuildXMLHierarchy(const ON_RenderContent& rc, ON_XMLNode& node)
+void ON_RenderContentPrivate::BuildXMLHierarchy(const ON_RenderContent& rc, ON_XMLNode& node) // Static.
 {
   // Recursively builds 'node' from the tree structure of the XML nodes in 'rc' and its children.
 
-  node = rc.m_impl->m_node;
+  node = rc._private->m_node;
 
-  auto* child_rc = rc.m_impl->m_first_child;
+  auto* child_rc = rc._private->m_first_child;
   while (nullptr != child_rc)
   {
     auto* child_node = new ON_XMLNode(L"");
     BuildXMLHierarchy(*child_rc, *child_node);
     node.AttachChildNode(child_node);
 
-    child_rc = child_rc->m_impl->m_next_sibling;
+    child_rc = child_rc->_private->m_next_sibling;
   }
+}
+
+ON_XMLNode* ON_RenderContentPrivate::NewXMLNodeRecursive(const ON_RenderContent& rc) // Static.
+{
+  ON_XMLNode* node = new ON_XMLNode(rc._private->m_node);
+
+  ON_RenderContent* child_rc = rc._private->m_first_child;
+  while (nullptr != child_rc)
+  {
+    ON_XMLNode* child_node = NewXMLNodeRecursive(*child_rc);
+    if (nullptr != child_node)
+    {
+      node->AttachChildNode(child_node);
+    }
+
+    child_rc = child_rc->_private->m_next_sibling;
+  }
+
+  return node;
+}
+
+void ON_RenderContentPrivate::SetModel(const ON_RenderContent& rc, ONX_Model& model) // Static.
+{
+  rc._private->m_model = &model;
+
+  auto it = rc.GetChildIterator();
+  ON_RenderContent* child_rc = nullptr;
+  while (nullptr != (child_rc = it.GetNextChild()))
+  {
+    SetModel(*child_rc, model);
+  }
+}
+
+ON_RenderContent* ON_RenderContentPrivate::NewRenderContentFromNode(const ON_XMLNode& node) // Static.
+{
+  ON_RenderContent* rc = nullptr;
+
+  const ON_wString& kind = node.TagName();
+
+  if (ON_KIND_MATERIAL == kind)
+    rc = new ON_RenderMaterial;
+  else
+  if (ON_KIND_ENVIRONMENT == kind)
+    rc = new ON_RenderEnvironment;
+  else
+  if (ON_KIND_TEXTURE == kind)
+    rc = new ON_RenderTexture;
+
+  if (nullptr != rc)
+  {
+    rc->_private->SetXMLNode(node);
+  }
+
+  return rc;
 }
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_RenderContent, ON_ModelComponent, "A98DEDDA-E4FA-4E1E-9BD3-2A0695C6D4E9");
@@ -712,7 +772,7 @@ ON_RenderContent::ON_RenderContent(const wchar_t* kind)
   :
   ON_ModelComponent(ON_ModelComponent::Type::RenderContent)
 {
-  m_impl = new (m_Impl) CImpl(*this, kind);
+  _private = new (_PRIVATE) ON_RenderContentPrivate(*this, kind); PRIVATE_CHECK(ON_RenderContentPrivate);
 
   // Set a unique instance id.
   ON_UUID uuid;
@@ -720,24 +780,24 @@ ON_RenderContent::ON_RenderContent(const wchar_t* kind)
   SetId(uuid);
 
   // Set the plug-in id to the RDK plug-in id.
-  m_impl->InternalSetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, RdkPlugInId());
+  _private->InternalSetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, RdkPlugInId());
 
   // Set the render engine id to 'universal'.
-  m_impl->InternalSetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, UniversalRenderEngineId());
+  _private->InternalSetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, UniversalRenderEngineId());
 }
 
 ON_RenderContent::ON_RenderContent(const ON_RenderContent& rc)
   :
   ON_ModelComponent(ON_ModelComponent::Type::RenderContent, rc)
 {
-  m_impl = new (m_Impl) CImpl(*this, L"");
+  _private = new (_PRIVATE) ON_RenderContentPrivate(*this, L""); PRIVATE_CHECK(ON_RenderContentPrivate);
   operator = (rc);
 }
 
 ON_RenderContent::~ON_RenderContent()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  _private->~ON_RenderContentPrivate();
+  _private = nullptr;
 }
 
 const ON_RenderContent& ON_RenderContent::operator = (const ON_RenderContent& rc)
@@ -745,8 +805,8 @@ const ON_RenderContent& ON_RenderContent::operator = (const ON_RenderContent& rc
   if (this != &rc)
   {
     ON_XMLRootNode root;
-    BuildXMLHierarchy(rc, root);
-    m_impl->SetXMLNode(root);
+    ON_RenderContentPrivate::BuildXMLHierarchy(rc, root);
+    _private->SetXMLNode(root);
   }
 
   return *this;
@@ -754,113 +814,113 @@ const ON_RenderContent& ON_RenderContent::operator = (const ON_RenderContent& rc
 
 ON_wString ON_RenderContent::TypeName(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME).AsString();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME).AsString();
 }
 
 void ON_RenderContent::SetTypeName(const wchar_t* name)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME, name);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_TYPE_NAME, name);
 }
 
 ON_wString ON_RenderContent::Notes(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_NOTES).AsString();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_NOTES).AsString();
 }
 
 void ON_RenderContent::SetNotes(const wchar_t* notes)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_NOTES, notes);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_NOTES, notes);
 }
 
 ON_wString ON_RenderContent::Tags(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TAGS).AsString();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_TAGS).AsString();
 }
 
 void ON_RenderContent::SetTags(const wchar_t* tags)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TAGS, tags);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_TAGS, tags);
 }
 
 ON_UUID ON_RenderContent::TypeId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_TYPE_ID).AsUuid();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_TYPE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetTypeId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_TYPE_ID, uuid);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_TYPE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::RenderEngineId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID).AsUuid();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID).AsUuid();
 }
 
 void ON_RenderContent::SetRenderEngineId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, uuid);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_RENDER_ENGINE_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::PlugInId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID).AsUuid();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID).AsUuid();
 }
 
 void ON_RenderContent::SetPlugInId(const ON_UUID& uuid)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, uuid);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_PLUG_IN_ID, uuid);
 }
 
 ON_UUID ON_RenderContent::GroupId(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_GROUP_ID).AsUuid();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_GROUP_ID).AsUuid();
 }
 
 void ON_RenderContent::SetGroupId(const ON_UUID& group)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_GROUP_ID, group);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_GROUP_ID, group);
 }
 
 bool ON_RenderContent::Hidden(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_HIDDEN).AsBool();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_HIDDEN).AsBool();
 }
 
 void ON_RenderContent::SetHidden(bool hidden)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_HIDDEN, hidden);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_HIDDEN, hidden);
 }
 
 bool ON_RenderContent::Reference(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_REFERENCE).AsBool();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_REFERENCE).AsBool();
 }
 
 void ON_RenderContent::SetReference(bool ref)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_REFERENCE, ref);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_REFERENCE, ref);
 }
 
 bool ON_RenderContent::AutoDelete(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE).AsBool();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE).AsBool();
 }
 
 void ON_RenderContent::SetAutoDelete(bool autodel)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE, autodel);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_AUTO_DELETE, autodel);
 }
 
 ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_XMLVariant value;
   value.SetNull();
 
   // Try to get the new V8 parameter section.
-  const ON_XMLNode* node = m_impl->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS_V8);
+  const ON_XMLNode* node = _private->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Got it, so use the new ON_XMLParametersV8 to get the parameter's value.
@@ -871,7 +931,7 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
   {
     // Either no V8 section was found or the parameter isn't there yet.
     // Try to get the legacy parameter section. This should not fail.
-    node = m_impl->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS);
+    node = _private->m_node.GetNamedChild(ON_RENDER_CONTENT_PARAMETERS);
     if (nullptr != node)
     {
       // Got it, so use the legacy ON_XMLParameters to get the parameter's value.
@@ -885,12 +945,12 @@ ON_XMLVariant ON_RenderContent::GetParameter(const wchar_t* name) const
 
 bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& value)
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   bool success = false;
 
   // Create / get the new V8 parameter section.
-  auto* node = m_impl->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS_V8);
+  auto* node = _private->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS_V8);
   if (nullptr != node)
   {
     // Use the new ON_XMLParametersV8 to write the parameter's value.
@@ -900,7 +960,7 @@ bool ON_RenderContent::SetParameter(const wchar_t* name, const ON_XMLVariant& va
   }
 
   // Create / get the legacy parameter section.
-  node = m_impl->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS);
+  node = _private->m_node.CreateNodeAtPath(ON_RENDER_CONTENT_PARAMETERS);
   if (nullptr != node)
   {
     // Use the legacy ON_XMLParameters to write the parameter's value.
@@ -919,52 +979,52 @@ ON_RenderContent::ChildIterator ON_RenderContent::GetChildIterator(void) const
 
 const ON_RenderContent* ON_RenderContent::Parent(void) const
 {
-  return m_impl->m_parent;
+  return _private->m_parent;
 }
 
 const ON_RenderContent* ON_RenderContent::FirstChild(void) const
 {
-  return m_impl->m_first_child;
+  return _private->m_first_child;
 }
 
 const ON_RenderContent* ON_RenderContent::NextSibling(void) const
 {
-  return m_impl->m_next_sibling;
+  return _private->m_next_sibling;
 }
 
 const ON_RenderContent& ON_RenderContent::TopLevel(void) const
 {
-  return m_impl->TopLevel();
+  return _private->TopLevel();
 }
 
 bool ON_RenderContent::IsTopLevel(void) const
 {
-	return nullptr == m_impl->m_parent;
+	return nullptr == _private->m_parent;
 }
 
 bool ON_RenderContent::IsChild(void) const
 {
-	return nullptr != m_impl->m_parent;
+	return nullptr != _private->m_parent;
 }
 
 bool ON_RenderContent::SetChild(const ON_RenderContent& child, const wchar_t* child_slot_name)
 {
-  return m_impl->SetChild(child.Duplicate(), child_slot_name);
+  return _private->SetChild(child.Duplicate(), child_slot_name);
 }
 
 bool ON_RenderContent::DeleteChild(const wchar_t* child_slot_name)
 {
-  return m_impl->SetChild(nullptr, child_slot_name);
+  return _private->SetChild(nullptr, child_slot_name);
 }
 
 ON_wString ON_RenderContent::ChildSlotName(void) const
 {
-  return m_impl->GetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME).AsString();
+  return _private->GetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME).AsString();
 }
 
 void ON_RenderContent::SetChildSlotName(const wchar_t* csn)
 {
-  m_impl->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, csn);
+  _private->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, csn);
 }
 
 bool ON_RenderContent::ChildSlotOn(const wchar_t* child_slot_name) const
@@ -981,35 +1041,16 @@ bool ON_RenderContent::SetChildSlotOn(bool on, const wchar_t* child_slot_name)
 
 const ON_RenderContent* ON_RenderContent::FindChild(const wchar_t* child_slot_name) const
 {
-  return m_impl->FindChild(child_slot_name);
-}
-
-static ON_XMLNode* NewXMLNodeRecursive(const ON_RenderContent& rc)
-{
-  ON_XMLNode* node = new ON_XMLNode(rc.m_impl->m_node);
-
-  ON_RenderContent* child_rc = rc.m_impl->m_first_child;
-  while (nullptr != child_rc)
-  {
-    ON_XMLNode* child_node = NewXMLNodeRecursive(*child_rc);
-    if (nullptr != child_node)
-    {
-      node->AttachChildNode(child_node);
-    }
-
-    child_rc = child_rc->m_impl->m_next_sibling;
-  }
-
-  return node;
+  return _private->FindChild(child_slot_name);
 }
 
 ON_wString ON_RenderContent::XML(bool recursive) const
 {
-  ON_XMLNode* node = &m_impl->m_node;
+  ON_XMLNode* node = &_private->m_node;
 
   if (recursive)
   {
-    node = NewXMLNodeRecursive(*this);
+    node = ON_RenderContentPrivate::NewXMLNodeRecursive(*this);
   }
 
   const ON__UINT32 logical_count = node->WriteToStream(nullptr, 0);
@@ -1031,19 +1072,19 @@ bool ON_RenderContent::SetXML(const wchar_t* xml)
   if (ON_XMLNode::ReadError == node.ReadFromStream(xml))
     return false;
 
-  m_impl->SetXMLNode(node);
+  _private->SetXMLNode(node);
 
   return true;
 }
 
 const ON_XMLNode& ON_RenderContent::XMLNode(void) const
 {
-  return m_impl->m_node;
+  return _private->m_node;
 }
 
 ON_wString ON_RenderContent::Kind(void) const
 {
-  return m_impl->m_node.TagName();
+  return _private->m_node.TagName();
 }
 
 const ON_RenderContent* ON_RenderContent::FromModelComponentRef(const ON_ModelComponentReference& ref,
@@ -1063,34 +1104,33 @@ void* ON_RenderContent::EVF(const wchar_t* func, void* data)
 
 // ON_RenderContent::ChildIterator
 
-class ON_RenderContent::ChildIterator::CImpl final
+class ON_RenderContentChildIteratorPrivate final
 {
 public:
-  ON_RenderContent* m_current = nullptr;
+  ON_RenderContent* _current = nullptr;
 };
 
 ON_RenderContent::ChildIterator::ChildIterator(const ON_RenderContent* parent_rc)
 {
-  m_impl = new CImpl;
+  _private = new ON_RenderContentChildIteratorPrivate;
 
   if (nullptr != parent_rc)
   {
-    m_impl->m_current = parent_rc->m_impl->m_first_child;
+    _private->_current = parent_rc->_private->m_first_child;
   }
 }
 
 ON_RenderContent::ChildIterator::~ChildIterator()
 {
-  delete m_impl;
-  m_impl = nullptr;
+  delete _private;
 }
 
 ON_RenderContent* ON_RenderContent::ChildIterator::GetNextChild(void)
 {
-  ON_RenderContent* rc = m_impl->m_current;
+  ON_RenderContent* rc = _private->_current;
   if (nullptr != rc)
   {
-    m_impl->m_current = rc->m_impl->m_next_sibling;
+    _private->_current = rc->_private->m_next_sibling;
   }
 
   return rc;
@@ -1103,37 +1143,17 @@ void* ON_RenderContent::ChildIterator::EVF(const wchar_t*, void*)
 
 void SetModel(const ON_RenderContent& rc, ONX_Model& model)
 {
-  rc.m_impl->m_model = &model;
-
-  auto it = rc.GetChildIterator();
-  ON_RenderContent* child_rc = nullptr;
-  while (nullptr != (child_rc = it.GetNextChild()))
-  {
-    SetModel(*child_rc, model);
-  }
+  ON_RenderContentPrivate::SetModel(rc, model);
 }
 
 ON_RenderContent* NewRenderContentFromNode(const ON_XMLNode& node)
 {
-  ON_RenderContent* rc = nullptr;
+  return ON_RenderContentPrivate::NewRenderContentFromNode(node);
+}
 
-  const ON_wString& kind = node.TagName();
-
-  if (ON_KIND_MATERIAL == kind)
-    rc = new ON_RenderMaterial;
-  else
-  if (ON_KIND_ENVIRONMENT == kind)
-    rc = new ON_RenderEnvironment;
-  else
-  if (ON_KIND_TEXTURE == kind)
-    rc = new ON_RenderTexture;
-
-  if (nullptr != rc)
-  {
-    rc->m_impl->SetXMLNode(node);
-  }
-
-  return rc;
+void SetRenderContentNodeRecursive(const ON_RenderContent& rc, ON_XMLNode& node)
+{
+  ON_RenderContentPrivate::SetRenderContentNodeRecursive(rc, node);
 }
 
 // ON_RenderMaterial
@@ -1179,11 +1199,11 @@ ON_XMLVariant ParamHelper(const ON_XMLParameters& p, const wchar_t* name)
 
 ON_Material ON_RenderMaterial::ToOnMaterial(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_Material mat;
 
-  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = _private->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLParameters p(*sim_node);
@@ -1324,11 +1344,11 @@ const ON_RenderEnvironment& ON_RenderEnvironment::operator = (const ON_RenderEnv
 
 ON_Environment ON_RenderEnvironment::ToOnEnvironment(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_Environment env;
 
-  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = _private->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLVariant v;
@@ -1389,11 +1409,11 @@ const ON_RenderTexture& ON_RenderTexture::operator = (const ON_RenderTexture& te
 
 ON_Texture ON_RenderTexture::ToOnTexture(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_Texture tex;
 
-  const ON_XMLNode* sim_node = m_impl->XMLNode_Simulation();
+  const ON_XMLNode* sim_node = _private->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
     ON_XMLVariant v;
@@ -1444,9 +1464,51 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
     {
       tex.m_mapping_channel_id = v.AsInteger();
     }
+
+    if (p.GetParam(ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR, v))
+    {
+        tex.m_transparent_color = v.AsColor(); // ANDY CHECK -- IS THIS RIGHT?
+    }
+  }
+
+  const auto* parent = Parent();
+  if (nullptr != parent)
+  {
+    const ON_wString csn = ChildSlotName();
+    tex.m_bOn = parent->ChildSlotOn(csn);
+
+// TODO: Discuss with Andy.
+//  tex.m_type                    ???
+//  tex.m_mode                    ???
+//  tex.m_bTreatAsLinear          ???
+//  tex.m_border_color            ???
+//  tex.m_transparency_texture_id ???
+//  tex.m_bump_scale              ???
+//  tex.m_blend_A0                ???
+//  tex.m_blend_A1                ???
+//  tex.m_blend_A2                ???
+//  tex.m_blend_A3                ???
+//  tex.m_blend_RGB0              ???
+//  tex.m_blend_RGB1              ???
+//  tex.m_blend_RGB2              ???
+//  tex.m_blend_RGB3              ???
+//  tex.m_blend_order             ???
+//  tex.m_blend_constant_A        ???
+//  tex.m_blend_constant_RGB      ???
+//  tex.m_minfilter               ???
+//  tex.m_magfilter               ???
   }
 
   return tex;
+}
+
+ON_wString ON_RenderTexture::Filename(void) const
+{
+  const ON_XMLVariant v = GetParameter(ON_RENDER_TEXTURE_FILENAME);
+  if (v.IsNull())
+    return L"";
+
+  return v.AsString();
 }
 
 int ONX_Model::AddRenderMaterial(const wchar_t* mat_name)

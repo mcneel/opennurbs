@@ -781,7 +781,7 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       ON_Color color = ON_Color::UnsetColor;
       rc = file.ReadColor(color);
       if (!rc) break;
-      SetHatchBackgrounFillColor(color);
+      SetHatchBackgroundFillColor(color);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -1989,7 +1989,12 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       SetSectionAttributesSource(parents_attributes.SectionAttributesSource());
       if (ON::SectionAttributesSource::FromLayer == SectionAttributesSource() && parent_layer.Index() >= 0)
       {
-        SetSectionAttributesSource(ON::SectionAttributesSource::FromLayer);
+        SetSectionAttributesSource(ON::SectionAttributesSource::FromObject);
+        const ON_SectionStyle* sectionStyle = parent_layer.CustomSectionStyle();
+        if (sectionStyle)
+          SetCustomSectionStyle(*sectionStyle);
+        else
+          RemoveCustomSectionStyle();
       }
       else
       {
@@ -2446,7 +2451,7 @@ ON_Color ON_3dmObjectAttributes::HatchBackgroundFillColor() const
 {
   return m_private ? m_private->m_hatch_background_fill : ON_Color::UnsetColor;
 }
-void ON_3dmObjectAttributes::SetHatchBackgrounFillColor(const ON_Color& color)
+void ON_3dmObjectAttributes::SetHatchBackgroundFillColor(const ON_Color& color)
 {
   ON_Color c = color;
   if (c.Alpha() == 255)

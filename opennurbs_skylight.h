@@ -42,16 +42,15 @@ public:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
+  // For internal use only.
+  virtual void OnInternalXmlChanged(const ON_Skylight*);
+
 public: // These methods are only here to support deprecated C# SDK methods.
         // Please use the equivalent methods in ON_3dmRenderSettings.
   /* DEPRECATED*/ bool EnvironmentOverride(void) const;
   /* DEPRECATED*/ void SetEnvironmentOverride(bool on);
   /* DEPRECATED*/ ON_UUID EnvironmentId(void) const;
   /* DEPRECATED*/ void SetEnvironmentId(const ON_UUID& id);
-
-private: // For internal use only.
-  friend class ON_3dmRenderSettingsPrivate;
-  virtual void OnInternalXmlChanged(const ON_Skylight*);
 
 private:
   class CImpl;

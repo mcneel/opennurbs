@@ -67,13 +67,11 @@ static void MyOutputDebugString(const wchar_t* s)
 #define OUTPUT_DEBUG_STRING_EOL(x) { }
 #endif
 
-#define IMPL_CHECK { ON_ASSERT(sizeof(m_Impl) >= (sizeof(CImpl) + sizeof(void*))); }
-
 std::atomic<long> g_lNodeCount(0);
 std::atomic<long> g_lPropertyCount(-1); // defaultProp below increments this to zero.
 
-#define ON_NAME           L"name"
-#define ON_PARAMETER      L"parameter"
+#define ON_NAME       L"name"
+#define ON_PARAMETER  L"parameter"
 
 static const wchar_t* wszBase64Prefix = L"base64:";
 
@@ -251,67 +249,67 @@ static time_t TimeFromString(const ON_wString& sTime)
 
 // ON_XMLVariant
 
-class ON_XMLVariant::CImpl final
+class ON_XMLVariantPrivate final
 {
 public:
-  CImpl() { }
-  ~CImpl() { ClearBuffers(); }
+  ON_XMLVariantPrivate() { }
+  ~ON_XMLVariantPrivate() { ClearBuffers(); }
 
   ON_Buffer& GetBuffer(void) const
   {
-    if (nullptr == m_pBuffer)
-      m_pBuffer = new ON_Buffer;
+    if (nullptr == _buffer)
+      _buffer = new ON_Buffer;
     else
-      m_pBuffer->SeekFromStart(0);
+      _buffer->SeekFromStart(0);
 
-    return *m_pBuffer;
+    return *_buffer;
   }
 
   void ClearBuffers(void)
   {
-    if (nullptr != m_pBuffer)
+    if (nullptr != _buffer)
     {
-      delete m_pBuffer;
-      m_pBuffer = nullptr;
+      delete _buffer;
+      _buffer = nullptr;
     }
 
-    if (nullptr != m_raw_buffer)
+    if (nullptr != _raw_buffer)
     {
-      delete[] m_raw_buffer;
-      m_raw_buffer = nullptr;
+      delete[] _raw_buffer;
+      _raw_buffer = nullptr;
     }
   }
 
   const ON_wString& ConvertDoubleToString(double d) const
   {
-    auto* buf = m_sVal.SetLength(30);
+    auto* buf = _string_val.SetLength(30);
     if (nullptr != buf)
     {
       const auto len = ON_wString::FormatIntoBuffer(buf, 24, L"%.15g", d);
-      m_sVal.SetLength(len);
+      _string_val.SetLength(len);
     }
 
-    return m_sVal;
+    return _string_val;
   }
 
   const ON_wString& ConvertDoubleArrayToString(int count) const
   {
     constexpr int maxCount = 16;
     if ((count == 0) || (count > maxCount))
-      return m_sVal;
+      return _string_val;
 
     constexpr int maxLen = 30;
 
     const auto num_chars = maxLen * maxCount;
-    auto* buf = m_sVal.SetLength(num_chars);
+    auto* buf = _string_val.SetLength(num_chars);
     if (nullptr == buf)
-      return m_sVal;
+      return _string_val;
 
     int totalLen = 0;
     auto* p = buf;
     for (int i = 0; i < count; i++)
     {
-      const auto len = ON_wString::FormatIntoBuffer(p, maxLen, L"%.15g", m_aVal[i]);
+      const auto len = ON_wString::FormatIntoBuffer(p, maxLen, L"%.15g", _array_val[i]);
       p += len;
       *p++ = L',';
       totalLen += len + 1;
@@ -324,182 +322,182 @@ public:
       buf[length] = 0;
     }
 
-    m_sVal.SetLength(length);
+    _string_val.SetLength(length);
 
-    return m_sVal;
+    return _string_val;
   }
 
-  mutable ON_Buffer* m_pBuffer = nullptr;
-  mutable ON_wString m_sVal;
+  mutable ON_Buffer* _buffer = nullptr;
+  mutable ON_wString _string_val;
   union
   {
-    bool m_bVal;
-    int m_iVal;
-    float m_fVal;
-    double m_dVal;
-    double m_aVal[16];
+    bool _bool_val;
+    int _int_val;
+    float _float_val;
+    double _double_val;
     ON_Xform m_xform;
-    time_t m_timeVal;
-    ON_UUID m_uuidVal;
+    time_t _time_val;
+    ON_UUID _uuid_val;
+    double _array_val[16] = { 0 };
   };
 
-  ON::LengthUnitSystem m_units = ON::LengthUnitSystem::None;
-  ON__UINT8* m_raw_buffer = nullptr;
-  bool m_bTypePending = false;
-  bool m_bVaries = false;
-  Types m_type = Types::Null;
+  ON::LengthUnitSystem _units = ON::LengthUnitSystem::None;
+  ON__UINT8* _raw_buffer = nullptr;
+  bool _type_pending = false;
+  bool _varies = false;
+  ON_XMLVariant::Types _type = ON_XMLVariant::Types::Null;
 };
 
 ON_XMLVariant::ON_XMLVariant()
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
 }
 
 ON_XMLVariant::ON_XMLVariant(int iValue)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(iValue);
 }
 
 ON_XMLVariant::ON_XMLVariant(double dValue)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(dValue);
 }
 
 ON_XMLVariant::ON_XMLVariant(float fValue)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(fValue);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_wString& s)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(s);
 }
 
 ON_XMLVariant::ON_XMLVariant(const double* point, ArrayTypes at)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(point, at);
 }
 
 ON_XMLVariant::ON_XMLVariant(const float* point, ArrayTypes at)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(point, at);
 }
 
 ON_XMLVariant::ON_XMLVariant(const wchar_t* wsz)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   ON_wString s(wsz);
   SetValue(s);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_2dPoint& p)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(p);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_3dPoint& p)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(p);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_4fColor& c)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(c);
 }
 
 ON_XMLVariant::ON_XMLVariant(bool b)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(b);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_UUID& uuid)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(uuid);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_Xform& xform)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(xform);
 }
 
 ON_XMLVariant::ON_XMLVariant(time_t time)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(time);
 }
 
 ON_XMLVariant::ON_XMLVariant(const void* pBuffer, size_t size)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(pBuffer, size);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_Buffer& buffer)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   SetValue(buffer);
 }
 
 ON_XMLVariant::ON_XMLVariant(const ON_XMLVariant& src)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLVariantPrivate; PRIVATE_CHECK(ON_XMLVariantPrivate);
   *this = src;
 }
 
 ON_XMLVariant::~ON_XMLVariant()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  _private->~ON_XMLVariantPrivate();
+  _private = nullptr;
 }
 
 ON_Buffer& ON_XMLVariant::GetBuffer(void) const
 {
-  return m_impl->GetBuffer();
+  return _private->GetBuffer();
 }
 
 void ON_XMLVariant::ClearBuffers(void)
 {
-  m_impl->ClearBuffers();
+  _private->ClearBuffers();
 }
 
 const ON_XMLVariant& ON_XMLVariant::operator = (const ON_XMLVariant& src)
 {
-  m_impl->m_type = src.Type();
-  m_impl->m_bTypePending = src.TypePending();
+  _private->_type = src.Type();
+  _private->_type_pending = src.TypePending();
 
-  if (m_impl->m_type != Types::Buffer)
+  if (_private->_type != Types::Buffer)
   {
     ClearBuffers();
   }
 
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
-  case Types::Null:                                              break;
-  case Types::Bool:         m_impl->m_bVal    = src.AsBool();    break;
-  case Types::Integer:      m_impl->m_iVal    = src.AsInteger(); break;
-  case Types::Float:        m_impl->m_fVal    = src.AsFloat();   break;
-  case Types::Double:       m_impl->m_dVal    = src.AsDouble();  break;
-  case Types::String:       m_impl->m_sVal    = src.AsString();  break;
-  case Types::Uuid:         m_impl->m_uuidVal = src.AsUuid();    break;
-  case Types::Time:         m_impl->m_timeVal = src.AsTime();    break;
-  case Types::DoubleArray2: SetValue(src.As2dPoint());           break;
-  case Types::DoubleArray3: SetValue(src.As3dPoint());           break;
-  case Types::DoubleArray4: SetValue(src.As4dPoint());           break;
-  case Types::DoubleColor4: SetValue(src.AsColor());             break;
-  case Types::Matrix:       SetValue(src.AsXform()) ;            break;
-  case Types::Buffer:       GetBuffer() = src.AsBuffer();        break;
+  case Types::Null:                                                  break;
+  case Types::Bool:         _private->_bool_val   = src.AsBool();    break;
+  case Types::Integer:      _private->_int_val    = src.AsInteger(); break;
+  case Types::Float:        _private->_float_val  = src.AsFloat();   break;
+  case Types::Double:       _private->_double_val = src.AsDouble();  break;
+  case Types::String:       _private->_string_val = src.AsString();  break;
+  case Types::Uuid:         _private->_uuid_val   = src.AsUuid();    break;
+  case Types::Time:         _private->_time_val   = src.AsTime();    break;
+  case Types::DoubleArray2: SetValue(src.As2dPoint());               break;
+  case Types::DoubleArray3: SetValue(src.As3dPoint());               break;
+  case Types::DoubleArray4: SetValue(src.As4dPoint());               break;
+  case Types::DoubleColor4: SetValue(src.AsColor());                 break;
+  case Types::Matrix:       SetValue(src.AsXform()) ;                break;
+  case Types::Buffer:       GetBuffer() = src.AsBuffer();            break;
 
   default:
     OUTPUT_DEBUG_STRING(L"ON_XMLVariant: Source has unknown type\n");
@@ -508,64 +506,65 @@ const ON_XMLVariant& ON_XMLVariant::operator = (const ON_XMLVariant& src)
 
   // The above calls can reset the type pending flag on the source.
   // Make sure the source is set back to the original condition.
-  src.SetTypePendingFlag(m_impl->m_bTypePending);
+  src.SetTypePendingFlag(_private->_type_pending);
 
   return *this;
 }
 
 bool ON_XMLVariant::operator == (const ON_XMLVariant& v) const
 {
-  if (m_impl->m_type != v.m_impl->m_type)
+  if (_private->_type != v._private->_type)
     return false;
 
-  if (m_impl->m_units != v.m_impl->m_units)
+  if (_private->_units != v._private->_units)
     return false;
 
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Bool:
-    return m_impl->m_bVal == v.m_impl->m_bVal;
+    return _private->_bool_val == v._private->_bool_val;
 
   case Types::Integer:
-    return m_impl->m_iVal == v.m_impl->m_iVal;
+    return _private->_int_val == v._private->_int_val;
 
   case Types::Float:
-    return IsFloatEqual(m_impl->m_fVal, v.m_impl->m_fVal) ? true : false;
+    return IsFloatEqual(_private->_float_val, v._private->_float_val) ? true : false;
 
   case Types::Double:
-    return IsDoubleEqual(m_impl->m_dVal, v.m_impl->m_dVal) ? true : false;
+    return IsDoubleEqual(_private->_double_val, v._private->_double_val) ? true : false;
 
   case Types::DoubleArray2:
-    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
-            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1]))) ? true : false;
+    return ((IsDoubleEqual(_private->_array_val[0], v._private->_array_val[0])) &&
+            (IsDoubleEqual(_private->_array_val[1], v._private->_array_val[1]))) ? true : false;
 
   case Types::DoubleArray3:
-    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
-            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1])) &&
-            (IsDoubleEqual(m_impl->m_aVal[2], v.m_impl->m_aVal[2]))) ? true : false;
+    return ((IsDoubleEqual(_private->_array_val[0], v._private->_array_val[0])) &&
+            (IsDoubleEqual(_private->_array_val[1], v._private->_array_val[1])) &&
+            (IsDoubleEqual(_private->_array_val[2], v._private->_array_val[2]))) ? true : false;
 
   case Types::DoubleColor4:
   case Types::DoubleArray4:
-    return ((IsDoubleEqual(m_impl->m_aVal[0], v.m_impl->m_aVal[0])) &&
-            (IsDoubleEqual(m_impl->m_aVal[1], v.m_impl->m_aVal[1])) &&
-            (IsDoubleEqual(m_impl->m_aVal[2], v.m_impl->m_aVal[2])) &&
-            (IsDoubleEqual(m_impl->m_aVal[3], v.m_impl->m_aVal[3]))) ? true : false;
+    return ((IsDoubleEqual(_private->_array_val[0], v._private->_array_val[0])) &&
+            (IsDoubleEqual(_private->_array_val[1], v._private->_array_val[1])) &&
+            (IsDoubleEqual(_private->_array_val[2], v._private->_array_val[2])) &&
+            (IsDoubleEqual(_private->_array_val[3], v._private->_array_val[3]))) ? true : false;
 
   case Types::String:
-    return m_impl->m_sVal.CompareNoCase(v.m_impl->m_sVal) == 0;
+    return _private->_string_val.CompareNoCase(v._private->_string_val) == 0;
 
   case Types::Uuid:
-    return (m_impl->m_uuidVal == v.m_impl->m_uuidVal) ? true : false;
+    return (_private->_uuid_val == v._private->_uuid_val) ? true : false;
 
   case Types::Time:
-    return m_impl->m_timeVal == v.m_impl->m_timeVal;
+    return _private->_time_val == v._private->_time_val;
 
   case Types::Matrix:
       for (int i = 0; i < 16; i++)
       {
-        if (m_impl->m_aVal[i] != v.m_impl->m_aVal[i])
+        if (_private->_array_val[i] != v._private->_array_val[i])
           return false;
       }
+  case Types::Null:
       return true;
 
   default:
@@ -582,7 +581,7 @@ bool ON_XMLVariant::operator != (const ON_XMLVariant& v) const
 
 bool ON_XMLVariant::NeedsXMLEncode(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Null:
   case Types::Bool:
@@ -611,52 +610,52 @@ bool ON_XMLVariant::NeedsXMLEncode(void) const
 
 void ON_XMLVariant::SetNull()
 {
-  m_impl->m_type = Types::Null;
+  _private->_type = Types::Null;
 }
 
 void ON_XMLVariant::SetValue(int v)
 {
   ClearBuffers();
-  m_impl->m_type = Types::Integer;
-  m_impl->m_iVal = v;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_type = Types::Integer;
+  _private->_int_val = v;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(double v)
 {
   ClearBuffers();
-  m_impl->m_type = Types::Double;
-  m_impl->m_dVal = v;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_type = Types::Double;
+  _private->_double_val = v;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(float v)
 {
   ClearBuffers();
-  m_impl->m_type = Types::Float;
-  m_impl->m_fVal = v;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_type = Types::Float;
+  _private->_float_val = v;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const wchar_t* s)
 {
   ClearBuffers();
-  m_impl->m_type = Types::String;
-  m_impl->m_sVal = s;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_type = Types::String;
+  _private->_string_val = s;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_wString& s)
 {
   ClearBuffers();
-  m_impl->m_type = Types::String;
-  m_impl->m_sVal = s;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_type = Types::String;
+  _private->_string_val = s;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 inline static void Fill(double* a, const double* b, int count)
@@ -681,14 +680,14 @@ void ON_XMLVariant::SetValue(const double* p, ArrayTypes at)
 
   switch (at)
   {
-  case ArrayTypes::Array2:  m_impl->m_type = Types::DoubleArray2; Fill(m_impl->m_aVal, p, 2);  break;
-  case ArrayTypes::Array3:  m_impl->m_type = Types::DoubleArray3; Fill(m_impl->m_aVal, p, 3);  break;
-  case ArrayTypes::Array4:  m_impl->m_type = Types::DoubleArray4; Fill(m_impl->m_aVal, p, 4);  break;
-  case ArrayTypes::Array16: m_impl->m_type = Types::Matrix;       Fill(m_impl->m_aVal, p, 16); break;
+  case ArrayTypes::Array2:  _private->_type = Types::DoubleArray2; Fill(_private->_array_val, p, 2);  break;
+  case ArrayTypes::Array3:  _private->_type = Types::DoubleArray3; Fill(_private->_array_val, p, 3);  break;
+  case ArrayTypes::Array4:  _private->_type = Types::DoubleArray4; Fill(_private->_array_val, p, 4);  break;
+  case ArrayTypes::Array16: _private->_type = Types::Matrix;       Fill(_private->_array_val, p, 16); break;
   }
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const float* p, ArrayTypes at)
@@ -697,124 +696,124 @@ void ON_XMLVariant::SetValue(const float* p, ArrayTypes at)
 
   switch (at)
   {
-  case ArrayTypes::Array2:  m_impl->m_type = Types::DoubleArray2; Fill(m_impl->m_aVal, p, 2);  break;
-  case ArrayTypes::Array3:  m_impl->m_type = Types::DoubleArray3; Fill(m_impl->m_aVal, p, 3);  break;
-  case ArrayTypes::Array4:  m_impl->m_type = Types::DoubleArray4; Fill(m_impl->m_aVal, p, 4);  break;
-  case ArrayTypes::Array16: m_impl->m_type = Types::Matrix;       Fill(m_impl->m_aVal, p, 16); break;
+  case ArrayTypes::Array2:  _private->_type = Types::DoubleArray2; Fill(_private->_array_val, p, 2);  break;
+  case ArrayTypes::Array3:  _private->_type = Types::DoubleArray3; Fill(_private->_array_val, p, 3);  break;
+  case ArrayTypes::Array4:  _private->_type = Types::DoubleArray4; Fill(_private->_array_val, p, 4);  break;
+  case ArrayTypes::Array16: _private->_type = Types::Matrix;       Fill(_private->_array_val, p, 16); break;
   }
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_2dPoint& v)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::DoubleArray2;
+  _private->_type = Types::DoubleArray2;
 
-  m_impl->m_aVal[0] = v.x;
-  m_impl->m_aVal[1] = v.y;
+  _private->_array_val[0] = v.x;
+  _private->_array_val[1] = v.y;
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_3dPoint& v)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::DoubleArray3;
+  _private->_type = Types::DoubleArray3;
 
-  m_impl->m_aVal[0] = v.x;
-  m_impl->m_aVal[1] = v.y;
-  m_impl->m_aVal[2] = v.z;
+  _private->_array_val[0] = v.x;
+  _private->_array_val[1] = v.y;
+  _private->_array_val[2] = v.z;
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_4dPoint& p)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::DoubleArray4;
+  _private->_type = Types::DoubleArray4;
 
-  m_impl->m_aVal[0] = p.x;
-  m_impl->m_aVal[1] = p.y;
-  m_impl->m_aVal[2] = p.z;
-  m_impl->m_aVal[3] = p.w;
+  _private->_array_val[0] = p.x;
+  _private->_array_val[1] = p.y;
+  _private->_array_val[2] = p.z;
+  _private->_array_val[3] = p.w;
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_4fColor& c)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::DoubleColor4;
+  _private->_type = Types::DoubleColor4;
 
-  m_impl->m_aVal[0] = c.Red();
-  m_impl->m_aVal[1] = c.Green();
-  m_impl->m_aVal[2] = c.Blue();
-  m_impl->m_aVal[3] = c.Alpha();
+  _private->_array_val[0] = c.Red();
+  _private->_array_val[1] = c.Green();
+  _private->_array_val[2] = c.Blue();
+  _private->_array_val[3] = c.Alpha();
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(bool b)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::Bool;
+  _private->_type = Types::Bool;
 
-  m_impl->m_bVal = b;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_bool_val = b;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const ON_UUID& uuid)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::Uuid;
+  _private->_type = Types::Uuid;
 
-  m_impl->m_uuidVal = uuid;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_uuid_val = uuid;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(time_t time)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::Time;
+  _private->_type = Types::Time;
 
-  m_impl->m_timeVal = time;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_time_val = time;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 void ON_XMLVariant::SetValue(const void* pBuffer, size_t size)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::Buffer;
+  _private->_type = Types::Buffer;
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 
   GetBuffer().Write(size, pBuffer);
 }
 
 void ON_XMLVariant::SetValue(const ON_Buffer& buffer)
 {
-  m_impl->m_type = Types::Buffer;
+  _private->_type = Types::Buffer;
 
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->_varies = false;
+  _private->_type_pending = false;
 
   GetBuffer() = buffer;
 }
@@ -823,27 +822,27 @@ void ON_XMLVariant::SetValue(const ON_Xform& xform)
 {
   ClearBuffers();
 
-  m_impl->m_type = Types::Matrix;
+  _private->_type = Types::Matrix;
 
-  m_impl->m_xform = xform;
-  m_impl->m_bVaries = false;
-  m_impl->m_bTypePending = false;
+  _private->m_xform = xform;
+  _private->_varies = false;
+  _private->_type_pending = false;
 }
 
 bool ON_XMLVariant::AsBool(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
-  case Types::Bool:    return m_impl->m_bVal;
-  case Types::Integer: return m_impl->m_iVal != 0;
-  case Types::Double:  return m_impl->m_dVal != 0;
-  case Types::Float:   return m_impl->m_fVal != 0;
+  case Types::Bool:    return _private->_bool_val;
+  case Types::Integer: return _private->_int_val != 0;
+  case Types::Double:  return _private->_double_val != 0;
+  case Types::Float:   return _private->_float_val != 0;
 
   case Types::String:
-    if (m_impl->m_sVal.CompareNoCase(L"true") == 0) return true;
-    if (m_impl->m_sVal.CompareNoCase(L"t")    == 0) return true;
-    return ON_wtoi(m_impl->m_sVal) != 0;
-          
+    if (_private->_string_val.CompareNoCase(L"true") == 0) return true;
+    if (_private->_string_val.CompareNoCase(L"t")    == 0) return true;
+    return ON_wtoi(_private->_string_val) != 0;
+
   default:
     return false;
   }
@@ -851,17 +850,17 @@ bool ON_XMLVariant::AsBool(void) const
 
 int ON_XMLVariant::AsInteger(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
-  case Types::Bool:    return     m_impl->m_bVal ? 1 : 0;
-  case Types::Integer: return     m_impl->m_iVal;
-  case Types::Double:  return int(m_impl->m_dVal);
-  case Types::Float:   return int(m_impl->m_fVal);
+  case Types::Bool:    return     _private->_bool_val ? 1 : 0;
+  case Types::Integer: return     _private->_int_val;
+  case Types::Double:  return int(_private->_double_val);
+  case Types::Float:   return int(_private->_float_val);
 
   case Types::String:
-    if (m_impl->m_sVal.CompareNoCase(L"true") == 0) return 1;
-    if (m_impl->m_sVal.CompareNoCase(L"t") == 0) return true;
-    return ON_wtoi(m_impl->m_sVal);
+    if (_private->_string_val.CompareNoCase(L"true") == 0) return 1;
+    if (_private->_string_val.CompareNoCase(L"t") == 0) return true;
+    return ON_wtoi(_private->_string_val);
 
   default:
     return 0;
@@ -870,13 +869,13 @@ int ON_XMLVariant::AsInteger(void) const
 
 double ON_XMLVariant::AsDouble(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
-  case Types::Bool:    return         m_impl->m_bVal ? 1.0 : 0.0;
-  case Types::Float:   return         m_impl->m_fVal;
-  case Types::Double:  return         m_impl->m_dVal;
-  case Types::Integer: return double (m_impl->m_iVal);
-  case Types::String:  return ON_wtof(m_impl->m_sVal);
+  case Types::Bool:    return         _private->_bool_val ? 1.0 : 0.0;
+  case Types::Float:   return         _private->_float_val;
+  case Types::Double:  return         _private->_double_val;
+  case Types::Integer: return double (_private->_int_val);
+  case Types::String:  return ON_wtof(_private->_string_val);
   
   default:
     return 0.0;
@@ -885,13 +884,13 @@ double ON_XMLVariant::AsDouble(void) const
 
 float ON_XMLVariant::AsFloat(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
-  case Types::Bool:    return       m_impl->m_bVal ? 1.0f : 0.0f;
-  case Types::Float:   return       m_impl->m_fVal;
-  case Types::Double:  return float(m_impl->m_dVal);
-  case Types::Integer: return float(m_impl->m_iVal);
-  case Types::String:  return float(ON_wtof(m_impl->m_sVal));
+  case Types::Bool:    return       _private->_bool_val ? 1.0f : 0.0f;
+  case Types::Float:   return       _private->_float_val;
+  case Types::Double:  return float(_private->_double_val);
+  case Types::Integer: return float(_private->_int_val);
+  case Types::String:  return float(ON_wtof(_private->_string_val));
           
   default:
     return 0.0f;
@@ -900,7 +899,7 @@ float ON_XMLVariant::AsFloat(void) const
 
 ON_2dPoint ON_XMLVariant::As2dPoint(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::DoubleArray2:
   case Types::DoubleArray3:
@@ -909,7 +908,7 @@ ON_2dPoint ON_XMLVariant::As2dPoint(void) const
     break;
 
   case Types::String:
-    if (m_impl->m_sVal.IsValid2dPoint())
+    if (_private->_string_val.IsValid2dPoint())
       StringToPoint(2);
       break;
 
@@ -917,15 +916,15 @@ ON_2dPoint ON_XMLVariant::As2dPoint(void) const
     return ON_2dPoint::Origin;
   }
 
-  return ON_2dPoint(m_impl->m_aVal[0], m_impl->m_aVal[1]);
+  return ON_2dPoint(_private->_array_val[0], _private->_array_val[1]);
 }
 
 ON_3dPoint ON_XMLVariant::As3dPoint(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::DoubleArray2:
-    m_impl->m_aVal[2] = 0.0;
+    _private->_array_val[2] = 0.0;
     break;
 
   case Types::DoubleArray3:
@@ -934,7 +933,7 @@ ON_3dPoint ON_XMLVariant::As3dPoint(void) const
     break;
 
   case Types::String:
-    if (m_impl->m_sVal.IsValid3dPoint())
+    if (_private->_string_val.IsValid3dPoint())
       StringToPoint(3);
     break;
 
@@ -942,17 +941,17 @@ ON_3dPoint ON_XMLVariant::As3dPoint(void) const
     return ON_3dPoint::Origin;
   }
 
-  return ON_3dPoint(m_impl->m_aVal[0], m_impl->m_aVal[1], m_impl->m_aVal[2]);
+  return ON_3dPoint(_private->_array_val[0], _private->_array_val[1], _private->_array_val[2]);
 }
 
 ON_4dPoint ON_XMLVariant::As4dPoint(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::DoubleArray2:
-    m_impl->m_aVal[2] = 0.0;
+    _private->_array_val[2] = 0.0;
   case Types::DoubleArray3:
-    m_impl->m_aVal[3] = 0.0;
+    _private->_array_val[3] = 0.0;
     break;
 
   case Types::DoubleArray4:
@@ -960,7 +959,7 @@ ON_4dPoint ON_XMLVariant::As4dPoint(void) const
     break;
 
   case Types::String:
-    if (m_impl->m_sVal.IsValid4dPoint())
+    if (_private->_string_val.IsValid4dPoint())
       StringToPoint(4);
     break;
 
@@ -968,18 +967,18 @@ ON_4dPoint ON_XMLVariant::As4dPoint(void) const
     return ON_4dPoint::Zero;
   }
 
-  return ON_4dPoint(m_impl->m_aVal[0], m_impl->m_aVal[1], m_impl->m_aVal[2], m_impl->m_aVal[3]);
+  return ON_4dPoint(_private->_array_val[0], _private->_array_val[1], _private->_array_val[2], _private->_array_val[3]);
 }
 
 ON_Xform ON_XMLVariant::AsXform(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Matrix:
     break;
 
   case Types::String:
-    if (m_impl->m_sVal.IsValidMatrix())
+    if (_private->_string_val.IsValidMatrix())
       StringToPoint(16); //////////////////////////////////// Risky
     break;
 
@@ -987,21 +986,21 @@ ON_Xform ON_XMLVariant::AsXform(void) const
     return ON_Xform::Zero4x4;
   }
 
-  return m_impl->m_xform;
+  return _private->m_xform;
 }
 
 ON_4fColor ON_XMLVariant::AsColor(void) const
 {
   ON_4fColor col(ON_Color(0, 0, 0, 0));
 
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::String:
     StringToPoint(4);
     // No break...
   case Types::DoubleArray4:
   case Types::DoubleColor4:
-    col.SetRGBA(float(m_impl->m_aVal[0]), float(m_impl->m_aVal[1]), float(m_impl->m_aVal[2]), float(m_impl->m_aVal[3]));
+    col.SetRGBA(float(_private->_array_val[0]), float(_private->_array_val[1]), float(_private->_array_val[2]), float(_private->_array_val[3]));
   
   default:
     break;
@@ -1012,13 +1011,13 @@ ON_4fColor ON_XMLVariant::AsColor(void) const
 
 ON_UUID ON_XMLVariant::AsUuid(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::String:
-    return ON_UuidFromString(m_impl->m_sVal);
+    return ON_UuidFromString(_private->_string_val);
 
   case Types::Uuid:
-    return m_impl->m_uuidVal;
+    return _private->_uuid_val;
 
   default:
     return ON_nil_uuid;
@@ -1027,13 +1026,13 @@ ON_UUID ON_XMLVariant::AsUuid(void) const
 
 time_t ON_XMLVariant::AsTime(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::String:
-    return TimeFromString(m_impl->m_sVal);
+    return TimeFromString(_private->_string_val);
 
   case Types::Time:
-    return m_impl->m_timeVal;
+    return _private->_time_val;
           
   default: return 0;
   }
@@ -1046,14 +1045,14 @@ ON_Buffer ON_XMLVariant::AsBuffer(void) const
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
 #endif
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Buffer:
     buf = GetBuffer();
     break;
 
   case Types::String:
-    auto& s = m_impl->m_sVal;
+    auto& s = _private->_string_val;
     if (s.StartsWithNoCase(wszBase64Prefix) && (s != wszBase64Prefix))
     {
       // Base64 is about 33% bigger than the resulting data so the string length is always enough.
@@ -1077,66 +1076,66 @@ void* ON_XMLVariant::AsBuffer(size_t& size_out) const
   auto buf = AsBuffer();
   size_out = buf.Size();
 
-  if (nullptr != m_impl->m_raw_buffer)
-    delete[] m_impl->m_raw_buffer;
+  if (nullptr != _private->_raw_buffer)
+    delete[] _private->_raw_buffer;
 
-  m_impl->m_raw_buffer = new ON__UINT8[size_out];
-  buf.Read(size_out, m_impl->m_raw_buffer);
+  _private->_raw_buffer = new ON__UINT8[size_out];
+  buf.Read(size_out, _private->_raw_buffer);
 
-  return m_impl->m_raw_buffer;
+  return _private->_raw_buffer;
 }
 
 ON_wString ON_XMLVariant::AsString(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Integer:
-    return m_impl->ConvertDoubleToString(double(m_impl->m_iVal));
+    return _private->ConvertDoubleToString(double(_private->_int_val));
 
   case Types::Float:
-    return m_impl->ConvertDoubleToString(double(m_impl->m_fVal));
+    return _private->ConvertDoubleToString(double(_private->_float_val));
 
   case Types::Double:
-    return m_impl->ConvertDoubleToString(m_impl->m_dVal);
+    return _private->ConvertDoubleToString(_private->_double_val);
 
   case Types::DoubleArray3:
-    return m_impl->ConvertDoubleArrayToString(3);
+    return _private->ConvertDoubleArrayToString(3);
 
   case Types::DoubleArray4:
   case Types::DoubleColor4:
-    return m_impl->ConvertDoubleArrayToString(4);
+    return _private->ConvertDoubleArrayToString(4);
 
   case Types::DoubleArray2:
-    return m_impl->ConvertDoubleArrayToString(2);
+    return _private->ConvertDoubleArrayToString(2);
 
   case Types::Matrix:
-    return m_impl->ConvertDoubleArrayToString(16);
+    return _private->ConvertDoubleArrayToString(16);
 
   case Types::Bool:
-    m_impl->m_sVal = m_impl->m_bVal ? L"true" : L"false";
+    _private->_string_val = _private->_bool_val ? L"true" : L"false";
     // No break...
   case Types::String:
-    return m_impl->m_sVal;
+    return _private->_string_val;
 
   case Types::Uuid:
-    ON_UuidToString(m_impl->m_uuidVal, m_impl->m_sVal);
-    m_impl->m_sVal.MakeUpperOrdinal();
-    return m_impl->m_sVal;
+    ON_UuidToString(_private->_uuid_val, _private->_string_val);
+    _private->_string_val.MakeUpperOrdinal();
+    return _private->_string_val;
 
   case Types::Time:
-    m_impl->m_sVal = TimeToString(m_impl->m_timeVal);
-    return m_impl->m_sVal;
+    _private->_string_val = TimeToString(_private->_time_val);
+    return _private->_string_val;
 
   case Types::Buffer:
     {
-      m_impl->m_sVal = wszBase64Prefix;
+      _private->_string_val = wszBase64Prefix;
       auto& buffer = GetBuffer();
       const auto buf_size = buffer.Size();
       auto* buf = new char[buf_size];
       buffer.Read(buf_size, buf);
-      ON_Base64::Encode(buf, buf_size, m_impl->m_sVal, true);
+      ON_Base64::Encode(buf, buf_size, _private->_string_val, true);
       delete[] buf;
-      return m_impl->m_sVal;
+      return _private->_string_val;
     }
   
   case Types::Null:
@@ -1212,7 +1211,7 @@ void ON_XMLVariant::StringToPoint(int numValues) const
   if ((numValues < 0) || (numValues > 16))
     return;
 
-  ON_wString s = m_impl->m_sVal + L",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
+  ON_wString s = _private->_string_val + L",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
   auto* p = s.Array();
 
   for (int i = 0; i < numValues; i++)
@@ -1222,7 +1221,7 @@ void ON_XMLVariant::StringToPoint(int numValues) const
       p++;
     }
 
-    m_impl->m_aVal[i] = ON_wtof(p);
+    _private->_array_val[i] = ON_wtof(p);
 
     while (*p != L',')
     {
@@ -1235,12 +1234,12 @@ void ON_XMLVariant::StringToPoint(int numValues) const
 
 ON_XMLVariant::Types ON_XMLVariant::Type(void) const
 {
-  return m_impl->m_type;
+  return _private->_type;
 }
 
 bool ON_XMLVariant::IsNull(void) const
 {
-  return Types::Null == m_impl->m_type;
+  return Types::Null == _private->_type;
 }
 
 bool ON_XMLVariant::IsEmpty(void) const
@@ -1250,7 +1249,7 @@ bool ON_XMLVariant::IsEmpty(void) const
 
 bool ON_XMLVariant::Varies(void) const
 {
-	return m_impl->m_bVaries;
+	return _private->_varies;
 }
 
 void ON_XMLVariant::SetVaries(void)
@@ -1261,33 +1260,33 @@ void ON_XMLVariant::SetVaries(void)
   }
   else
   {
-    m_impl->m_bVaries = true;
+    _private->_varies = true;
   }
 }
 
 ON::LengthUnitSystem ON_XMLVariant::Units(void) const
 {
-  return m_impl->m_units;
+  return _private->_units;
 }
 
 void ON_XMLVariant::SetUnits(ON::LengthUnitSystem units)
 {
-  m_impl->m_units = units;
+  _private->_units = units;
 }
 
 bool ON_XMLVariant::TypePending(void) const
 {
-  return m_impl->m_bTypePending;
+  return _private->_type_pending;
 }
 
 void ON_XMLVariant::SetTypePendingFlag(bool bTypePending) const
 {
-  m_impl->m_bTypePending = bTypePending;
+  _private->_type_pending = bTypePending;
 }
 
 ON_wString ON_XMLVariant::TypeAsString(void) const
 {
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Bool:         return L"bool";
   case Types::Integer:      return L"integer";
@@ -1323,28 +1322,28 @@ ON__UINT32 ON_XMLVariant::DataCRC(ON__UINT32 crc) const
     return crc;
 
   case Types::Double:
-    return CRCReal(crc, m_impl->m_dVal);
+    return CRCReal(crc, _private->_double_val);
 
   case Types::Float:
-    return CRCReal(crc, m_impl->m_fVal);
+    return CRCReal(crc, _private->_float_val);
 
   case Types::Integer:
   {
-    const auto x = m_impl->m_iVal;
+    const auto x = _private->_int_val;
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
   case Types::DoubleArray2:
   {
     ON__INT64 x[2] = { 0 };
-    for (int i = 0; i < 2; i++) x[i] = Integerize(m_impl->m_aVal[i]);
+    for (int i = 0; i < 2; i++) x[i] = Integerize(_private->_array_val[i]);
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
   case Types::DoubleArray3:
   {
     ON__INT64 x[3] = { 0 };
-    for (int i = 0; i < 3; i++) x[i] = Integerize(m_impl->m_aVal[i]);
+    for (int i = 0; i < 3; i++) x[i] = Integerize(_private->_array_val[i]);
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
@@ -1352,7 +1351,7 @@ ON__UINT32 ON_XMLVariant::DataCRC(ON__UINT32 crc) const
   case Types::DoubleColor4:
   {
     ON__INT64 x[4] = { 0 };
-    for (int i = 0; i < 4; i++) x[i] = Integerize(m_impl->m_aVal[i]);
+    for (int i = 0; i < 4; i++) x[i] = Integerize(_private->_array_val[i]);
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
@@ -1362,25 +1361,25 @@ ON__UINT32 ON_XMLVariant::DataCRC(ON__UINT32 crc) const
     ON__INT64 x[16] = { 0 };
     for (int j = 0; j < 4; j++)
       for (int i = 0; i < 4; i++)
-        x[index++] = Integerize(m_impl->m_xform.m_xform[i][j]);
+        x[index++] = Integerize(_private->m_xform.m_xform[i][j]);
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
   case Types::Bool:
   {
-    const auto x = m_impl->m_bVal;
+    const auto x = _private->_bool_val;
     return ON_CRC32(crc, sizeof(x), &x);
   }
 
   case Types::Uuid:
   {
-    const auto u = m_impl->m_uuidVal;
+    const auto u = _private->_uuid_val;
     return ON_CRC32(crc, sizeof(u), &u);
   }
 
   case Types::Time:
   {
-    const auto t = m_impl->m_timeVal;
+    const auto t = _private->_time_val;
     return ON_CRC32(crc, sizeof(t), &t);
   }
 
@@ -1398,7 +1397,7 @@ void ON_XMLVariant::Format(ON_wString& sOut) const
 {
   ON_wString sType;
 
-  switch (m_impl->m_type)
+  switch (_private->_type)
   {
   case Types::Null:
     sOut = "[null]";
@@ -1521,143 +1520,170 @@ void CPropertyData::SetHugeStringValue(const ON_wString& s)
   m_value.SetValue(s);
 }
 
-class ON_XMLProperty::CImpl final
+class ON_XMLPropertyPrivate final
 {
 public:
-  CImpl() { m_data = new CPropertyData; }
-  CImpl(const ON_XMLVariant& sValue) { m_data = new CPropertyData(sValue); }
-  CImpl(const ON_wString& sName, const ON_XMLVariant& value) { m_data = new CPropertyData(sName, value); }
-  CImpl(const ON_XMLProperty& prop) { prop.Impl().m_data->AddRef(); m_data = prop.Impl().m_data; }
-  ~CImpl() { m_data->Release(); }
+  ON_XMLPropertyPrivate();
+  ON_XMLPropertyPrivate(const ON_XMLVariant& sValue);
+  ON_XMLPropertyPrivate(const ON_wString& sName, const ON_XMLVariant& value);
+  ON_XMLPropertyPrivate(const ON_XMLProperty& prop);
+  ~ON_XMLPropertyPrivate();
 
-  const ON_wString& Name(void) const { return m_data->Name(); }
-  void SetName(const wchar_t* wsz) { CopyOnWrite(); m_data->SetName(wsz); }
+  const ON_wString& Name(void) const { return _data->Name(); }
+  void SetName(const wchar_t* wsz) { CopyOnWrite(); _data->SetName(wsz); }
 
-  ON__UINT32 DataCRC(ON__UINT32 crc) const { return m_data->DataCRC(crc); }
+  ON__UINT32 DataCRC(ON__UINT32 crc) const { return _data->DataCRC(crc); }
 
-  bool operator < (const ON_XMLProperty& prop) const { return m_data->operator < (*prop.Impl().m_data); }
+  bool operator < (const ON_XMLProperty& prop) const;
+  void operator = (const ON_XMLPropertyPrivate& pimpl);
 
-  void operator = (const ON_XMLProperty::CImpl& pimpl)
-  {
-    if (nullptr != pimpl.m_data)
-    {
-      pimpl.m_data->AddRef();
-    }
+  bool IsDefaultProperty(void) const { return _data->IsDefaultProperty(); }
+  const ON_XMLVariant& GetValue(void) const { return _data->GetValue(); }
+  ON_XMLVariant& GetNonConstValue(void) { CopyOnWrite(); return _data->m_value; }
+  void SetValue(const ON_XMLVariant& value) { CopyOnWrite(); _data->SetValue(value); }
+  void SetHugeStringValue(const ON_wString& s) { CopyOnWrite(); _data->SetHugeStringValue(s); }
+  void CopyOnWrite(void);
 
-    if (nullptr != m_data)
-    {
-      m_data->Release();
-    }
-
-    m_data = pimpl.m_data;
-  }
-
-  bool IsDefaultProperty(void) const { return m_data->IsDefaultProperty(); }
-  const ON_XMLVariant& GetValue(void) const { return m_data->GetValue(); }
-  ON_XMLVariant& GetNonConstValue(void) { CopyOnWrite(); return m_data->m_value; }
-  void SetValue(const ON_XMLVariant& value) { CopyOnWrite(); m_data->SetValue(value); }
-  void SetHugeStringValue(const ON_wString& s) { CopyOnWrite(); m_data->SetHugeStringValue(s); }
-
-  void CopyOnWrite(void)
-  {
-    if (m_data->m_iRefCount > 1)
-    {
-      auto* pData = new CPropertyData(*m_data);
-      m_data->Release();
-      m_data = pData;
-    }
-  }
-
-  CPropertyData* m_data = nullptr;
-  ON_XMLNode* m_owner = nullptr;
-  ON_XMLProperty* m_pNext = nullptr;
+  CPropertyData* _data = nullptr;
+  ON_XMLNode* _owner = nullptr;
+  ON_XMLProperty* _next = nullptr;
 };
+
+ON_XMLPropertyPrivate::ON_XMLPropertyPrivate()
+{
+  _data = new CPropertyData;
+}
+
+ON_XMLPropertyPrivate::ON_XMLPropertyPrivate(const ON_XMLVariant& sValue)
+{
+  _data = new CPropertyData(sValue);
+}
+
+ON_XMLPropertyPrivate::ON_XMLPropertyPrivate(const ON_wString& sName, const ON_XMLVariant& value)
+{
+  _data = new CPropertyData(sName, value);
+}
+
+ON_XMLPropertyPrivate::ON_XMLPropertyPrivate(const ON_XMLProperty& prop)
+{
+  prop._private->_data->AddRef();
+  _data = prop._private->_data;
+}
+
+ON_XMLPropertyPrivate::~ON_XMLPropertyPrivate()
+{
+  _data->Release();
+}
+
+bool ON_XMLPropertyPrivate::operator < (const ON_XMLProperty& prop) const
+{
+  return _data->operator < (*prop._private->_data);
+}
+
+void ON_XMLPropertyPrivate::operator = (const ON_XMLPropertyPrivate& other)
+{
+  if (&other == this)
+    return;
+
+  ON_ASSERT(nullptr != _data);
+  ON_ASSERT(nullptr != other._data);
+
+  other._data->AddRef();
+  _data->Release();
+  _data = other._data;
+}
+
+void ON_XMLPropertyPrivate::CopyOnWrite(void)
+{
+  if (_data->m_iRefCount > 1)
+  {
+    auto* pData = new CPropertyData(*_data);
+    _data->Release();
+    _data = pData;
+  }
+}
 
 ON_XMLProperty::ON_XMLProperty()
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLPropertyPrivate; PRIVATE_CHECK(ON_XMLPropertyPrivate);
 }
 
 ON_XMLProperty::ON_XMLProperty(const ON_XMLVariant& sValue)
 {
-  m_impl = new (m_Impl) CImpl(sValue); IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLPropertyPrivate(sValue); PRIVATE_CHECK(ON_XMLPropertyPrivate);
 }
 
 ON_XMLProperty::ON_XMLProperty(const ON_wString& sName, const ON_XMLVariant& value)
 {
-  m_impl = new (m_Impl) CImpl(sName, value); IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLPropertyPrivate(sName, value); PRIVATE_CHECK(ON_XMLPropertyPrivate);
 }
 
 ON_XMLProperty::ON_XMLProperty(const ON_XMLProperty& prop)
 {
-  m_impl = new (m_Impl) CImpl(prop); IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLPropertyPrivate(prop); PRIVATE_CHECK(ON_XMLPropertyPrivate);
 }
 
 ON_XMLProperty::~ON_XMLProperty()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  _private->~ON_XMLPropertyPrivate();
+  _private = nullptr;
 }
 
 const ON_wString& ON_XMLProperty::Name(void) const
 {
-  return m_impl->Name();
+  return _private->Name();
 }
 
 void ON_XMLProperty::SetName(const wchar_t* wsz)
 {
-  m_impl->SetName(wsz);
+  _private->SetName(wsz);
 }
 
 ON__UINT32 ON_XMLProperty::DataCRC(ON__UINT32 crc) const
 {
-  return m_impl->DataCRC(crc);
+  return _private->DataCRC(crc);
 }
 
 bool ON_XMLProperty::operator < (const ON_XMLProperty& prop) const
 {
-  return m_impl->operator < (prop);
+  return _private->operator < (prop);
 }
 
 const ON_XMLProperty& ON_XMLProperty::operator = (const ON_XMLProperty& prop)
 {
-  m_impl->operator = (prop.Impl());
+  _private->operator = (*prop._private);
+
   return *this;
 }
 
 bool ON_XMLProperty::IsDefaultProperty(void) const
 {
-  return m_impl->IsDefaultProperty();
+  return _private->IsDefaultProperty();
 }
 
 const ON_XMLVariant& ON_XMLProperty::GetValue(void) const
 {
-  return m_impl->GetValue();
+  return _private->GetValue();
 }
 
 void ON_XMLProperty::SetValue(const ON_XMLVariant& v)
 {
-  m_impl->SetValue(v);
+  _private->SetValue(v);
 }
 
 void ON_XMLProperty::SetHugeStringValue(const ON_wString& s)
 {
-  m_impl->SetHugeStringValue(s);
-}
-
-ON_XMLProperty::CImpl& ON_XMLProperty::Impl(void) const
-{
-  return *m_impl;
+  _private->SetHugeStringValue(s);
 }
 
 ON_XMLVariant& ON_XMLProperty::GetNonConstValue(void)
 {
-  return m_impl->GetNonConstValue();
+  return _private->GetNonConstValue();
 }
 
 ON_XMLProperty* ON_XMLProperty::Next(void) const
 {
-  return m_impl->m_pNext;
+  return _private->_next;
 }
 
 void* ON_XMLProperty::EVF(const wchar_t*, void*)
@@ -1667,7 +1693,7 @@ void* ON_XMLProperty::EVF(const wchar_t*, void*)
 
 // ON_XMLSegmentedStream
 
-class ON_XMLSegmentedStream::CImpl
+class ON_XMLSegmentedStreamPrivate
 {
 public:
   ON_SimpleArray<wchar_t*> m_a;
@@ -1675,36 +1701,35 @@ public:
 
 ON_XMLSegmentedStream::ON_XMLSegmentedStream()
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new ON_XMLSegmentedStreamPrivate;
 }
 
 ON_XMLSegmentedStream::~ON_XMLSegmentedStream()
 {
-  for (int i = 0; i < m_impl->m_a.Count(); i++)
+  for (int i = 0; i < _private->m_a.Count(); i++)
   {
-    delete[] m_impl->m_a[i];
+    delete[] _private->m_a[i];
   }
 
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  delete _private;
 }
 
 int ON_XMLSegmentedStream::Count(void) const
 {
-  return m_impl->m_a.Count();
+  return _private->m_a.Count();
 }
 
 void ON_XMLSegmentedStream::Append(wchar_t* wsz)
 {
-  m_impl->m_a.Append(wsz);
+  _private->m_a.Append(wsz);
 }
 
 wchar_t* ON_XMLSegmentedStream::Segment(int index) const
 {
-  if ((index < 0) || (index >= m_impl->m_a.Count()))
+  if ((index < 0) || (index >= _private->m_a.Count()))
     return nullptr;
 
-  return m_impl->m_a[index];
+  return _private->m_a[index];
 }
 
 void* ON_XMLSegmentedStream::EVF(const wchar_t*, void*)
@@ -1726,12 +1751,12 @@ private:
   bool m_bWarningsAsErrors;
 };
 
-class ON_XMLNode::CImpl final
+class ON_XMLNodePrivate final
 {
 public:
-  CImpl(ON_XMLNode& n) : m_node(n) { g_lNodeCount++; }
+  ON_XMLNodePrivate(ON_XMLNode& n) : m_node(n) { g_lNodeCount++; }
 
-  ~CImpl()
+  ~ON_XMLNodePrivate()
   {
     RemoveAllProperties();
     RemoveAllChildren();
@@ -1760,8 +1785,11 @@ public:
 
   static bool AssertValidTag(const ON_wString& sTag);
   static void AttemptToFixTag(ON_wString& tag);
-  static bool GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bValidateTag);
   static bool RecoverProperty(const ON_wString& tag, int iEqualSign, ON_wString& sProp);
+  static bool GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bValidateTag);
+  static ON_wString GetNameFromTag(const wchar_t* wszTag);
+  static bool IsValidXMLNameWithDebugging(const wchar_t* name);
+  static bool IsValidXMLName(const wchar_t* name);
 
   static bool m_bAutoTypePropValue;
 
@@ -1777,16 +1805,92 @@ public:
   bool m_debug_auto_test_read = true;
 };
 
-bool ON_XMLNode::CImpl::m_bAutoTypePropValue = false;
+bool ON_XMLNodePrivate::m_bAutoTypePropValue = false;
 
-bool ON_XMLNode::AutoTypePropValue(void)
+ON_wString ON_XMLNodePrivate::GetNameFromTag(const wchar_t* wszTag) // Static.
 {
-  return CImpl::m_bAutoTypePropValue;
+  ON_wString name = wszTag;
+  name.TrimLeft(L"</ ");
+  name.TrimRight(L">/ ");
+
+  const int pos = name.Find(L' ');
+  if (pos >= 0)
+  {
+    name.SetLength(pos);
+  }
+
+  return name;
 }
 
-void ON_XMLNode::SetAutoTypePropValue(bool b)
+bool ON_XMLNodePrivate::IsValidXMLNameWithDebugging(const wchar_t* tag_name) // Static.
 {
-  CImpl::m_bAutoTypePropValue = b;
+  if (IsValidXMLName(tag_name))
+    return true;
+
+  OUTPUT_DEBUG_STRING(L"Invalid XML tag syntax - ");
+  OUTPUT_DEBUG_STRING_EOL(tag_name);
+
+  ON_ASSERT(false);
+
+  return false;
+}
+
+bool ON_XMLNodePrivate::IsValidXMLName(const wchar_t* wszTagName) // Static.
+{
+  // https://www.xml.com/pub/a/2001/07/25/namingparts.html
+  //
+  // A 'Name' is a token beginning with a letter or one of a few punctuation characters, and continuing with
+  // letters, digits, hyphens, underscores, colons, or full stops, together known as name characters.
+  // This definition is formally expressed in Extended Backus-Naur Form (EBNF) notation as follows:
+  // 
+  //  NameChar ::=  Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
+  //  Name     ::= (Letter | '_' | ':') (NameChar)*
+
+  // We also simplify as follows:
+  //
+  // - ':' is not actually allowed in tags, it's reserved for XML namespaces, so we disallow it.
+  // - 'Letter' must be an ASCII letter: Letter ::= 'a' to 'z' or 'A' to 'Z'.
+  // - 'Digit'  must be an ASCII digit:  Digit  ::= '0' to '9'.
+  // - 'CombiningChar' and 'Extender' are not supported (disallowed).
+
+  const ON_wString sTagName = wszTagName;
+  if (sTagName.IsEmpty())
+    return false;
+
+  bool bad = false;
+
+  const int len = sTagName.Length();
+  for (int i = 0; i < len; i++)
+  {
+    const auto& ch = sTagName[i];
+
+    if ((ch >= L'a') && (ch <= L'z'))
+      continue;
+
+    if ((ch >= L'A') && (ch <= L'Z'))
+      continue;
+
+    if (ch == L'_')
+      continue;
+
+    if (i > 0)
+    {
+      if ((ch >= L'0') && (ch <= L'9'))
+        continue;
+
+      if ((ch == '-') || (ch == '.'))
+        continue;
+    }
+
+    bad = true;
+  }
+
+  if (bad)
+  {
+    return false;
+  }
+
+  return true;
 }
 
 static const wchar_t* StringFromPropType(ON_XMLVariant::Types vt)
@@ -1812,7 +1916,7 @@ static const wchar_t* StringFromPropType(ON_XMLVariant::Types vt)
   }
 }
 
-ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, bool recursive) const
+ON__UINT32 ON_XMLNodePrivate::DataCRC(ON__UINT32 crc, bool recursive) const
 {
   crc = TagName().DataCRCLower(crc);
 
@@ -1829,21 +1933,21 @@ ON__UINT32 ON_XMLNode::CImpl::DataCRC(ON__UINT32 crc, bool recursive) const
     ON_XMLNode* child = nullptr;
     while (nullptr != (child = cit.GetNextChild()))
     {
-      crc = child->m_impl->DataCRC(crc, recursive);
+      crc = child->_private->DataCRC(crc, recursive);
     }
   }
 
   return crc;
 }
 
-const ON_wString& ON_XMLNode::CImpl::TagName(void) const
+const ON_wString& ON_XMLNodePrivate::TagName(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   return m_name;
 }
 
-void ON_XMLNode::CImpl::SetTagName(const wchar_t* name)
+void ON_XMLNodePrivate::SetTagName(const wchar_t* name)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -1852,20 +1956,20 @@ void ON_XMLNode::CImpl::SetTagName(const wchar_t* name)
   m_name.TrimRight();
 }
 
-const ON_XMLNode& ON_XMLNode::CImpl::TopLevel(void) const
+const ON_XMLNode& ON_XMLNodePrivate::TopLevel(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   const auto* pNode = &m_node;
-  while (nullptr != pNode->Impl().m_parent)
+  while (nullptr != pNode->_private->m_parent)
   {
-    pNode = pNode->Impl().m_parent;
+    pNode = pNode->_private->m_parent;
   }
 
   return *pNode;
 }
 
-ON_XMLNode* ON_XMLNode::CImpl::AttachChildNode(ON_XMLNode* pNode)
+ON_XMLNode* ON_XMLNodePrivate::AttachChildNode(ON_XMLNode* pNode)
 {
   if (nullptr == pNode)
     return nullptr;
@@ -1880,22 +1984,22 @@ ON_XMLNode* ON_XMLNode::CImpl::AttachChildNode(ON_XMLNode* pNode)
   else
   {
     // There are children - add one to the end.
-    m_last_child->Impl().m_next_sibling = pNode;
+    m_last_child->_private->m_next_sibling = pNode;
     m_last_child = pNode;
   }
 
-  pNode->Impl().m_next_sibling = nullptr;
-  pNode->Impl().m_parent = &m_node;
+  pNode->_private->m_next_sibling = nullptr;
+  pNode->_private->m_parent = &m_node;
 
   return pNode;
 }
 
-void ON_XMLNode::CImpl::AddEmptyDefaultProperty(void)
+void ON_XMLNodePrivate::AddEmptyDefaultProperty(void)
 {
   AddProperty(ON_XMLProperty(L""));
 }
 
-void ON_XMLNode::CImpl::RemoveAllChildren(void)
+void ON_XMLNodePrivate::RemoveAllChildren(void)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -1914,16 +2018,16 @@ void ON_XMLNode::CImpl::RemoveAllChildren(void)
   m_last_child = nullptr;
 }
 
-ON_XMLNode* ON_XMLNode::CImpl::DetachChild(ON_XMLNode& child)
+ON_XMLNode* ON_XMLNodePrivate::DetachChild(ON_XMLNode& child)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  if (child.Impl().m_parent != &m_node)
+  if (child._private->m_parent != &m_node)
     return nullptr;
 
   ON_XMLNode* pChild = nullptr;
 
-  auto* pChildNextSibling = child.Impl().m_next_sibling;
+  auto* pChildNextSibling = child._private->m_next_sibling;
 
   if (m_first_child == &child)
   {
@@ -1939,9 +2043,9 @@ ON_XMLNode* ON_XMLNode::CImpl::DetachChild(ON_XMLNode& child)
     auto* pNode = m_first_child;
     while (nullptr != pNode)
     {
-      if (pNode->Impl().m_next_sibling == &child)
+      if (pNode->_private->m_next_sibling == &child)
       {
-        pNode->Impl().m_next_sibling = pChildNextSibling;
+        pNode->_private->m_next_sibling = pChildNextSibling;
 
         if (nullptr == pChildNextSibling)
           m_last_child = pNode;
@@ -1950,36 +2054,36 @@ ON_XMLNode* ON_XMLNode::CImpl::DetachChild(ON_XMLNode& child)
         break;
       }
 
-      pNode = pNode->Impl().m_next_sibling;
+      pNode = pNode->_private->m_next_sibling;
     }
   }
 
   if (nullptr != pChild)
   {
-    pChild->Impl().m_parent = nullptr;
-    pChild->Impl().m_next_sibling = nullptr;
+    pChild->_private->m_parent = nullptr;
+    pChild->_private->m_next_sibling = nullptr;
   }
 
   return pChild;
 }
 
-ON_XMLNode* ON_XMLNode::CImpl::PrevSibling(void) const
+ON_XMLNode* ON_XMLNodePrivate::PrevSibling(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* pPrev = m_parent->Impl().m_first_child;
+  auto* pPrev = m_parent->_private->m_first_child;
   if (pPrev == &m_node)
     return nullptr;
 
-  while (pPrev->Impl().m_next_sibling != &m_node)
+  while (pPrev->_private->m_next_sibling != &m_node)
   {
-    pPrev = pPrev->Impl().m_next_sibling;
+    pPrev = pPrev->_private->m_next_sibling;
   }
 
   return pPrev;
 }
 
-void ON_XMLNode::CImpl::MoveBefore(ON_XMLNode& other)
+void ON_XMLNodePrivate::MoveBefore(ON_XMLNode& other)
 {
   if (&other == &m_node)
     return;
@@ -1993,12 +2097,12 @@ void ON_XMLNode::CImpl::MoveBefore(ON_XMLNode& other)
   auto* pPrev = PrevSibling();
   if (nullptr != pPrev)
   {
-    pPrev->Impl().m_next_sibling = m_next_sibling;
+    pPrev->_private->m_next_sibling = m_next_sibling;
   }
   else
   {
     // 'this' was the head; redirect the parent's first child.
-    m_parent->Impl().m_first_child = m_next_sibling;
+    m_parent->_private->m_first_child = m_next_sibling;
   }
 
   m_next_sibling = &other;
@@ -2006,15 +2110,15 @@ void ON_XMLNode::CImpl::MoveBefore(ON_XMLNode& other)
   if (nullptr == pBeforeOther)
   {
     // 'other' was the head; redirect the parent's first child.
-    m_parent->Impl().m_first_child = &m_node;
+    m_parent->_private->m_first_child = &m_node;
   }
   else
   {
-    pBeforeOther->Impl().m_next_sibling = &m_node;
+    pBeforeOther->_private->m_next_sibling = &m_node;
   }
 }
 
-void ON_XMLNode::CImpl::MoveAfter(ON_XMLNode& other)
+void ON_XMLNodePrivate::MoveAfter(ON_XMLNode& other)
 {
   if (&other == &m_node)
     return;
@@ -2027,20 +2131,20 @@ void ON_XMLNode::CImpl::MoveAfter(ON_XMLNode& other)
 
   if (nullptr != pPrev)
   {
-    pPrev->Impl().m_next_sibling = m_next_sibling;
+    pPrev->_private->m_next_sibling = m_next_sibling;
   }
   else
   {
     // 'this' was the head; redirect the parent's first child.
-    m_parent->Impl().m_first_child = m_next_sibling;
+    m_parent->_private->m_first_child = m_next_sibling;
   }
 
-  m_next_sibling = other.Impl().m_next_sibling;
+  m_next_sibling = other._private->m_next_sibling;
 
-  other.Impl().m_next_sibling = &m_node;
+  other._private->m_next_sibling = &m_node;
 }
 
-bool ON_XMLNode::CImpl::RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* pv) const
+bool ON_XMLNodePrivate::RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* pv) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -2059,19 +2163,19 @@ bool ON_XMLNode::CImpl::RecurseChildren(ON_XMLRecurseChildrenCallback callback, 
   return true;
 }
 
-ON_XMLProperty* ON_XMLNode::CImpl::AddProperty(const ON_XMLProperty& prop)
+ON_XMLProperty* ON_XMLNodePrivate::AddProperty(const ON_XMLProperty& prop)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   auto* prop_copy = new ON_XMLProperty(prop);
-  prop_copy->Impl().m_owner = &m_node;
-  prop_copy->Impl().m_pNext = m_first_property;
+  prop_copy->_private->_owner = &m_node;
+  prop_copy->_private->_next = m_first_property;
   m_first_property = prop_copy;
 
   return prop_copy;
 }
 
-ON_XMLProperty* ON_XMLNode::CImpl::AttachProperty(ON_XMLProperty* prop)
+ON_XMLProperty* ON_XMLNodePrivate::AttachProperty(ON_XMLProperty* prop)
 {
   if (nullptr == prop)
     return nullptr;
@@ -2080,14 +2184,14 @@ ON_XMLProperty* ON_XMLNode::CImpl::AttachProperty(ON_XMLProperty* prop)
 
   RemoveProperty(prop->Name());
 
-  prop->Impl().m_pNext = m_first_property;
+  prop->_private->_next = m_first_property;
   m_first_property = prop;
-  m_first_property->Impl().m_owner = &m_node;
+  m_first_property->_private->_owner = &m_node;
 
   return prop;
 }
 
-bool ON_XMLNode::CImpl::RemoveProperty(const wchar_t* name)
+bool ON_XMLNodePrivate::RemoveProperty(const wchar_t* name)
 {
   ON_XMLProperty* pPrev = nullptr;
 
@@ -2102,7 +2206,7 @@ bool ON_XMLNode::CImpl::RemoveProperty(const wchar_t* name)
       }
       else
       {
-        pPrev->Impl().m_pNext = pProp->Next();
+        pPrev->_private->_next = pProp->Next();
       }
 
       delete pProp;
@@ -2110,13 +2214,13 @@ bool ON_XMLNode::CImpl::RemoveProperty(const wchar_t* name)
     }
 
     pPrev = pProp;
-    pProp = pProp->Impl().m_pNext;
+    pProp = pProp->_private->_next;
   }
 
   return false;
 }
 
-void ON_XMLNode::CImpl::RemoveAllProperties(void)
+void ON_XMLNodePrivate::RemoveAllProperties(void)
 {
   if (nullptr == m_first_property)
     return;
@@ -2132,7 +2236,7 @@ void ON_XMLNode::CImpl::RemoveAllProperties(void)
   m_first_property = nullptr;
 }
 
-ON_XMLNode* ON_XMLNode::CImpl::GetNodeAtPath(const wchar_t* wszPath, bool bCreate)
+ON_XMLNode* ON_XMLNodePrivate::GetNodeAtPath(const wchar_t* wszPath, bool bCreate)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
@@ -2189,20 +2293,20 @@ ON_XMLNode* ON_XMLNode::CImpl::GetNodeAtPath(const wchar_t* wszPath, bool bCreat
   {
     if (on_wcsicmp(wsz, pChild->TagName()) == 0)
     {
-      return pChild->Impl().GetNodeAtPath(pNext, bCreate);
+      return pChild->_private->GetNodeAtPath(pNext, bCreate);
     }
   }
 
   // The child was not found.
   if (bCreate)
   {
-    return AttachChildNode(new ON_XMLNode(wsz))->Impl().GetNodeAtPath(pNext, bCreate);
+    return AttachChildNode(new ON_XMLNode(wsz))->_private->GetNodeAtPath(pNext, bCreate);
   }
 
   return nullptr;
 }
 
-bool ON_XMLNode::CImpl::RecoverProperty(const ON_wString& tag, int equalSign, ON_wString& sProp) // Static.
+bool ON_XMLNodePrivate::RecoverProperty(const ON_wString& tag, int equalSign, ON_wString& sProp) // Static.
 {
   // Move left, looking for a space and ensuring every character is a valid name char.
   ON_ASSERT(tag[equalSign] == L'=');
@@ -2237,7 +2341,7 @@ bool ON_XMLNode::CImpl::RecoverProperty(const ON_wString& tag, int equalSign, ON
   return true;
 }
 
-void ON_XMLNode::CImpl::AttemptToFixTag(ON_wString& tag) // Static.
+void ON_XMLNodePrivate::AttemptToFixTag(ON_wString& tag) // Static.
 {
   // We're going to rebuild the tag from the name and the number of valid properties we find.
   const ON_wString sName = GetNameFromTag(tag);
@@ -2277,7 +2381,7 @@ void ON_XMLNode::CImpl::AttemptToFixTag(ON_wString& tag) // Static.
   tag = sNewTag;
 }
 
-bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bValidateTag) // Static.
+bool ON_XMLNodePrivate::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bValidateTag) // Static.
 {
   auto* start = pBuffer;
   while (*start != L'<')
@@ -2364,7 +2468,7 @@ bool ON_XMLNode::CImpl::GetNextTag(ON_wString& tag, wchar_t*& pBuffer, bool bVal
   return true;
 }
 
-bool ON_XMLNode::CImpl::AssertValidTag(const ON_wString& tag) // Static.
+bool ON_XMLNodePrivate::AssertValidTag(const ON_wString& tag) // Static.
 {
   // Check for an even number of quotes - odd means there are quotes in the strings.
   const int quoteCount = tag.Count(L'\"');
@@ -2413,24 +2517,23 @@ bool ON_XMLNode::CImpl::AssertValidTag(const ON_wString& tag) // Static.
 
 ON_XMLNode::ON_XMLNode(const wchar_t* name)
 {
-  m_impl = new (m_Impl) CImpl(*this); IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLNodePrivate(*this); PRIVATE_CHECK(ON_XMLNodePrivate);
 
   SetTagName(name);
 
-  m_impl->AddEmptyDefaultProperty();
+  _private->AddEmptyDefaultProperty();
 }
 
 ON_XMLNode::ON_XMLNode(const ON_XMLNode& src)
 {
-  m_impl = new (m_Impl) CImpl(*this); IMPL_CHECK;
-
+  _private = new (_PRIVATE) ON_XMLNodePrivate(*this); PRIVATE_CHECK(ON_XMLNodePrivate);
   *this = src;
 }
 
 ON_XMLNode::~ON_XMLNode()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  _private->~ON_XMLNodePrivate();
+  _private = nullptr;
 }
 
 const ON_XMLNode& ON_XMLNode::operator = (const ON_XMLNode& src)
@@ -2438,20 +2541,20 @@ const ON_XMLNode& ON_XMLNode::operator = (const ON_XMLNode& src)
   if (this == &src)
     return *this;
 
-  std::lock_guard<std::recursive_mutex> lg1(m_impl->m_mutex);
-  std::lock_guard<std::recursive_mutex> lg2(src.Impl().m_mutex);
+  std::lock_guard<std::recursive_mutex> lg1(_private->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg2(src._private->m_mutex);
 
-  m_impl->RemoveAllProperties();
-  m_impl->RemoveAllChildren();
+  _private->RemoveAllProperties();
+  _private->RemoveAllChildren();
 
-  m_impl->m_name = src.Impl().m_name;
+  _private->m_name = src._private->m_name;
 
   // Copy in the properties.
   ON_XMLProperty* pProperty = nullptr;
   auto pi = src.GetPropertyIterator();
   while (nullptr != (pProperty = pi.GetNextProperty()))
   {
-    m_impl->AddProperty(*pProperty);
+    _private->AddProperty(*pProperty);
   }
 
   // Copy in the children.
@@ -2499,12 +2602,22 @@ bool ON_XMLNode::operator != (const ON_XMLNode& node) const
     return !(operator == (node));
 }
 
+bool ON_XMLNode::AutoTypePropValue(void)
+{
+  return ON_XMLNodePrivate::m_bAutoTypePropValue;
+}
+
+void ON_XMLNode::SetAutoTypePropValue(bool b)
+{
+  ON_XMLNodePrivate::m_bAutoTypePropValue = b;
+}
+
 bool ON_XMLNode::MergeFrom(const ON_XMLNode& src)
 {
-  std::lock_guard<std::recursive_mutex> lg1(m_impl->m_mutex);
-  std::lock_guard<std::recursive_mutex> lg2(src.Impl().m_mutex);
+  std::lock_guard<std::recursive_mutex> lg1(_private->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg2(src._private->m_mutex);
 
-  if (m_impl->m_name != src.TagName())
+  if (_private->m_name != src.TagName())
     return false;
 
   // Copy in the parameters.
@@ -2547,20 +2660,20 @@ void ON_XMLNode::Clear(void)
 
 void ON_XMLNode::RemoveAllChildren(void)
 {
-  m_impl->RemoveAllChildren();
+  _private->RemoveAllChildren();
 }
 
 void ON_XMLNode::RemoveAllProperties(void)
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
-  m_impl->RemoveAllProperties();
-  m_impl->AddEmptyDefaultProperty();
+  _private->RemoveAllProperties();
+  _private->AddEmptyDefaultProperty();
 }
 
 ON_XMLProperty* ON_XMLNode::SetProperty(const ON_XMLProperty& prop)
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   if (g_iWarningsFlagCounter > 0)
   {
@@ -2578,118 +2691,47 @@ ON_XMLProperty* ON_XMLNode::SetProperty(const ON_XMLProperty& prop)
     }
   }
 
-  m_impl->RemoveProperty(prop.Name());
+  _private->RemoveProperty(prop.Name());
 
   // Copy the property, then add it to the tree.
-  return m_impl->AddProperty(prop);
+  return _private->AddProperty(prop);
 }
 
 const ON_wString& ON_XMLNode::TagName(void) const
 {
-  return m_impl->TagName();
+  return _private->TagName();
 }
 
 void ON_XMLNode::SetTagName(const wchar_t* name)
 {
-  m_impl->SetTagName(name);
-}
-
-bool ON_XMLNode::IsValidXMLNameWithDebugging(const wchar_t* tag_name) // Static.
-{
-  if (IsValidXMLName(tag_name))
-    return true;
-
-  OUTPUT_DEBUG_STRING(L"Invalid XML tag syntax - ");
-  OUTPUT_DEBUG_STRING_EOL(tag_name);
-
-  ON_ASSERT(false);
-
-  return false;
-}
-
-bool ON_XMLNode::IsValidXMLName(const wchar_t* wszTagName) // Static.
-{
-  // https://www.xml.com/pub/a/2001/07/25/namingparts.html
-  //
-  // A 'Name' is a token beginning with a letter or one of a few punctuation characters, and continuing with
-  // letters, digits, hyphens, underscores, colons, or full stops, together known as name characters.
-  // This definition is formally expressed in Extended Backus-Naur Form (EBNF) notation as follows:
-  // 
-  //  NameChar ::=  Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
-  //  Name     ::= (Letter | '_' | ':') (NameChar)*
-
-  // We also simplify as follows:
-  //
-  // - ':' is not actually allowed in tags, it's reserved for XML namespaces, so we disallow it.
-  // - 'Letter' must be an ASCII letter: Letter ::= 'a' to 'z' or 'A' to 'Z'.
-  // - 'Digit'  must be an ASCII digit:  Digit  ::= '0' to '9'.
-  // - 'CombiningChar' and 'Extender' are not supported (disallowed).
-
-  const ON_wString sTagName = wszTagName;
-  if (sTagName.IsEmpty())
-    return false;
-
-  bool bad = false;
-
-  const int len = sTagName.Length();
-  for (int i = 0; i < len; i++)
-  {
-    const auto& ch = sTagName[i];
-
-    if ((ch >= L'a') && (ch <= L'z'))
-      continue;
-
-    if ((ch >= L'A') && (ch <= L'Z'))
-      continue;
-
-    if (ch == L'_')
-      continue;
-
-    if (i > 0)
-    {
-      if ((ch >= L'0') && (ch <= L'9'))
-        continue;
-
-      if ((ch == '-') || (ch == '.'))
-        continue;
-    }
-
-    bad = true;
-  }
-
-  if (bad)
-  {
-    return false;
-  }
-
-  return true;
+  _private->SetTagName(name);
 }
 
 ON_XMLNode* ON_XMLNode::Parent(void) const
 {
-  return m_impl->m_parent;
+  return _private->m_parent;
 }
 
 const ON_XMLNode& ON_XMLNode::TopLevel(void) const
 {
-  return m_impl->TopLevel();
+  return _private->TopLevel();
 }
 
 ON_XMLNode* ON_XMLNode::AttachChildNode(ON_XMLNode* pNode)
 {
-  return m_impl->AttachChildNode(pNode);
+  return _private->AttachChildNode(pNode);
 }
 
 ON_XMLProperty* ON_XMLNode::AttachProperty(ON_XMLProperty* pProp)
 {
-  return m_impl->AttachProperty(pProp);
+  return _private->AttachProperty(pProp);
 }
 
 bool ON_XMLNode::RemoveProperty(const wchar_t* wszPropertyName)
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
-  return m_impl->RemoveProperty(wszPropertyName);
+  return _private->RemoveProperty(wszPropertyName);
 }
 
 void ON_XMLNode::Remove(void)
@@ -2707,7 +2749,7 @@ void ON_XMLNode::Remove(void)
 
 ON_XMLNode* ON_XMLNode::DetachChild(ON_XMLNode& child)
 {
-  return m_impl->DetachChild(child);
+  return _private->DetachChild(child);
 }
 
 bool ON_XMLNode::RemoveChild(ON_XMLNode* child)
@@ -2715,7 +2757,7 @@ bool ON_XMLNode::RemoveChild(ON_XMLNode* child)
   if (nullptr == child)
     return false;
 
-  ON_XMLNode* detach = m_impl->DetachChild(*child);
+  ON_XMLNode* detach = _private->DetachChild(*child);
   if (nullptr != detach)
   {
     delete detach;
@@ -2737,7 +2779,7 @@ ON_XMLNode::PropertyIterator ON_XMLNode::GetPropertyIterator(bool bAlphabetized)
 
 int ON_XMLNode::PropertyCount(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   int count = 0;
   auto it = GetPropertyIterator();
@@ -2751,7 +2793,7 @@ int ON_XMLNode::PropertyCount(void) const
 
 int ON_XMLNode::ChildCount(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   int count = 0;
   auto it = GetChildIterator();
@@ -2765,14 +2807,14 @@ int ON_XMLNode::ChildCount(void) const
 
 int ON_XMLNode::GetNestedDepth(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   int depth = 0;
 
   const auto* pNode = this;
-  while (nullptr != pNode->Impl().m_parent)
+  while (nullptr != pNode->_private->m_parent)
   {
-    pNode = pNode->Impl().m_parent;
+    pNode = pNode->_private->m_parent;
     depth++;
   }
 
@@ -2800,7 +2842,7 @@ static bool PrependNodeToStringAndRecurseParents(const ON_XMLNode* pNode, ON_wSt
 
 ON_wString ON_XMLNode::GetPathFromRoot(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_wString sPath = TagName();
   PrependNodeToStringAndRecurseParents(Parent(), sPath);
@@ -2819,7 +2861,7 @@ ON_XMLProperty& ON_XMLNode::GetDefaultProperty(void) const
 
 ON_XMLProperty* ON_XMLNode::GetNamedProperty(const wchar_t* name) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   auto it = GetPropertyIterator();
   ON_XMLProperty* pProp = nullptr;
@@ -2835,7 +2877,7 @@ ON_XMLProperty* ON_XMLNode::GetNamedProperty(const wchar_t* name) const
 
 ON_XMLNode* ON_XMLNode::GetNamedChild(const wchar_t* name) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   ON_XMLNode* node = nullptr;
 
@@ -2851,10 +2893,10 @@ ON_XMLNode* ON_XMLNode::GetNamedChild(const wchar_t* name) const
 
 void* ON_XMLNode::LastReadBufferPointer(void) const
 {
-  return m_impl->m_last_read_buf_ptr;
+  return _private->m_last_read_buf_ptr;
 }
 
-bool ON_XMLNode::CImpl::GetPropertiesFromTag(const ON_wString& sTag)
+bool ON_XMLNodePrivate::GetPropertiesFromTag(const ON_wString& sTag)
 {
   SetTagName(GetNameFromTag(sTag));
 
@@ -2930,7 +2972,7 @@ bool ON_XMLNode::CImpl::GetPropertiesFromTag(const ON_wString& sTag)
   return true;
 }
 
-bool ON_XMLNode::CImpl::IsClosingTag(const ON_wString& sTag) const
+bool ON_XMLNodePrivate::IsClosingTag(const ON_wString& sTag) const
 {
   if (sTag.Length() < 3)
     return false;
@@ -2981,12 +3023,12 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteHeaderToStream(wchar_t* stream, ON_
 
   if (write)
   {
-    ON_ASSERT(m_impl->m_name.IsNotEmpty());
+    ON_ASSERT(_private->m_name.IsNotEmpty());
     header = L"<";
-    header += m_impl->m_name;
+    header += _private->m_name;
   }
 
-  auto logical_header_length = ON__UINT32(m_impl->m_name.Length()) + 1; // +1 for '<'.
+  auto logical_header_length = ON__UINT32(_private->m_name.Length()) + 1; // +1 for '<'.
 
   if (includeFormatting)
   {
@@ -3049,7 +3091,7 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteHeaderToStream(wchar_t* stream, ON_
 
       const auto& vValue = pProp->GetValue();
 
-      if (CImpl::m_bAutoTypePropValue)
+      if (ON_XMLNodePrivate::m_bAutoTypePropValue)
       {
         const ON_wString sType = StringFromPropType(pProp->GetValue().Type());
         if (write)
@@ -3089,7 +3131,7 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteHeaderToStream(wchar_t* stream, ON_
   {
     ON_wString sType;
 
-    const bool bType = CImpl::m_bAutoTypePropValue && (nullptr != psDefaultProperty);
+    const bool bType = ON_XMLNodePrivate::m_bAutoTypePropValue && (nullptr != psDefaultProperty);
     if (bType)
       sType = StringFromPropType(GetDefaultProperty().GetValue().Type());
 
@@ -3121,14 +3163,14 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteHeaderToStream(wchar_t* stream, ON_
   }
 
   CharacterCounts counts;
-  counts.m_logical = logical_header_length;
+  counts._logical = logical_header_length;
 
   if (0 != max_chars)
   {
     const auto physical_header_length = ON__UINT32(header.Length());
     const auto chars_to_copy = std::min(max_chars, physical_header_length + 1);
     memcpy(stream, static_cast<const wchar_t*>(header), chars_to_copy * sizeof(wchar_t));
-    counts.m_physical = std::min(max_chars, physical_header_length);
+    counts._physical = std::min(max_chars, physical_header_length);
     ON_ASSERT(logical_header_length == physical_header_length);
   }
 
@@ -3148,8 +3190,8 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteChildrenToStream(wchar_t* stream, O
     const auto cc = pChild->WriteToStreamEx(stream, max_chars, includeFormatting, forceLongFormat, sortedProperties);
     counts += cc;
     if (nullptr != stream)
-      stream += cc.m_physical;
-    max_chars = std::max(0, int(max_chars - cc.m_logical));
+      stream += cc._physical;
+    max_chars = std::max(0, int(max_chars - cc._logical));
   }
 
   return counts;
@@ -3165,7 +3207,7 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteFooterToStream(wchar_t* stream, ON_
   if (hasDefaultProp || (child_count > 0) || forceLongFormat)
   {
     footer = L"</";
-    footer += Impl().m_name;
+    footer += _private->m_name;
     footer += L'>';
 
     if (includeFormatting)
@@ -3190,13 +3232,13 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteFooterToStream(wchar_t* stream, ON_
   }
 
   CharacterCounts counts;
-  counts.m_logical = ON__UINT32(footer.Length());
+  counts._logical = ON__UINT32(footer.Length());
 
   if (0 != max_chars)
   {
-    const auto chars_to_copy = std::min(max_chars, counts.m_logical + 1);
+    const auto chars_to_copy = std::min(max_chars, counts._logical + 1);
     memcpy(stream, static_cast<const wchar_t*>(footer), chars_to_copy * sizeof(wchar_t));
-    counts.m_physical = std::min(max_chars, counts.m_logical);
+    counts._physical = std::min(max_chars, counts._logical);
   }
 
   return counts;
@@ -3204,13 +3246,13 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteFooterToStream(wchar_t* stream, ON_
 
 void ON_XMLNode::SetInternalDebuggingFlags(ON__UINT64 flags)
 {
-  m_impl->m_debug_auto_test_read = (flags & 1);
+  _private->m_debug_auto_test_read = (flags & 1);
 }
 
 void ON_XMLNode::CharacterCounts::operator += (const CharacterCounts& cw)
 {
-  m_logical  += cw.m_logical;
-  m_physical += cw.m_physical;
+  _logical  += cw._logical;
+  _physical += cw._physical;
 }
 
 ON__UINT32 ON_XMLNode::WriteToStream(wchar_t* stream, ON__UINT32 max_chars, bool include_formatting,
@@ -3219,23 +3261,23 @@ ON__UINT32 ON_XMLNode::WriteToStream(wchar_t* stream, ON__UINT32 max_chars, bool
   const auto cc = WriteToStreamEx(stream, max_chars, include_formatting, force_long_format, sorted_props);
 
 #ifdef _DEBUG
-  if (m_impl->m_debug_auto_test_read && (nullptr != stream))
+  if (_private->m_debug_auto_test_read && (nullptr != stream))
   {
     ON_XMLNode test(TagName());
     const auto read = test.ReadFromStream(stream, true, true);
-    if (read != cc.m_logical)
+    if (read != cc._logical)
     {
       ON_ERROR("CRITICAL: Could not read back what was written");
     }
   }
 #endif
 
-  return cc.m_logical;
+  return cc._logical;
 }
 
 ON_XMLNode::CharacterCounts ON_XMLNode::WriteToStreamEx(wchar_t* stream, ON__UINT32 max_chars, bool includeFormatting, bool forceLongFormat, bool sortedProperties) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   CharacterCounts counts;
 
@@ -3248,16 +3290,16 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteToStreamEx(wchar_t* stream, ON__UIN
   auto cc = WriteHeaderToStream(stream, max_chars, includeFormatting, forceLongFormat, sortedProperties);
   counts += cc;
   if (nullptr != stream)
-    stream += cc.m_physical;
+    stream += cc._physical;
 
-  max_chars = std::max(0, int(max_chars - cc.m_logical));
+  max_chars = std::max(0, int(max_chars - cc._logical));
 
   cc = WriteChildrenToStream(stream, max_chars, includeFormatting, forceLongFormat, sortedProperties);
   counts += cc;
   if (nullptr != stream)
-    stream += cc.m_physical;
+    stream += cc._physical;
 
-  max_chars = std::max(0, int(max_chars - cc.m_logical));
+  max_chars = std::max(0, int(max_chars - cc._logical));
 
   cc = WriteFooterToStream(stream, max_chars, includeFormatting, forceLongFormat);
   counts += cc;
@@ -3267,11 +3309,11 @@ ON_XMLNode::CharacterCounts ON_XMLNode::WriteToStreamEx(wchar_t* stream, ON__UIN
 
 bool ON_XMLNode::WriteToSegmentedStream(ON_XMLSegmentedStream& segs, bool includeFormatting, bool forceLongFormat, bool sortedProperties) const
 {
-  std::lock_guard<std::recursive_mutex> lg(m_impl->m_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
   const auto header_cw = WriteHeaderToStream(nullptr, 0, includeFormatting, forceLongFormat, sortedProperties);
-  auto* pHeader = new wchar_t[size_t(header_cw.m_logical) + 1];
-  WriteHeaderToStream(pHeader, header_cw.m_logical + 1, includeFormatting, forceLongFormat, sortedProperties);
+  auto* pHeader = new wchar_t[size_t(header_cw._logical) + 1];
+  WriteHeaderToStream(pHeader, header_cw._logical + 1, includeFormatting, forceLongFormat, sortedProperties);
   segs.Append(pHeader);
 
   auto it = GetChildIterator();
@@ -3282,61 +3324,46 @@ bool ON_XMLNode::WriteToSegmentedStream(ON_XMLSegmentedStream& segs, bool includ
   }
 
   const auto footer_cw = WriteFooterToStream(nullptr, 0, includeFormatting, forceLongFormat);
-  auto* pFooter = new wchar_t[size_t(footer_cw.m_logical) + 1];
-  WriteFooterToStream(pFooter, footer_cw.m_logical + 1, includeFormatting, forceLongFormat);
+  auto* pFooter = new wchar_t[size_t(footer_cw._logical) + 1];
+  WriteFooterToStream(pFooter, footer_cw._logical + 1, includeFormatting, forceLongFormat);
   segs.Append(pFooter);
 
   return true;
 }
 
-ON_wString ON_XMLNode::GetNameFromTag(const wchar_t* wszTag) // Static.
-{
-  ON_wString name = wszTag;
-  name.TrimLeft(L"</ ");
-  name.TrimRight(L">/ ");
-
-  const int pos = name.Find(L' ');
-  if (pos >= 0)
-  {
-    name.SetLength(pos);
-  }
-
-  return name;
-}
-
 ON_XMLNode* ON_XMLNode::FirstChild(void) const
 {
-  return m_impl->m_first_child;
+  return _private->m_first_child;
 }
 
 ON_XMLNode* ON_XMLNode::PrevSibling(void) const
 {
-  return m_impl->PrevSibling();
+  return _private->PrevSibling();
 }
 
 void ON_XMLNode::MoveBefore(ON_XMLNode& other)
 {
-  m_impl->MoveBefore(other);
+  _private->MoveBefore(other);
 }
 
 void ON_XMLNode::MoveAfter(ON_XMLNode& other)
 {
-  m_impl->MoveAfter(other);
+  _private->MoveAfter(other);
 }
 
 bool ON_XMLNode::RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* pv) const
 {
-  return m_impl->RecurseChildren(callback, pv);
+  return _private->RecurseChildren(callback, pv);
 }
 
 ON_XMLNode* ON_XMLNode::NextSibling(void) const
 {
-  return m_impl->m_next_sibling;
+  return _private->m_next_sibling;
 }
 
 ON__UINT32 ON_XMLNode::DataCRC(ON__UINT32 crc, bool recursive) const
 {
-  return m_impl->DataCRC(crc, 0);
+  return _private->DataCRC(crc, 0);
 }
 
 void* ON_XMLNode::EVF(const wchar_t*, void*)
@@ -3346,12 +3373,12 @@ void* ON_XMLNode::EVF(const wchar_t*, void*)
 
 ON_XMLNode* ON_XMLNode::GetNodeAtPath(const wchar_t* wszPath) const
 {
-  return m_impl->GetNodeAtPath(wszPath, false);
+  return _private->GetNodeAtPath(wszPath, false);
 }
 
 ON_XMLNode* ON_XMLNode::CreateNodeAtPath(const wchar_t* wszPath)
 {
-  return m_impl->GetNodeAtPath(wszPath, true);
+  return _private->GetNodeAtPath(wszPath, true);
 }
 
 void ON_XMLNode::OnNodeReadFromStream(const ON_XMLNode*) const
@@ -3379,15 +3406,15 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
   // The original code was not checking GetNextTag() for failure and blindly continuing with an empty tag.
   // Then in some places it assumed that the tag was not empty. This is confusing because I thought
   // this was causing RH-66795, but it couldn't be because this bug was not in 7.x, and RH-66795 is 7.13.
-  if (!m_impl->GetNextTag(tag, pBuffer, bValidateTags))
+  if (!_private->GetNextTag(tag, pBuffer, bValidateTags))
     return ReadError;
 
   if (tag.IsEmpty())
     return ReadError;
 
-  m_impl->m_last_read_buf_ptr = (void*)stream;
+  _private->m_last_read_buf_ptr = (void*)stream;
 
-  m_impl->GetPropertiesFromTag(tag);
+  _private->GetPropertiesFromTag(tag);
 
   const auto pos1 = tag.Length() - 2; // Assumes the tag is not empty.
   if (tag[pos1] != L'/')
@@ -3428,10 +3455,10 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
       // an empty tag. This caused continuous child recursion because the buffer pointer was
       // still pointing at the same (bad) XML. This is confusing because I thought this was causing
       // RH-66795, but it couldn't be because this bug was not in 7.x, and RH-66795 is 7.13.
-      if (!m_impl->GetNextTag(tag, pBuffer, bValidateTags))
+      if (!_private->GetNextTag(tag, pBuffer, bValidateTags))
         return ReadError;
 
-      bClosingTag = m_impl->IsClosingTag(tag);
+      bClosingTag = _private->IsClosingTag(tag);
 
       if (!bClosingTag)
       {
@@ -3456,7 +3483,7 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
       auto* pProp = new ON_XMLProperty;
       AttachProperty(pProp);
 
-      const int pos2 = CImpl::m_bAutoTypePropValue ? sDefaultProperty.Find(L":") : -1;
+      const int pos2 = ON_XMLNodePrivate::m_bAutoTypePropValue ? sDefaultProperty.Find(L":") : -1;
       if (pos2 > 0)
       {
         auto& v = pProp->GetNonConstValue();
@@ -3465,8 +3492,8 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
       }
       else
       {
-        pProp->Impl().SetHugeStringValue(sDefaultProperty);
-        pProp->Impl().GetNonConstValue().SetTypePendingFlag(true);
+        pProp->_private->SetHugeStringValue(sDefaultProperty);
+        pProp->_private->GetNonConstValue().SetTypePendingFlag(true);
       }
     }
   }
@@ -3479,55 +3506,64 @@ ON__UINT32 ON_XMLNode::ReadFromStream(const wchar_t* stream, bool bWarningsAsErr
   return ON__UINT32(pBuffer - stream);
 }
 
-ON_XMLNode::CImpl& ON_XMLNode::Impl(void) const
+ON_wString ON_XMLNode::GetNameFromTag(const wchar_t* wszTag) // Static.
 {
-  return *m_impl;
+  return ON_XMLNodePrivate::GetNameFromTag(wszTag);
 }
 
-class ON_XMLNode::ChildIterator::CImpl final
+bool ON_XMLNode::IsValidXMLNameWithDebugging(const wchar_t* name) // Static.
+{
+  return ON_XMLNodePrivate::IsValidXMLNameWithDebugging(name);
+}
+
+bool ON_XMLNode::IsValidXMLName(const wchar_t* name) // Static.
+{
+  return ON_XMLNodePrivate::IsValidXMLName(name);
+}
+
+class ON_XMLNodeChildIteratorPrivate final
 {
 public:
-  ON_XMLNode* m_pCurrent = nullptr;
+  ON_XMLNode* _current = nullptr;
 };
 
-ON_XMLNode::ChildIterator::ChildIterator(const ON_XMLNode* pParent)
+ON_XMLNode::ChildIterator::ChildIterator(const ON_XMLNode* parent)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new ON_XMLNodeChildIteratorPrivate;
 
-  if (nullptr != pParent)
+  if (nullptr != parent)
   {
-    m_impl->m_pCurrent = pParent->Impl().m_first_child;
+    _private->_current = parent->_private->m_first_child;
   }
 }
 
 ON_XMLNode::ChildIterator::ChildIterator(const ChildIterator& other)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new ON_XMLNodeChildIteratorPrivate;
   operator = (other);
 }
 
 ON_XMLNode::ChildIterator::~ChildIterator()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  delete _private;
 }
 
 const ON_XMLNode::ChildIterator& ON_XMLNode::ChildIterator::operator = (const ChildIterator& other)
 {
-  m_impl->m_pCurrent = other.m_impl->m_pCurrent;
+  _private->_current = other._private->_current;
 
   return *this;
 }
 
 ON_XMLNode* ON_XMLNode::ChildIterator::GetNextChild(void)
 {
-  auto* pNode = m_impl->m_pCurrent;
-  if (nullptr != pNode)
+  ON_XMLNode* node = _private->_current;
+  if (nullptr != node)
   {
-    m_impl->m_pCurrent = pNode->Impl().m_next_sibling;
+    _private->_current = node->_private->m_next_sibling;
   }
 
-  return pNode;
+  return node;
 }
 
 void* ON_XMLNode::ChildIterator::EVF(const wchar_t*, void*)
@@ -3537,10 +3573,10 @@ void* ON_XMLNode::ChildIterator::EVF(const wchar_t*, void*)
 
 // ON_XMLNode::PropertyIterator
  
-class ON_XMLNode::PropertyIterator::CImpl final
+class ON_XMLNodePropertyIteratorPrivate final
 {
 public:
-  ~CImpl();
+  ~ON_XMLNodePropertyIteratorPrivate();
 
   ON_XMLProperty* GetNextPropertySorted(void)
   {
@@ -3548,9 +3584,9 @@ public:
     if (m_iIndex == 0)
     {
       // While sorting properties, don't allow anything else to access the parent node.
-      std::lock_guard<std::recursive_mutex> lg(m_pNode->Impl().m_mutex);
+      std::lock_guard<std::recursive_mutex> lg(m_pNode->_private->m_mutex);
 
-      PropertyIterator pi(m_pNode, false);
+      ON_XMLNode::PropertyIterator pi(m_pNode, false);
 
       ON_ASSERT(m_paSortedProperties == nullptr);
       m_paSortedProperties = new std::vector<ON_XMLProperty>;
@@ -3580,7 +3616,7 @@ public:
   bool m_bSorted = false;
 };
 
-ON_XMLNode::PropertyIterator::CImpl::~CImpl()
+ON_XMLNodePropertyIteratorPrivate::~ON_XMLNodePropertyIteratorPrivate()
 {
   delete m_paSortedProperties;
   m_paSortedProperties = nullptr;
@@ -3588,67 +3624,66 @@ ON_XMLNode::PropertyIterator::CImpl::~CImpl()
 
 ON_XMLNode::PropertyIterator::PropertyIterator(const ON_XMLNode* pNode, bool bSorted)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new ON_XMLNodePropertyIteratorPrivate;
 
-  m_impl->m_bSorted = bSorted;
+  _private->m_bSorted = bSorted;
 
-  if (m_impl->m_bSorted)
+  if (_private->m_bSorted)
   {
     if (pNode->PropertyCount() > 1)
     {
-      m_impl->m_pNode = pNode;
-      m_impl->m_iIndex = 0;
+      _private->m_pNode = pNode;
+      _private->m_iIndex = 0;
     }
     else
     {
-      m_impl->m_bSorted = false;
+      _private->m_bSorted = false;
     }
   }
 
-  if (!m_impl->m_bSorted)
+  if (!_private->m_bSorted)
   {
     if (nullptr != pNode)
     {
-      m_impl->m_pCurrent = pNode->Impl().m_first_property;
+      _private->m_pCurrent = pNode->_private->m_first_property;
     }
   }
 }
 
 ON_XMLNode::PropertyIterator::PropertyIterator(const PropertyIterator& other)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new ON_XMLNodePropertyIteratorPrivate;
   operator = (other);
 }
 
 ON_XMLNode::PropertyIterator::~PropertyIterator()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  delete _private;
 }
 
 const ON_XMLNode::PropertyIterator& ON_XMLNode::PropertyIterator::operator = (const PropertyIterator& other)
 {
-  m_impl->m_pCurrent           = other.m_impl->m_pCurrent;
-  m_impl->m_pNode              = other.m_impl->m_pNode;
-  m_impl->m_iIndex             = other.m_impl->m_iIndex;
-  m_impl->m_bSorted            = other.m_impl->m_bSorted;
-  m_impl->m_paSortedProperties = other.m_impl->m_paSortedProperties;
+  _private->m_pCurrent           = other._private->m_pCurrent;
+  _private->m_pNode              = other._private->m_pNode;
+  _private->m_iIndex             = other._private->m_iIndex;
+  _private->m_bSorted            = other._private->m_bSorted;
+  _private->m_paSortedProperties = other._private->m_paSortedProperties;
 
   return *this;
 }
 
 ON_XMLProperty* ON_XMLNode::PropertyIterator::GetNextProperty(void)
 {
-  if (m_impl->m_bSorted)
-    return m_impl->GetNextPropertySorted();
+  if (_private->m_bSorted)
+    return _private->GetNextPropertySorted();
 
-  auto* pProp = m_impl->m_pCurrent;
-  if (nullptr != pProp)
+  ON_XMLProperty* prop = _private->m_pCurrent;
+  if (nullptr != prop)
   {
-    m_impl->m_pCurrent = pProp->Impl().m_pNext;
+    _private->m_pCurrent = prop->_private->_next;
   }
 
-  return pProp;
+  return prop;
 }
 
 void* ON_XMLNode::PropertyIterator::EVF(const wchar_t*, void*)
@@ -3659,28 +3694,26 @@ void* ON_XMLNode::PropertyIterator::EVF(const wchar_t*, void*)
 // ON_XMLRootNode
 
 // TODO: Somehow I managed to port the non-rc version of the root node.
-//       We really need the rc version.
+//       TODO: We really need the rc version.
 
 static const ON_wString sXMLRootNodeName(L"xml");
 
-class ON_XMLRootNode::CImpl final
-{
-public:
-};
+//class ON_XMLRootNodePrivate final // For future use.
+//{
+//};
 
 ON_XMLRootNode::ON_XMLRootNode()
   :
   ON_XMLNode(sXMLRootNodeName)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = nullptr; //new ON_XMLRootNodePrivate;
 }
 
 ON_XMLRootNode::ON_XMLRootNode(const ON_XMLNode& src)
   :
   ON_XMLNode(sXMLRootNodeName)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
-
+  _private = nullptr; //new ON_XMLRootNodePrivate;
   *this = src;
 }
 
@@ -3688,15 +3721,13 @@ ON_XMLRootNode::ON_XMLRootNode(const ON_XMLRootNode& src)
   :
   ON_XMLNode(sXMLRootNodeName)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
-
+  _private = nullptr; //new ON_XMLRootNodePrivate;
   *this = src;
 }
 
 ON_XMLRootNode::~ON_XMLRootNode()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  //delete _private;
 }
 
 const ON_XMLRootNode& ON_XMLRootNode::operator = (const ON_XMLNode& src)
@@ -3793,27 +3824,17 @@ void ON_XMLRootNode::Clear(void)
   SetTagName(sXMLRootNodeName);
 }
 
-ON_XMLRootNode::CImpl& ON_XMLRootNode::Impl(void) const
-{
-  return *m_impl;
-}
-
 // ON_XMLUserData -- Specializes ON_UserData for XML use.
 
-class ON_XMLUserData::CImpl final
+class ON_XMLUserDataPrivate final
 {
 public:
   ON_XMLRootNode m_XMLRoot;
 };
 
-ON_XMLUserData::CImpl& ON_XMLUserData::Impl(void) const
-{
-  return *m_impl;
-}
-
 ON_XMLUserData::ON_XMLUserData()
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLUserDataPrivate; PRIVATE_CHECK(ON_XMLUserDataPrivate);
 
   m_userdata_copycount = 1;
   m_userdata_uuid = ON_nil_uuid;
@@ -3823,7 +3844,7 @@ ON_XMLUserData::ON_XMLUserData(const ON_XMLUserData& ud)
   :
   ON_UserData(ud)
 {
-  m_impl = new (m_Impl) CImpl; IMPL_CHECK;
+  _private = new (_PRIVATE) ON_XMLUserDataPrivate; PRIVATE_CHECK(ON_XMLUserDataPrivate);
 
   m_userdata_copycount = ud.m_userdata_copycount;
   m_userdata_uuid = ud.m_userdata_uuid;
@@ -3831,8 +3852,8 @@ ON_XMLUserData::ON_XMLUserData(const ON_XMLUserData& ud)
 
 ON_XMLUserData::~ON_XMLUserData()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  _private->~ON_XMLUserDataPrivate();
+  _private = nullptr;
 }
 
 const ON_XMLUserData& ON_XMLUserData::operator = (const ON_XMLUserData& ud)
@@ -3841,19 +3862,19 @@ const ON_XMLUserData& ON_XMLUserData::operator = (const ON_XMLUserData& ud)
 
   m_userdata_uuid = ud.m_userdata_uuid;
 
-  m_impl->m_XMLRoot = ud.m_impl->m_XMLRoot;
+  _private->m_XMLRoot = ud._private->m_XMLRoot;
 
   return *this;
 }
 
 const ON_XMLRootNode& ON_XMLUserData::XMLRootForRead(void) const
 {
-  return m_impl->m_XMLRoot.NodeForRead();
+  return _private->m_XMLRoot.NodeForRead();
 }
 
 ON_XMLRootNode& ON_XMLUserData::XMLRootForWrite(void) const
 {
-  return m_impl->m_XMLRoot.NodeForWrite();
+  return _private->m_XMLRoot.NodeForWrite();
 }
 
 ON_XMLProperty* ON_XMLUserData::Property(const wchar_t* wszXMLPath, const wchar_t* wszPropertyName) const
@@ -3902,7 +3923,7 @@ void ON_XMLUserData::SetValue(const wchar_t* wszXMLPath, const ON_XMLVariant& va
 
 void ON_XMLUserData::Clear(void) const
 {
-  m_impl->m_XMLRoot.Clear();
+  _private->m_XMLRoot.Clear();
 }
 
 int ON_XMLUserData::Version(void) const
@@ -3912,7 +3933,7 @@ int ON_XMLUserData::Version(void) const
 
 ON_XMLProperty* ON_XMLUserData::InternalProperty(const wchar_t* wszXMLPath, const wchar_t* wszPropertyName) const
 {
-  const auto* pNode = m_impl->m_XMLRoot.NodeForRead().GetNodeAtPath(wszXMLPath);
+  const auto* pNode = _private->m_XMLRoot.NodeForRead().GetNodeAtPath(wszXMLPath);
   if (nullptr == pNode)
     return nullptr;
 
@@ -4015,7 +4036,7 @@ bool ON_XMLUserData::Write(ON_BinaryArchive& archive) const
 
 void ON_XMLUserData::_Dump(const wchar_t* wszFileName) const
 {
-  m_impl->m_XMLRoot.WriteToFile(wszFileName);
+  _private->m_XMLRoot.WriteToFile(wszFileName);
 }
 
 void* ON_XMLUserData::EVF(const wchar_t*, void*)
@@ -4025,14 +4046,14 @@ void* ON_XMLUserData::EVF(const wchar_t*, void*)
 
 // ON_XMLParameters
 
-class ON_XMLParameters::CImpl
+class ON_XMLParametersPrivate
 {
 public:
-  CImpl(ON_XMLNode& n) : m_node(n) { }
+  ON_XMLParametersPrivate(ON_XMLNode& n) : _node(n) { }
 
-  ON_XMLNode& m_node;
-  ON_wString m_sDefaultType;
-  bool m_bWriteTypeProperty = true;
+  ON_XMLNode& _node;
+  ON_wString _default_type;
+  bool _write_type_property = true;
 };
 
 ON_XMLNode* ON_XMLParameters::ObtainChildNodeForWrite(ON_XMLNode& node, const wchar_t* wszParamName) const
@@ -4054,38 +4075,37 @@ ON_XMLNode* ON_XMLParameters::ObtainChildNodeForWrite(ON_XMLNode& node, const wc
 
 ON_XMLParameters::ON_XMLParameters(ON_XMLNode& node)
 {
-  m_impl = new CImpl(node);
+  _private = new ON_XMLParametersPrivate(node);
 }
 
 ON_XMLParameters::ON_XMLParameters(const ON_XMLNode& node)
 {
-  m_impl = new CImpl(const_cast<ON_XMLNode&>(node));
+  _private = new ON_XMLParametersPrivate(const_cast<ON_XMLNode&>(node));
 }
 
 ON_XMLParameters::~ON_XMLParameters()
 {
-  delete m_impl;
-  m_impl = nullptr;
+  delete _private;
 }
 
 void ON_XMLParameters::SetWriteTypeProperty(bool b)
 {
-  m_impl->m_bWriteTypeProperty = b;
+  _private->_write_type_property = b;
 }
 
 void ON_XMLParameters::SetDefaultReadType(const wchar_t* wszType)
 {
-  m_impl->m_sDefaultType = wszType;
+  _private->_default_type = wszType;
 }
 
 ON_wString ON_XMLParameters::AsString(void) const
 {
-  return m_impl->m_node.String();
+  return _private->_node.String();
 }
 
 void ON_XMLParameters::SetAsString(const wchar_t* wsz)
 {
-  m_impl->m_node.ReadFromStream(wsz);
+  _private->_node.ReadFromStream(wsz);
 }
 
 bool ON_XMLParameters::GetParam(const wchar_t* wszParamName, ON_XMLVariant& vValueOut) const
@@ -4093,7 +4113,7 @@ bool ON_XMLParameters::GetParam(const wchar_t* wszParamName, ON_XMLVariant& vVal
   // This expects the legacy format where the param name is the XML tag.
   // If you want to use the new system, you should be using ON_XMLParametersV8.
 
-  const auto* pNode = m_impl->m_node.GetNodeAtPath(wszParamName);
+  const auto* pNode = _private->_node.GetNodeAtPath(wszParamName);
   if (nullptr == pNode)
     return false;
 
@@ -4109,7 +4129,7 @@ ON_XMLNode* ON_XMLParameters::SetParam(const wchar_t* wszParamName, const ON_XML
     return nullptr;
 
   // Set the parameter node.
-  return SetParamNode(m_impl->m_node, wszParamName, value);
+  return SetParamNode(_private->_node, wszParamName, value);
 }
 
 ON_XMLVariant ON_XMLParameters::GetParam(const wchar_t* param_name, const ON_XMLVariant& default_value) const
@@ -4162,7 +4182,7 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
     pChildNode->SetProperty(prop);
   }
 
-  if (m_impl->m_bWriteTypeProperty)
+  if (_private->_write_type_property)
   {
     // Set type.
     prop.SetName(L"type");
@@ -4175,12 +4195,12 @@ ON_XMLNode* ON_XMLParameters::SetParamNode(ON_XMLNode& node, const wchar_t* wszP
 
 ON_XMLNode& ON_XMLParameters::Node(void)
 {
-  return m_impl->m_node;
+  return _private->_node;
 }
 
 const ON_XMLNode& ON_XMLParameters::Node(void) const
 {
-  return m_impl->m_node;
+  return _private->_node;
 }
 
 bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValueOut) const
@@ -4189,12 +4209,12 @@ bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValu
 
   const auto& v = node.GetDefaultProperty().GetValue();
 
-  ON_wString sType = m_impl->m_sDefaultType;
+  ON_wString sType = _private->_default_type;
 
-  auto* pProp = node.GetNamedProperty(L"type");
-  if (nullptr != pProp)
+  ON_XMLProperty* prop = node.GetNamedProperty(L"type");
+  if (nullptr != prop)
   {
-    sType = pProp->GetValue().AsString();
+    sType = prop->GetValue().AsString();
   }
   else
   if (sType.IsEmpty())
@@ -4329,10 +4349,10 @@ bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValu
     vValueOut = v.AsBuffer();
   }
 
-  pProp = node.GetNamedProperty(L"units");
-  if (nullptr != pProp)
+  prop = node.GetNamedProperty(L"units");
+  if (nullptr != prop)
   {
-    const auto sUnits = pProp->GetValue().AsString();
+    const auto sUnits = prop->GetValue().AsString();
     vValueOut.SetUnits(UnitsFromString(sUnits));
   }
 
@@ -4349,10 +4369,11 @@ void* ON_XMLParameters::EVF(const wchar_t*, void*)
   return nullptr;
 }
 
-class ON_XMLParameters::CIterator::CImpl
+class ON_XMLParametersIteratorPrivate
 {
 public:
-  CImpl(const ON_XMLParameters& p) : m_Params(p), m_XMLIterator(&p.m_impl->m_node) { }
+  ON_XMLParametersIteratorPrivate(const ON_XMLParameters& p)
+    : m_Params(p), m_XMLIterator(&p._private->_node) { }
 
   const ON_XMLParameters& m_Params;
   ON_XMLNode::ChildIterator m_XMLIterator;
@@ -4360,24 +4381,23 @@ public:
 
 ON_XMLParameters::CIterator::CIterator(const ON_XMLParameters& p)
 {
-  m_impl = new CImpl(p);
+  _private = new ON_XMLParametersIteratorPrivate(p);
 }
 
 ON_XMLParameters::CIterator::~CIterator()
 {
-  delete m_impl;
-  m_impl = nullptr;
+  delete _private;
 }
 
 bool ON_XMLParameters::CIterator::Next(ON_wString& sParamNameOut, ON_XMLVariant& vParamValueOut) const
 {
-  const auto* pNode = m_impl->m_XMLIterator.GetNextChild();
+  const auto* pNode = _private->m_XMLIterator.GetNextChild();
   if (nullptr == pNode)
     return false;
 
   sParamNameOut = pNode->TagName();
 
-  m_impl->m_Params.GetParamNode(*pNode, vParamValueOut);
+  _private->m_Params.GetParamNode(*pNode, vParamValueOut);
 
   return true;
 }

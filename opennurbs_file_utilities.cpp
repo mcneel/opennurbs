@@ -4236,15 +4236,24 @@ class ON_File
 public:
   virtual ~ON_File() { }
 
-  bool Open(const wchar_t* filename, const wchar_t* mode) { m_pFile = ON_FileStream::Open(filename, mode); return nullptr != m_pFile; }
-  bool Close(void)                                       const { return ON_FileStream::Close(m_pFile) == 0; }
-  bool SeekFromCurrentPosition(ON__INT64 offset)         const { return ON_FileStream::SeekFromCurrentPosition(m_pFile, offset); }
-  bool SeekFromStart(ON__INT64 offset)                   const { return ON_FileStream::SeekFromStart(m_pFile, offset); }
-  bool SeekFromEnd(ON__INT64 offset)                     const { return ON_FileStream::SeekFromEnd(m_pFile, offset); }
-  bool Seek(ON__INT64 offset, int origin)                const { return ON_FileStream::Seek(m_pFile, offset, origin); }
-  ON__INT64  CurrentPosition(void)                       const { return ON_FileStream::CurrentPosition(m_pFile); }
-  ON__UINT64 Read(ON__UINT64 count, void* buffer)        const { return ON_FileStream::Read(m_pFile, count, buffer); }
-  ON__UINT64 Write(ON__UINT64 count, const void* buffer) const { return ON_FileStream::Write(m_pFile, count, buffer); }
+  bool Open(const wchar_t* filename, const wchar_t* mode)
+  {
+    _file = ON_FileStream::Open(filename, mode);  
+    return nullptr != _file;
+  }
+
+  bool Close(void)                                const { return ON_FileStream::Close(_file) == 0; }
+  bool SeekFromCurrentPosition(ON__INT64 offset)  const { return ON_FileStream::SeekFromCurrentPosition(_file, offset); }
+  bool SeekFromStart(ON__INT64 offset)            const { return ON_FileStream::SeekFromStart(_file, offset); }
+  bool SeekFromEnd(ON__INT64 offset)              const { return ON_FileStream::SeekFromEnd(_file, offset); }
+  bool Seek(ON__INT64 offset, int origin)         const { return ON_FileStream::Seek(_file, offset, origin); }
+  ON__INT64  CurrentPosition(void)                const { return ON_FileStream::CurrentPosition(_file); }
+  ON__UINT64 Read(ON__UINT64 count, void* buffer) const { return ON_FileStream::Read(_file, count, buffer); }
+
+  ON__UINT64 Write(ON__UINT64 count, const void* buffer) const
+  {
+    return ON_FileStream::Write(_file, count, buffer);
+  }
 
   ON__UINT64 GetLength(void) const
   {
@@ -4257,19 +4266,19 @@ public:
   }
 
 private:
-  FILE* m_pFile = nullptr;
+  FILE* _file = nullptr;
 };
 
-class ON_UnicodeTextFile::CImpl final
+class ON_UnicodeTextFilePrivate final
 {
 public:
-  ~CImpl() { Close(); }
+  ~ON_UnicodeTextFilePrivate() { Close(); }
 
-  bool Open(const wchar_t* wszFullPath, Modes mode);
+  bool Open(const wchar_t* wszFullPath, ON_UnicodeTextFile::Modes mode);
   bool Close(void);
   bool ReadString(ON_wString& s);
   bool WriteString(const wchar_t* wsz);
-  bool ReadHeader(Types& t);
+  bool ReadHeader(ON_UnicodeTextFile::Types& t);
   bool WriteHeader(void);
   bool ReadStringFromUTF8(ON_wString& s);
   bool ReadStringFromUTF16(ON_wString& s);
@@ -4279,18 +4288,18 @@ public:
   size_t WriteData(const void* buf, size_t bytes_to_write);
 
 public:
-  ON_File m_File;
-  Types m_Type = Types::Unknown;
+  ON_File _file;
+  ON_UnicodeTextFile::Types _type = ON_UnicodeTextFile::Types::Unknown;
 };
 
-size_t ON_UnicodeTextFile::CImpl::ReadData(void* buf, size_t bytes_to_read)
+size_t ON_UnicodeTextFilePrivate::ReadData(void* buf, size_t bytes_to_read)
 {
-  return m_File.Read(bytes_to_read, buf);
+  return _file.Read(bytes_to_read, buf);
 }
 
-size_t ON_UnicodeTextFile::CImpl::WriteData(const void* buf, size_t bytes_to_write)
+size_t ON_UnicodeTextFilePrivate::WriteData(const void* buf, size_t bytes_to_write)
 {
-  return m_File.Write(bytes_to_write, buf);
+  return _file.Write(bytes_to_write, buf);
 }
 
 static const wchar_t* FileStreamMode(ON_UnicodeTextFile::Modes m)
@@ -4305,14 +4314,14 @@ static const wchar_t* FileStreamMode(ON_UnicodeTextFile::Modes m)
   return L"";
 }
 
-bool ON_UnicodeTextFile::CImpl::Open(const wchar_t* wszFullPath, Modes mode)
+bool ON_UnicodeTextFilePrivate::Open(const wchar_t* wszFullPath, ON_UnicodeTextFile::Modes mode)
 {
   bool ok = false;
   int attemptsCounter = 0;
 
   while (!ok && (attemptsCounter < 100))
   {
-    if (m_File.Open(wszFullPath, FileStreamMode(mode)))
+    if (_file.Open(wszFullPath, FileStreamMode(mode)))
     {
       ok = true;
     }
@@ -4325,27 +4334,27 @@ bool ON_UnicodeTextFile::CImpl::Open(const wchar_t* wszFullPath, Modes mode)
 
   if (ok)
   {
-    if (Modes::Write == mode)
+    if (ON_UnicodeTextFile::Modes::Write == mode)
     {
       ok = WriteHeader();
     }
     else
     {
-      ok = ReadHeader(m_Type);
+      ok = ReadHeader(_type);
     }
   }
 
   return ok;
 }
 
-bool ON_UnicodeTextFile::CImpl::Close(void)
+bool ON_UnicodeTextFilePrivate::Close(void)
 {
-  return m_File.Close();
+  return _file.Close();
 }
 
-bool ON_UnicodeTextFile::CImpl::ReadHeader(Types& t)
+bool ON_UnicodeTextFilePrivate::ReadHeader(ON_UnicodeTextFile::Types& t)
 {
-  if (0 != m_File.CurrentPosition())
+  if (0 != _file.CurrentPosition())
     return false;
 
   ON__UINT8 pBuf[3] = { 0 };
@@ -4357,7 +4366,7 @@ bool ON_UnicodeTextFile::CImpl::ReadHeader(Types& t)
   {
     if (pBuf[1] == ON__UINT8(0xFE))
     {
-      t = Types::UTF16;
+      t = ON_UnicodeTextFile::Types::UTF16;
       return true;
     }
   }
@@ -4370,7 +4379,7 @@ bool ON_UnicodeTextFile::CImpl::ReadHeader(Types& t)
       {
         if (pBuf[2] == ON__UINT8(0xBF))
         {
-          t = Types::UTF8;
+          t = ON_UnicodeTextFile::Types::UTF8;
           return true;
         }
       }
@@ -4378,18 +4387,18 @@ bool ON_UnicodeTextFile::CImpl::ReadHeader(Types& t)
   }
 
   // No BOM was found so rewind and assume UTF8. This allows testing with ASCII files.
-  m_File.SeekFromStart(0);
-  t = Types::UTF8;
+  _file.SeekFromStart(0);
+  t = ON_UnicodeTextFile::Types::UTF8;
 
   return true;
 }
 
-bool ON_UnicodeTextFile::CImpl::WriteHeader(void)
+bool ON_UnicodeTextFilePrivate::WriteHeader(void)
 {
   ON__UINT8 pBuf[3] = { 0 };
 
   size_t sizeBOM = 2;
-  if (Types::UTF8 == m_Type)
+  if (ON_UnicodeTextFile::Types::UTF8 == _type)
   {
     sizeBOM = 3;
     pBuf[0] = ON__UINT8(0xEF);
@@ -4397,7 +4406,7 @@ bool ON_UnicodeTextFile::CImpl::WriteHeader(void)
     pBuf[2] = ON__UINT8(0xBF);
   }
   else
-  if (Types::UTF16 == m_Type)
+  if (ON_UnicodeTextFile::Types::UTF16 == _type)
   {
     pBuf[0] = ON__UINT8(0xFF);
     pBuf[1] = ON__UINT8(0xFE);
@@ -4410,41 +4419,41 @@ bool ON_UnicodeTextFile::CImpl::WriteHeader(void)
   return true;
 }
 
-bool ON_UnicodeTextFile::CImpl::ReadString(ON_wString& s)
+bool ON_UnicodeTextFilePrivate::ReadString(ON_wString& s)
 {
-  switch (m_Type)
+  switch (_type)
   {
-  case Types::UTF8:
+  case ON_UnicodeTextFile::Types::UTF8:
     return ReadStringFromUTF8(s);
 
-  case Types::UTF16:
+  case ON_UnicodeTextFile::Types::UTF16:
     return ReadStringFromUTF16(s);
-          
-  case Types::Unknown:
+
+  case ON_UnicodeTextFile::Types::Unknown:
   default:
     return false;
   }
 }
 
-bool ON_UnicodeTextFile::CImpl::WriteString(const wchar_t* wsz)
+bool ON_UnicodeTextFilePrivate::WriteString(const wchar_t* wsz)
 {
-  switch (m_Type)
+  switch (_type)
   {
-  case Types::UTF8:
+  case ON_UnicodeTextFile::Types::UTF8:
     return WriteStringToUTF8(wsz);
 
-  case Types::UTF16:
+  case ON_UnicodeTextFile::Types::UTF16:
     return WriteStringToUTF16(wsz);
-          
-  case Types::Unknown:
+
+  case ON_UnicodeTextFile::Types::Unknown:
   default:
     return false;
   }
 }
 
-bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF8(ON_wString& s)
+bool ON_UnicodeTextFilePrivate::ReadStringFromUTF8(ON_wString& s)
 {
-  const auto size_in_bytes = m_File.GetLength() - m_File.CurrentPosition();
+  const auto size_in_bytes = _file.GetLength() - _file.CurrentPosition();
   auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[size_in_bytes + 1]);
   auto* pBuffer = p.get();
 
@@ -4464,10 +4473,10 @@ bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF8(ON_wString& s)
   return !s.IsEmpty();
 }
 
-bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF16(ON_wString& s)
+bool ON_UnicodeTextFilePrivate::ReadStringFromUTF16(ON_wString& s)
 {
   const auto char_size = sizeof(ON__UINT16);
-  const auto size_in_bytes = m_File.GetLength() - m_File.CurrentPosition();
+  const auto size_in_bytes = _file.GetLength() - _file.CurrentPosition();
   const auto size_in_chars = size_in_bytes / char_size;
 
 #ifdef ON_RUNTIME_WIN
@@ -4502,7 +4511,7 @@ bool ON_UnicodeTextFile::CImpl::ReadStringFromUTF16(ON_wString& s)
   return true;
 }
 
-bool ON_UnicodeTextFile::CImpl::WriteStringToUTF8(const wchar_t* wsz)
+bool ON_UnicodeTextFilePrivate::WriteStringToUTF8(const wchar_t* wsz)
 {
   const auto num_chars = ON_ConvertWideCharToUTF8(false, wsz, -1, nullptr, 0, nullptr, 0, 0, nullptr);
 
@@ -4517,7 +4526,7 @@ bool ON_UnicodeTextFile::CImpl::WriteStringToUTF8(const wchar_t* wsz)
   return true;
 }
 
-bool ON_UnicodeTextFile::CImpl::WriteStringToUTF16(const wchar_t* wsz)
+bool ON_UnicodeTextFilePrivate::WriteStringToUTF16(const wchar_t* wsz)
 {
 #ifdef ON_RUNTIME_WIN
   // On Windows, wchar_t is UTF16 so we can save the file directly from 'wsz'.
@@ -4549,32 +4558,31 @@ bool ON_UnicodeTextFile::CImpl::WriteStringToUTF16(const wchar_t* wsz)
 
 ON_UnicodeTextFile::ON_UnicodeTextFile(Types t)
 {
-  m_impl = new CImpl;
-  m_impl->m_Type = t;
+  _private = new ON_UnicodeTextFilePrivate;
+  _private->_type = t;
 }
 
 ON_UnicodeTextFile::~ON_UnicodeTextFile()
 {
-  m_impl->~CImpl();
-  m_impl = nullptr;
+  delete _private;
 }
 
 bool ON_UnicodeTextFile::Open(const wchar_t* wszFullPath, Modes mode)
 {
-  return m_impl->Open(wszFullPath, mode);
+  return _private->Open(wszFullPath, mode);
 }
 
 bool ON_UnicodeTextFile::Close(void)
 {
-  return m_impl->Close();
+  return _private->Close();
 }
 
 bool ON_UnicodeTextFile::ReadString(ON_wString& s)
 {
-  return m_impl->ReadString(s);
+  return _private->ReadString(s);
 }
 
 bool ON_UnicodeTextFile::WriteString(const wchar_t* wsz)
 {
-  return m_impl->WriteString(wsz);
+  return _private->WriteString(wsz);
 }

@@ -23,25 +23,19 @@
 
 #include "opennurbs_subd_data.h"
 
-
-enum
-{
-  // change bAllFragmentsHaveCurvature to true when principal and sectional curvatures are needed
-  // or delete this enum and always make room for curvatures.
-  ON_Internal_bAllFragmentsHaveCurvature = 0
-};
-
-
-
 const size_t ON_SubDHeap::g_sizeof_fragment[ON_SubDDisplayParameters::MaximumDensity + 1] =
 {
-  ON_SubDMeshFragment::SizeofFragment(0, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(1, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(2, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(3, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(4, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(5, ON_Internal_bAllFragmentsHaveCurvature),
-  ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::MaximumDensity, ON_Internal_bAllFragmentsHaveCurvature)
+  // All densities >= 0 and <= ON_SubDDisplayParameters::MaximumDensity
+  // must be in the following list. The sizes must include room for
+  // textures, colors, and curvatures, even though those properties are
+  // often not set.
+  ON_SubDMeshFragment::SizeofFragment(0),
+  ON_SubDMeshFragment::SizeofFragment(1),
+  ON_SubDMeshFragment::SizeofFragment(2),
+  ON_SubDMeshFragment::SizeofFragment(3),
+  ON_SubDMeshFragment::SizeofFragment(4),
+  ON_SubDMeshFragment::SizeofFragment(5),
+  ON_SubDMeshFragment::SizeofFragment(ON_SubDDisplayParameters::MaximumDensity)
 };
 
 static void* ON_SubD__Allocate(size_t sz)
@@ -2068,6 +2062,12 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
       const size_t sizeof_fragment = ON_SubDHeap::g_sizeof_fragment[density];
       for (p += sizeof_fragment; p + sizeof_fragment <= p1; p += sizeof_fragment)
       {
+        // This loop is rarely executed.
+        // It is used when an unusual small fragment is allocated from a pool
+        // providing large fragments (fsp.SizeofElement() > sizeof_fragment).
+        // If fsp.SizeofElement() is not an even multiple of sizeof_fragment,
+        // then some memory is wasted. Beause this situation is uncommon,
+        // the waste doesn't matter in the big scheme of things.
         ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
         ele->m_next = m_unused_fragments[density];
         m_unused_fragments[density] = ele;          
@@ -2077,13 +2077,14 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
     m_unused_fragments[density] = m_unused_fragments[density]->m_next;
   }
 
-  *fragment = src_fragment;
+  // NO // *fragment = src_fragment;
+  *fragment = ON_SubDMeshFragment::Empty;
   fragment->m_prev_fragment = nullptr;
   fragment->m_next_fragment = nullptr;
 
   // NOTE WELL:
   //   fragment and fragment array memory are from a single fixed size pool allocation.
-  fragment->Internal_LayoutArrays(false, (double*)(fragment + 1), vertex_capacity);
+  fragment->Internal_LayoutArrays(vertex_capacity, (double*)(fragment + 1) );
 
   if (src_fragment.VertexCount() > 0)
     fragment->CopyFrom(src_fragment,density);

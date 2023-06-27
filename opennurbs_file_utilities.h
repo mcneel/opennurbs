@@ -1808,8 +1808,7 @@ public:
   const ON_UnicodeTextFile& operator = (const ON_UnicodeTextFile&) = delete;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
+  class ON_UnicodeTextFilePrivate* _private;
 };
 
 #endif

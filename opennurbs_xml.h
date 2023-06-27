@@ -280,13 +280,16 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_ENVIRONMENT_PROJECTION_SPHERICAL             L"spherical"
 
 // Texture simulation.
-#define ON_TEXTURE_SIMULATION_FILENAME                  L"filename"
-#define ON_TEXTURE_SIMULATION_REPEAT                    L"repeat"
-#define ON_TEXTURE_SIMULATION_OFFSET                    L"offset"
-#define ON_TEXTURE_SIMULATION_ROTATION                  L"rotation"
-#define ON_TEXTURE_SIMULATION_WRAP_TYPE                 L"wrap-type"
-#define ON_TEXTURE_SIMULATION_MAPPING_CHANNEL           L"mapping-channel"
-#define ON_TEXTURE_SIMULATION_PROJECTION_MODE           L"projection-mode"
+#define ON_TEXTURE_SIMULATION_FILENAME                      L"filename"
+#define ON_TEXTURE_SIMULATION_REPEAT                        L"repeat"
+#define ON_TEXTURE_SIMULATION_OFFSET                        L"offset"
+#define ON_TEXTURE_SIMULATION_ROTATION                      L"rotation"
+#define ON_TEXTURE_SIMULATION_WRAP_TYPE                     L"wrap-type"
+#define ON_TEXTURE_SIMULATION_MAPPING_CHANNEL               L"mapping-channel"
+#define ON_TEXTURE_SIMULATION_PROJECTION_MODE               L"projection-mode"
+#define ON_TEXTURE_SIMULATION_HAS_TRANSPARENT_COLOR         L"has-trans-color"
+#define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR             L"trans-color"
+#define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR_SENSITIVITY L"trans-color-sensitivity"
 
 #define ON_RDK_POSTFIX_SECTION  L"-section"
 
@@ -412,9 +415,8 @@ protected:
   virtual void StringToPoint(int iValues) const;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[176];
+  class ON_XMLVariantPrivate* _private;
+  ON__UINT8 _PRIVATE[168+64];
 };
 
 class ON_CLASS ON_XMLProperty
@@ -449,12 +451,11 @@ public:
   virtual void* EVF(const wchar_t* func, void* data);
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[32];
-
-public:
-  CImpl& Impl(void) const;
+  class ON_XMLPropertyPrivate* _private;
+  ON__UINT8 _PRIVATE[24+64];
+  friend class ON_XMLNode;
+  friend class ON_XMLNodePrivate;
+  friend class ON_XMLPropertyPrivate;
 };
 
 class ON_CLASS ON_XMLSegmentedStream
@@ -475,9 +476,7 @@ protected:
   const ON_XMLSegmentedStream& operator = (const ON_XMLSegmentedStream&) = delete;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[32];
+  class ON_XMLSegmentedStreamPrivate* _private;
 };
 
 class ON_CLASS ON_XMLNode
@@ -594,14 +593,14 @@ public: // Serialization.
 
     // Number of characters that would have been written if the buffer was big enough.
     // This value does not include the terminator.
-    ON__UINT32 m_logical = 0;
+    ON__UINT32 _logical = 0;
 
     // Number of characters that were physically written. Always zero if max_chars is zero.
     // It is otherwise usually the same as m_logical, but less when the buffer is too small.
     // This value does not include the terminator.
-    ON__UINT32 m_physical = 0;
+    ON__UINT32 _physical = 0;
 
-    ON__UINT64 m_reserved = 0;
+    ON__UINT64 _reserved = 0;
   };
 
   virtual CharacterCounts WriteToStreamEx      (wchar_t* stream, ON__UINT32 max_chars, bool include_formatting = true, bool force_long_format = false, bool sorted_props = false) const;
@@ -664,9 +663,7 @@ public: // Iteration.
     virtual void* EVF(const wchar_t* func, void* data);
 
   private:
-    class CImpl;
-    CImpl* m_impl;
-    ON__UINT8 m_Impl[24];
+    class ON_XMLNodeChildIteratorPrivate* _private;
   };
 
   class ON_CLASS PropertyIterator
@@ -682,9 +679,7 @@ public: // Iteration.
     virtual void* EVF(const wchar_t* func, void* data);
 
   private:
-    class CImpl;
-    CImpl* m_impl;
-    ON__UINT8 m_Impl[64];
+    class ON_XMLNodePropertyIteratorPrivate* _private;
   };
 
   virtual ChildIterator GetChildIterator(void) const;
@@ -697,10 +692,10 @@ public: // Iteration.
   virtual void SetInternalDebuggingFlags(ON__UINT64);
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[168];
-  CImpl& Impl(void) const;
+  class ON_XMLNodePrivate* _private;
+  ON__UINT8 _PRIVATE[152+64];
+  friend class ON_XMLNodePrivate;
+  friend class ON_XMLNodePropertyIteratorPrivate;
 };
 
 class ON_CLASS ON_XMLRootNode : public ON_XMLNode
@@ -723,10 +718,7 @@ public:
   virtual void Clear(void) override;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[24];
-  CImpl& Impl(void) const;
+  class ON_XMLRootNodePrivate* _private;
 };
 
 class ON_CLASS ON_XMLUserData : public ON_UserData
@@ -771,10 +763,8 @@ public:
   virtual void SetToDefaultsImpl(int) const;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
-  ON__UINT8 m_Impl[224];
-  CImpl& Impl(void) const;
+  class ON_XMLUserDataPrivate* _private;
+  ON__UINT8 _PRIVATE[240+64];
 };
 
 class ON_CLASS ON_XMLParameters
@@ -815,8 +805,7 @@ public:
     virtual void* EVF(const wchar_t*, void*);
 
   private:
-    class CImpl;
-    CImpl* m_impl;
+    class ON_XMLParametersIteratorPrivate* _private;
   };
   CIterator* NewIterator(void) const;
 
@@ -827,8 +816,8 @@ protected:
   virtual ON_XMLNode* ObtainChildNodeForWrite(ON_XMLNode& node, const wchar_t* param_name) const;
 
 private:
-  class CImpl;
-  CImpl* m_impl;
+  class ON_XMLParametersPrivate* _private;
+  friend class ON_XMLParametersIteratorPrivate;
 };
 
 class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters

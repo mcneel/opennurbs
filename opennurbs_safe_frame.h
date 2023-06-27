@@ -106,8 +106,7 @@ public:
   // Emergency virtual function for future expansion.
   virtual void* EVF(const wchar_t* func, void* data);
 
-private: // For internal use only.
-  friend class ON_3dmRenderSettingsPrivate;
+  // For internal use only.
   virtual void OnInternalXmlChanged(const ON_SafeFrame*);
 
 private:

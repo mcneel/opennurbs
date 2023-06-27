@@ -164,14 +164,14 @@ private:
   // the reverse of the m_curve parameterization.
   bool m_bReversed; 
 
-  // The m_domain interval is always increasing and included in 
-  // m_curve->Domain().  The m_domain interval defines the portion
-  // of m_curve that "this" proxy uses and it can be a proper
-  // sub-interval of m_curve->Domain().
+  // The m_real_curve_domain interval is always increasing and included in 
+  // m_real_curve->Domain().  The m_real_curve_domain interval defines the portion
+  // of m_real_curve that "this" proxy uses and it can be a proper
+  // sub-interval of m_real_curve->Domain().
   ON_Interval m_real_curve_domain;
 
   // The evaluation domain of this curve.  If "t" is a parameter for
-  // "this" and "r" is a parameter for m_curve, then when m_bReversed==false
+  // "this" and "r" is a parameter for m_real_curve, then when m_bReversed==false
 	// we have 
   // t = m_this_domain.ParameterAt(m_real_curve_domain.NormalizedParameterAt(r))
   // r = m_real_curve_domain.ParameterAt(m_this_domain.NormalizedParameterAt(t))

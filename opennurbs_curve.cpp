@@ -559,6 +559,15 @@ bool ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
         }
       }
     }
+  
+    // RH-75060 GBA 9-June-23 
+    // For a planar simple closed curve we should return the plane
+    // whose orientation that matches the curve orientation.
+    if (rc && plane && IsClosed())
+    {
+      if (ON_ClosedCurveOrientation(*this, *plane) < 0)
+        plane->Flip();
+    }
   }
   return rc;
 }

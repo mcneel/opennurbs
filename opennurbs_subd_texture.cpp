@@ -1077,23 +1077,35 @@ bool ON_SubD::HasPerFaceColorsFromSymmetryMotif() const
 #if 1
 #pragma region ON_SubDMeshFragment - texture coordinates
 
-bool ON_SubDMeshFragment::TextureCoordinatesExist() const
+
+void ON_SubDMeshFragment::ClearTextureCoordinates() const
+{
+  m_vertex_count_etc &= ~ON_SubDMeshFragment::EtcTextureCoordinatesExistBit;
+  const size_t count = sizeof(this->m_ctrlnetT) / sizeof(this->m_ctrlnetT[0][0]);
+  double* p = &this->m_ctrlnetT[0][0];
+  double* p1 = p + count;
+  while (p < p1)
+    *p++ = ON_DBL_QNAN;
+}
+
+
+bool ON_SubDMeshFragment::TextureCoordinatesExistForExperts() const
 {
   return (0 != (m_vertex_count_etc & ON_SubDMeshFragment::EtcTextureCoordinatesExistBit));
 }
 
-void ON_SubDMeshFragment::SetTextureCoordinatesExist(bool bTextureCoordinatesExist) const
+void ON_SubDMeshFragment::SetTextureCoordinatesExistForExperts(bool bTextureCoordinatesExist) const
 {
   if (bTextureCoordinatesExist)
     m_vertex_count_etc |= ON_SubDMeshFragment::EtcTextureCoordinatesExistBit;
   else
-    m_vertex_count_etc &= ~ON_SubDMeshFragment::EtcTextureCoordinatesExistBit;
+    ClearTextureCoordinates();
 }
 
 
 unsigned int ON_SubDMeshFragment::TextureCoordinateCount() const
 {
-  return (TextureCoordinatesExist() && nullptr != m_T && (0 == m_T_stride || m_T_stride  >= 3)) ? VertexCount() : 0U;
+  return (TextureCoordinatesExistForExperts() && nullptr != m_T && (0 == m_T_stride || m_T_stride  >= 3)) ? VertexCount() : 0U;
 }
 
 unsigned int ON_SubDMeshFragment::TextureCoordinateCapacity() const
@@ -1113,35 +1125,37 @@ size_t ON_SubDMeshFragment::TextureCoordinateArrayStride(ON_SubDComponentLocatio
 
 unsigned ON_SubDMeshFragment::TextureCoordinateArrayCount(ON_SubDComponentLocation subd_appearance) const
 {
-  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? (TextureCoordinatesExist()?4U:0U) : TextureCoordinateCount();
+  if (false == TextureCoordinatesExistForExperts())
+    return 0U;
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 4U : TextureCoordinateCount();
 }
 
 bool  ON_SubDMeshFragment::GetTextureCoordinteCorners(
   bool bGridOrder,
-  ON_3dPoint texture_coordinate_coeners[4]
+  ON_3dPoint texture_coordinate_corners[4]
 ) const
 {
   // mutable double m_T_default_bbox[2][2];
-  if (nullptr != texture_coordinate_coeners)
+  if (nullptr != texture_coordinate_corners)
   {
     int i;
-    texture_coordinate_coeners[0].x = m_ctrlnetT[0][0];
-    texture_coordinate_coeners[0].y = m_ctrlnetT[0][1];
-    texture_coordinate_coeners[0].z = m_ctrlnetT[0][2];
+    texture_coordinate_corners[0].x = m_ctrlnetT[0][0];
+    texture_coordinate_corners[0].y = m_ctrlnetT[0][1];
+    texture_coordinate_corners[0].z = m_ctrlnetT[0][2];
 
-    texture_coordinate_coeners[1].x = m_ctrlnetT[1][0];
-    texture_coordinate_coeners[1].y = m_ctrlnetT[1][1];
-    texture_coordinate_coeners[1].z = m_ctrlnetT[1][2];
+    texture_coordinate_corners[1].x = m_ctrlnetT[1][0];
+    texture_coordinate_corners[1].y = m_ctrlnetT[1][1];
+    texture_coordinate_corners[1].z = m_ctrlnetT[1][2];
 
     i = bGridOrder ? 2 : 3;
-    texture_coordinate_coeners[i].x = m_ctrlnetT[2][0];
-    texture_coordinate_coeners[i].y = m_ctrlnetT[2][1];
-    texture_coordinate_coeners[i].z = m_ctrlnetT[2][2];
+    texture_coordinate_corners[i].x = m_ctrlnetT[2][0];
+    texture_coordinate_corners[i].y = m_ctrlnetT[2][1];
+    texture_coordinate_corners[i].z = m_ctrlnetT[2][2];
 
     i = bGridOrder ? 3 : 2;
-    texture_coordinate_coeners[i].x = m_ctrlnetT[3][0];
-    texture_coordinate_coeners[i].y = m_ctrlnetT[3][1];
-    texture_coordinate_coeners[i].z = m_ctrlnetT[3][2];
+    texture_coordinate_corners[i].x = m_ctrlnetT[3][0];
+    texture_coordinate_corners[i].y = m_ctrlnetT[3][1];
+    texture_coordinate_corners[i].z = m_ctrlnetT[3][2];
 
     return true;
   }
@@ -1803,7 +1817,12 @@ void ON_SubDMeshFragment::Internal_SetTextureCoordinatesFromCorners(
     return;
   if (corner_dim <= 0)
     return;
-  SetTextureCoordinatesExist(true);
+  if (corner_dim > 3)
+    corner_dim = 3;
+  if (nullptr == corner0 || nullptr == corner1 || nullptr == corner2 || nullptr == corner3)
+    return;
+    
+  SetTextureCoordinatesExistForExperts(true);
   double* T = m_T;
   const double d = (double)n;
   double s, t;
@@ -1843,6 +1862,7 @@ void ON_SubDMeshFragment::Internal_SetTextureCoordinatesFromCorners(
       T += m_T_stride;
     }
   }
+
   return;
 }
 
@@ -1875,7 +1895,7 @@ bool ON_SubDMeshFragment::SetVertexTextureCoordinate(
   T[0] = texture_coordinate.x;
   T[1] = texture_coordinate.y;
   T[2] = texture_coordinate.z;
-  SetTextureCoordinatesExist(true);
+  SetTextureCoordinatesExistForExperts(true);
   return true;
 }
 
