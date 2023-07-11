@@ -36,9 +36,6 @@
 #define PRIVATE_CHECK(c) { }
 #endif
 
-#define ON_KIND_MATERIAL     L"material"
-#define ON_KIND_ENVIRONMENT  L"environment"
-#define ON_KIND_TEXTURE      L"texture"
 #define ON_RDK_UD_ROOT       L"render-content-manager-data"
 
 inline bool IsFloatEqual (float  f1, float  f2) { return (fabsf(f1 - f2) < 1e-6); }

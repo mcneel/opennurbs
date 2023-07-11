@@ -28,7 +28,7 @@ public:
   virtual bool operator != (const ON_GroundPlane& gp) const;
 
   // Returns true if the ground plane is enabled, else false.
-  virtual bool On(void) const;
+  virtual bool Enabled(void) const;
 
   // Returns true if ground plane backface is enabled, else false.
   virtual bool ShowUnderside(void) const;
@@ -62,7 +62,7 @@ public:
   virtual double TextureRotation(void) const;
 
   // Set the ground plane enabled state.
-  virtual void SetOn(bool on);
+  virtual void SetEnabled(bool on);
 
   // Set if the ground plane backface is enabled.
   virtual void SetShowUnderside(bool on);

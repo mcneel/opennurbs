@@ -34,7 +34,7 @@ public:
   CImpl(const CImpl& i) = delete;
   CImpl(ON_XMLNode& n)  : ON_InternalXMLImpl(&n) { }
 
-  bool On(void)                    const { return GetParameter(XMLPath(), ON_RDK_GP_ON, false).AsBool(); }
+  bool Enabled(void)               const { return GetParameter(XMLPath(), ON_RDK_GP_ENABLED, false).AsBool(); }
   bool ShowUnderside(void)         const { return GetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, false).AsBool(); }
   double Altitude(void)            const { return GetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, 0.0).AsDouble(); }
   bool AutoAltitude(void)          const { return GetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, false).AsBool(); }
@@ -46,7 +46,7 @@ public:
   ON_2dVector TextureOffset(void)  const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_OFFSET, ON_nil_uuid).As2dPoint()); }
   ON_2dVector TextureSize(void)    const { return ON_2dVector(GetParameter(XMLPath(), ON_RDK_GP_TEXTURE_SIZE, ON_nil_uuid).As2dPoint()); }
 
-  void SetOn(bool v)                           { SetParameter(XMLPath(), ON_RDK_GP_ON, v); }
+  void SetEnabled(bool v)                      { SetParameter(XMLPath(), ON_RDK_GP_ENABLED, v); }
   void SetShowUnderside(bool v)                { SetParameter(XMLPath(), ON_RDK_GP_SHOW_UNDERSIDE, v); }
   void SetAltitude(double v)                   { SetParameter(XMLPath(), ON_RDK_GP_ALTITUDE, v); }
   void SetAutoAltitude(bool v)                 { SetParameter(XMLPath(), ON_RDK_GP_AUTO_ALTITUDE, v); }
@@ -87,7 +87,7 @@ const ON_GroundPlane& ON_GroundPlane::operator = (const ON_GroundPlane& gp)
   {
     // When copying the object, we need to directly copy the underlying XML. So we can't allow
     // virtual overrides to execute because they might hide the real values we want to copy.
-    _impl->SetOn                 (gp._impl->On());
+    _impl->SetEnabled            (gp._impl->Enabled());
     _impl->SetShowUnderside      (gp._impl->ShowUnderside());
     _impl->SetAltitude           (gp._impl->Altitude());
     _impl->SetAutoAltitude       (gp._impl->AutoAltitude());
@@ -107,7 +107,7 @@ bool ON_GroundPlane::operator == (const ON_GroundPlane& gp) const
 {
   // When checking equality, we need to directly check the underlying storage. So we can't allow
   // virtual overrides to execute because they might hide the real values we want to check.
-  if (_impl->On()                  != gp._impl->On()                 ) return false;
+  if (_impl->Enabled()             != gp._impl->Enabled()            ) return false;
   if (_impl->ShowUnderside()       != gp._impl->ShowUnderside()      ) return false;
   if (_impl->AutoAltitude()        != gp._impl->AutoAltitude()       ) return false;
   if (_impl->ShadowOnly()          != gp._impl->ShadowOnly()         ) return false;
@@ -128,9 +128,9 @@ bool ON_GroundPlane::operator != (const ON_GroundPlane& gp) const
   return !(operator == (gp));
 }
 
-bool ON_GroundPlane::On(void) const
+bool ON_GroundPlane::Enabled(void) const
 {
-  return _impl->On();
+  return _impl->Enabled();
 }
 
 bool ON_GroundPlane::ShowUnderside(void) const
@@ -183,9 +183,9 @@ double ON_GroundPlane::TextureRotation(void) const
   return _impl->TextureRotation();
 }
 
-void ON_GroundPlane::SetOn(bool v)
+void ON_GroundPlane::SetEnabled(bool v)
 {
-  _impl->SetOn(v);
+  _impl->SetEnabled(v);
 }
 
 void ON_GroundPlane::SetShowUnderside(bool v)

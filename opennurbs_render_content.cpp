@@ -261,12 +261,12 @@ ON_Color ON_Environment::BackgroundColor(void) const
   return m_impl->m_back_col;
 }
 
-void ON_Environment::SetBackgroundColor(ON_Color color)
+void ON_Environment::SetBackgroundColor(const ON_Color& col)
 {
-  m_impl->m_back_col = color;
+  m_impl->m_back_col = col;
 }
 
-ON_Texture ON_Environment::BackgroundImage(void) const
+const ON_Texture& ON_Environment::BackgroundImage(void) const
 {
   return m_impl->m_back_image;
 }
@@ -977,22 +977,22 @@ ON_RenderContent::ChildIterator ON_RenderContent::GetChildIterator(void) const
   return ChildIterator(this);
 }
 
-const ON_RenderContent* ON_RenderContent::Parent(void) const
+ON_RenderContent* ON_RenderContent::Parent(void) const
 {
   return _private->m_parent;
 }
 
-const ON_RenderContent* ON_RenderContent::FirstChild(void) const
+ON_RenderContent* ON_RenderContent::FirstChild(void) const
 {
   return _private->m_first_child;
 }
 
-const ON_RenderContent* ON_RenderContent::NextSibling(void) const
+ON_RenderContent* ON_RenderContent::NextSibling(void) const
 {
   return _private->m_next_sibling;
 }
 
-const ON_RenderContent& ON_RenderContent::TopLevel(void) const
+ON_RenderContent& ON_RenderContent::TopLevel(void) const
 {
   return _private->TopLevel();
 }
@@ -1310,6 +1310,11 @@ ON_Material ON_RenderMaterial::ToOnMaterial(void) const
   return mat;
 }
 
+ON_RenderContent* ON_RenderMaterial::NewRenderContent(void) const
+{
+  return new ON_RenderMaterial;
+}
+
 // ON_RenderEnvironment
 
 ON_OBJECT_IMPLEMENT(ON_RenderEnvironment, ON_RenderContent, "A0AB8EF9-5FD4-4320-BBDA-A1200D1846E4");
@@ -1373,6 +1378,11 @@ ON_Environment ON_RenderEnvironment::ToOnEnvironment(void) const
   }
 
   return env;
+}
+
+ON_RenderContent* ON_RenderEnvironment::NewRenderContent(void) const
+{
+  return new ON_RenderEnvironment;
 }
 
 // ON_RenderTexture
@@ -1510,6 +1520,17 @@ ON_wString ON_RenderTexture::Filename(void) const
 
   return v.AsString();
 }
+
+bool ON_RenderTexture::SetFilename(const wchar_t* f)
+{
+  return SetParameter(ON_RENDER_TEXTURE_FILENAME, f);
+}
+
+ON_RenderContent* ON_RenderTexture::NewRenderContent(void) const
+{
+  return new ON_RenderTexture;
+}
+
 
 int ONX_Model::AddRenderMaterial(const wchar_t* mat_name)
 {

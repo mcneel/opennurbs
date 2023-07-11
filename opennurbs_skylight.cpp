@@ -60,7 +60,7 @@ const ON_Skylight& ON_Skylight::operator = (const ON_Skylight& sl)
 {
   if (this != &sl)
   {
-    SetOn(sl.On());
+    SetEnabled(sl.Enabled());
     SetShadowIntensity(sl.ShadowIntensity());
   }
 
@@ -69,7 +69,7 @@ const ON_Skylight& ON_Skylight::operator = (const ON_Skylight& sl)
 
 bool ON_Skylight::operator == (const ON_Skylight& sl) const
 {
-  if (On()              != sl.On())              return false;
+  if (Enabled()         != sl.Enabled())         return false;
   if (ShadowIntensity() != sl.ShadowIntensity()) return false;
 
   return true;
@@ -80,14 +80,14 @@ bool ON_Skylight::operator != (const ON_Skylight& sl) const
   return !(operator == (sl));
 }
 
-bool ON_Skylight::On(void) const
+bool ON_Skylight::Enabled(void) const
 {
-  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ON, false).AsBool();
+  return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENABLED, false).AsBool();
 }
 
-void ON_Skylight::SetOn(bool b)
+void ON_Skylight::SetEnabled(bool b)
 {
-  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ON, b);
+  m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_ENABLED, b);
 }
 
 double ON_Skylight::ShadowIntensity(void) const

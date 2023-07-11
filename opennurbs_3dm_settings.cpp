@@ -1803,7 +1803,7 @@ ON_UUID ON_3dmRenderSettings::RenderEnvironmentId(EnvironmentUsage usage, Enviro
       return RenderEnvironmentId(EnvironmentUsage::Background, purpose);
 
     case EnvironmentUsage::Skylighting:
-      if (!Skylight().On())
+      if (!Skylight().Enabled())
         return ON_nil_uuid;
 
       if (e.SkylightingRenderEnvironmentOverride())
@@ -2051,7 +2051,7 @@ double ON_3dmAnnotationSettings::WorldViewHatchScale() const
   if (this != &ON_3dmAnnotationSettings::Default)
   {
     if (m_private)
-      world_view_hatch_scale = m_private->m_world_view_text_scale;
+      world_view_hatch_scale = m_private->m_world_view_hatch_scale;
   }
   return world_view_hatch_scale;
 }

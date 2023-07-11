@@ -60,8 +60,8 @@ const ON_Dithering& ON_Dithering::operator = (const ON_Dithering& dit)
 {
   if (this != &dit)
   {
-    SetOn    (dit.On());
-    SetMethod(dit.Method());
+    SetEnabled(dit.Enabled());
+    SetMethod (dit.Method());
   }
 
   return *this;
@@ -69,8 +69,8 @@ const ON_Dithering& ON_Dithering::operator = (const ON_Dithering& dit)
 
 bool ON_Dithering::operator == (const ON_Dithering& dit) const
 {
-  if (On()     != dit.On())     return false;
-  if (Method() != dit.Method()) return false;
+  if (Enabled() != dit.Enabled()) return false;
+  if (Method()  != dit.Method())  return false;
 
   return true;
 }
@@ -80,14 +80,14 @@ bool ON_Dithering::operator != (const ON_Dithering& dit) const
   return !(operator == (dit));
 }
 
-bool ON_Dithering::On(void) const
+bool ON_Dithering::Enabled(void) const
 {
-  return m_impl->GetParameter(XMLPathDit(), ON_RDK_DITHERING_ON, false);
+  return m_impl->GetParameter(XMLPathDit(), ON_RDK_DITHERING_ENABLED, false);
 }
 
-void ON_Dithering::SetOn(bool b)
+void ON_Dithering::SetEnabled(bool b)
 {
-  m_impl->SetParameter(XMLPathDit(), ON_RDK_DITHERING_ON, b);
+  m_impl->SetParameter(XMLPathDit(), ON_RDK_DITHERING_ENABLED, b);
 }
 
 ON_Dithering::Methods ON_Dithering::Method(void) const
@@ -110,7 +110,7 @@ void ON_Dithering::SetMethod(Methods m)
 
 ON__UINT32 ON_Dithering::DataCRC(ON__UINT32 crc) const
 {
-  const bool b = On();
+  const bool b = Enabled();
   crc = ON_CRC32(crc, sizeof(b), &b);
 
   const auto m = Method();

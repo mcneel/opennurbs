@@ -4294,12 +4294,12 @@ public:
 
 size_t ON_UnicodeTextFilePrivate::ReadData(void* buf, size_t bytes_to_read)
 {
-  return _file.Read(bytes_to_read, buf);
+  return size_t(_file.Read(bytes_to_read, buf));
 }
 
 size_t ON_UnicodeTextFilePrivate::WriteData(const void* buf, size_t bytes_to_write)
 {
-  return _file.Write(bytes_to_write, buf);
+  return size_t(_file.Write(bytes_to_write, buf));
 }
 
 static const wchar_t* FileStreamMode(ON_UnicodeTextFile::Modes m)
@@ -4453,7 +4453,7 @@ bool ON_UnicodeTextFilePrivate::WriteString(const wchar_t* wsz)
 
 bool ON_UnicodeTextFilePrivate::ReadStringFromUTF8(ON_wString& s)
 {
-  const auto size_in_bytes = _file.GetLength() - _file.CurrentPosition();
+  const auto size_in_bytes = size_t(_file.GetLength() - _file.CurrentPosition());
   auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[size_in_bytes + 1]);
   auto* pBuffer = p.get();
 
@@ -4476,8 +4476,8 @@ bool ON_UnicodeTextFilePrivate::ReadStringFromUTF8(ON_wString& s)
 bool ON_UnicodeTextFilePrivate::ReadStringFromUTF16(ON_wString& s)
 {
   const auto char_size = sizeof(ON__UINT16);
-  const auto size_in_bytes = _file.GetLength() - _file.CurrentPosition();
-  const auto size_in_chars = size_in_bytes / char_size;
+  const auto size_in_bytes = size_t(_file.GetLength() - _file.CurrentPosition());
+  const auto size_in_chars = size_t(size_in_bytes / char_size);
 
 #ifdef ON_RUNTIME_WIN
   // On Windows, wchar_t is UTF16 so we can load the file directly into the ON_wString.

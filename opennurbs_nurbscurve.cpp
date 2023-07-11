@@ -4371,6 +4371,64 @@ int ON_NurbsCurve::RemoveSingularSpans()
   return singular_span_count;
 }
 
+
+static bool Internal_UnclampedKnots(
+  int order,
+  int cv_count,
+  const double* cv,
+  const double* knot
+  )
+{
+  return
+    order >= 3
+    && cv_count >= order
+    && nullptr != cv
+    && nullptr != knot
+    && knot[0] > ON_UNSET_VALUE
+    && knot[cv_count + order - 3] < ON_UNSET_POSITIVE_VALUE
+    && knot[order - 2] < knot[order - 1] - ON_ZERO_TOLERANCE
+    && knot[cv_count - 2] < knot[cv_count - 1] - ON_ZERO_TOLERANCE
+    && ((knot[0] < knot[order - 2] - ON_ZERO_TOLERANCE) || (knot[cv_count - 1] < knot[cv_count + order - 3] - ON_ZERO_TOLERANCE))
+    ;
+}
+
+bool ON_NurbsCurve::UnclampedTagForExperts() const
+{
+  if (
+    0 != (m_knot_capacity_and_tags & ON_NurbsCurve::masks::unclamped_knots_tag)
+    && Internal_UnclampedKnots(m_order,m_cv_count,m_cv,m_knot)
+    && false == IsPeriodic()
+    )
+  {
+    return true;
+  }
+  return false;
+}
+
+/*
+Description:
+  Set the curve's UnclampedTag() property.
+Parameters:
+  bUnclampedTag - [in]
+    If bUnclampedTag is true, the curve has unclamped knots,
+    and the curve is not periodic,
+    then the UnclampedTag() property is set to true.
+    Otherwise the UnclampedTag() property is set to false.
+*/
+void ON_NurbsCurve::SetUnclampedTagForExperts(
+  bool bUnclampedTag
+)
+{
+  if (
+    bUnclampedTag
+    && Internal_UnclampedKnots(m_order, m_cv_count, m_cv, m_knot)
+    && false == this->IsPeriodic()
+    )
+    m_knot_capacity_and_tags |= ON_NurbsCurve::masks::unclamped_knots_tag;
+  else
+    m_knot_capacity_and_tags &= ~ON_NurbsCurve::masks::unclamped_knots_tag;
+}
+
 bool ON_NurbsCurve::SubDFriendlyTag() const
 {
   if (0 != (m_knot_capacity_and_tags & ON_NurbsCurve::masks::subdfriendly_tag))

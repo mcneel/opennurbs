@@ -27,11 +27,11 @@ public:
   virtual bool operator == (const ON_SafeFrame& sf) const;
   virtual bool operator != (const ON_SafeFrame& sf) const;
 
-  // Returns true if the safe frame is on.
-  virtual bool On(void) const;
+  // Returns true if the safe frame is enabled.
+  virtual bool Enabled(void) const;
 
   // Sets the safe frame on or off.
-  virtual void SetOn(bool b);
+  virtual void SetEnabled(bool b);
 
   // Returns true if the safe frame is only displayed in perspective views.
   virtual bool PerspectiveOnly(void) const;
