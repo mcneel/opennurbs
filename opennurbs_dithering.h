@@ -27,11 +27,11 @@ public:
   virtual bool operator == (const ON_Dithering& dit) const;
   virtual bool operator != (const ON_Dithering& dit) const;
 
-  // Get dithering on / off state.
-  virtual bool On(void) const;
+  // Get the dithering enabled state.
+  virtual bool Enabled(void) const;
 
-  // Set dithering on or off.
-  virtual void SetOn(bool b);
+  // Enable or disable dithering.
+  virtual void SetEnabled(bool b);
 
   enum class Methods { SimpleNoise, FloydSteinberg };
 

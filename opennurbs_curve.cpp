@@ -1884,20 +1884,24 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     //int knot_count = KnotCount();
     int i, j0, j1;
 
-    bool bIsPeriodic = IsPeriodic();
+    const bool bIsPeriodic = IsPeriodic();
+    const bool bIsUnclamped = this->UnclampedTagForExperts();
+    const bool bUnclampedUniformCubic = Internal_IsUniformCubic(*this);
 
-    if ( !bIsPeriodic )
+    const bool bClampEnds =
+      false == bIsPeriodic
+      && false == bIsUnclamped
+      && false == bUnclampedUniformCubic;
+
+    if (bClampEnds)
     {
       if ( m_knot[0] != m_knot[m_order-2] || m_knot[m_cv_count-1] != m_knot[m_cv_count+m_order-3] )
       {
-        if (false == Internal_IsUniformCubic(*this))
-        {
-          rc = true;
-          if (bRepair)
-            ClampEnd(2);
-          else
-            return rc;
-        }
+        rc = true;
+        if (bRepair)
+          ClampEnd(2);
+        else
+          return rc;
       }
     }
 
@@ -2015,8 +2019,11 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 
     if ( bRepair && bIsPeriodic && rc )
     {
-      if ( !IsPeriodic() )
+      if (!IsPeriodic())
+      {
+        // the repairs broke being periodic.
         ClampEnd(2);
+      }
     }
   }
   return rc;

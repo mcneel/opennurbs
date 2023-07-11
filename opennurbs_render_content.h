@@ -45,9 +45,9 @@ public:
   };
 
   virtual ON_Color BackgroundColor(void) const;
-  virtual void SetBackgroundColor(ON_Color color);
+  virtual void SetBackgroundColor(const ON_Color& col);
 
-  virtual ON_Texture BackgroundImage(void) const;
+  virtual const ON_Texture& BackgroundImage(void) const;
   virtual void SetBackgroundImage(const ON_Texture& tex);
 
   virtual BackgroundProjections BackgroundProjection(void) const;
@@ -164,16 +164,16 @@ public:
   virtual ChildIterator GetChildIterator(void) const;
 
   // Returns: The parent content or null if this is the top level object.
-  virtual const ON_RenderContent* Parent(void) const;
+  virtual ON_RenderContent* Parent(void) const;
 
   // Returns: The first child of this content or null if none.
-  virtual const ON_RenderContent* FirstChild(void) const;
+  virtual ON_RenderContent* FirstChild(void) const;
 
   // Returns: The first sibling of this content or null if none.
-  virtual const ON_RenderContent* NextSibling(void) const;
+  virtual ON_RenderContent* NextSibling(void) const;
 
   // Returns: The top level parent of this content.
-  virtual const ON_RenderContent& TopLevel(void) const;
+  virtual ON_RenderContent& TopLevel(void) const;
 
   // Returns: True if this is a top-level content (i.e., has no parent; is not a child).
   virtual bool IsTopLevel(void) const;
@@ -224,6 +224,8 @@ public:
   // Returns the kind of render content as a string.
   virtual ON_wString Kind(void) const;
 
+  virtual ON_RenderContent* NewRenderContent(void) const = 0;
+
   // If ON_RenderContent::Cast(ref.ModelComponent()) is not null,
   // that pointer is returned. Otherwise, none_return_value is returned.
   static const ON_RenderContent* FromModelComponentRef(const ON_ModelComponentReference& ref,
@@ -251,10 +253,11 @@ public:
   ON_RenderMaterial(const ON_RenderMaterial& m);
   virtual ~ON_RenderMaterial();
 
-  virtual const ON_RenderContent& operator = (const ON_RenderContent&) override;
+  virtual const ON_RenderContent&  operator = (const ON_RenderContent&) override;
   virtual const ON_RenderMaterial& operator = (const ON_RenderMaterial&);
 
   virtual ON_Material ToOnMaterial(void) const;
+  virtual ON_RenderContent* NewRenderContent(void) const override;
 };
 
 class ON_CLASS ON_RenderEnvironment : public ON_RenderContent
@@ -270,6 +273,7 @@ public:
   virtual const ON_RenderEnvironment& operator = (const ON_RenderEnvironment&);
 
   virtual ON_Environment ToOnEnvironment(void) const;
+  virtual ON_RenderContent* NewRenderContent(void) const override;
 };
 
 class ON_CLASS ON_RenderTexture : public ON_RenderContent
@@ -289,6 +293,12 @@ public:
 
   // If the texture has a file name, returns that file name. Otherwise returns an empty string.
   virtual ON_wString Filename(void) const;
+
+  // Set the texture's file name (if possible). If the texture does not have a file name (e.g., a
+  // procedural texture), the method returns false.
+  virtual bool SetFilename(const wchar_t*);
+
+  virtual ON_RenderContent* NewRenderContent(void) const override;
 };
 
 #endif

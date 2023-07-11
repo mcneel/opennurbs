@@ -338,6 +338,10 @@ bool ON_ClampKnotVector(
         int        // end  0 = clamp start, 1 = clamp end, 2 = clamp both ends
         );
 
+
+
+
+
 /*
 Returns:
   Number of knots added.

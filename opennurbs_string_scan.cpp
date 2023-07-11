@@ -736,7 +736,7 @@ const ON_wString ON_wString::ToMemorySize(size_t size_in_bytes)
   {
     const double x = ((double)sz)/((double)kb);
     if (0 == n)
-      return ON_wString::FormatToString(L"0.03f %ls", x, units);
+      return ON_wString::FormatToString(L"%0.03f %ls", x, units);
 
     if (n >= 10)
       return ON_wString::FormatToString(L"%0.1f %ls", x, units);

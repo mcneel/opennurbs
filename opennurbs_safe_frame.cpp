@@ -96,7 +96,7 @@ const ON_SafeFrame& ON_SafeFrame::operator = (const ON_SafeFrame& sf)
 {
   if (this != &sf)
   {
-    SetOn               (sf.On());
+    SetEnabled          (sf.Enabled());
     SetPerspectiveOnly  (sf.PerspectiveOnly());
     SetFieldGridOn      (sf.FieldGridOn());
     SetLiveFrameOn      (sf.LiveFrameOn());
@@ -115,7 +115,7 @@ const ON_SafeFrame& ON_SafeFrame::operator = (const ON_SafeFrame& sf)
 
 bool ON_SafeFrame::operator == (const ON_SafeFrame& sf) const
 {
-  if (On()                != sf.On())                return false;
+  if (Enabled()           != sf.Enabled())           return false;
   if (PerspectiveOnly()   != sf.PerspectiveOnly())   return false;
   if (FieldGridOn()       != sf.FieldGridOn())       return false;
   if (LiveFrameOn()       != sf.LiveFrameOn())       return false;
@@ -137,14 +137,14 @@ bool ON_SafeFrame::operator != (const ON_SafeFrame& sf) const
   return !(operator == (sf));
 }
 
-bool ON_SafeFrame::On(void) const
+bool ON_SafeFrame::Enabled(void) const
 {
-  return m_impl->GetBaseParameter(ON_RDK_SF_ON, false).AsBool();
+  return m_impl->GetBaseParameter(ON_RDK_SF_ENABLED, false).AsBool();
 }
 
-void ON_SafeFrame::SetOn(bool b)
+void ON_SafeFrame::SetEnabled(bool b)
 {
-  m_impl->SetBaseParameter(ON_RDK_SF_ON, b);
+  m_impl->SetBaseParameter(ON_RDK_SF_ENABLED, b);
 }
 
 bool ON_SafeFrame::PerspectiveOnly(void) const

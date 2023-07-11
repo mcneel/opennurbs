@@ -1004,7 +1004,7 @@ void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
   if (0 != K_count && vertex_capacity != K_count)
   {
     ON_SUBD_ERROR("invalid src.CurvatureCount()");
-    K_count;
+    K_count = 0;
   }
 
   unsigned C_count = src.ColorCount();

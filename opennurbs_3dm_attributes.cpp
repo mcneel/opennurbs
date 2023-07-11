@@ -1840,18 +1840,18 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
 {
   unsigned int rc = 0;
 
-  if (m_bVisible && !parents_attributes.m_bVisible)
+  if (0 != (0x01 & control_limits))
   {
-    if (0 != (0x01 & control_limits))
+    if (m_bVisible && !parents_attributes.m_bVisible)
     {
       rc |= 0x01;
       m_bVisible = false;
     }
   }
 
-  if (ON::color_from_parent == m_color_source)
+  if (0 != (0x02 & control_limits))
   {
-    if (0 != (0x02 & control_limits))
+    if (ON::color_from_parent == m_color_source)
     {
       rc |= 0x02;
       m_color_source = parents_attributes.m_color_source;
@@ -1869,9 +1869,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     }
   }
 
-  if (ON::material_from_parent == m_material_source)
+  if (0 != (0x04 & control_limits))
   {
-    if (0 != (0x04 & control_limits))
+    if (ON::material_from_parent == m_material_source)
     {
       rc |= 0x04;
       m_material_source = parents_attributes.m_material_source;
@@ -1889,9 +1889,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     }
   }
 
-  if (ON::plot_color_from_parent == m_plot_color_source)
+  if (0 != (0x08 & control_limits))
   {
-    if (0 != (0x08 & control_limits))
+    if (ON::plot_color_from_parent == m_plot_color_source)
     {
       rc |= 0x08;
       m_plot_color_source = parents_attributes.m_plot_color_source;
@@ -1905,9 +1905,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     }
   }
 
-  if (ON::plot_weight_from_parent == m_plot_weight_source)
+  if (0 != (0x10 & control_limits))
   {
-    if (0 != (0x10 & control_limits))
+    if (ON::plot_weight_from_parent == m_plot_weight_source)
     {
       rc |= 0x10;
       m_plot_weight_source = parents_attributes.m_plot_weight_source;
@@ -1921,9 +1921,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     }
   }
 
-  if (ON::linetype_from_parent == m_linetype_source)
+  if (0 != (0x20 & control_limits))
   {
-    if (0 != (0x20 & control_limits))
+    if (ON::linetype_from_parent == m_linetype_source)
     {
       rc |= 0x20;
       m_linetype_source = parents_attributes.m_linetype_source;
@@ -1943,9 +1943,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
     m_display_order = parents_attributes.m_display_order;
   }
 
-  //if (ON::ClipParticipationSource::FromParent == ClipParticipationSource())
+  //if (0 != (0x80 & control_limits))
   //{
-  //  if (0 != (0x80 & control_limits))
+  //  if (ON::ClipParticipationSource::FromParent == ClipParticipationSource())
   //  {
   //    rc |= 0x80;
   //    SetClipParticipationSource(parents_attributes.ClipParticipationSource());
@@ -1981,9 +1981,9 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
   //  }
   //}
 
-  if (ON::SectionAttributesSource::FromParent == SectionAttributesSource())
+  if (0 != (0x100 & control_limits))
   {
-    if (0 != (0x100 & control_limits))
+    if (ON::SectionAttributesSource::FromParent == SectionAttributesSource())
     {
       rc |= 0x100;
       SetSectionAttributesSource(parents_attributes.SectionAttributesSource());

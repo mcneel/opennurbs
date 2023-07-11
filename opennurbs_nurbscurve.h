@@ -976,6 +976,7 @@ public:
            double*   // g[cv_count]
            ) const;
 
+
   bool ZeroCVs(); // zeros control vertices and, if rational, sets weights to 1
 
   // Description:
@@ -986,8 +987,9 @@ public:
   // Returns:
   //   true if successful
   bool ClampEnd(
-            int end
-            );
+    int end
+  );
+
 
   // Description:
   //   Insert a knot and update cv locations.
@@ -1236,11 +1238,32 @@ public:
    Parameters:
      bSubDFriendlyTag - [in]
        If bSubDFriendlyTag is true and IsSubDFriendly(true) is true,
-       then the SubDFriendlyTag() property is set to true. 
+       then the SubDFriendlyTag() property is set to true.
        Otherwise the SubDFriendlyTag property is set to false.
    */
    void SetSubDFriendlyTag(
      bool bSubDFriendlyTag
+   );
+
+   /*
+   Returns:
+     True if this curve was explicitly tagged as having unclampled knots
+     and currently has unclampled knots.
+   */
+   bool UnclampedTagForExperts() const;
+
+   /*
+   Description:
+     Set the curve's UnclampedTag() property.
+   Parameters:
+     bUnclampedTag - [in]
+       If bUnclampedTag is true, the curve has unclamped knots,
+       and the curve is not periodic,
+       then the UnclampedTag() property is set to true.
+       Otherwise the UnclampedTag() property is set to false.
+   */
+   void SetUnclampedTagForExperts(
+     bool bUnclampedTag
    );
 
 
@@ -1276,6 +1299,7 @@ private:
   {
     knot_capacity = 0x0FFFFFFFU,
     subdfriendly_tag = 0x80000000U,
+    unclamped_knots_tag = 0x40000000U, // set if Rhino should accept this curve with unclamped knots
     all_tags = 0xF0000000U,
   };
   unsigned int m_knot_capacity_and_tags;

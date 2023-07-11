@@ -28,10 +28,10 @@ public:
   virtual bool operator != (const ON_Skylight& sl) const;
 
   // Returns true if the skylight is enabled, else false.
-  virtual bool On(void) const;
+  virtual bool Enabled(void) const;
 
   // Set the skylight enabled state.
-  virtual void SetOn(bool b);
+  virtual void SetEnabled(bool b);
 
   // Returns the skylight shadow intensity. This is unused at present.
   virtual double ShadowIntensity(void) const;

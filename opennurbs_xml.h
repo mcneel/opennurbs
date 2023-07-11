@@ -76,7 +76,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_CURRENT_RENDER_PRESET              L"current-preset"
       #define ON_RDK_EMBED_SUPPORT_FILES_ON             L"embed-support-files-on"
 
-      #define ON_RDK_DITHERING_ON                       L"use-dithering"
+      #define ON_RDK_DITHERING_ENABLED                  L"use-dithering"
       #define ON_RDK_DITHERING_METHOD                   L"dithering"
         #define ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG   L"floyd-steinberg"
         #define ON_RDK_DITHERING_METHOD_SIMPLE_NOISE      L"simple-noise"
@@ -105,7 +105,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_SUN_OBSERVER_LATITUDE              L"observer-latitude"
       #define ON_RDK_SUN_OBSERVER_LONGITUDE             L"observer-longitude"
       #define ON_RDK_SUN_OBSERVER_TIMEZONE              L"observer-timezone"
-      #define ON_RDK_SUN_SKYLIGHT_ON                    L"skylight-on"
+      #define ON_RDK_SUN_SKYLIGHT_ENABLED               L"skylight-on"
       #define ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY      L"skylight-shadow-intensity"
       #define ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE  L"skylight-custom-environment-on"
       #define ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID        L"skylight-custom-environment"
@@ -113,7 +113,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
       #define ON_RDK_SUN_INTENSITY                      L"intensity"
 
     #define ON_RDK_SAFE_FRAME                         L"safe-frame"
-      #define ON_RDK_SF_ON                              L"on"
+      #define ON_RDK_SF_ENABLED                         L"on"
       #define ON_RDK_SF_PERSPECTIVE_ONLY                L"perspective-only"
       #define ON_RDK_SF_4x3_FIELD_GRID_ON               L"field-display-on"
       #define ON_RDK_SF_LIVE_FRAME                      L"live-frame"
@@ -125,7 +125,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
         #define ON_RDK_SFF_LINK                           L"link"
 
     #define ON_RDK_GROUND_PLANE                       L"ground-plane"
-     #define ON_RDK_GP_ON                               L"on"
+     #define ON_RDK_GP_ENABLED                          L"on"
      #define ON_RDK_GP_ALTITUDE                         L"altitude"
      #define ON_RDK_GP_AUTO_ALTITUDE                    L"auto-altitude"
      #define ON_RDK_GP_SHOW_UNDERSIDE                   L"show-underside"
@@ -290,6 +290,11 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_TEXTURE_SIMULATION_HAS_TRANSPARENT_COLOR         L"has-trans-color"
 #define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR             L"trans-color"
 #define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR_SENSITIVITY L"trans-color-sensitivity"
+
+// Strings returned by ON_RenderContent::Kind().
+#define ON_KIND_MATERIAL     L"material"
+#define ON_KIND_ENVIRONMENT  L"environment"
+#define ON_KIND_TEXTURE      L"texture"
 
 #define ON_RDK_POSTFIX_SECTION  L"-section"
 

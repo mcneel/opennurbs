@@ -1074,7 +1074,7 @@ ON_Buffer ON_XMLVariant::AsBuffer(void) const
 void* ON_XMLVariant::AsBuffer(size_t& size_out) const
 {
   auto buf = AsBuffer();
-  size_out = buf.Size();
+  size_out = size_t(buf.Size());
 
   if (nullptr != _private->_raw_buffer)
     delete[] _private->_raw_buffer;
@@ -1131,9 +1131,9 @@ ON_wString ON_XMLVariant::AsString(void) const
       _private->_string_val = wszBase64Prefix;
       auto& buffer = GetBuffer();
       const auto buf_size = buffer.Size();
-      auto* buf = new char[buf_size];
+      auto* buf = new char[size_t(buf_size)];
       buffer.Read(buf_size, buf);
-      ON_Base64::Encode(buf, buf_size, _private->_string_val, true);
+      ON_Base64::Encode(buf, size_t(buf_size), _private->_string_val, true);
       delete[] buf;
       return _private->_string_val;
     }
@@ -3602,7 +3602,7 @@ public:
 
     ON_ASSERT(m_paSortedProperties != nullptr);
 
-    if (m_iIndex >= m_paSortedProperties->size())
+    if (m_iIndex >= int(m_paSortedProperties->size()))
       return nullptr;
 
     return &(*m_paSortedProperties)[m_iIndex++];
@@ -5235,7 +5235,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           // Misc rendering settings.
           ON_XMLParameters p(rendering);
           p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
-          p.SetParam(ON_RDK_DITHERING_ON, false);
+          p.SetParam(ON_RDK_DITHERING_ENABLED, false);
           p.SetParam(ON_RDK_DITHERING_METHOD, ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT_ON, (_major_version < 6) ? false : true);
@@ -5292,7 +5292,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_SUN_ALTITUDE,           engine.Altitude());
           p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE,  engine.TimeZoneHours());
 
-          p.SetParam(ON_RDK_SUN_SKYLIGHT_ON, (_major_version < 6) ? false : true);
+          p.SetParam(ON_RDK_SUN_SKYLIGHT_ENABLED, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, ON_nil_uuid);
@@ -5304,7 +5304,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
         auto& safe_frame = Create(settings, ON_RDK_SAFE_FRAME);
         {
           ON_XMLParameters p(safe_frame);
-          p.SetParam(ON_RDK_SF_ON, false);
+          p.SetParam(ON_RDK_SF_ENABLED, false);
           p.SetParam(ON_RDK_SF_PERSPECTIVE_ONLY, true);
           p.SetParam(ON_RDK_SF_4x3_FIELD_GRID_ON, false);
 
@@ -5340,7 +5340,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
         auto& ground_plane = Create(settings, ON_RDK_GROUND_PLANE);
         {
           ON_XMLParameters p(ground_plane);
-          p.SetParam(ON_RDK_GP_ON, (_major_version < 6) ? false : true);
+          p.SetParam(ON_RDK_GP_ENABLED, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_GP_SHOW_UNDERSIDE, false);
           p.SetParam(ON_RDK_GP_ALTITUDE, 0.0);
           p.SetParam(ON_RDK_GP_AUTO_ALTITUDE, true);

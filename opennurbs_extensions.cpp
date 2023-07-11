@@ -5660,13 +5660,13 @@ static bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, in
 
   const auto sizeof_buffer = buf.Size();
 
-  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[sizeof_buffer]);
+  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[size_t(sizeof_buffer)]);
   ON__UINT8* buffer = p.get();
   buf.SeekFromStart(0);
   buf.Read(sizeof_buffer, buffer);
 
   const unsigned int archive_opennurbs_version_number = ON::Version();
-  ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
+  ON_Read3dmBufferArchive archive(size_t(sizeof_buffer), buffer, false, archive_3dm_version, archive_opennurbs_version_number);
 
   int version = 0;
   if (!archive.ReadInt(&version))
@@ -5747,13 +5747,13 @@ static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml, int arc
 
   const ON__UINT64 sizeof_buffer = buf.Size();
 
-  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[sizeof_buffer]);
+  auto p = std::unique_ptr<ON__UINT8[]>(new ON__UINT8[size_t(sizeof_buffer)]);
   ON__UINT8* buffer = p.get();
   buf.SeekFromStart(0);
   buf.Read(sizeof_buffer, buffer);
 
   const auto archive_opennurbs_version_number = ON::Version();
-  ON_Read3dmBufferArchive archive(sizeof_buffer, buffer, false, archive_3dm_version, archive_opennurbs_version_number);
+  ON_Read3dmBufferArchive archive(size_t(sizeof_buffer), buffer, false, archive_3dm_version, archive_opennurbs_version_number);
 
   int version = 0;
   if (!archive.ReadInt(&version))
