@@ -233,6 +233,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_PBR_MATERIAL_ANISOTROPIC_ROTATION           L"pbr-anisotropic-rotation"
 #define ON_PBR_MATERIAL_BASE_COLOR                     L"pbr-base-color"
 #define ON_PBR_MATERIAL_CLEARCOAT                      L"pbr-clearcoat"
+#define ON_PBR_MATERIAL_CLEARCOAT_BUMP                 L"pbr-clearcoat-bump"
 #define ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS            L"pbr-clearcoat-roughness"
 #define ON_PBR_MATERIAL_EMISSION_COLOR                 L"pbr-emission"
 #define ON_PBR_MATERIAL_METALLIC                       L"pbr-metallic"
@@ -295,6 +296,12 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_KIND_MATERIAL     L"material"
 #define ON_KIND_ENVIRONMENT  L"environment"
 #define ON_KIND_TEXTURE      L"texture"
+
+// Standard texture child slot names.
+#define ON_TEXTURE_CHILD_SLOT_NAME_BITMAP_TEXTURE         L"bitmap-texture"
+#define ON_TEXTURE_CHILD_SLOT_NAME_BUMP_TEXTURE           L"bump-texture"
+#define ON_TEXTURE_CHILD_SLOT_NAME_TRANSPARENCY_TEXTURE   L"transparency-texture"
+#define ON_TEXTURE_CHILD_SLOT_NAME_ENVIRONMENT_TEXTURE    L"environment-texture"
 
 #define ON_RDK_POSTFIX_SECTION  L"-section"
 

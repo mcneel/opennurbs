@@ -323,6 +323,9 @@ public:
 	bool DecomposeAffine(ON_3dVector& Translation, ON_Xform& Linear) const;
 	bool DecomposeAffine(ON_Xform& Linear, ON_3dVector& Translation ) const;
 
+  // Convert an ON_Xform into the offset, repeat and rotation values used in ON_Texture and similar classes.
+  void DecomposeTextureMapping(ON_3dVector& offset, ON_3dVector& repeat, ON_3dVector& rotation) const;
+
 	// true if this is a proper rotation. 
 	bool IsRotation() const;
 
@@ -1015,6 +1018,8 @@ Notes:
   static const ON_Xform MirrorTransformation(
     ON_PlaneEquation mirror_plane
   );
+
+  static const ON_Xform TextureMapping(const ON_3dVector& offset, const ON_3dVector& repeat, const ON_3dVector& rotation);
 
   // Description: The ChangeBasis() function is overloaded 
   //   and provides several

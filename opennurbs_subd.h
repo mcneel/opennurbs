@@ -6655,6 +6655,7 @@ public:
     ON_SubDComponentLocation component_location
   );
 
+
   /*
   Description:
     Extrude entire subd bay adding a ring of faces around the boundary and moving the original subd.

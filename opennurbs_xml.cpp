@@ -3947,7 +3947,10 @@ void ON_XMLUserData::SetToDefaultsImpl(int) const
 
 bool ON_XMLUserData::Archive(void) const
 {
-  return true;
+  // 12th July 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-75697
+  // We only want to archive the user data if there's something useful in the XML. For there
+  // to be something useful in the XML, the root node must have at least one child node.
+  return _private->m_XMLRoot.ChildCount() > 0;
 }
 
 bool ON_XMLUserData::Read(ON_BinaryArchive& archive)

@@ -2378,6 +2378,61 @@ ON_Texture::WRAP ON_Texture::WrapFromUnsigned( unsigned int wrap_as_unsigned )
   return ON_Texture::WRAP::repeat_wrap;
 }
 
+void ON_Texture::SetRepeat(const ON_2dVector& repeat)
+{
+  ON_3dVector offset, rotation, r;
+
+  m_uvw.DecomposeTextureMapping(offset, r, rotation);
+
+  m_uvw = ON_Xform::TextureMapping(offset, ON_3dVector(repeat.x, repeat.y, 0.0), rotation);
+}
+
+ON_2dVector ON_Texture::Repeat() const
+{
+  ON_3dVector offset, rotation, repeat;
+
+  m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
+
+  return ON_2dVector(repeat.x, repeat.y);
+}
+
+void ON_Texture::SetOffset(const ON_2dVector& offset)
+{
+  ON_3dVector o, rotation, repeat;
+
+  m_uvw.DecomposeTextureMapping(o, repeat, rotation);
+
+  m_uvw = ON_Xform::TextureMapping(ON_3dVector(offset.x, offset.y, 0.0), repeat, rotation);
+}
+
+ON_2dVector ON_Texture::Offset() const
+{
+  ON_3dVector offset, rotation, repeat;
+
+  m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
+
+  return ON_2dVector(offset.x, offset.y);
+}
+
+void ON_Texture::SetRotation(double rotation)
+{
+  ON_3dVector offset, r, repeat;
+
+  m_uvw.DecomposeTextureMapping(offset, repeat, r);
+
+  m_uvw = ON_Xform::TextureMapping(offset, repeat, ON_3dPoint(0.0, 0.0, rotation));
+}
+
+double ON_Texture::Rotation() const
+{
+  ON_3dVector offset, rotation, repeat;
+
+  m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
+
+  return rotation.z;
+}
+
+
 bool ON_Texture::Read(
   ON_BinaryArchive& binary_archive
   )
@@ -7664,23 +7719,23 @@ const ON_Material& ON_PhysicallyBasedMaterial::Material(void) const
   return *Implementation().material;
 }
 
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BaseColor(void) { return L"pbr-base-color"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BRDF(void) { return L"pbr-brdf"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Subsurface(void) { return L"pbr-subsurface"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringColor(void) { return L"pbr-subsurface-scattering-color"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringRadius(void) { return L"pbr-subsurface-scattering-radius"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Specular(void) { return L"pbr-specular"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SpecularTint(void) { return L"pbr-specular-tint"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Metallic(void) { return L"pbr-metallic"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Roughness(void) { return L"pbr-roughness"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Anisotropic(void) { return L"pbr-anisotropic"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::AnisotropicRotation(void) { return L"pbr-anisotropic-rotation"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Sheen(void) { return L"pbr-sheen"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SheenTint(void) { return L"pbr-sheen-tint"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Clearcoat(void) { return L"pbr-clearcoat"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatRoughness(void) { return L"pbr-clearcoat-roughness"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatBump(void) { return L"pbr-clearcoat-bump"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityIor(void) { return L"pbr-opacity-ior"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Opacity(void) { return L"pbr-opacity"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityRoughness(void) { return L"pbr-opacity-roughness"; }
-ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Emission(void) { return L"pbr-emission"; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Anisotropic(void)                { return ON_PBR_MATERIAL_ANISOTROPIC                 ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::AnisotropicRotation(void)        { return ON_PBR_MATERIAL_ANISOTROPIC_ROTATION        ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BaseColor(void)                  { return ON_PBR_MATERIAL_BASE_COLOR                  ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::BRDF(void)                       { return ON_PBR_MATERIAL_BRDF                        ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Clearcoat(void)                  { return ON_PBR_MATERIAL_CLEARCOAT                   ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatBump(void)              { return ON_PBR_MATERIAL_CLEARCOAT_BUMP              ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::ClearcoatRoughness(void)         { return ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS         ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Emission(void)                   { return ON_PBR_MATERIAL_EMISSION_COLOR              ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Metallic(void)                   { return ON_PBR_MATERIAL_METALLIC                    ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Opacity(void)                    { return ON_PBR_MATERIAL_OPACITY                     ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityIor(void)                 { return ON_PBR_MATERIAL_OPACITY_IOR                 ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::OpacityRoughness(void)           { return ON_PBR_MATERIAL_OPACITY_ROUGHNESS           ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Roughness(void)                  { return ON_PBR_MATERIAL_ROUGHNESS                   ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Sheen(void)                      { return ON_PBR_MATERIAL_SHEEN                       ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SheenTint(void)                  { return ON_PBR_MATERIAL_SHEEN_TINT                  ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Specular(void)                   { return ON_PBR_MATERIAL_SPECULAR                    ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SpecularTint(void)               { return ON_PBR_MATERIAL_SPECULAR_TINT               ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::Subsurface(void)                 { return ON_PBR_MATERIAL_SUBSURFACE                  ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringColor(void)  { return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR ; }
+ON_wString ON_PhysicallyBasedMaterial::ParametersNames::SubsurfaceScatteringRadius(void) { return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS; }

@@ -1057,16 +1057,22 @@ void ON_DecalCollection::RemoveAllDecals(void)
 
 void ON_DecalCollection::ClearDecalArray(void)
 {
-  for (int i = 0; i < m_decals.Count(); i++)
+  // 12th July 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-75697
+  // Only call SetChanged() if a decal is actually deleted.
+  const int count = m_decals.Count();
+  if (count > 0)
   {
-    delete m_decals[i];
+    for (int i = 0; i < count; i++)
+    {
+      delete m_decals[i];
+    }
+
+    m_decals.Destroy();
+
+    SetChanged();
   }
 
-  m_decals.Destroy();
-
   m_populated = false;
-
-  SetChanged();
 }
 
 const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollection& dc)
@@ -1129,7 +1135,12 @@ void ON_DecalCollection::UpdateUserData(unsigned int archive_3dm_version) const
 {
   if (m_changed)
   {
-    SetRDKObjectInformation(*m_attr, m_root_node.String(), archive_3dm_version);
+    // 12th July 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-75697
+    // For there to be something useful in the XML, the root node must have at least one child node.
+    if (m_root_node.ChildCount() > 0)
+    {
+      SetRDKObjectInformation(*m_attr, m_root_node.String(), archive_3dm_version);
+    }
 
     m_changed = false;
   }

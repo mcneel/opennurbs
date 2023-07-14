@@ -1677,6 +1677,85 @@ bool ON_Xform::DecomposeAffine(ON_Xform& L, ON_3dVector& T) const
 	return rc;
 }
 
+void ON_Xform::DecomposeTextureMapping(ON_3dVector& offset, ON_3dVector& repeat, ON_3dVector& rotation) const
+{
+  ON_Xform xform = *this;
+
+  repeat.x = sqrt(xform[0][0] * xform[0][0] + xform[0][1] * xform[0][1] + xform[0][2] * xform[0][2]);
+  repeat.y = sqrt(xform[1][0] * xform[1][0] + xform[1][1] * xform[1][1] + xform[1][2] * xform[1][2]);
+  repeat.z = sqrt(xform[2][0] * xform[2][0] + xform[2][1] * xform[2][1] + xform[2][2] * xform[2][2]);
+
+  const ON_Xform S = TextureMapping(ON_3dVector::ZeroVector, repeat, ON_3dVector::ZeroVector).Inverse();
+
+  xform = S * xform;
+
+  const double dSinBeta = -xform[2][0];
+
+  double dCosBeta = sqrt(1.0 - dSinBeta * dSinBeta);
+  if (dCosBeta < 0.0)
+  {
+    dCosBeta = -dCosBeta;
+  }
+
+  double dSinAlpha, dCosAlpha, dSinGamma, dCosGamma;
+
+  if (dCosBeta < 1e-6)
+  {
+    dSinAlpha = -xform[1][2];
+    dCosAlpha = xform[1][1];
+    dSinGamma = 0.0;
+    dCosGamma = 1.0;
+  }
+  else
+  {
+    dSinAlpha = xform[2][1] / dCosBeta;
+    dCosAlpha = xform[2][2] / dCosBeta;
+    dSinGamma = xform[1][0] / dCosBeta;
+    dCosGamma = xform[0][0] / dCosBeta;
+  }
+
+  rotation.x = atan2(dSinAlpha, dCosAlpha);
+  rotation.y = atan2(dSinBeta, dCosBeta);
+  rotation.z = atan2(dSinGamma, dCosGamma);
+
+  const ON_Xform R = TextureMapping(ON_3dVector::ZeroVector, repeat, rotation).Inverse();
+
+  const ON_Xform T = R * *this;
+
+  offset.x = -T[0][3];
+  offset.y = -T[1][3];
+  offset.z = -T[2][3];
+}
+
+//static
+const ON_Xform ON_Xform::TextureMapping(const ON_3dVector& offset, const ON_3dVector& repeat, const ON_3dVector& rotation)
+{
+  ON_Xform S = ON_Xform::DiagonalTransformation(repeat.x, repeat.y, repeat.z);
+
+  ON_Xform R;
+  R.Rotation(rotation.x, ON_3dVector::XAxis, ON_3dPoint::Origin);
+
+  ON_3dVector vRotate = ON_3dVector::YAxis;
+  vRotate.Transform(R.Inverse());
+
+  ON_Xform Ry;
+  Ry.Rotation(rotation.y, vRotate, ON_3dPoint::Origin);
+
+  R = R * Ry;
+
+  vRotate = ON_3dVector::ZAxis;
+  vRotate.Transform(R.Inverse());
+
+  ON_Xform Rz;
+  Rz.Rotation(rotation.z, vRotate, ON_3dPoint::Origin);
+
+  R = R * Rz;
+
+  const ON_Xform T = ON_Xform::TranslationTransformation(-offset.x, -offset.y, -offset.z);
+
+  return S * R * T;
+}
+
 
 bool ON_Xform::IsZero() const
 {
