@@ -22,114 +22,6 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-static void ON_ConstructXform(double scale_x, double scale_y, double scale_z,
-                              double angle_x, double angle_y, double angle_z,
-                              double trans_x, double trans_y, double trans_z, ON_Xform& xform)
-{
-  // All angles in degrees.
-
-  const ON_Xform S = ON_Xform::DiagonalTransformation(scale_x, scale_y, scale_z);
-
-  ON_Xform R;
-  R.Rotation(ON_RadiansFromDegrees(angle_x), ON_3dVector::XAxis, ON_3dPoint::Origin);
-
-  auto vRotate = ON_3dVector::YAxis;
-  vRotate.Transform(R.Inverse());
-
-  ON_Xform Ry;
-  Ry.Rotation(ON_RadiansFromDegrees(angle_y), vRotate, ON_3dPoint::Origin);
-
-  R = R * Ry;
-
-  vRotate = ON_3dVector::ZAxis;
-  vRotate.Transform(R.Inverse());
-
-  ON_Xform Rz;
-  Rz.Rotation(ON_RadiansFromDegrees(angle_z), vRotate, ON_3dPoint::Origin);
-
-  R = R * Rz;
-
-  const auto T = ON_Xform::TranslationTransformation(-trans_x, -trans_y, -trans_z);
-
-  xform = S * R * T;
-}
-
-static void ON_DeconstructXform(const ON_Xform& xformIn,
-                                double& scale_x, double& scale_y, double& scale_z,
-                                double& angle_x, double& angle_y, double& angle_z,
-                                double& trans_x, double& trans_y, double& trans_z)
-{
-  // Returns all angles in degrees.
-
-  ON_Xform xform = xformIn;
-
-  scale_x = sqrt(xform[0][0] * xform[0][0] + xform[0][1] * xform[0][1] + xform[0][2] * xform[0][2]);
-  scale_y = sqrt(xform[1][0] * xform[1][0] + xform[1][1] * xform[1][1] + xform[1][2] * xform[1][2]);
-  scale_z = sqrt(xform[2][0] * xform[2][0] + xform[2][1] * xform[2][1] + xform[2][2] * xform[2][2]);
-
-  ON_Xform S;
-  ON_ConstructXform(scale_x, scale_y, scale_z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, S);
-  S.Invert();
-
-  xform = S * xform;
-
-  const double dSinBeta = -xform[2][0];
-
-  double dCosBeta = sqrt(1.0 - dSinBeta * dSinBeta);
-  if (dCosBeta < 0.0)
-  {
-    dCosBeta = -dCosBeta;
-  }
-
-  double dSinAlpha, dCosAlpha, dSinGamma, dCosGamma;
-
-  if (dCosBeta < 1e-6)
-  {
-    dSinAlpha = -xform[1][2];
-    dCosAlpha = xform[1][1];
-    dSinGamma = 0.0;
-    dCosGamma = 1.0;
-  }
-  else
-  {
-    dSinAlpha = xform[2][1] / dCosBeta;
-    dCosAlpha = xform[2][2] / dCosBeta;
-    dSinGamma = xform[1][0] / dCosBeta;
-    dCosGamma = xform[0][0] / dCosBeta;
-  }
-
-  angle_x = (ON_DegreesFromRadians(atan2(dSinAlpha, dCosAlpha)));
-  angle_y = (ON_DegreesFromRadians(atan2(dSinBeta, dCosBeta)));
-  angle_z = (ON_DegreesFromRadians(atan2(dSinGamma, dCosGamma)));
-
-  ON_Xform R;
-  ON_ConstructXform(scale_x, scale_y, scale_z, angle_x, angle_y, angle_z, 0.0, 0.0, 0.0, R);
-  R.Invert();
-
-  ON_Xform T = R * xformIn;
-
-  trans_x = -T[0][3];
-  trans_y = -T[1][3];
-  trans_z = -T[2][3];
-}
-
-struct XF
-{
-  double scale_x = 0.0, scale_y = 0.0, scale_z = 0.0;
-  double angle_x = 0.0, angle_y = 0.0, angle_z = 0.0;
-  double trans_x = 0.0, trans_y = 0.0, trans_z = 0.0;
-};
-
-static void ON_DeconstructXform(const ON_Xform& xform, XF& xf)
-{
-  ON_DeconstructXform(xform, xf.scale_x, xf.scale_y, xf.scale_z, xf.angle_x, xf.angle_y, xf.angle_z, xf.trans_x, xf.trans_y, xf.trans_z);
-}
-
-static void ON_ConstructXform(const XF& xf, ON_Xform& xform)
-{
-  ON_ConstructXform(xf.scale_x, xf.scale_y, xf.scale_z, xf.angle_x, xf.angle_y, xf.angle_z, xf.trans_x, xf.trans_y, xf.trans_z, xform);
-}
-
 ON_OBJECT_IMPLEMENT(ON_Environment, ON_Object, "94BCA4D5-0FC7-435E-95F9-22F3927F9B2E");
 
 class ON_Environment::CImpl
@@ -1027,16 +919,66 @@ void ON_RenderContent::SetChildSlotName(const wchar_t* csn)
   _private->SetPropertyValue(ON_RENDER_CONTENT_CHILD_SLOT_NAME, csn);
 }
 
+#define MAT_POSTFIX_ON            L"on"
+#define MAT_POSTFIX_AMOUNT        L"amount"
+#define MAT_POSTFIX_DOUBLE_AMOUNT L"double-amount"
+#define MAT_POSTFIX_FILTER_ON     L"filter-on"
+
 bool ON_RenderContent::ChildSlotOn(const wchar_t* child_slot_name) const
 {
-  const auto s = ON_wString(child_slot_name) + L"-on";
+  const auto s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_ON;
   return GetParameter(s).AsBool();
 }
 
 bool ON_RenderContent::SetChildSlotOn(bool on, const wchar_t* child_slot_name)
 {
-  const auto s = ON_wString(child_slot_name) + L"-on";
+  const auto s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_ON;
   return SetParameter(s, on);
+}
+
+double ON_RenderContent::ChildSlotAmount(const wchar_t* child_slot_name, double default_value) const
+{
+  // This is complicated. See https://mcneel.myjetbrains.com/youtrack/issue/RH-58417
+
+  // Try to get the new double amount value in the range 0..1.
+  auto s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_DOUBLE_AMOUNT;
+  auto v = GetParameter(s);
+  if (!v.IsNull())
+  {
+    // Got it, so return it in the range 0..100.
+    return v.AsDouble() * 100.0;
+  }
+
+  // Couldn't get it so get the legacy amount value. This value is problematic (which is why we added
+  // the new double amount). The reason is that originally, the value was supposed to be in the range
+  // 0..100, and the Physically Based material is an example of a material that does this. But due to
+  // an oversight, the Custom Material saved this in the range 0..1. This means that here, in generic
+  // code that doesn't know which class saved the data, we have to figure out what range it's in by
+  // looking at the variant's type.
+  s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_AMOUNT;
+  v = GetParameter(s);
+  if (!v.IsNull())
+  {
+    if (v.Type() == ON_XMLVariant::Types::Integer)
+    {
+      // Got it as an integer so it's already in the range 0..100.
+      return double(v.AsInteger());
+    }
+    else
+    {
+      // The double value is in the range 0..1. Return it in the range 0..100.
+      return v.AsDouble() * 100.0;
+    }
+  }
+
+  return default_value;
+}
+
+bool ON_RenderContent::SetChildSlotAmount(double amount, const wchar_t* child_slot_name)
+{
+  const auto s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_DOUBLE_AMOUNT;
+
+  return SetParameter(s, amount / 100.0);
 }
 
 const ON_RenderContent* ON_RenderContent::FindChild(const wchar_t* child_slot_name) const
@@ -1436,30 +1378,31 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_OFFSET, v))
     {
-      XF xf;
-      ON_DeconstructXform(tex.m_uvw, xf);
+      ON_3dVector offset, rotation, repeat;
+      tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
       const auto pt = v.As2dPoint();
-      xf.trans_x = pt[0];
-      xf.trans_y = pt[1];
-      ON_ConstructXform(xf, tex.m_uvw);
+      offset.x = pt[0];
+      offset.y = pt[1];
+      tex.m_uvw = ON_Xform::TextureMapping(offset, repeat, rotation);
     }
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_REPEAT, v))
     {
-      XF xf;
-      ON_DeconstructXform(tex.m_uvw, xf);
+      ON_3dVector offset, rotation, repeat;
+      tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
       const auto pt = v.As2dPoint();
-      xf.scale_x = pt[0];
-      xf.scale_y = pt[1];
-      ON_ConstructXform(xf, tex.m_uvw);
+      repeat.x = pt[0];
+      repeat.y = pt[1];
+      tex.m_uvw = ON_Xform::TextureMapping(offset, repeat, rotation);
     }
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_ROTATION, v))
     {
-      XF xf;
-      ON_DeconstructXform(tex.m_uvw, xf);
-      xf.angle_z = v.AsDouble();
-      ON_ConstructXform(xf, tex.m_uvw);
+      ON_3dVector offset, rotation, repeat;
+      tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
+      const auto pt = v.As2dPoint();
+      rotation.z = pt[0] * ON_RADIANS_TO_DEGREES;
+      tex.m_uvw = ON_Xform::TextureMapping(offset, repeat, rotation);
     }
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_WRAP_TYPE, v))
@@ -1477,36 +1420,43 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR, v))
     {
-        tex.m_transparent_color = v.AsColor(); // ANDY CHECK -- IS THIS RIGHT?
+      tex.m_transparent_color = v.AsColor();
     }
+  }
+
+  tex.m_mode = ON_Texture::MODE::decal_texture;
+  tex.m_transparency_texture_id = ON_nil_uuid;
+
+  //tex.m_bTreatAsLinear          ??? Andy: This is on CRhRdkTexture. John: It's computed; not in the XML.
+  //tex.m_blend_constant_RGB      ???
+
+  const ON_XMLVariant v = GetParameter(L"filter");
+  tex.m_minfilter = tex.m_magfilter = v.AsBool() ? ON_Texture::FILTER::linear_filter
+                                                 : ON_Texture::FILTER::nearest_filter;
+
+  const ON_wString child_slot_name = ChildSlotName();
+
+  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_BITMAP_TEXTURE)
+    tex.m_type = ON_Texture::TYPE::bitmap_texture;
+  else
+  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_BUMP_TEXTURE)
+    tex.m_type = ON_Texture::TYPE::bump_texture;
+  else
+  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_TRANSPARENCY_TEXTURE)
+    tex.m_type = ON_Texture::TYPE::transparency_texture;
+  else
+  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_ENVIRONMENT_TEXTURE)
+  {
+    tex.m_type = ON_Texture::TYPE::emap_texture;
+    // emap_texture is OBSOLETE - set m_mapping_channel_id = ON_MappingChannel::emap_mapping
+    // tex.m_mapping_channel_id = ON_MappingChannel::emap_mapping; // ERROR!
   }
 
   const auto* parent = Parent();
   if (nullptr != parent)
   {
-    const ON_wString csn = ChildSlotName();
-    tex.m_bOn = parent->ChildSlotOn(csn);
-
-// TODO: Discuss with Andy.
-//  tex.m_type                    ???
-//  tex.m_mode                    ???
-//  tex.m_bTreatAsLinear          ???
-//  tex.m_border_color            ???
-//  tex.m_transparency_texture_id ???
-//  tex.m_bump_scale              ???
-//  tex.m_blend_A0                ???
-//  tex.m_blend_A1                ???
-//  tex.m_blend_A2                ???
-//  tex.m_blend_A3                ???
-//  tex.m_blend_RGB0              ???
-//  tex.m_blend_RGB1              ???
-//  tex.m_blend_RGB2              ???
-//  tex.m_blend_RGB3              ???
-//  tex.m_blend_order             ???
-//  tex.m_blend_constant_A        ???
-//  tex.m_blend_constant_RGB      ???
-//  tex.m_minfilter               ???
-//  tex.m_magfilter               ???
+    tex.m_bOn = parent->ChildSlotOn(child_slot_name);
+    tex.m_blend_constant_A = parent->ChildSlotAmount(child_slot_name, 100.0) / 100.0;
   }
 
   return tex;

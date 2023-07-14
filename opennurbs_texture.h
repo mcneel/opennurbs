@@ -405,6 +405,16 @@ public:
   // Texture coordinate transformation.
   ON_Xform m_uvw = ON_Xform::IdentityTransformation;
 
+  // These functions are helpers for m_uvw
+  void SetRepeat(const ON_2dVector&);
+  ON_2dVector Repeat() const;
+
+  void SetOffset(const ON_2dVector&);
+  ON_2dVector Offset() const;
+
+  void SetRotation(double);
+  double Rotation() const;
+
   // If ON_UNSET_COLOR != m_border_color, then this color
   // is used when the texture coordinates are <=0 or >=1
   // and the m_wrap* value is clamp_wrap.

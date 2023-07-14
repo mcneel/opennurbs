@@ -206,7 +206,7 @@ bool ON_EmbeddedFile::LoadFromBuffer(ON_Buffer& buf)
 
   // Allocate a buffer for the data.
   auto& d = m_impl->m_data;
-  d.SetLength(buf.Size());
+  d.SetLength(size_t(buf.Size()));
 
   // Load the buffer from 'buf'.
   if (buf.Read(d.m_length, d.m_buffer.get()) != d.m_length)
@@ -251,7 +251,7 @@ bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
   if (!archive.ReadCompressedBuffer(uncompressed_size, d.m_buffer.get(), &bFailedCRC) && !bFailedCRC)
       return false;
 
-  d.m_compressed_length = archive.CurrentPosition() - pos_before;
+  d.m_compressed_length = size_t(archive.CurrentPosition() - pos_before);
 
   return true;
 }

@@ -204,6 +204,16 @@ public:
   // Returns: True if successful, else false.
   virtual bool SetChildSlotOn(bool on, const wchar_t* child_slot_name);
 
+  // Returns the blend amount of the texture with the specified child slot name.
+  // The returned value is typically in the range 0..100 but it can be any positive or negative value.
+  // If there is no child with the specified child slot name, the method returns 'default_value'.
+  virtual double ChildSlotAmount(const wchar_t* child_slot_name, double default_value=ON_UNSET_VALUE) const;
+
+  // Sets the blend amount of the texture with the specified child slot name.
+  // Param amount is typically in the range 0..100 but it can be any positive or negative value.
+  // Returns: True if successful, else false.
+  virtual bool SetChildSlotAmount(double amount, const wchar_t* child_slot_name);
+
   // Deletes any existing child with the specified child slot name.
   // Returns: True if successful, else false.
   virtual bool DeleteChild(const wchar_t* child_slot_name);

@@ -1069,6 +1069,17 @@ bool ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 
 bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
 {
+  if (m_private)
+  {
+    // Have the decal collection update the user data if anything has changed and there
+    // is actually decal data for which a user data object is needed. Note that this is
+    // not actually needed when running Rhino because the RDK decal UI directly updates
+    // the user data when changes are made. This is only needed when using ONX_Model and
+    // File3dm outside of Rhino, in case the programmer sets a decal property.
+    const unsigned int archive_3dm_version = file.Archive3dmVersion();
+    m_private->m_decals.UpdateUserData(archive_3dm_version);
+  }
+
   unsigned char c;
   // 29 Nov. 2009 S. Baer
   // Chunk version updated to 2.1 in order to support m_display_order
@@ -1403,10 +1414,6 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
         rc = file.WriteBool(HatchBoundaryVisible());
         if (!rc) break;
       }
-
-      // Have the decal collection update the user data if anything has changed.
-      const unsigned int archive_3dm_version = file.Archive3dmVersion();
-      m_private->m_decals.UpdateUserData(archive_3dm_version);
     }
 
     // 15 Jun 2022 S. Baer

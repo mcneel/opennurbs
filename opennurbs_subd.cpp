@@ -19877,7 +19877,6 @@ unsigned ON_SubDVertexQuadSector::SubdivisionLevel() const
 }
 
 
-
 static unsigned int Internal_MarkStuffAndMaybeMoveVertices(
   const ON_SubD& subd,
   const ON_SubDComponentPtr* cptr_list,
@@ -20167,6 +20166,8 @@ static unsigned int Internal_TransformComponents(
     list_face_count
   );
 }
+
+
 
 unsigned int ON_SubD::TransformComponents(
   const ON_Xform& xform,
