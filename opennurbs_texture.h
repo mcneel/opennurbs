@@ -317,8 +317,9 @@ public:
     // rendering physically based (PBR) materials.
     pbr_base_color_texture            = 1U,   //Reuse diffuse texture.
     pbr_subsurface_texture            = 10U,
-    pbr_subsurface_scattering_texture = 11U,
-    pbr_subsurface_scattering_radius_texture  = 12U,
+    /* Deprecated */ pbr_subsurface_scattering_texture = 11U,
+    pbr_subsurface_scattering_color_texture  = 11U,
+    pbr_subsurface_scattering_radius_texture = 12U,
     pbr_metallic_texture              = 13U,
     pbr_specular_texture              = 14U,
     pbr_specular_tint_texture         = 15U,

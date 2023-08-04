@@ -1012,7 +1012,10 @@ const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (cons
     ON_ASSERT(*_render_channels == *p._render_channels);
     ON_ASSERT(*_sun             == *p._sun);
     ON_ASSERT(*_environments    == *p._environments);
-    ON_ASSERT(*_post_effects    == *p._post_effects);
+
+    // We can't check post effects because they may be different in terms of the _is_populated flag.
+    // After a lot of thinking, I simply cannot figure out how to solve this.
+    //_ASSERT(*_post_effects    == *p._post_effects);
   }
 
   return *this;

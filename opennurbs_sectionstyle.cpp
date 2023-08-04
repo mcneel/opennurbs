@@ -37,7 +37,7 @@ public:
   ON_Color m_hatch_print_color = ON_Color::UnsetColor;
   bool m_boundary_visible = true;
   double m_boundary_width_scale = 3.0;
-
+  std::shared_ptr<ON_Linetype> m_custom_linetype;
   bool operator==(const ON_SectionStylePrivate& other) const;
 };
 
@@ -45,6 +45,20 @@ static ON_SectionStylePrivate DefaultSectionStylePrivate;
 
 bool ON_SectionStylePrivate::operator==(const ON_SectionStylePrivate& other) const
 {
+  {
+    const ON_Linetype* customThis = m_custom_linetype.get();
+    const ON_Linetype* customOther = other.m_custom_linetype.get();
+    if (nullptr == customThis && customOther)
+      return false;
+    if (customThis && nullptr == customOther)
+      return false;
+    if (customThis && customOther)
+    {
+      if ((*customThis) != (*customOther))
+        return false;
+    }
+  }
+
   return m_background_fill_mode == other.m_background_fill_mode &&
     m_fill_rule == other.m_fill_rule &&
     m_hatch_index == other.m_hatch_index &&
@@ -195,15 +209,16 @@ enum ON_SectionStyleTypeCodes : unsigned char
   HatchScale = 8,
   HatchRotation = 9,
   HatchColor = 10,
+  BoundaryLinetype = 11,
 
-  LastSectionStyleTypeCode = 10
+  LastSectionStyleTypeCode = 11
 };
 
 bool ON_SectionStyle::Write( ON_BinaryArchive& file) const
 {
   bool rc = false;
   {
-    const int minor_version = 0;
+    const int minor_version = 1;
     if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version))
       return false;
     for (;;)
@@ -298,6 +313,17 @@ bool ON_SectionStyle::Write( ON_BinaryArchive& file) const
         if (!file.WriteColor(HatchColor(false)))
           break;
         if (!file.WriteColor(HatchColor(true)))
+          break;
+      }
+
+      // chunk version 1.1 fields
+      const ON_Linetype* customLinetype = BoundaryLinetype();
+      if (customLinetype != nullptr)
+      {
+        const unsigned char itemType = ON_SectionStyleTypeCodes::BoundaryLinetype; // 11
+        if (!file.WriteChar(itemType))
+          break;
+        if (!customLinetype->Write(file))
           break;
       }
 
@@ -450,7 +476,15 @@ bool ON_SectionStyle::Read( ON_BinaryArchive& file)
         if (!file.ReadChar(&item_id))
           break;
       }
-
+      if (ON_SectionStyleTypeCodes::BoundaryLinetype == item_id) // 11
+      {
+        ON_Linetype lt;
+        if(!lt.Read(file))
+          break;
+        SetBoundaryLinetype(lt);
+        if (!file.ReadChar(&item_id))
+          break;
+      }
 
       if (item_id > ON_SectionStyleTypeCodes::LastSectionStyleTypeCode)
       {
@@ -629,4 +663,23 @@ void ON_SectionStyle::SetHatchColor(const ON_Color& color, bool print)
     m_private->m_hatch_print_color = color;
   else
     m_private->m_hatch_color = color;
+}
+
+const ON_Linetype* ON_SectionStyle::BoundaryLinetype() const
+{
+  if (m_private)
+    return m_private->m_custom_linetype.get();
+  return nullptr;
+}
+void ON_SectionStyle::SetBoundaryLinetype(const ON_Linetype& linetype)
+{
+  if (nullptr == m_private)
+    m_private = new ON_SectionStylePrivate();
+
+  m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
+}
+void ON_SectionStyle::RemoveBoundaryLinetype()
+{
+  if (m_private)
+    m_private->m_custom_linetype.reset();
 }

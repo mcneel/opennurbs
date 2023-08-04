@@ -869,22 +869,42 @@ ON_RenderContent::ChildIterator ON_RenderContent::GetChildIterator(void) const
   return ChildIterator(this);
 }
 
-ON_RenderContent* ON_RenderContent::Parent(void) const
+ON_RenderContent* ON_RenderContent::Parent(void)
 {
   return _private->m_parent;
 }
 
-ON_RenderContent* ON_RenderContent::FirstChild(void) const
+const ON_RenderContent* ON_RenderContent::Parent(void) const
+{
+  return _private->m_parent;
+}
+
+ON_RenderContent* ON_RenderContent::FirstChild(void)
 {
   return _private->m_first_child;
 }
 
-ON_RenderContent* ON_RenderContent::NextSibling(void) const
+const ON_RenderContent* ON_RenderContent::FirstChild(void) const
+{
+  return _private->m_first_child;
+}
+
+ON_RenderContent* ON_RenderContent::NextSibling(void)
 {
   return _private->m_next_sibling;
 }
 
-ON_RenderContent& ON_RenderContent::TopLevel(void) const
+const ON_RenderContent* ON_RenderContent::NextSibling(void) const
+{
+  return _private->m_next_sibling;
+}
+
+ON_RenderContent& ON_RenderContent::TopLevel(void)
+{
+  return _private->TopLevel();
+}
+
+const ON_RenderContent& ON_RenderContent::TopLevel(void) const
 {
   return _private->TopLevel();
 }
@@ -979,6 +999,11 @@ bool ON_RenderContent::SetChildSlotAmount(double amount, const wchar_t* child_sl
   const auto s = ON_wString(child_slot_name) + L"-" MAT_POSTFIX_DOUBLE_AMOUNT;
 
   return SetParameter(s, amount / 100.0);
+}
+
+ON_RenderContent* ON_RenderContent::FindChild(const wchar_t* child_slot_name)
+{
+  return _private->FindChild(child_slot_name);
 }
 
 const ON_RenderContent* ON_RenderContent::FindChild(const wchar_t* child_slot_name) const
@@ -1205,7 +1230,7 @@ ON_Material ON_RenderMaterial::ToOnMaterial(void) const
 
     mat.m_textures.Destroy();
 
-    // Iterator over the children.
+    // Iterate over the children.
     int count = 1;
     while (true)
     {
@@ -1255,6 +1280,179 @@ ON_Material ON_RenderMaterial::ToOnMaterial(void) const
 ON_RenderContent* ON_RenderMaterial::NewRenderContent(void) const
 {
   return new ON_RenderMaterial;
+}
+
+// This usage enum was copied from the RDK but the values are not important because
+// this is only used internally to ON_RenderTexture::ToOnTexture().
+enum class ChildSlotUsage : unsigned int
+{
+  None                             = 0x0000000,
+  Diffuse                          = 0x0000001,
+  Transparency                     = 0x0000002,
+  Bump                             = 0x0000004,
+  Environment                      = 0x0000008,
+  PBR_base_color                   = Diffuse,
+  PBR_opacity                      = Transparency,
+  PBR_bump                         = Bump,
+  PBR_subsurface                   = 0x0000020,
+  PBR_subsurface_scattering_color  = 0x0000040,
+  PBR_subsurface_scattering_radius = 0x0000080,
+  PBR_metallic                     = 0x0000100,
+  PBR_specular                     = 0x0000200,
+  PBR_specular_tint                = 0x0000400,
+  PBR_roughness                    = 0x0000800,
+  PBR_anisotropic                  = 0x0001000,
+  PBR_anisotropic_rotation         = 0x0002000,
+  PBR_sheen                        = 0x0004000,
+  PBR_sheen_tint                   = 0x0008000,
+  PBR_clearcoat                    = 0x0010000,
+  PBR_clearcoat_roughness          = 0x0020000,
+  PBR_opacity_ior                  = 0x0040000,
+  PBR_opacity_roughness            = 0x0080000,
+  PBR_emission                     = 0x0100000,
+  PBR_ambient_occlusion            = 0x0200000,
+  PBR_displacement                 = 0x0800000,
+  PBR_clearcoat_bump               = 0x1000000,
+  PBR_alpha                        = 0x2000000,
+};
+
+static ChildSlotUsage PBR_ChildSlotNameToUsage(const wchar_t* csn)
+{
+  using U = ChildSlotUsage;
+
+  // Most of the child slot names have equivalent parameter names. Some do not and are hard-coded here.
+
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_ALPHA))                        return U::PBR_alpha;
+  if (0 == on_wcsicmp(csn, L"pbr-ambient-occlusion"))                     return U::PBR_ambient_occlusion;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_ANISOTROPIC))                  return U::PBR_anisotropic;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_ANISOTROPIC_ROTATION))         return U::PBR_anisotropic_rotation;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_BASE_COLOR))                   return U::PBR_base_color;
+  if (0 == on_wcsicmp(csn, L"pbr-bump"))                                  return U::PBR_bump;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_CLEARCOAT))                    return U::PBR_clearcoat;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_CLEARCOAT_BUMP))               return U::PBR_clearcoat_bump;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS))          return U::PBR_clearcoat_roughness;
+  if (0 == on_wcsicmp(csn, L"pbr-displacement"))                          return U::PBR_displacement;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_EMISSION_COLOR))               return U::PBR_emission;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_METALLIC))                     return U::PBR_metallic;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_OPACITY))                      return U::PBR_opacity;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_OPACITY_IOR))                  return U::PBR_opacity_ior;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_OPACITY_ROUGHNESS))            return U::PBR_opacity_roughness;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_ROUGHNESS))                    return U::PBR_roughness;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SHEEN))                        return U::PBR_sheen;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SHEEN_TINT))                   return U::PBR_sheen_tint;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SPECULAR))                     return U::PBR_specular;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SPECULAR_TINT))                return U::PBR_specular_tint;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SUBSURFACE))                   return U::PBR_subsurface;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR))  return U::PBR_subsurface_scattering_color;
+  if (0 == on_wcsicmp(csn, ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS)) return U::PBR_subsurface_scattering_radius;
+
+  return U::None;
+}
+
+static ON_wString PBR_ChildSlotNameFromUsage(ChildSlotUsage usage)
+{
+  using U = ChildSlotUsage;
+
+  // Most of the child slot names have equivalent parameter names. Some do not and are hard-coded here.
+
+  switch (usage)
+  {
+  case U::PBR_alpha:                        return ON_PBR_MATERIAL_ALPHA;
+  case U::PBR_ambient_occlusion:            return L"pbr-ambient-occlusion";
+  case U::PBR_anisotropic:                  return ON_PBR_MATERIAL_ANISOTROPIC;
+  case U::PBR_anisotropic_rotation:         return ON_PBR_MATERIAL_ANISOTROPIC_ROTATION;
+  case U::PBR_base_color:                   return ON_PBR_MATERIAL_BASE_COLOR;
+  case U::PBR_bump:                         return L"pbr-bump";
+  case U::PBR_clearcoat:                    return ON_PBR_MATERIAL_CLEARCOAT;
+  case U::PBR_clearcoat_bump:               return ON_PBR_MATERIAL_CLEARCOAT_BUMP;
+  case U::PBR_clearcoat_roughness:          return ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS;
+  case U::PBR_displacement:                 return L"pbr-displacement";
+  case U::PBR_emission:                     return ON_PBR_MATERIAL_EMISSION_COLOR;
+  case U::PBR_metallic:                     return ON_PBR_MATERIAL_METALLIC;
+  case U::PBR_opacity:                      return ON_PBR_MATERIAL_OPACITY;
+  case U::PBR_opacity_ior:                  return ON_PBR_MATERIAL_OPACITY_IOR;
+  case U::PBR_opacity_roughness:            return ON_PBR_MATERIAL_OPACITY_ROUGHNESS;
+  case U::PBR_roughness:                    return ON_PBR_MATERIAL_ROUGHNESS;
+  case U::PBR_sheen:                        return ON_PBR_MATERIAL_SHEEN;
+  case U::PBR_sheen_tint:                   return ON_PBR_MATERIAL_SHEEN_TINT;
+  case U::PBR_specular:                     return ON_PBR_MATERIAL_SPECULAR;
+  case U::PBR_specular_tint:                return ON_PBR_MATERIAL_SPECULAR_TINT;
+  case U::PBR_subsurface:                   return ON_PBR_MATERIAL_SUBSURFACE;
+  case U::PBR_subsurface_scattering_color:  return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR;
+  case U::PBR_subsurface_scattering_radius: return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS;
+  case U::Environment:                      return L""; // PBR materials do not support Environment.
+  default: ON_ASSERT(false);                return L"";
+  }
+}
+
+static ON_Texture::TYPE PreJuly2023_TextureTypeFromUsage(ChildSlotUsage u)
+{
+  using U = ChildSlotUsage;
+  using T = ON_Texture::TYPE;
+
+  switch (u)
+  {
+  case U::Diffuse:                          return T::diffuse_texture; // Also handles PBR_base_color.
+  case U::Transparency:                     return T::opacity_texture; // Also handles PBR_opacity.
+  case U::Bump:                             return T::bump_texture;    // Also handles PBR_bump.
+  case U::Environment:                      return T::emap_texture;
+  case U::PBR_alpha:                        return T::pbr_alpha_texture;
+  case U::PBR_ambient_occlusion:            return T::pbr_ambient_occlusion_texture;
+  case U::PBR_anisotropic:                  return T::pbr_anisotropic_texture;
+  case U::PBR_anisotropic_rotation:         return T::pbr_anisotropic_rotation_texture;
+  case U::PBR_clearcoat:                    return T::pbr_clearcoat_texture;
+  case U::PBR_clearcoat_bump:               return T::pbr_clearcoat_bump_texture;
+  case U::PBR_clearcoat_roughness:          return T::pbr_clearcoat_roughness_texture;
+  case U::PBR_displacement:                 return T::pbr_displacement_texture;
+  case U::PBR_emission:                     return T::pbr_emission_texture;
+  case U::PBR_metallic:                     return T::pbr_metallic_texture;
+  case U::PBR_opacity_ior:                  return T::pbr_opacity_ior_texture;
+  case U::PBR_opacity_roughness:            return T::pbr_opacity_roughness_texture;
+  case U::PBR_roughness:                    return T::pbr_roughness_texture;
+  case U::PBR_sheen:                        return T::pbr_sheen_texture;
+  case U::PBR_sheen_tint:                   return T::pbr_sheen_tint_texture;
+  case U::PBR_specular:                     return T::pbr_specular_texture;
+  case U::PBR_specular_tint:                return T::pbr_specular_tint_texture;
+  case U::PBR_subsurface:                   return T::pbr_subsurface_texture;
+  case U::PBR_subsurface_scattering_color:  return T::pbr_subsurface_scattering_texture;
+  case U::PBR_subsurface_scattering_radius: return T::pbr_subsurface_scattering_radius_texture;
+  default: ON_ASSERT(false);                return T::no_texture_type;
+  }
+}
+
+static ON_wString PreJuly2023_TextureChildSlotName(const ON_RenderMaterial& rm, ChildSlotUsage usage)
+{
+  if (rm.ToOnMaterial().IsPhysicallyBased())
+    return PBR_ChildSlotNameFromUsage(usage);
+
+  switch (usage)
+  {
+  case ChildSlotUsage::Diffuse:      return ON_TEXTURE_CHILD_SLOT_NAME_BITMAP_TEXTURE;
+  case ChildSlotUsage::Bump:         return ON_TEXTURE_CHILD_SLOT_NAME_BUMP_TEXTURE;
+  case ChildSlotUsage::Transparency: return ON_TEXTURE_CHILD_SLOT_NAME_TRANSPARENCY_TEXTURE;
+  case ChildSlotUsage::Environment:  return ON_TEXTURE_CHILD_SLOT_NAME_ENVIRONMENT_TEXTURE;
+  default: return L"";
+  }
+}
+
+static ChildSlotUsage PreJuly2023_TextureUsage(const ON_RenderMaterial& rm, const wchar_t* child_slot_name)
+{
+  if (rm.ToOnMaterial().IsPhysicallyBased())
+    return PBR_ChildSlotNameToUsage(child_slot_name);
+
+  if (0 == PreJuly2023_TextureChildSlotName(rm, ChildSlotUsage::Diffuse).CompareNoCase(child_slot_name))
+    return ChildSlotUsage::Diffuse;
+
+  if (0 == PreJuly2023_TextureChildSlotName(rm, ChildSlotUsage::Transparency).CompareNoCase(child_slot_name))
+    return ChildSlotUsage::Transparency;
+
+  if (0 == PreJuly2023_TextureChildSlotName(rm, ChildSlotUsage::Bump).CompareNoCase(child_slot_name))
+    return ChildSlotUsage::Bump;
+
+  if (0 == PreJuly2023_TextureChildSlotName(rm, ChildSlotUsage::Environment).CompareNoCase(child_slot_name))
+    return ChildSlotUsage::Environment;
+
+  return ChildSlotUsage::None;
 }
 
 // ON_RenderEnvironment
@@ -1308,8 +1506,9 @@ ON_Environment ON_RenderEnvironment::ToOnEnvironment(void) const
     {
       ON_Texture tex;
       tex.m_image_file_reference.SetFullPath(v.AsString(), false);
-      // TODO: What other ON_Texture params need to be set?
       env.SetBackgroundImage(tex);
+
+      // TODO: More? Andy is thinking about this.
     }
 
     if (p.GetParam(ON_ENVIRONMENT_SIMULATION_BACKGROUND_PROJECTION, v))
@@ -1363,13 +1562,89 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(_private->m_mutex);
 
+  // The following simulation values are new in V8:
+  //
+  // - ON_TEXTURE_SIMULATION_ON
+  // - ON_TEXTURE_SIMULATION_TYPE
+  // - ON_TEXTURE_SIMULATION_MODE
+  // - ON_TEXTURE_SIMULATION_TREAT_AS_LINEAR
+  // - ON_TEXTURE_SIMULATION_BLEND_CONSTANT_A
+  // - ON_TEXTURE_SIMULATION_TRANSPARENCY_TEXTURE_ID
+  // - ON_TEXTURE_SIMULATION_MIN_FILTER
+  // - ON_TEXTURE_SIMULATION_MAG_FILTER
+  //
+  // This data was not saved in the texture simulation XML prior to 20th July 2023 so these values
+  // won't exist in old documents. If one value exists, we can assume they all do, so we use 'on'
+  // to determine if they exist or not. If they don't exist, we either leave the default in place
+  // or use a hacky method to get the value from the parent content.
+
   ON_Texture tex;
+  ON_XMLVariant v;
 
   const ON_XMLNode* sim_node = _private->XMLNode_Simulation();
   if (nullptr != sim_node)
   {
-    ON_XMLVariant v;
     ON_XMLParameters p(*sim_node);
+
+    if (p.GetParam(ON_TEXTURE_SIMULATION_ON, v))
+    {
+      // Since the 'on' value was found, this must be a document created on or after 20th July 2023.
+      // We can also get all the other new values and won't be needing the parent hack.
+      tex.m_bOn = v.AsBool();
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_TYPE, v))
+        tex.m_type = ON_Texture::TYPE(v.AsInteger());
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_MODE, v))
+        tex.m_mode = ON_Texture::MODE(v.AsInteger());
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_TREAT_AS_LINEAR, v))
+        tex.m_bTreatAsLinear = v.AsBool();
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_BLEND_CONSTANT_A, v))
+        tex.m_blend_constant_A = v.AsDouble();
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_TRANSPARENCY_TEXTURE_ID, v))
+        tex.m_transparency_texture_id = v.AsUuid();
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_MIN_FILTER, v))
+        tex.m_minfilter = ON_Texture::FILTER(v.AsInteger());
+
+      if (p.GetParam(ON_TEXTURE_SIMULATION_MAG_FILTER, v))
+        tex.m_magfilter = ON_Texture::FILTER(v.AsInteger());
+    }
+    else
+    {
+      // Since the new 'on' value was not found, this must be an old document. Use the various defaults and hacks.
+      v = GetParameter(L"filter");
+      if (!v.IsNull())
+      {
+        tex.m_minfilter =
+        tex.m_magfilter = v.AsBool() ? ON_Texture::FILTER::linear_filter
+                                     : ON_Texture::FILTER::nearest_filter;
+      }
+
+      const ON_wString child_slot_name = ChildSlotName();
+      const auto* parent = Parent();
+      if (nullptr != parent)
+      {
+        auto* parent_material = dynamic_cast<const ON_RenderMaterial*>(parent);
+        if (nullptr != parent_material)
+        {
+          const auto usage = PreJuly2023_TextureUsage(*parent_material, child_slot_name);
+          tex.m_type = PreJuly2023_TextureTypeFromUsage(usage);
+        }
+
+        tex.m_bOn = parent->ChildSlotOn(child_slot_name);
+        tex.m_blend_constant_A = parent->ChildSlotAmount(child_slot_name, 100.0) / 100.0;
+
+        v = parent->GetParameter(L"treat-as-linear");
+        if (!v.IsNull())
+        {
+          tex.m_bTreatAsLinear = v.AsBool();
+        }
+      }
+    }
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_FILENAME, v))
     {
@@ -1400,8 +1675,8 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
     {
       ON_3dVector offset, rotation, repeat;
       tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
-      const auto pt = v.As2dPoint();
-      rotation.z = pt[0] * ON_RADIANS_TO_DEGREES;
+      const auto pt = v.As2dPoint(); // 'pt' is in degrees.
+      rotation.z = pt[0] * ON_DEGREES_TO_RADIANS;
       tex.m_uvw = ON_Xform::TextureMapping(offset, repeat, rotation);
     }
 
@@ -1422,41 +1697,6 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
     {
       tex.m_transparent_color = v.AsColor();
     }
-  }
-
-  tex.m_mode = ON_Texture::MODE::decal_texture;
-  tex.m_transparency_texture_id = ON_nil_uuid;
-
-  //tex.m_bTreatAsLinear          ??? Andy: This is on CRhRdkTexture. John: It's computed; not in the XML.
-  //tex.m_blend_constant_RGB      ???
-
-  const ON_XMLVariant v = GetParameter(L"filter");
-  tex.m_minfilter = tex.m_magfilter = v.AsBool() ? ON_Texture::FILTER::linear_filter
-                                                 : ON_Texture::FILTER::nearest_filter;
-
-  const ON_wString child_slot_name = ChildSlotName();
-
-  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_BITMAP_TEXTURE)
-    tex.m_type = ON_Texture::TYPE::bitmap_texture;
-  else
-  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_BUMP_TEXTURE)
-    tex.m_type = ON_Texture::TYPE::bump_texture;
-  else
-  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_TRANSPARENCY_TEXTURE)
-    tex.m_type = ON_Texture::TYPE::transparency_texture;
-  else
-  if (child_slot_name == ON_TEXTURE_CHILD_SLOT_NAME_ENVIRONMENT_TEXTURE)
-  {
-    tex.m_type = ON_Texture::TYPE::emap_texture;
-    // emap_texture is OBSOLETE - set m_mapping_channel_id = ON_MappingChannel::emap_mapping
-    // tex.m_mapping_channel_id = ON_MappingChannel::emap_mapping; // ERROR!
-  }
-
-  const auto* parent = Parent();
-  if (nullptr != parent)
-  {
-    tex.m_bOn = parent->ChildSlotOn(child_slot_name);
-    tex.m_blend_constant_A = parent->ChildSlotAmount(child_slot_name, 100.0) / 100.0;
   }
 
   return tex;

@@ -2403,6 +2403,41 @@ public:
     ON_SubDFacePtr faceptr
     );
 
+  /// <summary>
+  /// Depending on the type of this component, returns an ON_SubDComponentPtr to
+  /// ON_SubDVertex::NextVertex(), ON_SubDEdge::NextEdge(), or ON_SubDFace::NextFace(). 
+  /// </summary>
+  /// <returns>
+  /// An ON_SubDComponentPtr to the next active component of the same type in the SubD
+  /// or ON_SubDComponentPtr::Null if there is no next active component.
+  /// </returns>
+  const ON_SubDComponentPtr NextComponent() const;
+
+  /// <summary>
+  /// Depending on the type of this component, returns an ON_SubDComponentPtr to
+  /// ON_SubDVertex::PrevVertex(), ON_SubDEdge::PrevEdge(), or ON_SubDFace::PrevFace(). 
+  /// </summary>
+  /// <returns>
+  /// An ON_SubDComponentPtr to the previous active component of the same type in the SubD
+  /// or ON_SubDComponentPtr::Null if there is no previous active component.
+  /// </returns>
+  const ON_SubDComponentPtr PrevComponent() const;
+
+  /// <summary>
+  /// Prefix operator ++ sets this to ON_SubDComponentPtr::NextComponent() 
+  /// and returns the new value of this.
+  /// </summary>
+  /// <returns>ON_SubDComponentPtr::NextComponent()</returns>
+  const ON_SubDComponentPtr operator++();
+
+  /// <summary>
+  /// Postfix operator ++ sets this to ON_SubDComponentPtr::NextComponent() 
+  /// and returns the previous value of this.
+  /// </summary>
+  /// <returns>ON_SubDComponentPtr::NextComponent()</returns>
+  const ON_SubDComponentPtr operator++(int);
+
+
   wchar_t* ToString(
     wchar_t* s,
     size_t s_capacity
@@ -5256,19 +5291,156 @@ public:
 
   /*
   Description:
-    Creates a SubD sphere with 24 quad faces
+    Creates a SubD box
   Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
+    corners - [in]
+      Box corners.
+      The bottom quad is specified by the first 4 points
+      and the top quad specified by the last 4 points.
+    edge_sharpness - [in]
+      If edge_sharpness = ON_SubDEdgeSharpness::SmoothValue, the edges where box sides meet will be smooth.
+      If ON_SubDEdgeSharpness::SmoothValue &lt; edge_sharpness &lt;= ON_SubDEdgeSharpenss::MaximumValue, 
+      the edges where box sides meet will have the specified sharpness.
+      If edge_sharpness = ON_SubDEdgeSharpenss::CreaseValue,
+      the edges where box sides meet will be creases.
+    facecount_x - [in] Number of faces in x direction
+    facecount_y - [in] Number of faces in y direction
+    facecount_z - [in] Number of faces in z direction
     destination_subd [out] -
-      If destination_subd is not null, make the SubD box there
+      If destination_subd is not null, the SubD box is saved in this instance.
   Returns:
     Pointer to the resulting SubD if successful
     Null for error
   */
-  //static ON_SubD* CreateSubDSphere(
-  //  const ON_Sphere sphere,
-  //  ON_SubD* destination_subd);
+  static ON_SubD* CreateSubDBox(
+    const ON_3dPoint corners[8],
+    double edge_sharpness,
+    unsigned int facecount_x,
+    unsigned int facecount_y,
+    unsigned int facecount_z,
+    ON_SubD* destination_subd
+  );
+
+
+#if 0
+  /*
+  Description:
+    Creates a SubD sphere made from triangular faces and 6 valent vertices.
+  Parameters:
+    sphere - [in]
+      Location, size and orientation of the sphere
+    vertex_location - [in]
+      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
+      points will be on the surface of the sphere. Otherwise the limit surface
+      points will be on the sphere.
+    subdivision_level - [in]
+      The resulting sphere will have 80*4^tri_subdivision_level triangles.
+      0 - 180 triangles
+      1 - 320 triangles
+      2 - 1280 triangles
+      ...
+    destination_subd [out] -
+      If destination_subd is not null, the SubD sphere is saved in this instance.
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  static ON_SubD* CreateSubDTriSphere(
+    const ON_Sphere sphere,
+    ON_SubDComponentLocation vertex_location,
+    unsigned tri_subdivision_level,
+    ON_SubD* destination_subd
+  );
+
+  /*
+  Description:
+    Creates a SubD sphere based on an icosohedran (20 triangular faces and 5 valent vertices).
+  Parameters:
+    sphere - [in]
+      Location, size and orientation of the sphere
+    vertex_location - [in]
+      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
+      points will be on the surface of the sphere. Otherwise the limit surface
+      points will be on the sphere.
+    subdivision_level - [in]
+      0 - 80 triangles (icosohedral control net)
+      1 - 60 quad
+      2 - 240 quads
+      ...
+    destination_subd [out] -
+      If destination_subd is not null, the SubD sphere is saved in this instance.
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  static ON_SubD* CreateSubDIcosahedran(
+    const ON_Sphere sphere,
+    ON_SubDComponentLocation vertex_location,
+    unsigned subdivision_level,
+    ON_SubD* destination_subd
+  );
+
+  /*
+  Description:
+    Creates a SubD sphere based on an dodecahedron (20 triangular faces and 5 valent vertices).
+  Parameters:
+    sphere - [in]
+      Location, size and orientation of the sphere
+    vertex_location - [in]
+      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
+      points will be on the surface of the sphere. Otherwise the limit surface
+      points will be on the sphere.
+    subdivision_level - [in]
+      0 - 5 pentagons (dodecahedral control net)
+      1 - 60 quad
+      2 - 240 quads
+      ...
+    destination_subd [out] -
+      If destination_subd is not null, the SubD sphere is saved in this instance.
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  static ON_SubD* CreateSubDDodecahedran(
+    const ON_Sphere sphere,
+    ON_SubDComponentLocation vertex_location,
+    unsigned subdivision_level,
+    ON_SubD* destination_subd
+  );
+
+
+  /*
+  Description:
+    Creates a SubD sphere made with triangles and quads to 
+    resemble a globe with latitude and longitude circles.
+  Parameters:
+    sphere - [in]
+      Location, size and orientation of the sphere
+    vertex_location - [in]
+      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
+      points will be on the surface of the sphere. Otherwise the limit surface
+      points will be on the sphere.
+    subdivision_level - [in]
+      The resulting sphere will have 80*4^tri_subdivision_level triangles.
+      0 - 180 triangles
+      1 - 320 triangles
+      2 - 1280 triangles
+      ...
+    destination_subd [out] -
+      If destination_subd is not null, the SubD sphere is saved in this instance.
+  Returns:
+    Pointer to the resulting SubD if successful
+    Null for error
+  */
+  static ON_SubD* CreateSubDGlobe(
+    const ON_Sphere sphere,
+    ON_SubDComponentLocation vertex_location,
+    unsigned latitude_count,
+    unsigned longitued_count,
+    ON_SubD* destination_subd
+  );
+
+#endif
 
   /*
   Description:
@@ -5286,7 +5458,8 @@ public:
     Null for error
   */
   //static ON_SubD* CreateSubDCylinder(
-  //  const ON_Cylinder& cylinder,
+  //  const ON_Cylinder cylinder,
+  //  ON_SubDComponentLocation vertex_location,
   //  unsigned int facecount_around,
   //  unsigned int facecount_length,
   //  ON_SubD* destination_subd);
@@ -5422,6 +5595,7 @@ public:
     );
 
   /*
+  Description:
   Remove all levels except the active level.
   Returns: 
     Number of removed levels.
@@ -5519,6 +5693,28 @@ public:
     safely determine what type of component (vertex/edge/face).
   */
   const ON_SubDComponentPtr InSubD(const class ON_SubDComponentBase* b) const;
+
+  /// <summary>
+  /// ON_SubD::FirstVertex(), ON_SubD::FirstEdge(), or ON_SubD::FirstFace() is returned,
+  /// depending on the value of component_type. 
+  /// </summary>
+  /// <param name="component_type"></param>
+  /// <returns>The first component of the specified type.</returns>
+  const ON_SubDComponentPtr FirstComponent(
+    ON_SubDComponentPtr::Type component_type
+  ) const;
+
+
+  /// <summary>
+  /// ON_SubD::VertexCount(), ON_SubD::EdgeCount(), or ON_SubD::FaceCount() is returned,
+  /// depending on the value of component_type. 
+  /// </summary>
+  /// <param name="component_type"></param>
+  /// <returns>The first component of the specified type.</returns>
+  unsigned ComponentCount(
+    ON_SubDComponentPtr::Type component_type
+  ) const;
+
 
   /////////////////////////////////////////////////////////
   //
@@ -14960,6 +15156,13 @@ public:
   /// <returns>Number of sharp edges attached to this face.</returns>
   unsigned int SharpEdgeCount() const;
 
+  /// <summary>
+  /// Get the maximum sharpeness of the edges that form the face's boundary.
+  /// (Creased edges have zero sharpness.)
+  /// </summary>
+  /// <returns>The maximum sharpness of the face's edges.</returns>
+  double MaximumEdgeSharpness() const;
+
 
   const class ON_SubDVertex* Vertex(
     unsigned int i
@@ -19155,7 +19358,7 @@ public:
       then at least one vertex of f is part of the edge chain and f is on the specified
       side of the edge chain.
 
-      If a vertex v is side_components[], then it is preceded and followed by the same
+      If a vertex v is in side_components[], then it is preceded and followed by the same
       face (...f,v,f,...), there are consecutive edges in the edge chain (...e0,e1,...),
       and e0 and e1 are consecutive edges in f's boundary.
 

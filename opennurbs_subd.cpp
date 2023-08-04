@@ -1206,11 +1206,13 @@ int ON_SubDFacePtr::CompareFacePointer(
 
 bool operator==(ON_SubDComponentPtr lhs, ON_SubDComponentPtr rhs)
 {
+  // MUST compare entire m_ptr (type, pointer, and direction)
   return lhs.m_ptr == rhs.m_ptr;
 }
 
 bool operator!=(ON_SubDComponentPtr lhs, ON_SubDComponentPtr rhs)
 {
+  // MUST compare entire m_ptr (type, pointer, and direction)
   return lhs.m_ptr != rhs.m_ptr;
 }
 
@@ -2201,8 +2203,8 @@ int ON_SubDComponentPtr::CompareComponent(
   const int rc = ON_SubDComponentPtr::CompareComponentPtrType(a->ComponentType(), b->ComponentType());
   if (0 == rc)
   {
-    const ON__UINT_PTR x = a->m_ptr;
-    const ON__UINT_PTR y = b->m_ptr;
+    const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
+    const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
     if (x < y)
       return -1;
     if (x > y)
@@ -2221,8 +2223,8 @@ int ON_SubDComponentPtr::CompareComponentAndDirection(
   const int rc = ON_SubDComponentPtr::CompareComponent(a, b);
   if (0 == rc)
   {
-    const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
-    const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
+    const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
+    const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
     if (x < y)
       return -1;
     if (x > y)
@@ -6434,6 +6436,29 @@ unsigned int ON_SubDFace::SharpEdgeCount(ON_SubDEdgeSharpness& sharpness_range) 
   return sharp_edge_count;
 }
 
+double ON_SubDFace::MaximumEdgeSharpness() const
+{
+  double max_edge_sharpness = 0.0;
+  const ON_SubDEdgePtr* eptr = m_edge4;
+  for (unsigned short fei = 0; fei < m_edge_count; ++fei, ++eptr)
+  {
+    if (4 == fei)
+    {
+      eptr = m_edgex;
+      if (nullptr == eptr)
+        break;
+    }
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+    if (nullptr == e || false == e->IsSharp())
+      continue;
+    const ON_SubDEdgeSharpness s = e->Sharpness(false);
+    const double m = s.MaximumEndSharpness();
+    if (m > max_edge_sharpness)
+      max_edge_sharpness = m;
+  }
+  return max_edge_sharpness;
+}
+
 unsigned int ON_SubDFace::SharpEdgeCount() const
 {
   unsigned int sharp_edge_count = 0;
@@ -8190,13 +8215,14 @@ bool ON_SubDimple::IsValidLevel(
     ON_SubDVertexIterator vit = subd.VertexIterator();
     if (vit.FirstVertex() != level->m_vertex[0])
       return ON_SubDIsNotValid(bSilentError);
-    ON_SubDVertexArray va = subd.VertexArray();
-    if (va.VertexCount() != level->m_vertex_count)
-      return ON_SubDIsNotValid(bSilentError);
-    if (va[0] != level->m_vertex[0])
-      return ON_SubDIsNotValid(bSilentError);
-    if (va[level->m_vertex_count-1] != level->m_vertex[1])
-      return ON_SubDIsNotValid(bSilentError);
+    // IsValid() should not create these clunky cached arrays.
+    //ON_SubDVertexArray va = subd.VertexArray();
+    //if (va.VertexCount() != level->m_vertex_count)
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (va[0] != level->m_vertex[0])
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (va[level->m_vertex_count-1] != level->m_vertex[1])
+    //  return ON_SubDIsNotValid(bSilentError);
   }
   const ON_SubDVertex* last_vertex = nullptr;
   for (i = 0, vertex = level->m_vertex[0]; i < level->m_vertex_count && nullptr != vertex; i++, vertex = vertex->m_next_vertex)
@@ -8242,13 +8268,15 @@ bool ON_SubDimple::IsValidLevel(
     ON_SubDEdgeIterator eit = subd.EdgeIterator();
     if (eit.FirstEdge() != level->m_edge[0])
       return ON_SubDIsNotValid(bSilentError);
-    ON_SubDEdgeArray ea = subd.EdgeArray();
-    if (ea.EdgeCount() != level->m_edge_count)
-      return ON_SubDIsNotValid(bSilentError);
-    if (ea[0] != level->m_edge[0])
-      return ON_SubDIsNotValid(bSilentError);
-    if (ea[level->m_edge_count-1] != level->m_edge[1])
-      return ON_SubDIsNotValid(bSilentError);
+
+    // IsValid() should not create these clunky cached arrays.
+    //ON_SubDEdgeArray ea = subd.EdgeArray();
+    //if (ea.EdgeCount() != level->m_edge_count)
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (ea[0] != level->m_edge[0])
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (ea[level->m_edge_count-1] != level->m_edge[1])
+    //  return ON_SubDIsNotValid(bSilentError);
   }
   const ON_SubDEdge* last_edge = nullptr;
   for (i = 0, edge = level->m_edge[0]; i < level->m_edge_count && nullptr != edge; i++, edge = edge->m_next_edge)
@@ -8293,13 +8321,14 @@ bool ON_SubDimple::IsValidLevel(
     ON_SubDFaceIterator fit = subd.FaceIterator();
     if (fit.FirstFace() != level->m_face[0])
       return ON_SubDIsNotValid(bSilentError);
-    ON_SubDFaceArray fa = subd.FaceArray();
-    if (fa.FaceCount() != level->m_face_count)
-      return ON_SubDIsNotValid(bSilentError);
-    if (fa[0] != level->m_face[0])
-      return ON_SubDIsNotValid(bSilentError);
-    if (fa[0] != level->m_face[0])
-      return ON_SubDIsNotValid(bSilentError);
+    // IsValid() should not create these clunky cached arrays.
+    //ON_SubDFaceArray fa = subd.FaceArray();
+    //if (fa.FaceCount() != level->m_face_count)
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (fa[0] != level->m_face[0])
+    //  return ON_SubDIsNotValid(bSilentError);
+    //if (fa[0] != level->m_face[0])
+    //  return ON_SubDIsNotValid(bSilentError);
   }
   const ON_SubDFace* last_face = nullptr;
   for (i = 0, face = level->m_face[0]; i < level->m_face_count && nullptr != face; i++, face = face->m_next_face)
@@ -10928,6 +10957,121 @@ unsigned ON_SubD::ClearInactiveLevels()
     (nullptr != subdimple)
     ? subdimple->ClearInactiveLevels()
     : 0U;
+}
+
+const ON_SubDComponentPtr ON_SubDComponentPtr::NextComponent() const
+{
+  switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
+  {
+  case ON_SUBD_COMPONENT_TYPE_VERTEX:
+  {
+    const ON_SubDVertex* v = ON_SUBD_VERTEX_POINTER(m_ptr);
+    if (nullptr != v)
+      return ON_SubDComponentPtr::Create(v->m_next_vertex);
+  }
+  case ON_SUBD_COMPONENT_TYPE_EDGE:
+  {
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+    if (nullptr != e)
+      return ON_SubDComponentPtr::Create(e->m_next_edge);
+  }
+  case ON_SUBD_COMPONENT_TYPE_FACE:
+  {
+    const ON_SubDFace* f = ON_SUBD_FACE_POINTER(m_ptr);
+    if (nullptr != f)
+      return ON_SubDComponentPtr::Create(f->m_next_face);
+  }
+  default:
+    break;
+  }
+  return ON_SubDComponentPtr::Null;
+}
+
+
+const ON_SubDComponentPtr ON_SubDComponentPtr::PrevComponent() const
+{
+  switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
+  {
+  case ON_SUBD_COMPONENT_TYPE_VERTEX:
+  {
+    const ON_SubDVertex* v = ON_SUBD_VERTEX_POINTER(m_ptr);
+    if (nullptr != v)
+      return ON_SubDComponentPtr::Create(v->m_prev_vertex);
+  }
+  case ON_SUBD_COMPONENT_TYPE_EDGE:
+  {
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_ptr);
+    if (nullptr != e)
+      return ON_SubDComponentPtr::Create(e->m_prev_edge);
+  }
+  case ON_SUBD_COMPONENT_TYPE_FACE:
+  {
+    const ON_SubDFace* f = ON_SUBD_FACE_POINTER(m_ptr);
+    if (nullptr != f)
+      return ON_SubDComponentPtr::Create(f->m_prev_face);
+  }
+  default:
+    break;
+  }
+  return ON_SubDComponentPtr::Null;
+}
+
+const ON_SubDComponentPtr ON_SubDComponentPtr::operator++()
+{
+  // prefix ++
+  *this = this->NextComponent();
+  return *this;
+}
+
+const ON_SubDComponentPtr ON_SubDComponentPtr::operator++(int)
+{
+  // postfix ++
+  const ON_SubDComponentPtr input_value = *this;
+  *this = this->NextComponent();
+  return input_value;
+}
+
+const ON_SubDComponentPtr ON_SubD::FirstComponent(
+  ON_SubDComponentPtr::Type component_type
+) const
+{
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+    return ON_SubDComponentPtr::Create(this->FirstVertex());
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    return ON_SubDComponentPtr::Create(this->FirstEdge());
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    return ON_SubDComponentPtr::Create(this->FirstFace());
+    break;
+  default:
+    break;
+  }
+  return ON_SubDComponentPtr::Null;
+}
+
+
+unsigned ON_SubD::ComponentCount(
+  ON_SubDComponentPtr::Type component_type
+) const 
+{
+  switch (component_type)
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+    return this->VertexCount();
+    break;
+  case ON_SubDComponentPtr::Type::Edge:
+    return this->EdgeCount();
+    break;
+  case ON_SubDComponentPtr::Type::Face:
+    return this->FaceCount();
+    break;
+  default:
+    break;
+  }
+  return 0;
 }
 
 void ON_SubD::Destroy()

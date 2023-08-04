@@ -3703,11 +3703,28 @@ unsigned int ON_SubDDisplayParameters::DisplayDensity() const
 unsigned int ON_SubDDisplayParameters::DisplayDensity(const ON_SubD& subd) const
 {
   const unsigned display_density = this->m_display_density;
-  return
-    this->DisplayDensityIsAdaptive() ?
-    ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(display_density, subd)
+  const unsigned absolute_display_density
+    = this->DisplayDensityIsAdaptive() 
+    ? ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(display_density, subd)
     : display_density
     ;
+
+  if (0 == absolute_display_density)
+  {
+    // If subd has ngons with n != 4, then the display density has to be >= 1.
+    ON_SubDFaceIdIterator fit(subd);
+    for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
+    {
+      if (4 != f->m_edge_count && f->m_edge_count > 3 && f->m_edge_count <= ON_SubDFace::MaximumEdgeCount)
+      {
+        // This face will have f->m_edge_count subd mesh fragments of density 0.
+        // That's why the default quad face density must be >= 1.
+        return 1u;
+      }
+    }
+  }
+
+  return absolute_display_density;
 }
 
 const unsigned char ON_SubDDisplayParameters::GetRawDisplayDensityForExperts() const

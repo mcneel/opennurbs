@@ -1217,13 +1217,55 @@ ON_SubD* ON_SubD::CreateSubDBox(
   unsigned int facecount_x,
   unsigned int facecount_y,
   unsigned int facecount_z,
-  ON_SubD* subd)
+  ON_SubD* destination_subd)
 {
-  if (ON_SubDEdgeTag::Crease != edge_tag)
-    edge_tag = ON_SubDEdgeTag::Smooth;
+  double edge_sharpness
+    = ON_SubDEdgeTag::Crease == edge_tag
+    ? ON_SubDEdgeSharpness::CreaseValue
+    : ON_SubDEdgeSharpness::SmoothValue
+    ;
 
-  if (nullptr == subd)
-    subd = new ON_SubD;
+  return ON_SubD::CreateSubDBox(
+    corners,
+    edge_sharpness,
+    facecount_x,
+    facecount_y,
+    facecount_z,
+    destination_subd
+  );
+}
+
+ON_SubD* ON_SubD::CreateSubDBox(
+  const ON_3dPoint corners[8],
+  double edge_sharpness,
+  unsigned int facecount_x,
+  unsigned int facecount_y,
+  unsigned int facecount_z,
+  ON_SubD* destination_subd
+)
+{
+  if (nullptr == corners)
+    return nullptr;
+  if (facecount_x <= 0)
+    return nullptr;
+  if (facecount_y <= 0)
+    return nullptr;
+  if (facecount_z <= 0)
+    return nullptr;
+    
+  const ON_SubDEdgeTag edge_tag
+    = (ON_SubDEdgeSharpness::CreaseValue == edge_sharpness)
+    ? ON_SubDEdgeTag::Crease
+    : ON_SubDEdgeTag::Smooth;
+
+  const bool bSharpEdge
+    = edge_sharpness > ON_SubDEdgeSharpness::SmoothValue
+    && edge_sharpness <= ON_SubDEdgeSharpness::MaximumValue;
+
+  ON_SubD* subd
+    = (nullptr != destination_subd)
+    ? destination_subd
+    : new ON_SubD;
 
   ON_3dVector xdir = corners[1] - corners[0];
   ON_3dVector ydir = corners[3] - corners[0];
@@ -1340,6 +1382,21 @@ ON_SubD* ON_SubD::CreateSubDBox(
 
     e = subd->AddEdge(edge_tag, IndexVertex(vertex, vert_index, 0, facecount_y, iz), IndexVertex(vertex, vert_index, 0, facecount_y, iz + 1));
     box_edges[7].Append(ON_SubDEdgePtr::Create(e, 0));
+  }
+
+  if (edge_sharpness > ON_SubDEdgeSharpness::Tolerance && edge_sharpness <= ON_SubDEdgeSharpness::MaximumValue)
+  {
+    const ON_SubDEdgeSharpness sharpness = ON_SubDEdgeSharpness::FromConstant(edge_sharpness);
+    if (sharpness.IsSharp())
+    {
+      for (int i = 0; i < 12; ++i)
+      {
+        ON_ClassArray< ON_SubDEdgePtr >& sharp_edges = box_edges[i];
+        const int c = sharp_edges.Count();
+        for (int j = 0; j < c; ++j)
+          sharp_edges[j].SetRelativeSharpness(sharpness);
+      }
+    }
   }
 
   ON_ClassArray< ON_ClassArray< ON_SubDEdgePtr > > face_edges[2];
@@ -1579,10 +1636,6 @@ ON_SubD* ON_SubD::CreateSubDBox(
         {
           e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy + 1, iz));
           row.Append(ON_SubDEdgePtr::Create(e, 0));
-
-          // mac compile warning // ON_3dPoint p0 = row.Last()->RelativeVertex(0)->ControlNetPoint();
-          // mac compile warning // ON_3dPoint p1 = row.Last()->RelativeVertex(1)->ControlNetPoint();
-          // mac compile warning // iy = iy;
         }
       }
     }
@@ -1600,10 +1653,6 @@ ON_SubD* ON_SubD::CreateSubDBox(
         {
           e = subd->AddEdge(ON_SubDEdgeTag::Smooth, IndexVertex(vertex, vert_index, 0, iy, iz), IndexVertex(vertex, vert_index, 0, iy, iz + 1));
           col.Append(ON_SubDEdgePtr::Create(e, 0));
-
-          // mac compile warning // ON_3dPoint p0 = col.Last()->RelativeVertex(0)->ControlNetPoint();
-          // mac compile warning // ON_3dPoint p1 = col.Last()->RelativeVertex(1)->ControlNetPoint();
-          // mac compile warning // iy = iy;
         }
       }
     }
@@ -1617,19 +1666,6 @@ ON_SubD* ON_SubD::CreateSubDBox(
         edge_ptrs[1] = face_edges[0][iz + 1][iy];
         edge_ptrs[2] = face_edges[1][iy + 1][iz].Reversed();
         edge_ptrs[3] = face_edges[0][iz][iy].Reversed();
-
-        // mac compile warning // ON_3dPoint p00 = edge_ptrs[0].RelativeVertex(0)->ControlNetPoint();
-        // mac compile warning // ON_3dPoint p01 = edge_ptrs[0].RelativeVertex(1)->ControlNetPoint();
-
-        // mac compile warning // ON_3dPoint p10 = edge_ptrs[1].RelativeVertex(0)->ControlNetPoint();
-        // mac compile warning // ON_3dPoint p11 = edge_ptrs[1].RelativeVertex(1)->ControlNetPoint();
-
-        // mac compile warning // ON_3dPoint p20 = edge_ptrs[2].RelativeVertex(0)->ControlNetPoint();
-        // mac compile warning // ON_3dPoint p21 = edge_ptrs[2].RelativeVertex(1)->ControlNetPoint();
-
-        // mac compile warning // ON_3dPoint p30 = edge_ptrs[3].RelativeVertex(0)->ControlNetPoint();
-        // mac compile warning // ON_3dPoint p31 = edge_ptrs[3].RelativeVertex(1)->ControlNetPoint();
-
         ON_SubDFace* f0 = subd->AddFace(edge_ptrs, 4);
         if (nullptr == f0)
           return nullptr;
@@ -1692,8 +1728,10 @@ ON_SubD* ON_SubD::CreateSubDBox(
     }
   }
 
-  subd->SubDModifiedNofification();
-  //subd->UpdateAllTagsAndSectorCoefficients(true);
+  if (subd == destination_subd)
+    subd->SubDModifiedNofification();
+  else
+    subd->UpdateAllTagsAndSectorCoefficients(true);
 
  return subd;
 }

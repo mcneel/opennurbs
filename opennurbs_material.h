@@ -610,7 +610,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_Material>;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class ON_PBRMaterial
+// Class ON_PhysicallyBasedMaterial
 //
 class ON_CLASS ON_PhysicallyBasedMaterial
 {
@@ -787,7 +787,4 @@ private:
   friend bool ON_PhysicallyBasedMaterial_Supported(const ON_PhysicallyBasedMaterial& material);
 };
 
-
-
 #endif
-

@@ -132,6 +132,11 @@ public:
   ON_Color HatchColor(bool print) const;
   void SetHatchColor(const ON_Color& color, bool print);
 
+  // Section styles can have custom linetypes. If null, then the linetype is retrieved
+  // from the parent layer or attributes
+  const ON_Linetype* BoundaryLinetype() const;
+  void SetBoundaryLinetype(const ON_Linetype& linetype);
+  void RemoveBoundaryLinetype();
 private:
   class ON_SectionStylePrivate* m_private = nullptr;
 };
