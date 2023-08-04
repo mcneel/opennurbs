@@ -2240,7 +2240,7 @@ int ON_SolveTriDiagonal( int dim, int n,
                           double* a, const double* b, double* c,
                           const double* d, double* X)
 /*****************************************************************************
-Solve a tridiagonal linear system of equations using backsubstution
+Solve a tridiagonal linear system of equations using backsubstitution
  
 INPUT:
   dim   (>=1) dimension of X and d

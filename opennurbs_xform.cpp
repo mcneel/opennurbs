@@ -1679,6 +1679,8 @@ bool ON_Xform::DecomposeAffine(ON_Xform& L, ON_3dVector& T) const
 
 void ON_Xform::DecomposeTextureMapping(ON_3dVector& offset, ON_3dVector& repeat, ON_3dVector& rotation) const
 {
+  // All angles in radians.
+
   ON_Xform xform = *this;
 
   repeat.x = sqrt(xform[0][0] * xform[0][0] + xform[0][1] * xform[0][1] + xform[0][2] * xform[0][2]);
@@ -1715,7 +1717,7 @@ void ON_Xform::DecomposeTextureMapping(ON_3dVector& offset, ON_3dVector& repeat,
   }
 
   rotation.x = atan2(dSinAlpha, dCosAlpha);
-  rotation.y = atan2(dSinBeta, dCosBeta);
+  rotation.y = atan2(dSinBeta,  dCosBeta);
   rotation.z = atan2(dSinGamma, dCosGamma);
 
   const ON_Xform R = TextureMapping(ON_3dVector::ZeroVector, repeat, rotation).Inverse();
@@ -1730,6 +1732,8 @@ void ON_Xform::DecomposeTextureMapping(ON_3dVector& offset, ON_3dVector& repeat,
 //static
 const ON_Xform ON_Xform::TextureMapping(const ON_3dVector& offset, const ON_3dVector& repeat, const ON_3dVector& rotation)
 {
+  // All angles in radians.
+
   ON_Xform S = ON_Xform::DiagonalTransformation(repeat.x, repeat.y, repeat.z);
 
   ON_Xform R;

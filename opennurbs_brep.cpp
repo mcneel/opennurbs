@@ -12289,10 +12289,9 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
 
   int fli, li, si=-1;
   int lti, ti;
-  int outer_loop_li=-1;
   const int loop_count = m_L.Count();
   const int trim_count = m_T.Count();
-  ON_BoundingBox outer_pbox;
+  ON_BoundingBox outer_pbox = ON_BoundingBox::NanBoundingBox;
 
   bool bAllTrimsAreIsoTrims = true; 
   bool bSomeTrimsAreIsoTrims = false;
@@ -12317,10 +12316,7 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
     if ( loop.m_type == ON_BrepLoop::outer )
     {
       // may be more than one outer loop
-      if ( outer_loop_li )
-        outer_loop_li = li;
       outer_pbox.Union( loop.m_pbox );
-
       int loop_trim_count = loop.m_ti.Count();
       for ( lti = 0; lti < loop_trim_count; lti++ )
       {
@@ -12328,7 +12324,9 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
         if ( ti >= 0 && ti < trim_count )
         {
           bool bIsIso = false;
-          switch( m_T[ti].m_iso )
+          const ON_BrepTrim& trim = m_T[ti];
+
+          switch(trim.m_iso )
           {
           case ON_Surface::x_iso:
           case ON_Surface::y_iso:
@@ -12356,8 +12354,8 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
           }
           if (bIsIso){
             // it's an iso curve trim
-            trim_iso_endbox.Set( m_T[ti].PointAtStart(), true );
-            trim_iso_endbox.Set( m_T[ti].PointAtEnd(), true );
+            trim_iso_endbox.Set(trim.PointAtStart(), true );
+            trim_iso_endbox.Set(trim.PointAtEnd(), true );
             bSomeTrimsAreIsoTrims = true;
           }
         }

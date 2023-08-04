@@ -577,19 +577,27 @@ ON_PostEffects& ON_PostEffects::operator = (const ON_PostEffects& peps)
   return *this;
 }
 
-bool ON_PostEffects::operator == (const ON_PostEffects& peps) const
+bool ON_PostEffects::operator == (const ON_PostEffects& other) const
 {
-  // We should not have to clear the lists here because they are always supposed to be consistent
-  // with the XML. But something is wrong that I don't have time to look into right now, and the
-  // easiest way to work around it is to clear the lists and make sure they get rebuilt. [MARKER]
-  _impl->Clear();
-  peps._impl->Clear();
+  // 3rd August 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH3DM-158
+  // The problem is that this is called during loading, but before the PEPs are loaded. This was
+  // causing them to get populated too early so once they are loaded they don't actually get populated.
 
+  // If the incoming pep list is not yet populated, they are equal if this one is also not populated
+  // but not equal if this one is populated.
+  if (!other._impl->_is_populated)
+    return !_impl->_is_populated;
+
+  // We don't want to populate this list if it's not yet populated. Remember, this method is const.
+  if (!_impl->_is_populated)
+    return false; // The incoming list is populated but this one isn't.
+
+  // If we get here, the both lists are already populated, so we need to check if the lists are equal.
   ON_SimpleArray<const ON_PostEffect*> a1;
   GetPostEffects(a1);
 
   ON_SimpleArray<const ON_PostEffect*> a2;
-  peps.GetPostEffects(a2);
+  other.GetPostEffects(a2);
 
   if (a1.Count() != a2.Count())
     return false;

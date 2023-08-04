@@ -164,16 +164,20 @@ public:
   virtual ChildIterator GetChildIterator(void) const;
 
   // Returns: The parent content or null if this is the top level object.
-  virtual ON_RenderContent* Parent(void) const;
+  virtual       ON_RenderContent* Parent(void);
+  virtual const ON_RenderContent* Parent(void) const;
 
   // Returns: The first child of this content or null if none.
-  virtual ON_RenderContent* FirstChild(void) const;
+  virtual       ON_RenderContent* FirstChild(void);
+  virtual const ON_RenderContent* FirstChild(void) const;
 
   // Returns: The first sibling of this content or null if none.
-  virtual ON_RenderContent* NextSibling(void) const;
+  virtual       ON_RenderContent* NextSibling(void);
+  virtual const ON_RenderContent* NextSibling(void) const;
 
   // Returns: The top level parent of this content.
-  virtual ON_RenderContent& TopLevel(void) const;
+  virtual       ON_RenderContent& TopLevel(void);
+  virtual const ON_RenderContent& TopLevel(void) const;
 
   // Returns: True if this is a top-level content (i.e., has no parent; is not a child).
   virtual bool IsTopLevel(void) const;
@@ -219,6 +223,7 @@ public:
   virtual bool DeleteChild(const wchar_t* child_slot_name);
 
   // Returns: The child with the specified child slot name, or null if no such child exists.
+  virtual       ON_RenderContent* FindChild(const wchar_t* child_slot_name);
   virtual const ON_RenderContent* FindChild(const wchar_t* child_slot_name) const;
 
   // Get the render content's state as an XML string.

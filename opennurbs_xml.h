@@ -281,16 +281,24 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_ENVIRONMENT_PROJECTION_SPHERICAL             L"spherical"
 
 // Texture simulation.
+#define ON_TEXTURE_SIMULATION_ON                            L"on"
 #define ON_TEXTURE_SIMULATION_FILENAME                      L"filename"
-#define ON_TEXTURE_SIMULATION_REPEAT                        L"repeat"
+#define ON_TEXTURE_SIMULATION_MODE                          L"mode"
+#define ON_TEXTURE_SIMULATION_TYPE                          L"type"
 #define ON_TEXTURE_SIMULATION_OFFSET                        L"offset"
+#define ON_TEXTURE_SIMULATION_REPEAT                        L"repeat"
 #define ON_TEXTURE_SIMULATION_ROTATION                      L"rotation"
-#define ON_TEXTURE_SIMULATION_WRAP_TYPE                     L"wrap-type"
 #define ON_TEXTURE_SIMULATION_MAPPING_CHANNEL               L"mapping-channel"
 #define ON_TEXTURE_SIMULATION_PROJECTION_MODE               L"projection-mode"
 #define ON_TEXTURE_SIMULATION_HAS_TRANSPARENT_COLOR         L"has-trans-color"
+#define ON_TEXTURE_SIMULATION_MIN_FILTER                    L"min-filter"
+#define ON_TEXTURE_SIMULATION_MAG_FILTER                    L"mag-filter"
+#define ON_TEXTURE_SIMULATION_TRANSPARENCY_TEXTURE_ID       L"transparency-texture-id"
 #define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR             L"trans-color"
 #define ON_TEXTURE_SIMULATION_TRANSPARENT_COLOR_SENSITIVITY L"trans-color-sensitivity"
+#define ON_TEXTURE_SIMULATION_TREAT_AS_LINEAR               L"treat-as-linear"
+#define ON_TEXTURE_SIMULATION_WRAP_TYPE                     L"wrap-type"
+#define ON_TEXTURE_SIMULATION_BLEND_CONSTANT_A              L"blend-constant-a"
 
 // Strings returned by ON_RenderContent::Kind().
 #define ON_KIND_MATERIAL     L"material"
