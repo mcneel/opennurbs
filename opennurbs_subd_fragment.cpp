@@ -374,6 +374,12 @@ unsigned ON_SubDMeshFragment::CurvatureArrayCount(ON_SubDComponentLocation subd_
   return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 4U : CurvatureCount();
 }
 
+size_t ON_SubDMeshFragment::CurvatureArrayStride(ON_SubDComponentLocation subd_appearance) const
+{
+  return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? 1 : m_K_stride;
+}
+
+
 const ON_Color* ON_SubDMeshFragment::ColorArray(ON_SubDComponentLocation subd_appearance) const
 {
   return (ON_SubDComponentLocation::ControlNet == subd_appearance) ? &m_ctrlnetC[0] : m_C;
@@ -396,6 +402,31 @@ bool ON_SubDMeshFragment::ColorsExistForExperts() const
   return (0 != (m_vertex_capacity_etc & ON_SubDMeshFragment::EtcColorsExistBit));
 }
 
+const ON_Color ON_SubDMeshFragment::VertexColor(
+  unsigned grid2dex_i,
+  unsigned grid2dex_j
+) const
+{
+  return VertexColor(m_grid.PointIndexFromGrid2dex(grid2dex_i, grid2dex_j));
+}
+
+const ON_Color ON_SubDMeshFragment::VertexColor(
+  ON_2udex grid2dex
+) const
+{
+  return VertexColor(m_grid.PointIndexFromGrid2dex(grid2dex.i, grid2dex.j));
+}
+
+const ON_Color ON_SubDMeshFragment::VertexColor(
+  unsigned grid_point_index
+) const
+{
+  return
+    (grid_point_index < this->ColorCount())
+    ? m_C[grid_point_index * m_C_stride]
+    : ON_Color::UnsetColor;
+}
+
 void ON_SubDMeshFragment::ClearColors() const
 {
   m_vertex_capacity_etc &= ~ON_SubDMeshFragment::EtcColorsExistBit;
@@ -416,6 +447,31 @@ void ON_SubDMeshFragment::SetColorsExistForExperts(bool bColorsExist) const
 bool ON_SubDMeshFragment::CurvaturesExistForExperts() const
 {
   return (0 != (m_vertex_capacity_etc & ON_SubDMeshFragment::EtcCurvaturesExistBit));
+}
+
+const ON_SurfaceCurvature ON_SubDMeshFragment::VertexCurvature(
+  unsigned grid2dex_i,
+  unsigned grid2dex_j
+) const
+{
+  return VertexCurvature(m_grid.PointIndexFromGrid2dex(grid2dex_i, grid2dex_j));
+}
+
+const ON_SurfaceCurvature ON_SubDMeshFragment::VertexCurvature(
+  ON_2udex grid2dex
+) const
+{
+  return VertexCurvature(m_grid.PointIndexFromGrid2dex(grid2dex.i, grid2dex.j));
+}
+
+const ON_SurfaceCurvature ON_SubDMeshFragment::VertexCurvature(
+  unsigned grid_point_index
+) const
+{
+  return
+    (grid_point_index < this->CurvatureCount())
+    ? m_K[grid_point_index * m_K_stride]
+    : ON_SurfaceCurvature::Nan;
 }
 
 void ON_SubDMeshFragment::ClearCurvatures() const
@@ -495,7 +551,7 @@ bool ON_SubDMeshFragment::SetColorsFromCallback(
     const unsigned count = PointArrayCount(subd_appearance);
     if (count <= 0)
       break;
-    if (count != ColorArrayCount(subd_appearance))
+    if (count != ColorCapacity())
       break;
  
     const double* P = PointArray(subd_appearance);
@@ -503,9 +559,12 @@ bool ON_SubDMeshFragment::SetColorsFromCallback(
     if (nullptr == P || Pstride < 3)
       break;
 
-    ON_Color* C = const_cast<ON_Color*>(ColorArray(subd_appearance));
-    const size_t Cstride = ColorArrayStride(subd_appearance);
+    // Note that ColorsExist() is currently false. We are setting colors now.
+    ON_Color* C = m_C;
     if (nullptr == C)
+      break;
+    const size_t Cstride = this->m_C_stride;
+    if (Cstride <= 0)
       break;
 
     const double nan3[3] = { ON_DBL_QNAN, ON_DBL_QNAN, ON_DBL_QNAN };
@@ -521,7 +580,7 @@ bool ON_SubDMeshFragment::SetColorsFromCallback(
       T = nan3;
 
     const ON_SurfaceCurvature* K = CurvatureArray(subd_appearance);
-    const size_t Kstride = (nullptr != K) ? 1 : 0;
+    const size_t Kstride = this->CurvatureArrayStride(subd_appearance); (nullptr != K) ? 1 : 0;
     if (nullptr == K)
       K = &ON_SurfaceCurvature::Nan;
 
@@ -559,6 +618,7 @@ bool ON_SubDMeshFragment::SetColorsFromCallback(
   return ColorsExistForExperts();
 }
 
+
 bool ON_SubD::SetFragmentColorsFromCallback(
   bool bLazySet,
   ON_SHA1_Hash fragment_colors_settings_hash,
@@ -575,7 +635,10 @@ bool ON_SubD::SetFragmentColorsFromCallback(
     const ON_SurfaceCurvature& K)
 ) const
 {
-  if (bLazySet && fragment_colors_settings_hash == FragmentColorsSettingsHash())
+  if (bLazySet 
+    && fragment_colors_settings_hash == FragmentColorsSettingsHash()
+    && fragment_colors_mapping_tag == FragmentColorsMappingTag()
+    )
     return true;
 
   bool bFragmentVetexColorsSet = false;
@@ -592,7 +655,12 @@ bool ON_SubD::SetFragmentColorsFromCallback(
         color_callback
       );
       if (b)
+      {
         bFragmentVetexColorsSet = true;
+        frag->SetColorsExistForExperts(true);
+      }
+      else
+        frag->SetColorsExistForExperts(false);
     }
     if (bFragmentVetexColorsSet)
     {
@@ -610,13 +678,67 @@ bool ON_SubD::SetFragmentColorsFromCallback(
   return bFragmentVetexColorsSet;
 }
 
+bool ON_SubD::HasFragmentColors() const
+{
+  const ON_SubDimple* subdimple = this->SubDimple();
+  if (nullptr != subdimple)
+  {
+    ON_SubDMeshFragmentIterator fragit(*this);
+    for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
+    {
+      if (frag->ColorCount() > 0)
+        return true;
+    }
+  }
+  return false;
+}
+
+bool ON_SubD::HasFragmentColors(
+  ON_MappingTag color_tag
+) const
+{
+  return
+    this->FragmentColorsMappingTag() == color_tag
+    && this->HasFragmentColors();
+}
+
+bool ON_SubD::HasFragmentColors(
+  ON_SHA1_Hash color_settings_hash
+) const
+{
+  return
+    this->FragmentColorsSettingsHash() == color_settings_hash
+    && this->HasFragmentColors();
+}
+
+bool ON_SubD::HasFragmentColors(
+  ON_SHA1_Hash color_settings_hash,
+  ON_MappingTag color_tag
+) const
+{
+  return
+    this->FragmentColorsSettingsHash() == color_settings_hash
+    && this->FragmentColorsMappingTag() == color_tag
+    && this->HasFragmentColors();
+}
+
+
 void ON_SubD::ClearFragmentColors(
   bool bClearFragmentColorsMappingTag
 )
 {
-  if (bClearFragmentColorsMappingTag)
-    SetFragmentColorsMappingTag(ON_MappingTag::Unset);
-  SetFragmentColorsFromCallback(false, ON_SHA1_Hash::EmptyContentHash, ON_MappingTag::Unset, 0, nullptr );
+  const ON_SubDimple* subdimple = this->SubDimple();
+  if (nullptr != subdimple)
+  {
+    ON_SubDMeshFragmentIterator fragit(*this);
+    for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
+      frag->SetColorsExistForExperts(false);
+    if (bClearFragmentColorsMappingTag)
+    {
+      subdimple->Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash::EmptyContentHash);
+      this->SetFragmentColorsMappingTag(ON_MappingTag::Unset);
+    }
+  }
 }
 
 const ON_SHA1_Hash ON_SubD::FragmentColorsSettingsHash() const
@@ -1664,12 +1786,19 @@ const ON_Color ON_SubDMeshFragment::CornerColor(
 
 const ON_SurfaceCurvature ON_SubDMeshFragment::CornerCurvature(unsigned int grid_corner_index) const
 {
-  if (grid_corner_index >= 4 || nullptr == m_K || nullptr == m_grid.m_S)
-    return ON_SurfaceCurvature::Nan;
+  for (;;)
+  {
+    if (grid_corner_index >= 4 || nullptr == m_grid.m_S)
+      break;
 
-  const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
+    const unsigned n = this->CurvatureCount();
+    const unsigned int i = m_grid.m_S[grid_corner_index * m_grid.m_side_segment_count];
+    if (i >= n)
+      break;
 
-  return m_K[i];
+    return m_K[i];
+  }
+  return ON_SurfaceCurvature::Nan;
 }
 
 const ON_3dPoint ON_SubDMeshFragment::TextureCoordinateCorner(
@@ -2554,7 +2683,7 @@ bool ON_SubDMeshFragment::CopyFrom(
         ON_SurfaceCurvature* src_k1 = src_k + src_k_stride * src_V_count;
         while (src_k < src_k1)
         {
-          k = src_k;
+          *k = *src_k;
           k += k_stride;
           src_k += src_k_stride;
         }
@@ -2580,7 +2709,7 @@ bool ON_SubDMeshFragment::CopyFrom(
         ON_Color* src_c1 = src_c + src_c_stride * src_V_count;
         while (src_c < src_c1)
         {
-          c = src_c;
+          *c = *src_c;
           c += c_stride;
           src_c += src_c_stride;
         }

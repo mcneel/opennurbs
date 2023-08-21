@@ -87,23 +87,58 @@ public:
     double t1
     );
 
-  /*
-  Description:
-    Convert normalized parameter to interval value, or pair of values.
-  Parameters:
-    normalized_parameter - [in] 
-  Returns:
-    Interval parameter
-    min*(1.0-normalized_parameter) + max*normalized_parameter
-  See Also:
-    ON_Interval::NormalizedParameterAt
-  */
+  /// <summary>
+  /// Convert a normalized parameter to an interval value.
+  /// The interval can be increasing, decreasing, or a singleton.
+  /// </summary>
+  /// <param name="normalized_parameter">
+  /// The normalized parameter can have any value.
+  /// </param>
+  /// <returns>
+  /// a*(1.0-normalized_parameter) + b*normalized_parameter
+  /// where a = the value at the beginning of this interval
+  /// and b = the value at the end of this interval.
+  /// </returns>
   double ParameterAt (
     double normalized_parameter
     ) const; 
+
+  /// <summary>
+  /// Convert a a pair of normalized parameter values to 
+  /// a pair of interval values.
+  /// This interval can be increasing, decreasing, or a singleton.
+  /// </summary>
+  /// <param name="normalized_interval">
+  /// The normalized parameters can have any value.
+  /// </param>
+  /// <returns>
+  /// a*(1.0-normalized_parameter) + b*normalized_parameter
+  /// where a = the value at the beginning of this interval
+  /// and b = the value at the end of this interval.
   ON_Interval ParameterAt (
     ON_Interval normalized_interval
     ) const; 
+
+  /// <summary>
+  /// Returns the interval's value at a clamped normalized parameter.
+  /// This interval may be increasing, decreasing, or a singleton.
+  /// </summary>
+  /// <param name="normalized_parameter">
+  /// normalized_parameter may have any value but it is clamped
+  /// to be between 0 and 1 before the corresponding interval
+  /// value is evaluated.
+  /// </param>
+  /// <returns>
+  /// Set a = the value at the beginning of this interval and
+  /// b = the value at the end of this interval.
+  /// If a, b or normalized_parameter is unset or nan, ON_DBL_QNAN is returned. 
+  /// If normalized_parameter &lt;= 0.0, a is returned.
+  /// If normalized_parameter &gt;= 1.0, b is returned.
+  /// Otherwise (1.0-normalized_parameter)*a + normalized_parameter*b is returned.
+  /// </returns>
+  double ClampedParameterAt(
+    double normalized_parameter
+  ) const;
   
   /*
   Description:
@@ -122,6 +157,27 @@ public:
   ON_Interval NormalizedParameterAt (
     ON_Interval interval_parameter
     ) const;
+
+  /// <summary>
+  /// Returns a clamped normalized parameter from an interval value.
+  /// This interval may be increasing, decreasing, or a singleton.
+  /// </summary>
+  /// <param name="interval_parameter">
+  /// interval_parameter may have any value but it is clamped
+  /// to be in the intervaly before the normalized parameter is evaluated.
+  /// </param>
+  /// <returns>
+  /// Set a = the value at the beginning of this interval and
+  /// b = the value at the end of this interval.
+  /// If a, b or interval_parameter is unset or nan, ON_DBL_QNAN is returned. 
+  /// If interval_parameter is in this interval, the correxponding normalized
+  /// parameter is returned.
+  /// If interval_parameter is outside the interval, the normalized paramter for 
+  /// the end closest to interval_parameter is retuend.
+  /// </returns>
+  double ClampedNormalizedParameterAt(
+    double interval_parameter
+  ) const;
 
   double& operator[](int); // returns (index<=0) ? m_t[0] : m_t[1]
   double operator[](int) const; // returns (index<=0) ? m_t[0] : m_t[1]
@@ -2193,6 +2249,11 @@ public:
   static const ON_SurfaceCurvature Nan;
   static const ON_SurfaceCurvature Zero;
 
+  /// <summary>
+  /// Value used to indicate a radius of curvature is infinite (1e300).
+  /// </summary>
+  static const double InfinteRadius;
+
 public:
   double k1, k2; // principal curvatures
 
@@ -2202,10 +2263,60 @@ public:
   bool IsUnset() const;
 
 public:
+  /// <summary>
+  /// The Gaussian curvature is k1*k2.
+  /// </summary>
+  /// <returns>The Gausian curvature.</returns>
   double GaussianCurvature() const;
+
+  /// <summary>
+  /// The mean curvature is (k1+k2)/2.
+  /// </summary>
+  /// <returns>The signed mean curvature.</returns>
   double MeanCurvature() const;
+
+  /// <summary>
+  /// The minimum radius of curvature is 1/max(fabs(k1),fabs(k2)).
+  /// Infinte radius values are returned as ON_SurfaceCurvature::InfinteRadius.
+  /// </summary>
+  /// <returns>
+  /// Minimum radius of curvature up to a maximum of 1e300. 
+  /// If both k1 and k2 are zero, then 1e300 is returned.
+  /// </returns>
   double MinimumRadius() const;
+
+  /// <summary>
+  /// If a principal curvature value is zero 
+  /// or the principal curvatures have opposite signs,
+  /// then the maximum radius of curvature is infinite 
+  /// and ON_SurfaceCurvature::InfinteRadius is returned.
+  /// Otherwise the maximum radius of curvature is 1/min(fabs(k1),fabs(k2)).
+  /// </summary>
+  /// <returns>
+  /// IF k1 and k2 are valid, the maximum radius of curvature is returned. 
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
   double MaximumRadius() const;
+
+  /// <summary>
+  /// Calculate one of the four typical curvature values associated
+  /// with the two principal curvatures and frequently used in false
+  /// color curvature analysis.
+  /// </summary>
+  /// <param name="kappa_style">
+  /// Specifies which type curvature (Gaussian, mean, ...) value to calculate from the principal curvatures.
+  /// The Gausian curvature can be positive or negative. The other curvatures are are &gt;= 0.
+  /// In particular, ON::curvature_style::mean_curvature return fabs(this->MeanCurvature()).
+  /// </param>
+  /// <returns>
+  /// If kappa_style and the principal curvatures are valid, the specified
+  /// type of curvature value is returned. 
+  /// Infinte radii are returned as ON_SurfaceCurvature::InfinteRadius.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  double KappaValue(ON::curvature_style kappa_style) const;
+
+
 };
 
 

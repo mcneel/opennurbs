@@ -79,6 +79,8 @@ public:
     seed - [in]
     hue_range - [in]
       range of hues. Use ON_Interval::ZeroToTwoPi for all hues.
+      0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+      4pi/3 = blue, 5pi/3 = magenta, 2pi = red
     saturation_range - [in]
       range of saturations. Use ON_Interval::ZeroToOne for all saturations.
     value_range - [in]
@@ -105,6 +107,8 @@ public:
     seed - [in]
     hue_range - [in]
       range of hues. Use ON_Interval::ZeroToTwoPi for all hues.
+      0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+      4pi/3 = blue, 5pi/3 = magenta, 2pi = red
     saturation_range - [in]
       range of saturations. Use ON_Interval::ZeroToOne for all saturations.
     value_range - [in]
@@ -117,6 +121,20 @@ public:
     ON_Interval hue_range,
     ON_Interval saturation_range,
     ON_Interval value_range
+  );
+
+  /// <summary>
+  /// Get the saturated color with the specified hue.
+  /// </summary>
+  /// <param name="hue_in_radians">
+  /// 0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+  /// 4pi/3 = blue, 5pi/3 = magenta, 2pi = red
+  /// </param>
+  /// <returns>
+  /// A saturated color with the specified hue.
+  /// </returns>
+  static const ON_Color FromHueInRadians(
+    double hue_in_radians
   );
 
   // If you need to use shifting to convert RGBA components to and from
@@ -229,11 +247,9 @@ public:
     double alpha  // alpha in range 0.0 to 1.0 (0.0 = opaque, 1.0 = transparent)
     );
 
-  // Hue() returns an angle in the range 0 to 2*pi 
-  //
-  //           0 = red, pi/3 = yellow, 2*pi/3 = green, 
-  //           pi = cyan, 4*pi/3 = blue,5*pi/3 = magenta,
-  //           2*pi = red
+  // Hue() returns an angle in radians in the range 0 to 2*pi.
+  // 0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+  // 4pi/3 = blue, 5pi/3 = magenta, 2pi = red
   double Hue() const;
 
   // Returns 0.0 (gray) to 1.0 (saturated)
@@ -242,10 +258,20 @@ public:
   // Returns 0.0 (black) to 1.0 (white)
   double Value() const;
 
+  /// <summary>
+  /// Specify a color using HSV (hue, saturation, value).
+  /// </summary>
+  /// <param name="h">
+  /// hue in radians
+  /// 0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+  /// 4pi/3 = blue, 5pi/3 = magenta, 2pi = red
+  /// </param>
+  /// <param name="s">satuation 0.0 = gray, 1.0 = saturated</param>
+  /// <param name="v">value 0=black, 1.0 = bright</param>
   void SetHSV( 
-         double h, // hue in radians 0 to 2*pi
-         double s, // satuation 0.0 = gray, 1.0 = saturated
-         double v // value     
+         double h,
+         double s,
+         double v 
          );
 
   ///<summary>
@@ -317,24 +343,49 @@ public:
     /// hue (0 to 2pi), saturation (0 to 1), value (0 to 1), alpha (0 to 1) as floating point values.
     ///</summary>
     HSVA = 12,
+
+    ///<summary>
+    /// red,green,blue as two hex digit hexadecimal numbers preceded with a hash. (#RRGGBB)
+    ///</summary>
+    HashRGB = 13,
+
+    ///<summary>
+    /// red,green,blue as two hex digit hexadecimal numbers preceded with a hash. alpha is appended if it is not zero. (#RRGGBBaa)
+    ///</summary>
+    HashRGBa = 14,
+
+    ///<summary>
+    /// red,green,blue,alpha as two hex digit hexadecimal numbers preceded with a hash. (#RRGGBBAA).
+    ///</summary>
+    HashRGBA = 15,
   };
 
   /*
   Parameters:
     format - [in]
     separator - [in]
+      Separarates the values. 
+      0 to use UNICODE comma.
+      (Ignored when the format is HashRGB*.)
     character to separate numbers (unicode code point - UTF-16 surrogate pairs not supported)
       pass 0 for default.
     bFormatUnsetColor - [in]
       If true, ON_Color::UnsetColor will return "UnsetColor". Otherwise ON_Color::UnsetColor will return the empty string.
-    text_log - [in]
-      destination of the text.
   */
   const ON_wString ToString(
     ON_Color::TextFormat format,
     wchar_t separator,
+    bool bFormatUnsetColor
+  ) const;
+
+
+
+  /*MISTAKE - BUT IT SNUCK INTO THE SDK - IGNORE*/
+  const ON_wString ToString(
+    ON_Color::TextFormat format,
+    wchar_t separator,
     bool bFormatUnsetColor,
-    class ON_TextLog& text_log
+    class ON_TextLog& ignored_parameter
   ) const;
 
   /*
@@ -342,6 +393,8 @@ public:
     format - [in]
       If format is ON_Color::TextFormat::Unset, then text_log.ColorFormat is used.
     separator - [in]
+      0 to use UNICODE comma.
+      (Ignored when the format is HashRGB*.)
     character to separate numbers (unicode code point - UTF-16 surrogate pairs not supported)
       pass 0 for default.
     bFormatUnsetColor - [in]

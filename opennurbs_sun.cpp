@@ -22,6 +22,9 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+// ShadowIntensity in the Sun and Skylight are currently unused. The only ShadowIntensity that's actually
+// used is the one in the lights. See [SHADOW_INTENSITY_UNUSED]
+
 static const wchar_t* XMLPath_Sun(void)
 {
   return ON_RDK_DOCUMENT  ON_XML_SLASH  ON_RDK_SETTINGS  ON_XML_SLASH  ON_RDK_SUN;
@@ -826,11 +829,13 @@ void ON_Sun::CImpl::SetIntensity(double d)
 
 double ON_Sun::CImpl::ShadowIntensity(void) const
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   return GetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, 1.0);
 }
 
 void ON_Sun::CImpl::SetShadowIntensity(double d)
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   SetParameter(XMLPath_Sun(), ON_RDK_SUN_SHADOW_INTENSITY, std::max(0.0, std::min(1.0, d)));
 }
 
@@ -1148,6 +1153,7 @@ double ON_Sun::Intensity(void) const
 
 double ON_Sun::ShadowIntensity(void) const
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   return _impl->ShadowIntensity();
 }
 
@@ -1239,6 +1245,7 @@ void ON_Sun::SetIntensity(double d)
 
 void ON_Sun::SetShadowIntensity(double d)
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   _impl->SetShadowIntensity(d);
 }
 

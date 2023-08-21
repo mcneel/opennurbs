@@ -1863,6 +1863,9 @@ public:
 
 
 
+
+
+
   /*
   Description:
     Create a brep from a surface.  The resulting surface has an outer

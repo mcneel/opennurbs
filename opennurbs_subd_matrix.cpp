@@ -2992,8 +2992,6 @@ double ON_SubDMatrix::TestEvaluation(
   double max_d = 0.0;
   const unsigned int maximum_fail_count = 10;
 
-  const char* sSubDTypeName = "ccquad";
-
   for (size_t vertex_tag_index = vertex_tag_index0; vertex_tag_index < vertex_tag_count; vertex_tag_index++)
   {
     const ON_SubDVertexTag vertex_tag_for_scope = vertex_tags[vertex_tag_index];
@@ -3024,7 +3022,8 @@ double ON_SubDMatrix::TestEvaluation(
         if (false == test_sector_type.SurfaceEvaluationCoefficientsAvailable())
           continue;
         const unsigned int N = test_sector_type.EdgeCount();
-        double d = ON_SubDMatrix::FromCache(test_sector_type).TestEvaluation();
+        const ON_SubDMatrix& SM = ON_SubDMatrix::FromCache(test_sector_type);
+        double d = SM.TestEvaluation();
         if (d >= 0.0)
         {
           pass_count++;
@@ -3039,14 +3038,97 @@ double ON_SubDMatrix::TestEvaluation(
         {
           ON_String test_description;
           if (ON_SubDVertexTag::Corner == vertex_tag_for_scope)
-            test_description.Format("%s, %s, %u faces, %u edges, angle = %u/%u 2pi", sSubDTypeName, sVertexTagName, F, N, corner_sector_angle_index, ON_SubDSectorType::MaximumCornerAngleIndex);
+            test_description.Format("%s, %u faces, %u edges, angle = %u/%u 2pi", sVertexTagName, F, N, corner_sector_angle_index, ON_SubDSectorType::MaximumCornerAngleIndex);
           else
-            test_description.Format("%s, %s, %u faces, %u edges", sSubDTypeName, sVertexTagName, F, N);
+            test_description.Format("%s, %u faces, %u edges", sVertexTagName, F, N);
 
           if (d >= 0.0)
             text_log->Print("Test( %s) passed. Deviation = %g\n", (const char*)test_description, d);
           else
             text_log->Print("Test( %s ) failed\n", (const char*)test_description);
+
+          if (SM.m_R > 0)
+          {
+            // Print evauation coefficients.
+            const ON_TextLogIndent indent1(*text_log);
+            text_log->Print("Limit suface evaluation coefficients:\n");
+            const ON_TextLogIndent indent2(*text_log);
+            for (unsigned Ldex = 0; Ldex < 3; ++Ldex)
+            {
+              const double* L;
+              ON_String Lid;
+              switch (Ldex)
+              {
+              case 0u:
+                L = SM.m_LP;
+                Lid = "point";
+                break;
+              case 1u:
+                L = SM.m_L1;
+                Lid = "tangent[1]";
+                break;
+              case 2u:
+                L = SM.m_L2;
+                Lid = "tangent[2]";
+                break;
+              default:
+                L = nullptr;
+                break;
+              }
+              if (nullptr == L)
+                continue;
+              char sep[] = { ' ', '=', ' ', 0 };
+              unsigned termcount = 0;
+              if ( 0.0 == L[0])
+                text_log->Print("%s", static_cast<const char*>(Lid));
+              else
+              {
+                if (1.0 == L[0])
+                  text_log->Print("%s%sV", static_cast<const char*>(Lid), sep, L[0]);
+                else if (-1.0 == L[0])
+                  text_log->Print("%s%s-V", static_cast<const char*>(Lid), sep, L[0]);
+                else
+                  text_log->Print("%s%s%g*V", static_cast<const char*>(Lid), sep, L[0]);
+                ++termcount;
+              }
+              bool bPopIndent = false;
+              for (unsigned r = 1u; r < SM.m_R; ++r)
+              {
+                double c = fabs(L[r]);
+                if (0.0 == L[r])
+                  continue;
+                ++termcount;
+                if (termcount >= 2)
+                {
+                  c = fabs(c);
+                  sep[1] = (L[r] < 0.0) ? '-' : '+';
+                }
+
+                if (8 == termcount && SM.m_R > 9 && false == bPopIndent)
+                {
+                  text_log->PrintNewLine();
+                  text_log->PushIndent();
+                  bPopIndent = true;
+                }
+                if (1.0 == c)
+                  text_log->Print("%s", sep);
+                else
+                  text_log->Print("%s%g*", sep, c);
+                if (1u == r % 2u)
+                  text_log->Print("E%u", (r+1u)/2u);
+                else
+                  text_log->Print("Q%u", r/2u);
+                if (14 == termcount && r < SM.m_R - 2)
+                {
+                  text_log->Print(" + ...");
+                  r = SM.m_R - 2;
+                }
+              }
+              text_log->PrintNewLine();
+              if (bPopIndent)
+                text_log->PopIndent();
+            }
+          }
         }
         if (ON_SubDVertexTag::Corner != vertex_tag_for_scope)
           break;

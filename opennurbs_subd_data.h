@@ -1160,7 +1160,12 @@ public:
 
   void ClearEvaluationCache() const;
 
-  bool CopyEvaluationCacheForExperts(class ON_SubDHeap& this_heap, const ON_SubDLevel& src, const class ON_SubDHeap& src_heap);
+  bool CopyEvaluationCacheForExperts(
+    class ON_SubDHeap& this_heap, 
+    const ON_SubDLevel& src, 
+    const class ON_SubDHeap& src_heap, 
+    bool& bFragmentsWereCopied
+  );
     
   void ClearTopologicalAttributes() const
   {

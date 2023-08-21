@@ -2420,7 +2420,7 @@ void ON_Texture::SetRotation(double rotation)
 
   m_uvw.DecomposeTextureMapping(offset, repeat, r);
 
-  m_uvw = ON_Xform::TextureMapping(offset, repeat, ON_3dPoint(0.0, 0.0, rotation));
+  m_uvw = ON_Xform::TextureMapping(offset, repeat, ON_3dPoint(0.0, 0.0, rotation * ON_DEGREES_TO_RADIANS));
 }
 
 double ON_Texture::Rotation() const
@@ -2429,7 +2429,7 @@ double ON_Texture::Rotation() const
 
   m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
 
-  return rotation.z;
+  return rotation.z * ON_RADIANS_TO_DEGREES;
 }
 
 

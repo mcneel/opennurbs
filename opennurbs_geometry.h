@@ -222,6 +222,8 @@ public:
     const class ON_Xform* xform = nullptr
   ) const;
 
+  const ON_BoundingBox TightBoundingBox() const;
+
   // Description:
   //   Some objects cache bounding box information.
   //   If you modify an object, then call ClearBoundingBox()

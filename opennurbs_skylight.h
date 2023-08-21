@@ -33,10 +33,10 @@ public:
   // Set the skylight enabled state.
   virtual void SetEnabled(bool b);
 
-  // Returns the skylight shadow intensity. This is unused at present.
+  // Returns the skylight shadow intensity. This is currently unused.
   virtual double ShadowIntensity(void) const;
 
-  // Set the skylight shadow intensity. This is unused at present.
+  // Set the skylight shadow intensity. This is currently unused.
   virtual void SetShadowIntensity(double d);
 
   // Emergency virtual function for future expansion.

@@ -37,10 +37,19 @@ class ON_CLASS ON_TextureMapping : public ON_ModelComponent
 
 public:
 
-  static const ON_TextureMapping Unset; // nil id
+  /// <summary>
+  /// m_type = ON_TextureMapping::TYPE::no_mapping
+  /// m_id = nil id
+  /// </summary>
+  static const ON_TextureMapping Unset;
 
-  // ON_TextureMapping::SurfaceParameterTextureMapping
-  // has m_type = ON_TextureMapping::srfp_mapping and m_id = nil;
+  // {B988A6C2-61A6-45a7-AAEE-9AED7EF4E316}
+  static const ON_UUID SurfaceParameterTextureMappingId;
+
+  /// <summary>
+  /// m_type = ON_TextureMapping::srfp_mapping
+  /// m_id = ON_TextureMapping::SurfaceParameterTextureMappingId
+  /// </summary>
   static const ON_TextureMapping SurfaceParameterTextureMapping;
 
   /*

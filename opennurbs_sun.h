@@ -179,7 +179,7 @@ public:
   // Returns the intensity to be used for the sun. This is 1.0 by default.
   virtual double Intensity(void) const;
 
-  // Returns the shadow intensity to be used for the sun. This is 1.0 by default. 0.0 turns off all shadows.
+  // This is currently unused.
   virtual double ShadowIntensity(void) const;
 
   // Set whether or not enabling/disabling the sun is allowed.
@@ -233,7 +233,7 @@ public:
   // Returns true if successful, false if the date is out of range.
   virtual bool SetLocalDateTime(int year, int month, int day, double hours);
 
-  // Set the shadow intensity to be used for the sun. This is 1.0 by default. 0.0 turns off all shadows.
+  // This is currently unused.
   virtual void SetShadowIntensity(double intensity);
 
   // Set the intensity to be used for the sun.  This is 1.0 by default.

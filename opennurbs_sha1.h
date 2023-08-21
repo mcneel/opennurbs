@@ -276,6 +276,18 @@ public:
   */
   bool IsSet() const;
 
+  /// <summary>
+  /// Calculating a SHA1 hash is faster than calculating a CRC on the same information.
+  /// This function calculates the ON_CRC value of the 20 byte digest.
+  /// Calculating a sha1 hash and then using CRC32(0) is an excellent and efficient way
+  /// to get a high quality 4 byte CRC.
+  /// </summary>
+  /// <param name="current_remainder"> 
+  /// Nonzero values are rare in this context. When in doubt, pass 0.
+  /// </param>
+  /// <returns>ON_CRC32(seed, 20, m_digest)</returns>
+  ON__UINT32 CRC32(ON__UINT32 current_remainder) const;
+
   ON__UINT8 m_digest[20]; 
 };
 

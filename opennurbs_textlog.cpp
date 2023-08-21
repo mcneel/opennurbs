@@ -54,6 +54,22 @@ ON_TextLogLevelOfDetail::ON_TextLogLevelOfDetail(
   m_text_log.SetLevelOfDetail(level_of_detail);
 }
 
+ON_TextLogLevelOfDetail::ON_TextLogLevelOfDetail(
+  class ON_TextLog& text_log,
+  int delta_lod
+)
+  : m_text_log(text_log)
+  , m_saved_level_of_detail(text_log.GetLevelOfDetail())
+{
+  const int new_lod = ((int)static_cast<unsigned>(m_saved_level_of_detail)) + delta_lod;
+  if (new_lod <= 0)
+    m_text_log.SetLevelOfDetail(ON_TextLog::LevelOfDetail::Minimum);
+  else if (((unsigned)new_lod) >= static_cast<unsigned>(ON_TextLog::LevelOfDetail::Maximum))
+    m_text_log.SetLevelOfDetail(ON_TextLog::LevelOfDetail::Maximum);
+  else
+    m_text_log.SetLevelOfDetail(ON_TextLog::LevelOfDetailFromUnsigned((unsigned)new_lod));
+}
+
 ON_TextLogLevelOfDetail::~ON_TextLogLevelOfDetail()
 {
   m_text_log.SetLevelOfDetail(m_saved_level_of_detail);
@@ -128,6 +144,22 @@ void ON_TextLog::SetLevelOfDetail(ON_TextLog::LevelOfDetail level_of_detail)
 ON_TextLog::LevelOfDetail ON_TextLog::GetLevelOfDetail() const
 {
   return m_level_of_detail;
+}
+
+ON_TextLog::LevelOfDetail ON_TextLog::IncreaseLevelOfDetail()
+{
+  ON_TextLog::LevelOfDetail prev_lod = m_level_of_detail;
+  if (prev_lod < ON_TextLog::LevelOfDetail::Maximum)
+    SetLevelOfDetail(ON_TextLog::LevelOfDetailFromUnsigned(static_cast<unsigned>(prev_lod) + 1u));
+  return prev_lod;
+}
+
+ON_TextLog::LevelOfDetail ON_TextLog::DecreaseLevelOfDetail()
+{
+  ON_TextLog::LevelOfDetail prev_lod = m_level_of_detail;
+  if (prev_lod > ON_TextLog::LevelOfDetail::Minimum)
+    SetLevelOfDetail(ON_TextLog::LevelOfDetailFromUnsigned(static_cast<unsigned>(prev_lod) - 1u));
+  return prev_lod;
 }
 
 bool ON_TextLog::LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail level_of_detail)
@@ -440,13 +472,21 @@ void ON_TextLog::Print( const ON_3dVector& p )
 
 void ON_TextLog::Print( const ON_Xform& xform )
 {
-  if ( xform.IsIdentity() )
+  if (ON_Xform::IdentityTransformation == xform)
   {
     Print("ON_Xform::IdentityTransformation\n");
   }
-  else if ( xform.IsZero() )
+  else if (ON_Xform::ZeroTransformation == xform)
   {
     Print("ON_Xform::ZeroTransformation\n");
+  }
+  else if (ON_Xform::Zero4x4 == xform)
+  {
+    Print("ON_Xform::Zero4x4\n");
+  }
+  else if (ON_Xform::Unset == xform)
+  {
+    Print("ON_Xform::Unset\n");
   }
   else
   {

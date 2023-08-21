@@ -1309,6 +1309,22 @@ static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArr
   Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
 }
 
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_SurfaceCurvature>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateDoubleArray(a.Count() * 2, (const double*)a.Array());
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
+static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_Color>& a, const wchar_t* prefix, bool bNewLine)
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateInteger32Array(a.Count(), (const ON__INT32*)a.Array());
+  const ON_SHA1_Hash hash = sha1.Hash();
+  Internal_PrintMeshArrayHash(text_log, hash, prefix, bNewLine);
+}
+
 static void Internal_PrintMeshArrayHash(ON_TextLog& text_log, const ON_SimpleArray<ON_3dPoint>& a, const wchar_t* prefix, bool bNewLine)
 {
   ON_SHA1 sha1;
@@ -1493,15 +1509,12 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
         }
         else
         {
-          ON_2fPoint tp = m_T[i];
-          p.x = tp.x;
-          p.y = tp.y;
-          dump.Print("m_T[%d] = (%g,%g)\n",i,p.x,p.y);
+          const ON_2dPoint tp(m_T[i]);
+          dump.Print("m_T[%d] = (%g,%g)\n",i,tp.x,tp.y);
         }
       }
     }
   }
-
 
   if ( HasSurfaceParameters() )
   {
@@ -1518,12 +1531,58 @@ void ON_Mesh::Dump( ON_TextLog& dump ) const
         }
         else
         {
-          ON_2dPoint srfuv = m_S[i];
-          dump.Print("m_S[%d] = (%g,%g)\n",i,srfuv.x,srfuv.y);
+          const ON_2dPoint srfuv = m_S[i];
+          dump.Print("m_S[%d] = (%g,%g)\n",i, srfuv.x, srfuv.y);
         }
       }
     }
   }
+
+  if (this->HasVertexColors())
+  {
+    dump.Print("%d mesh vertex colors:\n", m_C.Count());
+    {
+      const ON_TextLogIndent indent2(dump);
+      Internal_PrintMeshArrayHash(dump, m_C, L"m_C array hash", true);
+      for (i = 0; i < vcount; i++)
+      {
+        if (i == half_max && 2 * half_max < vcount)
+        {
+          dump.Print("...\n");
+          i = vcount - half_max;
+        }
+        else
+        {
+          const ON_wString s = m_C[i].ToString(ON_Color::TextFormat::HashRGBa, 0, true);
+          dump.Print(L"m_C[%d] = %s\n", i, static_cast<const wchar_t*>(s));
+        }
+      }
+    }
+  }
+
+
+  if (this->HasPrincipalCurvatures())
+  {
+    dump.Print("%d mesh vertex principal curvatures:\n", m_K.Count());
+    {
+      const ON_TextLogIndent indent2(dump);
+      Internal_PrintMeshArrayHash(dump, m_K, L"m_K array hash", true);
+      for (i = 0; i < vcount; i++)
+      {
+        if (i == half_max && 2 * half_max < vcount)
+        {
+          dump.Print("...\n");
+          i = vcount - half_max;
+        }
+        else
+        {
+          const ON_SurfaceCurvature k = m_K[i];
+          dump.Print("m_K[%d] = (%g,%g)\n", i, k.k1, k.k2);
+        }
+      }
+    }
+  }
+
 
   dump.Print("%d mesh faces:\n",m_F.Count());
   {
@@ -4286,8 +4345,78 @@ bool ON_Mesh::HasPrincipalCurvatures() const
 bool ON_Mesh::HasVertexColors() const
 {
   const int vertex_count = VertexCount();
-  return ( vertex_count > 0 && m_C.Count() == vertex_count ) ? true : false;
+  return (vertex_count > 0 && m_C.Count() == vertex_count) ? true : false;
 }
+
+bool ON_Mesh::HasVertexColors(
+  ON_MappingTag color_tag
+) const
+{
+  return this->HasVertexColors() && color_tag == this->m_Ctag;
+}
+
+void ON_Mesh::ClearVertexColors()
+{
+  this->m_C.SetCount(0);
+  this->m_Ctag = ON_MappingTag::Unset;
+}
+
+bool ON_Mesh::SetDraftAngleColorAnalysisColors(
+  bool bLazy,
+  ON_3dVector up,
+  ON_Interval angle_range_in_radians,
+  ON_Interval hue_range_in_radians
+)
+{
+  const ON_MappingTag Ctag = ON_MappingTag::DraftAngleColorAnalysisTag(up, angle_range_in_radians, hue_range_in_radians);
+  if (bLazy && HasVertexColors() && this->m_Ctag == Ctag)
+    return true;
+
+  this->ClearVertexColors();
+
+  if (false == this->HasVertexNormals())
+    return false;
+
+  const unsigned count = this->m_N.Count();
+  this->m_C.Reserve(count);
+  for (unsigned i = 0; i < count; ++i)
+  {
+    const ON_Color c = ON_MappingTag::DraftAngleColor(up, angle_range_in_radians, hue_range_in_radians, ON_3dVector(this->m_N[i]));
+    this->m_C.Append(c);
+  }
+  this->m_Ctag = Ctag;
+
+  return true;
+}
+
+bool ON_Mesh::SetCurvatureColorAnalysisColors(
+  bool bLazy,
+  const ON::curvature_style kappa_style,
+  ON_Interval kappa_range,
+  ON_Interval hue_range_in_radians
+)
+{
+  const ON_MappingTag Ctag = ON_MappingTag::CurvatureColorAnalysisTag(kappa_style, kappa_range, hue_range_in_radians);
+  if (bLazy && HasVertexColors() && this->m_Ctag == Ctag)
+    return true;
+
+  this->ClearVertexColors();
+
+  if (false == this->HasPrincipalCurvatures())
+    return false;
+
+  const unsigned count = this->m_K.Count();
+  this->m_C.Reserve(count);
+  for (unsigned i = 0; i < count; ++i)
+  {
+    const ON_Color c = ON_MappingTag::CurvatureColor(kappa_style, kappa_range, hue_range_in_radians, this->m_K[i]);
+    this->m_C.Append(c);
+  }
+  this->m_Ctag = Ctag;
+
+  return true;
+}
+
 
 void ON_Mesh::InvalidateBoundingBoxes()
 {
@@ -9220,6 +9349,84 @@ const ON_SurfaceCurvature ON_SurfaceCurvature::CreateFromPrincipalCurvatures(
   return k;
 }
 
+double ON_SurfaceCurvature::KappaValue(ON::curvature_style kappa_style) const
+{
+  double k;
+  switch (kappa_style)
+  {
+  case ON::gaussian_curvature:
+    k = this->GaussianCurvature();
+    break;
+
+  case ON::mean_curvature:
+    // fabs() is correct here.
+    // Turns out the vast majority of users don't appear to care about 
+    // signed mean curvature and find it confusing.
+    k = fabs(this->MeanCurvature());
+    break;
+
+  case ON::min_curvature:
+    k = this->MinimumRadius();
+    break;
+
+  case ON::max_curvature:
+    k = this->MaximumRadius();
+    break;
+
+  default:
+    k = ON_DBL_QNAN;
+    break;
+  }
+  return k;
+}
+
+const ON_Color ON_MappingTag::CurvatureColor(
+  ON::curvature_style kappa_style,
+  ON_Interval kappa_range,
+  ON_Interval hue_range_in_radians,
+  ON_SurfaceCurvature K
+)
+{
+  // This is the curvature analysis color used by the current version of Rhino.
+  // The code can be updated as the method for assigning a color to surface curvatures changes.
+
+  const double k = K.KappaValue(kappa_style);
+
+  if (ON_IS_NAN(k))
+    return ON_Color::UnsetColor;
+
+  // convert k to hue
+  const double mn = kappa_range.m_t[0];
+  const double mx = kappa_range.m_t[1];
+  double f;
+  if (mn != mx)
+  {
+    const double d = 1.0 / (mx - mn);
+    f = (mx - k) * d;
+    if (f <= 0.0)
+      f = 0.0;
+    else if (f >= 1.0)
+      f = 1.0;
+  }
+  else if (mn == mx)
+  {
+    if (k > mn)
+      f = 0.0;
+    else if (k < mn)
+      f = 1.0;
+    else
+      f = 0.5;
+  }
+  else
+    return ON_Color::UnsetColor;
+
+
+  if (f >= 0.0 && f <= 1.0)
+    return ON_Color::FromHueInRadians(hue_range_in_radians.ParameterAt(f));
+
+  return ON_Color::UnsetColor;
+}
+
 bool ON_SurfaceCurvature::IsSet() const
 {
   return (ON_UNSET_VALUE < k1&& k1 < ON_UNSET_POSITIVE_VALUE&& ON_UNSET_VALUE < k2&& k2 < ON_UNSET_POSITIVE_VALUE);
@@ -9238,36 +9445,67 @@ bool ON_SurfaceCurvature::IsUnset() const
 
 double ON_SurfaceCurvature::GaussianCurvature() const
 {
-  return k1*k2;
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    return k1 * k2;
+  }
+
+  return ON_DBL_QNAN;
 }
 
 double ON_SurfaceCurvature::MeanCurvature() const
 {
-  return 0.5*(k1+k2);
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    return 0.5 * (k1 + k2);
+  }
+
+  return ON_DBL_QNAN;
 }
 
 double ON_SurfaceCurvature::MinimumRadius() const
 {
-  double k;
-  k = (fabs(k1)>=fabs(k2)) ? fabs(k1) : fabs(k2); // k = maximum directional curvature
-  k = ( k > 1.0e-300 ) ? 1.0/k : 1.0e300;         // 1/k = minimum radius of curvature
-  return k;
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    // k = maximum directional curvature
+    const double k = (fabs(k1) >= fabs(k2)) ? fabs(k1) : fabs(k2); 
+
+    // 1/k = minimum radius of curvature
+    return
+      (k > (1.0 / ON_SurfaceCurvature::InfinteRadius)) 
+      ? 1.0 / k 
+      : ON_SurfaceCurvature::InfinteRadius;
+  }
+
+  return ON_DBL_QNAN;
 }
 
 double ON_SurfaceCurvature::MaximumRadius() const
 {
-  double k;
-  if ( k1*k2 <= 0.0 ) {
-    // if principal curvatures have opposite signs, there
-    // is a direction with zero directional curvature
-    k = 0.0;
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    // k = minimum directional curvature
+    double k;
+    if (k1 * k2 <= 0.0 || fabs(k1) <= 1e-300 || fabs(k2) <= 1e-300)
+    {
+      // If principal curvatures have opposite signs,
+      // there is a direction with zero directional curvature.
+      k = 0.0;
+    }
+    else
+    {
+      // The minimum directional curvaature is in a principal curvature direction.
+      k = (fabs(k1) <= fabs(k2)) ? fabs(k1) : fabs(k2);
+    }
+
+    // 1/k = maximum radius of curvature
+    return
+      (k > (1.0 / ON_SurfaceCurvature::InfinteRadius))
+      ? 1.0 / k 
+      : ON_SurfaceCurvature::InfinteRadius; 
   }
-  else {
-    k = (fabs(k1)<=fabs(k2)) ? fabs(k1) : fabs(k2);
-  }
-  // k = minimum directional curvature
-  k = ( k > 1.0e-300 ) ? 1.0/k : 1.0e300; // 1/k = maximum radius of curvature
-  return k;
+
+  return ON_DBL_QNAN;
 }
 
 ON_MeshTopology::ON_MeshTopology() 
@@ -12044,6 +12282,166 @@ const ON_Xform ON_MappingTag::Transform() const
   return TransformIsIdentity() ? ON_Xform::IdentityTransformation : m_mesh_xform;
 }
 
+const ON_SHA1_Hash ON_MappingTag::CurvatureColorAnalysisParametersHash(
+  ON::curvature_style kappa_style,
+  ON_Interval kappa_range,
+  ON_Interval hue_range_in_radians
+)
+{
+  ON_SHA1 sha1;
+
+  // The uuid is accumulated because an int,double,double could easily
+  // be the intput data int many unrelated contexts. This sha1 is used
+  // to avoid expensive recalculations of curvatures and their false colors.
+  const ON_UUID uniqueness_boost = ON_MappingTag::CurvatureColorAnalysisId;
+  sha1.AccumulateId(uniqueness_boost);
+
+  const unsigned u = (unsigned)kappa_style;
+  sha1.AccumulateInteger32(u);
+
+  sha1.AccumulateDoubleArray(2, kappa_range.m_t);
+
+  sha1.AccumulateDoubleArray(2, hue_range_in_radians.m_t);
+
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_MappingTag::CurvatureColorAnalysisParametersCRC32(
+  ON::curvature_style kappa_style,
+  ON_Interval kappa_range,
+  ON_Interval hue_range_in_radians
+)
+{
+  return ON_MappingTag::CurvatureColorAnalysisParametersHash(kappa_style,kappa_range, hue_range_in_radians).CRC32(0);
+}
+
+const ON_MappingTag ON_MappingTag::CurvatureColorAnalysisTag(
+  ON::curvature_style kappa_style,
+  ON_Interval kappa_range,
+  ON_Interval hue_range_in_radians
+)
+{
+  ON_MappingTag mt = ON_MappingTag::Unset;
+
+  mt.m_mapping_id = ON_MappingTag::CurvatureColorAnalysisId;
+  mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
+
+  // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
+  // This value is used to determine when the parameters used to calculate the vertex
+  // colors have changed.
+  mt.m_mapping_crc = ON_MappingTag::CurvatureColorAnalysisParametersCRC32(kappa_style, kappa_range, hue_range_in_radians);
+
+  // The m_mesh_xform in meaningless for false color curvature analysis,
+  // but setting it to the identity greases the wheels when downstream
+  // code looks at it for unknown reasons.
+  mt.m_mesh_xform = ON_Xform::IdentityTransformation; 
+
+  return mt;
+}
+
+const ON_SHA1_Hash ON_MappingTag::DraftAngleColorAnalysisParametersHash(
+  ON_3dVector up,
+  ON_Interval angle_range_in_radians,
+  ON_Interval hue_range_in_radians
+)
+{
+  ON_SHA1 sha1;
+
+  // The uuid is accumulated because an int,double,double could easily
+  // be the intput data int many unrelated contexts. This sha1 is used
+  // to avoid expensive recalculations of curvatures and their false colors.
+  const ON_UUID uniqueness_boost = ON_MappingTag::DraftAngleColorAnalysisId;
+  sha1.AccumulateId(uniqueness_boost);
+  sha1.AccumulateDoubleArray(3, &up.x);
+  sha1.AccumulateDoubleArray(2, angle_range_in_radians.m_t);
+  sha1.AccumulateDoubleArray(2, hue_range_in_radians.m_t);
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_MappingTag::DraftAngleColorAnalysisParametersCRC32(
+  ON_3dVector up,
+  ON_Interval angle_range_in_radians,
+  ON_Interval hue_range_in_radians
+)
+{
+  return ON_MappingTag::DraftAngleColorAnalysisParametersHash(up, angle_range_in_radians, hue_range_in_radians).CRC32(0);
+}
+
+
+const ON_MappingTag ON_MappingTag::DraftAngleColorAnalysisTag(
+  ON_3dVector up,
+  ON_Interval angle_range_in_radians,
+  ON_Interval hue_range_in_radians
+)
+{
+  ON_MappingTag mt = ON_MappingTag::Unset;
+
+  mt.m_mapping_id = ON_MappingTag::DraftAngleColorAnalysisId;
+  mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
+
+  // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
+  // This value is used to determine when the parameters used to calculate the vertex
+  // colors have changed.
+  mt.m_mapping_crc = ON_MappingTag::DraftAngleColorAnalysisParametersCRC32(up, angle_range_in_radians, hue_range_in_radians);
+
+  // The m_mesh_xform in meaningless for false color curvature analysis,
+  // but setting it to the identity greases the wheels when downstream
+  // code looks at it for unknown reasons.
+  mt.m_mesh_xform = ON_Xform::IdentityTransformation;
+
+  return mt;
+}
+
+const ON_Color ON_MappingTag::DraftAngleColor(
+  ON_3dVector up,
+  ON_Interval draft_angle_range_in_radians,
+  ON_Interval hue_range_in_radians,
+  ON_3dVector surface_normal
+)
+{
+  for (;;)
+  {
+    if (false == ON_IsValid(draft_angle_range_in_radians.m_t[0]))
+      break;
+    if (false == ON_IsValid(draft_angle_range_in_radians.m_t[1]))
+      break;
+
+    const double a0 = ON_HALFPI - draft_angle_range_in_radians[0];
+    const double a1 = ON_HALFPI - draft_angle_range_in_radians[1];
+    const double mn = cos(a0);
+    const double mx = cos(a1);
+
+    const double n_dot_up = surface_normal * up;
+    double h;
+
+    if (fabs(mn - mx) <= 1e-8)
+    {
+      if (n_dot_up < mn && n_dot_up < mx)
+        h = hue_range_in_radians[0];
+      else if (n_dot_up > mn && n_dot_up > mx)
+        h = hue_range_in_radians[1];
+      else
+        h = hue_range_in_radians.ParameterAt(0.5);
+    }
+    else if (mn != mx)
+    {
+      double t = (n_dot_up - mn) / (mx - mn);
+      if (t <= 0.0)
+        h = hue_range_in_radians[0];
+      else if (t >= 1.0)
+        h = hue_range_in_radians[1];
+      else
+        h = hue_range_in_radians.ParameterAt(t);
+    }
+    else
+      break;
+
+    return ON_Color::FromHueInRadians(h);
+  }
+  return ON_Color::UnsetColor;
+}
+
+
 bool ON_MappingTag::TransformIsIdentity() const
 {
   return ON_MappingTag::TransformTreatedIsIdentity(&m_mesh_xform);
@@ -12072,22 +12470,28 @@ ON_MappingTag::ON_MappingTag(const ON_TextureMapping & mapping, const ON_Xform *
 
 void ON_MappingTag::Dump( ON_TextLog& text_log ) const
 {
-  text_log.Print("Texture/color mapping tag:\n");
   if (text_log.IsTextHash())
   {
     // The code is a mess with respect to mapping tags and they are
     // often mutable or changed with const/cast in unpredictable ways.
+    text_log.Print("Texture/color mapping tag:\n");
     text_log.Print("  ...\n");
     return;
   }
 
-  const ON_TextLogIndent indent1(text_log);
+  const ON_TextLog::LevelOfDetail lod = text_log.GetLevelOfDetail();
 
-  if (0 == ON_MappingTag::CompareAll(ON_MappingTag::Unset, *this))
+  if (lod >= ON_TextLog::LevelOfDetail::Maximum)
+  {
+    text_log.Print("Texture/color mapping tag:\n");
+    text_log.PushIndent();
+  }
+
+  if (ON_MappingTag::Unset == *this)
   {
     text_log.Print("ON_MappingTag::Unset\n");
   }
-  else if (0 == ON_MappingTag::CompareAll(ON_MappingTag::SurfaceParameterMapping, *this))
+  else if (ON_MappingTag::SurfaceParameterMapping == *this)
   {
     text_log.Print("ON_MappingTag::SurfaceParameterMapping\n");
   }
@@ -12136,12 +12540,34 @@ void ON_MappingTag::Dump( ON_TextLog& text_log ) const
     text_log.Print(m_mapping_id);
     if (m_mapping_id == ON_MappingTag::SurfaceParameterMapping.m_mapping_id)
       text_log.Print(" = ON_MappingTag::SurfaceParameterMapping.m_mapping_id");
+    else if (m_mapping_id == ON_MappingTag::CurvatureColorAnalysisId)
+      text_log.Print(" = ON_MappingTag::CurvatureColorAnalysisId");
+    else if (m_mapping_id == ON_MappingTag::DraftAngleColorAnalysisId)
+      text_log.Print(" = ON_MappingTag::DraftAngleColorAnalysisId");
     text_log.PrintNewLine();
 
     text_log.Print("mapping crc: %08x\n", m_mapping_crc);
-    text_log.Print("mesh xform:\n");
-    const ON_TextLogIndent indent2(text_log);
-    text_log.Print(m_mesh_xform);
+
+    text_log.Print("mesh xform:");
+    if (ON_Xform::IdentityTransformation == m_mesh_xform)
+      text_log.Print(" ON_Xform::IdentityTransformation\n");
+    else if (ON_Xform::ZeroTransformation == m_mesh_xform)
+      text_log.Print(" ON_Xform::ZeroTransformation\n");
+    else if (ON_Xform::Zero4x4 == m_mesh_xform)
+      text_log.Print(" ON_Xform::Zero4x4\n");
+    else if (ON_Xform::Unset == m_mesh_xform)
+      text_log.Print(" ON_Xform::Unset\n");
+    else
+    {
+      text_log.PrintNewLine();
+      const ON_TextLogIndent indent2(text_log);
+      text_log.Print(m_mesh_xform);
+    }
+  }
+
+  if (lod >= ON_TextLog::LevelOfDetail::Maximum)
+  {
+    text_log.PopIndent();
   }
 }
 
@@ -12266,6 +12692,48 @@ int ON_MappingTag::CompareAll(const ON_MappingTag& lhs, const ON_MappingTag& rhs
   if (lhs.m_mapping_crc > rhs.m_mapping_crc)
     return 1;
   return  lhs.m_mesh_xform.Compare(rhs.m_mesh_xform);
+}
+
+bool operator==(const ON_MappingTag& lhs, const ON_MappingTag& rhs)
+{
+  if (lhs.m_mapping_type == rhs.m_mapping_type && lhs.m_mapping_id == rhs.m_mapping_id)
+  {
+    if (ON_TextureMapping::TYPE::no_mapping == lhs.m_mapping_type && ON_nil_uuid == lhs.m_mapping_id)
+    {
+      // m_mapping_crc and m_mesh_xform are meaningless and are ignored
+      return true;
+    }    
+
+    if (ON_TextureMapping::TYPE::srfp_mapping == lhs.m_mapping_type && ON_MappingTag::SurfaceParameterMapping.m_mapping_id == lhs.m_mapping_id)
+    {
+      // m_mesh_xform is meaningless and is ignored
+      // (m_mapping_crc can be from a uvw texture coordinate transformation and must be checked)
+      return lhs.m_mapping_crc == rhs.m_mapping_crc;
+    }
+  }
+
+  return lhs.m_mapping_crc == rhs.m_mapping_crc && 0 == lhs.m_mesh_xform.Compare(rhs.m_mesh_xform);
+}
+
+bool operator!=(const ON_MappingTag& lhs, const ON_MappingTag& rhs)
+{
+  if (lhs.m_mapping_type != rhs.m_mapping_type || false == (lhs.m_mapping_id == rhs.m_mapping_id))
+    return true;
+
+  if (ON_TextureMapping::TYPE::no_mapping == lhs.m_mapping_type && ON_nil_uuid == lhs.m_mapping_id)
+  {
+    // m_mapping_crc and m_mesh_xform are meaningless and are ignored
+    return false;
+  }
+
+  if (ON_TextureMapping::TYPE::srfp_mapping == lhs.m_mapping_type && ON_MappingTag::SurfaceParameterMapping.m_mapping_id == lhs.m_mapping_id)
+  {
+    // m_mesh_xform is meaningless and is ignored
+    // (m_mapping_crc can be from a uvw texture coordinate transformation and must be checked)
+    return lhs.m_mapping_crc != rhs.m_mapping_crc;
+  }
+
+  return (lhs.m_mapping_crc != rhs.m_mapping_crc || 0 != lhs.m_mesh_xform.Compare(rhs.m_mesh_xform));
 }
 
 int ON_MappingTag::CompareAllFromPointer(const ON_MappingTag* lhs, const ON_MappingTag* rhs)

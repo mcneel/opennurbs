@@ -360,6 +360,9 @@ bool ON_Plane::IsValid() const
 
 
   double x = plane_equation.ValueAt(origin);
+  if (ON_IS_NAN(x))
+    return false;
+
   if ( fabs(x) >  ON_ZERO_TOLERANCE )
   {
     double tol = fabs(origin.MaximumCoordinate()) + fabs(plane_equation.d);
@@ -392,6 +395,23 @@ bool ON_Plane::IsValid() const
   return true;
 }
 
+void ON_Plane::Dump(class ON_TextLog& text_log) const
+{
+  text_log.Print("plane equation: ");
+  plane_equation.Dump(text_log);
+  text_log.PrintNewLine();
+  text_log.PushIndent();
+  text_log.Print("xaxis=");
+  text_log.Print(xaxis);
+  text_log.Print(", yaxis=");
+  text_log.Print(yaxis);
+  text_log.Print(", zaxis=");
+  text_log.Print(zaxis);
+  text_log.Print(", origin=");
+  text_log.Print(origin);
+  text_log.PrintNewLine();
+  text_log.PopIndent();
+}
 
 bool ON_Plane::Transform( const ON_Xform& xform )
 {

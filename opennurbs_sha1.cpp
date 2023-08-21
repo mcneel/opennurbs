@@ -209,6 +209,11 @@ bool ON_SHA1_Hash::IsZeroDigentOrEmptyContentHash() const
   return IsZeroDigestOrEmptyContentHash();
 }
 
+ON__UINT32 ON_SHA1_Hash::CRC32(ON__UINT32 current_remainder) const
+{
+  return ON_CRC32(current_remainder, sizeof(m_digest) / sizeof(m_digest[0]), m_digest);
+}
+
 
 int ON_SHA1_Hash::Compare(
   const ON_SHA1_Hash& a,

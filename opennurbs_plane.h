@@ -273,6 +273,8 @@ See Also:
   */
   bool IsValid() const;
 
+  void Dump(class ON_TextLog&) const;
+
   /*
   Returns:
     Plane origin.

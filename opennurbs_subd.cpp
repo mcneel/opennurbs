@@ -8650,15 +8650,16 @@ unsigned int ON_SubD::DumpTopology(
     {
       const ON_MappingTag mapping_tag = this->TextureMappingTag(true);
 
+      const bool bUnsetMappingTag = ON_MappingTag::Unset == mapping_tag;
+
       const bool bSurfaceParameterMappingTag
-        = (0 == ON_MappingTag::CompareAll(ON_MappingTag::SurfaceParameterMapping, mapping_tag))
-        || (bIsTextHash && (ON_TextureMapping::TYPE::srfp_mapping == mapping_tag.m_mapping_type || ON_MappingTag::SurfaceParameterMapping.m_mapping_id == mapping_tag.m_mapping_id))
+        = false == bUnsetMappingTag
+        && (
+          ON_MappingTag::SurfaceParameterMapping == mapping_tag
+          || (bIsTextHash && (ON_TextureMapping::TYPE::srfp_mapping == mapping_tag.m_mapping_type || ON_MappingTag::SurfaceParameterMapping.m_mapping_id == mapping_tag.m_mapping_id))
+          )
         ;
 
-      const bool bUnsetMappingTag
-        = ((false == bSurfaceParameterMappingTag) &&
-          (0 == ON_MappingTag::CompareAll(ON_MappingTag::Unset, mapping_tag))) ||
-          ((bIsTextHash && (ON_TextureMapping::TYPE::no_mapping == mapping_tag.m_mapping_type || ON_nil_uuid == mapping_tag.m_mapping_id)));
 
       // NOTE: the mapping tag is only applied when subd_texture_coordinate_type = FromMapping
       if (ON_SubDTextureCoordinateType::FromMapping == subd_texture_coordinate_type && false == bUnsetMappingTag)
@@ -8742,9 +8743,18 @@ unsigned int ON_SubD::DumpTopology(
         frament_texture_settings_hash.Dump(text_log);
       text_log.PrintNewLine();
     }
+  }
 
-    if (false == text_log.IsTextHash())
+  if (false == text_log.IsTextHash())
+  {
+    text_log.Print(L"Fragment per vertex color settings:\n");
     {
+      ON_TextLogIndent indent1(text_log);
+      text_log.Print(L"FragmentColorsMappingTag() = ");
+      const ON_MappingTag colors_tag = this->FragmentColorsMappingTag();
+      const ON_TextLog::LevelOfDetail lod = text_log.DecreaseLevelOfDetail();
+      colors_tag.Dump(text_log);
+      text_log.SetLevelOfDetail(lod);
       const ON_SHA1_Hash subd_fragment_color_settings_hash = this->FragmentColorsSettingsHash();
       text_log.Print(L"FragmentColorsSettingsHash() = ");
       subd_fragment_color_settings_hash.Dump(text_log);
@@ -9082,6 +9092,21 @@ const ON_SHA1_Hash ON_SubDimple::FaceHash(ON_SubDHashType hash_type) const
   ON_SubDFaceIdIterator fidit;
   this->InitializeFaceIdIterator(fidit);
   return Internal_FaceHash(hash_type, ActiveLevel().m_face[0], this->ActiveLevelIndex(), fidit);
+}
+
+
+static void Internal_AccumulateFragmentColorArrayHash(ON_SHA1& sha1, const ON_Color* a, unsigned count, size_t stride)
+{
+  if (nullptr != a && count > 0)
+  {
+    sha1.AccumulateInteger32(count);
+    for (unsigned i = 0; i < count; ++i)
+    {
+      const unsigned c = a[0];
+      sha1.AccumulateInteger32(c);
+      a += stride;
+    }
+  }
 }
 
 static void Internal_AccumulateFragmentArrayHash(ON_SHA1& sha1, size_t dim, const double* a, unsigned count, size_t stride)
@@ -10443,12 +10468,45 @@ unsigned int ON_SubDLevel::DumpTopology(
   return topology_error_count;
 }
 
+static void Internal_DumpFragmentColorArray(ON_TextLog& text_log, const wchar_t* description, const ON_Color* a, unsigned count, size_t stride)
+{
+  if (nullptr != a && count > 0 && stride >= 1)
+  {
+    text_log.Print(L"%ls = ", description);
+    if (count <= 4)
+    {
+      text_log.Print("{");
+      for (unsigned i = 0; i < count; ++i)
+      {
+        if (0 != i)
+          text_log.Print(L",");
+        a->ToText(ON_Color::TextFormat::HashRGBa, 0, true, text_log);
+        a += stride;
+      }
+      text_log.Print("}");
+    }
+    else
+    {
+      a->ToText(ON_Color::TextFormat::HashRGBa, 0, true, text_log);
+      ON_SHA1 sha1;
+      Internal_AccumulateFragmentColorArrayHash(sha1, a, count, stride);
+      const ON_wString s = sha1.Hash().ToString(true);
+      text_log.Print(L" ... SHA1 hash=%ls", static_cast<const wchar_t*>(s));
+    }
+  }
+  else
+  {
+    text_log.Print(L"%ls: Not set.", description);
+  }
+  text_log.PrintNewLine();
+}
+
 static void Internal_DumpFragmentArray(ON_TextLog& text_log, const wchar_t* description, size_t dim, const double* a, unsigned count, size_t stride)
 {
   if (nullptr != a && count > 0 && dim > 0 && stride >= dim)
   {
     text_log.Print(L"%ls = ", description);
-    if (4 == count)
+    if (count <= 4)
     {
       text_log.Print("{");
       for (unsigned i = 0; i < count; ++i)
@@ -10538,7 +10596,12 @@ void ON_SubDMeshFragment::Dump(ON_TextLog& text_log) const
           text_log, L"curvatures", 2, // 2 principal
           (const double*)(CurvatureArray(cl)),
           CurvatureArrayCount(cl),
-          sizeof(ON_SurfaceCurvature)/sizeof(double)
+          sizeof(ON_SurfaceCurvature)/sizeof(double));
+        Internal_DumpFragmentColorArray(
+          text_log, L"colors",
+          ColorArray(cl),
+          ColorArrayCount(cl),
+          ColorArrayStride(cl)
         );
       }
     }
@@ -13610,8 +13673,8 @@ private:
 
 private:
   // prohibit use - no implementation
-  ON_ScratchBuffer(const ON_ScratchBuffer&);
-  ON_ScratchBuffer& operator-(const ON_ScratchBuffer&);
+  ON_ScratchBuffer(const ON_ScratchBuffer&) = delete;
+  ON_ScratchBuffer& operator=(const ON_ScratchBuffer&) = delete;
 };
 
 class FACE_AND_FACE_POINT
@@ -17373,11 +17436,20 @@ bool ON_SubDimple::CopyEvaluationCacheForExperts(const ON_SubDimple& src)
 {
   const ON_SubDLevel* src_level = src.ActiveLevelConstPointer();
   ON_SubDLevel* this_level = this->ActiveLevelPointer();
-  return (nullptr != src_level && nullptr != this_level) ? this_level->CopyEvaluationCacheForExperts(this->m_heap , *src_level, src.m_heap) : false;
+  bool bFragmentsWereCopied = false;
+  const bool bCopied = (nullptr != src_level && nullptr != this_level) ? this_level->CopyEvaluationCacheForExperts(this->m_heap , *src_level, src.m_heap, bFragmentsWereCopied) : false;
+  if (bFragmentsWereCopied)
+  {
+    this->m_fragment_colors_mapping_tag = src.m_fragment_colors_mapping_tag;
+    this->m_fragment_texture_settings_hash = src.m_fragment_texture_settings_hash;
+    this->m_fragment_colors_settings_hash = src.m_fragment_colors_settings_hash;
+  }
+  return bCopied;
 }
 
-bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const ON_SubDLevel& src, const ON_SubDHeap& src_heap)
+bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const ON_SubDLevel& src, const ON_SubDHeap& src_heap, bool& bFragmentsWereCopied)
 {
+  bFragmentsWereCopied = false;
   // Validate conditions for coping the cached evaluation information
   if (
     this == &src
@@ -17640,7 +17712,10 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
       if ( false == this_face->SavedSubdivisionPointIsSet())
         this_face->SetSavedSubdivisionPoint(subdivision_point);
       if (nullptr == this_face->MeshFragments() && nullptr != src_face->MeshFragments())
-        this_heap.CopyMeshFragments(src_face, subd_display_density, this_face);
+      {
+        if (nullptr != this_heap.CopyMeshFragments(src_face, subd_display_density, this_face))
+          bFragmentsWereCopied = true;
+      }
     }
   }
 

@@ -3054,8 +3054,6 @@ public:
   ON_SimpleArray<struct ON_MeshPart> m_part;
 };
 
-
-
 class ON_CLASS ON_MappingTag
 {
 public:
@@ -3063,7 +3061,203 @@ public:
   ON_MappingTag(const ON_TextureMapping& mapping,const ON_Xform* xform);
 
   static const ON_MappingTag Unset;
+
+  /// <summary>
+  /// id = ON_TextureMapping::SurfaceParameterTextureMappingId
+  /// type = ON_TextureMapping::TYPE::srfp_mapping
+  /// </summary>
   static const ON_MappingTag SurfaceParameterMapping;
+
+  // {639E9144-1C1A-4bba-8248-D330F50D7B69}
+  static const ON_UUID CurvatureColorAnalysisId;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::CurvatureColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// The SHA1 hash used to indentify the parameters used to 
+  /// convert the surface principal curvatures to a color.
+  /// </returns>
+  static const ON_SHA1_Hash CurvatureColorAnalysisParametersHash(
+    ON::curvature_style kappa_style,
+    ON_Interval kappa_range,
+    ON_Interval hue_range_in_radians
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::CurvatureColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// The 32 bit CRC used to indentify the parameters used to 
+  /// convert the surface principal curvatures to a color.
+  /// </returns>
+  static ON__UINT32 CurvatureColorAnalysisParametersCRC32(
+    ON::curvature_style kappa_style,
+    ON_Interval kappa_range,
+    ON_Interval hue_range_in_radians
+  );
+
+  /// <summary>
+  /// Get the mapping tag used to identify meshes whose vertex colors
+  /// are set by converting surface principal curvatures to a color.
+  /// </summary>
+  /// <param name="kappa_style"></param>
+  /// <param name="kappa_range"></param>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::CurvatureColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// A mapping tag that has id = ON_MappingTag::CurvatureAnalysisId
+  /// and a CRC that depends on kappa_style and kappa_range.
+  /// </returns>
+  static const ON_MappingTag CurvatureColorAnalysisTag(
+    ON::curvature_style kappa_style,
+    ON_Interval kappa_range,
+    ON_Interval hue_range_in_radians
+  );
+
+  /// <summary>
+  /// The default curvature color analysis hue range used
+  /// by the Rhino CurvatureAnalysis command.
+  /// </summary>
+  /// <returns>0 to 4pi/3 (red to blue)</returns>
+  static const ON_Interval CurvatureColorHueRangeDefault;
+
+  /// <summary>
+  /// Used to convert a curvature value to a color.
+  /// </summary>
+  /// <param name="kappa_style">
+  /// Specifies what curvature value to used.
+  /// </param>
+  /// <param name="kappa_range">
+  /// A range that is used to convert kappa values to colors. 
+  /// This interval may be increasing, decreasing, or a singleton.
+  /// A kappa value equal to kappa_range[0] is mapped to hue_range[0].
+  /// A kappa value equal to kappa_range[1] is mapped to hue_range[1].
+  /// A kappa value k in between kappa_range[0] and kappa_range[1]
+  /// is mapped to the saturated color with 
+  /// hue = hue_range.ParameterAt(kappa_range.NormalizedParameterAt(k)).
+  /// Kappa values outside the kappa_range inteval are mapped to the hue 
+  /// assigned to the nearest end of the kappa_range interval.
+  /// </param>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, pass ON_MappingTag::CurvatureHueRangeDefault.
+  /// The range of color hues in radians corresponding to kappa_range.
+  /// This interval may be increasing or decreasing.
+  /// A kappa value k in between kappa_range[0] and kappa_range[1]
+  /// is mapped to the saturated color with 
+  /// hue = hue_range.ParameterAt(kappa_range.NormalizedParameterAt(k)).
+  /// If k is outside the range specified by kappa_range,
+  /// the appropriate 
+  /// </param>
+  /// <returns>
+  /// The color used by the current Rhino CurvatureAnalysis command.
+  /// </returns>
+  static const ON_Color CurvatureColor(
+    ON::curvature_style kappa_style,
+    ON_Interval kappa_range,
+    ON_Interval hue_range_in_radians,
+    ON_SurfaceCurvature K
+  );
+
+  // {F08463F4-22E2-4cf1-B810-F01925446D71}
+  static const ON_UUID DraftAngleColorAnalysisId;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::DraftAngleColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// The SHA1 hash used to indentify the parameters used to 
+  /// convert the surface normal to a draft angle analysis color.
+  /// </returns>
+  static const ON_SHA1_Hash DraftAngleColorAnalysisParametersHash(
+    ON_3dVector up,
+    ON_Interval angle_range_in_radians,
+    ON_Interval hue_range_in_radians
+    );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::DraftAngleColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// The 32 bit CRC used to indentify the parameters used to 
+  /// convert the surface normal to a draft angle analysis color.
+  /// </returns>
+  static ON__UINT32 DraftAngleColorAnalysisParametersCRC32(
+    ON_3dVector up,
+    ON_Interval angle_range_in_radians,
+    ON_Interval hue_range_in_radians
+  );
+
+  /// <summary>
+  /// Get the mapping tag used to identify meshes whose vertex colors
+  /// are set by converting surface normal to a draft angle color.
+  /// </summary>
+  /// <param name="up"></param>
+  /// <param name="angle_range_in_radians"></param>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::DraftAngleColorHueRangeDefault.
+  /// </param>
+  /// <returns>
+  /// A mapping tag that has id = ON_MappingTag::DraftAngleMappingTag
+  /// and a CRC that depends on up and angle_range_in_radians.
+  /// </returns>
+  static const ON_MappingTag DraftAngleColorAnalysisTag(
+    ON_3dVector up,
+    ON_Interval angle_range_in_radians,
+    ON_Interval hue_range_in_radians
+  );
+
+  /// <summary>
+  /// The default draft angle color analysis hue range used
+  /// by the Rhino CraftAngleAnalysis command.
+  /// </summary>
+  /// <returns>
+  /// 0 to 4pi/3 (red to blue)
+  /// </returns>
+  static const ON_Interval DraftAngleColorHueRangeDefault;
+
+  /// <summary>
+  /// Used to get the color the current Rhino DraftAngleAnalysis command 
+  /// assigns to a specified surface normal.
+  /// </summary>
+  /// <param name="up">
+  /// A unit vector (length = 1) that specifies the up direction.
+  /// </param>
+  /// <param name="draft_angle_range_in_radians">
+  /// An draft angle of 0 corresponds to the up vector and a surface normal being orthogonal.
+  /// Draft angles &gt; 0 correspond to to a surface normal and up having a positive dot product.
+  /// Draft angles &lt; 0 correspond to to a surface normal and up having a negative dot product.
+  /// A draft angle of pi/2 (90 degrees) occurs when the surface normal and up are parallel.
+  /// A draft angle of -pi/2 (-90 degrees) occurs when the surface normal and up are antiparallel.
+  /// </param>
+  /// <param name="hue_range_in_radians">
+  /// hue range in radians.
+  ///   0 = red, pi/3 = yellow, 2pi/3 = green, pi = cyan,
+  ///   4pi/3 = blue, 5pi/3 = magenta, 2pi = red
+  /// A draft angle = draft_angle_range_in_radians[0] is assigned a color hue = hue_range_in_radians[0]
+  /// and a draft angle = draft_angle_range_in_radians[1] is assigned a color hue = hue_range_in_radians[1].
+  /// </param>
+  /// <param name="surface_normal"></param>
+  /// <returns></returns>
+  static const ON_Color DraftAngleColor(
+    ON_3dVector up,
+    ON_Interval draft_angle_range_in_radians,
+    ON_Interval hue_range_in_radians,
+    ON_3dVector surface_normal
+  );
 
   void Default();
   bool Write(ON_BinaryArchive&) const;
@@ -3102,17 +3296,35 @@ public:
   */
   bool IsDefaultSurfaceParameterMapping() const;
 
-  // Identifies the mapping used to create the texture 
-  // coordinates and records transformations applied 
+  // m_mapping_id identifies the mapping used to create
+  // the texture coordinates and/or false colors.
+  ON_UUID  m_mapping_id = ON_nil_uuid;
+  
+  ON_TextureMapping::TYPE m_mapping_type = ON_TextureMapping::TYPE::no_mapping;
+
+  // The m_mapping_crc is a CRC of a SHA1 hash of the parameters used in 
+  // the calculation to set the current texture coordinates and/or vertex colors. 
+  // This CRC is used to detect when the the texture coordinates and/or false colors need to be updated.
+  // (Saving the SHA1 hash itself would be better, but changing m_mapping_crc to a SHA1 hash would break the SDK.)
+  // 
+  // When m_mapping_id = ON_nil_uuid and m_mapping_type = ON_TextureMapping::TYPE::no_mapping, 
+  // m_mapping_crc has no meaning and is ignored by operator== and operator!=.
+  // 
+  // When m_mapping_id = ON_MappingTag::SurfaceParameterMapping.m_mapping_id and m_mapping_type = ON_TextureMapping::TYPE::srfp_mapping, 
+  // m_mapping_crc can be set from a uvw texture coordinate transformation.
+  ON__UINT32 m_mapping_crc = 0;
+
+  // It and records transformations applied 
   // to the mesh after the texture coordinates were
   // calculated.  If the texture mapping does not
   // change when the mesh is transformed, then set 
   // m_mesh_xform to zero so that compares will work right.
-  //
   // 
-  ON_UUID  m_mapping_id = ON_nil_uuid;   // ON_TextureMapping::m_mapping_id
-  ON_TextureMapping::TYPE m_mapping_type = ON_TextureMapping::TYPE::no_mapping; // ON_TextureMapping::m_type
-  ON__UINT32 m_mapping_crc = 0;  // ON_TextureMapping::MappingCRC() (from decades ago - a sha1 would be better when SDK can break)
+  // When m_mapping_id = ON_nil_uuid and m_mapping_type = ON_TextureMapping::TYPE::no_mapping, 
+  // m_mesh_xform has no meaning and is ignored by operator== and operator!=.
+  // 
+  // When m_mapping_id = ON_MappingTag::SurfaceParameterMapping.m_mapping_id and m_mapping_type = ON_TextureMapping::TYPE::srfp_mapping, 
+  // m_mesh_xform has no meaning and is ignored by operator== and operator!=.
   ON_Xform m_mesh_xform = ON_Xform::IdentityTransformation;
 
   /*
@@ -3136,10 +3348,18 @@ public:
 
   /*
   Returns:
-    A sha1 hash the identifies the mapping tag.
+    A sha1 hash of the m_mapping_id, m_mapping_type, m_mapping_crc and m_mesh_xform
+    the uniquely identifies the mapping tag but can be used where hashes are more
+    convenient.
   */
   const ON_SHA1_Hash Hash() const;
 };
+
+ON_DECL
+bool operator==(const ON_MappingTag& lhs, const ON_MappingTag& rhs);
+
+ON_DECL
+bool operator!=(const ON_MappingTag& lhs, const ON_MappingTag& rhs);
 
 class ON_CLASS ON_TextureCoordinates
 {
@@ -3591,7 +3811,59 @@ Returns:
   bool HasTextureCoordinates() const;
   bool HasSurfaceParameters() const;
   bool HasPrincipalCurvatures() const;
+
+  /// <returns>
+  /// If this mesh has per vertex colors set in the m_C[] array, then true is returned.
+  /// Otherwise false is returned.
+  ///</returns>
   bool HasVertexColors() const;
+
+  /// <param name="color_tag"></param>
+  /// <returns>
+  /// If this mesh has per vertex colors set in the m_C[] array and
+  /// color_tag = m_Ctag, then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasVertexColors(
+    ON_MappingTag color_tag
+    ) const;
+
+  void ClearVertexColors();
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="bLazy"></param>
+  /// <param name="up"></param>
+  /// <param name="draft_angle_range_in_radians"></param>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::DraftAngleColorHueRangeDefault.
+  /// </param>
+  /// <returns></returns>
+  bool SetDraftAngleColorAnalysisColors(
+    bool bLazy,
+    ON_3dVector up,
+    ON_Interval draft_angle_range_in_radians,
+    ON_Interval hue_range_in_radians
+  );
+
+  
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="bLazy"></param>
+  /// <param name="kappa_style"></param>
+  /// <param name="kappa_range"></param>
+  /// <param name="hue_range_in_radians">
+  /// When in doubt, use ON_MappingTag::CurvatureColorHueRangeDefault.
+  /// </param>
+  /// <returns></returns>
+  bool SetCurvatureColorAnalysisColors(
+    bool bLazy,
+    const ON::curvature_style kappa_style,
+    ON_Interval kappa_range,
+    ON_Interval hue_range_in_radians
+  );
 
   /*
   Returns:

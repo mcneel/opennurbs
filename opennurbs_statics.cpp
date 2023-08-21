@@ -22,12 +22,12 @@
 
 const ON_ErrorEvent ON_ErrorEvent::Unset;
 
-static unsigned int ON_LibraryStatusInit()
+static unsigned int Internal_ON_LibraryStatusInit()
 {
   return 0;
 }
 
-unsigned int ON::m_opennurbs_library_status = ON_LibraryStatusInit();
+unsigned int ON::m_opennurbs_library_status = Internal_ON_LibraryStatusInit();
 
 unsigned int ON_MemoryAllocationTracking::m_g_stack_depth = 0;
 int ON_MemoryAllocationTracking::m_g_crt_dbg_flag0 = 0;
@@ -140,7 +140,7 @@ to indicate invalid operations.
 SH - http://steve.hollasch.net/cgindex/coding/ieeefloat.html
 Intel -
 */
-static double ON__dblinithelper(int i)
+static double Internal_ON__dblinithelper(int i)
 {
   // called twice - performance is not important
   union
@@ -221,7 +221,7 @@ static double ON__dblinithelper(int i)
   return u.x;
 }
 
-static float ON__fltinithelper(int i)
+static float Internal_ON__fltinithelper(int i)
 {
   // called twice - performance is not important
   union
@@ -283,13 +283,13 @@ static float ON__fltinithelper(int i)
   return u.x;
 }
 
-const double ON_DBL_QNAN = ON__dblinithelper(1);
-const double ON_DBL_PINF = ON__dblinithelper(2);
-const double ON_DBL_NINF = -ON__dblinithelper(2);
+const double ON_DBL_QNAN = Internal_ON__dblinithelper(1);
+const double ON_DBL_PINF = Internal_ON__dblinithelper(2);
+const double ON_DBL_NINF = -Internal_ON__dblinithelper(2);
 
-const float  ON_FLT_QNAN = ON__fltinithelper(1);
-const float  ON_FLT_PINF = ON__fltinithelper(2);
-const float  ON_FLT_NINF = -ON__fltinithelper(2);
+const float  ON_FLT_QNAN = Internal_ON__fltinithelper(1);
+const float  ON_FLT_PINF = Internal_ON__fltinithelper(2);
+const float  ON_FLT_NINF = -Internal_ON__fltinithelper(2);
 
 // It is critical that ON_ModelComponent::Internal_RuntimeSerialNumberGenerator
 // be constructed before any instance of a class derived from ON_ModelComponent.
@@ -524,20 +524,20 @@ const ON_CheckSum ON_CheckSum::UnsetCheckSum;
 
 const ONX_ErrorCounter ONX_ErrorCounter::Zero;
 
-static ON_MD5_Hash ON_MD5_Hash_EmptyContentHash()
+static ON_MD5_Hash Internal_ON_MD5_Hash_EmptyContentHash()
 {
   ON_MD5 md5;
   return md5.Hash();
 }
-const ON_MD5_Hash ON_MD5_Hash::EmptyContentHash = ON_MD5_Hash_EmptyContentHash();
+const ON_MD5_Hash ON_MD5_Hash::EmptyContentHash = Internal_ON_MD5_Hash_EmptyContentHash();
 const ON_MD5_Hash ON_MD5_Hash::ZeroDigest;
 
-static ON_SHA1_Hash ON_SHA1_Hash_EmptyContentHash()
+static ON_SHA1_Hash Internal_ON_SHA1_Hash_EmptyContentHash()
 {
   ON_SHA1 sha1;
   return sha1.Hash();
 }
-const ON_SHA1_Hash ON_SHA1_Hash::EmptyContentHash = ON_SHA1_Hash_EmptyContentHash();
+const ON_SHA1_Hash ON_SHA1_Hash::EmptyContentHash = Internal_ON_SHA1_Hash_EmptyContentHash();
 const ON_SHA1_Hash ON_SHA1_Hash::ZeroDigest;
 
 const ONX_ModelTest ONX_ModelTest::Unset;
@@ -621,7 +621,7 @@ const ON_3dmProperties ON_3dmProperties::Empty;
 
 
 
-static ON_Xform ON_Xform_Init(double x, bool bDiagonal)
+static ON_Xform Internal_ON_Xform_Init(double x, bool bDiagonal)
 {
   ON_Xform xform;
   memset(&xform, 0, sizeof(xform));
@@ -642,13 +642,14 @@ static ON_Xform ON_Xform_Init(double x, bool bDiagonal)
   return xform;
 }
 
-const ON_Xform ON_Xform::IdentityTransformation = ON_Xform_Init(1.0, true);
-const ON_Xform ON_Xform::ZeroTransformation = ON_Xform_Init(0.0, true);
+const ON_Xform ON_Xform::IdentityTransformation = Internal_ON_Xform_Init(1.0, true);
+const ON_Xform ON_Xform::ZeroTransformation = Internal_ON_Xform_Init(0.0, true);
 
-const ON_Xform ON_Xform::Zero4x4 = ON_Xform_Init(0.0, false);
-const ON_Xform ON_Xform::Unset = ON_Xform_Init(ON_UNSET_VALUE, false);
-const ON_Xform ON_Xform::Nan = ON_Xform_Init(ON_DBL_QNAN, false);
+const ON_Xform ON_Xform::Zero4x4 = Internal_ON_Xform_Init(0.0, false);
+const ON_Xform ON_Xform::Unset = Internal_ON_Xform_Init(ON_UNSET_VALUE, false);
+const ON_Xform ON_Xform::Nan = Internal_ON_Xform_Init(ON_DBL_QNAN, false);
 
+const double ON_SurfaceCurvature::InfinteRadius = 1e300;
 const ON_SurfaceCurvature ON_SurfaceCurvature::Nan = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(ON_DBL_QNAN, ON_DBL_QNAN);
 const ON_SurfaceCurvature ON_SurfaceCurvature::Zero = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(0.0, 0.0);
 
@@ -721,7 +722,7 @@ const ON_UUID ON_Symmetry::RotateId =
 const ON_UUID ON_Symmetry::ReflectAndRotateId =
 { 0x9133927d, 0x5a4e, 0x4ddd, { 0x99, 0x24, 0xef, 0x3a, 0x63, 0x60, 0xc1, 0x9a } };
 
-static ON_BoundingBox BoundingBoxInit(double x)
+static ON_BoundingBox Internal_BoundingBoxInit(double x)
 {
   ON_BoundingBox bbox;
   bbox.m_min.x = x;
@@ -733,8 +734,8 @@ static ON_BoundingBox BoundingBoxInit(double x)
   return bbox;
 }
 const ON_BoundingBox ON_BoundingBox::EmptyBoundingBox;
-const ON_BoundingBox ON_BoundingBox::UnsetBoundingBox = BoundingBoxInit(ON_UNSET_VALUE);
-const ON_BoundingBox ON_BoundingBox::NanBoundingBox = BoundingBoxInit(ON_DBL_QNAN);
+const ON_BoundingBox ON_BoundingBox::UnsetBoundingBox = Internal_BoundingBoxInit(ON_UNSET_VALUE);
+const ON_BoundingBox ON_BoundingBox::NanBoundingBox = Internal_BoundingBoxInit(ON_DBL_QNAN);
 
 const ON_UnitSystem ON_UnitSystem::None(ON::LengthUnitSystem::None);
 const ON_UnitSystem ON_UnitSystem::Angstroms(ON::LengthUnitSystem::Angstroms);
@@ -869,16 +870,16 @@ const ON_Locale ON_Locale::InvariantCulture = ON_Locale::FromWindowsLCID(ON_Loca
 ON_Locale ON_Locale::m_CurrentCulture = ON_Locale::Ordinal;
 const ON_Locale& ON_Locale::CurrentCulture = ON_Locale::m_CurrentCulture;
 
-static ON_ClippingRegionPoints ON_ClippingRegionPoints_EmptyInit()
+static ON_ClippingRegionPoints Internal_ON_ClippingRegionPoints_EmptyInit()
 {
   ON_ClippingRegionPoints empty_clip_points;
   memset(&empty_clip_points, 0, sizeof(empty_clip_points));
   return empty_clip_points;
 }
 
-const ON_ClippingRegionPoints ON_ClippingRegionPoints::Empty = ON_ClippingRegionPoints_EmptyInit();
+const ON_ClippingRegionPoints ON_ClippingRegionPoints::Empty = Internal_ON_ClippingRegionPoints_EmptyInit();
 
-static ON_PickPoint ON_PickPoint_UnsetInit()
+static ON_PickPoint Internal_ON_PickPoint_UnsetInit()
 {
   ON_PickPoint unset_pick_point;
   double* p = unset_pick_point.m_t;
@@ -888,7 +889,7 @@ static ON_PickPoint ON_PickPoint_UnsetInit()
   return unset_pick_point;
 }
 
-const ON_PickPoint ON_PickPoint::Unset = ON_PickPoint_UnsetInit();
+const ON_PickPoint ON_PickPoint::Unset = Internal_ON_PickPoint_UnsetInit();
 
 const ON_Color ON_Color::UnsetColor(ON_UNSET_COLOR);
 const ON_Color ON_Color::Black(0, 0, 0);
@@ -945,7 +946,7 @@ static ON_Plane ON_Plane_UnsetPlane()
 
 const ON_Plane ON_Plane::UnsetPlane(ON_Plane_UnsetPlane());
 
-static ON_Plane ON_Plane_NanPlane()
+static ON_Plane Internal_ON_Plane_NanPlane()
 {
   ON_Plane nan_plane;
   nan_plane.xaxis = ON_3dVector::NanVector;
@@ -955,7 +956,7 @@ static ON_Plane ON_Plane_NanPlane()
   nan_plane.plane_equation = ON_PlaneEquation::NanPlaneEquation;
   return nan_plane;
 }
-const ON_Plane ON_Plane::NanPlane(ON_Plane_NanPlane());
+const ON_Plane ON_Plane::NanPlane(Internal_ON_Plane_NanPlane());
 
 // ON_SubDDisplayParameters statics before ON_MeshParamters statics
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty;
@@ -1170,7 +1171,7 @@ bool ON_MeshParameters_AreValid()
   return true;
 }
 
-const static bool ON_MeshParameters_AreValid_ = ON_MeshParameters_AreValid();
+const static bool Internal_ON_MeshParameters_AreValid_ = ON_MeshParameters_AreValid();
 
 const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters;
 
@@ -1456,7 +1457,7 @@ const ON_3dmObjectAttributes ON_3dmObjectAttributes::Unset;
 const ON_3dmObjectAttributes ON_3dmObjectAttributes::DefaultAttributes;
 
 
-static const ON_ModelComponentTypeIterator ON_ModelComponentIterator_Init(
+static const ON_ModelComponentTypeIterator Internal_ON_ModelComponentIterator_Init(
   int list_selector
   )
 {
@@ -1530,8 +1531,8 @@ static const ON_ModelComponentTypeIterator ON_ModelComponentIterator_Init(
   return ON_ModelComponentTypeIterator(0, nullptr);
 }
 
-const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::ExplicitComponentTypes(ON_ModelComponentIterator_Init(1));
-const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::TableComponentTypes(ON_ModelComponentIterator_Init(2));
+const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::ExplicitComponentTypes(Internal_ON_ModelComponentIterator_Init(1));
+const ON_ModelComponentTypeIterator ON_ModelComponentTypeIterator::TableComponentTypes(Internal_ON_ModelComponentIterator_Init(2));
 
 const ON_ModelComponent ON_ModelComponent::Unset(ON_ModelComponent::Type::Unset, (ON__UINT64) 0);
 
@@ -1607,13 +1608,13 @@ const ON_Material ON_Material::DefaultLockedObject(Internal_SystemMaterialInit(-
 
 const ON_TextureMapping ON_TextureMapping::Unset;
 
-static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
-{
-  //// {B988A6C2-61A6-45a7-AAEE-9AED7EF4E316}
-  const ON_UUID srfp_mapping_id = { 0xb988a6c2, 0x61a6, 0x45a7,{ 0xaa, 0xee, 0x9a, 0xed, 0x7e, 0xf4, 0xe3, 0x16 } };
+// {B988A6C2-61A6-45a7-AAEE-9AED7EF4E316}
+const ON_UUID ON_TextureMapping::SurfaceParameterTextureMappingId = { 0xb988a6c2, 0x61a6, 0x45a7,{ 0xaa, 0xee, 0x9a, 0xed, 0x7e, 0xf4, 0xe3, 0x16 } };
 
+static ON_TextureMapping Internal_SurfaceParameterTextureMappingInitializer()
+{
   ON_TextureMapping tm;
-  tm.SetId(srfp_mapping_id);
+  tm.SetId(ON_TextureMapping::SurfaceParameterTextureMappingId);
   tm.SetIndex(-1);
   // name = empty
 
@@ -1621,10 +1622,31 @@ static ON_TextureMapping SurfaceParameterTextureMappingInitializer()
 
   return tm;
 }
-const ON_TextureMapping ON_TextureMapping::SurfaceParameterTextureMapping(SurfaceParameterTextureMappingInitializer());
+const ON_TextureMapping ON_TextureMapping::SurfaceParameterTextureMapping(Internal_SurfaceParameterTextureMappingInitializer());
 
 const ON_MappingTag ON_MappingTag::Unset;
 const ON_MappingTag ON_MappingTag::SurfaceParameterMapping(ON_TextureMapping::SurfaceParameterTextureMapping,nullptr);
+
+// {639E9144-1C1A-4bba-8248-D330F50D7B69}
+// RHINO_CURVATURE_COLOR_ANALYSIS_MODE_ID and ON_MappingTag::CurvatureColorAnalysisId
+// are identical ids and must never be changed.
+const ON_UUID ON_MappingTag::CurvatureColorAnalysisId =
+{ 0x639e9144, 0x1c1a, 0x4bba, { 0x82, 0x48, 0xd3, 0x30, 0xf5, 0xd, 0x7b, 0x69 } };
+
+// Hue range used by the Rhino surface curvature color analysis.
+// Currently red to blue.
+const ON_Interval ON_MappingTag::CurvatureColorHueRangeDefault(0.0, 4.0 * ON_PI / 3.0);
+
+
+// {F08463F4-22E2-4cf1-B810-F01925446D71}
+// RHINO_DRAFT_ANGLE_ANALYSIS_MODE_ID and ON_MappingTag::DraftAngleColorAnalysisId
+// are identical ids and must never be changed.
+const ON_UUID ON_MappingTag::DraftAngleColorAnalysisId =
+{ 0xf08463f4, 0x22e2, 0x4cf1, { 0xb8, 0x10, 0xf0, 0x19, 0x25, 0x44, 0x6d, 0x71 } };
+
+// Hue range used by the Rhino draft angle color analysis.
+// Currently red to blue.
+const ON_Interval ON_MappingTag::DraftAngleColorHueRangeDefault(0.0, 4.0 * ON_PI / 3.0);
 
 const ON_LinetypeSegment ON_LinetypeSegment::Unset;
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);
@@ -1819,7 +1841,7 @@ const ON_Linetype ON_Linetype::Center(Internal_BuiltInLinePattern(-7));
 const ON_Linetype ON_Linetype::Border(Internal_BuiltInLinePattern(-8));
 const ON_Linetype ON_Linetype::Dots(Internal_BuiltInLinePattern(-9));
 
-static void TextStyleInit(
+static void Internal_TextStyleInit(
   const wchar_t* name,
   ON_UUID id,
   int index,
@@ -1849,7 +1871,7 @@ static void TextStyleInit(
 
 const ON_Layer ON_Layer::Unset;
 
-static ON_Layer ON_Layer_Default()
+static ON_Layer Internal_ON_Layer_Default()
 {
   // {061DF99E-2EF8-4A3F-8F2D-4B123A166089}
   const ON_UUID id = { 0x61df99e, 0x2ef8, 0x4a3f,{ 0x8f, 0x2d, 0x4b, 0x12, 0x3a, 0x16, 0x60, 0x89 } };
@@ -1858,52 +1880,52 @@ static ON_Layer ON_Layer_Default()
   Internal_SystemModelComponentInit(id, -1, L"Default", layer);
   return layer;
 }
-const ON_Layer ON_Layer::Default = ON_Layer_Default();
+const ON_Layer ON_Layer::Default = Internal_ON_Layer_Default();
 
-static ON_TextStyle UnsetTextStyle()
+static ON_TextStyle Internal_UnsetTextStyle()
 {
   ON_TextStyle text_style;
-  TextStyleInit(nullptr, ON_nil_uuid, 0, nullptr, text_style);
+  Internal_TextStyleInit(nullptr, ON_nil_uuid, 0, nullptr, text_style);
   return text_style;
 }
 
-static ON_TextStyle DefaultTextStyle()
+static ON_TextStyle Internal_DefaultTextStyle()
 {
   // {8F3A5848-7741-4AA9-B6A0-FA4F76C9D918}
   const ON_UUID default_text_style_id =
   { 0x8f3a5848, 0x7741, 0x4aa9,{ 0xb6, 0xa0, 0xfa, 0x4f, 0x76, 0xc9, 0xd9, 0x18 } };
 
   ON_TextStyle text_style;
-  TextStyleInit(L"Default", default_text_style_id, -1, &ON_Font::Default, text_style);
+  Internal_TextStyleInit(L"Default", default_text_style_id, -1, &ON_Font::Default, text_style);
   return text_style;
 }
 
-static ON_TextStyle ByLayerTextStyle()
+static ON_TextStyle Internal_ByLayerTextStyle()
 {
   // {DA800C9A-EB00-4251-8237-615017F3BB67}
   const ON_UUID ByLayer_text_style_id =
   { 0xda800c9a, 0xeb00, 0x4251,{ 0x82, 0x37, 0x61, 0x50, 0x17, 0xf3, 0xbb, 0x67 } };
 
   ON_TextStyle text_style;
-  TextStyleInit(L"By Layer", ByLayer_text_style_id, -2, nullptr, text_style);
+  Internal_TextStyleInit(L"By Layer", ByLayer_text_style_id, -2, nullptr, text_style);
   return text_style;
 }
 
-static ON_TextStyle ByParentTextStyle()
+static ON_TextStyle Internal_ByParentTextStyle()
 {
   // {4D82AFFA-0433-4CE0-92C8-BD328E23C49F}
   const ON_UUID ByParent_text_style_id =
   { 0x4d82affa, 0x433, 0x4ce0,{ 0x92, 0xc8, 0xbd, 0x32, 0x8e, 0x23, 0xc4, 0x9f } };
 
   ON_TextStyle text_style;
-  TextStyleInit(L"By Parent", ByParent_text_style_id, -3, nullptr, text_style);
+  Internal_TextStyleInit(L"By Parent", ByParent_text_style_id, -3, nullptr, text_style);
   return text_style;
 }
 
-const ON_TextStyle ON_TextStyle::Unset(UnsetTextStyle());
-const ON_TextStyle ON_TextStyle::Default(DefaultTextStyle());
-const ON_TextStyle ON_TextStyle::ByLayer(ByLayerTextStyle());
-const ON_TextStyle ON_TextStyle::ByParent(ByParentTextStyle());
+const ON_TextStyle ON_TextStyle::Unset(Internal_UnsetTextStyle());
+const ON_TextStyle ON_TextStyle::Default(Internal_DefaultTextStyle());
+const ON_TextStyle ON_TextStyle::ByLayer(Internal_ByLayerTextStyle());
+const ON_TextStyle ON_TextStyle::ByParent(Internal_ByParentTextStyle());
 
 const ON_TextMask ON_TextMask::None;
 
@@ -1923,7 +1945,7 @@ const ON_TextMask ON_TextMask::None;
 
 const ON_FontFaceQuartet ON_FontFaceQuartet::Empty;
 
-static void DimStyleInit(
+static void Internal_DimStyleInit(
   const wchar_t* name,
   int index,
   ON_UUID id,
@@ -1949,7 +1971,7 @@ static void Internal_SystemDimStyleFinalize(
 
 // Static DimStyle definitions
 
-static void DimStyleDefaultInit(ON_DimStyle& ds)
+static void Internal_DimStyleDefaultInit(ON_DimStyle& ds)
 {
   ds.SetExtExtension                     (0.5);
   ds.SetExtOffset                        (0.5);
@@ -2051,9 +2073,9 @@ static void DimStyleDefaultInit(ON_DimStyle& ds)
   ds.SetTextUnderlined                   (false);
 }
 
-static void DimStyleMillimeterArchitecturalInit(ON_DimStyle& ds)
+static void Internal_DimStyleMillimeterArchitecturalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (1.0);
   ds.SetArrowSize                        (3.0);
   ds.SetLeaderArrowSize                  (3.0);
@@ -2072,9 +2094,9 @@ static void DimStyleMillimeterArchitecturalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
 }
 
-static void DimStyleMillimeterLargeInit(ON_DimStyle& ds)
+static void Internal_DimStyleMillimeterLargeInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (1.0);
   ds.SetArrowSize                        (3.5);
   ds.SetLeaderArrowSize                  (3.5);
@@ -2092,9 +2114,9 @@ static void DimStyleMillimeterLargeInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
 }
 
-static void DimStyleMillimeterSmallInit (ON_DimStyle& ds)
+static void Internal_DimStyleMillimeterSmallInit (ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (1.0);
   ds.SetArrowSize                        (3.0);
   ds.SetLeaderArrowSize                  (3.0);
@@ -2110,9 +2132,9 @@ static void DimStyleMillimeterSmallInit (ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
 }
 
-static void DimStyleInchDecimalInit(ON_DimStyle& ds)
+static void Internal_DimStyleInchDecimalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (0.125);
   ds.SetExtOffset                        (0.0625);
   ds.SetArrowSize                        (0.125);
@@ -2129,9 +2151,9 @@ static void DimStyleInchDecimalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleInchFractionalInit(ON_DimStyle& ds)
+static void Internal_DimStyleInchFractionalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (0.125);
   ds.SetExtOffset                        (0.0625);
   ds.SetArrowSize                        (0.1);
@@ -2152,9 +2174,9 @@ static void DimStyleInchFractionalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleFootInchArchitecturalInit(ON_DimStyle& ds)
+static void Internal_DimStyleFootInchArchitecturalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (0.125);
   ds.SetExtOffset                        (0.0625);
   ds.SetArrowSize                        (0.1);
@@ -2175,9 +2197,9 @@ static void DimStyleFootInchArchitecturalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleFeetDecimalInit(ON_DimStyle& ds)
+static void Internal_DimStyleFeetDecimalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (0.125);
   ds.SetExtOffset                        (0.0625);
   ds.SetArrowSize                        (0.125);
@@ -2193,9 +2215,9 @@ static void DimStyleFeetDecimalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleModelUnitsDecimalInit(ON_DimStyle& ds)
+static void Internal_DimStyleModelUnitsDecimalInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (0.125);
   ds.SetExtOffset                        (0.0625);
   ds.SetArrowSize                        (0.125);
@@ -2210,18 +2232,18 @@ static void DimStyleModelUnitsDecimalInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleFeetEngraveInit(ON_DimStyle& ds)
+static void Internal_DimStyleFeetEngraveInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetDimensionLengthDisplay           (ON_DimStyle::LengthDisplay::FeetDecimal);
   ds.SetTextVerticalAlignment            (ON::TextVerticalAlignment::Bottom);
   ds.SetDimScale                         (12.0);
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
-static void DimStyleMillimeterEngraveInit(ON_DimStyle& ds)
+static void Internal_DimStyleMillimeterEngraveInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetExtExtension                     (1.5);
   ds.SetExtOffset                        (1.5);
   ds.SetArrowSize                        (3.0);
@@ -2237,9 +2259,9 @@ static void DimStyleMillimeterEngraveInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Millimeters);
 }
 
-static void DimStyleModelUnitsEngraveInit(ON_DimStyle& ds)
+static void Internal_DimStyleModelUnitsEngraveInit(ON_DimStyle& ds)
 {
-  DimStyleDefaultInit(ds);
+  Internal_DimStyleDefaultInit(ds);
   ds.SetAlternateDimensionLengthDisplay  (ON_DimStyle::LengthDisplay::Millmeters);
   ds.SetToleranceHeightScale             (1.0);
   ds.SetTextVerticalAlignment            (ON::TextVerticalAlignment::Bottom);
@@ -2248,123 +2270,123 @@ static void DimStyleModelUnitsEngraveInit(ON_DimStyle& ds)
 }
 
 
-static ON_DimStyle DimStyleDefault()
+static ON_DimStyle Internal_DimStyleDefault()
 {
   const ON_UUID id =
   { 0x25b90869, 0x22, 0x4e04,{ 0xb4, 0x98, 0x98, 0xb4, 0x17, 0x5f, 0x65, 0xfd } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Default", -1, id, dimstyle);
-  DimStyleDefaultInit(dimstyle);
+  Internal_DimStyleInit(L"Default", -1, id, dimstyle);
+  Internal_DimStyleDefaultInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleInchDecimal()
+static ON_DimStyle Internal_DimStyleInchDecimal()
 {
   const ON_UUID id =
   { 0x2105610c, 0xcfc7, 0x4473,{ 0xa5, 0x80, 0xc3, 0xd9, 0xc, 0xe8, 0xc7, 0xa3 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Inch Decimal", -2, id, dimstyle);
-  DimStyleInchDecimalInit(dimstyle);
+  Internal_DimStyleInit(L"Inch Decimal", -2, id, dimstyle);
+  Internal_DimStyleInchDecimalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleInchFractional()
+static ON_DimStyle Internal_DimStyleInchFractional()
 {
   const ON_UUID id =
   { 0x6bcb1506, 0x699f, 0x445d,{ 0xa1, 0x22, 0x4f, 0xc7, 0x78, 0x2b, 0xc4, 0x86 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Inch Fractional", -3, id, dimstyle);
-  DimStyleInchFractionalInit(dimstyle);
+  Internal_DimStyleInit(L"Inch Fractional", -3, id, dimstyle);
+  Internal_DimStyleInchFractionalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleFootInchArchitectural()
+static ON_DimStyle Internal_DimStyleFootInchArchitectural()
 {
   const ON_UUID id =
   { 0x50d6ef1b, 0xd1d0, 0x408a,{ 0x86, 0xc0, 0xee, 0x8b, 0x36, 0x8, 0x88, 0x3e } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Foot-Inch Architectural", -4, id, dimstyle);
-  DimStyleFootInchArchitecturalInit(dimstyle);
+  Internal_DimStyleInit(L"Foot-Inch Architectural", -4, id, dimstyle);
+  Internal_DimStyleFootInchArchitecturalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleMillimeterSmall()
+static ON_DimStyle Internal_DimStyleMillimeterSmall()
 {
   const ON_UUID id =
   { 0xdbe22573, 0x8cad, 0x4ced,{ 0x89, 0x47, 0x3, 0xa0, 0x48, 0xed, 0xde, 0x56 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Millimeter Small", -5, id, dimstyle);
-  DimStyleMillimeterSmallInit(dimstyle);
+  Internal_DimStyleInit(L"Millimeter Small", -5, id, dimstyle);
+  Internal_DimStyleMillimeterSmallInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleMillimeterLarge()
+static ON_DimStyle Internal_DimStyleMillimeterLarge()
 {
   const ON_UUID id =
   { 0xf7b30534, 0x773e, 0x45bc,{ 0x9d, 0x87, 0x9d, 0x14, 0x80, 0x9c, 0x96, 0x44 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Millimeter Large", -6, id, dimstyle);
-  DimStyleMillimeterLargeInit(dimstyle);
+  Internal_DimStyleInit(L"Millimeter Large", -6, id, dimstyle);
+  Internal_DimStyleMillimeterLargeInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleMillimeterArchitectural()
+static ON_DimStyle Internal_DimStyleMillimeterArchitectural()
 {
   const ON_UUID id =
   { 0xe5a4c08f, 0x23b3, 0x4033,{ 0x90, 0xb2, 0xfb, 0x31, 0xec, 0x45, 0x92, 0x9b } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Millimeter Architectural", -7, id, dimstyle);
-  DimStyleMillimeterArchitecturalInit(dimstyle);
+  Internal_DimStyleInit(L"Millimeter Architectural", -7, id, dimstyle);
+  Internal_DimStyleMillimeterArchitecturalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleFeetDecimal()
+static ON_DimStyle Internal_DimStyleFeetDecimal()
 {
   // {6F4B1840-8A12-4DE9-BF84-6A98B06C508D}
   const ON_UUID id =
   { 0x6f4b1840, 0x8a12, 0x4de9, { 0xbf, 0x84, 0x6a, 0x98, 0xb0, 0x6c, 0x50, 0x8d } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Feet Decimal", -8, id, dimstyle);
-  DimStyleFeetDecimalInit(dimstyle);
+  Internal_DimStyleInit(L"Feet Decimal", -8, id, dimstyle);
+  Internal_DimStyleFeetDecimalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleModelUnitsDecimal()
+static ON_DimStyle Internal_DimStyleModelUnitsDecimal()
 {
   const ON_UUID id =
   { 0x93a38bdf, 0x4c1c, 0x428c, { 0x8b, 0x97, 0x93, 0x59, 0xf1, 0xbd, 0xed, 0x17 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Model Units Decimal", -9, id, dimstyle);
-  DimStyleModelUnitsDecimalInit(dimstyle);
+  Internal_DimStyleInit(L"Model Units Decimal", -9, id, dimstyle);
+  Internal_DimStyleModelUnitsDecimalInit(dimstyle);
   Internal_SystemDimStyleFinalize(dimstyle);
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleFeetEngrave()
+static ON_DimStyle Internal_DimStyleFeetEngrave()
 {
   const ON_UUID id =
   { 0xc2d8846b, 0x918d, 0x4779, { 0x96, 0xec, 0x31, 0xb4, 0xe2, 0x75, 0xfb, 0x4e } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Feet Engrave", -10, id, dimstyle);
-  DimStyleFeetEngraveInit(dimstyle);
+  Internal_DimStyleInit(L"Feet Engrave", -10, id, dimstyle);
+  Internal_DimStyleFeetEngraveInit(dimstyle);
   const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
@@ -2372,14 +2394,14 @@ static ON_DimStyle DimStyleFeetEngrave()
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleMillimeterEngrave()
+static ON_DimStyle Internal_DimStyleMillimeterEngrave()
 {
   const ON_UUID id =
   { 0x741980ff, 0xde0f, 0x4ed7, { 0xaa, 0x6f, 0xee, 0x91, 0xb3, 0xbe, 0x96, 0xc6 } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Millimeter Engrave", -11, id, dimstyle);
-  DimStyleMillimeterEngraveInit(dimstyle);
+  Internal_DimStyleInit(L"Millimeter Engrave", -11, id, dimstyle);
+  Internal_DimStyleMillimeterEngraveInit(dimstyle);
   const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
@@ -2387,14 +2409,14 @@ static ON_DimStyle DimStyleMillimeterEngrave()
   return dimstyle;
 }
 
-static ON_DimStyle DimStyleModelUnitsEngrave()
+static ON_DimStyle Internal_DimStyleModelUnitsEngrave()
 {
   const ON_UUID id =
   { 0x2cc3a895, 0x5389, 0x467e, { 0x9d, 0xbe, 0x3a, 0xca, 0xb4, 0x38, 0x60, 0xfa } };
 
   ON_DimStyle dimstyle;
-  DimStyleInit(L"Model Units Engrave", -12, id, dimstyle);
-  DimStyleModelUnitsEngraveInit(dimstyle);
+  Internal_DimStyleInit(L"Model Units Engrave", -12, id, dimstyle);
+  Internal_DimStyleModelUnitsEngraveInit(dimstyle);
   const ON_Font* font = ON_Font::DefaultEngravingFont();
   if (nullptr != font)
     dimstyle.SetFont(*font);
@@ -2404,22 +2426,22 @@ static ON_DimStyle DimStyleModelUnitsEngrave()
 
 const ON_DimStyle ON_DimStyle::Unset;
 
-const ON_DimStyle ON_DimStyle::Default(DimStyleDefault());
+const ON_DimStyle ON_DimStyle::Default(Internal_DimStyleDefault());
 
-const ON_DimStyle ON_DimStyle::DefaultInchDecimal(DimStyleInchDecimal());
-const ON_DimStyle ON_DimStyle::DefaultInchFractional(DimStyleInchFractional());
-const ON_DimStyle ON_DimStyle::DefaultFootInchArchitecture(DimStyleFootInchArchitectural());
+const ON_DimStyle ON_DimStyle::DefaultInchDecimal(Internal_DimStyleInchDecimal());
+const ON_DimStyle ON_DimStyle::DefaultInchFractional(Internal_DimStyleInchFractional());
+const ON_DimStyle ON_DimStyle::DefaultFootInchArchitecture(Internal_DimStyleFootInchArchitectural());
 
-const ON_DimStyle ON_DimStyle::DefaultMillimeterSmall(DimStyleMillimeterSmall());
-const ON_DimStyle ON_DimStyle::DefaultMillimeterLarge(DimStyleMillimeterLarge());
-const ON_DimStyle ON_DimStyle::DefaultMillimeterArchitecture(DimStyleMillimeterArchitectural());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterSmall(Internal_DimStyleMillimeterSmall());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterLarge(Internal_DimStyleMillimeterLarge());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterArchitecture(Internal_DimStyleMillimeterArchitectural());
 
-const ON_DimStyle ON_DimStyle::DefaultFeetDecimal(DimStyleFeetDecimal());
-const ON_DimStyle ON_DimStyle::DefaultModelUnitsDecimal(DimStyleModelUnitsDecimal());
+const ON_DimStyle ON_DimStyle::DefaultFeetDecimal(Internal_DimStyleFeetDecimal());
+const ON_DimStyle ON_DimStyle::DefaultModelUnitsDecimal(Internal_DimStyleModelUnitsDecimal());
 
-const ON_DimStyle ON_DimStyle::DefaultFeetEngrave(DimStyleFeetEngrave());
-const ON_DimStyle ON_DimStyle::DefaultMillimeterEngrave(DimStyleMillimeterEngrave());
-const ON_DimStyle ON_DimStyle::DefaultModelUnitsEngrave(DimStyleModelUnitsEngrave());
+const ON_DimStyle ON_DimStyle::DefaultFeetEngrave(Internal_DimStyleFeetEngrave());
+const ON_DimStyle ON_DimStyle::DefaultMillimeterEngrave(Internal_DimStyleMillimeterEngrave());
+const ON_DimStyle ON_DimStyle::DefaultModelUnitsEngrave(Internal_DimStyleModelUnitsEngrave());
 
 const ON_StackedText ON_StackedText::Empty;
 const ON_TextRun ON_TextRun::Empty;
@@ -2733,7 +2755,7 @@ const ON_SubDComponentTest ON_SubDComponentTest::AllFail((ON__UINT_PTR)0);
 
 const ON_SubDEdgeChain ON_SubDEdgeChain::Empty;
 
-static ON_SubDSectorSurfacePoint ON_SubDSectorLimitPoint_Init(double x)
+static ON_SubDSectorSurfacePoint Internal_ON_SubDSectorLimitPoint_Init(double x)
 {
   ON_SubDSectorSurfacePoint lp;
   memset(&lp, 0, sizeof(lp));
@@ -2757,9 +2779,9 @@ static ON_SubDSectorSurfacePoint ON_SubDSectorLimitPoint_Init(double x)
   return lp;
 }
 
-const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Unset = ON_SubDSectorLimitPoint_Init(ON_UNSET_VALUE);
-const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Nan = ON_SubDSectorLimitPoint_Init(ON_DBL_QNAN);
-const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Zero = ON_SubDSectorLimitPoint_Init(0.0);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Unset = Internal_ON_SubDSectorLimitPoint_Init(ON_UNSET_VALUE);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Nan = Internal_ON_SubDSectorLimitPoint_Init(ON_DBL_QNAN);
+const ON_SubDSectorSurfacePoint ON_SubDSectorSurfacePoint::Zero = Internal_ON_SubDSectorLimitPoint_Init(0.0);
 
 const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Zero = ON_SubDVertexSurfacePointCoefficient::Create(nullptr,nullptr,0.0);
 const ON_SubDVertexSurfacePointCoefficient ON_SubDVertexSurfacePointCoefficient::Nan = ON_SubDVertexSurfacePointCoefficient::Create(nullptr,nullptr,ON_DBL_QNAN);
@@ -2800,7 +2822,7 @@ const ON_ComponentStatus ON_ComponentStatus::Locked = ON_ComponentStatus(ON_Comp
 const ON_ComponentStatus ON_ComponentStatus::Deleted = ON_ComponentStatus(ON_ComponentState::Deleted);
 const ON_ComponentStatus ON_ComponentStatus::Damaged = ON_ComponentStatus(ON_ComponentState::Damaged);
 const ON_ComponentStatus ON_ComponentStatus::Marked = ON_ComponentStatus(ON_ComponentState::RuntimeMarkSet);
-static ON_ComponentStatus ON_ComponentStatus_AllSet()
+static ON_ComponentStatus Internal_ON_ComponentStatus_AllSet()
 {
   ON_ComponentStatus s;
   s.SetStates(ON_ComponentStatus::SelectedPersistent);
@@ -2810,7 +2832,7 @@ static ON_ComponentStatus ON_ComponentStatus_AllSet()
   s.SetStates(ON_ComponentStatus::Damaged);
   return s;
 }
-const ON_ComponentStatus ON_ComponentStatus::AllSet = ON_ComponentStatus_AllSet();
+const ON_ComponentStatus ON_ComponentStatus::AllSet = Internal_ON_ComponentStatus_AllSet();
 
 static ON_AggregateComponentStatus ON_Internal_AggregateComponentStatus_Init(int k)
 {
@@ -2837,28 +2859,28 @@ const ON_AggregateComponentStatusEx ON_AggregateComponentStatusEx::NotCurrent = 
 
 const ON_SubDComponentPoint ON_SubDComponentPoint::Unset = ON_SubDComponentPoint();
 
-static ON_SubDMeshFragmentGrid EmptyLimitMeshFragmentGridInit()
+static ON_SubDMeshFragmentGrid Internal_EmptyLimitMeshFragmentGridInit()
 {
   ON_SubDMeshFragmentGrid empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
 }
 
-static ON_SubDMeshFragment EmptyLimitMeshFragmentInit()
+static ON_SubDMeshFragment Internal_EmptyLimitMeshFragmentInit()
 {
   ON_SubDMeshFragment empty;
   memset(&empty, 0, sizeof(empty));
   return empty;
 }
 
-const ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::Empty = EmptyLimitMeshFragmentGridInit();
-const ON_SubDMeshFragment ON_SubDMeshFragment::Empty = EmptyLimitMeshFragmentInit();
+const ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::Empty = Internal_EmptyLimitMeshFragmentGridInit();
+const ON_SubDMeshFragment ON_SubDMeshFragment::Empty = Internal_EmptyLimitMeshFragmentInit();
 
 
 
 const ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::OneQuadGrid = ON_SubDMeshFragmentGrid::QuadGridFromSideSegmentCount(1, 0);
 
-static ON_SubDComponentBase UnsetComponentBaseInit()
+static const ON_SubDComponentBase Internal_UnsetComponentBaseInit()
 {
   // For efficiency, ON_SubDComponentBase() does not waste time
   // m_cache_subd_P[], m_displacementV[]
@@ -2868,7 +2890,7 @@ static ON_SubDComponentBase UnsetComponentBaseInit()
   return unset;
 }
 
-static ON_SubDVertex EmptyVertexInit()
+static const ON_SubDVertex Internal_EmptyVertexInit()
 {
   // For efficiency, ON_SubDVertex() does not waste time
   // initializing m_limitP[], ..., m_cache_subd_P[], m_displacementV[]
@@ -2878,7 +2900,7 @@ static ON_SubDVertex EmptyVertexInit()
   return empty;
 }
 
-static ON_SubDEdge EmptyEdgeInit()
+static const ON_SubDEdge Internal_EmptyEdgeInit()
 {
   // For efficiency, ON_SubDEdge() does not waste time
   // initializing m_cache_subd_P[], m_displacementV[]
@@ -2888,7 +2910,7 @@ static ON_SubDEdge EmptyEdgeInit()
   return empty;
 }
 
-static ON_SubDFace EmptyFaceInit()
+static const ON_SubDFace Internal_EmptyFaceInit()
 {
   // For efficiency, ON_SubDFace() does not waste time
   // initializing m_cache_subd_P[], m_displacementV[]
@@ -2898,10 +2920,10 @@ static ON_SubDFace EmptyFaceInit()
   return empty;
 }
 
-const ON_SubDComponentBase ON_SubDComponentBase::Unset = UnsetComponentBaseInit();
-const ON_SubDVertex ON_SubDVertex::Empty = EmptyVertexInit();
-const ON_SubDEdge ON_SubDEdge::Empty = EmptyEdgeInit();
-const ON_SubDFace ON_SubDFace::Empty = EmptyFaceInit();
+const ON_SubDComponentBase ON_SubDComponentBase::Unset = Internal_UnsetComponentBaseInit();
+const ON_SubDVertex ON_SubDVertex::Empty = Internal_EmptyVertexInit();
+const ON_SubDEdge ON_SubDEdge::Empty = Internal_EmptyEdgeInit();
+const ON_SubDFace ON_SubDFace::Empty = Internal_EmptyFaceInit();
 
 const ON_SubD ON_SubD::Empty;
 const ON_SubDRef ON_SubDRef::Empty;

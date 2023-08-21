@@ -22,6 +22,9 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+// ShadowIntensity in the Sun and Skylight are currently unused. The only ShadowIntensity that's actually
+// used is the one in the lights. See [SHADOW_INTENSITY_UNUSED]
+
 class ON_Skylight::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -92,11 +95,13 @@ void ON_Skylight::SetEnabled(bool b)
 
 double ON_Skylight::ShadowIntensity(void) const
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   return m_impl->GetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0).AsDouble();
 }
 
 void ON_Skylight::SetShadowIntensity(double d)
 {
+  // ShadowIntensity is currently unused. See [SHADOW_INTENSITY_UNUSED]
   m_impl->SetParameter(XMLPath(), ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, d);
 }
 
