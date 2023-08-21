@@ -8237,13 +8237,57 @@ public:
       )
     ) const;
 
+
+  /// <summary>
+  /// Determing if this SubD's mesh fragments have per vertex color settings.
+  /// </summary>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex colors, then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentColors() const;
+
+  /// <param name="color_tag"></param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex colors and 
+  /// color_tag = FragmentColorsMappingTag(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentColors(
+    ON_MappingTag color_tag
+  ) const;
+
+  /// <param name="color_settings_hash"></param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex colors and 
+  /// color_settings_hash = FragmentColorsSettingsHash(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentColors(
+    ON_SHA1_Hash color_settings_hash
+  ) const;
+
+  /// <param name="color_settings_hash"></param>
+  /// <param name="color_tag"></param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex colors and 
+  /// color_settings_hash = FragmentColorsSettingsHash() and
+  /// color_tag = FragmentColorsMappingTag(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentColors(
+    ON_SHA1_Hash color_settings_hash,
+    ON_MappingTag color_tag
+  ) const;
+
+
   /*
   Description:
     Clear all fragment vertex colors
   Parameters:
     bClearFragmentColorsMappingTag - [in]
       When in doubt, pass true.
-      If true, the mapping tag associated with the fragment vertex colors is unset as well.
+      If true, the mapping tag and hash associated with the fragment vertex colors are unset as well.
   */
   void ClearFragmentColors(
     bool bClearFragmentColorsMappingTag
@@ -8273,6 +8317,8 @@ public:
     They can be changed by rendering applications as needed.
   */
   void SetFragmentColorsMappingTag(const class ON_MappingTag&) const;
+
+
 
 public:
   /*
@@ -11430,15 +11476,56 @@ public:
 
   /*
   Returns:
-    If the grid has memory to store curvatures, then VertexCount() is returned.
+    If the grid has memory to store curvatures, then VertexCapacity() is returned.
     Otherwise 0 is returned.
   Remarks:
-    Use CurvaturesExist() or CurvatureCount() to determine if the curvature values are actually set.
+    Use CurvatureCount() > 0 to determine if the curvature values are actually set.
   */
   unsigned int CurvatureCapacity() const;
 
+  /// <param name="subd_appearance">
+  /// Specifies which array (surface points or control net corners)
+  /// </param>
+  /// <returns>If curvature are set, a pointer to the curvatures in the specified array.
+  /// Otherwise, nullptr is returned.
+  /// </returns>
   const ON_SurfaceCurvature* CurvatureArray(ON_SubDComponentLocation subd_appearance)const;
+
+  /// <param name="subd_appearance">
+  /// Specifies which array (surface points or control net corners)
+  /// </param>
+  /// <returns>If curvature are set, the number of curvatures in the specified array.
+  /// Otherwise, 0 is returned.
+  /// </returns>  
   unsigned CurvatureArrayCount(ON_SubDComponentLocation subd_appearance) const;
+
+
+  size_t CurvatureArrayStride(ON_SubDComponentLocation subd_appearance) const;
+
+  /*
+  Description:
+    Get the principal surface curvature for the specified fragment grid point.
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+    The principal surface curvature for the specified fragment grid point.
+    When curvatures are not set, ON_SurfaceCurvature::Nan is returned.
+  */
+  const ON_SurfaceCurvature VertexCurvature(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+
+  const ON_SurfaceCurvature VertexCurvature(
+    ON_2udex grid2dex
+  ) const;
+
+  const ON_SurfaceCurvature VertexCurvature(
+    unsigned grid_point_index
+  ) const;
 
   /*
     Call ClearCurvatures() if the fragment points are changed and any
@@ -11446,21 +11533,6 @@ public:
   */
   void ClearCurvatures() const;
 
-  /*
-  Description:
-    Computes curvature values at grid points for this fragment.
-    Note that fragment curvature values are a mutable property
-    and can be set at any time after the fragment's points are set.
-  Parameters:
-    bLazy - [in]
-      If bLazy is true and if CurvaturesExist() is true, then no changes are made.
-      If bLazy is false, the curvature values are unconditionally calculated from the
-      fragment's surface and saved in m_K[].
-  Returns:
-    True if curvatures are set.
-    False if curvatures cannot be set.
-  */
-  bool SetCurvatures(bool bLazy) const;
 
   /*
   Returns:
@@ -11556,14 +11628,65 @@ public:
     Otherwise 0 is returned.
   Remarks:
     Use ColorCapacity() to get the capacity of m_C[].
+  */  /*
+  Returns:
+    If the grid has memory to store curvatures, then VertexCapacity() is returned.
+    Otherwise 0 is returned.
+  Remarks:
+    Use CurvaturesExist() or CurvatureCount() to determine if the curvature values are actually set.
   */
   unsigned int ColorCount() const;
 
+  /*
+  Returns:
+    If the grid has memory to store colors, then VertexCapacity() is returned.
+    Otherwise 0 is returned.
+  Remarks:
+    Use ColorCount() > 0 to determine if the color values are actually set.
+  */
   unsigned int ColorCapacity() const;
 
+  /// <param name="subd_appearance">
+  /// Specifies which array (surface points or control net corners)
+  /// </param>
+  /// <returns>If colors are set, the number of curvatures in the specified array.
+  /// Otherwise, 0 is returned.
+  /// </returns>  
   const ON_Color* ColorArray(ON_SubDComponentLocation subd_appearance)const;
   size_t ColorArrayStride(ON_SubDComponentLocation subd_appearance)const;
+
+  /// <param name="subd_appearance">
+  /// Specifies which array (surface points or control net corners)
+  /// </param>
+  /// <returns>If colors are set, the number of colors in the specified array.
+  /// Otherwise, 0 is returned.
+  /// </returns>  
   unsigned ColorArrayCount(ON_SubDComponentLocation subd_appearance) const;
+
+  /*
+  Description:
+    Get the per vertex color assigned to the specified fragment grid point.
+  Parameters:
+    grid2dex_i - [in]
+      0 <= grid2dex_i < m_grid.SidePointCount()
+    grid2dex_j - [in]
+      0 <= grid2dex_j < m_grid.SidePointCount()
+  Returns:
+    The colo for the specified fragment grid point.
+    When per vertex colors are not set, ON_Color::Unset is returned.
+  */
+  const ON_Color VertexColor(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+
+  const ON_Color VertexColor(
+    ON_2udex grid2dex
+  ) const;
+
+  const ON_Color VertexColor(
+    unsigned grid_point_index
+  ) const;
 
   /*
   Call ClearColors() if vertex colors do not exist or are no longer valid.
@@ -11619,7 +11742,6 @@ public:
       const ON_SurfaceCurvature& K
       )
   )const;
-
 
 public:
 
@@ -17273,10 +17395,11 @@ public:
     ///<summary>The option is not set.</summary>
     Unset = 0,
 
-    ///<summary>No convex coners.</summary>
+    ///<summary>No convex corners. In general,this is the best choice.</summary>
     None = 1,
 
-    ///<summary>A convex subd corner will appear at input mesh boundary vertices 
+    ///<summary>
+    /// A convex subd corner will appear at input mesh boundary vertices 
     /// where the corner angle &lt;= MaximumConvexCornerAngleRadians() and
     /// the number of edges the end at the vertex is &lt;= MaximumConvexCornerEdgeCount().
     ///</summary>
@@ -17332,6 +17455,8 @@ public:
     input mesh boundary vertex becomes a sub-D corner when the number of
     edges that end at the vertex is <= MaximumConvexCornerEdgeCount() edges
     and the corner angle is <= MaximumConvexCornerAngleRadians().
+
+    The default value is 2pi/3 = 120 degrees.
   Parameters:
     maximum_convex_corner_angle_radians - [in]
       > 0.0 and < ON_PI
@@ -17346,6 +17471,8 @@ public:
     input mesh boundary vertex becomes a sub-D corner when the number of
     edges that end at the vertex is <= MaximumConvexCornerEdgeCount() edges
     and the corner angle is <= MaximumConvexCornerAngleRadians().
+
+    The default value is 2pi/3 = 120 degrees.
   Returns:
     The maximum corner angle.
   */
@@ -17377,10 +17504,11 @@ public:
     ///<summary>The option is not set.</summary>
     Unset = 0,
 
-    ///<summary>No concave coners. In general, this is the best choice.</summary>
+    ///<summary>No concave corners. In general, this is the best choice.</summary>
     None = 1,
 
-    ///<summary>A concave subd corner will appear at input mesh boundary vertices 
+    ///<summary>
+    /// A concave subd corner will appear at input mesh boundary vertices 
     /// where the corner angle &gt;= MinimumConcaveCornerAngleRadians() and
     /// the number of edges the end at the vertex is &gt;= MinimumConcaveCornerEdgeCount().
     ///</summary>
@@ -17630,8 +17758,11 @@ private:
 
   double m_reserved4 = 0.0;
 
-  double m_maximum_convex_corner_angle_radians = 120.0 * ON_DEGREES_TO_RADIANS; // 120 degrees
-  double m_minimum_concave_corner_angle_radians = 240.0 * ON_DEGREES_TO_RADIANS; // 240 degrees
+  // default = 2pi/3 = 120 degrees
+  double m_maximum_convex_corner_angle_radians = 120.0 * ON_DEGREES_TO_RADIANS;
+
+  // default 4pi/3 = 240 degrees
+  double m_minimum_concave_corner_angle_radians = 240.0 * ON_DEGREES_TO_RADIANS;
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -90,6 +90,15 @@ const ON_Color ON_Color::RandomColor(
   return color;
 }
 
+const ON_Color ON_Color::FromHueInRadians(
+  double hue_in_radians
+)
+{
+  ON_Color c;
+  c.SetHSV(hue_in_radians, 1.0, 1.0);
+  return c;
+}
+
 ON_Color::ON_Color(unsigned int colorref)
   : m_color(colorref)
 {
@@ -346,8 +355,7 @@ void ON_Color::SetHSV(
 const ON_wString ON_Color::ToString(
   ON_Color::TextFormat format,
   wchar_t separator,
-  bool bFormatUnsetColor,
-  class ON_TextLog& text_log
+  bool bFormatUnsetColor
 ) const
 {
   ON_wString s;
@@ -374,6 +382,9 @@ const ON_wString ON_Color::ToString(
         break;
       case ON_Color::TextFormat::HSVa:
         format = ON_Color::TextFormat::HSVA;
+        break;
+      case ON_Color::TextFormat::HashRGBa:
+        format = ON_Color::TextFormat::HashRGBA;
         break;
       default:
         break;
@@ -416,9 +427,26 @@ const ON_wString ON_Color::ToString(
     case ON_Color::TextFormat::HSVA:
       s = ON_wString::FormatToString(L"%g%lc%g%lc%g%lc%g", Hue(), separator, Saturation(), separator, Value(), separator, FractionAlpha());
       break;
+    case ON_Color::TextFormat::HashRGB:
+    case ON_Color::TextFormat::HashRGBa: // nonzero alpha handled above
+      s = ON_wString::FormatToString(L"#%02x%02x%02x", Red(), Green(), Blue());
+      break;
+    case ON_Color::TextFormat::HashRGBA:
+      s = ON_wString::FormatToString(L"#%02x%02x%02x%02x", Red(), Green(), Blue(), Alpha());
+      break;
     }
   }
   return s;
+}
+
+const ON_wString ON_Color::ToString(
+  ON_Color::TextFormat format,
+  wchar_t separator,
+  bool bFormatUnsetColor,
+  class ON_TextLog& text_log
+) const
+{
+  return ON_Color::ToString(format, separator, bFormatUnsetColor);
 }
 
 void ON_Color::ToText(

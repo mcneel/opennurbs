@@ -106,6 +106,15 @@ ON_Geometry::GetBoundingBox( // returns true if successful
   return rc;
 }
 
+const ON_BoundingBox ON_Geometry::TightBoundingBox() const
+{
+  ON_BoundingBox bbox = ON_BoundingBox::NanBoundingBox;
+  // call virtual function
+  if (this->GetTightBoundingBox(bbox, false, nullptr) && bbox.IsValid())
+    return bbox;
+  return ON_BoundingBox::NanBoundingBox;
+}
+
 bool ON_Geometry::GetTightBoundingBox( 
 	ON_BoundingBox& tight_bbox, 
   bool bGrowBoxAsInt,

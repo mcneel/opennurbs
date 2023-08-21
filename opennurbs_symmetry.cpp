@@ -1052,23 +1052,28 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
 void ON_PlaneEquation::Dump(class ON_TextLog& text_log) const
 {
   // print -0 as 0.
-  double c[4] = { (0.0==x) ? 0.0 : x,(0.0 == y) ? 0.0 : y,(0.0 == z) ? 0.0 : z,(0.0 == d) ? 0.0 : d };
-  for (int i = 0; i < 3; ++i)
+  const double c[4] = { (0.0 == x) ? 0.0 : x,(0.0 == y) ? 0.0 : y,(0.0 == z) ? 0.0 : z,(0.0 == d) ? 0.0 : d };
+  if ( ON_IS_VALID(c[0]) && ON_IS_VALID(c[1]) && ON_IS_VALID(c[2]) && ON_IS_VALID(c[3]) )
   {
-    if (false == (0.0 != c[i] && 0.0 == c[(i + 1) % 3] && 0.0 == c[(i + 2) % 3]) )
-      continue;
-    const char* coord = (0 == i) ? "x" : ((1 == i) ? "y" : "z");
-    if (0.0 == c[3])
-      text_log.Print(L"%s = 0", coord);
-    else if (1.0 == c[i])
-      text_log.Print(L"%s = %g", coord, -c[3]);
-    else
-      text_log.Print(L"%g*%s = %g", c[i] , coord, -c[3]);
-    return;
+    for (int i = 0; i < 3; ++i)
+    {
+      if (false == (0.0 != c[i] && 0.0 == c[(i + 1) % 3] && 0.0 == c[(i + 2) % 3]))
+        continue;
+      const char* coord = (0 == i) ? "x" : ((1 == i) ? "y" : "z");
+      if (0.0 == c[3])
+        text_log.Print("%s = 0", coord);
+      else if (1.0 == c[i])
+        text_log.Print("%s = %g", coord, -c[3]);
+      else if (-1.0 == c[i])
+        text_log.Print("-%s = %g", coord, -c[3]);
+      else
+        text_log.Print("%g*%s = %g", c[i], coord, -c[3]);
+      return;
+    }
   }
 
   // general case
-  text_log.Print(L"%g*x + %g*y + %g*z + %g = 0", c[0], c[1], c[2], c[3]);
+  text_log.Print("%g*x + %g*y + %g*z + %g = 0", c[0], c[1], c[2], c[3]);
 }
 
 void ON_Symmetry::Dump(ON_TextLog& text_log) const

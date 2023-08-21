@@ -93,6 +93,23 @@ public:
   */
   ON_TextLog::LevelOfDetail GetLevelOfDetail() const;
 
+  /// <summary>
+  /// Increase the level of detail.
+  /// </summary>
+  /// <returns>
+  /// Level of detail to restore when this scope of increased detail is finished.
+  /// </returns>
+  ON_TextLog::LevelOfDetail IncreaseLevelOfDetail();
+
+  /// <summary>
+  /// Decrease the level of detail.
+  /// </summary>
+  /// <returns>
+  /// Level of detail to restore when this scope of decreased detail is finished.
+  /// </returns>
+  ON_TextLog::LevelOfDetail DecreaseLevelOfDetail();
+
+
   /*
   Parameter:
     level_of_detail - [in]
@@ -423,8 +440,8 @@ private:
 
   // prevent use of copy construction and operator=
   // (no implementations)
-  ON_TextLogIndent(const ON_TextLogIndent&);
-  ON_TextLogIndent& operator=(const ON_TextLogIndent&);
+  ON_TextLogIndent(const ON_TextLogIndent&) = delete;
+  ON_TextLogIndent& operator=(const ON_TextLogIndent&) = delete;
 };
 
 
@@ -440,6 +457,20 @@ public:
   ON_TextLogLevelOfDetail(
     class ON_TextLog& text_log,
     ON_TextLog::LevelOfDetail level_of_detail
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="text_log"></param>
+  /// <param name="delta_lod">
+  /// Amount to change the level of detail.
+  /// +1 increases the level of detail by a single level.
+  /// -1 decreases the level of detail by a single level.
+  /// </param>
+  ON_TextLogLevelOfDetail(
+    class ON_TextLog& text_log,
+    int delta_lod
   );
 
   // The destructor restores the level ot detail the saved value.

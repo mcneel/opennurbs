@@ -585,6 +585,64 @@ double ON_Interval::ParameterAt(double x) const
   return (ON_IS_VALID(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
 }
 
+double ON_Interval::ClampedParameterAt(
+  double x
+) const
+{
+  if (ON_IS_VALID(x) && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]))
+  {
+
+    if (x <= 0.0)
+      return m_t[0];
+    if (x >= 1.0)
+      return m_t[1];
+    if (m_t[0] == m_t[1])
+      return m_t[0]; // no fuzz from a linear combination
+    return ((1.0 - x) * m_t[0] + x * m_t[1]);
+  }
+
+  return ON_DBL_QNAN;
+}
+
+double ON_Interval::ClampedNormalizedParameterAt(
+  double interval_parameter
+) const
+{
+  if (ON_IS_VALID(interval_parameter) && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]))
+  {
+    if (m_t[0] < m_t[1])
+    {
+      // this is an increasing interval
+      if (interval_parameter <= m_t[0])
+        return 0.0;
+      if (interval_parameter >= m_t[1])
+        return 1.0;
+    }
+    else if (m_t[0] > m_t[1])
+    {
+      // this is a decreasing interval
+      if (interval_parameter >= m_t[0])
+        return 0.0;
+      if (interval_parameter <= m_t[1])
+        return 1.0;
+    }
+    else
+    {
+      // this is a singleton interval
+      if (interval_parameter < m_t[0])
+        return 0.0;
+      if (interval_parameter > m_t[1])
+        return 1.0;
+      return 0.5;
+    }
+
+    // the interval_parameter is strictly between m_t[0] and m_t[1]
+    return (interval_parameter - m_t[0]) / (m_t[1] - m_t[0]);
+  }
+
+  return ON_DBL_QNAN;
+}
+
 ON_Interval ON_Interval::ParameterAt(ON_Interval x) const
 {
   return ON_Interval( ParameterAt(x[0]), ParameterAt(x[1]) );
