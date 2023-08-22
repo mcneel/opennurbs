@@ -1834,7 +1834,59 @@ double ON_Xform::Determinant( double* pivot ) const
     *pivot = p;
   if (d != 0.0 )
     d = 1.0/d;
+
   return d;
+}
+
+int ON_Xform::SignOfDeterminant(bool bFastTest) const
+{
+  if (bFastTest)
+  {
+    if (
+      (0.0 == m_xform[3][0] && 0.0 == m_xform[3][1] && 0.0 == m_xform[3][2])
+      ||
+      (0.0 == m_xform[0][3] && 0.0 == m_xform[1][3] && 0.0 == m_xform[2][3])
+      )
+    {
+      // vast majority of the 4x4 cases in practice.
+
+      if (0.0 == m_xform[3][3])
+      {
+        return 0; // 100% accurate result.
+      }
+
+      // Use the simple 3x3 formula with the fewest flops.
+      const double x
+        = m_xform[0][0] * (m_xform[1][1] * m_xform[2][2] - m_xform[1][2] * m_xform[2][1])
+        + m_xform[0][1] * (m_xform[1][2] * m_xform[2][0] - m_xform[1][0] * m_xform[2][2])
+        + m_xform[0][2] * (m_xform[1][0] * m_xform[2][1] - m_xform[1][1] * m_xform[2][0]);
+
+      if (0.0 == x)
+      {
+        // It is very likely we had a simple case and, mathematically, det = 0.
+        // (not a 100% safe assumption, but good enough for bFastTest = true case).
+        return 0;
+      }
+
+      if (fabs(x) > 1e-8)
+      {
+        // x is big enough that it's very likely the sign is mathematically correct.
+        // (not a 100% safe assumption, but good enough for bFastTest = true case).
+        const int s = ((x < 0.0) ? -1 : 1) * ((m_xform[3][3] < 0.0) ? -1 : 1);
+        return s;
+      }
+    }
+  }
+
+  // do it a very slow and careful way
+  double min_pivot = 0.0;
+  const double det = this->Determinant(&min_pivot);
+  if (fabs(min_pivot) > ON_ZERO_TOLERANCE && fabs(det) > ON_ZERO_TOLERANCE)
+  {
+    return (det < 0.0) ? -1 : 1;
+  }
+
+  return 0;
 }
 
 bool ON_Xform::Invert( double* pivot )

@@ -1653,7 +1653,7 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_OFFSET, v))
     {
-      ON_3dVector offset, rotation, repeat;
+      ON_3dVector offset, repeat, rotation;
       tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
       const auto pt = v.As2dPoint();
       offset.x = pt[0];
@@ -1663,7 +1663,7 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_REPEAT, v))
     {
-      ON_3dVector offset, rotation, repeat;
+      ON_3dVector offset, repeat, rotation;
       tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
       const auto pt = v.As2dPoint();
       repeat.x = pt[0];
@@ -1673,10 +1673,10 @@ ON_Texture ON_RenderTexture::ToOnTexture(void) const
 
     if (p.GetParam(ON_TEXTURE_SIMULATION_ROTATION, v))
     {
-      ON_3dVector offset, rotation, repeat;
+      ON_3dVector offset, repeat, rotation;
       tex.m_uvw.DecomposeTextureMapping(offset, repeat, rotation);
-      const auto pt = v.As2dPoint(); // 'pt' is in degrees.
-      rotation.z = pt[0] * ON_DEGREES_TO_RADIANS;
+      const auto angle = v.AsDouble(); // 'angle' is in degrees.
+      rotation.z = angle * ON_DEGREES_TO_RADIANS;
       tex.m_uvw = ON_Xform::TextureMapping(offset, repeat, rotation);
     }
 

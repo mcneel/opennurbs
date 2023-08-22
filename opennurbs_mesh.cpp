@@ -4363,25 +4363,24 @@ void ON_Mesh::ClearVertexColors()
 
 bool ON_Mesh::SetDraftAngleColorAnalysisColors(
   bool bLazy,
-  ON_3dVector up,
-  ON_Interval angle_range_in_radians,
-  ON_Interval hue_range_in_radians
+  ON_SurfaceDraftAngleColorMapping draft_angle_colors
 )
 {
-  const ON_MappingTag Ctag = ON_MappingTag::DraftAngleColorAnalysisTag(up, angle_range_in_radians, hue_range_in_radians);
-  if (bLazy && HasVertexColors() && this->m_Ctag == Ctag)
+  const bool bSetColors = draft_angle_colors.IsSet() && this->HasVertexNormals();
+  const ON_MappingTag Ctag = draft_angle_colors.ColorMappingTag();
+  if (bSetColors && bLazy && this->m_Ctag == Ctag)
     return true;
 
   this->ClearVertexColors();
 
-  if (false == this->HasVertexNormals())
+  if (false == bSetColors)
     return false;
 
   const unsigned count = this->m_N.Count();
   this->m_C.Reserve(count);
   for (unsigned i = 0; i < count; ++i)
   {
-    const ON_Color c = ON_MappingTag::DraftAngleColor(up, angle_range_in_radians, hue_range_in_radians, ON_3dVector(this->m_N[i]));
+    const ON_Color c = draft_angle_colors.Color(ON_3dVector(this->m_N[i]));
     this->m_C.Append(c);
   }
   this->m_Ctag = Ctag;
@@ -4391,25 +4390,25 @@ bool ON_Mesh::SetDraftAngleColorAnalysisColors(
 
 bool ON_Mesh::SetCurvatureColorAnalysisColors(
   bool bLazy,
-  const ON::curvature_style kappa_style,
-  ON_Interval kappa_range,
-  ON_Interval hue_range_in_radians
+  ON_SurfaceCurvatureColorMapping kappa_colors
 )
 {
-  const ON_MappingTag Ctag = ON_MappingTag::CurvatureColorAnalysisTag(kappa_style, kappa_range, hue_range_in_radians);
-  if (bLazy && HasVertexColors() && this->m_Ctag == Ctag)
+  const bool bSetColors = kappa_colors.IsSet() && this->HasPrincipalCurvatures();
+  const ON_MappingTag Ctag = kappa_colors.ColorMappingTag();
+  if (bSetColors && bLazy && HasVertexColors() && this->m_Ctag == Ctag)
     return true;
 
   this->ClearVertexColors();
 
-  if (false == this->HasPrincipalCurvatures())
+  if (false == bSetColors)
     return false;
 
   const unsigned count = this->m_K.Count();
+  this->m_C.SetCount(0);
   this->m_C.Reserve(count);
   for (unsigned i = 0; i < count; ++i)
   {
-    const ON_Color c = ON_MappingTag::CurvatureColor(kappa_style, kappa_range, hue_range_in_radians, this->m_K[i]);
+    const ON_Color c = kappa_colors.Color(this->m_K[i]);
     this->m_C.Append(c);
   }
   this->m_Ctag = Ctag;
@@ -9380,24 +9379,21 @@ double ON_SurfaceCurvature::KappaValue(ON::curvature_style kappa_style) const
   return k;
 }
 
-const ON_Color ON_MappingTag::CurvatureColor(
-  ON::curvature_style kappa_style,
-  ON_Interval kappa_range,
-  ON_Interval hue_range_in_radians,
+const ON_Color ON_SurfaceCurvatureColorMapping::Color(
   ON_SurfaceCurvature K
-)
+) const
 {
   // This is the curvature analysis color used by the current version of Rhino.
   // The code can be updated as the method for assigning a color to surface curvatures changes.
 
-  const double k = K.KappaValue(kappa_style);
+  const double k = K.KappaValue(this->m_kappa_style);
 
   if (ON_IS_NAN(k))
     return ON_Color::UnsetColor;
 
   // convert k to hue
-  const double mn = kappa_range.m_t[0];
-  const double mx = kappa_range.m_t[1];
+  const double mn = this->m_kappa_range.m_t[0];
+  const double mx = this->m_kappa_range.m_t[1];
   double f;
   if (mn != mx)
   {
@@ -9422,10 +9418,81 @@ const ON_Color ON_MappingTag::CurvatureColor(
 
 
   if (f >= 0.0 && f <= 1.0)
-    return ON_Color::FromHueInRadians(hue_range_in_radians.ParameterAt(f));
+    return ON_Color::FromHueInRadians(this->m_hue_range_in_radians.ParameterAt(f));
 
   return ON_Color::UnsetColor;
 }
+
+bool ON_SurfaceCurvatureColorMapping::IsSet() const
+{
+  if (1 == this->m_is_set)
+    return true;
+  if (0 == this->m_is_set)
+    return false;
+  for (;;)
+  {
+    if ((int)(this->m_kappa_style) <= (int)(ON::curvature_style::unknown_curvature_style))
+      break;
+    if ((int)(this->m_kappa_style) >= (int)(ON::curvature_style::curvature_style_count))
+      break;
+    if (false == m_kappa_range.IsValid())
+      break;
+    if (false == m_hue_range_in_radians.IsValid())
+      break;
+    this->m_is_set = 1;
+    return true;
+  }
+  this->m_is_set = 0;
+  return false;
+}
+
+bool ON_SurfaceCurvatureColorMapping::IsUnset() const
+{
+  return this->IsSet() ? false : true;
+}
+
+bool operator==(const ON_SurfaceCurvatureColorMapping& lhs, const ON_SurfaceCurvatureColorMapping& rhs)
+{
+  // if any double is a nan, this compare must be false.
+  const ON::curvature_style cs[2] = { lhs.KappaStyle(), rhs.KappaStyle() };
+  if (cs[0] == cs[1])
+  {
+    const ON_Interval kr[2] = { lhs.KappaRange() ,rhs.KappaRange() };
+    if (kr[0].m_t[0] == kr[1].m_t[0] && kr[0].m_t[1] == kr[1].m_t[1])
+    {
+      const ON_Interval hr[2] = { lhs.HueRangeInRadians() ,rhs.HueRangeInRadians() };
+      if (hr[0].m_t[0] == hr[1].m_t[0] && hr[0].m_t[1] == hr[1].m_t[1])
+        return true;
+    }
+  }
+  return false;
+}
+
+bool operator!=(const ON_SurfaceCurvatureColorMapping& lhs, const ON_SurfaceCurvatureColorMapping& rhs)
+{
+  // if any double is a nan, this compare must be false.
+  const ON::curvature_style cs[2] = { lhs.KappaStyle(), rhs.KappaStyle() };
+  if (cs[0] != cs[1])
+  {
+    const ON_Interval kr[2] = { lhs.KappaRange() ,rhs.KappaRange() };
+    if (kr[0].m_t[0] != kr[1].m_t[0] || kr[0].m_t[1] != kr[1].m_t[1])
+    {
+      const ON_Interval hr[2] = { lhs.HueRangeInRadians() ,rhs.HueRangeInRadians() };
+      if (hr[0].m_t[0] != hr[1].m_t[0] || hr[0].m_t[1] != hr[1].m_t[1])
+      {
+        // any compare involving nans is false
+        if (ON_IS_NAN(kr[0].m_t[0]) || ON_IS_NAN(kr[0].m_t[1]) || ON_IS_NAN(kr[1].m_t[0]) || ON_IS_NAN(kr[1].m_t[1]))
+          return false;
+        if (ON_IS_NAN(hr[0].m_t[0]) || ON_IS_NAN(hr[0].m_t[1]) || ON_IS_NAN(hr[1].m_t[0]) || ON_IS_NAN(hr[1].m_t[1]))
+          return false;
+
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 
 bool ON_SurfaceCurvature::IsSet() const
 {
@@ -12282,156 +12349,283 @@ const ON_Xform ON_MappingTag::Transform() const
   return TransformIsIdentity() ? ON_Xform::IdentityTransformation : m_mesh_xform;
 }
 
-const ON_SHA1_Hash ON_MappingTag::CurvatureColorAnalysisParametersHash(
+ON_SurfaceCurvatureColorMapping::ON_SurfaceCurvatureColorMapping(
+  ON::curvature_style kappa_style,
+  ON_Interval kappa_range
+)
+  : m_is_set(2)
+  , m_kappa_style(ON::CurvatureStyle((int)(kappa_style)))
+  , m_kappa_range(kappa_range.IsValid() ? kappa_range : ON_Interval::Nan)
+{}
+
+ON_SurfaceCurvatureColorMapping::ON_SurfaceCurvatureColorMapping(
   ON::curvature_style kappa_style,
   ON_Interval kappa_range,
   ON_Interval hue_range_in_radians
 )
+  : m_is_set(2)
+  , m_kappa_style(ON::CurvatureStyle((int)(kappa_style)))
+  , m_kappa_range(kappa_range.IsValid() ? kappa_range : ON_Interval::Nan)
+  , m_hue_range_in_radians(hue_range_in_radians.IsValid() ? hue_range_in_radians : ON_Interval::Nan)
+{}
+
+const ON_SHA1_Hash ON_SurfaceCurvatureColorMapping::Hash() const
 {
-  ON_SHA1 sha1;
+  if (this->IsSet())
+  {
+    ON_SHA1 sha1;
 
-  // The uuid is accumulated because an int,double,double could easily
-  // be the intput data int many unrelated contexts. This sha1 is used
-  // to avoid expensive recalculations of curvatures and their false colors.
-  const ON_UUID uniqueness_boost = ON_MappingTag::CurvatureColorAnalysisId;
-  sha1.AccumulateId(uniqueness_boost);
+    // The uuid is accumulated because an int,double,double could easily
+    // be the intput data int many unrelated contexts. This sha1 is used
+    // to avoid expensive recalculations of curvatures and their false colors.
+    const ON_UUID uniqueness_boost = ON_SurfaceCurvatureColorMapping::Id;
+    sha1.AccumulateId(uniqueness_boost);
 
-  const unsigned u = (unsigned)kappa_style;
-  sha1.AccumulateInteger32(u);
+    const unsigned u = (unsigned)this->m_kappa_style;
+    sha1.AccumulateInteger32(u);
 
-  sha1.AccumulateDoubleArray(2, kappa_range.m_t);
+    sha1.AccumulateDoubleArray(2, this->m_kappa_range.m_t);
 
-  sha1.AccumulateDoubleArray(2, hue_range_in_radians.m_t);
+    sha1.AccumulateDoubleArray(2, this->m_hue_range_in_radians.m_t);
 
-  return sha1.Hash();
+    return sha1.Hash();
+  }
+  return ON_SHA1_Hash::EmptyContentHash;
 }
 
-ON__UINT32 ON_MappingTag::CurvatureColorAnalysisParametersCRC32(
-  ON::curvature_style kappa_style,
-  ON_Interval kappa_range,
-  ON_Interval hue_range_in_radians
-)
+ON__UINT32 ON_SurfaceCurvatureColorMapping::CRC32() const
 {
-  return ON_MappingTag::CurvatureColorAnalysisParametersHash(kappa_style,kappa_range, hue_range_in_radians).CRC32(0);
+  return this->IsSet() ? this->Hash().CRC32(0) : 0;
 }
 
-const ON_MappingTag ON_MappingTag::CurvatureColorAnalysisTag(
-  ON::curvature_style kappa_style,
-  ON_Interval kappa_range,
-  ON_Interval hue_range_in_radians
-)
+const ON_MappingTag ON_SurfaceCurvatureColorMapping::ColorMappingTag() const
 {
   ON_MappingTag mt = ON_MappingTag::Unset;
+  if (this->IsSet())
+  {
 
-  mt.m_mapping_id = ON_MappingTag::CurvatureColorAnalysisId;
-  mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
+    mt.m_mapping_id = ON_SurfaceCurvatureColorMapping::Id;
+    mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
 
-  // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
-  // This value is used to determine when the parameters used to calculate the vertex
-  // colors have changed.
-  mt.m_mapping_crc = ON_MappingTag::CurvatureColorAnalysisParametersCRC32(kappa_style, kappa_range, hue_range_in_radians);
+    // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
+    // This value is used to determine when the parameters used to calculate the vertex
+    // colors have changed.
+    mt.m_mapping_crc = this->CRC32();
 
-  // The m_mesh_xform in meaningless for false color curvature analysis,
-  // but setting it to the identity greases the wheels when downstream
-  // code looks at it for unknown reasons.
-  mt.m_mesh_xform = ON_Xform::IdentityTransformation; 
+    // The m_mesh_xform in meaningless for false color curvature analysis,
+    // but setting it to the identity greases the wheels when downstream
+    // code looks at it for unknown reasons.
+    mt.m_mesh_xform = ON_Xform::IdentityTransformation;
+  }
 
   return mt;
 }
 
-const ON_SHA1_Hash ON_MappingTag::DraftAngleColorAnalysisParametersHash(
-  ON_3dVector up,
-  ON_Interval angle_range_in_radians,
-  ON_Interval hue_range_in_radians
-)
+ON::curvature_style ON_SurfaceCurvatureColorMapping::KappaStyle() const
 {
-  ON_SHA1 sha1;
-
-  // The uuid is accumulated because an int,double,double could easily
-  // be the intput data int many unrelated contexts. This sha1 is used
-  // to avoid expensive recalculations of curvatures and their false colors.
-  const ON_UUID uniqueness_boost = ON_MappingTag::DraftAngleColorAnalysisId;
-  sha1.AccumulateId(uniqueness_boost);
-  sha1.AccumulateDoubleArray(3, &up.x);
-  sha1.AccumulateDoubleArray(2, angle_range_in_radians.m_t);
-  sha1.AccumulateDoubleArray(2, hue_range_in_radians.m_t);
-  return sha1.Hash();
+  return m_kappa_style;
 }
 
-ON__UINT32 ON_MappingTag::DraftAngleColorAnalysisParametersCRC32(
+const ON_Interval ON_SurfaceCurvatureColorMapping::KappaRange() const
+{
+  return m_kappa_range;
+}
+
+const ON_Interval ON_SurfaceCurvatureColorMapping::HueRangeInRadians() const
+{
+  return m_hue_range_in_radians;
+}
+
+ON_SurfaceDraftAngleColorMapping::ON_SurfaceDraftAngleColorMapping(
+  ON_3dVector up,
+  ON_Interval angle_range_in_radians
+)
+  : m_is_set(2)
+  , m_up(up.IsValid() ? up : ON_3dVector::NanVector)
+  , m_angle_range_in_radians(angle_range_in_radians.IsValid() ? angle_range_in_radians : ON_Interval::Nan)
+  , m_hue_range_in_radians(ON_SurfaceDraftAngleColorMapping::DefaultHueRangeRadians)
+{}
+
+ON_SurfaceDraftAngleColorMapping::ON_SurfaceDraftAngleColorMapping(
   ON_3dVector up,
   ON_Interval angle_range_in_radians,
   ON_Interval hue_range_in_radians
 )
+  : m_is_set(2)
+  , m_up(up.IsValid() ? up : ON_3dVector::NanVector)
+  , m_angle_range_in_radians(angle_range_in_radians.IsValid() ? angle_range_in_radians : ON_Interval::Nan)
+  , m_hue_range_in_radians(hue_range_in_radians.IsValid() ? hue_range_in_radians : ON_Interval::Nan)
+{}
+
+const ON_3dVector ON_SurfaceDraftAngleColorMapping::Up() const
 {
-  return ON_MappingTag::DraftAngleColorAnalysisParametersHash(up, angle_range_in_radians, hue_range_in_radians).CRC32(0);
+  return this->m_up;
+}
+
+const ON_Interval ON_SurfaceDraftAngleColorMapping::AngleRangeInRadians() const
+{
+  return this->m_angle_range_in_radians;
+}
+
+const ON_Interval ON_SurfaceDraftAngleColorMapping::HueRangeInRadians() const
+{
+  return this->m_hue_range_in_radians;
 }
 
 
-const ON_MappingTag ON_MappingTag::DraftAngleColorAnalysisTag(
-  ON_3dVector up,
-  ON_Interval angle_range_in_radians,
-  ON_Interval hue_range_in_radians
-)
+const ON_SHA1_Hash ON_SurfaceDraftAngleColorMapping::Hash() const
+{
+  if (this->IsSet())
+  {
+    ON_SHA1 sha1;    // The uuid is accumulated because an int,double,double could easily
+    // be the intput data int many unrelated contexts. This sha1 is used
+    // to avoid expensive recalculations of curvatures and their false colors.
+    const ON_UUID uniqueness_boost = ON_SurfaceDraftAngleColorMapping::Id;
+    sha1.AccumulateId(uniqueness_boost);
+    sha1.AccumulateDoubleArray(3, &this->m_up.x);
+    sha1.AccumulateDoubleArray(2, this->m_angle_range_in_radians.m_t);
+    sha1.AccumulateDoubleArray(2, this->m_hue_range_in_radians.m_t);
+    return sha1.Hash();
+  }
+  return ON_SHA1_Hash::EmptyContentHash;
+}
+
+ON__UINT32 ON_SurfaceDraftAngleColorMapping::CRC32() const
+{
+  return this->IsSet() ? this->Hash().CRC32(0) : 0;
+}
+
+
+const ON_MappingTag ON_SurfaceDraftAngleColorMapping::ColorMappingTag() const
 {
   ON_MappingTag mt = ON_MappingTag::Unset;
 
-  mt.m_mapping_id = ON_MappingTag::DraftAngleColorAnalysisId;
-  mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
+  if (this->IsSet())
+  {
+    mt.m_mapping_id = ON_SurfaceDraftAngleColorMapping::Id;
+    mt.m_mapping_type = ON_TextureMapping::TYPE::false_colors;
 
-  // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
-  // This value is used to determine when the parameters used to calculate the vertex
-  // colors have changed.
-  mt.m_mapping_crc = ON_MappingTag::DraftAngleColorAnalysisParametersCRC32(up, angle_range_in_radians, hue_range_in_radians);
+    // DO NOT INCLUDE anything in the crc that does not directly control vertex colors.
+    // This value is used to determine when the parameters used to calculate the vertex
+    // colors have changed.
+    mt.m_mapping_crc = this->CRC32();
 
-  // The m_mesh_xform in meaningless for false color curvature analysis,
-  // but setting it to the identity greases the wheels when downstream
-  // code looks at it for unknown reasons.
-  mt.m_mesh_xform = ON_Xform::IdentityTransformation;
+    // The m_mesh_xform in meaningless for false color curvature analysis,
+    // but setting it to the identity greases the wheels when downstream
+    // code looks at it for unknown reasons.
+    mt.m_mesh_xform = ON_Xform::IdentityTransformation;
+  }
 
   return mt;
 }
 
-const ON_Color ON_MappingTag::DraftAngleColor(
-  ON_3dVector up,
-  ON_Interval draft_angle_range_in_radians,
-  ON_Interval hue_range_in_radians,
+bool ON_SurfaceDraftAngleColorMapping::IsSet() const
+{
+  if (1 == this->m_is_set)
+    return true;
+  if (0 == this->m_is_set)
+    return false;
+  for (;;)
+  {
+    if (false == this->m_up.IsValid())
+      break;
+    if (false == this->m_angle_range_in_radians.IsValid())
+      break;
+    if (false == this->m_hue_range_in_radians.IsValid())
+      break;
+    this->m_is_set = 1;
+    return true;
+  }
+  this->m_is_set = 0;
+  return false;
+}
+
+bool ON_SurfaceDraftAngleColorMapping::IsUnset() const
+{
+  return this->IsSet() ? false : true;
+}
+
+bool operator==(const ON_SurfaceDraftAngleColorMapping& lhs, const ON_SurfaceDraftAngleColorMapping& rhs)
+{
+  // if any double is a nan, this compare must be false.
+  if (lhs.IsSet() == rhs.IsSet())
+  {
+    const ON_3dVector up[2] = { lhs.Up(), rhs.Up() };
+    if (up[0] == up[1])
+    {
+      const ON_Interval ar[2] = { lhs.AngleRangeInRadians() ,rhs.AngleRangeInRadians() };
+      if (ar[0].m_t[0] == ar[1].m_t[0] && ar[0].m_t[1] == ar[1].m_t[1])
+      {
+        const ON_Interval hr[2] = { lhs.HueRangeInRadians() ,rhs.HueRangeInRadians() };
+        if (hr[0].m_t[0] == hr[1].m_t[0] && hr[0].m_t[1] == hr[1].m_t[1])
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool operator!=(const ON_SurfaceDraftAngleColorMapping& lhs, const ON_SurfaceDraftAngleColorMapping& rhs)
+{
+  // if any double is a nan, this compare must be false.
+  const ON_3dVector up[2] = { lhs.Up(), rhs.Up() };
+  if (up[0] != up[1])
+  {
+    const ON_Interval ar[2] = { lhs.AngleRangeInRadians() ,rhs.AngleRangeInRadians() };
+    if (ar[0].m_t[0] != ar[1].m_t[0] || ar[0].m_t[1] != ar[1].m_t[1])
+    {
+      const ON_Interval hr[2] = { lhs.HueRangeInRadians() ,rhs.HueRangeInRadians() };
+      if (hr[0].m_t[0] != hr[1].m_t[0] || hr[0].m_t[1] != hr[1].m_t[1])
+      {
+        // any compare involving nans is false
+        if (ON_IS_NAN(ar[0].m_t[0]) || ON_IS_NAN(ar[0].m_t[1]) || ON_IS_NAN(ar[1].m_t[0]) || ON_IS_NAN(ar[1].m_t[1]))
+          return false;
+        if (ON_IS_NAN(hr[0].m_t[0]) || ON_IS_NAN(hr[0].m_t[1]) || ON_IS_NAN(hr[1].m_t[0]) || ON_IS_NAN(hr[1].m_t[1]))
+          return false;
+
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+const ON_Color ON_SurfaceDraftAngleColorMapping::Color(
   ON_3dVector surface_normal
-)
+) const
 {
   for (;;)
   {
-    if (false == ON_IsValid(draft_angle_range_in_radians.m_t[0]))
-      break;
-    if (false == ON_IsValid(draft_angle_range_in_radians.m_t[1]))
+    if (false == IsSet())
       break;
 
-    const double a0 = ON_HALFPI - draft_angle_range_in_radians[0];
-    const double a1 = ON_HALFPI - draft_angle_range_in_radians[1];
+    const double a0 = ON_HALFPI - this->m_angle_range_in_radians[0];
+    const double a1 = ON_HALFPI - this->m_angle_range_in_radians[1];
     const double mn = cos(a0);
     const double mx = cos(a1);
 
-    const double n_dot_up = surface_normal * up;
+    const double n_dot_up = surface_normal * this->m_up;
     double h;
 
     if (fabs(mn - mx) <= 1e-8)
     {
       if (n_dot_up < mn && n_dot_up < mx)
-        h = hue_range_in_radians[0];
+        h = this->m_hue_range_in_radians[0];
       else if (n_dot_up > mn && n_dot_up > mx)
-        h = hue_range_in_radians[1];
+        h = this->m_hue_range_in_radians[1];
       else
-        h = hue_range_in_radians.ParameterAt(0.5);
+        h = this->m_hue_range_in_radians.ParameterAt(0.5);
     }
     else if (mn != mx)
     {
       double t = (n_dot_up - mn) / (mx - mn);
       if (t <= 0.0)
-        h = hue_range_in_radians[0];
+        h = this->m_hue_range_in_radians[0];
       else if (t >= 1.0)
-        h = hue_range_in_radians[1];
+        h = this->m_hue_range_in_radians[1];
       else
-        h = hue_range_in_radians.ParameterAt(t);
+        h = this->m_hue_range_in_radians.ParameterAt(t);
     }
     else
       break;
@@ -12540,10 +12734,10 @@ void ON_MappingTag::Dump( ON_TextLog& text_log ) const
     text_log.Print(m_mapping_id);
     if (m_mapping_id == ON_MappingTag::SurfaceParameterMapping.m_mapping_id)
       text_log.Print(" = ON_MappingTag::SurfaceParameterMapping.m_mapping_id");
-    else if (m_mapping_id == ON_MappingTag::CurvatureColorAnalysisId)
-      text_log.Print(" = ON_MappingTag::CurvatureColorAnalysisId");
-    else if (m_mapping_id == ON_MappingTag::DraftAngleColorAnalysisId)
-      text_log.Print(" = ON_MappingTag::DraftAngleColorAnalysisId");
+    else if (m_mapping_id == ON_SurfaceCurvatureColorMapping::Id)
+      text_log.Print(" = ON_SurfaceCurvatureColorMapping::Id");
+    else if (m_mapping_id == ON_SurfaceDraftAngleColorMapping::Id)
+      text_log.Print(" = ON_SurfaceDraftAngleColorMapping::Id");
     text_log.PrintNewLine();
 
     text_log.Print("mapping crc: %08x\n", m_mapping_crc);
