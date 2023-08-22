@@ -411,9 +411,34 @@ public:
     double* = nullptr // If not nullptr, returns minimum pivot
   ) const;
 
+  /// <summary>
+  /// If you need a slow and accurate determinant, this is the function to call.
+  /// If you need a fast sign check, used SignOfDeterminant(true).
+  /// </summary>
+  /// <param name=minimum_pivot>
+  /// If not nullptr, returns the minimum pivot
+  /// </param>
+  /// <returns>The determinant of 4x4 matrix</returns>
   double
-  Determinant( // returns determinant of 4x4 matrix
-    double* = nullptr // If not nullptr, returns minimum pivot
+  Determinant( 
+    double* minimum_pivot = nullptr // 
+  ) const;
+
+  /// <summary>
+  /// Quickly determine the sign of the determinant.
+  /// Definitely good enough for graphics code.
+  /// </summary>
+  /// <param name=bFastTest>
+  /// When in double, pass true.
+  /// If you need a fast answer and can tolerate extremely rare wrong answers,
+  /// pass true. True definitely works for all common matrices used to transform 
+  /// 3d objects and all common view projection matrices.
+  /// </param>
+  /// <returns>
+  /// +1, 0, or -1.
+  /// </returns>
+  int SignOfDeterminant(
+    bool bFastTest
   ) const;
 
   bool

@@ -228,6 +228,27 @@ public:
     ON_Terminator* terminator
   );
 
+  /*
+  Description:
+    Removes points at given indices.
+  Parameters:
+    indices - [in] An array of indices of the points to remove.
+  Returns:
+    The number of points removed from the point cloud.
+  */
+  int RemoveRange(const ON_SimpleArray<int>& indices);
+  
+  /*
+  Description:
+    Removes points at given indices.
+  Parameters:
+    count - [in] The number of indices of the points to remove.
+    indices - [in] An array of indices of the points to remove.
+  Returns:
+    The number of points removed from the point cloud.
+  */
+  int RemoveRange(int count, const int* indices);
+
 
   /////////////////////////////////////////////////////////////////
   // Implementation

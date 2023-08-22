@@ -730,14 +730,21 @@ void ON_SubD::ClearFragmentColors(
   const ON_SubDimple* subdimple = this->SubDimple();
   if (nullptr != subdimple)
   {
+    bool bFragmentsChanged = false;
     ON_SubDMeshFragmentIterator fragit(*this);
     for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
+    {
+      if (false == bFragmentsChanged && frag->ColorCount() > 0)
+        bFragmentsChanged = true;
       frag->SetColorsExistForExperts(false);
+    }
     if (bClearFragmentColorsMappingTag)
     {
       subdimple->Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash::EmptyContentHash);
       this->SetFragmentColorsMappingTag(ON_MappingTag::Unset);
     }
+    if (bFragmentsChanged)
+      this->ChangeRenderContentSerialNumber();
   }
 }
 

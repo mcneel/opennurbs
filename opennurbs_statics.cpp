@@ -1628,25 +1628,28 @@ const ON_MappingTag ON_MappingTag::Unset;
 const ON_MappingTag ON_MappingTag::SurfaceParameterMapping(ON_TextureMapping::SurfaceParameterTextureMapping,nullptr);
 
 // {639E9144-1C1A-4bba-8248-D330F50D7B69}
-// RHINO_CURVATURE_COLOR_ANALYSIS_MODE_ID and ON_MappingTag::CurvatureColorAnalysisId
+// RHINO_CURVATURE_COLOR_ANALYSIS_MODE_ID and ON_SurfaceCurvatureColorMapping::Id
 // are identical ids and must never be changed.
-const ON_UUID ON_MappingTag::CurvatureColorAnalysisId =
+const ON_UUID ON_SurfaceCurvatureColorMapping::Id =
 { 0x639e9144, 0x1c1a, 0x4bba, { 0x82, 0x48, 0xd3, 0x30, 0xf5, 0xd, 0x7b, 0x69 } };
 
 // Hue range used by the Rhino surface curvature color analysis.
 // Currently red to blue.
-const ON_Interval ON_MappingTag::CurvatureColorHueRangeDefault(0.0, 4.0 * ON_PI / 3.0);
+const ON_Interval ON_SurfaceCurvatureColorMapping::DefaultHueRangeRadians(0.0, 4.0 * ON_PI / 3.0);
 
+const ON_SurfaceCurvatureColorMapping ON_SurfaceCurvatureColorMapping::Unset;
 
 // {F08463F4-22E2-4cf1-B810-F01925446D71}
-// RHINO_DRAFT_ANGLE_ANALYSIS_MODE_ID and ON_MappingTag::DraftAngleColorAnalysisId
+// RHINO_DRAFT_ANGLE_ANALYSIS_MODE_ID and ON_SurfaceDraftAngleColorMapping::Id
 // are identical ids and must never be changed.
-const ON_UUID ON_MappingTag::DraftAngleColorAnalysisId =
+const ON_UUID ON_SurfaceDraftAngleColorMapping::Id =
 { 0xf08463f4, 0x22e2, 0x4cf1, { 0xb8, 0x10, 0xf0, 0x19, 0x25, 0x44, 0x6d, 0x71 } };
 
 // Hue range used by the Rhino draft angle color analysis.
 // Currently red to blue.
-const ON_Interval ON_MappingTag::DraftAngleColorHueRangeDefault(0.0, 4.0 * ON_PI / 3.0);
+const ON_Interval ON_SurfaceDraftAngleColorMapping::DefaultHueRangeRadians(0.0, 4.0 * ON_PI / 3.0);
+
+const ON_SurfaceDraftAngleColorMapping ON_SurfaceDraftAngleColorMapping::Unset;
 
 const ON_LinetypeSegment ON_LinetypeSegment::Unset;
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);

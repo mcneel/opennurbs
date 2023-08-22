@@ -680,3 +680,84 @@ ON_PointCloud* ON_PointCloud::RandomSubsample(
 
   return destination_point_cloud;
 }
+
+int ON_PointCloud::RemoveRange(const ON_SimpleArray<int>& indices)
+{
+  return RemoveRange(indices.Count(), indices.Array());
+}
+
+int ON_PointCloud::RemoveRange(int count, const int* pIndices)
+{
+  const unsigned int point_count = m_P.UnsignedCount();
+  if (0 == point_count || count <= 0 || nullptr == pIndices)
+    return 0;
+
+  ON_SimpleArray<int> indices(count);
+  indices.Append(count, pIndices);
+  indices.QuickSortAndRemoveDuplicates(ON_CompareDecreasing<int>);
+
+  const unsigned int index_count = indices.Count();
+  if (index_count <= 0)
+    return 0;
+
+  const bool bHaveNormals = point_count == m_N.UnsignedCount();
+  const bool bHaveColors = point_count == m_C.UnsignedCount();
+  const bool bHaveValues = point_count == m_V.UnsignedCount();
+  const bool bHaveHidden = point_count == m_H.UnsignedCount();
+
+  unsigned int points_removed = 0;
+  unsigned int last_point_count = point_count;
+  for (unsigned int i = 0; i < index_count; i++)
+  {
+    const unsigned int point_index = indices[i];
+    if (point_index >= 0 && point_index < point_count)
+    {
+      m_P.Swap(point_index, last_point_count - 1);
+      if (bHaveNormals)
+        m_N.Swap(point_index, last_point_count - 1);
+      if (bHaveColors)
+        m_C.Swap(point_index, last_point_count - 1);
+      if (bHaveValues)
+        m_V.Swap(point_index, last_point_count - 1);
+      if (bHaveHidden)
+        m_H.Swap(point_index, last_point_count - 1);
+
+      points_removed++;
+      last_point_count--;
+      if (last_point_count <= 0)
+        break;
+    }
+  }
+
+  m_P.SetCount(last_point_count);
+  m_P.Shrink();
+  if (bHaveNormals)
+  {
+    m_N.SetCount(last_point_count);
+    m_N.Shrink();
+  }
+  if (bHaveColors)
+  {
+    m_C.SetCount(last_point_count);
+    m_C.Shrink();
+  }
+  if (bHaveValues)
+  {
+    m_V.SetCount(last_point_count);
+    m_V.Shrink();
+  }
+  if (bHaveHidden)
+  {
+    m_H.SetCount(last_point_count);
+    m_H.Shrink();
+    m_hidden_count = 0;
+    for (unsigned int i = 0; i < m_H.UnsignedCount(); i++)
+    {
+      if (m_H[i])
+        m_hidden_count++;
+    }
+    InvalidateBoundingBox();
+  }
+
+  return points_removed;
+}
