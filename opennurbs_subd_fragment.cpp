@@ -635,11 +635,19 @@ bool ON_SubD::SetFragmentColorsFromCallback(
     const ON_SurfaceCurvature& K)
 ) const
 {
-  if (bLazySet 
+  if (bLazySet
     && fragment_colors_settings_hash == FragmentColorsSettingsHash()
-    && fragment_colors_mapping_tag == FragmentColorsMappingTag()
+    && fragment_colors_mapping_tag == ColorsMappingTag()
+    && this->HasFragmentColors()
     )
+  {
+    // This subd has fragments with per vertex colors.
+    // The settings used to create those colors exactly
+    // match the settings that color_callback() will use
+    // to assign colors. The caller said to be lazy, so
+    // assume the existing colors are correct and return.
     return true;
+  }
 
   bool bFragmentVetexColorsSet = false;
   const ON_SubDimple* subdimple = this->SubDimple();
@@ -665,13 +673,13 @@ bool ON_SubD::SetFragmentColorsFromCallback(
     if (bFragmentVetexColorsSet)
     {
       subdimple->Internal_SetFragmentColorsSettingsHash(fragment_colors_settings_hash);
-      SetFragmentColorsMappingTag(fragment_colors_mapping_tag);
+      SetColorsMappingTag(fragment_colors_mapping_tag);
       ChangeRenderContentSerialNumber();
     }
     else
     {
       subdimple->Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash::EmptyContentHash);
-      this->SetFragmentColorsMappingTag(ON_MappingTag::Unset);
+      this->SetColorsMappingTag(ON_MappingTag::Unset);
     }
   }
 
@@ -680,25 +688,31 @@ bool ON_SubD::SetFragmentColorsFromCallback(
 
 bool ON_SubD::HasFragmentColors() const
 {
+  bool bHasColors = false;
   const ON_SubDimple* subdimple = this->SubDimple();
   if (nullptr != subdimple)
   {
     ON_SubDMeshFragmentIterator fragit(*this);
     for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
     {
-      if (frag->ColorCount() > 0)
-        return true;
+      if (0 == frag->ColorCount())
+        return false;
+      // NOTE WELL: 
+      // All fragments need to be tested as lasy updates of the 
+      // surface mesh cache result in the update fragments having
+      // no colors while the preexisting fragments have colors.
+      bHasColors = true; // fragments with colors exist
     }
   }
-  return false;
+  return bHasColors;
 }
 
 bool ON_SubD::HasFragmentColors(
-  ON_MappingTag color_tag
+  ON_MappingTag color_mapping_tag
 ) const
 {
   return
-    this->FragmentColorsMappingTag() == color_tag
+    this->ColorsMappingTag() == color_mapping_tag
     && this->HasFragmentColors();
 }
 
@@ -713,14 +727,61 @@ bool ON_SubD::HasFragmentColors(
 
 bool ON_SubD::HasFragmentColors(
   ON_SHA1_Hash color_settings_hash,
-  ON_MappingTag color_tag
+  ON_MappingTag color_mapping_tag
 ) const
 {
   return
     this->FragmentColorsSettingsHash() == color_settings_hash
-    && this->FragmentColorsMappingTag() == color_tag
+    && this->ColorsMappingTag() == color_mapping_tag
     && this->HasFragmentColors();
 }
+
+
+
+bool ON_SubD::HasFragmentTextureCoordinates() const
+{
+  const ON_SubDimple* subdimple = this->SubDimple();
+  if (nullptr != subdimple)
+  {
+    ON_SubDMeshFragmentIterator fragit(*this);
+    for (const ON_SubDMeshFragment* frag = fragit.FirstFragment(); nullptr != frag; frag = fragit.NextFragment())
+    {
+      if (frag->ColorCount() > 0)
+        return true;
+    }
+  }
+  return false;
+}
+
+bool ON_SubD::HasFragmentTextureCoordinates(
+  ON_MappingTag texture_mapping_tag
+) const
+{
+  return
+    this->TextureMappingTag(true) == texture_mapping_tag
+    && this->HasFragmentTextureCoordinates();
+}
+
+bool ON_SubD::HasFragmentTextureCoordinates(
+  ON_SHA1_Hash texture_settings_hash
+) const
+{
+  return
+    this->TextureSettingsHash() == texture_settings_hash
+    && this->HasFragmentTextureCoordinates();
+}
+
+bool ON_SubD::HasFragmentTextureCoordinates(
+  ON_SHA1_Hash texture_settings_hash,
+  ON_MappingTag texture_mapping_tag
+) const
+{
+  return
+    this->TextureSettingsHash() == texture_settings_hash
+    && this->TextureMappingTag(true) == texture_mapping_tag
+    && this->HasFragmentTextureCoordinates();
+}
+
 
 
 void ON_SubD::ClearFragmentColors(
@@ -741,7 +802,7 @@ void ON_SubD::ClearFragmentColors(
     if (bClearFragmentColorsMappingTag)
     {
       subdimple->Internal_SetFragmentColorsSettingsHash(ON_SHA1_Hash::EmptyContentHash);
-      this->SetFragmentColorsMappingTag(ON_MappingTag::Unset);
+      this->SetColorsMappingTag(ON_MappingTag::Unset);
     }
     if (bFragmentsChanged)
       this->ChangeRenderContentSerialNumber();
@@ -756,15 +817,25 @@ const ON_SHA1_Hash ON_SubD::FragmentColorsSettingsHash() const
 
 void ON_SubD::SetFragmentColorsMappingTag(const ON_MappingTag& colors_mapping_tag) const
 {
+  return SetColorsMappingTag(colors_mapping_tag);
+}
+
+void ON_SubD::SetColorsMappingTag(const ON_MappingTag& colors_mapping_tag) const
+{
   const ON_SubDimple* dimple = SubDimple();
   if (nullptr != dimple)
-    dimple->SetFragmentColorsMappingTag(colors_mapping_tag);
+    dimple->SetColorsMappingTag(colors_mapping_tag);
 }
 
 const ON_MappingTag ON_SubD::FragmentColorsMappingTag() const
 {
+  return ColorsMappingTag();
+}
+
+const ON_MappingTag ON_SubD::ColorsMappingTag() const
+{
   const ON_SubDimple* dimple = SubDimple();
-  return (nullptr != dimple) ? dimple->FragmentColorsMappingTag() : ON_MappingTag::Unset;
+  return (nullptr != dimple) ? dimple->ColorsMappingTag() : ON_MappingTag::Unset;
 }
 
 const ON_3dPoint ON_SubDMeshFragment::ControlNetQuadPoint(

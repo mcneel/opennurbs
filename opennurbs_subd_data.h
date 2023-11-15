@@ -1160,11 +1160,24 @@ public:
 
   void ClearEvaluationCache() const;
 
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="this_heap"></param>
+  /// <param name="src"></param>
+  /// <param name="src_heap"></param>
+  /// <param name="copy_status">
+  /// If (0 != 1(&amp;)copy_status, then fragments were copied.
+  /// If (0 != 2(&amp;)copy_status, then fragment per vertex texture coordinates were copied.
+  /// If (0 != 4(&amp;)copy_status, then fragment per vertex principal curvatures were copied.
+  /// If (0 != 8(&amp;)copy_status, then fragment per vertex colors were copied.
+  /// </param>
+  /// <returns></returns>
   bool CopyEvaluationCacheForExperts(
     class ON_SubDHeap& this_heap, 
     const ON_SubDLevel& src, 
     const class ON_SubDHeap& src_heap, 
-    bool& bFragmentsWereCopied
+    unsigned& copy_status
   );
     
   void ClearTopologicalAttributes() const
@@ -2491,21 +2504,33 @@ public:
     m_fragment_colors_settings_hash = hash;
   }
 
-  const ON_MappingTag FragmentColorsMappingTag() const;
-  void SetFragmentColorsMappingTag(const ON_MappingTag& mapping_tag) const;
+  const ON_MappingTag ColorsMappingTag() const;
+  void SetColorsMappingTag(const ON_MappingTag& mapping_tag) const;
 
 private:
   mutable ON_SubDComponentLocation m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   
   mutable ON_SubDTextureCoordinateType m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   unsigned short m_reserved = 0;
-  mutable ON_MappingTag m_texture_mapping_tag;
-  mutable ON_MappingTag m_fragment_colors_mapping_tag;
 
-  // hash of the settings used to create the current fragment texture coordinates
+  // m_texture_mapping_tag identifies the mapping used to set the fragment per vertex texture coordinates.
+  // If m_texture_mapping_tag is set and fragment per vertex texture coordinates are missing, 
+  // m_texture_mapping_tag.m_mapping_id specifies the method used to update the texture coordinates.
+  mutable ON_MappingTag m_texture_mapping_tag;
+
+  // m_colors_mapping_tag identifies the mapping used to set the fragment per vertex colors.
+  // If m_colors_mapping_tag is set and fragment per vertex colors are missing, 
+  // m_colors_mapping_tag.m_mapping_id specifies the method used to update the colors.
+  // Per vertex colors are used for false color analysis modes (curvature, draft angle) and
+  // other specific uses.
+  mutable ON_MappingTag m_colors_mapping_tag;
+
+  // hash of the settings used to create the current fragment texture coordinates.
+  // This hash has meaning only when fragments with per vertex texture coordinates exist.
   mutable ON_SHA1_Hash m_fragment_texture_settings_hash = ON_SHA1_Hash::EmptyContentHash;
 
   // hash of the settings used to create the current fragment vertex colors
+  // This hash has meaning only when fragments with per vertex colors exist.
   mutable ON_SHA1_Hash m_fragment_colors_settings_hash = ON_SHA1_Hash::EmptyContentHash;
 
   ON_SimpleArray< ON_SubDLevel* > m_levels;

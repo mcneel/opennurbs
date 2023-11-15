@@ -8747,11 +8747,11 @@ unsigned int ON_SubD::DumpTopology(
 
   if (false == text_log.IsTextHash())
   {
-    text_log.Print(L"Fragment per vertex color settings:\n");
+    text_log.Print(L"Per vertex color settings:\n");
     {
       ON_TextLogIndent indent1(text_log);
-      text_log.Print(L"FragmentColorsMappingTag() = ");
-      const ON_MappingTag colors_tag = this->FragmentColorsMappingTag();
+      text_log.Print(L"ColorsMappingTag() = ");
+      const ON_MappingTag colors_tag = this->ColorsMappingTag();
       const ON_TextLog::LevelOfDetail lod = text_log.DecreaseLevelOfDetail();
       colors_tag.Dump(text_log);
       text_log.SetLevelOfDetail(lod);
@@ -10366,11 +10366,10 @@ unsigned int ON_SubDLevel::DumpTopology(
       if (bNeedComma)
         text_log.Print(", ");
       else
-        text_log.Print("Per face");
+        text_log.Print("Per face ");
       bNeedComma = true;
-      text_log.Print("face color=(");
-      text_log.PrintColor(per_face_color);
-      text_log.Print(")");
+      text_log.Print("color=");
+      per_face_color.ToText(ON_Color::TextFormat::HashRGBa, 0, true, text_log);
     }
 
     const int per_face_material_channel_index = f->MaterialChannelIndex();
@@ -10379,9 +10378,9 @@ unsigned int ON_SubDLevel::DumpTopology(
       if (bNeedComma)
         text_log.Print(", ");
       else
-        text_log.Print("Per face");
+        text_log.Print("Per face ");
       bNeedComma = true;
-      text_log.Print(" material channel index=%d", per_face_material_channel_index);
+      text_log.Print("material channel index=%d", per_face_material_channel_index);
     }
     if (bNeedComma)
       text_log.PrintNewLine();
@@ -10668,7 +10667,7 @@ size_t ON_SubD::SizeOfUnusedMeshFragments() const
 //virtual
 ON__UINT32 ON_SubD::DataCRC(ON__UINT32 current_remainder) const
 {
-  return 0;
+  return this->GeometryHash().CRC32(current_remainder);
 }
 
 //virtual
@@ -17429,27 +17428,39 @@ bool ON_SubD::CopyEvaluationCacheForExperts(const ON_SubD& src)
 {
   const ON_SubDimple* src_subdimple = src.m_subdimple_sp.get();
   ON_SubDimple* this_subdimple = m_subdimple_sp.get();
-  return (nullptr != src_subdimple && nullptr != this_subdimple) ? this_subdimple->CopyEvaluationCacheForExperts(*src_subdimple) : false;
+  const bool bCopied 
+    = (nullptr != src_subdimple && nullptr != this_subdimple) 
+    ? this_subdimple->CopyEvaluationCacheForExperts(*src_subdimple) 
+    : false;
+  if (bCopied)
+  {
+    if (this->HasFragmentTextureCoordinates())
+      this_subdimple->Internal_SetFragmentTextureCoordinatesTextureSettingsHash(src_subdimple->FragmentColorsSettingsHash());
+    if (this->HasFragmentColors())
+      this_subdimple->Internal_SetFragmentColorsSettingsHash(src_subdimple->FragmentColorsSettingsHash());
+  }
+  return bCopied;
 }
 
 bool ON_SubDimple::CopyEvaluationCacheForExperts(const ON_SubDimple& src)
 {
   const ON_SubDLevel* src_level = src.ActiveLevelConstPointer();
   ON_SubDLevel* this_level = this->ActiveLevelPointer();
-  bool bFragmentsWereCopied = false;
-  const bool bCopied = (nullptr != src_level && nullptr != this_level) ? this_level->CopyEvaluationCacheForExperts(this->m_heap , *src_level, src.m_heap, bFragmentsWereCopied) : false;
-  if (bFragmentsWereCopied)
+  unsigned fragment_status = 0u;
+  const bool bCopied = (nullptr != src_level && nullptr != this_level) ? this_level->CopyEvaluationCacheForExperts(this->m_heap , *src_level, src.m_heap, fragment_status) : false;
+  if (0 != (1u& fragment_status))
   {
-    this->m_fragment_colors_mapping_tag = src.m_fragment_colors_mapping_tag;
-    this->m_fragment_texture_settings_hash = src.m_fragment_texture_settings_hash;
-    this->m_fragment_colors_settings_hash = src.m_fragment_colors_settings_hash;
+    if (2 != (1u & fragment_status))
+      this->m_fragment_texture_settings_hash = src.m_fragment_texture_settings_hash;
+    if (8 != (1u & fragment_status))
+      this->m_fragment_colors_settings_hash = src.m_fragment_colors_settings_hash;
   }
   return bCopied;
 }
 
-bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const ON_SubDLevel& src, const ON_SubDHeap& src_heap, bool& bFragmentsWereCopied)
+bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const ON_SubDLevel& src, const ON_SubDHeap& src_heap, unsigned& copy_status)
 {
-  bFragmentsWereCopied = false;
+  copy_status = 0u;
   // Validate conditions for coping the cached evaluation information
   if (
     this == &src
@@ -17713,8 +17724,17 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
         this_face->SetSavedSubdivisionPoint(subdivision_point);
       if (nullptr == this_face->MeshFragments() && nullptr != src_face->MeshFragments())
       {
-        if (nullptr != this_heap.CopyMeshFragments(src_face, subd_display_density, this_face))
-          bFragmentsWereCopied = true;
+        const ON_SubDMeshFragment* this_frag = this_heap.CopyMeshFragments(src_face, subd_display_density, this_face);
+        if (nullptr != this_frag)
+        {
+          copy_status |= 1u;
+          if (this_frag->TextureCoordinateCount() > 0)
+            copy_status |= 2u;
+          if (this_frag->CurvatureCount() > 0)
+            copy_status |= 4u;
+          if (this_frag->ColorCount() > 0)
+            copy_status |= 8u;
+        }
       }
     }
   }

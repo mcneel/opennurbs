@@ -310,45 +310,60 @@ void ON_Color::SetHSV(
        double value       // value
        )
 {
-  int i;
-  double f, p, q, t, r, g, b;
-  if ( saturation <= 1.0/256.0 ) {
-    r = value;
-    g = value;
-    b = value;
-  }
-  else  {
-    hue *= 3.0 / ON_PI;  // (6.0 / 2.0 * ON_PI);
-    i = (int)floor(hue);
-    if ( i < 0 || i > 5 ) {
-      hue = fmod(hue,6.0);
-      if ( hue < 0.0 )
-        hue += 6.0;
-      i = (int)floor(hue);
-    }
-    f = hue - i;
-    p = value * ( 1.0 - saturation);
-    q = value * ( 1.0 - ( saturation * f) );
-    t = value * ( 1.0 - ( saturation * ( 1.0 - f) ) );
-    switch( i)
+  if ( hue > ON_UNSET_FLOAT && hue < ON_UNSET_POSITIVE_FLOAT
+    && saturation > ON_UNSET_FLOAT && saturation < ON_UNSET_POSITIVE_FLOAT
+    && value > ON_UNSET_FLOAT && value < ON_UNSET_POSITIVE_FLOAT
+    )
+  {
+    double r, g, b;
+    if (value < 0.0)
+      value = 0.0;
+    else if (value > 1.0)
+      value = 1.0;
+    if (saturation <= 1.0 / 256.0)
     {
-    case 0:
-      r = value; g = t; b = p; break;
-    case 1:
-      r = q; g = value; b = p; break;
-    case 2:
-      r = p; g = value; b = t; break;
-    case 3:
-      r = p; g = q; b = value; break;
-    case 4:
-      r = t; g = p; b = value; break;
-    case 5:
-      r = value; g = p; b = q; break;
-    default:
-      r = 0; g = 0; b = 0; break; // to keep lint quiet
+      r = value;
+      g = value;
+      b = value;
     }
+    else
+    {
+      if (saturation > 1.0)
+        saturation = 1.0;
+      hue *= 3.0 / ON_PI;  // (6.0 / 2.0 * ON_PI);
+      int i = (int)floor(hue);
+      if (i < 0 || i > 5) {
+        hue = fmod(hue, 6.0);
+        if (hue < 0.0)
+          hue += 6.0;
+        i = (int)floor(hue);
+      }
+      const double f = hue - i;
+      const double p = value * (1.0 - saturation);
+      const double q = value * (1.0 - (saturation * f));
+      const double t = value * (1.0 - (saturation * (1.0 - f)));
+      switch (i)
+      {
+      case 0:
+        r = value; g = t; b = p; break;
+      case 1:
+        r = q; g = value; b = p; break;
+      case 2:
+        r = p; g = value; b = t; break;
+      case 3:
+        r = p; g = q; b = value; break;
+      case 4:
+        r = t; g = p; b = value; break;
+      case 5:
+        r = value; g = p; b = q; break;
+      default:
+        r = 0; g = 0; b = 0; break; // to keep lint quiet
+      }
+    }
+    SetFractionalRGB(r, g, b);
   }
-  SetFractionalRGB(r,g,b);
+  else
+    *this = ON_Color::UnsetColor;
 }
 
 
