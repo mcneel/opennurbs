@@ -1003,6 +1003,8 @@ const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (cons
     _sun            ->OnInternalXmlChanged(p._sun            );
     _post_effects   ->OnInternalXmlChanged(p._post_effects   );
 
+#ifdef _DEBUG // See https://mcneel.myjetbrains.com/youtrack/issue/RH-77284
+
     // Check that all the document objects now have matching properties.
     ON_ASSERT(*_ground_plane    == *p._ground_plane);
     ON_ASSERT(*_dithering       == *p._dithering);
@@ -1016,6 +1018,7 @@ const ON_3dmRenderSettingsPrivate& ON_3dmRenderSettingsPrivate::operator = (cons
     // We can't check post effects because they may be different in terms of the _is_populated flag.
     // After a lot of thinking, I simply cannot figure out how to solve this.
     //_ASSERT(*_post_effects    == *p._post_effects);
+#endif
   }
 
   return *this;

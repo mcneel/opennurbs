@@ -256,16 +256,16 @@ const ON_MappingTag ON_SubDimple::TextureMappingTag(bool bIgnoreTextureCoordinat
 #pragma endregion
 #endif
 
-const ON_MappingTag ON_SubDimple::FragmentColorsMappingTag() const
+const ON_MappingTag ON_SubDimple::ColorsMappingTag() const
 {
-  return m_fragment_colors_mapping_tag;
+  return m_colors_mapping_tag;
 }
 
-void ON_SubDimple::SetFragmentColorsMappingTag(const ON_MappingTag& mapping_tag) const
+void ON_SubDimple::SetColorsMappingTag(const ON_MappingTag& mapping_tag) const
 {
-  if (0 != ON_MappingTag::CompareAll(this->m_fragment_colors_mapping_tag, mapping_tag))
+  if (0 != ON_MappingTag::CompareAll(this->m_colors_mapping_tag, mapping_tag))
   {
-    this->m_fragment_colors_mapping_tag = mapping_tag;
+    this->m_colors_mapping_tag = mapping_tag;
     ChangeRenderContentSerialNumber();
   }
 }
