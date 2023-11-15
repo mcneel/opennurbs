@@ -866,13 +866,13 @@ ON_SubDimple::ON_SubDimple(const ON_SubDimple& src)
   m_subd_appearance = src.m_subd_appearance;
   m_texture_coordinate_type = src.m_texture_coordinate_type;
   m_texture_mapping_tag = src.m_texture_mapping_tag;
+  m_colors_mapping_tag = src.m_colors_mapping_tag;
 
   // NOTE WELL: (Dale Lear Aug 2023)
-  // Fragment settings like the three m_fragment_... values 
+  // Fragment settings like the two m_fragment_... values 
   // should be copied only if the mesh fragments are copied
   // and that happens conditionally and happens later
   // if ON_SubDimple::CopyEvaluationCacheForExperts() is called.
-  // NO // m_fragment_colors_mapping_tag = src.m_fragment_colors_mapping_tag;
   // NO // m_fragment_texture_settings_hash = src.m_fragment_texture_settings_hash;
   // NO // m_fragment_colors_settings_hash = src.m_fragment_colors_settings_hash;
 

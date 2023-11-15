@@ -1089,7 +1089,6 @@ bool ON_SubDVertex::SurfacePointIsSet() const
 
 void ON_SubDEdge::ClearSavedSubdivisionPoints() const
 {
-  // considering using a global pool for the limit curve cache - not yet.
   ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
 }
 
