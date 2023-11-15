@@ -2199,8 +2199,6 @@ ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
 // Find the largest absolute value of coordinates from an array of points (possibly homogeneous).
 ON_DECL
 double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count);
-ON_DECL
-double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count, int stride);   // stride>=dim+is_rat
 
 ///////////////////////////////////////////////////////////////
 //

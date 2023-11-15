@@ -1133,15 +1133,19 @@ int ON_TextContent::Dimension() const
 const ON_BoundingBox ON_TextContent::TextContentBoundingBox() const
 {
   ON_TextRunArray* runs = const_cast<ON_TextContent*>(this)->TextRuns(false);
-  const int run_count = (nullptr != runs) ? runs->Count() : 0;
+  const int run_count
+    = (nullptr != runs)
+    ? runs->Count()
+    : 0;
 
-  // 28 Aug 2023 S. Baer
-  // Computing a content hash takes longer than just computing the bounding box
-  // for simple single run situations. Only use the cached bbox when there are
-  // more than one run.
-  if ( run_count > 1 &&
-       m_text_content_bbox.IsValid() &&
-       m_text_content_bbox_hash == TextContentHash())
+  if (run_count <= 0)
+    return ON_BoundingBox::EmptyBoundingBox;
+
+  const ON_SHA1_Hash text_content_hash = TextContentHash();
+  if (
+    m_text_content_bbox.IsValid()
+    && m_text_content_bbox_hash == text_content_hash
+    )
   {
     return m_text_content_bbox;
   }
@@ -1158,8 +1162,8 @@ const ON_BoundingBox ON_TextContent::TextContentBoundingBox() const
     if (nullptr == run)
       continue;
 
-    if (ON_TextRun::RunType::kText == run->Type() ||
-      ON_TextRun::RunType::kField == run->Type())
+    if (ON_TextRun::RunType::kText == (*runs)[i]->Type() ||
+      ON_TextRun::RunType::kField == (*runs)[i]->Type())
     {
       ON_BoundingBox runbox = run->BoundingBox();
       if (false == runbox.IsValid())
@@ -1200,10 +1204,10 @@ const ON_BoundingBox ON_TextContent::TextContentBoundingBox() const
   bbox.m_min.z = 0.0;
   bbox.m_max.z = 0.0;
 
-  if (run_count>1 && bbox.IsValid())
+  if (bbox.IsValid())
   {
     m_text_content_bbox = bbox;
-    m_text_content_bbox_hash = TextContentHash();
+    m_text_content_bbox_hash = text_content_hash;
   }
 
   return bbox;

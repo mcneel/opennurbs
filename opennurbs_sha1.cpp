@@ -23,17 +23,26 @@
 
 ON_SHA1_Hash::ON_SHA1_Hash()
 {
-  memset(m_digest, 0, sizeof(m_digest));
+  ON__UINT32* p = (ON__UINT32*)m_digest;
+  p[0] = 0U;
+  p[1] = 0U;
+  p[2] = 0U;
+  p[3] = 0U;
+  p[4] = 0U;
 }
 
 bool operator==(const ON_SHA1_Hash& a, const ON_SHA1_Hash& b)
 {
-  return memcmp(a.m_digest, b.m_digest, sizeof(a.m_digest)) == 0;
+  const ON__UINT32* ai = (const ON__UINT32*)&a;
+  const ON__UINT32* bi = (const ON__UINT32*)&b;
+  return (ai[0] == bi[0] && ai[1] == bi[1] && ai[2] == bi[2] && ai[3] == bi[3] && ai[4] == bi[4]);
 }
 
 bool operator!=(const ON_SHA1_Hash& a, const ON_SHA1_Hash& b)
 {
-  return memcmp(a.m_digest, b.m_digest, sizeof(a.m_digest)) != 0;
+  const ON__UINT32* ai = (const ON__UINT32*)&a;
+  const ON__UINT32* bi = (const ON__UINT32*)&b;
+  return (ai[0] != bi[0] || ai[1] != bi[1] || ai[2] != bi[2] || ai[3] != bi[3] || ai[4] != bi[4]);
 }
 
 const ON_String ON_SHA1_Hash::ToUTF8String(

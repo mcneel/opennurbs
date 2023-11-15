@@ -294,8 +294,8 @@ public:
 
   const ON_wString& ConvertDoubleArrayToString(int count) const
   {
-    constexpr int maxCount = array_val_max;
-    if ((count < 1) || (count > maxCount))
+    constexpr int maxCount = 16;
+    if ((count == 0) || (count > maxCount))
       return _string_val;
 
     constexpr int maxLen = 30;
@@ -329,8 +329,6 @@ public:
 
   mutable ON_Buffer* _buffer = nullptr;
   mutable ON_wString _string_val;
-
-  static constexpr int array_val_max = 16;
   union
   {
     bool _bool_val;
@@ -340,7 +338,7 @@ public:
     ON_Xform m_xform;
     time_t _time_val;
     ON_UUID _uuid_val;
-    double _array_val[array_val_max] = { 0 };
+    double _array_val[16] = { 0 };
   };
 
   ON::LengthUnitSystem _units = ON::LengthUnitSystem::None;
@@ -561,7 +559,7 @@ bool ON_XMLVariant::operator == (const ON_XMLVariant& v) const
     return _private->_time_val == v._private->_time_val;
 
   case Types::Matrix:
-      for (int i = 0; i < _private->array_val_max; i++)
+      for (int i = 0; i < 16; i++)
       {
         if (_private->_array_val[i] != v._private->_array_val[i])
           return false;
@@ -869,17 +867,6 @@ int ON_XMLVariant::AsInteger(void) const
   }
 }
 
-static bool IsValidRealNumber(const ON_wString& s)
-{
-  if (s.ContainsNoCase(L"nan"))
-    return false;
-
-  if (s.ContainsNoCase(L"in")) // ind, inf.
-    return false;
-
-  return true;
-}
-
 double ON_XMLVariant::AsDouble(void) const
 {
   switch (_private->_type)
@@ -888,10 +875,8 @@ double ON_XMLVariant::AsDouble(void) const
   case Types::Float:   return         _private->_float_val;
   case Types::Double:  return         _private->_double_val;
   case Types::Integer: return double (_private->_int_val);
-  case Types::String:
-    if (IsValidRealNumber(_private->_string_val))
-      return ON_wtof(_private->_string_val);
-
+  case Types::String:  return ON_wtof(_private->_string_val);
+  
   default:
     return 0.0;
   }
@@ -905,10 +890,8 @@ float ON_XMLVariant::AsFloat(void) const
   case Types::Float:   return       _private->_float_val;
   case Types::Double:  return float(_private->_double_val);
   case Types::Integer: return float(_private->_int_val);
-  case Types::String:
-    if (IsValidRealNumber(_private->_string_val))
-      return float(ON_wtof(_private->_string_val));
-
+  case Types::String:  return float(ON_wtof(_private->_string_val));
+          
   default:
     return 0.0f;
   }
@@ -992,18 +975,18 @@ ON_Xform ON_XMLVariant::AsXform(void) const
   switch (_private->_type)
   {
   case Types::Matrix:
-    return _private->m_xform;
+    break;
 
   case Types::String:
     if (_private->_string_val.IsValidMatrix())
-    {
-      StringToPoint(16);
-      return _private->m_xform;
-    }
+      StringToPoint(16); //////////////////////////////////// Risky
+    break;
 
   default:
     return ON_Xform::Zero4x4;
   }
+
+  return _private->m_xform;
 }
 
 ON_4fColor ON_XMLVariant::AsColor(void) const
@@ -1225,66 +1208,27 @@ ON_XMLVariant::operator ON_Buffer() const
 
 void ON_XMLVariant::StringToPoint(int numValues) const
 {
-  // 22nd September 2022 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-77182
-  // This function crashed on the Mac inside wcstod_l() which must be getting called from the call to
-  // ON_wtof(). The only way that function can fail is if either the input pointers are invalid or the
-  // input string or locale is corrupted. I don't have any control over the locale (I don't even know
-  // how it's being accessed on the Mac), so all I can do is check the input string. It's unlikely that
-  // an incorrectly formatted string (i.e., not a float) would cause a crash, but I can do some simple
-  // validation to try and avoid trouble.
+  if ((numValues < 0) || (numValues > 16))
+    return;
 
-  bool good = true;
+  ON_wString s = _private->_string_val + L",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
+  auto* p = s.Array();
 
-  if ((numValues < 0) || (numValues > _private->array_val_max))
+  for (int i = 0; i < numValues; i++)
   {
-    good = false;
-  }
-  else
-  if (_private->_string_val.IsEmpty())
-  {
-    good = false;
-  }
-
-  if (good)
-  {
-    ON_wString s = _private->_string_val + L",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,";
-
-    auto* p = static_cast<const wchar_t*>(s);
-    for (int i = 0; i < numValues; i++)
+    while (iswspace(*p))
     {
-      // Skip white space. iswspace() returns 0 for the terminator so we can't go off the end of the buffer.
-      while (0 != iswspace(*p))
-      {
-        p++;
-      }
-
-      // Quick and simple sanity check at the start of a float value.
-      if (isdigit(*p) || (*p == '.') || (*p == '+') || (*p == '-'))
-      {
-        _private->_array_val[i] = ON_wtof(p);
-      }
-
-      // Because we've appended a fixed string containing commas, we know the pointer can't go off
-      // the end of the buffer while checking for a comma.
-      while (*p != L',')
-      {
-        p++;
-      }
-
-      // 'p' is now pointing to a comma.
-      ON_ASSERT(*p == L',');
-
-      // After incrementing it, the worst case scenario is that it's pointing to the terminator.
       p++;
     }
-  }
-  else
-  {
-    // Bad input; clear the result to all zeroes.
-    for (int i = 0; i < _private->array_val_max; i++)
+
+    _private->_array_val[i] = ON_wtof(p);
+
+    while (*p != L',')
     {
-      _private->_array_val[i] = 0.0;
+      p++;
     }
+
+    p++;
   }
 }
 
@@ -5293,7 +5237,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
 
           // Misc rendering settings.
           ON_XMLParameters p(rendering);
-          p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true); // Only for monitoring. Not loaded.
+          p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
           p.SetParam(ON_RDK_DITHERING_ENABLED, false);
           p.SetParam(ON_RDK_DITHERING_METHOD, ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);

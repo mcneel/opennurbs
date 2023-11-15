@@ -8171,69 +8171,6 @@ public:
   */
   void ClearFragmentTextureCoordinatesTextureSettingsHash() const;
 
-  /// <summary>
-  /// Determing if this SubD's mesh fragments have per vertex texture coordinates.
-  /// </summary>
-  /// <returns>
-  /// If this SubD has mesh fragments with per vertex texture coordinates, then true is returned.
-  /// Otherwise false is returned.
-  /// </returns>
-  bool HasFragmentTextureCoordinates() const;
-
-  /// <param name="texture_mapping_tag">
-  /// This tag identifies the method and computation used to set the
-  /// per vertex texture coordinates on the fragments. The tag is persistent so
-  /// that the texture coordinates can be recomputed from the id in situations where
-  /// fragments need to be recalculated.
-  /// </param>
-  /// <returns>
-  /// If this SubD has mesh fragments with per vertex texture coordinates and 
-  /// texture_mapping_tag = TextureMappingTag(), then true is returned.
-  /// Otherwise false is returned.
-  /// </returns>
-  bool HasFragmentTextureCoordinates(
-    ON_MappingTag texture_mapping_tag
-  ) const;
-
-  /// <param name="texture_settings_hash">
-  /// This hash uniquely identifies the method and computation used to
-  /// set the per vertex texture coordinates on the fragments. The hash is a runtime
-  /// value that has meaning only when fragments with per vertex texture coordinates
-  /// exist.
-  /// </param>
-  /// <returns>
-  /// If this SubD has mesh fragments with per vertex texture coordinates and 
-  /// texture_settings_hash = TextureSettingsHash(), then true is returned.
-  /// Otherwise false is returned.
-  /// </returns>
-  bool HasFragmentTextureCoordinates(
-    ON_SHA1_Hash texture_settings_hash
-  ) const;
-
-  /// <param name="texture_settings_hash">
-  /// This hash uniquely identifies the method and computation used to
-  /// set the per vertex texture coordinates on the fragments. The hash is a runtime
-  /// value that has meaning only when fragments with per vertex texture coordinates
-  /// exist.
-  /// </param>
-  /// <param name="texture_mapping_tag">
-  /// This tag identifies the method and computation used to set the
-  /// per vertex texture coordinates on the fragments. The tag is persistent so
-  /// that the texture coordinates can be recomputed from the id in situations where
-  /// fragments need to be recalculated.
-  /// </param>
-  /// <returns>
-  /// If this SubD has mesh fragments with per vertex texture coordinates and 
-  /// texture_settings_hash = TextureSettingsHash() and
-  /// texture_mapping_tag = TextureMappingTag(), then true is returned.
-  /// Otherwise false is returned.
-  /// </returns>
-  bool HasFragmentTextureCoordinates(
-    ON_SHA1_Hash texture_settings_hash,
-    ON_MappingTag texture_mapping_tag
-  ) const;
-
-
 private:
   /*
   Description:
@@ -8310,27 +8247,17 @@ public:
   /// </returns>
   bool HasFragmentColors() const;
 
-  /// <param name="color_mapping_tag">
-  /// This tag identifies the method and computation used to set the
-  /// per vertex colors on the fragments. The tag is persistent so
-  /// that the colors can be recomputed from the id in situations where
-  /// fragments need to be recalculated.
-  /// </param>
+  /// <param name="color_tag"></param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_tag = FragmentColorsMappingTag(), then true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool HasFragmentColors(
-    ON_MappingTag color_mapping_tag
+    ON_MappingTag color_tag
   ) const;
 
-  /// <param name="color_settings_hash">
-  /// This hash uniquely identifies the method and computation used to
-  /// set the per vertex colors on the fragments. The has is a runtime
-  /// value that has meaning only when fragments with per vertex colors
-  /// exist.
-  /// </param>
+  /// <param name="color_settings_hash"></param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_settings_hash = FragmentColorsSettingsHash(), then true is returned.
@@ -8340,27 +8267,17 @@ public:
     ON_SHA1_Hash color_settings_hash
   ) const;
 
-  /// <param name="color_settings_hash">
-  /// This hash uniquely identifies the method and computation used to
-  /// set the per vertex colors on the fragments. The has is a runtime
-  /// value that has meaning only when fragments with per vertex colors
-  /// exist.
-  /// </param>
-  /// <param name="color_mapping_tag">
-  /// This tag identifies the method and computation used to set the
-  /// per vertex colors on the fragments. The tag is persistent so
-  /// that the colors can be recomputed from the id in situations where
-  /// fragments need to be recalculated.
-  /// </param>
+  /// <param name="color_settings_hash"></param>
+  /// <param name="color_tag"></param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_settings_hash = FragmentColorsSettingsHash() and
-  /// color_mapping_tag = ColorsMappingTag(), then true is returned.
+  /// color_tag = FragmentColorsMappingTag(), then true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool HasFragmentColors(
     ON_SHA1_Hash color_settings_hash,
-    ON_MappingTag color_mapping_tag
+    ON_MappingTag color_tag
   ) const;
 
 
@@ -8376,38 +8293,32 @@ public:
     bool bClearFragmentColorsMappingTag
   );
 
-
-  /*
-  Returns:
-    This mapping tag ideitifies the color mapping used to set fragment per vertex colors.
-  */
-  const ON_MappingTag ColorsMappingTag() const;
-
-  /*
-  Description:
-    Set the colors mapping tag.
-  Remarks:
-    Calling this->SetColorsMappingTag() does not change existing cached
-    fragment vertex colors. At an appropriate time, call this->SetFragmentColorsFromCallback()
-    to update fragment vertex colors on any cached fragments.
-
-    The color mapping tag and per vertex colors are mutable properties.
-    They can be changed by rendering applications as needed.
-  */
-  void SetColorsMappingTag(const class ON_MappingTag&) const;
-
-
   /*
     Returns:
       hash identifying the way the fragment vertex colors were set.
   */
   const ON_SHA1_Hash FragmentColorsSettingsHash() const;
 
-  ON_DEPRECATED_MSG("Use ON_SubD::ColorsMappingTag()")
+  /*
+  Returns:
+    The current fragment vertex colors mapping tag.
+  */
   const ON_MappingTag FragmentColorsMappingTag() const;
 
-  ON_DEPRECATED_MSG("Use ON_SubD::SetColorsMappingTag()")
+  /*
+  Description:
+    Set the fragment colors mapping tag.
+  Remarks:
+    Calling this->SetFragmentColorsMappingTag() does not change existing cached
+    fragment vertex colors. At an appropriate time, call this->SetFragmentColorsFromCallback()
+    to update fragment vertex colors on any cached fragments.
+
+    SubD fragment vertex tag and colors are a mutable property.
+    They can be changed by rendering applications as needed.
+  */
   void SetFragmentColorsMappingTag(const class ON_MappingTag&) const;
+
+
 
 public:
   /*
@@ -8683,7 +8594,7 @@ public:
       subd must point to an ON_SubD that was constructed on the heap using
       an operator new call with a public ON_SubD constructor.
   Returns:
-    a pointer to the managed subd or nullptr subd if not valid.
+    a pointer to the managed subd or nullptr subd in not valid.
   Example:
     ON_SubD* subd = new ON_SubD(...);
     ON_SubDRef subr;
@@ -10855,46 +10766,9 @@ public:
   */
   ON_ComponentStatus Status() const;
 
-  /// <summary>
-  /// This simple version
-  /// transforms the points and normals and unconditionally
-  /// makes no changes to the curvatures, texture coordinates and colors.
-  /// 
-  /// Typically lots of fragments are being transformed and
-  /// the type and context of the transformation determines
-  /// if texture coordinate, curvature and color inforation should be 
-  /// preserved or destroyed. It is better to determine the answers to these
-  /// questions and call the version of Transform with
-  /// the bKeepTextures, bKeepCurvatures and bKeepColors parameters. 
-  /// For example if the transformation is an isometry and the colors
-  /// are set from the curvatures, then curvatures and colors should be
-  /// kept. If the transformation is not an isometry, the curvatures should
-  /// be destroyed.
-  /// If the texture coordinates are set from grid location 
-  /// (fake surface paramaters), the the texture coordinates should be kept.
-  /// If transform is not an identity and the texture coordinates come from a 
-  /// world object mapping, the should generally be destroyed.
-  /// </summary>
-  /// <param name="xform"></param>
-  /// <returns></returns>
   bool Transform(
     const ON_Xform& xform
-  );
-
-  /// <summary>
-  /// 
-  /// </summary>
-  /// <param name="bKeepTextures"></param>
-  /// <param name="bKeepCurvatures"></param>
-  /// <param name="bKeepColors"></param>
-  /// <param name="xform"></param>
-  /// <returns></returns>
-  bool Transform(
-    bool bKeepTextures,
-    bool bKeepCurvatures,
-    bool bKeepColors,
-    const ON_Xform& xform
-  );
+    );  
 
   ON_SubDMeshFragment* m_next_fragment;
   ON_SubDMeshFragment* m_prev_fragment;
@@ -12637,7 +12511,7 @@ protected:
   mutable double m_saved_subd_point1[3]; // saved subdivision point
 
 private:
-  // Reserved for future use for attributes that apply to all SubD components (ON_SubDVertex, ON_SubDEdge, and ON_SubDFace).
+  // Reserved for future use for attributes that apply to allSubD components (ON_SubDVertex, ON_SubDEdge, and ON_SubDFace).
   ON__UINT64 m_reserved8bytes1;
   ON__UINT64 m_reserved8bytes2;
   ON__UINT64 m_reserved8bytes3;
@@ -12896,8 +12770,9 @@ public:
     bTransformationSavedSubdivisionPoint - [in]
       If the transformation is being applied to every vertex, edge and 
       face in every level of a subdivision object, and the transformation
-      is an orientation preserving isometry (rotation, translation, ...),
-      then set bTransformationSavedSubdivisionPoint = true to apply the
+      is an isometry (rotation, translation, ...), a uniform scale, or a 
+      composition of these types, then set 
+      bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -13433,7 +13308,7 @@ public:
     two attached edges are attached to one face,
     the remaining edges are attached to two faces.
   Returns:
-    True if the vertex has boundary vertex toplology.
+    True if the vertex has interior vertex toplology.
   Remarks:
     Tags are ignored. This property is often used during construction
     and modification when tags are not set.
@@ -13841,10 +13716,11 @@ public:
 
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
-      If the transformation is being applied to every vertex, edge and
+      If the transformation is being applied to every vertex, edge and 
       face in every level of a subdivision object, and the transformation
-      is an orientation preserving isometry (rotation, translation, ...),
-      then set bTransformationSavedSubdivisionPoint = true to apply the
+      is an isometry (rotation, translation, ...), a uniform scale, or a 
+      composition of these types, then set 
+      bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -14734,8 +14610,9 @@ public:
     bTransformationSavedSubdivisionPoint - [in]
       If the transformation is being applied to every vertex, edge and
       face in every level of a subdivision object, and the transformation
-      is an orientation preserving isometry (rotation, translation, ...),
-      then set bTransformationSavedSubdivisionPoint = true to apply the
+      is an isometry (rotation, translation, ...), a uniform scale, or a
+      composition of these types, then set
+      bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -15231,71 +15108,18 @@ public:
   const class ON_SubDMeshFragment* MeshFragments() const;
 
 
-  /// <summary>
-  /// The face's control net center point is the average of the face's
-  /// vertex control net points. This is the same point as the face's
-  /// subdivision point.
-  /// </summary>
-  /// <returns>
-  /// The average of the face's vertex control net points
-  /// </returns>  
   const ON_3dPoint ControlNetCenterPoint() const;
 
-  /// <summary>
-  /// When the face's control net polygon is planar, the face's
-  /// control net normal is a unit vector perpindicular to the plane
-  /// that points outwards. If the control net polygon is not
-  /// planar, the control net normal is control net normal is a unit
-  /// vector that is the average of the control polygon's corner normals.
-  /// </summary>
-  /// <returns>
-  /// A unit vector that is normal to planar control net polygons and a good
-  /// compromise for nonplanar control net polygons.
-  /// </returns> 
   const ON_3dVector ControlNetCenterNormal() const;
 
-  /// <summary>
-  /// The face's control net center frame is a plane 
-  /// with normal equal to this->ControlNetCenterNormal() 
-  /// and origin equal to this->ControlNetCenterPoint(). 
-  /// The x and y axes of the frame have no predictable relationship 
-  /// to the face or SubD control net topology.
-  /// </summary>
-  /// <returns>
-  /// A plane with unit normal equal to this->ControlNetCenterNormal() 
-  /// and origin equal to this->ControlNetCenterPoint().
-  /// If the face is not valid, ON_Plane::NanPlane is returned.
-  /// </returns> 
   const ON_Plane ControlNetCenterFrame() const;
 
-  /// <returns>
-  /// True if the control net polygon is convex with respect to the
-  /// plane this->ControlNetCenterFrame().
-  /// </returns>
   bool IsConvex() const;
 
-  /// <returns>
-  /// True if the control net polygon is not convex with respect to the
-  /// plane this->ControlNetCenterFrame().
-  /// </returns>
   bool IsNotConvex() const;
 
-  /// <summary>
-  /// Determine if the face's control net polygon is planar.
-  /// </summary>
-  /// <param name="planar_tolerance"></param>
-  /// <returns>
-  /// True if the face's control net polygon is planar.
-  /// </returns>
   bool IsPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
 
-  /// <summary>
-  /// Determine if the face's control net polygon is not planar.
-  /// </summary>
-  /// <param name="planar_tolerance"></param>
-  /// <returns>
-  /// True if the face's control net polygon is not planar.
-  /// </returns>
   bool IsNotPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
 
 public:
@@ -17492,15 +17316,15 @@ public:
   static const ON_SubDFromMeshParameters InteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges or fewer
-  // that have an included angle <= 120 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges
+  // that have an included angle <= 90 degrees.
   static const ON_SubDFromMeshParameters ConvexCornersAndInteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges or fewer
-  // that have an included angle <= 120 degrees.
-  // Look for concave corners at sub-D vertices with 3 edges or more
-  // that have an included angle >= 240 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges
+  // that have an included angle <= 90 degrees.
+  // Look for concave corners at sub-D vertices with 3 edges
+  // that have an included angle >= 270 degrees.
   static const ON_SubDFromMeshParameters ConvexAndConcaveCornersAndInteriorCreases;
 
   ///////////////////////////////////////////////////////////////////////////////////////

@@ -7872,30 +7872,24 @@ const ON_PlaneEquation operator*(const ON_Xform& xform, const ON_PlaneEquation& 
 // Find the maximum absolute value of a array of (possibly homogeneous) points 
 double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count)
 {
-  return ON_MaximumCoordinate(data, dim, is_rat, count, dim + is_rat);
-}
-
-// Find the maximum absolute value of an array with stride of (possibly homogeneous) points 
-double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count, int stride)
-{
   double norm = 0;
   if (is_rat)
   {
     for (int i = 0; i < count; i++)
     {
-      double w = fabs(data[i*stride + dim ]);
+      double w = fabs(data[i*(dim+1) + dim ]);
       double norm_i = 0;
       for (int j = 0; j < dim; j++)
-        norm_i = ON_Max(norm_i, fabs(data[i*stride + j]));
-      if (norm_i > norm * w && w>0)
+        norm_i = ON_Max(norm_i, fabs(data[i*(dim+1) + j]));
+      if (norm_i > norm * w)
         norm = norm_i / w;
     }
   }
   else
   {
-    for (int i = 0; i < count; i++)
-      for (int j=0; j<dim; j++)
-        norm = ON_Max(norm, fabs(data[i*stride + j]));
+    int n = dim * count;
+    for (int i = 0; i < n; i++)
+      norm = ON_Max(norm, fabs(data[i]));
   }
   return norm;
 }

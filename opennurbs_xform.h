@@ -277,41 +277,23 @@ public:
 
 	/*
 	Description:
-    NOTE: A better name for this fuction would be IsIsometry().
-
-    An "isometry" transformation is an affine transformation that preserves
-    distances. Isometries include transformation like reflections
-    that reverse orientation.
-
-    A "rigid" transformation is an isometry that preserves orientation
-    and can be broken into  a proper rotation and a translation.  
+		A rigid transformation can be broken into  a proper rotation and a translation.  
+		while an isometry transformation could also include a reflection.
+	Parameters:
+	  *this - must be IsAffine().
+		Translation - [out] Translation vector
+		Rotation - [out] Proper Rotation transformation, ie. R*Transpose(R)=I and det(R)=1 
+	Details:
+		If X.DecomposeRigid(T, R) is 1 then X ~	TranslationTransformation(T)*R
+		                            -1      X ~ ON_Xform(-1) *TranslationTransformation(T)*R
+		where ~ means approximates to within tolerance.
+		DecomposeRigid will find the closest rotation to the linear part of this transformation.
  	Returns:
-	  +1: This transformation is an orientation preserving isometry transformation ("rigid and determinant = 1).
-	  -1: This transformation is an orientation reversing isometry (determinant = -1).
+	  +1: This transformation is an rigid transformation.
+	  -1: This transformation is an orientation reversing isometry.
 		0 : This transformation is not an orthogonal transformation.
 	*/
 	int IsRigid(double tolerance = ON_ZERO_TOLERANCE) const;
-
-
-  /*
-  Description:
-    A rigid transformation preserves distances and orientation
-    and can be broken into  a proper rotation and a translation.
-    An isometry transformation preserves distance and may include a reflection.
-  Parameters:
-    *this - must be IsAffine().
-    Translation - [out] Translation vector
-    Rotation - [out] Proper Rotation transformation, ie. R*Transpose(R)=I and det(R)=1
-  Details:
-    If X.DecomposeRigid(T, R) is 1 then X ~	TranslationTransformation(T)*R
-                                -1      X ~ ON_Xform(-1) *TranslationTransformation(T)*R
-    where ~ means approximates to within tolerance.
-    DecomposeRigid will find the closest rotation to the linear part of this transformation.
-  Returns:
-    +1: This transformation is an rigid transformation.
-    -1: This transformation is an orientation reversing isometry.
-    0 : This transformation is not an orthogonal transformation.
-  */
 	int DecomposeRigid(ON_3dVector& Translation, ON_Xform& Rotation, double tolerance = ON_ZERO_TOLERANCE) const;
 
 	/*

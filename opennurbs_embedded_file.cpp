@@ -38,7 +38,6 @@ public:
     std::unique_ptr<ON__UINT8[]> m_buffer;
     size_t m_length = 0;
     size_t m_compressed_length = 0;
-    bool m_error = false;
   };
 
   bool LoadFile(const wchar_t* filename);
@@ -66,8 +65,6 @@ const ON_EmbeddedFile::CImpl::Data& ON_EmbeddedFile::CImpl::Data::operator = (co
   {
     m_length = m_compressed_length = 0;
   }
-
-  m_error = d.m_error;
 
   return *this;
 }
@@ -106,8 +103,6 @@ bool ON_EmbeddedFile::CImpl::LoadFile(const wchar_t* filename)
   // Read the file data into the buffer.
   const bool bOK = (ON_FileStream::Read(pFile, d.m_length, d.m_buffer.get()) == d.m_length);
 
-  d.m_error = !bOK;
-
   // Close the file.
   ON_FileStream::Close(pFile);
 
@@ -116,9 +111,6 @@ bool ON_EmbeddedFile::CImpl::LoadFile(const wchar_t* filename)
 
 bool ON_EmbeddedFile::CImpl::SaveFile(const wchar_t* filename) const
 {
-  if (m_data.m_error)
-    return false; // Can't save when in error state.
-
   if (0 == m_data.m_length)
     return false; // Not loaded.
 
@@ -217,19 +209,14 @@ bool ON_EmbeddedFile::LoadFromBuffer(ON_Buffer& buf)
   d.SetLength(size_t(buf.Size()));
 
   // Load the buffer from 'buf'.
-  if (buf.Read(d.m_length, d.m_buffer.get()) == d.m_length)
-    return true;
+  if (buf.Read(d.m_length, d.m_buffer.get()) != d.m_length)
+    return false;
 
-  m_impl->m_data.m_error = true;
-
-  return false;
+  return true;
 }
 
 bool ON_EmbeddedFile::SaveToBuffer(ON_Buffer& buf) const
 {
-  if (m_impl->m_data.m_error)
-    return false; // Can't save when in error state.
-
   // Write the data to 'buf'.
   buf.Write(m_impl->m_data.m_length, m_impl->m_data.m_buffer.get());
 
@@ -243,20 +230,14 @@ bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
   // Read the full file path of the original file.
   ON_wString filename;
   if (!archive.ReadString(filename))
-  {
-    m_impl->m_data.m_error = true;
     return false;
-  }
 
   m_impl->m_orig_file = ON_FileSystemPath::CleanPath(filename);
 
   // Read the original (uncompressed) size of the compressed buffer.
   size_t uncompressed_size = 0;
   if (!archive.ReadCompressedBufferSize(&uncompressed_size))
-  {
-    m_impl->m_data.m_error = true;
     return false;
-  }
 
   // Allocate a buffer for the uncompressed data.
   auto& d = m_impl->m_data;
@@ -268,10 +249,7 @@ bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
   const ON__UINT64 pos_before = archive.CurrentPosition();
 
   if (!archive.ReadCompressedBuffer(uncompressed_size, d.m_buffer.get(), &bFailedCRC) && !bFailedCRC)
-  {
-    m_impl->m_data.m_error = true;
-    return false;
-  }
+      return false;
 
   d.m_compressed_length = size_t(archive.CurrentPosition() - pos_before);
 
@@ -281,8 +259,6 @@ bool ON_EmbeddedFile::Read(ON_BinaryArchive& archive)
 bool ON_EmbeddedFile::Write(ON_BinaryArchive& archive) const
 {
   auto& d = m_impl->m_data;
-  if (d.m_error)
-    return false; // Can't write when in error state.
 
   // Write the original filename to the archive.
   if (!archive.WriteString(m_impl->m_orig_file))
@@ -305,19 +281,12 @@ size_t ON_EmbeddedFile::CompressedLength(void) const
   return m_impl->m_data.m_compressed_length;
 }
 
-bool ON_EmbeddedFile::Error(void) const
-{
-  return m_impl->m_data.m_error;
-}
-
 bool ON_EmbeddedFile::Clear(void)
 {
   m_impl->m_orig_file.Empty();
 
   m_impl->m_data.SetLength(0);
   m_impl->m_data.m_compressed_length = 0;
-
-  m_impl->m_data.m_error = false;
 
   return true;
 }

@@ -2854,9 +2854,6 @@ bool ONX_Model::IncrementalReadFinish(
     }
   }
 
-  if (0 != archive.CriticalErrorCount())
-    return false;
-
   // STEP 17: OPTIONAL - Read user tables as anonymous goo
   // If you develop a plug-ins or application that uses OpenNURBS files,
   // you can store anything you want in a user table.
@@ -2940,23 +2937,17 @@ bool ONX_Model::IncrementalReadFinish(
     }
   }
 
-  if (0 != archive.CriticalErrorCount())
-    return false;
-
   // STEP 18: OPTIONAL - check for end mark
   size_t file_length = 0;
-  if (!archive.Read3dmEndMark(&file_length))
+  if ( !archive.Read3dmEndMark(&file_length) )
   {
-    if (archive.Archive3dmVersion() != 1)
+    if ( archive.Archive3dmVersion() != 1 ) 
     {
       // some v1 files are missing end-of-archive markers
     }
   }
   else
-  {
     m_3dm_file_byte_count = file_length;
-  }
-
   return (0 == archive.CriticalErrorCount());
 }
 
@@ -3020,11 +3011,8 @@ bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
       ON_ModelComponentReference model_geometry_reference;
 
       if (!IncrementalReadModelGeometry(archive, bManageComponents, bManageGeometry, bManageAttributes,
-        model_object_type_filter, model_geometry_reference))
-      {
-        // Catastrophic error.
-        break; 
-      }
+                                        model_object_type_filter, model_geometry_reference))
+        break; // Catastrophic error.
 
       if (model_geometry_reference.IsEmpty())
         break; // No more geometry.
@@ -5441,10 +5429,11 @@ bool ONX_ModelPrivate::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_
         // Create an ON_EmbeddedFile object for each embedded file.
         for (int i = 0; i < num_embedded_files; i++)
         {
-          // We keep the embedded file object even if it fails to load; then it will have an error flag set.
-          // See ON_EmbeddedFile::Error().
           ON_EmbeddedFile ef;
-          ef.Read(archive);
+
+          if (!ef.Read(archive))
+            return false;
+
           model->AddModelComponent(ef);
         }
       }

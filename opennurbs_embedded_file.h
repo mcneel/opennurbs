@@ -72,10 +72,6 @@ public:
   // loaded by LoadFromFile() or LoadFromBuffer(), this method returns zero.
   virtual size_t CompressedLength(void) const;
 
-  // Returns true if the embedded file was loaded, but the load failed. This should only happen
-  // if a buffer or archive being loaded is corrupted.
-  bool Error(void) const;
-
   // Clears the embedded file data. Returns true if successful, else false.
   virtual bool Clear(void);
 

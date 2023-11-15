@@ -8959,19 +8959,6 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
         return false;
       }
 
-      const bool bIsTableTypeCode = (TCODE_TABLE == (0xFFFFF000 & tcode));
-      if (false == bIsTableTypeCode)
-      {
-        // Dale Lear - Nov 8 2022 - ships in Rhino 8.2
-        // Fix https://mcneel.myjetbrains.com/youtrack/issue/RH-77657
-        // (detecting corruption in table headers prevents hangs).
-        // This value isn't a table typecode (even from a table added int the future).
-        // The file is badly corrupt at this point and we have to quit.
-        ON_ERROR("tcode is not a table typecode. File is badly corrupted.");
-        this->Internal_ReportCriticalError();
-        return false;
-      }
-
       // A required table is not at the current position in the archive
       // see if we can find it someplace else in the archive.  This can
       // happen when old code encounters a table that was added later.

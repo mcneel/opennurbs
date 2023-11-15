@@ -50,11 +50,9 @@ void ON_SubDimple::Clear()
   m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   m_texture_mapping_tag = ON_MappingTag::Unset;
-  m_colors_mapping_tag = ON_MappingTag::Unset;
-
+  m_fragment_colors_mapping_tag = ON_MappingTag::Unset;
   m_fragment_texture_settings_hash = ON_SHA1_Hash::EmptyContentHash;
   m_fragment_colors_settings_hash = ON_SHA1_Hash::EmptyContentHash;
-
   for (unsigned i = 0; i < m_levels.UnsignedCount(); ++i)
   {
     ON_SubDLevel* level = m_levels[i];
@@ -640,33 +638,27 @@ bool ON_SubDVertex::Transform(
 {
   TransformPoint(&xform.m_xform[0][0],m_P);
 
-  if (bTransformationSavedSubdivisionPoint)
-  {
-    // Transform saved subdivision point
-    Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
+  Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
 
-    // NOTE WELL:
-    //   If the vertex 
-    //     is tagged as ON_SubDVertexTag::Corner
-    //     and bTransformationSavedSubdivisionPoint is true, 
-    //     and the corner sector(s) contains interior smooth edges,
-    //     and the transformation changes the angle between a corner sector's crease boundary, 
-    //   then the sector's interior smooth edge's m_sector_coefficient[] could change
-    //   and invalidate the subdivison points and limit points.
-    //   This is only possible for uncommon (in practice) transformations
-    //   and corner sectors and will require a fair bit of testing for 
-    //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
-    //   at a higher level when these types of transformations are encountered.
-    if (bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag())
-    {
-      for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
-        const_cast<ON_SubDSectorSurfacePoint*>(lp)->Transform(xform);
-    }
-    else
-      Internal_ClearSurfacePointFlag();
+  // TODO:
+  //   If the vertex 
+  //     is tagged as ON_SubDVertexTag::Corner
+  //     and bTransformationSavedSubdivisionPoint is true, 
+  //     and the corner sector(s) contains interior smooth edges,
+  //     and the transformation changes the angle between a corner sector's crease boundary, 
+  //   then the sector's interior smooth edge's m_sector_coefficient[] could change
+  //   and invalidate the subdivison points and limit points.
+  //   This is only possible for uncommon (in practice) transformations
+  //   and corner sectors and will require a fair bit of testing for 
+  //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
+  //   at a higher level when these types of transformations are encountered.
+  if ( bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag() )
+  {
+    for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
+      const_cast<ON_SubDSectorSurfacePoint*>(lp)->Transform(xform);
   }
   else
-    this->ClearSavedSubdivisionPoints();
+    Internal_ClearSurfacePointFlag();
 
   return true;
 }
@@ -677,10 +669,6 @@ void ON_SubDVertex::UnsetControlNetPoint()
   m_P[1] = ON_DBL_QNAN;
   m_P[2] = ON_DBL_QNAN;
   ClearSavedSubdivisionPoints();
-  // With a nan control net point, there is no need for an expensive unset 
-  // of the neighborhod because the caller will either later pass
-  // bClearNeighborhoodCache=true to ON_SubDVertex::SetControlNetPoint(...,bClearNeighborhoodCache) 
-  // or deal with cleaning up the cached evaluations in some other way.
 }
 
 bool ON_SubDVertex::SetControlNetPoint(
@@ -691,115 +679,54 @@ bool ON_SubDVertex::SetControlNetPoint(
   if (false == control_net_point.IsValid())
     return false;
 
-  if (false == (m_P[0] == control_net_point.x && m_P[1] == control_net_point.y && m_P[2] == control_net_point.z))
+  if (!(m_P[0] == control_net_point.x && m_P[1] == control_net_point.y && m_P[2] == control_net_point.z))
   {
     m_P[0] = control_net_point.x;
     m_P[1] = control_net_point.y;
     m_P[2] = control_net_point.z;
     ClearSavedSubdivisionPoints();
 
-    for(;;)
+    if (bClearNeighborhoodCache)
     {
-      if (false == bClearNeighborhoodCache)
-        break;
-
-      if (this->m_edge_count <= 0 || nullptr == this->m_edges)
-        break;
-
-      // need to clear 2 rings of faces around "this" vertex.
-
-      const bool bThisVertexIsACorner = ON_SubDVertexTag::Corner == this->m_vertex_tag;
-      for (unsigned short vei = 0; vei < this->m_edge_count; vei++)
+      for (unsigned short vei = 0; vei < m_edge_count; vei++)
       {
-        const ON__UINT_PTR edgeptr = this->m_edges[vei].m_ptr;
-        const ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(edgeptr);
+        ON_SubDEdge* edge = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
         if (nullptr == edge)
           continue;
-        edge->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
-        // v1 = vertex opposite this on edge
-        const ON_SubDVertex* v1 = edge->m_vertex[1 - ON_SUBD_EDGE_DIRECTION(edgeptr)];
-        if (nullptr == v1)
-          continue;
-
-        v1->ClearSavedSubdivisionPoints();
-
-        if (ON_SubDVertexTag::Smooth != v1->m_vertex_tag)
-          continue;
-        if (false == bThisVertexIsACorner)
-          continue;
-        if (false == edge->IsSmooth())
-          continue;
-        // When a corner vertex is moved, the sector coefficients
-        // for smooth edges can change because the corner sector
-        // coefficient depends on the angle between the creases that
-        // bound the sector. For any other tag, the sector
-        // coefficients depend only on the topology and tags and
-        // moving a control net point does not change those.
-        edge->UnsetSectorCoefficientsForExperts();
-      }
-
-      if (this->m_face_count <= 0 || nullptr == this->m_faces)
-        break;
-
-      //const ON_SubDFace* face = this->m_faces[m_face_count - 1];
-      for(unsigned short vfi = 0; vfi < m_face_count; vfi++)
-      {
-        //const ON_SubDFace* prevface = face;
-        const ON_SubDFace* face = this->m_faces[vfi];
-        if (nullptr == face)
-          continue;
-
-        // face->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags() is fast
-        face->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
-
-        const ON_SubDEdgePtr* face_eptr = face->m_edge4;
-        for (unsigned short fei = 0; fei < face->m_edge_count; fei++, face_eptr++)
+        edge->ClearSavedSubdivisionPoints();
+        ON_SubDFacePtr* fptr = edge->m_face2;
+        for (unsigned short efi = 0; efi < edge->m_face_count; efi++, fptr++)
         {
-          if (4 == fei)
+          if (2 == efi)
           {
-            face_eptr = face->m_edgex;
-            if (nullptr == face_eptr)
-              break;          
+            fptr = edge->m_facex;
+            if (nullptr == fptr)
+              break;
           }
-          const ON__UINT_PTR e1ptr = face_eptr->m_ptr;
-          ON_SubDEdge* e1 = ON_SUBD_EDGE_POINTER(e1ptr);
-          if (nullptr == e1)
+          ON_SubDFace* face = ON_SUBD_FACE_POINTER(fptr->m_ptr);
+          if (nullptr == face)
             continue;
+          face->ClearSavedSubdivisionPoints();
 
-          // e1->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags() is fast.
-          // There is no need to unset e1 sector coefficients.
-          e1->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
-          const ON_SubDVertex* v1 = e1->m_vertex[ON_SUBD_EDGE_DIRECTION(e1ptr)];
-          if (this == v1 || nullptr == v1)
-            continue;
-          v1->ClearSavedSubdivisionPoints();
-
-          if (v1->m_edge_count <= 0 || nullptr == v1->m_edges)
-            continue;
-          for (unsigned short v1ei = 0; v1ei < v1->m_edge_count; v1ei++)
+          ON_SubDEdgePtr* eptr = face->m_edge4;
+          for (unsigned short fei = 0; fei < face->m_edge_count; fei++, eptr++)
           {
-            // e2 is sometime in ring 1, sometimes between ring 1 and 2, 
-            // and sometimes in ring 2, but this is enough to clear the
-            // ring 2 edges that can be modified by moving "this" vertex.
-            const ON_SubDEdge* e2 = ON_SUBD_EDGE_POINTER(v1->m_edges[v1ei].m_ptr);
-            if (nullptr != e2)
-              e2->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
-          }          
-          
-          if (v1->m_face_count <= 0 || nullptr == v1->m_faces)
-            continue;
-          for (unsigned short v1fi = 0; v1fi < v1->m_face_count; v1fi++)
-          {
-            // f2 is sometimes in ring 1 and sometimes in ring 2, but this
-            // is enough to clear the ring 2 faces that can be modified by
-            // moving "this" vertex.
-            const ON_SubDFace* f2 = v1->m_faces[v1fi];
-            if (nullptr != f2)
-              f2->ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags();
+            if (4 == fei)
+            {
+              eptr = face->m_edgex;
+              if (nullptr == eptr)
+                break;
+            }
+            ON_SubDEdge* fedge = ON_SUBD_EDGE_POINTER(eptr->m_ptr);
+            if (nullptr == fedge)
+              continue;
+            ON_SubDVertex* fvertex = const_cast<ON_SubDVertex*>(fedge->m_vertex[ON_SUBD_EDGE_DIRECTION(eptr->m_ptr)]);
+            if (nullptr == fvertex)
+              continue;
+            fvertex->ClearSavedSubdivisionPoints();
           }
         }
       }
-      break;
     }
   }
 
@@ -837,27 +764,15 @@ bool ON_SubDFace::Transform(
   const class ON_Xform& xform
   )
 {
-  if (bTransformationSavedSubdivisionPoint)
-  {
-    Internal_TransformComponentBase(true, xform);
+  Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
 
-    if (Internal_SurfacePointFlag())
-    {
-      // bTransformationSavedSubdivisionPoint = true means xform is an isometry.
-      // If its more complicated than this, the calling code should
-      // reset or addjut colors as needed based on information in the
-      // SubD's texture coordinate mapping tag and color mapping tag.
-      // Note that both of those tags have their transformation updated
-      // so intelligent decisions can be made at a higher level where
-      // there is enough context to make the correct decision.
-      for (ON_SubDMeshFragment* f = m_mesh_fragments; nullptr != f; f = f->m_next_fragment)
-        f->Transform(true, true, true, xform);
-    }
-    else
-      Internal_ClearSurfacePointFlag();
+  if (bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag() )
+  {
+    for (ON_SubDMeshFragment* f = m_mesh_fragments; nullptr != f; f = f->m_next_fragment)
+      f->Transform(xform);
   }
   else
-    this->ClearSavedSubdivisionPoints();
+    Internal_ClearSurfacePointFlag();
 
   return true;
 }
@@ -956,10 +871,7 @@ bool ON_SubDimple::Transform(
   // In all other cases, set bTransformationSavedSubdivisionPoint = false
   // and any saved subdivision points or saved limit points will be
   // deleted.
-  const bool bTransformationSavedSubdivisionPoint = (1 == xform.IsRigid());
-
-  bool bHasTextures = false;
-  bool bHasColors = false;
+  const bool bTransformationSavedSubdivisionPoint = false; // todo - set this correctly
 
   for (unsigned int level_index = 0; level_index < level_count; level_index++)
   {
@@ -975,24 +887,7 @@ bool ON_SubDimple::Transform(
       rc = false;
       break;
     }
-
-    if (level->m_face_count > 0 && level->m_face)
-    {
-      const ON_SubDMeshFragment* frag = level->m_face[0]->MeshFragments();
-      if (nullptr != frag)
-      {
-        if (frag->TextureCoordinateCount() > 0)
-          bHasTextures = true;
-        if (frag->ColorCount() > 0)
-          bHasColors = true;
-      }
-    }
   }
-
-  if (bHasTextures)
-    this->m_texture_mapping_tag.Transform(xform);
-  if (bHasColors)
-    this->m_colors_mapping_tag.Transform(xform);
 
   // SubD has been moved - geometry changed and we need to bump the geometry content serial number.
   this->ChangeGeometryContentSerialNumber(false);
@@ -1056,17 +951,7 @@ bool ON_SubDimple::Transform(
 
 bool ON_SubDMeshFragment::Transform(
   const ON_Xform& xform
-)
-{
-  return this->Transform(true, true, true, xform);
-}
-
-bool ON_SubDMeshFragment::Transform(
-  bool bKeepCurvatures,
-  bool bKeepTextureCoordinates,
-  bool bKeepColors,
-  const ON_Xform& xform
-)
+  )
 {
   const unsigned count = PointCount();
   if (0 == count)
@@ -1111,31 +996,6 @@ bool ON_SubDMeshFragment::Transform(
     }
   }
   ON_GetPointListBoundingBox(3,0,count,(int)m_P_stride,m_P,&m_surface_bbox.m_min.x,&m_surface_bbox.m_max.x,false);
-
-  if (false == bKeepTextureCoordinates)
-  {
-    this->SetTextureCoordinatesExistForExperts(false);
-    double* p = &this->m_ctrlnetT[0][0];
-    double* p1 = p + sizeof(this->m_ctrlnetT) / sizeof(this->m_ctrlnetT[0][0]);
-    while (p < p1)
-      *p++ = ON_DBL_QNAN;
-  }
-  if (false == bKeepCurvatures)
-  {
-    this->SetCurvaturesExistForExperts(false);
-    this->m_ctrlnetK[0] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[1] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[2] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[3] = ON_SurfaceCurvature::Nan;
-  }
-  if (false == bKeepColors)
-  {
-    this->SetColorsExistForExperts(false);
-    this->m_ctrlnetC[0] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[1] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[2] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[3] = ON_Color::UnsetColor;
-  }
   return true;
 }
 
@@ -1143,12 +1003,11 @@ bool ON_SubDMeshImpl::Transform(
   const ON_Xform& xform
   )
 {
-  const bool bIsometry = (1 == xform.IsRigid());
   m_bbox = ON_BoundingBox::EmptyBoundingBox;
   ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
   for ( const ON_SubDMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
   {
-    if ( false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(bIsometry, bIsometry, bIsometry, xform) )
+    if ( false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(xform) )
       return ON_SUBD_RETURN_ERROR(false);
     if ( fragment == m_first_fragment )
       bbox = fragment->m_surface_bbox;

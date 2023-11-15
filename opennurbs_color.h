@@ -260,9 +260,6 @@ public:
 
   /// <summary>
   /// Specify a color using HSV (hue, saturation, value).
-  /// If h, s or v are not in the open interval 
-  /// (ON_UNSET_FLOAT,ON_UNSET_POSITIVE_FLOAT),
-  /// then this color is set to ON_Color::UnsetColor.
   /// </summary>
   /// <param name="h">
   /// hue in radians

@@ -1809,8 +1809,6 @@ public:
     mesh_list - [out] meshes are appended to this array.
   Returns:
     Number of meshes appended to mesh_list[] array.
-  Note:
-    This function is not thread safe.  
   */
   int CreateMesh( 
     const ON_MeshParameters& mp,

@@ -991,74 +991,9 @@ bool ON_ClippingPlaneData::HasDefaultContent() const
   return true;
 }
 
-class ON_ClippingPlaneDataList
-{
-public:
-  ON_ClippingPlaneDataList() = default;
-  ~ON_ClippingPlaneDataList();
-  
-  ON_ClippingPlaneData* AppendNew();
-  void DeleteEntry(unsigned int sn);
-  ON_ClippingPlaneData* FromSerialNumber(unsigned int sn);
-private:
-  ON_SimpleArray<ON_ClippingPlaneData*> m_list;
-};
-
-static ON_ClippingPlaneDataList g_data_list;
+static ON_ClassArray<ON_ClippingPlaneData> g_data_list;
 static ON_SleepLock g_data_list_lock;
 
-ON_ClippingPlaneDataList::~ON_ClippingPlaneDataList()
-{
-  for(int i=0; i<m_list.Count(); i++)
-  {
-    ON_ClippingPlaneData* data = m_list[i];
-    if (data)
-      delete data;
-    m_list[i] = nullptr;
-  }
-}
-
-void ON_ClippingPlaneDataList::DeleteEntry(unsigned int sn)
-{
-  int count = m_list.Count();
-  for (int i=0; i<count; i++)
-  {
-    ON_ClippingPlaneData* data = m_list[i];
-    if (data && data->m_sn == sn)
-    {
-      delete data;
-      m_list.Remove(i);
-      return;
-    }
-  }
-}
-
-ON_ClippingPlaneData* ON_ClippingPlaneDataList::AppendNew()
-{
-  static unsigned int serial_number = 1;
-  ON_ClippingPlaneData* data = new ON_ClippingPlaneData();
-  m_list.Append(data);
-  data->m_sn = serial_number++;
-  return data;
-}
-
-ON_ClippingPlaneData* ON_ClippingPlaneDataList::FromSerialNumber(unsigned int sn)
-{
-  if (0==sn)
-    return nullptr;
-  
-  // TODO: use binary search
-  int count = m_list.Count();
-  for (int i=0; i<count; i++)
-  {
-    ON_ClippingPlaneData* data = m_list[i];
-    if (data && data->m_sn == sn)
-      return data;
-  }
-  return nullptr;
-}
-
-/*
 static int CompareClippingPlaneData(const ON_ClippingPlaneData* a, const ON_ClippingPlaneData* b)
 {
   if (a && b)
@@ -1075,16 +1010,25 @@ static int CompareClippingPlaneData(const ON_ClippingPlaneData* a, const ON_Clip
     return 1;
   return 0;
 }
- */
+
+static int ClippingPlaneDataIndex(unsigned int serialNumber)
+{
+  if (0==serialNumber)
+    return -1;
+  ON_ClippingPlaneData data;
+  data.m_sn = serialNumber;
+  int index = g_data_list.BinarySearch(&data, CompareClippingPlaneData);
+  return index;
+}
 
 static void DeleteClippingPlaneData(ON_ClippingPlaneDataStore& dataStore)
 {
-  const unsigned int serial_number = dataStore.m_sn;
-  if (serial_number>0)
+  if (dataStore.m_sn>0)
   {
     bool bReturnLock = g_data_list_lock.GetLock();
+    int index = ClippingPlaneDataIndex(dataStore.m_sn);
     dataStore.m_sn = 0;
-    g_data_list.DeleteEntry(serial_number);
+    g_data_list.Remove(index);
     if(bReturnLock)
       g_data_list_lock.ReturnLock();
   }
@@ -1096,7 +1040,8 @@ static ON_ClippingPlaneData* GetClippingPlaneData(unsigned int sn)
     return nullptr;
   
   bool bReturnLock = g_data_list_lock.GetLock();
-  ON_ClippingPlaneData* rc = g_data_list.FromSerialNumber(sn);
+  int index = ClippingPlaneDataIndex(sn);
+  ON_ClippingPlaneData* rc = g_data_list.At(index);
   if(bReturnLock)
     g_data_list_lock.ReturnLock();
   return rc;
@@ -1105,13 +1050,19 @@ static ON_ClippingPlaneData* GetClippingPlaneData(unsigned int sn)
 static ON_ClippingPlaneData* GetClippingPlaneData(ON_ClippingPlaneDataStore& dataStore, bool createIfMissing)
 {
   bool bReturnLock = g_data_list_lock.GetLock();
-
-  ON_ClippingPlaneData* rc = g_data_list.FromSerialNumber(dataStore.m_sn);
+  int index = ClippingPlaneDataIndex(dataStore.m_sn);
+  ON_ClippingPlaneData* rc = g_data_list.At(index);
   if (nullptr==rc && createIfMissing)
   {
-    rc = g_data_list.AppendNew();
-    if (rc)
-      dataStore.m_sn = rc->m_sn;
+    unsigned int serial_number = 1;
+    const ON_ClippingPlaneData* last = g_data_list.Last();
+    if (last)
+      serial_number = last->m_sn + 1;
+    
+    ON_ClippingPlaneData& data = g_data_list.AppendNew();
+    data.m_sn = serial_number;
+    dataStore.m_sn = data.m_sn;
+    rc = g_data_list.Last();
   }
   if(bReturnLock)
     g_data_list_lock.ReturnLock();

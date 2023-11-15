@@ -438,7 +438,7 @@ public:
     domain.
   Parameters:
     dir - [in] 0 sets plane's x coordinate extents
-               1 sets plane's y coordinate extents
+               0 sets plane's y coordinate extents
     extents - [in] increasing interval
     bSynchDomain - [in] if true, the corresponding evaluation interval
                domain is set so that it matches the extents interval
@@ -458,7 +458,7 @@ public:
     Gets the extents of the rectangle.
   Parameters:
     dir - [in] 0 gets plane's x coordinate extents
-               1 gets plane's y coordinate extents
+               0 gets plane's y coordinate extents
   Returns:
     Increasing interval
   See Also:
