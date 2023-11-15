@@ -4964,8 +4964,8 @@ void ON_Viewport::GetPerspectiveClippingPlaneConstraints(
 
   if ( depth_buffer_bit_depth >= 32 )
   {
-    nof = 0.0001;
-    n = 0.001;
+    nof = 0.0005; // Changed to match 24 bit defaults: https://mcneel.myjetbrains.com/youtrack/issue/RH-77623
+    n = 0.005;    // Do not change back unless you've fixed the problems shown in the YT somewhere else.
   }
   else if ( depth_buffer_bit_depth >= 24 )
   {

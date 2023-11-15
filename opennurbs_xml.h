@@ -236,6 +236,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 #define ON_PBR_MATERIAL_CLEARCOAT_BUMP                 L"pbr-clearcoat-bump"
 #define ON_PBR_MATERIAL_CLEARCOAT_ROUGHNESS            L"pbr-clearcoat-roughness"
 #define ON_PBR_MATERIAL_EMISSION_COLOR                 L"pbr-emission"
+#define ON_PBR_MATERIAL_EMISSION_MULTIPLIER            L"emission-multiplier"
 #define ON_PBR_MATERIAL_METALLIC                       L"pbr-metallic"
 #define ON_PBR_MATERIAL_OPACITY                        L"pbr-opacity"
 #define ON_PBR_MATERIAL_OPACITY_IOR                    L"pbr-opacity-ior"

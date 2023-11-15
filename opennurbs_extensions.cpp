@@ -5429,11 +5429,10 @@ bool ONX_ModelPrivate::GetEntireRDKDocument(const ONX_Model_UserData& docud, ON_
         // Create an ON_EmbeddedFile object for each embedded file.
         for (int i = 0; i < num_embedded_files; i++)
         {
+          // We keep the embedded file object even if it fails to load; then it will have an error flag set.
+          // See ON_EmbeddedFile::Error().
           ON_EmbeddedFile ef;
-
-          if (!ef.Read(archive))
-            return false;
-
+          ef.Read(archive);
           model->AddModelComponent(ef);
         }
       }
