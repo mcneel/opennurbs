@@ -28,6 +28,17 @@ Please see ["Getting started"](https://developer.rhino3d.com/guides/opennurbs/ge
 
 There's also a collection of [example 3dm files](example_files/) available for testing.
 
+## Building
+- `mkdir build && cd build`
+- `cmake ..`
+- `cmake --build .`
+
+This will also build the tests, which you can run by running them from the build/tests directory:
+
+- `cd tests`
+- `ctest`
+
+
 ## Questions?
 
 For technical support, please head over to [Discourse](https://discourse.mcneel.com/category/opennurbs).
