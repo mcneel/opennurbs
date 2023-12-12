@@ -2304,6 +2304,16 @@ void ON_Texture::SetMappingChannel(
   m_mapping_channel_id = mapping_channel_id;
 }
 
+bool ON_Texture::IsWcsProjected() const
+{
+  return (m_mapping_channel_id == (unsigned int)MAPPING_CHANNEL::wcs_channel);
+}
+
+bool ON_Texture::IsWcsBoxProjected() const
+{
+  return (m_mapping_channel_id == (unsigned int)MAPPING_CHANNEL::wcs_box_channel);
+}
+
 ON_Texture::TYPE ON_Texture::TypeFromUnsigned(unsigned int type_as_unsigned)
 {
   switch (type_as_unsigned)

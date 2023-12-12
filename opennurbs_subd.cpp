@@ -8484,7 +8484,7 @@ bool ON_SubDimple::IsValid(
 bool ON_SubD::IsValid(ON_TextLog* text_logx) const
 {
   // If low bit of text_log pointer is 1, then ON_Error is not called when the
-  // knot vector is invalid.
+  // subd is invalid.
   const ON__INT_PTR lowbit = 1;
   const ON__INT_PTR hightbits = ~lowbit;
   const bool bSilentError = (0 != (lowbit & ((ON__INT_PTR)text_logx)));
@@ -8539,6 +8539,7 @@ static const ON_wString Internal_DescribeWaste(size_t waste, size_t total)
     description += ON_wString(L" (") + ON_wString::ToMemorySize(waste) + ON_wString(L")");
   return description;
 }
+
 
 unsigned int ON_SubD::DumpTopology(
   ON_2udex vertex_id_range,
@@ -8634,10 +8635,13 @@ unsigned int ON_SubD::DumpTopology(
     h.Dump(text_log);
   }
 
-  text_log.Print(L"Texture coordinate settings:\n");
+
+  if (false == bIsTextHash)
   {
-    const ON_SubDTextureCoordinateType subd_texture_coordinate_type = this->TextureCoordinateType();
+    text_log.Print(L"Texture coordinate settings:\n");
     ON_TextLogIndent indent1(text_log);
+
+    const ON_SubDTextureCoordinateType subd_texture_coordinate_type = this->TextureCoordinateType();
     const ON_wString subd_texture_coordinate_type_as_string = ON_SubD::TextureCoordinateTypeToString(this->TextureCoordinateType());
     text_log.Print(L"TextureCoordinateType() = %ls\n", static_cast<const wchar_t*>(subd_texture_coordinate_type_as_string));
 
@@ -8724,7 +8728,6 @@ unsigned int ON_SubD::DumpTopology(
         text_log.Print(mapping_tag.m_mesh_xform);
         text_log.PopIndent();
       }
-
     }
 
     const ON_SHA1_Hash subd_texture_settings_hash = this->TextureSettingsHash();
@@ -8732,20 +8735,17 @@ unsigned int ON_SubD::DumpTopology(
     subd_texture_settings_hash.Dump(text_log);
     text_log.PrintNewLine();
 
-    if (false == text_log.IsTextHash())
-    {
-      // runtime settings most recentltly used to set fragmant texture coordinates.
-      const ON_SHA1_Hash frament_texture_settings_hash = this->FragmentTextureCoordinatesTextureSettingsHash();
-      text_log.Print(L"FragmentTextureCoordinatesTextureSettingsHash() = ");
-      if (subd_texture_settings_hash == frament_texture_settings_hash)
-        text_log.Print(L"TextureSettingsHash()");
-      else
-        frament_texture_settings_hash.Dump(text_log);
-      text_log.PrintNewLine();
-    }
+    // runtime settings most recentltly used to set fragmant texture coordinates.
+    const ON_SHA1_Hash frament_texture_settings_hash = this->FragmentTextureCoordinatesTextureSettingsHash();
+    text_log.Print(L"FragmentTextureCoordinatesTextureSettingsHash() = ");
+    if (subd_texture_settings_hash == frament_texture_settings_hash)
+      text_log.Print(L"TextureSettingsHash()");
+    else
+      frament_texture_settings_hash.Dump(text_log);
+    text_log.PrintNewLine();
   }
 
-  if (false == text_log.IsTextHash())
+  if (false == bIsTextHash)
   {
     text_log.Print(L"Per vertex color settings:\n");
     {
@@ -8764,19 +8764,22 @@ unsigned int ON_SubD::DumpTopology(
 
   bool bIncludeSymmetrySet = false;
 
-  text_log.Print(L"Geometry content serial number = %" PRIu64 "\n", geometry_content_sn);
-  text_log.Print(L"Render content serial number = %" PRIu64 "\n", render_content_sn);
-  text_log.Print("Heap use:\n");
+  if (false == bIsTextHash)
   {
-    ON_TextLogIndent indent1(text_log);
-    size_t sizeof_subd = this->SizeOfAllElements();
-    text_log.PrintString(ON_wString(L"Total = ") + ON_wString::ToMemorySize(sizeof_subd) + ON_wString(L".\n"));
-    const size_t sizeof_frags = this->SizeOfAllMeshFragments();
-    text_log.PrintString(ON_wString(L"Mesh fragments = ") + ON_wString::ToMemorySize(sizeof_frags) + ON_wString(L".\n"));
-    const size_t sizeof_frags_waste = this->SizeOfUnusedMeshFragments();
-    text_log.PrintString(ON_wString(L"Reserved but ununsed = ")
-      + Internal_DescribeWaste(sizeof_frags_waste,sizeof_subd)
-      + ON_wString(L".\n"));
+    text_log.Print(L"Geometry content serial number = %" PRIu64 "\n", geometry_content_sn);
+    text_log.Print(L"Render content serial number = %" PRIu64 "\n", render_content_sn);
+    text_log.Print("Heap use:\n");
+    {
+      ON_TextLogIndent indent1(text_log);
+      size_t sizeof_subd = this->SizeOfAllElements();
+      text_log.PrintString(ON_wString(L"Total = ") + ON_wString::ToMemorySize(sizeof_subd) + ON_wString(L".\n"));
+      const size_t sizeof_frags = this->SizeOfAllMeshFragments();
+      text_log.PrintString(ON_wString(L"Mesh fragments = ") + ON_wString::ToMemorySize(sizeof_frags) + ON_wString(L".\n"));
+      const size_t sizeof_frags_waste = this->SizeOfUnusedMeshFragments();
+      text_log.PrintString(ON_wString(L"Reserved but ununsed = ")
+        + Internal_DescribeWaste(sizeof_frags_waste, sizeof_subd)
+        + ON_wString(L".\n"));
+    }
   }
 
   text_log.Print(L"Levels:\n");
@@ -10337,6 +10340,72 @@ unsigned int ON_SubDLevel::DumpTopology(
     text_log.Print(" }\n");
 
 
+    if (f->PackRectIsSet())
+    {
+      const ON_2dPoint pack_rect_orgin = f->PackRectOrigin();
+      const ON_2dPoint pack_rect_size = f->PackRectSize();
+      text_log.Print("f.PackId = %u, origin = (%g,%g), size = (%g,%g), rot = %u degrees\n",
+        f->PackId(),
+        pack_rect_orgin.x, pack_rect_orgin.y,
+        pack_rect_size.x, pack_rect_size.y,
+        f->PackRectRotationDegrees()
+      );
+
+      // Dale Lear Oct 2023:
+      // Use bGridOrder = false so pack_rect corners are in quad order
+      // and it is possible to clearly see how texture space is assigned
+      // to triangle and quad faces. 
+      // For quads and triangles, vertex order, pack rect corner ordern and face
+      // texture point order are identical.
+      // For triangles, the texture space corresponding to the 4th pack_rect corner
+      // subrect is not mapped.
+      // For n-gons with n > 4, the pack rect is subdivide into two rows ofr floor((n+1)/2)
+      // subrects.
+      const bool bGridOrder = false; // SEE COMMENT ABOVE for why this should be false.
+      ON_2dPoint corners[4] = {
+        f->PackRectCorner(bGridOrder,0),
+        f->PackRectCorner(bGridOrder,1),
+        f->PackRectCorner(bGridOrder,2),
+        f->PackRectCorner(bGridOrder,3)
+      };
+      text_log.Print("f.PackRectCorners[4] = {(%g,%g), (%g,%g), (%g,%g), (%g,%g)}\n",
+        corners[0].x, corners[0].y,
+        corners[1].x, corners[1].y,
+        corners[2].x, corners[2].y,
+        corners[3].x, corners[3].y
+      );
+      if ( 3 == f->m_edge_count)
+      {
+        const ON_TextLogIndent indent2(text_log);
+        const ON_2dPoint m01 = 0.5 * (corners[0] + corners[1]);
+        const ON_2dPoint m12 = 0.5 * (corners[1] + corners[2]);
+        const ON_2dPoint m23 = 0.5 * (corners[2] + corners[3]);
+        const ON_2dPoint m30 = 0.5 * (corners[3] + corners[0]);
+        const ON_2dPoint c = pack_rect_orgin + 0.5 * pack_rect_size;
+
+        text_log.Print("3 sub rects:\n");
+        const ON_TextLogIndent indent3(text_log);
+        text_log.Print("{(%g,% g), (% g,% g), (% g,% g), (% g,% g)}\n",
+            corners[0].x, corners[0].y,
+            m01.x, m01.y,
+            c.x, c.y,
+            m30.x, m30.y
+          );
+        text_log.Print("{(%g,% g), (% g,% g), (% g,% g), (% g,% g)}\n",
+          m01.x, m01.y,
+          corners[1].x, corners[1].y,
+          m12.x, m12.y,
+          c.x, c.y
+        );
+        text_log.Print("{(%g,% g), (% g,% g), (% g,% g), (% g,% g)}\n",
+          c.x, c.y,
+          m12.x, m12.y,
+          corners[2].x, corners[2].y,
+          m23.x, m23.y
+        );
+      }
+    }
+
     if (f->TexturePointsAreSet())
     {
       text_log.Print("f.TexturePoints[%u] = {", face_edge_count);
@@ -10355,8 +10424,6 @@ unsigned int ON_SubDLevel::DumpTopology(
       }
       text_log.Print(" }\n");
     }
-
-
 
     bool bNeedComma = false;
 
@@ -10385,29 +10452,7 @@ unsigned int ON_SubDLevel::DumpTopology(
     if (bNeedComma)
       text_log.PrintNewLine();
 
-    if (f->PackRectIsSet())
-    {
-      bNeedComma = true;
-      const bool bGridOrder = true;
-      ON_2dPoint corners[4] = {
-        f->PackRectCorner(bGridOrder,0),
-        f->PackRectCorner(bGridOrder,1),
-        f->PackRectCorner(bGridOrder,2),
-        f->PackRectCorner(bGridOrder,3)
-      };
-      text_log.Print("f.PackId = %u Pack rectangle corners: (%g,%g), (%g,%g), (%g,%g), (%g,%g)",
-        f->PackId(),
-        corners[0].x, corners[0].y,
-        corners[1].x, corners[1].y,
-        corners[2].x, corners[2].y,
-        corners[3].x, corners[3].y
-      );
-    }
-    else
-    {
-      text_log.Print("Pack rectangle is not set.");
-    }
-    text_log.PrintNewLine();
+
 
     if (false == text_log.IsTextHash())
     {
@@ -10667,7 +10712,7 @@ size_t ON_SubD::SizeOfUnusedMeshFragments() const
 //virtual
 ON__UINT32 ON_SubD::DataCRC(ON__UINT32 current_remainder) const
 {
-  return 0;
+  return this->GeometryHash().CRC32(current_remainder);
 }
 
 //virtual
@@ -12840,6 +12885,8 @@ bool ON_SubDFace::IsValidPackRect(
 
 bool ON_SubDFace::SetPackRectForExperts(ON_2dPoint pack_rect_origin, ON_2dVector pack_rect_size, int packing_rotation_degrees)
 {
+  // r deals with negative values of input packing_rotation_degrees.
+  const int r = ((packing_rotation_degrees % 360) + 360) % 360;
   const bool bValidPackRectangle = ON_SubDFace::IsValidPackRect(pack_rect_origin, pack_rect_size, packing_rotation_degrees);
   if (bValidPackRectangle)
   {
@@ -12849,7 +12896,7 @@ bool ON_SubDFace::SetPackRectForExperts(ON_2dPoint pack_rect_origin, ON_2dVector
     m_pack_rect_size[1] = pack_rect_size.y;
 
     ON_SubDFace::PackStatusBits packing_rotation = ON_SubDFace::PackStatusBits::PackingRotate0;
-    switch (((packing_rotation_degrees % 360) + 360) % 360)
+    switch (r)
     {
     case 90:
       packing_rotation = ON_SubDFace::PackStatusBits::PackingRotate90;
@@ -14671,6 +14718,28 @@ bool ON_SubDimple::LocalSubdivide(
   return true; 
 }
 
+const ON_UUID ON_SubD::FacePackingId() const
+{
+  const ON_SubDimple* dimple = this->SubDimple();
+  return (nullptr != dimple) ? dimple->FacePackingId() : ON_nil_uuid;
+}
+
+const ON_UUID ON_SubDimple::FacePackingId() const
+{
+  return m_face_packing_id;
+}
+
+const ON_SubDHash ON_SubD::FacePackingTopologyHash() const
+{
+  const ON_SubDimple* dimple = this->SubDimple();
+  return (nullptr != dimple) ? dimple->FacePackingTopologyHash() : ON_SubDHash::Empty;
+}
+
+const ON_SubDHash ON_SubDimple::FacePackingTopologyHash() const
+{
+  return m_face_packing_topology_hash;
+}
+
 unsigned int ON_SubDimple::GlobalSubdivide()
 {
   if (m_levels.UnsignedCount() <= 0)
@@ -14702,10 +14771,15 @@ unsigned int ON_SubDimple::GlobalSubdivide()
   this->ChangeGeometryContentSerialNumber(bChangePreservesSymmetry);
 
   // Add face points
-  unsigned int max_pack_id = 0U;
+  bool bSubdividePackRect = ON_nil_uuid != this->FacePackingId();
+  unsigned next_pack_id = 0U;
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
   {
-    if (f0->PackId() > max_pack_id) max_pack_id = f0->PackId();
+    if (bSubdividePackRect && f0->PackRectIsSet())
+    {
+      if (f0->PackId() > next_pack_id)
+        next_pack_id = f0->PackId();
+    }
     if (false == f0->GetSubdivisionPoint(P))
       continue;
     if (nullptr == f0->m_subd_point1)
@@ -14720,6 +14794,17 @@ unsigned int ON_SubDimple::GlobalSubdivide()
       v->m_P[1] = P[1];
       v->m_P[2] = P[2];
     }
+  }
+
+  if (next_pack_id > 0)
+  {
+    // next_pack_id MUST be strictly greater than any pack rect id in use.
+    ++next_pack_id;
+  }
+  else
+  {
+    // nothing valid to copy
+    bSubdividePackRect = false;
   }
 
   // Add edge points
@@ -14799,16 +14884,176 @@ unsigned int ON_SubDimple::GlobalSubdivide()
 
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
   {
-    Internal_GlobalQuadSubdivideFace(f0, max_pack_id);
+    Internal_GlobalQuadSubdivideFace(f0, bSubdividePackRect, next_pack_id);
   }
 
   return level1_index;
 }
 
+static bool Internal_SubdivideFacePacking(
+  const ON_SubDFace* f0,
+  unsigned f0_edge_count,
+  unsigned f0_pack_id,
+  unsigned& next_pack_id,
+  ON_SubDFace** sub_quads
+)
+{
+  // NOTE WELL: 
+  // 1) The caller must insure input parameters are valid.
+  // 2) A multi-face pack MUST be a set of quads that form a RECTANGULAR topological grid.
+  // 3) The primary service provided by picking is insuring packed texture coordinates map 
+  // rectangular regions of texture space to the grids of packed quads. This is important
+  // for texture painting applications.
+
+  const ON_2dPoint f0_pack_rect_origin = f0->PackRectOrigin();
+  if (false == (f0_pack_rect_origin.x >= 0.0 && f0_pack_rect_origin.x < 1.0))
+    return false;
+  if (false == (f0_pack_rect_origin.y >= 0.0 && f0_pack_rect_origin.y < 1.0))
+    return false;
+
+  const ON_2dVector f0_pack_rect_size = f0->PackRectSize();
+  if (false == (f0_pack_rect_size.x > 0.0 && f0_pack_rect_origin.x + f0_pack_rect_size.x <= 1.0 + ON_EPSILON))
+    return false;
+  if (false == (f0_pack_rect_size.y > 0.0 && f0_pack_rect_origin.y + f0_pack_rect_size.y <= 1.0 + ON_EPSILON))
+    return false;
+
+  const unsigned f0_packing_rotation_degrees = f0->PackRectRotationDegrees();
+  if (f0_edge_count <= 4)
+  {
+    // NOTE WELL: A multi-face pack MUST be a set of quads that form a rectangular topological grid.
+    // 
+    // When f0 is a quad, the f0 pack region is subdivided into 4 sub rectangles and
+    // those rectangle are assigned the original pack id. This works because neighboring
+    // quad faces that belong to the same pack will also be subdivided into 4 quads
+    // and the requirement that multi-face pack MUST be a set of quads that form a 
+    // rectangular topological grid will be satisified in the globally subdivided SubD.
+    //
+    // When f0 is a triangle, f0 necessarily is the on face with its pack id (because it cannot
+    // possibly be grouped with other quads - see NOTE WELL above).
+    // In addition, for tiranglular faces, packed textures are assigned to the trianglular face
+    // in a way that the first two sub quads can become a single two quad pack and can reuse the f0->PackId(). 
+    // The third subquad gets a new pack id.
+
+    const ON_2dVector f1_pack_rect_size(0.5 * f0_pack_rect_size.x, 0.5 * f0_pack_rect_size.y);
+    unsigned f1_packing_rotation_degrees = (f0_packing_rotation_degrees + 90U) % 360U;
+    for (unsigned i = 0; i < f0_edge_count; ++i)
+    {
+      const unsigned j = (i + 4 - (f0_packing_rotation_degrees / 90)) % 4;
+      const ON_2dPoint f1_pack_rect_origin(
+        f0_pack_rect_origin.x + ((j >= 1 && j <= 2) ? 0.5 * f0_pack_rect_size.x : 0.0),
+        f0_pack_rect_origin.y + ((j >= 2) ? 0.5 * f0_pack_rect_size.y : 0.0)
+      );
+
+      // See comment above about pack id assignments
+      const unsigned f1_pack_id = (3 == f0_edge_count && 2 == i) ? (next_pack_id++) : f0_pack_id;
+
+      ON_SubDFace* f1 = sub_quads[i];
+      f1->SetPackIdForExperts(f1_pack_id);
+      f1->SetPackRectForExperts(
+        f1_pack_rect_origin,
+        f1_pack_rect_size,
+        f1_packing_rotation_degrees);
+      f1_packing_rotation_degrees = (f1_packing_rotation_degrees + 270U) % 360U;
+    }
+  }
+  else
+  {
+    // n-gon with n >= 5
+    ON_2dVector ngon_sub_pack_rect_size;
+    ON_2dVector ngon_sub_pack_rect_delta;
+    const ON_2udex ngon_grid_size = ON_SubDFace::GetNgonSubPackRectSizeAndDelta(
+      f0_edge_count,
+      f0_pack_rect_size,
+      ngon_sub_pack_rect_size,
+      ngon_sub_pack_rect_delta
+    );
+
+    if (ngon_grid_size.i <= 0 || ngon_grid_size.j <= 0 || ngon_grid_size.i * ngon_grid_size.j < f0_edge_count)
+      return false;
+
+    //const unsigned horiz_offset_count 
+    //  = (0 == (f0_packing_rotation_degrees % 180))
+    //  ? ngon_grid_size.i
+    //  : ngon_grid_size.j;
+
+    //if (0 != (f0_packing_rotation_degrees % 180))
+    //{
+    //  // subdivision rects coordinates need to be swapped
+    //  // for 90 and 270 rotations of the level 0 ngon packing rect.
+    //  double t;
+    //  
+    //  t = ngon_sub_pack_rect_size.x;
+    //  ngon_sub_pack_rect_size.x = ngon_sub_pack_rect_size.y;
+    //  ngon_sub_pack_rect_size.y = t;
+    //  
+    //  t = ngon_sub_pack_rect_delta.x;
+    //  ngon_sub_pack_rect_delta.x = ngon_sub_pack_rect_delta.y;
+    //  ngon_sub_pack_rect_delta.y = t;
+    //}
+
+    const bool bGridOrder = true;
+
+    ON_2dPoint face_pack_rect_corners[4];
+    if (false == f0->GetFacePackRectCorners(bGridOrder, face_pack_rect_corners))
+      return false;
+
+    unsigned f1_packing_rotation_degrees = (f0_packing_rotation_degrees + 270U) % 360U;
+    for (unsigned i = 0; i < f0_edge_count; ++i)
+    {
+      ON_2dPoint subd_quad_rect_corners[4];
+      if (false == ON_SubDMeshFragment::GetNgonFaceFragmentPackRectCorners(
+        f0_edge_count,
+        i,
+        bGridOrder,
+        face_pack_rect_corners,
+        f0_pack_rect_size,
+        ngon_grid_size,
+        ngon_sub_pack_rect_size,
+        ngon_sub_pack_rect_delta,
+        subd_quad_rect_corners))
+        continue;
+
+      ON_2dPoint f1_pack_rect_origin = subd_quad_rect_corners[0];
+      ON_2dPoint f1_pack_rect_max = subd_quad_rect_corners[0];
+      for (int j = 1; j < 4; ++j)
+      {
+        const double x = subd_quad_rect_corners[j].x;
+        if (x < f1_pack_rect_origin.x)
+          f1_pack_rect_origin.x = x;
+        else if (x > f1_pack_rect_max.x)
+          f1_pack_rect_max.x = x;
+        const double y = subd_quad_rect_corners[j].y;
+        if (y < f1_pack_rect_origin.y)
+          f1_pack_rect_origin.y = y;
+        else if (y > f1_pack_rect_max.y)
+          f1_pack_rect_max.y = y;
+      }
+
+      // NOTE WELL: A multi-face pack MUST be a set of quads that form a rectangular topological grid.
+      // 
+      // So, for ngons, the f0 ngon necessarily is the only face with it's pack id because it cannot
+      // possibly be in a group of QUADS.
+      // 
+      // Packed textures are assigned to ngons in a way that each subquad must have a distinct pack id.
+      // The first sub quad is assigned f0->PackId() and the subsequent subquads get a new pack id.
+      const unsigned f1_pack_id = (0 == i) ? f0_pack_id : next_pack_id++;
+      ON_SubDFace* f1 = sub_quads[i];
+      f1->SetPackIdForExperts(f1_pack_id);
+      f1->SetPackRectForExperts(
+        f1_pack_rect_origin,
+        f1_pack_rect_max - f1_pack_rect_origin,
+        f1_packing_rotation_degrees);
+    }
+  }
+
+  return true;
+}
+
 unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
   const ON_SubDFace* f0,
-  unsigned max_pack_id
-  )
+  bool bSubdividePackRect,
+  unsigned& next_pack_id
+)
 {
   // This is a private member function.  
   // The caller insures f0 != nullptr.
@@ -14822,52 +15067,7 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
   const unsigned int level_zero_face_id = (0 == f0->SubdivisionLevel()) ? f0->m_id : f0->m_level_zero_face_id;
 
   // 2022-06-30, Pierre, RH-69170. Try to keep face packs when globally subdividing
-  unsigned int pack_id = f0->PackId();
-  const bool pack_rect{ f0->PackRectIsSet() };
-
-  // We should never have to make a new pack: if the previous packing was valid, all pack_ids were set.
-  // If max_pack_id > 0 and one of the faces has pack_id == 0, the packing was invalid
-  const bool make_new_pack = max_pack_id > 0 && pack_id == 0 && !pack_rect && f0_edge_count == 4;
-  const bool set_pack_id = max_pack_id > 0 && ((pack_id > 0 && pack_rect) || make_new_pack);
-  const bool make_ngons_pack = max_pack_id > 0 && pack_id > 0 && pack_rect && f0_edge_count != 4;
-  unsigned int ngons_quadrant_size[4]{};
-
-  ON_2dPoint pack_rect_origin{ 0., 0. };
-  ON_2dVector pack_rect_size{ .5, .5 };
-  unsigned int packing_rotation_degrees{ 0U };
-  unsigned int rot_dex{ 0U };
-  ON_2dVector pack_rect_offsets[4]{
-    ON_2dVector{0., 0.}, ON_2dVector{.5, 0.}, ON_2dVector{.5, .5}, ON_2dVector{0., .5}
-  };
-  if (set_pack_id)
-  {
-    if (make_new_pack)
-    {
-      pack_id = max_pack_id + 1U; 
-    }
-    else
-    {
-      packing_rotation_degrees = f0->PackRectRotationDegrees();
-      rot_dex = (((packing_rotation_degrees / 90) % 4) + 4) % 4;
-      pack_rect_size = f0->PackRectSize() / 2;
-      pack_rect_origin = f0->PackRectCorner(false, rot_dex);
-      pack_rect_offsets[1].x = pack_rect_size.x;
-      pack_rect_offsets[2].x = pack_rect_size.x;
-      pack_rect_offsets[2].y = pack_rect_size.y;
-      pack_rect_offsets[3].y = pack_rect_size.y;
-    }
-    if (make_ngons_pack)
-    {
-      // TODO: Use ON_SubDFace::GetNgonSubPackRectSizeAndDelta() instead?
-      pack_id = max_pack_id;  // Will be incremented later
-      const unsigned int k = f0_edge_count / 4;
-      const unsigned int r = f0_edge_count % 4;
-      ngons_quadrant_size[0] = k + (r > 0 ? 1 : 0);
-      ngons_quadrant_size[1] = k + (r == 3 ? 1 : 0);
-      ngons_quadrant_size[2] = k + (r > 1 ? 1 : 0);
-      ngons_quadrant_size[3] = k;
-    }
-  }
+  // 2023-10-11 Dale Lear - RH-77662 - fixing bugs in ngon pact rect subdivision - triangles and ngons were not handled correctly.  
 
   if (nullptr == f0->m_subd_point1)
   {
@@ -14881,7 +15081,6 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     AddVertexToLevel(v);
     const_cast<ON_SubDFace*>(f0)->m_subd_point1 = v;
   }
-
 
   ON_SubDEdge* E0[2];
   ON__UINT_PTR E0dir[2];
@@ -14900,6 +15099,32 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
   unsigned int f1_count = 0;
 
   const double w_2facesector = ON_SubDSectorType::CreaseSectorCoefficient(2);
+
+  // The existing pack rect will be subdivided if and only if f0_pack_id > 0
+  // and f0 is successfully subdivided into f0_edge_count man quads
+  const unsigned f0_pack_id
+    = (bSubdividePackRect && f0->PackRectIsSet() && next_pack_id > 0)
+    ? f0->PackId()
+    : 0u;
+
+  // sub_quads_buffer[] is used to avoid allocation overhead
+  // in the vast majority of cases.
+  ON_SubDFace* sub_quads_buffer[8];
+  ON_SubDFace** sub_quads;
+  if (f0_pack_id > 0)
+  {
+    // sub_quads != nullptr if and only if f0 has texture packing information
+    // that needs to be subdivided.
+    sub_quads 
+      = (((size_t)f0_edge_count) <= sizeof(sub_quads_buffer) / sizeof(sub_quads_buffer[0]))
+      ? sub_quads_buffer
+      : (ON_SubDFace**)onmalloc(f0_edge_count * sizeof(sub_quads[0]));
+  }
+  else
+  {
+    // Packing information does not exist or will not be subdivided.
+    sub_quads = nullptr;
+  }
 
   for (unsigned int i = 0; i < f0_edge_count; i++)
   {
@@ -14933,7 +15158,7 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
       //  The resulting quad edge coefficient is 0.5 = 1/2 + 1/3*cos(pi/2).
       w = (ON_SubDVertexTag::Crease == E0[0]->m_subd_point1->m_vertex_tag) ? w_2facesector : 0.0;
       E1[3] = AddEdge(ON_SubDEdgeTag::Smooth, const_cast<ON_SubDVertex*>(f0->m_subd_point1), 0.0, const_cast<ON_SubDVertex*>(E0[0]->m_subd_point1), w);
-      if (nullptr == FirstE1)
+      if (0 == i)
         FirstE1 = E1[3];
     }
     E1dir[3] = 0;
@@ -14965,43 +15190,26 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
       f1->SetMaterialChannelIndex(material_channel_index);
       f1->SetPerFaceColor(per_face_color);
       f1->m_level_zero_face_id = level_zero_face_id;
+      if (nullptr != sub_quads)
+        sub_quads[f1_count] = f1;
       f1_count++;
-
-      if (set_pack_id)
-      {
-        if (make_ngons_pack)
-        {
-          // TODO: Use ON_SubDFace::GetNgonSubPackRectSizeAndDelta() instead?
-          ++pack_id;
-          const unsigned int quadrant = (i * 4) / f0_edge_count;
-          const unsigned int prevsizes = (
-            quadrant > 0 ? ngons_quadrant_size[0] : 0
-            + quadrant > 1 ? ngons_quadrant_size[1] : 0
-            + quadrant > 2 ? ngons_quadrant_size[2] : 0);
-          const unsigned int subidx = i - prevsizes;
-          const ON_2dVector size{
-            quadrant % 2 == 0 ? (pack_rect_size.x / ngons_quadrant_size[quadrant]) : pack_rect_size.x,
-            quadrant % 2 == 1 ? (pack_rect_size.y / ngons_quadrant_size[quadrant]) : pack_rect_size.y };
-          const ON_2dVector offset{
-            pack_rect_offsets[(quadrant + 4 - rot_dex) % 4]
-            + (quadrant % 2 == 0 ? ON_2dVector{ size.x * subidx, 0. } : ON_2dVector{ size.y * subidx, 0. }) };
-          f1->SetPackRectForExperts(
-            pack_rect_origin + offset,
-            size, packing_rotation_degrees - quadrant * 90U + 90U);
-        }
-        else
-        {
-          f1->SetPackRectForExperts(
-            pack_rect_origin + pack_rect_offsets[(i + 4 - rot_dex) % 4],
-            pack_rect_size, packing_rotation_degrees - i * 90U + 90U);
-        }
-        f1->SetPackIdForExperts(pack_id);
-        if (pack_id > max_pack_id) max_pack_id = pack_id;
-      }
     }
   }
 
-  // return number of new faces
+  if (nullptr != sub_quads)
+  {
+    // sub_quads != nullptr if and only if f0 has texture packing information
+    // that needs to be subdivided.
+    // 
+    // The existing pack rect needs to be subdivided and assinged to the subdivided faces
+    if (f0_edge_count == f1_count)
+      Internal_SubdivideFacePacking(f0, f0_edge_count, f0_pack_id, next_pack_id, sub_quads );
+
+    if (sub_quads != sub_quads_buffer)
+      onfree(sub_quads);
+  }
+
+  // return number of new sub quad faces
   return f1_count;
 }
 

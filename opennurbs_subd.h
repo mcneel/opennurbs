@@ -5322,125 +5322,6 @@ public:
   );
 
 
-#if 0
-  /*
-  Description:
-    Creates a SubD sphere made from triangular faces and 6 valent vertices.
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      The resulting sphere will have 80*4^tri_subdivision_level triangles.
-      0 - 180 triangles
-      1 - 320 triangles
-      2 - 1280 triangles
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDTriSphere(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned tri_subdivision_level,
-    ON_SubD* destination_subd
-  );
-
-  /*
-  Description:
-    Creates a SubD sphere based on an icosohedran (20 triangular faces and 5 valent vertices).
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      0 - 80 triangles (icosohedral control net)
-      1 - 60 quad
-      2 - 240 quads
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDIcosahedran(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned subdivision_level,
-    ON_SubD* destination_subd
-  );
-
-  /*
-  Description:
-    Creates a SubD sphere based on an dodecahedron (20 triangular faces and 5 valent vertices).
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      0 - 5 pentagons (dodecahedral control net)
-      1 - 60 quad
-      2 - 240 quads
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDDodecahedran(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned subdivision_level,
-    ON_SubD* destination_subd
-  );
-
-
-  /*
-  Description:
-    Creates a SubD sphere made with triangles and quads to 
-    resemble a globe with latitude and longitude circles.
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      The resulting sphere will have 80*4^tri_subdivision_level triangles.
-      0 - 180 triangles
-      1 - 320 triangles
-      2 - 1280 triangles
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDGlobe(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned latitude_count,
-    unsigned longitued_count,
-    ON_SubD* destination_subd
-  );
-
-#endif
 
   /*
   Description:
@@ -8512,12 +8393,44 @@ public:
     /// </summary>
     static const ON_UUID FastAndSimpleFacePackingId;
 
+    /// <summary>
+    /// The quad sphere face packing is used by ON_SubD::CreateSubDQuadSphere.
+    /// It divides the quad sphere into two similar sets (like a baseball cover) and assigns
+    /// the bottom third of texture space to the first region and the top third to 
+    /// the second region. The middle third is unmapped so that texture distortion is 
+    /// uniform for each quad.
+    /// {9C491E5C-2B46-48AA-BD43-7B18FDC52D58}
+    /// </summary>
+    static const ON_UUID QuadSphereFacePackingId;
+
+    /// <summary>
+    /// The globe sphere face packing is used by ON_SubD::CreateSubDGlobeSphere.
+    /// The equatorial band of quads is assigned a central horizontal strip of 
+    /// texture space while the polar triangle fans are assigned horizontal strips
+    /// from the bottom and top of texture space. 
+    /// The heights of the horizontal strips of texture space are chosen to minimize
+    /// distortion as latitude varies.
+    /// {63CA2FC1-8F6C-4EFC-9A07-C6A26A8C93FB}
+    /// </summary>
+    static const ON_UUID GlobeSphereFacePackingId;
+
+
+    /// <summary>
+    /// The custom face packing is typically used when a subd creation 
+    /// function sets a custom face packing different from the default.
+    /// Typically this happens when there are quad packs that align
+    /// well with the overall geometry or to reduce texture distortion.
+    /// It is used to indicate the built-in automatic face packing
+    /// was not applied.
+    /// {91FD7018-8BBE-4492-8D2E-E8761C505ACF}
+    /// </summary>
+    static const ON_UUID CustomFacePackingId;
 
     // ADD NEW PackFaces ids above this comment and below FastAndSimplePackFacesId.
 
 
     /// <summary>
-    /// ON_SubD::DefaultFacePackingId ideitifies the default face packing.
+    /// ON_SubD::DefaultFacePackingId identifies the default face packing.
     /// Code that wants to use the built-in face packing that is currently
     /// the best option for general use, will specify ON_SubD::DefaultFacePackingId.
     /// 
@@ -14786,7 +14699,7 @@ public:
   const class ON_SubDFace* m_next_face = nullptr;  // linked list of faces on this level
 
 private:
-  unsigned int m_reserved = 0;
+  unsigned int m_reserved1 = 0;
 
 private:
   // If non zero, m_pack_id identifies the packed group of faces this faces belongs to.
@@ -14803,8 +14716,8 @@ private:
   // If faces in a quad group are removed from a subd, the pack rects for the entire subd must be recalculated.
   double m_pack_rect_origin[2] = {ON_DBL_QNAN};
   double m_pack_rect_size[2] = {ON_DBL_QNAN};
-  unsigned int m_packed_rect_u = 0;
-  unsigned int m_packed_rect_v = 0;
+  unsigned int m_reserved2 = 0; // m_packed_rect_u = 0;
+  unsigned int m_reserved3 = 0; // m_packed_rect_v = 0;
 
   enum PackStatusBits : unsigned char
   {
@@ -15327,7 +15240,7 @@ public:
     then the texture point is set and true is returned.
     Otherwise, false is returned.
   Remarks:
-    To allocate texture point storage, call ON_SubD.AddFaceTexturePointStorage(this).
+    To allocate texture point storage, call ON_SubD.AllocateFaceTexturePoints(this).
     Texture points are a mutable property on ON_SubDFace.
   */
   bool SetTexturePoint(
@@ -17492,15 +17405,15 @@ public:
   static const ON_SubDFromMeshParameters InteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges
-  // that have an included angle <= 90 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges or fewer
+  // that have an included angle <= 120 degrees.
   static const ON_SubDFromMeshParameters ConvexCornersAndInteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges
-  // that have an included angle <= 90 degrees.
-  // Look for concave corners at sub-D vertices with 3 edges
-  // that have an included angle >= 270 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges or fewer
+  // that have an included angle <= 120 degrees.
+  // Look for concave corners at sub-D vertices with 3 edges or more
+  // that have an included angle >= 240 degrees.
   static const ON_SubDFromMeshParameters ConvexAndConcaveCornersAndInteriorCreases;
 
   ///////////////////////////////////////////////////////////////////////////////////////

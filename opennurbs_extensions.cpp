@@ -2854,6 +2854,9 @@ bool ONX_Model::IncrementalReadFinish(
     }
   }
 
+  if (0 != archive.CriticalErrorCount())
+    return false;
+
   // STEP 17: OPTIONAL - Read user tables as anonymous goo
   // If you develop a plug-ins or application that uses OpenNURBS files,
   // you can store anything you want in a user table.
@@ -2937,17 +2940,23 @@ bool ONX_Model::IncrementalReadFinish(
     }
   }
 
+  if (0 != archive.CriticalErrorCount())
+    return false;
+
   // STEP 18: OPTIONAL - check for end mark
   size_t file_length = 0;
-  if ( !archive.Read3dmEndMark(&file_length) )
+  if (!archive.Read3dmEndMark(&file_length))
   {
-    if ( archive.Archive3dmVersion() != 1 ) 
+    if (archive.Archive3dmVersion() != 1)
     {
       // some v1 files are missing end-of-archive markers
     }
   }
   else
+  {
     m_3dm_file_byte_count = file_length;
+  }
+
   return (0 == archive.CriticalErrorCount());
 }
 
@@ -3011,8 +3020,11 @@ bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
       ON_ModelComponentReference model_geometry_reference;
 
       if (!IncrementalReadModelGeometry(archive, bManageComponents, bManageGeometry, bManageAttributes,
-                                        model_object_type_filter, model_geometry_reference))
-        break; // Catastrophic error.
+        model_object_type_filter, model_geometry_reference))
+      {
+        // Catastrophic error.
+        break; 
+      }
 
       if (model_geometry_reference.IsEmpty())
         break; // No more geometry.
@@ -4994,6 +5006,13 @@ bool ONX_ModelPrivate::CreateRenderContentFromXML(ON_XMLNode& model_node, Render
     ON_RenderContent* rc = NewRenderContentFromNode(*rc_node);
     if (nullptr != rc)
     {
+      // The name currently in the render content came from XML. It's been corrected if it was invalid,
+      // but it still might be a duplicate of another one in the model, so we have to turn it into an
+      // unused name if necessary.
+      const ON_wString name = m_model.m_manifest.UnusedName(rc->ComponentType(), ON_nil_uuid, rc->Name(),
+                                                            nullptr, nullptr, 0, nullptr);
+      rc->SetName(name);
+
       const auto ref = m_model.AddModelComponent(*rc);
       auto* model_rc = ON_RenderContent::Cast(ref.ModelComponent());
       if (nullptr != model_rc)

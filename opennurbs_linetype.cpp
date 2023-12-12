@@ -144,6 +144,20 @@ ON_Linetype& ON_Linetype::operator=(const ON_Linetype& other)
   }
   return *this;
 }
+
+ON_Linetype* ON_Linetype::DuplicateLinetype() const
+{
+  ON_Linetype* rc = new ON_Linetype(*this);
+  if (rc)
+  {
+    rc->ClearName();
+    rc->ClearId();
+    rc->m_is_locked_bits = 0;
+  }
+  return rc;
+}
+
+
 bool ON_Linetype::IsValid( ON_TextLog* text_log ) const
 {
   if (false == ON_ModelComponent::IsValid(text_log))

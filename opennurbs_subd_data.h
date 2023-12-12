@@ -2642,9 +2642,34 @@ private:
   Number of quads added. When all input is valid the
   returned value is >= 4 and equal to face->m_edge_count.
   */
+
+
+  /// <summary>
+  /// Apply Catmull-Clark subdivision to face
+  /// </summary>
+  /// <param name="face"></param>
+  /// <param name="bSubdividePackRect">
+  /// If bSubdividePackRect and face->PackRectIsSet() are both true
+  /// then the pac rect for face is subdivided and assigned to the
+  /// subdivision quads. 
+  /// Note well: 
+  /// If face is an n-gon (n != 4), the existing pack rect id will be used for the
+  /// first two adjacent subddividsion quads and floor((n-1)/2) new pack rect ids
+  /// are generated for each subsequent pair of adjacent quads. When n is odd, the last
+  /// new pack rect contains a single quad that is assigned a new pack id. 
+  /// This is because pack rects MUST form rectangular regions.
+  /// The packed texture space assigned to the subdivided quads is identical to
+  /// the portion assigned before subdivision. Thus packed texture mappings will not
+  /// change under subdivision.
+  /// </param>
+  /// <param name="next_pack_id">
+  /// The value to use for the next new pack id if face is an n-gon
+  /// </param>
+  /// <returns></returns>
   unsigned int Internal_GlobalQuadSubdivideFace(
     const ON_SubDFace* face,
-    unsigned max_pack_id
+    bool bSubdividePackRect,
+    unsigned& next_pack_id
     );
 
 public:

@@ -353,16 +353,20 @@ bool ON_Text::GetTextXform(
   {
     ON_Xform tp2sxf;        // Text point to view plane rotation
     ON_3dPoint text_point_3d = Plane().origin;
-    ON_3dVector text_xdir = textobjectplane.xaxis;
-    ON_3dVector text_ydir = textobjectplane.yaxis;
-    ON_3dVector text_zdir = textobjectplane.zaxis;
+    const ON_3dVector& text_xdir = textobjectplane.xaxis;
+    const ON_3dVector& text_ydir = textobjectplane.yaxis;
+    const ON_3dVector& text_zdir = textobjectplane.zaxis;
+    ON_3dVector view_xdir = view_x;
+    ON_3dVector view_ydir = view_y;
+    ON_3dVector view_zdir = view_z;
     if (nullptr != model_xform)
     {
-      text_xdir.Transform(*model_xform);
-      text_ydir.Transform(*model_xform);
-      text_zdir.Transform(*model_xform);
+      auto inverse = model_xform->Inverse();
+      view_xdir.Transform(inverse);
+      view_ydir.Transform(inverse);
+      view_zdir.Transform(inverse);
     }
-    rotation_xf.Rotation(text_point_3d, text_xdir, text_ydir, text_zdir, text_point_3d, view_x, view_y, view_z);
+    rotation_xf.Rotation(text_point_3d, text_xdir, text_ydir, text_zdir, text_point_3d, view_xdir, view_ydir, view_zdir);
     text_xform_out = wcs2obj_xf * textscale_xf;
     text_xform_out = rotation_xf * text_xform_out;
     return true;

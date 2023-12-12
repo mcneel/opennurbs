@@ -34,7 +34,7 @@ ON_Sphere::~ON_Sphere()
 
 bool ON_Sphere::IsValid() const
 {
-  return ( ON_IsValid(radius) && radius > 0.0 && plane.IsValid() ) ? true : false;
+  return ( radius > 0.0 && radius < ON_UNSET_POSITIVE_VALUE && plane.IsValid() ) ? true : false;
 }
 
 bool ON_Sphere::Create( const ON_3dPoint& center, double r )

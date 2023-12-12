@@ -869,6 +869,17 @@ int ON_XMLVariant::AsInteger(void) const
   }
 }
 
+static bool IsValidRealNumber(const ON_wString& s)
+{
+  if (s.ContainsNoCase(L"nan"))
+    return false;
+
+  if (s.ContainsNoCase(L"in")) // ind, inf.
+    return false;
+
+  return true;
+}
+
 double ON_XMLVariant::AsDouble(void) const
 {
   switch (_private->_type)
@@ -877,8 +888,10 @@ double ON_XMLVariant::AsDouble(void) const
   case Types::Float:   return         _private->_float_val;
   case Types::Double:  return         _private->_double_val;
   case Types::Integer: return double (_private->_int_val);
-  case Types::String:  return ON_wtof(_private->_string_val);
-  
+  case Types::String:
+    if (IsValidRealNumber(_private->_string_val))
+      return ON_wtof(_private->_string_val);
+
   default:
     return 0.0;
   }
@@ -892,8 +905,10 @@ float ON_XMLVariant::AsFloat(void) const
   case Types::Float:   return       _private->_float_val;
   case Types::Double:  return float(_private->_double_val);
   case Types::Integer: return float(_private->_int_val);
-  case Types::String:  return float(ON_wtof(_private->_string_val));
-          
+  case Types::String:
+    if (IsValidRealNumber(_private->_string_val))
+      return float(ON_wtof(_private->_string_val));
+
   default:
     return 0.0f;
   }
@@ -5278,7 +5293,7 @@ void ON_RdkDocumentDefaults::CreateXML(void)
 
           // Misc rendering settings.
           ON_XMLParameters p(rendering);
-          p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true);
+          p.SetParam(ON_RDK_EMBED_SUPPORT_FILES_ON, true); // Only for monitoring. Not loaded.
           p.SetParam(ON_RDK_DITHERING_ENABLED, false);
           p.SetParam(ON_RDK_DITHERING_METHOD, ON_RDK_DITHERING_METHOD_FLOYD_STEINBERG);
           p.SetParam(ON_RDK_CUSTOM_REFLECTIVE_ENVIRONMENT, ON_nil_uuid);
