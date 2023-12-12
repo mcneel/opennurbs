@@ -589,7 +589,118 @@ bool ON_ConvexPoly::Standardize(ON_4dex& dex, ON_4dPoint& B)
   return rc;
 }
 
+/**/
 
+void ON_ConvexHullRefEx::Initialize(const ON_3dVector* V0, int n)
+{
+  m_n = n;
+  m_dim = 3;
+  m_v = *V0;
+  m_is_rat = false;
+  m_stride = 3;
+}
+
+void ON_ConvexHullRefEx::Initialize(const ON_4dPoint* V0, int  n)
+{
+  m_n = n;
+  m_v = *V0;
+  m_dim = 3;
+  m_is_rat = true;
+  m_stride = 4;
+}
+
+// style must be either not_rational or homogeneous_rational = 2,
+void ON_ConvexHullRefEx::Initialize(const double* V0, ON::point_style style, int  count)
+{
+  if (style == ON::homogeneous_rational)
+    Initialize(reinterpret_cast<const ON_4dPoint*>(V0), count);
+  else
+    Initialize(reinterpret_cast<const ON_3dVector*>(V0), count);
+}
+
+ON_ConvexHullRefEx::ON_ConvexHullRefEx(const ON_3dVector* V0, int n)
+{
+  m_n = n;
+  m_dim = 3;
+  m_v = *V0;
+  m_is_rat = false;
+  m_stride = 3;
+}
+
+ON_ConvexHullRefEx::ON_ConvexHullRefEx(const ON_3dPoint* P0, int n)
+{
+  m_n = n;
+  m_dim = 3;
+  m_v = *P0;
+  m_is_rat = false;
+  m_stride = 3;
+}
+
+ON_ConvexHullRefEx::ON_ConvexHullRefEx(const ON_4dPoint* V0, int  n)
+{
+  m_n = n;
+  m_dim = 3;
+  m_v = *V0;
+  m_is_rat = true;
+  m_stride = 4;
+}
+
+ON_ConvexHullRefEx::ON_ConvexHullRefEx(const double* V0, bool is_rat, int  n, int dim)
+{
+  m_n = n;
+  m_dim = (dim>=0 && dim<4)?dim:0;
+  m_v = V0;
+  m_is_rat = is_rat;
+  m_stride = is_rat ? dim+1 : dim;
+}
+
+ON_ConvexHullRefEx::ON_ConvexHullRefEx(const double* V0, bool is_rat, int  n, int dim, int stride)
+{
+  m_n = n;
+  m_dim = (dim >= 0 && dim < 4) ? dim : 0;
+  m_v = V0;
+  m_is_rat = is_rat;
+  m_stride = (stride>m_dim+is_rat)? stride: m_dim + is_rat;
+}
+
+ON_3dVector ON_ConvexHullRefEx::Vertex(int j) const
+{
+  ON_3dVector v(0,0,0);
+  for (int i = 0; i < m_dim; i++)
+    v[i] = m_v[j * m_stride + i];
+  if (m_is_rat )
+  {
+    double w = m_v[j * m_stride + m_dim];
+    if (w)
+      v *= (1.0 / w);
+  }
+
+  return v;
+}
+
+int ON_ConvexHullRefEx::SupportIndex(ON_3dVector W, int) const
+{
+  int j0 = 0;
+  double dot = Vertex(0) * W;
+  for (int j = 1; j < m_n; j++)
+  {
+    ON_3dVector v = Vertex(j);
+    double d = v * W;
+    if (d > dot)
+    {
+      dot = d;
+      j0 = j;
+    }
+  }
+  return j0;
+}
+
+double ON_ConvexHullRefEx::MaximumCoordinate() const
+{
+  return ON_MaximumCoordinate(m_v, m_dim, m_is_rat, m_n, m_stride);
+}
+
+/* ON_ConvexHullRef is DEEPRECATED because it doesn't work for 2d curves .  Use ON_ConvexHellRefEx instead.*/
 void ON_ConvexHullRef::Initialize(const ON_3dVector* V0, int n)
 {
   m_n = n;
@@ -713,7 +824,7 @@ double ON_ConvexHullPoint2::MaximumCoordinate() const
 bool ON_ConvexPoly::GetClosestPointSeeded(ON_3dPoint P0,
   ON_4dex& dex, ON_4dPoint& Bary, double atmost ) const
 {
-  ON_ConvexHullRef CvxPt(&P0, 1);
+  ON_ConvexHullRefEx CvxPt(&P0, 1);   // TODO don't use ON_ConvexHullRefEx
   // Set pdex to match the support of dex
   ON_4dex pdex = dex;
   for (int i = 0; i < 4; i++)
@@ -830,7 +941,7 @@ bool GJK_Simplex::Includes(int aind, int bind) // true if (aind, bind) is a vert
 //     Adex[i]<0 iff Bdex[i]<0  for all i
 //     Adex[i]>=0 for some i    for some i
 // By satisfying this condition Adex and Bdex will define a simplex in A - B 
-// Note the result of a ClosestPoint calculation Adex and Bdex satisfy these conditions 
+// Note:  As a  result of a ClosestPoint calculation Adex and Bdex satisfy these conditions. 
 bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
   ON_4dex& Adex, ON_4dex& Bdex, ON_4dPoint& Bary,
   double atmost) const

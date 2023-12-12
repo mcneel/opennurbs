@@ -340,6 +340,44 @@ void ON_RenderContentPrivate::InternalSetPropertyValue(const wchar_t* name, cons
   }
 }
 
+static void EnsureNameValid(ON_wString& name)
+{
+  // 29th November 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-78603
+  // Component names cannot begin with '(', ')', '[', ']', '{', '}' or ' '.
+  // Component names should not be multiline.
+  // I'm also going to disallow ':' because that has a special meaning in the name and
+  // render content does not use that feature.
+
+  ON_wString name_copy = name;
+  name = L"";
+
+  bool first = true;
+  const int len = name_copy.Length();
+  for (int i = 0; i < len; i++)
+  {
+    wchar_t c = name_copy[i];
+    if (first)
+    {
+      if ((c == L' ' )                ) continue;
+      if ((c == L'(' ) || (c == L')' )) continue;
+      if ((c == L'[' ) || (c == L']' )) continue;
+      if ((c == L'{' ) || (c == L'}' )) continue;
+    }
+
+    // Replace control codes with a space. Includes CR/LF.
+    if (c < L' ')
+      c = L' ';
+
+    name += c;
+    first = false;
+  }
+
+  // Also disallow ':' inside the name.
+  name.Replace(':', ' ');
+
+  name.TrimLeftAndRight();
+}
+
 void ON_RenderContentPrivate::SetXMLNode(const ON_XMLNode& node)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
@@ -374,8 +412,16 @@ void ON_RenderContentPrivate::SetXMLNode(const ON_XMLNode& node)
   // Copy the pruned copy of the XML node. This node does not have any child content nodes.
   m_node = node_copy;
 
-  // Copy the XML instance name to the component name.
-  m_render_content.SetName(GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME).AsString());
+  // Copy the XML instance name to the component name after validating it.
+  ON_wString name = GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_NAME).AsString();
+
+  // 29th November 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-78603
+  if (!ON_ModelComponent::IsValidComponentName(name))
+  {
+    EnsureNameValid(name);
+  }
+
+  m_render_content.SetName(name);
 
   // Copy the XML instance id to the component id.
   m_render_content.SetId(GetPropertyValue(ON_RENDER_CONTENT_INSTANCE_ID).AsUuid());
@@ -1721,16 +1767,19 @@ ON_RenderContent* ON_RenderTexture::NewRenderContent(void) const
   return new ON_RenderTexture;
 }
 
-
-int ONX_Model::AddRenderMaterial(const wchar_t* mat_name)
+int ONX_Model::AddRenderMaterial(const wchar_t* candidate_name)
 {
+  if (!ON_ModelComponent::IsValidComponentName(candidate_name))
+    return ON_UNSET_INT_INDEX;
+
   static ON_UUID uuidPB = { 0x5a8d7b9b, 0xcdc9, 0x49de, { 0x8c, 0x16, 0x2e, 0xf6, 0x4f, 0xb0, 0x97, 0xab } };
 
   ON_RenderMaterial mat;
   mat.SetTypeId(uuidPB);
 
-  const ON_wString unused_name = m_manifest.UnusedName(mat.ComponentType(), ON_nil_uuid, mat_name, nullptr, nullptr, 0, nullptr);
-  mat.SetName(unused_name);
+  const ON_wString mat_name = m_manifest.UnusedName(mat.ComponentType(), ON_nil_uuid, candidate_name,
+                                                    nullptr, nullptr, 0, nullptr);
+  mat.SetName(mat_name);
 
   const ON_ModelComponentReference mcr = AddModelComponent(mat, true);
   const auto* model_mat = ON_RenderMaterial::Cast(mcr.ModelComponent());
@@ -1743,15 +1792,19 @@ int ONX_Model::AddRenderMaterial(const wchar_t* mat_name)
   return model_mat->Index();
 }
 
-int ONX_Model::AddRenderEnvironment(const wchar_t* env_name)
+int ONX_Model::AddRenderEnvironment(const wchar_t* candidate_name)
 {
+  if (!ON_ModelComponent::IsValidComponentName(candidate_name))
+    return ON_UNSET_INT_INDEX;
+
   static ON_UUID uuidBE = { 0xba51ce00, 0xba51, 0xce00, { 0xba, 0x51, 0xce, 0xba, 0x51, 0xce, 0x00, 0x00 } };
 
   ON_RenderEnvironment env;
   env.SetTypeId(uuidBE);
 
-  const ON_wString unused_name = m_manifest.UnusedName(env.ComponentType(), ON_nil_uuid, env_name, nullptr, nullptr, 0, nullptr);
-  env.SetName(unused_name);
+  const ON_wString env_name = m_manifest.UnusedName(env.ComponentType(), ON_nil_uuid, candidate_name,
+                                                    nullptr, nullptr, 0, nullptr);
+  env.SetName(env_name);
 
   const ON_ModelComponentReference mcr = AddModelComponent(env, true);
   const auto* model_env = ON_RenderEnvironment::Cast(mcr.ModelComponent());
@@ -1764,27 +1817,26 @@ int ONX_Model::AddRenderEnvironment(const wchar_t* env_name)
   return model_env->Index();
 }
 
-int ONX_Model::AddRenderTexture(const wchar_t* fn)
+int ONX_Model::AddRenderTexture(const wchar_t* filename)
 {
-  static const ON_UUID uuidBM = { 0x57e0ed08, 0x1907, 0x4529, { 0xb0, 0x1b, 0x0c, 0x4a, 0x24, 0x24, 0x55, 0xfd } };
+  const ON_wString clean_filename = ON_FileSystemPath::CleanPath(filename);
 
-  const auto filename = ON_FileSystemPath::CleanPath(fn);
-
-  if (!ON_FileSystem::PathExists(filename))
+  if (!ON_FileSystem::PathExists(clean_filename))
   {
     ON_ERROR("Failed to add render texture; file does not exist");
     return ON_UNSET_INT_INDEX;
   }
 
+  static const ON_UUID uuidBM = { 0x57e0ed08, 0x1907, 0x4529, { 0xb0, 0x1b, 0x0c, 0x4a, 0x24, 0x24, 0x55, 0xfd } };
+
   ON_RenderTexture tex;
   tex.SetTypeId(uuidBM);
-  tex.SetParameter(ON_RENDER_TEXTURE_FILENAME, filename);
+  tex.SetParameter(ON_RENDER_TEXTURE_FILENAME, clean_filename);
 
-  const ON_wString tex_name = ON_FileSystemPath::FileNameFromPath(filename, false);
+  const ON_wString candidate_name = ON_FileSystemPath::FileNameFromPath(clean_filename, false);
+  const ON_wString tex_name = m_manifest.UnusedName(tex.ComponentType(), ON_nil_uuid, candidate_name,
+                                                    nullptr, nullptr, 0, nullptr);
   tex.SetName(tex_name);
-
-  const ON_wString unused_name = m_manifest.UnusedName(tex.ComponentType(), ON_nil_uuid, tex_name, nullptr, nullptr, 0, nullptr);
-  tex.SetName(unused_name);
 
   const ON_ModelComponentReference mcr = AddModelComponent(tex, true);
   const auto* model_tex = ON_RenderTexture::Cast(mcr.ModelComponent());
@@ -1796,4 +1848,9 @@ int ONX_Model::AddRenderTexture(const wchar_t* fn)
   }
 
   return model_tex->Index();
+}
+
+ON_DECL void ON_EnsureNameValid(ON_wString& name)
+{
+  EnsureNameValid(name);
 }

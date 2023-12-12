@@ -268,6 +268,30 @@ public:
     unsigned int mapping_channel_id
     );
 
+  /*
+  Description:
+    Returns true if this texture uses world coordinate system (WCS) projection
+    for texture mapping. 
+  Remarks:
+    If this texture is used by an object that has an object coordinate system (OCS)
+    frame defined on a mapping channel then that OCS frame is used instead of the WCS.
+  Returns:
+    True if this texture uses WCS projection.
+  */
+  bool IsWcsProjected() const;
+
+  /*
+  Description:
+    Returns true if this texture uses world coordinate system (WCS) box projection
+    for texture mapping. 
+  Remarks:
+    If this texture is used by an object that has an object coordinate system (OCS)
+    frame defined on a mapping channel then that OCS frame is used instead of the WCS.
+  Returns:
+    True if this texture uses WCS box projection.
+  */
+  bool IsWcsBoxProjected() const;
+
   // If the m_mapping_channel_id value is one of the built-in 
   // mappings listed in the MAPPING_CHANNEL enum, then that 
   // mapping is used.  Otherwise, if an object has rendering

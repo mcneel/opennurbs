@@ -781,7 +781,8 @@ public:
   Description:
     Easy way to add a render material to the model. Creates a PBR material.
   Returns:
-    If mat_name is valid, the material's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+    If mat_name is valid and the function succeeds, the material's index is returned.
+    Otherwise ON_UNSET_INT_INDEX is returned.
   */
   int AddRenderMaterial(
     const wchar_t* mat_name
@@ -791,7 +792,8 @@ public:
   Description:
     Easy way to add a render environment to the model. Creates a basic environment.
   Returns:
-    If env_name is valid, the environment's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+    If env_name is valid and the function succeeds, the environment's index is returned.
+    Otherwise ON_UNSET_INT_INDEX is returned.
   */
   int AddRenderEnvironment(
     const wchar_t* env_name
@@ -799,10 +801,12 @@ public:
 
   /*
   Description:
-    Easy way to add a render texture to the model. Creates a bitmap texture. The texture's name is derived from
-    the supplied file name. The file must exist locally or the function will fail.
+    Easy way to add a render texture to the model. Creates a bitmap texture.
+    The texture's name is derived from the supplied file name. The file must exist locally
+    or the function will fail.
   Returns:
-    If the function succeeds, the texture's index is returned. Otherwise ON_UNSET_INT_INDEX is returned.
+    If the function succeeds, the texture's index is returned.
+    Otherwise ON_UNSET_INT_INDEX is returned.
   */
   int AddRenderTexture(
     const wchar_t* filename

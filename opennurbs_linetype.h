@@ -92,6 +92,12 @@ public:
   ON_Linetype& operator=(const ON_Linetype&);
 
   /*
+  Description:
+    Duplicates this linetype, clears the name, id, and locked bits.
+  */
+  ON_Linetype* DuplicateLinetype() const;
+
+  /*
     Description:
       Tests that name is set and there is at least one non-zero length segment
   */

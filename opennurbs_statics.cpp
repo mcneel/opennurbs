@@ -346,6 +346,19 @@ const ON_SubDHash ON_SubDHash::Empty;
 const ON_UUID ON_SubD::FastAndSimpleFacePackingId =
 { 0xc3d8dd54, 0xf8c8, 0x4455, { 0xbb, 0xe, 0x2a, 0x2f, 0x49, 0x88, 0xec, 0x81 } };
 
+// {9C491E5C-2B46-48AA-BD43-7B18FDC52D58}
+const ON_UUID ON_SubD::QuadSphereFacePackingId =
+{ 0x9c491e5c, 0x2b46, 0x48aa, { 0xbd, 0x43, 0x7b, 0x18, 0xfd, 0xc5, 0x2d, 0x58 } };
+
+// {63CA2FC1-8F6C-4EFC-9A07-C6A26A8C93FB}
+const ON_UUID ON_SubD::GlobeSphereFacePackingId =
+{ 0x63ca2fc1, 0x8f6c, 0x4efc, { 0x9a, 0x7, 0xc6, 0xa2, 0x6a, 0x8c, 0x93, 0xfb } };
+
+// {91FD7018-8BBE-4492-8D2E-E8761C505ACF}
+const ON_UUID ON_SubD::CustomFacePackingId =
+{ 0x91fd7018, 0x8bbe, 0x4492, { 0x8d, 0x2e, 0xe8, 0x76, 0x1c, 0x50, 0x5a, 0xcf } };
+
+
 // ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
 // algoritm. If a new built-in algorithm is developed that produces generally 
 // better packings and is as fast and reliable as the current default, then

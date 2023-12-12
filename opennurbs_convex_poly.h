@@ -337,7 +337,50 @@ Details:
 // WARNING:  Points are referenced not stored for optimal performance in'
 //           some applications.
 //           The list of points must remain alive and in there initial location 
-//           For the duration of this object.                                               
+//           For the duration of this object. 
+//
+// This is an improved version of ON_ConvexHullRef that includes support for 2d point lists.
+class ON_CLASS ON_ConvexHullRefEx : public ON_ConvexPoly
+{
+public:
+  ON_ConvexHullRefEx() { m_n = 0; m_dim = 0;  m_is_rat = false; m_stride = 3; };
+  ON_ConvexHullRefEx(const ON_3dVector* V0, int  count);		// a 3d point array
+  ON_ConvexHullRefEx(const ON_3dPoint* V0, int  count);		// a 3d point array
+  ON_ConvexHullRefEx(const ON_4dPoint* V0, int count);			// a array of homogeneous points
+  ON_ConvexHullRefEx(const double* v0, bool is_rat, int n, int dim=3);		// v0 is an array of 2d or 3d points in either euclidean or homogeneous  coordinates. dim<4.
+  ON_ConvexHullRefEx(const double* v0, bool is_rat, int n, int dim , int stride);		// As above with a stride to the array. dim <4.
+
+  void Initialize(const ON_3dVector* V0, int  count);
+  void Initialize(const ON_4dPoint* V0, int  count);
+  void Initialize(const double* V0, ON::point_style style, int  count);  // style must be either not_rational or homogeneous_rational = 2,
+
+  int Count() const override { return m_n; }
+  ON_3dVector Vertex(int j) const override;
+
+  // Support map
+  virtual int SupportIndex(ON_3dVector W, int i0) const override;
+  virtual double MaximumCoordinate() const override;
+
+  virtual ~ON_ConvexHullRefEx() override {};
+private:
+
+  int m_n = 0;
+  int m_dim = 3;      // must be <4.  
+  bool m_is_rat = false;
+  const double* m_v = nullptr;
+  int m_stride = 3;
+};
+
+// 3d convex hull defined by an explicit collection of points called vertices.
+// Note: vertices need not be extreme points
+
+// WARNING:  Points are referenced not stored for optimal performance in'
+//           some applications.
+//           The list of points must remain alive and in there initial location 
+//           For the duration of this object.      
+//      
+// GBA 02-Nov-23 	This class  is DEPRECATED and will be removed in the future.
+//					Use ON_ConvexHullRefEx instead.                                   
 class ON_CLASS ON_ConvexHullRef : public ON_ConvexPoly
 {
 public:
@@ -397,7 +440,7 @@ public:
   };
 
 private:
-  ON_ConvexHullRef Ref;
+  ON_ConvexHullRefEx Ref;
   ON_SimpleArray<ON_3dVector> m_Vert;
 };
 
