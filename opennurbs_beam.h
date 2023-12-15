@@ -351,10 +351,7 @@ public:
         it will be deleted.
       * if mesh is null, any existing mesh is deleted and
         nothing is attached.
-  Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   bool SetMesh( ON::mesh_type mt, ON_Mesh* mesh );
 
   /*
@@ -372,10 +369,7 @@ public:
     This mesh will be deleted by ~ON_Extrusion().
     If a mesh of the requested type is not available,
     then null is returned.
-  Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   const ON_Mesh* Mesh( ON::mesh_type mt ) const;
 
   /*
@@ -387,10 +381,7 @@ public:
       all attached meshes of all types are destroyed.
     bDeleteMesh - [in] if true, cached mesh is deleted.
       If false, pointer to cached mesh is just set to null.
-  Remarks:
-    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed cached meshes.
   */
-  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed cached meshes")
   void DestroyMesh( ON::mesh_type mt );
 
   ////////////////////////////////////////////////////////////

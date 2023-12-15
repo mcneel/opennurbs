@@ -9898,6 +9898,7 @@ unsigned int ON_SubDLevel::DumpTopology(
         );
       if (v->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", v->m_group_id);      
+      //s += ON_String::FormatToString(" CRC32=%u", v->TopologyCRC32(true));
       text_log.PrintString(s);
       text_log.PrintNewLine();
     }
@@ -10120,6 +10121,8 @@ unsigned int ON_SubDLevel::DumpTopology(
       }
       s += " )";
 
+      //s += ON_String::FormatToString(" CRC32=%u", e->TopologyCRC32(true));
+
       if (e->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", e->m_group_id);
 
@@ -10269,6 +10272,8 @@ unsigned int ON_SubDLevel::DumpTopology(
     else
     {
       ON_String s = ON_String::FormatToString("f%u:", f->m_id);
+
+      //s += ON_String::FormatToString(" CRC32=%u", f->TopologyCRC32(true));
 
       if (f->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", f->m_group_id);

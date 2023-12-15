@@ -5322,7 +5322,6 @@ public:
   );
 
 
-
   /*
   Description:
     Creates a SubD cylinder
@@ -12837,6 +12836,36 @@ public:
 
   ON_BoundingBox ControlNetBoundingBox() const;
 
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// See also ON_SubDVertex::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the vertex's id and the ids of the edges and faces attached to this vertex.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
+
 
 public:
   const ON_COMPONENT_INDEX ComponentIndex() const;
@@ -13772,6 +13801,36 @@ public:
 
   const ON_BoundingBox ControlNetBoundingBox() const;
 
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// See also ON_SubDEdge::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the edge's id and the ids of the vertices and faces attached to this edge.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
+
   const ON_Plane CenterFrame(
     ON_SubDComponentLocation subd_appearance
   ) const;
@@ -14662,6 +14721,36 @@ public:
   );
 
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// See also ON_SubDFace::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the face's id the ids of the vertices and edges attached to this face.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
 
   /*
   Parameters:

@@ -436,7 +436,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3DM_BIG_CHUNK>;
 
 // Used int ON_3dmProperties::Read() to set ON_BinaryArchive.m_3dm_opennurbs_version
 // Do not call directly. 
-void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive&,unsigned int);
+void ON_SetBinaryArchiveOpenNURBSVersion(class ON_BinaryArchive&,unsigned int);
 
 class ON_CLASS ON_UserDataItemFilter
 {
