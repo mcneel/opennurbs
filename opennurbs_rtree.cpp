@@ -483,6 +483,15 @@ bool ON_RTreeIterator::Prev()
   return false; // we were at the last element and now there are no more.
 }
 
+const ON_RTreeLeaf* ON_RTreeIterator::FirstLeaf()
+{
+  return this->First() ? (const ON_RTreeLeaf*)this->Value() : nullptr;
+}
+
+const ON_RTreeLeaf* ON_RTreeIterator::NextLeaf()
+{
+  return this->Next() ? (const ON_RTreeLeaf*)this->Value() : nullptr;
+}
 
 ////////////////////////////////////////////////////////////////
 //

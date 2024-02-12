@@ -477,6 +477,13 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 
   v1->m_vertex_tag = vertex0->m_vertex_tag;
 
+  const double crease_sector_vertex_sharpness0 = vertex0->Internal_CreaseSectorVertexSharpnessForExperts();
+  if (crease_sector_vertex_sharpness0 > 1.0)
+  {
+    const double crease_sector_vertex_sharpness1 = ON_SubDEdgeSharpness::Sanitize(crease_sector_vertex_sharpness0 - 1.0);
+    v1->Internal_UpdateCreaseSectorVertexSharpnessForExperts(crease_sector_vertex_sharpness1);
+  }
+
   if (vertex0->SurfacePointIsSet())
   {
     // copy any cached limit point from vertex0 to v1.
