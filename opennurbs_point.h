@@ -397,6 +397,16 @@ public:
     );
 
   /*
+  In  opennurbs points within ON_ZERO_TOLERANCE are generally considered
+  to be the same.
+  Returns:
+    True if for each coordinate pair,
+    |a-b| <= ON_ZERO_TOLERANCE
+    or |a-b| <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE.
+  */
+  bool IsCoincident(const ON_2dPoint& P) const;
+
+  /*
   Returns:
     (A+B)/2
   Remarks:

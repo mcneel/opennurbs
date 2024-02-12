@@ -705,10 +705,12 @@ const ON_3fPoint ON_3fPoint::NanPoint(ON_FLT_QNAN, ON_FLT_QNAN, ON_FLT_QNAN);
 const ON_4fPoint ON_4fPoint::Zero(0.0f, 0.0f, 0.0f, 0.0f);
 const ON_4fPoint ON_4fPoint::Nan(ON_FLT_QNAN, ON_FLT_QNAN, ON_FLT_QNAN, ON_FLT_QNAN);
 
+const ON_2fVector ON_2fVector::NanVector(ON_FLT_QNAN, ON_FLT_QNAN);
 const ON_2fVector ON_2fVector::ZeroVector(0.0f, 0.0f);
 const ON_2fVector ON_2fVector::XAxis(1.0f, 0.0f);
 const ON_2fVector ON_2fVector::YAxis(0.0f, 1.0f);
 
+const ON_3fVector ON_3fVector::NanVector(ON_FLT_QNAN, ON_FLT_QNAN, ON_FLT_QNAN);
 const ON_3fVector ON_3fVector::ZeroVector(0.0f, 0.0f, 0.0f);
 const ON_3fVector ON_3fVector::XAxis(1.0f, 0.0f, 0.0f);
 const ON_3fVector ON_3fVector::YAxis(0.0f, 1.0f, 0.0f);
@@ -2751,6 +2753,10 @@ const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
 const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
 const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullVertex = { 2 };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullEdge = { 4 };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullFace = { 6 };
+
 const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
 
 const ON_SubDComponentAndNumber ON_SubDComponentAndNumber::NullAndNan = ON_SubDComponentAndNumber::Create(ON_SubDComponentPtr::Null, ON_DBL_QNAN);

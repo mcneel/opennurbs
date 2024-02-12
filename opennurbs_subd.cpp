@@ -2185,10 +2185,11 @@ int ON_SubDComponentPtr::CompareType(
 {
   if ( a == b )
     return 0;
+    // sort nullptrs to ends of arrays
   if ( nullptr == a )
-    return 1;
+    return 1; // nonzero b < nullptr a
   if ( nullptr == b )
-    return -1;
+    return -1; // nonzero a < nullptr b
   return ON_SubDComponentPtr::CompareComponentPtrType(a->ComponentType(), b->ComponentType());
 }
 
@@ -2198,13 +2199,32 @@ int ON_SubDComponentPtr::CompareComponent(
   const ON_SubDComponentPtr* b
 )
 {
-  if (a == b)
-    return 0;
-  const int rc = ON_SubDComponentPtr::CompareComponentPtrType(a->ComponentType(), b->ComponentType());
-  if (0 == rc)
+  const int rc = ON_SubDComponentPtr::CompareType(a, b);
+  if (0 == rc && a != b)
   {
+    // 0 == ON_SubDComponentPtr::CompareType(a, b) and a != b insures both pointers are not nullptr.
     const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
     const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
+    if (x < y)
+      return -1;
+    if (x > y)
+      return 1;
+  }
+  return rc;
+}
+
+
+int ON_SubDComponentPtr::CompareComponentId(
+  const ON_SubDComponentPtr* a,
+  const ON_SubDComponentPtr* b
+)
+{
+  const int rc = ON_SubDComponentPtr::CompareType(a, b);
+  if (0 == rc && a != b)
+  {
+    // 0 == ON_SubDComponentPtr::CompareType(a, b) and a != b insures both pointers are not nullptr.
+    const unsigned x = a->ComponentId();
+    const unsigned y = b->ComponentId();
     if (x < y)
       return -1;
     if (x > y)
@@ -2218,11 +2238,10 @@ int ON_SubDComponentPtr::CompareComponentAndDirection(
   const ON_SubDComponentPtr* b
 )
 {
-  if (a == b)
-    return 0;
   const int rc = ON_SubDComponentPtr::CompareComponent(a, b);
-  if (0 == rc)
+  if (0 == rc && a != b)
   {
+    // 0 == ON_SubDComponentPtr::CompareComponent(a, b) and a != b insures both pointers are not nullptr.
     const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
     const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
     if (x < y)
@@ -3908,7 +3927,17 @@ double ON_SubDEdge::EndSharpness(
   unsigned evi
 ) const
 {
-  return (IsSmooth() && evi >= 0 && evi <= 1) ? m_sharpness[evi] : 0.0;
+  return EndSharpness(evi, false);
+}
+
+double ON_SubDEdge::EndSharpness(
+  unsigned evi,
+  bool bUseCreaseSharpness
+) const
+{
+  return (IsSmooth() && evi >= 0 && evi <= 1)
+    ? m_sharpness[evi]
+    : ((bUseCreaseSharpness && IsCrease()) ? ON_SubDEdgeSharpness::CreaseValue : ON_SubDEdgeSharpness::SmoothValue);
 }
 
 double ON_SubDEdge::EndSharpness(
@@ -4017,13 +4046,13 @@ const ON_wString ON_SubDEdgeSharpness::ToPercentageText(double sharpness)
   return ON_wString(ON_wString::WarningSign);
 }
 
-const ON_wString ON_SubDEdgeSharpness::ToPercentageText( bool bVarableMinToMax ) const
+const ON_wString ON_SubDEdgeSharpness::ToPercentageText(bool bOrderMinToMax) const
 {
   if (IsValid())
   {
     if ( IsConstant() )
       return ON_SubDEdgeSharpness::ToPercentageText(EndSharpness(0));
-    const int i0 = (bVarableMinToMax && EndSharpness(0) > EndSharpness(2)) ? 1 : 0;
+    const int i0 = (bOrderMinToMax && (EndSharpness(0) > EndSharpness(1))) ? 1 : 0;
     const double s0 = EndSharpness(i0);
     const double s1 = EndSharpness(1-i0);
     return
@@ -4487,8 +4516,19 @@ double ON_SubDEdgeSharpness::EndSharpness(int end_index) const
   return (end_index >= 0 && end_index <= 1) ? ((double)m_edge_sharpness[end_index]) : ON_DBL_QNAN;
 }
 
+
 double ON_SubDEdgeSharpness::VertexSharpness(
   ON_SubDVertexTag vertex_tag,
+  unsigned sharp_edge_end_count,
+  double maximum_edge_end_sharpness
+)
+{
+  return ON_SubDEdgeSharpness::VertexSharpness(vertex_tag, 0.0, sharp_edge_end_count, maximum_edge_end_sharpness);
+}
+
+double ON_SubDEdgeSharpness::VertexSharpness(
+  ON_SubDVertexTag vertex_tag,
+  double global_vertex_sharpness,
   unsigned sharp_edge_end_count,
   double maximum_edge_end_sharpness
 )
@@ -4500,20 +4540,6 @@ double ON_SubDEdgeSharpness::VertexSharpness(
   // than assigning a constant sharpness to edges and Chaikin's subdivision rule
   // (averaging) at vertices.
 
-  if (sharp_edge_end_count <= 0)
-  {
-    // no edges have nonzero end sharpness at this vertex
-    return 0.0;
-  }
-
-  if (false == (maximum_edge_end_sharpness > 0.0))
-  {
-    // This happens when the sharp edges attached to the vertex
-    // have variable sharpness with 0 at the vertex
-    // and nonzero sharpness at the other ends.
-    return 0.0;
-  }
-
   if (ON_SubDVertexTag::Corner == vertex_tag)
   {
     // No sharpness bias for corner vertex subdivision.
@@ -4524,11 +4550,35 @@ double ON_SubDEdgeSharpness::VertexSharpness(
 
   unsigned crease_edge_count;
   if (ON_SubDVertexTag::Smooth == vertex_tag)
+  {
     crease_edge_count = 0;
+  }
   else if (ON_SubDVertexTag::Crease == vertex_tag)
+  {
+    if (global_vertex_sharpness > 0.0)
+    {
+      if (sharp_edge_end_count <= 0)
+      {
+        // no edges have nonzero end sharpness at this vertex
+        // If this isn't the tricky 2 sector crease vertex case, then the vertex sharpness is zero.
+        return global_vertex_sharpness;
+      }
+
+      if (global_vertex_sharpness > maximum_edge_end_sharpness)
+      {
+        // This happens when the sharp edges attached to the vertex
+        // have variable sharpness with 0 at the vertex
+        // and nonzero sharpness at the other ends.
+        return global_vertex_sharpness;
+      }
+    }
+
     crease_edge_count = 2;
+  }
   else if (ON_SubDVertexTag::Dart == vertex_tag)
+  {
     crease_edge_count = 1;
+  }
   else
   {
     ON_SUBD_ERROR("vertex_tag parameter is invalid or unset.");
@@ -4716,10 +4766,86 @@ unsigned int ON_SubD::ClearEdgeSharpness()
 }
 
 
+double ON_SubDVertex::Internal_CreaseSectorVertexSharpnessForExperts() const
+{
+  return (ON_SubDVertexTag::Crease == m_vertex_tag) ? m_crease_sector_vertex_sharpness : 0.0;
+}
+
+void ON_SubDVertex::Internal_UpdateCreaseSectorVertexSharpnessForExperts(double crease_sector_vertex_sharpness) const
+{
+  // NOTE WELL:
+  // 
+  if (ON_SubDVertexTag::Crease == m_vertex_tag && crease_sector_vertex_sharpness > 0.0 && ON_SubDEdgeSharpness::IsValidValue(crease_sector_vertex_sharpness,false))
+    this->m_crease_sector_vertex_sharpness = (float)crease_sector_vertex_sharpness;
+  else
+    this->m_crease_sector_vertex_sharpness = 0.0f;
+}
+
 double ON_SubDVertex::VertexSharpness() const
 {
-  ON_3dPoint sharp_subdivision_point;
-  return GetSharpSubdivisionPoint(sharp_subdivision_point);
+  // NOTE WELL:
+
+  // For performance reasone in calculating limit surface meshes,
+  // the code in this function does the same calculation and
+  // returns the same value as
+  //
+  //  ON_3dPoint sharp_subdivision_point;
+  //  return GetSharpSubdivisionPoint(sharp_subdivision_point);
+  //
+  //  ALWAYS CHANGE THE CODE IN ON_SubDVertex::GetSharpSubdivisionPoint() first
+  //  and then update this function as needed.
+
+
+  double vertex_sharpness;
+  if (this->IsSmoothOrDartOrCrease() && nullptr != m_edges)
+  {
+    unsigned int sharp_edge_count = 0;
+    double max_end_sharpeness = 0.0;
+
+    for (unsigned short vei = 0; vei < m_edge_count; ++vei)
+    {
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
+      if (nullptr == e)
+        continue;
+      // The edge is has a smooth tag and at leas one end has sharpness > 0.
+      // For variable edge sharpness, s can be zero at an end.
+      const double s = e->EndSharpness(this);
+      if (s > 0.0)
+      {
+        if (s > max_end_sharpeness)
+          max_end_sharpeness = s;
+        ++sharp_edge_count;
+      }
+    }
+
+    // In the low level evaluation code, this function is called
+    // when the sector center vertex is the original in the entire
+    // SubD. That insures crease_sector_vertex_sharpness is accurate.
+    // It's updated on the original SubD so that when the sector subset
+    // is created, the value is copied.
+    const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
+    vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, crease_sector_vertex_sharpness, sharp_edge_count, max_end_sharpeness);
+    this->Internal_UpdateCreaseSectorVertexSharpnessForExperts(vertex_sharpness);
+  }
+  else
+  {
+    vertex_sharpness = 0.0;
+  }
+  
+
+  // DEBUG TEST to make sure the condtion descried in the comment above is satisfied.
+  // DO NOT COMMIT THIS CODE - IT IS FOR TESTING WHILE DEVELOPING
+  //  ON_3dPoint sharp_subdivision_point;
+  //  const double check = GetSharpSubdivisionPoint(sharp_subdivision_point);
+  //  if (false == (check == vertex_sharpness))
+  //  {
+  //#if !defined(ON_DEBUG)
+  //#error Read comment above - do not commit this code uncommented.
+  //#endif
+  //    ON_SUBD_ERROR("The code in \"double ON_SubDVertex::VertexSharpness() const\" is wrong.");
+  //  }
+
+  return vertex_sharpness;
 }
 
 double ON_SubDVertex::GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_point) const
@@ -4785,6 +4911,14 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
   // When the returned vertex sharpness is > 0, the vertex subdivision point
   // (1-s)*(ordinary subdivision point) + s*sharp_subdivision_point,
   // where s = min(returned vertex sharpness, 1).
+  //
+
+  // NOTE WELL:
+  // The double returned by ON_SubDVertex::VertexSharpness() must
+  // always be identical to the double returned by this funciton.
+  //
+  //  ALWAYS CHANGE THE CODE IN ON_SubDVertex::GetSharpSubdivisionPoint() first
+  //  and then update ON_SubDVertex::VertexSharpness() as needed.
 
   count = 0;
   v[0] = v[1] = v[2] = nullptr;
@@ -4796,6 +4930,9 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
     double max_end_sharpeness = 0.0;
     const ON_SubDVertex* other_v[2] = {};
 
+    // NOTE WELL:
+    // In low level evaluation code, the edges are only those in the sector
+    // being evaluated. See RH-76871 for an example
     for (unsigned short vei = 0; vei < m_edge_count; ++vei)
     {
       const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(m_edges[vei].m_ptr);
@@ -4824,10 +4961,18 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
       }
     }
 
-    const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, sharp_edge_count, max_end_sharpeness);
+    // In the low level evaluation code, this function is called
+    // when the sector center vertex is the original in the entire
+    // SubD. That insures crease_sector_vertex_sharpness is accurate.
+    // It's updated on the original SubD so that when the sector subset
+    // is created, the value is copied.
+    const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
+    const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, crease_sector_vertex_sharpness, sharp_edge_count, max_end_sharpeness);
+    this->Internal_UpdateCreaseSectorVertexSharpnessForExperts(vertex_sharpness);
+
     if (vertex_sharpness > 0.0)
-    {
-      if (2 == other_v_count && nullptr != other_v[0] && nullptr != other_v[1])
+    {      
+      if (sharp_edge_count > 0 && 2 == other_v_count && nullptr != other_v[0] && nullptr != other_v[1])
       {
         // 2 creases and sharps - "crease" subdivision point
         c[0] = 0.75; 
@@ -4840,7 +4985,17 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
       }
       else
       {
-        // 3 or more creases and sharps - "corner" subdivision point
+        // Use "corner" subdivision point as the sharp contribution.
+        // There are two possibilities:
+        // 
+        // A) (sharp_edge_count > 0 and other_v_count >= 3)
+        // At least one sharp edge and a total of 3 or more creases and sharps.
+        // 
+        // B) (sharp_edge_count = 0, other_v_count = 2, tag = ON_SubDVertexTag::Crease)
+        // Two creases an no sharps at an interior crease vertex has sharp edges in one
+        // sector and no sharp edges in the other sector and this vertex
+        // is the sector center in low level evaluation code that stores only the
+        // sector components. See RH-76871 for an example.
         c[0] = 1.0;
         v[0] = this;
         count = 1;
@@ -9898,6 +10053,7 @@ unsigned int ON_SubDLevel::DumpTopology(
         );
       if (v->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", v->m_group_id);      
+      //s += ON_String::FormatToString(" CRC32=%u", v->TopologyCRC32(true));
       text_log.PrintString(s);
       text_log.PrintNewLine();
     }
@@ -10120,6 +10276,8 @@ unsigned int ON_SubDLevel::DumpTopology(
       }
       s += " )";
 
+      //s += ON_String::FormatToString(" CRC32=%u", e->TopologyCRC32(true));
+
       if (e->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", e->m_group_id);
 
@@ -10269,6 +10427,8 @@ unsigned int ON_SubDLevel::DumpTopology(
     else
     {
       ON_String s = ON_String::FormatToString("f%u:", f->m_id);
+
+      //s += ON_String::FormatToString(" CRC32=%u", f->TopologyCRC32(true));
 
       if (f->m_group_id > 0)
         s += ON_String::FormatToString(" group_id=%u", f->m_group_id);
@@ -13485,7 +13645,7 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     else
     {
       // error:
-      //   Both ends of a smooth vertex are tagged
+      //   Both ends of a smooth edge are tagged and coefficients are not ignored,
       //   or coefficients are incorrectly set
       //   or ...
       return ON_SubDEdge_GetSubdivisionPointError(this, subdivision_point, edgeP, true);
@@ -14217,7 +14377,8 @@ bool ON_SubDVertex::GetSubdivisionPoint(
   return false;
 }
 
-bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[3]) const
+bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(
+  double subdivision_point[3]) const
 {
   // This function is used to convert an arbitrary control polygon into the
   // "level 1" subD.  It cannot use the faster sub-D formulas because
@@ -14303,8 +14464,11 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(double subdivision_poin
     {
       // We found the two crease edges that share this crease vertex.
       ON_3dPoint sharp_subdivision_point = ON_3dPoint::NanPoint;
+
+      const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
+
       const double vertex_sharpness 
-        = bSharpEdges
+        = (bSharpEdges || crease_sector_vertex_sharpness > 0.0)
         ? this->GetSharpSubdivisionPoint(sharp_subdivision_point)
         : 0.0;
       if (vertex_sharpness >= 1.0)
@@ -19486,7 +19650,7 @@ ON_SubDVertexQuadSector::~ON_SubDVertexQuadSector()
 void ON_SubDVertexQuadSector::Internal_CopyFrom(const ON_SubDVertexQuadSector& src)
 {
   const ON_SubDVertexTag center_vertex_tag = src.CenterVertexTag();
-  if (false == this->Initialize(center_vertex_tag, src.SectorFaceCount(), nullptr, nullptr))
+  if (false == this->Initialize(center_vertex_tag, src.CenterVertexSharpness(), src.SectorFaceCount(), nullptr, nullptr))
     return;
 
   if ( ON_SubDVertexTag::Corner == center_vertex_tag)
@@ -19539,6 +19703,7 @@ ON_SubDVertexQuadSector& ON_SubDVertexQuadSector::operator=(const ON_SubDVertexQ
 
 bool ON_SubDVertexQuadSector::Initialize(
   ON_SubDVertexTag center_vertex_tag,
+  double center_vertex_sharpness,
   unsigned sector_face_count,
   const ON_3dPoint* sector_control_net_points,
   const ON_SubDEdgeSharpness* center_edge_sharpnesses
@@ -19647,55 +19812,33 @@ bool ON_SubDVertexQuadSector::Initialize(
     }
   }
 
-  for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
-  {
-    m_v[vi].UnsetControlNetPoint();
-    m_v[vi].m_id = vi + 1U;
-  }
-
-  for (unsigned ei = 0; ei < sector_edge_count; ++ei)
-  {
-    m_e[ei].m_id = ei + 1U;
-  }
-
-  for (unsigned fi = 0; fi < sector_face_count; ++fi)
-  {
-    m_f[fi].m_id = fi + 1U;
-  }
-
-  if (false == SetCenterVertexTag(center_vertex_tag))
-  {
-    this->Internal_Destroy();
-    return false;
-  }
-
+  // 2024-01-12, Pierre:
+  // Move up code setting control net points and edge sharpnesses.
+  // Remove code that was copied below from SetCenterVertexTagAndCenterVertexEdgesTags,
+  // that is not needed if sector_control_net_points and center_edge_sharpnesses are 
+  // properly set before the call to SetCenterVertexTagAndCenterVertexEdgesTags.
   if (nullptr != sector_control_net_points)
   {
     for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
     {
       const ON_3dPoint P = sector_control_net_points[vi];
-      if ( P.IsValid())
-        m_v[vi].SetControlNetPoint(P,false);
+      if (P.IsValid())
+        m_v[vi].SetControlNetPoint(P, false);
+      else
+        m_v[vi].UnsetControlNetPoint();
+      m_v[vi].m_id = vi + 1U;
     }
-
-
-    if (ON_SubDVertexTag::Corner == center_vertex_tag)
+  }
+  else
+  {
+    for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
     {
-      // The sector coefficient on smooth edges ending at the center vertex depends on the
-      // angle bewteen the bounding crease edges.
-      ON_SubDEdge* creases[2] = { &m_e[0], &m_e[m_sector_face_count] };
-      const bool bValidEdges = creases[0]->ControlNetLine().IsValid() && creases[1]->ControlNetLine().IsValid();
-      const double angle_radians
-        = bValidEdges
-        ? ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(ON_SubDEdgePtr::Create(creases[0], 0), ON_SubDEdgePtr::Create(creases[1], 0))
-        : ON_HALFPI;
-      const double sector_coefficient = ON_SubDSectorType::CornerSectorCoefficient(m_sector_face_count, angle_radians);
-      this->m_sector_coefficient = sector_coefficient;
-      for ( unsigned ei = 1; ei < m_sector_face_count; ++ei)
-        m_e[ei].m_sector_coefficient[0] = sector_coefficient;
+      m_v[vi].UnsetControlNetPoint();
+      m_v[vi].m_id = vi + 1U;
     }
   }
 
+  center_vertex_sharpness = ON_SubDEdgeSharpness::Sanitize(center_vertex_sharpness, 0.0);
   if (nullptr != center_edge_sharpnesses)
   {
     this->m_maximum_edge_end_sharpness = 0.0;
@@ -19708,12 +19851,42 @@ bool ON_SubDVertexQuadSector::Initialize(
       else
       {
         m_e[ei].SetSharpnessForExperts(center_edge_sharpnesses[ei]);
-        const double x = m_e[ei].Sharpness(false).MaximumEndSharpness();
+        const ON_SubDEdgeSharpness es = m_e[ei].Sharpness(false);
+        const double x = es.MaximumEndSharpness();
         if (x > this->m_maximum_edge_end_sharpness)
           this->m_maximum_edge_end_sharpness = x;
+        const double y = m_e[ei].EndSharpness(&m_v[0]);
+        if (y > center_vertex_sharpness)
+          center_vertex_sharpness = y;
       }
+      m_e[ei].m_id = ei + 1U;
+    }
+    for (unsigned ei = m_center_vertex_edge_count; ei < sector_edge_count; ++ei)
+    {
+      m_e[ei].m_id = ei + 1U;
     }
   }
+  else
+  {
+    for (unsigned ei = 0; ei < sector_edge_count; ++ei)
+    {
+      m_e[ei].m_id = ei + 1U;
+    }
+  }
+
+  for (unsigned fi = 0; fi < sector_face_count; ++fi)
+  {
+    m_f[fi].m_id = fi + 1U;
+  }
+
+  if (false == SetCenterVertexTagAndCenterVertexEdgesTags(center_vertex_tag))
+  {
+    this->Internal_Destroy();
+    return false;
+  }
+
+  this->SetCenterVertexSharpness(center_vertex_sharpness);
+  m_v[0].Internal_UpdateCreaseSectorVertexSharpnessForExperts(this->CenterVertexSharpness());
 
   m_r[0] = ON_SubDComponentPtr::Create(&m_v[0]);
   for (unsigned ri = 1u; ri < sector_vertex_count; ri += 2u)
@@ -19726,18 +19899,20 @@ bool ON_SubDVertexQuadSector::Initialize(
 
 bool ON_SubDVertexQuadSector::Initialize(
   ON_SubDVertexTag center_vertex_tag,
+  double center_vertex_sharpness,
   unsigned sector_face_count,
   const ON_SimpleArray<ON_3dPoint>& sector_control_net_points
 )
 {
   const unsigned sector_vertex_count = ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag, sector_face_count);
   return (sector_vertex_count > 0U && sector_vertex_count == sector_control_net_points.UnsignedCount())
-    ? this->Initialize(center_vertex_tag, sector_face_count, sector_control_net_points.Array(), nullptr)
+    ? this->Initialize(center_vertex_tag, center_vertex_sharpness, sector_face_count, sector_control_net_points.Array(), nullptr)
     : false;
 }
 
 bool ON_SubDVertexQuadSector::Initialize(
   ON_SubDVertexTag center_vertex_tag,
+  double center_vertex_sharpness,
   unsigned sector_face_count,
   const ON_SimpleArray<ON_3dPoint>& sector_control_net_points,
   const ON_SimpleArray<ON_SubDEdgeSharpness>& center_edge_sharpnesses
@@ -19750,14 +19925,14 @@ bool ON_SubDVertexQuadSector::Initialize(
     && (sector_vertex_count == sector_control_net_points.UnsignedCount() || 0 == sector_control_net_points.UnsignedCount())
     && (center_vertex_edge_count == center_edge_sharpnesses.UnsignedCount() || 0 == center_edge_sharpnesses.UnsignedCount())
     )
-    ? this->Initialize(center_vertex_tag, sector_face_count, 
-      (sector_vertex_count == sector_control_net_points.UnsignedCount()) ? sector_control_net_points.Array() : nullptr,
+    ? this->Initialize(center_vertex_tag, center_vertex_sharpness, sector_face_count,
+      (sector_vertex_count == sector_control_net_points.UnsignedCount()) ? sector_control_net_points.Array() : nullptr,      
       (center_vertex_edge_count == center_edge_sharpnesses.UnsignedCount()) ? center_edge_sharpnesses.Array() : nullptr
     )
     : false;
 }
 
-double ON_SubDVertexQuadSector::MaximumCenterVertexEdgeEndSharpness() const
+double ON_SubDVertexQuadSector::MaximumRadialEdgeEndSharpness() const
 {
   if (false == (this->m_maximum_edge_end_sharpness >= 0.0))
   {
@@ -19778,7 +19953,24 @@ double ON_SubDVertexQuadSector::MaximumCenterVertexEdgeEndSharpness() const
   return this->m_maximum_edge_end_sharpness;
 }
 
-bool ON_SubDVertexQuadSector::SetCenterVertexTag(ON_SubDVertexTag center_vertex_tag)
+double ON_SubDVertexQuadSector::CenterVertexSharpness() const
+{
+  if (false == ON_SubDEdgeSharpness::IsValidValue(this->m_center_vertex_sharpness, false))
+  {
+    const ON_SubDVertex* v = this->CenterVertex();
+    this->m_center_vertex_sharpness = (nullptr != v) ? v->VertexSharpness() : 0.0;
+  }
+  return this->m_center_vertex_sharpness;
+}
+
+double ON_SubDVertexQuadSector::MaximumSharpness() const
+{
+  const double max_es = this->MaximumRadialEdgeEndSharpness();
+  const double max_vs = this->CenterVertexSharpness();
+  return (max_vs > max_es) ? max_vs : max_es;
+}
+
+bool ON_SubDVertexQuadSector::SetCenterVertexTagAndCenterVertexEdgesTags(ON_SubDVertexTag center_vertex_tag)
 {
   this->m_sector_coefficient = ON_DBL_QNAN;
   bool bValidTag = false;
@@ -19862,7 +20054,19 @@ bool ON_SubDVertexQuadSector::SetCenterVertexTag(ON_SubDVertexTag center_vertex_
     }
   }
 
+  // 2024-01-12, Pierre, RH-79544: There is no reason not to set these tags properly, so do it
+  if (creases[0] != nullptr) 
+    m_v[1].m_vertex_tag = ON_SubDVertexTag::Crease;
+  if (creases[1] != nullptr) 
+    m_v[m_center_vertex_edge_count + m_sector_face_count].m_vertex_tag = ON_SubDVertexTag::Crease;
+
   return true;
+}
+
+bool ON_SubDVertexQuadSector::SetCenterVertexSharpness(double center_vertex_sharpness)
+{
+  this->m_center_vertex_sharpness = ON_SubDEdgeSharpness::Sanitize(center_vertex_sharpness, 0.0);
+  return ON_SubDEdgeSharpness::IsValidValue(this->m_center_vertex_sharpness, false);
 }
 
 bool ON_SubDVertexQuadSector::GetSectorControlNetPoints(
@@ -19881,13 +20085,20 @@ bool ON_SubDVertexQuadSector::GetSectorControlNetPoints(
 }
 
 bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(
+  double center_vertex_sharpness,
   const ON_SimpleArray<ON_SubDComponentPtr>& sector_ring_components
 )
 {
-  return this->InitializeFromSubdividedSectorComponents(sector_ring_components.Array(), sector_ring_components.Count());
+  return this->InitializeFromSubdividedSectorComponents(
+    center_vertex_sharpness,
+    sector_ring_components.Array(), 
+    sector_ring_components.Count());
 }
 
-bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(const ON_SubDComponentPtr* sector_ring_components, size_t sector_components_count)
+bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(
+  double center_vertex_sharpness,
+  const ON_SubDComponentPtr* sector_ring_components, 
+  size_t sector_components_count)
 {
   for (;;)
   {
@@ -19906,6 +20117,13 @@ bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(const ON_
     }
 
     const ON_SubDVertexTag center_vertex_tag = (nullptr != center_vertex) ? center_vertex->m_vertex_tag : ON_SubDVertexTag::Unset;
+
+    if (ON_SubDVertexTag::Crease == center_vertex_tag)
+    {
+      const double y = center_vertex->VertexSharpness();
+      if (y > center_vertex_sharpness)
+        center_vertex_sharpness = y;
+    }
 
     unsigned min_ring_count = 0U;
     switch (center_vertex_tag)
@@ -19953,7 +20171,9 @@ bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(const ON_
         // check that there will not be infinite recursion into this roll clause 
         // and then use local_sector_ring_components[].
         if (local_sector_ring_components[0].IsVertex() && local_sector_ring_components[1].EdgePtr().EdgeIsCrease())
-          return this->InitializeFromSubdividedSectorComponents(local_sector_ring_components);
+        {
+          return this->InitializeFromSubdividedSectorComponents(center_vertex_sharpness, local_sector_ring_components);
+        }
 
         break;
       }
@@ -20041,7 +20261,7 @@ bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorComponents(const ON_
 
     const unsigned sector_face_count = (sector_ring_component_count - 1U) / 2U;
 
-    if (false == this->Initialize(center_vertex_tag, sector_face_count, ring_points, ring_sharpness))
+    if (false == this->Initialize(center_vertex_tag, ON_SubDEdgeSharpness::Sanitize(center_vertex_sharpness - 1.0, 0.0), sector_face_count, ring_points, ring_sharpness))
       break;
 
     if (sector_ring_component_count != this->SectorVertexCount())
@@ -20130,14 +20350,13 @@ bool ON_SubDVertexQuadSector::InitializeFromSubdividedSectorIterator(const ON_Su
     }
 
     if ((bSmoothOrDartSector ? 1U : 0U) == (sector_ring_components.UnsignedCount() % 2U))
-      return this->InitializeFromSubdividedSectorComponents(sector_ring_components);
+      return this->InitializeFromSubdividedSectorComponents(center_vertex->VertexSharpness(), sector_ring_components);
 
     break;
   }
 
   this->Internal_Destroy();
   return ON_SUBD_RETURN_ERROR(false);
-
 }
 
 bool ON_SubDVertexQuadSector::Subdivide()
@@ -20174,19 +20393,42 @@ bool ON_SubDVertexQuadSector::Subdivide()
     R[2U + 2U * fi] = m_f[fi].SubdivisionPoint();
   }
 
+  const double crease_sector_vertex_sharpness0 = m_v[0].Internal_CreaseSectorVertexSharpnessForExperts();
+
+  const double center_vertex_sharpness0 = this->CenterVertexSharpness();
+
+  double center_vertex_sharpness1 = 0.0;
+
   // subdivide the sector
   const unsigned subdivision_level = center_vertex->SubdivisionLevel() + 1U;
   for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
   {
     m_v[vi].ClearSavedSubdivisionPoints(); // <- 2023-May-5 Dale Lear. This line fixes RH-74520.
+    m_v[vi].Internal_UpdateCreaseSectorVertexSharpnessForExperts(0.0);
     m_v[vi].SetControlNetPoint(R[vi],false);
     m_v[vi].SetSubdivisionLevel(subdivision_level);
     if (1 == vi)
       m_v[vi].m_vertex_tag = bCreaseOrCornerOrDartSector ? ON_SubDVertexTag::Crease : ON_SubDVertexTag::Smooth;
-    else if (vi == center_vertex_edge_count)
+    // 2024-01-12, Pierre, RH-79544: Fix wrong vertex getting tagged Crease (was vi == center_vertex_edge_count)
+    else if (vi + 1U == sector_vertex_count)  // or vi == 1 + 2 * (center_vertex_edge_count - 1)
       m_v[vi].m_vertex_tag = bCreaseOrCornerSector ? ON_SubDVertexTag::Crease : ON_SubDVertexTag::Smooth;
     else if (vi > 0U)
       m_v[vi].m_vertex_tag = ON_SubDVertexTag::Smooth;
+    else
+    {
+      // vi = 0 and m_v[0] is the center vertex
+      if (crease_sector_vertex_sharpness0 > 0.0)
+      {
+        // subdivide m_v[0] crease sector sharpness sharpness.
+        const double crease_sector_vertex_sharpness1 = ON_SubDEdgeSharpness::Sanitize(crease_sector_vertex_sharpness0 - 1.0);
+        if (crease_sector_vertex_sharpness1 > 0.0)
+        {
+          m_v[0].Internal_UpdateCreaseSectorVertexSharpnessForExperts(crease_sector_vertex_sharpness1);
+          if (center_vertex_sharpness1 < crease_sector_vertex_sharpness1)
+            center_vertex_sharpness1 = crease_sector_vertex_sharpness1;
+        }
+      }
+    }
   }
 
   this->m_maximum_edge_end_sharpness = 0.0;
@@ -20206,8 +20448,11 @@ bool ON_SubDVertexQuadSector::Subdivide()
       if (x > 0.0)
       {
         m_e[ei].SetSharpnessForExperts(s[ei]);
-        if (x > this->m_maximum_edge_end_sharpness)
+        if (this->m_maximum_edge_end_sharpness < x)
           this->m_maximum_edge_end_sharpness = x;
+        const double y = m_e[ei].EndSharpness(&m_v[0]);
+        if (center_vertex_sharpness1 < y)
+          center_vertex_sharpness1 = y;
       }
       else
         m_e[ei].ClearSharpnessForExperts();
@@ -20222,6 +20467,8 @@ bool ON_SubDVertexQuadSector::Subdivide()
     m_e[ei].SetSubdivisionLevel(subdivision_level);
   }
 
+  this->SetCenterVertexSharpness(center_vertex_sharpness1);
+
   for (unsigned fi = 0; fi < sector_face_count; ++fi)
   {
     m_f[fi].ClearSavedSubdivisionPoints();
@@ -20231,10 +20478,10 @@ bool ON_SubDVertexQuadSector::Subdivide()
   return true;
 }
 
-bool ON_SubDVertexQuadSector::SubdivideUntilEdgeSharpnessIsZero()
+bool ON_SubDVertexQuadSector::SubdivideUntilSharpnessIsZero()
 {
   bool rc = true;
-  double maxs = this->MaximumCenterVertexEdgeEndSharpness();
+  double maxs = this->MaximumSharpness();
   if (maxs > 0.0)
   {
     // for(i < n) used to prevent infinite looping when this content is not valid.
@@ -20242,7 +20489,7 @@ bool ON_SubDVertexQuadSector::SubdivideUntilEdgeSharpnessIsZero()
     for (unsigned i = 0; i < n && maxs > 0.0 && rc; ++i)
     {
       rc = Subdivide();
-      maxs = this->MaximumCenterVertexEdgeEndSharpness();
+      maxs = this->MaximumSharpness();
     }
     if (rc && false == (0.0 == maxs))
       rc = false;

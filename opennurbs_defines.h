@@ -108,6 +108,12 @@
 #define ON_DECL __attribute__ ((visibility ("default")))
 #define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
 
+#elif defined(ON_RUNTIME_LINUX)
+/* Linux defaults to exporting all functions*/
+#define ON_CLASS
+#define ON_DECL
+#define ON_EXTERN_DECL
+
 #else
 #error fill in your compiler dynamic linking decorations
 #endif
@@ -1557,7 +1563,7 @@ public:
       ON::AngleUnitSystem us_to
       );
 
-
+#pragma region RH_C_SHARED_ENUM [ON::EarthCoordinateSystem] [Rhino.DocObjects.EarthCoordinateSystem] [byte]
   /// <summary>
   /// ON::EarthCoordinateSystem identifies the standard used to define Earth latitude, longitude, and elevation coordinates.
   /// </summary>
@@ -1593,6 +1599,8 @@ public:
     ///</summary>
     EGM2008 = 6
   };
+
+#pragma endregion
 
   static ON::EarthCoordinateSystem EarthCoordinateSystemFromUnsigned(
     unsigned int earth_coordinte_system_as_unsigned

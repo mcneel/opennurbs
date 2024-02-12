@@ -358,10 +358,12 @@ static void EnsureNameValid(ON_wString& name)
     wchar_t c = name_copy[i];
     if (first)
     {
-      if ((c == L' ' )                ) continue;
-      if ((c == L'(' ) || (c == L')' )) continue;
-      if ((c == L'[' ) || (c == L']' )) continue;
-      if ((c == L'{' ) || (c == L'}' )) continue;
+      if ( c == L' '                ) continue;
+      if ((c == L'(') || (c == L')')) continue;
+      if ((c == L'[') || (c == L']')) continue;
+      if ((c == L'{') || (c == L'}')) continue;
+
+      first = false;
     }
 
     // Replace control codes with a space. Includes CR/LF.
@@ -369,7 +371,6 @@ static void EnsureNameValid(ON_wString& name)
       c = L' ';
 
     name += c;
-    first = false;
   }
 
   // Also disallow ':' inside the name.

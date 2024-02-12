@@ -4198,6 +4198,12 @@ float ON_TripleProduct( const float* a, const float* b, const float* c )
 // ON_2dPoint
 //
 
+
+bool ON_2dPoint::IsCoincident(const ON_2dPoint& p) const
+{
+  return ON_PointsAreCoincident(2, false, *this, p);
+}
+
 ON_2dPoint::ON_2dPoint( const float* p )
 {
   if (p) {
@@ -6027,7 +6033,7 @@ bool ON_2dVector::PerpendicularTo(
 
 double ON_2dVector::SignedAngle(const ON_2dVector& A, const ON_2dVector& B)
 {
-  return atan2(A.x * B.x + A.y * B.y, -A.x * B.y + A.y * B.x) ;
+  return atan2(-A.x * B.y + A.y * B.x, A.x * B.x + A.y * B.y);
 }
 
 ON_2dVector operator*(int i, const ON_2dVector& v)

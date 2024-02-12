@@ -387,7 +387,20 @@ public:
   /// </summary>
   static const ON_SubDEdgeSharpness Nan;
 
-
+  /// <summary>
+  /// Create a text string describing the sharpness as a percentage.
+  /// If the sharpness is constant, and single percentage is returned.
+  /// If the sharpness is variable, percentage range returned.
+  /// If the sharpness is not valid, a warning sign is returned.
+  /// </summary>
+  /// <param name="bOrderMinToMax">
+  /// If the sharpness is not constant and bOrderMinToMax is true, then
+  /// the string has the format min%-max%. 
+  /// If the sharpness is not constant and bOrderMinToMax is false, then
+  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
+  /// </param>
+  /// <returns>A string describing the sharpness as a percentage range.</returns>
+  const ON_wString ToPercentageText(bool bOrderMinToMax) const;
 
   /// <summary>
   /// Create a text string describing the sharpness as a percentage.
@@ -408,27 +421,11 @@ public:
   /// <param name="sharpness"></param>
   /// <param name="crease_percentage"></param>
   /// <returns>
-  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpenss/ON_SubDEdgeSharpness::MaximumValue is returned.
-  /// If sharpenss = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpness/ON_SubDEdgeSharpness::MaximumValue is returned.
+  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   static double ToPercentage(double sharpness, double crease_percentage);
-
-  /// <summary>
-  /// Create a text string describing the sharpness as a percentage.
-  /// If the sharpenss is constant, and single percentage is returned.
-  /// If the sharpenss is varable, percentage range returned.
-  /// If the sharpness is not valid, a warning sign is returned.
-  /// </summary>
-  /// <param name="bVarableAsIncreasing">
-  /// If the sharpness is not contanst and bVarableMinToMax is true, then
-  /// the string has the format min%-max%. 
-  /// If the sharpness is not contanst and bVarableMinToMax is false, then
-  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
-  /// </param>
-  /// <returns>A string describing the sharpness as a percentage range.</returns>
-  const ON_wString ToPercentageText( bool bVarableMinToMax ) const;
-
 
   /// <returns>
   /// If the sharpness value is valid and contant, returns true.
@@ -823,6 +820,14 @@ public:
   /// <returns>Sharpness or ON_DBL_QNAN if end_index is out of range.</returns>
   double EndSharpness(int end_index) const;
 
+  ON_DEPRECATED_MSG("Use the version with a global_vertex_sharpness parameter.")
+  static double VertexSharpness(
+    ON_SubDVertexTag vertex_tag,
+    unsigned sharp_edge_end_count,
+    double maximum_edge_end_sharpness
+  );
+
+
   /// <summary>
   /// Calculate the vertex sharpness from the attached sharp edge information.
   /// Note that vertices with a corner tag always have zero sharpness.
@@ -832,18 +837,31 @@ public:
   /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
   /// COrner vertices always have sharpness = 0.
   /// </param>
+  /// <param name="global_vertex_sharpness">
+  /// The cases where maximum_edge_end_sharpness arise only when the vertex_tag is crease,
+  /// a subset of a SubD is being used to calculate maximum_edge_end_sharpness,
+  /// the crease vertex has two sectors and the maximum_edge_end_sharpness is different
+  /// for the two sectors, and only one sector of a 2 sector crease vertex is in the subset.
+  /// This is a very specialized situation thot occurs only in low level SubD evaluation
+  /// code. In all other cases, this value doesn't matter as long
+  /// as it is 0 &lt;= global_vertex_sharpness &lt;= maximum_edge_end_sharpness.
+  /// When in doubt pass 0.0.
+  /// </param>
   /// <param name="sharp_edge_end_count">
   /// Number of sharp edges attached to the vertex that have 
-  /// nonzero end sharpness at the vertex.</param>
+  /// nonzero end sharpness at the vertex.
+  /// </param>
   /// <param name="maximum_edge_end_sharpness">
   /// The largest sharp edge end sharpness at the vertex.
   /// </param>
   /// <returns></returns>
   static double VertexSharpness(
     ON_SubDVertexTag vertex_tag,
+    double global_vertex_sharpness,
     unsigned sharp_edge_end_count,
     double maximum_edge_end_sharpness
   );
+
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
@@ -2039,7 +2057,25 @@ public:
   // or x = ON_SubDComponentPtr::Create(...).
   ON__UINT_PTR m_ptr;
 
-  static const ON_SubDComponentPtr Null; //  // nullptr, type = unset, mark = 0
+  /// <summary>
+  /// nullptr, type = Unset, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr Null; 
+
+  /// <summary>
+  /// nullptr, type = Vertex, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullVertex;
+
+  /// <summary>
+  /// nullptr, type = Edge, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullEdge;
+
+  /// <summary>
+  /// nullptr, type = Face, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullFace;
 
   /// <summary>
   /// ON_SubDComponentPtr::Type identifies the type of subdivision component referenced by
@@ -2080,6 +2116,15 @@ public:
     Dictionary compares type and ComponentBase() pointer as an unsigned.
   */
   static int CompareComponent(
+    const ON_SubDComponentPtr* a,
+    const ON_SubDComponentPtr* b
+  );
+
+  /*
+  Description:
+    Dictionary compares type and ComponentBase() id.
+  */
+  static int CompareComponentId(
     const ON_SubDComponentPtr* a,
     const ON_SubDComponentPtr* b
   );
@@ -5320,7 +5365,6 @@ public:
     unsigned int facecount_z,
     ON_SubD* destination_subd
   );
-
 
 
   /*
@@ -12837,6 +12881,36 @@ public:
 
   ON_BoundingBox ControlNetBoundingBox() const;
 
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// See also ON_SubDVertex::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the vertex's id and the ids of the edges and faces attached to this vertex.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
+
 
 public:
   const ON_COMPONENT_INDEX ComponentIndex() const;
@@ -12855,8 +12929,55 @@ private:
   unsigned char  m_reserved1 = 0;
 private:
   unsigned short  m_reserved2 = 0;
+
 private:
-  unsigned int m_reserved3 = 0;
+  // The vertex sharpness is the maximum edge end sharpenss of the
+  // ends attached to the vertex. When a SubD is complete, 
+  // all edges are present and the value can be calculated as needed.
+  // 
+  // In low level subdivision point evaluation code, a subset of the SubD containing 
+  // only the components from the sector being evaluated is used. There is one situation 
+  // where m_crease_sector_vertex_sharpness needs to be set to properly
+  // evaluate the subdivision points and limit points.
+  // 1) The vertex is an interior crease 
+  // (vertex has a crease tag and 2 sectors - implies both crease will have 2 faces).
+  // 2) The sharp edges in the two sectors generate different vertex sharpnesses.
+  // Again, this only occurs in low level evauation code.
+  // This value should be zero or be the same as the maximum sharpness 
+  // of all smooth edge ends at this vertex in the complete SubD.
+  // The value is mutable because it is updated in the case above
+  // at appropriate times in the evaluation calculation.
+  // If per vertex sharpness is ever added, that value must be stored someplace else
+  // as, depending on the initial sharpness configuration, this value can be
+  // larger, smaller, or equal to a per vertex sharpness.
+  mutable float m_crease_sector_vertex_sharpness = 0.0;
+
+private:
+
+#if defined(ON_COMPILING_OPENNURBS)
+public:
+  /// <summary>
+  /// This function is for use in ON_SubDVertexQuadSector 
+  /// when a subset of a SubD is being used
+  /// to calculate a global subdivision point. 
+  /// Always use the tools that set edge sharpnesses to
+  /// edit SubD sharpness. Never use this function as
+  /// a way to modify SubD sharpness properties.
+  /// </summary>
+  /// <param name="crease_sector_vertex_sharpness">
+  /// Maximum edge end sharpness at this vertex in the complete SubD.
+  /// </param>
+  void Internal_UpdateCreaseSectorVertexSharpnessForExperts(double crease_sector_vertex_sharpness) const;
+
+  /// <summary>
+  /// This function is for use by experts in low level subdivisino point 
+  /// evaluations when the center vertex is a crease with two sectors.
+  /// </summary>
+  /// <returns>
+  /// The crease sector vertex sharpness.
+  /// </returns>
+  double Internal_CreaseSectorVertexSharpnessForExperts() const;
+#endif
 
 public:
   unsigned short m_edge_count = 0;
@@ -13772,6 +13893,36 @@ public:
 
   const ON_BoundingBox ControlNetBoundingBox() const;
 
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// See also ON_SubDEdge::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the edge's id and the ids of the vertices and faces attached to this edge.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
+
   const ON_Plane CenterFrame(
     ON_SubDComponentLocation subd_appearance
   ) const;
@@ -14371,6 +14522,7 @@ public:
 
   /// <summary>
   /// Get the edge's sharpness at the end with the specified vertex.
+  /// If the edge is a crease, ON_SubDEdgeSharpness::Smooth is returned.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <param name="evi">End index (0=start or 1=end).</param>
@@ -14384,6 +14536,25 @@ public:
     unsigned evi
   ) const;
 
+  /// <summary>
+  /// Get the edge's sharpness at the end with the specified vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="evi">End index (0=start or 1=end).</param>
+  /// <param name="bUseCreaseSharpness">
+  /// If the edge is a crease and bUseCreaseSharpness is false, then ON_SubDEdgeSharpness::Smooth is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// </param>
+  /// <returns>
+  /// If the edge is sharp, the sharpness at the end with the specified by evi is returned.
+  /// If the edge is smooth or a crease, 0 is returned.
+  /// Otherwise, 0.0 is returned.
+  /// </returns>
+  /// <returns>The sharpness at the end of the edge specified by evi.</returns>
+  double EndSharpness(
+    unsigned evi,
+    bool bUseCreaseSharpness
+  ) const;
 
   /// <summary>
   /// Get the edge sharpenss values for the subdivided edge at the specified end of this edge.
@@ -14662,6 +14833,36 @@ public:
   );
 
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// See also ON_SubDFace::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the face's id the ids of the vertices and edges attached to this face.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
 
   /*
   Parameters:

@@ -692,9 +692,9 @@ int ON_SimpleArray<T>::Search( const T* key, int (*compar)(const T*,const T*) ) 
 template <class T>
 int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T*) ) const
 {
-  const T* found = (key&&m_a&&m_count>0) 
+  const T* found = (nullptr != key && nullptr != m_a && m_count>0)
                  ? (const T*)bsearch( key, m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar ) 
-                 : 0;
+                 : nullptr;
 
   // This worked on a wide range of 32 bit compilers.
 
@@ -742,9 +742,9 @@ int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const 
     count = m_count;
   if ( count <= 0 )
     return -1;
-  const T* found = (key&&m_a&&m_count>0) 
+  const T* found = (nullptr != key && nullptr != m_a && count > 0)
                  ? (const T*)bsearch( key, m_a, count, sizeof(T), (int(*)(const void*,const void*))compar ) 
-                 : 0;
+                 : nullptr;
 
   // This worked on a wide range of 32 bit compilers.
 
@@ -782,6 +782,28 @@ int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const 
   }
   return rc;
 }
+
+
+template <class T>
+const T* ON_SimpleArray<T>::BinarySearchPtr(const T* key, int (*compar)(const T*, const T*)) const
+{
+  return 
+    (nullptr != key && nullptr != m_a && m_count > 0)
+    ? (const T*)bsearch(key, m_a, m_count, sizeof(T), (int(*)(const void*, const void*))compar)
+    : nullptr;
+}
+
+template <class T>
+const T* ON_SimpleArray<T>::BinarySearchPtr(const T* key, int (*compar)(const T*, const T*), int count) const
+{
+  if (count > m_count)
+    count = m_count;
+  return 
+    (nullptr != key && nullptr != m_a && count > 0)
+    ? (const T*)bsearch(key, m_a, count, sizeof(T), (int(*)(const void*, const void*))compar)
+    : nullptr;
+}
+
 
 template <class T>
 int ON_SimpleArray<T>::InsertInSortedList(const T& e, int (*compar)(const T*, const T*))

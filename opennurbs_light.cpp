@@ -365,8 +365,9 @@ bool ON_Light::GetTightBoundingBox(
   {
     rc = ON_GetPointListBoundingBox(3, 0, points.Count(), 3,
       (double*)points.Array(),
-      tight_bbox.m_min, tight_bbox.m_max,
-      bGrowBox ? true : false)
+      tight_bbox,
+      bGrowBox ? true : false,
+      xform)
       ? true
       : false;
   }
