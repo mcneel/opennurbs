@@ -3879,19 +3879,29 @@ static bool IsCommaDelimitedDoubleArray(const wchar_t* wsz, int length, int numD
   if ((numDoubles < 1) || (numDoubles > 16))
     return false;
 
-  if (1 == numDoubles)
+  if (1 == numDoubles) // Optimization.
     return ::IsValidRealNumber(wsz, length);
 
+  // Make sure the input buffer ends with a comma; simplifies the following loop.
   ON_wString s(wsz);
   s += L",";
 
+  // Temporary buffer for isolating each 'double' string element.
   constexpr size_t maxChars = 400;
   wchar_t buf[maxChars+1] = { 0 };
+
+  // Use 'p' to scan the input buffer.
   const auto* p = s.Array();
 
   for (int i = 0; i < numDoubles; i++)
   {
-    auto* q = buf;
+    // 4th January 2024 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-79458
+    // If we've reached the end of the input buffer, we've run out of string elements early; fail.
+    if (0 == *p)
+      return false;
+
+    // Copy the next comma-delimited element to buf. (q - buf) is the length copied so far.
+    wchar_t* q = buf;
     while ((*p != L',') && ((q - buf) < maxChars))
       *q++ = *p++;
     *q = 0;
@@ -3901,6 +3911,7 @@ static bool IsCommaDelimitedDoubleArray(const wchar_t* wsz, int length, int numD
     if (len >= maxChars)
       return false;
 
+    // Check that the element in the buffer is a valid real number (double).
     if (!::IsValidRealNumber(buf, int(len)))
       return false;
   }

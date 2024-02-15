@@ -236,10 +236,12 @@ bool ON_NumberFormatter::FormatNumber(
 
         if (0 != numerator)
         {
-          if(bracket_fractions)
+          // RH-80143, no spaces for bracketed (stacked) fractions,
+          // a single space for normal fractions.
+          if (bracket_fractions)
             sFormat2.Format(L"[[%d/%d]]", numerator, denominator);
           else
-            sFormat2.Format(L"%d/%d", numerator, denominator);
+            sFormat2.Format(L" %d/%d", numerator, denominator);
           sFormat += sFormat2;
         }
       }

@@ -1218,6 +1218,182 @@ const ON_BoundingBox ON_SubDFace::ControlNetBoundingBox() const
   return bbox;
 }
 
+const ON_SHA1_Hash ON_SubDVertex::TopologyHash(bool bIncludeSubdivisionProperties) const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateInteger32(m_id);
+  if (bIncludeSubdivisionProperties)
+  {
+    sha1.AccumulateBytes(&this->m_vertex_tag, sizeof(this->m_vertex_tag));
+    sha1.AccumulateDoubleArray(3, this->m_P);
+  }
+
+  if (this->IsCreaseOrCorner())
+    bIncludeSubdivisionProperties = false;
+
+  if (nullptr != this->m_edges)
+  {
+    sha1.AccumulateInteger16(m_edge_count);
+    for (unsigned short vei = 0; vei < m_edge_count; ++vei)
+    {
+      const ON_SubDEdgePtr eptr = this->m_edges[vei];
+      const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+      if (nullptr == e)
+      {
+        sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+      }
+      else
+      {
+        sha1.AccumulateInteger32(e->m_id);
+        sha1.AccumulateInteger32((ON__UINT32)ON_SUBD_EDGE_DIRECTION(eptr.m_ptr));
+        if (bIncludeSubdivisionProperties)
+        {
+          // passing true here includes the edge tag in the hash.
+          const ON_SubDEdgeSharpness s = eptr.RelativeSharpness(true);
+          sha1.AccumulateDouble(s[0]);
+          sha1.AccumulateDouble(s[1]);
+        }
+      }
+    }
+  }
+
+  if (nullptr != this->m_faces)
+  {
+    sha1.AccumulateInteger16(m_face_count);
+    for (unsigned short vfi = 0; vfi < m_face_count; ++vfi)
+    {
+      const ON_SubDFace* f = this->m_faces[vfi];
+      sha1.AccumulateInteger32(nullptr == f ? ON_UNSET_UINT_INDEX : f->m_id);
+    }
+  }
+
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_SubDVertex::TopologyCRC32(bool bIncludeSubdivisionProperties) const
+{
+  return this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0);
+}
+
+const ON_SHA1_Hash ON_SubDEdge::TopologyHash(bool bIncludeSubdivisionProperties) const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateInteger32(m_id);
+  if (bIncludeSubdivisionProperties)
+  {
+    // passing true here includes the edge tag in the hash.
+    const ON_SubDEdgeSharpness s = this->Sharpness(true);
+    sha1.AccumulateDouble(s[0]);
+    sha1.AccumulateDouble(s[1]);
+  }
+  for (unsigned evi = 0; evi < 2; ++evi)
+  {
+    const ON_SubDVertex* v = this->m_vertex[evi];    
+    if (nullptr == v)
+      sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+    else
+    {
+      sha1.AccumulateInteger32(v->m_id);
+      if (bIncludeSubdivisionProperties)
+      {
+        sha1.AccumulateDoubleArray(3, v->m_P);
+        if (v->IsDartOrCreaseOrCorner())
+          sha1.AccumulateDouble(this->m_sector_coefficient[evi]);
+      }
+    }
+  }
+
+  sha1.AccumulateInteger16(this->m_face_count);
+  const ON_SubDFacePtr* ef = this->m_face2;
+  for (unsigned short efi = 0; efi < this->m_face_count; ++efi)
+  {
+    if (2 == efi)
+    {
+      ef = this->m_facex;
+      if (nullptr == ef)
+      {
+        while (efi < this->m_face_count)
+        {
+          sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+          ++efi;
+        }
+        break;
+      }
+    }
+    const ON_SubDFacePtr fptr = *ef++;
+    const ON_SubDFace* f = ON_SUBD_FACE_POINTER(fptr.m_ptr);
+    if (nullptr == f)
+    {
+      sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+    }
+    else
+    {
+      sha1.AccumulateInteger32(f->m_id);
+      sha1.AccumulateInteger32((ON__UINT32)ON_SUBD_FACE_DIRECTION(fptr.m_ptr));
+    }
+  }
+
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_SubDEdge::TopologyCRC32(bool bIncludeSubdivisionProperties) const
+{
+  return this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0);
+}
+
+const ON_SHA1_Hash ON_SubDFace::TopologyHash(bool bIncludeSubdivisionProperties) const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateInteger32(m_id);
+
+  const ON_SubDEdgePtr* fe = m_edge4;
+  for (unsigned short fei = 0; fei < m_edge_count; ++fei)
+  {
+    if (4 == fei)
+    {
+      fe = m_edgex;
+      if (nullptr == fe)
+      {
+        while (fei < this->m_edge_count)
+        {
+          sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+          ++fei;
+        }
+        break;
+      }
+    }
+
+    const ON_SubDEdgePtr eptr = *fe++;
+    const ON_SubDEdge* e = ON_SUBD_EDGE_POINTER(eptr.m_ptr);
+    if (nullptr == e)
+    {
+      sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+    }
+    else
+    {
+      sha1.AccumulateInteger32(e->m_id);
+      const unsigned evi = (unsigned)ON_SUBD_EDGE_DIRECTION(eptr.m_ptr);
+      sha1.AccumulateInteger32(evi);
+      const ON_SubDVertex* v = e->m_vertex[evi];
+      if (nullptr == v)
+        sha1.AccumulateInteger32(ON_UNSET_UINT_INDEX);
+      else
+      {
+        sha1.AccumulateInteger32(v->m_id);
+        if (bIncludeSubdivisionProperties)
+          sha1.AccumulateDoubleArray(3, v->m_P);
+      }
+    }
+  }
+
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_SubDFace::TopologyCRC32(bool bIncludeSubdivisionProperties) const
+{
+  return this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0);
+}
+
 bool ON_Symmetry::SameSymmetricObjectGeometry(const class ON_SubD* subd) const
 {
   const ON_SubDimple* subdimple = (nullptr != subd) ? subd->SubDimple() : nullptr;

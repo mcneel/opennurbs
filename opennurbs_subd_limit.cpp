@@ -758,6 +758,9 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       if (quad_vertex[corner_index]->IsDart())
         continue;
 
+      if (false == bSharpQuadrant[corner_index] && quad_vertex[corner_index]->Internal_CreaseSectorVertexSharpnessForExperts() > 0.0)
+        bSharpQuadrant[corner_index] = true;
+
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+1)%4])
         continue;
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+3)%4])
