@@ -114,12 +114,54 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
     }
   }
 
+  double vertex0_sharpness;
+  if (
+    ON_SubDVertexTag::Crease == center_vertex_tag
+    && vertex0->m_edge_count == vertex0->m_face_count
+    && F < (unsigned)(vertex0->m_face_count)
+    )
+  {
+    // Dale Lear 14 Dec 2023 RH-76871
+    // When a crease vertex has more than one sector the tagging rules imply
+    // it must have exactly two crease edges and exactly two sectors separated by
+    // those edges. Call the two sectors sector A and sector B.
+    // Set a = masimum ens sharpness at vertex0 of sector A
+    // and set b = masimum ens sharpness at vertex0 of sector B.
+    // If (a != b) and thre is an integer n so that max(a,b) >= n and min(a,b) <= n,
+    // then we need to sudivide the sector with the smallest sharpness 
+    // enough times to insure the vertex has no sharpness in eithe sector.
+    // Since the code below only has access to the edges from the current sector,
+    // we need the overall vertex sharpness here.
+    // This situation cannot occur with smooth or dart vertices because they
+    // always have a single sector. It doesnt matter with corner vertices
+    // because their subdivision points and limit piont are simple the
+    // level 0 control net point.
+    vertex0_sharpness = vertex0->VertexSharpness();
+    if (vertex0_sharpness > 1.0)
+    {
+      if (subdivision_count < 2u)
+        subdivision_count = 2u; // put a breakpoint here to see when this test matters (use files from RH-76871).
+    }
+    else if (vertex0_sharpness > 0.0)
+    {
+      if (subdivision_count < 1u)
+        subdivision_count = 1u; // put a breakpoint here to see when this test matters (use files from RH-76871 with constant edge sharpness = 1).
+    }
+  }
+  else
+  {
+    // Setting vertex0_sharpness = nan indicates
+    // it is not set and the actual value doesn't matter
+    // in the rest of this calculation.
+    vertex0_sharpness = ON_DBL_QNAN;
+  }
+
   if (subdivision_count > 1u)
   {
     // we need to subdivide at least twice to get the point ring
 
     ON_SubDVertexQuadSector vqs;
-    if (false == vqs.InitializeFromSubdividedSectorComponents(component_ring, component_ring_count))
+    if (false == vqs.InitializeFromSubdividedSectorComponents(vertex0_sharpness, component_ring, component_ring_count))
       return ON_SUBD_RETURN_ERROR(0);
     if (N != vqs.CenterVertexEdgeCount())
       return ON_SUBD_RETURN_ERROR(0);
@@ -127,7 +169,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
       return ON_SUBD_RETURN_ERROR(0);
     if (point_ring_count != vqs.SectorVertexCount())
       return ON_SUBD_RETURN_ERROR(0);
-    if (false == vqs.SubdivideUntilEdgeSharpnessIsZero())
+    if (false == vqs.SubdivideUntilSharpnessIsZero())
       return ON_SUBD_RETURN_ERROR(0);
 
     // harvest the ring points from vqs.

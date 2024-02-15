@@ -6027,7 +6027,7 @@ bool ON_2dVector::PerpendicularTo(
 
 double ON_2dVector::SignedAngle(const ON_2dVector& A, const ON_2dVector& B)
 {
-  return atan2(A.x * B.x + A.y * B.y, -A.x * B.y + A.y * B.x) ;
+  return atan2(-A.x * B.y + A.y * B.x, A.x * B.x + A.y * B.y);
 }
 
 ON_2dVector operator*(int i, const ON_2dVector& v)

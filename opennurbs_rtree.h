@@ -272,6 +272,30 @@ public:
   */
   bool Initialize(const struct ON_RTreeNode* a_node);
 
+  /// <summary>
+  /// Iterate every leaf in an R-tree.
+  /// ON_RTreeIterator rit(rtree);
+  /// for ( const ON_RTreeLeaf* leaf = rit.FirstLeaf(); nullptr != leaf; leaf = rith.nextLeaf())
+  /// {...}
+  ///   /// 
+  /// </summary>
+  /// <returns>
+  /// First leaf in the R-tree;
+  /// </returns>
+  const ON_RTreeLeaf* FirstLeaf();
+
+  /// <summary>
+  /// Iterate every leaf in an R-tree.
+  /// ON_RTreeIterator rit(rtree);
+  /// for ( const ON_RTreeLeaf* leaf = rit.FirstLeaf(); nullptr != leaf; leaf = rith.nextLeaf())
+  /// {...}
+  ///   /// 
+  /// </summary>
+  /// <returns>
+  /// Next leaf in the R-tree;
+  /// </returns>
+  const ON_RTreeLeaf* NextLeaf();
+
   /*
   Description:
     Get the value of the current leaf element. Calling Value()
