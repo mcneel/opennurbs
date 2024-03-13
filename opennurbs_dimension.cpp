@@ -3613,7 +3613,12 @@ bool ON_DimAngular::GetDisplayLines(
     if (0.0 < dim_ext[1])
       dim_ext_ang[1] = dim_ext[1] / radius;
 
-    while (a0 + ON_ZERO_TOLERANCE > ON_PI * 2.0)
+    // 6-Jan-2024 Dale Fugier, ON_ZERO_TOLERANCE is too
+    // small for an angle tolerace. 1e-6 is more than accurate
+    // but let's start with 1e-8.
+    //const double atol = ON_ZERO_TOLERANCE;
+    const double atol = 1e-8;
+    while (a0 + atol > ON_PI * 2.0)
       a0 -= ON_PI * 2.0;
     a0 -= dim_ext_ang[0];
     a1 += dim_ext_ang[1];

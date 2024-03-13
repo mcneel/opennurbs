@@ -8855,7 +8855,9 @@ bool ON_Mesh::TransposeTextureCoordinates()
       f = tc.x; tc.x = tc.y; tc.y = f;
 	  }
   }
-	return true;
+  // 12 Jan 2024 - Jeff: https://mcneel.myjetbrains.com/youtrack/issue/RH-79611
+  InvalidateCachedTextureCoordinates();
+  return true;
 }
 
 bool ON_Mesh::ReverseTextureCoordinates( int dir )
@@ -8903,7 +8905,9 @@ bool ON_Mesh::ReverseTextureCoordinates( int dir )
         tc.x = 1.0f-tc.x;
     }
   }
-	return true;
+  // 12 Jan 2024 - Jeff: https://mcneel.myjetbrains.com/youtrack/issue/RH-79611
+  InvalidateCachedTextureCoordinates();
+  return true;
 }
 
 bool ON_Mesh::ReverseSurfaceParameters( int dir )

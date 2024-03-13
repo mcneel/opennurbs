@@ -207,6 +207,10 @@ public:
   int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
   int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
 
+  const T* BinarySearchPtr(const T*, int (*)(const T*, const T*)) const;
+  const T* BinarySearchPtr(const T*, int (*)(const T*, const T*), int) const;
+
+
   int InsertInSortedList(const T&, int (*)(const T*, const T*));
   int InsertInSortedList(const T&, int (*)(const T*, const T*), int);
 

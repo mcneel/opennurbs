@@ -3450,7 +3450,7 @@ public:
     ON_SimpleArray<ON_3dPoint>& sector_control_net_points
   ) const;
 
-  bool SetCenterVertexTag(ON_SubDVertexTag center_vertex_tag);
+  bool SetCenterVertexTagAndCenterVertexEdgesTags(ON_SubDVertexTag center_vertex_tag);
 
   bool SetCenterVertexSharpness(double center_vertex_sharpness);
 

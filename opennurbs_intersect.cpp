@@ -817,7 +817,7 @@ int ON_Intersect(
   ON_Line L = line;
   L.Transform(xform);
   double r = fabs(circle.radius);
-  double tol = r*ON_SQRT_EPSILON;
+  double tol = (circle.Center().MaximumCoordinate()+ r)*ON_RELATIVE_TOLERANCE;
   if ( tol < ON_ZERO_TOLERANCE )
     tol = ON_ZERO_TOLERANCE;
   int xcnt;
@@ -825,7 +825,13 @@ int ON_Intersect(
        && fabs(L.from.y - L.to.y) <= tol
        && fabs(L.from.z - L.to.z) > tol )
   {
-    xcnt = 0;
+    if (fabs(L.from.x * L.from.x + L.from.y * L.from.y - r*r) < tol)
+    {
+      *line_t0 = -L.from.z / (L.to.z - L.from.z);
+      xcnt = 1;
+    }
+    else
+     xcnt = 0;
   }
   else
   {
@@ -833,53 +839,38 @@ int ON_Intersect(
     if ( xcnt == 3 )
       xcnt = 1;
   }
-  
-  if ( xcnt == 0 )
+ 
+  int rcnt = 0;  // actual number of intersections within tol
+  if (xcnt > 0)
   {
-    if ( L.ClosestPointTo( circle.Center(), line_t0 ) )
+    ON_3dPoint line_point1, line_point0 = line.PointAt(*line_t0);
+    circle_point0 = circle.ClosestPointTo(line_point0);
+    bool x0 = circle_point0.IsCoincident(line_point0);
+    bool x1 = false;
+
+    if (xcnt == 2)
     {
-      xcnt = 1;
-      *line_t1 = *line_t0;
+      line_point1 = line.PointAt(*line_t1);
+      circle_point1 = circle.ClosestPointTo(line_point1);
+      x1 = circle_point1.IsCoincident(line_point1);
+    }
+ 
+
+    if(x0)
+      rcnt ++;
+      
+    if (x1)
+    {
+      rcnt++;
+      if (rcnt == 1)
+      {
+        circle_point0 = circle_point1;
+        line_t0 = line_t1;
+      }
     }
   }
-  ON_3dPoint line_point1, line_point0 = line.PointAt(*line_t0);
-  circle_point0 = circle.ClosestPointTo(line_point0);
-  double d1, d0 = line_point0.DistanceTo(circle_point0);
-  if ( xcnt == 2 ) 
-  {
-  line_point1 = line.PointAt(*line_t1);
-  circle_point1 = circle.ClosestPointTo(line_point1);
-  d1 = line_point1.DistanceTo(circle_point1);
-  }
-  else
-  {
-  line_point1 = line_point0;
-  circle_point1 = circle_point0;
-  d1 = d0;
-  }
-  if ( xcnt==2 && (d0 > tol && d1 > tol) )
-  {
-    xcnt = 1;
-    if ( d0 <= d1 ) 
-    {
-      *line_t1 = *line_t0;
-      line_point1 = line_point0;
-      circle_point1 = circle_point0;
-      d1 = d0;
-    }
-    else
-    {
-      *line_t0 = *line_t1;
-      line_point0 = line_point1;
-      circle_point0 = circle_point1;
-      d0 = d1;
-    }
-  }
-  if ( xcnt == 1 && d0 > tol )
-  {
-    // TODO: iterate to closest point
-  }
-  return xcnt;
+
+  return rcnt;
 }
 
 int ON_Intersect(
@@ -1169,11 +1160,15 @@ int ON_Intersect(
       ON_3dPoint& arc_point1
       )
 {
+  // RH-48633 In V7 and earlier there were cases where 1 was returned and the 
+  // returned arc_point0 is the closest point on the arc to the line but not an
+  // intersection point
   ON_Circle c = arc;
   ON_3dPoint p[2];
   double t[2], a[2], s;
   bool b[2] = {false,false};
   int i, xcnt = ON_Intersect( line, c, &t[0], p[0], &t[1], p[1] );
+ 
   if ( xcnt > 0 )
   {
     // make sure points are on the arc;

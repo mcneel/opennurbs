@@ -449,13 +449,13 @@ private:
 /*
 	Compute Convex hull of 2d points
 	Parameters:
-	 Pnt - array of points,  this is array of working data.  The points are sorted in place as part of the algorithm
-	 HUll - the sequence Hull[0], HUll[1]...  ,*Hull.Last() == Hull[0] defines the convex hull with a positive orientation returns 2.
-	 PntInd - otional array to be filled in so that Hull[i] = Pnt[ PntInd[i]] where Pnt is the original input point
+	 Pnt - array of points.
+	 HUll - the sequence Hull[0], HUll[1]...  ,*Hull.Last() == Hull[0] defines the convex hull with a positive orientation when  returns 2.
+	 PntInd - optional array to be filled in so that Hull[i] = Pnt[ PntInd[i]] .
 	Returns
 	 dimension of the convex hull
 	 2 - Hull is 2 dimensional
-	 1 - Hull is a line segments
+	 1 - Hull is a line segment
 	 0 - hull is a point
 	 <0 error
 */

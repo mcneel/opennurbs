@@ -2185,10 +2185,11 @@ int ON_SubDComponentPtr::CompareType(
 {
   if ( a == b )
     return 0;
+    // sort nullptrs to ends of arrays
   if ( nullptr == a )
-    return 1;
+    return 1; // nonzero b < nullptr a
   if ( nullptr == b )
-    return -1;
+    return -1; // nonzero a < nullptr b
   return ON_SubDComponentPtr::CompareComponentPtrType(a->ComponentType(), b->ComponentType());
 }
 
@@ -2198,13 +2199,32 @@ int ON_SubDComponentPtr::CompareComponent(
   const ON_SubDComponentPtr* b
 )
 {
-  if (a == b)
-    return 0;
-  const int rc = ON_SubDComponentPtr::CompareComponentPtrType(a->ComponentType(), b->ComponentType());
-  if (0 == rc)
+  const int rc = ON_SubDComponentPtr::CompareType(a, b);
+  if (0 == rc && a != b)
   {
+    // 0 == ON_SubDComponentPtr::CompareType(a, b) and a != b insures both pointers are not nullptr.
     const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
     const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_POINTER_MASK);
+    if (x < y)
+      return -1;
+    if (x > y)
+      return 1;
+  }
+  return rc;
+}
+
+
+int ON_SubDComponentPtr::CompareComponentId(
+  const ON_SubDComponentPtr* a,
+  const ON_SubDComponentPtr* b
+)
+{
+  const int rc = ON_SubDComponentPtr::CompareType(a, b);
+  if (0 == rc && a != b)
+  {
+    // 0 == ON_SubDComponentPtr::CompareType(a, b) and a != b insures both pointers are not nullptr.
+    const unsigned x = a->ComponentId();
+    const unsigned y = b->ComponentId();
     if (x < y)
       return -1;
     if (x > y)
@@ -2218,11 +2238,10 @@ int ON_SubDComponentPtr::CompareComponentAndDirection(
   const ON_SubDComponentPtr* b
 )
 {
-  if (a == b)
-    return 0;
   const int rc = ON_SubDComponentPtr::CompareComponent(a, b);
-  if (0 == rc)
+  if (0 == rc && a != b)
   {
+    // 0 == ON_SubDComponentPtr::CompareComponent(a, b) and a != b insures both pointers are not nullptr.
     const ON__UINT_PTR x = (a->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
     const ON__UINT_PTR y = (b->m_ptr & ON_SUBD_COMPONENT_DIRECTION_MASK);
     if (x < y)
@@ -3908,7 +3927,17 @@ double ON_SubDEdge::EndSharpness(
   unsigned evi
 ) const
 {
-  return (IsSmooth() && evi >= 0 && evi <= 1) ? m_sharpness[evi] : 0.0;
+  return EndSharpness(evi, false);
+}
+
+double ON_SubDEdge::EndSharpness(
+  unsigned evi,
+  bool bUseCreaseSharpness
+) const
+{
+  return (IsSmooth() && evi >= 0 && evi <= 1)
+    ? m_sharpness[evi]
+    : ((bUseCreaseSharpness && IsCrease()) ? ON_SubDEdgeSharpness::CreaseValue : ON_SubDEdgeSharpness::SmoothValue);
 }
 
 double ON_SubDEdge::EndSharpness(
@@ -4017,13 +4046,13 @@ const ON_wString ON_SubDEdgeSharpness::ToPercentageText(double sharpness)
   return ON_wString(ON_wString::WarningSign);
 }
 
-const ON_wString ON_SubDEdgeSharpness::ToPercentageText( bool bVarableMinToMax ) const
+const ON_wString ON_SubDEdgeSharpness::ToPercentageText(bool bOrderMinToMax) const
 {
   if (IsValid())
   {
     if ( IsConstant() )
       return ON_SubDEdgeSharpness::ToPercentageText(EndSharpness(0));
-    const int i0 = (bVarableMinToMax && EndSharpness(0) > EndSharpness(2)) ? 1 : 0;
+    const int i0 = (bOrderMinToMax && (EndSharpness(0) > EndSharpness(1))) ? 1 : 0;
     const double s0 = EndSharpness(i0);
     const double s1 = EndSharpness(1-i0);
     return
@@ -13616,7 +13645,7 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
     else
     {
       // error:
-      //   Both ends of a smooth vertex are tagged
+      //   Both ends of a smooth edge are tagged and coefficients are not ignored,
       //   or coefficients are incorrectly set
       //   or ...
       return ON_SubDEdge_GetSubdivisionPointError(this, subdivision_point, edgeP, true);
@@ -19783,52 +19812,29 @@ bool ON_SubDVertexQuadSector::Initialize(
     }
   }
 
-  for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
-  {
-    m_v[vi].UnsetControlNetPoint();
-    m_v[vi].m_id = vi + 1U;
-  }
-
-  for (unsigned ei = 0; ei < sector_edge_count; ++ei)
-  {
-    m_e[ei].m_id = ei + 1U;
-  }
-
-  for (unsigned fi = 0; fi < sector_face_count; ++fi)
-  {
-    m_f[fi].m_id = fi + 1U;
-  }
-
-  if (false == SetCenterVertexTag(center_vertex_tag))
-  {
-    this->Internal_Destroy();
-    return false;
-  }
-
+  // 2024-01-12, Pierre:
+  // Move up code setting control net points and edge sharpnesses.
+  // Remove code that was copied below from SetCenterVertexTagAndCenterVertexEdgesTags,
+  // that is not needed if sector_control_net_points and center_edge_sharpnesses are 
+  // properly set before the call to SetCenterVertexTagAndCenterVertexEdgesTags.
   if (nullptr != sector_control_net_points)
   {
     for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
     {
       const ON_3dPoint P = sector_control_net_points[vi];
-      if ( P.IsValid())
-        m_v[vi].SetControlNetPoint(P,false);
+      if (P.IsValid())
+        m_v[vi].SetControlNetPoint(P, false);
+      else
+        m_v[vi].UnsetControlNetPoint();
+      m_v[vi].m_id = vi + 1U;
     }
-
-
-    if (ON_SubDVertexTag::Corner == center_vertex_tag)
+  }
+  else
+  {
+    for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
     {
-      // The sector coefficient on smooth edges ending at the center vertex depends on the
-      // angle bewteen the bounding crease edges.
-      ON_SubDEdge* creases[2] = { &m_e[0], &m_e[m_sector_face_count] };
-      const bool bValidEdges = creases[0]->ControlNetLine().IsValid() && creases[1]->ControlNetLine().IsValid();
-      const double angle_radians
-        = bValidEdges
-        ? ON_SubDSectorType::CornerSectorAngleRadiansFromEdges(ON_SubDEdgePtr::Create(creases[0], 0), ON_SubDEdgePtr::Create(creases[1], 0))
-        : ON_HALFPI;
-      const double sector_coefficient = ON_SubDSectorType::CornerSectorCoefficient(m_sector_face_count, angle_radians);
-      this->m_sector_coefficient = sector_coefficient;
-      for ( unsigned ei = 1; ei < m_sector_face_count; ++ei)
-        m_e[ei].m_sector_coefficient[0] = sector_coefficient;
+      m_v[vi].UnsetControlNetPoint();
+      m_v[vi].m_id = vi + 1U;
     }
   }
 
@@ -19853,7 +19859,30 @@ bool ON_SubDVertexQuadSector::Initialize(
         if (y > center_vertex_sharpness)
           center_vertex_sharpness = y;
       }
+      m_e[ei].m_id = ei + 1U;
     }
+    for (unsigned ei = m_center_vertex_edge_count; ei < sector_edge_count; ++ei)
+    {
+      m_e[ei].m_id = ei + 1U;
+    }
+  }
+  else
+  {
+    for (unsigned ei = 0; ei < sector_edge_count; ++ei)
+    {
+      m_e[ei].m_id = ei + 1U;
+    }
+  }
+
+  for (unsigned fi = 0; fi < sector_face_count; ++fi)
+  {
+    m_f[fi].m_id = fi + 1U;
+  }
+
+  if (false == SetCenterVertexTagAndCenterVertexEdgesTags(center_vertex_tag))
+  {
+    this->Internal_Destroy();
+    return false;
   }
 
   this->SetCenterVertexSharpness(center_vertex_sharpness);
@@ -19941,7 +19970,7 @@ double ON_SubDVertexQuadSector::MaximumSharpness() const
   return (max_vs > max_es) ? max_vs : max_es;
 }
 
-bool ON_SubDVertexQuadSector::SetCenterVertexTag(ON_SubDVertexTag center_vertex_tag)
+bool ON_SubDVertexQuadSector::SetCenterVertexTagAndCenterVertexEdgesTags(ON_SubDVertexTag center_vertex_tag)
 {
   this->m_sector_coefficient = ON_DBL_QNAN;
   bool bValidTag = false;
@@ -20024,6 +20053,12 @@ bool ON_SubDVertexQuadSector::SetCenterVertexTag(ON_SubDVertexTag center_vertex_
         this->m_maximum_edge_end_sharpness = x;
     }
   }
+
+  // 2024-01-12, Pierre, RH-79544: There is no reason not to set these tags properly, so do it
+  if (creases[0] != nullptr) 
+    m_v[1].m_vertex_tag = ON_SubDVertexTag::Crease;
+  if (creases[1] != nullptr) 
+    m_v[m_center_vertex_edge_count + m_sector_face_count].m_vertex_tag = ON_SubDVertexTag::Crease;
 
   return true;
 }
@@ -20374,7 +20409,8 @@ bool ON_SubDVertexQuadSector::Subdivide()
     m_v[vi].SetSubdivisionLevel(subdivision_level);
     if (1 == vi)
       m_v[vi].m_vertex_tag = bCreaseOrCornerOrDartSector ? ON_SubDVertexTag::Crease : ON_SubDVertexTag::Smooth;
-    else if (vi == center_vertex_edge_count)
+    // 2024-01-12, Pierre, RH-79544: Fix wrong vertex getting tagged Crease (was vi == center_vertex_edge_count)
+    else if (vi + 1U == sector_vertex_count)  // or vi == 1 + 2 * (center_vertex_edge_count - 1)
       m_v[vi].m_vertex_tag = bCreaseOrCornerSector ? ON_SubDVertexTag::Crease : ON_SubDVertexTag::Smooth;
     else if (vi > 0U)
       m_v[vi].m_vertex_tag = ON_SubDVertexTag::Smooth;
