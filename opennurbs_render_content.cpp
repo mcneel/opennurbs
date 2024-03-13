@@ -358,7 +358,7 @@ static void EnsureNameValid(ON_wString& name)
     wchar_t c = name_copy[i];
     if (first)
     {
-      if ((c == L' ')               ) continue;
+      if ( c == L' '                ) continue;
       if ((c == L'(') || (c == L')')) continue;
       if ((c == L'[') || (c == L']')) continue;
       if ((c == L'{') || (c == L'}')) continue;

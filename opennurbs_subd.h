@@ -387,7 +387,20 @@ public:
   /// </summary>
   static const ON_SubDEdgeSharpness Nan;
 
-
+  /// <summary>
+  /// Create a text string describing the sharpness as a percentage.
+  /// If the sharpness is constant, and single percentage is returned.
+  /// If the sharpness is variable, percentage range returned.
+  /// If the sharpness is not valid, a warning sign is returned.
+  /// </summary>
+  /// <param name="bOrderMinToMax">
+  /// If the sharpness is not constant and bOrderMinToMax is true, then
+  /// the string has the format min%-max%. 
+  /// If the sharpness is not constant and bOrderMinToMax is false, then
+  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
+  /// </param>
+  /// <returns>A string describing the sharpness as a percentage range.</returns>
+  const ON_wString ToPercentageText(bool bOrderMinToMax) const;
 
   /// <summary>
   /// Create a text string describing the sharpness as a percentage.
@@ -408,27 +421,11 @@ public:
   /// <param name="sharpness"></param>
   /// <param name="crease_percentage"></param>
   /// <returns>
-  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpenss/ON_SubDEdgeSharpness::MaximumValue is returned.
-  /// If sharpenss = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpness/ON_SubDEdgeSharpness::MaximumValue is returned.
+  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   static double ToPercentage(double sharpness, double crease_percentage);
-
-  /// <summary>
-  /// Create a text string describing the sharpness as a percentage.
-  /// If the sharpenss is constant, and single percentage is returned.
-  /// If the sharpenss is varable, percentage range returned.
-  /// If the sharpness is not valid, a warning sign is returned.
-  /// </summary>
-  /// <param name="bVarableAsIncreasing">
-  /// If the sharpness is not contanst and bVarableMinToMax is true, then
-  /// the string has the format min%-max%. 
-  /// If the sharpness is not contanst and bVarableMinToMax is false, then
-  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
-  /// </param>
-  /// <returns>A string describing the sharpness as a percentage range.</returns>
-  const ON_wString ToPercentageText( bool bVarableMinToMax ) const;
-
 
   /// <returns>
   /// If the sharpness value is valid and contant, returns true.
@@ -2060,7 +2057,25 @@ public:
   // or x = ON_SubDComponentPtr::Create(...).
   ON__UINT_PTR m_ptr;
 
-  static const ON_SubDComponentPtr Null; //  // nullptr, type = unset, mark = 0
+  /// <summary>
+  /// nullptr, type = Unset, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr Null; 
+
+  /// <summary>
+  /// nullptr, type = Vertex, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullVertex;
+
+  /// <summary>
+  /// nullptr, type = Edge, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullEdge;
+
+  /// <summary>
+  /// nullptr, type = Face, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullFace;
 
   /// <summary>
   /// ON_SubDComponentPtr::Type identifies the type of subdivision component referenced by
@@ -2101,6 +2116,15 @@ public:
     Dictionary compares type and ComponentBase() pointer as an unsigned.
   */
   static int CompareComponent(
+    const ON_SubDComponentPtr* a,
+    const ON_SubDComponentPtr* b
+  );
+
+  /*
+  Description:
+    Dictionary compares type and ComponentBase() id.
+  */
+  static int CompareComponentId(
     const ON_SubDComponentPtr* a,
     const ON_SubDComponentPtr* b
   );
@@ -14498,6 +14522,7 @@ public:
 
   /// <summary>
   /// Get the edge's sharpness at the end with the specified vertex.
+  /// If the edge is a crease, ON_SubDEdgeSharpness::Smooth is returned.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <param name="evi">End index (0=start or 1=end).</param>
@@ -14511,6 +14536,25 @@ public:
     unsigned evi
   ) const;
 
+  /// <summary>
+  /// Get the edge's sharpness at the end with the specified vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="evi">End index (0=start or 1=end).</param>
+  /// <param name="bUseCreaseSharpness">
+  /// If the edge is a crease and bUseCreaseSharpness is false, then ON_SubDEdgeSharpness::Smooth is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// </param>
+  /// <returns>
+  /// If the edge is sharp, the sharpness at the end with the specified by evi is returned.
+  /// If the edge is smooth or a crease, 0 is returned.
+  /// Otherwise, 0.0 is returned.
+  /// </returns>
+  /// <returns>The sharpness at the end of the edge specified by evi.</returns>
+  double EndSharpness(
+    unsigned evi,
+    bool bUseCreaseSharpness
+  ) const;
 
   /// <summary>
   /// Get the edge sharpenss values for the subdivided edge at the specified end of this edge.

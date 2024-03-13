@@ -580,7 +580,7 @@ bool ON_SubDMeshFragment::SetColorsFromCallback(
       T = nan3;
 
     const ON_SurfaceCurvature* K = CurvatureArray(subd_appearance);
-    const size_t Kstride = this->CurvatureArrayStride(subd_appearance); (nullptr != K) ? 1 : 0;
+    const size_t Kstride = (nullptr != K) ? CurvatureArrayStride(subd_appearance) : 0;
     if (nullptr == K)
       K = &ON_SurfaceCurvature::Nan;
 

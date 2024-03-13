@@ -1112,29 +1112,52 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
 }
 
 
-// Is PQR a right hnd turn
+// Is PQR a strictly left  hand turn.
+// Will return false if the point Q*, closest to PR from Q, 
+// IsCoincident to Q.
 static bool IsLeftTurn(const ON_2dPoint& P, const ON_2dPoint& Q, const ON_2dPoint& R)
 {
 	ON_2dVector A = R - Q;
 	ON_2dVector B = P - Q;
 	double det = A.x* B.y - B.x*A.y;
-	return det > 0.0;
+
+  bool Left = det > 0.0;
+  if (Left)
+  {
+    ON_2dVector Dir = R - P;
+    ON_2dVector N(-Dir.y, Dir.x);
+    N.Unitize();
+    // todo choose A or B
+    ON_2dVector Delta = B * N * N;    // Delta from Q to PR
+    // Is Q.IsCoincident(Q+Delta)
+    Left = false;
+    for (int di = 0; !Left && di < 2; di++)
+    {
+      if( fabs(Delta[di])>ON_ZERO_TOLERANCE  && fabs(Delta[di])>ON_RELATIVE_TOLERANCE* fabs( Q[di]) )
+        Left = true;
+    }
+  }
+
+	return Left;
 }
 
 
 int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dPoint>& Hull, ON_SimpleArray< int>* PntInd)
 {
-	int rval = -1;
+	int dim = -1;
+  if (Pnt.Count() == 0)
+    return dim;
+
 	Hull.Empty();
+  if (PntInd)
+    PntInd->Empty();
+
 	ON_SimpleArray<int> Ind(Pnt.Count());
 	Ind.SetCount(Pnt.Count());
-	if (PntInd)
-		PntInd->Empty();
+
 	if (!Pnt.Sort(ON::sort_algorithm::quick_sort, Ind,
 		[](const ON_2dPoint* A, const ON_2dPoint* B) { return ON_2dPoint::Compare(*A, *B); }))
-		return  rval;
-	if (Pnt.Count() == 0)
-		return rval;
+		return  dim;
 
 	Hull.Append(Pnt[Ind[0]]);
 	if (PntInd)
@@ -1146,22 +1169,36 @@ int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dP
 	{
 		for ( /*empty*/; ri < Pnt.Count() && ri >= 0; ri += inc)
 		{
-			ON_2dPoint R = Pnt[Ind[ri]];
+      ON_2dPoint Q = *Hull.Last();
+      ON_2dPoint R = Pnt[Ind[ri]];
+ 
+      // Ensure R is sufficiently distinct from Q
+      if (R.IsCoincident(Q))
+      {
+        if (ri == Pnt.Count() - 1 && Hull.Count()>1)
+        {
+          // Use x-most point as second fixed end
+          *Hull.Last() = R;
+          if (PntInd)
+            *PntInd->Last() = Ind[ri];
+        }
+      }
 
-			if (Hull.Count() == fixed)
+			else if (Hull.Count() == fixed)
 			{
-				if (R != *Hull.Last())
-				{
-					Hull.Append(R);
-					if (PntInd)
-						PntInd->Append(Ind[ri]);
-				}
+				Hull.Append(R);
+				if (PntInd)
+					PntInd->Append(Ind[ri]);		
 			}
 			else
 			{
 				int pi = Hull.Count() - 2;
 				ON_2dPoint P = Hull[pi];
-				ON_2dPoint Q = *Hull.Last();
+
+        if (R.IsCoincident(P))
+        {
+          //TODO what about this case?!
+        }
 				if (IsLeftTurn(P, Q, R))
 				{
 					Hull.Append(R);
@@ -1171,20 +1208,19 @@ int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dP
 				else
 				{
 					bool done = false;
-					while (!done)
-					{
-						Hull.Remove();
-						if (PntInd)
-							PntInd->Remove();
-						Q = P;
-						done = (pi == ((inc==1)?0:fixed-1));
-						if (!done)
-						{
-							P = Hull[--pi];
-							done = IsLeftTurn(P, Q, R);
-						}
-
-					}
+          while (!done)
+          {
+            Hull.Remove();
+            if (PntInd)
+              PntInd->Remove();
+            Q = P;
+            done = (pi == ((inc == 1) ? 0 : fixed - 1));
+            if (!done)
+            {
+              P = Hull[--pi];
+              done = IsLeftTurn(P, Q, R);
+            }
+          }
 					Hull.Append(R);
 					if (PntInd)
 						PntInd->Append(Ind[ri]);
@@ -1192,18 +1228,23 @@ int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dP
 			}
 		}
 		if (Hull.Count() == 1) {
-			rval = 0;
+      dim = 0;
 			break;
 		}
 		fixed = Hull.Count();
 		ri = Pnt.Count() - 2;
 	}
 
+  // Deal with dim=1 case
+  if (Hull.Count() == 3)
+    Hull.Remove();
+
+
 	if (Hull.Count() == 2)
-		rval = 1;
-	else
-		rval = 2;
-	return rval;
+    dim = 1;
+	else if(Hull.Count() > 2)
+    dim = 2;
+	return dim;
 }
 
 

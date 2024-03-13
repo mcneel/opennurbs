@@ -1088,6 +1088,8 @@ const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollecti
     }
   }
 
+  m_populated = dc.m_populated;
+
   return *this;
 }
 
@@ -1115,6 +1117,7 @@ void ON_DecalCollection::Populate(void) const
     if (nullptr != decals_node)
     {
       // Iterate over the decals under the decals node adding a new decal for each one.
+      ON_ASSERT(m_decals.Count() == 0);
       auto it = decals_node->GetChildIterator();
       ON_XMLNode* child_node = nullptr;
       while (nullptr != (child_node = it.GetNextChild()))

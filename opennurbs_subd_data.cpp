@@ -976,7 +976,7 @@ bool ON_SubDimple::Transform(
       break;
     }
 
-    if (level->m_face_count > 0 && level->m_face)
+    if (level->m_face_count > 0 && level->m_face[0])
     {
       const ON_SubDMeshFragment* frag = level->m_face[0]->MeshFragments();
       if (nullptr != frag)

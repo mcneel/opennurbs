@@ -4198,6 +4198,12 @@ float ON_TripleProduct( const float* a, const float* b, const float* c )
 // ON_2dPoint
 //
 
+
+bool ON_2dPoint::IsCoincident(const ON_2dPoint& p) const
+{
+  return ON_PointsAreCoincident(2, false, *this, p);
+}
+
 ON_2dPoint::ON_2dPoint( const float* p )
 {
   if (p) {

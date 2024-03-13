@@ -1049,21 +1049,25 @@ ON_Locale ON_Locale::FromWindowsName(
     if (ON_String::EqualOrdinal("Hans", -1, script_subtag, -1, true))
     {
       // Apple uses "zh-Hans" to mean BCP 47 "zh-CN"
-      if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("CN", -1, region_subtag, -1, true) )
-        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" ); 
+      // January 26, 2024 - Tim
+      // I don't think we should fail if the region is not set to China, "zh-Hans" is sufficient to choose "zh-CN"
+      //if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("CN", -1, region_subtag, -1, true) )
+        return ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" );
     }
     else if (ON_String::EqualOrdinal("Hant", -1, script_subtag, -1, true))
     {
       // Apple uses "zh-Hant" to mean BCP 47 "zh-CN"
-      if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("TW", -1, region_subtag, -1, true) )
-        ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+      // January 26, 2024 - Tim
+      // I don't think we should fail if the region is not set to Taiwan, "zh-Hant" is sufficient to choose "zh-TW"
+      //if ( 0 == region_subtag[0] || ON_String::EqualOrdinal("TW", -1, region_subtag, -1, true) )
+        return ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
     }
     else if ( ON_String::EqualOrdinal("CN", -1, region_subtag, -1, true) )
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" ); 
+      return ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_CN_LCID, "zh-CN" );
     else if ( ON_String::EqualOrdinal("TW", -1, region_subtag, -1, true) )
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+      return ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
     else
-      ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" ); 
+      return ON_Locale::FromWindowsLCIDAndName(ON_Locale::zh_TW_LCID, "zh-TW" );
   }
   else
   {
