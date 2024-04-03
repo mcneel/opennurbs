@@ -2253,12 +2253,136 @@ double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count,
 class ON_CLASS ON_SurfaceCurvature
 {
 public:
+
+  /// <summary>
+  /// Create an ON_SurfaceCurvature from the principal curvature values.
+  /// The principal curvature values are the most fundamental curvature properties
+  /// of a surface. Other curvatures are calculated from them. For example
+  /// gaussian curvature = k1 * k2 and mean curvature = (k1 + k2)/2.
+  /// </summary>
+  /// <param name="k1"></param>
+  /// <param name="k2"></param>
+  /// <returns>
+  /// An ON_SurfaceCurvature with the specified principal curvatures.
+  /// </returns>
   static const ON_SurfaceCurvature CreateFromPrincipalCurvatures(
     double k1,
     double k2
   );
 
+
+  /// <summary>
+  /// Create an ON_SurfaceCurvature from a gaussian and mean curvature values using the relationsip
+  /// between the principal curvatures, gaussian and mean.
+  /// k1 = mean + sqrt(mean*mean - gaussian)
+  /// k2 = mean - sqrt(mean*mean - gaussian)
+  /// If the radicand is negative, we assume we're dealing with a bit of numerical noise or
+  /// estimates and set the principal curvatures
+  /// k1 = k2 = sign(mean)*sqrt(gaussian)
+  /// </summary>
+  /// <param name="gaussian_curvature"></param>
+  /// Gaussian curvature = k1*k2 (product of principal curvatures).
+  /// <param name="mean_curvature">
+  /// Mean curvature = (k1+k2)/2 (average of principal curvatures).
+  /// </param>
+  /// <returns>
+  /// A surface curvature with GaussianCurvature() = gaussian_curvature 
+  /// and MeanCurvature() = gaussian_curvature.
+  /// </returns>
+  static const ON_SurfaceCurvature CreateFromGaussianAndMeanCurvatures(
+    double gaussian_curvature,
+    double mean_curvature
+  );
+
+  /// <summary>
+  /// The sign of the principal curvatures are with respect to a choice
+  /// of surface orientation. This function returns the principal curvatures
+  /// of the surface with opposite choice of orientation.
+  /// </summary>
+  /// <returns>
+  /// ON_SurfaceCurvature::CreateFromPrincipalCurvatures(-this->k2, -this->k1);
+  /// </returns>
+  const ON_SurfaceCurvature FlipSurfaceOrientation() const;
+
+  /// <summary>
+  /// Dictionary compare k1 and k2. Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int Compare(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Dictionary compare lhs.MaximumPrincipalCurvature() and rhs.MaximumPrincipalCurvature(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMaximumAndMinimumPrincipalCurvatures(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.MaximumPrincipalCurvature() and rhs.MaximumPrincipalCurvature(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMaximumPrincipalCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.MinimumPrincipalCurvature() and rhs.MinimumPrincipalCurvature(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMinimumPrincipalCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.MaximumRadius() and rhs.MaximumRadius(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMaximumRadius(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.MinimumRadius() and rhs.MinimumRadius(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMinimumRadius(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.GaussianCurvature() and rhs.GaussianCurvature(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareGaussianCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// Compare lhs.MeanCurvature() and rhs.MeanCurvature(). 
+  /// Values with nans sort last.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>-1, 0 or +1.</returns>
+  static int CompareMeanCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs);
+
+  /// <summary>
+  /// k1 = k2 = ON_DBL_QNAN
+  /// </summary>
   static const ON_SurfaceCurvature Nan;
+
+  /// <summary>
+  /// k1 = k2 = 0
+  /// </summary>
   static const ON_SurfaceCurvature Zero;
 
   /// <summary>
@@ -2270,21 +2394,36 @@ public:
   double k1, k2; // principal curvatures
 
 public:
+
+  /// <returns>True if k1 and k2 are both valid finite values.</returns>
   bool IsSet() const;
+
+  /// <returns>True if k1 and k2 are both zero.</returns>
   bool IsZero() const;
+
+  /// <returns>True if either of k1 or k2 is not a valid finite value.</returns>
   bool IsUnset() const;
+
+  /// <returns>True if either of k1 or k2 is a nan.</returns>
+  bool IsNan() const;
 
 public:
   /// <summary>
   /// The Gaussian curvature is k1*k2.
   /// </summary>
-  /// <returns>The Gausian curvature.</returns>
+  /// <returns>
+  /// If this is set, the Gausian curvature is returned.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
   double GaussianCurvature() const;
 
   /// <summary>
   /// The mean curvature is (k1+k2)/2.
   /// </summary>
-  /// <returns>The signed mean curvature.</returns>
+  /// <returns>
+  /// If this is set, the signed mean curvature is returned.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
   double MeanCurvature() const;
 
   /// <summary>
@@ -2328,8 +2467,41 @@ public:
   /// </returns>
   double KappaValue(ON::curvature_style kappa_style) const;
 
+  /// <returns>
+  /// If this is set, the maximum of k1 and k2 is returned.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  double MaximumPrincipalCurvature() const;
 
+  /// <returns>
+  /// If this is set, the minimum of k1 and k2.
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  double MinimumPrincipalCurvature() const;
 };
+
+ON_DECL
+/// <param name="lhs"></param>
+/// <param name="rhs"></param>
+/// <returns>
+/// Returns (lhs.k1==rhs.k1 && lhs.k2==rhs.k2)
+/// Note that if any princial curvature is a nan, then false is returned.
+/// </returns>
+bool operator==(
+  const ON_SurfaceCurvature& lhs,
+  const ON_SurfaceCurvature& rhs
+  );
+
+ON_DECL
+/// <param name="lhs"></param>
+/// <param name="rhs"></param>
+/// <returns>
+/// Returns (lhs.k1 != rhs.k1 || lhs.k2!=rhs.k2) || (lhs.IsNan() && rhs.IsNan()).
+/// </returns>
+bool operator!=(
+  const ON_SurfaceCurvature& lhs,
+  const ON_SurfaceCurvature& rhs
+  );
 
 
 #if defined(ON_DLL_TEMPLATE)
