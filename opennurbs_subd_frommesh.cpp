@@ -1258,10 +1258,6 @@ ON_SubD* ON_SubD::CreateSubDBox(
     ? ON_SubDEdgeTag::Crease
     : ON_SubDEdgeTag::Smooth;
 
-  const bool bSharpEdge
-    = edge_sharpness > ON_SubDEdgeSharpness::SmoothValue
-    && edge_sharpness <= ON_SubDEdgeSharpness::MaximumValue;
-
   ON_SubD* subd
     = (nullptr != destination_subd)
     ? destination_subd

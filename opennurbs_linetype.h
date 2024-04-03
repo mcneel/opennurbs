@@ -286,6 +286,20 @@ public:
   */
   void ClearBits();
 
+  /*
+    Description:
+      When true, pattern lengths and widths are always in models distances
+      When false (default), lengths and widths are interpreted as lengths
+      and widths on a page layout or in actual output prints
+  */
+  bool AlwaysModelDistances() const;
+
+  /*
+    Description:
+      Set how lengths and widths are interpreted when displayed in layouts
+      or printed
+  */
+  void SetAlwaysModelDistances(bool on);
 private:
   mutable class ON_LinetypePrivate* m_private = nullptr;
   unsigned char m_is_set_bits = 0;

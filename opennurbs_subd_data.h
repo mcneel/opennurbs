@@ -3138,7 +3138,7 @@ public:
   double* m_cvx = nullptr;
 };
 
-class ON_SubDVertexQuadSector
+class /*DO NOT EXPORT*/ ON_SubDVertexQuadSector
 {
 public:
   ON_SubDVertexQuadSector() = default;

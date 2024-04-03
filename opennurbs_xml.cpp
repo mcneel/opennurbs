@@ -3419,7 +3419,7 @@ ON_XMLNode* ON_XMLNode::NextSibling(void) const
 
 ON__UINT32 ON_XMLNode::DataCRC(ON__UINT32 crc, bool recursive) const
 {
-  return _private->DataCRC(crc, 0);
+  return _private->DataCRC(crc, recursive);
 }
 
 void* ON_XMLNode::EVF(const wchar_t*, void*)

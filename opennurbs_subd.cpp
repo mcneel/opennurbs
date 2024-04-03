@@ -2912,8 +2912,8 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromVer
     = (nullptr != v)
     ? ON_SubD_ComponentIdTypeAndTag::CreateFromVertexId(v->m_id, v->m_vertex_tag)
     : ON_SubD_ComponentIdTypeAndTag::Unset;
-  if (itt.m_id > 0)
-    itt.m_cptr = ON_SubDComponentPtr::Create(v);
+  //if (itt.m_id > 0)
+  //  itt.m_cptr = ON_SubDComponentPtr::Create(v);
   return itt;
 }
 
@@ -2924,7 +2924,7 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromVer
   {
     itt.m_id = vertex_id;
     itt.m_type = ON_SubDComponentPtr::Type::Vertex;
-    itt.m_tag = static_cast<unsigned char>(vtag);
+    itt.Internal_SetTag(static_cast<unsigned char>(vtag));
   }
   return itt;
 }
@@ -2933,10 +2933,18 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromEdg
 {
   ON_SubD_ComponentIdTypeAndTag itt
     = (nullptr != e) 
-    ? ON_SubD_ComponentIdTypeAndTag::CreateFromEdgeId(e->m_id, e->m_edge_tag) 
+    ? ON_SubD_ComponentIdTypeAndTag::CreateFromEdgeId(e->m_id, e->m_edge_tag, e->Sharpness(false)) 
     : ON_SubD_ComponentIdTypeAndTag::Unset;
-  if (itt.m_id > 0)
-    itt.m_cptr = ON_SubDComponentPtr::Create(e);
+  //if (itt.m_id > 0)
+  //  itt.m_cptr = ON_SubDComponentPtr::Create(e);
+  return itt;
+}
+
+const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromEdge(const class ON_SubDEdgePtr eptr)
+{
+  ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromEdge(eptr.Edge());
+  if (ON_SubDEdgeTag::Unset != itt.EdgeTag())
+    itt.Internal_SetDir(0 == eptr.EdgeDirection() ? 0 : 1);
   return itt;
 }
 
@@ -2946,9 +2954,29 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromEdg
   ON_SubD_ComponentIdTypeAndTag itt;
   if (edge_id > 0)
   {
+    itt.m_sharpness = ON_SubDEdgeSharpness::Smooth;
     itt.m_id = edge_id;
     itt.m_type = ON_SubDComponentPtr::Type::Edge;
-    itt.m_tag = static_cast<unsigned char>(ON_SubDEdgeTag::SmoothX == etag ? ON_SubDEdgeTag::Smooth : etag);
+    itt.Internal_SetTag(static_cast<unsigned char>(ON_SubDEdgeTag::SmoothX == etag ? ON_SubDEdgeTag::Smooth : etag));
+  }
+  return itt;
+}
+
+const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromEdgeId(unsigned edge_id, ON_SubDEdgeTag etag, ON_SubDEdgeSharpness sharpness)
+{
+  ON_SubD_ComponentIdTypeAndTag itt = CreateFromEdgeId(edge_id, etag);
+  if (ON_SubDComponentPtr::Type::Edge == itt.m_type)
+  {
+    switch (itt.EdgeTag())
+    {
+    case ON_SubDEdgeTag::Smooth:
+    case ON_SubDEdgeTag::SmoothX:
+      if (sharpness.IsSharp())
+        itt.m_sharpness = sharpness;
+      break;
+    default:
+      break;
+    }
   }
   return itt;
 }
@@ -2959,8 +2987,8 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromFac
     = (nullptr != f)
     ? ON_SubD_ComponentIdTypeAndTag::CreateFromFaceId(f->m_id, ftag)
     : ON_SubD_ComponentIdTypeAndTag::Unset;
-  if (itt.m_id > 0)
-    itt.m_cptr = ON_SubDComponentPtr::Create(f);
+  //if (itt.m_id > 0)
+  //  itt.m_cptr = ON_SubDComponentPtr::Create(f);
   return itt;
 }
 
@@ -2971,7 +2999,7 @@ const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::CreateFromFac
   {
     itt.m_id = face_id;
     itt.m_type = ON_SubDComponentPtr::Type::Vertex;
-    itt.m_tag = ftag;
+    itt.Internal_SetTag(ftag);
   }
   return itt;
 }
@@ -3004,73 +3032,105 @@ int ON_SubD_ComponentIdTypeAndTag::CompareTypeAndIdAndTag(const ON_SubD_Componen
     return 1;
   if (nullptr == rhs)
     return -1;
-  if (lhs->m_tag < rhs->m_tag)
+  const unsigned char lhs_tag = lhs->Internal_Tag();
+  const unsigned char rhs_tag = rhs->Internal_Tag();
+  if (lhs_tag < rhs_tag)
     return -1;
-  if (lhs->m_tag > rhs->m_tag)
+  if (lhs_tag > rhs_tag)
     return 1;
   return 0;
+}
+
+const ON_SubD_ComponentIdTypeAndTag ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type type, unsigned id, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
+{
+  if (0 == id || ON_SubDComponentPtr::Type::Unset == type)
+    return ON_SubD_ComponentIdTypeAndTag::Unset;
+  ON_SubD_ComponentIdTypeAndTag itt;
+  itt.m_id = id;
+  itt.m_type = type;
+  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
+  return (i >= 0) ? sorted_tags[i] : ON_SubD_ComponentIdTypeAndTag::Unset;
 }
 
 ON_SubDVertexTag ON_SubD_ComponentIdTypeAndTag::OriginalVertexTag(unsigned vertex_id, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
 {
   if (0 == vertex_id)
     return ON_SubDVertexTag::Unset;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromVertexId(vertex_id,ON_SubDVertexTag::Unset);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  return (i >= 0) ? sorted_tags[i].VertexTag() : ON_SubDVertexTag::Unset;
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Vertex, vertex_id, sorted_tags);
+  return itt.VertexTag();
 }
 
 ON_SubDVertexTag ON_SubD_ComponentIdTypeAndTag::OriginalVertexTag(const ON_SubDVertex* v, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
 {
   if (nullptr == v)
-    return ON_SubDVertexTag::Unset;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromVertexId(v->m_id,ON_SubDVertexTag::Unset);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  return (i >= 0) ? sorted_tags[i].VertexTag() : v->m_vertex_tag;
+    return ON_SubD_ComponentIdTypeAndTag::OriginalVertexTag((unsigned)0, sorted_tags);
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Vertex, v->m_id, sorted_tags);
+  return (ON_SubDComponentPtr::Type::Vertex == itt.m_type && v->m_id == itt.m_id) ? itt.VertexTag() : v->m_vertex_tag;
 }
 
 ON_SubDEdgeTag ON_SubD_ComponentIdTypeAndTag::OriginalEdgeTag(unsigned edge_id, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
 {
   if (0 == edge_id)
     return ON_SubDEdgeTag::Unset;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromEdgeId(edge_id, ON_SubDEdgeTag::Unset);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  return (i >= 0) ? sorted_tags[i].EdgeTag() : ON_SubDEdgeTag::Unset;
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Edge, edge_id, sorted_tags);
+  return itt.EdgeTag();
 }
-
 
 ON_SubDEdgeTag ON_SubD_ComponentIdTypeAndTag::OriginalEdgeTag(const ON_SubDEdge * e, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>&sorted_tags)
 {
   if (nullptr == e)
-    return ON_SubDEdgeTag::Unset;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromEdgeId(e->m_id,ON_SubDEdgeTag::Unset);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  return (i >= 0) ? sorted_tags[i].EdgeTag() : e->m_edge_tag;
+    return ON_SubD_ComponentIdTypeAndTag::OriginalEdgeTag((unsigned)0,sorted_tags);
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Edge, e->m_id, sorted_tags);
+  return (ON_SubDComponentPtr::Type::Edge == itt.m_type && e->m_id == itt.m_id) ? itt.EdgeTag() : e->m_edge_tag;
 }
 
 unsigned char ON_SubD_ComponentIdTypeAndTag::OriginalFaceTag(unsigned face_id, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
 {
   if (0 == face_id)
     return 0;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromFaceId(face_id, 0);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  return (i >= 0) ? sorted_tags[i].FaceTag() : 0;
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Face, face_id, sorted_tags);
+  return itt.FaceTag();
 }
 
 
 unsigned char ON_SubD_ComponentIdTypeAndTag::OriginalFaceTag(const ON_SubDFace* f, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags)
 {
   if (nullptr == f)
-    return 0;
-  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::CreateFromFaceId(f->m_id,0);
-  const int i = sorted_tags.BinarySearch(&itt, ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId);
-  const unsigned char ftag = (i >= 0) ? sorted_tags[i].FaceTag() : 0;
-  return ftag;
+    return ON_SubD_ComponentIdTypeAndTag::OriginalFaceTag((unsigned)0, sorted_tags);
+  const ON_SubD_ComponentIdTypeAndTag itt = ON_SubD_ComponentIdTypeAndTag::FindFromTypeAndId(ON_SubDComponentPtr::Type::Face, f->m_id, sorted_tags);
+  return (ON_SubDComponentPtr::Type::Face == itt.m_type && f->m_id == itt.m_id) ? itt.FaceTag() : 0;
 }
 
 ON_SubDComponentPtr::Type ON_SubD_ComponentIdTypeAndTag::ComponentType() const
 {
   return m_type;
+}
+
+unsigned char ON_SubD_ComponentIdTypeAndTag::Internal_Tag() const
+{
+  return (0x07 & m_tag_and_dirx);
+}
+
+void ON_SubD_ComponentIdTypeAndTag::Internal_SetTag(unsigned char tag)
+{
+  const unsigned char dir = 0x80 & m_tag_and_dirx;
+  m_tag_and_dirx = (dir | (0x07 & tag));
+}
+
+// returns (0x80 & m_tag_and_dir) != 0 ? 1 : 0;
+unsigned char ON_SubD_ComponentIdTypeAndTag::Internal_Dir() const
+{
+  return (0 == (0x80 & m_tag_and_dirx)) ? 0 : 1;
+}
+
+void ON_SubD_ComponentIdTypeAndTag::Internal_SetDir(unsigned char dir)
+{
+  if (dir <= 1)
+  {
+
+    const unsigned char tag = 0x07 & m_tag_and_dirx;
+    m_tag_and_dirx = (tag | ((dir != 0) ? 0x70 : 0x00));
+  }
 }
 
 unsigned ON_SubD_ComponentIdTypeAndTag::VertexId() const
@@ -3083,6 +3143,38 @@ unsigned ON_SubD_ComponentIdTypeAndTag::EdgeId() const
   return (ON_SubDComponentPtr::Type::Edge == m_type) ? m_id : 0;
 }
 
+const ON_SubDEdgeSharpness ON_SubD_ComponentIdTypeAndTag::EdgeSharpness(bool bUseCreaseSharpness) const
+{
+  switch (EdgeTag())
+  {
+  case ON_SubDEdgeTag::Smooth:
+  case ON_SubDEdgeTag::SmoothX:
+    return m_sharpness;
+    break;
+  case ON_SubDEdgeTag::Crease:
+    if (bUseCreaseSharpness)
+      return ON_SubDEdgeSharpness::Crease;
+    break;
+  default:
+    break;
+  }
+  return ON_SubDEdgeSharpness::Nan;
+}
+
+const double ON_SubD_ComponentIdTypeAndTag::VertexSharpness() const
+{
+  return
+    (ON_SubDComponentPtr::Type::Vertex == m_type && m_sharpness.IsConstant()) 
+    ? m_sharpness[0] 
+    : 0.0;
+}
+
+void ON_SubD_ComponentIdTypeAndTag::SetVertexSharpness(double s)
+{
+  m_sharpness = ON_SubDEdgeSharpness::FromConstant(ON_SubDEdgeSharpness::IsValidValue(s, false) ? s : 0.0);
+}
+
+
 unsigned ON_SubD_ComponentIdTypeAndTag::FaceId() const
 {
   return (ON_SubDComponentPtr::Type::Face == m_type) ? m_id : 0;
@@ -3090,17 +3182,17 @@ unsigned ON_SubD_ComponentIdTypeAndTag::FaceId() const
 
 ON_SubDVertexTag ON_SubD_ComponentIdTypeAndTag::VertexTag() const
 {
-  return (ON_SubDComponentPtr::Type::Vertex == m_type) ? ON_SubD::VertexTagFromUnsigned(m_tag) : ON_SubDVertexTag::Unset;
+  return (ON_SubDComponentPtr::Type::Vertex == m_type) ? ON_SubD::VertexTagFromUnsigned(this->Internal_Tag()) : ON_SubDVertexTag::Unset;
 }
 
 ON_SubDEdgeTag ON_SubD_ComponentIdTypeAndTag::EdgeTag() const
 {
-  return (ON_SubDComponentPtr::Type::Edge == m_type) ? ON_SubD::EdgeTagFromUnsigned(m_tag) : ON_SubDEdgeTag::Unset;
+  return (ON_SubDComponentPtr::Type::Edge == m_type) ? ON_SubD::EdgeTagFromUnsigned(this->Internal_Tag()) : ON_SubDEdgeTag::Unset;
 }
 
 unsigned char ON_SubD_ComponentIdTypeAndTag::FaceTag() const
 {
-  return (ON_SubDComponentPtr::Type::Face == m_type) ? m_tag : 0;
+  return (ON_SubDComponentPtr::Type::Face == m_type) ? this->Internal_Tag() : 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -3700,6 +3792,16 @@ bool ON_SubDVertex::IsSmooth() const
 bool ON_SubDVertex::IsCrease() const
 {
   return (ON_SubDVertexTag::Crease == m_vertex_tag);
+}
+
+bool ON_SubDVertex::IsOneSectorCrease() const
+{
+  return (ON_SubDVertexTag::Crease == m_vertex_tag && m_edge_count == m_face_count+1 && m_face_count >= 1);
+}
+
+bool ON_SubDVertex::IsTwoSectorCrease() const
+{
+  return (ON_SubDVertexTag::Crease == m_vertex_tag && m_edge_count == m_face_count && m_face_count >= 2);
 }
 
 bool ON_SubDVertex::IsCorner() const
@@ -4355,7 +4457,8 @@ const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::FromInterval(
   double sharpness1
 )
 {
-  if (sharpness0 >= 0.0 && sharpness0 <= ON_SubDEdgeSharpness::MaximumValue && sharpness1 >= 0.0 && sharpness1 <= ON_SubDEdgeSharpness::MaximumValue)
+  if (sharpness0 >= 0.0 && sharpness0 <= ON_SubDEdgeSharpness::MaximumValue 
+    && sharpness1 >= 0.0 && sharpness1 <= ON_SubDEdgeSharpness::MaximumValue)
   {
     ON_SubDEdgeSharpness s;
     s.m_edge_sharpness[0] = (float)ON_SubDEdgeSharpness::Sanitize(sharpness0, 0.0);
@@ -4528,7 +4631,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
 
 double ON_SubDEdgeSharpness::VertexSharpness(
   ON_SubDVertexTag vertex_tag,
-  double global_vertex_sharpness,
+  double interior_crease_vertex_sharpness,
   unsigned sharp_edge_end_count,
   double maximum_edge_end_sharpness
 )
@@ -4555,21 +4658,30 @@ double ON_SubDEdgeSharpness::VertexSharpness(
   }
   else if (ON_SubDVertexTag::Crease == vertex_tag)
   {
-    if (global_vertex_sharpness > 0.0)
+    if (interior_crease_vertex_sharpness > 0.0)
     {
+      // In the comments below,
+      // VSS = vertex sector sharpness = maximum edges sharpness 
+      //       at the vertex's end of all smooth edges in the sector.
       if (sharp_edge_end_count <= 0)
       {
-        // no edges have nonzero end sharpness at this vertex
-        // If this isn't the tricky 2 sector crease vertex case, then the vertex sharpness is zero.
-        return global_vertex_sharpness;
+        // No edges have nonzero end sharpness at this vertex
+        // It should be the case that the origin of this vertex
+        // is an interior crease vertex where:
+        // 1) One sector (A) had sharp edges and VSS > 0.
+        // 2) The other sector (B) had no sharp edges and VSS = 0.
+        // 3) This vertex is part of a single sector B copy (or a subdivision of such a copy).
+        return interior_crease_vertex_sharpness;
       }
 
-      if (global_vertex_sharpness > maximum_edge_end_sharpness)
+      if (interior_crease_vertex_sharpness > maximum_edge_end_sharpness)
       {
-        // This happens when the sharp edges attached to the vertex
-        // have variable sharpness with 0 at the vertex
-        // and nonzero sharpness at the other ends.
-        return global_vertex_sharpness;
+        // It should be the case that the origin of this vertex
+        // is an interior crease vertex where:
+        // 1) Both sectors had sharp edges and the VSS of the sectors was different (one could be zero).
+        // 2) This vertex is part of a single sector copy of the sector with 
+        //    the smaller VSS (or a subdivision of such a copy).
+        return interior_crease_vertex_sharpness;
       }
     }
 
@@ -4587,7 +4699,6 @@ double ON_SubDEdgeSharpness::VertexSharpness(
 
   if (sharp_edge_end_count + crease_edge_count < 2U)
   {
-    // 1 sharp edge and no creases
     // No sharp bias for the vertex subdivision point.
     return 0.0;
   }
@@ -4766,26 +4877,154 @@ unsigned int ON_SubD::ClearEdgeSharpness()
 }
 
 
-double ON_SubDVertex::Internal_CreaseSectorVertexSharpnessForExperts() const
+double ON_SubDVertex::Internal_InteriorCreaseVertexSharpnessForExperts() const
 {
-  return (ON_SubDVertexTag::Crease == m_vertex_tag) ? m_crease_sector_vertex_sharpness : 0.0;
+  // This function cannot check that this->IsInteriorCrease() is true because
+  // this function is used on partial subsets of a SubD in low level evaluation code.
+  // When a vertex is an interior crease in the complete SubD, these partial
+  // SubD include only one of the sectors. Thus, all that can be checked is the
+  // crease tag settings
+  return (ON_SubDVertexTag::Crease == m_vertex_tag) ? m_interior_crease_vertex_sharpness : 0.0;
 }
 
-void ON_SubDVertex::Internal_UpdateCreaseSectorVertexSharpnessForExperts(double crease_sector_vertex_sharpness) const
+void ON_SubDVertex::Internal_SetInteriorCreaseVertexSharpnessForExperts(
+  double interior_crease_vertex_sharpness,
+  bool bSkipEdgeCountTest
+) const
 {
   // NOTE WELL:
-  // 
-  if (ON_SubDVertexTag::Crease == m_vertex_tag && crease_sector_vertex_sharpness > 0.0 && ON_SubDEdgeSharpness::IsValidValue(crease_sector_vertex_sharpness,false))
-    this->m_crease_sector_vertex_sharpness = (float)crease_sector_vertex_sharpness;
+  // This function is used to set m_crease_sector_vertex_sharpness when the vertex is part
+  // of a complete SubD.
+  if (ON_SubDVertexTag::Crease == m_vertex_tag
+    && interior_crease_vertex_sharpness > 0.0
+    && ON_SubDEdgeSharpness::IsValidValue(interior_crease_vertex_sharpness, false)
+    )
+  {
+    // nonzero vertex sharpness on a crease vertex.
+    // Because, even with the bSingleSectorSubset parameter, it's impossible to know the context 
+    // when ON_SubDVertex.VertexSharpness() is called (complete SubD or singel sector subset)
+    // we test for a change to the value before setting it so debugger breakpoints can
+    // be set and triggered at useful times.
+    const float f = (float)interior_crease_vertex_sharpness;
+    if (m_edge_count == m_face_count && m_face_count >= 2)
+    {
+      // This is a 2 sector crease vertex and is exactly
+      // the case where m_crease_sector_vertex_sharpness is useful.
+      // If the sectors have different maximum edge end shaprnesses at this
+      // vertex, then this value is critical. The sector with the smaller
+      // maximum edge end sharpness must use this value when the
+      // vertex subdivision point is calculated so the subdivision
+      // and limit surface point are correct when calculated from
+      // either sector.
+      this->m_interior_crease_vertex_sharpness = f;
+    }
+    else
+    {
+      const bool bOneSector = m_edge_count == m_face_count + 1 && m_face_count >= 1;
+      if (bOneSector && m_level > 0)
+      {
+        // The situation should be that the calling code knows for sure
+        // this is a 1 sector crease vertex and that sector is a 
+        // subset taken from a 2 sector crease vertex (in low level evaluation code)
+        // and interior_crease_vertex_sharpness was calculated using both sectors
+        // (or is a subdivision of a value calculated using both sectors).
+        // One place this happens is in ON_SubDVertexQuadSector::Subdivide().
+        // This is a good location for a breakpoint.
+        this->m_interior_crease_vertex_sharpness = f;
+      }
+      else if (bSkipEdgeCountTest)
+      {
+        // When bSkipEdgeCountTest = true, the expert caller is stating
+        // this is some type of special case when the vertex isn't completely
+        // connected the the entire SubD. It is typically at some stage of subdivision
+        // where either a the subdivided SubD is under construction or
+        // during low level evaluation where a copy of 1 side of a 2 sector crease
+        // is being created so limit surface information can be calculated.
+        // 
+        // Each case is separated out so it's posible to surgically debug with simple breakpoints.
+        if (bOneSector)
+        {
+          // One sector of a level 0 bertex is being copied and the expert caller 
+          // set bSkipEdgeCountTest=true to inform us this is a special case.
+          // One place this happens is in
+          // ON_SubDVertexQuadSector::Initialize(ON_SubDVertexTag center_vertex_tag, double center_vertex_sharpness, ...).
+          this->m_interior_crease_vertex_sharpness = f;
+        }
+        else if (0 == m_edge_count && 0 == m_face_count)
+        {
+          // A vertex is being bopied, the edges and faces have not been attached yet,
+          // and the expert caller set bSkipEdgeCountTest=true to inform us this is a
+          // special case.
+          // One place this happens is in
+          // ON_SubD_FixedSizeHeap::AllocateVertex(ON_SubDVertex* vertex0,unsigned int edge_capacity)
+          // where the subdivision vertex of vertex0 is being created and the edges and faces
+          // have not been allocated (and hence not attached) yet.
+          // Good place for a breakpoint.
+          this->m_interior_crease_vertex_sharpness = f;
+        }
+        else
+        {
+          // If you end up here and it's a valid state, add a comment.
+          // If it's confusing, please ask Dale Lear for some help.
+          ON_ERROR("This probably should not be happening.");
+          // Nothing is accomplished by setting this value and 
+          // having it set can cause errors when sharpnesses are edited.      
+          // Good place for a breakpoint.
+          this->Internal_ClearInteriorCreaseVertexSharpnessForExperts();
+        }
+      }
+    }
+  }
   else
-    this->m_crease_sector_vertex_sharpness = 0.0f;
+    this->Internal_ClearInteriorCreaseVertexSharpnessForExperts();
+}
+
+void ON_SubDVertex::Internal_ClearInteriorCreaseVertexSharpnessForExperts() const
+{
+  // NO tests - set m_interior_crease_vertex_sharpness = 0 unconditionally 
+  this->m_interior_crease_vertex_sharpness = 0.0f;
+}
+
+static double Internal_VertexSharpnessCalculationHelper(
+  const ON_SubDVertex* v, // caller insures v is not nullptr
+  unsigned int sharp_edge_count, // caller insures sharp_edge_count is valid 
+  double max_end_sharpeness // caller insures max_end_sharpeness is valid 
+)
+{
+  // In low level evluation code, interior crease vertices
+  // only have informtion from one sector and we need the value
+  // calculated from both sectors. In all other cases, the
+  // value of max_end_sharpeness calculated above is the
+  // correct value to use.
+  const bool bIsOneSectorCrease = v->IsOneSectorCrease();
+  const double two_sector_crease_vertex_sharpness
+    = bIsOneSectorCrease
+    ? v->Internal_InteriorCreaseVertexSharpnessForExperts()
+    : 0.0;
+  const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(v->m_vertex_tag, two_sector_crease_vertex_sharpness, sharp_edge_count, max_end_sharpeness);
+  if (false == bIsOneSectorCrease)
+  {
+    if (vertex_sharpness > 0.0 && v->IsTwoSectorCrease())
+    {
+      // This interior crease vertex has both sectors present and the value
+      // of vertex_sharpness can be saved for future situations where
+      // single sector copies are used in low level evaluation code.
+      v->Internal_SetInteriorCreaseVertexSharpnessForExperts(vertex_sharpness, false);
+    }
+    else
+      v->Internal_ClearInteriorCreaseVertexSharpnessForExperts();
+  }
+  // else DO NOTHING - THIS IS IMPORTANT
+  // The 1 sector case might be low level code passing in copy of just one of two sectors
+  // and, at this point, there is not enough information to determine the correct action.
+  return vertex_sharpness;
 }
 
 double ON_SubDVertex::VertexSharpness() const
 {
   // NOTE WELL:
 
-  // For performance reasone in calculating limit surface meshes,
+  // For performance reasons in calculating limit surface meshes,
   // the code in this function does the same calculation and
   // returns the same value as
   //
@@ -4818,14 +5057,11 @@ double ON_SubDVertex::VertexSharpness() const
       }
     }
 
-    // In the low level evaluation code, this function is called
-    // when the sector center vertex is the original in the entire
-    // SubD. That insures crease_sector_vertex_sharpness is accurate.
-    // It's updated on the original SubD so that when the sector subset
-    // is created, the value is copied.
-    const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
-    vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, crease_sector_vertex_sharpness, sharp_edge_count, max_end_sharpeness);
-    this->Internal_UpdateCreaseSectorVertexSharpnessForExperts(vertex_sharpness);
+    vertex_sharpness = Internal_VertexSharpnessCalculationHelper(
+      this,
+      sharp_edge_count,
+      max_end_sharpeness
+    );
   }
   else
   {
@@ -4961,14 +5197,12 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
       }
     }
 
-    // In the low level evaluation code, this function is called
-    // when the sector center vertex is the original in the entire
-    // SubD. That insures crease_sector_vertex_sharpness is accurate.
-    // It's updated on the original SubD so that when the sector subset
-    // is created, the value is copied.
-    const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
-    const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(m_vertex_tag, crease_sector_vertex_sharpness, sharp_edge_count, max_end_sharpeness);
-    this->Internal_UpdateCreaseSectorVertexSharpnessForExperts(vertex_sharpness);
+    const double vertex_sharpness = Internal_VertexSharpnessCalculationHelper(
+      this,
+      sharp_edge_count,
+      max_end_sharpeness
+    );
+
 
     if (vertex_sharpness > 0.0)
     {      
@@ -8604,6 +8838,7 @@ bool ON_SubDimple::IsValidLevel(
     }
   }
 
+
   return true;
 }
 
@@ -8656,12 +8891,23 @@ bool ON_SubD::IsValid(ON_TextLog* text_logx) const
 void ON_SubD::Dump(ON_TextLog& text_log) const
 {
   // At maximum verbosity, dump all vertices, edges, faces, else dump the first 16.
-  const unsigned component_sample_count = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Maximum) ? 0x7FFFFFFF : 16; 
+  const unsigned maxcount = 0x7FFFFFFF;
 
-  ON_2udex id_range;
-  id_range.i = component_sample_count;
-  id_range.j = 0;
-  DumpTopology(id_range,id_range,id_range,text_log);
+  const unsigned face_count = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Maximum) ? maxcount : 16;
+
+  // Bump vertex_count up a bit to deal with small models with lots of hexagons.
+  const unsigned vertex_count = face_count < maxcount ? (3 * face_count) / 2 : maxcount;
+
+  // And ... edge_count is set this way because in a typical control net,
+  // vertex count - edge count + face count is nearish to zero.
+  // (Euler's formula)
+  const unsigned edge_count = face_count < maxcount ? (vertex_count + face_count + 8) : maxcount;
+
+  const ON_2udex vertex_id_range(vertex_count, 0);
+  const ON_2udex edge_id_range(edge_count, 0);
+  const ON_2udex face_id_range(face_count, 0);
+
+  DumpTopology(vertex_id_range,edge_id_range,face_id_range,text_log);
 }
 
 unsigned int ON_SubD::DumpTopology(ON_TextLog & text_log) const
@@ -10060,6 +10306,13 @@ unsigned int ON_SubDLevel::DumpTopology(
 
     text_log.PushIndent();
 
+    const double vs = v->VertexSharpness();
+    if (false == (0.0 == vs))
+    {
+      const ON_wString vspct = ON_SubDEdgeSharpness::ToPercentageText(vs);
+      text_log.Print(L"v.VertexSharpness = %ls (%g)\n", static_cast<const wchar_t*>(vspct), vs);
+    }
+
     ON_3dPoint P1(ON_3dPoint::NanPoint);
     if (v->GetSavedSubdivisionPoint(&P1.x) && P1.IsValid())
       text_log.Print( "v.SubdivisionPoint: (%g, %g, %g)\n", P1.x, P1.y, P1.z );
@@ -10286,6 +10539,18 @@ unsigned int ON_SubDLevel::DumpTopology(
     }
 
     text_log.PushIndent();
+
+    if (e->IsSharp())
+    {
+      const ON_SubDEdgeSharpness sharpness = e->Sharpness(false);
+      const ON_wString ss = sharpness.ToPercentageText(false);
+      ON_wString s 
+        = (sharpness.IsConstant())
+        ? ON_String::FormatToString("e.Sharpness: %ls (%g)", static_cast<const wchar_t*>(ss), sharpness.EndSharpness(0))
+        : ON_String::FormatToString("e.Sharpness: %ls (%g-%g)", static_cast<const wchar_t*>(ss), sharpness.EndSharpness(0), sharpness.EndSharpness(1));
+      text_log.PrintString(s);
+      text_log.PrintNewLine();
+    }
 
     ON_3dPoint P1(ON_3dPoint::NanPoint);
     if (e->GetSavedSubdivisionPoint(&P1.x) && P1.IsValid())
@@ -11690,6 +11955,29 @@ ON_SubDEdge* ON_SubD::AddEdgeWithSectorCoefficients(
   return ON_SUBD_RETURN_ERROR(nullptr);
 }
 
+ON_SubDEdge* ON_SubD::AddEdgeWithSectorCoefficients(
+  ON_SubDEdgeTag edge_tag,
+  class ON_SubDVertex* v0,
+  double v0_sector_coefficient,
+  class ON_SubDVertex* v1,
+  double v1_sector_coefficient,
+  ON_SubDEdgeSharpness sharpness
+)
+{
+  ON_SubDimple* subdimple = SubDimple(true);
+  if (nullptr != subdimple)
+  {
+    ON_SubDEdge* e = subdimple->AddEdge(edge_tag, v0, v0_sector_coefficient, v1, v1_sector_coefficient);
+    if (nullptr != e)
+    {
+      if (e->IsSmooth())
+        e->SetSharpnessForExperts(sharpness);
+      return e;
+    }
+  }
+  return ON_SUBD_RETURN_ERROR(nullptr);
+}
+
 class ON_SubDEdge* ON_SubD::AddEdgeForExperts(
   unsigned int candidate_edge_id,
   ON_SubDEdgeTag edge_tag,
@@ -11703,6 +11991,31 @@ class ON_SubDEdge* ON_SubD::AddEdgeForExperts(
   ON_SubDimple* subdimple = SubDimple(true);
   if (nullptr != subdimple)
     return subdimple->AddEdge(candidate_edge_id, edge_tag, v0, v0_sector_coefficient, v1, v1_sector_coefficient, initial_face_capacity);
+  return ON_SUBD_RETURN_ERROR(nullptr);
+}
+
+ON_SubDEdge* ON_SubD::AddEdgeForExperts(
+  unsigned int candidate_edge_id,
+  ON_SubDEdgeTag edge_tag,
+  class ON_SubDVertex* v0,
+  double v0_sector_coefficient,
+  class ON_SubDVertex* v1,
+  double v1_sector_coefficient,
+  ON_SubDEdgeSharpness sharpness,
+  unsigned int initial_face_capacity
+)
+{
+  ON_SubDimple* subdimple = SubDimple(true);
+  if (nullptr != subdimple)
+  {
+    ON_SubDEdge* e = subdimple->AddEdge(candidate_edge_id, edge_tag, v0, v0_sector_coefficient, v1, v1_sector_coefficient, initial_face_capacity);
+    if (nullptr != e)
+    {
+      if (e->IsSmooth())
+        e->SetSharpnessForExperts(sharpness);
+      return e;
+    }
+  }
   return ON_SUBD_RETURN_ERROR(nullptr);
 }
 
@@ -13709,8 +14022,8 @@ bool ON_SubDEdge::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
       // sharp crease vertex with 0 < sharpness < 1 at the current level
       const double a = 1.0 - edge_sharpness;
       subdivision_point[0] = a * subdivision_point[0] + edge_sharpness * sharp_subdivision_point.x;
-      subdivision_point[1] = a * subdivision_point[1] + edge_sharpness * sharp_subdivision_point.x;
-      subdivision_point[2] = a * subdivision_point[2] + edge_sharpness * sharp_subdivision_point.x;
+      subdivision_point[1] = a * subdivision_point[1] + edge_sharpness * sharp_subdivision_point.y;
+      subdivision_point[2] = a * subdivision_point[2] + edge_sharpness * sharp_subdivision_point.z;
     }
     return true;
   }
@@ -14464,11 +14777,8 @@ bool ON_SubDVertex::EvaluateCatmullClarkSubdivisionPoint(
     {
       // We found the two crease edges that share this crease vertex.
       ON_3dPoint sharp_subdivision_point = ON_3dPoint::NanPoint;
-
-      const double crease_sector_vertex_sharpness = this->Internal_CreaseSectorVertexSharpnessForExperts();
-
       const double vertex_sharpness 
-        = (bSharpEdges || crease_sector_vertex_sharpness > 0.0)
+        = (bSharpEdges || this->Internal_InteriorCreaseVertexSharpnessForExperts() > 0.0)
         ? this->GetSharpSubdivisionPoint(sharp_subdivision_point)
         : 0.0;
       if (vertex_sharpness >= 1.0)
@@ -16495,6 +16805,8 @@ const ON_SubDEdge* ON_SubDimple::SplitEdge(
     break;
   }
 
+  const ON_SubDEdgeSharpness sharpness0 = edge->Sharpness(false);
+
   ON_SubDVertex* end_vertex[2] = { const_cast<ON_SubDVertex*>(edge->m_vertex[0]), const_cast<ON_SubDVertex*>(edge->m_vertex[1]) };
 
   ON_SubDVertex* new_vertex = nullptr;
@@ -16613,6 +16925,16 @@ const ON_SubDEdge* ON_SubDimple::SplitEdge(
 
     AddVertexToLevel(new_vertex);
     AddEdgeToLevel(new_edge);
+
+    if (sharpness0.IsSharp() && edge->IsSmooth() && new_edge->IsSmooth())
+    {
+      // Dale Lear 2024 Feb 29 - Fix RH-80388
+      const double smid = sharpness0.Average();
+      const ON_SubDEdgeSharpness s0 = ON_SubDEdgeSharpness::FromInterval(sharpness0[0], smid);
+      const ON_SubDEdgeSharpness s1 = ON_SubDEdgeSharpness::FromInterval(smid, sharpness0[1]);
+      edge->SetSharpnessForExperts(s0);
+      new_edge->SetSharpnessForExperts(s1);
+    }
 
     end_vertex[0]->VertexModifiedNofification();
     end_vertex[1]->VertexModifiedNofification();
@@ -19886,7 +20208,10 @@ bool ON_SubDVertexQuadSector::Initialize(
   }
 
   this->SetCenterVertexSharpness(center_vertex_sharpness);
-  m_v[0].Internal_UpdateCreaseSectorVertexSharpnessForExperts(this->CenterVertexSharpness());
+  if (ON_SubDVertexTag::Crease == m_v[0].m_vertex_tag)
+    m_v[0].Internal_SetInteriorCreaseVertexSharpnessForExperts(this->CenterVertexSharpness(), true);
+  else
+    m_v[0].Internal_ClearInteriorCreaseVertexSharpnessForExperts();
 
   m_r[0] = ON_SubDComponentPtr::Create(&m_v[0]);
   for (unsigned ri = 1u; ri < sector_vertex_count; ri += 2u)
@@ -20393,9 +20718,7 @@ bool ON_SubDVertexQuadSector::Subdivide()
     R[2U + 2U * fi] = m_f[fi].SubdivisionPoint();
   }
 
-  const double crease_sector_vertex_sharpness0 = m_v[0].Internal_CreaseSectorVertexSharpnessForExperts();
-
-  const double center_vertex_sharpness0 = this->CenterVertexSharpness();
+  const double crease_sector_vertex_sharpness0 = m_v[0].Internal_InteriorCreaseVertexSharpnessForExperts();
 
   double center_vertex_sharpness1 = 0.0;
 
@@ -20404,7 +20727,6 @@ bool ON_SubDVertexQuadSector::Subdivide()
   for (unsigned vi = 0; vi < sector_vertex_count; ++vi)
   {
     m_v[vi].ClearSavedSubdivisionPoints(); // <- 2023-May-5 Dale Lear. This line fixes RH-74520.
-    m_v[vi].Internal_UpdateCreaseSectorVertexSharpnessForExperts(0.0);
     m_v[vi].SetControlNetPoint(R[vi],false);
     m_v[vi].SetSubdivisionLevel(subdivision_level);
     if (1 == vi)
@@ -20423,7 +20745,7 @@ bool ON_SubDVertexQuadSector::Subdivide()
         const double crease_sector_vertex_sharpness1 = ON_SubDEdgeSharpness::Sanitize(crease_sector_vertex_sharpness0 - 1.0);
         if (crease_sector_vertex_sharpness1 > 0.0)
         {
-          m_v[0].Internal_UpdateCreaseSectorVertexSharpnessForExperts(crease_sector_vertex_sharpness1);
+          m_v[0].Internal_SetInteriorCreaseVertexSharpnessForExperts(crease_sector_vertex_sharpness1, false);
           if (center_vertex_sharpness1 < crease_sector_vertex_sharpness1)
             center_vertex_sharpness1 = crease_sector_vertex_sharpness1;
         }

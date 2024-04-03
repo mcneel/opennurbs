@@ -226,12 +226,13 @@ void ON_3dmRevisionHistory::Dump( ON_TextLog& dump ) const
 const ON_3dmNotes ON_3dmNotes::Empty;
 
 ON_3dmNotes::ON_3dmNotes()
-: m_bVisible(0)
-, m_bHTML(0)
+: m_bVisible(false)
+, m_bHTML(false)
 , m_window_left(0)
 , m_window_top(0)
 , m_window_right(0)
 , m_window_bottom(0)
+, m_bLocked(false)
 {}
 
 ON_3dmNotes::~ON_3dmNotes()
@@ -280,6 +281,14 @@ bool ON_3dmNotes::Read( ON_BinaryArchive& file )
       break;
     if (!file.ReadInt( &m_window_bottom ))
       break;
+
+    if (minor_version >= 1)
+    {
+      //https://mcneel.myjetbrains.com/youtrack/issue/RH-74718/Lock-notes
+      if (!file.ReadBool(&m_bLocked))
+        break;
+    }
+
     rc = true;
     break;
   }
@@ -288,7 +297,7 @@ bool ON_3dmNotes::Read( ON_BinaryArchive& file )
 
 bool ON_3dmNotes::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.Write3dmChunkVersion(1,0);
+  bool rc = file.Write3dmChunkVersion(1,1);
   if ( rc ) rc = file.WriteInt( m_bHTML );
   if ( rc ) rc = file.WriteString( m_notes );
   if ( rc ) rc = file.WriteInt( m_bVisible );
@@ -296,6 +305,9 @@ bool ON_3dmNotes::Write( ON_BinaryArchive& file ) const
   if ( rc ) rc = file.WriteInt( m_window_top );
   if ( rc ) rc = file.WriteInt( m_window_right );
   if ( rc ) rc = file.WriteInt( m_window_bottom );
+
+  if (rc) rc = file.WriteBool(m_bLocked);
+
   return rc;
 }
 

@@ -1027,6 +1027,9 @@ void ON_SubDVertex::ClearSavedSurfacePoints() const
 
 void ON_SubDVertex::ClearSavedSubdivisionPoints() const
 {
+  // Dale Lear 2024 Feb 27 - Fix RH-80633
+  // Unconditionally clear cached crease sector sharpness.
+  this->Internal_ClearInteriorCreaseVertexSharpnessForExperts();
   // clear vertex specific limit point cache
   ClearSavedSurfacePoints();
   // clear general subdivision point cache

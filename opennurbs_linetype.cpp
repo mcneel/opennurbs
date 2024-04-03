@@ -26,6 +26,7 @@ class ON_LinetypePrivate
 public:
   ON_SimpleArray<ON_LinetypeSegment> m_segments;
   ON_SimpleArray<ON_2dPoint> m_taper_points;
+  bool m_always_model_distances = false;
 };
 
 bool ON_IsHairlinePrintWidth(double width_mm)
@@ -313,8 +314,10 @@ enum ON_LinetypeTypeCodes : unsigned char
   Width = 3,
   WidthUnits = 4,
   Taper = 5,
+  //minor version = 3
+  AlwaysModelDistance = 6,
 
-  LastLinetypeTypeCode = 5
+  LastLinetypeTypeCode = 6
 };
 
 bool ON_Linetype::Write( ON_BinaryArchive& file) const
@@ -352,7 +355,9 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
     // minor_version = 1: add cap and join styles to linetype
     // 29 Nov 2022 S. Baer (RH-7262)
     // minor_version = 2: add width, width units, and taper
-    const int minor_version = 2;
+    // 13 Feb 2024 S. Baer (RH-79551)
+    // minor_version = 3: add AlwaysModelDistance
+    const int minor_version = 3;
     if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 2, minor_version))
       return false;
     for (;;)
@@ -411,6 +416,16 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
           break;
 
         if (!file.WriteArray(*taper))
+          break;
+      }
+
+      if (AlwaysModelDistances() == true)
+      {
+        const unsigned char itemType = ON_LinetypeTypeCodes::AlwaysModelDistance; // 6
+        if (!file.WriteChar(itemType))
+          break;
+
+        if (!file.WriteBool(AlwaysModelDistances()))
           break;
       }
 
@@ -562,6 +577,25 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
         if (2 == minor_version && item_id != 0)
         {
           ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.2");
+        }
+      }
+
+      if (minor_version >= 3)
+      {
+        if (ON_LinetypeTypeCodes::AlwaysModelDistance == item_id)
+        {
+          bool always = false;
+          if (!file.ReadBool(&always))
+            break;
+          SetAlwaysModelDistances(always);
+
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (3 == minor_version && item_id != 0)
+        {
+          ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.3");
         }
       }
 
@@ -784,4 +818,14 @@ void ON_Linetype::ClearBits()
 {
   m_is_set_bits = 0;
   m_is_locked_bits = 0;
+}
+
+bool ON_Linetype::AlwaysModelDistances() const
+{
+  return m_private->m_always_model_distances;
+}
+
+void ON_Linetype::SetAlwaysModelDistances(bool on)
+{
+  m_private->m_always_model_distances = on;
 }
